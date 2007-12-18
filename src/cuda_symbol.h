@@ -1,4 +1,4 @@
-/* cuda_error.h
+/* cuda_symbol.h
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,42 +16,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * CUDA runtime error checking
- */
-
-#ifndef __CUDA_ERROR_H__
-#define __CUDA_ERROR_H__
+#ifndef __CUDA_SYMBOL_H__
+#define __CUDA_SYMBOL_H__
 
 #include "cuda_base.h"
+#include "cuda_error.h"
+#include "cuda_array.h"
 
 
-#define CUDA_ERROR(err) throw cuda_error(err)
+template <typename T>
+class cuda_array;
 
-#define CUDA_CALL(x) if (cudaSuccess != x) CUDA_ERROR(cudaGetLastError())
 
-
-/*
- * CUDA error handling
- */
-class cuda_error
+template <typename T>
+class cuda_symbol : public cuda_base
 {
-public:
-  /* CUDA error */
-  const cudaError_t errno;
+protected:
+  const char *symbol;
 
-  cuda_error(cudaError_t _errno): errno(_errno)
+public:
+  cuda_symbol(T *symbol) : symbol(reinterpret_cast<const char *>(symbol))
   {
   }
 
-  /*
-   * returns a message string for the CUDA error
-   */
-  const char* what() const throw()
+  cuda_symbol& operator=(const T& value)
   {
-    return cudaGetErrorString(errno);
+    CUDA_CALL(cudaMemcpyToSymbol(symbol, &value, sizeof(T), 0, cudaMemcpyHostToDevice));
+    return *this;
+  }
+
+  cuda_symbol& operator=(const cuda_array<T>& array)
+  {
+    CUDA_CALL(cudaMemcpyToSymbol(symbol, array.dev_ptr, array.n * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+    return *this;
   }
 };
 
 
-#endif /* ! __CUDA_ERROR_H__ */
+#endif /* ! __CUDA_SYMBOL_H__ */

@@ -23,10 +23,14 @@
 #ifndef __CUDA_ASYNC_H__
 #define __CUDA_ASYNC_H__
 
-#include <cuda_runtime.h>
+#include "cuda_base.h"
 
 /* requires CUDA runtime version >= 1.1 */
 #if (CUDART_VERSION >= 1010)
+#define CUDA_ASYNC_API
+#endif
+
+#ifdef CUDA_ASYNC_API
 
 #include "cuda_error.h"
 
@@ -34,7 +38,7 @@
 /*
  * CUDA stream wrapper class
  */
-class cuda_stream
+class cuda_stream : public cuda_base
 {
   friend class cuda_event;
 
@@ -47,7 +51,7 @@ public:
    */
   cuda_stream()
   {
-    CUDA_CHECK(cudaStreamCreate(&_stream));
+    CUDA_CALL(cudaStreamCreate(&_stream));
   }
 
   /*
@@ -55,7 +59,7 @@ public:
    */
   ~cuda_stream()
   {
-    CUDA_CHECK(cudaStreamDestroy(_stream));
+    CUDA_CALL(cudaStreamDestroy(_stream));
   }
 
   /*
@@ -63,7 +67,7 @@ public:
    */
   void synchronize()
   {
-    CUDA_CHECK(cudaStreamSynchronize(_stream));
+    CUDA_CALL(cudaStreamSynchronize(_stream));
   }
 
   /*
@@ -80,19 +84,13 @@ public:
       return false;
     CUDA_ERROR(err);
   }
-
-private:
-  /* disallow copy */
-  cuda_stream(const cuda_stream&);
-  /* disallow assignment operator */
-  void operator=(const cuda_stream&);
 };
 
 
 /*
  * CUDA event wrapper class
  */
-class cuda_event
+class cuda_event : public cuda_base
 {
 protected:
   cudaEvent_t _event;
@@ -103,7 +101,7 @@ public:
    */
   cuda_event()
   {
-    CUDA_CHECK(cudaEventCreate(&_event));
+    CUDA_CALL(cudaEventCreate(&_event));
   }
 
   /*
@@ -111,7 +109,7 @@ public:
    */
   ~cuda_event()
   {
-    CUDA_CHECK(cudaEventDestroy(_event));
+    CUDA_CALL(cudaEventDestroy(_event));
   }
 
   /*
@@ -121,7 +119,7 @@ public:
    */
   void record()
   {
-    CUDA_CHECK(cudaEventRecord(_event, 0));
+    CUDA_CALL(cudaEventRecord(_event, 0));
   }
 
   /*
@@ -131,7 +129,7 @@ public:
    */
   void record(const cuda_stream& stream)
   {
-    CUDA_CHECK(cudaEventRecord(_event, stream._stream));
+    CUDA_CALL(cudaEventRecord(_event, stream._stream));
   }
 
   /*
@@ -139,7 +137,7 @@ public:
    */
   void synchronize()
   {
-    CUDA_CHECK(cudaEventSynchronize(_event));
+    CUDA_CALL(cudaEventSynchronize(_event));
   }
 
   /*
@@ -165,20 +163,12 @@ public:
   float operator-(const cuda_event &start)
   {
     float time;
-    CUDA_CHECK(cudaEventElapsedTime(&time, start._event, _event));
+    CUDA_CALL(cudaEventElapsedTime(&time, start._event, _event));
     return time;
   }
-
-private:
-  /* disallow copy */
-  cuda_event(const cuda_event&);
-  /* disallow assignment operator */
-  void operator=(const cuda_event&);
 };
 
 
-#else
-#warning Asynchronous CUDA runtime API requires CUDA runtime version >= 1.1
-#endif
+#endif /* CUDA_ASYNC_API */
 
 #endif /* ! __CUDA_ASYNC_H__ */

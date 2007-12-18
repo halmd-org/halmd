@@ -1,4 +1,4 @@
-/* cuda_error.h
+/* cuda.h
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,42 +16,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * CUDA runtime error checking
- */
-
-#ifndef __CUDA_ERROR_H__
-#define __CUDA_ERROR_H__
+#ifndef __CUDA_DEVICE_H__
+#define __CUDA_DEVICE_H__
 
 #include "cuda_base.h"
-
-
-#define CUDA_ERROR(err) throw cuda_error(err)
-
-#define CUDA_CALL(x) if (cudaSuccess != x) CUDA_ERROR(cudaGetLastError())
+#include "cuda_error.h"
 
 
 /*
- * CUDA error handling
+ * CUDA device management
  */
-class cuda_error
+class cuda_device
 {
 public:
-  /* CUDA error */
-  const cudaError_t errno;
-
-  cuda_error(cudaError_t _errno): errno(_errno)
+  /*
+   * returns number of devices available for execution
+   */
+  static int count()
   {
+    int count;
+    CUDA_CALL(cudaGetDeviceCount(&count));
+    return count;
   }
 
   /*
-   * returns a message string for the CUDA error
+   * set device on which the active host thread executes device code
    */
-  const char* what() const throw()
+  static void set(int dev)
   {
-    return cudaGetErrorString(errno);
+    CUDA_CALL(cudaSetDevice(dev));
+  }
+
+  /*
+   * get device on which the active host thread executes device code
+   */
+  static int get()
+  {
+    int dev;
+    CUDA_CALL(cudaGetDevice(&dev));
+    return dev;
   }
 };
 
 
-#endif /* ! __CUDA_ERROR_H__ */
+#endif /* ! __CUDA_DEVICE_H__ */

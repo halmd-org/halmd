@@ -1,4 +1,4 @@
-/* cuda_error.h
+/* cuda_thread.h
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,42 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * CUDA runtime error checking
- */
-
-#ifndef __CUDA_ERROR_H__
-#define __CUDA_ERROR_H__
+#ifndef __CUDA_THREAD_H__
+#define __CUDA_THREAD_H__
 
 #include "cuda_base.h"
-
-
-#define CUDA_ERROR(err) throw cuda_error(err)
-
-#define CUDA_CALL(x) if (cudaSuccess != x) CUDA_ERROR(cudaGetLastError())
+#include "cuda_error.h"
 
 
 /*
- * CUDA error handling
+ * CUDA thread management
  */
-class cuda_error
+class cuda_thread
 {
 public:
-  /* CUDA error */
-  const cudaError_t errno;
-
-  cuda_error(cudaError_t _errno): errno(_errno)
+  /*
+   * blocks until the device has completed all preceding requested tasks
+   */
+  static void synchronize()
   {
+    CUDA_CALL(cudaThreadSynchronize());
   }
 
   /*
-   * returns a message string for the CUDA error
+   * cleans up all runtime-related resources associated with calling thread
    */
-  const char* what() const throw()
+  static void exit()
   {
-    return cudaGetErrorString(errno);
+    CUDA_CALL(cudaThreadExit());
   }
 };
 
 
-#endif /* ! __CUDA_ERROR_H__ */
+#endif /* ! __CUDA_THREAD_H__ */
