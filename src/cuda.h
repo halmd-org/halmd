@@ -1,4 +1,4 @@
-/* cuda_error.h
+/* cuda.h
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -17,41 +17,27 @@
  */
 
 /*
- * CUDA runtime error checking
+ * CUDA runtime API wrapper classes
  */
 
-#ifndef __CUDA_ERROR_H__
-#define __CUDA_ERROR_H__
+#ifndef __CUDA_H__
+#define __CUDA_H__
+
+
+#include <cuda_runtime.h>
 
 #include "cuda_base.h"
+#include "cuda_error.h"
+
+#include "cuda_array.h"
+#include "cuda_host_array.h"
+#include "cuda_symbol.h"
+
+#include "cuda_async.h"
+
+#include "cuda_device.h"
+#include "cuda_kernel.h"
+#include "cuda_thread.h"
 
 
-#define CUDA_ERROR(err) throw cuda_error(err)
-
-#define CUDA_CALL(x) if (cudaSuccess != x) CUDA_ERROR(cudaGetLastError())
-
-
-/*
- * CUDA error handling
- */
-class cuda_error
-{
-public:
-  /* CUDA error */
-  const cudaError_t errno;
-
-  cuda_error(cudaError_t _errno): errno(_errno)
-  {
-  }
-
-  /*
-   * returns a message string for the CUDA error
-   */
-  const char* what() const throw()
-  {
-    return cudaGetErrorString(errno);
-  }
-};
-
-
-#endif /* ! __CUDA_ERROR_H__ */
+#endif /* ! __CUDA_H__ */
