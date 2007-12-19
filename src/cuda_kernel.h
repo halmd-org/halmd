@@ -19,7 +19,7 @@
 #ifndef __CUDA_KERNEL_H__
 #define __CUDA_KERNEL_H__
 
-#include <vector>
+#include "union.h"
 
 #include "cuda_base.h"
 #include "cuda_error.h"
@@ -60,60 +60,63 @@ public:
 };
 
 
-#ifndef CUDA_KERNEL_MIN_ARG_SIZE
-#define CUDA_KERNEL_MIN_ARG_SIZE 128
-#endif
-
-
 /*
  * CUDA execution control
  */
-class cuda_kernel : public cuda_base
+class cuda_kernel
 {
-protected:
-  /* function to execute on the device */
-  const char *entry;
-  /* argument stack */
-  std::vector<char> arg_stack;
-
 public:
-  template <typename T>
-  cuda_kernel(T *entry) : entry(reinterpret_cast<const char *>(entry))
-  {
-    arg_stack.reserve(CUDA_KERNEL_MIN_ARG_SIZE);
-  }
-
   /*
-   * push arbitrary argument onto argument stack
+   * configure execution parameters
    */
-  template <typename T>
-  void setup_argument(T arg)
-  {
-    int offset = arg_stack.size();
-    arg_stack.resize(offset + sizeof(T));
-    memcpy(&arg_stack[offset], &arg, sizeof(T));
-  }
-
-  /*
-   * push device memory pointer onto argument stack
-   */
-  template <typename T>
-  void setup_argument(const cuda_array<T>& arg)
-  {
-    setup_argument(arg.dev_ptr);
-  }
-
-  /*
-   * launch kernel with given execution parameters
-   */
-  void launch(const cuda_dim& dim, size_t shared_mem = 0)
+  static void configure(const cuda_dim& dim, size_t shared_mem = 0)
   {
     CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
-    CUDA_CALL(cudaSetupArgument(&arg_stack[0], arg_stack.size(), 0));
-    CUDA_CALL(cudaLaunch(entry));
+  }
 
-    /* clear argument stack for next launch */
-    arg_stack.clear();
+  /*
+   * push arbitrary arguments into argument passing area
+   */
+  template <typename X>
+  static void setup_argument(const X& x)
+  {
+    CUDA_CALL(cudaSetupArgument(&x, sizeof(X), 0));
+  }
+
+  template <typename X, typename Y>
+  static void setup_argument(const X& x, const Y& y)
+  {
+    union2<X, Y> args = { x, y };
+    CUDA_CALL(cudaSetupArgument(&x, sizeof(X), __offsetof(args, x)));
+    CUDA_CALL(cudaSetupArgument(&y, sizeof(Y), __offsetof(args, y)));
+  }
+
+  template <typename X, typename Y, typename Z>
+  static void setup_argument(const X& x, const Y& y, const Z& z)
+  {
+    union3<X, Y, Z> args = { x, y, z };
+    CUDA_CALL(cudaSetupArgument(&x, sizeof(X), __offsetof(args, x)));
+    CUDA_CALL(cudaSetupArgument(&y, sizeof(Y), __offsetof(args, y)));
+    CUDA_CALL(cudaSetupArgument(&z, sizeof(Z), __offsetof(args, z)));
+  }
+
+  template <typename X, typename Y, typename Z, typename W>
+  static void setup_argument(const X& x, const Y& y, const Z& z, const W& w)
+  {
+    union4<X, Y, Z, W> args = { x, y, z, w };
+    CUDA_CALL(cudaSetupArgument(&x, sizeof(X), __offsetof(args, x)));
+    CUDA_CALL(cudaSetupArgument(&y, sizeof(Y), __offsetof(args, y)));
+    CUDA_CALL(cudaSetupArgument(&z, sizeof(Z), __offsetof(args, z)));
+    CUDA_CALL(cudaSetupArgument(&w, sizeof(W), __offsetof(args, w)));
+  }
+
+  /*
+   * launch kernel
+   */
+  template <typename T>
+  static void launch(T *entry)
+  {
+    CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(entry)));
   }
 };
 

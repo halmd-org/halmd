@@ -38,7 +38,6 @@ class cuda_array : public cuda_base
 {
   friend class cuda_host_array<T>;
   friend class cuda_symbol<T>;
-  friend class cuda_kernel;
 
 protected:
   T *dev_ptr;
@@ -72,6 +71,16 @@ public:
   int dim() const
   {
     return n;
+  }
+
+  T *front()
+  {
+    return dev_ptr;
+  }
+
+  T *at(int i)
+  {
+    return (dev_ptr + i);
   }
 };
 
