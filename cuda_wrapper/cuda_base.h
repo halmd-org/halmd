@@ -29,10 +29,6 @@ public:
   {
   }
 
-  virtual ~cuda_base()
-  {
-  }
-
 private:
   /* disable default copy constructor */
   cuda_base(const cuda_base&);

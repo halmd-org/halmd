@@ -47,7 +47,8 @@ public:
 
   cuda_symbol& operator=(const cuda_array<T>& array)
   {
-    CUDA_CALL(cudaMemcpyToSymbol(symbol, array.dev_ptr, array.n * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+    assert(array.n == 1);
+    CUDA_CALL(cudaMemcpyToSymbol(symbol, array.dev_ptr, sizeof(T), 0, cudaMemcpyDeviceToDevice));
     return *this;
   }
 };
