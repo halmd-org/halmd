@@ -19,11 +19,21 @@
 #ifndef __CUDA_KERNEL_H__
 #define __CUDA_KERNEL_H__
 
-#include "union.h"
+#include <boost/preprocessor/repetition/enum_params.hpp>
+#include <boost/preprocessor/repetition/enum_binary_params.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
+#include <boost/preprocessor/repetition/repeat_from_to.hpp>
+#include <boost/preprocessor/inc.hpp>
 
 #include "cuda_base.h"
 #include "cuda_error.h"
 #include "cuda_array.h"
+
+
+/* maximum number of arguments passed to device functions */
+#ifndef CUDA_KERNEL_MAX_ARGS
+#define CUDA_KERNEL_MAX_ARGS 10
+#endif
 
 
 /*
@@ -77,38 +87,28 @@ public:
   /*
    * push arbitrary arguments into argument passing area
    */
-  template <typename X>
-  static void setup_argument(const X& x)
-  {
-    CUDA_CALL(cudaSetupArgument(&x, sizeof(X), 0));
+
+#define DECL_STRUCT_MEMBER(z, n, text) \
+  T##n x##n;
+
+#define DECL_SETUP_ARGUMENT(z, n, text) \
+  CUDA_CALL(cudaSetupArgument(&x##n, sizeof(T##n), offsetof(T_args, x##n)));
+
+#define TEMPLATE(z, n, text) \
+  template <BOOST_PP_ENUM_PARAMS_Z(z, n, typename T)> \
+  static void setup_argument(BOOST_PP_ENUM_BINARY_PARAMS_Z(z, n, const T, &x)) \
+  { \
+    typedef struct { \
+      BOOST_PP_REPEAT_##z(n, DECL_STRUCT_MEMBER, ) \
+    } T_args; \
+    BOOST_PP_REPEAT_##z(n, DECL_SETUP_ARGUMENT, ) \
   }
 
-  template <typename X, typename Y>
-  static void setup_argument(const X& x, const Y& y)
-  {
-    union2<X, Y> args = { x, y };
-    CUDA_CALL(cudaSetupArgument(&x, sizeof(X), __offsetof(args, x)));
-    CUDA_CALL(cudaSetupArgument(&y, sizeof(Y), __offsetof(args, y)));
-  }
+  BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(CUDA_KERNEL_MAX_ARGS), TEMPLATE, )
 
-  template <typename X, typename Y, typename Z>
-  static void setup_argument(const X& x, const Y& y, const Z& z)
-  {
-    union3<X, Y, Z> args = { x, y, z };
-    CUDA_CALL(cudaSetupArgument(&x, sizeof(X), __offsetof(args, x)));
-    CUDA_CALL(cudaSetupArgument(&y, sizeof(Y), __offsetof(args, y)));
-    CUDA_CALL(cudaSetupArgument(&z, sizeof(Z), __offsetof(args, z)));
-  }
-
-  template <typename X, typename Y, typename Z, typename W>
-  static void setup_argument(const X& x, const Y& y, const Z& z, const W& w)
-  {
-    union4<X, Y, Z, W> args = { x, y, z, w };
-    CUDA_CALL(cudaSetupArgument(&x, sizeof(X), __offsetof(args, x)));
-    CUDA_CALL(cudaSetupArgument(&y, sizeof(Y), __offsetof(args, y)));
-    CUDA_CALL(cudaSetupArgument(&z, sizeof(Z), __offsetof(args, z)));
-    CUDA_CALL(cudaSetupArgument(&w, sizeof(W), __offsetof(args, w)));
-  }
+#undef DECL_STRUCT_MEMBER
+#undef DECL_SETUP_ARGUMENT
+#undef TEMPLATE
 
   /*
    * launch kernel
