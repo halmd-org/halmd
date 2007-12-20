@@ -1,4 +1,4 @@
-/* cuda.h
+/* cuda_wrapper.h
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -20,11 +20,11 @@
  * CUDA runtime API wrapper classes
  */
 
-#ifndef __CUDA_H__
-#define __CUDA_H__
+#ifndef __CUDA_WRAPPER_H__
+#define __CUDA_WRAPPER_H__
 
 
-#include <cuda_runtime.h>
+#include <cuda/cuda_runtime.h>
 
 #include "cuda_base.h"
 #include "cuda_error.h"
@@ -40,4 +40,4 @@
 #include "cuda_thread.h"
 
 
-#endif /* ! __CUDA_H__ */
+#endif /* ! __CUDA_WRAPPER_H__ */
