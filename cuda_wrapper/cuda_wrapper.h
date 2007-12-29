@@ -29,6 +29,7 @@
 #include "cuda_base.h"
 #include "cuda_error.h"
 
+#include "cuda_mem.h"
 #include "cuda_array.h"
 #include "cuda_host_array.h"
 #include "cuda_symbol.h"
