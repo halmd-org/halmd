@@ -1,4 +1,4 @@
-/* cuda.h
+/* cuda_device.h
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -21,6 +21,10 @@
 
 #include "cuda_base.h"
 #include "cuda_error.h"
+
+#ifndef __CUDACC__
+
+typedef cudaDeviceProp cuda_device_prop;
 
 
 /*
@@ -56,7 +60,18 @@ public:
     CUDA_CALL(cudaGetDevice(&dev));
     return dev;
   }
+
+  /*
+   * returns properties of given device
+   */
+  static cuda_device_prop properties(int dev)
+  {
+    cuda_device_prop prop;
+    CUDA_CALL(cudaGetDeviceProperties(&prop, dev));
+    return prop;
+  }
 };
 
+#endif /* ! __CUDACC__ */
 
 #endif /* ! __CUDA_DEVICE_H__ */
