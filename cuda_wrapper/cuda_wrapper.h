@@ -37,8 +37,9 @@
 #include "cuda_async.h"
 
 #include "cuda_device.h"
-#include "cuda_kernel.h"
+#include "cuda_exec.h"
 #include "cuda_thread.h"
 
+#include "cuda_kernel.h"
 
 #endif /* ! __CUDA_WRAPPER_H__ */
