@@ -19,15 +19,128 @@
 #ifndef __CUDA_KERNEL_H__
 #define __CUDA_KERNEL_H__
 
-#include <boost/preprocessor/iteration/iterate.hpp>
+#include "cuda_base.h"
+#include "cuda_error.h"
+#include "cuda_exec.h"
 
-/* maximum number of arguments passed to device functions */
-#ifndef CUDA_KERNEL_MAX_ARGS
-#define CUDA_KERNEL_MAX_ARGS 10
-#endif
 
-#define BOOST_PP_FILENAME_1 "cuda_kernel_template.h"
-#define BOOST_PP_ITERATION_LIMITS (1, CUDA_KERNEL_MAX_ARGS)
-#include BOOST_PP_ITERATE()
+template <typename T>
+struct cuda_kernel;
+
+
+template <typename T0>
+class cuda_kernel<void (T0)>
+{
+protected:
+    typedef void T (T0);
+    T *entry;
+
+public:
+    cuda_kernel(T *entry) : entry(entry) {}
+
+#ifndef __CUDACC__
+    void operator()(T0 x0)
+    {
+	size_t offset = 0;
+	cuda_exec::setup_argument(x0, &offset);
+	cuda_exec::launch(entry);
+    }
+#endif /* ! __CUDACC__ */
+};
+
+
+template <typename T0, typename T1>
+class cuda_kernel<void (T0, T1)>
+{
+protected:
+    typedef void T (T0, T1);
+    T *entry;
+
+public:
+    cuda_kernel(T *entry) : entry(entry) {}
+
+#ifndef __CUDACC__
+    void operator()(T0 x0, T1 x1)
+    {
+	size_t offset = 0;
+	cuda_exec::setup_argument(x0, &offset);
+	cuda_exec::setup_argument(x1, &offset);
+	cuda_exec::launch(entry);
+    }
+#endif /* ! __CUDACC__ */
+};
+
+
+template <typename T0, typename T1, typename T2>
+class cuda_kernel<void (T0, T1, T2)>
+{
+protected:
+    typedef void T (T0, T1, T2);
+    T *entry;
+
+public:
+    cuda_kernel(T *entry) : entry(entry) {}
+
+#ifndef __CUDACC__
+    void operator()(T0 x0, T1 x1, T2 x2)
+    {
+	size_t offset = 0;
+	cuda_exec::setup_argument(x0, &offset);
+	cuda_exec::setup_argument(x1, &offset);
+	cuda_exec::setup_argument(x2, &offset);
+	cuda_exec::launch(entry);
+    }
+#endif /* ! __CUDACC__ */
+};
+
+
+template <typename T0, typename T1, typename T2, typename T3>
+class cuda_kernel<void (T0, T1, T2, T3)>
+{
+protected:
+    typedef void T (T0, T1, T2, T3);
+    T *entry;
+
+public:
+    cuda_kernel(T *entry) : entry(entry) {}
+
+#ifndef __CUDACC__
+    void operator()(T0 x0, T1 x1, T2 x2, T3 x3)
+    {
+	size_t offset = 0;
+	cuda_exec::setup_argument(x0, &offset);
+	cuda_exec::setup_argument(x1, &offset);
+	cuda_exec::setup_argument(x2, &offset);
+	cuda_exec::setup_argument(x3, &offset);
+	cuda_exec::launch(entry);
+    }
+#endif /* ! __CUDACC__ */
+};
+
+
+template <typename T0, typename T1, typename T2, typename T3, typename T4>
+class cuda_kernel<void (T0, T1, T2, T3, T4)>
+{
+protected:
+    typedef void T (T0, T1, T2, T3, T4);
+    T *entry;
+
+public:
+    cuda_kernel(T *entry) : entry(entry) {}
+
+#ifndef __CUDACC__
+    void operator()(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4)
+    {
+	size_t offset = 0;
+	cuda_exec::setup_argument(x0, &offset);
+	cuda_exec::setup_argument(x1, &offset);
+	cuda_exec::setup_argument(x2, &offset);
+	cuda_exec::setup_argument(x3, &offset);
+	cuda_exec::setup_argument(x4, &offset);
+	cuda_exec::launch(entry);
+    }
+#endif /* ! __CUDACC__ */
+};
+
 
 #endif /* ! __CUDA_KERNEL_H__ */
