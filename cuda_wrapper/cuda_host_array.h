@@ -23,8 +23,10 @@
 
 #include "cuda_base.h"
 #include "cuda_error.h"
+#include "cuda_mem.h"
 #include "cuda_array.h"
 
+#ifndef __CUDACC__
 
 template <typename T>
 class cuda_array;
@@ -37,30 +39,36 @@ class cuda_host_array : public cuda_base
 
 protected:
   T *host_ptr;
-  int n;
+  const int n;
 
 public:
   cuda_host_array(int n): n(n)
   {
-    CUDA_CALL(cudaMallocHost((void **) &host_ptr, n * sizeof(T)));
+    cuda_mem::malloc_host(&host_ptr, n);
+  }
+
+  cuda_host_array(int n, const T& value): n(n)
+  {
+    cuda_mem::malloc_host(&host_ptr, n);
+    *this = value;
   }
 
   ~cuda_host_array()
   {
-    CUDA_CALL(cudaFreeHost(host_ptr));
+    cuda_mem::free_host(host_ptr);
   }
 
   cuda_host_array<T>& operator=(const cuda_host_array<T>& array)
   {
     assert(array.n == n);
-    memcpy(host_ptr, array.host_ptr, n * sizeof(T));
+    cuda_mem::HtoH(host_ptr, array.host_ptr, n);
     return *this;
   }
 
   cuda_host_array<T>& operator=(const cuda_array<T>& array)
   {
     assert(array.n == n);
-    CUDA_CALL(cudaMemcpy(host_ptr, array.dev_ptr, n * sizeof(T), cudaMemcpyDeviceToHost));
+    cuda_mem::DtoH(host_ptr, array.dev_ptr, n);
     return *this;
   }
 
@@ -83,5 +91,6 @@ public:
   }
 };
 
+#endif /* ! __CUDACC__ */
 
 #endif /* __CUDA_HOST_ARRAY_H__ */
