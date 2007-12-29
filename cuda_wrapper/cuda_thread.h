@@ -22,6 +22,7 @@
 #include "cuda_base.h"
 #include "cuda_error.h"
 
+#ifndef __CUDACC__
 
 /*
  * CUDA thread management
@@ -46,5 +47,6 @@ public:
   }
 };
 
+#endif /* ! __CUDACC__ */
 
 #endif /* ! __CUDA_THREAD_H__ */
