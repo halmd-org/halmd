@@ -26,6 +26,8 @@
 #include "cuda_base.h"
 
 
+#ifndef __CUDACC__
+
 #define CUDA_ERROR(err) throw cuda_error(err)
 
 #define CUDA_CALL(x) if (cudaSuccess != x) CUDA_ERROR(cudaGetLastError())
@@ -53,5 +55,6 @@ public:
   }
 };
 
+#endif /* ! __CUDACC__ */
 
 #endif /* ! __CUDA_ERROR_H__ */

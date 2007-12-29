@@ -34,6 +34,7 @@
 
 #include "cuda_error.h"
 
+#ifndef __CUDACC__
 
 /*
  * CUDA stream wrapper class
@@ -168,6 +169,7 @@ public:
   }
 };
 
+#endif /* ! __CUDACC__ */
 
 #endif /* CUDA_ASYNC_API */
 
