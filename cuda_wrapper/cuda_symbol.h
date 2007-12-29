@@ -21,36 +21,52 @@
 
 #include "cuda_base.h"
 #include "cuda_error.h"
+#include "cuda_mem.h"
 #include "cuda_array.h"
+#include "cuda_host_array.h"
 
 
+#ifndef __CUDACC__
 template <typename T>
 class cuda_array;
+template <typename T>
+class cuda_host_array;
+#endif /* ! __CUDACC__ */
 
 
 template <typename T>
 class cuda_symbol : public cuda_base
 {
 protected:
-  const char *symbol;
+  const T &symbol;
+  const size_t n;
 
 public:
-  cuda_symbol(T *symbol) : symbol(reinterpret_cast<const char *>(symbol))
-  {
-  }
+  cuda_symbol(const T &symbol) : symbol(symbol), n(1) {}
+  /* FIXME allow passing a symbol array */
 
+#ifndef __CUDACC__
   cuda_symbol& operator=(const T& value)
   {
-    CUDA_CALL(cudaMemcpyToSymbol(symbol, &value, sizeof(T), 0, cudaMemcpyHostToDevice));
+    assert(n == 1);
+    cuda_mem::HtoS(symbol, &value, 1);
+    return *this;
+  }
+
+  cuda_symbol& operator=(const cuda_host_array<T>& array)
+  {
+    assert(n == array.n);
+    cuda_mem::HtoS(symbol, array.dev_ptr, n);
     return *this;
   }
 
   cuda_symbol& operator=(const cuda_array<T>& array)
   {
-    assert(array.n == 1);
-    CUDA_CALL(cudaMemcpyToSymbol(symbol, array.dev_ptr, sizeof(T), 0, cudaMemcpyDeviceToDevice));
+    assert(n == array.n);
+    cuda_mem::DtoS(symbol, array.dev_ptr, n);
     return *this;
   }
+#endif /* ! __CUDACC__ */
 };
 
 
