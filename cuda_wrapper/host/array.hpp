@@ -46,8 +46,8 @@ template <typename T>
 class array
 {
 protected:
-    T *ptr;
     size_t n;
+    T *ptr;
 
 public:
     array(size_t n): n(n)
