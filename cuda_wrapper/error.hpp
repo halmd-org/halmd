@@ -1,4 +1,4 @@
-/* cuda_base.h
+/* cuda_wrapper/error.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,27 +16,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CUDA_BASE_H__
-#define __CUDA_BASE_H__
+/*
+ * CUDA runtime error checking
+ */
 
-#include <cuda_runtime.h>
+#ifndef CUDA_ERROR_HPP
+#define CUDA_ERROR_HPP
+
+#include <cuda/cuda_runtime.h>
+
+#define CUDA_ERROR(err) throw cuda_error(err)
+
+#define CUDA_CALL(x) if (cudaSuccess != x) CUDA_ERROR(cudaGetLastError())
 
 
-class cuda_base
+/*
+ * CUDA error handling
+ */
+class cuda_error
 {
 public:
-  cuda_base()
-  {
-  }
+    /* CUDA error */
+    const cudaError_t errno;
 
-private:
-  /* disable default copy constructor */
-  cuda_base(const cuda_base&);
-  /* disable default assignment operator */
-  void operator=(const cuda_base&);
-  /* disable default address-of operator */
-  void *operator&();
+    cuda_error(cudaError_t _errno): errno(_errno)
+    {
+    }
+
+    /*
+     * returns a message string for the CUDA error
+     */
+    const char* what() const throw()
+    {
+	return cudaGetErrorString(errno);
+    }
 };
 
-
-#endif /* ! __CUDA_BASE_H__ */
+#endif /* ! CUDA_ERROR_HPP */

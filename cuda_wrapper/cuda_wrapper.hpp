@@ -1,4 +1,4 @@
-/* cuda_wrapper.h
+/* cuda_wrapper/cuda_wrapper.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -20,26 +20,21 @@
  * CUDA runtime API wrapper classes
  */
 
-#ifndef __CUDA_WRAPPER_H__
-#define __CUDA_WRAPPER_H__
+#ifndef CUDA_WRAPPER_HPP
+#define CUDA_WRAPPER_HPP
 
+#ifndef __CUDACC__
+#include <cuda_wrapper/error.hpp>
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_wrapper/async.hpp>
+#include <cuda_wrapper/device.hpp>
+#include <cuda_wrapper/thread.hpp>
 
-#include "cuda_base.h"
-#include "cuda_error.h"
+#include <cuda_wrapper/device/array.hpp>
+#include <cuda_wrapper/host/array.hpp>
+#endif /* ! __CUDACC__ */
 
-#include "cuda_mem.h"
-#include "cuda_array.h"
-#include "cuda_host_array.h"
-#include "cuda_symbol.h"
+#include <cuda_wrapper/device/function.hpp>
+#include <cuda_wrapper/device/symbol.hpp>
 
-#include "cuda_async.h"
-
-#include "cuda_device.h"
-#include "cuda_exec.h"
-#include "cuda_thread.h"
-
-#include "cuda_kernel.h"
-
-#endif /* ! __CUDA_WRAPPER_H__ */
+#endif /* ! CUDA_WRAPPER_HPP */

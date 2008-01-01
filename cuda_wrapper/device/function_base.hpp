@@ -1,4 +1,4 @@
-/* cuda_exec.h
+/* cuda_wrapper/device/function_base.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,13 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CUDA_EXEC_H__
-#define __CUDA_EXEC_H__
+/*
+ * CUDA execution control
+ */
 
-#include "cuda_base.h"
-#include "cuda_error.h"
+#ifndef CUDA_DEVICE_FUNCTION_BASE_HPP
+#define CUDA_DEVICE_FUNCTION_BASE_HPP
 
+#include <cuda/cuda_runtime.h>
 #ifndef __CUDACC__
+#include <cuda_wrapper/error.hpp>
+#endif
 
 /*
  * CUDA execution configuration
@@ -30,40 +34,43 @@
 class cuda_dim
 {
 public:
-  /* grid dimensions */
-  const dim3 grid;
-  /* block dimensions */
-  const dim3 block;
-  /* FIXME store useful numbers (no. of threads per grid/block) */
-
-  cuda_dim(dim3 grid, dim3 block) : grid(grid), block(block)
-  {
+    /* grid dimensions */
+    const dim3 grid;
+    /* block dimensions */
+    const dim3 block;
     /* FIXME store useful numbers (no. of threads per grid/block) */
-  }
 
-  int threads() const
-  {
-    return grid.y * grid.x * block.z * block.y * block.x;
-  }
+    cuda_dim(dim3 grid, dim3 block) : grid(grid), block(block)
+    {
+	/* FIXME store useful numbers (no. of threads per grid/block) */
+    }
 
-  int blocks_per_grid() const
-  {
-    return grid.y * grid.x;
-  }
+    int threads() const
+    {
+	return grid.y * grid.x * block.z * block.y * block.x;
+    }
 
-  int threads_per_block() const
-  {
-    return block.z * block.y * block.x;
-  }
+    int blocks_per_grid() const
+    {
+	return grid.y * grid.x;
+    }
+
+    int threads_per_block() const
+    {
+	return block.z * block.y * block.x;
+    }
 };
 
-
-/*
- * CUDA execution control
- */
-
-struct cuda_exec
+namespace cuda
 {
+
+namespace device
+{
+
+class function_base
+{
+#ifndef __CUDACC__
+public:
     /*
      * configure execution parameters
      */
@@ -72,6 +79,7 @@ struct cuda_exec
 	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
     }
 
+protected:
     /*
      * push arbitrary argument into argument passing area
      */
@@ -97,8 +105,11 @@ struct cuda_exec
     {
 	CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(entry)));
     }
+#endif /* ! __CUDACC__ */
 };
 
-#endif /* ! __CUDACC__ */
+}
 
-#endif /* ! __CUDA_EXEC_H__ */
+}
+
+#endif /* ! CUDA_DEVICE_FUNCTION_BASE_HPP */
