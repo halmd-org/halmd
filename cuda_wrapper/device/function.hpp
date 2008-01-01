@@ -1,4 +1,4 @@
-/* cuda_kernel.h
+/* cuda_wrapper/device/function.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,131 +16,137 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CUDA_KERNEL_H__
-#define __CUDA_KERNEL_H__
+#ifndef CUDA_DEVICE_FUNCTION_HPP
+#define CUDA_DEVICE_FUNCTION_HPP
 
-#include "cuda_base.h"
-#include "cuda_error.h"
-#include "cuda_exec.h"
+#include <cuda_wrapper/device/function_base.hpp>
 
+namespace cuda
+{
+
+namespace device
+{
 
 template <typename T>
-struct cuda_kernel;
+class function;
 
 
 template <typename T0>
-class cuda_kernel<void (T0)>
+class function<void (T0)> : public function_base
 {
 protected:
     typedef void T (T0);
     T *entry;
 
 public:
-    cuda_kernel(T *entry) : entry(entry) {}
+    function(T *entry) : entry(entry) {}
 
 #ifndef __CUDACC__
     void operator()(T0 x0)
     {
 	size_t offset = 0;
-	cuda_exec::setup_argument(x0, &offset);
-	cuda_exec::launch(entry);
+	setup_argument(x0, &offset);
+	launch(entry);
     }
 #endif /* ! __CUDACC__ */
 };
 
 
 template <typename T0, typename T1>
-class cuda_kernel<void (T0, T1)>
+class function<void (T0, T1)> : public function_base
 {
 protected:
     typedef void T (T0, T1);
     T *entry;
 
 public:
-    cuda_kernel(T *entry) : entry(entry) {}
+    function(T *entry) : entry(entry) {}
 
 #ifndef __CUDACC__
     void operator()(T0 x0, T1 x1)
     {
 	size_t offset = 0;
-	cuda_exec::setup_argument(x0, &offset);
-	cuda_exec::setup_argument(x1, &offset);
-	cuda_exec::launch(entry);
+	setup_argument(x0, &offset);
+	setup_argument(x1, &offset);
+	launch(entry);
     }
 #endif /* ! __CUDACC__ */
 };
 
 
 template <typename T0, typename T1, typename T2>
-class cuda_kernel<void (T0, T1, T2)>
+class function<void (T0, T1, T2)> : public function_base
 {
 protected:
     typedef void T (T0, T1, T2);
     T *entry;
 
 public:
-    cuda_kernel(T *entry) : entry(entry) {}
+    function(T *entry) : entry(entry) {}
 
 #ifndef __CUDACC__
     void operator()(T0 x0, T1 x1, T2 x2)
     {
 	size_t offset = 0;
-	cuda_exec::setup_argument(x0, &offset);
-	cuda_exec::setup_argument(x1, &offset);
-	cuda_exec::setup_argument(x2, &offset);
-	cuda_exec::launch(entry);
+	setup_argument(x0, &offset);
+	setup_argument(x1, &offset);
+	setup_argument(x2, &offset);
+	launch(entry);
     }
 #endif /* ! __CUDACC__ */
 };
 
 
 template <typename T0, typename T1, typename T2, typename T3>
-class cuda_kernel<void (T0, T1, T2, T3)>
+class function<void (T0, T1, T2, T3)> : public function_base
 {
 protected:
     typedef void T (T0, T1, T2, T3);
     T *entry;
 
 public:
-    cuda_kernel(T *entry) : entry(entry) {}
+    function(T *entry) : entry(entry) {}
 
 #ifndef __CUDACC__
     void operator()(T0 x0, T1 x1, T2 x2, T3 x3)
     {
 	size_t offset = 0;
-	cuda_exec::setup_argument(x0, &offset);
-	cuda_exec::setup_argument(x1, &offset);
-	cuda_exec::setup_argument(x2, &offset);
-	cuda_exec::setup_argument(x3, &offset);
-	cuda_exec::launch(entry);
+	setup_argument(x0, &offset);
+	setup_argument(x1, &offset);
+	setup_argument(x2, &offset);
+	setup_argument(x3, &offset);
+	launch(entry);
     }
 #endif /* ! __CUDACC__ */
 };
 
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4>
-class cuda_kernel<void (T0, T1, T2, T3, T4)>
+class function<void (T0, T1, T2, T3, T4)> : public function_base
 {
 protected:
     typedef void T (T0, T1, T2, T3, T4);
     T *entry;
 
 public:
-    cuda_kernel(T *entry) : entry(entry) {}
+    function(T *entry) : entry(entry) {}
 
 #ifndef __CUDACC__
     void operator()(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4)
     {
 	size_t offset = 0;
-	cuda_exec::setup_argument(x0, &offset);
-	cuda_exec::setup_argument(x1, &offset);
-	cuda_exec::setup_argument(x2, &offset);
-	cuda_exec::setup_argument(x3, &offset);
-	cuda_exec::setup_argument(x4, &offset);
-	cuda_exec::launch(entry);
+	setup_argument(x0, &offset);
+	setup_argument(x1, &offset);
+	setup_argument(x2, &offset);
+	setup_argument(x3, &offset);
+	setup_argument(x4, &offset);
+	launch(entry);
     }
 #endif /* ! __CUDACC__ */
 };
 
+}
 
-#endif /* ! __CUDA_KERNEL_H__ */
+}
+
+#endif /* ! CUDA_DEVICE_FUNCTION_HPP */
