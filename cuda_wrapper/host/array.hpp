@@ -63,7 +63,7 @@ public:
 	if (this != &src) {
 	    array<T> dst(src.dim());
 	    dst = src;
-	    swap(dst);
+	    swap(*this, dst);
 	}
     }
 
@@ -71,14 +71,14 @@ public:
     {
 	array<T> dst(src.dim());
 	dst = src;
-	swap(dst);
+	swap(*this, dst);
     }
 
     array(const device::symbol<T>& src): n(0), ptr(NULL)
     {
 	array<T> dst(src.dim());
 	dst = src;
-	swap(dst);
+	swap(*this, dst);
     }
 
     ~array()
@@ -129,10 +129,10 @@ public:
 	return ptr[i];
     }
 
-    void swap(array<T>& array)
+    static void swap(array<T>& a, array<T>& b)
     {
-	std::swap(n, array.n);
-	std::swap(ptr, array.ptr);
+	std::swap(a.n, b.n);
+	std::swap(a.ptr, b.ptr);
     }
 
     size_t dim() const
