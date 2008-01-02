@@ -25,21 +25,31 @@
 
 #include <cuda/cuda_runtime.h>
 
-#define CUDA_ERROR(err) throw cuda_error(err)
 
-#define CUDA_CALL(x) if (cudaSuccess != x) CUDA_ERROR(cudaGetLastError())
+#define CUDA_ERROR(err) throw cuda::error(err)
 
+#define CUDA_CALL(x)							\
+    do {								\
+	cudaError_t err;						\
+	if (cudaSuccess != (err = x)) {					\
+	    CUDA_ERROR(err);						\
+	}								\
+    } while(0)
+
+
+namespace cuda
+{
 
 /*
  * CUDA error handling
  */
-class cuda_error
+class error
 {
 public:
     /* CUDA error */
-    const cudaError_t errno;
+    const cudaError_t err;
 
-    cuda_error(cudaError_t _errno): errno(_errno)
+    error(cudaError_t err): err(err)
     {
     }
 
@@ -48,8 +58,10 @@ public:
      */
     const char* what() const throw()
     {
-	return cudaGetErrorString(errno);
+	return cudaGetErrorString(err);
     }
 };
+
+}
 
 #endif /* ! CUDA_ERROR_HPP */
