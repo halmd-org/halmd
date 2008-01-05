@@ -23,7 +23,7 @@
 #ifndef CUDA_THREAD_HPP
 #define CUDA_THREAD_HPP
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #include <cuda_wrapper/error.hpp>
 
 namespace cuda

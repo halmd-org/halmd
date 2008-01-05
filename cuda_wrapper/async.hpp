@@ -30,7 +30,7 @@
 
 #ifdef CUDA_ASYNC_API
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #include <cuda_wrapper/error.hpp>
 
 /*

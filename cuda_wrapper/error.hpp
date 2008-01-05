@@ -23,7 +23,7 @@
 #ifndef CUDA_ERROR_HPP
 #define CUDA_ERROR_HPP
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 
 
 #define CUDA_ERROR(err) throw cuda::error(err)
