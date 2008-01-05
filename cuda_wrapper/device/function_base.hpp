@@ -23,7 +23,7 @@
 #ifndef CUDA_DEVICE_FUNCTION_BASE_HPP
 #define CUDA_DEVICE_FUNCTION_BASE_HPP
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
 #endif

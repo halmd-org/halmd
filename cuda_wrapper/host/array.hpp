@@ -19,7 +19,7 @@
 #ifndef CUDA_HOST_ARRAY_HPP
 #define CUDA_HOST_ARRAY_HPP
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #include <algorithm>
 #include <assert.h>
 #include <cuda_wrapper/device/array.hpp>

@@ -19,7 +19,7 @@
 #ifndef CUDA_DEVICE_SYMBOL_HPP
 #define CUDA_DEVICE_SYMBOL_HPP
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #ifndef __CUDACC__
 #include <cuda_wrapper/device/array.hpp>
 #include <cuda_wrapper/host/array.hpp>

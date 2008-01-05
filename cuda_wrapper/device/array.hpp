@@ -19,7 +19,7 @@
 #ifndef CUDA_ARRAY_HPP
 #define CUDA_ARRAY_HPP
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #include <cuda_wrapper/host/array.hpp>
 #include <cuda_wrapper/device/symbol.hpp>
 #include <algorithm>
