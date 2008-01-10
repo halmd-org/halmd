@@ -20,6 +20,7 @@
 #define CUDA_ARRAY_HPP
 
 #include <cuda_runtime.h>
+#include <cuda_wrapper/device/allocator.hpp>
 #include <cuda_wrapper/host/array.hpp>
 #include <cuda_wrapper/device/symbol.hpp>
 #include <algorithm>
@@ -51,13 +52,7 @@ protected:
     T *ptr;
 
 public:
-    array(size_t n): n(n)
-    {
-	void *p;
-	// allocate linear memory on the device
-	CUDA_CALL(cudaMalloc(&p, n * sizeof(T)));
-	ptr = reinterpret_cast<T *>(p);
-    }
+    array(size_t n): n(n), ptr(allocator<T>().allocate(n)) { }
 
     array(const array<T>& src): n(0), ptr(NULL)
     {
@@ -85,8 +80,7 @@ public:
     ~array()
     {
 	if (ptr != NULL) {
-	    // free device memory
-	    CUDA_CALL(cudaFree(ptr));
+	    allocator<T>().deallocate(ptr, n);
 	}
     }
 
