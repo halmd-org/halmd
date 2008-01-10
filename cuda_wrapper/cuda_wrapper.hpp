@@ -31,6 +31,7 @@
 #include <cuda_wrapper/thread.hpp>
 
 #include <cuda_wrapper/device/allocator.hpp>
+#include <cuda_wrapper/host/allocator.hpp>
 #include <cuda_wrapper/device/array.hpp>
 #include <cuda_wrapper/host/array.hpp>
 #endif /* ! __CUDACC__ */

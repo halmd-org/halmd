@@ -22,6 +22,7 @@
 #include <cuda_runtime.h>
 #include <algorithm>
 #include <assert.h>
+#include <cuda_wrapper/host/allocator.hpp>
 #include <cuda_wrapper/device/array.hpp>
 #include <cuda_wrapper/device/symbol.hpp>
 
@@ -50,13 +51,7 @@ protected:
     T *ptr;
 
 public:
-    array(size_t n): n(n)
-    {
-	void *p;
-	// allocate page-locked host memory accessible to the device
-	CUDA_CALL(cudaMallocHost(&p, n * sizeof(T)));
-	ptr = reinterpret_cast<T *>(p);
-    }
+    array(size_t n): n(n), ptr(allocator<T>().allocate(n)) { }
 
     array(const array<T>& src): n(0), ptr(NULL)
     {
@@ -84,8 +79,7 @@ public:
     ~array()
     {
 	if (ptr != NULL) {
-	    // free page-locked host memory
-	    CUDA_CALL(cudaFreeHost(ptr));
+	    allocator<T>().deallocate(ptr, n);
 	}
     }
 
