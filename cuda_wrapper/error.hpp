@@ -24,6 +24,7 @@
 #define CUDA_ERROR_HPP
 
 #include <cuda_runtime.h>
+#include <exception>
 
 
 #define CUDA_ERROR(err) throw cuda::error(err)
@@ -43,7 +44,7 @@ namespace cuda
 /*
  * CUDA error handling
  */
-class error
+class error : public std::exception
 {
 public:
     /* CUDA error */
