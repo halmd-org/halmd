@@ -32,7 +32,7 @@ namespace cuda
 /*
  * blocks until the device has completed all preceding requested tasks
  */
-static void thread_synchronize()
+__inline__ void thread_synchronize()
 {
     CUDA_CALL(cudaThreadSynchronize());
 }
@@ -40,7 +40,7 @@ static void thread_synchronize()
 /*
  * cleans up all runtime-related resources associated with calling thread
  */
-static void thread_exit()
+__inline__ void thread_exit()
 {
     CUDA_CALL(cudaThreadExit());
 }
