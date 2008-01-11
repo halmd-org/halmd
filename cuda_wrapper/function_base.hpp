@@ -1,4 +1,4 @@
-/* cuda_wrapper/device/function_base.hpp
+/* cuda_wrapper/function_base.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -20,18 +20,21 @@
  * CUDA execution control
  */
 
-#ifndef CUDA_DEVICE_FUNCTION_BASE_HPP
-#define CUDA_DEVICE_FUNCTION_BASE_HPP
+#ifndef CUDA_FUNCTION_BASE_HPP
+#define CUDA_FUNCTION_BASE_HPP
 
 #include <cuda_runtime.h>
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
 #endif
 
+namespace cuda
+{
+
 /*
  * CUDA execution configuration
  */
-class cuda_dim
+class config
 {
 public:
     /* grid dimensions */
@@ -40,7 +43,7 @@ public:
     const dim3 block;
     /* FIXME store useful numbers (no. of threads per grid/block) */
 
-    cuda_dim(dim3 grid, dim3 block) : grid(grid), block(block)
+    config(dim3 grid, dim3 block) : grid(grid), block(block)
     {
 	/* FIXME store useful numbers (no. of threads per grid/block) */
     }
@@ -61,11 +64,6 @@ public:
     }
 };
 
-namespace cuda
-{
-
-namespace device
-{
 
 class function_base
 {
@@ -74,7 +72,7 @@ public:
     /*
      * configure execution parameters
      */
-    static void configure(const cuda_dim& dim, size_t shared_mem = 0)
+    static void configure(const config& dim, size_t shared_mem = 0)
     {
 	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
     }
@@ -110,6 +108,4 @@ protected:
 
 }
 
-}
-
-#endif /* ! CUDA_DEVICE_FUNCTION_BASE_HPP */
+#endif /* ! CUDA_FUNCTION_BASE_HPP */

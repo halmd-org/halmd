@@ -33,12 +33,15 @@
 #include <cuda_runtime.h>
 #include <cuda_wrapper/error.hpp>
 
+namespace cuda
+{
+
 /*
  * CUDA stream wrapper class
  */
-class cuda_stream
+class stream
 {
-    friend class cuda_event;
+    friend class event;
 
 protected:
     cudaStream_t _stream;
@@ -47,7 +50,7 @@ public:
     /*
      * creates a stream
      */
-    cuda_stream()
+    stream()
     {
 	CUDA_CALL(cudaStreamCreate(&_stream));
     }
@@ -55,7 +58,7 @@ public:
     /*
      * destroys the stream
      */
-    ~cuda_stream()
+    ~stream()
     {
 	CUDA_CALL(cudaStreamDestroy(_stream));
     }
@@ -85,16 +88,16 @@ public:
 
 private:
     // disable default copy constructor
-    cuda_stream(const cuda_stream&);
+    stream(const stream&);
     // disable default assignment operator
-    cuda_stream& operator=(const cuda_stream&);
+    stream& operator=(const stream&);
 };
 
 
 /*
  * CUDA event wrapper class
  */
-class cuda_event
+class event
 {
 protected:
     cudaEvent_t _event;
@@ -103,7 +106,7 @@ public:
     /*
      * creates an event
      */
-    cuda_event()
+    event()
     {
 	CUDA_CALL(cudaEventCreate(&_event));
     }
@@ -111,7 +114,7 @@ public:
     /*
      * destroys the event
      */
-    ~cuda_event()
+    ~event()
     {
 	CUDA_CALL(cudaEventDestroy(_event));
     }
@@ -131,7 +134,7 @@ public:
      *
      * after all preceding operations in the stream have been completed
      */
-    void record(const cuda_stream& stream)
+    void record(const stream& stream)
     {
 	CUDA_CALL(cudaEventRecord(_event, stream._stream));
     }
@@ -164,7 +167,7 @@ public:
      *
      * (in milliseconds with a resolution of around 0.5 microseconds)
      */
-    float operator-(const cuda_event &start)
+    float operator-(const event &start)
     {
 	float time;
 	CUDA_CALL(cudaEventElapsedTime(&time, start._event, _event));
@@ -173,10 +176,12 @@ public:
 
 private:
     // disable default copy constructor
-    cuda_event(const cuda_event&);
+    event(const event&);
     // disable default assignment operator
-    cuda_event& operator=(const cuda_event&);
+    event& operator=(const event&);
 };
+
+}
 
 #endif /* CUDA_ASYNC_API */
 

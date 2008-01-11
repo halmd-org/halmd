@@ -1,4 +1,4 @@
-/* cuda_wrapper/host/array.hpp
+/* cuda_wrapper/host/vector.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -23,85 +23,80 @@
 #include <algorithm>
 #include <assert.h>
 #include <cuda_wrapper/host/allocator.hpp>
-#include <cuda_wrapper/device/array.hpp>
-#include <cuda_wrapper/device/symbol.hpp>
+#include <cuda_wrapper/vector.hpp>
+#include <cuda_wrapper/symbol.hpp>
 
 namespace cuda
 {
 
-namespace device
-{
-
 template <typename T>
-class array;
+class vector;
 
 template <typename T>
 class symbol;
-
-}
 
 namespace host
 {
 
 template <typename T>
-class array
+class vector
 {
 protected:
     size_t n;
     T *ptr;
 
 public:
-    array(size_t n): n(n), ptr(allocator<T>().allocate(n)) { }
+    vector(size_t n): n(n), ptr(allocator<T>().allocate(n)) { }
 
-    array(const array<T>& src): n(0), ptr(NULL)
+    vector(const vector<T>& src): n(0), ptr(NULL)
     {
 	if (this != &src) {
-	    array<T> dst(src.dim());
+	    vector<T> dst(src.dim());
 	    dst = src;
 	    swap(*this, dst);
 	}
     }
 
-    array(const device::array<T>& src): n(0), ptr(NULL)
+    vector(const cuda::vector<T>& src): n(0), ptr(NULL)
     {
-	array<T> dst(src.dim());
+	vector<T> dst(src.dim());
 	dst = src;
 	swap(*this, dst);
     }
 
-    array(const device::symbol<T>& src): n(0), ptr(NULL)
+    vector(const cuda::symbol<T>& src): n(0), ptr(NULL)
     {
-	array<T> dst(src.dim());
+	vector<T> dst(src.dim());
 	dst = src;
 	swap(*this, dst);
     }
 
-    ~array()
+    ~vector()
     {
 	if (ptr != NULL) {
 	    allocator<T>().deallocate(ptr, n);
 	}
     }
 
-    array<T>& operator=(const array<T>& array)
+    vector<T>& operator=(const vector<T>& v)
     {
-	if (this != &array) {
-	    assert(array.dim() == n);
+	if (this != &v) {
+	    assert(v.dim() == n);
 	    // copy from host memory area to host memory area
-	    CUDA_CALL(cudaMemcpy(ptr, array.get_ptr(), n * sizeof(T), cudaMemcpyHostToHost));
+	    CUDA_CALL(cudaMemcpy(ptr, v.get_ptr(), n * sizeof(T), cudaMemcpyHostToHost));
 	}
 	return *this;
     }
 
-    array<T>& operator=(const device::array<T>& array)
+    vector<T>& operator=(const cuda::vector<T>& v)
     {
-	assert(array.dim() == n);
+	assert(v.dim() == n);
 	// copy from device memory area to host memory area
-	CUDA_CALL(cudaMemcpy(ptr, array.get_ptr(), n * sizeof(T), cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpy(ptr, v.get_ptr(), n * sizeof(T), cudaMemcpyDeviceToHost));
 	return *this;
     }
 
-    array<T>& operator=(const device::symbol<T>& symbol)
+    vector<T>& operator=(const cuda::symbol<T>& symbol)
     {
 	assert(symbol.dim() == n);
 	// copy from device symbol to host memory area
@@ -109,7 +104,7 @@ public:
 	return *this;
     }
 
-    array<T>& operator=(const T& value)
+    vector<T>& operator=(const T& value)
     {
 	for (size_t i = 0; i < n; i++) {
 	    ptr[i] = value;
@@ -123,7 +118,7 @@ public:
 	return ptr[i];
     }
 
-    static void swap(array<T>& a, array<T>& b)
+    static void swap(vector<T>& a, vector<T>& b)
     {
 	std::swap(a.n, b.n);
 	std::swap(a.ptr, b.ptr);
