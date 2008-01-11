@@ -29,21 +29,25 @@
 namespace cuda
 {
 
-/*
- * blocks until the device has completed all preceding requested tasks
- */
-__inline__ void thread_synchronize()
+class thread
 {
-    CUDA_CALL(cudaThreadSynchronize());
-}
+public:
+    /*
+     * blocks until the device has completed all preceding requested tasks
+     */
+    static void synchronize()
+    {
+	CUDA_CALL(cudaThreadSynchronize());
+    }
 
-/*
- * cleans up all runtime-related resources associated with calling thread
- */
-__inline__ void thread_exit()
-{
-    CUDA_CALL(cudaThreadExit());
-}
+    /*
+     * cleans up all runtime-related resources associated with calling thread
+     */
+    static void exit()
+    {
+	CUDA_CALL(cudaThreadExit());
+    }
+};
 
 }
 

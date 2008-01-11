@@ -1,4 +1,4 @@
-/* cuda_wrapper/device/function.hpp
+/* cuda_wrapper/function.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,15 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_DEVICE_FUNCTION_HPP
-#define CUDA_DEVICE_FUNCTION_HPP
+#ifndef CUDA_FUNCTION_HPP
+#define CUDA_FUNCTION_HPP
 
-#include <cuda_wrapper/device/function_base.hpp>
+#include <cuda_wrapper/function_base.hpp>
 
 namespace cuda
-{
-
-namespace device
 {
 
 template <typename T>
@@ -147,6 +144,4 @@ public:
 
 }
 
-}
-
-#endif /* ! CUDA_DEVICE_FUNCTION_HPP */
+#endif /* ! CUDA_FUNCTION_HPP */

@@ -21,8 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_DEVICE_ALLOCATOR_HPP
-#define CUDA_DEVICE_ALLOCATOR_HPP
+#ifndef CUDA_ALLOCATOR_HPP
+#define CUDA_ALLOCATOR_HPP
 
 #include <cstdlib>
 #include <new>
@@ -31,9 +31,6 @@
 #include <cuda_wrapper/error.hpp>
 
 namespace cuda
-{
-
-namespace device
 {
 
 using std::size_t;
@@ -123,8 +120,6 @@ template<typename _Tp>
 inline bool operator!=(const allocator<_Tp>&, const allocator<_Tp>&)
 {
     return false;
-}
-
 }
 
 }

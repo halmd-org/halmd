@@ -1,4 +1,4 @@
-/* cuda_wrapper/device/symbol.hpp
+/* cuda_wrapper/symbol.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_DEVICE_SYMBOL_HPP
-#define CUDA_DEVICE_SYMBOL_HPP
+#ifndef CUDA_SYMBOL_HPP
+#define CUDA_SYMBOL_HPP
 
 #include <cuda_runtime.h>
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
-#include <cuda_wrapper/device/array.hpp>
-#include <cuda_wrapper/host/array.hpp>
+#include <cuda_wrapper/vector.hpp>
+#include <cuda_wrapper/host/vector.hpp>
 #endif
 
 namespace cuda
@@ -34,17 +34,14 @@ namespace host
 
 #ifndef __CUDACC__
 template <typename T>
-class array;
+class vector;
 #endif
 
 }
 
-namespace device
-{
-
 #ifndef __CUDACC__
 template <typename T>
-class array;
+class vector;
 #endif
 
 
@@ -59,30 +56,30 @@ public:
     /* constructor for device symbol variable */
     symbol(const T& symbol) : ptr(&symbol), n(1) {}
 
-    /* constructor for device symbol array */
+    /* constructor for device symbol vector */
     symbol(const T* symbol) : ptr(symbol), n(0) {}
 
 #ifndef __CUDACC__
     symbol& operator=(const T& value)
     {
-	host::array<T> array(dim());
-	*this = array = value;
+	host::vector<T> v(dim());
+	*this = v = value;
 	return *this;
     }
 
-    symbol& operator=(const host::array<T>& array)
+    symbol& operator=(const host::vector<T>& v)
     {
-	assert(array.dim() == dim());
+	assert(v.dim() == dim());
 	// copy from host memory area to device symbol
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr), array.get_ptr(), dim() * sizeof(T), 0, cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr), v.get_ptr(), dim() * sizeof(T), 0, cudaMemcpyHostToDevice));
 	return *this;
     }
 
-    symbol& operator=(const array<T>& array)
+    symbol& operator=(const vector<T>& v)
     {
-	assert(array.dim() == dim());
+	assert(v.dim() == dim());
 	// copy from device memory area to device symbol
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr), array.get_ptr(), dim() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr), v.get_ptr(), dim() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
 	return *this;
     }
 
@@ -112,6 +109,4 @@ public:
 
 }
 
-}
-
-#endif /* ! CUDA_DEVICE_SYMBOL_HPP */
+#endif /* ! CUDA_SYMBOL_HPP */
