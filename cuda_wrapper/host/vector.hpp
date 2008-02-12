@@ -59,7 +59,7 @@ public:
     /**
      * initialize host vector with content of host vector
      */
-    vector(const vector<T>& v) : _Base(v.dim())
+    vector(const vector<T>& v) : _Base(v.size())
     {
 	memcpy(v);
     }
@@ -67,7 +67,7 @@ public:
     /**
      * initialize host vector with content of device vector
      */
-    vector(const cuda::vector<T>& v) : _Base(v.dim())
+    vector(const cuda::vector<T>& v) : _Base(v.size())
     {
 	memcpy(v);
     }
@@ -86,8 +86,8 @@ public:
      */
     void memcpy(const cuda::vector<T>& v)
     {
-	assert(v.dim() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), v.get_ptr(), v.dim() * sizeof(T), cudaMemcpyDeviceToHost));
+	assert(v.size() == _Base::size());
+	CUDA_CALL(cudaMemcpy(&_Base::front(), v.ptr(), v.size() * sizeof(T), cudaMemcpyDeviceToHost));
     }
 
     /**
@@ -95,8 +95,8 @@ public:
      */
     void memcpy(const cuda::symbol<T>& symbol)
     {
-	assert(symbol.dim() == _Base::size());
-	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.get_ptr()), symbol.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
+	assert(symbol.size() == _Base::size());
+	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
     }
 
     /**
@@ -116,7 +116,7 @@ public:
      */
     vector<T, Alloc>& operator=(const cuda::vector<T>& v)
     {
-	resize(v.dim());
+	resize(v.size());
 	memcpy(v);
 	return *this;
     }
