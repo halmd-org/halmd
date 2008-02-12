@@ -23,19 +23,32 @@
 #ifndef CUDA_WRAPPER_HPP
 #define CUDA_WRAPPER_HPP
 
+#include <cuda_runtime.h>
+
+/* asynchronous API requires CUDA runtime version >= 1.1 */
+#if (CUDART_VERSION >= 1010)
+#define CUDA_WRAPPER_ASYNC_API
+#endif
+
+/*
+ * C++ wrappers requiring runtime functionality (e.g. exceptions)
+ */
+
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
-
-#include <cuda_wrapper/async.hpp>
 #include <cuda_wrapper/device.hpp>
 #include <cuda_wrapper/thread.hpp>
-
+#include <cuda_wrapper/event.hpp>
+#include <cuda_wrapper/stream.hpp>
 #include <cuda_wrapper/allocator.hpp>
 #include <cuda_wrapper/vector.hpp>
-
 #include <cuda_wrapper/host/allocator.hpp>
 #include <cuda_wrapper/host/vector.hpp>
 #endif /* ! __CUDACC__ */
+
+/*
+ * C++ wrappers *not* requiring runtime functionality
+ */
 
 #include <cuda_wrapper/function.hpp>
 #include <cuda_wrapper/symbol.hpp>
