@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_ARRAY_HPP
-#define CUDA_ARRAY_HPP
+#ifndef CUDA_VECTOR_HPP
+#define CUDA_VECTOR_HPP
 
 #include <cuda_runtime.h>
 #include <cuda_wrapper/allocator.hpp>
@@ -41,96 +41,178 @@ template <typename T>
 class symbol;
 
 
+/**
+ * vector pseudo-container for linear global device memory
+ */
 template <typename T>
 class vector
 {
 protected:
-    size_t n;
-    T *ptr;
+    size_t _size;
+    T *_ptr;
 
 public:
-    vector(size_t n): n(n), ptr(allocator<T>().allocate(n)) { }
-
-    vector(const vector<T>& src): n(0), ptr(NULL)
+    /**
+     * initialize device vector of given size
+     */
+    vector(size_t n): _size(n), _ptr(allocator<T>().allocate(n))
     {
-	if (this != &src) {
-	    vector<T> dst(src.dim());
-	    dst = src;
-	    swap(*this, dst);
-	}
     }
 
-    vector(const host::vector<T>& src): n(0), ptr(NULL)
+    /**
+     * initialize device vector with content of device vector
+     */
+    vector(const vector<T>& src): _size(0), _ptr(NULL)
     {
+	// ensure deallocation of device memory in case of an exception
 	vector<T> dst(src.size());
-	dst = src;
+	dst.memcpy(src);
 	swap(*this, dst);
     }
 
-    vector(const symbol<T> &src): n(0), ptr(NULL)
+    /**
+     * initialize device vector with content of host vector
+     */
+    template <typename Alloc>
+    vector(const host::vector<T, Alloc>& src): _size(0), _ptr(NULL)
     {
-	vector<T> dst(1);
-	dst = src;
+	// ensure deallocation of device memory in case of an exception
+	vector<T> dst(src.size());
+	dst.memcpy(src);
 	swap(*this, dst);
     }
 
+    /**
+     * initialize device vector with content of device symbol
+     */
+    vector(const symbol<T> &src): _size(0), _ptr(NULL)
+    {
+	// ensure deallocation of device memory in case of an exception
+	vector<T> dst(src.dim());
+	dst.memcpy(src);
+	swap(*this, dst);
+    }
+
+    /**
+     * deallocate device vector
+     */
     ~vector()
     {
-	if (ptr != NULL) {
-	    allocator<T>().deallocate(ptr, n);
+	if (_ptr != NULL) {
+	    allocator<T>().deallocate(_ptr, _size);
 	}
     }
 
+    /**
+     * copy from device memory area to device memory area
+     */
+    void memcpy(const vector<T>& v)
+    {
+	assert(v.size() == size());
+	CUDA_CALL(cudaMemcpy(ptr(), v.ptr(), v.size() * sizeof(T), cudaMemcpyDeviceToDevice));
+    }
+
+    /*
+     * copy from host memory area to device memory area
+     */
+    template <typename Alloc>
+    void memcpy(const host::vector<T, Alloc>& v)
+    {
+	assert(v.size() == size());
+	CUDA_CALL(cudaMemcpy(ptr(), &v.front(), v.size() * sizeof(T), cudaMemcpyHostToDevice));
+    }
+
+    /*
+     * copy from device symbol to device memory area
+     */
+    void memcpy(const symbol<T>& symbol)
+    {
+	assert(symbol.dim() == size());
+	CUDA_CALL(cudaMemcpyFromSymbol(ptr(), reinterpret_cast<const char *>(symbol.get_ptr()), symbol.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+    }
+
+    /**
+     * assign content of device vector to device vector
+     */
     vector<T>& operator=(const vector<T>& v)
     {
 	if (this != &v) {
-	    assert(v.dim() == n);
-	    // copy from device memory area to device memory area
-	    CUDA_CALL(cudaMemcpy(ptr, v.get_ptr(), n * sizeof(T), cudaMemcpyDeviceToDevice));
+	    memcpy(v);
 	}
 	return *this;
     }
 
-    vector<T>& operator=(const host::vector<T>& v)
+    /**
+     * assign content of host vector to device vector
+     */
+    template <typename Alloc>
+    vector<T>& operator=(const host::vector<T, Alloc>& v)
     {
-	assert(v.size() == n);
-	// copy from host memory area to device memory area
-	CUDA_CALL(cudaMemcpy(ptr, &v.front(), n * sizeof(T), cudaMemcpyHostToDevice));
+	memcpy(v);
 	return *this;
     }
 
+    /**
+     * assign content of device symbol to device vector
+     */
     vector<T>& operator=(const symbol<T>& symbol)
     {
-	assert(symbol.dim() == n);
-	// copy from device symbol to device memory area
-	CUDA_CALL(cudaMemcpyFromSymbol(ptr, reinterpret_cast<const char *>(symbol.get_ptr()), n * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+	memcpy(symbol);
 	return *this;
     }
 
+    /**
+     * assign copies of value to device vector
+     */
     vector<T>& operator=(const T& value)
     {
-	host::vector<T> v(n);
-	*this = v = value;
+	host::vector<T> v(size(), value);
+	memcpy(v);
 	return *this;
     }
 
+    /**
+     * swap device memory areas with another device vector
+     */
     static void swap(vector<T>& a, vector<T>& b)
     {
-	std::swap(a.n, b.n);
-	std::swap(a.ptr, b.ptr);
+	std::swap(a._size, b._size);
+	std::swap(a._ptr, b._ptr);
     }
 
+    /**
+     * returns element count of device vector
+     */
+    size_t size() const
+    {
+	return _size;
+    }
+
+    /**
+     * FIXME obsolete
+     */
     size_t dim() const
     {
-	return n;
+	return _size;
     }
 
+    /**
+     * returns device pointer to allocated device memory
+     */
+    T *ptr() const
+    {
+	return _ptr;
+    }
+
+    /**
+     * FIXME obsolete
+     */
     T *get_ptr() const
     {
-	return ptr;
+	return _ptr;
     }
 };
 
 }
 
-#endif /* CUDA_ARRAY_HPP */
+#endif /* CUDA_VECTOR_HPP */
