@@ -88,7 +88,7 @@ public:
     vector(const symbol<T> &src): _size(0), _ptr(NULL)
     {
 	// ensure deallocation of device memory in case of an exception
-	vector<T> dst(src.dim());
+	vector<T> dst(src.size());
 	dst.memcpy(src);
 	swap(*this, dst);
     }
@@ -127,8 +127,8 @@ public:
      */
     void memcpy(const symbol<T>& symbol)
     {
-	assert(symbol.dim() == size());
-	CUDA_CALL(cudaMemcpyFromSymbol(ptr(), reinterpret_cast<const char *>(symbol.get_ptr()), symbol.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+	assert(symbol.size() == size());
+	CUDA_CALL(cudaMemcpyFromSymbol(ptr(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
     }
 
     /**
