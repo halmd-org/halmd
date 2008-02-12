@@ -45,47 +45,85 @@ class vector;
 #endif
 
 
+/**
+ * vector container for a device symbol
+ */
 template <typename T>
 class symbol
 {
 protected:
-    const T *ptr;
-    mutable size_t n;
+    mutable size_t _size;
+    const T *_ptr;
 
 public:
-    /* constructor for device symbol variable */
-    symbol(const T& symbol) : ptr(&symbol), n(1) {}
+    /**
+     * initialize container with device symbol variable
+     */
+    symbol(const T& symbol) : _size(1), _ptr(&symbol)
+    {
+    }
 
-    /* constructor for device symbol vector */
-    symbol(const T* symbol) : ptr(symbol), n(0) {}
+    /**
+     * initialize container with device symbol vector
+     */
+    symbol(const T* symbol) : _size(0), _ptr(symbol)
+    {
+    }
 
 #ifndef __CUDACC__
-    symbol& operator=(const T& value)
+
+    /**
+     * copy from host memory area to device symbol
+     */
+    void memcpy(const host::vector<T>& v)
     {
-	host::vector<T> v(dim());
-	*this = v = value;
-	return *this;
+	assert(v.size() == size());
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr()), &v.front(), v.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
     }
 
+    /**
+     * copy from device memory area to device symbol
+     */
+    void memcpy(const vector<T>& v)
+    {
+	assert(v.size() == size());
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr()), v.ptr(), v.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+    }
+
+    /**
+     * assign content of host vector to device symbol
+     */
     symbol& operator=(const host::vector<T>& v)
     {
-	assert(v.size() == dim());
-	// copy from host memory area to device symbol
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr), &v.front(), v.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
+	memcpy(v);
 	return *this;
     }
 
+    /**
+     * assign content of device vector to device symbol
+     */
     symbol& operator=(const vector<T>& v)
     {
-	assert(v.dim() == dim());
-	// copy from device memory area to device symbol
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr), v.get_ptr(), dim() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+	memcpy(v);
 	return *this;
     }
 
-    size_t dim() const
+    /**
+     * assign copies of value to device symbol
+     */
+    symbol& operator=(const T& value)
     {
-	if (n == 0) {
+	host::vector<T> v(size(), value);
+	memcpy(v);
+	return *this;
+    }
+
+    /**
+     * return element count of device symbol vector
+     */
+    size_t size() const
+    {
+	if (!_size) {
 	    /*
 	     * It would be preferable to issue the following CUDA runtime
 	     * call directly upon construction. However, the constructor
@@ -93,17 +131,21 @@ public:
 	     * which does not support C++ runtime functionality, e.g.
 	     * exceptions.
 	     */
-	    CUDA_CALL(cudaGetSymbolSize(&n, reinterpret_cast<const char *>(ptr)));
-	    n = n / sizeof(T);
+	    CUDA_CALL(cudaGetSymbolSize(&_size, reinterpret_cast<const char *>(ptr())));
+	    _size /= sizeof(T);
 	}
 
-	return n;
+	return _size;
     }
+
 #endif /* ! __CUDACC__ */
 
-    T *get_ptr() const
+    /**
+     * returns device pointer to device symbol
+     */
+    const T *ptr() const
     {
-	return ptr;
+	return _ptr;
     }
 };
 
