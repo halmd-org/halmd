@@ -189,25 +189,9 @@ public:
     }
 
     /**
-     * FIXME obsolete
-     */
-    size_t dim() const
-    {
-	return _size;
-    }
-
-    /**
      * returns device pointer to allocated device memory
      */
     T *ptr() const
-    {
-	return _ptr;
-    }
-
-    /**
-     * FIXME obsolete
-     */
-    T *get_ptr() const
     {
 	return _ptr;
     }
