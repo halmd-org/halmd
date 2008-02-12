@@ -32,7 +32,7 @@ namespace cuda
 namespace host
 {
 
-template <typename T>
+template <typename T, typename Alloc>
 class vector;
 
 }
@@ -62,7 +62,7 @@ public:
 
     vector(const host::vector<T>& src): n(0), ptr(NULL)
     {
-	vector<T> dst(src.dim());
+	vector<T> dst(src.size());
 	dst = src;
 	swap(*this, dst);
     }
@@ -93,9 +93,9 @@ public:
 
     vector<T>& operator=(const host::vector<T>& v)
     {
-	assert(v.dim() == n);
+	assert(v.size() == n);
 	// copy from host memory area to device memory area
-	CUDA_CALL(cudaMemcpy(ptr, v.get_ptr(), n * sizeof(T), cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpy(ptr, &v.front(), n * sizeof(T), cudaMemcpyHostToDevice));
 	return *this;
     }
 

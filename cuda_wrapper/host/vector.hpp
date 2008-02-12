@@ -16,11 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_HOST_ARRAY_HPP
-#define CUDA_HOST_ARRAY_HPP
+#ifndef CUDA_HOST_VECTOR_HPP
+#define CUDA_HOST_VECTOR_HPP
 
 #include <cuda_runtime.h>
 #include <algorithm>
+#include <vector>
 #include <assert.h>
 #include <cuda_wrapper/host/allocator.hpp>
 #include <cuda_wrapper/vector.hpp>
@@ -38,100 +39,55 @@ class symbol;
 namespace host
 {
 
-template <typename T>
-class vector
+/**
+ * vector container class for linear host memory
+ */
+template <typename T, typename Alloc = allocator<T> >
+class vector : public std::vector<T, Alloc>
 {
 protected:
-    size_t n;
-    T *ptr;
+    typedef std::vector<T, Alloc > _Base;
 
 public:
-    vector(size_t n): n(n), ptr(allocator<T>().allocate(n)) { }
+    vector(size_t n, const T& value = T()) : _Base(n, value) { }
 
-    vector(const vector<T>& src): n(0), ptr(NULL)
+    vector(const cuda::vector<T>& v) : _Base(v.dim())
     {
-	if (this != &src) {
-	    vector<T> dst(src.dim());
-	    dst = src;
-	    swap(*this, dst);
-	}
+	*this = v;
     }
 
-    vector(const cuda::vector<T>& src): n(0), ptr(NULL)
-    {
-	vector<T> dst(src.dim());
-	dst = src;
-	swap(*this, dst);
-    }
-
-    vector(const cuda::symbol<T>& src): n(0), ptr(NULL)
-    {
-	vector<T> dst(src.dim());
-	dst = src;
-	swap(*this, dst);
-    }
-
-    ~vector()
-    {
-	if (ptr != NULL) {
-	    allocator<T>().deallocate(ptr, n);
-	}
-    }
-
-    vector<T>& operator=(const vector<T>& v)
+    vector<T, Alloc>& operator=(const vector<T, Alloc>& v)
     {
 	if (this != &v) {
-	    assert(v.dim() == n);
+	    resize(v.size());
 	    // copy from host memory area to host memory area
-	    CUDA_CALL(cudaMemcpy(ptr, v.get_ptr(), n * sizeof(T), cudaMemcpyHostToHost));
+	    CUDA_CALL(cudaMemcpy(&_Base::front(), &v.front(), v.size() * sizeof(T), cudaMemcpyHostToHost));
 	}
 	return *this;
     }
 
-    vector<T>& operator=(const cuda::vector<T>& v)
+    vector<T, Alloc>& operator=(const cuda::vector<T>& v)
     {
-	assert(v.dim() == n);
+	resize(v.dim());
 	// copy from device memory area to host memory area
-	CUDA_CALL(cudaMemcpy(ptr, v.get_ptr(), n * sizeof(T), cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpy(&_Base::front(), v.get_ptr(), v.dim() * sizeof(T), cudaMemcpyDeviceToHost));
 	return *this;
     }
 
-    vector<T>& operator=(const cuda::symbol<T>& symbol)
+    vector<T, Alloc>& operator=(const cuda::symbol<T>& symbol)
     {
-	assert(symbol.dim() == n);
+	resize(symbol.size());
 	// copy from device symbol to host memory area
-	CUDA_CALL(cudaMemcpyFromSymbol(ptr, reinterpret_cast<const char *>(symbol.get_ptr()), n * sizeof(T), 0, cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.get_ptr()), symbol.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
 	return *this;
     }
 
-    vector<T>& operator=(const T& value)
+    vector<T, Alloc>& operator=(const T& value)
     {
-	for (size_t i = 0; i < n; i++) {
-	    ptr[i] = value;
+	for (size_t i = 0; i < _Base::size(); i++) {
+	    (*this)[i] = value;
 	}
 	return *this;
-    }
-
-    T& operator[](const size_t i) const
-    {
-	assert(i < n);
-	return ptr[i];
-    }
-
-    static void swap(vector<T>& a, vector<T>& b)
-    {
-	std::swap(a.n, b.n);
-	std::swap(a.ptr, b.ptr);
-    }
-
-    size_t dim() const
-    {
-	return n;
-    }
-
-    T *get_ptr() const
-    {
-	return ptr;
     }
 };
 
@@ -139,4 +95,4 @@ public:
 
 }
 
-#endif /* ! CUDA_HOST_ARRAY_HPP */
+#endif /* ! CUDA_HOST_VECTOR_HPP */

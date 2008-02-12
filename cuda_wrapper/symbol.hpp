@@ -33,7 +33,7 @@ namespace host
 {
 
 #ifndef __CUDACC__
-template <typename T>
+template <typename T, typename Alloc>
 class vector;
 #endif
 
@@ -69,9 +69,9 @@ public:
 
     symbol& operator=(const host::vector<T>& v)
     {
-	assert(v.dim() == dim());
+	assert(v.size() == dim());
 	// copy from host memory area to device symbol
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr), v.get_ptr(), dim() * sizeof(T), 0, cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr), &v.front(), v.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
 	return *this;
     }
 
