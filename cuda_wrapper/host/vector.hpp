@@ -80,7 +80,8 @@ public:
     /**
      * copy from host memory area to host memory area
      */
-    void memcpy(const vector_type& v)
+    template <typename _Allocator>
+    void memcpy(const vector<value_type, _Allocator>& v)
     {
 	assert(v.size() == _Base::size());
 	CUDA_CALL(cudaMemcpy(&_Base::front(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToHost));
@@ -107,7 +108,8 @@ public:
     /**
      * assign content of host vector to host vector
      */
-    vector_type& operator=(const vector_type& v)
+    template <typename _Allocator>
+    vector_type& operator=(const vector<value_type, _Allocator>& v)
     {
 	if (this != &v) {
 	    resize(v.size());
@@ -189,7 +191,8 @@ public:
     /**
      * copy from host memory area to host memory area
      */
-    void memcpy(const vector_type& v)
+    template <typename _Allocator>
+    void memcpy(const vector<value_type, _Allocator>& v)
     {
 	assert(v.size() == _Base::size());
 	CUDA_CALL(cudaMemcpy(&_Base::front(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToHost));
@@ -242,7 +245,8 @@ public:
     /**
      * assign content of host vector to host vector
      */
-    vector_type& operator=(const vector_type& v)
+    template <typename _Allocator>
+    vector_type& operator=(const vector<value_type, _Allocator>& v)
     {
 	if (this != &v) {
 	    resize(v.size());
