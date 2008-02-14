@@ -23,6 +23,7 @@
 #include <cuda_wrapper/allocator.hpp>
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/host/vector.hpp>
+#include <cuda_wrapper/stream.hpp>
 #include <algorithm>
 #include <assert.h>
 
@@ -47,25 +48,31 @@ class symbol;
 template <typename T>
 class vector
 {
+public:
+    typedef allocator<T> _Alloc;
+    typedef vector<T> vector_type;
+    typedef T value_type;
+    typedef size_t size_type;
+
 protected:
-    size_t _size;
-    T *_ptr;
+    size_type _size;
+    value_type* _ptr;
 
 public:
     /**
      * initialize device vector of given size
      */
-    vector(size_t n): _size(n), _ptr(allocator<T>().allocate(n))
+    vector(size_type n): _size(n), _ptr(_Alloc().allocate(n))
     {
     }
 
     /**
      * initialize device vector with content of device vector
      */
-    vector(const vector<T>& src): _size(0), _ptr(NULL)
+    vector(const vector_type& src): _size(0), _ptr(NULL)
     {
 	// ensure deallocation of device memory in case of an exception
-	vector<T> dst(src.size());
+	vector_type dst(src.size());
 	dst.memcpy(src);
 	swap(*this, dst);
     }
@@ -74,10 +81,10 @@ public:
      * initialize device vector with content of host vector
      */
     template <typename Alloc>
-    vector(const host::vector<T, Alloc>& src): _size(0), _ptr(NULL)
+    vector(const host::vector<value_type, Alloc>& src): _size(0), _ptr(NULL)
     {
 	// ensure deallocation of device memory in case of an exception
-	vector<T> dst(src.size());
+	vector_type dst(src.size());
 	dst.memcpy(src);
 	swap(*this, dst);
     }
@@ -85,10 +92,10 @@ public:
     /**
      * initialize device vector with content of device symbol
      */
-    vector(const symbol<T> &src): _size(0), _ptr(NULL)
+    vector(const symbol<value_type> &src): _size(0), _ptr(NULL)
     {
 	// ensure deallocation of device memory in case of an exception
-	vector<T> dst(src.size());
+	vector_type dst(src.size());
 	dst.memcpy(src);
 	swap(*this, dst);
     }
@@ -99,42 +106,66 @@ public:
     ~vector()
     {
 	if (_ptr != NULL) {
-	    allocator<T>().deallocate(_ptr, _size);
+	    _Alloc().deallocate(_ptr, _size);
 	}
     }
 
     /**
      * copy from device memory area to device memory area
      */
-    void memcpy(const vector<T>& v)
+    void memcpy(const vector_type& v)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpy(ptr(), v.ptr(), v.size() * sizeof(T), cudaMemcpyDeviceToDevice));
+	CUDA_CALL(cudaMemcpy(ptr(), v.ptr(), v.size() * sizeof(value_type), cudaMemcpyDeviceToDevice));
     }
 
-    /*
+    /**
      * copy from host memory area to device memory area
      */
     template <typename Alloc>
-    void memcpy(const host::vector<T, Alloc>& v)
+    void memcpy(const host::vector<value_type, Alloc>& v)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpy(ptr(), &v.front(), v.size() * sizeof(T), cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpy(ptr(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToDevice));
     }
+
+#ifdef CUDA_WRAPPER_ASYNC_API
+
+    /**
+     * asynchronous copy from device memory area to device memory area
+     */
+    void memcpy(const vector_type& v, const stream& stream)
+    {
+	assert(v.size() == size());
+	CUDA_CALL(cudaMemcpyAsync(ptr(), v.ptr(), v.size() * sizeof(value_type), cudaMemcpyDeviceToDevice, stream._stream));
+    }
+
+    /**
+     * asynchronous copy from host memory area to device memory area
+     *
+     * requires page-locked host memory (default host vector allocator)
+     */
+    void memcpy(const host::vector<value_type, host::allocator<value_type> >& v, const stream& stream)
+    {
+	assert(v.size() == size());
+	CUDA_CALL(cudaMemcpyAsync(ptr(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToDevice, stream._stream));
+    }
+
+#endif /* CUDA_WRAPPER_ASYNC_API */
 
     /*
      * copy from device symbol to device memory area
      */
-    void memcpy(const symbol<T>& symbol)
+    void memcpy(const symbol<value_type>& symbol)
     {
 	assert(symbol.size() == size());
-	CUDA_CALL(cudaMemcpyFromSymbol(ptr(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+	CUDA_CALL(cudaMemcpyFromSymbol(ptr(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToDevice));
     }
 
     /**
      * assign content of device vector to device vector
      */
-    vector<T>& operator=(const vector<T>& v)
+    vector_type& operator=(const vector_type& v)
     {
 	if (this != &v) {
 	    memcpy(v);
@@ -146,7 +177,7 @@ public:
      * assign content of host vector to device vector
      */
     template <typename Alloc>
-    vector<T>& operator=(const host::vector<T, Alloc>& v)
+    vector_type& operator=(const host::vector<value_type, Alloc>& v)
     {
 	memcpy(v);
 	return *this;
@@ -155,7 +186,7 @@ public:
     /**
      * assign content of device symbol to device vector
      */
-    vector<T>& operator=(const symbol<T>& symbol)
+    vector_type& operator=(const symbol<value_type>& symbol)
     {
 	memcpy(symbol);
 	return *this;
@@ -164,9 +195,9 @@ public:
     /**
      * assign copies of value to device vector
      */
-    vector<T>& operator=(const T& value)
+    vector_type& operator=(const value_type& value)
     {
-	host::vector<T> v(size(), value);
+	host::vector<value_type, host::allocator<value_type> > v(size(), value);
 	memcpy(v);
 	return *this;
     }
@@ -174,7 +205,7 @@ public:
     /**
      * swap device memory areas with another device vector
      */
-    static void swap(vector<T>& a, vector<T>& b)
+    static void swap(vector_type& a, vector_type& b)
     {
 	std::swap(a._size, b._size);
 	std::swap(a._ptr, b._ptr);
@@ -183,7 +214,7 @@ public:
     /**
      * returns element count of device vector
      */
-    size_t size() const
+    size_type size() const
     {
 	return _size;
     }
@@ -191,7 +222,7 @@ public:
     /**
      * returns device pointer to allocated device memory
      */
-    T *ptr() const
+    value_type* ptr() const
     {
 	return _ptr;
     }
