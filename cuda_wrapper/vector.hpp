@@ -251,14 +251,6 @@ public:
     {
 	return _ptr.get();
     }
-
-    /**
-     * FIXME obsolete
-     */
-    value_type* ptr() const
-    {
-	return _ptr.get();
-    }
 };
 
 }
