@@ -26,6 +26,17 @@
 namespace cuda
 {
 
+template <typename T>
+class vector;
+
+namespace host
+{
+
+template <typename T, typename Alloc>
+class vector;
+
+}
+
 #ifdef CUDA_WRAPPER_ASYNC_API
 
 /**
@@ -34,6 +45,12 @@ namespace cuda
 class stream
 {
     friend class event;
+
+    template <typename T>
+    friend class vector;
+
+    template <typename T, typename Alloc>
+    friend class host::vector;
 
 protected:
     cudaStream_t _stream;

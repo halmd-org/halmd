@@ -26,6 +26,7 @@
 #include <cuda_wrapper/host/allocator.hpp>
 #include <cuda_wrapper/vector.hpp>
 #include <cuda_wrapper/symbol.hpp>
+#include <cuda_wrapper/stream.hpp>
 
 namespace cuda
 {
@@ -45,21 +46,25 @@ namespace host
 template <typename T, typename Alloc = allocator<T> >
 class vector : public std::vector<T, Alloc>
 {
-protected:
-    typedef std::vector<T, Alloc > _Base;
+public:
+    typedef Alloc _Alloc;
+    typedef std::vector<T, Alloc> _Base;
+    typedef vector<T, Alloc> vector_type;
+    typedef T value_type;
+    typedef size_t size_type;
 
 public:
     /**
      * initialize host vector with copies of value
      */
-    vector(size_t n, const T& value = T()) : _Base(n, value)
+    vector(size_type n, const value_type& value = value_type()) : _Base(n, value)
     {
     }
 
     /**
      * initialize host vector with content of host vector
      */
-    vector(const vector<T>& v) : _Base(v.size())
+    vector(const vector_type& v) : _Base(v.size())
     {
 	memcpy(v);
     }
@@ -67,7 +72,7 @@ public:
     /**
      * initialize host vector with content of device vector
      */
-    vector(const cuda::vector<T>& v) : _Base(v.size())
+    vector(const cuda::vector<value_type>& v) : _Base(v.size())
     {
 	memcpy(v);
     }
@@ -75,34 +80,34 @@ public:
     /**
      * copy from host memory area to host memory area
      */
-    void memcpy(const vector<T, Alloc>& v)
+    void memcpy(const vector_type& v)
     {
 	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), &v.front(), v.size() * sizeof(T), cudaMemcpyHostToHost));
+	CUDA_CALL(cudaMemcpy(&_Base::front(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToHost));
     }
 
     /**
      * copy from device memory area to host memory area
      */
-    void memcpy(const cuda::vector<T>& v)
+    void memcpy(const cuda::vector<value_type>& v)
     {
 	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), v.ptr(), v.size() * sizeof(T), cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpy(&_Base::front(), v.ptr(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost));
     }
 
     /**
      * copy from device symbol to host memory area
      */
-    void memcpy(const cuda::symbol<T>& symbol)
+    void memcpy(const cuda::symbol<value_type>& symbol)
     {
 	assert(symbol.size() == _Base::size());
-	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToHost));
     }
 
     /**
      * assign content of host vector to host vector
      */
-    vector<T, Alloc>& operator=(const vector<T, Alloc>& v)
+    vector_type& operator=(const vector_type& v)
     {
 	if (this != &v) {
 	    resize(v.size());
@@ -114,7 +119,7 @@ public:
     /**
      * assign content of device vector to host vector
      */
-    vector<T, Alloc>& operator=(const cuda::vector<T>& v)
+    vector_type& operator=(const cuda::vector<value_type>& v)
     {
 	resize(v.size());
 	memcpy(v);
@@ -124,7 +129,7 @@ public:
     /**
      * assign content of device symbol to host vector
      */
-    vector<T, Alloc>& operator=(const cuda::symbol<T>& symbol)
+    vector_type& operator=(const cuda::symbol<value_type>& symbol)
     {
 	resize(symbol.size());
 	memcpy(symbol);
@@ -134,9 +139,144 @@ public:
     /**
      * assign copies of value to host vector
      */
-    vector<T, Alloc>& operator=(const T& value)
+    vector_type& operator=(const value_type& value)
     {
-	for (size_t i = 0; i < _Base::size(); i++) {
+	for (size_type i = 0; i < _Base::size(); i++) {
+	    (*this)[i] = value;
+	}
+	return *this;
+    }
+};
+
+
+/**
+ * vector container class for linear page-locked host memory
+ */
+template <typename T>
+class vector<T, allocator<T> > : public std::vector<T, allocator<T> >
+{
+public:
+    typedef allocator<T> _Alloc;
+    typedef std::vector<T, allocator<T> > _Base;
+    typedef vector<T, allocator<T> > vector_type;
+    typedef T value_type;
+    typedef size_t size_type;
+
+public:
+    /**
+     * initialize host vector with copies of value
+     */
+    vector(size_type n, const value_type& value = value_type()) : _Base(n, value)
+    {
+    }
+
+    /**
+     * initialize host vector with content of host vector
+     */
+    vector(const vector_type& v) : _Base(v.size())
+    {
+	memcpy(v);
+    }
+
+    /**
+     * initialize host vector with content of device vector
+     */
+    vector(const cuda::vector<value_type>& v) : _Base(v.size())
+    {
+	memcpy(v);
+    }
+
+    /**
+     * copy from host memory area to host memory area
+     */
+    void memcpy(const vector_type& v)
+    {
+	assert(v.size() == _Base::size());
+	CUDA_CALL(cudaMemcpy(&_Base::front(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToHost));
+    }
+
+    /**
+     * copy from device memory area to host memory area
+     */
+    void memcpy(const cuda::vector<value_type>& v)
+    {
+	assert(v.size() == _Base::size());
+	CUDA_CALL(cudaMemcpy(&_Base::front(), v.ptr(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost));
+    }
+
+    /**
+     * copy from device symbol to host memory area
+     */
+    void memcpy(const cuda::symbol<value_type>& symbol)
+    {
+	assert(symbol.size() == _Base::size());
+	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToHost));
+    }
+
+#ifdef CUDA_WRAPPER_ASYNC_API
+
+    /**
+     * asynchronous copy from host memory area to host memory area
+     *
+     * requires page-locked host memory
+     */
+    void memcpy(const vector_type& v, const stream& stream)
+    {
+	assert(v.size() == _Base::size());
+	CUDA_CALL(cudaMemcpyAsync(&_Base::front(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToHost, stream._stream));
+    }
+
+    /**
+     * asynchronous copy from device memory area to host memory area
+     *
+     * requires page-locked host memory
+     */
+    void memcpy(const cuda::vector<value_type>& v, const stream& stream)
+    {
+	assert(v.size() == _Base::size());
+	CUDA_CALL(cudaMemcpyAsync(&_Base::front(), v.ptr(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost, stream._stream));
+    }
+
+#endif /* CUDA_WRAPPER_ASYNC_API */
+
+    /**
+     * assign content of host vector to host vector
+     */
+    vector_type& operator=(const vector_type& v)
+    {
+	if (this != &v) {
+	    resize(v.size());
+	    memcpy(v);
+	}
+	return *this;
+    }
+
+    /**
+     * assign content of device vector to host vector
+     */
+    vector_type& operator=(const cuda::vector<value_type>& v)
+    {
+	resize(v.size());
+	memcpy(v);
+	return *this;
+    }
+
+    /**
+     * assign content of device symbol to host vector
+     */
+    vector_type& operator=(const cuda::symbol<value_type>& symbol)
+    {
+	resize(symbol.size());
+	memcpy(symbol);
+	return *this;
+    }
+
+    /**
+     * assign copies of value to host vector
+     */
+    vector_type& operator=(const value_type& value)
+    {
+	for (size_type i = 0; i < _Base::size(); i++) {
 	    (*this)[i] = value;
 	}
 	return *this;
