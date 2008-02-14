@@ -19,17 +19,106 @@
 #ifndef CUDA_FUNCTION_HPP
 #define CUDA_FUNCTION_HPP
 
-#include <cuda_wrapper/function_base.hpp>
+#include <cuda_runtime.h>
+#ifndef __CUDACC__
+#include <cuda_wrapper/error.hpp>
+#endif
+
 
 namespace cuda
 {
 
+/*
+ * CUDA execution configuration
+ */
+class config
+{
+public:
+    /* grid dimensions */
+    const dim3 grid;
+    /* block dimensions */
+    const dim3 block;
+    /* FIXME store useful numbers (no. of threads per grid/block) */
+
+    config(dim3 grid, dim3 block) : grid(grid), block(block)
+    {
+	/* FIXME store useful numbers (no. of threads per grid/block) */
+    }
+
+    int threads() const
+    {
+	return grid.y * grid.x * block.z * block.y * block.x;
+    }
+
+    int blocks_per_grid() const
+    {
+	return grid.y * grid.x;
+    }
+
+    int threads_per_block() const
+    {
+	return block.z * block.y * block.x;
+    }
+};
+
+
+/**
+ * CUDA kernel execution wrapper base class
+ */
+class _function_base
+{
+#ifndef __CUDACC__
+public:
+    /*
+     * configure execution parameters
+     */
+    static void configure(const config& dim, size_t shared_mem = 0)
+    {
+	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
+    }
+
+protected:
+    /*
+     * push arbitrary argument into argument passing area
+     */
+    template <typename T>
+    static void setup_argument(const T& arg, size_t *offset)
+    {
+	/* respect alignment requirements of passed argument */
+	if (0 != *offset % __alignof(T)) {
+	    *offset += __alignof(T) - *offset % __alignof(T);
+	}
+
+	CUDA_CALL(cudaSetupArgument(&arg, sizeof(T), *offset));
+
+	/* advance argument offset for next call */
+	*offset += sizeof(T);
+    }
+
+    /*
+     * launch kernel
+     */
+    template <typename T>
+    static void launch(T *entry)
+    {
+	CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(entry)));
+    }
+#endif /* ! __CUDACC__ */
+};
+
+
+/**
+ * CUDA kernel execution wrapper
+ */
 template <typename T>
 class function;
 
 
+/**
+ * CUDA kernel execution wrapper for unary device function
+ */
 template <typename T0>
-class function<void (T0)> : public function_base
+class function<void (T0)> : public _function_base
 {
 protected:
     typedef void T (T0);
@@ -49,8 +138,11 @@ public:
 };
 
 
+/**
+ * CUDA kernel execution wrapper for binary device function
+ */
 template <typename T0, typename T1>
-class function<void (T0, T1)> : public function_base
+class function<void (T0, T1)> : public _function_base
 {
 protected:
     typedef void T (T0, T1);
@@ -71,8 +163,11 @@ public:
 };
 
 
+/**
+ * CUDA kernel execution wrapper for ternary device function
+ */
 template <typename T0, typename T1, typename T2>
-class function<void (T0, T1, T2)> : public function_base
+class function<void (T0, T1, T2)> : public _function_base
 {
 protected:
     typedef void T (T0, T1, T2);
@@ -94,8 +189,11 @@ public:
 };
 
 
+/**
+ * CUDA kernel execution wrapper for quaternary device function
+ */
 template <typename T0, typename T1, typename T2, typename T3>
-class function<void (T0, T1, T2, T3)> : public function_base
+class function<void (T0, T1, T2, T3)> : public _function_base
 {
 protected:
     typedef void T (T0, T1, T2, T3);
@@ -118,8 +216,11 @@ public:
 };
 
 
+/**
+ * CUDA kernel execution wrapper for quinary device function
+ */
 template <typename T0, typename T1, typename T2, typename T3, typename T4>
-class function<void (T0, T1, T2, T3, T4)> : public function_base
+class function<void (T0, T1, T2, T3, T4)> : public _function_base
 {
 protected:
     typedef void T (T0, T1, T2, T3, T4);
