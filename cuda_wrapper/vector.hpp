@@ -24,7 +24,7 @@
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/host/vector.hpp>
 #include <cuda_wrapper/stream.hpp>
-#include <algorithm>
+#include <vector>
 #include <assert.h>
 
 namespace cuda
@@ -43,78 +43,33 @@ class symbol;
 
 
 /**
- * auto-pointer for linear global device memory
- */
-template <typename T, typename Alloc>
-class auto_ptr
-{
-public:
-    typedef Alloc _Alloc;
-    typedef T value_type;
-    typedef size_t size_type;
-
-protected:
-    value_type* _ptr;
-    size_type _size;
-
-public:
-    /**
-     * allocate global device memory
-     */
-    auto_ptr(size_type size) : _ptr(_Alloc().allocate(size)), _size(size) { }
-
-    /**
-     * deallocate global device memory
-     */
-    ~auto_ptr()
-    {
-	_Alloc().deallocate(_ptr, _size);
-    }
-
-    /**
-     * returns device pointer to allocated device memory
-     */
-    value_type* get() const
-    {
-	return _ptr;
-    }
-
-    /**
-     * returns size
-     */
-    size_type size() const
-    {
-	return _size;
-    }
-};
-
-
-/**
- * vector pseudo-container for linear global device memory
+ * vector container for linear global device memory
  */
 template <typename T>
-class vector
+class vector : protected std::vector<T, allocator<T> >
 {
 public:
     typedef allocator<T> _Alloc;
+    typedef std::vector<T, allocator<T> > _Base;
     typedef vector<T> vector_type;
     typedef T value_type;
     typedef size_t size_type;
-
-protected:
-    auto_ptr<value_type, _Alloc> _ptr;
 
 public:
     /**
      * initialize device vector of given size
      */
-    vector(size_type size): _ptr(size) { }
+    vector(size_type size)
+    {
+	_Base::reserve(size);
+    }
 
     /**
      * initialize device vector with content of device vector
      */
-    vector(const vector_type& v): _ptr(v.size())
+    vector(const vector_type& v)
     {
+	_Base::reserve(size);
 	memcpy(v);
     }
 
@@ -122,16 +77,18 @@ public:
      * initialize device vector with content of host vector
      */
     template <typename Alloc>
-    vector(const host::vector<value_type, Alloc>& v): _ptr(v.size())
+    vector(const host::vector<value_type, Alloc>& v)
     {
+	_Base::reserve(size);
 	memcpy(v);
     }
 
     /**
      * initialize device vector with content of device symbol
      */
-    vector(const symbol<value_type> &v): _ptr(v.size())
+    vector(const symbol<value_type> &v)
     {
+	_Base::reserve(size);
 	memcpy(v);
     }
 
@@ -228,20 +185,11 @@ public:
     }
 
     /**
-     * swap device memory areas with another device vector
-     */
-    static void swap(vector_type& a, vector_type& b)
-    {
-	std::swap(a._size, b._size);
-	std::swap(a._ptr, b._ptr);
-    }
-
-    /**
      * returns element count of device vector
      */
     size_type size() const
     {
-	return _ptr.size();
+	return _Base::capacity();
     }
 
     /**
@@ -249,7 +197,7 @@ public:
      */
     value_type* get() const
     {
-	return _ptr.get();
+	return const_cast<value_type*>(&_Base::front());
     }
 };
 
