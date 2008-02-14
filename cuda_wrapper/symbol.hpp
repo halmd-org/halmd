@@ -51,22 +51,27 @@ class vector;
 template <typename T>
 class symbol
 {
+public:
+    typedef symbol<T> vector_type;
+    typedef T value_type;
+    typedef size_t size_type;
+
 protected:
-    mutable size_t _size;
-    const T *_ptr;
+    mutable size_type _size;
+    const value_type* _ptr;
 
 public:
     /**
      * initialize container with device symbol variable
      */
-    symbol(const T& symbol) : _size(1), _ptr(&symbol)
+    symbol(const value_type& symbol) : _size(1), _ptr(&symbol)
     {
     }
 
     /**
      * initialize container with device symbol vector
      */
-    symbol(const T* symbol) : _size(0), _ptr(symbol)
+    symbol(const value_type* symbol) : _size(0), _ptr(symbol)
     {
     }
 
@@ -75,25 +80,25 @@ public:
     /**
      * copy from host memory area to device symbol
      */
-    void memcpy(const host::vector<T>& v)
+    void memcpy(const host::vector<value_type>& v)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr()), &v.front(), v.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr()), &v.front(), v.size() * sizeof(value_type), 0, cudaMemcpyHostToDevice));
     }
 
     /**
      * copy from device memory area to device symbol
      */
-    void memcpy(const vector<T>& v)
+    void memcpy(const vector<value_type>& v)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr()), v.ptr(), v.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(ptr()), v.ptr(), v.size() * sizeof(value_type), 0, cudaMemcpyDeviceToDevice));
     }
 
     /**
      * assign content of host vector to device symbol
      */
-    symbol& operator=(const host::vector<T>& v)
+    vector_type& operator=(const host::vector<value_type>& v)
     {
 	memcpy(v);
 	return *this;
@@ -102,7 +107,7 @@ public:
     /**
      * assign content of device vector to device symbol
      */
-    symbol& operator=(const vector<T>& v)
+    vector_type& operator=(const vector<value_type>& v)
     {
 	memcpy(v);
 	return *this;
@@ -111,9 +116,9 @@ public:
     /**
      * assign copies of value to device symbol
      */
-    symbol& operator=(const T& value)
+    vector_type& operator=(const value_type& value)
     {
-	host::vector<T> v(size(), value);
+	host::vector<value_type> v(size(), value);
 	memcpy(v);
 	return *this;
     }
@@ -121,7 +126,7 @@ public:
     /**
      * return element count of device symbol vector
      */
-    size_t size() const
+    size_type size() const
     {
 	if (!_size) {
 	    /*
@@ -132,7 +137,7 @@ public:
 	     * exceptions.
 	     */
 	    CUDA_CALL(cudaGetSymbolSize(&_size, reinterpret_cast<const char *>(ptr())));
-	    _size /= sizeof(T);
+	    _size /= sizeof(value_type);
 	}
 
 	return _size;
@@ -143,7 +148,7 @@ public:
     /**
      * returns device pointer to device symbol
      */
-    const T *ptr() const
+    const value_type* ptr() const
     {
 	return _ptr;
     }
