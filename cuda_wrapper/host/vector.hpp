@@ -57,7 +57,7 @@ public:
     /**
      * initialize host vector with copies of value
      */
-    vector(size_type n, const value_type& value = value_type()) : _Base(n, value)
+    vector(size_type size, const value_type& value = value_type()) : _Base(size, value)
     {
     }
 
@@ -92,7 +92,7 @@ public:
     void memcpy(const cuda::vector<value_type>& v)
     {
 	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), v.ptr(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpy(&_Base::front(), v.get(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost));
     }
 
     /**
@@ -101,7 +101,7 @@ public:
     void memcpy(const cuda::symbol<value_type>& symbol)
     {
 	assert(symbol.size() == _Base::size());
-	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.get()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToHost));
     }
 
     /**
@@ -166,7 +166,7 @@ public:
     /**
      * initialize host vector with copies of value
      */
-    vector(size_type n, const value_type& value = value_type()) : _Base(n, value)
+    vector(size_type size, const value_type& value = value_type()) : _Base(size, value)
     {
     }
 
@@ -201,7 +201,7 @@ public:
     void memcpy(const cuda::vector<value_type>& v)
     {
 	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), v.ptr(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpy(&_Base::front(), v.get(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost));
     }
 
     /**
@@ -210,7 +210,7 @@ public:
     void memcpy(const cuda::symbol<value_type>& symbol)
     {
 	assert(symbol.size() == _Base::size());
-	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.ptr()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.get()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToHost));
     }
 
 #ifdef CUDA_WRAPPER_ASYNC_API
@@ -234,7 +234,7 @@ public:
     void memcpy(const cuda::vector<value_type>& v, const stream& stream)
     {
 	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpyAsync(&_Base::front(), v.ptr(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost, stream._stream));
+	CUDA_CALL(cudaMemcpyAsync(&_Base::front(), v.get(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost, stream._stream));
     }
 
 #endif /* CUDA_WRAPPER_ASYNC_API */
