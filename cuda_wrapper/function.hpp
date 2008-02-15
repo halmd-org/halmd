@@ -22,6 +22,7 @@
 #include <cuda_runtime.h>
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/stream.hpp>
 #endif
 
 
@@ -69,7 +70,7 @@ class _function_base
 {
 #ifndef __CUDACC__
 public:
-    /*
+    /**
      * configure execution parameters
      */
     static void configure(const config& dim, size_t shared_mem = 0)
@@ -77,8 +78,24 @@ public:
 	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
     }
 
+    /**
+     * configure execution parameters
+     */
+    static void configure(const config& dim, stream& stream)
+    {
+	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, 0, stream._stream));
+    }
+
+    /**
+     * configure execution parameters
+     */
+    static void configure(const config& dim, size_t shared_mem, stream& stream)
+    {
+	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, stream._stream));
+    }
+
 protected:
-    /*
+    /**
      * push arbitrary argument into argument passing area
      */
     template <typename T>
@@ -95,7 +112,7 @@ protected:
 	*offset += sizeof(T);
     }
 
-    /*
+    /**
      * launch kernel
      */
     template <typename T>
