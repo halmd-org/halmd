@@ -61,7 +61,7 @@ public:
      */
     vector(size_type size)
     {
-	_Base::reserve(size);
+	resize(size);
     }
 
     /**
@@ -69,7 +69,7 @@ public:
      */
     vector(const vector_type& v)
     {
-	_Base::reserve(size);
+	resize(size);
 	memcpy(v);
     }
 
@@ -79,7 +79,7 @@ public:
     template <typename Alloc>
     vector(const host::vector<value_type, Alloc>& v)
     {
-	_Base::reserve(size);
+	resize(size);
 	memcpy(v);
     }
 
@@ -88,7 +88,7 @@ public:
      */
     vector(const symbol<value_type> &v)
     {
-	_Base::reserve(size);
+	resize(size);
 	memcpy(v);
     }
 
@@ -190,6 +190,17 @@ public:
     size_type size() const
     {
 	return _Base::capacity();
+    }
+
+    /**
+     * resize element count of device vector
+     */
+    void resize(size_type size)
+    {
+	// size of vector must always be kept at zero to prevent
+	// initialization of vector elements, so use vector::reserve
+	// in place of vector::resize
+	_Base::reserve(size);
     }
 
     /**
