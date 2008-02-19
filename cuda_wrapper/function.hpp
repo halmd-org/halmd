@@ -78,6 +78,8 @@ public:
 	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
     }
 
+#ifdef CUDA_WRAPPER_ASYNC_API
+
     /**
      * configure execution parameters
      */
@@ -93,6 +95,8 @@ public:
     {
 	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, stream._stream));
     }
+
+#endif /* CUDA_WRAPPER_ASYNC_API */
 
 protected:
     /**
