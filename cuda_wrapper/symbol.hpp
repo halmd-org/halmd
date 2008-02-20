@@ -152,6 +152,12 @@ public:
     {
 	return _ptr;
     }
+
+private:
+    // disable default copy constructor
+    symbol(const vector_type&);
+    // disable default assignment operator
+    vector_type& operator=(const vector_type&);
 };
 
 }
