@@ -1,0 +1,146 @@
+#!/usr/bin/python
+#
+# Render a movie from multiple plot data sets with gnuplot and mencoder
+#
+# Copyright (C) 2008  Peter Colberg
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import os, sys, glob, re, subprocess
+
+
+def error(desc):
+    print >> sys.stderr, '%s: %s.' % (os.path.basename(sys.argv[0]), desc)
+    sys.exit(1)
+
+
+def main():
+    if not sys.argv[1:]:
+        error('Missing gnuplot input file')
+
+    gnuplot_input_fn = sys.argv[1]
+    if not os.path.exists(gnuplot_input_fn):
+        error('Input file `%s\' does not exist' % gnuplot_input_fn)
+
+    # parse gnuplot commands
+    gnuplot_input = open(gnuplot_input_fn, 'r')
+
+    rx = re.compile('^(?P<left>%s)%s(?P<right>.*)$' % (
+        '\s*(?:set\s+(?P<output>output)|(?P<plot>plot)(?:\s+\[.+\])*)\s+',
+        '(?P<quote>[\"\'])(?P<fn>.+)(?P=quote)'))
+
+    gnuplot_commands = []
+    gnuplot_output_fn = None
+    movie_fn = None
+    gnuplot_output_cmd = None
+    gnuplot_data_fn = None
+    gnuplot_plot_cmd = None
+
+    for line in gnuplot_input:
+        m = rx.match(line)
+        if not m:
+            gnuplot_commands.append(line)
+
+        elif m.group('output'):
+            if not gnuplot_output_fn is None:
+                error('Duplicate output command in gnuplot input')
+            tok = os.path.splitext(m.group('fn'))
+            if not tok[1]:
+                error('Missing output filename extension')
+            gnuplot_output_fn = tok[0] + '_%s' + tok[1]
+            movie_fn =  tok[0] + '.avi'
+            gnuplot_output_cmd = m.group('left') + m.group('quote') + \
+                    gnuplot_output_fn + m.group('quote') + m.group('right') + \
+                    '\n'
+
+        elif m.group('plot'):
+            if not gnuplot_data_fn is None:
+                error('Duplicate data file.')
+            gnuplot_data_fn = m.group('fn')
+            gnuplot_plot_cmd = m.group('left') + m.group('quote') + \
+                    m.group('fn') + m.group('quote') + ' index %d ' + \
+                    m.group('right') + '\n'
+
+    gnuplot_input.close()
+
+    # delete old frames
+    old_frames = glob.glob(gnuplot_output_fn % '*')
+    for fn in old_frames:
+        os.unlink(fn)
+
+    # count number of data sets
+    gnuplot_data = open(gnuplot_data_fn, 'r')
+
+    ndatasets = 0
+    dataset = False
+    sep = False
+
+    for line in gnuplot_data:
+        if line[:1] == '\n':
+            if sep:
+                # end of dataset due to encounter of second newline character
+                dataset = False
+            else:
+                # first newline character of a potential dataset separator
+                sep = True
+
+        elif not dataset:
+            # begin of dataset
+            dataset = True
+            ndatasets += 1
+
+    gnuplot_data.close()
+
+    # render frames with gnuplot
+    p = subprocess.Popen(['gnuplot'], stdin=subprocess.PIPE, close_fds=True)
+
+    p.stdin.write(''.join(gnuplot_commands))
+    sys.stdout.write('gnuplot: %6sf' % '')
+    for index in range(ndatasets):
+        p.stdin.write(gnuplot_output_cmd % ('%06d' % index))
+        p.stdin.write(gnuplot_plot_cmd % index)
+        p.stdin.flush()
+
+        # erase previously printed frame number characters
+        sys.stdout.write('\010 \010' * 7)
+        sys.stdout.write('%6df' % index)
+        sys.stdout.flush()
+
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+    p.stdin.close()
+    errno = p.wait()
+    if errno:
+        error('gnuplot exited with error code %d' % errno)
+
+    # render movie with mencoder
+    p = subprocess.Popen(['mencoder',
+        'mf://' + gnuplot_output_fn % '*',
+        '-mf', 'fps=25', '-o', movie_fn, '-ovc', 'lavc',
+        '-lavcopts', 'vcodec=mpeg4', '-nosound'], close_fds=True)
+    errno = p.wait()
+    if errno:
+        error('mencoder exited with error code %d' % errno)
+
+    # delete new frames
+    frames = glob.glob(gnuplot_output_fn % '*')
+    for fn in frames:
+        os.unlink(fn)
+
+
+if __name__ == "__main__":
+    main()
+
+
