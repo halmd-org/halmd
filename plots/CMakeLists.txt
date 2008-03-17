@@ -1,0 +1,14 @@
+CONFIGURE_FILE(
+  ${CMAKE_CURRENT_SOURCE_DIR}/trajectories.gpi
+  ${CMAKE_CURRENT_BINARY_DIR}/trajectories.gpi
+  @ONLY
+)
+
+CONFIGURE_FILE(
+  ${CMAKE_CURRENT_SOURCE_DIR}/gnuplot_movie
+  ${CMAKE_CURRENT_BINARY_DIR}/gnuplot_movie
+  @ONLY
+)
+
+FILE(MAKE_DIRECTORY
+  ${CMAKE_CURRENT_BINARY_DIR}/data)
