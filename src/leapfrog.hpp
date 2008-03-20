@@ -106,6 +106,7 @@ public:
 	    en_kin += v[i] * v[i];
 	}
 
+	v_cm /= r.size();
 	en_kin *= 0.5;
     }
 };
