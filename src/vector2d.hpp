@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VECTOR_HPP
-#define _VECTOR_HPP
+#ifndef _VECTOR2D_HPP
+#define _VECTOR2D_HPP
 
 #include <math.h>
 
@@ -189,4 +189,4 @@ vector2d<double> ceil(const vector2d<double>& v)
 }
 
 
-#endif /* ! _VECTOR_HPP */
+#endif /* ! _VECTOR2D_HPP */
