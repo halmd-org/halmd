@@ -107,7 +107,7 @@ public:
 	}
 
 	v_cm /= r.size();
-	en_kin *= 0.5;
+	en_kin *= 0.5 / r.size();
     }
 };
 

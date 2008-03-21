@@ -121,6 +121,8 @@ public:
 		en_pot += 4. * d_inv_6 * (d_inv_6 - 1.) - en_cut;
 	    }
 	}
+
+	en_pot /= r.size();
     }
 };
 
