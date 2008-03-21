@@ -20,6 +20,9 @@
 #define _RNG_GSL_RNG_HPP
 
 #include <gsl/gsl_rng.h>
+#include <math.h>
+#include "vector2d.hpp"
+#include "vector3d.hpp"
 
 namespace rng
 {
@@ -74,6 +77,45 @@ public:
     double get_uniform()
     {
 	return gsl_rng_uniform(_rng);
+    }
+
+    /**
+     * Generate two-dimensional random unit vector
+     */
+    template <typename T>
+    void get_unit_vector(vector2d<T>& v)
+    {
+	T s = 2. * M_PI * get_uniform();
+	v.x = cos(s);
+	v.y = sin(s);
+    }
+
+    /**
+     * Generate three-dimensional random unit vector
+     *
+     * The following method requires an average of 8/Pi =~ 2.55
+     * uniform random numbers. It is described in
+     *
+     * G. Marsaglia, Choosing a Point from the Surface of a Sphere,
+     * The Annals of Mathematical Statistics, 1972, 43, 645-646
+     *
+     * http://projecteuclid.org/euclid.aoms/1177692644
+     */
+    template <typename T>
+    void get_unit_vector(vector3d<T>& v)
+    {
+	T s;
+
+	do {
+	    v.x = 2. * get_uniform() - 1.;
+	    v.y = 2. * get_uniform() - 1.;
+	    s = v.x * v.x + v.y * v.y;
+	} while (s >= 1.);
+
+	v.z = 1. - 2. * s;
+	s = 2. * sqrt(1. - s);
+	v.x *= s;
+	v.y *= s;
     }
 };
 
