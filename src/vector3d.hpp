@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VECTOR_HPP
-#define _VECTOR_HPP
+#ifndef _VECTOR3D_HPP
+#define _VECTOR3D_HPP
 
 /**
  * Three-dimensional vector
@@ -139,18 +139,18 @@ public:
  * round vector components to nearest integer
  */
 template <typename T>
-vector2d<T> round(const vector2d<T>& v);
+vector3d<T> round(const vector3d<T>& v);
 
 template <>
-vector2d<float> round(const vector2d<float>& v)
+vector3d<float> round(const vector3d<float>& v)
 {
-    return vector2d<float>(roundf(v.x), roundf(v.y));
+    return vector3d<float>(roundf(v.x), roundf(v.y), roundf(v.z));
 }
 
 template <>
-vector2d<double> round(const vector2d<double>& v)
+vector3d<double> round(const vector3d<double>& v)
 {   
-    return vector2d<double>(round(v.x), round(v.y));
+    return vector3d<double>(round(v.x), round(v.y), round(v.z));
 }
 
 
@@ -158,18 +158,18 @@ vector2d<double> round(const vector2d<double>& v)
  * round vector components down to nearest integer
  */
 template <typename T>
-vector2d<T> floor(const vector2d<T>& v);
+vector3d<T> floor(const vector3d<T>& v);
 
 template <>
-vector2d<float> floor(const vector2d<float>& v)
+vector3d<float> floor(const vector3d<float>& v)
 {
-    return vector2d<float>(floorf(v.x), floorf(v.y));
+    return vector3d<float>(floorf(v.x), floorf(v.y), floorf(v.z));
 }
 
 template <>
-vector2d<double> floor(const vector2d<double>& v)
+vector3d<double> floor(const vector3d<double>& v)
 {   
-    return vector2d<double>(floor(v.x), floor(v.y));
+    return vector3d<double>(floor(v.x), floor(v.y), floor(v.z));
 }
 
 
@@ -177,19 +177,19 @@ vector2d<double> floor(const vector2d<double>& v)
  * round vector components up to nearest integer
  */
 template <typename T>
-vector2d<T> ceil(const vector2d<T>& v);
+vector3d<T> ceil(const vector3d<T>& v);
 
 template <>
-vector2d<float> ceil(const vector2d<float>& v)
+vector3d<float> ceil(const vector3d<float>& v)
 {
-    return vector2d<float>(ceilf(v.x), ceilf(v.y));
+    return vector3d<float>(ceilf(v.x), ceilf(v.y), ceilf(v.z));
 }
 
 template <>
-vector2d<double> ceil(const vector2d<double>& v)
+vector3d<double> ceil(const vector3d<double>& v)
 {   
-    return vector2d<double>(ceil(v.x), ceil(v.y));
+    return vector3d<double>(ceil(v.x), ceil(v.y), ceil(v.z));
 }
 
 
-#endif /* ! _VECTOR_HPP */
+#endif /* ! _VECTOR3D_HPP */
