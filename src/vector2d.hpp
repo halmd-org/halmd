@@ -19,7 +19,7 @@
 #ifndef _VECTOR2D_HPP
 #define _VECTOR2D_HPP
 
-#include <math.h>
+#include <cmath>
 
 
 /**
@@ -155,18 +155,9 @@ vector2d<double> round(const vector2d<double>& v)
  * round vector components down to nearest integer
  */
 template <typename T>
-vector2d<T> floor(const vector2d<T>& v);
-
-template <>
-vector2d<float> floor(const vector2d<float>& v)
+vector2d<T> floor(const vector2d<T>& v)
 {
-    return vector2d<float>(floorf(v.x), floorf(v.y));
-}
-
-template <>
-vector2d<double> floor(const vector2d<double>& v)
-{
-    return vector2d<double>(floor(v.x), floor(v.y));
+    return vector2d<T>(std::floor(v.x), std::floor(v.y));
 }
 
 
@@ -174,18 +165,9 @@ vector2d<double> floor(const vector2d<double>& v)
  * round vector components up to nearest integer
  */
 template <typename T>
-vector2d<T> ceil(const vector2d<T>& v);
-
-template <>
-vector2d<float> ceil(const vector2d<float>& v)
+vector2d<T> ceil(const vector2d<T>& v)
 {
-    return vector2d<float>(ceilf(v.x), ceilf(v.y));
-}
-
-template <>
-vector2d<double> ceil(const vector2d<double>& v)
-{
-    return vector2d<double>(ceil(v.x), ceil(v.y));
+    return vector2d<T>(std::ceil(v.x), std::ceil(v.y));
 }
 
 
