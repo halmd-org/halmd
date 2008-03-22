@@ -20,7 +20,7 @@
 #define _RNG_GSL_RNG_HPP
 
 #include <gsl/gsl_rng.h>
-#include <math.h>
+#include <cmath>
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 
@@ -86,8 +86,8 @@ public:
     void get_unit_vector(vector2d<T>& v)
     {
 	T s = 2. * M_PI * get_uniform();
-	v.x = cos(s);
-	v.y = sin(s);
+	v.x = std::cos(s);
+	v.y = std::sin(s);
     }
 
     /**
@@ -113,7 +113,7 @@ public:
 	} while (s >= 1.);
 
 	v.z = 1. - 2. * s;
-	s = 2. * sqrt(1. - s);
+	s = 2. * std::sqrt(1. - s);
 	v.x *= s;
 	v.y *= s;
     }
