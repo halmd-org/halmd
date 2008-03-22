@@ -19,6 +19,9 @@
 #ifndef _VECTOR3D_HPP
 #define _VECTOR3D_HPP
 
+#include <cmath>
+
+
 /**
  * Three-dimensional vector
  */
@@ -158,18 +161,9 @@ vector3d<double> round(const vector3d<double>& v)
  * round vector components down to nearest integer
  */
 template <typename T>
-vector3d<T> floor(const vector3d<T>& v);
-
-template <>
-vector3d<float> floor(const vector3d<float>& v)
-{
-    return vector3d<float>(floorf(v.x), floorf(v.y), floorf(v.z));
-}
-
-template <>
-vector3d<double> floor(const vector3d<double>& v)
+vector3d<T> floor(const vector3d<T>& v)
 {   
-    return vector3d<double>(floor(v.x), floor(v.y), floor(v.z));
+    return vector3d<T>(std::floor(v.x), std::floor(v.y), std::floor(v.z));
 }
 
 
@@ -177,18 +171,9 @@ vector3d<double> floor(const vector3d<double>& v)
  * round vector components up to nearest integer
  */
 template <typename T>
-vector3d<T> ceil(const vector3d<T>& v);
-
-template <>
-vector3d<float> ceil(const vector3d<float>& v)
-{
-    return vector3d<float>(ceilf(v.x), ceilf(v.y), ceilf(v.z));
-}
-
-template <>
-vector3d<double> ceil(const vector3d<double>& v)
+vector3d<T> ceil(const vector3d<T>& v)
 {   
-    return vector3d<double>(ceil(v.x), ceil(v.y), ceil(v.z));
+    return vector3d<T>(std::ceil(v.x), std::ceil(v.y), std::ceil(v.z));
 }
 
 
