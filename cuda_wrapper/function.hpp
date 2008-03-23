@@ -264,6 +264,65 @@ public:
 #endif /* ! __CUDACC__ */
 };
 
+
+/**
+ * CUDA kernel execution wrapper for senary device function
+ */
+template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
+class function<void (T0, T1, T2, T3, T4, T5)> : public _function_base
+{
+protected:
+    typedef void T (T0, T1, T2, T3, T4, T5);
+    T *entry;
+
+public:
+    function(T *entry) : entry(entry) {}
+
+#ifndef __CUDACC__
+    void operator()(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4, T5 x5)
+    {
+	size_t offset = 0;
+	setup_argument(x0, &offset);
+	setup_argument(x1, &offset);
+	setup_argument(x2, &offset);
+	setup_argument(x3, &offset);
+	setup_argument(x4, &offset);
+	setup_argument(x5, &offset);
+	launch(entry);
+    }
+#endif /* ! __CUDACC__ */
+};
+
+
+/**
+ * CUDA kernel execution wrapper for septenary device function
+ */
+template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+class function<void (T0, T1, T2, T3, T4, T5, T6)> : public _function_base
+{
+protected:
+    typedef void T (T0, T1, T2, T3, T4, T5, T6);
+    T *entry;
+
+public:
+    function(T *entry) : entry(entry) {}
+
+#ifndef __CUDACC__
+    void operator()(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4, T5 x5, T6 x6)
+    {
+	size_t offset = 0;
+	setup_argument(x0, &offset);
+	setup_argument(x1, &offset);
+	setup_argument(x2, &offset);
+	setup_argument(x3, &offset);
+	setup_argument(x4, &offset);
+	setup_argument(x5, &offset);
+	setup_argument(x6, &offset);
+	launch(entry);
+    }
+#endif /* ! __CUDACC__ */
+};
+
 }
 
 #endif /* ! CUDA_FUNCTION_HPP */
