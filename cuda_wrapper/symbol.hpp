@@ -83,7 +83,7 @@ public:
     void memcpy(const host::vector<value_type>& v)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(get()), &v.front(), v.size() * sizeof(value_type), 0, cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(operator&()), &v.front(), v.size() * sizeof(value_type), 0, cudaMemcpyHostToDevice));
     }
 
     /**
@@ -92,7 +92,7 @@ public:
     void memcpy(const vector<value_type>& v)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(get()), v.get(), v.size() * sizeof(value_type), 0, cudaMemcpyDeviceToDevice));
+	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(operator&()), v.operator&(), v.size() * sizeof(value_type), 0, cudaMemcpyDeviceToDevice));
     }
 
     /**
@@ -136,7 +136,7 @@ public:
 	     * which does not support C++ runtime functionality, e.g.
 	     * exceptions.
 	     */
-	    CUDA_CALL(cudaGetSymbolSize(&_size, reinterpret_cast<const char *>(get())));
+	    CUDA_CALL(cudaGetSymbolSize(&_size, reinterpret_cast<const char *>(operator&())));
 	    _size /= sizeof(value_type);
 	}
 
@@ -148,7 +148,7 @@ public:
     /**
      * returns device pointer to device symbol
      */
-    const value_type* get() const
+    const value_type* operator&() const
     {
 	return _ptr;
     }
