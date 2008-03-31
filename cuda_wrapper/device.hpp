@@ -81,7 +81,7 @@ public:
 	/**
 	 * ASCII string identifying the device
 	 */
-	string name()
+	std::string name()
 	{
 	    return prop.name;
 	}
