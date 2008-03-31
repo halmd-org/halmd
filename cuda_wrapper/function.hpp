@@ -46,17 +46,17 @@ public:
 	/* FIXME store useful numbers (no. of threads per grid/block) */
     }
 
-    int threads() const
+    size_t threads() const
     {
 	return grid.y * grid.x * block.z * block.y * block.x;
     }
 
-    int blocks_per_grid() const
+    size_t blocks_per_grid() const
     {
 	return grid.y * grid.x;
     }
 
-    int threads_per_block() const
+    size_t threads_per_block() const
     {
 	return block.z * block.y * block.x;
     }
