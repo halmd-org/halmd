@@ -127,7 +127,7 @@ public:
     {
 	state_type state;
 	rng.save(state);
-	os << state.x << " " << state.y << " " << state.z;
+	os << state.x << " " << state.y << " " << state.z << " ";
 	return os;
     }
 
@@ -137,7 +137,7 @@ public:
     friend std::istream& operator>>(std::istream& is, rand48<T>& rng)
     {
 	state_type state;
-	is >> state.x >> std::ws >> state.y >> std::ws >> state.z;
+	is >> state.x >> state.y >> state.z;
 	rng.restore(state);
 	return is;
     }
