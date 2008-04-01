@@ -87,10 +87,11 @@ public:
     /**
      * save generator state to memory
      */
-    void save(state_type& mem, cuda::stream& stream)
+    void save(state_type& mem)
     {
 	cuda::vector<ushort3> dbuffer(1);
 	cuda::host::vector<ushort3> hbuffer(1);
+	cuda::stream stream;
 
 	gpu::rand48<T>::save.configure(dim, stream);
 	gpu::rand48<T>::save(&state, &dbuffer);
@@ -103,10 +104,11 @@ public:
     /**
      * restore generator state from memory
      */
-    void restore(const state_type& mem, cuda::stream& stream)
+    void restore(const state_type& mem)
     {
 	cuda::vector<uint3> A(1);
 	cuda::vector<uint3> C(1);
+	cuda::stream stream;
 
 	gpu::rand48<T>::restore.configure(dim, stream);
 	gpu::rand48<T>::restore(&state, &A, &C, mem);
@@ -124,9 +126,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, rand48<T>& rng)
     {
 	state_type state;
-	cuda::stream stream;
-
-	rng.save(state, stream);
+	rng.save(state);
 	os << state.x << " " << state.y << " " << state.z;
 	return os;
     }
@@ -137,10 +137,8 @@ public:
     friend std::istream& operator>>(std::istream& is, rand48<T>& rng)
     {
 	state_type state;
-	cuda::stream stream;
-
 	is >> state.x >> std::ws >> state.y >> std::ws >> state.z;
-	rng.restore(state, stream);
+	rng.restore(state);
 	return is;
     }
 };
