@@ -27,6 +27,7 @@
 #include <cuda_wrapper/vector.hpp>
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/stream.hpp>
+#include <cuda_wrapper/function.hpp>
 
 namespace cuda
 {
@@ -58,6 +59,13 @@ public:
      * initialize host vector with copies of value
      */
     vector(size_type size, const value_type& value = value_type()) : _Base(size, value)
+    {
+    }
+
+    /**
+     * initialize host vector with copies of value
+     */
+    vector(config dim, const value_type& value = value_type()) : _Base(dim.threads(), value)
     {
     }
 

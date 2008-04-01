@@ -24,6 +24,7 @@
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/host/vector.hpp>
 #include <cuda_wrapper/stream.hpp>
+#include <cuda_wrapper/function.hpp>
 #include <vector>
 #include <assert.h>
 
@@ -62,6 +63,14 @@ public:
     vector(size_type size)
     {
 	resize(size);
+    }
+
+    /**
+     * initialize device vector of given size
+     */
+    vector(config dim)
+    {
+	resize(dim.threads());
     }
 
     /**
