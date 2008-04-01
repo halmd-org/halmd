@@ -234,27 +234,18 @@ namespace mdsim { namespace gpu
 {
 
 #ifdef DIM_3D
-
-symbol<uint3> rand48<float3>::a(::rand48::a);
-symbol<uint3> rand48<float3>::c(::rand48::c);
-
-function<void (ushort3*, uint3*, uint3*, unsigned int)> rand48<float3>::init(::rand48::init);
-function<void (ushort3*, ushort3*)> rand48<float3>::save(::rand48::save);
-function<void (ushort3*, uint3*, uint3*, ushort3)> rand48<float3>::restore(::rand48::restore);
-function<void (ushort3*, float*, unsigned int)> rand48<float3>::get_uniform(::rand48::get_uniform);
-function<void (ushort3*, float3*, unsigned int)> rand48<float3>::get_unit_vector(::rand48::get_unit_vector);
-
+# define T float3
 #else
-
-symbol<uint3> rand48<float2>::a(::rand48::a);
-symbol<uint3> rand48<float2>::c(::rand48::c);
-
-function<void (ushort3*, uint3*, uint3*, unsigned int)> rand48<float2>::init(::rand48::init);
-function<void (ushort3*, ushort3*)> rand48<float2>::save(::rand48::save);
-function<void (ushort3*, uint3*, uint3*, ushort3)> rand48<float2>::restore(::rand48::restore);
-function<void (ushort3*, float*, unsigned int)> rand48<float2>::get_uniform(::rand48::get_uniform);
-function<void (ushort3*, float2*, unsigned int)> rand48<float2>::get_unit_vector(::rand48::get_unit_vector);
-
+# define T float2
 #endif
+
+symbol<uint3> rand48<T>::a(::rand48::a);
+symbol<uint3> rand48<T>::c(::rand48::c);
+
+function<void (ushort3*, uint3*, uint3*, unsigned int)> rand48<T>::init(::rand48::init);
+function<void (ushort3*, ushort3*)> rand48<T>::save(::rand48::save);
+function<void (ushort3*, uint3*, uint3*, ushort3)> rand48<T>::restore(::rand48::restore);
+function<void (ushort3*, float*, unsigned int)> rand48<T>::get_uniform(::rand48::get_uniform);
+function<void (ushort3*, T*, unsigned int)> rand48<T>::get_unit_vector(::rand48::get_unit_vector);
 
 }} // namespace mdsim::gpu
