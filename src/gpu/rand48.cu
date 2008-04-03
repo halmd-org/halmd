@@ -200,7 +200,7 @@ __global__ void restore(ushort3 *x, uint3 *a, uint3 *c, ushort3 state)
 /**
  * fill array with uniform random numbers
  */
-__global__ void get_uniform(ushort3* state, float* v, unsigned int count)
+__global__ void uniform(ushort3* state, float* v, unsigned int count)
 {
     ushort3 x = state[GTID];
     int k;
@@ -217,7 +217,7 @@ __global__ void get_uniform(ushort3* state, float* v, unsigned int count)
  * fill array with n-dimensional random unit vectors
  */
 template <typename T>
-__global__ void get_unit_vector(ushort3* state, T* v, unsigned int count)
+__global__ void unit_vector(ushort3* state, T* v, unsigned int count)
 {
     ushort3 x = state[GTID];
     int k;
@@ -235,19 +235,14 @@ __global__ void get_unit_vector(ushort3* state, T* v, unsigned int count)
 namespace mdsim { namespace gpu
 {
 
-#ifdef DIM_3D
-# define T float3
-#else
-# define T float2
-#endif
+symbol<uint3> rand48::a(::rand48::a);
+symbol<uint3> rand48::c(::rand48::c);
 
-symbol<uint3> rand48<T>::a(::rand48::a);
-symbol<uint3> rand48<T>::c(::rand48::c);
-
-function<void (ushort3*, uint3*, uint3*, unsigned int)> rand48<T>::init(::rand48::init);
-function<void (ushort3*, ushort3*)> rand48<T>::save(::rand48::save);
-function<void (ushort3*, uint3*, uint3*, ushort3)> rand48<T>::restore(::rand48::restore);
-function<void (ushort3*, float*, unsigned int)> rand48<T>::get_uniform(::rand48::get_uniform);
-function<void (ushort3*, T*, unsigned int)> rand48<T>::get_unit_vector(::rand48::get_unit_vector);
+function<void (ushort3*, uint3*, uint3*, unsigned int)> rand48::init(::rand48::init);
+function<void (ushort3*, ushort3*)> rand48::save(::rand48::save);
+function<void (ushort3*, uint3*, uint3*, ushort3)> rand48::restore(::rand48::restore);
+function<void (ushort3*, float*, unsigned int)> rand48::uniform(::rand48::uniform);
+function<void (ushort3*, float2*, unsigned int)> rand48::unit_vector_2d(::rand48::unit_vector);
+function<void (ushort3*, float3*, unsigned int)> rand48::unit_vector_3d(::rand48::unit_vector);
 
 }} // namespace mdsim::gpu

@@ -29,7 +29,6 @@ namespace mdsim
 /**
  * parallelized rand48 random number generator for CUDA
  */
-template <typename T>
 class rand48
 {
 public:
@@ -42,7 +41,7 @@ protected:
     cuda::vector<ushort3> state;
 
 public:
-    rand48<T>(cuda::config dim) : dim(dim), state(dim.threads())
+    rand48(cuda::config dim) : dim(dim), state(dim.threads())
     {
     }
 
@@ -54,34 +53,44 @@ public:
 	cuda::vector<uint3> A(1);
 	cuda::vector<uint3> C(1);
 
-	gpu::rand48<T>::init.configure(dim, stream);
-	gpu::rand48<T>::init(&state, &A, &C, seed);
+	gpu::rand48::init.configure(dim, stream);
+	gpu::rand48::init(&state, &A, &C, seed);
 	stream.synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
-	gpu::rand48<T>::a = A;
+	gpu::rand48::a = A;
 	// copy leapfrogging addend into constant device memory
-	gpu::rand48<T>::c = C;
+	gpu::rand48::c = C;
     }
 
     /**
      * fill array with uniform random numbers
      */
-    void get_uniform(cuda::vector<float>& v, cuda::stream& stream)
+    void uniform(cuda::vector<float>& v, cuda::stream& stream)
     {
 	assert(v.size() == dim.threads());
-	gpu::rand48<T>::get_uniform.configure(dim, stream);
-	gpu::rand48<T>::get_uniform(&state, &v, 1);
+	gpu::rand48::uniform.configure(dim, stream);
+	gpu::rand48::uniform(&state, &v, 1);
+    }
+
+    /**
+     * fill array with 2-dimensional random unit vectors
+     */
+    void unit_vector(cuda::vector<float2>& v, cuda::stream& stream)
+    {
+	assert(v.size() == dim.threads());
+	gpu::rand48::unit_vector_2d.configure(dim, stream);
+	gpu::rand48::unit_vector_2d(&state, &v, 1);
     }
 
     /**
      * fill array with n-dimensional random unit vectors
      */
-    void get_unit_vector(cuda::vector<T>& v, cuda::stream& stream)
+    void unit_vector(cuda::vector<float3>& v, cuda::stream& stream)
     {
 	assert(v.size() == dim.threads());
-	gpu::rand48<T>::get_unit_vector.configure(dim, stream);
-	gpu::rand48<T>::get_unit_vector(&state, &v, 1);
+	gpu::rand48::unit_vector_3d.configure(dim, stream);
+	gpu::rand48::unit_vector_3d(&state, &v, 1);
     }
 
     /**
@@ -93,8 +102,8 @@ public:
 	cuda::host::vector<ushort3> hbuffer(1);
 	cuda::stream stream;
 
-	gpu::rand48<T>::save.configure(dim, stream);
-	gpu::rand48<T>::save(&state, &dbuffer);
+	gpu::rand48::save.configure(dim, stream);
+	gpu::rand48::save(&state, &dbuffer);
 	hbuffer.memcpy(dbuffer, stream);
 	stream.synchronize();
 
@@ -110,20 +119,20 @@ public:
 	cuda::vector<uint3> C(1);
 	cuda::stream stream;
 
-	gpu::rand48<T>::restore.configure(dim, stream);
-	gpu::rand48<T>::restore(&state, &A, &C, mem);
+	gpu::rand48::restore.configure(dim, stream);
+	gpu::rand48::restore(&state, &A, &C, mem);
 	stream.synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
-	gpu::rand48<T>::a = A;
+	gpu::rand48::a = A;
 	// copy leapfrogging addend into constant device memory
-	gpu::rand48<T>::c = C;
+	gpu::rand48::c = C;
     }
 
     /**
      * save generator state to text-mode output stream
      */
-    friend std::ostream& operator<<(std::ostream& os, rand48<T>& rng)
+    friend std::ostream& operator<<(std::ostream& os, rand48& rng)
     {
 	state_type state;
 	rng.save(state);
@@ -134,7 +143,7 @@ public:
     /**
      * restore generator state from text-mode input stream
      */
-    friend std::istream& operator>>(std::istream& is, rand48<T>& rng)
+    friend std::istream& operator>>(std::istream& is, rand48& rng)
     {
 	state_type state;
 	is >> state.x >> state.y >> state.z;

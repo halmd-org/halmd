@@ -24,7 +24,6 @@
 namespace mdsim { namespace gpu
 {
 
-template <typename T>
 class rand48
 {
 public:
@@ -34,8 +33,9 @@ public:
     static cuda::function<void (ushort3*, uint3*, uint3*, unsigned int)> init;
     static cuda::function<void (ushort3*, ushort3*)> save;
     static cuda::function<void (ushort3*, uint3*, uint3*, ushort3)> restore;
-    static cuda::function<void (ushort3*, float*, unsigned int)> get_uniform;
-    static cuda::function<void (ushort3*, T*, unsigned int)> get_unit_vector;
+    static cuda::function<void (ushort3*, float*, unsigned int)> uniform;
+    static cuda::function<void (ushort3*, float2*, unsigned int)> unit_vector_2d;
+    static cuda::function<void (ushort3*, float3*, unsigned int)> unit_vector_3d;
 };
 
 }} // namespace mdsim::gpu
