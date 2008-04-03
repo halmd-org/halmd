@@ -50,11 +50,13 @@ __inline__ __device__ T muladd(uint3 a, T b, uint3 c)
     T r;
 
     //
-    // On a POSIX.2001 compatible platform, multiplying two 16-bit integers
-    // results in promotion to 32-bit integers before the multiplication.
-    // The CUDA device compiler, however, does not perform integer
-    // promotion. Therefore, we have to force conversion to 32-bit integers
-    // by using a 32-bit integer type for at least one of the operands.
+    // With a C compiler following the ISO/IEC 9899:1999 standard
+    // (described in section 6.3 Conversions), multiplying two 16-bit
+    // integers results in promotion to 32-bit integers before the
+    // multiplication. The CUDA PTX compiler, however, does not perform
+    // integer promotion. Therefore, we have to force conversion to
+    // 32-bit integers by using a 32-bit integer type for at least one
+    // of the operands.
     //
     // Note that in order to enforce such an integer promotion, it does
     // *not* suffice to add a 32-bit register variable and then assign
