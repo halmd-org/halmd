@@ -122,6 +122,15 @@ __device__ float3& operator/=(float3& v, const float& s)
 
 
 /**
+ * equality comparison operator
+ */
+__device__ bool operator==(const float3& v, const float3& w)
+{   
+    return (v.x == w.x && v.y == w.y && v.z == w.z) ? true : false;
+}
+
+
+/**
  * returns vector with components set to given scalar
  */
 template <typename T>
