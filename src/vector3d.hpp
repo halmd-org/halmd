@@ -21,6 +21,7 @@
 
 #include <math.h>
 #include <cuda/vector_types.h>
+#include <cuda/vector_functions.h>
 
 
 /**
@@ -62,6 +63,14 @@ public:
      */
     vector3d(const float& x, const float& y, const float& z) : x(x), y(y), z(z)
     {
+    }
+
+    /**
+     * conversion to CUDA vector type
+     */
+    float3 floatn() const
+    {
+	return make_float3(x, y, z);
     }
 
     /**
