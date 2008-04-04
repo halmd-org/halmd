@@ -21,6 +21,7 @@
 
 #include <math.h>
 #include <cuda/vector_types.h>
+#include <cuda/vector_functions.h>
 
 
 /**
@@ -62,6 +63,14 @@ public:
      */
     vector2d(const float& x, const float& y) : x(x), y(y)
     {
+    }
+
+    /**
+     * conversion to CUDA vector type
+     */
+    float2 floatn() const
+    {
+	return make_float2(x, y);
     }
 
     /**
@@ -225,7 +234,6 @@ public:
     {
 	return vector2d(floorf(v.x), floorf(v.y));
     }
-
 
     /**
      * componentwise round to nearest integer not less argument
