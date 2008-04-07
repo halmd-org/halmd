@@ -60,7 +60,7 @@ public:
     /**
      * dimension of vector space
      */
-    unsigned int dim() const
+    static unsigned int dim()
     {
 	return 3;
     }
