@@ -19,7 +19,7 @@
 #ifndef MDSIM_VECTOR3D_HPP
 #define MDSIM_VECTOR3D_HPP
 
-#include <cmath>
+#include <math.h>
 
 
 /**
@@ -32,7 +32,7 @@ public:
     T x, y, z;
 
 public:
-    vector3d<T>()
+    vector3d()
     {
     }
 
@@ -170,38 +170,79 @@ public:
     {
 	return vector3d<T>(x / s, y / s, z / s);
     }
-
-    /**
-     * componentwise round to nearest integer
-     */
-    friend vector3d<T> rint(const vector3d<T>& v)
-    {
-	return vector3d<T>(rint(v.x), rint(v.y), rint(v.z));
-    }
-
-    /*
-     * componentwise round to nearest integer, away from zero
-     */
-    friend vector3d<T> round(const vector3d<T>& v)
-    {
-	return vector3d<T>(round(v.x), round(v.y), round(v.z));
-    }
-
-    /**
-     * componentwise round to nearest integer not greater than argument
-     */
-    friend vector3d<T> floor(const vector3d<T>& v)
-    {   
-	return vector3d<T>(floor(v.x), floor(v.y), floor(v.z));
-    }
-
-    /**
-     * componentwise round to nearest integer not less argument
-     */
-    friend vector3d<T> ceil(const vector3d<T>& v)
-    {   
-	return vector3d<T>(ceil(v.x), ceil(v.y), ceil(v.z));
-    }
 };
+
+
+/**
+ * componentwise round to nearest integer
+ */
+template <typename T>
+vector3d<T> rint(const vector3d<T>& v);
+
+template <>
+vector3d<float> rint(const vector3d<float>& v)
+{
+    return vector3d<float>(rintf(v.x), rintf(v.y), rintf(v.z));
+}
+
+template <>
+vector3d<double> rint(const vector3d<double>& v)
+{
+    return vector3d<double>(rint(v.x), rint(v.y), rint(v.z));
+}
+
+/**
+ * componentwise round to nearest integer, away from zero
+ */
+template <typename T>
+vector3d<T> round(const vector3d<T>& v);
+
+template <>
+vector3d<float> round(const vector3d<float>& v)
+{
+    return vector3d<float>(roundf(v.x), roundf(v.y), roundf(v.z));
+}
+
+template <>
+vector3d<double> round(const vector3d<double>& v)
+{
+    return vector3d<double>(round(v.x), round(v.y), round(v.z));
+}
+
+/**
+ * componentwise round to nearest integer not greater than argument
+ */
+template <typename T>
+vector3d<T> floor(const vector3d<T>& v);
+
+template <>
+vector3d<float> floor(const vector3d<float>& v)
+{   
+    return vector3d<float>(floorf(v.x), floorf(v.y), floorf(v.z));
+}
+
+template <>
+vector3d<double> floor(const vector3d<double>& v)
+{   
+    return vector3d<double>(floor(v.x), floor(v.y), floor(v.z));
+}
+
+/**
+ * componentwise round to nearest integer not less argument
+ */
+template <typename T>
+vector3d<T> ceil(const vector3d<T>& v);
+
+template <>
+vector3d<float> ceil(const vector3d<float>& v)
+{   
+    return vector3d<float>(ceilf(v.x), ceilf(v.y), ceilf(v.z));
+}
+
+template <>
+vector3d<double> ceil(const vector3d<double>& v)
+{   
+    return vector3d<double>(ceil(v.x), ceil(v.y), ceil(v.z));
+}
 
 #endif /* ! MDSIM_VECTOR3D_HPP */
