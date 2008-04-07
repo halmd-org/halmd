@@ -1,4 +1,4 @@
-/* Two-dimensional vector
+/* 2-dimensional floating-point vector
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VECTOR2D_HPP
-#define _VECTOR2D_HPP
+#ifndef MDSIM_VECTOR2D_HPP
+#define MDSIM_VECTOR2D_HPP
 
 #include <cmath>
 
 
 /**
- * Two-dimensional vector
+ * 2-dimensional floating-point vector
  */
 template <typename T>
 class vector2d
@@ -31,34 +31,42 @@ class vector2d
 public:
     T x, y;
 
-    /**
-     * default constructor
-     */
+public:
     vector2d()
     {
     }
 
     /**
-     * copy constructor
+     * initialization by vector
      */
     vector2d(const vector2d<T>& v) : x(v.x), y(v.y)
     {
     }
 
     /**
-     * value constructor
+     * initialization by scalar
+     */
+    vector2d(const T& s) : x(s), y(s)
+    {
+    }
+
+    /**
+     * initialization by scalar components
      */
     vector2d(const T& x, const T& y) : x(x), y(y)
     {
     }
 
-    size_t size() const
+    /**
+     * dimension of vector space
+     */
+    unsigned int dim() const
     {
 	return 2;
     }
 
     /**
-     * assignment operator
+     * assignment by vector
      */
     vector2d<T>& operator=(const vector2d<T>& v)
     {
@@ -67,6 +75,9 @@ public:
 	return *this;
     }
 
+    /**
+     * assignment by scalar
+     */
     vector2d<T>& operator=(const T& s)
     {
 	x = s;
@@ -74,6 +85,9 @@ public:
 	return *this;
     }
 
+    /**
+     * assignment by componentwise vector addition
+     */
     vector2d<T>& operator+=(const vector2d<T>& v)
     {
 	x += v.x;
@@ -81,6 +95,9 @@ public:
 	return *this;
     }
 
+    /**
+     * assignment by componentwise vector subtraction
+     */
     vector2d<T>& operator-=(const vector2d<T>& v)
     {
 	x -= v.x;
@@ -88,6 +105,9 @@ public:
 	return *this;
     }
 
+    /**
+     * assignment by scalar multiplication
+     */
     vector2d<T>& operator*=(const T& s)
     {
 	x *= s;
@@ -95,6 +115,9 @@ public:
 	return *this;
     }
 
+    /**
+     * assignment by scalar division
+     */
     vector2d<T>& operator/=(const T& s)
     {
 	x /= s;
@@ -102,73 +125,77 @@ public:
 	return *this;
     }
 
+    /**
+     * componentwise vector addition
+     */
     vector2d<T> operator+(const vector2d<T>& v) const
     {
 	return vector2d<T>(x + v.x, y + v.y);
     }
 
+    /**
+     * componentwise vector subtraction
+     */
     vector2d<T> operator-(const vector2d<T>& v) const
     {
 	return vector2d<T>(x - v.x, y - v.y);
     }
 
+    /**
+     * scalar product
+     */
+    T operator*(const vector2d<T>& v) const
+    {
+	return x * v.x + y * v.y;
+    }
+
+    /**
+     * scalar multiplication
+     */
     vector2d<T> operator*(const T& s) const
     {
 	return vector2d<T>(x * s, y * s);
     }
 
+    /**
+     * scalar division
+     */
     vector2d<T> operator/(const T& s) const
     {
 	return vector2d<T>(x / s, y / s);
     }
 
     /**
-     * dot product
+     * componentwise round to nearest integer
      */
-    T operator*(const vector2d<T>& v) const
+    friend vector2d<T> rint(const vector2d<T>& v)
     {
-	return x * v.x + y * v.y;
+	return vector2d<T>(rint(v.x), rint(v.y));
+    }
+
+    /**
+     * componentwise round to nearest integer, away from zero
+     */
+    friend vector2d<T> round(const vector2d<T>& v)
+    {
+	return vector2d<T>(round(v.x), round(v.y));
+    }
+
+    /**
+     * componentwise round to nearest integer not greater than argument
+     */
+    friend vector2d<T> floor(const vector2d<T>& v)
+    {
+	return vector2d<T>(floor(v.x), floor(v.y));
+    }
+
+    /**
+     * componentwise round to nearest integer not less argument
+     */
+    friend vector2d<T> ceil(const vector2d<T>& v)
+    {
+	return vector2d<T>(ceil(v.x), ceil(v.y));
     }
 };
 
-
-/**
- * round vector components to nearest integer
- */
-template <typename T>
-vector2d<T> round(const vector2d<T>& v);
-
-template <>
-vector2d<float> round(const vector2d<float>& v)
-{
-    return vector2d<float>(roundf(v.x), roundf(v.y));
-}
-
-template <>
-vector2d<double> round(const vector2d<double>& v)
-{
-    return vector2d<double>(round(v.x), round(v.y));
-}
-
-
-/**
- * round vector components down to nearest integer
- */
-template <typename T>
-vector2d<T> floor(const vector2d<T>& v)
-{
-    return vector2d<T>(std::floor(v.x), std::floor(v.y));
-}
-
-
-/**
- * round vector components up to nearest integer
- */
-template <typename T>
-vector2d<T> ceil(const vector2d<T>& v)
-{
-    return vector2d<T>(std::ceil(v.x), std::ceil(v.y));
-}
-
-
-#endif /* ! _VECTOR2D_HPP */
+#endif /* ! MDSIM_VECTOR2D_HPP */
