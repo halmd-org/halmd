@@ -19,7 +19,7 @@
 #ifndef MDSIM_VECTOR2D_HPP
 #define MDSIM_VECTOR2D_HPP
 
-#include <cmath>
+#include <math.h>
 
 
 /**
@@ -164,38 +164,79 @@ public:
     {
 	return vector2d<T>(x / s, y / s);
     }
-
-    /**
-     * componentwise round to nearest integer
-     */
-    friend vector2d<T> rint(const vector2d<T>& v)
-    {
-	return vector2d<T>(rint(v.x), rint(v.y));
-    }
-
-    /**
-     * componentwise round to nearest integer, away from zero
-     */
-    friend vector2d<T> round(const vector2d<T>& v)
-    {
-	return vector2d<T>(round(v.x), round(v.y));
-    }
-
-    /**
-     * componentwise round to nearest integer not greater than argument
-     */
-    friend vector2d<T> floor(const vector2d<T>& v)
-    {
-	return vector2d<T>(floor(v.x), floor(v.y));
-    }
-
-    /**
-     * componentwise round to nearest integer not less argument
-     */
-    friend vector2d<T> ceil(const vector2d<T>& v)
-    {
-	return vector2d<T>(ceil(v.x), ceil(v.y));
-    }
 };
+
+
+/**
+ * componentwise round to nearest integer
+ */
+template <typename T>
+vector2d<T> rint(const vector2d<T>& v);
+
+template <>
+vector2d<float> rint(const vector2d<float>& v)
+{
+    return vector2d<float>(rintf(v.x), rintf(v.y));
+}
+
+template <>
+vector2d<double> rint(const vector2d<double>& v)
+{
+    return vector2d<double>(rint(v.x), rint(v.y));
+}
+
+/**
+ * componentwise round to nearest integer, away from zero
+ */
+template <typename T>
+vector2d<T> round(const vector2d<T>& v);
+
+template <>
+vector2d<float> round(const vector2d<float>& v)
+{
+    return vector2d<float>(roundf(v.x), roundf(v.y));
+}
+
+template <>
+vector2d<double> round(const vector2d<double>& v)
+{
+    return vector2d<double>(round(v.x), round(v.y));
+}
+
+/**
+ * componentwise round to nearest integer not greater than argument
+ */
+template <typename T>
+vector2d<T> floor(const vector2d<T>& v);
+
+template <>
+vector2d<float> floor(const vector2d<float>& v)
+{
+    return vector2d<float>(floorf(v.x), floorf(v.y));
+}
+
+template <>
+vector2d<double> floor(const vector2d<double>& v)
+{
+    return vector2d<double>(floor(v.x), floor(v.y));
+}
+
+/**
+ * componentwise round to nearest integer not less argument
+ */
+template <typename T>
+vector2d<T> ceil(const vector2d<T>& v);
+
+template <>
+vector2d<float> ceil(const vector2d<float>& v)
+{
+    return vector2d<float>(ceilf(v.x), ceilf(v.y));
+}
+
+template <>
+vector2d<double> ceil(const vector2d<double>& v)
+{
+    return vector2d<double>(ceil(v.x), ceil(v.y));
+}
 
 #endif /* ! MDSIM_VECTOR2D_HPP */
