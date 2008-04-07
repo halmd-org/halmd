@@ -16,18 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _RNG_GSL_RNG_HPP
-#define _RNG_GSL_RNG_HPP
+#ifndef MDSIM_RNG_GSL_HPP
+#define MDSIM_RNG_GSL_HPP
 
 #include <gsl/gsl_rng.h>
 #include <cmath>
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 
-namespace rng
-{
 
-namespace gsl
+namespace rng { namespace gsl
 {
 
 template <const gsl_rng_type*& rng_type>
@@ -64,51 +62,60 @@ public:
 	return *this;
     }
 
+    /**
+     * initialize generator with integer seed
+     */
     void set(unsigned long int seed)
     {
 	gsl_rng_set(_rng, seed);
     }
 
+    /**
+     * generate random integer in generator-dependent interval
+     */
     unsigned int get()
     {
 	return gsl_rng_get(_rng);
     }
 
-    double get_uniform()
+    /**
+     * generate random uniform number
+     */
+    double uniform()
     {
 	return gsl_rng_uniform(_rng);
     }
 
     /**
-     * Generate two-dimensional random unit vector
+     * generate 2-dimensional random unit vector
      */
-    template <typename T>
-    void get_unit_vector(vector2d<T>& v)
+    void unit_vector(vector2d<double>& v)
     {
-	T s = 2. * M_PI * get_uniform();
+	double s = 2. * M_PI * uniform();
 	v.x = std::cos(s);
 	v.y = std::sin(s);
     }
 
     /**
-     * Generate three-dimensional random unit vector
-     *
-     * The following method requires an average of 8/Pi =~ 2.55
-     * uniform random numbers. It is described in
-     *
-     * G. Marsaglia, Choosing a Point from the Surface of a Sphere,
-     * The Annals of Mathematical Statistics, 1972, 43, 645-646
-     *
-     * http://projecteuclid.org/euclid.aoms/1177692644
+     * generate 3-dimensional random unit vector
      */
-    template <typename T>
-    void get_unit_vector(vector3d<T>& v)
+    void unit_vector(vector3d<double>& v)
     {
-	T s;
+	//
+	// The following method requires an average of 8/Pi =~ 2.55
+	// uniform random numbers. It is described in
+	//
+	// G. Marsaglia, Choosing a Point from the Surface of a Sphere,
+	// The Annals of Mathematical Statistics, 1972, 43, 645-646
+	//
+	// http://projecteuclid.org/euclid.aoms/1177692644#
+	//
+
+	double s;
 
 	do {
-	    v.x = 2. * get_uniform() - 1.;
-	    v.y = 2. * get_uniform() - 1.;
+	    v.x = 2. * uniform() - 1.;
+	    v.y = 2. * uniform() - 1.;
 	    s = v.x * v.x + v.y * v.y;
 	} while (s >= 1.);
 
@@ -183,8 +190,6 @@ typedef rng<gsl_rng_vax> vax;
 typedef rng<gsl_rng_waterman14> waterman14;
 typedef rng<gsl_rng_zuf> zuf;
 
-}
+}} // namespace rng::gsl
 
-}
-
-#endif /* ! _RNG_GSL_RNG_HPP */
+#endif /* ! MDSIM_RNG_GSL_HPP */
