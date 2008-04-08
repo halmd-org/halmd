@@ -28,6 +28,21 @@ namespace mdsim
 {
 
 /**
+ * MD simulation particle
+ */
+template <typename V>
+struct particle
+{
+    /** n-dimensional particle coordinates */
+    V pos;
+    /** n-dimensional particle velocity */
+    V vel;
+    /** n-dimensional force acting upon particle */
+    V force;
+};
+
+
+/**
  * Simulate a Lennard-Jones fluid with naive N-squared algorithm
  */
 template <typename V>
@@ -35,13 +50,9 @@ class ljfluid_base
 {
 protected:
     /** number of particles in periodic box */
-    size_t N;
-    /** n-dimensional particle coordinates */
-    std::vector<V> pos;
-    /** n-dimensional particle velocities */
-    std::vector<V> vel;
-    /** n-dimensional particles forces */
-    std::vector<V> force;
+    size_t npart;
+    /** particles */
+    std::vector<particle<V> > part;
 
     /** particles per n-dimensional volume */
     double density_;
@@ -61,7 +72,7 @@ public:
     /**
      * initialize Lennard-Jones fluid with given particle number
      */
-    ljfluid_base(size_t N) : N(N), pos(N), vel(N), force(N)
+    ljfluid_base(size_t npart) : npart(npart), part(npart)
     {
 	// fixed cutoff distance for shifted Lennard-Jones potential
 	// Frenkel
@@ -83,7 +94,7 @@ public:
      */
     size_t particles() const
     {
-	return N;
+	return npart;
     }
 
     /**
@@ -127,8 +138,8 @@ public:
      */
     void trajectories(std::ostream& os)
     {
-	for (size_t i = 0; i < N; i++) {
-	    os << i + 1 << "\t" << pos[i] << "\t" << vel[i] << std::endl;
+	for (size_t i = 0; i < npart; i++) {
+	    os << i + 1 << "\t" << part[i].pos << "\t" << part[i].vel << std::endl;
 	}
 	os << std::endl << std::endl;
     }
@@ -139,13 +150,13 @@ private:
      */
     void leapfrog_half()
     {
-	for (size_t i = 0; i < N; i++) {
+	for (size_t i = 0; i < npart; i++) {
 	    // half step velocity
-	    vel[i] += force[i] * (timestep_ / 2.);
+	    part[i].vel += part[i].force * (timestep_ / 2.);
 	    // full step coordinates
-	    pos[i] += vel[i] * timestep_;
+	    part[i].pos += part[i].vel * timestep_;
 	    // enforce periodic boundary conditions
-	    pos[i] -= floor(pos[i] / box) * box;
+	    part[i].pos -= floor(part[i].pos / box) * box;
 	}
     }
 
@@ -159,17 +170,17 @@ private:
 	// squared velocities sum
 	vel2_sum = 0.;
 
-	for (size_t i = 0; i < N; i++) {
+	for (size_t i = 0; i < npart; i++) {
 	    // full step velocity
-	    vel[i] = vel[i] + (timestep_ / 2) * force[i];
+	    part[i].vel = part[i].vel + (timestep_ / 2) * part[i].force;
 	    // velocity center of mass
-	    vel_cm += vel[i];
+	    vel_cm += part[i].vel;
 	    // total kinetic energy
-	    vel2_sum += vel[i] * vel[i];
+	    vel2_sum += part[i].vel * part[i].vel;
 	}
 
-	vel_cm /= N;
-	vel2_sum /= N;
+	vel_cm /= npart;
+	vel2_sum /= npart;
     }
 
     /*
@@ -182,14 +193,14 @@ private:
 	// virial equation sum
 	virial = 0.;
 
-	for (size_t i = 0; i < N; i++) {
-	    force[i] = 0.;
+	for (size_t i = 0; i < npart; i++) {
+	    part[i].force = 0.;
 	}
 
-	for (size_t i = 0; i < N - 1; i++) {
-	    for (size_t j = i + 1; j < N; j++) {
+	for (size_t i = 0; i < npart - 1; i++) {
+	    for (size_t j = i + 1; j < npart; j++) {
 		// particle distance vector
-		V r = pos[i] - pos[j];
+		V r = part[i].pos - part[j].pos;
 		// enforce periodic boundary conditions
 		r -= round(r / box) * box;
 		// squared particle distance
@@ -203,16 +214,16 @@ private:
 		double r6i = rri * rri * rri;
 		double fval = 48. * rri * r6i * (r6i - 0.5);
 
-		force[i] += r * fval;
-		force[j] -= r * fval;
+		part[i].force += r * fval;
+		part[j].force -= r * fval;
 
 		en_pot += 4. * r6i * (r6i - 1.) - en_cut;
 		virial += rr * fval;
 	    }
 	}
 
-	en_pot /= N;
-	virial /= N;
+	en_pot /= npart;
+	virial /= npart;
     }
 
     /**
@@ -226,16 +237,16 @@ private:
 	// center of mass velocity
 	V vel_cm = 0.;
 
-	for (size_t i = 0; i < N; i++) {
-	    rng.unit_vector(vel[i]);
-	    vel[i] *= vel_mag;
-	    vel_cm += vel[i];
+	for (size_t i = 0; i < npart; i++) {
+	    rng.unit_vector(part[i].vel);
+	    part[i].vel *= vel_mag;
+	    vel_cm += part[i].vel;
 	}
 
 	// set center of mass velocity to zero
-	vel_cm /= N;
-	for (size_t i = 0; i < N; i++) {
-	    vel[i] -= vel_cm;
+	vel_cm /= npart;
+	for (size_t i = 0; i < npart; i++) {
+	    part[i].vel -= vel_cm;
 	}
     }
 
@@ -244,8 +255,8 @@ private:
      */
     void init_forces()
     {
-	for (size_t i = 0; i < N; i++) {
-	    force[i] = 0.;
+	for (size_t i = 0; i < npart; i++) {
+	    part[i].force = 0.;
 	}
     }
 };
@@ -265,7 +276,7 @@ private:
     typedef vector2d<double> V;
 
 public:
-    ljfluid(size_t N) : ljfluid_base<V>(N)
+    ljfluid(size_t npart) : ljfluid_base<V>(npart)
     {
     }
 
@@ -285,7 +296,7 @@ public:
 	// particle density
 	this->density_ = density_;
 	// periodic box length
-	this->box = sqrt(this->N / density_);
+	this->box = sqrt(this->npart / density_);
 
 	init_lattice();
     }
@@ -297,12 +308,12 @@ private:
     void init_lattice()
     {
 	// number of particles along one lattice dimension
-	size_t n = (size_t) ceil(sqrt(this->N));
+	size_t n = (size_t) ceil(sqrt(this->npart));
 	// lattice distance
 	double a = this->box / n;
 
-	for (size_t i = 0; i < this->N; i++) {
-	    this->pos[i] = V(i % n + 0.5, i / n + 0.5) * a;
+	for (size_t i = 0; i < this->npart; i++) {
+	    this->part[i].pos = V(i % n + 0.5, i / n + 0.5) * a;
 	}
     }
 };
@@ -318,7 +329,7 @@ private:
     typedef vector3d<double> V;
 
 public:
-    ljfluid(size_t N) : ljfluid_base<V>(N)
+    ljfluid(size_t npart) : ljfluid_base<V>(npart)
     {
     }
 
@@ -338,7 +349,7 @@ public:
 	// particle density
 	this->density_ = density_;
 	// periodic box length
-	this->box = cbrt(this->N / density_);
+	this->box = cbrt(this->npart / density_);
 
 	init_lattice();
     }
@@ -350,12 +361,12 @@ private:
     void init_lattice()
     {
 	// number of particles along one lattice dimension
-	size_t n = (size_t) ceil(cbrt(this->N));
+	size_t n = (size_t) ceil(cbrt(this->npart));
 	// lattice distance
 	double a = this->box / n;
 
-	for (size_t i = 0; i < this->N; i++) {
-	    this->pos[i] = V(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a;
+	for (size_t i = 0; i < this->npart; i++) {
+	    this->part[i].pos = V(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a;
 	}
     }
 };
