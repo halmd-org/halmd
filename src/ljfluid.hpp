@@ -20,25 +20,19 @@
 #define MDSIM_LJFLUID_HPP
 
 #include <vector>
+#include <iostream>
 #include <math.h>
-#include "gsl_rng.hpp"
 
 
 namespace mdsim
 {
 
-template <typename V>
-class measure;
-
-
 /**
  * Simulate a Lennard-Jones fluid with naive N-squared algorithm
  */
 template <typename V>
-class _ljfluid_base
+class ljfluid_base
 {
-    friend class measure<V>;
-
 protected:
     /** number of particles in periodic box */
     size_t N;
@@ -49,22 +43,10 @@ protected:
     /** n-dimensional particles forces */
     std::vector<V> force;
 
-    /** random number generator */
-    rng::gsl::rand48 rng;
-
-    /** potential energy accumulator */
-    std::vector<double> en_pot;
-    /** kinetic energy accumulator */
-    std::vector<double> en_kin;
-    /** virial equation sum accumulator */
-    std::vector<double> virial;
-    /** center of mass velocity accumulator */
-    std::vector<V> vel_cm;
-
     /** particles per n-dimensional volume */
-    double rho;
+    double density_;
     /** MD simulation timestep */
-    double h;
+    double timestep_;
     /** cutoff distance for shifted Lennard-Jones potential */
     double r_cut;
 
@@ -79,21 +61,21 @@ public:
     /**
      * initialize Lennard-Jones fluid with given particle number
      */
-    _ljfluid_base(size_t N) : N(N), pos(N), vel(N), force(N)
+    ljfluid_base(size_t N) : N(N), pos(N), vel(N), force(N)
     {
 	// fixed cutoff distance for shifted Lennard-Jones potential
-	this->r_cut = 2.5;
+	// Frenkel
+	r_cut = 2.5;
+	// Rapaport
+	//r_cut = pow(2., 1. / 6.);
 
 	// squared cutoff distance
-	this->rr_cut = r_cut * r_cut;
+	rr_cut = r_cut * r_cut;
 
 	// potential energy at cutoff distance
 	double rri_cut = 1. / rr_cut;
 	double r6i_cut = rri_cut * rri_cut * rri_cut;
-	this->en_cut = 4. * r6i_cut * (r6i_cut - 1.);
-
-	// FIXME
-	rng.set(123);
+	en_cut = 4. * r6i_cut * (r6i_cut - 1.);
     }
 
     /**
@@ -105,46 +87,39 @@ public:
     }
 
     /**
-     * get particle density
-     */
-    double density() const
-    {
-	return rho;
-    }
-
-    /**
      * get simulation timestep
      */
     double timestep()
     {
-	return h;
+	return timestep_;
     }
 
     /**
      * set simulation timestep
      */
-    void timestep(double h)
+    void timestep(double val)
     {
-	this->h = h;
+	timestep_ = val;
     }
 
     /**
      * set temperature
      */
-    void temperature(double temp)
+    template <typename T>
+    void temperature(double temp, T& rng)
     {
-	init_velocities(temp);
+	init_velocities(temp, rng);
 	init_forces();
     }
 
     /**
      * MD simulation step
      */
-    void step()
+    void step(double& en_pot, double& virial, V& vel_cm, double& vel2_sum)
     {
 	leapfrog_half();
-	compute_forces();
-	leapfrog_full();
+	compute_forces(en_pot, virial);
+	leapfrog_full(vel_cm, vel2_sum);
     }
 
     /**
@@ -153,9 +128,9 @@ public:
     void trajectories(std::ostream& os)
     {
 	for (size_t i = 0; i < N; i++) {
-	    os << i + 1 << "\t" << pos[i] << "\t" << vel[i] << endl;
+	    os << i + 1 << "\t" << pos[i] << "\t" << vel[i] << std::endl;
 	}
-	os << endl << endl;
+	os << std::endl << std::endl;
     }
 
 private:
@@ -166,9 +141,9 @@ private:
     {
 	for (size_t i = 0; i < N; i++) {
 	    // half step velocity
-	    vel[i] += force[i] * (h / 2.);
+	    vel[i] += force[i] * (timestep_ / 2.);
 	    // full step coordinates
-	    pos[i] += vel[i] * h;
+	    pos[i] += vel[i] * timestep_;
 	    // enforce periodic boundary conditions
 	    pos[i] -= floor(pos[i] / box) * box;
 	}
@@ -177,37 +152,35 @@ private:
     /*
      * second leapfrog step in integration of equations of motion
      */
-    void leapfrog_full()
+    void leapfrog_full(V& vel_cm, double& vel2_sum)
     {
 	// center of mass velocity
-	V vel_cm = 0.;
-	// kinetic energy
-	double en_kin = 0.;
+	vel_cm = 0.;
+	// squared velocities sum
+	vel2_sum = 0.;
 
 	for (size_t i = 0; i < N; i++) {
 	    // full step velocity
-	    vel[i] = vel[i] + (h / 2) * force[i];
+	    vel[i] = vel[i] + (timestep_ / 2) * force[i];
 	    // velocity center of mass
 	    vel_cm += vel[i];
 	    // total kinetic energy
-	    en_kin += vel[i] * vel[i];
+	    vel2_sum += vel[i] * vel[i];
 	}
 
-	// accumulate center of mass velocity
-	this->vel_cm.push_back(vel_cm / N);
-	// accumulate kinetic energy
-	this->en_kin.push_back(0.5 * en_kin / N);
+	vel_cm /= N;
+	vel2_sum /= N;
     }
 
     /*
      * compute pairwise Lennard-Jones forces
      */
-    void compute_forces()
+    void compute_forces(double& en_pot, double& virial)
     {
 	// potential energy
-	double en_pot = 0.;
+	en_pot = 0.;
 	// virial equation sum
-	double virial = 0.;
+	virial = 0.;
 
 	for (size_t i = 0; i < N; i++) {
 	    force[i] = 0.;
@@ -238,16 +211,15 @@ private:
 	    }
 	}
 
-	// accumulate potential energy
-	this->en_pot.push_back(en_pot / N);
-	// accumulate virial equation sum
-	this->virial.push_back(virial / N);
+	en_pot /= N;
+	virial /= N;
     }
 
     /**
      * generate random n-dimensional velocity vectors with uniform magnitude
      */
-    void init_velocities(double temp)
+    template <typename T>
+    void init_velocities(double temp, T& rng)
     {
 	// velocity magnitude
 	double vel_mag = sqrt(V::dim() * temp);
@@ -287,25 +259,33 @@ class ljfluid;
  * 2-dimensional Lennard-Jones fluid
  */
 template <>
-class ljfluid<vector2d<double> > : public _ljfluid_base<vector2d<double> >
+class ljfluid<vector2d<double> > : public ljfluid_base<vector2d<double> >
 {
 private:
     typedef vector2d<double> V;
 
 public:
-    ljfluid(size_t N) : _ljfluid_base<V>(N)
+    ljfluid(size_t N) : ljfluid_base<V>(N)
     {
+    }
+
+    /**
+     * get particle density
+     */
+    double density() const
+    {
+	return density_;
     }
 
     /**
      * set particle density
      */
-    void density(double rho)
+    void density(double density_)
     {
 	// particle density
-	this->rho = rho;
+	this->density_ = density_;
 	// periodic box length
-	this->box = sqrt(this->N / rho);
+	this->box = sqrt(this->N / density_);
 
 	init_lattice();
     }
@@ -332,25 +312,33 @@ private:
  * 3-dimensional Lennard-Jones fluid
  */
 template <>
-class ljfluid<vector3d<double> > : public _ljfluid_base<vector3d<double> >
+class ljfluid<vector3d<double> > : public ljfluid_base<vector3d<double> >
 {
 private:
     typedef vector3d<double> V;
 
 public:
-    ljfluid(size_t N) : _ljfluid_base<V>(N)
+    ljfluid(size_t N) : ljfluid_base<V>(N)
     {
+    }
+
+    /**
+     * get particle density
+     */
+    double density() const
+    {
+	return density_;
     }
 
     /**
      * set particle density
      */
-    void density(double rho)
+    void density(double density_)
     {
 	// particle density
-	this->rho = rho;
+	this->density_ = density_;
 	// periodic box length
-	this->box = cbrt(this->N / rho);
+	this->box = cbrt(this->N / density_);
 
 	init_lattice();
     }
