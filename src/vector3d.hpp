@@ -218,6 +218,7 @@ vector3d<double> rint(const vector3d<double>& v)
     return vector3d<double>(rint(v.x), rint(v.y), rint(v.z));
 }
 
+
 /**
  * componentwise round to nearest integer, away from zero
  */
@@ -235,6 +236,7 @@ vector3d<double> round(const vector3d<double>& v)
 {
     return vector3d<double>(round(v.x), round(v.y), round(v.z));
 }
+
 
 /**
  * componentwise round to nearest integer not greater than argument
@@ -254,6 +256,7 @@ vector3d<double> floor(const vector3d<double>& v)
     return vector3d<double>(floor(v.x), floor(v.y), floor(v.z));
 }
 
+
 /**
  * componentwise round to nearest integer not less argument
  */
@@ -270,6 +273,25 @@ template <>
 vector3d<double> ceil(const vector3d<double>& v)
 {   
     return vector3d<double>(ceil(v.x), ceil(v.y), ceil(v.z));
+}
+
+
+/**
+ * componentwise square root function
+ */
+template <typename T>
+vector3d<T> sqrt(const vector3d<T>& v);
+
+template <>
+vector3d<float> sqrt(const vector3d<float>& v)
+{   
+    return vector3d<float>(sqrtf(v.x), sqrtf(v.y), sqrtf(v.z));
+}
+
+template <>
+vector3d<double> sqrt(const vector3d<double>& v)
+{   
+    return vector3d<double>(sqrt(v.x), sqrt(v.y), sqrt(v.z));
 }
 
 #endif /* ! MDSIM_VECTOR3D_HPP */
