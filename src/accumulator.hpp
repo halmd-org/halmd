@@ -19,8 +19,8 @@
 #ifndef MDSIM_ACCUMULATOR_HPP
 #define MDSIM_ACCUMULATOR_HPP
 
-#include <vector>
 #include <math.h>
+#include <assert.h>
 
 
 namespace mdsim
@@ -29,17 +29,44 @@ namespace mdsim
 /**
  * Accumulator with statistical evaluation functions
  */
-template <typename T, typename Allocator = std::allocator<T> >
-class accumulator : public std::vector<T, Allocator>
+template <typename T>
+class accumulator
 {
 public:
+    accumulator() : count_(0), mean_(0), std_(0)
+    {
+    }
+
     /**
      * accumulate value
      */
-    accumulator<T>& operator=(T const& val)
+    accumulator<T>& add(T const& val)
     {
-	push_back(val);
+	// accumulate mean average
+	mean_ += val;
+	// accumulate standard deviation
+	std_ += val * val;
+
+	count_++;
 	return *this;
+    }
+
+    /**
+     * reset accumulator to empty state
+     */
+    void clear()
+    {
+	mean_ = 0;
+	std_ = 0;
+	count_ = 0;
+    }
+
+    /**
+     * get accumulator value count
+     */
+    size_t count() const
+    {
+	return count_;
     }
 
     /**
@@ -47,16 +74,22 @@ public:
      */
     T mean() const
     {
-	T val = 0;
-	typename std::vector<T, Allocator>::const_iterator it;
-
-	for (it = this->begin(); it != this->end(); it++) {
-	    val += *it;
-	}
-	val /= this->size();
-
-	return val;
+	assert(count_ != 0);
+	return mean_ / count_;
     }
+
+    /**
+     * compute standard deviation
+     */
+    T std() const
+    {
+	assert(count_ != 0);
+	return sqrt((std_ - mean_ * mean_ / count_) / count_);
+    }
+
+private:
+    size_t count_;
+    T mean_, std_;
 };
 
 } // namespace mdsim
