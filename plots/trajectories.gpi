@@ -11,4 +11,4 @@ unset title
 set xlabel 'x'
 set ylabel 'y'
 
-plot '@CMAKE_CURRENT_BINARY_DIR@/data/trajectories.dat' using 2:3 with points
+plot '@CMAKE_CURRENT_BINARY_DIR@/data/trajectories.dat' using 2:3 with points pt 7
