@@ -212,6 +212,7 @@ vector2d<double> rint(const vector2d<double>& v)
     return vector2d<double>(rint(v.x), rint(v.y));
 }
 
+
 /**
  * componentwise round to nearest integer, away from zero
  */
@@ -229,6 +230,7 @@ vector2d<double> round(const vector2d<double>& v)
 {
     return vector2d<double>(round(v.x), round(v.y));
 }
+
 
 /**
  * componentwise round to nearest integer not greater than argument
@@ -248,6 +250,7 @@ vector2d<double> floor(const vector2d<double>& v)
     return vector2d<double>(floor(v.x), floor(v.y));
 }
 
+
 /**
  * componentwise round to nearest integer not less argument
  */
@@ -264,6 +267,25 @@ template <>
 vector2d<double> ceil(const vector2d<double>& v)
 {
     return vector2d<double>(ceil(v.x), ceil(v.y));
+}
+
+
+/**
+ * componentwise square root function
+ */
+template <typename T>
+vector2d<T> sqrt(const vector2d<T>& v);
+
+template <>
+vector2d<float> sqrt(const vector2d<float>& v)
+{
+    return vector2d<float>(sqrtf(v.x), sqrtf(v.y));
+}
+
+template <>
+vector2d<double> sqrt(const vector2d<double>& v)
+{
+    return vector2d<double>(sqrt(v.x), sqrt(v.y));
 }
 
 #endif /* ! MDSIM_VECTOR2D_HPP */
