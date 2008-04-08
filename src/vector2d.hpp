@@ -20,6 +20,7 @@
 #define MDSIM_VECTOR2D_HPP
 
 #include <math.h>
+#include <iostream>
 
 
 /**
@@ -171,6 +172,24 @@ public:
     vector2d<T> operator/(const T& s) const
     {
 	return vector2d<T>(x / s, y / s);
+    }
+
+    /**
+     * write vector components to output stream
+     */
+    friend std::ostream& operator<<(std::ostream& os, const vector2d<T>& v)
+    {
+	os << v.x << "\t" << v.y;
+	return os;
+    }
+
+    /**
+     * read vector components from input stream
+     */
+    friend std::istream& operator>>(std::istream& is, vector2d<T>& v)
+    {
+	is >> v.x >> v.y >> v.z;
+	return is;
     }
 };
 
