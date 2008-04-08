@@ -18,76 +18,54 @@
 
 #include <iostream>
 #include <vector>
-using namespace std;
-
 #include "vector2d.hpp"
+#include "vector3d.hpp"
 #include "gsl_rng.hpp"
-#include "leapfrog.hpp"
-#include "force.hpp"
+#include "ljfluid.hpp"
+#include "mdsim.hpp"
+using namespace std;
 
 
 int main(int argc, char **argv)
 {
-    unsigned int i, j;
     rng::gsl::gfsr4 rng;
-
-    vector<vector2d<double> > r(100);
-    vector<vector2d<double> > v(r.size());
-    vector<vector2d<double> > f(r.size());
-
-    vector2d<double> v_cm;
-    double en_pot;
-    double en_kin;
-
-    ljforce<vector2d<double>, double> force(r, f);
-    leapfrog<vector2d<double>, double> inteq(r, v, f);
-
-    const double box = 100.;
-    inteq.set_timestep(1E-2);
-    //const double box = 50.;
-    //inteq.set_timestep(1E-4);
-    //const double box = 10.;
-    //inteq.set_timestep(1E-9);
-
-    force.set_box_length(box);
-    inteq.set_box_length(box);
-
-    // FIXME /dev/random
-    rng.set(1);
-
-    for (i = 0; i < r.size(); i++) {
-	v[i].x = rng.get_uniform() - 0.5;
-	v[i].y = rng.get_uniform() - 0.5;
-
-	r[i].x = rng.get_uniform() * box;
-	r[i].y = rng.get_uniform() * box;
-    }
-
-    // output gnuplot header
-    cout << "# i\tr[i].x\tr[i].y\tf[i].x\tf[i].y" << endl;
-
-    for (i = 0; i < 10000; i++) {
-	// first leapfrog step of integration of equations of motion
-	inteq.first();
-	// force calculation
-	force(en_pot);
-	// second leapfrog step of integration of equations of motion
-	inteq.second(v_cm, en_kin);
-
-	if (i % 10) continue;
-#if 1
-	cout << "# en_pot(" << en_pot << ")" << endl;
-	cout << "# en_kin(" << en_kin << ")" << endl;
-	cout << "# en_tot(" << en_pot + en_kin << ")" << endl;
-	cout << "# v_cm(" << v_cm.x << ", " << v_cm.y << ")" << endl;
-
-	for (j = 0; j < f.size(); j++) {
-	    cout << j << "\t" << r[j].x << "\t" << r[j].y << "\t";
-	    cout << v[j].x << "\t" << v[j].y << "\t";
-	    cout << f[j].x << "\t" << f[j].y << endl;
-	}
-	cout << endl << endl;
+#ifdef DIM_3D
+    mdsim::ljfluid<vector3d<double> > fluid(100);
+    mdsim::mdsim<vector3d<double> > sim;
+#else
+    mdsim::ljfluid<vector2d<double> > fluid(100);
+    mdsim::mdsim<vector2d<double> > sim;
 #endif
+
+    rng.set(123);
+
+    fluid.density(0.05);
+    fluid.timestep(0.005);
+    fluid.temperature(1., rng);
+
+    for (size_t i = 1; i <= 100000; i++) {
+	sim.step(fluid);
+
+	if (i % 100) continue;
+
+	cout << "## steps(" << i << ")" << endl;
+
+	cout << "# en_pot(" << sim.en_pot().mean() << ")" << endl;
+	cout << "# sigma_en_pot(" << sim.en_pot().std() << ")" << endl;
+	cout << "# en_kin(" << sim.en_kin().mean() << ")" << endl;
+	cout << "# sigma_en_kin(" << sim.en_kin().std() << ")" << endl;
+	cout << "# en_tot(" << sim.en_tot().mean() << ")" << endl;
+	cout << "# sigma_en_tot(" << sim.en_tot().std() << ")" << endl;
+	cout << "# temp(" << sim.temp().mean() << ")" << endl;
+	cout << "# sigma_temp(" << sim.temp().std() << ")" << endl;
+	cout << "# pressure(" << sim.pressure().mean() << ")" << endl;
+	cout << "# sigma_pressure(" << sim.pressure().std() << ")" << endl;
+	cout << "# vel_cm(" << sim.vel_cm().mean() << ")" << endl;
+	cout << "# sigma_vel_cm(" << sim.vel_cm().std() << ")" << endl;
+
+	fluid.trajectories(cout);
+
+	sim.clear();
     }
 
     return EXIT_SUCCESS;
