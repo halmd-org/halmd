@@ -20,6 +20,7 @@
 #define MDSIM_VECTOR3D_HPP
 
 #include <math.h>
+#include <iostream>
 
 
 /**
@@ -177,6 +178,24 @@ public:
     vector3d<T> operator/(const T& s) const
     {
 	return vector3d<T>(x / s, y / s, z / s);
+    }
+
+    /**
+     * write vector components to output stream
+     */
+    friend std::ostream& operator<<(std::ostream& os, const vector3d<T>& v)
+    {
+	os << v.x << "\t" << v.y << "\t" << v.z;
+	return os;
+    }
+
+    /**
+     * read vector components from input stream
+     */
+    friend std::istream& operator>>(std::istream& is, vector3d<T>& v)
+    {
+	is >> v.x >> v.y >> v.z;
+	return is;
     }
 };
 
