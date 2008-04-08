@@ -164,6 +164,14 @@ public:
     }
 
     /**
+     * scalar multiplication
+     */
+    friend vector3d<T> operator*(const T& s, const vector3d<T>& v)
+    {
+	return vector3d<T>(s * v.x, s * v.y, s * v.z);
+    }
+
+    /**
      * scalar division
      */
     vector3d<T> operator/(const T& s) const
