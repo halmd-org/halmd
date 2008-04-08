@@ -147,6 +147,17 @@ public:
 	leapfrog_full();
     }
 
+    /**
+     * write particle coordinates and velocities to output stream
+     */
+    void trajectories(std::ostream& os)
+    {
+	for (size_t i = 0; i < N; i++) {
+	    os << i + 1 << "\t" << pos[i] << "\t" << vel[i] << endl;
+	}
+	os << endl << endl;
+    }
+
 private:
     /*
      * first leapfrog half-step in integration of equations of motion
