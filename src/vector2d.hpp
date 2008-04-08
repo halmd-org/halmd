@@ -158,6 +158,14 @@ public:
     }
 
     /**
+     * scalar multiplication
+     */
+    friend vector2d<T> operator*(const T& s, const vector2d<T>& v)
+    {
+	return vector2d<T>(s * v.x, s * v.y);
+    }
+
+    /**
      * scalar division
      */
     vector2d<T> operator/(const T& s) const
