@@ -40,7 +40,7 @@ public:
     /**
      * accumulate value
      */
-    accumulator<T>& add(T const& val)
+    accumulator<T>& operator+=(T const& val)
     {
 	// accumulate mean average
 	mean_ += val;
