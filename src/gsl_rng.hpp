@@ -136,7 +136,6 @@ typedef rng<gsl_rng_fishman2x> fishman2x;
 typedef rng<gsl_rng_gfsr4> gfsr4;
 typedef rng<gsl_rng_knuthran> knuthran;
 typedef rng<gsl_rng_knuthran2> knuthran2;
-typedef rng<gsl_rng_knuthran2002> knuthran2002;
 typedef rng<gsl_rng_lecuyer21> lecuyer21;
 typedef rng<gsl_rng_minstd> minstd;
 typedef rng<gsl_rng_mrg> mrg;
