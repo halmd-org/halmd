@@ -17,7 +17,6 @@
  */
 
 #include <iostream>
-#include <vector>
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 #include "gsl_rng.hpp"
@@ -43,10 +42,10 @@ int main(int argc, char **argv)
     fluid.timestep(0.005);
     fluid.temperature(1., rng);
 
-    for (size_t i = 1; i <= 100000; i++) {
+    for (size_t i = 1; i <= 10000; i++) {
 	sim.step(fluid);
 
-	if (i % 100) continue;
+	if (i % 10) continue;
 
 	cout << "## steps(" << i << ")" << endl;
 
