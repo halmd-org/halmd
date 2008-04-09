@@ -60,7 +60,7 @@ def main():
             if not tok[1]:
                 error('Missing output filename extension')
             gnuplot_output_fn = tok[0] + '_%s' + tok[1]
-            movie_fn =  tok[0] + '.avi'
+            movie_fn =  tok[0] + '.ogg'
             gnuplot_output_cmd = m.group('left') + m.group('quote') + \
                     gnuplot_output_fn + m.group('quote') + m.group('right') + \
                     '\n'
@@ -126,10 +126,8 @@ def main():
         error('gnuplot exited with error code %d' % errno)
 
     # render movie with mencoder
-    p = subprocess.Popen(['mencoder',
-        'mf://' + gnuplot_output_fn % '*',
-        '-mf', 'fps=25', '-o', movie_fn, '-ovc', 'lavc',
-        '-lavcopts', 'vcodec=mpeg4', '-nosound'], close_fds=True)
+    p = subprocess.Popen(['ffmpeg2theora', gnuplot_output_fn % '%06d', '-o', movie_fn,
+        '--nosound', '--inputfps 1'], close_fds=True)
     errno = p.wait()
     if errno:
         error('mencoder exited with error code %d' % errno)
