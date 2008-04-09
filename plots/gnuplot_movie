@@ -38,7 +38,7 @@ def main():
     gnuplot_input = open(gnuplot_input_fn, 'r')
 
     rx = re.compile('^(?P<left>%s)%s(?P<right>.*)$' % (
-        '\s*(?:set\s+(?P<output>output)|(?P<plot>plot)(?:\s+\[.+\])*)\s+',
+        '\s*(?:set\s+(?P<output>output)|(?P<plot>s?plot)(?:\s+\[.+\])*)\s+',
         '(?P<quote>[\"\'])(?P<fn>.+)(?P=quote)'))
 
     gnuplot_commands = []

@@ -1,14 +1,5 @@
-CONFIGURE_FILE(
-  ${CMAKE_CURRENT_SOURCE_DIR}/trajectories.gpi
-  ${CMAKE_CURRENT_BINARY_DIR}/trajectories.gpi
-  @ONLY
-)
+FOREACH(fn trajectories2d.gpi trajectories3d.gpi gnuplot_movie)
+  CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/${fn}" "${CMAKE_CURRENT_BINARY_DIR}/${fn}" @ONLY)
+ENDFOREACH(fn)
 
-CONFIGURE_FILE(
-  ${CMAKE_CURRENT_SOURCE_DIR}/gnuplot_movie
-  ${CMAKE_CURRENT_BINARY_DIR}/gnuplot_movie
-  @ONLY
-)
-
-FILE(MAKE_DIRECTORY
-  ${CMAKE_CURRENT_BINARY_DIR}/data)
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
