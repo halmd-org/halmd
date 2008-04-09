@@ -50,12 +50,12 @@ public:
 	fluid.step(en_pot, virial, vel_cm, vel2_sum);
 
 	// accumulate properties
-	en_pot_.add(en_pot);
-	en_kin_.add(vel2_sum / 2);
-	en_tot_.add(en_pot + vel2_sum / 2);
-	temp_.add(vel2_sum / V::dim());
-	pressure_.add(fluid.density() * (vel2_sum + virial));
-	vel_cm_.add(vel_cm);
+	en_pot_ += en_pot;
+	en_kin_ += vel2_sum / 2;
+	en_tot_ += en_pot + vel2_sum / 2;
+	temp_ += vel2_sum / V::dim();
+	pressure_ += fluid.density() * (vel2_sum + virial);
+	vel_cm_ += vel_cm;
     }
 
     /**
