@@ -1,0 +1,15 @@
+#
+# Trajectories for Molecular Dynamics Simulation of a Lennard-Jones fluid
+#
+
+set terminal png
+set output '@CMAKE_CURRENT_BINARY_DIR@/trajectories3d.png'
+set size 1.5, 1.5
+
+unset key
+unset title
+set xlabel 'x'
+set ylabel 'y'
+set zlabel 'z'
+
+splot '@CMAKE_CURRENT_BINARY_DIR@/data/trajectories3d.dat' using 2:3:4 with points pt 7
