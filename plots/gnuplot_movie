@@ -126,8 +126,8 @@ def main():
         error('gnuplot exited with error code %d' % errno)
 
     # render movie with mencoder
-    p = subprocess.Popen(['ffmpeg2theora', gnuplot_output_fn % '%06d', '-o', movie_fn,
-        '--nosound', '--inputfps 1'], close_fds=True)
+    p = subprocess.Popen(['ffmpeg2theora', gnuplot_output_fn % '%06d', '-o',
+        movie_fn, '--nosound'], close_fds=True)
     errno = p.wait()
     if errno:
         error('mencoder exited with error code %d' % errno)
