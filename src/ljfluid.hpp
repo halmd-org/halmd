@@ -30,33 +30,33 @@ namespace mdsim
 /**
  * MD simulation particle
  */
-template <typename V>
+template <typename T>
 struct particle
 {
     /** n-dimensional particle coordinates */
-    V pos;
+    T pos;
     /** n-dimensional particle velocity */
-    V vel;
+    T vel;
     /** n-dimensional force acting upon particle */
-    V force;
+    T force;
 };
 
 
 /**
  * Simulate a Lennard-Jones fluid with naive N-squared algorithm
  */
-template <typename V>
+template <typename T>
 class ljfluid_base
 {
 public:
-    typedef typename std::vector<particle<V> >::iterator iterator;
-    typedef typename std::vector<particle<V> >::const_iterator const_iterator;
+    typedef typename std::vector<particle<T> >::iterator iterator;
+    typedef typename std::vector<particle<T> >::const_iterator const_iterator;
 
 protected:
     /** number of particles in periodic box */
     size_t npart;
     /** particles */
-    std::vector<particle<V> > part;
+    std::vector<particle<T> > part;
 
     /** particles per n-dimensional volume */
     double density_;
@@ -120,8 +120,8 @@ public:
     /**
      * set temperature
      */
-    template <typename T>
-    void temperature(double temp, T& rng)
+    template <typename rng_type>
+    void temperature(double temp, rng_type& rng)
     {
 	init_velocities(temp, rng);
 	init_forces();
@@ -130,7 +130,7 @@ public:
     /**
      * MD simulation step
      */
-    void step(double& en_pot, double& virial, V& vel_cm, double& vel2_sum)
+    void step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum)
     {
 	leapfrog_half();
 	compute_forces(en_pot, virial);
@@ -170,7 +170,7 @@ private:
     /*
      * second leapfrog step in integration of equations of motion
      */
-    void leapfrog_full(V& vel_cm, double& vel2_sum)
+    void leapfrog_full(T& vel_cm, double& vel2_sum)
     {
 	// center of mass velocity
 	vel_cm = 0.;
@@ -207,7 +207,7 @@ private:
 	for (iterator it = part.begin(); it != part.end(); ++it) {
 	    for (iterator it2 = it; ++it2 != part.end(); ) {
 		// particle distance vector
-		V r = it->pos - it2->pos;
+		T r = it->pos - it2->pos;
 		// enforce periodic boundary conditions
 		r -= round(r / box) * box;
 		// squared particle distance
@@ -236,13 +236,13 @@ private:
     /**
      * generate random n-dimensional velocity vectors with uniform magnitude
      */
-    template <typename T>
-    void init_velocities(double temp, T& rng)
+    template <typename rng_type>
+    void init_velocities(double temp, rng_type& rng)
     {
 	// velocity magnitude
-	double vel_mag = sqrt(V::dim() * temp);
+	double vel_mag = sqrt(T::dim() * temp);
 	// center of mass velocity
-	V vel_cm = 0.;
+	T vel_cm = 0.;
 
 	for (iterator it = part.begin(); it != part.end(); ++it) {
 	    rng.unit_vector(it->vel);
@@ -269,21 +269,21 @@ private:
 };
 
 
-template <typename V>
+template <typename T>
 class ljfluid;
 
 
 /**
  * 2-dimensional Lennard-Jones fluid
  */
-template <>
-class ljfluid<vector2d<double> > : public ljfluid_base<vector2d<double> >
+template <typename T>
+class ljfluid<vector2d<T> > : public ljfluid_base<vector2d<T> >
 {
 private:
-    typedef vector2d<double> V;
+    typedef ljfluid_base<vector2d<T> > base_;
 
 public:
-    ljfluid(size_t npart) : ljfluid_base<V>(npart)
+    ljfluid(size_t npart) : base_(npart)
     {
     }
 
@@ -292,7 +292,7 @@ public:
      */
     double density() const
     {
-	return density_;
+	return base_::density_;
     }
 
     /**
@@ -303,7 +303,7 @@ public:
 	// particle density
 	this->density_ = density_;
 	// periodic box length
-	this->box = sqrt(npart / density_);
+	this->box = sqrt(base_::npart / density_);
 
 	init_lattice();
     }
@@ -314,16 +314,16 @@ private:
      */
     void init_lattice()
     {
-	iterator it;
+	typename base_::iterator it;
 	size_t i;
 
 	// number of particles along one lattice dimension
-	size_t n = (size_t) ceil(sqrt(npart));
+	size_t n = (size_t) ceil(sqrt(base_::npart));
 	// lattice distance
-	double a = box / n;
+	double a = base_::box / n;
 
-	for (it = part.begin(), i = 0; it != part.end(); ++it, ++i) {
-	    it->pos = V(i % n + 0.5, i / n + 0.5) * a;
+	for (it = base_::part.begin(), i = 0; it != base_::part.end(); ++it, ++i) {
+	    it->pos = vector2d<T>(i % n + 0.5, i / n + 0.5) * a;
 	}
     }
 };
@@ -332,14 +332,14 @@ private:
 /**
  * 3-dimensional Lennard-Jones fluid
  */
-template <>
-class ljfluid<vector3d<double> > : public ljfluid_base<vector3d<double> >
+template <typename T>
+class ljfluid<vector3d<T> > : public ljfluid_base<vector3d<T> >
 {
 private:
-    typedef vector3d<double> V;
+    typedef ljfluid_base<vector3d<T> > base_;
 
 public:
-    ljfluid(size_t npart) : ljfluid_base<V>(npart)
+    ljfluid(size_t npart) : ljfluid_base<vector3d<T> >(npart)
     {
     }
 
@@ -348,7 +348,7 @@ public:
      */
     double density() const
     {
-	return density_;
+	return base_::density_;
     }
 
     /**
@@ -357,9 +357,9 @@ public:
     void density(double density_)
     {
 	// particle density
-	this->density_ = density_;
+	base_::density_ = density_;
 	// periodic box length
-	this->box = cbrt(npart / density_);
+	base_::box = cbrt(base_::npart / density_);
 
 	init_lattice();
     }
@@ -370,16 +370,16 @@ private:
      */
     void init_lattice()
     {
-	iterator it;
+	typename base_::iterator it;
 	size_t i;
 
 	// number of particles along one lattice dimension
-	size_t n = (size_t) ceil(cbrt(npart));
+	size_t n = (size_t) ceil(cbrt(base_::npart));
 	// lattice distance
-	double a = box / n;
+	double a = base_::box / n;
 
-	for (it = part.begin(), i = 0; it != part.end(); ++it, ++i) {
-	    it->pos = V(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a;
+	for (it = base_::part.begin(), i = 0; it != base_::part.end(); ++it, ++i) {
+	    it->pos = vector3d<T>(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a;
 	}
     }
 };
