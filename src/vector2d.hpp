@@ -67,6 +67,22 @@ public:
     }
 
     /**
+     * equality comparison
+     */
+    bool operator==(const vector2d<T>& v)
+    {
+	return (v.x == x && v.y == y);
+    }
+
+    /**
+     * inequality comparison
+     */
+    bool operator!=(const vector2d<T>& v)
+    {
+	return (v.x != x || v.y != y);
+    }
+
+    /**
      * assignment by vector
      */
     vector2d<T>& operator=(const vector2d<T>& v)
