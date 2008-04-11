@@ -67,6 +67,22 @@ public:
     }
 
     /**
+     * equality comparison
+     */
+    bool operator==(const vector3d<T>& v)
+    {
+        return (v.x == x && v.y == y && v.z == z);
+    }
+    
+    /**
+     * inequality comparison
+     */
+    bool operator!=(const vector3d<T>& v)
+    {
+        return (v.x != x || v.y != y || v.z != z);
+    }
+
+    /**
      * assignment by vector
      */
     vector3d<T>& operator=(const vector3d<T>& v)
