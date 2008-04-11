@@ -202,10 +202,9 @@ template <typename T>
 void ljfluid<T>::trajectories(std::ostream& os) const
 {
     const_iterator it;
-    size_t i;
 
-    for (it = part.begin(), i = 1; it != part.end(); ++it, ++i) {
-	os << i << "\t" << it->pos << "\t" << it->vel << std::endl;
+    for (it = part.begin(); it != part.end(); ++it) {
+	os << it->pos << "\t" << it->vel << std::endl;
     }
     os << std::endl << std::endl;
 }
