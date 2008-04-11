@@ -52,26 +52,6 @@ public:
     typedef typename std::vector<particle<T> >::iterator iterator;
     typedef typename std::vector<particle<T> >::const_iterator const_iterator;
 
-protected:
-    /** number of particles in periodic box */
-    size_t npart;
-    /** particles */
-    std::vector<particle<T> > part;
-
-    /** particles per n-dimensional volume */
-    double density_;
-    /** MD simulation timestep */
-    double timestep_;
-    /** cutoff distance for shifted Lennard-Jones potential */
-    double r_cut;
-
-    /** periodic box length */
-    double box;
-    /** squared cutoff distance */
-    double rr_cut;
-    /** potential energy at cutoff distance */
-    double en_cut;
-
 public:
     ljfluid(size_t npart);
 
@@ -95,6 +75,26 @@ private:
     template <typename rng_type>
     void init_velocities(double temp, rng_type& rng);
     void init_forces();
+
+private:
+    /** number of particles in periodic box */
+    size_t npart;
+    /** particles */
+    std::vector<particle<T> > part;
+
+    /** particles per n-dimensional volume */
+    double density_;
+    /** MD simulation timestep */
+    double timestep_;
+    /** cutoff distance for shifted Lennard-Jones potential */
+    double r_cut;
+
+    /** periodic box length */
+    double box;
+    /** squared cutoff distance */
+    double rr_cut;
+    /** potential energy at cutoff distance */
+    double en_cut;
 };
 
 
