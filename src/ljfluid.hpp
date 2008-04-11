@@ -304,9 +304,9 @@ void ljfluid<T>::init_lattice()
 
     // number of particles along one lattice dimension
 #ifdef DIM_3D
-    size_t n = (size_t) ceil(cbrt(npart));
+    size_t n = size_t(ceil(cbrt(npart)));
 #else
-    size_t n = (size_t) ceil(sqrt(npart));
+    size_t n = size_t(ceil(sqrt(npart)));
 #endif
     // lattice distance
     double a = box / n;
