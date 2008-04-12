@@ -21,6 +21,8 @@
 
 #include <boost/multi_array.hpp>
 #include <list>
+#include <vector>
+#include <algorithm>
 #include <iostream>
 #include <math.h>
 
@@ -40,6 +42,8 @@ struct particle
     T vel;
     /** n-dimensional force acting upon particle */
     T force;
+
+    std::vector<particle<T>*> neighbour;
 
     particle() {}
     particle(T const& pos) : pos(pos) {}
@@ -80,8 +84,12 @@ private:
     void leapfrog_half();
     void leapfrog_full(T& vel_cm, double& vel2_sum);
     void update_cells();
+
+    void compute_neighbours();
+    void compute_cell_neighbours(particle<T>& p, list_type& cell);
+    void compute_neighbour(particle<T>& p1, particle<T>& p2);
+
     void compute_forces(double& en_pot, double& virial);
-    void compute_cell_forces(particle<T>& p, list_type& cell, double& en_pot, double& virial);
     void compute_force(particle<T>& p1, particle<T>& p2, double& en_pot, double& virial);
 
     void init_cells();
@@ -113,6 +121,12 @@ private:
     double rr_cut;
     /** potential energy at cutoff distance */
     double en_cut;
+    
+    /** neighbour list radius */
+    double r_skin;
+    double r_cut_skin;
+    double rr_cut_skin;
+    double vel_max_sum;
 };
 
 
@@ -135,6 +149,10 @@ ljfluid<T>::ljfluid(size_t npart) : npart(npart)
     double rri_cut = 1. / rr_cut;
     double r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut = 4. * r6i_cut * (r6i_cut - 1.);
+
+    r_skin = 0.3; // FIXME should depend on system size
+    r_cut_skin = r_cut + r_skin;
+    rr_cut_skin = r_cut_skin * r_cut_skin;
 }
 
 /**
@@ -209,9 +227,20 @@ void ljfluid<T>::temperature(double temp, rng_type& rng)
 template <typename T>
 void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum)
 {
+    // calculate coordinates
     leapfrog_half();
+    // update cell lists
     update_cells();
+
+    // update Verlet neighbour lists if necessary
+    if ((2. * timestep_ * vel_max_sum) > r_skin) {
+	compute_neighbours();
+	vel_max_sum = 0.;
+    }
+
+    // calculate forces
     compute_forces(en_pot, virial);
+    // calculate velocities
     leapfrog_full(vel_cm, vel2_sum);
 }
 
@@ -261,6 +290,8 @@ void ljfluid<T>::leapfrog_full(T& vel_cm, double& vel2_sum)
     vel_cm = 0.;
     // squared velocities sum
     vel2_sum = 0.;
+    // maximum squared velocity
+    double vel2_max = 0.;
 
     for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
@@ -270,11 +301,14 @@ void ljfluid<T>::leapfrog_full(T& vel_cm, double& vel2_sum)
 	    vel_cm += it->vel;
 	    // total kinetic energy
 	    vel2_sum += it->vel * it->vel;
+	    // maximum squared velocity
+	    vel2_max = std::max(it->vel * it->vel, vel2_max);
 	}
     }
 
     vel_cm /= npart;
     vel2_sum /= npart;
+    vel_max_sum += sqrt(vel2_max);
 }
 
 /**
@@ -320,49 +354,11 @@ void ljfluid<T>::compute_forces(double& en_pot, double& virial)
 	}
     }
 
-    for (size_t i = 0; i < cells.size(); ++i) {
-	for (size_t j = 0; j < cells[i].size(); ++j) {
-#ifdef DIM_3D
-	    for (size_t k = 0; k < cells[i][j].size(); ++k) {
-		// FIXME This is royal prefix/postfix fun...
-		for (list_iterator it = cells[i][j][k].begin(); it != cells[i][j][k].end(); ++it) {
-		    // FIXME This is royal prefix/postfix fun...
-		    for (list_iterator it2 = it; ++it2 != cells[i][j][k].end(); )
-			compute_force(*it, *it2, en_pot, virial);
-
-		    // only half of neighbour cells need to be considered due to pair potential
-		    compute_cell_forces(*it, cells[i][(j + ncell - 1) % ncell][k], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][k], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][j][k], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][k], en_pot, virial);
-
-		    compute_cell_forces(*it, cells[i][(j + ncell - 1) % ncell][(k + ncell - 1) % ncell], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][(k + ncell - 1) % ncell], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][j][(k + ncell - 1) % ncell], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][(k + ncell - 1) % ncell], en_pot, virial);
-
-		    compute_cell_forces(*it, cells[i][(j + ncell - 1) % ncell][(k + 1) % ncell], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][(k + 1) % ncell], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][j][(k + 1) % ncell], en_pot, virial);
-		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][(k + 1) % ncell], en_pot, virial);
-
-		    compute_cell_forces(*it, cells[i][j][(k + ncell - 1) % ncell], en_pot, virial);
-		}
+    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    for (typename std::vector<particle<T>*>::iterator it2 = it->neighbour.begin(); it2 != it->neighbour.end(); it2++) {
+		compute_force(*it, **it2, en_pot, virial);
 	    }
-#else
-	    // FIXME This is royal prefix/postfix fun...
-	    for (list_iterator it = cells[i][j].begin(); it != cells[i][j].end(); ++it) {
-		// FIXME This is royal prefix/postfix fun...
-		for (list_iterator it2 = it; ++it2 != cells[i][j].end(); )
-		    compute_force(*it, *it2, en_pot, virial);
-
-		// only half of neighbour cells need to be considered due to pair potential
-		compute_cell_forces(*it, cells[i][(j + ncell - 1) % ncell], en_pot, virial);
-		compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell], en_pot, virial);
-		compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][j], en_pot, virial);
-		compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell], en_pot, virial);
-	    }
-#endif
 	}
     }
 
@@ -374,11 +370,88 @@ void ljfluid<T>::compute_forces(double& en_pot, double& virial)
  * FIXME
  */
 template <typename T>
-void ljfluid<T>::compute_cell_forces(particle<T>& p, list_type& cell, double& en_pot, double& virial)
+void ljfluid<T>::compute_neighbours()
+{
+    for (size_t i = 0; i < cells.size(); ++i) {
+	for (size_t j = 0; j < cells[i].size(); ++j) {
+#ifdef DIM_3D
+	    for (size_t k = 0; k < cells[i][j].size(); ++k) {
+		// FIXME This is royal prefix/postfix fun...
+		for (list_iterator it = cells[i][j][k].begin(); it != cells[i][j][k].end(); ++it) {
+		    // empty neighbour list
+		    it->neighbour.clear();
+
+		    // FIXME This is royal prefix/postfix fun...
+		    for (list_iterator it2 = it; ++it2 != cells[i][j][k].end(); )
+			compute_neighbour(*it, *it2);
+
+		    // only half of neighbour cells need to be considered due to pair potential
+		    compute_cell_neighbours(*it, cells[i][(j + ncell - 1) % ncell][k]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][k]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][j][k]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][k]);
+
+		    compute_cell_neighbours(*it, cells[i][(j + ncell - 1) % ncell][(k + ncell - 1) % ncell]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][(k + ncell - 1) % ncell]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][j][(k + ncell - 1) % ncell]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][(k + ncell - 1) % ncell]);
+
+		    compute_cell_neighbours(*it, cells[i][(j + ncell - 1) % ncell][(k + 1) % ncell]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][(k + 1) % ncell]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][j][(k + 1) % ncell]);
+		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][(k + 1) % ncell]);
+
+		    compute_cell_neighbours(*it, cells[i][j][(k + ncell - 1) % ncell]);
+		}
+	    }
+#else
+	    // FIXME This is royal prefix/postfix fun...
+	    for (list_iterator it = cells[i][j].begin(); it != cells[i][j].end(); ++it) {
+		// empty neighbour list
+		it->neighbour.clear();
+
+		// FIXME This is royal prefix/postfix fun...
+		for (list_iterator it2 = it; ++it2 != cells[i][j].end(); )
+		    compute_neighbour(*it, *it2);
+
+		// only half of neighbour cells need to be considered due to pair potential
+		compute_cell_neighbours(*it, cells[i][(j + ncell - 1) % ncell]);
+		compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell]);
+		compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][j]);
+		compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell]);
+	    }
+#endif
+	}
+    }
+}
+
+/**
+ * FIXME
+ */
+template <typename T>
+void ljfluid<T>::compute_cell_neighbours(particle<T>& p, list_type& cell)
 {
     for (list_iterator it = cell.begin(); it != cell.end(); ++it) {
-	compute_force(p, *it, en_pot, virial);
+	compute_neighbour(p, *it);
     }
+}
+
+/**
+ * FIXME
+ */
+template<typename T>
+void ljfluid<T>::compute_neighbour(particle<T>& p1, particle<T>& p2)
+{
+    T r = p1.pos - p2.pos;
+    // enforce periodic boundary conditions
+    r -= round(r / box) * box;
+    // squared particle distance
+    double rr = r * r;
+
+    // enforce cutoff distance
+    if (rr >= rr_cut_skin) return;
+
+    p1.neighbour.push_back(&p2);
 }
 
 /**
@@ -415,7 +488,7 @@ template <typename T>
 void ljfluid<T>::init_cells()
 {
     // number of cells along 1 dimension
-    ncell = size_t(floor(box / r_cut));
+    ncell = size_t(floor(box / r_cut_skin));
     // cell edge length (must be greater or equal to cutoff length)
     cell_len = box / ncell;
 
@@ -468,6 +541,8 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
     double vel_mag = sqrt(T::dim() * temp);
     // center of mass velocity
     T vel_cm = 0.;
+    // maximum squared velocity
+    double vel2_max = 0.;
 
     for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
@@ -482,8 +557,11 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
     for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    it->vel -= vel_cm;
+	    vel2_max = std::max(it->vel * it->vel, vel2_max);
 	}
     }
+
+    vel_max_sum = sqrt(vel2_max);
 }
 
 /**
