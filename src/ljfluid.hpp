@@ -1,4 +1,4 @@
-/* Simulate a Lennard-Jones fluid with naive N-squared algorithm
+/* Simulate a Lennard-Jones fluid with cell list algorithm
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -19,7 +19,8 @@
 #ifndef MDSIM_LJFLUID_HPP
 #define MDSIM_LJFLUID_HPP
 
-#include <vector>
+#include <boost/multi_array.hpp>
+#include <list>
 #include <iostream>
 #include <math.h>
 
@@ -39,6 +40,9 @@ struct particle
     T vel;
     /** n-dimensional force acting upon particle */
     T force;
+
+    particle() {}
+    particle(T const& pos) : pos(pos) {}
 };
 
 
@@ -49,8 +53,14 @@ template <typename T>
 class ljfluid
 {
 public:
-    typedef typename std::vector<particle<T> >::iterator iterator;
-    typedef typename std::vector<particle<T> >::const_iterator const_iterator;
+    typedef typename std::list<particle<T> > list_type;
+    typedef typename std::list<particle<T> >::iterator list_iterator;
+    typedef typename std::list<particle<T> >::const_iterator const_list_iterator;
+#ifdef DIM_3D
+    typedef boost::multi_array<list_type, 3> array_type;
+#else
+    typedef boost::multi_array<list_type, 2> array_type;
+#endif
 
 public:
     ljfluid(size_t npart);
@@ -69,8 +79,12 @@ public:
 private:
     void leapfrog_half();
     void leapfrog_full(T& vel_cm, double& vel2_sum);
+    void update_cells();
     void compute_forces(double& en_pot, double& virial);
+    void compute_cell_forces(particle<T>& p, list_type& cell, double& en_pot, double& virial);
+    void compute_force(particle<T>& p1, particle<T>& p2, double& en_pot, double& virial);
 
+    void init_cells();
     void init_lattice();
     template <typename rng_type>
     void init_velocities(double temp, rng_type& rng);
@@ -79,8 +93,12 @@ private:
 private:
     /** number of particles in periodic box */
     size_t npart;
-    /** particles */
-    std::vector<particle<T> > part;
+    /** cell lists */
+    array_type cells;
+    /** number of cells along 1 dimension */
+    size_t ncell;
+    /** cell edge length */
+    double cell_len;
 
     /** particles per n-dimensional volume */
     double density_;
@@ -102,7 +120,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <typename T>
-ljfluid<T>::ljfluid(size_t npart) : npart(npart), part(npart)
+ljfluid<T>::ljfluid(size_t npart) : npart(npart)
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     // Frenkel
@@ -170,6 +188,7 @@ void ljfluid<T>::density(double density_)
     box = sqrt(npart / density_);
 #endif
 
+    init_cells();
     init_lattice();
 }
 
@@ -191,6 +210,7 @@ template <typename T>
 void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum)
 {
     leapfrog_half();
+    update_cells();
     compute_forces(en_pot, virial);
     leapfrog_full(vel_cm, vel2_sum);
 }
@@ -201,31 +221,37 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
 template <typename T>
 void ljfluid<T>::trajectories(std::ostream& os) const
 {
-    const_iterator it;
-
-    for (it = part.begin(); it != part.end(); ++it) {
-	os << it->pos << "\t" << it->vel << std::endl;
+    for (list_type const* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	for (const_list_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    os << it->pos << "\t" << it->vel << std::endl;
+	}
     }
     os << std::endl << std::endl;
 }
 
-/*
+/**
  * first leapfrog half-step in integration of equations of motion
  */
 template <typename T>
 void ljfluid<T>::leapfrog_half()
 {
-    for (iterator it = part.begin(); it != part.end(); ++it) {
-	// half step velocity
-	it->vel += it->force * (timestep_ / 2.);
-	// full step coordinates
-	it->pos += it->vel * timestep_;
-	// enforce periodic boundary conditions
-	it->pos -= floor(it->pos / box) * box;
+    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    // half step velocity
+	    it->vel += it->force * (timestep_ / 2.);
+	    // full step coordinates
+	    it->pos += it->vel * timestep_;
+	    // enforce periodic boundary conditions
+	    it->pos -= floor(it->pos / box) * box;
+
+	    // if particles are moving more than cutoff length in timestep,
+	    // something is really fishy...
+	    assert(((it->vel * it->vel) * timestep_ * timestep_) < rr_cut);
+	}
     }
 }
 
-/*
+/**
  * second leapfrog step in integration of equations of motion
  */
 template <typename T>
@@ -236,20 +262,48 @@ void ljfluid<T>::leapfrog_full(T& vel_cm, double& vel2_sum)
     // squared velocities sum
     vel2_sum = 0.;
 
-    for (iterator it = part.begin(); it != part.end(); ++it) {
-	// full step velocity
-	it->vel = it->vel + (timestep_ / 2) * it->force;
-	// velocity center of mass
-	vel_cm += it->vel;
-	// total kinetic energy
-	vel2_sum += it->vel * it->vel;
+    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    // full step velocity
+	    it->vel = it->vel + (timestep_ / 2) * it->force;
+	    // velocity center of mass
+	    vel_cm += it->vel;
+	    // total kinetic energy
+	    vel2_sum += it->vel * it->vel;
+	}
     }
 
     vel_cm /= npart;
     vel2_sum /= npart;
 }
 
-/*
+/**
+ * update cell lists
+ */
+template <typename T>
+void ljfluid<T>::update_cells()
+{
+    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	// FIXME particles may be visited twice if moved ahead in sequence
+	for (list_iterator it = cell->begin(); it != cell->end(); ) {
+	    list_iterator it_old = it;
+	    ++it;
+
+	    // update cell lists
+	    T index = floor(it_old->pos / cell_len);
+#ifdef DIM_3D
+	    list_type& cell_ = cells[size_t(index.x)][size_t(index.y)][size_t(index.z)];
+#else
+	    list_type& cell_ = cells[size_t(index.x)][size_t(index.y)];
+#endif
+	    if (&cell_ != cell) {
+		cell_.splice(cell_.end(), *cell, it_old);
+	    }
+	}
+    }
+}
+
+/**
  * compute pairwise Lennard-Jones forces
  */
 template <typename T>
@@ -260,32 +314,55 @@ void ljfluid<T>::compute_forces(double& en_pot, double& virial)
     // virial equation sum
     virial = 0.;
 
-    for (iterator it = part.begin(); it != part.end(); ++it) {
-	it->force = 0.;
+    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    it->force = 0.;
+	}
     }
 
-    for (iterator it = part.begin(); it != part.end(); ++it) {
-	for (iterator it2 = it; ++it2 != part.end(); ) {
-	    // particle distance vector
-	    T r = it->pos - it2->pos;
-	    // enforce periodic boundary conditions
-	    r -= round(r / box) * box;
-	    // squared particle distance
-	    double rr = r * r;
+    for (size_t i = 0; i < cells.size(); ++i) {
+	for (size_t j = 0; j < cells[i].size(); ++j) {
+#ifdef DIM_3D
+	    for (size_t k = 0; k < cells[i][j].size(); ++k) {
+		// FIXME This is royal prefix/postfix fun...
+		for (list_iterator it = cells[i][j][k].begin(); it != cells[i][j][k].end(); ++it) {
+		    // FIXME This is royal prefix/postfix fun...
+		    for (list_iterator it2 = it; ++it2 != cells[i][j][k].end(); )
+			compute_force(*it, *it2, en_pot, virial);
 
-	    // enforce cutoff distance
-	    if (rr >= rr_cut) continue;
+		    // only half of neighbour cells need to be considered due to pair potential
+		    compute_cell_forces(*it, cells[i][(j + ncell - 1) % ncell][k], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][k], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][j][k], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][k], en_pot, virial);
 
-	    // compute Lennard-Jones force in reduced units
-	    double rri = 1. / rr;
-	    double r6i = rri * rri * rri;
-	    double fval = 48. * rri * r6i * (r6i - 0.5);
+		    compute_cell_forces(*it, cells[i][(j + ncell - 1) % ncell][(k + ncell - 1) % ncell], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][(k + ncell - 1) % ncell], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][j][(k + ncell - 1) % ncell], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][(k + ncell - 1) % ncell], en_pot, virial);
 
-	    it->force += r * fval;
-	    it2->force -= r * fval;
+		    compute_cell_forces(*it, cells[i][(j + ncell - 1) % ncell][(k + 1) % ncell], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][(k + 1) % ncell], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][j][(k + 1) % ncell], en_pot, virial);
+		    compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][(k + 1) % ncell], en_pot, virial);
 
-	    en_pot += 4. * r6i * (r6i - 1.) - en_cut;
-	    virial += rr * fval;
+		    compute_cell_forces(*it, cells[i][j][(k + ncell - 1) % ncell], en_pot, virial);
+		}
+	    }
+#else
+	    // FIXME This is royal prefix/postfix fun...
+	    for (list_iterator it = cells[i][j].begin(); it != cells[i][j].end(); ++it) {
+		// FIXME This is royal prefix/postfix fun...
+		for (list_iterator it2 = it; ++it2 != cells[i][j].end(); )
+		    compute_force(*it, *it2, en_pot, virial);
+
+		// only half of neighbour cells need to be considered due to pair potential
+		compute_cell_forces(*it, cells[i][(j + ncell - 1) % ncell], en_pot, virial);
+		compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell], en_pot, virial);
+		compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][j], en_pot, virial);
+		compute_cell_forces(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell], en_pot, virial);
+	    }
+#endif
 	}
     }
 
@@ -294,14 +371,67 @@ void ljfluid<T>::compute_forces(double& en_pot, double& virial)
 }
 
 /**
+ * FIXME
+ */
+template <typename T>
+void ljfluid<T>::compute_cell_forces(particle<T>& p, list_type& cell, double& en_pot, double& virial)
+{
+    for (list_iterator it = cell.begin(); it != cell.end(); ++it) {
+	compute_force(p, *it, en_pot, virial);
+    }
+}
+
+/**
+ * compute pairwise Lennard-Jones force
+ */
+template<typename T>
+void ljfluid<T>::compute_force(particle<T>& p1, particle<T>& p2, double& en_pot, double& virial)
+{
+    T r = p1.pos - p2.pos;
+    // enforce periodic boundary conditions
+    r -= round(r / box) * box;
+    // squared particle distance
+    double rr = r * r;
+
+    // enforce cutoff distance
+    if (rr >= rr_cut) return;
+
+    // compute Lennard-Jones force in reduced units
+    double rri = 1. / rr;
+    double r6i = rri * rri * rri;
+    double fval = 48. * rri * r6i * (r6i - 0.5);
+
+    p1.force += r * fval;
+    p2.force -= r * fval;
+
+    en_pot += 4. * r6i * (r6i - 1.) - en_cut;
+    virial += rr * fval;
+}
+
+/**
+ * initialize cell lists
+ */
+template <typename T>
+void ljfluid<T>::init_cells()
+{
+    // number of cells along 1 dimension
+    ncell = size_t(floor(box / r_cut));
+    // cell edge length (must be greater or equal to cutoff length)
+    cell_len = box / ncell;
+
+#ifdef DIM_3D
+    cells.resize(boost::extents[ncell][ncell][ncell]);
+#else
+    cells.resize(boost::extents[ncell][ncell]);
+#endif
+}
+
+/**
  * place particles on a 3-dimensional simple cubic lattice
  */
 template <typename T>
 void ljfluid<T>::init_lattice()
 {
-    iterator it;
-    size_t i;
-
     // number of particles along one lattice dimension
 #ifdef DIM_3D
     size_t n = size_t(ceil(cbrt(npart)));
@@ -311,11 +441,18 @@ void ljfluid<T>::init_lattice()
     // lattice distance
     double a = box / n;
 
-    for (it = part.begin(), i = 0; it != part.end(); ++it, ++i) {
+    // first cell
 #ifdef DIM_3D
-	it->pos = T(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a;
+    list_type& cell = *cells.begin()->begin()->begin();
 #else
-	it->pos = T(i % n + 0.5, i / n + 0.5) * a;
+    list_type& cell = *cells.begin()->begin();
+#endif
+
+    for (size_t i = 0; i < npart; ++i) {
+#ifdef DIM_3D
+	cell.push_back(particle<T>(T(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a));
+#else
+	cell.push_back(particle<T>(T(i % n + 0.5, i / n + 0.5) * a));
 #endif
     }
 }
@@ -332,16 +469,20 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
     // center of mass velocity
     T vel_cm = 0.;
 
-    for (iterator it = part.begin(); it != part.end(); ++it) {
-	rng.unit_vector(it->vel);
-	it->vel *= vel_mag;
-	vel_cm += it->vel;
+    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    rng.unit_vector(it->vel);
+	    it->vel *= vel_mag;
+	    vel_cm += it->vel;
+	}
     }
 
     // set center of mass velocity to zero
     vel_cm /= npart;
-    for (iterator it = part.begin(); it != part.end(); ++it) {
-	it->vel -= vel_cm;
+    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    it->vel -= vel_cm;
+	}
     }
 }
 
@@ -351,8 +492,10 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
 template <typename T>
 void ljfluid<T>::init_forces()
 {
-    for (iterator it = part.begin(); it != part.end(); ++it) {
-	it->force = 0.;
+    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    it->force = 0.;
+	}
     }
 }
 
