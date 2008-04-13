@@ -204,7 +204,7 @@ public:
      */
     friend std::istream& operator>>(std::istream& is, vector2d<T>& v)
     {
-	is >> v.x >> v.y >> v.z;
+	is >> v.x >> v.y;
 	return is;
     }
 };
