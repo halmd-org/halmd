@@ -19,12 +19,12 @@
 #ifndef MDSIM_LJFLUID_HPP
 #define MDSIM_LJFLUID_HPP
 
-#include <boost/multi_array.hpp>
 #include <list>
 #include <vector>
 #include <algorithm>
 #include <iostream>
 #include <math.h>
+#include "cell_array.hpp"
 
 
 namespace mdsim
@@ -56,15 +56,13 @@ struct particle
 template <typename T>
 class ljfluid
 {
-public:
+protected:
     typedef typename std::list<particle<T> > list_type;
     typedef typename std::list<particle<T> >::iterator list_iterator;
-    typedef typename std::list<particle<T> >::const_iterator const_list_iterator;
-#ifdef DIM_3D
-    typedef boost::multi_array<list_type, 3> array_type;
-#else
-    typedef boost::multi_array<list_type, 2> array_type;
-#endif
+    typedef typename std::list<particle<T> >::const_iterator list_const_iterator;
+
+    typedef typename cell_array<list_type, T>::iterator cell_iterator;
+    typedef typename cell_array<list_type, T>::const_iterator cell_const_iterator;
 
 public:
     ljfluid(size_t npart);
@@ -102,7 +100,7 @@ private:
     /** number of particles in periodic box */
     size_t npart;
     /** cell lists */
-    array_type cells;
+    cell_array<list_type, T> cells;
     /** number of cells along 1 dimension */
     size_t ncell;
     /** cell edge length */
@@ -250,8 +248,8 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
 template <typename T>
 void ljfluid<T>::trajectories(std::ostream& os) const
 {
-    for (list_type const* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
-	for (const_list_iterator it = cell->begin(); it != cell->end(); ++it) {
+    for (cell_const_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
+	for (list_const_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    os << it->pos << "\t" << it->vel << std::endl;
 	}
     }
@@ -264,7 +262,7 @@ void ljfluid<T>::trajectories(std::ostream& os) const
 template <typename T>
 void ljfluid<T>::leapfrog_half()
 {
-    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    // half step velocity
 	    it->vel += it->force * (timestep_ / 2.);
@@ -293,7 +291,7 @@ void ljfluid<T>::leapfrog_full(T& vel_cm, double& vel2_sum)
     // maximum squared velocity
     double vel2_max = 0.;
 
-    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    // full step velocity
 	    it->vel = it->vel + (timestep_ / 2) * it->force;
@@ -317,20 +315,15 @@ void ljfluid<T>::leapfrog_full(T& vel_cm, double& vel2_sum)
 template <typename T>
 void ljfluid<T>::update_cells()
 {
-    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	// FIXME particles may be visited twice if moved ahead in sequence
 	for (list_iterator it = cell->begin(); it != cell->end(); ) {
 	    list_iterator it_old = it;
 	    ++it;
 
 	    // update cell lists
-	    T index = floor(it_old->pos / cell_len);
-#ifdef DIM_3D
-	    list_type& cell_ = cells[size_t(index.x)][size_t(index.y)][size_t(index.z)];
-#else
-	    list_type& cell_ = cells[size_t(index.x)][size_t(index.y)];
-#endif
-	    if (&cell_ != cell) {
+	    list_type& cell_ = cells(it_old->pos / cell_len);
+	    if (&cell_ != &(*cell)) {
 		cell_.splice(cell_.end(), *cell, it_old);
 	    }
 	}
@@ -348,13 +341,13 @@ void ljfluid<T>::compute_forces(double& en_pot, double& virial)
     // virial equation sum
     virial = 0.;
 
-    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    it->force = 0.;
 	}
     }
 
-    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    for (typename std::vector<particle<T>*>::iterator it2 = it->neighbour.begin(); it2 != it->neighbour.end(); it2++) {
 		compute_force(*it, **it2, en_pot, virial);
@@ -492,11 +485,7 @@ void ljfluid<T>::init_cells()
     // cell edge length (must be greater or equal to cutoff length)
     cell_len = box / ncell;
 
-#ifdef DIM_3D
-    cells.resize(boost::extents[ncell][ncell][ncell]);
-#else
-    cells.resize(boost::extents[ncell][ncell]);
-#endif
+    cells.resize(ncell);
 }
 
 /**
@@ -515,11 +504,7 @@ void ljfluid<T>::init_lattice()
     double a = box / n;
 
     // first cell
-#ifdef DIM_3D
-    list_type& cell = *cells.begin()->begin()->begin();
-#else
-    list_type& cell = *cells.begin()->begin();
-#endif
+    list_type& cell = *cells.begin();
 
     for (size_t i = 0; i < npart; ++i) {
 #ifdef DIM_3D
@@ -544,7 +529,7 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
     // maximum squared velocity
     double vel2_max = 0.;
 
-    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    rng.unit_vector(it->vel);
 	    it->vel *= vel_mag;
@@ -554,7 +539,7 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
 
     // set center of mass velocity to zero
     vel_cm /= npart;
-    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    it->vel -= vel_cm;
 	    vel2_max = std::max(it->vel * it->vel, vel2_max);
@@ -570,7 +555,7 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
 template <typename T>
 void ljfluid<T>::init_forces()
 {
-    for (list_type* cell = cells.data(); cell != cells.data() + cells.num_elements(); ++cell) {
+    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    it->force = 0.;
 	}
