@@ -495,15 +495,13 @@ void ljfluid<T>::init_lattice()
     // lattice distance
     double a = box / n;
 
-    // first cell
-    list_type& cell = *cells.begin();
-
     for (size_t i = 0; i < npart; ++i) {
 #ifdef DIM_3D
-	cell.push_back(particle<T>(T(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a));
+	particle<T> p(T(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a);
 #else
-	cell.push_back(particle<T>(T(i % n + 0.5, i / n + 0.5) * a));
+	particle<T> p(T(i % n + 0.5, i / n + 0.5) * a);
 #endif
+	cells(p.pos / cell_len).push_back(p);
     }
 }
 
