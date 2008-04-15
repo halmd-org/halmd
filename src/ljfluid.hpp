@@ -198,11 +198,7 @@ void ljfluid<T>::density(double density_)
     // particle density
     this->density_ = density_;
     // periodic box length
-#ifdef DIM_3D
-    box = cbrt(npart / density_);
-#else
-    box = sqrt(npart / density_);
-#endif
+    box = pow(npart / density_, 1.0 / T::dim());
 
     init_cells();
     init_lattice();
@@ -495,11 +491,7 @@ template <typename T>
 void ljfluid<T>::init_lattice()
 {
     // number of particles along one lattice dimension
-#ifdef DIM_3D
-    size_t n = size_t(ceil(cbrt(npart)));
-#else
-    size_t n = size_t(ceil(sqrt(npart)));
-#endif
+    size_t n = size_t(ceil(pow(npart, 1.0 / T::dim())));
     // lattice distance
     double a = box / n;
 
