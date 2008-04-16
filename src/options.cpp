@@ -23,14 +23,97 @@
 namespace po = boost::program_options;
 
 
+namespace boost { namespace program_options
+{
+
+/**
+ * program option value validation for double precision floating-point values
+ */
+template <>
+void validate(boost::any& value_store, std::vector<std::string> const& values, double*, long)
+{
+    std::string const& s = po::validators::get_single_string(values);
+    double value;
+
+    try {
+	value = lexical_cast<double>(s);
+    }
+    catch (bad_lexical_cast const& e)
+    {
+	throw po::invalid_option_value(s);
+    }
+
+    // require positive value
+    if (value > 0.) {
+	value_store = boost::any(value);
+    }
+    else {
+	throw po::invalid_option_value(s);
+    }
+}
+
+/**
+ * program option value validation for unsigned integer values
+ */
+template <>
+void validate(boost::any& value_store, std::vector<std::string> const& values, unsigned int*, long)
+{
+    std::string const& s = po::validators::get_single_string(values);
+    unsigned int value;
+
+    try {
+	value = lexical_cast<unsigned int>(s);
+    }
+    catch (bad_lexical_cast const& e)
+    {
+	throw po::invalid_option_value(s);
+    }
+
+    // require positive value
+    if (value > 0) {
+	value_store = boost::any(value);
+    }
+    else {
+	throw po::invalid_option_value(s);
+    }
+}
+
+/**
+ * program option value validation for 64-bit unsigned integer values
+ */
+template <>
+void validate(boost::any& value_store, std::vector<std::string> const& values, uint64_t*, long)
+{
+    std::string const& s = po::validators::get_single_string(values);
+    uint64_t value;
+
+    try {
+	value = lexical_cast<uint64_t>(s);
+    }
+    catch (bad_lexical_cast const& e)
+    {
+	throw po::invalid_option_value(s);
+    }
+
+    // require positive value
+    if (value > 0) {
+	value_store = boost::any(value);
+    }
+    else {
+	throw po::invalid_option_value(s);
+    }
+}
+
+}} // namespace boost::program_options
+
+
 namespace mdsim {
 
+/**
+ * set default parameters
+ */
 options::options()
 {
-    //
-    // default program parameters
-    //
-
     npart_ = 10000;
     density_ = 0.05;
     timestep_ = 0.005;
@@ -41,6 +124,9 @@ options::options()
     rngseed_ = 123;
 }
 
+/**
+ * parse program option values
+ */
 void options::parse(int argc, char** argv)
 {
     po::options_description gen_opts("General options");
