@@ -16,11 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __VERSION_H__
-#define __VERSION_H__
+#ifndef MDSIM_VERSION_H
+#define MDSIM_VERSION_H
+
+#ifdef DIM_3D
+# define PROGRAM_NAME		"ljfluid3d"
+#else
+# define PROGRAM_NAME		"ljfluid2d"
+#endif
 
 #define PROGRAM_VERSION		"@PROGRAM_VERSION@"
 #define PROGRAM_AUTHOR		"Peter Colberg <peter.colberg@physik.uni-muenchen.de>"
 #define PROGRAM_COPYRIGHT	"Copyright (C) 2007-2008  " PROGRAM_AUTHOR
 
-#endif /* !__VERSION_H__ */
+#endif /* !MDSIM_VERSION_H */
