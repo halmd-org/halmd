@@ -72,7 +72,7 @@ void options::parse(int argc, char** argv)
     try {
 	po::store(po::command_line_parser(argc, argv).options(opts).run(), vm);
     }
-    catch (std::exception &e) {
+    catch (std::exception const& e) {
 	std::cerr << PROGRAM_NAME << ": " << e.what() << "\n";
 	std::cerr << "Try `" << PROGRAM_NAME << " --help' for more information.\n";
 	throw options::exception(EXIT_FAILURE);

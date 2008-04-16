@@ -36,7 +36,7 @@ public:
     public:
 	exception(int status) : status_(status) {}
 
-	int status()
+	int status() const
 	{
 	    return status_;
 	}
