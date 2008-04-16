@@ -19,7 +19,7 @@
 #ifndef MDSIM_OPTIONS_HPP
 #define MDSIM_OPTIONS_HPP
 
-#include <sys/types.h>
+#include <stdint.h>
 
 
 namespace mdsim
@@ -50,7 +50,7 @@ public:
 
     void parse(int argc, char** argv);
 
-    size_t npart() const
+    unsigned int npart() const
     {
 	return npart_;
     }
@@ -70,12 +70,12 @@ public:
 	return temp_;
     }
 
-    size_t steps() const
+    uint64_t steps() const
     {
 	return steps_;
     }
 
-    size_t avgsteps() const
+    uint64_t avgsteps() const
     {
 	return avgsteps_;
     }
@@ -87,7 +87,7 @@ public:
 
 private:
     /** number of particles */
-    size_t npart_;
+    unsigned int npart_;
     /** density */
     double density_;
     /** simulation timestep */
@@ -95,9 +95,9 @@ private:
     /** initial temperature */
     double temp_;
     /** number of simulation steps */
-    size_t steps_;
+    uint64_t steps_;
     /** number of steps for average accumulation */
-    size_t avgsteps_;
+    uint64_t avgsteps_;
     /** random number generator seed */
     unsigned int rngseed_;
 };
