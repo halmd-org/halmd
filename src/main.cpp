@@ -22,30 +22,41 @@
 #include "gsl_rng.hpp"
 #include "ljfluid.hpp"
 #include "mdsim.hpp"
+#include "options.hpp"
 using namespace std;
 
 
 int main(int argc, char **argv)
 {
+    mdsim::options opts;
+
+    try {
+	opts.parse(argc, argv);
+    }
+    catch (mdsim::options::exception& e) {
+	return e.status();
+    }
+
     rng::gsl::gfsr4 rng;
 #ifdef DIM_3D
-    mdsim::ljfluid<vector3d<double> > fluid(100);
+    mdsim::ljfluid<vector3d<double> > fluid(opts.npart());
     mdsim::mdsim<vector3d<double> > sim;
 #else
-    mdsim::ljfluid<vector2d<double> > fluid(100);
+    mdsim::ljfluid<vector2d<double> > fluid(opts.npart());
     mdsim::mdsim<vector2d<double> > sim;
 #endif
 
-    rng.set(123);
+    rng.set(opts.rngseed());
 
-    fluid.density(0.05);
-    fluid.timestep(0.005);
-    fluid.temperature(1., rng);
+    fluid.density(opts.density());
+    fluid.timestep(opts.timestep());
+    fluid.temperature(opts.temp(), rng);
 
-    for (size_t i = 1; i <= 10000; i++) {
+    for (size_t i = 1; i <= opts.steps(); i++) {
 	sim.step(fluid);
 
-	if (i % 10) continue;
+	if (i % opts.avgsteps())
+	    continue;
 
 	cout << "## steps(" << i << ")" << endl;
 
