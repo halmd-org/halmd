@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     try {
 	opts.parse(argc, argv);
     }
-    catch (mdsim::options::exception const& e) {
+    catch (mdsim::options::exit_exception const& e) {
 	return e.status();
     }
 

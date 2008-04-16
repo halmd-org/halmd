@@ -31,10 +31,10 @@ namespace mdsim
 class options
 {
 public:
-    class exception
+    class exit_exception
     {
     public:
-	exception(int status) : status_(status) {}
+	exit_exception(int status) : status_(status) {}
 
 	int status() const
 	{

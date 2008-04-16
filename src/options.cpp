@@ -19,8 +19,11 @@
 #include "options.hpp"
 #include "version.h"
 #include <iostream>
+#include <fstream>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
+
+using namespace std;
 
 
 namespace boost { namespace program_options
@@ -30,9 +33,9 @@ namespace boost { namespace program_options
  * program option value validation for double precision floating-point values
  */
 template <>
-void validate(boost::any& value_store, std::vector<std::string> const& values, double*, long)
+void validate(boost::any& value_store, vector<string> const& values, double*, long)
 {
-    std::string const& s = po::validators::get_single_string(values);
+    string const& s = po::validators::get_single_string(values);
     double value;
 
     try {
@@ -56,9 +59,9 @@ void validate(boost::any& value_store, std::vector<std::string> const& values, d
  * program option value validation for unsigned integer values
  */
 template <>
-void validate(boost::any& value_store, std::vector<std::string> const& values, unsigned int*, long)
+void validate(boost::any& value_store, vector<string> const& values, unsigned int*, long)
 {
-    std::string const& s = po::validators::get_single_string(values);
+    string const& s = po::validators::get_single_string(values);
     unsigned int value;
 
     try {
@@ -82,9 +85,9 @@ void validate(boost::any& value_store, std::vector<std::string> const& values, u
  * program option value validation for 64-bit unsigned integer values
  */
 template <>
-void validate(boost::any& value_store, std::vector<std::string> const& values, uint64_t*, long)
+void validate(boost::any& value_store, vector<string> const& values, uint64_t*, long)
 {
-    std::string const& s = po::validators::get_single_string(values);
+    string const& s = po::validators::get_single_string(values);
     uint64_t value;
 
     try {
@@ -129,12 +132,6 @@ options::options()
  */
 void options::parse(int argc, char** argv)
 {
-    po::options_description gen_opts("General options");
-    gen_opts.add_options()
-	("version,V", "output version and exit")
-	("help,h", "display this help and exit")
-	;
-
     po::options_description mdsim_opts("MD simulation parameters");
     mdsim_opts.add_options()
 	("particles,N", po::value(&npart_), "number of particles")
@@ -145,40 +142,59 @@ void options::parse(int argc, char** argv)
 	("average,S", po::value(&avgsteps_), "number of average accumulation steps")
 	;
 
-    po::options_description misc_opts("Miscellaneous options");
+    po::options_description misc_opts("Other options");
     misc_opts.add_options()
 	("seed,R", po::value(&rngseed_), "random number generator integer seed")
+	("input,I", po::value<vector<string> >(), "parameter input file")
+	("version,V", "output version and exit")
+	("help,h", "display this help and exit")
 	;
 
     po::options_description opts;
-    opts.add(gen_opts).add(mdsim_opts).add(misc_opts);
+    opts.add(mdsim_opts).add(misc_opts);
 
     po::variables_map vm;
 
     try {
-	po::store(po::command_line_parser(argc, argv).options(opts).run(), vm);
+	// parse command line options
+	po::store(po::parse_command_line(argc, argv, opts), vm);
+
+	// parse optional parameter input files
+	if (vm.count("input")) {
+	    vector<string> const& files = vm["input"].as<vector<string> >();
+
+	    for (vector<string>::const_iterator it = files.begin(); it != files.end(); ++it) {
+		ifstream ifs(it->c_str());
+		if (ifs.fail()) {
+		    cerr << PROGRAM_NAME ": could not open parameter input file '" << *it << "'\n";
+		    throw options::exit_exception(EXIT_FAILURE);
+		}
+
+		po::store(po::parse_config_file(ifs, opts), vm);
+	    }
+	}
     }
     catch (std::exception const& e) {
-	std::cerr << PROGRAM_NAME << ": " << e.what() << "\n";
-	std::cerr << "Try `" << PROGRAM_NAME << " --help' for more information.\n";
-	throw options::exception(EXIT_FAILURE);
+	cerr << PROGRAM_NAME ": " << e.what() << "\n";
+	cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
+	throw options::exit_exception(EXIT_FAILURE);
     }
 
     po::notify(vm);
 
     if (vm.count("help")) {
-	std::cout << "Usage: " PROGRAM_NAME " [OPTION]..." << opts;
-	throw options::exception(EXIT_SUCCESS);
+	cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << opts << "\n";
+	throw options::exit_exception(EXIT_SUCCESS);
     }
 
     if (vm.count("version")) {
-	std::cout << PROGRAM_NAME " (" PROGRAM_VERSION ")\n"
+	cout << PROGRAM_NAME " (" PROGRAM_VERSION ")\n"
 	    "\n" PROGRAM_COPYRIGHT "\n" "This is free software. "
 	    "You may redistribute copies of it under the terms of\n"
 	    "the GNU General Public License "
 	    "<http://www.gnu.org/licenses/gpl.html>.\n"
 	    "There is NO WARRANTY, to the extent permitted by law.\n";
-	throw options::exception(EXIT_SUCCESS);
+	throw options::exit_exception(EXIT_SUCCESS);
     }
 }
 
