@@ -106,7 +106,7 @@ public:
 	// uniform random numbers. It is described in
 	//
 	// G. Marsaglia, Choosing a Point from the Surface of a Sphere,
-	// The Annals of Mathematical Statistics, 1972, 43, 645-646
+	// The Annals of Mathematical Statistics, 1972, 43, p. 645-646
 	//
 	// http://projecteuclid.org/euclid.aoms/1177692644#
 	//
@@ -123,6 +123,39 @@ public:
 	s = 2. * std::sqrt(1. - s);
 	v.x *= s;
 	v.y *= s;
+    }
+
+    /**
+     * generate 2 random numbers from Gaussian distribution with given variance
+     */
+    void gaussian(double& r1, double& r2, double const& var)
+    {
+	//
+	// The Box-Muller transformation for generating random numbers
+	// in the normal distribution was originally described in
+	//
+	// G.E.P. Box and M.E. Muller, A Note on the Generation of
+	// Random Normal Deviates, The Annals of Mathematical Statistics,
+	// 1958, 29, p. 610-611
+	//
+	// Here, we use instead the faster polar method of the Box-Muller
+	// transformation, see
+	//
+	// D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+	// Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
+	//
+
+	double s;
+
+	do {
+	    r1 = 2. * uniform() - 1.;
+	    r2 = 2. * uniform() - 1.;
+	    s = r1 * r1 + r2 * r2;
+	} while (s >= 1.);
+
+	s = std::sqrt(-2. * var * std::log(s) / s);
+	r1 *= s;
+	r2 *= s;
     }
 };
 
