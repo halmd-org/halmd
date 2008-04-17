@@ -506,14 +506,12 @@ void ljfluid<T>::init_lattice()
 }
 
 /**
- * generate random n-dimensional velocity vectors with uniform magnitude
+ * generate random n-dimensional Maxwell-Boltzmann distributed velocities
  */
 template <typename T>
 template <typename rng_type>
 void ljfluid<T>::init_velocities(double temp, rng_type& rng)
 {
-    // velocity magnitude
-    double vel_mag = sqrt(T::dim() * temp);
     // center of mass velocity
     T vel_cm = 0.;
     // maximum squared velocity
@@ -521,8 +519,10 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
 
     for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    rng.unit_vector(it->vel);
-	    it->vel *= vel_mag;
+	    rng.gaussian(it->vel.x, it->vel.y, temp);
+#ifdef DIM_3D
+	    rng.gaussian(it->vel.z, it->vel.z, temp);
+#endif
 	    vel_cm += it->vel;
 	}
     }
