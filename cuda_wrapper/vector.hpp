@@ -107,7 +107,7 @@ public:
     void memcpy(const vector_type& v)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpy(operator&(), v.operator&(), v.size() * sizeof(value_type), cudaMemcpyDeviceToDevice));
+	CUDA_CALL(cudaMemcpy(data(), v.data(), v.size() * sizeof(value_type), cudaMemcpyDeviceToDevice));
     }
 
     /**
@@ -117,7 +117,7 @@ public:
     void memcpy(const host::vector<value_type, Alloc>& v)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpy(operator&(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpy(data(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToDevice));
     }
 
 #ifdef CUDA_WRAPPER_ASYNC_API
@@ -128,7 +128,7 @@ public:
     void memcpy(const vector_type& v, const stream& stream)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpyAsync(operator&(), v.operator&(), v.size() * sizeof(value_type), cudaMemcpyDeviceToDevice, stream._stream));
+	CUDA_CALL(cudaMemcpyAsync(data(), v.data(), v.size() * sizeof(value_type), cudaMemcpyDeviceToDevice, stream._stream));
     }
 
     /**
@@ -139,7 +139,7 @@ public:
     void memcpy(const host::vector<value_type, host::allocator<value_type> >& v, const stream& stream)
     {
 	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpyAsync(operator&(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToDevice, stream._stream));
+	CUDA_CALL(cudaMemcpyAsync(data(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToDevice, stream._stream));
     }
 
 #endif /* CUDA_WRAPPER_ASYNC_API */
@@ -150,7 +150,7 @@ public:
     void memcpy(const symbol<value_type>& symbol)
     {
 	assert(symbol.size() == size());
-	CUDA_CALL(cudaMemcpyFromSymbol(operator&(), reinterpret_cast<const char *>(symbol.operator&()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToDevice));
+	CUDA_CALL(cudaMemcpyFromSymbol(data(), reinterpret_cast<const char *>(symbol.data()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToDevice));
     }
 
     /**
@@ -215,7 +215,7 @@ public:
     /**
      * returns device pointer to allocated device memory
      */
-    value_type* operator&() const
+    value_type* data() const
     {
 	return const_cast<value_type*>(&_Base::front());
     }
