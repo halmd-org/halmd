@@ -35,7 +35,7 @@ namespace boost { namespace program_options
 template <>
 void validate(boost::any& value_store, vector<string> const& values, double*, long)
 {
-    string const& s = po::validators::get_single_string(values);
+    string const& s = validators::get_single_string(values);
     double value;
 
     try {
@@ -43,7 +43,7 @@ void validate(boost::any& value_store, vector<string> const& values, double*, lo
     }
     catch (bad_lexical_cast const& e)
     {
-	throw po::invalid_option_value(s);
+	throw invalid_option_value(s);
     }
 
     // require positive value
@@ -51,7 +51,7 @@ void validate(boost::any& value_store, vector<string> const& values, double*, lo
 	value_store = boost::any(value);
     }
     else {
-	throw po::invalid_option_value(s);
+	throw invalid_option_value(s);
     }
 }
 
@@ -61,7 +61,7 @@ void validate(boost::any& value_store, vector<string> const& values, double*, lo
 template <>
 void validate(boost::any& value_store, vector<string> const& values, unsigned int*, long)
 {
-    string const& s = po::validators::get_single_string(values);
+    string const& s = validators::get_single_string(values);
     unsigned int value;
 
     try {
@@ -69,7 +69,7 @@ void validate(boost::any& value_store, vector<string> const& values, unsigned in
     }
     catch (bad_lexical_cast const& e)
     {
-	throw po::invalid_option_value(s);
+	throw invalid_option_value(s);
     }
 
     // require positive value
@@ -77,7 +77,7 @@ void validate(boost::any& value_store, vector<string> const& values, unsigned in
 	value_store = boost::any(value);
     }
     else {
-	throw po::invalid_option_value(s);
+	throw invalid_option_value(s);
     }
 }
 
@@ -87,7 +87,7 @@ void validate(boost::any& value_store, vector<string> const& values, unsigned in
 template <>
 void validate(boost::any& value_store, vector<string> const& values, uint64_t*, long)
 {
-    string const& s = po::validators::get_single_string(values);
+    string const& s = validators::get_single_string(values);
     uint64_t value;
 
     try {
@@ -95,7 +95,7 @@ void validate(boost::any& value_store, vector<string> const& values, uint64_t*, 
     }
     catch (bad_lexical_cast const& e)
     {
-	throw po::invalid_option_value(s);
+	throw invalid_option_value(s);
     }
 
     // require positive value
@@ -103,7 +103,17 @@ void validate(boost::any& value_store, vector<string> const& values, uint64_t*, 
 	value_store = boost::any(value);
     }
     else {
-	throw po::invalid_option_value(s);
+	throw invalid_option_value(s);
+    }
+}
+
+/**
+ * Function used to check that 'opt1' and 'opt2' are not specified at the same time.
+ */
+void conflicting_options(const variables_map& vm, const char* opt1, const char* opt2)
+{
+    if (vm.count(opt1) && !vm[opt1].defaulted() && vm.count(opt2) && !vm[opt2].defaulted()) {
+	throw logic_error(string("conflicting options '") + opt1 + "' and '" + opt2 + "'");
     }
 }
 
