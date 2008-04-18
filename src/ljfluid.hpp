@@ -72,6 +72,7 @@ public:
     void timestep(double val);
     double density() const;
     void density(double density_);
+    double box() const;
     template <typename rng_type>
     void temperature(double temp, rng_type& rng);
 
@@ -106,15 +107,15 @@ private:
     /** cell edge length */
     double cell_len;
 
-    /** particles per n-dimensional volume */
+    /** particle density */
     double density_;
+    /** periodic box length */
+    double box_;
     /** MD simulation timestep */
     double timestep_;
     /** cutoff distance for shifted Lennard-Jones potential */
     double r_cut;
 
-    /** periodic box length */
-    double box;
     /** squared cutoff distance */
     double rr_cut;
     /** potential energy at cutoff distance */
@@ -198,10 +199,19 @@ void ljfluid<T>::density(double density_)
     // particle density
     this->density_ = density_;
     // periodic box length
-    box = pow(npart / density_, 1.0 / T::dim());
+    this->box_ = pow(npart / density_, 1.0 / T::dim());
 
     init_cells();
     init_lattice();
+}
+
+/**
+ * get periodic box length
+ */
+template <typename T>
+double ljfluid<T>::box() const
+{
+    return box_;
 }
 
 /**
@@ -265,7 +275,7 @@ void ljfluid<T>::leapfrog_half()
 	    // full step coordinates
 	    it->pos += it->vel * timestep_;
 	    // enforce periodic boundary conditions
-	    it->pos -= floor(it->pos / box) * box;
+	    it->pos -= floor(it->pos / box_) * box_;
 
 	    // if particles are moving more than cutoff length in timestep,
 	    // something is really fishy...
@@ -433,7 +443,7 @@ void ljfluid<T>::compute_neighbour(particle<T>& p1, particle<T>& p2)
 {
     T r = p1.pos - p2.pos;
     // enforce periodic boundary conditions
-    r -= round(r / box) * box;
+    r -= round(r / box_) * box_;
     // squared particle distance
     double rr = r * r;
 
@@ -451,7 +461,7 @@ void ljfluid<T>::compute_force(particle<T>& p1, particle<T>& p2, double& en_pot,
 {
     T r = p1.pos - p2.pos;
     // enforce periodic boundary conditions
-    r -= round(r / box) * box;
+    r -= round(r / box_) * box_;
     // squared particle distance
     double rr = r * r;
 
@@ -477,9 +487,9 @@ template <typename T>
 void ljfluid<T>::init_cells()
 {
     // number of cells along 1 dimension
-    ncell = size_t(floor(box / r_cut_skin));
+    ncell = size_t(floor(box_ / r_cut_skin));
     // cell edge length (must be greater or equal to cutoff length)
-    cell_len = box / ncell;
+    cell_len = box_ / ncell;
 
     cells.resize(ncell);
 }
@@ -493,7 +503,7 @@ void ljfluid<T>::init_lattice()
     // number of particles along one lattice dimension
     size_t n = size_t(ceil(pow(npart, 1.0 / T::dim())));
     // lattice distance
-    double a = box / n;
+    double a = box_ / n;
 
     for (size_t i = 0; i < npart; ++i) {
 #ifdef DIM_3D
