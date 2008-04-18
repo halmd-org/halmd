@@ -1,5 +1,3 @@
-ADD_DEFINITIONS(-Wall)
-
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 # Generate version header file
@@ -9,8 +7,17 @@ CONFIGURE_FILE(
   ESCAPE_QUOTES @ONLY
   )
 
+FOREACH(dim RANGE 2 3)
+  ADD_EXECUTABLE(ljfluid${dim}d main.cpp options.cpp)
+  SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES COMPILE_FLAGS "-DDIM_${dim}D")
+  TARGET_LINK_LIBRARIES(ljfluid${dim}d
+    ljfluid${dim}d_gpu
+    rand48_gpu
+    ${BOOST_PROGRAM_OPTIONS_LIBRARY}
+    ${GSL_LIBRARIES}
+    ${CUDA_LIBRARIES}
+    )
+ENDFOREACH(dim)
 
-ADD_EXECUTABLE(ljfluid main.cpp)
-TARGET_LINK_LIBRARIES(ljfluid
-  ${BOOST_PROGRAM_OPTIONS_LIBRARY}
-  ${GSL_LIBRARIES})
+ADD_SUBDIRECTORY(gpu)
+
