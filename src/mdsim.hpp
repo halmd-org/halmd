@@ -19,8 +19,6 @@
 #ifndef MDSIM_MDSIM_HPP
 #define MDSIM_MDSIM_HPP
 
-#include <math.h>
-#include <iostream>
 #include "ljfluid.hpp"
 #include "accumulator.hpp"
 
