@@ -20,17 +20,17 @@
 #define MDSIM_VECTOR3D_HPP
 
 #include <math.h>
-#include <cuda/vector_types.h>
-#include <cuda/vector_functions.h>
+#include <iostream>
 
 
 /**
  * 3-dimensional floating-point vector
  */
+template <typename T>
 class vector3d
 {
 public:
-    float x, y, z;
+    T x, y, z;
 
 public:
     vector3d()
@@ -40,62 +40,52 @@ public:
     /**
      * initialization by vector
      */
-    vector3d(const vector3d& v) : x(v.x), y(v.y), z(v.z)
-    {
-    }
-
-    /**
-     * initialization by vector
-     */
-    vector3d(const float3& v) : x(v.x), y(v.y), z(v.z)
+    vector3d(vector3d<T> const& v) : x(v.x), y(v.y), z(v.z)
     {
     }
 
     /**
      * initialization by scalar
      */
-    vector3d(const float& s) : x(s), y(s), z(s)
+    vector3d(T const& s) : x(s), y(s), z(s)
     {
     }
 
     /**
      * initialization by scalar components
      */
-    vector3d(const float& x, const float& y, const float& z) : x(x), y(y), z(z)
+    vector3d(T const& x, T const& y, T const& z) : x(x), y(y), z(z)
     {
-    }
-
-    /**
-     * conversion to CUDA vector type
-     */
-    float3 floatn() const
-    {
-	return make_float3(x, y, z);
     }
 
     /**
      * dimension of vector space
      */
-    unsigned int dim() const
+    static unsigned int dim()
     {
 	return 3;
     }
 
     /**
-     * assignment by vector
+     * equality comparison
      */
-    vector3d& operator=(const vector3d& v)
+    bool operator==(vector3d<T> const& v) const
     {
-	x = v.x;
-	y = v.y;
-	z = v.z;
-	return *this;
+        return (v.x == x && v.y == y && v.z == z);
+    }
+    
+    /**
+     * inequality comparison
+     */
+    bool operator!=(vector3d<T> const& v) const
+    {
+        return (v.x != x || v.y != y || v.z != z);
     }
 
     /**
      * assignment by vector
      */
-    vector3d& operator=(const float3& v)
+    vector3d<T>& operator=(vector3d<T> const& v)
     {
 	x = v.x;
 	y = v.y;
@@ -106,7 +96,7 @@ public:
     /**
      * assignment by scalar
      */
-    vector3d& operator=(const float& s)
+    vector3d<T>& operator=(T const& s)
     {
 	x = s;
 	y = s;
@@ -117,18 +107,7 @@ public:
     /**
      * assignment by componentwise vector addition
      */
-    vector3d& operator+=(const vector3d& v)
-    {
-	x += v.x;
-	y += v.y;
-	z += v.z;
-	return *this;
-    }
-
-    /**
-     * assignment by componentwise vector addition
-     */
-    vector3d& operator+=(const float3& v)
+    vector3d<T>& operator+=(vector3d<T> const& v)
     {
 	x += v.x;
 	y += v.y;
@@ -139,18 +118,7 @@ public:
     /**
      * assignment by componentwise vector subtraction
      */
-    vector3d& operator-=(const vector3d& v)
-    {
-	x -= v.x;
-	y -= v.y;
-	z -= v.z;
-	return *this;
-    }
-
-    /**
-     * assignment by componentwise vector subtraction
-     */
-    vector3d& operator-=(const float3& v)
+    vector3d<T>& operator-=(vector3d<T> const& v)
     {
 	x -= v.x;
 	y -= v.y;
@@ -161,7 +129,7 @@ public:
     /**
      * assignment by scalar multiplication
      */
-    vector3d& operator*=(const float& s)
+    vector3d<T>& operator*=(T const& s)
     {
 	x *= s;
 	y *= s;
@@ -172,7 +140,7 @@ public:
     /**
      * assignment by scalar division
      */
-    vector3d& operator/=(const float& s)
+    vector3d<T>& operator/=(T const& s)
     {
 	x /= s;
 	y /= s;
@@ -183,23 +151,29 @@ public:
     /**
      * componentwise vector addition
      */
-    vector3d operator+(const vector3d& v) const
+    friend vector3d<T> operator+(vector3d<T> v, vector3d<T> const& w)
     {
-	return vector3d(x + v.x, y + v.y, z + v.z);
+	v.x += w.x;
+	v.y += w.y;
+	v.z += w.z;
+	return v;
     }
 
     /**
      * componentwise vector subtraction
      */
-    vector3d operator-(const vector3d& v) const
+    friend vector3d<T> operator-(vector3d<T> v, vector3d<T> const& w)
     {
-	return vector3d(x - v.x, y - v.y, z - v.z);
+	v.x -= w.x;
+	v.y -= w.y;
+	v.z -= w.z;
+	return v;
     }
 
     /**
      * scalar product
      */
-    float operator*(const vector3d& v) const
+    T operator*(vector3d<T> const& v) const
     {
 	return x * v.x + y * v.y + z * v.z;
     }
@@ -207,50 +181,178 @@ public:
     /**
      * scalar multiplication
      */
-    vector3d operator*(const float& s) const
+    friend vector3d<T> operator*(vector3d<T> v, T const& s)
     {
-	return vector3d(x * s, y * s, z * s);
+	v.x *= s;
+	v.y *= s;
+	v.z *= s;
+	return v;
+    }
+
+    /**
+     * scalar multiplication
+     */
+    friend vector3d<T> operator*(T const& s, vector3d<T> v)
+    {
+	v.x *= s;
+	v.y *= s;
+	v.z *= s;
+	return v;
     }
 
     /**
      * scalar division
      */
-    vector3d operator/(const float& s) const
+    friend vector3d<T> operator/(vector3d<T> v, T const& s)
     {
-	return vector3d(x / s, y / s, z / s);
+	v.x /= s;
+	v.y /= s;
+	v.z /= s;
+	return v;
     }
 
     /**
-     * componentwise round to nearest integer
+     * write vector components to output stream
      */
-    friend vector3d rintf(const vector3d& v)
+    friend std::ostream& operator<<(std::ostream& os, vector3d<T> const& v)
     {
-	return vector3d(rintf(v.x), rintf(v.y), rintf(v.z));
-    }
-
-    /*
-     * componentwise round to nearest integer, away from zero
-     */
-    friend vector3d roundf(const vector3d& v)
-    {
-	return vector3d(roundf(v.x), roundf(v.y), roundf(v.z));
+	os << v.x << "\t" << v.y << "\t" << v.z;
+	return os;
     }
 
     /**
-     * componentwise round to nearest integer not greater than argument
+     * read vector components from input stream
      */
-    friend vector3d floorf(const vector3d& v)
-    {   
-	return vector3d(floorf(v.x), floorf(v.y), floorf(v.z));
-    }
-
-    /**
-     * componentwise round to nearest integer not less argument
-     */
-    friend vector3d ceilf(const vector3d& v)
-    {   
-	return vector3d(ceilf(v.x), ceilf(v.y), ceilf(v.z));
+    friend std::istream& operator>>(std::istream& is, vector3d<T>& v)
+    {
+	is >> v.x >> v.y >> v.z;
+	return is;
     }
 };
+
+
+/**
+ * componentwise round to nearest integer
+ */
+template <typename T>
+vector3d<T> rint(vector3d<T> v);
+
+template <>
+vector3d<float> rint(vector3d<float> v)
+{
+    v.x = rintf(v.x);
+    v.y = rintf(v.y);
+    v.z = rintf(v.z);
+    return v;
+}
+
+template <>
+vector3d<double> rint(vector3d<double> v)
+{
+    v.x = rint(v.x);
+    v.y = rint(v.y);
+    v.z = rint(v.z);
+    return v;
+}
+
+
+/**
+ * componentwise round to nearest integer, away from zero
+ */
+template <typename T>
+vector3d<T> round(vector3d<T> v);
+
+template <>
+vector3d<float> round(vector3d<float> v)
+{
+    v.x = roundf(v.x);
+    v.y = roundf(v.y);
+    v.z = roundf(v.z);
+    return v;
+}
+
+template <>
+vector3d<double> round(vector3d<double> v)
+{
+    v.x = round(v.x);
+    v.y = round(v.y);
+    v.z = round(v.z);
+    return v;
+}
+
+
+/**
+ * componentwise round to nearest integer not greater than argument
+ */
+template <typename T>
+vector3d<T> floor(vector3d<T> v);
+
+template <>
+vector3d<float> floor(vector3d<float> v)
+{   
+    v.x = floorf(v.x);
+    v.y = floorf(v.y);
+    v.z = floorf(v.z);
+    return v;
+}
+
+template <>
+vector3d<double> floor(vector3d<double> v)
+{   
+    v.x = floor(v.x);
+    v.y = floor(v.y);
+    v.z = floor(v.z);
+    return v;
+}
+
+
+/**
+ * componentwise round to nearest integer not less argument
+ */
+template <typename T>
+vector3d<T> ceil(vector3d<T> v);
+
+template <>
+vector3d<float> ceil(vector3d<float> v)
+{   
+    v.x = ceilf(v.x);
+    v.y = ceilf(v.y);
+    v.z = ceilf(v.z);
+    return v;
+}
+
+template <>
+vector3d<double> ceil(vector3d<double> v)
+{   
+    v.x = ceil(v.x);
+    v.y = ceil(v.y);
+    v.z = ceil(v.z);
+    return v;
+}
+
+
+/**
+ * componentwise square root function
+ */
+template <typename T>
+vector3d<T> sqrt(vector3d<T> v);
+
+template <>
+vector3d<float> sqrt(vector3d<float> v)
+{   
+    v.x = sqrtf(v.x);
+    v.y = sqrtf(v.y);
+    v.z = sqrtf(v.z);
+    return v;
+}
+
+template <>
+vector3d<double> sqrt(vector3d<double> v)
+{   
+    v.x = sqrt(v.x);
+    v.y = sqrt(v.y);
+    v.z = sqrt(v.z);
+    return v;
+}
 
 #endif /* ! MDSIM_VECTOR3D_HPP */
