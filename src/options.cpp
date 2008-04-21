@@ -158,7 +158,7 @@ void options::parse(int argc, char** argv)
 
     po::options_description cuda_opts("CUDA options");
     cuda_opts.add_options()
-	("device", po::value(&device_), "CUDA device")
+	("device,D", po::value(&device_), "CUDA device")
 	("blocks", po::value(&blocks_), "number of blocks per grid")
 	("threads", po::value(&threads_), "number of threads per block")
 	;
