@@ -17,77 +17,82 @@
  */
 
 #include <iostream>
-#include <vector>
-using namespace std;
-
+#include <cuda_wrapper/cuda_wrapper.hpp>
+#include "rand48.hpp"
+#include "ljfluid.hpp"
+#include "mdsim.hpp"
+#include "options.hpp"
 #include "vector2d.hpp"
-#include "gsl_rng.hpp"
-#include "leapfrog.hpp"
-#include "force.hpp"
+#include "vector3d.hpp"
+#include "version.h"
+using namespace std;
 
 
 int main(int argc, char **argv)
 {
-    unsigned int i, j;
-    rng::gsl::gfsr4 rng;
+    mdsim::options opts;
 
-    vector<vector2d<double> > r(100);
-    vector<vector2d<double> > v(r.size());
-    vector<vector2d<double> > f(r.size());
-
-    vector2d<double> v_cm;
-    double en_pot;
-    double en_kin;
-
-    ljforce<vector2d<double>, double> force(r, f);
-    leapfrog<vector2d<double>, double> inteq(r, v, f);
-
-    const double box = 100.;
-    inteq.set_timestep(1E-2);
-    //const double box = 50.;
-    //inteq.set_timestep(1E-4);
-    //const double box = 10.;
-    //inteq.set_timestep(1E-9);
-
-    force.set_box_length(box);
-    inteq.set_box_length(box);
-
-    // FIXME /dev/random
-    rng.set(1);
-
-    for (i = 0; i < r.size(); i++) {
-	v[i].x = rng.get_uniform() - 0.5;
-	v[i].y = rng.get_uniform() - 0.5;
-
-	r[i].x = rng.get_uniform() * box;
-	r[i].y = rng.get_uniform() * box;
+    try {
+	opts.parse(argc, argv);
+    }
+    catch (mdsim::options::exit_exception const& e) {
+	return e.status();
     }
 
-    // output gnuplot header
-    cout << "# i\tr[i].x\tr[i].y\tf[i].x\tf[i].y" << endl;
+    cuda::device::set(opts.device());
 
-    for (i = 0; i < 10000; i++) {
-	// first leapfrog step of integration of equations of motion
-	inteq.first();
-	// force calculation
-	force(en_pot);
-	// second leapfrog step of integration of equations of motion
-	inteq.second(v_cm, en_kin);
-
-	if (i % 10) continue;
-#if 1
-	cout << "# en_pot(" << en_pot << ")" << endl;
-	cout << "# en_kin(" << en_kin << ")" << endl;
-	cout << "# en_tot(" << en_pot + en_kin << ")" << endl;
-	cout << "# v_cm(" << v_cm.x << ", " << v_cm.y << ")" << endl;
-
-	for (j = 0; j < f.size(); j++) {
-	    cout << j << "\t" << r[j].x << "\t" << r[j].y << "\t";
-	    cout << v[j].x << "\t" << v[j].y << "\t";
-	    cout << f[j].x << "\t" << f[j].y << endl;
-	}
-	cout << endl << endl;
+    const cuda::config dim(dim3(opts.blocks()), dim3(opts.threads()));
+    mdsim::rand48 rng(dim);
+#ifdef DIM_3D
+    mdsim::ljfluid<vector3d<double> > fluid(opts.npart(), dim);
+    mdsim::mdsim<vector3d<double> > sim;
+#else
+    mdsim::ljfluid<vector2d<double> > fluid(opts.npart(), dim);
+    mdsim::mdsim<vector2d<double> > sim;
 #endif
+
+    rng.set(opts.rngseed());
+
+    try {
+	fluid.density(opts.density());
+	fluid.timestep(opts.timestep());
+	fluid.temperature(opts.temp(), rng);
+    }
+    catch (string const& e) {
+	cerr << PROGRAM_NAME ": " << e << endl;
+	return EXIT_FAILURE;
+    }
+
+    cout << "### particles(" << fluid.particles() << ")" << endl;
+    cout << "### density(" << fluid.density() << ")" << endl;
+    cout << "### box(" << fluid.box() << ")" << endl;
+    cout << "### timestep(" << fluid.timestep() << ")" << endl;
+    cout << endl;
+
+    for (uint64_t i = 1; i <= opts.steps(); i++) {
+	sim.step(fluid);
+
+	if (i % opts.avgsteps())
+	    continue;
+
+	cout << "## steps(" << i << ")" << endl;
+
+	cout << "# en_pot(" << sim.en_pot().mean() << ")" << endl;
+	cout << "# sigma_en_pot(" << sim.en_pot().std() << ")" << endl;
+	cout << "# en_kin(" << sim.en_kin().mean() << ")" << endl;
+	cout << "# sigma_en_kin(" << sim.en_kin().std() << ")" << endl;
+	cout << "# en_tot(" << sim.en_tot().mean() << ")" << endl;
+	cout << "# sigma_en_tot(" << sim.en_tot().std() << ")" << endl;
+	cout << "# temp(" << sim.temp().mean() << ")" << endl;
+	cout << "# sigma_temp(" << sim.temp().std() << ")" << endl;
+	cout << "# pressure(" << sim.pressure().mean() << ")" << endl;
+	cout << "# sigma_pressure(" << sim.pressure().std() << ")" << endl;
+	cout << "# vel_cm(" << sim.vel_cm().mean() << ")" << endl;
+	cout << "# sigma_vel_cm(" << sim.vel_cm().std() << ")" << endl;
+
+	fluid.trajectories(cout);
+
+	sim.clear();
     }
 
     return EXIT_SUCCESS;
