@@ -127,7 +127,7 @@ namespace mdsim {
  */
 options::options()
 {
-    npart_ = 10000;
+    npart_ = 4096;
     density_ = 0.05;
     timestep_ = 0.005;
     temp_ = 1.;
@@ -135,8 +135,8 @@ options::options()
     avgsteps_ = 100;
 
     device_ = 0;
-    blocks_ = 16;
-    threads_ = 512;
+    blocks_ = 32;
+    threads_ = 128;
 
     rngseed_ = 123;
 }
