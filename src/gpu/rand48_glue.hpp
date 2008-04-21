@@ -21,23 +21,18 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace mdsim { namespace gpu
+
+namespace mdsim { namespace gpu { namespace rand48
 {
 
-class rand48
-{
-public:
-    static cuda::symbol<uint3> a;
-    static cuda::symbol<uint3> c;
+extern cuda::symbol<uint3> a;
+extern cuda::symbol<uint3> c;
 
-    static cuda::function<void (ushort3*, uint3*, uint3*, unsigned int)> init;
-    static cuda::function<void (ushort3*, ushort3*)> save;
-    static cuda::function<void (ushort3*, uint3*, uint3*, ushort3)> restore;
-    static cuda::function<void (ushort3*, float*, unsigned int)> uniform;
-    static cuda::function<void (ushort3*, float2*, unsigned int)> unit_vector_2d;
-    static cuda::function<void (ushort3*, float3*, unsigned int)> unit_vector_3d;
-};
+extern cuda::function<void (ushort3*, uint3*, uint3*, unsigned int)> init;
+extern cuda::function<void (ushort3*, ushort3*)> save;
+extern cuda::function<void (ushort3*, uint3*, uint3*, ushort3)> restore;
+extern cuda::function<void (ushort3*, float*, unsigned int)> uniform;
 
-}} // namespace mdsim::gpu
+}}} // namespace mdsim::gpu::rand48
 
 #endif /* ! MDSIM_GPU_RAND48_GLUE_HPP */

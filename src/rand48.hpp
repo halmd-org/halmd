@@ -20,6 +20,7 @@
 #define MDSIM_RAND48_HPP
 
 #include "gpu/rand48_glue.hpp"
+#include "gpu/ljfluid_glue.hpp"
 #include <iostream>
 
 
@@ -35,62 +36,38 @@ public:
     /** type for saving or restoring generator state in memory */
     typedef ushort3 state_type;
 
-protected:
-    const cuda::config dim;
-    /** generator state on device */
-    cuda::vector<ushort3> state;
-
 public:
-    rand48(cuda::config dim) : dim(dim), state(dim.threads())
+    rand48(cuda::config const& dim) : dim_(dim), state_(dim.threads())
     {
     }
 
     /**
      * initialize generator with 32-bit integer seed
      */
-    void init(unsigned int seed, cuda::stream& stream)
+    void set(unsigned int seed)
     {
-	cuda::vector<uint3> A(1);
-	cuda::vector<uint3> C(1);
+	cuda::vector<uint3> a(1), c(1);
 
-	gpu::rand48::init.configure(dim, stream);
-	gpu::rand48::init(&state, &A, &C, seed);
-	stream.synchronize();
+	gpu::rand48::init.configure(dim_);
+	gpu::rand48::init(state_.data(), a.data(), c.data(), seed);
+	cuda::thread::synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
-	gpu::rand48::a = A;
+	gpu::rand48::a.memcpy(a);
+	mdsim::gpu::ljfluid::a.memcpy(a);
 	// copy leapfrogging addend into constant device memory
-	gpu::rand48::c = C;
+	gpu::rand48::c.memcpy(c);
+	mdsim::gpu::ljfluid::c.memcpy(c);
     }
 
-    /**
+    /*
      * fill array with uniform random numbers
      */
-    void uniform(cuda::vector<float>& v, cuda::stream& stream)
+    void uniform(cuda::vector<float>& r, cuda::stream& stream)
     {
-	assert(v.size() == dim.threads());
-	gpu::rand48::uniform.configure(dim, stream);
-	gpu::rand48::uniform(&state, &v, 1);
-    }
-
-    /**
-     * fill array with 2-dimensional random unit vectors
-     */
-    void unit_vector(cuda::vector<float2>& v, cuda::stream& stream)
-    {
-	assert(v.size() == dim.threads());
-	gpu::rand48::unit_vector_2d.configure(dim, stream);
-	gpu::rand48::unit_vector_2d(&state, &v, 1);
-    }
-
-    /**
-     * fill array with n-dimensional random unit vectors
-     */
-    void unit_vector(cuda::vector<float3>& v, cuda::stream& stream)
-    {
-	assert(v.size() == dim.threads());
-	gpu::rand48::unit_vector_3d.configure(dim, stream);
-	gpu::rand48::unit_vector_3d(&state, &v, 1);
+	assert(r.size() == dim_.threads());
+	gpu::rand48::uniform.configure(dim_, stream);
+	gpu::rand48::uniform(state_.data(), r.data(), 1);
     }
 
     /**
@@ -98,35 +75,36 @@ public:
      */
     void save(state_type& mem)
     {
-	cuda::vector<ushort3> dbuffer(1);
-	cuda::host::vector<ushort3> hbuffer(1);
 	cuda::stream stream;
+	cuda::vector<ushort3> buf_gpu(1);
+	cuda::host::vector<ushort3> buf(1);
 
-	gpu::rand48::save.configure(dim, stream);
-	gpu::rand48::save(&state, &dbuffer);
-	hbuffer.memcpy(dbuffer, stream);
+	gpu::rand48::save.configure(dim_, stream);
+	gpu::rand48::save(state_.data(), buf_gpu.data());
+	buf.memcpy(buf_gpu, stream);
 	stream.synchronize();
 
-	mem = hbuffer[0];
+	mem = buf[0];
     }
 
     /**
      * restore generator state from memory
      */
-    void restore(const state_type& mem)
+    void restore(state_type const& mem)
     {
-	cuda::vector<uint3> A(1);
-	cuda::vector<uint3> C(1);
+	cuda::vector<uint3> a(1), c(1);
 	cuda::stream stream;
 
-	gpu::rand48::restore.configure(dim, stream);
-	gpu::rand48::restore(&state, &A, &C, mem);
+	gpu::rand48::restore.configure(dim_, stream);
+	gpu::rand48::restore(state_.data(), a.data(), c.data(), mem);
 	stream.synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
-	gpu::rand48::a = A;
+	gpu::rand48::a.memcpy(a);
+	mdsim::gpu::ljfluid::a.memcpy(a);
 	// copy leapfrogging addend into constant device memory
-	gpu::rand48::c = C;
+	gpu::rand48::c.memcpy(c);
+	mdsim::gpu::ljfluid::c.memcpy(c);
     }
 
     /**
@@ -134,9 +112,9 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, rand48& rng)
     {
-	state_type state;
-	rng.save(state);
-	os << state.x << " " << state.y << " " << state.z << " ";
+	state_type state_;
+	rng.save(state_);
+	os << state_.x << " " << state_.y << " " << state_.z << " ";
 	return os;
     }
 
@@ -145,11 +123,23 @@ public:
      */
     friend std::istream& operator>>(std::istream& is, rand48& rng)
     {
-	state_type state;
-	is >> state.x >> state.y >> state.z;
-	rng.restore(state);
+	state_type state_;
+	is >> state_.x >> state_.y >> state_.z;
+	rng.restore(state_);
 	return is;
     }
+
+    /**
+     * get pointer to CUDA device memory
+     */
+    ushort3* data()
+    {
+	return state_.data();
+    }
+
+private:
+    const cuda::config dim_;
+    cuda::vector<ushort3> state_;
 };
 
 } // namespace mdsim

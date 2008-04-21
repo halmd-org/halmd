@@ -24,76 +24,19 @@
  * FIXME description of algorithm
  */
 
-#include "cutil.h"
 #include "rand48_glue.hpp"
+#include "cutil.h"
+#include "rand48.h"
 using namespace cuda;
-
-#define __rng rand48
-#define __rng_state_t ushort3
-#include "rng.h"
 
 
 namespace rand48
 {
 
-__constant__ static uint3 a;
-__constant__ static uint3 c;
-
-
-/**
- * combined multiply-add-operation for 48-bit integers
- */
-template <typename T>
-__inline__ __device__ T muladd(uint3 a, T b, uint3 c)
-{
-    uint d;
-    T r;
-
-    //
-    // With a C compiler following the ISO/IEC 9899:1999 standard
-    // (described in section 6.3 Conversions), multiplying two 16-bit
-    // integers results in promotion to 32-bit integers before the
-    // multiplication. The CUDA PTX compiler, however, does not perform
-    // integer promotion. Therefore, we have to force conversion to
-    // 32-bit integers by using a 32-bit integer type for at least one
-    // of the operands.
-    //
-    // Note that in order to enforce such an integer promotion, it does
-    // *not* suffice to add a 32-bit register variable and then assign
-    // the value of a 16-bit register to it, as the CUDA compiler will
-    // rigorously optimize this additional register away. If in doubt,
-    // take a look at the resulting PTX assembly code.
-    //
-
-    d = a.x * b.x + c.x;
-    r.x = (d & 0xFFFF);
-
-    d >>= 16;
-
-    // Although the next line may overflow we only need the top 16 bits
-    // in the following stage, so it does not matter.
-
-    d += a.x * b.y + a.y * b.x + c.y;
-    r.y = (d & 0xFFFF);
-
-    d >>= 16;
-
-    d += a.x * b.z + a.y * b.y + a.z * b.x + c.z;
-    r.z = (d & 0xFFFF);
-
-    return r;
-}
-
-
-/**
- * returns uniform random number
- */
-__inline__ __device__ float uniform(ushort3& x)
-{
-    float r = x.z / 65536.0 +  x.y / 4294967296.0;
-    x = muladd(a, x, c);
-    return r;
-}
+/** leapfrogging multiplier */
+static __constant__ uint3 a;
+/** leapfrogging addend */
+static __constant__ uint3 c;
 
 
 /**
@@ -196,34 +139,15 @@ __global__ void restore(ushort3 *x, uint3 *a, uint3 *c, ushort3 state)
     }
 }
 
-
 /**
  * fill array with uniform random numbers
  */
 __global__ void uniform(ushort3* state, float* v, unsigned int count)
 {
     ushort3 x = state[GTID];
-    int k;
 
-    for (k = 0; k < count; k++) {
+    for (unsigned int k = 0; k < count; k++) {
 	v[GTID + k * GTDIM] = uniform(x);
-    }
-
-    state[GTID] = x;
-}
-
-
-/**
- * fill array with n-dimensional random unit vectors
- */
-template <typename T>
-__global__ void unit_vector(ushort3* state, T* v, unsigned int count)
-{
-    ushort3 x = state[GTID];
-    int k;
-
-    for (k = 0; k < count; k++) {
-	v[GTID + k * GTDIM] = unit_vector<T>(x);
     }
 
     state[GTID] = x;
@@ -232,17 +156,15 @@ __global__ void unit_vector(ushort3* state, T* v, unsigned int count)
 } // namespace rand48
 
 
-namespace mdsim { namespace gpu
+namespace mdsim { namespace gpu { namespace rand48
 {
 
-symbol<uint3> rand48::a(::rand48::a);
-symbol<uint3> rand48::c(::rand48::c);
+symbol<uint3> a(::rand48::a);
+symbol<uint3> c(::rand48::c);
 
-function<void (ushort3*, uint3*, uint3*, unsigned int)> rand48::init(::rand48::init);
-function<void (ushort3*, ushort3*)> rand48::save(::rand48::save);
-function<void (ushort3*, uint3*, uint3*, ushort3)> rand48::restore(::rand48::restore);
-function<void (ushort3*, float*, unsigned int)> rand48::uniform(::rand48::uniform);
-function<void (ushort3*, float2*, unsigned int)> rand48::unit_vector_2d(::rand48::unit_vector);
-function<void (ushort3*, float3*, unsigned int)> rand48::unit_vector_3d(::rand48::unit_vector);
+function<void (ushort3*, uint3*, uint3*, unsigned int)> init(::rand48::init);
+function<void (ushort3*, ushort3*)> save(::rand48::save);
+function<void (ushort3*, uint3*, uint3*, ushort3)> restore(::rand48::restore);
+function<void (ushort3*, float*, unsigned int)> uniform(::rand48::uniform);
 
-}} // namespace mdsim::gpu
+}}} // namespace mdsim::gpu::rand48
