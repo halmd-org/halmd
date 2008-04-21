@@ -193,12 +193,10 @@ float ljfluid<T>::box() const
 template <typename T>
 void ljfluid<T>::temperature(float temp, rand48& rng)
 {
-    // velocity magnitude
-    float vel_mag = sqrt(T::dim() * temp);
-
     // initialize velocities
     gpu::ljfluid::init_vel.configure(dim_);
-    gpu::ljfluid::init_vel(part.vel_gpu.data(), vel_mag, rng.data());
+    gpu::ljfluid::init_vel(part.vel_gpu.data(), temp, rng.data());
+
     // initialize forces
     gpu::ljfluid::init_forces.configure(dim_);
     gpu::ljfluid::init_forces(part.force_gpu.data());

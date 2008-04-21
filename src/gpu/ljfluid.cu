@@ -222,41 +222,17 @@ __global__ void init_lattice(T0* part, T1 cell, unsigned int n)
 
 
 /**
- * generate random n-dimensional velocity vectors with uniform magnitude
+ * generate random n-dimensional Maxwell-Boltzmann distributed velocities
  */
 template <typename T>
-__global__ void init_vel(T* vel, float vel_mag, ushort3* rng)
+__global__ void init_vel(T* vel, float temp, ushort3* rng)
 {
     ushort3 state = rng[GTID];
     T v = vel[GTID];
-    float t;
 
+    rand48::gaussian(v.x, v.y, temp, state);
 #ifdef DIM_3D
-    //
-    // The following method requires an average of 8 / Pi =~ 2.55
-    // uniform random numbers. It is described in
-    //   
-    // G. Marsaglia, Choosing a Point from the Surface of a Sphere,
-    // The Annals of Mathematical Statistics, 1972, 43, 645-646
-    //
-    // http://projecteuclid.org/euclid.aoms/1177692644
-    //
-
-    do {
-	v.x = 2. * rand48::uniform(state) - 1.;
-	v.y = 2. * rand48::uniform(state) - 1.;
-	t = v.x * v.x + v.y * v.y;
-    }
-    while (t >= 1.);
-
-    v.z = vel_mag - 2. * vel_mag * t;
-    t = 2. * vel_mag * sqrtf(1. - t);
-    v.x *= t;
-    v.y *= t;
-#else
-    t = 2. * M_PI * rand48::uniform(state);
-    v.x = vel_mag * cosf(t);
-    v.y = vel_mag * sinf(t);
+    rand48::gaussian(v.z, v.z, temp, state);
 #endif
 
     rng[GTID] = state;
