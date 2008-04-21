@@ -19,64 +19,29 @@
 #ifndef MDSIM_GPU_VECTOR3D_H
 #define MDSIM_GPU_VECTOR3D_H
 
-/**
- * componentwise vector addition
- */
-__device__ float3 operator+(const float3& v, const float3& w)
-{
-    return make_float3(v.x + w.x, v.y + w.y, v.z + w.z);
-}
+#include <cuda/cuda_runtime.h>
 
 
 /**
- * componentwise vector subtraction
+ * equality comparison
  */
-__device__ float3 operator-(const float3& v, const float3& w)
+__device__ bool operator==(float3 const& v, float3 const& w)
 {
-    return make_float3(v.x - w.x, v.y - w.y, v.z + w.z);
+    return (v.x == w.x && v.y == w.y && v.z == w.z);
 }
-
 
 /**
- * scalar product
+ * inequality comparison
  */
-__device__ float operator*(const float3& v, const float3& w)
+__device__ bool operator!=(float3 const& v, float3 const& w)
 {
-    return v.x * w.x + v.y * w.y + v.z * w.z;
+    return (v.x != w.x || v.y != w.y || v.z != w.z);
 }
-
-
-/**
- * scalar multiplication
- */
-__device__ float3 operator*(const float3& v, const float& s)
-{
-    return make_float3(v.x * s, v.y * s, v.z * s);
-}
-
-
-/**
- * scalar multiplication
- */
-__device__ float3 operator*(const float& s, const float3& v)
-{
-    return make_float3(s * v.x, s * v.y, s * v.z);
-}
-
-
-/**
- * scalar division
- */
-__device__ float3 operator/(const float3& v, const float& s)
-{
-    return make_float3(v.x / s, v.y / s, v.z / s);
-}
-
 
 /**
  * assignment by componentwise vector addition
  */
-__device__ float3& operator+=(float3& v, const float3& w)
+__device__ float3& operator+=(float3& v, float3 const& w)
 {
     v.x += w.x;
     v.y += w.y;
@@ -84,11 +49,10 @@ __device__ float3& operator+=(float3& v, const float3& w)
     return v;
 }
 
-
 /**
  * assignment by componentwise vector subtraction
  */
-__device__ float3& operator-=(float3& v, const float3& w)
+__device__ float3& operator-=(float3& v, float3 const& w)
 {
     v.x -= w.x;
     v.y -= w.y;
@@ -96,23 +60,21 @@ __device__ float3& operator-=(float3& v, const float3& w)
     return v;
 }
 
-
 /**
  * assignment by scalar multiplication
  */
-__device__ float3& operator*=(float3& v, const float& s)
+__device__ float3& operator*=(float3& v, float const& s)
 {
     v.x *= s;
-    v.y -= s;
-    v.z -= s;
+    v.y *= s;
+    v.z *= s;
     return v;
 }
-
 
 /**
  * assignment by scalar division
  */
-__device__ float3& operator/=(float3& v, const float& s)
+__device__ float3& operator/=(float3& v, float const& s)
 {
     v.x /= s;
     v.y /= s;
@@ -120,63 +82,125 @@ __device__ float3& operator/=(float3& v, const float& s)
     return v;
 }
 
-
 /**
- * equality comparison operator
+ * componentwise vector addition
  */
-__device__ bool operator==(const float3& v, const float3& w)
-{   
-    return (v.x == w.x && v.y == w.y && v.z == w.z) ? true : false;
-}
-
-
-/**
- * returns vector with components set to given scalar
- */
-template <typename T>
-__device__ T make_floatn(const float& s);
-
-template <>
-__device__ float3 make_floatn(const float& s)
+__device__ float3 operator+(float3 v, float3 const& w)
 {
-    return make_float3(s, s, s);
+    v.x += w.x;
+    v.y += w.y;
+    v.z += w.z;
+    return v;
 }
 
+/**
+ * componentwise vector subtraction
+ */
+__device__ float3 operator-(float3 v, float3 const& w)
+{
+    v.x -= w.x;
+    v.y -= w.y;
+    v.z -= w.z;
+    return v;
+}
+
+/**
+ * scalar product
+ */
+__device__ float operator*(float3 const& v, float3 const& w)
+{
+    return v.x * w.x + v.y * w.y + v.z * w.z;
+}
+
+/**
+ * scalar multiplication
+ */
+__device__ float3 operator*(float3 v, float const& s)
+{
+    v.x *= s;
+    v.y *= s;
+    v.z *= s;
+    return v;
+}
+
+/**
+ * scalar multiplication
+ */
+__device__ float3 operator*(float const& s, float3 v)
+{
+    v.x *= s;
+    v.y *= s;
+    v.z *= s;
+    return v;
+}
+
+/**
+ * scalar division
+ */
+__device__ float3 operator/(float3 v, float const& s)
+{
+    v.x /= s;
+    v.y /= s;
+    v.z /= s;
+    return v;
+}
 
 /**
  * componentwise round to nearest integer
  */
-__device__ float3 rintf(const float3& v)
+__device__ float3 rintf(float3 v)
 {
-    return make_float3(rintf(v.x), rintf(v.y), rintf(v.z));
+    v.x = rintf(v.x);
+    v.y = rintf(v.y);
+    v.z = rintf(v.z);
+    return v;
 }
 
 
 /**
  * componentwise round to nearest integer, away from zero
  */
-__device__ float3 roundf(const float3& v)
+__device__ float3 roundf(float3 v)
 {
-    return make_float3(roundf(v.x), roundf(v.y), roundf(v.z));
+    v.x = roundf(v.x);
+    v.y = roundf(v.y);
+    v.z = roundf(v.z);
+    return v;
 }
 
 
 /**
  * componentwise round to nearest integer not greater than argument
  */
-__device__ float3 floorf(const float3& v)
+__device__ float3 floorf(float3 v)
 {
-    return make_float3(floorf(v.x), floorf(v.y), floorf(v.z));
+    v.x = floorf(v.x);
+    v.y = floorf(v.y);
+    v.z = floorf(v.z);
+    return v;
 }
 
 
 /**
  * componentwise round to nearest integer not less argument
  */
-__device__ float3 ceilf(const float3& v)
+__device__ float3 ceilf(float3 v)
 {
-    return make_float3(ceilf(v.x), ceilf(v.y), ceilf(v.z));
+    v.x = ceilf(v.x);
+    v.y = ceilf(v.y);
+    v.z = ceilf(v.z);
+    return v;
 }
 
+/**
+ * componentwise square root function
+ */
+__device__ float3 sqrtf(float3 v)
+{
+    v.x = sqrtf(v.x);
+    v.y = sqrtf(v.y);
+    v.z = sqrtf(v.z);
+    return v;
+}
 
 #endif /* ! MDSIM_GPU_VECTOR3D_H */
