@@ -19,160 +19,174 @@
 #ifndef MDSIM_GPU_VECTOR2D_H
 #define MDSIM_GPU_VECTOR2D_H
 
-/**
- * componentwise vector addition
- */
-__device__ float2 operator+(const float2& v, const float2& w)
-{
-    return make_float2(v.x + w.x, v.y + w.y);
-}
+#include <cuda/cuda_runtime.h>
 
 
 /**
- * componentwise vector subtraction
+ * equality comparison
  */
-__device__ float2 operator-(const float2& v, const float2& w)
+__device__ bool operator==(float2 const& v, float2 const& w)
 {
-    return make_float2(v.x - w.x, v.y - w.y);
+    return (v.x == w.x && v.y == w.y);
 }
-
 
 /**
- * scalar product
+ * inequality comparison
  */
-__device__ float operator*(const float2& v, const float2& w)
+__device__ bool operator!=(float2 const& v, float2 const& w)
 {
-    return v.x * w.x + v.y * w.y;
+    return (v.x != w.x || v.y != w.y);
 }
-
-
-/**
- * scalar multiplication
- */
-__device__ float2 operator*(const float2& v, const float& s)
-{
-    return make_float2(v.x * s, v.y * s);
-}
-
-
-/**
- * scalar multiplication
- */
-__device__ float2 operator*(const float& s, const float2& v)
-{
-    return make_float2(s * v.x, s * v.y);
-}
-
-
-/**
- * scalar division
- */
-__device__ float2 operator/(const float2& v, const float& s)
-{
-    return make_float2(v.x / s, v.y / s);
-}
-
 
 /**
  * assignment by componentwise vector addition
  */
-__device__ float2& operator+=(float2& v, const float2& w)
+__device__ float2& operator+=(float2& v, float2 const& w)
 {
     v.x += w.x;
     v.y += w.y;
     return v;
 }
 
-
 /**
  * assignment by componentwise vector subtraction
  */
-__device__ float2& operator-=(float2& v, const float2& w)
+__device__ float2& operator-=(float2& v, float2 const& w)
 {
     v.x -= w.x;
     v.y -= w.y;
     return v;
 }
 
-
 /**
  * assignment by scalar multiplication
  */
-__device__ float2& operator*=(float2& v, const float& s)
+__device__ float2& operator*=(float2& v, float const& s)
 {
     v.x *= s;
-    v.y -= s;
+    v.y *= s;
     return v;
 }
-
 
 /**
  * assignment by scalar division
  */
-__device__ float2& operator/=(float2& v, const float& s)
+__device__ float2& operator/=(float2& v, float const& s)
 {
     v.x /= s;
     v.y /= s;
     return v;
 }
 
-
 /**
- * equality comparison operator
+ * componentwise vector addition
  */
-__device__ bool operator==(const float2& v, const float2& w)
+__device__ float2 operator+(float2 v, float2 const& w)
 {
-    return (v.x == w.x && v.y == w.y) ? true : false;
+    v.x += w.x;
+    v.y += w.y;
+    return v;
 }
 
-
 /**
- * returns vector with components set to given scalar
+ * componentwise vector subtraction
  */
-template <typename T>
-__device__ T make_floatn(const float& s);
-
-template <>
-__device__ float2 make_floatn(const float& s)
+__device__ float2 operator-(float2 v, float2 const& w)
 {
-    return make_float2(s, s);
+    v.x -= w.x;
+    v.y -= w.y;
+    return v;
 }
 
+/**
+ * scalar product
+ */
+__device__ float operator*(float2 const& v, float2 const& w)
+{
+    return v.x * w.x + v.y * w.y;
+}
+
+/**
+ * scalar multiplication
+ */
+__device__ float2 operator*(float2 v, float const& s)
+{
+    v.x *= s;
+    v.y *= s;
+    return v;
+}
+
+/**
+ * scalar multiplication
+ */
+__device__ float2 operator*(float const& s, float2 v)
+{
+    v.x *= s;
+    v.y *= s;
+    return v;
+}
+
+/**
+ * scalar division
+ */
+__device__ float2 operator/(float2 v, float const& s)
+{
+    v.x /= s;
+    v.y /= s;
+    return v;
+}
 
 /**
  * componentwise round to nearest integer
  */
-__device__ float2 rintf(const float2& v)
+__device__ float2 rintf(float2 v)
 {
-    return make_float2(rintf(v.x), rintf(v.y));
+    v.x = rintf(v.x);
+    v.y = rintf(v.y);
+    return v;
 }
 
 
 /**
  * componentwise round to nearest integer, away from zero
  */
-__device__ float2 roundf(const float2& v)
+__device__ float2 roundf(float2 v)
 {
-    return make_float2(roundf(v.x), roundf(v.y));
+    v.x = roundf(v.x);
+    v.y = roundf(v.y);
+    return v;
 }
 
 
 /**
  * componentwise round to nearest integer not greater than argument
  */
-__device__ float2 floorf(const float2& v)
+__device__ float2 floorf(float2 v)
 {
-    return make_float2(floorf(v.x), floorf(v.y));
+    v.x = floorf(v.x);
+    v.y = floorf(v.y);
+    return v;
 }
 
 
 /**
  * componentwise round to nearest integer not less argument
  */
-__device__ float2 ceilf(const float2& v)
+__device__ float2 ceilf(float2 v)
 {
-    return make_float2(ceilf(v.x), ceilf(v.y));
+    v.x = ceilf(v.x);
+    v.y = ceilf(v.y);
+    return v;
 }
 
+/**
+ * componentwise square root function
+ */
+__device__ float2 sqrtf(float2 v)
+{
+    v.x = sqrtf(v.x);
+    v.y = sqrtf(v.y);
+    return v;
+}
 
 #endif /* ! MDSIM_GPU_VECTOR2D_H */
