@@ -20,17 +20,17 @@
 #define MDSIM_VECTOR2D_HPP
 
 #include <math.h>
-#include <cuda/vector_types.h>
-#include <cuda/vector_functions.h>
+#include <iostream>
 
 
 /**
  * 2-dimensional floating-point vector
  */
+template <typename T>
 class vector2d
 {
 public:
-    float x, y;
+    T x, y;
 
 public:
     vector2d()
@@ -40,61 +40,52 @@ public:
     /**
      * initialization by vector
      */
-    vector2d(const vector2d& v) : x(v.x), y(v.y)
-    {
-    }
-
-    /**
-     * initialization by vector
-     */
-    vector2d(const float2& v) : x(v.x), y(v.y)
+    vector2d(vector2d<T> const& v) : x(v.x), y(v.y)
     {
     }
 
     /**
      * initialization by scalar
      */
-    vector2d(const float& s) : x(s), y(s)
+    vector2d(T const& s) : x(s), y(s)
     {
     }
 
     /**
      * initialization by scalar components
      */
-    vector2d(const float& x, const float& y) : x(x), y(y)
+    vector2d(T const& x, T const& y) : x(x), y(y)
     {
-    }
-
-    /**
-     * conversion to CUDA vector type
-     */
-    float2 floatn() const
-    {
-	return make_float2(x, y);
     }
 
     /**
      * dimension of vector space
      */
-    unsigned int dim() const
+    static unsigned int dim()
     {
 	return 2;
     }
 
     /**
-     * assignment by vector
+     * equality comparison
      */
-    vector2d& operator=(const vector2d& v)
+    bool operator==(vector2d<T> const& v) const
     {
-	x = v.x;
-	y = v.y;
-	return *this;
+	return (v.x == x && v.y == y);
+    }
+
+    /**
+     * inequality comparison
+     */
+    bool operator!=(vector2d<T> const& v) const
+    {
+	return (v.x != x || v.y != y);
     }
 
     /**
      * assignment by vector
      */
-    vector2d& operator=(const float2& v)
+    vector2d<T>& operator=(vector2d<T> const& v)
     {
 	x = v.x;
 	y = v.y;
@@ -104,7 +95,7 @@ public:
     /**
      * assignment by scalar
      */
-    vector2d& operator=(const float& s)
+    vector2d<T>& operator=(T const& s)
     {
 	x = s;
 	y = s;
@@ -114,17 +105,7 @@ public:
     /**
      * assignment by componentwise vector addition
      */
-    vector2d& operator+=(const vector2d& v)
-    {
-	x += v.x;
-	y += v.y;
-	return *this;
-    }
-
-    /**
-     * assignment by componentwise vector addition
-     */
-    vector2d& operator+=(float2& v)
+    vector2d<T>& operator+=(vector2d<T> const& v)
     {
 	x += v.x;
 	y += v.y;
@@ -134,17 +115,7 @@ public:
     /**
      * assignment by componentwise vector subtraction
      */
-    vector2d& operator-=(const vector2d& v)
-    {
-	x -= v.x;
-	y -= v.y;
-	return *this;
-    }
-
-    /**
-     * assignment by componentwise vector subtraction
-     */
-    vector2d& operator-=(float2& v)
+    vector2d<T>& operator-=(vector2d<T> const& v)
     {
 	x -= v.x;
 	y -= v.y;
@@ -154,7 +125,7 @@ public:
     /**
      * assignment by scalar multiplication
      */
-    vector2d& operator*=(const float& s)
+    vector2d<T>& operator*=(T const& s)
     {
 	x *= s;
 	y *= s;
@@ -164,7 +135,7 @@ public:
     /**
      * assignment by scalar division
      */
-    vector2d& operator/=(const float& s)
+    vector2d<T>& operator/=(T const& s)
     {
 	x /= s;
 	y /= s;
@@ -174,23 +145,27 @@ public:
     /**
      * componentwise vector addition
      */
-    vector2d operator+(const vector2d& v) const
+    friend vector2d<T> operator+(vector2d<T> v, vector2d<T> const& w)
     {
-	return vector2d(x + v.x, y + v.y);
+	v.x += w.x;
+	v.y += w.y;
+	return v;
     }
 
     /**
      * componentwise vector subtraction
      */
-    vector2d operator-(const vector2d& v) const
+    friend vector2d<T> operator-(vector2d<T> v, vector2d<T> const& w)
     {
-	return vector2d(x - v.x, y - v.y);
+	v.x -= w.x;
+	v.y -= w.y;
+	return v;
     }
 
     /**
      * scalar product
      */
-    float operator*(const vector2d& v) const
+    T operator*(vector2d<T> const& v) const
     {
 	return x * v.x + y * v.y;
     }
@@ -198,50 +173,165 @@ public:
     /**
      * scalar multiplication
      */
-    vector2d operator*(const float& s) const
+    friend vector2d<T> operator*(vector2d<T> v, T const& s)
     {
-	return vector2d(x * s, y * s);
+	v.x *= s;
+	v.y *= s;
+	return v;
+    }
+
+    /**
+     * scalar multiplication
+     */
+    friend vector2d<T> operator*(T const& s, vector2d<T> v)
+    {
+	v.x *= s;
+	v.y *= s;
+	return v;
     }
 
     /**
      * scalar division
      */
-    vector2d operator/(const float& s) const
+    friend vector2d<T> operator/(vector2d<T> v, T const& s)
     {
-	return vector2d(x / s, y / s);
+	v.x /= s;
+	v.y /= s;
+	return v;
     }
 
     /**
-     * componentwise round to nearest integer
+     * write vector components to output stream
      */
-    friend vector2d rintf(const vector2d& v)
+    friend std::ostream& operator<<(std::ostream& os, vector2d<T> const& v)
     {
-	return vector2d(rintf(v.x), rintf(v.y));
+	os << v.x << "\t" << v.y;
+	return os;
     }
 
     /**
-     * componentwise round to nearest integer, away from zero
+     * read vector components from input stream
      */
-    friend vector2d roundf(const vector2d& v)
+    friend std::istream& operator>>(std::istream& is, vector2d<T>& v)
     {
-	return vector2d(roundf(v.x), roundf(v.y));
-    }
-
-    /**
-     * componentwise round to nearest integer not greater than argument
-     */
-    friend vector2d floorf(const vector2d& v)
-    {
-	return vector2d(floorf(v.x), floorf(v.y));
-    }
-
-    /**
-     * componentwise round to nearest integer not less argument
-     */
-    friend vector2d ceilf(const vector2d& v)
-    {
-	return vector2d(ceilf(v.x), ceilf(v.y));
+	is >> v.x >> v.y;
+	return is;
     }
 };
+
+
+/**
+ * componentwise round to nearest integer
+ */
+template <typename T>
+vector2d<T> rint(vector2d<T> v);
+
+template <>
+vector2d<float> rint(vector2d<float> v)
+{
+    v.x = rintf(v.x);
+    v.y = rintf(v.y);
+    return v;
+}
+
+template <>
+vector2d<double> rint(vector2d<double> v)
+{
+    v.x = rint(v.x);
+    v.y = rint(v.y);
+    return v;
+}
+
+
+/**
+ * componentwise round to nearest integer, away from zero
+ */
+template <typename T>
+vector2d<T> round(vector2d<T> v);
+
+template <>
+vector2d<float> round(vector2d<float> v)
+{
+    v.x = roundf(v.x);
+    v.y = roundf(v.y);
+    return v;
+}
+
+template <>
+vector2d<double> round(vector2d<double> v)
+{
+    v.x = round(v.x);
+    v.y = round(v.y);
+    return v;
+}
+
+
+/**
+ * componentwise round to nearest integer not greater than argument
+ */
+template <typename T>
+vector2d<T> floor(vector2d<T> v);
+
+template <>
+vector2d<float> floor(vector2d<float> v)
+{
+    v.x = floorf(v.x);
+    v.y = floorf(v.y);
+    return v;
+}
+
+template <>
+vector2d<double> floor(vector2d<double> v)
+{
+    v.x = floor(v.x);
+    v.y = floor(v.y);
+    return v;
+}
+
+
+/**
+ * componentwise round to nearest integer not less argument
+ */
+template <typename T>
+vector2d<T> ceil(vector2d<T> v);
+
+template <>
+vector2d<float> ceil(vector2d<float> v)
+{
+    v.x = ceilf(v.x);
+    v.y = ceilf(v.y);
+    return v;
+}
+
+template <>
+vector2d<double> ceil(vector2d<double> v)
+{
+    v.x = ceil(v.x);
+    v.y = ceil(v.y);
+    return v;
+}
+
+
+/**
+ * componentwise square root function
+ */
+template <typename T>
+vector2d<T> sqrt(vector2d<T> v);
+
+template <>
+vector2d<float> sqrt(vector2d<float> v)
+{
+    v.x = sqrtf(v.x);
+    v.y = sqrtf(v.y);
+    return v;
+}
+
+template <>
+vector2d<double> sqrt(vector2d<double> v)
+{
+    v.x = sqrt(v.x);
+    v.y = sqrt(v.y);
+    return v;
+}
 
 #endif /* ! MDSIM_VECTOR2D_HPP */
