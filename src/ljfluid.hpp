@@ -176,6 +176,8 @@ void ljfluid<T>::density(float density_)
     gpu::ljfluid::init_lattice(part.pos_gpu.data(), make_float2(a, a), n);
 #endif
     cuda::thread::synchronize();
+
+    part.pos.memcpy(part.pos_gpu);
 }
 
 /**
@@ -201,6 +203,8 @@ void ljfluid<T>::temperature(float temp, rand48& rng)
     gpu::ljfluid::init_forces.configure(dim_);
     gpu::ljfluid::init_forces(part.force_gpu.data());
     cuda::thread::synchronize();
+
+    part.vel.memcpy(part.vel_gpu);
 }
 
 /**
