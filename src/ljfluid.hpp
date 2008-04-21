@@ -534,7 +534,8 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    rng.gaussian(it->vel.x, it->vel.y, temp);
 #ifdef DIM_3D
-	    rng.gaussian(it->vel.z, it->vel.z, temp);
+	    // Box-Muller transformation strictly generates 2 variates at once
+	    rng.gaussian(it->vel.y, it->vel.z, temp);
 #endif
 	    vel_cm += it->vel;
 	}
