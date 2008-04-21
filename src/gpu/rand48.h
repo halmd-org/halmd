@@ -86,6 +86,40 @@ __inline__ __device__ float uniform(ushort3& state)
     return r;
 }
 
+
+/**
+ * generate 2 random numbers from Gaussian distribution with given variance
+ */
+__inline__ __device__ void gaussian(float& r1, float& r2, float const& var, ushort3& state)
+{
+    //
+    // The Box-Muller transformation for generating random numbers
+    // in the normal distribution was originally described in
+    //
+    // G.E.P. Box and M.E. Muller, A Note on the Generation of
+    // Random Normal Deviates, The Annals of Mathematical Statistics,
+    // 1958, 29, p. 610-611
+    //
+    // Here, we use instead the faster polar method of the Box-Muller
+    // transformation, see
+    //
+    // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+    // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
+    //
+
+    float s;
+
+    do {
+	r1 = 2. * uniform(state) - 1.;
+	r2 = 2. * uniform(state) - 1.;
+	s = r1 * r1 + r2 * r2;
+    } while (s >= 1.);
+
+    s = sqrtf(-2. * var * logf(s) / s);
+    r1 *= s;
+    r2 *= s;
+}
+
 } // namespace rand48
 
 #endif /* ! MDSIM_GPU_RAND48_H */
