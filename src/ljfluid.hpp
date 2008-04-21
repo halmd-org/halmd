@@ -486,8 +486,11 @@ void ljfluid<T>::compute_force(particle<T>& p1, particle<T>& p2, double& en_pot,
 template <typename T>
 void ljfluid<T>::init_cells()
 {
-    // number of cells along 1 dimension
+    // number of cells per dimension
     ncell = size_t(floor(box_ / r_cut_skin));
+    if (ncell < 3) {
+	throw std::string("requires at least 3 cells per dimension");
+    }
     // cell edge length (must be greater or equal to cutoff length)
     cell_len = box_ / ncell;
 

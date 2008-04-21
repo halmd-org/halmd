@@ -24,6 +24,7 @@
 #include "ljfluid.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
+#include "version.h"
 using namespace std;
 
 
@@ -49,9 +50,15 @@ int main(int argc, char **argv)
 
     rng.set(opts.rngseed());
 
-    fluid.density(opts.density());
-    fluid.timestep(opts.timestep());
-    fluid.temperature(opts.temp(), rng);
+    try {
+	fluid.density(opts.density());
+	fluid.timestep(opts.timestep());
+	fluid.temperature(opts.temp(), rng);
+    }
+    catch (string const& e) {
+	cerr << PROGRAM_NAME ": " << e << endl;
+	return EXIT_FAILURE;
+    }
 
     for (uint64_t i = 1; i <= opts.steps(); i++) {
 	sim.step(fluid);
