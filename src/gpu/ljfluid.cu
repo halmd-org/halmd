@@ -232,7 +232,8 @@ __global__ void init_vel(T* vel, float temp, ushort3* rng)
 
     rand48::gaussian(v.x, v.y, temp, state);
 #ifdef DIM_3D
-    rand48::gaussian(v.z, v.z, temp, state);
+    // Box-Muller transformation strictly generates 2 variates at once
+    rand48::gaussian(v.y, v.z, temp, state);
 #endif
 
     rng[GTID] = state;
