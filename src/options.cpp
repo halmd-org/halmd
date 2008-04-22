@@ -151,7 +151,7 @@ void options::parse(int argc, char** argv)
 	("particles,N", po::value(&npart_), "number of particles")
 	("density,d", po::value(&density_), "particle density")
 	("timestep,t", po::value(&timestep_), "simulation timestep")
-	("temperature,T", po::value(&temp_), "initial temperature")
+	("temperature,K", po::value(&temp_), "initial temperature")
 	("steps,s", po::value(&steps_), "number of simulation steps")
 	("average,S", po::value(&avgsteps_), "number of average accumulation steps")
 	;
@@ -159,14 +159,14 @@ void options::parse(int argc, char** argv)
     po::options_description cuda_opts("CUDA options");
     cuda_opts.add_options()
 	("device,D", po::value(&device_), "CUDA device")
-	("blocks", po::value(&blocks_), "number of blocks per grid")
-	("threads", po::value(&threads_), "number of threads per block")
+	("blocks,B", po::value(&blocks_), "number of blocks per grid")
+	("threads,T", po::value(&threads_), "number of threads per block")
 	;
 
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
 	("seed,R", po::value(&rngseed_), "random number generator integer seed")
-	("input,I", po::value<vector<string> >(), "parameter input file")
+	("input,i", po::value<vector<string> >(), "parameter input file")
 	("version,V", "output version and exit")
 	("help,h", "display this help and exit")
 	;
