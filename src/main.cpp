@@ -25,6 +25,7 @@
 #include "mdsim.hpp"
 #include "options.hpp"
 #include "version.h"
+#include "time.hpp"
 using namespace std;
 
 
@@ -60,6 +61,9 @@ int main(int argc, char **argv)
 	return EXIT_FAILURE;
     }
 
+    mdsim::timer timer;
+    timer.start();
+
     for (uint64_t i = 1; i <= opts.steps(); i++) {
 	sim.step(fluid);
 
@@ -85,6 +89,9 @@ int main(int argc, char **argv)
 
 	sim.clear();
     }
+
+    timer.stop();
+    cerr << "Elapsed time: " << (timer.elapsed() * 1.E3) << "ms" << endl;
 
     return EXIT_SUCCESS;
 }
