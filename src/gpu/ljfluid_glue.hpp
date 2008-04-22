@@ -26,13 +26,13 @@ namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-extern cuda::function<void (float4*, float4*, float4*)> mdstep;
-extern cuda::function<void (float4*, float3, unsigned int)> init_lattice;
-extern cuda::function<void (float4*, float, ushort3*)> init_vel;
-extern cuda::function<void (float4*)> init_forces;
+extern cuda::function<void (float3*, float3*, float3*, float*, float*)> mdstep;
+extern cuda::function<void (float3*, float3, unsigned int)> init_lattice;
+extern cuda::function<void (float3*, float, ushort3*)> init_vel;
+extern cuda::function<void (float3*)> init_forces;
 #else
-extern cuda::function<void (float4*, float2*, float2*)> mdstep;
-extern cuda::function<void (float4*, float2, unsigned int)> init_lattice;
+extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
+extern cuda::function<void (float2*, float2, unsigned int)> init_lattice;
 extern cuda::function<void (float2*, float, ushort3*)> init_vel;
 extern cuda::function<void (float2*)> init_forces;
 #endif

@@ -31,20 +31,26 @@ namespace mdsim
 /**
  * MD simulation particle
  */
-template <typename T0, typename T1, typename T2>
+template <typename T>
 struct particle
 {
     /** n-dimensional particle coordinates */
-    cuda::vector<T0> pos_gpu;
-    cuda::host::vector<T0> pos;
+    cuda::vector<T> pos_gpu;
+    cuda::host::vector<T> pos;
     /** n-dimensional particle velocity */
-    cuda::vector<T1> vel_gpu;
-    cuda::host::vector<T1> vel;
+    cuda::vector<T> vel_gpu;
+    cuda::host::vector<T> vel;
     /** n-dimensional force acting upon particle */
-    cuda::vector<T2> force_gpu;
-    cuda::host::vector<T2> force;
+    cuda::vector<T> force_gpu;
+    cuda::host::vector<T> force;
+    /** potential energy */
+    cuda::vector<float> en_gpu;
+    cuda::host::vector<float> en;
+    /** virial equation sum */
+    cuda::vector<float> virial_gpu;
+    cuda::host::vector<float> virial;
 
-    particle(size_t n) : pos_gpu(n), pos(n), vel_gpu(n), vel(n), force_gpu(n), force(n) {}
+    particle(size_t n) : pos_gpu(n), pos(n), vel_gpu(n), vel(n), force_gpu(n), force(n), en_gpu(n), en(n), virial_gpu(n), virial(n) {}
 };
 
 
@@ -73,9 +79,9 @@ private:
     size_t npart;
     /** particles */
 #ifdef DIM_3D
-    particle<float4, float4, float4> part;
+    particle<float3> part;
 #else
-    particle<float4, float2, float2> part;
+    particle<float2> part;
 #endif
     /** CUDA execution dimensions */
     cuda::config dim_;
@@ -219,11 +225,13 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
 #else
     gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(float2));
 #endif
-    gpu::ljfluid::mdstep(part.pos_gpu.data(), part.vel_gpu.data(), part.force_gpu.data());
+    gpu::ljfluid::mdstep(part.pos_gpu.data(), part.vel_gpu.data(), part.force_gpu.data(), part.en_gpu.data(), part.virial_gpu.data());
     cuda::thread::synchronize();
 
     part.pos.memcpy(part.pos_gpu);
     part.vel.memcpy(part.vel_gpu);
+    part.en.memcpy(part.en_gpu);
+    part.virial.memcpy(part.virial_gpu);
 
     // compute averages
     en_pot = 0.;
@@ -232,14 +240,12 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
     vel2_sum = 0.;
 
     for (size_t i = 0; i < npart; ++i) {
+	en_pot += part.en[i];
+	virial += part.virial[i];
 #ifdef DIM_3D
 	T vel(part.vel[i].x, part.vel[i].y, part.vel[i].z);
-	en_pot += part.pos[i].w;
-	virial += part.vel[i].w;
 #else
 	T vel(part.vel[i].x, part.vel[i].y);
-	en_pot += part.pos[i].z;
-	virial += part.pos[i].w;
 #endif
 	vel_cm += vel;
 	vel2_sum += vel * vel;

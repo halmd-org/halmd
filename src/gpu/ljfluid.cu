@@ -80,7 +80,7 @@ __device__ void leapfrog_full_step(T& v, T f)
  * calculate particle force using Lennard-Jones potential
  */
 template <typename T>
-__device__ void ljforce(T r1, T r2, T& f, float& en, float& virial)
+__device__ void compute_force(T r1, T r2, T& f, float& en, float& virial)
 {
     // particle distance vector
     T d = r1 - r2;
@@ -111,62 +111,38 @@ __device__ void ljforce(T r1, T r2, T& f, float& en, float& virial)
 /**
  * n-dimensional MD simulation step
  */
-template <typename T0, typename T1, typename T2>
-__global__ void mdstep(T0* part, T1* vel, T2* forces)
+template <typename T>
+__global__ void mdstep(T* part, T* vel, T* forces, float* en_, float* virial_)
 {
-    float432 r, v, f;
+    T r, v, f;
+    float en, virial;
 
     // particles within domain
-#ifdef DIM_3D
-    extern __shared__ float3 block[];
-#else
-    extern __shared__ float2 block[];
-#endif
+    extern __shared__ T block[];
 
     // load particle associated with this thread
-    r.u4 = part[GTID];
-#ifdef DIM_3D
-    v.u4 = vel[GTID];
-    f.u4 = forces[GTID];
-#else
-    v.u2 = vel[GTID];
-    f.u2 = forces[GTID];
-#endif
+    r = part[GTID];
+    v = vel[GTID];
+    f = forces[GTID];
 
     // first leapfrog step as part of integration of equations of motion
-#ifdef DIM_3D
-    leapfrog_half_step(r.u3, v.u3, f.u3);
-#else
-    leapfrog_half_step(r.u2, v.u2, f.u2);
-#endif
+    leapfrog_half_step(r, v, f);
 
     // potential energy contribution
-#ifdef DIM_3D
-    r.u4.w = 0.;
-#else
-    r.u4.z = 0.;
-#endif
+    en = 0.;
     // virial equation sum contribution
-#ifdef DIM_3D
-    v.u4.w = 0.;
-#else
-    r.u4.w = 0.;
-#endif
+    virial = 0.;
 
     // Lennard-Jones force calculation
 #ifdef DIM_3D
-    f.u3 = make_float3(0., 0., 0.);
+    f = make_float3(0., 0., 0.);
 #else
-    f.u2 = make_float2(0., 0.);
+    f = make_float2(0., 0.);
 #endif
 
     for (int k = 0; k < gridDim.x; k++) {
 	// load all interacting particles coordinates within domain
-#ifdef DIM_3D
-	block[TID] = make_float432(part[k * blockDim.x + TID]).u3;
-#else
-	block[TID] = make_float432(part[k * blockDim.x + TID]).u2;
-#endif
+	block[TID] = part[k * blockDim.x + TID];
 
 	__syncthreads();
 
@@ -174,42 +150,31 @@ __global__ void mdstep(T0* part, T1* vel, T2* forces)
 	    // same particle
 	    if (blockIdx.x == k && TID == j) continue;
 
-#ifdef DIM_3D
-	    ljforce(r.u3, block[j], f.u3, r.u4.w, v.u4.w);
-#else
-	    ljforce(r.u2, block[j], f.u2, r.u4.z, r.u4.w);
-#endif
+	    compute_force(r, block[j], f, en, virial);
 	}
 
 	__syncthreads();
     }
 
     // second leapfrog step as part of integration of equations of motion
-#ifdef DIM_3D
-    leapfrog_full_step(v.u3, f.u3);
-#else
-    leapfrog_full_step(v.u2, f.u2);
-#endif
+    leapfrog_full_step(v, f);
 
     // store particle associated with this thread
-    part[GTID] = r.u4;
-#ifdef DIM_3D
-    vel[GTID] = v.u4;
-    forces[GTID] = f.u4;
-#else
-    vel[GTID] = v.u2;
-    forces[GTID] = f.u2;
-#endif
+    part[GTID] = r;
+    vel[GTID] = v;
+    forces[GTID] = f;
+    en_[GTID] = en;
+    virial_[GTID] = virial;
 }
 
 
 /**
  * place particles on an n-dimensional hypercubic lattice
  */
-template <typename T0, typename T1>
-__global__ void init_lattice(T0* part, T1 cell, unsigned int n)
+template <typename T>
+__global__ void init_lattice(T* part, T cell, unsigned int n)
 {
-    T0 r = part[GTID];
+    T r;
     r.x = cell.x / 2 + cell.x * (GTID % n);
 #ifdef DIM_3D
     r.y = cell.y / 2 + cell.y * (GTID / n % n);
@@ -228,7 +193,7 @@ template <typename T>
 __global__ void init_vel(T* vel, float temp, ushort3* rng)
 {
     ushort3 state = rng[GTID];
-    T v = vel[GTID];
+    T v;
 
     rand48::gaussian(v.x, v.y, temp, state);
 #ifdef DIM_3D
@@ -248,9 +213,7 @@ template <typename T>
 __global__ void init_forces(T* forces)
 {
 #ifdef DIM_3D
-    float432 f = make_float432(forces[GTID]);
-    f.u3 = make_float3(0., 0., 0.);
-    forces[GTID] = f.u4;
+    forces[GTID] = make_float3(0., 0., 0.);
 #else
     forces[GTID] = make_float2(0., 0.);
 #endif
@@ -263,13 +226,13 @@ namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-function<void (float4*, float4*, float4*)> mdstep(mdsim::mdstep);
-function<void (float4*, float3, unsigned int)> init_lattice(mdsim::init_lattice);
-function<void (float4*, float, ushort3*)> init_vel(mdsim::init_vel);
-function<void (float4*)> init_forces(mdsim::init_forces);
+function<void (float3*, float3*, float3*, float*, float*)> mdstep(mdsim::mdstep);
+function<void (float3*, float3, unsigned int)> init_lattice(mdsim::init_lattice);
+function<void (float3*, float, ushort3*)> init_vel(mdsim::init_vel);
+function<void (float3*)> init_forces(mdsim::init_forces);
 #else
-function<void (float4*, float2*, float2*)> mdstep(mdsim::mdstep);
-function<void (float4*, float2, unsigned int)> init_lattice(mdsim::init_lattice);
+function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep);
+function<void (float2*, float2, unsigned int)> init_lattice(mdsim::init_lattice);
 function<void (float2*, float, ushort3*)> init_vel(mdsim::init_vel);
 function<void (float2*)> init_forces(mdsim::init_forces);
 #endif
