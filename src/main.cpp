@@ -25,6 +25,7 @@
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 #include "version.h"
+#include "time.hpp"
 using namespace std;
 
 
@@ -69,6 +70,9 @@ int main(int argc, char **argv)
     cout << "### timestep(" << fluid.timestep() << ")" << endl;
     cout << endl;
 
+    mdsim::timer timer;
+    timer.start();
+
     for (uint64_t i = 1; i <= opts.steps(); i++) {
 	sim.step(fluid);
 
@@ -94,6 +98,9 @@ int main(int argc, char **argv)
 
 	sim.clear();
     }
+
+    timer.stop();
+    cerr << "Elapsed time: " << (timer.elapsed() * 1.E3) << "ms" << endl;
 
     return EXIT_SUCCESS;
 }
