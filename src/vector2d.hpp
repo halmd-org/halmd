@@ -83,6 +83,38 @@ public:
     }
 
     /**
+     * componentwise less than comparison
+     */
+    bool operator<(vector2d<T> const& v) const
+    {
+	return (v.x < x && v.y < y);
+    }
+
+    /**
+     * componentwise greater than comparison
+     */
+    bool operator>(vector2d<T> const& v) const
+    {
+	return (v.x > x && v.y > y);
+    }
+
+    /**
+     * componentwise less than or equal to comparison
+     */
+    bool operator<=(vector2d<T> const& v) const
+    {
+	return (v.x <= x && v.y <= y);
+    }
+
+    /**
+     * componentwise greater than or equal to comparison
+     */
+    bool operator>=(vector2d<T> const& v) const
+    {
+	return (v.x >= x && v.y >= y);
+    }
+
+    /**
      * assignment by vector
      */
     vector2d<T>& operator=(vector2d<T> const& v)
