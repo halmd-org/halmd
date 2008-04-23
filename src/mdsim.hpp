@@ -80,9 +80,9 @@ public:
     friend std::ostream& operator<<(std::ostream& os, mdsim<T> const& sim)
     {
 	os << sim.time_ << "\t";
+	os << sim.en_tot_.mean() << "\t" << sim.en_tot_.std() << "\t";
 	os << sim.en_pot_.mean() << "\t" << sim.en_pot_.std() << "\t";
 	os << sim.en_kin_.mean() << "\t" << sim.en_kin_.std() << "\t";
-	os << sim.en_tot_.mean() << "\t" << sim.en_tot_.std() << "\t";
 	os << sim.temp_.mean() << "\t" << sim.temp_.std() << "\t";
 	os << sim.pressure_.mean() << "\t" << sim.pressure_.std() << "\t";
 	os << sim.vel_cm_.mean() << "\t" << sim.vel_cm_.std();
