@@ -17,6 +17,16 @@ FOREACH(dim RANGE 2 3)
     ${GSL_LIBRARIES}
     ${CUDA_LIBRARIES}
     )
+
+  ADD_EXECUTABLE(ljfluid${dim}d_leapfrog main.cpp options.cpp)
+  SET_TARGET_PROPERTIES(ljfluid${dim}d_leapfrog PROPERTIES COMPILE_FLAGS "-DDIM_${dim}D -DUSE_LEAPFROG")
+  TARGET_LINK_LIBRARIES(ljfluid${dim}d_leapfrog
+    ljfluid${dim}d_leapfrog_gpu
+    rand48_gpu
+    ${BOOST_PROGRAM_OPTIONS_LIBRARY}
+    ${GSL_LIBRARIES}
+    ${CUDA_LIBRARIES}
+    )
 ENDFOREACH(dim)
 
 ADD_SUBDIRECTORY(gpu)

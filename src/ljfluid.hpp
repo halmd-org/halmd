@@ -36,13 +36,13 @@ struct particle
 {
     /** n-dimensional particle coordinates */
     cuda::vector<T> pos_gpu;
+    cuda::vector<T> pos_old_gpu;
     cuda::host::vector<T> pos;
     /** n-dimensional particle velocity */
     cuda::vector<T> vel_gpu;
     cuda::host::vector<T> vel;
     /** n-dimensional force acting upon particle */
     cuda::vector<T> force_gpu;
-    cuda::host::vector<T> force;
     /** potential energy */
     cuda::vector<float> en_gpu;
     cuda::host::vector<float> en;
@@ -50,7 +50,28 @@ struct particle
     cuda::vector<float> virial_gpu;
     cuda::host::vector<float> virial;
 
-    particle(size_t n) : pos_gpu(n), pos(n), vel_gpu(n), vel(n), force_gpu(n), force(n), en_gpu(n), en(n), virial_gpu(n), virial(n) {}
+    particle(size_t n) : pos_gpu(n), pos_old_gpu(n), pos(n), vel_gpu(n), vel(n), force_gpu(n), en_gpu(n), en(n), virial_gpu(n), virial(n)
+    {
+    }
+
+    /**
+     * MD simulation state in global device memory
+     */
+    mdstep_param<T> data()
+    {
+	mdstep_param<T> state;
+
+	state.r = pos_gpu.data();
+#ifndef USE_LEAPFROG
+	state.rm = pos_old_gpu.data();
+#endif
+	state.v = vel_gpu.data();
+	state.f = force_gpu.data();
+	state.en = en_gpu.data();
+	state.virial = virial_gpu.data();
+
+	return state;
+    }
 };
 
 
@@ -77,11 +98,16 @@ public:
 private:
     /** number of particles in periodic box */
     size_t npart;
-    /** particles */
 #ifdef DIM_3D
+    /** particles */
     particle<float3> part;
+    /** MD simulation state in global device memory */
+    const mdstep_param<float3> state_gpu;
 #else
+    /** particles */
     particle<float2> part;
+    /** MD simulation state in global device memory */
+    const mdstep_param<float2> state_gpu;
 #endif
     /** CUDA execution dimensions */
     cuda::config dim_;
@@ -101,7 +127,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <typename T>
-ljfluid<T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(npart), dim_(dim)
+ljfluid<T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(npart), state_gpu(part.data()), dim_(dim)
 {
     // FIXME do without this requirement
     assert(npart == dim_.threads());
@@ -203,7 +229,7 @@ void ljfluid<T>::temperature(float temp, rand48& rng)
 {
     // initialize velocities
     gpu::ljfluid::init_vel.configure(dim_);
-    gpu::ljfluid::init_vel(part.vel_gpu.data(), temp, rng.data());
+    gpu::ljfluid::init_vel(state_gpu, temp, rng.data());
 
     // initialize forces
     gpu::ljfluid::init_forces.configure(dim_);
@@ -225,7 +251,7 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
 #else
     gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(float2));
 #endif
-    gpu::ljfluid::mdstep(part.pos_gpu.data(), part.vel_gpu.data(), part.force_gpu.data(), part.en_gpu.data(), part.virial_gpu.data());
+    gpu::ljfluid::mdstep(state_gpu);
     cuda::thread::synchronize();
 
     part.pos.memcpy(part.pos_gpu);
