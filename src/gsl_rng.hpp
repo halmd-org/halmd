@@ -89,9 +89,10 @@ public:
     /**
      * generate 2-dimensional random unit vector
      */
-    void unit_vector(vector2d<double>& v)
+    template <typename T>
+    void unit_vector(vector2d<T>& v)
     {
-	double s = 2. * M_PI * uniform();
+	T s = 2. * M_PI * uniform();
 	v.x = std::cos(s);
 	v.y = std::sin(s);
     }
@@ -99,7 +100,8 @@ public:
     /**
      * generate 3-dimensional random unit vector
      */
-    void unit_vector(vector3d<double>& v)
+    template <typename T>
+    void unit_vector(vector3d<T>& v)
     {
 	//
 	// The following method requires an average of 8/Pi =~ 2.55
@@ -111,7 +113,7 @@ public:
 	// http://projecteuclid.org/euclid.aoms/1177692644#
 	//
 
-	double s;
+	T s;
 
 	do {
 	    v.x = 2. * uniform() - 1.;
@@ -128,7 +130,8 @@ public:
     /**
      * generate 2 random numbers from Gaussian distribution with given variance
      */
-    void gaussian(double& r1, double& r2, double const& var)
+    template <typename T>
+    void gaussian(T& r1, T& r2, T const& var)
     {
 	//
 	// The Box-Muller transformation for generating random numbers
@@ -145,7 +148,7 @@ public:
 	// Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
 	//
 
-	double s;
+	T s;
 
 	do {
 	    r1 = 2. * uniform() - 1.;
