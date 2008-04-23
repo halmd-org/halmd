@@ -22,6 +22,7 @@
 #include "ljfluid.hpp"
 #include "accumulator.hpp"
 #include <stdint.h>
+#include <ostream>
 
 
 namespace mdsim
@@ -73,7 +74,22 @@ public:
 	vel_cm_.clear();
     }
 
-    /*
+    /**
+     * output measurement properties to stream
+     */
+    friend std::ostream& operator<<(std::ostream& os, mdsim<T> const& sim)
+    {
+	os << sim.time_ << "\t";
+	os << sim.en_pot_.mean() << "\t" << sim.en_pot_.std() << "\t";
+	os << sim.en_kin_.mean() << "\t" << sim.en_kin_.std() << "\t";
+	os << sim.en_tot_.mean() << "\t" << sim.en_tot_.std() << "\t";
+	os << sim.temp_.mean() << "\t" << sim.temp_.std() << "\t";
+	os << sim.pressure_.mean() << "\t" << sim.pressure_.std() << "\t";
+	os << sim.vel_cm_.mean() << "\t" << sim.vel_cm_.std();
+	return os;
+    }
+
+    /**
      * get potential energy per particle
      */
     accumulator<double> const& en_pot() const
@@ -81,7 +97,7 @@ public:
 	return en_pot_;
     }
 
-    /*
+    /**
      * get kinetic energy per particle
      */
     accumulator<double> const& en_kin() const
@@ -89,7 +105,7 @@ public:
 	return en_kin_;
     }
 
-    /*
+    /**
      * get potential energy
      */
     accumulator<double> const& en_tot() const
@@ -97,7 +113,7 @@ public:
 	return en_tot_;
     }
 
-    /*
+    /**
      * get temperature
      */
     accumulator<double> const& temp() const
@@ -105,7 +121,7 @@ public:
 	return temp_;
     }
 
-    /*
+    /**
      * get pressure
      */
     accumulator<double> const& pressure() const
@@ -113,7 +129,7 @@ public:
 	return pressure_;
     }
 
-    /*
+    /**
      * get center of mass velocity
      */
     accumulator<T> const& vel_cm() const
