@@ -83,6 +83,38 @@ public:
     }
 
     /**
+     * componentwise less than comparison
+     */
+    bool operator<(vector3d<T> const& v) const
+    {
+	return (v.x < x && v.y < y && v.z < z);
+    }
+
+    /**
+     * componentwise greater than comparison
+     */
+    bool operator>(vector3d<T> const& v) const
+    {
+	return (v.x > x && v.y > y && v.z > z);
+    }
+
+    /**
+     * componentwise less than or equal to comparison
+     */
+    bool operator<=(vector3d<T> const& v) const
+    {
+	return (v.x <= x && v.y <= y && v.z <= z);
+    }
+
+    /**
+     * componentwise greater than or equal to comparison
+     */
+    bool operator>=(vector3d<T> const& v) const
+    {
+	return (v.x >= x && v.y >= y && v.z >= z);
+    }
+
+    /**
      * assignment by vector
      */
     vector3d<T>& operator=(vector3d<T> const& v)
