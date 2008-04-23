@@ -33,21 +33,29 @@ template <typename T>
 class accumulator
 {
 public:
-    accumulator() : count_(0), mean_(0), std_(0)
+    accumulator() : count_(0), m_(0), s_(0)
     {
     }
 
     /**
-     * accumulate value
+     * accumulate single value
      */
     accumulator<T>& operator+=(T const& val)
     {
-	// accumulate mean average
-	mean_ += val;
-	// accumulate standard deviation
-	std_ += val * val;
+	//
+	// The following method for calculating means and standard
+	// deviations with floating point arithmetic is described in
+	//
+	// D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+	// Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
+	//
 
-	count_++;
+	++count_;
+
+	T t = val - m_;
+	m_ += t / count_;
+	s_ += t * (val - m_);
+
 	return *this;
     }
 
@@ -56,9 +64,9 @@ public:
      */
     void clear()
     {
-	mean_ = 0;
-	std_ = 0;
 	count_ = 0;
+	m_ = 0;
+	s_ = 0;
     }
 
     /**
@@ -74,8 +82,8 @@ public:
      */
     T mean() const
     {
-	assert(count_ != 0);
-	return mean_ / count_;
+	assert(count_ > 0);
+	return m_;
     }
 
     /**
@@ -83,13 +91,13 @@ public:
      */
     T std() const
     {
-	assert(count_ != 0);
-	return sqrt((std_ - mean_ * mean_ / count_) / count_);
+	assert(count_ > 1);
+	return sqrt(s_ / (count_ - 1.));
     }
 
 private:
     size_t count_;
-    T mean_, std_;
+    T m_, s_;
 };
 
 } // namespace mdsim
