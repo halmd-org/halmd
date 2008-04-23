@@ -39,6 +39,38 @@ __device__ bool operator!=(float2 const& v, float2 const& w)
 }
 
 /**
+ * componentwise less than comparison
+ */
+__device__ bool operator<(float2 const& v, float2 const& w)
+{
+    return (v.x < w.x && v.y < w.y);
+}
+
+/**
+ * componentwise greater than comparison
+ */
+__device__ bool operator>(float2 const& v, float2 const& w)
+{
+    return (v.x > w.x && v.y > w.y);
+}
+
+/**
+ * componentwise less than or equal to comparison
+ */
+__device__ bool operator<=(float2 const& v, float2 const& w)
+{
+    return (v.x <= w.x && v.y <= w.y);
+}
+
+/**
+ * componentwise greater than or equal to comparison
+ */
+__device__ bool operator>=(float2 const& v, float2 const& w)
+{
+    return (v.x >= w.x && v.y >= w.y);
+}
+
+/**
  * assignment by componentwise vector addition
  */
 __device__ float2& operator+=(float2& v, float2 const& w)
