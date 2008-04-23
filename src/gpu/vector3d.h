@@ -39,6 +39,38 @@ __device__ bool operator!=(float3 const& v, float3 const& w)
 }
 
 /**
+ * componentwise less than comparison
+ */
+__device__ bool operator<(float3 const& v, float3 const& w)
+{
+    return (v.x < w.x && v.y < w.y && v.z < w.z);
+}
+
+/**
+ * componentwise greater than comparison
+ */
+__device__ bool operator>(float3 const& v, float3 const& w)
+{
+    return (v.x > w.x && v.y > w.y && v.z > w.z);
+}
+
+/**
+ * componentwise less than or equal to comparison
+ */
+__device__ bool operator<=(float3 const& v, float3 const& w)
+{
+    return (v.x <= w.x && v.y <= w.y && v.z <= w.z);
+}
+
+/**
+ * componentwise greater than or equal to comparison
+ */
+__device__ bool operator>=(float3 const& v, float3 const& w)
+{
+    return (v.x >= w.x && v.y >= w.y && v.z >= w.z);
+}
+
+/**
  * assignment by componentwise vector addition
  */
 __device__ float3& operator+=(float3& v, float3 const& w)
