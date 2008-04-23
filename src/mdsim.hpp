@@ -21,6 +21,7 @@
 
 #include "ljfluid.hpp"
 #include "accumulator.hpp"
+#include <stdint.h>
 
 
 namespace mdsim
@@ -33,7 +34,7 @@ template <typename T>
 class mdsim
 {
 public:
-    mdsim()
+    mdsim() : steps_(0), time_(0.)
     {
     }
 
@@ -45,7 +46,10 @@ public:
 	double en_pot, virial, vel2_sum;
 	T vel_cm;
 
+	// MD simulation step
 	fluid.step(en_pot, virial, vel_cm, vel2_sum);
+	// advance total simulation time
+	time_ = ++steps_ * fluid.timestep();
 
 	// accumulate properties
 	en_pot_ += en_pot;
@@ -117,6 +121,22 @@ public:
 	return vel_cm_;
     }
 
+    /**
+     * get total number of simulation steps
+     */
+    uint64_t steps() const
+    {
+	return steps_;
+    }
+
+    /**
+     * get total simulation time
+     */
+    double time() const
+    {
+	return time_;
+    }
+
 private:
     /** potential energy per particle */
     accumulator<double> en_pot_;
@@ -130,6 +150,10 @@ private:
     accumulator<double> pressure_;
     /** center of mass velocity */
     accumulator<T> vel_cm_;
+    /** total number of simulation steps */
+    uint64_t steps_;
+    /** total simulation time */
+    double time_;
 };
 
 } // namespace mdsim
