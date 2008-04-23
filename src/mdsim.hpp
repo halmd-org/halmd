@@ -21,6 +21,7 @@
 
 #include "ljfluid.hpp"
 #include "accumulator.hpp"
+#include <stdint.h>
 
 
 namespace mdsim
@@ -29,29 +30,32 @@ namespace mdsim
 /**
  * Molecular dynamics simulation
  */
-template <typename V>
+template <typename T>
 class mdsim
 {
 public:
-    mdsim()
+    mdsim() : steps_(0), time_(0.)
     {
     }
 
     /**
      * MD simulation step
      */
-    void step(ljfluid<V>& fluid)
+    void step(ljfluid<T>& fluid)
     {
 	double en_pot, virial, vel2_sum;
-	V vel_cm;
+	T vel_cm;
 
+	// MD simulation step
 	fluid.step(en_pot, virial, vel_cm, vel2_sum);
+	// advance total simulation time
+	time_ = ++steps_ * fluid.timestep();
 
 	// accumulate properties
 	en_pot_ += en_pot;
 	en_kin_ += vel2_sum / 2;
 	en_tot_ += en_pot + vel2_sum / 2;
-	temp_ += vel2_sum / V::dim();
+	temp_ += vel2_sum / T::dim();
 	pressure_ += fluid.density() * (vel2_sum + virial);
 	vel_cm_ += vel_cm;
     }
@@ -112,9 +116,25 @@ public:
     /*
      * get center of mass velocity
      */
-    accumulator<V> const& vel_cm() const
+    accumulator<T> const& vel_cm() const
     {
 	return vel_cm_;
+    }
+
+    /**
+     * get total number of simulation steps
+     */
+    uint64_t steps() const
+    {
+	return steps_;
+    }
+
+    /**
+     * get total simulation time
+     */
+    double time() const
+    {
+	return time_;
     }
 
 private:
@@ -129,7 +149,11 @@ private:
     /** pressure */
     accumulator<double> pressure_;
     /** center of mass velocity */
-    accumulator<V> vel_cm_;
+    accumulator<T> vel_cm_;
+    /** total number of simulation steps */
+    uint64_t steps_;
+    /** total simulation time */
+    double time_;
 };
 
 } // namespace mdsim
