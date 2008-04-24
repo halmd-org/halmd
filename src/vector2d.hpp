@@ -20,6 +20,7 @@
 #define MDSIM_VECTOR2D_HPP
 
 #include <math.h>
+#include <cuda/cuda_runtime.h>
 #include <iostream>
 
 
@@ -41,6 +42,13 @@ public:
      * initialization by vector
      */
     vector2d(vector2d<T> const& v) : x(v.x), y(v.y)
+    {
+    }
+
+    /**
+     * initialization by vector
+     */
+    vector2d(float2 const& v) : x(v.x), y(v.y)
     {
     }
 
