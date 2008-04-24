@@ -256,7 +256,7 @@ void ljfluid<T>::trajectories(std::ostream& os) const
 {
     for (cell_const_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_const_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    os << it->pos << "\t" << it->vel << std::endl;
+	    os << it->pos << "\t" << it->vel << "\n";
 	}
     }
     os << std::endl << std::endl;
