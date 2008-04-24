@@ -81,7 +81,7 @@ public:
     float box() const;
     void temperature(float temp, rand48& rng);
 
-    void step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum);
+    void step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum);
     void trajectories(std::ostream& os) const;
 
 private:
@@ -232,7 +232,7 @@ void ljfluid<T>::temperature(float temp, rand48& rng)
  * MD simulation step
  */
 template <typename T>
-void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum)
+void ljfluid<T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
 {
     cuda::stream stream;
 

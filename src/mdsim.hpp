@@ -44,7 +44,7 @@ public:
      */
     void step(ljfluid<T>& fluid)
     {
-	double en_pot, virial, vel2_sum;
+	float en_pot, virial, vel2_sum;
 	T vel_cm;
 
 	// MD simulation step
@@ -92,7 +92,7 @@ public:
     /**
      * get potential energy per particle
      */
-    accumulator<double> const& en_pot() const
+    accumulator<float> const& en_pot() const
     {
 	return en_pot_;
     }
@@ -100,7 +100,7 @@ public:
     /**
      * get kinetic energy per particle
      */
-    accumulator<double> const& en_kin() const
+    accumulator<float> const& en_kin() const
     {
 	return en_kin_;
     }
@@ -108,7 +108,7 @@ public:
     /**
      * get potential energy
      */
-    accumulator<double> const& en_tot() const
+    accumulator<float> const& en_tot() const
     {
 	return en_tot_;
     }
@@ -116,7 +116,7 @@ public:
     /**
      * get temperature
      */
-    accumulator<double> const& temp() const
+    accumulator<float> const& temp() const
     {
 	return temp_;
     }
@@ -124,7 +124,7 @@ public:
     /**
      * get pressure
      */
-    accumulator<double> const& pressure() const
+    accumulator<float> const& pressure() const
     {
 	return pressure_;
     }
@@ -148,28 +148,28 @@ public:
     /**
      * get total simulation time
      */
-    double time() const
+    float time() const
     {
 	return time_;
     }
 
 private:
     /** potential energy per particle */
-    accumulator<double> en_pot_;
+    accumulator<float> en_pot_;
     /** kinetic energy per particle */
-    accumulator<double> en_kin_;
+    accumulator<float> en_kin_;
     /** total energy per particle */
-    accumulator<double> en_tot_;
+    accumulator<float> en_tot_;
     /** temperature */
-    accumulator<double> temp_;
+    accumulator<float> temp_;
     /** pressure */
-    accumulator<double> pressure_;
+    accumulator<float> pressure_;
     /** center of mass velocity */
     accumulator<T> vel_cm_;
     /** total number of simulation steps */
     uint64_t steps_;
     /** total simulation time */
-    double time_;
+    float time_;
 };
 
 } // namespace mdsim

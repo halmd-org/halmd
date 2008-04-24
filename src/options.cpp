@@ -30,16 +30,16 @@ namespace boost { namespace program_options
 {
 
 /**
- * program option value validation for double precision floating-point values
+ * program option value validation for single precision floating-point values
  */
 template <>
-void validate(boost::any& value_store, vector<string> const& values, double*, long)
+void validate(boost::any& value_store, vector<string> const& values, float*, long)
 {
     string const& s = validators::get_single_string(values);
-    double value;
+    float value;
 
     try {
-	value = lexical_cast<double>(s);
+	value = lexical_cast<float>(s);
     }
     catch (bad_lexical_cast const& e)
     {

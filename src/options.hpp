@@ -55,17 +55,17 @@ public:
 	return npart_;
     }
 
-    double density() const
+    float density() const
     {
 	return density_;
     }
 
-    double timestep() const
+    float timestep() const
     {
 	return timestep_;
     }
 
-    double temp() const
+    float temp() const
     {
 	return temp_;
     }
@@ -104,11 +104,11 @@ private:
     /** number of particles */
     unsigned int npart_;
     /** density */
-    double density_;
+    float density_;
     /** simulation timestep */
-    double timestep_;
+    float timestep_;
     /** initial temperature */
-    double temp_;
+    float temp_;
     /** number of simulation steps */
     uint64_t steps_;
     /** number of steps for average accumulation */

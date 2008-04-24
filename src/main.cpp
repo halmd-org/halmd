@@ -45,11 +45,11 @@ int main(int argc, char **argv)
     const cuda::config dim(dim3(opts.blocks()), dim3(opts.threads()));
     mdsim::rand48 rng(dim);
 #ifdef DIM_3D
-    mdsim::ljfluid<vector3d<double> > fluid(opts.npart(), dim);
-    mdsim::mdsim<vector3d<double> > sim;
+    mdsim::ljfluid<vector3d<float> > fluid(opts.npart(), dim);
+    mdsim::mdsim<vector3d<float> > sim;
 #else
-    mdsim::ljfluid<vector2d<double> > fluid(opts.npart(), dim);
-    mdsim::mdsim<vector2d<double> > sim;
+    mdsim::ljfluid<vector2d<float> > fluid(opts.npart(), dim);
+    mdsim::mdsim<vector2d<float> > sim;
 #endif
 
     rng.set(opts.rngseed());
