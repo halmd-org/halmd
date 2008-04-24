@@ -7,9 +7,11 @@ CONFIGURE_FILE(
   ESCAPE_QUOTES @ONLY
   )
 
+ADD_DEFINITIONS(-DUSE_LEAPFROG)
+
 FOREACH(dim RANGE 2 3)
   ADD_EXECUTABLE(ljfluid${dim}d main.cpp options.cpp)
-  SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES COMPILE_FLAGS "-DDIM_${dim}D -DUSE_LEAPFROG")
+  SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES COMPILE_FLAGS "-DDIM_${dim}D")
   TARGET_LINK_LIBRARIES(ljfluid${dim}d
     ljfluid${dim}d_gpu
     rand48_gpu
