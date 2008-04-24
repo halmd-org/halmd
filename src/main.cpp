@@ -100,6 +100,8 @@ int main(int argc, char **argv)
     }
 
     timer.stop();
+    cerr << "GPU time: " << (fluid.gputime() * 1.E3) << "ms" << endl;
+    cerr << "Device memory transfer time: " << (fluid.memtime() * 1.E3) << "ms" << endl;
     cerr << "Elapsed time: " << (timer.elapsed() * 1.E3) << "ms" << endl;
 
     return EXIT_SUCCESS;

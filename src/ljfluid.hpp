@@ -20,6 +20,7 @@
 #define MDSIM_LJFLUID_HPP
 
 #include <math.h>
+#include <stdint.h>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include "gpu/ljfluid_glue.hpp"
 #include "rand48.hpp"
@@ -84,6 +85,9 @@ public:
     void step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum);
     void trajectories(std::ostream& os) const;
 
+    float gputime() const;
+    float memtime() const;
+
 private:
     /** number of particles in periodic box */
     size_t npart;
@@ -105,6 +109,13 @@ private:
     float timestep_;
     /** cutoff distance for shifted Lennard-Jones potential */
     float r_cut;
+
+    /** total number of simulation steps */
+    uint64_t steps_;
+    /** average GPU time in milliseconds per simulation step */
+    float gputime_;
+    /** average device memory transfer time in milliseconds per simulation step */
+    float memtime_;
 };
 
 
@@ -112,7 +123,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <typename T>
-ljfluid<T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(npart), dim_(dim)
+ljfluid<T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(npart), dim_(dim), steps_(0), gputime_(0.), memtime_(0.)
 {
     // FIXME do without this requirement
     assert(npart == dim_.threads());
@@ -235,6 +246,10 @@ template <typename T>
 void ljfluid<T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
 {
     cuda::stream stream;
+    cuda::event start, stop;
+    start.record(stream);
+
+    ++steps_;
 
 #ifdef USE_LEAPFROG
     gpu::ljfluid::inteq.configure(dim_, stream);
@@ -254,12 +269,24 @@ void ljfluid<T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
     gpu::ljfluid::inteq(part.pos_gpu.data(), part.pos_old_gpu.data(), part.vel_gpu.data(), part.force_gpu.data());
 #endif
 
+    stop.record(stream);
+    stop.synchronize();
+
+    // adjust average GPU time in milliseconds per simulation time
+    gputime_ += ((stop - start) - gputime_) / steps_;
+
+    start.record(stream);
+
     part.pos.memcpy(part.pos_gpu, stream);
     part.vel.memcpy(part.vel_gpu, stream);
     part.en.memcpy(part.en_gpu, stream);
     part.virial.memcpy(part.virial_gpu, stream);
 
-    stream.synchronize();
+    stop.record(stream);
+    stop.synchronize();
+
+    // adjust average device memory transfer time in milliseconds per simulation time
+    memtime_ += ((stop - start) - memtime_) / steps_;
 
     // compute averages
     en_pot = 0.;
@@ -287,6 +314,24 @@ void ljfluid<T>::trajectories(std::ostream& os) const
     os << "\n\n";
 }
 
+/**
+ * get total GPU time in seconds
+ */
+template <typename T>
+float ljfluid<T>::gputime() const
+{
+    return (gputime_ * 1.e-3) * steps_;
 }
+
+/**
+ * get total device memory transfer time in seconds
+ */
+template <typename T>
+float ljfluid<T>::memtime() const
+{
+    return (memtime_ * 1.e-3) * steps_;
+}
+
+} // namespace mdsim
 
 #endif /* ! MDSIM_LJFLUID_HPP */
