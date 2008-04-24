@@ -70,7 +70,7 @@ __device__ void verlet_step(T& r, T& rm, T& v, T const& f)
  * first leapfrog step of integration of equations of motion
  */
 template <typename T>
-__device__ void leapfrog_half_step(T& r, T& v, T f)
+__device__ void leapfrog_half_step(T& r, T& v, T const& f)
 {
     // half step velocity
     v += f * (timestep / 2);
@@ -85,7 +85,7 @@ __device__ void leapfrog_half_step(T& r, T& v, T f)
  * second leapfrog step of integration of equations of motion
  */
 template <typename T>
-__device__ void leapfrog_full_step(T& v, T f)
+__device__ void leapfrog_full_step(T& v, T const& f)
 {
     // full step velocity
     v += f * (timestep / 2);
@@ -96,14 +96,14 @@ __device__ void leapfrog_full_step(T& v, T f)
  * calculate particle force using Lennard-Jones potential
  */
 template <typename T>
-__device__ void compute_force(T r1, T r2, T& f, float& en, float& virial)
+__device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& virial)
 {
     // particle distance vector
-    T d = r1 - r2;
+    T r = r1 - r2;
     // enforce periodic boundary conditions
-    d -= roundf(d / box) * box;
+    r -= roundf(r / box) * box;
     // squared particle distance
-    float rr = d * d;
+    float rr = r * r;
 
     // enforce cutoff length
     if (rr >= rr_cut) return;
@@ -114,40 +114,56 @@ __device__ void compute_force(T r1, T r2, T& f, float& en, float& virial)
     float fval = 48 * rri * ri6 * (ri6 - 0.5);
 
     // add contribution to this particle's force only
-    f += fval * d;
+    f += fval * r;
 
     // potential energy contribution from this particle
     en += 2 * ri6 * (ri6 - 1) - en_cut;
 
     // virial equation sum
-    virial += fval * rr;
+    virial += 0.5 * fval * rr;
 }
+
+
+#ifdef USE_LEAPFROG
+
+/**
+ * integrate equations of motion
+ */
+template <typename T>
+__global__ void inteq(T* r, T* v, T* f)
+{
+    // first leapfrog step as part of integration of equations of motion
+    leapfrog_half_step(r[GTID], v[GTID], f[GTID]);
+}
+
+#else
+
+/**
+ * integrate equations of motion
+ */
+template <typename T>
+__global__ void inteq(T* r, T* rm, T* v, T* f)
+{
+    // Verlet integration of equations of motion
+    verlet_step(r[GTID], rm[GTID], v[GTID], f[GTID]);
+}
+
+#endif
 
 
 /**
  * n-dimensional MD simulation step
  */
 template <typename T>
-__global__ void mdstep(mdstep_param<T> state)
+__global__ void mdstep(T* r_, T* v_, T* f_, float* en_, float* virial_)
 {
     // particles within domain
     extern __shared__ T block[];
 
     // load particle associated with this thread
-    T r = state.r[GTID];
-#ifndef USE_LEAPFROG
-    T rm = state.rm[GTID];
-#endif
-    T v = state.v[GTID];
-    T f = state.f[GTID];
-
-#ifdef USE_LEAPFROG
-    // first leapfrog step as part of integration of equations of motion
-    leapfrog_half_step(r, v, f);
-#else
-    // Verlet integration of equations of motion
-    verlet_step(r, rm, v, f);
-#endif
+    T r = r_[GTID];
+    T v = v_[GTID];
+    T f = f_[GTID];
 
     // potential energy contribution
     float en = 0.;
@@ -163,7 +179,7 @@ __global__ void mdstep(mdstep_param<T> state)
 
     for (int k = 0; k < gridDim.x; k++) {
 	// load all interacting particles coordinates within domain
-	block[TID] = state.r[k * blockDim.x + TID];
+	block[TID] = r_[k * blockDim.x + TID];
 
 	__syncthreads();
 
@@ -183,14 +199,11 @@ __global__ void mdstep(mdstep_param<T> state)
 #endif
 
     // store particle associated with this thread
-    state.r[GTID] = r;
-#ifndef USE_LEAPFROG
-    state.rm[GTID] = rm;
-#endif
-    state.v[GTID] = v;
-    state.f[GTID] = f;
-    state.en[GTID] = en;
-    state.virial[GTID] = virial;
+    r_[GTID] = r;
+    v_[GTID] = v;
+    f_[GTID] = f;
+    en_[GTID] = en;
+    virial_[GTID] = virial;
 }
 
 
@@ -216,26 +229,30 @@ __global__ void init_lattice(T* part, T cell, unsigned int n)
  * generate random n-dimensional Maxwell-Boltzmann distributed velocities
  */
 template <typename T>
-__global__ void init_vel(mdstep_param<T> state, float temp, ushort3* rng)
+#ifdef USE_LEAPFROG
+__global__ void init_vel(T* v_, float temp, ushort3* rng_)
+#else
+__global__ void init_vel(T* v_, T* r_, T* rm_, float temp, ushort3* rng_)
+#endif
 {
 #ifndef USE_LEAPFROG
-    T r = state.r[GTID];
+    T r = r_[GTID];
 #endif
     T v;
-    ushort3 rng_state = rng[GTID];
+    ushort3 rng = rng_[GTID];
 
-    rand48::gaussian(v.x, v.y, temp, rng_state);
+    rand48::gaussian(v.x, v.y, temp, rng);
 #ifdef DIM_3D
     // Box-Muller transformation strictly generates 2 variates at once
-    rand48::gaussian(v.y, v.z, temp, rng_state);
+    rand48::gaussian(v.y, v.z, temp, rng);
 #endif
 
-    rng[GTID] = rng_state;
-    state.v[GTID] = v;
+    rng_[GTID] = rng;
+    v_[GTID] = v;
 
 #ifndef USE_LEAPFROG
     // position previous time step for Verlet algorithm
-    state.rm[GTID] = r - v * timestep;
+    rm_[GTID] = r - v * timestep;
 #endif
 }
 
@@ -260,15 +277,31 @@ namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-function<void (mdstep_param<float3>)> mdstep(mdsim::mdstep);
-function<void (float3*, float3, unsigned int)> init_lattice(mdsim::init_lattice);
-function<void (mdstep_param<float3>, float, ushort3*)> init_vel(mdsim::init_vel);
-function<void (float3*)> init_forces(mdsim::init_forces);
+
+#ifdef USE_LEAPFROG
+function<void (float3*, float3*, float3*)> inteq(mdsim::inteq);
+function<void (float3*, float, ushort3*)> init_vel(mdsim::init_vel);
 #else
-function<void (mdstep_param<float2>)> mdstep(mdsim::mdstep);
+function<void (float3*, float3*, float3*, float3*)> inteq(mdsim::inteq);
+function<void (float3*, float3*, float3*, float, ushort3*)> init_vel(mdsim::init_vel);
+#endif
+function<void (float3*, float3*, float3*, float*, float*)> mdstep(mdsim::mdstep);
+function<void (float3*, float3, unsigned int)> init_lattice(mdsim::init_lattice);
+function<void (float3*)> init_forces(mdsim::init_forces);
+
+#else
+
+#ifdef USE_LEAPFROG
+function<void (float2*, float2*, float2*)> inteq(mdsim::inteq);
+function<void (float2*, float, ushort3*)> init_vel(mdsim::init_vel);
+#else
+function<void (float2*, float2*, float2*, float2*)> inteq(mdsim::inteq);
+function<void (float2*, float2*, float2*, float, ushort3*)> init_vel(mdsim::init_vel);
+#endif
+function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float2*, float2, unsigned int)> init_lattice(mdsim::init_lattice);
-function<void (mdstep_param<float2>, float, ushort3*)> init_vel(mdsim::init_vel);
 function<void (float2*)> init_forces(mdsim::init_forces);
+
 #endif
 
 symbol<float> box(mdsim::box);

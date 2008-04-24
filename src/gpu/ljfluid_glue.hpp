@@ -21,47 +21,36 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace mdsim
-{
-
-/**
- * MD simulation state in global device memory
- */
-template <typename T>
-struct mdstep_param
-{
-    // particle coordinates
-    T* r;
-#ifndef USE_LEAPFROG
-    // previous particle coordinates for Verlet algorithm
-    T* rm;
-#endif
-    // particle velocities
-    T* v;
-    // particle forces
-    T* f;
-    // potential energies for each particle
-    float* en;
-    // virial equation sums for each particle
-    float* virial;
-};
-
-} //namespace mdsim
-
 
 namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-extern cuda::function<void (mdstep_param<float3>)> mdstep;
-extern cuda::function<void (float3*, float3, unsigned int)> init_lattice;
-extern cuda::function<void (mdstep_param<float3>, float, ushort3*)> init_vel;
-extern cuda::function<void (float3*)> init_forces;
+
+#ifdef USE_LEAPFROG
+extern cuda::function<void (float3*, float3*, float3*)> inteq;
+extern cuda::function<void (float3*, float, ushort3*)> init_vel;
 #else
-extern cuda::function<void (mdstep_param<float2>)> mdstep;
+extern cuda::function<void (float3*, float3*, float3*, float3*)> inteq;
+extern cuda::function<void (float3*, float3*, float3*, float, ushort3*)> init_vel;
+#endif
+extern cuda::function<void (float3*, float3*, float3*, float*, float*)> mdstep;
+extern cuda::function<void (float3*, float3, unsigned int)> init_lattice;
+extern cuda::function<void (float3*)> init_forces;
+
+#else
+
+#ifdef USE_LEAPFROG
+extern cuda::function<void (float2*, float2*, float2*)> inteq;
+extern cuda::function<void (float2*, float, ushort3*)> init_vel;
+#else
+extern cuda::function<void (float2*, float2*, float2*, float2*)> inteq;
+extern cuda::function<void (float2*, float2*, float2*, float, ushort3*)> init_vel;
+#endif
+extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
 extern cuda::function<void (float2*, float2, unsigned int)> init_lattice;
-extern cuda::function<void (mdstep_param<float2>, float, ushort3*)> init_vel;
 extern cuda::function<void (float2*)> init_forces;
+
 #endif
 
 extern cuda::symbol<float> box;
