@@ -268,21 +268,11 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
     vel2_sum = 0.;
 
     for (size_t i = 0; i < npart; ++i) {
-	en_pot += part.en[i];
-	virial += part.virial[i];
-#ifdef DIM_3D
-	T vel(part.vel[i].x, part.vel[i].y, part.vel[i].z);
-#else
-	T vel(part.vel[i].x, part.vel[i].y);
-#endif
-	vel_cm += vel;
-	vel2_sum += vel * vel;
+	en_pot += (part.en[i] - en_pot) / (i + 1);
+	virial += (part.virial[i] - virial) / (i + 1);
+	vel_cm += (T(part.vel[i]) - vel_cm) / (i + 1);
+	vel2_sum += (T(part.vel[i]) * T(part.vel[i]) - vel2_sum) / (i + 1);
     }
-
-    en_pot /= npart;
-    virial /= npart;
-    vel_cm /= npart;
-    vel2_sum /= npart;
 }
 
 /**
