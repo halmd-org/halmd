@@ -20,6 +20,7 @@
 #define MDSIM_VECTOR3D_HPP
 
 #include <math.h>
+#include <cuda/cuda_runtime.h>
 #include <iostream>
 
 
@@ -41,6 +42,13 @@ public:
      * initialization by vector
      */
     vector3d(vector3d<T> const& v) : x(v.x), y(v.y), z(v.z)
+    {
+    }
+
+    /**
+     * initialization by vector
+     */
+    vector3d(float3 const& v) : x(v.x), y(v.y), z(v.z)
     {
     }
 
