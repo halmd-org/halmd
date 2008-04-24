@@ -162,8 +162,9 @@ __global__ void mdstep(T* r_, T* v_, T* f_, float* en_, float* virial_)
 
     // load particle associated with this thread
     T r = r_[GTID];
+#ifdef USE_LEAPFROG
     T v = v_[GTID];
-    T f = f_[GTID];
+#endif
 
     // potential energy contribution
     float en = 0.;
@@ -172,9 +173,9 @@ __global__ void mdstep(T* r_, T* v_, T* f_, float* en_, float* virial_)
 
     // Lennard-Jones force calculation
 #ifdef DIM_3D
-    f = make_float3(0., 0., 0.);
+    T f = make_float3(0., 0., 0.);
 #else
-    f = make_float2(0., 0.);
+    T f = make_float2(0., 0.);
 #endif
 
     for (int k = 0; k < gridDim.x; k++) {
@@ -199,8 +200,9 @@ __global__ void mdstep(T* r_, T* v_, T* f_, float* en_, float* virial_)
 #endif
 
     // store particle associated with this thread
-    r_[GTID] = r;
+#ifdef USE_LEAPFROG
     v_[GTID] = v;
+#endif
     f_[GTID] = f;
     en_[GTID] = en;
     virial_[GTID] = virial;
