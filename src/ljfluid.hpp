@@ -292,10 +292,10 @@ void ljfluid<T>::trajectories(std::ostream& os) const
     for (size_t i = 0; i < npart; ++i) {
 #ifdef DIM_3D
 	os << part.pos[i].x << "\t" << part.pos[i].y << "\t" << part.pos[i].z << "\t";
-	os << part.vel[i].x << "\t" << part.vel[i].y << "\t" << part.vel[i].z << std::endl;
+	os << part.vel[i].x << "\t" << part.vel[i].y << "\t" << part.vel[i].z << "\n";
 #else
 	os << part.pos[i].x << "\t" << part.pos[i].y << "\t";
-	os << part.vel[i].x << "\t" << part.vel[i].y << std::endl;
+	os << part.vel[i].x << "\t" << part.vel[i].y << "\n";
 #endif
     }
     os << std::endl << std::endl;
