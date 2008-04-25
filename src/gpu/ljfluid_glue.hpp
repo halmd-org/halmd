@@ -35,7 +35,7 @@ extern cuda::function<void (float3*, float3*, float3*, float3*)> inteq;
 extern cuda::function<void (float3*, float3*, float3*, float, ushort3*)> init_vel;
 #endif
 extern cuda::function<void (float3*, float3*, float3*, float*, float*)> mdstep;
-extern cuda::function<void (float3*, float3, unsigned int)> init_lattice;
+extern cuda::function<void (float3*)> lattice;
 extern cuda::function<void (float3*)> init_forces;
 
 #else
@@ -48,11 +48,12 @@ extern cuda::function<void (float2*, float2*, float2*, float2*)> inteq;
 extern cuda::function<void (float2*, float2*, float2*, float, ushort3*)> init_vel;
 #endif
 extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
-extern cuda::function<void (float2*, float2, unsigned int)> init_lattice;
+extern cuda::function<void (float2*)> lattice;
 extern cuda::function<void (float2*)> init_forces;
 
 #endif
 
+extern cuda::symbol<unsigned int> npart;
 extern cuda::symbol<float> box;
 extern cuda::symbol<float> timestep;
 extern cuda::symbol<float> rr_cut;

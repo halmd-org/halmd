@@ -138,6 +138,7 @@ ljfluid<T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(
     float r6i_cut = rri_cut * rri_cut * rri_cut;
     float en_cut = 4. * r6i_cut * (r6i_cut - 1.);
 
+    gpu::ljfluid::npart = npart;
     gpu::ljfluid::rr_cut = rr_cut;
     gpu::ljfluid::en_cut = en_cut;
 }
@@ -191,21 +192,14 @@ void ljfluid<T>::density(float density_)
     box_ = pow(npart / density_, 1.0 / T::dim());
     gpu::ljfluid::box = box_;
 
-    // number of particles along one lattice dimension
-    unsigned int n = size_t(ceil(pow(npart, 1.0 / T::dim())));
-    // lattice distance
-    float a = box_ / n;
-
     // initialize coordinates
-    gpu::ljfluid::init_lattice.configure(dim_);
-#ifdef DIM_3D
-    gpu::ljfluid::init_lattice(part.pos_gpu.data(), make_float3(a, a, a), n);
-#else
-    gpu::ljfluid::init_lattice(part.pos_gpu.data(), make_float2(a, a), n);
-#endif
-    cuda::thread::synchronize();
+    cuda::stream stream;
 
-    part.pos.memcpy(part.pos_gpu);
+    gpu::ljfluid::lattice.configure(dim_, stream);
+    gpu::ljfluid::lattice(part.pos_gpu.data());
+
+    part.pos.memcpy(part.pos_gpu, stream);
+    stream.synchronize();
 }
 
 /**

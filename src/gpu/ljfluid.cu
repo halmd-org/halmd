@@ -39,6 +39,9 @@ static __constant__ uint3 c;
 namespace mdsim
 {
 
+/** number of particles */
+static __constant__ unsigned int npart;
+
 /** simulation timestemp */
 static __constant__ float timestep;
 /** periodic box length */
@@ -210,20 +213,29 @@ __global__ void mdstep(T* r_, T* v_, T* f_, float* en_, float* virial_)
 
 
 /**
- * place particles on an n-dimensional hypercubic lattice
+ * place particles on a face centered cubic (FCC) lattice
  */
 template <typename T>
-__global__ void init_lattice(T* part, T cell, unsigned int n)
+__global__ void lattice(T* part)
 {
     T r;
-    r.x = cell.x / 2 + cell.x * (GTID % n);
 #ifdef DIM_3D
-    r.y = cell.y / 2 + cell.y * (GTID / n % n);
-    r.z = cell.z / 2 + cell.z * (GTID / n / n);
+    // number of particles along 1 lattice dimension
+    const unsigned int n = ceilf(cbrtf(npart / 4.));
+
+    // compose primitive vectors from 1-dimensional index
+    r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.;
+    r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.;
+    r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.;
 #else
-    r.y = cell.y / 2 + cell.y * (GTID / n);
+    // number of particles along 1 lattice dimension
+    const unsigned int n = ceilf(sqrtf(npart / 2.));
+
+    // compose primitive vectors from 1-dimensional index
+    r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.;
+    r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.;
 #endif
-    part[GTID] = r;
+    part[GTID] = r * (box / n);
 }
 
 
@@ -288,7 +300,7 @@ function<void (float3*, float3*, float3*, float3*)> inteq(mdsim::inteq);
 function<void (float3*, float3*, float3*, float, ushort3*)> init_vel(mdsim::init_vel);
 #endif
 function<void (float3*, float3*, float3*, float*, float*)> mdstep(mdsim::mdstep);
-function<void (float3*, float3, unsigned int)> init_lattice(mdsim::init_lattice);
+function<void (float3*)> lattice(mdsim::lattice);
 function<void (float3*)> init_forces(mdsim::init_forces);
 
 #else
@@ -301,11 +313,12 @@ function<void (float2*, float2*, float2*, float2*)> inteq(mdsim::inteq);
 function<void (float2*, float2*, float2*, float, ushort3*)> init_vel(mdsim::init_vel);
 #endif
 function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep);
-function<void (float2*, float2, unsigned int)> init_lattice(mdsim::init_lattice);
+function<void (float2*)> lattice(mdsim::lattice);
 function<void (float2*)> init_forces(mdsim::init_forces);
 
 #endif
 
+symbol<unsigned int> npart(mdsim::npart);
 symbol<float> box(mdsim::box);
 symbol<float> timestep(mdsim::timestep);
 symbol<float> rr_cut(mdsim::rr_cut);
