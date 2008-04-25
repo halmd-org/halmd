@@ -92,7 +92,7 @@ private:
     void compute_force(particle<T>& p1, particle<T>& p2, double& en_pot, double& virial);
 
     void init_cells();
-    void init_lattice();
+    void lattice();
     template <typename rng_type>
     void init_velocities(double temp, rng_type& rng);
     void init_forces();
@@ -202,7 +202,7 @@ void ljfluid<T>::density(double density_)
     this->box_ = pow(npart / density_, 1.0 / T::dim());
 
     init_cells();
-    init_lattice();
+    lattice();
 }
 
 /**
@@ -498,23 +498,34 @@ void ljfluid<T>::init_cells()
 }
 
 /**
- * place particles on a 3-dimensional simple cubic lattice
+ * place particles on a face centered cubic (FCC) lattice
  */
 template <typename T>
-void ljfluid<T>::init_lattice()
+void ljfluid<T>::lattice()
 {
-    // number of particles along one lattice dimension
-    size_t n = size_t(ceil(pow(npart, 1.0 / T::dim())));
+#ifdef DIM_3D
+    // number of particles along 1 lattice dimension
+    const unsigned int n = ceil(cbrt(npart / 4.));
+#else
+    // number of particles along 1 lattice dimension
+    const unsigned int n = ceil(sqrt(npart / 2.));
+#endif
     // lattice distance
     double a = box_ / n;
 
-    for (size_t i = 0; i < npart; ++i) {
+    for (unsigned int i = 0; i < npart; ++i) {
+	T r(a);
 #ifdef DIM_3D
-	particle<T> p(T(i % n + 0.5, i / n % n + 0.5, i / n / n + 0.5) * a);
+	// compose primitive vectors from 1-dimensional index
+	r.x *= ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
+	r.y *= ((i >> 2) / n % n) + (i & 1) / 2.;
+	r.z *= ((i >> 2) / n / n) + (i & 2) / 4.;
 #else
-	particle<T> p(T(i % n + 0.5, i / n + 0.5) * a);
+	// compose primitive vectors from 1-dimensional index
+	r.x *= ((i >> 1) % n) + (i & 1) / 2.;
+	r.y *= ((i >> 1) / n) + (i & 1) / 2.;
 #endif
-	cells(p.pos / cell_len).push_back(p);
+	cells(r / cell_len).push_back(particle<T>(r));
     }
 }
 
