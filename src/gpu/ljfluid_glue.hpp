@@ -29,27 +29,25 @@ namespace mdsim { namespace gpu { namespace ljfluid
 
 #ifdef USE_LEAPFROG
 extern cuda::function<void (float3*, float3*, float3*)> inteq;
-extern cuda::function<void (float3*, float, ushort3*)> init_vel;
+extern cuda::function<void (float3*, float, ushort3*)> boltzmann;
 #else
 extern cuda::function<void (float3*, float3*, float3*, float3*)> inteq;
-extern cuda::function<void (float3*, float3*, float3*, float, ushort3*)> init_vel;
+extern cuda::function<void (float3*, float3*, float3*, float, ushort3*)> boltzmann;
 #endif
 extern cuda::function<void (float3*, float3*, float3*, float*, float*)> mdstep;
 extern cuda::function<void (float3*)> lattice;
-extern cuda::function<void (float3*)> init_forces;
 
 #else
 
 #ifdef USE_LEAPFROG
 extern cuda::function<void (float2*, float2*, float2*)> inteq;
-extern cuda::function<void (float2*, float, ushort3*)> init_vel;
+extern cuda::function<void (float2*, float, ushort3*)> boltzmann;
 #else
 extern cuda::function<void (float2*, float2*, float2*, float2*)> inteq;
-extern cuda::function<void (float2*, float2*, float2*, float, ushort3*)> init_vel;
+extern cuda::function<void (float2*, float2*, float2*, float, ushort3*)> boltzmann;
 #endif
 extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
 extern cuda::function<void (float2*)> lattice;
-extern cuda::function<void (float2*)> init_forces;
 
 #endif
 

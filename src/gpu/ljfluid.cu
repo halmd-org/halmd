@@ -244,9 +244,9 @@ __global__ void lattice(T* part)
  */
 template <typename T>
 #ifdef USE_LEAPFROG
-__global__ void init_vel(T* v_, float temp, ushort3* rng_)
+__global__ void boltzmann(T* v_, float temp, ushort3* rng_)
 #else
-__global__ void init_vel(T* v_, T* r_, T* rm_, float temp, ushort3* rng_)
+__global__ void boltzmann(T* v_, T* r_, T* rm_, float temp, ushort3* rng_)
 #endif
 {
 #ifndef USE_LEAPFROG
@@ -270,20 +270,6 @@ __global__ void init_vel(T* v_, T* r_, T* rm_, float temp, ushort3* rng_)
 #endif
 }
 
-
-/**
- * set n-dimensional force vectors to zero
- */
-template <typename T>
-__global__ void init_forces(T* forces)
-{
-#ifdef DIM_3D
-    forces[GTID] = make_float3(0., 0., 0.);
-#else
-    forces[GTID] = make_float2(0., 0.);
-#endif
-}
-
 } // namespace mdsim
 
 
@@ -294,27 +280,25 @@ namespace mdsim { namespace gpu { namespace ljfluid
 
 #ifdef USE_LEAPFROG
 function<void (float3*, float3*, float3*)> inteq(mdsim::inteq);
-function<void (float3*, float, ushort3*)> init_vel(mdsim::init_vel);
+function<void (float3*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else
 function<void (float3*, float3*, float3*, float3*)> inteq(mdsim::inteq);
-function<void (float3*, float3*, float3*, float, ushort3*)> init_vel(mdsim::init_vel);
+function<void (float3*, float3*, float3*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif
 function<void (float3*, float3*, float3*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float3*)> lattice(mdsim::lattice);
-function<void (float3*)> init_forces(mdsim::init_forces);
 
 #else
 
 #ifdef USE_LEAPFROG
 function<void (float2*, float2*, float2*)> inteq(mdsim::inteq);
-function<void (float2*, float, ushort3*)> init_vel(mdsim::init_vel);
+function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else
 function<void (float2*, float2*, float2*, float2*)> inteq(mdsim::inteq);
-function<void (float2*, float2*, float2*, float, ushort3*)> init_vel(mdsim::init_vel);
+function<void (float2*, float2*, float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif
 function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float2*)> lattice(mdsim::lattice);
-function<void (float2*)> init_forces(mdsim::init_forces);
 
 #endif
 

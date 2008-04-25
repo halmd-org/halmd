@@ -21,6 +21,7 @@
 
 #include <math.h>
 #include <stdint.h>
+#include <algorithm>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include "gpu/ljfluid_glue.hpp"
 #include "rand48.hpp"
@@ -217,20 +218,28 @@ float ljfluid<T>::box() const
 template <typename T>
 void ljfluid<T>::temperature(float temp, rand48& rng)
 {
+    cuda::stream stream;
+
     // initialize velocities
-    gpu::ljfluid::init_vel.configure(dim_);
+    gpu::ljfluid::boltzmann.configure(dim_, stream);
 #ifdef USE_LEAPFROG
-    gpu::ljfluid::init_vel(part.vel_gpu.data(), temp, rng.data());
+    gpu::ljfluid::boltzmann(part.vel_gpu.data(), temp, rng.data());
 #else
-    gpu::ljfluid::init_vel(part.vel_gpu.data(), part.pos_gpu.data(), part.pos_old_gpu.data(), temp, rng.data());
+    gpu::ljfluid::boltzmann(part.vel_gpu.data(), part.pos_gpu.data(), part.pos_old_gpu.data(), temp, rng.data());
 #endif
+    part.vel.memcpy(part.vel_gpu, stream);
 
     // initialize forces
-    gpu::ljfluid::init_forces.configure(dim_);
-    gpu::ljfluid::init_forces(part.force_gpu.data());
-    cuda::thread::synchronize();
+#ifdef DIM_3D
+    cuda::host::vector<float3> force(npart);
+    fill(force.begin(), force.end(), make_float3(0., 0., 0.));
+#else
+    cuda::host::vector<float2> force(npart);
+    fill(force.begin(), force.end(), make_float2(0., 0.));
+#endif
+    part.force_gpu.memcpy(force, stream);
 
-    part.vel.memcpy(part.vel_gpu);
+    stream.synchronize();
 }
 
 /**
