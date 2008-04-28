@@ -1,4 +1,4 @@
-/* cuda_wrapper/cuda_wrapper.hpp
+/* cuda_wrapper.hpp
  *
  * Copyright (C) 2007  Peter Colberg
  *
