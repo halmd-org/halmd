@@ -20,8 +20,9 @@
 #define MDSIM_VECTOR2D_HPP
 
 #include <math.h>
-#include <cuda/cuda_runtime.h>
 #include <iostream>
+#include <cuda/cuda_runtime.h>
+#include <xdr/iostream.hpp>
 
 
 /**
@@ -256,6 +257,24 @@ public:
     {
 	is >> v.x >> v.y;
 	return is;
+    }
+
+    /**
+     * translate from vector to XDR vector
+     */
+    friend xdr::ostream& operator<<(xdr::ostream& xdrs, vector2d<T> const& v)
+    {
+	xdrs << v.x << v.y;
+	return xdrs;
+    }
+
+    /**
+     * translate to vector from XDR vector
+     */
+    friend xdr::istream& operator>>(xdr::istream& xdrs, vector2d<T>& v)
+    {
+	xdrs >> v.x >> v.y;
+	return xdrs;
     }
 };
 
