@@ -19,7 +19,7 @@
 #ifndef CUDA_EVENT_HPP
 #define CUDA_EVENT_HPP
 
-#include <cuda_runtime.h>
+#include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/error.hpp>
 #include <cuda_wrapper/stream.hpp>
 

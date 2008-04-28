@@ -19,7 +19,7 @@
 #ifndef CUDA_HOST_VECTOR_HPP
 #define CUDA_HOST_VECTOR_HPP
 
-#include <cuda_runtime.h>
+#include <cuda/cuda_runtime.h>
 #include <algorithm>
 #include <vector>
 #include <assert.h>
