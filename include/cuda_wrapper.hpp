@@ -23,7 +23,7 @@
 #ifndef CUDA_WRAPPER_HPP
 #define CUDA_WRAPPER_HPP
 
-#include <cuda_runtime.h>
+#include <cuda/cuda_runtime.h>
 
 /* asynchronous API requires CUDA runtime version >= 1.1 */
 #if (CUDART_VERSION >= 1010)

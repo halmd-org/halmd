@@ -19,7 +19,7 @@
 #ifndef CUDA_FUNCTION_HPP
 #define CUDA_FUNCTION_HPP
 
-#include <cuda_runtime.h>
+#include <cuda/cuda_runtime.h>
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
 #include <cuda_wrapper/stream.hpp>

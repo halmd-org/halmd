@@ -19,7 +19,7 @@
 #ifndef CUDA_STREAM_HPP
 #define CUDA_STREAM_HPP
 
-#include <cuda_runtime.h>
+#include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/error.hpp>
 
 

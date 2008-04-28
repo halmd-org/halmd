@@ -19,7 +19,7 @@
 #ifndef CUDA_VECTOR_HPP
 #define CUDA_VECTOR_HPP
 
-#include <cuda_runtime.h>
+#include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/allocator.hpp>
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/host/vector.hpp>
