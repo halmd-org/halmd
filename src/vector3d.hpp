@@ -20,8 +20,9 @@
 #define MDSIM_VECTOR3D_HPP
 
 #include <math.h>
-#include <cuda/cuda_runtime.h>
 #include <iostream>
+#include <cuda/cuda_runtime.h>
+#include <xdr/iostream.hpp>
 
 
 /**
@@ -267,6 +268,24 @@ public:
     {
 	is >> v.x >> v.y >> v.z;
 	return is;
+    }
+
+    /**
+     * translate from vector to XDR vector
+     */
+    friend xdr::ostream& operator<<(xdr::ostream& xdrs, vector3d<T> const& v)
+    {
+	xdrs << v.x << v.y << v.z;
+	return xdrs;
+    }
+
+    /**
+     * translate to vector from XDR vector
+     */
+    friend xdr::istream& operator>>(xdr::istream& xdrs, vector3d<T>& v)
+    {
+	xdrs >> v.x >> v.y >> v.z;
+	return xdrs;
     }
 };
 
