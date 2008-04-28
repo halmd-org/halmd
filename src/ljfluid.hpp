@@ -22,7 +22,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <algorithm>
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <cuda_wrapper.hpp>
 #include "gpu/ljfluid_glue.hpp"
 #include "rand48.hpp"
 

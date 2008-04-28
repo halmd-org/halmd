@@ -17,7 +17,7 @@
  */
 
 #include <iostream>
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <cuda_wrapper.hpp>
 #include "rand48.hpp"
 #include "ljfluid.hpp"
 #include "mdsim.hpp"

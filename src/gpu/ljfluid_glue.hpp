@@ -19,7 +19,7 @@
 #ifndef MDSIM_GPU_LJFLUID_GLUE_HPP
 #define MDSIM_GPU_LJFLUID_GLUE_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <cuda_wrapper.hpp>
 
 
 namespace mdsim { namespace gpu { namespace ljfluid
