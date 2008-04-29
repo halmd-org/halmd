@@ -2,9 +2,8 @@
 # Trajectories for Molecular Dynamics Simulation of a Lennard-Jones fluid
 #
 
-set terminal png
+set terminal png size 960,720
 set output '@CMAKE_CURRENT_BINARY_DIR@/trajectories2d.png'
-set size 1.5, 1.5
 
 unset key
 unset title
