@@ -25,6 +25,7 @@
 #include <iostream>
 #include <math.h>
 #include "cell_array.hpp"
+#include "trajectory.hpp"
 
 
 namespace mdsim
@@ -42,11 +43,13 @@ struct particle
     T vel;
     /** n-dimensional force acting upon particle */
     T force;
+    /** particle number */
+    unsigned int tag;
 
     std::vector<particle<T>*> neighbour;
 
     particle() {}
-    particle(T const& pos) : pos(pos) {}
+    particle(T const& pos, unsigned int const& tag) : pos(pos), tag(tag) {}
 };
 
 
@@ -78,6 +81,8 @@ public:
 
     void step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum);
     void trajectories(std::ostream& os) const;
+    template <unsigned int X, typename Y>
+    void trajectories(trajectory<X, Y>& traj) const;
 
 private:
     void leapfrog_half();
@@ -107,6 +112,11 @@ private:
     /** cell edge length */
     double cell_len;
 
+    /** particles sorted by particle number */
+    std::vector<T> part_;
+    std::vector<T> vel_;
+    std::vector<T> force_;
+
     /** particle density */
     double density_;
     /** periodic box length */
@@ -133,7 +143,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <typename T>
-ljfluid<T>::ljfluid(size_t npart) : npart(npart)
+ljfluid<T>::ljfluid(size_t npart) : npart(npart), part_(npart), vel_(npart), force_(npart)
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     // Frenkel
@@ -246,6 +256,15 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
     compute_forces(en_pot, virial);
     // calculate velocities
     leapfrog_full(vel_cm, vel2_sum);
+
+    // sort particles by particle number for trajectory sampling
+    for (cell_const_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
+	for (list_const_iterator it = cell->begin(); it != cell->end(); ++it) {
+	    part_[it->tag] = it->pos;
+	    vel_[it->tag] = it->vel;
+	    force_[it->tag] = it->force;
+	}
+    }
 }
 
 /**
@@ -254,12 +273,20 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
 template <typename T>
 void ljfluid<T>::trajectories(std::ostream& os) const
 {
-    for (cell_const_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_const_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    os << it->pos << "\t" << it->vel << "\n";
-	}
+    for (unsigned int i = 0; i < npart; ++i) {
+	os << part_[i] << "\t" << vel_[i] << "\n";
     }
     os << std::endl << std::endl;
+}
+
+/**
+ * write particle coordinates and velocities to binary HDF5 file
+ */
+template <typename T>
+template <unsigned int X, typename Y>
+void ljfluid<T>::trajectories(trajectory<X, Y>& traj) const
+{
+    traj.write(part_, vel_, force_);
 }
 
 /**
@@ -525,7 +552,7 @@ void ljfluid<T>::lattice()
 	r.x *= ((i >> 1) % n) + (i & 1) / 2.;
 	r.y *= ((i >> 1) / n) + (i & 1) / 2.;
 #endif
-	cells(r / cell_len).push_back(particle<T>(r));
+	cells(r / cell_len).push_back(particle<T>(r, i));
     }
 }
 

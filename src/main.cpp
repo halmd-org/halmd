@@ -18,12 +18,14 @@
 
 #include <iostream>
 #include <stdint.h>
+#include <vector>
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 #include "gsl_rng.hpp"
 #include "ljfluid.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
+#include "trajectory.hpp"
 #include "version.h"
 #include "time.hpp"
 using namespace std;
@@ -44,9 +46,11 @@ int main(int argc, char **argv)
 #ifdef DIM_3D
     mdsim::ljfluid<vector3d<double> > fluid(opts.npart());
     mdsim::mdsim<vector3d<double> > sim;
+    mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts.output(), opts.npart(), opts.steps());
 #else
     mdsim::ljfluid<vector2d<double> > fluid(opts.npart());
     mdsim::mdsim<vector2d<double> > sim;
+    mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts.output(), opts.npart(), opts.steps());
 #endif
 
     rng.set(opts.rngseed());
@@ -67,6 +71,8 @@ int main(int argc, char **argv)
     for (uint64_t i = 1; i <= opts.steps(); i++) {
 	sim.step(fluid);
 
+	fluid.trajectories(traj);
+
 	if (i % opts.avgsteps())
 	    continue;
 
@@ -84,8 +90,6 @@ int main(int argc, char **argv)
 	cout << "# sigma_pressure(" << sim.pressure().std() << ")" << endl;
 	cout << "# vel_cm(" << sim.vel_cm().mean() << ")" << endl;
 	cout << "# sigma_vel_cm(" << sim.vel_cm().std() << ")" << endl;
-
-	fluid.trajectories(cout);
 
 	sim.clear();
     }
