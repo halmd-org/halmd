@@ -25,6 +25,7 @@
 #include <cuda_wrapper.hpp>
 #include "gpu/ljfluid_glue.hpp"
 #include "rand48.hpp"
+#include "trajectory.hpp"
 
 
 namespace mdsim
@@ -47,6 +48,7 @@ struct particle
     cuda::host::vector<T> vel;
     /** n-dimensional force acting upon particle */
     cuda::vector<T> force_gpu;
+    cuda::host::vector<T> force;
     /** potential energy */
     cuda::vector<float> en_gpu;
     cuda::host::vector<float> en;
@@ -59,7 +61,7 @@ struct particle
 #ifndef USE_LEAPFROG
 	pos_old_gpu(n),
 #endif
-	pos(n), vel_gpu(n), vel(n), force_gpu(n),
+	pos(n), vel_gpu(n), vel(n), force_gpu(n), force(n),
 	en_gpu(n), en(n), virial_gpu(n), virial(n)
     {
     }
@@ -85,6 +87,8 @@ public:
 
     void step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum);
     void trajectories(std::ostream& os) const;
+    template <unsigned int X, typename Y>
+    void trajectories(trajectory<X, Y>& traj) const;
 
     float gputime() const;
     float memtime() const;
@@ -231,13 +235,11 @@ void ljfluid<T>::temperature(float temp, rand48& rng)
 
     // initialize forces
 #ifdef DIM_3D
-    cuda::host::vector<float3> force(npart);
-    fill(force.begin(), force.end(), make_float3(0., 0., 0.));
+    fill(part.force.begin(), part.force.end(), make_float3(0., 0., 0.));
 #else
-    cuda::host::vector<float2> force(npart);
-    fill(force.begin(), force.end(), make_float2(0., 0.));
+    fill(part.force.begin(), part.force.end(), make_float2(0., 0.));
 #endif
-    part.force_gpu.memcpy(force, stream);
+    part.force_gpu.memcpy(part.force, stream);
 
     stream.synchronize();
 }
@@ -282,6 +284,7 @@ void ljfluid<T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
 
     part.pos.memcpy(part.pos_gpu, stream);
     part.vel.memcpy(part.vel_gpu, stream);
+    part.force.memcpy(part.force_gpu, stream);
     part.en.memcpy(part.en_gpu, stream);
     part.virial.memcpy(part.virial_gpu, stream);
 
@@ -315,6 +318,16 @@ void ljfluid<T>::trajectories(std::ostream& os) const
 	os << T(part.pos[i]) << "\t" << T(part.vel[i]) << "\n";
     }
     os << "\n\n";
+}
+
+/**
+ * write particle coordinates and velocities to binary HDF5 file
+ */
+template <typename T>
+template <unsigned int X, typename Y>
+void ljfluid<T>::trajectories(trajectory<X, Y>& traj) const
+{
+    traj.write(part.pos, part.vel, part.force);
 }
 
 /**

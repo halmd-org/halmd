@@ -20,9 +20,9 @@
 #define MDSIM_VERSION_H
 
 #ifdef DIM_3D
-# define PROGRAM_NAME		"ljfluid_cuda3d"
+# define PROGRAM_NAME		"ljfluid3d"
 #else
-# define PROGRAM_NAME		"ljfluid_cuda2d"
+# define PROGRAM_NAME		"ljfluid2d"
 #endif
 
 #define PROGRAM_VERSION		"@PROGRAM_VERSION@"

@@ -20,6 +20,7 @@
 #define MDSIM_OPTIONS_HPP
 
 #include <stdint.h>
+#include <string>
 
 
 namespace mdsim
@@ -100,6 +101,11 @@ public:
 	return rngseed_;
     }
 
+    char const* output() const
+    {
+	return output_.c_str();
+    }
+
 private:
     /** number of particles */
     unsigned int npart_;
@@ -121,6 +127,8 @@ private:
     unsigned int threads_;
     /** random number generator seed */
     unsigned int rngseed_;
+    /** trajectory output file */
+    std::string output_;
 };
 
 } // namespace mdsim

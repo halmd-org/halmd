@@ -139,6 +139,7 @@ options::options()
     threads_ = 128;
 
     rngseed_ = 123;
+    output_ = PROGRAM_NAME ".trj";
 }
 
 /**
@@ -167,6 +168,7 @@ void options::parse(int argc, char** argv)
     misc_opts.add_options()
 	("seed,R", po::value(&rngseed_), "random number generator integer seed")
 	("input,i", po::value<vector<string> >(), "parameter input file")
+	("output,o", po::value(&output_), "trajectory output file")
 	("version,V", "output version and exit")
 	("help,h", "display this help and exit")
 	;
