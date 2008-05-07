@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <cuda_wrapper.hpp>
 #include <stdio.h>
 #include "sum_gpu.hpp"
 #include "timer.hpp"
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 	timer.start();
 
 	mdsim::test::gpu::blocksum.configure(dim, sizeof(float) * dim.threads_per_block(), stream);
-	mdsim::test::gpu::blocksum(&v, &v_sum);
+	mdsim::test::gpu::blocksum(v.data(), v_sum.data());
 	v_sum_host.memcpy(v_sum, stream);
 	stream.synchronize();
 
