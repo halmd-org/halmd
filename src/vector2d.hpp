@@ -21,7 +21,7 @@
 
 #include <math.h>
 #include <iostream>
-#include <cuda/cuda_runtime.h>
+#include <cuda_wrapper.hpp>
 #include <xdr/iostream.hpp>
 
 
@@ -31,9 +31,6 @@
 template <typename T>
 class vector2d
 {
-public:
-    T x, y;
-
 public:
     vector2d()
     {
@@ -276,7 +273,27 @@ public:
 	xdrs >> v.x >> v.y;
 	return xdrs;
     }
+
+public:
+    T x, y;
 };
+
+
+/**
+ * returns device pointer to allocated device memory
+ */
+float2* cuda_cast(cuda::vector<vector2d<float> >& v)
+{
+    return reinterpret_cast<float2*>(v.data());
+}
+
+/**
+ * returns device pointer to allocated device memory
+ */
+float2 const* cuda_cast(cuda::vector<vector2d<float> > const& v)
+{
+    return reinterpret_cast<float2 const*>(v.data());
+}
 
 
 /**
