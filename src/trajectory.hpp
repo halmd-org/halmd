@@ -40,9 +40,9 @@ private:
     const unsigned int npart_;
     const unsigned int steps_;
     H5::DataSpace ds_;
-    H5::DataSet dset_;
+    H5::DataSet dset_[3];
     H5::DataSpace ds_src_;
-    H5::DataSpace ds_dst_[3];
+    H5::DataSpace ds_dst_;
 };
 
 
@@ -71,16 +71,15 @@ trajectory<NDIM, T>::trajectory(char const* path, unsigned int npart, unsigned i
     root.createAttribute("particles", dt, ds).write(dt, &npart_);
     root.createAttribute("steps", dt, ds).write(dt, &steps_);
 
-    hsize_t dim1[4] = { steps_, npart_, 3, NDIM };
-    ds_ = H5::DataSpace(4, dim1);
-    dset_ = file_.createDataSet("trajectory", H5::PredType::NATIVE_DOUBLE, ds_);
+    hsize_t dim1[3] = { steps_, npart_, NDIM };
+    ds_ = H5::DataSpace(3, dim1);
+    dset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_DOUBLE, ds_);
+    dset_[1] = file_.createDataSet("velocity", H5::PredType::NATIVE_DOUBLE, ds_);
+    dset_[2] = file_.createDataSet("force", H5::PredType::NATIVE_DOUBLE, ds_);
 
     hsize_t dim2[2] = { npart_, NDIM };
     ds_src_ = H5::DataSpace(2, dim2);
-
-    ds_dst_[0] = ds_;
-    ds_dst_[1] = ds_;
-    ds_dst_[2] = ds_;
+    ds_dst_ = ds_;
 }
 
 template <unsigned int NDIM, typename T>
@@ -91,22 +90,19 @@ void trajectory<NDIM, T>::write(T const& coord, T const& vel, T const& force)
     assert(vel.size() == npart_);
     assert(force.size() == npart_);
 
-    // coordinates hyperslab
-    hsize_t count[4]  = { 1, npart_, 1, 1 };
-    hsize_t start[4]  = { sets_, 0, 0, 0 };
-    hsize_t stride[4] = { 1, 1, 3, 1 };
-    hsize_t block[4]  = { 1, 1, 1, NDIM };
+    hsize_t count[3]  = { 1, npart_, 1 };
+    hsize_t start[3]  = { sets_, 0, 0 };
+    hsize_t stride[3] = { 1, 1, 1 };
+    hsize_t block[3]  = { 1, 1, NDIM };
 
-    for (int i = 0; i <= 2; ++i, ++start[2]) {
-	ds_dst_[i].selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-    }
+    ds_dst_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     // coordinates
-    dset_.write(coord.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_[0]);
+    dset_[0].write(coord.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_);
     // velocities
-    dset_.write(vel.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_[1]);
+    dset_[1].write(vel.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_);
     // forces
-    dset_.write(force.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_[2]);
+    dset_[2].write(force.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_);
 
     sets_++;
 }
