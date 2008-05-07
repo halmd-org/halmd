@@ -49,7 +49,7 @@ public:
 	cuda::vector<uint3> a(1), c(1);
 
 	gpu::rand48::init.configure(dim_);
-	gpu::rand48::init(state_.data(), a.data(), c.data(), seed);
+	gpu::rand48::init(cuda_cast(state_), cuda_cast(a), cuda_cast(c), seed);
 	cuda::thread::synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
@@ -67,7 +67,7 @@ public:
     {
 	assert(r.size() == dim_.threads());
 	gpu::rand48::uniform.configure(dim_, stream);
-	gpu::rand48::uniform(state_.data(), r.data(), 1);
+	gpu::rand48::uniform(cuda_cast(state_), cuda_cast(r), 1);
     }
 
     /**
@@ -80,7 +80,7 @@ public:
 	cuda::host::vector<ushort3> buf(1);
 
 	gpu::rand48::save.configure(dim_, stream);
-	gpu::rand48::save(state_.data(), buf_gpu.data());
+	gpu::rand48::save(cuda_cast(state_), cuda_cast(buf_gpu));
 	buf.memcpy(buf_gpu, stream);
 	stream.synchronize();
 
@@ -96,7 +96,7 @@ public:
 	cuda::stream stream;
 
 	gpu::rand48::restore.configure(dim_, stream);
-	gpu::rand48::restore(state_.data(), a.data(), c.data(), mem);
+	gpu::rand48::restore(cuda_cast(state_), cuda_cast(a), cuda_cast(c), mem);
 	stream.synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
@@ -132,9 +132,9 @@ public:
     /**
      * get pointer to CUDA device memory
      */
-    ushort3* data()
+    friend ushort3* cuda_cast(rand48& rng)
     {
-	return state_.data();
+	return rng.state_.data();
     }
 
 private:

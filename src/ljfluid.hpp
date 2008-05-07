@@ -26,6 +26,8 @@
 #include "gpu/ljfluid_glue.hpp"
 #include "rand48.hpp"
 #include "trajectory.hpp"
+#include "vector2d.hpp"
+#include "vector3d.hpp"
 
 
 namespace mdsim
@@ -98,10 +100,10 @@ private:
     size_t npart;
 #ifdef DIM_3D
     /** particles */
-    particle<float3> part;
+    particle<vector3d<float> > part;
 #else
     /** particles */
-    particle<float2> part;
+    particle<vector2d<float> > part;
 #endif
     /** CUDA execution dimensions */
     cuda::config dim_;
@@ -194,14 +196,14 @@ void ljfluid<NDIM, T>::density(float density_)
     // particle density
     this->density_ = density_;
     // periodic box length
-    box_ = pow(npart / density_, 1.0 / T::dim());
+    box_ = pow(npart / density_, 1.0 / NDIM);
     gpu::ljfluid::box = box_;
 
     // initialize coordinates
     cuda::stream stream;
 
     gpu::ljfluid::lattice.configure(dim_, stream);
-    gpu::ljfluid::lattice(part.pos_gpu.data());
+    gpu::ljfluid::lattice(cuda_cast(part.pos_gpu));
 
     part.pos.memcpy(part.pos_gpu, stream);
     stream.synchronize();
@@ -227,18 +229,14 @@ void ljfluid<NDIM, T>::temperature(float temp, rand48& rng)
     // initialize velocities
     gpu::ljfluid::boltzmann.configure(dim_, stream);
 #ifdef USE_LEAPFROG
-    gpu::ljfluid::boltzmann(part.vel_gpu.data(), temp, rng.data());
+    gpu::ljfluid::boltzmann(cuda_cast(part.vel_gpu), temp, cuda_cast(rng));
 #else
-    gpu::ljfluid::boltzmann(part.vel_gpu.data(), part.pos_gpu.data(), part.pos_old_gpu.data(), temp, rng.data());
+    gpu::ljfluid::boltzmann(cuda_cast(part.vel_gpu), cuda_cast(part.pos_gpu), cuda_cast(part.pos_old_gpu), temp, cuda_cast(rng));
 #endif
     part.vel.memcpy(part.vel_gpu, stream);
 
     // initialize forces
-#ifdef DIM_3D
-    fill(part.force.begin(), part.force.end(), make_float3(0., 0., 0.));
-#else
-    fill(part.force.begin(), part.force.end(), make_float2(0., 0.));
-#endif
+    fill(part.force.begin(), part.force.end(), 0.);
     part.force_gpu.memcpy(part.force, stream);
 
     stream.synchronize();
@@ -258,7 +256,7 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
 
 #ifdef USE_LEAPFROG
     gpu::ljfluid::inteq.configure(dim_, stream);
-    gpu::ljfluid::inteq(part.pos_gpu.data(), part.vel_gpu.data(), part.force_gpu.data());
+    gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
 #endif
 
 #ifdef DIM_3D
@@ -267,11 +265,11 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
 #else
     gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(float2), stream);
 #endif
-    gpu::ljfluid::mdstep(part.pos_gpu.data(), part.vel_gpu.data(), part.force_gpu.data(), part.en_gpu.data(), part.virial_gpu.data());
+    gpu::ljfluid::mdstep(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
 
 #ifndef USE_LEAPFROG
     gpu::ljfluid::inteq.configure(dim_, stream);
-    gpu::ljfluid::inteq(part.pos_gpu.data(), part.pos_old_gpu.data(), part.vel_gpu.data(), part.force_gpu.data());
+    gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.pos_old_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
 #endif
 
     stop.record(stream);
@@ -303,8 +301,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     for (size_t i = 0; i < npart; ++i) {
 	en_pot += (part.en[i] - en_pot) / (i + 1);
 	virial += (part.virial[i] - virial) / (i + 1);
-	vel_cm += (T(part.vel[i]) - vel_cm) / (i + 1);
-	vel2_sum += (T(part.vel[i]) * T(part.vel[i]) - vel2_sum) / (i + 1);
+	vel_cm += (part.vel[i] - vel_cm) / (i + 1);
+	vel2_sum += (part.vel[i] * part.vel[i] - vel2_sum) / (i + 1);
     }
 }
 
@@ -315,7 +313,7 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (size_t i = 0; i < npart; ++i) {
-	os << T(part.pos[i]) << "\t" << T(part.vel[i]) << "\n";
+	os << part.pos[i] << "\t" << part.vel[i] << "\n";
     }
     os << "\n\n";
 }

@@ -48,11 +48,11 @@ int main(int argc, char **argv)
 #ifdef DIM_3D
     mdsim::ljfluid<3, vector3d<float> > fluid(opts.npart(), dim);
     mdsim::mdsim<3, vector3d<float> > sim;
-    mdsim::trajectory<3, cuda::host::vector<float3> > traj(opts.output(), opts.npart(), opts.steps());
+    mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts.output(), opts.npart(), opts.steps());
 #else
     mdsim::ljfluid<2, vector2d<float> > fluid(opts.npart(), dim);
     mdsim::mdsim<2, vector2d<float> > sim;
-    mdsim::trajectory<2, cuda::host::vector<float2> > traj(opts.output(), opts.npart(), opts.steps());
+    mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts.output(), opts.npart(), opts.steps());
 #endif
 
     rng.set(opts.rngseed());
