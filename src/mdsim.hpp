@@ -31,7 +31,7 @@ namespace mdsim
 /**
  * Molecular dynamics simulation
  */
-template <typename T>
+template <unsigned int NDIM, typename T>
 class mdsim
 {
 public:
@@ -42,7 +42,7 @@ public:
     /**
      * MD simulation step
      */
-    void step(ljfluid<T>& fluid)
+    void step(ljfluid<NDIM, T>& fluid)
     {
 	float en_pot, virial, vel2_sum;
 	T vel_cm;
@@ -77,7 +77,7 @@ public:
     /**
      * output measurement properties to stream
      */
-    friend std::ostream& operator<<(std::ostream& os, mdsim<T> const& sim)
+    friend std::ostream& operator<<(std::ostream& os, mdsim<NDIM, T> const& sim)
     {
 	os << sim.time_ << "\t";
 	os << sim.en_tot_.mean() << "\t" << sim.en_tot_.std() << "\t";

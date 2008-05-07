@@ -71,7 +71,7 @@ struct particle
 /**
  * Simulate a Lennard-Jones fluid with naive N-squared algorithm
  */
-template <typename T>
+template <unsigned int NDIM, typename T>
 class ljfluid
 {
 public:
@@ -87,8 +87,8 @@ public:
 
     void step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum);
     void trajectories(std::ostream& os) const;
-    template <unsigned int X, typename Y>
-    void trajectories(trajectory<X, Y>& traj) const;
+    template <typename Y>
+    void trajectories(trajectory<NDIM, Y>& traj) const;
 
     float gputime() const;
     float memtime() const;
@@ -127,8 +127,8 @@ private:
 /**
  * initialize Lennard-Jones fluid with given particle number
  */
-template <typename T>
-ljfluid<T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(npart), dim_(dim), steps_(0), gputime_(0.), memtime_(0.)
+template <unsigned int NDIM, typename T>
+ljfluid<NDIM, T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(npart), dim_(dim), steps_(0), gputime_(0.), memtime_(0.)
 {
     // FIXME do without this requirement
     assert(npart == dim_.threads());
@@ -151,8 +151,8 @@ ljfluid<T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(
 /**
  * get number of particles in periodic box
  */
-template <typename T>
-size_t ljfluid<T>::particles() const
+template <unsigned int NDIM, typename T>
+size_t ljfluid<NDIM, T>::particles() const
 {
     return npart;
 }
@@ -160,8 +160,8 @@ size_t ljfluid<T>::particles() const
 /**
  * get simulation timestep
  */
-template <typename T>
-float ljfluid<T>::timestep()
+template <unsigned int NDIM, typename T>
+float ljfluid<NDIM, T>::timestep()
 {
     return timestep_;
 }
@@ -169,8 +169,8 @@ float ljfluid<T>::timestep()
 /**
  * set simulation timestep
  */
-template <typename T>
-void ljfluid<T>::timestep(float timestep_)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::timestep(float timestep_)
 {
     this->timestep_ = timestep_;
     gpu::ljfluid::timestep = timestep_;
@@ -179,8 +179,8 @@ void ljfluid<T>::timestep(float timestep_)
 /**
  * get particle density
  */
-template <typename T>
-float ljfluid<T>::density() const
+template <unsigned int NDIM, typename T>
+float ljfluid<NDIM, T>::density() const
 {
     return density_;
 }
@@ -188,8 +188,8 @@ float ljfluid<T>::density() const
 /**
  * set particle density
  */
-template <typename T>
-void ljfluid<T>::density(float density_)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::density(float density_)
 {
     // particle density
     this->density_ = density_;
@@ -210,8 +210,8 @@ void ljfluid<T>::density(float density_)
 /**
  * get periodic box length
  */
-template <typename T>
-float ljfluid<T>::box() const
+template <unsigned int NDIM, typename T>
+float ljfluid<NDIM, T>::box() const
 {
     return box_;
 }
@@ -219,8 +219,8 @@ float ljfluid<T>::box() const
 /**
  * set temperature
  */
-template <typename T>
-void ljfluid<T>::temperature(float temp, rand48& rng)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::temperature(float temp, rand48& rng)
 {
     cuda::stream stream;
 
@@ -247,8 +247,8 @@ void ljfluid<T>::temperature(float temp, rand48& rng)
 /**
  * MD simulation step
  */
-template <typename T>
-void ljfluid<T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
 {
     cuda::stream stream;
     cuda::event start, stop;
@@ -311,8 +311,8 @@ void ljfluid<T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
 /**
  * write particle coordinates and velocities to output stream
  */
-template <typename T>
-void ljfluid<T>::trajectories(std::ostream& os) const
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (size_t i = 0; i < npart; ++i) {
 	os << T(part.pos[i]) << "\t" << T(part.vel[i]) << "\n";
@@ -323,9 +323,9 @@ void ljfluid<T>::trajectories(std::ostream& os) const
 /**
  * write particle coordinates and velocities to binary HDF5 file
  */
-template <typename T>
-template <unsigned int X, typename Y>
-void ljfluid<T>::trajectories(trajectory<X, Y>& traj) const
+template <unsigned int NDIM, typename T>
+template <typename Y>
+void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
     traj.write(part.pos, part.vel, part.force);
 }
@@ -333,8 +333,8 @@ void ljfluid<T>::trajectories(trajectory<X, Y>& traj) const
 /**
  * get total GPU time in seconds
  */
-template <typename T>
-float ljfluid<T>::gputime() const
+template <unsigned int NDIM, typename T>
+float ljfluid<NDIM, T>::gputime() const
 {
     return (gputime_ * 1.e-3) * steps_;
 }
@@ -342,8 +342,8 @@ float ljfluid<T>::gputime() const
 /**
  * get total device memory transfer time in seconds
  */
-template <typename T>
-float ljfluid<T>::memtime() const
+template <unsigned int NDIM, typename T>
+float ljfluid<NDIM, T>::memtime() const
 {
     return (memtime_ * 1.e-3) * steps_;
 }
