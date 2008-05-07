@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 	timer.start();
 
 	mdsim::test::gpu::blocksum.configure(dim, sizeof(float) * dim.threads_per_block(), stream);
-	mdsim::test::gpu::blocksum(v.data(), v_sum.data());
+	mdsim::test::gpu::blocksum(cuda_cast(v), cuda_cast(v_sum));
 	v_sum_host.memcpy(v_sum, stream);
 	stream.synchronize();
 
