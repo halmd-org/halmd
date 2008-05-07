@@ -98,13 +98,8 @@ public:
 private:
     /** number of particles in periodic box */
     size_t npart;
-#ifdef DIM_3D
     /** particles */
-    particle<vector3d<float> > part;
-#else
-    /** particles */
-    particle<vector2d<float> > part;
-#endif
+    particle<T> part;
     /** CUDA execution dimensions */
     cuda::config dim_;
 
@@ -259,12 +254,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
 #endif
 
-#ifdef DIM_3D
     // reserve shared device memory for particle coordinates
-    gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(float3), stream);
-#else
-    gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(float2), stream);
-#endif
+    gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream);
     gpu::ljfluid::mdstep(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
 
 #ifndef USE_LEAPFROG
