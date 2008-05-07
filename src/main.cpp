@@ -44,12 +44,12 @@ int main(int argc, char **argv)
 
     rng::gsl::gfsr4 rng;
 #ifdef DIM_3D
-    mdsim::ljfluid<vector3d<double> > fluid(opts.npart());
-    mdsim::mdsim<vector3d<double> > sim;
+    mdsim::ljfluid<3, vector3d<double> > fluid(opts.npart());
+    mdsim::mdsim<3, vector3d<double> > sim;
     mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts.output(), opts.npart(), opts.steps());
 #else
-    mdsim::ljfluid<vector2d<double> > fluid(opts.npart());
-    mdsim::mdsim<vector2d<double> > sim;
+    mdsim::ljfluid<2, vector2d<double> > fluid(opts.npart());
+    mdsim::mdsim<2, vector2d<double> > sim;
     mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts.output(), opts.npart(), opts.steps());
 #endif
 

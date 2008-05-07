@@ -56,7 +56,7 @@ struct particle
 /**
  * Simulate a Lennard-Jones fluid with naive N-squared algorithm
  */
-template <typename T>
+template <unsigned int NDIM, typename T>
 class ljfluid
 {
 protected:
@@ -81,8 +81,8 @@ public:
 
     void step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum);
     void trajectories(std::ostream& os) const;
-    template <unsigned int X, typename Y>
-    void trajectories(trajectory<X, Y>& traj) const;
+    template <typename Y>
+    void trajectories(trajectory<NDIM, Y>& traj) const;
 
 private:
     void leapfrog_half();
@@ -142,8 +142,8 @@ private:
 /**
  * initialize Lennard-Jones fluid with given particle number
  */
-template <typename T>
-ljfluid<T>::ljfluid(size_t npart) : npart(npart), part_(npart), vel_(npart), force_(npart)
+template <unsigned int NDIM, typename T>
+ljfluid<NDIM, T>::ljfluid(size_t npart) : npart(npart), part_(npart), vel_(npart), force_(npart)
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     // Frenkel
@@ -167,8 +167,8 @@ ljfluid<T>::ljfluid(size_t npart) : npart(npart), part_(npart), vel_(npart), for
 /**
  * get number of particles in periodic box
  */
-template <typename T>
-size_t ljfluid<T>::particles() const
+template <unsigned int NDIM, typename T>
+size_t ljfluid<NDIM, T>::particles() const
 {
     return npart;
 }
@@ -176,8 +176,8 @@ size_t ljfluid<T>::particles() const
 /**
  * get simulation timestep
  */
-template <typename T>
-double ljfluid<T>::timestep()
+template <unsigned int NDIM, typename T>
+double ljfluid<NDIM, T>::timestep()
 {
     return timestep_;
 }
@@ -185,8 +185,8 @@ double ljfluid<T>::timestep()
 /**
  * set simulation timestep
  */
-template <typename T>
-void ljfluid<T>::timestep(double val)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::timestep(double val)
 {
     timestep_ = val;
 }
@@ -194,8 +194,8 @@ void ljfluid<T>::timestep(double val)
 /**
  * get particle density
  */
-template <typename T>
-double ljfluid<T>::density() const
+template <unsigned int NDIM, typename T>
+double ljfluid<NDIM, T>::density() const
 {
     return density_;
 }
@@ -203,8 +203,8 @@ double ljfluid<T>::density() const
 /**
  * set particle density
  */
-template <typename T>
-void ljfluid<T>::density(double density_)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::density(double density_)
 {
     // particle density
     this->density_ = density_;
@@ -218,8 +218,8 @@ void ljfluid<T>::density(double density_)
 /**
  * get periodic box length
  */
-template <typename T>
-double ljfluid<T>::box() const
+template <unsigned int NDIM, typename T>
+double ljfluid<NDIM, T>::box() const
 {
     return box_;
 }
@@ -227,9 +227,9 @@ double ljfluid<T>::box() const
 /**
  * set temperature
  */
-template <typename T>
+template <unsigned int NDIM, typename T>
 template <typename rng_type>
-void ljfluid<T>::temperature(double temp, rng_type& rng)
+void ljfluid<NDIM, T>::temperature(double temp, rng_type& rng)
 {
     init_velocities(temp, rng);
     init_forces();
@@ -238,8 +238,8 @@ void ljfluid<T>::temperature(double temp, rng_type& rng)
 /**
  * MD simulation step
  */
-template <typename T>
-void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum)
 {
     // calculate coordinates
     leapfrog_half();
@@ -270,8 +270,8 @@ void ljfluid<T>::step(double& en_pot, double& virial, T& vel_cm, double& vel2_su
 /**
  * write particle coordinates and velocities to output stream
  */
-template <typename T>
-void ljfluid<T>::trajectories(std::ostream& os) const
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (unsigned int i = 0; i < npart; ++i) {
 	os << part_[i] << "\t" << vel_[i] << "\n";
@@ -282,9 +282,9 @@ void ljfluid<T>::trajectories(std::ostream& os) const
 /**
  * write particle coordinates and velocities to binary HDF5 file
  */
-template <typename T>
-template <unsigned int X, typename Y>
-void ljfluid<T>::trajectories(trajectory<X, Y>& traj) const
+template <unsigned int NDIM, typename T>
+template <typename Y>
+void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
     traj.write(part_, vel_, force_);
 }
@@ -292,8 +292,8 @@ void ljfluid<T>::trajectories(trajectory<X, Y>& traj) const
 /**
  * first leapfrog half-step in integration of equations of motion
  */
-template <typename T>
-void ljfluid<T>::leapfrog_half()
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::leapfrog_half()
 {
     for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
@@ -314,8 +314,8 @@ void ljfluid<T>::leapfrog_half()
 /**
  * second leapfrog step in integration of equations of motion
  */
-template <typename T>
-void ljfluid<T>::leapfrog_full(T& vel_cm, double& vel2_sum)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::leapfrog_full(T& vel_cm, double& vel2_sum)
 {
     // center of mass velocity
     vel_cm = 0.;
@@ -345,8 +345,8 @@ void ljfluid<T>::leapfrog_full(T& vel_cm, double& vel2_sum)
 /**
  * update cell lists
  */
-template <typename T>
-void ljfluid<T>::update_cells()
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::update_cells()
 {
     for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	// FIXME particles may be visited twice if moved ahead in sequence
@@ -366,8 +366,8 @@ void ljfluid<T>::update_cells()
 /**
  * compute pairwise Lennard-Jones forces
  */
-template <typename T>
-void ljfluid<T>::compute_forces(double& en_pot, double& virial)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::compute_forces(double& en_pot, double& virial)
 {
     // potential energy
     en_pot = 0.;
@@ -395,8 +395,8 @@ void ljfluid<T>::compute_forces(double& en_pot, double& virial)
 /**
  * FIXME
  */
-template <typename T>
-void ljfluid<T>::compute_neighbours()
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::compute_neighbours()
 {
     for (size_t i = 0; i < cells.size(); ++i) {
 	for (size_t j = 0; j < cells[i].size(); ++j) {
@@ -454,8 +454,8 @@ void ljfluid<T>::compute_neighbours()
 /**
  * FIXME
  */
-template <typename T>
-void ljfluid<T>::compute_cell_neighbours(particle<T>& p, list_type& cell)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::compute_cell_neighbours(particle<T>& p, list_type& cell)
 {
     for (list_iterator it = cell.begin(); it != cell.end(); ++it) {
 	compute_neighbour(p, *it);
@@ -465,8 +465,8 @@ void ljfluid<T>::compute_cell_neighbours(particle<T>& p, list_type& cell)
 /**
  * FIXME
  */
-template<typename T>
-void ljfluid<T>::compute_neighbour(particle<T>& p1, particle<T>& p2)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::compute_neighbour(particle<T>& p1, particle<T>& p2)
 {
     T r = p1.pos - p2.pos;
     // enforce periodic boundary conditions
@@ -483,8 +483,8 @@ void ljfluid<T>::compute_neighbour(particle<T>& p1, particle<T>& p2)
 /**
  * compute pairwise Lennard-Jones force
  */
-template<typename T>
-void ljfluid<T>::compute_force(particle<T>& p1, particle<T>& p2, double& en_pot, double& virial)
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::compute_force(particle<T>& p1, particle<T>& p2, double& en_pot, double& virial)
 {
     T r = p1.pos - p2.pos;
     // enforce periodic boundary conditions
@@ -510,8 +510,8 @@ void ljfluid<T>::compute_force(particle<T>& p1, particle<T>& p2, double& en_pot,
 /**
  * initialize cell lists
  */
-template <typename T>
-void ljfluid<T>::init_cells()
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::init_cells()
 {
     // number of cells per dimension
     ncell = size_t(floor(box_ / r_cut_skin));
@@ -527,8 +527,8 @@ void ljfluid<T>::init_cells()
 /**
  * place particles on a face centered cubic (FCC) lattice
  */
-template <typename T>
-void ljfluid<T>::lattice()
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::lattice()
 {
 #ifdef DIM_3D
     // number of particles along 1 lattice dimension
@@ -559,9 +559,9 @@ void ljfluid<T>::lattice()
 /**
  * generate random n-dimensional Maxwell-Boltzmann distributed velocities
  */
-template <typename T>
+template <unsigned int NDIM, typename T>
 template <typename rng_type>
-void ljfluid<T>::init_velocities(double temp, rng_type& rng)
+void ljfluid<NDIM, T>::init_velocities(double temp, rng_type& rng)
 {
     // center of mass velocity
     T vel_cm = 0.;
@@ -594,8 +594,8 @@ void ljfluid<T>::init_velocities(double temp, rng_type& rng)
 /**
  * set n-dimensional force vectors to zero
  */
-template <typename T>
-void ljfluid<T>::init_forces()
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::init_forces()
 {
     for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
