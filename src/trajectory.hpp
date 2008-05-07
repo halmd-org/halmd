@@ -20,7 +20,7 @@
 #define MDSIM_TRAJECTORY_HPP
 
 #include <H5Cpp.h>
-#include <exception>
+#include "exception.hpp"
 #include <assert.h>
 
 
@@ -29,21 +29,6 @@ namespace mdsim {
 template <unsigned int NDIM, typename T>
 class trajectory
 {
-public:
-    class exception : public std::exception
-    {
-    public:
-	exception(char const* str): str_(str) {}
-
-	char const* what() const throw()
-	{
-	    return str_;
-	}
-
-    private:
-	char const* str_;
-    };
-
 public:
     trajectory(char const* path, unsigned int npart, unsigned int steps);
 
@@ -73,7 +58,7 @@ trajectory<NDIM, T>::trajectory(char const* path, unsigned int npart, unsigned i
 	file_ = H5::H5File(path, H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
-	throw typename trajectory<NDIM, T>::exception("failed to create HDF5 trajectory file");
+	throw exception("failed to create HDF5 trajectory file");
     }
 
     hsize_t dim[1] = { 1 };
