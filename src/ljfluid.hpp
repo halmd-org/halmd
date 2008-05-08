@@ -115,7 +115,6 @@ private:
     /** particles sorted by particle number */
     std::vector<T> part_;
     std::vector<T> vel_;
-    std::vector<T> force_;
 
     /** particle density */
     double density_;
@@ -143,7 +142,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <unsigned int NDIM, typename T>
-ljfluid<NDIM, T>::ljfluid(size_t npart) : npart(npart), part_(npart), vel_(npart), force_(npart)
+ljfluid<NDIM, T>::ljfluid(size_t npart) : npart(npart), part_(npart), vel_(npart)
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     // Frenkel
@@ -262,7 +261,6 @@ void ljfluid<NDIM, T>::step(double& en_pot, double& virial, T& vel_cm, double& v
 	for (list_const_iterator it = cell->begin(); it != cell->end(); ++it) {
 	    part_[it->tag] = it->pos;
 	    vel_[it->tag] = it->vel;
-	    force_[it->tag] = it->force;
 	}
     }
 }
@@ -286,7 +284,7 @@ template <unsigned int NDIM, typename T>
 template <typename Y>
 void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
-    traj.write(part_, vel_, force_);
+    traj.write(part_, vel_);
 }
 
 /**

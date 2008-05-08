@@ -32,7 +32,7 @@ class trajectory
 public:
     trajectory(char const* path, unsigned int npart, unsigned int steps);
 
-    void write(T const& coord, T const& vel, T const& force);
+    void write(T const& coord, T const& vel);
 
 private:
     H5::H5File file_;
@@ -40,7 +40,7 @@ private:
     const unsigned int npart_;
     const unsigned int steps_;
     H5::DataSpace ds_;
-    H5::DataSet dset_[3];
+    H5::DataSet dset_[2];
     H5::DataSpace ds_src_;
     H5::DataSpace ds_dst_;
 };
@@ -75,7 +75,6 @@ trajectory<NDIM, T>::trajectory(char const* path, unsigned int npart, unsigned i
     ds_ = H5::DataSpace(3, dim1);
     dset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_DOUBLE, ds_);
     dset_[1] = file_.createDataSet("velocity", H5::PredType::NATIVE_DOUBLE, ds_);
-    dset_[2] = file_.createDataSet("force", H5::PredType::NATIVE_DOUBLE, ds_);
 
     hsize_t dim2[2] = { npart_, NDIM };
     ds_src_ = H5::DataSpace(2, dim2);
@@ -83,12 +82,11 @@ trajectory<NDIM, T>::trajectory(char const* path, unsigned int npart, unsigned i
 }
 
 template <unsigned int NDIM, typename T>
-void trajectory<NDIM, T>::write(T const& coord, T const& vel, T const& force)
+void trajectory<NDIM, T>::write(T const& coord, T const& vel)
 {
     assert(sets_ < steps_);
     assert(coord.size() == npart_);
     assert(vel.size() == npart_);
-    assert(force.size() == npart_);
 
     hsize_t count[3]  = { 1, npart_, 1 };
     hsize_t start[3]  = { sets_, 0, 0 };
@@ -101,8 +99,6 @@ void trajectory<NDIM, T>::write(T const& coord, T const& vel, T const& force)
     dset_[0].write(coord.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_);
     // velocities
     dset_[1].write(vel.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_);
-    // forces
-    dset_[2].write(force.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_);
 
     sets_++;
 }
