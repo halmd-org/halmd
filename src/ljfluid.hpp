@@ -273,7 +273,6 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
 
     part.pos.memcpy(part.pos_gpu, stream);
     part.vel.memcpy(part.vel_gpu, stream);
-    part.force.memcpy(part.force_gpu, stream);
     part.en.memcpy(part.en_gpu, stream);
     part.virial.memcpy(part.virial_gpu, stream);
 
@@ -316,7 +315,7 @@ template <unsigned int NDIM, typename T>
 template <typename Y>
 void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
-    traj.write(part.pos, part.vel, part.force);
+    traj.write(part.pos, part.vel);
 }
 
 /**

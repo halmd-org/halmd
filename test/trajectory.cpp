@@ -27,10 +27,10 @@ int main(int argc, char** argv)
 {
 #ifdef DIM_3D
     mdsim::trajectory<3, cuda::host::vector<float3> > traj("ljfluid3d.trj", ATOMS, STEPS);
-    cuda::host::vector<float3> r(0), v(0), f(0);
+    cuda::host::vector<float3> r(0), v(0);
 #else
     mdsim::trajectory<2, cuda::host::vector<float2> > traj("ljfluid2d.trj", ATOMS, STEPS);
-    cuda::host::vector<float2> r(0), v(0), f(0);
+    cuda::host::vector<float2> r(0), v(0);
 #endif
 
     srand48(42);
@@ -39,17 +39,14 @@ int main(int argc, char** argv)
 #ifdef DIM_3D
 	    r.push_back(make_float3(drand48() * 10., drand48() * 0.01 + 3.14, drand48() * 0.01 + 42.));
 	    v.push_back(make_float3(drand48() - 0.5, (drand48() - 0.5) * 0.01 - 3.14, (drand48() - 0.5) - 42.));
-	    f.push_back(make_float3(drand48() * 1.E19, drand48() * 1.E-19, drand48() * 1.E9));
 #else
 	    r.push_back(make_float2(drand48() * 10., drand48() * 0.01 + 42.));
 	    v.push_back(make_float2(drand48() - 0.5, (drand48() - 0.5) - 42.));
-	    f.push_back(make_float2(drand48() * 1.E19, drand48() * 1.E-19));
 #endif
 	}
-	traj.write(r, v, f);
+	traj.write(r, v);
 	r.clear();
 	v.clear();
-	f.clear();
     }
 
     return EXIT_SUCCESS;
