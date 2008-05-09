@@ -79,8 +79,6 @@ __device__ void leapfrog_half_step(T& r, T& v, T const& f)
     v += f * (timestep / 2);
     // full step coordinates
     r += v * timestep;
-    // enforce periodic boundary conditions
-    r -= floorf(r / box) * box;
 }
 
 
