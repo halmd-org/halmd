@@ -96,6 +96,9 @@ public:
     float memtime() const;
 
 private:
+    void step();
+
+private:
     /** number of particles in periodic box */
     size_t npart;
     /** particles */
@@ -118,6 +121,9 @@ private:
     float gputime_;
     /** average device memory transfer time in milliseconds per simulation step */
     float memtime_;
+
+    cuda::stream stream_;
+    cuda::event event_[4];
 };
 
 
@@ -195,13 +201,11 @@ void ljfluid<NDIM, T>::density(float density_)
     gpu::ljfluid::box = box_;
 
     // initialize coordinates
-    cuda::stream stream;
-
-    gpu::ljfluid::lattice.configure(dim_, stream);
+    gpu::ljfluid::lattice.configure(dim_, stream_);
     gpu::ljfluid::lattice(cuda_cast(part.pos_gpu));
 
-    part.pos.memcpy(part.pos_gpu, stream);
-    stream.synchronize();
+    part.pos.memcpy(part.pos_gpu, stream_);
+    stream_.synchronize();
 }
 
 /**
@@ -219,22 +223,41 @@ float ljfluid<NDIM, T>::box() const
 template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::temperature(float temp, rand48& rng)
 {
-    cuda::stream stream;
-
     // initialize velocities
-    gpu::ljfluid::boltzmann.configure(dim_, stream);
+    gpu::ljfluid::boltzmann.configure(dim_, stream_);
 #ifdef USE_LEAPFROG
     gpu::ljfluid::boltzmann(cuda_cast(part.vel_gpu), temp, cuda_cast(rng));
 #else
     gpu::ljfluid::boltzmann(cuda_cast(part.vel_gpu), cuda_cast(part.pos_gpu), cuda_cast(part.pos_old_gpu), temp, cuda_cast(rng));
 #endif
-    part.vel.memcpy(part.vel_gpu, stream);
+    part.vel.memcpy(part.vel_gpu, stream_);
 
     // initialize forces
     fill(part.force.begin(), part.force.end(), 0.);
-    part.force_gpu.memcpy(part.force, stream);
+    part.force_gpu.memcpy(part.force, stream_);
 
-    stream.synchronize();
+    stream_.synchronize();
+}
+
+/**
+ * MD simulation step on GPU
+ */
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::step()
+{
+    event_[0].record(stream_);
+#ifdef USE_LEAPFROG
+    gpu::ljfluid::inteq.configure(dim_, stream_);
+    gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
+#endif
+    // reserve shared device memory for particle coordinates
+    gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
+    gpu::ljfluid::mdstep(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
+#ifndef USE_LEAPFROG
+    gpu::ljfluid::inteq.configure(dim_, stream_);
+    gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.pos_old_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
+#endif
+    event_[1].record(stream_);
 }
 
 /**
@@ -243,44 +266,28 @@ void ljfluid<NDIM, T>::temperature(float temp, rand48& rng)
 template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
 {
-    cuda::stream stream;
-    cuda::event start, stop;
-    start.record(stream);
+    if (steps_ == 0) {
+	// first MD simulation step on GPU
+	step();
+    }
 
-    ++steps_;
+    event_[2].record(stream_);
+    part.pos.memcpy(part.pos_gpu, stream_);
+    part.vel.memcpy(part.vel_gpu, stream_);
+    part.en.memcpy(part.en_gpu, stream_);
+    part.virial.memcpy(part.virial_gpu, stream_);
+    event_[3].record(stream_);
+    event_[3].synchronize();
 
-#ifdef USE_LEAPFROG
-    gpu::ljfluid::inteq.configure(dim_, stream);
-    gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
-#endif
-
-    // reserve shared device memory for particle coordinates
-    gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream);
-    gpu::ljfluid::mdstep(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
-
-#ifndef USE_LEAPFROG
-    gpu::ljfluid::inteq.configure(dim_, stream);
-    gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.pos_old_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
-#endif
-
-    stop.record(stream);
-    stop.synchronize();
+    steps_++;
 
     // adjust average GPU time in milliseconds per simulation time
-    gputime_ += ((stop - start) - gputime_) / steps_;
-
-    start.record(stream);
-
-    part.pos.memcpy(part.pos_gpu, stream);
-    part.vel.memcpy(part.vel_gpu, stream);
-    part.en.memcpy(part.en_gpu, stream);
-    part.virial.memcpy(part.virial_gpu, stream);
-
-    stop.record(stream);
-    stop.synchronize();
-
+    gputime_ += ((event_[1] - event_[0]) - gputime_) / steps_;
     // adjust average device memory transfer time in milliseconds per simulation time
-    memtime_ += ((stop - start) - memtime_) / steps_;
+    memtime_ += ((event_[3] - event_[2]) - memtime_) / steps_;
+
+    // next MD simulation step on GPU
+    step();
 
     // compute averages
     en_pot = 0.;
