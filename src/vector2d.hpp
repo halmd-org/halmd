@@ -30,6 +30,9 @@ template <typename T>
 class vector2d
 {
 public:
+    typedef T value_type;
+
+public:
     T x, y;
 
 public:
