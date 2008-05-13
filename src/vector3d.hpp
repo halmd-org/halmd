@@ -32,6 +32,9 @@ template <typename T>
 class vector3d
 {
 public:
+    typedef T value_type;
+
+public:
     vector3d()
     {
     }
