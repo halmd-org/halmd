@@ -95,6 +95,15 @@ public:
 	return sqrt(s_ / (count_ - 1.));
     }
 
+    /**
+     * compute standard error of mean
+     */
+    T err() const
+    {
+	assert(count_ > 1);
+	return sqrt(s_ / (count_ - 1.) / count_);
+    }
+
 private:
     size_t count_;
     T m_, s_;
