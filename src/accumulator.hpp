@@ -20,6 +20,7 @@
 #define MDSIM_ACCUMULATOR_HPP
 
 #include <math.h>
+#include <stdint.h>
 #include <assert.h>
 
 
@@ -72,7 +73,7 @@ public:
     /**
      * get accumulator value count
      */
-    size_t count() const
+    uint64_t count() const
     {
 	return count_;
     }
@@ -105,7 +106,7 @@ public:
     }
 
 private:
-    size_t count_;
+    uint64_t count_;
     T m_, s_;
 };
 
