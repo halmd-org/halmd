@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cuda_wrapper.hpp>
 #include "gpu/ljfluid_glue.hpp"
+#include "exception.hpp"
 #include "rand48.hpp"
 #include "trajectory.hpp"
 #include "vector2d.hpp"
@@ -44,10 +45,9 @@ struct particle
 #ifndef USE_LEAPFROG
     cuda::vector<T> pos_old_gpu;
 #endif
-    cuda::host::vector<T> pos;
     /** n-dimensional particle velocity */
     cuda::vector<T> vel_gpu;
-    cuda::host::vector<T> vel;
+    phase_space_point<cuda::host::vector<T> > psp;
     /** n-dimensional force acting upon particle */
     cuda::vector<T> force_gpu;
     cuda::host::vector<T> force;
@@ -63,7 +63,7 @@ struct particle
 #ifndef USE_LEAPFROG
 	pos_old_gpu(n),
 #endif
-	pos(n), vel_gpu(n), vel(n), force_gpu(n), force(n),
+	vel_gpu(n), psp(n), force_gpu(n), force(n),
 	en_gpu(n), en(n), virial_gpu(n), virial(n)
     {
     }
@@ -204,7 +204,7 @@ void ljfluid<NDIM, T>::density(float density_)
     gpu::ljfluid::lattice.configure(dim_, stream_);
     gpu::ljfluid::lattice(cuda_cast(part.pos_gpu));
 
-    part.pos.memcpy(part.pos_gpu, stream_);
+    part.psp.r.memcpy(part.pos_gpu, stream_);
     stream_.synchronize();
 }
 
@@ -230,13 +230,25 @@ void ljfluid<NDIM, T>::temperature(float temp, rand48& rng)
 #else
     gpu::ljfluid::boltzmann(cuda_cast(part.vel_gpu), cuda_cast(part.pos_gpu), cuda_cast(part.pos_old_gpu), temp, cuda_cast(rng));
 #endif
-    part.vel.memcpy(part.vel_gpu, stream_);
+    part.psp.v.memcpy(part.vel_gpu, stream_);
+
+    try {
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("CUDA ERROR: failed to initialize velocities");
+    }
 
     // initialize forces
     fill(part.force.begin(), part.force.end(), 0.);
     part.force_gpu.memcpy(part.force, stream_);
 
-    stream_.synchronize();
+    try {
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("CUDA ERROR: failed to initialize forces");
+    }
 }
 
 /**
@@ -272,8 +284,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     }
 
     event_[2].record(stream_);
-    part.pos.memcpy(part.pos_gpu, stream_);
-    part.vel.memcpy(part.vel_gpu, stream_);
+    part.psp.r.memcpy(part.pos_gpu, stream_);
+    part.psp.v.memcpy(part.vel_gpu, stream_);
     part.en.memcpy(part.en_gpu, stream_);
     part.virial.memcpy(part.virial_gpu, stream_);
     event_[3].record(stream_);
@@ -298,8 +310,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     for (size_t i = 0; i < npart; ++i) {
 	en_pot += (part.en[i] - en_pot) / (i + 1);
 	virial += (part.virial[i] - virial) / (i + 1);
-	vel_cm += (part.vel[i] - vel_cm) / (i + 1);
-	vel2_sum += (part.vel[i] * part.vel[i] - vel2_sum) / (i + 1);
+	vel_cm += (part.psp.v[i] - vel_cm) / (i + 1);
+	vel2_sum += (part.psp.v[i] * part.psp.v[i] - vel2_sum) / (i + 1);
     }
 }
 
@@ -310,7 +322,7 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (size_t i = 0; i < npart; ++i) {
-	os << part.pos[i] << "\t" << part.vel[i] << "\n";
+	os << part.psp.r[i] << "\t" << part.psp.v[i] << "\n";
     }
     os << "\n\n";
 }
@@ -322,7 +334,7 @@ template <unsigned int NDIM, typename T>
 template <typename Y>
 void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
-    traj.write(part.pos, part.vel);
+    traj.write(part.psp.r, part.psp.v);
 }
 
 /**
