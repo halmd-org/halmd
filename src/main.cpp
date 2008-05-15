@@ -51,12 +51,12 @@ int main(int argc, char **argv)
     mdsim::ljfluid<3, vector3d<float> > fluid(opts.npart(), dim);
     mdsim::mdsim<3, vector3d<float> > sim;
     mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
-    mdsim::autocorrelation<3, vector3d<float> > tcf(opts.block_count(), opts.block_size(), opts.block_shift(), opts.max_samples());
+    mdsim::autocorrelation<3, vector3d<float> > tcf(opts);
 #else
     mdsim::ljfluid<2, vector2d<float> > fluid(opts.npart(), dim);
     mdsim::mdsim<2, vector2d<float> > sim;
     mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
-    mdsim::autocorrelation<2, vector2d<float> > tcf(opts.block_count(), opts.block_size(), opts.block_shift(), opts.max_samples());
+    mdsim::autocorrelation<2, vector2d<float> > tcf(opts);
 #endif
 
     if (opts.steps() < tcf.min_samples()) {
