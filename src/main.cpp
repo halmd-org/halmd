@@ -19,15 +19,17 @@
 #include <iostream>
 #include <stdint.h>
 #include <vector>
-#include "vector2d.hpp"
-#include "vector3d.hpp"
+#include "autocorrelation.hpp"
+#include "exception.hpp"
 #include "gsl_rng.hpp"
 #include "ljfluid.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
-#include "trajectory.hpp"
-#include "version.h"
 #include "time.hpp"
+#include "trajectory.hpp"
+#include "vector2d.hpp"
+#include "vector3d.hpp"
+#include "version.h"
 using namespace std;
 
 
@@ -46,12 +48,18 @@ int main(int argc, char **argv)
 #ifdef DIM_3D
     mdsim::ljfluid<3, vector3d<double> > fluid(opts.npart());
     mdsim::mdsim<3, vector3d<double> > sim;
-    mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts.output(), opts.npart(), opts.steps());
+    mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::autocorrelation<3, vector3d<double> > tcf(opts.block_count(), opts.block_size(), opts.block_shift(), opts.max_samples());
 #else
     mdsim::ljfluid<2, vector2d<double> > fluid(opts.npart());
     mdsim::mdsim<2, vector2d<double> > sim;
-    mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts.output(), opts.npart(), opts.steps());
+    mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::autocorrelation<2, vector2d<double> > tcf(opts.block_count(), opts.block_size(), opts.block_shift(), opts.max_samples());
 #endif
+
+    if (opts.steps() < tcf.min_samples()) {
+	throw mdsim::exception("less simulation steps than minimum required number of samples");
+    }
 
     rng.set(opts.rngseed());
 
@@ -71,7 +79,11 @@ int main(int argc, char **argv)
     for (uint64_t i = 1; i <= opts.steps(); i++) {
 	sim.step(fluid);
 
-	fluid.trajectories(traj);
+	fluid.sample(tcf);
+
+	if (i <= opts.max_samples()) {
+	    fluid.trajectories(traj);
+	}
 
 	if (i % opts.avgsteps())
 	    continue;
@@ -93,6 +105,8 @@ int main(int argc, char **argv)
 
 	sim.clear();
     }
+
+    tcf.write(opts.tcf_output(), opts.timestep());
 
     timer.stop();
     cerr << "Elapsed time: " << (timer.elapsed() * 1.E3) << "ms" << endl;
