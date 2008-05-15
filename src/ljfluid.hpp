@@ -25,6 +25,7 @@
 #include <iostream>
 #include <math.h>
 #include "cell_array.hpp"
+#include "exception.hpp"
 #include "trajectory.hpp"
 
 
@@ -113,8 +114,7 @@ private:
     double cell_len;
 
     /** particles sorted by particle number */
-    std::vector<T> part_;
-    std::vector<T> vel_;
+    phase_space_point<std::vector<T> > part_;
 
     /** particle density */
     double density_;
@@ -142,7 +142,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <unsigned int NDIM, typename T>
-ljfluid<NDIM, T>::ljfluid(size_t npart) : npart(npart), part_(npart), vel_(npart)
+ljfluid<NDIM, T>::ljfluid(size_t npart) : npart(npart), part_(npart)
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     // Frenkel
@@ -259,8 +259,8 @@ void ljfluid<NDIM, T>::step(double& en_pot, double& virial, T& vel_cm, double& v
     // sort particles by particle number for trajectory sampling
     for (cell_const_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_const_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    part_[it->tag] = it->pos;
-	    vel_[it->tag] = it->vel;
+	    part_.r[it->tag] = it->pos;
+	    part_.v[it->tag] = it->vel;
 	}
     }
 }
@@ -272,7 +272,7 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (unsigned int i = 0; i < npart; ++i) {
-	os << part_[i] << "\t" << vel_[i] << "\n";
+	os << part_.r[i] << "\t" << part_.v[i] << "\n";
     }
     os << std::endl << std::endl;
 }
@@ -284,7 +284,7 @@ template <unsigned int NDIM, typename T>
 template <typename Y>
 void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
-    traj.write(part_, vel_);
+    traj.write(part_.r, part_.v);
 }
 
 /**
