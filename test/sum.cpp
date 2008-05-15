@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 	stream.synchronize();
 
 	v_avg = 0;
-	for (int i = 0; i < v_sum_host.size(); i++) {
+	for (unsigned int i = 0; i < v_sum_host.size(); i++) {
 	    v_avg += v_sum_host[i];
 	}
 	v_avg /= v_host.size();
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 	//
 
 	v_avg = 0;
-	for (int i = 0; i < v_host.size(); i++) {
+	for (unsigned int i = 0; i < v_host.size(); i++) {
 	    v_avg += v_host[i];
 	}
 	v_avg /= v_host.size();
