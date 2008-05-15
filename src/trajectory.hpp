@@ -74,8 +74,7 @@ trajectory<NDIM, T>::trajectory(char const* path, uint64_t npart, uint64_t steps
 	throw exception("failed to create HDF5 trajectory file");
     }
 
-    hsize_t dim[1] = { 1 };
-    H5::DataSpace ds(1, dim);
+    H5::DataSpace ds(H5S_SCALAR);
     H5::Group root(file_.openGroup("/"));
 
     unsigned int ndim = NDIM;

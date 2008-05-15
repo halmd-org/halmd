@@ -238,9 +238,7 @@ void autocorrelation<NDIM, T>::write(char const* path, float timestep)
 
     try {
 	H5::Group root(file.openGroup("/"));
-
-	hsize_t dim[1] = { 1 };
-	H5::DataSpace ds(1, dim);
+	H5::DataSpace ds(H5S_SCALAR);
 
 	// write block parameters
 	root.createAttribute("block_count", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_count);
