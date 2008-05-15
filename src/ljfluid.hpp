@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <iostream>
 #include <math.h>
+#include "autocorrelation.hpp"
 #include "cell_array.hpp"
 #include "exception.hpp"
 #include "trajectory.hpp"
@@ -84,6 +85,7 @@ public:
     void trajectories(std::ostream& os) const;
     template <typename Y>
     void trajectories(trajectory<NDIM, Y>& traj) const;
+    void sample(autocorrelation<NDIM, T>& tcf) const;
 
 private:
     void leapfrog_half();
@@ -285,6 +287,15 @@ template <typename Y>
 void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
     traj.write(part_.r, part_.v);
+}
+
+/**
+ * sample trajectory for autocorrelation
+ */
+template <unsigned int NDIM, typename T>
+void ljfluid<NDIM, T>::sample(autocorrelation<NDIM, T>& tcf) const
+{
+    tcf.sample(part_);
 }
 
 /**
