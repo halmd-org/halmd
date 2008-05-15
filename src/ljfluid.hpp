@@ -41,14 +41,9 @@ namespace mdsim
 template <typename T>
 struct particle
 {
-    /** n-dimensional particle coordinates */
-    cuda::vector<T> pos_gpu;
-#ifndef USE_LEAPFROG
-    cuda::vector<T> pos_old_gpu;
-#endif
-    /** n-dimensional particle velocity */
-    cuda::vector<T> vel_gpu;
-    phase_space_point<cuda::host::vector<T> > psp;
+    /** n-dimensional particle phase space coordiates */
+    phase_space_point<cuda::vector<T> > psc_gpu;
+    phase_space_point<cuda::host::vector<T> > psc;
     /** n-dimensional force acting upon particle */
     cuda::vector<T> force_gpu;
     cuda::host::vector<T> force;
@@ -59,15 +54,7 @@ struct particle
     cuda::vector<float> virial_gpu;
     cuda::host::vector<float> virial;
 
-    particle(size_t n) :
-	pos_gpu(n),
-#ifndef USE_LEAPFROG
-	pos_old_gpu(n),
-#endif
-	vel_gpu(n), psp(n), force_gpu(n), force(n),
-	en_gpu(n), en(n), virial_gpu(n), virial(n)
-    {
-    }
+    particle(size_t n) : psc_gpu(n), psc(n), force_gpu(n), force(n), en_gpu(n), en(n), virial_gpu(n), virial(n) { }
 };
 
 
@@ -204,9 +191,9 @@ void ljfluid<NDIM, T>::density(float density_)
 
     // initialize coordinates
     gpu::ljfluid::lattice.configure(dim_, stream_);
-    gpu::ljfluid::lattice(cuda_cast(part.pos_gpu));
+    gpu::ljfluid::lattice(cuda_cast(part.psc_gpu.r));
 
-    part.psp.r.memcpy(part.pos_gpu, stream_);
+    part.psc.r.memcpy(part.psc_gpu.r, stream_);
     stream_.synchronize();
 }
 
@@ -227,12 +214,8 @@ void ljfluid<NDIM, T>::temperature(float temp, rand48& rng)
 {
     // initialize velocities
     gpu::ljfluid::boltzmann.configure(dim_, stream_);
-#ifdef USE_LEAPFROG
-    gpu::ljfluid::boltzmann(cuda_cast(part.vel_gpu), temp, cuda_cast(rng));
-#else
-    gpu::ljfluid::boltzmann(cuda_cast(part.vel_gpu), cuda_cast(part.pos_gpu), cuda_cast(part.pos_old_gpu), temp, cuda_cast(rng));
-#endif
-    part.psp.v.memcpy(part.vel_gpu, stream_);
+    gpu::ljfluid::boltzmann(cuda_cast(part.psc_gpu.v), temp, cuda_cast(rng));
+    part.psc.v.memcpy(part.psc_gpu.v, stream_);
 
     try {
 	stream_.synchronize();
@@ -260,17 +243,11 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::step()
 {
     event_[0].record(stream_);
-#ifdef USE_LEAPFROG
     gpu::ljfluid::inteq.configure(dim_, stream_);
-    gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
-#endif
+    gpu::ljfluid::inteq(cuda_cast(part.psc_gpu.r), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu));
     // reserve shared device memory for particle coordinates
     gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
-    gpu::ljfluid::mdstep(cuda_cast(part.pos_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
-#ifndef USE_LEAPFROG
-    gpu::ljfluid::inteq.configure(dim_, stream_);
-    gpu::ljfluid::inteq(cuda_cast(part.pos_gpu), cuda_cast(part.pos_old_gpu), cuda_cast(part.vel_gpu), cuda_cast(part.force_gpu));
-#endif
+    gpu::ljfluid::mdstep(cuda_cast(part.psc_gpu.r), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
     event_[1].record(stream_);
 }
 
@@ -286,8 +263,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     }
 
     event_[2].record(stream_);
-    part.psp.r.memcpy(part.pos_gpu, stream_);
-    part.psp.v.memcpy(part.vel_gpu, stream_);
+    part.psc.r.memcpy(part.psc_gpu.r, stream_);
+    part.psc.v.memcpy(part.psc_gpu.v, stream_);
     part.en.memcpy(part.en_gpu, stream_);
     part.virial.memcpy(part.virial_gpu, stream_);
     event_[3].record(stream_);
@@ -312,8 +289,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     for (size_t i = 0; i < npart; ++i) {
 	en_pot += (part.en[i] - en_pot) / (i + 1);
 	virial += (part.virial[i] - virial) / (i + 1);
-	vel_cm += (part.psp.v[i] - vel_cm) / (i + 1);
-	vel2_sum += (part.psp.v[i] * part.psp.v[i] - vel2_sum) / (i + 1);
+	vel_cm += (part.psc.v[i] - vel_cm) / (i + 1);
+	vel2_sum += (part.psc.v[i] * part.psc.v[i] - vel2_sum) / (i + 1);
     }
 }
 
@@ -324,7 +301,7 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (size_t i = 0; i < npart; ++i) {
-	os << part.psp.r[i] << "\t" << part.psp.v[i] << "\n";
+	os << part.psc.r[i] << "\t" << part.psc.v[i] << "\n";
     }
     os << "\n\n";
 }
@@ -336,7 +313,7 @@ template <unsigned int NDIM, typename T>
 template <typename Y>
 void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
-    traj.write(part.psp.r, part.psp.v);
+    traj.write(part.psc.r, part.psc.v);
 }
 
 /**
@@ -345,7 +322,7 @@ void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::sample(autocorrelation<NDIM, T>& tcf) const
 {
-    tcf.sample(part.psp);
+    tcf.sample(part.psc);
 }
 
 /**

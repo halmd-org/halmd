@@ -125,8 +125,6 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
 }
 
 
-#ifdef USE_LEAPFROG
-
 /**
  * integrate equations of motion
  */
@@ -136,20 +134,6 @@ __global__ void inteq(T* r, T* v, T* f)
     // first leapfrog step as part of integration of equations of motion
     leapfrog_half_step(r[GTID], v[GTID], f[GTID]);
 }
-
-#else
-
-/**
- * integrate equations of motion
- */
-template <typename T>
-__global__ void inteq(T* r, T* rm, T* v, T* f)
-{
-    // Verlet integration of equations of motion
-    verlet_step(r[GTID], rm[GTID], v[GTID], f[GTID]);
-}
-
-#endif
 
 
 /**
@@ -163,9 +147,7 @@ __global__ void mdstep(T* r_, T* v_, T* f_, float* en_, float* virial_)
 
     // load particle associated with this thread
     T r = r_[GTID];
-#ifdef USE_LEAPFROG
     T v = v_[GTID];
-#endif
 
     // potential energy contribution
     float en = 0.;
@@ -195,15 +177,11 @@ __global__ void mdstep(T* r_, T* v_, T* f_, float* en_, float* virial_)
 	__syncthreads();
     }
 
-#ifdef USE_LEAPFROG
     // second leapfrog step as part of integration of equations of motion
     leapfrog_full_step(v, f);
-#endif
 
     // store particle associated with this thread
-#ifdef USE_LEAPFROG
     v_[GTID] = v;
-#endif
     f_[GTID] = f;
     en_[GTID] = en;
     virial_[GTID] = virial;
@@ -241,15 +219,8 @@ __global__ void lattice(T* part)
  * generate random n-dimensional Maxwell-Boltzmann distributed velocities
  */
 template <typename T>
-#ifdef USE_LEAPFROG
 __global__ void boltzmann(T* v_, float temp, ushort3* rng_)
-#else
-__global__ void boltzmann(T* v_, T* r_, T* rm_, float temp, ushort3* rng_)
-#endif
 {
-#ifndef USE_LEAPFROG
-    T r = r_[GTID];
-#endif
     T v;
     ushort3 rng = rng_[GTID];
 
@@ -261,11 +232,6 @@ __global__ void boltzmann(T* v_, T* r_, T* rm_, float temp, ushort3* rng_)
 
     rng_[GTID] = rng;
     v_[GTID] = v;
-
-#ifndef USE_LEAPFROG
-    // position previous time step for Verlet algorithm
-    rm_[GTID] = r - v * timestep;
-#endif
 }
 
 } // namespace mdsim
@@ -275,29 +241,15 @@ namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-
-#ifdef USE_LEAPFROG
 function<void (float3*, float3*, float3*)> inteq(mdsim::inteq);
 function<void (float3*, float, ushort3*)> boltzmann(mdsim::boltzmann);
-#else
-function<void (float3*, float3*, float3*, float3*)> inteq(mdsim::inteq);
-function<void (float3*, float3*, float3*, float, ushort3*)> boltzmann(mdsim::boltzmann);
-#endif
 function<void (float3*, float3*, float3*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float3*)> lattice(mdsim::lattice);
-
 #else
-
-#ifdef USE_LEAPFROG
 function<void (float2*, float2*, float2*)> inteq(mdsim::inteq);
 function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
-#else
-function<void (float2*, float2*, float2*, float2*)> inteq(mdsim::inteq);
-function<void (float2*, float2*, float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
-#endif
 function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float2*)> lattice(mdsim::lattice);
-
 #endif
 
 symbol<unsigned int> npart(mdsim::npart);
