@@ -96,7 +96,7 @@ public:
 	return block_shift_;
     }
 
-    unsigned int max_samples() const
+    uint64_t max_samples() const
     {
 	return max_samples_;
     }
@@ -137,7 +137,7 @@ private:
     /** block shift */
     unsigned int block_shift_;
     /** maximum number of samples per block */
-    unsigned int max_samples_;
+    uint64_t max_samples_;
     /** trajectory correlation functions output file */
     std::string tcf_output_;
 
