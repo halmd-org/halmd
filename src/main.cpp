@@ -18,10 +18,12 @@
 
 #include <iostream>
 #include <cuda_wrapper.hpp>
-#include "rand48.hpp"
+#include "autocorrelation.hpp"
+#include "exception.hpp"
 #include "ljfluid.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
+#include "rand48.hpp"
 #include "trajectory.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
@@ -48,12 +50,18 @@ int main(int argc, char **argv)
 #ifdef DIM_3D
     mdsim::ljfluid<3, vector3d<float> > fluid(opts.npart(), dim);
     mdsim::mdsim<3, vector3d<float> > sim;
-    mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts.output(), opts.npart(), opts.steps());
+    mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::autocorrelation<3, vector3d<float> > tcf(opts.block_count(), opts.block_size(), opts.block_shift(), opts.max_samples());
 #else
     mdsim::ljfluid<2, vector2d<float> > fluid(opts.npart(), dim);
     mdsim::mdsim<2, vector2d<float> > sim;
-    mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts.output(), opts.npart(), opts.steps());
+    mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::autocorrelation<2, vector2d<float> > tcf(opts.block_count(), opts.block_size(), opts.block_shift(), opts.max_samples());
 #endif
+
+    if (opts.steps() < tcf.min_samples()) {
+	throw mdsim::exception("less simulation steps than minimum required number of samples");
+    }
 
     rng.set(opts.rngseed());
 
@@ -77,9 +85,19 @@ int main(int argc, char **argv)
     timer.start();
 
     for (uint64_t i = 1; i <= opts.steps(); i++) {
-	sim.step(fluid);
+	try {
+	    sim.step(fluid);
+	}
+	catch (cuda::error const& e) {
+	    fprintf(stderr, PROGRAM_NAME ": CUDA ERROR: %s\n", e.what());
+	    return EXIT_FAILURE;
+	}
 
-	fluid.trajectories(traj);
+	fluid.sample(tcf);
+
+	if (i <= opts.max_samples()) {
+	    fluid.trajectories(traj);
+	}
 
 	if (i % opts.avgsteps())
 	    continue;
@@ -101,6 +119,8 @@ int main(int argc, char **argv)
 
 	sim.clear();
     }
+
+    tcf.write(opts.tcf_output(), opts.timestep());
 
     timer.stop();
     cerr << "GPU time: " << (fluid.gputime() * 1.E3) << "ms" << endl;
