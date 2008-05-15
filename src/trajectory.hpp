@@ -36,7 +36,7 @@ struct phase_space_point
     /** velocities of all particles in system */
     vector_type v;
 
-    phase_space_point(unsigned int N) : r(N), v(N) { }
+    phase_space_point(uint64_t N) : r(N), v(N) { }
 };
 
 
@@ -44,15 +44,14 @@ template <unsigned int NDIM, typename T>
 class trajectory
 {
 public:
-    trajectory(char const* path, unsigned int npart, unsigned int steps);
-
-    void write(T const& coord, T const& vel);
+    trajectory(char const* path, uint64_t npart, uint64_t steps);
+    void write(phase_space_point<T> const& p);
 
 private:
     H5::H5File file_;
-    unsigned int sets_;
-    const unsigned int npart_;
-    const unsigned int steps_;
+    const uint64_t npart_;
+    const uint64_t steps_;
+    uint64_t sets_;
     H5::DataSpace ds_;
     H5::DataSet dset_[2];
     H5::DataSpace ds_src_;
@@ -61,7 +60,7 @@ private:
 
 
 template <unsigned int NDIM, typename T>
-trajectory<NDIM, T>::trajectory(char const* path, unsigned int npart, unsigned int steps) : sets_(0), npart_(npart), steps_(steps)
+trajectory<NDIM, T>::trajectory(char const* path, uint64_t npart, uint64_t steps) : npart_(npart), steps_(steps), sets_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -77,13 +76,12 @@ trajectory<NDIM, T>::trajectory(char const* path, unsigned int npart, unsigned i
 
     hsize_t dim[1] = { 1 };
     H5::DataSpace ds(1, dim);
-    H5::FloatType dt(H5::PredType::NATIVE_UINT);
     H5::Group root(file_.openGroup("/"));
 
     unsigned int ndim = NDIM;
-    root.createAttribute("dimensions", dt, ds).write(dt, &ndim);
-    root.createAttribute("particles", dt, ds).write(dt, &npart_);
-    root.createAttribute("steps", dt, ds).write(dt, &steps_);
+    root.createAttribute("dimensions", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &ndim);
+    root.createAttribute("particles", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &npart_);
+    root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &steps_);
 
     hsize_t dim1[3] = { steps_, npart_, NDIM };
     ds_ = H5::DataSpace(3, dim1);
@@ -96,11 +94,11 @@ trajectory<NDIM, T>::trajectory(char const* path, unsigned int npart, unsigned i
 }
 
 template <unsigned int NDIM, typename T>
-void trajectory<NDIM, T>::write(T const& coord, T const& vel)
+void trajectory<NDIM, T>::write(phase_space_point<T> const& p)
 {
     assert(sets_ < steps_);
-    assert(coord.size() == npart_);
-    assert(vel.size() == npart_);
+    assert(p.r.size() == npart_);
+    assert(p.v.size() == npart_);
 
     hsize_t count[3]  = { 1, npart_, 1 };
     hsize_t start[3]  = { sets_, 0, 0 };
@@ -110,9 +108,9 @@ void trajectory<NDIM, T>::write(T const& coord, T const& vel)
     ds_dst_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     // coordinates
-    dset_[0].write(coord.data(), H5::PredType::NATIVE_FLOAT, ds_src_, ds_dst_);
+    dset_[0].write(p.r.data(), H5::PredType::NATIVE_FLOAT, ds_src_, ds_dst_);
     // velocities
-    dset_[1].write(vel.data(), H5::PredType::NATIVE_FLOAT, ds_src_, ds_dst_);
+    dset_[1].write(p.v.data(), H5::PredType::NATIVE_FLOAT, ds_src_, ds_dst_);
 
     sets_++;
 }

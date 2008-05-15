@@ -54,7 +54,7 @@ struct particle
     cuda::vector<float> virial_gpu;
     cuda::host::vector<float> virial;
 
-    particle(size_t n) : psc_gpu(n), psc(n), force_gpu(n), force(n), en_gpu(n), en(n), virial_gpu(n), virial(n) { }
+    particle(uint64_t n) : psc_gpu(n), psc(n), force_gpu(n), force(n), en_gpu(n), en(n), virial_gpu(n), virial(n) { }
 };
 
 
@@ -65,9 +65,9 @@ template <unsigned int NDIM, typename T>
 class ljfluid
 {
 public:
-    ljfluid(size_t npart, cuda::config const& dim);
+    ljfluid(uint64_t npart, cuda::config const& dim);
 
-    size_t particles() const;
+    uint64_t particles() const;
     float timestep();
     void timestep(float val);
     float density() const;
@@ -89,7 +89,7 @@ private:
 
 private:
     /** number of particles in periodic box */
-    size_t npart;
+    uint64_t npart;
     /** particles */
     particle<T> part;
     /** CUDA execution dimensions */
@@ -120,7 +120,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <unsigned int NDIM, typename T>
-ljfluid<NDIM, T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart), part(npart), dim_(dim), steps_(0), gputime_(0.), memtime_(0.)
+ljfluid<NDIM, T>::ljfluid(uint64_t npart, cuda::config const& dim) : npart(npart), part(npart), dim_(dim), steps_(0), gputime_(0.), memtime_(0.)
 {
     // FIXME do without this requirement
     assert(npart == dim_.threads());
@@ -144,7 +144,7 @@ ljfluid<NDIM, T>::ljfluid(size_t npart, cuda::config const& dim) : npart(npart),
  * get number of particles in periodic box
  */
 template <unsigned int NDIM, typename T>
-size_t ljfluid<NDIM, T>::particles() const
+uint64_t ljfluid<NDIM, T>::particles() const
 {
     return npart;
 }
@@ -286,7 +286,7 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     vel_cm = 0.;
     vel2_sum = 0.;
 
-    for (size_t i = 0; i < npart; ++i) {
+    for (uint64_t i = 0; i < npart; ++i) {
 	en_pot += (part.en[i] - en_pot) / (i + 1);
 	virial += (part.virial[i] - virial) / (i + 1);
 	vel_cm += (part.psc.v[i] - vel_cm) / (i + 1);
@@ -300,7 +300,7 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
 template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
-    for (size_t i = 0; i < npart; ++i) {
+    for (uint64_t i = 0; i < npart; ++i) {
 	os << part.psc.r[i] << "\t" << part.psc.v[i] << "\n";
     }
     os << "\n\n";
@@ -313,7 +313,7 @@ template <unsigned int NDIM, typename T>
 template <typename Y>
 void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
-    traj.write(part.psc.r, part.psc.v);
+    traj.write(part.psc);
 }
 
 /**

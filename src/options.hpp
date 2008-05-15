@@ -51,7 +51,7 @@ public:
 
     void parse(int argc, char** argv);
 
-    unsigned int npart() const
+    uint64_t npart() const
     {
 	return npart_;
     }
@@ -133,7 +133,7 @@ public:
 
 private:
     /** number of particles */
-    unsigned int npart_;
+    uint64_t npart_;
     /** density */
     float density_;
     /** simulation timestep */
