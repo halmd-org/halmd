@@ -69,7 +69,7 @@ private:
 
 public:
     autocorrelation(options const& opts);
-    unsigned int min_samples();
+    uint64_t min_samples();
     void sample(phase_space_type const& p);
     void write(char const* path, float timestep);
 
@@ -89,7 +89,7 @@ private:
     unsigned int block_count;
     unsigned int block_size;
     unsigned int block_shift;
-    unsigned int max_samples;
+    uint64_t max_samples;
 };
 
 
@@ -143,9 +143,9 @@ autocorrelation<NDIM, T>::autocorrelation(options const& opts)
  * minimum number of samples required to autocorrelate all blocks at least once
  */
 template <int NDIM, typename T>
-unsigned int autocorrelation<NDIM, T>::min_samples()
+uint64_t autocorrelation<NDIM, T>::min_samples()
 {
-    return powf(block_size, block_count / 2) * block_shift;
+    return pow(block_size, block_count / 2) * block_shift;
 }
 
 
@@ -246,7 +246,7 @@ void autocorrelation<NDIM, T>::write(char const* path, float timestep)
 	root.createAttribute("block_count", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_count);
 	root.createAttribute("block_size", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_size);
 	root.createAttribute("block_shift", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_shift);
-	root.createAttribute("max_samples", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &max_samples);
+	root.createAttribute("max_samples", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write block parameters to correlations file");
