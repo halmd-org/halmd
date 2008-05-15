@@ -26,27 +26,27 @@
 int main(int argc, char** argv)
 {
 #ifdef DIM_3D
+    mdsim::phase_space_point<cuda::host::vector<float3> > p(0);
     mdsim::trajectory<3, cuda::host::vector<float3> > traj("ljfluid3d.trj", ATOMS, STEPS);
-    cuda::host::vector<float3> r(0), v(0);
 #else
+    mdsim::phase_space_point<cuda::host::vector<float2> > p(0);
     mdsim::trajectory<2, cuda::host::vector<float2> > traj("ljfluid2d.trj", ATOMS, STEPS);
-    cuda::host::vector<float2> r(0), v(0);
 #endif
 
     srand48(42);
     for (size_t i = 0; i < STEPS; ++i) {
 	for (size_t j = 0; j < ATOMS; ++j) {
 #ifdef DIM_3D
-	    r.push_back(make_float3(drand48() * 10., drand48() * 0.01 + 3.14, drand48() * 0.01 + 42.));
-	    v.push_back(make_float3(drand48() - 0.5, (drand48() - 0.5) * 0.01 - 3.14, (drand48() - 0.5) - 42.));
+	    p.r.push_back(make_float3(drand48() * 10., drand48() * 0.01 + 3.14, drand48() * 0.01 + 42.));
+	    p.v.push_back(make_float3(drand48() - 0.5, (drand48() - 0.5) * 0.01 - 3.14, (drand48() - 0.5) - 42.));
 #else
-	    r.push_back(make_float2(drand48() * 10., drand48() * 0.01 + 42.));
-	    v.push_back(make_float2(drand48() - 0.5, (drand48() - 0.5) - 42.));
+	    p.r.push_back(make_float2(drand48() * 10., drand48() * 0.01 + 42.));
+	    p.v.push_back(make_float2(drand48() - 0.5, (drand48() - 0.5) - 42.));
 #endif
 	}
-	traj.write(r, v);
-	r.clear();
-	v.clear();
+	traj.write(p);
+	p.r.clear();
+	p.v.clear();
     }
 
     return EXIT_SUCCESS;
