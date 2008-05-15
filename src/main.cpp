@@ -49,12 +49,12 @@ int main(int argc, char **argv)
     mdsim::ljfluid<3, vector3d<double> > fluid(opts.npart());
     mdsim::mdsim<3, vector3d<double> > sim;
     mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
-    mdsim::autocorrelation<3, vector3d<double> > tcf(opts.block_count(), opts.block_size(), opts.block_shift(), opts.max_samples());
+    mdsim::autocorrelation<3, vector3d<double> > tcf(opts);
 #else
     mdsim::ljfluid<2, vector2d<double> > fluid(opts.npart());
     mdsim::mdsim<2, vector2d<double> > sim;
     mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
-    mdsim::autocorrelation<2, vector2d<double> > tcf(opts.block_count(), opts.block_size(), opts.block_shift(), opts.max_samples());
+    mdsim::autocorrelation<2, vector2d<double> > tcf(opts);
 #endif
 
     if (opts.steps() < tcf.min_samples()) {

@@ -28,6 +28,7 @@
 #include <H5Cpp.h>
 #include "accumulator.hpp"
 #include "exception.hpp"
+#include "options.hpp"
 #include "tcf.hpp"
 #include "trajectory.hpp"
 
@@ -66,7 +67,7 @@ private:
     typedef typename std::vector<result_type>::const_iterator result_const_iterator;
 
 public:
-    autocorrelation(unsigned int block_count, unsigned int block_size, unsigned int block_shift, unsigned int max_samples);
+    autocorrelation(options const& opts);
     unsigned int min_samples();
     void sample(phase_space_type const& p);
     void write(char const* path, double timestep);
@@ -92,22 +93,27 @@ private:
 
 
 template <int NDIM, typename T>
-autocorrelation<NDIM, T>::autocorrelation(unsigned int block_count, unsigned int block_size, unsigned int block_shift, unsigned int max_samples)
-: block_count(block_count), block_size(block_size), block_shift(block_shift), max_samples(max_samples)
+autocorrelation<NDIM, T>::autocorrelation(options const& opts)
 {
     // validate block parameters
-    if (block_count < 2 || block_count % 2) {
+    if (opts.block_count() < 2 || opts.block_count() % 2) {
 	throw exception("block count must be at least 2 and even");
     }
-    if (block_size < 3) {
+    if (opts.block_size() < 3) {
 	throw exception("block size must be at least 3");
     }
-    if (block_shift < 2) {
+    if (opts.block_shift() < 2) {
 	throw exception("block shift must be at least 2");
     }
-    if (max_samples < block_size) {
+    if (opts.max_samples() < opts.block_size()) {
 	throw exception("maximum number of samples must not be smaller than block size");
     }
+
+    // set block parameters
+    block_count = opts.block_count();
+    block_size = opts.block_size();
+    block_shift = opts.block_shift();
+    max_samples = opts.max_samples();
 
     // allocate phase space sample blocks
     try {
