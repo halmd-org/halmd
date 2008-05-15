@@ -70,9 +70,9 @@ protected:
     typedef typename cell_array<list_type, T>::const_iterator cell_const_iterator;
 
 public:
-    ljfluid(size_t npart);
+    ljfluid(uint64_t npart);
 
-    size_t particles() const;
+    uint64_t particles() const;
     double timestep();
     void timestep(double val);
     double density() const;
@@ -107,7 +107,7 @@ private:
 
 private:
     /** number of particles in periodic box */
-    size_t npart;
+    uint64_t npart;
     /** cell lists */
     cell_array<list_type, T> cells;
     /** number of cells along 1 dimension */
@@ -144,7 +144,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <unsigned int NDIM, typename T>
-ljfluid<NDIM, T>::ljfluid(size_t npart) : npart(npart), part_(npart)
+ljfluid<NDIM, T>::ljfluid(uint64_t npart) : npart(npart), part_(npart)
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     // Frenkel
@@ -169,7 +169,7 @@ ljfluid<NDIM, T>::ljfluid(size_t npart) : npart(npart), part_(npart)
  * get number of particles in periodic box
  */
 template <unsigned int NDIM, typename T>
-size_t ljfluid<NDIM, T>::particles() const
+uint64_t ljfluid<NDIM, T>::particles() const
 {
     return npart;
 }
@@ -286,7 +286,7 @@ template <unsigned int NDIM, typename T>
 template <typename Y>
 void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
 {
-    traj.write(part_.r, part_.v);
+    traj.write(part_);
 }
 
 /**
