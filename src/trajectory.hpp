@@ -26,6 +26,20 @@
 
 namespace mdsim {
 
+template <typename T>
+struct phase_space_point
+{
+    typedef T vector_type;
+
+    /** coordinates of all particles in system */
+    vector_type r;
+    /** velocities of all particles in system */
+    vector_type v;
+
+    phase_space_point(unsigned int N) : r(N), v(N) { }
+};
+
+
 template <unsigned int NDIM, typename T>
 class trajectory
 {
