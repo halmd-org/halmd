@@ -127,6 +127,7 @@ namespace mdsim {
  */
 options::options()
 {
+    // MD simulation parameters
     npart_ = 4096;
     density_ = 0.05;
     timestep_ = 0.005;
@@ -134,10 +135,19 @@ options::options()
     steps_ = 1000;
     avgsteps_ = 100;
 
+    // Autocorrelation options
+    block_count_ = 6;
+    block_size_ = 6;
+    block_shift_ = 2;
+    max_samples_ = 1000;
+    tcf_output_ = PROGRAM_NAME ".tcf";
+
+    // CUDA options
     device_ = 0;
     blocks_ = 32;
     threads_ = 128;
 
+    // Other options
     rngseed_ = 123;
     output_ = PROGRAM_NAME ".trj";
 }
@@ -157,6 +167,15 @@ void options::parse(int argc, char** argv)
 	("average,S", po::value(&avgsteps_), "number of average accumulation steps")
 	;
 
+    po::options_description tcf_opts("Autocorrelation options");
+    tcf_opts.add_options()
+	("block-count", po::value(&block_count_), "block count")
+	("block-size", po::value(&block_size_), "block size")
+	("block-shift", po::value(&block_shift_), "block shift")
+	("max-samples", po::value(&max_samples_), "maximum number of samples per block")
+	("tcf-output", po::value(&tcf_output_), "trajectory correlation functions output file")
+	;
+
     po::options_description cuda_opts("CUDA options");
     cuda_opts.add_options()
 	("device,D", po::value(&device_), "CUDA device")
@@ -174,7 +193,7 @@ void options::parse(int argc, char** argv)
 	;
 
     po::options_description opts;
-    opts.add(mdsim_opts).add(cuda_opts).add(misc_opts);
+    opts.add(mdsim_opts).add(tcf_opts).add(cuda_opts).add(misc_opts);
 
     po::variables_map vm;
 

@@ -81,6 +81,31 @@ public:
 	return avgsteps_;
     }
 
+    unsigned int block_count() const
+    {
+	return block_count_;
+    }
+
+    unsigned int block_size() const
+    {
+	return block_size_;
+    }
+
+    unsigned int block_shift() const
+    {
+	return block_shift_;
+    }
+
+    unsigned int max_samples() const
+    {
+	return max_samples_;
+    }
+
+    char const* tcf_output() const
+    {
+	return tcf_output_.c_str();
+    }
+
     unsigned int device() const
     {
 	return device_;
@@ -119,12 +144,25 @@ private:
     uint64_t steps_;
     /** number of steps for average accumulation */
     uint64_t avgsteps_;
+
+    /** block count */
+    unsigned int block_count_;
+    /** block size */
+    unsigned int block_size_;
+    /** block shift */
+    unsigned int block_shift_;
+    /** maximum number of samples per block */
+    unsigned int max_samples_;
+    /** trajectory correlation functions output file */
+    std::string tcf_output_;
+
     /** CUDA device */
     unsigned int device_;
     /** number of blocks per grid */
     unsigned int blocks_;
     /** number of threads per block */
     unsigned int threads_;
+
     /** random number generator seed */
     unsigned int rngseed_;
     /** trajectory output file */
