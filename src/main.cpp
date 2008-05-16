@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <cuda_wrapper.hpp>
+#include <iostream>
 #include "autocorrelation.hpp"
 #include "exception.hpp"
 #include "ljfluid.hpp"
@@ -82,6 +83,9 @@ int main(int argc, char **argv)
     cout << endl;
 
     mdsim::timer timer;
+    boost::posix_time::ptime time_start = boost::posix_time::second_clock::local_time();
+    mdsim::accumulator<float> time_estimated;
+
     timer.start();
 
     for (uint64_t i = 1; i <= opts.steps(); i++) {
@@ -98,6 +102,13 @@ int main(int argc, char **argv)
 
 	if (i % opts.avgsteps())
 	    continue;
+
+	// compute elapsed time since start of simulation
+	float time_elapsed = (boost::posix_time::second_clock::local_time() - time_start).total_seconds();
+	// accumulate estimated finish time
+	time_estimated += time_elapsed * opts.steps() / i;
+	// print mean average of estimated finish time
+	cerr << "\r" << "Estimated finish time:\t" << time_start + boost::posix_time::seconds(time_estimated.mean());
 
 	cout << "## steps(" << i << ")" << endl;
 
@@ -120,9 +131,10 @@ int main(int argc, char **argv)
     tcf.write(opts.correlations_output_file(), opts.timestep());
 
     timer.stop();
-    cerr << "GPU time: " << (fluid.gputime() * 1.E3) << "ms" << endl;
-    cerr << "Device memory transfer time: " << (fluid.memtime() * 1.E3) << "ms" << endl;
-    cerr << "Elapsed time: " << (timer.elapsed() * 1.E3) << "ms" << endl;
+
+    cerr << "\n\n" << "GPU time: " << fluid.gputime() << "s" << endl;
+    cerr << "Device memory transfer time: " << fluid.memtime() << "s" << endl;
+    cerr << "Elapsed time: " << timer.elapsed() << "s" << endl;
 
     return EXIT_SUCCESS;
 }
