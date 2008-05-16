@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 	sim.step(fluid);
 
 	fluid.sample(tcf);
-	fluid.trajectories(traj);
+	fluid.sample(traj);
 
 	if (i % opts.avgsteps())
 	    continue;

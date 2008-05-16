@@ -24,10 +24,7 @@
 #include <algorithm>
 #include <iostream>
 #include <math.h>
-#include "autocorrelation.hpp"
 #include "cell_array.hpp"
-#include "exception.hpp"
-#include "trajectory.hpp"
 
 
 namespace mdsim
@@ -83,9 +80,8 @@ public:
 
     void step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum);
     void trajectories(std::ostream& os) const;
-    template <typename Y>
-    void trajectories(trajectory<NDIM, Y>& traj) const;
-    void sample(autocorrelation<NDIM, T>& tcf) const;
+    template <typename V>
+    void sample(V& visitor) const;
 
 private:
     void leapfrog_half();
@@ -280,22 +276,13 @@ void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 }
 
 /**
- * write particle coordinates and velocities to binary HDF5 file
+ * sample trajectory
  */
 template <unsigned int NDIM, typename T>
-template <typename Y>
-void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
+template <typename V>
+void ljfluid<NDIM, T>::sample(V& visitor) const
 {
-    traj.write(part_);
-}
-
-/**
- * sample trajectory for autocorrelation
- */
-template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::sample(autocorrelation<NDIM, T>& tcf) const
-{
-    tcf.sample(part_);
+    visitor.sample(part_);
 }
 
 /**

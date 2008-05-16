@@ -47,7 +47,7 @@ class trajectory
 {
 public:
     trajectory(options const& opts);
-    void write(phase_space_point<T> const& p);
+    void sample(phase_space_point<T> const& p);
 
 private:
     H5::H5File file_;
@@ -95,7 +95,7 @@ trajectory<NDIM, T>::trajectory(options const& opts) : npart_(opts.npart()), max
 }
 
 template <unsigned int NDIM, typename T>
-void trajectory<NDIM, T>::write(phase_space_point<T> const& p)
+void trajectory<NDIM, T>::sample(phase_space_point<T> const& p)
 {
     if (samples_ >= max_samples_)
 	return;
