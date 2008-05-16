@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 	}
 
 	fluid.sample(tcf);
-	fluid.trajectories(traj);
+	fluid.sample(traj);
 
 	if (i % opts.avgsteps())
 	    continue;

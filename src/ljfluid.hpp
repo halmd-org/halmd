@@ -24,10 +24,8 @@
 #include <algorithm>
 #include <cuda_wrapper.hpp>
 #include "gpu/ljfluid_glue.hpp"
-#include "autocorrelation.hpp"
 #include "exception.hpp"
 #include "rand48.hpp"
-#include "trajectory.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 
@@ -79,9 +77,8 @@ public:
 
     void step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum);
     void trajectories(std::ostream& os) const;
-    template <typename Y>
-    void trajectories(trajectory<NDIM, Y>& traj) const;
-    void sample(autocorrelation<NDIM, T>& tcf) const;
+    template <typename V>
+    void sample(V& visitor) const;
 
     float gputime() const;
     float memtime() const;
@@ -310,22 +307,13 @@ void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 }
 
 /**
- * write particle coordinates and velocities to binary HDF5 file
+ * sample trajectory
  */
 template <unsigned int NDIM, typename T>
-template <typename Y>
-void ljfluid<NDIM, T>::trajectories(trajectory<NDIM, Y>& traj) const
+template <typename V>
+void ljfluid<NDIM, T>::sample(V& visitor) const
 {
-    traj.write(part.psc);
-}
-
-/**
- * sample trajectory for autocorrelation
- */
-template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::sample(autocorrelation<NDIM, T>& tcf) const
-{
-    tcf.sample(part.psc);
+    visitor.sample(part.psc);
 }
 
 /**
