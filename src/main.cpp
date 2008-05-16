@@ -103,12 +103,14 @@ int main(int argc, char **argv)
 	if (i % opts.avgsteps())
 	    continue;
 
-	// compute elapsed time since start of simulation
-	float time_elapsed = (boost::posix_time::second_clock::local_time() - time_start).total_seconds();
-	// accumulate estimated finish time
-	time_estimated += time_elapsed * opts.steps() / i;
-	// print mean average of estimated finish time
-	cerr << "\r" << "Estimated finish time:\t" << time_start + boost::posix_time::seconds(time_estimated.mean());
+	if (!opts.quiet())  {
+	    // compute elapsed time since start of simulation
+	    float time_elapsed = (boost::posix_time::second_clock::local_time() - time_start).total_seconds();
+	    // accumulate estimated finish time
+	    time_estimated += time_elapsed * opts.steps() / i;
+	    // print mean average of estimated finish time
+	    cerr << "\r" << "Estimated finish time:\t" << time_start + boost::posix_time::seconds(time_estimated.mean());
+	}
 
 	cout << "## steps(" << i << ")" << endl;
 
@@ -133,7 +135,11 @@ int main(int argc, char **argv)
 
     timer.stop();
 
-    cerr << "\n\n" << "GPU time: " << fluid.gputime() << "s" << endl;
+    if (!opts.quiet()) {
+	cerr << "\n\n";
+    }
+
+    cerr << "GPU time: " << fluid.gputime() << "s" << endl;
     cerr << "Device memory transfer time: " << fluid.memtime() << "s" << endl;
     cerr << "Elapsed time: " << timer.elapsed() << "s" << endl;
 

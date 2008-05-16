@@ -131,6 +131,11 @@ public:
 	return output_file_prefix_ + ".trj";
     }
 
+    bool quiet() const
+    {
+	return quiet_;
+    }
+
 private:
     /** number of particles */
     uint64_t npart_;
@@ -165,6 +170,8 @@ private:
     unsigned int rngseed_;
     /** output file prefix */
     std::string output_file_prefix_;
+    /** suppress status output */
+    bool quiet_;
 };
 
 } // namespace mdsim
