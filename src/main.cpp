@@ -48,12 +48,12 @@ int main(int argc, char **argv)
 #ifdef DIM_3D
     mdsim::ljfluid<3, vector3d<double> > fluid(opts.npart());
     mdsim::mdsim<3, vector3d<double> > sim;
-    mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts.trajectory_output_file(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts);
     mdsim::autocorrelation<3, vector3d<double> > tcf(opts);
 #else
     mdsim::ljfluid<2, vector2d<double> > fluid(opts.npart());
     mdsim::mdsim<2, vector2d<double> > sim;
-    mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts.trajectory_output_file(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts);
     mdsim::autocorrelation<2, vector2d<double> > tcf(opts);
 #endif
 
@@ -80,10 +80,7 @@ int main(int argc, char **argv)
 	sim.step(fluid);
 
 	fluid.sample(tcf);
-
-	if (i <= opts.max_samples()) {
-	    fluid.trajectories(traj);
-	}
+	fluid.trajectories(traj);
 
 	if (i % opts.avgsteps())
 	    continue;

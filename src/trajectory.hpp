@@ -20,8 +20,10 @@
 #define MDSIM_TRAJECTORY_HPP
 
 #include <H5Cpp.h>
-#include "exception.hpp"
+#include <algorithm>
 #include <assert.h>
+#include "exception.hpp"
+#include "options.hpp"
 
 
 namespace mdsim {
@@ -44,14 +46,14 @@ template <unsigned int NDIM, typename T>
 class trajectory
 {
 public:
-    trajectory(std::string const& path, uint64_t npart, uint64_t steps);
+    trajectory(options const& opts);
     void write(phase_space_point<T> const& p);
 
 private:
     H5::H5File file_;
     const uint64_t npart_;
-    const uint64_t steps_;
-    uint64_t sets_;
+    const uint64_t max_samples_;
+    uint64_t samples_;
     H5::DataSpace ds_;
     H5::DataSet dset_[2];
     H5::DataSpace ds_src_;
@@ -60,7 +62,7 @@ private:
 
 
 template <unsigned int NDIM, typename T>
-trajectory<NDIM, T>::trajectory(std::string const& path, uint64_t npart, uint64_t steps) : npart_(npart), steps_(steps), sets_(0)
+trajectory<NDIM, T>::trajectory(options const& opts) : npart_(opts.npart()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -68,7 +70,7 @@ trajectory<NDIM, T>::trajectory(std::string const& path, uint64_t npart, uint64_
 #endif
 
     try {
-	file_ = H5::H5File(path, H5F_ACC_TRUNC);
+	file_ = H5::H5File(opts.trajectory_output_file(), H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create HDF5 trajectory file");
@@ -80,9 +82,9 @@ trajectory<NDIM, T>::trajectory(std::string const& path, uint64_t npart, uint64_
     unsigned int ndim = NDIM;
     root.createAttribute("dimensions", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &ndim);
     root.createAttribute("particles", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &npart_);
-    root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &steps_);
+    root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples_);
 
-    hsize_t dim1[3] = { steps_, npart_, NDIM };
+    hsize_t dim1[3] = { max_samples_, npart_, NDIM };
     ds_ = H5::DataSpace(3, dim1);
     dset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_DOUBLE, ds_);
     dset_[1] = file_.createDataSet("velocity", H5::PredType::NATIVE_DOUBLE, ds_);
@@ -95,12 +97,14 @@ trajectory<NDIM, T>::trajectory(std::string const& path, uint64_t npart, uint64_
 template <unsigned int NDIM, typename T>
 void trajectory<NDIM, T>::write(phase_space_point<T> const& p)
 {
-    assert(sets_ < steps_);
+    if (samples_ >= max_samples_)
+	return;
+
     assert(p.r.size() == npart_);
     assert(p.v.size() == npart_);
 
     hsize_t count[3]  = { 1, npart_, 1 };
-    hsize_t start[3]  = { sets_, 0, 0 };
+    hsize_t start[3]  = { samples_, 0, 0 };
     hsize_t stride[3] = { 1, 1, 1 };
     hsize_t block[3]  = { 1, 1, NDIM };
 
@@ -111,7 +115,7 @@ void trajectory<NDIM, T>::write(phase_space_point<T> const& p)
     // velocities
     dset_[1].write(p.v.data(), H5::PredType::NATIVE_DOUBLE, ds_src_, ds_dst_);
 
-    sets_++;
+    samples_++;
 }
 
 } // namespace mdsim
