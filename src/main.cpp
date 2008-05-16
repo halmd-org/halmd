@@ -50,12 +50,12 @@ int main(int argc, char **argv)
 #ifdef DIM_3D
     mdsim::ljfluid<3, vector3d<float> > fluid(opts.npart(), dim);
     mdsim::mdsim<3, vector3d<float> > sim;
-    mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts.trajectory_output_file(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
     mdsim::autocorrelation<3, vector3d<float> > tcf(opts);
 #else
     mdsim::ljfluid<2, vector2d<float> > fluid(opts.npart(), dim);
     mdsim::mdsim<2, vector2d<float> > sim;
-    mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts.trajectory_output_file(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
     mdsim::autocorrelation<2, vector2d<float> > tcf(opts);
 #endif
 
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 	sim.clear();
     }
 
-    tcf.write(opts.tcf_output(), opts.timestep());
+    tcf.write(opts.correlations_output_file(), opts.timestep());
 
     timer.stop();
     cerr << "GPU time: " << (fluid.gputime() * 1.E3) << "ms" << endl;

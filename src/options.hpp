@@ -101,11 +101,6 @@ public:
 	return max_samples_;
     }
 
-    char const* tcf_output() const
-    {
-	return tcf_output_.c_str();
-    }
-
     unsigned int device() const
     {
 	return device_;
@@ -126,9 +121,14 @@ public:
 	return rngseed_;
     }
 
-    char const* output() const
+    char const* correlations_output_file() const
     {
-	return output_.c_str();
+	return (output_file_prefix_ + ".tcf").c_str();
+    }
+
+    char const* trajectory_output_file() const
+    {
+	return (output_file_prefix_ + ".trj").c_str();
     }
 
 private:
@@ -153,8 +153,6 @@ private:
     unsigned int block_shift_;
     /** maximum number of samples per block */
     uint64_t max_samples_;
-    /** trajectory correlation functions output file */
-    std::string tcf_output_;
 
     /** CUDA device */
     unsigned int device_;
@@ -165,8 +163,8 @@ private:
 
     /** random number generator seed */
     unsigned int rngseed_;
-    /** trajectory output file */
-    std::string output_;
+    /** output file prefix */
+    std::string output_file_prefix_;
 };
 
 } // namespace mdsim
