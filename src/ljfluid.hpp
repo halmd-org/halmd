@@ -310,8 +310,6 @@ void ljfluid<NDIM, T>::leapfrog_half()
 	    it->vel += it->force * (timestep_ / 2.);
 	    // full step coordinates
 	    it->pos += it->vel * timestep_;
-	    // enforce periodic boundary conditions
-	    it->pos -= floor(it->pos / box_) * box_;
 
 	    // if particles are moving more than cutoff length in timestep,
 	    // something is really fishy...
@@ -363,8 +361,10 @@ void ljfluid<NDIM, T>::update_cells()
 	    list_iterator it_old = it;
 	    ++it;
 
+	    // enforce periodic boundary conditions
+	    T pos = it_old->pos - floor(it_old->pos / box_) * box_;
 	    // update cell lists
-	    list_type& cell_ = cells(it_old->pos / cell_len);
+	    list_type& cell_ = cells(pos / cell_len);
 	    if (&cell_ != &(*cell)) {
 		cell_.splice(cell_.end(), *cell, it_old);
 	    }
