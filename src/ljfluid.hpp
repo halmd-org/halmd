@@ -44,6 +44,8 @@ struct particle
     /** n-dimensional particle phase space coordiates */
     phase_space_point<cuda::vector<T> > psc_gpu;
     phase_space_point<cuda::host::vector<T> > psc;
+    /** periodically reduced particle coordinates */
+    cuda::vector<T> rp_gpu;
     /** n-dimensional force acting upon particle */
     cuda::vector<T> force_gpu;
     cuda::host::vector<T> force;
@@ -54,7 +56,7 @@ struct particle
     cuda::vector<float> virial_gpu;
     cuda::host::vector<float> virial;
 
-    particle(uint64_t n) : psc_gpu(n), psc(n), force_gpu(n), force(n), en_gpu(n), en(n), virial_gpu(n), virial(n) { }
+    particle(uint64_t n) : psc_gpu(n), psc(n), rp_gpu(n), force_gpu(n), force(n), en_gpu(n), en(n), virial_gpu(n), virial(n) { }
 };
 
 
@@ -194,6 +196,7 @@ void ljfluid<NDIM, T>::density(float density_)
     gpu::ljfluid::lattice(cuda_cast(part.psc_gpu.r));
 
     part.psc.r.memcpy(part.psc_gpu.r, stream_);
+    part.rp_gpu.memcpy(part.psc_gpu.r, stream_);
     stream_.synchronize();
 }
 
@@ -244,10 +247,10 @@ void ljfluid<NDIM, T>::step()
 {
     event_[0].record(stream_);
     gpu::ljfluid::inteq.configure(dim_, stream_);
-    gpu::ljfluid::inteq(cuda_cast(part.psc_gpu.r), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu));
+    gpu::ljfluid::inteq(cuda_cast(part.psc_gpu.r), cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu));
     // reserve shared device memory for particle coordinates
     gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
-    gpu::ljfluid::mdstep(cuda_cast(part.psc_gpu.r), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
+    gpu::ljfluid::mdstep(cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
     event_[1].record(stream_);
 }
 

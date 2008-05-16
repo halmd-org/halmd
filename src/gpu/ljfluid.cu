@@ -73,12 +73,16 @@ __device__ void verlet_step(T& r, T& rm, T& v, T const& f)
  * first leapfrog step of integration of equations of motion
  */
 template <typename T>
-__device__ void leapfrog_half_step(T& r, T& v, T const& f)
+__device__ void leapfrog_half_step(T& r, T& rp, T& v, T const& f)
 {
     // half step velocity
     v += f * (timestep / 2);
     // full step coordinates
-    r += v * timestep;
+    T dr = v * timestep;
+    r += dr;
+    rp += dr;
+    // enforce periodic boundary conditions
+    rp -= floorf(rp / box) * box;
 }
 
 
@@ -129,10 +133,10 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
  * integrate equations of motion
  */
 template <typename T>
-__global__ void inteq(T* r, T* v, T* f)
+__global__ void inteq(T* r, T* rp, T* v, T* f)
 {
     // first leapfrog step as part of integration of equations of motion
-    leapfrog_half_step(r[GTID], v[GTID], f[GTID]);
+    leapfrog_half_step(r[GTID], rp[GTID], v[GTID], f[GTID]);
 }
 
 
@@ -241,12 +245,12 @@ namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-function<void (float3*, float3*, float3*)> inteq(mdsim::inteq);
+function<void (float3*, float3*, float3*, float3*)> inteq(mdsim::inteq);
 function<void (float3*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 function<void (float3*, float3*, float3*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float3*)> lattice(mdsim::lattice);
 #else
-function<void (float2*, float2*, float2*)> inteq(mdsim::inteq);
+function<void (float2*, float2*, float2*, float2*)> inteq(mdsim::inteq);
 function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float2*)> lattice(mdsim::lattice);
