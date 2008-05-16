@@ -44,7 +44,7 @@ template <unsigned int NDIM, typename T>
 class trajectory
 {
 public:
-    trajectory(char const* path, uint64_t npart, uint64_t steps);
+    trajectory(std::string const& path, uint64_t npart, uint64_t steps);
     void write(phase_space_point<T> const& p);
 
 private:
@@ -60,7 +60,7 @@ private:
 
 
 template <unsigned int NDIM, typename T>
-trajectory<NDIM, T>::trajectory(char const* path, uint64_t npart, uint64_t steps) : npart_(npart), steps_(steps), sets_(0)
+trajectory<NDIM, T>::trajectory(std::string const& path, uint64_t npart, uint64_t steps) : npart_(npart), steps_(steps), sets_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library

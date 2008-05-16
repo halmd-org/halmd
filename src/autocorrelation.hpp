@@ -25,6 +25,7 @@
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
 #include <cuda_wrapper.hpp>
+#include <string>
 #include <vector>
 #include <H5Cpp.h>
 #include "accumulator.hpp"
@@ -71,7 +72,7 @@ public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
     void sample(phase_space_type const& p);
-    void write(char const* path, float timestep);
+    void write(std::string const& path, float timestep);
 
 private:
     void sample(phase_space_type const& p, unsigned int offset);
@@ -224,7 +225,7 @@ float autocorrelation<NDIM, T>::timegrid(unsigned int block, unsigned int sample
  * write correlation function results to HDF5 file
  */
 template <int NDIM, typename T>
-void autocorrelation<NDIM, T>::write(char const* path, float timestep)
+void autocorrelation<NDIM, T>::write(std::string const& path, float timestep)
 {
     H5::H5File file;
 
