@@ -48,12 +48,12 @@ int main(int argc, char **argv)
 #ifdef DIM_3D
     mdsim::ljfluid<3, vector3d<double> > fluid(opts.npart());
     mdsim::mdsim<3, vector3d<double> > sim;
-    mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts.trajectory_output_file(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
     mdsim::autocorrelation<3, vector3d<double> > tcf(opts);
 #else
     mdsim::ljfluid<2, vector2d<double> > fluid(opts.npart());
     mdsim::mdsim<2, vector2d<double> > sim;
-    mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts.output(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
+    mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts.trajectory_output_file(), opts.npart(), min(opts.steps(), uint64_t(opts.max_samples())));
     mdsim::autocorrelation<2, vector2d<double> > tcf(opts);
 #endif
 
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 	sim.clear();
     }
 
-    tcf.write(opts.tcf_output(), opts.timestep());
+    tcf.write(opts.correlations_output_file(), opts.timestep());
 
     timer.stop();
     cerr << "Elapsed time: " << (timer.elapsed() * 1.E3) << "ms" << endl;

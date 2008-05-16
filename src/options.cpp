@@ -140,11 +140,10 @@ options::options()
     block_size_ = 6;
     block_shift_ = 2;
     max_samples_ = 1000;
-    tcf_output_ = PROGRAM_NAME ".tcf";
 
     // Other options
     rngseed_ = 123;
-    output_ = PROGRAM_NAME ".trj";
+    output_file_prefix_ = PROGRAM_NAME;
 }
 
 /**
@@ -168,14 +167,13 @@ void options::parse(int argc, char** argv)
 	("block-size", po::value(&block_size_), "block size")
 	("block-shift", po::value(&block_shift_), "block shift")
 	("max-samples", po::value(&max_samples_), "maximum number of samples per block")
-	("tcf-output", po::value(&tcf_output_), "trajectory correlation functions output file")
 	;
 
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
 	("seed,R", po::value(&rngseed_), "random number generator integer seed")
 	("input,i", po::value<vector<string> >(), "parameter input file")
-	("output,o", po::value(&output_), "trajectory output file")
+	("output,o", po::value(&output_file_prefix_), "output file prefix")
 	("version,V", "output version and exit")
 	("help,h", "display this help and exit")
 	;
