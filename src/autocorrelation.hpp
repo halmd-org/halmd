@@ -99,8 +99,8 @@ template <int NDIM, typename T>
 autocorrelation<NDIM, T>::autocorrelation(options const& opts)
 {
     // validate block parameters
-    if (opts.block_count() < 2 || opts.block_count() % 2) {
-	throw exception("block count must be at least 2 and even");
+    if (opts.block_count() < 1) {
+	throw exception("block count must be at least 1");
     }
     if (opts.block_size() < 3) {
 	throw exception("block size must be at least 3");
@@ -113,7 +113,7 @@ autocorrelation<NDIM, T>::autocorrelation(options const& opts)
     }
 
     // set block parameters
-    block_count = opts.block_count();
+    block_count = 2 * opts.block_count();
     block_size = opts.block_size();
     block_shift = opts.block_shift();
     max_samples = opts.max_samples();
