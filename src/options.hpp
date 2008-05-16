@@ -101,19 +101,19 @@ public:
 	return max_samples_;
     }
 
+    std::string correlations_output_file() const
+    {
+	return output_file_prefix_ + ".tcf";
+    }
+
     unsigned int rngseed() const
     {
 	return rngseed_;
     }
 
-    char const* correlations_output_file() const
+    std::string trajectory_output_file() const
     {
-	return (output_file_prefix_ + ".tcf").c_str();
-    }
-
-    char const* trajectory_output_file() const
-    {
-	return (output_file_prefix_ + ".trj").c_str();
+	return output_file_prefix_ + ".trj";
     }
 
 private:

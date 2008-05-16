@@ -24,6 +24,7 @@
 #include <boost/mpl/vector.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
+#include <string>
 #include <vector>
 #include <H5Cpp.h>
 #include "accumulator.hpp"
@@ -70,7 +71,7 @@ public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
     void sample(phase_space_type const& p);
-    void write(char const* path, double timestep);
+    void write(std::string const& path, double timestep);
 
 private:
     void sample(phase_space_type const& p, unsigned int offset);
@@ -223,7 +224,7 @@ double autocorrelation<NDIM, T>::timegrid(unsigned int block, unsigned int sampl
  * write correlation function results to HDF5 file
  */
 template <int NDIM, typename T>
-void autocorrelation<NDIM, T>::write(char const* path, double timestep)
+void autocorrelation<NDIM, T>::write(std::string const& path, double timestep)
 {
     H5::H5File file;
 
