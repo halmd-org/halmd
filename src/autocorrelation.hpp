@@ -71,6 +71,7 @@ public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
     void sample(phase_space_type const& p);
+    void flush();
     void write(std::string const& path, double timestep);
 
 private:
@@ -168,11 +169,11 @@ void autocorrelation<NDIM, T>::sample(phase_space_type const& p, unsigned int of
     // add phase space sample to lowest block
     block[offset].samples.push_back(p);
     block[offset].count++;
-    block[offset].nsample++;
 
     // autocorrelate block if circular buffer has been replaced completely
-    if (block[offset].count == block_size && block[offset].nsample <= max_samples) {
+    if (block[offset].count == block_size && block[offset].nsample < max_samples) {
 	autocorrelate_block(offset);
+	block[offset].nsample++;
     }
 
     for (unsigned int i = offset + 2; i < block_count; i += 2) {
@@ -184,13 +185,26 @@ void autocorrelation<NDIM, T>::sample(phase_space_type const& p, unsigned int of
 	// add phase space sample from lower level block middle
 	block[i].samples.push_back(block[i - 2].samples[block_size / 2]);
 	block[i].count++;
-	block[i].nsample++;
 	// reset lower level block coarse grain count
 	block[i - 2].count = 0;
 
 	// autocorrelate block if circular buffer is full
-	if (block[i].samples.full() && block[i].nsample <= max_samples) {
+	if (block[i].samples.full() && block[i].nsample < max_samples) {
 	    autocorrelate_block(i);
+	    block[i].nsample++;
+	}
+    }
+}
+
+
+template <int NDIM, typename T>
+void autocorrelation<NDIM, T>::flush()
+{
+    for (unsigned int i = 2; i < block_count; ++i) {
+	while (block[i].nsample < max_samples && block[i].samples.size() > 2) {
+	    block[i].samples.pop_front();
+	    autocorrelate_block(i);
+	    block[i].nsample++;
 	}
     }
 }
