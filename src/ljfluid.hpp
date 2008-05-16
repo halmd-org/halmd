@@ -47,14 +47,11 @@ struct particle
     /** n-dimensional force acting upon particle */
     cuda::vector<T> force_gpu;
     cuda::host::vector<T> force;
-    /** potential energy */
-    cuda::vector<float> en_gpu;
-    cuda::host::vector<float> en;
-    /** virial equation sum */
-    cuda::vector<float> virial_gpu;
-    cuda::host::vector<float> virial;
+    /** potential energy and virial equation sum */
+    cuda::vector<float2> en_gpu;
+    cuda::host::vector<float2> en;
 
-    particle(uint64_t n) : psc_gpu(n), psc(n), rp_gpu(n), force_gpu(n), force(n), en_gpu(n), en(n), virial_gpu(n), virial(n) { }
+    particle(uint64_t n) : psc_gpu(n), psc(n), rp_gpu(n), force_gpu(n), force(n), en_gpu(n), en(n) { }
 };
 
 
@@ -247,7 +244,7 @@ void ljfluid<NDIM, T>::step()
     gpu::ljfluid::inteq(cuda_cast(part.psc_gpu.r), cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu));
     // reserve shared device memory for particle coordinates
     gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
-    gpu::ljfluid::mdstep(cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu), cuda_cast(part.virial_gpu));
+    gpu::ljfluid::mdstep(cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu));
     event_[1].record(stream_);
 }
 
@@ -266,7 +263,6 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     part.psc.r.memcpy(part.psc_gpu.r, stream_);
     part.psc.v.memcpy(part.psc_gpu.v, stream_);
     part.en.memcpy(part.en_gpu, stream_);
-    part.virial.memcpy(part.virial_gpu, stream_);
     event_[3].record(stream_);
     event_[3].synchronize();
 
@@ -287,8 +283,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     vel2_sum = 0.;
 
     for (uint64_t i = 0; i < npart; ++i) {
-	en_pot += (part.en[i] - en_pot) / (i + 1);
-	virial += (part.virial[i] - virial) / (i + 1);
+	en_pot += (part.en[i].x - en_pot) / (i + 1);
+	virial += (part.en[i].y - virial) / (i + 1);
 	vel_cm += (part.psc.v[i] - vel_cm) / (i + 1);
 	vel2_sum += (part.psc.v[i] * part.psc.v[i] - vel2_sum) / (i + 1);
     }
