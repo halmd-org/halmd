@@ -25,6 +25,7 @@
 #include <cuda_wrapper.hpp>
 #include "gpu/ljfluid_glue.hpp"
 #include "exception.hpp"
+#include "options.hpp"
 #include "rand48.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
@@ -62,7 +63,7 @@ template <unsigned int NDIM, typename T>
 class ljfluid
 {
 public:
-    ljfluid(uint64_t npart, cuda::config const& dim);
+    ljfluid(options const& opts);
 
     uint64_t particles() const;
     float timestep();
@@ -70,7 +71,7 @@ public:
     float density() const;
     void density(float density_);
     float box() const;
-    void temperature(float temp, rand48& rng);
+    void temperature(float temp);
 
     void step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum);
     void trajectories(std::ostream& os) const;
@@ -88,6 +89,8 @@ private:
     uint64_t npart;
     /** particles */
     particle<T> part;
+    /** random number generator */
+    mdsim::rand48 rng_;
     /** CUDA execution dimensions */
     cuda::config dim_;
 
@@ -107,6 +110,7 @@ private:
     /** average device memory transfer time in milliseconds per simulation step */
     float memtime_;
 
+    /** CUDA asynchronous execution */
     cuda::stream stream_;
     cuda::event event_[4];
 };
@@ -116,7 +120,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <unsigned int NDIM, typename T>
-ljfluid<NDIM, T>::ljfluid(uint64_t npart, cuda::config const& dim) : npart(npart), part(npart), dim_(dim), steps_(0), gputime_(0.), memtime_(0.)
+ljfluid<NDIM, T>::ljfluid(options const& opts) : npart(opts.npart()), part(opts.npart()), rng_(opts.dim()), dim_(opts.dim()), steps_(0), gputime_(0.), memtime_(0.)
 {
     // FIXME do without this requirement
     assert(npart == dim_.threads());
@@ -134,6 +138,9 @@ ljfluid<NDIM, T>::ljfluid(uint64_t npart, cuda::config const& dim) : npart(npart
     gpu::ljfluid::npart = npart;
     gpu::ljfluid::rr_cut = rr_cut;
     gpu::ljfluid::en_cut = en_cut;
+
+    // seed random number generator
+    rng_.set(opts.rngseed());
 }
 
 /**
@@ -207,11 +214,11 @@ float ljfluid<NDIM, T>::box() const
  * set temperature
  */
 template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::temperature(float temp, rand48& rng)
+void ljfluid<NDIM, T>::temperature(float temp)
 {
     // initialize velocities
     gpu::ljfluid::boltzmann.configure(dim_, stream_);
-    gpu::ljfluid::boltzmann(cuda_cast(part.psc_gpu.v), temp, cuda_cast(rng));
+    gpu::ljfluid::boltzmann(cuda_cast(part.psc_gpu.v), temp, cuda_cast(rng_));
     part.psc.v.memcpy(part.psc_gpu.v, stream_);
 
     try {

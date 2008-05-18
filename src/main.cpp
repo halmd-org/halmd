@@ -24,7 +24,6 @@
 #include "ljfluid.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
-#include "rand48.hpp"
 #include "trajectory.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
@@ -46,15 +45,13 @@ int main(int argc, char **argv)
 
     cuda::device::set(opts.device());
 
-    const cuda::config dim(dim3(opts.blocks()), dim3(opts.threads()));
-    mdsim::rand48 rng(dim);
 #ifdef DIM_3D
-    mdsim::ljfluid<3, vector3d<float> > fluid(opts.npart(), dim);
+    mdsim::ljfluid<3, vector3d<float> > fluid(opts);
     mdsim::mdsim<3, vector3d<float> > sim;
     mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts);
     mdsim::autocorrelation<3, vector3d<float> > tcf(opts);
 #else
-    mdsim::ljfluid<2, vector2d<float> > fluid(opts.npart(), dim);
+    mdsim::ljfluid<2, vector2d<float> > fluid(opts);
     mdsim::mdsim<2, vector2d<float> > sim;
     mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts);
     mdsim::autocorrelation<2, vector2d<float> > tcf(opts);
@@ -64,12 +61,10 @@ int main(int argc, char **argv)
 	throw mdsim::exception("less simulation steps than minimum required number of samples");
     }
 
-    rng.set(opts.rngseed());
-
     try {
 	fluid.density(opts.density());
 	fluid.timestep(opts.timestep());
-	fluid.temperature(opts.temp(), rng);
+	fluid.temperature(opts.temp());
     }
     catch (string const& e) {
 	cerr << PROGRAM_NAME ": " << e << endl;

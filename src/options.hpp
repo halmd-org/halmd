@@ -19,6 +19,7 @@
 #ifndef MDSIM_OPTIONS_HPP
 #define MDSIM_OPTIONS_HPP
 
+#include <cuda_wrapper.hpp>
 #include <stdint.h>
 #include <string>
 
@@ -111,14 +112,9 @@ public:
 	return device_;
     }
 
-    unsigned int blocks() const
+    cuda::config dim() const
     {
-	return blocks_;
-    }
-
-    unsigned int threads() const
-    {
-	return threads_;
+	return cuda::config(dim3(blocks_), dim3(threads_));
     }
 
     unsigned int rngseed() const
