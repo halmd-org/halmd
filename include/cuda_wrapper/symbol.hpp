@@ -22,6 +22,7 @@
 #include <cuda/cuda_runtime.h>
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/memory.hpp>
 #include <cuda_wrapper/vector.hpp>
 #include <cuda_wrapper/host/vector.hpp>
 #endif
@@ -78,38 +79,20 @@ public:
 #ifndef __CUDACC__
 
     /**
-     * copy from host memory area to device symbol
-     */
-    void memcpy(const host::vector<value_type>& v)
-    {
-	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(data()), &v.front(), v.size() * sizeof(value_type), 0, cudaMemcpyHostToDevice));
-    }
-
-    /**
-     * copy from device memory area to device symbol
-     */
-    void memcpy(const vector<value_type>& v)
-    {
-	assert(v.size() == size());
-	CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(data()), v.data(), v.size() * sizeof(value_type), 0, cudaMemcpyDeviceToDevice));
-    }
-
-    /**
      * assign content of host vector to device symbol
      */
-    vector_type& operator=(const host::vector<value_type>& v)
+    vector_type& operator=(const host::vector<value_type>& src)
     {
-	memcpy(v);
+	copy(*this, src);
 	return *this;
     }
 
     /**
      * assign content of device vector to device symbol
      */
-    vector_type& operator=(const vector<value_type>& v)
+    vector_type& operator=(const vector<value_type>& src)
     {
-	memcpy(v);
+	copy(*this, src);
 	return *this;
     }
 
@@ -118,8 +101,8 @@ public:
      */
     vector_type& operator=(const value_type& value)
     {
-	host::vector<value_type> v(size(), value);
-	memcpy(v);
+	host::vector<value_type> src(size(), value);
+	copy(*this, src);
 	return *this;
     }
 

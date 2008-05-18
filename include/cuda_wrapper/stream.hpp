@@ -44,26 +44,13 @@ class vector;
  */
 class stream
 {
-    friend class event;
-
-    template <typename T>
-    friend class vector;
-    template <typename T, typename Alloc>
-    friend class host::vector;
-
-    template <typename T>
-    friend class function;
-
-protected:
-    cudaStream_t _stream;
-
 public:
     /**
      * creates a stream
      */
     stream()
     {
-	CUDA_CALL(cudaStreamCreate(&_stream));
+	CUDA_CALL(cudaStreamCreate(&stream_));
     }
 
     /**
@@ -71,7 +58,7 @@ public:
      */
     ~stream()
     {
-	CUDA_CALL(cudaStreamDestroy(_stream));
+	CUDA_CALL(cudaStreamDestroy(stream_));
     }
 
     /**
@@ -79,7 +66,7 @@ public:
      */
     void synchronize()
     {
-	CUDA_CALL(cudaStreamSynchronize(_stream));
+	CUDA_CALL(cudaStreamSynchronize(stream_));
     }
 
     /**
@@ -89,7 +76,7 @@ public:
      */
     bool query()
     {
-	cudaError_t err = cudaStreamQuery(_stream);
+	cudaError_t err = cudaStreamQuery(stream_);
 	if (cudaSuccess == err)
 	    return true;
 	else if (cudaErrorNotReady == err)
@@ -97,11 +84,22 @@ public:
 	CUDA_ERROR(err);
     }
 
+    /**
+     * returns stream
+     */
+    cudaStream_t data() const
+    {
+	return stream_;
+    }
+
 private:
     // disable default copy constructor
     stream(const stream&);
     // disable default assignment operator
     stream& operator=(const stream&);
+
+private:
+    cudaStream_t stream_;
 };
 
 #endif /* CUDA_WRAPPER_ASYNC_API */
