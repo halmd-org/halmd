@@ -55,6 +55,8 @@ public:
     typedef size_t size_type;
 
 public:
+    vector() {}
+
     /**
      * initialize host vector with copies of value
      */
@@ -173,6 +175,8 @@ public:
     typedef size_t size_type;
 
 public:
+    vector() {}
+
     /**
      * initialize host vector with copies of value
      */
