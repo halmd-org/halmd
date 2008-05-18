@@ -51,7 +51,8 @@ class stream
     template <typename T, typename Alloc>
     friend class host::vector;
 
-    friend class _function_base;
+    template <typename T>
+    friend class function;
 
 protected:
     cudaStream_t _stream;
