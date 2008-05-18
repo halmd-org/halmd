@@ -127,6 +127,8 @@ private:
     unsigned int ncell_;
     /** total number of cell placeholders */
     unsigned int nplace_;
+    /** cell length */
+    float r_cell_;
 
     /** particle density */
     float density_;
@@ -226,13 +228,20 @@ void ljfluid<NDIM, T>::density(float density_)
     box_ = pow(npart / density_, 1.0 / NDIM);
     gpu::ljfluid::box = box_;
 
-    // number of cells per dimension
-    ncell_ = floorf(box_ / r_cut);
+    // FIXME optimal cell length must consider particle density fluctuations!
+    r_cell_ = std::max(r_cut, powf((CELL_SIZE / 4.) / density_, 1.0 / NDIM));
+    // optimal number of cells per dimension
+    ncell_ = floorf(box_ / r_cell_);
     gpu::ljfluid::ncell = ncell_;
     // CUDA execution dimensions for cell kernels
     cell_dim_ = cuda::config(dim3(pow(ncell_, NDIM)), dim3(CELL_SIZE));
     // total number of cell placeholders
     nplace_ = pow(ncell_, NDIM) * CELL_SIZE;
+
+    std::cerr << "Placeholders per cell:\t" << CELL_SIZE << "\n";
+    std::cerr << "Optimal cell length:\t" << r_cell_ << "\n";
+    std::cerr << "Cells per dimension:\t" << ncell_ << "\n";
+    std::cerr << "Average cell occupancy:\t" << (float(npart) / nplace_) << std::endl;
 
     try {
 	cell.resize(nplace_);
