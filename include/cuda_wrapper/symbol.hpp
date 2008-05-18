@@ -83,7 +83,7 @@ public:
      */
     vector_type& operator=(const host::vector<value_type>& src)
     {
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
@@ -92,7 +92,7 @@ public:
      */
     vector_type& operator=(const vector<value_type>& src)
     {
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
@@ -102,7 +102,7 @@ public:
     vector_type& operator=(const value_type& value)
     {
 	host::vector<value_type> src(size(), value);
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
