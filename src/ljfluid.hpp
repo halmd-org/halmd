@@ -196,8 +196,8 @@ void ljfluid<NDIM, T>::density(float density_)
     gpu::ljfluid::lattice.configure(dim_, stream_);
     gpu::ljfluid::lattice(cuda_cast(part.psc_gpu.r));
 
-    cuda::copy(part.psc.r, part.psc_gpu.r, stream_);
-    cuda::copy(part.rp_gpu, part.psc_gpu.r, stream_);
+    cuda::copy(part.psc_gpu.r, part.psc.r, stream_);
+    cuda::copy(part.psc_gpu.r, part.rp_gpu, stream_);
     stream_.synchronize();
 }
 
@@ -219,7 +219,7 @@ void ljfluid<NDIM, T>::temperature(float temp)
     // initialize velocities
     gpu::ljfluid::boltzmann.configure(dim_, stream_);
     gpu::ljfluid::boltzmann(cuda_cast(part.psc_gpu.v), temp, cuda_cast(rng_));
-    cuda::copy(part.psc.v, part.psc_gpu.v, stream_);
+    cuda::copy(part.psc_gpu.v, part.psc.v, stream_);
 
     try {
 	stream_.synchronize();
@@ -230,7 +230,7 @@ void ljfluid<NDIM, T>::temperature(float temp)
 
     // initialize forces
     fill(part.force.begin(), part.force.end(), 0.);
-    cuda::copy(part.force_gpu, part.force, stream_);
+    cuda::copy(part.force, part.force_gpu, stream_);
 
     try {
 	stream_.synchronize();
@@ -267,9 +267,9 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     }
 
     event_[2].record(stream_);
-    cuda::copy(part.psc.r, part.psc_gpu.r, stream_);
-    cuda::copy(part.psc.v, part.psc_gpu.v, stream_);
-    cuda::copy(part.en, part.en_gpu, stream_);
+    cuda::copy(part.psc_gpu.r, part.psc.r, stream_);
+    cuda::copy(part.psc_gpu.v, part.psc.v, stream_);
+    cuda::copy(part.en_gpu, part.en, stream_);
     event_[3].record(stream_);
     event_[3].synchronize();
 
