@@ -57,6 +57,8 @@ public:
     typedef size_t size_type;
 
 public:
+    vector() {}
+
     /**
      * initialize device vector of given size
      */
