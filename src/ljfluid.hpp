@@ -304,7 +304,7 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (uint64_t i = 0; i < npart; ++i) {
-	os << part.psc.r[i] << "\t" << part.psc.v[i] << "\n";
+	os << i << "\t" << part.psc.r[i] << "\t" << part.psc.v[i] << "\n";
     }
     os << "\n\n";
 }
