@@ -221,4 +221,93 @@ __device__ float2 sqrtf(float2 v)
     return v;
 }
 
+
+/**
+ * convert floating-point components to integers, rounding to nearest even integer
+ */
+__device__ int2 __float2int_rn(float2 const& v)
+{
+    int2 w;
+    w.x = __float2int_rn(v.x);
+    w.y = __float2int_rn(v.y);
+    return w;
+}
+
+/**
+ * convert floating-point components to integers, rounding towards zero
+ */
+__device__ int2 __float2int_rz(float2 const& v)
+{
+    int2 w;
+    w.x = __float2int_rz(v.x);
+    w.y = __float2int_rz(v.y);
+    return w;
+}
+
+/**
+ * convert floating-point components to integers, rounding to positive infinity
+ */
+__device__ int2 __float2int_ru(float2 const& v)
+{
+    int2 w;
+    w.x = __float2int_ru(v.x);
+    w.y = __float2int_ru(v.y);
+    return w;
+}
+
+/**
+ * convert floating-point components to integers, rounding to negative infinity
+ */
+__device__ int2 __float2int_rd(float2 const& v)
+{
+    int2 w;
+    w.x = __float2int_rd(v.x);
+    w.y = __float2int_rd(v.y);
+    return w;
+}
+
+/**
+ * convert floating-point components to unsigned integers, rounding to nearest even integer
+ */
+__device__ uint2 __float2uint_rn(float2 const& v)
+{
+    uint2 w;
+    w.x = __float2uint_rn(v.x);
+    w.y = __float2uint_rn(v.y);
+    return w;
+}
+
+/**
+ * convert floating-point components to unsigned integers, rounding towards zero
+ */
+__device__ uint2 __float2uint_rz(float2 const& v)
+{
+    uint2 w;
+    w.x = __float2uint_rz(v.x);
+    w.y = __float2uint_rz(v.y);
+    return w;
+}
+
+/**
+ * convert floating-point components to unsigned integers, rounding to positive infinity
+ */
+__device__ uint2 __float2uint_ru(float2 const& v)
+{
+    uint2 w;
+    w.x = __float2uint_ru(v.x);
+    w.y = __float2uint_ru(v.y);
+    return w;
+}
+
+/**
+ * convert floating-point components to unsigned integers, rounding to negative infinity
+ */
+__device__ uint2 __float2uint_rd(float2 const& v)
+{
+    uint2 w;
+    w.x = __float2uint_rd(v.x);
+    w.y = __float2uint_rd(v.y);
+    return w;
+}
+
 #endif /* ! MDSIM_GPU_VECTOR2D_H */
