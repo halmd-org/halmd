@@ -235,4 +235,101 @@ __device__ float3 sqrtf(float3 v)
     return v;
 }
 
+
+/**
+ * convert floating-point components to integers, rounding to nearest even integer
+ */
+__device__ int3 __float2int_rn(float3 const& v)
+{
+    int3 w;
+    w.x = __float2int_rn(v.x);
+    w.y = __float2int_rn(v.y);
+    w.z = __float2int_rn(v.z);
+    return w;
+}
+
+/**
+ * convert floating-point components to integers, rounding towards zero
+ */
+__device__ int3 __float2int_rz(float3 const& v)
+{
+    int3 w;
+    w.x = __float2int_rz(v.x);
+    w.y = __float2int_rz(v.y);
+    w.z = __float2int_rz(v.z);
+    return w;
+}
+
+/**
+ * convert floating-point components to integers, rounding to positive infinity
+ */
+__device__ int3 __float2int_ru(float3 const& v)
+{
+    int3 w;
+    w.x = __float2int_ru(v.x);
+    w.y = __float2int_ru(v.y);
+    w.z = __float2int_ru(v.z);
+    return w;
+}
+
+/**
+ * convert floating-point components to integers, rounding to negative infinity
+ */
+__device__ int3 __float2int_rd(float3 const& v)
+{
+    int3 w;
+    w.x = __float2int_rd(v.x);
+    w.y = __float2int_rd(v.y);
+    w.z = __float2int_rd(v.z);
+    return w;
+}
+
+/**
+ * convert floating-point components to unsigned integers, rounding to nearest even integer
+ */
+__device__ uint3 __float2uint_rn(float3 const& v)
+{
+    uint3 w;
+    w.x = __float2uint_rn(v.x);
+    w.y = __float2uint_rn(v.y);
+    w.z = __float2uint_rn(v.z);
+    return w;
+}
+
+/**
+ * convert floating-point components to unsigned integers, rounding towards zero
+ */
+__device__ uint3 __float2uint_rz(float3 const& v)
+{
+    uint3 w;
+    w.x = __float2uint_rz(v.x);
+    w.y = __float2uint_rz(v.y);
+    w.z = __float2uint_rz(v.z);
+    return w;
+}
+
+/**
+ * convert floating-point components to unsigned integers, rounding to positive infinity
+ */
+__device__ uint3 __float2uint_ru(float3 const& v)
+{
+    uint3 w;
+    w.x = __float2uint_ru(v.x);
+    w.y = __float2uint_ru(v.y);
+    w.z = __float2uint_ru(v.z);
+    return w;
+}
+
+/**
+ * convert floating-point components to unsigned integers, rounding to negative infinity
+ */
+__device__ uint3 __float2uint_rd(float3 const& v)
+{
+    uint3 w;
+    w.x = __float2uint_rd(v.x);
+    w.y = __float2uint_rd(v.y);
+    w.z = __float2uint_rd(v.z);
+    return w;
+}
+
 #endif /* ! MDSIM_GPU_VECTOR3D_H */
