@@ -259,9 +259,9 @@ void ljfluid<NDIM, T>::density(float density_)
     gpu::ljfluid::assign_cells.configure(cell_dim_, stream_);
     gpu::ljfluid::assign_cells(cuda_cast(part), cuda_cast(cell.r_gpu), cuda_cast(cell.tag_gpu));
 
-    cuda::copy(cell.r, cell.r_gpu, stream_);
-    cuda::copy(cell.tag, cell.tag_gpu, stream_);
-    cuda::copy(cell.rp_gpu, cell.r_gpu, stream_);
+    cuda::copy(cell.r_gpu, cell.r, stream_);
+    cuda::copy(cell.tag_gpu, cell.tag, stream_);
+    cuda::copy(cell.r_gpu, cell.rp_gpu, stream_);
     stream_.synchronize();
 }
 
@@ -284,7 +284,7 @@ void ljfluid<NDIM, T>::temperature(float temp)
     cuda::vector<T> v(npart);
     gpu::ljfluid::boltzmann.configure(dim_, stream_);
     gpu::ljfluid::boltzmann(cuda_cast(v), temp, cuda_cast(rng_));
-    cuda::copy(part.v, v, stream_);
+    cuda::copy(v, part.v, stream_);
 
     try {
 	stream_.synchronize();
@@ -298,11 +298,11 @@ void ljfluid<NDIM, T>::temperature(float temp)
 	    cell.v[i] = part.v[cell.tag[i]];
 	}
     }
-    cuda::copy(cell.v_gpu, cell.v, stream_);
+    cuda::copy(cell.v, cell.v_gpu, stream_);
 
     // initialize forces
     fill(cell.force.begin(), cell.force.end(), 0.);
-    cuda::copy(cell.force_gpu, cell.force, stream_);
+    cuda::copy(cell.force, cell.force_gpu, stream_);
 
     try {
 	stream_.synchronize();
@@ -327,11 +327,11 @@ void ljfluid<NDIM, T>::step()
     // update cells
     gpu::ljfluid::update_cells.configure(cell_dim_, stream_);
     gpu::ljfluid::update_cells(cuda_cast(cell.r_gpu), cuda_cast(cell.rp_gpu), cuda_cast(cell.v_gpu), cuda_cast(cell.force_gpu), cuda_cast(cell.tag_gpu), cuda_cast(cell.r_gpu2), cuda_cast(cell.rp_gpu2), cuda_cast(cell.v_gpu2), cuda_cast(cell.force_gpu2), cuda_cast(cell.tag_gpu2));
-    cuda::copy(cell.r_gpu, cell.r_gpu2, stream_);
-    cuda::copy(cell.rp_gpu, cell.rp_gpu2, stream_);
-    cuda::copy(cell.v_gpu, cell.v_gpu2, stream_);
-    cuda::copy(cell.force_gpu, cell.force_gpu2, stream_);
-    cuda::copy(cell.tag_gpu, cell.tag_gpu2, stream_);
+    cuda::copy(cell.r_gpu2, cell.r_gpu, stream_);
+    cuda::copy(cell.rp_gpu2, cell.rp_gpu, stream_);
+    cuda::copy(cell.v_gpu2, cell.v_gpu, stream_);
+    cuda::copy(cell.force_gpu2, cell.force_gpu, stream_);
+    cuda::copy(cell.tag_gpu2, cell.tag_gpu, stream_);
 
     // update forces
     gpu::ljfluid::mdstep.configure(cell_dim_, stream_);
@@ -352,10 +352,10 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     }
 
     event_[2].record(stream_);
-    cuda::copy(cell.r, cell.r_gpu, stream_);
-    cuda::copy(cell.v, cell.v_gpu, stream_);
-    cuda::copy(cell.tag, cell.tag_gpu, stream_);
-    cuda::copy(cell.en, cell.en_gpu, stream_);
+    cuda::copy(cell.r_gpu, cell.r, stream_);
+    cuda::copy(cell.v_gpu, cell.v, stream_);
+    cuda::copy(cell.tag_gpu, cell.tag, stream_);
+    cuda::copy(cell.en_gpu, cell.en, stream_);
     event_[3].record(stream_);
     event_[3].synchronize();
 
