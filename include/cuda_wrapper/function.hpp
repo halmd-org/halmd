@@ -1,4 +1,4 @@
-/* cuda_wrapper/function.hpp
+/* CUDA device function execution
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -16,313 +16,160 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_FUNCTION_HPP
-#define CUDA_FUNCTION_HPP
+#ifndef BOOST_PP_IS_ITERATING
 
-#include <cuda/cuda_runtime.h>
-#ifndef __CUDACC__
-#include <cuda_wrapper/error.hpp>
-#include <cuda_wrapper/stream.hpp>
-#endif
+    #ifndef CUDA_FUNCTION_HPP
+    #define CUDA_FUNCTION_HPP
+
+    #include <boost/preprocessor/iteration/iterate.hpp>
+    #include <boost/preprocessor/repetition/enum_params.hpp>
+    #include <boost/preprocessor/repetition/enum_binary_params.hpp>
+    #include <boost/preprocessor/repetition/repeat.hpp>
+    #include <cuda/cuda_runtime.h>
+    #ifndef __CUDACC__
+    #include <cuda_wrapper/error.hpp>
+    #include <cuda_wrapper/stream.hpp>
+    #endif
 
 
-namespace cuda
-{
+    /* maximum number of arguments passed to device functions */
+    #ifndef CUDA_FUNCTION_MAX_ARGS
+    #define CUDA_FUNCTION_MAX_ARGS 10
+    #endif
 
-/*
- * CUDA execution configuration
- */
-class config
-{
-public:
-    /* grid dimensions */
-    const dim3 grid;
-    /* block dimensions */
-    const dim3 block;
-    /* FIXME store useful numbers (no. of threads per grid/block) */
-
-    config(dim3 grid, dim3 block) : grid(grid), block(block)
+    namespace cuda
     {
+
+    /*
+     * CUDA execution configuration
+     */
+    class config
+    {
+    public:
+	/* grid dimensions */
+	dim3 grid;
+	/* block dimensions */
+	dim3 block;
 	/* FIXME store useful numbers (no. of threads per grid/block) */
-    }
 
-    size_t threads() const
-    {
-	return grid.y * grid.x * block.z * block.y * block.x;
-    }
-
-    size_t blocks_per_grid() const
-    {
-	return grid.y * grid.x;
-    }
-
-    size_t threads_per_block() const
-    {
-	return block.z * block.y * block.x;
-    }
-};
-
-
-/**
- * CUDA kernel execution wrapper base class
- */
-class _function_base
-{
-#ifndef __CUDACC__
-public:
-    /**
-     * configure execution parameters
-     */
-    static void configure(const config& dim, size_t shared_mem = 0)
-    {
-	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
-    }
-
-#ifdef CUDA_WRAPPER_ASYNC_API
-
-    /**
-     * configure execution parameters
-     */
-    static void configure(const config& dim, stream& stream)
-    {
-	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, 0, stream._stream));
-    }
-
-    /**
-     * configure execution parameters
-     */
-    static void configure(const config& dim, size_t shared_mem, stream& stream)
-    {
-	CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, stream._stream));
-    }
-
-#endif /* CUDA_WRAPPER_ASYNC_API */
-
-protected:
-    /**
-     * push arbitrary argument into argument passing area
-     */
-    template <typename T>
-    static void setup_argument(const T& arg, size_t *offset)
-    {
-	/* respect alignment requirements of passed argument */
-	if (0 != *offset % __alignof(T)) {
-	    *offset += __alignof(T) - *offset % __alignof(T);
+	config()
+	{
 	}
 
-	CUDA_CALL(cudaSetupArgument(&arg, sizeof(T), *offset));
+	config(dim3 grid, dim3 block) : grid(grid), block(block)
+	{
+	    /* FIXME store useful numbers (no. of threads per grid/block) */
+	}
 
-	/* advance argument offset for next call */
-	*offset += sizeof(T);
-    }
+	size_t threads() const
+	{
+	    return grid.y * grid.x * block.z * block.y * block.x;
+	}
+
+	size_t blocks_per_grid() const
+	{
+	    return grid.y * grid.x;
+	}
+
+	size_t threads_per_block() const
+	{
+	    return block.z * block.y * block.x;
+	}
+    };
+
+    } // namespace cuda
+
+
+    #define BOOST_PP_FILENAME_1 <cuda_wrapper/function.hpp>
+    #define BOOST_PP_ITERATION_LIMITS (1, CUDA_FUNCTION_MAX_ARGS)
+    #include BOOST_PP_ITERATE()
+
+    #endif /* ! CUDA_FUNCTION_HPP */
+
+#else /* ! BOOST_PP_IS_ITERATING */
+
+    namespace cuda
+    {
+
+    template <typename T>
+    class function;
 
     /**
-     * launch kernel
+     * CUDA kernel execution wrapper for n-ary device function
      */
-    template <typename T>
-    static void launch(T *entry)
+    template <BOOST_PP_ENUM_PARAMS(BOOST_PP_ITERATION(), typename T)>
+    class function<void (BOOST_PP_ENUM_PARAMS(BOOST_PP_ITERATION(), T))>
     {
-	CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(entry)));
-    }
-#endif /* ! __CUDACC__ */
-};
+    public:
+	typedef void T (BOOST_PP_ENUM_PARAMS(BOOST_PP_ITERATION(), T));
 
+    public:
+	function(T *entry) : entry(entry) {}
 
-/**
- * CUDA kernel execution wrapper
- */
-template <typename T>
-class function;
+    #ifndef __CUDACC__
 
+	/**
+	 * configure execution parameters
+	 */
+	static void configure(const config& dim, size_t shared_mem = 0)
+	{
+	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
+	}
 
-/**
- * CUDA kernel execution wrapper for unary device function
- */
-template <typename T0>
-class function<void (T0)> : public _function_base
-{
-protected:
-    typedef void T (T0);
-    T *entry;
+    #ifdef CUDA_WRAPPER_ASYNC_API
+	/**
+	 * configure execution parameters
+	 */
+	static void configure(const config& dim, stream& stream)
+	{
+	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, 0, stream._stream));
+	}
 
-public:
-    function(T *entry) : entry(entry) {}
+	/**
+	 * configure execution parameters
+	 */
+	static void configure(const config& dim, size_t shared_mem, stream& stream)
+	{
+	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, stream._stream));
+	}
+    #endif /* CUDA_WRAPPER_ASYNC_API */
 
-#ifndef __CUDACC__
-    void operator()(T0 x0)
-    {
-	size_t offset = 0;
-	setup_argument(x0, &offset);
-	launch(entry);
-    }
-#endif /* ! __CUDACC__ */
-};
+	/**
+	 * execute kernel
+	 */
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(BOOST_PP_ITERATION(), const T, &x))
+	{
+	    size_t offset = 0;
+    #define SETUP_ARGUMENT(z, n, x) setup_argument(x##n, &offset);
+	    BOOST_PP_REPEAT(BOOST_PP_ITERATION(), SETUP_ARGUMENT, x)
+    #undef SETUP_ARGUMENT
+	    CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(entry)));
+	}
 
+    private:
+	/**
+	 * push arbitrary argument into argument passing area
+	 */
+	template <typename U>
+	static void setup_argument(const U& arg, size_t *offset)
+	{
+	    /* respect alignment requirements of passed argument */
+	    if (0 != *offset % __alignof(U)) {
+		*offset += __alignof(U) - *offset % __alignof(U);
+	    }
 
-/**
- * CUDA kernel execution wrapper for binary device function
- */
-template <typename T0, typename T1>
-class function<void (T0, T1)> : public _function_base
-{
-protected:
-    typedef void T (T0, T1);
-    T *entry;
+	    CUDA_CALL(cudaSetupArgument(&arg, sizeof(U), *offset));
 
-public:
-    function(T *entry) : entry(entry) {}
+	    /* advance argument offset for next call */
+	    *offset += sizeof(U);
+	}
 
-#ifndef __CUDACC__
-    void operator()(T0 x0, T1 x1)
-    {
-	size_t offset = 0;
-	setup_argument(x0, &offset);
-	setup_argument(x1, &offset);
-	launch(entry);
-    }
-#endif /* ! __CUDACC__ */
-};
+    #endif /* ! __CUDACC__ */
 
+    private:
+	T *entry;
+    };
 
-/**
- * CUDA kernel execution wrapper for ternary device function
- */
-template <typename T0, typename T1, typename T2>
-class function<void (T0, T1, T2)> : public _function_base
-{
-protected:
-    typedef void T (T0, T1, T2);
-    T *entry;
+    } // namespace cuda
 
-public:
-    function(T *entry) : entry(entry) {}
-
-#ifndef __CUDACC__
-    void operator()(T0 x0, T1 x1, T2 x2)
-    {
-	size_t offset = 0;
-	setup_argument(x0, &offset);
-	setup_argument(x1, &offset);
-	setup_argument(x2, &offset);
-	launch(entry);
-    }
-#endif /* ! __CUDACC__ */
-};
-
-
-/**
- * CUDA kernel execution wrapper for quaternary device function
- */
-template <typename T0, typename T1, typename T2, typename T3>
-class function<void (T0, T1, T2, T3)> : public _function_base
-{
-protected:
-    typedef void T (T0, T1, T2, T3);
-    T *entry;
-
-public:
-    function(T *entry) : entry(entry) {}
-
-#ifndef __CUDACC__
-    void operator()(T0 x0, T1 x1, T2 x2, T3 x3)
-    {
-	size_t offset = 0;
-	setup_argument(x0, &offset);
-	setup_argument(x1, &offset);
-	setup_argument(x2, &offset);
-	setup_argument(x3, &offset);
-	launch(entry);
-    }
-#endif /* ! __CUDACC__ */
-};
-
-
-/**
- * CUDA kernel execution wrapper for quinary device function
- */
-template <typename T0, typename T1, typename T2, typename T3, typename T4>
-class function<void (T0, T1, T2, T3, T4)> : public _function_base
-{
-protected:
-    typedef void T (T0, T1, T2, T3, T4);
-    T *entry;
-
-public:
-    function(T *entry) : entry(entry) {}
-
-#ifndef __CUDACC__
-    void operator()(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4)
-    {
-	size_t offset = 0;
-	setup_argument(x0, &offset);
-	setup_argument(x1, &offset);
-	setup_argument(x2, &offset);
-	setup_argument(x3, &offset);
-	setup_argument(x4, &offset);
-	launch(entry);
-    }
-#endif /* ! __CUDACC__ */
-};
-
-
-/**
- * CUDA kernel execution wrapper for senary device function
- */
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
-class function<void (T0, T1, T2, T3, T4, T5)> : public _function_base
-{
-protected:
-    typedef void T (T0, T1, T2, T3, T4, T5);
-    T *entry;
-
-public:
-    function(T *entry) : entry(entry) {}
-
-#ifndef __CUDACC__
-    void operator()(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4, T5 x5)
-    {
-	size_t offset = 0;
-	setup_argument(x0, &offset);
-	setup_argument(x1, &offset);
-	setup_argument(x2, &offset);
-	setup_argument(x3, &offset);
-	setup_argument(x4, &offset);
-	setup_argument(x5, &offset);
-	launch(entry);
-    }
-#endif /* ! __CUDACC__ */
-};
-
-
-/**
- * CUDA kernel execution wrapper for septenary device function
- */
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-class function<void (T0, T1, T2, T3, T4, T5, T6)> : public _function_base
-{
-protected:
-    typedef void T (T0, T1, T2, T3, T4, T5, T6);
-    T *entry;
-
-public:
-    function(T *entry) : entry(entry) {}
-
-#ifndef __CUDACC__
-    void operator()(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4, T5 x5, T6 x6)
-    {
-	size_t offset = 0;
-	setup_argument(x0, &offset);
-	setup_argument(x1, &offset);
-	setup_argument(x2, &offset);
-	setup_argument(x3, &offset);
-	setup_argument(x4, &offset);
-	setup_argument(x5, &offset);
-	setup_argument(x6, &offset);
-	launch(entry);
-    }
-#endif /* ! __CUDACC__ */
-};
-
-}
-
-#endif /* ! CUDA_FUNCTION_HPP */
+#endif /* ! BOOST_PP_IS_ITERATING */
