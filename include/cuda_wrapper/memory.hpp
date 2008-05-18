@@ -84,6 +84,15 @@ void copy(host::vector<T, AllocT> const& src, host::vector<U, AllocU>& dst)
 }
 
 /**
+ * copy from device symbol to value
+ */
+template <typename T, typename U>
+void copy(symbol<T> const& src, U& dst)
+{
+    CUDA_CALL(cudaMemcpyFromSymbol(&dst, reinterpret_cast<const char *>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
+}
+
+/**
  * copy from device symbol to host memory area
  */
 template <typename T, typename U, typename AllocU>
@@ -99,6 +108,15 @@ template <typename T, typename U>
 void copy(symbol<T> const& src, vector<U>& dst)
 {
     CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<const char *>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+}
+
+/**
+ * copy from value to device symbol
+ */
+template <typename T, typename U>
+void copy(T const& src, symbol<U>& dst)
+{
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(dst.data()), &src, sizeof(T), 0, cudaMemcpyHostToDevice));
 }
 
 /**
