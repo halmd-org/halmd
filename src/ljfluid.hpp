@@ -37,17 +37,22 @@ namespace mdsim
 /**
  * MD simulation particle
  */
-template <typename T>
+template <unsigned dimension, typename T>
 struct particle
 {
+    /** n-dimensional host floating-point vector type */
+    typedef T vector_type;
+    /** n-dimensional device floating-point vector type */
+    typedef typename cuda::vector_type<dimension, typename T::value_type>::value_type cuda_vector_type;
+
     /** n-dimensional particle phase space coordiates */
-    phase_space_point<cuda::vector<T> > psc_gpu;
-    phase_space_point<cuda::host::vector<T> > psc;
+    phase_space_point<cuda::vector<cuda_vector_type> > psc_gpu;
+    phase_space_point<cuda::host::vector<vector_type> > psc;
     /** periodically reduced particle coordinates */
-    cuda::vector<T> rp_gpu;
+    cuda::vector<cuda_vector_type> rp_gpu;
     /** n-dimensional force acting upon particle */
-    cuda::vector<T> force_gpu;
-    cuda::host::vector<T> force;
+    cuda::vector<cuda_vector_type> force_gpu;
+    cuda::host::vector<vector_type> force;
     /** potential energy and virial equation sum */
     cuda::vector<float2> en_gpu;
     cuda::host::vector<float2> en;
@@ -62,6 +67,12 @@ struct particle
 template <unsigned int NDIM, typename T>
 class ljfluid
 {
+public:
+    /** n-dimensional host floating-point vector type */
+    typedef T vector_type;
+    /** n-dimensional device floating-point vector type */
+    typedef typename cuda::vector_type<NDIM, typename T::value_type>::value_type cuda_vector_type;
+
 public:
     ljfluid(options const& opts);
 
@@ -88,7 +99,7 @@ private:
     /** number of particles in periodic box */
     uint64_t npart;
     /** particles */
-    particle<T> part;
+    particle<NDIM, T> part;
     /** random number generator */
     mdsim::rand48 rng_;
     /** CUDA execution dimensions */
@@ -194,7 +205,7 @@ void ljfluid<NDIM, T>::density(float density_)
 
     // initialize coordinates
     gpu::ljfluid::lattice.configure(dim_, stream_);
-    gpu::ljfluid::lattice(cuda_cast(part.psc_gpu.r));
+    gpu::ljfluid::lattice(part.psc_gpu.r.data());
 
     cuda::copy(part.psc_gpu.r, part.psc.r, stream_);
     cuda::copy(part.psc_gpu.r, part.rp_gpu, stream_);
@@ -218,7 +229,7 @@ void ljfluid<NDIM, T>::temperature(float temp)
 {
     // initialize velocities
     gpu::ljfluid::boltzmann.configure(dim_, stream_);
-    gpu::ljfluid::boltzmann(cuda_cast(part.psc_gpu.v), temp, cuda_cast(rng_));
+    gpu::ljfluid::boltzmann(part.psc_gpu.v.data(), temp, rng_.data());
     cuda::copy(part.psc_gpu.v, part.psc.v, stream_);
 
     try {
@@ -248,10 +259,10 @@ void ljfluid<NDIM, T>::step()
 {
     event_[0].record(stream_);
     gpu::ljfluid::inteq.configure(dim_, stream_);
-    gpu::ljfluid::inteq(cuda_cast(part.psc_gpu.r), cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu));
+    gpu::ljfluid::inteq(part.psc_gpu.r.data(), part.rp_gpu.data(), part.psc_gpu.v.data(), part.force_gpu.data());
     // reserve shared device memory for particle coordinates
     gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
-    gpu::ljfluid::mdstep(cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu));
+    gpu::ljfluid::mdstep(part.rp_gpu.data(), part.psc_gpu.v.data(), part.force_gpu.data(), part.en_gpu.data());
     event_[1].record(stream_);
 }
 
