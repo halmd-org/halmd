@@ -25,6 +25,8 @@
 #include <iostream>
 #include <math.h>
 #include "cell_array.hpp"
+#include "gsl_rng.hpp"
+#include "options.hpp"
 
 
 namespace mdsim
@@ -67,7 +69,7 @@ protected:
     typedef typename cell_array<list_type, T>::const_iterator cell_const_iterator;
 
 public:
-    ljfluid(uint64_t npart);
+    ljfluid(options const& opts);
 
     uint64_t particles() const;
     double timestep();
@@ -75,8 +77,7 @@ public:
     double density() const;
     void density(double density_);
     double box() const;
-    template <typename rng_type>
-    void temperature(double temp, rng_type& rng);
+    void temperature(double temp);
 
     void step(double& en_pot, double& virial, T& vel_cm, double& vel2_sum);
     void trajectories(std::ostream& os) const;
@@ -97,8 +98,7 @@ private:
 
     void init_cells();
     void lattice();
-    template <typename rng_type>
-    void init_velocities(double temp, rng_type& rng);
+    void boltzmann(double temp);
     void init_forces();
 
 private:
@@ -113,6 +113,8 @@ private:
 
     /** particles sorted by particle number */
     phase_space_point<std::vector<T> > part_;
+    /** random number generator */
+    rng::gsl::gfsr4 rng_;
 
     /** particle density */
     double density_;
@@ -140,7 +142,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <unsigned int NDIM, typename T>
-ljfluid<NDIM, T>::ljfluid(uint64_t npart) : npart(npart), part_(npart)
+ljfluid<NDIM, T>::ljfluid(options const& opts) : npart(opts.npart()), part_(opts.npart())
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     // Frenkel
@@ -159,6 +161,9 @@ ljfluid<NDIM, T>::ljfluid(uint64_t npart) : npart(npart), part_(npart)
     r_skin = 0.3; // FIXME should depend on system size
     r_cut_skin = r_cut + r_skin;
     rr_cut_skin = r_cut_skin * r_cut_skin;
+
+    // seed random number generator
+    rng_.set(opts.rngseed());
 }
 
 /**
@@ -225,10 +230,9 @@ double ljfluid<NDIM, T>::box() const
  * set temperature
  */
 template <unsigned int NDIM, typename T>
-template <typename rng_type>
-void ljfluid<NDIM, T>::temperature(double temp, rng_type& rng)
+void ljfluid<NDIM, T>::temperature(double temp)
 {
-    init_velocities(temp, rng);
+    boltzmann(temp);
     init_forces();
 }
 
@@ -556,8 +560,7 @@ void ljfluid<NDIM, T>::lattice()
  * generate random n-dimensional Maxwell-Boltzmann distributed velocities
  */
 template <unsigned int NDIM, typename T>
-template <typename rng_type>
-void ljfluid<NDIM, T>::init_velocities(double temp, rng_type& rng)
+void ljfluid<NDIM, T>::boltzmann(double temp)
 {
     // center of mass velocity
     T vel_cm = 0.;
@@ -566,10 +569,10 @@ void ljfluid<NDIM, T>::init_velocities(double temp, rng_type& rng)
 
     for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
 	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    rng.gaussian(it->vel.x, it->vel.y, temp);
+	    rng_.gaussian(it->vel.x, it->vel.y, temp);
 #ifdef DIM_3D
 	    // Box-Muller transformation strictly generates 2 variates at once
-	    rng.gaussian(it->vel.y, it->vel.z, temp);
+	    rng_.gaussian(it->vel.y, it->vel.z, temp);
 #endif
 	    vel_cm += it->vel;
 	}

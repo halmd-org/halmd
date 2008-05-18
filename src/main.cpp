@@ -21,7 +21,6 @@
 #include <vector>
 #include "autocorrelation.hpp"
 #include "exception.hpp"
-#include "gsl_rng.hpp"
 #include "ljfluid.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
@@ -44,14 +43,13 @@ int main(int argc, char **argv)
 	return e.status();
     }
 
-    rng::gsl::gfsr4 rng;
 #ifdef DIM_3D
-    mdsim::ljfluid<3, vector3d<double> > fluid(opts.npart());
+    mdsim::ljfluid<3, vector3d<double> > fluid(opts);
     mdsim::mdsim<3, vector3d<double> > sim;
     mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts);
     mdsim::autocorrelation<3, vector3d<double> > tcf(opts);
 #else
-    mdsim::ljfluid<2, vector2d<double> > fluid(opts.npart());
+    mdsim::ljfluid<2, vector2d<double> > fluid(opts);
     mdsim::mdsim<2, vector2d<double> > sim;
     mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts);
     mdsim::autocorrelation<2, vector2d<double> > tcf(opts);
@@ -61,12 +59,10 @@ int main(int argc, char **argv)
 	throw mdsim::exception("less simulation steps than minimum required number of samples");
     }
 
-    rng.set(opts.rngseed());
-
     try {
 	fluid.density(opts.density());
 	fluid.timestep(opts.timestep());
-	fluid.temperature(opts.temp(), rng);
+	fluid.temperature(opts.temp());
     }
     catch (string const& e) {
 	cerr << PROGRAM_NAME ": " << e << endl;
