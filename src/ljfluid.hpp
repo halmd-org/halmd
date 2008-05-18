@@ -182,9 +182,9 @@ ljfluid<NDIM, T>::ljfluid(options const& opts) : npart(opts.npart()), part(npart
     float r6i_cut = rri_cut * rri_cut * rri_cut;
     float en_cut = 4. * r6i_cut * (r6i_cut - 1.);
 
-    gpu::ljfluid::npart = npart;
-    gpu::ljfluid::rr_cut = rr_cut;
-    gpu::ljfluid::en_cut = en_cut;
+    cuda::copy(npart, gpu::ljfluid::npart);
+    cuda::copy(rr_cut, gpu::ljfluid::rr_cut);
+    cuda::copy(en_cut, gpu::ljfluid::en_cut);
 
     // seed random number generator
     rng_.set(opts.rngseed());
@@ -215,7 +215,7 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::timestep(float timestep_)
 {
     this->timestep_ = timestep_;
-    gpu::ljfluid::timestep = timestep_;
+    cuda::copy(timestep_, gpu::ljfluid::timestep);
 }
 
 /**
@@ -237,13 +237,13 @@ void ljfluid<NDIM, T>::density(float density_)
     this->density_ = density_;
     // periodic box length
     box_ = pow(npart / density_, 1.0 / NDIM);
-    gpu::ljfluid::box = box_;
+    cuda::copy(box_, gpu::ljfluid::box);
 
     // FIXME optimal cell length must consider particle density fluctuations!
     r_cell_ = std::max(r_cut, powf((CELL_SIZE / 4.) / density_, 1.0 / NDIM));
     // optimal number of cells per dimension
     ncell_ = floorf(box_ / r_cell_);
-    gpu::ljfluid::ncell = ncell_;
+    cuda::copy(ncell_, gpu::ljfluid::ncell);
     // CUDA execution dimensions for cell kernels
     cell_dim_ = cuda::config(dim3(pow(ncell_, NDIM)), dim3(CELL_SIZE));
     // total number of cell placeholders
