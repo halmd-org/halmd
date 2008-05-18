@@ -33,16 +33,13 @@ namespace cuda
  */
 class event
 {
-protected:
-    cudaEvent_t _event;
-
 public:
     /**
      * creates an event
      */
     event()
     {
-	CUDA_CALL(cudaEventCreate(&_event));
+	CUDA_CALL(cudaEventCreate(&event_));
     }
 
     /**
@@ -50,7 +47,7 @@ public:
      */
     ~event()
     {
-	CUDA_CALL(cudaEventDestroy(_event));
+	CUDA_CALL(cudaEventDestroy(event_));
     }
 
     /**
@@ -60,7 +57,7 @@ public:
      */
     void record()
     {
-	CUDA_CALL(cudaEventRecord(_event, 0));
+	CUDA_CALL(cudaEventRecord(event_, 0));
     }
 
     /**
@@ -70,7 +67,7 @@ public:
      */
     void record(const stream& stream)
     {
-	CUDA_CALL(cudaEventRecord(_event, stream._stream));
+	CUDA_CALL(cudaEventRecord(event_, stream.data()));
     }
 
     /**
@@ -78,7 +75,7 @@ public:
      */
     void synchronize()
     {
-	CUDA_CALL(cudaEventSynchronize(_event));
+	CUDA_CALL(cudaEventSynchronize(event_));
     }
 
     /**
@@ -88,7 +85,7 @@ public:
      */
     bool query()
     {
-	cudaError_t err = cudaEventQuery(_event);
+	cudaError_t err = cudaEventQuery(event_);
 	if (cudaSuccess == err)
 	    return true;
 	else if (cudaErrorNotReady == err)
@@ -104,8 +101,16 @@ public:
     float operator-(const event &start)
     {
 	float time;
-	CUDA_CALL(cudaEventElapsedTime(&time, start._event, _event));
+	CUDA_CALL(cudaEventElapsedTime(&time, start.event_, event_));
 	return time;
+    }
+
+    /**
+     * returns event
+     */
+    cudaEvent_t data() const
+    {
+	return event_;
     }
 
 private:
@@ -113,6 +118,9 @@ private:
     event(const event&);
     // disable default assignment operator
     event& operator=(const event&);
+
+private:
+    cudaEvent_t event_;
 };
 
 #endif /* CUDA_WRAPPER_ASYNC_API */

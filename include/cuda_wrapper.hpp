@@ -40,6 +40,7 @@
 #include <cuda_wrapper/thread.hpp>
 #include <cuda_wrapper/event.hpp>
 #include <cuda_wrapper/stream.hpp>
+#include <cuda_wrapper/memory.hpp>
 #include <cuda_wrapper/allocator.hpp>
 #include <cuda_wrapper/vector.hpp>
 #include <cuda_wrapper/host/allocator.hpp>
