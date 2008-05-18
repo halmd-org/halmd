@@ -53,11 +53,11 @@ public:
 	cuda::thread::synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
-	gpu::rand48::a.memcpy(a);
-	mdsim::gpu::ljfluid::a.memcpy(a);
+	cuda::copy(gpu::rand48::a, a);
+	cuda::copy(mdsim::gpu::ljfluid::a, a);
 	// copy leapfrogging addend into constant device memory
-	gpu::rand48::c.memcpy(c);
-	mdsim::gpu::ljfluid::c.memcpy(c);
+	cuda::copy(gpu::rand48::c, c);
+	cuda::copy(mdsim::gpu::ljfluid::c, c);
     }
 
     /*
@@ -81,7 +81,7 @@ public:
 
 	gpu::rand48::save.configure(dim_, stream);
 	gpu::rand48::save(cuda_cast(state_), cuda_cast(buf_gpu));
-	buf.memcpy(buf_gpu, stream);
+	cuda::copy(buf, buf_gpu, stream);
 	stream.synchronize();
 
 	mem = buf[0];
@@ -100,11 +100,11 @@ public:
 	stream.synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
-	gpu::rand48::a.memcpy(a);
-	mdsim::gpu::ljfluid::a.memcpy(a);
+	cuda::copy(gpu::rand48::a, a);
+	cuda::copy(mdsim::gpu::ljfluid::a, a);
 	// copy leapfrogging addend into constant device memory
-	gpu::rand48::c.memcpy(c);
-	mdsim::gpu::ljfluid::c.memcpy(c);
+	cuda::copy(gpu::rand48::c, c);
+	cuda::copy(mdsim::gpu::ljfluid::c, c);
     }
 
     /**
