@@ -64,10 +64,10 @@ __device__ unsigned int compute_cell(T const& r)
 {
 #ifdef DIM_3D
     uint3 cell = __float2uint_rz(r / (box / ncell));
-    return (cell.z * ncell + cell.y) * ncell + cell.x;
+    return ((cell.z % ncell) * ncell + (cell.y % ncell)) * ncell + (cell.x % ncell);
 #else
     uint2 cell = __float2uint_rz(r / (box / ncell));
-    return cell.y * ncell + cell.x;
+    return (cell.y % ncell) * ncell + (cell.x % ncell);
 #endif
 }
 
