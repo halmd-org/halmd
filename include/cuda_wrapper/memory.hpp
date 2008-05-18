@@ -51,72 +51,72 @@ class allocator;
  * copy from device memory area to device memory area
  */
 template <typename T, typename U>
-void copy(vector<T>& dst, vector<U> const& src)
+void copy(vector<T> const& src, vector<U>& dst)
 {
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(U), cudaMemcpyDeviceToDevice));
+    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToDevice));
 }
 
 /**
  * copy from host memory area to device memory area
  */
-template <typename T, typename U, typename AllocU>
-void copy(vector<T>& dst, host::vector<U, AllocU> const& src)
+template <typename T, typename AllocT, typename U>
+void copy(host::vector<T, AllocT> const& src, vector<U>& dst)
 {
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(U), cudaMemcpyHostToDevice));
+    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 /**
  * copy from device memory area to host memory area
  */
-template <typename T, typename AllocT, typename U>
-void copy(host::vector<T, AllocT>& dst, vector<U> const& src)
+template <typename T, typename U, typename AllocU>
+void copy(vector<T> const& src, host::vector<U, AllocU>& dst)
 {
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(U), cudaMemcpyDeviceToHost));
+    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToHost));
 }
 
 /**
  * copy from host memory area to host memory area
  */
 template <typename T, typename AllocT, typename U, typename AllocU>
-void copy(host::vector<T, AllocT>& dst, host::vector<U, AllocU> const& src)
+void copy(host::vector<T, AllocT> const& src, host::vector<U, AllocU>& dst)
 {
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(U), cudaMemcpyHostToHost));
+    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToHost));
 }
 
 /**
  * copy from device symbol to host memory area
  */
-template <typename T, typename AllocT, typename U>
-void copy(host::vector<T, AllocT>& dst, symbol<U> const& src)
+template <typename T, typename U, typename AllocU>
+void copy(symbol<T> const& src, host::vector<U, AllocU>& dst)
 {
-    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<const char *>(src.data()), src.size() * sizeof(U), 0, cudaMemcpyDeviceToHost));
+    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<const char *>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
 }
 
 /*
  * copy from device symbol to device memory area
  */
 template <typename T, typename U>
-void copy(vector<T>& dst, symbol<U> const& src)
+void copy(symbol<T> const& src, vector<U>& dst)
 {
-    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<const char *>(src.data()), src.size() * sizeof(U), 0, cudaMemcpyDeviceToDevice));
+    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<const char *>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
 }
 
 /**
  * copy from host memory area to device symbol
  */
-template <typename T, typename U, typename AllocU>
-void copy(symbol<T>& dst, host::vector<U, AllocU> const& src)
+template <typename T, typename AllocT, typename U>
+void copy(host::vector<T, AllocT> const& src, symbol<U>& dst)
 {
-    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(dst.data()), src.data(), src.size() * sizeof(U), 0, cudaMemcpyHostToDevice));
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
 }
 
 /**
  * copy from device memory area to device symbol
  */
 template <typename T, typename U>
-void copy(symbol<T>& dst, vector<U> const& src)
+void copy(vector<T> const& src, symbol<U>& dst)
 {
-    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(dst.data()), src.data(), src.size() * sizeof(U), 0, cudaMemcpyDeviceToDevice));
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
 }
 
 #ifdef CUDA_WRAPPER_ASYNC_API
@@ -125,36 +125,36 @@ void copy(symbol<T>& dst, vector<U> const& src)
  * asynchronous copy from device memory area to device memory area
  */
 template <typename T, typename U>
-void copy(vector<T>& dst, vector<U> const& src, stream& stream)
+void copy(vector<T> const& src, vector<U>& dst, stream& stream)
 {
-    CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(U), cudaMemcpyDeviceToDevice, stream.data()));
+    CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToDevice, stream.data()));
 }
 
 /**
  * asynchronous copy from host memory area to device memory area
  */
 template <typename T, typename U>
-void copy(vector<T>& dst, host::vector<U, host::allocator<U> > const& src, stream& stream)
+void copy(host::vector<T, host::allocator<T> > const& src, vector<U>& dst, stream& stream)
 {
-    CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(U), cudaMemcpyHostToDevice, stream.data()));
+    CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToDevice, stream.data()));
 }
 
 /**
  * asynchronous copy from host memory area to host memory area
  */
 template <typename T, typename U>
-void copy(host::vector<T, host::allocator<T> >& dst, host::vector<U, host::allocator<U> > const& src, stream& stream)
+void copy(host::vector<T, host::allocator<T> > const& src, host::vector<U, host::allocator<U> >& dst, stream& stream)
 {
-    CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(U), cudaMemcpyHostToHost, stream.data()));
+    CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToHost, stream.data()));
 }
 
 /**
  * asynchronous copy from device memory area to host memory area
  */
 template <typename T, typename U>
-void copy(host::vector<T, host::allocator<T> >& dst, vector<U> const& src, stream& stream)
+void copy(vector<T> const& src, host::vector<U, host::allocator<U> >& dst, stream& stream)
 {
-    CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(U), cudaMemcpyDeviceToHost, stream.data()));
+    CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToHost, stream.data()));
 }
 
 #endif /* CUDA_WRAPPER_ASYNC_API */

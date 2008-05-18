@@ -82,7 +82,7 @@ public:
     vector(const vector_type& src)
     {
 	resize(size);
-	copy(*this, src);
+	copy(src, *this);
     }
 
     /**
@@ -92,7 +92,7 @@ public:
     vector(const host::vector<value_type, Alloc>& src)
     {
 	resize(size);
-	copy(*this, src);
+	copy(src, *this);
     }
 
     /**
@@ -101,7 +101,7 @@ public:
     vector(const symbol<value_type> &src)
     {
 	resize(size);
-	copy(*this, src);
+	copy(src, *this);
     }
 
     /**
@@ -110,7 +110,7 @@ public:
     vector_type& operator=(const vector_type& src)
     {
 	if (this != &src) {
-	    copy(*this, src);
+	    copy(src, *this);
 	}
 	return *this;
     }
@@ -121,7 +121,7 @@ public:
     template <typename Alloc>
     vector_type& operator=(const host::vector<value_type, Alloc>& src)
     {
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
@@ -130,7 +130,7 @@ public:
      */
     vector_type& operator=(const symbol<value_type>& src)
     {
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
@@ -140,7 +140,7 @@ public:
     vector_type& operator=(const value_type& value)
     {
 	host::vector<value_type, host::allocator<value_type> > src(size(), value);
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
