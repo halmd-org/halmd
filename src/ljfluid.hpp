@@ -274,7 +274,7 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (unsigned int i = 0; i < npart; ++i) {
-	os << part_.r[i] << "\t" << part_.v[i] << "\n";
+	os << i << "\t" << part_.r[i] << "\t" << part_.v[i] << "\n";
     }
     os << std::endl << std::endl;
 }
