@@ -37,22 +37,27 @@ namespace mdsim
 /**
  * MD simulation cell placeholders
  */
-template <typename T>
+template <unsigned dimension, typename T>
 struct cell_array
 {
+    /** n-dimensional host floating-point vector type */
+    typedef T vector_type;
+    /** n-dimensional device floating-point vector type */
+    typedef typename cuda::vector_type<dimension, typename T::value_type>::value_type cuda_vector_type;
+
     /** n-dimensional particle phase space coordiates */
-    cuda::vector<T> r_gpu, r_gpu2;
-    cuda::vector<T> v_gpu, v_gpu2;
-    cuda::host::vector<T> r;
-    cuda::host::vector<T> v;
+    cuda::vector<cuda_vector_type> r_gpu, r_gpu2;
+    cuda::vector<cuda_vector_type> v_gpu, v_gpu2;
+    cuda::host::vector<vector_type> r;
+    cuda::host::vector<vector_type> v;
     /** periodically reduced particle coordinates */
-    cuda::vector<T> rp_gpu, rp_gpu2;
+    cuda::vector<cuda_vector_type> rp_gpu, rp_gpu2;
     /** particle numbers */
     cuda::vector<int> tag_gpu, tag_gpu2;
     cuda::host::vector<int> tag;
     /** n-dimensional force acting upon particle */
-    cuda::vector<T> force_gpu, force_gpu2;
-    cuda::host::vector<T> force;
+    cuda::vector<cuda_vector_type> force_gpu, force_gpu2;
+    cuda::host::vector<vector_type> force;
     /** potential energy and virial equation sum */
     cuda::vector<float2> en_gpu;
     cuda::host::vector<float2> en;
@@ -88,6 +93,12 @@ template <unsigned int NDIM, typename T>
 class ljfluid
 {
 public:
+    /** n-dimensional host floating-point vector type */
+    typedef T vector_type;
+    /** n-dimensional device floating-point vector type */
+    typedef typename cuda::vector_type<NDIM, typename T::value_type>::value_type cuda_vector_type;
+
+public:
     ljfluid(options const& opts);
 
     uint64_t particles() const;
@@ -120,7 +131,7 @@ private:
     mdsim::rand48 rng_;
 
     /** cell placeholders */
-    cell_array<T> cell;
+    cell_array<NDIM, T> cell;
     /** CUDA execution dimensions for cell kernels */
     cuda::config cell_dim_;
     /** number of cells per dimension */
@@ -251,13 +262,13 @@ void ljfluid<NDIM, T>::density(float density_)
     }
 
     // initialize coordinates
-    cuda::vector<T> part(npart);
+    cuda::vector<cuda_vector_type> part(npart);
     gpu::ljfluid::lattice.configure(dim_, stream_);
-    gpu::ljfluid::lattice(cuda_cast(part));
+    gpu::ljfluid::lattice(part.data());
 
     // assign particles to cells
     gpu::ljfluid::assign_cells.configure(cell_dim_, stream_);
-    gpu::ljfluid::assign_cells(cuda_cast(part), cuda_cast(cell.r_gpu), cuda_cast(cell.tag_gpu));
+    gpu::ljfluid::assign_cells(part.data(), cell.r_gpu.data(), cell.tag_gpu.data());
 
     cuda::copy(cell.r_gpu, cell.r, stream_);
     cuda::copy(cell.tag_gpu, cell.tag, stream_);
@@ -281,9 +292,9 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::temperature(float temp)
 {
     // initialize velocities
-    cuda::vector<T> v(npart);
+    cuda::vector<cuda_vector_type> v(npart);
     gpu::ljfluid::boltzmann.configure(dim_, stream_);
-    gpu::ljfluid::boltzmann(cuda_cast(v), temp, cuda_cast(rng_));
+    gpu::ljfluid::boltzmann(v.data(), temp, rng_.data());
     cuda::copy(v, part.v, stream_);
 
     try {
@@ -322,11 +333,11 @@ void ljfluid<NDIM, T>::step()
 
     // integrate equations of motion
     gpu::ljfluid::inteq.configure(cell_dim_, stream_);
-    gpu::ljfluid::inteq(cuda_cast(cell.r_gpu), cuda_cast(cell.rp_gpu), cuda_cast(cell.v_gpu), cuda_cast(cell.force_gpu));
+    gpu::ljfluid::inteq(cell.r_gpu.data(), cell.rp_gpu.data(), cell.v_gpu.data(), cell.force_gpu.data());
 
     // update cells
     gpu::ljfluid::update_cells.configure(cell_dim_, stream_);
-    gpu::ljfluid::update_cells(cuda_cast(cell.r_gpu), cuda_cast(cell.rp_gpu), cuda_cast(cell.v_gpu), cuda_cast(cell.force_gpu), cuda_cast(cell.tag_gpu), cuda_cast(cell.r_gpu2), cuda_cast(cell.rp_gpu2), cuda_cast(cell.v_gpu2), cuda_cast(cell.force_gpu2), cuda_cast(cell.tag_gpu2));
+    gpu::ljfluid::update_cells(cell.r_gpu.data(), cell.rp_gpu.data(), cell.v_gpu.data(), cell.force_gpu.data(), cell.tag_gpu.data(), cell.r_gpu2.data(), cell.rp_gpu2.data(), cell.v_gpu2.data(), cell.force_gpu2.data(), cell.tag_gpu2.data());
     cuda::copy(cell.r_gpu2, cell.r_gpu, stream_);
     cuda::copy(cell.rp_gpu2, cell.rp_gpu, stream_);
     cuda::copy(cell.v_gpu2, cell.v_gpu, stream_);
@@ -335,7 +346,7 @@ void ljfluid<NDIM, T>::step()
 
     // update forces
     gpu::ljfluid::mdstep.configure(cell_dim_, stream_);
-    gpu::ljfluid::mdstep(cuda_cast(cell.rp_gpu), cuda_cast(cell.v_gpu), cuda_cast(cell.force_gpu), cuda_cast(cell.tag_gpu), cuda_cast(cell.en_gpu));
+    gpu::ljfluid::mdstep(cell.rp_gpu.data(), cell.v_gpu.data(), cell.force_gpu.data(), cell.tag_gpu.data(), cell.en_gpu.data());
 
     event_[1].record(stream_);
 }
