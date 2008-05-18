@@ -22,19 +22,36 @@
 #include <cuda_wrapper.hpp>
 
 
+#ifndef CELL_SIZE
+/** fixed number of placeholders per cell */
+#define CELL_SIZE 32
+#endif
+
+/** real particle tag */
+#define REAL_PARTICLE(x)	(x)
+/** virtual particle tag */
+#define VIRTUAL_PARTICLE	-1
+
+#define IS_REAL_PARTICLE(x)	(x >= 0)
+
+
 namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
 extern cuda::function<void (float3*, float3*, float3*, float3*)> inteq;
 extern cuda::function<void (float3*, float, ushort3*)> boltzmann;
-extern cuda::function<void (float3*, float3*, float3*, float2*)> mdstep;
+extern cuda::function<void (float3 const*, float3*, float3*, int const*, float2*)> mdstep;
 extern cuda::function<void (float3*)> lattice;
+extern cuda::function<void (float3 const*, float3*, int*)> assign_cells;
+extern cuda::function<void (float3 const*, float3 const*, float3 const*, float3 const*, int const*, float3*, float3*, float3*, float3*, int*)> update_cells;
 #else
 extern cuda::function<void (float2*, float2*, float2*, float2*)> inteq;
 extern cuda::function<void (float2*, float, ushort3*)> boltzmann;
-extern cuda::function<void (float2*, float2*, float2*, float2*)> mdstep;
+extern cuda::function<void (float2 const*, float2*, float2*, int const*, float2*)> mdstep;
 extern cuda::function<void (float2*)> lattice;
+extern cuda::function<void (float2 const*, float2*, int*)> assign_cells;
+extern cuda::function<void (float2 const*, float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, float2*, int*)> update_cells;
 #endif
 
 extern cuda::symbol<unsigned int> npart;
@@ -42,6 +59,7 @@ extern cuda::symbol<float> box;
 extern cuda::symbol<float> timestep;
 extern cuda::symbol<float> rr_cut;
 extern cuda::symbol<float> en_cut;
+extern cuda::symbol<unsigned int> ncell;
 
 extern cuda::symbol<uint3> a;
 extern cuda::symbol<uint3> c;

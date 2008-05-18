@@ -35,24 +35,49 @@ namespace mdsim
 {
 
 /**
- * MD simulation particle
+ * MD simulation cell placeholders
  */
 template <typename T>
-struct particle
+struct cell_array
 {
     /** n-dimensional particle phase space coordiates */
-    phase_space_point<cuda::vector<T> > psc_gpu;
-    phase_space_point<cuda::host::vector<T> > psc;
+    cuda::vector<T> r_gpu, r_gpu2;
+    cuda::vector<T> v_gpu, v_gpu2;
+    cuda::host::vector<T> r;
+    cuda::host::vector<T> v;
     /** periodically reduced particle coordinates */
-    cuda::vector<T> rp_gpu;
+    cuda::vector<T> rp_gpu, rp_gpu2;
+    /** particle numbers */
+    cuda::vector<int> tag_gpu, tag_gpu2;
+    cuda::host::vector<int> tag;
     /** n-dimensional force acting upon particle */
-    cuda::vector<T> force_gpu;
+    cuda::vector<T> force_gpu, force_gpu2;
     cuda::host::vector<T> force;
     /** potential energy and virial equation sum */
     cuda::vector<float2> en_gpu;
     cuda::host::vector<float2> en;
 
-    particle(uint64_t n) : psc_gpu(n), psc(n), rp_gpu(n), force_gpu(n), force(n), en_gpu(n), en(n) { }
+    cell_array() {}
+
+    void resize(size_t n)
+    {
+	r_gpu.resize(n);
+	r_gpu2.resize(n);
+	v_gpu.resize(n);
+	v_gpu2.resize(n);
+	r.resize(n);
+	v.resize(n);
+	rp_gpu.resize(n);
+	rp_gpu2.resize(n);
+	tag_gpu.resize(n);
+	tag_gpu2.resize(n);
+	tag.resize(n);
+	force_gpu.resize(n);
+	force_gpu2.resize(n);
+	force.resize(n);
+	en_gpu.resize(n);
+	en.resize(n);
+    }
 };
 
 
@@ -87,12 +112,21 @@ private:
 private:
     /** number of particles in periodic box */
     uint64_t npart;
-    /** particles */
-    particle<T> part;
-    /** random number generator */
-    mdsim::rand48 rng_;
+    /** particle phase space coordinates */
+    phase_space_point<cuda::host::vector<T> > part;
     /** CUDA execution dimensions */
     cuda::config dim_;
+    /** random number generator */
+    mdsim::rand48 rng_;
+
+    /** cell placeholders */
+    cell_array<T> cell;
+    /** CUDA execution dimensions for cell kernels */
+    cuda::config cell_dim_;
+    /** number of cells per dimension */
+    unsigned int ncell_;
+    /** total number of cell placeholders */
+    unsigned int nplace_;
 
     /** particle density */
     float density_;
@@ -120,7 +154,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <unsigned int NDIM, typename T>
-ljfluid<NDIM, T>::ljfluid(options const& opts) : npart(opts.npart()), part(opts.npart()), rng_(opts.dim()), dim_(opts.dim()), steps_(0), gputime_(0.), memtime_(0.)
+ljfluid<NDIM, T>::ljfluid(options const& opts) : npart(opts.npart()), part(npart), dim_(opts.dim()), rng_(dim_), steps_(0), gputime_(0.), memtime_(0.)
 {
     // FIXME do without this requirement
     assert(npart == dim_.threads());
@@ -192,12 +226,33 @@ void ljfluid<NDIM, T>::density(float density_)
     box_ = pow(npart / density_, 1.0 / NDIM);
     gpu::ljfluid::box = box_;
 
-    // initialize coordinates
-    gpu::ljfluid::lattice.configure(dim_, stream_);
-    gpu::ljfluid::lattice(cuda_cast(part.psc_gpu.r));
+    // number of cells per dimension
+    ncell_ = floorf(box_ / r_cut);
+    gpu::ljfluid::ncell = ncell_;
+    // CUDA execution dimensions for cell kernels
+    cell_dim_ = cuda::config(dim3(pow(ncell_, NDIM)), dim3(CELL_SIZE));
+    // total number of cell placeholders
+    nplace_ = pow(ncell_, NDIM) * CELL_SIZE;
 
-    part.psc.r.memcpy(part.psc_gpu.r, stream_);
-    part.rp_gpu.memcpy(part.psc_gpu.r, stream_);
+    try {
+	cell.resize(nplace_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate global device memory for cells");
+    }
+
+    // initialize coordinates
+    cuda::vector<T> part(npart);
+    gpu::ljfluid::lattice.configure(dim_, stream_);
+    gpu::ljfluid::lattice(cuda_cast(part));
+
+    // assign particles to cells
+    gpu::ljfluid::assign_cells.configure(cell_dim_, stream_);
+    gpu::ljfluid::assign_cells(cuda_cast(part), cuda_cast(cell.r_gpu), cuda_cast(cell.tag_gpu));
+
+    cell.r.memcpy(cell.r_gpu, stream_);
+    cell.tag.memcpy(cell.tag_gpu, stream_);
+    cell.rp_gpu.memcpy(cell.r_gpu, stream_);
     stream_.synchronize();
 }
 
@@ -217,9 +272,10 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::temperature(float temp)
 {
     // initialize velocities
+    cuda::vector<T> v(npart);
     gpu::ljfluid::boltzmann.configure(dim_, stream_);
-    gpu::ljfluid::boltzmann(cuda_cast(part.psc_gpu.v), temp, cuda_cast(rng_));
-    part.psc.v.memcpy(part.psc_gpu.v, stream_);
+    gpu::ljfluid::boltzmann(cuda_cast(v), temp, cuda_cast(rng_));
+    part.v.memcpy(v, stream_);
 
     try {
 	stream_.synchronize();
@@ -228,9 +284,16 @@ void ljfluid<NDIM, T>::temperature(float temp)
 	throw exception("CUDA ERROR: failed to initialize velocities");
     }
 
+    for (unsigned int i = 0; i < cell.v.size(); ++i) {
+	if (IS_REAL_PARTICLE(cell.tag[i])) {
+	    cell.v[i] = part.v[cell.tag[i]];
+	}
+    }
+    cell.v_gpu.memcpy(cell.v, stream_);
+
     // initialize forces
-    fill(part.force.begin(), part.force.end(), 0.);
-    part.force_gpu.memcpy(part.force, stream_);
+    fill(cell.force.begin(), cell.force.end(), 0.);
+    cell.force_gpu.memcpy(cell.force, stream_);
 
     try {
 	stream_.synchronize();
@@ -247,11 +310,24 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::step()
 {
     event_[0].record(stream_);
-    gpu::ljfluid::inteq.configure(dim_, stream_);
-    gpu::ljfluid::inteq(cuda_cast(part.psc_gpu.r), cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu));
-    // reserve shared device memory for particle coordinates
-    gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
-    gpu::ljfluid::mdstep(cuda_cast(part.rp_gpu), cuda_cast(part.psc_gpu.v), cuda_cast(part.force_gpu), cuda_cast(part.en_gpu));
+
+    // integrate equations of motion
+    gpu::ljfluid::inteq.configure(cell_dim_, stream_);
+    gpu::ljfluid::inteq(cuda_cast(cell.r_gpu), cuda_cast(cell.rp_gpu), cuda_cast(cell.v_gpu), cuda_cast(cell.force_gpu));
+
+    // update cells
+    gpu::ljfluid::update_cells.configure(cell_dim_, stream_);
+    gpu::ljfluid::update_cells(cuda_cast(cell.r_gpu), cuda_cast(cell.rp_gpu), cuda_cast(cell.v_gpu), cuda_cast(cell.force_gpu), cuda_cast(cell.tag_gpu), cuda_cast(cell.r_gpu2), cuda_cast(cell.rp_gpu2), cuda_cast(cell.v_gpu2), cuda_cast(cell.force_gpu2), cuda_cast(cell.tag_gpu2));
+    cell.r_gpu.memcpy(cell.r_gpu2, stream_);
+    cell.rp_gpu.memcpy(cell.rp_gpu2, stream_);
+    cell.v_gpu.memcpy(cell.v_gpu2, stream_);
+    cell.force_gpu.memcpy(cell.force_gpu2, stream_);
+    cell.tag_gpu.memcpy(cell.tag_gpu2, stream_);
+
+    // update forces
+    gpu::ljfluid::mdstep.configure(cell_dim_, stream_);
+    gpu::ljfluid::mdstep(cuda_cast(cell.rp_gpu), cuda_cast(cell.v_gpu), cuda_cast(cell.force_gpu), cuda_cast(cell.tag_gpu), cuda_cast(cell.en_gpu));
+
     event_[1].record(stream_);
 }
 
@@ -267,9 +343,10 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     }
 
     event_[2].record(stream_);
-    part.psc.r.memcpy(part.psc_gpu.r, stream_);
-    part.psc.v.memcpy(part.psc_gpu.v, stream_);
-    part.en.memcpy(part.en_gpu, stream_);
+    cell.r.memcpy(cell.r_gpu, stream_);
+    cell.v.memcpy(cell.v_gpu, stream_);
+    cell.tag.memcpy(cell.tag_gpu, stream_);
+    cell.en.memcpy(cell.en_gpu, stream_);
     event_[3].record(stream_);
     event_[3].synchronize();
 
@@ -289,12 +366,26 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     vel_cm = 0.;
     vel2_sum = 0.;
 
-    for (uint64_t i = 0; i < npart; ++i) {
-	en_pot += (part.en[i].x - en_pot) / (i + 1);
-	virial += (part.en[i].y - virial) / (i + 1);
-	vel_cm += (part.psc.v[i] - vel_cm) / (i + 1);
-	vel2_sum += (part.psc.v[i] * part.psc.v[i] - vel2_sum) / (i + 1);
+    // number of particles found in cells
+    unsigned int count = 0;
+
+    for (uint64_t i = 0; i < cell.r.size(); ++i) {
+	// check if real particle
+	if (IS_REAL_PARTICLE(cell.tag[i])) {
+	    // copy phase space coordinates
+	    part.r[cell.tag[i]] = cell.r[i];
+	    part.v[cell.tag[i]] = cell.v[i];
+
+	    en_pot += (cell.en[i].x - en_pot) / (i + 1);
+	    virial += (cell.en[i].y - virial) / (i + 1);
+	    vel_cm += (cell.v[i] - vel_cm) / (i + 1);
+	    vel2_sum += (cell.v[i] * cell.v[i] - vel2_sum) / (i + 1);
+
+	    count++;
+	}
     }
+
+    if (count != npart) throw exception("I've lost my marbles!");
 }
 
 /**
@@ -304,7 +395,7 @@ template <unsigned int NDIM, typename T>
 void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 {
     for (uint64_t i = 0; i < npart; ++i) {
-	os << i << "\t" << part.psc.r[i] << "\t" << part.psc.v[i] << "\n";
+	os << i << "\t" << part.r[i] << "\t" << part.v[i] << "\n";
     }
     os << "\n\n";
 }
@@ -316,7 +407,7 @@ template <unsigned int NDIM, typename T>
 template <typename V>
 void ljfluid<NDIM, T>::sample(V& visitor) const
 {
-    visitor.sample(part.psc);
+    visitor.sample(part);
 }
 
 /**
