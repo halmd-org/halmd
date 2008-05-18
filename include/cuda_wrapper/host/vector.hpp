@@ -24,6 +24,7 @@
 #include <vector>
 #include <assert.h>
 #include <cuda_wrapper/host/allocator.hpp>
+#include <cuda_wrapper/memory.hpp>
 #include <cuda_wrapper/vector.hpp>
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/stream.hpp>
@@ -74,56 +75,28 @@ public:
     /**
      * initialize host vector with content of host vector
      */
-    vector(const vector_type& v) : _Base(v.size())
+    vector(const vector_type& src) : _Base(src.size())
     {
-	memcpy(v);
+	copy(*this, src);
     }
 
     /**
      * initialize host vector with content of device vector
      */
-    vector(const cuda::vector<value_type>& v) : _Base(v.size())
+    vector(const cuda::vector<value_type>& src) : _Base(src.size())
     {
-	memcpy(v);
-    }
-
-    /**
-     * copy from host memory area to host memory area
-     */
-    template <typename _Allocator>
-    void memcpy(const vector<value_type, _Allocator>& v)
-    {
-	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToHost));
-    }
-
-    /**
-     * copy from device memory area to host memory area
-     */
-    void memcpy(const cuda::vector<value_type>& v)
-    {
-	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), v.data(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost));
-    }
-
-    /**
-     * copy from device symbol to host memory area
-     */
-    void memcpy(const cuda::symbol<value_type>& symbol)
-    {
-	assert(symbol.size() == _Base::size());
-	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.data()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToHost));
+	copy(*this, src);
     }
 
     /**
      * assign content of host vector to host vector
      */
     template <typename _Allocator>
-    vector_type& operator=(const vector<value_type, _Allocator>& v)
+    vector_type& operator=(const vector<value_type, _Allocator>& src)
     {
-	if (this != &v) {
-	    resize(v.size());
-	    memcpy(v);
+	if (this != &src) {
+	    resize(src.size());
+	    copy(*this, src);
 	}
 	return *this;
     }
@@ -131,20 +104,20 @@ public:
     /**
      * assign content of device vector to host vector
      */
-    vector_type& operator=(const cuda::vector<value_type>& v)
+    vector_type& operator=(const cuda::vector<value_type>& src)
     {
-	resize(v.size());
-	memcpy(v);
+	resize(src.size());
+	copy(*this, src);
 	return *this;
     }
 
     /**
      * assign content of device symbol to host vector
      */
-    vector_type& operator=(const cuda::symbol<value_type>& symbol)
+    vector_type& operator=(const cuda::symbol<value_type>& src)
     {
-	resize(symbol.size());
-	memcpy(symbol);
+	resize(src.size());
+	copy(*this, src);
 	return *this;
     }
 
@@ -187,82 +160,30 @@ public:
     /**
      * initialize host vector with content of host vector
      */
-    vector(const vector_type& v) : _Base(v.size())
+    vector(const vector_type& src) : _Base(src.size())
     {
-	memcpy(v);
+	copy(*this, src);
     }
 
     /**
      * initialize host vector with content of device vector
      */
-    vector(const cuda::vector<value_type>& v) : _Base(v.size())
+    vector(const cuda::vector<value_type>& src) : _Base(src.size())
     {
-	memcpy(v);
+	copy(*this, src);
     }
 
-    /**
-     * copy from host memory area to host memory area
-     */
-    template <typename _Allocator>
-    void memcpy(const vector<value_type, _Allocator>& v)
-    {
-	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToHost));
-    }
 
-    /**
-     * copy from device memory area to host memory area
-     */
-    void memcpy(const cuda::vector<value_type>& v)
-    {
-	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpy(&_Base::front(), v.data(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost));
-    }
-
-    /**
-     * copy from device symbol to host memory area
-     */
-    void memcpy(const cuda::symbol<value_type>& symbol)
-    {
-	assert(symbol.size() == _Base::size());
-	CUDA_CALL(cudaMemcpyFromSymbol(&_Base::front(), reinterpret_cast<const char *>(symbol.data()), symbol.size() * sizeof(value_type), 0, cudaMemcpyDeviceToHost));
-    }
-
-#ifdef CUDA_WRAPPER_ASYNC_API
-
-    /**
-     * asynchronous copy from host memory area to host memory area
-     *
-     * requires page-locked host memory
-     */
-    void memcpy(const vector_type& v, const stream& stream)
-    {
-	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpyAsync(&_Base::front(), &v.front(), v.size() * sizeof(value_type), cudaMemcpyHostToHost, stream._stream));
-    }
-
-    /**
-     * asynchronous copy from device memory area to host memory area
-     *
-     * requires page-locked host memory
-     */
-    void memcpy(const cuda::vector<value_type>& v, const stream& stream)
-    {
-	assert(v.size() == _Base::size());
-	CUDA_CALL(cudaMemcpyAsync(&_Base::front(), v.data(), v.size() * sizeof(value_type), cudaMemcpyDeviceToHost, stream._stream));
-    }
-
-#endif /* CUDA_WRAPPER_ASYNC_API */
 
     /**
      * assign content of host vector to host vector
      */
     template <typename _Allocator>
-    vector_type& operator=(const vector<value_type, _Allocator>& v)
+    vector_type& operator=(const vector<value_type, _Allocator>& src)
     {
-	if (this != &v) {
-	    resize(v.size());
-	    memcpy(v);
+	if (this != &src) {
+	    resize(src.size());
+	    copy(*this, src);
 	}
 	return *this;
     }
@@ -270,20 +191,20 @@ public:
     /**
      * assign content of device vector to host vector
      */
-    vector_type& operator=(const cuda::vector<value_type>& v)
+    vector_type& operator=(const cuda::vector<value_type>& src)
     {
-	resize(v.size());
-	memcpy(v);
+	resize(src.size());
+	copy(*this, src);
 	return *this;
     }
 
     /**
      * assign content of device symbol to host vector
      */
-    vector_type& operator=(const cuda::symbol<value_type>& symbol)
+    vector_type& operator=(const cuda::symbol<value_type>& src)
     {
-	resize(symbol.size());
-	memcpy(symbol);
+	resize(src.size());
+	copy(*this, src);
 	return *this;
     }
 

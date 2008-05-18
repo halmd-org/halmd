@@ -111,7 +111,7 @@
 	/**
 	 * configure execution parameters
 	 */
-	static void configure(const config& dim, size_t shared_mem = 0)
+	static void configure(config const& dim, size_t shared_mem = 0)
 	{
 	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
 	}
@@ -120,27 +120,27 @@
 	/**
 	 * configure execution parameters
 	 */
-	static void configure(const config& dim, stream& stream)
+	static void configure(config const& dim, stream& stream)
 	{
-	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, 0, stream._stream));
+	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, 0, stream.data()));
 	}
 
 	/**
 	 * configure execution parameters
 	 */
-	static void configure(const config& dim, size_t shared_mem, stream& stream)
+	static void configure(config const& dim, size_t shared_mem, stream& stream)
 	{
-	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, stream._stream));
+	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, stream.data()));
 	}
     #endif /* CUDA_WRAPPER_ASYNC_API */
 
 	/**
 	 * execute kernel
 	 */
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(BOOST_PP_ITERATION(), const T, &x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(BOOST_PP_ITERATION(), T, const& x))
 	{
 	    size_t offset = 0;
-    #define SETUP_ARGUMENT(z, n, x) setup_argument(x##n, &offset);
+    #define SETUP_ARGUMENT(z, n, x) setup_argument(x##n, offset);
 	    BOOST_PP_REPEAT(BOOST_PP_ITERATION(), SETUP_ARGUMENT, x)
     #undef SETUP_ARGUMENT
 	    CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(entry)));
@@ -151,17 +151,17 @@
 	 * push arbitrary argument into argument passing area
 	 */
 	template <typename U>
-	static void setup_argument(const U& arg, size_t *offset)
+	static void setup_argument(U const& arg, size_t& offset)
 	{
 	    /* respect alignment requirements of passed argument */
-	    if (0 != *offset % __alignof(U)) {
-		*offset += __alignof(U) - *offset % __alignof(U);
+	    if (0 != offset % __alignof(U)) {
+		offset += __alignof(U) - offset % __alignof(U);
 	    }
 
-	    CUDA_CALL(cudaSetupArgument(&arg, sizeof(U), *offset));
+	    CUDA_CALL(cudaSetupArgument(&arg, sizeof(U), offset));
 
 	    /* advance argument offset for next call */
-	    *offset += sizeof(U);
+	    offset += sizeof(U);
 	}
 
     #endif /* ! __CUDACC__ */
