@@ -180,25 +180,6 @@ public:
     }
 };
 
-
-/**
- * returns device pointer to allocated device memory
- */
-template <typename T>
-T* cuda_cast(cuda::vector<T>& v)
-{
-    return v.data();
-}
-
-/**
- * returns device pointer to allocated device memory
- */
-template <typename T>
-T const* cuda_cast(cuda::vector<T> const& v)
-{
-    return v.data();
-}
-
 } // namespace cuda
 
 #endif /* CUDA_VECTOR_HPP */
