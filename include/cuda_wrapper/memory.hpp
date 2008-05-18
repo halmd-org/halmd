@@ -20,32 +20,14 @@
 #define CUDA_MEMORY_HPP
 
 #include <cuda/cuda_runtime.h>
+#include <cuda_wrapper/host/allocator.hpp>
+#include <cuda_wrapper/host/vector.hpp>
+#include <cuda_wrapper/symbol.hpp>
+#include <cuda_wrapper/vector.hpp>
+
 
 namespace cuda
 {
-
-// forward declaration
-template <typename T>
-class vector;
-
-// forward declaration
-template <typename T>
-class symbol;
-
-
-namespace host
-{
-
-// forward declaration
-template <typename T, typename Alloc>
-class vector;
-
-// forward declaration
-template<typename T>
-class allocator;
-
-} // namespace host
-
 
 /**
  * copy from device memory area to device memory area
@@ -89,7 +71,7 @@ void copy(host::vector<T, AllocT> const& src, host::vector<U, AllocU>& dst)
 template <typename T, typename U>
 void copy(symbol<T> const& src, U& dst)
 {
-    CUDA_CALL(cudaMemcpyFromSymbol(&dst, reinterpret_cast<const char *>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
+    CUDA_CALL(cudaMemcpyFromSymbol(&dst, reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
 }
 
 /**
@@ -98,7 +80,7 @@ void copy(symbol<T> const& src, U& dst)
 template <typename T, typename U, typename AllocU>
 void copy(symbol<T> const& src, host::vector<U, AllocU>& dst)
 {
-    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<const char *>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
+    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
 }
 
 /*
@@ -107,7 +89,7 @@ void copy(symbol<T> const& src, host::vector<U, AllocU>& dst)
 template <typename T, typename U>
 void copy(symbol<T> const& src, vector<U>& dst)
 {
-    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<const char *>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
 }
 
 /**
@@ -116,7 +98,7 @@ void copy(symbol<T> const& src, vector<U>& dst)
 template <typename T, typename U>
 void copy(T const& src, symbol<U>& dst)
 {
-    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(dst.data()), &src, sizeof(T), 0, cudaMemcpyHostToDevice));
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), &src, sizeof(T), 0, cudaMemcpyHostToDevice));
 }
 
 /**
@@ -125,7 +107,7 @@ void copy(T const& src, symbol<U>& dst)
 template <typename T, typename AllocT, typename U>
 void copy(host::vector<T, AllocT> const& src, symbol<U>& dst)
 {
-    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
 }
 
 /**
@@ -134,7 +116,7 @@ void copy(host::vector<T, AllocT> const& src, symbol<U>& dst)
 template <typename T, typename U>
 void copy(vector<T> const& src, symbol<U>& dst)
 {
-    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<const char *>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
 }
 
 #ifdef CUDA_WRAPPER_ASYNC_API

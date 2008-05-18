@@ -1,4 +1,4 @@
-/* cuda_wrapper/vector.hpp
+/* CUDA global device memory vector
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -19,33 +19,16 @@
 #ifndef CUDA_VECTOR_HPP
 #define CUDA_VECTOR_HPP
 
-#include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/allocator.hpp>
-#include <cuda_wrapper/memory.hpp>
-#include <cuda_wrapper/symbol.hpp>
-#include <cuda_wrapper/host/vector.hpp>
-#include <cuda_wrapper/stream.hpp>
 #include <cuda_wrapper/function.hpp>
 #include <vector>
-#include <assert.h>
+
 
 namespace cuda
 {
 
-namespace host
-{
-
-template <typename T, typename Alloc>
-class vector;
-
-}
-
-template <typename T>
-class symbol;
-
-
 /**
- * vector container for linear global device memory
+ * CUDA global device memory vector
  */
 template <typename T>
 class vector : protected std::vector<T, allocator<T> >
@@ -71,77 +54,9 @@ public:
     /**
      * initialize device vector of given size
      */
-    vector(config dim)
+    vector(config const& dim)
     {
 	resize(dim.threads());
-    }
-
-    /**
-     * initialize device vector with content of device vector
-     */
-    vector(const vector_type& src)
-    {
-	resize(size);
-	copy(src, *this);
-    }
-
-    /**
-     * initialize device vector with content of host vector
-     */
-    template <typename Alloc>
-    vector(const host::vector<value_type, Alloc>& src)
-    {
-	resize(size);
-	copy(src, *this);
-    }
-
-    /**
-     * initialize device vector with content of device symbol
-     */
-    vector(const symbol<value_type> &src)
-    {
-	resize(size);
-	copy(src, *this);
-    }
-
-    /**
-     * assign content of device vector to device vector
-     */
-    vector_type& operator=(const vector_type& src)
-    {
-	if (this != &src) {
-	    copy(src, *this);
-	}
-	return *this;
-    }
-
-    /**
-     * assign content of host vector to device vector
-     */
-    template <typename Alloc>
-    vector_type& operator=(const host::vector<value_type, Alloc>& src)
-    {
-	copy(src, *this);
-	return *this;
-    }
-
-    /**
-     * assign content of device symbol to device vector
-     */
-    vector_type& operator=(const symbol<value_type>& src)
-    {
-	copy(src, *this);
-	return *this;
-    }
-
-    /**
-     * assign copies of value to device vector
-     */
-    vector_type& operator=(const value_type& value)
-    {
-	host::vector<value_type, host::allocator<value_type> > src(size(), value);
-	copy(src, *this);
-	return *this;
     }
 
     /**
@@ -178,6 +93,12 @@ public:
     {
 	return _Base::data();
     }
+
+private:
+    // disable default copy constructor
+    vector(vector_type const&);
+    // disable default assignment operator
+    vector_type& operator=(vector_type const&);
 };
 
 } // namespace cuda

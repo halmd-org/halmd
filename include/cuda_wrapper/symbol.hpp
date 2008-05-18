@@ -1,4 +1,4 @@
-/* cuda_wrapper/symbol.hpp
+/* CUDA device symbol
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -22,32 +22,13 @@
 #include <cuda/cuda_runtime.h>
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
-#include <cuda_wrapper/memory.hpp>
-#include <cuda_wrapper/vector.hpp>
-#include <cuda_wrapper/host/vector.hpp>
 #endif
 
 namespace cuda
 {
 
-namespace host
-{
-
-#ifndef __CUDACC__
-template <typename T, typename Alloc>
-class vector;
-#endif
-
-}
-
-#ifndef __CUDACC__
-template <typename T>
-class vector;
-#endif
-
-
 /**
- * vector container for a device symbol
+ * CUDA device symbol
  */
 template <typename T>
 class symbol
@@ -57,61 +38,29 @@ public:
     typedef T value_type;
     typedef size_t size_type;
 
-protected:
-    mutable size_type _size;
-    const value_type* _ptr;
-
 public:
     /**
-     * initialize container with device symbol variable
+     * initialize with device symbol variable
      */
-    symbol(const value_type& symbol) : _size(1), _ptr(&symbol)
+    symbol(const value_type& symbol) : size_(1), ptr_(&symbol)
     {
     }
 
     /**
-     * initialize container with device symbol vector
+     * initialize with device symbol vector
      */
-    symbol(const value_type* symbol) : _size(0), _ptr(symbol)
+    symbol(const value_type* symbol) : size_(0), ptr_(symbol)
     {
     }
 
 #ifndef __CUDACC__
 
     /**
-     * assign content of host vector to device symbol
-     */
-    vector_type& operator=(const host::vector<value_type>& src)
-    {
-	copy(src, *this);
-	return *this;
-    }
-
-    /**
-     * assign content of device vector to device symbol
-     */
-    vector_type& operator=(const vector<value_type>& src)
-    {
-	copy(src, *this);
-	return *this;
-    }
-
-    /**
-     * assign copies of value to device symbol
-     */
-    vector_type& operator=(const value_type& value)
-    {
-	host::vector<value_type> src(size(), value);
-	copy(src, *this);
-	return *this;
-    }
-
-    /**
      * return element count of device symbol vector
      */
     size_type size() const
     {
-	if (!_size) {
+	if (!size_) {
 	    /*
 	     * It would be preferable to issue the following CUDA runtime
 	     * call directly upon construction. However, the constructor
@@ -119,11 +68,11 @@ public:
 	     * which does not support C++ runtime functionality, e.g.
 	     * exceptions.
 	     */
-	    CUDA_CALL(cudaGetSymbolSize(&_size, reinterpret_cast<const char *>(data())));
-	    _size /= sizeof(value_type);
+	    CUDA_CALL(cudaGetSymbolSize(&size_, reinterpret_cast<char const*>(data())));
+	    size_ /= sizeof(value_type);
 	}
 
-	return _size;
+	return size_;
     }
 
 #endif /* ! __CUDACC__ */
@@ -133,16 +82,22 @@ public:
      */
     const value_type* data() const
     {
-	return _ptr;
+	return ptr_;
     }
 
 private:
     // disable default copy constructor
-    symbol(const vector_type&);
+    symbol(vector_type const&);
     // disable default assignment operator
-    vector_type& operator=(const vector_type&);
+    vector_type& operator=(vector_type const&);
+
+private:
+    /** symbol size */
+    mutable size_type size_;
+    /** symbol device pointer */
+    const value_type* ptr_;
 };
 
-}
+} // namespace cuda
 
 #endif /* ! CUDA_SYMBOL_HPP */
