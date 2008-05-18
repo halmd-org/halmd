@@ -77,7 +77,7 @@ public:
      */
     vector(const vector_type& src) : _Base(src.size())
     {
-	copy(*this, src);
+	copy(src, *this);
     }
 
     /**
@@ -85,7 +85,7 @@ public:
      */
     vector(const cuda::vector<value_type>& src) : _Base(src.size())
     {
-	copy(*this, src);
+	copy(src, *this);
     }
 
     /**
@@ -96,7 +96,7 @@ public:
     {
 	if (this != &src) {
 	    resize(src.size());
-	    copy(*this, src);
+	    copy(src, *this);
 	}
 	return *this;
     }
@@ -107,7 +107,7 @@ public:
     vector_type& operator=(const cuda::vector<value_type>& src)
     {
 	resize(src.size());
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
@@ -117,7 +117,7 @@ public:
     vector_type& operator=(const cuda::symbol<value_type>& src)
     {
 	resize(src.size());
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
@@ -162,7 +162,7 @@ public:
      */
     vector(const vector_type& src) : _Base(src.size())
     {
-	copy(*this, src);
+	copy(src, *this);
     }
 
     /**
@@ -170,7 +170,7 @@ public:
      */
     vector(const cuda::vector<value_type>& src) : _Base(src.size())
     {
-	copy(*this, src);
+	copy(src, *this);
     }
 
 
@@ -183,7 +183,7 @@ public:
     {
 	if (this != &src) {
 	    resize(src.size());
-	    copy(*this, src);
+	    copy(src, *this);
 	}
 	return *this;
     }
@@ -194,7 +194,7 @@ public:
     vector_type& operator=(const cuda::vector<value_type>& src)
     {
 	resize(src.size());
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
@@ -204,7 +204,7 @@ public:
     vector_type& operator=(const cuda::symbol<value_type>& src)
     {
 	resize(src.size());
-	copy(*this, src);
+	copy(src, *this);
 	return *this;
     }
 
