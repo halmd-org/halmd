@@ -32,18 +32,18 @@ struct mean_square_displacement
     char const* name() { return "MSD"; }
 
     template <typename input_iterator, typename output_iterator>
-    void operator()(input_iterator const& first, input_iterator const& last, output_iterator block)
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::value_type::vector_type::const_iterator r, r0;
-	typename input_iterator::value_type::vector_type::value_type dr;
-	typename output_iterator::value_type::iterator result;
+	typedef typename input_iterator::value_type::vector_type::const_iterator vector_const_iterator;
+	typedef typename input_iterator::value_type::vector_type::value_type vector_type;
+	typedef typename input_iterator::value_type::vector_type::value_type::value_type value_type;
 
 	// iterate over phase space samples in block, skipping first sample
-	for (input_iterator it = first; ++it != last; ++block) {
+	for (input_iterator it = first; ++it != last; ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (r = it->r.begin(), r0 = first->r.begin(), result = block->begin(); r != it->r.end(); ++r, ++r0, ++result) {
+	    for (vector_const_iterator r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0) {
 		// displacement of particle
-		dr = *r0 - *r;
+		vector_type dr = *r0 - *r;
 		// accumulate square displacement
 		*result += dr * dr;
 	    }
@@ -60,21 +60,20 @@ struct mean_quartic_displacement
     char const* name() { return "MQD"; }
 
     template <typename input_iterator, typename output_iterator>
-    void operator()(input_iterator const& first, input_iterator const& last, output_iterator block)
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::value_type::vector_type::const_iterator r, r0;
-	typename input_iterator::value_type::vector_type::value_type dr;
-	typename input_iterator::value_type::vector_type::value_type::value_type rr;
-	typename output_iterator::value_type::iterator result;
+	typedef typename input_iterator::value_type::vector_type::const_iterator vector_const_iterator;
+	typedef typename input_iterator::value_type::vector_type::value_type vector_type;
+	typedef typename input_iterator::value_type::vector_type::value_type::value_type value_type;
 
 	// iterate over phase space samples in block, skipping first sample
-	for (input_iterator it = first; ++it != last; ++block) {
+	for (input_iterator it = first; ++it != last; ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (r = it->r.begin(), r0 = first->r.begin(), result = block->begin(); r != it->r.end(); ++r, ++r0, ++result) {
+	    for (vector_const_iterator r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0) {
 		// displacement of particle
-		dr = *r0 - *r;
+		vector_type dr = *r0 - *r;
 		// square displacement
-		rr = dr * dr;
+		value_type rr = dr * dr;
 		// accumulate quartic displacement
 		*result += rr * rr;
 	    }
@@ -91,15 +90,14 @@ struct velocity_autocorrelation
     char const* name() { return "VAC"; }
 
     template <typename input_iterator, typename output_iterator>
-    void operator()(input_iterator const& first, input_iterator const& last, output_iterator block)
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::value_type::vector_type::const_iterator v, v0;
-	typename output_iterator::value_type::iterator result;
+	typedef typename input_iterator::value_type::vector_type::const_iterator vector_const_iterator;
 
 	// iterate over phase space samples in block, skipping first sample
-	for (input_iterator it = first; ++it != last; ++block) {
+	for (input_iterator it = first; ++it != last; ++result) {
 	    // iterate over particle velocities in current and first sample
-	    for (v = it->v.begin(), v0 = first->v.begin(), result = block->begin(); v != it->v.end(); ++v, ++v0, ++result) {
+	    for (vector_const_iterator v = it->v.begin(), v0 = first->v.begin(); v != it->v.end(); ++v, ++v0) {
 		// accumulate velocity autocorrelation
 		*result += *v0 * *v;
 	    }
