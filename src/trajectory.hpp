@@ -42,12 +42,12 @@ struct phase_space_point
 };
 
 
-template <unsigned int NDIM, typename T>
+template <unsigned dimension, typename T>
 class trajectory
 {
 public:
     trajectory(options const& opts);
-    void sample(phase_space_point<T> const& p);
+    void sample(phase_space_point<T> const& p, float const&, float const&);
 
 private:
     H5::H5File file_;
@@ -61,8 +61,8 @@ private:
 };
 
 
-template <unsigned int NDIM, typename T>
-trajectory<NDIM, T>::trajectory(options const& opts) : npart_(opts.npart()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
+template <unsigned dimension, typename T>
+trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.npart()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -79,23 +79,23 @@ trajectory<NDIM, T>::trajectory(options const& opts) : npart_(opts.npart()), max
     H5::DataSpace ds(H5S_SCALAR);
     H5::Group root(file_.openGroup("/"));
 
-    unsigned int ndim = NDIM;
+    unsigned int ndim = dimension;
     root.createAttribute("dimensions", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &ndim);
     root.createAttribute("particles", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &npart_);
     root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples_);
 
-    hsize_t dim1[3] = { max_samples_, npart_, NDIM };
+    hsize_t dim1[3] = { max_samples_, npart_, dimension };
     ds_ = H5::DataSpace(3, dim1);
     dset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_FLOAT, ds_);
     dset_[1] = file_.createDataSet("velocity", H5::PredType::NATIVE_FLOAT, ds_);
 
-    hsize_t dim2[2] = { npart_, NDIM };
+    hsize_t dim2[2] = { npart_, dimension };
     ds_src_ = H5::DataSpace(2, dim2);
     ds_dst_ = ds_;
 }
 
-template <unsigned int NDIM, typename T>
-void trajectory<NDIM, T>::sample(phase_space_point<T> const& p)
+template <unsigned dimension, typename T>
+void trajectory<dimension, T>::sample(phase_space_point<T> const& p, float const&, float const&)
 {
     if (samples_ >= max_samples_)
 	return;
@@ -106,7 +106,7 @@ void trajectory<NDIM, T>::sample(phase_space_point<T> const& p)
     hsize_t count[3]  = { 1, npart_, 1 };
     hsize_t start[3]  = { samples_, 0, 0 };
     hsize_t stride[3] = { 1, 1, 1 };
-    hsize_t block[3]  = { 1, 1, NDIM };
+    hsize_t block[3]  = { 1, 1, dimension };
 
     ds_dst_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
