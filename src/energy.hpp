@@ -53,7 +53,7 @@ private:
     /** HDF5 data sets for thermodynamic equilibrium properties */
     std::vector<H5::DataSet> dset_;
     /** HDF5 data space for selection within data set */
-    H5::DataSpace ds_scalar_, ds_scalar_time_, ds_vector_, ds_vector_time_;
+    H5::DataSpace ds_scalar_, ds_vector_;
 };
 
 
@@ -77,12 +77,10 @@ energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep()), 
 
     root.createAttribute("timestep", dt, H5S_SCALAR).write(dt, &timestep_);
 
-    hsize_t dim_scalar[2] = { opts.steps(), 2 };
-    hsize_t dim_vector[2] = { opts.steps(), 1 + dimension };
+    hsize_t dim_scalar[2] = { opts.steps(), 1 };
+    hsize_t dim_vector[2] = { opts.steps(), dimension };
     ds_scalar_ = H5::DataSpace(2, dim_scalar);
-    ds_scalar_time_ = H5::DataSpace(2, dim_scalar);
     ds_vector_ = H5::DataSpace(2, dim_vector);
-    ds_vector_time_ = H5::DataSpace(2, dim_vector);
 
     // mean potential energy per particle
     dset_.push_back(file_.createDataSet("EPOT", dt, ds_scalar_));
@@ -106,8 +104,6 @@ void energy<dimension, T>::sample(phase_space_point<T> const& p, float const& en
     for (typename T::const_iterator it = p.v.begin(); it != p.v.end(); ++it) {
 	vv += *it * *it;
     }
-    // simulation time
-    float time_ = samples_ * timestep_;
 
     // mean kinetic energy per particle
     float en_kin = vv.mean() / 2.;
@@ -121,17 +117,13 @@ void energy<dimension, T>::sample(phase_space_point<T> const& p, float const& en
     typename T::value_type v_cm = mean(p.v.begin(), p.v.end());
 
     hsize_t count[2]  = { 1, 1 };
-    hsize_t start[2]  = { samples_, 1 };
+    hsize_t start[2]  = { samples_, 0 };
     hsize_t stride[2] = { 1, 1 };
     hsize_t block[2]  = { 1, 1 };
     ds_scalar_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     hsize_t block2[2] = { 1, dimension };
     ds_vector_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block2);
-
-    hsize_t start2[2]  = { samples_, 0 };
-    ds_scalar_time_.selectHyperslab(H5S_SELECT_SET, count, start2, stride, block);
-    ds_vector_time_.selectHyperslab(H5S_SELECT_SET, count, start2, stride, block);
 
     hsize_t dim_vector[1] = { dimension };
     hsize_t dim_scalar[1] = { 1 };
@@ -142,17 +134,11 @@ void energy<dimension, T>::sample(phase_space_point<T> const& p, float const& en
 
     // write thermodynamic equilibrium properties
     std::vector<H5::DataSet>::iterator dset = dset_.begin();
-    (dset)->write(&time_, dt, ds_scalar, ds_scalar_time_);
     (dset++)->write(&en_pot, dt, ds_scalar, ds_scalar_);
-    (dset)->write(&time_, dt, ds_scalar, ds_scalar_time_);
     (dset++)->write(&en_kin, dt, ds_scalar, ds_scalar_);
-    (dset)->write(&time_, dt, ds_scalar, ds_scalar_time_);
     (dset++)->write(&en_tot, dt, ds_scalar, ds_scalar_);
-    (dset)->write(&time_, dt, ds_scalar, ds_scalar_time_);
     (dset++)->write(&temp, dt, ds_scalar, ds_scalar_);
-    (dset)->write(&time_, dt, ds_scalar, ds_scalar_time_);
     (dset++)->write(&press, dt, ds_scalar, ds_scalar_);
-    (dset)->write(&time_, dt, ds_scalar, ds_vector_time_);
     (dset++)->write(&v_cm, dt, ds_vector, ds_vector_);
 
     samples_++;
