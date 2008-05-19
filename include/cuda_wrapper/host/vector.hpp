@@ -1,4 +1,4 @@
-/* CUDA host memory vector
+/* CUDA page-locked host memory vector
  *
  * Copyright (C) 2007  Peter Colberg
  *
@@ -28,15 +28,15 @@ namespace cuda { namespace host
 {
 
 /**
- * CUDA host memory vector
+ * CUDA page-locked host memory vector
  */
-template <typename T, typename Alloc = allocator<T> >
-class vector : public std::vector<T, Alloc>
+template <typename T>
+class vector : public std::vector<T, allocator<T> >
 {
 public:
-    typedef Alloc _Alloc;
-    typedef std::vector<T, Alloc> _Base;
-    typedef vector<T, Alloc> vector_type;
+    typedef allocator<T> _Alloc;
+    typedef std::vector<T, allocator<T> > _Base;
+    typedef vector<T> vector_type;
     typedef T value_type;
     typedef size_t size_type;
 

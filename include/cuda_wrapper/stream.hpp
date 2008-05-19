@@ -26,17 +26,6 @@
 namespace cuda
 {
 
-template <typename T>
-class vector;
-
-namespace host
-{
-
-template <typename T, typename Alloc>
-class vector;
-
-}
-
 #ifdef CUDA_WRAPPER_ASYNC_API
 
 /**
