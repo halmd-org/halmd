@@ -20,9 +20,9 @@
 #include <stdint.h>
 #include <vector>
 #include "autocorrelation.hpp"
+#include "energy.hpp"
 #include "exception.hpp"
 #include "ljfluid.hpp"
-#include "mdsim.hpp"
 #include "options.hpp"
 #include "time.hpp"
 #include "trajectory.hpp"
@@ -45,12 +45,14 @@ int main(int argc, char **argv)
 
 #ifdef DIM_3D
     mdsim::ljfluid<3, vector3d<double> > fluid(opts);
-    mdsim::mdsim<3, vector3d<double> > sim;
+    // thermodynamic equilibrium properties
+    mdsim::energy<3, std::vector<vector3d<double> > > tep(opts);
     mdsim::trajectory<3, std::vector<vector3d<double> > > traj(opts);
     mdsim::autocorrelation<3, vector3d<double> > tcf(opts);
 #else
     mdsim::ljfluid<2, vector2d<double> > fluid(opts);
-    mdsim::mdsim<2, vector2d<double> > sim;
+    // thermodynamic equilibrium properties
+    mdsim::energy<2, std::vector<vector2d<double> > > tep(opts);
     mdsim::trajectory<2, std::vector<vector2d<double> > > traj(opts);
     mdsim::autocorrelation<2, vector2d<double> > tcf(opts);
 #endif
@@ -73,30 +75,11 @@ int main(int argc, char **argv)
     timer.start();
 
     for (uint64_t i = 1; i <= opts.steps(); i++) {
-	sim.step(fluid);
+	fluid.mdstep();
 
 	fluid.sample(tcf);
+	fluid.sample(tep);
 	fluid.sample(traj);
-
-	if (i % opts.avgsteps())
-	    continue;
-
-	cout << "## steps(" << i << ")" << endl;
-
-	cout << "# en_pot(" << sim.en_pot().mean() << ")" << endl;
-	cout << "# sigma_en_pot(" << sim.en_pot().std() << ")" << endl;
-	cout << "# en_kin(" << sim.en_kin().mean() << ")" << endl;
-	cout << "# sigma_en_kin(" << sim.en_kin().std() << ")" << endl;
-	cout << "# en_tot(" << sim.en_tot().mean() << ")" << endl;
-	cout << "# sigma_en_tot(" << sim.en_tot().std() << ")" << endl;
-	cout << "# temp(" << sim.temp().mean() << ")" << endl;
-	cout << "# sigma_temp(" << sim.temp().std() << ")" << endl;
-	cout << "# pressure(" << sim.pressure().mean() << ")" << endl;
-	cout << "# sigma_pressure(" << sim.pressure().std() << ")" << endl;
-	cout << "# vel_cm(" << sim.vel_cm().mean() << ")" << endl;
-	cout << "# sigma_vel_cm(" << sim.vel_cm().std() << ")" << endl;
-
-	sim.clear();
     }
 
     tcf.flush();

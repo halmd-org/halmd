@@ -116,6 +116,11 @@ public:
 	return output_file_prefix_ + ".trj";
     }
 
+    std::string energy_output_file() const
+    {
+	return output_file_prefix_ + ".tep";
+    }
+
     bool quiet() const
     {
 	return quiet_;

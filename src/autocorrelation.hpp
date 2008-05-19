@@ -50,7 +50,7 @@ struct phase_space_samples
 };
 
 
-template <int NDIM, typename T>
+template <unsigned dimension, typename T>
 class autocorrelation
 {
 private:
@@ -70,7 +70,7 @@ private:
 public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
-    void sample(phase_space_type const& p);
+    void sample(phase_space_type const& p, float const&, float const&);
     void flush();
     void write(std::string const& path, double timestep);
 
@@ -94,8 +94,8 @@ private:
 };
 
 
-template <int NDIM, typename T>
-autocorrelation<NDIM, T>::autocorrelation(options const& opts)
+template <unsigned dimension, typename T>
+autocorrelation<dimension, T>::autocorrelation(options const& opts)
 {
     // validate block parameters
     if (opts.block_count() < 1) {
@@ -143,15 +143,15 @@ autocorrelation<NDIM, T>::autocorrelation(options const& opts)
 /**
  * minimum number of samples required to autocorrelate all blocks at least once
  */
-template <int NDIM, typename T>
-uint64_t autocorrelation<NDIM, T>::min_samples()
+template <unsigned dimension, typename T>
+uint64_t autocorrelation<dimension, T>::min_samples()
 {
     return pow(block_size, block_count / 2) * block_shift;
 }
 
 
-template <int NDIM, typename T>
-void autocorrelation<NDIM, T>::sample(phase_space_type const& p)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::sample(phase_space_type const& p, float const&, float const&)
 {
     // sample odd level blocks
     sample(p, 0);
@@ -163,8 +163,8 @@ void autocorrelation<NDIM, T>::sample(phase_space_type const& p)
 }
 
 
-template <int NDIM, typename T>
-void autocorrelation<NDIM, T>::sample(phase_space_type const& p, unsigned int offset)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::sample(phase_space_type const& p, unsigned int offset)
 {
     // add phase space sample to lowest block
     block[offset].samples.push_back(p);
@@ -197,8 +197,8 @@ void autocorrelation<NDIM, T>::sample(phase_space_type const& p, unsigned int of
 }
 
 
-template <int NDIM, typename T>
-void autocorrelation<NDIM, T>::flush()
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::flush()
 {
     for (unsigned int i = 2; i < block_count; ++i) {
 	while (block[i].nsample < max_samples && block[i].samples.size() > 2) {
@@ -213,8 +213,8 @@ void autocorrelation<NDIM, T>::flush()
 /**
  * apply correlation functions to block samples
  */
-template <int NDIM, typename T>
-void autocorrelation<NDIM, T>::autocorrelate_block(unsigned int n)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::autocorrelate_block(unsigned int n)
 {
     for (unsigned int i = 0; i < tcf.size(); ++i) {
 	boost::apply_visitor(gen_tcf_apply_visitor(block[n].samples.begin(), block[n].samples.end(), result[i][n].begin()), tcf[i]);
@@ -222,8 +222,8 @@ void autocorrelation<NDIM, T>::autocorrelate_block(unsigned int n)
 }
 
 
-template <int NDIM, typename T>
-double autocorrelation<NDIM, T>::timegrid(unsigned int block, unsigned int sample, double timestep)
+template <unsigned dimension, typename T>
+double autocorrelation<dimension, T>::timegrid(unsigned int block, unsigned int sample, double timestep)
 {
     if (block % 2) {
 	// shifted block
@@ -237,9 +237,14 @@ double autocorrelation<NDIM, T>::timegrid(unsigned int block, unsigned int sampl
 /**
  * write correlation function results to HDF5 file
  */
-template <int NDIM, typename T>
-void autocorrelation<NDIM, T>::write(std::string const& path, double timestep)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::write(std::string const& path, double timestep)
 {
+#ifdef NDEBUG
+    // turns off the automatic error printing from the HDF5 library
+    H5::Exception::dontPrint();
+#endif
+
     H5::H5File file;
 
     try {
