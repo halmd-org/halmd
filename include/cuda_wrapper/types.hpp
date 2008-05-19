@@ -34,217 +34,217 @@ struct vector_type;
 template <>
 struct vector_type<1, char>
 {
-    typedef char1 value_type;
+    typedef char1 type;
 };
 
 template <>
 struct vector_type<1, unsigned char>
 {
-    typedef uchar1 value_type;
+    typedef uchar1 type;
 };
 
 template <>
 struct vector_type<2, char>
 {
-    typedef char2 value_type;
+    typedef char2 type;
 };
 
 template <>
 struct vector_type<2, unsigned char>
 {
-    typedef uchar2 value_type;
+    typedef uchar2 type;
 };
 
 template <>
 struct vector_type<3, char>
 {
-    typedef char3 value_type;
+    typedef char3 type;
 };
 
 template <>
 struct vector_type<3, unsigned char>
 {
-    typedef uchar3 value_type;
+    typedef uchar3 type;
 };
 
 template <>
 struct vector_type<4, char>
 {
-    typedef char4 value_type;
+    typedef char4 type;
 };
 
 template <>
 struct vector_type<4, unsigned char>
 {
-    typedef uchar4 value_type;
+    typedef uchar4 type;
 };
 
 template <>
 struct vector_type<1, short>
 {
-    typedef short1 value_type;
+    typedef short1 type;
 };
 
 template <>
 struct vector_type<1, unsigned short>
 {
-    typedef ushort1 value_type;
+    typedef ushort1 type;
 };
 
 template <>
 struct vector_type<2, short>
 {
-    typedef short2 value_type;
+    typedef short2 type;
 };
 
 template <>
 struct vector_type<2, unsigned short>
 {
-    typedef ushort2 value_type;
+    typedef ushort2 type;
 };
 
 template <>
 struct vector_type<3, short>
 {
-    typedef short3 value_type;
+    typedef short3 type;
 };
 
 template <>
 struct vector_type<3, unsigned short>
 {
-    typedef ushort3 value_type;
+    typedef ushort3 type;
 };
 
 template <>
 struct vector_type<4, short>
 {
-    typedef short4 value_type;
+    typedef short4 type;
 };
 
 template <>
 struct vector_type<4, unsigned short>
 {
-    typedef ushort4 value_type;
+    typedef ushort4 type;
 };
 
 template <>
 struct vector_type<1, int>
 {
-    typedef int1 value_type;
+    typedef int1 type;
 };
 
 template <>
 struct vector_type<1, unsigned int>
 {
-    typedef uint1 value_type;
+    typedef uint1 type;
 };
 
 template <>
 struct vector_type<2, int>
 {
-    typedef int2 value_type;
+    typedef int2 type;
 };
 
 template <>
 struct vector_type<2, unsigned int>
 {
-    typedef uint2 value_type;
+    typedef uint2 type;
 };
 
 template <>
 struct vector_type<3, int>
 {
-    typedef int3 value_type;
+    typedef int3 type;
 };
 
 template <>
 struct vector_type<3, unsigned int>
 {
-    typedef uint3 value_type;
+    typedef uint3 type;
 };
 
 template <>
 struct vector_type<4, int>
 {
-    typedef int4 value_type;
+    typedef int4 type;
 };
 
 template <>
 struct vector_type<4, unsigned int>
 {
-    typedef uint4 value_type;
+    typedef uint4 type;
 };
 
 template <>
 struct vector_type<1, long>
 {
-    typedef long1 value_type;
+    typedef long1 type;
 };
 
 template <>
 struct vector_type<1, unsigned long>
 {
-    typedef ulong1 value_type;
+    typedef ulong1 type;
 };
 
 template <>
 struct vector_type<2, long>
 {
-    typedef long2 value_type;
+    typedef long2 type;
 };
 
 template <>
 struct vector_type<2, unsigned long>
 {
-    typedef ulong2 value_type;
+    typedef ulong2 type;
 };
 
 template <>
 struct vector_type<3, long>
 {
-    typedef long3 value_type;
+    typedef long3 type;
 };
 
 template <>
 struct vector_type<3, unsigned long>
 {
-    typedef ulong3 value_type;
+    typedef ulong3 type;
 };
 
 template <>
 struct vector_type<4, long>
 {
-    typedef long4 value_type;
+    typedef long4 type;
 };
 
 template <>
 struct vector_type<4, unsigned long>
 {
-    typedef ulong4 value_type;
+    typedef ulong4 type;
 };
 
 template <>
 struct vector_type<1, float>
 {
-    typedef float1 value_type;
+    typedef float1 type;
 };
 
 template <>
 struct vector_type<2, float>
 {
-    typedef float2 value_type;
+    typedef float2 type;
 };
 
 template <>
 struct vector_type<3, float>
 {
-    typedef float3 value_type;
+    typedef float3 type;
 };
 
 template <>
 struct vector_type<4, float>
 {
-    typedef float4 value_type;
+    typedef float4 type;
 };
 
 } // namespace cuda
