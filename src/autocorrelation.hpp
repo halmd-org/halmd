@@ -64,9 +64,9 @@ private:
     typedef typename std::vector<tcf_type>::iterator tcf_iterator;
     typedef typename std::vector<tcf_type>::const_iterator tcf_const_iterator;
 
-    typedef typename boost::multi_array<accumulator<float>, 2> result_type;
-    typedef typename std::vector<result_type>::iterator result_iterator;
-    typedef typename std::vector<result_type>::const_iterator result_const_iterator;
+    typedef typename boost::multi_array<accumulator<float>, 4> result_type;
+    typedef typename result_type::iterator result_iterator;
+    typedef typename result_type::const_iterator result_const_iterator;
 
 public:
     autocorrelation(options const& opts);
@@ -84,7 +84,7 @@ private:
     /** phase space sample blocks */
     std::vector<block_type> block;
     /** correlation functions results */
-    std::vector<result_type> result;
+    result_type result;
     /** correlation functions */
     std::vector<tcf_type> tcf;
 
@@ -133,7 +133,7 @@ autocorrelation<NDIM, T>::autocorrelation(options const& opts)
 
     // allocate correlation functions results
     try {
-	result.resize(tcf.size(), result_type(boost::extents[block_count][block_size - 1]));
+	result.resize(boost::extents[tcf.size()][block_count][block_size - 1][opts.npart()]);
     }
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate correlation functions results");
@@ -269,7 +269,7 @@ void autocorrelation<NDIM, T>::write(std::string const& path, float timestep)
 	// iterate over correlation functions
 	for (unsigned int i = 0; i < tcf.size(); ++i) {
 	    // dataspace for correlation function results
-	    hsize_t dim[3] = { result[i].shape()[0], result[i].shape()[1], 3 };
+	    hsize_t dim[3] = { result.shape()[1], result.shape()[2], 3 };
 	    H5::DataSpace ds(3, dim);
 	    // correlation function name
 	    char const* name = boost::apply_visitor(tcf_name_visitor(), tcf[i]);
@@ -282,12 +282,19 @@ void autocorrelation<NDIM, T>::write(std::string const& path, float timestep)
 
 	    for (unsigned int j = 0; j < data.size(); ++j) {
 		for (unsigned int k = 0; k < data[j].size(); ++k) {
+		    // average over particles
+		    accumulator<float> x;
+		    for (typename result_type::subarray<1>::type::const_iterator it = result[i][j][k].begin(); it != result[i][j][k].end(); ++it) {
+			// accumulate sample average of particle
+			x += (*it).mean();
+		    }
+
 		    // time interval
 		    data[j][k][0] = timegrid(j, k, timestep);
 		    // mean average
-		    data[j][k][1] = result[i][j][k].mean();
+		    data[j][k][1] = x.mean();
 		    // standard error of mean
-		    data[j][k][2] = result[i][j][k].err();
+		    data[j][k][2] = x.err();
 		}
 	    }
 
