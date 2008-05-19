@@ -43,7 +43,7 @@ struct particle
     /** n-dimensional host floating-point vector type */
     typedef T vector_type;
     /** n-dimensional device floating-point vector type */
-    typedef typename cuda::vector_type<dimension, typename T::value_type>::value_type cuda_vector_type;
+    typedef typename cuda::vector_type<dimension, typename T::value_type>::type cuda_vector_type;
 
     /** n-dimensional particle phase space coordiates */
     phase_space_point<cuda::vector<cuda_vector_type> > psc_gpu;
@@ -71,7 +71,7 @@ public:
     /** n-dimensional host floating-point vector type */
     typedef T vector_type;
     /** n-dimensional device floating-point vector type */
-    typedef typename cuda::vector_type<NDIM, typename T::value_type>::value_type cuda_vector_type;
+    typedef typename cuda::vector_type<NDIM, typename T::value_type>::type cuda_vector_type;
 
 public:
     ljfluid(options const& opts);
