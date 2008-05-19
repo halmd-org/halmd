@@ -22,8 +22,8 @@
 #include "autocorrelation.hpp"
 #include "exception.hpp"
 #include "ljfluid.hpp"
-#include "mdsim.hpp"
 #include "options.hpp"
+#include "energy.hpp"
 #include "trajectory.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
@@ -47,12 +47,14 @@ int main(int argc, char **argv)
 
 #ifdef DIM_3D
     mdsim::ljfluid<3, vector3d<float> > fluid(opts);
-    mdsim::mdsim<3, vector3d<float> > sim;
+    // thermodynamic equilibrium properties
+    mdsim::energy<3, cuda::host::vector<vector3d<float> > > tep(opts);
     mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts);
     mdsim::autocorrelation<3, vector3d<float> > tcf(opts);
 #else
     mdsim::ljfluid<2, vector2d<float> > fluid(opts);
-    mdsim::mdsim<2, vector2d<float> > sim;
+    // thermodynamic equilibrium properties
+    mdsim::energy<2, cuda::host::vector<vector2d<float> > > tep(opts);
     mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts);
     mdsim::autocorrelation<2, vector2d<float> > tcf(opts);
 #endif
@@ -85,7 +87,7 @@ int main(int argc, char **argv)
 
     for (uint64_t i = 1; i <= opts.steps(); i++) {
 	try {
-	    sim.step(fluid);
+	    fluid.mdstep();
 	}
 	catch (cuda::error const& e) {
 	    fprintf(stderr, PROGRAM_NAME ": CUDA ERROR: %s\n", e.what());
@@ -93,6 +95,7 @@ int main(int argc, char **argv)
 	}
 
 	fluid.sample(tcf);
+	fluid.sample(tep);
 	fluid.sample(traj);
 
 	if (i % opts.avgsteps())
@@ -106,23 +109,6 @@ int main(int argc, char **argv)
 	    // print mean average of estimated finish time
 	    cerr << "\r" << "Estimated finish time:\t" << time_start + boost::posix_time::seconds(time_estimated.mean());
 	}
-
-	cout << "## steps(" << i << ")" << endl;
-
-	cout << "# en_pot(" << sim.en_pot().mean() << ")" << endl;
-	cout << "# sigma_en_pot(" << sim.en_pot().std() << ")" << endl;
-	cout << "# en_kin(" << sim.en_kin().mean() << ")" << endl;
-	cout << "# sigma_en_kin(" << sim.en_kin().std() << ")" << endl;
-	cout << "# en_tot(" << sim.en_tot().mean() << ")" << endl;
-	cout << "# sigma_en_tot(" << sim.en_tot().std() << ")" << endl;
-	cout << "# temp(" << sim.temp().mean() << ")" << endl;
-	cout << "# sigma_temp(" << sim.temp().std() << ")" << endl;
-	cout << "# pressure(" << sim.pressure().mean() << ")" << endl;
-	cout << "# sigma_pressure(" << sim.pressure().std() << ")" << endl;
-	cout << "# vel_cm(" << sim.vel_cm().mean() << ")" << endl;
-	cout << "# sigma_vel_cm(" << sim.vel_cm().std() << ")" << endl;
-
-	sim.clear();
     }
 
     tcf.flush();

@@ -27,6 +27,7 @@
 #include "exception.hpp"
 #include "options.hpp"
 #include "rand48.hpp"
+#include "statistics.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 
@@ -59,8 +60,8 @@ struct cell_array
     cuda::vector<cuda_vector_type> force_gpu, force_gpu2;
     cuda::host::vector<vector_type> force;
     /** potential energy and virial equation sum */
-    cuda::vector<float2> en_gpu;
-    cuda::host::vector<float2> en;
+    cuda::vector<typename cuda::vector_type<2, typename T::value_type>::type> en_gpu;
+    cuda::host::vector<vector2d<typename T::value_type> > en;
 
     cell_array() {}
 
@@ -89,14 +90,14 @@ struct cell_array
 /**
  * Simulate a Lennard-Jones fluid with naive N-squared algorithm
  */
-template <unsigned int NDIM, typename T>
+template <unsigned dimension, typename T>
 class ljfluid
 {
 public:
     /** n-dimensional host floating-point vector type */
     typedef T vector_type;
     /** n-dimensional device floating-point vector type */
-    typedef typename cuda::vector_type<NDIM, typename T::value_type>::type cuda_vector_type;
+    typedef typename cuda::vector_type<dimension, typename T::value_type>::type cuda_vector_type;
 
 public:
     ljfluid(options const& opts);
@@ -109,7 +110,7 @@ public:
     float box() const;
     void temperature(float temp);
 
-    void step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum);
+    void mdstep();
     void trajectories(std::ostream& os) const;
     template <typename V>
     void sample(V& visitor) const;
@@ -131,7 +132,7 @@ private:
     mdsim::rand48 rng_;
 
     /** cell placeholders */
-    cell_array<NDIM, T> cell;
+    cell_array<dimension, T> cell;
     /** CUDA execution dimensions for cell kernels */
     cuda::config cell_dim_;
     /** number of cells per dimension */
@@ -160,14 +161,19 @@ private:
     /** CUDA asynchronous execution */
     cuda::stream stream_;
     cuda::event event_[4];
+
+    /** potential energy per particle */
+    float en_pot_;
+    /** virial theorem force sum */
+    float virial_;
 };
 
 
 /**
  * initialize Lennard-Jones fluid with given particle number
  */
-template <unsigned int NDIM, typename T>
-ljfluid<NDIM, T>::ljfluid(options const& opts) : npart(opts.npart()), part(npart), dim_(opts.dim()), rng_(dim_), steps_(0), gputime_(0.), memtime_(0.)
+template <unsigned dimension, typename T>
+ljfluid<dimension, T>::ljfluid(options const& opts) : npart(opts.npart()), part(npart), dim_(opts.dim()), rng_(dim_), steps_(0), gputime_(0.), memtime_(0.)
 {
     // FIXME do without this requirement
     assert(npart == dim_.threads());
@@ -193,8 +199,8 @@ ljfluid<NDIM, T>::ljfluid(options const& opts) : npart(opts.npart()), part(npart
 /**
  * get number of particles in periodic box
  */
-template <unsigned int NDIM, typename T>
-uint64_t ljfluid<NDIM, T>::particles() const
+template <unsigned dimension, typename T>
+uint64_t ljfluid<dimension, T>::particles() const
 {
     return npart;
 }
@@ -202,8 +208,8 @@ uint64_t ljfluid<NDIM, T>::particles() const
 /**
  * get simulation timestep
  */
-template <unsigned int NDIM, typename T>
-float ljfluid<NDIM, T>::timestep()
+template <unsigned dimension, typename T>
+float ljfluid<dimension, T>::timestep()
 {
     return timestep_;
 }
@@ -211,8 +217,8 @@ float ljfluid<NDIM, T>::timestep()
 /**
  * set simulation timestep
  */
-template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::timestep(float timestep_)
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::timestep(float timestep_)
 {
     this->timestep_ = timestep_;
     cuda::copy(timestep_, gpu::ljfluid::timestep);
@@ -221,8 +227,8 @@ void ljfluid<NDIM, T>::timestep(float timestep_)
 /**
  * get particle density
  */
-template <unsigned int NDIM, typename T>
-float ljfluid<NDIM, T>::density() const
+template <unsigned dimension, typename T>
+float ljfluid<dimension, T>::density() const
 {
     return density_;
 }
@@ -230,24 +236,24 @@ float ljfluid<NDIM, T>::density() const
 /**
  * set particle density
  */
-template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::density(float density_)
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::density(float density_)
 {
     // particle density
     this->density_ = density_;
     // periodic box length
-    box_ = pow(npart / density_, 1.0 / NDIM);
+    box_ = pow(npart / density_, 1.0 / dimension);
     cuda::copy(box_, gpu::ljfluid::box);
 
     // FIXME optimal cell length must consider particle density fluctuations!
-    r_cell_ = std::max(r_cut, powf((CELL_SIZE / 4.) / density_, 1.0 / NDIM));
+    r_cell_ = std::max(r_cut, powf((CELL_SIZE / 4.) / density_, 1.0 / dimension));
     // optimal number of cells per dimension
     ncell_ = floorf(box_ / r_cell_);
     cuda::copy(ncell_, gpu::ljfluid::ncell);
     // CUDA execution dimensions for cell kernels
-    cell_dim_ = cuda::config(dim3(pow(ncell_, NDIM)), dim3(CELL_SIZE));
+    cell_dim_ = cuda::config(dim3(pow(ncell_, dimension)), dim3(CELL_SIZE));
     // total number of cell placeholders
-    nplace_ = pow(ncell_, NDIM) * CELL_SIZE;
+    nplace_ = pow(ncell_, dimension) * CELL_SIZE;
 
     std::cerr << "Placeholders per cell:\t" << CELL_SIZE << "\n";
     std::cerr << "Optimal cell length:\t" << r_cell_ << "\n";
@@ -279,8 +285,8 @@ void ljfluid<NDIM, T>::density(float density_)
 /**
  * get periodic box length
  */
-template <unsigned int NDIM, typename T>
-float ljfluid<NDIM, T>::box() const
+template <unsigned dimension, typename T>
+float ljfluid<dimension, T>::box() const
 {
     return box_;
 }
@@ -288,8 +294,8 @@ float ljfluid<NDIM, T>::box() const
 /**
  * set temperature
  */
-template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::temperature(float temp)
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::temperature(float temp)
 {
     // initialize velocities
     cuda::vector<cuda_vector_type> v(npart);
@@ -326,8 +332,8 @@ void ljfluid<NDIM, T>::temperature(float temp)
 /**
  * MD simulation step on GPU
  */
-template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::step()
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::step()
 {
     event_[0].record(stream_);
 
@@ -354,8 +360,8 @@ void ljfluid<NDIM, T>::step()
 /**
  * MD simulation step
  */
-template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2_sum)
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::mdstep()
 {
     if (steps_ == 0) {
 	// first MD simulation step on GPU
@@ -380,11 +386,9 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
     // next MD simulation step on GPU
     step();
 
-    // compute averages
-    en_pot = 0.;
-    virial = 0.;
-    vel_cm = 0.;
-    vel2_sum = 0.;
+    // compute average potential energy and virial theorem sum per particle
+    en_pot_ = 0.;
+    virial_ = 0.;
 
     // number of particles found in cells
     unsigned int count = 0;
@@ -396,10 +400,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
 	    part.r[cell.tag[i]] = cell.r[i];
 	    part.v[cell.tag[i]] = cell.v[i];
 
-	    en_pot += (cell.en[i].x - en_pot) / (i + 1);
-	    virial += (cell.en[i].y - virial) / (i + 1);
-	    vel_cm += (cell.v[i] - vel_cm) / (i + 1);
-	    vel2_sum += (cell.v[i] * cell.v[i] - vel2_sum) / (i + 1);
+	    en_pot_ += (cell.en[i].x - en_pot_) / (i + 1);
+	    virial_ += (cell.en[i].y - virial_) / (i + 1);
 
 	    count++;
 	}
@@ -411,8 +413,8 @@ void ljfluid<NDIM, T>::step(float& en_pot, float& virial, T& vel_cm, float& vel2
 /**
  * write particle coordinates and velocities to output stream
  */
-template <unsigned int NDIM, typename T>
-void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::trajectories(std::ostream& os) const
 {
     for (uint64_t i = 0; i < npart; ++i) {
 	os << i << "\t" << part.r[i] << "\t" << part.v[i] << "\n";
@@ -423,18 +425,18 @@ void ljfluid<NDIM, T>::trajectories(std::ostream& os) const
 /**
  * sample trajectory
  */
-template <unsigned int NDIM, typename T>
+template <unsigned dimension, typename T>
 template <typename V>
-void ljfluid<NDIM, T>::sample(V& visitor) const
+void ljfluid<dimension, T>::sample(V& visitor) const
 {
-    visitor.sample(part);
+    visitor.sample(part, en_pot_, virial_);
 }
 
 /**
  * get total GPU time in seconds
  */
-template <unsigned int NDIM, typename T>
-float ljfluid<NDIM, T>::gputime() const
+template <unsigned dimension, typename T>
+float ljfluid<dimension, T>::gputime() const
 {
     return (gputime_ * 1.e-3) * steps_;
 }
@@ -442,8 +444,8 @@ float ljfluid<NDIM, T>::gputime() const
 /**
  * get total device memory transfer time in seconds
  */
-template <unsigned int NDIM, typename T>
-float ljfluid<NDIM, T>::memtime() const
+template <unsigned dimension, typename T>
+float ljfluid<dimension, T>::memtime() const
 {
     return (memtime_ * 1.e-3) * steps_;
 }
