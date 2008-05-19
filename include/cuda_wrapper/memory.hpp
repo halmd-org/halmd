@@ -19,6 +19,7 @@
 #ifndef CUDA_MEMORY_HPP
 #define CUDA_MEMORY_HPP
 
+#include <assert.h>
 #include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/host/vector.hpp>
 #include <cuda_wrapper/symbol.hpp>
@@ -35,6 +36,7 @@ namespace cuda
 template <typename T, typename U>
 void copy(vector<T> const& src, vector<U>& dst)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToDevice));
 }
 
@@ -44,6 +46,7 @@ void copy(vector<T> const& src, vector<U>& dst)
 template <typename T, typename AllocT, typename U>
 void copy(std::vector<T, AllocT> const& src, vector<U>& dst)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToDevice));
 }
 
@@ -53,6 +56,7 @@ void copy(std::vector<T, AllocT> const& src, vector<U>& dst)
 template <typename T, typename U, typename AllocU>
 void copy(vector<T> const& src, std::vector<U, AllocU>& dst)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToHost));
 }
 
@@ -62,6 +66,7 @@ void copy(vector<T> const& src, std::vector<U, AllocU>& dst)
 template <typename T, typename AllocT, typename U, typename AllocU>
 void copy(std::vector<T, AllocT> const& src, std::vector<U, AllocU>& dst)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToHost));
 }
 
@@ -71,6 +76,7 @@ void copy(std::vector<T, AllocT> const& src, std::vector<U, AllocU>& dst)
 template <typename T, typename U>
 void copy(symbol<T> const& src, U& dst)
 {
+    assert(src.size() == 1);
     CUDA_CALL(cudaMemcpyFromSymbol(&dst, reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
 }
 
@@ -80,6 +86,7 @@ void copy(symbol<T> const& src, U& dst)
 template <typename T, typename U, typename AllocU>
 void copy(symbol<T> const& src, std::vector<U, AllocU>& dst)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
 }
 
@@ -89,6 +96,7 @@ void copy(symbol<T> const& src, std::vector<U, AllocU>& dst)
 template <typename T, typename U>
 void copy(symbol<T> const& src, vector<U>& dst)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
 }
 
@@ -98,6 +106,7 @@ void copy(symbol<T> const& src, vector<U>& dst)
 template <typename T, typename U>
 void copy(T const& src, symbol<U>& dst)
 {
+    assert(1 == dst.size());
     CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), &src, sizeof(T), 0, cudaMemcpyHostToDevice));
 }
 
@@ -107,6 +116,7 @@ void copy(T const& src, symbol<U>& dst)
 template <typename T, typename AllocT, typename U>
 void copy(std::vector<T, AllocT> const& src, symbol<U>& dst)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
 }
 
@@ -116,6 +126,7 @@ void copy(std::vector<T, AllocT> const& src, symbol<U>& dst)
 template <typename T, typename U>
 void copy(vector<T> const& src, symbol<U>& dst)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
 }
 
@@ -127,6 +138,7 @@ void copy(vector<T> const& src, symbol<U>& dst)
 template <typename T, typename U>
 void copy(vector<T> const& src, vector<U>& dst, stream& stream)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToDevice, stream.data()));
 }
 
@@ -136,6 +148,7 @@ void copy(vector<T> const& src, vector<U>& dst, stream& stream)
 template <typename T, typename U>
 void copy(host::vector<T> const& src, vector<U>& dst, stream& stream)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToDevice, stream.data()));
 }
 
@@ -145,6 +158,7 @@ void copy(host::vector<T> const& src, vector<U>& dst, stream& stream)
 template <typename T, typename U>
 void copy(host::vector<T> const& src, host::vector<U>& dst, stream& stream)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToHost, stream.data()));
 }
 
@@ -154,6 +168,7 @@ void copy(host::vector<T> const& src, host::vector<U>& dst, stream& stream)
 template <typename T, typename U>
 void copy(vector<T> const& src, host::vector<U>& dst, stream& stream)
 {
+    assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToHost, stream.data()));
 }
 
