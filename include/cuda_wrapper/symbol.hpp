@@ -28,7 +28,7 @@ namespace cuda
 {
 
 /**
- * CUDA device symbol
+ * CUDA device symbol constant
  */
 template <typename T>
 class symbol
@@ -40,47 +40,22 @@ public:
 
 public:
     /**
-     * initialize with device symbol variable
+     * initialize device symbol constant
      */
-    symbol(const value_type& symbol) : size_(1), ptr_(&symbol)
-    {
-    }
+    symbol(value_type const& symbol) : ptr_(&symbol) { }
 
     /**
-     * initialize with device symbol vector
-     */
-    symbol(const value_type* symbol) : size_(0), ptr_(symbol)
-    {
-    }
-
-#ifndef __CUDACC__
-
-    /**
-     * return element count of device symbol vector
+     * return element count of device symbol
      */
     size_type size() const
     {
-	if (!size_) {
-	    /*
-	     * It would be preferable to issue the following CUDA runtime
-	     * call directly upon construction. However, the constructor
-	     * has to be compilable by the NVIDIA CUDA compiler as well,
-	     * which does not support C++ runtime functionality, e.g.
-	     * exceptions.
-	     */
-	    CUDA_CALL(cudaGetSymbolSize(&size_, reinterpret_cast<char const*>(data())));
-	    size_ /= sizeof(value_type);
-	}
-
-	return size_;
+	return 1;
     }
-
-#endif /* ! __CUDACC__ */
 
     /**
      * returns device pointer to device symbol
      */
-    const value_type* data() const
+    value_type const* data() const
     {
 	return ptr_;
     }
@@ -92,10 +67,67 @@ private:
     vector_type& operator=(vector_type const&);
 
 private:
-    /** symbol size */
-    mutable size_type size_;
-    /** symbol device pointer */
-    const value_type* ptr_;
+    /** device symbol pointer */
+    value_type const* ptr_;
+};
+
+
+/**
+ * CUDA device symbol vector
+ */
+template <typename T>
+class symbol<T*>
+{
+public:
+    typedef symbol<T> vector_type;
+    typedef T value_type;
+    typedef size_t size_type;
+
+public:
+    /**
+     * initialize device symbol vector
+     */
+    symbol(value_type const* symbol) : ptr_(symbol) { }
+
+#ifndef __CUDACC__
+
+    /**
+     * return element count of device symbol
+     */
+    size_type size() const
+    {
+	//
+	// It would be preferable to issue the following CUDA runtime
+	// call directly upon construction. However, the constructor
+	// has to be compilable by the NVIDIA CUDA compiler as well,
+	// which does not support C++ runtime functionality, e.g.
+	// exceptions.
+	//
+
+	size_t size;
+	CUDA_CALL(cudaGetSymbolSize(&size, reinterpret_cast<char const*>(ptr_)));
+	return (size / sizeof(value_type));
+    }
+
+#endif /* ! __CUDACC__ */
+
+    /**
+     * returns device pointer to device symbol
+     */
+    value_type const* data() const
+    {
+	return ptr_;
+    }
+
+private:
+    // disable default copy constructor
+    symbol(vector_type const&);
+    // disable default assignment operator
+    vector_type& operator=(vector_type const&);
+
+private:
+    /** device symbol pointer */
+    value_type const* ptr_;
 };
 
 } // namespace cuda
