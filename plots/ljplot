@@ -1,0 +1,180 @@
+#!/usr/bin/python
+#
+# Molecular dynamics simulation plotter
+#
+# Copyright (C) 2008  Peter Colberg
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import tables
+import Gnuplot
+import sys
+import tempfile
+import os.path
+
+
+"""
+Plot thermodynamic equilibrium properties
+"""
+def plot_equilibrium_properties(root):
+    g = Gnuplot.Gnuplot()
+
+    # FIXME iteractive window actions do not work (e.g. zoom, replot)
+    term = 'set terminal wxt enhanced %d title "ljfluid: %s"'
+    plot = 'plot "%s" binary array=inf format="%%float" using ($0*%f):%s notitle with lines'
+
+    timestep = root._v_attrs.timestep
+    g.xlabel('t*')
+
+    g(term % (0, 'Mean potential energy per particle'))
+    g.ylabel('E_{pot}^*(t^*)')
+    data0 = tempfile.NamedTemporaryFile('wb')
+    data0.write(root.EKIN.read().tostring())
+    data0.flush()
+    g(plot % (data0.name, timestep, '1'))
+
+    g(term % (1, 'Mean kinetic energy per particle'))
+    g.ylabel('E_{kin}^*(t^*)')
+    data1 = tempfile.NamedTemporaryFile('wb')
+    data1.write(root.EPOT.read().tostring())
+    data1.flush()
+    g(plot % (data1.name, timestep, '1'))
+
+    g(term % (2, 'Mean total energy per particle'))
+    g.ylabel('E^*(t^*)')
+    data2 = tempfile.NamedTemporaryFile('wb')
+    data2.write(root.ETOT.read().tostring())
+    data2.flush()
+    g(plot % (data2.name, timestep, '1'))
+
+    g(term % (3, 'Temperature'))
+    g.ylabel('T^*(t^*)')
+    data3 = tempfile.NamedTemporaryFile('wb')
+    data3.write(root.TEMP.read().tostring())
+    data3.flush()
+    g(plot % (data3.name, timestep, '1'))
+
+    g(term % (4, 'Pressure'))
+    g.ylabel('P^*(t^*)')
+    data4 = tempfile.NamedTemporaryFile('wb')
+    data4.write(root.PRESS.read().tostring())
+    data4.flush()
+    g(plot % (data4.name, timestep, '1'))
+
+    # plot velocity center of mass
+    g(term % (5, 'Velocity center of mass'))
+    g.ylabel('|<v^*(t^*)>|')
+    data5 = tempfile.NamedTemporaryFile('wb')
+    data5.write(root.VCM.read().tostring())
+    data5.flush()
+    g(plot % (data5.name, timestep, '(sqrt($1*$1+$2*$2))'))
+
+    # wait for gnuplot to read temporary data files
+    g.interact()
+
+
+"""
+Plot correlations
+"""
+def plot_correlations(root):
+    g = Gnuplot.Gnuplot()
+
+    # FIXME iteractive window actions do not work (e.g. zoom, replot)
+    term = 'set terminal wxt enhanced %d title "ljfluid: %s"'
+    plot = 'plot "%s" binary array=inf format="%%float%%float%%*float" using 1:%s notitle with lines lt 1'
+    replot = 'replot "%s" binary array=inf format="%%float%%float%%float" using 1:%s:%s title "%s" with yerrorbars lt 1'
+
+    g('set xrange [%f:]' % root._v_attrs.timestep)
+    g('set logscale x')
+    g('set format x "10^{%T}"')
+    g.xlabel('dt^*')
+
+    g(term % (0, 'Mean squared displacement'))
+    g('set key left top Left reverse')
+    g('set logscale y')
+    g('set format y "10^{%T}"')
+    data0 = tempfile.NamedTemporaryFile('wb')
+    data0.write(root.MSD.read().tostring())
+    data0.flush()
+    g(plot % (data0.name, '2'))
+    g(replot % (data0.name, '2', '3', '<(r^*(t^*+dt^*) - r^*(t^*))^2>_N'))
+
+    g(term % (1, 'Diffusion constant'))
+    g('set key left top Left reverse')
+    g('unset logscale y')
+    g('set format y')
+    g(plot % (data0.name, '($2/$1)'))
+    g(replot % (data0.name, '($2/$1)', '($3/$1)', '<(r^*(t^*+dt^*) - r^*(t^*))^2>_N / dt^*'))
+
+    g(term % (2, 'Mean quartic displacement'))
+    g('set key left top Left reverse')
+    g('set logscale y')
+    g('set format y "10^{%T}"')
+    data1 = tempfile.NamedTemporaryFile('wb')
+    data1.write(root.MQD.read().tostring())
+    data1.flush()
+    g(plot % (data1.name, '2'))
+    g(replot % (data1.name, '2', '3', '<(r^*(t^*+dt^*) - r^*(t^*))^4>_N'))
+
+    g(term % (3, 'Velocity autocorrelation'))
+    g('set key right top Right noreverse')
+    g('set logscale y')
+    g('set format y "10^{%T}"')
+    data2 = tempfile.NamedTemporaryFile('wb')
+    data2.write(root.VAC.read().tostring())
+    data2.flush()
+    g(plot % (data2.name, '2'))
+    g(replot % (data2.name, '2', '3', '<(v^*(t^*+dt^*) * v^*(t^*))>_N'))
+
+    # wait for gnuplot to read temporary data files
+    g.interact()
+
+
+"""
+Molecular dynamics simulation plotter
+"""
+def main(args):
+    if len(args) < 1:
+        print >> sys.stderr, 'Usage: %s [file]' % os.path.basename(sys.argv[0])
+        sys.exit(1)
+
+    # open HDF5 data file
+    try:
+        h5file = tables.openFile(args[0], mode='r')
+    except IOError:
+        print >> sys.stderr, "%s: ERROR: could not read file: %s" % (os.path.basename(sys.argv[0]), args[0])
+        sys.exit(1)
+
+    # detect data format
+    if 'EKIN' in h5file.root:
+        # thermodynamic equilibrium properties file
+        plot_equilibrium_properties(h5file.root)
+
+    elif 'MSD' in h5file.root:
+        # correlations file
+        plot_correlations(h5file.root)
+
+    else:
+        print >> sys.stderr, "%s: ERROR: HDF5 file contains unknown data" % (os.path.basename(sys.argv[0]))
+        h5file.close()
+        sys.exit(1)
+
+    # close HDF5 data file
+    h5file.close()
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
+
