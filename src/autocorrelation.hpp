@@ -71,7 +71,7 @@ public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
     void sample(phase_space_type const& p, float const&, float const&);
-    void flush();
+    void finalize();
     void write(std::string const& path, double timestep);
 
 private:
@@ -197,8 +197,11 @@ void autocorrelation<dimension, T>::sample(phase_space_type const& p, unsigned i
 }
 
 
+/**
+ * compute correlations for remaining samples in all blocks
+ */
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::flush()
+void autocorrelation<dimension, T>::finalize()
 {
     for (unsigned int i = 2; i < block_count; ++i) {
 	while (block[i].nsample < max_samples && block[i].samples.size() > 2) {
@@ -240,6 +243,9 @@ double autocorrelation<dimension, T>::timegrid(unsigned int block, unsigned int 
 template <unsigned dimension, typename T>
 void autocorrelation<dimension, T>::write(std::string const& path, double timestep)
 {
+    // compute correlations for remaining samples in all blocks
+    finalize();
+
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();

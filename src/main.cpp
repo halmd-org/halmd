@@ -82,7 +82,6 @@ int main(int argc, char **argv)
 	fluid.sample(traj);
     }
 
-    tcf.flush();
     tcf.write(opts.correlations_output_file(), opts.timestep());
 
     timer.stop();
