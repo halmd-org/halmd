@@ -111,7 +111,6 @@ int main(int argc, char **argv)
 	}
     }
 
-    tcf.flush();
     tcf.write(opts.correlations_output_file(), opts.timestep());
 
     timer.stop();
