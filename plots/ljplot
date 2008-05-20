@@ -158,14 +158,15 @@ def plot_trajectory(root, basename):
     # FIXME use fraction of cutoff length as particle radius
     plot = 'plot "%s" binary array=inf format="%%float%%float" using 2:3 notitle with points pt 7 ps 2'
 
-    g('set terminal png size 1440, 1080')
+    g('set terminal png size 1080, 1080')
     g('unset key')
     g('unset title')
-    g.xlabel('x')
-    g.ylabel('y')
+    g('set x2tics')
+    g('set y2tics')
     # FIXME set xrange, yrange according to box length
 
     data_file = None
+    frame_fn = basename + '_%06d.png'
     sys.stdout.write('gnuplot: %6sf' % '')
     for i in range(len(root.trajectory)):
         # write trajectory sample to temporary binary file
@@ -173,12 +174,11 @@ def plot_trajectory(root, basename):
         f.write(root.trajectory[i].tostring())
         f.flush()
         # plot trajectory sample
-        fn = basename + '_%06d.png' % i
-        g(output % fn)
+        g(output % (frame_fn % i))
         g(plot % (f.name))
 
         # FIXME better way to wait for file creation (maybe pyinotify?)
-        while not os.path.exists(fn):
+        while not os.path.exists(frame_fn % i):
             time.sleep(1e-2)
 
         # erase previously printed frame number characters
@@ -198,7 +198,7 @@ def plot_trajectory(root, basename):
     sys.stdout.flush()
 
     # render movie with ffmpeg2theora
-    ffmpeg = subprocess.Popen(['ffmpeg2theora', basename + '_%06d.png', '-x', '960', '-y', '720', '-S', '0', '-o', '%s.ogg' % basename, '--nosound'], close_fds=True)
+    ffmpeg = subprocess.Popen(['ffmpeg2theora', frame_fn, '-x', '720', '-y', '720', '-S', '0', '-o', '%s.ogg' % basename, '--nosound'], close_fds=True)
     errno = ffmpeg.wait()
 
     # remove gnuplot output files
