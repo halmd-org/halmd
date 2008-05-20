@@ -20,9 +20,11 @@
 
 import tables
 import Gnuplot
-import sys
+import glob
+import os, os.path, sys
+import subprocess
 import tempfile
-import os.path
+import time
 
 
 """
@@ -143,6 +145,71 @@ def plot_correlations(root):
 
 
 """
+Plot trajectory
+"""
+def plot_trajectory(root, basename):
+    # remove stray gnuplot output files
+    for fn in glob.glob(basename + '_*.png'):
+        os.unlink(fn)
+
+    g = Gnuplot.Gnuplot()
+
+    output = 'set output "%s"'
+    # FIXME use fraction of cutoff length as particle radius
+    plot = 'plot "%s" binary array=inf format="%%float%%float" using 2:3 notitle with points pt 7 ps 2'
+
+    g('set terminal png size 1440, 1080')
+    g('unset key')
+    g('unset title')
+    g.xlabel('x')
+    g.ylabel('y')
+    # FIXME set xrange, yrange according to box length
+
+    data_file = None
+    sys.stdout.write('gnuplot: %6sf' % '')
+    for i in range(len(root.trajectory)):
+        # write trajectory sample to temporary binary file
+        f = tempfile.NamedTemporaryFile('wb')
+        f.write(root.trajectory[i].tostring())
+        f.flush()
+        # plot trajectory sample
+        fn = basename + '_%06d.png' % i
+        g(output % fn)
+        g(plot % (f.name))
+
+        # FIXME better way to wait for file creation (maybe pyinotify?)
+        while not os.path.exists(fn):
+            time.sleep(1e-2)
+
+        # erase previously printed frame number characters
+        sys.stdout.write('\010 \010' * 7)
+        sys.stdout.write('%6df' % (i + 1))
+        sys.stdout.flush()
+
+        # erase previous data file
+        data_file = f
+
+    # wait for gnuplot to finish
+    del g
+    # remove temporary files
+    del data_file
+
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+
+    # render movie with ffmpeg2theora
+    ffmpeg = subprocess.Popen(['ffmpeg2theora', basename + '_%06d.png', '-x', '960', '-y', '720', '-S', '0', '-o', '%s.ogg' % basename, '--nosound'], close_fds=True)
+    errno = ffmpeg.wait()
+
+    # remove gnuplot output files
+    for fn in glob.glob(basename + '_*.png'):
+        os.unlink(fn)
+
+    if errno:
+        raise Exception('mencoder exited with error code %d' % errno)
+
+
+"""
 Molecular dynamics simulation plotter
 """
 def main(args):
@@ -165,6 +232,10 @@ def main(args):
     elif 'MSD' in h5file.root:
         # correlations file
         plot_correlations(h5file.root)
+
+    elif 'trajectory' in h5file.root:
+        # trajectory dump file
+        plot_trajectory(h5file.root, os.path.splitext(args[0])[0])
 
     else:
         print >> sys.stderr, "%s: ERROR: HDF5 file contains unknown data" % (os.path.basename(sys.argv[0]))
