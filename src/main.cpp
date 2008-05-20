@@ -83,6 +83,7 @@ int main(int argc, char **argv)
     }
 
     tcf.write(opts.correlations_output_file(), opts.timestep());
+    tep.write(opts.energy_output_file());
 
     timer.stop();
     cerr << "Elapsed time: " << (timer.elapsed() * 1.E3) << "ms" << endl;
