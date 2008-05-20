@@ -271,9 +271,12 @@ void autocorrelation<dimension, T>::write(std::string const& path, float timeste
 	root.createAttribute("block_size", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_size);
 	root.createAttribute("block_shift", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_shift);
 	root.createAttribute("max_samples", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples);
+
+	// write simulation parameters
+	root.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &timestep);
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to write block parameters to correlations file");
+	throw exception("failed to write attributes to correlations file");
     }
 
     try {
