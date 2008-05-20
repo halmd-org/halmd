@@ -1,4 +1,4 @@
-FOREACH(filename ljplot trajectories2d.gpi trajectories3d.gpi gnuplot_movie)
+FOREACH(filename ljplot)
   CONFIGURE_FILE(
     "${CMAKE_CURRENT_SOURCE_DIR}/${filename}"
     "${CMAKE_CURRENT_BINARY_DIR}/${filename}"
