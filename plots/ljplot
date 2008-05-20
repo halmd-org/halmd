@@ -156,7 +156,7 @@ def plot_trajectory(root, basename):
 
     output = 'set output "%s"'
     # FIXME use fraction of cutoff length as particle radius
-    plot = 'plot "%s" binary array=inf format="%%float%%float" using 2:3 notitle with points pt 7 ps 2'
+    plot = 'plot "%s" binary array=inf format="%%float%%float" using 1:2 notitle with points pt 7 ps 2'
 
     g('set terminal png size 1080, 1080')
     g('unset key')
