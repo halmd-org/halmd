@@ -37,12 +37,17 @@ def plot_equilibrium_properties(root, basename):
     def spawn_gnuplot(title):
         # one gnuplot instance per plot to allow multiple *interactive* windows
         g = Gnuplot.Gnuplot()
-        g('set terminal wxt enhanced title "ljfluid: %s"' % title)
+
+        # With the current gnuplot release (4.2.3), the persist option for the
+        # wxt terminal is buggy and causes CPU usage to rise to 100% after the
+        # main gnuplot process exits. This bug is fixed in gnuplot 4.3 CVS
+        # since 2007-04-29.
+        g('set terminal wxt persist enhanced title "ljfluid: %s"' % title)
+
         g('set xlabel "t*"')
         return g
 
     plot = 'plot "%s" binary array=inf format="%%float" using ($0*%f):%s notitle with lines'
-    gsave = []
 
     g = spawn_gnuplot('Mean potential energy per particle')
     g('set ylabel "E_{pot}^*(t^*)"')
@@ -50,7 +55,6 @@ def plot_equilibrium_properties(root, basename):
     f.write(root.EKIN.read().tostring())
     f.close()
     g(plot % (f.name, timestep, '1'))
-    gsave.append(g)
 
     g = spawn_gnuplot('Mean kinetic energy per particle')
     g('set ylabel "E_{kin}^*(t^*)"')
@@ -58,7 +62,6 @@ def plot_equilibrium_properties(root, basename):
     f.write(root.EPOT.read().tostring())
     f.close()
     g(plot % (f.name, timestep, '1'))
-    gsave.append(g)
 
     g = spawn_gnuplot('Mean total energy per particle')
     g('set ylabel "E^*(t^*)"')
@@ -66,7 +69,6 @@ def plot_equilibrium_properties(root, basename):
     f.write(root.ETOT.read().tostring())
     f.close()
     g(plot % (f.name, timestep, '1'))
-    gsave.append(g)
 
     g = spawn_gnuplot('Temperature')
     g('set ylabel "T^*(t^*)"')
@@ -74,7 +76,6 @@ def plot_equilibrium_properties(root, basename):
     f.write(root.TEMP.read().tostring())
     f.close()
     g(plot % (f.name, timestep, '1'))
-    gsave.append(g)
 
     g = spawn_gnuplot('Pressure')
     g('set ylabel "P^*(t^*)"')
@@ -82,7 +83,6 @@ def plot_equilibrium_properties(root, basename):
     f.write(root.PRESS.read().tostring())
     f.close()
     g(plot % (f.name, timestep, '1'))
-    gsave.append(g)
 
     g = spawn_gnuplot('Velocity center of mass')
     g('set ylabel "|<v^*(t^*)>|"')
@@ -90,10 +90,6 @@ def plot_equilibrium_properties(root, basename):
     f.write(root.VCM.read().tostring())
     f.close()
     g(plot % (f.name, timestep, '(sqrt($1*$1+$2*$2))'))
-    gsave.append(g)
-
-    # FIXME terminal wxt persist causes 100% CPU usage after python exits
-    raw_input('Press return to exit...')
 
 
 """
@@ -103,7 +99,13 @@ def plot_correlations(root, basename):
     def spawn_gnuplot(title):
         # one gnuplot instance per plot to allow multiple *interactive* windows
         g = Gnuplot.Gnuplot()
-        g('set terminal wxt enhanced title "ljfluid: %s"' % title)
+
+        # With the current gnuplot release (4.2.3), the persist option for the
+        # wxt terminal is buggy and causes CPU usage to rise to 100% after the
+        # main gnuplot process exits. This bug is fixed in gnuplot 4.3 CVS
+        # since 2007-04-29.
+        g('set terminal wxt persist enhanced title "ljfluid: %s"' % title)
+
         g('set xrange [%f:]' % root._v_attrs.timestep)
         g('set logscale x')
         g('set format x "10^{%T}"')
@@ -112,7 +114,6 @@ def plot_correlations(root, basename):
 
     plot = 'plot "%s" binary array=inf format="%%float%%float%%*float" using 1:%s notitle with lines lt 1'
     replot = 'replot "%s" binary array=inf format="%%float%%float%%float" using 1:%s:%s title "%s" with yerrorbars lt 1'
-    gsave = []
 
     # write mean squared displacement data file
     f = file(basename + '_msd.bin', 'wb')
@@ -125,7 +126,6 @@ def plot_correlations(root, basename):
     g('set format y "10^{%T}"')
     g(plot % (f.name, '2'))
     g(replot % (f.name, '2', '3', '<(r^*(t^*+dt^*) - r^*(t^*))^2>_N'))
-    gsave.append(g)
 
     g = spawn_gnuplot('Diffusion constant')
     g('set key left top Left reverse')
@@ -133,7 +133,6 @@ def plot_correlations(root, basename):
     g('set format y')
     g(plot % (f.name, '($2/$1)'))
     g(replot % (f.name, '($2/$1)', '($3/$1)', '<(r^*(t^*+dt^*) - r^*(t^*))^2>_N / dt^*'))
-    gsave.append(g)
 
     # write mean quartic displacement data file
     f = file(basename + '_mqd.bin', 'wb')
@@ -146,7 +145,6 @@ def plot_correlations(root, basename):
     g('set format y "10^{%T}"')
     g(plot % (f.name, '2'))
     g(replot % (f.name, '2', '3', '<(r^*(t^*+dt^*) - r^*(t^*))^4>_N'))
-    gsave.append(g)
 
     # write velocity autocorrelation data file
     f = file(basename + '_vac.bin', 'wb')
@@ -159,10 +157,6 @@ def plot_correlations(root, basename):
     g('set format y "10^{%T}"')
     g(plot % (f.name, '2'))
     g(replot % (f.name, '2', '3', '<(v^*(t^*+dt^*) * v^*(t^*))>_N'))
-    gsave.append(g)
-
-    # FIXME terminal wxt persist causes 100% CPU usage after python exits
-    raw_input('Press return to exit...')
 
 
 """
