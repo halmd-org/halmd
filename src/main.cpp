@@ -16,26 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <cuda_wrapper.hpp>
+#include <exception>
 #include <iostream>
-#include "autocorrelation.hpp"
-#include "exception.hpp"
-#include "ljfluid.hpp"
+#include "mdsim.hpp"
 #include "options.hpp"
-#include "energy.hpp"
-#include "trajectory.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 #include "version.h"
-#include "time.hpp"
-using namespace std;
 
 
 int main(int argc, char **argv)
 {
     mdsim::options opts;
 
+    // parse program options
     try {
 	opts.parse(argc, argv);
     }
@@ -43,86 +38,27 @@ int main(int argc, char **argv)
 	return e.status();
     }
 
-    cuda::device::set(opts.device());
-
-#ifdef DIM_3D
-    mdsim::ljfluid<3, vector3d<float> > fluid(opts);
-    // thermodynamic equilibrium properties
-    mdsim::energy<3, cuda::host::vector<vector3d<float> > > tep(opts);
-    mdsim::trajectory<3, cuda::host::vector<vector3d<float> > > traj(opts);
-    mdsim::autocorrelation<3, vector3d<float> > tcf(opts);
-#else
-    mdsim::ljfluid<2, vector2d<float> > fluid(opts);
-    // thermodynamic equilibrium properties
-    mdsim::energy<2, cuda::host::vector<vector2d<float> > > tep(opts);
-    mdsim::trajectory<2, cuda::host::vector<vector2d<float> > > traj(opts);
-    mdsim::autocorrelation<2, vector2d<float> > tcf(opts);
-#endif
-
-    if (opts.steps() < tcf.min_samples()) {
-	throw mdsim::exception("less simulation steps than minimum required number of samples");
-    }
-
     try {
-	fluid.density(opts.density());
-	fluid.timestep(opts.timestep());
-	fluid.temperature(opts.temp());
+	// set CUDA device for host context
+	cuda::device::set(opts.device());
+
+	// initialize molecular dynamics simulation
+#ifdef DIM_3D
+	mdsim::mdsim<3, vector3d<float> > sim(opts);
+#else
+	mdsim::mdsim<2, vector2d<float> > sim(opts);
+#endif
+	// run molecular dynamics simulation
+	sim.run();
     }
-    catch (string const& e) {
-	cerr << PROGRAM_NAME ": " << e << endl;
+    catch (cuda::error const& e) {
+	std::cerr << PROGRAM_NAME ": CUDA ERROR: " << e.what() << std::endl;
 	return EXIT_FAILURE;
     }
-
-    cout << "### particles(" << fluid.particles() << ")" << endl;
-    cout << "### density(" << fluid.density() << ")" << endl;
-    cout << "### box(" << fluid.box() << ")" << endl;
-    cout << "### timestep(" << fluid.timestep() << ")" << endl;
-    cout << endl;
-
-    mdsim::timer timer;
-    boost::posix_time::ptime time_start = boost::posix_time::second_clock::local_time();
-    mdsim::accumulator<float> time_estimated;
-
-    timer.start();
-
-    for (uint64_t i = 1; i <= opts.steps(); i++) {
-	try {
-	    fluid.mdstep();
-	}
-	catch (cuda::error const& e) {
-	    fprintf(stderr, PROGRAM_NAME ": CUDA ERROR: %s\n", e.what());
-	    return EXIT_FAILURE;
-	}
-
-	fluid.sample(tcf);
-	fluid.sample(tep);
-	fluid.sample(traj);
-
-	if (i % opts.avgsteps())
-	    continue;
-
-	if (!opts.quiet())  {
-	    // compute elapsed time since start of simulation
-	    float time_elapsed = (boost::posix_time::second_clock::local_time() - time_start).total_seconds();
-	    // accumulate estimated finish time
-	    time_estimated += time_elapsed * opts.steps() / i;
-	    // print mean average of estimated finish time
-	    cerr << "\r" << "Estimated finish time:\t" << time_start + boost::posix_time::seconds(time_estimated.mean());
-	}
+    catch (std::exception const& e) {
+	std::cerr << PROGRAM_NAME ": ERROR: " << e.what() << std::endl;
+	return EXIT_FAILURE;
     }
-
-    tcf.write(opts.correlations_output_file(), opts.timestep());
-    tep.write(opts.energy_output_file());
-
-    timer.stop();
-
-    if (!opts.quiet()) {
-	cerr << "\n\n";
-    }
-
-    cerr << "GPU time: " << fluid.gputime() << "s" << endl;
-    cerr << "Device memory transfer time: " << fluid.memtime() << "s" << endl;
-    cerr << "Elapsed time: " << timer.elapsed() << "s" << endl;
 
     return EXIT_SUCCESS;
 }
