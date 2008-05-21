@@ -51,52 +51,52 @@ public:
 
     void parse(int argc, char** argv);
 
-    uint64_t npart() const
+    uint64_t const& npart() const
     {
 	return npart_;
     }
 
-    double density() const
+    double const& density() const
     {
 	return density_;
     }
 
-    double timestep() const
+    double const& timestep() const
     {
 	return timestep_;
     }
 
-    double temp() const
+    double const& temp() const
     {
 	return temp_;
     }
 
-    uint64_t steps() const
+    uint64_t const& steps() const
     {
 	return steps_;
     }
 
-    uint64_t avgsteps() const
+    uint64_t const& avgsteps() const
     {
 	return avgsteps_;
     }
 
-    unsigned int block_count() const
+    unsigned int const& block_count() const
     {
 	return block_count_;
     }
 
-    unsigned int block_size() const
+    unsigned int const& block_size() const
     {
 	return block_size_;
     }
 
-    unsigned int block_shift() const
+    unsigned int const& block_shift() const
     {
 	return block_shift_;
     }
 
-    uint64_t max_samples() const
+    uint64_t const& max_samples() const
     {
 	return max_samples_;
     }
@@ -106,7 +106,7 @@ public:
 	return output_file_prefix_ + ".tcf";
     }
 
-    unsigned int rngseed() const
+    unsigned int const& rngseed() const
     {
 	return rngseed_;
     }
@@ -121,7 +121,7 @@ public:
 	return output_file_prefix_ + ".tep";
     }
 
-    bool quiet() const
+    bool const& quiet() const
     {
 	return quiet_;
     }
