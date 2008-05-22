@@ -13,11 +13,11 @@ FOREACH(dim RANGE 2 3)
   TARGET_LINK_LIBRARIES(ljfluid${dim}d
     ljfluid${dim}d_gpu
     rand48_gpu
-    ${BOOST_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_DATE_TIME_LIBRARY}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${GSL_LIBRARIES}
     ${CUDA_LIBRARIES}
     ${HDF5_CPP_LIBRARY}
-    ${BOOST_DATE_TIME_LIBRARY}
     )
 ENDFOREACH(dim)
 
