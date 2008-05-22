@@ -70,7 +70,7 @@ private:
 public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
-    void sample(phase_space_type const& p, float const&, float const&);
+    void sample(phase_space_type const& p, double const&, double const&);
     void finalize();
     void write(std::string const& path, double timestep);
 
@@ -151,7 +151,7 @@ uint64_t autocorrelation<dimension, T>::min_samples()
 
 
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(phase_space_type const& p, float const&, float const&)
+void autocorrelation<dimension, T>::sample(phase_space_type const& p, double const&, double const&)
 {
     // sample odd level blocks
     sample(p, 0);
@@ -272,7 +272,7 @@ void autocorrelation<dimension, T>::write(std::string const& path, double timest
 	root.createAttribute("max_samples", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples);
 
 	// write simulation parameters
-	root.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &timestep);
+	root.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &timestep);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write attributes to correlations file");

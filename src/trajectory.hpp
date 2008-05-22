@@ -83,10 +83,10 @@ trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.npart())
     root.createAttribute("dimension", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &ndim);
     root.createAttribute("particles", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &npart_);
     root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples_);
-    root.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &opts.timestep());
+    root.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &opts.timestep());
     // FIXME derived parameter box length is already calculated in ljfluid
-    float box = pow(opts.npart() / opts.density(), 1.0 / dimension);
-    root.createAttribute("box", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &box);
+    double box = pow(opts.npart() / opts.density(), 1.0 / dimension);
+    root.createAttribute("box", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &box);
 
     hsize_t dim1[3] = { max_samples_, npart_, dimension };
     ds_ = H5::DataSpace(3, dim1);
