@@ -133,6 +133,11 @@ public:
 	return output_file_prefix_ + ".tep";
     }
 
+    std::string logfile() const
+    {
+	return output_file_prefix_ + ".log";
+    }
+
     /**
      * returns verbosity
      */
