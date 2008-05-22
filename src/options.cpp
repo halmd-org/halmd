@@ -20,7 +20,6 @@
 #include "version.h"
 #include <iostream>
 #include <fstream>
-#include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
 using namespace std;
@@ -204,7 +203,6 @@ options::options()
     // Other options
     rngseed_ = 42;
     output_file_prefix_ = PROGRAM_NAME;
-    quiet_ = false;
 }
 
 /**
@@ -235,15 +233,13 @@ void options::parse(int argc, char** argv)
 	("seed,R", po::value(&rngseed_), "random number generator integer seed")
 	("input,i", po::value<vector<string> >(), "parameter input file")
 	("output,o", po::value(&output_file_prefix_), "output file prefix")
-	("quiet,q", po::bool_switch(&quiet_), "suppress status output")
+	("verbose,v", po::accum_value<int>(), "increase verbosity")
 	("version,V", "output version and exit")
 	("help,h", "display this help and exit")
 	;
 
     po::options_description opts;
     opts.add(mdsim_opts).add(tcf_opts).add(misc_opts);
-
-    po::variables_map vm;
 
     try {
 	// parse command line options
