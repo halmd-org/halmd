@@ -47,7 +47,7 @@ def plot_equilibrium_properties(root, basename):
         g('set xlabel "t*"')
         return g
 
-    plot = 'plot "%s" binary array=inf format="%%float" using ($0*%f):%s notitle with lines'
+    plot = 'plot "%s" binary array=inf format="%%double" using ($0*%f):%s notitle with lines'
 
     g = spawn_gnuplot('Mean potential energy per particle')
     g('set ylabel "E_{pot}^*(t^*)"')
@@ -112,8 +112,8 @@ def plot_correlations(root, basename):
         g('set xlabel "dt^*"')
         return g
 
-    plot = 'plot "%s" binary array=inf format="%%float%%float%%*float" using 1:%s notitle with lines lt 1'
-    replot = 'replot "%s" binary array=inf format="%%float%%float%%float" using 1:%s:%s title "%s" with yerrorbars lt 1'
+    plot = 'plot "%s" binary array=inf format="%%double%%double%%*double" using 1:%s notitle with lines lt 1'
+    replot = 'replot "%s" binary array=inf format="%%double%%double%%double" using 1:%s:%s title "%s" with yerrorbars lt 1'
 
     # write mean squared displacement data file
     f = file(basename + '_msd.bin', 'wb')
@@ -175,7 +175,7 @@ def plot_trajectory(root, basename):
 
     output = 'set output "%s"'
     # FIXME use fraction of cutoff length as particle radius
-    plot = 'plot "%s" binary array=inf format="%%float%%float" using 1:2 notitle with points pt 7 ps 2'
+    plot = 'plot "%s" binary array=inf format="%%double%%double" using 1:2 notitle with points pt 7 ps 2'
 
     g('set terminal png font "DejaVuSans,12" enhanced size 1080, 1080')
     g('unset key')
