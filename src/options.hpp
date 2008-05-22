@@ -83,19 +83,9 @@ public:
 	return avgsteps_;
     }
 
-    unsigned int const& block_count() const
-    {
-	return block_count_;
-    }
-
     unsigned int const& block_size() const
     {
 	return block_size_;
-    }
-
-    unsigned int const& block_shift() const
-    {
-	return block_shift_;
     }
 
     uint64_t const& max_samples() const
@@ -171,12 +161,8 @@ private:
     /** number of steps for average accumulation */
     uint64_t avgsteps_;
 
-    /** block count */
-    unsigned int block_count_;
     /** block size */
     unsigned int block_size_;
-    /** block shift */
-    unsigned int block_shift_;
     /** maximum number of samples per block */
     uint64_t max_samples_;
 
