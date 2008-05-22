@@ -310,6 +310,12 @@ void ljfluid<dimension, T>::temperature(float temp)
 	throw exception("CUDA ERROR: failed to initialize velocities");
     }
 
+    // set center of mass velocity to zero
+    T v_cm = mean(part.v.begin(), part.v.end());
+    for (typename cuda::host::vector<T>::iterator v = part.v.begin(); v != part.v.end(); ++v) {
+	*v -= v_cm;
+    }
+
     for (unsigned int i = 0; i < cell.v.size(); ++i) {
 	if (IS_REAL_PARTICLE(cell.tag[i])) {
 	    cell.v[i] = part.v[cell.tag[i]];
