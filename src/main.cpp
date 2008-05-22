@@ -19,6 +19,7 @@
 #include <exception>
 #include <iostream>
 #include <vector>
+#include "log.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
 #include "vector2d.hpp"
@@ -37,6 +38,8 @@ int main(int argc, char **argv)
     catch (mdsim::options::exit_exception const& e) {
 	return e.status();
     }
+
+    mdsim::log::init(opts);
 
     try {
 	// initialize molecular dynamics simulation
