@@ -63,8 +63,7 @@ public:
 
         res = pthread_mutex_init(&m_mutex, &attr);
         {
-            int res = pthread_mutexattr_destroy(&attr);
-            BOOST_ASSERT(res == 0);
+            BOOST_VERIFY(pthread_mutexattr_destroy(&attr) == 0);
         }
         if (res != 0)
             throw std::runtime_error("could not create mutex_posix");
