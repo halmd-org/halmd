@@ -23,19 +23,45 @@
 #include "options.hpp"
 
 
+/** log informational messages */
+#define LOG(fmt) L_(logger) << fmt
+
+/** log error messages */
+#define LOG_ERROR(fmt) L_(logger_error) << "[ERROR] " << fmt
+
+/** log debug-level messages */
+#ifndef NDEBUG
+# define LOG_DEBUG(fmt) L_(logger_debug) << "[DEBUG] " << fmt
+# define SCOPED_LOG_DEBUG(fmt) BOOST_SCOPED_LOG_CTX(L_(logger_debug)) << "[DEBUG] " << fmt
+#else
+# define LOG_DEBUG(fmt)
+# define SCOPED_LOG_DEBUG(fmt)
+#endif
+
+
 // use a cache string to make message formatting faster
 BOOST_LOG_FORMAT_MSG(boost::logging::optimize::cache_string_one_str<>)
-
-#define L_(lvl) BOOST_LOG_USE_LOG_IF_LEVEL(::mdsim::log::g_l(), ::mdsim::log::g_l_filter(), lvl)
 
 namespace mdsim { namespace log
 {
 
-BOOST_DECLARE_LOG(g_l, boost::logging::logger_format_write<>)
-BOOST_DECLARE_LOG_FILTER(g_l_filter, boost::logging::level::holder)
-
 void init(options const& opts);
 
+typedef boost::logging::scenario::ts::use<
+    boost::logging::scenario::ts::filter_::none,
+    boost::logging::scenario::ts::level_::no_levels,
+    boost::logging::scenario::ts::logger_::none> finder;
+
+BOOST_DECLARE_LOG_FILTER(log_filter, finder::filter)
+
+BOOST_DECLARE_LOG(logger, finder::logger)
+BOOST_DECLARE_LOG(logger_error, finder::logger)
+#ifndef NDEBUG
+BOOST_DECLARE_LOG(logger_debug, finder::logger)
+#endif
+
 }} // namespace mdsim::log
+
+#define L_(logger) BOOST_LOG_USE_LOG_IF_FILTER(::mdsim::log::logger(), ::mdsim::log::log_filter()->is_enabled())
 
 #endif /* ! MDSIM_LOG_HPP */
