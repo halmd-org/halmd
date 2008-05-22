@@ -117,6 +117,66 @@ void conflicting_options(const variables_map& vm, const char* opt1, const char* 
     }
 }
 
+/**
+ * Accumulating program option value
+ */
+template <typename T, typename charT = char>
+class accumulating_value : public boost::program_options::typed_value<T,charT>
+{
+    //
+    // Originally written by Bryan Green <bgreen@nas.nasa.gov>
+    // http://article.gmane.org/gmane.comp.lib.boost.user/29084
+    //
+
+public:
+    accumulating_value(T* store_to=0) : boost::program_options::typed_value<T,charT>(store_to), origin(0)
+    {
+	(void) boost::program_options::typed_value<T,charT>::zero_tokens();
+    }
+
+    accumulating_value* default_value(const T &v)
+    {
+	// setting a default value sets the origin to that value
+	origin = v;
+	(void) boost::program_options::typed_value<T,charT>::default_value(v);
+	return this;
+    }
+
+    accumulating_value* default_value(const T &v,const std::string& textual)
+    {
+	// setting a default value sets the origin to that value
+	origin = v;
+	(void) boost::program_options::typed_value<T,charT>::default_value(v, textual);
+	return this;
+    }
+
+    void xparse(boost::any& value_store, const std::vector<std::basic_string<charT> >& new_tokens) const
+    {
+	// if this is the first occurrence of the option, initialize it to the origin
+	if (value_store.empty())
+	    value_store = boost::any(origin);
+
+	++boost::any_cast<T&>(value_store);
+    }
+
+private:
+    /** the numeric origin from which to increment upward */
+    T origin;
+};
+
+template <typename T>
+accumulating_value<T>* accum_value(T *v)
+{
+    accumulating_value<T>* r = new accumulating_value<T>(v);
+    return r;
+}
+
+template <typename T>
+accumulating_value<T>* accum_value()
+{
+    return accum_value<T>(0);
+}
+
 }} // namespace boost::program_options
 
 
