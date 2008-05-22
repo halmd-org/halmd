@@ -194,10 +194,8 @@ options::options()
     steps_ = 1000;
     avgsteps_ = 100;
 
-    // Autocorrelation options
-    block_count_ = 6;
+    // Block algorithm options
     block_size_ = 6;
-    block_shift_ = 2;
     max_samples_ = 1000;
 
     // CUDA options
@@ -227,9 +225,7 @@ void options::parse(int argc, char** argv)
 
     po::options_description tcf_opts("Autocorrelation options");
     tcf_opts.add_options()
-	("block-count", po::value(&block_count_), "block count")
 	("block-size", po::value(&block_size_), "block size")
-	("block-shift", po::value(&block_shift_), "block shift")
 	("max-samples", po::value(&max_samples_), "maximum number of samples per block")
 	;
 
