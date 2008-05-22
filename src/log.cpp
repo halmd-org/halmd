@@ -24,32 +24,54 @@
 namespace mdsim { namespace log
 {
 
-BOOST_DEFINE_LOG(g_l, boost::logging::logger_format_write<>)
-BOOST_DEFINE_LOG_FILTER(g_l_filter, boost::logging::level::holder)
-
 /**
  * initialize logging
  */
 void init(options const& opts) {
-    // add formatters and destinations
-    g_l()->writer().add_formatter(boost::logging::formatter::high_precision_time("[$dd-$MM-$yyyy $hh:$mm:$ss.$mili] "));
-    g_l()->writer().add_formatter(boost::logging::formatter::append_newline());
+    // use millisecond-resolution log timestamps
+    boost::logging::formatter::high_precision_time hpt("[$dd-$MM-$yyyy $hh:$mm:$ss.$mili] ");
 
-    // add destinations
-    g_l()->writer().add_destination(boost::logging::destination::cout());
-    g_l()->writer().add_destination(boost::logging::destination::file(opts.logfile()));
-    g_l()->turn_cache_off();
+    // add log formatters
+    logger()->writer().add_formatter(hpt);
+    logger()->writer().add_formatter(boost::logging::formatter::append_newline());
+    logger_error()->writer().add_formatter(hpt);
+    logger_error()->writer().add_formatter(boost::logging::formatter::append_newline());
+#ifndef NDEBUG
+    logger_debug()->writer().add_formatter(hpt);
+    logger_debug()->writer().add_formatter(boost::logging::formatter::append_newline());
+#endif
 
-    // set console logging verbosity
+    boost::logging::destination::file logfile(opts.logfile());
+
+    // output informational messages to file
+    logger()->writer().add_destination(logfile);
+    if (opts.verbosity() > 0) {
+	// output informational messages to console
+	logger()->writer().add_destination(boost::logging::destination::cout());
+    }
+    logger()->mark_as_initialized();
+
+    // output error messages to console and file
+    logger_error()->writer().add_destination(boost::logging::destination::cerr());
+    logger_error()->writer().add_destination(logfile);
+    logger_error()->mark_as_initialized();
+
+#ifndef NDEBUG
     if (opts.verbosity() > 1) {
-	g_l_filter()->set_enabled(boost::logging::level::debug);
+	// output debug-level messages to console and file
+	logger_debug()->writer().add_destination(boost::logging::destination::cout());
+	logger_debug()->writer().add_destination(logfile);
     }
-    else if (opts.verbosity() == 1) {
-	g_l_filter()->set_enabled(boost::logging::level::info);
-    }
-    else {
-	g_l_filter()->set_enabled(boost::logging::level::error);
-    }
+    logger_debug()->mark_as_initialized();
+#endif
 }
+
+BOOST_DEFINE_LOG_FILTER(log_filter, finder::filter)
+
+BOOST_DEFINE_LOG(logger, finder::logger)
+BOOST_DEFINE_LOG(logger_error, finder::logger)
+#ifndef NDEBUG
+BOOST_DEFINE_LOG(logger_debug, finder::logger)
+#endif
 
 }} // namespace mdsim::log
