@@ -28,8 +28,8 @@ namespace mdsim { namespace log
  * initialize logging
  */
 void init(options const& opts) {
-    // use millisecond-resolution log timestamps
-    boost::logging::formatter::high_precision_time hpt("[$dd-$MM-$yyyy $hh:$mm:$ss.$mili] ");
+    // use microsecond-resolution log timestamps
+    boost::logging::formatter::high_precision_time hpt("[$dd-$MM-$yyyy $hh:$mm:$ss.$micro] ");
 
     // add log formatters
     logger()->writer().add_formatter(hpt);
