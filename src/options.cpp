@@ -142,7 +142,7 @@ options::options()
     max_samples_ = 1000;
 
     // Other options
-    rngseed_ = 123;
+    rngseed_ = 42;
     output_file_prefix_ = PROGRAM_NAME;
     quiet_ = false;
 }
