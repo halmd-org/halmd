@@ -147,7 +147,7 @@ options::options()
     threads_ = 128;
 
     // Other options
-    rngseed_ = 123;
+    rngseed_ = 42;
     output_file_prefix_ = PROGRAM_NAME;
     quiet_ = false;
 }
