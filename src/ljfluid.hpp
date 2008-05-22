@@ -19,15 +19,15 @@
 #ifndef MDSIM_LJFLUID_HPP
 #define MDSIM_LJFLUID_HPP
 
-#include <math.h>
-#include <stdint.h>
 #include <algorithm>
 #include <cuda_wrapper.hpp>
+#include <math.h>
+#include <stdint.h>
 #include "gpu/ljfluid_glue.hpp"
 #include "exception.hpp"
 #include "options.hpp"
-#include "rand48.hpp"
 #include "statistics.hpp"
+#include "rand48.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 
