@@ -8,13 +8,14 @@ CONFIGURE_FILE(
   )
 
 FOREACH(dim RANGE 2 3)
-  ADD_EXECUTABLE(ljfluid${dim}d main.cpp options.cpp)
+  ADD_EXECUTABLE(ljfluid${dim}d main.cpp options.cpp log.cpp)
   SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES COMPILE_DEFINITIONS "DIM_${dim}D")
   TARGET_LINK_LIBRARIES(ljfluid${dim}d
     ljfluid${dim}d_gpu
     rand48_gpu
     ${Boost_DATE_TIME_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
     ${GSL_LIBRARIES}
     ${CUDA_LIBRARIES}
     ${HDF5_CPP_LIBRARY}
