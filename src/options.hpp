@@ -19,6 +19,7 @@
 #ifndef MDSIM_OPTIONS_HPP
 #define MDSIM_OPTIONS_HPP
 
+#include <boost/program_options.hpp>
 #include <cuda_wrapper.hpp>
 #include <stdint.h>
 #include <string>
@@ -132,12 +133,26 @@ public:
 	return output_file_prefix_ + ".tep";
     }
 
+    /**
+     * returns verbosity
+     */
+    int verbosity() const
+    {
+	if (vm.count("verbose")) {
+	    return vm["verbose"].as<int>();
+	}
+	return 0;
+    }
+
     bool const& quiet() const
     {
 	return quiet_;
     }
 
 private:
+    /** parsed program options */
+    boost::program_options::variables_map vm;
+
     /** number of particles */
     uint64_t npart_;
     /** density */
