@@ -245,6 +245,13 @@ void ljfluid<dimension, T>::temperature(float temp)
 	throw exception("CUDA ERROR: failed to initialize velocities");
     }
 
+    // set center of mass velocity to zero
+    T v_cm = mean(part.psc.v.begin(), part.psc.v.end());
+    for (typename cuda::host::vector<T>::iterator v = part.psc.v.begin(); v != part.psc.v.end(); ++v) {
+	*v -= v_cm;
+    }
+    cuda::copy(part.psc.v, part.psc_gpu.v, stream_);
+
     // initialize forces
     fill(part.force.begin(), part.force.end(), 0.);
     cuda::copy(part.force, part.force_gpu, stream_);
