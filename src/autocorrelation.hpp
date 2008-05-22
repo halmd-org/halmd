@@ -29,6 +29,7 @@
 #include <H5Cpp.h>
 #include "accumulator.hpp"
 #include "exception.hpp"
+#include "log.hpp"
 #include "options.hpp"
 #include "tcf.hpp"
 #include "trajectory.hpp"
@@ -72,6 +73,7 @@ public:
     uint64_t min_samples();
     void sample(phase_space_type const& p, double const&, double const&);
     void finalize();
+    void compute_block_param(options const& opts);
     void write(std::string const& path, double timestep);
 
 private:
@@ -87,9 +89,13 @@ private:
     /** correlation functions */
     std::vector<tcf_type> tcf;
 
-    unsigned int block_count;
+    /** block size */
     unsigned int block_size;
+    /** block shift */
     unsigned int block_shift;
+    /** block count */
+    unsigned int block_count;
+    /** maximum number of samples per block */
     uint64_t max_samples;
 };
 
@@ -97,25 +103,8 @@ private:
 template <unsigned dimension, typename T>
 autocorrelation<dimension, T>::autocorrelation(options const& opts)
 {
-    // validate block parameters
-    if (opts.block_count() < 1) {
-	throw exception("block count must be at least 1");
-    }
-    if (opts.block_size() < 3) {
-	throw exception("block size must be at least 3");
-    }
-    if (opts.block_shift() < 2) {
-	throw exception("block shift must be at least 2");
-    }
-    if (opts.max_samples() < opts.block_size()) {
-	throw exception("maximum number of samples must not be smaller than block size");
-    }
-
-    // set block parameters
-    block_count = 2 * opts.block_count();
-    block_size = opts.block_size();
-    block_shift = opts.block_shift();
-    max_samples = opts.max_samples();
+    // compute block parameters
+    compute_block_param(opts);
 
     // allocate phase space sample blocks
     try {
@@ -136,6 +125,47 @@ autocorrelation<dimension, T>::autocorrelation(options const& opts)
     }
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate correlation functions results");
+    }
+}
+
+
+/**
+ * compute block parameters
+ */
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::compute_block_param(options const& opts)
+{
+    // set block size
+    block_size = opts.block_size();
+    // compute block shift
+    block_shift = std::floor(std::sqrt(block_size));
+    // compute block level count
+    block_count = 0;
+    if (block_size > 1) {
+	for (unsigned int n = block_size; n <= opts.steps(); n *= block_size) {
+	    ++block_count;
+	    if ((n * block_shift) > opts.steps())
+		break;
+	    ++block_count;
+	}
+    }
+    // set maximum number of samples per block
+    max_samples = opts.max_samples();
+
+    LOG("block size  = " << block_size);
+    LOG("block shift = " << block_shift);
+    LOG("block count = " << block_count);
+    LOG("max samples = " << max_samples);
+
+    // validate block parameters
+    if (max_samples < block_size) {
+	throw exception("maximum number of samples must not be smaller than block size");
+    }
+    if (block_shift < 2) {
+	throw exception("computed block shift is less than 2, larger block size required");
+    }
+    if (block_count < 2) {
+	throw exception("computed block count is less than 2, more simulations steps required");
     }
 }
 
