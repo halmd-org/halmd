@@ -19,6 +19,7 @@
 #ifndef MDSIM_ENERGY_HPP
 #define MDSIM_ENERGY_HPP
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include "accumulator.hpp"
@@ -46,7 +47,7 @@ private:
     double timestep_;
     /** particle density */
     double density_;
-    /** number of samples */
+    /** sample count */
     unsigned int samples_;
     /** number of samples */
     unsigned int max_samples_;
@@ -62,12 +63,15 @@ private:
 
 
 template <unsigned dimension, typename T>
-energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep()), density_(opts.density()), samples_(0), max_samples_(opts.max_samples())
+energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep()), density_(opts.density()), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
+
+    // number of samples
+    max_samples_ = std::min(opts.max_samples(), opts.steps());
 
     try {
 	en_pot_.reserve(max_samples_);

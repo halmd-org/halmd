@@ -19,11 +19,11 @@
 #ifndef MDSIM_LJFLUID_HPP
 #define MDSIM_LJFLUID_HPP
 
-#include <list>
-#include <vector>
 #include <algorithm>
 #include <iostream>
+#include <list>
 #include <math.h>
+#include <vector>
 #include "cell_array.hpp"
 #include "gsl_rng.hpp"
 #include "options.hpp"
