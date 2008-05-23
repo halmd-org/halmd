@@ -98,7 +98,7 @@ public:
 	return output_file_prefix_ + ".tcf";
     }
 
-    unsigned int const& device() const
+    unsigned short const& device() const
     {
 	return device_;
     }
@@ -167,7 +167,7 @@ private:
     uint64_t max_samples_;
 
     /** CUDA device */
-    unsigned int device_;
+    unsigned short device_;
     /** number of blocks per grid */
     unsigned int blocks_;
     /** number of threads per block */
