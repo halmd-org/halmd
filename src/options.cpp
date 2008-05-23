@@ -200,7 +200,6 @@ options::options()
 
     // CUDA options
     device_ = 0;
-    blocks_ = 32;
     threads_ = 128;
 
     // Other options
@@ -233,7 +232,6 @@ void options::parse(int argc, char** argv)
     po::options_description cuda_opts("CUDA options");
     cuda_opts.add_options()
 	("device,D", po::value(&device_), "CUDA device")
-	("blocks,B", po::value(&blocks_), "number of blocks per grid")
 	("threads,T", po::value(&threads_), "number of threads per block")
 	;
 

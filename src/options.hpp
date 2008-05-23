@@ -105,7 +105,7 @@ public:
 
     cuda::config dim() const
     {
-	return cuda::config(dim3(blocks_), dim3(threads_));
+	return cuda::config(dim3((npart_ + threads_ - 1) / threads_), dim3(threads_));
     }
 
     unsigned int const& rngseed() const
@@ -173,8 +173,6 @@ private:
 
     /** CUDA device */
     unsigned short device_;
-    /** number of blocks per grid */
-    unsigned int blocks_;
     /** number of threads per block */
     unsigned int threads_;
 

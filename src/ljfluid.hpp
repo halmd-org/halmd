@@ -139,9 +139,6 @@ private:
 template <unsigned dimension, typename T>
 ljfluid<dimension, T>::ljfluid(options const& opts) : npart(opts.npart()), part(opts.npart()), rng_(opts.dim()), dim_(opts.dim()), steps_(0), gputime_(0.), memtime_(0.)
 {
-    // FIXME do without this requirement
-    assert(npart == dim_.threads());
-
     // fixed cutoff distance for shifted Lennard-Jones potential
     r_cut = 2.5;
     // squared cutoff distance
@@ -158,6 +155,13 @@ ljfluid<dimension, T>::ljfluid(options const& opts) : npart(opts.npart()), part(
 
     // seed random number generator
     rng_.set(opts.rngseed());
+
+    // reserve device memory for placeholder particles
+    part.psc_gpu.r.reserve(dim_.threads());
+    part.psc_gpu.v.reserve(dim_.threads());
+    part.rp_gpu.reserve(dim_.threads());
+    part.force_gpu.reserve(dim_.threads());
+    part.en_gpu.reserve(dim_.threads());
 }
 
 /**
