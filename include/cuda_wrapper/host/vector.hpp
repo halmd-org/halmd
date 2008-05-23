@@ -20,7 +20,6 @@
 #define CUDA_HOST_VECTOR_HPP
 
 #include <cuda_wrapper/host/allocator.hpp>
-#include <cuda_wrapper/function.hpp>
 #include <vector>
 
 
@@ -46,16 +45,7 @@ public:
     /**
      * initialize host vector with copies of value
      */
-    vector(size_type size, value_type const& value = value_type()) : _Base(size, value)
-    {
-    }
-
-    /**
-     * initialize host vector with copies of value
-     */
-    vector(config const& dim, value_type const& value = value_type()) : _Base(dim.threads(), value)
-    {
-    }
+    vector(size_type size, value_type const& value = value_type()) : _Base(size, value) {}
 };
 
 }} // namespace cuda::host

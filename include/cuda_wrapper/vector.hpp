@@ -19,8 +19,8 @@
 #ifndef CUDA_VECTOR_HPP
 #define CUDA_VECTOR_HPP
 
+#include <algorithm>
 #include <cuda_wrapper/allocator.hpp>
-#include <cuda_wrapper/function.hpp>
 #include <vector>
 
 
@@ -31,7 +31,7 @@ namespace cuda
  * CUDA global device memory vector
  */
 template <typename T>
-class vector : protected std::vector<T, allocator<T> >
+class vector : private std::vector<T, allocator<T> >
 {
 public:
     typedef allocator<T> _Alloc;
@@ -41,22 +41,14 @@ public:
     typedef size_t size_type;
 
 public:
-    vector() {}
+    vector() : size_(0) {}
 
     /**
      * initialize device vector of given size
      */
-    vector(size_type size)
+    vector(size_type size) : size_(size)
     {
-	resize(size);
-    }
-
-    /**
-     * initialize device vector of given size
-     */
-    vector(config const& dim)
-    {
-	resize(dim.threads());
+	_Base::reserve(size_);
     }
 
     /**
@@ -64,7 +56,7 @@ public:
      */
     size_type size() const
     {
-	return _Base::capacity();
+	return size_;
     }
 
     /**
@@ -76,6 +68,23 @@ public:
 	// initialization of vector elements, so use vector::reserve
 	// in place of vector::resize
 	_Base::reserve(size);
+	size_ = size;
+    }
+
+    /**
+     * returns capacity
+     */
+    size_type capacity() const
+    {
+	return _Base::capacity();
+    }
+
+    /**
+     * allocate enough memory for specified number of elements
+     */
+    void reserve(size_type n)
+    {
+	_Base::reserve(std::max(size_, n));
     }
 
     /**
@@ -99,6 +108,9 @@ private:
     vector(vector_type const&);
     // disable default assignment operator
     vector_type& operator=(vector_type const&);
+
+private:
+    size_type size_;
 };
 
 } // namespace cuda
