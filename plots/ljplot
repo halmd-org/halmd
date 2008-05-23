@@ -115,9 +115,19 @@ def plot_correlations(root, basename):
     plot = 'plot "%s" binary array=inf format="%%float%%float%%*float" using 1:%s notitle with lines lt 1'
     replot = 'replot "%s" binary array=inf format="%%float%%float%%float" using 1:%s:%s title "%s" with yerrorbars lt 1'
 
+    def time_ordered_write(f, dataset):
+        data = {}
+        for nblock in range(len(dataset)):
+            for sample in dataset[nblock]:
+                data[(sample[0], nblock)] = sample.tostring()
+
+        # sort dataset after time interval
+        for k in sorted(data.keys()):
+            f.write(data[k])
+
     # write mean squared displacement data file
     f = file(basename + '_msd.bin', 'wb')
-    f.write(root.MSD.read().tostring())
+    time_ordered_write(f, root.MSD)
     f.close()
 
     g = spawn_gnuplot('Mean squared displacement')
@@ -136,7 +146,7 @@ def plot_correlations(root, basename):
 
     # write mean quartic displacement data file
     f = file(basename + '_mqd.bin', 'wb')
-    f.write(root.MQD.read().tostring())
+    time_ordered_write(f, root.MQD)
     f.close()
 
     g = spawn_gnuplot('Mean quartic displacement')
@@ -148,7 +158,7 @@ def plot_correlations(root, basename):
 
     # write velocity autocorrelation data file
     f = file(basename + '_vac.bin', 'wb')
-    f.write(root.VAC.read().tostring())
+    time_ordered_write(f, root.VAC)
     f.close()
 
     g = spawn_gnuplot('Velocity autocorrelation')
