@@ -47,7 +47,7 @@ void init(options const& opts) {
     logger()->writer().add_destination(logfile);
     if (opts.verbosity() > 0) {
 	// output informational messages to console
-	logger()->writer().add_destination(boost::logging::destination::cout());
+	logger()->writer().add_destination(boost::logging::destination::cerr());
     }
     logger()->mark_as_initialized();
 
@@ -59,7 +59,7 @@ void init(options const& opts) {
 #ifndef NDEBUG
     if (opts.verbosity() > 1) {
 	// output debug-level messages to console and file
-	logger_debug()->writer().add_destination(boost::logging::destination::cout());
+	logger_debug()->writer().add_destination(boost::logging::destination::cerr());
 	logger_debug()->writer().add_destination(logfile);
     }
     logger_debug()->mark_as_initialized();
