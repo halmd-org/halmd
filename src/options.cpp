@@ -206,6 +206,8 @@ options::options()
     // Other options
     rngseed_ = 42;
     output_file_prefix_ = PROGRAM_NAME;
+    trajectory_input_file_ = "";
+    sample_ = -1;
 }
 
 /**
@@ -220,7 +222,6 @@ void options::parse(int argc, char** argv)
 	("timestep,t", po::value(&timestep_), "simulation timestep")
 	("temperature,K", po::value(&temp_), "initial temperature")
 	("steps,s", po::value(&steps_), "number of simulation steps")
-	("average,S", po::value(&avgsteps_), "number of average accumulation steps")
 	;
 
     po::options_description tcf_opts("Autocorrelation options");
@@ -240,6 +241,8 @@ void options::parse(int argc, char** argv)
     misc_opts.add_options()
 	("seed,R", po::value(&rngseed_), "random number generator integer seed")
 	("input,i", po::value<vector<string> >(), "parameter input file")
+	("trajectory,I", po::value(&trajectory_input_file_), "trajectory input file")
+	("sample,S", po::value(&sample_), "sample in trajectory input file")
 	("output,o", po::value(&output_file_prefix_), "output file prefix")
 	("verbose,v", po::accum_value<int>(), "increase verbosity")
 	("version,V", "output version and exit")

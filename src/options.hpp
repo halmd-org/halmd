@@ -139,9 +139,14 @@ public:
 	return 0;
     }
 
-    bool const& quiet() const
+    std::string const& trajectory_input_file() const
     {
-	return quiet_;
+	return trajectory_input_file_;
+    }
+
+    int const& sample() const
+    {
+	return sample_;
     }
 
 private:
@@ -177,8 +182,10 @@ private:
     unsigned int rngseed_;
     /** output file prefix */
     std::string output_file_prefix_;
-    /** suppress status output */
-    bool quiet_;
+    /** trajectory input file */
+    std::string trajectory_input_file_;
+    /** sample in trajectory input file */
+    int sample_;
 };
 
 } // namespace mdsim
