@@ -141,53 +141,58 @@ __global__ void inteq(T* r, T* rp, T* v, T* f)
 
 
 /**
- * n-dimensional MD simulation step
+ * Molecular Dynamics simulation step
  */
 template <typename T>
-__global__ void mdstep(T* r_, T* v_, T* f_, float2* en_)
+__global__ void mdstep(T* g_r, T* g_v, T* g_f, float2* g_en)
 {
-    // particles within domain
-    extern __shared__ T block[];
+    extern __shared__ T s_r[];
 
     // load particle associated with this thread
-    T r = r_[GTID];
-    T v = v_[GTID];
+    T r = g_r[GTID];
+    T v = g_v[GTID];
 
     // potential energy contribution
     float en = 0.;
     // virial equation sum contribution
     float virial = 0.;
 
-    // Lennard-Jones force calculation
 #ifdef DIM_3D
     T f = make_float3(0., 0., 0.);
 #else
     T f = make_float2(0., 0.);
 #endif
 
-    for (int k = 0; k < gridDim.x; k++) {
-	// load all interacting particles coordinates within domain
-	block[TID] = r_[k * blockDim.x + TID];
+    // iterate over all blocks
+    for (unsigned int k = 0; k < gridDim.x; k++) {
+	// load positions of particles within block
+	s_r[TID] = g_r[k * blockDim.x + TID];
 
 	__syncthreads();
 
-	for (int j = 0; j < blockDim.x; j++) {
-	    // same particle
-	    if (blockIdx.x == k && TID == j) continue;
+	// iterate over all particles within block
+	for (unsigned int j = 0; j < blockDim.x; j++) {
+	    // skip identical particle
+	    if (blockIdx.x == k && TID == j)
+		continue;
+	    // skip placeholder particles
+	    if (k * blockDim.x + j >= npart)
+		continue;
 
-	    compute_force(r, block[j], f, en, virial);
+	    // compute Lennard-Jones force with particle
+	    compute_force(r, s_r[j], f, en, virial);
 	}
 
 	__syncthreads();
     }
 
-    // second leapfrog step as part of integration of equations of motion
+    // second leapfrog step of integration of equations of motion
     leapfrog_full_step(v, f);
 
     // store particle associated with this thread
-    v_[GTID] = v;
-    f_[GTID] = f;
-    en_[GTID] = make_float2(en, virial);
+    g_v[GTID] = v;
+    g_f[GTID] = f;
+    g_en[GTID] = make_float2(en, virial);
 }
 
 
