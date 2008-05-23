@@ -78,11 +78,6 @@ public:
 	return steps_;
     }
 
-    uint64_t const& avgsteps() const
-    {
-	return avgsteps_;
-    }
-
     unsigned int const& block_size() const
     {
 	return block_size_;
@@ -163,8 +158,6 @@ private:
     float temp_;
     /** number of simulation steps */
     uint64_t steps_;
-    /** number of steps for average accumulation */
-    uint64_t avgsteps_;
 
     /** block size */
     unsigned int block_size_;

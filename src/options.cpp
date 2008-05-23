@@ -191,8 +191,10 @@ options::options()
     density_ = 0.05;
     timestep_ = 0.005;
     temp_ = 1.;
+    rngseed_ = 42;
     steps_ = 1000;
-    avgsteps_ = 100;
+    trajectory_input_file_ = "";
+    sample_ = -1;
 
     // Block algorithm options
     block_size_ = 6;
@@ -203,10 +205,7 @@ options::options()
     threads_ = 128;
 
     // Other options
-    rngseed_ = 42;
     output_file_prefix_ = PROGRAM_NAME;
-    trajectory_input_file_ = "";
-    sample_ = -1;
 }
 
 /**
@@ -220,13 +219,16 @@ void options::parse(int argc, char** argv)
 	("density,d", po::value(&density_), "particle density")
 	("timestep,t", po::value(&timestep_), "simulation timestep")
 	("temperature,K", po::value(&temp_), "initial temperature")
+	("seed,R", po::value(&rngseed_), "random number generator integer seed")
 	("steps,s", po::value(&steps_), "number of simulation steps")
+	("trajectory,I", po::value(&trajectory_input_file_), "trajectory input file")
+	("sample,S", po::value(&sample_), "sample in trajectory input file")
 	;
 
     po::options_description tcf_opts("Autocorrelation options");
     tcf_opts.add_options()
-	("block-size", po::value(&block_size_), "block size")
-	("max-samples", po::value(&max_samples_), "maximum number of samples per block")
+	("block-size,B", po::value(&block_size_), "block size")
+	("max-samples,M", po::value(&max_samples_), "maximum number of samples per block")
 	;
 
     po::options_description cuda_opts("CUDA options");
@@ -237,11 +239,8 @@ void options::parse(int argc, char** argv)
 
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
-	("seed,R", po::value(&rngseed_), "random number generator integer seed")
-	("input,i", po::value<vector<string> >(), "parameter input file")
-	("trajectory,I", po::value(&trajectory_input_file_), "trajectory input file")
-	("sample,S", po::value(&sample_), "sample in trajectory input file")
 	("output,o", po::value(&output_file_prefix_), "output file prefix")
+	("input,i", po::value<vector<string> >(), "parameter input file")
 	("verbose,v", po::accum_value<int>(), "increase verbosity")
 	("version,V", "output version and exit")
 	("help,h", "display this help and exit")
