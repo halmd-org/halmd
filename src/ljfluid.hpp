@@ -41,22 +41,20 @@ namespace mdsim
 template <unsigned dimension, typename T>
 struct particle
 {
-    /** n-dimensional host floating-point vector type */
-    typedef T vector_type;
-    /** n-dimensional device floating-point vector type */
-    typedef typename cuda::vector_type<dimension, typename T::value_type>::type cuda_vector_type;
+    /** device floating-point vector type */
+    typedef typename cuda::types::vector<dimension, typename T::value_type>::type floatn;
 
     /** n-dimensional particle phase space coordiates */
-    phase_space_point<cuda::vector<cuda_vector_type> > psc_gpu;
-    phase_space_point<cuda::host::vector<vector_type> > psc;
+    phase_space_point<cuda::vector<floatn> > psc_gpu;
+    phase_space_point<cuda::host::vector<T> > psc;
     /** periodically reduced particle coordinates */
-    cuda::vector<cuda_vector_type> rp_gpu;
+    cuda::vector<floatn> rp_gpu;
     /** n-dimensional force acting upon particle */
-    cuda::vector<cuda_vector_type> force_gpu;
-    cuda::host::vector<vector_type> force;
+    cuda::vector<floatn> force_gpu;
+    cuda::host::vector<T> force;
     /** potential energy and virial equation sum */
-    cuda::vector<typename cuda::vector_type<2, typename T::value_type>::type> en_gpu;
-    cuda::host::vector<vector2d<typename T::value_type> > en;
+    cuda::vector<float2> en_gpu;
+    cuda::host::vector<vector2d<float> > en;
 
     particle(uint64_t n) : psc_gpu(n), psc(n), rp_gpu(n), force_gpu(n), force(n), en_gpu(n), en(n) { }
 };
@@ -69,10 +67,8 @@ template <unsigned dimension, typename T>
 class ljfluid
 {
 public:
-    /** n-dimensional host floating-point vector type */
-    typedef T vector_type;
-    /** n-dimensional device floating-point vector type */
-    typedef typename cuda::vector_type<dimension, typename T::value_type>::type cuda_vector_type;
+    /** device floating-point vector type */
+    typedef typename cuda::types::vector<dimension, typename T::value_type>::type floatn;
 
 public:
     ljfluid(options const& opts);
