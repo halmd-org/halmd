@@ -1,4 +1,4 @@
-/* rng/gsl_rng.hpp
+/* GSL random number generator C++ wrapper
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -21,6 +21,7 @@
 
 #include <gsl/gsl_rng.h>
 #include <cmath>
+#include <vector>
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 
@@ -28,38 +29,82 @@
 namespace rng { namespace gsl
 {
 
-template <const gsl_rng_type*& rng_type>
+/**
+ * GSL random number generator
+ */
+template <const gsl_rng_type* const& rng_type>
 class rng
 {
-protected:
-    gsl_rng *_rng;
+public:
+    /** random number generator state type */
+    typedef std::vector<char> state_type;
 
 public:
+    /**
+     * create new instance of random number generator
+     */
     rng()
     {
-	// FIXME set GSL error handler
-	if (NULL == (_rng = gsl_rng_alloc(rng_type))) {
+	// do not abort program after GSL error
+	gsl_error_handler_t* handler = gsl_set_error_handler_off();
+
+	if (NULL == (rng_ = gsl_rng_alloc(rng_type))) {
 	    throw std::bad_alloc();
 	}
+
+	// restore previous error handler
+	gsl_set_error_handler(handler);
     }
 
-    rng(const rng<rng_type>& r)
+    /**
+     * create new instance as an exact copy of given generator
+     */
+    rng(rng<rng_type> const& src)
     {
-	// FIXME set GSL error handler
-	if (NULL == (_rng = gsl_rng_clone(r._rng))) {
+	// do not abort program after GSL error
+	gsl_error_handler_t* handler = gsl_set_error_handler_off();
+
+	if (NULL == (rng_ = gsl_rng_clone(src.rng_))) {
 	    throw std::bad_alloc();
 	}
+
+	// restore previous error handler
+	gsl_set_error_handler(handler);
     }
 
+    /**
+     * copy random number generator into pre-existing generator
+     */
+    rng<rng_type>& operator=(rng<rng_type> const& src)
+    {
+	gsl_rng_memcpy(rng_, src.rng_);
+	return *this;
+    }
+
+    /**
+     * free all memory associated with generator
+     */
     ~rng()
     {
-	gsl_rng_free(_rng);
+	gsl_rng_free(rng_);
     }
 
-    rng<rng_type>& operator=(const rng<rng_type>& r)
+    /**
+     * save generator state
+     */
+    void save(state_type& state) const
     {
-	gsl_rng_memcpy(_rng, r._rng);
-	return *this;
+	state.resize(rng_type->size);
+	memcpy(state.data(), rng_->state, rng_type->size);
+    }
+
+    /**
+     * restore generator state
+     */
+    void restore(state_type const& state)
+    {
+	assert(state.size() == rng_type->size);
+	memcpy(rng_->state, state.data(), rng_type->size);
     }
 
     /**
@@ -67,15 +112,31 @@ public:
      */
     void set(unsigned long int seed)
     {
-	gsl_rng_set(_rng, seed);
+	gsl_rng_set(rng_, seed);
     }
 
     /**
-     * generate random integer in generator-dependent interval
+     * generate random integer in algorithm-dependent interval
      */
-    unsigned int get()
+    unsigned long int get()
     {
-	return gsl_rng_get(_rng);
+	return gsl_rng_get(rng_);
+    }
+
+    /**
+     * determine minimum random integer
+     */
+    unsigned long int min() const
+    {
+	return gsl_rng_min(rng_);
+    }
+
+    /**
+     * determine maximum random integer
+     */
+    unsigned long int max() const
+    {
+	return gsl_rng_max(rng_);
     }
 
     /**
@@ -83,7 +144,7 @@ public:
      */
     double uniform()
     {
-	return gsl_rng_uniform(_rng);
+	return gsl_rng_uniform(rng_);
     }
 
     /**
@@ -160,6 +221,9 @@ public:
 	r1 *= s;
 	r2 *= s;
     }
+
+private:
+    gsl_rng *rng_;
 };
 
 
