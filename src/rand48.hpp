@@ -19,9 +19,9 @@
 #ifndef MDSIM_RAND48_HPP
 #define MDSIM_RAND48_HPP
 
+#include <iostream>
 #include "gpu/rand48_glue.hpp"
 #include "gpu/ljfluid_glue.hpp"
-#include <iostream>
 
 
 namespace mdsim
@@ -37,8 +37,22 @@ public:
     typedef ushort3 state_type;
 
 public:
-    rand48(cuda::config const& dim) : dim_(dim), state_(dim.threads())
+    rand48() {}
+
+    /**
+     * initialize random number generator with CUDA execution dimensions
+     */
+    rand48(cuda::config const& dim) : dim_(dim), state_(dim.threads()) {}
+
+    /**
+     * allocate global device memory for random number generator state
+     */
+    void resize(cuda::config const& dim)
     {
+	// set CUDA execution dimensions
+	dim_ = dim;
+	// allocate global device memory for random number generator state
+	state_.resize(dim.threads());
     }
 
     /**
@@ -138,7 +152,7 @@ public:
     }
 
 private:
-    const cuda::config dim_;
+    cuda::config dim_;
     cuda::vector<ushort3> state_;
 };
 
