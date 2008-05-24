@@ -20,6 +20,7 @@
 #define MDSIM_LJFLUID_HPP
 
 #include <algorithm>
+#include <boost/array.hpp>
 #include <cuda_wrapper.hpp>
 #include <math.h>
 #include <stdint.h>
@@ -120,7 +121,7 @@ private:
 
     /** CUDA asynchronous execution */
     cuda::stream stream_;
-    cuda::event event_[4];
+    boost::array<cuda::event, 4> event_;
 
     /** potential energy per particle */
     float en_pot_;

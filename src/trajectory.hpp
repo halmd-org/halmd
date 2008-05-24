@@ -22,6 +22,7 @@
 #include <H5Cpp.h>
 #include <algorithm>
 #include <assert.h>
+#include <boost/array.hpp>
 #include <string>
 #include "exception.hpp"
 #include "options.hpp"
@@ -58,7 +59,7 @@ private:
     const uint64_t npart_;
     const uint64_t max_samples_;
     uint64_t samples_;
-    H5::DataSet dset_[2];
+    boost::array<H5::DataSet, 2> dset_;
     H5::DataSpace ds_mem_;
     H5::DataSpace ds_file_;
 };
