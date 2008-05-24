@@ -45,14 +45,27 @@ public:
     rand48(cuda::config const& dim) : dim_(dim), state_(dim.threads()) {}
 
     /**
-     * allocate global device memory for random number generator state
+     * change random number generator CUDA execution dimensions
      */
     void resize(cuda::config const& dim)
     {
-	// set CUDA execution dimensions
+	ushort3 state;
+	bool init = (state_.size() > 0) ? true : false;
+
+	if (init) {
+	    // save generator state using old dimensions
+	    save(state);
+	}
+
+	// set new CUDA execution dimensions
 	dim_ = dim;
-	// allocate global device memory for random number generator state
-	state_.resize(dim.threads());
+	// reallocate global device memory for generator state
+	state_.resize(dim_.threads());
+
+	if (init) {
+	    // restore generator state using new dimensions
+	    restore(state);
+	}
     }
 
     /**
