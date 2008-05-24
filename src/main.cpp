@@ -51,8 +51,8 @@ int main(int argc, char **argv)
 #else
 	mdsim::mdsim<2, vector2d<float> > sim(opts);
 #endif
-	// run molecular dynamics simulation
-	sim.run();
+	// run MD simulation
+	sim();
     }
     catch (cuda::error const& e) {
 	std::cerr << PROGRAM_NAME ": CUDA ERROR: " << e.what() << std::endl;

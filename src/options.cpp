@@ -187,10 +187,10 @@ namespace mdsim {
 options::options()
 {
     // MD simulation parameters
-    npart_ = 4096;
+    particles_ = 4096;
     density_ = 0.05;
     timestep_ = 0.005;
-    temp_ = 1.;
+    temperature_ = 1.;
     rngseed_ = 42;
     steps_ = 1000;
     trajectory_input_file_ = "";
@@ -215,10 +215,10 @@ void options::parse(int argc, char** argv)
 {
     po::options_description mdsim_opts("MD simulation parameters");
     mdsim_opts.add_options()
-	("particles,N", po::value(&npart_), "number of particles")
+	("particles,N", po::value(&particles_), "number of particles")
 	("density,d", po::value(&density_), "particle density")
 	("timestep,t", po::value(&timestep_), "simulation timestep")
-	("temperature,K", po::value(&temp_), "initial temperature")
+	("temperature,K", po::value(&temperature_), "initial temperature")
 	("seed,R", po::value(&rngseed_), "random number generator integer seed")
 	("steps,s", po::value(&steps_), "number of simulation steps")
 	("trajectory,I", po::value(&trajectory_input_file_), "trajectory input file")

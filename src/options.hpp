@@ -20,7 +20,6 @@
 #define MDSIM_OPTIONS_HPP
 
 #include <boost/program_options.hpp>
-#include <cuda_wrapper.hpp>
 #include <stdint.h>
 #include <string>
 
@@ -53,9 +52,9 @@ public:
 
     void parse(int argc, char** argv);
 
-    uint64_t const& npart() const
+    unsigned int const& particles() const
     {
-	return npart_;
+	return particles_;
     }
 
     float const& density() const
@@ -68,9 +67,9 @@ public:
 	return timestep_;
     }
 
-    float const& temp() const
+    float const& temperature() const
     {
-	return temp_;
+	return temperature_;
     }
 
     uint64_t const& steps() const
@@ -98,9 +97,9 @@ public:
 	return device_;
     }
 
-    cuda::config dim() const
+    unsigned int const& threads() const
     {
-	return cuda::config(dim3((npart_ + threads_ - 1) / threads_), dim3(threads_));
+	return threads_;
     }
 
     unsigned int const& rngseed() const
@@ -149,13 +148,13 @@ private:
     boost::program_options::variables_map vm;
 
     /** number of particles */
-    uint64_t npart_;
+    unsigned int particles_;
     /** density */
     float density_;
     /** simulation timestep */
     float timestep_;
     /** initial temperature */
-    float temp_;
+    float temperature_;
     /** number of simulation steps */
     uint64_t steps_;
 

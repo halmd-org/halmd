@@ -1,4 +1,4 @@
-/* Lennard-Jones fluid
+/* Lennard-Jones fluid simulation with naive N-squared algorithm
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -21,11 +21,13 @@
 
 #include <algorithm>
 #include <boost/array.hpp>
+#include <boost/foreach.hpp>
+#include <cmath>
 #include <cuda_wrapper.hpp>
-#include <math.h>
 #include <stdint.h>
 #include "gpu/ljfluid_glue.hpp"
 #include "exception.hpp"
+#include "log.hpp"
 #include "options.hpp"
 #include "statistics.hpp"
 #include "rand48.hpp"
@@ -33,36 +35,13 @@
 #include "vector3d.hpp"
 
 
+#define foreach BOOST_FOREACH
+
 namespace mdsim
 {
 
 /**
- * MD simulation particle
- */
-template <unsigned dimension, typename T>
-struct particle
-{
-    /** device floating-point vector type */
-    typedef typename cuda::types::vector<dimension, typename T::value_type>::type floatn;
-
-    /** n-dimensional particle phase space coordiates */
-    phase_space_point<cuda::vector<floatn> > psc_gpu;
-    phase_space_point<cuda::host::vector<T> > psc;
-    /** periodically reduced particle coordinates */
-    cuda::vector<floatn> rp_gpu;
-    /** n-dimensional force acting upon particle */
-    cuda::vector<floatn> force_gpu;
-    cuda::host::vector<T> force;
-    /** potential energy and virial equation sum */
-    cuda::vector<float2> en_gpu;
-    cuda::host::vector<vector2d<float> > en;
-
-    particle(uint64_t n) : psc_gpu(n), psc(n), rp_gpu(n), force_gpu(n), force(n), en_gpu(n), en(n) { }
-};
-
-
-/**
- * Simulate a Lennard-Jones fluid with naive N-squared algorithm
+ * Lennard-Jones fluid simulation with naive N-squared algorithm
  */
 template <unsigned dimension, typename T>
 class ljfluid
@@ -72,290 +51,495 @@ public:
     typedef typename cuda::types::vector<dimension, typename T::value_type>::type floatn;
 
 public:
-    ljfluid(options const& opts);
+    /** initialize fixed simulation parameters */
+    ljfluid();
+    /** set number of particles in system */
+    void particles(unsigned int value);
+    /** set system state from phase space sample */
+    void particles(phase_space_point<std::vector<T> > const& state);
+    /** set number of CUDA execution threads */
+    void threads(unsigned int value);
+    /** initialize random number generator with seed */
+    void rng(unsigned int seed);
+    /** initialize random number generator from state */
+    void rng(mdsim::rand48::state_type const& state);
 
-    uint64_t particles() const;
-    float timestep();
-    void timestep(float val);
-    float density() const;
-    void density(float density_);
-    float box() const;
+    /** set particle density */
+    void density(float value);
+    /** set periodic box length */
+    void box(float value);
+    /** arrange particles on a face-centered cubic (fcc) lattice */
+    void lattice();
+    /** set system temperature according to Maxwell-Boltzmann distribution */
     void temperature(float temp);
+    /** set simulation timestep */
+    void timestep(float value);
 
+    /** get number of particles */
+    unsigned int const& particles() const;
+    /** get particle density */
+    float const& density() const;
+    /** get periodic box length */
+    float const& box() const;
+    /** get simulation timestep */
+    float const& timestep() const;
+
+    /** stream MD simulation step on GPU */
     void mdstep();
-    void trajectories(std::ostream& os) const;
-    template <typename V>
-    void sample(V& visitor) const;
-
-    float gputime() const;
-    float memtime() const;
-
-private:
-    void step();
+    /** copy MD simulation step results from GPU to host */
+    void sample();
+    /** sample trajectory */
+    template <typename visitor>
+    void sample(visitor& v) const;
 
 private:
-    /** number of particles in periodic box */
-    uint64_t npart;
-    /** particles */
-    particle<dimension, T> part;
-    /** random number generator */
-    mdsim::rand48 rng_;
-    /** CUDA execution dimensions */
-    cuda::config dim_;
-
+    /** number of particles in system */
+    unsigned int npart;
     /** particle density */
     float density_;
     /** periodic box length */
     float box_;
-    /** MD simulation timestep */
+    /** simulation timestep */
     float timestep_;
     /** cutoff distance for shifted Lennard-Jones potential */
     float r_cut;
 
-    /** total number of simulation steps */
-    uint64_t steps_;
-    /** average GPU time in milliseconds per simulation step */
-    float gputime_;
-    /** average device memory transfer time in milliseconds per simulation step */
-    float memtime_;
+    /** system state in phase space */
+    phase_space_point<cuda::host::vector<T> > h_state;
+    phase_space_point<cuda::vector<floatn> > g_state;
+    /** forces */
+    cuda::vector<floatn> g_force;
+    /** potential energy and virial equation sum */
+    cuda::host::vector<vector2d<float> > h_en;
+    cuda::vector<float2> g_en;
 
+    /** random number generator */
+    mdsim::rand48 rng_;
+    /** CUDA execution dimensions */
+    cuda::config dim_;
     /** CUDA asynchronous execution */
     cuda::stream stream_;
-    boost::array<cuda::event, 4> event_;
-
-    /** potential energy per particle */
-    float en_pot_;
-    /** virial theorem force sum */
-    float virial_;
 };
 
 
 /**
- * initialize Lennard-Jones fluid with given particle number
+ * initialize fixed simulation parameters
  */
 template <unsigned dimension, typename T>
-ljfluid<dimension, T>::ljfluid(options const& opts) : npart(opts.npart()), part(opts.npart()), rng_(opts.dim()), dim_(opts.dim()), steps_(0), gputime_(0.), memtime_(0.)
+ljfluid<dimension, T>::ljfluid()
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     r_cut = 2.5;
+
     // squared cutoff distance
     float rr_cut = r_cut * r_cut;
-
     // potential energy at cutoff distance
     float rri_cut = 1. / rr_cut;
     float r6i_cut = rri_cut * rri_cut * rri_cut;
     float en_cut = 4. * r6i_cut * (r6i_cut - 1.);
 
-    cuda::copy(npart, gpu::ljfluid::npart);
-    cuda::copy(rr_cut, gpu::ljfluid::rr_cut);
-    cuda::copy(en_cut, gpu::ljfluid::en_cut);
+    try {
+	cuda::copy(rr_cut, gpu::ljfluid::rr_cut);
+	cuda::copy(en_cut, gpu::ljfluid::en_cut);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy cutoff parameters to device symbols");
+    }
+}
+
+/**
+ * set number of particles in system
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::particles(unsigned int value)
+{
+    // validate particle number
+    if (value < 1) {
+	throw exception("invalid number of particles");
+    }
+    // set particle number
+    npart = value;
+    // copy particle number to device symbol
+    try {
+	cuda::copy(npart, gpu::ljfluid::npart);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy particle number to device symbol");
+    }
+
+    // allocate global device memory for system state
+    try {
+	g_state.r.resize(npart);
+	g_state.R.resize(npart);
+	g_state.v.resize(npart);
+	g_force.resize(npart);
+	g_en.resize(npart);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate global device memory for system state");
+    }
+
+    // allocate page-locked host memory for system state
+    try {
+	h_state.r.resize(npart);
+	h_state.R.resize(npart);
+	h_state.v.resize(npart);
+	// particle forces reside only in GPU memory
+	h_en.resize(npart);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate page-locked host memory for system state");
+    }
+
+    // set particle forces to zero for first integration of differential equations of motion
+    try {
+	fill(h_state.v.begin(), h_state.v.end(), 0.);
+	cuda::copy(h_state.v, g_force, stream_);
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to initialize forces to zero");
+    }
+}
+
+/**
+ * set system state from phase space sample
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::particles(phase_space_point<std::vector<T> > const& state)
+{
+    // set number of particles in system
+    particles(state.r.size());
+
+    // set system state from phase space sample
+    std::copy(state.r.begin(), state.r.end(), h_state.r.begin());
+    try {
+	// copy periodically reduced particles positions from host to GPU
+	cuda::copy(h_state.r, g_state.r, stream_);
+	// replicate to periodically extended particle positions
+	cuda::copy(g_state.r, g_state.R, stream_);
+	cuda::copy(h_state.r, h_state.R, stream_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to set system state from phase space sample");
+    }
+}
+
+/**
+ * set number of CUDA execution threads
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::threads(unsigned int value)
+{
+    // query CUDA device properties
+    cuda::device::properties prop;
+    try {
+	prop = cuda::device::properties(cuda::device::get());
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to query CUDA device properties");
+    }
+
+    // validate number of CUDA execution threads
+    if (value < 1) {
+	throw exception("invalid number of CUDA execution threads");
+    }
+    if (value > prop.max_threads_per_block()) {
+	throw exception("number of CUDA execution threads exceeds maximum number of threads per block");
+    }
+    if (value & (value - 1)) {
+	LOG_WARNING("number of CUDA execution threads not a power of 2");
+    }
+    if (value % prop.warp_size()) {
+	LOG_WARNING("number of CUDA execution threads not a multiple of warp size (" << prop.warp_size() << ")");
+    }
+
+    // set CUDA execution dimensions
+    dim_ = cuda::config(dim3((npart + value - 1) / value), dim3(value));
+
+    // allocate additional global device memory for system state
+    try {
+	g_state.r.reserve(npart);
+	g_state.R.reserve(npart);
+	g_state.v.reserve(npart);
+	g_force.reserve(npart);
+	g_en.reserve(npart);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate additional global device memory for system state");
+    }
+}
+
+/**
+ * initialize random number generator with seed
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::rng(unsigned int seed)
+{
+    // initialize random number generator
+    try {
+	rng_.resize(dim_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate global device memory for random number generator");
+    }
 
     // seed random number generator
-    rng_.set(opts.rngseed());
-
-    // reserve device memory for placeholder particles
-    part.psc_gpu.r.reserve(dim_.threads());
-    part.psc_gpu.v.reserve(dim_.threads());
-    part.rp_gpu.reserve(dim_.threads());
-    part.force_gpu.reserve(dim_.threads());
-    part.en_gpu.reserve(dim_.threads());
+    try {
+	rng_.set(seed);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to seed random number generator");
+    }
 }
 
 /**
- * get number of particles in periodic box
+ * initialize random number generator from state
  */
 template <unsigned dimension, typename T>
-uint64_t ljfluid<dimension, T>::particles() const
+void ljfluid<dimension, T>::rng(mdsim::rand48::state_type const& state)
 {
-    return npart;
-}
+    // initialize random number generator
+    try {
+	rng_.resize(dim_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate global device memory for random number generator");
+    }
 
-/**
- * get simulation timestep
- */
-template <unsigned dimension, typename T>
-float ljfluid<dimension, T>::timestep()
-{
-    return timestep_;
-}
-
-/**
- * set simulation timestep
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::timestep(float timestep_)
-{
-    this->timestep_ = timestep_;
-    cuda::copy(timestep_, gpu::ljfluid::timestep);
-}
-
-/**
- * get particle density
- */
-template <unsigned dimension, typename T>
-float ljfluid<dimension, T>::density() const
-{
-    return density_;
+    // restore random number generator state
+    try {
+	rng_.restore(state);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to restore random number generator state");
+    }
 }
 
 /**
  * set particle density
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::density(float density_)
+void ljfluid<dimension, T>::density(float value)
 {
-    // particle density
-    this->density_ = density_;
-    // periodic box length
-    box_ = pow(npart / density_, 1.0 / dimension);
-    cuda::copy(box_, gpu::ljfluid::box);
+    // set particle density
+    density_ = value;
 
-    // initialize coordinates
-    gpu::ljfluid::lattice.configure(dim_, stream_);
-    gpu::ljfluid::lattice(part.psc_gpu.r.data());
+    // compute periodic box length
+    box_ = powf(npart / density_, 1. / dimension);
+    // copy periodic box length to device symbol
+    try {
+	cuda::copy(box_, gpu::ljfluid::box);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy periodic box length to device symbol");
+    }
+}
 
-    cuda::copy(part.psc_gpu.r, part.psc.r, stream_);
-    cuda::copy(part.psc_gpu.r, part.rp_gpu, stream_);
-    stream_.synchronize();
+/**
+ * set periodic box length
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::box(float value)
+{
+    // set periodic box length
+    box_ = value;
+    // copy periodic box length to device symbol
+    try {
+	cuda::copy(box_, gpu::ljfluid::box);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy periodic box length to device symbol");
+    }
+
+    // compute particle density
+    density_ = npart / powf(box_, dimension);
+}
+
+/**
+ * arrange particles on a face-centered cubic (fcc) lattice
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::lattice()
+{
+    try {
+	// compute particle lattice positions on GPU
+	gpu::ljfluid::lattice.configure(dim_, stream_);
+	gpu::ljfluid::lattice(g_state.r.data());
+	// copy particle positions from GPU to host
+	cuda::copy(g_state.r, h_state.r, stream_);
+	// copy particle positions to periodically extended positions
+	cuda::copy(g_state.r, g_state.R, stream_);
+	cuda::copy(h_state.r, h_state.R, stream_);
+
+	// wait for CUDA operations to finish
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to compute particle lattice positions on GPU");
+    }
+}
+
+/**
+ * set system temperature according to Maxwell-Boltzmann distribution
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::temperature(float temp)
+{
+    try {
+	// set velocities using Maxwell-Boltzmann distribution at temperature
+	gpu::ljfluid::boltzmann.configure(dim_, stream_);
+	gpu::ljfluid::boltzmann(g_state.v.data(), temp, rng_.data());
+	// copy particle velocities from GPU to host
+	cuda::copy(g_state.v, h_state.v, stream_);
+
+	// wait for CUDA operations to finish
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to compute Maxwell-Boltzmann distributed velocities on GPU");
+    }
+
+    // compute center of mass velocity
+    T v_cm = mean(h_state.v.begin(), h_state.v.end());
+    // set center of mass velocity to zero
+    foreach (T& v, h_state.v) {
+	v -= v_cm;
+    }
+    // copy particle velocities from host to GPU
+    try {
+	cuda::copy(h_state.v, g_state.v, stream_);
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to set center of mass velocity to zero");
+    }
+}
+
+/**
+ * set simulation timestep
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::timestep(float value)
+{
+    // set simulation timestep
+    timestep_ = value;
+    // copy simulation timestep to device symbol
+    try {
+	cuda::copy(timestep_, gpu::ljfluid::timestep);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy simulation timestep to device symbol");
+    }
+}
+
+/**
+ * get number of particles
+ */
+template <unsigned dimension, typename T>
+unsigned int const& ljfluid<dimension, T>::particles() const
+{
+    return npart;
+}
+
+/**
+ * get particle density
+ */
+template <unsigned dimension, typename T>
+float const& ljfluid<dimension, T>::density() const
+{
+    return density_;
 }
 
 /**
  * get periodic box length
  */
 template <unsigned dimension, typename T>
-float ljfluid<dimension, T>::box() const
+float const& ljfluid<dimension, T>::box() const
 {
     return box_;
 }
 
 /**
- * set temperature
+ * get simulation timestep
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::temperature(float temp)
+float const& ljfluid<dimension, T>::timestep() const
 {
-    // initialize velocities
-    gpu::ljfluid::boltzmann.configure(dim_, stream_);
-    gpu::ljfluid::boltzmann(part.psc_gpu.v.data(), temp, rng_.data());
-    cuda::copy(part.psc_gpu.v, part.psc.v, stream_);
-
-    try {
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("CUDA ERROR: failed to initialize velocities");
-    }
-
-    // set center of mass velocity to zero
-    T v_cm = mean(part.psc.v.begin(), part.psc.v.end());
-    for (typename cuda::host::vector<T>::iterator v = part.psc.v.begin(); v != part.psc.v.end(); ++v) {
-	*v -= v_cm;
-    }
-    cuda::copy(part.psc.v, part.psc_gpu.v, stream_);
-
-    // initialize forces
-    fill(part.force.begin(), part.force.end(), 0.);
-    cuda::copy(part.force, part.force_gpu, stream_);
-
-    try {
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("CUDA ERROR: failed to initialize forces");
-    }
+    return timestep_;
 }
 
 /**
- * MD simulation step on GPU
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::step()
-{
-    event_[0].record(stream_);
-    gpu::ljfluid::inteq.configure(dim_, stream_);
-    gpu::ljfluid::inteq(part.psc_gpu.r.data(), part.rp_gpu.data(), part.psc_gpu.v.data(), part.force_gpu.data());
-    // reserve shared device memory for particle coordinates
-    gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
-    gpu::ljfluid::mdstep(part.rp_gpu.data(), part.psc_gpu.v.data(), part.force_gpu.data(), part.en_gpu.data());
-    event_[1].record(stream_);
-}
-
-/**
- * MD simulation step
+ * stream MD simulation step on GPU
  */
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::mdstep()
 {
-    if (steps_ == 0) {
-	// first MD simulation step on GPU
-	step();
+    // first leapfrog step of integration of differential equations of motion
+    try {
+	gpu::ljfluid::inteq.configure(dim_, stream_);
+	gpu::ljfluid::inteq(g_state.r.data(), g_state.R.data(), g_state.v.data(), g_force.data());
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to stream first leapfrog step on GPU");
     }
 
-    event_[2].record(stream_);
-    cuda::copy(part.psc_gpu.r, part.psc.r, stream_);
-    cuda::copy(part.psc_gpu.v, part.psc.v, stream_);
-    cuda::copy(part.en_gpu, part.en, stream_);
-    event_[3].record(stream_);
-    event_[3].synchronize();
-
-    steps_++;
-
-    // adjust average GPU time in milliseconds per simulation time
-    gputime_ += ((event_[1] - event_[0]) - gputime_) / steps_;
-    // adjust average device memory transfer time in milliseconds per simulation time
-    memtime_ += ((event_[3] - event_[2]) - memtime_) / steps_;
-
-    // next MD simulation step on GPU
-    step();
-
-    // compute average potential energy and virial theorem sum per particle
-    vector2d<typename T::value_type> en = mean(part.en.begin(), part.en.end());
-    // average potential energy per particle
-    en_pot_ = en.x;
-    // average virial theorem sum per particle
-    virial_ = en.y;
+    // Lennard-Jones force calculation
+    try {
+	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
+	gpu::ljfluid::mdstep(g_state.r.data(), g_state.v.data(), g_force.data(), g_en.data());
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to stream force calculation on GPU");
+    }
 }
 
 /**
- * write particle coordinates and velocities to output stream
+ * copy MD simulation step results from GPU to host
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::trajectories(std::ostream& os) const
+void ljfluid<dimension, T>::sample()
 {
-    for (uint64_t i = 0; i < npart; ++i) {
-	os << i << "\t" << part.psc.r[i] << "\t" << part.psc.v[i] << "\n";
+    // wait for MD simulation step on GPU to finish
+    try {
+	stream_.synchronize();
     }
-    os << "\n\n";
+    catch (cuda::error const& e) {
+	throw exception("MD simulation step on GPU failed");
+    }
+
+    // copy MD simulation step results from GPU to host
+    try {
+	// copy periodically reduce particles positions
+	cuda::copy(g_state.r, h_state.r, stream_);
+	// copy periodically extended particles positions
+	cuda::copy(g_state.R, h_state.R, stream_);
+	// copy particle velocities
+	cuda::copy(g_state.v, h_state.v, stream_);
+	// copy potential energies and virial equation sums
+	cuda::copy(g_en, h_en, stream_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy MD simulation step results from GPU to host");
+    }
 }
 
 /**
  * sample trajectory
  */
 template <unsigned dimension, typename T>
-template <typename V>
-void ljfluid<dimension, T>::sample(V& visitor) const
+template <typename visitor>
+void ljfluid<dimension, T>::sample(visitor& v) const
 {
-    visitor.sample(part.psc, en_pot_, virial_);
-}
+    // compute average potential energy and virial theorem sum per particle
+    vector2d<float> en = mean(h_en.begin(), h_en.end());
 
-/**
- * get total GPU time in seconds
- */
-template <unsigned dimension, typename T>
-float ljfluid<dimension, T>::gputime() const
-{
-    return (gputime_ * 1.e-3) * steps_;
-}
-
-/**
- * get total device memory transfer time in seconds
- */
-template <unsigned dimension, typename T>
-float ljfluid<dimension, T>::memtime() const
-{
-    return (memtime_ * 1.e-3) * steps_;
+    // sample trajectory, potential energy and virial equation sum
+    v.sample(h_state, en.x, en.y);
 }
 
 } // namespace mdsim
+
+#undef foreach
 
 #endif /* ! MDSIM_LJFLUID_HPP */

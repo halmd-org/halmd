@@ -1,4 +1,4 @@
-/* Molecular Dynamics simulation
+/* Molecular Dynamics simulation of a Lennard-Jones fluid
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -25,6 +25,7 @@
 #include "energy.hpp"
 #include "ljfluid.hpp"
 #include "options.hpp"
+#include "rand48.hpp"
 #include "trajectory.hpp"
 
 
@@ -32,58 +33,89 @@ namespace mdsim
 {
 
 /**
- * Molecular Dynamics simulation
+ * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
 template <unsigned dimension, typename T>
 class mdsim
 {
 public:
-    mdsim(options const& options);
-    void run();
+    mdsim(options const& opts) : opts_(opts) {};
+    void operator()();
 
 private:
-    // Lennard Jones fluid simulation
-    ljfluid<dimension, T> fluid_;
-    // autocorrelation functions
-    autocorrelation<dimension, T> tcf_;
-    // thermodynamic equilibrium properties
-    energy<dimension, cuda::host::vector<T> > tep_;
-    // trajectory writer
-    trajectory<dimension, cuda::host::vector<T> > traj_;
-
-    // program options
+    /** program options */
     options const& opts_;
 };
 
 
+/**
+ * run MD simulation
+ */
 template <unsigned dimension, typename T>
-mdsim<dimension, T>::mdsim(options const& opts) : fluid_(opts), tcf_(opts), tep_(opts), traj_(opts), opts_(opts)
+void mdsim<dimension, T>::operator()()
 {
-    fluid_.density(opts_.density());
-    fluid_.timestep(opts_.timestep());
-    fluid_.temperature(opts_.temp());
-}
+    //
+    // initialize Lennard Jones fluid simulation
+    //
 
+    ljfluid<dimension, T> fluid;
 
-template <unsigned dimension, typename T>
-void mdsim<dimension, T>::run()
-{
-    for (uint64_t step = 0; step < opts_.steps(); step++) {
-	// MD simulation step
-	fluid_.mdstep();
+    // set number of particles in system
+    fluid.particles(opts_.particles());
+    // set number of CUDA execution threads
+    fluid.threads(opts_.threads());
+    // initialize random number generator with seed
+    fluid.rng(opts_.rngseed());
+
+    // set particle density
+    fluid.density(opts_.density());
+    // arrange particles on a face-centered cubic (fcc) lattice
+    fluid.lattice();
+    // set system temperature according to Maxwell-Boltzmann distribution
+    fluid.temperature(opts_.temperature());
+    // set simulation timestep
+    fluid.timestep(opts_.timestep());
+
+    //
+    // initialize trajectory sample visitors
+    //
+
+    // autocorrelation functions
+    autocorrelation<dimension, T> tcf(opts_);
+    // thermodynamic equilibrium properties
+    energy<dimension, cuda::host::vector<T> > tep(opts_);
+    // trajectory writer
+    trajectory<dimension, cuda::host::vector<T> > traj(opts_);
+
+    //
+    // run MD simulation
+    //
+
+    // stream first MD simulation step on GPU
+    fluid.mdstep();
+
+    for (uint64_t step = 0; step < opts_.steps(); ++step) {
+	// copy MD simulation step results from GPU to host
+	fluid.sample();
+	// stream next MD simulation step on GPU
+	fluid.mdstep();
 
 	// sample autocorrelation functions
-	fluid_.sample(tcf_);
+	fluid.sample(tcf);
 	// sample thermodynamic equilibrium properties
-	fluid_.sample(tep_);
+	fluid.sample(tep);
 	// sample trajectory
-	fluid_.sample(traj_);
+	fluid.sample(traj);
     }
 
+    //
+    // write trajectory sample visitor results
+    //
+
     // write autocorrelation function results to HDF5 file
-    tcf_.write(opts_.correlations_output_file(), fluid_.timestep());
+    tcf.write(opts_.correlations_output_file(), fluid.timestep());
     // write thermodynamic equilibrium properties to HDF5 file
-    tep_.write(opts_.energy_output_file());
+    tep.write(opts_.energy_output_file());
 }
 
 } // namespace mdsim

@@ -31,17 +31,18 @@
 namespace mdsim {
 
 template <typename T>
-struct phase_space_point
+class phase_space_point
 {
+public:
     typedef T vector_type;
 
-    /** coordinates of all particles in system */
-    vector_type r;
+public:
+    /** periodically reduced coordinates of all particles in system */
+    T r;
+    /** periodically extended coordinates of all particles in system */
+    T R;
     /** velocities of all particles in system */
-    vector_type v;
-
-    phase_space_point(uint64_t N) : r(N), v(N) { }
-    phase_space_point() { }
+    T v;
 };
 
 
@@ -69,7 +70,7 @@ private:
  * initialize HDF5 trajectory output file
  */
 template <unsigned dimension, typename T>
-trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.npart()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
+trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.particles()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -92,7 +93,7 @@ trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.npart())
     root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples_);
     root.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &opts.timestep());
     // FIXME derived parameter box length is already calculated in ljfluid
-    float box = pow(opts.npart() / opts.density(), 1.0 / dimension);
+    float box = pow(opts.particles() / opts.density(), 1.0 / dimension);
     root.createAttribute("box", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &box);
 
     hsize_t dim[3] = { max_samples_, npart_, dimension };

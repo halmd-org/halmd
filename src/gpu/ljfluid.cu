@@ -73,16 +73,17 @@ __device__ void verlet_step(T& r, T& rm, T& v, T const& f)
  * first leapfrog step of integration of equations of motion
  */
 template <typename T>
-__device__ void leapfrog_half_step(T& r, T& rp, T& v, T const& f)
+__device__ void leapfrog_half_step(T& r, T& R, T& v, T const& f)
 {
     // half step velocity
     v += f * (timestep / 2);
     // full step coordinates
     T dr = v * timestep;
+    // periodically reduced coordinates
     r += dr;
-    rp += dr;
-    // enforce periodic boundary conditions
-    rp -= floorf(rp / box) * box;
+    r -= floorf(r / box) * box;
+    // periodically extended coordinates
+    R += dr;
 }
 
 
@@ -130,18 +131,17 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
 
 
 /**
- * integrate equations of motion
+ * first leapfrog step of integration of equations of motion
  */
 template <typename T>
-__global__ void inteq(T* r, T* rp, T* v, T* f)
+__global__ void inteq(T* r, T* R, T* v, T* f)
 {
-    // first leapfrog step as part of integration of equations of motion
-    leapfrog_half_step(r[GTID], rp[GTID], v[GTID], f[GTID]);
+    leapfrog_half_step(r[GTID], R[GTID], v[GTID], f[GTID]);
 }
 
 
 /**
- * Molecular Dynamics simulation step
+ * MD simulation step
  */
 template <typename T>
 __global__ void mdstep(T* g_r, T* g_v, T* g_f, float2* g_en)
