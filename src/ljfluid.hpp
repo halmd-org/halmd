@@ -105,14 +105,11 @@ private:
     /** cutoff distance for shifted Lennard-Jones potential */
     float r_cut;
 
-    /** system state in phase space */
-    phase_space_point<cuda::host::vector<T> > h_state;
-    phase_space_point<cuda::vector<floatn> > g_state;
+    /** system state */
+    mdstep_sample<cuda::host::vector<T>, cuda::host::vector<float> > h_state;
+    mdstep_sample<cuda::vector<floatn>, cuda::vector<float> > g_state;
     /** forces */
     cuda::vector<floatn> g_force;
-    /** potential energy and virial equation sum */
-    cuda::host::vector<vector2d<float> > h_en;
-    cuda::vector<float2> g_en;
 
     /** random number generator */
     mdsim::rand48 rng_;
@@ -174,7 +171,8 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	g_state.R.resize(npart);
 	g_state.v.resize(npart);
 	g_force.resize(npart);
-	g_en.resize(npart);
+	g_state.en.resize(npart);
+	g_state.virial.resize(npart);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory for system state");
@@ -186,7 +184,8 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	h_state.R.resize(npart);
 	h_state.v.resize(npart);
 	// particle forces reside only in GPU memory
-	h_en.resize(npart);
+	h_state.en.resize(npart);
+	h_state.virial.resize(npart);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate page-locked host memory for system state");
@@ -264,7 +263,8 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 	g_state.R.reserve(dim_.threads());
 	g_state.v.reserve(dim_.threads());
 	g_force.reserve(dim_.threads());
-	g_en.reserve(dim_.threads());
+	g_state.en.reserve(dim_.threads());
+	g_state.virial.reserve(dim_.threads());
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory for placeholder particles");
@@ -478,7 +478,7 @@ void ljfluid<dimension, T>::mdstep()
     // Lennard-Jones force calculation
     try {
 	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
-	gpu::ljfluid::mdstep(g_state.r.data(), g_state.v.data(), g_force.data(), g_en.data());
+	gpu::ljfluid::mdstep(g_state.r.data(), g_state.v.data(), g_force.data(), g_state.en.data(), g_state.virial.data());
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
@@ -507,8 +507,10 @@ void ljfluid<dimension, T>::sample()
 	cuda::copy(g_state.R, h_state.R, stream_);
 	// copy particle velocities
 	cuda::copy(g_state.v, h_state.v, stream_);
-	// copy potential energies and virial equation sums
-	cuda::copy(g_en, h_en, stream_);
+	// copy potential energies per particle and virial equation sums
+	cuda::copy(g_state.en, h_state.en, stream_);
+	// copy virial equation sums per particle
+	cuda::copy(g_state.virial, h_state.virial, stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy MD simulation step results from GPU to host");
@@ -522,11 +524,7 @@ template <unsigned dimension, typename T>
 template <typename visitor>
 void ljfluid<dimension, T>::sample(visitor& v) const
 {
-    // compute average potential energy and virial theorem sum per particle
-    vector2d<float> en = mean(h_en.begin(), h_en.end());
-
-    // sample trajectory, potential energy and virial equation sum
-    v.sample(h_state, en.x, en.y);
+    v.sample(h_state);
 }
 
 } // namespace mdsim

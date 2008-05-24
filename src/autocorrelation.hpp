@@ -25,7 +25,6 @@
 #include <boost/mpl/vector.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
-#include <cuda_wrapper.hpp>
 #include <string>
 #include <vector>
 #include <H5Cpp.h>
@@ -53,12 +52,12 @@ struct phase_space_samples
 };
 
 
-template <unsigned dimension, typename T>
+template <unsigned dimension, typename S>
 class autocorrelation
 {
 private:
-    typedef phase_space_point<cuda::host::vector<T> > phase_space_type;
-    typedef phase_space_samples<cuda::host::vector<T> > block_type;
+    typedef phase_space_point<typename S::vector_type> phase_space_type;
+    typedef phase_space_samples<typename S::vector_type> block_type;
     typedef typename std::vector<block_type>::iterator block_iterator;
     typedef typename std::vector<block_type>::const_iterator block_const_iterator;
 
@@ -74,12 +73,11 @@ private:
 
 public:
     autocorrelation(options const& opts);
-    uint64_t min_samples();
-    void sample(phase_space_type const& p, float const&, float const&);
+    void sample(S const& s);
     void write(std::string const& path, float timestep);
 
 private:
-    void sample(phase_space_type const& p, unsigned int offset);
+    void sample(S const& s, unsigned int offset);
     void autocorrelate_block(unsigned int n);
     void finalize();
     void compute_block_param(options const& opts);
@@ -104,8 +102,8 @@ private:
 };
 
 
-template <unsigned dimension, typename T>
-autocorrelation<dimension, T>::autocorrelation(options const& opts)
+template <unsigned dimension, typename S>
+autocorrelation<dimension, S>::autocorrelation(options const& opts)
 {
     // compute block parameters
     compute_block_param(opts);
@@ -138,8 +136,8 @@ autocorrelation<dimension, T>::autocorrelation(options const& opts)
 /**
  * compute block parameters
  */
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::compute_block_param(options const& opts)
+template <unsigned dimension, typename S>
+void autocorrelation<dimension, S>::compute_block_param(options const& opts)
 {
     // set block size
     block_size = opts.block_size();
@@ -176,34 +174,24 @@ void autocorrelation<dimension, T>::compute_block_param(options const& opts)
 }
 
 
-/**
- * minimum number of samples required to autocorrelate all blocks at least once
- */
-template <unsigned dimension, typename T>
-uint64_t autocorrelation<dimension, T>::min_samples()
-{
-    return pow(block_size, block_count / 2) * block_shift;
-}
-
-
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(phase_space_type const& p, float const&, float const&)
+template <unsigned dimension, typename S>
+void autocorrelation<dimension, S>::sample(S const& s)
 {
     // sample odd level blocks
-    sample(p, 0);
+    sample(s, 0);
 
     if (block[0].count % block_shift == 0) {
 	// sample even level blocks
-	sample(p, 1);
+	sample(s, 1);
     }
 }
 
 
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(phase_space_type const& p, unsigned int offset)
+template <unsigned dimension, typename S>
+void autocorrelation<dimension, S>::sample(S const& s, unsigned int offset)
 {
     // add phase space sample to lowest block
-    block[offset].samples.push_back(p);
+    block[offset].samples.push_back(phase_space_type(s.R, s.v));
     block[offset].count++;
 
     // autocorrelate block if circular buffer has been replaced completely
@@ -236,8 +224,8 @@ void autocorrelation<dimension, T>::sample(phase_space_type const& p, unsigned i
 /**
  * compute correlations for remaining samples in all blocks
  */
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::finalize()
+template <unsigned dimension, typename S>
+void autocorrelation<dimension, S>::finalize()
 {
     for (unsigned int i = 2; i < block_count; ++i) {
 	while (block[i].nsample < max_samples && block[i].samples.size() > 2) {
@@ -252,8 +240,8 @@ void autocorrelation<dimension, T>::finalize()
 /**
  * apply correlation functions to block samples
  */
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::autocorrelate_block(unsigned int n)
+template <unsigned dimension, typename S>
+void autocorrelation<dimension, S>::autocorrelate_block(unsigned int n)
 {
     for (unsigned int i = 0; i < tcf.size(); ++i) {
 	boost::apply_visitor(gen_tcf_apply_visitor(block[n].samples.begin(), block[n].samples.end(), result[i][n].begin()), tcf[i]);
@@ -261,8 +249,8 @@ void autocorrelation<dimension, T>::autocorrelate_block(unsigned int n)
 }
 
 
-template <unsigned dimension, typename T>
-float autocorrelation<dimension, T>::timegrid(unsigned int block, unsigned int sample, float timestep)
+template <unsigned dimension, typename S>
+float autocorrelation<dimension, S>::timegrid(unsigned int block, unsigned int sample, float timestep)
 {
     if (block % 2) {
 	// shifted block
@@ -276,8 +264,8 @@ float autocorrelation<dimension, T>::timegrid(unsigned int block, unsigned int s
 /**
  * write correlation function results to HDF5 file
  */
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::write(std::string const& path, float timestep)
+template <unsigned dimension, typename S>
+void autocorrelation<dimension, S>::write(std::string const& path, float timestep)
 {
     // compute correlations for remaining samples in all blocks
     finalize();

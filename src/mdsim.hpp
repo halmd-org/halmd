@@ -39,6 +39,9 @@ template <unsigned dimension, typename T>
 class mdsim
 {
 public:
+    typedef mdstep_sample<cuda::host::vector<T>, cuda::host::vector<float> > mdstep_sample_type;
+
+public:
     mdsim(options const& opts) : opts_(opts) {};
     void operator()();
 
@@ -81,11 +84,11 @@ void mdsim<dimension, T>::operator()()
     //
 
     // autocorrelation functions
-    autocorrelation<dimension, T> tcf(opts_);
+    autocorrelation<dimension, mdstep_sample_type> tcf(opts_);
     // thermodynamic equilibrium properties
-    energy<dimension, cuda::host::vector<T> > tep(opts_);
+    energy<dimension, mdstep_sample_type> tep(opts_);
     // trajectory writer
-    trajectory<dimension, cuda::host::vector<T> > traj(opts_);
+    trajectory<dimension, mdstep_sample_type> traj(opts_);
 
     //
     // run MD simulation

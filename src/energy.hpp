@@ -20,6 +20,7 @@
 #define MDSIM_ENERGY_HPP
 
 #include <algorithm>
+#include <boost/foreach.hpp>
 #include <string>
 #include <vector>
 #include "accumulator.hpp"
@@ -28,18 +29,20 @@
 #include "statistics.hpp"
 
 
+#define foreach BOOST_FOREACH
+
 namespace mdsim
 {
 
 /**
  * Thermodynamic equilibrium properties
  */
-template <unsigned dimension, typename T>
+template <unsigned dimension, typename S>
 class energy
 {
 public:
     energy(options const& opts);
-    void sample(phase_space_point<T> const& p, float const& en_pot, float const& virial);
+    void sample(S const& s);
     void write(std::string const& filename);
 
 private:
@@ -58,12 +61,12 @@ private:
     std::vector<float> en_tot_;
     std::vector<float> temp_;
     std::vector<float> press_;
-    std::vector<typename T::value_type> v_cm_;
+    std::vector<typename S::vector_type::value_type> v_cm_;
 };
 
 
-template <unsigned dimension, typename T>
-energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep()), density_(opts.density()), samples_(0)
+template <unsigned dimension, typename S>
+energy<dimension, S>::energy(options const& opts) : timestep_(opts.timestep()), density_(opts.density()), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -89,19 +92,19 @@ energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep()), 
 /**
  * sample thermodynamic equilibrium properties
  */
-template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(phase_space_point<T> const& p, float const& en_pot, float const& virial)
+template <unsigned dimension, typename S>
+void energy<dimension, S>::sample(S const& s)
 {
     if (samples_ >= max_samples_) return;
 
     // mean squared velocity
     accumulator<float> vv;
-    for (typename T::const_iterator it = p.v.begin(); it != p.v.end(); ++it) {
-	vv += *it * *it;
+    foreach (typename S::vector_type::value_type const& v, s.v) {
+	vv += v * v;
     }
 
     // mean potential energy per particle
-    en_pot_.push_back(en_pot);
+    en_pot_.push_back(mean(s.en.begin(), s.en.end()));
     // mean kinetic energy per particle
     en_kin_.push_back(vv.mean() / 2);
     // mean total energy per particle
@@ -109,9 +112,9 @@ void energy<dimension, T>::sample(phase_space_point<T> const& p, float const& en
     // temperature
     temp_.push_back(vv.mean() / dimension);
     // pressure
-    press_.push_back(density_ * (vv.mean() + virial));
+    press_.push_back(density_ * (vv.mean() + mean(s.virial.begin(), s.virial.end())));
     // velocity center of mass
-    v_cm_.push_back(mean(p.v.begin(), p.v.end()));
+    v_cm_.push_back(mean(s.v.begin(), s.v.end()));
 
     samples_++;
 }
@@ -120,8 +123,8 @@ void energy<dimension, T>::sample(phase_space_point<T> const& p, float const& en
 /**
  * write thermodynamic equilibrium properties buffer to file
  */
-template <unsigned dimension, typename T>
-void energy<dimension, T>::write(std::string const& filename)
+template <unsigned dimension, typename S>
+void energy<dimension, S>::write(std::string const& filename)
 {
     // HDF5 energy file
     H5::H5File file_;
@@ -191,5 +194,7 @@ void energy<dimension, T>::write(std::string const& filename)
 }
 
 } // namespace mdsim
+
+#undef foreach
 
 #endif /* ! MDSIM_ENERGY_HPP */

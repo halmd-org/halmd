@@ -23,12 +23,34 @@
 #include <algorithm>
 #include <assert.h>
 #include <boost/array.hpp>
+#include <cuda_wrapper.hpp>
 #include <string>
 #include "exception.hpp"
 #include "options.hpp"
 
 
 namespace mdsim {
+
+template <typename T, typename U>
+class mdstep_sample
+{
+public:
+    typedef T vector_type;
+    typedef U scalar_type;
+
+public:
+    /** periodically reduced particle positions */
+    T r;
+    /** periodically extended particle positions */
+    T R;
+    /** particle velocities */
+    T v;
+    /** potential energies per particle */
+    U en;
+    /** virial equation sums per particle */
+    U virial;
+};
+
 
 template <typename T>
 class phase_space_point
@@ -37,23 +59,25 @@ public:
     typedef T vector_type;
 
 public:
-    /** periodically reduced coordinates of all particles in system */
+    phase_space_point() {}
+    phase_space_point(T const& r, T const& v) : r(r), v(v) {}
+
+public:
+    /** particle positions */
     T r;
-    /** periodically extended coordinates of all particles in system */
-    T R;
-    /** velocities of all particles in system */
+    /** particle velocities */
     T v;
 };
 
 
-template <unsigned dimension, typename T>
+template <unsigned dimension, typename S>
 class trajectory
 {
 public:
     trajectory(options const& opts);
-    void sample(phase_space_point<T> const& p, float const&, float const&);
+    void sample(S const& s);
 
-    static void read(options const& opts, phase_space_point<T> &p);
+    static void read(options const& opts, phase_space_point<typename S::vector_type> &p);
 
 private:
     H5::H5File file_;
@@ -69,8 +93,8 @@ private:
 /**
  * initialize HDF5 trajectory output file
  */
-template <unsigned dimension, typename T>
-trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.particles()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
+template <unsigned dimension, typename S>
+trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particles()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -108,14 +132,14 @@ trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.particle
 /**
  * write phase space sample to HDF5 dataset
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T>::sample(phase_space_point<T> const& p, float const&, float const&)
+template <unsigned dimension, typename S>
+void trajectory<dimension, S>::sample(S const& s)
 {
     if (samples_ >= max_samples_)
 	return;
 
-    assert(p.r.size() == npart_);
-    assert(p.v.size() == npart_);
+    assert(s.r.size() == npart_);
+    assert(s.v.size() == npart_);
 
     hsize_t count[3]  = { 1, npart_, 1 };
     hsize_t start[3]  = { samples_, 0, 0 };
@@ -124,10 +148,10 @@ void trajectory<dimension, T>::sample(phase_space_point<T> const& p, float const
 
     ds_file_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
-    // coordinates
-    dset_[0].write(p.r.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
-    // velocities
-    dset_[1].write(p.v.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
+    // write periodically reduced particle coordinates
+    dset_[0].write(s.r.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
+    // write particle velocities
+    dset_[1].write(s.v.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
 
     samples_++;
 }
@@ -135,8 +159,8 @@ void trajectory<dimension, T>::sample(phase_space_point<T> const& p, float const
 /**
  * read phase space sample from HDF5 trajectory input file
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T>::read(options const& opts, phase_space_point<T> &p)
+template <unsigned dimension, typename S>
+void trajectory<dimension, S>::read(options const& opts, phase_space_point<typename S::vector_type> &p)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library

@@ -144,7 +144,7 @@ __global__ void inteq(T* r, T* R, T* v, T* f)
  * MD simulation step
  */
 template <typename T>
-__global__ void mdstep(T* g_r, T* g_v, T* g_f, float2* g_en)
+__global__ void mdstep(T* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
 {
     extern __shared__ T s_r[];
 
@@ -192,7 +192,8 @@ __global__ void mdstep(T* g_r, T* g_v, T* g_f, float2* g_en)
     // store particle associated with this thread
     g_v[GTID] = v;
     g_f[GTID] = f;
-    g_en[GTID] = make_float2(en, virial);
+    g_en[GTID] = en;
+    g_virial[GTID] = virial;
 }
 
 
@@ -251,12 +252,12 @@ namespace mdsim { namespace gpu { namespace ljfluid
 #ifdef DIM_3D
 function<void (float3*, float3*, float3*, float3*)> inteq(mdsim::inteq);
 function<void (float3*, float, ushort3*)> boltzmann(mdsim::boltzmann);
-function<void (float3*, float3*, float3*, float2*)> mdstep(mdsim::mdstep);
+function<void (float3*, float3*, float3*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float3*)> lattice(mdsim::lattice);
 #else
 function<void (float2*, float2*, float2*, float2*)> inteq(mdsim::inteq);
 function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
-function<void (float2*, float2*, float2*, float2*)> mdstep(mdsim::mdstep);
+function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep);
 function<void (float2*)> lattice(mdsim::lattice);
 #endif
 
