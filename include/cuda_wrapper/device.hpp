@@ -71,6 +71,11 @@ public:
 
     public:
 	/**
+	 * empty initializer
+	 */
+	properties() {}
+
+	/**
 	 * retrieve properties of given device
 	 */
 	properties(int dev)
