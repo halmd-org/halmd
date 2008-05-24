@@ -257,16 +257,16 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     // set CUDA execution dimensions
     dim_ = cuda::config(dim3((npart + value - 1) / value), dim3(value));
 
-    // allocate additional global device memory for system state
+    // allocate global device memory for placeholder particles
     try {
-	g_state.r.reserve(npart);
-	g_state.R.reserve(npart);
-	g_state.v.reserve(npart);
-	g_force.reserve(npart);
-	g_en.reserve(npart);
+	g_state.r.reserve(dim_.threads());
+	g_state.R.reserve(dim_.threads());
+	g_state.v.reserve(dim_.threads());
+	g_force.reserve(dim_.threads());
+	g_en.reserve(dim_.threads());
     }
     catch (cuda::error const& e) {
-	throw exception("failed to allocate additional global device memory for system state");
+	throw exception("failed to allocate global device memory for placeholder particles");
     }
 }
 
