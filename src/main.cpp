@@ -48,8 +48,8 @@ int main(int argc, char **argv)
 #else
 	mdsim::mdsim<2, vector2d<double> > sim(opts);
 #endif
-	// run molecular dynamics simulation
-	sim.run();
+	// run MD simulation
+	sim();
     }
     catch (std::exception const& e) {
 	std::cerr << PROGRAM_NAME ": ERROR: " << e.what() << std::endl;

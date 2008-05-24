@@ -1,4 +1,4 @@
-/* Simulate a Lennard-Jones fluid with cell list algorithm
+/* Lennard-Jones fluid simulation with cell lists and Verlet neighbour lists
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -20,14 +20,20 @@
 #define MDSIM_LJFLUID_HPP
 
 #include <algorithm>
+#include <boost/array.hpp>
+#include <boost/foreach.hpp>
+#include <boost/multi_array.hpp>
+#include <cmath>
 #include <iostream>
 #include <list>
-#include <math.h>
 #include <vector>
-#include "cell_array.hpp"
+#include "exception.hpp"
 #include "gsl_rng.hpp"
+#include "log.hpp"
 #include "options.hpp"
 
+
+#define foreach BOOST_FOREACH
 
 namespace mdsim
 {
@@ -38,198 +44,193 @@ namespace mdsim
 template <typename T>
 struct particle
 {
-    /** n-dimensional particle coordinates */
-    T pos;
-    /** n-dimensional particle velocity */
-    T vel;
-    /** n-dimensional force acting upon particle */
-    T force;
-    /** particle number */
-    unsigned int tag;
+    /** particle position */
+    T r;
+    /** particle velocity */
+    T v;
+    /** particle number tag */
+    unsigned int n;
 
-    std::vector<particle<T>*> neighbour;
+    /** particle force */
+    T f;
+    /** particle neighbours list */
+    std::vector<particle<T>* > neighbour;
 
+    particle(T const& r, unsigned int n) : r(r), n(n) {}
     particle() {}
-    particle(T const& pos, unsigned int const& tag) : pos(pos), tag(tag) {}
 };
 
-
 /**
- * Simulate a Lennard-Jones fluid with naive N-squared algorithm
+ * Lennard-Jones fluid simulation with cell lists and Verlet neighbour lists
  */
 template <unsigned dimension, typename T>
 class ljfluid
 {
-protected:
-    typedef typename std::list<particle<T> > list_type;
-    typedef typename std::list<particle<T> >::iterator list_iterator;
-    typedef typename std::list<particle<T> >::const_iterator list_const_iterator;
-
-    typedef typename cell_array<list_type, T>::iterator cell_iterator;
-    typedef typename cell_array<list_type, T>::const_iterator cell_const_iterator;
+public:
+    typedef typename std::list<particle<T> > cell_list;
+    typedef typename cell_list::iterator cell_list_iterator;
+    typedef typename cell_list::const_iterator cell_list_const_iterator;
+    typedef typename boost::array<int, dimension> cell_index;
 
 public:
-    ljfluid(options const& opts);
-
-    uint64_t particles() const;
-    double timestep();
-    void timestep(double val);
-    double density() const;
-    void density(double density_);
+    /** initialize fixed simulation parameters */
+    ljfluid();
+    /** set number of particles */
+    void particles(unsigned int value);
+    /** set particle density */
+    void density(double value);
+    /** set periodic box length */
     void box(double value);
-    double box() const;
-    void temperature(double temp);
+    /** initialize cell lists */
+    void init_cell();
+    /** set simulation timestep */
+    void timestep(double value);
 
-    void mdstep();
-    void trajectories(std::ostream& os) const;
-    template <typename V>
-    void sample(V& visitor) const;
-
-private:
-    void leapfrog_half();
-    void leapfrog_full();
-    void update_cells();
-
-    void compute_neighbours();
-    void compute_cell_neighbours(particle<T>& p, list_type& cell);
-    void compute_neighbour(particle<T>& p1, particle<T>& p2);
-
-    void compute_forces();
-    void compute_force(particle<T>& p1, particle<T>& p2, double& en_pot, double& virial);
-
-    void init_cells();
+    /** initialize random number generator with seed */
+    void rng(unsigned int seed);
+    /** initialize random number generator from state */
+    void rng(rng::gsl::gfsr4::state_type const& state);
+    /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
-    void boltzmann(double temp);
-    void init_forces();
+    /** set system temperature according to Maxwell-Boltzmann distribution */
+    void temperature(double value);
+
+    /** returns number of particles */
+    unsigned int const& particles() const;
+    /** returns number of cells per dimension */
+    unsigned int const& cells() const;
+    /** returns particle density */
+    double const& density() const;
+    /** returns periodic box length */
+    double const& box() const;
+    /** returns cell length */
+    double const& cell_length();
+    /** returns simulation timestep */
+    double const& timestep() const;
+
+    /** MD simulation step */
+    void mdstep();
+    /** sample trajectory */
+    template <typename V> void sample(V& visitor) const;
 
 private:
-    /** number of particles in periodic box */
-    uint64_t npart;
+    /** update cell lists */
+    void update_cells();
+    /** returns cell list which a particle belongs to */
+    cell_list& compute_cell(T const& r);
+    /** update neighbour lists */
+    void update_neighbours();
+    /** update neighbour list of particle */
+    void compute_cell_neighbours(particle<T>& p, cell_list& c);
+    /** compute Lennard-Jones forces */
+    void compute_forces();
+    /** first leapfrog step of integration of equations of motion */
+    void leapfrog_half();
+    /** second leapfrog step of integration of equations of motion */
+    void leapfrog_full();
+
+private:
+    /** number of particles */
+    unsigned int npart;
+    /** particle density */
+    double density_;
+    /** periodic box length */
+    double box_;
+    /** number of cells per dimension */
+    unsigned int ncell;
+    /** cell length */
+    double cell_length_;
+    /** simulation timestep */
+    double timestep_;
+    /** cutoff distance for shifted Lennard-Jones potential */
+    double r_cut;
+    /** neighbour list skin */
+    double r_skin;
+    /** cutoff distance with neighbour list skin */
+    double r_cut_skin;
+
     /** cell lists */
-    cell_array<list_type, T> cells;
-    /** number of cells along 1 dimension */
-    size_t ncell;
-    /** cell edge length */
-    double cell_len;
-
+    boost::multi_array<cell_list, dimension> cell;
     /** particles sorted by particle number */
-    phase_space_point<std::vector<T> > part_;
-    /** random number generator */
-    rng::gsl::gfsr4 rng_;
-
+    phase_space_point<std::vector<T> > part;
     /** potential energy per particle */
     double en_pot_;
     /** virial theorem force sum */
     double virial_;
 
-    /** particle density */
-    double density_;
-    /** periodic box length */
-    double box_;
-    /** MD simulation timestep */
-    double timestep_;
-    /** cutoff distance for shifted Lennard-Jones potential */
-    double r_cut;
-
+    /** random number generator */
+    rng::gsl::gfsr4 rng_;
     /** squared cutoff distance */
     double rr_cut;
     /** potential energy at cutoff distance */
     double en_cut;
-    
-    /** neighbour list radius */
-    double r_skin;
-    double r_cut_skin;
+    /** squared cutoff distance with neighbour list skin */
     double rr_cut_skin;
-    double vel_max_sum;
+    /** sum over maximum velocity magnitudes since last neighbour lists update */
+    double v_max_sum;
 };
 
-
 /**
- * initialize Lennard-Jones fluid with given particle number
+ * initialize fixed simulation parameters
  */
 template <unsigned dimension, typename T>
-ljfluid<dimension, T>::ljfluid(options const& opts) : npart(opts.particles().value()), part_(opts.particles().value())
+ljfluid<dimension, T>::ljfluid()
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
-    // Frenkel
     r_cut = 2.5;
-    // Rapaport
-    //r_cut = pow(2., 1. / 6.);
+    LOG("potential cutoff distance: " << r_cut);
 
     // squared cutoff distance
     rr_cut = r_cut * r_cut;
-
     // potential energy at cutoff distance
     double rri_cut = 1. / rr_cut;
     double r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut = 4. * r6i_cut * (r6i_cut - 1.);
 
-    r_skin = 0.3; // FIXME should depend on system size
-    r_cut_skin = r_cut + r_skin;
+    // neighbour list skin
+    r_skin = 0.3;
+    LOG("neighbour list skin: " << r_skin);
+
+    // cutoff distance with neighbour list skin
+    r_cut_skin = r_skin + r_cut;
+    // squared cutoff distance with neighbour list skin
     rr_cut_skin = r_cut_skin * r_cut_skin;
-
-    // seed random number generator
-    rng_.set(opts.rng_seed().value());
 }
 
 /**
- * get number of particles in periodic box
+ * set number of particles in system
  */
 template <unsigned dimension, typename T>
-uint64_t ljfluid<dimension, T>::particles() const
+void ljfluid<dimension, T>::particles(unsigned int value)
 {
-    return npart;
-}
+    if (value < 1) {
+	throw exception("number of particles must be non-zero");
+    }
+    npart = value;
+    LOG("number of particles: " << npart);
 
-/**
- * get simulation timestep
- */
-template <unsigned dimension, typename T>
-double ljfluid<dimension, T>::timestep()
-{
-    return timestep_;
-}
-
-/**
- * set simulation timestep
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::timestep(double val)
-{
-    timestep_ = val;
-}
-
-/**
- * get particle density
- */
-template <unsigned dimension, typename T>
-double ljfluid<dimension, T>::density() const
-{
-    return density_;
+    try {
+	part.r.resize(npart);
+	part.R.resize(npart);
+	part.v.resize(npart);
+    }
+    catch (std::bad_alloc const& e) {
+	throw exception("failed to allocate phase space state");
+    }
 }
 
 /**
  * set particle density
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::density(double density_)
+void ljfluid<dimension, T>::density(double value)
 {
-    // particle density
-    this->density_ = density_;
-    // periodic box length
-    this->box_ = std::pow(npart / density_, 1. / T::dim());
+    density_ = value;
+    LOG("particle density: " << density_);
 
-    init_cells();
-    lattice();
-}
-
-/**
- * get periodic box length
- */
-template <unsigned dimension, typename T>
-double ljfluid<dimension, T>::box() const
-{
-    return box_;
+    // derive periodic box length
+    box_ = std::pow(npart / density_, 1. / dimension);
+    LOG("periodic box length: " << box_);
 }
 
 /**
@@ -238,305 +239,76 @@ double ljfluid<dimension, T>::box() const
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::box(double value)
 {
-    // periodic box length
     box_ = value;
-    // particle density
+    LOG("periodic box length: " << box_);
+
+    // derive particle density
     density_ = npart / std::pow(box_, 1. * dimension);
-
-    init_cells();
-    lattice();
-}
-
-/**
- * set temperature
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::temperature(double temp)
-{
-    boltzmann(temp);
-    init_forces();
-}
-
-/**
- * MD simulation step
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::mdstep()
-{
-    // calculate coordinates
-    leapfrog_half();
-    // update cell lists
-    update_cells();
-
-    // update Verlet neighbour lists if necessary
-    if ((2. * timestep_ * vel_max_sum) > r_skin) {
-	compute_neighbours();
-	vel_max_sum = 0.;
-    }
-
-    // calculate forces
-    compute_forces();
-    // calculate velocities
-    leapfrog_full();
-
-    // sort particles by particle number for trajectory sampling
-    for (cell_const_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_const_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    part_.r[it->tag] = it->pos;
-	    part_.v[it->tag] = it->vel;
-	}
-    }
-}
-
-/**
- * write particle coordinates and velocities to output stream
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::trajectories(std::ostream& os) const
-{
-    for (unsigned int i = 0; i < npart; ++i) {
-	os << i << "\t" << part_.r[i] << "\t" << part_.v[i] << "\n";
-    }
-    os << std::endl << std::endl;
-}
-
-/**
- * sample trajectory
- */
-template <unsigned dimension, typename T>
-template <typename V>
-void ljfluid<dimension, T>::sample(V& visitor) const
-{
-    visitor.sample(part_, en_pot_, virial_);
-}
-
-/**
- * first leapfrog half-step in integration of equations of motion
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::leapfrog_half()
-{
-    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    // half step velocity
-	    it->vel += it->force * (timestep_ / 2.);
-	    // full step coordinates
-	    it->pos += it->vel * timestep_;
-
-	    // if particles are moving more than cutoff length in timestep,
-	    // something is really fishy...
-	    assert(((it->vel * it->vel) * timestep_ * timestep_) < rr_cut);
-	}
-    }
-}
-
-/**
- * second leapfrog step in integration of equations of motion
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::leapfrog_full()
-{
-    // maximum squared velocity
-    double vel2_max = 0.;
-
-    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    // full step velocity
-	    it->vel = it->vel + (timestep_ / 2) * it->force;
-	    // maximum squared velocity
-	    vel2_max = std::max(it->vel * it->vel, vel2_max);
-	}
-    }
-
-    vel_max_sum += sqrt(vel2_max);
-}
-
-/**
- * update cell lists
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::update_cells()
-{
-    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	// FIXME particles may be visited twice if moved ahead in sequence
-	for (list_iterator it = cell->begin(); it != cell->end(); ) {
-	    list_iterator it_old = it;
-	    ++it;
-
-	    // enforce periodic boundary conditions
-	    T pos = it_old->pos - floor(it_old->pos / box_) * box_;
-	    // update cell lists
-	    list_type& cell_ = cells(pos / cell_len);
-	    if (&cell_ != &(*cell)) {
-		cell_.splice(cell_.end(), *cell, it_old);
-	    }
-	}
-    }
-}
-
-/**
- * compute pairwise Lennard-Jones forces
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::compute_forces()
-{
-    // potential energy
-    en_pot_ = 0.;
-    // virial equation sum
-    virial_ = 0.;
-
-    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    it->force = 0.;
-	}
-    }
-
-    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    for (typename std::vector<particle<T>*>::iterator it2 = it->neighbour.begin(); it2 != it->neighbour.end(); it2++) {
-		compute_force(*it, **it2, en_pot_, virial_);
-	    }
-	}
-    }
-
-    en_pot_ /= npart;
-    virial_ /= npart;
-}
-
-/**
- * FIXME
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::compute_neighbours()
-{
-    for (size_t i = 0; i < cells.size(); ++i) {
-	for (size_t j = 0; j < cells[i].size(); ++j) {
-#ifdef DIM_3D
-	    for (size_t k = 0; k < cells[i][j].size(); ++k) {
-		// FIXME This is royal prefix/postfix fun...
-		for (list_iterator it = cells[i][j][k].begin(); it != cells[i][j][k].end(); ++it) {
-		    // empty neighbour list
-		    it->neighbour.clear();
-
-		    // FIXME This is royal prefix/postfix fun...
-		    for (list_iterator it2 = it; ++it2 != cells[i][j][k].end(); )
-			compute_neighbour(*it, *it2);
-
-		    // only half of neighbour cells need to be considered due to pair potential
-		    compute_cell_neighbours(*it, cells[i][(j + ncell - 1) % ncell][k]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][k]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][j][k]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][k]);
-
-		    compute_cell_neighbours(*it, cells[i][(j + ncell - 1) % ncell][(k + ncell - 1) % ncell]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][(k + ncell - 1) % ncell]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][j][(k + ncell - 1) % ncell]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][(k + ncell - 1) % ncell]);
-
-		    compute_cell_neighbours(*it, cells[i][(j + ncell - 1) % ncell][(k + 1) % ncell]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell][(k + 1) % ncell]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][j][(k + 1) % ncell]);
-		    compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell][(k + 1) % ncell]);
-
-		    compute_cell_neighbours(*it, cells[i][j][(k + ncell - 1) % ncell]);
-		}
-	    }
-#else
-	    // FIXME This is royal prefix/postfix fun...
-	    for (list_iterator it = cells[i][j].begin(); it != cells[i][j].end(); ++it) {
-		// empty neighbour list
-		it->neighbour.clear();
-
-		// FIXME This is royal prefix/postfix fun...
-		for (list_iterator it2 = it; ++it2 != cells[i][j].end(); )
-		    compute_neighbour(*it, *it2);
-
-		// only half of neighbour cells need to be considered due to pair potential
-		compute_cell_neighbours(*it, cells[i][(j + ncell - 1) % ncell]);
-		compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + ncell - 1) % ncell]);
-		compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][j]);
-		compute_cell_neighbours(*it, cells[(i + ncell - 1) % ncell][(j + 1) % ncell]);
-	    }
-#endif
-	}
-    }
-}
-
-/**
- * FIXME
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::compute_cell_neighbours(particle<T>& p, list_type& cell)
-{
-    for (list_iterator it = cell.begin(); it != cell.end(); ++it) {
-	compute_neighbour(p, *it);
-    }
-}
-
-/**
- * FIXME
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::compute_neighbour(particle<T>& p1, particle<T>& p2)
-{
-    T r = p1.pos - p2.pos;
-    // enforce periodic boundary conditions
-    r -= round(r / box_) * box_;
-    // squared particle distance
-    double rr = r * r;
-
-    // enforce cutoff distance
-    if (rr >= rr_cut_skin) return;
-
-    p1.neighbour.push_back(&p2);
-}
-
-/**
- * compute pairwise Lennard-Jones force
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::compute_force(particle<T>& p1, particle<T>& p2, double& en_pot, double& virial)
-{
-    T r = p1.pos - p2.pos;
-    // enforce periodic boundary conditions
-    r -= round(r / box_) * box_;
-    // squared particle distance
-    double rr = r * r;
-
-    // enforce cutoff distance
-    if (rr >= rr_cut) return;
-
-    // compute Lennard-Jones force in reduced units
-    double rri = 1. / rr;
-    double r6i = rri * rri * rri;
-    double fval = 48. * rri * r6i * (r6i - 0.5);
-
-    p1.force += r * fval;
-    p2.force -= r * fval;
-
-    en_pot += 4. * r6i * (r6i - 1.) - en_cut;
-    virial += rr * fval;
+    LOG("particle density: " << density_);
 }
 
 /**
  * initialize cell lists
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::init_cells()
+void ljfluid<dimension, T>::init_cell()
 {
     // number of cells per dimension
-    ncell = size_t(floor(box_ / r_cut_skin));
-    if (ncell < 3) {
-	throw std::string("requires at least 3 cells per dimension");
-    }
-    // cell edge length (must be greater or equal to cutoff length)
-    cell_len = box_ / ncell;
+    ncell = std::floor(box_ / r_cut_skin);
+    LOG("number of cells per dimension: " << ncell);
 
-    cells.resize(ncell);
+    if (ncell < 3) {
+	throw exception("requires at least 3 cells per dimension");
+    }
+
+    // derive cell length from integer number of cells per dimension
+    cell_length_ = box_ / ncell;
+    LOG("cell length: " << cell_length_);
+
+    try {
+#ifdef DIM_3D
+	cell.resize(boost::extents[ncell][ncell][ncell]);
+#else
+	cell.resize(boost::extents[ncell][ncell]);
+#endif
+    }
+    catch (std::bad_alloc const& e) {
+	throw exception("failed to allocate initial cell lists");
+    }
 }
 
 /**
- * place particles on a face centered cubic (FCC) lattice
+ * set simulation timestep
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::timestep(double value)
+{
+    timestep_ = value;
+    LOG("simulation timestep: " << timestep_);
+}
+
+/**
+ * initialize random number generator with seed
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::rng(unsigned int seed)
+{
+    rng_.set(seed);
+    LOG("initializing random number generator with seed: " << seed);
+}
+
+/**
+ * initialize random number generator from state
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::rng(rng::gsl::gfsr4::state_type const& state)
+{
+    rng_.restore(state);
+    LOG("restoring random number generator from state");
+}
+
+/**
+ * place particles on a face-centered cubic (fcc) lattice
  */
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::lattice()
@@ -563,57 +335,376 @@ void ljfluid<dimension, T>::lattice()
 	r.x *= ((i >> 1) % n) + (i & 1) / 2.;
 	r.y *= ((i >> 1) / n) + (i & 1) / 2.;
 #endif
-	cells(r / cell_len).push_back(particle<T>(r, i));
+	// add particle to appropriate cell list
+	compute_cell(r).push_back(particle<T>(r, i));
+	// copy position to sorted particle list
+	part.r[i] = r;
+	part.R[i] = r;
     }
 }
 
 /**
- * generate random n-dimensional Maxwell-Boltzmann distributed velocities
+ * set system temperature according to Maxwell-Boltzmann distribution
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::boltzmann(double temp)
+void ljfluid<dimension, T>::temperature(double value)
 {
     // center of mass velocity
-    T vel_cm = 0.;
+    T v_cm = 0.;
     // maximum squared velocity
-    double vel2_max = 0.;
+    double vv_max = 0.;
 
-    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    rng_.gaussian(it->vel.x, it->vel.y, temp);
+    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
+	foreach (particle<T>& p, *it) {
+	    // generate random Maxwell-Boltzmann distributed velocity
+	    rng_.gaussian(p.v.x, p.v.y, value);
 #ifdef DIM_3D
 	    // Box-Muller transformation strictly generates 2 variates at once
-	    rng_.gaussian(it->vel.y, it->vel.z, temp);
+	    rng_.gaussian(p.v.y, p.v.z, value);
 #endif
-	    vel_cm += it->vel;
+	    v_cm += p.v;
+
+	    // initialize force to zero for first leapfrog half step
+	    p.f = 0.;
 	}
     }
 
-    // set center of mass velocity to zero
-    vel_cm /= npart;
-    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    it->vel -= vel_cm;
-	    vel2_max = std::max(it->vel * it->vel, vel2_max);
+    v_cm /= npart;
+
+    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
+	foreach (particle<T>& p, *it) {
+	    // set center of mass velocity to zero
+	    p.v -= v_cm;
+	    // copy velocity to sorted particle list
+	    part.v[p.n] = p.v;
+
+	    vv_max = std::max(vv_max, p.v * p.v);
 	}
     }
 
-    vel_max_sum = sqrt(vel2_max);
+    // initialize sum over maximum velocity magnitudes since last neighbour lists update
+    v_max_sum = std::sqrt(vv_max);
 }
 
 /**
- * set n-dimensional force vectors to zero
+ * returns number of particles
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::init_forces()
+unsigned int const& ljfluid<dimension, T>::particles() const
 {
-    for (cell_iterator cell = cells.begin(); cell != cells.end(); ++cell) {
-	for (list_iterator it = cell->begin(); it != cell->end(); ++it) {
-	    it->force = 0.;
+    return npart;
+}
+
+/**
+ * returns number of cells per dimension
+ */
+template <unsigned dimension, typename T>
+unsigned int const& ljfluid<dimension, T>::cells() const
+{
+    return ncell;
+}
+
+/**
+ * returns particle density
+ */
+template <unsigned dimension, typename T>
+double const& ljfluid<dimension, T>::density() const
+{
+    return density_;
+}
+
+/**
+ * returns periodic box length
+ */
+template <unsigned dimension, typename T>
+double const& ljfluid<dimension, T>::box() const
+{
+    return box_;
+}
+
+/**
+ * returns cell length
+ */
+template <unsigned dimension, typename T>
+double const& ljfluid<dimension, T>::cell_length()
+{
+    return cell_length_;
+}
+
+/**
+ * returns simulation timestep
+ */
+template <unsigned dimension, typename T>
+double const& ljfluid<dimension, T>::timestep() const
+{
+    return timestep_;
+}
+
+/**
+ * update cell lists
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::update_cells()
+{
+    // FIXME particle may be inspected twice if moved ahead in cell order
+    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
+	for (cell_list_iterator it2 = it->begin(); it2 != it->end(); ) {
+	    // store old cell list iterator
+	    cell_list_iterator p(it2);
+	    // advance cell list iterator to next particle
+	    it2++;
+	    // compute cell which particle belongs to
+	    cell_list& c = compute_cell(p->r);
+	    // check whether cells are not identical
+	    if (&c != &(*it)) {
+		// move particle from old to new cell
+		c.splice(c.end(), *it, p);
+	    }
 	}
     }
+}
+
+/**
+ * returns cell list which a particle belongs to
+ */
+template <unsigned dimension, typename T>
+typename ljfluid<dimension, T>::cell_list& ljfluid<dimension, T>::compute_cell(T const& r)
+{
+    T idx = trunc((r - floor(r / box_) * box_) / cell_length_);
+#ifdef DIM_3D
+    return cell[(int)(idx.x)][(int)(idx.y)][(int)(idx.z)];
+#else
+    return cell[(int)(idx.x)][(int)(idx.y)];
+#endif
+}
+
+/**
+ * update neighbour lists
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::update_neighbours()
+{
+#ifdef DIM_3D
+    for (unsigned int x = 0; x < ncell; ++x) {
+	for (unsigned int y = 0; y < ncell; ++y) {
+	    for (unsigned int z = 0; z < ncell; ++z) {
+		foreach (particle<T>& p, cell[x][y][z]) {
+		    // empty neighbour list of particle
+		    p.neighbour.clear();
+
+		    boost::array<cell_index, 14> neighbour = {{
+			{{  0,  0,  0 }},
+			// visit half of neighbour cells (13 of 26) due to pair potential
+			{{  0, -1,  0 }},
+			{{ -1, -1,  0 }},
+			{{ -1,  0,  0 }},
+			{{ -1, +1,  0 }},
+			{{  0, -1, -1 }},
+			{{ -1, -1, -1 }},
+			{{ -1,  0, -1 }},
+			{{ -1, +1, -1 }},
+			{{  0, -1, +1 }},
+			{{ -1, -1, +1 }},
+			{{ -1,  0, +1 }},
+			{{ -1, +1, +1 }},
+			{{  0,  0, -1 }},
+		    }};
+
+		    // update neighbour list of particle
+		    foreach (cell_index const& idx, neighbour) {
+			compute_cell_neighbours(p, cell[(x + ncell + idx[0]) % ncell][(y + ncell + idx[1]) % ncell][(z + ncell + idx[2]) % ncell]);
+		    }
+		}
+	    }
+	}
+    }
+#else
+    for (unsigned int x = 0; x < ncell; ++x) {
+	for (unsigned int y = 0; y < ncell; ++y) {
+	    foreach (particle<T>& p, cell[x][y]) {
+		// empty neighbour list of particle
+		p.neighbour.clear();
+
+		boost::array<cell_index, 5> neighbour = {{
+		    {{  0,  0 }},
+		    // visit half of neighbour cells (4 of 8) due to pair potential
+		    {{  0, -1 }},
+		    {{ -1, -1 }},
+		    {{ -1,  0 }},
+		    {{ -1, +1 }},
+		}};
+
+		// update neighbour list of particle
+		foreach (cell_index const& idx, neighbour) {
+		    compute_cell_neighbours(p, cell[(x + ncell + idx[0]) % ncell][(y + ncell + idx[1]) % ncell]);
+		}
+	    }
+	}
+    }
+#endif
+}
+
+/**
+ * update neighbour list of particle
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::compute_cell_neighbours(particle<T>& p, cell_list& c)
+{
+    foreach (particle<T>& pp, c) {
+	// skip identical particles
+	if (&p == &pp)
+	    continue;
+
+	// particle distance vector
+	T r = p.r - pp.r;
+	// enforce periodic boundary conditions
+	r -= round(r / box_) * box_;
+	// squared particle distance
+	double rr = r * r;
+
+	// enforce cutoff distance with neighbour list skin
+	if (rr >= rr_cut_skin)
+	    continue;
+
+	// add particle to neighbour list
+	p.neighbour.push_back(&pp);
+    }
+}
+
+/**
+ * compute Lennard-Jones forces
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::compute_forces()
+{
+    // initialize particle forces to zero
+    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
+	foreach (particle<T>& p, *it) {
+	    p.f = 0.;
+	}
+    }
+
+    // potential energy
+    en_pot_ = 0.;
+    // virial equation sum
+    virial_ = 0.;
+
+    // iterate over all particles
+    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
+	foreach (particle<T>& p, *it) {
+	    // calculate pairwise Lennard-Jones force with neighbour particles
+	    foreach (particle<T>* pp, p.neighbour) {
+		// particle distance vector
+		T r = p.r - pp->r;
+		// enforce periodic boundary conditions
+		r -= round(r / box_) * box_;
+		// squared particle distance
+		double rr = r * r;
+
+		// enforce cutoff distance
+		if (rr >= rr_cut)
+		    continue;
+
+		// compute Lennard-Jones force in reduced units
+		double rri = 1. / rr;
+		double r6i = rri * rri * rri;
+		double fval = 48. * rri * r6i * (r6i - 0.5);
+
+		// add force contribution to both particles
+		p.f += r * fval;
+		pp->f -= r * fval;
+
+		// add contribution to potential energy
+		en_pot_ += 4. * r6i * (r6i - 1.) - en_cut;
+		// add contribution to virial equation sum
+		virial_ += rr * fval;
+	    }
+	}
+    }
+
+    en_pot_ /= npart;
+    virial_ /= npart;
+}
+
+/**
+ * first leapfrog step of integration of equations of motion
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::leapfrog_half()
+{
+    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
+	foreach (particle<T>& p, *it) {
+	    // half step velocity
+	    p.v += p.f * (timestep_ / 2.);
+	    // full step position
+	    p.r += p.v * timestep_;
+	    // copy position to sorted particle list
+	    part.r[p.n] = p.r - floor(p.r / box_) * box_;
+	    part.R[p.n] = p.r;
+	}
+    }
+}
+
+/**
+ * second leapfrog step of integration of equations of motion
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::leapfrog_full()
+{
+    // maximum squared velocity
+    double vv_max = 0.;
+
+    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
+	foreach (particle<T>& p, *it) {
+	    // full step velocity
+	    p.v = p.v + p.f * (timestep_ / 2.);
+	    // copy velocity to sorted particle list
+	    part.v[p.n] = p.v;
+
+	    vv_max = std::max(vv_max, p.v * p.v);
+	}
+    }
+
+    // add to sum over maximum velocity magnitudes since last neighbour lists update
+    v_max_sum += std::sqrt(vv_max);
+}
+
+/**
+ * MD simulation step
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::mdstep()
+{
+    // calculate particle positions
+    leapfrog_half();
+    // update cell lists
+    update_cells();
+
+    if (v_max_sum * timestep_ > r_skin / 2.) {
+	// update Verlet neighbour lists
+	update_neighbours();
+	// reset sum over maximum velocity magnitudes to zero
+	v_max_sum = 0.;
+    }
+
+    // calculate Lennard-Jones forces
+    compute_forces();
+    // calculate velocities
+    leapfrog_full();
+}
+
+/**
+ * sample trajectory
+ */
+template <unsigned dimension, typename T>
+template <typename V>
+void ljfluid<dimension, T>::sample(V& visitor) const
+{
+    visitor.sample(part, en_pot_, virial_);
 }
 
 } // namespace mdsim
+
+#undef foreach
 
 #endif /* ! MDSIM_LJFLUID_HPP */

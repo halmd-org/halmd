@@ -367,6 +367,31 @@ vector3d<double> ceil(vector3d<double> v)
 
 
 /**
+ * componentwise round to integer towards zero
+ */
+template <typename T>
+vector3d<T> trunc(vector3d<T> v);
+
+template <>
+vector3d<float> trunc(vector3d<float> v)
+{   
+    v.x = truncf(v.x);
+    v.y = truncf(v.y);
+    v.z = truncf(v.z);
+    return v;
+}
+
+template <>
+vector3d<double> trunc(vector3d<double> v)
+{   
+    v.x = trunc(v.x);
+    v.y = trunc(v.y);
+    v.z = trunc(v.z);
+    return v;
+}
+
+
+/**
  * componentwise square root function
  */
 template <typename T>

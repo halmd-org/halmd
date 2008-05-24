@@ -348,6 +348,29 @@ vector2d<double> ceil(vector2d<double> v)
 
 
 /**
+ * componentwise round to integer towards zero
+ */
+template <typename T>
+vector2d<T> trunc(vector2d<T> v);
+
+template <>
+vector2d<float> trunc(vector2d<float> v)
+{
+    v.x = truncf(v.x);
+    v.y = truncf(v.y);
+    return v;
+}
+
+template <>
+vector2d<double> trunc(vector2d<double> v)
+{
+    v.x = trunc(v.x);
+    v.y = trunc(v.y);
+    return v;
+}
+
+
+/**
  * componentwise square root function
  */
 template <typename T>

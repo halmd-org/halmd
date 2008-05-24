@@ -31,17 +31,18 @@
 namespace mdsim {
 
 template <typename T>
-struct phase_space_point
+class phase_space_point
 {
+public:
     typedef T vector_type;
 
-    /** coordinates of all particles in system */
-    vector_type r;
+public:
+    /** periodically reduced coordinates of all particles in system */
+    T r;
+    /** periodically extended coordinates of all particles in system */
+    T R;
     /** velocities of all particles in system */
-    vector_type v;
-
-    phase_space_point(uint64_t N) : r(N), v(N) { }
-    phase_space_point() { }
+    T v;
 };
 
 

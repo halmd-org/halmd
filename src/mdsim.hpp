@@ -1,4 +1,4 @@
-/* Molecular Dynamics simulation
+/* Molecular Dynamics simulation of a Lennard-Jones fluid
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -32,66 +32,94 @@ namespace mdsim
 {
 
 /**
- * Molecular Dynamics simulation
+ * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
 template <unsigned dimension, typename T>
 class mdsim
 {
 public:
-    mdsim(options const& options);
-    void run();
+    mdsim(options const& opts) : opts(opts) {}
+    void operator()();
 
 private:
-    // Lennard Jones fluid simulation
-    ljfluid<dimension, T> fluid_;
-    // autocorrelation functions
-    autocorrelation<dimension, T> tcf_;
-    // thermodynamic equilibrium properties
-    energy<dimension, std::vector<T> > tep_;
-    // trajectory writer
-    trajectory<dimension, std::vector<T> > traj_;
-
-    // program options
-    options const& opts_;
+    /** program options */
+    options const& opts;
 };
 
-
+/**
+ * run MD simulation
+ */
 template <unsigned dimension, typename T>
-mdsim<dimension, T>::mdsim(options const& opts) : fluid_(opts), tcf_(opts), tep_(opts), traj_(opts), opts_(opts)
+void mdsim<dimension, T>::operator()()
 {
-    if (!opts_.box().empty()) {
+    //
+    // initialize Lennard Jones fluid simulation
+    //
+
+    ljfluid<dimension, T> fluid;
+
+    // set number of particles
+    fluid.particles(opts.particles().value());
+    // initialize random number generator with seed
+    fluid.rng(opts.rng_seed().value());
+
+    if (!opts.box().empty()) {
 	// set simulation box length
-	fluid_.box(opts_.box().value());
+	fluid.box(opts.box().value());
     }
     else {
 	// set particle density
-	fluid_.density(opts_.density().value());
+	fluid.density(opts.density().value());
     }
 
-    fluid_.timestep(opts_.timestep().value());
-    fluid_.temperature(opts_.temperature().value());
-}
+    // initialize cell lists
+    fluid.init_cell();
+    // set simulation timestep
+    fluid.timestep(opts.timestep().value());
 
+    // arrange particles on a face-centered cubic (fcc) lattice
+    fluid.lattice();
+    // set system temperature according to Maxwell-Boltzmann distribution
+    fluid.temperature(opts.temperature().value());
 
-template <unsigned dimension, typename T>
-void mdsim<dimension, T>::run()
-{
-    for (uint64_t step = 0; step < opts_.steps().value(); step++) {
+    //
+    // initialize trajectory sample visitors
+    //
+
+    // autocorrelation functions
+    autocorrelation<dimension, T> tcf(opts);
+    // thermodynamic equilibrium properties
+    energy<dimension, std::vector<T> > tep(opts);
+    // trajectory writer
+    trajectory<dimension, std::vector<T> > traj(opts);
+
+    //
+    // run MD simulation
+    //
+
+    // sample trajectory
+    fluid.sample(traj);
+
+    for (uint64_t step = 0; step < opts.steps().value(); ++step) {
 	// MD simulation step
-	fluid_.mdstep();
+	fluid.mdstep();
 
 	// sample autocorrelation functions
-	fluid_.sample(tcf_);
+	fluid.sample(tcf);
 	// sample thermodynamic equilibrium properties
-	fluid_.sample(tep_);
+	fluid.sample(tep);
 	// sample trajectory
-	fluid_.sample(traj_);
+	fluid.sample(traj);
     }
 
+    //
+    // write trajectory sample visitor results
+    //
+
     // write autocorrelation function results to HDF5 file
-    tcf_.write(opts_.output_file_prefix().value() + ".tcf", fluid_.timestep());
+    tcf.write(opts.output_file_prefix().value() + ".tcf", fluid.timestep());
     // write thermodynamic equilibrium properties to HDF5 file
-    tep_.write(opts_.output_file_prefix().value() + ".tep");
+    tep.write(opts.output_file_prefix().value() + ".tep");
 }
 
 } // namespace mdsim
