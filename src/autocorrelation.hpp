@@ -19,6 +19,7 @@
 #ifndef MDSIM_AUTOCORRELATION_HPP
 #define MDSIM_AUTOCORRELATION_HPP
 
+#include <boost/array.hpp>
 // requires patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
 #include <boost/mpl/vector.hpp>
@@ -61,12 +62,14 @@ private:
     typedef typename std::vector<block_type>::const_iterator block_const_iterator;
 
     typedef typename boost::make_variant_over<tcf_types>::type tcf_type;
-    typedef typename std::vector<tcf_type>::iterator tcf_iterator;
-    typedef typename std::vector<tcf_type>::const_iterator tcf_const_iterator;
+    typedef typename boost::array<tcf_type, 3> tcf_array;
+    typedef typename tcf_array::iterator tcf_iterator;
+    typedef typename tcf_array::const_iterator tcf_const_iterator;
 
     typedef typename boost::multi_array<accumulator<double>, 2> result_type;
-    typedef typename std::vector<result_type>::iterator result_iterator;
-    typedef typename std::vector<result_type>::const_iterator result_const_iterator;
+    typedef typename boost::array<result_type, 3> result_array;
+    typedef typename result_array::iterator result_iterator;
+    typedef typename result_array::const_iterator result_const_iterator;
 
 public:
     autocorrelation(options const& opts);
@@ -85,9 +88,9 @@ private:
     /** phase space sample blocks */
     std::vector<block_type> block;
     /** correlation functions results */
-    std::vector<result_type> result;
+    result_array result;
     /** correlation functions */
-    std::vector<tcf_type> tcf;
+    tcf_array tcf;
 
     /** block size */
     unsigned int block_size;
@@ -115,13 +118,15 @@ autocorrelation<dimension, T>::autocorrelation(options const& opts)
     }
 
     // setup correlation functions
-    tcf.push_back(mean_square_displacement());
-    tcf.push_back(mean_quartic_displacement());
-    tcf.push_back(velocity_autocorrelation());
+    tcf[0] = mean_square_displacement();
+    tcf[1] = mean_quartic_displacement();
+    tcf[2] = velocity_autocorrelation();
 
     // allocate correlation functions results
     try {
-	result.resize(tcf.size(), result_type(boost::extents[block_count][block_size - 1]));
+	for (result_iterator it = result.begin(); it != result.end(); ++it) {
+	    it->resize(boost::extents[block_count][block_size - 1]);
+	}
     }
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate correlation functions results");

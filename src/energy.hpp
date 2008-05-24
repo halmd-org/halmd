@@ -151,21 +151,21 @@ void energy<dimension, T>::write(std::string const& filename)
     H5::DataSpace ds_vector(2, dim_vector);
 
     // HDF5 datasets for thermodynamic equilibrium properties
-    std::vector<H5::DataSet> dataset_;
+    boost::array<H5::DataSet, 6> dataset_;
 
     try {
 	// mean potential energy per particle
-	dataset_.push_back(file_.createDataSet("EPOT", dt, ds_scalar));
+	dataset_[0] = file_.createDataSet("EPOT", dt, ds_scalar);
 	// mean kinetic energy per particle
-	dataset_.push_back(file_.createDataSet("EKIN", dt, ds_scalar));
+	dataset_[1] = file_.createDataSet("EKIN", dt, ds_scalar);
 	// mean total energy per particle
-	dataset_.push_back(file_.createDataSet("ETOT", dt, ds_scalar));
+	dataset_[2] = file_.createDataSet("ETOT", dt, ds_scalar);
 	// temperature
-	dataset_.push_back(file_.createDataSet("TEMP", dt, ds_scalar));
+	dataset_[3] = file_.createDataSet("TEMP", dt, ds_scalar);
 	// pressure
-	dataset_.push_back(file_.createDataSet("PRESS", dt, ds_scalar));
+	dataset_[4] = file_.createDataSet("PRESS", dt, ds_scalar);
 	// velocity center of mass
-	dataset_.push_back(file_.createDataSet("VCM", dt, ds_vector));
+	dataset_[5] = file_.createDataSet("VCM", dt, ds_vector);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create datasets in HDF5 energy file");
