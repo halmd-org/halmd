@@ -36,6 +36,8 @@ void init(options const& opts) {
     logger()->writer().add_formatter(boost::logging::formatter::append_newline());
     logger_error()->writer().add_formatter(hpt);
     logger_error()->writer().add_formatter(boost::logging::formatter::append_newline());
+    logger_warning()->writer().add_formatter(hpt);
+    logger_warning()->writer().add_formatter(boost::logging::formatter::append_newline());
 #ifndef NDEBUG
     logger_debug()->writer().add_formatter(hpt);
     logger_debug()->writer().add_formatter(boost::logging::formatter::append_newline());
@@ -56,6 +58,11 @@ void init(options const& opts) {
     logger_error()->writer().add_destination(logfile);
     logger_error()->mark_as_initialized();
 
+    // output warning messages to console and file
+    logger_warning()->writer().add_destination(boost::logging::destination::cerr());
+    logger_warning()->writer().add_destination(logfile);
+    logger_warning()->mark_as_initialized();
+
 #ifndef NDEBUG
     if (opts.verbosity().value() > 1) {
 	// output debug-level messages to console and file
@@ -70,6 +77,7 @@ BOOST_DEFINE_LOG_FILTER(log_filter, finder::filter)
 
 BOOST_DEFINE_LOG(logger, finder::logger)
 BOOST_DEFINE_LOG(logger_error, finder::logger)
+BOOST_DEFINE_LOG(logger_warning, finder::logger)
 #ifndef NDEBUG
 BOOST_DEFINE_LOG(logger_debug, finder::logger)
 #endif
