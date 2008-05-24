@@ -134,7 +134,7 @@ public:
 	/**
 	 * maximum number of threads per block
 	 */
-	int max_threads_per_block()
+	unsigned int max_threads_per_block()
 	{
 	    return prop.maxThreadsPerBlock;
 	}
@@ -166,7 +166,7 @@ public:
 	/**
 	 * major revision number of device's compute capatibility
 	 */
-	int major()
+	unsigned int major()
 	{
 	    return prop.major;
 	}
@@ -174,7 +174,7 @@ public:
 	/**
 	 * minor revision number of device's compute capatibility
 	 */
-	int minor()
+	unsigned int minor()
 	{
 	    return prop.minor;
 	}
@@ -182,7 +182,7 @@ public:
 	/**
 	 * clock frequency in kHz
 	 */
-	int clock_rate()
+	unsigned int clock_rate()
 	{
 	    return prop.clockRate;
 	}
