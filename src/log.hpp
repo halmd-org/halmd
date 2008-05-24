@@ -29,6 +29,9 @@
 /** log error messages */
 #define LOG_ERROR(fmt) L_(logger_error) << "[ERROR] " << fmt
 
+/** log warning messages */
+#define LOG_WARNING(fmt) L_(logger_warning) << "[WARNING] " << fmt
+
 /** log debug-level messages */
 #ifndef NDEBUG
 # define LOG_DEBUG(fmt) L_(logger_debug) << "[DEBUG] " << fmt
@@ -56,6 +59,7 @@ BOOST_DECLARE_LOG_FILTER(log_filter, finder::filter)
 
 BOOST_DECLARE_LOG(logger, finder::logger)
 BOOST_DECLARE_LOG(logger_error, finder::logger)
+BOOST_DECLARE_LOG(logger_warning, finder::logger)
 #ifndef NDEBUG
 BOOST_DECLARE_LOG(logger_debug, finder::logger)
 #endif
