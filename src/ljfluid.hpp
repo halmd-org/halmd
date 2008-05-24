@@ -59,9 +59,10 @@ public:
     void particles(phase_space_point<std::vector<T> > const& state);
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
-    /** initialize random number generator with seed */
+
+    /** seed random number generator */
     void rng(unsigned int seed);
-    /** initialize random number generator from state */
+    /** restore random number generator from state */
     void rng(mdsim::rand48::state_type const& state);
 
     /** set particle density */
@@ -268,23 +269,22 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory for placeholder particles");
     }
-}
 
-/**
- * initialize random number generator with seed
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::rng(unsigned int seed)
-{
-    // initialize random number generator
+    // change random number generator dimensions
     try {
 	rng_.resize(dim_);
     }
     catch (cuda::error const& e) {
-	throw exception("failed to allocate global device memory for random number generator");
+	throw exception("failed to change random number generator dimensions");
     }
+}
 
-    // seed random number generator
+/**
+ * seed random number generator
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::rng(unsigned int seed)
+{
     try {
 	rng_.set(seed);
     }
@@ -294,20 +294,11 @@ void ljfluid<dimension, T>::rng(unsigned int seed)
 }
 
 /**
- * initialize random number generator from state
+ * restore random number generator from state
  */
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::rng(mdsim::rand48::state_type const& state)
 {
-    // initialize random number generator
-    try {
-	rng_.resize(dim_);
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to allocate global device memory for random number generator");
-    }
-
-    // restore random number generator state
     try {
 	rng_.restore(state);
     }
