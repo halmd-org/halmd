@@ -41,31 +41,30 @@ template <unsigned dimension, typename T>
 class mdsim
 {
 public:
-    mdsim(options const& opts) : opts(opts) {}
-    /** run MD simulation */
+    /** initialize MD simulation program */
+    mdsim(options const& opts);
+    /** run MD simulation program */
     void operator()();
 
 private:
     /** program options */
     options const& opts;
+    /** Lennard-Jones fluid simulation */
+    ljfluid<dimension, T> fluid;
 };
 
 /**
- * run MD simulation
+ * initialize MD simulation program
  */
 template <unsigned dimension, typename T>
-void mdsim<dimension, T>::operator()()
+mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 {
-    //
     // initialize Lennard Jones fluid simulation
-    //
-
-    ljfluid<dimension, T> fluid;
-
     if (!opts.trajectory_input_file().empty()) {
-	// read trajectory sample
+	// read trajectory sample and global simulation parameters from input file
+	H5param param;
 	phase_space_point<std::vector<T> > sample;
-	trajectory<dimension, std::vector<T> >::read(opts.trajectory_input_file().value(), opts.trajectory_sample().value(), sample);
+	trajectory<dimension, std::vector<T> >::read(opts.trajectory_input_file().value(), opts.trajectory_sample().value(), sample, param);
 	// set number of particles in system
 	fluid.particles(sample.r.size());
 
@@ -81,9 +80,9 @@ void mdsim<dimension, T>::operator()()
 	// initialize cell lists
 	fluid.init_cell();
 	// set simulation timestep
-	fluid.timestep(opts.timestep().value());
+	fluid.timestep(opts.timestep().defaulted() ? param.timestep() : opts.timestep().value());
 
-	// set system state from phase space sample
+	// set system state from trajectory sample
 	fluid.particles(sample);
 
 	// initialize random number generator with seed
@@ -119,11 +118,14 @@ void mdsim<dimension, T>::operator()()
 	// set system temperature according to Maxwell-Boltzmann distribution
 	fluid.temperature(opts.temperature().value());
     }
+}
 
-    //
-    // initialize trajectory sample visitors
-    //
-
+/**
+ * run MD simulation program
+ */
+template <unsigned dimension, typename T>
+void mdsim<dimension, T>::operator()()
+{
     // autocorrelation functions
     autocorrelation<dimension, T> tcf(opts);
     // thermodynamic equilibrium properties
@@ -131,20 +133,16 @@ void mdsim<dimension, T>::operator()()
     // trajectory writer
     trajectory<dimension, std::vector<T> > traj(opts);
 
-    // global simulation parameters
     H5param param;
-    // gather simulation parameters
+
+    // collect global simulation parameters
     fluid.copy_param(param);
     tcf.copy_param(param);
 
-    // write simulation parameters to HDF5 output files
+    // write global simulation parameters to HDF5 output files
     tcf.write_param(param);
     tep.write_param(param);
     traj.write_param(param);
-
-    //
-    // run MD simulation
-    //
 
     // sample trajectory
     fluid.sample(traj);
@@ -160,10 +158,6 @@ void mdsim<dimension, T>::operator()()
 	// sample trajectory
 	fluid.sample(traj);
     }
-
-    //
-    // write trajectory sample visitor results
-    //
 
     // write autocorrelation function results to HDF5 file
     tcf.write(fluid.timestep());
