@@ -20,6 +20,7 @@
 #define MDSIM_MDSIM_HPP
 
 #include <boost/array.hpp>
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
 #include <stdint.h>
@@ -65,6 +66,9 @@ private:
 template <unsigned dimension, typename T>
 mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 {
+    // boost::bind
+    using namespace boost;
+
     // initialize Lennard Jones fluid simulation
     if (!opts.trajectory_input_file().empty()) {
 	// open trajectory input file
@@ -73,14 +77,11 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	// read global simulation parameters
 	H5param param;
 	traj.read(param);
-	// read phase space sample
-	std::vector<T> r, v;
-	traj.read(r, v, opts.trajectory_sample().value());
+	// read trajectory sample and set system state
+	fluid.state(bind(&trajectory<dimension, T, false>::read, ref(traj), _1, _2, opts.trajectory_sample().value()));
 	// close trajectory input file
 	traj.close();
 
-	// set system state from trajectory sample
-	fluid.particles(r, v);
 	// set number of CUDA execution threads
 	fluid.threads(opts.threads().defaulted() ? param.threads() : opts.threads().value());
 	// initialize random number generator with seed

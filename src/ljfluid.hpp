@@ -57,7 +57,7 @@ public:
     /** set number of particles in system */
     void particles(unsigned int value);
     /** set system state from phase space sample */
-    void particles(std::vector<T> const& r, std::vector<T> const& v);
+    template <typename V> void state(V visitor);
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
 
@@ -207,14 +207,14 @@ void ljfluid<dimension, T>::particles(unsigned int value)
  * set system state from phase space sample
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::particles(std::vector<T> const& r, std::vector<T> const& v)
+template <typename V>
+void ljfluid<dimension, T>::state(V visitor)
 {
-    // set number of particles in system
-    particles(r.size());
-
     // set system state from phase space sample
-    std::copy(r.begin(), r.end(), h_state.r.begin());
-    std::copy(v.begin(), v.end(), h_state.v.begin());
+    visitor(h_state.r, h_state.v);
+    // set number of particles in system
+    particles(h_state.r.size());
+
     try {
 	// copy periodically reduced particles positions from host to GPU
 	cuda::copy(h_state.r, g_state.r, stream_);

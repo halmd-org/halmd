@@ -216,7 +216,7 @@ public:
     /** read global simulation parameters */
     void read(H5param& param);
     /** read phase space sample */
-    void read(std::vector<T>& r, std::vector<T>& v, int64_t index);
+    void read(cuda::host::vector<T>& r, cuda::host::vector<T>& v, int64_t index);
 
 private:
     /** HDF5 trajectory input file */
@@ -273,7 +273,7 @@ void trajectory<dimension, T, false>::read(H5param& param)
  * read phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v, int64_t index)
+void trajectory<dimension, T, false>::read(cuda::host::vector<T>& r, cuda::host::vector<T>& v, int64_t index)
 {
     try {
 	// open phase space coordinates datasets
