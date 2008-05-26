@@ -219,12 +219,17 @@ void ljfluid<dimension, T>::particles(phase_space_point<std::vector<T> > const& 
 
     // set system state from phase space sample
     std::copy(state.r.begin(), state.r.end(), h_state.r.begin());
+    std::copy(state.v.begin(), state.v.end(), h_state.v.begin());
     try {
 	// copy periodically reduced particles positions from host to GPU
 	cuda::copy(h_state.r, g_state.r, stream_);
 	// replicate to periodically extended particle positions
 	cuda::copy(g_state.r, g_state.R, stream_);
 	cuda::copy(h_state.r, h_state.R, stream_);
+	// copy particle velocities from host to GPU
+	cuda::copy(h_state.v, g_state.v, stream_);
+
+	stream_.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to set system state from phase space sample");
