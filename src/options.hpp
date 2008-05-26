@@ -174,7 +174,7 @@ public:
     /**
      * returns sample in trajectory input file
      */
-    option_value<int> sample() const
+    option_value<int64_t> trajectory_sample() const
     {
 	return vm["sample"];
     }

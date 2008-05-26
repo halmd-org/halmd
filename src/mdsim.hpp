@@ -58,29 +58,63 @@ void mdsim<dimension, T>::operator()()
 
     ljfluid<dimension, T> fluid;
 
-    // set number of particles
-    fluid.particles(opts.particles().value());
-    // initialize random number generator with seed
-    fluid.rng(opts.rng_seed().value());
+    if (!opts.trajectory_input_file().empty()) {
+	// read trajectory sample
+	phase_space_point<std::vector<T> > sample;
+	trajectory<dimension, std::vector<T> >::read(opts.trajectory_input_file().value(), opts.trajectory_sample().value(), sample);
+	// set number of particles in system
+	fluid.particles(sample.r.size());
 
-    if (!opts.box().empty()) {
-	// set simulation box length
-	fluid.box(opts.box().value());
+	if (!opts.box().empty()) {
+	    // set simulation box length
+	    fluid.box(opts.box().value());
+	}
+	else {
+	    // set particle density
+	    fluid.density(opts.density().value());
+	}
+
+	// initialize cell lists
+	fluid.init_cell();
+	// set simulation timestep
+	fluid.timestep(opts.timestep().value());
+
+	// set system state from phase space sample
+	fluid.particles(sample);
+
+	// initialize random number generator with seed
+	fluid.rng(opts.rng_seed().value());
+
+	if (!opts.temperature().empty()) {
+	    // set system temperature according to Maxwell-Boltzmann distribution
+	    fluid.temperature(opts.temperature().value());
+	}
     }
     else {
-	// set particle density
-	fluid.density(opts.density().value());
+	// set number of particles
+	fluid.particles(opts.particles().value());
+	// initialize random number generator with seed
+	fluid.rng(opts.rng_seed().value());
+
+	if (!opts.box().empty()) {
+	    // set simulation box length
+	    fluid.box(opts.box().value());
+	}
+	else {
+	    // set particle density
+	    fluid.density(opts.density().value());
+	}
+
+	// initialize cell lists
+	fluid.init_cell();
+	// set simulation timestep
+	fluid.timestep(opts.timestep().value());
+
+	// arrange particles on a face-centered cubic (fcc) lattice
+	fluid.lattice();
+	// set system temperature according to Maxwell-Boltzmann distribution
+	fluid.temperature(opts.temperature().value());
     }
-
-    // initialize cell lists
-    fluid.init_cell();
-    // set simulation timestep
-    fluid.timestep(opts.timestep().value());
-
-    // arrange particles on a face-centered cubic (fcc) lattice
-    fluid.lattice();
-    // set system temperature according to Maxwell-Boltzmann distribution
-    fluid.temperature(opts.temperature().value());
 
     //
     // initialize trajectory sample visitors

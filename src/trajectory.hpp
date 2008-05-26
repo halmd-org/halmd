@@ -53,7 +53,7 @@ public:
     trajectory(options const& opts);
     void sample(phase_space_point<T> const& p, double const&, double const&);
 
-    static void read(options const& opts, phase_space_point<T> &p);
+    static void read(std::string const& filename, int64_t sample, phase_space_point<T> &p);
 
 private:
     H5::H5File file_;
@@ -136,7 +136,7 @@ void trajectory<dimension, T>::sample(phase_space_point<T> const& p, double cons
  * read phase space sample from HDF5 trajectory input file
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T>::read(options const& opts, phase_space_point<T> &p)
+void trajectory<dimension, T>::read(std::string const& filename, int64_t sample, phase_space_point<T> &p)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -146,7 +146,7 @@ void trajectory<dimension, T>::read(options const& opts, phase_space_point<T> &p
     H5::H5File file;
 
     try {
-	file = H5::H5File(opts.trajectory_input_file().value(), H5F_ACC_RDONLY);
+	file = H5::H5File(filename, H5F_ACC_RDONLY);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to open HDF5 trajectory input file");
@@ -202,10 +202,10 @@ void trajectory<dimension, T>::read(options const& opts, phase_space_point<T> &p
 	}
 
 	// check if sample number is within bounds
-	if ((opts.sample().value() >= int(nsamples)) || ((-opts.sample().value()) > int(nsamples))) {
+	if ((sample >= int(nsamples)) || ((-sample) > int(nsamples))) {
 	    throw exception("trajectory input sample number out of bounds");
 	}
-	hsize_t sample = (opts.sample().value() < 0) ? (opts.sample().value() + int(nsamples)) : opts.sample().value();
+	sample = (sample < 0) ? (sample + int(nsamples)) : sample;
 
 	// allocate memory for sample
 	p.r.resize(npart);

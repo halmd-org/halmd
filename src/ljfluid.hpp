@@ -57,6 +57,7 @@ struct particle
     std::vector<particle<T>* > neighbour;
 
     particle(T const& r, unsigned int n) : r(r), n(n) {}
+    particle(T const& r, T const& v, unsigned int n) : r(r), v(v), n(n) {}
     particle() {}
 };
 
@@ -77,6 +78,8 @@ public:
     ljfluid();
     /** set number of particles */
     void particles(unsigned int value);
+    /** set system state from phase space sample */
+    void particles(phase_space_point<std::vector<T> > const& state);
     /** set particle density */
     void density(double value);
     /** set periodic box length */
@@ -219,6 +222,36 @@ void ljfluid<dimension, T>::particles(unsigned int value)
     }
 }
 
+/**
+ * set system state from phase space sample
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::particles(phase_space_point<std::vector<T> > const& state)
+{
+    assert(state.r.size() == npart);
+    assert(state.v.size() == npart);
+
+    // copy particle positions to sorted particle list
+    std::copy(state.r.begin(), state.r.end(), part.r.begin());
+    std::copy(state.R.begin(), state.R.end(), part.R.begin());
+    // copy particle velocities to sorted particle list
+    std::copy(state.v.begin(), state.v.end(), part.v.begin());
+
+    for (unsigned int i = 0; i < npart; ++i) {
+	// add particle to appropriate cell list
+	compute_cell(part.r[i]).push_back(particle<T>(part.r[i], part.v[i], i));
+    }
+
+    // update cell lists
+    update_cells();
+    // update Verlet neighbour lists
+    update_neighbours();
+    // reset sum over maximum velocity magnitudes to zero
+    v_max_sum = 0.;
+    // reconstruct forces for first leapfrog half step
+    compute_forces();
+}
+     
 /**
  * set particle density
  */
