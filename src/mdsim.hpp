@@ -61,10 +61,18 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 {
     // initialize Lennard Jones fluid simulation
     if (!opts.trajectory_input_file().empty()) {
-	// read trajectory sample and global simulation parameters from input file
+	// open trajectory input file
+	trajectory<dimension, T, false> traj;
+	traj.open(opts.trajectory_input_file().value());
+	// read global simulation parameters
 	H5param param;
+	traj.read(param);
+	// read phase space sample
 	phase_space_point<std::vector<T> > sample;
-	trajectory<dimension, std::vector<T> >::read(opts.trajectory_input_file().value(), opts.trajectory_sample().value(), sample, param);
+	traj.read(sample, opts.trajectory_sample().value());
+	// close trajectory input file
+	traj.close();
+
 	// set number of particles in system
 	fluid.particles(sample.r.size());
 
