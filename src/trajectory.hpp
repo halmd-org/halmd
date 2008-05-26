@@ -70,8 +70,18 @@ public:
 };
 
 
+/**
+ * trajectory file reader or writer
+ */
+template <unsigned dimension, typename T, bool writer = true>
+class trajectory;
+
+
+/**
+ * trajectory file writer
+ */
 template <unsigned dimension, typename S>
-class trajectory
+class trajectory<dimension, S, true>
 {
 public:
     trajectory(options const& opts);
@@ -79,8 +89,6 @@ public:
 
     /** write global simulation parameters to trajectory output file */
     void write_param(H5param const& param);
-
-    static void read(std::string const& filename, int64_t sample, phase_space_point<std::vector<typename S::vector_type::value_type> > &p, H5param& param);
 
 private:
     /** HDF5 output file */
@@ -160,29 +168,81 @@ void trajectory<dimension, S>::sample(S const& s)
     samples_++;
 }
 
+
 /**
- * read phase space sample from HDF5 trajectory input file
+ * trajectory file reader
  */
-template <unsigned dimension, typename S>
-void trajectory<dimension, S>::read(std::string const& filename, int64_t sample, phase_space_point<std::vector<typename S::vector_type::value_type> > &p, H5param& param)
+template <unsigned dimension, typename T>
+class trajectory<dimension, T, false>
+{
+public:
+    trajectory();
+    /** open HDF5 trajectory input file */
+    void open(std::string const& filename);
+    /** close HDF5 trajectory input file */
+    void close();
+    /** read global simulation parameters */
+    void read(H5param& param);
+    /** read phase space sample */
+    void read(phase_space_point<std::vector<T> >& sample, int64_t index);
+
+private:
+    /** HDF5 trajectory input file */
+    H5::H5File file;
+};
+
+template <unsigned dimension, typename T>
+trajectory<dimension, T, false>::trajectory()
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
+}
 
-    // open HDF5 trajectory input file
-    H5::H5File file;
+/**
+ * open HDF5 trajectory input file
+ */
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, false>::open(std::string const& filename)
+{
     try {
 	file = H5::H5File(filename, H5F_ACC_RDONLY);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to open HDF5 trajectory input file");
     }
+}
 
-    // read global simulation parameters from file
+/**
+ * close HDF5 trajectory input file
+ */
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, false>::close()
+{
+    try {
+	file.close();
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to close HDF5 trajectory input file");
+    }
+}
+
+/**
+ * read global simulation parameters
+ */
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, false>::read(H5param& param)
+{
     param.read(file.openGroup("/parameters"));
+}
 
+/**
+ * read phase space sample
+ */
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, false>::read(phase_space_point<std::vector<T> >& sample, int64_t index)
+{
     try {
 	// open phase space coordinates datasets
 	H5::DataSet dset_r(file.openDataSet("trajectory"));
@@ -215,48 +275,46 @@ void trajectory<dimension, S>::read(std::string const& filename, int64_t sample,
 	}
 
 	// number of samples
-	hsize_t nsamples = dim_r[0];
+	int64_t len = dim_r[0];
 	// number of particles
-	hsize_t npart = dim_r[1];
-	// positional coordinate dimension
-	hsize_t ndim = dim_r[2];
+	unsigned int npart = dim_r[1];
 
 	// validate dataspace dimensions
-	if (nsamples < 1) {
+	if (len < 1) {
 	    throw exception("trajectory input file has invalid number of samples");
 	}
 	if (npart < 1) {
 	    throw exception("trajectory input file has invalid number of particles");
 	}
-	if (ndim != dimension) {
+	if (dimension != dim_r[2]) {
 	    throw exception("trajectory input file has invalid coordinate dimension");
 	}
 
 	// check if sample number is within bounds
-	if ((sample >= int(nsamples)) || ((-sample) > int(nsamples))) {
+	if ((index >= len) || ((-index) > len)) {
 	    throw exception("trajectory input sample number out of bounds");
 	}
-	sample = (sample < 0) ? (sample + int(nsamples)) : sample;
+	index = (index < 0) ? (index + len) : index;
 
 	// allocate memory for sample
-	p.r.resize(npart);
-	p.v.resize(npart);
+	sample.r.resize(npart);
+	sample.v.resize(npart);
 
 	// read sample from dataset
-	hsize_t dim_mem[2] = { npart, ndim };
+	hsize_t dim_mem[2] = { npart, dimension };
 	H5::DataSpace ds_mem(2, dim_mem);
 
 	hsize_t count[3]  = { 1, npart, 1 };
-	hsize_t start[3]  = { sample, 0, 0 };
+	hsize_t start[3]  = { index, 0, 0 };
 	hsize_t stride[3] = { 1, 1, 1 };
-	hsize_t block[3]  = { 1, 1, ndim };
+	hsize_t block[3]  = { 1, 1, dimension };
 
 	// coordinates
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dset_r.read(p.r.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_r);
+	dset_r.read(sample.r.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_r);
 	// velocities
 	ds_v.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dset_v.read(p.v.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_v);
+	dset_v.read(sample.v.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_v);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to read from HDF5 trajectory input file");
