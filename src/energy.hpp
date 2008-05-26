@@ -38,7 +38,7 @@ namespace mdsim
 /**
  * Thermodynamic equilibrium properties
  */
-template <unsigned dimension, typename S>
+template <unsigned dimension, typename T>
 class energy
 {
 public:
@@ -47,7 +47,7 @@ public:
     /** write global simulation parameters to thermodynamic equilibrium properties output file */
     void write_param(H5param const& param);
 
-    void sample(S const& s);
+    void sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t);
     void write();
 
 private:
@@ -66,15 +66,15 @@ private:
     std::vector<float> en_tot_;
     std::vector<float> temp_;
     std::vector<float> press_;
-    std::vector<typename S::vector_type::value_type> v_cm_;
+    std::vector<T> v_cm_;
 
     /** HDF5 output file */
     H5::H5File file_;
 };
 
 
-template <unsigned dimension, typename S>
-energy<dimension, S>::energy(options const& opts) : timestep_(opts.timestep().value()), density_(opts.density().value()), samples_(0)
+template <unsigned dimension, typename T>
+energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep().value()), density_(opts.density().value()), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -109,8 +109,8 @@ energy<dimension, S>::energy(options const& opts) : timestep_(opts.timestep().va
 /**
  * write global simulation parameters to thermodynamic equilibrium properties output file
  */
-template <unsigned dimension, typename S>
-void energy<dimension, S>::write_param(H5param const& param)
+template <unsigned dimension, typename T>
+void energy<dimension, T>::write_param(H5param const& param)
 {
     param.write(file_.createGroup("/parameters"));
 }
@@ -118,14 +118,14 @@ void energy<dimension, S>::write_param(H5param const& param)
 /**
  * sample thermodynamic equilibrium properties
  */
-template <unsigned dimension, typename S>
-void energy<dimension, S>::sample(S const& s)
+template <unsigned dimension, typename T>
+void energy<dimension, T>::sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t)
 {
     if (samples_ >= max_samples_) return;
 
     // mean squared velocity
     accumulator<float> vv;
-    foreach (typename S::vector_type::value_type const& v, s.v) {
+    foreach (T const& v, s.v) {
 	vv += v * v;
     }
 
@@ -149,8 +149,8 @@ void energy<dimension, S>::sample(S const& s)
 /**
  * write thermodynamic equilibrium properties buffer to file
  */
-template <unsigned dimension, typename S>
-void energy<dimension, S>::write()
+template <unsigned dimension, typename T>
+void energy<dimension, T>::write()
 {
     // create dataspaces for scalar and vector types
     hsize_t dim_scalar[2] = { max_samples_, 1 };

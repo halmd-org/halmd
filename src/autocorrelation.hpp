@@ -40,6 +40,24 @@
 namespace mdsim {
 
 template <typename T>
+class phase_space_point
+{
+public:
+    typedef T vector_type;
+
+public:
+    phase_space_point() {}
+    phase_space_point(T const& r, T const& v) : r(r), v(v) {}
+
+public:
+    /** particle positions */
+    T r;
+    /** particle velocities */
+    T v;
+};
+
+
+template <typename T>
 struct phase_space_samples
 {
     /** block samples */
@@ -53,12 +71,12 @@ struct phase_space_samples
 };
 
 
-template <unsigned dimension, typename S>
+template <unsigned dimension, typename T>
 class autocorrelation
 {
 private:
-    typedef phase_space_point<typename S::vector_type> phase_space_type;
-    typedef phase_space_samples<typename S::vector_type> block_type;
+    typedef phase_space_point<cuda::host::vector<T> > phase_space_type;
+    typedef phase_space_samples<cuda::host::vector<T> > block_type;
     typedef typename std::vector<block_type>::iterator block_iterator;
     typedef typename std::vector<block_type>::const_iterator block_const_iterator;
 
@@ -83,11 +101,11 @@ public:
     /** write global simulation parameters to autocorrelation output file */
     void write_param(H5param const& param);
 
-    void sample(S const& s);
+    void sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t);
     void write(float timestep);
 
 private:
-    void sample(S const& s, unsigned int offset);
+    void autocorrelate(mdstep_sample<cuda::host::vector<T> > const& s, unsigned int offset);
     void autocorrelate_block(unsigned int n);
     void finalize();
     void compute_block_param(unsigned int block_size_, uint64_t steps, uint64_t max_samples_);
@@ -116,8 +134,8 @@ private:
 };
 
 
-template <unsigned dimension, typename S>
-autocorrelation<dimension, S>::autocorrelation(options const& opts)
+template <unsigned dimension, typename T>
+autocorrelation<dimension, T>::autocorrelation(options const& opts)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -164,8 +182,8 @@ autocorrelation<dimension, S>::autocorrelation(options const& opts)
 /**
  * compute block parameters
  */
-template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::compute_block_param(unsigned int block_size_, uint64_t steps, uint64_t max_samples_)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::compute_block_param(unsigned int block_size_, uint64_t steps, uint64_t max_samples_)
 {
     // set number of simulation steps
     steps_ = steps;
@@ -206,8 +224,8 @@ void autocorrelation<dimension, S>::compute_block_param(unsigned int block_size_
 /**
  * get number of simulation steps
  */
-template <unsigned dimension, typename S>
-uint64_t autocorrelation<dimension, S>::steps() const
+template <unsigned dimension, typename T>
+uint64_t autocorrelation<dimension, T>::steps() const
 {
     return steps_;
 }
@@ -215,8 +233,8 @@ uint64_t autocorrelation<dimension, S>::steps() const
 /**
  * copy autocorrelation parameters to global simulation parameters
  */
-template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::copy_param(H5param& param) const
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::copy_param(H5param& param) const
 {
     // number of simulation steps
     param.steps(steps_);
@@ -233,27 +251,27 @@ void autocorrelation<dimension, S>::copy_param(H5param& param) const
 /**
  * write global simulation parameters to autocorrelation output file
  */
-template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::write_param(H5param const& param)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::write_param(H5param const& param)
 {
     param.write(file.createGroup("/parameters"));
 }
 
-template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::sample(S const& s)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t)
 {
     // sample odd level blocks
-    sample(s, 0);
+    autocorrelate(s, 0);
 
     if (0 == block[0].count % block_shift) {
 	// sample even level blocks
-	sample(s, 1);
+	autocorrelate(s, 1);
     }
 }
 
 
-template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::sample(S const& s, unsigned int offset)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::autocorrelate(mdstep_sample<cuda::host::vector<T> > const& s, unsigned int offset)
 {
     // add phase space sample to lowest block
     block[offset].samples.push_back(phase_space_type(s.R, s.v));
@@ -287,8 +305,8 @@ void autocorrelation<dimension, S>::sample(S const& s, unsigned int offset)
 /**
  * compute correlations for remaining samples in all blocks
  */
-template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::finalize()
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::finalize()
 {
     for (unsigned int i = 2; i < block_count; ++i) {
 	while (block[i].nsample < max_samples && block[i].samples.size() > 2) {
@@ -303,8 +321,8 @@ void autocorrelation<dimension, S>::finalize()
 /**
  * apply correlation functions to block samples
  */
-template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::autocorrelate_block(unsigned int n)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::autocorrelate_block(unsigned int n)
 {
     for (unsigned int i = 0; i < tcf.size(); ++i) {
 	boost::apply_visitor(gen_tcf_apply_visitor(block[n].samples.begin(), block[n].samples.end(), result[i][n].begin()), tcf[i]);
@@ -312,8 +330,8 @@ void autocorrelation<dimension, S>::autocorrelate_block(unsigned int n)
 }
 
 
-template <unsigned dimension, typename S>
-float autocorrelation<dimension, S>::timegrid(unsigned int block, unsigned int sample, float timestep)
+template <unsigned dimension, typename T>
+float autocorrelation<dimension, T>::timegrid(unsigned int block, unsigned int sample, float timestep)
 {
     if (block % 2) {
 	// shifted block
@@ -327,8 +345,8 @@ float autocorrelation<dimension, S>::timegrid(unsigned int block, unsigned int s
 /**
  * write correlation function results to HDF5 file
  */
-template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::write(float timestep)
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::write(float timestep)
 {
     // compute correlations for remaining samples in all blocks
     finalize();

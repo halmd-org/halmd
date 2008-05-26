@@ -57,7 +57,7 @@ public:
     /** set number of particles in system */
     void particles(unsigned int value);
     /** set system state from phase space sample */
-    void particles(phase_space_point<std::vector<T> > const& state);
+    void particles(std::vector<T> const& r, std::vector<T> const& v);
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
 
@@ -94,8 +94,7 @@ public:
     /** copy MD simulation step results from GPU to host */
     void sample();
     /** sample trajectory */
-    template <typename visitor>
-    void sample(visitor& v) const;
+    template <typename visitor> void sample(visitor& v, uint64_t index) const;
 
 private:
     /** number of particles in system */
@@ -109,11 +108,9 @@ private:
     /** cutoff distance for shifted Lennard-Jones potential */
     float r_cut;
 
-    /** system state */
-    mdstep_sample<cuda::host::vector<T>, cuda::host::vector<float> > h_state;
-    mdstep_sample<cuda::vector<floatn>, cuda::vector<float> > g_state;
-    /** forces */
-    cuda::vector<floatn> g_force;
+    /** system state in page-locked host memory */
+    mdstep_sample<cuda::host::vector<T> > h_state;
+    mdstep_sample<cuda::vector<floatn> > g_state;
 
     /** random number generator */
     mdsim::rand48 rng_;
@@ -174,7 +171,7 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	g_state.r.resize(npart);
 	g_state.R.resize(npart);
 	g_state.v.resize(npart);
-	g_force.resize(npart);
+	g_state.f.resize(npart);
 	g_state.en.resize(npart);
 	g_state.virial.resize(npart);
     }
@@ -198,7 +195,7 @@ void ljfluid<dimension, T>::particles(unsigned int value)
     // set particle forces to zero for first integration of differential equations of motion
     try {
 	fill(h_state.v.begin(), h_state.v.end(), 0.);
-	cuda::copy(h_state.v, g_force, stream_);
+	cuda::copy(h_state.v, g_state.f, stream_);
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
@@ -210,14 +207,14 @@ void ljfluid<dimension, T>::particles(unsigned int value)
  * set system state from phase space sample
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::particles(phase_space_point<std::vector<T> > const& state)
+void ljfluid<dimension, T>::particles(std::vector<T> const& r, std::vector<T> const& v)
 {
     // set number of particles in system
-    particles(state.r.size());
+    particles(r.size());
 
     // set system state from phase space sample
-    std::copy(state.r.begin(), state.r.end(), h_state.r.begin());
-    std::copy(state.v.begin(), state.v.end(), h_state.v.begin());
+    std::copy(r.begin(), r.end(), h_state.r.begin());
+    std::copy(v.begin(), v.end(), h_state.v.begin());
     try {
 	// copy periodically reduced particles positions from host to GPU
 	cuda::copy(h_state.r, g_state.r, stream_);
@@ -271,7 +268,7 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 	g_state.r.reserve(dim_.threads());
 	g_state.R.reserve(dim_.threads());
 	g_state.v.reserve(dim_.threads());
-	g_force.reserve(dim_.threads());
+	g_state.f.reserve(dim_.threads());
 	g_state.en.reserve(dim_.threads());
 	g_state.virial.reserve(dim_.threads());
     }
@@ -502,7 +499,7 @@ void ljfluid<dimension, T>::mdstep()
     // first leapfrog step of integration of differential equations of motion
     try {
 	gpu::ljfluid::inteq.configure(dim_, stream_);
-	gpu::ljfluid::inteq(g_state.r.data(), g_state.R.data(), g_state.v.data(), g_force.data());
+	gpu::ljfluid::inteq(g_state.r.data(), g_state.R.data(), g_state.v.data(), g_state.f.data());
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream first leapfrog step on GPU");
@@ -511,7 +508,7 @@ void ljfluid<dimension, T>::mdstep()
     // Lennard-Jones force calculation
     try {
 	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
-	gpu::ljfluid::mdstep(g_state.r.data(), g_state.v.data(), g_force.data(), g_state.en.data(), g_state.virial.data());
+	gpu::ljfluid::mdstep(g_state.r.data(), g_state.v.data(), g_state.f.data(), g_state.en.data(), g_state.virial.data());
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
@@ -555,9 +552,9 @@ void ljfluid<dimension, T>::sample()
  */
 template <unsigned dimension, typename T>
 template <typename visitor>
-void ljfluid<dimension, T>::sample(visitor& v) const
+void ljfluid<dimension, T>::sample(visitor& v, uint64_t index) const
 {
-    v.sample(h_state);
+    v.sample(h_state, index);
 }
 
 } // namespace mdsim

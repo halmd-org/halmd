@@ -45,9 +45,6 @@ template <unsigned dimension, typename T>
 class mdsim
 {
 public:
-    typedef mdstep_sample<cuda::host::vector<T>, cuda::host::vector<float> > mdstep_sample_type;
-
-public:
     /** initialize MD simulation program */
     mdsim(options const& opts);
     /** run MD simulation program */
@@ -58,6 +55,8 @@ private:
     options const& opts;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T> fluid;
+    /** trajectory file writer */
+    trajectory<dimension, T> traj;
 };
 
 /**
@@ -75,13 +74,13 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	H5param param;
 	traj.read(param);
 	// read phase space sample
-	phase_space_point<std::vector<T> > sample;
-	traj.read(sample, opts.trajectory_sample().value());
+	std::vector<T> r, v;
+	traj.read(r, v, opts.trajectory_sample().value());
 	// close trajectory input file
 	traj.close();
 
 	// set system state from trajectory sample
-	fluid.particles(sample);
+	fluid.particles(r, v);
 	// set number of CUDA execution threads
 	fluid.threads(opts.threads().defaulted() ? param.threads() : opts.threads().value());
 	// initialize random number generator with seed
@@ -136,11 +135,11 @@ template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
     // autocorrelation functions
-    autocorrelation<dimension, mdstep_sample_type> tcf(opts);
+    autocorrelation<dimension, T> tcf(opts);
     // thermodynamic equilibrium properties
-    energy<dimension, mdstep_sample_type> tep(opts);
-    // trajectory writer
-    trajectory<dimension, mdstep_sample_type> traj(opts);
+    energy<dimension, T> tep(opts);
+    // open HDF5 output files
+    traj.open(opts);
 
     H5param param;
     // collect global simulation parameters
@@ -149,7 +148,7 @@ void mdsim<dimension, T>::operator()()
     // write global simulation parameters to HDF5 output files
     tcf.write_param(param);
     tep.write_param(param);
-    traj.write_param(param);
+    traj.write(param);
 
     // stream first MD simulation program step on GPU
     fluid.mdstep();
@@ -161,17 +160,19 @@ void mdsim<dimension, T>::operator()()
 	fluid.mdstep();
 
 	// sample autocorrelation functions
-	fluid.sample(tcf);
+	fluid.sample(tcf, step);
 	// sample thermodynamic equilibrium properties
-	fluid.sample(tep);
+	fluid.sample(tep, step);
 	// sample trajectory
-	fluid.sample(traj);
+	fluid.sample(traj, step);
     }
 
     // write autocorrelation function results to HDF5 file
     tcf.write(fluid.timestep());
     // write thermodynamic equilibrium properties to HDF5 file
     tep.write();
+    // close HDF5 output files
+    traj.close();
 }
 
 #undef foreach

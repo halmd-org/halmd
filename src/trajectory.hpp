@@ -31,42 +31,49 @@
 
 namespace mdsim {
 
-template <typename T, typename U>
-class mdstep_sample
+template <typename T>
+class mdstep_sample;
+
+template <typename T>
+class mdstep_sample<cuda::host::vector<T> >
 {
 public:
-    typedef T vector_type;
-    typedef U scalar_type;
+    typedef cuda::host::vector<T> vector_type;
+    typedef cuda::host::vector<float> scalar_type;
 
 public:
     /** periodically reduced particle positions */
-    T r;
+    vector_type r;
     /** periodically extended particle positions */
-    T R;
+    vector_type R;
     /** particle velocities */
-    T v;
+    vector_type v;
     /** potential energies per particle */
-    U en;
+    scalar_type en;
     /** virial equation sums per particle */
-    U virial;
+    scalar_type virial;
 };
 
-
 template <typename T>
-class phase_space_point
+class mdstep_sample<cuda::vector<T> >
 {
 public:
-    typedef T vector_type;
+    typedef cuda::vector<T> vector_type;
+    typedef cuda::vector<float> scalar_type;
 
 public:
-    phase_space_point() {}
-    phase_space_point(T const& r, T const& v) : r(r), v(v) {}
-
-public:
-    /** particle positions */
-    T r;
+    /** periodically reduced particle positions */
+    vector_type r;
+    /** periodically extended particle positions */
+    vector_type R;
     /** particle velocities */
-    T v;
+    vector_type v;
+    /** particle forces */
+    vector_type f;
+    /** potential energies per particle */
+    scalar_type en;
+    /** virial equation sums per particle */
+    scalar_type virial;
 };
 
 
@@ -80,21 +87,25 @@ class trajectory;
 /**
  * trajectory file writer
  */
-template <unsigned dimension, typename S>
-class trajectory<dimension, S, true>
+template <unsigned dimension, typename T>
+class trajectory<dimension, T, true>
 {
 public:
-    trajectory(options const& opts);
-    void sample(S const& s);
-
-    /** write global simulation parameters to trajectory output file */
-    void write_param(H5param const& param);
+    trajectory();
+    /** create HDF5 trajectory output file */
+    void open(options const& opts);
+    /** close HDF5 trajectory output file */
+    void close();
+    /** write global simulation parameters */
+    void write(H5param const& param);
+    /** write phase space sample */
+    void sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t index);
 
 private:
     /** HDF5 output file */
     H5::H5File file_;
-    const uint64_t npart_;
-    const uint64_t max_samples_;
+    uint64_t npart_;
+    uint64_t max_samples_;
     uint64_t samples_;
     boost::array<H5::DataSet, 2> dset_;
     H5::DataSpace ds_mem_;
@@ -102,17 +113,21 @@ private:
 };
 
 
-/**
- * initialize HDF5 trajectory output file
- */
-template <unsigned dimension, typename S>
-trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particles().value()), max_samples_(std::min(opts.steps().value(), opts.max_samples().value())), samples_(0)
+template <unsigned dimension, typename T>
+trajectory<dimension, T, true>::trajectory() : samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
+}
 
+/**
+ * create HDF5 trajectory output file
+ */
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::open(options const& opts)
+{
     // create trajectory output file
     try {
 	// truncate existing file
@@ -121,6 +136,11 @@ trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particle
     catch (H5::FileIException const& e) {
 	throw exception("failed to create trajectory output file");
     }
+
+    // set number of particles
+    npart_ = opts.particles().value();
+    // set maximum number of samples
+    max_samples_ = std::min(opts.steps().value(), opts.max_samples().value());
 
     // create datasets
     hsize_t dim[3] = { max_samples_, npart_, dimension };
@@ -133,28 +153,42 @@ trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particle
 }
 
 /**
- * write global simulation parameters to trajectory output file
+ * close HDF5 trajectory output file
  */
-template <unsigned dimension, typename S>
-void trajectory<dimension, S>::write_param(H5param const& param)
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::close()
+{
+    try {
+	file_.close();
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to close HDF5 trajectory input file");
+    }
+}
+
+/**
+ * write global simulation parameters
+ */
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::write(H5param const& param)
 {
     param.write(file_.createGroup("/parameters"));
 }
 
 /**
- * write phase space sample to HDF5 dataset
+ * write phase space sample
  */
-template <unsigned dimension, typename S>
-void trajectory<dimension, S>::sample(S const& s)
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t index)
 {
-    if (samples_ >= max_samples_)
+    if (index >= max_samples_)
 	return;
 
     assert(s.r.size() == npart_);
     assert(s.v.size() == npart_);
 
     hsize_t count[3]  = { 1, npart_, 1 };
-    hsize_t start[3]  = { samples_, 0, 0 };
+    hsize_t start[3]  = { index, 0, 0 };
     hsize_t stride[3] = { 1, 1, 1 };
     hsize_t block[3]  = { 1, 1, dimension };
 
@@ -164,8 +198,6 @@ void trajectory<dimension, S>::sample(S const& s)
     dset_[0].write(s.r.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
     // write particle velocities
     dset_[1].write(s.v.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
-
-    samples_++;
 }
 
 
@@ -184,7 +216,7 @@ public:
     /** read global simulation parameters */
     void read(H5param& param);
     /** read phase space sample */
-    void read(phase_space_point<std::vector<T> >& sample, int64_t index);
+    void read(std::vector<T>& r, std::vector<T>& v, int64_t index);
 
 private:
     /** HDF5 trajectory input file */
@@ -241,7 +273,7 @@ void trajectory<dimension, T, false>::read(H5param& param)
  * read phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, false>::read(phase_space_point<std::vector<T> >& sample, int64_t index)
+void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v, int64_t index)
 {
     try {
 	// open phase space coordinates datasets
@@ -297,8 +329,8 @@ void trajectory<dimension, T, false>::read(phase_space_point<std::vector<T> >& s
 	index = (index < 0) ? (index + len) : index;
 
 	// allocate memory for sample
-	sample.r.resize(npart);
-	sample.v.resize(npart);
+	r.resize(npart);
+	v.resize(npart);
 
 	// read sample from dataset
 	hsize_t dim_mem[2] = { npart, dimension };
@@ -311,10 +343,10 @@ void trajectory<dimension, T, false>::read(phase_space_point<std::vector<T> >& s
 
 	// coordinates
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dset_r.read(sample.r.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_r);
+	dset_r.read(r.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_r);
 	// velocities
 	ds_v.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dset_v.read(sample.v.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_v);
+	dset_v.read(v.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_v);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to read from HDF5 trajectory input file");
