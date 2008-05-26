@@ -51,8 +51,9 @@ class trajectory
 {
 public:
     trajectory(options const& opts);
+    /** write global simulation parameters to trajectory output file */
+    void write_param(H5param const& param);
     void sample(phase_space_point<T> const& p, double const&, double const&);
-
     static void read(std::string const& filename, int64_t sample, phase_space_point<T> &p);
 
 private:
@@ -84,18 +85,6 @@ trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.particle
 	throw exception("failed to create HDF5 trajectory file");
     }
 
-    H5::DataSpace ds(H5S_SCALAR);
-    H5::Group root(file_.openGroup("/"));
-
-    unsigned int ndim = dimension;
-    root.createAttribute("dimension", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &ndim);
-    root.createAttribute("particles", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &npart_);
-    root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples_);
-    root.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &opts.timestep().value());
-    // FIXME derived parameter box length is already calculated in ljfluid
-    double box = pow(opts.particles().value() / opts.density().value(), 1.0 / dimension);
-    root.createAttribute("box", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &box);
-
     hsize_t dim[3] = { max_samples_, npart_, dimension };
     ds_file_ = H5::DataSpace(3, dim);
     dset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_DOUBLE, ds_file_);
@@ -103,6 +92,15 @@ trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.particle
 
     hsize_t dim_mem[2] = { npart_, dimension };
     ds_mem_ = H5::DataSpace(2, dim_mem);
+}
+
+/**
+ * write global simulation parameters to trajectory output file
+ */
+template <unsigned dimension, typename T>
+void trajectory<dimension, T>::write_param(H5param const& param)
+{
+    param.write(file_.createGroup("/parameters"));
 }
 
 /**

@@ -19,11 +19,14 @@
 #ifndef MDSIM_MDSIM_HPP
 #define MDSIM_MDSIM_HPP
 
+#include <H5Cpp.h>
 #include <stdint.h>
 #include <vector>
+#include "H5param.hpp"
 #include "autocorrelation.hpp"
 #include "energy.hpp"
 #include "ljfluid.hpp"
+#include "log.hpp"
 #include "options.hpp"
 #include "trajectory.hpp"
 
@@ -39,6 +42,7 @@ class mdsim
 {
 public:
     mdsim(options const& opts) : opts(opts) {}
+    /** run MD simulation */
     void operator()();
 
 private:
@@ -65,9 +69,9 @@ void mdsim<dimension, T>::operator()()
 	// set number of particles in system
 	fluid.particles(sample.r.size());
 
-	if (!opts.box().empty()) {
+	if (!opts.box_length().empty()) {
 	    // set simulation box length
-	    fluid.box(opts.box().value());
+	    fluid.box(opts.box_length().value());
 	}
 	else {
 	    // set particle density
@@ -96,9 +100,9 @@ void mdsim<dimension, T>::operator()()
 	// initialize random number generator with seed
 	fluid.rng(opts.rng_seed().value());
 
-	if (!opts.box().empty()) {
+	if (!opts.box_length().empty()) {
 	    // set simulation box length
-	    fluid.box(opts.box().value());
+	    fluid.box(opts.box_length().value());
 	}
 	else {
 	    // set particle density
@@ -127,6 +131,17 @@ void mdsim<dimension, T>::operator()()
     // trajectory writer
     trajectory<dimension, std::vector<T> > traj(opts);
 
+    // global simulation parameters
+    H5param param;
+    // gather simulation parameters
+    fluid.copy_param(param);
+    tcf.copy_param(param);
+
+    // write simulation parameters to HDF5 output files
+    tcf.write_param(param);
+    tep.write_param(param);
+    traj.write_param(param);
+
     //
     // run MD simulation
     //
@@ -151,9 +166,9 @@ void mdsim<dimension, T>::operator()()
     //
 
     // write autocorrelation function results to HDF5 file
-    tcf.write(opts.output_file_prefix().value() + ".tcf", fluid.timestep());
+    tcf.write(fluid.timestep());
     // write thermodynamic equilibrium properties to HDF5 file
-    tep.write(opts.output_file_prefix().value() + ".tep");
+    tep.write();
 }
 
 } // namespace mdsim

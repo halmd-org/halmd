@@ -19,6 +19,7 @@
 #ifndef MDSIM_AUTOCORRELATION_HPP
 #define MDSIM_AUTOCORRELATION_HPP
 
+#include <H5Cpp.h>
 #include <boost/array.hpp>
 // requires patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
@@ -27,7 +28,7 @@
 #include <boost/variant.hpp>
 #include <string>
 #include <vector>
-#include <H5Cpp.h>
+#include "H5param.hpp"
 #include "accumulator.hpp"
 #include "exception.hpp"
 #include "log.hpp"
@@ -77,7 +78,11 @@ public:
     void sample(phase_space_type const& p, double const&, double const&);
     void finalize();
     void compute_block_param(options const& opts);
-    void write(std::string const& path, double timestep);
+    /** copy autocorrelation parameters to global simulation parameters */
+    void copy_param(H5param& param) const;
+    /** write global simulation parameters to autocorrelation output file */
+    void write_param(H5param const& param);
+    void write(double timestep);
 
 private:
     void sample(phase_space_type const& p, unsigned int offset);
@@ -92,6 +97,11 @@ private:
     /** correlation functions */
     tcf_array tcf;
 
+    /** correlations output file */
+    H5::H5File file;
+
+    /** number of simulation steps */
+    uint64_t steps_;
     /** block size */
     unsigned int block_size;
     /** block shift */
@@ -104,8 +114,21 @@ private:
 
 
 template <unsigned dimension, typename T>
-autocorrelation<dimension, T>::autocorrelation(options const& opts)
+autocorrelation<dimension, T>::autocorrelation(options const& opts) : steps_(opts.steps().value())
 {
+#ifdef NDEBUG
+    // turns off the automatic error printing from the HDF5 library
+    H5::Exception::dontPrint();
+#endif
+
+    try {
+	// create empty HDF5 file
+	file = H5::H5File(opts.output_file_prefix().value() + ".tcf", H5F_ACC_TRUNC);
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create correlations file");
+    }
+
     // compute block parameters
     compute_block_param(opts);
 
@@ -271,47 +294,41 @@ double autocorrelation<dimension, T>::timegrid(unsigned int block, unsigned int 
     return timestep * powf(block_size, block / 2) * (sample + 1);
 }
 
+/**
+ * copy autocorrelation parameters to global simulation parameters
+ */
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::copy_param(H5param& param) const
+{
+    // number of simulation steps
+    param.steps(steps_);
+    // block size
+    param.block_size(block_size);
+    // block shift
+    param.block_shift(block_shift);
+    // block count
+    param.block_count(block_count);
+    // maximum number of samples per block
+    param.max_samples(max_samples);
+}
+
+/**
+ * write global simulation parameters to autocorrelation output file
+ */
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::write_param(H5param const& param)
+{
+    param.write(file.createGroup("/parameters"));
+}
 
 /**
  * write correlation function results to HDF5 file
  */
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::write(std::string const& path, double timestep)
+void autocorrelation<dimension, T>::write(double timestep)
 {
     // compute correlations for remaining samples in all blocks
     finalize();
-
-#ifdef NDEBUG
-    // turns off the automatic error printing from the HDF5 library
-    H5::Exception::dontPrint();
-#endif
-
-    H5::H5File file;
-
-    try {
-	// create empty HDF5 file
-	file = H5::H5File(path, H5F_ACC_TRUNC);
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create correlations file");
-    }
-
-    try {
-	H5::Group root(file.openGroup("/"));
-	H5::DataSpace ds(H5S_SCALAR);
-
-	// write block parameters
-	root.createAttribute("block_count", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_count);
-	root.createAttribute("block_size", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_size);
-	root.createAttribute("block_shift", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_shift);
-	root.createAttribute("max_samples", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples);
-
-	// write simulation parameters
-	root.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &timestep);
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to write attributes to correlations file");
-    }
 
     try {
 	// iterate over correlation functions

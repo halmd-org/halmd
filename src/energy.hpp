@@ -19,6 +19,7 @@
 #ifndef MDSIM_ENERGY_HPP
 #define MDSIM_ENERGY_HPP
 
+#include <H5Cpp.h>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -39,8 +40,10 @@ class energy
 {
 public:
     energy(options const& opts);
+    /** write global simulation parameters to thermodynamic equilibrium properties output file */
+    void write_param(H5param const& param);
     void sample(phase_space_point<T> const& p, double const& en_pot, double const& virial);
-    void write(std::string const& filename);
+    void write();
 
 private:
     /** simulation timestep */
@@ -51,6 +54,9 @@ private:
     unsigned int samples_;
     /** number of samples */
     unsigned int max_samples_;
+
+    /** thermodynamic equilibrium properties output file */
+    H5::H5File file_;
 
     /** thermodynamic equilibrium properties */
     std::vector<double> en_pot_;
@@ -70,6 +76,13 @@ energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep().va
     H5::Exception::dontPrint();
 #endif
 
+    try {
+	file_ = H5::H5File(opts.output_file_prefix().value() + ".tep", H5F_ACC_TRUNC);
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create HDF5 energy file");
+    }
+
     // number of samples
     max_samples_ = std::min(opts.max_samples().value(), opts.steps().value());
 
@@ -86,6 +99,15 @@ energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep().va
     }
 }
 
+/**
+ * write global simulation parameters to thermodynamic equilibrium properties output file
+ */
+template <unsigned dimension, typename T>
+void energy<dimension, T>::write_param(H5param const& param)
+{
+    param.write(file_.createGroup("/parameters"));
+}
+ 
 /**
  * sample thermodynamic equilibrium properties
  */
@@ -121,29 +143,8 @@ void energy<dimension, T>::sample(phase_space_point<T> const& p, double const& e
  * write thermodynamic equilibrium properties buffer to file
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::write(std::string const& filename)
+void energy<dimension, T>::write()
 {
-    // HDF5 energy file
-    H5::H5File file_;
-
-    try {
-	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create HDF5 energy file");
-    }
-
-    // write parameters
-    H5::Group root(file_.openGroup("/"));
-    H5::DataType dt(H5::PredType::NATIVE_DOUBLE);
-
-    try {
-	root.createAttribute("timestep", dt, H5S_SCALAR).write(dt, &timestep_);
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create attributes in HDF5 energy file");
-    }
-
     // create dataspaces for scalar and vector types
     hsize_t dim_scalar[2] = { max_samples_, 1 };
     hsize_t dim_vector[2] = { max_samples_, dimension };
@@ -152,20 +153,21 @@ void energy<dimension, T>::write(std::string const& filename)
 
     // HDF5 datasets for thermodynamic equilibrium properties
     boost::array<H5::DataSet, 6> dataset_;
+    H5::DataType tid(H5::PredType::NATIVE_DOUBLE);
 
     try {
 	// mean potential energy per particle
-	dataset_[0] = file_.createDataSet("EPOT", dt, ds_scalar);
+	dataset_[0] = file_.createDataSet("EPOT", tid, ds_scalar);
 	// mean kinetic energy per particle
-	dataset_[1] = file_.createDataSet("EKIN", dt, ds_scalar);
+	dataset_[1] = file_.createDataSet("EKIN", tid, ds_scalar);
 	// mean total energy per particle
-	dataset_[2] = file_.createDataSet("ETOT", dt, ds_scalar);
+	dataset_[2] = file_.createDataSet("ETOT", tid, ds_scalar);
 	// temperature
-	dataset_[3] = file_.createDataSet("TEMP", dt, ds_scalar);
+	dataset_[3] = file_.createDataSet("TEMP", tid, ds_scalar);
 	// pressure
-	dataset_[4] = file_.createDataSet("PRESS", dt, ds_scalar);
+	dataset_[4] = file_.createDataSet("PRESS", tid, ds_scalar);
 	// velocity center of mass
-	dataset_[5] = file_.createDataSet("VCM", dt, ds_vector);
+	dataset_[5] = file_.createDataSet("VCM", tid, ds_vector);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create datasets in HDF5 energy file");
@@ -173,17 +175,17 @@ void energy<dimension, T>::write(std::string const& filename)
 
     try {
 	// mean potential energy per particle
-	dataset_[0].write(en_pot_.data(), dt, ds_scalar, ds_scalar);
+	dataset_[0].write(en_pot_.data(), tid, ds_scalar, ds_scalar);
 	// mean kinetic energy per particle
-	dataset_[1].write(en_kin_.data(), dt, ds_scalar, ds_scalar);
+	dataset_[1].write(en_kin_.data(), tid, ds_scalar, ds_scalar);
 	// mean total energy per particle
-	dataset_[2].write(en_tot_.data(), dt, ds_scalar, ds_scalar);
+	dataset_[2].write(en_tot_.data(), tid, ds_scalar, ds_scalar);
 	// temperature
-	dataset_[3].write(temp_.data(), dt, ds_scalar, ds_scalar);
+	dataset_[3].write(temp_.data(), tid, ds_scalar, ds_scalar);
 	// pressure
-	dataset_[4].write(press_.data(), dt, ds_scalar, ds_scalar);
+	dataset_[4].write(press_.data(), tid, ds_scalar, ds_scalar);
 	// velocity center of mass
-	dataset_[5].write(v_cm_.data(), dt, ds_vector, ds_vector);
+	dataset_[5].write(v_cm_.data(), tid, ds_vector, ds_vector);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write thermodynamic equilibrium properties to HDF5 energy file");

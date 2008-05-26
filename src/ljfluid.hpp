@@ -27,6 +27,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include "H5param.hpp"
 #include "exception.hpp"
 #include "gsl_rng.hpp"
 #include "log.hpp"
@@ -110,6 +111,9 @@ public:
     double const& cell_length();
     /** returns simulation timestep */
     double const& timestep() const;
+
+    /** copy ljfluid parameters to global simulation parameters */
+    void copy_param(H5param& param) const;
 
     /** MD simulation step */
     void mdstep();
@@ -471,6 +475,30 @@ template <unsigned dimension, typename T>
 double const& ljfluid<dimension, T>::timestep() const
 {
     return timestep_;
+}
+
+/**
+ * copy ljfluid parameters to global simulation parameters
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::copy_param(H5param& param) const
+{
+    // positional coordinate dimension
+    param.dimension(dimension);
+    // number of particles
+    param.particles(npart);
+    // number of cells per dimension
+    param.cells(ncell);
+    // particle density
+    param.density(density_);
+    // periodic box length
+    param.box_length(box_);
+    // cell length
+    param.cell_length(cell_length_);
+    // simulation timestep
+    param.timestep(timestep_);
+    // cutoff distance
+    param.cutoff_distance(r_cut);
 }
 
 /**
