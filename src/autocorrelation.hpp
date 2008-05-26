@@ -25,9 +25,9 @@
 #include <boost/mpl/vector.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
+#include <hdf5.hpp>
 #include <string>
 #include <vector>
-#include <H5Cpp.h>
 #include "accumulator.hpp"
 #include "exception.hpp"
 #include "log.hpp"
@@ -73,6 +73,15 @@ private:
 
 public:
     autocorrelation(options const& opts);
+
+    /** get number of simulation steps */
+    uint64_t steps() const;
+
+    /** read autocorrelation parameters from HDF5 file */
+    void read_param(H5::Group const& root);
+    /** write autocorrelation parameters to HDF5 file */
+    void write_param(H5::Group& root) const;
+
     void sample(S const& s);
     void write(std::string const& path, float timestep);
 
@@ -80,7 +89,7 @@ private:
     void sample(S const& s, unsigned int offset);
     void autocorrelate_block(unsigned int n);
     void finalize();
-    void compute_block_param(options const& opts);
+    void compute_block_param(unsigned int block_size_, uint64_t steps, uint64_t max_samples_);
     float timegrid(unsigned int n, unsigned int k, float timestep);
 
 private:
@@ -91,6 +100,8 @@ private:
     /** correlation functions */
     tcf_array tcf;
 
+    /** number of simulation steps */
+    uint64_t steps_;
     /** block size */
     unsigned int block_size;
     /** block shift */
@@ -106,7 +117,7 @@ template <unsigned dimension, typename S>
 autocorrelation<dimension, S>::autocorrelation(options const& opts)
 {
     // compute block parameters
-    compute_block_param(opts);
+    compute_block_param(opts.block_size(), opts.steps(), opts.max_samples());
 
     // allocate phase space sample blocks
     try {
@@ -137,24 +148,26 @@ autocorrelation<dimension, S>::autocorrelation(options const& opts)
  * compute block parameters
  */
 template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::compute_block_param(options const& opts)
+void autocorrelation<dimension, S>::compute_block_param(unsigned int block_size_, uint64_t steps, uint64_t max_samples_)
 {
+    // set number of simulation steps
+    steps_ = steps;
     // set block size
-    block_size = opts.block_size();
+    block_size = block_size_;
     // compute block shift
     block_shift = std::floor(std::sqrt(block_size));
     // compute block level count
     block_count = 0;
     if (block_size > 1) {
-	for (unsigned int n = block_size; n <= opts.steps(); n *= block_size) {
+	for (unsigned int n = block_size; n <= steps_; n *= block_size) {
 	    ++block_count;
-	    if ((n * block_shift) > opts.steps())
+	    if ((n * block_shift) > steps_)
 		break;
 	    ++block_count;
 	}
     }
     // set maximum number of samples per block
-    max_samples = opts.max_samples();
+    max_samples = max_samples_;
 
     LOG("block size  = " << block_size);
     LOG("block shift = " << block_shift);
@@ -173,6 +186,56 @@ void autocorrelation<dimension, S>::compute_block_param(options const& opts)
     }
 }
 
+/**
+ * get number of simulation steps
+ */
+template <unsigned dimension, typename T>
+uint64_t autocorrelation<dimension, T>::steps() const
+{
+    return steps_;
+}
+
+/**
+ * read autocorrelation parameters from HDF5 file
+ */
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::read_param(H5::Group const& root)
+{
+    try {
+	H5ext::Group param(root.openGroup("autocorrelation"));
+
+	// block parameters
+	compute_block_param(param["block_size"].as<unsigned int>(), param["steps"].as<uint64_t>(), param["max_samples"].as<uint64_t>());
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to read autocorrelation parameters from HDF5 file");
+    }
+}
+
+/**
+ * write autocorrelation parameters to HDF5 file
+ */
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::write_param(H5::Group& root) const
+{
+    try {
+	H5ext::Group param(root.createGroup("autocorrelation"));
+
+	// number of simulation steps
+	param["steps"] = steps_;
+	// block size
+	param["block_size"] = block_size;
+	// block shift
+	param["block_shift"] = block_shift;
+	// block count
+	param["block_count"] = block_count;
+	// maximum number of samples per block
+	param["max_samples"] = max_samples;
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to write autocorrelation parameters to HDF5 file");
+    }
+}
 
 template <unsigned dimension, typename S>
 void autocorrelation<dimension, S>::sample(S const& s)
@@ -286,17 +349,16 @@ void autocorrelation<dimension, S>::write(std::string const& path, float timeste
     }
 
     try {
-	H5::Group root(file.openGroup("/"));
-	H5::DataSpace ds(H5S_SCALAR);
+	H5ext::Group root(file.openGroup("/"));
 
 	// write block parameters
-	root.createAttribute("block_count", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_count);
-	root.createAttribute("block_size", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_size);
-	root.createAttribute("block_shift", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &block_shift);
-	root.createAttribute("max_samples", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples);
+	root["block_count"] = block_count;
+	root["block_size"] = block_size;
+	root["block_shift"] = block_shift;
+	root["max_samples"] = max_samples;
 
 	// write simulation parameters
-	root.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &timestep);
+	root["timestep"] = timestep;
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write attributes to correlations file");
