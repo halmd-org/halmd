@@ -59,7 +59,15 @@ private:
 template <unsigned dimension, typename T>
 mdsim<dimension, T>::mdsim(options const& opts) : fluid_(opts), tcf_(opts), tep_(opts), traj_(opts), opts_(opts)
 {
-    fluid_.density(opts_.density().value());
+    if (!opts_.box().empty()) {
+	// set simulation box length
+	fluid_.box(opts_.box().value());
+    }
+    else {
+	// set particle density
+	fluid_.density(opts_.density().value());
+    }
+
     fluid_.timestep(opts_.timestep().value());
     fluid_.temperature(opts_.temperature().value());
 }

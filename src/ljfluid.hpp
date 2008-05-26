@@ -76,6 +76,7 @@ public:
     void timestep(double val);
     double density() const;
     void density(double density_);
+    void box(double value);
     double box() const;
     void temperature(double temp);
 
@@ -216,7 +217,7 @@ void ljfluid<dimension, T>::density(double density_)
     // particle density
     this->density_ = density_;
     // periodic box length
-    this->box_ = pow(npart / density_, 1.0 / T::dim());
+    this->box_ = std::pow(npart / density_, 1. / T::dim());
 
     init_cells();
     lattice();
@@ -229,6 +230,21 @@ template <unsigned dimension, typename T>
 double ljfluid<dimension, T>::box() const
 {
     return box_;
+}
+
+/**
+ * set periodic box length
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::box(double value)
+{
+    // periodic box length
+    box_ = value;
+    // particle density
+    density_ = npart / std::pow(box_, 1. * dimension);
+
+    init_cells();
+    lattice();
 }
 
 /**
