@@ -16,13 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "options.hpp"
-#include "version.h"
 #include <iostream>
 #include <fstream>
+#include "options.hpp"
+#include "version.h"
 namespace po = boost::program_options;
-
-using namespace std;
 
 
 namespace boost { namespace program_options
@@ -32,9 +30,9 @@ namespace boost { namespace program_options
  * program option value validation for double precision floating-point values
  */
 template <>
-void validate(boost::any& value_store, vector<string> const& values, double*, long)
+void validate(boost::any& value_store, std::vector<std::string> const& values, double*, long)
 {
-    string const& s = validators::get_single_string(values);
+    std::string const& s = validators::get_single_string(values);
     double value;
 
     try {
@@ -58,9 +56,9 @@ void validate(boost::any& value_store, vector<string> const& values, double*, lo
  * program option value validation for unsigned integer values
  */
 template <>
-void validate(boost::any& value_store, vector<string> const& values, unsigned int*, long)
+void validate(boost::any& value_store, std::vector<std::string> const& values, unsigned int*, long)
 {
-    string const& s = validators::get_single_string(values);
+    std::string const& s = validators::get_single_string(values);
     unsigned int value;
 
     try {
@@ -84,9 +82,9 @@ void validate(boost::any& value_store, vector<string> const& values, unsigned in
  * program option value validation for 64-bit unsigned integer values
  */
 template <>
-void validate(boost::any& value_store, vector<string> const& values, uint64_t*, long)
+void validate(boost::any& value_store, std::vector<std::string> const& values, uint64_t*, long)
 {
-    string const& s = validators::get_single_string(values);
+    std::string const& s = validators::get_single_string(values);
     uint64_t value;
 
     try {
@@ -112,7 +110,7 @@ void validate(boost::any& value_store, vector<string> const& values, uint64_t*, 
 void conflicting_options(const variables_map& vm, char const* opt1, char const* opt2)
 {
     if (vm.count(opt1) && !vm[opt1].defaulted() && vm.count(opt2) && !vm[opt2].defaulted()) {
-	throw logic_error(string("conflicting options '") + opt1 + "' and '" + opt2 + "'");
+	throw std::logic_error(std::string("conflicting options '") + opt1 + "' and '" + opt2 + "'");
     }
 }
 
@@ -208,7 +206,7 @@ void options::parse(int argc, char** argv)
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
 	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME), "output file prefix")
-	("input,i", po::value<vector<string> >(), "parameter input file")
+	("input,i", po::value<std::vector<std::string> >(), "parameter input file")
 	("dry-run,n", po::bool_switch(), "perform a trial run without simulation")
 	("verbose,v", po::accum_value<int>()->default_value(0), "increase verbosity")
 	("version,V", "output version and exit")
@@ -224,12 +222,12 @@ void options::parse(int argc, char** argv)
 
 	// parse optional parameter input files
 	if (vm.count("input")) {
-	    vector<string> const& files = vm["input"].as<vector<string> >();
+	    std::vector<std::string> const& files = vm["input"].as<std::vector<std::string> >();
 
-	    for (vector<string>::const_iterator it = files.begin(); it != files.end(); ++it) {
-		ifstream ifs(it->c_str());
+	    for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it) {
+		std::ifstream ifs(it->c_str());
 		if (ifs.fail()) {
-		    cerr << PROGRAM_NAME ": could not open parameter input file '" << *it << "'\n";
+		    std::cerr << PROGRAM_NAME ": could not open parameter input file '" << *it << "'\n";
 		    throw options::exit_exception(EXIT_FAILURE);
 		}
 
@@ -238,8 +236,8 @@ void options::parse(int argc, char** argv)
 	}
     }
     catch (std::exception const& e) {
-	cerr << PROGRAM_NAME ": " << e.what() << "\n";
-	cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
+	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";
+	std::cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
 	throw options::exit_exception(EXIT_FAILURE);
     }
 
@@ -250,17 +248,17 @@ void options::parse(int argc, char** argv)
 	po::conflicting_options(vm, "density", "box-length");
     }
     catch (std::exception const& e) {
-	cerr << PROGRAM_NAME ": " << e.what() << "\n";
+	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";
 	throw options::exit_exception(EXIT_FAILURE);
     }
 
     if (vm.count("help")) {
-	cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << opts << "\n";
+	std::cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << opts << "\n";
 	throw options::exit_exception(EXIT_SUCCESS);
     }
 
     if (vm.count("version")) {
-	cout << PROGRAM_NAME " (" PROGRAM_VERSION ")\n"
+	std::cout << PROGRAM_NAME " (" PROGRAM_VERSION ")\n"
 	    "\n" PROGRAM_COPYRIGHT "\n" "This is free software. "
 	    "You may redistribute copies of it under the terms of\n"
 	    "the GNU General Public License "
