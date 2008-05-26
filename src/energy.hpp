@@ -45,7 +45,7 @@ public:
     energy(options const& opts);
     /** write global simulation parameters to thermodynamic equilibrium properties output file */
     void write_param(H5param const& param);
-    void sample(phase_space_point<std::vector<T> > const& p, double const& en_pot, double const& virial, uint64_t);
+    void sample(phase_space_point<std::vector<T> > const& p, double const& en_pot, double const& virial);
     void write();
 
 private:
@@ -115,7 +115,7 @@ void energy<dimension, T>::write_param(H5param const& param)
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const& en_pot, double const& virial, uint64_t)
+void energy<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const& en_pot, double const& virial)
 {
     if (samples_ >= max_samples_) return;
 

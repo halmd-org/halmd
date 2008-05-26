@@ -118,7 +118,7 @@ public:
     /** MD simulation step */
     void mdstep();
     /** sample trajectory */
-    template <typename V> void sample(V& visitor, uint64_t index) const;
+    template <typename V> void sample(V visitor) const;
 
 private:
     /** update cell lists */
@@ -751,9 +751,9 @@ void ljfluid<dimension, T>::mdstep()
  */
 template <unsigned dimension, typename T>
 template <typename V>
-void ljfluid<dimension, T>::sample(V& visitor, uint64_t index) const
+void ljfluid<dimension, T>::sample(V visitor) const
 {
-    visitor.sample(part, en_pot_, virial_, index);
+    visitor(part, en_pot_, virial_);
 }
 
 } // namespace mdsim

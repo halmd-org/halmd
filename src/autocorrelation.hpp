@@ -75,7 +75,7 @@ private:
 public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
-    void sample(phase_space_point<std::vector<T> > const& p, double const&, double const&, uint64_t);
+    void sample(phase_space_point<std::vector<T> > const& p, double const&, double const&);
     void finalize();
     void compute_block_param(options const& opts);
     /** copy autocorrelation parameters to global simulation parameters */
@@ -209,7 +209,7 @@ uint64_t autocorrelation<dimension, T>::min_samples()
 
 
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const&, double const&, uint64_t)
+void autocorrelation<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const&, double const&)
 {
     // sample odd level blocks
     autocorrelate(p, 0);
