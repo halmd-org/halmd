@@ -51,6 +51,8 @@ private:
     options const& opts;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T> fluid;
+    /** trajectory file writer */
+    trajectory<dimension, T> traj;
 };
 
 /**
@@ -68,13 +70,13 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	H5param param;
 	traj.read(param);
 	// read phase space sample
-	phase_space_point<std::vector<T> > sample;
-	traj.read(sample, opts.trajectory_sample().value());
+	std::vector<T> r, v;
+	traj.read(r, v, opts.trajectory_sample().value());
 	// close trajectory input file
 	traj.close();
 
 	// set number of particles in system
-	fluid.particles(sample.r.size());
+	fluid.particles(param.particles());
 
 	if (!opts.box_length().empty()) {
 	    // set simulation box length
@@ -91,7 +93,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	fluid.timestep(opts.timestep().defaulted() ? param.timestep() : opts.timestep().value());
 
 	// set system state from trajectory sample
-	fluid.particles(sample);
+	fluid.particles(r, v);
 
 	// initialize random number generator with seed
 	fluid.rng(opts.rng_seed().value());
@@ -137,9 +139,12 @@ void mdsim<dimension, T>::operator()()
     // autocorrelation functions
     autocorrelation<dimension, T> tcf(opts);
     // thermodynamic equilibrium properties
-    energy<dimension, std::vector<T> > tep(opts);
+    energy<dimension, T> tep(opts);
     // trajectory writer
-    trajectory<dimension, std::vector<T> > traj(opts);
+    trajectory<dimension, T> traj;
+
+    // open HDF5 output files
+    traj.open(opts);
 
     H5param param;
 
@@ -150,27 +155,29 @@ void mdsim<dimension, T>::operator()()
     // write global simulation parameters to HDF5 output files
     tcf.write_param(param);
     tep.write_param(param);
-    traj.write_param(param);
+    traj.write(param);
 
     // sample trajectory
-    fluid.sample(traj);
+    fluid.sample(traj, 0);
 
     for (uint64_t step = 0; step < opts.steps().value(); ++step) {
 	// MD simulation step
 	fluid.mdstep();
 
 	// sample autocorrelation functions
-	fluid.sample(tcf);
+	fluid.sample(tcf, step);
 	// sample thermodynamic equilibrium properties
-	fluid.sample(tep);
+	fluid.sample(tep, step);
 	// sample trajectory
-	fluid.sample(traj);
+	fluid.sample(traj, step + 1);
     }
 
     // write autocorrelation function results to HDF5 file
     tcf.write(fluid.timestep());
     // write thermodynamic equilibrium properties to HDF5 file
     tep.write();
+    // close HDF5 output files
+    traj.close();
 }
 
 } // namespace mdsim

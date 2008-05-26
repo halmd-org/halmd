@@ -75,7 +75,7 @@ private:
 public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
-    void sample(phase_space_type const& p, double const&, double const&);
+    void sample(phase_space_point<std::vector<T> > const& p, double const&, double const&, uint64_t);
     void finalize();
     void compute_block_param(options const& opts);
     /** copy autocorrelation parameters to global simulation parameters */
@@ -85,7 +85,7 @@ public:
     void write(double timestep);
 
 private:
-    void sample(phase_space_type const& p, unsigned int offset);
+    void autocorrelate(phase_space_point<std::vector<T> > const& p, unsigned int offset);
     void autocorrelate_block(unsigned int n);
     double timegrid(unsigned int n, unsigned int k, double timestep);
 
@@ -209,20 +209,20 @@ uint64_t autocorrelation<dimension, T>::min_samples()
 
 
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(phase_space_type const& p, double const&, double const&)
+void autocorrelation<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const&, double const&, uint64_t)
 {
     // sample odd level blocks
-    sample(p, 0);
+    autocorrelate(p, 0);
 
     if (0 == block[0].count % block_shift) {
 	// sample even level blocks
-	sample(p, 1);
+	autocorrelate(p, 1);
     }
 }
 
 
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(phase_space_type const& p, unsigned int offset)
+void autocorrelation<dimension, T>::autocorrelate(phase_space_point<std::vector<T> > const& p, unsigned int offset)
 {
     // add phase space sample to lowest block
     block[offset].samples.push_back(p);

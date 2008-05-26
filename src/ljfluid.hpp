@@ -80,7 +80,7 @@ public:
     /** set number of particles */
     void particles(unsigned int value);
     /** set system state from phase space sample */
-    void particles(phase_space_point<std::vector<T> > const& state);
+    void particles(std::vector<T> const& r, std::vector<T> const& v);
     /** set particle density */
     void density(double value);
     /** set periodic box length */
@@ -118,7 +118,7 @@ public:
     /** MD simulation step */
     void mdstep();
     /** sample trajectory */
-    template <typename V> void sample(V& visitor) const;
+    template <typename V> void sample(V& visitor, uint64_t index) const;
 
 private:
     /** update cell lists */
@@ -218,7 +218,6 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 
     try {
 	part.r.resize(npart);
-	part.R.resize(npart);
 	part.v.resize(npart);
     }
     catch (std::bad_alloc const& e) {
@@ -230,16 +229,15 @@ void ljfluid<dimension, T>::particles(unsigned int value)
  * set system state from phase space sample
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::particles(phase_space_point<std::vector<T> > const& state)
+void ljfluid<dimension, T>::particles(std::vector<T> const& r, std::vector<T> const& v)
 {
-    assert(state.r.size() == npart);
-    assert(state.v.size() == npart);
+    assert(r.size() == npart);
+    assert(v.size() == npart);
 
     // copy particle positions to sorted particle list
-    std::copy(state.r.begin(), state.r.end(), part.r.begin());
-    std::copy(state.R.begin(), state.R.end(), part.R.begin());
+    std::copy(r.begin(), r.end(), part.r.begin());
     // copy particle velocities to sorted particle list
-    std::copy(state.v.begin(), state.v.end(), part.v.begin());
+    std::copy(v.begin(), v.end(), part.v.begin());
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// add particle to appropriate cell list
@@ -376,7 +374,6 @@ void ljfluid<dimension, T>::lattice()
 	compute_cell(r).push_back(particle<T>(r, i));
 	// copy position to sorted particle list
 	part.r[i] = r;
-	part.R[i] = r;
     }
 }
 
@@ -700,8 +697,7 @@ void ljfluid<dimension, T>::leapfrog_half()
 	    // full step position
 	    p.r += p.v * timestep_;
 	    // copy position to sorted particle list
-	    part.r[p.n] = p.r - floor(p.r / box_) * box_;
-	    part.R[p.n] = p.r;
+	    part.r[p.n] = p.r;
 	}
     }
 }
@@ -759,9 +755,9 @@ void ljfluid<dimension, T>::mdstep()
  */
 template <unsigned dimension, typename T>
 template <typename V>
-void ljfluid<dimension, T>::sample(V& visitor) const
+void ljfluid<dimension, T>::sample(V& visitor, uint64_t index) const
 {
-    visitor.sample(part, en_pot_, virial_);
+    visitor.sample(part, en_pot_, virial_, index);
 }
 
 } // namespace mdsim

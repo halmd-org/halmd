@@ -21,6 +21,7 @@
 
 #include <H5Cpp.h>
 #include <algorithm>
+#include <boost/foreach.hpp>
 #include <string>
 #include <vector>
 #include "accumulator.hpp"
@@ -28,6 +29,8 @@
 #include "options.hpp"
 #include "statistics.hpp"
 
+
+#define foreach BOOST_FOREACH
 
 namespace mdsim
 {
@@ -42,7 +45,7 @@ public:
     energy(options const& opts);
     /** write global simulation parameters to thermodynamic equilibrium properties output file */
     void write_param(H5param const& param);
-    void sample(phase_space_point<T> const& p, double const& en_pot, double const& virial);
+    void sample(phase_space_point<std::vector<T> > const& p, double const& en_pot, double const& virial, uint64_t);
     void write();
 
 private:
@@ -64,7 +67,7 @@ private:
     std::vector<double> en_tot_;
     std::vector<double> temp_;
     std::vector<double> press_;
-    std::vector<typename T::value_type> v_cm_;
+    std::vector<T> v_cm_;
 };
 
 
@@ -112,14 +115,14 @@ void energy<dimension, T>::write_param(H5param const& param)
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(phase_space_point<T> const& p, double const& en_pot, double const& virial)
+void energy<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const& en_pot, double const& virial, uint64_t)
 {
     if (samples_ >= max_samples_) return;
 
     // mean squared velocity
     accumulator<double> vv;
-    for (typename T::const_iterator it = p.v.begin(); it != p.v.end(); ++it) {
-	vv += *it * *it;
+    foreach (T const& v, p.v) {
+	vv += v * v;
     }
 
     // mean potential energy per particle
@@ -193,5 +196,7 @@ void energy<dimension, T>::write()
 }
 
 } // namespace mdsim
+
+#undef foreach
 
 #endif /* ! MDSIM_ENERGY_HPP */
