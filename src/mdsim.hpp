@@ -20,6 +20,7 @@
 #define MDSIM_MDSIM_HPP
 
 #include <H5Cpp.h>
+#include <boost/bind.hpp>
 #include <stdint.h>
 #include <vector>
 #include "H5param.hpp"
@@ -69,11 +70,6 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	// read global simulation parameters
 	H5param param;
 	traj.read(param);
-	// read phase space sample
-	std::vector<T> r, v;
-	traj.read(r, v, opts.trajectory_sample().value());
-	// close trajectory input file
-	traj.close();
 
 	// set number of particles in system
 	fluid.particles(param.particles());
@@ -92,8 +88,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	// set simulation timestep
 	fluid.timestep(opts.timestep().defaulted() ? param.timestep() : opts.timestep().value());
 
-	// set system state from trajectory sample
-	fluid.particles(r, v);
+	// read trajectory sample and set system state
+	fluid.state(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+	// close trajectory input file
+	traj.close();
 
 	// initialize random number generator with seed
 	fluid.rng(opts.rng_seed().value());

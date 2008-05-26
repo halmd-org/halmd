@@ -80,7 +80,7 @@ public:
     /** set number of particles */
     void particles(unsigned int value);
     /** set system state from phase space sample */
-    void particles(std::vector<T> const& r, std::vector<T> const& v);
+    template <typename V> void state(V visitor);
     /** set particle density */
     void density(double value);
     /** set periodic box length */
@@ -229,15 +229,11 @@ void ljfluid<dimension, T>::particles(unsigned int value)
  * set system state from phase space sample
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::particles(std::vector<T> const& r, std::vector<T> const& v)
+template <typename V>
+void ljfluid<dimension, T>::state(V visitor)
 {
-    assert(r.size() == npart);
-    assert(v.size() == npart);
-
-    // copy particle positions to sorted particle list
-    std::copy(r.begin(), r.end(), part.r.begin());
-    // copy particle velocities to sorted particle list
-    std::copy(v.begin(), v.end(), part.v.begin());
+    // set system state from phase space sample
+    visitor(part.r, part.v);
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// add particle to appropriate cell list

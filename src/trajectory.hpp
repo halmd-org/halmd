@@ -299,9 +299,8 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
 	}
 	index = (index < 0) ? (index + len) : index;
 
-	// allocate memory for sample
-	r.resize(npart);
-	v.resize(npart);
+	assert(r.size() == npart);
+	assert(v.size() == npart);
 
 	// read sample from dataset
 	hsize_t dim_mem[2] = { npart, dimension };
