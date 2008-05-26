@@ -44,9 +44,9 @@ struct phase_space_samples
 {
     /** block samples */
     boost::circular_buffer<phase_space_point<T> > samples;
-    /** coarse grain count */
+    /** trajectory sample count */
     unsigned int count;
-    /** sample count */
+    /** block autocorrelation count */
     unsigned int nsample;
 
     phase_space_samples(size_t size) : samples(size), count(0), nsample(0) { }
@@ -245,7 +245,7 @@ void autocorrelation<dimension, S>::sample(S const& s)
     // sample odd level blocks
     sample(s, 0);
 
-    if (block[0].count % block_shift == 0) {
+    if (0 == block[0].count % block_shift) {
 	// sample even level blocks
 	sample(s, 1);
     }
@@ -260,22 +260,20 @@ void autocorrelation<dimension, S>::sample(S const& s, unsigned int offset)
     block[offset].count++;
 
     // autocorrelate block if circular buffer has been replaced completely
-    if (block[offset].count == block_size && block[offset].nsample < max_samples) {
+    if ((0 == block[offset].count % block_size) && block[offset].nsample < max_samples) {
 	autocorrelate_block(offset);
 	block[offset].nsample++;
     }
 
     for (unsigned int i = offset + 2; i < block_count; i += 2) {
 	// check if coarse graining is possible
-	if (block[i - 2].count < block_size) {
+	if (block[i - 2].count % block_size) {
 	    break;
 	}
 
 	// add phase space sample from lower level block middle
 	block[i].samples.push_back(block[i - 2].samples[block_size / 2]);
 	block[i].count++;
-	// reset lower level block coarse grain count
-	block[i - 2].count = 0;
 
 	// autocorrelate block if circular buffer is full
 	if (block[i].samples.full() && block[i].nsample < max_samples) {
