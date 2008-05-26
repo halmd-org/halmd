@@ -168,7 +168,7 @@ public:
      */
     option_value<std::string> trajectory_input_file() const
     {
-	return vm["input"];
+	return vm["trajectory"];
     }
 
     /**
