@@ -80,7 +80,7 @@ public:
     /** write global simulation parameters to trajectory output file */
     void write_param(H5param const& param);
 
-    static void read(std::string const& filename, int64_t sample, phase_space_point<std::vector<typename S::vector_type::value_type> > &p);
+    static void read(std::string const& filename, int64_t sample, phase_space_point<std::vector<typename S::vector_type::value_type> > &p, H5param& param);
 
 private:
     /** HDF5 output file */
@@ -164,21 +164,24 @@ void trajectory<dimension, S>::sample(S const& s)
  * read phase space sample from HDF5 trajectory input file
  */
 template <unsigned dimension, typename S>
-void trajectory<dimension, S>::read(std::string const& filename, int64_t sample, phase_space_point<std::vector<typename S::vector_type::value_type> > &p)
+void trajectory<dimension, S>::read(std::string const& filename, int64_t sample, phase_space_point<std::vector<typename S::vector_type::value_type> > &p, H5param& param)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
 
+    // open HDF5 trajectory input file
     H5::H5File file;
-
     try {
 	file = H5::H5File(filename, H5F_ACC_RDONLY);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to open HDF5 trajectory input file");
     }
+
+    // read global simulation parameters from file
+    param.read(file.openGroup("/parameters"));
 
     try {
 	// open phase space coordinates datasets
