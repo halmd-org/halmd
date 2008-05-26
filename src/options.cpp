@@ -109,7 +109,7 @@ void validate(boost::any& value_store, vector<string> const& values, uint64_t*, 
 /**
  * Function used to check that 'opt1' and 'opt2' are not specified at the same time.
  */
-void conflicting_options(const variables_map& vm, const char* opt1, const char* opt2)
+void conflicting_options(const variables_map& vm, char const* opt1, char const* opt2)
 {
     if (vm.count(opt1) && !vm[opt1].defaulted() && vm.count(opt2) && !vm[opt2].defaulted()) {
 	throw logic_error(string("conflicting options '") + opt1 + "' and '" + opt2 + "'");
@@ -190,6 +190,7 @@ void options::parse(int argc, char** argv)
     mdsim_opts.add_options()
 	("particles,N", po::value<unsigned int>()->default_value(128), "number of particles")
 	("density,d", po::value<float>()->default_value(0.1), "particle density")
+	("box-length,L", po::value<float>(), "simulation box length")
 	("timestep,t", po::value<float>()->default_value(0.01), "simulation timestep")
 	("temperature,K", po::value<float>()->default_value(1.), "initial temperature")
 	("seed,R", po::value<unsigned int>()->default_value(42), "random number generator integer seed")
@@ -249,6 +250,15 @@ void options::parse(int argc, char** argv)
     }
 
     po::notify(vm);
+
+    try {
+	// check for conflicting options
+	po::conflicting_options(vm, "density", "box-length");
+    }
+    catch (std::exception const& e) {
+	cerr << PROGRAM_NAME ": " << e.what() << "\n";
+	throw options::exit_exception(EXIT_FAILURE);
+    }
 
     if (vm.count("help")) {
 	cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << opts << "\n";

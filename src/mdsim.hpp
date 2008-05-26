@@ -79,8 +79,15 @@ void mdsim<dimension, T>::operator()()
     // initialize random number generator with seed
     fluid.rng(opts_.rng_seed().value());
 
-    // set particle density
-    fluid.density(opts_.density().value());
+    if (!opts_.box().empty()) {
+	// set simulation box length
+	fluid.box(opts_.box().value());
+    }
+    else {
+	// set particle density
+	fluid.density(opts_.density().value());
+    }
+
     // arrange particles on a face-centered cubic (fcc) lattice
     fluid.lattice();
     // set system temperature according to Maxwell-Boltzmann distribution

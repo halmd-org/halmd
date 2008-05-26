@@ -92,6 +92,14 @@ public:
     }
 
     /**
+     * returns simulation box length
+     */
+    option_value<float> box() const
+    {
+	return vm["box-length"];
+    }
+
+    /**
      * returns simulation timestep
      */
     option_value<float> timestep() const
