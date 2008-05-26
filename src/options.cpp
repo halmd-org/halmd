@@ -196,7 +196,7 @@ void options::parse(int argc, char** argv)
 	("seed,R", po::value<unsigned int>()->default_value(42), "random number generator integer seed")
 	("steps,s", po::value<uint64_t>()->default_value(10000), "number of simulation steps")
 	("trajectory,I", po::value<std::string>(), "trajectory input file")
-	("sample,S", po::value<int>(), "sample in trajectory input file")
+	("sample,S", po::value<int64_t>()->default_value(-1), "sample in trajectory input file")
 	;
 
     po::options_description tcf_opts("Autocorrelation options");

@@ -72,28 +72,58 @@ void mdsim<dimension, T>::operator()()
     // initialize Lennard Jones fluid simulation
     //
 
-    // set number of particles in system
-    fluid.particles(opts_.particles().value());
-    // set number of CUDA execution threads
-    fluid.threads(opts_.threads().value());
-    // initialize random number generator with seed
-    fluid.rng(opts_.rng_seed().value());
+    if (!opts_.trajectory_input_file().empty()) {
+	// read trajectory sample
+	phase_space_point<std::vector<T> > sample;
+	trajectory<dimension, mdstep_sample_type>::read(opts_.trajectory_input_file().value(), opts_.trajectory_sample().value(), sample);
+	// set system state from phase space sample
+	fluid.particles(sample);
 
-    if (!opts_.box().empty()) {
-	// set simulation box length
-	fluid.box(opts_.box().value());
+	// set number of CUDA execution threads
+	fluid.threads(opts_.threads().value());
+	// initialize random number generator with seed
+	fluid.rng(opts_.rng_seed().value());
+
+	if (!opts_.box().empty()) {
+	    // set simulation box length
+	    fluid.box(opts_.box().value());
+	}
+	else {
+	    // set particle density
+	    fluid.density(opts_.density().value());
+	}
+
+	if (!opts_.temperature().empty()) {
+	    // set system temperature according to Maxwell-Boltzmann distribution
+	    fluid.temperature(opts_.temperature().value());
+	}
+	// set simulation timestep
+	fluid.timestep(opts_.timestep().value());
     }
     else {
-	// set particle density
-	fluid.density(opts_.density().value());
-    }
+	// set number of particles in system
+	fluid.particles(opts_.particles().value());
+	// set number of CUDA execution threads
+	fluid.threads(opts_.threads().value());
+	// initialize random number generator with seed
+	fluid.rng(opts_.rng_seed().value());
 
-    // arrange particles on a face-centered cubic (fcc) lattice
-    fluid.lattice();
-    // set system temperature according to Maxwell-Boltzmann distribution
-    fluid.temperature(opts_.temperature().value());
-    // set simulation timestep
-    fluid.timestep(opts_.timestep().value());
+	if (!opts_.box().empty()) {
+	    // set simulation box length
+	    fluid.box(opts_.box().value());
+	}
+	else {
+	    // set particle density
+	    fluid.density(opts_.density().value());
+	}
+
+	// arrange particles on a face-centered cubic (fcc) lattice
+	fluid.lattice();
+	// set system temperature according to Maxwell-Boltzmann distribution
+	fluid.temperature(opts_.temperature().value());
+	// set simulation timestep
+	fluid.timestep(opts_.timestep().value());
+    }
 
     //
     // initialize trajectory sample visitors
