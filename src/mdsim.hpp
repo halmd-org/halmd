@@ -20,6 +20,7 @@
 #define MDSIM_MDSIM_HPP
 
 #include <cuda_wrapper.hpp>
+#include <hdf5.hpp>
 #include <stdint.h>
 #include "autocorrelation.hpp"
 #include "energy.hpp"
@@ -27,6 +28,7 @@
 #include "options.hpp"
 #include "rand48.hpp"
 #include "trajectory.hpp"
+#include "version.h"
 
 
 namespace mdsim
@@ -44,6 +46,9 @@ public:
 public:
     mdsim(options const& opts) : opts_(opts) {};
     void operator()();
+
+    /** write program parameters to HDF5 file */
+    void write_param(H5::Group& root) const;
 
 private:
     /** program options */
@@ -119,6 +124,25 @@ void mdsim<dimension, T>::operator()()
     tcf.write(opts_.correlations_output_file(), fluid.timestep());
     // write thermodynamic equilibrium properties to HDF5 file
     tep.write(opts_.energy_output_file());
+}
+
+/**
+ * write program parameters to HDF5 file
+ */
+template <unsigned dimension, typename T>
+void mdsim<dimension, T>::write_param(H5::Group& root) const
+{
+    try {
+	H5ext::Group param(root.createGroup("program"));
+
+	// program name
+	param["name"] = PROGRAM_NAME;
+	// program version
+	param["version"] = PROGRAM_VERSION;
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to write program parameters to HDF5 file");
+    }
 }
 
 } // namespace mdsim
