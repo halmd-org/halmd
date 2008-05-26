@@ -94,7 +94,7 @@ public:
     /** copy MD simulation step results from GPU to host */
     void sample();
     /** sample trajectory */
-    template <typename visitor> void sample(visitor& v, uint64_t index) const;
+    template <typename V> void sample(V visitor) const;
 
 private:
     /** number of particles in system */
@@ -551,10 +551,10 @@ void ljfluid<dimension, T>::sample()
  * sample trajectory
  */
 template <unsigned dimension, typename T>
-template <typename visitor>
-void ljfluid<dimension, T>::sample(visitor& v, uint64_t index) const
+template <typename V>
+void ljfluid<dimension, T>::sample(V visitor) const
 {
-    v.sample(h_state, index);
+    visitor(h_state);
 }
 
 } // namespace mdsim

@@ -135,6 +135,9 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
+    // boost::bind
+    using namespace boost;
+
     // autocorrelation functions
     autocorrelation<dimension, T> tcf(opts);
     // thermodynamic equilibrium properties
@@ -161,11 +164,11 @@ void mdsim<dimension, T>::operator()()
 	fluid.mdstep();
 
 	// sample autocorrelation functions
-	fluid.sample(tcf, step);
+	fluid.sample(bind(&autocorrelation<dimension, T>::sample, ref(tcf), _1));
 	// sample thermodynamic equilibrium properties
-	fluid.sample(tep, step);
+	fluid.sample(bind(&energy<dimension, T>::sample, ref(tep), _1));
 	// sample trajectory
-	fluid.sample(traj, step);
+	fluid.sample(bind(&trajectory<dimension, T>::sample, ref(traj), _1, step));
     }
 
     // write autocorrelation function results to HDF5 file

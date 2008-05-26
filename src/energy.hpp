@@ -47,7 +47,7 @@ public:
     /** write global simulation parameters to thermodynamic equilibrium properties output file */
     void write_param(H5param const& param);
 
-    void sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t);
+    void sample(mdstep_sample<cuda::host::vector<T> > const& s);
     void write();
 
 private:
@@ -119,7 +119,7 @@ void energy<dimension, T>::write_param(H5param const& param)
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t)
+void energy<dimension, T>::sample(mdstep_sample<cuda::host::vector<T> > const& s)
 {
     if (samples_ >= max_samples_) return;
 

@@ -101,7 +101,7 @@ public:
     /** write global simulation parameters to autocorrelation output file */
     void write_param(H5param const& param);
 
-    void sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t);
+    void sample(mdstep_sample<cuda::host::vector<T> > const& s);
     void write(float timestep);
 
 private:
@@ -258,7 +258,7 @@ void autocorrelation<dimension, T>::write_param(H5param const& param)
 }
 
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t)
+void autocorrelation<dimension, T>::sample(mdstep_sample<cuda::host::vector<T> > const& s)
 {
     // sample odd level blocks
     autocorrelate(s, 0);
