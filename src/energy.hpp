@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <hdf5.hpp>
 #include <string>
 #include <vector>
 #include "accumulator.hpp"
@@ -43,7 +44,10 @@ class energy
 public:
     energy(options const& opts);
     void sample(S const& s);
-    void write(std::string const& filename);
+    void write();
+
+    /** write parameters to HDF5 file */
+    template <typename visitor> void visit_param(visitor const& v);
 
 private:
     /** simulation timestep */
@@ -62,6 +66,9 @@ private:
     std::vector<float> temp_;
     std::vector<float> press_;
     std::vector<typename S::vector_type::value_type> v_cm_;
+
+    /** HDF5 output file */
+    H5::H5File file_;
 };
 
 
@@ -72,6 +79,15 @@ energy<dimension, S>::energy(options const& opts) : timestep_(opts.timestep()), 
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
+
+    // create thermodynamic equilibrium properties output file
+    try {
+	// truncate existing file
+	file_ = H5::H5File(opts.energy_output_file(), H5F_ACC_TRUNC);
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create thermodynamic equilibrium properties output file");
+    }
 
     // number of samples
     max_samples_ = std::min(opts.max_samples(), opts.steps());
@@ -87,6 +103,16 @@ energy<dimension, S>::energy(options const& opts) : timestep_(opts.timestep()), 
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate thermodynamic equilibrium properties buffer");
     }
+}
+
+/**
+ * write parameters to HDF5 file
+ */
+template <unsigned dimension, typename S>
+template <typename visitor>
+void energy<dimension, S>::visit_param(visitor const& v)
+{
+    v.write_param(file_.openGroup("/"));
 }
 
 /**
@@ -124,24 +150,15 @@ void energy<dimension, S>::sample(S const& s)
  * write thermodynamic equilibrium properties buffer to file
  */
 template <unsigned dimension, typename S>
-void energy<dimension, S>::write(std::string const& filename)
+void energy<dimension, S>::write()
 {
-    // HDF5 energy file
-    H5::H5File file_;
-
-    try {
-	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create HDF5 energy file");
-    }
 
     // write parameters
-    H5::Group root(file_.openGroup("/"));
+    H5ext::Group root(file_.openGroup("/"));
     H5::DataType dt(H5::PredType::NATIVE_FLOAT);
 
     try {
-	root.createAttribute("timestep", dt, H5S_SCALAR).write(dt, &timestep_);
+	root["timestep"] = timestep_;
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create attributes in HDF5 energy file");

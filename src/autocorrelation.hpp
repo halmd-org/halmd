@@ -80,10 +80,13 @@ public:
     /** read autocorrelation parameters from HDF5 file */
     void read_param(H5::Group const& root);
     /** write autocorrelation parameters to HDF5 file */
-    void write_param(H5::Group& root) const;
+    void write_param(H5::Group root) const;
+
+    /** write parameters to HDF5 file */
+    template <typename visitor> void visit_param(visitor const& v);
 
     void sample(S const& s);
-    void write(std::string const& path, float timestep);
+    void write(float timestep);
 
 private:
     void sample(S const& s, unsigned int offset);
@@ -99,6 +102,8 @@ private:
     result_array result;
     /** correlation functions */
     tcf_array tcf;
+    /** HDF5 output file */
+    H5::H5File file;
 
     /** number of simulation steps */
     uint64_t steps_;
@@ -116,6 +121,20 @@ private:
 template <unsigned dimension, typename S>
 autocorrelation<dimension, S>::autocorrelation(options const& opts)
 {
+#ifdef NDEBUG
+    // turns off the automatic error printing from the HDF5 library
+    H5::Exception::dontPrint();
+#endif
+
+    // create autocorrelation output file
+    try {
+	// truncate existing file
+	file = H5::H5File(opts.correlations_output_file(), H5F_ACC_TRUNC);
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create autocorrelation output file");
+    }
+
     // compute block parameters
     compute_block_param(opts.block_size(), opts.steps(), opts.max_samples());
 
@@ -216,7 +235,7 @@ void autocorrelation<dimension, T>::read_param(H5::Group const& root)
  * write autocorrelation parameters to HDF5 file
  */
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::write_param(H5::Group& root) const
+void autocorrelation<dimension, T>::write_param(H5::Group root) const
 {
     try {
 	H5ext::Group param(root.createGroup("autocorrelation"));
@@ -235,6 +254,16 @@ void autocorrelation<dimension, T>::write_param(H5::Group& root) const
     catch (H5::Exception const& e) {
 	throw exception("failed to write autocorrelation parameters to HDF5 file");
     }
+}
+
+/**
+ * write parameters to HDF5 file
+ */
+template <unsigned dimension, typename S>
+template <typename visitor>
+void autocorrelation<dimension, S>::visit_param(visitor const& v)
+{
+    v.write_param(file.openGroup("/"));
 }
 
 template <unsigned dimension, typename S>
@@ -328,41 +357,10 @@ float autocorrelation<dimension, S>::timegrid(unsigned int block, unsigned int s
  * write correlation function results to HDF5 file
  */
 template <unsigned dimension, typename S>
-void autocorrelation<dimension, S>::write(std::string const& path, float timestep)
+void autocorrelation<dimension, S>::write(float timestep)
 {
     // compute correlations for remaining samples in all blocks
     finalize();
-
-#ifdef NDEBUG
-    // turns off the automatic error printing from the HDF5 library
-    H5::Exception::dontPrint();
-#endif
-
-    H5::H5File file;
-
-    try {
-	// create empty HDF5 file
-	file = H5::H5File(path, H5F_ACC_TRUNC);
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create correlations file");
-    }
-
-    try {
-	H5ext::Group root(file.openGroup("/"));
-
-	// write block parameters
-	root["block_count"] = block_count;
-	root["block_size"] = block_size;
-	root["block_shift"] = block_shift;
-	root["max_samples"] = max_samples;
-
-	// write simulation parameters
-	root["timestep"] = timestep;
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to write attributes to correlations file");
-    }
 
     try {
 	// iterate over correlation functions

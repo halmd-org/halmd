@@ -89,7 +89,7 @@ public:
     /** read ljfluid parameters from HDF5 file */
     void read_param(H5::Group const& root);
     /** write ljfluid parameters to HDF5 file */
-    void write_param(H5::Group& group) const;
+    void write_param(H5::Group group) const;
 
     /** stream MD simulation step on GPU */
     void mdstep();
@@ -489,11 +489,15 @@ void ljfluid<dimension, T>::read_param(H5::Group const& root)
     }
 }
 
+}
+#include <sstream>
+namespace mdsim {
+
 /**
  * write ljfluid parameters to HDF5 file
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::write_param(H5::Group& root) const
+void ljfluid<dimension, T>::write_param(H5::Group root) const
 {
     try {
 	H5ext::Group param(root.createGroup("ljfluid"));

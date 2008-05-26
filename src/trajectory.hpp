@@ -19,11 +19,11 @@
 #ifndef MDSIM_TRAJECTORY_HPP
 #define MDSIM_TRAJECTORY_HPP
 
-#include <H5Cpp.h>
 #include <algorithm>
 #include <assert.h>
 #include <boost/array.hpp>
 #include <cuda_wrapper.hpp>
+#include <hdf5.hpp>
 #include <string>
 #include "exception.hpp"
 #include "options.hpp"
@@ -77,9 +77,13 @@ public:
     trajectory(options const& opts);
     void sample(S const& s);
 
+    /** write parameters to HDF5 file */
+    template <typename visitor> void visit_param(visitor const& v);
+
     static void read(options const& opts, phase_space_point<typename S::vector_type> &p);
 
 private:
+    /** HDF5 output file */
     H5::H5File file_;
     const uint64_t npart_;
     const uint64_t max_samples_;
@@ -101,25 +105,16 @@ trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particle
     H5::Exception::dontPrint();
 #endif
 
+    // create trajectory output file
     try {
+	// truncate existing file
 	file_ = H5::H5File(opts.trajectory_output_file(), H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to create HDF5 trajectory file");
+	throw exception("failed to create trajectory output file");
     }
 
-    H5::DataSpace ds(H5S_SCALAR);
-    H5::Group root(file_.openGroup("/"));
-
-    unsigned int ndim = dimension;
-    root.createAttribute("dimension", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &ndim);
-    root.createAttribute("particles", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &npart_);
-    root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples_);
-    root.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &opts.timestep());
-    // FIXME derived parameter box length is already calculated in ljfluid
-    float box = pow(opts.particles() / opts.density(), 1.0 / dimension);
-    root.createAttribute("box", H5::PredType::NATIVE_FLOAT, ds).write(H5::PredType::NATIVE_FLOAT, &box);
-
+    // create datasets
     hsize_t dim[3] = { max_samples_, npart_, dimension };
     ds_file_ = H5::DataSpace(3, dim);
     dset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_FLOAT, ds_file_);
@@ -127,6 +122,16 @@ trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particle
 
     hsize_t dim_mem[2] = { npart_, dimension };
     ds_mem_ = H5::DataSpace(2, dim_mem);
+}
+
+/**
+ * write parameters to HDF5 file
+ */
+template <unsigned dimension, typename S>
+template <typename visitor>
+void trajectory<dimension, S>::visit_param(visitor const& v)
+{
+    v.write_param(file_.openGroup("/"));
 }
 
 /**
