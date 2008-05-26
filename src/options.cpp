@@ -182,54 +182,34 @@ accumulating_value<T>* accum_value()
 namespace mdsim {
 
 /**
- * set default parameters
- */
-options::options()
-{
-    // MD simulation parameters
-    npart_ = 10000;
-    density_ = 0.05;
-    timestep_ = 0.005;
-    temp_ = 1.;
-    steps_ = 1000;
-    avgsteps_ = 100;
-
-    // Block algorithm options
-    block_size_ = 6;
-    max_samples_ = 1000;
-
-    // Other options
-    rngseed_ = 42;
-    output_file_prefix_ = PROGRAM_NAME;
-}
-
-/**
  * parse program option values
  */
 void options::parse(int argc, char** argv)
 {
     po::options_description mdsim_opts("MD simulation parameters");
     mdsim_opts.add_options()
-	("particles,N", po::value(&npart_), "number of particles")
-	("density,d", po::value(&density_), "particle density")
-	("timestep,t", po::value(&timestep_), "simulation timestep")
-	("temperature,K", po::value(&temp_), "initial temperature")
-	("steps,s", po::value(&steps_), "number of simulation steps")
-	("average,S", po::value(&avgsteps_), "number of average accumulation steps")
+	("particles,N", po::value<unsigned int>()->default_value(128), "number of particles")
+	("density,d", po::value<double>()->default_value(0.1), "particle density")
+	("timestep,t", po::value<double>()->default_value(0.01), "simulation timestep")
+	("temperature,K", po::value<double>()->default_value(1.), "initial temperature")
+	("seed,R", po::value<unsigned int>()->default_value(42), "random number generator integer seed")
+	("steps,s", po::value<uint64_t>()->default_value(10000), "number of simulation steps")
+	("trajectory,I", po::value<std::string>(), "trajectory input file")
+	("sample,S", po::value<int>(), "sample in trajectory input file")
 	;
 
     po::options_description tcf_opts("Autocorrelation options");
     tcf_opts.add_options()
-	("block-size", po::value(&block_size_), "block size")
-	("max-samples", po::value(&max_samples_), "maximum number of samples per block")
+	("block-size,B", po::value<unsigned int>()->default_value(10), "block size")
+	("max-samples,M", po::value<uint64_t>()->default_value(1000), "maximum number of samples per block")
 	;
 
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
-	("seed,R", po::value(&rngseed_), "random number generator integer seed")
+	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME), "output file prefix")
 	("input,i", po::value<vector<string> >(), "parameter input file")
-	("output,o", po::value(&output_file_prefix_), "output file prefix")
-	("verbose,v", po::accum_value<int>(), "increase verbosity")
+	("dry-run,n", po::bool_switch(), "perform a trial run without simulation")
+	("verbose,v", po::accum_value<int>()->default_value(0), "increase verbosity")
 	("version,V", "output version and exit")
 	("help,h", "display this help and exit")
 	;

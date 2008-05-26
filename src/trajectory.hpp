@@ -62,7 +62,7 @@ private:
 
 
 template <unsigned dimension, typename T>
-trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.npart()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
+trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.particles().value()), max_samples_(std::min(opts.steps().value(), opts.max_samples().value())), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -70,7 +70,7 @@ trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.npart())
 #endif
 
     try {
-	file_ = H5::H5File(opts.trajectory_output_file(), H5F_ACC_TRUNC);
+	file_ = H5::H5File(opts.output_file_prefix().value() + ".trj", H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create HDF5 trajectory file");
@@ -83,9 +83,9 @@ trajectory<dimension, T>::trajectory(options const& opts) : npart_(opts.npart())
     root.createAttribute("dimension", H5::PredType::NATIVE_UINT, ds).write(H5::PredType::NATIVE_UINT, &ndim);
     root.createAttribute("particles", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &npart_);
     root.createAttribute("steps", H5::PredType::NATIVE_UINT64, ds).write(H5::PredType::NATIVE_UINT64, &max_samples_);
-    root.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &opts.timestep());
+    root.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &opts.timestep().value());
     // FIXME derived parameter box length is already calculated in ljfluid
-    double box = pow(opts.npart() / opts.density(), 1.0 / dimension);
+    double box = pow(opts.particles().value() / opts.density().value(), 1.0 / dimension);
     root.createAttribute("box", H5::PredType::NATIVE_DOUBLE, ds).write(H5::PredType::NATIVE_DOUBLE, &box);
 
     hsize_t dim1[3] = { max_samples_, npart_, dimension };

@@ -28,6 +28,29 @@ namespace mdsim
 {
 
 /**
+ * option value
+ */
+template <typename T>
+class option_value : public boost::program_options::variable_value
+{
+public:
+    option_value(boost::program_options::variable_value const& vv) : boost::program_options::variable_value(vv) {}
+
+    /**
+     * returns the contained value
+     */
+    T const& value() const
+    {
+	return boost::program_options::variable_value::as<T>();
+    }
+
+    T& value()
+    {
+	return boost::program_options::variable_value::as<T>();
+    }
+};
+
+/**
  * Molecular Dynamics simulation program options
  */
 class options
@@ -48,119 +71,117 @@ public:
     };
 
 public:
-    options();
-
+    options() {}
+    /** parse program option values */
     void parse(int argc, char** argv);
 
-    uint64_t const& npart() const
+    /**
+     * returns number of particles
+     */
+    option_value<unsigned int> particles() const
     {
-	return npart_;
+	return vm["particles"];
     }
 
-    double const& density() const
+    /**
+     * returns particle density
+     */
+    option_value<double> density() const
     {
-	return density_;
+	return vm["density"];
     }
 
-    double const& timestep() const
+    /**
+     * returns simulation timestep
+     */
+    option_value<double> timestep() const
     {
-	return timestep_;
+	return vm["timestep"];
     }
 
-    double const& temp() const
+    /**
+     * returns initial system temperature
+     */
+    option_value<double> temperature() const
     {
-	return temp_;
+	return vm["temperature"];
     }
 
-    uint64_t const& steps() const
+    /**
+     * returns number of simulation steps
+     */
+    option_value<uint64_t> steps() const
     {
-	return steps_;
+	return vm["steps"];
     }
 
-    uint64_t const& avgsteps() const
+    /**
+     * returns block size
+     */
+    option_value<unsigned int> block_size() const
     {
-	return avgsteps_;
+	return vm["block-size"];
     }
 
-    unsigned int const& block_size() const
+    /**
+     * returns maximum number of samples per block
+     */
+    option_value<uint64_t> max_samples() const
     {
-	return block_size_;
+	return vm["max-samples"];
     }
 
-    uint64_t const& max_samples() const
+    /**
+     * returns output file prefix
+     */
+    option_value<std::string> output_file_prefix() const
     {
-	return max_samples_;
+	return vm["output"];
     }
 
-    std::string correlations_output_file() const
+    /**
+     * returns random number generator seed
+     */
+    option_value<unsigned int> rng_seed() const
     {
-	return output_file_prefix_ + ".tcf";
-    }
-
-    unsigned int const& rngseed() const
-    {
-	return rngseed_;
-    }
-
-    std::string trajectory_output_file() const
-    {
-	return output_file_prefix_ + ".trj";
-    }
-
-    std::string energy_output_file() const
-    {
-	return output_file_prefix_ + ".tep";
-    }
-
-    std::string logfile() const
-    {
-	return output_file_prefix_ + ".log";
+	return vm["seed"];
     }
 
     /**
      * returns verbosity
      */
-    int verbosity() const
+    option_value<int> verbosity() const
     {
-	if (vm.count("verbose")) {
-	    return vm["verbose"].as<int>();
-	}
-	return 0;
+	return vm["verbose"];
     }
 
-    bool const& quiet() const
+    /**
+     * returns trajectory input file
+     */
+    option_value<std::string> trajectory_input_file() const
     {
-	return quiet_;
+	return vm["input"];
+    }
+
+    /**
+     * returns sample in trajectory input file
+     */
+    option_value<int> sample() const
+    {
+	return vm["sample"];
+    }
+
+    /**
+     * returns whether to perform a trial run without simulation
+     */
+    option_value<bool> dry_run() const
+    {
+	return vm["dry-run"];
     }
 
 private:
     /** parsed program options */
     boost::program_options::variables_map vm;
-
-    /** number of particles */
-    uint64_t npart_;
-    /** density */
-    double density_;
-    /** simulation timestep */
-    double timestep_;
-    /** initial temperature */
-    double temp_;
-    /** number of simulation steps */
-    uint64_t steps_;
-    /** number of steps for average accumulation */
-    uint64_t avgsteps_;
-
-    /** block size */
-    unsigned int block_size_;
-    /** maximum number of samples per block */
-    uint64_t max_samples_;
-
-    /** random number generator seed */
-    unsigned int rngseed_;
-    /** output file prefix */
-    std::string output_file_prefix_;
-    /** suppress status output */
-    bool quiet_;
 };
 
 } // namespace mdsim

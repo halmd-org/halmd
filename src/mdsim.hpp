@@ -59,16 +59,16 @@ private:
 template <unsigned dimension, typename T>
 mdsim<dimension, T>::mdsim(options const& opts) : fluid_(opts), tcf_(opts), tep_(opts), traj_(opts), opts_(opts)
 {
-    fluid_.density(opts_.density());
-    fluid_.timestep(opts_.timestep());
-    fluid_.temperature(opts_.temp());
+    fluid_.density(opts_.density().value());
+    fluid_.timestep(opts_.timestep().value());
+    fluid_.temperature(opts_.temperature().value());
 }
 
 
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::run()
 {
-    for (uint64_t step = 0; step < opts_.steps(); step++) {
+    for (uint64_t step = 0; step < opts_.steps().value(); step++) {
 	// MD simulation step
 	fluid_.mdstep();
 
@@ -81,9 +81,9 @@ void mdsim<dimension, T>::run()
     }
 
     // write autocorrelation function results to HDF5 file
-    tcf_.write(opts_.correlations_output_file(), fluid_.timestep());
+    tcf_.write(opts_.output_file_prefix().value() + ".tcf", fluid_.timestep());
     // write thermodynamic equilibrium properties to HDF5 file
-    tep_.write(opts_.energy_output_file());
+    tep_.write(opts_.output_file_prefix().value() + ".tep");
 }
 
 } // namespace mdsim

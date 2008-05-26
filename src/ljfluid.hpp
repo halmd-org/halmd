@@ -147,7 +147,7 @@ private:
  * initialize Lennard-Jones fluid with given particle number
  */
 template <unsigned dimension, typename T>
-ljfluid<dimension, T>::ljfluid(options const& opts) : npart(opts.npart()), part_(opts.npart())
+ljfluid<dimension, T>::ljfluid(options const& opts) : npart(opts.particles().value()), part_(opts.particles().value())
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     // Frenkel
@@ -168,7 +168,7 @@ ljfluid<dimension, T>::ljfluid(options const& opts) : npart(opts.npart()), part_
     rr_cut_skin = r_cut_skin * r_cut_skin;
 
     // seed random number generator
-    rng_.set(opts.rngseed());
+    rng_.set(opts.rng_seed().value());
 }
 
 /**

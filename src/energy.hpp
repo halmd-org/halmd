@@ -63,7 +63,7 @@ private:
 
 
 template <unsigned dimension, typename T>
-energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep()), density_(opts.density()), samples_(0)
+energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep().value()), density_(opts.density().value()), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -71,7 +71,7 @@ energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep()), 
 #endif
 
     // number of samples
-    max_samples_ = std::min(opts.max_samples(), opts.steps());
+    max_samples_ = std::min(opts.max_samples().value(), opts.steps().value());
 
     try {
 	en_pot_.reserve(max_samples_);

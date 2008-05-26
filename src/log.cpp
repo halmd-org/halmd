@@ -41,11 +41,11 @@ void init(options const& opts) {
     logger_debug()->writer().add_formatter(boost::logging::formatter::append_newline());
 #endif
 
-    boost::logging::destination::file logfile(opts.logfile());
+    boost::logging::destination::file logfile(opts.output_file_prefix().value() + ".log");
 
     // output informational messages to file
     logger()->writer().add_destination(logfile);
-    if (opts.verbosity() > 0) {
+    if (opts.verbosity().value() > 0) {
 	// output informational messages to console
 	logger()->writer().add_destination(boost::logging::destination::cerr());
     }
@@ -57,7 +57,7 @@ void init(options const& opts) {
     logger_error()->mark_as_initialized();
 
 #ifndef NDEBUG
-    if (opts.verbosity() > 1) {
+    if (opts.verbosity().value() > 1) {
 	// output debug-level messages to console and file
 	logger_debug()->writer().add_destination(boost::logging::destination::cerr());
 	logger_debug()->writer().add_destination(logfile);

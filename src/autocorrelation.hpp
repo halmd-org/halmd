@@ -136,21 +136,21 @@ template <unsigned dimension, typename T>
 void autocorrelation<dimension, T>::compute_block_param(options const& opts)
 {
     // set block size
-    block_size = opts.block_size();
+    block_size = opts.block_size().value();
     // compute block shift
     block_shift = std::floor(std::sqrt(block_size));
     // compute block level count
     block_count = 0;
     if (block_size > 1) {
-	for (unsigned int n = block_size; n <= opts.steps(); n *= block_size) {
+	for (unsigned int n = block_size; n <= opts.steps().value(); n *= block_size) {
 	    ++block_count;
-	    if ((n * block_shift) > opts.steps())
+	    if ((n * block_shift) > opts.steps().value())
 		break;
 	    ++block_count;
 	}
     }
     // set maximum number of samples per block
-    max_samples = opts.max_samples();
+    max_samples = opts.max_samples().value();
 
     LOG("block size  = " << block_size);
     LOG("block shift = " << block_shift);
