@@ -19,14 +19,16 @@
 #ifndef MDSIM_MDSIM_HPP
 #define MDSIM_MDSIM_HPP
 
+#include <H5Cpp.h>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
-#include <hdf5.hpp>
 #include <stdint.h>
+#include "H5param.hpp"
 #include "autocorrelation.hpp"
 #include "energy.hpp"
 #include "ljfluid.hpp"
+#include "log.hpp"
 #include "options.hpp"
 #include "rand48.hpp"
 #include "trajectory.hpp"
@@ -49,10 +51,9 @@ public:
 
 public:
     mdsim(options const& opts) : opts_(opts) {};
-    void operator()();
 
-    /** write program parameters to HDF5 file */
-    void write_param(H5::Group root) const;
+    /** run MD simulation */
+    void operator()();
 
 private:
     /** program options */
@@ -84,9 +85,9 @@ void mdsim<dimension, T>::operator()()
 	// initialize random number generator with seed
 	fluid.rng(opts_.rng_seed().value());
 
-	if (!opts_.box().empty()) {
+	if (!opts_.box_length().empty()) {
 	    // set simulation box length
-	    fluid.box(opts_.box().value());
+	    fluid.box(opts_.box_length().value());
 	}
 	else {
 	    // set particle density
@@ -108,9 +109,9 @@ void mdsim<dimension, T>::operator()()
 	// initialize random number generator with seed
 	fluid.rng(opts_.rng_seed().value());
 
-	if (!opts_.box().empty()) {
+	if (!opts_.box_length().empty()) {
 	    // set simulation box length
-	    fluid.box(opts_.box().value());
+	    fluid.box(opts_.box_length().value());
 	}
 	else {
 	    // set particle density
@@ -136,18 +137,16 @@ void mdsim<dimension, T>::operator()()
     // trajectory writer
     trajectory<dimension, mdstep_sample_type> traj(opts_);
 
-    // write program parameters to HDF5 output files
-    tcf.visit_param(*this);
-    tep.visit_param(*this);
-    traj.visit_param(*this);
-    // write Lennard-Jones simulation parameters to HDF5 output files
-    tcf.visit_param(fluid);
-    tep.visit_param(fluid);
-    traj.visit_param(fluid);
-    // write autocorrelation parameters to HDF5 output files
-    tcf.visit_param(tcf);
-    tep.visit_param(tcf);
-    traj.visit_param(tcf);
+    // global simulation parameters
+    H5param param;
+
+    // gather simulation parameters
+    fluid.copy_param(param);
+    tcf.copy_param(param);
+    // write simulation parameters to HDF5 output files
+    tcf.write_param(param);
+    tep.write_param(param);
+    traj.write_param(param);
 
     //
     // run MD simulation
@@ -178,25 +177,6 @@ void mdsim<dimension, T>::operator()()
     tcf.write(fluid.timestep());
     // write thermodynamic equilibrium properties to HDF5 file
     tep.write();
-}
-
-/**
- * write program parameters to HDF5 file
- */
-template <unsigned dimension, typename T>
-void mdsim<dimension, T>::write_param(H5::Group root) const
-{
-    try {
-	H5ext::Group param(root.createGroup("program"));
-
-	// program name
-	param["name"] = PROGRAM_NAME;
-	// program version
-	param["version"] = PROGRAM_VERSION;
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to write program parameters to HDF5 file");
-    }
 }
 
 #undef foreach

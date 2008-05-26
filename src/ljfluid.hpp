@@ -24,9 +24,8 @@
 #include <boost/foreach.hpp>
 #include <cmath>
 #include <cuda_wrapper.hpp>
-#include <hdf5.hpp>
 #include <stdint.h>
-#include "gpu/ljfluid_glue.hpp"
+#include "H5param.hpp"
 #include "exception.hpp"
 #include "log.hpp"
 #include "options.hpp"
@@ -34,6 +33,7 @@
 #include "rand48.hpp"
 #include "vector2d.hpp"
 #include "vector3d.hpp"
+#include "gpu/ljfluid_glue.hpp"
 
 
 #define foreach BOOST_FOREACH
@@ -86,10 +86,8 @@ public:
     /** get simulation timestep */
     float const& timestep() const;
 
-    /** read ljfluid parameters from HDF5 file */
-    void read_param(H5::Group const& root);
-    /** write ljfluid parameters to HDF5 file */
-    void write_param(H5::Group group) const;
+    /** copy ljfluid parameters to global simulation parameters */
+    void copy_param(H5param& param) const;
 
     /** stream MD simulation step on GPU */
     void mdstep();
@@ -472,61 +470,27 @@ float const& ljfluid<dimension, T>::timestep() const
 }
 
 /**
- * read ljfluid parameters from HDF5 file
+ * copy ljfluid parameters to global simulation parameters
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::read_param(H5::Group const& root)
+void ljfluid<dimension, T>::copy_param(H5param& param) const
 {
-    try {
-	H5ext::Group param(root.openGroup("ljfluid"));
-
-	// number of particles
-	particles(param["particles"].as<unsigned int>());
-	// number of CUDA execution threads per block
-	threads(param["threads"].as<unsigned int>());
-	// particle density
-	density(param["density"].as<float>());
-	// simulation timestep
-	timestep(param["timestep"].as<float>());
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to read ljfluid parameters from HDF5 file");
-    }
-}
-
-}
-#include <sstream>
-namespace mdsim {
-
-/**
- * write ljfluid parameters to HDF5 file
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::write_param(H5::Group root) const
-{
-    try {
-	H5ext::Group param(root.createGroup("ljfluid"));
-
-	// positional coordinate dimension
-	param["dimension"] = dimension;
-	// number of particles
-	param["particles"] = npart;
-	// number of CUDA execution blocks in grid
-	param["blocks"] = dim_.blocks_per_grid();
-	// number of CUDA execution threads per block
-	param["threads"] = dim_.threads_per_block();
-	// particle density
-	param["density"] = density_;
-	// periodic box length
-	param["box"] = box_;
-	// simulation timestep
-	param["timestep"] = timestep_;
-	// cutoff distance
-	param["cutoff"] = r_cut;
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to write ljfluid parameters to HDF5 file");
-    }
+    // positional coordinate dimension
+    param.dimension(dimension);
+    // number of particles
+    param.particles(npart);
+    // number of CUDA execution blocks in grid
+    param.blocks(dim_.blocks_per_grid());
+    // number of CUDA execution threads per block
+    param.threads(dim_.threads_per_block());
+    // particle density
+    param.density(density_);
+    // periodic box length
+    param.box_length(box_);
+    // simulation timestep
+    param.timestep(timestep_);
+    // cutoff distance
+    param.cutoff_distance(r_cut);
 }
 
 /**

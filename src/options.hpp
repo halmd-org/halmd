@@ -94,7 +94,7 @@ public:
     /**
      * returns simulation box length
      */
-    option_value<float> box() const
+    option_value<float> box_length() const
     {
 	return vm["box-length"];
     }
@@ -168,7 +168,7 @@ public:
      */
     option_value<unsigned int> rng_seed() const
     {
-	return vm["seed"];
+	return vm["rng-seed"];
     }
 
     /**

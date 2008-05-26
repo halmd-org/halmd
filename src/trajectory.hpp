@@ -19,11 +19,11 @@
 #ifndef MDSIM_TRAJECTORY_HPP
 #define MDSIM_TRAJECTORY_HPP
 
+#include <H5Cpp.h>
 #include <algorithm>
 #include <assert.h>
 #include <boost/array.hpp>
 #include <cuda_wrapper.hpp>
-#include <hdf5.hpp>
 #include <string>
 #include "exception.hpp"
 #include "options.hpp"
@@ -77,8 +77,8 @@ public:
     trajectory(options const& opts);
     void sample(S const& s);
 
-    /** write parameters to HDF5 file */
-    template <typename visitor> void visit_param(visitor const& v);
+    /** write global simulation parameters to trajectory output file */
+    void write_param(H5param const& param);
 
     static void read(std::string const& filename, int64_t sample, phase_space_point<std::vector<typename S::vector_type::value_type> > &p);
 
@@ -125,13 +125,12 @@ trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particle
 }
 
 /**
- * write parameters to HDF5 file
+ * write global simulation parameters to trajectory output file
  */
 template <unsigned dimension, typename S>
-template <typename visitor>
-void trajectory<dimension, S>::visit_param(visitor const& v)
+void trajectory<dimension, S>::write_param(H5param const& param)
 {
-    v.write_param(file_.openGroup("/"));
+    param.write(file_.createGroup("/parameters"));
 }
 
 /**

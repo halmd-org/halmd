@@ -19,15 +19,16 @@
 #ifndef MDSIM_AUTOCORRELATION_HPP
 #define MDSIM_AUTOCORRELATION_HPP
 
+#include <H5Cpp.h>
 #include <boost/array.hpp>
 // requires patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
-#include <hdf5.hpp>
 #include <string>
 #include <vector>
+#include "H5param.hpp"
 #include "accumulator.hpp"
 #include "exception.hpp"
 #include "log.hpp"
@@ -77,13 +78,10 @@ public:
     /** get number of simulation steps */
     uint64_t steps() const;
 
-    /** read autocorrelation parameters from HDF5 file */
-    void read_param(H5::Group const& root);
-    /** write autocorrelation parameters to HDF5 file */
-    void write_param(H5::Group root) const;
-
-    /** write parameters to HDF5 file */
-    template <typename visitor> void visit_param(visitor const& v);
+    /** copy autocorrelation parameters to global simulation parameters */
+    void copy_param(H5param& param) const;
+    /** write global simulation parameters to autocorrelation output file */
+    void write_param(H5param const& param);
 
     void sample(S const& s);
     void write(float timestep);
@@ -208,62 +206,37 @@ void autocorrelation<dimension, S>::compute_block_param(unsigned int block_size_
 /**
  * get number of simulation steps
  */
-template <unsigned dimension, typename T>
-uint64_t autocorrelation<dimension, T>::steps() const
+template <unsigned dimension, typename S>
+uint64_t autocorrelation<dimension, S>::steps() const
 {
     return steps_;
 }
 
 /**
- * read autocorrelation parameters from HDF5 file
- */
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::read_param(H5::Group const& root)
-{
-    try {
-	H5ext::Group param(root.openGroup("autocorrelation"));
-
-	// block parameters
-	compute_block_param(param["block_size"].as<unsigned int>(), param["steps"].as<uint64_t>(), param["max_samples"].as<uint64_t>());
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to read autocorrelation parameters from HDF5 file");
-    }
-}
-
-/**
- * write autocorrelation parameters to HDF5 file
- */
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::write_param(H5::Group root) const
-{
-    try {
-	H5ext::Group param(root.createGroup("autocorrelation"));
-
-	// number of simulation steps
-	param["steps"] = steps_;
-	// block size
-	param["block_size"] = block_size;
-	// block shift
-	param["block_shift"] = block_shift;
-	// block count
-	param["block_count"] = block_count;
-	// maximum number of samples per block
-	param["max_samples"] = max_samples;
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to write autocorrelation parameters to HDF5 file");
-    }
-}
-
-/**
- * write parameters to HDF5 file
+ * copy autocorrelation parameters to global simulation parameters
  */
 template <unsigned dimension, typename S>
-template <typename visitor>
-void autocorrelation<dimension, S>::visit_param(visitor const& v)
+void autocorrelation<dimension, S>::copy_param(H5param& param) const
 {
-    v.write_param(file.openGroup("/"));
+    // number of simulation steps
+    param.steps(steps_);
+    // block size
+    param.block_size(block_size);
+    // block shift
+    param.block_shift(block_shift);
+    // block count
+    param.block_count(block_count);
+    // maximum number of samples per block
+    param.max_samples(max_samples);
+}
+
+/**
+ * write global simulation parameters to autocorrelation output file
+ */
+template <unsigned dimension, typename S>
+void autocorrelation<dimension, S>::write_param(H5param const& param)
+{
+    param.write(file.createGroup("/parameters"));
 }
 
 template <unsigned dimension, typename S>
