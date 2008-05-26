@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 
     try {
 	// set CUDA device for host context
-	cuda::device::set(opts.device());
+	cuda::device::set(opts.device().value());
 
 	// initialize molecular dynamics simulation
 #ifdef DIM_3D

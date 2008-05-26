@@ -28,6 +28,29 @@ namespace mdsim
 {
 
 /**
+ * option value
+ */
+template <typename T>
+class option_value : public boost::program_options::variable_value
+{
+public:
+    option_value(boost::program_options::variable_value const& vv) : boost::program_options::variable_value(vv) {}
+
+    /**
+     * returns the contained value
+     */
+    T const& value() const
+    {
+	return boost::program_options::variable_value::as<T>();
+    }
+
+    T& value()
+    {
+	return boost::program_options::variable_value::as<T>();
+    }
+};
+
+/**
  * Molecular Dynamics simulation program options
  */
 class options
@@ -48,134 +71,133 @@ public:
     };
 
 public:
-    options();
-
+    options() {}
+    /** parse program option values */
     void parse(int argc, char** argv);
 
-    unsigned int const& particles() const
+    /**
+     * returns number of particles
+     */
+    option_value<unsigned int> particles() const
     {
-	return particles_;
+	return vm["particles"];
     }
 
-    float const& density() const
+    /**
+     * returns particle density
+     */
+    option_value<float> density() const
     {
-	return density_;
+	return vm["density"];
     }
 
-    float const& timestep() const
+    /**
+     * returns simulation timestep
+     */
+    option_value<float> timestep() const
     {
-	return timestep_;
+	return vm["timestep"];
     }
 
-    float const& temperature() const
+    /**
+     * return initial system temperature
+     */
+    option_value<float> temperature() const
     {
-	return temperature_;
+	return vm["temperature"];
     }
 
-    uint64_t const& steps() const
+    /**
+     * returns number of simulation steps
+     */
+    option_value<uint64_t> steps() const
     {
-	return steps_;
+	return vm["steps"];
     }
 
-    unsigned int const& block_size() const
+    /**
+     * returns block size
+     */
+    option_value<unsigned int> block_size() const
     {
-	return block_size_;
+	return vm["block-size"];
     }
 
-    uint64_t const& max_samples() const
+    /**
+     * returns maximum number of samples per block
+     */
+    option_value<uint64_t> max_samples() const
     {
-	return max_samples_;
+	return vm["max-samples"];
     }
 
-    std::string correlations_output_file() const
+    /**
+     * returns output file prefix
+     */
+    option_value<std::string> output_file_prefix() const
     {
-	return output_file_prefix_ + ".tcf";
+	return vm["output"];
     }
 
-    unsigned short const& device() const
+    /**
+     * returns CUDA device
+     */
+    option_value<unsigned short> device() const
     {
-	return device_;
+	return vm["device"];
     }
 
-    unsigned int const& threads() const
+    /**
+     * returns number of CUDA execution threads
+     */
+    option_value<unsigned int> threads() const
     {
-	return threads_;
+	return vm["threads"];
     }
 
-    unsigned int const& rngseed() const
+    /**
+     * returns random number generator seed
+     */
+    option_value<unsigned int> rng_seed() const
     {
-	return rngseed_;
-    }
-
-    std::string trajectory_output_file() const
-    {
-	return output_file_prefix_ + ".trj";
-    }
-
-    std::string energy_output_file() const
-    {
-	return output_file_prefix_ + ".tep";
-    }
-
-    std::string logfile() const
-    {
-	return output_file_prefix_ + ".log";
+	return vm["seed"];
     }
 
     /**
      * returns verbosity
      */
-    int verbosity() const
+    option_value<int> verbosity() const
     {
-	if (vm.count("verbose")) {
-	    return vm["verbose"].as<int>();
-	}
-	return 0;
+	return vm["verbose"];
     }
 
-    std::string const& trajectory_input_file() const
+    /**
+     * returns trajectory input file
+     */
+    option_value<std::string> trajectory_input_file() const
     {
-	return trajectory_input_file_;
+	return vm["input"];
     }
 
-    int const& sample() const
+    /**
+     * returns sample in trajectory input file
+     */
+    option_value<int> sample() const
     {
-	return sample_;
+	return vm["sample"];
+    }
+
+    /**
+     * returns whether to perform a trial run without simulation
+     */
+    option_value<bool> dry_run() const
+    {
+	return vm["dry-run"];
     }
 
 private:
     /** parsed program options */
     boost::program_options::variables_map vm;
-
-    /** number of particles */
-    unsigned int particles_;
-    /** density */
-    float density_;
-    /** simulation timestep */
-    float timestep_;
-    /** initial temperature */
-    float temperature_;
-    /** number of simulation steps */
-    uint64_t steps_;
-
-    /** block size */
-    unsigned int block_size_;
-    /** maximum number of samples per block */
-    uint64_t max_samples_;
-
-    /** CUDA device */
-    unsigned short device_;
-    /** number of threads per block */
-    unsigned int threads_;
-
-    /** random number generator seed */
-    unsigned int rngseed_;
-    /** output file prefix */
-    std::string output_file_prefix_;
-    /** trajectory input file */
-    std::string trajectory_input_file_;
-    /** sample in trajectory input file */
-    int sample_;
 };
 
 } // namespace mdsim

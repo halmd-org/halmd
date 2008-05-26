@@ -98,7 +98,7 @@ private:
  * initialize HDF5 trajectory output file
  */
 template <unsigned dimension, typename S>
-trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particles()), max_samples_(std::min(opts.steps(), opts.max_samples())), samples_(0)
+trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particles().value()), max_samples_(std::min(opts.steps().value(), opts.max_samples().value())), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -108,7 +108,7 @@ trajectory<dimension, S>::trajectory(options const& opts) : npart_(opts.particle
     // create trajectory output file
     try {
 	// truncate existing file
-	file_ = H5::H5File(opts.trajectory_output_file(), H5F_ACC_TRUNC);
+	file_ = H5::H5File(opts.output_file_prefix().value() + ".trj", H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create trajectory output file");
@@ -175,7 +175,7 @@ void trajectory<dimension, S>::read(options const& opts, phase_space_point<typen
     H5::H5File file;
 
     try {
-	file = H5::H5File(opts.trajectory_input_file(), H5F_ACC_RDONLY);
+	file = H5::H5File(opts.trajectory_input_file().value(), H5F_ACC_RDONLY);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to open HDF5 trajectory input file");
@@ -231,10 +231,10 @@ void trajectory<dimension, S>::read(options const& opts, phase_space_point<typen
 	}
 
 	// check if sample number is within bounds
-	if ((opts.sample() >= int(nsamples)) || ((-opts.sample()) > int(nsamples))) {
+	if ((opts.sample().value() >= int(nsamples)) || ((-opts.sample().value()) > int(nsamples))) {
 	    throw exception("trajectory input sample number out of bounds");
 	}
-	hsize_t sample = (opts.sample() < 0) ? (opts.sample() + int(nsamples)) : opts.sample();
+	hsize_t sample = (opts.sample().value() < 0) ? (opts.sample().value() + int(nsamples)) : opts.sample().value();
 
 	// allocate memory for sample
 	p.r.resize(npart);

@@ -73,7 +73,7 @@ private:
 
 
 template <unsigned dimension, typename S>
-energy<dimension, S>::energy(options const& opts) : timestep_(opts.timestep()), density_(opts.density()), samples_(0)
+energy<dimension, S>::energy(options const& opts) : timestep_(opts.timestep().value()), density_(opts.density().value()), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -83,14 +83,14 @@ energy<dimension, S>::energy(options const& opts) : timestep_(opts.timestep()), 
     // create thermodynamic equilibrium properties output file
     try {
 	// truncate existing file
-	file_ = H5::H5File(opts.energy_output_file(), H5F_ACC_TRUNC);
+	file_ = H5::H5File(opts.output_file_prefix().value() + ".tep", H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create thermodynamic equilibrium properties output file");
     }
 
     // number of samples
-    max_samples_ = std::min(opts.max_samples(), opts.steps());
+    max_samples_ = std::min(opts.max_samples().value(), opts.steps().value());
 
     try {
 	en_pot_.reserve(max_samples_);

@@ -73,20 +73,20 @@ void mdsim<dimension, T>::operator()()
     //
 
     // set number of particles in system
-    fluid.particles(opts_.particles());
+    fluid.particles(opts_.particles().value());
     // set number of CUDA execution threads
-    fluid.threads(opts_.threads());
+    fluid.threads(opts_.threads().value());
     // initialize random number generator with seed
-    fluid.rng(opts_.rngseed());
+    fluid.rng(opts_.rng_seed().value());
 
     // set particle density
-    fluid.density(opts_.density());
+    fluid.density(opts_.density().value());
     // arrange particles on a face-centered cubic (fcc) lattice
     fluid.lattice();
     // set system temperature according to Maxwell-Boltzmann distribution
-    fluid.temperature(opts_.temperature());
+    fluid.temperature(opts_.temperature().value());
     // set simulation timestep
-    fluid.timestep(opts_.timestep());
+    fluid.timestep(opts_.timestep().value());
 
     //
     // initialize trajectory sample visitors

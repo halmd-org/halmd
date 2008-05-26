@@ -129,14 +129,14 @@ autocorrelation<dimension, S>::autocorrelation(options const& opts)
     // create autocorrelation output file
     try {
 	// truncate existing file
-	file = H5::H5File(opts.correlations_output_file(), H5F_ACC_TRUNC);
+	file = H5::H5File(opts.output_file_prefix().value() + ".tcf", H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create autocorrelation output file");
     }
 
     // compute block parameters
-    compute_block_param(opts.block_size(), opts.steps(), opts.max_samples());
+    compute_block_param(opts.block_size().value(), opts.steps().value(), opts.max_samples().value());
 
     // allocate phase space sample blocks
     try {
