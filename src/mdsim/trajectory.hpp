@@ -24,8 +24,9 @@
 #include <assert.h>
 #include <boost/array.hpp>
 #include <string>
+#include "H5param.hpp"
+#include "log.hpp"
 #include "exception.hpp"
-#include "options.hpp"
 
 
 namespace mdsim {
@@ -44,9 +45,9 @@ template <unsigned dimension, typename T>
 class trajectory<dimension, T, true>
 {
 public:
-    trajectory();
+    trajectory(H5param const& param);
     /** create HDF5 trajectory output file */
-    void open(options const& opts);
+    void open(std::string const& filename);
     /** close HDF5 trajectory output file */
     void close();
     /** write global simulation parameters */
@@ -55,6 +56,7 @@ public:
     void sample(std::vector<T> const& r, std::vector<T> const& v);
 
 private:
+    /** HDF5 output file */
     H5::H5File file_;
     uint64_t npart_;
     uint64_t max_samples_;
@@ -65,11 +67,8 @@ private:
 };
 
 
-/**
- * initialize HDF5 trajectory output file
- */
 template <unsigned dimension, typename T>
-trajectory<dimension, T>::trajectory() : samples_(0)
+trajectory<dimension, T, true>::trajectory(H5param const& param) : npart_(param.particles()), max_samples_(param.max_samples()), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -81,20 +80,18 @@ trajectory<dimension, T>::trajectory() : samples_(0)
  * create HDF5 trajectory output file
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::open(options const& opts)
+void trajectory<dimension, T, true>::open(std::string const& filename)
 {
+    // create trajectory output file
     try {
-	file_ = H5::H5File(opts.output_file_prefix().value() + ".trj", H5F_ACC_TRUNC);
+	// truncate existing file
+	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to create HDF5 trajectory file");
+	throw exception("failed to create trajectory output file");
     }
 
-    // set number of particles
-    npart_ = opts.particles().value();
-    // set maximum number of samples
-    max_samples_ = std::min(opts.steps().value(), opts.max_samples().value());
-
+    // create datasets
     hsize_t dim[3] = { max_samples_, npart_, dimension };
     ds_file_ = H5::DataSpace(3, dim);
     dset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_DOUBLE, ds_file_);
@@ -128,10 +125,10 @@ void trajectory<dimension, T, true>::write(H5param const& param)
 }
 
 /**
- * write phase space sample to HDF5 dataset
+ * write phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T>::sample(std::vector<T> const& r, std::vector<T> const& v)
+void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector<T> const& v)
 {
     if (samples_ >= max_samples_)
 	return;
@@ -146,9 +143,9 @@ void trajectory<dimension, T>::sample(std::vector<T> const& r, std::vector<T> co
 
     ds_file_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
-    // coordinates
+    // write particle positions
     dset_[0].write(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
-    // velocities
+    // write particle velocities
     dset_[1].write(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
 
     samples_++;
@@ -220,7 +217,6 @@ void trajectory<dimension, T, false>::close()
 template <unsigned dimension, typename T>
 void trajectory<dimension, T, false>::read(H5param& param)
 {
-    // read global simulation parameters from file
     param.read(file.openGroup("/parameters"));
 }
 
@@ -295,10 +291,10 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
 	hsize_t stride[3] = { 1, 1, 1 };
 	hsize_t block[3]  = { 1, 1, dimension };
 
-	// coordinates
+	// read particle positions
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 	dset_r.read(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem, ds_r);
-	// velocities
+	// read particle velocities
 	ds_v.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 	dset_v.read(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem, ds_v);
     }

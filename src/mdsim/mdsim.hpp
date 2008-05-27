@@ -19,10 +19,8 @@
 #ifndef MDSIM_MDSIM_HPP
 #define MDSIM_MDSIM_HPP
 
-#include <H5Cpp.h>
 #include <boost/bind.hpp>
 #include <stdint.h>
-#include <vector>
 #include "H5param.hpp"
 #include "autocorrelation.hpp"
 #include "energy.hpp"
@@ -62,15 +60,18 @@ private:
 template <unsigned dimension, typename T>
 mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 {
+    // set positional coordinate dimension
+    param.dimension(dimension);
+
     // initialize Lennard Jones fluid simulation
     if (!opts.trajectory_input_file().empty()) {
-	// open trajectory input file
 	trajectory<dimension, T, false> traj;
+	// open trajectory input file
 	traj.open(opts.trajectory_input_file().value());
 	// read global simulation parameters
 	traj.read(param);
 
-	// set number of particles in system
+	// set number of particles
 	fluid.particles(param.particles());
 
 	if (!opts.box_length().empty()) {
@@ -79,13 +80,14 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	}
 	else {
 	    // set particle density
-	    fluid.density(opts.density().defaulted() ? param.density() : opts.density().value());
+	    if (!opts.density().defaulted()) {
+		param.density(opts.density().value());
+	    }
+	    fluid.density(param.density());
 	}
 
 	// initialize cell lists
 	fluid.init_cell();
-	// set simulation timestep
-	fluid.timestep(opts.timestep().defaulted() ? param.timestep() : opts.timestep().value());
 
 	// read trajectory sample and set system state
 	fluid.state(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
@@ -95,16 +97,28 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	// initialize random number generator with seed
 	fluid.rng(opts.rng_seed().value());
 
-	if (!opts.temperature().empty()) {
+	if (!opts.temperature().defaulted()) {
 	    // set system temperature according to Maxwell-Boltzmann distribution
 	    fluid.temperature(opts.temperature().value());
 	}
+
+	// override parameters with non-default option values
+	if (!opts.timestep().defaulted()) {
+	    param.timestep(opts.timestep().value());
+	}
+	if (!opts.block_size().defaulted()) {
+	    param.block_size(opts.block_size().value());
+	}
+	if (!opts.max_samples().defaulted()) {
+	    param.max_samples(opts.max_samples().value());
+	}
+	if (!opts.steps().defaulted()) {
+	    param.steps(opts.steps().value());
+	}
     }
     else {
-	// set number of particles
+	// set number of particles in system
 	fluid.particles(opts.particles().value());
-	// initialize random number generator with seed
-	fluid.rng(opts.rng_seed().value());
 
 	if (!opts.box_length().empty()) {
 	    // set simulation box length
@@ -117,14 +131,36 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
 	// initialize cell lists
 	fluid.init_cell();
-	// set simulation timestep
-	fluid.timestep(opts.timestep().value());
 
+	// initialize random number generator with seed
+	fluid.rng(opts.rng_seed().value());
 	// arrange particles on a face-centered cubic (fcc) lattice
 	fluid.lattice();
 	// set system temperature according to Maxwell-Boltzmann distribution
 	fluid.temperature(opts.temperature().value());
+
+	// gather parameters from option values
+	param.timestep(opts.timestep().value());
+	param.block_size(opts.block_size().value());
+	param.max_samples(opts.max_samples().value());
+	param.steps(opts.steps().value());
     }
+
+    // gather number of particles
+    param.particles(fluid.particles());
+    // gather number of cells per dimension
+    param.cells(fluid.cells());
+    // gather particle density
+    param.density(fluid.density());
+    // gather simulation box length
+    param.box_length(fluid.box());
+    // gather cell length
+    param.cell_length(fluid.cell_length());
+    // gather cutoff distance
+    param.cutoff_distance(fluid.cutoff_distance());
+
+    // set simulation timestep
+    fluid.timestep(param.timestep());
 }
 
 /**
@@ -134,28 +170,35 @@ template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
     // autocorrelation functions
-    autocorrelation<dimension, T> tcf(opts);
+    autocorrelation<dimension, T> tcf(param);
+    // gather block shift
+    param.block_shift(tcf.block_shift());
+    // gather block count
+    param.block_count(tcf.block_count());
+    // gather maximum number of samples per block
+    param.max_samples(tcf.max_samples());
+
+    // trajectory file writer
+    trajectory<dimension, T> traj(param);
     // thermodynamic equilibrium properties
-    energy<dimension, T> tep(opts);
-    // trajectory writer
-    trajectory<dimension, T> traj;
+    energy<dimension, T> tep(param);
 
-    // open HDF5 output files
-    traj.open(opts);
-
-    // collect global simulation parameters
-    fluid.copy_param(param);
-    tcf.copy_param(param);
+    // create trajectory output file
+    traj.open(opts.output_file_prefix().value() + ".trj");
+    // create correlations output file
+    tcf.open(opts.output_file_prefix().value() + ".tcf");
+    // create thermodynamic equilibrium properties output file
+    tep.open(opts.output_file_prefix().value() + ".tep");
 
     // write global simulation parameters to HDF5 output files
-    tcf.write_param(param);
-    tep.write_param(param);
     traj.write(param);
+    tcf.write(param);
+    tep.write(param);
 
     // sample initial trajectory
     fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2));
 
-    for (uint64_t step = 0; step < opts.steps().value(); ++step) {
+    for (uint64_t step = 0; step < param.steps(); ++step) {
 	// MD simulation step
 	fluid.mdstep();
 
@@ -168,10 +211,13 @@ void mdsim<dimension, T>::operator()()
     }
 
     // write autocorrelation function results to HDF5 file
-    tcf.write(fluid.timestep());
+    tcf.write();
     // write thermodynamic equilibrium properties to HDF5 file
     tep.write();
+
     // close HDF5 output files
+    tcf.close();
+    tep.close();
     traj.close();
 }
 

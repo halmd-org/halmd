@@ -31,7 +31,6 @@
 #include "exception.hpp"
 #include "gsl_rng.hpp"
 #include "log.hpp"
-#include "options.hpp"
 
 
 #define foreach BOOST_FOREACH
@@ -111,9 +110,8 @@ public:
     double const& cell_length();
     /** returns simulation timestep */
     double const& timestep() const;
-
-    /** copy ljfluid parameters to global simulation parameters */
-    void copy_param(H5param& param) const;
+    /** get potential cutoff distance */
+    double const& cutoff_distance() const;
 
     /** MD simulation step */
     void mdstep();
@@ -478,27 +476,12 @@ double const& ljfluid<dimension, T>::timestep() const
 }
 
 /**
- * copy ljfluid parameters to global simulation parameters
+ * returns potential cutoff distance
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::copy_param(H5param& param) const
+double const& ljfluid<dimension, T>::cutoff_distance() const
 {
-    // positional coordinate dimension
-    param.dimension(dimension);
-    // number of particles
-    param.particles(npart);
-    // number of cells per dimension
-    param.cells(ncell);
-    // particle density
-    param.density(density_);
-    // periodic box length
-    param.box_length(box_);
-    // cell length
-    param.cell_length(cell_length_);
-    // simulation timestep
-    param.timestep(timestep_);
-    // cutoff distance
-    param.cutoff_distance(r_cut);
+    return r_cut;
 }
 
 /**
