@@ -1,0 +1,4 @@
+FILE(GLOB_RECURSE modules RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.py")
+FOREACH(filename mdplot ${modules})
+  CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/${filename}" "${CMAKE_CURRENT_BINARY_DIR}/${filename}" @ONLY)
+ENDFOREACH(filename)
