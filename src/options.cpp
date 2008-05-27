@@ -206,7 +206,7 @@ void options::parse(int argc, char** argv)
 
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
-	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME "_%Y%M%d_%H%M%S"), "output file prefix")
+	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S"), "output file prefix")
 	("input,i", po::value<std::vector<std::string> >(), "parameter input file")
 	("dry-run,n", po::bool_switch(), "perform a trial run without simulation")
 	("verbose,v", po::accum_value<int>()->default_value(0), "increase verbosity")
