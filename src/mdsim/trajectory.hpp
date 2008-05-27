@@ -285,9 +285,8 @@ void trajectory<dimension, T, false>::read(cuda::host::vector<T>& r, cuda::host:
 
 	LOG("resuming from trajectory sample at offset: " << index);
 
-	// allocate memory for sample
-	r.resize(npart);
-	v.resize(npart);
+	assert(r.size() == npart);
+	assert(v.size() == npart);
 
 	// read sample from dataset
 	hsize_t dim_mem[2] = { npart, dimension };

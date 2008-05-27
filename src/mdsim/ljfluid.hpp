@@ -55,22 +55,21 @@ public:
     ljfluid();
     /** set number of particles in system */
     void particles(unsigned int value);
-    /** set system state from phase space sample */
-    template <typename V> void state(V visitor);
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
-
-    /** seed random number generator */
-    void rng(unsigned int seed);
-    /** restore random number generator from state */
-    void rng(mdsim::rand48::state_type const& state);
-
     /** set particle density */
     void density(float value);
     /** set periodic box length */
     void box(float value);
+    /** restore system state from phase space sample */
+    template <typename V> void restore(V visitor);
+
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
+    /** seed random number generator */
+    void rng(unsigned int seed);
+    /** restore random number generator from state */
+    void rng(mdsim::rand48::state_type const& state);
     /** set system temperature according to Maxwell-Boltzmann distribution */
     void temperature(float temp);
     /** set simulation timestep */
@@ -234,34 +233,6 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 }
 
 /**
- * set system state from phase space sample
- */
-template <unsigned dimension, typename T>
-template <typename V>
-void ljfluid<dimension, T>::state(V visitor)
-{
-    // set system state from phase space sample
-    visitor(h_state.r, h_state.v);
-    // set number of particles in system
-    particles(h_state.r.size());
-
-    try {
-	// copy periodically reduced particles positions from host to GPU
-	cuda::copy(h_state.r, g_state.r, stream_);
-	// replicate to periodically extended particle positions
-	cuda::copy(g_state.r, g_state.R, stream_);
-	cuda::copy(h_state.r, h_state.R, stream_);
-	// copy particle velocities from host to GPU
-	cuda::copy(h_state.v, g_state.v, stream_);
-
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to set system state from phase space sample");
-    }
-}
-
-/**
  * set number of CUDA execution threads
  */
 template <unsigned dimension, typename T>
@@ -318,35 +289,6 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 }
 
 /**
- * seed random number generator
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::rng(unsigned int seed)
-{
-    LOG("random number generator seed: " << seed);
-    try {
-	rng_.set(seed);
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to seed random number generator");
-    }
-}
-
-/**
- * restore random number generator from state
- */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::rng(mdsim::rand48::state_type const& state)
-{
-    try {
-	rng_.restore(state);
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to restore random number generator state");
-    }
-}
-
-/**
  * set particle density
  */
 template <unsigned dimension, typename T>
@@ -388,6 +330,64 @@ void ljfluid<dimension, T>::box(float value)
     // compute particle density
     density_ = npart / powf(box_, dimension);
     LOG("particle density: " << density_);
+}
+
+/**
+ * restore system state from phase space sample
+ */
+template <unsigned dimension, typename T>
+template <typename V>
+void ljfluid<dimension, T>::restore(V visitor)
+{
+    // read phase space sample
+    visitor(h_state.r, h_state.v);
+
+    try {
+	// copy periodically reduced particle positions from host to GPU
+	cuda::copy(h_state.r, g_state.r, stream_);
+	// replicate to periodically extended particle positions
+	cuda::copy(g_state.r, g_state.R, stream_);
+	cuda::copy(h_state.r, h_state.R, stream_);
+	// recalculate forces for first leapfrog half step
+	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
+	gpu::ljfluid::mdstep(g_state.r.data(), g_state.v.data(), g_state.f.data(), g_state.en.data(), g_state.virial.data());
+	// copy particle velocities from host to GPU (after force calculation!)
+	cuda::copy(h_state.v, g_state.v, stream_);
+
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to restore system state from phase space sample");
+    }
+}
+
+/**
+ * seed random number generator
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::rng(unsigned int seed)
+{
+    LOG("random number generator seed: " << seed);
+    try {
+	rng_.set(seed);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to seed random number generator");
+    }
+}
+
+/**
+ * restore random number generator from state
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::rng(mdsim::rand48::state_type const& state)
+{
+    try {
+	rng_.restore(state);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to restore random number generator state");
+    }
 }
 
 /**

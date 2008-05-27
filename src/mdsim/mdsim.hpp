@@ -75,29 +75,23 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	trajectory<dimension, T, false> traj;
 	// open trajectory input file
 	traj.open(opts.trajectory_input_file().value());
+
 	// read global simulation parameters
 	traj.read(param);
-	// read trajectory sample and set system state
-	fluid.state(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+	// set number of particles in system
+	fluid.particles(param.particles());
+	// set number of CUDA execution threads
+	fluid.threads(!opts.threads().defaulted() ? opts.threads().value() : param.threads());
+	// set particle density
+	fluid.density(!opts.density().defaulted() ? opts.density().value() : param.density());
+	// read trajectory sample and restore system state
+	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+
 	// close trajectory input file
 	traj.close();
 
-	// set number of CUDA execution threads
-	if (!opts.threads().defaulted()) {
-	    param.threads(opts.threads().value());
-	}
-	fluid.threads(param.threads());
 	// initialize random number generator with seed
 	fluid.rng(opts.rng_seed().value());
-
-	if (!opts.box_length().empty()) {
-	    // set simulation box length
-	    fluid.box(opts.box_length().value());
-	}
-	else {
-	    // set particle density
-	    fluid.density(!opts.density().defaulted() ? opts.density().value() : param.density());
-	}
 
 	if (!opts.temperature().defaulted()) {
 	    LOG_WARNING("discarding velocities from trajectory file");
