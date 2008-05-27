@@ -124,6 +124,14 @@ public:
     }
 
     /**
+     * returns total simulation time
+     */
+    option_value<double> time() const
+    {
+	return vm["time"];
+    }
+
+    /**
      * returns block size
      */
     option_value<unsigned int> block_size() const

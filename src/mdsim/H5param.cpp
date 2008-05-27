@@ -61,6 +61,9 @@ void H5param::read(H5::Group const& root)
 	// number of simulation steps
 	attr = node.openAttribute("steps");
 	attr.read(H5::PredType::NATIVE_UINT64, &steps_);
+	// total simulation time
+	attr = node.openAttribute("time");
+	attr.read(H5::PredType::NATIVE_DOUBLE, &time_);
 	// block size
 	attr = node.openAttribute("block_size");
 	attr.read(H5::PredType::NATIVE_UINT, &block_size_);
@@ -122,6 +125,9 @@ void H5param::write(H5::Group root) const
 	// number of simulation steps
 	attr = node.createAttribute("steps", H5::PredType::NATIVE_UINT64, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_UINT64, &steps_);
+	// total simulation time
+	attr = node.createAttribute("time", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_DOUBLE, &time_);
 	// block size
 	attr = node.createAttribute("block_size", H5::PredType::NATIVE_UINT, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_UINT, &block_size_);

@@ -183,6 +183,22 @@ public:
     }
 
     /**
+     * returns total simulation time
+     */
+    double const& time() const
+    {
+	return time_;
+    }
+
+    /**
+     * returns total simulation time
+     */
+    void time(double const& value)
+    {
+	time_ = value;
+    }
+
+    /**
      * returns block size
      */
     unsigned int const& block_size() const
@@ -283,6 +299,8 @@ private:
     double timestep_;
     /** number of simulation steps */
     uint64_t steps_;
+    /** total simulation time */
+    double time_;
     /** block size */
     unsigned int block_size_;
     /** block shift */
