@@ -9,11 +9,22 @@ FIND_PACKAGE(Mercurial)
 
 MERCURIAL_HG_INFO(${ljfluid_SOURCE_DIR} ljfluid)
 
-IF(ljfluid_HG_ID)
-  SET(PROGRAM_VERSION "changeset ${ljfluid_HG_ID}")
-ELSE(ljfluid_HG_ID)
-  SET(PROGRAM_VERSION "unknown version")
-ENDIF(ljfluid_HG_ID)
+IF(ljfluid_HG_TAG)
+  SET(PROGRAM_VERSION "version ${ljfluid_HG_TAG}")
+ELSE(ljfluid_HG_TAG)
+  IF(ljfluid_HG_ID)
+    SET(PROGRAM_VERSION "changeset ${ljfluid_HG_ID}")
+  ELSE(ljfluid_HG_ID)
+    SET(PROGRAM_VERSION "unknown version")
+  ENDIF(ljfluid_HG_ID)
+ENDIF(ljfluid_HG_TAG)
+
+IF(ljfluid_HG_DATE)
+  SET(PROGRAM_DATE "${ljfluid_HG_DATE}")
+ELSE(ljfluid_HG_DATE)
+  SET(PROGRAM_DATE "unknown date")
+ENDIF(ljfluid_HG_DATE)
+
 
 SET(GSL_FIND_REQUIRED TRUE)
 SET(GSL_FIND_QUIETLY TRUE)
