@@ -50,7 +50,7 @@ public:
     void close();
 
     /** write global simulation parameters to thermodynamic equilibrium properties output file */
-    void write(H5param const& param);
+    energy<dimension, T>& operator<<(H5param const& param);
 
     void sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial);
     void write();
@@ -134,9 +134,10 @@ void energy<dimension, T>::close()
  * write global simulation parameters to thermodynamic equilibrium properties output file
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::write(H5param const& param)
+energy<dimension, T>& energy<dimension, T>::operator<<(H5param const& param)
 {
     param.write(file_.createGroup("/parameters"));
+    return *this;
 }
 
 /**

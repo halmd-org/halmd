@@ -52,9 +52,9 @@ public:
     /** close HDF5 trajectory output file */
     void close();
     /** write global simulation parameters */
-    void write(H5param const& param);
+    trajectory<dimension, T, true>& operator<<(H5param const& param);
     /** write phase space sample */
-    void write(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v);
+    void sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v);
 
 private:
     /** HDF5 output file */
@@ -120,16 +120,17 @@ void trajectory<dimension, T, true>::close()
  * write global simulation parameters
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::write(H5param const& param)
+trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5param const& param)
 {
     param.write(file_.createGroup("/parameters"));
+    return *this;
 }
 
 /**
  * write phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::write(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v)
+void trajectory<dimension, T, true>::sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v)
 {
     if (samples_ >= max_samples_)
 	return;

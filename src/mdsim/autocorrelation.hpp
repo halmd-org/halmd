@@ -105,7 +105,7 @@ public:
     uint64_t max_samples() const;
 
     /** write global simulation parameters to autocorrelation output file */
-    void write(H5param const& param);
+    autocorrelation<dimension, T>& operator<<(H5param const& param);
 
     void sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v);
     void write();
@@ -285,9 +285,10 @@ uint64_t autocorrelation<dimension, T>::max_samples() const
  * write global simulation parameters to autocorrelation output file
  */
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::write(H5param const& param)
+autocorrelation<dimension, T>& autocorrelation<dimension, T>::operator<<(H5param const& param)
 {
     param.write(file.createGroup("/parameters"));
+    return *this;
 }
 
 template <unsigned dimension, typename T>
