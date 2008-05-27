@@ -54,6 +54,8 @@ public:
 private:
     /** program options */
     options const& opts;
+    /** global simulation parameters */
+    H5param param;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T> fluid;
     /** trajectory file writer */
@@ -75,7 +77,6 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	trajectory<dimension, T, false> traj;
 	traj.open(opts.trajectory_input_file().value());
 	// read global simulation parameters
-	H5param param;
 	traj.read(param);
 	// read trajectory sample and set system state
 	fluid.state(bind(&trajectory<dimension, T, false>::read, ref(traj), _1, _2, opts.trajectory_sample().value()));
@@ -145,7 +146,6 @@ void mdsim<dimension, T>::operator()()
     // open HDF5 output files
     traj.open(opts);
 
-    H5param param;
     // collect global simulation parameters
     fluid.copy_param(param);
     tcf.copy_param(param);
@@ -164,11 +164,11 @@ void mdsim<dimension, T>::operator()()
 	fluid.mdstep();
 
 	// sample autocorrelation functions
-	fluid.sample(bind(&autocorrelation<dimension, T>::sample, ref(tcf), _1));
+	fluid.sample(bind(&autocorrelation<dimension, T>::sample, ref(tcf), _2, _3));
 	// sample thermodynamic equilibrium properties
-	fluid.sample(bind(&energy<dimension, T>::sample, ref(tep), _1));
+	fluid.sample(bind(&energy<dimension, T>::sample, ref(tep), _3, _4, _5));
 	// sample trajectory
-	fluid.sample(bind(&trajectory<dimension, T>::sample, ref(traj), _1, step));
+	fluid.sample(bind(&trajectory<dimension, T>::write, ref(traj), _1, _3, step));
     }
 
     // write autocorrelation function results to HDF5 file

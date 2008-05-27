@@ -34,22 +34,18 @@
 #include "log.hpp"
 #include "options.hpp"
 #include "tcf.hpp"
-#include "trajectory.hpp"
 
 
 namespace mdsim {
 
 template <typename T>
-class phase_space_point
+struct phase_space_point
 {
-public:
     typedef T vector_type;
 
-public:
     phase_space_point() {}
     phase_space_point(T const& r, T const& v) : r(r), v(v) {}
 
-public:
     /** particle positions */
     T r;
     /** particle velocities */
@@ -60,14 +56,14 @@ public:
 template <typename T>
 struct phase_space_samples
 {
+    phase_space_samples(size_t size) : samples(size), count(0), nsample(0) { }
+
     /** block samples */
     boost::circular_buffer<phase_space_point<T> > samples;
     /** trajectory sample count */
     unsigned int count;
     /** block autocorrelation count */
     unsigned int nsample;
-
-    phase_space_samples(size_t size) : samples(size), count(0), nsample(0) { }
 };
 
 
@@ -101,11 +97,11 @@ public:
     /** write global simulation parameters to autocorrelation output file */
     void write_param(H5param const& param);
 
-    void sample(mdstep_sample<cuda::host::vector<T> > const& s);
+    void sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v);
     void write(float timestep);
 
 private:
-    void autocorrelate(mdstep_sample<cuda::host::vector<T> > const& s, unsigned int offset);
+    void autocorrelate(phase_space_type const& sample, unsigned int offset);
     void autocorrelate_block(unsigned int n);
     void finalize();
     void compute_block_param(unsigned int block_size_, uint64_t steps, uint64_t max_samples_);
@@ -258,23 +254,23 @@ void autocorrelation<dimension, T>::write_param(H5param const& param)
 }
 
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(mdstep_sample<cuda::host::vector<T> > const& s)
+void autocorrelation<dimension, T>::sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v)
 {
     // sample odd level blocks
-    autocorrelate(s, 0);
+    autocorrelate(phase_space_type(r, v), 0);
 
     if (0 == block[0].count % block_shift) {
 	// sample even level blocks
-	autocorrelate(s, 1);
+	autocorrelate(phase_space_type(r, v), 1);
     }
 }
 
 
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::autocorrelate(mdstep_sample<cuda::host::vector<T> > const& s, unsigned int offset)
+void autocorrelation<dimension, T>::autocorrelate(phase_space_type const& sample, unsigned int offset)
 {
     // add phase space sample to lowest block
-    block[offset].samples.push_back(phase_space_type(s.R, s.v));
+    block[offset].samples.push_back(sample);
     block[offset].count++;
 
     // autocorrelate block if circular buffer has been replaced completely

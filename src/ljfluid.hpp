@@ -109,8 +109,34 @@ private:
     float r_cut;
 
     /** system state in page-locked host memory */
-    mdstep_sample<cuda::host::vector<T> > h_state;
-    mdstep_sample<cuda::vector<floatn> > g_state;
+    struct {
+	/** periodically reduced particle positions */
+	cuda::host::vector<T> r;
+	/** periodically extended particle positions */
+	cuda::host::vector<T> R;
+	/** particle velocities */
+	cuda::host::vector<T> v;
+	/** potential energies per particle */
+	cuda::host::vector<float> en;
+	/** virial equation sums per particle */
+	cuda::host::vector<float> virial;
+    } h_state;
+
+    /** system state in global device memory */
+    struct {
+	/** periodically reduced particle positions */
+	cuda::vector<floatn> r;
+	/** periodically extended particle positions */
+	cuda::vector<floatn> R;
+	/** particle velocities */
+	cuda::vector<floatn> v;
+	/** particle forces */
+	cuda::vector<floatn> f;
+	/** potential energies per particle */
+	cuda::vector<float> en;
+	/** virial equation sums per particle */
+	cuda::vector<float> virial;
+    } g_state;
 
     /** random number generator */
     mdsim::rand48 rng_;
@@ -554,7 +580,7 @@ template <unsigned dimension, typename T>
 template <typename V>
 void ljfluid<dimension, T>::sample(V visitor) const
 {
-    visitor(h_state);
+    visitor(h_state.r, h_state.R, h_state.v, h_state.en, h_state.virial);
 }
 
 } // namespace mdsim

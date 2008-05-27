@@ -31,52 +31,6 @@
 
 namespace mdsim {
 
-template <typename T>
-class mdstep_sample;
-
-template <typename T>
-class mdstep_sample<cuda::host::vector<T> >
-{
-public:
-    typedef cuda::host::vector<T> vector_type;
-    typedef cuda::host::vector<float> scalar_type;
-
-public:
-    /** periodically reduced particle positions */
-    vector_type r;
-    /** periodically extended particle positions */
-    vector_type R;
-    /** particle velocities */
-    vector_type v;
-    /** potential energies per particle */
-    scalar_type en;
-    /** virial equation sums per particle */
-    scalar_type virial;
-};
-
-template <typename T>
-class mdstep_sample<cuda::vector<T> >
-{
-public:
-    typedef cuda::vector<T> vector_type;
-    typedef cuda::vector<float> scalar_type;
-
-public:
-    /** periodically reduced particle positions */
-    vector_type r;
-    /** periodically extended particle positions */
-    vector_type R;
-    /** particle velocities */
-    vector_type v;
-    /** particle forces */
-    vector_type f;
-    /** potential energies per particle */
-    scalar_type en;
-    /** virial equation sums per particle */
-    scalar_type virial;
-};
-
-
 /**
  * trajectory file reader or writer
  */
@@ -99,7 +53,7 @@ public:
     /** write global simulation parameters */
     void write(H5param const& param);
     /** write phase space sample */
-    void sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t index);
+    void write(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v, uint64_t index);
 
 private:
     /** HDF5 output file */
@@ -179,13 +133,13 @@ void trajectory<dimension, T, true>::write(H5param const& param)
  * write phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::sample(mdstep_sample<cuda::host::vector<T> > const& s, uint64_t index)
+void trajectory<dimension, T, true>::write(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v, uint64_t index)
 {
     if (index >= max_samples_)
 	return;
 
-    assert(s.r.size() == npart_);
-    assert(s.v.size() == npart_);
+    assert(r.size() == npart_);
+    assert(v.size() == npart_);
 
     hsize_t count[3]  = { 1, npart_, 1 };
     hsize_t start[3]  = { index, 0, 0 };
@@ -195,9 +149,9 @@ void trajectory<dimension, T, true>::sample(mdstep_sample<cuda::host::vector<T> 
     ds_file_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     // write periodically reduced particle coordinates
-    dset_[0].write(s.r.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
+    dset_[0].write(r.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
     // write particle velocities
-    dset_[1].write(s.v.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
+    dset_[1].write(v.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
 }
 
 
