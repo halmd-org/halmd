@@ -79,7 +79,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	}
 	else {
 	    // set particle density
-	    fluid.density(opts.density().value());
+	    fluid.density(opts.density().defaulted() ? param.density() : opts.density().value());
 	}
 
 	// initialize cell lists
