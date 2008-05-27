@@ -45,7 +45,7 @@ public:
     energy(options const& opts);
     /** write global simulation parameters to thermodynamic equilibrium properties output file */
     void write_param(H5param const& param);
-    void sample(phase_space_point<std::vector<T> > const& p, double const& en_pot, double const& virial);
+    void sample(std::vector<T> const& v, double const& en_pot, double const& virial);
     void write();
 
 private:
@@ -115,14 +115,14 @@ void energy<dimension, T>::write_param(H5param const& param)
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const& en_pot, double const& virial)
+void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot, double const& virial)
 {
     if (samples_ >= max_samples_) return;
 
     // mean squared velocity
     accumulator<double> vv;
-    foreach (T const& v, p.v) {
-	vv += v * v;
+    foreach (T const& v_, v) {
+	vv += v_ * v_;
     }
 
     // mean potential energy per particle
@@ -136,7 +136,7 @@ void energy<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, d
     // pressure
     press_.push_back(density_ * (vv.mean() + virial));
     // velocity center of mass
-    v_cm_.push_back(mean(p.v.begin(), p.v.end()));
+    v_cm_.push_back(mean(v.begin(), v.end()));
 
     samples_++;
 }

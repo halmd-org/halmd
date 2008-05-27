@@ -30,24 +30,6 @@
 
 namespace mdsim {
 
-template <typename T>
-class phase_space_point
-{
-public:
-    typedef T vector_type;
-
-public:
-    phase_space_point() {}
-    phase_space_point(T const& r, T const& v) : r(r), v(v) {}
-
-public:
-    /** particle positions */
-    T r;
-    /** particle velocities */
-    T v;
-};
-
-
 /**
  * trajectory file reader or writer
  */
@@ -70,7 +52,7 @@ public:
     /** write global simulation parameters */
     void write(H5param const& param);
     /** write phase space sample */
-    void sample(phase_space_point<std::vector<T> > const& p, double const&, double const&, uint64_t index);
+    void sample(std::vector<T> const& r, std::vector<T> const& v, uint64_t index);
 
 private:
     H5::H5File file_;
@@ -149,13 +131,13 @@ void trajectory<dimension, T, true>::write(H5param const& param)
  * write phase space sample to HDF5 dataset
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const&, double const&, uint64_t index)
+void trajectory<dimension, T>::sample(std::vector<T> const& r, std::vector<T> const& v, uint64_t index)
 {
     if (index >= max_samples_)
 	return;
 
-    assert(p.r.size() == npart_);
-    assert(p.v.size() == npart_);
+    assert(r.size() == npart_);
+    assert(v.size() == npart_);
 
     hsize_t count[3]  = { 1, npart_, 1 };
     hsize_t start[3]  = { index, 0, 0 };
@@ -165,9 +147,9 @@ void trajectory<dimension, T>::sample(phase_space_point<std::vector<T> > const& 
     ds_file_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     // coordinates
-    dset_[0].write(p.r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
+    dset_[0].write(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
     // velocities
-    dset_[1].write(p.v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
+    dset_[1].write(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
 }
 
 

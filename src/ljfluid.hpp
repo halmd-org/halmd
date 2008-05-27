@@ -158,8 +158,15 @@ private:
 
     /** cell lists */
     boost::multi_array<cell_list, dimension> cell;
+
     /** particles sorted by particle number */
-    phase_space_point<std::vector<T> > part;
+    struct {
+	/** particle positions */
+	std::vector<T> r;
+	/** particle velocities */
+	std::vector<T> v;
+    } part;
+
     /** potential energy per particle */
     double en_pot_;
     /** virial theorem force sum */
@@ -753,7 +760,7 @@ template <unsigned dimension, typename T>
 template <typename V>
 void ljfluid<dimension, T>::sample(V visitor) const
 {
-    visitor(part, en_pot_, virial_);
+    visitor(part.r, part.v, en_pot_, virial_);
 }
 
 } // namespace mdsim

@@ -34,22 +34,35 @@
 #include "log.hpp"
 #include "options.hpp"
 #include "tcf.hpp"
-#include "trajectory.hpp"
 
 
 namespace mdsim {
 
 template <typename T>
+struct phase_space_point
+{
+    typedef T vector_type;
+
+    phase_space_point(T const& r, T const& v) : r(r), v(v) {}
+
+    /** particle positions */
+    T r;
+    /** particle velocities */
+    T v;
+};
+
+
+template <typename T>
 struct phase_space_samples
 {
+    phase_space_samples(size_t size) : samples(size), count(0), nsample(0) { }
+
     /** block samples */
     boost::circular_buffer<phase_space_point<T> > samples;
     /** trajectory sample count */
     unsigned int count;
     /** block autocorrelation count */
     unsigned int nsample;
-
-    phase_space_samples(size_t size) : samples(size), count(0), nsample(0) { }
 };
 
 
@@ -75,7 +88,7 @@ private:
 public:
     autocorrelation(options const& opts);
     uint64_t min_samples();
-    void sample(phase_space_point<std::vector<T> > const& p, double const&, double const&);
+    void sample(std::vector<T> const& r, std::vector<T> const& v);
     void finalize();
     void compute_block_param(options const& opts);
     /** copy autocorrelation parameters to global simulation parameters */
@@ -209,14 +222,14 @@ uint64_t autocorrelation<dimension, T>::min_samples()
 
 
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(phase_space_point<std::vector<T> > const& p, double const&, double const&)
+void autocorrelation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> const& v)
 {
     // sample odd level blocks
-    autocorrelate(p, 0);
+    autocorrelate(phase_space_type(r, v), 0);
 
     if (0 == block[0].count % block_shift) {
 	// sample even level blocks
-	autocorrelate(p, 1);
+	autocorrelate(phase_space_type(r, v), 1);
     }
 }
 
