@@ -93,17 +93,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	if (!opts.box_length().empty()) {
 	    // set simulation box length
 	    fluid.box(opts.box_length().value());
-	    // gather particle density
-	    param.density(fluid.density());
 	}
 	else {
 	    // set particle density
-	    if (!opts.density().defaulted()) {
-		param.density(opts.density().value());
-	    }
-	    fluid.density(param.density());
-	    // gather simulation box length
-	    param.box_length(fluid.box());
+	    fluid.density(!opts.density().defaulted() ? opts.density().value() : param.density());
 	}
 
 	if (!opts.temperature().defaulted()) {
@@ -137,14 +130,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	if (!opts.box_length().empty()) {
 	    // set simulation box length
 	    fluid.box(opts.box_length().value());
-	    // gather particle density
-	    param.density(fluid.density());
 	}
 	else {
 	    // set particle density
 	    fluid.density(opts.density().value());
-	    // gather simulation box length
-	    param.box_length(fluid.box());
 	}
 
 	// arrange particles on a face-centered cubic (fcc) lattice
@@ -165,6 +154,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     param.blocks(fluid.blocks());
     // gather number of CUDA execution threads per block
     param.threads(fluid.threads());
+    // gather particle density
+    param.density(fluid.density());
+    // gather simulation box length
+    param.box_length(fluid.box());
     // gather potential cutoff distance
     param.cutoff_distance(fluid.cutoff_distance());
 
