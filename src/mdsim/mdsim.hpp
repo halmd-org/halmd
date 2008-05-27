@@ -161,6 +161,9 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
     // set simulation timestep
     fluid.timestep(param.timestep());
+
+    // adjust maximum number of samples to simulation steps limit
+    param.max_samples(std::min(param.max_samples(), param.steps()));
 }
 
 /**
@@ -175,8 +178,6 @@ void mdsim<dimension, T>::operator()()
     param.block_shift(tcf.block_shift());
     // gather block count
     param.block_count(tcf.block_count());
-    // gather maximum number of samples per block
-    param.max_samples(tcf.max_samples());
 
     // trajectory file writer
     trajectory<dimension, T> traj(param);
