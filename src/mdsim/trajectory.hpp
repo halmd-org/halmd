@@ -52,7 +52,7 @@ public:
     /** write global simulation parameters */
     void write(H5param const& param);
     /** write phase space sample */
-    void sample(std::vector<T> const& r, std::vector<T> const& v, uint64_t index);
+    void sample(std::vector<T> const& r, std::vector<T> const& v);
 
 private:
     H5::H5File file_;
@@ -131,16 +131,16 @@ void trajectory<dimension, T, true>::write(H5param const& param)
  * write phase space sample to HDF5 dataset
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T>::sample(std::vector<T> const& r, std::vector<T> const& v, uint64_t index)
+void trajectory<dimension, T>::sample(std::vector<T> const& r, std::vector<T> const& v)
 {
-    if (index >= max_samples_)
+    if (samples_ >= max_samples_)
 	return;
 
     assert(r.size() == npart_);
     assert(v.size() == npart_);
 
     hsize_t count[3]  = { 1, npart_, 1 };
-    hsize_t start[3]  = { index, 0, 0 };
+    hsize_t start[3]  = { samples_, 0, 0 };
     hsize_t stride[3] = { 1, 1, 1 };
     hsize_t block[3]  = { 1, 1, dimension };
 
@@ -150,6 +150,8 @@ void trajectory<dimension, T>::sample(std::vector<T> const& r, std::vector<T> co
     dset_[0].write(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
     // velocities
     dset_[1].write(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
+
+    samples_++;
 }
 
 

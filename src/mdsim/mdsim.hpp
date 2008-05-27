@@ -152,8 +152,8 @@ void mdsim<dimension, T>::operator()()
     tep.write_param(param);
     traj.write(param);
 
-    // sample trajectory
-    fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, 0));
+    // sample initial trajectory
+    fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2));
 
     for (uint64_t step = 0; step < opts.steps().value(); ++step) {
 	// MD simulation step
@@ -164,7 +164,7 @@ void mdsim<dimension, T>::operator()()
 	// sample thermodynamic equilibrium properties
 	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4));
 	// sample trajectory
-	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, step + 1));
+	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2));
     }
 
     // write autocorrelation function results to HDF5 file
