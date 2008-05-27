@@ -191,6 +191,11 @@ void mdsim<dimension, T>::operator()()
     // thermodynamic equilibrium properties
     energy<dimension, T> tep(param);
 
+    if (opts.dry_run().value()) {
+	// abort now that all simulation parameters have been handled
+	return;
+    }
+
     // create trajectory output file
     traj.open(opts.output_file_prefix().value() + ".trj");
     // create correlations output file
