@@ -19,12 +19,7 @@
 #ifndef MDSIM_VERSION_H
 #define MDSIM_VERSION_H
 
-#ifdef DIM_3D
-# define PROGRAM_NAME		"ljfluid3d"
-#else
-# define PROGRAM_NAME		"ljfluid2d"
-#endif
-
+#define PROGRAM_NAME		"@PROGRAM_NAME@"
 #define PROGRAM_VERSION		"@PROGRAM_VERSION@"
 #define PROGRAM_DATE		"@PROGRAM_DATE@"
 #define PROGRAM_BUILT		__DATE__ " " __TIME__

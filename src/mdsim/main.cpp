@@ -42,11 +42,35 @@ int main(int argc, char **argv)
     mdsim::log::init(opts);
 
     LOG(PROGRAM_NAME " (" PROGRAM_VERSION ")");
+#ifndef NDEBUG
+    LOG_WARNING("built with enabled debugging");
+#endif
+
+    // assemble command line
+    std::string cmd(argv[0]);
+    for (int i = 1; i < argc; ++i) {
+	cmd.push_back(' ');
+	cmd += argv[i];
+    }
+    LOG("command line: " << cmd);
 
     try {
 	// set CUDA device for host context
 	cuda::device::set(opts.device().value());
 	LOG("CUDA device: " << cuda::device::get());
+
+	// query CUDA device properties
+	cuda::device::properties prop(cuda::device::get());
+	LOG("CUDA device name: " << prop.name());
+	LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
+	LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
+	LOG("CUDA device registers per block: " << prop.regs_per_block());
+	LOG("CUDA device warp size: " << prop.warp_size());
+	LOG("CUDA device maximum number of threads per block: " << prop.max_threads_per_block());
+	LOG("CUDA device total constant memory: " << prop.total_const_mem());
+	LOG("CUDA device major revision: " << prop.major());
+	LOG("CUDA device minor revision: " << prop.minor());
+	LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 
 	// initialize molecular dynamics simulation
 #ifdef DIM_3D

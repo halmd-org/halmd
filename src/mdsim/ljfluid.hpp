@@ -421,7 +421,7 @@ void ljfluid<dimension, T>::lattice()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::temperature(float temp)
 {
-    LOG("setting velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
+    LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     try {
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	gpu::ljfluid::boltzmann.configure(dim_, stream_);
