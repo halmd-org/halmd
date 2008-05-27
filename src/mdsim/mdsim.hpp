@@ -99,6 +99,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	fluid.rng(opts.rng_seed().value());
 
 	if (!opts.temperature().defaulted()) {
+	    LOG_WARNING("discarding velocities from trajectory file");
 	    // set system temperature according to Maxwell-Boltzmann distribution
 	    fluid.temperature(opts.temperature().value());
 	}

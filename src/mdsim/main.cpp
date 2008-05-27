@@ -42,6 +42,17 @@ int main(int argc, char **argv)
     mdsim::log::init(opts);
 
     LOG(PROGRAM_NAME " (" PROGRAM_VERSION ")");
+#ifndef NDEBUG
+    LOG_WARNING("built with enabled debugging");
+#endif
+
+    // assemble command line
+    std::string cmd(argv[0]);
+    for (int i = 1; i < argc; ++i) {
+	cmd.push_back(' ');
+	cmd += argv[i];
+    }
+    LOG("command line: " << cmd);
 
     try {
 	// initialize molecular dynamics simulation

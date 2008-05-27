@@ -106,7 +106,7 @@ energy<dimension, T>::energy(H5param const& param) : timestep_(param.timestep())
 template <unsigned dimension, typename T>
 void energy<dimension, T>::open(std::string const& filename)
 {
-    LOG("thermodynamic equilibrium properties output file: " << filename);
+    LOG("write thermodynamic equilibrium properties to file: " << filename);
     try {
 	// truncate existing file
 	file_ = H5::H5File(filename, H5F_ACC_TRUNC);

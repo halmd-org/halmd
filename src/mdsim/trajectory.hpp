@@ -83,7 +83,7 @@ template <unsigned dimension, typename T>
 void trajectory<dimension, T, true>::open(std::string const& filename)
 {
     // create trajectory output file
-    LOG("trajectory output file: " << filename);
+    LOG("write trajectories to file: " << filename);
     try {
 	// truncate existing file
 	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
@@ -191,7 +191,7 @@ trajectory<dimension, T, false>::trajectory()
 template <unsigned dimension, typename T>
 void trajectory<dimension, T, false>::open(std::string const& filename)
 {
-    LOG("resuming from trajectory file: " << filename);
+    LOG("read trajectory file: " << filename);
     try {
 	file = H5::H5File(filename, H5F_ACC_RDONLY);
     }
@@ -282,7 +282,7 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
 	}
 	index = (index < 0) ? (index + len) : index;
 
-	LOG("reading trajectory sample at offset: " << index);
+	LOG("resuming from trajectory sample at offset: " << index);
 
 	assert(r.size() == npart);
 	assert(v.size() == npart);

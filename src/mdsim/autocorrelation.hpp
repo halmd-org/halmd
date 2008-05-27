@@ -211,7 +211,7 @@ autocorrelation<dimension, T>::autocorrelation(H5param const& param) : steps_(pa
 template <unsigned dimension, typename T>
 void autocorrelation<dimension, T>::open(std::string const& filename)
 {
-    LOG("correlations output file: " << filename);
+    LOG("write correlations to file: " << filename);
     try {
 	// truncate existing file
 	file = H5::H5File(filename, H5F_ACC_TRUNC);

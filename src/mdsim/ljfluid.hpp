@@ -386,7 +386,7 @@ void ljfluid<dimension, T>::lattice()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::temperature(double value)
 {
-    LOG("setting velocities from Maxwell-Boltzmann distribution at temperature: " << value);
+    LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
     // center of mass velocity
     T v_cm = 0.;
