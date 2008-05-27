@@ -192,9 +192,9 @@ void mdsim<dimension, T>::operator()()
     tep.open(opts.output_file_prefix().value() + ".tep");
 
     // write global simulation parameters to HDF5 output files
-    traj.write(param);
-    tcf.write(param);
-    tep.write(param);
+    traj << param;
+    tcf << param;
+    tep << param;
 
     // sample initial trajectory
     fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2));

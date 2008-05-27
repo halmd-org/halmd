@@ -51,7 +51,7 @@ public:
     /** close HDF5 trajectory output file */
     void close();
     /** write global simulation parameters */
-    void write(H5param const& param);
+    trajectory<dimension, T, true>& operator<<(H5param const& param);
     /** write phase space sample */
     void sample(std::vector<T> const& r, std::vector<T> const& v);
 
@@ -119,9 +119,10 @@ void trajectory<dimension, T, true>::close()
  * write global simulation parameters
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::write(H5param const& param)
+trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5param const& param)
 {
     param.write(file_.createGroup("/parameters"));
+    return *this;
 }
 
 /**
