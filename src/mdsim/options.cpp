@@ -190,10 +190,11 @@ void options::parse(int argc, char** argv)
 	("particles,N", po::value<unsigned int>()->default_value(128), "number of particles")
 	("density,d", po::value<float>()->default_value(0.1), "particle density")
 	("box-length,L", po::value<float>(), "simulation box length")
-	("timestep,t", po::value<float>()->default_value(0.01), "simulation timestep")
+	("timestep,r", po::value<float>()->default_value(0.01), "simulation timestep")
 	("temperature,K", po::value<float>()->default_value(1.), "initial temperature")
 	("rng-seed,R", po::value<unsigned int>()->default_value(42), "random number generator integer seed")
 	("steps,s", po::value<uint64_t>()->default_value(10000), "number of simulation steps")
+	("time,t", po::value<float>(), "total simulation time")
 	("trajectory,I", po::value<std::string>(), "trajectory input file")
 	("sample,S", po::value<int64_t>()->default_value(-1), "sample in trajectory input file")
 	;
@@ -259,6 +260,7 @@ void options::parse(int argc, char** argv)
     try {
 	// check for conflicting options
 	po::conflicting_options(vm, "density", "box-length");
+	po::conflicting_options(vm, "steps", "time");
     }
     catch (std::exception const& e) {
 	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";

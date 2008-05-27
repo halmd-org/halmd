@@ -142,6 +142,17 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	param.steps(opts.steps().value());
     }
 
+    if (!opts.time().empty()) {
+	// override number of simulation steps with total simulation time
+	param.time(opts.time().value());
+	param.steps(std::ceil(param.time() / param.timestep()));
+    }
+    else {
+	// derive total simulation time from number of simulation steps
+	param.time(param.steps() * param.timestep());
+    }
+    LOG("total simulation time: " << param.time());
+
     // gather number of particles
     param.particles(fluid.particles());
     // gather number of CUDA execution blocks in grid
