@@ -66,8 +66,9 @@ private:
 template <unsigned dimension, typename T>
 mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 {
-    // set positional coordinate dimension
+    // set positional coordinates dimension
     param.dimension(dimension);
+    LOG("positional coordinates dimension: " << dimension);
 
     // initialize Lennard Jones fluid simulation
     if (!opts.trajectory_input_file().empty()) {
@@ -163,7 +164,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     param.blocks(fluid.blocks());
     // gather number of CUDA execution threads per block
     param.threads(fluid.threads());
-    // gather cutoff distance
+    // gather potential cutoff distance
     param.cutoff_distance(fluid.cutoff_distance());
 
     // set simulation timestep
@@ -171,6 +172,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
     // adjust maximum number of samples to simulation steps limit
     param.max_samples(std::min(param.max_samples(), param.steps()));
+    LOG("maximum number of samples: " << param.max_samples());
 }
 
 /**
@@ -211,6 +213,8 @@ void mdsim<dimension, T>::operator()()
     // sample initial trajectory
     fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3));
 
+    LOG("starting MD simulation");
+
     // stream first MD simulation program step on GPU
     fluid.mdstep();
 
@@ -227,6 +231,8 @@ void mdsim<dimension, T>::operator()()
 	// sample trajectory
 	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3));
     }
+
+    LOG("finished MD simulation");
 
     // write autocorrelation function results to HDF5 file
     tcf.write();

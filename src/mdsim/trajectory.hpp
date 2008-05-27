@@ -84,6 +84,7 @@ template <unsigned dimension, typename T>
 void trajectory<dimension, T, true>::open(std::string const& filename)
 {
     // create trajectory output file
+    LOG("trajectory output file: " << filename);
     try {
 	// truncate existing file
 	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
@@ -191,6 +192,7 @@ trajectory<dimension, T, false>::trajectory()
 template <unsigned dimension, typename T>
 void trajectory<dimension, T, false>::open(std::string const& filename)
 {
+    LOG("resuming from trajectory file: " << filename);
     try {
 	file = H5::H5File(filename, H5F_ACC_RDONLY);
     }
@@ -280,6 +282,8 @@ void trajectory<dimension, T, false>::read(cuda::host::vector<T>& r, cuda::host:
 	    throw exception("trajectory input sample number out of bounds");
 	}
 	index = (index < 0) ? (index + len) : index;
+
+	LOG("reading trajectory sample at offset: " << index);
 
 	// allocate memory for sample
 	r.resize(npart);

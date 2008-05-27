@@ -41,9 +41,12 @@ int main(int argc, char **argv)
 
     mdsim::log::init(opts);
 
+    LOG(PROGRAM_NAME " (" PROGRAM_VERSION ")");
+
     try {
 	// set CUDA device for host context
 	cuda::device::set(opts.device().value());
+	LOG("CUDA device: " << cuda::device::get());
 
 	// initialize molecular dynamics simulation
 #ifdef DIM_3D
@@ -55,13 +58,16 @@ int main(int argc, char **argv)
 	sim();
     }
     catch (cuda::error const& e) {
-	std::cerr << PROGRAM_NAME ": CUDA ERROR: " << e.what() << std::endl;
+	LOG_ERROR("CUDA: " << e.what());
+	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
     catch (std::exception const& e) {
-	std::cerr << PROGRAM_NAME ": ERROR: " << e.what() << std::endl;
+	LOG_ERROR(e.what());
+	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
 
+    LOG(PROGRAM_NAME " exit");
     return EXIT_SUCCESS;
 }

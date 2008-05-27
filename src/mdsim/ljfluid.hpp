@@ -69,7 +69,7 @@ public:
     void density(float value);
     /** set periodic box length */
     void box(float value);
-    /** arrange particles on a face-centered cubic (fcc) lattice */
+    /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
     void temperature(float temp);
@@ -157,6 +157,7 @@ ljfluid<dimension, T>::ljfluid()
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     r_cut = 2.5;
+    LOG("potential cutoff distance: " << r_cut);
 
     // squared cutoff distance
     float rr_cut = r_cut * r_cut;
@@ -186,6 +187,7 @@ void ljfluid<dimension, T>::particles(unsigned int value)
     }
     // set particle number
     npart = value;
+    LOG("number of particles: " << npart);
     // copy particle number to device symbol
     try {
 	cuda::copy(npart, gpu::ljfluid::npart);
@@ -290,6 +292,8 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 
     // set CUDA execution dimensions
     dim_ = cuda::config(dim3((npart + value - 1) / value), dim3(value));
+    LOG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
+    LOG("number of CUDA execution threads: " << dim_.threads_per_block());
 
     // allocate global device memory for placeholder particles
     try {
@@ -319,6 +323,7 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::rng(unsigned int seed)
 {
+    LOG("random number generator seed: " << seed);
     try {
 	rng_.set(seed);
     }
@@ -349,9 +354,11 @@ void ljfluid<dimension, T>::density(float value)
 {
     // set particle density
     density_ = value;
+    LOG("particle density: " << density_);
 
     // compute periodic box length
     box_ = powf(npart / density_, 1. / dimension);
+    LOG("periodic simulation box length: " << box_);
     // copy periodic box length to device symbol
     try {
 	cuda::copy(box_, gpu::ljfluid::box);
@@ -369,6 +376,7 @@ void ljfluid<dimension, T>::box(float value)
 {
     // set periodic box length
     box_ = value;
+    LOG("periodic simulation box length: " << box_);
     // copy periodic box length to device symbol
     try {
 	cuda::copy(box_, gpu::ljfluid::box);
@@ -379,14 +387,16 @@ void ljfluid<dimension, T>::box(float value)
 
     // compute particle density
     density_ = npart / powf(box_, dimension);
+    LOG("particle density: " << density_);
 }
 
 /**
- * arrange particles on a face-centered cubic (fcc) lattice
+ * place particles on a face-centered cubic (fcc) lattice
  */
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::lattice()
 {
+    LOG("placing particles on face-centered cubic (fcc) lattice");
     try {
 	// compute particle lattice positions on GPU
 	gpu::ljfluid::lattice.configure(dim_, stream_);
@@ -411,6 +421,7 @@ void ljfluid<dimension, T>::lattice()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::temperature(float temp)
 {
+    LOG("setting velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     try {
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	gpu::ljfluid::boltzmann.configure(dim_, stream_);
@@ -449,6 +460,7 @@ void ljfluid<dimension, T>::timestep(float value)
 {
     // set simulation timestep
     timestep_ = value;
+    LOG("simulation timestep: " << timestep_);
     // copy simulation timestep to device symbol
     try {
 	cuda::copy(timestep_, gpu::ljfluid::timestep);
