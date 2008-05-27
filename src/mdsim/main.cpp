@@ -41,6 +41,8 @@ int main(int argc, char **argv)
 
     mdsim::log::init(opts);
 
+    LOG(PROGRAM_NAME " (" PROGRAM_VERSION ")");
+
     try {
 	// initialize molecular dynamics simulation
 #ifdef DIM_3D
@@ -52,9 +54,11 @@ int main(int argc, char **argv)
 	sim();
     }
     catch (std::exception const& e) {
-	std::cerr << PROGRAM_NAME ": ERROR: " << e.what() << std::endl;
+	LOG_ERROR(e.what());
+	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
 
+    LOG(PROGRAM_NAME " exit");
     return EXIT_SUCCESS;
 }

@@ -151,9 +151,12 @@ autocorrelation<dimension, T>::autocorrelation(H5param const& param) : steps_(pa
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
+    LOG("number of simulation steps: " << steps_);
+    LOG("block size: " << block_size_);
 
     // compute block shift
     block_shift_ = std::floor(std::sqrt(block_size_));
+    LOG("block shift: " << block_shift_);
 
     // compute block level count
     block_count_ = 0;
@@ -165,11 +168,7 @@ autocorrelation<dimension, T>::autocorrelation(H5param const& param) : steps_(pa
 	    ++block_count_;
 	}
     }
-
-    LOG("block size  = " << block_size_);
-    LOG("block shift = " << block_shift_);
-    LOG("block count = " << block_count_);
-    LOG("max samples = " << max_samples_);
+    LOG("block count: " << block_count_);
 
     // validate block parameters
     if (max_samples_ < block_size_) {
@@ -212,6 +211,7 @@ autocorrelation<dimension, T>::autocorrelation(H5param const& param) : steps_(pa
 template <unsigned dimension, typename T>
 void autocorrelation<dimension, T>::open(std::string const& filename)
 {
+    LOG("correlations output file: " << filename);
     try {
 	// truncate existing file
 	file = H5::H5File(filename, H5F_ACC_TRUNC);

@@ -349,6 +349,8 @@ void ljfluid<dimension, T>::rng(rng::gsl::gfsr4::state_type const& state)
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::lattice()
 {
+    LOG("placing particles on face-centered cubic (fcc) lattice");
+
 #ifdef DIM_3D
     // number of particles along 1 lattice dimension
     const unsigned int n = ceil(cbrt(npart / 4.));
@@ -384,6 +386,8 @@ void ljfluid<dimension, T>::lattice()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::temperature(double value)
 {
+    LOG("setting velocities from Maxwell-Boltzmann distribution at temperature: " << value);
+
     // center of mass velocity
     T v_cm = 0.;
     // maximum squared velocity
