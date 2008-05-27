@@ -28,7 +28,6 @@
 #include "H5param.hpp"
 #include "exception.hpp"
 #include "log.hpp"
-#include "options.hpp"
 #include "statistics.hpp"
 #include "rand48.hpp"
 #include "vector2d.hpp"
@@ -79,15 +78,18 @@ public:
 
     /** get number of particles */
     unsigned int const& particles() const;
+    /** get number of CUDA execution blocks */
+    unsigned int blocks() const;
+    /** get number of CUDA execution threads */
+    unsigned int threads() const;
     /** get particle density */
     float const& density() const;
     /** get periodic box length */
     float const& box() const;
     /** get simulation timestep */
     float const& timestep() const;
-
-    /** copy ljfluid parameters to global simulation parameters */
-    void copy_param(H5param& param) const;
+    /** get potential cutoff distance */
+    float const& cutoff_distance() const;
 
     /** stream MD simulation step on GPU */
     void mdstep();
@@ -466,6 +468,24 @@ unsigned int const& ljfluid<dimension, T>::particles() const
 }
 
 /**
+ * get number of CUDA execution blocks
+ */
+template <unsigned dimension, typename T>
+unsigned int ljfluid<dimension, T>::blocks() const
+{
+    return dim_.blocks_per_grid();
+}
+
+/**
+ * get number of particles
+ */
+template <unsigned dimension, typename T>
+unsigned int ljfluid<dimension, T>::threads() const
+{
+    return dim_.threads_per_block();
+}
+
+/**
  * get particle density
  */
 template <unsigned dimension, typename T>
@@ -493,27 +513,12 @@ float const& ljfluid<dimension, T>::timestep() const
 }
 
 /**
- * copy ljfluid parameters to global simulation parameters
+ * get potential cutoff distance
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::copy_param(H5param& param) const
+float const& ljfluid<dimension, T>::cutoff_distance() const
 {
-    // positional coordinate dimension
-    param.dimension(dimension);
-    // number of particles
-    param.particles(npart);
-    // number of CUDA execution blocks in grid
-    param.blocks(dim_.blocks_per_grid());
-    // number of CUDA execution threads per block
-    param.threads(dim_.threads_per_block());
-    // particle density
-    param.density(density_);
-    // periodic box length
-    param.box_length(box_);
-    // simulation timestep
-    param.timestep(timestep_);
-    // cutoff distance
-    param.cutoff_distance(r_cut);
+    return r_cut;
 }
 
 /**

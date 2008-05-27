@@ -24,9 +24,10 @@
 #include <boost/foreach.hpp>
 #include <string>
 #include <vector>
+#include "H5param.hpp"
 #include "accumulator.hpp"
 #include "ljfluid.hpp"
-#include "options.hpp"
+#include "log.hpp"
 #include "statistics.hpp"
 
 
@@ -42,10 +43,14 @@ template <unsigned dimension, typename T>
 class energy
 {
 public:
-    energy(options const& opts);
+    energy(H5param const& param);
+    /** create HDF5 thermodynamic equilibrium properties output file */
+    void open(std::string const& filename);
+    /** close HDF5 thermodynamic equilibrium properties output file */
+    void close();
 
     /** write global simulation parameters to thermodynamic equilibrium properties output file */
-    void write_param(H5param const& param);
+    void write(H5param const& param);
 
     void sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial);
     void write();
@@ -68,31 +73,20 @@ private:
     std::vector<float> press_;
     std::vector<T> v_cm_;
 
-    /** HDF5 output file */
+    /** HDF5 thermodynamic equilibrium properties output file */
     H5::H5File file_;
 };
 
 
 template <unsigned dimension, typename T>
-energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep().value()), density_(opts.density().value()), samples_(0)
+energy<dimension, T>::energy(H5param const& param) : timestep_(param.timestep()), density_(param.density()), samples_(0), max_samples_(param.max_samples())
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
 
-    // create thermodynamic equilibrium properties output file
-    try {
-	// truncate existing file
-	file_ = H5::H5File(opts.output_file_prefix().value() + ".tep", H5F_ACC_TRUNC);
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create thermodynamic equilibrium properties output file");
-    }
-
-    // number of samples
-    max_samples_ = std::min(opts.max_samples().value(), opts.steps().value());
-
+    // allocate thermodynamic equilibrium properties buffers
     try {
 	en_pot_.reserve(max_samples_);
 	en_kin_.reserve(max_samples_);
@@ -102,7 +96,37 @@ energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep().va
 	v_cm_.reserve(max_samples_);
     }
     catch (std::bad_alloc const& e) {
-	throw exception("failed to allocate thermodynamic equilibrium properties buffer");
+	throw exception("failed to allocate thermodynamic equilibrium properties buffers");
+    }
+}
+
+/**
+ * create HDF5 thermodynamic equilibrium properties output file
+ */
+template <unsigned dimension, typename T>
+void energy<dimension, T>::open(std::string const& filename)
+{
+    try {
+	// truncate existing file
+	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create thermodynamic equilibrium properties output file");
+    }
+
+}
+
+/**
+ * close HDF5 thermodynamic equilibrium properties output file
+ */
+template <unsigned dimension, typename T>
+void energy<dimension, T>::close()
+{
+    try {
+	file_.close();
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to close HDF5 correlations output file");
     }
 }
 
@@ -110,7 +134,7 @@ energy<dimension, T>::energy(options const& opts) : timestep_(opts.timestep().va
  * write global simulation parameters to thermodynamic equilibrium properties output file
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::write_param(H5param const& param)
+void energy<dimension, T>::write(H5param const& param)
 {
     param.write(file_.createGroup("/parameters"));
 }

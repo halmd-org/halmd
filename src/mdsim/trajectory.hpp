@@ -25,8 +25,9 @@
 #include <boost/array.hpp>
 #include <cuda_wrapper.hpp>
 #include <string>
+#include "H5param.hpp"
+#include "log.hpp"
 #include "exception.hpp"
-#include "options.hpp"
 
 
 namespace mdsim {
@@ -45,9 +46,9 @@ template <unsigned dimension, typename T>
 class trajectory<dimension, T, true>
 {
 public:
-    trajectory();
+    trajectory(H5param const& param);
     /** create HDF5 trajectory output file */
-    void open(options const& opts);
+    void open(std::string const& filename);
     /** close HDF5 trajectory output file */
     void close();
     /** write global simulation parameters */
@@ -68,7 +69,7 @@ private:
 
 
 template <unsigned dimension, typename T>
-trajectory<dimension, T, true>::trajectory() : samples_(0)
+trajectory<dimension, T, true>::trajectory(H5param const& param) : npart_(param.particles()), max_samples_(param.max_samples()), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -80,21 +81,16 @@ trajectory<dimension, T, true>::trajectory() : samples_(0)
  * create HDF5 trajectory output file
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::open(options const& opts)
+void trajectory<dimension, T, true>::open(std::string const& filename)
 {
     // create trajectory output file
     try {
 	// truncate existing file
-	file_ = H5::H5File(opts.output_file_prefix().value() + ".trj", H5F_ACC_TRUNC);
+	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create trajectory output file");
     }
-
-    // set number of particles
-    npart_ = opts.particles().value();
-    // set maximum number of samples
-    max_samples_ = std::min(opts.steps().value(), opts.max_samples().value());
 
     // create datasets
     hsize_t dim[3] = { max_samples_, npart_, dimension };
