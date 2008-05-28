@@ -78,8 +78,6 @@ public:
     ljfluid();
     /** set number of particles */
     void particles(unsigned int value);
-    /** set system state from phase space sample */
-    template <typename V> void state(V visitor);
     /** set particle density */
     void density(double value);
     /** set periodic box length */
@@ -89,6 +87,8 @@ public:
     /** set simulation timestep */
     void timestep(double value);
 
+    /** set system state from phase space sample */
+    template <typename V> void state(V visitor);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
