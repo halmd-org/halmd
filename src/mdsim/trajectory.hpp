@@ -102,8 +102,8 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
     // create datasets
     hsize_t dim[3] = { param.max_samples(), npart, dimension };
     ds_file_ = H5::DataSpace(3, dim);
-    dataset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_FLOAT, ds_file_);
-    dataset_[1] = file_.createDataSet("velocity", H5::PredType::NATIVE_FLOAT, ds_file_);
+    dataset_[0] = file_.createDataSet("positions", H5::PredType::NATIVE_FLOAT, ds_file_);
+    dataset_[1] = file_.createDataSet("velocities", H5::PredType::NATIVE_FLOAT, ds_file_);
 
     hsize_t dim_mem[2] = { npart, dimension };
     ds_mem_ = H5::DataSpace(2, dim_mem);
@@ -238,9 +238,9 @@ void trajectory<dimension, T, false>::read(cuda::host::vector<T>& r, cuda::host:
 {
     try {
 	// open phase space coordinates datasets
-	H5::DataSet dataset_r(file.openDataSet("trajectory"));
+	H5::DataSet dataset_r(file.openDataSet("positions"));
 	H5::DataSpace ds_r(dataset_r.getSpace());
-	H5::DataSet dataset_v(file.openDataSet("velocity"));
+	H5::DataSet dataset_v(file.openDataSet("velocities"));
 	H5::DataSpace ds_v(dataset_v.getSpace());
 
 	// validate dataspace extents

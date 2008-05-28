@@ -88,7 +88,7 @@ def render(root, basename):
     data_file = None
     frame_fn = basename + '_%06d.png'
     sys.stdout.write('gnuplot: %6sf' % '')
-    for (i, sample) in enumerate(root.trajectory):
+    for (i, sample) in enumerate(root.positions):
         # write trajectory sample to temporary binary file
         f = tempfile.NamedTemporaryFile('wb')
         f.write(sample.tostring())
