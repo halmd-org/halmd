@@ -672,6 +672,11 @@ void ljfluid<dimension, T>::compute_forces()
 
     en_pot_ /= npart;
     virial_ /= npart;
+
+    // ensure that system is still in valid state
+    if (std::isinf(en_pot_)) {
+	throw exception("potential energy diverged due to excessive timestep or density");
+    }
 }
 
 /**
