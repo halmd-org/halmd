@@ -34,14 +34,14 @@ template <unsigned dimension, typename T>
 class block_param
 {
 public:
-    /** set total number of simulation steps */
+    /** set upper boundary of total number of simulation steps */
     void steps(uint64_t const& value, float const& timestep);
-    /** set total simulation time */
+    /** set upper boundary of total simulation time */
     void time(float const& value, float const& timestep);
-    /** set block size */
-    void block_size(unsigned int const& value);
     /** set maximum number of samples per block */
     void max_samples(uint64_t const& value);
+    /** set block size and compute block parameters */
+    void block_size(unsigned int const& value);
 
     /** returns total number of simulation steps */
     uint64_t const& steps() const;
@@ -78,67 +78,35 @@ private:
 
 
 /**
- * set total number of simulation steps
+ * set upper boundary of total number of simulation steps
  */
 template <unsigned dimension, typename T>
 void block_param<dimension, T>::steps(uint64_t const& value, float const& timestep)
 {
-    // set total number of simulation steps
+    // set upper boundary of total number of simulation steps
     steps_ = value;
-    LOG("total number of simulation steps: " << steps_);
+    LOG("upper boundary of total number of simulation steps: " << steps_);
     // set simulation timestep
     timestep_ = timestep;
-    // derive total simulation time
+    // derive upper boundary of total simulation time
     time_ = value * timestep_;
-    LOG("total simulation time: " << time_);
+    LOG("upper boundary of total simulation time: " << time_);
 }
 
 /**
- * set total simulation time
+ * set upper boundary of total simulation time
  */
 template <unsigned dimension, typename T>
 void block_param<dimension, T>::time(float const& value, float const& timestep)
 {
-    // set total simulation time
+    // set upper boundary of total simulation time
     time_ = value;
-    LOG("total simulation time: " << time_);
+    LOG("upper boundary of total simulation time: " << time_);
     // set simulation timestep
     timestep_ = timestep;
-    // derive total number of simulation steps
+    // derive upper boundary of total number of simulation steps
     steps_ = std::ceil(time_ / timestep_);
-    LOG("total number of simulation steps: " << steps_);
-}
-
-/**
- * set block size
- */
-template <unsigned dimension, typename T>
-void block_param<dimension, T>::block_size(unsigned int const& value)
-{
-    // set block size
-    block_size_ = value;
-    LOG("block size: " << block_size_);
-
-    // derive block shift from block size
-    block_shift_ = std::floor(std::sqrt(block_size_));
-    LOG("block shift: " << block_shift_);
-    if (block_shift_ < 2) {
-	throw exception("computed block shift is less than 2, larger block size required");
-    }
-
-    // derive block count from block size and block shift
-    block_count_ = 0;
-    for (unsigned int n = block_size_; n <= steps_; n *= block_size_) {
-	block_count_++;
-	if ((n * block_shift_) > steps_) {
-	    break;
-	}
-	block_count_ ++;
-    }
-    LOG("block count: " << block_count_);
-    if (block_count_ < 2) {
-	throw exception("computed block count is less than 2, more simulations steps required");
-    }
+    LOG("upper boundary of total number of simulation steps: " << steps_);
 }
 
 /**
@@ -149,12 +117,69 @@ void block_param<dimension, T>::max_samples(uint64_t const& value)
 {
     max_samples_ = std::min(value, steps_);
     if (max_samples_ != value) {
-	LOG_WARNING("overriding maximum number of samples with number of simulation steps");
+	LOG_WARNING("overriding maximum number of samples with upper boundary of number of MD steps");
     }
     LOG("maximum number of samples per block: " << max_samples_);
-    if (max_samples_ < block_size_) {
-	throw exception("maximum number of samples must not be smaller than block size");
+}
+
+/**
+ * set block size and compute block parameters
+ */
+template <unsigned dimension, typename T>
+void block_param<dimension, T>::block_size(unsigned int const& value)
+{
+    // set block size
+    block_size_ = value;
+    LOG("block size: " << block_size_);
+
+    if (block_size_ > max_samples_) {
+	throw exception("block size is larger than maximum number of samples");
     }
+
+    // derive block shift from block size
+    block_shift_ = std::floor(std::sqrt(block_size_));
+    LOG("block shift: " << block_shift_);
+
+    if (block_shift_ < 2) {
+	throw exception("computed block shift is less than 2, larger block size required");
+    }
+
+    // derive block count from block size and block shift
+    block_count_ = 0;
+    uint64_t steps = std::min(steps_, max_samples_);
+
+    for (uint64_t s, n = block_size_; ; n *= block_size_) {
+	// odd block count
+	block_count_++;
+	if ((n * block_shift_) > steps_) {
+	    break;
+	}
+	// MD steps required per sample at this block level
+	s = n / block_size_ * block_shift_;
+	// set maximum reasonable number of MD steps
+	steps = std::max(steps, std::min(max_samples_ * s, steps_ - (steps_ % s)));
+
+	// even block count
+	block_count_++;
+	if ((n * block_size_) > steps_) {
+	    break;
+	}
+	// set maximum reasonable number of MD steps
+	steps = std::max(steps, std::min(max_samples_ * n, steps_ - (steps_ % n)));
+    }
+    LOG("block count: " << block_count_);
+
+    if (block_count_ < 2) {
+	throw exception("computed block count is less than 2, more simulations steps required");
+    }
+
+    // adjust total number of simulation steps
+    steps_ = steps;
+    LOG("total number of simulation steps: " << steps_);
+
+    // derive total simulation time from total number of simulation steps
+    time_ = steps_ * timestep_;
+    LOG("total simulation time: " << time_);
 }
 
 /**
