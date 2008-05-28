@@ -49,17 +49,18 @@ public:
     typedef std::pair<double, T> vector_pair;
 
 public:
+    /** allocate thermodynamic equilibrium properties buffers */
     energy(block_param<dimension, T> const& param);
     /** create HDF5 thermodynamic equilibrium properties output file */
     void open(std::string const& filename);
-    /** close HDF5 thermodynamic equilibrium properties output file */
-    void close();
-
     /** dump global simulation parameters to HDF5 file */
     energy<dimension, T>& operator<<(H5param const& param);
-
+    /** sample thermodynamic equilibrium properties */
     void sample(std::vector<T> const& v, double const& en_pot, double const& virial, double const& density, double const& timestep);
+    /** write thermodynamic equilibrium properties to HDF5 file */
     void write();
+    /** close HDF5 thermodynamic equilibrium properties output file */
+    void close();
 
 private:
     /** block algorithm parameters */
@@ -73,6 +74,7 @@ private:
     std::vector<scalar_pair> en_tot_;
     std::vector<scalar_pair> temp_;
     std::vector<scalar_pair> press_;
+    /** velocity center of mass */
     std::vector<vector_pair> v_cm_;
 
     /** HDF5 thermodynamic equilibrium properties output file */
@@ -80,6 +82,9 @@ private:
 };
 
 
+/**
+ * allocate thermodynamic equilibrium properties buffers
+ */
 template <unsigned dimension, typename T>
 energy<dimension, T>::energy(block_param<dimension, T> const& param) : param(param), samples_(0)
 {
@@ -88,7 +93,6 @@ energy<dimension, T>::energy(block_param<dimension, T> const& param) : param(par
     H5::Exception::dontPrint();
 #endif
 
-    // allocate thermodynamic equilibrium properties buffers
     try {
 	en_pot_.reserve(param.max_samples());
 	en_kin_.reserve(param.max_samples());
@@ -117,20 +121,6 @@ void energy<dimension, T>::open(std::string const& filename)
 	throw exception("failed to create thermodynamic equilibrium properties output file");
     }
 
-}
-
-/**
- * close HDF5 thermodynamic equilibrium properties output file
- */
-template <unsigned dimension, typename T>
-void energy<dimension, T>::close()
-{
-    try {
-	file_.close();
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to close HDF5 correlations output file");
-    }
 }
 
 /**
@@ -179,7 +169,7 @@ void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot,
 
 
 /**
- * write thermodynamic equilibrium properties buffer to file
+ * write thermodynamic equilibrium properties to HDF5 file
  */
 template <unsigned dimension, typename T>
 void energy<dimension, T>::write()
@@ -228,6 +218,20 @@ void energy<dimension, T>::write()
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write thermodynamic equilibrium properties to HDF5 energy file");
+    }
+}
+
+/**
+ * close HDF5 file
+ */
+template <unsigned dimension, typename T>
+void energy<dimension, T>::close()
+{
+    try {
+	file_.close();
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to close HDF5 correlations output file");
     }
 }
 
