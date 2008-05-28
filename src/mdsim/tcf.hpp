@@ -20,6 +20,7 @@
 #define MDSIM_TCF_HPP
 
 #include <boost/variant.hpp>
+#include <boost/mpl/vector.hpp>
 
 
 namespace mdsim {
@@ -51,7 +52,6 @@ struct mean_square_displacement
     }
 };
 
-
 /**
  * mean-quartic displacement
  */
@@ -81,7 +81,6 @@ struct mean_quartic_displacement
     }
 };
 
-
 /**
  * velocity autocorrelation
  */
@@ -105,14 +104,12 @@ struct velocity_autocorrelation
     }
 };
 
-
 /**
  * generic correlation function type
  */
 typedef boost::mpl::vector<mean_square_displacement> _tcf_types_0;
 typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement>::type _tcf_types_1;
 typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation>::type tcf_types;
-
 
 /**
  * apply generic correlation function to block of phase space samples
@@ -135,7 +132,7 @@ private:
 };
 
 template <typename T1, typename T2>
-tcf_apply_visitor<T1, T2> gen_tcf_apply_visitor(T1 const& first, T1 const& last, T2 const& result)
+tcf_apply_visitor<T1, T2> tcf_apply_visitor_gen(T1 const& first, T1 const& last, T2 const& result)
 {
     return tcf_apply_visitor<T1, T2>(first, last, result);
 }

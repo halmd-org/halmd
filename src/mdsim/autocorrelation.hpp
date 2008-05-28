@@ -23,7 +23,7 @@
 #include <boost/array.hpp>
 // requires patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
-#include <boost/mpl/vector.hpp>
+#include <boost/foreach.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
 #include <string>
@@ -36,55 +36,62 @@
 #include "tcf.hpp"
 
 
+#define foreach BOOST_FOREACH
+
 namespace mdsim {
 
+/**
+ * Phase space sample
+ */
 template <typename T>
 struct phase_space_point
 {
-    typedef T vector_type;
+    /** vector sample vector in page-locked host memory */
+    typedef cuda::host::vector<T> vector_type;
 
-    phase_space_point() {}
-    phase_space_point(T const& r, T const& v) : r(r), v(v) {}
+    phase_space_point(vector_type const& r, vector_type const& v) : r(r), v(v) {}
 
     /** particle positions */
-    T r;
+    vector_type r;
     /** particle velocities */
-    T v;
+    vector_type v;
 };
 
-
+/**
+ * Block of phase space samples
+ */
 template <typename T>
-struct phase_space_samples
+struct phase_space_samples : boost::circular_buffer<phase_space_point<T> >
 {
-    phase_space_samples(size_t size) : samples(size), count(0), nsample(0) { }
+    phase_space_samples(size_t size) : boost::circular_buffer<phase_space_point<T> >(size), count(0), samples(0) { }
 
-    /** block samples */
-    boost::circular_buffer<phase_space_point<T> > samples;
     /** trajectory sample count */
-    unsigned int count;
+    uint64_t count;
     /** block autocorrelation count */
-    unsigned int nsample;
+    uint64_t samples;
 };
 
-
+/**
+ * Autocorrelation block algorithm
+ */
 template <unsigned dimension, typename T>
 class autocorrelation
 {
-private:
-    typedef phase_space_point<cuda::host::vector<T> > phase_space_type;
-    typedef phase_space_samples<cuda::host::vector<T> > block_type;
-    typedef typename std::vector<block_type>::iterator block_iterator;
-    typedef typename std::vector<block_type>::const_iterator block_const_iterator;
+public:
+    /** sample vector in page-locked host memory */
+    typedef cuda::host::vector<T> vector_type;
 
+    /** phase space sample type */
+    typedef phase_space_point<T> phase_space_type;
+    /** phase space samples block type */
+    typedef phase_space_samples<T> block_type;
+
+    /** generic correlation function type */
     typedef typename boost::make_variant_over<tcf_types>::type tcf_type;
-    typedef typename boost::array<tcf_type, 3> tcf_array;
-    typedef typename tcf_array::iterator tcf_iterator;
-    typedef typename tcf_array::const_iterator tcf_const_iterator;
-
-    typedef typename boost::multi_array<accumulator<float>, 2> result_type;
-    typedef typename boost::array<result_type, 3> result_array;
-    typedef typename result_array::iterator result_iterator;
-    typedef typename result_array::const_iterator result_const_iterator;
+    /** correlation function results type */
+    typedef boost::multi_array<accumulator<float>, 2> tcf_result_type;
+    /** correlation function and results pair type */
+    typedef std::pair<tcf_type, tcf_result_type> tcf_pair;
 
 public:
     /** initialize correlation functions */
@@ -92,35 +99,35 @@ public:
 
     /** create HDF5 correlations output file */
     void open(std::string const& filename);
-    /** close HDF5 correlations output file */
-    void close();
-
     /** dump global simulation parameters to HDF5 file */
     autocorrelation<dimension, T>& operator<<(H5param const& param);
-
-    void sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v);
+    /** sample trajectory correlation functions */
+    void sample(vector_type const& r, vector_type const& v);
+    /** write correlation function results to HDF5 file */
     void write();
+    /** close HDF5 file */
+    void close();
 
 private:
+    /** autocorrelate odd or even blocks */
     void autocorrelate(phase_space_type const& sample, unsigned int offset);
+    /** apply correlation functions to block samples */
     void autocorrelate_block(unsigned int n);
+    /** compute correlations for remaining samples in all blocks */
     void finalize();
-    float timegrid(unsigned int n, unsigned int k);
 
 private:
-    /** phase space sample blocks */
-    std::vector<block_type> block;
-    /** correlation functions results */
-    result_array result;
-    /** correlation functions */
-    tcf_array tcf;
-    /** HDF5 output file */
-    H5::H5File file;
-
     /** block algorithm parameters */
     block_param<dimension, T> param;
-};
 
+    /** phase space sample blocks */
+    std::vector<block_type> block;
+    /** correlation functions and results */
+    boost::array<tcf_pair, 3> tcf_;
+
+    /** HDF5 output file */
+    H5::H5File file;
+};
 
 /**
  * initialize correlation functions
@@ -142,14 +149,14 @@ autocorrelation<dimension, T>::autocorrelation(block_param<dimension, T> const& 
     }
 
     // setup correlation functions
-    tcf[0] = mean_square_displacement();
-    tcf[1] = mean_quartic_displacement();
-    tcf[2] = velocity_autocorrelation();
+    tcf_[0].first = mean_square_displacement();
+    tcf_[1].first = mean_quartic_displacement();
+    tcf_[2].first = velocity_autocorrelation();
 
     // allocate correlation functions results
     try {
-	for (result_iterator it = result.begin(); it != result.end(); ++it) {
-	    it->resize(boost::extents[param.block_count()][param.block_size() - 1]);
+	foreach (tcf_pair& tcf, tcf_) {
+	    tcf.second.resize(boost::extents[param.block_count()][param.block_size() - 1]);
 	}
     }
     catch (std::bad_alloc const& e) {
@@ -174,20 +181,6 @@ void autocorrelation<dimension, T>::open(std::string const& filename)
 }
 
 /**
- * close HDF5 correlations output file
- */
-template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::close()
-{
-    try {
-	file.close();
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to close HDF5 correlations output file");
-    }
-}
-
-/**
  * dump global simulation parameters to HDF5 file
  */
 template <unsigned dimension, typename T>
@@ -197,8 +190,11 @@ autocorrelation<dimension, T>& autocorrelation<dimension, T>::operator<<(H5param
     return *this;
 }
 
+/**
+ * sample trajectory correlation functions
+ */
 template <unsigned dimension, typename T>
-void autocorrelation<dimension, T>::sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v)
+void autocorrelation<dimension, T>::sample(vector_type const& r, vector_type const& v)
 {
     // sample odd level blocks
     autocorrelate(phase_space_type(r, v), 0);
@@ -210,17 +206,20 @@ void autocorrelation<dimension, T>::sample(cuda::host::vector<T> const& r, cuda:
 }
 
 
+/**
+ * autocorrelate odd or even blocks
+ */
 template <unsigned dimension, typename T>
 void autocorrelation<dimension, T>::autocorrelate(phase_space_type const& sample, unsigned int offset)
 {
     // add phase space sample to lowest block
-    block[offset].samples.push_back(sample);
+    block[offset].push_back(sample);
     block[offset].count++;
 
     // autocorrelate block if circular buffer has been replaced completely
-    if ((0 == block[offset].count % param.block_size()) && block[offset].nsample < param.max_samples()) {
+    if ((0 == block[offset].count % param.block_size()) && block[offset].samples < param.max_samples()) {
 	autocorrelate_block(offset);
-	block[offset].nsample++;
+	block[offset].samples++;
     }
 
     for (unsigned int i = offset + 2; i < param.block_count(); i += 2) {
@@ -230,17 +229,16 @@ void autocorrelation<dimension, T>::autocorrelate(phase_space_type const& sample
 	}
 
 	// add phase space sample from lower level block middle
-	block[i].samples.push_back(block[i - 2].samples[param.block_size() / 2]);
+	block[i].push_back(block[i - 2][param.block_size() / 2]);
 	block[i].count++;
 
 	// autocorrelate block if circular buffer is full
-	if (block[i].samples.full() && block[i].nsample < param.max_samples()) {
+	if (block[i].full() && block[i].samples < param.max_samples()) {
 	    autocorrelate_block(i);
-	    block[i].nsample++;
+	    block[i].samples++;
 	}
     }
 }
-
 
 /**
  * compute correlations for remaining samples in all blocks
@@ -249,14 +247,13 @@ template <unsigned dimension, typename T>
 void autocorrelation<dimension, T>::finalize()
 {
     for (unsigned int i = 2; i < param.block_count(); ++i) {
-	while (block[i].nsample < param.max_samples() && block[i].samples.size() > 2) {
-	    block[i].samples.pop_front();
+	while (block[i].samples < param.max_samples() && block[i].size() > 2) {
+	    block[i].pop_front();
 	    autocorrelate_block(i);
-	    block[i].nsample++;
+	    block[i].samples++;
 	}
     }
 }
-
 
 /**
  * apply correlation functions to block samples
@@ -264,11 +261,10 @@ void autocorrelation<dimension, T>::finalize()
 template <unsigned dimension, typename T>
 void autocorrelation<dimension, T>::autocorrelate_block(unsigned int n)
 {
-    for (unsigned int i = 0; i < tcf.size(); ++i) {
-	boost::apply_visitor(gen_tcf_apply_visitor(block[n].samples.begin(), block[n].samples.end(), result[i][n].begin()), tcf[i]);
+    foreach (tcf_pair& tcf, tcf_) {
+	boost::apply_visitor(tcf_apply_visitor_gen(block[n].begin(), block[n].end(), tcf.second[n].begin()), tcf.first);
     }
 }
-
 
 /**
  * write correlation function results to HDF5 file
@@ -281,12 +277,12 @@ void autocorrelation<dimension, T>::write()
 
     try {
 	// iterate over correlation functions
-	for (unsigned int i = 0; i < tcf.size(); ++i) {
+	foreach (tcf_pair& tcf, tcf_) {
 	    // dataspace for correlation function results
-	    hsize_t dim[3] = { result[i].shape()[0], result[i].shape()[1], 3 };
+	    hsize_t dim[3] = { tcf.second.shape()[0], tcf.second.shape()[1], 3 };
 	    H5::DataSpace ds(3, dim);
 	    // correlation function name
-	    char const* name = boost::apply_visitor(tcf_name_visitor(), tcf[i]);
+	    char const* name = boost::apply_visitor(tcf_name_visitor(), tcf.first);
 
 	    // create dataset for correlation function results
 	    H5::DataSet set(file.createDataSet(name, H5::PredType::NATIVE_FLOAT, ds));
@@ -299,23 +295,37 @@ void autocorrelation<dimension, T>::write()
 		    // time interval
 		    data[j][k][0] = param.timegrid(j, k);
 		    // mean average
-		    data[j][k][1] = result[i][j][k].mean();
+		    data[j][k][1] = tcf.second[j][k].mean();
 		    // standard error of mean
-		    data[j][k][2] = result[i][j][k].err();
+		    data[j][k][2] = tcf.second[j][k].err();
 		}
 	    }
 
 	    // write results to HDF5 file
 	    set.write(data.data(), H5::PredType::NATIVE_FLOAT);
 	}
-
-	file.close();
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write results to correlations file");
     }
 }
 
+/**
+ * close HDF5 file
+ */
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::close()
+{
+    try {
+	file.close();
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to close HDF5 correlations output file");
+    }
+}
+
 } // namespace mdsim
+
+#undef foreach
 
 #endif /* ! MDSIM_AUTOCORRELATION_HPP */
