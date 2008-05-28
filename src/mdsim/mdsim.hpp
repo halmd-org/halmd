@@ -145,9 +145,6 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	param.steps(opts.steps().value());
     }
 
-    // set simulation timestep
-    fluid.timestep(param.timestep());
-
     // gather number of particles
     param.particles(fluid.particles());
     // gather number of CUDA execution blocks in grid
@@ -161,27 +158,31 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     // gather potential cutoff distance
     param.cutoff_distance(fluid.cutoff_distance());
 
+    // set simulation timestep
+    fluid.timestep(param.timestep());
+
     if (!opts.time().empty()) {
-	// set upper boundary of total simulation time
+	// set total simulation time
 	block.time(opts.time().value(), param.timestep());
     }
     else {
-	// set upper boundary of total number of simulation steps
+	// set total number of simulation steps
 	block.steps(param.steps(), param.timestep());
     }
-    // set maximum number of samples per block
-    block.max_samples(param.max_samples());
-    // set block size and compute block parameters
-    block.block_size(param.block_size());
-
     // gather total number of simulation steps
     param.steps(block.steps());
     // gather total simulation time
     param.time(block.time());
+
+    // set block size
+    block.block_size(param.block_size());
     // gather block shift
     param.block_shift(block.block_shift());
     // gather block count
     param.block_count(block.block_count());
+
+    // set maximum number of samples per block
+    block.max_samples(param.max_samples());
 }
 
 /**
