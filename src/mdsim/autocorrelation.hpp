@@ -30,6 +30,7 @@
 #include <vector>
 #include "H5param.hpp"
 #include "accumulator.hpp"
+#include "block.hpp"
 #include "exception.hpp"
 #include "log.hpp"
 #include "tcf.hpp"
@@ -85,25 +86,15 @@ private:
     typedef typename result_array::const_iterator result_const_iterator;
 
 public:
-    /** compute block parameters */
-    autocorrelation(H5param const& param);
+    /** initialize correlation functions */
+    autocorrelation(block_param<dimension, T> const& param);
+
     /** create HDF5 correlations output file */
     void open(std::string const& filename);
     /** close HDF5 correlations output file */
     void close();
 
-    /** get number of simulation steps */
-    uint64_t steps() const;
-    /** get block size */
-    unsigned int block_size() const;
-    /** get block shift */
-    unsigned int block_shift() const;
-    /** get block count */
-    unsigned int block_count() const;
-    /** get maximum number of samples per block */
-    uint64_t max_samples() const;
-
-    /** write global simulation parameters to autocorrelation output file */
+    /** dump global simulation parameters to HDF5 file */
     autocorrelation<dimension, T>& operator<<(H5param const& param);
 
     void sample(std::vector<T> const& r, std::vector<T> const& v);
@@ -113,8 +104,6 @@ private:
     void autocorrelate(phase_space_type const& sample, unsigned int offset);
     void autocorrelate_block(unsigned int n);
     void finalize();
-    void compute_block_param(unsigned int block_size_, uint64_t steps, uint64_t max_samples_);
-    double timegrid(unsigned int n, unsigned int k);
 
 private:
     /** phase space sample blocks */
@@ -126,64 +115,25 @@ private:
     /** HDF5 output file */
     H5::H5File file;
 
-    /** number of simulation steps */
-    uint64_t steps_;
-    /** block size */
-    unsigned int block_size_;
-    /** block shift */
-    unsigned int block_shift_;
-    /** block count */
-    unsigned int block_count_;
-    /** maximum number of samples per block */
-    uint64_t max_samples_;
-    /** simulation timestep */
-    double timestep_;
+    /** block algorithm parameters */
+    block_param<dimension, T> param;
 };
 
 
 /**
- * compute block parameters
+ * initialize correlation functions
  */
 template <unsigned dimension, typename T>
-autocorrelation<dimension, T>::autocorrelation(H5param const& param) : steps_(param.steps()), block_size_(param.block_size()), max_samples_(param.max_samples()), timestep_(param.timestep())
+autocorrelation<dimension, T>::autocorrelation(block_param<dimension, T> const& param) : param(param)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
-    LOG("number of simulation steps: " << steps_);
-    LOG("block size: " << block_size_);
-
-    // compute block shift
-    block_shift_ = std::floor(std::sqrt(block_size_));
-    LOG("block shift: " << block_shift_);
-
-    // compute block level count
-    block_count_ = 0;
-    if (block_size_ > 1) {
-	for (unsigned int n = block_size_; n <= steps_; n *= block_size_) {
-	    ++block_count_;
-	    if ((n * block_shift_) > steps_)
-		break;
-	    ++block_count_;
-	}
-    }
-    LOG("block count: " << block_count_);
-
-    // validate block parameters
-    if (max_samples_ < block_size_) {
-	throw exception("maximum number of samples must not be smaller than block size");
-    }
-    if (block_shift_ < 2) {
-	throw exception("computed block shift is less than 2, larger block size required");
-    }
-    if (block_count_ < 2) {
-	throw exception("computed block count is less than 2, more simulations steps required");
-    }
 
     // allocate phase space sample blocks
     try {
-	block.resize(block_count_, block_type(block_size_));
+	block.resize(param.block_count(), block_type(param.block_size()));
     }
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate phase space sample blocks");
@@ -197,7 +147,7 @@ autocorrelation<dimension, T>::autocorrelation(H5param const& param) : steps_(pa
     // allocate correlation functions results
     try {
 	for (result_iterator it = result.begin(); it != result.end(); ++it) {
-	    it->resize(boost::extents[block_count_][block_size_ - 1]);
+	    it->resize(boost::extents[param.block_count()][param.block_size() - 1]);
 	}
     }
     catch (std::bad_alloc const& e) {
@@ -236,52 +186,7 @@ void autocorrelation<dimension, T>::close()
 }
 
 /**
- * get number of simulation steps
- */
-template <unsigned dimension, typename T>
-uint64_t autocorrelation<dimension, T>::steps() const
-{
-    return steps_;
-}
-
-/**
- * get number of simulation steps
- */
-template <unsigned dimension, typename T>
-unsigned int autocorrelation<dimension, T>::block_size() const
-{
-    return block_size_;
-}
-
-/**
- * get block shift
- */
-template <unsigned dimension, typename T>
-unsigned int autocorrelation<dimension, T>::block_shift() const
-{
-    return block_shift_;
-}
-
-/**
- * get block count
- */
-template <unsigned dimension, typename T>
-unsigned int autocorrelation<dimension, T>::block_count() const
-{
-    return block_count_;
-}
-
-/**
- * get maximum number of samples per block
- */
-template <unsigned dimension, typename T>
-uint64_t autocorrelation<dimension, T>::max_samples() const
-{
-    return max_samples_;
-}
-
-/**
- * write global simulation parameters to autocorrelation output file
+ * dump global simulation parameters to HDF5 file
  */
 template <unsigned dimension, typename T>
 autocorrelation<dimension, T>& autocorrelation<dimension, T>::operator<<(H5param const& param)
@@ -296,7 +201,7 @@ void autocorrelation<dimension, T>::sample(std::vector<T> const& r, std::vector<
     // sample odd level blocks
     autocorrelate(phase_space_type(r, v), 0);
 
-    if (0 == block[0].count % block_shift_) {
+    if (0 == block[0].count % param.block_shift()) {
 	// sample even level blocks
 	autocorrelate(phase_space_type(r, v), 1);
     }
@@ -311,23 +216,23 @@ void autocorrelation<dimension, T>::autocorrelate(phase_space_type const& sample
     block[offset].count++;
 
     // autocorrelate block if circular buffer has been replaced completely
-    if ((0 == block[offset].count % block_size_) && block[offset].nsample < max_samples_) {
+    if ((0 == block[offset].count % param.block_size()) && block[offset].nsample < param.max_samples()) {
 	autocorrelate_block(offset);
 	block[offset].nsample++;
     }
 
-    for (unsigned int i = offset + 2; i < block_count_; i += 2) {
+    for (unsigned int i = offset + 2; i < param.block_count(); i += 2) {
 	// check if coarse graining is possible
-	if (block[i - 2].count % block_size_) {
+	if (block[i - 2].count % param.block_size()) {
 	    break;
 	}
 
 	// add phase space sample from lower level block middle
-	block[i].samples.push_back(block[i - 2].samples[block_size_ / 2]);
+	block[i].samples.push_back(block[i - 2].samples[param.block_size() / 2]);
 	block[i].count++;
 
 	// autocorrelate block if circular buffer is full
-	if (block[i].samples.full() && block[i].nsample < max_samples_) {
+	if (block[i].samples.full() && block[i].nsample < param.max_samples()) {
 	    autocorrelate_block(i);
 	    block[i].nsample++;
 	}
@@ -341,8 +246,8 @@ void autocorrelation<dimension, T>::autocorrelate(phase_space_type const& sample
 template <unsigned dimension, typename T>
 void autocorrelation<dimension, T>::finalize()
 {
-    for (unsigned int i = 2; i < block_count_; ++i) {
-	while (block[i].nsample < max_samples_ && block[i].samples.size() > 2) {
+    for (unsigned int i = 2; i < param.block_count(); ++i) {
+	while (block[i].nsample < param.max_samples() && block[i].samples.size() > 2) {
 	    block[i].samples.pop_front();
 	    autocorrelate_block(i);
 	    block[i].nsample++;
@@ -360,18 +265,6 @@ void autocorrelation<dimension, T>::autocorrelate_block(unsigned int n)
     for (unsigned int i = 0; i < tcf.size(); ++i) {
 	boost::apply_visitor(gen_tcf_apply_visitor(block[n].samples.begin(), block[n].samples.end(), result[i][n].begin()), tcf[i]);
     }
-}
-
-
-template <unsigned dimension, typename T>
-double autocorrelation<dimension, T>::timegrid(unsigned int block, unsigned int sample)
-{
-    if (block % 2) {
-	// shifted block
-	return timestep_ * powf(block_size_, block / 2) * (sample + 1) * block_shift_;
-    }
-
-    return timestep_ * powf(block_size_, block / 2) * (sample + 1);
 }
 
 
@@ -402,7 +295,7 @@ void autocorrelation<dimension, T>::write()
 	    for (unsigned int j = 0; j < data.size(); ++j) {
 		for (unsigned int k = 0; k < data[j].size(); ++k) {
 		    // time interval
-		    data[j][k][0] = timegrid(j, k);
+		    data[j][k][0] = param.timegrid(j, k);
 		    // mean average
 		    data[j][k][1] = result[i][j][k].mean();
 		    // standard error of mean

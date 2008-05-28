@@ -25,6 +25,7 @@
 #include <boost/array.hpp>
 #include <string>
 #include "H5param.hpp"
+#include "block.hpp"
 #include "log.hpp"
 #include "exception.hpp"
 
@@ -45,30 +46,35 @@ template <unsigned dimension, typename T>
 class trajectory<dimension, T, true>
 {
 public:
-    trajectory(H5param const& param);
+    trajectory(block_param<dimension, T> const& param);
     /** create HDF5 trajectory output file */
-    void open(std::string const& filename);
+    void open(std::string const& filename, unsigned int const& npart);
     /** close HDF5 trajectory output file */
     void close();
-    /** write global simulation parameters */
+    /** dump global simulation parameters to HDF5 file */
     trajectory<dimension, T, true>& operator<<(H5param const& param);
     /** write phase space sample */
-    void sample(std::vector<T> const& r, std::vector<T> const& v);
+    void sample(std::vector<T> const& r, std::vector<T> const& v, unsigned int const& npart);
 
 private:
-    /** HDF5 output file */
-    H5::H5File file_;
-    uint64_t npart_;
-    uint64_t max_samples_;
+    /** block algorithm parameters */
+    block_param<dimension, T> param;
+    /** number of samples */
     uint64_t samples_;
-    boost::array<H5::DataSet, 2> dset_;
+
+    /** HDF5 trajectory output file */
+    H5::H5File file_;
+    /** trajectory datasets for particle coordinates and velocities */
+    boost::array<H5::DataSet, 2> dataset_;
+    /** memory dataspace for a single coordinates or velocities sample */
     H5::DataSpace ds_mem_;
+    /** file dataspace for a single coordinates or velocities sample */
     H5::DataSpace ds_file_;
 };
 
 
 template <unsigned dimension, typename T>
-trajectory<dimension, T, true>::trajectory(H5param const& param) : npart_(param.particles()), max_samples_(param.max_samples()), samples_(0)
+trajectory<dimension, T, true>::trajectory(block_param<dimension, T> const& param) : param(param), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -80,7 +86,7 @@ trajectory<dimension, T, true>::trajectory(H5param const& param) : npart_(param.
  * create HDF5 trajectory output file
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::open(std::string const& filename)
+void trajectory<dimension, T, true>::open(std::string const& filename, unsigned int const& npart)
 {
     // create trajectory output file
     LOG("write trajectories to file: " << filename);
@@ -93,12 +99,12 @@ void trajectory<dimension, T, true>::open(std::string const& filename)
     }
 
     // create datasets
-    hsize_t dim[3] = { max_samples_, npart_, dimension };
+    hsize_t dim[3] = { param.max_samples(), npart, dimension };
     ds_file_ = H5::DataSpace(3, dim);
-    dset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_DOUBLE, ds_file_);
-    dset_[1] = file_.createDataSet("velocity", H5::PredType::NATIVE_DOUBLE, ds_file_);
+    dataset_[0] = file_.createDataSet("trajectory", H5::PredType::NATIVE_DOUBLE, ds_file_);
+    dataset_[1] = file_.createDataSet("velocity", H5::PredType::NATIVE_DOUBLE, ds_file_);
 
-    hsize_t dim_mem[2] = { npart_, dimension };
+    hsize_t dim_mem[2] = { npart, dimension };
     ds_mem_ = H5::DataSpace(2, dim_mem);
 }
 
@@ -117,7 +123,7 @@ void trajectory<dimension, T, true>::close()
 }
 
 /**
- * write global simulation parameters
+ * dump global simulation parameters to HDF5 file
  */
 template <unsigned dimension, typename T>
 trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5param const& param)
@@ -130,15 +136,15 @@ trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5par
  * write phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector<T> const& v)
+void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector<T> const& v, unsigned int const& npart)
 {
-    if (samples_ >= max_samples_)
+    if (samples_ >= param.max_samples())
 	return;
 
-    assert(r.size() == npart_);
-    assert(v.size() == npart_);
+    assert(r.size() == npart);
+    assert(v.size() == npart);
 
-    hsize_t count[3]  = { 1, npart_, 1 };
+    hsize_t count[3]  = { 1, npart, 1 };
     hsize_t start[3]  = { samples_, 0, 0 };
     hsize_t stride[3] = { 1, 1, 1 };
     hsize_t block[3]  = { 1, 1, dimension };
@@ -146,9 +152,9 @@ void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector
     ds_file_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     // write particle positions
-    dset_[0].write(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
+    dataset_[0].write(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
     // write particle velocities
-    dset_[1].write(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
+    dataset_[1].write(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
 
     samples_++;
 }
@@ -231,10 +237,10 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
 {
     try {
 	// open phase space coordinates datasets
-	H5::DataSet dset_r(file.openDataSet("trajectory"));
-	H5::DataSpace ds_r(dset_r.getSpace());
-	H5::DataSet dset_v(file.openDataSet("velocity"));
-	H5::DataSpace ds_v(dset_v.getSpace());
+	H5::DataSet dataset_r(file.openDataSet("trajectory"));
+	H5::DataSpace ds_r(dataset_r.getSpace());
+	H5::DataSet dataset_v(file.openDataSet("velocity"));
+	H5::DataSpace ds_v(dataset_v.getSpace());
 
 	// validate dataspace extents
 	if (!ds_r.isSimple()) {
@@ -298,10 +304,10 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
 
 	// read particle positions
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dset_r.read(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem, ds_r);
+	dataset_r.read(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem, ds_r);
 	// read particle velocities
 	ds_v.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dset_v.read(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem, ds_v);
+	dataset_v.read(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem, ds_v);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to read from HDF5 trajectory input file");

@@ -61,8 +61,11 @@ int main(int argc, char **argv)
 #else
 	mdsim::mdsim<2, vector2d<double> > sim(opts);
 #endif
-	// run MD simulation
-	sim();
+
+	if (!opts.dry_run().value()) {
+	    // run MD simulation
+	    sim();
+	}
     }
     catch (std::exception const& e) {
 	LOG_ERROR(e.what());
