@@ -64,12 +64,12 @@ public:
     /** restore system state from phase space sample */
     template <typename V> void restore(V visitor);
 
-    /** place particles on a face-centered cubic (fcc) lattice */
-    void lattice();
     /** seed random number generator */
     void rng(unsigned int seed);
     /** restore random number generator from state */
     void rng(mdsim::rand48::state_type const& state);
+    /** place particles on a face-centered cubic (fcc) lattice */
+    void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
     void temperature(float temp);
     /** set simulation timestep */
