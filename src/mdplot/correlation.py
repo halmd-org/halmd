@@ -90,7 +90,6 @@ def plot(tcf):
     g('plot ' + ', '.join(plot))
 
     g = spawn_gnuplot('Diffusion constant')
-    g('unset logscale y')
     g('set format y')
     g('set ylabel "<({/Symbol x}({/Symbol t}+{/Symbol Dt}) - {/Symbol x}({/Symbol t}))^2>_N / {/Symbol Dt}"')
     plot = []
@@ -126,8 +125,6 @@ def plot(tcf):
         files_VAC.append(f.name)
 
     g = spawn_gnuplot('Velocity autocorrelation')
-    g('set logscale y')
-    g('set format y "10^{%T}"')
     g('set ylabel "<({/Symbol n}({/Symbol t}+{/Symbol Dt}) {/Symbol n}({/Symbol t}))>_N"')
     plot = []
     for (i, f) in enumerate(files_VAC):
