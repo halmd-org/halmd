@@ -588,6 +588,11 @@ void ljfluid<dimension, T>::sample()
     catch (cuda::error const& e) {
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
+
+    // ensure that system is still in valid state after MD step
+    if (std::isnan(mean(h_state.en.begin(), h_state.en.end()))) {
+	throw exception("potential energy diverged due to excessive timestep or density");
+    }
 }
 
 /**
