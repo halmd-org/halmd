@@ -51,7 +51,7 @@ def plot(tep):
         return g
 
     # plot command
-    plot = '"%s" binary array=inf format="%%double" using ($0*%f):%s title "%s" with lines'
+    plot = '"%s" binary array=inf format="%%double" using (($0 + 1)*%f):%s title "%s" with lines'
     # plot titles
     titles = parameter.difference(sets)
 
