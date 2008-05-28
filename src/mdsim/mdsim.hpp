@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include "H5param.hpp"
 #include "autocorrelation.hpp"
+#include "block.hpp"
 #include "energy.hpp"
 #include "ljfluid.hpp"
 #include "log.hpp"
@@ -58,6 +59,8 @@ private:
     H5param param;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T> fluid;
+    /** block algorithm parameters */
+    block_param<dimension, T> block;
 };
 
 /**
@@ -142,17 +145,6 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	param.steps(opts.steps().value());
     }
 
-    if (!opts.time().empty()) {
-	// override number of simulation steps with total simulation time
-	param.time(opts.time().value());
-	param.steps(std::ceil(param.time() / param.timestep()));
-    }
-    else {
-	// derive total simulation time from number of simulation steps
-	param.time(param.steps() * param.timestep());
-    }
-    LOG("total simulation time: " << param.time());
-
     // gather number of particles
     param.particles(fluid.particles());
     // gather number of CUDA execution blocks in grid
@@ -169,9 +161,28 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     // set simulation timestep
     fluid.timestep(param.timestep());
 
-    // adjust maximum number of samples to simulation steps limit
-    param.max_samples(std::min(param.max_samples(), param.steps()));
-    LOG("maximum number of samples: " << param.max_samples());
+    if (!opts.time().empty()) {
+	// set total simulation time
+	block.time(opts.time().value(), param.timestep());
+    }
+    else {
+	// set total number of simulation steps
+	block.steps(param.steps(), param.timestep());
+    }
+    // gather total number of simulation steps
+    param.steps(block.steps());
+    // gather total simulation time
+    param.time(block.time());
+
+    // set block size
+    block.block_size(param.block_size());
+    // gather block shift
+    param.block_shift(block.block_shift());
+    // gather block count
+    param.block_count(block.block_count());
+
+    // set maximum number of samples per block
+    block.max_samples(param.max_samples());
 }
 
 /**
@@ -181,24 +192,14 @@ template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
     // autocorrelation functions
-    autocorrelation<dimension, T> tcf(param);
-    // gather block shift
-    param.block_shift(tcf.block_shift());
-    // gather block count
-    param.block_count(tcf.block_count());
-
+    autocorrelation<dimension, T> tcf(block);
     // trajectory file writer
-    trajectory<dimension, T> traj(param);
+    trajectory<dimension, T> traj(block);
     // thermodynamic equilibrium properties
-    energy<dimension, T> tep(param);
-
-    if (opts.dry_run().value()) {
-	// abort now that all simulation parameters have been handled
-	return;
-    }
+    energy<dimension, T> tep(block);
 
     // create trajectory output file
-    traj.open(opts.output_file_prefix().value() + ".trj");
+    traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
     // create correlations output file
     tcf.open(opts.output_file_prefix().value() + ".tcf");
     // create thermodynamic equilibrium properties output file
@@ -210,7 +211,7 @@ void mdsim<dimension, T>::operator()()
     tep << param;
 
     // sample initial trajectory
-    fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3));
+    fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3, param.particles()));
 
     LOG("starting MD simulation");
 
@@ -226,9 +227,9 @@ void mdsim<dimension, T>::operator()()
 	// sample autocorrelation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _2, _3));
 	// sample thermodynamic equilibrium properties
-	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, _5));
+	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, _5, param.density()));
 	// sample trajectory
-	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3));
+	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3, param.particles()));
     }
 
     LOG("finished MD simulation");

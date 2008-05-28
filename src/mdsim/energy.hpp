@@ -43,27 +43,23 @@ template <unsigned dimension, typename T>
 class energy
 {
 public:
-    energy(H5param const& param);
+    energy(block_param<dimension, T> const& param);
     /** create HDF5 thermodynamic equilibrium properties output file */
     void open(std::string const& filename);
     /** close HDF5 thermodynamic equilibrium properties output file */
     void close();
 
-    /** write global simulation parameters to thermodynamic equilibrium properties output file */
+    /** dump global simulation parameters to HDF5 file */
     energy<dimension, T>& operator<<(H5param const& param);
 
-    void sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial);
+    void sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial, float const& density);
     void write();
 
 private:
-    /** simulation timestep */
-    float timestep_;
-    /** particle density */
-    float density_;
-    /** sample count */
-    unsigned int samples_;
+    /** block algorithm parameters */
+    block_param<dimension, T> param;
     /** number of samples */
-    unsigned int max_samples_;
+    unsigned int samples_;
 
     /** thermodynamic equilibrium properties */
     std::vector<float> en_pot_;
@@ -79,7 +75,7 @@ private:
 
 
 template <unsigned dimension, typename T>
-energy<dimension, T>::energy(H5param const& param) : timestep_(param.timestep()), density_(param.density()), samples_(0), max_samples_(param.max_samples())
+energy<dimension, T>::energy(block_param<dimension, T> const& param) : param(param), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -88,12 +84,12 @@ energy<dimension, T>::energy(H5param const& param) : timestep_(param.timestep())
 
     // allocate thermodynamic equilibrium properties buffers
     try {
-	en_pot_.reserve(max_samples_);
-	en_kin_.reserve(max_samples_);
-	en_tot_.reserve(max_samples_);
-	temp_.reserve(max_samples_);
-	press_.reserve(max_samples_);
-	v_cm_.reserve(max_samples_);
+	en_pot_.reserve(param.max_samples());
+	en_kin_.reserve(param.max_samples());
+	en_tot_.reserve(param.max_samples());
+	temp_.reserve(param.max_samples());
+	press_.reserve(param.max_samples());
+	v_cm_.reserve(param.max_samples());
     }
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate thermodynamic equilibrium properties buffers");
@@ -132,7 +128,7 @@ void energy<dimension, T>::close()
 }
 
 /**
- * write global simulation parameters to thermodynamic equilibrium properties output file
+ * dump global simulation parameters to HDF5 file
  */
 template <unsigned dimension, typename T>
 energy<dimension, T>& energy<dimension, T>::operator<<(H5param const& param)
@@ -145,9 +141,9 @@ energy<dimension, T>& energy<dimension, T>::operator<<(H5param const& param)
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial)
+void energy<dimension, T>::sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial, float const& density)
 {
-    if (samples_ >= max_samples_) return;
+    if (samples_ >= param.max_samples()) return;
 
     // mean squared velocity
     accumulator<float> vv;
@@ -164,7 +160,7 @@ void energy<dimension, T>::sample(cuda::host::vector<T> const& v, cuda::host::ve
     // temperature
     temp_.push_back(vv.mean() / dimension);
     // pressure
-    press_.push_back(density_ * (vv.mean() + mean(virial.begin(), virial.end())));
+    press_.push_back(density * (vv.mean() + mean(virial.begin(), virial.end())));
     // velocity center of mass
     v_cm_.push_back(mean(v.begin(), v.end()));
 
@@ -179,8 +175,8 @@ template <unsigned dimension, typename T>
 void energy<dimension, T>::write()
 {
     // create dataspaces for scalar and vector types
-    hsize_t dim_scalar[2] = { max_samples_, 1 };
-    hsize_t dim_vector[2] = { max_samples_, dimension };
+    hsize_t dim_scalar[2] = { param.max_samples(), 1 };
+    hsize_t dim_vector[2] = { param.max_samples(), dimension };
     H5::DataSpace ds_scalar(2, dim_scalar);
     H5::DataSpace ds_vector(2, dim_vector);
 

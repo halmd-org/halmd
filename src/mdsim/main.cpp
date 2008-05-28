@@ -78,8 +78,11 @@ int main(int argc, char **argv)
 #else
 	mdsim::mdsim<2, vector2d<float> > sim(opts);
 #endif
-	// run MD simulation
-	sim();
+
+	if (!opts.dry_run().value()) {
+	    // run MD simulation
+	    sim();
+	}
     }
     catch (cuda::error const& e) {
 	LOG_ERROR("CUDA: " << e.what());
