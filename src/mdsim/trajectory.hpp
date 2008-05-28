@@ -32,12 +32,8 @@
 
 namespace mdsim {
 
-/**
- * trajectory file reader or writer
- */
 template <unsigned dimension, typename T, bool writer = true>
 class trajectory;
-
 
 /**
  * trajectory file writer
@@ -72,6 +68,27 @@ private:
     H5::DataSpace ds_file_;
 };
 
+/**
+ * trajectory file reader
+ */
+template <unsigned dimension, typename T>
+class trajectory<dimension, T, false>
+{
+public:
+    trajectory();
+    /** open HDF5 trajectory input file */
+    void open(std::string const& filename);
+    /** close HDF5 trajectory input file */
+    void close();
+    /** read global simulation parameters */
+    void read(H5param& param);
+    /** read phase space sample */
+    void read(std::vector<T>& r, std::vector<T>& v, int64_t index);
+
+private:
+    /** HDF5 trajectory input file */
+    H5::H5File file;
+};
 
 template <unsigned dimension, typename T>
 trajectory<dimension, T, true>::trajectory(block_param<dimension, T> const& param) : param(param), samples_(0)
@@ -158,29 +175,6 @@ void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector
 
     samples_++;
 }
-
-
-/**
- * trajectory file reader
- */
-template <unsigned dimension, typename T>
-class trajectory<dimension, T, false>
-{
-public:
-    trajectory();
-    /** open HDF5 trajectory input file */
-    void open(std::string const& filename);
-    /** close HDF5 trajectory input file */
-    void close();
-    /** read global simulation parameters */
-    void read(H5param& param);
-    /** read phase space sample */
-    void read(std::vector<T>& r, std::vector<T>& v, int64_t index);
-
-private:
-    /** HDF5 trajectory input file */
-    H5::H5File file;
-};
 
 template <unsigned dimension, typename T>
 trajectory<dimension, T, false>::trajectory()
