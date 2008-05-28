@@ -46,7 +46,7 @@ def main(args):
     basename = [ os.path.splitext(fn)[0] for fn in args ]
     root = [ f.root for f in h5files ]
 
-    # thermal equilibrium properties
+    # thermodynamic equilibrium properties
     tep = []
     # correlations
     tcf = []
@@ -63,7 +63,7 @@ def main(args):
             # correlations file
             tcf.append((root[i], basename[i]))
 
-        elif 'trajectory' in root[i]:
+        elif 'positions' in root[i]:
             # trajectory dump file
             trj.append((root[i], basename[i]))
 
