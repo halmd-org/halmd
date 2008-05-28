@@ -112,7 +112,7 @@ def plot(tep):
 
     # velocity center of mass
     g = spawn_gnuplot('Velocity center of mass')
-    g('set ylabel "(|<{/Symbol n}^2({/Symbol t})|)^{1/2}"')
+    g('set ylabel "({/Symbol n}^2({/Symbol t}))^{1/2}"')
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_vcm.bin', 'wb')
