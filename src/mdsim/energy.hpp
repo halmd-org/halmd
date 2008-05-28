@@ -43,6 +43,12 @@ template <unsigned dimension, typename T>
 class energy
 {
 public:
+    /** time and scalar property */
+    typedef std::pair<float, float> scalar_pair;
+    /** time and vector property */
+    typedef std::pair<float, T> vector_pair;
+
+public:
     energy(block_param<dimension, T> const& param);
     /** create HDF5 thermodynamic equilibrium properties output file */
     void open(std::string const& filename);
@@ -52,7 +58,7 @@ public:
     /** dump global simulation parameters to HDF5 file */
     energy<dimension, T>& operator<<(H5param const& param);
 
-    void sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial, float const& density);
+    void sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial, float const& density, float const& timestep);
     void write();
 
 private:
@@ -62,12 +68,12 @@ private:
     unsigned int samples_;
 
     /** thermodynamic equilibrium properties */
-    std::vector<float> en_pot_;
-    std::vector<float> en_kin_;
-    std::vector<float> en_tot_;
-    std::vector<float> temp_;
-    std::vector<float> press_;
-    std::vector<T> v_cm_;
+    std::vector<scalar_pair> en_pot_;
+    std::vector<scalar_pair> en_kin_;
+    std::vector<scalar_pair> en_tot_;
+    std::vector<scalar_pair> temp_;
+    std::vector<scalar_pair> press_;
+    std::vector<vector_pair> v_cm_;
 
     /** HDF5 thermodynamic equilibrium properties output file */
     H5::H5File file_;
@@ -141,7 +147,7 @@ energy<dimension, T>& energy<dimension, T>::operator<<(H5param const& param)
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial, float const& density)
+void energy<dimension, T>::sample(cuda::host::vector<T> const& v, cuda::host::vector<float> const& en, cuda::host::vector<float> const& virial, float const& density, float const& timestep)
 {
     if (samples_ >= param.max_samples()) return;
 
@@ -151,18 +157,21 @@ void energy<dimension, T>::sample(cuda::host::vector<T> const& v, cuda::host::ve
 	vv += v_ * v_;
     }
 
+    // simulation time of sample
+    const float time = (samples_ + 1) * timestep;
+
     // mean potential energy per particle
-    en_pot_.push_back(mean(en.begin(), en.end()));
+    en_pot_.push_back(scalar_pair(time, mean(en.begin(), en.end())));
     // mean kinetic energy per particle
-    en_kin_.push_back(vv.mean() / 2);
+    en_kin_.push_back(scalar_pair(time, vv.mean() / 2));
     // mean total energy per particle
-    en_tot_.push_back(en_pot_.back() + en_kin_.back());
+    en_tot_.push_back(scalar_pair(time, en_pot_.back().second + en_kin_.back().second));
     // temperature
-    temp_.push_back(vv.mean() / dimension);
+    temp_.push_back(scalar_pair(time, vv.mean() / dimension));
     // pressure
-    press_.push_back(density * (vv.mean() + mean(virial.begin(), virial.end())));
+    press_.push_back(scalar_pair(time, density * (vv.mean() + mean(virial.begin(), virial.end()))));
     // velocity center of mass
-    v_cm_.push_back(mean(v.begin(), v.end()));
+    v_cm_.push_back(vector_pair(time, mean(v.begin(), v.end())));
 
     samples_++;
 }
@@ -175,8 +184,8 @@ template <unsigned dimension, typename T>
 void energy<dimension, T>::write()
 {
     // create dataspaces for scalar and vector types
-    hsize_t dim_scalar[2] = { param.max_samples(), 1 };
-    hsize_t dim_vector[2] = { param.max_samples(), dimension };
+    hsize_t dim_scalar[2] = { param.max_samples(), 2 };
+    hsize_t dim_vector[2] = { param.max_samples(), 1 + dimension };
     H5::DataSpace ds_scalar(2, dim_scalar);
     H5::DataSpace ds_vector(2, dim_vector);
 

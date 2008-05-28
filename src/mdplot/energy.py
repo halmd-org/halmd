@@ -51,7 +51,7 @@ def plot(tep):
         return g
 
     # plot command
-    plot = '"%s" binary array=inf format="%%float" using (($0 + 1)*%f):%s title "%s" with lines'
+    plot = '"%s" binary array=inf format="%%float" using 1:%s title "%s" with lines'
     # plot titles
     titles = parameter.difference(sets)
 
@@ -63,7 +63,7 @@ def plot(tep):
         f = file(name + '_epot.bin', 'wb')
         f.write(root.EPOT.read().tostring())
         f.close()
-        plots.append(plot % (f.name, root.parameters.ljfluid._v_attrs.timestep, '1', titles[i]))
+        plots.append(plot % (f.name, '1', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # mean kinetic energy per particle
@@ -74,7 +74,7 @@ def plot(tep):
         f = file(name + '_ekin.bin', 'wb')
         f.write(root.EKIN.read().tostring())
         f.close()
-        plots.append(plot % (f.name, root.parameters.ljfluid._v_attrs.timestep, '1', titles[i]))
+        plots.append(plot % (f.name, '1', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # mean total energy per particle
@@ -85,7 +85,7 @@ def plot(tep):
         f = file(name + '_etot.bin', 'wb')
         f.write(root.ETOT.read().tostring())
         f.close()
-        plots.append(plot % (f.name, root.parameters.ljfluid._v_attrs.timestep, '1', titles[i]))
+        plots.append(plot % (f.name, '1', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # temperature
@@ -96,7 +96,7 @@ def plot(tep):
         f = file(name + '_temp.bin', 'wb')
         f.write(root.TEMP.read().tostring())
         f.close()
-        plots.append(plot % (f.name, root.parameters.ljfluid._v_attrs.timestep, '1', titles[i]))
+        plots.append(plot % (f.name, '1', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # pressure
@@ -107,7 +107,7 @@ def plot(tep):
         f = file(name + '_press.bin', 'wb')
         f.write(root.PRESS.read().tostring())
         f.close()
-        plots.append(plot % (f.name, root.parameters.ljfluid._v_attrs.timestep, '1', titles[i]))
+        plots.append(plot % (f.name, '1', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # velocity center of mass
@@ -118,7 +118,7 @@ def plot(tep):
         f = file(name + '_vcm.bin', 'wb')
         f.write(root.VCM.read().tostring())
         f.close()
-        plots.append(plot % (f.name, root.parameters.ljfluid._v_attrs.timestep, '(sqrt($1*$1+$2*$2))', titles[i]))
+        plots.append(plot % (f.name, '(sqrt($1*$1+$2*$2))', titles[i]))
     g('plot ' + ', '.join(plots))
 
 
