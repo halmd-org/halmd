@@ -266,6 +266,10 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     LOG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
     LOG("number of CUDA execution threads: " << dim_.threads_per_block());
 
+    if (dim_.threads() != npart) {
+	LOG_WARNING("number of particles (" << npart << ") not a multiple of number of CUDA execution threads (" << dim_.threads() << ")");
+    }
+
     // allocate global device memory for placeholder particles
     try {
 	g_state.r.reserve(dim_.threads());
