@@ -61,7 +61,7 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_epot.bin', 'wb')
-        f.write(root.EKIN.read().tostring())
+        f.write(root.EPOT.read().tostring())
         f.close()
         plots.append(plot % (f.name, root.parameters.ljfluid._v_attrs.timestep, '1', titles[i]))
     g('plot ' + ', '.join(plots))
@@ -72,7 +72,7 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_ekin.bin', 'wb')
-        f.write(root.EPOT.read().tostring())
+        f.write(root.EKIN.read().tostring())
         f.close()
         plots.append(plot % (f.name, root.parameters.ljfluid._v_attrs.timestep, '1', titles[i]))
     g('plot ' + ', '.join(plots))
