@@ -33,12 +33,8 @@
 
 namespace mdsim {
 
-/**
- * trajectory file reader or writer
- */
 template <unsigned dimension, typename T, bool writer = true>
 class trajectory;
-
 
 /**
  * trajectory file writer
@@ -46,6 +42,10 @@ class trajectory;
 template <unsigned dimension, typename T>
 class trajectory<dimension, T, true>
 {
+public:
+    /** vector sample vector in page-locked host memory */
+    typedef cuda::host::vector<T> vector_type;
+
 public:
     trajectory(block_param<dimension, T> const& param);
     /** create HDF5 trajectory output file */
@@ -55,7 +55,7 @@ public:
     /** dump global simulation parameters to HDF5 file */
     trajectory<dimension, T, true>& operator<<(H5param const& param);
     /** write phase space sample */
-    void sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v, unsigned int const& npart);
+    void sample(vector_type const& r, vector_type const& v, unsigned int const& npart);
 
 private:
     /** block algorithm parameters */
@@ -73,6 +73,31 @@ private:
     H5::DataSpace ds_file_;
 };
 
+/**
+ * trajectory file reader
+ */
+template <unsigned dimension, typename T>
+class trajectory<dimension, T, false>
+{
+public:
+    /** sample vector in page-locked host memory */
+    typedef cuda::host::vector<T> vector_type;
+
+public:
+    trajectory();
+    /** open HDF5 trajectory input file */
+    void open(std::string const& filename);
+    /** close HDF5 trajectory input file */
+    void close();
+    /** read global simulation parameters */
+    void read(H5param& param);
+    /** read phase space sample */
+    void read(vector_type& r, vector_type& v, int64_t index);
+
+private:
+    /** HDF5 trajectory input file */
+    H5::H5File file;
+};
 
 template <unsigned dimension, typename T>
 trajectory<dimension, T, true>::trajectory(block_param<dimension, T> const& param) : param(param), samples_(0)
@@ -137,7 +162,7 @@ trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5par
  * write phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::sample(cuda::host::vector<T> const& r, cuda::host::vector<T> const& v, unsigned int const& npart)
+void trajectory<dimension, T, true>::sample(vector_type const& r, vector_type const& v, unsigned int const& npart)
 {
     if (samples_ >= param.max_samples())
 	return;
@@ -160,28 +185,6 @@ void trajectory<dimension, T, true>::sample(cuda::host::vector<T> const& r, cuda
     samples_++;
 }
 
-
-/**
- * trajectory file reader
- */
-template <unsigned dimension, typename T>
-class trajectory<dimension, T, false>
-{
-public:
-    trajectory();
-    /** open HDF5 trajectory input file */
-    void open(std::string const& filename);
-    /** close HDF5 trajectory input file */
-    void close();
-    /** read global simulation parameters */
-    void read(H5param& param);
-    /** read phase space sample */
-    void read(cuda::host::vector<T>& r, cuda::host::vector<T>& v, int64_t index);
-
-private:
-    /** HDF5 trajectory input file */
-    H5::H5File file;
-};
 
 template <unsigned dimension, typename T>
 trajectory<dimension, T, false>::trajectory()
@@ -234,7 +237,7 @@ void trajectory<dimension, T, false>::read(H5param& param)
  * read phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, false>::read(cuda::host::vector<T>& r, cuda::host::vector<T>& v, int64_t index)
+void trajectory<dimension, T, false>::read(vector_type& r, vector_type& v, int64_t index)
 {
     try {
 	// open phase space coordinates datasets
