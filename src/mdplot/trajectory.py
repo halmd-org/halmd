@@ -84,7 +84,7 @@ def render(root, basename):
             g('set x2tics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
             g('set ytics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
             g('set y2tics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
-            g('set grid xtics ytics')
+            g('set grid xtics ytics lt -1')
         else:
             g('set x2tics')
             g('set y2tics')
