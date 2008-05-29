@@ -118,6 +118,11 @@ void H5param::write(H5::Group root) const
 	// periodic box length
 	attr = node.createAttribute("box_length", H5::PredType::NATIVE_FLOAT, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_FLOAT, &box_length_);
+#ifdef USE_CELL
+	// cell length
+	attr = node.createAttribute("cell_length", H5::PredType::NATIVE_FLOAT, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_FLOAT, &cell_length_);
+#endif
 	// simulation timestep
 	attr = node.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_FLOAT, &timestep_);

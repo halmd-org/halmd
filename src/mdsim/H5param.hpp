@@ -134,6 +134,16 @@ public:
 	box_length_ = value;
     }
 
+#ifdef USE_CELL
+    /**
+     * set cell length
+     */
+    void cell_length(float const& value)
+    {
+	cell_length_ = value;
+    }
+#endif
+
     /**
      * returns simulation timestep
      */
@@ -275,6 +285,10 @@ private:
     float density_;
     /** periodic box length */
     float box_length_;
+#ifdef USE_CELL
+    /** cell length */
+    float cell_length_;
+#endif
     /** simulation timestep */
     float timestep_;
     /** number of simulation steps */

@@ -77,13 +77,20 @@ def render(root, basename):
         # FIXME use fraction of cutoff length as particle radius
         plot = 'plot "%s" binary array=inf format="%%float%%float" using 1:2 notitle with points pt 7 ps 2'
 
+        # draw grid for cell-list based MD simulation
+        if root.parameters.ljfluid._v_attrs.__contains__("cell_length"):
+            g('set format "%.3g"')
+            g('set xtics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
+            g('set x2tics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
+            g('set ytics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
+            g('set y2tics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
+            g('set grid xtics ytics')
+        else:
+            g('set x2tics')
+            g('set y2tics')
+
         g('set x2range [0:%f]' % box)
         g('set y2range [0:%f]' % box)
-        g('set grid xtics ytics')
-        g('set x2tics')
-        g('set y2tics')
-        g('set x2tics')
-        g('set y2tics')
 
     data_file = None
     frame_fn = basename + '_%06d.png'

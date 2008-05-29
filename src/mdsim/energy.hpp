@@ -48,10 +48,8 @@ public:
     /** time and vector property */
     typedef std::pair<float, T> vector_pair;
 
-    /** scalar sample vector in page-locked host memory */
-    typedef cuda::host::vector<float> scalar_vector;
     /** vector sample vector in page-locked host memory */
-    typedef cuda::host::vector<T> vector_vector;
+    typedef cuda::host::vector<T> vector_type;
 
 public:
     /** allocate thermodynamic equilibrium properties buffers */
@@ -62,7 +60,7 @@ public:
     /** dump global simulation parameters to HDF5 file */
     energy<dimension, T>& operator<<(H5param const& param);
     /** sample thermodynamic equilibrium properties */
-    void sample(vector_vector const& v, scalar_vector const& en, scalar_vector const& virial, float const& density, float const& timestep);
+    void sample(vector_type const& v, float const& en_pot, float const& virial, float const& density, float const& timestep);
     /** write thermodynamic equilibrium properties to HDF5 file */
     void write();
     /** close HDF5 file */
@@ -143,7 +141,7 @@ energy<dimension, T>& energy<dimension, T>::operator<<(H5param const& param)
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(vector_vector const& v, scalar_vector const& en, scalar_vector const& virial, float const& density, float const& timestep)
+void energy<dimension, T>::sample(vector_type const& v, float const& en_pot, float const& virial, float const& density, float const& timestep)
 {
     if (samples_ >= param.max_samples())
 	return;
@@ -158,7 +156,7 @@ void energy<dimension, T>::sample(vector_vector const& v, scalar_vector const& e
     const float time = (samples_ + 1) * timestep;
 
     // mean potential energy per particle
-    en_pot_.push_back(scalar_pair(time, mean(en.begin(), en.end())));
+    en_pot_.push_back(scalar_pair(time, en_pot));
     // mean kinetic energy per particle
     en_kin_.push_back(scalar_pair(time, vv.mean() / 2));
     // mean total energy per particle
@@ -166,7 +164,7 @@ void energy<dimension, T>::sample(vector_vector const& v, scalar_vector const& e
     // temperature
     temp_.push_back(scalar_pair(time, vv.mean() / dimension));
     // pressure
-    press_.push_back(scalar_pair(time, density * (vv.mean() + mean(virial.begin(), virial.end()))));
+    press_.push_back(scalar_pair(time, density * (vv.mean() + virial)));
     // velocity center of mass
     v_cm_.push_back(vector_pair(time, mean(v.begin(), v.end())));
 

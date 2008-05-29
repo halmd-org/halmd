@@ -83,10 +83,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	traj.read(param);
 	// set number of particles in system
 	fluid.particles(param.particles());
-	// set number of CUDA execution threads
-	fluid.threads(!opts.threads().defaulted() ? opts.threads().value() : param.threads());
 	// set particle density
 	fluid.density(!opts.density().defaulted() ? opts.density().value() : param.density());
+	// set number of CUDA execution threads
+	fluid.threads(!opts.threads().defaulted() ? opts.threads().value() : param.threads());
 	// read trajectory sample and restore system state
 	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
 
@@ -119,10 +119,6 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     else {
 	// set number of particles in system
 	fluid.particles(opts.particles().value());
-	// set number of CUDA execution threads
-	fluid.threads(opts.threads().value());
-	// initialize random number generator with seed
-	fluid.rng(opts.rng_seed().value());
 
 	if (!opts.box_length().empty()) {
 	    // set simulation box length
@@ -133,6 +129,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	    fluid.density(opts.density().value());
 	}
 
+	// set number of CUDA execution threads
+	fluid.threads(opts.threads().value());
+	// initialize random number generator with seed
+	fluid.rng(opts.rng_seed().value());
 	// arrange particles on a face-centered cubic (fcc) lattice
 	fluid.lattice();
 	// set system temperature according to Maxwell-Boltzmann distribution
@@ -149,12 +149,16 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     param.particles(fluid.particles());
     // gather number of CUDA execution blocks in grid
     param.blocks(fluid.blocks());
-    // gather number of CUDA execution threads per block
-    param.threads(fluid.threads());
     // gather particle density
     param.density(fluid.density());
     // gather simulation box length
     param.box_length(fluid.box());
+#ifdef USE_CELL
+    // gather cell length
+    param.cell_length(fluid.cell_length());
+#endif
+    // gather number of CUDA execution threads per block
+    param.threads(fluid.threads());
     // gather potential cutoff distance
     param.cutoff_distance(fluid.cutoff_distance());
 
