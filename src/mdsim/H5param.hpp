@@ -70,6 +70,24 @@ public:
 	particles_ = value;
     }
 
+#ifdef USE_CELL
+    /**
+     * set number of cells per dimension
+     */
+    void cells(unsigned int const& value)
+    {
+	cells_ = value;
+    }
+
+    /**
+     * set total number of cell placeholders
+     */
+    void placeholders(unsigned int const& value)
+    {
+	placeholders_ = value;
+    }
+#endif
+
     /**
      * returns number of CUDA execution threads
      */
@@ -149,6 +167,14 @@ public:
     void cell_occupancy(float const& value)
     {
 	cell_occupancy_ = value;
+    }
+
+    /**
+     * set number of placeholders per cell
+     */
+    void cell_size(unsigned int const& value)
+    {
+	cell_size_ = value;
     }
 #endif
 
@@ -285,6 +311,12 @@ private:
     unsigned int dimension_;
     /** number of particles */
     unsigned int particles_;
+#ifdef USE_CELL
+    /** number of cells per dimension */
+    unsigned int cells_;
+    /** total number of cell placeholders */
+    unsigned int placeholders_;
+#endif
     /** number of CUDA execution threads */
     unsigned int threads_;
     /** number of CUDA execution blocks */
@@ -298,6 +330,8 @@ private:
     float cell_length_;
     /** average cell occupancy */
     float cell_occupancy_;
+    /** number of placeholders per cell */
+    unsigned int cell_size_;
 #endif
     /** simulation timestep */
     float timestep_;

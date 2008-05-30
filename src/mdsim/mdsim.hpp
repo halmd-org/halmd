@@ -155,6 +155,12 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
     // gather number of particles
     param.particles(fluid.particles());
+#ifdef USE_CELL
+    // gather number of cells per dimension
+    param.cells(fluid.cells());
+    // gather total number of cell placeholders
+    param.placeholders(fluid.placeholders());
+#endif
     // gather number of CUDA execution blocks in grid
     param.blocks(fluid.blocks());
     // gather particle density
@@ -166,6 +172,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     param.cell_length(fluid.cell_length());
     // gather average cell occupancy
     param.cell_occupancy(fluid.cell_occupancy());
+    // gather number of placeholders per cell
+    param.cell_size(fluid.cell_size());
 #endif
     // gather number of CUDA execution threads per block
     param.threads(fluid.threads());

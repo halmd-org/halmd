@@ -106,6 +106,14 @@ void H5param::write(H5::Group root) const
 	// number of particles
 	attr = node.createAttribute("particles", H5::PredType::NATIVE_UINT, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_UINT, &particles_);
+#ifdef USE_CELL
+	// number of cells per dimension
+	attr = node.createAttribute("cells", H5::PredType::NATIVE_UINT, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_UINT, &cells_);
+	// number of total cell placeholders
+	attr = node.createAttribute("placeholders", H5::PredType::NATIVE_UINT, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_UINT, &placeholders_);
+#endif
 	// number of cuda execution blocks
 	attr = node.createAttribute("blocks", H5::PredType::NATIVE_UINT, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_UINT, &blocks_);
@@ -125,6 +133,9 @@ void H5param::write(H5::Group root) const
 	// average cell occupancy
 	attr = node.createAttribute("cell_occupancy", H5::PredType::NATIVE_FLOAT, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_FLOAT, &cell_occupancy_);
+	// number of placeholders per cell
+	attr = node.createAttribute("cell_size", H5::PredType::NATIVE_UINT, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_UINT, &cell_size_);
 #endif
 	// simulation timestep
 	attr = node.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, H5S_SCALAR);

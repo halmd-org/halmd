@@ -84,12 +84,14 @@ public:
 #ifdef USE_CELL
     /** get number of cells per dimension */
     unsigned int const& cells() const;
-    /** get number of cell placeholders in system */
+    /** get total number of cell placeholders */
     unsigned int const& placeholders() const;
     /** get cell length */
     float const& cell_length() const;
     /** get effective average cell occupancy */
     float const& cell_occupancy() const;
+    /** get number of placeholders per cell */
+    unsigned int const& cell_size() const;
 #endif
     /** get number of CUDA execution blocks */
     unsigned int blocks() const;
@@ -117,12 +119,14 @@ private:
 #ifdef USE_CELL
     /** number of cells per dimension */
     unsigned int ncell;
-    /** number of cell placeholders in system */
+    /** total number of cell placeholders */
     unsigned int nplace;
     /** cell length */
     float cell_length_;
     /** effective average cell occupancy */
     float cell_occupancy_;
+    /** number of placeholders per cell */
+    unsigned int cell_size_;
 #endif
     /** particle density */
     float density_;
@@ -376,8 +380,11 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
 {
     LOG("desired average cell occupancy: " << value);
 
+    // fixed cell size due to fixed number of CUDA execution threads per block
+    cell_size_ = CELL_SIZE;
+
     // optimal cell length to yield desired average cell occupancy
-    cell_length_ = std::pow((CELL_SIZE * value) / density_, 1.f / dimension);
+    cell_length_ = std::pow((cell_size_ * value) / density_, 1.f / dimension);
 
     // set number of cells per dimension
     ncell = std::floor(box_ / std::max(r_cut, cell_length_));
@@ -391,8 +398,8 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
 
-    // set number of cell placeholders in system
-    nplace = pow(ncell, dimension) * CELL_SIZE;
+    // set total number of cell placeholders
+    nplace = pow(ncell, dimension) * cell_size_;
     LOG("number of cell placeholders: " << nplace);
 
     // set effective average cell occupancy
@@ -456,7 +463,7 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 
 #ifdef USE_CELL
     // set CUDA execution dimensions for cell-specific kernels
-    dim_cell_ = cuda::config(dim3(powf(ncell, dimension)), dim3(CELL_SIZE));
+    dim_cell_ = cuda::config(dim3(powf(ncell, dimension)), dim3(cell_size_));
     LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
     LOG("number of cell CUDA execution threads: " << dim_cell_.threads_per_block());
 
@@ -762,7 +769,7 @@ unsigned int const& ljfluid<dimension, T>::cells() const
 }
 
 /**
- * get number of cell placeholders in system
+ * get total number of cell placeholders
  */
 template <unsigned dimension, typename T>
 unsigned int const& ljfluid<dimension, T>::placeholders() const
@@ -786,6 +793,15 @@ template <unsigned dimension, typename T>
 float const& ljfluid<dimension, T>::cell_occupancy() const
 {
     return cell_occupancy_;
+}
+
+/**
+ * get number of placeholders per cell
+ */
+template <unsigned dimension, typename T>
+unsigned int const& ljfluid<dimension, T>::cell_size() const
+{
+    return cell_size_;
 }
 #endif
 
