@@ -382,21 +382,20 @@ void ljfluid<dimension, T>::box(float value)
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::compute_cell_param()
 {
-    // fixed average cell occupancy
-    const float occupancy = CELL_SIZE / 4.;
+    // optimal cell length to yield designated average cell occupancy
+    cell_length_ = std::pow((CELL_SIZE * 0.25f) / density_, 1.f / dimension);
 
-    // derive optimal cell length
-    cell_length_ = std::max(r_cut, powf(occupancy / density_, 1. / dimension));
-    LOG("cell length: " << cell_length_);
-
-    // set optimal number of cells per dimension
-    ncell = floorf(box_ / cell_length_);
+    // set number of cells per dimension
+    ncell = std::floor(box_ / std::max(r_cut, cell_length_));
     LOG("number of cells per dimension: " << ncell);
 
-    // FIXME should the lower limit not be 3?
-    if (ncell < 4) {
-	throw exception("number of cells per dimension must be at least 4");
+    if (ncell < 3) {
+	throw exception("number of cells per dimension must be at least 3");
     }
+
+    // derive cell length from integer number of cells
+    cell_length_ = box_ / ncell;
+    LOG("cell length: " << cell_length_);
 
     // set number of cell placeholders in system
     nplace = pow(ncell, dimension) * CELL_SIZE;
@@ -454,6 +453,8 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 #ifdef USE_CELL
     // set CUDA execution dimensions for cell-specific kernels
     dim_cell_ = cuda::config(dim3(powf(ncell, dimension)), dim3(CELL_SIZE));
+    LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
+    LOG("number of cell CUDA execution threads: " << dim_cell_.threads_per_block());
 
     // allocate page-locked host memory for cell placeholders
     try {
