@@ -982,7 +982,7 @@ void ljfluid<dimension, T>::sample()
     }
     // validate number of particles
     if (count != npart) {
-	throw exception("lost particles in cell-list update due to overcrowed cells");
+	throw exception("particle loss while updating cell lists");
     }
 #else
     // copy MD simulation step results from GPU to host
