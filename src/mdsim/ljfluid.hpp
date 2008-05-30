@@ -981,6 +981,9 @@ void ljfluid<dimension, T>::sample()
 	cuda::copy(g_part.en, h_part.en, stream_);
 	// copy virial equation sums per particle
 	cuda::copy(g_part.virial, h_part.virial, stream_);
+
+	// wait for CUDA operations to finish
+	stream_.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy MD simulation step results from GPU to host");
