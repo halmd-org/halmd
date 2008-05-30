@@ -471,7 +471,7 @@ __device__ void examine_cell(U const& offset, T const* g_ir, T const* g_iR, T co
 	    if (!IS_REAL_PARTICLE(s_itag[j])) continue;
 
 	    // if particle belongs to this cell
-	    if (s_icell[j] == blockIdx.x) {
+	    if (s_icell[j] == blockIdx.x && npart < cell_size) {
 		// store particle in cell
 		s_or[npart] = s_ir[j];
 		s_oR[npart] = s_iR[j];
