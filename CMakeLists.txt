@@ -9,11 +9,7 @@ FIND_PACKAGE(Mercurial)
 
 MERCURIAL_HG_INFO(${ljfluid_SOURCE_DIR} ljfluid)
 
-IF(ljfluid_HG_BRANCH)
-  SET(PROGRAM_NAME "${ljfluid_HG_BRANCH}")
-ELSE(ljfluid_HG_BRANCH)
-  SET(PROGRAM_NAME "ljfluid")
-ENDIF(ljfluid_HG_BRANCH)
+SET(PROGRAM_NAME "ljfluid")
 
 IF(ljfluid_HG_TAG)
   SET(PROGRAM_VERSION "version ${ljfluid_HG_TAG}")
