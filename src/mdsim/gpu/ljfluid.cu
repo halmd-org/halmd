@@ -444,10 +444,10 @@ __global__ void assign_cells(T const* g_part, T* g_cell, int* g_tag)
  * examine neighbour cell for particles which moved into this block's cell
  */
 template <unsigned int cell_size, typename T, typename U>
-__device__ void examine_cell(U const& offset, T const* g_ir, T const* g_irp, T const* g_iv, int const* g_itag, T* s_or, T* s_orp, T* s_ov, int* s_otag, unsigned int& npart)
+__device__ void examine_cell(U const& offset, T const* g_ir, T const* g_iR, T const* g_iv, int const* g_itag, T* s_or, T* s_oR, T* s_ov, int* s_otag, unsigned int& npart)
 {
     __shared__ T s_ir[cell_size];
-    __shared__ T s_irp[cell_size];
+    __shared__ T s_iR[cell_size];
     __shared__ T s_iv[cell_size];
     __shared__ int s_itag[cell_size];
     __shared__ unsigned int s_icell[cell_size];
@@ -456,13 +456,13 @@ __device__ void examine_cell(U const& offset, T const* g_ir, T const* g_irp, T c
     unsigned int icell = compute_neighbour_cell(offset);
 
     // load particles in cell from global device memory
-    s_ir[threadIdx.x] = g_ir[icell * cell_size + threadIdx.x];
-    T rp = g_irp[icell * cell_size + threadIdx.x];
-    s_irp[threadIdx.x] = rp;
+    T r = g_ir[icell * cell_size + threadIdx.x];
+    s_ir[threadIdx.x] = r;
+    s_iR[threadIdx.x] = g_iR[icell * cell_size + threadIdx.x];
     s_iv[threadIdx.x] = g_iv[icell * cell_size + threadIdx.x];
     s_itag[threadIdx.x] = g_itag[icell * cell_size + threadIdx.x];
     // compute new cell
-    s_icell[threadIdx.x] = compute_cell(rp);
+    s_icell[threadIdx.x] = compute_cell(r);
     __syncthreads();
 
     if (threadIdx.x == 0) {
@@ -474,7 +474,7 @@ __device__ void examine_cell(U const& offset, T const* g_ir, T const* g_irp, T c
 	    if (s_icell[j] == blockIdx.x) {
 		// store particle in cell
 		s_or[npart] = s_ir[j];
-		s_orp[npart] = s_irp[j];
+		s_oR[npart] = s_iR[j];
 		s_ov[npart] = s_iv[j];
 		s_otag[npart] = s_itag[j];
 		// increment particle count in cell
@@ -489,10 +489,10 @@ __device__ void examine_cell(U const& offset, T const* g_ir, T const* g_irp, T c
  * update cells
  */
 template <unsigned int cell_size, typename T>
-__global__ void update_cells(T const* g_ir, T const* g_irp, T const* g_iv, int const* g_itag, T* g_or, T* g_orp, T* g_ov, int* g_otag)
+__global__ void update_cells(T const* g_ir, T const* g_iR, T const* g_iv, int const* g_itag, T* g_or, T* g_oR, T* g_ov, int* g_otag)
 {
     __shared__ T s_or[cell_size];
-    __shared__ T s_orp[cell_size];
+    __shared__ T s_oR[cell_size];
     __shared__ T s_ov[cell_size];
     __shared__ int s_otag[cell_size];
     // number of particles in cell
@@ -503,50 +503,50 @@ __global__ void update_cells(T const* g_ir, T const* g_irp, T const* g_iv, int c
     __syncthreads();
 
 #ifdef DIM_3D
-    examine_cell<cell_size>(make_int3( 0,  0,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0,  0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
     // visit 26 neighbour cells
-    examine_cell<cell_size>(make_int3(-1,  0,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0,  0, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0,  0, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1,  0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1,  0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, -1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, +1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, -1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0,  0, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1,  0, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1,  0, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, -1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, +1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, -1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0,  0, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1,  0, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1,  0, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, -1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, +1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, -1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
 #else
-    examine_cell<cell_size>(make_int2( 0,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2( 0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
     // visit 8 neighbour cells
-    examine_cell<cell_size>(make_int2(-1,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1,  0), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2( 0, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2( 0, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(-1, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(-1, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1, -1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1, +1), g_ir, g_irp, g_iv, g_itag, s_or, s_orp, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2(-1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2(+1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2( 0, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2( 0, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2(-1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2(-1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2(+1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2(+1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
 #endif
 
     // store cell in global device memory
     g_or[blockIdx.x * cell_size + threadIdx.x] = s_or[threadIdx.x];
-    g_orp[blockIdx.x * cell_size + threadIdx.x] = s_orp[threadIdx.x];
+    g_oR[blockIdx.x * cell_size + threadIdx.x] = s_oR[threadIdx.x];
     g_ov[blockIdx.x * cell_size + threadIdx.x] = s_ov[threadIdx.x];
     g_otag[blockIdx.x * cell_size + threadIdx.x] = s_otag[threadIdx.x];
 }
