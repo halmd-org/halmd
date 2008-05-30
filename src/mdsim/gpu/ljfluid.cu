@@ -421,7 +421,7 @@ __global__ void assign_cells(T const* g_part, T* g_cell, int* g_tag)
 	__syncthreads();
 
 	if (threadIdx.x == 0) {
-	    for (unsigned int j = 0; j < cell_size; j++) {
+	    for (unsigned int j = 0; j < cell_size && (i + j) < npart; j++) {
 		if (s_icell[j] == blockIdx.x) {
 		    // store particle in cell
 		    s_cell[n] = s_block[j];
