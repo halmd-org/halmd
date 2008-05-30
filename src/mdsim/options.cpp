@@ -190,6 +190,9 @@ void options::parse(int argc, char** argv)
 	("particles,N", po::value<unsigned int>()->default_value(128), "number of particles")
 	("density,d", po::value<float>()->default_value(0.1), "particle density")
 	("box-length,L", po::value<float>(), "simulation box length")
+#ifdef USE_CELL
+	("cell-occupancy,C", po::value<float>()->default_value(0.25), "desired average cell occupancy")
+#endif
 	("timestep,r", po::value<float>()->default_value(0.01), "simulation timestep")
 	("temperature,K", po::value<float>()->default_value(1.), "initial temperature")
 	("rng-seed,R", po::value<unsigned int>()->default_value(42), "random number generator integer seed")

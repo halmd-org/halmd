@@ -59,6 +59,10 @@ public:
     void density(float value);
     /** set periodic box length */
     void box(float value);
+#ifdef USE_CELL
+    /** set desired average cell occupancy */
+    void cell_occupancy(float value);
+#endif
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
     /** restore system state from phase space sample */
@@ -84,6 +88,8 @@ public:
     unsigned int const& placeholders() const;
     /** get cell length */
     float const& cell_length() const;
+    /** get effective average cell occupancy */
+    float const& cell_occupancy() const;
 #endif
     /** get number of CUDA execution blocks */
     unsigned int blocks() const;
@@ -106,12 +112,6 @@ public:
     template <typename V> void sample(V visitor) const;
 
 private:
-#ifdef USE_CELL
-    /** compute cell parameters */
-    void compute_cell_param();
-#endif
-
-private:
     /** number of particles in system */
     unsigned int npart;
 #ifdef USE_CELL
@@ -121,6 +121,8 @@ private:
     unsigned int nplace;
     /** cell length */
     float cell_length_;
+    /** effective average cell occupancy */
+    float cell_occupancy_;
 #endif
     /** particle density */
     float density_;
@@ -341,11 +343,6 @@ void ljfluid<dimension, T>::density(float value)
     catch (cuda::error const& e) {
 	throw exception("failed to copy periodic box length to device symbol");
     }
-
-#ifdef USE_CELL
-    // compute cell parameters
-    compute_cell_param();
-#endif
 }
 
 /**
@@ -368,22 +365,19 @@ void ljfluid<dimension, T>::box(float value)
     // compute particle density
     density_ = npart / powf(box_, dimension);
     LOG("particle density: " << density_);
-
-#ifdef USE_CELL
-    // compute cell parameters
-    compute_cell_param();
-#endif
 }
 
 #ifdef USE_CELL
 /**
- * compute cell parameters
+ * set desired average cell occupancy
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::compute_cell_param()
+void ljfluid<dimension, T>::cell_occupancy(float value)
 {
-    // optimal cell length to yield designated average cell occupancy
-    cell_length_ = std::pow((CELL_SIZE * 0.25f) / density_, 1.f / dimension);
+    LOG("desired average cell occupancy: " << value);
+
+    // optimal cell length to yield desired average cell occupancy
+    cell_length_ = std::pow((CELL_SIZE * value) / density_, 1.f / dimension);
 
     // set number of cells per dimension
     ncell = std::floor(box_ / std::max(r_cut, cell_length_));
@@ -393,14 +387,24 @@ void ljfluid<dimension, T>::compute_cell_param()
 	throw exception("number of cells per dimension must be at least 3");
     }
 
-    // derive cell length from integer number of cells
+    // set cell length from integer number of cells
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
 
     // set number of cell placeholders in system
     nplace = pow(ncell, dimension) * CELL_SIZE;
     LOG("number of cell placeholders: " << nplace);
-    LOG("average cell occupancy: " << (npart * 1. / nplace));
+
+    // set effective average cell occupancy
+    cell_occupancy_ = npart * 1. / nplace;
+    LOG("effective average cell occupancy: " << cell_occupancy_);
+
+    if (cell_occupancy_ > 1.) {
+	throw exception("average cell occupancy must not be larger than 1.0");
+    }
+    else if (cell_occupancy_ > 0.5) {
+	LOG_WARNING("average cell occupancy is larger than 0.5");
+    }
 
     // copy cell parameters to device symbols
     try {
@@ -774,6 +778,15 @@ float const& ljfluid<dimension, T>::cell_length() const
 {
     return cell_length_;
 }
+
+/**
+ * get effective average cell occupancy
+ */
+template <unsigned dimension, typename T>
+float const& ljfluid<dimension, T>::cell_occupancy() const
+{
+    return cell_occupancy_;
+}
 #endif
 
 /**
@@ -953,7 +966,7 @@ void ljfluid<dimension, T>::sample()
     }
     // validate number of particles
     if (count != npart) {
-	throw exception("I've lost my marbles!");
+	throw exception("lost particles in cell-list update due to overcrowed cells");
     }
 #else
     // copy MD simulation step results from GPU to host

@@ -99,6 +99,16 @@ public:
 	return vm["box-length"];
     }
 
+#ifdef USE_CELL
+    /**
+     * returns desired average cell occupancy
+     */
+    option_value<float> cell_occupancy() const
+    {
+	return vm["cell-occupancy"];
+    }
+#endif
+
     /**
      * returns simulation timestep
      */

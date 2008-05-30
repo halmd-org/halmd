@@ -122,6 +122,9 @@ void H5param::write(H5::Group root) const
 	// cell length
 	attr = node.createAttribute("cell_length", H5::PredType::NATIVE_FLOAT, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_FLOAT, &cell_length_);
+	// average cell occupancy
+	attr = node.createAttribute("cell_occupancy", H5::PredType::NATIVE_FLOAT, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_FLOAT, &cell_occupancy_);
 #endif
 	// simulation timestep
 	attr = node.createAttribute("timestep", H5::PredType::NATIVE_FLOAT, H5S_SCALAR);

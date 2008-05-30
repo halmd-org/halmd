@@ -142,6 +142,14 @@ public:
     {
 	cell_length_ = value;
     }
+
+    /**
+     * set cell occupancy
+     */
+    void cell_occupancy(float const& value)
+    {
+	cell_occupancy_ = value;
+    }
 #endif
 
     /**
@@ -288,6 +296,8 @@ private:
 #ifdef USE_CELL
     /** cell length */
     float cell_length_;
+    /** average cell occupancy */
+    float cell_occupancy_;
 #endif
     /** simulation timestep */
     float timestep_;

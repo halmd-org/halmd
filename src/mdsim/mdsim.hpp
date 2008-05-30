@@ -85,6 +85,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	fluid.particles(param.particles());
 	// set particle density
 	fluid.density(!opts.density().defaulted() ? opts.density().value() : param.density());
+#ifdef USE_CELL
+	// compute cell parameters
+	fluid.cell_occupancy(opts.cell_occupancy().value());
+#endif
 	// set number of CUDA execution threads
 	fluid.threads(!opts.threads().defaulted() ? opts.threads().value() : param.threads());
 	// read trajectory sample and restore system state
@@ -128,6 +132,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	    // set particle density
 	    fluid.density(opts.density().value());
 	}
+#ifdef USE_CELL
+	// compute cell parameters
+	fluid.cell_occupancy(opts.cell_occupancy().value());
+#endif
 
 	// set number of CUDA execution threads
 	fluid.threads(opts.threads().value());
@@ -156,6 +164,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 #ifdef USE_CELL
     // gather cell length
     param.cell_length(fluid.cell_length());
+    // gather average cell occupancy
+    param.cell_occupancy(fluid.cell_occupancy());
 #endif
     // gather number of CUDA execution threads per block
     param.threads(fluid.threads());
