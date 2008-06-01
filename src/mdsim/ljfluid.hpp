@@ -126,7 +126,7 @@ private:
     /** update neighbour lists */
     void update_neighbours();
     /** update neighbour list of particle */
-    void compute_cell_neighbours(particle<T>& p, cell_list& c);
+    template <bool same_cell> void compute_cell_neighbours(particle<T>& p, cell_list& c);
     /** compute Lennard-Jones forces */
     void compute_forces();
     /** first leapfrog step of integration of equations of motion */
@@ -540,9 +540,11 @@ void ljfluid<dimension, T>::update_neighbours()
 		    // empty neighbour list of particle
 		    p.neighbour.clear();
 
-		    boost::array<cell_index, 14> neighbour = {{
-			{{  0,  0,  0 }},
-			// visit half of neighbour cells (13 of 26) due to pair potential
+		    // visit this cell
+		    compute_cell_neighbours<true>(p, cell[x][y][z]);
+
+		    // visit half of 26 neighbour cells due to pair potential
+		    boost::array<cell_index, 13> neighbour = {{
 			{{  0, -1,  0 }},
 			{{ -1, -1,  0 }},
 			{{ -1,  0,  0 }},
@@ -560,7 +562,7 @@ void ljfluid<dimension, T>::update_neighbours()
 
 		    // update neighbour list of particle
 		    foreach (cell_index const& idx, neighbour) {
-			compute_cell_neighbours(p, cell[(x + ncell + idx[0]) % ncell][(y + ncell + idx[1]) % ncell][(z + ncell + idx[2]) % ncell]);
+			compute_cell_neighbours<false>(p, cell[(x + ncell + idx[0]) % ncell][(y + ncell + idx[1]) % ncell][(z + ncell + idx[2]) % ncell]);
 		    }
 		}
 	    }
@@ -573,9 +575,11 @@ void ljfluid<dimension, T>::update_neighbours()
 		// empty neighbour list of particle
 		p.neighbour.clear();
 
-		boost::array<cell_index, 5> neighbour = {{
-		    {{  0,  0 }},
-		    // visit half of neighbour cells (4 of 8) due to pair potential
+		// visit this cell
+		compute_cell_neighbours<true>(p, cell[x][y]);
+
+		// visit half of 8 neighbour cells due to pair potential
+		boost::array<cell_index, 4> neighbour = {{
 		    {{  0, -1 }},
 		    {{ -1, -1 }},
 		    {{ -1,  0 }},
@@ -584,7 +588,7 @@ void ljfluid<dimension, T>::update_neighbours()
 
 		// update neighbour list of particle
 		foreach (cell_index const& idx, neighbour) {
-		    compute_cell_neighbours(p, cell[(x + ncell + idx[0]) % ncell][(y + ncell + idx[1]) % ncell]);
+		    compute_cell_neighbours<false>(p, cell[(x + ncell + idx[0]) % ncell][(y + ncell + idx[1]) % ncell]);
 		}
 	    }
 	}
@@ -596,11 +600,12 @@ void ljfluid<dimension, T>::update_neighbours()
  * update neighbour list of particle
  */
 template <unsigned dimension, typename T>
+template <bool same_cell>
 void ljfluid<dimension, T>::compute_cell_neighbours(particle<T>& p, cell_list& c)
 {
     foreach (particle<T>& pp, c) {
-	// skip identical particles
-	if (&p == &pp)
+	// skip identical particle and particle pair permutations if same cell
+	if (same_cell && pp.n <= p.n)
 	    continue;
 
 	// particle distance vector
@@ -709,7 +714,7 @@ void ljfluid<dimension, T>::leapfrog_full()
     for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
 	foreach (particle<T>& p, *it) {
 	    // full step velocity
-	    p.v = p.v + p.f * (timestep_ / 2.);
+	    p.v += p.f * (timestep_ / 2.);
 	    // copy velocity to sorted particle list
 	    part.v[p.n] = p.v;
 
