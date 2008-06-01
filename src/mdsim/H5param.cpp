@@ -175,6 +175,9 @@ void H5param::write(H5::Group root) const
 	// program version
 	attr = node.createAttribute("version", H5::StrType(H5::PredType::C_S1, 256), H5S_SCALAR);
 	attr.write(H5::StrType(H5::PredType::C_S1, 256), PROGRAM_VERSION);
+	// program variant
+	attr = node.createAttribute("variant", H5::StrType(H5::PredType::C_S1, 256), H5S_SCALAR);
+	attr.write(H5::StrType(H5::PredType::C_S1, 256), PROGRAM_VARIANT);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to write parameters to HDF5 input file");
