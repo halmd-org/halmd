@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/algorithm/string/join.hpp>
 #include <cuda_wrapper.hpp>
 #include <exception>
 #include <iostream>
@@ -46,13 +47,9 @@ int main(int argc, char **argv)
     LOG_WARNING("built with enabled debugging");
 #endif
 
-    // assemble command line
-    std::string cmd(argv[0]);
-    for (int i = 1; i < argc; ++i) {
-	cmd.push_back(' ');
-	cmd += argv[i];
-    }
-    LOG("command line: " << cmd);
+    // print command line
+    std::vector<std::string> cmd(argv, argv + argc);
+    LOG("command line: " << boost::algorithm::join(cmd, " "));
 
     try {
 	// set CUDA device for host context
