@@ -518,7 +518,7 @@ void ljfluid<dimension, T>::update_cells()
 template <unsigned dimension, typename T>
 typename ljfluid<dimension, T>::cell_list& ljfluid<dimension, T>::compute_cell(T const& r)
 {
-    T idx = trunc((r - floor(r / box_) * box_) / cell_length_);
+    T idx = (r - floor(r / box_) * box_) / cell_length_;
 #ifdef DIM_3D
     return cell[(int)(idx.x)][(int)(idx.y)][(int)(idx.z)];
 #else
