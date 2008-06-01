@@ -21,6 +21,11 @@
 
 #define PROGRAM_NAME		"@PROGRAM_NAME@"
 #define PROGRAM_VERSION		"@PROGRAM_VERSION@"
+#ifdef DIM_3D
+# define PROGRAM_VARIANT		"+3D +CELL +NEIGHBOUR"
+#else
+# define PROGRAM_VARIANT		"+2D +CELL +NEIGHBOUR"
+#endif
 #define PROGRAM_DATE		"@PROGRAM_DATE@"
 #define PROGRAM_BUILT		__DATE__ " " __TIME__
 #define PROGRAM_AUTHOR		"Peter Colberg <peter.colberg@physik.uni-muenchen.de>"
