@@ -21,6 +21,7 @@
 import Gnuplot
 import glob
 import os, os.path, sys
+import numpy
 import subprocess
 import tables
 import tempfile
@@ -56,8 +57,8 @@ def plot(tcf):
         return g
 
     # plot commands
-    plot_line = '"%s" binary array=inf format="%%double%%double%%*double" using 1:%s notitle with lines lt %d'
-    plot_error = '"%s" binary array=inf format="%%double%%double%%double" using 1:%s:%s title "%s" with yerrorbars lt %d'
+    plot_line = '"%s" binary array=inf format="%%%s%%%s%%*%s" using 1:%s notitle with lines lt %d'
+    plot_error = '"%s" binary array=inf format="%%%s%%%s%%%s" using 1:%s:%s title "%s" with yerrorbars lt %d'
     # plot titles
     titles = parameter.difference(sets)
 
@@ -75,9 +76,10 @@ def plot(tcf):
     files_MSD = []
     for (root, name) in tcf:
         f = file(name + '_msd.bin', 'wb')
+        tid = (root.MSD.read().dtype == numpy.float64) and 'double' or 'float'
         time_ordered_write(f, root.MSD)
         f.close()
-        files_MSD.append(f.name)
+        files_MSD.append((f.name, tid))
 
     g = spawn_gnuplot('Mean squared displacement')
     g('set logscale y')
@@ -85,8 +87,8 @@ def plot(tcf):
     g('set ylabel "<({/Symbol x}({/Symbol t}+{/Symbol Dt}) - {/Symbol x}({/Symbol t}))^2>_N"')
     plot = []
     for (i, f) in enumerate(files_MSD):
-        plot.append(plot_line % (f, '2', i + 1))
-        plot.append(plot_error % (f, '2', '3', titles[i], i + 1))
+        plot.append(plot_line % (f[0], f[1], f[1], f[1], '2', i + 1))
+        plot.append(plot_error % (f[0], f[1], f[1], f[1], '2', '3', titles[i], i + 1))
     g('plot ' + ', '.join(plot))
 
     g = spawn_gnuplot('Diffusion constant')
@@ -94,17 +96,18 @@ def plot(tcf):
     g('set ylabel "<({/Symbol x}({/Symbol t}+{/Symbol Dt}) - {/Symbol x}({/Symbol t}))^2>_N / {/Symbol Dt}"')
     plot = []
     for (i, f) in enumerate(files_MSD):
-        plot.append(plot_line % (f, '($2/$1)', i + 1))
-        plot.append(plot_error % (f, '($2/$1)', '($3/$1)', titles[i], i + 1))
+        plot.append(plot_line % (f[0], f[1], f[1], f[1], '($2/$1)', i + 1))
+        plot.append(plot_error % (f[0], f[1], f[1], f[1], '($2/$1)', '($3/$1)', titles[i], i + 1))
     g('plot ' + ', '.join(plot))
 
     # write mean quartic displacement data files
     files_MQD = []
     for (root, name) in tcf:
         f = file(name + '_mqd.bin', 'wb')
+        tid = (root.MQD.read().dtype == numpy.float64) and 'double' or 'float'
         time_ordered_write(f, root.MQD)
         f.close()
-        files_MQD.append(f.name)
+        files_MQD.append((f.name, tid))
 
     g = spawn_gnuplot('Mean quartic displacement')
     g('set logscale y')
@@ -112,24 +115,25 @@ def plot(tcf):
     g('set ylabel "<({/Symbol x}({/Symbol t}+{/Symbol Dt}) - {/Symbol x}({/Symbol t}))^4>_N"')
     plot = []
     for (i, f) in enumerate(files_MQD):
-        plot.append(plot_line % (f, '2', i + 1))
-        plot.append(plot_error % (f, '2', '3', titles[i], i + 1))
+        plot.append(plot_line % (f[0], f[1], f[1], f[1], '2', i + 1))
+        plot.append(plot_error % (f[0], f[1], f[1], f[1], '2', '3', titles[i], i + 1))
     g('plot ' + ', '.join(plot))
 
     # write velocity autocorrelation data files
     files_VAC = []
     for (root, name) in tcf:
         f = file(name + '_vac.bin', 'wb')
+        tid = (root.VAC.read().dtype == numpy.float64) and 'double' or 'float'
         time_ordered_write(f, root.VAC)
         f.close()
-        files_VAC.append(f.name)
+        files_VAC.append((f.name, tid))
 
     g = spawn_gnuplot('Velocity autocorrelation')
     g('set ylabel "<({/Symbol n}({/Symbol t}+{/Symbol Dt}) {/Symbol n}({/Symbol t}))>_N"')
     plot = []
     for (i, f) in enumerate(files_VAC):
-        plot.append(plot_line % (f, '2', i + 1))
-        plot.append(plot_error % (f, '2', '3', titles[i], i + 1))
+        plot.append(plot_line % (f[0], f[1], f[1], f[1], '2', i + 1))
+        plot.append(plot_error % (f[0], f[1], f[1], f[1], '2', '3', titles[i], i + 1))
     g('plot ' + ', '.join(plot))
 
 

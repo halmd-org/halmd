@@ -21,6 +21,7 @@
 import Gnuplot
 import glob
 import os, os.path, sys
+import numpy
 import subprocess
 import tables
 import tempfile
@@ -66,7 +67,7 @@ def render(root, basename):
 
     if dimension == 3:
         # FIXME use fraction of cutoff length as particle radius
-        plot = 'splot "%s" binary record=inf format="%%double%%double%%double" using 1:2:3 notitle with points pt 7 ps 2'
+        plot = 'splot "%s" binary record=inf format="%%%s" using 1:2:3 notitle with points pt 7 ps 2'
 
         g('set zrange [-%f:%f]' % (box, box))
         g('set grid')
@@ -75,7 +76,7 @@ def render(root, basename):
 
     else:
         # FIXME use fraction of cutoff length as particle radius
-        plot = 'plot "%s" binary array=inf format="%%double%%double" using 1:2 notitle with points pt 7 ps 2'
+        plot = 'plot "%s" binary array=inf format="%%%s" using 1:2 notitle with points pt 7 ps 2'
 
         # draw grid for cell-list based MD simulation
         if root.parameters.ljfluid._v_attrs.__contains__("cell_length"):
@@ -98,12 +99,13 @@ def render(root, basename):
     for (i, sample) in enumerate(root.positions):
         # write trajectory sample to temporary binary file
         f = tempfile.NamedTemporaryFile('wb')
+        tid = (sample.dtype == numpy.float64) and 'double' or 'float'
         f.write(sample.tostring())
         f.flush()
         # plot trajectory sample
         g(output % (frame_fn % i))
         g('set label 1 front "t^* = %g" font "DejaVuSans,14" at graph 0.85, 0.05' % (i * timestep))
-        g(plot % (f.name))
+        g(plot % (f.name, tid))
 
         # FIXME better way to wait for file creation (maybe pyinotify?)
         while not os.path.exists(frame_fn % i):
