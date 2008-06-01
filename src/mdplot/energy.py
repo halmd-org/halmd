@@ -21,6 +21,7 @@
 import Gnuplot
 import glob
 import os, os.path, sys
+import numpy
 import subprocess
 import tables
 import tempfile
@@ -51,7 +52,7 @@ def plot(tep):
         return g
 
     # plot command
-    plot = '"%s" binary array=inf format="%%float" using 1:%s title "%s" with lines'
+    plot = '"%s" binary array=inf format="%%%s" using 1:%s title "%s" with lines'
     # plot titles
     titles = parameter.difference(sets)
 
@@ -61,9 +62,10 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_epot.bin', 'wb')
+        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.EPOT.read().tostring())
         f.close()
-        plots.append(plot % (f.name, '2', titles[i]))
+        plots.append(plot % (f.name, tid, '2', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # mean kinetic energy per particle
@@ -72,9 +74,10 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_ekin.bin', 'wb')
+        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.EKIN.read().tostring())
         f.close()
-        plots.append(plot % (f.name, '2', titles[i]))
+        plots.append(plot % (f.name, tid, '2', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # mean total energy per particle
@@ -83,9 +86,10 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_etot.bin', 'wb')
+        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.ETOT.read().tostring())
         f.close()
-        plots.append(plot % (f.name, '2', titles[i]))
+        plots.append(plot % (f.name, tid, '2', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # temperature
@@ -94,9 +98,10 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_temp.bin', 'wb')
+        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.TEMP.read().tostring())
         f.close()
-        plots.append(plot % (f.name, '2', titles[i]))
+        plots.append(plot % (f.name, tid, '2', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # pressure
@@ -105,9 +110,10 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_press.bin', 'wb')
+        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.PRESS.read().tostring())
         f.close()
-        plots.append(plot % (f.name, '2', titles[i]))
+        plots.append(plot % (f.name, tid, '2', titles[i]))
     g('plot ' + ', '.join(plots))
 
     # velocity center of mass
@@ -116,12 +122,13 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_vcm.bin', 'wb')
+        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.VCM.read().tostring())
         f.close()
         if root.parameters.ljfluid._v_attrs.dimension == 3:
-            plots.append(plot % (f.name, '(sqrt($2*$2+$3*$3+$4*$4))', titles[i]))
+            plots.append(plot % (f.name, tid, '(sqrt($2*$2+$3*$3+$4*$4))', titles[i]))
         else:
-            plots.append(plot % (f.name, '(sqrt($2*$2+$3*$3))', titles[i]))
+            plots.append(plot % (f.name, tid, '(sqrt($2*$2+$3*$3))', titles[i]))
     g('plot ' + ', '.join(plots))
 
 
