@@ -21,6 +21,7 @@
 import Gnuplot
 import glob
 import os, os.path, sys
+import numpy
 import subprocess
 import tables
 import tempfile
@@ -63,12 +64,12 @@ def difference(sets):
         l = []
         for (path, value) in pairs:
             if path in diff:
-                try:
-                    # parameter with floating-point value
+                if type(value) in (numpy.float32, numpy.float64):
+                    # attribute with floating-point value
                     l.append("%s = %.3G" % (label(path), value))
-                except TypeError:
-                    # parameter with arbitrary value
-                    l.append(" = ".join((path, str(value))))
+                else:
+                    # attribute with arbitrary value
+                    l.append("%s = %s" % (label(path), str(value)))
 
         labels.append(", ".join(l))
 
@@ -102,6 +103,7 @@ def label(path):
     # plot labels for fully-qualified parameter names
     labels = {
             'autocorrelation/steps': 'steps',
+            'autocorrelation/time': 'time',
             'autocorrelation/block_size': 'block-size',
             'autocorrelation/block_shift': 'block-shift',
             'autocorrelation/block_count': 'block-count',
@@ -116,6 +118,7 @@ def label(path):
             'ljfluid/cutoff_distance': '{/Symbol x}_{cut}',
             'program/name': 'program',
             'program/version': 'version',
+            'program/variant': 'variant',
     }
 
     return path in labels and labels[path] or path
