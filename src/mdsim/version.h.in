@@ -24,15 +24,15 @@
 
 #ifdef DIM_3D
 # ifdef USE_CELL
-#  define PROGRAM_VARIANT		"+3D +CUDA +CELL"
+#  define PROGRAM_VARIANT		"+3D +CUDA +VVERLET +CELL"
 # else
-#  define PROGRAM_VARIANT		"+3D +CUDA"
+#  define PROGRAM_VARIANT		"+3D +CUDA +VVERLET"
 # endif
 #else
 # ifdef USE_CELL
-#  define PROGRAM_VARIANT		"+2D +CUDA +CELL"
+#  define PROGRAM_VARIANT		"+2D +CUDA +VVERLET +CELL"
 # else
-#  define PROGRAM_VARIANT		"+2D +CUDA"
+#  define PROGRAM_VARIANT		"+2D +CUDA +VVERLET"
 # endif
 #endif
 
