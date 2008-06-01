@@ -118,7 +118,10 @@ def plot(tep):
         f = file(name + '_vcm.bin', 'wb')
         f.write(root.VCM.read().tostring())
         f.close()
-        plots.append(plot % (f.name, '(sqrt($2*$2+$3*$3))', titles[i]))
+        if root.parameters.ljfluid._v_attrs.dimension == 3:
+            plots.append(plot % (f.name, '(sqrt($2*$2+$3*$3+$4*$4))', titles[i]))
+        else:
+            plots.append(plot % (f.name, '(sqrt($2*$2+$3*$3))', titles[i]))
     g('plot ' + ', '.join(plots))
 
 
