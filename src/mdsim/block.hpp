@@ -105,7 +105,7 @@ void block_param<dimension, T>::time(float const& value, float const& timestep)
     // set simulation timestep
     timestep_ = timestep;
     // derive total number of simulation steps
-    steps_ = std::ceil(time_ / timestep_);
+    steps_ = roundf(time_ / timestep_);
     LOG("total number of simulation steps: " << steps_);
 }
 
