@@ -252,7 +252,7 @@ ljfluid<dimension, T>::ljfluid()
     // potential energy at cutoff distance
     float rri_cut = 1. / rr_cut;
     float r6i_cut = rri_cut * rri_cut * rri_cut;
-    float en_cut = 4. * r6i_cut * (r6i_cut - 1.);
+    float en_cut = 2. * r6i_cut * (r6i_cut - 1.);
 
     try {
 	cuda::copy(rr_cut, gpu::ljfluid::rr_cut);
