@@ -148,8 +148,8 @@ void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot,
 	vv += v_ * v_;
     }
 
-    // simulation time of sample
-    const double time = (samples_ + 1) * timestep;
+    // simulation time of sample, starting at time zero
+    const double time = samples_ * timestep;
 
     // mean potential energy per particle
     en_pot_.push_back(scalar_pair(time, en_pot));

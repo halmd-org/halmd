@@ -94,7 +94,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	fluid.init_cell();
 
 	// read trajectory sample and set system state
-	fluid.state(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
 	// close trajectory input file
 	traj.close();
 
@@ -216,21 +216,18 @@ void mdsim<dimension, T>::operator()()
     tcf << param;
     tep << param;
 
-    // sample initial trajectory
-    fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, param.particles()));
-
     LOG("starting MD simulation");
 
     for (uint64_t step = 0; step < param.steps(); ++step) {
-	// MD simulation step
-	fluid.mdstep();
-
 	// sample autocorrelation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _1, _2));
 	// sample thermodynamic equilibrium properties
 	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, param.density(), param.timestep()));
 	// sample trajectory
 	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, param.particles()));
+
+	// MD simulation step
+	fluid.mdstep();
     }
 
     LOG("finished MD simulation");

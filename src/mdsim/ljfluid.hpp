@@ -88,7 +88,7 @@ public:
     void timestep(double value);
 
     /** set system state from phase space sample */
-    template <typename V> void state(V visitor);
+    template <typename V> void restore(V visitor);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -235,7 +235,7 @@ void ljfluid<dimension, T>::particles(unsigned int value)
  */
 template <unsigned dimension, typename T>
 template <typename V>
-void ljfluid<dimension, T>::state(V visitor)
+void ljfluid<dimension, T>::restore(V visitor)
 {
     // set system state from phase space sample
     visitor(part.r, part.v);
@@ -245,13 +245,11 @@ void ljfluid<dimension, T>::state(V visitor)
 	compute_cell(part.r[i]).push_back(particle<T>(part.r[i], part.v[i], i));
     }
 
-    // update cell lists
-    update_cells();
     // update Verlet neighbour lists
     update_neighbours();
     // reset sum over maximum velocity magnitudes to zero
     v_max_sum = 0.;
-    // reconstruct forces for first leapfrog half step
+    // calculate forces, potential energy and virial equation sum
     compute_forces();
 }
      
@@ -378,6 +376,13 @@ void ljfluid<dimension, T>::lattice()
 	// copy position to sorted particle list
 	part.r[i] = r;
     }
+
+    // update Verlet neighbour lists
+    update_neighbours();
+    // reset sum over maximum velocity magnitudes to zero
+    v_max_sum = 0.;
+    // calculate forces, potential energy and virial equation sum
+    compute_forces();
 }
 
 /**
@@ -744,7 +749,7 @@ void ljfluid<dimension, T>::mdstep()
 	v_max_sum = 0.;
     }
 
-    // calculate Lennard-Jones forces
+    // calculate forces, potential energy and virial equation sum
     compute_forces();
     // calculate velocities
     leapfrog_full();
