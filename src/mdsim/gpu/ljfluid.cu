@@ -198,17 +198,14 @@ __device__ void compute_cell_forces(T const* g_cell, int const* g_tag, U const& 
     s_tag[threadIdx.x] = g_tag[icell * block_size + threadIdx.x];
     __syncthreads();
 
-    // check if a real particle
-    if (IS_REAL_PARTICLE(tag)) {
-	for (int i = 0; i < block_size; ++i) {
-	    // skip same particle
-	    if (blockIdx.x == icell && threadIdx.x == i) continue;
+    for (unsigned int i = 0; i < block_size; ++i) {
+	// skip same particle
+	if (blockIdx.x == icell && threadIdx.x == i) continue;
 
-	    // skip virtual particles
-	    if (!IS_REAL_PARTICLE(s_tag[i])) continue;
+	// skip virtual particles
+	if (!IS_REAL_PARTICLE(s_tag[i])) continue;
 
-	    compute_force(r, s_cell[i], f, en, virial);
-	}
+	compute_force(r, s_cell[i], f, en, virial);
     }
     __syncthreads();
 }
