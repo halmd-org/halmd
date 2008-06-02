@@ -313,18 +313,6 @@ void ljfluid<dimension, T>::particles(unsigned int value)
     catch (cuda::error const& e) {
 	throw exception("failed to allocate page-locked host memory for system state");
     }
-
-#ifndef USE_CELL
-    // set particle forces to zero for first integration of differential equations of motion
-    try {
-	fill(h_part.v.begin(), h_part.v.end(), 0.);
-	cuda::copy(h_part.v, g_part.f, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to initialize forces to zero");
-    }
-#endif
 }
 
 /**
@@ -505,16 +493,6 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory double buffers");
     }
-
-    // set particle forces to zero for first integration of differential equations of motion
-    try {
-	fill(h_cell.v.begin(), h_cell.v.end(), 0.);
-	cuda::copy(h_cell.v, g_cell.f, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to initialize forces to zero");
-    }
 #else /* USE_CELL */
     // allocate global device memory for placeholder particles
     try {
@@ -554,21 +532,19 @@ void ljfluid<dimension, T>::restore(V visitor)
 	// copy periodically reduced particle positions from host to GPU
 	cuda::vector<floatn> g_r(npart);
 	cuda::copy(h_part.r, g_r, stream_);
-
 	// assign particles to cells
 	gpu::ljfluid::assign_cells.configure(dim_cell_, stream_);
 	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
-	// copy particle number tags from GPU to host
-	cuda::copy(g_cell.n, h_cell.n, stream_);
-	// copy particle positions from GPU to host
-	cuda::copy(g_cell.r, h_cell.r, stream_);
-	// replicate to periodically extended positions
+	// replicate particle positions to periodically extended positions
 	cuda::copy(g_cell.r, g_cell.R, stream_);
-	cuda::copy(h_cell.r, h_cell.R, stream_);
-
-	// recalculate forces for first leapfrog half step
+	// calculate forces, potential energy and virial equation sum
 	gpu::ljfluid::mdstep.configure(dim_cell_, stream_);
 	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
+
+	// copy particle number tags from GPU to host
+	cuda::copy(g_cell.n, h_cell.n, stream_);
+	// wait for CUDA operations to finish
+	stream_.synchronize();
 
 	// assign velocities to cell placeholders
 	for (unsigned int i = 0; i < nplace; ++i) {
@@ -583,14 +559,13 @@ void ljfluid<dimension, T>::restore(V visitor)
 	cuda::copy(h_part.r, g_part.r, stream_);
 	// replicate to periodically extended particle positions
 	cuda::copy(g_part.r, g_part.R, stream_);
-	cuda::copy(h_part.r, h_part.R, stream_);
-	// recalculate forces for first leapfrog half step
+	// calculate forces, potential energy and virial equation sum
 	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
 	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
+
 	// copy particle velocities from host to GPU (after force calculation!)
 	cuda::copy(h_part.v, g_part.v, stream_);
 #endif
-
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
@@ -641,27 +616,23 @@ void ljfluid<dimension, T>::lattice()
 	// compute particle lattice positions on GPU
 	gpu::ljfluid::lattice.configure(dim_, stream_);
 	gpu::ljfluid::lattice(g_r.data());
-	// copy particle positions from GPU to host
-	cuda::copy(g_r, h_part.r, stream_);
 	// assign particles to cells
 	gpu::ljfluid::assign_cells.configure(dim_cell_, stream_);
 	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
-	// copy particle number tags from GPU to host
-	cuda::copy(g_cell.n, h_cell.n, stream_);
-	// copy particle positions from GPU to host
-	cuda::copy(g_cell.r, h_cell.r, stream_);
-	// copy particle positions to periodically extended positions
+	// replicate particle positions to periodically extended positions
 	cuda::copy(g_cell.r, g_cell.R, stream_);
-	cuda::copy(h_cell.r, h_cell.R, stream_);
+	// calculate forces, potential energy and virial equation sum
+	gpu::ljfluid::mdstep.configure(dim_cell_, stream_);
+	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
 #else
 	// compute particle lattice positions on GPU
 	gpu::ljfluid::lattice.configure(dim_, stream_);
 	gpu::ljfluid::lattice(g_part.r.data());
-	// copy particle positions from GPU to host
-	cuda::copy(g_part.r, h_part.r, stream_);
 	// copy particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
-	cuda::copy(h_part.r, h_part.R, stream_);
+	// calculate forces, potential energy and virial equation sum
+	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
+	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
 #endif
 
 	// wait for CUDA operations to finish
@@ -688,6 +659,8 @@ void ljfluid<dimension, T>::temperature(float temp)
 	gpu::ljfluid::boltzmann(g_v.data(), temp, rng_.data());
 	// copy particle velocities from GPU to host
 	cuda::copy(g_v, h_part.v, stream_);
+	// copy particle number tags from GPU to host
+	cuda::copy(g_cell.n, h_cell.n, stream_);
 #else
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	gpu::ljfluid::boltzmann.configure(dim_, stream_);
@@ -695,7 +668,6 @@ void ljfluid<dimension, T>::temperature(float temp)
 	// copy particle velocities from GPU to host
 	cuda::copy(g_part.v, h_part.v, stream_);
 #endif
-
 	// wait for CUDA operations to finish
 	stream_.synchronize();
     }

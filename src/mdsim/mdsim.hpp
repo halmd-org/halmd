@@ -232,16 +232,10 @@ void mdsim<dimension, T>::operator()()
     tcf << param;
     tep << param;
 
-    // sample initial trajectory
-    fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3, param.particles()));
-
     LOG("starting MD simulation");
 
-    // stream first MD simulation program step on GPU
-    fluid.mdstep();
-
     for (uint64_t step = 0; step < param.steps(); ++step) {
-	// copy MD simulation program step results from GPU to host
+	// copy MD simulation state from GPU to host
 	fluid.sample();
 	// stream next MD simulation program step on GPU
 	fluid.mdstep();

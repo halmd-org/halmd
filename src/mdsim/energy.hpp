@@ -152,8 +152,8 @@ void energy<dimension, T>::sample(vector_type const& v, float const& en_pot, flo
 	vv += v_ * v_;
     }
 
-    // simulation time of sample
-    const float time = (samples_ + 1) * timestep;
+    // simulation time of sample, starting at time zero
+    const float time = samples_ * timestep;
 
     // mean potential energy per particle
     en_pot_.push_back(scalar_pair(time, en_pot));
