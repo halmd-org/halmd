@@ -972,12 +972,12 @@ void ljfluid<dimension, T>::sample()
 	    // copy particle velocities
 	    h_part.v[h_cell.n[i]] = h_cell.v[i];
 
-	    // calculate mean potential energy per particle
-	    en_pot_ += (h_cell.en[i] - en_pot_) / (i + 1);
-	    // calculate mean virial equation sum per particle
-	    virial_ += (h_cell.virial[i] - virial_) / (i + 1);
-
 	    count++;
+
+	    // calculate mean potential energy per particle
+	    en_pot_ += (h_cell.en[i] - en_pot_) / count;
+	    // calculate mean virial equation sum per particle
+	    virial_ += (h_cell.virial[i] - virial_) / count;
 	}
     }
     // validate number of particles
