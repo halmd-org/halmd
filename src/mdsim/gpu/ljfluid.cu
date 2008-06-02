@@ -184,7 +184,7 @@ __device__ unsigned int compute_neighbour_cell(T const& offset)
 /**
  * compute forces with particles in a neighbour cell
  */
-template <unsigned int block_size, typename T, typename U>
+template <unsigned int block_size, bool same_cell, typename T, typename U>
 __device__ void compute_cell_forces(T const* g_cell, int const* g_tag, U const& offset, T const& r, T& f, int const& tag, float& en, float& virial)
 {
     __shared__ T s_cell[block_size];
@@ -200,10 +200,12 @@ __device__ void compute_cell_forces(T const* g_cell, int const* g_tag, U const& 
 
     for (unsigned int i = 0; i < block_size; ++i) {
 	// skip same particle
-	if (blockIdx.x == icell && threadIdx.x == i) continue;
+	if (same_cell && threadIdx.x == i)
+	    continue;
 
 	// skip virtual particles
-	if (!IS_REAL_PARTICLE(s_tag[i])) continue;
+	if (!IS_REAL_PARTICLE(s_tag[i]))
+	    continue;
 
 	compute_force(r, s_cell[i], f, en, virial);
     }
@@ -235,45 +237,45 @@ __global__ void mdstep(T const* g_r, T* g_v, T* g_f, int const* g_tag, float* g_
 
     // calculate forces for this and neighbouring cells
 #ifdef DIM_3D
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0,  0,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, f, tag, en, virial);
     // visit 26 neighbour cells
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1,  0,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1,  0,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0, -1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0, +1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1, -1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1, +1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1, -1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1, +1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0,  0, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1,  0, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1,  0, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0, -1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0, +1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1, -1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1, +1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1, -1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1, +1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0,  0, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1,  0, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1,  0, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0, -1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3( 0, +1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1, -1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(-1, +1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1, -1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int3(+1, +1, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, +1), r, f, tag, en, virial);
 #else
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2( 0,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, f, tag, en, virial);
     // visit 8 neighbour cells
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2(-1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2(+1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2( 0, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2( 0, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2(-1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2(-1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2(+1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size>(g_r, g_tag, make_int2(+1, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1,  0), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, +1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, -1), r, f, tag, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, +1), r, f, tag, en, virial);
 #endif
 
     // second leapfrog step as part of integration of equations of motion
