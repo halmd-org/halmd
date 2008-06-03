@@ -141,7 +141,9 @@ public:
 
 private:
     /** schedule next particle event starting at given time */
-    void schedule_event(unsigned int n, double const& t0);
+    void schedule_event(unsigned int const& n, double const& t);
+    /** process next particle event */
+    void process_event(unsigned int const& n, double const& t);
 
 private:
     /** number of particles */
@@ -415,7 +417,7 @@ void hardspheres<dimension, T>::init_event_list()
  * schedule next particle event starting at given time
  */
 template <unsigned dimension, typename T>
-void hardspheres<dimension, T>::schedule_event(unsigned int n, double const& t0)
+void hardspheres<dimension, T>::schedule_event(unsigned int const& n, double const& t)
 {
     // time interval till collision
     double dt = std::numeric_limits<double>::max();
@@ -429,7 +431,7 @@ void hardspheres<dimension, T>::schedule_event(unsigned int n, double const& t0)
 	    continue;
 
 	// particle distance vector at given time
-	T dr = part[j].r + part[j].v * (t0 - part[j].t) - (part[n].r + part[n].v * (t0 - part[n].t));
+	T dr = part[j].r + part[j].v * (t - part[j].t) - (part[n].r + part[n].v * (t - part[n].t));
 	// enforce periodic boundary conditions
 	dr -= round(dr / box_) * box_;
 	// velocity difference at given time
@@ -463,7 +465,7 @@ void hardspheres<dimension, T>::schedule_event(unsigned int n, double const& t0)
     if (n2 >= 0) {
 	// generate particle collision event
 	event_list[n].type = event::COLLISION;
-	event_list[n].t = t0 + dt;
+	event_list[n].t = t + dt;
 	event_list[n].n2 = n2;
 	event_list[n].count2 = part[n2].count;
     }
@@ -475,11 +477,72 @@ void hardspheres<dimension, T>::schedule_event(unsigned int n, double const& t0)
 #ifdef DIM_3D
 	dt = std::min(dt, bound_dist / fabs(part[n].v.z));
 #endif
-	event_list[n].t = t0 + dt;
+	event_list[n].t = t + dt;
     }
 
     // schedule particle event
     event_queue.push(event_queue_item(event_list[n].t, n));
+}
+
+/*
+ * process next particle event
+ */
+template <unsigned dimension, typename T>
+void hardspheres<dimension, T>::process_event(unsigned int const& n, double const& t)
+{
+    if (event_list[n].t != t)
+	// discard invalidated event
+	return;
+
+    if (event_list[n].type == event::COLLISION) {
+	// collision partner particle number
+	const unsigned int n2 = event_list[n].n2;
+
+	// check if partner participated in another collision before this event
+	if (part[n2].count != event_list[n].count2) {
+	    // schedule next event for this particle
+	    schedule_event(n, t);
+	    return;
+	}
+
+	// update positions to current simulation time
+	part[n].r += part[n].v * (t - part[n].t);
+	part[n2].r += part[n2].v * (t - part[n2].t);
+	// update particle times
+	part[n].t = t;
+	part[n2].t = t;
+
+	// particle distance vector
+	T dr = part[n2].r - part[n].r;
+	// enforce periodic boundary conditions
+	dr -= round(dr / box_) * box_;
+	// velocity difference before collision
+	T dv = part[n].v - part[n2].v;
+	// velocity difference after collision without dissipation
+	dv = dr * (dr * dv) / (dr * dr);
+
+	// update velocities to current simulation time
+	part[n].v -= dv;
+	part[n2].v += dv;
+	// update particle event counters
+	part[n].count++;
+	part[n2].count++;
+
+	// schedule next event for each particle
+	schedule_event(n, t);
+	schedule_event(n2, t);
+    }
+    else if (event_list[n].type == event::BOUNDARY) {
+	// update particle position to current simulation time
+	part[n].r += part[n].v * (t - part[n].t);
+	// update particle time
+	part[n].t = t;
+	// update particle event counter
+	part[n].count++;
+
+	// schedule next event for particle
+	schedule_event(n, t);
+    }
 }
 
 /**
@@ -496,63 +559,9 @@ void hardspheres<dimension, T>::mdstep(double const& sample_time)
 
 	// update current simulation time to particle event time
 	time_ = event_queue.top().first;
-	// particle number of event
-	const unsigned int n = event_queue.top().second;
+
+	process_event(event_queue.top().second, time_);
 	event_queue.pop();
-
-	if (event_list[n].t != time_)
-	    // discard invalidated event
-	    continue;
-
-	if (event_list[n].type == event::COLLISION) {
-	    // collision partner particle number
-	    const unsigned int n2 = event_list[n].n2;
-
-	    // check if partner participated in another collision before this event
-	    if (part[n2].count != event_list[n].count2) {
-		// schedule next event for this particle
-		schedule_event(n, time_);
-		continue;
-	    }
-
-	    // update positions to current simulation time
-	    part[n].r += part[n].v * (time_ - part[n].t);
-	    part[n2].r += part[n2].v * (time_ - part[n2].t);
-	    // update particle times
-	    part[n].t = time_;
-	    part[n2].t = time_;
-
-	    // particle distance vector
-	    T dr = part[n2].r - part[n].r;
-	    // enforce periodic boundary conditions
-	    dr -= round(dr / box_) * box_;
-	    // velocity difference before collision
-	    T dv = part[n].v - part[n2].v;
-	    // velocity difference after collision without dissipation
-	    dv = dr * (dr * dv) / (dr * dr);
-
-	    // update velocities to current simulation time
-	    part[n].v -= dv;
-	    part[n2].v += dv;
-	    // update particle event counters
-	    part[n].count++;
-	    part[n2].count++;
-
-	    // schedule next event for each particle
-	    schedule_event(n, time_);
-	    schedule_event(n2, time_);
-	}
-	else if (event_list[n].type == event::BOUNDARY) {
-	    // update particle position to current simulation time
-	    part[n].r += part[n].v * (time_ - part[n].t);
-	    // update particle time
-	    part[n].t = time_;
-	    // update particle event counter
-	    part[n].count++;
-
-	    // schedule next event for particle
-	    schedule_event(n, time_);
-	}
     }
 
     // sample phase space at given time
