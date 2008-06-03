@@ -26,7 +26,6 @@
 #include <vector>
 #include "H5param.hpp"
 #include "accumulator.hpp"
-#include "ljfluid.hpp"
 #include "log.hpp"
 #include "statistics.hpp"
 

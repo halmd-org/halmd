@@ -84,6 +84,14 @@ public:
     }
 
     /**
+     * returns pair separation at which particle collision occurs
+     */
+    option_value<double> pair_separation() const
+    {
+	return vm["pair-separation"];
+    }
+
+    /**
      * returns particle density
      */
     option_value<double> density() const
@@ -100,7 +108,7 @@ public:
     }
 
     /**
-     * returns simulation timestep
+     * returns sample timestep
      */
     option_value<double> timestep() const
     {
@@ -116,7 +124,7 @@ public:
     }
 
     /**
-     * returns number of simulation steps
+     * returns number of sample steps
      */
     option_value<uint64_t> steps() const
     {
@@ -124,7 +132,7 @@ public:
     }
 
     /**
-     * returns total simulation time
+     * returns total sample time
      */
     option_value<double> time() const
     {

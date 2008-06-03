@@ -46,11 +46,11 @@ def plot(tcf):
         # wxt terminal is buggy and causes CPU usage to rise to 100% after the
         # main gnuplot process exits. This bug is fixed in gnuplot 4.3 CVS
         # since 2007-04-29.
-        g('set terminal wxt persist size 1024,768 enhanced title "ljfluid: %s"' % title)
+        g('set terminal wxt persist size 1024,768 enhanced title "hardspheres: %s"' % title)
 
         g('set key outside vertical center bottom Left reverse box')
         # minimal timestep value of sets
-        # g('set xrange [%.3G:]' % max(parameter.values(sets, 'ljfluid/timestep')))
+        # g('set xrange [%.3G:]' % max(parameter.values(sets, 'hardspheres/timestep')))
         g('set logscale x')
         g('set format x "10^{%T}"')
         g('set xlabel "{/Symbol Dt}"')

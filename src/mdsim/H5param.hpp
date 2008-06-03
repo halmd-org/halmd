@@ -71,43 +71,19 @@ public:
     }
 
     /**
-     * set number of cells per dimension
+     * returns pair separation at which particle collision occurs
      */
-    void cells(unsigned int const& value)
+    double const& pair_separation() const
     {
-	cells_ = value;
+	return pair_separation_;
     }
 
     /**
-     * returns number of CUDA execution threads
+     * set particle pair_separation
      */
-    unsigned int const& threads() const
+    void pair_separation(double const& value)
     {
-	return threads_;
-    }
-
-    /**
-     * set number of CUDA execution threads
-     */
-    void threads(unsigned int const& value)
-    {
-	threads_ = value;
-    }
-
-    /**
-     * returns number of CUDA execution blocks
-     */
-    unsigned int const& blocks() const
-    {
-	return blocks_;
-    }
-
-    /**
-     * set number of CUDA execution blocks
-     */
-    void blocks(unsigned int const& value)
-    {
-	blocks_ = value;
+	pair_separation_ = value;
     }
 
     /**
@@ -151,7 +127,7 @@ public:
     }
 
     /**
-     * returns simulation timestep
+     * returns sample timestep
      */
     double const& timestep() const
     {
@@ -159,7 +135,7 @@ public:
     }
 
     /**
-     * returns simulation timestep
+     * returns sample timestep
      */
     void timestep(double const& value)
     {
@@ -167,7 +143,7 @@ public:
     }
 
     /**
-     * returns number of simulation steps
+     * returns number of sample steps
      */
     uint64_t const& steps() const
     {
@@ -175,7 +151,7 @@ public:
     }
 
     /**
-     * set number of simulation steps
+     * set number of sample steps
      */
     void steps(uint64_t const& value)
     {
@@ -183,7 +159,7 @@ public:
     }
 
     /**
-     * returns total simulation time
+     * returns total sample time
      */
     double const& time() const
     {
@@ -191,7 +167,7 @@ public:
     }
 
     /**
-     * returns total simulation time
+     * returns total sample time
      */
     void time(double const& value)
     {
@@ -262,44 +238,24 @@ public:
 	max_samples_ = value;
     }
 
-    /**
-     * returns Lennard-Jones potential cutoff distance
-     */
-    double const& cutoff_distance() const
-    {
-	return cutoff_distance_;
-    }
-
-    /**
-     * set Lennard-Jones potential cutoff distance
-     */
-    void cutoff_distance(double const& value)
-    {
-	cutoff_distance_ = value;
-    }
-
 private:
     /** positional coordinates dimension */
     unsigned int dimension_;
     /** number of particles */
     unsigned int particles_;
-    /** number of cells per dimension */
-    unsigned int cells_;
-    /** number of CUDA execution threads */
-    unsigned int threads_;
-    /** number of CUDA execution blocks */
-    unsigned int blocks_;
+    /** pair separation at which particle collision occurs */
+    double pair_separation_;
     /** particle density */
     double density_;
     /** periodic box length */
     double box_length_;
     /** cell length */
     double cell_length_;
-    /** simulation timestep */
+    /** sample timestep */
     double timestep_;
-    /** number of simulation steps */
+    /** number of sample steps */
     uint64_t steps_;
-    /** total simulation time */
+    /** total sample time */
     double time_;
     /** block size */
     unsigned int block_size_;
@@ -309,8 +265,6 @@ private:
     unsigned int block_count_;
     /** maximum number of samples per block */
     uint64_t max_samples_;
-    /** Lennard-Jones potential cutoff distance */
-    double cutoff_distance_;
 };
 
 } // namespace mdsim

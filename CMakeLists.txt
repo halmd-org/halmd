@@ -1,31 +1,31 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-PROJECT(ljfluid)
+PROJECT(hardspheres)
 
-SET(CMAKE_MODULE_PATH ${ljfluid_SOURCE_DIR}/CMakeModules)
+SET(CMAKE_MODULE_PATH ${hardspheres_SOURCE_DIR}/CMakeModules)
 
 SET(MERCURIAL_FIND_REQUIRED TRUE)
 FIND_PACKAGE(Mercurial)
 
-MERCURIAL_HG_INFO(${ljfluid_SOURCE_DIR} ljfluid)
+MERCURIAL_HG_INFO(${hardspheres_SOURCE_DIR} hardspheres)
 
-SET(PROGRAM_NAME "ljfluid")
+SET(PROGRAM_NAME "hardspheres")
 
-IF(ljfluid_HG_TAG)
-  SET(PROGRAM_VERSION "version ${ljfluid_HG_TAG}")
-ELSE(ljfluid_HG_TAG)
-  IF(ljfluid_HG_ID)
-    SET(PROGRAM_VERSION "changeset ${ljfluid_HG_ID}")
-  ELSE(ljfluid_HG_ID)
+IF(hardspheres_HG_TAG)
+  SET(PROGRAM_VERSION "version ${hardspheres_HG_TAG}")
+ELSE(hardspheres_HG_TAG)
+  IF(hardspheres_HG_ID)
+    SET(PROGRAM_VERSION "changeset ${hardspheres_HG_ID}")
+  ELSE(hardspheres_HG_ID)
     SET(PROGRAM_VERSION "unknown version")
-  ENDIF(ljfluid_HG_ID)
-ENDIF(ljfluid_HG_TAG)
+  ENDIF(hardspheres_HG_ID)
+ENDIF(hardspheres_HG_TAG)
 
-IF(ljfluid_HG_DATE)
-  SET(PROGRAM_DATE "${ljfluid_HG_DATE}")
-ELSE(ljfluid_HG_DATE)
+IF(hardspheres_HG_DATE)
+  SET(PROGRAM_DATE "${hardspheres_HG_DATE}")
+ELSE(hardspheres_HG_DATE)
   SET(PROGRAM_DATE "unknown date")
-ENDIF(ljfluid_HG_DATE)
+ENDIF(hardspheres_HG_DATE)
 
 
 SET(GSL_FIND_REQUIRED TRUE)
@@ -43,6 +43,6 @@ SET(HDF5_FIND_REQUIRED TRUE)
 SET(HDF5_FIND_QUIETLY TRUE)
 FIND_PACKAGE(HDF5)
 
-INCLUDE_DIRECTORIES(${ljfluid_SOURCE_DIR}/include)
+INCLUDE_DIRECTORIES(${hardspheres_SOURCE_DIR}/include)
 
 ADD_SUBDIRECTORY(src)

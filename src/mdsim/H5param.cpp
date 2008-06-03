@@ -33,8 +33,8 @@ void H5param::read(H5::Group const& root)
 	H5::Attribute attr;
 	H5::Group node;
 
-	// Lennard-Jones fluid simulation parameters
-	node = root.openGroup("ljfluid");
+	// hard spheres simulation parameters
+	node = root.openGroup("hardspheres");
 
 	// positional coordinates dimension
 	attr = node.openAttribute("dimension");
@@ -42,26 +42,26 @@ void H5param::read(H5::Group const& root)
 	// number of particles
 	attr = node.openAttribute("particles");
 	attr.read(H5::PredType::NATIVE_UINT, &particles_);
+	// pair separation at which particle collision occurs
+	attr = node.openAttribute("pair_separation");
+	attr.read(H5::PredType::NATIVE_DOUBLE, &pair_separation_);
 	// particle density
 	attr = node.openAttribute("density");
 	attr.read(H5::PredType::NATIVE_DOUBLE, &density_);
 	// periodic box length
 	attr = node.openAttribute("box_length");
 	attr.read(H5::PredType::NATIVE_DOUBLE, &box_length_);
-	// simulation timestep
+	// sample timestep
 	attr = node.openAttribute("timestep");
 	attr.read(H5::PredType::NATIVE_DOUBLE, &timestep_);
-	// Lennard-Jones potential cutoff distance
-	attr = node.openAttribute("cutoff_distance");
-	attr.read(H5::PredType::NATIVE_DOUBLE, &cutoff_distance_);
 
 	// correlation function parameters
 	node = root.openGroup("autocorrelation");
 
-	// number of simulation steps
+	// number of sample steps
 	attr = node.openAttribute("steps");
 	attr.read(H5::PredType::NATIVE_UINT64, &steps_);
-	// total simulation time
+	// total sample time
 	attr = node.openAttribute("time");
 	attr.read(H5::PredType::NATIVE_DOUBLE, &time_);
 	// block size
@@ -91,8 +91,8 @@ void H5param::write(H5::Group root) const
 	H5::Attribute attr;
 	H5::Group node;
 
-	// Lennard-Jones fluid simulation parameters
-	node = root.createGroup("ljfluid");
+	// hard spheres simulation parameters
+	node = root.createGroup("hardspheres");
 
 	// positional coordinates dimension
 	attr = node.createAttribute("dimension", H5::PredType::NATIVE_UINT, H5S_SCALAR);
@@ -100,32 +100,26 @@ void H5param::write(H5::Group root) const
 	// number of particles
 	attr = node.createAttribute("particles", H5::PredType::NATIVE_UINT, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_UINT, &particles_);
-	// number of cells per dimension
-	attr = node.createAttribute("cells", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT, &cells_);
+	// pair separation at which particle collision occurs
+	attr = node.createAttribute("pair_separation", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_DOUBLE, &pair_separation_);
 	// particle density
 	attr = node.createAttribute("density", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_DOUBLE, &density_);
 	// periodic box length
 	attr = node.createAttribute("box_length", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_DOUBLE, &box_length_);
-	// cell length
-	attr = node.createAttribute("cell_length", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_DOUBLE, &cell_length_);
-	// simulation timestep
+	// sample timestep
 	attr = node.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_DOUBLE, &timestep_);
-	// Lennard-Jones potential cutoff distance
-	attr = node.createAttribute("cutoff_distance", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_DOUBLE, &cutoff_distance_);
 
 	// correlation function parameters
 	node = root.createGroup("autocorrelation");
 
-	// number of simulation steps
+	// number of sample steps
 	attr = node.createAttribute("steps", H5::PredType::NATIVE_UINT64, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_UINT64, &steps_);
-	// total simulation time
+	// total sample time
 	attr = node.createAttribute("time", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_DOUBLE, &time_);
 	// block size

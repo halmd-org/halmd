@@ -51,23 +51,28 @@ def render(root, basename):
     g = Gnuplot.Gnuplot()
 
     output = 'set output "%s"'
-    g('set terminal png font "DejaVuSans,12" enhanced size 1080, 1080')
+    g('set terminal png font "DejaVuSans,12" enhanced size 2048, 2048')
+    #FIXME --draft option g('set terminal png font "DejaVuSans,12" enhanced size 720, 720')
     g('unset key')
     g('unset title')
 
     # simulation box length
-    box = root.parameters.ljfluid._v_attrs.box_length
+    box = root.parameters.hardspheres._v_attrs.box_length
     # positional coordinates dimension
-    dimension = root.parameters.ljfluid._v_attrs.dimension
+    dimension = root.parameters.hardspheres._v_attrs.dimension
     # simulation time resolution
-    timestep = root.parameters.ljfluid._v_attrs.timestep
+    timestep = root.parameters.hardspheres._v_attrs.timestep
 
     g('set xrange [0:%f]' % box)
     g('set yrange [0:%f]' % box)
+    
+    # define Kronecker delta
+    g('delta(x, y) = (x == y) ? 1 : 0')
+    g('rgb(r,g,b) = 65536 * int(r) + 256 * int(g) + int(b)')
 
     if dimension == 3:
         # FIXME use fraction of cutoff length as particle radius
-        plot = 'splot "%s" binary record=inf format="%%%s" using 1:2:3 notitle with points pt 7 ps 2'
+        plot = 'splot "%s" binary record=inf format="%%%s" using 1:2:(%f) notitle with circles lc rgb "blue" fs transparent solid 0.5'
 
         g('set zrange [-%f:%f]' % (box, box))
         g('set grid')
@@ -76,15 +81,16 @@ def render(root, basename):
 
     else:
         # FIXME use fraction of cutoff length as particle radius
-        plot = 'plot "%s" binary array=inf format="%%%s" using 1:2 notitle with points pt 7 ps 2'
+        plot = 'plot "%s" binary array=inf format="%%%s" using 1:2:(%f):(rgb(255*delta($0, 76), 255*delta($0, 49), 255)) notitle with circles lc rgb variable fs transparent solid 0.5'
+        # FIXME --mark particle(s) option
 
         # draw grid for cell-list based MD simulation
-        if root.parameters.ljfluid._v_attrs.__contains__("cell_length"):
+        if root.parameters.hardspheres._v_attrs.__contains__("cell_length"):
             g('set format "%.3g"')
-            g('set xtics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
-            g('set x2tics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
-            g('set ytics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
-            g('set y2tics 0, %f' % root.parameters.ljfluid._v_attrs.cell_length)
+            g('set xtics 0, %f' % root.parameters.hardspheres._v_attrs.cell_length)
+            g('set x2tics 0, %f' % root.parameters.hardspheres._v_attrs.cell_length)
+            g('set ytics 0, %f' % root.parameters.hardspheres._v_attrs.cell_length)
+            g('set y2tics 0, %f' % root.parameters.hardspheres._v_attrs.cell_length)
             g('set grid xtics ytics lt -1')
         else:
             g('set x2tics')
@@ -92,6 +98,9 @@ def render(root, basename):
 
         g('set x2range [0:%f]' % box)
         g('set y2range [0:%f]' % box)
+
+    # particle radius
+    radius = root.parameters.hardspheres._v_attrs.pair_separation / 2
 
     data_file = None
     frame_fn = basename + '_%06d.png'
@@ -105,7 +114,7 @@ def render(root, basename):
         # plot trajectory sample
         g(output % (frame_fn % i))
         g('set label 1 front "t^* = %g" font "DejaVuSans,14" at graph 0.85, 0.05' % (i * timestep))
-        g(plot % (f.name, tid))
+        g(plot % (f.name, tid, radius))
 
         # FIXME better way to wait for file creation (maybe pyinotify?)
         while not os.path.exists(frame_fn % i):

@@ -1,4 +1,4 @@
-/* Molecular Dynamics simulation of a Lennard-Jones fluid
+/* Molecular Dynamics simulation of hard sphere particles
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -25,7 +25,7 @@
 #include "autocorrelation.hpp"
 #include "block.hpp"
 #include "energy.hpp"
-#include "ljfluid.hpp"
+#include "hardspheres.hpp"
 #include "log.hpp"
 #include "options.hpp"
 #include "trajectory.hpp"
@@ -35,7 +35,7 @@ namespace mdsim
 {
 
 /**
- * Molecular Dynamics simulation of a Lennard-Jones fluid
+ * Molecular Dynamics simulation of hard sphere particles
  */
 template <unsigned dimension, typename T>
 class mdsim
@@ -51,8 +51,8 @@ private:
     options const& opts;
     /** global simulation parameters */
     H5param param;
-    /** Lennard-Jones fluid simulation */
-    ljfluid<dimension, T> fluid;
+    /** hard spheres simulation */
+    hardspheres<dimension, T> fluid;
     /** block algorithm parameters */
     block_param<dimension, T> block;
 };
@@ -67,7 +67,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     param.dimension(dimension);
     LOG("positional coordinates dimension: " << dimension);
 
-    // initialize Lennard Jones fluid simulation
+    // initialize hard spheres simulation
     if (!opts.trajectory_input_file().empty()) {
 	trajectory<dimension, T, false> traj;
 	// open trajectory input file
@@ -77,6 +77,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
 	// set number of particles
 	fluid.particles(param.particles());
+	// set pair separation at which particle collision occurs
+	fluid.pair_separation(param.pair_separation());
 
 	if (!opts.box_length().empty()) {
 	    // set simulation box length
@@ -89,9 +91,6 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	    }
 	    fluid.density(param.density());
 	}
-
-	// initialize cell lists
-	fluid.init_cell();
 
 	// read trajectory sample and set system state
 	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
@@ -124,6 +123,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     else {
 	// set number of particles in system
 	fluid.particles(opts.particles().value());
+	// set pair separation at which particle collision occurs
+	fluid.pair_separation(opts.pair_separation().value());
 
 	if (!opts.box_length().empty()) {
 	    // set simulation box length
@@ -133,9 +134,6 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	    // set particle density
 	    fluid.density(opts.density().value());
 	}
-
-	// initialize cell lists
-	fluid.init_cell();
 
 	// initialize random number generator with seed
 	fluid.rng(opts.rng_seed().value());
@@ -151,33 +149,29 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	param.steps(opts.steps().value());
     }
 
+    // initialize event list
+    fluid.init_event_list();
+
     // gather number of particles
     param.particles(fluid.particles());
-    // gather number of cells per dimension
-    param.cells(fluid.cells());
+    // gather pair separation at which particle collision occurs
+    param.pair_separation(fluid.pair_separation());
     // gather particle density
     param.density(fluid.density());
     // gather simulation box length
     param.box_length(fluid.box());
-    // gather cell length
-    param.cell_length(fluid.cell_length());
-    // gather potential cutoff distance
-    param.cutoff_distance(fluid.cutoff_distance());
-
-    // set simulation timestep
-    fluid.timestep(param.timestep());
 
     if (!opts.time().empty()) {
-	// set total simulation time
+	// set total sample time
 	block.time(opts.time().value(), param.timestep());
     }
     else {
-	// set total number of simulation steps
+	// set total number of sample steps
 	block.steps(param.steps(), param.timestep());
     }
-    // gather total number of simulation steps
+    // gather total number of sample steps
     param.steps(block.steps());
-    // gather total simulation time
+    // gather total sample time
     param.time(block.time());
 
     // set block size
@@ -221,13 +215,13 @@ void mdsim<dimension, T>::operator()()
     for (uint64_t step = 0; step < param.steps(); ++step) {
 	// sample autocorrelation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _1, _2));
-	// sample thermodynamic equilibrium properties
-	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, param.density(), param.timestep()));
+	// FIXME sample thermodynamic equilibrium properties
+	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, 0., 0., param.density(), param.timestep()));
 	// sample trajectory
 	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, param.particles()));
 
-	// MD simulation step
-	fluid.mdstep();
+	// advance phase space state to given sample time
+	fluid.mdstep(step * param.timestep());
     }
 
     LOG("finished MD simulation");

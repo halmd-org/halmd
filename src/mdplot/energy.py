@@ -45,7 +45,7 @@ def plot(tep):
         # wxt terminal is buggy and causes CPU usage to rise to 100% after the
         # main gnuplot process exits. This bug is fixed in gnuplot 4.3 CVS
         # since 2007-04-29.
-        g('set terminal wxt persist size 1200,900 enhanced title "ljfluid: %s"' % title)
+        g('set terminal wxt persist size 1200,900 enhanced title "hardspheres: %s"' % title)
 
         g('set key outside vertical center bottom Left reverse box')
         g('set xlabel "{/Symbol t}"')
@@ -125,7 +125,7 @@ def plot(tep):
         tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.VCM.read().tostring())
         f.close()
-        if root.parameters.ljfluid._v_attrs.dimension == 3:
+        if root.parameters.hardspheres._v_attrs.dimension == 3:
             plots.append(plot % (f.name, tid, '(sqrt($2*$2+$3*$3+$4*$4))', titles[i]))
         else:
             plots.append(plot % (f.name, tid, '(sqrt($2*$2+$3*$3))', titles[i]))

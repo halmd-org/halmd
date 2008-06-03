@@ -1,4 +1,4 @@
-/* Molecular Dynamics Simulation of a Lennard-Jones fluid
+/* Molecular Dynamics Simulation of hard sphere particles
  *
  * Copyright (C) 2008  Peter Colberg
  *
