@@ -19,6 +19,7 @@
 #ifndef MDSIM_VECTOR3D_HPP
 #define MDSIM_VECTOR3D_HPP
 
+#include <boost/array.hpp>
 #include <math.h>
 #include <iostream>
 
@@ -43,21 +44,32 @@ public:
     /**
      * initialization by vector
      */
-    vector3d(vector3d<T> const& v) : x(v.x), y(v.y), z(v.z)
+    template <typename U>
+    vector3d(vector3d<U> const& v) : x(v.x), y(v.y), z(v.z)
     {
     }
 
     /**
      * initialization by scalar
      */
-    vector3d(T const& s) : x(s), y(s), z(s)
+    template <typename U>
+    vector3d(U const& s) : x(s), y(s), z(s)
     {
     }
 
     /**
      * initialization by scalar components
      */
-    vector3d(T const& x, T const& y, T const& z) : x(x), y(y), z(z)
+    template <typename U, typename V, typename W>
+    vector3d(U const& x, V const& y, W const& z) : x(x), y(y), z(z)
+    {
+    }
+
+    /**
+     * initialization by array
+     */
+    template <typename U>
+    vector3d(boost::array<U, 3> const& v) : x(v[0]), y(v[1]), z(v[2])
     {
     }
 
