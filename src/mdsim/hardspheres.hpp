@@ -67,9 +67,11 @@ public:
      */
     struct particle
     {
-	/** particle position immediately after most recently processed event for this particle */
+	/** periodically reduced particle position */
 	T r;
-	/** particle velocity immediately after most recently processed event for this particle */
+	/** periodically extended particle position */
+	T R;
+	/** particle velocity */
 	T v;
 	/** time of that event */
 	double t;
@@ -320,8 +322,10 @@ void hardspheres<dimension, T>::restore(V visitor)
     std::copy(r_.begin(), r_.end(), R_.begin());
 
     for (unsigned int i = 0; i < npart; ++i) {
-	// set particle position at simulation time zero
+	// set periodically reduced particle position at simulation time zero
 	part[i].r = r_[i];
+	// set periodically extended particle position at simulation time zero
+	part[i].R = R_[i];
 	// set cell which particle belongs to
 	part[i].cell = compute_cell(part[i].r);
 	// add particle to cell
@@ -384,14 +388,18 @@ void hardspheres<dimension, T>::lattice()
 #endif
 	// scale by lattice distance
 	part[i].r *= a;
+	// set periodically extended particle position
+	part[i].R = part[i].r;
 	// set cell which particle belongs to
 	part[i].cell = compute_cell(part[i].r);
 	// add particle to cell
 	cell_(part[i].cell).push_back(i);
 	// set particle time
 	part[i].t = 0.;
-	// copy particle position at sample time zero
-	r_[i] = R_[i] = part[i].r;
+	// copy periodically reduced particle position at sample time zero
+	r_[i] = part[i].r;
+	// copy periodically extended particle position at sample time zero
+	R_[i] = part[i].R;
     }
 }
 
@@ -567,10 +575,10 @@ void hardspheres<dimension, T>::compute_cell_event(const unsigned int n)
     double dt = std::numeric_limits<double>::max();
 
 #ifdef DIM_3D
-    // periodically extended position of cell origin
-    const T r_cell_origin = floor(part[n].r / box_) * box_ + T(part[n].cell[0], part[n].cell[1], part[n].cell[2]) * cell_length_;
+    // periodically reduced position of cell origin
+    const T r_cell_origin = T(part[n].cell[0], part[n].cell[1], part[n].cell[2]) * cell_length_;
 #else
-    const T r_cell_origin = floor(part[n].r / box_) * box_ + T(part[n].cell[0], part[n].cell[1]) * cell_length_;
+    const T r_cell_origin = T(part[n].cell[0], part[n].cell[1]) * cell_length_;
 #endif
 
     //
@@ -581,8 +589,8 @@ void hardspheres<dimension, T>::compute_cell_event(const unsigned int n)
     // The width of a cell center zone is defined by the pair separation,
     // thus ensuring that two particles separated by an entire cell length
     // at collision event prediction (therefore being invisible to each other)
-    // will trigger a cell boundary event just before a collision may in
-    // the center of the cell.
+    // will trigger a cell boundary event just before a collision might occur
+    // in the center of the cell.
     // This border case assumes that the particles have a velocity component
     // with equal magnitude and opposite sign in that dimension, and velocity
     // component zero in all other dimensions.
@@ -747,7 +755,7 @@ void hardspheres<dimension, T>::process_cell_event(const unsigned int n)
 template <unsigned dimension, typename T>
 typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::compute_cell(T const& r)
 {
-    T cellf = (r - floor(r / box_) * box_) / cell_length_;
+    T cellf = r / cell_length_;
 #ifdef DIM_3D
     cell_index cell = {{ int(cellf.x), int(cellf.y), int(cellf.z) }};
 #else
@@ -762,8 +770,13 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::update_particle(const unsigned int n, const double t)
 {
-    // update particle position to given time
-    part[n].r += part[n].v * (t - part[n].t);
+    const T dr = part[n].v * (t - part[n].t);
+    // update periodically extended particle position
+    part[n].R += dr;
+    // update periodically reduced particle position to given time
+    part[n].r += dr;
+    // enforce periodic boundary conditions
+    part[n].r -= floor(part[n].r / box_) * box_;
     // update particle time
     part[n].t = t;
 
@@ -810,8 +823,11 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 
     // sample phase space at given time
     for (unsigned int i = 0; i < npart; ++i) {
-	// particle position
-	r_[i] = R_[i] = part[i].r + part[i].v * (sample_time - part[i].t);
+	const T dr = part[i].v * (sample_time - part[i].t);
+	// periodically extended particle position
+	R_[i] = part[i].R + dr;
+	// periodically reduced particle position
+	r_[i] = part[i].r + dr;
 	// enforce periodic boundary conditions
 	r_[i] -= floor(r_[i] / box_) * box_;
 	// particle velocity
