@@ -574,12 +574,8 @@ void hardspheres<dimension, T>::compute_cell_event(const unsigned int n)
 {
     double dt = std::numeric_limits<double>::max();
 
-#ifdef DIM_3D
     // periodically reduced position of cell origin
-    const T r_cell_origin = T(part[n].cell[0], part[n].cell[1], part[n].cell[2]) * cell_length_;
-#else
-    const T r_cell_origin = T(part[n].cell[0], part[n].cell[1]) * cell_length_;
-#endif
+    const T r_cell_origin = T(part[n].cell) * cell_length_;
 
     //
     // For each dimension, we calculate the time a particle requires to
