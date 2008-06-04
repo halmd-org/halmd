@@ -22,9 +22,11 @@
 #include <algorithm>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
+#include <boost/multi_array.hpp>
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <list>
 #include <queue>
 #include <vector>
 #include "H5param.hpp"
@@ -57,6 +59,9 @@ class hardspheres
     //
 
 public:
+    typedef std::list<unsigned int> cell_type;
+    typedef boost::array<unsigned int, dimension> cell_index;
+
     /**
      * particle state
      */
@@ -70,6 +75,8 @@ public:
 	double t;
 	/** event counter */
 	uint64_t count;
+	/** cell which particle belongs to */
+	cell_index cell;
 
 	/** initialize event counter to zero */
 	particle() : count(0) {}
@@ -86,8 +93,8 @@ public:
 	enum {
 	    /** collision with other particle */
 	    COLLISION,
-	    /** reexamine due to periodic boundary conditions */
-	    BOUNDARY,
+	    /** cell boundary */
+	    CELL,
 	} type;
 
 	/** collision event partner */
@@ -100,9 +107,6 @@ public:
     typedef std::pair<double, unsigned int> event_queue_item;
 
 public:
-    /** initialize current simulation time */
-    hardspheres() : time_(0.) {}
-
     /** set number of particles */
     void particles(unsigned int value);
     /** set pair separation at which particle collision occurs */
@@ -111,6 +115,8 @@ public:
     void density(double value);
     /** set periodic box length */
     void box(double value);
+    /** initialize cells */
+    void init_cell();
 
     /** set system state from phase space sample */
     template <typename V> void restore(V visitor);
@@ -133,17 +139,31 @@ public:
     double const& density() const;
     /** returns periodic box length */
     double const& box() const;
+    /** returns number of cells per dimension */
+    unsigned int const& cells() const;
+    /** returns cell length */
+    double const& cell_length();
 
     /** advance phase space state to given sample time */
-    void mdstep(double const& time);
+    void mdstep(double sample_time);
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
 
 private:
     /** schedule next particle event starting at given time */
-    void schedule_event(unsigned int const& n, double const& t);
-    /** process next particle event */
-    void process_event(unsigned int const& n, double const& t);
+    void schedule_event(unsigned int n);
+    /** process particle collision event */
+    void process_collision_event(unsigned int n);
+    /** process cell boundary event */
+    void process_cell_event(unsigned int n);
+    /** returns cell which a particle belongs to */
+    cell_index compute_cell(T const& r);
+    /** update particle position, time and cell to given point in time */
+    void update_particle(unsigned int n, double t);
+    /** compute next collision event with particles of given cell starting at given time within given time interval */
+    void compute_collision_event(unsigned int n, cell_type const& cell);
+    /** compute next cell boundary event starting at given time within given time interval */
+    void compute_cell_event(unsigned int n);
 
 private:
     /** number of particles */
@@ -154,15 +174,19 @@ private:
     double density_;
     /** periodic box length */
     double box_;
+    /** number of cells per dimension */
+    unsigned int ncell;
+    /** cell length */
+    double cell_length_;
 
     /** particle states */
     std::vector<particle> part;
+    /** cells */
+    boost::multi_array<cell_type, dimension> cell_;
     /** particle event list with next event for each particle */
     std::vector<event> event_list;
     /** time-ordered particle event queue */
     std::priority_queue<event_queue_item, std::vector<event_queue_item>, std::greater<event_queue_item> > event_queue;
-    /** current simulation time */
-    double time_;
 
     /** particle positions at sample time */
     std::vector<T> r_;
@@ -173,8 +197,8 @@ private:
     rng::gsl::gfsr4 rng_;
     /** squared pair separation */
     double pair_sep_sq;
-    /** periodic boundary condition reexamination event distance */
-    double bound_dist;
+    /** cell center zone distance */
+    double cell_center_dist;
 };
 
 /**
@@ -227,9 +251,6 @@ void hardspheres<dimension, T>::density(double value)
     // derive periodic box length
     box_ = std::pow(npart / density_, 1. / dimension);
     LOG("periodic box length: " << box_);
-
-    // derive periodic boundary condition reexamination event distance
-    bound_dist = (box_ / 2. - pair_sep_) / 2.;
 }
 
 /**
@@ -244,9 +265,43 @@ void hardspheres<dimension, T>::box(double value)
     // derive particle density
     density_ = npart / std::pow(box_, 1. * dimension);
     LOG("particle density: " << density_);
+}
 
-    // derive periodic boundary condition reexamination event distance
-    bound_dist = (box_ / 2. - pair_sep_) / 2.;
+/**
+ * initialize cells
+ */
+template <unsigned dimension, typename T>
+void hardspheres<dimension, T>::init_cell()
+{
+#ifdef DIM_3D
+    // FIXME optimal number of cells
+    ncell = std::min(cbrt(npart * 8.), std::floor(box_ / pair_sep_));
+#else
+    ncell = std::min(sqrt(npart * 1.5), std::floor(box_ / pair_sep_));
+#endif
+    LOG("number of cells per dimension: " << ncell);
+
+    if (ncell < 3) {
+	throw exception("number of cells per dimension must be at least 3");
+    }
+
+    try {
+#ifdef DIM_3D
+	cell_.resize(boost::extents[ncell][ncell][ncell]);
+#else
+	cell_.resize(boost::extents[ncell][ncell]);
+#endif
+    }
+    catch (std::bad_alloc const&) {
+	throw exception("failed to allocate cells");
+    }
+
+    // derive cell length
+    cell_length_ = box_ / ncell;
+    LOG("cell length: " << cell_length_);
+
+    // derive cell center zone distance
+    cell_center_dist = (cell_length_ - pair_sep_) / 2.;
 }
 
 /**
@@ -262,6 +317,10 @@ void hardspheres<dimension, T>::restore(V visitor)
     for (unsigned int i = 0; i < npart; ++i) {
 	// set particle position at simulation time zero
 	part[i].r = r_[i];
+	// set cell which particle belongs to
+	part[i].cell = compute_cell(part[i].r);
+	// add particle to cell
+	cell_(part[i].cell).push_back(i);
 	// set particle velocity at simulation time zero
 	part[i].v = v_[i];
 	// set particle time
@@ -320,6 +379,10 @@ void hardspheres<dimension, T>::lattice()
 #endif
 	// scale by lattice distance
 	part[i].r *= a;
+	// set cell which particle belongs to
+	part[i].cell = compute_cell(part[i].r);
+	// add particle to cell
+	cell_(part[i].cell).push_back(i);
 	// set particle time
 	part[i].t = 0.;
 	// copy particle position at sample time zero
@@ -395,6 +458,24 @@ double const& hardspheres<dimension, T>::box() const
 }
 
 /**
+ * returns number of cells per dimension
+ */
+template <unsigned dimension, typename T>
+unsigned int const& hardspheres<dimension, T>::cells() const
+{
+    return ncell;
+}
+
+/**
+ * returns cell length
+ */
+template <unsigned dimension, typename T>
+double const& hardspheres<dimension, T>::cell_length()
+{
+    return cell_length_;
+}
+
+/**
  * initialize event list
  */
 template <unsigned dimension, typename T>
@@ -409,29 +490,27 @@ void hardspheres<dimension, T>::init_event_list()
 
     // schedule next event for each particle
     for (unsigned int i = 0; i < npart; ++i) {
-	schedule_event(i, 0.);
+	schedule_event(i);
     }
 }
 
 /**
- * schedule next particle event starting at given time
+ * compute next collision event with particles of given cell
  */
 template <unsigned dimension, typename T>
-void hardspheres<dimension, T>::schedule_event(unsigned int const& n, double const& t)
+void hardspheres<dimension, T>::compute_collision_event(const unsigned int n, cell_type const& cell)
 {
-    // time interval till collision
     double dt = std::numeric_limits<double>::max();
-    // collision partner
     int n2 = -1;
 
-    // find earliest particle collision event starting at given time
-    for (unsigned int j = 0; j < npart; ++j) {
-	// skip same particle
+    // iterate over particles in cell
+    foreach (unsigned int j, cell) {
+	// skip same particle if in same cell
 	if (j == n)
 	    continue;
 
-	// particle distance vector at given time
-	T dr = part[j].r + part[j].v * (t - part[j].t) - (part[n].r + part[n].v * (t - part[n].t));
+	// particle distance vector at time of first particle
+	T dr = part[j].r + part[j].v * (part[n].t - part[j].t) - part[n].r;
 	// enforce periodic boundary conditions
 	dr -= round(dr / box_) * box_;
 	// velocity difference at given time
@@ -461,87 +540,238 @@ void hardspheres<dimension, T>::schedule_event(unsigned int const& n, double con
 	}
     }
 
-    // check if collision event has been found
-    if (n2 >= 0) {
+    if (n2 < 0)
+	// no collision with particles in cell
+	return;
+
+    if (dt < event_list[n].t - part[n].t) {
 	// generate particle collision event
 	event_list[n].type = event::COLLISION;
-	event_list[n].t = t + dt;
+	event_list[n].t = part[n].t + dt;
 	event_list[n].n2 = n2;
 	event_list[n].count2 = part[n2].count;
     }
-    else {
-	// generate periodic boundary condition reexamination event
-	event_list[n].type = event::BOUNDARY;
-	// minimum time required to traverse boundary event distance in any direction
-	dt = std::min(bound_dist / fabs(part[n].v.x), bound_dist / fabs(part[n].v.y));
+}
+
+/**
+ * compute next cell boundary event
+ */
+template <unsigned dimension, typename T>
+void hardspheres<dimension, T>::compute_cell_event(const unsigned int n)
+{
+    double dt = std::numeric_limits<double>::max();
+
 #ifdef DIM_3D
-	dt = std::min(dt, bound_dist / fabs(part[n].v.z));
+    // periodically extended position of cell origin
+    const T r_cell_origin = floor(part[n].r / box_) * box_ + T(part[n].cell[0], part[n].cell[1], part[n].cell[2]) * cell_length_;
+#else
+    const T r_cell_origin = floor(part[n].r / box_) * box_ + T(part[n].cell[0], part[n].cell[1]) * cell_length_;
 #endif
-	event_list[n].t = t + dt;
+
+    //
+    // For each dimension, we calculate the time a particle requires to
+    // reach the cell center zone within the next cell, with regard to the
+    // particle's direction of movement in that dimension.
+    //
+    // The width of a cell center zone is defined by the pair separation,
+    // thus ensuring that two particles separated by an entire cell length
+    // at collision event prediction (therefore being invisible to each other)
+    // will trigger a cell boundary event just before a collision may in
+    // the center of the cell.
+    // This border case assumes that the particles have a velocity component
+    // with equal magnitude and opposite sign in that dimension, and velocity
+    // component zero in all other dimensions.
+    //
+
+    if (part[n].v.x < 0.) {
+	dt = (r_cell_origin.x - cell_center_dist - part[n].r.x) / part[n].v.x;
     }
+    else if (part[n].v.x > 0.) {
+	dt = (r_cell_origin.x + cell_length_ + cell_center_dist - part[n].r.x) / part[n].v.x;
+    }
+    if (part[n].v.y < 0.) {
+	dt = std::min(dt, (r_cell_origin.y - cell_center_dist - part[n].r.y) / part[n].v.y);
+    }
+    else if (part[n].v.y > 0.) {
+	dt = std::min(dt, (r_cell_origin.y + cell_length_ + cell_center_dist - part[n].r.y) / part[n].v.y);
+    }
+#ifdef DIM_3D
+    if (part[n].v.z < 0.) {
+	dt = std::min(dt, (r_cell_origin.z - cell_center_dist - part[n].r.z) / part[n].v.z);
+    }
+    else if (part[n].v.z > 0.) {
+	dt = std::min(dt, (r_cell_origin.z + cell_length_ + cell_center_dist - part[n].r.z) / part[n].v.z);
+    }
+#endif
+
+    if (dt < event_list[n].t - part[n].t) {
+	// generate cell boundary event
+	event_list[n].t = part[n].t + dt;
+	event_list[n].type = event::CELL;
+    }
+}
+
+/**
+ * schedule next particle event starting at given time
+ */
+template <unsigned dimension, typename T>
+void hardspheres<dimension, T>::schedule_event(const unsigned int n)
+{
+    // upper boundary for time of next particle event
+    event_list[n].t = std::numeric_limits<double>::max();
+
+    // compute next cell boundary event
+    compute_cell_event(n);
+    // compute next collision event with particles of this cell
+    compute_collision_event(n, cell_(part[n].cell));
+
+#ifdef DIM_3D
+    // compute next collision event with particles of neighbour cells
+    const boost::array<cell_index, 26> neighbour = {{
+	{{  0, -1,  0 }},
+	{{  0, +1,  0 }},
+	{{ -1, -1,  0 }},
+	{{ -1,  0,  0 }},
+	{{ -1, +1,  0 }},
+	{{ +1, -1,  0 }},
+	{{ +1,  0,  0 }},
+	{{ +1, +1,  0 }},
+	{{  0, -1, -1 }},
+	{{  0, +1, -1 }},
+	{{  0, +1, +1 }},
+	{{ -1, -1, -1 }},
+	{{ -1,  0, -1 }},
+	{{ -1, +1, -1 }},
+	{{ +1, -1, -1 }},
+	{{ +1,  0, -1 }},
+	{{ +1, +1, -1 }},
+	{{  0, -1, +1 }},
+	{{ -1, -1, +1 }},
+	{{ -1,  0, +1 }},
+	{{ -1, +1, +1 }},
+	{{ +1, -1, +1 }},
+	{{ +1,  0, +1 }},
+	{{ +1, +1, +1 }},
+	{{  0,  0, -1 }},
+	{{  0,  0, +1 }},
+    }};
+
+    foreach (cell_index const& idx, neighbour) {
+	compute_collision_event(n, cell_[(part[n].cell[0] + ncell + idx[0]) % ncell][(part[n].cell[1] + ncell + idx[1]) % ncell][(part[n].cell[2] + ncell + idx[2]) % ncell]);
+    }
+#else
+    // compute next collision event with particles of neighbour cells
+    const boost::array<cell_index, 8> neighbour = {{
+	{{  0, -1 }},
+	{{ -1, -1 }},
+	{{ -1,  0 }},
+	{{ -1, +1 }},
+	{{  0, +1 }},
+	{{ +1, -1 }},
+	{{ +1,  0 }},
+	{{ +1, +1 }},
+    }};
+
+    foreach (cell_index const& idx, neighbour) {
+	compute_collision_event(n, cell_[(part[n].cell[0] + ncell + idx[0]) % ncell][(part[n].cell[1] + ncell + idx[1]) % ncell]);
+    }
+#endif
 
     // schedule particle event
     event_queue.push(event_queue_item(event_list[n].t, n));
 }
 
 /*
- * process next particle event
+ * process particle collision event
  */
 template <unsigned dimension, typename T>
-void hardspheres<dimension, T>::process_event(unsigned int const& n, double const& t)
+void hardspheres<dimension, T>::process_collision_event(const unsigned int n)
 {
-    if (event_list[n].t != t)
-	// discard invalidated event
+    // collision partner particle number
+    const unsigned int n2 = event_list[n].n2;
+
+    // check if partner participated in another collision before this event
+    if (part[n2].count != event_list[n].count2) {
+	// schedule next event for this particle
+	schedule_event(n);
 	return;
-
-    if (event_list[n].type == event::COLLISION) {
-	// collision partner particle number
-	const unsigned int n2 = event_list[n].n2;
-
-	// check if partner participated in another collision before this event
-	if (part[n2].count != event_list[n].count2) {
-	    // schedule next event for this particle
-	    schedule_event(n, t);
-	    return;
-	}
-
-	// update positions to current simulation time
-	part[n].r += part[n].v * (t - part[n].t);
-	part[n2].r += part[n2].v * (t - part[n2].t);
-	// update particle times
-	part[n].t = t;
-	part[n2].t = t;
-
-	// particle distance vector
-	T dr = part[n2].r - part[n].r;
-	// enforce periodic boundary conditions
-	dr -= round(dr / box_) * box_;
-	// velocity difference before collision
-	T dv = part[n].v - part[n2].v;
-	// velocity difference after collision without dissipation
-	dv = dr * (dr * dv) / (dr * dr);
-
-	// update velocities to current simulation time
-	part[n].v -= dv;
-	part[n2].v += dv;
-	// update particle event counters
-	part[n].count++;
-	part[n2].count++;
-
-	// schedule next event for each particle
-	schedule_event(n, t);
-	schedule_event(n2, t);
     }
-    else if (event_list[n].type == event::BOUNDARY) {
-	// update particle position to current simulation time
-	part[n].r += part[n].v * (t - part[n].t);
-	// update particle time
-	part[n].t = t;
-	// update particle event counter
-	part[n].count++;
 
-	// schedule next event for particle
-	schedule_event(n, t);
+    // update particle event counters
+    part[n].count++;
+    part[n2].count++;
+    // update both particles to current simulation time
+    update_particle(n, event_list[n].t);
+    update_particle(n2, event_list[n].t);
+
+    // particle distance vector
+    T dr = part[n2].r - part[n].r;
+    // enforce periodic boundary conditions
+    dr -= round(dr / box_) * box_;
+    // velocity difference before collision
+    T dv = part[n].v - part[n2].v;
+    // velocity difference after collision without dissipation
+    dv = dr * (dr * dv) / (dr * dr);
+
+    // update velocities to current simulation time
+    part[n].v -= dv;
+    part[n2].v += dv;
+
+    // schedule next event for each particle
+    schedule_event(n);
+    schedule_event(n2);
+}
+
+/*
+ * process cell boundary event
+ */
+template <unsigned dimension, typename T>
+void hardspheres<dimension, T>::process_cell_event(const unsigned int n)
+{
+    // update particle to current simulation time
+    update_particle(n, event_list[n].t);
+    // update particle event counter
+    part[n].count++;
+    // schedule next event for particle
+    schedule_event(n);
+}
+
+/**
+ * returns cell which a particle belongs to
+ */
+template <unsigned dimension, typename T>
+typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::compute_cell(T const& r)
+{
+    T cellf = (r - floor(r / box_) * box_) / cell_length_;
+#ifdef DIM_3D
+    cell_index cell = {{ int(cellf.x), int(cellf.y), int(cellf.z) }};
+#else
+    cell_index cell = {{ int(cellf.x), int(cellf.y) }};
+#endif
+    return cell;
+}
+
+/**
+ * update particle position, time and cell to given point in time
+ */
+template <unsigned dimension, typename T>
+void hardspheres<dimension, T>::update_particle(const unsigned int n, const double t)
+{
+    // update particle position to given time
+    part[n].r += part[n].v * (t - part[n].t);
+    // update particle time
+    part[n].t = t;
+
+    // compute cell which particle belongs to
+    cell_index cell = compute_cell(part[n].r);
+
+    if (cell != part[n].cell) {
+	// remove particle from old cell
+	cell_(part[n].cell).remove(n);
+	// add particle to cell
+	cell_(cell).push_back(n);
+	// update particle cell
+	part[n].cell = cell;
     }
 }
 
@@ -549,18 +779,27 @@ void hardspheres<dimension, T>::process_event(unsigned int const& n, double cons
  * advance phase space state to given sample time
  */
 template <unsigned dimension, typename T>
-void hardspheres<dimension, T>::mdstep(double const& sample_time)
+void hardspheres<dimension, T>::mdstep(const double sample_time)
 {
     // process particle event queue till sample time
     while (event_queue.top().first <= sample_time) {
-	if (event_queue.top().first < time_) {
-	    throw exception("simulation time is running backwards");
+	if (event_queue.top().first != event_list[event_queue.top().second].t) {
+	    // discard invalidated event
+	    event_queue.pop();
+	    continue;
 	}
 
-	// update current simulation time to particle event time
-	time_ = event_queue.top().first;
+	switch (event_list[event_queue.top().second].type) {
+	  case event::COLLISION:
+	    // process particle collision event
+	    process_collision_event(event_queue.top().second);
+	    break;
 
-	process_event(event_queue.top().second, time_);
+	  case event::CELL:
+	    // process cell boundary event
+	    process_cell_event(event_queue.top().second);
+	    break;
+	}
 	event_queue.pop();
     }
 

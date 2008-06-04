@@ -119,6 +119,14 @@ public:
     }
 
     /**
+     * set number of cells per dimension
+     */
+    void cells(unsigned int const& value)
+    {
+	cells_ = value;
+    }
+
+    /**
      * set cell length
      */
     void cell_length(double const& value)
@@ -249,6 +257,8 @@ private:
     double density_;
     /** periodic box length */
     double box_length_;
+    /** number of cells per dimension */
+    unsigned int cells_;
     /** cell length */
     double cell_length_;
     /** sample timestep */

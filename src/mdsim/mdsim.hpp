@@ -1,4 +1,4 @@
-/* Molecular Dynamics simulation of hard sphere particles
+/* Event-based Molecular Dynamics simulation of hard spheres
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -35,7 +35,7 @@ namespace mdsim
 {
 
 /**
- * Molecular Dynamics simulation of hard sphere particles
+ * Event-based Molecular Dynamics simulation of hard spheres
  */
 template <unsigned dimension, typename T>
 class mdsim
@@ -91,6 +91,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	    }
 	    fluid.density(param.density());
 	}
+	// initialize cells
+	fluid.init_cell();
 
 	// read trajectory sample and set system state
 	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
@@ -134,6 +136,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	    // set particle density
 	    fluid.density(opts.density().value());
 	}
+	// initialize cells
+	fluid.init_cell();
 
 	// initialize random number generator with seed
 	fluid.rng(opts.rng_seed().value());
@@ -160,6 +164,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     param.density(fluid.density());
     // gather simulation box length
     param.box_length(fluid.box());
+    // gather number of cells per dimension
+    param.cells(fluid.cells());
+    // gather cell length
+    param.cell_length(fluid.cell_length());
 
     if (!opts.time().empty()) {
 	// set total sample time

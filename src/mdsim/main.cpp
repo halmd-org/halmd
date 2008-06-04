@@ -1,4 +1,4 @@
-/* Molecular Dynamics Simulation of hard sphere particles
+/* Event-based Molecular Dynamics simulation of hard spheres
  *
  * Copyright (C) 2008  Peter Colberg
  *

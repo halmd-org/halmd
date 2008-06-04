@@ -109,6 +109,12 @@ void H5param::write(H5::Group root) const
 	// periodic box length
 	attr = node.createAttribute("box_length", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_DOUBLE, &box_length_);
+	// number of cells per dimension
+	attr = node.createAttribute("cells", H5::PredType::NATIVE_UINT, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_UINT, &cells_);
+	// cell length
+	attr = node.createAttribute("cell_length", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_DOUBLE, &cell_length_);
 	// sample timestep
 	attr = node.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_DOUBLE, &timestep_);
