@@ -188,8 +188,10 @@ private:
     /** time-ordered particle event queue */
     std::priority_queue<event_queue_item, std::vector<event_queue_item>, std::greater<event_queue_item> > event_queue;
 
-    /** particle positions at sample time */
+    /** periodically reduced particle positions at sample time */
     std::vector<T> r_;
+    /** periodically extended particle positions at sample time */
+    std::vector<T> R_;
     /** particle velocities at sample time */
     std::vector<T> v_;
 
@@ -216,6 +218,7 @@ void hardspheres<dimension, T>::particles(unsigned int value)
     try {
 	part.resize(npart);
 	r_.resize(npart);
+	R_.resize(npart);
 	v_.resize(npart);
     }
     catch (std::bad_alloc const&) {
@@ -313,6 +316,8 @@ void hardspheres<dimension, T>::restore(V visitor)
 {
     // copy particle positions and velocities at sample time zero
     visitor(r_, v_);
+    // replicate to periodically extended coordinates
+    std::copy(r_.begin(), r_.end(), R_.begin());
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// set particle position at simulation time zero
@@ -386,7 +391,7 @@ void hardspheres<dimension, T>::lattice()
 	// set particle time
 	part[i].t = 0.;
 	// copy particle position at sample time zero
-	r_[i] = part[i].r;
+	r_[i] = R_[i] = part[i].r;
     }
 }
 
@@ -806,7 +811,7 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
     // sample phase space at given time
     for (unsigned int i = 0; i < npart; ++i) {
 	// particle position
-	r_[i] = part[i].r + part[i].v * (sample_time - part[i].t);
+	r_[i] = R_[i] = part[i].r + part[i].v * (sample_time - part[i].t);
 	// enforce periodic boundary conditions
 	r_[i] -= floor(r_[i] / box_) * box_;
 	// particle velocity
@@ -821,7 +826,7 @@ template <unsigned dimension, typename T>
 template <typename V>
 void hardspheres<dimension, T>::sample(V visitor) const
 {
-    visitor(r_, v_);
+    visitor(r_, R_, v_);
 }
 
 } // namespace mdsim
