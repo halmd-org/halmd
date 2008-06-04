@@ -19,6 +19,7 @@
 #ifndef MDSIM_VECTOR2D_HPP
 #define MDSIM_VECTOR2D_HPP
 
+#include <boost/array.hpp>
 #include <math.h>
 #include <iostream>
 
@@ -43,21 +44,32 @@ public:
     /**
      * initialization by vector
      */
-    vector2d(vector2d<T> const& v) : x(v.x), y(v.y)
+    template <typename U>
+    vector2d(vector2d<U> const& v) : x(v.x), y(v.y)
     {
     }
 
     /**
      * initialization by scalar
      */
-    vector2d(T const& s) : x(s), y(s)
+    template <typename U>
+    vector2d(U const& s) : x(s), y(s)
     {
     }
 
     /**
      * initialization by scalar components
      */
-    vector2d(T const& x, T const& y) : x(x), y(y)
+    template <typename U, typename V>
+    vector2d(U const& x, V const& y) : x(x), y(y)
+    {
+    }
+
+    /**
+     * initialization by array
+     */
+    template <typename U>
+    vector2d(boost::array<U, 2> const& v) : x(v[0]), y(v[1])
     {
     }
 
