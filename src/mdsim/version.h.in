@@ -22,9 +22,9 @@
 #define PROGRAM_NAME		"@PROGRAM_NAME@"
 #define PROGRAM_VERSION		"@PROGRAM_VERSION@"
 #ifdef DIM_3D
-# define PROGRAM_VARIANT		"+3D"
+# define PROGRAM_VARIANT		"+3D +CELL"
 #else
-# define PROGRAM_VARIANT		"+2D"
+# define PROGRAM_VARIANT		"+2D +CELL"
 #endif
 #define PROGRAM_DATE		"@PROGRAM_DATE@"
 #define PROGRAM_BUILT		__DATE__ " " __TIME__
