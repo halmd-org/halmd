@@ -696,6 +696,9 @@ void hardspheres<dimension, T>::schedule_event(const unsigned int n)
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::process_collision_event(const unsigned int n)
 {
+    // update particle to current simulation time
+    update_particle(n, event_list[n].t);
+
     // collision partner particle number
     const unsigned int n2 = event_list[n].n2;
 
@@ -706,11 +709,7 @@ void hardspheres<dimension, T>::process_collision_event(const unsigned int n)
 	return;
     }
 
-    // update particle event counters
-    part[n].count++;
-    part[n2].count++;
     // update both particles to current simulation time
-    update_particle(n, event_list[n].t);
     update_particle(n2, event_list[n].t);
 
     // particle distance vector
@@ -725,6 +724,10 @@ void hardspheres<dimension, T>::process_collision_event(const unsigned int n)
     // update velocities to current simulation time
     part[n].v -= dv;
     part[n2].v += dv;
+
+    // update particle event counters
+    part[n].count++;
+    part[n2].count++;
 
     // schedule next event for each particle
     schedule_event(n);
