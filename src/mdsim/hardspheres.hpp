@@ -101,6 +101,8 @@ public:
 
 	/** collision event partner */
 	unsigned int n2;
+	/** cell boundary */
+	cell_index cell2;
 	/** copy of event counter of partner at time of event */
 	uint64_t count2;
     };
@@ -160,8 +162,6 @@ private:
     void process_cell_event(unsigned int n);
     /** returns cell which a particle belongs to */
     cell_index compute_cell(T const& r);
-    /** update particle position, time and cell to given point in time */
-    void update_particle(unsigned int n, double t);
     /** compute next collision event with particles of given cell starting at given time within given time interval */
     void compute_collision_event(unsigned int n, cell_type const& cell);
     /** compute next cell boundary event starting at given time within given time interval */
@@ -572,51 +572,51 @@ void hardspheres<dimension, T>::compute_collision_event(const unsigned int n, ce
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::compute_cell_event(const unsigned int n)
 {
-    double dt = std::numeric_limits<double>::max();
-
-    // periodically reduced position of cell origin
-    const T r_cell_origin = T(part[n].cell) * cell_length_;
-
-    //
-    // For each dimension, we calculate the time a particle requires to
-    // reach the cell center zone within the next cell, with regard to the
-    // particle's direction of movement in that dimension.
-    //
-    // The width of a cell center zone is defined by the pair separation,
-    // thus ensuring that two particles separated by an entire cell length
-    // at collision event prediction (therefore being invisible to each other)
-    // will trigger a cell boundary event just before a collision might occur
-    // in the center of the cell.
-    // This border case assumes that the particles have a velocity component
-    // with equal magnitude and opposite sign in that dimension, and velocity
-    // component zero in all other dimensions.
-    //
+    T dt3(std::numeric_limits<double>::max());
+    cell_index cell2 = part[n].cell;
 
     if (part[n].v.x < 0.) {
-	dt = (r_cell_origin.x - cell_center_dist - part[n].r.x) / part[n].v.x;
+	dt3.x = (part[n].cell[0] * cell_length_ - part[n].r.x) / part[n].v.x;
+	cell2[0] = (cell2[0] + ncell - 1) % ncell;
     }
     else if (part[n].v.x > 0.) {
-	dt = (r_cell_origin.x + cell_length_ + cell_center_dist - part[n].r.x) / part[n].v.x;
+	dt3.x = ((part[n].cell[0] + 1) * cell_length_ - part[n].r.x) / part[n].v.x;
+	cell2[0] = (cell2[0] + 1) % ncell;
     }
     if (part[n].v.y < 0.) {
-	dt = std::min(dt, (r_cell_origin.y - cell_center_dist - part[n].r.y) / part[n].v.y);
+	dt3.y = (part[n].cell[1] * cell_length_ - part[n].r.y) / part[n].v.y;
+	cell2[1] = (cell2[1] + ncell - 1) % ncell;
     }
     else if (part[n].v.y > 0.) {
-	dt = std::min(dt, (r_cell_origin.y + cell_length_ + cell_center_dist - part[n].r.y) / part[n].v.y);
+	dt3.y = ((part[n].cell[1] + 1) * cell_length_ - part[n].r.y) / part[n].v.y;
+	cell2[1] = (cell2[1] + 1) % ncell;
     }
 #ifdef DIM_3D
     if (part[n].v.z < 0.) {
-	dt = std::min(dt, (r_cell_origin.z - cell_center_dist - part[n].r.z) / part[n].v.z);
+	dt3.z = (part[n].cell[2] * cell_length_ - part[n].r.z) / part[n].v.z;
+	cell2[2] = (cell2[2] + ncell - 1) % ncell;
     }
     else if (part[n].v.z > 0.) {
-	dt = std::min(dt, (r_cell_origin.z + cell_length_ + cell_center_dist - part[n].r.z) / part[n].v.z);
+	dt3.z = ((part[n].cell[2] + 1) * cell_length_ - part[n].r.z) / part[n].v.z;
+	cell2[2] = (cell2[2] + 1) % ncell;
     }
+#endif
+
+#ifdef DIM_3D
+    const double dt = std::min(std::min(dt3.x, dt3.y), dt3.z);
+#else
+    const double dt = std::min(dt3.x, dt3.y);
 #endif
 
     if (dt < event_list[n].t - part[n].t) {
 	// generate cell boundary event
 	event_list[n].t = part[n].t + dt;
 	event_list[n].type = event::CELL;
+	event_list[n].cell2[0] = (dt3.x == dt) ? cell2[0] : part[n].cell[0];
+	event_list[n].cell2[1] = (dt3.y == dt) ? cell2[1] : part[n].cell[1];
+#ifdef DIM_3D
+	event_list[n].cell2[2] = (dt3.z == dt) ? cell2[2] : part[n].cell[2];
+#endif
     }
 }
 
@@ -694,43 +694,53 @@ void hardspheres<dimension, T>::schedule_event(const unsigned int n)
  * process particle collision event
  */
 template <unsigned dimension, typename T>
-void hardspheres<dimension, T>::process_collision_event(const unsigned int n)
+void hardspheres<dimension, T>::process_collision_event(const unsigned int n1)
 {
-    // update particle to current simulation time
-    update_particle(n, event_list[n].t);
+    const T dr1 = part[n1].v * (event_list[n1].t - part[n1].t);
+    // update periodically extended particle position
+    part[n1].R += dr1;
+    // update periodically reduced particle position to given time
+    part[n1].r += dr1;
+    // update particle time
+    part[n1].t = event_list[n1].t;
 
     // collision partner particle number
-    const unsigned int n2 = event_list[n].n2;
+    const unsigned int n2 = event_list[n1].n2;
 
     // check if partner participated in another collision before this event
-    if (part[n2].count != event_list[n].count2) {
+    if (part[n2].count != event_list[n1].count2) {
 	// schedule next event for this particle
-	schedule_event(n);
+	schedule_event(n1);
 	return;
     }
 
-    // update both particles to current simulation time
-    update_particle(n2, event_list[n].t);
+    const T dr2 = part[n2].v * (event_list[n1].t - part[n2].t);
+    // update periodically extended particle position
+    part[n2].R += dr2;
+    // update periodically reduced particle position to given time
+    part[n2].r += dr2;
+    // update particle time
+    part[n2].t = event_list[n1].t;
 
     // particle distance vector
-    T dr = part[n2].r - part[n].r;
+    T dr = part[n2].r - part[n1].r;
     // enforce periodic boundary conditions
     dr -= round(dr / box_) * box_;
     // velocity difference before collision
-    T dv = part[n].v - part[n2].v;
+    T dv = part[n1].v - part[n2].v;
     // velocity difference after collision without dissipation
     dv = dr * (dr * dv) / (dr * dr);
 
     // update velocities to current simulation time
-    part[n].v -= dv;
+    part[n1].v -= dv;
     part[n2].v += dv;
 
     // update particle event counters
-    part[n].count++;
+    part[n1].count++;
     part[n2].count++;
 
     // schedule next event for each particle
-    schedule_event(n);
+    schedule_event(n1);
     schedule_event(n2);
 }
 
@@ -740,10 +750,36 @@ void hardspheres<dimension, T>::process_collision_event(const unsigned int n)
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::process_cell_event(const unsigned int n)
 {
-    // update particle to current simulation time
-    update_particle(n, event_list[n].t);
-    // update particle event counter
-    part[n].count++;
+    const T dr = part[n].v * (event_list[n].t - part[n].t);
+    // update periodically extended particle position
+    part[n].R += dr;
+    // update periodically reduced particle position to given time
+    part[n].r += dr;
+    // enforce periodic boundary conditions
+    if (part[n].cell[0] == ncell - 1 && event_list[n].cell2[0] == 0)
+	part[n].r.x -= box_;
+    if (part[n].cell[0] == 0 && event_list[n].cell2[0] == ncell - 1)
+	part[n].r.x += box_;
+    if (part[n].cell[1] == ncell - 1 && event_list[n].cell2[1] == 0)
+	part[n].r.y -= box_;
+    if (part[n].cell[1] == 0 && event_list[n].cell2[1] == ncell - 1)
+	part[n].r.y += box_;
+#ifdef DIM_3D
+    if (part[n].cell[2] == ncell - 1 && event_list[n].cell2[2] == 0)
+	part[n].r.z -= box_;
+    if (part[n].cell[2] == 0 && event_list[n].cell2[2] == ncell - 1)
+	part[n].r.z += box_;
+#endif
+    // update particle time
+    part[n].t = event_list[n].t;
+
+    // remove particle from old cell
+    cell_(part[n].cell).remove(n);
+    // update particle cell
+    part[n].cell = event_list[n].cell2;
+    // add particle to cell
+    cell_(part[n].cell).push_back(n);
+
     // schedule next event for particle
     schedule_event(n);
 }
@@ -761,35 +797,6 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
     cell_index cell = {{ int(cellf.x), int(cellf.y) }};
 #endif
     return cell;
-}
-
-/**
- * update particle position, time and cell to given point in time
- */
-template <unsigned dimension, typename T>
-void hardspheres<dimension, T>::update_particle(const unsigned int n, const double t)
-{
-    const T dr = part[n].v * (t - part[n].t);
-    // update periodically extended particle position
-    part[n].R += dr;
-    // update periodically reduced particle position to given time
-    part[n].r += dr;
-    // enforce periodic boundary conditions
-    part[n].r -= floor(part[n].r / box_) * box_;
-    // update particle time
-    part[n].t = t;
-
-    // compute cell which particle belongs to
-    cell_index cell = compute_cell(part[n].r);
-
-    if (cell != part[n].cell) {
-	// remove particle from old cell
-	cell_(part[n].cell).remove(n);
-	// add particle to cell
-	cell_(cell).push_back(n);
-	// update particle cell
-	part[n].cell = cell;
-    }
 }
 
 /**
