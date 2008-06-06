@@ -201,8 +201,6 @@ private:
     rng::gsl::gfsr4 rng_;
     /** squared pair separation */
     double pair_sep_sq;
-    /** cell center zone distance */
-    double cell_center_dist;
 };
 
 /**
@@ -304,9 +302,6 @@ void hardspheres<dimension, T>::init_cell()
     // derive cell length
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
-
-    // derive cell center zone distance
-    cell_center_dist = (cell_length_ - pair_sep_) / 2.;
 }
 
 /**
