@@ -164,7 +164,7 @@ void energy<dimension, T>::sample(vector_type const& v, float const& en_pot, flo
     // temperature
     temp_.push_back(scalar_pair(time, vv.mean() / dimension));
     // pressure
-    press_.push_back(scalar_pair(time, density * (vv.mean() + virial)));
+    press_.push_back(scalar_pair(time, density / dimension * (vv.mean() + virial)));
     // velocity center of mass
     v_cm_.push_back(vector_pair(time, mean(v.begin(), v.end())));
 
