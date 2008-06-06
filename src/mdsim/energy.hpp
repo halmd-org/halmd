@@ -55,7 +55,7 @@ public:
     /** dump global simulation parameters to HDF5 file */
     energy<dimension, T>& operator<<(H5param const& param);
     /** sample thermodynamic equilibrium properties */
-    void sample(std::vector<T> const& v, double const& en_pot, double const& virial, double const& density, double const& timestep);
+    void sample(std::vector<T> const& v, double const& virial, double const& density, double const& timestep);
     /** write thermodynamic equilibrium properties to HDF5 file */
     void write();
     /** close HDF5 thermodynamic equilibrium properties output file */
@@ -68,9 +68,7 @@ private:
     unsigned int samples_;
 
     /** thermodynamic equilibrium properties */
-    std::vector<scalar_pair> en_pot_;
     std::vector<scalar_pair> en_kin_;
-    std::vector<scalar_pair> en_tot_;
     std::vector<scalar_pair> temp_;
     std::vector<scalar_pair> press_;
     /** velocity center of mass */
@@ -93,9 +91,7 @@ energy<dimension, T>::energy(block_param<dimension, T> const& param) : param(par
 #endif
 
     try {
-	en_pot_.reserve(param.max_samples());
 	en_kin_.reserve(param.max_samples());
-	en_tot_.reserve(param.max_samples());
 	temp_.reserve(param.max_samples());
 	press_.reserve(param.max_samples());
 	v_cm_.reserve(param.max_samples());
@@ -136,7 +132,7 @@ energy<dimension, T>& energy<dimension, T>::operator<<(H5param const& param)
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot, double const& virial, double const& density, double const& timestep)
+void energy<dimension, T>::sample(std::vector<T> const& v, double const& virial, double const& density, double const& timestep)
 {
     if (samples_ >= param.max_samples())
 	return;
@@ -150,16 +146,12 @@ void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot,
     // simulation time of sample, starting at time zero
     const double time = samples_ * timestep;
 
-    // mean potential energy per particle
-    en_pot_.push_back(scalar_pair(time, en_pot));
     // mean kinetic energy per particle
     en_kin_.push_back(scalar_pair(time, vv.mean() / 2));
-    // mean total energy per particle
-    en_tot_.push_back(scalar_pair(time, en_pot_.back().second + en_kin_.back().second));
     // temperature
     temp_.push_back(scalar_pair(time, vv.mean() / dimension));
     // pressure
-    press_.push_back(scalar_pair(time, density * (vv.mean() + virial)));
+    press_.push_back(scalar_pair(time, density / dimension * (vv.mean() + virial / timestep)));
     // velocity center of mass
     v_cm_.push_back(vector_pair(time, mean(v.begin(), v.end())));
 
@@ -180,40 +172,32 @@ void energy<dimension, T>::write()
     H5::DataSpace ds_vector(2, dim_vector);
 
     // HDF5 datasets for thermodynamic equilibrium properties
-    boost::array<H5::DataSet, 6> dataset_;
+    boost::array<H5::DataSet, 4> dataset_;
     H5::DataType tid(H5::PredType::NATIVE_DOUBLE);
 
     try {
-	// mean potential energy per particle
-	dataset_[0] = file_.createDataSet("EPOT", tid, ds_scalar);
 	// mean kinetic energy per particle
-	dataset_[1] = file_.createDataSet("EKIN", tid, ds_scalar);
-	// mean total energy per particle
-	dataset_[2] = file_.createDataSet("ETOT", tid, ds_scalar);
+	dataset_[0] = file_.createDataSet("EKIN", tid, ds_scalar);
 	// temperature
-	dataset_[3] = file_.createDataSet("TEMP", tid, ds_scalar);
+	dataset_[1] = file_.createDataSet("TEMP", tid, ds_scalar);
 	// pressure
-	dataset_[4] = file_.createDataSet("PRESS", tid, ds_scalar);
+	dataset_[2] = file_.createDataSet("PRESS", tid, ds_scalar);
 	// velocity center of mass
-	dataset_[5] = file_.createDataSet("VCM", tid, ds_vector);
+	dataset_[3] = file_.createDataSet("VCM", tid, ds_vector);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create datasets in HDF5 energy file");
     }
 
     try {
-	// mean potential energy per particle
-	dataset_[0].write(en_pot_.data(), tid, ds_scalar, ds_scalar);
 	// mean kinetic energy per particle
-	dataset_[1].write(en_kin_.data(), tid, ds_scalar, ds_scalar);
-	// mean total energy per particle
-	dataset_[2].write(en_tot_.data(), tid, ds_scalar, ds_scalar);
+	dataset_[0].write(en_kin_.data(), tid, ds_scalar, ds_scalar);
 	// temperature
-	dataset_[3].write(temp_.data(), tid, ds_scalar, ds_scalar);
+	dataset_[1].write(temp_.data(), tid, ds_scalar, ds_scalar);
 	// pressure
-	dataset_[4].write(press_.data(), tid, ds_scalar, ds_scalar);
+	dataset_[2].write(press_.data(), tid, ds_scalar, ds_scalar);
 	// velocity center of mass
-	dataset_[5].write(v_cm_.data(), tid, ds_vector, ds_vector);
+	dataset_[3].write(v_cm_.data(), tid, ds_vector, ds_vector);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write thermodynamic equilibrium properties to HDF5 energy file");

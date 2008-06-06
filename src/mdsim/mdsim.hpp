@@ -224,7 +224,7 @@ void mdsim<dimension, T>::operator()()
 	// sample autocorrelation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _2, _3));
 	// FIXME sample thermodynamic equilibrium properties
-	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, 0., 0., param.density(), param.timestep()));
+	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, param.density(), param.timestep()));
 	// sample trajectory
 	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3, param.particles()));
 

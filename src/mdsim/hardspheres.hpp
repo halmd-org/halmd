@@ -196,6 +196,8 @@ private:
     std::vector<T> R_;
     /** particle velocities at sample time */
     std::vector<T> v_;
+    /** impulsive limit of the virial expression sum */
+    double virial_;
 
     /** random number generator */
     rng::gsl::gfsr4 rng_;
@@ -730,6 +732,9 @@ void hardspheres<dimension, T>::process_collision_event(const unsigned int n1)
     part[n1].v -= dv;
     part[n2].v += dv;
 
+    // add contribution to impulsive limit of the virial expression sum
+    virial_ += dr * dv;
+
     // update particle event counters
     part[n1].count++;
     part[n2].count++;
@@ -800,6 +805,9 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::mdstep(const double sample_time)
 {
+    // impulsive limit of the virial expression sum
+    virial_ = 0.;
+
     // process particle event queue till sample time
     while (event_queue.top().first <= sample_time) {
 	if (event_queue.top().first != event_list[event_queue.top().second].t) {
@@ -822,6 +830,8 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 	event_queue.pop();
     }
 
+    virial_ /= npart;
+
     // sample phase space at given time
     for (unsigned int i = 0; i < npart; ++i) {
 	const T dr = part[i].v * (sample_time - part[i].t);
@@ -843,7 +853,7 @@ template <unsigned dimension, typename T>
 template <typename V>
 void hardspheres<dimension, T>::sample(V visitor) const
 {
-    visitor(r_, R_, v_);
+    visitor(r_, R_, v_, virial_);
 }
 
 } // namespace mdsim

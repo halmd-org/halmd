@@ -56,38 +56,14 @@ def plot(tep):
     # plot titles
     titles = parameter.difference(sets)
 
-    # mean potential energy per particle
-    g = spawn_gnuplot('Mean potential energy per particle')
-    g('set ylabel "{/Symbol e}_{pot}({/Symbol t})"')
-    plots = []
-    for (i, (root, name)) in enumerate(tep):
-        f = file(name + '_epot.bin', 'wb')
-        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
-        f.write(root.EPOT.read().tostring())
-        f.close()
-        plots.append(plot % (f.name, tid, '2', titles[i]))
-    g('plot ' + ', '.join(plots))
-
     # mean kinetic energy per particle
     g = spawn_gnuplot('Mean kinetic energy per particle')
     g('set ylabel "{/Symbol e}_{kin}({/Symbol t})"')
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_ekin.bin', 'wb')
-        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
+        tid = (root.EKIN.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.EKIN.read().tostring())
-        f.close()
-        plots.append(plot % (f.name, tid, '2', titles[i]))
-    g('plot ' + ', '.join(plots))
-
-    # mean total energy per particle
-    g = spawn_gnuplot('Mean total energy per particle')
-    g('set ylabel "{/Symbol e}({/Symbol t})"')
-    plots = []
-    for (i, (root, name)) in enumerate(tep):
-        f = file(name + '_etot.bin', 'wb')
-        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
-        f.write(root.ETOT.read().tostring())
         f.close()
         plots.append(plot % (f.name, tid, '2', titles[i]))
     g('plot ' + ', '.join(plots))
@@ -98,7 +74,7 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_temp.bin', 'wb')
-        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
+        tid = (root.TEMP.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.TEMP.read().tostring())
         f.close()
         plots.append(plot % (f.name, tid, '2', titles[i]))
@@ -110,7 +86,7 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_press.bin', 'wb')
-        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
+        tid = (root.PRESS.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.PRESS.read().tostring())
         f.close()
         plots.append(plot % (f.name, tid, '2', titles[i]))
@@ -122,7 +98,7 @@ def plot(tep):
     plots = []
     for (i, (root, name)) in enumerate(tep):
         f = file(name + '_vcm.bin', 'wb')
-        tid = (root.EPOT.read().dtype == numpy.float64) and 'double' or 'float'
+        tid = (root.VCM.read().dtype == numpy.float64) and 'double' or 'float'
         f.write(root.VCM.read().tostring())
         f.close()
         if root.parameters.hardspheres._v_attrs.dimension == 3:
