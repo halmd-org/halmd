@@ -43,7 +43,7 @@ void init(options const& opts) {
     logger_debug()->writer().add_formatter(boost::logging::formatter::append_newline());
 #endif
 
-    boost::logging::destination::file logfile(opts.output_file_prefix().value() + ".log");
+    boost::logging::destination::file logfile(opts.output_file_prefix().value() + ".log", boost::logging::destination::file_settings().initial_overwrite(true).do_append(false));
 
     // output informational messages to file
     logger()->writer().add_destination(logfile);
