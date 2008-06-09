@@ -250,7 +250,6 @@ void autocorrelation<dimension, T>::finalize()
 	while (block[i].samples < param.max_samples() && block[i].size() > 2) {
 	    block[i].pop_front();
 	    autocorrelate_block(i);
-	    block[i].samples++;
 	}
     }
 }
@@ -276,16 +275,28 @@ void autocorrelation<dimension, T>::write()
     finalize();
 
     try {
+	// assure adequate number of samples per block
+	unsigned int max_blocks;
+	for (max_blocks = 0; max_blocks < block.size(); ++max_blocks) {
+	    if (block[max_blocks].samples < 1) {
+		LOG_WARNING("could gather only " << max_blocks << " blocks of correlation function results");
+		break;
+	    }
+	}
+
+	if (max_blocks == 0)
+	    return;
+
 	// iterate over correlation functions
 	foreach (tcf_pair& tcf, tcf_) {
 	    // dataspace for correlation function results
-	    hsize_t dim[3] = { tcf.second.shape()[0], tcf.second.shape()[1], 3 };
+	    hsize_t dim[3] = { max_blocks, tcf.second.shape()[1], 3 };
 	    H5::DataSpace ds(3, dim);
 	    // correlation function name
 	    char const* name = boost::apply_visitor(tcf_name_visitor(), tcf.first);
 
 	    // create dataset for correlation function results
-	    H5::DataSet set(file.createDataSet(name, H5::PredType::NATIVE_FLOAT, ds));
+	    H5::DataSet dataset(file.createDataSet(name, H5::PredType::NATIVE_FLOAT, ds));
 
 	    // compose results in memory
 	    boost::multi_array<float, 3> data(boost::extents[dim[0]][dim[1]][dim[2]]);
@@ -302,7 +313,7 @@ void autocorrelation<dimension, T>::write()
 	    }
 
 	    // write results to HDF5 file
-	    set.write(data.data(), H5::PredType::NATIVE_FLOAT);
+	    dataset.write(data.data(), H5::PredType::NATIVE_FLOAT);
 	}
     }
     catch (H5::FileIException const& e) {
