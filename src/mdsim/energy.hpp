@@ -174,6 +174,9 @@ void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot,
 template <unsigned dimension, typename T>
 void energy<dimension, T>::write()
 {
+    if (samples_ == 0)
+	return;
+
     // create dataspaces for scalar and vector types
     hsize_t dim_scalar[2] = { samples_, 2 };
     hsize_t dim_vector[2] = { samples_, 1 + dimension };
