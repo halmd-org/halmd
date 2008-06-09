@@ -124,11 +124,17 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
 	throw exception("failed to create trajectory output file");
     }
 
+    // modify dataset creation properties to enable chunking
+    H5::DSetCreatPropList cparms;
+    hsize_t chunk_dim[3] = { 1, npart, dimension };
+    cparms.setChunk(3, chunk_dim);
+
     // create datasets
-    hsize_t dim[3] = { param.max_samples(), npart, dimension };
-    ds_file_ = H5::DataSpace(3, dim);
-    dataset_[0] = file_.createDataSet("positions", H5::PredType::NATIVE_FLOAT, ds_file_);
-    dataset_[1] = file_.createDataSet("velocities", H5::PredType::NATIVE_FLOAT, ds_file_);
+    hsize_t dim[3] = { 0, npart, dimension };
+    hsize_t max_dim[3] = { H5S_UNLIMITED, npart, dimension };
+    ds_file_ = H5::DataSpace(3, dim, max_dim);
+    dataset_[0] = file_.createDataSet("positions", H5::PredType::NATIVE_FLOAT, ds_file_, cparms);
+    dataset_[1] = file_.createDataSet("velocities", H5::PredType::NATIVE_FLOAT, ds_file_, cparms);
 
     hsize_t dim_mem[2] = { npart, dimension };
     ds_mem_ = H5::DataSpace(2, dim_mem);
@@ -170,6 +176,9 @@ void trajectory<dimension, T, true>::sample(vector_type const& r, vector_type co
     assert(r.size() == npart);
     assert(v.size() == npart);
 
+    hsize_t dim[3] = { samples_ + 1, npart, dimension };
+    ds_file_.setExtentSimple(3, dim);
+
     hsize_t count[3]  = { 1, npart, 1 };
     hsize_t start[3]  = { samples_, 0, 0 };
     hsize_t stride[3] = { 1, 1, 1 };
@@ -178,8 +187,10 @@ void trajectory<dimension, T, true>::sample(vector_type const& r, vector_type co
     ds_file_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     // write periodically reduced particle coordinates
+    dataset_[0].extend(dim);
     dataset_[0].write(r.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
     // write particle velocities
+    dataset_[1].extend(dim);
     dataset_[1].write(v.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
 
     samples_++;
