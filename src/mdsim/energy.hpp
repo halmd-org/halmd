@@ -179,8 +179,8 @@ template <unsigned dimension, typename T>
 void energy<dimension, T>::write()
 {
     // create dataspaces for scalar and vector types
-    hsize_t dim_scalar[2] = { param.max_samples(), 2 };
-    hsize_t dim_vector[2] = { param.max_samples(), 1 + dimension };
+    hsize_t dim_scalar[2] = { samples_, 2 };
+    hsize_t dim_vector[2] = { samples_, 1 + dimension };
     H5::DataSpace ds_scalar(2, dim_scalar);
     H5::DataSpace ds_vector(2, dim_vector);
 
