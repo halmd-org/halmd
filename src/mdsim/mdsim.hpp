@@ -23,6 +23,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
+#include <signal.h>
 #include <stdint.h>
 #include "H5param.hpp"
 #include "autocorrelation.hpp"
@@ -53,6 +54,10 @@ public:
     void operator()();
 
 private:
+    /** signal handler */
+    static void handle_signal(int signum);
+
+private:
     /** program options */
     options const& opts;
     /** global simulation parameters */
@@ -61,6 +66,9 @@ private:
     ljfluid<dimension, T> fluid;
     /** block algorithm parameters */
     block_param<dimension, T> block;
+
+    /** signal number */
+    static int signal_;
 };
 
 /**
@@ -232,9 +240,21 @@ void mdsim<dimension, T>::operator()()
     tcf << param;
     tep << param;
 
+    // install signal handlers
+    boost::array<sighandler_t, 3> sigh;
+    sigh[0] = signal(SIGHUP, handle_signal);
+    sigh[1] = signal(SIGINT, handle_signal);
+    sigh[2] = signal(SIGTERM, handle_signal);
+
     LOG("starting MD simulation");
 
     for (uint64_t step = 0; step < param.steps(); ++step) {
+	// abort simulation on signal
+	if (signal_) {
+	    LOG_WARNING("caught signal " << signal_ << " at simulation step " << step);
+	    break;
+	}
+
 	// copy MD simulation state from GPU to host
 	fluid.sample();
 	// stream next MD simulation program step on GPU
@@ -250,6 +270,11 @@ void mdsim<dimension, T>::operator()()
 
     LOG("finished MD simulation");
 
+    // restore previous signal handlers
+    signal(SIGHUP, sigh[0]);
+    signal(SIGINT, sigh[1]);
+    signal(SIGTERM, sigh[2]);
+
     // write autocorrelation function results to HDF5 file
     tcf.write();
     // write thermodynamic equilibrium properties to HDF5 file
@@ -260,6 +285,19 @@ void mdsim<dimension, T>::operator()()
     tep.close();
     traj.close();
 }
+
+/**
+ * signal handler
+ */
+template <unsigned dimension, typename T>
+void mdsim<dimension, T>::handle_signal(int signum)
+{
+    // store signal number in global variable
+    signal_ = signum;
+}
+
+template <unsigned dimension, typename T>
+int mdsim::mdsim<dimension, T>::signal_(0);
 
 #undef foreach
 
