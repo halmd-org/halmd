@@ -63,7 +63,7 @@ def main(args):
             # correlations file
             tcf.append((root[i], basename[i]))
 
-        elif 'positions' in root[i]:
+        elif 'trajectory' in root[i]:
             # trajectory dump file
             trj.append((root[i], basename[i]))
 
