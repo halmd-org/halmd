@@ -244,7 +244,7 @@ void mdsim<dimension, T>::operator()()
 	// sample thermodynamic equilibrium properties
 	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, param.density(), param.timestep()));
 	// sample trajectory
-	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, param.particles()));
+	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, param.particles(), param.timestep()));
 
 	// MD simulation step
 	fluid.mdstep();

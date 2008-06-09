@@ -50,7 +50,7 @@ public:
     /** dump global simulation parameters to HDF5 file */
     trajectory<dimension, T, true>& operator<<(H5param const& param);
     /** write phase space sample */
-    void sample(std::vector<T> const& r, std::vector<T> const& v, unsigned int const& npart);
+    void sample(std::vector<T> const& r, std::vector<T> const& v, unsigned int const& npart, double const& timestep);
 
 private:
     /** block algorithm parameters */
@@ -61,11 +61,13 @@ private:
     /** HDF5 trajectory output file */
     H5::H5File file_;
     /** trajectory datasets for particle coordinates and velocities */
-    boost::array<H5::DataSet, 2> dataset_;
+    boost::array<H5::DataSet, 3> dataset_;
     /** memory dataspace for a single coordinates or velocities sample */
     H5::DataSpace ds_mem_;
     /** file dataspace for a single coordinates or velocities sample */
     H5::DataSpace ds_file_;
+    /** file dataspace for simulation time */
+    H5::DataSpace ds_scalar_;
 };
 
 /**
@@ -124,11 +126,20 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
     hsize_t dim[3] = { 0, npart, dimension };
     hsize_t max_dim[3] = { H5S_UNLIMITED, npart, dimension };
     ds_file_ = H5::DataSpace(3, dim, max_dim);
-    dataset_[0] = file_.createDataSet("positions", H5::PredType::NATIVE_DOUBLE, ds_file_, cparms);
-    dataset_[1] = file_.createDataSet("velocities", H5::PredType::NATIVE_DOUBLE, ds_file_, cparms);
+    H5::Group root(file_.createGroup("trajectory"));
+    dataset_[0] = root.createDataSet("positions", H5::PredType::NATIVE_DOUBLE, ds_file_, cparms);
+    dataset_[1] = root.createDataSet("velocities", H5::PredType::NATIVE_DOUBLE, ds_file_, cparms);
 
     hsize_t dim_mem[2] = { npart, dimension };
     ds_mem_ = H5::DataSpace(2, dim_mem);
+
+    hsize_t chunk_scalar[1] = { 1 };
+    cparms.setChunk(1, chunk_scalar);
+
+    hsize_t dim_scalar[1] = { 0 };
+    hsize_t max_dim_scalar[1] = { H5S_UNLIMITED };
+    ds_scalar_ = H5::DataSpace(1, dim_scalar, max_dim_scalar);
+    dataset_[2] = root.createDataSet("time", H5::PredType::NATIVE_DOUBLE, ds_scalar_, cparms);
 }
 
 /**
@@ -159,13 +170,16 @@ trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5par
  * write phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector<T> const& v, unsigned int const& npart)
+void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector<T> const& v, unsigned int const& npart, double const& timestep)
 {
     if (samples_ >= param.max_samples())
 	return;
 
     assert(r.size() == npart);
     assert(v.size() == npart);
+
+    // absolute simulation time
+    const double time_ = samples_ * timestep;
 
     hsize_t dim[3] = { samples_ + 1, npart, dimension };
     ds_file_.setExtentSimple(3, dim);
@@ -177,12 +191,25 @@ void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector
 
     ds_file_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
+    hsize_t dim_scalar[1] = { samples_ + 1 };
+    ds_scalar_.setExtentSimple(1, dim_scalar);
+
+    hsize_t count_scalar[1]  = { 1 };
+    hsize_t start_scalar[1]  = { samples_ };
+    hsize_t stride_scalar[1] = { 1 };
+    hsize_t block_scalar[1]  = { 1 };
+
+    ds_scalar_.selectHyperslab(H5S_SELECT_SET, count_scalar, start_scalar, stride_scalar, block_scalar);
+
     // write particle positions
     dataset_[0].extend(dim);
     dataset_[0].write(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
     // write particle velocities
     dataset_[1].extend(dim);
     dataset_[1].write(v.data(), H5::PredType::NATIVE_DOUBLE, ds_mem_, ds_file_);
+    // write simulation time
+    dataset_[2].extend(dim_scalar);
+    dataset_[2].write(&time_, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, ds_scalar_);
 
     samples_++;
 }
@@ -242,9 +269,10 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
 {
     try {
 	// open phase space coordinates datasets
-	H5::DataSet dataset_r(file.openDataSet("positions"));
+	H5::Group root(file.openGroup("trajectory"));
+	H5::DataSet dataset_r(root.openDataSet("positions"));
 	H5::DataSpace ds_r(dataset_r.getSpace());
-	H5::DataSet dataset_v(file.openDataSet("velocities"));
+	H5::DataSet dataset_v(root.openDataSet("velocities"));
 	H5::DataSpace ds_v(dataset_v.getSpace());
 
 	// validate dataspace extents
