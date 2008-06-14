@@ -739,10 +739,10 @@ void ljfluid<dimension, T>::mdstep()
 {
     // calculate particle positions
     leapfrog_half();
-    // update cell lists
-    update_cells();
 
     if (v_max_sum * timestep_ > r_skin / 2.) {
+	// update cell lists
+	update_cells();
 	// update Verlet neighbour lists
 	update_neighbours();
 	// reset sum over maximum velocity magnitudes to zero
