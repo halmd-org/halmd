@@ -194,16 +194,20 @@ void options::parse(int argc, char** argv)
 	("temperature,K", po::value<double>()->default_value(1.), "initial temperature")
 	("rng-seed,R", po::value<unsigned int>()->default_value(42), "random number generator integer seed")
 	("steps,s", po::value<uint64_t>()->default_value(10000), "number of simulation steps")
+#ifndef BENCHMARK
 	("time,t", po::value<double>(), "total simulation time")
+#endif
 	("trajectory,I", po::value<std::string>(), "trajectory input file")
 	("sample,S", po::value<int64_t>()->default_value(-1), "sample in trajectory input file")
 	;
 
+#ifndef BENCHMARK
     po::options_description tcf_opts("Autocorrelation options");
     tcf_opts.add_options()
 	("block-size,B", po::value<unsigned int>()->default_value(10), "block size")
 	("max-samples,M", po::value<uint64_t>()->default_value(1000), "maximum number of samples per block")
 	;
+#endif
 
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
@@ -216,7 +220,11 @@ void options::parse(int argc, char** argv)
 	;
 
     po::options_description opts;
-    opts.add(mdsim_opts).add(tcf_opts).add(misc_opts);
+    opts.add(mdsim_opts);
+#ifndef BENCHMARK
+    opts.add(tcf_opts);
+#endif
+    opts.add(misc_opts);
 
     try {
 	// parse command line options

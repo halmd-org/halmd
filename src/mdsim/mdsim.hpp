@@ -48,8 +48,10 @@ public:
     void operator()();
 
 private:
+#ifndef BENCHMARK
     /** signal handler */
     static void handle_signal(int signum);
+#endif
 
 private:
     /** program options */
@@ -58,11 +60,15 @@ private:
     H5param param;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T> fluid;
+#ifndef BENCHMARK
     /** block algorithm parameters */
     block_param<dimension, T> block;
+#endif
 
+#ifndef BENCHMARK
     /** signal number */
     static int signal_;
+#endif
 };
 
 /**
@@ -119,12 +125,14 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	if (!opts.timestep().defaulted()) {
 	    param.timestep(opts.timestep().value());
 	}
+#ifndef BENCHMARK
 	if (!opts.block_size().defaulted()) {
 	    param.block_size(opts.block_size().value());
 	}
 	if (!opts.max_samples().defaulted()) {
 	    param.max_samples(opts.max_samples().value());
 	}
+#endif
 	if (!opts.steps().defaulted()) {
 	    param.steps(opts.steps().value());
 	}
@@ -154,8 +162,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
 	// gather parameters from option values
 	param.timestep(opts.timestep().value());
+#ifndef BENCHMARK
 	param.block_size(opts.block_size().value());
 	param.max_samples(opts.max_samples().value());
+#endif
 	param.steps(opts.steps().value());
     }
 
@@ -175,6 +185,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     // set simulation timestep
     fluid.timestep(param.timestep());
 
+#ifndef BENCHMARK
     if (!opts.time().empty()) {
 	// set total simulation time
 	block.time(opts.time().value(), param.timestep());
@@ -197,6 +208,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
     // set maximum number of samples per block
     block.max_samples(param.max_samples());
+#endif
 }
 
 /**
@@ -205,6 +217,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
+#ifndef BENCHMARK
     // autocorrelation functions
     autocorrelation<dimension, T> tcf(block);
     // trajectory file writer
@@ -229,10 +242,12 @@ void mdsim<dimension, T>::operator()()
     sigh[0] = signal(SIGHUP, handle_signal);
     sigh[1] = signal(SIGINT, handle_signal);
     sigh[2] = signal(SIGTERM, handle_signal);
+#endif
 
     LOG("starting MD simulation");
 
     for (uint64_t step = 0; step < param.steps(); ++step) {
+#ifndef BENCHMARK
 	// abort simulation on signal
 	if (signal_) {
 	    LOG_WARNING("caught signal " << signal_ << " at simulation step " << step);
@@ -245,6 +260,7 @@ void mdsim<dimension, T>::operator()()
 	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, param.density(), param.timestep()));
 	// sample trajectory
 	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, param.particles(), param.timestep()));
+#endif
 
 	// MD simulation step
 	fluid.mdstep();
@@ -252,6 +268,7 @@ void mdsim<dimension, T>::operator()()
 
     LOG("finished MD simulation");
 
+#ifndef BENCHMARK
     // restore previous signal handlers
     signal(SIGHUP, sigh[0]);
     signal(SIGINT, sigh[1]);
@@ -266,8 +283,10 @@ void mdsim<dimension, T>::operator()()
     tcf.close();
     tep.close();
     traj.close();
+#endif
 }
 
+#ifndef BENCHMARK
 /**
  * signal handler
  */
@@ -280,6 +299,7 @@ void mdsim<dimension, T>::handle_signal(int signum)
 
 template <unsigned dimension, typename T>
 int mdsim::mdsim<dimension, T>::signal_(0);
+#endif
 
 } // namespace mdsim
 

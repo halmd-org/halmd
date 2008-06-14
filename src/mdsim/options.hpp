@@ -123,6 +123,7 @@ public:
 	return vm["steps"];
     }
 
+#ifndef BENCHMARK
     /**
      * returns total simulation time
      */
@@ -130,7 +131,9 @@ public:
     {
 	return vm["time"];
     }
+#endif
 
+#ifndef BENCHMARK
     /**
      * returns block size
      */
@@ -146,6 +149,7 @@ public:
     {
 	return vm["max-samples"];
     }
+#endif
 
     /**
      * returns output file prefix
