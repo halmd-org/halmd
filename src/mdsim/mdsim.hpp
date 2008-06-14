@@ -58,8 +58,10 @@ private:
     H5param param;
     /** hard spheres simulation */
     hardspheres<dimension, T> fluid;
+#ifndef USE_BENCHMARK
     /** block algorithm parameters */
     block_param<dimension, T> block;
+#endif
 
     /** signal number */
     static int signal_;
@@ -120,12 +122,14 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	if (!opts.timestep().defaulted()) {
 	    param.timestep(opts.timestep().value());
 	}
+#ifndef USE_BENCHMARK
 	if (!opts.block_size().defaulted()) {
 	    param.block_size(opts.block_size().value());
 	}
 	if (!opts.max_samples().defaulted()) {
 	    param.max_samples(opts.max_samples().value());
 	}
+#endif
 	if (!opts.steps().defaulted()) {
 	    param.steps(opts.steps().value());
 	}
@@ -156,8 +160,10 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
 	// gather parameters from option values
 	param.timestep(opts.timestep().value());
+#ifndef USE_BENCHMARK
 	param.block_size(opts.block_size().value());
 	param.max_samples(opts.max_samples().value());
+#endif
 	param.steps(opts.steps().value());
     }
 
@@ -177,6 +183,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     // gather cell length
     param.cell_length(fluid.cell_length());
 
+#ifndef USE_BENCHMARK
     if (!opts.time().empty()) {
 	// set total sample time
 	block.time(opts.time().value(), param.timestep());
@@ -199,6 +206,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
     // set maximum number of samples per block
     block.max_samples(param.max_samples());
+#endif
 }
 
 /**
@@ -207,6 +215,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
+#ifndef USE_BENCHMARK
     // autocorrelation functions
     autocorrelation<dimension, T> tcf(block);
     // trajectory file writer
@@ -225,6 +234,7 @@ void mdsim<dimension, T>::operator()()
     traj << param;
     tcf << param;
     tep << param;
+#endif
 
     // install signal handlers
     boost::array<sighandler_t, 3> sigh;
@@ -241,12 +251,14 @@ void mdsim<dimension, T>::operator()()
 	    break;
 	}
 
+#ifndef USE_BENCHMARK
 	// sample autocorrelation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _2, _3));
 	// FIXME sample thermodynamic equilibrium properties
 	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, param.density(), param.timestep()));
 	// sample trajectory
 	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3, param.particles(), param.timestep()));
+#endif
 
 	// advance phase space state to given sample time
 	fluid.mdstep(step * param.timestep());
@@ -259,6 +271,7 @@ void mdsim<dimension, T>::operator()()
     signal(SIGINT, sigh[1]);
     signal(SIGTERM, sigh[2]);
 
+#ifndef USE_BENCHMARK
     // write autocorrelation function results to HDF5 file
     tcf.write();
     // write thermodynamic equilibrium properties to HDF5 file
@@ -268,6 +281,7 @@ void mdsim<dimension, T>::operator()()
     tcf.close();
     tep.close();
     traj.close();
+#endif
 }
 
 /**

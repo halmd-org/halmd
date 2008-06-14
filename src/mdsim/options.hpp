@@ -131,6 +131,7 @@ public:
 	return vm["steps"];
     }
 
+#ifndef USE_BENCHMARK
     /**
      * returns total sample time
      */
@@ -154,6 +155,7 @@ public:
     {
 	return vm["max-samples"];
     }
+#endif
 
     /**
      * returns output file prefix
