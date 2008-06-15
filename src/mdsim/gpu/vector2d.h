@@ -310,4 +310,14 @@ __device__ uint2 __float2uint_rd(float2 const& v)
     return w;
 }
 
+/**
+ * limit floating-point components to unit interval [0, 1]
+ */
+__device__ float2 __saturatef(float2 v)
+{
+    v.x = __saturatef(v.x);
+    v.y = __saturatef(v.y);
+    return v;
+}
+
 #endif /* ! MDSIM_GPU_VECTOR2D_H */
