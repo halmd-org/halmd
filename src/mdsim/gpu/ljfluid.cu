@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <float.h>
 #include "ljfluid_glue.hpp"
 #include "cutil.h"
 #include "types.h"
@@ -65,12 +66,21 @@ static __constant__ unsigned int ncell;
 template <typename T>
 __device__ unsigned int compute_cell(T const& r)
 {
+    //
+    // Mapping the positional coordinates of a particle to its corresponding
+    // cell index is the most delicate part of the cell lists update.
+    // The safest way is to combine round-towards-zero with a successive
+    // integer modulo operation, which comes with a performance penalty.
+    //
+    // As an efficient alternative, we transform the coordinates to the
+    // half-open unit interval [0.0, 1.0) and multiply with the number
+    // of cells per dimension afterwards.
+    //
+    const T cell = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
 #ifdef DIM_3D
-    uint3 cell = __float2uint_rz(r / (box / ncell));
-    return (cell.z * ncell + cell.y) * ncell + cell.x;
+    return (uint(cell.z) * ncell + uint(cell.y)) * ncell + uint(cell.x);
 #else
-    uint2 cell = __float2uint_rz(r / (box / ncell));
-    return cell.y * ncell + cell.x;
+    return uint(cell.y) * ncell + uint(cell.x);
 #endif
 }
 #endif /* USE_CELL */
