@@ -126,7 +126,7 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
     // particle distance vector
     T r = r1 - r2;
     // enforce periodic boundary conditions
-    r -= roundf(r / box) * box;
+    r -= rintf(r / box) * box;
     // squared particle distance
     float rr = r * r;
 
