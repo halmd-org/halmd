@@ -343,4 +343,15 @@ __device__ float3 __saturatef(float3 v)
     return v;
 }
 
+/**
+ * floating-point remainder function
+ */
+__device__ float3 remainderf(float3 v, const float s)
+{
+    v.x = remainderf(v.x, s);
+    v.y = remainderf(v.y, s);
+    v.z = remainderf(v.z, s);
+    return v;
+}
+
 #endif /* ! MDSIM_GPU_VECTOR3D_H */
