@@ -320,4 +320,14 @@ __device__ float2 __saturatef(float2 v)
     return v;
 }
 
+/**
+ * floating-point remainder function
+ */
+__device__ float2 remainderf(float2 v, const float s)
+{
+    v.x = remainderf(v.x, s);
+    v.y = remainderf(v.y, s);
+    return v;
+}
+
 #endif /* ! MDSIM_GPU_VECTOR2D_H */
