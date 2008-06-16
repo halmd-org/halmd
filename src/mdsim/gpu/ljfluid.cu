@@ -146,7 +146,7 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
     // compute Lennard-Jones force in reduced units
     float rri = 1 / rr;
     float ri6 = rri * rri * rri;
-    float fval = 48 * rri * ri6 * (ri6 - 0.5);
+    float fval = 48 * rri * ri6 * (ri6 - 0.5f);
 
     // add contribution to this particle's force only
     f += fval * r;
@@ -155,7 +155,7 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
     en += 2 * ri6 * (ri6 - 1) - en_cut;
 
     // virial equation sum
-    virial += 0.5 * fval * rr;
+    virial += 0.5f * fval * rr;
 }
 
 /**
