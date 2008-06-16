@@ -321,12 +321,22 @@ __device__ float2 __saturatef(float2 v)
 }
 
 /**
- * floating-point remainder function
+ * floating-point remainder function, round towards nearest integer
  */
 __device__ float2 remainderf(float2 v, const float s)
 {
     v.x = remainderf(v.x, s);
     v.y = remainderf(v.y, s);
+    return v;
+}
+
+/**
+ * floating-point remainder function, round towards zero
+ */
+__device__ float2 fmodf(float2 v, const float s)
+{
+    v.x = fmodf(v.x, s);
+    v.y = fmodf(v.y, s);
     return v;
 }
 
