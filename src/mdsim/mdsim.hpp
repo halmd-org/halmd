@@ -270,12 +270,10 @@ void mdsim<dimension, T>::operator()()
 	    break;
 	}
 #endif
-
-	// copy MD simulation state from GPU to host
+	// copy previous MD simulation state from GPU to host
 	fluid.sample();
 	// stream next MD simulation program step on GPU
 	fluid.mdstep();
-
 #ifndef BENCHMARK
 	// sample autocorrelation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _2, _3));
@@ -284,6 +282,8 @@ void mdsim<dimension, T>::operator()()
 	// sample trajectory
 	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3, param.particles(), param.timestep()));
 #endif
+	// synchronize MD simulation program step on GPU
+	fluid.synchronize();
     }
 
     LOG("finished MD simulation");
