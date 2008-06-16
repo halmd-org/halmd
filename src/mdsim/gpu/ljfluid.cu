@@ -93,9 +93,9 @@ __device__ void verlet_step(T& r, T& rm, T& v, T const& f)
 {
     T t = r;
     // update coordinates
-    r = 2. * r - rm + f * (timestep * timestep);
+    r = 2 * r - rm + f * (timestep * timestep);
     // update velocity
-    v = (r - rm) / (2. * timestep);
+    v = (r - rm) / (2 * timestep);
     // store previous coordinates
     rm = t;
 }
@@ -234,15 +234,15 @@ __global__ void mdstep(T const* g_r, T* g_v, T* g_f, int const* g_tag, float* g_
     int tag = g_tag[GTID];
 
     // potential energy contribution
-    float en = 0.;
+    float en = 0;
     // virial equation sum contribution
-    float virial = 0.;
+    float virial = 0;
 
     // Lennard-Jones force calculation
 #ifdef DIM_3D
-    T f = make_float3(0., 0., 0.);
+    T f = make_float3(0, 0, 0);
 #else
-    T f = make_float2(0., 0.);
+    T f = make_float2(0, 0);
 #endif
 
     // calculate forces for this and neighbouring cells
@@ -288,14 +288,14 @@ __global__ void mdstep(T* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
     T v = g_v[GTID];
 
     // potential energy contribution
-    float en = 0.;
+    float en = 0;
     // virial equation sum contribution
-    float virial = 0.;
+    float virial = 0;
 
 #ifdef DIM_3D
-    T f = make_float3(0., 0., 0.);
+    T f = make_float3(0, 0, 0);
 #else
-    T f = make_float2(0., 0.);
+    T f = make_float2(0, 0);
 #endif
 
     // iterate over all blocks
@@ -342,19 +342,19 @@ __global__ void lattice(T* g_r)
     T r;
 #ifdef DIM_3D
     // number of particles along 1 lattice dimension
-    const unsigned int n = ceilf(cbrtf(npart / 4.));
+    const unsigned int n = ceilf(cbrtf(npart / 4.f));
 
     // compose primitive vectors from 1-dimensional index
-    r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.;
-    r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.;
-    r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.;
+    r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.f;
+    r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.f;
+    r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.f;
 #else
     // number of particles along 1 lattice dimension
-    const unsigned int n = ceilf(sqrtf(npart / 2.));
+    const unsigned int n = ceilf(sqrtf(npart / 2.f));
 
     // compose primitive vectors from 1-dimensional index
-    r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.;
-    r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.;
+    r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
+    r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.f;
 #endif
     g_r[GTID] = r * (box / n);
 }
