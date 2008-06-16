@@ -340,4 +340,14 @@ __device__ float2 fmodf(float2 v, const float s)
     return v;
 }
 
+/**
+ * fast, accurate floating-point division by s < 2^126
+ */
+__device__ float2 __fdividef(float2 v, const float s)
+{
+    v.x = __fdividef(v.x, s);
+    v.y = __fdividef(v.y, s);
+    return v;
+}
+
 #endif /* ! MDSIM_GPU_VECTOR2D_H */
