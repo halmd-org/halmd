@@ -86,21 +86,6 @@ __device__ unsigned int compute_cell(T const& r)
 #endif /* USE_CELL */
 
 /**
- * Verlet algorithm for integration of equations of motion
- */
-template <typename T>
-__device__ void verlet_step(T& r, T& rm, T& v, T const& f)
-{
-    T t = r;
-    // update coordinates
-    r = 2 * r - rm + f * (timestep * timestep);
-    // update velocity
-    v = (r - rm) / (2 * timestep);
-    // store previous coordinates
-    rm = t;
-}
-
-/**
  * first leapfrog step of integration of equations of motion
  */
 template <typename T>
