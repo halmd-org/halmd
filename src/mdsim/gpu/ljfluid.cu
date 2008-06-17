@@ -194,12 +194,11 @@ __device__ void compute_cell_forces(T const* g_cell, int const* g_tag, U const& 
     __syncthreads();
 
     for (unsigned int i = 0; i < block_size; ++i) {
+	// skip placeholder particles
+	if (!IS_REAL_PARTICLE(s_tag[i]))
+	    break;
 	// skip same particle
 	if (same_cell && threadIdx.x == i)
-	    continue;
-
-	// skip virtual particles
-	if (!IS_REAL_PARTICLE(s_tag[i]))
 	    continue;
 
 	compute_force(r, s_cell[i], f, en, virial);
@@ -292,11 +291,11 @@ __global__ void mdstep(T* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
 
 	// iterate over all particles within block
 	for (unsigned int j = 0; j < blockDim.x; j++) {
-	    // skip identical particle
-	    if (blockIdx.x == k && TID == j)
-		continue;
 	    // skip placeholder particles
 	    if (k * blockDim.x + j >= npart)
+		break;
+	    // skip identical particle
+	    if (blockIdx.x == k && TID == j)
 		continue;
 
 	    // compute Lennard-Jones force with particle
