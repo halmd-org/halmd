@@ -20,8 +20,6 @@
 #define MDSIM_LJFLUID_HPP
 
 #include <algorithm>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics.hpp>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <cmath>
@@ -906,11 +904,6 @@ void ljfluid<dimension, T>::sample()
 	throw exception("MD simulation step on GPU failed");
     }
 
-    // mean potential energy per particle
-    boost::accumulators::accumulator_set<float, boost::accumulators::features<boost::accumulators::tag::mean> > en_pot;
-    // mean virial equation sum per particle
-    boost::accumulators::accumulator_set<float, boost::accumulators::features<boost::accumulators::tag::mean> > virial;
-
 #ifdef USE_CELL
     // copy MD simulation step results from GPU to host
     try {
@@ -934,6 +927,10 @@ void ljfluid<dimension, T>::sample()
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
+    // mean potential energy per particle
+    en_pot_ = 0.;
+    // mean virial equation sum per particle
+    virial_ = 0.;
     // number of particles found in cells
     unsigned int count = 0;
 
@@ -950,9 +947,9 @@ void ljfluid<dimension, T>::sample()
 	    count++;
 
 	    // calculate mean potential energy per particle
-	    en_pot(h_cell.en[i]);
+	    en_pot_ += (h_cell.en[i] - en_pot_) / count;
 	    // calculate mean virial equation sum per particle
-	    virial(h_cell.virial[i]);
+	    virial_ += (h_cell.virial[i] - virial_) / count;
 	}
     }
     // validate number of particles
@@ -980,14 +977,11 @@ void ljfluid<dimension, T>::sample()
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
-    en_pot = std::for_each(h_part.en.begin(), h_part.en.end(), en_pot);
-    virial = std::for_each(h_part.virial.begin(), h_part.virial.end(), virial);
-#endif
-
     // calculate mean potential energy per particle
-    en_pot_ = boost::accumulators::extract_result<boost::accumulators::tag::mean>(en_pot);
+    en_pot_ = mean(h_part.en.begin(), h_part.en.end());
     // calculate mean virial equation sum per particle
-    virial_ = boost::accumulators::extract_result<boost::accumulators::tag::mean>(virial);
+    virial_ = mean(h_part.virial.begin(), h_part.virial.end());
+#endif
 
     // ensure that system is still in valid state after MD step
     if (std::isnan(en_pot_)) {
