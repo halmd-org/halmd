@@ -133,7 +133,7 @@ public:
 	return vm["steps"];
     }
 
-#ifndef BENCHMARK
+#ifndef USE_BENCHMARK
     /**
      * returns total simulation time
      */
@@ -143,7 +143,7 @@ public:
     }
 #endif
 
-#ifndef BENCHMARK
+#ifndef USE_BENCHMARK
     /**
      * returns block size
      */

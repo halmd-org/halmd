@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include "H5param.hpp"
 #include "accumulator.hpp"
+#include "perf.hpp"
 #include "exception.hpp"
 #include "log.hpp"
 #include "statistics.hpp"
@@ -45,14 +46,6 @@ namespace mdsim
 template <unsigned dimension, typename T, typename U>
 class ljfluid
 {
-public:
-    /** CUDA execution time statistics */
-#ifdef USE_CELL
-    typedef boost::array<accumulator<float>, 7> timing;
-#else
-    typedef boost::array<accumulator<float>, 4> timing;
-#endif
-
 public:
     /** initialize fixed simulation parameters */
     ljfluid();
@@ -118,7 +111,7 @@ public:
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
     /** get CUDA execution time statistics */
-    timing const& times() const;
+    perf_type const& times() const;
 
 private:
     /** number of particles in system */
@@ -248,7 +241,7 @@ private:
     boost::array<cuda::event, 3> event_;
 #endif
     /** CUDA execution time statistics */
-    timing times_;
+    perf_type times_;
 };
 
 
@@ -548,8 +541,10 @@ void ljfluid<dimension, T, U>::restore(V visitor)
 	cuda::vector<U> g_r(npart);
 	cuda::copy(h_part.r, g_r, stream_);
 	// assign particles to cells
+	event_[0].record(stream_);
 	gpu::ljfluid::assign_cells.configure(dim_cell_, stream_);
 	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
+	event_[1].record(stream_);
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_cell.r, g_cell.R, stream_);
 	// calculate forces, potential energy and virial equation sum
@@ -586,6 +581,10 @@ void ljfluid<dimension, T, U>::restore(V visitor)
     catch (cuda::error const& e) {
 	throw exception("failed to restore system state from phase space sample");
     }
+
+#ifdef USE_CELL
+    times_["assign_cells"] += event_[1] - event_[0];
+#endif
 }
 
 /**
@@ -629,11 +628,14 @@ void ljfluid<dimension, T, U>::lattice()
 	cuda::vector<U> g_r(npart);
 	g_r.reserve(dim_.threads());
 	// compute particle lattice positions on GPU
+	event_[0].record(stream_);
 	gpu::ljfluid::lattice.configure(dim_, stream_);
 	gpu::ljfluid::lattice(g_r.data());
+	event_[1].record(stream_);
 	// assign particles to cells
 	gpu::ljfluid::assign_cells.configure(dim_cell_, stream_);
 	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
+	event_[2].record(stream_);
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_cell.r, g_cell.R, stream_);
 	// calculate forces, potential energy and virial equation sum
@@ -641,8 +643,10 @@ void ljfluid<dimension, T, U>::lattice()
 	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
 #else
 	// compute particle lattice positions on GPU
+	event_[0].record(stream_);
 	gpu::ljfluid::lattice.configure(dim_, stream_);
 	gpu::ljfluid::lattice(g_part.r.data());
+	event_[1].record(stream_);
 	// copy particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
@@ -656,6 +660,11 @@ void ljfluid<dimension, T, U>::lattice()
     catch (cuda::error const& e) {
 	throw exception("failed to compute particle lattice positions on GPU");
     }
+
+    times_["lattice"] += event_[1] - event_[0];
+#ifdef USE_CELL
+    times_["assign_cells"] += event_[2] - event_[1];
+#endif
 }
 
 /**
@@ -670,16 +679,20 @@ void ljfluid<dimension, T, U>::temperature(float temp)
 	cuda::vector<U> g_v(npart);
 	g_v.reserve(dim_.threads());
 	// set velocities using Maxwell-Boltzmann distribution at temperature
+	event_[0].record(stream_);
 	gpu::ljfluid::boltzmann.configure(dim_, stream_);
 	gpu::ljfluid::boltzmann(g_v.data(), temp, rng_.data());
+	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
 	cuda::copy(g_v, h_part.v, stream_);
 	// copy particle number tags from GPU to host
 	cuda::copy(g_cell.n, h_cell.n, stream_);
 #else
 	// set velocities using Maxwell-Boltzmann distribution at temperature
+	event_[0].record(stream_);
 	gpu::ljfluid::boltzmann.configure(dim_, stream_);
 	gpu::ljfluid::boltzmann(g_part.v.data(), temp, rng_.data());
+	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
 	cuda::copy(g_part.v, h_part.v, stream_);
 #endif
@@ -689,6 +702,9 @@ void ljfluid<dimension, T, U>::temperature(float temp)
     catch (cuda::error const& e) {
 	throw exception("failed to compute Maxwell-Boltzmann distributed velocities on GPU");
     }
+
+    // accumulate Maxwell-Boltzmann distribution GPU time
+    times_["boltzmann"] += event_[1] - event_[0];
 
     // compute center of mass velocity
     T v_cm = 0;
@@ -935,21 +951,19 @@ void ljfluid<dimension, T, U>::synchronize()
     }
 
     // accumulate total MD step GPU time
-    times_[0] += event_[0] - event_[1];
+    times_["mdstep"] += event_[0] - event_[1];
     // accumulate leapfrog step of integration GPU kernel time
-    times_[2] += event_[2] - event_[1];
+    times_["inteq"] += event_[2] - event_[1];
 #ifdef USE_CELL
     // accumulate Lennard-Jones force calculation GPU kernel time
-    times_[3] += event_[0] - event_[4];
+    times_["force"] += event_[0] - event_[4];
     // accumulate cell lists update GPU kernel time
-    times_[4] += event_[3] - event_[2];
+    times_["update_cells"] += event_[3] - event_[2];
     // accumulate cell lists update GPU memcpy time
-    times_[5] += event_[4] - event_[3];
-    // accumulate cell lists update total GPU time
-    times_[6] += event_[4] - event_[2];
+    times_["memcpy_cells"] += event_[4] - event_[3];
 #else
     // accumulate Lennard-Jones force calculation GPU kernel time
-    times_[3] += event_[0] - event_[2];
+    times_["force"] += event_[0] - event_[2];
 #endif
 }
 
@@ -1048,7 +1062,7 @@ void ljfluid<dimension, T, U>::sample()
     }
 
     // accumulate MD step GPU to host memcpy time
-    times_[1] += event_[0] - event_[1];
+    times_["memcpy_sample"] += event_[0] - event_[1];
 }
 
 /**
@@ -1065,7 +1079,7 @@ void ljfluid<dimension, T, U>::sample(V visitor) const
  * get CUDA execution time statistics
  */
 template <unsigned dimension, typename T, typename U>
-typename ljfluid<dimension, T, U>::timing const& ljfluid<dimension, T, U>::times() const
+perf_type const& ljfluid<dimension, T, U>::times() const
 {
     return times_;
 }
