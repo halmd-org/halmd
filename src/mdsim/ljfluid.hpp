@@ -985,9 +985,9 @@ void ljfluid<dimension, T, U>::sample()
     }
 
     // mean potential energy per particle
-    en_pot_ = 0.;
+    en_pot_ = 0;
     // mean virial equation sum per particle
-    virial_ = 0.;
+    virial_ = 0;
     // number of particles found in cells
     unsigned int count = 0;
 
