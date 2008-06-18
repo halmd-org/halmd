@@ -77,6 +77,36 @@
 	}
     };
 
+    #ifndef __CUDACC__
+
+    /**
+     * configure execution parameters
+     */
+    __inline__ void configure(dim3 const& grid, dim3 const& block, size_t shared_mem = 0)
+    {
+	CUDA_CALL(cudaConfigureCall(grid, block, shared_mem, 0));
+    }
+
+    #ifdef CUDA_WRAPPER_ASYNC_API
+    /**
+     * configure execution parameters
+     */
+    __inline__ void configure(dim3 const& grid, dim3 const& block, stream& stream)
+    {
+	CUDA_CALL(cudaConfigureCall(grid, block, 0, stream.data()));
+    }
+
+    /**
+     * configure execution parameters
+     */
+    __inline__ void configure(dim3 const& grid, dim3 const& block, size_t shared_mem, stream& stream)
+    {
+	CUDA_CALL(cudaConfigureCall(grid, block, shared_mem, stream.data()));
+    }
+    #endif /* CUDA_WRAPPER_ASYNC_API */
+
+    #endif /* ! __CUDACC__ */
+
     } // namespace cuda
 
 
@@ -107,32 +137,6 @@
 	function(T *entry) : entry(entry) {}
 
     #ifndef __CUDACC__
-
-	/**
-	 * configure execution parameters
-	 */
-	static void configure(config const& dim, size_t shared_mem = 0)
-	{
-	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, 0));
-	}
-
-    #ifdef CUDA_WRAPPER_ASYNC_API
-	/**
-	 * configure execution parameters
-	 */
-	static void configure(config const& dim, stream& stream)
-	{
-	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, 0, stream.data()));
-	}
-
-	/**
-	 * configure execution parameters
-	 */
-	static void configure(config const& dim, size_t shared_mem, stream& stream)
-	{
-	    CUDA_CALL(cudaConfigureCall(dim.grid, dim.block, shared_mem, stream.data()));
-	}
-    #endif /* CUDA_WRAPPER_ASYNC_API */
 
 	/**
 	 * execute kernel
