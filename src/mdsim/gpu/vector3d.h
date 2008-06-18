@@ -23,6 +23,22 @@
 
 
 /**
+ * convert non-coalesced vector type to coalesced vector type
+ */
+__device__ __inline__ float4 pack(float3 const& v)
+{
+    return make_float4(v.x, v.y, v.z, 0);
+}
+
+/**
+ * convert coalesced vector type to non-coalesced vector type
+ */
+__device__ __inline__ float3 unpack(float4 const& v)
+{
+    return make_float3(v.x, v.y, v.z);
+}
+
+/**
  * equality comparison
  */
 __device__ bool operator==(float3 const& v, float3 const& w)
