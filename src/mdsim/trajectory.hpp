@@ -33,18 +33,18 @@
 
 namespace mdsim {
 
-template <unsigned dimension, typename T, bool writer = true>
+template <unsigned dimension, typename T, typename U, bool writer = true>
 class trajectory;
 
 /**
  * trajectory file writer
  */
-template <unsigned dimension, typename T>
-class trajectory<dimension, T, true>
+template <unsigned dimension, typename T, typename U>
+class trajectory<dimension, T, U, true>
 {
 public:
     /** vector sample vector in page-locked host memory */
-    typedef cuda::host::vector<T> vector_type;
+    typedef cuda::host::vector<U> vector_type;
 
 public:
     trajectory(block_param<dimension, T> const& param);
@@ -53,7 +53,7 @@ public:
     /** close HDF5 trajectory output file */
     void close();
     /** dump global simulation parameters to HDF5 file */
-    trajectory<dimension, T, true>& operator<<(H5param const& param);
+    trajectory<dimension, T, U, true>& operator<<(H5param const& param);
     /** write phase space sample */
     void sample(vector_type const& r, vector_type const& v, unsigned int const& npart, float const& timestep);
 
@@ -78,12 +78,12 @@ private:
 /**
  * trajectory file reader
  */
-template <unsigned dimension, typename T>
-class trajectory<dimension, T, false>
+template <unsigned dimension, typename T, typename U>
+class trajectory<dimension, T, U, false>
 {
 public:
     /** sample vector in page-locked host memory */
-    typedef cuda::host::vector<T> vector_type;
+    typedef cuda::host::vector<U> vector_type;
 
 public:
     trajectory();
@@ -101,8 +101,8 @@ private:
     H5::H5File file;
 };
 
-template <unsigned dimension, typename T>
-trajectory<dimension, T, true>::trajectory(block_param<dimension, T> const& param) : param(param), samples_(0)
+template <unsigned dimension, typename T, typename U>
+trajectory<dimension, T, U, true>::trajectory(block_param<dimension, T> const& param) : param(param), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -113,8 +113,8 @@ trajectory<dimension, T, true>::trajectory(block_param<dimension, T> const& para
 /**
  * create HDF5 trajectory output file
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::open(std::string const& filename, unsigned int const& npart)
+template <unsigned dimension, typename T, typename U>
+void trajectory<dimension, T, U, true>::open(std::string const& filename, unsigned int const& npart)
 {
     // create trajectory output file
     LOG("write trajectories to file: " << filename);
@@ -139,8 +139,14 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
     dataset_[0] = root.createDataSet("positions", H5::PredType::NATIVE_FLOAT, ds_file_, cparms);
     dataset_[1] = root.createDataSet("velocities", H5::PredType::NATIVE_FLOAT, ds_file_, cparms);
 
-    hsize_t dim_mem[2] = { npart, dimension };
+    hsize_t dim_mem[2] = { npart, sizeof(U) / sizeof(float) };
     ds_mem_ = H5::DataSpace(2, dim_mem);
+
+    hsize_t count_mem[2]  = { npart, 1 };
+    hsize_t start_mem[2]  = { 0, 0 };
+    hsize_t stride_mem[2] = { 1, 1 };
+    hsize_t block_mem[2]  = { 1, dimension };
+    ds_mem_.selectHyperslab(H5S_SELECT_SET, count_mem, start_mem, stride_mem, block_mem);
 
     hsize_t chunk_scalar[1] = { 1 };
     cparms.setChunk(1, chunk_scalar);
@@ -154,8 +160,8 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
 /**
  * close HDF5 trajectory output file
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::close()
+template <unsigned dimension, typename T, typename U>
+void trajectory<dimension, T, U, true>::close()
 {
     try {
 	file_.close();
@@ -168,8 +174,8 @@ void trajectory<dimension, T, true>::close()
 /**
  * dump global simulation parameters to HDF5 file
  */
-template <unsigned dimension, typename T>
-trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5param const& param)
+template <unsigned dimension, typename T, typename U>
+trajectory<dimension, T, U, true>& trajectory<dimension, T, U, true>::operator<<(H5param const& param)
 {
     param.write(file_.createGroup("/parameters"));
     return *this;
@@ -178,8 +184,8 @@ trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5par
 /**
  * write phase space sample
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::sample(vector_type const& r, vector_type const& v, unsigned int const& npart, float const& timestep)
+template <unsigned dimension, typename T, typename U>
+void trajectory<dimension, T, U, true>::sample(vector_type const& r, vector_type const& v, unsigned int const& npart, float const& timestep)
 {
     if (samples_ >= param.max_samples())
 	return;
@@ -224,8 +230,8 @@ void trajectory<dimension, T, true>::sample(vector_type const& r, vector_type co
 }
 
 
-template <unsigned dimension, typename T>
-trajectory<dimension, T, false>::trajectory()
+template <unsigned dimension, typename T, typename U>
+trajectory<dimension, T, U, false>::trajectory()
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -236,8 +242,8 @@ trajectory<dimension, T, false>::trajectory()
 /**
  * open HDF5 trajectory input file
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T, false>::open(std::string const& filename)
+template <unsigned dimension, typename T, typename U>
+void trajectory<dimension, T, U, false>::open(std::string const& filename)
 {
     LOG("read trajectory file: " << filename);
     try {
@@ -251,8 +257,8 @@ void trajectory<dimension, T, false>::open(std::string const& filename)
 /**
  * close HDF5 trajectory input file
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T, false>::close()
+template <unsigned dimension, typename T, typename U>
+void trajectory<dimension, T, U, false>::close()
 {
     try {
 	file.close();
@@ -265,8 +271,8 @@ void trajectory<dimension, T, false>::close()
 /**
  * read global simulation parameters
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T, false>::read(H5param& param)
+template <unsigned dimension, typename T, typename U>
+void trajectory<dimension, T, U, false>::read(H5param& param)
 {
     param.read(file.openGroup("/parameters"));
 }
@@ -274,8 +280,8 @@ void trajectory<dimension, T, false>::read(H5param& param)
 /**
  * read phase space sample
  */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T, false>::read(vector_type& r, vector_type& v, int64_t index)
+template <unsigned dimension, typename T, typename U>
+void trajectory<dimension, T, U, false>::read(vector_type& r, vector_type& v, int64_t index)
 {
     try {
 	// open phase space coordinates datasets
@@ -337,8 +343,14 @@ void trajectory<dimension, T, false>::read(vector_type& r, vector_type& v, int64
 	assert(v.size() == npart);
 
 	// read sample from dataset
-	hsize_t dim_mem[2] = { npart, dimension };
+	hsize_t dim_mem[2] = { npart, sizeof(U) / sizeof(float) };
 	H5::DataSpace ds_mem(2, dim_mem);
+
+	hsize_t count_mem[2]  = { npart, 1 };
+	hsize_t start_mem[2]  = { 0, 0 };
+	hsize_t stride_mem[2] = { 1, 1 };
+	hsize_t block_mem[2]  = { 1, dimension };
+	ds_mem.selectHyperslab(H5S_SELECT_SET, count_mem, start_mem, stride_mem, block_mem);
 
 	hsize_t count[3]  = { 1, npart, 1 };
 	hsize_t start[3]  = { index, 0, 0 };

@@ -72,9 +72,9 @@ int main(int argc, char **argv)
 
 	// initialize molecular dynamics simulation
 #ifdef DIM_3D
-	mdsim::mdsim<3, vector3d<float> > sim(opts);
+	mdsim::mdsim<3, vector3d<float>, float4> sim(opts);
 #else
-	mdsim::mdsim<2, vector2d<float> > sim(opts);
+	mdsim::mdsim<2, vector2d<float>, float2> sim(opts);
 #endif
 
 	if (!opts.dry_run().value()) {

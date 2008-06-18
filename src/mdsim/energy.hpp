@@ -39,7 +39,7 @@ namespace mdsim
 /**
  * Thermodynamic equilibrium properties
  */
-template <unsigned dimension, typename T>
+template <unsigned dimension, typename T, typename U>
 class energy
 {
 public:
@@ -49,7 +49,7 @@ public:
     typedef std::pair<float, T> vector_pair;
 
     /** vector sample vector in page-locked host memory */
-    typedef cuda::host::vector<T> vector_type;
+    typedef cuda::host::vector<U> vector_type;
 
 public:
     /** allocate thermodynamic equilibrium properties buffers */
@@ -58,7 +58,7 @@ public:
     /** create HDF5 thermodynamic equilibrium properties output file */
     void open(std::string const& filename);
     /** dump global simulation parameters to HDF5 file */
-    energy<dimension, T>& operator<<(H5param const& param);
+    energy<dimension, T, U>& operator<<(H5param const& param);
     /** sample thermodynamic equilibrium properties */
     void sample(vector_type const& v, float const& en_pot, float const& virial, float const& density, float const& timestep);
     /** write thermodynamic equilibrium properties to HDF5 file */
@@ -89,8 +89,8 @@ private:
 /**
  * allocate thermodynamic equilibrium properties buffers
  */
-template <unsigned dimension, typename T>
-energy<dimension, T>::energy(block_param<dimension, T> const& param) : param(param), samples_(0)
+template <unsigned dimension, typename T, typename U>
+energy<dimension, T, U>::energy(block_param<dimension, T> const& param) : param(param), samples_(0)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -113,8 +113,8 @@ energy<dimension, T>::energy(block_param<dimension, T> const& param) : param(par
 /**
  * create HDF5 thermodynamic equilibrium properties output file
  */
-template <unsigned dimension, typename T>
-void energy<dimension, T>::open(std::string const& filename)
+template <unsigned dimension, typename T, typename U>
+void energy<dimension, T, U>::open(std::string const& filename)
 {
     LOG("write thermodynamic equilibrium properties to file: " << filename);
     try {
@@ -130,8 +130,8 @@ void energy<dimension, T>::open(std::string const& filename)
 /**
  * dump global simulation parameters to HDF5 file
  */
-template <unsigned dimension, typename T>
-energy<dimension, T>& energy<dimension, T>::operator<<(H5param const& param)
+template <unsigned dimension, typename T, typename U>
+energy<dimension, T, U>& energy<dimension, T, U>::operator<<(H5param const& param)
 {
     param.write(file_.createGroup("/parameters"));
     return *this;
@@ -140,16 +140,22 @@ energy<dimension, T>& energy<dimension, T>::operator<<(H5param const& param)
 /**
  * sample thermodynamic equilibrium properties
  */
-template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(vector_type const& v, float const& en_pot, float const& virial, float const& density, float const& timestep)
+template <unsigned dimension, typename T, typename U>
+void energy<dimension, T, U>::sample(vector_type const& v, float const& en_pot, float const& virial, float const& density, float const& timestep)
 {
     if (samples_ >= param.max_samples())
 	return;
 
-    // mean squared velocity
-    accumulator<float> vv;
-    foreach (T const& v_, v) {
-	vv += v_ * v_;
+    T v_cm = 0;
+    float vv = 0;
+
+    for (size_t i = 0; i < v.size(); ++i) {
+	// convert from GPU to host vector type
+	T v_(v[i]);
+	// center of mass velocity
+	v_cm = (v_ - v_cm) / (i + 1);
+	// mean squared velocity
+	vv = (v_ * v_ - vv) / (i + 1);
     }
 
     // simulation time of sample, starting at time zero
@@ -158,15 +164,15 @@ void energy<dimension, T>::sample(vector_type const& v, float const& en_pot, flo
     // mean potential energy per particle
     en_pot_.push_back(scalar_pair(time, en_pot));
     // mean kinetic energy per particle
-    en_kin_.push_back(scalar_pair(time, vv.mean() / 2));
+    en_kin_.push_back(scalar_pair(time, vv / 2));
     // mean total energy per particle
     en_tot_.push_back(scalar_pair(time, en_pot_.back().second + en_kin_.back().second));
     // temperature
-    temp_.push_back(scalar_pair(time, vv.mean() / dimension));
+    temp_.push_back(scalar_pair(time, vv / dimension));
     // pressure
-    press_.push_back(scalar_pair(time, density / dimension * (vv.mean() + virial)));
+    press_.push_back(scalar_pair(time, density / dimension * (vv + virial)));
     // velocity center of mass
-    v_cm_.push_back(vector_pair(time, mean(v.begin(), v.end())));
+    v_cm_.push_back(vector_pair(time, v_cm));
 
     samples_++;
 }
@@ -175,8 +181,8 @@ void energy<dimension, T>::sample(vector_type const& v, float const& en_pot, flo
 /**
  * write thermodynamic equilibrium properties to HDF5 file
  */
-template <unsigned dimension, typename T>
-void energy<dimension, T>::write()
+template <unsigned dimension, typename T, typename U>
+void energy<dimension, T, U>::write()
 {
     if (samples_ == 0)
 	return;
@@ -231,8 +237,8 @@ void energy<dimension, T>::write()
 /**
  * close HDF5 file
  */
-template <unsigned dimension, typename T>
-void energy<dimension, T>::close()
+template <unsigned dimension, typename T, typename U>
+void energy<dimension, T, U>::close()
 {
     try {
 	file_.close();

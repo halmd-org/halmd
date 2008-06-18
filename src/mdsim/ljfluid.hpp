@@ -31,8 +31,6 @@
 #include "log.hpp"
 #include "statistics.hpp"
 #include "rand48.hpp"
-#include "vector2d.hpp"
-#include "vector3d.hpp"
 #include "gpu/ljfluid_glue.hpp"
 
 
@@ -44,12 +42,10 @@ namespace mdsim
 /**
  * Lennard-Jones fluid simulation using CUDA
  */
-template <unsigned dimension, typename T>
+template <unsigned dimension, typename T, typename U>
 class ljfluid
 {
 public:
-    /** device floating-point vector type */
-    typedef typename cuda::types::vector<dimension, typename T::value_type>::type floatn;
     /** CUDA execution time statistics */
 #ifdef USE_CELL
     typedef boost::array<accumulator<float>, 7> timing;
@@ -151,11 +147,11 @@ private:
     /** system state in page-locked host memory */
     struct {
 	/** periodically reduced particle positions */
-	cuda::host::vector<T> r;
+	cuda::host::vector<U> r;
 	/** periodically extended particle positions */
-	cuda::host::vector<T> R;
+	cuda::host::vector<U> R;
 	/** particle velocities */
-	cuda::host::vector<T> v;
+	cuda::host::vector<U> v;
 #ifndef USE_CELL
 	/** potential energies per particle */
 	cuda::host::vector<float> en;
@@ -173,11 +169,11 @@ private:
     /** cell placeholders in page-locked host memory */
     struct {
 	/** periodically reduced particle positions */
-	cuda::host::vector<T> r;
+	cuda::host::vector<U> r;
 	/** periodically extended particle positions */
-	cuda::host::vector<T> R;
+	cuda::host::vector<U> R;
 	/** particle velocities */
-	cuda::host::vector<T> v;
+	cuda::host::vector<U> v;
 	/** particle number tags */
 	cuda::host::vector<int> n;
 	/** potential energies per particle */
@@ -191,15 +187,15 @@ private:
     /** system state in global device memory */
     struct {
 	/** periodically reduced particle positions */
-	cuda::vector<floatn> r;
+	cuda::vector<U> r;
 	/** periodically extended particle positions */
-	cuda::vector<floatn> R;
+	cuda::vector<U> R;
 	/** particle velocities */
-	cuda::vector<floatn> v;
+	cuda::vector<U> v;
 	/** particle number tags */
 	cuda::vector<int> n;
 	/** particle forces */
-	cuda::vector<floatn> f;
+	cuda::vector<U> f;
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
@@ -209,11 +205,11 @@ private:
     /** system state double buffer in global device memory */
     struct {
 	/** periodically reduced particle positions */
-	cuda::vector<floatn> r;
+	cuda::vector<U> r;
 	/** periodically extended particle positions */
-	cuda::vector<floatn> R;
+	cuda::vector<U> R;
 	/** particle velocities */
-	cuda::vector<floatn> v;
+	cuda::vector<U> v;
 	/** particle number tags */
 	cuda::vector<int> n;
     } g_cell2;
@@ -221,13 +217,13 @@ private:
     /** system state in global device memory */
     struct {
 	/** periodically reduced particle positions */
-	cuda::vector<floatn> r;
+	cuda::vector<U> r;
 	/** periodically extended particle positions */
-	cuda::vector<floatn> R;
+	cuda::vector<U> R;
 	/** particle velocities */
-	cuda::vector<floatn> v;
+	cuda::vector<U> v;
 	/** particle forces */
-	cuda::vector<floatn> f;
+	cuda::vector<U> f;
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
@@ -259,8 +255,8 @@ private:
 /**
  * initialize fixed simulation parameters
  */
-template <unsigned dimension, typename T>
-ljfluid<dimension, T>::ljfluid()
+template <unsigned dimension, typename T, typename U>
+ljfluid<dimension, T, U>::ljfluid()
 {
     // fixed cutoff distance for shifted Lennard-Jones potential
     r_cut = 2.5;
@@ -285,8 +281,8 @@ ljfluid<dimension, T>::ljfluid()
 /**
  * set number of particles in system
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::particles(unsigned int value)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::particles(unsigned int value)
 {
     // validate particle number
     if (value < 1) {
@@ -337,8 +333,8 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 /**
  * set particle density
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::density(float value)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::density(float value)
 {
     // set particle density
     density_ = value;
@@ -359,8 +355,8 @@ void ljfluid<dimension, T>::density(float value)
 /**
  * set periodic box length
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::box(float value)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::box(float value)
 {
     // set periodic box length
     box_ = value;
@@ -382,8 +378,8 @@ void ljfluid<dimension, T>::box(float value)
 /**
  * set desired average cell occupancy
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::cell_occupancy(float value)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::cell_occupancy(float value)
 {
     LOG("desired average cell occupancy: " << value);
 
@@ -433,8 +429,8 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
 /**
  * set number of CUDA execution threads
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::threads(unsigned int value)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::threads(unsigned int value)
 {
     // query CUDA device properties
     cuda::device::properties prop;
@@ -539,9 +535,9 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 /**
  * restore system state from phase space sample
  */
-template <unsigned dimension, typename T>
+template <unsigned dimension, typename T, typename U>
 template <typename V>
-void ljfluid<dimension, T>::restore(V visitor)
+void ljfluid<dimension, T, U>::restore(V visitor)
 {
     // read phase space sample
     visitor(h_part.r, h_part.v);
@@ -549,7 +545,7 @@ void ljfluid<dimension, T>::restore(V visitor)
     try {
 #ifdef USE_CELL
 	// copy periodically reduced particle positions from host to GPU
-	cuda::vector<floatn> g_r(npart);
+	cuda::vector<U> g_r(npart);
 	cuda::copy(h_part.r, g_r, stream_);
 	// assign particles to cells
 	gpu::ljfluid::assign_cells.configure(dim_cell_, stream_);
@@ -579,7 +575,7 @@ void ljfluid<dimension, T>::restore(V visitor)
 	// replicate to periodically extended particle positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
-	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
+	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(U), stream_);
 	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
 
 	// copy particle velocities from host to GPU (after force calculation!)
@@ -595,8 +591,8 @@ void ljfluid<dimension, T>::restore(V visitor)
 /**
  * seed random number generator
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::rng(unsigned int seed)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::rng(unsigned int seed)
 {
     LOG("random number generator seed: " << seed);
     try {
@@ -610,8 +606,8 @@ void ljfluid<dimension, T>::rng(unsigned int seed)
 /**
  * restore random number generator from state
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::rng(mdsim::rand48::state_type const& state)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::rng(mdsim::rand48::state_type const& state)
 {
     try {
 	rng_.restore(state);
@@ -624,13 +620,13 @@ void ljfluid<dimension, T>::rng(mdsim::rand48::state_type const& state)
 /**
  * place particles on a face-centered cubic (fcc) lattice
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::lattice()
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::lattice()
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
     try {
 #ifdef USE_CELL
-	cuda::vector<floatn> g_r(npart);
+	cuda::vector<U> g_r(npart);
 	g_r.reserve(dim_.threads());
 	// compute particle lattice positions on GPU
 	gpu::ljfluid::lattice.configure(dim_, stream_);
@@ -650,7 +646,7 @@ void ljfluid<dimension, T>::lattice()
 	// copy particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
-	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
+	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(U), stream_);
 	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
 #endif
 
@@ -665,13 +661,13 @@ void ljfluid<dimension, T>::lattice()
 /**
  * set system temperature according to Maxwell-Boltzmann distribution
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::temperature(float temp)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::temperature(float temp)
 {
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     try {
 #ifdef USE_CELL
-	cuda::vector<floatn> g_v(npart);
+	cuda::vector<U> g_v(npart);
 	g_v.reserve(dim_.threads());
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	gpu::ljfluid::boltzmann.configure(dim_, stream_);
@@ -695,10 +691,17 @@ void ljfluid<dimension, T>::temperature(float temp)
     }
 
     // compute center of mass velocity
-    T v_cm = mean(h_part.v.begin(), h_part.v.end());
+    T v_cm = 0;
+    for (size_t i = 0; i < h_part.v.size(); ++i) {
+	v_cm = (T(h_part.v[i]) - v_cm) / (i + 1);
+    }
     // set center of mass velocity to zero
-    foreach (T& v, h_part.v) {
-	v -= v_cm;
+    for (size_t i = 0; i < h_part.v.size(); ++i) {
+	h_part.v[i].x -= v_cm.x;
+	h_part.v[i].y -= v_cm.y;
+#ifdef DIM_3D
+	h_part.v[i].z -= v_cm.z;
+#endif
     }
 
     try {
@@ -725,8 +728,8 @@ void ljfluid<dimension, T>::temperature(float temp)
 /**
  * set simulation timestep
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::timestep(float value)
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::timestep(float value)
 {
     // set simulation timestep
     timestep_ = value;
@@ -743,8 +746,8 @@ void ljfluid<dimension, T>::timestep(float value)
 /**
  * get number of particles
  */
-template <unsigned dimension, typename T>
-unsigned int const& ljfluid<dimension, T>::particles() const
+template <unsigned dimension, typename T, typename U>
+unsigned int const& ljfluid<dimension, T, U>::particles() const
 {
     return npart;
 }
@@ -753,8 +756,8 @@ unsigned int const& ljfluid<dimension, T>::particles() const
 /**
  * get number of cells per dimension
  */
-template <unsigned dimension, typename T>
-unsigned int const& ljfluid<dimension, T>::cells() const
+template <unsigned dimension, typename T, typename U>
+unsigned int const& ljfluid<dimension, T, U>::cells() const
 {
     return ncell;
 }
@@ -762,8 +765,8 @@ unsigned int const& ljfluid<dimension, T>::cells() const
 /**
  * get total number of cell placeholders
  */
-template <unsigned dimension, typename T>
-unsigned int const& ljfluid<dimension, T>::placeholders() const
+template <unsigned dimension, typename T, typename U>
+unsigned int const& ljfluid<dimension, T, U>::placeholders() const
 {
     return nplace;
 }
@@ -771,8 +774,8 @@ unsigned int const& ljfluid<dimension, T>::placeholders() const
 /**
  * get cell length
  */
-template <unsigned dimension, typename T>
-float const& ljfluid<dimension, T>::cell_length() const
+template <unsigned dimension, typename T, typename U>
+float const& ljfluid<dimension, T, U>::cell_length() const
 {
     return cell_length_;
 }
@@ -780,8 +783,8 @@ float const& ljfluid<dimension, T>::cell_length() const
 /**
  * get effective average cell occupancy
  */
-template <unsigned dimension, typename T>
-float const& ljfluid<dimension, T>::cell_occupancy() const
+template <unsigned dimension, typename T, typename U>
+float const& ljfluid<dimension, T, U>::cell_occupancy() const
 {
     return cell_occupancy_;
 }
@@ -789,8 +792,8 @@ float const& ljfluid<dimension, T>::cell_occupancy() const
 /**
  * get number of placeholders per cell
  */
-template <unsigned dimension, typename T>
-unsigned int const& ljfluid<dimension, T>::cell_size() const
+template <unsigned dimension, typename T, typename U>
+unsigned int const& ljfluid<dimension, T, U>::cell_size() const
 {
     return cell_size_;
 }
@@ -799,8 +802,8 @@ unsigned int const& ljfluid<dimension, T>::cell_size() const
 /**
  * get number of CUDA execution blocks
  */
-template <unsigned dimension, typename T>
-unsigned int ljfluid<dimension, T>::blocks() const
+template <unsigned dimension, typename T, typename U>
+unsigned int ljfluid<dimension, T, U>::blocks() const
 {
     return dim_.blocks_per_grid();
 }
@@ -808,8 +811,8 @@ unsigned int ljfluid<dimension, T>::blocks() const
 /**
  * get number of particles
  */
-template <unsigned dimension, typename T>
-unsigned int ljfluid<dimension, T>::threads() const
+template <unsigned dimension, typename T, typename U>
+unsigned int ljfluid<dimension, T, U>::threads() const
 {
     return dim_.threads_per_block();
 }
@@ -817,8 +820,8 @@ unsigned int ljfluid<dimension, T>::threads() const
 /**
  * get particle density
  */
-template <unsigned dimension, typename T>
-float const& ljfluid<dimension, T>::density() const
+template <unsigned dimension, typename T, typename U>
+float const& ljfluid<dimension, T, U>::density() const
 {
     return density_;
 }
@@ -826,8 +829,8 @@ float const& ljfluid<dimension, T>::density() const
 /**
  * get periodic box length
  */
-template <unsigned dimension, typename T>
-float const& ljfluid<dimension, T>::box() const
+template <unsigned dimension, typename T, typename U>
+float const& ljfluid<dimension, T, U>::box() const
 {
     return box_;
 }
@@ -835,8 +838,8 @@ float const& ljfluid<dimension, T>::box() const
 /**
  * get simulation timestep
  */
-template <unsigned dimension, typename T>
-float const& ljfluid<dimension, T>::timestep() const
+template <unsigned dimension, typename T, typename U>
+float const& ljfluid<dimension, T, U>::timestep() const
 {
     return timestep_;
 }
@@ -844,8 +847,8 @@ float const& ljfluid<dimension, T>::timestep() const
 /**
  * get potential cutoff distance
  */
-template <unsigned dimension, typename T>
-float const& ljfluid<dimension, T>::cutoff_distance() const
+template <unsigned dimension, typename T, typename U>
+float const& ljfluid<dimension, T, U>::cutoff_distance() const
 {
     return r_cut;
 }
@@ -853,8 +856,8 @@ float const& ljfluid<dimension, T>::cutoff_distance() const
 /**
  * stream MD simulation step on GPU
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::mdstep()
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::mdstep()
 {
 #ifdef USE_CELL
     // first leapfrog step of integration of differential equations of motion
@@ -907,7 +910,7 @@ void ljfluid<dimension, T>::mdstep()
 
     // Lennard-Jones force calculation
     try {
-	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
+	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(U), stream_);
 	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
 	event_[0].record(stream_);
     }
@@ -920,8 +923,8 @@ void ljfluid<dimension, T>::mdstep()
 /**
  * synchronize MD simulation step on GPU
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::synchronize()
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::synchronize()
 {
     try {
 	// wait for MD simulation step on GPU to finish
@@ -953,8 +956,8 @@ void ljfluid<dimension, T>::synchronize()
 /**
  * copy MD simulation step results from GPU to host
  */
-template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::sample()
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::sample()
 {
 #ifdef USE_CELL
     // copy MD simulation step results from GPU to host
@@ -1051,9 +1054,9 @@ void ljfluid<dimension, T>::sample()
 /**
  * sample trajectory
  */
-template <unsigned dimension, typename T>
+template <unsigned dimension, typename T, typename U>
 template <typename V>
-void ljfluid<dimension, T>::sample(V visitor) const
+void ljfluid<dimension, T, U>::sample(V visitor) const
 {
     visitor(h_part.r, h_part.R, h_part.v, en_pot_, virial_);
 }
@@ -1061,8 +1064,8 @@ void ljfluid<dimension, T>::sample(V visitor) const
 /**
  * get CUDA execution time statistics
  */
-template <unsigned dimension, typename T>
-typename ljfluid<dimension, T>::timing const& ljfluid<dimension, T>::times() const
+template <unsigned dimension, typename T, typename U>
+typename ljfluid<dimension, T, U>::timing const& ljfluid<dimension, T, U>::times() const
 {
     return times_;
 }

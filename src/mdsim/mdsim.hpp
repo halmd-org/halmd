@@ -44,7 +44,7 @@ namespace mdsim
 /**
  * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
-template <unsigned dimension, typename T>
+template <unsigned dimension, typename T, typename U>
 class mdsim
 {
 public:
@@ -65,7 +65,7 @@ private:
     /** global simulation parameters */
     H5param param;
     /** Lennard-Jones fluid simulation */
-    ljfluid<dimension, T> fluid;
+    ljfluid<dimension, T, U> fluid;
 #ifndef BENCHMARK
     /** block algorithm parameters */
     block_param<dimension, T> block;
@@ -80,8 +80,8 @@ private:
 /**
  * initialize MD simulation program
  */
-template <unsigned dimension, typename T>
-mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
+template <unsigned dimension, typename T, typename U>
+mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
 {
     // set positional coordinates dimension
     param.dimension(dimension);
@@ -89,7 +89,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
     // initialize Lennard Jones fluid simulation
     if (!opts.trajectory_input_file().empty()) {
-	trajectory<dimension, T, false> traj;
+	trajectory<dimension, T, U, false> traj;
 	// open trajectory input file
 	traj.open(opts.trajectory_input_file().value());
 
@@ -106,7 +106,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	// set number of CUDA execution threads
 	fluid.threads(!opts.threads().defaulted() ? opts.threads().value() : param.threads());
 	// read trajectory sample and restore system state
-	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+	fluid.restore(boost::bind(&trajectory<dimension, T, U, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
 
 	// close trajectory input file
 	traj.close();
@@ -230,16 +230,16 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 /**
  * run MD simulation program
  */
-template <unsigned dimension, typename T>
-void mdsim<dimension, T>::operator()()
+template <unsigned dimension, typename T, typename U>
+void mdsim<dimension, T, U>::operator()()
 {
 #ifndef BENCHMARK
     // autocorrelation functions
-    autocorrelation<dimension, T> tcf(block);
+    autocorrelation<dimension, T, U> tcf(block);
     // trajectory file writer
-    trajectory<dimension, T> traj(block);
+    trajectory<dimension, T, U> traj(block);
     // thermodynamic equilibrium properties
-    energy<dimension, T> tep(block);
+    energy<dimension, T, U> tep(block);
 
     // create trajectory output file
     traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
@@ -276,11 +276,11 @@ void mdsim<dimension, T>::operator()()
 	fluid.mdstep();
 #ifndef BENCHMARK
 	// sample autocorrelation functions
-	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _2, _3));
+	fluid.sample(boost::bind(&autocorrelation<dimension, T, U>::sample, boost::ref(tcf), _2, _3));
 	// sample thermodynamic equilibrium properties
-	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, _5, param.density(), param.timestep()));
+	fluid.sample(boost::bind(&energy<dimension, T, U>::sample, boost::ref(tep), _3, _4, _5, param.density(), param.timestep()));
 	// sample trajectory
-	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3, param.particles(), param.timestep()));
+	fluid.sample(boost::bind(&trajectory<dimension, T, U>::sample, boost::ref(traj), _1, _3, param.particles(), param.timestep()));
 #endif
 	// synchronize MD simulation program step on GPU
 	fluid.synchronize();
@@ -310,15 +310,15 @@ void mdsim<dimension, T>::operator()()
 /**
  * signal handler
  */
-template <unsigned dimension, typename T>
-void mdsim<dimension, T>::handle_signal(int signum)
+template <unsigned dimension, typename T, typename U>
+void mdsim<dimension, T, U>::handle_signal(int signum)
 {
     // store signal number in global variable
     signal_ = signum;
 }
 
-template <unsigned dimension, typename T>
-int mdsim::mdsim<dimension, T>::signal_(0);
+template <unsigned dimension, typename T, typename U>
+int mdsim::mdsim<dimension, T, U>::signal_(0);
 #endif
 
 #undef foreach

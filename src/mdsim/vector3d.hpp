@@ -49,7 +49,7 @@ public:
     /**
      * initialization by vector
      */
-    vector3d(float3 const& v) : x(v.x), y(v.y), z(v.z)
+    vector3d(float4 const& v) : x(v.x), y(v.y), z(v.z)
     {
     }
 

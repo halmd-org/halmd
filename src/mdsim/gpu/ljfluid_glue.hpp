@@ -42,18 +42,18 @@ namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-extern cuda::function<void (float3*, float3*, float3*, float3*)> inteq;
-extern cuda::function<void (float3*, float, ushort3*)> boltzmann;
+extern cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
+extern cuda::function<void (float4*, float, ushort3*)> boltzmann;
 #ifdef USE_CELL
-extern cuda::function<void (float3 const*, float3*, float3*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float3 const*, float3*, int*)> assign_cells;
-extern cuda::function<void (float3 const*, float3 const*, float3 const*, int const*, float3*, float3*, float3*, int*)> update_cells;
+extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
+extern cuda::function<void (float4 const*, float4*, int*)> assign_cells;
+extern cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells;
 #else
-extern cuda::function<void (float3*, float3*, float3*, float*, float*)> mdstep;
+extern cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
 #endif
-extern cuda::function<void (float3*)> lattice;
-#else
-extern cuda::function<void (float2*, float2*, float2*, float2*)> inteq;
+extern cuda::function<void (float4*)> lattice;
+#else /* DIM_3D */
+extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
 extern cuda::function<void (float2*, float, ushort3*)> boltzmann;
 #ifdef USE_CELL
 extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
@@ -63,7 +63,7 @@ extern cuda::function<void (float2 const*, float2 const*, float2 const*, int con
 extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
 #endif
 extern cuda::function<void (float2*)> lattice;
-#endif
+#endif /* DIM_3D */
 
 extern cuda::symbol<unsigned int> npart;
 extern cuda::symbol<float> box;
