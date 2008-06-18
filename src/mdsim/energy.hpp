@@ -153,9 +153,9 @@ void energy<dimension, T, U>::sample(vector_type const& v, float const& en_pot, 
 	// convert from GPU to host vector type
 	T v_(v[i]);
 	// center of mass velocity
-	v_cm = (v_ - v_cm) / (i + 1);
+	v_cm += (v_ - v_cm) / (i + 1);
 	// mean squared velocity
-	vv = (v_ * v_ - vv) / (i + 1);
+	vv += (v_ * v_ - vv) / (i + 1);
     }
 
     // simulation time of sample, starting at time zero

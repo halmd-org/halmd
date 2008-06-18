@@ -693,7 +693,7 @@ void ljfluid<dimension, T, U>::temperature(float temp)
     // compute center of mass velocity
     T v_cm = 0;
     for (size_t i = 0; i < h_part.v.size(); ++i) {
-	v_cm = (T(h_part.v[i]) - v_cm) / (i + 1);
+	v_cm += (T(h_part.v[i]) - v_cm) / (i + 1);
     }
     // set center of mass velocity to zero
     for (size_t i = 0; i < h_part.v.size(); ++i) {
