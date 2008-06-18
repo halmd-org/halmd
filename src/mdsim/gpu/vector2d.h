@@ -23,6 +23,22 @@
 
 
 /**
+ * convert non-coalesced vector type to coalesced vector type
+ */
+__device__ __inline__ float2 pack(float2 const& v)
+{
+    return v;
+}
+
+/**
+ * convert coalesced vector type to non-coalesced vector type
+ */
+__device__ __inline__ float2 unpack(float2 const& v)
+{
+    return v;
+}
+
+/**
  * equality comparison
  */
 __device__ bool operator==(float2 const& v, float2 const& w)
