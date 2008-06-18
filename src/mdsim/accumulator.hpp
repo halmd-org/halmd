@@ -83,7 +83,6 @@ public:
      */
     T mean() const
     {
-	assert(count_ > 0);
 	return m_;
     }
 
@@ -92,7 +91,9 @@ public:
      */
     T std() const
     {
-	assert(count_ > 1);
+	if (count_ < 2) {
+	    return 0;
+	}
 	return sqrt(s_ / (count_ - 1.));
     }
 
@@ -101,7 +102,9 @@ public:
      */
     T err() const
     {
-	assert(count_ > 1);
+	if (count_ < 2) {
+	    return 0;
+	}
 	return sqrt(s_ / (count_ - 1.) / count_);
     }
 
