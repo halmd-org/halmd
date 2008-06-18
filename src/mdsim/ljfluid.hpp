@@ -542,13 +542,13 @@ void ljfluid<dimension, T, U>::restore(V visitor)
 	cuda::copy(h_part.r, g_r, stream_);
 	// assign particles to cells
 	event_[0].record(stream_);
-	gpu::ljfluid::assign_cells.configure(dim_cell_, stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
 	event_[1].record(stream_);
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_cell.r, g_cell.R, stream_);
 	// calculate forces, potential energy and virial equation sum
-	gpu::ljfluid::mdstep.configure(dim_cell_, stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
 
 	// copy particle number tags from GPU to host
@@ -570,7 +570,7 @@ void ljfluid<dimension, T, U>::restore(V visitor)
 	// replicate to periodically extended particle positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
-	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(U), stream_);
+	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(U), stream_);
 	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
 
 	// copy particle velocities from host to GPU (after force calculation!)
@@ -629,28 +629,28 @@ void ljfluid<dimension, T, U>::lattice()
 	g_r.reserve(dim_.threads());
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
-	gpu::ljfluid::lattice.configure(dim_, stream_);
+	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_r.data());
 	event_[1].record(stream_);
 	// assign particles to cells
-	gpu::ljfluid::assign_cells.configure(dim_cell_, stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
 	event_[2].record(stream_);
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_cell.r, g_cell.R, stream_);
 	// calculate forces, potential energy and virial equation sum
-	gpu::ljfluid::mdstep.configure(dim_cell_, stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
 #else
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
-	gpu::ljfluid::lattice.configure(dim_, stream_);
+	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_part.r.data());
 	event_[1].record(stream_);
 	// copy particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
-	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(U), stream_);
+	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(U), stream_);
 	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
 #endif
 
@@ -680,7 +680,7 @@ void ljfluid<dimension, T, U>::temperature(float temp)
 	g_v.reserve(dim_.threads());
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	event_[0].record(stream_);
-	gpu::ljfluid::boltzmann.configure(dim_, stream_);
+	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::boltzmann(g_v.data(), temp, rng_.data());
 	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
@@ -690,7 +690,7 @@ void ljfluid<dimension, T, U>::temperature(float temp)
 #else
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	event_[0].record(stream_);
-	gpu::ljfluid::boltzmann.configure(dim_, stream_);
+	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::boltzmann(g_part.v.data(), temp, rng_.data());
 	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
@@ -879,7 +879,7 @@ void ljfluid<dimension, T, U>::mdstep()
     // first leapfrog step of integration of differential equations of motion
     try {
 	event_[1].record(stream_);
-	gpu::ljfluid::inteq.configure(dim_cell_, stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::inteq(g_cell.r.data(), g_cell.R.data(), g_cell.v.data(), g_cell.f.data());
 	event_[2].record(stream_);
     }
@@ -889,7 +889,7 @@ void ljfluid<dimension, T, U>::mdstep()
 
     // update cell lists
     try {
-	gpu::ljfluid::update_cells.configure(dim_cell_, stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::update_cells(g_cell.r.data(), g_cell.R.data(), g_cell.v.data(), g_cell.n.data(), g_cell2.r.data(), g_cell2.R.data(), g_cell2.v.data(), g_cell2.n.data());
 	event_[3].record(stream_);
 
@@ -905,7 +905,7 @@ void ljfluid<dimension, T, U>::mdstep()
 
     // Lennard-Jones force calculation
     try {
-	gpu::ljfluid::mdstep.configure(dim_cell_, stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
 	event_[0].record(stream_);
     }
@@ -916,7 +916,7 @@ void ljfluid<dimension, T, U>::mdstep()
     // first leapfrog step of integration of differential equations of motion
     try {
 	event_[1].record(stream_);
-	gpu::ljfluid::inteq.configure(dim_, stream_);
+	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::inteq(g_part.r.data(), g_part.R.data(), g_part.v.data(), g_part.f.data());
 	event_[2].record(stream_);
     }
@@ -926,7 +926,7 @@ void ljfluid<dimension, T, U>::mdstep()
 
     // Lennard-Jones force calculation
     try {
-	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(U), stream_);
+	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(U), stream_);
 	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
 	event_[0].record(stream_);
     }
