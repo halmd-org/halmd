@@ -77,6 +77,10 @@ int main(int argc, char **argv)
 	mdsim::mdsim<2, vector2d<float>, float2> sim(opts);
 #endif
 
+	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used() << " bytes");
+	LOG("GPU available global device memory: " << cuda::device::mem_get_free() << " bytes");
+	LOG("GPU total global device memory: " << cuda::device::mem_get_total() << " bytes");
+
 	if (!opts.dry_run().value()) {
 	    // run MD simulation
 	    sim();
