@@ -283,23 +283,6 @@ public:
 
 
 /**
- * returns device pointer to allocated device memory
- */
-float2* cuda_cast(cuda::vector<vector2d<float> >& v)
-{
-    return reinterpret_cast<float2*>(v.data());
-}
-
-/**
- * returns device pointer to allocated device memory
- */
-float2 const* cuda_cast(cuda::vector<vector2d<float> > const& v)
-{
-    return reinterpret_cast<float2 const*>(v.data());
-}
-
-
-/**
  * componentwise round to nearest integer
  */
 template <typename T>

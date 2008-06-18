@@ -310,4 +310,44 @@ __device__ uint2 __float2uint_rd(float2 const& v)
     return w;
 }
 
+/**
+ * limit floating-point components to unit interval [0, 1]
+ */
+__device__ float2 __saturatef(float2 v)
+{
+    v.x = __saturatef(v.x);
+    v.y = __saturatef(v.y);
+    return v;
+}
+
+/**
+ * floating-point remainder function, round towards nearest integer
+ */
+__device__ float2 remainderf(float2 v, const float s)
+{
+    v.x = remainderf(v.x, s);
+    v.y = remainderf(v.y, s);
+    return v;
+}
+
+/**
+ * floating-point remainder function, round towards zero
+ */
+__device__ float2 fmodf(float2 v, const float s)
+{
+    v.x = fmodf(v.x, s);
+    v.y = fmodf(v.y, s);
+    return v;
+}
+
+/**
+ * fast, accurate floating-point division by s < 2^126
+ */
+__device__ float2 __fdividef(float2 v, const float s)
+{
+    v.x = __fdividef(v.x, s);
+    v.y = __fdividef(v.y, s);
+    return v;
+}
+
 #endif /* ! MDSIM_GPU_VECTOR2D_H */

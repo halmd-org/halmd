@@ -20,14 +20,13 @@
 #define MDSIM_LJFLUID_HPP
 
 #include <algorithm>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics.hpp>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <cmath>
 #include <cuda_wrapper.hpp>
 #include <stdint.h>
 #include "H5param.hpp"
+#include "accumulator.hpp"
 #include "exception.hpp"
 #include "log.hpp"
 #include "statistics.hpp"
@@ -51,6 +50,12 @@ class ljfluid
 public:
     /** device floating-point vector type */
     typedef typename cuda::types::vector<dimension, typename T::value_type>::type floatn;
+    /** CUDA execution time statistics */
+#ifdef USE_CELL
+    typedef boost::array<accumulator<float>, 7> timing;
+#else
+    typedef boost::array<accumulator<float>, 4> timing;
+#endif
 
 public:
     /** initialize fixed simulation parameters */
@@ -110,10 +115,14 @@ public:
 
     /** stream MD simulation step on GPU */
     void mdstep();
+    /** synchronize MD simulation step on GPU */
+    void synchronize();
     /** copy MD simulation step results from GPU to host */
     void sample();
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
+    /** get CUDA execution time statistics */
+    timing const& times() const;
 
 private:
     /** number of particles in system */
@@ -236,6 +245,14 @@ private:
 #endif
     /** CUDA asynchronous execution */
     cuda::stream stream_;
+    /** CUDA events for kernel timing */
+#ifdef USE_CELL
+    boost::array<cuda::event, 5> event_;
+#else
+    boost::array<cuda::event, 3> event_;
+#endif
+    /** CUDA execution time statistics */
+    timing times_;
 };
 
 
@@ -842,8 +859,10 @@ void ljfluid<dimension, T>::mdstep()
 #ifdef USE_CELL
     // first leapfrog step of integration of differential equations of motion
     try {
+	event_[1].record(stream_);
 	gpu::ljfluid::inteq.configure(dim_cell_, stream_);
 	gpu::ljfluid::inteq(g_cell.r.data(), g_cell.R.data(), g_cell.v.data(), g_cell.f.data());
+	event_[2].record(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream first leapfrog step on GPU");
@@ -853,11 +872,13 @@ void ljfluid<dimension, T>::mdstep()
     try {
 	gpu::ljfluid::update_cells.configure(dim_cell_, stream_);
 	gpu::ljfluid::update_cells(g_cell.r.data(), g_cell.R.data(), g_cell.v.data(), g_cell.n.data(), g_cell2.r.data(), g_cell2.R.data(), g_cell2.v.data(), g_cell2.n.data());
+	event_[3].record(stream_);
 
 	cuda::copy(g_cell2.r, g_cell.r, stream_);
 	cuda::copy(g_cell2.R, g_cell.R, stream_);
 	cuda::copy(g_cell2.v, g_cell.v, stream_);
 	cuda::copy(g_cell2.n, g_cell.n, stream_);
+	event_[4].record(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream cell list update on GPU");
@@ -867,6 +888,7 @@ void ljfluid<dimension, T>::mdstep()
     try {
 	gpu::ljfluid::mdstep.configure(dim_cell_, stream_);
 	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
+	event_[0].record(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
@@ -874,8 +896,10 @@ void ljfluid<dimension, T>::mdstep()
 #else
     // first leapfrog step of integration of differential equations of motion
     try {
+	event_[1].record(stream_);
 	gpu::ljfluid::inteq.configure(dim_, stream_);
 	gpu::ljfluid::inteq(g_part.r.data(), g_part.R.data(), g_part.v.data(), g_part.f.data());
+	event_[2].record(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream first leapfrog step on GPU");
@@ -885,10 +909,44 @@ void ljfluid<dimension, T>::mdstep()
     try {
 	gpu::ljfluid::mdstep.configure(dim_, dim_.threads_per_block() * sizeof(T), stream_);
 	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
+	event_[0].record(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
     }
+#endif
+}
+
+/**
+ * synchronize MD simulation step on GPU
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::synchronize()
+{
+    try {
+	// wait for MD simulation step on GPU to finish
+	event_[0].synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("MD simulation step on GPU failed");
+    }
+
+    // accumulate total MD step GPU time
+    times_[0] += event_[0] - event_[1];
+    // accumulate leapfrog step of integration GPU kernel time
+    times_[2] += event_[2] - event_[1];
+#ifdef USE_CELL
+    // accumulate Lennard-Jones force calculation GPU kernel time
+    times_[3] += event_[0] - event_[4];
+    // accumulate cell lists update GPU kernel time
+    times_[4] += event_[3] - event_[2];
+    // accumulate cell lists update GPU memcpy time
+    times_[5] += event_[4] - event_[3];
+    // accumulate cell lists update total GPU time
+    times_[6] += event_[4] - event_[2];
+#else
+    // accumulate Lennard-Jones force calculation GPU kernel time
+    times_[3] += event_[0] - event_[2];
 #endif
 }
 
@@ -898,22 +956,10 @@ void ljfluid<dimension, T>::mdstep()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::sample()
 {
-    // wait for MD simulation step on GPU to finish
-    try {
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("MD simulation step on GPU failed");
-    }
-
-    // mean potential energy per particle
-    boost::accumulators::accumulator_set<float, boost::accumulators::features<boost::accumulators::tag::mean> > en_pot;
-    // mean virial equation sum per particle
-    boost::accumulators::accumulator_set<float, boost::accumulators::features<boost::accumulators::tag::mean> > virial;
-
 #ifdef USE_CELL
     // copy MD simulation step results from GPU to host
     try {
+	event_[1].record(stream_);
 	// copy periodically reduce particles positions
 	cuda::copy(g_cell.r, h_cell.r, stream_);
 	// copy periodically extended particles positions
@@ -926,14 +972,19 @@ void ljfluid<dimension, T>::sample()
 	cuda::copy(g_cell.en, h_cell.en, stream_);
 	// copy virial equation sums per particle
 	cuda::copy(g_cell.virial, h_cell.virial, stream_);
+	event_[0].record(stream_);
 
 	// wait for CUDA operations to finish
-	stream_.synchronize();
+	event_[0].synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
+    // mean potential energy per particle
+    en_pot_ = 0.;
+    // mean virial equation sum per particle
+    virial_ = 0.;
     // number of particles found in cells
     unsigned int count = 0;
 
@@ -950,9 +1001,9 @@ void ljfluid<dimension, T>::sample()
 	    count++;
 
 	    // calculate mean potential energy per particle
-	    en_pot(h_cell.en[i]);
+	    en_pot_ += (h_cell.en[i] - en_pot_) / count;
 	    // calculate mean virial equation sum per particle
-	    virial(h_cell.virial[i]);
+	    virial_ += (h_cell.virial[i] - virial_) / count;
 	}
     }
     // validate number of particles
@@ -962,6 +1013,7 @@ void ljfluid<dimension, T>::sample()
 #else
     // copy MD simulation step results from GPU to host
     try {
+	event_[1].record(stream_);
 	// copy periodically reduce particles positions
 	cuda::copy(g_part.r, h_part.r, stream_);
 	// copy periodically extended particles positions
@@ -972,27 +1024,28 @@ void ljfluid<dimension, T>::sample()
 	cuda::copy(g_part.en, h_part.en, stream_);
 	// copy virial equation sums per particle
 	cuda::copy(g_part.virial, h_part.virial, stream_);
+	event_[0].record(stream_);
 
 	// wait for CUDA operations to finish
-	stream_.synchronize();
+	event_[0].synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
-    en_pot = std::for_each(h_part.en.begin(), h_part.en.end(), en_pot);
-    virial = std::for_each(h_part.virial.begin(), h_part.virial.end(), virial);
-#endif
-
     // calculate mean potential energy per particle
-    en_pot_ = boost::accumulators::extract_result<boost::accumulators::tag::mean>(en_pot);
+    en_pot_ = mean(h_part.en.begin(), h_part.en.end());
     // calculate mean virial equation sum per particle
-    virial_ = boost::accumulators::extract_result<boost::accumulators::tag::mean>(virial);
+    virial_ = mean(h_part.virial.begin(), h_part.virial.end());
+#endif
 
     // ensure that system is still in valid state after MD step
     if (std::isnan(en_pot_)) {
 	throw exception("potential energy diverged due to excessive timestep or density");
     }
+
+    // accumulate MD step GPU to host memcpy time
+    times_[1] += event_[0] - event_[1];
 }
 
 /**
@@ -1003,6 +1056,15 @@ template <typename V>
 void ljfluid<dimension, T>::sample(V visitor) const
 {
     visitor(h_part.r, h_part.R, h_part.v, en_pot_, virial_);
+}
+
+/**
+ * get CUDA execution time statistics
+ */
+template <unsigned dimension, typename T>
+typename ljfluid<dimension, T>::timing const& ljfluid<dimension, T>::times() const
+{
+    return times_;
 }
 
 } // namespace mdsim

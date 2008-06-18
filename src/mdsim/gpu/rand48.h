@@ -81,7 +81,7 @@ __inline__ __device__ T muladd(uint3 a, T b, uint3 c)
  */
 __inline__ __device__ float uniform(ushort3& state)
 {
-    float r = state.z / 65536.0 + state.y / 4294967296.0;
+    float r = state.z / 65536.f + state.y / 4294967296.f;
     state = muladd(a, state, c);
     return r;
 }
@@ -110,12 +110,12 @@ __inline__ __device__ void gaussian(float& r1, float& r2, float const& var, usho
     float s;
 
     do {
-	r1 = 2. * uniform(state) - 1.;
-	r2 = 2. * uniform(state) - 1.;
+	r1 = 2 * uniform(state) - 1;
+	r2 = 2 * uniform(state) - 1;
 	s = r1 * r1 + r2 * r2;
-    } while (s >= 1.);
+    } while (s >= 1);
 
-    s = sqrtf(-2. * var * logf(s) / s);
+    s = sqrtf(-2 * var * logf(s) / s);
     r1 *= s;
     r2 *= s;
 }
