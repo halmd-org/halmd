@@ -75,7 +75,7 @@ public:
     {
 	cuda::vector<uint3> a(1), c(1);
 
-	gpu::rand48::init.configure(dim_);
+	cuda::configure(dim_.grid, dim_.block);
 	gpu::rand48::init(state_.data(), a.data(), c.data(), seed);
 	cuda::thread::synchronize();
 
@@ -93,7 +93,7 @@ public:
     void uniform(cuda::vector<float>& r, cuda::stream& stream)
     {
 	assert(r.size() == dim_.threads());
-	gpu::rand48::uniform.configure(dim_, stream);
+	cuda::configure(dim_.grid, dim_.block, stream);
 	gpu::rand48::uniform(state_.data(), r.data(), 1);
     }
 
@@ -106,7 +106,7 @@ public:
 	cuda::vector<ushort3> buf_gpu(1);
 	cuda::host::vector<ushort3> buf(1);
 
-	gpu::rand48::save.configure(dim_, stream);
+	cuda::configure(dim_.grid, dim_.block, stream);
 	gpu::rand48::save(state_.data(), buf_gpu.data());
 	cuda::copy(buf_gpu, buf, stream);
 	stream.synchronize();
@@ -122,7 +122,7 @@ public:
 	cuda::vector<uint3> a(1), c(1);
 	cuda::stream stream;
 
-	gpu::rand48::restore.configure(dim_, stream);
+	cuda::configure(dim_.grid, dim_.block, stream);
 	gpu::rand48::restore(state_.data(), a.data(), c.data(), mem);
 	stream.synchronize();
 
