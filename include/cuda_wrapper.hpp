@@ -46,7 +46,6 @@
  * C++ wrappers *not* requiring runtime functionality
  */
 
-#include <cuda_wrapper/types.hpp>
 #include <cuda_wrapper/function.hpp>
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/texture.hpp>
