@@ -293,7 +293,7 @@ __global__ void mdstep(T* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
 	for (unsigned int j = 0; j < blockDim.x; j++) {
 	    // skip placeholder particles
 	    if (k * blockDim.x + j >= npart)
-		break;
+		continue;
 	    // skip identical particle
 	    if (blockIdx.x == k && TID == j)
 		continue;
