@@ -20,6 +20,7 @@
 #define CUDA_DEVICE_HPP
 
 #include <cuda/cuda_runtime.h>
+#include <cuda/cuda.h>
 #include <cuda_wrapper/error.hpp>
 #include <string>
 
@@ -59,7 +60,6 @@ public:
 	CUDA_CALL(cudaGetDevice(&dev));
 	return dev;
     }
-
 
     /**
      * CUDA device properties
@@ -195,6 +195,36 @@ public:
 	    return prop.textureAlignment;
 	}
     };
+
+    /**
+     * get total memory in bytes in the current context
+     */
+    static unsigned int mem_get_total()
+    {
+	unsigned int free, total;
+	cuMemGetInfo(&free, &total);
+	return total;
+    }
+
+    /**
+     * get allocated memory in bytes in the current context
+     */
+    static unsigned int mem_get_used()
+    {
+	unsigned int free, total;
+	cuMemGetInfo(&free, &total);
+	return (total - free);
+    }
+
+    /**
+     * get available memory in bytes in the current context
+     */
+    static unsigned int mem_get_free()
+    {
+	unsigned int free, total;
+	cuMemGetInfo(&free, &total);
+	return free;
+    }
 };
 
 }
