@@ -20,6 +20,8 @@
 #define MDSIM_AUTOCORRELATION_HPP
 
 #include <H5Cpp.h>
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics.hpp>
 #include <boost/array.hpp>
 // requires patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
@@ -29,7 +31,6 @@
 #include <string>
 #include <vector>
 #include "H5param.hpp"
-#include "accumulator.hpp"
 #include "block.hpp"
 #include "exception.hpp"
 #include "log.hpp"
@@ -89,7 +90,7 @@ public:
     /** generic correlation function type */
     typedef typename boost::make_variant_over<tcf_types>::type tcf_type;
     /** correlation function results type */
-    typedef boost::multi_array<accumulator<float>, 2> tcf_result_type;
+    typedef boost::multi_array<boost::accumulators::accumulator_set<float, boost::accumulators::stats<boost::accumulators::tag::error_of<boost::accumulators::tag::mean> > >, 2> tcf_result_type;
     /** correlation function and results pair type */
     typedef std::pair<tcf_type, tcf_result_type> tcf_pair;
 
@@ -306,9 +307,9 @@ void autocorrelation<dimension, T>::write()
 		    // time interval
 		    data[j][k][0] = param.timegrid(j, k);
 		    // mean average
-		    data[j][k][1] = tcf.second[j][k].mean();
+		    data[j][k][1] = boost::accumulators::extract_result<boost::accumulators::tag::mean>(tcf.second[j][k]);
 		    // standard error of mean
-		    data[j][k][2] = tcf.second[j][k].err();
+		    data[j][k][2] = boost::accumulators::extract_result<boost::accumulators::tag::error_of<boost::accumulators::tag::mean> >(tcf.second[j][k]);
 		}
 	    }
 

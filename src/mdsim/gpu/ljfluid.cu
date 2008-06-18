@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <float.h>
 #include "ljfluid_glue.hpp"
 #include "cutil.h"
 #include "types.h"
@@ -65,30 +66,24 @@ static __constant__ unsigned int ncell;
 template <typename T>
 __device__ unsigned int compute_cell(T const& r)
 {
+    //
+    // Mapping the positional coordinates of a particle to its corresponding
+    // cell index is the most delicate part of the cell lists update.
+    // The safest way is to combine round-towards-zero with a successive
+    // integer modulo operation, which comes with a performance penalty.
+    //
+    // As an efficient alternative, we transform the coordinates to the
+    // half-open unit interval [0.0, 1.0) and multiply with the number
+    // of cells per dimension afterwards.
+    //
+    const T cell = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
 #ifdef DIM_3D
-    uint3 cell = __float2uint_rz(r / (box / ncell));
-    return (cell.z * ncell + cell.y) * ncell + cell.x;
+    return (uint(cell.z) * ncell + uint(cell.y)) * ncell + uint(cell.x);
 #else
-    uint2 cell = __float2uint_rz(r / (box / ncell));
-    return cell.y * ncell + cell.x;
+    return uint(cell.y) * ncell + uint(cell.x);
 #endif
 }
 #endif /* USE_CELL */
-
-/**
- * Verlet algorithm for integration of equations of motion
- */
-template <typename T>
-__device__ void verlet_step(T& r, T& rm, T& v, T const& f)
-{
-    T t = r;
-    // update coordinates
-    r = 2. * r - rm + f * (timestep * timestep);
-    // update velocity
-    v = (r - rm) / (2. * timestep);
-    // store previous coordinates
-    rm = t;
-}
 
 /**
  * first leapfrog step of integration of equations of motion
@@ -126,7 +121,7 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
     // particle distance vector
     T r = r1 - r2;
     // enforce periodic boundary conditions
-    r -= roundf(r / box) * box;
+    r -= rintf(__fdividef(r, box)) * box;
     // squared particle distance
     float rr = r * r;
 
@@ -136,7 +131,7 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
     // compute Lennard-Jones force in reduced units
     float rri = 1 / rr;
     float ri6 = rri * rri * rri;
-    float fval = 48 * rri * ri6 * (ri6 - 0.5);
+    float fval = 48 * rri * ri6 * (ri6 - 0.5f);
 
     // add contribution to this particle's force only
     f += fval * r;
@@ -145,7 +140,7 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, float& en, float& 
     en += 2 * ri6 * (ri6 - 1) - en_cut;
 
     // virial equation sum
-    virial += 0.5 * fval * rr;
+    virial += 0.5f * fval * rr;
 }
 
 /**
@@ -199,12 +194,11 @@ __device__ void compute_cell_forces(T const* g_cell, int const* g_tag, U const& 
     __syncthreads();
 
     for (unsigned int i = 0; i < block_size; ++i) {
+	// skip placeholder particles
+	if (!IS_REAL_PARTICLE(s_tag[i]))
+	    break;
 	// skip same particle
 	if (same_cell && threadIdx.x == i)
-	    continue;
-
-	// skip virtual particles
-	if (!IS_REAL_PARTICLE(s_tag[i]))
 	    continue;
 
 	compute_force(r, s_cell[i], f, en, virial);
@@ -224,58 +218,33 @@ __global__ void mdstep(T const* g_r, T* g_v, T* g_f, int const* g_tag, float* g_
     int tag = g_tag[GTID];
 
     // potential energy contribution
-    float en = 0.;
+    float en = 0;
     // virial equation sum contribution
-    float virial = 0.;
+    float virial = 0;
 
     // Lennard-Jones force calculation
 #ifdef DIM_3D
-    T f = make_float3(0., 0., 0.);
+    T f = make_float3(0, 0, 0);
 #else
-    T f = make_float2(0., 0.);
+    T f = make_float2(0, 0);
 #endif
 
     // calculate forces for this and neighbouring cells
 #ifdef DIM_3D
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, f, tag, en, virial);
     // visit 26 neighbour cells
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, +1), r, f, tag, en, virial);
+    for (int x = -1; x <= 1; ++x)
+	for (int y = -1; y <= 1; ++y)
+	    for (int z = -1; z <= 1; ++z)
+		if (x != 0 || y != 0 || z != 0)
+		    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(x,  y,  z), r, f, tag, en, virial);
 #else
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, f, tag, en, virial);
     // visit 8 neighbour cells
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1,  0), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, +1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, -1), r, f, tag, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, +1), r, f, tag, en, virial);
+    for (int x = -1; x <= 1; ++x)
+	for (int y = -1; y <= 1; ++y)
+	    if (x != 0 || y != 0)
+		compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(x, y), r, f, tag, en, virial);
 #endif
 
     // second leapfrog step as part of integration of equations of motion
@@ -303,14 +272,14 @@ __global__ void mdstep(T* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
     T v = g_v[GTID];
 
     // potential energy contribution
-    float en = 0.;
+    float en = 0;
     // virial equation sum contribution
-    float virial = 0.;
+    float virial = 0;
 
 #ifdef DIM_3D
-    T f = make_float3(0., 0., 0.);
+    T f = make_float3(0, 0, 0);
 #else
-    T f = make_float2(0., 0.);
+    T f = make_float2(0, 0);
 #endif
 
     // iterate over all blocks
@@ -322,11 +291,11 @@ __global__ void mdstep(T* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
 
 	// iterate over all particles within block
 	for (unsigned int j = 0; j < blockDim.x; j++) {
-	    // skip identical particle
-	    if (blockIdx.x == k && TID == j)
-		continue;
 	    // skip placeholder particles
 	    if (k * blockDim.x + j >= npart)
+		break;
+	    // skip identical particle
+	    if (blockIdx.x == k && TID == j)
 		continue;
 
 	    // compute Lennard-Jones force with particle
@@ -357,19 +326,19 @@ __global__ void lattice(T* g_r)
     T r;
 #ifdef DIM_3D
     // number of particles along 1 lattice dimension
-    const unsigned int n = ceilf(cbrtf(npart / 4.));
+    const unsigned int n = ceilf(cbrtf(npart / 4.f));
 
     // compose primitive vectors from 1-dimensional index
-    r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.;
-    r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.;
-    r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.;
+    r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.f;
+    r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.f;
+    r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.f;
 #else
     // number of particles along 1 lattice dimension
-    const unsigned int n = ceilf(sqrtf(npart / 2.));
+    const unsigned int n = ceilf(sqrtf(npart / 2.f));
 
     // compose primitive vectors from 1-dimensional index
-    r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.;
-    r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.;
+    r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
+    r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.f;
 #endif
     g_r[GTID] = r * (box / n);
 }

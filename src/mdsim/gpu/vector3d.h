@@ -332,4 +332,48 @@ __device__ uint3 __float2uint_rd(float3 const& v)
     return w;
 }
 
+/**
+ * limit floating-point components to unit interval [0, 1]
+ */
+__device__ float3 __saturatef(float3 v)
+{
+    v.x = __saturatef(v.x);
+    v.y = __saturatef(v.y);
+    v.z = __saturatef(v.z);
+    return v;
+}
+
+/**
+ * floating-point remainder function, round towards nearest integer
+ */
+__device__ float3 remainderf(float3 v, const float s)
+{
+    v.x = remainderf(v.x, s);
+    v.y = remainderf(v.y, s);
+    v.z = remainderf(v.z, s);
+    return v;
+}
+
+/**
+ * floating-point remainder function, round towards zero
+ */
+__device__ float3 fmodf(float3 v, const float s)
+{
+    v.x = fmodf(v.x, s);
+    v.y = fmodf(v.y, s);
+    v.z = fmodf(v.z, s);
+    return v;
+}
+
+/**
+ * fast, accurate floating-point division by s < 2^126
+ */
+__device__ float3 __fdividef(float3 v, const float s)
+{
+    v.x = __fdividef(v.x, s);
+    v.y = __fdividef(v.y, s);
+    v.z = __fdividef(v.z, s);
+    return v;
+}
+
 #endif /* ! MDSIM_GPU_VECTOR3D_H */

@@ -46,7 +46,7 @@ struct mean_square_displacement
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// accumulate square displacement
-		*result += dr * dr;
+		(*result)(dr * dr);
 	    }
 	}
     }
@@ -75,7 +75,7 @@ struct mean_quartic_displacement
 		// square displacement
 		value_type rr = dr * dr;
 		// accumulate quartic displacement
-		*result += rr * rr;
+		(*result)(rr * rr);
 	    }
 	}
     }
@@ -98,7 +98,7 @@ struct velocity_autocorrelation
 	    // iterate over particle velocities in current and first sample
 	    for (vector_const_iterator v = it->v.begin(), v0 = first->v.begin(); v != it->v.end(); ++v, ++v0) {
 		// accumulate velocity autocorrelation
-		*result += *v0 * *v;
+		(*result)(*v0 * *v);
 	    }
 	}
     }
