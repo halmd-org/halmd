@@ -379,18 +379,18 @@ void ljfluid<dimension, T, U>::cell_occupancy(float value)
     // fixed cell size due to fixed number of CUDA execution threads per block
     cell_size_ = CELL_SIZE;
 
-    // optimal cell length to yield desired average cell occupancy
-    cell_length_ = std::pow((cell_size_ * value) / density_, 1.f / dimension);
+    // optimal number of cells with given cell occupancy as upper boundary
+    ncell = std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension));
 
-    // set number of cells per dimension
-    ncell = std::floor(box_ / std::max(r_cut, cell_length_));
+    // set number of cells per dimension, respecting cutoff distance
+    ncell = std::min(ncell, uint(box_ / r_cut));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
 	throw exception("number of cells per dimension must be at least 3");
     }
 
-    // set cell length from integer number of cells
+    // derive cell length from number of cells
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
 
