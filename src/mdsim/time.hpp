@@ -76,11 +76,11 @@ public:
     }
 
     /**
-     * return total elapsed time in seconds
+     * return total elapsed time in milliseconds
      */
     double elapsed()
     {
-	return tv_sum.tv_sec + (tv_sum.tv_usec * 1.0E-6);
+	return (tv_sum.tv_sec * 1.e3) + (tv_sum.tv_usec * 1.e-3);
     }
 
     /**
