@@ -28,9 +28,12 @@
 #include <list>
 #include <vector>
 #include "H5param.hpp"
+#include "accumulator.hpp"
 #include "exception.hpp"
 #include "gsl_rng.hpp"
 #include "log.hpp"
+#include "perf.hpp"
+#include "time.hpp"
 
 
 #define foreach BOOST_FOREACH
@@ -117,6 +120,8 @@ public:
     void mdstep();
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
+    /** get execution time statistics */
+    perf_type const& times() const;
 
 private:
     /** update cell lists */
@@ -180,6 +185,9 @@ private:
     double rr_cut_skin;
     /** sum over maximum velocity magnitudes since last neighbour lists update */
     double v_max_sum;
+
+    /** execution time statistics */
+    perf_type times_;
 };
 
 /**
@@ -737,22 +745,42 @@ void ljfluid<dimension, T>::leapfrog_full()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::mdstep()
 {
+    boost::array<timer, 5> t;
+    t[0].start();
+
     // calculate particle positions
+    t[1].start();
     leapfrog_half();
+    t[1].stop();
 
     if (v_max_sum * timestep_ > r_skin / 2.) {
 	// update cell lists
+	t[2].start();
 	update_cells();
+	t[2].stop();
+	times_["update_cells"] += t[2].elapsed();
 	// update Verlet neighbour lists
+	t[3].start();
 	update_neighbours();
+	t[3].stop();
+	times_["update_neighbours"] += t[3].elapsed();
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0.;
     }
 
     // calculate forces, potential energy and virial equation sum
+    t[4].start();
     compute_forces();
+    t[4].stop();
+    times_["force"] += t[4].elapsed();
     // calculate velocities
+    t[1].start();
     leapfrog_full();
+    t[1].stop();
+    times_["inteq"] += t[1].elapsed();
+
+    t[0].stop();
+    times_["mdstep"] += t[0].elapsed();
 }
 
 /**
@@ -763,6 +791,15 @@ template <typename V>
 void ljfluid<dimension, T>::sample(V visitor) const
 {
     visitor(part.r, part.v, en_pot_, virial_);
+}
+
+/*
+ * get CUDA execution time statistics
+ */
+template <unsigned dimension, typename T>
+perf_type const& ljfluid<dimension, T>::times() const
+{
+    return times_;
 }
 
 } // namespace mdsim

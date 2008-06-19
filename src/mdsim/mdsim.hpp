@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include "H5param.hpp"
 #include "autocorrelation.hpp"
+#include "perf.hpp"
 #include "block.hpp"
 #include "energy.hpp"
 #include "ljfluid.hpp"
@@ -48,10 +49,8 @@ public:
     void operator()();
 
 private:
-#ifndef BENCHMARK
     /** signal handler */
     static void handle_signal(int signum);
-#endif
 
 private:
     /** program options */
@@ -60,15 +59,11 @@ private:
     H5param param;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T> fluid;
-#ifndef BENCHMARK
     /** block algorithm parameters */
     block_param<dimension, T> block;
-#endif
 
-#ifndef BENCHMARK
     /** signal number */
     static int signal_;
-#endif
 };
 
 /**
@@ -125,7 +120,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	if (!opts.timestep().defaulted()) {
 	    param.timestep(opts.timestep().value());
 	}
-#ifndef BENCHMARK
+#ifndef USE_BENCHMARK
 	if (!opts.block_size().defaulted()) {
 	    param.block_size(opts.block_size().value());
 	}
@@ -162,7 +157,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 
 	// gather parameters from option values
 	param.timestep(opts.timestep().value());
-#ifndef BENCHMARK
+#ifndef USE_BENCHMARK
 	param.block_size(opts.block_size().value());
 	param.max_samples(opts.max_samples().value());
 #endif
@@ -185,7 +180,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     // set simulation timestep
     fluid.timestep(param.timestep());
 
-#ifndef BENCHMARK
+#ifndef USE_BENCHMARK
     if (!opts.time().empty()) {
 	// set total simulation time
 	block.time(opts.time().value(), param.timestep());
@@ -217,43 +212,41 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
-#ifndef BENCHMARK
+#ifndef USE_BENCHMARK
     // autocorrelation functions
     autocorrelation<dimension, T> tcf(block);
+    tcf.open(opts.output_file_prefix().value() + ".tcf");
+    tcf << param;
     // trajectory file writer
     trajectory<dimension, T> traj(block);
+    traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
+    traj << param;
     // thermodynamic equilibrium properties
     energy<dimension, T> tep(block);
-
-    // create trajectory output file
-    traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
-    // create correlations output file
-    tcf.open(opts.output_file_prefix().value() + ".tcf");
-    // create thermodynamic equilibrium properties output file
     tep.open(opts.output_file_prefix().value() + ".tep");
-
-    // write global simulation parameters to HDF5 output files
-    traj << param;
-    tcf << param;
     tep << param;
+#endif
+    // time statistics
+    perf<dimension, T> prf;
+    prf.open(opts.output_file_prefix().value() + ".prf");
+    prf << param;
 
     // install signal handlers
     boost::array<sighandler_t, 3> sigh;
     sigh[0] = signal(SIGHUP, handle_signal);
     sigh[1] = signal(SIGINT, handle_signal);
     sigh[2] = signal(SIGTERM, handle_signal);
-#endif
 
     LOG("starting MD simulation");
 
     for (uint64_t step = 0; step < param.steps(); ++step) {
-#ifndef BENCHMARK
 	// abort simulation on signal
 	if (signal_) {
-	    LOG_WARNING("caught signal " << signal_ << " at simulation step " << step);
+	    LOG_WARNING("caught signal at simulation step " << step);
 	    break;
 	}
 
+#ifndef USE_BENCHMARK
 	// sample autocorrelation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _1, _2));
 	// sample thermodynamic equilibrium properties
@@ -268,25 +261,26 @@ void mdsim<dimension, T>::operator()()
 
     LOG("finished MD simulation");
 
-#ifndef BENCHMARK
     // restore previous signal handlers
     signal(SIGHUP, sigh[0]);
     signal(SIGINT, sigh[1]);
     signal(SIGTERM, sigh[2]);
 
+#ifndef USE_BENCHMARK
     // write autocorrelation function results to HDF5 file
     tcf.write();
+    tcf.close();
     // write thermodynamic equilibrium properties to HDF5 file
     tep.write();
-
-    // close HDF5 output files
-    tcf.close();
     tep.close();
+    // close HDF5 trajectory output file
     traj.close();
 #endif
+    // write time statistics to HDF5 file
+    prf.write(fluid.times());
+    prf.close();
 }
 
-#ifndef BENCHMARK
 /**
  * signal handler
  */
@@ -299,7 +293,6 @@ void mdsim<dimension, T>::handle_signal(int signum)
 
 template <unsigned dimension, typename T>
 int mdsim::mdsim<dimension, T>::signal_(0);
-#endif
 
 } // namespace mdsim
 
