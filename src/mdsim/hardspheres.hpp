@@ -33,6 +33,8 @@
 #include "exception.hpp"
 #include "gsl_rng.hpp"
 #include "log.hpp"
+#include "perf.hpp"
+#include "time.hpp"
 
 
 #define foreach BOOST_FOREACH
@@ -152,6 +154,8 @@ public:
     void mdstep(double sample_time);
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
+    /** get execution time statistics */
+    perf_type const& times() const;
 
 private:
     /** schedule next particle event starting at given time */
@@ -203,6 +207,9 @@ private:
     rng::gsl::gfsr4 rng_;
     /** squared pair separation */
     double pair_sep_sq;
+
+    /** execution time statistics */
+    perf_type times_;
 };
 
 /**
@@ -805,10 +812,14 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::mdstep(const double sample_time)
 {
+    boost::array<timer, 3> t;
+    t[0].start();
+
     // impulsive limit of the virial expression sum
     virial_ = 0.;
 
     // process particle event queue till sample time
+    t[1].start();
     while (event_queue.top().first <= sample_time) {
 	if (event_queue.top().first != event_list[event_queue.top().second].t) {
 	    // discard invalidated event
@@ -829,10 +840,13 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 	}
 	event_queue.pop();
     }
+    t[1].stop();
+    times_["queue"] += t[1].elapsed();
 
     virial_ /= npart;
 
     // sample phase space at given time
+    t[2].start();
     for (unsigned int i = 0; i < npart; ++i) {
 	const T dr = part[i].v * (sample_time - part[i].t);
 	// periodically extended particle position
@@ -844,6 +858,11 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 	// particle velocity
 	v_[i] = part[i].v;
     }
+    t[2].stop();
+    times_["sample"] += t[2].elapsed();
+
+    t[0].stop();
+    times_["mdstep"] += t[0].elapsed();
 }
 
 /**
@@ -854,6 +873,15 @@ template <typename V>
 void hardspheres<dimension, T>::sample(V visitor) const
 {
     visitor(r_, R_, v_, virial_);
+}
+ 
+/*
+ * get execution time statistics
+ */
+template <unsigned dimension, typename T>
+perf_type const& hardspheres<dimension, T>::times() const
+{
+    return times_;
 }
 
 } // namespace mdsim

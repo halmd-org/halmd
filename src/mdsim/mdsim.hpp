@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include "H5param.hpp"
 #include "autocorrelation.hpp"
+#include "perf.hpp"
 #include "block.hpp"
 #include "energy.hpp"
 #include "hardspheres.hpp"
@@ -218,23 +219,21 @@ void mdsim<dimension, T>::operator()()
 #ifndef USE_BENCHMARK
     // autocorrelation functions
     autocorrelation<dimension, T> tcf(block);
+    tcf.open(opts.output_file_prefix().value() + ".tcf");
+    tcf << param;
     // trajectory file writer
     trajectory<dimension, T> traj(block);
+    traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
+    traj << param;
     // thermodynamic equilibrium properties
     energy<dimension, T> tep(block);
-
-    // create trajectory output file
-    traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
-    // create correlations output file
-    tcf.open(opts.output_file_prefix().value() + ".tcf");
-    // create thermodynamic equilibrium properties output file
     tep.open(opts.output_file_prefix().value() + ".tep");
-
-    // write global simulation parameters to HDF5 output files
-    traj << param;
-    tcf << param;
     tep << param;
 #endif
+    // performance data
+    perf<dimension, T> prf;
+    prf.open(opts.output_file_prefix().value() + ".prf");
+    prf << param;
 
     // install signal handlers
     boost::array<sighandler_t, 3> sigh;
@@ -247,7 +246,7 @@ void mdsim<dimension, T>::operator()()
     for (uint64_t step = 0; step < param.steps(); ++step) {
 	// abort simulation on signal
 	if (signal_) {
-	    LOG_WARNING("caught signal " << signal_ << " at simulation step " << step);
+	    LOG_WARNING("caught signal at simulation step " << step);
 	    break;
 	}
 
@@ -274,14 +273,16 @@ void mdsim<dimension, T>::operator()()
 #ifndef USE_BENCHMARK
     // write autocorrelation function results to HDF5 file
     tcf.write();
+    tcf.close();
     // write thermodynamic equilibrium properties to HDF5 file
     tep.write();
-
-    // close HDF5 output files
-    tcf.close();
     tep.close();
+    // close HDF5 trajectory output file
     traj.close();
 #endif
+    // write performance data to HDF5 file
+    prf.write(fluid.times());
+    prf.close();
 }
 
 /**
