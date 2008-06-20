@@ -758,12 +758,12 @@ void ljfluid<dimension, T>::mdstep()
 	t[2].start();
 	update_cells();
 	t[2].stop();
-	times_["update_cells"] += t[2].elapsed();
+	times_["host"]["update_cells"] += t[2].elapsed();
 	// update Verlet neighbour lists
 	t[3].start();
 	update_neighbours();
 	t[3].stop();
-	times_["update_neighbours"] += t[3].elapsed();
+	times_["host"]["update_neighbours"] += t[3].elapsed();
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0.;
     }
@@ -772,15 +772,15 @@ void ljfluid<dimension, T>::mdstep()
     t[4].start();
     compute_forces();
     t[4].stop();
-    times_["force"] += t[4].elapsed();
+    times_["host"]["ljforce"] += t[4].elapsed();
     // calculate velocities
     t[1].start();
     leapfrog_full();
     t[1].stop();
-    times_["inteq"] += t[1].elapsed();
+    times_["host"]["verlet"] += t[1].elapsed();
 
     t[0].stop();
-    times_["mdstep"] += t[0].elapsed();
+    times_["host"]["mdstep"] += t[0].elapsed();
 }
 
 /**

@@ -226,7 +226,7 @@ void mdsim<dimension, T>::operator()()
     tep.open(opts.output_file_prefix().value() + ".tep");
     tep << param;
 #endif
-    // time statistics
+    // performance data
     perf<dimension, T> prf;
     prf.open(opts.output_file_prefix().value() + ".prf");
     prf << param;
@@ -276,7 +276,7 @@ void mdsim<dimension, T>::operator()()
     // close HDF5 trajectory output file
     traj.close();
 #endif
-    // write time statistics to HDF5 file
+    // write performance data to HDF5 file
     prf.write(fluid.times());
     prf.close();
 }
