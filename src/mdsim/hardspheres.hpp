@@ -841,7 +841,7 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 	event_queue.pop();
     }
     t[1].stop();
-    times_["queue"] += t[1].elapsed();
+    times_["host"]["queue"] += t[1].elapsed();
 
     virial_ /= npart;
 
@@ -859,10 +859,10 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 	v_[i] = part[i].v;
     }
     t[2].stop();
-    times_["sample"] += t[2].elapsed();
+    times_["host"]["sample"] += t[2].elapsed();
 
     t[0].stop();
-    times_["mdstep"] += t[0].elapsed();
+    times_["host"]["mdstep"] += t[0].elapsed();
 }
 
 /**

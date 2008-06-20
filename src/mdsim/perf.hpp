@@ -33,9 +33,9 @@ namespace mdsim
 {
 
 /**
- * time accumulators
+ * performance class accumulators
  */
-typedef std::map<std::string, accumulator<double> > perf_type;
+typedef std::map<std::string, std::map<std::string, accumulator<double> > > perf_type;
 
 /**
  * performance data
@@ -105,29 +105,35 @@ void perf<dimension, T>::write(perf_type const& times)
     hsize_t dim[1] = { 3 };
     H5::DataSpace ds(1, dim);
     H5::DataType tid(H5::PredType::NATIVE_DOUBLE);
-    H5::Group root(file_.createGroup("/times"));
 
     try {
+	H5::Group root(file_.createGroup("/times"));
+
 	for (typename perf_type::const_iterator it = times.begin(); it != times.end(); ++it) {
-	    // create dataset
-	    H5::DataSet dataset(root.createDataSet(it->first, tid, ds));
+	    // create group for performance class
+	    H5::Group group(root.createGroup(it->first));
 
-	    // write dataset
-	    double data[] = {
-		// average time in milliseconds
-		it->second.mean(),
-		// standard deviation in milliseconds
-		it->second.std(),
-		// number of calls
-		it->second.count(),
-	    };
-	    dataset.write(data, tid, ds, ds);
+	    for (typename perf_type::mapped_type::const_iterator acc = it->second.begin(); acc != it->second.end(); ++acc) {
+		// create dataset
+		H5::DataSet dataset(root.createDataSet(acc->first, tid, ds));
 
-	    if (it->second.count() > 1) {
-		LOG("average " << it->first << " time: " << std::setprecision(4) << data[0] << " ms (" << std::setprecision(4) << data[1] << " ms)");
-	    }
-	    else {
-		LOG(it->first << " time: " << std::setprecision(4) << data[0] << " ms");
+		// write dataset
+		double data[] = {
+		    // average time in milliseconds
+		    acc->second.mean(),
+		    // standard deviation in milliseconds
+		    acc->second.std(),
+		    // number of calls
+		    acc->second.count(),
+		};
+		dataset.write(data, tid, ds, ds);
+
+		if (acc->second.count() > 1) {
+		    LOG(it->first << "/" << acc->first << " average time: " << std::setprecision(4) << data[0] << " ms (" << std::setprecision(4) << data[1] << " ms)");
+		}
+		else {
+		    LOG(it->first << "/" << acc->first << " time: " << std::setprecision(4) << data[0] << " ms");
+		}
 	    }
 	}
     }
