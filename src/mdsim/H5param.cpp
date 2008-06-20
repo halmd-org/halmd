@@ -34,7 +34,7 @@ void H5param::read(H5::Group const& root)
 	H5::Group node;
 
 	// Lennard-Jones fluid simulation parameters
-	node = root.openGroup("ljfluid");
+	node = root.openGroup("mdsim");
 
 	// positional coordinates dimension
 	attr = node.openAttribute("dimension");
@@ -98,7 +98,7 @@ void H5param::write(H5::Group root) const
 	H5::Group node;
 
 	// Lennard-Jones fluid simulation parameters
-	node = root.createGroup("ljfluid");
+	node = root.createGroup("mdsim");
 
 	// positional coordinates dimension
 	attr = node.createAttribute("dimension", H5::PredType::NATIVE_UINT, H5S_SCALAR);
