@@ -113,10 +113,10 @@ void perf<dimension, T, U>::write(perf_type const& times)
 	    H5::Group group(root.createGroup(it->first));
 
 	    for (typename perf_type::mapped_type::const_iterator acc = it->second.begin(); acc != it->second.end(); ++acc) {
-		// average time in milliseconds
-		const float mean = acc->second.mean();
-		// standard deviation in milliseconds
-		const float sigma = acc->second.std();
+		// average time in seconds
+		const float mean = acc->second.mean() * 1.E-3f;
+		// standard deviation in seconds
+		const float sigma = acc->second.std() * 1.E-3f;
 		// number of calls
 		const uint64_t count = acc->second.count();
 
@@ -126,10 +126,10 @@ void perf<dimension, T, U>::write(perf_type const& times)
 		time.createAttribute("count", utid, H5S_SCALAR).write(utid, &count);
 
 		if (acc->second.count() > 1) {
-		    LOG(it->first << "/" << acc->first << " average time: " << std::setprecision(4) << mean << " ms (" << std::setprecision(4) << sigma << " ms)");
+		    LOG(it->first << "/" << acc->first << " average time: " << std::setprecision(4) << (mean * 1.E3f) << " ms (" << std::setprecision(4) << (sigma * 1.E3f) << " ms)");
 		}
 		else {
-		    LOG(it->first << "/" << acc->first << " time: " << std::setprecision(4) << mean << " ms");
+		    LOG(it->first << "/" << acc->first << " time: " << std::setprecision(4) << (mean * 1.E3f) << " ms");
 		}
 	    }
 	}
