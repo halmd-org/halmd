@@ -583,7 +583,7 @@ void ljfluid<dimension, T, U>::restore(V visitor)
     }
 
 #ifdef USE_CELL
-    times_["assign_cells"] += event_[1] - event_[0];
+    times_["gpu"]["assign_cells"] += event_[1] - event_[0];
 #endif
 }
 
@@ -661,9 +661,9 @@ void ljfluid<dimension, T, U>::lattice()
 	throw exception("failed to compute particle lattice positions on GPU");
     }
 
-    times_["lattice"] += event_[1] - event_[0];
+    times_["gpu"]["lattice"] += event_[1] - event_[0];
 #ifdef USE_CELL
-    times_["assign_cells"] += event_[2] - event_[1];
+    times_["gpu"]["assign_cells"] += event_[2] - event_[1];
 #endif
 }
 
@@ -704,7 +704,7 @@ void ljfluid<dimension, T, U>::temperature(float temp)
     }
 
     // accumulate Maxwell-Boltzmann distribution GPU time
-    times_["boltzmann"] += event_[1] - event_[0];
+    times_["gpu"]["boltzmann"] += event_[1] - event_[0];
 
     // compute center of mass velocity
     T v_cm = 0;
@@ -951,19 +951,19 @@ void ljfluid<dimension, T, U>::synchronize()
     }
 
     // accumulate total MD step GPU time
-    times_["mdstep"] += event_[0] - event_[1];
+    times_["gpu"]["mdstep"] += event_[0] - event_[1];
     // accumulate leapfrog step of integration GPU kernel time
-    times_["inteq"] += event_[2] - event_[1];
+    times_["gpu"]["verlet"] += event_[2] - event_[1];
 #ifdef USE_CELL
     // accumulate Lennard-Jones force calculation GPU kernel time
-    times_["force"] += event_[0] - event_[4];
+    times_["gpu"]["ljforce"] += event_[0] - event_[4];
     // accumulate cell lists update GPU kernel time
-    times_["update_cells"] += event_[3] - event_[2];
-    // accumulate cell lists update GPU memcpy time
-    times_["memcpy_cells"] += event_[4] - event_[3];
+    times_["gpu"]["update_cells"] += event_[3] - event_[2];
+    // accumulate cell lists update GPU mem time
+    times_["memcpy"]["update_cells"] += event_[4] - event_[3];
 #else
     // accumulate Lennard-Jones force calculation GPU kernel time
-    times_["force"] += event_[0] - event_[2];
+    times_["gpu"]["ljforce"] += event_[0] - event_[2];
 #endif
 }
 
@@ -1061,8 +1061,8 @@ void ljfluid<dimension, T, U>::sample()
 	throw exception("potential energy diverged due to excessive timestep or density");
     }
 
-    // accumulate MD step GPU to host memcpy time
-    times_["memcpy_sample"] += event_[0] - event_[1];
+    // accumulate MD step GPU to host mem time
+    times_["memcpy"]["sample"] += event_[0] - event_[1];
 }
 
 /**
