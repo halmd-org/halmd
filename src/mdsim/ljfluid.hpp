@@ -26,6 +26,7 @@
 #include <cmath>
 #include <iostream>
 #include <list>
+#include <sys/times.h>
 #include <vector>
 #include "H5param.hpp"
 #include "accumulator.hpp"
@@ -33,7 +34,6 @@
 #include "gsl_rng.hpp"
 #include "log.hpp"
 #include "perf.hpp"
-#include "time.hpp"
 
 
 #define foreach BOOST_FOREACH
@@ -745,42 +745,39 @@ void ljfluid<dimension, T>::leapfrog_full()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::mdstep()
 {
-    boost::array<timer, 5> t;
-    t[0].start();
+    boost::array<tms, 5> t;
 
     // calculate particle positions
-    t[1].start();
+    ::times(&t[0]);
     leapfrog_half();
-    t[1].stop();
+    ::times(&t[1]);
 
     if (v_max_sum * timestep_ > r_skin / 2.) {
 	// update cell lists
-	t[2].start();
 	update_cells();
-	t[2].stop();
-	times_["host"]["update_cells"] += t[2].elapsed();
+	::times(&t[2]);
 	// update Verlet neighbour lists
-	t[3].start();
 	update_neighbours();
-	t[3].stop();
-	times_["host"]["update_neighbours"] += t[3].elapsed();
+	::times(&t[3]);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0.;
+
+	times_["host"]["update_cells"] += t[2].tms_utime - t[1].tms_utime;
+	times_["host"]["update_neighbours"] += t[3].tms_utime - t[2].tms_utime;
     }
 
     // calculate forces, potential energy and virial equation sum
-    t[4].start();
+    ::times(&t[2]);
     compute_forces();
-    t[4].stop();
-    times_["host"]["ljforce"] += t[4].elapsed();
+    ::times(&t[3]);
     // calculate velocities
-    t[1].start();
     leapfrog_full();
-    t[1].stop();
-    times_["host"]["verlet"] += t[1].elapsed();
+    ::times(&t[4]);
 
-    t[0].stop();
-    times_["host"]["mdstep"] += t[0].elapsed();
+    // accumulate process user times
+    times_["host"]["ljforce"] += t[3].tms_utime - t[2].tms_utime;
+    times_["host"]["verlet"] += (t[4].tms_utime - t[3].tms_utime) + (t[1].tms_utime - t[0].tms_utime);
+    times_["host"]["mdstep"] += t[4].tms_utime - t[0].tms_utime;
 }
 
 /**

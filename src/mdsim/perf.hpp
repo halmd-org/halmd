@@ -23,6 +23,8 @@
 #include <iomanip>
 #include <map>
 #include <string>
+#include <sys/times.h>
+#include <unistd.h>
 #include "H5param.hpp"
 #include "accumulator.hpp"
 #include "log.hpp"
@@ -105,6 +107,9 @@ void perf<dimension, T>::write(perf_type const& times)
     H5::DataType ftid(H5::PredType::NATIVE_DOUBLE);
     H5::DataType utid(H5::PredType::NATIVE_UINT64);
 
+    // milliseconds per clock tick
+    const double clk = 1000. / sysconf(_SC_CLK_TCK);
+
     try {
 	H5::Group root(file_.createGroup("/times"));
 
@@ -114,9 +119,9 @@ void perf<dimension, T>::write(perf_type const& times)
 
 	    for (typename perf_type::mapped_type::const_iterator acc = it->second.begin(); acc != it->second.end(); ++acc) {
 		// average time in milliseconds
-		const double mean = acc->second.mean();
+		const double mean = clk * acc->second.mean();
 		// standard deviation in milliseconds
-		const double sigma = acc->second.std();
+		const double sigma = clk * acc->second.std();
 		// number of calls
 		const uint64_t count = acc->second.count();
 
