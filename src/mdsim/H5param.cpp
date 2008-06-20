@@ -34,7 +34,7 @@ void H5param::read(H5::Group const& root)
 	H5::Group node;
 
 	// hard spheres simulation parameters
-	node = root.openGroup("hardspheres");
+	node = root.openGroup("mdsim");
 
 	// positional coordinates dimension
 	attr = node.openAttribute("dimension");
@@ -92,7 +92,7 @@ void H5param::write(H5::Group root) const
 	H5::Group node;
 
 	// hard spheres simulation parameters
-	node = root.createGroup("hardspheres");
+	node = root.createGroup("mdsim");
 
 	// positional coordinates dimension
 	attr = node.createAttribute("dimension", H5::PredType::NATIVE_UINT, H5S_SCALAR);
