@@ -28,13 +28,13 @@
 #include <limits>
 #include <list>
 #include <queue>
+#include <sys/times.h>
 #include <vector>
 #include "H5param.hpp"
 #include "exception.hpp"
 #include "gsl_rng.hpp"
 #include "log.hpp"
 #include "perf.hpp"
-#include "time.hpp"
 
 
 #define foreach BOOST_FOREACH
@@ -812,14 +812,13 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::mdstep(const double sample_time)
 {
-    boost::array<timer, 3> t;
-    t[0].start();
+    boost::array<tms, 3> t;
+    ::times(&t[0]);
 
     // impulsive limit of the virial expression sum
     virial_ = 0.;
 
     // process particle event queue till sample time
-    t[1].start();
     while (event_queue.top().first <= sample_time) {
 	if (event_queue.top().first != event_list[event_queue.top().second].t) {
 	    // discard invalidated event
@@ -840,12 +839,11 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 	}
 	event_queue.pop();
     }
-    t[1].stop();
 
     virial_ /= npart;
 
     // sample phase space at given time
-    t[2].start();
+    ::times(&t[1]);
     for (unsigned int i = 0; i < npart; ++i) {
 	const T dr = part[i].v * (sample_time - part[i].t);
 	// periodically extended particle position
@@ -857,13 +855,12 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 	// particle velocity
 	v_[i] = part[i].v;
     }
-    t[2].stop();
+    ::times(&t[2]);
 
-    t[0].stop();
-
-    times_["host"]["mdstep"] += t[0].elapsed();
-    times_["host"]["queue"] += t[1].elapsed();
-    times_["host"]["sample"] += t[2].elapsed();
+    // accumulate process user times
+    times_["host"]["mdstep"] += t[2].tms_utime - t[0].tms_utime;
+    times_["host"]["queue"] += t[1].tms_utime - t[0].tms_utime;
+    times_["host"]["sample"] += t[2].tms_utime - t[1].tms_utime;
 }
 
 /**
