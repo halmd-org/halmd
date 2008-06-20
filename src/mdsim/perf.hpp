@@ -102,9 +102,8 @@ perf<dimension, T>& perf<dimension, T>::operator<<(H5param const& param)
 template <unsigned dimension, typename T>
 void perf<dimension, T>::write(perf_type const& times)
 {
-    hsize_t dim[1] = { 3 };
-    H5::DataSpace ds(1, dim);
-    H5::DataType tid(H5::PredType::NATIVE_DOUBLE);
+    H5::DataType ftid(H5::PredType::NATIVE_DOUBLE);
+    H5::DataType utid(H5::PredType::NATIVE_UINT64);
 
     try {
 	H5::Group root(file_.createGroup("/times"));
@@ -114,25 +113,23 @@ void perf<dimension, T>::write(perf_type const& times)
 	    H5::Group group(root.createGroup(it->first));
 
 	    for (typename perf_type::mapped_type::const_iterator acc = it->second.begin(); acc != it->second.end(); ++acc) {
-		// create dataset
-		H5::DataSet dataset(root.createDataSet(acc->first, tid, ds));
+		// average time in milliseconds
+		const double mean = acc->second.mean();
+		// standard deviation in milliseconds
+		const double sigma = acc->second.std();
+		// number of calls
+		const uint64_t count = acc->second.count();
 
-		// write dataset
-		double data[] = {
-		    // average time in milliseconds
-		    acc->second.mean(),
-		    // standard deviation in milliseconds
-		    acc->second.std(),
-		    // number of calls
-		    acc->second.count(),
-		};
-		dataset.write(data, tid, ds, ds);
+		H5::Group time(group.createGroup(acc->first));
+		time.createAttribute("mean", ftid, H5S_SCALAR).write(ftid, &mean);
+		time.createAttribute("sigma", ftid, H5S_SCALAR).write(ftid, &sigma);
+		time.createAttribute("count", utid, H5S_SCALAR).write(utid, &count);
 
 		if (acc->second.count() > 1) {
-		    LOG(it->first << "/" << acc->first << " average time: " << std::setprecision(4) << data[0] << " ms (" << std::setprecision(4) << data[1] << " ms)");
+		    LOG(it->first << "/" << acc->first << " average time: " << std::setprecision(4) << mean << " ms (" << std::setprecision(4) << sigma << " ms)");
 		}
 		else {
-		    LOG(it->first << "/" << acc->first << " time: " << std::setprecision(4) << data[0] << " ms");
+		    LOG(it->first << "/" << acc->first << " time: " << std::setprecision(4) << mean << " ms");
 		}
 	    }
 	}
