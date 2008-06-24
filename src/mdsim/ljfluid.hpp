@@ -251,8 +251,8 @@ private:
 template <unsigned dimension, typename T, typename U>
 ljfluid<dimension, T, U>::ljfluid()
 {
-    // fixed cutoff distance for shifted Lennard-Jones potential
-    r_cut = 2.5;
+    // suppress attractive tail of Lennard-Jones potential
+    r_cut = std::pow(2., 1. / 6.);
     LOG("potential cutoff distance: " << r_cut);
 
     // squared cutoff distance
