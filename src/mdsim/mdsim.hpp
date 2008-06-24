@@ -292,7 +292,7 @@ void mdsim<dimension, T>::handle_signal(int signum)
 }
 
 template <unsigned dimension, typename T>
-int mdsim::mdsim<dimension, T>::signal_(0);
+int mdsim<dimension, T>::signal_(0);
 
 } // namespace mdsim
 
