@@ -311,7 +311,7 @@ void mdsim<dimension, T, U>::handle_signal(int signum)
 }
 
 template <unsigned dimension, typename T, typename U>
-int mdsim::mdsim<dimension, T, U>::signal_(0);
+int mdsim<dimension, T, U>::signal_(0);
 
 #undef foreach
 
