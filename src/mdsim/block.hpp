@@ -217,7 +217,13 @@ uint64_t const& block_param<dimension, T>::max_samples() const
 template <unsigned dimension, typename T>
 double block_param<dimension, T>::timegrid(unsigned int block, unsigned int offset) const
 {
-    return timestep_ * std::pow(block_size_, block / 2.f) * (offset + 1) * ((block % 2) ? block_shift_ : 1) ;
+    double time = timestep_ * std::pow(block_size_, block / 2) * (offset + 1);
+
+    if (block % 2) {
+	// shifted block
+	time *= block_shift_;
+    }
+    return time;
 }
 
 } // namespace mdsim
