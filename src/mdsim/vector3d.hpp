@@ -20,7 +20,7 @@
 #define MDSIM_VECTOR3D_HPP
 
 #include <boost/array.hpp>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 
 
@@ -88,7 +88,7 @@ public:
     {
         return (v.x == x && v.y == y && v.z == z);
     }
-    
+
     /**
      * inequality comparison
      */
@@ -277,7 +277,6 @@ public:
     }
 };
 
-
 /**
  * componentwise round to nearest integer
  */
@@ -301,7 +300,6 @@ vector3d<double> rint(vector3d<double> v)
     v.z = rint(v.z);
     return v;
 }
-
 
 /**
  * componentwise round to nearest integer, away from zero
@@ -327,56 +325,29 @@ vector3d<double> round(vector3d<double> v)
     return v;
 }
 
-
 /**
  * componentwise round to nearest integer not greater than argument
  */
 template <typename T>
-vector3d<T> floor(vector3d<T> v);
-
-template <>
-vector3d<float> floor(vector3d<float> v)
-{   
-    v.x = floorf(v.x);
-    v.y = floorf(v.y);
-    v.z = floorf(v.z);
+vector3d<T> floor(vector3d<T> v)
+{
+    v.x = std::floor(v.x);
+    v.y = std::floor(v.y);
+    v.z = std::floor(v.z);
     return v;
 }
-
-template <>
-vector3d<double> floor(vector3d<double> v)
-{   
-    v.x = floor(v.x);
-    v.y = floor(v.y);
-    v.z = floor(v.z);
-    return v;
-}
-
 
 /**
  * componentwise round to nearest integer not less argument
  */
 template <typename T>
-vector3d<T> ceil(vector3d<T> v);
-
-template <>
-vector3d<float> ceil(vector3d<float> v)
-{   
-    v.x = ceilf(v.x);
-    v.y = ceilf(v.y);
-    v.z = ceilf(v.z);
+vector3d<T> ceil(vector3d<T> v)
+{
+    v.x = std::ceil(v.x);
+    v.y = std::ceil(v.y);
+    v.z = std::ceil(v.z);
     return v;
 }
-
-template <>
-vector3d<double> ceil(vector3d<double> v)
-{   
-    v.x = ceil(v.x);
-    v.y = ceil(v.y);
-    v.z = ceil(v.z);
-    return v;
-}
-
 
 /**
  * componentwise round to integer towards zero
@@ -386,7 +357,7 @@ vector3d<T> trunc(vector3d<T> v);
 
 template <>
 vector3d<float> trunc(vector3d<float> v)
-{   
+{
     v.x = truncf(v.x);
     v.y = truncf(v.y);
     v.z = truncf(v.z);
@@ -395,35 +366,46 @@ vector3d<float> trunc(vector3d<float> v)
 
 template <>
 vector3d<double> trunc(vector3d<double> v)
-{   
+{
     v.x = trunc(v.x);
     v.y = trunc(v.y);
     v.z = trunc(v.z);
     return v;
 }
 
-
 /**
  * componentwise square root function
  */
 template <typename T>
-vector3d<T> sqrt(vector3d<T> v);
-
-template <>
-vector3d<float> sqrt(vector3d<float> v)
-{   
-    v.x = sqrtf(v.x);
-    v.y = sqrtf(v.y);
-    v.z = sqrtf(v.z);
+vector3d<T> sqrt(vector3d<T> v)
+{
+    v.x = std::sqrt(v.x);
+    v.y = std::sqrt(v.y);
+    v.z = std::sqrt(v.z);
     return v;
 }
 
-template <>
-vector3d<double> sqrt(vector3d<double> v)
-{   
-    v.x = sqrt(v.x);
-    v.y = sqrt(v.y);
-    v.z = sqrt(v.z);
+/**
+ * componentwise cosine function
+ */
+template <typename T>
+vector3d<T> cos(vector3d<T> v)
+{
+    v.x = std::cos(v.x);
+    v.y = std::cos(v.y);
+    v.z = std::cos(v.z);
+    return v;
+}
+
+/**
+ * componentwise sine function
+ */
+template <typename T>
+vector3d<T> sin(vector3d<T> v)
+{
+    v.x = std::sin(v.x);
+    v.y = std::sin(v.y);
+    v.z = std::sin(v.z);
     return v;
 }
 
