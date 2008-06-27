@@ -1,4 +1,4 @@
-/* Trajectory correlation functions
+/* Time correlation functions
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -105,11 +105,37 @@ struct velocity_autocorrelation
 };
 
 /**
- * generic correlation function type
+ * intermediate scattering function
  */
+struct intermediate_scattering_function
+{
+    char const* name() { return "ISF"; }
+
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+	typename input_iterator::value_type::density_vector_type::const_iterator rho, rho0;
+	typename output_iterator::value_type::iterator k;
+
+	// iterate over phase space samples in block
+	for (input_iterator it = first; it != last; ++it, ++result) {
+	    // iterate over Fourier transformed densities in current and first sample
+	    for (rho = it->rho.begin(), rho0 = first->rho.begin(), k = result->begin(); rho != it->rho.end(); ++rho, ++rho0, ++k) {
+		// accumulate intermediate scattering function
+		for (unsigned int d = 0; d < rho->size(); ++d) {
+		    *k += (*rho)[d].first * (*rho0)[d].first + (*rho)[d].second * (*rho0)[d].second;
+		}
+	    }
+	}
+    }
+};
+
+/** correlation function type */
 typedef boost::mpl::vector<mean_square_displacement> _tcf_types_0;
 typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement>::type _tcf_types_1;
 typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation>::type tcf_types;
+/** binary correlation function type */
+typedef boost::mpl::vector<intermediate_scattering_function> tcfk_types;
 
 /**
  * apply generic correlation function to block of phase space samples
