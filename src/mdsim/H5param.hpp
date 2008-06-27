@@ -246,6 +246,22 @@ public:
 	max_samples_ = value;
     }
 
+    /**
+     * returns number of k-values
+     */
+    unsigned int const& k_values() const
+    {
+	return k_values_;
+    }
+
+    /**
+     * set number of k-values
+     */
+    void k_values(unsigned int const& value)
+    {
+	k_values_ = value;
+    }
+
 private:
     /** positional coordinates dimension */
     unsigned int dimension_;
@@ -275,6 +291,8 @@ private:
     unsigned int block_count_;
     /** maximum number of samples per block */
     uint64_t max_samples_;
+    /** number of k-values */
+    unsigned int k_values_;
 };
 
 } // namespace mdsim

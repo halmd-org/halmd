@@ -130,6 +130,9 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	if (!opts.max_samples().defaulted()) {
 	    param.max_samples(opts.max_samples().value());
 	}
+	if (!opts.k_values().defaulted()) {
+	    param.k_values(opts.k_values().value());
+	}
 #endif
 	if (!opts.steps().defaulted()) {
 	    param.steps(opts.steps().value());
@@ -164,6 +167,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 #ifndef USE_BENCHMARK
 	param.block_size(opts.block_size().value());
 	param.max_samples(opts.max_samples().value());
+	param.k_values(opts.k_values().value());
 #endif
 	param.steps(opts.steps().value());
     }
@@ -217,8 +221,8 @@ template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
 #ifndef USE_BENCHMARK
-    // autocorrelation functions
-    autocorrelation<dimension, T> tcf(block);
+    // time correlation functions
+    autocorrelation<dimension, T> tcf(block, param.box_length(), opts.k_values().value());
     tcf.open(opts.output_file_prefix().value() + ".tcf");
     tcf << param;
     // trajectory file writer
@@ -251,7 +255,7 @@ void mdsim<dimension, T>::operator()()
 	}
 
 #ifndef USE_BENCHMARK
-	// sample autocorrelation functions
+	// sample time correlation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _2, _3));
 	// FIXME sample thermodynamic equilibrium properties
 	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, param.density(), param.timestep()));
@@ -271,7 +275,7 @@ void mdsim<dimension, T>::operator()()
     signal(SIGTERM, sigh[2]);
 
 #ifndef USE_BENCHMARK
-    // write autocorrelation function results to HDF5 file
+    // write time correlation function results to HDF5 file
     tcf.write();
     tcf.close();
     // write thermodynamic equilibrium properties to HDF5 file
