@@ -159,6 +159,14 @@ public:
     {
 	return vm["max-samples"];
     }
+
+    /**
+     * returns number of q-values
+     */
+    option_value<unsigned int> k_values() const
+    {
+	return vm["k-values"];
+    }
 #endif
 
     /**

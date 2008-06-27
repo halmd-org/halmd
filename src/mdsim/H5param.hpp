@@ -291,6 +291,22 @@ public:
     }
 
     /**
+     * returns number of k-values
+     */
+    unsigned int const& k_values() const
+    {
+	return k_values_;
+    }
+
+    /**
+     * set number of k-values
+     */
+    void k_values(unsigned int const& value)
+    {
+	k_values_ = value;
+    }
+
+    /**
      * returns Lennard-Jones potential cutoff distance
      */
     float const& cutoff_distance() const
@@ -347,6 +363,8 @@ private:
     unsigned int block_count_;
     /** maximum number of samples per block */
     uint64_t max_samples_;
+    /** number of k-values */
+    unsigned int k_values_;
     /** Lennard-Jones potential cutoff distance */
     float cutoff_distance_;
 };

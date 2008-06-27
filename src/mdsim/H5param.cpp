@@ -82,6 +82,9 @@ void H5param::read(H5::Group const& root)
 	// maximum number of samples per block
 	attr = node.openAttribute("max_samples");
 	attr.read(H5::PredType::NATIVE_UINT64, &max_samples_);
+	// number of k-valuess
+	attr = node.openAttribute("k_values");
+	attr.read(H5::PredType::NATIVE_UINT, &k_values_);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to read parameters from HDF5 input file");
@@ -165,6 +168,9 @@ void H5param::write(H5::Group root) const
 	// maximum number of samples per block
 	attr = node.createAttribute("max_samples", H5::PredType::NATIVE_UINT64, H5S_SCALAR);
 	attr.write(H5::PredType::NATIVE_UINT64, &max_samples_);
+	// number of k-values
+	attr = node.createAttribute("k_values", H5::PredType::NATIVE_UINT, H5S_SCALAR);
+	attr.write(H5::PredType::NATIVE_UINT, &k_values_);
 
 	// program info
 	node = root.createGroup("program");
