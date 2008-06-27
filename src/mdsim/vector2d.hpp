@@ -281,7 +281,6 @@ public:
     T x, y;
 };
 
-
 /**
  * componentwise round to nearest integer
  */
@@ -303,7 +302,6 @@ vector2d<double> rint(vector2d<double> v)
     v.y = rint(v.y);
     return v;
 }
-
 
 /**
  * componentwise round to nearest integer, away from zero
@@ -327,72 +325,58 @@ vector2d<double> round(vector2d<double> v)
     return v;
 }
 
-
 /**
  * componentwise round to nearest integer not greater than argument
  */
 template <typename T>
-vector2d<T> floor(vector2d<T> v);
-
-template <>
-vector2d<float> floor(vector2d<float> v)
+vector2d<T> floor(vector2d<T> v)
 {
-    v.x = floorf(v.x);
-    v.y = floorf(v.y);
+    v.x = std::floor(v.x);
+    v.y = std::floor(v.y);
     return v;
 }
-
-template <>
-vector2d<double> floor(vector2d<double> v)
-{
-    v.x = floor(v.x);
-    v.y = floor(v.y);
-    return v;
-}
-
 
 /**
  * componentwise round to nearest integer not less argument
  */
 template <typename T>
-vector2d<T> ceil(vector2d<T> v);
-
-template <>
-vector2d<float> ceil(vector2d<float> v)
+vector2d<T> ceil(vector2d<T> v)
 {
-    v.x = ceilf(v.x);
-    v.y = ceilf(v.y);
+    v.x = std::ceil(v.x);
+    v.y = std::ceil(v.y);
     return v;
 }
-
-template <>
-vector2d<double> ceil(vector2d<double> v)
-{
-    v.x = ceil(v.x);
-    v.y = ceil(v.y);
-    return v;
-}
-
 
 /**
  * componentwise square root function
  */
 template <typename T>
-vector2d<T> sqrt(vector2d<T> v);
-
-template <>
-vector2d<float> sqrt(vector2d<float> v)
+vector2d<T> sqrt(vector2d<T> v)
 {
-    v.x = sqrtf(v.x);
-    v.y = sqrtf(v.y);
+    v.x = std::sqrt(v.x);
+    v.y = std::sqrt(v.y);
     return v;
 }
 
-template <>
-vector2d<double> sqrt(vector2d<double> v)
+/**
+ * componentwise cos function
+ */
+template <typename T>
+vector2d<T> cos(vector2d<T> v)
 {
-    v.x = sqrt(v.x);
-    v.y = sqrt(v.y);
+    v.x = std::cos(v.x);
+    v.y = std::cos(v.y);
+    return v;
+}
+
+/**
+ * componentwise sin function
+ */
+template <typename T>
+vector2d<T> sin(vector2d<T> v)
+{
+    v.x = std::sin(v.x);
+    v.y = std::sin(v.y);
     return v;
 }
 
