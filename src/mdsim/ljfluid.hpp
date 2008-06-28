@@ -713,10 +713,10 @@ void ljfluid<dimension, T, U>::temperature(float temp)
     }
     // set center of mass velocity to zero
     for (size_t i = 0; i < h_part.v.size(); ++i) {
-	h_part.v[i].x -= v_cm.x;
-	h_part.v[i].y -= v_cm.y;
+	h_part.v[i].x -= v_cm[0];
+	h_part.v[i].y -= v_cm[1];
 #ifdef DIM_3D
-	h_part.v[i].z -= v_cm.z;
+	h_part.v[i].z -= v_cm[2];
 #endif
     }
 

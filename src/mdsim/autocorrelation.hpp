@@ -50,14 +50,13 @@ struct phase_space_point
     // swappable host memory vector type
     typedef std::vector<T> vector_type;
     typedef typename T::value_type value_type;
-    typedef typename std::vector<boost::array<std::pair<value_type, value_type>, dimension> > density_vector_type;
+    typedef typename std::vector<std::pair<T, T> > density_vector_type;
 
-    phase_space_point(cuda::host::vector<U> const& h_r, cuda::host::vector<U> const& h_v, std::vector<value_type> k) : rho(k.size())
+    phase_space_point(cuda::host::vector<U> const& h_r, cuda::host::vector<U> const& h_v, std::vector<value_type> k) : rho(k.size(), std::pair<T, T>(0, 0))
     {
 	r.reserve(h_r.size());
 	v.reserve(h_v.size());
 
-	std::vector<T> csum(k.size(), 0), ssum(k.size(), 0);
 	for (size_t i = 0; i < h_r.size(); ++i) {
 	    // convert from GPU type to host type
 	    const T r(h_r[i]), v(h_v[i]);
@@ -65,21 +64,19 @@ struct phase_space_point
 	    this->r.push_back(r);
 	    this->v.push_back(v);
 
+	    // spatial Fourier transformation
 	    for (unsigned int j = 0; j < k.size(); ++j) {
-		csum[j] += (cos(r * k[j]) - csum[j]) / (i + 1);
-		ssum[j] += (sin(r * k[j]) - ssum[j]) / (i + 1);
+		// compute averages to maintain accuracy with single precision floating-point
+		rho[j].first += (cos(r * k[j]) - rho[j].first) / (i + 1);
+		rho[j].second += (sin(r * k[j]) - rho[j].second) / (i + 1);
 	    }
 	}
+	// normalize Fourier transformed density with N^(-1/2)
 	const value_type n = std::sqrt(r.size());
 	for (unsigned int j = 0; j < k.size(); ++j) {
-	    rho[j][0].first = n * csum[j].x;
-	    rho[j][0].second = n * ssum[j].x;
-	    rho[j][1].first = n * csum[j].y;
-	    rho[j][1].second = n * ssum[j].y;
-#ifdef DIM_3D
-	    rho[j][2].first = n * csum[j].z;
-	    rho[j][2].second = n * ssum[j].z;
-#endif
+	    // multiply averages with N^(+1/2)
+	    rho[j].first *= n;
+	    rho[j].second *= n;
 	}
     }
 
