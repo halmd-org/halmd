@@ -49,27 +49,24 @@ struct phase_space_point
 {
     typedef std::vector<T> vector_type;
     typedef typename T::value_type value_type;
-    typedef typename std::vector<boost::array<std::pair<value_type, value_type>, dimension> > density_vector_type;
+    typedef typename std::vector<std::pair<T, T> > density_vector_type;
 
-    phase_space_point(vector_type const& r, vector_type const& v, std::vector<value_type> k) : r(r), v(v), rho(k.size())
+    phase_space_point(vector_type const& r, vector_type const& v, std::vector<value_type> k) : r(r), v(v), rho(k.size(), std::pair<T, T>(0, 0))
     {
-	std::vector<T> csum(k.size(), 0), ssum(k.size(), 0);
+	// spatial Fourier transformation
  	for (size_t i = 0; i < r.size(); ++i) {
 	    for (unsigned int j = 0; j < k.size(); ++j) {
-		csum[j] += (cos(r[i] * k[j]) - csum[j]) / (i + 1);
-		ssum[j] += (sin(r[i] * k[j]) - ssum[j]) / (i + 1);
+		// compute averages to maintain accuracy with single precision floating-point
+		rho[j].first += (cos(r[i] * k[j]) - rho[j].first) / (i + 1);
+		rho[j].second += (sin(r[i] * k[j]) - rho[j].second) / (i + 1);
 	    }
 	}
+	// normalize Fourier transformed density with N^(-1/2)
 	const value_type n = std::sqrt(r.size());
 	for (unsigned int j = 0; j < k.size(); ++j) {
-	    rho[j][0].first = n * csum[j].x;
-	    rho[j][0].second = n * ssum[j].x;
-	    rho[j][1].first = n * csum[j].y;
-	    rho[j][1].second = n * ssum[j].y;
-#ifdef DIM_3D
-	    rho[j][2].first = n * csum[j].z;
-	    rho[j][2].second = n * ssum[j].z;
-#endif
+	    // multiply averages with N^(+1/2)
+	    rho[j].first *= n;
+	    rho[j].second *= n;
 	}
     }
 

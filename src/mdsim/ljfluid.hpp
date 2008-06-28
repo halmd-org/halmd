@@ -371,13 +371,13 @@ void ljfluid<dimension, T>::lattice()
 	T r(a);
 #ifdef DIM_3D
 	// compose primitive vectors from 1-dimensional index
-	r.x *= ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
-	r.y *= ((i >> 2) / n % n) + (i & 1) / 2.;
-	r.z *= ((i >> 2) / n / n) + (i & 2) / 4.;
+	r[0] *= ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
+	r[1] *= ((i >> 2) / n % n) + (i & 1) / 2.;
+	r[2] *= ((i >> 2) / n / n) + (i & 2) / 4.;
 #else
 	// compose primitive vectors from 1-dimensional index
-	r.x *= ((i >> 1) % n) + (i & 1) / 2.;
-	r.y *= ((i >> 1) / n) + (i & 1) / 2.;
+	r[0] *= ((i >> 1) % n) + (i & 1) / 2.;
+	r[1] *= ((i >> 1) / n) + (i & 1) / 2.;
 #endif
 	// add particle to appropriate cell list
 	compute_cell(r).push_back(particle<T>(r, i));
@@ -409,10 +409,10 @@ void ljfluid<dimension, T>::temperature(double value)
     for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
 	foreach (particle<T>& p, *it) {
 	    // generate random Maxwell-Boltzmann distributed velocity
-	    rng_.gaussian(p.v.x, p.v.y, value);
+	    rng_.gaussian(p.v[0], p.v[1], value);
 #ifdef DIM_3D
 	    // Box-Muller transformation strictly generates 2 variates at once
-	    rng_.gaussian(p.v.y, p.v.z, value);
+	    rng_.gaussian(p.v[1], p.v[2], value);
 #endif
 	    v_cm += p.v;
 
@@ -533,9 +533,9 @@ typename ljfluid<dimension, T>::cell_list& ljfluid<dimension, T>::compute_cell(T
 {
     T idx = (r - floor(r / box_) * box_) / cell_length_;
 #ifdef DIM_3D
-    return cell[(int)(idx.x)][(int)(idx.y)][(int)(idx.z)];
+    return cell[(int)(idx[0])][(int)(idx[1])][(int)(idx[2])];
 #else
-    return cell[(int)(idx.x)][(int)(idx.y)];
+    return cell[(int)(idx[0])][(int)(idx[1])];
 #endif
 }
 
