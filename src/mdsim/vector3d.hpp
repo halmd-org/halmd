@@ -19,7 +19,8 @@
 #ifndef MDSIM_VECTOR3D_HPP
 #define MDSIM_VECTOR3D_HPP
 
-#include <math.h>
+#include <boost/array.hpp>
+#include <cmath>
 #include <iostream>
 #include <cuda_wrapper.hpp>
 #include <xdr/iostream.hpp>
@@ -29,7 +30,7 @@
  * 3-dimensional floating-point vector
  */
 template <typename T>
-class vector3d
+class vector3d : public boost::array<T, 3>
 {
 public:
     typedef T value_type;
@@ -42,37 +43,41 @@ public:
     /**
      * initialization by vector
      */
-    vector3d(vector3d<T> const& v) : x(v.x), y(v.y), z(v.z)
+    vector3d(vector3d<T> const& v)
     {
+	(*this)[0] = v[0];
+	(*this)[1] = v[1];
+	(*this)[2] = v[2];
     }
 
     /**
      * initialization by vector
      */
-    vector3d(float4 const& v) : x(v.x), y(v.y), z(v.z)
+    vector3d(float4 const& v)
     {
+	(*this)[0] = v.x;
+	(*this)[1] = v.y;
+	(*this)[2] = v.z;
     }
 
     /**
      * initialization by scalar
      */
-    vector3d(T const& s) : x(s), y(s), z(s)
+    vector3d(T const& s)
     {
+	(*this)[0] = s;
+	(*this)[1] = s;
+	(*this)[2] = s;
     }
 
     /**
      * initialization by scalar components
      */
-    vector3d(T const& x, T const& y, T const& z) : x(x), y(y), z(z)
+    vector3d(T const& x, T const& y, T const& z)
     {
-    }
-
-    /**
-     * dimension of vector space
-     */
-    static unsigned int dim()
-    {
-	return 3;
+	(*this)[0] = x;
+	(*this)[1] = y;
+	(*this)[2] = z;
     }
 
     /**
@@ -80,7 +85,7 @@ public:
      */
     bool operator==(vector3d<T> const& v) const
     {
-        return (v.x == x && v.y == y && v.z == z);
+        return (v[0] == (*this)[0] && v[1] == (*this)[1] && v[2] == (*this)[2]);
     }
 
     /**
@@ -88,7 +93,7 @@ public:
      */
     bool operator!=(vector3d<T> const& v) const
     {
-        return (v.x != x || v.y != y || v.z != z);
+        return (v[0] != (*this)[0] || v[1] != (*this)[1] || v[2] != (*this)[2]);
     }
 
     /**
@@ -96,7 +101,7 @@ public:
      */
     bool operator<(vector3d<T> const& v) const
     {
-	return (v.x < x && v.y < y && v.z < z);
+	return (v[0] < (*this)[0] && v[1] < (*this)[1] && v[2] < (*this)[2]);
     }
 
     /**
@@ -104,7 +109,7 @@ public:
      */
     bool operator>(vector3d<T> const& v) const
     {
-	return (v.x > x && v.y > y && v.z > z);
+	return (v[0] > (*this)[0] && v[1] > (*this)[1] && v[2] > (*this)[2]);
     }
 
     /**
@@ -112,7 +117,7 @@ public:
      */
     bool operator<=(vector3d<T> const& v) const
     {
-	return (v.x <= x && v.y <= y && v.z <= z);
+	return (v[0] <= (*this)[0] && v[1] <= (*this)[1] && v[2] <= (*this)[2]);
     }
 
     /**
@@ -120,7 +125,7 @@ public:
      */
     bool operator>=(vector3d<T> const& v) const
     {
-	return (v.x >= x && v.y >= y && v.z >= z);
+	return (v[0] >= (*this)[0] && v[1] >= (*this)[1] && v[2] >= (*this)[2]);
     }
 
     /**
@@ -128,9 +133,9 @@ public:
      */
     vector3d<T>& operator=(vector3d<T> const& v)
     {
-	x = v.x;
-	y = v.y;
-	z = v.z;
+	(*this)[0] = v[0];
+	(*this)[1] = v[1];
+	(*this)[2] = v[2];
 	return *this;
     }
 
@@ -139,9 +144,9 @@ public:
      */
     vector3d<T>& operator=(T const& s)
     {
-	x = s;
-	y = s;
-	z = s;
+	(*this)[0] = s;
+	(*this)[1] = s;
+	(*this)[2] = s;
 	return *this;
     }
 
@@ -150,9 +155,9 @@ public:
      */
     vector3d<T>& operator+=(vector3d<T> const& v)
     {
-	x += v.x;
-	y += v.y;
-	z += v.z;
+	(*this)[0] += v[0];
+	(*this)[1] += v[1];
+	(*this)[2] += v[2];
 	return *this;
     }
 
@@ -161,9 +166,9 @@ public:
      */
     vector3d<T>& operator-=(vector3d<T> const& v)
     {
-	x -= v.x;
-	y -= v.y;
-	z -= v.z;
+	(*this)[0] -= v[0];
+	(*this)[1] -= v[1];
+	(*this)[2] -= v[2];
 	return *this;
     }
 
@@ -172,9 +177,9 @@ public:
      */
     vector3d<T>& operator*=(T const& s)
     {
-	x *= s;
-	y *= s;
-	z *= s;
+	(*this)[0] *= s;
+	(*this)[1] *= s;
+	(*this)[2] *= s;
 	return *this;
     }
 
@@ -183,9 +188,9 @@ public:
      */
     vector3d<T>& operator/=(T const& s)
     {
-	x /= s;
-	y /= s;
-	z /= s;
+	(*this)[0] /= s;
+	(*this)[1] /= s;
+	(*this)[2] /= s;
 	return *this;
     }
 
@@ -194,9 +199,9 @@ public:
      */
     friend vector3d<T> operator+(vector3d<T> v, vector3d<T> const& w)
     {
-	v.x += w.x;
-	v.y += w.y;
-	v.z += w.z;
+	v[0] += w[0];
+	v[1] += w[1];
+	v[2] += w[2];
 	return v;
     }
 
@@ -205,9 +210,9 @@ public:
      */
     friend vector3d<T> operator-(vector3d<T> v, vector3d<T> const& w)
     {
-	v.x -= w.x;
-	v.y -= w.y;
-	v.z -= w.z;
+	v[0] -= w[0];
+	v[1] -= w[1];
+	v[2] -= w[2];
 	return v;
     }
 
@@ -216,7 +221,7 @@ public:
      */
     T operator*(vector3d<T> const& v) const
     {
-	return x * v.x + y * v.y + z * v.z;
+	return (*this)[0] * v[0] + (*this)[1] * v[1] + (*this)[2] * v[2];
     }
 
     /**
@@ -224,9 +229,9 @@ public:
      */
     friend vector3d<T> operator*(vector3d<T> v, T const& s)
     {
-	v.x *= s;
-	v.y *= s;
-	v.z *= s;
+	v[0] *= s;
+	v[1] *= s;
+	v[2] *= s;
 	return v;
     }
 
@@ -235,9 +240,9 @@ public:
      */
     friend vector3d<T> operator*(T const& s, vector3d<T> v)
     {
-	v.x *= s;
-	v.y *= s;
-	v.z *= s;
+	v[0] *= s;
+	v[1] *= s;
+	v[2] *= s;
 	return v;
     }
 
@@ -246,9 +251,9 @@ public:
      */
     friend vector3d<T> operator/(vector3d<T> v, T const& s)
     {
-	v.x /= s;
-	v.y /= s;
-	v.z /= s;
+	v[0] /= s;
+	v[1] /= s;
+	v[2] /= s;
 	return v;
     }
 
@@ -257,7 +262,7 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, vector3d<T> const& v)
     {
-	os << v.x << "\t" << v.y << "\t" << v.z;
+	os << v[0] << "\t" << v[1] << "\t" << v[2];
 	return os;
     }
 
@@ -266,7 +271,7 @@ public:
      */
     friend std::istream& operator>>(std::istream& is, vector3d<T>& v)
     {
-	is >> v.x >> v.y >> v.z;
+	is >> v[0] >> v[1] >> v[2];
 	return is;
     }
 
@@ -275,7 +280,7 @@ public:
      */
     friend xdr::ostream& operator<<(xdr::ostream& xdrs, vector3d<T> const& v)
     {
-	xdrs << v.x << v.y << v.z;
+	xdrs << v[0] << v[1] << v[2];
 	return xdrs;
     }
 
@@ -284,12 +289,9 @@ public:
      */
     friend xdr::istream& operator>>(xdr::istream& xdrs, vector3d<T>& v)
     {
-	xdrs >> v.x >> v.y >> v.z;
+	xdrs >> v[0] >> v[1] >> v[2];
 	return xdrs;
     }
-
-public:
-    T x, y, z;
 };
 
 /**
@@ -301,18 +303,18 @@ vector3d<T> rint(vector3d<T> v);
 template <>
 vector3d<float> rint(vector3d<float> v)
 {
-    v.x = rintf(v.x);
-    v.y = rintf(v.y);
-    v.z = rintf(v.z);
+    v[0] = rintf(v[0]);
+    v[1] = rintf(v[1]);
+    v[2] = rintf(v[2]);
     return v;
 }
 
 template <>
 vector3d<double> rint(vector3d<double> v)
 {
-    v.x = rint(v.x);
-    v.y = rint(v.y);
-    v.z = rint(v.z);
+    v[0] = rint(v[0]);
+    v[1] = rint(v[1]);
+    v[2] = rint(v[2]);
     return v;
 }
 
@@ -325,18 +327,18 @@ vector3d<T> round(vector3d<T> v);
 template <>
 vector3d<float> round(vector3d<float> v)
 {
-    v.x = roundf(v.x);
-    v.y = roundf(v.y);
-    v.z = roundf(v.z);
+    v[0] = roundf(v[0]);
+    v[1] = roundf(v[1]);
+    v[2] = roundf(v[2]);
     return v;
 }
 
 template <>
 vector3d<double> round(vector3d<double> v)
 {
-    v.x = round(v.x);
-    v.y = round(v.y);
-    v.z = round(v.z);
+    v[0] = round(v[0]);
+    v[1] = round(v[1]);
+    v[2] = round(v[2]);
     return v;
 }
 
@@ -346,9 +348,9 @@ vector3d<double> round(vector3d<double> v)
 template <typename T>
 vector3d<T> floor(vector3d<T> v)
 {
-    v.x = std::floor(v.x);
-    v.y = std::floor(v.y);
-    v.z = std::floor(v.z);
+    v[0] = std::floor(v[0]);
+    v[1] = std::floor(v[1]);
+    v[2] = std::floor(v[2]);
     return v;
 }
 
@@ -358,9 +360,9 @@ vector3d<T> floor(vector3d<T> v)
 template <typename T>
 vector3d<T> ceil(vector3d<T> v)
 {
-    v.x = std::ceil(v.x);
-    v.y = std::ceil(v.y);
-    v.z = std::ceil(v.z);
+    v[0] = std::ceil(v[0]);
+    v[1] = std::ceil(v[1]);
+    v[2] = std::ceil(v[2]);
     return v;
 }
 
@@ -370,9 +372,9 @@ vector3d<T> ceil(vector3d<T> v)
 template <typename T>
 vector3d<T> sqrt(vector3d<T> v)
 {
-    v.x = std::sqrt(v.x);
-    v.y = std::sqrt(v.y);
-    v.z = std::sqrt(v.z);
+    v[0] = std::sqrt(v[0]);
+    v[1] = std::sqrt(v[1]);
+    v[2] = std::sqrt(v[2]);
     return v;
 }
 
@@ -382,9 +384,9 @@ vector3d<T> sqrt(vector3d<T> v)
 template <typename T>
 vector3d<T> cos(vector3d<T> v)
 {
-    v.x = std::cos(v.x);
-    v.y = std::cos(v.y);
-    v.z = std::cos(v.z);
+    v[0] = std::cos(v[0]);
+    v[1] = std::cos(v[1]);
+    v[2] = std::cos(v[2]);
     return v;
 }
 
@@ -394,9 +396,9 @@ vector3d<T> cos(vector3d<T> v)
 template <typename T>
 vector3d<T> sin(vector3d<T> v)
 {
-    v.x = std::sin(v.x);
-    v.y = std::sin(v.y);
-    v.z = std::sin(v.z);
+    v[0] = std::sin(v[0]);
+    v[1] = std::sin(v[1]);
+    v[2] = std::sin(v[2]);
     return v;
 }
 
