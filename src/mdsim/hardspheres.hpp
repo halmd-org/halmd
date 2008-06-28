@@ -382,13 +382,13 @@ void hardspheres<dimension, T>::lattice()
     for (unsigned int i = 0; i < npart; ++i) {
 #ifdef DIM_3D
 	// compose primitive vectors from 1-dimensional index
-	part[i].r.x = ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
-	part[i].r.y = ((i >> 2) / n % n) + (i & 1) / 2.;
-	part[i].r.z = ((i >> 2) / n / n) + (i & 2) / 4.;
+	part[i].r[0] = ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
+	part[i].r[1] = ((i >> 2) / n % n) + (i & 1) / 2.;
+	part[i].r[2] = ((i >> 2) / n / n) + (i & 2) / 4.;
 #else
 	// compart[i]ose primitive vectors from 1-dimensional index
-	part[i].r.x = ((i >> 1) % n) + (i & 1) / 2.;
-	part[i].r.y = ((i >> 1) / n) + (i & 1) / 2.;
+	part[i].r[0] = ((i >> 1) % n) + (i & 1) / 2.;
+	part[i].r[1] = ((i >> 1) / n) + (i & 1) / 2.;
 #endif
 	// scale by lattice distance
 	part[i].r *= a;
@@ -420,10 +420,10 @@ void hardspheres<dimension, T>::temperature(double value)
 
     foreach (particle& p, part) {
 	// generate random Maxwell-Boltzmann distributed velocity
-	rng_.gaussian(p.v.x, p.v.y, value);
+	rng_.gaussian(p.v[0], p.v[1], value);
 #ifdef DIM_3D
 	// Box-Muller transformation strictly generates 2 variates at once
-	rng_.gaussian(p.v.y, p.v.z, value);
+	rng_.gaussian(p.v[1], p.v[2], value);
 #endif
 	v_cm += p.v;
     }
@@ -577,50 +577,28 @@ template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::compute_cell_event(const unsigned int n)
 {
     T dt3(std::numeric_limits<double>::max());
+    double dt = std::numeric_limits<double>::max();
     cell_index cell2 = part[n].cell;
 
-    if (part[n].v.x < 0.) {
-	dt3.x = (part[n].cell[0] * cell_length_ - part[n].r.x) / part[n].v.x;
-	cell2[0] = (cell2[0] + ncell - 1) % ncell;
+    for (unsigned int d = 0; d < dimension; ++d) {
+	if (part[n].v[d] < 0.) {
+	    dt3[d] = (part[n].cell[d] * cell_length_ - part[n].r[d]) / part[n].v[d];
+	    cell2[d] = (cell2[d] + ncell - 1) % ncell;
+	}
+	else if (part[n].v[d] > 0.) {
+	    dt3[d] = ((part[n].cell[d] + 1) * cell_length_ - part[n].r[d]) / part[n].v[d];
+	    cell2[d] = (cell2[d] + 1) % ncell;
+	}
+	dt = std::min(dt, dt3[d]);
     }
-    else if (part[n].v.x > 0.) {
-	dt3.x = ((part[n].cell[0] + 1) * cell_length_ - part[n].r.x) / part[n].v.x;
-	cell2[0] = (cell2[0] + 1) % ncell;
-    }
-    if (part[n].v.y < 0.) {
-	dt3.y = (part[n].cell[1] * cell_length_ - part[n].r.y) / part[n].v.y;
-	cell2[1] = (cell2[1] + ncell - 1) % ncell;
-    }
-    else if (part[n].v.y > 0.) {
-	dt3.y = ((part[n].cell[1] + 1) * cell_length_ - part[n].r.y) / part[n].v.y;
-	cell2[1] = (cell2[1] + 1) % ncell;
-    }
-#ifdef DIM_3D
-    if (part[n].v.z < 0.) {
-	dt3.z = (part[n].cell[2] * cell_length_ - part[n].r.z) / part[n].v.z;
-	cell2[2] = (cell2[2] + ncell - 1) % ncell;
-    }
-    else if (part[n].v.z > 0.) {
-	dt3.z = ((part[n].cell[2] + 1) * cell_length_ - part[n].r.z) / part[n].v.z;
-	cell2[2] = (cell2[2] + 1) % ncell;
-    }
-#endif
-
-#ifdef DIM_3D
-    const double dt = std::min(std::min(dt3.x, dt3.y), dt3.z);
-#else
-    const double dt = std::min(dt3.x, dt3.y);
-#endif
 
     if (dt < event_list[n].t - part[n].t) {
 	// generate cell boundary event
 	event_list[n].t = part[n].t + dt;
 	event_list[n].type = event::CELL;
-	event_list[n].cell2[0] = (dt3.x == dt) ? cell2[0] : part[n].cell[0];
-	event_list[n].cell2[1] = (dt3.y == dt) ? cell2[1] : part[n].cell[1];
-#ifdef DIM_3D
-	event_list[n].cell2[2] = (dt3.z == dt) ? cell2[2] : part[n].cell[2];
-#endif
+	for (unsigned int d = 0; d < dimension; ++d) {
+	    event_list[n].cell2[d] = (dt3[d] == dt) ? cell2[d] : part[n].cell[d];
+	}
     }
 }
 
@@ -763,20 +741,12 @@ void hardspheres<dimension, T>::process_cell_event(const unsigned int n)
     // update periodically reduced particle position to given time
     part[n].r += dr;
     // enforce periodic boundary conditions
-    if (part[n].cell[0] == ncell - 1 && event_list[n].cell2[0] == 0)
-	part[n].r.x -= box_;
-    if (part[n].cell[0] == 0 && event_list[n].cell2[0] == ncell - 1)
-	part[n].r.x += box_;
-    if (part[n].cell[1] == ncell - 1 && event_list[n].cell2[1] == 0)
-	part[n].r.y -= box_;
-    if (part[n].cell[1] == 0 && event_list[n].cell2[1] == ncell - 1)
-	part[n].r.y += box_;
-#ifdef DIM_3D
-    if (part[n].cell[2] == ncell - 1 && event_list[n].cell2[2] == 0)
-	part[n].r.z -= box_;
-    if (part[n].cell[2] == 0 && event_list[n].cell2[2] == ncell - 1)
-	part[n].r.z += box_;
-#endif
+    for (unsigned int d = 0; d < dimension; ++d) {
+	if (part[n].cell[d] == ncell - 1 && event_list[n].cell2[d] == 0)
+	    part[n].r[d] -= box_;
+	if (part[n].cell[d] == 0 && event_list[n].cell2[d] == ncell - 1)
+	    part[n].r[d] += box_;
+    }
     // update particle time
     part[n].t = event_list[n].t;
 
@@ -799,9 +769,9 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
 {
     T cellf = r / cell_length_;
 #ifdef DIM_3D
-    cell_index cell = {{ int(cellf.x), int(cellf.y), int(cellf.z) }};
+    cell_index cell = {{ int(cellf[0]), int(cellf[1]), int(cellf[2]) }};
 #else
-    cell_index cell = {{ int(cellf.x), int(cellf.y) }};
+    cell_index cell = {{ int(cellf[0]), int(cellf[1]) }};
 #endif
     return cell;
 }

@@ -122,8 +122,8 @@ struct intermediate_scattering_function
 	    // iterate over Fourier transformed densities in current and first sample
 	    for (rho = it->rho.begin(), rho0 = first->rho.begin(), k = result->begin(); rho != it->rho.end(); ++rho, ++rho0, ++k) {
 		// accumulate intermediate scattering function
-		for (unsigned int d = 0; d < rho->size(); ++d) {
-		    *k += (*rho)[d].first * (*rho0)[d].first + (*rho)[d].second * (*rho0)[d].second;
+		for (unsigned int d = 0; d < rho->first.size(); ++d) {
+		    *k += rho->first[d] * rho0->first[d] + rho->second[d] * rho0->second[d];
 		}
 	    }
 	}
