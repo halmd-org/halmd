@@ -126,8 +126,8 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
 	if (!opts.max_samples().defaulted()) {
 	    param.max_samples(opts.max_samples().value());
 	}
-	if (!opts.k_values().defaulted()) {
-	    param.k_values(opts.k_values().value());
+	if (!opts.q_values().defaulted()) {
+	    param.q_values(opts.q_values().value());
 	}
 #endif
 	if (!opts.steps().defaulted()) {
@@ -165,7 +165,7 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
 #ifndef USE_BENCHMARK
 	param.block_size(opts.block_size().value());
 	param.max_samples(opts.max_samples().value());
-	param.k_values(opts.k_values().value());
+	param.q_values(opts.q_values().value());
 #endif
 	param.steps(opts.steps().value());
     }
@@ -234,7 +234,7 @@ void mdsim<dimension, T, U>::operator()()
 {
 #ifndef USE_BENCHMARK
     // time correlation functions
-    autocorrelation<dimension, T, U> tcf(block, param.box_length(), opts.k_values().value());
+    autocorrelation<dimension, T, U> tcf(block, param.box_length(), opts.q_values().value());
     tcf.open(opts.output_file_prefix().value() + ".tcf");
     tcf << param;
     // trajectory file writer

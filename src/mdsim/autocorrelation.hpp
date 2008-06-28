@@ -51,8 +51,11 @@ struct phase_space_point
     typedef std::vector<T> vector_type;
     typedef typename T::value_type value_type;
     typedef typename std::vector<std::pair<T, T> > density_vector_type;
+    typedef typename std::vector<value_type> q_values_type;
+    typedef typename std::vector<value_type>::const_iterator q_values_const_iterator;
+    typedef typename std::pair<q_values_const_iterator, q_values_const_iterator> q_values_const_iterator_pair;
 
-    phase_space_point(cuda::host::vector<U> const& h_r, cuda::host::vector<U> const& h_v, std::vector<value_type> k) : rho(k.size(), std::pair<T, T>(0, 0))
+    phase_space_point(cuda::host::vector<U> const& h_r, cuda::host::vector<U> const& h_v, q_values_type const& q) : q(q.begin(), q.end()), rho(q.size(), std::pair<T, T>(0, 0))
     {
 	r.reserve(h_r.size());
 	v.reserve(h_v.size());
@@ -65,15 +68,15 @@ struct phase_space_point
 	    this->v.push_back(v);
 
 	    // spatial Fourier transformation
-	    for (unsigned int j = 0; j < k.size(); ++j) {
+	    for (unsigned int j = 0; j < q.size(); ++j) {
 		// compute averages to maintain accuracy with single precision floating-point
-		rho[j].first += (cos(r * k[j]) - rho[j].first) / (i + 1);
-		rho[j].second += (sin(r * k[j]) - rho[j].second) / (i + 1);
+		rho[j].first += (cos(r * q[j]) - rho[j].first) / (i + 1);
+		rho[j].second += (sin(r * q[j]) - rho[j].second) / (i + 1);
 	    }
 	}
 	// normalize Fourier transformed density with N^(-1/2)
 	const value_type n = std::sqrt(r.size());
-	for (unsigned int j = 0; j < k.size(); ++j) {
+	for (unsigned int j = 0; j < q.size(); ++j) {
 	    // multiply averages with N^(+1/2)
 	    rho[j].first *= n;
 	    rho[j].second *= n;
@@ -84,7 +87,9 @@ struct phase_space_point
     vector_type r;
     /** particle velocities */
     vector_type v;
-    /** spatially Fourier transformed density for given k-values */
+    /** q-values */
+    q_values_const_iterator_pair q;
+    /** spatially Fourier transformed density for given q-values */
     density_vector_type rho;
 };
 
@@ -125,15 +130,15 @@ public:
     typedef std::pair<tcf_type, tcf_result_type> tcf_pair;
 
     /** binary correlation function type */
-    typedef typename boost::make_variant_over<tcfk_types>::type tcfk_type;
+    typedef typename boost::make_variant_over<qtcf_types>::type qtcf_type;
     /** binary correlation function results type */
-    typedef boost::multi_array<accumulator<float>, 3> tcfk_result_type;
+    typedef boost::multi_array<accumulator<float>, 3> qtcf_result_type;
     /** binary correlation function and results pair type */
-    typedef std::pair<tcfk_type, tcfk_result_type> tcfk_pair;
+    typedef std::pair<qtcf_type, qtcf_result_type> qtcf_pair;
 
 public:
     /** initialize correlation functions */
-    autocorrelation(block_param<dimension, T> const& param, float const& box, unsigned int nk);
+    autocorrelation(block_param<dimension, T> const& param, float const& box, unsigned int nq);
 
     /** create HDF5 correlations output file */
     void open(std::string const& filename);
@@ -157,15 +162,15 @@ private:
 private:
     /** block algorithm parameters */
     block_param<dimension, T> param;
-    /** k-values for spatial Fourier transformation */
-    std::vector<float> k_;
+    /** q-values for spatial Fourier transformation */
+    std::vector<float> q_;
 
     /** phase space sample blocks */
     std::vector<block_type> block;
     /** correlation functions and results */
     boost::array<tcf_pair, 3> tcf_;
     /** binary correlation functions and results */
-    boost::array<tcfk_pair, 1> tcfk_;
+    boost::array<qtcf_pair, 2> qtcf_;
 
     /** HDF5 output file */
     H5::H5File file;
@@ -175,7 +180,7 @@ private:
  * initialize correlation functions
  */
 template <unsigned dimension, typename T, typename U>
-autocorrelation<dimension, T, U>::autocorrelation(block_param<dimension, T> const& param, float const& box, unsigned int nk) : param(param)
+autocorrelation<dimension, T, U>::autocorrelation(block_param<dimension, T> const& param, float const& box, unsigned int nq) : param(param)
 {
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
@@ -190,10 +195,10 @@ autocorrelation<dimension, T, U>::autocorrelation(block_param<dimension, T> cons
 	throw exception("failed to allocate phase space sample blocks");
     }
 
-    // compute k-values for spatial Fourier transformation */
-    for (unsigned int k = 1; k <= nk; ++k) {
-	// integer multiple of smallest k-value
-	k_.push_back(k * 2 * M_PI / box);
+    // compute q-values for spatial Fourier transformation */
+    for (unsigned int k = 1; k <= nq; ++k) {
+	// integer multiple of smallest q-value
+	q_.push_back(k * 2 * M_PI / box);
     }
 
     // setup correlation functions
@@ -201,15 +206,16 @@ autocorrelation<dimension, T, U>::autocorrelation(block_param<dimension, T> cons
     tcf_[1].first = mean_quartic_displacement();
     tcf_[2].first = velocity_autocorrelation();
     // setup binary correlation functions
-    tcfk_[0].first = intermediate_scattering_function();
+    qtcf_[0].first = intermediate_scattering_function();
+    qtcf_[1].first = self_intermediate_scattering_function();
 
     try {
 	// allocate correlation functions results
 	foreach (tcf_pair& tcf, tcf_) {
 	    tcf.second.resize(boost::extents[param.block_count()][param.block_size() - 1]);
 	}
-	foreach (tcfk_pair& tcfk, tcfk_) {
-	    tcfk.second.resize(boost::extents[param.block_count()][param.block_size()][k_.size()]);
+	foreach (qtcf_pair& qtcf, qtcf_) {
+	    qtcf.second.resize(boost::extents[param.block_count()][param.block_size()][q_.size()]);
 	}
     }
     catch (std::bad_alloc const& e) {
@@ -250,11 +256,11 @@ template <unsigned dimension, typename T, typename U>
 void autocorrelation<dimension, T, U>::sample(vector_type const& r, vector_type const& v)
 {
     // sample odd level blocks
-    autocorrelate(phase_space_type(r, v, k_), 0);
+    autocorrelate(phase_space_type(r, v, q_), 0);
 
     if (0 == block[0].count % param.block_shift()) {
 	// sample even level blocks
-	autocorrelate(phase_space_type(r, v, k_), 1);
+	autocorrelate(phase_space_type(r, v, q_), 1);
     }
 }
 
@@ -316,8 +322,8 @@ void autocorrelation<dimension, T, U>::autocorrelate_block(unsigned int n)
     foreach (tcf_pair& tcf, tcf_) {
 	boost::apply_visitor(tcf_apply_visitor_gen(block[n].begin(), block[n].end(), tcf.second[n].begin()), tcf.first);
     }
-    foreach (tcfk_pair& tcfk, tcfk_) {
-	boost::apply_visitor(tcf_apply_visitor_gen(block[n].begin(), block[n].end(), tcfk.second[n].begin()), tcfk.first);
+    foreach (qtcf_pair& qtcf, qtcf_) {
+	boost::apply_visitor(tcf_apply_visitor_gen(block[n].begin(), block[n].end(), qtcf.second[n].begin()), qtcf.first);
     }
 }
 
@@ -373,12 +379,12 @@ void autocorrelation<dimension, T, U>::write()
 	}
 
 	// iterate over binary correlation functions
-	foreach (tcfk_pair& tcfk, tcfk_) {
+	foreach (qtcf_pair& qtcf, qtcf_) {
 	    // dataspace for binary correlation function results
-	    hsize_t dim[4] = { k_.size(), max_blocks, tcfk.second.shape()[1], 4 };
+	    hsize_t dim[4] = { q_.size(), max_blocks, qtcf.second.shape()[1], 4 };
 	    H5::DataSpace ds(4, dim);
 	    // correlation function name
-	    char const* name = boost::apply_visitor(tcf_name_visitor(), tcfk.first);
+	    char const* name = boost::apply_visitor(tcf_name_visitor(), qtcf.first);
 
 	    // create dataset for correlation function results
 	    H5::DataSet dataset(file.createDataSet(name, H5::PredType::NATIVE_FLOAT, ds));
@@ -389,14 +395,14 @@ void autocorrelation<dimension, T, U>::write()
 	    for (unsigned int j = 0; j < data.size(); ++j) {
 		for (unsigned int k = 0; k < data[j].size(); ++k) {
 		    for (unsigned int l = 0; l < data[j][k].size(); ++l) {
-			// k-value
-			data[j][k][l][0] = k_[j];
+			// q-value
+			data[j][k][l][0] = q_[j];
 			// time interval
 			data[j][k][l][1] = (l > 0) ? param.timegrid(k, l - 1) : 0;
 			// mean average
-			data[j][k][l][2] = tcfk.second[k][l][j].mean();
+			data[j][k][l][2] = qtcf.second[k][l][j].mean();
 			// standard error of mean
-			data[j][k][l][3] = tcfk.second[k][l][j].err();
+			data[j][k][l][3] = qtcf.second[k][l][j].err();
 		    }
 		}
 	    }

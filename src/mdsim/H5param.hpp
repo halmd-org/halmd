@@ -291,19 +291,19 @@ public:
     }
 
     /**
-     * returns number of k-values
+     * returns number of q-values
      */
-    unsigned int const& k_values() const
+    unsigned int const& q_values() const
     {
-	return k_values_;
+	return q_values_;
     }
 
     /**
-     * set number of k-values
+     * set number of q-values
      */
-    void k_values(unsigned int const& value)
+    void q_values(unsigned int const& value)
     {
-	k_values_ = value;
+	q_values_ = value;
     }
 
     /**
@@ -363,8 +363,8 @@ private:
     unsigned int block_count_;
     /** maximum number of samples per block */
     uint64_t max_samples_;
-    /** number of k-values */
-    unsigned int k_values_;
+    /** number of q-values */
+    unsigned int q_values_;
     /** Lennard-Jones potential cutoff distance */
     float cutoff_distance_;
 };

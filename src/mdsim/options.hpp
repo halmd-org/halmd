@@ -163,9 +163,9 @@ public:
     /**
      * returns number of q-values
      */
-    option_value<unsigned int> k_values() const
+    option_value<unsigned int> q_values() const
     {
-	return vm["k-values"];
+	return vm["q-values"];
     }
 #endif
 
