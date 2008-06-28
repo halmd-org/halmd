@@ -152,7 +152,7 @@ struct self_intermediate_scattering_function
 		unsigned int i = 0;
 		// iterate over particle positions in current and first sample
 		for (r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0, ++i) {
-		    sum = (cos((*r - *r0) * *q) - sum) / (i + 1);
+		    sum += (cos((*r - *r0) * *q) - sum) / (i + 1);
 		}
 		// accumulate self-intermediate scattering function
 		for (unsigned int d = 0; d < it->r.begin()->size(); ++d) {
