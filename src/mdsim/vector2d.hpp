@@ -19,7 +19,8 @@
 #ifndef MDSIM_VECTOR2D_HPP
 #define MDSIM_VECTOR2D_HPP
 
-#include <math.h>
+#include <boost/array.hpp>
+#include <cmath>
 #include <iostream>
 #include <cuda_wrapper.hpp>
 #include <xdr/iostream.hpp>
@@ -29,7 +30,7 @@
  * 2-dimensional floating-point vector
  */
 template <typename T>
-class vector2d
+class vector2d : public boost::array<T, 2>
 {
 public:
     typedef T value_type;
@@ -42,37 +43,37 @@ public:
     /**
      * initialization by vector
      */
-    vector2d(vector2d<T> const& v) : x(v.x), y(v.y)
+    vector2d(vector2d<T> const& v)
     {
+	(*this)[0] = v[0];
+	(*this)[1] = v[1];
     }
 
     /**
      * initialization by vector
      */
-    vector2d(float2 const& v) : x(v.x), y(v.y)
+    vector2d(float2 const& v)
     {
+	(*this)[0] = v.x;
+	(*this)[1] = v.y;
     }
 
     /**
      * initialization by scalar
      */
-    vector2d(T const& s) : x(s), y(s)
+    vector2d(T const& s)
     {
+	(*this)[0] = s;
+	(*this)[1] = s;
     }
 
     /**
      * initialization by scalar components
      */
-    vector2d(T const& x, T const& y) : x(x), y(y)
+    vector2d(T const& x, T const& y)
     {
-    }
-
-    /**
-     * dimension of vector space
-     */
-    static unsigned int dim()
-    {
-	return 2;
+	(*this)[0] = x;
+	(*this)[1] = y;
     }
 
     /**
@@ -80,7 +81,7 @@ public:
      */
     bool operator==(vector2d<T> const& v) const
     {
-	return (v.x == x && v.y == y);
+	return (v[0] == (*this)[0] && v[1] == (*this)[1]);
     }
 
     /**
@@ -88,7 +89,7 @@ public:
      */
     bool operator!=(vector2d<T> const& v) const
     {
-	return (v.x != x || v.y != y);
+	return (v[0] != (*this)[0] || v[1] != (*this)[1]);
     }
 
     /**
@@ -96,7 +97,7 @@ public:
      */
     bool operator<(vector2d<T> const& v) const
     {
-	return (v.x < x && v.y < y);
+	return (v[0] < (*this)[0] && v[1] < (*this)[1]);
     }
 
     /**
@@ -104,7 +105,7 @@ public:
      */
     bool operator>(vector2d<T> const& v) const
     {
-	return (v.x > x && v.y > y);
+	return (v[0] > (*this)[0] && v[1] > (*this)[1]);
     }
 
     /**
@@ -112,7 +113,7 @@ public:
      */
     bool operator<=(vector2d<T> const& v) const
     {
-	return (v.x <= x && v.y <= y);
+	return (v[0] <= (*this)[0] && v[1] <= (*this)[1]);
     }
 
     /**
@@ -120,7 +121,7 @@ public:
      */
     bool operator>=(vector2d<T> const& v) const
     {
-	return (v.x >= x && v.y >= y);
+	return (v[0] >= (*this)[0] && v[1] >= (*this)[1]);
     }
 
     /**
@@ -128,8 +129,8 @@ public:
      */
     vector2d<T>& operator=(vector2d<T> const& v)
     {
-	x = v.x;
-	y = v.y;
+	(*this)[0] = v[0];
+	(*this)[1] = v[1];
 	return *this;
     }
 
@@ -138,8 +139,8 @@ public:
      */
     vector2d<T>& operator=(T const& s)
     {
-	x = s;
-	y = s;
+	(*this)[0] = s;
+	(*this)[1] = s;
 	return *this;
     }
 
@@ -148,8 +149,8 @@ public:
      */
     vector2d<T>& operator+=(vector2d<T> const& v)
     {
-	x += v.x;
-	y += v.y;
+	(*this)[0] += v[0];
+	(*this)[1] += v[1];
 	return *this;
     }
 
@@ -158,8 +159,8 @@ public:
      */
     vector2d<T>& operator-=(vector2d<T> const& v)
     {
-	x -= v.x;
-	y -= v.y;
+	(*this)[0] -= v[0];
+	(*this)[1] -= v[1];
 	return *this;
     }
 
@@ -168,8 +169,8 @@ public:
      */
     vector2d<T>& operator*=(T const& s)
     {
-	x *= s;
-	y *= s;
+	(*this)[0] *= s;
+	(*this)[1] *= s;
 	return *this;
     }
 
@@ -178,8 +179,8 @@ public:
      */
     vector2d<T>& operator/=(T const& s)
     {
-	x /= s;
-	y /= s;
+	(*this)[0] /= s;
+	(*this)[1] /= s;
 	return *this;
     }
 
@@ -188,8 +189,8 @@ public:
      */
     friend vector2d<T> operator+(vector2d<T> v, vector2d<T> const& w)
     {
-	v.x += w.x;
-	v.y += w.y;
+	v[0] += w[0];
+	v[1] += w[1];
 	return v;
     }
 
@@ -198,8 +199,8 @@ public:
      */
     friend vector2d<T> operator-(vector2d<T> v, vector2d<T> const& w)
     {
-	v.x -= w.x;
-	v.y -= w.y;
+	v[0] -= w[0];
+	v[1] -= w[1];
 	return v;
     }
 
@@ -208,7 +209,7 @@ public:
      */
     T operator*(vector2d<T> const& v) const
     {
-	return x * v.x + y * v.y;
+	return (*this)[0] * v[0] + (*this)[1] * v[1];
     }
 
     /**
@@ -216,8 +217,8 @@ public:
      */
     friend vector2d<T> operator*(vector2d<T> v, T const& s)
     {
-	v.x *= s;
-	v.y *= s;
+	v[0] *= s;
+	v[1] *= s;
 	return v;
     }
 
@@ -226,8 +227,8 @@ public:
      */
     friend vector2d<T> operator*(T const& s, vector2d<T> v)
     {
-	v.x *= s;
-	v.y *= s;
+	v[0] *= s;
+	v[1] *= s;
 	return v;
     }
 
@@ -236,8 +237,8 @@ public:
      */
     friend vector2d<T> operator/(vector2d<T> v, T const& s)
     {
-	v.x /= s;
-	v.y /= s;
+	v[0] /= s;
+	v[1] /= s;
 	return v;
     }
 
@@ -246,7 +247,7 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, vector2d<T> const& v)
     {
-	os << v.x << "\t" << v.y;
+	os << v[0] << "\t" << v[1];
 	return os;
     }
 
@@ -255,7 +256,7 @@ public:
      */
     friend std::istream& operator>>(std::istream& is, vector2d<T>& v)
     {
-	is >> v.x >> v.y;
+	is >> v[0] >> v[1];
 	return is;
     }
 
@@ -264,7 +265,7 @@ public:
      */
     friend xdr::ostream& operator<<(xdr::ostream& xdrs, vector2d<T> const& v)
     {
-	xdrs << v.x << v.y;
+	xdrs << v[0] << v[1];
 	return xdrs;
     }
 
@@ -273,12 +274,9 @@ public:
      */
     friend xdr::istream& operator>>(xdr::istream& xdrs, vector2d<T>& v)
     {
-	xdrs >> v.x >> v.y;
+	xdrs >> v[0] >> v[1];
 	return xdrs;
     }
-
-public:
-    T x, y;
 };
 
 /**
@@ -290,16 +288,16 @@ vector2d<T> rint(vector2d<T> v);
 template <>
 vector2d<float> rint(vector2d<float> v)
 {
-    v.x = rintf(v.x);
-    v.y = rintf(v.y);
+    v[0] = rintf(v[0]);
+    v[1] = rintf(v[1]);
     return v;
 }
 
 template <>
 vector2d<double> rint(vector2d<double> v)
 {
-    v.x = rint(v.x);
-    v.y = rint(v.y);
+    v[0] = rint(v[0]);
+    v[1] = rint(v[1]);
     return v;
 }
 
@@ -312,16 +310,16 @@ vector2d<T> round(vector2d<T> v);
 template <>
 vector2d<float> round(vector2d<float> v)
 {
-    v.x = roundf(v.x);
-    v.y = roundf(v.y);
+    v[0] = roundf(v[0]);
+    v[1] = roundf(v[1]);
     return v;
 }
 
 template <>
 vector2d<double> round(vector2d<double> v)
 {
-    v.x = round(v.x);
-    v.y = round(v.y);
+    v[0] = round(v[0]);
+    v[1] = round(v[1]);
     return v;
 }
 
@@ -331,8 +329,8 @@ vector2d<double> round(vector2d<double> v)
 template <typename T>
 vector2d<T> floor(vector2d<T> v)
 {
-    v.x = std::floor(v.x);
-    v.y = std::floor(v.y);
+    v[0] = std::floor(v[0]);
+    v[1] = std::floor(v[1]);
     return v;
 }
 
@@ -342,8 +340,8 @@ vector2d<T> floor(vector2d<T> v)
 template <typename T>
 vector2d<T> ceil(vector2d<T> v)
 {
-    v.x = std::ceil(v.x);
-    v.y = std::ceil(v.y);
+    v[0] = std::ceil(v[0]);
+    v[1] = std::ceil(v[1]);
     return v;
 }
 
@@ -353,8 +351,8 @@ vector2d<T> ceil(vector2d<T> v)
 template <typename T>
 vector2d<T> sqrt(vector2d<T> v)
 {
-    v.x = std::sqrt(v.x);
-    v.y = std::sqrt(v.y);
+    v[0] = std::sqrt(v[0]);
+    v[1] = std::sqrt(v[1]);
     return v;
 }
 
@@ -364,8 +362,8 @@ vector2d<T> sqrt(vector2d<T> v)
 template <typename T>
 vector2d<T> cos(vector2d<T> v)
 {
-    v.x = std::cos(v.x);
-    v.y = std::cos(v.y);
+    v[0] = std::cos(v[0]);
+    v[1] = std::cos(v[1]);
     return v;
 }
 
@@ -375,8 +373,8 @@ vector2d<T> cos(vector2d<T> v)
 template <typename T>
 vector2d<T> sin(vector2d<T> v)
 {
-    v.x = std::sin(v.x);
-    v.y = std::sin(v.y);
+    v[0] = std::sin(v[0]);
+    v[1] = std::sin(v[1]);
     return v;
 }
 
