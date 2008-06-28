@@ -130,15 +130,49 @@ struct intermediate_scattering_function
     }
 };
 
+/**
+ * self-intermediate scattering function
+ */
+struct self_intermediate_scattering_function
+{
+    char const* name() { return "SISF"; }
+
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+	typename input_iterator::value_type::vector_type::const_iterator r, r0;
+	typename input_iterator::value_type::q_values_type::const_iterator q;
+	typename output_iterator::value_type::iterator k;
+
+	// iterate over phase space samples in block
+	for (input_iterator it = first; it != last; ++it, ++result) {
+	    // iterate over q-values
+	    for (q = it->q.first, k = result->begin(); q != it->q.second; ++q, ++k) {
+		typename input_iterator::value_type::vector_type::value_type sum(0);
+		unsigned int i = 0;
+		// iterate over particle positions in current and first sample
+		for (r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0, ++i) {
+		    sum = (cos((*r - *r0) * *q) - sum) / (i + 1);
+		}
+		// accumulate self-intermediate scattering function
+		for (unsigned int d = 0; d < it->r.begin()->size(); ++d) {
+		    *k += sum[d];
+		}
+	    }
+	}
+    }
+};
+
 /** correlation function type */
 typedef boost::mpl::vector<mean_square_displacement> _tcf_types_0;
 typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement>::type _tcf_types_1;
 typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation>::type tcf_types;
 /** binary correlation function type */
-typedef boost::mpl::vector<intermediate_scattering_function> tcfk_types;
+typedef boost::mpl::vector<intermediate_scattering_function> _qtcf_types_0;
+typedef boost::mpl::push_back<_qtcf_types_0, self_intermediate_scattering_function>::type qtcf_types;
 
 /**
- * apply generic correlation function to block of phase space samples
+ * apply correlation function to block of phase space samples
  */
 template <typename T1, typename T2>
 class tcf_apply_visitor : public boost::static_visitor<>
@@ -162,7 +196,6 @@ tcf_apply_visitor<T1, T2> tcf_apply_visitor_gen(T1 const& first, T1 const& last,
 {
     return tcf_apply_visitor<T1, T2>(first, last, result);
 }
-
 
 /**
  * retrieve name of a generic correlation function
