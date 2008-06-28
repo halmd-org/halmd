@@ -207,7 +207,7 @@ void options::parse(int argc, char** argv)
     tcf_opts.add_options()
 	("block-size,B", po::value<unsigned int>()->default_value(10), "block size")
 	("max-samples,M", po::value<uint64_t>()->default_value(1000), "maximum number of samples per block")
-	("k-values", po::value<unsigned int>()->default_value(5), "largest k-multiple for spatial Fourier transformation")
+	("q-values", po::value<unsigned int>()->default_value(5), "largest multiple of smallest q-vector for Fourier transformation")
 	;
 #endif
 
