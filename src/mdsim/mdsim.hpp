@@ -20,7 +20,6 @@
 #define MDSIM_MDSIM_HPP
 
 #include <boost/bind.hpp>
-#include <signal.h>
 #include <stdint.h>
 #include "H5param.hpp"
 #include "autocorrelation.hpp"
@@ -30,6 +29,7 @@
 #include "ljfluid.hpp"
 #include "log.hpp"
 #include "options.hpp"
+#include "signal.hpp"
 #include "trajectory.hpp"
 
 
@@ -49,10 +49,6 @@ public:
     void operator()();
 
 private:
-    /** signal handler */
-    static void handle_signal(int signum);
-
-private:
     /** program options */
     options const& opts;
     /** global simulation parameters */
@@ -61,9 +57,6 @@ private:
     ljfluid<dimension, T> fluid;
     /** block algorithm parameters */
     block_param<dimension, T> block;
-
-    /** signal number */
-    static int signal_;
 };
 
 /**
@@ -216,6 +209,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
+    // handle signals
+    signal_handler signal;
 #ifndef USE_BENCHMARK
     // time correlation functions
     autocorrelation<dimension, T> tcf(block, param.box_length(), opts.q_values().value());
@@ -235,17 +230,11 @@ void mdsim<dimension, T>::operator()()
     prf.open(opts.output_file_prefix().value() + ".prf");
     prf << param;
 
-    // install signal handlers
-    boost::array<sighandler_t, 3> sigh;
-    sigh[0] = signal(SIGHUP, handle_signal);
-    sigh[1] = signal(SIGINT, handle_signal);
-    sigh[2] = signal(SIGTERM, handle_signal);
-
     LOG("starting MD simulation");
 
     for (uint64_t step = 0; step < param.steps(); ++step) {
 	// abort simulation on signal
-	if (signal_) {
+	if (signal.get()) {
 	    LOG_WARNING("caught signal at simulation step " << step);
 	    break;
 	}
@@ -265,11 +254,6 @@ void mdsim<dimension, T>::operator()()
 
     LOG("finished MD simulation");
 
-    // restore previous signal handlers
-    signal(SIGHUP, sigh[0]);
-    signal(SIGINT, sigh[1]);
-    signal(SIGTERM, sigh[2]);
-
 #ifndef USE_BENCHMARK
     // write time correlation function results to HDF5 file
     tcf.write();
@@ -284,19 +268,6 @@ void mdsim<dimension, T>::operator()()
     prf.write(fluid.times());
     prf.close();
 }
-
-/**
- * signal handler
- */
-template <unsigned dimension, typename T>
-void mdsim<dimension, T>::handle_signal(int signum)
-{
-    // store signal number in global variable
-    signal_ = signum;
-}
-
-template <unsigned dimension, typename T>
-int mdsim<dimension, T>::signal_(0);
 
 } // namespace mdsim
 
