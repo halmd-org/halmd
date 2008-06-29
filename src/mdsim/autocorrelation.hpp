@@ -157,11 +157,10 @@ private:
     /** correlation functions and results */
     boost::array<tcf_pair, 3> tcf_;
     /** binary correlation functions and results */
-    boost::array<qtcf_pair, 1> qtcf_;
+    boost::array<qtcf_pair, 2> qtcf_;
 
     /** HDF5 output file */
     H5::H5File file;
-
 };
 
 /**
