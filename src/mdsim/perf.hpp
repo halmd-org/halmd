@@ -126,10 +126,10 @@ void perf<dimension, T, U>::write(perf_type const& times)
 		time.createAttribute("count", utid, H5S_SCALAR).write(utid, &count);
 
 		if (acc->second.count() > 1) {
-		    LOG(it->first << "/" << acc->first << " average time: " << std::setprecision(4) << (mean * 1.E3f) << " ms (" << std::setprecision(4) << (sigma * 1.E3f) << " ms)");
+		    LOG(acc->first << "(" << it->first << ") average time: " << std::setprecision(4) << (mean * 1.E3f) << " ms (" << std::setprecision(4) << (sigma * 1.E3f) << " ms, " << count << " calls)");
 		}
 		else {
-		    LOG(it->first << "/" << acc->first << " time: " << std::setprecision(4) << (mean * 1.E3f) << " ms");
+		    LOG(acc->first << "(" << it->first << ") time: " << std::setprecision(4) << (mean * 1.E3f) << " ms");
 		}
 	    }
 	}
