@@ -207,6 +207,7 @@ void options::parse(int argc, char** argv)
 	("block-size,B", po::value<unsigned int>()->default_value(10), "block size")
 	("max-samples,M", po::value<uint64_t>()->default_value(1000), "maximum number of samples per block")
 	("q-values", po::value<unsigned int>()->default_value(5), "largest multiple of smallest q-vector for Fourier transformation")
+	("dump-trajectories", po::bool_switch(), "dump particle trajectories")
 	;
 #endif
 

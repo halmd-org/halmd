@@ -172,9 +172,6 @@ trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5par
 template <unsigned dimension, typename T>
 void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector<T> const& v, unsigned int const& npart, double const& timestep)
 {
-    if (samples_ >= param.max_samples())
-	return;
-
     assert(r.size() == npart);
     assert(v.size() == npart);
 

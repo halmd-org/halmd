@@ -218,8 +218,10 @@ void mdsim<dimension, T>::operator()()
     tcf << param;
     // trajectory file writer
     trajectory<dimension, T> traj(block);
-    traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
-    traj << param;
+    if (opts.dump_trajectories().value()) {
+	traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
+	traj << param;
+    }
     // thermodynamic equilibrium properties
     energy<dimension, T> tep(block);
     tep.open(opts.output_file_prefix().value() + ".tep");
@@ -244,8 +246,10 @@ void mdsim<dimension, T>::operator()()
 	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _1, _2));
 	// sample thermodynamic equilibrium properties
 	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, param.density(), param.timestep()));
-	// sample trajectory
-	fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, param.particles(), param.timestep()));
+	if (opts.dump_trajectories().value()) {
+	    // sample trajectory
+	    fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, param.particles(), param.timestep()));
+	}
 #endif
 
 	// MD simulation step
@@ -262,7 +266,9 @@ void mdsim<dimension, T>::operator()()
     tep.write();
     tep.close();
     // close HDF5 trajectory output file
-    traj.close();
+    if (opts.dump_trajectories().value()) {
+	traj.close();
+    }
 #endif
     // write performance data to HDF5 file
     prf.write(fluid.times());

@@ -157,6 +157,15 @@ public:
     {
 	return vm["q-values"];
     }
+
+    /**
+     * returns whether to dump particle trajectories
+     */
+    option_value<bool> dump_trajectories() const
+    {
+	return vm["dump-trajectories"];
+    }
+
 #endif
 
     /**
