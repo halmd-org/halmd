@@ -187,9 +187,6 @@ trajectory<dimension, T, U, true>& trajectory<dimension, T, U, true>::operator<<
 template <unsigned dimension, typename T, typename U>
 void trajectory<dimension, T, U, true>::sample(vector_type const& r, vector_type const& v, unsigned int const& npart, float const& timestep)
 {
-    if (samples_ >= param.max_samples())
-	return;
-
     assert(r.size() == npart);
     assert(v.size() == npart);
 
