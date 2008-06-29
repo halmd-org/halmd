@@ -191,7 +191,7 @@ void options::parse(int argc, char** argv)
 	("density,d", po::value<float>()->default_value(0.1), "particle density")
 	("box-length,L", po::value<float>(), "simulation box length")
 #ifdef USE_CELL
-	("cell-occupancy,C", po::value<float>()->default_value(0.55), "desired average cell occupancy")
+	("cell-occupancy,C", po::value<float>()->default_value(0.5), "desired average cell occupancy")
 #endif
 	("timestep,r", po::value<float>()->default_value(0.01), "simulation timestep")
 	("temperature,K", po::value<float>()->default_value(1.), "initial temperature")
