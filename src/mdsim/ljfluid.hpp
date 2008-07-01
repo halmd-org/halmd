@@ -636,6 +636,25 @@ template <unsigned dimension, typename T, typename U>
 void ljfluid<dimension, T, U>::lattice()
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
+
+    // particles per 2- or 3-dimensional unit cell
+    const unsigned int m = 2 * (dimension - 1);
+    // lower boundary for number of particles per lattice dimension
+    unsigned int n = std::pow(npart / m, 1.f / dimension);
+    // lower boundary for total number of lattice sites
+    unsigned int N = m * std::pow(n, dimension);
+
+    if (N < npart) {
+	n += 1;
+	N = m * std::pow(n, dimension);
+    }
+    if (N > npart) {
+	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+    }
+
+    // minimum distance in 2- or 3-dimensional fcc lattice
+    LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
+
     try {
 #ifdef USE_CELL
 	cuda::vector<U> g_r(npart);
@@ -643,7 +662,7 @@ void ljfluid<dimension, T, U>::lattice()
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::lattice(g_r.data());
+	gpu::ljfluid::lattice(g_r.data(), n);
 	event_[1].record(stream_);
 	// assign particles to cells
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
@@ -660,7 +679,7 @@ void ljfluid<dimension, T, U>::lattice()
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::lattice(g_part.r.data());
+	gpu::ljfluid::lattice(g_part.r.data(), n);
 	event_[1].record(stream_);
 	// copy particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);

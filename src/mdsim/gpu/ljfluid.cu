@@ -328,21 +328,15 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
  * place particles on a face centered cubic (FCC) lattice
  */
 template <typename T, typename U>
-__global__ void lattice(U* g_r)
+__global__ void lattice(U* g_r, unsigned int n)
 {
     T r;
 #ifdef DIM_3D
-    // number of particles along 1 lattice dimension
-    const unsigned int n = ceilf(cbrtf(npart / 4.f));
-
     // compose primitive vectors from 1-dimensional index
     r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.f;
     r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.f;
     r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.f;
 #else
-    // number of particles along 1 lattice dimension
-    const unsigned int n = ceilf(sqrtf(npart / 2.f));
-
     // compose primitive vectors from 1-dimensional index
     r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
     r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.f;
@@ -544,7 +538,7 @@ function<void (float4 const*, float4 const*, float4 const*, int const*, float4*,
 #else
 function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 #endif
-function<void (float4*)> lattice(mdsim::lattice<float3>);
+function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
 function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else /* DIM_3D */
 function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
@@ -555,7 +549,7 @@ function<void (float2 const*, float2 const*, float2 const*, int const*, float2*,
 #else
 function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 #endif
-function<void (float2*)> lattice(mdsim::lattice<float2>);
+function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
 function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif /* DIM_3D */
 
