@@ -369,15 +369,31 @@ void hardspheres<dimension, T>::lattice()
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
-#ifdef DIM_3D
-    // number of particles along 1 lattice dimension
-    const unsigned int n = ceil(cbrt(npart / 4.));
-#else
-    // number of particles along 1 lattice dimension
-    const unsigned int n = ceil(sqrt(npart / 2.));
-#endif
+    // particles per 2- or 3-dimensional unit cell
+    const unsigned int m = 2 * (dimension - 1);
+    // lower boundary for number of particles per lattice dimension
+    unsigned int n = std::pow(npart / m, 1. / dimension);
+    // lower boundary for total number of lattice sites
+    unsigned int N = m * std::pow(n, dimension);
+
+    if (N < npart) {
+	n += 1;
+	N = m * std::pow(n, dimension);
+    }
+    if (N > npart) {
+	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+    }
+
     // lattice distance
-    double a = box_ / n;
+    const double a = box_ / n;
+    // minimum distance in 2- or 3-dimensional fcc lattice
+    const double dist = a / std::sqrt(2.);
+    LOG("minimum lattice distance: " << dist);
+
+    // ensure that particles do not overlap
+    if (dist < pair_sep_) {
+	throw exception("minimum lattice distance smaller than pair separation");
+    }
 
     for (unsigned int i = 0; i < npart; ++i) {
 #ifdef DIM_3D
