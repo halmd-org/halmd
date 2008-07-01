@@ -462,9 +462,11 @@ void ljfluid<dimension, T, U>::threads(unsigned int value)
     LOG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
     LOG("number of CUDA execution threads: " << dim_.threads_per_block());
 
+#ifndef USE_CELL
     if (dim_.threads() != npart) {
 	LOG_WARNING("number of particles (" << npart << ") not a multiple of number of CUDA execution threads (" << dim_.threads() << ")");
     }
+#endif
 
 #ifdef USE_CELL
     // set CUDA execution dimensions for cell-specific kernels
