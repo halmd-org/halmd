@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 #include "H5param.hpp"
-#include "H5type.hpp"
+#include "H5ctype.hpp"
 #include "exception.hpp"
 #include "version.h"
 
@@ -46,9 +46,8 @@ template <typename T>
 void H5param::attr(H5::Group const& node, char const* name, T value)
 {
     try {
-	H5type<T> tid;
-	H5::Attribute attr(node.createAttribute(name, tid, H5S_SCALAR));
-	attr.write(tid, &value);
+	H5::Attribute attr(node.createAttribute(name, H5ctype<T>::type, H5S_SCALAR));
+	attr.write(H5ctype<T>::type, &value);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to write parameter to HDF5 output file");
