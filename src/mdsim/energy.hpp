@@ -88,11 +88,6 @@ private:
 template <unsigned dimension, typename T>
 energy<dimension, T>::energy(block_param<dimension, T> const& param) : param(param), samples_(0)
 {
-#ifdef NDEBUG
-    // turns off the automatic error printing from the HDF5 library
-    H5::Exception::dontPrint();
-#endif
-
     try {
 	en_pot_.reserve(param.max_samples());
 	en_kin_.reserve(param.max_samples());

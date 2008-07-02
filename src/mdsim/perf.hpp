@@ -46,8 +46,6 @@ template <unsigned dimension, typename T>
 class perf
 {
 public:
-    perf();
-
     /** create HDF5 performance data output file */
     void open(std::string const& filename);
     /** returns HDF5 parameter group */
@@ -61,16 +59,6 @@ private:
     /** HDF5 performance data output file */
     H5::H5File file_;
 };
-
-
-template <unsigned dimension, typename T>
-perf<dimension, T>::perf()
-{
-#ifdef NDEBUG
-    // turns off the automatic error printing from the HDF5 library
-    H5::Exception::dontPrint();
-#endif
-}
 
 /**
  * create HDF5 performance data output file
