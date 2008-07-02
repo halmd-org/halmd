@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <H5Cpp.h>
 #include <boost/algorithm/string/join.hpp>
 #include <exception>
 #include <iostream>
@@ -30,9 +31,13 @@
 
 int main(int argc, char **argv)
 {
-    mdsim::options opts;
+#ifdef NDEBUG
+    // turns off the automatic error printing from the HDF5 library
+    H5::Exception::dontPrint();
+#endif
 
     // parse program options
+    mdsim::options opts;
     try {
 	opts.parse(argc, argv);
     }
