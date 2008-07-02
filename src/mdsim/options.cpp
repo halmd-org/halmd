@@ -19,7 +19,7 @@
 #include <H5Cpp.h>
 #include <iostream>
 #include <fstream>
-#include "H5ctype.hpp"
+#include "H5xx.hpp"
 #include "date_time.hpp"
 #include "options.hpp"
 #include "version.h"
@@ -181,19 +181,15 @@ accumulating_value<T>* accum_value()
  * returns HDF5 attribute value if attribute exists, or empty value otherwise
  */
 template <typename T>
-boost::any parse_attribute(H5::Group const& node, char const* name)
+boost::any parse_attribute(H5xx::group const& node, char const* name)
 {
-    H5::Attribute attr;
     try {
-	attr = node.openAttribute(name);
+	return boost::any(node[name].as<T>());
     }
     catch (H5::Exception const& e) {
 	// discard missing HDF5 attribute for backward compatibility
 	return boost::any();
     }
-    T value;
-    attr.read(H5ctype<T>::type, &value);
-    return value;
 }
 
 /**

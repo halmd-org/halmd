@@ -18,8 +18,8 @@
 
 #include <stdint.h>
 #include "H5param.hpp"
-#include "H5ctype.hpp"
 #include "exception.hpp"
+#include "H5xx.hpp"
 #include "version.h"
 
 
@@ -31,39 +31,11 @@ namespace mdsim
  */
 H5param::H5param(H5::Group param) : param(param)
 {
-    H5::DataType tid(H5::StrType(H5::PredType::C_S1, 256));
+    H5xx::group node(param.createGroup("program"));
     // write program info attributes
-    H5::Group node(param.createGroup("program"));
-    node.createAttribute("name", tid, H5S_SCALAR).write(tid, PROGRAM_NAME);
-    node.createAttribute("version", tid, H5S_SCALAR).write(tid, PROGRAM_VERSION);
-    node.createAttribute("variant", tid, H5S_SCALAR).write(tid, PROGRAM_VARIANT);
+    node["name"] = PROGRAM_NAME;
+    node["version"] = PROGRAM_VERSION;
+    node["variant"] = PROGRAM_VARIANT;
 }
-
-/**
- * create attribute in given HDF5 group
- */
-template <typename T>
-void H5param::attr(H5::Group const& node, char const* name, T value)
-{
-    try {
-	H5::Attribute attr(node.createAttribute(name, H5ctype<T>::type, H5S_SCALAR));
-	attr.write(H5ctype<T>::type, &value);
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to write parameter to HDF5 output file");
-    }
-}
-
-// explicit template instantiation
-template void H5param::attr(H5::Group const&, char const*, int8_t);
-template void H5param::attr(H5::Group const&, char const*, uint8_t);
-template void H5param::attr(H5::Group const&, char const*, int16_t);
-template void H5param::attr(H5::Group const&, char const*, uint16_t);
-template void H5param::attr(H5::Group const&, char const*, int32_t);
-template void H5param::attr(H5::Group const&, char const*, uint32_t);
-template void H5param::attr(H5::Group const&, char const*, int64_t);
-template void H5param::attr(H5::Group const&, char const*, uint64_t);
-template void H5param::attr(H5::Group const&, char const*, float);
-template void H5param::attr(H5::Group const&, char const*, double);
 
 } // namespace mdsim

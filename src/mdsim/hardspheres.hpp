@@ -31,6 +31,7 @@
 #include <sys/times.h>
 #include <vector>
 #include "H5param.hpp"
+#include "H5xx.hpp"
 #include "exception.hpp"
 #include "gsl_rng.hpp"
 #include "log.hpp"
@@ -517,14 +518,14 @@ double const& hardspheres<dimension, T>::cell_length()
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::attrs(H5::Group const& param) const
 {
-    H5::Group node(param.createGroup("mdsim"));
-    H5param::attr(node, "dimension", dimension);
-    H5param::attr(node, "particles", npart);
-    H5param::attr(node, "pair_separation", pair_sep_);
-    H5param::attr(node, "cells", ncell);
-    H5param::attr(node, "cell_length", cell_length_);
-    H5param::attr(node, "density", density_);
-    H5param::attr(node, "box_length", box_);
+    H5xx::group node(param.createGroup("mdsim"));
+    node["dimension"] = dimension;
+    node["particles"] = npart;
+    node["pair_separation"] = pair_sep_;
+    node["cells"] = ncell;
+    node["cell_length"] = cell_length_;
+    node["density"] = density_;
+    node["box_length"] = box_;
 }
 
 /**
