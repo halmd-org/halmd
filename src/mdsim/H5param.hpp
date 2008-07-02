@@ -33,9 +33,6 @@ class H5param
 public:
     /** initialize HDF5 parameter group */
     H5param(H5::Group param);
-    /** create attribute in given HDF5 group */
-    template <typename T>
-    static void attr(H5::Group const& node, char const* name, T value);
     /** write parameters of visitor to HDF5 parameter group */
     template <typename T>
     H5param& operator<<(T const& visitor);

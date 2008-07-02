@@ -26,6 +26,7 @@
 #include <cuda_wrapper.hpp>
 #include <stdint.h>
 #include "H5param.hpp"
+#include "H5xx.hpp"
 #include "accumulator.hpp"
 #include "perf.hpp"
 #include "exception.hpp"
@@ -920,21 +921,21 @@ float const& ljfluid<dimension, T, U>::cutoff_distance() const
 template <unsigned dimension, typename T, typename U>
 void ljfluid<dimension, T, U>::attrs(H5::Group const& param) const
 {
-    H5::Group node(param.createGroup("mdsim"));
-    H5param::attr(node, "dimension", dimension);
-    H5param::attr(node, "particles", npart);
+    H5xx::group node(param.createGroup("mdsim"));
+    node["dimension"] = dimension;
+    node["particles"] = npart;
+    node["blocks"] = dim_.blocks_per_grid();
+    node["threads"] = dim_.threads_per_block();
+    node["density"] = density_;
+    node["box_length"] = box_;
+    node["timestep"] = timestep_;
+    node["cutoff_distance"] = r_cut;
 #ifdef USE_CELL
-    H5param::attr(node, "cells", ncell);
-    H5param::attr(node, "placeholders", nplace);
-    H5param::attr(node, "cell_length", cell_length_);
-    H5param::attr(node, "cell_occupancy", cell_occupancy_);
+    node["cells"] = ncell;
+    node["placeholders"] = nplace;
+    node["cell_length"] = cell_length_;
+    node["cell_occupancy"] = cell_occupancy_;
 #endif
-    H5param::attr(node, "blocks", dim_.blocks_per_grid());
-    H5param::attr(node, "threads", dim_.threads_per_block());
-    H5param::attr(node, "density", density_);
-    H5param::attr(node, "box_length", box_);
-    H5param::attr(node, "timestep", timestep_);
-    H5param::attr(node, "cutoff_distance", r_cut);
 }
 
 /**

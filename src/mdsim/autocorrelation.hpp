@@ -30,6 +30,7 @@
 #include <string>
 #include <vector>
 #include "H5param.hpp"
+#include "H5xx.hpp"
 #include "accumulator.hpp"
 #include "block.hpp"
 #include "exception.hpp"
@@ -254,8 +255,8 @@ H5param autocorrelation<dimension, T, U>::attrs()
 template <unsigned dimension, typename T, typename U>
 void autocorrelation<dimension, T, U>::attrs(H5::Group const& param) const
 {
-    H5::Group node(param.openGroup("autocorrelation"));
-    H5param::attr(node, "q_values", q_.size());
+    H5xx::group node(param.openGroup("autocorrelation"));
+    node["q_values"] = q_.size();
 }
 
 /**
