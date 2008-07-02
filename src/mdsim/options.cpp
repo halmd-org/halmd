@@ -229,8 +229,9 @@ boost::any parse_attribute(H5::Group const& node, char const* name)
     else if (tid == H5::PredType::NATIVE_FLOAT)
 	return read_attribute<float>(attr, tid);
 
+    // convert double precision HDF5 attribute to single precision variable
     else if (tid == H5::PredType::NATIVE_DOUBLE)
-	return read_attribute<double>(attr, tid);
+	return read_attribute<float>(attr, tid);
 
     return boost::any();
 }
