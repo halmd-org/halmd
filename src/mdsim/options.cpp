@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <H5Cpp.h>
 #include <iostream>
 #include <fstream>
 #include "date_time.hpp"
@@ -175,6 +176,74 @@ accumulating_value<T>* accum_value()
     return accum_value<T>(0);
 }
 
+/**
+ * read HDF5 attribute value
+ */
+template <typename T>
+T read_attribute(H5::Attribute& attr, H5::DataType const& tid)
+{
+    T value;
+    attr.read(tid, &value);
+    return value;
+}
+
+/**
+ * returns HDF5 attribute value if attribute exists, or empty value otherwise
+ */
+boost::any parse_attribute(H5::Group const& node, char const* name)
+{
+    H5::Attribute attr;
+    try {
+	attr = node.openAttribute(name);
+    }
+    catch (H5::Exception const& e) {
+	// discard missing HDF5 attribute for backward compatibility
+	return boost::any();
+    }
+    H5::DataType tid(attr.getDataType());
+
+    if (tid == H5::PredType::NATIVE_INT8)
+	return read_attribute<int8_t>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_UINT8)
+	return read_attribute<uint8_t>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_INT16)
+	return read_attribute<int16_t>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_UINT16)
+	return read_attribute<uint16_t>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_INT32)
+	return read_attribute<int32_t>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_UINT32)
+	return read_attribute<uint32_t>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_INT64)
+	return read_attribute<int64_t>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_UINT64)
+	return read_attribute<uint64_t>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_FLOAT)
+	return read_attribute<float>(attr, tid);
+
+    else if (tid == H5::PredType::NATIVE_DOUBLE)
+	return read_attribute<double>(attr, tid);
+
+    return boost::any();
+}
+
+/**
+ * override variable value if defaulted
+ */
+void store(boost::any const& value, variable_value& vv) {
+    if (vv.defaulted() && !value.empty()) {
+	vv = variable_value(value, true);
+    }
+}
+
 }} // namespace boost::program_options
 
 
@@ -255,14 +324,8 @@ void options::parse(int argc, char** argv)
 
     po::notify(vm);
 
-    // override const operator[] in variables_map
-    std::map<std::string, po::variable_value>& vm_ = vm;
-
-    // format timestamp in output file prefix
-    vm_["output"] = po::variable_value(date_time::format(vm["output"].as<std::string>()), false);
-
+    // check for conflicting options
     try {
-	// check for conflicting options
 	po::conflicting_options(vm, "density", "box-length");
 	po::conflicting_options(vm, "steps", "time");
     }
@@ -270,6 +333,42 @@ void options::parse(int argc, char** argv)
 	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";
 	throw options::exit_exception(EXIT_FAILURE);
     }
+
+    // override const operator[] in variables_map
+    std::map<std::string, po::variable_value>& vm_ = vm;
+
+    // optionally read parameters from HDF5 input file
+    if (vm.count("trajectory")) {
+	try {
+	    H5::H5File file(vm["trajectory"].as<std::string>(), H5F_ACC_RDONLY);
+	    H5::Group param(file.openGroup("parameters")), node;
+
+	    node = param.openGroup("mdsim");
+	    po::store(po::parse_attribute(node, "particles"), vm_["particles"]);
+	    po::store(po::parse_attribute(node, "density"), vm_["density"]);
+	    po::store(po::parse_attribute(node, "box_length"), vm_["box-length"]);
+	    po::store(po::parse_attribute(node, "timestep"), vm_["timestep"]);
+	    po::store(po::parse_attribute(node, "threads"), vm_["threads"]);
+	    po::store(po::parse_attribute(node, "temperature"), vm_["temperature"]);
+#ifdef USE_CELL
+	    po::store(po::parse_attribute(node, "cell_occupancy"), vm_["cell-occupancy"]);
+#endif
+
+	    node = param.openGroup("autocorrelation");
+	    po::store(po::parse_attribute(node, "steps"), vm_["steps"]);
+	    po::store(po::parse_attribute(node, "time"), vm_["time"]);
+	    po::store(po::parse_attribute(node, "block_size"), vm_["block-size"]);
+	    po::store(po::parse_attribute(node, "max_samples"), vm_["max-samples"]);
+	    po::store(po::parse_attribute(node, "q_values"), vm_["q-values"]);
+	}
+	catch (H5::Exception const& e) {
+	    std::cerr << PROGRAM_NAME ": " << "failed to read parameters from HDF5 input file\n";
+	    throw options::exit_exception(EXIT_FAILURE);
+	}
+    }
+
+    // format timestamp in output file prefix
+    vm_["output"] = po::variable_value(date_time::format(vm["output"].as<std::string>()), false);
 
     if (vm.count("help")) {
 	std::cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << opts << "\n";
