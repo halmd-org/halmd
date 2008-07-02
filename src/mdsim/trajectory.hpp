@@ -47,8 +47,8 @@ public:
     void open(std::string const& filename, unsigned int const& npart);
     /** close HDF5 trajectory output file */
     void close();
-    /** dump global simulation parameters to HDF5 file */
-    trajectory<dimension, T, true>& operator<<(H5param const& param);
+    /** returns HDF5 parameter group */
+    H5param attrs();
     /** write phase space sample */
     void sample(std::vector<T> const& r, std::vector<T> const& v, unsigned int const& npart, double const& timestep);
 
@@ -82,8 +82,6 @@ public:
     void open(std::string const& filename);
     /** close HDF5 trajectory input file */
     void close();
-    /** read global simulation parameters */
-    void read(H5param& param);
     /** read phase space sample */
     void read(std::vector<T>& r, std::vector<T>& v, int64_t index);
 
@@ -116,6 +114,8 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
     catch (H5::FileIException const& e) {
 	throw exception("failed to create trajectory output file");
     }
+    // create parameter group
+    file_.createGroup("param");
 
     // modify dataset creation properties to enable chunking
     H5::DSetCreatPropList cparms;
@@ -157,13 +157,12 @@ void trajectory<dimension, T, true>::close()
 }
 
 /**
- * dump global simulation parameters to HDF5 file
+ * returns HDF5 parameter group
  */
 template <unsigned dimension, typename T>
-trajectory<dimension, T, true>& trajectory<dimension, T, true>::operator<<(H5param const& param)
+H5param trajectory<dimension, T, true>::attrs()
 {
-    param.write(file_.createGroup("/parameters"));
-    return *this;
+    return H5param(file_.openGroup("param"));
 }
 
 /**
@@ -247,15 +246,6 @@ void trajectory<dimension, T, false>::close()
     catch (H5::Exception const& e) {
 	throw exception("failed to close HDF5 trajectory input file");
     }
-}
-
-/**
- * read global simulation parameters
- */
-template <unsigned dimension, typename T>
-void trajectory<dimension, T, false>::read(H5param& param)
-{
-    param.read(file.openGroup("/parameters"));
 }
 
 /**

@@ -150,6 +150,9 @@ public:
     /** returns cell length */
     double const& cell_length();
 
+    /** write parameters to HDF5 parameter group */
+    void attrs(H5::Group const& param) const;
+
     /** advance phase space state to given sample time */
     void mdstep(double sample_time);
     /** sample trajectory */
@@ -506,6 +509,22 @@ template <unsigned dimension, typename T>
 double const& hardspheres<dimension, T>::cell_length()
 {
     return cell_length_;
+}
+
+/**
+ * write parameters to HDF5 parameter group
+ */
+template <unsigned dimension, typename T>
+void hardspheres<dimension, T>::attrs(H5::Group const& param) const
+{
+    H5::Group node(param.createGroup("mdsim"));
+    H5param::attr(node, "dimension", dimension);
+    H5param::attr(node, "particles", npart);
+    H5param::attr(node, "pair_separation", pair_sep_);
+    H5param::attr(node, "cells", ncell);
+    H5param::attr(node, "cell_length", cell_length_);
+    H5param::attr(node, "density", density_);
+    H5param::attr(node, "box_length", box_);
 }
 
 /**

@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "H5param.hpp"
 #include "exception.hpp"
 #include "log.hpp"
 
@@ -47,6 +48,8 @@ public:
     uint64_t const& steps() const;
     /** returns total simulation time */
     double const& time() const;
+    /** returns sample timestep */
+    double const& timestep() const;
     /** returns block size */
     unsigned int const& block_size() const;
     /** returns block shift */
@@ -55,6 +58,9 @@ public:
     unsigned int const& block_count() const;
     /** returns maximum number of samples per block */
     uint64_t const& max_samples() const;
+
+    /** write parameters to HDF5 parameter group */
+    void attrs(H5::Group const& param) const;
 
     /** returns simulation time belonging to block sample at given block offset */
     double timegrid(unsigned int block, unsigned int offset) const;
@@ -86,8 +92,9 @@ void block_param<dimension, T>::steps(uint64_t const& value, double const& times
     // set total number of simulation steps
     steps_ = value;
     LOG("total number of simulation steps: " << steps_);
-    // set simulation timestep
+    // set sample timestep
     timestep_ = timestep;
+    LOG("sample timestep: " << timestep_);
     // derive total simulation time
     time_ = value * timestep_;
     LOG("total simulation time: " << time_);
@@ -102,8 +109,9 @@ void block_param<dimension, T>::time(double const& value, double const& timestep
     // set total simulation time
     time_ = value;
     LOG("total simulation time: " << time_);
-    // set simulation timestep
+    // set sample timestep
     timestep_ = timestep;
+    LOG("sample timestep: " << timestep_);
     // derive total number of simulation steps
     steps_ = round(time_ / timestep_);
     LOG("total number of simulation steps: " << steps_);
@@ -176,6 +184,15 @@ double const& block_param<dimension, T>::time() const
 }
 
 /**
+ * returns sample timestep
+ */
+template <unsigned dimension, typename T>
+double const& block_param<dimension, T>::timestep() const
+{
+    return timestep_;
+}
+
+/**
  * returns block size
  */
 template <unsigned dimension, typename T>
@@ -224,6 +241,22 @@ double block_param<dimension, T>::timegrid(unsigned int block, unsigned int offs
 	time *= block_shift_;
     }
     return time;
+}
+
+/**
+ * write parameters to HDF5 parameter group
+ */
+template <unsigned dimension, typename T>
+void block_param<dimension, T>::attrs(H5::Group const& param) const
+{
+    H5::Group node(param.createGroup("autocorrelation"));
+    H5param::attr(node, "steps", steps_);
+    H5param::attr(node, "time", time_);
+    H5param::attr(node, "timestep", timestep_);
+    H5param::attr(node, "block_size", block_size_);
+    H5param::attr(node, "block_shift", block_shift_);
+    H5param::attr(node, "block_count", block_count_);
+    H5param::attr(node, "max_samples", max_samples_);
 }
 
 } // namespace mdsim

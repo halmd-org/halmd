@@ -50,8 +50,8 @@ public:
 
     /** create HDF5 performance data output file */
     void open(std::string const& filename);
-    /** dump global simulation parameters to HDF5 file */
-    perf<dimension, T>& operator<<(H5param const& param);
+    /** returns HDF5 parameter group */
+    H5param attrs();
     /** write performance data to HDF5 file */
     void write(perf_type const& times);
     /** close HDF5 file */
@@ -86,16 +86,17 @@ void perf<dimension, T>::open(std::string const& filename)
     catch (H5::FileIException const& e) {
 	throw exception("failed to create performance data file");
     }
+    // create parameter group
+    file_.createGroup("param");
 }
 
 /**
- * dump global simulation parameters to HDF5 file
+ * returns HDF5 parameter group
  */
 template <unsigned dimension, typename T>
-perf<dimension, T>& perf<dimension, T>::operator<<(H5param const& param)
+H5param perf<dimension, T>::attrs()
 {
-    param.write(file_.createGroup("/parameters"));
-    return *this;
+    return H5param(file_.openGroup("param"));
 }
 
 /**
