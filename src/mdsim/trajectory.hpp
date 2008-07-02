@@ -47,7 +47,7 @@ public:
     typedef cuda::host::vector<U> vector_type;
 
 public:
-    trajectory(block_param<dimension, T> const& param);
+    trajectory(block_param<dimension, T> const& param) : param(param), samples_(0) {}
     /** create HDF5 trajectory output file */
     void open(std::string const& filename, unsigned int const& npart);
     /** close HDF5 trajectory output file */
@@ -74,39 +74,6 @@ private:
     /** file dataspace for simulation time */
     H5::DataSpace ds_scalar_;
 };
-
-/**
- * trajectory file reader
- */
-template <unsigned dimension, typename T, typename U>
-class trajectory<dimension, T, U, false>
-{
-public:
-    /** sample vector in page-locked host memory */
-    typedef cuda::host::vector<U> vector_type;
-
-public:
-    trajectory();
-    /** open HDF5 trajectory input file */
-    void open(std::string const& filename);
-    /** close HDF5 trajectory input file */
-    void close();
-    /** read phase space sample */
-    void read(vector_type& r, vector_type& v, int64_t index);
-
-private:
-    /** HDF5 trajectory input file */
-    H5::H5File file;
-};
-
-template <unsigned dimension, typename T, typename U>
-trajectory<dimension, T, U, true>::trajectory(block_param<dimension, T> const& param) : param(param), samples_(0)
-{
-#ifdef NDEBUG
-    // turns off the automatic error printing from the HDF5 library
-    H5::Exception::dontPrint();
-#endif
-}
 
 /**
  * create HDF5 trajectory output file
@@ -225,15 +192,28 @@ void trajectory<dimension, T, U, true>::sample(vector_type const& r, vector_type
     samples_++;
 }
 
-
+/**
+ * trajectory file reader
+ */
 template <unsigned dimension, typename T, typename U>
-trajectory<dimension, T, U, false>::trajectory()
+class trajectory<dimension, T, U, false>
 {
-#ifdef NDEBUG
-    // turns off the automatic error printing from the HDF5 library
-    H5::Exception::dontPrint();
-#endif
-}
+public:
+    /** sample vector in page-locked host memory */
+    typedef cuda::host::vector<U> vector_type;
+
+public:
+    /** open HDF5 trajectory input file */
+    void open(std::string const& filename);
+    /** close HDF5 trajectory input file */
+    void close();
+    /** read phase space sample */
+    void read(vector_type& r, vector_type& v, int64_t index);
+
+private:
+    /** HDF5 trajectory input file */
+    H5::H5File file;
+};
 
 /**
  * open HDF5 trajectory input file
