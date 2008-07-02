@@ -171,11 +171,6 @@ private:
 template <unsigned dimension, typename T>
 autocorrelation<dimension, T>::autocorrelation(block_param<dimension, T> const& param, double const& box, unsigned int nq) : param(param)
 {
-#ifdef NDEBUG
-    // turns off the automatic error printing from the HDF5 library
-    H5::Exception::dontPrint();
-#endif
-
     // allocate phase space sample blocks
     try {
 	block.resize(param.block_count(), block_type(param.block_size()));
