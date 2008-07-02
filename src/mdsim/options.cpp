@@ -19,7 +19,7 @@
 #include <H5Cpp.h>
 #include <iostream>
 #include <fstream>
-#include "H5type.hpp"
+#include "H5ctype.hpp"
 #include "date_time.hpp"
 #include "options.hpp"
 #include "version.h"
@@ -192,8 +192,7 @@ boost::any parse_attribute(H5::Group const& node, char const* name)
 	return boost::any();
     }
     T value;
-    H5type<T> tid;
-    attr.read(tid, &value);
+    attr.read(H5ctype<T>::type, &value);
     return value;
 }
 
