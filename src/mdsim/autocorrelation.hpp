@@ -129,8 +129,10 @@ public:
 
     /** create HDF5 correlations output file */
     void open(std::string const& filename);
-    /** dump global simulation parameters to HDF5 file */
-    autocorrelation<dimension, T>& operator<<(H5param const& param);
+    /** returns HDF5 parameter group */
+    H5param attrs();
+    /** write parameters to HDF5 parameter group */
+    void attrs(H5::Group const& param) const;
     /** sample time correlation functions */
     void sample(std::vector<T> const& r, std::vector<T> const& v);
     /** write correlation function results to HDF5 file */
@@ -224,16 +226,27 @@ void autocorrelation<dimension, T>::open(std::string const& filename)
     catch (H5::FileIException const& e) {
 	throw exception("failed to create HDF5 correlations output file");
     }
+    // create parameter group
+    file.createGroup("param");
 }
 
 /**
- * dump global simulation parameters to HDF5 file
+ * returns HDF5 parameter group
  */
 template <unsigned dimension, typename T>
-autocorrelation<dimension, T>& autocorrelation<dimension, T>::operator<<(H5param const& param)
+H5param autocorrelation<dimension, T>::attrs()
 {
-    param.write(file.createGroup("/parameters"));
-    return *this;
+    return H5param(file.openGroup("param"));
+}
+
+/**
+ * write parameters to HDF5 parameter group
+ */
+template <unsigned dimension, typename T>
+void autocorrelation<dimension, T>::attrs(H5::Group const& param) const
+{
+    H5::Group node(param.openGroup("autocorrelation"));
+    H5param::attr(node, "q_values", q_.size());
 }
 
 /**

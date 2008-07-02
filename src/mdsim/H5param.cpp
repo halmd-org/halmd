@@ -1,4 +1,4 @@
-/* Molecular Dynamics simulation parameters
+/* HDF5 parameter group
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
 #include "H5param.hpp"
+#include "H5type.hpp"
 #include "exception.hpp"
 #include "version.h"
 
@@ -25,144 +27,44 @@ namespace mdsim
 {
 
 /**
- * read parameters from HDF5 file
+ * initialize HDF5 parameter group
  */
-void H5param::read(H5::Group const& root)
+H5param::H5param(H5::Group param) : param(param)
 {
-    try {
-	H5::Attribute attr;
-	H5::Group node;
-
-	// Lennard-Jones fluid simulation parameters
-	node = root.openGroup("mdsim");
-
-	// positional coordinates dimension
-	attr = node.openAttribute("dimension");
-	attr.read(H5::PredType::NATIVE_UINT, &dimension_);
-	// number of particles
-	attr = node.openAttribute("particles");
-	attr.read(H5::PredType::NATIVE_UINT, &particles_);
-	// particle density
-	attr = node.openAttribute("density");
-	attr.read(H5::PredType::NATIVE_DOUBLE, &density_);
-	// periodic box length
-	attr = node.openAttribute("box_length");
-	attr.read(H5::PredType::NATIVE_DOUBLE, &box_length_);
-	// simulation timestep
-	attr = node.openAttribute("timestep");
-	attr.read(H5::PredType::NATIVE_DOUBLE, &timestep_);
-	// Lennard-Jones potential cutoff distance
-	attr = node.openAttribute("cutoff_distance");
-	attr.read(H5::PredType::NATIVE_DOUBLE, &cutoff_distance_);
-
-	// correlation function parameters
-	node = root.openGroup("autocorrelation");
-
-	// number of simulation steps
-	attr = node.openAttribute("steps");
-	attr.read(H5::PredType::NATIVE_UINT64, &steps_);
-	// total simulation time
-	attr = node.openAttribute("time");
-	attr.read(H5::PredType::NATIVE_DOUBLE, &time_);
-	// block size
-	attr = node.openAttribute("block_size");
-	attr.read(H5::PredType::NATIVE_UINT, &block_size_);
-	// block shift
-	attr = node.openAttribute("block_shift");
-	attr.read(H5::PredType::NATIVE_UINT, &block_shift_);
-	// block count
-	attr = node.openAttribute("block_count");
-	attr.read(H5::PredType::NATIVE_UINT, &block_count_);
-	// maximum number of samples per block
-	attr = node.openAttribute("max_samples");
-	attr.read(H5::PredType::NATIVE_UINT64, &max_samples_);
-	// number of q-valuess
-	attr = node.openAttribute("nq");
-	attr.read(H5::PredType::NATIVE_UINT, &q_values_);
-    }
-    catch (H5::Exception const& e) {
-	throw exception("failed to read parameters from HDF5 input file");
-    }
+    H5::DataType tid(H5::StrType(H5::PredType::C_S1, 256));
+    // write program info attributes
+    H5::Group node(param.createGroup("program"));
+    node.createAttribute("name", tid, H5S_SCALAR).write(tid, PROGRAM_NAME);
+    node.createAttribute("version", tid, H5S_SCALAR).write(tid, PROGRAM_VERSION);
+    node.createAttribute("variant", tid, H5S_SCALAR).write(tid, PROGRAM_VARIANT);
 }
 
 /**
- * write parameters to HDF5 file
+ * create attribute in given HDF5 group
  */
-void H5param::write(H5::Group root) const
+template <typename T>
+void H5param::attr(H5::Group const& node, char const* name, T value)
 {
     try {
-	H5::Attribute attr;
-	H5::Group node;
-
-	// Lennard-Jones fluid simulation parameters
-	node = root.createGroup("mdsim");
-
-	// positional coordinates dimension
-	attr = node.createAttribute("dimension", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT, &dimension_);
-	// number of particles
-	attr = node.createAttribute("particles", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT, &particles_);
-	// number of cells per dimension
-	attr = node.createAttribute("cells", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT, &cells_);
-	// particle density
-	attr = node.createAttribute("density", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_DOUBLE, &density_);
-	// periodic box length
-	attr = node.createAttribute("box_length", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_DOUBLE, &box_length_);
-	// cell length
-	attr = node.createAttribute("cell_length", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_DOUBLE, &cell_length_);
-	// simulation timestep
-	attr = node.createAttribute("timestep", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_DOUBLE, &timestep_);
-	// Lennard-Jones potential cutoff distance
-	attr = node.createAttribute("cutoff_distance", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_DOUBLE, &cutoff_distance_);
-
-	// correlation function parameters
-	node = root.createGroup("autocorrelation");
-
-	// number of simulation steps
-	attr = node.createAttribute("steps", H5::PredType::NATIVE_UINT64, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT64, &steps_);
-	// total simulation time
-	attr = node.createAttribute("time", H5::PredType::NATIVE_DOUBLE, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_DOUBLE, &time_);
-	// block size
-	attr = node.createAttribute("block_size", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT, &block_size_);
-	// block shift
-	attr = node.createAttribute("block_shift", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT, &block_shift_);
-	// block count
-	attr = node.createAttribute("block_count", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT, &block_count_);
-	// maximum number of samples per block
-	attr = node.createAttribute("max_samples", H5::PredType::NATIVE_UINT64, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT64, &max_samples_);
-	// number of q-values
-	attr = node.createAttribute("nq", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-	attr.write(H5::PredType::NATIVE_UINT, &q_values_);
-
-	// program info
-	node = root.createGroup("program");
-
-	// program name
-	attr = node.createAttribute("name", H5::StrType(H5::PredType::C_S1, 256), H5S_SCALAR);
-	attr.write(H5::StrType(H5::PredType::C_S1, 256), PROGRAM_NAME);
-	// program version
-	attr = node.createAttribute("version", H5::StrType(H5::PredType::C_S1, 256), H5S_SCALAR);
-	attr.write(H5::StrType(H5::PredType::C_S1, 256), PROGRAM_VERSION);
-	// program variant
-	attr = node.createAttribute("variant", H5::StrType(H5::PredType::C_S1, 256), H5S_SCALAR);
-	attr.write(H5::StrType(H5::PredType::C_S1, 256), PROGRAM_VARIANT);
+	H5type<T> tid;
+	H5::Attribute attr(node.createAttribute(name, tid, H5S_SCALAR));
+	attr.write(tid, &value);
     }
     catch (H5::Exception const& e) {
-	throw exception("failed to write parameters to HDF5 input file");
+	throw exception("failed to write parameter to HDF5 output file");
     }
 }
+
+// explicit template instantiation
+template void H5param::attr(H5::Group const&, char const*, int8_t);
+template void H5param::attr(H5::Group const&, char const*, uint8_t);
+template void H5param::attr(H5::Group const&, char const*, int16_t);
+template void H5param::attr(H5::Group const&, char const*, uint16_t);
+template void H5param::attr(H5::Group const&, char const*, int32_t);
+template void H5param::attr(H5::Group const&, char const*, uint32_t);
+template void H5param::attr(H5::Group const&, char const*, int64_t);
+template void H5param::attr(H5::Group const&, char const*, uint64_t);
+template void H5param::attr(H5::Group const&, char const*, float);
+template void H5param::attr(H5::Group const&, char const*, double);
 
 } // namespace mdsim

@@ -310,11 +310,7 @@ void options::parse(int argc, char** argv)
 	    po::store(po::parse_attribute<double>(node, "density"), vm_["density"]);
 	    po::store(po::parse_attribute<double>(node, "box_length"), vm_["box-length"]);
 	    po::store(po::parse_attribute<double>(node, "timestep"), vm_["timestep"]);
-	    po::store(po::parse_attribute<unsigned int>(node, "threads"), vm_["threads"]);
 	    po::store(po::parse_attribute<double>(node, "temperature"), vm_["temperature"]);
-#ifdef USE_CELL
-	    po::store(po::parse_attribute<double>(node, "cell_occupancy"), vm_["cell-occupancy"]);
-#endif
 
 	    node = param.openGroup("autocorrelation");
 	    po::store(po::parse_attribute<uint64_t>(node, "steps"), vm_["steps"]);

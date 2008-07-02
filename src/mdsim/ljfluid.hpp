@@ -116,6 +116,9 @@ public:
     /** get potential cutoff distance */
     double const& cutoff_distance() const;
 
+    /** write parameters to HDF5 parameter group */
+    void attrs(H5::Group const& param) const;
+
     /** MD simulation step */
     void mdstep();
     /** sample trajectory */
@@ -509,6 +512,23 @@ template <unsigned dimension, typename T>
 double const& ljfluid<dimension, T>::cutoff_distance() const
 {
     return r_cut;
+}
+
+/**
+ * write parameters to HDF5 parameter group
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::attrs(H5::Group const& param) const
+{
+    H5::Group node(param.createGroup("mdsim"));
+    H5param::attr(node, "dimension", dimension);
+    H5param::attr(node, "particles", npart);
+    H5param::attr(node, "cells", ncell);
+    H5param::attr(node, "cell_length", cell_length_);
+    H5param::attr(node, "density", density_);
+    H5param::attr(node, "box_length", box_);
+    H5param::attr(node, "timestep", timestep_);
+    H5param::attr(node, "cutoff_distance", r_cut);
 }
 
 /**
