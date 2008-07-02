@@ -91,9 +91,6 @@ H5param perf<dimension, T, U>::attrs()
 template <unsigned dimension, typename T, typename U>
 void perf<dimension, T, U>::write(perf_type const& times)
 {
-    H5::DataType ftid(H5::PredType::NATIVE_FLOAT);
-    H5::DataType utid(H5::PredType::NATIVE_UINT64);
-
     try {
 	H5::Group root(file_.createGroup("/times"));
 
@@ -110,9 +107,9 @@ void perf<dimension, T, U>::write(perf_type const& times)
 		const uint64_t count = acc->second.count();
 
 		H5::Group time(group.createGroup(acc->first));
-		time.createAttribute("mean", ftid, H5S_SCALAR).write(ftid, &mean);
-		time.createAttribute("sigma", ftid, H5S_SCALAR).write(ftid, &sigma);
-		time.createAttribute("count", utid, H5S_SCALAR).write(utid, &count);
+		H5param::attr(time, "mean", mean);
+		H5param::attr(time, "sigma", sigma);
+		H5param::attr(time, "count", count);
 
 		if (acc->second.count() > 1) {
 		    LOG(acc->first << "(" << it->first << ") average time: " << std::setprecision(4) << (mean * 1.E3f) << " ms (" << std::setprecision(4) << (sigma * 1.E3f) << " ms, " << count << " calls)");
