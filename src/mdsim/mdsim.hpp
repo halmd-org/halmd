@@ -24,7 +24,6 @@
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
 #include <stdint.h>
-#include "H5param.hpp"
 #include "autocorrelation.hpp"
 #include "perf.hpp"
 #include "block.hpp"
@@ -57,8 +56,6 @@ public:
 private:
     /** program options */
     options const& opts;
-    /** global simulation parameters */
-    H5param param;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T, U> fluid;
     /** block algorithm parameters */
@@ -71,151 +68,58 @@ private:
 template <unsigned dimension, typename T, typename U>
 mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
 {
-    // set positional coordinates dimension
-    param.dimension(dimension);
     LOG("positional coordinates dimension: " << dimension);
 
-    // initialize Lennard Jones fluid simulation
+    // set number of particles in system
+    fluid.particles(opts.particles().value());
+    // set simulation box length or particle density
+    if (opts.density().defaulted() && !opts.box_length().empty())
+	fluid.box(opts.box_length().value());
+    else
+	fluid.density(opts.density().value());
+#ifdef USE_CELL
+    // compute cell parameters
+    fluid.cell_occupancy(opts.cell_occupancy().value());
+#endif
+    // set number of CUDA execution threads
+    fluid.threads(opts.threads().value());
+
     if (!opts.trajectory_input_file().empty()) {
 	trajectory<dimension, T, U, false> traj;
 	// open trajectory input file
 	traj.open(opts.trajectory_input_file().value());
-
-	// read global simulation parameters
-	traj.read(param);
-	// set number of particles in system
-	fluid.particles(param.particles());
-	// set particle density
-	fluid.density(!opts.density().defaulted() ? opts.density().value() : param.density());
-#ifdef USE_CELL
-	// compute cell parameters
-	fluid.cell_occupancy(opts.cell_occupancy().value());
-#endif
-	// set number of CUDA execution threads
-	fluid.threads(!opts.threads().defaulted() ? opts.threads().value() : param.threads());
 	// read trajectory sample and restore system state
 	fluid.restore(boost::bind(&trajectory<dimension, T, U, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
-
 	// close trajectory input file
 	traj.close();
-
-	// initialize random number generator with seed
-	fluid.rng(opts.rng_seed().value());
-
-	if (!opts.temperature().defaulted()) {
-	    LOG_WARNING("discarding velocities from trajectory file");
-	    // set system temperature according to Maxwell-Boltzmann distribution
-	    fluid.temperature(opts.temperature().value());
-	}
-
-	// override parameters with non-default option values
-	if (!opts.timestep().defaulted()) {
-	    param.timestep(opts.timestep().value());
-	}
-#ifndef USE_BENCHMARK
-	if (!opts.block_size().defaulted()) {
-	    param.block_size(opts.block_size().value());
-	}
-	if (!opts.max_samples().defaulted()) {
-	    param.max_samples(opts.max_samples().value());
-	}
-	if (!opts.q_values().defaulted()) {
-	    param.q_values(opts.q_values().value());
-	}
-#endif
-	if (!opts.steps().defaulted()) {
-	    param.steps(opts.steps().value());
-	}
     }
     else {
-	// set number of particles in system
-	fluid.particles(opts.particles().value());
-
-	if (!opts.box_length().empty()) {
-	    // set simulation box length
-	    fluid.box(opts.box_length().value());
-	}
-	else {
-	    // set particle density
-	    fluid.density(opts.density().value());
-	}
-#ifdef USE_CELL
-	// compute cell parameters
-	fluid.cell_occupancy(opts.cell_occupancy().value());
-#endif
-
-	// set number of CUDA execution threads
-	fluid.threads(opts.threads().value());
-	// initialize random number generator with seed
-	fluid.rng(opts.rng_seed().value());
 	// arrange particles on a face-centered cubic (fcc) lattice
 	fluid.lattice();
-	// set system temperature according to Maxwell-Boltzmann distribution
-	fluid.temperature(opts.temperature().value());
-
-	// gather parameters from option values
-	param.timestep(opts.timestep().value());
-#ifndef USE_BENCHMARK
-	param.block_size(opts.block_size().value());
-	param.max_samples(opts.max_samples().value());
-	param.q_values(opts.q_values().value());
-#endif
-	param.steps(opts.steps().value());
     }
 
-    // gather number of particles
-    param.particles(fluid.particles());
-#ifdef USE_CELL
-    // gather number of cells per dimension
-    param.cells(fluid.cells());
-    // gather total number of cell placeholders
-    param.placeholders(fluid.placeholders());
-#endif
-    // gather number of CUDA execution blocks in grid
-    param.blocks(fluid.blocks());
-    // gather particle density
-    param.density(fluid.density());
-    // gather simulation box length
-    param.box_length(fluid.box());
-#ifdef USE_CELL
-    // gather cell length
-    param.cell_length(fluid.cell_length());
-    // gather average cell occupancy
-    param.cell_occupancy(fluid.cell_occupancy());
-    // gather number of placeholders per cell
-    param.cell_size(fluid.cell_size());
-#endif
-    // gather number of CUDA execution threads per block
-    param.threads(fluid.threads());
-    // gather potential cutoff distance
-    param.cutoff_distance(fluid.cutoff_distance());
-
+    if (opts.trajectory_input_file().empty() || !opts.temperature().defaulted()) {
+	// initialize random number generator with seed
+	fluid.rng(opts.rng_seed().value());
+	// set system temperature according to Maxwell-Boltzmann distribution
+	fluid.temperature(opts.temperature().value());
+    }
     // set simulation timestep
-    fluid.timestep(param.timestep());
+    fluid.timestep(opts.timestep().value());
 
 #ifndef USE_BENCHMARK
     if (!opts.time().empty()) {
 	// set total simulation time
-	block.time(opts.time().value(), param.timestep());
+	block.time(opts.time().value(), opts.timestep().value());
     }
     else {
 	// set total number of simulation steps
-	block.steps(param.steps(), param.timestep());
+	block.steps(opts.steps().value(), opts.timestep().value());
     }
-    // gather total number of simulation steps
-    param.steps(block.steps());
-    // gather total simulation time
-    param.time(block.time());
-
     // set block size
-    block.block_size(param.block_size());
-    // gather block shift
-    param.block_shift(block.block_shift());
-    // gather block count
-    param.block_count(block.block_count());
-
+    block.block_size(opts.block_size().value());
     // set maximum number of samples per block
-    block.max_samples(param.max_samples());
+    block.max_samples(opts.max_samples().value());
 #endif
 }
 
@@ -225,32 +129,33 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T, typename U>
 void mdsim<dimension, T, U>::operator()()
 {
-    // handle signals
-    signal_handler signal;
 #ifndef USE_BENCHMARK
     // time correlation functions
-    autocorrelation<dimension, T, U> tcf(block, param.box_length(), opts.q_values().value());
+    autocorrelation<dimension, T, U> tcf(block, fluid.box(), opts.q_values().value());
     tcf.open(opts.output_file_prefix().value() + ".tcf");
-    tcf << param;
+    tcf.attrs() << fluid << block << tcf;
     // trajectory file writer
     trajectory<dimension, T, U> traj(block);
     if (opts.dump_trajectories().value()) {
-	traj.open(opts.output_file_prefix().value() + ".trj", param.particles());
-	traj << param;
+	traj.open(opts.output_file_prefix().value() + ".trj", fluid.particles());
+	traj.attrs() << fluid << block << tcf;
     }
     // thermodynamic equilibrium properties
     energy<dimension, T, U> tep(block);
     tep.open(opts.output_file_prefix().value() + ".tep");
-    tep << param;
+    tep.attrs() << fluid << block << tcf;
 #endif
     // performance data
     perf<dimension, T, U> prf;
     prf.open(opts.output_file_prefix().value() + ".prf");
-    prf << param;
+    prf.attrs() << fluid << block << tcf;
+
+    // handle signals
+    signal_handler signal;
 
     LOG("starting MD simulation");
 
-    for (uint64_t step = 0; step < param.steps(); ++step) {
+    for (uint64_t step = 0; step < block.steps(); ++step) {
 	// abort simulation on signal
 	if (signal.get()) {
 	    LOG_WARNING("caught signal at simulation step " << step);
@@ -265,10 +170,10 @@ void mdsim<dimension, T, U>::operator()()
 	// sample time correlation functions
 	fluid.sample(boost::bind(&autocorrelation<dimension, T, U>::sample, boost::ref(tcf), _2, _3));
 	// sample thermodynamic equilibrium properties
-	fluid.sample(boost::bind(&energy<dimension, T, U>::sample, boost::ref(tep), _3, _4, _5, param.density(), param.timestep()));
+	fluid.sample(boost::bind(&energy<dimension, T, U>::sample, boost::ref(tep), _3, _4, _5, fluid.density(), fluid.timestep()));
 	// sample trajectory
 	if (opts.dump_trajectories().value()) {
-	    fluid.sample(boost::bind(&trajectory<dimension, T, U>::sample, boost::ref(traj), _1, _3, param.particles(), param.timestep()));
+	    fluid.sample(boost::bind(&trajectory<dimension, T, U>::sample, boost::ref(traj), _1, _3, fluid.particles(), fluid.timestep()));
 	}
 #endif
 	// synchronize MD simulation program step on GPU

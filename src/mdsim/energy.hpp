@@ -57,8 +57,8 @@ public:
 
     /** create HDF5 thermodynamic equilibrium properties output file */
     void open(std::string const& filename);
-    /** dump global simulation parameters to HDF5 file */
-    energy<dimension, T, U>& operator<<(H5param const& param);
+    /** returns HDF5 parameter group */
+    H5param attrs();
     /** sample thermodynamic equilibrium properties */
     void sample(vector_type const& v, float const& en_pot, float const& virial, float const& density, float const& timestep);
     /** write thermodynamic equilibrium properties to HDF5 file */
@@ -124,17 +124,17 @@ void energy<dimension, T, U>::open(std::string const& filename)
     catch (H5::FileIException const& e) {
 	throw exception("failed to create thermodynamic equilibrium properties output file");
     }
-
+    // create parameter group
+    file_.createGroup("param");
 }
 
 /**
- * dump global simulation parameters to HDF5 file
+ * returns HDF5 parameter group
  */
 template <unsigned dimension, typename T, typename U>
-energy<dimension, T, U>& energy<dimension, T, U>::operator<<(H5param const& param)
+H5param energy<dimension, T, U>::attrs()
 {
-    param.write(file_.createGroup("/parameters"));
-    return *this;
+    return H5param(file_.openGroup("param"));
 }
 
 /**

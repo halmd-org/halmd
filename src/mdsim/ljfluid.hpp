@@ -102,6 +102,9 @@ public:
     /** get potential cutoff distance */
     float const& cutoff_distance() const;
 
+    /** write parameters to HDF5 parameter group */
+    void attrs(H5::Group const& param) const;
+
     /** stream MD simulation step on GPU */
     void mdstep();
     /** synchronize MD simulation step on GPU */
@@ -909,6 +912,29 @@ template <unsigned dimension, typename T, typename U>
 float const& ljfluid<dimension, T, U>::cutoff_distance() const
 {
     return r_cut;
+}
+
+/**
+ * write parameters to HDF5 parameter group
+ */
+template <unsigned dimension, typename T, typename U>
+void ljfluid<dimension, T, U>::attrs(H5::Group const& param) const
+{
+    H5::Group node(param.createGroup("mdsim"));
+    H5param::attr(node, "dimension", dimension);
+    H5param::attr(node, "particles", npart);
+#ifdef USE_CELL
+    H5param::attr(node, "cells", ncell);
+    H5param::attr(node, "placeholders", nplace);
+    H5param::attr(node, "cell_length", cell_length_);
+    H5param::attr(node, "cell_occupancy", cell_occupancy_);
+#endif
+    H5param::attr(node, "blocks", dim_.blocks_per_grid());
+    H5param::attr(node, "threads", dim_.threads_per_block());
+    H5param::attr(node, "density", density_);
+    H5param::attr(node, "box_length", box_);
+    H5param::attr(node, "timestep", timestep_);
+    H5param::attr(node, "cutoff_distance", r_cut);
 }
 
 /**
