@@ -11,7 +11,7 @@ CONFIGURE_FILE(
 
 
 FOREACH(dim RANGE 2 3)
-  ADD_EXECUTABLE(ljfluid${dim}d main.cpp options.cpp H5param.cpp H5ctype.cpp log.cpp)
+  ADD_EXECUTABLE(ljfluid${dim}d main.cpp options.cpp H5param.cpp H5xx.cpp log.cpp)
   SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES COMPILE_DEFINITIONS "DIM_${dim}D")
   TARGET_LINK_LIBRARIES(ljfluid${dim}d
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

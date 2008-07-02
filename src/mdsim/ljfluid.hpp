@@ -29,6 +29,7 @@
 #include <sys/times.h>
 #include <vector>
 #include "H5param.hpp"
+#include "H5xx.hpp"
 #include "accumulator.hpp"
 #include "exception.hpp"
 #include "gsl_rng.hpp"
@@ -520,15 +521,15 @@ double const& ljfluid<dimension, T>::cutoff_distance() const
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::attrs(H5::Group const& param) const
 {
-    H5::Group node(param.createGroup("mdsim"));
-    H5param::attr(node, "dimension", dimension);
-    H5param::attr(node, "particles", npart);
-    H5param::attr(node, "cells", ncell);
-    H5param::attr(node, "cell_length", cell_length_);
-    H5param::attr(node, "density", density_);
-    H5param::attr(node, "box_length", box_);
-    H5param::attr(node, "timestep", timestep_);
-    H5param::attr(node, "cutoff_distance", r_cut);
+    H5xx::group node(param.createGroup("mdsim"));
+    node["dimension"] = dimension;
+    node["particles"] = npart;
+    node["cells"] = ncell;
+    node["cell_length"] = cell_length_;
+    node["density"] = density_;
+    node["box_length"] = box_;
+    node["timestep"] = timestep_;
+    node["cutoff_distance"] = r_cut;
 }
 
 /**

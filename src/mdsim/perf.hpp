@@ -26,6 +26,7 @@
 #include <sys/times.h>
 #include <unistd.h>
 #include "H5param.hpp"
+#include "H5xx.hpp"
 #include "accumulator.hpp"
 #include "log.hpp"
 #include "statistics.hpp"
@@ -111,10 +112,10 @@ void perf<dimension, T>::write(perf_type const& times)
 		// number of calls
 		const uint64_t count = acc->second.count();
 
-		H5::Group time(group.createGroup(acc->first));
-		H5param::attr(time, "mean", mean);
-		H5param::attr(time, "sigma", sigma);
-		H5param::attr(time, "count", count);
+		H5xx::group time(group.createGroup(acc->first));
+		time["mean"] = mean;
+		time["sigma"] = sigma;
+		time["count"] = count;
 
 		if (acc->second.count() > 1) {
 		    LOG(acc->first << "(" << it->first << ") average time: " << std::setprecision(4) << (mean * 1.E3) << " ms (" << std::setprecision(4) << (sigma * 1.E3) << " ms, " << count << " calls)");
