@@ -331,7 +331,7 @@ void options::parse(int argc, char** argv)
 	    po::store(po::parse_attribute<float>(node, "cell_occupancy"), vm_["cell-occupancy"]);
 #endif
 
-	    node = param.openGroup("autocorrelation");
+	    node = param.openGroup("correlation");
 	    po::store(po::parse_attribute<uint64_t>(node, "steps"), vm_["steps"]);
 	    po::store(po::parse_attribute<float>(node, "time"), vm_["time"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "block_size"), vm_["block-size"]);

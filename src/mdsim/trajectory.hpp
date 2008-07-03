@@ -26,7 +26,6 @@
 #include <cuda_wrapper.hpp>
 #include <string>
 #include "H5param.hpp"
-#include "block.hpp"
 #include "exception.hpp"
 #include "log.hpp"
 
@@ -47,7 +46,6 @@ public:
     typedef cuda::host::vector<U> vector_type;
 
 public:
-    trajectory(block_param<dimension, T> const& param) : param(param), samples_(0) {}
     /** create HDF5 trajectory output file */
     void open(std::string const& filename, unsigned int const& npart);
     /** close HDF5 trajectory output file */
@@ -55,24 +53,19 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** write phase space sample */
-    void sample(vector_type const& r, vector_type const& v, unsigned int const& npart, float const& timestep);
+    void sample(vector_type const& r, vector_type const& v, float const& time);
 
 private:
-    /** block algorithm parameters */
-    block_param<dimension, T> param;
-    /** number of samples */
-    uint64_t samples_;
-
     /** HDF5 trajectory output file */
-    H5::H5File file_;
+    H5::H5File m_file;
     /** trajectory datasets for particle coordinates and velocities */
-    boost::array<H5::DataSet, 3> dataset_;
+    boost::array<H5::DataSet, 3> m_dataset;
     /** memory dataspace for a single coordinates or velocities sample */
-    H5::DataSpace ds_mem_;
+    H5::DataSpace m_ds_mem;
     /** file dataspace for a single coordinates or velocities sample */
-    H5::DataSpace ds_file_;
+    H5::DataSpace m_ds_file;
     /** file dataspace for simulation time */
-    H5::DataSpace ds_scalar_;
+    H5::DataSpace m_ds_scalar;
 };
 
 /**
@@ -85,13 +78,13 @@ void trajectory<dimension, T, U, true>::open(std::string const& filename, unsign
     LOG("write trajectories to file: " << filename);
     try {
 	// truncate existing file
-	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
+	m_file = H5::H5File(filename, H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create trajectory output file");
     }
     // create parameter group
-    file_.createGroup("param");
+    m_file.createGroup("param");
 
     // modify dataset creation properties to enable chunking
     H5::DSetCreatPropList cparms;
@@ -101,27 +94,27 @@ void trajectory<dimension, T, U, true>::open(std::string const& filename, unsign
     // create datasets
     hsize_t dim[3] = { 0, npart, dimension };
     hsize_t max_dim[3] = { H5S_UNLIMITED, npart, dimension };
-    ds_file_ = H5::DataSpace(3, dim, max_dim);
-    H5::Group root(file_.createGroup("trajectory"));
-    dataset_[0] = root.createDataSet("positions", H5::PredType::NATIVE_FLOAT, ds_file_, cparms);
-    dataset_[1] = root.createDataSet("velocities", H5::PredType::NATIVE_FLOAT, ds_file_, cparms);
+    m_ds_file = H5::DataSpace(3, dim, max_dim);
+    H5::Group root(m_file.createGroup("trajectory"));
+    m_dataset[0] = root.createDataSet("positions", H5::PredType::NATIVE_FLOAT, m_ds_file, cparms);
+    m_dataset[1] = root.createDataSet("velocities", H5::PredType::NATIVE_FLOAT, m_ds_file, cparms);
 
     hsize_t dim_mem[2] = { npart, sizeof(U) / sizeof(float) };
-    ds_mem_ = H5::DataSpace(2, dim_mem);
+    m_ds_mem = H5::DataSpace(2, dim_mem);
 
     hsize_t count_mem[2]  = { npart, 1 };
     hsize_t start_mem[2]  = { 0, 0 };
     hsize_t stride_mem[2] = { 1, 1 };
     hsize_t block_mem[2]  = { 1, dimension };
-    ds_mem_.selectHyperslab(H5S_SELECT_SET, count_mem, start_mem, stride_mem, block_mem);
+    m_ds_mem.selectHyperslab(H5S_SELECT_SET, count_mem, start_mem, stride_mem, block_mem);
 
     hsize_t chunk_scalar[1] = { 1 };
     cparms.setChunk(1, chunk_scalar);
 
     hsize_t dim_scalar[1] = { 0 };
     hsize_t max_dim_scalar[1] = { H5S_UNLIMITED };
-    ds_scalar_ = H5::DataSpace(1, dim_scalar, max_dim_scalar);
-    dataset_[2] = root.createDataSet("time", H5::PredType::NATIVE_FLOAT, ds_scalar_, cparms);
+    m_ds_scalar = H5::DataSpace(1, dim_scalar, max_dim_scalar);
+    m_dataset[2] = root.createDataSet("time", H5::PredType::NATIVE_FLOAT, m_ds_scalar, cparms);
 }
 
 /**
@@ -131,7 +124,7 @@ template <unsigned dimension, typename T, typename U>
 void trajectory<dimension, T, U, true>::close()
 {
     try {
-	file_.close();
+	m_file.close();
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to close HDF5 trajectory input file");
@@ -144,52 +137,52 @@ void trajectory<dimension, T, U, true>::close()
 template <unsigned dimension, typename T, typename U>
 H5param trajectory<dimension, T, U, true>::attrs()
 {
-    return H5param(file_.openGroup("param"));
+    return H5param(m_file.openGroup("param"));
 }
 
 /**
  * write phase space sample
  */
 template <unsigned dimension, typename T, typename U>
-void trajectory<dimension, T, U, true>::sample(vector_type const& r, vector_type const& v, unsigned int const& npart, float const& timestep)
+void trajectory<dimension, T, U, true>::sample(vector_type const& r, vector_type const& v, float const& time)
 {
-    assert(r.size() == npart);
-    assert(v.size() == npart);
+    hsize_t dim[3];
+    m_ds_file.getSimpleExtentDims(dim);
 
-    // absolute simulation time
-    const float time_ = samples_ * timestep;
-
-    hsize_t dim[3] = { samples_ + 1, npart, dimension };
-    ds_file_.setExtentSimple(3, dim);
-
-    hsize_t count[3]  = { 1, npart, 1 };
-    hsize_t start[3]  = { samples_, 0, 0 };
+    hsize_t count[3]  = { 1, dim[1], 1 };
+    hsize_t start[3]  = { dim[0], 0, 0 };
     hsize_t stride[3] = { 1, 1, 1 };
-    hsize_t block[3]  = { 1, 1, dimension };
+    hsize_t block[3]  = { 1, 1, dim[2] };
 
-    ds_file_.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
+    dim[0]++;
+    m_ds_file.setExtentSimple(3, dim);
+    m_ds_file.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
-    hsize_t dim_scalar[1] = { samples_ + 1 };
-    ds_scalar_.setExtentSimple(1, dim_scalar);
+    assert(r.size() == dim[1]);
+    assert(v.size() == dim[1]);
+
+    // write periodically reduced particle coordinates
+    m_dataset[0].extend(dim);
+    m_dataset[0].write(r.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
+    // write particle velocities
+    m_dataset[1].extend(dim);
+    m_dataset[1].write(v.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
+
+    hsize_t dim_scalar[1];
+    m_ds_scalar.getSimpleExtentDims(dim_scalar);
 
     hsize_t count_scalar[1]  = { 1 };
-    hsize_t start_scalar[1]  = { samples_ };
+    hsize_t start_scalar[1]  = { dim_scalar[0] };
     hsize_t stride_scalar[1] = { 1 };
     hsize_t block_scalar[1]  = { 1 };
 
-    ds_scalar_.selectHyperslab(H5S_SELECT_SET, count_scalar, start_scalar, stride_scalar, block_scalar);
+    dim_scalar[0]++;
+    m_ds_scalar.setExtentSimple(1, dim_scalar);
+    m_ds_scalar.selectHyperslab(H5S_SELECT_SET, count_scalar, start_scalar, stride_scalar, block_scalar);
 
-    // write periodically reduced particle coordinates
-    dataset_[0].extend(dim);
-    dataset_[0].write(r.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
-    // write particle velocities
-    dataset_[1].extend(dim);
-    dataset_[1].write(v.data(), H5::PredType::NATIVE_FLOAT, ds_mem_, ds_file_);
     // write simulation time
-    dataset_[2].extend(dim_scalar);
-    dataset_[2].write(&time_, H5::PredType::NATIVE_FLOAT, H5S_SCALAR, ds_scalar_);
-
-    samples_++;
+    m_dataset[2].extend(dim_scalar);
+    m_dataset[2].write(&time, H5::PredType::NATIVE_FLOAT, H5S_SCALAR, m_ds_scalar);
 }
 
 /**
