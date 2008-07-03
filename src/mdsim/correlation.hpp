@@ -395,7 +395,7 @@ void correlation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> c
     sample_type sample(r, v, m_q_vector);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
-	if (m_block_samples[i] > m_max_samples)
+	if (m_block_samples[i] >= m_max_samples)
 	    continue;
 	if (step % m_block_freq[i])
 	    continue;
@@ -409,6 +409,9 @@ void correlation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> c
 		m_block[i].clear();
 	    }
 	    m_block_samples[i]++;
+	    if (m_max_samples == m_block_samples[i]) {
+		LOG("finished sampling on block level " << i << " at step " << step);
+	    }
 	}
     }
 }
