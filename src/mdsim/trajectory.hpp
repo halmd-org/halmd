@@ -48,13 +48,13 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** write phase space sample */
-    void sample(std::vector<T> const& r, std::vector<T> const& v, double const& time);
+    void sample(std::vector<T> const& r, std::vector<T> const& R, std::vector<T> const& v, double const& time);
 
 private:
     /** HDF5 trajectory output file */
     H5::H5File m_file;
     /** trajectory datasets for particle coordinates and velocities */
-    boost::array<H5::DataSet, 3> m_dataset;
+    boost::array<H5::DataSet, 4> m_dataset;
     /** memory dataspace for a single coordinates or velocities sample */
     H5::DataSpace m_ds_mem;
     /** file dataspace for a single coordinates or velocities sample */
@@ -91,8 +91,9 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
     hsize_t max_dim[3] = { H5S_UNLIMITED, npart, dimension };
     m_ds_file = H5::DataSpace(3, dim, max_dim);
     H5::Group root(m_file.createGroup("trajectory"));
-    m_dataset[0] = root.createDataSet("positions", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
-    m_dataset[1] = root.createDataSet("velocities", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
+    m_dataset[0] = root.createDataSet("r", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
+    m_dataset[1] = root.createDataSet("R", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
+    m_dataset[2] = root.createDataSet("v", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
 
     hsize_t dim_mem[2] = { npart, dimension };
     m_ds_mem = H5::DataSpace(2, dim_mem);
@@ -103,7 +104,7 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
     hsize_t dim_scalar[1] = { 0 };
     hsize_t max_dim_scalar[1] = { H5S_UNLIMITED };
     m_ds_scalar = H5::DataSpace(1, dim_scalar, max_dim_scalar);
-    m_dataset[2] = root.createDataSet("time", H5::PredType::NATIVE_DOUBLE, m_ds_scalar, cparms);
+    m_dataset[3] = root.createDataSet("t", H5::PredType::NATIVE_DOUBLE, m_ds_scalar, cparms);
 }
 
 /**
@@ -133,7 +134,7 @@ H5param trajectory<dimension, T, true>::attrs()
  * write phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector<T> const& v, double const& time)
+void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector<T> const& R, std::vector<T> const& v, double const& time)
 {
     hsize_t dim[3];
     m_ds_file.getSimpleExtentDims(dim);
@@ -148,14 +149,18 @@ void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector
     m_ds_file.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     assert(r.size() == dim[1]);
+    assert(R.size() == dim[1]);
     assert(v.size() == dim[1]);
 
     // write periodically reduced particle coordinates
     m_dataset[0].extend(dim);
     m_dataset[0].write(r.data(), H5::PredType::NATIVE_DOUBLE, m_ds_mem, m_ds_file);
-    // write particle velocities
+    // write periodically extended particle coordinates
     m_dataset[1].extend(dim);
-    m_dataset[1].write(v.data(), H5::PredType::NATIVE_DOUBLE, m_ds_mem, m_ds_file);
+    m_dataset[1].write(R.data(), H5::PredType::NATIVE_DOUBLE, m_ds_mem, m_ds_file);
+    // write particle velocities
+    m_dataset[2].extend(dim);
+    m_dataset[2].write(v.data(), H5::PredType::NATIVE_DOUBLE, m_ds_mem, m_ds_file);
 
     hsize_t dim_scalar[1];
     m_ds_scalar.getSimpleExtentDims(dim_scalar);
@@ -170,8 +175,8 @@ void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector
     m_ds_scalar.selectHyperslab(H5S_SELECT_SET, count_scalar, start_scalar, stride_scalar, block_scalar);
 
     // write simulation time
-    m_dataset[2].extend(dim_scalar);
-    m_dataset[2].write(&time, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, m_ds_scalar);
+    m_dataset[3].extend(dim_scalar);
+    m_dataset[3].write(&time, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, m_ds_scalar);
 }
 
 /**
@@ -231,9 +236,9 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
     try {
 	// open phase space coordinates datasets
 	H5::Group root(file.openGroup("trajectory"));
-	H5::DataSet dataset_r(root.openDataSet("positions"));
+	H5::DataSet dataset_r(root.openDataSet("r"));
 	H5::DataSpace ds_r(dataset_r.getSpace());
-	H5::DataSet dataset_v(root.openDataSet("velocities"));
+	H5::DataSet dataset_v(root.openDataSet("v"));
 	H5::DataSpace ds_v(dataset_v.getSpace());
 
 	// validate dataspace extents
@@ -296,7 +301,7 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
 	hsize_t stride[3] = { 1, 1, 1 };
 	hsize_t block[3]  = { 1, 1, dimension };
 
-	// read particle positions
+	// read periodically reduced particle positions
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 	dataset_r.read(r.data(), H5::PredType::NATIVE_DOUBLE, ds_mem, ds_r);
 	// read particle velocities

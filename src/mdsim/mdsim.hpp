@@ -194,7 +194,7 @@ void mdsim<dimension, T>::operator()()
 	    fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, fluid.density(), tcf.timestep(), time));
 	    // sample trajectory
 	    if (opts.dump_trajectories().value()) {
-		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _3, time));
+		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, _3, time));
 	    }
 	    // advance phase space state to given sample time
 	    fluid.mdstep(step * tcf.timestep());
