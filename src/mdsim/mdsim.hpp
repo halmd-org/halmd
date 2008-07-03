@@ -21,8 +21,7 @@
 
 #include <boost/bind.hpp>
 #include <stdint.h>
-#include "autocorrelation.hpp"
-#include "block.hpp"
+#include "correlation.hpp"
 #include "energy.hpp"
 #include "ljfluid.hpp"
 #include "log.hpp"
@@ -52,8 +51,14 @@ private:
     options const& opts;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T> fluid;
-    /** block algorithm parameters */
-    block_param<dimension, T> block;
+    /** block correlations */
+    correlation<dimension, T> tcf;
+    /**  trajectory file writer */
+    trajectory<dimension, T> traj;
+    /** thermodynamic equilibrium properties */
+    energy<dimension, T> tep;
+    /** performance data */
+    perf<dimension, T> prf;
 };
 
 /**
@@ -100,16 +105,18 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 #ifndef USE_BENCHMARK
     if (!opts.time().empty()) {
 	// set total simulation time
-	block.time(opts.time().value(), opts.timestep().value());
+	tcf.time(opts.time().value(), opts.timestep().value());
     }
     else {
 	// set total number of simulation steps
-	block.steps(opts.steps().value(), opts.timestep().value());
+	tcf.steps(opts.steps().value(), opts.timestep().value());
     }
     // set block size
-    block.block_size(opts.block_size().value());
+    tcf.block_size(opts.block_size().value());
     // set maximum number of samples per block
-    block.max_samples(opts.max_samples().value());
+    tcf.max_samples(opts.max_samples().value());
+    // set q-vectors for spatial Fourier transformation
+    tcf.q_values(opts.q_values().value(), fluid.box());
 #endif
 }
 
@@ -121,25 +128,21 @@ void mdsim<dimension, T>::operator()()
 {
 #ifndef USE_BENCHMARK
     // time correlation functions
-    autocorrelation<dimension, T> tcf(block, fluid.box(), opts.q_values().value());
     tcf.open(opts.output_file_prefix().value() + ".tcf");
-    tcf.attrs() << fluid << block << tcf;
+    tcf.attrs() << fluid << tcf;
     // trajectory file writer
-    trajectory<dimension, T> traj(block);
     if (opts.dump_trajectories().value()) {
 	traj.open(opts.output_file_prefix().value() + ".trj", fluid.particles());
-	traj.attrs() << fluid << block << tcf;
+	traj.attrs() << fluid << tcf;
     }
     // thermodynamic equilibrium properties
-    energy<dimension, T> tep(block);
     tep.open(opts.output_file_prefix().value() + ".tep");
-    tep.attrs() << fluid << block << tcf;
+    tep.attrs() << fluid << tcf;
 #endif
     // performance data
-    perf<dimension, T> prf;
     prf.open(opts.output_file_prefix().value() + ".prf");
 #ifndef USE_BENCHMARK
-    prf.attrs() << fluid << block << tcf;
+    prf.attrs() << fluid << tcf;
 #else
     prf.attrs() << fluid;
 #endif
@@ -149,7 +152,7 @@ void mdsim<dimension, T>::operator()()
 
     LOG("starting MD simulation");
 
-    for (uint64_t step = 0; step < block.steps(); ++step) {
+    for (uint64_t step = 0; step < tcf.steps(); ++step) {
 	// abort simulation on signal
 	if (signal.get()) {
 	    LOG_WARNING("caught signal at simulation step " << step);
@@ -157,13 +160,18 @@ void mdsim<dimension, T>::operator()()
 	}
 
 #ifndef USE_BENCHMARK
-	// sample time correlation functions
-	fluid.sample(boost::bind(&autocorrelation<dimension, T>::sample, boost::ref(tcf), _1, _2));
-	// sample thermodynamic equilibrium properties
-	fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, fluid.density(), fluid.timestep()));
-	if (opts.dump_trajectories().value()) {
-	    // sample trajectory
-	    fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, fluid.particles(), fluid.timestep()));
+	// check if sample is acquired for given simulation step
+	if (tcf.sample(step)) {
+	    // simulation time
+	    const double time = step * fluid.timestep();
+	    // sample time correlation functions
+	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _1, _2, step));
+	    // sample thermodynamic equilibrium properties
+	    fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, fluid.density(), time));
+	    if (opts.dump_trajectories().value()) {
+		// sample trajectory
+		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, time));
+	    }
 	}
 #endif
 
@@ -177,13 +185,13 @@ void mdsim<dimension, T>::operator()()
     // write time correlation function results to HDF5 file
     tcf.write();
     tcf.close();
-    // write thermodynamic equilibrium properties to HDF5 file
-    tep.write();
-    tep.close();
     // close HDF5 trajectory output file
     if (opts.dump_trajectories().value()) {
 	traj.close();
     }
+    // write thermodynamic equilibrium properties to HDF5 file
+    tep.write();
+    tep.close();
 #endif
     // write performance data to HDF5 file
     prf.write(fluid.times());
