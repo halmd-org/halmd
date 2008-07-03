@@ -22,12 +22,12 @@
 #include <boost/bind.hpp>
 #include <stdint.h>
 #include "autocorrelation.hpp"
-#include "perf.hpp"
 #include "block.hpp"
 #include "energy.hpp"
 #include "hardspheres.hpp"
 #include "log.hpp"
 #include "options.hpp"
+#include "perf.hpp"
 #include "signal.hpp"
 #include "trajectory.hpp"
 

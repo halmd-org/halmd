@@ -19,6 +19,8 @@
 #ifndef MDSIM_STATISTICS_HPP
 #define MDSIM_STATISTICS_HPP
 
+#include <stddef.h>
+
 namespace mdsim
 {
 
