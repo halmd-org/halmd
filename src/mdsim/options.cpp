@@ -318,7 +318,7 @@ void options::parse(int argc, char** argv)
 	    po::store(po::parse_attribute<double>(node, "box_length"), vm_["box-length"]);
 	    po::store(po::parse_attribute<double>(node, "temperature"), vm_["temperature"]);
 
-	    node = param.openGroup("autocorrelation");
+	    node = param.openGroup("correlation");
 	    po::store(po::parse_attribute<uint64_t>(node, "steps"), vm_["steps"]);
 	    po::store(po::parse_attribute<double>(node, "time"), vm_["time"]);
 	    po::store(po::parse_attribute<double>(node, "timestep"), vm_["timestep"]);
