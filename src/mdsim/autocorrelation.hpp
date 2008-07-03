@@ -27,6 +27,7 @@
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
+#include <cuda_wrapper.hpp>
 #include <string>
 #include <vector>
 #include "H5param.hpp"

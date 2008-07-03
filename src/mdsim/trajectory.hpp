@@ -27,8 +27,8 @@
 #include <string>
 #include "H5param.hpp"
 #include "block.hpp"
-#include "log.hpp"
 #include "exception.hpp"
+#include "log.hpp"
 
 
 namespace mdsim {

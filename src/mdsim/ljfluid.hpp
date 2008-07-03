@@ -28,12 +28,12 @@
 #include "H5param.hpp"
 #include "H5xx.hpp"
 #include "accumulator.hpp"
-#include "perf.hpp"
 #include "exception.hpp"
-#include "log.hpp"
-#include "statistics.hpp"
-#include "rand48.hpp"
 #include "gpu/ljfluid_glue.hpp"
+#include "log.hpp"
+#include "perf.hpp"
+#include "rand48.hpp"
+#include "statistics.hpp"
 
 
 #define foreach BOOST_FOREACH
