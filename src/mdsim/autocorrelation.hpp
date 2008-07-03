@@ -141,6 +141,9 @@ public:
     /** initialize correlation functions */
     autocorrelation(block_param<dimension, T> const& param, float const& box, unsigned int nq);
 
+    /** returns number of wave vectors */
+    unsigned int q_values() { return q_.size(); }
+
     /** create HDF5 correlations output file */
     void open(std::string const& filename);
     /** returns HDF5 parameter group */

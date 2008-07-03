@@ -77,31 +77,31 @@ public:
     void timestep(float value);
 
     /** get number of particles */
-    unsigned int const& particles() const;
+    unsigned int const& particles() const { return npart; }
 #ifdef USE_CELL
     /** get number of cells per dimension */
-    unsigned int const& cells() const;
+    unsigned int const& cells() const { return ncell; }
     /** get total number of cell placeholders */
-    unsigned int const& placeholders() const;
+    unsigned int const& placeholders() const { return nplace; }
     /** get cell length */
-    float const& cell_length() const;
+    float const& cell_length() const { return cell_length_; }
     /** get effective average cell occupancy */
-    float const& cell_occupancy() const;
+    float const& cell_occupancy() const { return cell_occupancy_; }
     /** get number of placeholders per cell */
-    unsigned int const& cell_size() const;
+    unsigned int const& cell_size() const { return cell_size_; }
 #endif
     /** get number of CUDA execution blocks */
-    unsigned int blocks() const;
+    unsigned int blocks() const { return dim_.blocks_per_grid(); }
     /** get number of CUDA execution threads */
-    unsigned int threads() const;
+    unsigned int threads() const { return dim_.threads_per_block(); }
     /** get particle density */
-    float const& density() const;
+    float const& density() const { return density_; }
     /** get periodic box length */
-    float const& box() const;
+    float const& box() const { return box_; }
     /** get simulation timestep */
-    float const& timestep() const;
+    float const& timestep() const { return timestep_; }
     /** get potential cutoff distance */
-    float const& cutoff_distance() const;
+    float const& cutoff_distance() const { return r_cut; }
 
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
@@ -803,116 +803,6 @@ void ljfluid<dimension, T, U>::timestep(float value)
     catch (cuda::error const& e) {
 	throw exception("failed to copy simulation timestep to device symbol");
     }
-}
-
-/**
- * get number of particles
- */
-template <unsigned dimension, typename T, typename U>
-unsigned int const& ljfluid<dimension, T, U>::particles() const
-{
-    return npart;
-}
-
-#ifdef USE_CELL
-/**
- * get number of cells per dimension
- */
-template <unsigned dimension, typename T, typename U>
-unsigned int const& ljfluid<dimension, T, U>::cells() const
-{
-    return ncell;
-}
-
-/**
- * get total number of cell placeholders
- */
-template <unsigned dimension, typename T, typename U>
-unsigned int const& ljfluid<dimension, T, U>::placeholders() const
-{
-    return nplace;
-}
-
-/**
- * get cell length
- */
-template <unsigned dimension, typename T, typename U>
-float const& ljfluid<dimension, T, U>::cell_length() const
-{
-    return cell_length_;
-}
-
-/**
- * get effective average cell occupancy
- */
-template <unsigned dimension, typename T, typename U>
-float const& ljfluid<dimension, T, U>::cell_occupancy() const
-{
-    return cell_occupancy_;
-}
-
-/**
- * get number of placeholders per cell
- */
-template <unsigned dimension, typename T, typename U>
-unsigned int const& ljfluid<dimension, T, U>::cell_size() const
-{
-    return cell_size_;
-}
-#endif
-
-/**
- * get number of CUDA execution blocks
- */
-template <unsigned dimension, typename T, typename U>
-unsigned int ljfluid<dimension, T, U>::blocks() const
-{
-    return dim_.blocks_per_grid();
-}
-
-/**
- * get number of particles
- */
-template <unsigned dimension, typename T, typename U>
-unsigned int ljfluid<dimension, T, U>::threads() const
-{
-    return dim_.threads_per_block();
-}
-
-/**
- * get particle density
- */
-template <unsigned dimension, typename T, typename U>
-float const& ljfluid<dimension, T, U>::density() const
-{
-    return density_;
-}
-
-/**
- * get periodic box length
- */
-template <unsigned dimension, typename T, typename U>
-float const& ljfluid<dimension, T, U>::box() const
-{
-    return box_;
-}
-
-/**
- * get simulation timestep
- */
-template <unsigned dimension, typename T, typename U>
-float const& ljfluid<dimension, T, U>::timestep() const
-{
-    return timestep_;
-}
-
-/**
- * get potential cutoff distance
- */
-template <unsigned dimension, typename T, typename U>
-float const& ljfluid<dimension, T, U>::cutoff_distance() const
-{
-    return r_cut;
 }
 
 /**
