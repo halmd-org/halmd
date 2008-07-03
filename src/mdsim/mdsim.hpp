@@ -153,7 +153,7 @@ void mdsim<dimension, T>::operator()()
 
     LOG("starting MD simulation");
 
-    for (uint64_t step = 0; step < tcf.steps(); ++step) {
+    for (uint64_t step = 0; step <= tcf.steps(); ++step) {
 	// abort simulation on signal
 	if (signal.get()) {
 	    LOG_WARNING("caught signal at simulation step " << step);
