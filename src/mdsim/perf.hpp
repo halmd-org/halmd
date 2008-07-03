@@ -28,6 +28,7 @@
 #include "H5param.hpp"
 #include "H5xx.hpp"
 #include "accumulator.hpp"
+#include "exception.hpp"
 #include "log.hpp"
 #include "statistics.hpp"
 
