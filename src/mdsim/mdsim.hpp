@@ -180,7 +180,7 @@ void mdsim<dimension, T, U>::operator()()
 	    fluid.sample(boost::bind(&energy<dimension, T, U>::sample, boost::ref(tep), _3, _4, _5, fluid.density(), time));
 	    // sample trajectory
 	    if (opts.dump_trajectories().value()) {
-		fluid.sample(boost::bind(&trajectory<dimension, T, U>::sample, boost::ref(traj), _1, _3, time));
+		fluid.sample(boost::bind(&trajectory<dimension, T, U>::sample, boost::ref(traj), _1, _2, _3, time));
 	    }
 	}
 #endif
