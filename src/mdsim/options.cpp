@@ -118,6 +118,16 @@ void conflicting_options(const variables_map& vm, char const* opt1, char const* 
 }
 
 /**
+ * Function used to check that 'opt2' is specified if 'opt1' is specified
+ */
+void dependent_option(const variables_map& vm, char const* opt1, char const* opt2)
+{
+    if (vm.count(opt1) && !vm[opt1].defaulted() && !(vm.count(opt2) && !vm[opt2].defaulted())) {
+	throw std::logic_error(std::string("option '") + opt1 + "' requires missing option '" + opt2 + "'");
+    }
+}
+
+/**
  * Accumulating program option value
  */
 template <typename T, typename charT = char>
@@ -282,10 +292,10 @@ void options::parse(int argc, char** argv)
 
     po::notify(vm);
 
-    // check for conflicting options
     try {
 	po::conflicting_options(vm, "density", "box-length");
 	po::conflicting_options(vm, "steps", "time");
+	po::dependent_option(vm, "sample", "trajectory");
     }
     catch (std::exception const& e) {
 	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";
