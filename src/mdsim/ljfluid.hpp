@@ -103,19 +103,19 @@ public:
     void temperature(double value);
 
     /** returns number of particles */
-    unsigned int const& particles() const;
+    unsigned int const& particles() const { return npart; }
     /** returns number of cells per dimension */
-    unsigned int const& cells() const;
+    unsigned int const& cells() const { return ncell; }
     /** returns particle density */
-    double const& density() const;
+    double const& density() const { return density_; }
     /** returns periodic box length */
-    double const& box() const;
+    double const& box() const { return box_; }
     /** returns cell length */
-    double const& cell_length();
+    double const& cell_length() { return cell_length_; }
     /** returns simulation timestep */
-    double const& timestep() const;
+    double const& timestep() const { return timestep_; }
     /** get potential cutoff distance */
-    double const& cutoff_distance() const;
+    double const& cutoff_distance() const { return r_cut; }
 
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
@@ -450,69 +450,6 @@ void ljfluid<dimension, T>::temperature(double value)
 
     // initialize sum over maximum velocity magnitudes since last neighbour lists update
     v_max_sum = std::sqrt(vv_max);
-}
-
-/**
- * returns number of particles
- */
-template <unsigned dimension, typename T>
-unsigned int const& ljfluid<dimension, T>::particles() const
-{
-    return npart;
-}
-
-/**
- * returns number of cells per dimension
- */
-template <unsigned dimension, typename T>
-unsigned int const& ljfluid<dimension, T>::cells() const
-{
-    return ncell;
-}
-
-/**
- * returns particle density
- */
-template <unsigned dimension, typename T>
-double const& ljfluid<dimension, T>::density() const
-{
-    return density_;
-}
-
-/**
- * returns periodic box length
- */
-template <unsigned dimension, typename T>
-double const& ljfluid<dimension, T>::box() const
-{
-    return box_;
-}
-
-/**
- * returns cell length
- */
-template <unsigned dimension, typename T>
-double const& ljfluid<dimension, T>::cell_length()
-{
-    return cell_length_;
-}
-
-/**
- * returns simulation timestep
- */
-template <unsigned dimension, typename T>
-double const& ljfluid<dimension, T>::timestep() const
-{
-    return timestep_;
-}
-
-/**
- * returns potential cutoff distance
- */
-template <unsigned dimension, typename T>
-double const& ljfluid<dimension, T>::cutoff_distance() const
-{
-    return r_cut;
 }
 
 /**

@@ -46,17 +46,17 @@ public:
     void max_samples(uint64_t const& value);
 
     /** returns total number of simulation steps */
-    uint64_t const& steps() const;
+    uint64_t const& steps() const { return steps_; }
     /** returns total simulation time */
-    double const& time() const;
+    double const& time() const { return time_; }
     /** returns block size */
-    unsigned int const& block_size() const;
+    unsigned int const& block_size() const { return block_size_; }
     /** returns block shift */
-    unsigned int const& block_shift() const;
+    unsigned int const& block_shift() const { return block_shift_; }
     /** returns block count */
-    unsigned int const& block_count() const;
+    unsigned int const& block_count() const { return block_count_; }
     /** returns maximum number of samples per block */
-    uint64_t const& max_samples() const;
+    uint64_t const& max_samples() const { return max_samples_; }
 
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
@@ -160,60 +160,6 @@ void block_param<dimension, T>::max_samples(uint64_t const& value)
     if (max_samples_ < block_size_) {
 	throw exception("maximum number of samples must not be smaller than block size");
     }
-}
-
-/**
- * returns total number of simulation steps
- */
-template <unsigned dimension, typename T>
-uint64_t const& block_param<dimension, T>::steps() const
-{
-    return steps_;
-}
-
-/**
- * returns total simulation time
- */
-template <unsigned dimension, typename T>
-double const& block_param<dimension, T>::time() const
-{
-    return time_;
-}
-
-/**
- * returns block size
- */
-template <unsigned dimension, typename T>
-unsigned int const& block_param<dimension, T>::block_size() const
-{
-    return block_size_;
-}
-
-/**
- * returns block shift
- */
-template <unsigned dimension, typename T>
-unsigned int const& block_param<dimension, T>::block_shift() const
-{
-    return block_shift_;
-}
-
-/**
- * returns block count
- */
-template <unsigned dimension, typename T>
-unsigned int const& block_param<dimension, T>::block_count() const
-{
-    return block_count_;
-}
-
-/**
- * returns maximum number of samples per block
- */
-template <unsigned dimension, typename T>
-uint64_t const& block_param<dimension, T>::max_samples() const
-{
-    return max_samples_;
 }
 
 /**
