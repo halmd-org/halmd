@@ -139,17 +139,17 @@ public:
     void init_event_list();
 
     /** returns number of particles */
-    unsigned int const& particles() const;
+    unsigned int const& particles() const { return npart; }
     /** returns pair separation at which particle collision occurs */
-    double const& pair_separation() const;
+    double const& pair_separation() const { return pair_sep_; }
     /** returns particle density */
-    double const& density() const;
+    double const& density() const { return density_; }
     /** returns periodic box length */
-    double const& box() const;
+    double const& box() const { return box_; }
     /** returns number of cells per dimension */
-    unsigned int const& cells() const;
+    unsigned int const& cells() const { return ncell; }
     /** returns cell length */
-    double const& cell_length();
+    double const& cell_length() { return cell_length_; }
 
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
@@ -456,60 +456,6 @@ void hardspheres<dimension, T>::temperature(double value)
 	// copy particle velocity at sample time zero
 	v_[i] = part[i].v;
     }
-}
-
-/**
- * returns number of particles
- */
-template <unsigned dimension, typename T>
-unsigned int const& hardspheres<dimension, T>::particles() const
-{
-    return npart;
-}
-
-/**
- * returns pair separation at which particle collision occurs
- */
-template <unsigned dimension, typename T>
-double const& hardspheres<dimension, T>::pair_separation() const
-{
-    return pair_sep_;
-}
-
-/**
- * returns particle density
- */
-template <unsigned dimension, typename T>
-double const& hardspheres<dimension, T>::density() const
-{
-    return density_;
-}
-
-/**
- * returns periodic box length
- */
-template <unsigned dimension, typename T>
-double const& hardspheres<dimension, T>::box() const
-{
-    return box_;
-}
-
-/**
- * returns number of cells per dimension
- */
-template <unsigned dimension, typename T>
-unsigned int const& hardspheres<dimension, T>::cells() const
-{
-    return ncell;
-}
-
-/**
- * returns cell length
- */
-template <unsigned dimension, typename T>
-double const& hardspheres<dimension, T>::cell_length()
-{
-    return cell_length_;
 }
 
 /**
