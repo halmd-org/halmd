@@ -234,7 +234,7 @@ void options::parse(int argc, char** argv)
 	("time,t", po::value<double>(), "total simulation time")
 #endif
 	("trajectory,I", po::value<std::string>(), "trajectory input file")
-	("sample,S", po::value<int64_t>()->default_value(-1), "sample in trajectory input file")
+	("sample,S", po::value<int64_t>(), "resume from sample in trajectory file")
 	;
 
 #ifndef USE_BENCHMARK
