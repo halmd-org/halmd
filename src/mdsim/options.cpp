@@ -232,9 +232,12 @@ void options::parse(int argc, char** argv)
 	("timestep,r", po::value<float>()->default_value(0.01), "simulation timestep")
 	("temperature,K", po::value<float>()->default_value(1.), "initial temperature")
 	("rng-seed,R", po::value<unsigned int>()->default_value(42), "random number generator integer seed")
-	("steps,s", po::value<uint64_t>()->default_value(10000), "number of simulation steps")
 #ifndef USE_BENCHMARK
+	("steps,s", po::value<uint64_t>()->default_value(10000), "number of simulation steps")
 	("time,t", po::value<float>(), "total simulation time")
+	("equilibrate,E", po::value<uint64_t>()->default_value(0), "number of equilibration steps")
+#else
+	("equilibrate,E", po::value<uint64_t>()->default_value(10000), "number of equilibration steps")
 #endif
 	("trajectory,I", po::value<std::string>(), "trajectory input file")
 	("sample,S", po::value<int64_t>(), "resume from sample in trajectory file")

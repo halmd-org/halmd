@@ -57,12 +57,14 @@ private:
     options const& opts;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T, U> fluid;
+#ifndef USE_BENCHMARK
     /** block correlations */
     correlation<dimension, T, U> tcf;
     /**  trajectory file writer */
     trajectory<dimension, T, U> traj;
     /** thermodynamic equilibrium properties */
     energy<dimension, T, U> tep;
+#endif
     /** performance data */
     perf<dimension, T, U> prf;
 };
@@ -112,6 +114,8 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
     // set simulation timestep
     fluid.timestep(opts.timestep().value());
 
+    LOG("number of equilibration steps: " << opts.equilibration_steps().value());
+
 #ifndef USE_BENCHMARK
     if (!opts.time().empty()) {
 	// set total simulation time
@@ -151,13 +155,30 @@ void mdsim<dimension, T, U>::operator()()
 #endif
     // performance data
     prf.open(opts.output_file_prefix().value() + ".prf");
+#ifndef USE_BENCHMARK
     prf.attrs() << fluid << tcf;
+#else
+    prf.attrs() << fluid;
+#endif
 
-    // handle signals
+    if (opts.equilibration_steps().value()) {
+	LOG("starting equilibration");
+	for (uint64_t step = 0; step <= opts.equilibration_steps().value(); ++step) {
+	    // copy previous MD simulation state from GPU to host
+	    fluid.sample();
+	    // stream next MD simulation program step on GPU
+	    fluid.mdstep();
+	    // synchronize MD simulation program step on GPU
+	    fluid.synchronize();
+	}
+	LOG("finished equilibration");
+    }
+
+#ifndef USE_BENCHMARK
+    // handle non-lethal POSIX signals to allow for a partial simulation run
     signal_handler signal;
 
     LOG("starting MD simulation");
-
     for (uint64_t step = 0; step <= tcf.steps(); ++step) {
 	// abort simulation on signal
 	if (signal.get()) {
@@ -169,7 +190,6 @@ void mdsim<dimension, T, U>::operator()()
 	fluid.sample();
 	// stream next MD simulation program step on GPU
 	fluid.mdstep();
-#ifndef USE_BENCHMARK
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(step)) {
 	    // simulation time
@@ -183,14 +203,11 @@ void mdsim<dimension, T, U>::operator()()
 		fluid.sample(boost::bind(&trajectory<dimension, T, U>::sample, boost::ref(traj), _1, _2, _3, time));
 	    }
 	}
-#endif
 	// synchronize MD simulation program step on GPU
 	fluid.synchronize();
     }
-
     LOG("finished MD simulation");
 
-#ifndef USE_BENCHMARK
     // write time correlation function results to HDF5 file
     tcf.write();
     tcf.close();
@@ -202,7 +219,7 @@ void mdsim<dimension, T, U>::operator()()
     tep.write();
     tep.close();
 #endif
-    // write performance data to HDF5 file
+    // write performance data to HDF5 file (includes equilibration phase)
     prf.write(fluid.times());
     prf.close();
 }
