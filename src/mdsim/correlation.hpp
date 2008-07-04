@@ -408,7 +408,7 @@ void correlation<dimension, T, U>::sample(vector_type const& r, vector_type cons
 	    if (m_max_samples == m_block_samples[i]) {
 		LOG("finished sampling on block level " << i << " at step " << step);
 		// schedule remaining MD simulation runtime estimate
-		alarm(60);
+		alarm(300);
 	    }
 	}
     }
