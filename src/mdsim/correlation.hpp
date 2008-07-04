@@ -205,7 +205,7 @@ void correlation<dimension, T, U>::block_size(unsigned int const& value)
 
     // derive block count from block size and block shift
     m_block_count = 0;
-    for (unsigned int n = m_block_size; n <= m_steps; n *= m_block_size) {
+    for (uint64_t n = m_block_size; n <= m_steps; n *= m_block_size) {
 	m_block_count++;
 	if ((n * m_block_shift) > m_steps) {
 	    break;
@@ -227,14 +227,14 @@ void correlation<dimension, T, U>::block_size(unsigned int const& value)
     m_block_samples.resize(m_block_count, 0);
 
     // calculate phase sample frequencies
-    for (unsigned int i = 0, n = 1, m = m_block_shift; i < m_block_count; ++i) {
+    for (uint64_t i = 0, n = 1, m = m_block_shift; i < m_block_count; ++i) {
 	if (i % 2) {
 	    m_block_freq.push_back(m);
-	    m = m * m_block_size;
+	    m *= m_block_size;
 	}
 	else {
 	    m_block_freq.push_back(n);
-	    n = n * m_block_size;
+	    n *= m_block_size;
 	}
     }
 
