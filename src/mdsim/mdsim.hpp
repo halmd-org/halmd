@@ -20,7 +20,11 @@
 #define MDSIM_MDSIM_HPP
 
 #include <boost/bind.hpp>
+#include <iomanip>
 #include <stdint.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
 #include "correlation.hpp"
 #include "energy.hpp"
 #include "hardspheres.hpp"
@@ -169,14 +173,17 @@ void mdsim<dimension, T>::operator()()
 #ifndef USE_BENCHMARK
     // handle non-lethal POSIX signals to allow for a partial simulation run
     signal_handler signal;
+
+    // elapsed real time measurement
+    std::pair<timeval, uint64_t> tv0, tv1, tv2;
+    gettimeofday(&tv0.first, NULL);
+    tv0.second = 0;
+    tv1 = tv0;
+    // schedule initial estimate of remaining MD simulation runtime
+    alarm(60);
+
     LOG("starting MD simulation");
     for (uint64_t step = 0; step <= tcf.steps(); ++step) {
-	// abort simulation on signal
-	if (signal.get()) {
-	    LOG_WARNING("caught signal at simulation step " << step);
-	    break;
-	}
-
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(step)) {
 	    // sample time
@@ -192,8 +199,44 @@ void mdsim<dimension, T>::operator()()
 	    // advance phase space state to given sample time
 	    fluid.mdstep(step * tcf.timestep());
 	}
+
+	if (signal.get() == SIGALRM || signal.get() == SIGUSR1) {
+	    // estimate remaining MD simulation runtime
+	    gettimeofday(&tv2.first, NULL);
+	    timersub(&tv2.first, &tv1.first, &tv1.first);
+	    tv2.second = step + 1;
+	    tv1.second = tv2.second - tv1.second;
+	    const float trem = (tv1.first.tv_sec + tv1.first.tv_usec * 1.E-6) * (tcf.steps() + 1 - step) / tv1.second;
+	    if (trem < 60)
+		LOG("estimated remaining runtime: " << std::fixed << std::setprecision(1) << trem << " s");
+	    else if (trem < 3600)
+		LOG("estimated remaining runtime: " << std::fixed << std::setprecision(1) << (trem / 60) << " min");
+	    else
+		LOG("estimated remaining runtime: " << std::fixed << std::setprecision(1) << (trem / 3600) << " h");
+	    tv1 = tv2;
+	    signal.clear();
+	    // schedule next estimate
+	    alarm(1800);
+	}
+	else if (signal.get()) {
+	    // abort simulation on signal
+	    LOG_WARNING("caught signal at simulation step " << step);
+	    signal.clear();
+	    break;
+	}
     }
     LOG("finished MD simulation");
+
+    // output total MD simulation runtime
+    gettimeofday(&tv1.first, NULL);
+    timersub(&tv1.first, &tv0.first, &tv1.first);
+    const float ttot = tv1.first.tv_sec + tv1.first.tv_usec * 1.E-6;
+    if (ttot < 60)
+	LOG("total MD simulation runtime: " << std::fixed << std::setprecision(1) << ttot << " s");
+    else if (ttot < 3600)
+	LOG("total MD simulation runtime: " << std::fixed << std::setprecision(1) << (ttot / 60) << " min");
+    else
+	LOG("total MD simulation runtime: " << std::fixed << std::setprecision(1) << (ttot / 3600) << " h");
 
     // write time correlation function results to HDF5 file
     tcf.write();
