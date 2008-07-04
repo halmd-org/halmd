@@ -174,7 +174,7 @@ void mdsim<dimension, T>::operator()()
     tv0.second = 0;
     tv1 = tv0;
     // schedule initial estimate of remaining MD simulation runtime
-    alarm(60);
+    alarm(300);
 
     LOG("starting MD simulation");
 
