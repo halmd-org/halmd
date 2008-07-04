@@ -157,7 +157,7 @@ void mdsim<dimension, T>::operator()()
 
     if (opts.equilibration_steps().value()) {
 	LOG("starting equilibration");
-	for (uint64_t step = 0; step <= opts.equilibration_steps().value(); ++step) {
+	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
 	    // MD simulation step
 	    fluid.mdstep();
 	}
