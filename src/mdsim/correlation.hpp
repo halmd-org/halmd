@@ -410,7 +410,7 @@ void correlation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> c
 	    if (m_max_samples == m_block_samples[i]) {
 		LOG("finished sampling on block level " << i << " at step " << step);
 		// schedule remaining MD simulation runtime estimate
-		alarm(60);
+		alarm(300);
 	    }
 	}
     }
