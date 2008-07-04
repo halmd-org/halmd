@@ -212,8 +212,8 @@ void correlation<dimension, T, U>::block_size(unsigned int const& value)
 	m_block_count ++;
     }
     LOG("block count: " << m_block_count);
-    if (m_block_count < 2) {
-	throw exception("computed block count is less than 2, more simulations steps required");
+    if (!m_block_count) {
+	throw exception("computed block count is zero, more simulations steps required");
     }
 
     // allocate phase space sample blocks
@@ -259,10 +259,7 @@ void correlation<dimension, T, U>::block_size(unsigned int const& value)
 template <unsigned dimension, typename T, typename U>
 void correlation<dimension, T, U>::max_samples(uint64_t const& value)
 {
-    m_max_samples = std::min(value, m_steps);
-    if (m_max_samples != value) {
-	LOG_WARNING("overriding maximum number of samples with number of simulation steps");
-    }
+    m_max_samples = value;
     LOG("maximum number of samples per block: " << m_max_samples);
     if (m_max_samples < m_block_size) {
 	throw exception("maximum number of samples must not be smaller than block size");
