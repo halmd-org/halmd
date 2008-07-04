@@ -30,6 +30,7 @@
 #include <cmath>
 #include <cuda_wrapper.hpp>
 #include <string>
+#include <unistd.h>
 #include <vector>
 #include "H5param.hpp"
 #include "H5xx.hpp"
@@ -406,6 +407,8 @@ void correlation<dimension, T, U>::sample(vector_type const& r, vector_type cons
 	    m_block_samples[i]++;
 	    if (m_max_samples == m_block_samples[i]) {
 		LOG("finished sampling on block level " << i << " at step " << step);
+		// schedule remaining MD simulation runtime estimate
+		alarm(60);
 	    }
 	}
     }
