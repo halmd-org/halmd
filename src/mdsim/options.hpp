@@ -175,6 +175,14 @@ public:
 #endif
 
     /**
+     * returns number of equilibration steps
+     */
+    option_value<uint64_t> equilibration_steps() const
+    {
+	return vm["equilibrate"];
+    }
+
+    /**
      * returns output file prefix
      */
     option_value<std::string> output_file_prefix() const

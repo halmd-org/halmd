@@ -51,12 +51,14 @@ private:
     options const& opts;
     /** hard spheres simulation */
     hardspheres<dimension, T> fluid;
+#ifndef USE_BENCHMARK
     /** block correlations */
     correlation<dimension, T> tcf;
     /**  trajectory file writer */
     trajectory<dimension, T> traj;
     /** thermodynamic equilibrium properties */
     energy<dimension, T> tep;
+#endif
     /** performance data */
     perf<dimension, T> prf;
 };
@@ -103,6 +105,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     // initialize event list
     fluid.init_event_list();
 
+    LOG("number of equilibration steps: " << opts.equilibration_steps().value());
+
 #ifndef USE_BENCHMARK
     if (!opts.time().empty()) {
 	// set total sample time
@@ -148,11 +152,24 @@ void mdsim<dimension, T>::operator()()
     prf.attrs() << fluid;
 #endif
 
-    // handle signals
+    if (opts.equilibration_steps().value()) {
+	LOG("starting equilibration");
+#ifndef USE_BENCHMARK
+	// advance phase space state to given sample time
+	fluid.mdstep(opts.equilibration_steps().value() * tcf.timestep());
+#else
+	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
+	    // advance phase space state to given sample time
+	    fluid.mdstep(step * opts.timestep().value());
+	}
+#endif
+	LOG("finished equilibration");
+    }
+
+#ifndef USE_BENCHMARK
+    // handle non-lethal POSIX signals to allow for a partial simulation run
     signal_handler signal;
-
     LOG("starting MD simulation");
-
     for (uint64_t step = 0; step <= tcf.steps(); ++step) {
 	// abort simulation on signal
 	if (signal.get()) {
@@ -160,7 +177,6 @@ void mdsim<dimension, T>::operator()()
 	    break;
 	}
 
-#ifndef USE_BENCHMARK
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(step)) {
 	    // sample time
@@ -176,15 +192,9 @@ void mdsim<dimension, T>::operator()()
 	    // advance phase space state to given sample time
 	    fluid.mdstep(step * tcf.timestep());
 	}
-#else
-	// advance phase space state to given sample time
-	fluid.mdstep(step * tcf.timestep());
-#endif
     }
-
     LOG("finished MD simulation");
 
-#ifndef USE_BENCHMARK
     // write time correlation function results to HDF5 file
     tcf.write();
     tcf.close();
@@ -196,7 +206,7 @@ void mdsim<dimension, T>::operator()()
     tep.write();
     tep.close();
 #endif
-    // write performance data to HDF5 file
+    // write performance data to HDF5 file (includes equilibration phase)
     prf.write(fluid.times());
     prf.close();
 }
