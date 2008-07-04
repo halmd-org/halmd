@@ -91,8 +91,8 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
     hsize_t max_dim[3] = { H5S_UNLIMITED, npart, dimension };
     m_ds_file = H5::DataSpace(3, dim, max_dim);
     H5::Group root(m_file.createGroup("trajectory"));
-    m_dataset[0] = root.createDataSet("positions", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
-    m_dataset[1] = root.createDataSet("velocities", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
+    m_dataset[0] = root.createDataSet("r", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
+    m_dataset[1] = root.createDataSet("v", H5::PredType::NATIVE_DOUBLE, m_ds_file, cparms);
 
     hsize_t dim_mem[2] = { npart, dimension };
     m_ds_mem = H5::DataSpace(2, dim_mem);
@@ -103,7 +103,7 @@ void trajectory<dimension, T, true>::open(std::string const& filename, unsigned 
     hsize_t dim_scalar[1] = { 0 };
     hsize_t max_dim_scalar[1] = { H5S_UNLIMITED };
     m_ds_scalar = H5::DataSpace(1, dim_scalar, max_dim_scalar);
-    m_dataset[2] = root.createDataSet("time", H5::PredType::NATIVE_DOUBLE, m_ds_scalar, cparms);
+    m_dataset[2] = root.createDataSet("t", H5::PredType::NATIVE_DOUBLE, m_ds_scalar, cparms);
 }
 
 /**
@@ -231,9 +231,9 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
     try {
 	// open phase space coordinates datasets
 	H5::Group root(file.openGroup("trajectory"));
-	H5::DataSet dataset_r(root.openDataSet("positions"));
+	H5::DataSet dataset_r(root.openDataSet("r"));
 	H5::DataSpace ds_r(dataset_r.getSpace());
-	H5::DataSet dataset_v(root.openDataSet("velocities"));
+	H5::DataSet dataset_v(root.openDataSet("v"));
 	H5::DataSpace ds_v(dataset_v.getSpace());
 
 	// validate dataspace extents
