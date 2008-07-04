@@ -167,7 +167,7 @@ void mdsim<dimension, T, U>::operator()()
 
     if (opts.equilibration_steps().value()) {
 	LOG("starting equilibration");
-	for (uint64_t step = 0; step <= opts.equilibration_steps().value(); ++step) {
+	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
 	    // copy previous MD simulation state from GPU to host
 	    fluid.sample();
 	    // stream next MD simulation program step on GPU
