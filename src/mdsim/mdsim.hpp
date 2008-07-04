@@ -81,7 +81,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     // initialize cells
     fluid.init_cell();
 
-    if (!opts.trajectory_input_file().empty()) {
+    if (!opts.trajectory_sample().empty()) {
 	trajectory<dimension, T, false> traj;
 	// open trajectory input file
 	traj.open(opts.trajectory_input_file().value());
@@ -94,7 +94,7 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 	// arrange particles on a face-centered cubic (fcc) lattice
 	fluid.lattice();
     }
-    if (opts.trajectory_input_file().empty() || !opts.temperature().defaulted()) {
+    if (opts.trajectory_sample().empty() || !opts.temperature().defaulted()) {
 	// initialize random number generator with seed
 	fluid.rng(opts.rng_seed().value());
 	// set system temperature according to Maxwell-Boltzmann distribution
