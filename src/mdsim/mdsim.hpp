@@ -51,12 +51,14 @@ private:
     options const& opts;
     /** Lennard-Jones fluid simulation */
     ljfluid<dimension, T> fluid;
+#ifndef USE_BENCHMARK
     /** block correlations */
     correlation<dimension, T> tcf;
     /**  trajectory file writer */
     trajectory<dimension, T> traj;
     /** thermodynamic equilibrium properties */
     energy<dimension, T> tep;
+#endif
     /** performance data */
     perf<dimension, T> prf;
 };
@@ -101,6 +103,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     }
     // set simulation timestep
     fluid.timestep(opts.timestep().value());
+
+    LOG("number of equilibration steps: " << opts.equilibration_steps().value());
 
 #ifndef USE_BENCHMARK
     if (!opts.time().empty()) {
@@ -147,9 +151,18 @@ void mdsim<dimension, T>::operator()()
     prf.attrs() << fluid;
 #endif
 
-    // handle signals
-    signal_handler signal;
+    if (opts.equilibration_steps().value()) {
+	LOG("starting equilibration");
+	for (uint64_t step = 0; step <= opts.equilibration_steps().value(); ++step) {
+	    // MD simulation step
+	    fluid.mdstep();
+	}
+	LOG("finished equilibration");
+    }
 
+#ifndef USE_BENCHMARK
+    // handle non-lethal POSIX signals to allow for a partial simulation run
+    signal_handler signal;
     LOG("starting MD simulation");
 
     for (uint64_t step = 0; step <= tcf.steps(); ++step) {
@@ -159,7 +172,6 @@ void mdsim<dimension, T>::operator()()
 	    break;
 	}
 
-#ifndef USE_BENCHMARK
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(step)) {
 	    // simulation time
@@ -173,15 +185,11 @@ void mdsim<dimension, T>::operator()()
 		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, time));
 	    }
 	}
-#endif
-
 	// MD simulation step
 	fluid.mdstep();
     }
-
     LOG("finished MD simulation");
 
-#ifndef USE_BENCHMARK
     // write time correlation function results to HDF5 file
     tcf.write();
     tcf.close();
@@ -193,7 +201,7 @@ void mdsim<dimension, T>::operator()()
     tep.write();
     tep.close();
 #endif
-    // write performance data to HDF5 file
+    // write performance data to HDF5 file (includes equilibration phase)
     prf.write(fluid.times());
     prf.close();
 }

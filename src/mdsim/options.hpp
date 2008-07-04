@@ -115,6 +115,7 @@ public:
 	return vm["temperature"];
     }
 
+#ifndef USE_BENCHMARK
     /**
      * returns number of simulation steps
      */
@@ -123,7 +124,6 @@ public:
 	return vm["steps"];
     }
 
-#ifndef USE_BENCHMARK
     /**
      * returns total simulation time
      */
@@ -132,6 +132,14 @@ public:
 	return vm["time"];
     }
 #endif
+
+    /**
+     * returns number of equilibration steps
+     */
+    option_value<uint64_t> equilibration_steps() const
+    {
+	return vm["equilibrate"];
+    }
 
 #ifndef USE_BENCHMARK
     /**
