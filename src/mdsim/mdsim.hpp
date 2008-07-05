@@ -213,15 +213,12 @@ void mdsim<dimension, T>::operator()()
     timer.stop();
     LOG("total MD simulation runtime: " << timer);
 
-    // write time correlation function results to HDF5 file
-    tcf.write();
+    // close HDF5 output files
     tcf.close();
-    // close HDF5 trajectory output file
+    tep.close();
     if (opts.dump_trajectories().value()) {
 	traj.close();
     }
-    // flush thermodynamic equilibrium properties file
-    tep.close();
 #endif
     // write performance data to HDF5 file (includes equilibration phase)
     prf.write(fluid.times());
