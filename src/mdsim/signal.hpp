@@ -37,12 +37,9 @@ public:
      */
     signal_handler()
     {
-	handler[0] = ::signal(SIGALRM, callback);
-	handler[1] = ::signal(SIGHUP, callback);
-	handler[2] = ::signal(SIGINT, callback);
-	handler[3] = ::signal(SIGTERM, callback);
-	handler[4] = ::signal(SIGUSR1, callback);
-	handler[5] = ::signal(SIGUSR2, callback);
+	handler[0] = ::signal(SIGHUP, callback);
+	handler[1] = ::signal(SIGINT, callback);
+	handler[2] = ::signal(SIGTERM, callback);
     }
 
     /**
@@ -50,12 +47,9 @@ public:
      */
     ~signal_handler()
     {
-	::signal(SIGALRM, handler[0]);
-	::signal(SIGHUP, handler[1]);
-	::signal(SIGINT, handler[2]);
-	::signal(SIGTERM, handler[3]);
-	::signal(SIGUSR1, handler[4]);
-	::signal(SIGUSR2, handler[5]);
+	::signal(SIGHUP, handler[0]);
+	::signal(SIGINT, handler[1]);
+	::signal(SIGTERM, handler[2]);
     }
 
     /**
@@ -87,7 +81,7 @@ private:
     /** signal number */
     static int signum;
     /** previous signal handlers */
-    boost::array<sighandler_t, 6> handler;
+    boost::array<sighandler_t, 3> handler;
 };
 
 int signal_handler::signum(0);
