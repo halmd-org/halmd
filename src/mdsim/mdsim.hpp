@@ -131,6 +131,15 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
+    if (opts.equilibration_steps().value()) {
+	LOG("starting equilibration");
+	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
+	    // MD simulation step
+	    fluid.mdstep();
+	}
+	LOG("finished equilibration");
+    }
+
 #ifndef USE_BENCHMARK
     // time correlation functions
     tcf.open(opts.output_file_prefix().value() + ".tcf");
@@ -151,15 +160,6 @@ void mdsim<dimension, T>::operator()()
 #else
     prf.attrs() << fluid;
 #endif
-
-    if (opts.equilibration_steps().value()) {
-	LOG("starting equilibration");
-	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
-	    // MD simulation step
-	    fluid.mdstep();
-	}
-	LOG("finished equilibration");
-    }
 
 #ifndef USE_BENCHMARK
     // handle non-lethal POSIX signals to allow for a partial simulation run
