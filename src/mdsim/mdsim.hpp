@@ -173,15 +173,28 @@ void mdsim<dimension, T>::operator()()
     for (iterator_timer<uint64_t> step = 0; step < tcf.steps(); ++step) {
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(*step)) {
+	    bool flush = false;
 	    // simulation time
 	    const double time = *step * fluid.timestep();
 	    // sample time correlation functions
-	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _1, _2, boost::ref(step)));
+	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _1, _2, *step, boost::ref(flush)));
 	    // sample thermodynamic equilibrium properties
 	    fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, fluid.density(), time));
-	    if (opts.dump_trajectories().value()) {
-		// sample trajectory
+	    // sample trajectory
+	    if (opts.dump_trajectories().value())
 		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, time));
+
+	    if (flush) {
+		// acquired maximum number of samples for a block level
+		LOG("flushing HDF5 buffers to disk");
+		// write partial results to HDF5 files and flush to disk
+		tcf.flush();
+		if (opts.dump_trajectories().value())
+		    traj.flush();
+		tep.flush();
+		// schedule remaining runtime estimate in 5 minutes
+		step.clear();
+		step.set(300);
 	    }
 	}
 	// MD simulation step
@@ -215,10 +228,9 @@ void mdsim<dimension, T>::operator()()
 
     // close HDF5 output files
     tcf.close();
-    tep.close();
-    if (opts.dump_trajectories().value()) {
+    if (opts.dump_trajectories().value())
 	traj.close();
-    }
+    tep.close();
 #endif
     // write performance data to HDF5 file (includes equilibration phase)
     prf.write(fluid.times());
