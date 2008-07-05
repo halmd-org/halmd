@@ -29,7 +29,6 @@
 #include <boost/variant.hpp>
 #include <cmath>
 #include <string>
-#include <unistd.h>
 #include <vector>
 #include "H5param.hpp"
 #include "H5xx.hpp"
@@ -38,6 +37,7 @@
 #include "log.hpp"
 #include "sample.hpp"
 #include "tcf.hpp"
+#include "timer.hpp"
 
 #define foreach BOOST_FOREACH
 
@@ -410,7 +410,7 @@ void correlation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> c
 	    if (m_max_samples == m_block_samples[i]) {
 		LOG("finished sampling on block level " << i << " at step " << step);
 		// schedule remaining MD simulation runtime estimate
-		alarm(300);
+		iterator_timer<uint64_t>::start();
 	    }
 	}
     }
