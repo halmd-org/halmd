@@ -37,9 +37,10 @@ public:
      */
     signal_handler()
     {
-	handler[0] = ::signal(SIGHUP, callback);
-	handler[1] = ::signal(SIGINT, callback);
-	handler[2] = ::signal(SIGTERM, callback);
+	m_sigh[0] = signal(SIGHUP, set);
+	m_sigh[1] = signal(SIGINT, set);
+	m_sigh[2] = signal(SIGTERM, set);
+	m_sigh[3] = signal(SIGUSR1, set);
     }
 
     /**
@@ -47,9 +48,10 @@ public:
      */
     ~signal_handler()
     {
-	::signal(SIGHUP, handler[0]);
-	::signal(SIGINT, handler[1]);
-	::signal(SIGTERM, handler[2]);
+	signal(SIGHUP, m_sigh[0]);
+	signal(SIGINT, m_sigh[1]);
+	signal(SIGTERM, m_sigh[2]);
+	signal(SIGUSR1, m_sigh[3]);
     }
 
     /**
@@ -57,34 +59,50 @@ public:
      */
     static int const& get()
     {
-	return signum;
+	return m_signum;
     }
 
     /**
-     * set signal number to zero
+     * reset signal number
      */
     void clear()
     {
-	signum = 0;
+	m_signum = 0;
+    }
+
+    /**
+     * output signal description to stream
+     */
+    friend std::ostream& operator<<(std::ostream& os, signal_handler const& sig)
+    {
+	if (sig.m_signum == SIGHUP)
+	    os << "HUP";
+	else if (sig.m_signum == SIGINT)
+	    os << "INT";
+	else if (sig.m_signum == SIGTERM)
+	    os << "TERM";
+	else if (sig.m_signum == SIGUSR1)
+	    os << "USR1";
+	return os;
     }
 
 private:
     /**
      * signal handler callback
      */
-    static void callback(int signum)
+    static void set(int signum)
     {
-	signal_handler::signum = signum;
+	m_signum = signum;
     }
 
 private:
     /** signal number */
-    static int signum;
+    static int m_signum;
     /** previous signal handlers */
-    boost::array<sighandler_t, 3> handler;
+    boost::array<sighandler_t, 4> m_sigh;
 };
 
-int signal_handler::signum(0);
+int signal_handler::m_signum(0);
 
 } // namespace mdsim
 
