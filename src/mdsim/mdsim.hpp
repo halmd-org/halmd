@@ -208,16 +208,27 @@ void mdsim<dimension, T>::operator()()
 	    step.set(1800);
 	}
 
-	if (signal.get() == SIGUSR1) {
-	    LOG("trapped signal " << signal << " at simulation step " << *step);
-	    // schedule runtime estimate now
-	    step.set(0);
-	    signal.clear();
-	}
-	else if (signal.get()) {
+	if (signal.get()) {
 	    LOG_WARNING("trapped signal " << signal << " at simulation step " << *step);
-	    // abort simulation
-	    break;
+	    // process signal event
+	    if (signal.get() == SIGUSR1) {
+		// schedule runtime estimate now
+		step.set(0);
+		signal.clear();
+	    }
+	    else if (signal.get() == SIGHUP) {
+		// write partial results to HDF5 files and flush to disk
+		LOG("flushing HDF5 buffers to disk");
+		tcf.flush();
+		if (opts.dump_trajectories().value())
+		    traj.flush();
+		tep.flush();
+	    }
+	    else {
+		LOG_WARNING("aborting simulation");
+		break;
+	    }
+	    signal.clear();
 	}
     }
     LOG("finished MD simulation");
