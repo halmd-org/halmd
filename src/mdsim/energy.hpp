@@ -117,6 +117,8 @@ void energy<dimension, T, U>::open(std::string const& filename)
     H5::DataSpace scalar_ds(2, scalar_dim, scalar_max_dim);
     H5::DSetCreatPropList scalar_cparms;
     scalar_cparms.setChunk(2, scalar_chunk_dim);
+    // GZIP compression
+    scalar_cparms.setDeflate(6);
 
     // extensible dataspace for vector properties
     hsize_t vector_dim[2] = { 0, dimension + 1 };
@@ -125,6 +127,8 @@ void energy<dimension, T, U>::open(std::string const& filename)
     H5::DataSpace vector_ds(2, vector_dim, vector_max_dim);
     H5::DSetCreatPropList vector_cparms;
     vector_cparms.setChunk(2, vector_chunk_dim);
+    // GZIP compression
+    vector_cparms.setDeflate(6);
 
     // floating-point data type
     m_tid = H5::PredType::NATIVE_FLOAT;
