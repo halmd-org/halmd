@@ -41,6 +41,7 @@ public:
 	m_sigh[1] = signal(SIGINT, set);
 	m_sigh[2] = signal(SIGTERM, set);
 	m_sigh[3] = signal(SIGUSR1, set);
+	m_sigh[4] = signal(SIGALRM, set);
     }
 
     /**
@@ -52,12 +53,13 @@ public:
 	signal(SIGINT, m_sigh[1]);
 	signal(SIGTERM, m_sigh[2]);
 	signal(SIGUSR1, m_sigh[3]);
+	signal(SIGALRM, m_sigh[4]);
     }
 
     /**
      * get signal number
      */
-    static int const& get()
+    int const& operator*()
     {
 	return m_signum;
     }
@@ -83,6 +85,8 @@ public:
 	    os << "TERM";
 	else if (sig.m_signum == SIGUSR1)
 	    os << "USR1";
+	else if (sig.m_signum == SIGALRM)
+	    os << "ALRM";
 	return os;
     }
 
@@ -99,7 +103,7 @@ private:
     /** signal number */
     static int m_signum;
     /** previous signal handlers */
-    boost::array<sighandler_t, 4> m_sigh;
+    boost::array<sighandler_t, 5> m_sigh;
 };
 
 int signal_handler::m_signum(0);
