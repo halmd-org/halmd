@@ -45,6 +45,8 @@ public:
     void open(std::string const& filename, unsigned int const& npart);
     /** close HDF5 trajectory output file */
     void close();
+    /** flush HDF5 output file to disk */
+    void flush();
     /** returns HDF5 parameter group */
     H5param attrs();
     /** write phase space sample */
@@ -117,7 +119,21 @@ void trajectory<dimension, T, true>::close()
 	m_file.close();
     }
     catch (H5::Exception const& e) {
-	throw exception("failed to close HDF5 trajectory input file");
+	throw exception("failed to close HDF5 trajectory output file");
+    }
+}
+
+/**
+ * flush HDF5 output file to disk
+ */
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::flush()
+{
+    try {
+	m_file.flush(H5F_SCOPE_GLOBAL);
+    }
+    catch (H5::Exception const& e) {
+	throw exception("failed to flush HDF5 trajectory output file");
     }
 }
 
