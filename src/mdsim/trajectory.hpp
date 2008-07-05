@@ -139,10 +139,10 @@ void trajectory<dimension, T, true>::sample(std::vector<T> const& r, std::vector
     hsize_t dim[3];
     m_ds_file.getSimpleExtentDims(dim);
 
-    hsize_t count[3]  = { 1, dim[1], 1 };
+    hsize_t count[3]  = { 1, 1, 1 };
     hsize_t start[3]  = { dim[0], 0, 0 };
     hsize_t stride[3] = { 1, 1, 1 };
-    hsize_t block[3]  = { 1, 1, dim[2] };
+    hsize_t block[3]  = { 1, dim[1], dim[2] };
 
     dim[0]++;
     m_ds_file.setExtentSimple(3, dim);
