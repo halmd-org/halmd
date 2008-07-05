@@ -60,12 +60,10 @@ public:
     H5param attrs();
     /** sample thermodynamic equilibrium properties */
     void sample(std::vector<T> const& v, double const& en_pot, double const& virial, double const& density, double const& time);
+    /** write thermodynamic equilibrium properties to HDF5 file */
+    void flush(bool force);
     /** close HDF5 thermodynamic equilibrium properties output file */
     void close();
-
-private:
-    /** write thermodynamic equilibrium properties to HDF5 file */
-    void flush();
 
 private:
     /** number of aquired samples */
@@ -199,9 +197,9 @@ void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot,
     m_samples++;
     m_samples_buffer++;
 
-    // commit full buffers to file
     if (m_samples_buffer >= CHUNK_SIZE) {
-	flush();
+	// commit full buffers to file
+	flush(false);
     }
 }
 
@@ -209,8 +207,12 @@ void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot,
  * write thermodynamic equilibrium properties to HDF5 file
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::flush()
+void energy<dimension, T>::flush(bool force=true)
 {
+    if (!m_samples_buffer)
+	// empty buffers
+	return;
+
     // file dataspaces
     hsize_t scalar_dim[2] = { m_samples, 2 };
     hsize_t vector_dim[2] = { m_samples, dimension + 1 };
@@ -257,7 +259,16 @@ void energy<dimension, T>::flush()
 	m_v_cm.clear();
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to write thermodynamic equilibrium properties to HDF5 energy file");
+	throw exception("failed to write thermodynamic equilibrium properties");
+    }
+
+    if (force) {
+	try {
+	    m_file.flush(H5F_SCOPE_GLOBAL);
+	}
+	catch (H5::FileIException const& e) {
+	    throw exception("failed to flush HDF5 energy file to disk");
+	}
     }
 
     m_samples_file = m_samples;
@@ -271,9 +282,7 @@ template <unsigned dimension, typename T>
 void energy<dimension, T>::close()
 {
     // commit remaining samples to file
-    if (m_samples_buffer > 0) {
-	flush();
-    }
+    flush(false);
 
     try {
 	m_file.close();
