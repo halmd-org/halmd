@@ -168,12 +168,11 @@ void mdsim<dimension, T>::operator()()
 #endif
 
 #ifndef USE_BENCHMARK
-    // handle non-lethal POSIX signals to allow for a partial simulation run
-    signal_handler signal;
-
     // measure elapsed realtime
     real_timer timer;
     timer.start();
+    // handle non-lethal POSIX signals to allow for a partial simulation run
+    signal_handler signal;
 
     LOG("starting MD simulation");
     for (iterator_timer<uint64_t> step = 0; step < tcf.steps(); ++step) {
@@ -182,7 +181,7 @@ void mdsim<dimension, T>::operator()()
 	    // sample time
 	    const double time = *step * tcf.timestep();
 	    // sample time correlation functions
-	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _2, _3, *step));
+	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _2, _3, boost::ref(step)));
 	    // sample thermodynamic equilibrium properties
 	    fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, fluid.density(), tcf.timestep(), time));
 	    // sample trajectory
@@ -193,9 +192,23 @@ void mdsim<dimension, T>::operator()()
 	    fluid.mdstep(*step * tcf.timestep());
 	}
 
-	// abort simulation on signal
-	if (signal.get()) {
-	    LOG_WARNING("caught signal at simulation step " << *step);
+	// check whether a runtime estimate has finished
+	if (step.elapsed() > 0) {
+	    LOG("estimated remaining runtime: " << step);
+	    step.clear();
+	    // schedule next runtime estimate in half an hour
+	    step.set(1800);
+	}
+
+	if (signal.get() == SIGUSR1) {
+	    LOG("trapped signal " << signal << " at simulation step " << *step);
+	    // schedule runtime estimate now
+	    step.set(0);
+	    signal.clear();
+	}
+	else if (signal.get()) {
+	    LOG_WARNING("trapped signal " << signal << " at simulation step " << *step);
+	    // abort simulation
 	    break;
 	}
     }
