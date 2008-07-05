@@ -39,8 +39,8 @@ struct mean_square_displacement
 	typedef typename input_iterator::value_type::vector_type::value_type vector_type;
 	typedef typename input_iterator::value_type::vector_type::value_type::value_type value_type;
 
-	// iterate over phase space samples in block, skipping first sample
-	for (input_iterator it = first; ++it != last; ++result) {
+	// iterate over phase space samples in block
+	for (input_iterator it = first; it != last; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
 	    for (vector_const_iterator r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0) {
 		// displacement of particle
@@ -66,8 +66,8 @@ struct mean_quartic_displacement
 	typedef typename input_iterator::value_type::vector_type::value_type vector_type;
 	typedef typename input_iterator::value_type::vector_type::value_type::value_type value_type;
 
-	// iterate over phase space samples in block, skipping first sample
-	for (input_iterator it = first; ++it != last; ++result) {
+	// iterate over phase space samples in block
+	for (input_iterator it = first; it != last; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
 	    for (vector_const_iterator r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0) {
 		// displacement of particle
@@ -93,8 +93,8 @@ struct velocity_autocorrelation
     {
 	typedef typename input_iterator::value_type::vector_type::const_iterator vector_const_iterator;
 
-	// iterate over phase space samples in block, skipping first sample
-	for (input_iterator it = first; ++it != last; ++result) {
+	// iterate over phase space samples in block
+	for (input_iterator it = first; it != last; ++it, ++result) {
 	    // iterate over particle velocities in current and first sample
 	    for (vector_const_iterator v = it->v.begin(), v0 = first->v.begin(); v != it->v.end(); ++v, ++v0) {
 		// accumulate velocity autocorrelation
