@@ -24,6 +24,7 @@
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
 #include <stdint.h>
+#include <unistd.h>
 #include "correlation.hpp"
 #include "energy.hpp"
 #include "ljfluid.hpp"
@@ -47,6 +48,16 @@ namespace mdsim
 template <unsigned dimension, typename T, typename U>
 class mdsim
 {
+public:
+    enum {
+	/** HDF5 buffers flush to disk interval in seconds */
+	FLUSH_TO_DISK_INTERVAL = 900,
+	/** waiting time in seconds before runtime estimate after block completion */
+	TIME_ESTIMATE_WAIT_AFTER_BLOCK = 300,
+	/** runtime estimate interval in seconds */
+	TIME_ESTIMATE_INTERVAL = 1800,
+    };
+
 public:
     /** initialize MD simulation program */
     mdsim(options const& opts);
@@ -178,11 +189,14 @@ void mdsim<dimension, T, U>::operator()()
 #ifndef USE_BENCHMARK
     // measure elapsed realtime
     real_timer timer;
-    timer.start();
     // handle non-lethal POSIX signals to allow for a partial simulation run
     signal_handler signal;
+    // schedule first disk flush
+    alarm(FLUSH_TO_DISK_INTERVAL);
 
     LOG("starting MD simulation");
+    timer.start();
+
     for (iterator_timer<uint64_t> step = 0; step < tcf.steps(); ++step) {
 	// copy previous MD simulation state from GPU to host
 	fluid.sample();
@@ -209,9 +223,11 @@ void mdsim<dimension, T, U>::operator()()
 		if (opts.dump_trajectories().value())
 		    traj.flush();
 		tep.flush();
-		// schedule remaining runtime estimate in 5 minutes
+		// schedule remaining runtime estimate
 		step.clear();
-		step.set(300);
+		step.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
+		// schedule next disk flush
+		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
 	}
 	// synchronize MD simulation program step on GPU
@@ -221,39 +237,44 @@ void mdsim<dimension, T, U>::operator()()
 	if (step.elapsed() > 0) {
 	    LOG("estimated remaining runtime: " << step);
 	    step.clear();
-	    // schedule next runtime estimate in half an hour
-	    step.set(1800);
+	    // schedule next remaining runtime estimate
+	    step.set(TIME_ESTIMATE_INTERVAL);
 	}
 
-	if (signal.get()) {
-	    LOG_WARNING("trapped signal " << signal << " at simulation step " << *step);
-	    // process signal event
-	    if (signal.get() == SIGUSR1) {
+	// process signal event
+	if (*signal) {
+	    if (*signal != SIGALRM) {
+		LOG_WARNING("trapped signal " << signal << " at simulation step " << *step);
+	    }
+	    if (*signal == SIGUSR1) {
 		// schedule runtime estimate now
 		step.set(0);
 		signal.clear();
 	    }
-	    else if (signal.get() == SIGHUP) {
+	    else if (*signal == SIGHUP || *signal == SIGALRM) {
 		// write partial results to HDF5 files and flush to disk
 		LOG("flushing HDF5 buffers to disk");
 		tcf.flush();
 		if (opts.dump_trajectories().value())
 		    traj.flush();
 		tep.flush();
+		// schedule next disk flush
+		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
-	    else {
+	    else if (*signal == SIGINT || *signal == SIGTERM) {
 		LOG_WARNING("aborting simulation");
 		break;
 	    }
 	    signal.clear();
 	}
     }
-    LOG("finished MD simulation");
 
-    // output total MD simulation runtime
     timer.stop();
+    LOG("finished MD simulation");
     LOG("total MD simulation runtime: " << timer);
 
+    // cancel previously scheduled disk flush
+    alarm(0);
     // close HDF5 output files
     tcf.close();
     if (opts.dump_trajectories().value())
