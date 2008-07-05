@@ -107,7 +107,7 @@ public:
     /** check if sample is acquired for given simulation step */
     bool sample(uint64_t const& step) const;
     /** sample time correlation functions */
-    void sample(std::vector<T> const& r, std::vector<T> const& v, uint64_t const& step);
+    void sample(std::vector<T> const& r, std::vector<T> const& v, iterator_timer<uint64_t>& step);
     /** write correlation function results to HDF5 file */
     void write();
 
@@ -383,14 +383,14 @@ bool correlation<dimension, T>::sample(uint64_t const& step) const
  * sample time correlation functions
  */
 template <unsigned dimension, typename T>
-void correlation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> const& v, uint64_t const& step)
+void correlation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> const& v, iterator_timer<uint64_t>& step)
 {
     sample_type sample(r, v, m_q_vector);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
 	    continue;
-	if (step % m_block_freq[i])
+	if (*step % m_block_freq[i])
 	    continue;
 
 	m_block[i].push_back(sample);
@@ -402,10 +402,12 @@ void correlation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> c
 		m_block[i].clear();
 	    }
 	    m_block_samples[i]++;
+
 	    if (m_max_samples == m_block_samples[i]) {
 		LOG("finished sampling on block level " << i << " at step " << step);
-		// schedule remaining MD simulation runtime estimate
-		iterator_timer<uint64_t>::start();
+		// schedule remaining runtime estimate in 5 minutes
+		step.clear();
+		step.set(300);
 	    }
 	}
     }

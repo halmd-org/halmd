@@ -73,8 +73,10 @@ public:
 	    os << std::fixed << std::setprecision(1) << t << " s";
 	else if (t < 3600)
 	    os << std::fixed << std::setprecision(1) << (t / 60) << " min";
-	else
+	else if (t < 86400)
 	    os << std::fixed << std::setprecision(1) << (t / 3600) << " h";
+	else
+	    os << std::fixed << std::setprecision(1) << (t / 86400) << " d";
 	return os.str();
     }
 
@@ -91,79 +93,104 @@ private:
     timeval m_start, m_stop;
 };
 
-
 /**
- * Loop iterator with remaining runtime estimator
+ * Iterator with remaining realtime estimator
  */
-template <typename T>
+template <typename T, time_t I = 15, time_t W = 60>
 class iterator_timer
 {
 public:
-    enum {
-	INTERVAL = 15,
-    };
-
-public:
-    iterator_timer(T const& value)
+    /**
+     * initialize iterator variable and schedule timer
+     */
+    iterator_timer(T const& value) : m_count(value), m_time(0)
     {
-	m_value = value;
-	m_handler[0] = ::signal(SIGALRM, stop);
-	// estimate may be triggered by user via USR1 signal
-	m_handler[1] = ::signal(SIGUSR1, start);
-	start();
+	m_start = time(NULL) + W;
     }
 
-    ~iterator_timer()
+    /**
+     * schedule timer after given time interval in seconds
+     */
+    void set(time_t wait = W)
     {
-	alarm(0);
-	::signal(SIGALRM, m_handler[0]);
-	::signal(SIGUSR1, m_handler[1]);
+	m_start = time(NULL) + wait;
     }
 
-    static void start(int signum = 0)
+    /**
+     * reset estimated remaining time
+     */
+    void clear()
     {
-	m_timer.start();
-	m_start = m_value;
-	alarm(INTERVAL);
-    }
-    
-    static void stop(int signum = 0)
-    {
-	m_timer.stop();
-	double t = m_timer.elapsed() * (m_total - m_value) / (m_value - m_start);
-	LOG("estimated remaining runtime: " << real_timer::format(t));
+	m_start = -1;
+	m_stop = -1;
+	m_time = 0;
     }
 
+    /**
+     * start and stop timer
+     */
     bool operator<(T const& value)
     {
-	return (m_value < (m_total = value)) ? true : false;
+	// time() is about an order of magnitude faster than gettimeofday()
+	const time_t t = time(NULL);
+
+	if (m_start != -1 && t >= m_start) {
+	    m_timer.start();
+	    m_stop = t + I;
+	    m_start = -1;
+	    m_base = m_count;
+	}
+	else if (m_stop != -1 && t >= m_stop) {
+	    m_timer.stop();
+	    m_stop = -1;
+	    m_time = m_timer.elapsed() * (value - m_count) / (m_count - m_base);
+	}
+	return (m_count < value);
+    }
+
+    /**
+     * returns estimated remaining time
+     */
+    double const& elapsed()
+    {
+	return m_time;
+    }
+
+    /**
+     * output formatted estimated remaining time to stream
+     */
+    friend std::ostream& operator<<(std::ostream& os, iterator_timer& tm)
+    {
+	os << real_timer::format(tm.elapsed());
+	return os;
     }
 
     T operator++(int)
     {
-	return m_value++;
+	return m_count++;
     }
 
     T operator++()
     {
-	return ++m_value;
+	return ++m_count;
     }
 
     T& operator*()
     {
-	return m_value;
+	return m_count;
+    }
+
+    T const& operator*() const
+    {
+	return m_count;
     }
 
 private:
-    boost::array<sighandler_t, 2> m_handler;
-    static T m_start, m_value, m_total;
-    static real_timer m_timer;
+    time_t m_start, m_stop;
+    real_timer m_timer;
+    T m_base, m_count;
+    double m_time;
 };
-
-template <typename T> T iterator_timer<T>::m_start;
-template <typename T> T iterator_timer<T>::m_value;
-template <typename T> T iterator_timer<T>::m_total;
-template <typename T> real_timer iterator_timer<T>::m_timer;
 
 } // namespace mdsim
 
