@@ -141,6 +141,19 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T, typename U>
 void mdsim<dimension, T, U>::operator()()
 {
+    if (opts.equilibration_steps().value()) {
+	LOG("starting equilibration");
+	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
+	    // copy previous MD simulation state from GPU to host
+	    fluid.sample();
+	    // stream next MD simulation program step on GPU
+	    fluid.mdstep();
+	    // synchronize MD simulation program step on GPU
+	    fluid.synchronize();
+	}
+	LOG("finished equilibration");
+    }
+
 #ifndef USE_BENCHMARK
     // time correlation functions
     tcf.open(opts.output_file_prefix().value() + ".tcf");
@@ -161,19 +174,6 @@ void mdsim<dimension, T, U>::operator()()
 #else
     prf.attrs() << fluid;
 #endif
-
-    if (opts.equilibration_steps().value()) {
-	LOG("starting equilibration");
-	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
-	    // copy previous MD simulation state from GPU to host
-	    fluid.sample();
-	    // stream next MD simulation program step on GPU
-	    fluid.mdstep();
-	    // synchronize MD simulation program step on GPU
-	    fluid.synchronize();
-	}
-	LOG("finished equilibration");
-    }
 
 #ifndef USE_BENCHMARK
     // handle non-lethal POSIX signals to allow for a partial simulation run
