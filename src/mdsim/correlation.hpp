@@ -246,7 +246,7 @@ void correlation<dimension, T, U>::block_size(unsigned int const& value)
     // allocate correlation functions results
     try {
 	foreach (tcf_pair& tcf, m_tcf) {
-	    tcf.second.resize(boost::extents[m_block_count][m_block_size - 1]);
+	    tcf.second.resize(boost::extents[m_block_count][m_block_size]);
 	}
     }
     catch (std::bad_alloc const& e) {
@@ -299,7 +299,7 @@ void correlation<dimension, T, U>::q_values(unsigned int const& n, float const& 
 template <unsigned dimension, typename T, typename U>
 float correlation<dimension, T, U>::block_sample_time(unsigned int block, unsigned int offset) const
 {
-    float time = m_timestep * std::pow(m_block_size, block / 2) * (offset + 1);
+    float time = m_timestep * std::pow(m_block_size, block / 2) * offset;
 
     if (block % 2) {
 	// shifted block
@@ -506,7 +506,7 @@ void correlation<dimension, T, U>::write()
 			// q-value
 			data[j][k][l][0] = m_q_vector[j];
 			// time interval
-			data[j][k][l][1] = (l > 0) ? block_sample_time(k, l - 1) : 0;
+			data[j][k][l][1] = block_sample_time(k, l);
 			// mean average
 			data[j][k][l][2] = qtcf.second[k][l][j].mean();
 			// standard error of mean
