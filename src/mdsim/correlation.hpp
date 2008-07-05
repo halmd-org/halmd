@@ -112,7 +112,7 @@ public:
     /** sample time correlation functions */
     void sample(vector_type const& r, vector_type const& v, iterator_timer<uint64_t>& step);
     /** write correlation function results to HDF5 file */
-    void write();
+    void flush();
 
 private:
     /** apply correlation functions to block samples */
@@ -152,6 +152,11 @@ private:
 
     /** HDF5 output file */
     H5::H5File m_file;
+    /** HDF5 datasets */
+    boost::array<H5::DataSet, 3> m_tcf_dataset;
+    boost::array<H5::DataSet, 2> m_qtcf_dataset;
+    /** HDF5 floating-point data type */
+    H5::DataType m_tid;
 };
 
 /**
@@ -324,6 +329,49 @@ void correlation<dimension, T, U>::open(std::string const& filename)
     }
     // create parameter group
     m_file.createGroup("param");
+
+    // floating-point data type
+    m_tid = H5::PredType::NATIVE_FLOAT;
+
+    try {
+	// extensible dataspace for correlation function results
+	hsize_t dim[3] = { 0, m_block_size, 3 };
+	hsize_t max_dim[3] = { H5S_UNLIMITED, m_block_size, 3 };
+	hsize_t chunk_dim[3] = { 1, m_block_size, 3 };
+	H5::DataSpace ds(3, dim, max_dim);
+	H5::DSetCreatPropList cparms;
+	cparms.setChunk(3, chunk_dim);
+
+	for (unsigned int i = 0; i < m_tcf.size(); ++i) {
+	    // correlation function name
+	    char const* name = boost::apply_visitor(tcf_name_visitor(), m_tcf[i].first);
+	    // create dataset
+	    m_tcf_dataset[i] = m_file.createDataSet(name, m_tid, ds, cparms);
+	}
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create correlation function datasets");
+    }
+
+    try {
+	// extensible dataspace for binary correlation function results
+	hsize_t dim[4] = { m_q_vector.size(), 0, m_block_size, 4 };
+	hsize_t max_dim[4] = { m_q_vector.size(), H5S_UNLIMITED, m_block_size, 4 };
+	hsize_t chunk_dim[4] = { m_q_vector.size(), 1, m_block_size, 4 };
+	H5::DataSpace ds(4, dim, max_dim);
+	H5::DSetCreatPropList cparms;
+	cparms.setChunk(4, chunk_dim);
+
+	for (unsigned int i = 0; i < m_qtcf.size(); ++i) {
+	    // correlation function name
+	    char const* name = boost::apply_visitor(tcf_name_visitor(), m_qtcf[i].first);
+	    // create dataset
+	    m_qtcf_dataset[i] = m_file.createDataSet(name, m_tid, ds, cparms);
+	}
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create binary correlation function datasets");
+    }
 }
 
 /**
@@ -332,6 +380,17 @@ void correlation<dimension, T, U>::open(std::string const& filename)
 template <unsigned dimension, typename T, typename U>
 void correlation<dimension, T, U>::close()
 {
+    // compute higher block correlations for remaining samples
+    for (unsigned int i = 2; i < m_block_count; ++i) {
+	while (m_block[i].size() > 2) {
+	    m_block[i].pop_front();
+	    autocorrelate_block(i);
+	}
+    }
+
+    // write correlation function results to HDF5 file
+    flush();
+
     try {
 	m_file.close();
     }
@@ -434,93 +493,81 @@ void correlation<dimension, T, U>::autocorrelate_block(unsigned int n)
  * write correlation function results to HDF5 file
  */
 template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::write()
+void correlation<dimension, T, U>::flush()
 {
-    // compute higher block correlations for remaining samples
-    for (unsigned int i = 2; i < m_block_count; ++i) {
-	while (m_block[i].size() > 2) {
-	    m_block[i].pop_front();
-	    autocorrelate_block(i);
-	}
+    // find highest block with adequate number of samples
+    unsigned int max_blocks = 0;
+    for (; max_blocks < m_block_count; ++max_blocks) {
+	if (m_block_samples[max_blocks] < 2)
+	    break;
     }
+    if (max_blocks < 1)
+	return;
 
     try {
-	// assure adequate number of samples per block
-	unsigned int max_blocks;
-	for (max_blocks = 0; max_blocks < m_block.size(); ++max_blocks) {
-	    if (m_block_samples[max_blocks] < 1) {
-		LOG_WARNING("could gather only " << max_blocks << " blocks of correlation function results");
-		break;
-	    }
-	}
+	// dataset dimensions
+	boost::array<hsize_t, 3> dim = {{ max_blocks, m_block_size, 3 }};
+	// memory buffer for results
+	boost::multi_array<float, 3> data(dim);
 
-	if (max_blocks == 0)
-	    return;
-
-	// iterate over correlation functions
-	foreach (tcf_pair& tcf, m_tcf) {
-	    // dataspace for correlation function results
-	    hsize_t dim[3] = { max_blocks, tcf.second.shape()[1], 3 };
-	    H5::DataSpace ds(3, dim);
-	    // correlation function name
-	    char const* name = boost::apply_visitor(tcf_name_visitor(), tcf.first);
-
-	    // create dataset for correlation function results
-	    H5::DataSet dataset(m_file.createDataSet(name, H5::PredType::NATIVE_FLOAT, ds));
-
-	    // compose results in memory
-	    boost::multi_array<float, 3> data(boost::extents[dim[0]][dim[1]][dim[2]]);
-
-	    for (unsigned int j = 0; j < data.size(); ++j) {
-		for (unsigned int k = 0; k < data[j].size(); ++k) {
+	// write correlation functions
+	for (unsigned int i = 0; i < m_tcf.size(); ++i) {
+	    for (unsigned int j = 0; j < dim[0]; ++j) {
+		for (unsigned int k = 0; k < dim[1]; ++k) {
 		    // time interval
 		    data[j][k][0] = block_sample_time(j, k);
 		    // mean average
-		    data[j][k][1] = tcf.second[j][k].mean();
+		    data[j][k][1] = m_tcf[i].second[j][k].mean();
 		    // standard error of mean
-		    data[j][k][2] = tcf.second[j][k].err();
+		    data[j][k][2] = m_tcf[i].second[j][k].err();
 		}
 	    }
-
+	    m_tcf_dataset[i].extend(dim.c_array());
 	    // write results to HDF5 file
-	    dataset.write(data.data(), H5::PredType::NATIVE_FLOAT);
-	}
+	    m_tcf_dataset[i].write(data.data(), m_tid);
+ 	}
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to write correlation function results");
+    }
 
-	// iterate over binary correlation functions
-	foreach (qtcf_pair& qtcf, m_qtcf) {
-	    // dataspace for binary correlation function results
-	    hsize_t dim[4] = { m_q_vector.size(), max_blocks, qtcf.second.shape()[1], 4 };
-	    H5::DataSpace ds(4, dim);
-	    // correlation function name
-	    char const* name = boost::apply_visitor(tcf_name_visitor(), qtcf.first);
+    try {
+	// dataset dimensions
+	boost::array<hsize_t, 4> dim = {{ m_q_vector.size(), max_blocks, m_block_size, 4 }};
+	// memory buffer for results
+	boost::multi_array<float, 4> data(dim);
 
-	    // create dataset for correlation function results
-	    H5::DataSet dataset(m_file.createDataSet(name, H5::PredType::NATIVE_FLOAT, ds));
-
-	    // compose results in memory
-	    boost::multi_array<float, 4> data(boost::extents[dim[0]][dim[1]][dim[2]][dim[3]]);
-
-	    for (unsigned int j = 0; j < data.size(); ++j) {
-		for (unsigned int k = 0; k < data[j].size(); ++k) {
-		    for (unsigned int l = 0; l < data[j][k].size(); ++l) {
+	// write binary correlation functions
+	for (unsigned int i = 0; i < m_qtcf.size(); ++i) {
+	    for (unsigned int j = 0; j < dim[0]; ++j) {
+		for (unsigned int k = 0; k < dim[1]; ++k) {
+		    for (unsigned int l = 0; l < dim[2]; ++l) {
 			// q-value
 			data[j][k][l][0] = m_q_vector[j];
 			// time interval
 			data[j][k][l][1] = block_sample_time(k, l);
 			// mean average
-			data[j][k][l][2] = qtcf.second[k][l][j].mean();
+			data[j][k][l][2] = m_qtcf[i].second[k][l][j].mean();
 			// standard error of mean
-			data[j][k][l][3] = qtcf.second[k][l][j].err();
+			data[j][k][l][3] = m_qtcf[i].second[k][l][j].err();
 		    }
 		}
 	    }
-
+	    m_qtcf_dataset[i].extend(dim.c_array());
 	    // write results to HDF5 file
-	    dataset.write(data.data(), H5::PredType::NATIVE_FLOAT);
+	    m_qtcf_dataset[i].write(data.data(), m_tid);
 	}
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to write results to correlations file");
+	throw exception("failed to write binary correlation results");
+    }
+
+    try {
+	// flush file contents to disk
+	m_file.flush(H5F_SCOPE_GLOBAL);
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to flush HDF5 correlations file");
     }
 }
 
