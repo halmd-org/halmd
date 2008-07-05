@@ -132,6 +132,20 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
+    if (opts.equilibration_steps().value()) {
+	LOG("starting equilibration");
+#ifndef USE_BENCHMARK
+	// advance phase space state to given sample time
+	fluid.mdstep(opts.equilibration_steps().value() * tcf.timestep());
+#else
+	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
+	    // advance phase space state to given sample time
+	    fluid.mdstep(step * opts.timestep().value());
+	}
+#endif
+	LOG("finished equilibration");
+    }
+
 #ifndef USE_BENCHMARK
     // time correlation functions
     tcf.open(opts.output_file_prefix().value() + ".tcf");
@@ -152,20 +166,6 @@ void mdsim<dimension, T>::operator()()
 #else
     prf.attrs() << fluid;
 #endif
-
-    if (opts.equilibration_steps().value()) {
-	LOG("starting equilibration");
-#ifndef USE_BENCHMARK
-	// advance phase space state to given sample time
-	fluid.mdstep(opts.equilibration_steps().value() * tcf.timestep());
-#else
-	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
-	    // advance phase space state to given sample time
-	    fluid.mdstep(step * opts.timestep().value());
-	}
-#endif
-	LOG("finished equilibration");
-    }
 
 #ifndef USE_BENCHMARK
     // handle non-lethal POSIX signals to allow for a partial simulation run
