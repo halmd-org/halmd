@@ -240,8 +240,7 @@ void mdsim<dimension, T>::operator()()
     if (opts.dump_trajectories().value()) {
 	traj.close();
     }
-    // write thermodynamic equilibrium properties to HDF5 file
-    tep.write();
+    // flush thermodynamic equilibrium properties file
     tep.close();
 #endif
     // write performance data to HDF5 file (includes equilibration phase)

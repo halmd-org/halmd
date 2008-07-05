@@ -26,7 +26,6 @@
 #include <vector>
 #include "H5param.hpp"
 #include "accumulator.hpp"
-#include "ljfluid.hpp"
 #include "log.hpp"
 #include "statistics.hpp"
 
@@ -48,22 +47,33 @@ public:
     /** time and vector property */
     typedef std::pair<double, T> vector_pair;
 
+    enum {
+	/** HDF5 dataset chunk size */
+	CHUNK_SIZE = 2500,
+    };
+
 public:
-    energy() : m_samples(0) {}
+    energy() : m_samples(0), m_samples_buffer(0), m_samples_file(0) {}
     /** create HDF5 thermodynamic equilibrium properties output file */
     void open(std::string const& filename);
     /** returns HDF5 parameter group */
     H5param attrs();
     /** sample thermodynamic equilibrium properties */
     void sample(std::vector<T> const& v, double const& en_pot, double const& virial, double const& density, double const& time);
-    /** write thermodynamic equilibrium properties to HDF5 file */
-    void write();
     /** close HDF5 thermodynamic equilibrium properties output file */
     void close();
 
 private:
+    /** write thermodynamic equilibrium properties to HDF5 file */
+    void flush();
+
+private:
     /** number of aquired samples */
     uint64_t m_samples;
+    /** number of samples in memory */
+    uint64_t m_samples_buffer;
+    /** number of samples committed to file */
+    uint64_t m_samples_file;
 
     /** thermodynamic equilibrium properties */
     std::vector<scalar_pair> m_en_pot;
@@ -74,6 +84,10 @@ private:
     std::vector<vector_pair> m_v_cm;
     /** HDF5 thermodynamic equilibrium properties output file */
     H5::H5File m_file;
+    /** HDF5 datasets */
+    boost::array<H5::DataSet, 6> m_dataset;
+    /** HDF5 floating-point data type */
+    H5::DataType m_tid;
 };
 
 /**
@@ -92,6 +106,56 @@ void energy<dimension, T>::open(std::string const& filename)
     }
     // create parameter group
     m_file.createGroup("param");
+
+    // extensible dataspace for scalar properties
+    hsize_t scalar_dim[2] = { 0, 2 };
+    hsize_t scalar_max_dim[2] = { H5S_UNLIMITED, 2 };
+    hsize_t scalar_chunk_dim[2] = { CHUNK_SIZE, 2 };
+    H5::DataSpace scalar_ds(2, scalar_dim, scalar_max_dim);
+    H5::DSetCreatPropList scalar_cparms;
+    scalar_cparms.setChunk(2, scalar_chunk_dim);
+
+    // extensible dataspace for vector properties
+    hsize_t vector_dim[2] = { 0, dimension + 1 };
+    hsize_t vector_max_dim[2] = { H5S_UNLIMITED, dimension + 1 };
+    hsize_t vector_chunk_dim[2] = { CHUNK_SIZE, dimension + 1 };
+    H5::DataSpace vector_ds(2, vector_dim, vector_max_dim);
+    H5::DSetCreatPropList vector_cparms;
+    vector_cparms.setChunk(2, vector_chunk_dim);
+
+    // floating-point data type
+    m_tid = H5::PredType::NATIVE_DOUBLE;
+
+    try {
+	// mean potential energy per particle
+	m_dataset[0] = m_file.createDataSet("EPOT", m_tid, scalar_ds, scalar_cparms);
+	// mean kinetic energy per particle
+	m_dataset[1] = m_file.createDataSet("EKIN", m_tid, scalar_ds, scalar_cparms);
+	// mean total energy per particle
+	m_dataset[2] = m_file.createDataSet("ETOT", m_tid, scalar_ds, scalar_cparms);
+	// temperature
+	m_dataset[3] = m_file.createDataSet("TEMP", m_tid, scalar_ds, scalar_cparms);
+	// pressure
+	m_dataset[4] = m_file.createDataSet("PRESS", m_tid, scalar_ds, scalar_cparms);
+	// velocity center of mass
+	m_dataset[5] = m_file.createDataSet("VCM", m_tid, vector_ds, vector_cparms);
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create datasets in HDF5 energy file");
+    }
+
+    try {
+	// allocate thermodynamic equilibrium property buffers
+	m_en_pot.reserve(CHUNK_SIZE);
+	m_en_kin.reserve(CHUNK_SIZE);
+	m_en_tot.reserve(CHUNK_SIZE);
+	m_temp.reserve(CHUNK_SIZE);
+	m_press.reserve(CHUNK_SIZE);
+	m_v_cm.reserve(CHUNK_SIZE);
+    }
+    catch (std::bad_alloc const&) {
+	throw exception("failed to allocate thermodynamic equilibrium property buffers");
+    }
 }
 
 /**
@@ -129,60 +193,71 @@ void energy<dimension, T>::sample(std::vector<T> const& v, double const& en_pot,
     m_v_cm.push_back(vector_pair(time, mean(v.begin(), v.end())));
 
     m_samples++;
-}
+    m_samples_buffer++;
 
+    // commit full buffers to file
+    if (m_samples_buffer >= CHUNK_SIZE) {
+	flush();
+    }
+}
 
 /**
  * write thermodynamic equilibrium properties to HDF5 file
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::write()
+void energy<dimension, T>::flush()
 {
-    // create dataspaces for scalar and vector types
-    hsize_t dim_scalar[2] = { m_samples, 2 };
-    hsize_t dim_vector[2] = { m_samples, 1 + dimension };
-    H5::DataSpace ds_scalar(2, dim_scalar);
-    H5::DataSpace ds_vector(2, dim_vector);
+    // file dataspaces
+    hsize_t scalar_dim[2] = { m_samples, 2 };
+    hsize_t vector_dim[2] = { m_samples, dimension + 1 };
+    H5::DataSpace scalar_ds(2, scalar_dim);
+    H5::DataSpace vector_ds(2, vector_dim);
 
-    // HDF5 datasets for thermodynamic equilibrium properties
-    boost::array<H5::DataSet, 6> dataset_;
-    H5::DataType tid(H5::PredType::NATIVE_DOUBLE);
+    // file dataspace hyperslabs
+    hsize_t count[2] = { 1, 1 };
+    hsize_t start[2] = { m_samples_file, 0 };
+    hsize_t stride[2] = { 1, 1 };
+    hsize_t scalar_block[2] = { m_samples_buffer, 2 };
+    hsize_t vector_block[2] = { m_samples_buffer, dimension + 1 };
+    scalar_ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, scalar_block);
+    vector_ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, vector_block);
 
-    try {
-	// mean potential energy per particle
-	dataset_[0] = m_file.createDataSet("EPOT", tid, ds_scalar);
-	// mean kinetic energy per particle
-	dataset_[1] = m_file.createDataSet("EKIN", tid, ds_scalar);
-	// mean total energy per particle
-	dataset_[2] = m_file.createDataSet("ETOT", tid, ds_scalar);
-	// temperature
-	dataset_[3] = m_file.createDataSet("TEMP", tid, ds_scalar);
-	// pressure
-	dataset_[4] = m_file.createDataSet("PRESS", tid, ds_scalar);
-	// velocity center of mass
-	dataset_[5] = m_file.createDataSet("VCM", tid, ds_vector);
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create datasets in HDF5 energy file");
-    }
+    // memory dataspaces
+    H5::DataSpace scalar_mem_ds(2, scalar_block);
+    H5::DataSpace vector_mem_ds(2, vector_block);
 
     try {
 	// mean potential energy per particle
-	dataset_[0].write(m_en_pot.data(), tid, ds_scalar, ds_scalar);
+	m_dataset[0].extend(scalar_dim);
+	m_dataset[0].write(m_en_pot.data(), m_tid, scalar_mem_ds, scalar_ds);
+	m_en_pot.clear();
 	// mean kinetic energy per particle
-	dataset_[1].write(m_en_kin.data(), tid, ds_scalar, ds_scalar);
+	m_dataset[1].extend(scalar_dim);
+	m_dataset[1].write(m_en_kin.data(), m_tid, scalar_mem_ds, scalar_ds);
+	m_en_kin.clear();
 	// mean total energy per particle
-	dataset_[2].write(m_en_tot.data(), tid, ds_scalar, ds_scalar);
+	m_dataset[2].extend(scalar_dim);
+	m_dataset[2].write(m_en_tot.data(), m_tid, scalar_mem_ds, scalar_ds);
+	m_en_tot.clear();
 	// temperature
-	dataset_[3].write(m_temp.data(), tid, ds_scalar, ds_scalar);
+	m_dataset[3].extend(scalar_dim);
+	m_dataset[3].write(m_temp.data(), m_tid, scalar_mem_ds, scalar_ds);
+	m_temp.clear();
 	// pressure
-	dataset_[4].write(m_press.data(), tid, ds_scalar, ds_scalar);
+	m_dataset[4].extend(scalar_dim);
+	m_dataset[4].write(m_press.data(), m_tid, scalar_mem_ds, scalar_ds);
+	m_press.clear();
 	// velocity center of mass
-	dataset_[5].write(m_v_cm.data(), tid, ds_vector, ds_vector);
+	m_dataset[5].extend(vector_dim);
+	m_dataset[5].write(m_v_cm.data(), m_tid, vector_mem_ds, vector_ds);
+	m_v_cm.clear();
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write thermodynamic equilibrium properties to HDF5 energy file");
     }
+
+    m_samples_file = m_samples;
+    m_samples_buffer = 0;
 }
 
 /**
@@ -191,6 +266,11 @@ void energy<dimension, T>::write()
 template <unsigned dimension, typename T>
 void energy<dimension, T>::close()
 {
+    // commit remaining samples to file
+    if (m_samples_buffer > 0) {
+	flush();
+    }
+
     try {
 	m_file.close();
     }
