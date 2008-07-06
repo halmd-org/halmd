@@ -192,6 +192,14 @@ private:
     double m_time;
 };
 
+/**
+ * returns time interval in seconds between two timespecs
+ */
+inline double operator-(timespec const& ts1, timespec const& ts2)
+{
+    return (ts1.tv_sec - ts2.tv_sec) + (ts1.tv_nsec - ts2.tv_nsec) * 1.E-9;
+}
+
 } // namespace mdsim
 
 #endif /* ! MDSIM_TIMER_HPP */
