@@ -336,8 +336,8 @@ void correlation<dimension, T>::open(std::string const& filename)
 
     try {
 	// extensible dataspace for correlation function results
-	hsize_t dim[3] = { 0, m_block_size, 3 };
-	hsize_t max_dim[3] = { H5S_UNLIMITED, m_block_size, 3 };
+	hsize_t dim[3] = { 0, m_block_size, 5 };
+	hsize_t max_dim[3] = { H5S_UNLIMITED, m_block_size, 5 };
 	hsize_t chunk_dim[3] = { 1, m_block_size, 3 };
 	H5::DataSpace ds(3, dim, max_dim);
 	H5::DSetCreatPropList cparms;
@@ -356,8 +356,8 @@ void correlation<dimension, T>::open(std::string const& filename)
 
     try {
 	// extensible dataspace for binary correlation function results
-	hsize_t dim[4] = { m_q_vector.size(), 0, m_block_size, 4 };
-	hsize_t max_dim[4] = { m_q_vector.size(), H5S_UNLIMITED, m_block_size, 4 };
+	hsize_t dim[4] = { m_q_vector.size(), 0, m_block_size, 6 };
+	hsize_t max_dim[4] = { m_q_vector.size(), H5S_UNLIMITED, m_block_size, 6 };
 	hsize_t chunk_dim[4] = { m_q_vector.size(), 1, m_block_size, 4 };
 	H5::DataSpace ds(4, dim, max_dim);
 	H5::DSetCreatPropList cparms;
@@ -507,7 +507,7 @@ void correlation<dimension, T>::flush()
 
     try {
 	// dataset dimensions
-	boost::array<hsize_t, 3> dim = {{ max_blocks, m_block_size, 3 }};
+	boost::array<hsize_t, 3> dim = {{ max_blocks, m_block_size, 5 }};
 	// memory buffer for results
 	boost::multi_array<double, 3> data(dim);
 
@@ -521,6 +521,10 @@ void correlation<dimension, T>::flush()
 		    data[j][k][1] = m_tcf[i].second[j][k].mean();
 		    // standard error of mean
 		    data[j][k][2] = m_tcf[i].second[j][k].err();
+		    // variance
+		    data[j][k][3] = m_tcf[i].second[j][k].var();
+		    // count
+		    data[j][k][4] = m_tcf[i].second[j][k].count();
 		}
 	    }
 	    m_tcf_dataset[i].extend(dim.c_array());
@@ -534,7 +538,7 @@ void correlation<dimension, T>::flush()
 
     try {
 	// dataset dimensions
-	boost::array<hsize_t, 4> dim = {{ m_q_vector.size(), max_blocks, m_block_size, 4 }};
+	boost::array<hsize_t, 4> dim = {{ m_q_vector.size(), max_blocks, m_block_size, 6 }};
 	// memory buffer for results
 	boost::multi_array<double, 4> data(dim);
 
@@ -551,6 +555,10 @@ void correlation<dimension, T>::flush()
 			data[j][k][l][2] = m_qtcf[i].second[k][l][j].mean();
 			// standard error of mean
 			data[j][k][l][3] = m_qtcf[i].second[k][l][j].err();
+			// variance
+			data[j][k][l][4] = m_qtcf[i].second[k][l][j].var();
+			// count
+			data[j][k][l][5] = m_qtcf[i].second[k][l][j].count();
 		    }
 		}
 	    }
