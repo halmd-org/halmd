@@ -19,9 +19,9 @@
 #ifndef MDSIM_ACCUMULATOR_HPP
 #define MDSIM_ACCUMULATOR_HPP
 
-#include <math.h>
+#include <cmath>
+#include <stdexcept>
 #include <stdint.h>
-#include <assert.h>
 
 
 namespace mdsim
@@ -34,12 +34,10 @@ template <typename T>
 class accumulator
 {
 public:
-    accumulator() : count_(0), m_(0), s_(0)
-    {
-    }
+    accumulator() : n_(0), m_(0), v_(0) {}
 
     /**
-     * accumulate single value
+     * accumulate a value
      */
     accumulator<T>& operator+=(T const& val)
     {
@@ -50,13 +48,22 @@ public:
 	// D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
 	// Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
 	//
+	const T t = val - m_;
+	n_++;
+	m_ += t / n_;
+	v_ += t * (val - m_);
+	return *this;
+    }
 
-	++count_;
-
-	T t = val - m_;
-	m_ += t / count_;
-	s_ += t * (val - m_);
-
+    /**
+     * accumulate values of another accumulator
+     */
+    accumulator<T>& operator +=(accumulator<T> const& acc)
+    {
+	const uint64_t n = n_ + acc.n_;
+	v_ = v_ + acc.v_ + std::pow(m_ - acc.m_, 2) * n_ * acc.n_ / n;
+	m_ = (n_ * m_ + acc.n_ * acc.m_) / n;
+	n_ = n;
 	return *this;
     }
 
@@ -65,25 +72,39 @@ public:
      */
     void clear()
     {
-	count_ = 0;
+	n_ = 0;
 	m_ = 0;
-	s_ = 0;
+	v_ = 0;
     }
 
     /**
      * get accumulator value count
      */
-    uint64_t count() const
+    uint64_t const& count() const
     {
-	return count_;
+	return n_;
     }
 
     /**
      * compute mean average
      */
-    T mean() const
+    T const& mean() const
     {
+	if (n_ < 1) {
+	    throw std::logic_error("accumulator mean average requires a value");
+	}
 	return m_;
+    }
+
+    /**
+     * compute variance
+     */
+    T const& var() const
+    {
+	if (n_ < 2) {
+	    throw std::logic_error("accumulator variance requires multiple values");
+	}
+	return v_;
     }
 
     /**
@@ -91,10 +112,10 @@ public:
      */
     T std() const
     {
-	if (count_ < 2) {
-	    return 0;
+	if (n_ < 2) {
+	    throw std::logic_error("accumulator standard deviation requires multiple values");
 	}
-	return sqrt(s_ / (count_ - 1.));
+	return std::sqrt(v_ / (n_ - 1));
     }
 
     /**
@@ -102,15 +123,19 @@ public:
      */
     T err() const
     {
-	if (count_ < 2) {
-	    return 0;
+	if (n_ < 2) {
+	    throw std::logic_error("accumulator standard error of mean requires multiple values");
 	}
-	return sqrt(s_ / (count_ - 1.) / count_);
+	return sqrt(v_ / (n_ - 1) / n_);
     }
 
 private:
-    uint64_t count_;
-    T m_, s_;
+    /** count */
+    uint64_t n_;
+    /** mean */
+    T m_;
+    /** variance */
+    T v_;
 };
 
 } // namespace mdsim
