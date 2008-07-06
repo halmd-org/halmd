@@ -145,6 +145,14 @@ void mdsim<dimension, T>::operator()()
     // handle non-lethal POSIX signals to allow for a partial simulation run
     signal_handler signal;
 
+    // performance data
+    prf.open(opts.output_file_prefix().value() + ".prf");
+#ifndef USE_BENCHMARK
+    prf.attrs() << fluid << tcf;
+#else
+    prf.attrs() << fluid;
+#endif
+
     if (opts.equilibration_steps().value()) {
 	LOG("starting equilibration");
 	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
@@ -162,6 +170,10 @@ void mdsim<dimension, T>::operator()()
 	}
 	LOG("finished equilibration");
     }
+    // sample performance counters
+    prf.sample(fluid.times());
+    // commit HDF5 performance datasets
+    prf.commit();
 
 #ifndef USE_BENCHMARK
     // time correlation functions
@@ -175,16 +187,7 @@ void mdsim<dimension, T>::operator()()
     // thermodynamic equilibrium properties
     tep.open(opts.output_file_prefix().value() + ".tep");
     tep.attrs() << fluid << tcf;
-#endif
-    // performance data
-    prf.open(opts.output_file_prefix().value() + ".prf");
-#ifndef USE_BENCHMARK
-    prf.attrs() << fluid << tcf;
-#else
-    prf.attrs() << fluid;
-#endif
 
-#ifndef USE_BENCHMARK
     // measure elapsed realtime
     real_timer timer;
     // schedule first disk flush
@@ -209,11 +212,14 @@ void mdsim<dimension, T>::operator()()
 
 	    // acquired maximum number of samples for a block level
 	    if (flush) {
+		// sample performance counters
+		prf.sample(fluid.times());
 		// write partial results to HDF5 files and flush to disk
 		tcf.flush();
 		if (opts.dump_trajectories().value())
 		    traj.flush();
 		tep.flush();
+		prf.flush();
 		LOG("flushed HDF5 buffers to disk");
 		// schedule remaining runtime estimate
 		step.clear();
@@ -244,11 +250,14 @@ void mdsim<dimension, T>::operator()()
 		signal.clear();
 	    }
 	    else if (*signal == SIGHUP || *signal == SIGALRM) {
+		// sample performance counters
+		prf.sample(fluid.times());
 		// write partial results to HDF5 files and flush to disk
 		tcf.flush();
 		if (opts.dump_trajectories().value())
 		    traj.flush();
 		tep.flush();
+		prf.flush();
 		LOG("flushed HDF5 buffers to disk");
 		// schedule next disk flush
 		alarm(FLUSH_TO_DISK_INTERVAL);
@@ -261,6 +270,10 @@ void mdsim<dimension, T>::operator()()
 	    signal.clear();
 	}
     }
+    // sample performance counters
+    prf.sample(fluid.times());
+    // commit HDF5 performance datasets
+    prf.commit();
 
     timer.stop();
     LOG("finished MD simulation");
@@ -274,8 +287,6 @@ void mdsim<dimension, T>::operator()()
 	traj.close();
     tep.close();
 #endif
-    // write performance data to HDF5 file (includes equilibration phase)
-    prf.write(fluid.times());
     prf.close();
 }
 

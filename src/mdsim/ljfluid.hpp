@@ -116,6 +116,8 @@ public:
     double const& timestep() const { return timestep_; }
     /** get potential cutoff distance */
     double const& cutoff_distance() const { return r_cut; }
+    /** returns and resets CPU tick statistics */
+    perf_counters times();
 
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
@@ -124,8 +126,6 @@ public:
     void mdstep();
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
-    /** get execution time statistics */
-    perf_type const& times() const;
 
 private:
     /** update cell lists */
@@ -190,8 +190,8 @@ private:
     /** sum over maximum velocity magnitudes since last neighbour lists update */
     double v_max_sum;
 
-    /** execution time statistics */
-    perf_type times_;
+    /** CPU tick statistics */
+    perf_counters m_times;
 };
 
 /**
@@ -713,6 +713,7 @@ void ljfluid<dimension, T>::leapfrog_full()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::mdstep()
 {
+    // CPU cycles in clock ticks
     boost::array<tms, 5> t;
 
     // calculate particle positions
@@ -730,8 +731,10 @@ void ljfluid<dimension, T>::mdstep()
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0.;
 
-	times_["host"]["update_cells"] += t[2].tms_utime - t[1].tms_utime;
-	times_["host"]["update_neighbours"] += t[3].tms_utime - t[2].tms_utime;
+	// CPU ticks for update cell lists
+	m_times[0] += t[2].tms_utime - t[1].tms_utime;
+	// CPU ticks for update Verlet neighbour lists
+	m_times[1] += t[3].tms_utime - t[2].tms_utime;
     }
 
     // calculate forces, potential energy and virial equation sum
@@ -742,10 +745,12 @@ void ljfluid<dimension, T>::mdstep()
     leapfrog_full();
     ::times(&t[4]);
 
-    // accumulate process user times
-    times_["host"]["ljforce"] += t[3].tms_utime - t[2].tms_utime;
-    times_["host"]["verlet"] += (t[4].tms_utime - t[3].tms_utime) + (t[1].tms_utime - t[0].tms_utime);
-    times_["host"]["mdstep"] += t[4].tms_utime - t[0].tms_utime;
+    // CPU ticks for Lennard-Jones force update
+    m_times[2] += t[3].tms_utime - t[2].tms_utime;
+    // CPU ticks for velocity-Verlet
+    m_times[3] += (t[4].tms_utime - t[3].tms_utime) + (t[1].tms_utime - t[0].tms_utime);
+    // CPU ticks for MD simulation step
+    m_times[4] += t[4].tms_utime - t[0].tms_utime;
 }
 
 /**
@@ -759,12 +764,17 @@ void ljfluid<dimension, T>::sample(V visitor) const
 }
 
 /*
- * get CUDA execution time statistics
+ * returns and resets CPU tick statistics
  */
 template <unsigned dimension, typename T>
-perf_type const& ljfluid<dimension, T>::times() const
+perf_counters ljfluid<dimension, T>::times()
 {
-    return times_;
+    perf_counters times(m_times);
+    // reset performance counters
+    for (unsigned int i = 0; i < m_times.size(); ++i) {
+	m_times[i].clear();
+    }
+    return times;
 }
 
 } // namespace mdsim
