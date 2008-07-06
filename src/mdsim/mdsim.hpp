@@ -197,14 +197,14 @@ void mdsim<dimension, T>::operator()()
 	    if (opts.dump_trajectories().value())
 		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, time));
 
+	    // acquired maximum number of samples for a block level
 	    if (flush) {
-		// acquired maximum number of samples for a block level
-		LOG("flushing HDF5 buffers to disk");
 		// write partial results to HDF5 files and flush to disk
 		tcf.flush();
 		if (opts.dump_trajectories().value())
 		    traj.flush();
 		tep.flush();
+		LOG("flushed HDF5 buffers to disk");
 		// schedule remaining runtime estimate
 		step.clear();
 		step.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
@@ -235,11 +235,11 @@ void mdsim<dimension, T>::operator()()
 	    }
 	    else if (*signal == SIGHUP || *signal == SIGALRM) {
 		// write partial results to HDF5 files and flush to disk
-		LOG("flushing HDF5 buffers to disk");
 		tcf.flush();
 		if (opts.dump_trajectories().value())
 		    traj.flush();
 		tep.flush();
+		LOG("flushed HDF5 buffers to disk");
 		// schedule next disk flush
 		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
