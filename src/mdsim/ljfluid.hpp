@@ -102,6 +102,8 @@ public:
     float const& timestep() const { return timestep_; }
     /** get potential cutoff distance */
     float const& cutoff_distance() const { return r_cut; }
+    /** returns and resets CUDA time statistics */
+    perf_counters times();
 
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
@@ -114,8 +116,6 @@ public:
     void sample();
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
-    /** get CUDA execution time statistics */
-    perf_type const& times() const;
 
 private:
     /** number of particles in system */
@@ -250,8 +250,8 @@ private:
 #else
     boost::array<cuda::event, 3> event_;
 #endif
-    /** CUDA execution time statistics */
-    perf_type times_;
+    /** CUDA time statistics */
+    perf_counters m_times;
 };
 
 
@@ -600,7 +600,8 @@ void ljfluid<dimension, T, U>::restore(V visitor)
     }
 
 #ifdef USE_CELL
-    times_["gpu"]["assign_cells"] += event_[1] - event_[0];
+    // CUDA time for cell lists initialisation
+    m_times[6] += event_[1] - event_[0];
 #endif
 }
 
@@ -699,9 +700,11 @@ void ljfluid<dimension, T, U>::lattice()
 	throw exception("failed to compute particle lattice positions on GPU");
     }
 
-    times_["gpu"]["lattice"] += event_[1] - event_[0];
+    // CUDA time for lattice generation
+    m_times[4] += event_[1] - event_[0];
 #ifdef USE_CELL
-    times_["gpu"]["assign_cells"] += event_[2] - event_[1];
+    // CUDA time for cell lists initialisation
+    m_times[6] += event_[2] - event_[1];
 #endif
 }
 
@@ -741,8 +744,8 @@ void ljfluid<dimension, T, U>::temperature(float temp)
 	throw exception("failed to compute Maxwell-Boltzmann distributed velocities on GPU");
     }
 
-    // accumulate Maxwell-Boltzmann distribution GPU time
-    times_["gpu"]["boltzmann"] += event_[1] - event_[0];
+    // CUDA time for Maxwell-Boltzmann distribution
+    m_times[5] += event_[1] - event_[0];
 
     // compute center of mass velocity
     T v_cm = 0;
@@ -914,25 +917,25 @@ void ljfluid<dimension, T, U>::synchronize()
 	throw exception("MD simulation step on GPU failed");
     }
 
-    // accumulate total MD step GPU time
-    times_["gpu"]["mdstep"] += event_[0] - event_[1];
-    // accumulate leapfrog step of integration GPU kernel time
-    times_["gpu"]["verlet"] += event_[2] - event_[1];
+    // CUDA time for MD simulation step
+    m_times[0] += event_[0] - event_[1];
+    // CUDA time for velocity-Verlet integration
+    m_times[1] += event_[2] - event_[1];
 #ifdef USE_CELL
-    // accumulate Lennard-Jones force calculation GPU kernel time
-    times_["gpu"]["ljforce"] += event_[0] - event_[4];
+    // CUDA time for Lennard-Jones force update
+    m_times[2] += event_[0] - event_[4];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
-	// accumulate cell lists update GPU kernel time
-	times_["gpu"]["update_cells"] += event_[3] - event_[2];
-	// accumulate cell lists update GPU mem time
-	times_["memcpy"]["update_cells"] += event_[4] - event_[3];
+	// CUDA time for cell lists update
+	m_times[7] += event_[3] - event_[2];
+	// CUDA time for cell lists memcpy
+	m_times[8] += event_[4] - event_[3];
     }
 #else
-    // accumulate Lennard-Jones force calculation GPU kernel time
-    times_["gpu"]["ljforce"] += event_[0] - event_[2];
+    // CUDA time for Lennard-Jones force update
+    m_times[2] += event_[0] - event_[2];
 #endif
 }
 
@@ -1037,8 +1040,8 @@ void ljfluid<dimension, T, U>::sample()
 	throw exception("potential energy diverged due to excessive timestep or density");
     }
 
-    // accumulate MD step GPU to host mem time
-    times_["memcpy"]["sample"] += event_[0] - event_[1];
+    // CUDA time for sample memcpy
+    m_times[3] += event_[0] - event_[1];
 }
 
 /**
@@ -1052,12 +1055,17 @@ void ljfluid<dimension, T, U>::sample(V visitor) const
 }
 
 /**
- * get CUDA execution time statistics
+ * returns and resets CUDA time statistics
  */
 template <unsigned dimension, typename T, typename U>
-perf_type const& ljfluid<dimension, T, U>::times() const
+perf_counters ljfluid<dimension, T, U>::times()
 {
-    return times_;
+    perf_counters times(m_times);
+    // reset performance counters
+    for (unsigned int i = 0; i < m_times.size(); ++i) {
+	m_times[i].clear();
+    }
+    return times;
 }
 
 } // namespace mdsim

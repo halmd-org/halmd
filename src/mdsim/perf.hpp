@@ -21,6 +21,8 @@
 
 #include <H5Cpp.h>
 #include <iomanip>
+#include <iostream>
+#include <limits>
 #include <map>
 #include <string>
 #include "H5param.hpp"
@@ -37,7 +39,11 @@ namespace mdsim
 /**
  * performance class accumulators
  */
-typedef std::map<std::string, std::map<std::string, accumulator<float> > > perf_type;
+#ifdef USE_CELL
+typedef boost::array<accumulator<float>, 9> perf_counters;
+#else
+typedef boost::array<accumulator<float>, 6> perf_counters;
+#endif
 
 /**
  * performance data
@@ -46,18 +52,37 @@ template <unsigned dimension, typename T, typename U>
 class perf
 {
 public:
+    perf() : m_offset(0), m_dirty(false) {}
     /** create HDF5 performance data output file */
     void open(std::string const& filename);
     /** returns HDF5 parameter group */
     H5param attrs();
+    /** sample performance data */
+    void sample(perf_counters const& times);
+    /** clear performance counters */
+    void commit();
     /** write performance data to HDF5 file */
-    void write(perf_type const& times);
+    void flush(bool force);
     /** close HDF5 file */
     void close();
 
 private:
+    /** CPU tick accumulators */
+    perf_counters m_times;
     /** HDF5 performance data output file */
-    H5::H5File file_;
+    H5::H5File m_file;
+    /** HDF5 datasets */
+#ifdef USE_CELL
+    boost::array<H5::DataSet, 9> m_dataset;
+#else
+    boost::array<H5::DataSet, 6> m_dataset;
+#endif
+    /** HDF5 floating-point data type */
+    H5::DataType m_tid;
+    /** dataset offset */
+    uint64_t m_offset;
+    /** pending data bit */
+    bool m_dirty;
 };
 
 /**
@@ -69,13 +94,51 @@ void perf<dimension, T, U>::open(std::string const& filename)
     LOG("write performance data to file: " << filename);
     try {
 	// truncate existing file
-	file_ = H5::H5File(filename, H5F_ACC_TRUNC);
+	m_file = H5::H5File(filename, H5F_ACC_TRUNC);
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create performance data file");
     }
     // create parameter group
-    file_.createGroup("param");
+    m_file.createGroup("param");
+
+    // floating-point data type
+    m_tid = H5::PredType::NATIVE_FLOAT;
+
+    // extensible dataspace for performance data
+    hsize_t dim[2] = { 0, 3 };
+    hsize_t max_dim[2] = { H5S_UNLIMITED, 3 };
+    hsize_t chunk_dim[2] = { 1, 3 };
+    H5::DataSpace ds(2, dim, max_dim);
+    H5::DSetCreatPropList cparms;
+    cparms.setChunk(2, chunk_dim);
+
+    try {
+	H5::Group node(m_file.createGroup("times"));
+	// CUDA time for MD simulation step
+	m_dataset[0] = node.createDataSet("mdstep", m_tid, ds, cparms);
+	// CUDA time for velocity-Verlet integration
+	m_dataset[1] = node.createDataSet("velocity_verlet", m_tid, ds, cparms);
+	// CUDA time for Lennard-Jones force update
+	m_dataset[2] = node.createDataSet("update_forces", m_tid, ds, cparms);
+	// CUDA time for sample memcpy
+	m_dataset[3] = node.createDataSet("memcpy_sample", m_tid, ds, cparms);
+	// CUDA time for lattice generation
+	m_dataset[4] = node.createDataSet("lattice", m_tid, ds, cparms);
+	// CUDA time for Maxwell-Boltzmann distribution
+	m_dataset[5] = node.createDataSet("boltzmann", m_tid, ds, cparms);
+#ifdef USE_CELL
+	// CUDA time for cell lists initialisation
+	m_dataset[6] = node.createDataSet("init_cells", m_tid, ds, cparms);
+	// CUDA time for cell lists update
+	m_dataset[7] = node.createDataSet("update_cells", m_tid, ds, cparms);
+	// CUDA time for cell lists memcpy
+	m_dataset[8] = node.createDataSet("memcpy_cells", m_tid, ds, cparms);
+#endif
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to create HDF5 performance datasets");
+    }
 }
 
 /**
@@ -84,46 +147,108 @@ void perf<dimension, T, U>::open(std::string const& filename)
 template <unsigned dimension, typename T, typename U>
 H5param perf<dimension, T, U>::attrs()
 {
-    return H5param(file_.openGroup("param"));
+    return H5param(m_file.openGroup("param"));
+}
+
+/**
+ * sample performance data
+ */
+template <unsigned dimension, typename T, typename U>
+void perf<dimension, T, U>::sample(perf_counters const& times)
+{
+    for (unsigned int i = 0; i < m_times.size(); ++i) {
+	// accumulate values of accumulator
+	m_times[i] += times[i];
+    }
+    m_dirty = true;
+}
+
+/**
+ * output formatted accumulator values to stream
+ */
+template <typename T>
+std::ostream& operator<<(std::ostream& os, accumulator<T> const& acc)
+{
+    os << std::fixed << std::setprecision(4) << (acc.mean() * 1000) << " ms";
+    if (acc.count() > 1) {
+	os << " (" << std::fixed << std::setprecision(4) << (acc.std() * 1000) << " ms, " << acc.count() << " calls)";
+    }
+    return os;
+}
+
+/**
+ * commit HDF5 performance datasets
+ */
+template <unsigned dimension, typename T, typename U>
+void perf<dimension, T, U>::commit()
+{
+    LOG("mean CUDA time for MD simulation step: " << m_times[0]);
+    LOG("mean CUDA time for velocity-Verlet integration: " << m_times[1]);
+#ifdef USE_CELL
+    LOG("mean CUDA time for cell lists initialisation: " << m_times[6]);
+    LOG("mean CUDA time for cell lists update: " << m_times[7]);
+    LOG("mean CUDA time for cell lists memcpy: " << m_times[8]);
+#endif
+    LOG("mean CUDA time for Lennard-Jones force update: " << m_times[2]);
+    LOG("mean CUDA time for sample memcpy: " << m_times[3]);
+    LOG("mean CUDA time for lattice generation: " << m_times[4]);
+    LOG("mean CUDA time for Maxwell-Boltzmann distribution: " << m_times[5]);
+
+    // write pending performance data to HDF5 file
+    flush(false);
+
+    for (unsigned int i = 0; i < m_times.size(); ++i) {
+	// accumulate values of accumulator
+	m_times[i].clear();
+    }
+    // increment offset in HDF5 datasets
+    m_offset++;
+    // clear pending data bit
+    m_dirty = false;
 }
 
 /**
  * write performance data to HDF5 file
  */
 template <unsigned dimension, typename T, typename U>
-void perf<dimension, T, U>::write(perf_type const& times)
+void perf<dimension, T, U>::flush(bool force = true)
 {
+    if (!m_dirty)
+	return;
+
+    // file dataspace
+    hsize_t dim[2] = { m_offset + 1, 3 };
+    hsize_t count[2] = { 1, 1 };
+    hsize_t start[2] = { m_offset, 0 };
+    hsize_t stride[2] = { 1, 1 };
+    hsize_t block[2] = { 1, 3 };
+    H5::DataSpace ds(2, dim);
+    ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
+
+    // memory dataspace
+    H5::DataSpace mem_ds(2, block);
+    boost::array<float, 3> data;
     try {
-	H5::Group root(file_.createGroup("/times"));
-
-	for (typename perf_type::const_iterator it = times.begin(); it != times.end(); ++it) {
-	    // create group for performance class
-	    H5::Group group(root.createGroup(it->first));
-
-	    for (typename perf_type::mapped_type::const_iterator acc = it->second.begin(); acc != it->second.end(); ++acc) {
-		// average time in seconds
-		const float mean = acc->second.mean() * 1.E-3f;
-		// standard deviation in seconds
-		const float sigma = acc->second.std() * 1.E-3f;
-		// number of calls
-		const uint64_t count = acc->second.count();
-
-		H5xx::group time(group.createGroup(acc->first));
-		time["mean"] = mean;
-		time["sigma"] = sigma;
-		time["count"] = count;
-
-		if (acc->second.count() > 1) {
-		    LOG(acc->first << "(" << it->first << ") average time: " << std::setprecision(4) << (mean * 1.E3f) << " ms (" << std::setprecision(4) << (sigma * 1.E3f) << " ms, " << count << " calls)");
-		}
-		else {
-		    LOG(acc->first << "(" << it->first << ") time: " << std::setprecision(4) << (mean * 1.E3f) << " ms");
-		}
-	    }
+	for (unsigned int i = 0; i < m_times.size(); ++i) {
+	    // write to HDF5 dataset
+	    m_dataset[i].extend(dim);
+	    data[0] = m_times[i].mean();
+	    data[1] = m_times[i].std();
+	    data[2] = m_times[i].count();
+	    m_dataset[i].write(data.c_array(), m_tid, mem_ds, ds);
 	}
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write performance data to HDF5 file");
+    }
+
+    if (force) {
+	try {
+	    m_file.flush(H5F_SCOPE_GLOBAL);
+	}
+	catch (H5::FileIException const& e) {
+	    throw exception("failed to flush HDF5 performance file to disk");
+	}
     }
 }
 
@@ -133,8 +258,11 @@ void perf<dimension, T, U>::write(perf_type const& times)
 template <unsigned dimension, typename T, typename U>
 void perf<dimension, T, U>::close()
 {
+    // write pending performance data to HDF5 file
+    flush(false);
+
     try {
-	file_.close();
+	m_file.close();
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to close performance data file");
