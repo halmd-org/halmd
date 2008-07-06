@@ -150,6 +150,8 @@ public:
     unsigned int const& cells() const { return ncell; }
     /** returns cell length */
     double const& cell_length() { return cell_length_; }
+    /** returns and resets CPU tick statistics */
+    perf_counters times();
 
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
@@ -158,8 +160,6 @@ public:
     void mdstep(double sample_time);
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
-    /** get execution time statistics */
-    perf_type const& times() const;
 
 private:
     /** schedule next particle event starting at given time */
@@ -212,8 +212,8 @@ private:
     /** squared pair separation */
     double pair_sep_sq;
 
-    /** execution time statistics */
-    perf_type times_;
+    /** CPU tick statistics */
+    perf_counters m_times;
 };
 
 /**
@@ -764,6 +764,7 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::mdstep(const double sample_time)
 {
+    // CPU cycles in clock ticks
     boost::array<tms, 3> t;
     ::times(&t[0]);
 
@@ -809,10 +810,12 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
     }
     ::times(&t[2]);
 
-    // accumulate process user times
-    times_["host"]["mdstep"] += t[2].tms_utime - t[0].tms_utime;
-    times_["host"]["queue"] += t[1].tms_utime - t[0].tms_utime;
-    times_["host"]["sample"] += t[2].tms_utime - t[1].tms_utime;
+    // CPU ticks for MD simulation step
+    m_times[0] += t[2].tms_utime - t[0].tms_utime;
+    // CPU ticks for event queue processing
+    m_times[1] += t[1].tms_utime - t[0].tms_utime;
+    // CPU ticks for phase space sampling
+    m_times[2] += t[2].tms_utime - t[1].tms_utime;
 }
 
 /**
@@ -826,12 +829,17 @@ void hardspheres<dimension, T>::sample(V visitor) const
 }
  
 /*
- * get execution time statistics
+ * returns and resets CPU tick statistics
  */
 template <unsigned dimension, typename T>
-perf_type const& hardspheres<dimension, T>::times() const
+perf_counters hardspheres<dimension, T>::times()
 {
-    return times_;
+    perf_counters times(m_times);
+    // reset performance counters
+    for (unsigned int i = 0; i < m_times.size(); ++i) {
+	m_times[i].clear();
+    }
+    return times;
 }
 
 } // namespace mdsim
