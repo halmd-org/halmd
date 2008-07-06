@@ -142,11 +142,23 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 template <unsigned dimension, typename T>
 void mdsim<dimension, T>::operator()()
 {
+    // handle non-lethal POSIX signals to allow for a partial simulation run
+    signal_handler signal;
+
     if (opts.equilibration_steps().value()) {
 	LOG("starting equilibration");
 	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
 	    // MD simulation step
 	    fluid.mdstep();
+	    if (*signal) {
+		LOG_WARNING("trapped signal " << signal << " at simulation step " << step);
+		if (*signal == SIGINT || *signal == SIGTERM) {
+		    LOG_WARNING("aborting equilibration");
+		    signal.clear();
+		    break;
+		}
+		signal.clear();
+	    }
 	}
 	LOG("finished equilibration");
     }
@@ -175,8 +187,6 @@ void mdsim<dimension, T>::operator()()
 #ifndef USE_BENCHMARK
     // measure elapsed realtime
     real_timer timer;
-    // handle non-lethal POSIX signals to allow for a partial simulation run
-    signal_handler signal;
     // schedule first disk flush
     alarm(FLUSH_TO_DISK_INTERVAL);
 
@@ -245,6 +255,7 @@ void mdsim<dimension, T>::operator()()
 	    }
 	    else if (*signal == SIGINT || *signal == SIGTERM) {
 		LOG_WARNING("aborting simulation");
+		signal.clear();
 		break;
 	    }
 	    signal.clear();
