@@ -764,9 +764,9 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
 template <unsigned dimension, typename T>
 void hardspheres<dimension, T>::mdstep(const double sample_time)
 {
-    // CPU cycles in clock ticks
-    boost::array<tms, 3> t;
-    ::times(&t[0]);
+    // nanosecond resolution process times
+    boost::array<timespec, 5> t;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
 
     // impulsive limit of the virial expression sum
     virial_ = 0.;
@@ -796,7 +796,7 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
     virial_ /= npart;
 
     // sample phase space at given time
-    ::times(&t[1]);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
     for (unsigned int i = 0; i < npart; ++i) {
 	const T dr = part[i].v * (sample_time - part[i].t);
 	// periodically extended particle position
@@ -808,14 +808,14 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
 	// particle velocity
 	v_[i] = part[i].v;
     }
-    ::times(&t[2]);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
 
     // CPU ticks for MD simulation step
-    m_times[0] += t[2].tms_utime - t[0].tms_utime;
+    m_times[0] += t[2] - t[0];
     // CPU ticks for event queue processing
-    m_times[1] += t[1].tms_utime - t[0].tms_utime;
+    m_times[1] += t[1] - t[0];
     // CPU ticks for phase space sampling
-    m_times[2] += t[2].tms_utime - t[1].tms_utime;
+    m_times[2] += t[2] - t[1];
 }
 
 /**
