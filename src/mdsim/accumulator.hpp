@@ -20,7 +20,7 @@
 #define MDSIM_ACCUMULATOR_HPP
 
 #include <cmath>
-#include <stdexcept>
+#include <limits>
 #include <stdint.h>
 
 
@@ -88,10 +88,10 @@ public:
     /**
      * compute mean average
      */
-    T const& mean() const
+    T mean() const
     {
 	if (n_ < 1) {
-	    throw std::logic_error("accumulator mean average requires a value");
+	    return std::numeric_limits<double>::quiet_NaN();
 	}
 	return m_;
     }
@@ -99,10 +99,10 @@ public:
     /**
      * compute variance
      */
-    T const& var() const
+    T var() const
     {
 	if (n_ < 2) {
-	    throw std::logic_error("accumulator variance requires multiple values");
+	    return std::numeric_limits<double>::quiet_NaN();
 	}
 	return v_;
     }
@@ -113,7 +113,7 @@ public:
     T std() const
     {
 	if (n_ < 2) {
-	    throw std::logic_error("accumulator standard deviation requires multiple values");
+	    return std::numeric_limits<double>::quiet_NaN();
 	}
 	return std::sqrt(v_ / (n_ - 1));
     }
@@ -124,7 +124,7 @@ public:
     T err() const
     {
 	if (n_ < 2) {
-	    throw std::logic_error("accumulator standard error of mean requires multiple values");
+	    return std::numeric_limits<double>::quiet_NaN();
 	}
 	return sqrt(v_ / (n_ - 1) / n_);
     }
