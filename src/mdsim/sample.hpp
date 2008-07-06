@@ -38,7 +38,7 @@ struct phase_space_point
     typedef typename std::vector<value_type>::const_iterator q_values_const_iterator;
     typedef typename std::pair<q_values_const_iterator, q_values_const_iterator> q_values_const_iterator_pair;
 
-    phase_space_point(vector_type const& r, vector_type const& v, std::vector<value_type> q) : r(r), v(v), q(q.begin(), q.end()), rho(q.size(), std::pair<T, T>(0, 0))
+    phase_space_point(vector_type const& r, vector_type const& v, std::vector<value_type> const& q) : r(r), v(v), q(q.begin(), q.end()), rho(q.size(), std::pair<T, T>(0, 0))
     {
 	// spatial Fourier transformation
  	for (size_t i = 0; i < r.size(); ++i) {
