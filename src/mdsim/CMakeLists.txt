@@ -17,5 +17,6 @@ FOREACH(dim RANGE 2 3)
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${GSL_LIBRARIES}
     ${HDF5_CPP_LIBRARY}
+    rt
     )
 ENDFOREACH(dim)

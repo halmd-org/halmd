@@ -713,44 +713,44 @@ void ljfluid<dimension, T>::leapfrog_full()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::mdstep()
 {
-    // CPU cycles in clock ticks
-    boost::array<tms, 5> t;
+    // nanosecond resolution process times
+    boost::array<timespec, 5> t;
 
     // calculate particle positions
-    ::times(&t[0]);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
     leapfrog_half();
-    ::times(&t[1]);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 
     if (v_max_sum * timestep_ > r_skin / 2.) {
 	// update cell lists
 	update_cells();
-	::times(&t[2]);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
 	// update Verlet neighbour lists
 	update_neighbours();
-	::times(&t[3]);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0.;
 
-	// CPU ticks for update cell lists
-	m_times[0] += t[2].tms_utime - t[1].tms_utime;
-	// CPU ticks for update Verlet neighbour lists
-	m_times[1] += t[3].tms_utime - t[2].tms_utime;
+	// CPU time for update cell lists
+	m_times[0] += t[2] - t[1];
+	// CPU time for update Verlet neighbour lists
+	m_times[1] += t[3] - t[2];
     }
 
     // calculate forces, potential energy and virial equation sum
-    ::times(&t[2]);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
     compute_forces();
-    ::times(&t[3]);
     // calculate velocities
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
     leapfrog_full();
-    ::times(&t[4]);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
 
     // CPU ticks for Lennard-Jones force update
-    m_times[2] += t[3].tms_utime - t[2].tms_utime;
+    m_times[2] += t[3] - t[2];
     // CPU ticks for velocity-Verlet
-    m_times[3] += (t[4].tms_utime - t[3].tms_utime) + (t[1].tms_utime - t[0].tms_utime);
+    m_times[3] += (t[1] - t[0]) + (t[4] - t[3]);
     // CPU ticks for MD simulation step
-    m_times[4] += t[4].tms_utime - t[0].tms_utime;
+    m_times[4] += t[4] - t[0];
 }
 
 /**

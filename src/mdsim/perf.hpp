@@ -39,48 +39,9 @@ namespace mdsim
 {
 
 /**
- * CPU tick accumulator
- */
-template <typename T>
-class perf_accumulator: public accumulator<T>
-{
-public:
-    perf_accumulator() : accumulator<T>() {}
-    perf_accumulator(perf_accumulator const& acc) : accumulator<T>(acc) {}
-
-    /**
-     * returns average time in seconds
-     */
-    T mean() const
-    {
-	return accumulator<T>::mean() / sysconf(_SC_CLK_TCK);
-    }
-
-    /**
-     * returns standard deviation in seconds
-     */
-    T std() const
-    {
-	return accumulator<T>::std() / sysconf(_SC_CLK_TCK);
-    }
-
-    /**
-     * output formatted accumulator values to stream
-     */
-    friend std::ostream& operator<<(std::ostream& os, perf_accumulator<T>& acc)
-    {
-	os << std::setprecision(4) << (acc.mean() * 1000) << " ms";
-	if (acc.count() > 1) {
-	    os << " (" << std::setprecision(4) << (acc.std() * 1000) << " ms, " << acc.count() << " calls)";
-	}
-	return os;
-    }
-};
-
-/**
  * performance class accumulators
  */
-typedef boost::array<perf_accumulator<double>, 5> perf_counters;
+typedef boost::array<accumulator<double>, 5> perf_counters;
 
 /**
  * performance data
@@ -184,6 +145,19 @@ void perf<dimension, T>::sample(perf_counters const& times)
 	m_times[i] += times[i];
     }
     m_dirty = true;
+}
+
+/**
+ * output formatted accumulator times to stream
+ */
+template <typename T>
+std::ostream& operator<<(std::ostream& os, accumulator<T>& acc)
+{
+    os << std::setprecision(4) << (acc.mean() * 1000) << " ms";
+    if (acc.count() > 1) {
+	os << " (" << std::setprecision(4) << (acc.std() * 1000) << " ms, " << acc.count() << " calls)";
+    }
+    return os;
 }
 
 /**
