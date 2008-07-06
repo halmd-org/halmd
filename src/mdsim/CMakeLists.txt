@@ -35,6 +35,7 @@ FOREACH(dim RANGE 2 3)
     ${GSL_LIBRARIES}
     ${CUDA_LIBRARIES}
     ${HDF5_CPP_LIBRARY}
+    rt
     )
 ENDFOREACH(dim)
 
