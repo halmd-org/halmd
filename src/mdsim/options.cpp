@@ -17,6 +17,7 @@
  */
 
 #include <H5Cpp.h>
+#include <boost/filesystem.hpp>
 #include <iostream>
 #include <fstream>
 #include "H5xx.hpp"
@@ -255,6 +256,7 @@ void options::parse(int argc, char** argv)
 	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S"), "output file prefix")
 	("input,i", po::value<std::vector<std::string> >(), "parameter input file")
 	("dry-run,n", po::bool_switch(), "perform a trial run without simulation")
+	("daemon", po::bool_switch(), "run program in background")
 	("verbose,v", po::accum_value<int>()->default_value(0), "increase verbosity")
 	("version,V", "output version and exit")
 	("help,h", "display this help and exit")
@@ -334,7 +336,9 @@ void options::parse(int argc, char** argv)
     }
 
     // format timestamp in output file prefix
-    vm_["output"] = po::variable_value(date_time::format(vm["output"].as<std::string>()), false);
+    boost::filesystem::path path(date_time::format(vm["output"].as<std::string>()));
+    // store absolute output file path
+    vm_["output"] = po::variable_value(boost::filesystem::complete(path).string(), false);
 
     if (vm.count("help")) {
 	std::cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << opts << "\n";

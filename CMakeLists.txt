@@ -35,7 +35,7 @@ FIND_PACKAGE(GSL)
 SET(Boost_FIND_REQUIRED TRUE)
 SET(Boost_FIND_QUIETLY TRUE)
 OPTION(Boost_USE_MULTITHREADED OFF)
-FIND_PACKAGE(Boost COMPONENTS date_time program_options)
+FIND_PACKAGE(Boost COMPONENTS filesystem date_time program_options)
 
 FIND_PACKAGE(Gnuplot)
 
