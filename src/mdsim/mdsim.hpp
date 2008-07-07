@@ -116,6 +116,8 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     }
     // initialize event list
     fluid.init_event_list();
+    // set simulation timestep
+    fluid.timestep(opts.timestep().value());
 
     LOG("number of equilibration steps: " << opts.equilibration_steps().value());
 
@@ -156,13 +158,9 @@ void mdsim<dimension, T>::operator()()
 
     if (opts.equilibration_steps().value()) {
 	LOG("starting equilibration");
-#ifndef USE_BENCHMARK
-	// advance phase space state to given sample time
-	fluid.mdstep(opts.equilibration_steps().value() * tcf.timestep());
-#else
 	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
 	    // advance phase space state to given sample time
-	    fluid.mdstep(step * opts.timestep().value());
+	    fluid.mdstep();
 	    if (*signal) {
 		LOG_WARNING("trapped signal " << signal << " at simulation step " << step);
 		if (*signal == SIGINT || *signal == SIGTERM) {
@@ -173,7 +171,6 @@ void mdsim<dimension, T>::operator()()
 		signal.clear();
 	    }
 	}
-#endif
 	LOG("finished equilibration");
     }
     // sample performance counters
@@ -207,16 +204,14 @@ void mdsim<dimension, T>::operator()()
 	if (tcf.sample(*step)) {
 	    bool flush = false;
 	    // sample time
-	    const double time = *step * tcf.timestep();
+	    const double time = *step * fluid.timestep();
 	    // sample time correlation functions
 	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _2, _3, *step, boost::ref(flush)));
 	    // sample thermodynamic equilibrium properties
-	    fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, fluid.density(), tcf.timestep(), time));
+	    fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _3, _4, fluid.density(), fluid.timestep(), time));
 	    // sample trajectory
 	    if (opts.dump_trajectories().value())
 		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, _3, time));
-	    // advance phase space state to given sample time
-	    fluid.mdstep(*step * tcf.timestep());
 
 	    // acquired maximum number of samples for a block level
 	    if (flush) {
@@ -236,6 +231,8 @@ void mdsim<dimension, T>::operator()()
 		alarm(FLUSH_TO_DISK_INTERVAL);
  	    }
 	}
+	// MD simulation step
+	fluid.mdstep();
 
 	// check whether a runtime estimate has finished
 	if (step.elapsed() > 0) {

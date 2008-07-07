@@ -85,8 +85,6 @@ public:
     uint64_t const& steps() const { return m_steps; }
     /** returns total simulation time */
     double const& time() const { return m_time; }
-    /** returns sample timestep */
-    double const& timestep() const { return m_timestep; }
     /** returns block size */
     unsigned int const& block_size() const { return m_block_size; }
     /** returns block shift */
@@ -169,7 +167,6 @@ void correlation<dimension, T>::steps(uint64_t const& value, double const& times
     LOG("total number of simulation steps: " << m_steps);
     // set simulation timestep
     m_timestep = timestep;
-    LOG("sample timestep: " << m_timestep);
     // derive total simulation time
     m_time = value * m_timestep;
     LOG("total simulation time: " << m_time);
@@ -186,7 +183,6 @@ void correlation<dimension, T>::time(double const& value, double const& timestep
     LOG("total simulation time: " << m_time);
     // set simulation timestep
     m_timestep = timestep;
-    LOG("sample timestep: " << m_timestep);
     // derive total number of simulation steps
     m_steps = roundf(m_time / m_timestep);
     LOG("total number of simulation steps: " << m_steps);
@@ -418,7 +414,6 @@ void correlation<dimension, T>::attrs(H5::Group const& param) const
     H5xx::group node(param.createGroup("correlation"));
     node["steps"] = m_steps;
     node["time"] = m_time;
-    node["timestep"] = m_timestep;
     node["block_size"] = m_block_size;
     node["block_shift"] = m_block_shift;
     node["block_count"] = m_block_count;

@@ -114,6 +114,7 @@ public:
     typedef std::pair<double, unsigned int> event_queue_item;
 
 public:
+    hardspheres() : step_(0) {}
     /** set number of particles */
     void particles(unsigned int value);
     /** set pair separation at which particle collision occurs */
@@ -124,6 +125,8 @@ public:
     void box(double value);
     /** initialize cells */
     void init_cell();
+    /** set simulation timestep */
+    void timestep(double value);
 
     /** set system state from phase space sample */
     template <typename V> void restore(V visitor);
@@ -150,6 +153,8 @@ public:
     unsigned int const& cells() const { return ncell; }
     /** returns cell length */
     double const& cell_length() { return cell_length_; }
+    /** returns simulation timestep */
+    double const& timestep() { return timestep_; }
     /** returns and resets CPU tick statistics */
     perf_counters times();
 
@@ -157,7 +162,7 @@ public:
     void attrs(H5::Group const& param) const;
 
     /** advance phase space state to given sample time */
-    void mdstep(double sample_time);
+    void mdstep();
     /** sample trajectory */
     template <typename V> void sample(V visitor) const;
 
@@ -188,6 +193,8 @@ private:
     unsigned int ncell;
     /** cell length */
     double cell_length_;
+    /** simulation timestep */
+    double timestep_;
 
     /** particle states */
     std::vector<particle> part;
@@ -197,6 +204,8 @@ private:
     std::vector<event> event_list;
     /** time-ordered particle event queue */
     std::priority_queue<event_queue_item, std::vector<event_queue_item>, std::greater<event_queue_item> > event_queue;
+    /** current simulation step */
+    uint64_t step_;
 
     /** periodically reduced particle positions at sample time */
     std::vector<T> r_;
@@ -315,6 +324,16 @@ void hardspheres<dimension, T>::init_cell()
     // derive cell length
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
+}
+
+/**
+ * set simulation timestep
+ */
+template <unsigned dimension, typename T>
+void hardspheres<dimension, T>::timestep(double value)
+{
+    timestep_ = value;
+    LOG("simulation timestep: " << timestep_);
 }
 
 /**
@@ -472,6 +491,7 @@ void hardspheres<dimension, T>::attrs(H5::Group const& param) const
     node["cell_length"] = cell_length_;
     node["density"] = density_;
     node["box_length"] = box_;
+    node["timestep"] = timestep_;
 }
 
 /**
@@ -762,7 +782,7 @@ typename hardspheres<dimension, T>::cell_index hardspheres<dimension, T>::comput
  * advance phase space state to given sample time
  */
 template <unsigned dimension, typename T>
-void hardspheres<dimension, T>::mdstep(const double sample_time)
+void hardspheres<dimension, T>::mdstep()
 {
     // nanosecond resolution process times
     boost::array<timespec, 5> t;
@@ -771,6 +791,8 @@ void hardspheres<dimension, T>::mdstep(const double sample_time)
     // impulsive limit of the virial expression sum
     virial_ = 0.;
 
+    // advance simulation time
+    const double sample_time = ++step_ * timestep_;
     // process particle event queue till sample time
     while (event_queue.top().first <= sample_time) {
 	if (event_queue.top().first != event_list[event_queue.top().second].t) {
