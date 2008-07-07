@@ -230,6 +230,14 @@ public:
 	return vm["dry-run"];
     }
 
+    /**
+     * returns whether to run program in background
+     */
+    option_value<bool> daemon() const
+    {
+	return vm["daemon"];
+    }
+
 private:
     /** parsed program options */
     boost::program_options::variables_map vm;

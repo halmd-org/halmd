@@ -20,6 +20,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <exception>
 #include <iostream>
+#include <unistd.h>
 #include <vector>
 #include "log.hpp"
 #include "mdsim.hpp"
@@ -65,6 +66,10 @@ int main(int argc, char **argv)
 	mdsim::mdsim<2, vector2d<double> > sim(opts);
 #endif
 
+	if (opts.daemon().value()) {
+	    // run program in background
+	    daemon(0, 0);
+	}
 	if (!opts.dry_run().value()) {
 	    // run MD simulation
 	    sim();
