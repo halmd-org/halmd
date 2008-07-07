@@ -21,6 +21,7 @@
 #include <cuda_wrapper.hpp>
 #include <exception>
 #include <iostream>
+#include <unistd.h>
 #include "log.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
@@ -86,6 +87,10 @@ int main(int argc, char **argv)
 	LOG("GPU available global device memory: " << cuda::device::mem_get_free() << " bytes");
 	LOG("GPU total global device memory: " << cuda::device::mem_get_total() << " bytes");
 
+	if (opts.daemon().value()) {
+	    // run program in background
+	    daemon(0, 0);
+	}
 	if (!opts.dry_run().value()) {
 	    // run MD simulation
 	    sim();

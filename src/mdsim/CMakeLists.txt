@@ -13,6 +13,7 @@ FOREACH(dim RANGE 2 3)
   TARGET_LINK_LIBRARIES(ljfluid${dim}d
     ljfluid${dim}d_gpu
     rand48_gpu
+    ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${GSL_LIBRARIES}
     ${CUDA_LIBRARIES}
