@@ -96,13 +96,13 @@ public:
     /**
      * computes the elapsed time between two events
      *
-     * (in milliseconds with a resolution of around 0.5 microseconds)
+     * (in seconds with a resolution of around 0.5 microseconds)
      */
     float operator-(const event &start)
     {
 	float time;
 	CUDA_CALL(cudaEventElapsedTime(&time, start.event_, event_));
-	return time;
+	return (1.e-3f * time);
     }
 
     /**
