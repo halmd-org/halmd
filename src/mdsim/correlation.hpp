@@ -117,8 +117,6 @@ public:
 private:
     /** apply correlation functions to block samples */
     void autocorrelate_block(unsigned int n);
-    /** returns simulation time belonging to block sample at given block offset */
-    float block_sample_time(unsigned int block, unsigned int offset) const;
 
 private:
     /** phase space sample blocks */
@@ -140,6 +138,8 @@ private:
     unsigned int m_block_shift;
     /** block count */
     unsigned int m_block_count;
+    /** block time intervals */
+    boost::multi_array<float, 2> m_block_time;
     /** maximum number of correlation samples per block */
     uint64_t m_max_samples;
     /** q-values for spatial Fourier transformation */
@@ -257,6 +257,18 @@ void correlation<dimension, T, U>::block_size(unsigned int const& value)
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate correlation functions results");
     }
+
+    // compute block time intervals
+    m_block_time.resize(boost::extents[m_block_count][m_block_size]);
+    for (unsigned int i = 0; i < m_block_count; ++i) {
+	for (unsigned int j = 0; j < m_block_size; ++j) {
+	    m_block_time[i][j] = m_timestep * std::pow(m_block_size, i / 2) * j;
+	    // shifted block
+	    if (i % 2) {
+		m_block_time[i][j] *= m_block_shift;
+	    }
+	}
+    }
 }
 
 /**
@@ -296,21 +308,6 @@ void correlation<dimension, T, U>::q_values(unsigned int const& n, float const& 
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate binary correlation functions results");
     }
-}
-
-/**
- * returns simulation time belonging to block sample at given block offset
- */
-template <unsigned dimension, typename T, typename U>
-float correlation<dimension, T, U>::block_sample_time(unsigned int block, unsigned int offset) const
-{
-    float time = m_timestep * std::pow(m_block_size, block / 2) * offset;
-
-    if (block % 2) {
-	// shifted block
-	time *= m_block_shift;
-    }
-    return time;
 }
 
 /**
@@ -514,7 +511,7 @@ void correlation<dimension, T, U>::flush()
 	    for (unsigned int j = 0; j < dim[0]; ++j) {
 		for (unsigned int k = 0; k < dim[1]; ++k) {
 		    // time interval
-		    data[j][k][0] = block_sample_time(j, k);
+		    data[j][k][0] = m_block_time[j][k];
 		    // mean average
 		    data[j][k][1] = m_tcf[i].second[j][k].mean();
 		    // standard error of mean
@@ -548,7 +545,7 @@ void correlation<dimension, T, U>::flush()
 			// q-value
 			data[j][k][l][0] = m_q_vector[j];
 			// time interval
-			data[j][k][l][1] = block_sample_time(k, l);
+			data[j][k][l][1] = m_block_time[k][l];
 			// mean average
 			data[j][k][l][2] = m_qtcf[i].second[k][l][j].mean();
 			// standard error of mean
