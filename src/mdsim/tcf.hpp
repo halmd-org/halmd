@@ -19,17 +19,29 @@
 #ifndef MDSIM_TCF_HPP
 #define MDSIM_TCF_HPP
 
-#include <boost/variant.hpp>
+#include <H5Cpp.h>
+#include <boost/array.hpp>
 #include <boost/mpl/vector.hpp>
-
+#include <boost/multi_array.hpp>
+#include <boost/variant.hpp>
+#include "accumulator.hpp"
 
 namespace mdsim {
+
+/** correlation function result types */
+typedef boost::multi_array<accumulator<double>, 2> tcf_unary_result_type;
+typedef boost::multi_array<accumulator<double>, 3> tcf_binary_result_type;
 
 /**
  * mean-square displacement
  */
 struct mean_square_displacement
 {
+    /** block sample results */
+    tcf_unary_result_type result;
+    /** HDF5 dataset */
+    H5::DataSet dataset;
+
     char const* name() { return "MSD"; }
 
     template <typename input_iterator, typename output_iterator>
@@ -57,6 +69,11 @@ struct mean_square_displacement
  */
 struct mean_quartic_displacement
 {
+    /** block sample results */
+    tcf_unary_result_type result;
+    /** HDF5 dataset */
+    H5::DataSet dataset;
+
     char const* name() { return "MQD"; }
 
     template <typename input_iterator, typename output_iterator>
@@ -86,6 +103,11 @@ struct mean_quartic_displacement
  */
 struct velocity_autocorrelation
 {
+    /** block sample results */
+    tcf_unary_result_type result;
+    /** HDF5 dataset */
+    H5::DataSet dataset;
+
     char const* name() { return "VAC"; }
 
     template <typename input_iterator, typename output_iterator>
@@ -109,6 +131,11 @@ struct velocity_autocorrelation
  */
 struct intermediate_scattering_function
 {
+    /** block sample results */
+    tcf_binary_result_type result;
+    /** HDF5 dataset */
+    H5::DataSet dataset;
+
     char const* name() { return "ISF"; }
 
     template <typename input_iterator, typename output_iterator>
@@ -135,6 +162,11 @@ struct intermediate_scattering_function
  */
 struct self_intermediate_scattering_function
 {
+    /** block sample results */
+    tcf_binary_result_type result;
+    /** HDF5 dataset */
+    H5::DataSet dataset;
+
     char const* name() { return "SISF"; }
 
     template <typename input_iterator, typename output_iterator>
@@ -163,50 +195,198 @@ struct self_intermediate_scattering_function
     }
 };
 
-/** correlation function type */
-typedef boost::mpl::vector<mean_square_displacement> _tcf_types_0;
-typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement>::type _tcf_types_1;
-typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation>::type tcf_types;
-/** binary correlation function type */
-typedef boost::mpl::vector<intermediate_scattering_function> _qtcf_types_0;
-typedef boost::mpl::push_back<_qtcf_types_0, self_intermediate_scattering_function>::type qtcf_types;
+/** correlation function types */
+typedef boost::mpl::vector<mean_square_displacement, mean_quartic_displacement, velocity_autocorrelation, intermediate_scattering_function, self_intermediate_scattering_function> tcf_types;
 
 /**
  * apply correlation function to block of phase space samples
  */
-template <typename T1, typename T2>
-class tcf_apply_visitor : public boost::static_visitor<>
+template <typename T1>
+class tcf_correlate_block : public boost::static_visitor<>
 {
 public:
-    tcf_apply_visitor(T1 const& first, T1 const& last, T2 const& result) : first(first), last(last), result(result) { }
+    tcf_correlate_block(T1 const& first, T1 const& last, unsigned int const& block) : first(first), last(last), block(block) {}
 
     template <typename T>
     void operator()(T& tcf) const
     {
-	tcf(first, last, result);
+	tcf(first, last, tcf.result[block].begin());
     }
 
 private:
     T1 const& first, last;
-    T2 const& result;
+    unsigned int const& block;
 };
 
-template <typename T1, typename T2>
-tcf_apply_visitor<T1, T2> tcf_apply_visitor_gen(T1 const& first, T1 const& last, T2 const& result)
+template <typename T1>
+tcf_correlate_block<T1> tcf_correlate_block_gen(T1 const& first, T1 const& last, unsigned int block)
 {
-    return tcf_apply_visitor<T1, T2>(first, last, result);
+    return tcf_correlate_block<T1>(first, last, block);
 }
 
 /**
- * retrieve name of a generic correlation function
+ * retrieve name of a correlation function
  */
-struct tcf_name_visitor : public boost::static_visitor<char const*>
+class tcf_name : public boost::static_visitor<char const*>
 {
+public:
     template <typename T>
     char const* operator()(T& tcf) const
     {
-	return tcf.name();
+       return tcf.name();
     }
+};
+
+/**
+ * create correlation function HDF5 dataset
+ */
+class tcf_create_dataset : public boost::static_visitor<>
+{
+public:
+    tcf_create_dataset(H5::H5File& file) : file(file) {}
+
+    template <typename T>
+    void operator()(T& tcf) const
+    {
+	create_dataset(tcf.dataset, tcf.result, tcf.name());
+    }
+
+    void create_dataset(H5::DataSet& dataset, tcf_unary_result_type const& result, char const* name) const
+    {
+	// extensible dataspace for correlation function results
+	hsize_t dim[3] = { 0, result.shape()[1], 5 };
+	hsize_t max_dim[3] = { H5S_UNLIMITED, result.shape()[1], 5 };
+	hsize_t chunk_dim[3] = { 1, result.shape()[1], 3 };
+	H5::DataSpace ds(3, dim, max_dim);
+	H5::DSetCreatPropList cparms;
+	cparms.setChunk(3, chunk_dim);
+
+	// create dataset
+	dataset = file.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
+    }
+
+    void create_dataset(H5::DataSet& dataset, tcf_binary_result_type const& result, char const* name) const
+    {
+	// extensible dataspace for binary correlation function results
+	hsize_t dim[4] = { result.shape()[2], 0, result.shape()[1], 6 };
+	hsize_t max_dim[4] = { result.shape()[2], H5S_UNLIMITED, result.shape()[1], 6 };
+	hsize_t chunk_dim[4] = { result.shape()[2], 1, result.shape()[1], 4 };
+	H5::DataSpace ds(4, dim, max_dim);
+	H5::DSetCreatPropList cparms;
+	cparms.setChunk(4, chunk_dim);
+
+	// create dataset
+	dataset = file.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
+    }
+    
+private:
+    H5::H5File& file;
+};
+
+/**
+ * allocate correlation functions results
+ */
+class tcf_allocate_results : public boost::static_visitor<>
+{
+public:
+    tcf_allocate_results(unsigned int const& block_count, unsigned int const& block_size, unsigned int const& q_values) : block_count(block_count), block_size(block_size), q_values(q_values) {}
+
+    template <typename T>
+    void operator()(T& tcf) const
+    {
+	resize(tcf.result);
+    }
+
+    void resize(tcf_unary_result_type& result) const
+    {
+	result.resize(boost::extents[block_count][block_size]);
+    }
+
+    void resize(tcf_binary_result_type& result) const
+    {
+	result.resize(boost::extents[block_count][block_size][q_values]);
+    }
+    
+private:
+    unsigned int const& block_count;
+    unsigned int const& block_size;
+    unsigned int const& q_values;
+};
+
+/**
+ * write correlation function results to HDF5 file
+ */
+class tcf_write_results : public boost::static_visitor<>
+{
+public:
+    tcf_write_results(boost::multi_array<double, 2> const& block_time, std::vector<double> const& q_vector, unsigned int const& max_blocks) : block_time(block_time), q_vector(q_vector), max_blocks(max_blocks) {}
+
+    template <typename T>
+    void operator()(T& tcf) const
+    {
+	write(tcf.dataset, tcf.result);
+    }
+
+    void write(H5::DataSet& dataset, tcf_unary_result_type const& result) const
+    {
+	// dataset dimensions
+	boost::array<hsize_t, 3> dim = {{ max_blocks, result.shape()[1], 5 }};
+	// memory buffer for results
+	boost::multi_array<double, 3> data(dim);
+
+	for (unsigned int j = 0; j < dim[0]; ++j) {
+	    for (unsigned int k = 0; k < dim[1]; ++k) {
+		// time interval
+		data[j][k][0] = block_time[j][k];
+		// mean average
+		data[j][k][1] = result[j][k].mean();
+		// standard error of mean
+		data[j][k][2] = result[j][k].err();
+		// variance
+		data[j][k][3] = result[j][k].var();
+		// count
+		data[j][k][4] = result[j][k].count();
+	    }
+	}
+	dataset.extend(dim.c_array());
+	// write results to HDF5 file
+	dataset.write(data.data(), H5::PredType::NATIVE_DOUBLE);
+    }
+
+    void write(H5::DataSet& dataset, tcf_binary_result_type const& result) const
+    {
+	// dataset dimensions
+	boost::array<hsize_t, 4> dim = {{ result.shape()[2], max_blocks, result.shape()[1], 6 }};
+	// memory buffer for results
+	boost::multi_array<double, 4> data(dim);
+
+	for (unsigned int j = 0; j < dim[0]; ++j) {
+	    for (unsigned int k = 0; k < dim[1]; ++k) {
+		for (unsigned int l = 0; l < dim[2]; ++l) {
+		    // q-value
+		    data[j][k][l][0] = q_vector[j];
+		    // time interval
+		    data[j][k][l][1] = block_time[k][l];
+		    // mean average
+		    data[j][k][l][2] = result[k][l][j].mean();
+		    // standard error of mean
+		    data[j][k][l][3] = result[k][l][j].err();
+		    // variance
+		    data[j][k][l][4] = result[k][l][j].var();
+		    // count
+		    data[j][k][l][5] = result[k][l][j].count();
+		}
+	    }
+	}
+	dataset.extend(dim.c_array());
+	// write results to HDF5 file
+	dataset.write(data.data(), H5::PredType::NATIVE_DOUBLE);
+    }
+
+private:
+    boost::multi_array<double, 2> const& block_time;
+    std::vector<double> const& q_vector;
+    unsigned int const& max_blocks;
 };
 
 } // namespace mdsim
