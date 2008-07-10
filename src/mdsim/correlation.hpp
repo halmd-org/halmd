@@ -22,9 +22,11 @@
 #include <H5Cpp.h>
 #include <algorithm>
 #include <boost/array.hpp>
+#include <boost/bind.hpp>
 // requires patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
 #include <boost/foreach.hpp>
+#include <boost/mpl/for_each.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
@@ -54,22 +56,12 @@ public:
     typedef phase_space_point<dimension, T> sample_type;
     /** phase space samples block type */
     typedef boost::circular_buffer<phase_space_point<dimension, T> > block_type;
-
-    /** correlation function type */
-    typedef typename boost::make_variant_over<tcf_types>::type tcf_type;
-    /** correlation function results type */
-    typedef boost::multi_array<accumulator<double>, 2> tcf_result_type;
-    /** correlation function and results pair type */
-    typedef std::pair<tcf_type, tcf_result_type> tcf_pair;
-
-    /** binary correlation function type */
-    typedef typename boost::make_variant_over<qtcf_types>::type qtcf_type;
-    /** binary correlation function results type */
-    typedef boost::multi_array<accumulator<double>, 3> qtcf_result_type;
-    /** binary correlation function and results pair type */
-    typedef std::pair<qtcf_type, qtcf_result_type> qtcf_pair;
+    /** correlation function variant type */
+    typedef boost::make_variant_over<tcf_types>::type tcf_type;
 
 public:
+    /** initialize with all correlation function types */
+    correlation();
     /** set total number of simulation steps */
     void steps(uint64_t const& value, double const& timestep);
     /** set total simulation time */
@@ -143,18 +135,19 @@ private:
     std::vector<double> m_q_vector;
 
     /** correlation functions and results */
-    boost::array<tcf_pair, 3> m_tcf;
-    /** binary correlation functions and results */
-    boost::array<qtcf_pair, 2> m_qtcf;
-
+    std::vector<tcf_type> m_tcf;
     /** HDF5 output file */
     H5::H5File m_file;
-    /** HDF5 datasets */
-    boost::array<H5::DataSet, 3> m_tcf_dataset;
-    boost::array<H5::DataSet, 2> m_qtcf_dataset;
-    /** HDF5 floating-point data type */
-    H5::DataType m_tid;
 };
+
+/**
+ * initialize with all correlation function types
+ */
+template <unsigned dimension, typename T>
+correlation<dimension, T>::correlation()
+{
+    boost::mpl::for_each<tcf_types>(boost::bind(&std::vector<tcf_type>::push_back, boost::ref(m_tcf), _1));
+}
 
 /**
  * set total number of simulation steps
@@ -240,21 +233,6 @@ void correlation<dimension, T>::block_size(unsigned int const& value)
 	}
     }
 
-    // setup correlation functions
-    m_tcf[0].first = mean_square_displacement();
-    m_tcf[1].first = mean_quartic_displacement();
-    m_tcf[2].first = velocity_autocorrelation();
-
-    // allocate correlation functions results
-    try {
-	foreach (tcf_pair& tcf, m_tcf) {
-	    tcf.second.resize(boost::extents[m_block_count][m_block_size]);
-	}
-    }
-    catch (std::bad_alloc const& e) {
-	throw exception("failed to allocate correlation functions results");
-    }
-
     // compute block time intervals
     m_block_time.resize(boost::extents[m_block_count][m_block_size]);
     for (unsigned int i = 0; i < m_block_count; ++i) {
@@ -292,14 +270,10 @@ void correlation<dimension, T>::q_values(unsigned int const& n, double const& bo
 	m_q_vector.push_back(k * 2 * M_PI / box);
     }
 
-    // setup binary correlation functions
-    m_qtcf[0].first = intermediate_scattering_function();
-    m_qtcf[1].first = self_intermediate_scattering_function();
-
-    // allocate binary correlation functions results
+    // allocate correlation function results
     try {
-	foreach (qtcf_pair& qtcf, m_qtcf) {
-	    qtcf.second.resize(boost::extents[m_block_count][m_block_size][n]);
+	foreach (tcf_type& tcf, m_tcf) {
+	    boost::apply_visitor(tcf_allocate_results(m_block_count, m_block_size, m_q_vector.size()), tcf);
 	}
     }
     catch (std::bad_alloc const& e) {
@@ -324,47 +298,14 @@ void correlation<dimension, T>::open(std::string const& filename)
     // create parameter group
     m_file.createGroup("param");
 
-    // floating-point data type
-    m_tid = H5::PredType::NATIVE_DOUBLE;
-
+    // create correlation function datasets
     try {
-	// extensible dataspace for correlation function results
-	hsize_t dim[3] = { 0, m_block_size, 5 };
-	hsize_t max_dim[3] = { H5S_UNLIMITED, m_block_size, 5 };
-	hsize_t chunk_dim[3] = { 1, m_block_size, 3 };
-	H5::DataSpace ds(3, dim, max_dim);
-	H5::DSetCreatPropList cparms;
-	cparms.setChunk(3, chunk_dim);
-
-	for (unsigned int i = 0; i < m_tcf.size(); ++i) {
-	    // correlation function name
-	    char const* name = boost::apply_visitor(tcf_name_visitor(), m_tcf[i].first);
-	    // create dataset
-	    m_tcf_dataset[i] = m_file.createDataSet(name, m_tid, ds, cparms);
+	foreach (tcf_type& tcf, m_tcf) {
+	    boost::apply_visitor(tcf_create_dataset(m_file), tcf);
 	}
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create correlation function datasets");
-    }
-
-    try {
-	// extensible dataspace for binary correlation function results
-	hsize_t dim[4] = { m_q_vector.size(), 0, m_block_size, 6 };
-	hsize_t max_dim[4] = { m_q_vector.size(), H5S_UNLIMITED, m_block_size, 6 };
-	hsize_t chunk_dim[4] = { m_q_vector.size(), 1, m_block_size, 4 };
-	H5::DataSpace ds(4, dim, max_dim);
-	H5::DSetCreatPropList cparms;
-	cparms.setChunk(4, chunk_dim);
-
-	for (unsigned int i = 0; i < m_qtcf.size(); ++i) {
-	    // correlation function name
-	    char const* name = boost::apply_visitor(tcf_name_visitor(), m_qtcf[i].first);
-	    // create dataset
-	    m_qtcf_dataset[i] = m_file.createDataSet(name, m_tid, ds, cparms);
-	}
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create binary correlation function datasets");
     }
 }
 
@@ -474,11 +415,8 @@ void correlation<dimension, T>::sample(std::vector<T> const& r, std::vector<T> c
 template <unsigned dimension, typename T>
 void correlation<dimension, T>::autocorrelate_block(unsigned int n)
 {
-    foreach (tcf_pair& tcf, m_tcf) {
-	boost::apply_visitor(tcf_apply_visitor_gen(m_block[n].begin(), m_block[n].end(), tcf.second[n].begin()), tcf.first);
-    }
-    foreach (qtcf_pair& qtcf, m_qtcf) {
-	boost::apply_visitor(tcf_apply_visitor_gen(m_block[n].begin(), m_block[n].end(), qtcf.second[n].begin()), qtcf.first);
+    foreach (tcf_type& tcf, m_tcf) {
+	boost::apply_visitor(tcf_correlate_block_gen(m_block[n].begin(), m_block[n].end(), n), tcf);
     }
 }
 
@@ -498,69 +436,12 @@ void correlation<dimension, T>::flush()
 	return;
 
     try {
-	// dataset dimensions
-	boost::array<hsize_t, 3> dim = {{ max_blocks, m_block_size, 5 }};
-	// memory buffer for results
-	boost::multi_array<double, 3> data(dim);
-
-	// write correlation functions
 	for (unsigned int i = 0; i < m_tcf.size(); ++i) {
-	    for (unsigned int j = 0; j < dim[0]; ++j) {
-		for (unsigned int k = 0; k < dim[1]; ++k) {
-		    // time interval
-		    data[j][k][0] = m_block_time[j][k];
-		    // mean average
-		    data[j][k][1] = m_tcf[i].second[j][k].mean();
-		    // standard error of mean
-		    data[j][k][2] = m_tcf[i].second[j][k].err();
-		    // variance
-		    data[j][k][3] = m_tcf[i].second[j][k].var();
-		    // count
-		    data[j][k][4] = m_tcf[i].second[j][k].count();
-		}
-	    }
-	    m_tcf_dataset[i].extend(dim.c_array());
-	    // write results to HDF5 file
-	    m_tcf_dataset[i].write(data.data(), m_tid);
+	    boost::apply_visitor(tcf_write_results(m_block_time, m_q_vector, max_blocks), m_tcf[i]);
 	}
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to write correlation function results");
-    }
-
-    try {
-	// dataset dimensions
-	boost::array<hsize_t, 4> dim = {{ m_q_vector.size(), max_blocks, m_block_size, 6 }};
-	// memory buffer for results
-	boost::multi_array<double, 4> data(dim);
-
-	// write binary correlation functions
-	for (unsigned int i = 0; i < m_qtcf.size(); ++i) {
-	    for (unsigned int j = 0; j < dim[0]; ++j) {
-		for (unsigned int k = 0; k < dim[1]; ++k) {
-		    for (unsigned int l = 0; l < dim[2]; ++l) {
-			// q-value
-			data[j][k][l][0] = m_q_vector[j];
-			// time interval
-			data[j][k][l][1] = m_block_time[k][l];
-			// mean average
-			data[j][k][l][2] = m_qtcf[i].second[k][l][j].mean();
-			// standard error of mean
-			data[j][k][l][3] = m_qtcf[i].second[k][l][j].err();
-			// variance
-			data[j][k][l][4] = m_qtcf[i].second[k][l][j].var();
-			// count
-			data[j][k][l][5] = m_qtcf[i].second[k][l][j].count();
-		    }
-		}
-	    }
-	    m_qtcf_dataset[i].extend(dim.c_array());
-	    // write results to HDF5 file
-	    m_qtcf_dataset[i].write(data.data(), m_tid);
-	}
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to write binary correlation results");
     }
 
     try {
