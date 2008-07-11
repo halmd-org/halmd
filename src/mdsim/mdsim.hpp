@@ -154,6 +154,8 @@ void mdsim<dimension, T, U>::operator()()
 {
     // handle non-lethal POSIX signals to allow for a partial simulation run
     signal_handler signal;
+    // measure elapsed realtime
+    real_timer timer;
 
     // performance data
     prf.open(opts.output_file_prefix().value() + ".prf");
@@ -165,7 +167,8 @@ void mdsim<dimension, T, U>::operator()()
 
     if (opts.equilibration_steps().value()) {
 	LOG("starting equilibration");
-	for (uint64_t step = 0; step < opts.equilibration_steps().value(); ++step) {
+	timer.start();
+	for (iterator_timer<uint64_t> step = 0; step < opts.equilibration_steps().value(); ++step) {
 	    // copy previous MD simulation state from GPU to host
 	    fluid.sample();
 	    // stream next MD simulation program step on GPU
@@ -173,9 +176,23 @@ void mdsim<dimension, T, U>::operator()()
 	    // synchronize MD simulation program step on GPU
 	    fluid.synchronize();
 
+	    // check whether a runtime estimate has finished
+	    if (step.elapsed() > 0) {
+		LOG("estimated remaining runtime: " << step);
+		step.clear();
+		// schedule next remaining runtime estimate
+		step.set(TIME_ESTIMATE_INTERVAL);
+	    }
+
+	    // process signal event
 	    if (*signal) {
-		LOG_WARNING("trapped signal " << signal << " at simulation step " << step);
-		if (*signal == SIGINT || *signal == SIGTERM) {
+		LOG_WARNING("trapped signal " << signal << " at simulation step " << *step);
+
+		if (*signal == SIGUSR1) {
+		    // schedule runtime estimate now
+		    step.set(0);
+		}
+		else if (*signal == SIGINT || *signal == SIGTERM) {
 		    LOG_WARNING("aborting equilibration");
 		    signal.clear();
 		    break;
@@ -183,7 +200,9 @@ void mdsim<dimension, T, U>::operator()()
 		signal.clear();
 	    }
 	}
+	timer.stop();
 	LOG("finished equilibration");
+	LOG("total equilibration runtime: " << timer);
     }
     // sample performance counters
     prf.sample(fluid.times());
@@ -203,8 +222,6 @@ void mdsim<dimension, T, U>::operator()()
     tep.open(opts.output_file_prefix().value() + ".tep");
     tep.attrs() << fluid << tcf;
 
-    // measure elapsed realtime
-    real_timer timer;
     // schedule first disk flush
     alarm(FLUSH_TO_DISK_INTERVAL);
 
