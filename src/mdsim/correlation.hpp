@@ -416,7 +416,7 @@ template <unsigned dimension, typename T>
 void correlation<dimension, T>::autocorrelate_block(unsigned int n)
 {
     foreach (tcf_type& tcf, m_tcf) {
-	boost::apply_visitor(tcf_correlate_block_gen(m_block[n].begin(), m_block[n].end(), n), tcf);
+	boost::apply_visitor(tcf_correlate_block_gen(n, m_block[n], m_q_vector), tcf);
     }
 }
 

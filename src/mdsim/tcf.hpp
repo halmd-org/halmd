@@ -47,14 +47,14 @@ struct mean_square_displacement
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::value_type::vector_type::const_iterator vector_const_iterator;
-	typedef typename input_iterator::value_type::vector_type::value_type vector_type;
-	typedef typename input_iterator::value_type::vector_type::value_type::value_type value_type;
+	typedef typename input_iterator::first_type::value_type::vector_type::const_iterator vector_const_iterator;
+	typedef typename input_iterator::first_type::value_type::vector_type::value_type vector_type;
+	typedef typename input_iterator::first_type::value_type::vector_type::value_type::value_type value_type;
 
 	// iterate over phase space samples in block
-	for (input_iterator it = first; it != last; ++it, ++result) {
+	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0) {
+	    for (vector_const_iterator r = it->r.begin(), r0 = first.first->r.begin(); r != it->r.end(); ++r, ++r0) {
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// accumulate square displacement
@@ -79,14 +79,14 @@ struct mean_quartic_displacement
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::value_type::vector_type::const_iterator vector_const_iterator;
-	typedef typename input_iterator::value_type::vector_type::value_type vector_type;
-	typedef typename input_iterator::value_type::vector_type::value_type::value_type value_type;
+	typedef typename input_iterator::first_type::value_type::vector_type::const_iterator vector_const_iterator;
+	typedef typename input_iterator::first_type::value_type::vector_type::value_type vector_type;
+	typedef typename input_iterator::first_type::value_type::vector_type::value_type::value_type value_type;
 
 	// iterate over phase space samples in block
-	for (input_iterator it = first; it != last; ++it, ++result) {
+	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0) {
+	    for (vector_const_iterator r = it->r.begin(), r0 = first.first->r.begin(); r != it->r.end(); ++r, ++r0) {
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// square displacement
@@ -113,12 +113,12 @@ struct velocity_autocorrelation
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::value_type::vector_type::const_iterator vector_const_iterator;
+	typedef typename input_iterator::first_type::value_type::vector_type::const_iterator vector_const_iterator;
 
 	// iterate over phase space samples in block
-	for (input_iterator it = first; it != last; ++it, ++result) {
+	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle velocities in current and first sample
-	    for (vector_const_iterator v = it->v.begin(), v0 = first->v.begin(); v != it->v.end(); ++v, ++v0) {
+	    for (vector_const_iterator v = it->v.begin(), v0 = first.first->v.begin(); v != it->v.end(); ++v, ++v0) {
 		// accumulate velocity autocorrelation
 		*result += *v0 * *v;
 	    }
@@ -141,13 +141,13 @@ struct intermediate_scattering_function
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::value_type::density_vector_type::const_iterator rho, rho0;
+	typename input_iterator::first_type::value_type::density_vector_type::const_iterator rho, rho0;
 	typename output_iterator::value_type::iterator k;
 
 	// iterate over phase space samples in block
-	for (input_iterator it = first; it != last; ++it, ++result) {
+	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over Fourier transformed densities in current and first sample
-	    for (rho = it->rho.begin(), rho0 = first->rho.begin(), k = result->begin(); rho != it->rho.end(); ++rho, ++rho0, ++k) {
+	    for (rho = it->rho.begin(), rho0 = first.first->rho.begin(), k = result->begin(); rho != it->rho.end(); ++rho, ++rho0, ++k) {
 		// accumulate intermediate scattering function
 		for (unsigned int d = 0; d < rho->first.size(); ++d) {
 		    *k += rho->first[d] * rho0->first[d] + rho->second[d] * rho0->second[d];
@@ -172,23 +172,23 @@ struct self_intermediate_scattering_function
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::value_type::vector_type::const_iterator r, r0;
-	typename input_iterator::value_type::q_values_type::const_iterator q;
+	typename input_iterator::first_type::value_type::vector_type::const_iterator r, r0;
+	typename input_iterator::second_type q;
+	typename input_iterator::first_type::value_type::vector_type::value_type f;
+	unsigned int i;
 	typename output_iterator::value_type::iterator k;
 
 	// iterate over phase space samples in block
-	for (input_iterator it = first; it != last; ++it, ++result) {
+	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over q-values
-	    for (q = it->q.first, k = result->begin(); q != it->q.second; ++q, ++k) {
-		typename input_iterator::value_type::vector_type::value_type sum(0);
-		unsigned int i = 0;
+	    for (q = first.second, k = result->begin(); q != last.second; ++q, ++k) {
 		// iterate over particle positions in current and first sample
-		for (r = it->r.begin(), r0 = first->r.begin(); r != it->r.end(); ++r, ++r0, ++i) {
-		    sum += (cos((*r - *r0) * *q) - sum) / (i + 1);
+		for (f = 0, r = it->r.begin(), r0 = first.first->r.begin(), i = 0; r != it->r.end(); ++r, ++r0, ++i) {
+		    f += (cos((*r - *r0) * *q) - f) / (i + 1);
 		}
-		// accumulate self-intermediate scattering function
-		for (unsigned int d = 0; d < it->r.begin()->size(); ++d) {
-		    *k += sum[d];
+		// accumulate self-intermediate scattering function over mutually orthogonal q-vectors
+		for (i = 0; i < f.size(); ++i) {
+		    *k += f[i];
 		}
 	    }
 	}
@@ -201,27 +201,28 @@ typedef boost::mpl::vector<mean_square_displacement, mean_quartic_displacement, 
 /**
  * apply correlation function to block of phase space samples
  */
-template <typename T1>
+template <typename T1, typename T2>
 class tcf_correlate_block : public boost::static_visitor<>
 {
 public:
-    tcf_correlate_block(T1 const& first, T1 const& last, unsigned int const& block) : first(first), last(last), block(block) {}
+    tcf_correlate_block(unsigned int const& block, T1 const& sample, T2 const& q_vector) : block(block), sample(sample), q_vector(q_vector) {}
 
     template <typename T>
     void operator()(T& tcf) const
     {
-	tcf(first, last, tcf.result[block].begin());
+	tcf(std::make_pair(sample.begin(), q_vector.begin()), std::make_pair(sample.end(), q_vector.end()), tcf.result[block].begin());
     }
 
 private:
-    T1 const& first, last;
     unsigned int const& block;
+    T1 const& sample;
+    T2 const& q_vector;
 };
 
-template <typename T1>
-tcf_correlate_block<T1> tcf_correlate_block_gen(T1 const& first, T1 const& last, unsigned int block)
+template <typename T1, typename T2>
+tcf_correlate_block<T1, T2> tcf_correlate_block_gen(unsigned int const& block, T1 const& sample, T2 const& q_vector)
 {
-    return tcf_correlate_block<T1>(first, last, block);
+    return tcf_correlate_block<T1, T2>(block, sample, q_vector);
 }
 
 /**
