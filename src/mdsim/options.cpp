@@ -311,6 +311,10 @@ void options::parse(int argc, char** argv)
 
     // optionally read parameters from HDF5 input file
     if (vm.count("trajectory")) {
+	// store absolute input file path
+	boost::filesystem::path path(vm["trajectory"].as<std::string>());
+	vm_["trajectory"] = po::variable_value(boost::filesystem::complete(path).string(), false);
+
 	try {
 	    H5::H5File file(vm["trajectory"].as<std::string>(), H5F_ACC_RDONLY);
 	    H5::Group param(file.openGroup("param")), node;
