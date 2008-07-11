@@ -500,10 +500,21 @@ template <unsigned dimension, typename T>
 typename ljfluid<dimension, T>::cell_list& ljfluid<dimension, T>::compute_cell(T const& r)
 {
     T idx = (r - floor(r / box_) * box_) / cell_length_;
+    //
+    // Wrapping the positional coordinates of a particle in the above way
+    // has proven to reliably deliver an integer in [0, ncell - 1] after
+    // conversion from floating-point for valid simulation parameters.
+    //
+    // However, in the extreme case of diverging potential energy (due to a
+    // too-large timestep) the coordinates may jump to several orders of
+    // magnitude of the box length, resulting in an out-of-bounds cell
+    // index after rounding and integer conversion. Therefore, we have to
+    // add integer modulo operations as a safeguard.
+    //
 #ifdef DIM_3D
-    return cell[(int)(idx[0])][(int)(idx[1])][(int)(idx[2])];
+    return cell[(unsigned int)(idx[0]) % ncell][(unsigned int)(idx[1]) % ncell][(unsigned int)(idx[2]) % ncell];
 #else
-    return cell[(int)(idx[0])][(int)(idx[1])];
+    return cell[(unsigned int)(idx[0]) % ncell][(unsigned int)(idx[1]) % ncell];
 #endif
 }
 
