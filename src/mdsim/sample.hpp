@@ -36,11 +36,8 @@ struct phase_space_point
     typedef std::vector<T> vector_type;
     typedef typename T::value_type value_type;
     typedef typename std::vector<std::pair<T, T> > density_vector_type;
-    typedef typename std::vector<value_type> q_values_type;
-    typedef typename std::vector<value_type>::const_iterator q_values_const_iterator;
-    typedef typename std::pair<q_values_const_iterator, q_values_const_iterator> q_values_const_iterator_pair;
 
-    phase_space_point(cuda::host::vector<U> const& h_r, cuda::host::vector<U> const& h_v, q_values_type const& q) : q(q.begin(), q.end()), rho(q.size(), std::pair<T, T>(0, 0))
+    phase_space_point(cuda::host::vector<U> const& h_r, cuda::host::vector<U> const& h_v, std::vector<value_type> const& q) : rho(q.size(), std::pair<T, T>(0, 0))
     {
 	r.reserve(h_r.size());
 	v.reserve(h_v.size());
@@ -72,8 +69,6 @@ struct phase_space_point
     vector_type r;
     /** particle velocities */
     vector_type v;
-    /** q-values */
-    q_values_const_iterator_pair q;
     /** spatially Fourier transformed density for given q-values */
     density_vector_type rho;
 };
