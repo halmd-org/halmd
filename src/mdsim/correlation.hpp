@@ -436,8 +436,8 @@ void correlation<dimension, T>::flush()
 	return;
 
     try {
-	for (unsigned int i = 0; i < m_tcf.size(); ++i) {
-	    boost::apply_visitor(tcf_write_results(m_block_time, m_q_vector, max_blocks), m_tcf[i]);
+	foreach (tcf_type& tcf, m_tcf) {
+	    boost::apply_visitor(tcf_write_results(m_block_time, m_q_vector, max_blocks), tcf);
 	}
     }
     catch (H5::FileIException const& e) {
