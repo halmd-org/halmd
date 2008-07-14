@@ -257,7 +257,7 @@ void options::parse(int argc, char** argv)
     po::options_description cuda_opts("CUDA options");
     cuda_opts.add_options()
 	("device,D", po::value<unsigned short>()->default_value(0), "CUDA device")
-	("threads,T", po::value<unsigned int>()->default_value(256), "number of threads per block")
+	("threads,T", po::value<unsigned int>()->default_value(128), "number of threads per block")
 	;
 
     po::options_description misc_opts("Other options");
