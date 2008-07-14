@@ -91,7 +91,7 @@ public:
     T mean() const
     {
 	if (n_ < 1) {
-	    return std::numeric_limits<double>::quiet_NaN();
+	    return std::numeric_limits<T>::quiet_NaN();
 	}
 	return m_;
     }
@@ -102,7 +102,7 @@ public:
     T var() const
     {
 	if (n_ < 2) {
-	    return std::numeric_limits<double>::quiet_NaN();
+	    return std::numeric_limits<T>::quiet_NaN();
 	}
 	return v_;
     }
@@ -113,7 +113,7 @@ public:
     T std() const
     {
 	if (n_ < 2) {
-	    return std::numeric_limits<double>::quiet_NaN();
+	    return std::numeric_limits<T>::quiet_NaN();
 	}
 	return std::sqrt(v_ / (n_ - 1));
     }
@@ -124,7 +124,7 @@ public:
     T err() const
     {
 	if (n_ < 2) {
-	    return std::numeric_limits<double>::quiet_NaN();
+	    return std::numeric_limits<T>::quiet_NaN();
 	}
 	return sqrt(v_ / (n_ - 1) / n_);
     }
