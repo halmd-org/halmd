@@ -208,7 +208,8 @@ boost::any parse_attribute(H5xx::group const& node, char const* name)
  */
 void store(boost::any const& value, variable_value& vv) {
     if (vv.defaulted() && !value.empty()) {
-	vv = variable_value(value, true);
+	// set option value as non-defaulted
+	vv = variable_value(value, false);
     }
 }
 
