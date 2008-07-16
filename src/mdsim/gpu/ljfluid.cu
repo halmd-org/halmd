@@ -238,22 +238,62 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     T f = make_float2(0, 0);
 #endif
 
-    // calculate forces for this and neighbouring cells
+    //
+    // The summation over all forces acting on a particle is the most
+    // delicate part of the MD step. As already explained above, with
+    // the cell lists algorithm, summing over partial cell force sums
+    // in an inappropriate order will cause a continuous drift of the
+    // center of mass velocity due to single precision floating-point
+    // arithmetic.
+    //
+    // Besides implementing the summation in double precision arithmetic,
+    // choosing the order of summation over cells such that one partial
+    // neighbour cell force sum is always followed by the sum of the
+    // opposite neighbour cell also remedies the velocity drift.
+    //
+
 #ifdef DIM_3D
+    // sum forces over this cell
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
-    // visit 26 neighbour cells
-    for (int x = -1; x <= 1; ++x)
-	for (int y = -1; y <= 1; ++y)
-	    for (int z = -1; z <= 1; ++z)
-		if (x != 0 || y != 0 || z != 0)
-		    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(x,  y,  z), r, tag, f, en, virial);
+    // sum forces over 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, +1), r, tag, f, en, virial);
 #else
+    // sum forces over this cell
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
-    // visit 8 neighbour cells
-    for (int x = -1; x <= 1; ++x)
-	for (int y = -1; y <= 1; ++y)
-	    if (x != 0 || y != 0)
-		compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(x, y), r, tag, f, en, virial);
+    // sum forces over 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, +1), r, tag, f, en, virial);
 #endif
 
     // second leapfrog step as part of integration of equations of motion
