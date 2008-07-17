@@ -140,7 +140,7 @@ __global__ void restore(ushort3 *x, uint3 *a, uint3 *c, ushort3 state)
 }
 
 /**
- * fill array with uniform random numbers
+ * fill array with uniform random numbers between [0.0, 1.0)
  */
 __global__ void uniform(ushort3* state, float* v, unsigned int count)
 {
