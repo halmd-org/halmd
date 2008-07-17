@@ -669,10 +669,15 @@ void ljfluid<dimension, T, U>::lattice()
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_r.data(), n);
 	event_[1].record(stream_);
+	// randomly permute particles to increase force summing accuracy
+	cuda::copy(g_r, h_part.r, stream_);
+	rng_.shuffle(h_part.r, stream_);
+	cuda::copy(h_part.r, g_r);
 	// assign particles to cells
+	event_[2].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
-	event_[2].record(stream_);
+	event_[3].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
 	// replicate particle positions to periodically extended positions
@@ -686,6 +691,10 @@ void ljfluid<dimension, T, U>::lattice()
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_part.r.data(), n);
 	event_[1].record(stream_);
+	// randomly permute particles to increase force summing accuracy
+	cuda::copy(g_part.r, h_part.r, stream_);
+	rng_.shuffle(h_part.r, stream_);
+	cuda::copy(h_part.r, g_part.r);
 	// copy particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
@@ -704,7 +713,7 @@ void ljfluid<dimension, T, U>::lattice()
     m_times[4] += event_[1] - event_[0];
 #ifdef USE_CELL
     // CUDA time for cell lists initialisation
-    m_times[6] += event_[2] - event_[1];
+    m_times[6] += event_[3] - event_[2];
 #endif
 }
 

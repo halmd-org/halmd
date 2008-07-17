@@ -102,6 +102,8 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
 #endif
     // set number of CUDA execution threads
     fluid.threads(opts.threads().value());
+    // initialize random number generator with seed
+    fluid.rng(opts.rng_seed().value());
 
     if (!opts.trajectory_sample().empty()) {
 	trajectory<dimension, T, U, false> traj;
@@ -118,8 +120,6 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
     }
 
     if (opts.trajectory_sample().empty() || !opts.temperature().defaulted()) {
-	// initialize random number generator with seed
-	fluid.rng(opts.rng_seed().value());
 	// set system temperature according to Maxwell-Boltzmann distribution
 	fluid.temperature(opts.temperature().value());
     }
