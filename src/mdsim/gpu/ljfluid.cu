@@ -47,14 +47,19 @@ static __constant__ float timestep;
 /** periodic box length */
 static __constant__ float box;
 
-/** squared cutoff length */
+/** potential cutoff distance */
+static __constant__ float r_cut;
+/** squared cutoff distance */
 static __constant__ float rr_cut;
 /** cutoff energy for Lennard-Jones potential at cutoff length */
 static __constant__ float en_cut;
-
 #ifdef USE_CELL
 /** number of cells per dimension */
 static __constant__ unsigned int ncell;
+#endif
+#ifdef USE_SMOOTH_POTENTIAL
+/** squared potential smoothing function scale parameter */
+static __constant__ float rr_smooth;
 #endif
 
 
@@ -131,12 +136,30 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, T& ff, float& en, 
     float rri = 1 / rr;
     float ri6 = rri * rri * rri;
     float fval = 48 * rri * ri6 * (ri6 - 0.5f);
+    // compute shifted Lennard-Jones potential
+    float pot = 4 * ri6 * (ri6 - 1) - en_cut;
+
+#ifdef USE_SMOOTH_POTENTIAL
+    // compute potential smoothing function
+    float p = sqrtf(rr);
+    float y = p - r_cut;
+    float x2 = y * y / rr_smooth;
+    float x4 = x2 * x2;
+    float d = 1 + x4;
+    float g = x4 / d;
+    float h = 4 * y * x2 / (d * d * p);
+
+    // apply smoothing function to obtain C^1 force function
+    fval = g * fval - h * pot;
+    // apply smoothing function to obtain C^2 potential function
+    pot = g * pot;
+#endif
 
     // virial equation sum
     virial += 0.5f * fval * rr;
-    // potential energy contribution from this particle
-    en += 2 * ri6 * (ri6 - 1) - en_cut;
-    // add contribution to this particle's force only
+    // potential energy contribution of this particle
+    en += 0.5f * pot;
+    // force from other particle acting on this particle
     T fi = fval * r;
 
     //
@@ -641,10 +664,14 @@ function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 symbol<unsigned int> npart(mdsim::npart);
 symbol<float> box(mdsim::box);
 symbol<float> timestep(mdsim::timestep);
+symbol<float> r_cut(mdsim::r_cut);
 symbol<float> rr_cut(mdsim::rr_cut);
 symbol<float> en_cut(mdsim::en_cut);
 #ifdef USE_CELL
 symbol<unsigned int> ncell(mdsim::ncell);
+#endif
+#ifdef USE_SMOOTH_POTENTIAL
+symbol<float> rr_smooth(mdsim::rr_smooth);
 #endif
 
 symbol<uint3> a(::rand48::a);
