@@ -291,14 +291,14 @@ ljfluid<dimension, T, U>::ljfluid()
 
 #ifdef USE_SMOOTH_POTENTIAL
     // compute potential smoothing function scale parameter
-    r_smooth = 0.01;
+    r_smooth = 0.001;
     LOG("potential smoothing function scale parameter: " << r_smooth);
 
-    // squared potential smoothing function scale parameter
-    float rr_smooth = std::pow(r_smooth, 2);
+    // squared inverse potential smoothing function scale parameter
+    float rri_smooth = std::pow(r_smooth, -2);
 
     try {
-	cuda::copy(rr_smooth, gpu::ljfluid::rr_smooth);
+	cuda::copy(rri_smooth, gpu::ljfluid::rri_smooth);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy potential smoothing function scale parameter to device symbol");

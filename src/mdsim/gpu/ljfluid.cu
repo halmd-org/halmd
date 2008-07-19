@@ -58,8 +58,8 @@ static __constant__ float en_cut;
 static __constant__ unsigned int ncell;
 #endif
 #ifdef USE_SMOOTH_POTENTIAL
-/** squared potential smoothing function scale parameter */
-static __constant__ float rr_smooth;
+/** squared inverse potential smoothing function scale parameter */
+static __constant__ float rri_smooth;
 #endif
 
 
@@ -143,7 +143,7 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, T& ff, float& en, 
     // compute potential smoothing function
     float p = sqrtf(rr);
     float y = p - r_cut;
-    float x2 = y * y / rr_smooth;
+    float x2 = y * y * rri_smooth;
     float x4 = x2 * x2;
     float d = 1 + x4;
     float g = x4 / d;
@@ -671,7 +671,7 @@ symbol<float> en_cut(mdsim::en_cut);
 symbol<unsigned int> ncell(mdsim::ncell);
 #endif
 #ifdef USE_SMOOTH_POTENTIAL
-symbol<float> rr_smooth(mdsim::rr_smooth);
+symbol<float> rri_smooth(mdsim::rri_smooth);
 #endif
 
 symbol<uint3> a(::rand48::a);

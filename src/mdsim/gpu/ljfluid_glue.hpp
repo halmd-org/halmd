@@ -75,7 +75,7 @@ extern cuda::symbol<float> en_cut;
 extern cuda::symbol<unsigned int> ncell;
 #endif
 #ifdef USE_SMOOTH_POTENTIAL
-extern cuda::symbol<float> rr_smooth;
+extern cuda::symbol<float> rri_smooth;
 #endif
 
 extern cuda::symbol<uint3> a;
