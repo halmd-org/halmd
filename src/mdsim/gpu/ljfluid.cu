@@ -19,6 +19,7 @@
 #include <float.h>
 #include "ljfluid_glue.hpp"
 #include "cutil.h"
+#include "dsfun.h"
 #include "vector2d.h"
 #include "vector3d.h"
 #include "rand48.h"
@@ -132,13 +133,6 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, T& ff, float& en, 
     float ri6 = rri * rri * rri;
     float fval = 48 * rri * ri6 * (ri6 - 0.5f);
 
-    // virial equation sum
-    virial += 0.5f * fval * rr;
-    // potential energy contribution from this particle
-    en += 2 * ri6 * (ri6 - 1) - en_cut;
-    // add contribution to this particle's force only
-    T fi = fval * r;
-
     //
     // The summation of all forces acting on a particle is the most
     // critical part what concerns longtime accuracy of the simulation.
@@ -166,21 +160,19 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, T& ff, float& en, 
     // force due to being limited to single-precision floating-point
     // arithmetic.
     //
-    // Indeed, implemeting the summation with a native-pair arithmetic,
-    //
-    //   Seppo Linnainmaa, Software for Doubled-Precision Floating-Point
-    //   Computations, ACM Trans. Math. Softw., ACM, 1981, 7, pp.272-283,
-    //
-    // remedies the velocity drift, with fluctuations < 1e-7, as would
-    // be expected from a symplectic integrator such as the Verlet
-    // algorithm used here.
+    // Therefore, we implement the summation using a double-single
+    // floating point arithmetic based on the DSFUN90 package.
     // 
+#ifdef DIM_3D
+    dsadd(f, ff, f, ff, fval * r, make_float3(0, 0, 0));
+#else
+    dsadd(f, ff, f, ff, fval * r, make_float2(0, 0));
+#endif
 
-    T z = f + fi;
-    T q = f - z;
-    T zz = ((q + fi) + (f - (q + z))) + ff;
-    f = z + zz;
-    ff = (z - f) + zz;
+    // virial equation sum
+    virial += 0.5f * fval * rr;
+    // potential energy contribution from this particle
+    en += 2 * ri6 * (ri6 - 1) - en_cut;
 }
 
 /**
