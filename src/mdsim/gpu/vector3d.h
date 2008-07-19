@@ -153,6 +153,17 @@ __device__ float3 operator-(float3 v, float3 const& w)
 }
 
 /**
+ * componentwise change of sign
+ */
+__device__ float3 operator-(float3 v)
+{
+    v.x = -v.x;
+    v.y = -v.y;
+    v.z = -v.z;
+    return v;
+}
+
+/**
  * scalar product
  */
 __device__ float operator*(float3 const& v, float3 const& w)
