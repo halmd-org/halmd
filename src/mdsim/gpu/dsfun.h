@@ -61,16 +61,16 @@ __device__ inline void dssub(T &c0, T &c1, const T a0, const T a1, const T b0, c
 /**
  * This function multiplies DS numbers A and B to yield the DS product C.
  */
-template <typename T>
-__device__ inline void dsmul(T &c0, T &c1, const T a0, const T a1, const T b0, const T b1)
+template <typename T, typename U, typename V>
+__device__ inline void dsmul(T &c0, T &c1, const U a0, const U a1, const V b0, const V b1)
 {
     // This splits dsa(1) and dsb(1) into high-order and low-order words.
-    T cona = a0 * 8193.0f;
-    T conb = b0 * 8193.0f;
-    T sa1 = cona - (cona - a0);
-    T sb1 = conb - (conb - b0);
-    T sa2 = a0 - sa1;
-    T sb2 = b0 - sb1;
+    U cona = a0 * 8193.0f;
+    V conb = b0 * 8193.0f;
+    U sa1 = cona - (cona - a0);
+    V sb1 = conb - (conb - b0);
+    U sa2 = a0 - sa1;
+    V sb2 = b0 - sb1;
 
     // Multiply a0 * b0 using Dekker's method.
     T c11 = a0 * b0;
