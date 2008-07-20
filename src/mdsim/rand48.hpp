@@ -50,22 +50,22 @@ public:
      */
     void resize(cuda::config const& dim)
     {
-	ushort3 state;
-	bool init = (state_.size() > 0) ? true : false;
-
-	if (init) {
+	if (state_.size() > 0) {
+	    ushort3 x;
 	    // save generator state using old dimensions
-	    save(state);
-	}
-
-	// set new CUDA execution dimensions
-	dim_ = dim;
-	// reallocate global device memory for generator state
-	state_.resize(dim_.threads());
-
-	if (init) {
+	    save(x);
+	    // set new CUDA execution dimensions
+	    dim_ = dim;
+	    // reallocate global device memory for generator state
+	    state_.resize(dim_.threads());
 	    // restore generator state using new dimensions
-	    restore(state);
+	    restore(x);
+	}
+	else {
+	    // set new CUDA execution dimensions
+	    dim_ = dim;
+	    // reallocate global device memory for generator state
+	    state_.resize(dim_.threads());
 	}
     }
 
