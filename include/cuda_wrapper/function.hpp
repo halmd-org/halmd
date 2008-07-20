@@ -200,29 +200,18 @@
 	 */
 	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(BOOST_PP_ITERATION(), arg<T, > x))
 	{
-	    size_t offset = 0;
-    #define SETUP_ARGUMENT(z, n, x) setup_argument(x##n, offset);
-	    BOOST_PP_REPEAT(BOOST_PP_ITERATION(), SETUP_ARGUMENT, *x)
-    #undef SETUP_ARGUMENT
+	    // properly align CUDA device function arguments
+	    struct {
+		#define DECL_ARG(z, n, x) T##n x##n;
+		BOOST_PP_REPEAT(BOOST_PP_ITERATION(), DECL_ARG, a)
+		#undef DECL_ARG
+	    } args = {
+		BOOST_PP_ENUM_PARAMS(BOOST_PP_ITERATION(), *x)
+	    };
+	    // push aligned arguments onto CUDA execution stack
+	    CUDA_CALL(cudaSetupArgument(&args, sizeof(args), 0));
+	    // launch CUDA device function
 	    CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(entry)));
-	}
-
-    private:
-	/**
-	 * push arbitrary argument into argument passing area
-	 */
-	template <typename U>
-	static void setup_argument(U const& arg, size_t& offset)
-	{
-	    /* respect alignment requirements of passed argument */
-	    if (0 != offset % __alignof(U)) {
-		offset += __alignof(U) - offset % __alignof(U);
-	    }
-
-	    CUDA_CALL(cudaSetupArgument(&arg, sizeof(U), offset));
-
-	    /* advance argument offset for next call */
-	    offset += sizeof(U);
 	}
 
     #endif /* ! __CUDACC__ */
