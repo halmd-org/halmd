@@ -558,7 +558,7 @@ void ljfluid<dimension, T, U>::restore(V visitor)
 	// assign particles to cells
 	event_[0].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
+	gpu::ljfluid::assign_cells(g_r, g_cell.r, g_cell.n);
 	event_[1].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
@@ -566,7 +566,7 @@ void ljfluid<dimension, T, U>::restore(V visitor)
 	cuda::copy(g_cell.r, g_cell.R, stream_);
 	// calculate forces, potential energy and virial equation sum
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
+	gpu::ljfluid::mdstep(g_cell.r, g_cell.v, g_cell.f, g_cell.n, g_cell.en, g_cell.virial);
 
 	// copy particle number tags from GPU to host
 	cuda::copy(g_cell.n, h_cell.n, stream_);
@@ -588,7 +588,7 @@ void ljfluid<dimension, T, U>::restore(V visitor)
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(U), stream_);
-	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
+	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 
 	// copy particle velocities from host to GPU (after force calculation!)
 	cuda::copy(h_part.v, g_part.v, stream_);
@@ -667,7 +667,7 @@ void ljfluid<dimension, T, U>::lattice()
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::lattice(g_r.data(), n);
+	gpu::ljfluid::lattice(g_r, n);
 	event_[1].record(stream_);
 	// randomly permute particles to increase force summing accuracy
 	cuda::copy(g_r, h_part.r, stream_);
@@ -676,7 +676,7 @@ void ljfluid<dimension, T, U>::lattice()
 	// assign particles to cells
 	event_[2].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::assign_cells(g_r.data(), g_cell.r.data(), g_cell.n.data());
+	gpu::ljfluid::assign_cells(g_r, g_cell.r, g_cell.n);
 	event_[3].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
@@ -684,12 +684,12 @@ void ljfluid<dimension, T, U>::lattice()
 	cuda::copy(g_cell.r, g_cell.R, stream_);
 	// calculate forces, potential energy and virial equation sum
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
+	gpu::ljfluid::mdstep(g_cell.r, g_cell.v, g_cell.f, g_cell.n, g_cell.en, g_cell.virial);
 #else
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::lattice(g_part.r.data(), n);
+	gpu::ljfluid::lattice(g_part.r, n);
 	event_[1].record(stream_);
 	// randomly permute particles to increase force summing accuracy
 	cuda::copy(g_part.r, h_part.r, stream_);
@@ -699,7 +699,7 @@ void ljfluid<dimension, T, U>::lattice()
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(U), stream_);
-	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
+	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 #endif
 
 	// wait for CUDA operations to finish
@@ -731,7 +731,7 @@ void ljfluid<dimension, T, U>::temperature(float temp)
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::boltzmann(g_v.data(), temp, rng_.data());
+	gpu::ljfluid::boltzmann(g_v, temp, rng_.state());
 	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
 	cuda::copy(g_v, h_part.v, stream_);
@@ -741,7 +741,7 @@ void ljfluid<dimension, T, U>::temperature(float temp)
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::boltzmann(g_part.v.data(), temp, rng_.data());
+	gpu::ljfluid::boltzmann(g_part.v, temp, rng_.state());
 	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
 	cuda::copy(g_part.v, h_part.v, stream_);
@@ -851,7 +851,7 @@ void ljfluid<dimension, T, U>::mdstep()
     // first leapfrog step of integration of differential equations of motion
     try {
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::inteq(g_cell.r.data(), g_cell.R.data(), g_cell.v.data(), g_cell.f.data());
+	gpu::ljfluid::inteq(g_cell.r, g_cell.R, g_cell.v, g_cell.f);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream first leapfrog step on GPU");
@@ -862,7 +862,7 @@ void ljfluid<dimension, T, U>::mdstep()
     if (v_max_sum * timestep_ > r_skin / 2) {
 	try {
 	    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	    gpu::ljfluid::update_cells(g_cell.r.data(), g_cell.R.data(), g_cell.v.data(), g_cell.n.data(), g_cell2.r.data(), g_cell2.R.data(), g_cell2.v.data(), g_cell2.n.data());
+	    gpu::ljfluid::update_cells(g_cell.r, g_cell.R, g_cell.v, g_cell.n, g_cell2.r, g_cell2.R, g_cell2.v, g_cell2.n);
 	}
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream cell list update on GPU");
@@ -884,7 +884,7 @@ void ljfluid<dimension, T, U>::mdstep()
     // Lennard-Jones force calculation
     try {
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::mdstep(g_cell.r.data(), g_cell.v.data(), g_cell.f.data(), g_cell.n.data(), g_cell.en.data(), g_cell.virial.data());
+	gpu::ljfluid::mdstep(g_cell.r, g_cell.v, g_cell.f, g_cell.n, g_cell.en, g_cell.virial);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
@@ -893,7 +893,7 @@ void ljfluid<dimension, T, U>::mdstep()
     // first leapfrog step of integration of differential equations of motion
     try {
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::inteq(g_part.r.data(), g_part.R.data(), g_part.v.data(), g_part.f.data());
+	gpu::ljfluid::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream first leapfrog step on GPU");
@@ -903,7 +903,7 @@ void ljfluid<dimension, T, U>::mdstep()
     // Lennard-Jones force calculation
     try {
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(U), stream_);
-	gpu::ljfluid::mdstep(g_part.r.data(), g_part.v.data(), g_part.f.data(), g_part.en.data(), g_part.virial.data());
+	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
