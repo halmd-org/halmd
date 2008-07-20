@@ -105,6 +105,63 @@
     }
     #endif /* CUDA_WRAPPER_ASYNC_API */
 
+    /**
+     * CUDA device function argument wrapper
+     */
+    template <typename T>
+    class arg
+    {
+    public:
+	arg(T const& a) : a(a) {}
+
+	/**
+	 * returns const reference to arbitrary argument
+	 */
+	T const& operator*()
+	{
+	    return a;
+	}
+
+    private:
+	T const& a;
+    };
+
+    template <typename T>
+    class arg<T*>
+    {
+    public:
+	arg(vector<T>& a) : a(a) {}
+
+	/**
+	 * returns pointer to CUDA device memory array
+	 */
+	T* operator*()
+	{
+	    return a.data();
+	}
+
+    private:
+	vector<T>& a;
+    };
+
+    template <typename T>
+    class arg<T const*>
+    {
+    public:
+	arg(vector<T> const& a) : a(a) {}
+
+	/**
+	 * returns const pointer to CUDA device memory array
+	 */
+	T const* operator*()
+	{
+	    return a.data();
+	}
+
+    private:
+	vector<T> const& a;
+    };
+
     #endif /* ! __CUDACC__ */
 
     } // namespace cuda
@@ -141,11 +198,11 @@
 	/**
 	 * execute kernel
 	 */
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(BOOST_PP_ITERATION(), T, const& x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(BOOST_PP_ITERATION(), arg<T, > x))
 	{
 	    size_t offset = 0;
     #define SETUP_ARGUMENT(z, n, x) setup_argument(x##n, offset);
-	    BOOST_PP_REPEAT(BOOST_PP_ITERATION(), SETUP_ARGUMENT, x)
+	    BOOST_PP_REPEAT(BOOST_PP_ITERATION(), SETUP_ARGUMENT, *x)
     #undef SETUP_ARGUMENT
 	    CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(entry)));
 	}
