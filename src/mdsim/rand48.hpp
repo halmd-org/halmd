@@ -77,7 +77,7 @@ public:
 	cuda::vector<uint3> a(1), c(1);
 
 	cuda::configure(dim_.grid, dim_.block);
-	gpu::rand48::init(state_.data(), a.data(), c.data(), seed);
+	gpu::rand48::init(state_, a, c, seed);
 	cuda::thread::synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
@@ -95,7 +95,7 @@ public:
     {
 	assert(r.size() == dim_.threads());
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::uniform(state_.data(), r.data(), 1);
+	gpu::rand48::uniform(state_, r, 1);
     }
 
     /**
@@ -109,7 +109,7 @@ public:
 	cuda::vector<float> g_r(dim_.threads());
 	cuda::host::vector<float> h_r(dim_.threads());
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::uniform(state_.data(), g_r.data(), 1);
+	gpu::rand48::uniform(state_, g_r, 1);
 	// copy random numbers from GPU to host
 	cuda::copy(g_r, h_r, stream);
 	stream.synchronize();
@@ -134,7 +134,7 @@ public:
 	cuda::host::vector<ushort3> buf(1);
 
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::save(state_.data(), buf_gpu.data());
+	gpu::rand48::save(state_, buf_gpu);
 	cuda::copy(buf_gpu, buf, stream);
 	stream.synchronize();
 
@@ -150,7 +150,7 @@ public:
 	cuda::stream stream;
 
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::restore(state_.data(), a.data(), c.data(), mem);
+	gpu::rand48::restore(state_, a, c, mem);
 	stream.synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
@@ -186,9 +186,9 @@ public:
     /**
      * get pointer to CUDA device memory
      */
-    ushort3* data()
+    cuda::vector<ushort3>& state()
     {
-	return state_.data();
+	return state_;
     }
 
 private:
