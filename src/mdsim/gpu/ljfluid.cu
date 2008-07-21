@@ -116,6 +116,37 @@ __device__ void leapfrog_full_step(T& v, T const& f)
     v += f * (timestep / 2);
 }
 
+
+#ifdef USE_SMOOTH_POTENTIAL
+
+/**
+ * calculate potential smoothing function and its first derivative
+ *
+ * returns tuple (r, h(r), h'(r))
+ */
+__device__ float3 compute_smooth_function(float const& r)
+{
+    float y = r - r_cut;
+    float x2 = y * y * rri_smooth;
+    float x4 = x2 * x2;
+    float x4i = 1 / (1 + x4);
+    float3 h;
+    h.x = r;
+    h.y = x4 * x4i;
+    h.z = 4 * y * x2 * x4i * x4i;
+    return h;
+}
+
+/**
+ * sample potential smoothing function in given range
+ */
+__global__ void sample_smooth_function(float3* g_h, const float2 r)
+{
+    g_h[GTID] = compute_smooth_function(r.x + (r.y - r.x) / GTDIM * GTID);
+}
+
+#endif /* USE_SMOOTH_POTENTIAL */
+
 /**
  * calculate particle force using Lennard-Jones potential
  */
@@ -138,21 +169,13 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, T& ff, float& en, 
     float fval = 48 * rri * ri6 * (ri6 - 0.5f);
     // compute shifted Lennard-Jones potential
     float pot = 4 * ri6 * (ri6 - 1) - en_cut;
-
 #ifdef USE_SMOOTH_POTENTIAL
-    // compute potential smoothing function
-    float p = sqrtf(rr);
-    float y = p - r_cut;
-    float x2 = y * y * rri_smooth;
-    float x4 = x2 * x2;
-    float d = 1 + x4;
-    float g = x4 / d;
-    float h = 4 * y * x2 / (d * d * p);
-
+    // compute smoothing function and its first derivative
+    const float3 h = compute_smooth_function(sqrtf(rr));
     // apply smoothing function to obtain C^1 force function
-    fval = g * fval - h * pot;
+    fval = h.y * fval - h.z * pot / h.x;
     // apply smoothing function to obtain C^2 potential function
-    pot = g * pot;
+    pot = h.y * pot;
 #endif
 
     // virial equation sum
@@ -670,8 +693,10 @@ symbol<float> en_cut(mdsim::en_cut);
 #ifdef USE_CELL
 symbol<unsigned int> ncell(mdsim::ncell);
 #endif
+
 #ifdef USE_SMOOTH_POTENTIAL
 symbol<float> rri_smooth(mdsim::rri_smooth);
+function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
 #endif
 
 symbol<uint3> a(::rand48::a);

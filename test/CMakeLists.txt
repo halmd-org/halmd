@@ -1,0 +1,5 @@
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/mdsim)
+
+ADD_EXECUTABLE(sample_smooth_function ${CMAKE_SOURCE_DIR}/src/mdsim/gpu/ljfluid.cu smooth.cpp)
+SET_TARGET_PROPERTIES(sample_smooth_function PROPERTIES COMPILE_FLAGS "-DDIM_3D -DUSE_SMOOTH_POTENTIAL")
+TARGET_LINK_LIBRARIES(sample_smooth_function ${Boost_PROGRAM_OPTIONS_LIBRARY} ${CUDA_LIBRARIES})
