@@ -51,7 +51,7 @@ public:
     }
 
     /**
-     * initialization by vector
+     * initialization by coalesced GPU floating-point vector
      */
     vector3d(float4 const& v)
     {
@@ -400,6 +400,15 @@ vector3d<T> sin(vector3d<T> v)
     v[1] = std::sin(v[1]);
     v[2] = std::sin(v[2]);
     return v;
+}
+
+/**
+ * convert to coalesced GPU floating-point vector
+ */
+template <typename T>
+float4 make_float(vector3d<T> const& v)
+{
+    return make_float4(v[0], v[1], v[2], 0);
 }
 
 #endif /* ! MDSIM_VECTOR3D_HPP */

@@ -50,7 +50,7 @@ public:
     }
 
     /**
-     * initialization by vector
+     * initialization by coalesced GPU floating-point vector
      */
     vector2d(float2 const& v)
     {
@@ -376,6 +376,15 @@ vector2d<T> sin(vector2d<T> v)
     v[0] = std::sin(v[0]);
     v[1] = std::sin(v[1]);
     return v;
+}
+
+/**
+ * convert to GPU floating-point type
+ */
+template <typename T>
+float2 make_float(vector2d<T> const& v)
+{
+    return make_float2(v[0], v[1]);
 }
 
 #endif /* ! MDSIM_VECTOR2D_HPP */
