@@ -150,11 +150,17 @@ private:
     float timestep_;
     /** cutoff distance for shifted Lennard-Jones potential */
     float r_cut;
+    /** maximum velocity magnitude after last MD step */
+    float v_max;
 #ifdef USE_CELL
     /** cell skin */
     float r_skin;
     /** sum over maximum velocity magnitudes since last cell lists update */
     float v_max_sum;
+#endif
+#ifdef USE_SMOOTH_POTENTIAL
+    /** potential smoothing function scale parameter */
+    float r_smooth;
 #endif
 
     /** trajectory sample in swappable host memory */
@@ -268,23 +274,42 @@ template <unsigned dimension, typename T>
 ljfluid<dimension, T>::ljfluid()
 {
     // suppress attractive tail of Lennard-Jones potential
-    r_cut = std::pow(2., 1. / 6.);
+    r_cut = std::pow(2, 1 / 6.f);
     LOG("potential cutoff distance: " << r_cut);
 
     // squared cutoff distance
-    float rr_cut = r_cut * r_cut;
+    float rr_cut = std::pow(r_cut, 2);
     // potential energy at cutoff distance
-    float rri_cut = 1. / rr_cut;
+    float rri_cut = 1 / rr_cut;
     float r6i_cut = rri_cut * rri_cut * rri_cut;
-    float en_cut = 2. * r6i_cut * (r6i_cut - 1.);
+    float en_cut = 4 * r6i_cut * (r6i_cut - 1);
+
+    LOG("potential cutoff energy: " << en_cut);
 
     try {
+	cuda::copy(r_cut, gpu::ljfluid::r_cut);
 	cuda::copy(rr_cut, gpu::ljfluid::rr_cut);
 	cuda::copy(en_cut, gpu::ljfluid::en_cut);
     }
     catch (cuda::error const& e) {
-	throw exception("failed to copy cutoff parameters to device symbols");
+	throw exception("failed to copy potential cutoff parameters to device symbols");
     }
+
+#ifdef USE_SMOOTH_POTENTIAL
+    // compute potential smoothing function scale parameter
+    r_smooth = 0.001;
+    LOG("potential smoothing function scale parameter: " << r_smooth);
+
+    // squared inverse potential smoothing function scale parameter
+    float rri_smooth = std::pow(r_smooth, -2);
+
+    try {
+	cuda::copy(rri_smooth, gpu::ljfluid::rri_smooth);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy potential smoothing function scale parameter to device symbol");
+    }
+#endif
 }
 
 /**
@@ -589,14 +614,22 @@ void ljfluid<dimension, T>::restore(V visitor)
 	// wait for CUDA operations to finish
 	stream_.synchronize();
 
+	// maximum squared velocity
+	float vv_max = 0;
 	// assign velocities to cell placeholders
 	for (unsigned int i = 0; i < nplace; ++i) {
 	    // particle number
 	    const int n = h_cell.n[i];
 	    if (IS_REAL_PARTICLE(n)) {
 		h_cell.v[i] = make_float(h_sample.v[n]);
+		// calculate maximum squared velocity
+		vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
 	    }
 	}
+	// set maximum velocity magnitude
+	v_max = std::sqrt(vv_max);
+	// set sum over maximum velocity magnitudes to zero
+	v_max_sum = v_max;
 	// copy particle velocities from host to GPU (after force calculation!)
 	cuda::copy(h_cell.v, g_cell.v, stream_);
 #else
@@ -611,10 +644,16 @@ void ljfluid<dimension, T>::restore(V visitor)
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 
+	// maximum squared velocity
+	float vv_max = 0;
 	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.v[i] = make_float(h_sample.v[i]);
+	    // calculate maximum squared velocity
+	    vv_max = std::max(vv_max, h_sample.v[i] * h_sample.v[i]);
 	}
+	// set maximum velocity magnitude
+	v_max = std::sqrt(vv_max);
 	cuda::copy(h_part.v, g_part.v, stream_);
 #endif
 	stream_.synchronize();
@@ -732,7 +771,7 @@ void ljfluid<dimension, T>::lattice()
 	    h_part.r[i] = make_float(h_sample.r[i]);
 	}
 	cuda::copy(h_part.r, g_part.r);
-	// copy particle positions to periodically extended positions
+	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
@@ -822,15 +861,23 @@ void ljfluid<dimension, T>::temperature(float temp)
 		vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
 	    }
 	}
+	// set maximum velocity magnitude
+	v_max = std::sqrt(vv_max);
 	// initialize sum over maximum velocity magnitudes since last cell lists update
-	v_max_sum = std::sqrt(vv_max);
+	v_max_sum = v_max;
 	// copy particle velocities from host to GPU
 	cuda::copy(h_cell.v, g_cell.v, stream_);
 #else
-	// copy particle velocities from host to GPU
+	// maximum squared velocity
+	float vv_max = 0;
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.v[i] = make_float(h_sample.v[i]);
+	    // calculate maximum squared velocity
+	    vv_max = std::max(vv_max, h_sample.v[i] * h_sample.v[i]);
 	}
+	// set maximum velocity magnitude
+	v_max = std::sqrt(vv_max);
+	// copy particle velocities from host to GPU
 	cuda::copy(h_part.v, g_part.v, stream_);
 #endif
 	stream_.synchronize();
@@ -878,6 +925,9 @@ void ljfluid<dimension, T>::attrs(H5::Group const& param) const
     node["placeholders"] = nplace;
     node["cell_length"] = cell_length_;
     node["cell_occupancy"] = cell_occupancy_;
+#endif
+#ifdef USE_SMOOTH_POTENTIAL
+    node["smooth_distance"] = r_smooth;
 #endif
 }
 
@@ -1049,8 +1099,10 @@ void ljfluid<dimension, T>::sample()
 	    vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
 	}
     }
+    // set maximum velocity magnitude
+    v_max = std::sqrt(vv_max);
     // add to sum over maximum velocity magnitudes since last cell lists update
-    v_max_sum += std::sqrt(vv_max);
+    v_max_sum += v_max;
     // validate number of particles
     if (count != npart) {
 	throw exception("particle loss while updating cell lists");
@@ -1078,6 +1130,9 @@ void ljfluid<dimension, T>::sample()
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
+    // maximum squared velocity
+    float vv_max = 0;
+
     for (unsigned int n = 0; n < npart; ++n) {
 	// copy periodically reduced particle positions
 	h_sample.r[n] = T(h_part.r[n]);
@@ -1086,10 +1141,14 @@ void ljfluid<dimension, T>::sample()
 	// copy particle velocities
 	h_sample.v[n] = T(h_part.v[n]);
 	// calculate mean potential energy per particle
-	h_sample.en_pot += (h_part.en[i] - h_sample.en_pot) / (n + 1);
+	h_sample.en_pot += (h_part.en[n] - h_sample.en_pot) / (n + 1);
 	// calculate mean virial equation sum per particle
-	h_sample.virial += (h_part.virial[i] - h_sample.virial) / (n + 1);
+	h_sample.virial += (h_part.virial[n] - h_sample.virial) / (n + 1);
+	// calculate maximum squared velocity
+	vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
     }
+    // set maximum velocity magnitude
+    v_max = std::sqrt(vv_max);
 #endif
 
     // ensure that system is still in valid state after MD step
