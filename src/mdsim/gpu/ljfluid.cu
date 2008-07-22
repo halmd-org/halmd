@@ -115,8 +115,8 @@ __device__ void leapfrog_full_step(T& v, T const& f)
 /**
  * calculate particle force using Lennard-Jones potential
  */
-template <typename T>
-__device__ void compute_force(T const& r1, T const& r2, T& f, T& ff, float& en, float& virial)
+template <typename T, typename TT>
+__device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float& virial)
 {
     // particle distance vector
     T r = r1 - r2;
@@ -163,11 +163,7 @@ __device__ void compute_force(T const& r1, T const& r2, T& f, T& ff, float& en, 
     // Therefore, we implement the summation using a double-single
     // floating point arithmetic based on the DSFUN90 package.
     // 
-#ifdef DIM_3D
-    dsadd(f, ff, f, ff, fval * r, make_float3(0, 0, 0));
-#else
-    dsadd(f, ff, f, ff, fval * r, make_float2(0, 0));
-#endif
+    f += fval * r;
 
     // virial equation sum
     virial += 0.5f * fval * rr;
@@ -220,8 +216,8 @@ __device__ unsigned int compute_neighbour_cell(I const& offset)
 /**
  * compute forces with particles in a neighbour cell
  */
-template <unsigned int block_size, bool same_cell, typename T, typename U, typename I>
-__device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offset, T const& r, int const& n, T& f, T& ff, float& en, float& virial)
+template <unsigned int block_size, bool same_cell, typename T, typename TT, typename U, typename I>
+__device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offset, T const& r, int const& n, TT& f, float& en, float& virial)
 {
     __shared__ T s_r[block_size];
     __shared__ int s_n[block_size];
@@ -243,7 +239,7 @@ __device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offse
 	    if (same_cell && threadIdx.x == i)
 		continue;
 
-	    compute_force(r, s_r[i], f, ff, en, virial);
+	    compute_force(r, s_r[i], f, en, virial);
 	}
     }
     __syncthreads();
@@ -266,37 +262,35 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     float virial = 0;
 
 #ifdef DIM_3D
-    T f = make_float3(0, 0, 0);
-    T ff = make_float3(0, 0, 0);
+    dfloat3 f(make_float3(0, 0, 0), make_float3(0, 0, 0));
 #else
-    T f = make_float2(0, 0);
-    T ff = make_float2(0, 0);
+    dfloat2 f(make_float2(0, 0), make_float2(0, 0));
 #endif
 
     // calculate forces for this and neighbouring cells
 #ifdef DIM_3D
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, ff, en, virial);
+    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
     // visit 26 neighbour cells
     for (int x = -1; x <= 1; ++x)
 	for (int y = -1; y <= 1; ++y)
 	    for (int z = -1; z <= 1; ++z)
 		if (x != 0 || y != 0 || z != 0)
-		    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(x,  y,  z), r, tag, f, ff, en, virial);
+		    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(x,  y,  z), r, tag, f, en, virial);
 #else
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, ff, en, virial);
+    compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
     // visit 8 neighbour cells
     for (int x = -1; x <= 1; ++x)
 	for (int y = -1; y <= 1; ++y)
 	    if (x != 0 || y != 0)
-		compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(x, y), r, tag, f, ff, en, virial);
+		compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(x, y), r, tag, f, en, virial);
 #endif
 
     // second leapfrog step as part of integration of equations of motion
-    leapfrog_full_step(v, f);
+    leapfrog_full_step(v, f.f0);
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
-    g_f[GTID] = pack(f);
+    g_f[GTID] = pack(f.f0);
     g_en[GTID] = en;
     g_virial[GTID] = virial;
 }
@@ -321,11 +315,9 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
     float virial = 0;
 
 #ifdef DIM_3D
-    T f = make_float3(0, 0, 0);
-    T ff = make_float3(0, 0, 0);
+    dfloat3 f(make_float3(0, 0, 0));
 #else
-    T f = make_float2(0, 0);
-    T ff = make_float2(0, 0);
+    dfloat2 f(make_float2(0, 0));
 #endif
 
     // iterate over all blocks
@@ -344,17 +336,17 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 		continue;
 
 	    // compute Lennard-Jones force with particle
-	    compute_force(r, s_r[j], f, ff, en, virial);
+	    compute_force(r, s_r[j], f, en, virial);
 	}
 	__syncthreads();
     }
 
     // second leapfrog step of integration of equations of motion
-    leapfrog_full_step(v, f);
+    leapfrog_full_step(v, f.f0);
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
-    g_f[GTID] = pack(f);
+    g_f[GTID] = pack(f.f0);
     g_en[GTID] = en;
     g_virial[GTID] = virial;
 }
