@@ -19,6 +19,7 @@
 #ifndef MDSIM_RAND48_HPP
 #define MDSIM_RAND48_HPP
 
+#include <algorithm>
 #include <iostream>
 #include "gpu/rand48_glue.hpp"
 #include "gpu/ljfluid_glue.hpp"
@@ -49,22 +50,22 @@ public:
      */
     void resize(cuda::config const& dim)
     {
-	ushort3 state;
-	bool init = (state_.size() > 0) ? true : false;
-
-	if (init) {
+	if (state_.size() > 0) {
+	    ushort3 x;
 	    // save generator state using old dimensions
-	    save(state);
-	}
-
-	// set new CUDA execution dimensions
-	dim_ = dim;
-	// reallocate global device memory for generator state
-	state_.resize(dim_.threads());
-
-	if (init) {
+	    save(x);
+	    // set new CUDA execution dimensions
+	    dim_ = dim;
+	    // reallocate global device memory for generator state
+	    state_.resize(dim_.threads());
 	    // restore generator state using new dimensions
-	    restore(state);
+	    restore(x);
+	}
+	else {
+	    // set new CUDA execution dimensions
+	    dim_ = dim;
+	    // reallocate global device memory for generator state
+	    state_.resize(dim_.threads());
 	}
     }
 
@@ -76,7 +77,7 @@ public:
 	cuda::vector<uint3> a(1), c(1);
 
 	cuda::configure(dim_.grid, dim_.block);
-	gpu::rand48::init(state_.data(), a.data(), c.data(), seed);
+	gpu::rand48::init(state_, a, c, seed);
 	cuda::thread::synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
@@ -88,13 +89,39 @@ public:
     }
 
     /*
-     * fill array with uniform random numbers
+     * fill array with uniform random numbers between [0.0, 1.0)
      */
     void uniform(cuda::vector<float>& r, cuda::stream& stream)
     {
 	assert(r.size() == dim_.threads());
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::uniform(state_.data(), r.data(), 1);
+	gpu::rand48::uniform(state_, r, 1);
+    }
+
+    /**
+     * generate in-place random permutation of a host array
+     */
+    template <typename T>
+    void shuffle(T& array, cuda::stream& stream)
+    {
+	assert(array.size() <= dim_.threads());
+	// generate uniform random numbers between [0.0, 1.0)
+	cuda::vector<float> g_r(dim_.threads());
+	cuda::host::vector<float> h_r(dim_.threads());
+	cuda::configure(dim_.grid, dim_.block, stream);
+	gpu::rand48::uniform(state_, g_r, 1);
+	// copy random numbers from GPU to host
+	cuda::copy(g_r, h_r, stream);
+	stream.synchronize();
+
+	//
+	// D.E. Knuth, Art of Computer Programming, Volume 2:
+	// Seminumerical Algorithms, 3rd Edition, 1997,
+	// Addison-Wesley, pp. 124–125.
+	//
+	for (typename T::size_type n = array.size(); n > 1; --n) {
+	    std::swap(array[n * h_r[n - 1]], array[n - 1]);
+        }
     }
 
     /**
@@ -107,7 +134,7 @@ public:
 	cuda::host::vector<ushort3> buf(1);
 
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::save(state_.data(), buf_gpu.data());
+	gpu::rand48::save(state_, buf_gpu);
 	cuda::copy(buf_gpu, buf, stream);
 	stream.synchronize();
 
@@ -123,7 +150,7 @@ public:
 	cuda::stream stream;
 
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::restore(state_.data(), a.data(), c.data(), mem);
+	gpu::rand48::restore(state_, a, c, mem);
 	stream.synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
@@ -159,9 +186,9 @@ public:
     /**
      * get pointer to CUDA device memory
      */
-    ushort3* data()
+    cuda::vector<ushort3>& state()
     {
-	return state_.data();
+	return state_;
     }
 
 private:

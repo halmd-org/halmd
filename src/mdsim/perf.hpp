@@ -48,7 +48,7 @@ typedef boost::array<accumulator<float>, 6> perf_counters;
 /**
  * performance data
  */
-template <unsigned dimension, typename T, typename U>
+template <unsigned dimension, typename T>
 class perf
 {
 public:
@@ -88,8 +88,8 @@ private:
 /**
  * create HDF5 performance data output file
  */
-template <unsigned dimension, typename T, typename U>
-void perf<dimension, T, U>::open(std::string const& filename)
+template <unsigned dimension, typename T>
+void perf<dimension, T>::open(std::string const& filename)
 {
     LOG("write performance data to file: " << filename);
     try {
@@ -144,8 +144,8 @@ void perf<dimension, T, U>::open(std::string const& filename)
 /**
  * returns HDF5 parameter group
  */
-template <unsigned dimension, typename T, typename U>
-H5param perf<dimension, T, U>::attrs()
+template <unsigned dimension, typename T>
+H5param perf<dimension, T>::attrs()
 {
     return H5param(m_file.openGroup("param"));
 }
@@ -153,8 +153,8 @@ H5param perf<dimension, T, U>::attrs()
 /**
  * sample performance data
  */
-template <unsigned dimension, typename T, typename U>
-void perf<dimension, T, U>::sample(perf_counters const& times)
+template <unsigned dimension, typename T>
+void perf<dimension, T>::sample(perf_counters const& times)
 {
     for (unsigned int i = 0; i < m_times.size(); ++i) {
 	// accumulate values of accumulator
@@ -179,8 +179,8 @@ std::ostream& operator<<(std::ostream& os, accumulator<T> const& acc)
 /**
  * commit HDF5 performance datasets
  */
-template <unsigned dimension, typename T, typename U>
-void perf<dimension, T, U>::commit()
+template <unsigned dimension, typename T>
+void perf<dimension, T>::commit()
 {
     LOG("mean CUDA time for MD simulation step: " << m_times[0]);
     LOG("mean CUDA time for velocity-Verlet integration: " << m_times[1]);
@@ -210,8 +210,8 @@ void perf<dimension, T, U>::commit()
 /**
  * write performance data to HDF5 file
  */
-template <unsigned dimension, typename T, typename U>
-void perf<dimension, T, U>::flush(bool force = true)
+template <unsigned dimension, typename T>
+void perf<dimension, T>::flush(bool force = true)
 {
     if (!m_dirty)
 	return;
@@ -255,8 +255,8 @@ void perf<dimension, T, U>::flush(bool force = true)
 /**
  * close HDF5 file
  */
-template <unsigned dimension, typename T, typename U>
-void perf<dimension, T, U>::close()
+template <unsigned dimension, typename T>
+void perf<dimension, T>::close()
 {
     // write pending performance data to HDF5 file
     flush(false);

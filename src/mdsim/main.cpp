@@ -78,9 +78,9 @@ int main(int argc, char **argv)
 
 	// initialize molecular dynamics simulation
 #ifdef DIM_3D
-	mdsim::mdsim<3, vector3d<float>, float4> sim(opts);
+	mdsim::mdsim<3, vector<float, 3> > sim(opts);
 #else
-	mdsim::mdsim<2, vector2d<float>, float2> sim(opts);
+	mdsim::mdsim<2, vector<float, 2> > sim(opts);
 #endif
 
 	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used() << " bytes");

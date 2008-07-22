@@ -24,15 +24,31 @@
 
 #ifdef DIM_3D
 # ifdef USE_CELL
-#  define PROGRAM_VARIANT		"+3D +CUDA +VVERLET +CELL"
+#  ifdef USE_SMOOTH_POTENTIAL
+#   define PROGRAM_VARIANT		"+3D +CUDA +CELL +VVERLET +C2POT"
+#  else
+#   define PROGRAM_VARIANT		"+3D +CUDA +CELL +VVERLET"
+#  endif
 # else
-#  define PROGRAM_VARIANT		"+3D +CUDA +VVERLET"
+#  ifdef USE_SMOOTH_POTENTIAL
+#   define PROGRAM_VARIANT		"+3D +CUDA +VVERLET +C2POT"
+#  else
+#   define PROGRAM_VARIANT		"+3D +CUDA +VVERLET"
+#  endif
 # endif
 #else
 # ifdef USE_CELL
-#  define PROGRAM_VARIANT		"+2D +CUDA +VVERLET +CELL"
+#  ifdef USE_SMOOTH_POTENTIAL
+#   define PROGRAM_VARIANT		"+2D +CUDA +CELL +VVERLET +C2POT"
+#  else
+#   define PROGRAM_VARIANT		"+2D +CUDA +CELL +VVERLET"
+#  endif
 # else
-#  define PROGRAM_VARIANT		"+2D +CUDA +VVERLET"
+#  ifdef USE_SMOOTH_POTENTIAL
+#   define PROGRAM_VARIANT		"+2D +CUDA +VVERLET +C2POT"
+#  else
+#   define PROGRAM_VARIANT		"+2D +CUDA +VVERLET"
+#  endif
 # endif
 #endif
 

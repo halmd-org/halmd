@@ -77,7 +77,7 @@ __inline__ __device__ T muladd(uint3 a, T b, uint3 c)
 
 
 /**
- * returns uniform random number
+ * returns uniform random number between [0.0, 1.0)
  */
 __inline__ __device__ float uniform(ushort3& state)
 {
