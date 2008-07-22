@@ -28,23 +28,20 @@
 #include "H5param.hpp"
 #include "exception.hpp"
 #include "log.hpp"
+#include "sample.hpp"
 
 
 namespace mdsim {
 
-template <unsigned dimension, typename T, typename U, bool writer = true>
+template <unsigned dimension, typename T, bool writer = true>
 class trajectory;
 
 /**
  * trajectory file writer
  */
-template <unsigned dimension, typename T, typename U>
-class trajectory<dimension, T, U, true>
+template <unsigned dimension, typename T>
+class trajectory<dimension, T, true>
 {
-public:
-    /** vector sample vector in page-locked host memory */
-    typedef cuda::host::vector<U> vector_type;
-
 public:
     /** create HDF5 trajectory output file */
     void open(std::string const& filename, unsigned int const& npart);
@@ -55,7 +52,7 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** write phase space sample */
-    void sample(vector_type const& r, vector_type const& R, vector_type const& v, float const& time);
+    void sample(trajectory_sample<T> const& sample, float const& time);
 
 private:
     /** HDF5 trajectory output file */
@@ -73,8 +70,8 @@ private:
 /**
  * create HDF5 trajectory output file
  */
-template <unsigned dimension, typename T, typename U>
-void trajectory<dimension, T, U, true>::open(std::string const& filename, unsigned int const& npart)
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::open(std::string const& filename, unsigned int const& npart)
 {
     // create trajectory output file
     LOG("write trajectories to file: " << filename);
@@ -102,14 +99,8 @@ void trajectory<dimension, T, U, true>::open(std::string const& filename, unsign
     m_dataset[1] = root.createDataSet("R", H5::PredType::NATIVE_FLOAT, m_ds_file, cparms);
     m_dataset[2] = root.createDataSet("v", H5::PredType::NATIVE_FLOAT, m_ds_file, cparms);
 
-    hsize_t dim_mem[2] = { npart, sizeof(U) / sizeof(float) };
+    hsize_t dim_mem[2] = { npart, dimension };
     m_ds_mem = H5::DataSpace(2, dim_mem);
-
-    hsize_t count_mem[2]  = { npart, 1 };
-    hsize_t start_mem[2]  = { 0, 0 };
-    hsize_t stride_mem[2] = { 1, 1 };
-    hsize_t block_mem[2]  = { 1, dimension };
-    m_ds_mem.selectHyperslab(H5S_SELECT_SET, count_mem, start_mem, stride_mem, block_mem);
 
     hsize_t chunk_scalar[1] = { 1 };
     cparms.setChunk(1, chunk_scalar);
@@ -123,8 +114,8 @@ void trajectory<dimension, T, U, true>::open(std::string const& filename, unsign
 /**
  * close HDF5 trajectory output file
  */
-template <unsigned dimension, typename T, typename U>
-void trajectory<dimension, T, U, true>::close()
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::close()
 {
     try {
 	m_file.close();
@@ -137,8 +128,8 @@ void trajectory<dimension, T, U, true>::close()
 /**
  * flush HDF5 output file to disk
  */
-template <unsigned dimension, typename T, typename U>
-void trajectory<dimension, T, U, true>::flush()
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::flush()
 {
     try {
 	m_file.flush(H5F_SCOPE_GLOBAL);
@@ -151,8 +142,8 @@ void trajectory<dimension, T, U, true>::flush()
 /**
  * returns HDF5 parameter group
  */
-template <unsigned dimension, typename T, typename U>
-H5param trajectory<dimension, T, U, true>::attrs()
+template <unsigned dimension, typename T>
+H5param trajectory<dimension, T, true>::attrs()
 {
     return H5param(m_file.openGroup("param"));
 }
@@ -160,8 +151,8 @@ H5param trajectory<dimension, T, U, true>::attrs()
 /**
  * write phase space sample
  */
-template <unsigned dimension, typename T, typename U>
-void trajectory<dimension, T, U, true>::sample(vector_type const& r, vector_type const& R, vector_type const& v, float const& time)
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, true>::sample(trajectory_sample<T> const& sample, float const& time)
 {
     hsize_t dim[3];
     m_ds_file.getSimpleExtentDims(dim);
@@ -175,19 +166,19 @@ void trajectory<dimension, T, U, true>::sample(vector_type const& r, vector_type
     m_ds_file.setExtentSimple(3, dim);
     m_ds_file.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
-    assert(r.size() == dim[1]);
-    assert(R.size() == dim[1]);
-    assert(v.size() == dim[1]);
+    assert(sample.r.size() == dim[1]);
+    assert(sample.R.size() == dim[1]);
+    assert(sample.v.size() == dim[1]);
 
     // write periodically reduced particle coordinates
     m_dataset[0].extend(dim);
-    m_dataset[0].write(r.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
+    m_dataset[0].write(sample.r.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
     // write periodically extended particle coordinates
     m_dataset[1].extend(dim);
-    m_dataset[1].write(R.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
+    m_dataset[1].write(sample.R.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
     // write particle velocities
     m_dataset[2].extend(dim);
-    m_dataset[2].write(v.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
+    m_dataset[2].write(sample.v.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
 
     hsize_t dim_scalar[1];
     m_ds_scalar.getSimpleExtentDims(dim_scalar);
@@ -209,20 +200,16 @@ void trajectory<dimension, T, U, true>::sample(vector_type const& r, vector_type
 /**
  * trajectory file reader
  */
-template <unsigned dimension, typename T, typename U>
-class trajectory<dimension, T, U, false>
+template <unsigned dimension, typename T>
+class trajectory<dimension, T, false>
 {
-public:
-    /** sample vector in page-locked host memory */
-    typedef cuda::host::vector<U> vector_type;
-
 public:
     /** open HDF5 trajectory input file */
     void open(std::string const& filename);
     /** close HDF5 trajectory input file */
     void close();
     /** read phase space sample */
-    void read(vector_type& r, vector_type& v, int64_t index);
+    void read(std::vector<T>& r, std::vector<T>& v, int64_t index);
 
 private:
     /** HDF5 trajectory input file */
@@ -232,8 +219,8 @@ private:
 /**
  * open HDF5 trajectory input file
  */
-template <unsigned dimension, typename T, typename U>
-void trajectory<dimension, T, U, false>::open(std::string const& filename)
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, false>::open(std::string const& filename)
 {
     LOG("read trajectory file: " << filename);
     try {
@@ -247,8 +234,8 @@ void trajectory<dimension, T, U, false>::open(std::string const& filename)
 /**
  * close HDF5 trajectory input file
  */
-template <unsigned dimension, typename T, typename U>
-void trajectory<dimension, T, U, false>::close()
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, false>::close()
 {
     try {
 	file.close();
@@ -261,8 +248,8 @@ void trajectory<dimension, T, U, false>::close()
 /**
  * read phase space sample
  */
-template <unsigned dimension, typename T, typename U>
-void trajectory<dimension, T, U, false>::read(vector_type& r, vector_type& v, int64_t index)
+template <unsigned dimension, typename T>
+void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v, int64_t index)
 {
     try {
 	// open phase space coordinates datasets
@@ -324,14 +311,8 @@ void trajectory<dimension, T, U, false>::read(vector_type& r, vector_type& v, in
 	assert(v.size() == npart);
 
 	// read sample from dataset
-	hsize_t dim_mem[2] = { npart, sizeof(U) / sizeof(float) };
+	hsize_t dim_mem[2] = { npart, dimension };
 	H5::DataSpace ds_mem(2, dim_mem);
-
-	hsize_t count_mem[2]  = { npart, 1 };
-	hsize_t start_mem[2]  = { 0, 0 };
-	hsize_t stride_mem[2] = { 1, 1 };
-	hsize_t block_mem[2]  = { 1, dimension };
-	ds_mem.selectHyperslab(H5S_SELECT_SET, count_mem, start_mem, stride_mem, block_mem);
 
 	hsize_t count[3]  = { 1, npart, 1 };
 	hsize_t start[3]  = { index, 0, 0 };

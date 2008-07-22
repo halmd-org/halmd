@@ -45,7 +45,7 @@ namespace mdsim
 /**
  * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
-template <unsigned dimension, typename T, typename U>
+template <unsigned dimension, typename T>
 class mdsim
 {
 public:
@@ -68,24 +68,24 @@ private:
     /** program options */
     options const& opts;
     /** Lennard-Jones fluid simulation */
-    ljfluid<dimension, T, U> fluid;
+    ljfluid<dimension, T> fluid;
 #ifndef USE_BENCHMARK
     /** block correlations */
-    correlation<dimension, T, U> tcf;
+    correlation<dimension, T> tcf;
     /**  trajectory file writer */
-    trajectory<dimension, T, U> traj;
+    trajectory<dimension, T> traj;
     /** thermodynamic equilibrium properties */
-    energy<dimension, T, U> tep;
+    energy<dimension, T> tep;
 #endif
     /** performance data */
-    perf<dimension, T, U> prf;
+    perf<dimension, T> prf;
 };
 
 /**
  * initialize MD simulation program
  */
-template <unsigned dimension, typename T, typename U>
-mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
+template <unsigned dimension, typename T>
+mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
 {
     LOG("positional coordinates dimension: " << dimension);
 
@@ -106,11 +106,11 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
     fluid.rng(opts.rng_seed().value());
 
     if (!opts.trajectory_sample().empty()) {
-	trajectory<dimension, T, U, false> traj;
+	trajectory<dimension, T, false> traj;
 	// open trajectory input file
 	traj.open(opts.trajectory_input_file().value());
 	// read trajectory sample and restore system state
-	fluid.restore(boost::bind(&trajectory<dimension, T, U, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
 	// close trajectory input file
 	traj.close();
     }
@@ -149,8 +149,8 @@ mdsim<dimension, T, U>::mdsim(options const& opts) : opts(opts)
 /**
  * run MD simulation program
  */
-template <unsigned dimension, typename T, typename U>
-void mdsim<dimension, T, U>::operator()()
+template <unsigned dimension, typename T>
+void mdsim<dimension, T>::operator()()
 {
     // handle non-lethal POSIX signals to allow for a partial simulation run
     signal_handler signal;
@@ -239,13 +239,13 @@ void mdsim<dimension, T, U>::operator()()
 	    // simulation time
 	    const float time = *step * fluid.timestep();
 	    // sample time correlation functions
-	    fluid.sample(boost::bind(&correlation<dimension, T, U>::sample, boost::ref(tcf), _2, _3, *step, boost::ref(flush)));
+	    tcf.sample(fluid.trajectory(), *step, flush);
 	    // sample thermodynamic equilibrium properties
-	    fluid.sample(boost::bind(&energy<dimension, T, U>::sample, boost::ref(tep), _3, _4, _5, fluid.density(), time));
+	    tep.sample(fluid.trajectory(), fluid.density(), time);
 	    // sample trajectory
-	    if (opts.dump_trajectories().value())
-		fluid.sample(boost::bind(&trajectory<dimension, T, U>::sample, boost::ref(traj), _1, _2, _3, time));
-
+	    if (opts.dump_trajectories().value()) {
+		traj.sample(fluid.trajectory(), time);
+	    }
 	    // acquired maximum number of samples for a block level
 	    if (flush) {
 		// sample performance counters

@@ -49,17 +49,12 @@ namespace mdsim {
 /**
  * Block correlations
  */
-template <unsigned dimension, typename T, typename U>
+template <unsigned dimension, typename T>
 class correlation
 {
 public:
-    /** sample vector in page-locked host memory */
-    typedef cuda::host::vector<U> vector_type;
-
-    /** phase space sample type */
-    typedef phase_space_point<dimension, T, U> sample_type;
     /** phase space samples block type */
-    typedef boost::circular_buffer<phase_space_point<dimension, T, U> > block_type;
+    typedef boost::circular_buffer<phase_space_point<T> > block_type;
     /** correlation function variant type */
     typedef boost::make_variant_over<tcf_types>::type tcf_type;
 
@@ -103,7 +98,7 @@ public:
     /** check if sample is acquired for given simulation step */
     bool sample(uint64_t const& step) const;
     /** sample time correlation functions */
-    void sample(vector_type const& r, vector_type const& v, uint64_t const& step, bool& flush);
+    void sample(trajectory_sample<T> const& sample, uint64_t const& step, bool& flush);
     /** write correlation function results to HDF5 file */
     void flush();
 
@@ -147,8 +142,8 @@ private:
 /**
  * initialize with all correlation function types
  */
-template <unsigned dimension, typename T, typename U>
-correlation<dimension, T, U>::correlation()
+template <unsigned dimension, typename T>
+correlation<dimension, T>::correlation()
 {
     boost::mpl::for_each<tcf_types>(boost::bind(&std::vector<tcf_type>::push_back, boost::ref(m_tcf), _1));
 }
@@ -156,8 +151,8 @@ correlation<dimension, T, U>::correlation()
 /**
  * set total number of simulation steps
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::steps(uint64_t const& value, float const& timestep)
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::steps(uint64_t const& value, float const& timestep)
 {
     // set total number of simulation steps
     m_steps = value;
@@ -172,8 +167,8 @@ void correlation<dimension, T, U>::steps(uint64_t const& value, float const& tim
 /**
  * set total simulation time
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::time(float const& value, float const& timestep)
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::time(float const& value, float const& timestep)
 {
     // set total simulation time
     m_time = value;
@@ -188,8 +183,8 @@ void correlation<dimension, T, U>::time(float const& value, float const& timeste
 /**
  * set block size
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::block_size(unsigned int const& value)
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::block_size(unsigned int const& value)
 {
     // set block size
     m_block_size = value;
@@ -253,8 +248,8 @@ void correlation<dimension, T, U>::block_size(unsigned int const& value)
 /**
  * set maximum number of samples per block
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::max_samples(uint64_t const& value)
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::max_samples(uint64_t const& value)
 {
     m_max_samples = value;
     LOG("maximum number of samples per block: " << m_max_samples);
@@ -266,8 +261,8 @@ void correlation<dimension, T, U>::max_samples(uint64_t const& value)
 /**
  * set q-vectors for spatial Fourier transformation
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::q_values(unsigned int const& n, float const& box)
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::q_values(unsigned int const& n, float const& box)
 {
     // integer multiples of q-value corresponding to periodic box length
     for (unsigned int k = 1; k <= n; ++k) {
@@ -288,8 +283,8 @@ void correlation<dimension, T, U>::q_values(unsigned int const& n, float const& 
 /**
  * create HDF5 correlations output file
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::open(std::string const& filename)
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::open(std::string const& filename)
 {
     LOG("write correlations to file: " << filename);
     try {
@@ -316,8 +311,8 @@ void correlation<dimension, T, U>::open(std::string const& filename)
 /**
  * close HDF5 file
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::close()
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::close()
 {
     // compute higher block correlations for remaining samples
     for (unsigned int i = 2; i < m_block_count; ++i) {
@@ -341,8 +336,8 @@ void correlation<dimension, T, U>::close()
 /**
  * returns HDF5 parameter group
  */
-template <unsigned dimension, typename T, typename U>
-H5param correlation<dimension, T, U>::attrs()
+template <unsigned dimension, typename T>
+H5param correlation<dimension, T>::attrs()
 {
     return H5param(m_file.openGroup("param"));
 }
@@ -350,8 +345,8 @@ H5param correlation<dimension, T, U>::attrs()
 /**
  * write parameters to HDF5 parameter group
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::attrs(H5::Group const& param) const
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::attrs(H5::Group const& param) const
 {
     H5xx::group node(param.createGroup("correlation"));
     node["steps"] = m_steps;
@@ -366,8 +361,8 @@ void correlation<dimension, T, U>::attrs(H5::Group const& param) const
 /**
  * check if sample is acquired for given simulation step
  */
-template <unsigned dimension, typename T, typename U>
-bool correlation<dimension, T, U>::sample(uint64_t const& step) const
+template <unsigned dimension, typename T>
+bool correlation<dimension, T>::sample(uint64_t const& step) const
 {
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
@@ -383,10 +378,10 @@ bool correlation<dimension, T, U>::sample(uint64_t const& step) const
 /**
  * sample time correlation functions
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::sample(vector_type const& r, vector_type const& v, uint64_t const& step, bool& flush)
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::sample(trajectory_sample<T> const& sample, uint64_t const& step, bool& flush)
 {
-    sample_type sample(r, v, m_q_vector);
+    phase_space_point<T> p(sample.r, sample.v, m_q_vector);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
@@ -394,7 +389,7 @@ void correlation<dimension, T, U>::sample(vector_type const& r, vector_type cons
 	if (step % m_block_freq[i])
 	    continue;
 
-	m_block[i].push_back(sample);
+	m_block[i].push_back(p);
 
 	if (m_block[i].full()) {
 	    autocorrelate_block(i);
@@ -416,8 +411,8 @@ void correlation<dimension, T, U>::sample(vector_type const& r, vector_type cons
 /**
  * apply correlation functions to block samples
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::autocorrelate_block(unsigned int n)
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::autocorrelate_block(unsigned int n)
 {
     foreach (tcf_type& tcf, m_tcf) {
 	boost::apply_visitor(tcf_correlate_block_gen(n, m_block[n], m_q_vector), tcf);
@@ -427,8 +422,8 @@ void correlation<dimension, T, U>::autocorrelate_block(unsigned int n)
 /**
  * write correlation function results to HDF5 file
  */
-template <unsigned dimension, typename T, typename U>
-void correlation<dimension, T, U>::flush()
+template <unsigned dimension, typename T>
+void correlation<dimension, T>::flush()
 {
     // find highest block with adequate number of samples
     unsigned int max_blocks = 0;

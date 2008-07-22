@@ -27,9 +27,27 @@
 namespace mdsim {
 
 /**
+ * MD simulation sample
+ */
+template <typename T>
+struct trajectory_sample
+{
+    /** periodically reduced particle positions */
+    std::vector<T> r;
+    /** periodically extended particle positions */
+    std::vector<T> R;
+    /** particle velocities */
+    std::vector<T> v;
+    /** potential energy per particle */
+    float en_pot;
+    /** virial equation sum per particle */
+    float virial;
+};
+
+/**
  * Phase space sample
  */
-template <unsigned dimension, typename T, typename U>
+template <typename T>
 struct phase_space_point
 {
     // swappable host memory vector type
@@ -37,23 +55,14 @@ struct phase_space_point
     typedef typename T::value_type value_type;
     typedef typename std::vector<std::pair<T, T> > density_vector_type;
 
-    phase_space_point(cuda::host::vector<U> const& h_r, cuda::host::vector<U> const& h_v, std::vector<value_type> const& q) : rho(q.size(), std::pair<T, T>(0, 0))
+    phase_space_point(vector_type const& r, vector_type const& v, std::vector<value_type> const& q) : r(r), v(v), rho(q.size(), std::pair<T, T>(0, 0))
     {
-	r.reserve(h_r.size());
-	v.reserve(h_v.size());
-
-	for (size_t i = 0; i < h_r.size(); ++i) {
-	    // convert from GPU type to host type
-	    const T r(h_r[i]), v(h_v[i]);
-
-	    this->r.push_back(r);
-	    this->v.push_back(v);
-
-	    // spatial Fourier transformation
+	// spatial Fourier transformation
+	for (size_t i = 0; i < r.size(); ++i) {
 	    for (unsigned int j = 0; j < q.size(); ++j) {
 		// compute averages to maintain accuracy with single precision floating-point
-		rho[j].first += (cos(r * q[j]) - rho[j].first) / (i + 1);
-		rho[j].second += (sin(r * q[j]) - rho[j].second) / (i + 1);
+		rho[j].first += (cos(r[i] * q[j]) - rho[j].first) / (i + 1);
+		rho[j].second += (sin(r[i] * q[j]) - rho[j].second) / (i + 1);
 	    }
 	}
 	// normalize Fourier transformed density with N^(-1/2)

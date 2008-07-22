@@ -27,6 +27,7 @@
 #include "H5param.hpp"
 #include "accumulator.hpp"
 #include "log.hpp"
+#include "sample.hpp"
 #include "statistics.hpp"
 
 
@@ -38,7 +39,7 @@ namespace mdsim
 /**
  * Thermodynamic equilibrium properties
  */
-template <unsigned dimension, typename T, typename U>
+template <unsigned dimension, typename T>
 class energy
 {
 public:
@@ -46,8 +47,6 @@ public:
     typedef std::pair<float, float> scalar_pair;
     /** time and vector property */
     typedef std::pair<float, T> vector_pair;
-    /** vector sample vector in page-locked host memory */
-    typedef cuda::host::vector<U> vector_type;
 
     enum {
 	/** HDF5 dataset chunk size */
@@ -61,7 +60,7 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** sample thermodynamic equilibrium properties */
-    void sample(vector_type const& v, float const& en_pot, float const& virial, float const& density, float const& time);
+    void sample(trajectory_sample<T> const& sample, float const& density, float const& time);
     /** write thermodynamic equilibrium properties to HDF5 file */
     void flush(bool force);
     /** close HDF5 file */
@@ -94,8 +93,8 @@ private:
 /**
  * create HDF5 thermodynamic equilibrium properties output file
  */
-template <unsigned dimension, typename T, typename U>
-void energy<dimension, T, U>::open(std::string const& filename)
+template <unsigned dimension, typename T>
+void energy<dimension, T>::open(std::string const& filename)
 {
     LOG("write thermodynamic equilibrium properties to file: " << filename);
     try {
@@ -166,8 +165,8 @@ void energy<dimension, T, U>::open(std::string const& filename)
 /**
  * returns HDF5 parameter group
  */
-template <unsigned dimension, typename T, typename U>
-H5param energy<dimension, T, U>::attrs()
+template <unsigned dimension, typename T>
+H5param energy<dimension, T>::attrs()
 {
     return H5param(m_file.openGroup("param"));
 }
@@ -175,23 +174,21 @@ H5param energy<dimension, T, U>::attrs()
 /**
  * sample thermodynamic equilibrium properties
  */
-template <unsigned dimension, typename T, typename U>
-void energy<dimension, T, U>::sample(vector_type const& v, float const& en_pot, float const& virial, float const& density, float const& time)
+template <unsigned dimension, typename T>
+void energy<dimension, T>::sample(trajectory_sample<T> const& sample, float const& density, float const& time)
 {
     T v_cm = 0;
     float vv = 0;
 
-    for (size_t i = 0; i < v.size(); ++i) {
-	// convert from GPU to host vector type
-	T v_(v[i]);
+    for (size_t i = 0; i < sample.v.size(); ++i) {
 	// center of mass velocity
-	v_cm += (v_ - v_cm) / (i + 1);
+	v_cm += (sample.v[i] - v_cm) / (i + 1);
 	// mean squared velocity
-	vv += (v_ * v_ - vv) / (i + 1);
+	vv += (sample.v[i] * sample.v[i] - vv) / (i + 1);
     }
 
     // mean potential energy per particle
-    m_en_pot.push_back(scalar_pair(time, en_pot));
+    m_en_pot.push_back(scalar_pair(time, sample.en_pot));
     // mean kinetic energy per particle
     m_en_kin.push_back(scalar_pair(time, vv / 2));
     // mean total energy per particle
@@ -199,7 +196,7 @@ void energy<dimension, T, U>::sample(vector_type const& v, float const& en_pot, 
     // temperature
     m_temp.push_back(scalar_pair(time, vv / dimension));
     // pressure
-    m_press.push_back(scalar_pair(time, density / dimension * (vv + virial)));
+    m_press.push_back(scalar_pair(time, density / dimension * (vv + sample.virial)));
     // velocity center of mass
     m_v_cm.push_back(vector_pair(time, v_cm));
 
@@ -215,8 +212,8 @@ void energy<dimension, T, U>::sample(vector_type const& v, float const& en_pot, 
 /**
  * write thermodynamic equilibrium properties to HDF5 file
  */
-template <unsigned dimension, typename T, typename U>
-void energy<dimension, T, U>::flush(bool force=true)
+template <unsigned dimension, typename T>
+void energy<dimension, T>::flush(bool force=true)
 {
     if (!m_samples_buffer)
 	// empty buffers
@@ -287,8 +284,8 @@ void energy<dimension, T, U>::flush(bool force=true)
 /**
  * close HDF5 file
  */
-template <unsigned dimension, typename T, typename U>
-void energy<dimension, T, U>::close()
+template <unsigned dimension, typename T>
+void energy<dimension, T>::close()
 {
     // commit remaining samples to file
     flush(false);
