@@ -29,6 +29,8 @@
 #include "log.hpp"
 #include "sample.hpp"
 #include "statistics.hpp"
+#include "vector2d.hpp"
+#include "vector3d.hpp"
 
 
 #define foreach BOOST_FOREACH
@@ -44,9 +46,9 @@ class energy
 {
 public:
     /** time and scalar property */
-    typedef std::pair<float, float> scalar_pair;
+    typedef std::pair<double, double> scalar_pair;
     /** time and vector property */
-    typedef std::pair<float, T> vector_pair;
+    typedef std::pair<double, vector<double, dimension> > vector_pair;
 
     enum {
 	/** HDF5 dataset chunk size */
@@ -128,7 +130,7 @@ void energy<dimension, T>::open(std::string const& filename)
     vector_cparms.setDeflate(6);
 
     // floating-point data type
-    m_tid = H5::PredType::NATIVE_FLOAT;
+    m_tid = H5::PredType::NATIVE_DOUBLE;
 
     try {
 	// mean potential energy per particle
@@ -177,14 +179,16 @@ H5param energy<dimension, T>::attrs()
 template <unsigned dimension, typename T>
 void energy<dimension, T>::sample(trajectory_sample<T> const& sample, float const& density, float const& time)
 {
-    T v_cm = 0;
-    float vv = 0;
+    vector<double, dimension> v_cm = 0;
+    double vv = 0;
 
     for (size_t i = 0; i < sample.v.size(); ++i) {
+	// ensure double-precision floating point arithmetic
+	vector<double, dimension> v(sample.v[i]);
 	// center of mass velocity
-	v_cm += (sample.v[i] - v_cm) / (i + 1);
+	v_cm += (v - v_cm) / (i + 1);
 	// mean squared velocity
-	vv += (sample.v[i] * sample.v[i] - vv) / (i + 1);
+	vv += (v * v - vv) / (i + 1);
     }
 
     // mean potential energy per particle

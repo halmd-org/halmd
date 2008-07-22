@@ -39,9 +39,9 @@ struct trajectory_sample
     /** particle velocities */
     std::vector<T> v;
     /** potential energy per particle */
-    float en_pot;
+    double en_pot;
     /** virial equation sum per particle */
-    float virial;
+    double virial;
 };
 
 /**

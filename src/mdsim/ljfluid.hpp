@@ -995,6 +995,11 @@ void ljfluid<dimension, T>::synchronize()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::sample()
 {
+    // mean potential energy per particle
+    h_sample.en_pot = 0;
+    // mean virial equation sum per particle
+    h_sample.virial = 0;
+
 #ifdef USE_CELL
     // copy MD simulation step results from GPU to host
     try {
@@ -1020,10 +1025,6 @@ void ljfluid<dimension, T>::sample()
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
-    // mean potential energy per particle
-    h_sample.en_pot = 0;
-    // mean virial equation sum per particle
-    h_sample.virial = 0;
     // number of particles found in cells
     unsigned int count = 0;
     // maximum squared velocity
@@ -1084,11 +1085,11 @@ void ljfluid<dimension, T>::sample()
 	h_sample.R[n] = T(h_part.R[n]);
 	// copy particle velocities
 	h_sample.v[n] = T(h_part.v[n]);
+	// calculate mean potential energy per particle
+	h_sample.en_pot += (h_part.en[i] - h_sample.en_pot) / (n + 1);
+	// calculate mean virial equation sum per particle
+	h_sample.virial += (h_part.virial[i] - h_sample.virial) / (n + 1);
     }
-    // calculate mean potential energy per particle
-    h_sample.en_pot = mean(h_part.en.begin(), h_part.en.end());
-    // calculate mean virial equation sum per particle
-    h_sample.virial = mean(h_part.virial.begin(), h_part.virial.end());
 #endif
 
     // ensure that system is still in valid state after MD step
