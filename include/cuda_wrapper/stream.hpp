@@ -45,9 +45,9 @@ public:
     /**
      * destroys the stream
      */
-    ~stream()
+    ~stream() throw() // no-throw guarantee
     {
-	CUDA_CALL(cudaStreamDestroy(stream_));
+	cudaStreamDestroy(stream_);
     }
 
     /**

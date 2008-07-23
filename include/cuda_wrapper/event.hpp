@@ -45,9 +45,9 @@ public:
     /**
      * destroys the event
      */
-    ~event()
+    ~event() throw() // no-throw guarantee
     {
-	CUDA_CALL(cudaEventDestroy(event_));
+	cudaEventDestroy(event_);
     }
 
     /**
