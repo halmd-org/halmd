@@ -54,5 +54,6 @@
 #include <cuda_wrapper/types.hpp>
 #include <cuda_wrapper/function.hpp>
 #include <cuda_wrapper/symbol.hpp>
+#include <cuda_wrapper/texture.hpp>
 
 #endif /* ! CUDA_WRAPPER_HPP */
