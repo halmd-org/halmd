@@ -23,7 +23,6 @@
 #include "vector2d.h"
 #include "vector3d.h"
 #include "rand48.h"
-using namespace cuda;
 
 
 namespace rand48
@@ -54,10 +53,18 @@ static __constant__ float r_cut;
 static __constant__ float rr_cut;
 /** cutoff energy for Lennard-Jones potential at cutoff length */
 static __constant__ float en_cut;
+
 #ifdef USE_CELL
 /** number of cells per dimension */
 static __constant__ unsigned int ncell;
+#ifdef DIM_3D
+struct texture<float4, 1, cudaReadModeElementType> t_r;
+#else
+struct texture<float2, 1, cudaReadModeElementType> t_r;
 #endif
+struct texture<int, 1, cudaReadModeElementType> t_cell;
+#endif
+
 #ifdef USE_SMOOTH_POTENTIAL
 /** squared inverse potential smoothing function scale parameter */
 static __constant__ float rri_smooth;
@@ -69,7 +76,11 @@ static __constant__ float rri_smooth;
  * determine cell index for a particle
  */
 template <typename T>
-__device__ unsigned int compute_cell(T const& r)
+#ifdef DIM_3D
+__device__ int3 compute_cell(T const& r)
+#else
+__device__ int2 compute_cell(T const& r)
+#endif
 {
     //
     // Mapping the positional coordinates of a particle to its corresponding
@@ -83,9 +94,21 @@ __device__ unsigned int compute_cell(T const& r)
     //
     const T cell = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
 #ifdef DIM_3D
-    return (uint(cell.z) * ncell + uint(cell.y)) * ncell + uint(cell.x);
+    return make_int3(cell.x, cell.y, cell.z);
 #else
-    return uint(cell.y) * ncell + uint(cell.x);
+    return make_int2(cell.x, cell.y);
+#endif
+}
+
+template <typename T>
+__device__ void compute_cell(T const& r, unsigned int& i)
+{
+#ifdef DIM_3D
+    const int3 cell = compute_cell(r);
+    i = cell.x + ncell * (cell.y + ncell * cell.z);
+#else
+    const int2 cell = compute_cell(r);
+    i = cell.x + ncell * cell.y;
 #endif
 }
 #endif /* USE_CELL */
@@ -210,21 +233,13 @@ __global__ void inteq(U* g_r, U* g_R, U* g_v, U const* g_f)
  * compute neighbour cell
  */
 template <typename I>
-__device__ unsigned int compute_neighbour_cell(I const& offset)
+__device__ unsigned int compute_neighbour_cell(I const& cell, I const& offset)
 {
 #ifdef DIM_3D
-    // cell belonging to this execution block
-    I cell = make_int3(blockIdx.x % ncell, (blockIdx.x / ncell) % ncell, blockIdx.x / ncell / ncell);
-    // neighbour cell of this cell
     I neighbour = make_int3((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell, (cell.z + ncell + offset.z) % ncell);
-
     return (neighbour.z * ncell + neighbour.y) * ncell + neighbour.x;
 #else
-    // cell belonging to this execution block
-    I cell = make_int2(blockIdx.x % ncell, blockIdx.x / ncell);
-    // neighbour cell of this cell
     I neighbour = make_int2((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell);
-
     return neighbour.y * ncell + neighbour.x;
 #endif
 }
@@ -232,45 +247,42 @@ __device__ unsigned int compute_neighbour_cell(I const& offset)
 /**
  * compute forces with particles in a neighbour cell
  */
-template <unsigned int block_size, bool same_cell, typename T, typename TT, typename U, typename I>
-__device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offset, T const& r, int const& n, TT& f, float& en, float& virial)
+template <unsigned int block_size, typename T, typename TT, typename U, typename I>
+__device__ void compute_cell_forces(U const* g_r, I const& offset, T const& r, I const& cell, TT& f, float& en, float& virial)
 {
-    __shared__ T s_r[block_size];
-    __shared__ int s_n[block_size];
+    // neighbour cell index
+    const unsigned int neighbour = compute_neighbour_cell(cell, offset);
 
-    // compute cell index
-    unsigned int cell = compute_neighbour_cell(offset);
+    for (unsigned int i = 0; i < block_size; ++i) {
+	// load particle number from cell placeholder
+	const int n = tex1Dfetch(t_cell, neighbour * block_size + i);
+	// skip placeholder particles
+	if (!IS_REAL_PARTICLE(n))
+	    break;
+	// skip same particle
+	if (GTID == n)
+	    continue;
 
-    // load particles coordinates for cell
-    s_r[threadIdx.x] = unpack(g_r[cell * block_size + threadIdx.x]);
-    s_n[threadIdx.x] = g_n[cell * block_size + threadIdx.x];
-    __syncthreads();
-
-    if (IS_REAL_PARTICLE(n)) {
-	for (unsigned int i = 0; i < block_size; ++i) {
-	    // skip placeholder particles
-	    if (!IS_REAL_PARTICLE(s_n[i]))
-		break;
-	    // skip same particle
-	    if (same_cell && threadIdx.x == i)
-		continue;
-
-	    compute_force(r, s_r[i], f, en, virial);
-	}
+	compute_force(r, unpack(tex1Dfetch(t_r, n)), f, en, virial);
     }
-    __syncthreads();
 }
 
 /**
  * n-dimensional MD simulation step
  */
 template <unsigned int block_size, typename T, typename U>
-__global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_en, float* g_virial)
+__global__ void mdstep(U const* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
-    T r = unpack(g_r[GTID]);
+    const T r = unpack(g_r[GTID]);
     T v = unpack(g_v[GTID]);
-    int tag = g_tag[GTID];
+
+#ifdef DIM_3D
+    // cell to which particle belongs
+    const int3 cell = compute_cell(r);
+#else
+    const int2 cell = compute_cell(r);
+#endif
 
     // potential energy contribution
     float en = 0;
@@ -319,46 +331,46 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
 
 #ifdef DIM_3D
     // sum forces over this cell
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0,  0,  0), r, cell, f, en, virial);
     // sum forces over 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1, -1, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1, +1, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1, -1, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1, +1, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1, +1, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1, -1, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1, -1, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1, +1, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1, -1,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1, +1,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1, +1,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1, -1,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1,  0, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1,  0, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1,  0, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1,  0, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0, -1, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0, +1, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0, -1, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0, +1, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(-1,  0,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3(+1,  0,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0, -1,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0, +1,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0,  0, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int3( 0,  0, +1), r, cell, f, en, virial);
 #else
     // sum forces over this cell
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2( 0,  0), r, cell, f, en, virial);
     // sum forces over 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2(-1, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2(+1, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2(-1, +1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2(+1, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2(-1,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2(+1,  0), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2( 0, -1), r, cell, f, en, virial);
+    compute_cell_forces<block_size>(g_r, make_int2( 0, +1), r, cell, f, en, virial);
 #endif
 
     // second leapfrog step as part of integration of equations of motion
@@ -473,34 +485,27 @@ __global__ void boltzmann(U* g_v, float temp, ushort3* g_rng)
 /**
  * assign particles to cells
  */
-template <unsigned int cell_size, typename T, typename U>
-__global__ void assign_cells(U const* g_part, U* g_r, int* g_tag)
+template <unsigned int cell_size, typename U>
+__global__ void assign_cells(U const* g_part, int* g_tag)
 {
-    __shared__ T s_block[cell_size];
-    __shared__ T s_r[cell_size];
-    __shared__ int s_icell[cell_size];
+    __shared__ unsigned int s_cell[cell_size];
     __shared__ int s_tag[cell_size];
     // number of particles in cell
     unsigned int n = 0;
 
     // mark all particles in cell as virtual particles
     s_tag[threadIdx.x] = VIRTUAL_PARTICLE;
-
     __syncthreads();
 
     for (unsigned int i = 0; i < npart; i += cell_size) {
 	// load block of particles from global device memory
-	T r = unpack(g_part[i + threadIdx.x]);
-	s_block[threadIdx.x] = r;
-	s_icell[threadIdx.x] = compute_cell(r);
+	compute_cell(unpack(g_part[i + threadIdx.x]), s_cell[threadIdx.x]);
 	__syncthreads();
 
 	if (threadIdx.x == 0) {
 	    for (unsigned int j = 0; j < cell_size && (i + j) < npart; j++) {
-		if (s_icell[j] == blockIdx.x) {
+		if (s_cell[j] == blockIdx.x) {
 		    // store particle in cell
-		    s_r[n] = s_block[j];
-		    // store particle number
 		    s_tag[n] = REAL_PARTICLE(i + j);
 		    // increment particle count in cell
 		    ++n;
@@ -511,33 +516,33 @@ __global__ void assign_cells(U const* g_part, U* g_r, int* g_tag)
     }
 
     // store cell in global device memory
-    g_r[blockIdx.x * cell_size + threadIdx.x] = pack(s_r[threadIdx.x]);
     g_tag[blockIdx.x * cell_size + threadIdx.x] = s_tag[threadIdx.x];
 }
 
 /**
  * examine neighbour cell for particles which moved into this block's cell
  */
-template <unsigned int cell_size, typename T, typename U, typename I>
-__device__ void examine_cell(I const& offset, U const* g_ir, U const* g_iR, U const* g_iv, int const* g_itag, T* s_or, T* s_oR, T* s_ov, int* s_otag, unsigned int& npart)
+template <unsigned int cell_size, typename T>
+__device__ void examine_cell(T const& offset, int const* g_itag, int* s_otag, unsigned int& npart)
 {
-    __shared__ T s_ir[cell_size];
-    __shared__ T s_iR[cell_size];
-    __shared__ T s_iv[cell_size];
     __shared__ int s_itag[cell_size];
     __shared__ unsigned int s_cell[cell_size];
 
+#ifdef DIM_3D
     // compute cell index
-    unsigned int cell = compute_neighbour_cell(offset);
+    const unsigned int cell = compute_neighbour_cell(make_int3(blockIdx.x % ncell, (blockIdx.x / ncell) % ncell, blockIdx.x / ncell / ncell), offset);
+#else
+    const unsigned int cell = compute_neighbour_cell(make_int2(blockIdx.x % ncell, blockIdx.x / ncell), offset);
+#endif
 
-    // load particles in cell from global device memory
-    T r = unpack(g_ir[cell * cell_size + threadIdx.x]);
-    s_ir[threadIdx.x] = r;
-    s_iR[threadIdx.x] = unpack(g_iR[cell * cell_size + threadIdx.x]);
-    s_iv[threadIdx.x] = unpack(g_iv[cell * cell_size + threadIdx.x]);
-    s_itag[threadIdx.x] = g_itag[cell * cell_size + threadIdx.x];
-    // compute new cell
-    s_cell[threadIdx.x] = compute_cell(r);
+    // load particle numbers from global device memory
+    int n = g_itag[cell * cell_size + threadIdx.x];
+    s_itag[threadIdx.x] = n;
+
+    if (IS_REAL_PARTICLE(n)) {
+	// compute new cell
+	compute_cell(unpack(tex1Dfetch(t_r, n)), s_cell[threadIdx.x]);
+    }
     __syncthreads();
 
     if (threadIdx.x == 0) {
@@ -549,9 +554,6 @@ __device__ void examine_cell(I const& offset, U const* g_ir, U const* g_iR, U co
 	    // if particle belongs to this cell
 	    if (s_cell[j] == blockIdx.x && npart < cell_size) {
 		// store particle in cell
-		s_or[npart] = s_ir[j];
-		s_oR[npart] = s_iR[j];
-		s_ov[npart] = s_iv[j];
 		s_otag[npart] = s_itag[j];
 		// increment particle count in cell
 		++npart;
@@ -564,12 +566,9 @@ __device__ void examine_cell(I const& offset, U const* g_ir, U const* g_iR, U co
 /**
  * update cells
  */
-template <unsigned int cell_size, typename T, typename U>
-__global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int const* g_itag, U* g_or, U* g_oR, U* g_ov, int* g_otag)
+template <unsigned int cell_size>
+__global__ void update_cells(int const* g_itag, int* g_otag)
 {
-    __shared__ T s_or[cell_size];
-    __shared__ T s_oR[cell_size];
-    __shared__ T s_ov[cell_size];
     __shared__ int s_otag[cell_size];
     // number of particles in cell
     unsigned int n = 0;
@@ -579,51 +578,48 @@ __global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int co
     __syncthreads();
 
 #ifdef DIM_3D
-    examine_cell<cell_size>(make_int3( 0,  0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0,  0,  0), g_itag, s_otag, n);
     // visit 26 neighbour cells
-    examine_cell<cell_size>(make_int3(-1,  0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0,  0, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0,  0, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1,  0,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1,  0,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, -1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, +1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, -1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0,  0, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1,  0, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1,  0, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, -1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, +1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, -1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0,  0, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1,  0, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1,  0, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, -1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, +1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, -1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1, +1), g_itag, s_otag, n);
 #else
-    examine_cell<cell_size>(make_int2( 0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2( 0,  0), g_itag, s_otag, n);
     // visit 8 neighbour cells
-    examine_cell<cell_size>(make_int2(-1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2( 0, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2( 0, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(-1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(-1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
+    examine_cell<cell_size>(make_int2(-1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2(+1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2( 0, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2( 0, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2(-1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2(-1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2(+1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2(+1, +1), g_itag, s_otag, n);
 #endif
 
     // store cell in global device memory
-    g_or[blockIdx.x * cell_size + threadIdx.x] = pack(s_or[threadIdx.x]);
-    g_oR[blockIdx.x * cell_size + threadIdx.x] = pack(s_oR[threadIdx.x]);
-    g_ov[blockIdx.x * cell_size + threadIdx.x] = pack(s_ov[threadIdx.x]);
     g_otag[blockIdx.x * cell_size + threadIdx.x] = s_otag[threadIdx.x];
 }
 #endif  /* USE_CELL */
@@ -635,45 +631,48 @@ namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
+cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
 #ifdef USE_CELL
-function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float3>);
-function<void (float4 const*, float4*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE, float3>);
-function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells(mdsim::update_cells<CELL_SIZE, float3>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float3>);
+cuda::function<void (float4 const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
+cuda::function<void (int const*, int*)> update_cells(mdsim::update_cells<CELL_SIZE>);
+cuda::texture<float4> r(mdsim::t_r);
 #else
-function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
+cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 #endif
-function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
-function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
+cuda::function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
+cuda::function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else /* DIM_3D */
-function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
+cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
 #ifdef USE_CELL
-function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float2>);
-function<void (float2 const*, float2*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE, float2>);
-function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells(mdsim::update_cells<CELL_SIZE, float2>);
+cuda::function<void (float2 const*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float2>);
+cuda::function<void (float2 const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
+cuda::function<void (int const*, int*)> update_cells(mdsim::update_cells<CELL_SIZE>);
+cuda::texture<float2> r(mdsim::t_r);
 #else
-function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
+cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 #endif
-function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
-function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
+cuda::function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
+cuda::function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif /* DIM_3D */
 
-symbol<unsigned int> npart(mdsim::npart);
-symbol<float> box(mdsim::box);
-symbol<float> timestep(mdsim::timestep);
-symbol<float> r_cut(mdsim::r_cut);
-symbol<float> rr_cut(mdsim::rr_cut);
-symbol<float> en_cut(mdsim::en_cut);
+cuda::symbol<unsigned int> npart(mdsim::npart);
+cuda::symbol<float> box(mdsim::box);
+cuda::symbol<float> timestep(mdsim::timestep);
+cuda::symbol<float> r_cut(mdsim::r_cut);
+cuda::symbol<float> rr_cut(mdsim::rr_cut);
+cuda::symbol<float> en_cut(mdsim::en_cut);
 #ifdef USE_CELL
-symbol<unsigned int> ncell(mdsim::ncell);
+cuda::symbol<unsigned int> ncell(mdsim::ncell);
+cuda::texture<int> cell(mdsim::t_cell);
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL
-symbol<float> rri_smooth(mdsim::rri_smooth);
-function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
+cuda::symbol<float> rri_smooth(mdsim::rri_smooth);
+cuda::function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
 #endif
 
-symbol<uint3> a(::rand48::a);
-symbol<uint3> c(::rand48::c);
+cuda::symbol<uint3> a(::rand48::a);
+cuda::symbol<uint3> c(::rand48::c);
 
 }}} // namespace mdsim::gpu::ljfluid

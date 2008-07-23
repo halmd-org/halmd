@@ -21,7 +21,6 @@
 
 #include <algorithm>
 #include <boost/array.hpp>
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <cmath>
 #include <cuda_wrapper.hpp>
@@ -166,23 +165,6 @@ private:
     /** trajectory sample in swappable host memory */
     trajectory_sample<T> h_sample;
 
-#ifdef USE_CELL
-    /** cell placeholders in page-locked host memory */
-    struct {
-	/** periodically reduced particle positions */
-	cuda::host::vector<g_vector> r;
-	/** periodically extended particle positions */
-	cuda::host::vector<g_vector> R;
-	/** particle velocities */
-	cuda::host::vector<g_vector> v;
-	/** particle number tags */
-	cuda::host::vector<int> n;
-	/** potential energies per particle */
-	cuda::host::vector<float> en;
-	/** virial equation sums per particle */
-	cuda::host::vector<float> virial;
-    } h_cell;
-#else
     /** system state in page-locked host memory */
     struct {
 	/** periodically reduced particle positions */
@@ -196,39 +178,7 @@ private:
 	/** virial equation sums per particle */
 	cuda::host::vector<float> virial;
     } h_part;
-#endif
 
-#ifdef USE_CELL
-    /** system state in global device memory */
-    struct {
-	/** periodically reduced particle positions */
-	cuda::vector<g_vector> r;
-	/** periodically extended particle positions */
-	cuda::vector<g_vector> R;
-	/** particle velocities */
-	cuda::vector<g_vector> v;
-	/** particle number tags */
-	cuda::vector<int> n;
-	/** particle forces */
-	cuda::vector<g_vector> f;
-	/** potential energies per particle */
-	cuda::vector<float> en;
-	/** virial equation sums per particle */
-	cuda::vector<float> virial;
-    } g_cell;
-
-    /** system state double buffer in global device memory */
-    struct {
-	/** periodically reduced particle positions */
-	cuda::vector<g_vector> r;
-	/** periodically extended particle positions */
-	cuda::vector<g_vector> R;
-	/** particle velocities */
-	cuda::vector<g_vector> v;
-	/** particle number tags */
-	cuda::vector<int> n;
-    } g_cell2;
-#else
     /** system state in global device memory */
     struct {
 	/** periodically reduced particle positions */
@@ -244,6 +194,10 @@ private:
 	/** virial equation sums per particle */
 	cuda::vector<float> virial;
     } g_part;
+
+#ifdef USE_CELL
+    /** double buffered cell placeholders in global device memory */
+    std::pair<cuda::vector<int>, cuda::vector<int> > g_cell;
 #endif
 
     /** random number generator */
@@ -343,7 +297,6 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	throw exception("failed to allocate swappable host memory for trajectory sample");
     }
 
-#ifndef USE_CELL
     // allocate global device memory for system state
     try {
 	g_part.r.resize(npart);
@@ -369,7 +322,6 @@ void ljfluid<dimension, T>::particles(unsigned int value)
     catch (cuda::error const& e) {
 	throw exception("failed to allocate page-locked host memory for system state");
     }
-#endif
 }
 
 /**
@@ -505,11 +457,9 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     LOG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
     LOG("number of CUDA execution threads: " << dim_.threads_per_block());
 
-#ifndef USE_CELL
     if (dim_.threads() != npart) {
 	LOG_WARNING("number of particles (" << npart << ") not a multiple of number of CUDA execution threads (" << dim_.threads() << ")");
     }
-#endif
 
 #ifdef USE_CELL
     // set CUDA execution dimensions for cell-specific kernels
@@ -517,45 +467,19 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
     LOG("number of cell CUDA execution threads: " << dim_cell_.threads_per_block());
 
-    // allocate page-locked host memory for cell placeholders
-    try {
-	h_cell.r.resize(dim_cell_.threads());
-	h_cell.R.resize(dim_cell_.threads());
-	h_cell.v.resize(dim_cell_.threads());
-	h_cell.n.resize(dim_cell_.threads());
-	// particle forces reside only in GPU memory
-	h_cell.en.resize(dim_cell_.threads());
-	h_cell.virial.resize(dim_cell_.threads());
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to allocate page-locked host memory cell placeholders");
-    }
-
     // allocate global device memory for cell placeholders
     try {
-	g_cell.r.resize(dim_cell_.threads());
-	g_cell.R.resize(dim_cell_.threads());
-	g_cell.v.resize(dim_cell_.threads());
-	g_cell.n.resize(dim_cell_.threads());
-	g_cell.f.resize(dim_cell_.threads());
-	g_cell.en.resize(dim_cell_.threads());
-	g_cell.virial.resize(dim_cell_.threads());
+	g_cell.first.resize(dim_cell_.threads());
+	g_cell.second.resize(dim_cell_.threads());
+	// bind GPU texture to cell placeholders
+	mdsim::gpu::ljfluid::cell.bind(g_cell.first);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory cell placeholders");
     }
 
-    // allocate global device memory for double buffers
-    try {
-	g_cell2.r.resize(dim_cell_.threads());
-	g_cell2.R.resize(dim_cell_.threads());
-	g_cell2.v.resize(dim_cell_.threads());
-	g_cell2.n.resize(dim_cell_.threads());
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to allocate global device memory double buffers");
-    }
-#else /* USE_CELL */
+#endif /* USE_CELL */
+
     // allocate global device memory for placeholder particles
     try {
 	g_part.r.reserve(dim_.threads());
@@ -564,11 +488,14 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 	g_part.f.reserve(dim_.threads());
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
+#ifdef USE_CELL
+	// bind GPU texture to periodic particle positions
+	mdsim::gpu::ljfluid::r.bind(g_part.r);
+#endif
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory for placeholder particles");
     }
-#endif /* USE_CELL */
 
     // change random number generator dimensions
     try {
@@ -590,63 +517,32 @@ void ljfluid<dimension, T>::restore(V visitor)
     visitor(h_sample.r, h_sample.v);
 
     try {
-#ifdef USE_CELL
-	// copy periodically reduced particle positions from host to GPU
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_cell.r[i] = make_float(h_sample.r[i]);
-	}
-	cuda::copy(h_cell.r, g_cell2.r, stream_);
-	// assign particles to cells
-	event_[0].record(stream_);
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::assign_cells(g_cell2.r, g_cell.r, g_cell.n);
-	event_[1].record(stream_);
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
-	// replicate particle positions to periodically extended positions
-	cuda::copy(g_cell.r, g_cell.R, stream_);
-	// calculate forces, potential energy and virial equation sum
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::mdstep(g_cell.r, g_cell.v, g_cell.f, g_cell.n, g_cell.en, g_cell.virial);
-
-	// copy particle number tags from GPU to host
-	cuda::copy(g_cell.n, h_cell.n, stream_);
-	// wait for CUDA operations to finish
-	stream_.synchronize();
-
-	// maximum squared velocity
-	float vv_max = 0;
-	// assign velocities to cell placeholders
-	for (unsigned int i = 0; i < nplace; ++i) {
-	    // particle number
-	    const int n = h_cell.n[i];
-	    if (IS_REAL_PARTICLE(n)) {
-		h_cell.v[i] = make_float(h_sample.v[n]);
-		// calculate maximum squared velocity
-		vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
-	    }
-	}
-	// set maximum velocity magnitude
-	v_max = std::sqrt(vv_max);
-	// set sum over maximum velocity magnitudes to zero
-	v_max_sum = v_max;
-	// copy particle velocities from host to GPU (after force calculation!)
-	cuda::copy(h_cell.v, g_cell.v, stream_);
-#else
 	// copy periodically reduced particle positions from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.r[i] = make_float(h_sample.r[i]);
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
+#ifdef USE_CELL
+	// assign particles to cells
+	event_[0].record(stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+	gpu::ljfluid::assign_cells(g_part.r, g_cell.first);
+	event_[1].record(stream_);
+	// reset sum over maximum velocity magnitudes to zero
+	v_max_sum = 0;
+#endif
 	// replicate to periodically extended particle positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
+#ifdef USE_CELL
+	cuda::configure(dim_.grid, dim_.block, stream_);
+#else
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
+#endif
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 
 	// maximum squared velocity
 	float vv_max = 0;
-	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.v[i] = make_float(h_sample.v[i]);
 	    // calculate maximum squared velocity
@@ -654,8 +550,13 @@ void ljfluid<dimension, T>::restore(V visitor)
 	}
 	// set maximum velocity magnitude
 	v_max = std::sqrt(vv_max);
-	cuda::copy(h_part.v, g_part.v, stream_);
+#ifdef USE_CELL
+	// set sum over maximum velocity magnitudes to zero
+	v_max_sum = v_max;
 #endif
+	// copy particle velocities from host to GPU (after force calculation!)
+	cuda::copy(h_part.v, g_part.v, stream_);
+
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
@@ -724,59 +625,41 @@ void ljfluid<dimension, T>::lattice()
     LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
     try {
-#ifdef USE_CELL
-	g_cell.r.reserve(dim_.threads());
-	// compute particle lattice positions on GPU
-	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::lattice(g_cell.r, n);
-	event_[1].record(stream_);
-	// randomly permute particles to increase force summing accuracy
-	cuda::copy(g_cell.r, h_cell.r, stream_);
-	stream_.synchronize();
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_sample.r[i] = T(h_cell.r[i]);
-	}
-	rng_.shuffle(h_sample.r, stream_);
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_cell.r[i] = make_float(h_sample.r[i]);
-	}
-	cuda::copy(h_cell.r, g_cell2.r, stream_);
-	// assign particles to cells
-	event_[2].record(stream_);
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::assign_cells(g_cell2.r, g_cell.r, g_cell.n);
-	event_[3].record(stream_);
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
-	// replicate particle positions to periodically extended positions
-	cuda::copy(g_cell.r, g_cell.R, stream_);
-	// calculate forces, potential energy and virial equation sum
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::mdstep(g_cell.r, g_cell.v, g_cell.f, g_cell.n, g_cell.en, g_cell.virial);
-#else
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_part.r, n);
 	event_[1].record(stream_);
-	// randomly permute particles to increase force summing accuracy
+	// copy particle positions from GPU to host
 	cuda::copy(g_part.r, h_part.r, stream_);
 	stream_.synchronize();
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_sample.r[i] = T(h_part.r[i]);
 	}
+	// randomly permute particles to increase force summing accuracy
 	rng_.shuffle(h_part.r, stream_);
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.r[i] = make_float(h_sample.r[i]);
 	}
 	cuda::copy(h_part.r, g_part.r);
+#ifdef USE_CELL
+	// assign particles to cells
+	event_[2].record(stream_);
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+	gpu::ljfluid::assign_cells(g_part.r, g_cell.first);
+	event_[3].record(stream_);
+	// reset sum over maximum velocity magnitudes to zero
+	v_max_sum = 0;
+#endif
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
+#ifdef USE_CELL
+	cuda::configure(dim_.grid, dim_.block, stream_);
+#else
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
-	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 #endif
+	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -801,22 +684,6 @@ void ljfluid<dimension, T>::temperature(float temp)
 {
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     try {
-#ifdef USE_CELL
-	g_cell.v.reserve(dim_.threads());
-	// set velocities using Maxwell-Boltzmann distribution at temperature
-	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::boltzmann(g_cell.v, temp, rng_.state());
-	event_[1].record(stream_);
-	// copy particle velocities from GPU to host
-	cuda::copy(g_cell.v, h_cell.v, stream_);
-	stream_.synchronize();
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_sample.v[i] = T(h_cell.v[i]);
-	}
-	// copy particle number tags from GPU to host
-	cuda::copy(g_cell.n, h_cell.n, stream_);
-#else
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
@@ -828,7 +695,6 @@ void ljfluid<dimension, T>::temperature(float temp)
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_sample.v[i] = T(h_part.v[i]);
 	}
-#endif
 	// wait for CUDA operations to finish
 	stream_.synchronize();
     }
@@ -847,27 +713,6 @@ void ljfluid<dimension, T>::temperature(float temp)
     }
 
     try {
-#ifdef USE_CELL
-	// maximum squared velocity
-	float vv_max = 0;
-	// assign velocities to cell placeholders
-	for (unsigned int i = 0; i < nplace; ++i) {
-	    // particle number
-	    const int n = h_cell.n[i];
-	    if (IS_REAL_PARTICLE(n)) {
-		// assign velocity to cell placeholder
-		h_cell.v[i] = make_float(h_sample.v[n]);
-		// calculate maximum squared velocity
-		vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
-	    }
-	}
-	// set maximum velocity magnitude
-	v_max = std::sqrt(vv_max);
-	// initialize sum over maximum velocity magnitudes since last cell lists update
-	v_max_sum = v_max;
-	// copy particle velocities from host to GPU
-	cuda::copy(h_cell.v, g_cell.v, stream_);
-#else
 	// maximum squared velocity
 	float vv_max = 0;
 	for (unsigned int i = 0; i < npart; ++i) {
@@ -877,9 +722,13 @@ void ljfluid<dimension, T>::temperature(float temp)
 	}
 	// set maximum velocity magnitude
 	v_max = std::sqrt(vv_max);
+#ifdef USE_CELL
+	// set sum over maximum velocity magnitudes to zero
+	v_max_sum = v_max;
+#endif
 	// copy particle velocities from host to GPU
 	cuda::copy(h_part.v, g_part.v, stream_);
-#endif
+
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
@@ -938,49 +787,7 @@ template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::mdstep()
 {
     event_[1].record(stream_);
-#ifdef USE_CELL
-    // first leapfrog step of integration of differential equations of motion
-    try {
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::inteq(g_cell.r, g_cell.R, g_cell.v, g_cell.f);
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to stream first leapfrog step on GPU");
-    }
-    event_[2].record(stream_);
 
-    // update cell lists
-    if (v_max_sum * timestep_ > r_skin / 2) {
-	try {
-	    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	    gpu::ljfluid::update_cells(g_cell.r, g_cell.R, g_cell.v, g_cell.n, g_cell2.r, g_cell2.R, g_cell2.v, g_cell2.n);
-	}
-	catch (cuda::error const& e) {
-	    throw exception("failed to stream cell list update on GPU");
-	}
-	event_[3].record(stream_);
-
-	try {
-	    cuda::copy(g_cell2.r, g_cell.r, stream_);
-	    cuda::copy(g_cell2.R, g_cell.R, stream_);
-	    cuda::copy(g_cell2.v, g_cell.v, stream_);
-	    cuda::copy(g_cell2.n, g_cell.n, stream_);
-	}
-	catch (cuda::error const& e) {
-	    throw exception("failed to replicate cell lists on GPU");
-	}
-    }
-    event_[4].record(stream_);
-
-    // Lennard-Jones force calculation
-    try {
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::mdstep(g_cell.r, g_cell.v, g_cell.f, g_cell.n, g_cell.en, g_cell.virial);
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to stream force calculation on GPU");
-    }
-#else
     // first leapfrog step of integration of differential equations of motion
     try {
 	cuda::configure(dim_.grid, dim_.block, stream_);
@@ -991,15 +798,40 @@ void ljfluid<dimension, T>::mdstep()
     }
     event_[2].record(stream_);
 
+#ifdef USE_CELL
+    // update cell lists
+    if (v_max_sum * timestep_ > r_skin / 2) {
+	try {
+	    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+	    gpu::ljfluid::update_cells(g_cell.first, g_cell.second);
+	}
+	catch (cuda::error const& e) {
+	    throw exception("failed to stream cell list update on GPU");
+	}
+	event_[3].record(stream_);
+
+	try {
+	    cuda::copy(g_cell.second, g_cell.first, stream_);
+	}
+	catch (cuda::error const& e) {
+	    throw exception("failed to replicate cell lists on GPU");
+	}
+    }
+    event_[4].record(stream_);
+#endif
+
     // Lennard-Jones force calculation
     try {
+#ifdef USE_CELL
+	cuda::configure(dim_.grid, dim_.block, stream_);
+#else
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
+#endif
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
     }
-#endif
     event_[0].record(stream_);
 }
 
@@ -1050,64 +882,6 @@ void ljfluid<dimension, T>::sample()
     // mean virial equation sum per particle
     h_sample.virial = 0;
 
-#ifdef USE_CELL
-    // copy MD simulation step results from GPU to host
-    try {
-	event_[1].record(stream_);
-	// copy periodically reduce particles positions
-	cuda::copy(g_cell.r, h_cell.r, stream_);
-	// copy periodically extended particles positions
-	cuda::copy(g_cell.R, h_cell.R, stream_);
-	// copy particle velocities
-	cuda::copy(g_cell.v, h_cell.v, stream_);
-	// copy particle number tags
-	cuda::copy(g_cell.n, h_cell.n, stream_);
-	// copy potential energies per particle and virial equation sums
-	cuda::copy(g_cell.en, h_cell.en, stream_);
-	// copy virial equation sums per particle
-	cuda::copy(g_cell.virial, h_cell.virial, stream_);
-	event_[0].record(stream_);
-
-	// wait for CUDA operations to finish
-	event_[0].synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to copy MD simulation step results from GPU to host");
-    }
-
-    // number of particles found in cells
-    unsigned int count = 0;
-    // maximum squared velocity
-    float vv_max = 0;
-
-    for (unsigned int i = 0; i < nplace; ++i) {
-	// particle number
-	const int n = h_cell.n[i];
-	// check if real particle
-	if (IS_REAL_PARTICLE(n)) {
-	    // copy periodically reduced particle positions
-	    h_sample.r[n] = T(h_cell.r[i]);
-	    // copy periodically extended particle positions
-	    h_sample.R[n] = T(h_cell.R[i]);
-	    // copy particle velocities
-	    h_sample.v[n] = T(h_cell.v[i]);
-	    // calculate mean potential energy per particle
-	    h_sample.en_pot += (h_cell.en[i] - h_sample.en_pot) / ++count;
-	    // calculate mean virial equation sum per particle
-	    h_sample.virial += (h_cell.virial[i] - h_sample.virial) / count;
-	    // calculate maximum squared velocity
-	    vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
-	}
-    }
-    // set maximum velocity magnitude
-    v_max = std::sqrt(vv_max);
-    // add to sum over maximum velocity magnitudes since last cell lists update
-    v_max_sum += v_max;
-    // validate number of particles
-    if (count != npart) {
-	throw exception("particle loss while updating cell lists");
-    }
-#else
     // copy MD simulation step results from GPU to host
     try {
 	event_[1].record(stream_);
@@ -1149,6 +923,9 @@ void ljfluid<dimension, T>::sample()
     }
     // set maximum velocity magnitude
     v_max = std::sqrt(vv_max);
+#ifdef USE_CELL
+    // add to sum over maximum velocity magnitudes since last cell lists update
+    v_max_sum += v_max;
 #endif
 
     // ensure that system is still in valid state after MD step
