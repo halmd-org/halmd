@@ -92,9 +92,9 @@ public:
     }
 
     // __p is not permitted to be a null pointer.
-    void deallocate(pointer __p, size_type)
+    void deallocate(pointer __p, size_type) throw() // no-throw guarantee
     {
-	CUDA_CALL(cudaFreeHost(reinterpret_cast<void *>(__p)));
+	cudaFreeHost(reinterpret_cast<void *>(__p));
     }
 
     size_type max_size() const throw()
