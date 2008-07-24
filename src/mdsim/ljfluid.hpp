@@ -92,6 +92,8 @@ public:
     unsigned int const& cells() const { return ncell; }
     /** get total number of cell placeholders */
     unsigned int const& placeholders() const { return nplace; }
+    /** get total number of placeholders per neighbour list */
+    unsigned int const& neighbours() const { return nnbl; }
     /** get cell length */
     float const& cell_length() const { return cell_length_; }
     /** get effective average cell occupancy */
@@ -134,6 +136,8 @@ private:
     unsigned int ncell;
     /** total number of cell placeholders */
     unsigned int nplace;
+    /** number of placeholders per neighbour list */
+    unsigned int nnbl;
     /** cell length */
     float cell_length_;
     /** effective average cell occupancy */
@@ -198,6 +202,8 @@ private:
 #ifdef USE_CELL
     /** double buffered cell placeholders in global device memory */
     std::pair<cuda::vector<int>, cuda::vector<int> > g_cell;
+    /** neighbour list in global device memory */
+    cuda::vector<int> g_nbl;
 #endif
 
     /** random number generator */
@@ -212,7 +218,7 @@ private:
     cuda::stream stream_;
     /** CUDA events for kernel timing */
 #ifdef USE_CELL
-    boost::array<cuda::event, 5> event_;
+    boost::array<cuda::event, 6> event_;
 #else
     boost::array<cuda::event, 3> event_;
 #endif
@@ -379,6 +385,7 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
 
     // fixed cell size due to fixed number of CUDA execution threads per block
     cell_size_ = CELL_SIZE;
+    LOG("number of placeholders per cell: " << cell_size_);
 
     // optimal number of cells with given cell occupancy as upper boundary
     ncell = std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension));
@@ -400,7 +407,7 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
 
     // set total number of cell placeholders
     nplace = pow(ncell, dimension) * cell_size_;
-    LOG("number of cell placeholders: " << nplace);
+    LOG("total number of cell placeholders: " << nplace);
 
     // set effective average cell occupancy
     cell_occupancy_ = npart * 1. / nplace;
@@ -413,9 +420,23 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
 	LOG_WARNING("average cell occupancy is larger than 0.5");
     }
 
+    // set number of placeholders per neighbour list
+    if (dimension == 3) {
+	// cube-to-sphere volume ratio with number of placeholders of 27 cells
+	nnbl = 4.5 * M_PI * cell_size_;
+    }
+    else {
+	// square-to-circle area ratio with number of placeholders of 9 cells
+	nnbl = 2.25 * M_PI * cell_size_;
+    }
+    LOG("number of placeholders per neighbour list: " << nnbl);
+
     // copy cell parameters to device symbols
     try {
 	cuda::copy(ncell, gpu::ljfluid::ncell);
+	cuda::copy(cell_length_, gpu::ljfluid::r_cell);
+	cuda::copy(std::pow(cell_length_, 2), gpu::ljfluid::rr_cell);
+	cuda::copy(nnbl, gpu::ljfluid::nnbl);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy cell parameters to device symbols");
@@ -471,8 +492,7 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     try {
 	g_cell.first.resize(dim_cell_.threads());
 	g_cell.second.resize(dim_cell_.threads());
-	// bind GPU texture to cell placeholders
-	mdsim::gpu::ljfluid::cell.bind(g_cell.first);
+	g_nbl.resize(npart * nnbl);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory cell placeholders");
@@ -489,6 +509,7 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
 #ifdef USE_CELL
+	g_nbl.reserve(dim_.threads() * nnbl);
 	// bind GPU texture to periodic particle positions
 	mdsim::gpu::ljfluid::r.bind(g_part.r);
 #endif
@@ -528,6 +549,10 @@ void ljfluid<dimension, T>::restore(V visitor)
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::assign_cells(g_part.r, g_cell.first);
 	event_[1].record(stream_);
+	// update neighbour lists
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+	gpu::ljfluid::update_neighbours(g_cell.first, g_nbl);
+	event_[2].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
 #endif
@@ -536,10 +561,11 @@ void ljfluid<dimension, T>::restore(V visitor)
 	// calculate forces, potential energy and virial equation sum
 #ifdef USE_CELL
 	cuda::configure(dim_.grid, dim_.block, stream_);
+	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
 #else
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
-#endif
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+#endif
 
 	// maximum squared velocity
 	float vv_max = 0;
@@ -566,6 +592,8 @@ void ljfluid<dimension, T>::restore(V visitor)
 #ifdef USE_CELL
     // CUDA time for cell lists initialisation
     m_times[6] += event_[1] - event_[0];
+    // CUDA time for neighbour lists update
+    m_times[9] += event_[2] - event_[1];
 #endif
 }
 
@@ -648,6 +676,10 @@ void ljfluid<dimension, T>::lattice()
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	gpu::ljfluid::assign_cells(g_part.r, g_cell.first);
 	event_[3].record(stream_);
+	// update neighbour lists
+	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+	gpu::ljfluid::update_neighbours(g_cell.first, g_nbl);
+	event_[4].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
 #endif
@@ -656,10 +688,11 @@ void ljfluid<dimension, T>::lattice()
 	// calculate forces, potential energy and virial equation sum
 #ifdef USE_CELL
 	cuda::configure(dim_.grid, dim_.block, stream_);
+	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
 #else
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
-#endif
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+#endif
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -673,6 +706,8 @@ void ljfluid<dimension, T>::lattice()
 #ifdef USE_CELL
     // CUDA time for cell lists initialisation
     m_times[6] += event_[3] - event_[2];
+    // CUDA time for neighbour lists update
+    m_times[6] += event_[4] - event_[3];
 #endif
 }
 
@@ -772,6 +807,7 @@ void ljfluid<dimension, T>::attrs(H5::Group const& param) const
 #ifdef USE_CELL
     node["cells"] = ncell;
     node["placeholders"] = nplace;
+    node["neighbours"] = nnbl;
     node["cell_length"] = cell_length_;
     node["cell_occupancy"] = cell_occupancy_;
 #endif
@@ -816,18 +852,28 @@ void ljfluid<dimension, T>::mdstep()
 	catch (cuda::error const& e) {
 	    throw exception("failed to replicate cell lists on GPU");
 	}
+	event_[4].record(stream_);
+
+	try {
+	    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+	    gpu::ljfluid::update_neighbours(g_cell.first, g_nbl);
+	}
+	catch (cuda::error const& e) {
+	    throw exception("failed to update neighbour lists on GPU");
+	}
     }
-    event_[4].record(stream_);
+    event_[5].record(stream_);
 #endif
 
     // Lennard-Jones force calculation
     try {
 #ifdef USE_CELL
 	cuda::configure(dim_.grid, dim_.block, stream_);
+	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
 #else
 	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
-#endif
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+#endif
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
@@ -855,7 +901,7 @@ void ljfluid<dimension, T>::synchronize()
     m_times[1] += event_[2] - event_[1];
 #ifdef USE_CELL
     // CUDA time for Lennard-Jones force update
-    m_times[2] += event_[0] - event_[4];
+    m_times[2] += event_[0] - event_[5];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
@@ -864,6 +910,8 @@ void ljfluid<dimension, T>::synchronize()
 	m_times[7] += event_[3] - event_[2];
 	// CUDA time for cell lists memcpy
 	m_times[8] += event_[4] - event_[3];
+	// CUDA time for neighbour lists update
+	m_times[9] += event_[5] - event_[4];
     }
 #else
     // CUDA time for Lennard-Jones force update

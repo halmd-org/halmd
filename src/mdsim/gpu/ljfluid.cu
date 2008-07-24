@@ -57,12 +57,18 @@ static __constant__ float en_cut;
 #ifdef USE_CELL
 /** number of cells per dimension */
 static __constant__ unsigned int ncell;
-#ifdef DIM_3D
+/** neighbour list length */
+static __constant__ unsigned int nnbl;
+/** potential cutoff distance with cell skin */
+static __constant__ float r_cell;
+/** squared potential cutoff distance with cell skin */
+static __constant__ float rr_cell;
+# ifdef DIM_3D
+/** texture reference to periodic particle positions */
 struct texture<float4, 1, cudaReadModeElementType> t_r;
-#else
+# else
 struct texture<float2, 1, cudaReadModeElementType> t_r;
-#endif
-struct texture<int, 1, cudaReadModeElementType> t_cell;
+# endif
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL
@@ -70,48 +76,6 @@ struct texture<int, 1, cudaReadModeElementType> t_cell;
 static __constant__ float rri_smooth;
 #endif
 
-
-#ifdef USE_CELL
-/**
- * determine cell index for a particle
- */
-template <typename T>
-#ifdef DIM_3D
-__device__ int3 compute_cell(T const& r)
-#else
-__device__ int2 compute_cell(T const& r)
-#endif
-{
-    //
-    // Mapping the positional coordinates of a particle to its corresponding
-    // cell index is the most delicate part of the cell lists update.
-    // The safest way is to combine round-towards-zero with a successive
-    // integer modulo operation, which comes with a performance penalty.
-    //
-    // As an efficient alternative, we transform the coordinates to the
-    // half-open unit interval [0.0, 1.0) and multiply with the number
-    // of cells per dimension afterwards.
-    //
-    const T cell = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
-#ifdef DIM_3D
-    return make_int3(cell.x, cell.y, cell.z);
-#else
-    return make_int2(cell.x, cell.y);
-#endif
-}
-
-template <typename T>
-__device__ void compute_cell(T const& r, unsigned int& i)
-{
-#ifdef DIM_3D
-    const int3 cell = compute_cell(r);
-    i = cell.x + ncell * (cell.y + ncell * cell.z);
-#else
-    const int2 cell = compute_cell(r);
-    i = cell.x + ncell * cell.y;
-#endif
-}
-#endif /* USE_CELL */
 
 /**
  * first leapfrog step of integration of equations of motion
@@ -139,7 +103,6 @@ __device__ void leapfrog_full_step(T& v, T const& f)
     // full step velocity
     v += f * (timestep / 2);
 }
-
 
 #ifdef USE_SMOOTH_POTENTIAL
 
@@ -229,60 +192,16 @@ __global__ void inteq(U* g_r, U* g_R, U* g_v, U const* g_f)
 }
 
 #ifdef USE_CELL
-/**
- * compute neighbour cell
- */
-template <typename I>
-__device__ unsigned int compute_neighbour_cell(I const& cell, I const& offset)
-{
-#ifdef DIM_3D
-    I neighbour = make_int3((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell, (cell.z + ncell + offset.z) % ncell);
-    return (neighbour.z * ncell + neighbour.y) * ncell + neighbour.x;
-#else
-    I neighbour = make_int2((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell);
-    return neighbour.y * ncell + neighbour.x;
-#endif
-}
-
-/**
- * compute forces with particles in a neighbour cell
- */
-template <unsigned int block_size, typename T, typename TT, typename U, typename I>
-__device__ void compute_cell_forces(U const* g_r, I const& offset, T const& r, I const& cell, TT& f, float& en, float& virial)
-{
-    // neighbour cell index
-    const unsigned int neighbour = compute_neighbour_cell(cell, offset);
-
-    for (unsigned int i = 0; i < block_size; ++i) {
-	// load particle number from cell placeholder
-	const int n = tex1Dfetch(t_cell, neighbour * block_size + i);
-	// skip placeholder particles
-	if (!IS_REAL_PARTICLE(n))
-	    break;
-	// skip same particle
-	if (GTID == n)
-	    continue;
-
-	compute_force(r, unpack(tex1Dfetch(t_r, n)), f, en, virial);
-    }
-}
 
 /**
  * n-dimensional MD simulation step
  */
-template <unsigned int block_size, typename T, typename U>
-__global__ void mdstep(U const* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
+template <typename T, typename U>
+__global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
     const T r = unpack(g_r[GTID]);
     T v = unpack(g_v[GTID]);
-
-#ifdef DIM_3D
-    // cell to which particle belongs
-    const int3 cell = compute_cell(r);
-#else
-    const int2 cell = compute_cell(r);
-#endif
 
     // potential energy contribution
     float en = 0;
@@ -295,83 +214,15 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, float* g_en, float* g_viria
     dfloat2 f(make_float2(0, 0));
 #endif
 
-    //
-    // The summation of all forces acting on a particle is the most
-    // critical part of the simulation concerning longtime accuracy.
-    //
-    // Naively adding all forces with a single-precision operation is fine
-    // with the Lennard-Jones potential using the N-squared algorithm, as
-    // the force exhibits both a repulsive and an attractive part, and the
-    // particles are more or less in random order. Thus, summing over all
-    // forces comprises negative and positive summands in random order.
-    //
-    // With the WCA potential (Weeks-Chandler-Andersen, purely repulsive
-    // part of the shifted Lennard-Jones potential) using the N-squared
-    // algorithm, the center of mass velocity effectively stays zero if
-    // the initial list of particles arranged on a lattice is randomly
-    // permuted before simulation.
-    // Using the cell algorithm with the WCA potential however results
-    // in a continuously drifting center of mass velocity, independent
-    // of the chosen simulation timestep.
-    //
-    // The reason for this behaviour lies in the disadvantageous summing
-    // order: With a purely repulsive potential, the summed forces of a
-    // single neighbour cell will more or less have the same direction.
-    // Thus, when adding the force sums of all neighbour cells, we add
-    // huge force sums which will mostly cancel each other out in an
-    // equilibrated system, giving a small and very inaccurate total
-    // force due to being limited to single-precision floating-point
-    // arithmetic.
-    //
-    // Besides implementing the summation in double precision arithmetic,
-    // choosing the order of summation over cells such that one partial
-    // neighbour cell force sum is always followed by the sum of the
-    // opposite neighbour cell softens the velocity drift.
-    //
-
-#ifdef DIM_3D
-    // sum forces over this cell
-    compute_cell_forces<block_size>(g_r, make_int3( 0,  0,  0), r, cell, f, en, virial);
-    // sum forces over 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-    compute_cell_forces<block_size>(g_r, make_int3(-1, -1, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1, +1, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(-1, -1, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1, +1, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(-1, +1, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1, -1, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1, -1, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(-1, +1, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(-1, -1,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1, +1,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(-1, +1,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1, -1,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(-1,  0, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1,  0, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(-1,  0, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1,  0, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3( 0, -1, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3( 0, +1, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3( 0, -1, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3( 0, +1, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(-1,  0,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3(+1,  0,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3( 0, -1,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3( 0, +1,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3( 0,  0, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int3( 0,  0, +1), r, cell, f, en, virial);
-#else
-    // sum forces over this cell
-    compute_cell_forces<block_size>(g_r, make_int2( 0,  0), r, cell, f, en, virial);
-    // sum forces over 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-    compute_cell_forces<block_size>(g_r, make_int2(-1, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int2(+1, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int2(-1, +1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int2(+1, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int2(-1,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int2(+1,  0), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int2( 0, -1), r, cell, f, en, virial);
-    compute_cell_forces<block_size>(g_r, make_int2( 0, +1), r, cell, f, en, virial);
-#endif
+    for (unsigned int i = 0; i < nnbl; ++i) {
+	// load particle number from neighbour list
+	const int n = g_nbl[GTID * nnbl + i];
+	// skip placeholder particles
+	if (!IS_REAL_PARTICLE(n))
+	    break;
+	// accumulate force between particles
+	compute_force(r, unpack(tex1Dfetch(t_r, n)), f, en, virial);
+    }
 
     // second leapfrog step as part of integration of equations of motion
     leapfrog_full_step(v, f.f0);
@@ -482,6 +333,190 @@ __global__ void boltzmann(U* g_v, float temp, ushort3* g_rng)
 }
 
 #ifdef USE_CELL
+
+/**
+ * compute neighbour cell
+ */
+template <typename I>
+__device__ unsigned int compute_neighbour_cell(I const& offset)
+{
+#ifdef DIM_3D
+    const int3 cell = make_int3(blockIdx.x % ncell, (blockIdx.x / ncell) % ncell, blockIdx.x / ncell / ncell);
+    const int3 neighbour = make_int3((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell, (cell.z + ncell + offset.z) % ncell);
+    return (neighbour.z * ncell + neighbour.y) * ncell + neighbour.x;
+#else
+    const int2 cell = make_int2(blockIdx.x % ncell, blockIdx.x / ncell);
+    const int2 neighbour = make_int2((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell);
+    return neighbour.y * ncell + neighbour.x;
+#endif
+}
+
+/**
+ * update neighbour list with particles of given cell
+ */
+template <unsigned int cell_size, bool same_cell, typename T, typename I>
+__device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* g_nbl, T const& r, int const& n, unsigned int& count)
+{
+    __shared__ int s_n[cell_size];
+    __shared__ T s_r[cell_size];
+
+    // compute cell index
+    const unsigned int cell = compute_neighbour_cell(offset);
+
+    // load particles in cell
+    s_n[threadIdx.x] = g_cell[cell * cell_size + threadIdx.x];
+    s_r[threadIdx.x] = unpack(tex1Dfetch(t_r, s_n[threadIdx.x]));
+    __syncthreads();
+
+    if (IS_REAL_PARTICLE(n)) {
+	for (unsigned int i = 0; i < cell_size; ++i) {
+	    // particle number of cell placeholder
+	    const int m = s_n[i];
+	    // skip placeholder particles
+	    if (!IS_REAL_PARTICLE(m))
+		break;
+	    // skip same particle
+	    if (same_cell && i == threadIdx.x)
+		continue;
+
+	    // particle distance vector
+	    T dr = r - s_r[i];
+	    // enforce periodic boundary conditions
+	    dr -= rintf(__fdividef(dr, box)) * box;
+	    // squared particle distance
+	    const float rr = dr * dr;
+
+	    // enforce cutoff length with neighbour list skin
+	    if (rr <= rr_cell && count < nnbl) {
+		// uncoalesced write to neighbour list
+		g_nbl[n * nnbl + count] = m;
+		// increment neighbour list particle count
+		count++;
+	    }
+	}
+    }
+}
+
+/**
+ * update neighbour lists
+ */
+template <unsigned int cell_size, typename T>
+__global__ void update_neighbours(int const* g_cell, int* g_nbl)
+{
+    // load particle from cell placeholder
+    const int n = g_cell[GTID];
+    const T r = unpack(tex1Dfetch(t_r, n));
+    // number of particles in neighbour list
+    unsigned int count = 0;
+
+    //
+    // The summation of all forces acting on a particle is the most
+    // critical part of the simulation concerning longtime accuracy.
+    //
+    // Naively adding all forces with a single-precision operation is fine
+    // with the Lennard-Jones potential using the N-squared algorithm, as
+    // the force exhibits both a repulsive and an attractive part, and the
+    // particles are more or less in random order. Thus, summing over all
+    // forces comprises negative and positive summands in random order.
+    //
+    // With the WCA potential (Weeks-Chandler-Andersen, purely repulsive
+    // part of the shifted Lennard-Jones potential) using the N-squared
+    // algorithm, the center of mass velocity effectively stays zero if
+    // the initial list of particles arranged on a lattice is randomly
+    // permuted before simulation.
+    // Using the cell algorithm with the WCA potential however results
+    // in a continuously drifting center of mass velocity, independent
+    // of the chosen simulation timestep.
+    //
+    // The reason for this behaviour lies in the disadvantageous summing
+    // order: With a purely repulsive potential, the summed forces of a
+    // single neighbour cell will more or less have the same direction.
+    // Thus, when adding the force sums of all neighbour cells, we add
+    // huge force sums which will mostly cancel each other out in an
+    // equilibrated system, giving a small and very inaccurate total
+    // force due to being limited to single-precision floating-point
+    // arithmetic.
+    //
+    // Besides implementing the summation in double precision arithmetic,
+    // choosing the order of summation over cells such that one partial
+    // neighbour cell force sum is always followed by the sum of the
+    // opposite neighbour cell softens the velocity drift.
+    //
+
+#ifdef DIM_3D
+    // visit this cell
+    update_cell_neighbours<cell_size, true>(make_int3( 0,  0,  0), g_cell, g_nbl, r, n, count);
+    // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
+    update_cell_neighbours<cell_size, false>(make_int3(-1, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(-1, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(-1, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(-1, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(-1, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(-1, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(-1,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1,  0, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(-1,  0, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3( 0, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3( 0, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3( 0, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3( 0, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(-1,  0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3(+1,  0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3( 0, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3( 0, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3( 0,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int3( 0,  0, +1), g_cell, g_nbl, r, n, count);
+#else
+    // visit this cell
+    update_cell_neighbours<cell_size, true>(make_int2( 0,  0), g_cell, g_nbl, r, n, count);
+    // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
+    update_cell_neighbours<cell_size, false>(make_int2(-1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int2(+1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int2(-1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int2(+1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int2(-1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int2(+1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int2( 0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, false>(make_int2( 0, +1), g_cell, g_nbl, r, n, count);
+#endif
+
+    // terminate neighbour list
+    if (IS_REAL_PARTICLE(n) && count < nnbl) {
+	g_nbl[n * nnbl + count] = VIRTUAL_PARTICLE;
+    }
+}
+
+/**
+ * determine cell index for a particle
+ */
+template <typename T>
+__device__ unsigned int compute_cell(T const& r)
+{
+    //
+    // Mapping the positional coordinates of a particle to its corresponding
+    // cell index is the most delicate part of the cell lists update.
+    // The safest way is to combine round-towards-zero with a successive
+    // integer modulo operation, which comes with a performance penalty.
+    //
+    // As an efficient alternative, we transform the coordinates to the
+    // half-open unit interval [0.0, 1.0) and multiply with the number
+    // of cells per dimension afterwards.
+    //
+    const T cell = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
+#ifdef DIM_3D
+    return uint(cell.x) + ncell * (uint(cell.y) + ncell * uint(cell.z));
+#else
+    return uint(cell.x) + ncell * uint(cell.y);
+#endif
+}
+
 /**
  * assign particles to cells
  */
@@ -499,7 +534,7 @@ __global__ void assign_cells(U const* g_part, int* g_tag)
 
     for (unsigned int i = 0; i < npart; i += cell_size) {
 	// load block of particles from global device memory
-	compute_cell(unpack(g_part[i + threadIdx.x]), s_cell[threadIdx.x]);
+	s_cell[threadIdx.x] = compute_cell(unpack(g_part[i + threadIdx.x]));
 	__syncthreads();
 
 	if (threadIdx.x == 0) {
@@ -528,12 +563,8 @@ __device__ void examine_cell(T const& offset, int const* g_itag, int* s_otag, un
     __shared__ int s_itag[cell_size];
     __shared__ unsigned int s_cell[cell_size];
 
-#ifdef DIM_3D
     // compute cell index
-    const unsigned int cell = compute_neighbour_cell(make_int3(blockIdx.x % ncell, (blockIdx.x / ncell) % ncell, blockIdx.x / ncell / ncell), offset);
-#else
-    const unsigned int cell = compute_neighbour_cell(make_int2(blockIdx.x % ncell, blockIdx.x / ncell), offset);
-#endif
+    const unsigned int cell = compute_neighbour_cell(offset);
 
     // load particle numbers from global device memory
     int n = g_itag[cell * cell_size + threadIdx.x];
@@ -541,7 +572,7 @@ __device__ void examine_cell(T const& offset, int const* g_itag, int* s_otag, un
 
     if (IS_REAL_PARTICLE(n)) {
 	// compute new cell
-	compute_cell(unpack(tex1Dfetch(t_r, n)), s_cell[threadIdx.x]);
+	s_cell[threadIdx.x] = compute_cell(unpack(tex1Dfetch(t_r, n)));
     }
     __syncthreads();
 
@@ -578,50 +609,53 @@ __global__ void update_cells(int const* g_itag, int* g_otag)
     __syncthreads();
 
 #ifdef DIM_3D
+    // visit this cell
     examine_cell<cell_size>(make_int3( 0,  0,  0), g_itag, s_otag, n);
     // visit 26 neighbour cells
+    examine_cell<cell_size>(make_int3(-1, -1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, -1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, -1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, +1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1, +1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1, -1,  0), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1,  0, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1,  0, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(-1,  0, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3(+1,  0, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, -1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, +1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, -1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int3( 0, +1, -1), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int3(-1,  0,  0), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int3(+1,  0,  0), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int3( 0, -1,  0), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int3( 0, +1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1,  0), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int3( 0,  0, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1, -1), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int3( 0,  0, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1, +1), g_itag, s_otag, n);
 #else
+    // visit this cell
     examine_cell<cell_size>(make_int2( 0,  0), g_itag, s_otag, n);
     // visit 8 neighbour cells
+    examine_cell<cell_size>(make_int2(-1, -1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2(+1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2(-1, +1), g_itag, s_otag, n);
+    examine_cell<cell_size>(make_int2(+1, -1), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int2(-1,  0), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int2(+1,  0), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int2( 0, -1), g_itag, s_otag, n);
     examine_cell<cell_size>(make_int2( 0, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(-1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(-1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1, +1), g_itag, s_otag, n);
 #endif
 
     // store cell in global device memory
     g_otag[blockIdx.x * cell_size + threadIdx.x] = s_otag[threadIdx.x];
 }
+
 #endif  /* USE_CELL */
 
 } // namespace mdsim
@@ -632,26 +666,26 @@ namespace mdsim { namespace gpu { namespace ljfluid
 
 #ifdef DIM_3D
 cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
-#ifdef USE_CELL
-cuda::function<void (float4 const*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float3>);
+# ifdef USE_CELL
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 cuda::function<void (float4 const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
-cuda::function<void (int const*, int*)> update_cells(mdsim::update_cells<CELL_SIZE>);
+cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float3>);
 cuda::texture<float4> r(mdsim::t_r);
-#else
+# else
 cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
-#endif
+# endif
 cuda::function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
 cuda::function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else /* DIM_3D */
 cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
-#ifdef USE_CELL
-cuda::function<void (float2 const*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float2>);
+# ifdef USE_CELL
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 cuda::function<void (float2 const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
-cuda::function<void (int const*, int*)> update_cells(mdsim::update_cells<CELL_SIZE>);
+cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float2>);
 cuda::texture<float2> r(mdsim::t_r);
-#else
+# else
 cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
-#endif
+# endif
 cuda::function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
 cuda::function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif /* DIM_3D */
@@ -663,8 +697,11 @@ cuda::symbol<float> r_cut(mdsim::r_cut);
 cuda::symbol<float> rr_cut(mdsim::rr_cut);
 cuda::symbol<float> en_cut(mdsim::en_cut);
 #ifdef USE_CELL
+cuda::function<void (int const*, int*)> update_cells(mdsim::update_cells<CELL_SIZE>);
 cuda::symbol<unsigned int> ncell(mdsim::ncell);
-cuda::texture<int> cell(mdsim::t_cell);
+cuda::symbol<unsigned int> nnbl(mdsim::nnbl);
+cuda::symbol<float> r_cell(mdsim::r_cell);
+cuda::symbol<float> rr_cell(mdsim::rr_cell);
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL

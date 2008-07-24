@@ -40,7 +40,7 @@ namespace mdsim
  * performance class accumulators
  */
 #ifdef USE_CELL
-typedef boost::array<accumulator<float>, 9> perf_counters;
+typedef boost::array<accumulator<float>, 10> perf_counters;
 #else
 typedef boost::array<accumulator<float>, 6> perf_counters;
 #endif
@@ -72,11 +72,7 @@ private:
     /** HDF5 performance data output file */
     H5::H5File m_file;
     /** HDF5 datasets */
-#ifdef USE_CELL
-    boost::array<H5::DataSet, 9> m_dataset;
-#else
-    boost::array<H5::DataSet, 6> m_dataset;
-#endif
+    boost::array<H5::DataSet, perf_counters::static_size> m_dataset;
     /** HDF5 floating-point data type */
     H5::DataType m_tid;
     /** dataset offset */
@@ -134,6 +130,8 @@ void perf<dimension, T>::open(std::string const& filename)
 	m_dataset[7] = node.createDataSet("update_cells", m_tid, ds, cparms);
 	// CUDA time for cell lists memcpy
 	m_dataset[8] = node.createDataSet("memcpy_cells", m_tid, ds, cparms);
+	// CUDA time for neighbour lists update
+	m_dataset[9] = node.createDataSet("update_neighbours", m_tid, ds, cparms);
 #endif
     }
     catch (H5::FileIException const& e) {
@@ -188,6 +186,7 @@ void perf<dimension, T>::commit()
     LOG("mean CUDA time for cell lists initialisation: " << m_times[6]);
     LOG("mean CUDA time for cell lists update: " << m_times[7]);
     LOG("mean CUDA time for cell lists memcpy: " << m_times[8]);
+    LOG("mean CUDA time for neighbour lists update: " << m_times[9]);
 #endif
     LOG("mean CUDA time for Lennard-Jones force update: " << m_times[2]);
     LOG("mean CUDA time for sample memcpy: " << m_times[3]);
