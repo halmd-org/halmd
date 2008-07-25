@@ -77,11 +77,22 @@ __inline__ __device__ T muladd(uint3 a, T b, uint3 c)
 
 
 /**
- * returns uniform random number between [0.0, 1.0)
+ * returns uniform random number in [0.0, 1.0)
  */
 __inline__ __device__ float uniform(ushort3& state)
 {
     float r = state.z / 65536.f + state.y / 4294967296.f;
+    state = muladd(a, state, c);
+    return r;
+}
+
+
+/**
+ * returns random integer in [0, 2^32-1]
+ */
+__inline__ __device__ uint get(ushort3& state)
+{
+    uint r = (state.z << 16UL) + state.y;
     state = muladd(a, state, c);
     return r;
 }

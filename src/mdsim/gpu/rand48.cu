@@ -140,14 +140,28 @@ __global__ void restore(ushort3 *x, uint3 *a, uint3 *c, ushort3 state)
 }
 
 /**
- * fill array with uniform random numbers between [0.0, 1.0)
+ * fill array with uniform random numbers in [0.0, 1.0)
  */
-__global__ void uniform(ushort3* state, float* v, unsigned int count)
+__global__ void uniform(ushort3* state, float* v, unsigned int len)
 {
     ushort3 x = state[GTID];
 
-    for (unsigned int k = 0; k < count; k++) {
-	v[GTID + k * GTDIM] = uniform(x);
+    for (unsigned int k = GTID; k < len; k += GTDIM) {
+	v[k] = uniform(x);
+    }
+
+    state[GTID] = x;
+}
+
+/**
+ * fill array with random integers in [0, 2^32-1]
+ */
+__global__ void get(ushort3* state, uint* v, unsigned int len)
+{
+    ushort3 x = state[GTID];
+
+    for (unsigned int k = GTID; k < len; k += GTDIM) {
+	v[k] = get(x);
     }
 
     state[GTID] = x;
@@ -166,5 +180,6 @@ function<void (ushort3*, uint3*, uint3*, unsigned int)> init(::rand48::init);
 function<void (ushort3*, ushort3*)> save(::rand48::save);
 function<void (ushort3*, uint3*, uint3*, ushort3)> restore(::rand48::restore);
 function<void (ushort3*, float*, unsigned int)> uniform(::rand48::uniform);
+function<void (ushort3*, uint*, unsigned int)> get(::rand48::get);
 
 }}} // namespace mdsim::gpu::rand48
