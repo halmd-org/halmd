@@ -168,7 +168,7 @@
 
 
     #define BOOST_PP_FILENAME_1 <cuda_wrapper/function.hpp>
-    #define BOOST_PP_ITERATION_LIMITS (1, CUDA_FUNCTION_MAX_ARGS)
+    #define BOOST_PP_ITERATION_LIMITS (0, CUDA_FUNCTION_MAX_ARGS)
     #include BOOST_PP_ITERATE()
 
     #endif /* ! CUDA_FUNCTION_HPP */
