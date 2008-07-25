@@ -48,6 +48,7 @@ extern cuda::function<void (float4*, float, ushort3*)> boltzmann;
 extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
 extern cuda::function<void (float4 const*, int*)> assign_cells;
 extern cuda::texture<float4> r;
+extern cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode;
 # else
 extern cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
 # endif
@@ -59,6 +60,7 @@ extern cuda::function<void (float2*, float, ushort3*)> boltzmann;
 extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
 extern cuda::function<void (float2 const*, int*)> assign_cells;
 extern cuda::texture<float2> r;
+extern cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode;
 # else
 extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
 # endif
@@ -78,6 +80,7 @@ extern cuda::symbol<unsigned int> ncell;
 extern cuda::symbol<unsigned int> nnbl;
 extern cuda::symbol<float> r_cell;
 extern cuda::symbol<float> rr_cell;
+extern cuda::symbol<unsigned int> sfc_level;
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL

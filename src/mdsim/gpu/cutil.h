@@ -47,6 +47,7 @@
 
 #ifdef __DEVICE_EMULATION__
 #include <stdio.h>
+#include <assert.h>
 #endif
 
 

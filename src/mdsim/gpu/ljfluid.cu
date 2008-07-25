@@ -18,6 +18,7 @@
 
 #include <float.h>
 #include "ljfluid_glue.hpp"
+#include "algorithm.h"
 #include "cutil.h"
 #include "dsfun.h"
 #include "vector2d.h"
@@ -69,6 +70,8 @@ struct texture<float4, 1, cudaReadModeElementType> t_r;
 # else
 struct texture<float2, 1, cudaReadModeElementType> t_r;
 # endif
+/** number of Hilbert space-filling curve code levels */
+static __constant__ unsigned int sfc_level;
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL
@@ -656,6 +659,166 @@ __global__ void update_cells(int const* g_itag, int* g_otag)
     g_otag[blockIdx.x * cell_size + threadIdx.x] = s_otag[threadIdx.x];
 }
 
+/**
+ * map n-dimensional point to 1-dimensional point on Hilbert space curve
+ */
+template <typename T, typename U>
+__global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
+{
+    //
+    // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
+    // GeoComputation, 2005
+    //
+
+#ifdef DIM_3D
+    // cell vertices
+    T a = make_float3(0, 0, 0);
+    T b = make_float3(box, 0, 0);
+    T c = make_float3(box, box, 0);
+    T d = make_float3(0, box, 0);
+    T e = make_float3(0, box, box);
+    T f = make_float3(box, box, box);
+    T g = make_float3(box, 0, box);
+    T h = make_float3(0, 0, box);
+#else
+    T a = make_float2(0, 0);
+    T b = make_float2(box, 0);
+    T c = make_float2(box, box);
+    T d = make_float2(0, box);
+#endif
+
+    // periodic particle position
+    const T r = unpack(g_r[GTID]);
+    unsigned int j, hcode = 0;
+    T t;
+
+    //
+    // FIXME It is not clear how the algorithm should behave in cases
+    // where the particle lies on an edge or corner belonging to multiple
+    // subcells, and thus the choice of a permutation rule is ambiguous.
+    // In the implementation below, this may cause instabilities and
+    // prevent the recursion from converging to a definite Hilbert curve.
+    //
+
+    // 32-bit integer for Hilbert code allows a maximum of 10 levels
+    for (unsigned int i = 0; i < sfc_level; ++i) {
+	// distances of particle to vertices
+	t = r - a;
+	const float rra = t * t;
+	t = r - b;
+	const float rrb = t * t;
+	t = r - c;
+	const float rrc = t * t;
+	t = r - d;
+	const float rrd = t * t;
+#ifdef DIM_3D
+	t = r - e;
+	const float rre = t * t;
+	t = r - f;
+	const float rrf = t * t;
+	t = r - g;
+	const float rrg = t * t;
+	t = r - h;
+	const float rrh = t * t;
+
+	// apply permutation rules
+	if (rra <= rrb && rra <= rrc && rra <= rrd && rra <= rre && rra <= rrf && rra <= rrg && rra <= rrh) {
+	    j = 0;
+	    t = a;
+	    swap(b, h);
+	    swap(c, e);
+	}
+	else if (rrb <= rra && rrb <= rrc && rrb <= rrd && rrb <= rre && rrb <= rrf && rrb <= rrg && rrb <= rrh) {
+	    j = 1;
+	    t = b;
+	    swap(c, g);
+	    swap(d, h);
+	}
+	else if (rrc <= rra && rrc <= rrb && rrc <= rrd && rrc <= rre && rrc <= rrf && rrc <= rrg && rrc <= rrh) {
+	    j = 2;
+	    t = c;
+	    swap(c, g);
+	    swap(d, h);
+	}
+	else if (rrd <= rra && rrd <= rrb && rrd <= rrc && rrd <= rre && rrd <= rrf && rrd <= rrg && rrd <= rrh) {
+	    j = 3;
+	    t = d;
+	    swap(a, c);
+	    swap(b, d);
+	    swap(e, g);
+	    swap(f, h);
+	}
+	else if (rre <= rra && rre <= rrb && rre <= rrc && rre <= rrd && rre <= rrf && rre <= rrg && rre <= rrh) {
+	    j = 4;
+	    t = e;
+	    swap(a, c);
+	    swap(b, d);
+	    swap(e, g);
+	    swap(f, h);
+	}
+	else if (rrf <= rra && rrf <= rrb && rrf <= rrc && rrf <= rrd && rrf <= rre && rrf <= rrg && rrf <= rrh) {
+	    j = 5;
+	    t = f;
+	    swap(a, e);
+	    swap(b, f);
+	}
+	else if (rrg <= rra && rrg <= rrb && rrg <= rrc && rrg <= rrd && rrg <= rre && rrg <= rrf && rrg <= rrh) {
+	    j = 6;
+	    t = g;
+	    swap(a, e);
+	    swap(b, f);
+	}
+	else {
+	    j = 7;
+	    t = h;
+	    swap(a, g);
+	    swap(d, f);
+	}
+
+#else /* DIM_3D */
+
+	if (rra <= rrb && rra <= rrc && rra <= rrd) {
+	    j = 0;
+	    t = a;
+	    swap(b, d);
+	}
+	else if (rrb <= rra && rrb <= rrc && rrb <= rrd) {
+	    j = 1;
+	    t = b;
+	}
+	else if (rrc <= rra && rrc <= rrb && rrc <= rrd) {
+	    j = 2;
+	    t = c;
+	}
+	else {
+	    j = 3;
+	    t = d;
+	    swap(a, c);
+	}
+
+#endif /* DIM_3D */
+
+	// transform vertices to subcell which contains particle
+	a = 0.5f * (a + t);
+	b = 0.5f * (b + t);
+	c = 0.5f * (c + t);
+	d = 0.5f * (d + t);
+#ifdef DIM_3D
+	e = 0.5f * (e + t);
+	f = 0.5f * (f + t);
+	g = 0.5f * (g + t);
+	h = 0.5f * (h + t);
+	// add vertex to Hilbert code
+	hcode = (hcode << 3) + j;
+#else
+	hcode = (hcode << 2) + j;
+#endif
+    }
+
+    // store Hilbert code for particle
+    g_sfc[GTID] = hcode;
+}
+
 #endif  /* USE_CELL */
 
 } // namespace mdsim
@@ -671,6 +834,7 @@ cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*
 cuda::function<void (float4 const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float3>);
 cuda::texture<float4> r(mdsim::t_r);
+cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float3>);
 # else
 cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 # endif
@@ -683,6 +847,7 @@ cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*
 cuda::function<void (float2 const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float2>);
 cuda::texture<float2> r(mdsim::t_r);
+cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float2>);
 # else
 cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 # endif
@@ -702,6 +867,7 @@ cuda::symbol<unsigned int> ncell(mdsim::ncell);
 cuda::symbol<unsigned int> nnbl(mdsim::nnbl);
 cuda::symbol<float> r_cell(mdsim::r_cell);
 cuda::symbol<float> rr_cell(mdsim::rr_cell);
+cuda::symbol<unsigned int> sfc_level(mdsim::sfc_level);
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL
