@@ -32,6 +32,7 @@ extern cuda::function<void (ushort3*, uint3*, uint3*, unsigned int)> init;
 extern cuda::function<void (ushort3*, ushort3*)> save;
 extern cuda::function<void (ushort3*, uint3*, uint3*, ushort3)> restore;
 extern cuda::function<void (ushort3*, float*, unsigned int)> uniform;
+extern cuda::function<void (ushort3*, uint*, unsigned int)> get;
 
 }}} // namespace mdsim::gpu::rand48
 

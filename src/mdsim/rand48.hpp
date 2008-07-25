@@ -89,39 +89,21 @@ public:
     }
 
     /*
-     * fill array with uniform random numbers between [0.0, 1.0)
+     * fill array with uniform random numbers in [0.0, 1.0)
      */
     void uniform(cuda::vector<float>& r, cuda::stream& stream)
     {
-	assert(r.size() == dim_.threads());
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::uniform(state_, r, 1);
+	gpu::rand48::uniform(state_, r, r.size());
     }
 
     /**
-     * generate in-place random permutation of a host array
+     * fill array with random integers in [0, 2^32-1]
      */
-    template <typename T>
-    void shuffle(T& array, cuda::stream& stream)
+    void get(cuda::vector<uint>& r, cuda::stream& stream)
     {
-	assert(array.size() <= dim_.threads());
-	// generate uniform random numbers between [0.0, 1.0)
-	cuda::vector<float> g_r(dim_.threads());
-	cuda::host::vector<float> h_r(dim_.threads());
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::uniform(state_, g_r, 1);
-	// copy random numbers from GPU to host
-	cuda::copy(g_r, h_r, stream);
-	stream.synchronize();
-
-	//
-	// D.E. Knuth, Art of Computer Programming, Volume 2:
-	// Seminumerical Algorithms, 3rd Edition, 1997,
-	// Addison-Wesley, pp. 124–125.
-	//
-	for (typename T::size_type n = array.size(); n > 1; --n) {
-	    std::swap(array[n * h_r[n - 1]], array[n - 1]);
-        }
+	gpu::rand48::get(state_, r, r.size());
     }
 
     /**
