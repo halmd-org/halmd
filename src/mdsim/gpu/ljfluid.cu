@@ -689,8 +689,8 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 
     // periodic particle position
     const T r = unpack(g_r[GTID]);
-    unsigned int j, hcode = 0;
-    T t;
+    // Hilbert code for particle
+    unsigned int hcode = 0;
 
     //
     // FIXME It is not clear how the algorithm should behave in cases
@@ -700,47 +700,52 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
     // prevent the recursion from converging to a definite Hilbert curve.
     //
 
-    // 32-bit integer for Hilbert code allows a maximum of 10 levels
+    // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
     for (unsigned int i = 0; i < sfc_level; ++i) {
 	// distances of particle to vertices
-	t = r - a;
-	const float rra = t * t;
-	t = r - b;
-	const float rrb = t * t;
-	t = r - c;
-	const float rrc = t * t;
-	t = r - d;
-	const float rrd = t * t;
+	T t = r - a; const float rra = t * t;
+	t = r - b; const float rrb = t * t;
+	t = r - c; const float rrc = t * t;
+	t = r - d; const float rrd = t * t;
 #ifdef DIM_3D
-	t = r - e;
-	const float rre = t * t;
-	t = r - f;
-	const float rrf = t * t;
-	t = r - g;
-	const float rrg = t * t;
-	t = r - h;
-	const float rrh = t * t;
+	t = r - e; const float rre = t * t;
+	t = r - f; const float rrf = t * t;
+	t = r - g; const float rrg = t * t;
+	t = r - h; const float rrh = t * t;
+#endif
+
+	float rr = fminf(rra, rrb);
+	rr = fminf(rr, rrc);
+	rr = fminf(rr, rrd);
+#ifdef DIM_3D
+	rr = fminf(rr, rre);
+	rr = fminf(rr, rrf);
+	rr = fminf(rr, rrg);
+	rr = fminf(rr, rrh);
+#endif
 
 	// apply permutation rules
-	if (rra <= rrb && rra <= rrc && rra <= rrd && rra <= rre && rra <= rrf && rra <= rrg && rra <= rrh) {
+	unsigned int j;
+#ifdef DIM_3D
+	if (rra == rr) {
 	    j = 0;
 	    t = a;
 	    swap(b, h);
 	    swap(c, e);
 	}
-	else if (rrb <= rra && rrb <= rrc && rrb <= rrd && rrb <= rre && rrb <= rrf && rrb <= rrg && rrb <= rrh) {
+	else if (rrb == rr) {
 	    j = 1;
 	    t = b;
 	    swap(c, g);
 	    swap(d, h);
 	}
-	else if (rrc <= rra && rrc <= rrb && rrc <= rrd && rrc <= rre && rrc <= rrf && rrc <= rrg && rrc <= rrh) {
+	else if (rrc == rr) {
 	    j = 2;
 	    t = c;
 	    swap(c, g);
 	    swap(d, h);
 	}
-	else if (rrd <= rra && rrd <= rrb && rrd <= rrc && rrd <= rre && rrd <= rrf && rrd <= rrg && rrd <= rrh) {
+	else if (rrd == rr) {
 	    j = 3;
 	    t = d;
 	    swap(a, c);
@@ -748,7 +753,7 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	    swap(e, g);
 	    swap(f, h);
 	}
-	else if (rre <= rra && rre <= rrb && rre <= rrc && rre <= rrd && rre <= rrf && rre <= rrg && rre <= rrh) {
+	else if (rre == rr) {
 	    j = 4;
 	    t = e;
 	    swap(a, c);
@@ -756,13 +761,13 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	    swap(e, g);
 	    swap(f, h);
 	}
-	else if (rrf <= rra && rrf <= rrb && rrf <= rrc && rrf <= rrd && rrf <= rre && rrf <= rrg && rrf <= rrh) {
+	else if (rrf == rr) {
 	    j = 5;
 	    t = f;
 	    swap(a, e);
 	    swap(b, f);
 	}
-	else if (rrg <= rra && rrg <= rrb && rrg <= rrc && rrg <= rrd && rrg <= rre && rrg <= rrf && rrg <= rrh) {
+	else if (rrg == rr) {
 	    j = 6;
 	    t = g;
 	    swap(a, e);
@@ -774,19 +779,17 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	    swap(a, g);
 	    swap(d, f);
 	}
-
 #else /* DIM_3D */
-
-	if (rra <= rrb && rra <= rrc && rra <= rrd) {
+	if (rra == rr) {
 	    j = 0;
 	    t = a;
 	    swap(b, d);
 	}
-	else if (rrb <= rra && rrb <= rrc && rrb <= rrd) {
+	else if (rrb == rr) {
 	    j = 1;
 	    t = b;
 	}
-	else if (rrc <= rra && rrc <= rrb && rrc <= rrd) {
+	else if (rrc == rr) {
 	    j = 2;
 	    t = c;
 	}
@@ -795,7 +798,6 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	    t = d;
 	    swap(a, c);
 	}
-
 #endif /* DIM_3D */
 
 	// transform vertices to subcell which contains particle
