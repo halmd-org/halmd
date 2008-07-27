@@ -17,7 +17,7 @@
  */
 
 #include "scan_glue.hpp"
-#include "cutil.h"
+using namespace mdsim::gpu::scan;
 
 namespace mdsim
 {
@@ -30,13 +30,17 @@ __global__ void block_prefix_sum(T const* g_in, T* g_out, T* g_block, const uint
 {
     //
     // Prefix Sums and Their Applications,
-    // Guy E. Blelloch, November 1990, CMU-CS-90-190
+    // Guy E. Blelloch.
+    // CMU-CS-90-190, November 1990.
     //
-    // Parallel Prefix Sum (Scan) with CUDA,
-    // Mark Harris, April 2007, NVIDIA
+    // http://www.cs.cmu.edu/~scandal/papers/CMU-CS-90-190.html
     //
 
-    using namespace mdsim::gpu::scan;
+    //
+    // Parallel Prefix Sum (Scan) with CUDA,
+    // Mark Harris, April 2007, NVIDIA Corporation
+    //
+
     extern __shared__ T s_array[];
 
     const uint tid = threadIdx.x;
