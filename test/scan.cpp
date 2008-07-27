@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 	cuda::copy(g_sum2[dim.size() - 1], g_sum[dim.size() - 1], stream);
 	for (uint i = dim.size() - 1; i > 0; --i) {
 	    cuda::configure(blocks[i - 1], threads, stream);
-	    add_block_sums(g_sum[i], g_sum2[i - 1], g_sum[i - 1], count);
+	    add_block_sums(g_sum[i], g_sum2[i - 1], g_sum[i - 1], dim[i - 1]);
 	}
 	stop.record(stream);
 
