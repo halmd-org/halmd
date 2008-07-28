@@ -72,13 +72,13 @@ public:
     /**
      * initialize generator with 32-bit integer seed
      */
-    void set(unsigned int seed)
+    void set(unsigned int seed, cuda::stream& stream)
     {
 	cuda::vector<uint3> a(1), c(1);
 
-	cuda::configure(dim_.grid, dim_.block);
+	cuda::configure(dim_.grid, dim_.block, stream);
 	gpu::rand48::init(state_, a, c, seed);
-	cuda::thread::synchronize();
+	stream.synchronize();
 
 	// copy leapfrogging multiplier into constant device memory
 	cuda::copy(a, gpu::rand48::a);

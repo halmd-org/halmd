@@ -605,7 +605,8 @@ void ljfluid<dimension, T>::rng(unsigned int seed)
 {
     LOG("random number generator seed: " << seed);
     try {
-	rng_.set(seed);
+	rng_.set(seed, stream);
+	stream.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to seed random number generator");
