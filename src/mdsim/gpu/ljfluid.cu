@@ -23,7 +23,6 @@
 #include "vector2d.h"
 #include "vector3d.h"
 #include "rand48.h"
-using namespace cuda;
 
 
 namespace rand48
@@ -451,6 +450,25 @@ __global__ void lattice(U* g_r, unsigned int n)
 }
 
 /**
+ * place particles on a simple cubic (SCC) lattice
+ */
+template <typename T, typename U>
+__global__ void lattice_simple(U* g_r, unsigned int n)
+{
+    T r;
+#ifdef DIM_3D
+    r.x = (GTID % n) + 0.5f;
+    r.y = (GTID / n % n) + 0.5f;
+    r.z = (GTID / n / n) + 0.5f;
+#else
+    r.x = (GTID % n) + 0.5f;
+    r.y = (GTID / n) + 0.5f;
+#endif
+
+    g_r[GTID] = pack(r * (box / n));
+}
+
+/**
  * generate random n-dimensional Maxwell-Boltzmann distributed velocities
  */
 template <typename U>
@@ -635,45 +653,47 @@ namespace mdsim { namespace gpu { namespace ljfluid
 {
 
 #ifdef DIM_3D
-function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
+cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
 #ifdef USE_CELL
-function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float3>);
-function<void (float4 const*, float4*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE, float3>);
-function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells(mdsim::update_cells<CELL_SIZE, float3>);
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float3>);
+cuda::function<void (float4 const*, float4*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE, float3>);
+cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells(mdsim::update_cells<CELL_SIZE, float3>);
 #else
-function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
+cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 #endif
-function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
-function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
+cuda::function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
+cuda::function<void (float4*, unsigned int)> lattice_simple(mdsim::lattice_simple<float3>);
+cuda::function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else /* DIM_3D */
-function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
+cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
 #ifdef USE_CELL
-function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float2>);
-function<void (float2 const*, float2*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE, float2>);
-function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells(mdsim::update_cells<CELL_SIZE, float2>);
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float2>);
+cuda::function<void (float2 const*, float2*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE, float2>);
+cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells(mdsim::update_cells<CELL_SIZE, float2>);
 #else
-function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
+cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 #endif
-function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
-function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
+cuda::function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
+cuda::function<void (float2*, unsigned int)> lattice_simple(mdsim::lattice_simple<float2>);
+cuda::function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif /* DIM_3D */
 
-symbol<unsigned int> npart(mdsim::npart);
-symbol<float> box(mdsim::box);
-symbol<float> timestep(mdsim::timestep);
-symbol<float> r_cut(mdsim::r_cut);
-symbol<float> rr_cut(mdsim::rr_cut);
-symbol<float> en_cut(mdsim::en_cut);
+cuda::symbol<unsigned int> npart(mdsim::npart);
+cuda::symbol<float> box(mdsim::box);
+cuda::symbol<float> timestep(mdsim::timestep);
+cuda::symbol<float> r_cut(mdsim::r_cut);
+cuda::symbol<float> rr_cut(mdsim::rr_cut);
+cuda::symbol<float> en_cut(mdsim::en_cut);
 #ifdef USE_CELL
-symbol<unsigned int> ncell(mdsim::ncell);
+cuda::symbol<unsigned int> ncell(mdsim::ncell);
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL
-symbol<float> rri_smooth(mdsim::rri_smooth);
-function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
+cuda::symbol<float> rri_smooth(mdsim::rri_smooth);
+cuda::function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
 #endif
 
-symbol<uint3> a(::rand48::a);
-symbol<uint3> c(::rand48::c);
+cuda::symbol<uint3> a(::rand48::a);
+cuda::symbol<uint3> c(::rand48::c);
 
 }}} // namespace mdsim::gpu::ljfluid
