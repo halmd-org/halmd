@@ -690,34 +690,45 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
     //
 
 #ifdef DIM_3D
-    // cell vertices
+    // normalized cell vertices
     T a = make_float3(0, 0, 0);
-    T b = make_float3(box, 0, 0);
-    T c = make_float3(box, box, 0);
-    T d = make_float3(0, box, 0);
-    T e = make_float3(0, box, box);
-    T f = make_float3(box, box, box);
-    T g = make_float3(box, 0, box);
-    T h = make_float3(0, 0, box);
+    T b = make_float3(1, 0, 0);
+    T c = make_float3(1, 1, 0);
+    T d = make_float3(0, 1, 0);
+    T e = make_float3(0, 1, 1);
+    T f = make_float3(1, 1, 1);
+    T g = make_float3(1, 0, 1);
+    T h = make_float3(0, 0, 1);
 #else
     T a = make_float2(0, 0);
-    T b = make_float2(box, 0);
-    T c = make_float2(box, box);
-    T d = make_float2(0, box);
+    T b = make_float2(1, 0);
+    T c = make_float2(1, 1);
+    T d = make_float2(0, 1);
 #endif
 
-    // periodic particle position
-    const T r = unpack(g_r[GTID]);
+    //
+    // We need to avoid ambiguities during the assignment of a particle
+    // to a subcell, i.e. the particle position should never lie on an
+    // edge or corner of multiple subcells, or the algorithm will have
+    // trouble converging to a definite Hilbert curve.
+    //
+    // Therefore, we use a simple cubic lattice of predefined dimensions
+    // according to the number of cells at the deepest recursion level,
+    // and round the particle position to the nearest center of a cell.
+    //
+
+    // Hilbert cells per dimension at deepest recursion level
+    const uint n = 1UL << sfc_level;
+    // fractional index of particle's Hilbert cell in [0, n)
+    const T cell = (__saturatef(unpack(g_r[GTID]) / box) * (1.f - FLT_EPSILON)) * n;
+#ifdef DIM_3D
+    // round particle position to normalized center of cell
+    T r = make_float3(uint(cell.x) + 0.5f, uint(cell.y) + 0.5f, uint(cell.z) + 0.5f) / n;
+#else
+    T r = make_float2(uint(cell.x) + 0.5f, uint(cell.y) + 0.5f) / n;
+#endif
     // Hilbert code for particle
     unsigned int hcode = 0;
-
-    //
-    // FIXME It is not clear how the algorithm should behave in cases
-    // where the particle lies on an edge or corner belonging to multiple
-    // subcells, and thus the choice of a permutation rule is ambiguous.
-    // In the implementation below, this may cause instabilities and
-    // prevent the recursion from converging to a definite Hilbert curve.
-    //
 
     // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
     for (unsigned int i = 0; i < sfc_level; ++i) {
@@ -743,97 +754,87 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	rr = fminf(rr, rrh);
 #endif
 
-	// apply permutation rules
-	unsigned int j;
 #ifdef DIM_3D
+	// increment Hilbert code level
+	hcode <<= 3;
+
+	// apply permutation rule
 	if (rra == rr) {
-	    j = 0;
-	    t = a;
+	    hcode += 0;
+	    r = 2 * r - a;
 	    swap(b, h);
 	    swap(c, e);
 	}
 	else if (rrb == rr) {
-	    j = 1;
-	    t = b;
+	    hcode += 1;
+	    r = 2 * r - b;
 	    swap(c, g);
 	    swap(d, h);
 	}
 	else if (rrc == rr) {
-	    j = 2;
-	    t = c;
+	    hcode += 2;
+	    r = 2 * r - c;
 	    swap(c, g);
 	    swap(d, h);
 	}
 	else if (rrd == rr) {
-	    j = 3;
-	    t = d;
+	    hcode += 3;
+	    r = 2 * r - d;
 	    swap(a, c);
 	    swap(b, d);
 	    swap(e, g);
 	    swap(f, h);
 	}
 	else if (rre == rr) {
-	    j = 4;
-	    t = e;
+	    hcode += 4;
+	    r = 2 * r - e;
 	    swap(a, c);
 	    swap(b, d);
 	    swap(e, g);
 	    swap(f, h);
 	}
 	else if (rrf == rr) {
-	    j = 5;
-	    t = f;
+	    hcode += 5;
+	    r = 2 * r - f;
 	    swap(a, e);
 	    swap(b, f);
 	}
 	else if (rrg == rr) {
-	    j = 6;
-	    t = g;
+	    hcode += 6;
+	    r = 2 * r - g;
 	    swap(a, e);
 	    swap(b, f);
 	}
 	else {
-	    j = 7;
-	    t = h;
+	    hcode += 7;
+	    r = 2 * r - h;
 	    swap(a, g);
 	    swap(d, f);
 	}
-#else /* DIM_3D */
+#else /* ! DIM_3D */
+	// shift Hilbert code level
+	hcode <<= 2;
+
+	// apply permutation rule
 	if (rra == rr) {
-	    j = 0;
-	    t = a;
+	    hcode += 0;
+	    r = 2 * r - a;
 	    swap(b, d);
 	}
 	else if (rrb == rr) {
-	    j = 1;
-	    t = b;
+	    hcode += 1;
+	    r = 2 * r - b;
 	}
 	else if (rrc == rr) {
-	    j = 2;
-	    t = c;
+	    hcode += 2;
+	    r = 2 * r - c;
 	}
 	else {
-	    j = 3;
-	    t = d;
+	    hcode += 3;
+	    r = 2 * r - d;
 	    swap(a, c);
 	}
 #endif /* DIM_3D */
-
-	// transform vertices to subcell which contains particle
-	a = 0.5f * (a + t);
-	b = 0.5f * (b + t);
-	c = 0.5f * (c + t);
-	d = 0.5f * (d + t);
-#ifdef DIM_3D
-	e = 0.5f * (e + t);
-	f = 0.5f * (f + t);
-	g = 0.5f * (g + t);
-	h = 0.5f * (h + t);
-	// add vertex to Hilbert code
-	hcode = (hcode << 3) + j;
-#else
-	hcode = (hcode << 2) + j;
-#endif
     }
 
     // store Hilbert code for particle
