@@ -53,7 +53,7 @@ enum { dimension = 2 };
 int main(int argc, char **argv)
 {
     // program options
-    uint count, blocks, threads, seed, sfc_level;
+    uint blocks, threads, seed, sfc_level;
     float box;
     ushort device;
 
@@ -61,8 +61,6 @@ int main(int argc, char **argv)
 	// parse command line options
 	po::options_description opts("Program options");
 	opts.add_options()
-	    ("particles,N", po::value<uint>(&count)->default_value(10000),
-	     "number of particles")
 	    ("box-length,L", po::value<float>(&box)->default_value(50.f),
 	     "periodic simulation box length")
 	    ("sfc-level,R", po::value<uint>(&sfc_level)->default_value(10),
@@ -81,9 +79,6 @@ int main(int argc, char **argv)
 	po::store(po::parse_command_line(argc, argv, opts), vm);
 	po::notify(vm);
 
-	if (count < 2) {
-	    throw std::logic_error("number of elements must be greater than 1");
-	}
 	if (threads == 0 || threads % 16) {
 	    throw std::logic_error("number of threads must be a multiple of half-warp");
 	}
@@ -110,31 +105,36 @@ int main(int argc, char **argv)
 	cuda::device::set(device);
 	// asynchroneous GPU operations
 	cuda::stream stream;
-	boost::array<cuda::event, 3> start, stop;
+	boost::array<cuda::event, 4> start, stop;
 
 	// copy device symbols to GPU
 	cuda::copy(box, ljfluid::box);
 	cuda::copy(sfc_level, ljfluid::sfc_level);
+
+	// number of grid cells
+	uint count = (1UL << (dimension * sfc_level));
 
 	boost::array<cuda::vector<T>, 3> g_r;
 	boost::array<cuda::host::vector<T>, 3> h_r;
 	cuda::vector<T> g_array4(count);
 	boost::array<cuda::vector<uint>, 2> g_sort;
 
-	// compute particle lattice positions on GPU
+	// compute lattice points on GPU
 	cuda::config dim((count + threads - 1) / threads, threads);
 	g_r[0].resize(count);
 	g_r[0].reserve(dim.threads());
 	start[0].record(stream);
 	cuda::configure(dim.grid, dim.block, stream);
-	ljfluid::lattice(g_r[0], std::pow(count / (2 * (dimension - 1)), 1.f / dimension));
+	ljfluid::lattice_simple(g_r[0], (1UL << sfc_level));
 	stop[0].record(stream);
 	h_r[0].resize(count);
 	cuda::copy(g_r[0], h_r[0]);
 
 	// seed GPU random number generator
 	mdsim::rand48 rng(dim);
-	rng.set(seed);
+	start[1].record(stream);
+	rng.set(seed, stream);
+	stop[1].record(stream);
 
 	// parallel radix sort
 	cuda::vector<uint> g_bucket(blocks * threads * radix::BUCKETS_PER_THREAD);
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 	    g_r[i + 1].resize(g_r[0].size());
 	    cuda::copy(g_r[i], g_r[i + 1]);
 
-	    start[i + 1].record(stream);
+	    start[i + 2].record(stream);
 
 	    if (i == 0) {
 		// generate array of random integers in [0, 2^32-1] on GPU
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 		cuda::copy(g_array4, g_r[i + 1], stream);
 	    }
 
-	    stop[i + 1].record(stream);
+	    stop[i + 2].record(stream);
 
 	    h_r[i + 1].resize(h_r[0].size());
 	    cuda::copy(g_r[i + 1], h_r[i + 1], stream);
@@ -193,10 +193,12 @@ int main(int argc, char **argv)
 	// wait for GPU to finish
 	stream.synchronize();
 
-	boost::array<std::string, 3> title;
-	title[0] = "lattice";
-	title[1] = "random";
-	title[2] = "hilbert";
+	boost::array<std::string, 4> title = {{ "lattice", "seed", "random", "hilbert" }};
+
+	// print measured GPU times
+	for (uint j = 0; j < start.size(); ++j) {
+	    std::cerr << title[j] << " GPU time:  \t" << std::setw(10) << std::fixed << std::setprecision(3) << (stop[j] - start[j]) * 1e3 << " ms" << std::endl;
+	}
 
 	// write results to stdout
 	for (uint j = 0; j < h_r.size(); ++j) {
@@ -205,11 +207,6 @@ int main(int argc, char **argv)
 		std::cout << std::scientific << i << "\t" << vector<float, dimension>(h_r[j][i]) << "\n";
 	    }
 	    std::cout << "\n\n";
-	}
-
-	// print measured GPU times
-	for (uint j = 0; j < start.size(); ++j) {
-	    std::cerr << title[j] << " GPU time:\t" << std::fixed << std::setprecision(3) << (stop[j] - start[j]) * 1e3 << " ms\n";
 	}
     }
     catch (cuda::error const& e) {
