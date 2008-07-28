@@ -86,8 +86,7 @@ int main(int argc, char **argv)
     }
 
     try {
-	using namespace mdsim::gpu::radix;
-	using namespace mdsim::gpu::scan;
+	using namespace mdsim::gpu;
 
 	// set CUDA device
 	cuda::device::set(device);
@@ -106,31 +105,31 @@ int main(int argc, char **argv)
 	stream.synchronize();
 
 	// parallel radix sort
-	cuda::vector<uint> g_bucket(blocks * threads * BUCKETS_PER_THREAD);
+	cuda::vector<uint> g_bucket(blocks * threads * radix::BUCKETS_PER_THREAD);
 	cuda::vector<uint> g_bucket2(g_bucket.size());
-	cuda::config dim_scan((g_bucket.size() + 2 * BUCKET_SIZE - 1) / (2 * BUCKET_SIZE), BUCKET_SIZE);
+	cuda::config dim_scan((g_bucket.size() + 2 * radix::BUCKET_SIZE - 1) / (2 * radix::BUCKET_SIZE), radix::BUCKET_SIZE);
 	cuda::vector<uint> g_array2(count), g_array3(count), g_array4(count);
 	cuda::vector<uint> g_block_sum(dim_scan.blocks_per_grid());
 	cuda::vector<uint> g_block_sum2(g_block_sum.size()), g_block_block_sum(1);
 	cuda::host::vector<uint> h_array2(count);
 
 	start.record(stream);
-	for (uint r = 0; r < 32; r += RADIX) {
+	for (uint r = 0; r < 32; r += radix::RADIX) {
 	    // compute partial radix counts
-	    cuda::configure(blocks, threads, threads * BUCKETS_PER_THREAD * sizeof(uint), stream);
-	    histogram_keys(g_array, g_bucket, count, r);
+	    cuda::configure(blocks, threads, threads * radix::BUCKETS_PER_THREAD * sizeof(uint), stream);
+	    radix::histogram_keys(g_array, g_bucket, count, r);
 
 	    // parallel prefix sum over radix counts
-	    cuda::configure(dim_scan.grid, dim_scan.block, boff(2 * dim_scan.threads_per_block()) * sizeof(uint), stream);
-	    block_prefix_sum(g_bucket, g_bucket2, g_block_sum, g_bucket.size());
-	    cuda::configure(1, dim_scan.block, boff(2 * dim_scan.threads_per_block() * sizeof(uint)), stream);
-	    block_prefix_sum(g_block_sum, g_block_sum2, g_block_block_sum, g_block_sum.size());
+	    cuda::configure(dim_scan.grid, dim_scan.block, scan::boff(2 * dim_scan.threads_per_block()) * sizeof(uint), stream);
+	    scan::block_prefix_sum(g_bucket, g_bucket2, g_block_sum, g_bucket.size());
+	    cuda::configure(1, dim_scan.block, scan::boff(2 * dim_scan.threads_per_block() * sizeof(uint)), stream);
+	    scan::block_prefix_sum(g_block_sum, g_block_sum2, g_block_block_sum, g_block_sum.size());
 	    cuda::configure(dim_scan.grid, dim_scan.block, stream);
-	    add_block_sums(g_block_sum2, g_bucket2, g_bucket, g_bucket.size());
+	    scan::add_block_sums(g_block_sum2, g_bucket2, g_bucket, g_bucket.size());
 
 	    // permute array
-	    cuda::configure(blocks, threads, threads * BUCKETS_PER_THREAD * sizeof(uint), stream);
-	    permute(g_array, g_array2, g_array3, g_array4, g_bucket, count, r);
+	    cuda::configure(blocks, threads, threads * radix::BUCKETS_PER_THREAD * sizeof(uint), stream);
+	    radix::permute(g_array, g_array2, g_array3, g_array4, g_bucket, count, r);
 	    cuda::copy(g_array2, g_array, stream);
 	}
 	stop.record(stream);
@@ -138,11 +137,11 @@ int main(int argc, char **argv)
 
 	// serial radix sort
 	std::vector<uint> h_array3(count);
-	boost::array<std::deque<uint>, BUCKET_SIZE> h_buckets;
+	boost::array<std::deque<uint>, radix::BUCKET_SIZE> h_buckets;
 	std::copy(h_array.begin(), h_array.end(), h_array3.begin());
 	mdsim::real_timer timer;
 	timer.start();
-	for (uint r = 0; r < 32; r += RADIX) {
+	for (uint r = 0; r < 32; r += radix::RADIX) {
 	    for (uint i = 0; i < count; ++i) {
 		h_buckets[(h_array3[i] >> r) & 0xff].push_back(h_array3[i]);
 	    }
