@@ -53,6 +53,7 @@ extern cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode;
 extern cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
 # endif
 extern cuda::function<void (float4*, unsigned int)> lattice;
+extern cuda::function<void (float4*, unsigned int)> lattice_simple;
 #else /* DIM_3D */
 extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
 extern cuda::function<void (float2*, float, ushort3*)> boltzmann;
@@ -65,6 +66,7 @@ extern cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode;
 extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
 # endif
 extern cuda::function<void (float2*, unsigned int)> lattice;
+extern cuda::function<void (float2*, unsigned int)> lattice_simple;
 #endif /* DIM_3D */
 
 extern cuda::symbol<unsigned int> npart;

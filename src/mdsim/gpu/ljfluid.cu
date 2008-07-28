@@ -317,6 +317,25 @@ __global__ void lattice(U* g_r, unsigned int n)
 }
 
 /**
+ * place particles on a simple cubic (SCC) lattice
+ */
+template <typename T, typename U>
+__global__ void lattice_simple(U* g_r, unsigned int n)
+{
+    T r;
+#ifdef DIM_3D
+    r.x = (GTID % n) + 0.5f;
+    r.y = (GTID / n % n) + 0.5f;
+    r.z = (GTID / n / n) + 0.5f;
+#else
+    r.x = (GTID % n) + 0.5f;
+    r.y = (GTID / n) + 0.5f;
+#endif
+
+    g_r[GTID] = pack(r * (box / n));
+}
+
+/**
  * generate random n-dimensional Maxwell-Boltzmann distributed velocities
  */
 template <typename U>
@@ -841,6 +860,7 @@ cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sf
 cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 # endif
 cuda::function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
+cuda::function<void (float4*, unsigned int)> lattice_simple(mdsim::lattice_simple<float3>);
 cuda::function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else /* DIM_3D */
 cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
@@ -854,6 +874,7 @@ cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sf
 cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 # endif
 cuda::function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
+cuda::function<void (float2*, unsigned int)> lattice_simple(mdsim::lattice_simple<float2>);
 cuda::function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif /* DIM_3D */
 
