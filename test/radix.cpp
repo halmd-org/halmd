@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 	cuda::host::vector<uint> h_array(count);
 	cuda::config dim((count + threads - 1) / threads, threads);
 	mdsim::rand48 rng(dim);
-	rng.set(seed);
+	rng.set(seed, stream);
 	rng.get(g_array, stream);
 	cuda::copy(g_array, h_array, stream);
 	stream.synchronize();
