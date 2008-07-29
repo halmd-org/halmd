@@ -716,7 +716,7 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
     r -= make_float3(0.5f, 0.5f, 0.5f);
 
     // Hilbert vertex-to-code lookup table
-    uint vv = 0x5AFA5;			// 000 001 011 010 111 110 100 101
+    uint vc = 0x5AFA5;			// 000 001 011 010 111 110 100 101
     // Hilbert code-to-vertex lookup table
     uint a = 21;
     uint b = 18;
@@ -735,35 +735,35 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	const uint x = __signbitf(r.x) & 1;
 	const uint y = __signbitf(r.y) & 1;
 	const uint z = __signbitf(r.z) & 1;
-	// lookup Hilbert code 
-	const uint v = (vv >> (3 * (x + (y << 1) + (z << 2))) & MASK);
+	// lookup Hilbert code
+	const uint v = (vc >> (3 * (x + (y << 1) + (z << 2))) & MASK);
 
 	// scale particle coordinates to subcell
 	r = 2 * r - make_float3(0.5f - x, 0.5f - y, 0.5f - z);
 	// apply permutation rule according to Hilbert code
 	if (v == 0) {
-	    vertex_swap(vv, b, h, MASK);
-	    vertex_swap(vv, c, e, MASK);
+	    vertex_swap(vc, b, h, MASK);
+	    vertex_swap(vc, c, e, MASK);
 	}
 	else if (v == 1 || v == 2) {
-	    vertex_swap(vv, c, g, MASK);
-	    vertex_swap(vv, d, h, MASK);
+	    vertex_swap(vc, c, g, MASK);
+	    vertex_swap(vc, d, h, MASK);
 	}
 	else if (v == 3 || v == 4) {
-	    vertex_swap(vv, a, c, MASK);
+	    vertex_swap(vc, a, c, MASK);
 #ifdef USE_ALTERNATIVE_HILBERT_3D
-	    vertex_swap(vv, b, d, MASK);
-	    vertex_swap(vv, e, g, MASK);
+	    vertex_swap(vc, b, d, MASK);
+	    vertex_swap(vc, e, g, MASK);
 #endif
-	    vertex_swap(vv, f, h, MASK);
+	    vertex_swap(vc, f, h, MASK);
 	}
 	else if (v == 5 || v == 6) {
-	    vertex_swap(vv, a, e, MASK);
-	    vertex_swap(vv, b, f, MASK);
+	    vertex_swap(vc, a, e, MASK);
+	    vertex_swap(vc, b, f, MASK);
 	}
 	else if (v == 7) {
-	    vertex_swap(vv, a, g, MASK);
-	    vertex_swap(vv, d, f, MASK);
+	    vertex_swap(vc, a, g, MASK);
+	    vertex_swap(vc, d, f, MASK);
 	}
 
 	// add vertex code to partial Hilbert code
@@ -778,7 +778,7 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
     r -= make_float2(0.5f, 0.5f);
 
     // Hilbert vertex-to-code lookup table
-    uint vv = 0x1E;			// 00 01 11 10
+    uint vc = 0x1E;			// 00 01 11 10
     // Hilbert code-to-vertex lookup table
     uint a = 6;
     uint b = 4;
@@ -792,17 +792,17 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	// determine Hilbert vertex closest to particle
 	const uint x = __signbitf(r.x) & 1;
 	const uint y = __signbitf(r.y) & 1;
-	// lookup Hilbert code 
-	const uint v = (vv >> (2 * (x + (y << 1))) & MASK);
+	// lookup Hilbert code
+	const uint v = (vc >> (2 * (x + (y << 1))) & MASK);
 
 	// scale particle coordinates to subcell
 	r = 2 * r - make_float2(0.5f - x, 0.5f - y);
 	// apply permutation rule according to Hilbert code
 	if (v == 0) {
-	    vertex_swap(vv, b, d, MASK);
+	    vertex_swap(vc, b, d, MASK);
 	}
 	else if (v == 3) {
-	    vertex_swap(vv, a, c, MASK);
+	    vertex_swap(vc, a, c, MASK);
 	}
 
 	// add vertex code to partial Hilbert code
