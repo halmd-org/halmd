@@ -307,8 +307,8 @@ void trajectory<dimension, T, false>::read(std::vector<T>& r, std::vector<T>& v,
 
 	LOG("resuming from trajectory sample at offset: " << index);
 
-	assert(r.size() == npart);
-	assert(v.size() == npart);
+	r.resize(npart);
+	v.resize(npart);
 
 	// read sample from dataset
 	hsize_t dim_mem[2] = { npart, dimension };
