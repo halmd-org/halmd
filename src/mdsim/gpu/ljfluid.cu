@@ -822,7 +822,9 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 __device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
 {
     // swap bits comprising Hilbert codes in vertex-to-code lookup table
-    v = (v & ~(mask << a) & ~(mask << b)) + (((v >> a) & mask) << b) + (((v >> b) & mask) << a);
+    const uint va = ((v >> a) & mask);
+    const uint vb = ((v >> b) & mask);
+    v = v ^ (va << a) ^ (vb << b) ^ (va << b) ^ (vb << a);
     // update code-to-vertex lookup table
     swap(a, b);
 }
