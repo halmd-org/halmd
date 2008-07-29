@@ -689,22 +689,8 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
     // GeoComputation, 2005
     //
 
-#ifdef DIM_3D
-    // normalized cell vertices
-    T a = make_float3(0, 0, 0);
-    T b = make_float3(1, 0, 0);
-    T c = make_float3(1, 1, 0);
-    T d = make_float3(0, 1, 0);
-    T e = make_float3(0, 1, 1);
-    T f = make_float3(1, 1, 1);
-    T g = make_float3(1, 0, 1);
-    T h = make_float3(0, 0, 1);
-#else
-    T a = make_float2(0, 0);
-    T b = make_float2(1, 0);
-    T c = make_float2(1, 1);
-    T d = make_float2(0, 1);
-#endif
+    // Hilbert code for particle
+    unsigned int hcode = 0;
 
     //
     // We need to avoid ambiguities during the assignment of a particle
@@ -721,124 +707,124 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
     const uint n = 1UL << sfc_level;
     // fractional index of particle's Hilbert cell in [0, n)
     const T cell = (__saturatef(unpack(g_r[GTID]) / box) * (1.f - FLT_EPSILON)) * n;
+
 #ifdef DIM_3D
-    // round particle position to normalized center of cell
+
+    // round particle position to center of cell in unit coordinates
     T r = make_float3(uint(cell.x) + 0.5f, uint(cell.y) + 0.5f, uint(cell.z) + 0.5f) / n;
-#else
-    T r = make_float2(uint(cell.x) + 0.5f, uint(cell.y) + 0.5f) / n;
-#endif
-    // Hilbert code for particle
-    unsigned int hcode = 0;
+    // use symmetric coordinates
+    r -= make_float3(0.5f, 0.5f, 0.5f);
+
+    // Hilbert vertex-to-code lookup table
+    uint vv = 0x5AFA5;			// 000 001 011 010 111 110 100 101
+    // Hilbert code-to-vertex lookup table
+    uint a = 21;
+    uint b = 18;
+    uint c = 12;
+    uint d = 15;
+    uint e = 3;
+    uint f = 0;
+    uint g = 6;
+    uint h = 9;
+
+#define MASK ((1 << 3) - 1)
 
     // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
     for (unsigned int i = 0; i < sfc_level; ++i) {
-	// distances of particle to vertices
-	T t = r - a; const float rra = t * t;
-	t = r - b; const float rrb = t * t;
-	t = r - c; const float rrc = t * t;
-	t = r - d; const float rrd = t * t;
-#ifdef DIM_3D
-	t = r - e; const float rre = t * t;
-	t = r - f; const float rrf = t * t;
-	t = r - g; const float rrg = t * t;
-	t = r - h; const float rrh = t * t;
+	// determine Hilbert vertex closest to particle
+	const uint x = __signbitf(r.x) & 1;
+	const uint y = __signbitf(r.y) & 1;
+	const uint z = __signbitf(r.z) & 1;
+	// lookup Hilbert code 
+	const uint v = (vv >> (3 * (x + (y << 1) + (z << 2))) & MASK);
+
+	// scale particle coordinates to subcell
+	r = 2 * r - make_float3(0.5f - x, 0.5f - y, 0.5f - z);
+	// apply permutation rule according to Hilbert code
+	if (v == 0) {
+	    vertex_swap(vv, b, h, MASK);
+	    vertex_swap(vv, c, e, MASK);
+	}
+	else if (v == 1 || v == 2) {
+	    vertex_swap(vv, c, g, MASK);
+	    vertex_swap(vv, d, h, MASK);
+	}
+	else if (v == 3 || v == 4) {
+	    vertex_swap(vv, a, c, MASK);
+#ifdef USE_ALTERNATIVE_HILBERT_3D
+	    vertex_swap(vv, b, d, MASK);
+	    vertex_swap(vv, e, g, MASK);
 #endif
+	    vertex_swap(vv, f, h, MASK);
+	}
+	else if (v == 5 || v == 6) {
+	    vertex_swap(vv, a, e, MASK);
+	    vertex_swap(vv, b, f, MASK);
+	}
+	else if (v == MASK) {
+	    vertex_swap(vv, a, g, MASK);
+	    vertex_swap(vv, d, f, MASK);
+	}
 
-	float rr = fminf(rra, rrb);
-	rr = fminf(rr, rrc);
-	rr = fminf(rr, rrd);
-#ifdef DIM_3D
-	rr = fminf(rr, rre);
-	rr = fminf(rr, rrf);
-	rr = fminf(rr, rrg);
-	rr = fminf(rr, rrh);
-#endif
-
-#ifdef DIM_3D
-	// increment Hilbert code level
-	hcode <<= 3;
-
-	// apply permutation rule
-	if (rra == rr) {
-	    hcode += 0;
-	    r = 2 * r - a;
-	    swap(b, h);
-	    swap(c, e);
-	}
-	else if (rrb == rr) {
-	    hcode += 1;
-	    r = 2 * r - b;
-	    swap(c, g);
-	    swap(d, h);
-	}
-	else if (rrc == rr) {
-	    hcode += 2;
-	    r = 2 * r - c;
-	    swap(c, g);
-	    swap(d, h);
-	}
-	else if (rrd == rr) {
-	    hcode += 3;
-	    r = 2 * r - d;
-	    swap(a, c);
-	    swap(b, d);
-	    swap(e, g);
-	    swap(f, h);
-	}
-	else if (rre == rr) {
-	    hcode += 4;
-	    r = 2 * r - e;
-	    swap(a, c);
-	    swap(b, d);
-	    swap(e, g);
-	    swap(f, h);
-	}
-	else if (rrf == rr) {
-	    hcode += 5;
-	    r = 2 * r - f;
-	    swap(a, e);
-	    swap(b, f);
-	}
-	else if (rrg == rr) {
-	    hcode += 6;
-	    r = 2 * r - g;
-	    swap(a, e);
-	    swap(b, f);
-	}
-	else {
-	    hcode += 7;
-	    r = 2 * r - h;
-	    swap(a, g);
-	    swap(d, f);
-	}
-#else /* ! DIM_3D */
-	// shift Hilbert code level
-	hcode <<= 2;
-
-	// apply permutation rule
-	if (rra == rr) {
-	    hcode += 0;
-	    r = 2 * r - a;
-	    swap(b, d);
-	}
-	else if (rrb == rr) {
-	    hcode += 1;
-	    r = 2 * r - b;
-	}
-	else if (rrc == rr) {
-	    hcode += 2;
-	    r = 2 * r - c;
-	}
-	else {
-	    hcode += 3;
-	    r = 2 * r - d;
-	    swap(a, c);
-	}
-#endif /* DIM_3D */
+	// add vertex code to partial Hilbert code
+	hcode = (hcode << 3) + v;
     }
+
+#else /* ! DIM_3D */
+
+    // round particle position to center of cell in unit coordinates
+    T r = make_float2(uint(cell.x) + 0.5f, uint(cell.y) + 0.5f) / n;
+    // use symmetric coordinates
+    r -= make_float2(0.5f, 0.5f);
+
+    // Hilbert vertex-to-code lookup table
+    uint vv = 0x1E;			// 00 01 11 10
+    // Hilbert code-to-vertex lookup table
+    uint a = 6;
+    uint b = 4;
+    uint c = 0;
+    uint d = 2;
+
+#define MASK ((1 << 2) - 1)
+
+    // 32-bit integer for 2D Hilbert code allows a maximum of 16 levels
+    for (unsigned int i = 0; i < sfc_level; ++i) {
+	// determine Hilbert vertex closest to particle
+	const uint x = __signbitf(r.x) & 1;
+	const uint y = __signbitf(r.y) & 1;
+	// lookup Hilbert code 
+	const uint v = (vv >> (2 * (x + (y << 1))) & MASK);
+
+	// scale particle coordinates to subcell
+	r = 2 * r - make_float2(0.5f - x, 0.5f - y);
+	// apply permutation rule according to Hilbert code
+	if (v == 0) {
+	    vertex_swap(vv, b, d, MASK);
+	}
+	else if (v == MASK) {
+	    vertex_swap(vv, a, c, MASK);
+	}
+
+	// add vertex code to partial Hilbert code
+	hcode = (hcode << 2) + v;
+    }
+
+#endif /* DIM_3D */
+#undef MASK
 
     // store Hilbert code for particle
     g_sfc[GTID] = hcode;
+}
+
+/**
+ * swap Hilbert spacing-filling curve vertices
+ */
+__device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
+{
+    // swap bits comprising Hilbert codes in vertex-to-code lookup table
+    v = (v & ~(mask << a) & ~(mask << b)) + (((v >> a) & mask) << b) + (((v >> b) & mask) << a);
+    // update code-to-vertex lookup table
+    swap(a, b);
 }
 
 #endif  /* USE_CELL */
