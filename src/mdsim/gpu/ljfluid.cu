@@ -711,12 +711,10 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 #ifdef DIM_3D
 
     // round particle position to center of cell in unit coordinates
-    T r = make_float3(uint(cell.x) + 0.5f, uint(cell.y) + 0.5f, uint(cell.z) + 0.5f) / n;
+    T r = (floorf(cell) + make_float3(0.5f, 0.5f, 0.5f)) / n;
     // use symmetric coordinates
     r -= make_float3(0.5f, 0.5f, 0.5f);
 
-    // Hilbert vertex-to-code lookup table
-    uint vc = 0x5AFA5;			// 000 001 011 010 111 110 100 101
     // Hilbert code-to-vertex lookup table
     uint a = 21;
     uint b = 18;
@@ -726,6 +724,8 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
     uint f = 0;
     uint g = 6;
     uint h = 9;
+    // Hilbert vertex-to-code lookup table
+    uint vc = 1U << b ^ 2U << c ^ 3U << d ^ 4U << e ^ 5U << f ^ 6U << g ^ 7U << h;
 
 #define MASK ((1 << 3) - 1)
 
@@ -773,17 +773,17 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 #else /* ! DIM_3D */
 
     // round particle position to center of cell in unit coordinates
-    T r = make_float2(uint(cell.x) + 0.5f, uint(cell.y) + 0.5f) / n;
+    T r = (floorf(cell) + make_float2(0.5f, 0.5f)) / n;
     // use symmetric coordinates
     r -= make_float2(0.5f, 0.5f);
 
-    // Hilbert vertex-to-code lookup table
-    uint vc = 0x1E;			// 00 01 11 10
     // Hilbert code-to-vertex lookup table
     uint a = 6;
     uint b = 4;
     uint c = 0;
     uint d = 2;
+    // Hilbert vertex-to-code lookup table
+    uint vc = 1U << b ^ 2U << c ^ 3U << d;
 
 #define MASK ((1 << 2) - 1)
 
