@@ -142,7 +142,7 @@ int main(int argc, char **argv)
 	cuda::config dim_scan((g_bucket.size() + 2 * radix::BUCKET_SIZE - 1) / (2 * radix::BUCKET_SIZE), radix::BUCKET_SIZE);
 	cuda::vector<uint> g_array2(count), g_array3(count);
 	cuda::vector<uint> g_block_sum(dim_scan.blocks_per_grid());
-	cuda::vector<uint> g_block_sum2(g_block_sum.size()), g_block_block_sum(1);
+	cuda::vector<uint> g_block_sum2(g_block_sum.size());
 
 	for (uint i = 0; i < g_sort.size(); ++i) {
 	    g_r[i + 1].resize(g_r[0].size());
@@ -173,9 +173,9 @@ int main(int argc, char **argv)
 		cuda::configure(dim_scan.grid, dim_scan.block, scan::boff(2 * dim_scan.threads_per_block()) * sizeof(uint), stream);
 		scan::block_prefix_sum(g_bucket, g_bucket2, g_block_sum, g_bucket.size());
 		cuda::configure(1, dim_scan.block, scan::boff(2 * dim_scan.threads_per_block() * sizeof(uint)), stream);
-		scan::block_prefix_sum(g_block_sum, g_block_sum2, g_block_block_sum, g_block_sum.size());
+		scan::prefix_sum(g_block_sum, g_block_sum2, g_block_sum.size());
 		cuda::configure(dim_scan.grid, dim_scan.block, stream);
-		scan::add_block_sums(g_block_sum2, g_bucket2, g_bucket, g_bucket.size());
+		scan::add_block_sums(g_bucket2, g_bucket, g_block_sum2, g_bucket.size());
 
 		// permute array
 		cuda::configure(blocks, threads, threads * radix::BUCKETS_PER_THREAD * sizeof(uint), stream);
