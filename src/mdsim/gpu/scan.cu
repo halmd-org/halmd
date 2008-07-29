@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "algorithm.h"
 #include "scan_glue.hpp"
-using namespace mdsim::gpu::scan;
 
 namespace mdsim
 {
@@ -26,7 +26,7 @@ namespace mdsim
  * blockwise parallel exclusive prefix sum
  */
 template <typename T>
-__global__ void block_prefix_sum(T const* g_in, T* g_out, T* g_block, const uint count)
+__device__ T block_prefix_sum(T const* g_in, T* g_out, const uint count)
 {
     //
     // Prefix Sums and Their Applications,
@@ -41,7 +41,9 @@ __global__ void block_prefix_sum(T const* g_in, T* g_out, T* g_block, const uint
     // Mark Harris, April 2007, NVIDIA Corporation
     //
 
+    using namespace mdsim::gpu::scan;
     extern __shared__ T s_array[];
+    T block_sum = 0;
 
     const uint tid = threadIdx.x;
     const uint threads = blockDim.x;
@@ -63,11 +65,8 @@ __global__ void block_prefix_sum(T const* g_in, T* g_out, T* g_block, const uint
     }
 
     if (tid == 0) {
-	// write last block prefix sum to auxiliary array
-	const uint i = boff(2 * threads - 1);
-	g_block[bid] = s_array[i];
 	// set last element to zero for down-sweep phase
-	s_array[i] = 0;
+	swap(s_array[boff(2 * threads - 1)], block_sum);
     }
     __syncthreads();
 
@@ -89,13 +88,41 @@ __global__ void block_prefix_sum(T const* g_in, T* g_out, T* g_block, const uint
 	g_out[i1] = s_array[boff(tid)];
     if (i2 < count)
 	g_out[i2] = s_array[boff(threads + tid)];
+
+    // block sum for last thread in block, otherwise zero
+    return block_sum;
+}
+
+/**
+ * blockwise parallel exclusive prefix sum
+ */
+template <typename T>
+__global__ void block_prefix_sum(T const* g_in, T* g_out, T* g_block_sum, const uint count)
+{
+    const uint tid = threadIdx.x;
+    const uint bid = blockIdx.x;
+
+    const T block_sum =  block_prefix_sum(g_in, g_out, count);
+
+    if (tid == 0) {
+	g_block_sum[bid] = block_sum;
+    }
+}
+
+/**
+ * single-block parallel exclusive prefix sum
+ */
+template <typename T>
+__global__ void prefix_sum(T const* g_in, T* g_out, const uint count)
+{
+    block_prefix_sum(g_in, g_out, count);
 }
 
 /**
  * add block prefix sum to partial prefix sums for each block
  */
 template <typename T>
-__global__ void add_block_sums(T const* g_block, T const* g_in, T* g_out, const uint count)
+__global__ void add_block_sums(T const* g_in, T* g_out, T const* g_block_sum, const uint count)
 {
     __shared__ T s_block_sum[1];
 
@@ -105,25 +132,26 @@ __global__ void add_block_sums(T const* g_block, T const* g_in, T* g_out, const 
 
     if (tid == 0) {
 	// read block sum for subsequent shared memory broadcast
-	s_block_sum[0] = g_block[bid];
+	s_block_sum[0] = g_block_sum[bid];
     }
     __syncthreads();
 
     const uint i1 = 2 * bid * threads + tid;
-    const uint i2 = (2 * bid + 1) * threads + tid;
     if (i1 < count)
 	g_out[i1] = g_in[i1] + s_block_sum[0];
+
+    const uint i2 = (2 * bid + 1) * threads + tid;
     if (i2 < count)
 	g_out[i2] = g_in[i2] + s_block_sum[0];
 }
 
 } // namespace mdsim
 
-
 namespace mdsim { namespace gpu { namespace scan
 {
 
 cuda::function<void (uint const*, uint*, uint*, const uint)> block_prefix_sum(mdsim::block_prefix_sum);
-cuda::function<void (uint const*, uint const*, uint*, const uint)> add_block_sums(mdsim::add_block_sums);
+cuda::function<void (uint const*, uint*, const uint)> prefix_sum(mdsim::prefix_sum);
+cuda::function<void (uint const*, uint*, uint const*, const uint)> add_block_sums(mdsim::add_block_sums);
 
 }}} // namespace mdsim::gpu::scan

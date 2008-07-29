@@ -38,7 +38,8 @@ __device__ __host__ inline uint boff(uint const& i)
 }
 
 extern cuda::function<void (uint const*, uint*, uint*, const uint)> block_prefix_sum;
-extern cuda::function<void (uint const*, uint const*, uint*, const uint)> add_block_sums;
+extern cuda::function<void (uint const*, uint*, const uint)> prefix_sum;
+extern cuda::function<void (uint const*, uint*, uint const*, const uint)> add_block_sums;
 
 }}} // namespace mdsim::gpu::scan
 
