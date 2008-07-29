@@ -15,3 +15,6 @@ FOREACH(dim RANGE 2 3)
   SET_TARGET_PROPERTIES(hilbert_curve_sort${dim}d PROPERTIES COMPILE_FLAGS "-DDIM_${dim}D")
   TARGET_LINK_LIBRARIES(hilbert_curve_sort${dim}d ljfluid${dim}d_gpu radix_gpu scan_gpu rand48_gpu ${Boost_PROGRAM_OPTIONS_LIBRARY} ${CUDA_LIBRARIES})
 ENDFOREACH(dim)
+
+ADD_EXECUTABLE(rand48_test rand48.cpp)
+TARGET_LINK_LIBRARIES(rand48_test rand48_gpu ljfluid3d_gpu scan_gpu ${Boost_PROGRAM_OPTIONS_LIBRARY} ${CUDA_LIBRARIES})
