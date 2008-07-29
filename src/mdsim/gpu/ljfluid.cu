@@ -761,7 +761,7 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	    vertex_swap(vv, a, e, MASK);
 	    vertex_swap(vv, b, f, MASK);
 	}
-	else if (v == MASK) {
+	else if (v == 7) {
 	    vertex_swap(vv, a, g, MASK);
 	    vertex_swap(vv, d, f, MASK);
 	}
@@ -801,7 +801,7 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	if (v == 0) {
 	    vertex_swap(vv, b, d, MASK);
 	}
-	else if (v == MASK) {
+	else if (v == 3) {
 	    vertex_swap(vv, a, c, MASK);
 	}
 
