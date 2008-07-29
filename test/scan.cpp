@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 
 	// obey maximum reasonable recursion depth
 	boost::array<cuda::vector<uint>, 10> g_sum, g_sum2;
-	if (dim.size() >= g_sum.size()) {
+	if (dim.size() > g_sum.size()) {
 	    throw std::logic_error("maximum recursion depth exceeded");
 	}
 	// allocate prefix sum arrays in global device memory
@@ -120,14 +120,19 @@ int main(int argc, char **argv)
 	start.record(stream);
 	for (uint i = 0; i < dim.size(); ++i) {
 	    cuda::configure(blocks[i], threads, boff(2 * threads * sizeof(uint)), stream);
-	    block_prefix_sum(g_sum[i], g_sum2[i], g_sum[i + 1], dim[i]);
+	    if (i + 1 < dim.size()) {
+		block_prefix_sum(g_sum[i], g_sum2[i], g_sum[i + 1], dim[i]);
+	    }
+	    else {
+		prefix_sum(g_sum[i], g_sum2[i], dim[i]);
+	    }
 	}
 
 	// add block prefix sum to partial prefix sums
 	cuda::copy(g_sum2[dim.size() - 1], g_sum[dim.size() - 1], stream);
 	for (uint i = dim.size() - 1; i > 0; --i) {
 	    cuda::configure(blocks[i - 1], threads, stream);
-	    add_block_sums(g_sum[i], g_sum2[i - 1], g_sum[i - 1], dim[i - 1]);
+	    add_block_sums(g_sum2[i - 1], g_sum[i - 1], g_sum[i], dim[i - 1]);
 	}
 	stop.record(stream);
 
