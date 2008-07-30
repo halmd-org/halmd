@@ -21,14 +21,16 @@
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <cmath>
-#include <gpu/scan_glue.hpp>
 #include <iomanip>
 #include <iostream>
 #include <libgen.h>
 #include <stdexcept>
 #include <stdio.h>
-#include <timer.hpp>
 #include <vector>
+
+#include <scan.hpp>
+#include <timer.hpp>
+
 namespace po = boost::program_options;
 #define foreach BOOST_FOREACH
 
@@ -89,55 +91,19 @@ int main(int argc, char **argv)
 
 	// generate array of ascending integers
 	cuda::host::vector<uint> h_array(count);
+	cuda::vector<uint> g_array(count);
 	for (uint i = 0; i < count; ++i)
 	    h_array[i] = i + 1;
+	cuda::copy(h_array, g_array, stream);
+	stream.synchronize();
 
-	// compute block recursion depth
-	std::vector<uint> dim, blocks;
-	for (uint n = count; n > 1; ) {
-	    // number of elements at this recursion depth
-	    dim.push_back(n);
-	    // number of blocks
-	    n = (n + (2 * threads) - 1) / (2 * threads);
-	    blocks.push_back(n);
-	}
-
-	// obey maximum reasonable recursion depth
-	boost::array<cuda::vector<uint>, 10> g_sum, g_sum2;
-	if (dim.size() > g_sum.size()) {
-	    throw std::logic_error("maximum recursion depth exceeded");
-	}
-	// allocate prefix sum arrays in global device memory
-	for (uint i = 0; i < dim.size(); ++i) {
-	    g_sum[i].resize(dim[i]);
-	    g_sum2[i].resize(dim[i]);
-	}
-	// block sum array for last blockwise parallel prefix sum
-	g_sum[dim.size()].resize(1);
-
-	// recursive blockwise parallel prefix sum
-	cuda::copy(h_array, g_sum[0], stream);
-	start.record(stream);
-	for (uint i = 0; i < dim.size(); ++i) {
-	    cuda::configure(blocks[i], threads, boff(2 * threads * sizeof(uint)), stream);
-	    if (i + 1 < dim.size()) {
-		block_prefix_sum(g_sum[i], g_sum2[i], g_sum[i + 1], dim[i]);
-	    }
-	    else {
-		prefix_sum(g_sum[i], g_sum2[i], dim[i]);
-	    }
-	}
-
-	// add block prefix sum to partial prefix sums
-	cuda::copy(g_sum2[dim.size() - 1], g_sum[dim.size() - 1], stream);
-	for (uint i = dim.size() - 1; i > 0; --i) {
-	    cuda::configure(blocks[i - 1], threads, stream);
-	    add_block_sums(g_sum2[i - 1], g_sum[i - 1], g_sum[i], dim[i - 1]);
-	}
-	stop.record(stream);
-
+	// parallel exclusive prefix sum
+	mdsim::prefix_sum<uint> scan(count, threads);
 	cuda::host::vector<uint> h_array2(count);
-	cuda::copy(g_sum[0], h_array2, stream);
+	start.record(stream);
+	scan(g_array, stream);
+	stop.record(stream);
+	cuda::copy(g_array, h_array2, stream);
 
 	// serial prefix sum
 	std::vector<uint> h_array3(count);
