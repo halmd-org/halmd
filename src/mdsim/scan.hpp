@@ -38,6 +38,10 @@ public:
      */
     prefix_sum(uint const& count, uint const& threads) : count(count), threads(threads)
     {
+	if (threads & (threads - 1)) {
+	    throw std::logic_error("prefix sum threads must be a power of 2");
+	}
+
 	// compute number of CUDA execution blocks for each level of recursion
 	uint n = count;
 	do {
