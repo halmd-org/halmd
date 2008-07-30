@@ -37,9 +37,31 @@ __device__ __host__ inline uint boff(uint const& i)
     return i + i / SHMEM_BANKS;
 }
 
-extern cuda::function<void (uint const*, uint*, uint*, const uint)> block_prefix_sum;
-extern cuda::function<void (uint const*, uint*, const uint)> prefix_sum;
-extern cuda::function<void (uint const*, uint*, uint const*, const uint)> add_block_sums;
+template <typename T>
+struct __scan
+{
+    static cuda::function<void (T const*, T*, T*, const uint)> block_prefix_sum;
+    static cuda::function<void (T const*, T*, const uint)> prefix_sum;
+    static cuda::function<void (T const*, T*, T const*, const uint)> add_block_sums;
+};
+
+template <typename T0, typename T1, typename T2, typename T3>
+inline void block_prefix_sum(T0& t0, T1& t1, T2& t2, T3& t3)
+{
+    __scan<typename T0::value_type>::block_prefix_sum(t0, t1, t2, t3);
+}
+
+template <typename T0, typename T1, typename T2>
+inline void prefix_sum(T0& t0, T1& t1, T2& t2)
+{
+    __scan<typename T0::value_type>::prefix_sum(t0, t1, t2);
+}
+
+template <typename T0, typename T1, typename T2, typename T3>
+inline void add_block_sums(T0& t0, T1& t1, T2& t2, T3& t3)
+{
+    __scan<typename T0::value_type>::add_block_sums(t0, t1, t2, t3);
+}
 
 }}} // namespace mdsim::gpu::scan
 

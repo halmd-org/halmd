@@ -18,6 +18,9 @@
 
 #include "algorithm.h"
 #include "scan_glue.hpp"
+#ifdef USE_SCAN_RAND48
+# include "rand48.cuh"
+#endif
 
 namespace mdsim
 {
@@ -150,8 +153,19 @@ __global__ void add_block_sums(T const* g_in, T* g_out, T const* g_block_sum, co
 namespace mdsim { namespace gpu { namespace scan
 {
 
-cuda::function<void (uint const*, uint*, uint*, const uint)> block_prefix_sum(mdsim::block_prefix_sum);
-cuda::function<void (uint const*, uint*, const uint)> prefix_sum(mdsim::prefix_sum);
-cuda::function<void (uint const*, uint*, uint const*, const uint)> add_block_sums(mdsim::add_block_sums);
+//
+// We cannot instatiate the following functions for multiple types in the
+// same translation unit, because the CUDA linker will complain about
+// conflicting external shared memory declarations. 
+//
+#ifdef USE_SCAN_RAND48
+cuda::function<void (uint48 const*, uint48*, uint48*, const uint)> __scan<uint48>::block_prefix_sum(mdsim::block_prefix_sum);
+cuda::function<void (uint48 const*, uint48*, const uint)> __scan<uint48>::prefix_sum(mdsim::prefix_sum);
+cuda::function<void (uint48 const*, uint48*, uint48 const*, const uint)> __scan<uint48>::add_block_sums(mdsim::add_block_sums);
+#else
+cuda::function<void (uint const*, uint*, uint*, const uint)> __scan<uint>::block_prefix_sum(mdsim::block_prefix_sum);
+cuda::function<void (uint const*, uint*, const uint)> __scan<uint>::prefix_sum(mdsim::prefix_sum);
+cuda::function<void (uint const*, uint*, uint const*, const uint)> __scan<uint>::add_block_sums(mdsim::add_block_sums);
+#endif
 
 }}} // namespace mdsim::gpu::scan
