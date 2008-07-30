@@ -52,6 +52,23 @@ public:
     }
 
     /**
+     * shallow copy constructor
+     */
+    vector(vector_type const& v) : size_(v.size())
+    {
+	_Base::reserve(size_);
+    }
+
+    /**
+     * shallow assignment operator
+     */
+    vector_type& operator=(vector_type const& v)
+    {
+	resize(v.size());
+	return *this;
+    }
+
+    /**
      * returns element count of device vector
      */
     size_type size() const
@@ -102,12 +119,6 @@ public:
     {
 	return _Base::data();
     }
-
-private:
-    // disable default copy constructor
-    vector(vector_type const&);
-    // disable default assignment operator
-    vector_type& operator=(vector_type const&);
 
 private:
     size_type size_;
