@@ -30,9 +30,8 @@
 #include <vector>
 
 #include <gpu/ljfluid_glue.hpp>
-#include <gpu/radix_glue.hpp>
-#include <gpu/scan_glue.hpp>
 #include <rand48.hpp>
+#include <radix.hpp>
 #include <timer.hpp>
 #include <vector2d.hpp>
 #include <vector3d.hpp>
@@ -116,7 +115,6 @@ int main(int argc, char **argv)
 
 	boost::array<cuda::vector<T>, 3> g_r;
 	boost::array<cuda::host::vector<T>, 3> h_r;
-	cuda::vector<T> g_array4(count);
 	boost::array<cuda::vector<uint>, 2> g_sort;
 
 	// compute lattice points on GPU
@@ -137,19 +135,13 @@ int main(int argc, char **argv)
 	stop[1].record(stream);
 
 	// parallel radix sort
-	cuda::vector<uint> g_bucket(blocks * threads * radix::BUCKETS_PER_THREAD);
-	cuda::vector<uint> g_bucket2(g_bucket.size());
-	cuda::config dim_scan((g_bucket.size() + 2 * radix::BUCKET_SIZE - 1) / (2 * radix::BUCKET_SIZE), radix::BUCKET_SIZE);
-	cuda::vector<uint> g_array2(count), g_array3(count);
-	cuda::vector<uint> g_block_sum(dim_scan.blocks_per_grid());
-	cuda::vector<uint> g_block_sum2(g_block_sum.size());
+	mdsim::radix_sort<T> radix(count, blocks, threads);
 
 	for (uint i = 0; i < g_sort.size(); ++i) {
 	    g_r[i + 1].resize(g_r[0].size());
 	    cuda::copy(g_r[i], g_r[i + 1]);
 
 	    start[i + 2].record(stream);
-
 	    if (i == 0) {
 		// generate array of random integers in [0, 2^32-1] on GPU
 		g_sort[0].resize(count);
@@ -163,27 +155,8 @@ int main(int argc, char **argv)
 		cuda::configure(dim.grid, dim.block, stream);
 		ljfluid::sfc_hilbert_encode(g_r[i + 1], g_sort[1]);
 	    }
-
-	    for (uint r = 0; r < 32; r += radix::RADIX) {
-		// compute partial radix counts
-		cuda::configure(blocks, threads, threads * radix::BUCKETS_PER_THREAD * sizeof(uint), stream);
-		radix::histogram_keys(g_sort[i], g_bucket, count, r);
-
-		// parallel prefix sum over radix counts
-		cuda::configure(dim_scan.grid, dim_scan.block, scan::boff(2 * dim_scan.threads_per_block()) * sizeof(uint), stream);
-		scan::block_prefix_sum(g_bucket, g_bucket2, g_block_sum, g_bucket.size());
-		cuda::configure(1, dim_scan.block, scan::boff(2 * dim_scan.threads_per_block() * sizeof(uint)), stream);
-		scan::prefix_sum(g_block_sum, g_block_sum2, g_block_sum.size());
-		cuda::configure(dim_scan.grid, dim_scan.block, stream);
-		scan::add_block_sums(g_bucket2, g_bucket, g_block_sum2, g_bucket.size());
-
-		// permute array
-		cuda::configure(blocks, threads, threads * radix::BUCKETS_PER_THREAD * sizeof(uint), stream);
-		radix::permute(g_sort[i], g_array2, g_r[i + 1], g_array4, g_bucket, count, r);
-		cuda::copy(g_array2, g_sort[i], stream);
-		cuda::copy(g_array4, g_r[i + 1], stream);
-	    }
-
+	    // radix sort integers and particle positions
+	    radix(g_sort[i], g_r[i + 1], stream);
 	    stop[i + 2].record(stream);
 
 	    h_r[i + 1].resize(h_r[0].size());
