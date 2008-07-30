@@ -42,7 +42,7 @@ struct __boltzmann
 };
 
 template <typename T0, typename T1, typename T2>
-inline void boltzmann(T0& t0, T1& t1, T2& t2)
+inline void boltzmann(T0& t0, T1 const& t1, T2& t2)
 {
     __boltzmann<typename T0::value_type>::ref(t0, t1, t2);
 }
