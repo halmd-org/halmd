@@ -22,16 +22,17 @@
 #include <boost/program_options.hpp>
 #include <cmath>
 #include <deque>
-#include <gpu/radix_glue.hpp>
-#include <gpu/scan_glue.hpp>
 #include <iomanip>
 #include <iostream>
 #include <libgen.h>
-#include <rand48.hpp>
 #include <stdexcept>
 #include <stdio.h>
-#include <timer.hpp>
 #include <vector>
+
+#include <radix.hpp>
+#include <rand48.hpp>
+#include <timer.hpp>
+
 namespace po = boost::program_options;
 #define foreach BOOST_FOREACH
 
@@ -105,33 +106,11 @@ int main(int argc, char **argv)
 	stream.synchronize();
 
 	// parallel radix sort
-	cuda::vector<uint> g_bucket(blocks * threads * radix::BUCKETS_PER_THREAD);
-	cuda::vector<uint> g_bucket2(g_bucket.size());
-	cuda::config dim_scan((g_bucket.size() + 2 * radix::BUCKET_SIZE - 1) / (2 * radix::BUCKET_SIZE), radix::BUCKET_SIZE);
-	cuda::vector<uint> g_array2(count), g_array3(count), g_array4(count);
-	cuda::vector<uint> g_block_sum(dim_scan.blocks_per_grid());
-	cuda::vector<uint> g_block_sum2(g_block_sum.size()), g_block_block_sum(1);
+	mdsim::radix_sort<uint> radix(count, blocks, threads);
+	cuda::vector<uint> g_dummy(count);
 	cuda::host::vector<uint> h_array2(count);
-
 	start.record(stream);
-	for (uint r = 0; r < 32; r += radix::RADIX) {
-	    // compute partial radix counts
-	    cuda::configure(blocks, threads, threads * radix::BUCKETS_PER_THREAD * sizeof(uint), stream);
-	    radix::histogram_keys(g_array, g_bucket, count, r);
-
-	    // parallel prefix sum over radix counts
-	    cuda::configure(dim_scan.grid, dim_scan.block, scan::boff(2 * dim_scan.threads_per_block()) * sizeof(uint), stream);
-	    scan::block_prefix_sum(g_bucket, g_bucket2, g_block_sum, g_bucket.size());
-	    cuda::configure(1, dim_scan.block, scan::boff(2 * dim_scan.threads_per_block() * sizeof(uint)), stream);
-	    scan::block_prefix_sum(g_block_sum, g_block_sum2, g_block_block_sum, g_block_sum.size());
-	    cuda::configure(dim_scan.grid, dim_scan.block, stream);
-	    scan::add_block_sums(g_block_sum2, g_bucket2, g_bucket, g_bucket.size());
-
-	    // permute array
-	    cuda::configure(blocks, threads, threads * radix::BUCKETS_PER_THREAD * sizeof(uint), stream);
-	    radix::permute(g_array, g_array2, g_array3, g_array4, g_bucket, count, r);
-	    cuda::copy(g_array2, g_array, stream);
-	}
+	radix(g_array, g_dummy, stream);
 	stop.record(stream);
 	cuda::copy(g_array, h_array2, stream);
 
