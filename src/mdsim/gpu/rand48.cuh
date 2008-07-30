@@ -19,23 +19,26 @@
 #ifndef MDSIM_GPU_RAND48_H
 #define MDSIM_GPU_RAND48_H
 
-#include "cutil.h"
-
-
-namespace rand48
+/**
+ * 48-bit unsigned integer operations
+ */
+struct uint48
 {
+    uint x, y, z;
 
-/** leapfrogging multiplier */
-extern __constant__ uint3 a;
-/** leapfrogging addend */
-extern __constant__ uint3 c;
+    uint48() {}
+    uint48(uint48 const& i) : x(i.x), y(i.y), z(i.z) {}
+    uint48(uint const& i) : x(i), y(i), z(i) {}
+    uint48(uint const& x, uint const& y, uint const& z) : x(x), y(y), z(z) {}
+};
 
+#ifdef __CUDACC__
 
 /**
  * combined multiply-add-operation for 48-bit integers
  */
 template <typename T>
-__inline__ __device__ T muladd(uint3 a, T b, uint3 c)
+__device__ T muladd(uint48 a, T b, uint48 c)
 {
     uint d;
     T r;
@@ -75,62 +78,31 @@ __inline__ __device__ T muladd(uint3 a, T b, uint3 c)
     return r;
 }
 
-
 /**
- * returns uniform random number in [0.0, 1.0)
+ * add-operation for 48-bit integers
  */
-__inline__ __device__ float uniform(ushort3& state)
+__device__ uint48& operator+=(uint48& a, uint48 const& b)
 {
-    float r = state.z / 65536.f + state.y / 4294967296.f;
-    state = muladd(a, state, c);
-    return r;
+    uint d = a.x + b.x;
+    a.x = (d & 0xFFFF);
+    d >>= 16;
+    d += a.y + b.y;
+    a.y = (d & 0xFFFF);
+    d >>= 16;
+    d += a.z + b.z;
+    a.z = (d & 0xFFFF);
+    return a;
 }
 
-
 /**
- * returns random integer in [0, 2^32-1]
+ * add-operation for 48-bit integers
  */
-__inline__ __device__ uint get(ushort3& state)
+__device__ uint48 operator+(uint48 const& a, uint48 b)
 {
-    uint r = (state.z << 16UL) + state.y;
-    state = muladd(a, state, c);
-    return r;
+    b += a;
+    return b;
 }
 
-
-/**
- * generate 2 random numbers from Gaussian distribution with given variance
- */
-__inline__ __device__ void gaussian(float& r1, float& r2, float const& var, ushort3& state)
-{
-    //
-    // The Box-Muller transformation for generating random numbers
-    // in the normal distribution was originally described in
-    //
-    // G.E.P. Box and M.E. Muller, A Note on the Generation of
-    // Random Normal Deviates, The Annals of Mathematical Statistics,
-    // 1958, 29, p. 610-611
-    //
-    // Here, we use instead the faster polar method of the Box-Muller
-    // transformation, see
-    //
-    // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
-    // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
-    //
-
-    float s;
-
-    do {
-	r1 = 2 * uniform(state) - 1;
-	r2 = 2 * uniform(state) - 1;
-	s = r1 * r1 + r2 * r2;
-    } while (s >= 1);
-
-    s = sqrtf(-2 * var * logf(s) / s);
-    r1 *= s;
-    r2 *= s;
-}
-
-} // namespace rand48
+#endif /* __CUDACC__ */
 
 #endif /* ! MDSIM_GPU_RAND48_H */

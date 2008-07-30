@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <iostream>
 #include "gpu/rand48_glue.hpp"
-#include "gpu/ljfluid_glue.hpp"
+#include "scan.hpp"
 
 
 namespace mdsim
@@ -74,18 +74,26 @@ public:
      */
     void set(unsigned int seed, cuda::stream& stream)
     {
-	cuda::vector<uint3> a(1), c(1);
-
+	// compute leapfrog multipliers for initialization
+	cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::init(state_, a, c, seed);
+	gpu::rand48::leapfrog(g_a);
+
+	// compute leapfrog addends for initialization
+	cuda::copy(g_a, g_c, stream);
+	mdsim::prefix_sum<uint48> scan(g_c.size(), dim_.threads_per_block());
+	scan(g_c, stream);
+
+	// initialize generator with seed
+	cuda::vector<uint48> a(1), c(1);
+	cuda::configure(dim_.grid, dim_.block, stream);
+	gpu::rand48::set(state_, g_a, g_c, a, c, seed);
 	stream.synchronize();
 
-	// copy leapfrogging multiplier into constant device memory
+	// copy leapfrog multiplier into constant device memory
 	cuda::copy(a, gpu::rand48::a);
-	cuda::copy(a, mdsim::gpu::ljfluid::a);
-	// copy leapfrogging addend into constant device memory
+	// copy leapfrog addend into constant device memory
 	cuda::copy(c, gpu::rand48::c);
-	cuda::copy(c, mdsim::gpu::ljfluid::c);
     }
 
     /*
@@ -128,19 +136,28 @@ public:
      */
     void restore(state_type const& mem)
     {
-	cuda::vector<uint3> a(1), c(1);
 	cuda::stream stream;
 
+	// compute leapfrog multipliers for initialization
+	cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::restore(state_, a, c, mem);
+	gpu::rand48::leapfrog(g_a);
+
+	// compute leapfrog addends for initialization
+	cuda::copy(g_a, g_c, stream);
+	mdsim::prefix_sum<uint48> scan(g_c.size(), dim_.threads_per_block());
+	scan(g_c, stream);
+
+	// initialize generator from state
+	cuda::vector<uint48> a(1), c(1);
+	cuda::configure(dim_.grid, dim_.block, stream);
+	gpu::rand48::restore(state_, g_a, g_c, a, c, mem);
 	stream.synchronize();
 
-	// copy leapfrogging multiplier into constant device memory
+	// copy leapfrog multiplier into constant device memory
 	cuda::copy(a, gpu::rand48::a);
-	cuda::copy(a, mdsim::gpu::ljfluid::a);
-	// copy leapfrogging addend into constant device memory
+	// copy leapfrog addend into constant device memory
 	cuda::copy(c, gpu::rand48::c);
-	cuda::copy(c, mdsim::gpu::ljfluid::c);
     }
 
     /**

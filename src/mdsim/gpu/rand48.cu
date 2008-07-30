@@ -16,95 +16,103 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * FIXME ported to CUDA from GSL
- */
-
-/*
- * FIXME description of algorithm
- */
-
-#include "rand48_glue.hpp"
 #include "cutil.h"
-#include "rand48.h"
-using namespace cuda;
+#include "rand48.cuh"
+#include "rand48_glue.hpp"
 
-
+/*
+ * This is a parallel version of the Unix rand48 generator for CUDA.
+ * It is based on the GNU Scientific Library rand48 implementation.
+ */
 namespace rand48
 {
 
 /** leapfrogging multiplier */
-static __constant__ uint3 a;
+static __constant__ uint48 a;
 /** leapfrogging addend */
-static __constant__ uint3 c;
-
+static __constant__ uint48 c;
 
 /**
- * calculate leapfrog rand48 multiplier and addend in order to jump
- * ahead N numbers in the random number sequence with a single step
+ * compute leapfrog multipliers for initialization
  */
-__inline__ __device__ void leapfrog(uint3& A, uint3& C, unsigned int N)
+__global__ void leapfrog(uint48* g_la)
 {
-    const uint3 a = make_uint3(0xE66D, 0xDEEC, 0x0005);
-    const uint3 c = make_uint3(0x000B, 0, 0);
-
-    const uint3 zero = make_uint3(0, 0, 0);
-    const uint3 one = make_uint3(1, 0, 0);
-    int k;
+    const uint48 a(0xE66D, 0xDEEC, 0x0005);
 
     //
     // leapfrog multiplier:
     //   A = a^N mod m
     //
-    // leapfrog addend:
-    //   C = (c * sum(n = 0..(N-1), a^n)) mod m
-    //
 
-    A = one;
-    C = one;
+    uint48 A = a;
+    uint48 x = a;
 
-    for (k = 1; k < N; k++) {
-	A = muladd(a, A, zero);
-	C = muladd(C, one, A);
+    // fast exponentiation by squares
+    for (uint k = GTID; k > 0; k >>= 1) {
+	if (k % 2 == 1) {
+	    A = muladd(x, A, 0);
+	}
+	x = muladd(x, x, 0);
     }
 
-    A = muladd(a, A, zero);
-    C = muladd(c, C, zero);
+    g_la[GTID] = A;
 }
-
 
 /**
  * initialize generator with 32-bit integer seed
  */
-__global__ void init(ushort3 *y, uint3 *a, uint3 *c, uint seed)
+__global__ void set(ushort3 *y, uint48 const* g_la, uint48 const* g_lc, uint48 *g_a, uint48 *g_c, uint seed)
 {
-    uint3 A, C;
-    ushort3 x;
+    const uint48 c(0x000B, 0, 0);
 
-    leapfrog(A, C, GTID + 1);
+    //
+    // leapfrog addend:
+    //   C = (c * sum(n = 0..(N-1), a^n)) mod m
+    //
 
-    if (GTID + 1 == GTDIM) {
+    const uint48 A = g_la[GTID];
+    const uint48 C = muladd(c, g_lc[GTID], c);
+
+    if (GTID == GTDIM - 1) {
 	// store leapfrog constants
-	*a = A;
-	*c = C;
+	*g_a = A;
+	*g_c = C;
     }
 
-    if (seed == 0) {
-	x.x = 0x330E;
-	// default seed
-	x.y = 0xABCD;
-	x.z = 0x1234;
-    }
-    else {
-	x.x = 0x330E;
+    // default seed
+    ushort3 x = make_ushort3(0x330E, 0xABCD, 0x1234);
+
+    if (seed > 0) {
 	x.y = seed & 0xFFFF;
 	x.z = (seed >> 16) & 0xFFFF;
     }
 
-    // generate initial states
+    // generate initial state
     y[GTID] = muladd(A, x, C);
 }
 
+/**
+ * restore generate state
+ */
+__global__ void restore(ushort3 *x, uint48 const* g_la, uint48 const* g_lc, uint48 *g_a, uint48 *g_c, ushort3 state)
+{
+    const uint48 c(0x000B, 0, 0);
+
+    const uint48 A = g_la[GTID];
+    const uint48 C = muladd(c, g_lc[GTID], c);
+
+    if (GTID == GTDIM - 1) {
+	// store leapfrog constants
+	*g_a = A;
+	*g_c = C;
+
+	x[0] = state;
+    }
+    else {
+	// generate initial states
+	x[GTID + 1] = muladd(A, state, C);
+    }
+}
 
 /**
  * save generator state
@@ -116,27 +124,14 @@ __global__ void save(ushort3 *x, ushort3 *state)
     }
 }
 
-
 /**
- * restore generate state
+ * returns uniform random number in [0.0, 1.0)
  */
-__global__ void restore(ushort3 *x, uint3 *a, uint3 *c, ushort3 state)
+__device__ float uniform(ushort3& state)
 {
-    uint3 A, C;
-
-    leapfrog(A, C, GTID + 1);
-
-    if (GTID + 1 == GTDIM) {
-	// store leapfrog constants
-	*a = A;
-	*c = C;
-
-	x[0] = state;
-    }
-    else {
-	// generate initial states
-	x[GTID + 1] = muladd(A, state, C);
-    }
+    float r = state.z / 65536.f + state.y / 4294967296.f;
+    state = muladd(a, state, c);
+    return r;
 }
 
 /**
@@ -154,6 +149,16 @@ __global__ void uniform(ushort3* state, float* v, unsigned int len)
 }
 
 /**
+ * returns random integer in [0, 2^32-1]
+ */
+__device__ uint get(ushort3& state)
+{
+    uint r = (state.z << 16UL) + state.y;
+    state = muladd(a, state, c);
+    return r;
+}
+
+/**
  * fill array with random integers in [0, 2^32-1]
  */
 __global__ void get(ushort3* state, uint* v, unsigned int len)
@@ -167,19 +172,87 @@ __global__ void get(ushort3* state, uint* v, unsigned int len)
     state[GTID] = x;
 }
 
+/**
+ * generate 2 random numbers from Gaussian distribution with given variance
+ */
+__device__ void gaussian(float& r1, float& r2, float const& var, ushort3& state)
+{
+    //
+    // The Box-Muller transformation for generating random numbers
+    // in the normal distribution was originally described in
+    //
+    // G.E.P. Box and M.E. Muller, A Note on the Generation of
+    // Random Normal Deviates, The Annals of Mathematical Statistics,
+    // 1958, 29, p. 610-611
+    //
+    // Here, we use instead the faster polar method of the Box-Muller
+    // transformation, see
+    //
+    // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+    // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
+    //
+
+    float s;
+
+    do {
+	r1 = 2 * uniform(state) - 1;
+	r2 = 2 * uniform(state) - 1;
+	s = r1 * r1 + r2 * r2;
+    } while (s >= 1);
+
+    s = sqrtf(-2 * var * logf(s) / s);
+    r1 *= s;
+    r2 *= s;
+}
+
+/**
+ * generate random 2-dimensional Maxwell-Boltzmann distributed velocities
+ */
+__global__ void boltzmann(float4* g_v, float temperature, ushort3* g_state)
+{
+    ushort3 state = g_state[GTID];
+    float4 v;
+
+    // Box-Muller transformation generates two variates at once
+    rand48::gaussian(v.x, v.y, temperature, state);
+    rand48::gaussian(v.z, v.w, temperature, state);
+
+    g_state[GTID] = state;
+    g_v[GTID] = v;
+}
+
+/**
+ * generate random n-dimensional Maxwell-Boltzmann distributed velocities
+ */
+__global__ void boltzmann(float2* g_v, float temperature, ushort3* g_state)
+{
+    ushort3 state = g_state[GTID];
+    float2 v;
+
+    // Box-Muller transformation generates two variates at once
+    rand48::gaussian(v.x, v.y, temperature, state);
+
+    g_state[GTID] = state;
+    g_v[GTID] = v;
+}
+
 } // namespace rand48
 
 
 namespace mdsim { namespace gpu { namespace rand48
 {
 
-symbol<uint3> a(::rand48::a);
-symbol<uint3> c(::rand48::c);
+cuda::function<void (uint48*)> leapfrog(::rand48::leapfrog);
+cuda::function<void (ushort3*, uint48 const*, uint48 const*, uint48*, uint48*, unsigned int)> set(::rand48::set);
+cuda::function<void (ushort3*, uint48 const*, uint48 const*, uint48*, uint48*, ushort3)> restore(::rand48::restore);
+cuda::function<void (ushort3*, ushort3*)> save(::rand48::save);
+cuda::function<void (ushort3*, float*, unsigned int)> uniform(::rand48::uniform);
+cuda::function<void (ushort3*, uint*, unsigned int)> get(::rand48::get);
 
-function<void (ushort3*, uint3*, uint3*, unsigned int)> init(::rand48::init);
-function<void (ushort3*, ushort3*)> save(::rand48::save);
-function<void (ushort3*, uint3*, uint3*, ushort3)> restore(::rand48::restore);
-function<void (ushort3*, float*, unsigned int)> uniform(::rand48::uniform);
-function<void (ushort3*, uint*, unsigned int)> get(::rand48::get);
+cuda::symbol<uint48> a(::rand48::a);
+cuda::symbol<uint48> c(::rand48::c);
+
+cuda::function<void (float2*, float, ushort3*)> __boltzmann<float2>::ref(::rand48::boltzmann);
+cuda::function<void (float4*, float, ushort3*)> __boltzmann<float4>::ref(::rand48::boltzmann);
 
 }}} // namespace mdsim::gpu::rand48
