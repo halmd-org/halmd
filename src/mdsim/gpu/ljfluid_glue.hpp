@@ -83,7 +83,7 @@ extern cuda::symbol<unsigned int> nnbl;
 extern cuda::symbol<float> r_cell;
 extern cuda::symbol<float> rr_cell;
 extern cuda::symbol<unsigned int> sfc_level;
-extern cuda::function<void (int const*, int const*, int*)> assign_cells;
+extern cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells;
 extern cuda::function<void (uint*, int*)> find_cell_offset;
 #endif
 

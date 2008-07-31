@@ -533,15 +533,12 @@ __global__ void compute_cell(U const* g_part, uint* g_cell)
  */
 __global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
 {
-    if (GTID == 0) {
-	g_cell_offset[0] = 0;
-    }
-    else if (GTID < npart) {
-	const uint j = g_cell[GTID];
-	const uint k = g_cell[GTID - 1];
-	if (k < j) {
-	    g_cell_offset[j] = GTID;
-	}
+    const uint j = g_cell[GTID];
+    const uint k = (GTID > 0 && GTID < npart) ? g_cell[GTID - 1] : j;
+
+    if (GTID == 0 || k < j) {
+	// particle marks the start of a cell
+	g_cell_offset[j] = GTID;
     }
 }
 
@@ -549,34 +546,33 @@ __global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
  * assign particles to cells
  */
 template <uint cell_size>
-__global__ void assign_cells(int const* g_cell_offset, int const* g_itag, int* g_otag)
+__global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int const* g_itag, int* g_otag)
 {
-    __shared__ int s_tag[cell_size];
-    __shared__ int s_offset[2];
+    __shared__ int s_offset[1];
 
     if (threadIdx.x == 0) {
-	// global offset of this offset in particle list
+	// global offset of this cell in particle list
 	s_offset[0] = g_cell_offset[blockIdx.x];
-	// global offset of next offset in particle list
-	s_offset[1] = (blockIdx.x + 1 < gridDim.x) ? g_cell_offset[blockIdx.x + 1] : -1;
     }
     __syncthreads();
 
-    const int start = s_offset[0];
-    const int end = s_offset[1];
-    const int count = (start >= 0 && end < 0) ? (npart - start) : ((start >= 0) ? (end - start) : 0);
+    const int offset = s_offset[0];
+    // mark as virtual particle
+    int tag = -1;
 
-    if (threadIdx.x < count) {
+    if (offset >= 0) {
+	const int n = offset + threadIdx.x;
+	const uint cell = g_cell[n];
+	const uint itag = g_itag[n];
+
 	// assign particle to cell
-	s_tag[threadIdx.x] = g_itag[start + threadIdx.x];
-    }
-    else {
-	// mark as virtual particle
-	s_tag[threadIdx.x] = VIRTUAL_PARTICLE;
+	if (n < npart && cell == blockIdx.x) {
+	    tag = itag;
+	}
     }
 
     // store cell in global device memory
-    g_otag[blockIdx.x * cell_size + threadIdx.x] = s_tag[threadIdx.x];
+    g_otag[blockIdx.x * cell_size + threadIdx.x] = tag;
 }
 
 /**
@@ -883,8 +879,8 @@ cuda::symbol<unsigned int> nnbl(mdsim::nnbl);
 cuda::symbol<float> r_cell(mdsim::r_cell);
 cuda::symbol<float> rr_cell(mdsim::rr_cell);
 cuda::symbol<unsigned int> sfc_level(mdsim::sfc_level);
-cuda::function<void (int const*, int const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
-cuda::function<void (uint*, int*)> find_cell_offset(find_cell_offset);
+cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
+cuda::function<void (uint*, int*)> find_cell_offset(mdsim::find_cell_offset);
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL

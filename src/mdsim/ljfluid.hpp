@@ -1068,7 +1068,7 @@ void ljfluid<dimension, T>::assign_cells()
 
     // assign particles to cells
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-    gpu::ljfluid::assign_cells(g_cell.offset, g_part.tag, g_cell.first);
+    gpu::ljfluid::assign_cells(g_part.cell, g_cell.offset, g_part.tag, g_cell.first);
 }
 
 #endif /* USE_CELL */
