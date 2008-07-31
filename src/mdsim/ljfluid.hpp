@@ -212,7 +212,7 @@ ljfluid<dimension, T>::ljfluid()
     en_cut = 4. * r6i_cut * (r6i_cut - 1.);
 
     // neighbour list skin
-    r_skin = 0.3;
+    r_skin = 0.5;
     LOG("neighbour list skin: " << r_skin);
 
     // cutoff distance with neighbour list skin
