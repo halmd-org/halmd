@@ -174,6 +174,15 @@ void copy(vector<T> const& src, host::vector<T>& dst, stream& stream)
 
 #endif /* CUDA_WRAPPER_ASYNC_API */
 
+/**
+ * fill device memory array with constant byte value
+ */
+template <typename T>
+void memset(vector<T>& array, int const& value)
+{
+    CUDA_CALL(cudaMemset(array.data(), value, array.size() * sizeof(T)));
+}
+
 } // namespace cuda
 
 #endif /* ! CUDA_MEMORY_HPP */
