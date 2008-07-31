@@ -43,7 +43,6 @@ namespace mdsim { namespace gpu { namespace ljfluid
 
 #ifdef DIM_3D
 extern cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
-extern cuda::function<void (float4*, float, ushort3*)> boltzmann;
 #ifdef USE_CELL
 extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
 extern cuda::function<void (float4 const*, float4*, int*)> assign_cells;
@@ -55,7 +54,6 @@ extern cuda::function<void (float4*, unsigned int)> lattice;
 extern cuda::function<void (float4*, unsigned int)> lattice_simple;
 #else /* DIM_3D */
 extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
-extern cuda::function<void (float2*, float, ushort3*)> boltzmann;
 #ifdef USE_CELL
 extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
 extern cuda::function<void (float2 const*, float2*, int*)> assign_cells;
@@ -81,9 +79,6 @@ extern cuda::symbol<unsigned int> ncell;
 extern cuda::symbol<float> rri_smooth;
 extern cuda::function <void (float3*, const float2)> sample_smooth_function;
 #endif
-
-extern cuda::symbol<uint3> a;
-extern cuda::symbol<uint3> c;
 
 }}} // namespace mdsim::gpu::ljfluid
 

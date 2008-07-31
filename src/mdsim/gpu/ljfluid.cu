@@ -22,19 +22,6 @@
 #include "dsfun.h"
 #include "vector2d.h"
 #include "vector3d.h"
-#include "rand48.h"
-
-
-namespace rand48
-{
-
-/** leapfrogging multiplier */
-static __constant__ uint3 a;
-/** leapfrogging addend */
-static __constant__ uint3 c;
-
-}
-
 
 namespace mdsim
 {
@@ -468,25 +455,6 @@ __global__ void lattice_simple(U* g_r, unsigned int n)
     g_r[GTID] = pack(r * (box / n));
 }
 
-/**
- * generate random n-dimensional Maxwell-Boltzmann distributed velocities
- */
-template <typename U>
-__global__ void boltzmann(U* g_v, float temp, ushort3* g_rng)
-{
-    ushort3 rng = g_rng[GTID];
-    U v;
-
-    // Box-Muller transformation generates two variates at once
-    rand48::gaussian(v.x, v.y, temp, rng);
-#ifdef DIM_3D
-    rand48::gaussian(v.z, v.w, temp, rng);
-#endif
-
-    g_rng[GTID] = rng;
-    g_v[GTID] = v;
-}
-
 #ifdef USE_CELL
 /**
  * assign particles to cells
@@ -663,7 +631,6 @@ cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::m
 #endif
 cuda::function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
 cuda::function<void (float4*, unsigned int)> lattice_simple(mdsim::lattice_simple<float3>);
-cuda::function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else /* DIM_3D */
 cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
 #ifdef USE_CELL
@@ -675,7 +642,6 @@ cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::m
 #endif
 cuda::function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
 cuda::function<void (float2*, unsigned int)> lattice_simple(mdsim::lattice_simple<float2>);
-cuda::function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif /* DIM_3D */
 
 cuda::symbol<unsigned int> npart(mdsim::npart);
@@ -692,8 +658,5 @@ cuda::symbol<unsigned int> ncell(mdsim::ncell);
 cuda::symbol<float> rri_smooth(mdsim::rri_smooth);
 cuda::function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
 #endif
-
-cuda::symbol<uint3> a(::rand48::a);
-cuda::symbol<uint3> c(::rand48::c);
 
 }}} // namespace mdsim::gpu::ljfluid

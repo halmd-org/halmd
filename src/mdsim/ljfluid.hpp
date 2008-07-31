@@ -33,10 +33,10 @@
 #include "gpu/ljfluid_glue.hpp"
 #include "log.hpp"
 #include "perf.hpp"
+#include "radix.hpp"
 #include "rand48.hpp"
 #include "sample.hpp"
 #include "statistics.hpp"
-
 
 #define foreach BOOST_FOREACH
 
@@ -58,7 +58,7 @@ public:
 #endif
 
 public:
-    /** initialize fixed simulation parameters */
+    /** initialise fixed simulation parameters */
     ljfluid();
     /** set number of particles in system */
     void particles(unsigned int value);
@@ -246,8 +246,10 @@ private:
     } g_part;
 #endif
 
-    /** random number generator */
+    /** GPU random number generator */
     mdsim::rand48 rng_;
+    /** GPU mdsim::radix sort for particle positions */
+    mdsim::radix_sort<g_vector> radix_sort;
     /** CUDA execution dimensions */
     cuda::config dim_;
 #ifdef USE_CELL
@@ -268,7 +270,7 @@ private:
 
 
 /**
- * initialize fixed simulation parameters
+ * initialise fixed simulation parameters
  */
 template <unsigned dimension, typename T>
 ljfluid<dimension, T>::ljfluid()
@@ -577,6 +579,22 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     catch (cuda::error const& e) {
 	throw exception("failed to change random number generator dimensions");
     }
+
+    try {
+	// compute optimal number of blocks for GeForce 8800 with 16 multiprocessors
+	const uint threads = dim_.threads_per_block();
+	const uint max_blocks = (16 * 512) / (threads * gpu::radix::BUCKETS_PER_THREAD / 2);
+	const uint blocks = std::min((npart + 2 * threads - 1) / (2 * threads), max_blocks);
+
+	LOG("number of CUDA blocks for radix sort: " << blocks);
+	LOG("number of CUDA threads for radix sort: " << threads);
+
+	// allocate global device memory for radix sort
+	radix_sort.resize(npart, blocks, threads);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate global device memory for radix sort");
+    }
 }
 
 /**
@@ -676,8 +694,8 @@ void ljfluid<dimension, T>::rng(unsigned int seed)
 {
     LOG("random number generator seed: " << seed);
     try {
-	rng_.set(seed, stream);
-	stream.synchronize();
+	rng_.set(seed, stream_);
+	stream_.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to seed random number generator");
@@ -732,17 +750,8 @@ void ljfluid<dimension, T>::lattice()
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_cell.r, n);
 	event_[1].record(stream_);
-	// randomly permute particles to increase force summing accuracy
-	cuda::copy(g_cell.r, h_cell.r, stream_);
-	stream_.synchronize();
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_sample.r[i] = T(h_cell.r[i]);
-	}
-	rng_.shuffle(h_sample.r, stream_);
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_cell.r[i] = make_float(h_sample.r[i]);
-	}
-	cuda::copy(h_cell.r, g_cell2.r, stream_);
+	// TODO randomly permute particles to increase force summing accuracy
+	cuda::copy(g_cell.r, g_cell2.r, stream_);
 	// assign particles to cells
 	event_[2].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
@@ -761,17 +770,7 @@ void ljfluid<dimension, T>::lattice()
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_part.r, n);
 	event_[1].record(stream_);
-	// randomly permute particles to increase force summing accuracy
-	cuda::copy(g_part.r, h_part.r, stream_);
-	stream_.synchronize();
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_sample.r[i] = T(h_part.r[i]);
-	}
-	rng_.shuffle(h_part.r, stream_);
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.r[i] = make_float(h_sample.r[i]);
-	}
-	cuda::copy(h_part.r, g_part.r);
+	// TODO randomly permute particles to increase force summing accuracy
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
@@ -800,14 +799,13 @@ void ljfluid<dimension, T>::lattice()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::temperature(float temp)
 {
-    LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
+    LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     try {
 #ifdef USE_CELL
 	g_cell.v.reserve(dim_.threads());
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::boltzmann(g_cell.v, temp, rng_.state());
+	rng_.boltzmann(g_cell.v, temp, stream_);
 	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
 	cuda::copy(g_cell.v, h_cell.v, stream_);
@@ -864,7 +862,7 @@ void ljfluid<dimension, T>::temperature(float temp)
 	}
 	// set maximum velocity magnitude
 	v_max = std::sqrt(vv_max);
-	// initialize sum over maximum velocity magnitudes since last cell lists update
+	// initialise sum over maximum velocity magnitudes since last cell lists update
 	v_max_sum = v_max;
 	// copy particle velocities from host to GPU
 	cuda::copy(h_cell.v, g_cell.v, stream_);
