@@ -20,8 +20,10 @@
 #define CUDA_TEXTURE_HPP
 
 #include <cuda/cuda_runtime.h>
-#include <cuda_wrapper/error.hpp>
-#include <cuda_wrapper/vector.hpp>
+#ifndef __CUDACC__
+# include <cuda_wrapper/error.hpp>
+# include <cuda_wrapper/vector.hpp>
+#endif
 
 /*
  * CUDA texture management
@@ -39,8 +41,7 @@ public:
      * type-safe constructor for CUDA host code
      */
     texture(::texture<T, 1, cudaReadModeElementType> const& tex) : tex(tex) {}
-#endif
-
+#else
     /**
      * bind CUDA texture to device memory array
      */
@@ -56,6 +57,7 @@ public:
     {
 	CUDA_CALL(cudaUnbindTexture(&tex));
     }
+#endif
 
 private:
     textureReference const& tex;
