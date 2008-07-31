@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cuda_wrapper/allocator.hpp>
+#include <cuda_wrapper/memory.hpp>
 #include <vector>
 
 
@@ -52,20 +53,33 @@ public:
     }
 
     /**
-     * shallow copy constructor
+     * deep copy constructor
      */
-    vector(vector_type const& v) : size_(v.size())
+    vector(vector_type const& v)
     {
-	_Base::reserve(size_);
+	vector w(v.size());
+	copy(v, w);
+	swap(w);
     }
 
     /**
-     * shallow assignment operator
+     * deep assignment operator
      */
     vector_type& operator=(vector_type const& v)
     {
-	resize(v.size());
+	vector w(v.size());
+	copy(v, w);
+	swap(w);
 	return *this;
+    }
+
+    /**
+     * swap device memory with another vector
+     */
+    void swap(vector_type& v)
+    {
+	std::swap(v.size_, size_);
+	_Base::swap(v);
     }
 
     /**
