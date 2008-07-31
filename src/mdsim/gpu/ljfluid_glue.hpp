@@ -21,6 +21,8 @@
 
 #include <cuda_wrapper.hpp>
 
+/** virtual particle tag */
+#define VIRTUAL_PARTICLE	-1
 
 #ifdef USE_CELL
 
@@ -31,8 +33,6 @@
 
 /** real particle tag */
 #define REAL_PARTICLE(x)	(x)
-/** virtual particle tag */
-#define VIRTUAL_PARTICLE	-1
 
 #define IS_REAL_PARTICLE(x)	(x >= 0)
 
@@ -43,12 +43,11 @@ namespace mdsim { namespace gpu { namespace ljfluid
 
 #ifdef DIM_3D
 extern cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
-extern cuda::function<void (float4*, float, ushort3*)> boltzmann;
 # ifdef USE_CELL
 extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float4 const*, int*)> assign_cells;
 extern cuda::texture<float4> r;
 extern cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode;
+extern cuda::function<void (float4 const*, uint*)> compute_cell;
 # else
 extern cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
 # endif
@@ -56,12 +55,11 @@ extern cuda::function<void (float4*, unsigned int)> lattice;
 extern cuda::function<void (float4*, unsigned int)> lattice_simple;
 #else /* DIM_3D */
 extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
-extern cuda::function<void (float2*, float, ushort3*)> boltzmann;
 # ifdef USE_CELL
 extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float2 const*, int*)> assign_cells;
 extern cuda::texture<float2> r;
 extern cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode;
+extern cuda::function<void (float2 const*, uint*)> compute_cell;
 # else
 extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
 # endif
@@ -75,6 +73,8 @@ extern cuda::symbol<float> timestep;
 extern cuda::symbol<float> r_cut;
 extern cuda::symbol<float> rr_cut;
 extern cuda::symbol<float> en_cut;
+extern cuda::function<void (int*)> init_tags;
+
 #ifdef USE_CELL
 extern cuda::function<void (int const*, int*)> update_cells;
 extern cuda::function<void (int const*, int*)> update_neighbours;
@@ -83,15 +83,14 @@ extern cuda::symbol<unsigned int> nnbl;
 extern cuda::symbol<float> r_cell;
 extern cuda::symbol<float> rr_cell;
 extern cuda::symbol<unsigned int> sfc_level;
+extern cuda::function<void (int const*, int const*, int*)> assign_cells;
+extern cuda::function<void (uint*, int*)> find_cell_offset;
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL
 extern cuda::symbol<float> rri_smooth;
 extern cuda::function <void (float3*, const float2)> sample_smooth_function;
 #endif
-
-extern cuda::symbol<uint3> a;
-extern cuda::symbol<uint3> c;
 
 }}} // namespace mdsim::gpu::ljfluid
 

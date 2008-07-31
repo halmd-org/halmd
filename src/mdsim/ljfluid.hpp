@@ -32,10 +32,10 @@
 #include "gpu/ljfluid_glue.hpp"
 #include "log.hpp"
 #include "perf.hpp"
+#include "radix.hpp"
 #include "rand48.hpp"
 #include "sample.hpp"
 #include "statistics.hpp"
-
 
 #define foreach BOOST_FOREACH
 
@@ -57,7 +57,7 @@ public:
 #endif
 
 public:
-    /** initialize fixed simulation parameters */
+    /** initialise fixed simulation parameters */
     ljfluid();
     /** set number of particles in system */
     void particles(unsigned int value);
@@ -129,6 +129,12 @@ public:
     trajectory_sample<T> const& trajectory() const { return h_sample; }
 
 private:
+#ifdef USE_CELL
+    /** assign particles to cells */
+    void assign_cells();
+#endif
+
+private:
     /** number of particles in system */
     unsigned int npart;
 #ifdef USE_CELL
@@ -193,6 +199,12 @@ private:
 	cuda::vector<g_vector> v;
 	/** particle forces */
 	cuda::vector<g_vector> f;
+	/** particle tag */
+	cuda::vector<int> tag;
+#ifdef USE_CELL
+	/** particle cell */
+	cuda::vector<unsigned int> cell;
+#endif
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
@@ -200,14 +212,25 @@ private:
     } g_part;
 
 #ifdef USE_CELL
-    /** double buffered cell placeholders in global device memory */
-    std::pair<cuda::vector<int>, cuda::vector<int> > g_cell;
-    /** neighbour list in global device memory */
+    /** cell lists in global device memory */
+    struct {
+	/** double buffered cell placeholders */
+	cuda::vector<int> first, second;
+	/** cell offsets in sorted particle list */
+	cuda::vector<int> offset;
+    } g_cell;
+
+    /** neighbour lists in global device memory */
     cuda::vector<int> g_nbl;
 #endif
 
-    /** random number generator */
+    /** GPU random number generator */
     mdsim::rand48 rng_;
+    /** GPU mdsim::radix sort for particle positions */
+    mdsim::radix_sort<g_vector> radix_sort;
+    /** GPU mdsim::radix sort for particle tags */
+    mdsim::radix_sort<int> radix_sort_tags;
+
     /** CUDA execution dimensions */
     cuda::config dim_;
 #ifdef USE_CELL
@@ -228,7 +251,7 @@ private:
 
 
 /**
- * initialize fixed simulation parameters
+ * initialise fixed simulation parameters
  */
 template <unsigned dimension, typename T>
 ljfluid<dimension, T>::ljfluid()
@@ -309,6 +332,10 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	g_part.R.resize(npart);
 	g_part.v.resize(npart);
 	g_part.f.resize(npart);
+	g_part.tag.resize(npart);
+#ifdef USE_CELL
+	g_part.cell.resize(npart);
+#endif
 	g_part.en.resize(npart);
 	g_part.virial.resize(npart);
     }
@@ -492,6 +519,7 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     try {
 	g_cell.first.resize(dim_cell_.threads());
 	g_cell.second.resize(dim_cell_.threads());
+	g_cell.offset.resize(dim_cell_.blocks_per_grid());
 	g_nbl.resize(npart * nnbl);
     }
     catch (cuda::error const& e) {
@@ -506,6 +534,10 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 	g_part.R.reserve(dim_.threads());
 	g_part.v.reserve(dim_.threads());
 	g_part.f.reserve(dim_.threads());
+	g_part.tag.reserve(dim_.threads());
+#ifdef USE_CELL
+	g_part.cell.reserve(dim_.threads());
+#endif
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
 #ifdef USE_CELL
@@ -525,6 +557,23 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     catch (cuda::error const& e) {
 	throw exception("failed to change random number generator dimensions");
     }
+
+    try {
+	// compute optimal number of blocks for GeForce 8800 with 16 multiprocessors
+	const uint threads = dim_.threads_per_block();
+	const uint max_blocks = (16 * 512) / (threads * gpu::radix::BUCKETS_PER_THREAD / 2);
+	const uint blocks = std::min((npart + 2 * threads - 1) / (2 * threads), max_blocks);
+
+	LOG("number of CUDA blocks for radix sort: " << blocks);
+	LOG("number of CUDA threads for radix sort: " << threads);
+
+	// allocate global device memory for radix sort
+	radix_sort.resize(npart, blocks, threads);
+	radix_sort_tags.resize(npart, blocks, threads);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate global device memory for radix sort");
+    }
 }
 
 /**
@@ -538,6 +587,9 @@ void ljfluid<dimension, T>::restore(V visitor)
     visitor(h_sample.r, h_sample.v);
 
     try {
+	// assign particle tags
+	cuda::configure(dim_.grid, dim_.block, stream_);
+	gpu::ljfluid::init_tags(g_part.tag);
 	// copy periodically reduced particle positions from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.r[i] = make_float(h_sample.r[i]);
@@ -546,8 +598,7 @@ void ljfluid<dimension, T>::restore(V visitor)
 #ifdef USE_CELL
 	// assign particles to cells
 	event_[0].record(stream_);
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::assign_cells(g_part.r, g_cell.first);
+	assign_cells();
 	event_[1].record(stream_);
 	// update neighbour lists
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
@@ -605,8 +656,8 @@ void ljfluid<dimension, T>::rng(unsigned int seed)
 {
     LOG("random number generator seed: " << seed);
     try {
-	rng_.set(seed, stream);
-	stream.synchronize();
+	rng_.set(seed, stream_);
+	stream_.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to seed random number generator");
@@ -654,6 +705,9 @@ void ljfluid<dimension, T>::lattice()
     LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
     try {
+	// assign particle tags
+	cuda::configure(dim_.grid, dim_.block, stream_);
+	gpu::ljfluid::init_tags(g_part.tag);
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
@@ -665,17 +719,10 @@ void ljfluid<dimension, T>::lattice()
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_sample.r[i] = T(h_part.r[i]);
 	}
-	// randomly permute particles to increase force summing accuracy
-	rng_.shuffle(h_part.r, stream_);
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.r[i] = make_float(h_sample.r[i]);
-	}
-	cuda::copy(h_part.r, g_part.r);
 #ifdef USE_CELL
 	// assign particles to cells
 	event_[2].record(stream_);
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::assign_cells(g_part.r, g_cell.first);
+	assign_cells();
 	event_[3].record(stream_);
 	// update neighbour lists
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
@@ -708,7 +755,7 @@ void ljfluid<dimension, T>::lattice()
     // CUDA time for cell lists initialisation
     m_times[6] += event_[3] - event_[2];
     // CUDA time for neighbour lists update
-    m_times[6] += event_[4] - event_[3];
+    m_times[9] += event_[4] - event_[3];
 #endif
 }
 
@@ -718,12 +765,11 @@ void ljfluid<dimension, T>::lattice()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::temperature(float temp)
 {
-    LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
+    LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     try {
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::boltzmann(g_part.v, temp, rng_.state());
+	rng_.boltzmann(g_part.v, temp, stream_);
 	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
 	cuda::copy(g_part.v, h_part.v, stream_);
@@ -999,6 +1045,33 @@ perf_counters ljfluid<dimension, T>::times()
     }
     return times;
 }
+
+#ifdef USE_CELL
+
+/**
+ * assign particles to cells
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::assign_cells()
+{
+    // compute cell indices for particle positions
+    cuda::configure(dim_.grid, dim_.block, stream_);
+    gpu::ljfluid::compute_cell(g_part.r, g_part.cell);
+
+    // sort cell indices and particle tags
+    radix_sort_tags(g_part.cell, g_part.tag, stream_);
+
+    // compute global cell offsets in sorted particle list
+    cuda::memset(g_cell.offset, 0xff);
+    cuda::configure(dim_.grid, dim_.block, stream_);
+    gpu::ljfluid::find_cell_offset(g_part.cell, g_cell.offset);
+
+    // assign particles to cells
+    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+    gpu::ljfluid::assign_cells(g_cell.offset, g_part.tag, g_cell.first);
+}
+
+#endif /* USE_CELL */
 
 } // namespace mdsim
 

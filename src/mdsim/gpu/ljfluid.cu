@@ -23,19 +23,6 @@
 #include "dsfun.h"
 #include "vector2d.h"
 #include "vector3d.h"
-#include "rand48.h"
-
-
-namespace rand48
-{
-
-/** leapfrogging multiplier */
-static __constant__ uint3 a;
-/** leapfrogging addend */
-static __constant__ uint3 c;
-
-}
-
 
 namespace mdsim
 {
@@ -336,22 +323,15 @@ __global__ void lattice_simple(U* g_r, unsigned int n)
 }
 
 /**
- * generate random n-dimensional Maxwell-Boltzmann distributed velocities
+ * initialise particle tags
  */
-template <typename U>
-__global__ void boltzmann(U* g_v, float temp, ushort3* g_rng)
+__global__ void init_tags(int* g_tag)
 {
-    ushort3 rng = g_rng[GTID];
-    U v;
-
-    // Box-Muller transformation generates two variates at once
-    rand48::gaussian(v.x, v.y, temp, rng);
-#ifdef DIM_3D
-    rand48::gaussian(v.z, v.w, temp, rng);
-#endif
-
-    g_rng[GTID] = rng;
-    g_v[GTID] = v;
+    int tag = VIRTUAL_PARTICLE;
+    if (GTID < npart) {
+	tag = GTID;
+    }
+    g_tag[GTID] = tag;
 }
 
 #ifdef USE_CELL
@@ -540,40 +520,63 @@ __device__ unsigned int compute_cell(T const& r)
 }
 
 /**
+ * compute cell indices for given particle positions
+ */
+template <typename U>
+__global__ void compute_cell(U const* g_part, uint* g_cell)
+{
+    g_cell[GTID] = compute_cell(unpack(g_part[GTID]));
+}
+
+/**
+ * compute global cell offsets in particle list
+ */
+__global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
+{
+    if (GTID == 0) {
+	g_cell_offset[0] = 0;
+    }
+    else if (GTID < npart) {
+	const uint j = g_cell[GTID];
+	const uint k = g_cell[GTID - 1];
+	if (k < j) {
+	    g_cell_offset[j] = GTID;
+	}
+    }
+}
+
+/**
  * assign particles to cells
  */
-template <unsigned int cell_size, typename U>
-__global__ void assign_cells(U const* g_part, int* g_tag)
+template <uint cell_size>
+__global__ void assign_cells(int const* g_cell_offset, int const* g_itag, int* g_otag)
 {
-    __shared__ unsigned int s_cell[cell_size];
     __shared__ int s_tag[cell_size];
-    // number of particles in cell
-    unsigned int n = 0;
+    __shared__ int s_offset[2];
 
-    // mark all particles in cell as virtual particles
-    s_tag[threadIdx.x] = VIRTUAL_PARTICLE;
+    if (threadIdx.x == 0) {
+	// global offset of this offset in particle list
+	s_offset[0] = g_cell_offset[blockIdx.x];
+	// global offset of next offset in particle list
+	s_offset[1] = (blockIdx.x + 1 < gridDim.x) ? g_cell_offset[blockIdx.x + 1] : -1;
+    }
     __syncthreads();
 
-    for (unsigned int i = 0; i < npart; i += cell_size) {
-	// load block of particles from global device memory
-	s_cell[threadIdx.x] = compute_cell(unpack(g_part[i + threadIdx.x]));
-	__syncthreads();
+    const int start = s_offset[0];
+    const int end = s_offset[1];
+    const int count = (start >= 0 && end < 0) ? (npart - start) : ((start >= 0) ? (end - start) : 0);
 
-	if (threadIdx.x == 0) {
-	    for (unsigned int j = 0; j < cell_size && (i + j) < npart; j++) {
-		if (s_cell[j] == blockIdx.x) {
-		    // store particle in cell
-		    s_tag[n] = REAL_PARTICLE(i + j);
-		    // increment particle count in cell
-		    ++n;
-		}
-	    }
-	}
-	__syncthreads();
+    if (threadIdx.x < count) {
+	// assign particle to cell
+	s_tag[threadIdx.x] = g_itag[start + threadIdx.x];
+    }
+    else {
+	// mark as virtual particle
+	s_tag[threadIdx.x] = VIRTUAL_PARTICLE;
     }
 
     // store cell in global device memory
-    g_tag[blockIdx.x * cell_size + threadIdx.x] = s_tag[threadIdx.x];
+    g_otag[blockIdx.x * cell_size + threadIdx.x] = s_tag[threadIdx.x];
 }
 
 /**
@@ -841,30 +844,28 @@ namespace mdsim { namespace gpu { namespace ljfluid
 cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
 # ifdef USE_CELL
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<float3>);
-cuda::function<void (float4 const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float3>);
 cuda::texture<float4> r(mdsim::t_r);
 cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float3>);
+cuda::function<void (float4 const*, uint*)> compute_cell(mdsim::compute_cell);
 # else
 cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 # endif
 cuda::function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
 cuda::function<void (float4*, unsigned int)> lattice_simple(mdsim::lattice_simple<float3>);
-cuda::function<void (float4*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #else /* DIM_3D */
 cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
 # ifdef USE_CELL
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<float2>);
-cuda::function<void (float2 const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float2>);
 cuda::texture<float2> r(mdsim::t_r);
 cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float2>);
+cuda::function<void (float2 const*, uint*)> compute_cell(mdsim::compute_cell);
 # else
 cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 # endif
 cuda::function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
 cuda::function<void (float2*, unsigned int)> lattice_simple(mdsim::lattice_simple<float2>);
-cuda::function<void (float2*, float, ushort3*)> boltzmann(mdsim::boltzmann);
 #endif /* DIM_3D */
 
 cuda::symbol<unsigned int> npart(mdsim::npart);
@@ -873,6 +874,8 @@ cuda::symbol<float> timestep(mdsim::timestep);
 cuda::symbol<float> r_cut(mdsim::r_cut);
 cuda::symbol<float> rr_cut(mdsim::rr_cut);
 cuda::symbol<float> en_cut(mdsim::en_cut);
+cuda::function<void (int*)> init_tags(mdsim::init_tags);
+
 #ifdef USE_CELL
 cuda::function<void (int const*, int*)> update_cells(mdsim::update_cells<CELL_SIZE>);
 cuda::symbol<unsigned int> ncell(mdsim::ncell);
@@ -880,14 +883,13 @@ cuda::symbol<unsigned int> nnbl(mdsim::nnbl);
 cuda::symbol<float> r_cell(mdsim::r_cell);
 cuda::symbol<float> rr_cell(mdsim::rr_cell);
 cuda::symbol<unsigned int> sfc_level(mdsim::sfc_level);
+cuda::function<void (int const*, int const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
+cuda::function<void (uint*, int*)> find_cell_offset(find_cell_offset);
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL
 cuda::symbol<float> rri_smooth(mdsim::rri_smooth);
 cuda::function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
 #endif
-
-cuda::symbol<uint3> a(::rand48::a);
-cuda::symbol<uint3> c(::rand48::c);
 
 }}} // namespace mdsim::gpu::ljfluid
