@@ -33,6 +33,8 @@ template <typename T>
 class prefix_sum
 {
 public:
+    prefix_sum() : count(0), threads(0) {}
+
     /**
      * allocate parallel exclusive prefix sum for given element count
      */
@@ -58,6 +60,29 @@ public:
 	}
     }
 
+    /**
+     * reallocate parallel exclusive prefix sum for given element count
+     */
+    void resize(uint const& count, uint const& threads)
+    {
+	prefix_sum temp(count, threads);
+	swap(temp);
+    }
+
+    /**
+     * swap dimensions and device memory with another parallel exclusive prefix sum
+     */
+    void swap(prefix_sum& p)
+    {
+	std::swap(count, p.count);
+	std::swap(threads, p.threads);
+	blocks.swap(p.blocks);
+	g_sum.swap(p.g_sum);
+    }
+
+    /**
+     * in-place parallel exclusive prefix sum
+     */
     void operator()(cuda::vector<T>& g_array, cuda::stream& stream)
     {
 	assert(g_array.size() == count);
@@ -85,7 +110,7 @@ public:
     }
 
 private:
-    const uint count, threads;
+    uint count, threads;
     std::vector<cuda::vector<T> > g_sum;
     std::vector<uint> blocks;
 };
