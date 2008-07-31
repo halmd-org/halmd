@@ -45,9 +45,12 @@ namespace mdsim { namespace gpu { namespace ljfluid
 extern cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
 # ifdef USE_CELL
 extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
-extern cuda::texture<float4> r;
 extern cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode;
 extern cuda::function<void (float4 const*, uint*)> compute_cell;
+extern cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles;
+extern cuda::texture<float4> r;
+extern cuda::texture<float4> R;
+extern cuda::texture<float4> v;
 # else
 extern cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
 # endif
@@ -57,9 +60,12 @@ extern cuda::function<void (float4*, unsigned int)> lattice_simple;
 extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
 # ifdef USE_CELL
 extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
-extern cuda::texture<float2> r;
 extern cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode;
 extern cuda::function<void (float2 const*, uint*)> compute_cell;
+extern cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles;
+extern cuda::texture<float2> r;
+extern cuda::texture<float2> R;
+extern cuda::texture<float2> v;
 # else
 extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
 # endif
@@ -76,15 +82,16 @@ extern cuda::symbol<float> en_cut;
 extern cuda::function<void (int*)> init_tags;
 
 #ifdef USE_CELL
-extern cuda::function<void (int const*, int*)> update_cells;
 extern cuda::function<void (int const*, int*)> update_neighbours;
 extern cuda::symbol<unsigned int> ncell;
 extern cuda::symbol<unsigned int> nnbl;
 extern cuda::symbol<float> r_cell;
 extern cuda::symbol<float> rr_cell;
 extern cuda::symbol<unsigned int> sfc_level;
+extern cuda::texture<int> tag;
 extern cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells;
 extern cuda::function<void (uint*, int*)> find_cell_offset;
+extern cuda::function<void (int*)> gen_index;
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL

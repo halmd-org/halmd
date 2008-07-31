@@ -131,7 +131,9 @@ public:
 private:
 #ifdef USE_CELL
     /** assign particles to cells */
-    void assign_cells();
+    void assign_cells(cuda::stream& stream);
+    /* order particles after Hilbert space-filling curve */
+    void hilbert_order(cuda::stream& stream);
 #endif
 
 private:
@@ -183,6 +185,8 @@ private:
 	cuda::host::vector<g_vector> R;
 	/** particle velocities */
 	cuda::host::vector<g_vector> v;
+	/** particle tags */
+	cuda::host::vector<int> tag;
 	/** potential energies per particle */
 	cuda::host::vector<float> en;
 	/** virial equation sums per particle */
@@ -199,12 +203,8 @@ private:
 	cuda::vector<g_vector> v;
 	/** particle forces */
 	cuda::vector<g_vector> f;
-	/** particle tag */
+	/** particle tags */
 	cuda::vector<int> tag;
-#ifdef USE_CELL
-	/** particle cell */
-	cuda::vector<unsigned int> cell;
-#endif
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
@@ -212,24 +212,40 @@ private:
     } g_part;
 
 #ifdef USE_CELL
-    /** cell lists in global device memory */
+    /** double buffers for particle sorting */
     struct {
-	/** double buffered cell placeholders */
-	cuda::vector<int> first, second;
+	/** periodically reduced particle positions */
+	cuda::vector<g_vector> r;
+	/** periodically extended particle positions */
+	cuda::vector<g_vector> R;
+	/** particle velocities */
+	cuda::vector<g_vector> v;
+	/** particle tags */
+	cuda::vector<int> tag;
+    } g_sort;
+
+    /** auxiliary device memory arrays for particle sorting */
+    struct {
+	/** particle cells */
+	cuda::vector<uint> cell;
 	/** cell offsets in sorted particle list */
 	cuda::vector<int> offset;
-    } g_cell;
+	/** permutation indices */
+	cuda::vector<int> idx;
+    } g_aux;
 
+    /** cell lists in global device memory */
+    cuda::vector<int> g_cell;
     /** neighbour lists in global device memory */
     cuda::vector<int> g_nbl;
 #endif
 
     /** GPU random number generator */
     mdsim::rand48 rng_;
-    /** GPU mdsim::radix sort for particle positions */
-    mdsim::radix_sort<g_vector> radix_sort;
-    /** GPU mdsim::radix sort for particle tags */
-    mdsim::radix_sort<int> radix_sort_tags;
+#ifdef USE_CELL
+    /** GPU mdsim::radix sort */
+    mdsim::radix_sort<int> radix_sort;
+#endif
 
     /** CUDA execution dimensions */
     cuda::config dim_;
@@ -333,9 +349,6 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	g_part.v.resize(npart);
 	g_part.f.resize(npart);
 	g_part.tag.resize(npart);
-#ifdef USE_CELL
-	g_part.cell.resize(npart);
-#endif
 	g_part.en.resize(npart);
 	g_part.virial.resize(npart);
     }
@@ -343,11 +356,27 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	throw exception("failed to allocate global device memory for system state");
     }
 
+#ifdef USE_CELL
+    // allocate global device memory for sorting buffers
+    try {
+	g_sort.r.resize(npart);
+	g_sort.R.resize(npart);
+	g_sort.v.resize(npart);
+	g_sort.tag.resize(npart);
+	g_aux.cell.resize(npart);
+	g_aux.idx.resize(npart);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate global device memory for sorting buffers");
+    }
+#endif
+
     // allocate page-locked host memory for system state
     try {
 	h_part.r.resize(npart);
 	h_part.R.resize(npart);
 	h_part.v.resize(npart);
+	h_part.tag.resize(npart);
 	// particle forces reside only in GPU memory
 	h_part.en.resize(npart);
 	h_part.virial.resize(npart);
@@ -468,6 +497,20 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
     catch (cuda::error const& e) {
 	throw exception("failed to copy cell parameters to device symbols");
     }
+
+    // set Hilbert space-filling curve recursion level
+#ifdef DIM_3D
+    const uint level = std::min(10.f, ceilf(logf(box_) / M_LN2));
+#else
+    const uint level = std::min(16.f, ceilf(logf(box_) / M_LN2));
+#endif
+    LOG("Hilbert space-filling curve recursion level: " << level);
+    try {
+	cuda::copy(level, gpu::ljfluid::sfc_level);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy Hilbert curve recursion level to device symbol");
+    }
 }
 #endif /* USE_CELL */
 
@@ -517,9 +560,7 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 
     // allocate global device memory for cell placeholders
     try {
-	g_cell.first.resize(dim_cell_.threads());
-	g_cell.second.resize(dim_cell_.threads());
-	g_cell.offset.resize(dim_cell_.blocks_per_grid());
+	g_cell.resize(dim_cell_.threads());
 	g_nbl.resize(npart * nnbl);
     }
     catch (cuda::error const& e) {
@@ -535,29 +576,43 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 	g_part.v.reserve(dim_.threads());
 	g_part.f.reserve(dim_.threads());
 	g_part.tag.reserve(dim_.threads());
-#ifdef USE_CELL
-	g_part.cell.reserve(dim_.threads());
-#endif
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
 #ifdef USE_CELL
 	g_nbl.reserve(dim_.threads() * nnbl);
-	// bind GPU texture to periodic particle positions
-	mdsim::gpu::ljfluid::r.bind(g_part.r);
 #endif
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory for placeholder particles");
     }
 
-    // change random number generator dimensions
+#ifdef USE_CELL
+    // bind GPU textures to global device memory arrays
     try {
-	rng_.resize(dim_);
+	gpu::ljfluid::r.bind(g_part.r);
+	gpu::ljfluid::v.bind(g_part.v);
+	gpu::ljfluid::R.bind(g_part.R);
+	gpu::ljfluid::tag.bind(g_part.tag);
     }
     catch (cuda::error const& e) {
-	throw exception("failed to change random number generator dimensions");
+	throw exception("failed to bind GPU textures to global device memory arrays");
     }
 
+    // allocate global device memory for sorting buffers
+    try {
+	g_sort.r.reserve(dim_.threads());
+	g_sort.R.reserve(dim_.threads());
+	g_sort.v.reserve(dim_.threads());
+	g_sort.tag.reserve(dim_.threads());
+	g_aux.cell.reserve(dim_.threads());
+	g_aux.offset.resize(dim_cell_.blocks_per_grid());
+	g_aux.idx.reserve(dim_.threads());
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to allocate global device memory for sorting buffers");
+    }
+
+    // allocate global device memory for radix sort
     try {
 	// compute optimal number of blocks for GeForce 8800 with 16 multiprocessors
 	const uint threads = dim_.threads_per_block();
@@ -569,10 +624,18 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 
 	// allocate global device memory for radix sort
 	radix_sort.resize(npart, blocks, threads);
-	radix_sort_tags.resize(npart, blocks, threads);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory for radix sort");
+    }
+#endif
+
+    // change random number generator dimensions
+    try {
+	rng_.resize(dim_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to change random number generator dimensions");
     }
 }
 
@@ -598,11 +661,11 @@ void ljfluid<dimension, T>::restore(V visitor)
 #ifdef USE_CELL
 	// assign particles to cells
 	event_[0].record(stream_);
-	assign_cells();
+	assign_cells(stream_);
 	event_[1].record(stream_);
 	// update neighbour lists
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::update_neighbours(g_cell.first, g_nbl);
+	gpu::ljfluid::update_neighbours(g_cell, g_nbl);
 	event_[2].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
@@ -722,11 +785,11 @@ void ljfluid<dimension, T>::lattice()
 #ifdef USE_CELL
 	// assign particles to cells
 	event_[2].record(stream_);
-	assign_cells();
+	assign_cells(stream_);
 	event_[3].record(stream_);
 	// update neighbour lists
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::update_neighbours(g_cell.first, g_nbl);
+	gpu::ljfluid::update_neighbours(g_cell, g_nbl);
 	event_[4].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
@@ -885,28 +948,27 @@ void ljfluid<dimension, T>::mdstep()
     // update cell lists
     if (v_max_sum * timestep_ > r_skin / 2) {
 	try {
-	    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	    gpu::ljfluid::update_cells(g_cell.first, g_cell.second);
+	    hilbert_order(stream_);
 	}
 	catch (cuda::error const& e) {
-	    throw exception("failed to stream cell list update on GPU");
+	    throw exception("failed to stream hilbert space-filling curve sort on GPU");
 	}
 	event_[3].record(stream_);
 
 	try {
-	    cuda::copy(g_cell.second, g_cell.first, stream_);
+	    assign_cells(stream_);
 	}
 	catch (cuda::error const& e) {
-	    throw exception("failed to replicate cell lists on GPU");
+	    throw exception("failed to stream cell list update on GPU");
 	}
 	event_[4].record(stream_);
 
 	try {
 	    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	    gpu::ljfluid::update_neighbours(g_cell.first, g_nbl);
+	    gpu::ljfluid::update_neighbours(g_cell, g_nbl);
 	}
 	catch (cuda::error const& e) {
-	    throw exception("failed to update neighbour lists on GPU");
+	    throw exception("failed to stream neighbour lists update on GPU");
 	}
     }
     event_[5].record(stream_);
@@ -953,9 +1015,9 @@ void ljfluid<dimension, T>::synchronize()
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
-	// CUDA time for cell lists update
+	// CUDA time for Hilbert curve sort
 	m_times[7] += event_[3] - event_[2];
-	// CUDA time for cell lists memcpy
+	// CUDA time for cell lists update
 	m_times[8] += event_[4] - event_[3];
 	// CUDA time for neighbour lists update
 	m_times[9] += event_[5] - event_[4];
@@ -986,6 +1048,8 @@ void ljfluid<dimension, T>::sample()
 	cuda::copy(g_part.R, h_part.R, stream_);
 	// copy particle velocities
 	cuda::copy(g_part.v, h_part.v, stream_);
+	// copy particle tags
+	cuda::copy(g_part.tag, h_part.tag, stream_);
 	// copy potential energies per particle and virial equation sums
 	cuda::copy(g_part.en, h_part.en, stream_);
 	// copy virial equation sums per particle
@@ -1002,17 +1066,19 @@ void ljfluid<dimension, T>::sample()
     // maximum squared velocity
     float vv_max = 0;
 
-    for (unsigned int n = 0; n < npart; ++n) {
+    for (unsigned int j = 0; j < npart; ++j) {
+	// particle tracking number
+	const int n = h_part.tag[j];
 	// copy periodically reduced particle positions
-	h_sample.r[n] = T(h_part.r[n]);
+	h_sample.r[n] = T(h_part.r[j]);
 	// copy periodically extended particle positions
-	h_sample.R[n] = T(h_part.R[n]);
+	h_sample.R[n] = T(h_part.R[j]);
 	// copy particle velocities
-	h_sample.v[n] = T(h_part.v[n]);
+	h_sample.v[n] = T(h_part.v[j]);
 	// calculate mean potential energy per particle
-	h_sample.en_pot += (h_part.en[n] - h_sample.en_pot) / (n + 1);
+	h_sample.en_pot += (h_part.en[j] - h_sample.en_pot) / (j + 1);
 	// calculate mean virial equation sum per particle
-	h_sample.virial += (h_part.virial[n] - h_sample.virial) / (n + 1);
+	h_sample.virial += (h_part.virial[j] - h_sample.virial) / (j + 1);
 	// calculate maximum squared velocity
 	vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
     }
@@ -1052,23 +1118,49 @@ perf_counters ljfluid<dimension, T>::times()
  * assign particles to cells
  */
 template <unsigned dimension, typename T>
-void ljfluid<dimension, T>::assign_cells()
+void ljfluid<dimension, T>::assign_cells(cuda::stream& stream)
 {
     // compute cell indices for particle positions
-    cuda::configure(dim_.grid, dim_.block, stream_);
-    gpu::ljfluid::compute_cell(g_part.r, g_part.cell);
+    cuda::configure(dim_.grid, dim_.block, stream);
+    gpu::ljfluid::compute_cell(g_part.r, g_aux.cell);
 
-    // sort cell indices and particle tags
-    radix_sort_tags(g_part.cell, g_part.tag, stream_);
+    // generate permutation array
+    cuda::configure(dim_.grid, dim_.block, stream);
+    gpu::ljfluid::gen_index(g_aux.idx);
+    radix_sort(g_aux.cell, g_aux.idx, stream);
 
     // compute global cell offsets in sorted particle list
-    cuda::memset(g_cell.offset, 0xff);
-    cuda::configure(dim_.grid, dim_.block, stream_);
-    gpu::ljfluid::find_cell_offset(g_part.cell, g_cell.offset);
+    cuda::memset(g_aux.offset, 0xff);
+    cuda::configure(dim_.grid, dim_.block, stream);
+    gpu::ljfluid::find_cell_offset(g_aux.cell, g_aux.offset);
 
     // assign particles to cells
-    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-    gpu::ljfluid::assign_cells(g_part.cell, g_cell.offset, g_part.tag, g_cell.first);
+    cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
+    gpu::ljfluid::assign_cells(g_aux.cell, g_aux.offset, g_aux.idx, g_cell);
+}
+
+/**
+ * order particles after Hilbert space-filling curve
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::hilbert_order(cuda::stream& stream)
+{
+    // compute Hilbert space-filling curve for particles
+    cuda::configure(dim_.grid, dim_.block, stream);
+    gpu::ljfluid::sfc_hilbert_encode(g_part.r, g_aux.cell);
+
+    // generate permutation array
+    cuda::configure(dim_.grid, dim_.block, stream);
+    gpu::ljfluid::gen_index(g_aux.idx);
+    radix_sort(g_aux.cell, g_aux.idx, stream);
+
+    // order particles by permutation
+    cuda::configure(dim_.grid, dim_.block, stream);
+    gpu::ljfluid::order_particles(g_aux.idx, g_sort.r, g_sort.R, g_sort.v, g_sort.tag);
+    cuda::copy(g_sort.r, g_part.r, stream);
+    cuda::copy(g_sort.R, g_part.R, stream);
+    cuda::copy(g_sort.v, g_part.v, stream);
+    cuda::copy(g_sort.tag, g_part.tag, stream);
 }
 
 #endif /* USE_CELL */

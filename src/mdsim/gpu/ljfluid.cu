@@ -51,14 +51,25 @@ static __constant__ unsigned int nnbl;
 static __constant__ float r_cell;
 /** squared potential cutoff distance with cell skin */
 static __constant__ float rr_cell;
+/** number of Hilbert space-filling curve code levels */
+static __constant__ unsigned int sfc_level;
 # ifdef DIM_3D
 /** texture reference to periodic particle positions */
 struct texture<float4, 1, cudaReadModeElementType> t_r;
+/** texture reference to extended particle positions */
+struct texture<float4, 1, cudaReadModeElementType> t_R;
+/** texture reference to particle velocities */
+struct texture<float4, 1, cudaReadModeElementType> t_v;
 # else
+/** texture reference to periodic particle positions */
 struct texture<float2, 1, cudaReadModeElementType> t_r;
+/** texture reference to extended particle positions */
+struct texture<float2, 1, cudaReadModeElementType> t_R;
+/** texture reference to particle velocities */
+struct texture<float2, 1, cudaReadModeElementType> t_v;
 # endif
-/** number of Hilbert space-filling curve code levels */
-static __constant__ unsigned int sfc_level;
+/** texture reference to particle tags */
+struct texture<int, 1, cudaReadModeElementType> t_tag;
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL
@@ -496,11 +507,13 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl)
 }
 
 /**
- * determine cell index for a particle
+ * compute cell indices for given particle positions
  */
-template <typename T>
-__device__ unsigned int compute_cell(T const& r)
+template <typename T, typename U>
+__global__ void compute_cell(U const* g_part, uint* g_cell)
 {
+    const T r = unpack(g_part[GTID]);
+
     //
     // Mapping the positional coordinates of a particle to its corresponding
     // cell index is the most delicate part of the cell lists update.
@@ -512,20 +525,12 @@ __device__ unsigned int compute_cell(T const& r)
     // of cells per dimension afterwards.
     //
     const T cell = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
-#ifdef DIM_3D
-    return uint(cell.x) + ncell * (uint(cell.y) + ncell * uint(cell.z));
-#else
-    return uint(cell.x) + ncell * uint(cell.y);
-#endif
-}
 
-/**
- * compute cell indices for given particle positions
- */
-template <typename U>
-__global__ void compute_cell(U const* g_part, uint* g_cell)
-{
-    g_cell[GTID] = compute_cell(unpack(g_part[GTID]));
+#ifdef DIM_3D
+    g_cell[GTID] = uint(cell.x) + ncell * (uint(cell.y) + ncell * uint(cell.z));
+#else
+    g_cell[GTID] = uint(cell.x) + ncell * uint(cell.y);
+#endif
 }
 
 /**
@@ -573,108 +578,6 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
 
     // store cell in global device memory
     g_otag[blockIdx.x * cell_size + threadIdx.x] = tag;
-}
-
-/**
- * examine neighbour cell for particles which moved into this block's cell
- */
-template <unsigned int cell_size, typename T>
-__device__ void examine_cell(T const& offset, int const* g_itag, int* s_otag, unsigned int& npart)
-{
-    __shared__ int s_itag[cell_size];
-    __shared__ unsigned int s_cell[cell_size];
-
-    // compute cell index
-    const unsigned int cell = compute_neighbour_cell(offset);
-
-    // load particle numbers from global device memory
-    int n = g_itag[cell * cell_size + threadIdx.x];
-    s_itag[threadIdx.x] = n;
-
-    if (IS_REAL_PARTICLE(n)) {
-	// compute new cell
-	s_cell[threadIdx.x] = compute_cell(unpack(tex1Dfetch(t_r, n)));
-    }
-    __syncthreads();
-
-    if (threadIdx.x == 0) {
-	for (unsigned int j = 0; j < cell_size; j++) {
-	    // skip virtual particles
-	    if (!IS_REAL_PARTICLE(s_itag[j]))
-		break;
-
-	    // if particle belongs to this cell
-	    if (s_cell[j] == blockIdx.x && npart < cell_size) {
-		// store particle in cell
-		s_otag[npart] = s_itag[j];
-		// increment particle count in cell
-		++npart;
-	    }
-	}
-    }
-    __syncthreads();
-}
-
-/**
- * update cells
- */
-template <unsigned int cell_size>
-__global__ void update_cells(int const* g_itag, int* g_otag)
-{
-    __shared__ int s_otag[cell_size];
-    // number of particles in cell
-    unsigned int n = 0;
-
-    // mark all particles in cell as virtual particles
-    s_otag[threadIdx.x] = VIRTUAL_PARTICLE;
-    __syncthreads();
-
-#ifdef DIM_3D
-    // visit this cell
-    examine_cell<cell_size>(make_int3( 0,  0,  0), g_itag, s_otag, n);
-    // visit 26 neighbour cells
-    examine_cell<cell_size>(make_int3(-1, -1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, -1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, +1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1, +1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1, -1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(-1,  0,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3(+1,  0,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, -1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0, +1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0,  0, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int3( 0,  0, +1), g_itag, s_otag, n);
-#else
-    // visit this cell
-    examine_cell<cell_size>(make_int2( 0,  0), g_itag, s_otag, n);
-    // visit 8 neighbour cells
-    examine_cell<cell_size>(make_int2(-1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(-1, +1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(-1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2(+1,  0), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2( 0, -1), g_itag, s_otag, n);
-    examine_cell<cell_size>(make_int2( 0, +1), g_itag, s_otag, n);
-#endif
-
-    // store cell in global device memory
-    g_otag[blockIdx.x * cell_size + threadIdx.x] = s_otag[threadIdx.x];
 }
 
 /**
@@ -828,6 +731,30 @@ __device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
     swap(a, b);
 }
 
+/**
+ * generate ascending index sequence
+ */
+__global__ void gen_index(int* g_idx)
+{
+    g_idx[GTID] = (GTID < npart) ? GTID : 0;
+}
+
+/**
+ * order particles after given permutation
+ */
+template <typename U>
+__global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int* g_otag)
+{
+    // permutation index
+    const uint j = g_idx[GTID];
+    // permute particle phase space coordinates
+    g_or[GTID] = tex1Dfetch(t_r, j);
+    g_oR[GTID] = tex1Dfetch(t_R, j);
+    g_ov[GTID] = tex1Dfetch(t_v, j);
+    // permute particle tracking number
+    g_otag[GTID] = tex1Dfetch(t_tag, j);
+}
+
 #endif  /* USE_CELL */
 
 } // namespace mdsim
@@ -841,9 +768,12 @@ cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::int
 # ifdef USE_CELL
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float3>);
-cuda::texture<float4> r(mdsim::t_r);
 cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float3>);
-cuda::function<void (float4 const*, uint*)> compute_cell(mdsim::compute_cell);
+cuda::function<void (float4 const*, uint*)> compute_cell(mdsim::compute_cell<float3>);
+cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles(mdsim::order_particles);
+cuda::texture<float4> r(mdsim::t_r);
+cuda::texture<float4> R(mdsim::t_R);
+cuda::texture<float4> v(mdsim::t_v);
 # else
 cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 # endif
@@ -854,9 +784,12 @@ cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::int
 # ifdef USE_CELL
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float2>);
-cuda::texture<float2> r(mdsim::t_r);
 cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float2>);
-cuda::function<void (float2 const*, uint*)> compute_cell(mdsim::compute_cell);
+cuda::function<void (float2 const*, uint*)> compute_cell(mdsim::compute_cell<float2>);
+cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles(mdsim::order_particles);
+cuda::texture<float2> r(mdsim::t_r);
+cuda::texture<float2> R(mdsim::t_R);
+cuda::texture<float2> v(mdsim::t_v);
 # else
 cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 # endif
@@ -873,14 +806,15 @@ cuda::symbol<float> en_cut(mdsim::en_cut);
 cuda::function<void (int*)> init_tags(mdsim::init_tags);
 
 #ifdef USE_CELL
-cuda::function<void (int const*, int*)> update_cells(mdsim::update_cells<CELL_SIZE>);
 cuda::symbol<unsigned int> ncell(mdsim::ncell);
 cuda::symbol<unsigned int> nnbl(mdsim::nnbl);
 cuda::symbol<float> r_cell(mdsim::r_cell);
 cuda::symbol<float> rr_cell(mdsim::rr_cell);
 cuda::symbol<unsigned int> sfc_level(mdsim::sfc_level);
+cuda::texture<int> tag(mdsim::t_tag);
 cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
 cuda::function<void (uint*, int*)> find_cell_offset(mdsim::find_cell_offset);
+cuda::function<void (int*)> gen_index(mdsim::gen_index);
 #endif
 
 #ifdef USE_SMOOTH_POTENTIAL

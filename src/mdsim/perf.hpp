@@ -126,10 +126,10 @@ void perf<dimension, T>::open(std::string const& filename)
 #ifdef USE_CELL
 	// CUDA time for cell lists initialisation
 	m_dataset[6] = node.createDataSet("init_cells", m_tid, ds, cparms);
+	// CUDA time for Hilbert space-filling curve sort
+	m_dataset[7] = node.createDataSet("hilbert_sort", m_tid, ds, cparms);
 	// CUDA time for cell lists update
-	m_dataset[7] = node.createDataSet("update_cells", m_tid, ds, cparms);
-	// CUDA time for cell lists memcpy
-	m_dataset[8] = node.createDataSet("memcpy_cells", m_tid, ds, cparms);
+	m_dataset[8] = node.createDataSet("update_cells", m_tid, ds, cparms);
 	// CUDA time for neighbour lists update
 	m_dataset[9] = node.createDataSet("update_neighbours", m_tid, ds, cparms);
 #endif
@@ -184,8 +184,8 @@ void perf<dimension, T>::commit()
     LOG("mean CUDA time for velocity-Verlet integration: " << m_times[1]);
 #ifdef USE_CELL
     LOG("mean CUDA time for cell lists initialisation: " << m_times[6]);
-    LOG("mean CUDA time for cell lists update: " << m_times[7]);
-    LOG("mean CUDA time for cell lists memcpy: " << m_times[8]);
+    LOG("mean CUDA time for Hilbert space-filling curve sort: " << m_times[7]);
+    LOG("mean CUDA time for cell lists update: " << m_times[8]);
     LOG("mean CUDA time for neighbour lists update: " << m_times[9]);
 #endif
     LOG("mean CUDA time for Lennard-Jones force update: " << m_times[2]);
