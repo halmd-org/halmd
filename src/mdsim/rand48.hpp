@@ -115,6 +115,16 @@ public:
     }
 
     /**
+     * generate random 2-dimensional Maxwell-Boltzmann distributed velocities
+     */
+    template <typename T>
+    void boltzmann(cuda::vector<T>& v, float const& temperature, cuda::stream& stream)
+    {
+	cuda::configure(dim_.grid, dim_.block, stream);
+	gpu::rand48::boltzmann(v, temperature, state_);
+    }
+
+    /**
      * save generator state to memory
      */
     void save(state_type& mem)
@@ -180,14 +190,6 @@ public:
 	is >> state_.x >> state_.y >> state_.z;
 	rng.restore(state_);
 	return is;
-    }
-
-    /**
-     * get pointer to CUDA device memory
-     */
-    cuda::vector<ushort3>& state()
-    {
-	return state_;
     }
 
 private:
