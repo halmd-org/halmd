@@ -97,6 +97,7 @@ __device__  struct __align__(8) dfloat
 #ifdef __cplusplus
     dfloat(float const& f0, float const& f1) : f0(f0), f1(f1) {}
     dfloat(float const& f0) : f0(f0), f1(0) {}
+    dfloat() {}
 #endif
 };
 
@@ -106,6 +107,7 @@ __device__ struct __align__(16) dfloat2
 #ifdef __cplusplus
     dfloat2(float2 const& f0, float2 const& f1) : f0(f0), f1(f1) {}
     dfloat2(float2 const& f0) : f0(f0), f1(make_float2(0, 0)) {}
+    dfloat2() {}
 #endif
 };
 
@@ -115,6 +117,7 @@ __device__ struct dfloat3
 #ifdef __cplusplus
     dfloat3(float3 const& f0, float3 const& f1) : f0(f0), f1(f1) {}
     dfloat3(float3 const& f0) : f0(f0), f1(make_float3(0, 0, 0)) {}
+    dfloat3() {}
 #endif
 };
 
@@ -124,6 +127,7 @@ __device__ struct dfloat4
 #ifdef __cplusplus
     dfloat4(float4 const& f0, float4 const& f1) : f0(f0), f1(f1) {}
     dfloat4(float4 const& f0) : f0(f0), f1(make_float4(0, 0, 0, 0)) {}
+    dfloat4() {}
 #endif
 };
 
