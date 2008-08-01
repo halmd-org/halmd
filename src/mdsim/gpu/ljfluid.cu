@@ -46,7 +46,9 @@ static __constant__ float en_cut;
 /** number of cells per dimension */
 static __constant__ unsigned int ncell;
 /** neighbour list length */
-static __constant__ unsigned int nnbl;
+static __constant__ unsigned int nbl_size;
+/** neighbour list stride */
+static __constant__ unsigned int nbl_stride;
 /** potential cutoff distance with cell skin */
 static __constant__ float r_cell;
 /** squared potential cutoff distance with cell skin */
@@ -215,9 +217,9 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
     dfloat2 f(make_float2(0, 0));
 #endif
 
-    for (unsigned int i = 0; i < nnbl; ++i) {
-	// load particle number from neighbour list
-	const int n = g_nbl[GTID * nnbl + i];
+    for (unsigned int i = 0; i < nbl_size; ++i) {
+	// coalesced read from neighbour list
+	const int n = g_nbl[i * nbl_stride + GTID];
 	// skip placeholder particles
 	if (!IS_REAL_PARTICLE(n))
 	    break;
@@ -400,9 +402,9 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* 
 	    const float rr = dr * dr;
 
 	    // enforce cutoff length with neighbour list skin
-	    if (rr <= rr_cell && count < nnbl) {
-		// uncoalesced write to neighbour list
-		g_nbl[n * nnbl + count] = m;
+	    if (rr <= rr_cell && count < nbl_size) {
+		// scattered write to neighbour list
+		g_nbl[count * nbl_stride + n] = m;
 		// increment neighbour list particle count
 		count++;
 	    }
@@ -499,11 +501,6 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl)
     update_cell_neighbours<cell_size, false>(make_int2( 0, -1), g_cell, g_nbl, r, n, count);
     update_cell_neighbours<cell_size, false>(make_int2( 0, +1), g_cell, g_nbl, r, n, count);
 #endif
-
-    // terminate neighbour list
-    if (IS_REAL_PARTICLE(n) && count < nnbl) {
-	g_nbl[n * nnbl + count] = VIRTUAL_PARTICLE;
-    }
 }
 
 /**
@@ -807,7 +804,8 @@ cuda::function<void (int*)> init_tags(mdsim::init_tags);
 
 #ifdef USE_CELL
 cuda::symbol<unsigned int> ncell(mdsim::ncell);
-cuda::symbol<unsigned int> nnbl(mdsim::nnbl);
+cuda::symbol<unsigned int> nbl_size(mdsim::nbl_size);
+cuda::symbol<unsigned int> nbl_stride(mdsim::nbl_stride);
 cuda::symbol<float> r_cell(mdsim::r_cell);
 cuda::symbol<float> rr_cell(mdsim::rr_cell);
 cuda::symbol<unsigned int> sfc_level(mdsim::sfc_level);

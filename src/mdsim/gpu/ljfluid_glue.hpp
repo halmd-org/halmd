@@ -84,7 +84,8 @@ extern cuda::function<void (int*)> init_tags;
 #ifdef USE_CELL
 extern cuda::function<void (int const*, int*)> update_neighbours;
 extern cuda::symbol<unsigned int> ncell;
-extern cuda::symbol<unsigned int> nnbl;
+extern cuda::symbol<unsigned int> nbl_size;
+extern cuda::symbol<unsigned int> nbl_stride;
 extern cuda::symbol<float> r_cell;
 extern cuda::symbol<float> rr_cell;
 extern cuda::symbol<unsigned int> sfc_level;

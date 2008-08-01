@@ -93,7 +93,7 @@ public:
     /** get total number of cell placeholders */
     unsigned int const& placeholders() const { return nplace; }
     /** get total number of placeholders per neighbour list */
-    unsigned int const& neighbours() const { return nnbl; }
+    unsigned int const& neighbours() const { return nbl_size; }
     /** get cell length */
     float const& cell_length() const { return cell_length_; }
     /** get effective average cell occupancy */
@@ -132,7 +132,9 @@ private:
 #ifdef USE_CELL
     /** assign particles to cells */
     void assign_cells(cuda::stream& stream);
-    /* order particles after Hilbert space-filling curve */
+    /** update neighbour lists */
+    void update_neighbours(cuda::stream& stream);
+    /** order particles after Hilbert space-filling curve */
     void hilbert_order(cuda::stream& stream);
 #endif
 
@@ -145,7 +147,7 @@ private:
     /** total number of cell placeholders */
     unsigned int nplace;
     /** number of placeholders per neighbour list */
-    unsigned int nnbl;
+    unsigned int nbl_size;
     /** cell length */
     float cell_length_;
     /** effective average cell occupancy */
@@ -479,20 +481,20 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
     // set number of placeholders per neighbour list
     if (dimension == 3) {
 	// cube-to-sphere volume ratio with number of placeholders of 27 cells
-	nnbl = 4.5 * M_PI * cell_size_;
+	nbl_size = 4.5 * M_PI * cell_size_;
     }
     else {
 	// square-to-circle area ratio with number of placeholders of 9 cells
-	nnbl = 2.25 * M_PI * cell_size_;
+	nbl_size = 2.25 * M_PI * cell_size_;
     }
-    LOG("number of placeholders per neighbour list: " << nnbl);
+    LOG("number of placeholders per neighbour list: " << nbl_size);
 
     // copy cell parameters to device symbols
     try {
 	cuda::copy(ncell, gpu::ljfluid::ncell);
 	cuda::copy(cell_length_, gpu::ljfluid::r_cell);
 	cuda::copy(std::pow(cell_length_, 2), gpu::ljfluid::rr_cell);
-	cuda::copy(nnbl, gpu::ljfluid::nnbl);
+	cuda::copy(nbl_size, gpu::ljfluid::nbl_size);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy cell parameters to device symbols");
@@ -561,7 +563,7 @@ void ljfluid<dimension, T>::threads(unsigned int value)
     // allocate global device memory for cell placeholders
     try {
 	g_cell.resize(dim_cell_.threads());
-	g_nbl.resize(npart * nnbl);
+	g_nbl.resize(npart * nbl_size);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory cell placeholders");
@@ -579,7 +581,8 @@ void ljfluid<dimension, T>::threads(unsigned int value)
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
 #ifdef USE_CELL
-	g_nbl.reserve(dim_.threads() * nnbl);
+	g_nbl.reserve(dim_.threads() * nbl_size);
+	cuda::copy(uint(dim_.threads()), gpu::ljfluid::nbl_stride);
 #endif
     }
     catch (cuda::error const& e) {
@@ -664,8 +667,7 @@ void ljfluid<dimension, T>::restore(V visitor)
 	assign_cells(stream_);
 	event_[1].record(stream_);
 	// update neighbour lists
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::update_neighbours(g_cell, g_nbl);
+	update_neighbours(stream_);
 	event_[2].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
@@ -788,8 +790,7 @@ void ljfluid<dimension, T>::lattice()
 	assign_cells(stream_);
 	event_[3].record(stream_);
 	// update neighbour lists
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid::update_neighbours(g_cell, g_nbl);
+	update_neighbours(stream_);
 	event_[4].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
@@ -917,7 +918,7 @@ void ljfluid<dimension, T>::attrs(H5::Group const& param) const
 #ifdef USE_CELL
     node["cells"] = ncell;
     node["placeholders"] = nplace;
-    node["neighbours"] = nnbl;
+    node["neighbours"] = nbl_size;
     node["cell_length"] = cell_length_;
     node["cell_occupancy"] = cell_occupancy_;
 #endif
@@ -964,8 +965,7 @@ void ljfluid<dimension, T>::mdstep()
 	event_[4].record(stream_);
 
 	try {
-	    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	    gpu::ljfluid::update_neighbours(g_cell, g_nbl);
+	    update_neighbours(stream_);
 	}
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream neighbour lists update on GPU");
@@ -1137,6 +1137,19 @@ void ljfluid<dimension, T>::assign_cells(cuda::stream& stream)
     // assign particles to cells
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
     gpu::ljfluid::assign_cells(g_aux.cell, g_aux.offset, g_aux.idx, g_cell);
+}
+
+/*
+ * update neighbour lists
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::update_neighbours(cuda::stream& stream)
+{
+    // mark neighbour list placeholders as virtual particles
+    cuda::memset(g_nbl, 0xff);
+    // build neighbour lists
+    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+    gpu::ljfluid::update_neighbours(g_cell, g_nbl);
 }
 
 /**
