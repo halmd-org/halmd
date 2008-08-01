@@ -478,15 +478,10 @@ void ljfluid<dimension, T>::cell_occupancy(float value)
 	LOG_WARNING("average cell occupancy is larger than 0.5");
     }
 
+    // volume of n-dimensional sphere with neighbour list radius
+    const float nbl_sphere = ((dimension + 1) * M_PI / 3) * std::pow(cell_length_, dimension);
     // set number of placeholders per neighbour list
-    if (dimension == 3) {
-	// cube-to-sphere volume ratio with number of placeholders of 27 cells
-	nbl_size = 4.5 * M_PI * cell_size_;
-    }
-    else {
-	// square-to-circle area ratio with number of placeholders of 9 cells
-	nbl_size = 2.25 * M_PI * cell_size_;
-    }
+    nbl_size = std::ceil((density_ / value) * nbl_sphere);
     LOG("number of placeholders per neighbour list: " << nbl_size);
 
     // copy cell parameters to device symbols
