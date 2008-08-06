@@ -32,18 +32,48 @@
 #include "log.hpp"
 #include "statistics.hpp"
 
-
 namespace mdsim
 {
 
 /**
+ * performance counter types
+ */
+enum {
+    GPU_TIME_MDSTEP,
+    GPU_TIME_VELOCITY_VERLET,
+#ifdef USE_CELL
+    GPU_TIME_HILBERT_SORT,
+    GPU_TIME_UPDATE_CELLS,
+    GPU_TIME_UPDATE_NEIGHBOURS,
+#endif
+    GPU_TIME_UPDATE_FORCES,
+    GPU_TIME_SAMPLE_MEMCPY,
+    GPU_TIME_LATTICE,
+    GPU_TIME_BOLTZMANN,
+    NUM_PERF_COUNTERS,
+};
+
+/**
+ * performance counter datasets
+ */
+static char const* perf_dataset[][2] = {
+    { "mdstep",			"GPU time for MD simulation step" },
+    { "velocity_verlet",	"GPU time for velocity-Verlet integration" },
+#ifdef USE_CELL
+    { "hilbert_sort",		"GPU time for Hilbert space-filling curve sort" },
+    { "update_cells",		"GPU time for cell lists update" },
+    { "update_neighbours",	"GPU time for neighbour lists update" },
+#endif
+    { "update_forces",		"GPU time for Lennard-Jones force update" },
+    { "sample_memcpy",		"GPU time for sample memcpy" },
+    { "lattice",		"GPU time for lattice generation" },
+    { "boltzmann",		"GPU time for Maxwell-Boltzmann distribution" },
+};
+
+/**
  * performance class accumulators
  */
-#ifdef USE_CELL
-typedef boost::array<accumulator<float>, 10> perf_counters;
-#else
-typedef boost::array<accumulator<float>, 6> perf_counters;
-#endif
+typedef boost::array<accumulator<float>, NUM_PERF_COUNTERS> perf_counters;
 
 /**
  * performance data
@@ -111,28 +141,9 @@ void perf<dimension, T>::open(std::string const& filename)
 
     try {
 	H5::Group node(m_file.createGroup("times"));
-	// CUDA time for MD simulation step
-	m_dataset[0] = node.createDataSet("mdstep", m_tid, ds, cparms);
-	// CUDA time for velocity-Verlet integration
-	m_dataset[1] = node.createDataSet("velocity_verlet", m_tid, ds, cparms);
-	// CUDA time for Lennard-Jones force update
-	m_dataset[2] = node.createDataSet("update_forces", m_tid, ds, cparms);
-	// CUDA time for sample memcpy
-	m_dataset[3] = node.createDataSet("memcpy_sample", m_tid, ds, cparms);
-	// CUDA time for lattice generation
-	m_dataset[4] = node.createDataSet("lattice", m_tid, ds, cparms);
-	// CUDA time for Maxwell-Boltzmann distribution
-	m_dataset[5] = node.createDataSet("boltzmann", m_tid, ds, cparms);
-#ifdef USE_CELL
-	// CUDA time for cell lists initialisation
-	m_dataset[6] = node.createDataSet("init_cells", m_tid, ds, cparms);
-	// CUDA time for Hilbert space-filling curve sort
-	m_dataset[7] = node.createDataSet("hilbert_sort", m_tid, ds, cparms);
-	// CUDA time for cell lists update
-	m_dataset[8] = node.createDataSet("update_cells", m_tid, ds, cparms);
-	// CUDA time for neighbour lists update
-	m_dataset[9] = node.createDataSet("update_neighbours", m_tid, ds, cparms);
-#endif
+	for (unsigned int i = 0; i < m_dataset.size(); ++i) {
+	    m_dataset[i] = node.createDataSet(perf_dataset[i][0], m_tid, ds, cparms);
+	}
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create HDF5 performance datasets");
@@ -180,18 +191,9 @@ std::ostream& operator<<(std::ostream& os, accumulator<T> const& acc)
 template <unsigned dimension, typename T>
 void perf<dimension, T>::commit()
 {
-    LOG("mean CUDA time for MD simulation step: " << m_times[0]);
-    LOG("mean CUDA time for velocity-Verlet integration: " << m_times[1]);
-#ifdef USE_CELL
-    LOG("mean CUDA time for cell lists initialisation: " << m_times[6]);
-    LOG("mean CUDA time for Hilbert space-filling curve sort: " << m_times[7]);
-    LOG("mean CUDA time for cell lists update: " << m_times[8]);
-    LOG("mean CUDA time for neighbour lists update: " << m_times[9]);
-#endif
-    LOG("mean CUDA time for Lennard-Jones force update: " << m_times[2]);
-    LOG("mean CUDA time for sample memcpy: " << m_times[3]);
-    LOG("mean CUDA time for lattice generation: " << m_times[4]);
-    LOG("mean CUDA time for Maxwell-Boltzmann distribution: " << m_times[5]);
+    for (unsigned int i = 0; i < m_times.size(); ++i) {
+	LOG("mean " << perf_dataset[i][1] << ": " << m_times[i]);
+    }
 
     // write pending performance data to HDF5 file
     flush(false);

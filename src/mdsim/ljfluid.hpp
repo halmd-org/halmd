@@ -702,9 +702,9 @@ void ljfluid<dimension, T>::restore(V visitor)
 
 #ifdef USE_CELL
     // CUDA time for cell lists initialisation
-    m_times[6] += event_[1] - event_[0];
+    m_times[GPU_TIME_UPDATE_CELLS] += event_[1] - event_[0];
     // CUDA time for neighbour lists update
-    m_times[9] += event_[2] - event_[1];
+    m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[2] - event_[1];
 #endif
 }
 
@@ -809,12 +809,12 @@ void ljfluid<dimension, T>::lattice()
     }
 
     // CUDA time for lattice generation
-    m_times[4] += event_[1] - event_[0];
+    m_times[GPU_TIME_LATTICE] += event_[1] - event_[0];
 #ifdef USE_CELL
     // CUDA time for cell lists initialisation
-    m_times[6] += event_[3] - event_[2];
+    m_times[GPU_TIME_UPDATE_CELLS] += event_[3] - event_[2];
     // CUDA time for neighbour lists update
-    m_times[9] += event_[4] - event_[3];
+    m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[4] - event_[3];
 #endif
 }
 
@@ -844,7 +844,7 @@ void ljfluid<dimension, T>::temperature(float temp)
     }
 
     // CUDA time for Maxwell-Boltzmann distribution
-    m_times[5] += event_[1] - event_[0];
+    m_times[GPU_TIME_BOLTZMANN] += event_[1] - event_[0];
 
     // compute center of mass velocity
     T v_cm = mean(h_sample.v.begin(), h_sample.v.end());
@@ -1000,26 +1000,26 @@ void ljfluid<dimension, T>::synchronize()
     }
 
     // CUDA time for MD simulation step
-    m_times[0] += event_[0] - event_[1];
+    m_times[GPU_TIME_MDSTEP] += event_[0] - event_[1];
     // CUDA time for velocity-Verlet integration
-    m_times[1] += event_[2] - event_[1];
+    m_times[GPU_TIME_VELOCITY_VERLET] += event_[2] - event_[1];
 #ifdef USE_CELL
     // CUDA time for Lennard-Jones force update
-    m_times[2] += event_[0] - event_[5];
+    m_times[GPU_TIME_UPDATE_FORCES] += event_[0] - event_[5];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
 	// CUDA time for Hilbert curve sort
-	m_times[7] += event_[3] - event_[2];
+	m_times[GPU_TIME_HILBERT_SORT] += event_[3] - event_[2];
 	// CUDA time for cell lists update
-	m_times[8] += event_[4] - event_[3];
+	m_times[GPU_TIME_UPDATE_CELLS] += event_[4] - event_[3];
 	// CUDA time for neighbour lists update
-	m_times[9] += event_[5] - event_[4];
+	m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[5] - event_[4];
     }
 #else
     // CUDA time for Lennard-Jones force update
-    m_times[2] += event_[0] - event_[2];
+    m_times[GPU_TIME_UPDATE_FORCES] += event_[0] - event_[2];
 #endif
 }
 
@@ -1090,7 +1090,7 @@ void ljfluid<dimension, T>::sample()
     }
 
     // CUDA time for sample memcpy
-    m_times[3] += event_[0] - event_[1];
+    m_times[GPU_TIME_SAMPLE_MEMCPY] += event_[0] - event_[1];
 }
 
 /**
