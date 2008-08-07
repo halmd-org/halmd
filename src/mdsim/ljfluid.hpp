@@ -49,6 +49,12 @@ template <unsigned dimension, typename T>
 class ljfluid
 {
 public:
+    enum {
+	REDUCE_BLOCKS = 16,
+	REDUCE_THREADS = 512,
+    };
+
+public:
 #ifdef DIM_3D
     /** coalesced GPU single-precision floating-point types */
     typedef float4 g_vector;
@@ -163,8 +169,6 @@ private:
     float timestep_;
     /** cutoff distance for shifted Lennard-Jones potential */
     float r_cut;
-    /** maximum velocity magnitude after last MD step */
-    float v_max;
 #ifdef USE_CELL
     /** cell skin */
     float r_skin;
@@ -189,6 +193,8 @@ private:
 	cuda::host::vector<g_vector> v;
 	/** particle tags */
 	cuda::host::vector<int> tag;
+	/** blockwise maximum particles velocity magnitudes */
+	cuda::host::vector<float> v_max;
 	/** potential energies per particle */
 	cuda::host::vector<float> en;
 	/** virial equation sums per particle */
@@ -211,6 +217,8 @@ private:
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
 	cuda::vector<float> virial;
+	/** blockwise maximum particles velocity magnitudes */
+	cuda::vector<float> v_max;
     } g_part;
 
 #ifdef USE_CELL
@@ -259,7 +267,7 @@ private:
     cuda::stream stream_;
     /** CUDA events for kernel timing */
 #ifdef USE_CELL
-    boost::array<cuda::event, 6> event_;
+    boost::array<cuda::event, 7> event_;
 #else
     boost::array<cuda::event, 3> event_;
 #endif
@@ -353,6 +361,7 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	g_part.tag.resize(npart);
 	g_part.en.resize(npart);
 	g_part.virial.resize(npart);
+	g_part.v_max.resize(REDUCE_BLOCKS);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory for system state");
@@ -379,6 +388,7 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	h_part.R.resize(npart);
 	h_part.v.resize(npart);
 	h_part.tag.resize(npart);
+	h_part.v_max.resize(REDUCE_BLOCKS);
 	// particle forces reside only in GPU memory
 	h_part.en.resize(npart);
 	h_part.virial.resize(npart);
@@ -664,8 +674,6 @@ void ljfluid<dimension, T>::restore(V visitor)
 	// update neighbour lists
 	update_neighbours(stream_);
 	event_[2].record(stream_);
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
 #endif
 	// replicate to periodically extended particle positions
 	cuda::copy(g_part.r, g_part.R, stream_);
@@ -685,11 +693,9 @@ void ljfluid<dimension, T>::restore(V visitor)
 	    // calculate maximum squared velocity
 	    vv_max = std::max(vv_max, h_sample.v[i] * h_sample.v[i]);
 	}
-	// set maximum velocity magnitude
-	v_max = std::sqrt(vv_max);
 #ifdef USE_CELL
-	// set sum over maximum velocity magnitudes to zero
-	v_max_sum = v_max;
+	// set initial sum over maximum velocity magnitudes
+	v_max_sum = std::sqrt(vv_max);
 #endif
 	// copy particle velocities from host to GPU (after force calculation!)
 	cuda::copy(h_part.v, g_part.v, stream_);
@@ -787,8 +793,6 @@ void ljfluid<dimension, T>::lattice()
 	// update neighbour lists
 	update_neighbours(stream_);
 	event_[4].record(stream_);
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
 #endif
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
@@ -861,11 +865,9 @@ void ljfluid<dimension, T>::temperature(float temp)
 	    // calculate maximum squared velocity
 	    vv_max = std::max(vv_max, h_sample.v[i] * h_sample.v[i]);
 	}
-	// set maximum velocity magnitude
-	v_max = std::sqrt(vv_max);
 #ifdef USE_CELL
-	// set sum over maximum velocity magnitudes to zero
-	v_max_sum = v_max;
+	// set initial sum over maximum velocity magnitudes to zero
+	v_max_sum = std::sqrt(vv_max);
 #endif
 	// copy particle velocities from host to GPU
 	cuda::copy(h_part.v, g_part.v, stream_);
@@ -982,6 +984,19 @@ void ljfluid<dimension, T>::mdstep()
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
     }
+
+#ifdef USE_CELL
+    event_[6].record(stream_);
+
+    try {
+	cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float), stream_);
+	gpu::ljfluid::maximum_velocity(g_part.v, g_part.v_max);
+	cuda::copy(g_part.v_max, h_part.v_max, stream_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to stream maximum velocity calculation on GPU");
+    }
+#endif
     event_[0].record(stream_);
 }
 
@@ -1005,7 +1020,9 @@ void ljfluid<dimension, T>::synchronize()
     m_times[GPU_TIME_VELOCITY_VERLET] += event_[2] - event_[1];
 #ifdef USE_CELL
     // CUDA time for Lennard-Jones force update
-    m_times[GPU_TIME_UPDATE_FORCES] += event_[0] - event_[5];
+    m_times[GPU_TIME_UPDATE_FORCES] += event_[6] - event_[5];
+    // CUDA time for maximum velocity calculation
+    m_times[GPU_TIME_MAXIMUM_VELOCITY] += event_[0] - event_[6];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
@@ -1020,6 +1037,11 @@ void ljfluid<dimension, T>::synchronize()
 #else
     // CUDA time for Lennard-Jones force update
     m_times[GPU_TIME_UPDATE_FORCES] += event_[0] - event_[2];
+#endif
+
+#ifdef USE_CELL
+    // add to sum over maximum velocity magnitudes since last cell lists update
+    v_max_sum += *std::max_element(h_part.v_max.begin(), h_part.v_max.end());
 #endif
 }
 
@@ -1058,9 +1080,6 @@ void ljfluid<dimension, T>::sample()
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
-    // maximum squared velocity
-    float vv_max = 0;
-
     for (unsigned int j = 0; j < npart; ++j) {
 	// particle tracking number
 	const int n = h_part.tag[j];
@@ -1074,15 +1093,7 @@ void ljfluid<dimension, T>::sample()
 	h_sample.en_pot += (h_part.en[j] - h_sample.en_pot) / (j + 1);
 	// calculate mean virial equation sum per particle
 	h_sample.virial += (h_part.virial[j] - h_sample.virial) / (j + 1);
-	// calculate maximum squared velocity
-	vv_max = std::max(vv_max, h_sample.v[n] * h_sample.v[n]);
     }
-    // set maximum velocity magnitude
-    v_max = std::sqrt(vv_max);
-#ifdef USE_CELL
-    // add to sum over maximum velocity magnitudes since last cell lists update
-    v_max_sum += v_max;
-#endif
 
     // ensure that system is still in valid state after MD step
     if (std::isnan(h_sample.en_pot)) {

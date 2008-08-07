@@ -45,6 +45,7 @@ namespace mdsim { namespace gpu { namespace ljfluid
 extern cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
 # ifdef USE_CELL
 extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
+extern cuda::function<void (float4 const*, float*)> maximum_velocity;
 extern cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode;
 extern cuda::function<void (float4 const*, uint*)> compute_cell;
 extern cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles;
@@ -60,6 +61,7 @@ extern cuda::function<void (float4*, unsigned int)> lattice_simple;
 extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
 # ifdef USE_CELL
 extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
+extern cuda::function<void (float2 const*, float*)> maximum_velocity;
 extern cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode;
 extern cuda::function<void (float2 const*, uint*)> compute_cell;
 extern cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles;

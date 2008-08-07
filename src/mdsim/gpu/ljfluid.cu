@@ -237,6 +237,70 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
     g_virial[GTID] = virial;
 }
 
+/**
+ * blockwise maximum velocity magnitude
+ */
+template <typename T, typename U>
+__global__ void maximum_velocity(U const* g_v, float* g_vmax)
+{
+    extern __shared__ float s_vv[];
+
+    // load first particle from global device memory
+    T v = unpack(g_v[GTID]);
+    float vv = v * v;
+    // load further particles
+    for (unsigned int i = GTDIM + GTID; i < npart; i += GTDIM) {
+	v = unpack(g_v[i]);
+	vv = fmaxf(vv, v * v);
+    }
+    // maximum velocity for this thread
+    s_vv[TID] = vv;
+    __syncthreads();
+
+    // compute maximum velocity for all threads in block
+    if (TID < 256) {
+	vv = fmaxf(vv, s_vv[TID + 256]);
+	s_vv[TID] = vv;
+    }
+    __syncthreads();
+    if (TID < 128) {
+	vv = fmaxf(vv, s_vv[TID + 128]);
+	s_vv[TID] = vv;
+    }
+    __syncthreads();
+    if (TID < 64) {
+	vv = fmaxf(vv, s_vv[TID + 64]);
+	s_vv[TID] = vv;
+    }
+    __syncthreads();
+    if (TID < 32) {
+	vv = fmaxf(vv, s_vv[TID + 32]);
+	s_vv[TID] = vv;
+    }
+    // no further syncs needed within execution warp of 32 threads
+    if (TID < 16) {
+	vv = fmaxf(vv, s_vv[TID + 16]);
+	s_vv[TID] = vv;
+    }
+    if (TID < 8) {
+	vv = fmaxf(vv, s_vv[TID + 8]);
+	s_vv[TID] = vv;
+    }
+    if (TID < 4) {
+	vv = fmaxf(vv, s_vv[TID + 4]);
+	s_vv[TID] = vv;
+    }
+    if (TID < 2) {
+	vv = fmaxf(vv, s_vv[TID + 2]);
+	s_vv[TID] = vv;
+    }
+    if (TID < 1) {
+	vv = fmaxf(vv, s_vv[TID + 1]);
+	// store maximum block velocity in global memory
+	g_vmax[blockIdx.x] = sqrtf(vv);
+    }
+}
+
 #else /* USE_CELL */
 
 /**
@@ -764,6 +828,7 @@ namespace mdsim { namespace gpu { namespace ljfluid
 cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
 # ifdef USE_CELL
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<float3>);
+cuda::function<void (float4 const*, float*)> maximum_velocity(mdsim::maximum_velocity<float3>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float3>);
 cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float3>);
 cuda::function<void (float4 const*, uint*)> compute_cell(mdsim::compute_cell<float3>);
@@ -780,6 +845,7 @@ cuda::function<void (float4*, unsigned int)> lattice_simple(mdsim::lattice_simpl
 cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
 # ifdef USE_CELL
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<float2>);
+cuda::function<void (float2 const*, float*)> maximum_velocity(mdsim::maximum_velocity<float2>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float2>);
 cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float2>);
 cuda::function<void (float2 const*, uint*)> compute_cell(mdsim::compute_cell<float2>);

@@ -45,6 +45,7 @@ enum {
     GPU_TIME_HILBERT_SORT,
     GPU_TIME_UPDATE_CELLS,
     GPU_TIME_UPDATE_NEIGHBOURS,
+    GPU_TIME_MAXIMUM_VELOCITY,
 #endif
     GPU_TIME_UPDATE_FORCES,
     GPU_TIME_SAMPLE_MEMCPY,
@@ -63,6 +64,7 @@ static char const* perf_dataset[][2] = {
     { "hilbert_sort",		"GPU time for Hilbert space-filling curve sort" },
     { "update_cells",		"GPU time for cell lists update" },
     { "update_neighbours",	"GPU time for neighbour lists update" },
+    { "maximum_velocity",	"GPU time for maximum velocity calculation" },
 #endif
     { "update_forces",		"GPU time for Lennard-Jones force update" },
     { "sample_memcpy",		"GPU time for sample memcpy" },
