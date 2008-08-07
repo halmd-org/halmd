@@ -169,8 +169,6 @@ void mdsim<dimension, T>::operator()()
 	LOG("starting equilibration");
 	timer.start();
 	for (iterator_timer<uint64_t> step = 0; step < opts.equilibration_steps().value(); ++step) {
-	    // copy previous MD simulation state from GPU to host
-	    fluid.sample();
 	    // stream next MD simulation program step on GPU
 	    fluid.mdstep();
 	    // synchronize MD simulation program step on GPU
@@ -229,8 +227,11 @@ void mdsim<dimension, T>::operator()()
     timer.start();
 
     for (iterator_timer<uint64_t> step = 0; step < tcf.steps(); ++step) {
-	// copy previous MD simulation state from GPU to host
-	fluid.sample();
+	// check if sample is acquired for given simulation step
+	if (tcf.sample(*step)) {
+	    // copy previous MD simulation state from GPU to host
+	    fluid.sample();
+	}
 	// stream next MD simulation program step on GPU
 	fluid.mdstep();
 	// check if sample is acquired for given simulation step
