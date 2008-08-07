@@ -135,7 +135,17 @@ public:
     trajectory_sample<T> const& trajectory() const { return h_sample; }
 
 private:
+    /** first leapfrog step of integration of differential equations of motion */
+    void velocity_verlet(cuda::stream& stream);
+    /** Lennard-Jones force calculation */
+    void update_forces(cuda::stream& stream);
+    /** potential energy sum calculation */
+    void potential_energy(cuda::stream& stream);
+    /** virial equation sum calculation */
+    void virial_sum(cuda::stream& stream);
 #ifdef USE_CELL
+    /** maximum velocity calculation */
+    void maximum_velocity(cuda::stream& stream);
     /** assign particles to cells */
     void assign_cells(cuda::stream& stream);
     /** update neighbour lists */
@@ -365,6 +375,7 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	g_part.tag.resize(npart);
 	g_part.en.resize(npart);
 	g_part.virial.resize(npart);
+
 	g_part.v_max.resize(REDUCE_BLOCKS);
 	g_part.en_sum.resize(REDUCE_BLOCKS);
 	g_part.virial_sum.resize(REDUCE_BLOCKS);
@@ -395,6 +406,7 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	h_part.v.resize(npart);
 	h_part.tag.resize(npart);
 	// particle forces reside only in GPU memory
+
 	h_part.v_max.resize(REDUCE_BLOCKS);
 	h_part.en_sum.resize(REDUCE_BLOCKS);
 	h_part.virial_sum.resize(REDUCE_BLOCKS);
@@ -673,51 +685,41 @@ void ljfluid<dimension, T>::restore(V visitor)
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
 #ifdef USE_CELL
+	// order particles after Hilbert space-filling curve
+	hilbert_order(stream_);
 	// assign particles to cells
-	event_[0].record(stream_);
 	assign_cells(stream_);
-	event_[1].record(stream_);
 	// update neighbour lists
 	update_neighbours(stream_);
-	event_[2].record(stream_);
 #endif
+	// calculate forces
+	update_forces(stream_);
+	// calculate potential energy
+	potential_energy(stream_);
+	// calculate virial equation sum
+	virial_sum(stream_);
 	// replicate to periodically extended particle positions
 	cuda::copy(g_part.r, g_part.R, stream_);
-	// calculate forces, potential energy and virial equation sum
-#ifdef USE_CELL
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
-#else
-	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
-	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
-#endif
 
-	// maximum squared velocity
-	float vv_max = 0;
+	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.v[i] = make_float(h_sample.v[i]);
-	    // calculate maximum squared velocity
-	    vv_max = std::max(vv_max, h_sample.v[i] * h_sample.v[i]);
 	}
-#ifdef USE_CELL
-	// set initial sum over maximum velocity magnitudes
-	v_max_sum = std::sqrt(vv_max);
-#endif
-	// copy particle velocities from host to GPU (after force calculation!)
 	cuda::copy(h_part.v, g_part.v, stream_);
+#ifdef USE_CELL
+	// calculate maximum velocity magnitude
+	maximum_velocity(stream_);
+#endif
 
+	// wait for GPU operations to finish
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to restore system state from phase space sample");
     }
 
-#ifdef USE_CELL
-    // GPU time for cell lists initialisation
-    m_times[GPU_TIME_UPDATE_CELLS] += event_[1] - event_[0];
-    // GPU time for neighbour lists update
-    m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[2] - event_[1];
-#endif
+    // set initial sum over maximum velocity magnitudes since last cell lists update
+    v_max_sum = *std::max_element(h_part.v_max.begin(), h_part.v_max.end());
 }
 
 /**
@@ -785,31 +787,22 @@ void ljfluid<dimension, T>::lattice()
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_part.r, n);
 	event_[1].record(stream_);
-	// copy particle positions from GPU to host
-	cuda::copy(g_part.r, h_part.r, stream_);
-	stream_.synchronize();
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_sample.r[i] = T(h_part.r[i]);
-	}
 #ifdef USE_CELL
+	// order particles after Hilbert space-filling curve
+	hilbert_order(stream_);
 	// assign particles to cells
-	event_[2].record(stream_);
 	assign_cells(stream_);
-	event_[3].record(stream_);
 	// update neighbour lists
 	update_neighbours(stream_);
-	event_[4].record(stream_);
 #endif
+	// calculate forces
+	update_forces(stream_);
+	// calculate potential energy
+	potential_energy(stream_);
+	// calculate virial equation sum
+	virial_sum(stream_);
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
-	// calculate forces, potential energy and virial equation sum
-#ifdef USE_CELL
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
-#else
-	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
-	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
-#endif
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -820,12 +813,6 @@ void ljfluid<dimension, T>::lattice()
 
     // GPU time for lattice generation
     m_times[GPU_TIME_LATTICE] += event_[1] - event_[0];
-#ifdef USE_CELL
-    // GPU time for cell lists initialisation
-    m_times[GPU_TIME_UPDATE_CELLS] += event_[3] - event_[2];
-    // GPU time for neighbour lists update
-    m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[4] - event_[3];
-#endif
 }
 
 /**
@@ -864,25 +851,24 @@ void ljfluid<dimension, T>::temperature(float temp)
     }
 
     try {
-	// maximum squared velocity
-	float vv_max = 0;
+	// copy particle velocities from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.v[i] = make_float(h_sample.v[i]);
-	    // calculate maximum squared velocity
-	    vv_max = std::max(vv_max, h_sample.v[i] * h_sample.v[i]);
 	}
-#ifdef USE_CELL
-	// set initial sum over maximum velocity magnitudes to zero
-	v_max_sum = std::sqrt(vv_max);
-#endif
-	// copy particle velocities from host to GPU
 	cuda::copy(h_part.v, g_part.v, stream_);
+#ifdef USE_CELL
+	// calculate maximum velocity magnitude
+	maximum_velocity(stream_);
+#endif
 
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to set center of mass velocity to zero");
     }
+
+    // set initial sum over maximum velocity magnitudes since last cell lists update
+    v_max_sum = *std::max_element(h_part.v_max.begin(), h_part.v_max.end());
 }
 
 /**
@@ -940,8 +926,7 @@ void ljfluid<dimension, T>::mdstep()
 
     // first leapfrog step of integration of differential equations of motion
     try {
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
+	velocity_verlet(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream first leapfrog step on GPU");
@@ -979,13 +964,7 @@ void ljfluid<dimension, T>::mdstep()
 
     // Lennard-Jones force calculation
     try {
-#ifdef USE_CELL
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
-#else
-	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
-	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
-#endif
+	update_forces(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
@@ -994,9 +973,7 @@ void ljfluid<dimension, T>::mdstep()
 
     // potential energy sum calculation
     try {
-	cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream_);
-	gpu::ljfluid::potential_energy_sum(g_part.en, g_part.en_sum);
-	cuda::copy(g_part.en_sum, h_part.en_sum, stream_);
+	potential_energy(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream potential energy sum calculation on GPU");
@@ -1005,9 +982,7 @@ void ljfluid<dimension, T>::mdstep()
 
     // virial equation sum calculation
     try {
-	cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream_);
-	gpu::ljfluid::potential_energy_sum(g_part.virial, g_part.virial_sum);
-	cuda::copy(g_part.virial_sum, h_part.virial_sum, stream_);
+	virial_sum(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream virial equation sum calculation on GPU");
@@ -1018,9 +993,7 @@ void ljfluid<dimension, T>::mdstep()
 
     // maximum velocity calculation
     try {
-	cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float), stream_);
-	gpu::ljfluid::maximum_velocity(g_part.v, g_part.v_max);
-	cuda::copy(g_part.v_max, h_part.v_max, stream_);
+	maximum_velocity(stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream maximum velocity calculation on GPU");
@@ -1155,7 +1128,65 @@ perf_counters ljfluid<dimension, T>::times()
     return times;
 }
 
+/*
+ * first leapfrog step of integration of differential equations of motion
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::velocity_verlet(cuda::stream& stream)
+{
+    cuda::configure(dim_.grid, dim_.block, stream);
+    gpu::ljfluid::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
+}
+
+/*
+ * Lennard-Jones force calculation
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::update_forces(cuda::stream& stream)
+{
 #ifdef USE_CELL
+    cuda::configure(dim_.grid, dim_.block, stream);
+    gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
+#else
+    cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream);
+    gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+#endif
+}
+
+/*
+ * potential energy sum calculation
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::potential_energy(cuda::stream& stream)
+{
+    cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream_);
+    gpu::ljfluid::potential_energy_sum(g_part.en, g_part.en_sum);
+    cuda::copy(g_part.en_sum, h_part.en_sum, stream_);
+}
+
+/*
+ * virial equation sum calculation
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::virial_sum(cuda::stream& stream)
+{
+    cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream);
+    gpu::ljfluid::potential_energy_sum(g_part.virial, g_part.virial_sum);
+    cuda::copy(g_part.virial_sum, h_part.virial_sum, stream);
+}
+
+#ifdef USE_CELL
+
+/*
+ * maximum velocity calculation
+ */
+template <unsigned dimension, typename T>
+void ljfluid<dimension, T>::maximum_velocity(cuda::stream& stream)
+{
+    cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float), stream);
+    gpu::ljfluid::maximum_velocity(g_part.v, g_part.v_max);
+    cuda::copy(g_part.v_max, h_part.v_max, stream);
+}
 
 /**
  * assign particles to cells
