@@ -42,7 +42,9 @@ enum {
     GPU_TIME_MDSTEP,
     GPU_TIME_VELOCITY_VERLET,
 #ifdef USE_CELL
+#ifdef USE_HILBERT_ORDER
     GPU_TIME_HILBERT_SORT,
+#endif
     GPU_TIME_UPDATE_CELLS,
     GPU_TIME_UPDATE_NEIGHBOURS,
     GPU_TIME_MAXIMUM_VELOCITY,
@@ -63,7 +65,9 @@ static char const* perf_dataset[][2] = {
     { "mdstep",			"GPU time for MD simulation step" },
     { "velocity_verlet",	"GPU time for velocity-Verlet integration" },
 #ifdef USE_CELL
+#ifdef USE_HILBERT_ORDER
     { "hilbert_sort",		"GPU time for Hilbert space-filling curve sort" },
+#endif
     { "update_cells",		"GPU time for cell lists update" },
     { "update_neighbours",	"GPU time for neighbour lists update" },
     { "maximum_velocity",	"GPU time for maximum velocity calculation" },

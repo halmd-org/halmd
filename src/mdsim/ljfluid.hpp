@@ -150,8 +150,10 @@ private:
     void assign_cells(cuda::stream& stream);
     /** update neighbour lists */
     void update_neighbours(cuda::stream& stream);
+#ifdef USE_HILBERT_ORDER
     /** order particles after Hilbert space-filling curve */
     void hilbert_order(cuda::stream& stream);
+#endif
 #endif
 
 private:
@@ -685,8 +687,10 @@ void ljfluid<dimension, T>::restore(V visitor)
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
 #ifdef USE_CELL
+#ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
+#endif
 	// assign particles to cells
 	assign_cells(stream_);
 	// update neighbour lists
@@ -788,8 +792,10 @@ void ljfluid<dimension, T>::lattice()
 	gpu::ljfluid::lattice(g_part.r, n);
 	event_[1].record(stream_);
 #ifdef USE_CELL
+#ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
+#endif
 	// assign particles to cells
 	assign_cells(stream_);
 	// update neighbour lists
@@ -936,12 +942,14 @@ void ljfluid<dimension, T>::mdstep()
 #ifdef USE_CELL
     // update cell lists
     if (v_max_sum * timestep_ > r_skin / 2) {
+#ifdef USE_HILBERT_ORDER
 	try {
 	    hilbert_order(stream_);
 	}
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream hilbert space-filling curve sort on GPU");
 	}
+#endif
 	event_[5].record(stream_);
 
 	try {
@@ -1033,8 +1041,10 @@ void ljfluid<dimension, T>::synchronize()
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
+#ifdef USE_HILBERT_ORDER
 	// GPU time for Hilbert curve sort
 	m_times[GPU_TIME_HILBERT_SORT] += event_[5] - event_[2];
+#endif
 	// GPU time for cell lists update
 	m_times[GPU_TIME_UPDATE_CELLS] += event_[6] - event_[5];
 	// GPU time for neighbour lists update
@@ -1226,6 +1236,8 @@ void ljfluid<dimension, T>::update_neighbours(cuda::stream& stream)
     gpu::ljfluid::update_neighbours(g_cell, g_nbl);
 }
 
+#ifdef USE_HILBERT_ORDER
+
 /**
  * order particles after Hilbert space-filling curve
  */
@@ -1249,6 +1261,8 @@ void ljfluid<dimension, T>::hilbert_order(cuda::stream& stream)
     cuda::copy(g_sort.v, g_part.v, stream);
     cuda::copy(g_sort.tag, g_part.tag, stream);
 }
+
+#endif /* USE_HILBERT_ORDER */
 
 #endif /* USE_CELL */
 
