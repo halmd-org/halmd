@@ -360,6 +360,68 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 #endif /* USE_CELL */
 
 /**
+ * blockwise potential energy sum
+ */
+__global__ void potential_energy_sum(float const* g_en, float2* g_en_sum)
+{
+    // single-double floating point arithmetic
+    extern __shared__ dfloat s_en[];
+
+    // load first particle from global device memory
+    dfloat en = g_en[GTID];
+    // load further particles
+    for (unsigned int i = GTDIM + GTID; i < npart; i += GTDIM) {
+	en = en + g_en[i];
+    }
+    // potential energy sum for this thread
+    s_en[TID] = en;
+    __syncthreads();
+
+    // compute potential energy sum for all threads in block
+    if (TID < 256) {
+	en = en + s_en[TID + 256];
+	s_en[TID] = en;
+    }
+    __syncthreads();
+    if (TID < 128) {
+	en = en + s_en[TID + 128];
+	s_en[TID] = en;
+    }
+    __syncthreads();
+    if (TID < 64) {
+	en = en + s_en[TID + 64];
+	s_en[TID] = en;
+    }
+    __syncthreads();
+    if (TID < 32) {
+	en = en + s_en[TID + 32];
+	s_en[TID] = en;
+    }
+    // no further syncs needed within execution warp of 32 threads
+    if (TID < 16) {
+	en = en + s_en[TID + 16];
+	s_en[TID] = en;
+    }
+    if (TID < 8) {
+	en = en + s_en[TID + 8];
+	s_en[TID] = en;
+    }
+    if (TID < 4) {
+	en = en + s_en[TID + 4];
+	s_en[TID] = en;
+    }
+    if (TID < 2) {
+	en = en + s_en[TID + 2];
+	s_en[TID] = en;
+    }
+    if (TID < 1) {
+	en = en + s_en[TID + 1];
+	// store potential energy block sum in global memory
+	g_en_sum[blockIdx.x] = make_float2(en.f0, en.f1);
+    }
+}
+
+/**
  * place particles on a face centered cubic (FCC) lattice
  */
 template <typename T, typename U>
@@ -867,6 +929,7 @@ cuda::symbol<float> r_cut(mdsim::r_cut);
 cuda::symbol<float> rr_cut(mdsim::rr_cut);
 cuda::symbol<float> en_cut(mdsim::en_cut);
 cuda::function<void (int*)> init_tags(mdsim::init_tags);
+cuda::function<void (float const* g_en, float2* g_en_sum)> potential_energy_sum(mdsim::potential_energy_sum);
 
 #ifdef USE_CELL
 cuda::symbol<unsigned int> ncell(mdsim::ncell);

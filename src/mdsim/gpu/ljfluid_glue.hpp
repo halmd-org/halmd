@@ -82,6 +82,7 @@ extern cuda::symbol<float> r_cut;
 extern cuda::symbol<float> rr_cut;
 extern cuda::symbol<float> en_cut;
 extern cuda::function<void (int*)> init_tags;
+extern cuda::function<void (float const*, float2*)> potential_energy_sum;
 
 #ifdef USE_CELL
 extern cuda::function<void (int const*, int*)> update_neighbours;

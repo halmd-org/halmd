@@ -48,6 +48,8 @@ enum {
     GPU_TIME_MAXIMUM_VELOCITY,
 #endif
     GPU_TIME_UPDATE_FORCES,
+    GPU_TIME_POTENTIAL_ENERGY,
+    GPU_TIME_VIRIAL_SUM,
     GPU_TIME_SAMPLE_MEMCPY,
     GPU_TIME_LATTICE,
     GPU_TIME_BOLTZMANN,
@@ -67,6 +69,8 @@ static char const* perf_dataset[][2] = {
     { "maximum_velocity",	"GPU time for maximum velocity calculation" },
 #endif
     { "update_forces",		"GPU time for Lennard-Jones force update" },
+    { "potential_energy",	"GPU time for potential energy sum calculation" },
+    { "virial_sum",		"GPU time for virial equation sum calculation" },
     { "sample_memcpy",		"GPU time for sample memcpy" },
     { "lattice",		"GPU time for lattice generation" },
     { "boltzmann",		"GPU time for Maxwell-Boltzmann distribution" },

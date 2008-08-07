@@ -119,7 +119,7 @@ public:
     float const& timestep() const { return timestep_; }
     /** get potential cutoff distance */
     float const& cutoff_distance() const { return r_cut; }
-    /** returns and resets CUDA time statistics */
+    /** returns and resets GPU time statistics */
     perf_counters times();
 
     /** write parameters to HDF5 parameter group */
@@ -195,10 +195,10 @@ private:
 	cuda::host::vector<int> tag;
 	/** blockwise maximum particles velocity magnitudes */
 	cuda::host::vector<float> v_max;
-	/** potential energies per particle */
-	cuda::host::vector<float> en;
-	/** virial equation sums per particle */
-	cuda::host::vector<float> virial;
+	/** blockwise potential energies sum per particle */
+	cuda::host::vector<float2> en_sum;
+	/** blockwise virial equation sum per particle */
+	cuda::host::vector<float2> virial_sum;
     } h_part;
 
     /** system state in global device memory */
@@ -219,6 +219,10 @@ private:
 	cuda::vector<float> virial;
 	/** blockwise maximum particles velocity magnitudes */
 	cuda::vector<float> v_max;
+	/** blockwise potential energies sum per particle */
+	cuda::vector<float2> en_sum;
+	/** blockwise virial equation sum per particle */
+	cuda::vector<float2> virial_sum;
     } g_part;
 
 #ifdef USE_CELL
@@ -267,11 +271,11 @@ private:
     cuda::stream stream_;
     /** CUDA events for kernel timing */
 #ifdef USE_CELL
-    boost::array<cuda::event, 7> event_;
+    boost::array<cuda::event, 9> event_;
 #else
-    boost::array<cuda::event, 3> event_;
+    boost::array<cuda::event, 5> event_;
 #endif
-    /** CUDA time statistics */
+    /** GPU time statistics */
     perf_counters m_times;
 };
 
@@ -362,6 +366,8 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	g_part.en.resize(npart);
 	g_part.virial.resize(npart);
 	g_part.v_max.resize(REDUCE_BLOCKS);
+	g_part.en_sum.resize(REDUCE_BLOCKS);
+	g_part.virial_sum.resize(REDUCE_BLOCKS);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate global device memory for system state");
@@ -388,10 +394,10 @@ void ljfluid<dimension, T>::particles(unsigned int value)
 	h_part.R.resize(npart);
 	h_part.v.resize(npart);
 	h_part.tag.resize(npart);
-	h_part.v_max.resize(REDUCE_BLOCKS);
 	// particle forces reside only in GPU memory
-	h_part.en.resize(npart);
-	h_part.virial.resize(npart);
+	h_part.v_max.resize(REDUCE_BLOCKS);
+	h_part.en_sum.resize(REDUCE_BLOCKS);
+	h_part.virial_sum.resize(REDUCE_BLOCKS);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to allocate page-locked host memory for system state");
@@ -707,9 +713,9 @@ void ljfluid<dimension, T>::restore(V visitor)
     }
 
 #ifdef USE_CELL
-    // CUDA time for cell lists initialisation
+    // GPU time for cell lists initialisation
     m_times[GPU_TIME_UPDATE_CELLS] += event_[1] - event_[0];
-    // CUDA time for neighbour lists update
+    // GPU time for neighbour lists update
     m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[2] - event_[1];
 #endif
 }
@@ -812,12 +818,12 @@ void ljfluid<dimension, T>::lattice()
 	throw exception("failed to compute particle lattice positions on GPU");
     }
 
-    // CUDA time for lattice generation
+    // GPU time for lattice generation
     m_times[GPU_TIME_LATTICE] += event_[1] - event_[0];
 #ifdef USE_CELL
-    // CUDA time for cell lists initialisation
+    // GPU time for cell lists initialisation
     m_times[GPU_TIME_UPDATE_CELLS] += event_[3] - event_[2];
-    // CUDA time for neighbour lists update
+    // GPU time for neighbour lists update
     m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[4] - event_[3];
 #endif
 }
@@ -847,7 +853,7 @@ void ljfluid<dimension, T>::temperature(float temp)
 	throw exception("failed to compute Maxwell-Boltzmann distributed velocities on GPU");
     }
 
-    // CUDA time for Maxwell-Boltzmann distribution
+    // GPU time for Maxwell-Boltzmann distribution
     m_times[GPU_TIME_BOLTZMANN] += event_[1] - event_[0];
 
     // compute center of mass velocity
@@ -951,7 +957,7 @@ void ljfluid<dimension, T>::mdstep()
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream hilbert space-filling curve sort on GPU");
 	}
-	event_[3].record(stream_);
+	event_[5].record(stream_);
 
 	try {
 	    assign_cells(stream_);
@@ -959,7 +965,7 @@ void ljfluid<dimension, T>::mdstep()
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream cell list update on GPU");
 	}
-	event_[4].record(stream_);
+	event_[6].record(stream_);
 
 	try {
 	    update_neighbours(stream_);
@@ -968,7 +974,7 @@ void ljfluid<dimension, T>::mdstep()
 	    throw exception("failed to stream neighbour lists update on GPU");
 	}
     }
-    event_[5].record(stream_);
+    event_[7].record(stream_);
 #endif
 
     // Lennard-Jones force calculation
@@ -984,10 +990,33 @@ void ljfluid<dimension, T>::mdstep()
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
     }
+    event_[3].record(stream_);
+
+    // potential energy sum calculation
+    try {
+	cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream_);
+	gpu::ljfluid::potential_energy_sum(g_part.en, g_part.en_sum);
+	cuda::copy(g_part.en_sum, h_part.en_sum, stream_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to stream potential energy sum calculation on GPU");
+    }
+    event_[4].record(stream_);
+
+    // virial equation sum calculation
+    try {
+	cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream_);
+	gpu::ljfluid::potential_energy_sum(g_part.virial, g_part.virial_sum);
+	cuda::copy(g_part.virial_sum, h_part.virial_sum, stream_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to stream virial equation sum calculation on GPU");
+    }
 
 #ifdef USE_CELL
-    event_[6].record(stream_);
+    event_[8].record(stream_);
 
+    // maximum velocity calculation
     try {
 	cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float), stream_);
 	gpu::ljfluid::maximum_velocity(g_part.v, g_part.v_max);
@@ -1014,30 +1043,56 @@ void ljfluid<dimension, T>::synchronize()
 	throw exception("MD simulation step on GPU failed");
     }
 
-    // CUDA time for MD simulation step
+    // GPU time for MD simulation step
     m_times[GPU_TIME_MDSTEP] += event_[0] - event_[1];
-    // CUDA time for velocity-Verlet integration
+    // GPU time for velocity-Verlet integration
     m_times[GPU_TIME_VELOCITY_VERLET] += event_[2] - event_[1];
 #ifdef USE_CELL
-    // CUDA time for Lennard-Jones force update
-    m_times[GPU_TIME_UPDATE_FORCES] += event_[6] - event_[5];
-    // CUDA time for maximum velocity calculation
-    m_times[GPU_TIME_MAXIMUM_VELOCITY] += event_[0] - event_[6];
+    // GPU time for Lennard-Jones force update
+    m_times[GPU_TIME_UPDATE_FORCES] += event_[3] - event_[7];
+    // GPU time for potential energy sum calculation
+    m_times[GPU_TIME_POTENTIAL_ENERGY] += event_[4] - event_[3];
+    // GPU time for virial equation sum calculation
+    m_times[GPU_TIME_VIRIAL_SUM] += event_[8] - event_[4];
+    // GPU time for maximum velocity calculation
+    m_times[GPU_TIME_MAXIMUM_VELOCITY] += event_[0] - event_[8];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
-	// CUDA time for Hilbert curve sort
-	m_times[GPU_TIME_HILBERT_SORT] += event_[3] - event_[2];
-	// CUDA time for cell lists update
-	m_times[GPU_TIME_UPDATE_CELLS] += event_[4] - event_[3];
-	// CUDA time for neighbour lists update
-	m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[5] - event_[4];
+	// GPU time for Hilbert curve sort
+	m_times[GPU_TIME_HILBERT_SORT] += event_[5] - event_[2];
+	// GPU time for cell lists update
+	m_times[GPU_TIME_UPDATE_CELLS] += event_[6] - event_[5];
+	// GPU time for neighbour lists update
+	m_times[GPU_TIME_UPDATE_NEIGHBOURS] += event_[7] - event_[6];
     }
 #else
-    // CUDA time for Lennard-Jones force update
-    m_times[GPU_TIME_UPDATE_FORCES] += event_[0] - event_[2];
+    // GPU time for Lennard-Jones force update
+    m_times[GPU_TIME_UPDATE_FORCES] += event_[3] - event_[2];
+    // GPU time for potential energy sum calculation
+    m_times[GPU_TIME_POTENTIAL_ENERGY] += event_[4] - event_[3];
+    // GPU time for virial equation sum calculation
+    m_times[GPU_TIME_VIRIAL_SUM] += event_[0] - event_[4];
 #endif
+
+    // mean potential energy per particle
+    h_sample.en_pot = 0;
+    for (unsigned int i = 0; i < h_part.en_sum.size(); ++i) {
+	h_sample.en_pot += (double) h_part.en_sum[i].x + (double) h_part.en_sum[i].y;
+    }
+    h_sample.en_pot /= npart;
+    // mean virial equation sum per particle
+    h_sample.virial = 0;
+    for (unsigned int i = 0; i < h_part.virial_sum.size(); ++i) {
+	h_sample.virial += (double) h_part.virial_sum[i].x + (double) h_part.virial_sum[i].y;
+    }
+    h_sample.virial /= npart;
+
+    // ensure that system is still in valid state after MD step
+    if (!std::isfinite(h_sample.en_pot)) {
+	throw exception("potential energy diverged");
+    }
 
 #ifdef USE_CELL
     // add to sum over maximum velocity magnitudes since last cell lists update
@@ -1051,11 +1106,6 @@ void ljfluid<dimension, T>::synchronize()
 template <unsigned dimension, typename T>
 void ljfluid<dimension, T>::sample()
 {
-    // mean potential energy per particle
-    h_sample.en_pot = 0;
-    // mean virial equation sum per particle
-    h_sample.virial = 0;
-
     // copy MD simulation step results from GPU to host
     try {
 	event_[1].record(stream_);
@@ -1067,10 +1117,6 @@ void ljfluid<dimension, T>::sample()
 	cuda::copy(g_part.v, h_part.v, stream_);
 	// copy particle tags
 	cuda::copy(g_part.tag, h_part.tag, stream_);
-	// copy potential energies per particle and virial equation sums
-	cuda::copy(g_part.en, h_part.en, stream_);
-	// copy virial equation sums per particle
-	cuda::copy(g_part.virial, h_part.virial, stream_);
 	event_[0].record(stream_);
 
 	// wait for CUDA operations to finish
@@ -1089,23 +1135,14 @@ void ljfluid<dimension, T>::sample()
 	h_sample.R[n] = T(h_part.R[j]);
 	// copy particle velocities
 	h_sample.v[n] = T(h_part.v[j]);
-	// calculate mean potential energy per particle
-	h_sample.en_pot += (h_part.en[j] - h_sample.en_pot) / (j + 1);
-	// calculate mean virial equation sum per particle
-	h_sample.virial += (h_part.virial[j] - h_sample.virial) / (j + 1);
     }
 
-    // ensure that system is still in valid state after MD step
-    if (std::isnan(h_sample.en_pot)) {
-	throw exception("potential energy diverged due to excessive timestep or density");
-    }
-
-    // CUDA time for sample memcpy
+    // GPU time for sample memcpy
     m_times[GPU_TIME_SAMPLE_MEMCPY] += event_[0] - event_[1];
 }
 
 /**
- * returns and resets CUDA time statistics
+ * returns and resets GPU time statistics
  */
 template <unsigned dimension, typename T>
 perf_counters ljfluid<dimension, T>::times()
