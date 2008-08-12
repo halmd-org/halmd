@@ -4,28 +4,28 @@ PROJECT(ljfluid)
 
 SET(CMAKE_MODULE_PATH ${ljfluid_SOURCE_DIR}/CMakeModules)
 
-SET(MERCURIAL_FIND_REQUIRED TRUE)
-FIND_PACKAGE(Mercurial)
+SET(GIT_FIND_REQUIRED TRUE)
+FIND_PACKAGE(Git)
 
-MERCURIAL_HG_INFO(${ljfluid_SOURCE_DIR} ljfluid)
+GIT_REPOSITORY_INFO(${ljfluid_SOURCE_DIR} ljfluid)
 
 SET(PROGRAM_NAME "ljfluid")
 
-IF(ljfluid_HG_TAG)
-  SET(PROGRAM_VERSION "version ${ljfluid_HG_TAG}")
-ELSE(ljfluid_HG_TAG)
-  IF(ljfluid_HG_ID)
-    SET(PROGRAM_VERSION "changeset ${ljfluid_HG_ID}")
-  ELSE(ljfluid_HG_ID)
+IF(ljfluid_GIT_TAGS)
+  SET(PROGRAM_VERSION "version ${ljfluid_GIT_TAGS}")
+ELSE(ljfluid_GIT_TAGS)
+  IF(ljfluid_GIT_COMMIT)
+    SET(PROGRAM_VERSION "commit ${ljfluid_GIT_COMMIT}")
+  ELSE(ljfluid_GIT_COMMIT)
     SET(PROGRAM_VERSION "unknown version")
-  ENDIF(ljfluid_HG_ID)
-ENDIF(ljfluid_HG_TAG)
+  ENDIF(ljfluid_GIT_COMMIT)
+ENDIF(ljfluid_GIT_TAGS)
 
-IF(ljfluid_HG_DATE)
-  SET(PROGRAM_DATE "${ljfluid_HG_DATE}")
-ELSE(ljfluid_HG_DATE)
+IF(ljfluid_GIT_AUTHOR_DATE)
+  SET(PROGRAM_DATE "${ljfluid_GIT_AUTHOR_DATE}")
+ELSE(ljfluid_GIT_AUTHOR_DATE)
   SET(PROGRAM_DATE "unknown date")
-ENDIF(ljfluid_HG_DATE)
+ENDIF(ljfluid_GIT_AUTHOR_DATE)
 
 
 SET(GSL_FIND_REQUIRED TRUE)
