@@ -4,28 +4,28 @@ PROJECT(hardspheres)
 
 SET(CMAKE_MODULE_PATH ${hardspheres_SOURCE_DIR}/CMakeModules)
 
-SET(MERCURIAL_FIND_REQUIRED TRUE)
-FIND_PACKAGE(Mercurial)
+SET(GIT_FIND_REQUIRED TRUE)
+FIND_PACKAGE(Git)
 
-MERCURIAL_HG_INFO(${hardspheres_SOURCE_DIR} hardspheres)
+GIT_REPOSITORY_INFO(${hardspheres_SOURCE_DIR} hardspheres)
 
 SET(PROGRAM_NAME "hardspheres")
 
-IF(hardspheres_HG_TAG)
-  SET(PROGRAM_VERSION "version ${hardspheres_HG_TAG}")
-ELSE(hardspheres_HG_TAG)
-  IF(hardspheres_HG_ID)
-    SET(PROGRAM_VERSION "changeset ${hardspheres_HG_ID}")
-  ELSE(hardspheres_HG_ID)
+IF(hardspheres_GIT_TAGS)
+  SET(PROGRAM_VERSION "version ${hardspheres_GIT_TAGS}")
+ELSE(hardspheres_GIT_TAGS)
+  IF(hardspheres_GIT_COMMIT)
+    SET(PROGRAM_VERSION "commit ${hardspheres_GIT_COMMIT}")
+  ELSE(hardspheres_GIT_COMMIT)
     SET(PROGRAM_VERSION "unknown version")
-  ENDIF(hardspheres_HG_ID)
-ENDIF(hardspheres_HG_TAG)
+  ENDIF(hardspheres_GIT_COMMIT)
+ENDIF(hardspheres_GIT_TAGS)
 
-IF(hardspheres_HG_DATE)
-  SET(PROGRAM_DATE "${hardspheres_HG_DATE}")
-ELSE(hardspheres_HG_DATE)
+IF(hardspheres_GIT_AUTHOR_DATE)
+  SET(PROGRAM_DATE "${hardspheres_GIT_AUTHOR_DATE}")
+ELSE(hardspheres_GIT_AUTHOR_DATE)
   SET(PROGRAM_DATE "unknown date")
-ENDIF(hardspheres_HG_DATE)
+ENDIF(hardspheres_GIT_AUTHOR_DATE)
 
 
 SET(GSL_FIND_REQUIRED TRUE)
