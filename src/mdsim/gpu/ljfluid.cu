@@ -704,6 +704,19 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
 }
 
 /**
+ * swap Hilbert spacing-filling curve vertices
+ */
+__device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
+{
+    // swap bits comprising Hilbert codes in vertex-to-code lookup table
+    const uint va = ((v >> a) & mask);
+    const uint vb = ((v >> b) & mask);
+    v = v ^ (va << a) ^ (vb << b) ^ (va << b) ^ (vb << a);
+    // update code-to-vertex lookup table
+    swap(a, b);
+}
+
+/**
  * map n-dimensional point to 1-dimensional point on Hilbert space curve
  */
 template <typename T, typename U>
@@ -839,19 +852,6 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 
     // store Hilbert code for particle
     g_sfc[GTID] = hcode;
-}
-
-/**
- * swap Hilbert spacing-filling curve vertices
- */
-__device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
-{
-    // swap bits comprising Hilbert codes in vertex-to-code lookup table
-    const uint va = ((v >> a) & mask);
-    const uint vb = ((v >> b) & mask);
-    v = v ^ (va << a) ^ (vb << b) ^ (va << b) ^ (vb << a);
-    // update code-to-vertex lookup table
-    swap(a, b);
 }
 
 /**
