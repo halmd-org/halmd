@@ -130,7 +130,7 @@ void copy(vector<T> const& src, symbol<U>& dst)
     CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
 }
 
-#ifdef CUDA_WRAPPER_ASYNC_API
+#if (CUDART_VERSION >= 1010)
 
 /**
  * asynchronous copy from device memory area to device memory area
@@ -172,7 +172,51 @@ void copy(vector<T> const& src, host::vector<U>& dst, stream& stream)
     CUDA_CALL(cudaMemcpyAsync(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToHost, stream.data()));
 }
 
-#endif /* CUDA_WRAPPER_ASYNC_API */
+#endif /* CUDART_VERSION >= 1010 */
+
+#if (CUDART_VERSION >= 2000)
+
+/**
+ * asynchronous copy from device symbol to host memory area
+ */
+template <typename T>
+void copy(symbol<T> const& src, std::vector<T>& dst, stream& stream)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyFromSymbolAsync(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost, stream.data()));
+}
+
+/*
+ * asynchronous copy from device symbol to device memory area
+ */
+template <typename T>
+void copy(symbol<T> const& src, vector<T>& dst, stream& stream)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyFromSymbolAsync(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice, stream.data()));
+}
+
+/**
+ * asynchronous copy from host memory area to device symbol
+ */
+template <typename T>
+void copy(std::vector<T> const& src, symbol<T>& dst, stream& stream)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyToSymbolAsync(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice, stream.data()));
+}
+
+/**
+ * asynchronous copy from device memory area to device symbol
+ */
+template <typename T>
+void copy(vector<T> const& src, symbol<T>& dst, stream& stream)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyToSymbolAsync(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice, stream.data()));
+}
+
+#endif /* CUDART_VERSION >= 2000 */
 
 /**
  * fill device memory array with constant byte value
