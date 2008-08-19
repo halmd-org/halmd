@@ -87,7 +87,8 @@
 	CUDA_CALL(cudaConfigureCall(grid, block, shared_mem, 0));
     }
 
-    #ifdef CUDA_WRAPPER_ASYNC_API
+    #if (CUDART_VERSION >= 1010)
+
     /**
      * configure execution parameters
      */
@@ -103,7 +104,8 @@
     {
 	CUDA_CALL(cudaConfigureCall(grid, block, shared_mem, stream.data()));
     }
-    #endif /* CUDA_WRAPPER_ASYNC_API */
+
+    #endif /* CUDART_VERSION >= 1010 */
 
     /**
      * CUDA device function argument wrapper
