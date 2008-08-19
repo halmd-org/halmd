@@ -26,7 +26,7 @@
 namespace cuda
 {
 
-#ifdef CUDA_WRAPPER_ASYNC_API
+#if (CUDART_VERSION >= 1010)
 
 /**
  * CUDA stream wrapper class
@@ -91,7 +91,7 @@ private:
     cudaStream_t stream_;
 };
 
-#endif /* CUDA_WRAPPER_ASYNC_API */
+#endif /* CUDART_VERSION >= 1010 */
 
 }
 

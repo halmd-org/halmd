@@ -26,7 +26,7 @@
 namespace cuda
 {
 
-#ifdef CUDA_WRAPPER_ASYNC_API
+#if (CUDART_VERSION >= 1010)
 
 /**
  * CUDA event wrapper class
@@ -123,7 +123,7 @@ private:
     cudaEvent_t event_;
 };
 
-#endif /* CUDA_WRAPPER_ASYNC_API */
+#endif /* CUDART_VERSION >= 1010 */
 
 }
 

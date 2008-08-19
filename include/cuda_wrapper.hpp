@@ -25,11 +25,6 @@
 
 #include <cuda/cuda_runtime.h>
 
-/* asynchronous API requires CUDA runtime version >= 1.1 */
-#if (CUDART_VERSION >= 1010)
-#define CUDA_WRAPPER_ASYNC_API
-#endif
-
 /*
  * C++ wrappers requiring runtime functionality (e.g. exceptions)
  */
