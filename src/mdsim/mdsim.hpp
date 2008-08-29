@@ -62,7 +62,7 @@ private:
     /** program options */
     options const& opts;
     /** hard spheres simulation */
-    hardspheres<dimension, T> fluid;
+    hardspheres fluid;
 #ifndef USE_BENCHMARK
     /** block correlations */
     correlation<dimension, T> tcf;

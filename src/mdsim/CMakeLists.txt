@@ -9,10 +9,18 @@ CONFIGURE_FILE(
   ESCAPE_QUOTES @ONLY
   )
 
-
 FOREACH(dim RANGE 2 3)
-  ADD_EXECUTABLE(hardspheres${dim}d main.cpp options.cpp H5param.cpp H5xx.cpp log.cpp)
-  SET_TARGET_PROPERTIES(hardspheres${dim}d PROPERTIES COMPILE_DEFINITIONS "DIM_${dim}D")
+  ADD_EXECUTABLE(hardspheres${dim}d
+    H5param.cpp
+    H5xx.cpp
+    hardspheres.cpp
+    log.cpp
+    main.cpp
+    options.cpp
+    )
+  SET_TARGET_PROPERTIES(hardspheres${dim}d PROPERTIES
+    COMPILE_DEFINITIONS "DIM_${dim}D"
+    )
   TARGET_LINK_LIBRARIES(hardspheres${dim}d
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
