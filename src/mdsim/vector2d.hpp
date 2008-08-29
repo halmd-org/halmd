@@ -287,7 +287,7 @@ template <typename T>
 vector<T, 2> rint(vector<T, 2> v);
 
 template <>
-vector<float, 2> rint(vector<float, 2> v)
+inline vector<float, 2> rint(vector<float, 2> v)
 {
     v[0] = rintf(v[0]);
     v[1] = rintf(v[1]);
@@ -295,7 +295,7 @@ vector<float, 2> rint(vector<float, 2> v)
 }
 
 template <>
-vector<double, 2> rint(vector<double, 2> v)
+inline vector<double, 2> rint(vector<double, 2> v)
 {
     v[0] = rint(v[0]);
     v[1] = rint(v[1]);
@@ -309,7 +309,7 @@ template <typename T>
 vector<T, 2> round(vector<T, 2> v);
 
 template <>
-vector<float, 2> round(vector<float, 2> v)
+inline vector<float, 2> round(vector<float, 2> v)
 {
     v[0] = roundf(v[0]);
     v[1] = roundf(v[1]);
@@ -317,7 +317,7 @@ vector<float, 2> round(vector<float, 2> v)
 }
 
 template <>
-vector<double, 2> round(vector<double, 2> v)
+inline vector<double, 2> round(vector<double, 2> v)
 {
     v[0] = round(v[0]);
     v[1] = round(v[1]);
