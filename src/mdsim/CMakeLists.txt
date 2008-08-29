@@ -13,6 +13,7 @@ FOREACH(dim RANGE 2 3)
   ADD_EXECUTABLE(hardspheres${dim}d
     H5param.cpp
     H5xx.cpp
+    energy.cpp
     hardspheres.cpp
     log.cpp
     main.cpp
