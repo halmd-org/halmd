@@ -73,7 +73,7 @@ private:
     /** block correlations */
     correlation tcf;
     /**  trajectory file writer */
-    trajectory<dimension, T> traj;
+    trajectory<true> traj;
     /** thermodynamic equilibrium properties */
     energy tep;
 #endif
@@ -106,11 +106,11 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     fluid.rng(opts.rng_seed().value());
 
     if (!opts.trajectory_sample().empty()) {
-	trajectory<dimension, T, false> traj;
+	trajectory<false> traj;
 	// open trajectory input file
 	traj.open(opts.trajectory_input_file().value());
 	// read trajectory sample and restore system state
-	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+	fluid.restore(boost::bind(&trajectory<false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
 	// close trajectory input file
 	traj.close();
     }
