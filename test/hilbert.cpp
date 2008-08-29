@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 	opts.add_options()
 	    ("box-length,L", po::value<float>(&box)->default_value(50.f),
 	     "periodic simulation box length")
-	    ("sfc-level,R", po::value<uint>(&sfc_level)->default_value(10),
+	    ("sfc-level,R", po::value<uint>(&sfc_level)->default_value(5),
 	     "Hilbert code recursion depth")
 	    ("device,D", po::value<ushort>(&device)->default_value(0),
 	     "CUDA device")
