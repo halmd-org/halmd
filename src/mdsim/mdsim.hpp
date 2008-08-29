@@ -62,7 +62,7 @@ private:
     /** program options */
     options const& opts;
     /** Lennard-Jones fluid simulation */
-    ljfluid<dimension, T> fluid;
+    ljfluid fluid;
 #ifndef USE_BENCHMARK
     /** block correlations */
     correlation<dimension, T> tcf;
