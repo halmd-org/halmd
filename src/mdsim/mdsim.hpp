@@ -78,7 +78,7 @@ private:
     energy tep;
 #endif
     /** performance data */
-    perf<dimension, T> prf;
+    perf prf;
 };
 
 /**

@@ -16,6 +16,7 @@ FOREACH(dim RANGE 2 3)
     log.cpp
     main.cpp
     options.cpp
+    perf.cpp
     )
   SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES COMPILE_DEFINITIONS "DIM_${dim}D")
   TARGET_LINK_LIBRARIES(ljfluid${dim}d
