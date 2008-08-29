@@ -98,7 +98,7 @@ public:
     /** check if sample is acquired for given simulation step */
     bool sample(uint64_t const& step) const;
     /** sample time correlation functions */
-    void sample(trajectory_sample<T> const& sample, uint64_t const& step, bool& flush);
+    void sample(trajectory_sample const& sample, uint64_t const& step, bool& flush);
     /** write correlation function results to HDF5 file */
     void flush();
 
@@ -379,7 +379,7 @@ bool correlation<dimension, T>::sample(uint64_t const& step) const
  * sample time correlation functions
  */
 template <unsigned dimension, typename T>
-void correlation<dimension, T>::sample(trajectory_sample<T> const& sample, uint64_t const& step, bool& flush)
+void correlation<dimension, T>::sample(trajectory_sample const& sample, uint64_t const& step, bool& flush)
 {
     phase_space_point<T> p(sample.r, sample.v, m_q_vector);
 

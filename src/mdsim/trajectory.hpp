@@ -52,7 +52,7 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** write phase space sample */
-    void sample(trajectory_sample<T> const& sample, float const& time);
+    void sample(trajectory_sample const& sample, float const& time);
 
 private:
     /** HDF5 trajectory output file */
@@ -152,7 +152,7 @@ H5param trajectory<dimension, T, true>::attrs()
  * write phase space sample
  */
 template <unsigned dimension, typename T>
-void trajectory<dimension, T, true>::sample(trajectory_sample<T> const& sample, float const& time)
+void trajectory<dimension, T, true>::sample(trajectory_sample const& sample, float const& time)
 {
     hsize_t dim[3];
     m_ds_file.getSimpleExtentDims(dim);

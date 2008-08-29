@@ -62,7 +62,7 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** sample thermodynamic equilibrium properties */
-    void sample(trajectory_sample<T> const& sample, float const& density, float const& time);
+    void sample(trajectory_sample const& sample, float const& density, float const& time);
     /** write thermodynamic equilibrium properties to HDF5 file */
     void flush(bool force);
     /** close HDF5 file */
@@ -177,7 +177,7 @@ H5param energy<dimension, T>::attrs()
  * sample thermodynamic equilibrium properties
  */
 template <unsigned dimension, typename T>
-void energy<dimension, T>::sample(trajectory_sample<T> const& sample, float const& density, float const& time)
+void energy<dimension, T>::sample(trajectory_sample const& sample, float const& density, float const& time)
 {
     vector<double, dimension> v_cm = 0;
     double vv = 0;
