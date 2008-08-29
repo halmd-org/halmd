@@ -1,4 +1,4 @@
-/* Molecular Dynamics Simulation of a Lennard-Jones fluid
+/* Molecular Dynamics simulation of a Lennard-Jones fluid
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -25,8 +25,6 @@
 #include "log.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
-#include "vector2d.hpp"
-#include "vector3d.hpp"
 #include "version.h"
 
 
@@ -77,11 +75,7 @@ int main(int argc, char **argv)
 	LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 
 	// initialize molecular dynamics simulation
-#ifdef DIM_3D
-	mdsim::mdsim<3, vector<float, 3> > sim(opts);
-#else
-	mdsim::mdsim<2, vector<float, 2> > sim(opts);
-#endif
+	mdsim::mdsim sim(opts);
 
 	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used() << " bytes");
 	LOG("GPU available global device memory: " << cuda::device::mem_get_free() << " bytes");
