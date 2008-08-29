@@ -18,6 +18,7 @@ FOREACH(dim RANGE 2 3)
     hardspheres.cpp
     log.cpp
     main.cpp
+    mdsim.cpp
     options.cpp
     perf.cpp
     trajectory.cpp

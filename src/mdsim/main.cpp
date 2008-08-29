@@ -25,10 +25,7 @@
 #include "log.hpp"
 #include "mdsim.hpp"
 #include "options.hpp"
-#include "vector2d.hpp"
-#include "vector3d.hpp"
 #include "version.h"
-
 
 int main(int argc, char **argv)
 {
@@ -60,11 +57,7 @@ int main(int argc, char **argv)
 
     try {
 	// initialize molecular dynamics simulation
-#ifdef DIM_3D
-	mdsim::mdsim<3, vector3d<double> > sim(opts);
-#else
-	mdsim::mdsim<2, vector2d<double> > sim(opts);
-#endif
+	mdsim::mdsim sim(opts);
 
 	if (opts.daemon().value()) {
 	    // run program in background
