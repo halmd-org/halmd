@@ -71,7 +71,7 @@ private:
     ljfluid fluid;
 #ifndef USE_BENCHMARK
     /** block correlations */
-    correlation<dimension, T> tcf;
+    correlation tcf;
     /**  trajectory file writer */
     trajectory<dimension, T> traj;
     /** thermodynamic equilibrium properties */
