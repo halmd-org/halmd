@@ -18,6 +18,7 @@ FOREACH(dim RANGE 2 3)
     log.cpp
     main.cpp
     options.cpp
+    perf.cpp
     )
   SET_TARGET_PROPERTIES(hardspheres${dim}d PROPERTIES
     COMPILE_DEFINITIONS "DIM_${dim}D"
