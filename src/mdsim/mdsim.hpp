@@ -65,7 +65,7 @@ private:
     hardspheres fluid;
 #ifndef USE_BENCHMARK
     /** block correlations */
-    correlation<dimension, T> tcf;
+    correlation tcf;
     /**  trajectory file writer */
     trajectory<dimension, T> traj;
     /** thermodynamic equilibrium properties */
@@ -224,7 +224,7 @@ void mdsim<dimension, T>::operator()()
 	    // sample time
 	    const double time = *step * fluid.timestep();
 	    // sample time correlation functions
-	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _2, _3, *step, boost::ref(flush)));
+	    fluid.sample(boost::bind(&correlation::sample, boost::ref(tcf), _2, _3, *step, boost::ref(flush)));
 	    // sample thermodynamic equilibrium properties
 	    fluid.sample(boost::bind(&energy::sample, boost::ref(tep), _3, _4, fluid.density(), fluid.timestep(), time));
 	    // sample trajectory
