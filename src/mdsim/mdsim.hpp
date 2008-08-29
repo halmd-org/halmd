@@ -67,7 +67,7 @@ private:
     /** block correlations */
     correlation tcf;
     /**  trajectory file writer */
-    trajectory<dimension, T> traj;
+    trajectory<true> traj;
     /** thermodynamic equilibrium properties */
     energy tep;
 #endif
@@ -94,11 +94,11 @@ mdsim<dimension, T>::mdsim(options const& opts) : opts(opts)
     fluid.init_cell();
 
     if (!opts.trajectory_sample().empty()) {
-	trajectory<dimension, T, false> traj;
+	trajectory<false> traj;
 	// open trajectory input file
 	traj.open(opts.trajectory_input_file().value());
 	// read trajectory sample and set system state
-	fluid.restore(boost::bind(&trajectory<dimension, T, false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+	fluid.restore(boost::bind(&trajectory<false>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
 	// close trajectory input file
 	traj.close();
     }
@@ -226,7 +226,7 @@ void mdsim<dimension, T>::operator()()
 	    fluid.sample(boost::bind(&energy::sample, boost::ref(tep), _2, _3, _4, fluid.density(), time));
 	    // sample trajectory
 	    if (opts.dump_trajectories().value())
-		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, time));
+		fluid.sample(boost::bind(&trajectory<true>::sample, boost::ref(traj), _1, _2, time));
 
 	    // acquired maximum number of samples for a block level
 	    if (flush) {

@@ -21,6 +21,7 @@ FOREACH(dim RANGE 2 3)
     main.cpp
     options.cpp
     perf.cpp
+    trajectory.cpp
     )
   SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES
     COMPILE_DEFINITIONS "DIM_${dim}D"
