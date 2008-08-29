@@ -20,6 +20,7 @@
 #include <boost/foreach.hpp>
 #include <cmath>
 #include "exception.hpp"
+#include "gpu/hilbert_glue.hpp"
 #include "gpu/ljfluid_glue.hpp"
 #include "ljfluid.hpp"
 #include "log.hpp"
@@ -266,7 +267,8 @@ void ljfluid::cell_occupancy(float value)
 #endif
     LOG("Hilbert space-filling curve recursion level: " << level);
     try {
-	cuda::copy(level, gpu::ljfluid::sfc_level);
+	cuda::copy(box_, gpu::hilbert::box);
+	cuda::copy(level, gpu::hilbert::sfc_level);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy Hilbert curve recursion level to device symbol");
@@ -962,7 +964,7 @@ void ljfluid::hilbert_order(cuda::stream& stream)
 {
     // compute Hilbert space-filling curve for particles
     cuda::configure(dim_.grid, dim_.block, stream);
-    gpu::ljfluid::sfc_hilbert_encode(g_part.r, g_aux.cell);
+    gpu::hilbert::sfc_hilbert_encode(g_part.r, g_aux.cell);
 
     // generate permutation array
     cuda::configure(dim_.grid, dim_.block, stream);

@@ -26,6 +26,7 @@ FOREACH(dim RANGE 2 3)
     )
   TARGET_LINK_LIBRARIES(ljfluid${dim}d
     ljfluid${dim}d_gpu
+    hilbert${dim}d_gpu
     rand48_gpu
     scan_gpu
     radix_gpu

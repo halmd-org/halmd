@@ -46,7 +46,6 @@ extern cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
 # ifdef USE_CELL
 extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
 extern cuda::function<void (float4 const*, float*)> maximum_velocity;
-extern cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode;
 extern cuda::function<void (float4 const*, uint*)> compute_cell;
 extern cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles;
 extern cuda::texture<float4> r;
@@ -62,7 +61,6 @@ extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
 # ifdef USE_CELL
 extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
 extern cuda::function<void (float2 const*, float*)> maximum_velocity;
-extern cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode;
 extern cuda::function<void (float2 const*, uint*)> compute_cell;
 extern cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles;
 extern cuda::texture<float2> r;
@@ -91,7 +89,6 @@ extern cuda::symbol<unsigned int> nbl_size;
 extern cuda::symbol<unsigned int> nbl_stride;
 extern cuda::symbol<float> r_cell;
 extern cuda::symbol<float> rr_cell;
-extern cuda::symbol<unsigned int> sfc_level;
 extern cuda::texture<int> tag;
 extern cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells;
 extern cuda::function<void (uint*, int*)> find_cell_offset;

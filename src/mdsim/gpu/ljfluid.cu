@@ -53,8 +53,6 @@ static __constant__ unsigned int nbl_stride;
 static __constant__ float r_cell;
 /** squared potential cutoff distance with cell skin */
 static __constant__ float rr_cell;
-/** number of Hilbert space-filling curve code levels */
-static __constant__ unsigned int sfc_level;
 # ifdef DIM_3D
 /** texture reference to periodic particle positions */
 struct texture<float4, 1, cudaReadModeElementType> t_r;
@@ -704,157 +702,6 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
 }
 
 /**
- * swap Hilbert spacing-filling curve vertices
- */
-__device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
-{
-    // swap bits comprising Hilbert codes in vertex-to-code lookup table
-    const uint va = ((v >> a) & mask);
-    const uint vb = ((v >> b) & mask);
-    v = v ^ (va << a) ^ (vb << b) ^ (va << b) ^ (vb << a);
-    // update code-to-vertex lookup table
-    swap(a, b);
-}
-
-/**
- * map n-dimensional point to 1-dimensional point on Hilbert space curve
- */
-template <typename T, typename U>
-__global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
-{
-    //
-    // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
-    // GeoComputation, 2005
-    //
-
-    // Hilbert code for particle
-    unsigned int hcode = 0;
-
-    //
-    // We need to avoid ambiguities during the assignment of a particle
-    // to a subcell, i.e. the particle position should never lie on an
-    // edge or corner of multiple subcells, or the algorithm will have
-    // trouble converging to a definite Hilbert curve.
-    //
-    // Therefore, we use a simple cubic lattice of predefined dimensions
-    // according to the number of cells at the deepest recursion level,
-    // and round the particle position to the nearest center of a cell.
-    //
-
-    // Hilbert cells per dimension at deepest recursion level
-    const uint n = 1UL << sfc_level;
-    // fractional index of particle's Hilbert cell in [0, n)
-    const T cell = (__saturatef(unpack(g_r[GTID]) / box) * (1.f - FLT_EPSILON)) * n;
-
-#ifdef DIM_3D
-
-    // round particle position to center of cell in unit coordinates
-    T r = (floorf(cell) + make_float3(0.5f, 0.5f, 0.5f)) / n;
-    // use symmetric coordinates
-    r -= make_float3(0.5f, 0.5f, 0.5f);
-
-    // Hilbert code-to-vertex lookup table
-    uint a = 21;
-    uint b = 18;
-    uint c = 12;
-    uint d = 15;
-    uint e = 3;
-    uint f = 0;
-    uint g = 6;
-    uint h = 9;
-    // Hilbert vertex-to-code lookup table
-    uint vc = 1U << b ^ 2U << c ^ 3U << d ^ 4U << e ^ 5U << f ^ 6U << g ^ 7U << h;
-
-#define MASK ((1 << 3) - 1)
-
-    // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
-    for (unsigned int i = 0; i < sfc_level; ++i) {
-	// determine Hilbert vertex closest to particle
-	const uint x = __signbitf(r.x) & 1;
-	const uint y = __signbitf(r.y) & 1;
-	const uint z = __signbitf(r.z) & 1;
-	// lookup Hilbert code
-	const uint v = (vc >> (3 * (x + (y << 1) + (z << 2))) & MASK);
-
-	// scale particle coordinates to subcell
-	r = 2 * r - make_float3(0.5f - x, 0.5f - y, 0.5f - z);
-	// apply permutation rule according to Hilbert code
-	if (v == 0) {
-	    vertex_swap(vc, b, h, MASK);
-	    vertex_swap(vc, c, e, MASK);
-	}
-	else if (v == 1 || v == 2) {
-	    vertex_swap(vc, c, g, MASK);
-	    vertex_swap(vc, d, h, MASK);
-	}
-	else if (v == 3 || v == 4) {
-	    vertex_swap(vc, a, c, MASK);
-#ifdef USE_ALTERNATIVE_HILBERT_3D
-	    vertex_swap(vc, b, d, MASK);
-	    vertex_swap(vc, e, g, MASK);
-#endif
-	    vertex_swap(vc, f, h, MASK);
-	}
-	else if (v == 5 || v == 6) {
-	    vertex_swap(vc, a, e, MASK);
-	    vertex_swap(vc, b, f, MASK);
-	}
-	else if (v == 7) {
-	    vertex_swap(vc, a, g, MASK);
-	    vertex_swap(vc, d, f, MASK);
-	}
-
-	// add vertex code to partial Hilbert code
-	hcode = (hcode << 3) + v;
-    }
-
-#else /* ! DIM_3D */
-
-    // round particle position to center of cell in unit coordinates
-    T r = (floorf(cell) + make_float2(0.5f, 0.5f)) / n;
-    // use symmetric coordinates
-    r -= make_float2(0.5f, 0.5f);
-
-    // Hilbert code-to-vertex lookup table
-    uint a = 6;
-    uint b = 4;
-    uint c = 0;
-    uint d = 2;
-    // Hilbert vertex-to-code lookup table
-    uint vc = 1U << b ^ 2U << c ^ 3U << d;
-
-#define MASK ((1 << 2) - 1)
-
-    // 32-bit integer for 2D Hilbert code allows a maximum of 16 levels
-    for (unsigned int i = 0; i < sfc_level; ++i) {
-	// determine Hilbert vertex closest to particle
-	const uint x = __signbitf(r.x) & 1;
-	const uint y = __signbitf(r.y) & 1;
-	// lookup Hilbert code
-	const uint v = (vc >> (2 * (x + (y << 1))) & MASK);
-
-	// scale particle coordinates to subcell
-	r = 2 * r - make_float2(0.5f - x, 0.5f - y);
-	// apply permutation rule according to Hilbert code
-	if (v == 0) {
-	    vertex_swap(vc, b, d, MASK);
-	}
-	else if (v == 3) {
-	    vertex_swap(vc, a, c, MASK);
-	}
-
-	// add vertex code to partial Hilbert code
-	hcode = (hcode << 2) + v;
-    }
-
-#endif /* DIM_3D */
-#undef MASK
-
-    // store Hilbert code for particle
-    g_sfc[GTID] = hcode;
-}
-
-/**
  * generate ascending index sequence
  */
 __global__ void gen_index(int* g_idx)
@@ -892,7 +739,6 @@ cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::int
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 cuda::function<void (float4 const*, float*)> maximum_velocity(mdsim::maximum_velocity<float3>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float3>);
-cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float3>);
 cuda::function<void (float4 const*, uint*)> compute_cell(mdsim::compute_cell<float3>);
 cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles(mdsim::order_particles);
 cuda::texture<float4> r(mdsim::t_r);
@@ -909,7 +755,6 @@ cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::int
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 cuda::function<void (float2 const*, float*)> maximum_velocity(mdsim::maximum_velocity<float2>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float2>);
-cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float2>);
 cuda::function<void (float2 const*, uint*)> compute_cell(mdsim::compute_cell<float2>);
 cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles(mdsim::order_particles);
 cuda::texture<float2> r(mdsim::t_r);
@@ -937,7 +782,6 @@ cuda::symbol<unsigned int> nbl_size(mdsim::nbl_size);
 cuda::symbol<unsigned int> nbl_stride(mdsim::nbl_stride);
 cuda::symbol<float> r_cell(mdsim::r_cell);
 cuda::symbol<float> rr_cell(mdsim::rr_cell);
-cuda::symbol<unsigned int> sfc_level(mdsim::sfc_level);
 cuda::texture<int> tag(mdsim::t_tag);
 cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE>);
 cuda::function<void (uint*, int*)> find_cell_offset(mdsim::find_cell_offset);
