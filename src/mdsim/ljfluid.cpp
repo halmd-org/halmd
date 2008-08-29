@@ -452,8 +452,10 @@ void ljfluid::restore(trajectory_sample::visitor visitor)
 	throw exception("failed to restore system state from phase space sample");
     }
 
+#ifdef USE_CELL
     // set initial sum over maximum velocity magnitudes since last cell lists update
     v_max_sum = *std::max_element(h_part.v_max.begin(), h_part.v_max.end());
+#endif
 }
 
 /**
@@ -599,8 +601,10 @@ void ljfluid::temperature(float temp)
 	throw exception("failed to set center of mass velocity to zero");
     }
 
+#ifdef USE_CELL
     // set initial sum over maximum velocity magnitudes since last cell lists update
     v_max_sum = *std::max_element(h_part.v_max.begin(), h_part.v_max.end());
+#endif
 }
 
 /**
