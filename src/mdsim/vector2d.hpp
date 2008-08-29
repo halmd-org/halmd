@@ -260,7 +260,7 @@ template <typename T>
 vector2d<T> rint(vector2d<T> v);
 
 template <>
-vector2d<float> rint(vector2d<float> v)
+inline vector2d<float> rint(vector2d<float> v)
 {
     v[0] = rintf(v[0]);
     v[1] = rintf(v[1]);
@@ -268,7 +268,7 @@ vector2d<float> rint(vector2d<float> v)
 }
 
 template <>
-vector2d<double> rint(vector2d<double> v)
+inline vector2d<double> rint(vector2d<double> v)
 {
     v[0] = rint(v[0]);
     v[1] = rint(v[1]);
@@ -282,7 +282,7 @@ template <typename T>
 vector2d<T> round(vector2d<T> v);
 
 template <>
-vector2d<float> round(vector2d<float> v)
+inline vector2d<float> round(vector2d<float> v)
 {
     v[0] = roundf(v[0]);
     v[1] = roundf(v[1]);
@@ -290,7 +290,7 @@ vector2d<float> round(vector2d<float> v)
 }
 
 template <>
-vector2d<double> round(vector2d<double> v)
+inline vector2d<double> round(vector2d<double> v)
 {
     v[0] = round(v[0]);
     v[1] = round(v[1]);
@@ -326,7 +326,7 @@ template <typename T>
 vector2d<T> trunc(vector2d<T> v);
 
 template <>
-vector2d<float> trunc(vector2d<float> v)
+inline vector2d<float> trunc(vector2d<float> v)
 {
     v[0] = truncf(v[0]);
     v[1] = truncf(v[1]);
@@ -334,7 +334,7 @@ vector2d<float> trunc(vector2d<float> v)
 }
 
 template <>
-vector2d<double> trunc(vector2d<double> v)
+inline vector2d<double> trunc(vector2d<double> v)
 {
     v[0] = trunc(v[0]);
     v[1] = trunc(v[1]);
