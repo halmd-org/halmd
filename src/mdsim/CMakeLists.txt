@@ -19,6 +19,7 @@ FOREACH(dim RANGE 2 3)
     ljfluid.cpp
     log.cpp
     main.cpp
+    mdsim.cpp
     options.cpp
     perf.cpp
     trajectory.cpp
