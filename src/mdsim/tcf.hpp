@@ -196,7 +196,11 @@ struct self_intermediate_scattering_function
 };
 
 /** correlation function types */
-typedef boost::mpl::vector<mean_square_displacement, mean_quartic_displacement, velocity_autocorrelation, intermediate_scattering_function, self_intermediate_scattering_function> tcf_types;
+typedef boost::mpl::vector<mean_square_displacement> _tcf_types_0;
+typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement>::type _tcf_types_1;
+typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation>::type _tcf_types_2;
+typedef boost::mpl::push_back<_tcf_types_2, intermediate_scattering_function>::type _tcf_types_3;
+typedef boost::mpl::push_back<_tcf_types_3, self_intermediate_scattering_function>::type tcf_types;
 
 /**
  * apply correlation function to block of phase space samples
