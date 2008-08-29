@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <vector>
 
+#include <gpu/hilbert_glue.hpp>
 #include <gpu/ljfluid_glue.hpp>
 #include <rand48.hpp>
 #include <radix.hpp>
@@ -108,7 +109,8 @@ int main(int argc, char **argv)
 
 	// copy device symbols to GPU
 	cuda::copy(box, ljfluid::box);
-	cuda::copy(sfc_level, ljfluid::sfc_level);
+	cuda::copy(box, hilbert::box);
+	cuda::copy(sfc_level, hilbert::sfc_level);
 
 	// number of grid cells
 	uint count = (1UL << (dimension * sfc_level));
@@ -153,7 +155,7 @@ int main(int argc, char **argv)
 		g_sort[1].resize(count);
 		g_sort[1].reserve(dim.threads());
 		cuda::configure(dim.grid, dim.block, stream);
-		ljfluid::sfc_hilbert_encode(g_r[i + 1], g_sort[1]);
+		hilbert::sfc_hilbert_encode(g_r[i + 1], g_sort[1]);
 	    }
 	    // radix sort integers and particle positions
 	    radix(g_sort[i], g_r[i + 1], stream);
