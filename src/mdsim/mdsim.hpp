@@ -69,7 +69,7 @@ private:
     /**  trajectory file writer */
     trajectory<dimension, T> traj;
     /** thermodynamic equilibrium properties */
-    energy<dimension, T> tep;
+    energy tep;
 #endif
     /** performance data */
     perf<dimension, T> prf;
@@ -223,7 +223,7 @@ void mdsim<dimension, T>::operator()()
 	    // sample time correlation functions
 	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _1, _2, *step, boost::ref(flush)));
 	    // sample thermodynamic equilibrium properties
-	    fluid.sample(boost::bind(&energy<dimension, T>::sample, boost::ref(tep), _2, _3, _4, fluid.density(), time));
+	    fluid.sample(boost::bind(&energy::sample, boost::ref(tep), _2, _3, _4, fluid.density(), time));
 	    // sample trajectory
 	    if (opts.dump_trajectories().value())
 		fluid.sample(boost::bind(&trajectory<dimension, T>::sample, boost::ref(traj), _1, _2, time));
