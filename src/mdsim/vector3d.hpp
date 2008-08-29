@@ -274,7 +274,7 @@ template <typename T>
 vector3d<T> rint(vector3d<T> v);
 
 template <>
-vector3d<float> rint(vector3d<float> v)
+inline vector3d<float> rint(vector3d<float> v)
 {
     v[0] = rintf(v[0]);
     v[1] = rintf(v[1]);
@@ -283,7 +283,7 @@ vector3d<float> rint(vector3d<float> v)
 }
 
 template <>
-vector3d<double> rint(vector3d<double> v)
+inline vector3d<double> rint(vector3d<double> v)
 {
     v[0] = rint(v[0]);
     v[1] = rint(v[1]);
@@ -298,7 +298,7 @@ template <typename T>
 vector3d<T> round(vector3d<T> v);
 
 template <>
-vector3d<float> round(vector3d<float> v)
+inline vector3d<float> round(vector3d<float> v)
 {
     v[0] = roundf(v[0]);
     v[1] = roundf(v[1]);
@@ -307,7 +307,7 @@ vector3d<float> round(vector3d<float> v)
 }
 
 template <>
-vector3d<double> round(vector3d<double> v)
+inline vector3d<double> round(vector3d<double> v)
 {
     v[0] = round(v[0]);
     v[1] = round(v[1]);
@@ -346,7 +346,7 @@ template <typename T>
 vector3d<T> trunc(vector3d<T> v);
 
 template <>
-vector3d<float> trunc(vector3d<float> v)
+inline vector3d<float> trunc(vector3d<float> v)
 {
     v[0] = truncf(v[0]);
     v[1] = truncf(v[1]);
@@ -355,7 +355,7 @@ vector3d<float> trunc(vector3d<float> v)
 }
 
 template <>
-vector3d<double> trunc(vector3d<double> v)
+inline vector3d<double> trunc(vector3d<double> v)
 {
     v[0] = trunc(v[0]);
     v[1] = trunc(v[1]);
