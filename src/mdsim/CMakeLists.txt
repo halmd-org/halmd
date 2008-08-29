@@ -11,6 +11,7 @@ FOREACH(dim RANGE 2 3)
   ADD_EXECUTABLE(ljfluid${dim}d
     H5param.cpp
     H5xx.cpp
+    correlation.cpp
     energy.cpp
     ljfluid.cpp
     log.cpp
@@ -18,7 +19,9 @@ FOREACH(dim RANGE 2 3)
     options.cpp
     perf.cpp
     )
-  SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES COMPILE_DEFINITIONS "DIM_${dim}D")
+  SET_TARGET_PROPERTIES(ljfluid${dim}d PROPERTIES
+    COMPILE_DEFINITIONS "DIM_${dim}D"
+    )
   TARGET_LINK_LIBRARIES(ljfluid${dim}d
     ljfluid${dim}d_gpu
     rand48_gpu
@@ -33,4 +36,3 @@ FOREACH(dim RANGE 2 3)
 ENDFOREACH(dim)
 
 ADD_SUBDIRECTORY(gpu)
-
