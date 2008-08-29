@@ -65,7 +65,7 @@ private:
     ljfluid fluid;
 #ifndef USE_BENCHMARK
     /** block correlations */
-    correlation<dimension, T> tcf;
+    correlation tcf;
     /**  trajectory file writer */
     trajectory<dimension, T> traj;
     /** thermodynamic equilibrium properties */
@@ -221,7 +221,7 @@ void mdsim<dimension, T>::operator()()
 	    // simulation time
 	    const double time = *step * fluid.timestep();
 	    // sample time correlation functions
-	    fluid.sample(boost::bind(&correlation<dimension, T>::sample, boost::ref(tcf), _1, _2, *step, boost::ref(flush)));
+	    fluid.sample(boost::bind(&correlation::sample, boost::ref(tcf), _1, _2, *step, boost::ref(flush)));
 	    // sample thermodynamic equilibrium properties
 	    fluid.sample(boost::bind(&energy::sample, boost::ref(tep), _2, _3, _4, fluid.density(), time));
 	    // sample trajectory

@@ -14,6 +14,7 @@ FOREACH(dim RANGE 2 3)
   ADD_EXECUTABLE(ljfluid${dim}d
     H5param.cpp
     H5xx.cpp
+    correlation.cpp
     energy.cpp
     ljfluid.cpp
     log.cpp
