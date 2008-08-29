@@ -20,24 +20,28 @@
 #define MDSIM_SAMPLE_HPP
 
 #include <algorithm>
+#include <boost/function.hpp>
 #include <cmath>
 #include <cuda_wrapper.hpp>
 #include <vector>
+#include "config.hpp"
 
 namespace mdsim {
 
 /**
  * MD simulation sample
  */
-template <typename T>
 struct trajectory_sample
 {
+    /** trajectory sample visitor type */
+    typedef boost::function<void (std::vector<hvector>&, std::vector<hvector>&)> visitor;
+
     /** periodically reduced particle positions */
-    std::vector<T> r;
+    std::vector<hvector> r;
     /** periodically extended particle positions */
-    std::vector<T> R;
+    std::vector<hvector> R;
     /** particle velocities */
-    std::vector<T> v;
+    std::vector<hvector> v;
     /** potential energy per particle */
     double en_pot;
     /** virial equation sum per particle */
