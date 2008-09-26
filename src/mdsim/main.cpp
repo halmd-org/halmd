@@ -58,8 +58,8 @@ int main(int argc, char **argv)
     std::vector<std::string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
-    // bind process to CPU core
     try {
+	// bind process to CPU core(s)
 	if (!opts.processor().empty()) {
 	    cpu_set_t cpu_set;
 	    CPU_ZERO(&cpu_set);

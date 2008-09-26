@@ -199,7 +199,7 @@ public:
     }
 
     /**
-     * returns CPU core
+     * returns CPU core(s)
      */
     option_value<std::vector<unsigned short> > processor() const
     {
