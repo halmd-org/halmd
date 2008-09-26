@@ -18,6 +18,7 @@
 
 #include <H5Cpp.h>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
 #include <exception>
 #include <iostream>
@@ -27,7 +28,7 @@
 #include "mdsim.hpp"
 #include "options.hpp"
 #include "version.h"
-
+#define foreach BOOST_FOREACH
 
 int main(int argc, char **argv)
 {
@@ -62,7 +63,10 @@ int main(int argc, char **argv)
 	if (!opts.processor().empty()) {
 	    cpu_set_t cpu_set;
 	    CPU_ZERO(&cpu_set);
-	    CPU_SET(opts.processor().value(), &cpu_set);
+	    foreach (unsigned short const& cpu, opts.processor().value()) {
+		LOG("adding CPU core " << cpu << " to process CPU affinity mask");
+		CPU_SET(cpu, &cpu_set);
+	    }
 	    if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpu_set)) {
 		throw std::logic_error("failed to set process CPU affinity mask");
 	    }

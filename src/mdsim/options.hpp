@@ -201,7 +201,7 @@ public:
     /**
      * returns CPU core
      */
-    option_value<unsigned short> processor() const
+    option_value<std::vector<unsigned short> > processor() const
     {
 	return vm["processor"];
     }
