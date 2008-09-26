@@ -34,17 +34,13 @@ template <typename T>
 class option_value : public boost::program_options::variable_value
 {
 public:
-    option_value(boost::program_options::variable_value const& vv) : boost::program_options::variable_value(vv) {}
+    option_value(boost::program_options::variable_value const& vv)
+    : boost::program_options::variable_value(vv) {}
 
     /**
      * returns the contained value
      */
-    T const& value() const
-    {
-	return boost::program_options::variable_value::as<T>();
-    }
-
-    T& value()
+    T value() const
     {
 	return boost::program_options::variable_value::as<T>();
     }
