@@ -21,6 +21,7 @@
 #include <cuda_wrapper.hpp>
 #include <exception>
 #include <iostream>
+#include <sched.h>
 #include <unistd.h>
 #include "log.hpp"
 #include "mdsim.hpp"
@@ -56,7 +57,17 @@ int main(int argc, char **argv)
     std::vector<std::string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
+    // bind process to CPU core
     try {
+	if (!opts.processor().empty()) {
+	    cpu_set_t cpu_set;
+	    CPU_ZERO(&cpu_set);
+	    CPU_SET(opts.processor().value(), &cpu_set);
+	    if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpu_set)) {
+		throw std::logic_error("failed to set process CPU affinity mask");
+	    }
+	}
+
 	// set CUDA device for host context
 	cuda::device::set(opts.device().value());
 	LOG("CUDA device: " << cuda::device::get());
