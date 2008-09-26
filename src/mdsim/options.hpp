@@ -203,6 +203,14 @@ public:
     }
 
     /**
+     * returns CPU core
+     */
+    option_value<unsigned short> processor() const
+    {
+	return vm["processor"];
+    }
+
+    /**
      * returns number of CUDA execution threads
      */
     option_value<unsigned int> threads() const
