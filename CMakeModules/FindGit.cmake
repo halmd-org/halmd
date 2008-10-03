@@ -151,7 +151,7 @@ if(GIT_EXECUTABLE)
       endforeach(ref)
 
       # show most recent tag that is reachable from a commit
-      GIT_COMMAND(${dir} describe --always)
+      GIT_COMMAND(${dir} describe --long --always)
 
       if(GIT_describe_OUTPUT)
 	string(STRIP "${GIT_describe_OUTPUT}" ${prefix}_GIT_VERSION)
