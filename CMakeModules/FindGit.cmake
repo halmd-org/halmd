@@ -17,6 +17,7 @@
 #  <var-prefix>_GIT_COMMITTER - committer name and email
 #  <var-prefix>_GIT_COMMITTER_DATE - committer date
 #  <var-prefix>_GIT_SUBJECT - subject
+#  <var-prefix>_GIT_VERSION - most recent tag
 # Example usage:
 #  FIND_PACKAGE(Git)
 #  if(GIT_FOUND)
@@ -148,6 +149,13 @@ if(GIT_EXECUTABLE)
 	  list(APPEND ${prefix}_GIT_REMOTES "${remote}")
 	endif(ref MATCHES "^refs/remotes/.*$")
       endforeach(ref)
+
+      # show most recent tag that is reachable from a commit
+      GIT_COMMAND(${dir} describe --always)
+
+      if(GIT_describe_OUTPUT)
+	string(STRIP "${GIT_describe_OUTPUT}" ${prefix}_GIT_VERSION)
+      endif(GIT_describe_OUTPUT)
 
     else(IS_DIRECTORY "${dir}")
       message(SEND_ERROR "Invalid GIT_REPOSITORY_INFO directory \"${dir}\"")
