@@ -365,7 +365,7 @@ void options::parse(int argc, char** argv)
     }
 
     if (vm.count("version")) {
-	std::cout << PROGRAM_NAME " (" PROGRAM_VERSION ")\n"
+	std::cout << PROGRAM_NAME " " PROGRAM_VERSION "\n"
 	    "variant: " PROGRAM_VARIANT "\n"
 	    "\n" PROGRAM_COPYRIGHT "\n" "This is free software. "
 	    "You may redistribute copies of it under the terms of\n"
