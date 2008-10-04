@@ -674,27 +674,20 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
     __shared__ int s_offset[1];
 
     if (threadIdx.x == 0) {
-	// global offset of this cell in particle list
 	s_offset[0] = g_cell_offset[blockIdx.x];
     }
     __syncthreads();
-
+    // global offset of first particle in this block's cell
     const int offset = s_offset[0];
+    // global offset of this thread's particle
+    const int n = offset + threadIdx.x;
     // mark as virtual particle
     int tag = -1;
-
-    if (offset >= 0) {
-	const int n = offset + threadIdx.x;
-	const uint cell = g_cell[n];
-	const uint itag = g_itag[n];
-
-	// assign particle to cell
-	if (n < npart && cell == blockIdx.x) {
-	    tag = itag;
-	}
+    // mark as real particle if appropriate
+    if (offset >= 0 && n < npart && g_cell[n] == blockIdx.x) {
+	tag = g_itag[n];
     }
-
-    // store cell in global device memory
+    // store particle in this block's cell
     g_otag[blockIdx.x * cell_size + threadIdx.x] = tag;
 }
 
