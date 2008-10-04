@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
     mdsim::log::init(opts);
 
-    LOG(PROGRAM_NAME " (" PROGRAM_VERSION ")");
+    LOG(PROGRAM_NAME " " PROGRAM_VERSION);
     LOG("variant: " << PROGRAM_VARIANT);
 #ifndef NDEBUG
     LOG_WARNING("built with enabled debugging");
