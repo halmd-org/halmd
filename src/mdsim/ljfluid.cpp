@@ -892,9 +892,9 @@ void ljfluid::update_forces(cuda::stream& stream)
  */
 void ljfluid::potential_energy(cuda::stream& stream)
 {
-    cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream_);
+    cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream);
     gpu::ljfluid::potential_energy_sum(g_part.en, g_part.en_sum);
-    cuda::copy(g_part.en_sum, h_part.en_sum, stream_);
+    cuda::copy(g_part.en_sum, h_part.en_sum, stream);
 }
 
 /*
@@ -951,7 +951,7 @@ void ljfluid::update_neighbours(cuda::stream& stream)
     // mark neighbour list placeholders as virtual particles
     cuda::memset(g_nbl, 0xff);
     // build neighbour lists
-    cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+    cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
     gpu::ljfluid::update_neighbours(g_cell, g_nbl);
 }
 
