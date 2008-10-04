@@ -243,12 +243,10 @@ __global__ void maximum_velocity(U const* g_v, float* g_vmax)
 {
     extern __shared__ float s_vv[];
 
-    // load first particle from global device memory
-    T v = unpack(g_v[GTID]);
-    float vv = v * v;
-    // load further particles
-    for (unsigned int i = GTDIM + GTID; i < npart; i += GTDIM) {
-	v = unpack(g_v[i]);
+    // load particles from global device memory
+    float vv = 0;
+    for (unsigned int i = GTID; i < npart; i += GTDIM) {
+	T v = unpack(g_v[i]);
 	vv = fmaxf(vv, v * v);
     }
     // maximum velocity for this thread
@@ -365,11 +363,10 @@ __global__ void potential_energy_sum(float const* g_en, float2* g_en_sum)
     // single-double floating point arithmetic
     extern __shared__ dfloat s_en[];
 
-    // load first particle from global device memory
-    dfloat en = g_en[GTID];
-    // load further particles
-    for (unsigned int i = GTDIM + GTID; i < npart; i += GTDIM) {
-	en = en + g_en[i];
+    // load particles from global device memory
+    dfloat en = 0;
+    for (unsigned int i = GTID; i < npart; i += GTDIM) {
+	en += g_en[i];
     }
     // potential energy sum for this thread
     s_en[TID] = en;
