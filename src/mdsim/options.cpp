@@ -224,52 +224,78 @@ void options::parse(int argc, char** argv)
 {
     po::options_description mdsim_opts("MD simulation parameters");
     mdsim_opts.add_options()
-	("particles,N", po::value<unsigned int>()->default_value(1024), "number of particles")
-	("density,d", po::value<float>()->default_value(0.1), "particle density")
-	("box-length,L", po::value<float>(), "simulation box length")
+	("particles,N", po::value<unsigned int>()->default_value(1024),
+	 "number of particles")
+	("density,d", po::value<float>()->default_value(0.1),
+	 "particle density")
+	("box-length,L", po::value<float>(),
+	 "simulation box length")
 #ifdef USE_CELL
-	("cell-occupancy,C", po::value<float>()->default_value(0.5), "desired average cell occupancy")
+	("cell-occupancy,C", po::value<float>()->default_value(0.5),
+	 "desired average cell occupancy")
 #endif
-	("timestep,r", po::value<float>()->default_value(0.01), "simulation timestep")
-	("temperature,K", po::value<float>()->default_value(1.), "initial temperature")
-	("rng-seed,R", po::value<unsigned int>()->default_value(42), "random number generator integer seed")
+	("timestep,r", po::value<float>()->default_value(0.001),
+	 "simulation timestep")
+	("temperature,K", po::value<float>()->default_value(1.),
+	 "initial temperature")
+	("rng-seed,R", po::value<unsigned int>()->default_value(42),
+	 "random number generator integer seed")
 #ifndef USE_BENCHMARK
-	("steps,s", po::value<uint64_t>()->default_value(10000), "number of simulation steps")
+	("steps,s", po::value<uint64_t>()->default_value(10000),
+	 "number of simulation steps")
 	("time,t", po::value<float>(), "total simulation time")
-	("equilibrate,E", po::value<uint64_t>()->default_value(0), "number of equilibration steps")
+	("equilibrate,E", po::value<uint64_t>()->default_value(0),
+	 "number of equilibration steps")
 #else
-	("equilibrate,E", po::value<uint64_t>()->default_value(10000), "number of equilibration steps")
+	("equilibrate,E", po::value<uint64_t>()->default_value(10000),
+	 "number of equilibration steps")
 #endif
-	("trajectory,I", po::value<std::string>(), "trajectory input file")
-	("sample,S", po::value<int64_t>(), "resume from sample in trajectory file")
+	("trajectory,I", po::value<std::string>(),
+	 "trajectory input file")
+	("sample,S", po::value<int64_t>(),
+	 "resume from sample in trajectory file")
 	;
 
 #ifndef USE_BENCHMARK
     po::options_description tcf_opts("Time correlation function options");
     tcf_opts.add_options()
-	("block-size,B", po::value<unsigned int>()->default_value(10), "block size")
-	("max-samples,M", po::value<uint64_t>()->default_value(1000), "maximum number of samples per block")
-	("q-values", po::value<unsigned int>()->default_value(5), "largest multiple of smallest q-vector for Fourier transformation")
-	("dump-trajectories", po::bool_switch(), "dump particle trajectories")
+	("block-size,B", po::value<unsigned int>()->default_value(10),
+	 "block size")
+	("max-samples,M", po::value<uint64_t>()->default_value(1000),
+	 "maximum number of samples per block")
+	("q-values", po::value<unsigned int>()->default_value(5),
+	 "largest multiple of smallest q-vector for Fourier transformation")
+	("dump-trajectories", po::bool_switch(),
+	 "dump particle trajectories")
 	;
 #endif
 
     po::options_description cuda_opts("CUDA options");
     cuda_opts.add_options()
-	("device,D", po::value<unsigned short>()->default_value(0), "CUDA device")
-	("processor,P", po::value<std::vector<unsigned short> >(), "CPU core(s)")
-	("threads,T", po::value<unsigned int>()->default_value(128), "number of threads per block")
+	("device,D", po::value<unsigned short>()->default_value(0),
+	 "CUDA device")
+	("processor,P", po::value<std::vector<unsigned short> >(),
+	 "CPU core(s)")
+	("threads,T", po::value<unsigned int>()->default_value(128),
+	 "number of threads per block")
 	;
 
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
-	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S"), "output file prefix")
-	("input,i", po::value<std::vector<std::string> >(), "parameter input file")
-	("dry-run,n", po::bool_switch(), "perform a trial run without simulation")
-	("daemon", po::bool_switch(), "run program in background")
-	("verbose,v", po::accum_value<int>()->default_value(0), "increase verbosity")
-	("version,V", "output version and exit")
-	("help,h", "display this help and exit")
+	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S"),
+	 "output file prefix")
+	("input,i", po::value<std::vector<std::string> >(),
+	 "parameter input file")
+	("dry-run,n", po::bool_switch(),
+	 "perform a trial run without simulation")
+	("daemon", po::bool_switch(),
+	 "run program in background")
+	("verbose,v", po::accum_value<int>()->default_value(0),
+	 "increase verbosity")
+	("version,V",
+	 "output version and exit")
+	("help,h",
+	 "display this help and exit")
 	;
 
     po::options_description opts;
