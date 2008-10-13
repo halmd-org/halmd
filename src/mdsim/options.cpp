@@ -234,7 +234,7 @@ void options::parse(int argc, char** argv)
 	 "simulation timestep")
 	("temperature,K", po::value<double>()->default_value(1.),
 	 "initial temperature")
-	("rng-seed,R", po::value<unsigned int>()->default_value(42),
+	("rng-seed,R", po::value<unsigned int>(),
 	 "random number generator integer seed")
 #ifndef USE_BENCHMARK
 	("steps,s", po::value<uint64_t>()->default_value(10000),

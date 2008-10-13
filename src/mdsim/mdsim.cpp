@@ -18,6 +18,8 @@
 
 #include <boost/bind.hpp>
 #include <stdint.h>
+#include <iostream>
+#include <fstream>
 #include <unistd.h>
 #include "log.hpp"
 #include "mdsim.hpp"
@@ -43,6 +45,25 @@ mdsim::mdsim(options const& opts) : opts(opts)
 	fluid.density(opts.density().value());
     // initialize cell lists
     fluid.init_cell();
+    // initialize random number generator with seed
+    if (opts.rng_seed().empty()) {
+	LOG("obtaining 32-bit integer seed from /dev/random");
+	unsigned int seed;
+	try {
+	    std::ifstream rand;
+	    rand.exceptions(std::ifstream::eofbit|std::ifstream::failbit|std::ifstream::badbit);
+	    rand.open("/dev/random");
+	    rand.read(reinterpret_cast<char*>(&seed), sizeof(seed));
+	    rand.close();
+	}
+	catch (std::ifstream::failure const& e) {
+	    throw std::logic_error(std::string("failed to read from /dev/random: ") + e.what());
+	}
+	fluid.rng(seed);
+    }
+    else {
+	fluid.rng(opts.rng_seed().value());
+    }
 
     if (!opts.trajectory_sample().empty()) {
 	trajectory<false> traj;
@@ -59,8 +80,6 @@ mdsim::mdsim(options const& opts) : opts(opts)
     }
 
     if (opts.trajectory_sample().empty() || !opts.temperature().defaulted()) {
-	// initialize random number generator with seed
-	fluid.rng(opts.rng_seed().value());
 	// set system temperature according to Maxwell-Boltzmann distribution
 	fluid.temperature(opts.temperature().value());
     }
