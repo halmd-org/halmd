@@ -175,10 +175,8 @@ void mdsim::operator()()
     tcf.open(opts.output_file_prefix().value() + ".tcf");
     tcf.attrs() << fluid << tcf;
     // trajectory file writer
-    if (opts.dump_trajectories().value()) {
-	traj.open(opts.output_file_prefix().value() + ".trj", fluid.particles());
-	traj.attrs() << fluid << tcf;
-    }
+    traj.open(opts.output_file_prefix().value() + ".trj", fluid.particles());
+    traj.attrs() << fluid << tcf;
     // thermodynamic equilibrium properties
     tep.open(opts.output_file_prefix().value() + ".tep");
     tep.attrs() << fluid << tcf;
@@ -207,8 +205,11 @@ void mdsim::operator()()
 	    // sample thermodynamic equilibrium properties
 	    tep.sample(fluid.trajectory(), fluid.density(), time);
 	    // sample trajectory
-	    if (opts.dump_trajectories().value()) {
+	    if (opts.dump_trajectories().value() || *step == 0) {
 		traj.sample(fluid.trajectory(), time);
+		if (*step == 0) {
+		    traj.flush();
+		}
 	    }
 	    // acquired maximum number of samples for a block level
 	    if (flush) {
@@ -270,6 +271,12 @@ void mdsim::operator()()
 	    signal.clear();
 	}
     }
+
+    // copy last MD simulation state from GPU to host
+    fluid.sample();
+    // save last phase space sample
+    traj.sample(fluid.trajectory(), tcf.steps() * fluid.timestep());
+
     // sample performance counters
     prf.sample(fluid.times());
     // commit HDF5 performance datasets
@@ -283,8 +290,7 @@ void mdsim::operator()()
     alarm(0);
     // close HDF5 output files
     tcf.close();
-    if (opts.dump_trajectories().value())
-	traj.close();
+    traj.close();
     tep.close();
 #endif
     prf.close();
