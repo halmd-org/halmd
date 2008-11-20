@@ -234,26 +234,28 @@ void options::parse(int argc, char** argv)
 	("cell-occupancy,C", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
 #endif
-	("timestep,r", po::value<float>()->default_value(0.001),
+	("timestep,h", po::value<float>()->default_value(0.001),
 	 "simulation timestep")
 	("temperature,K", po::value<float>()->default_value(1.),
 	 "initial temperature")
-	("rng-seed,R", po::value<unsigned int>(),
+	("random-seed,m", po::value<unsigned int>(),
 	 "random number generator integer seed")
 #ifndef USE_BENCHMARK
 	("steps,s", po::value<uint64_t>()->default_value(10000),
 	 "number of simulation steps")
 	("time,t", po::value<float>(), "total simulation time")
+	("sample-rate,r", po::value<float>()->default_value(20),
+	 "sample rate for lowest block level")
 	("equilibrate,E", po::value<uint64_t>()->default_value(0),
 	 "number of equilibration steps")
 #else
 	("equilibrate,E", po::value<uint64_t>()->default_value(10000),
 	 "number of equilibration steps")
 #endif
-	("trajectory,I", po::value<std::string>(),
+	("trajectory,J", po::value<std::string>(),
 	 "trajectory input file")
-	("sample,S", po::value<int64_t>(),
-	 "resume from sample in trajectory file")
+	("trajectory-sample,S", po::value<int64_t>(),
+	 "use sample in trajectory file as initial state")
 	;
 
 #ifndef USE_BENCHMARK
@@ -263,9 +265,9 @@ void options::parse(int argc, char** argv)
 	 "block size")
 	("max-samples,M", po::value<uint64_t>()->default_value(10000),
 	 "maximum number of samples per block")
-	("q-values", po::value<unsigned int>()->default_value(5),
+	("q-values,q", po::value<unsigned int>()->default_value(5),
 	 "largest multiple of smallest q-vector for Fourier transformation")
-	("dump-trajectories", po::bool_switch(),
+	("dump-trajectories,j", po::bool_switch(),
 	 "dump particle trajectories")
 	;
 #endif
@@ -284,7 +286,7 @@ void options::parse(int argc, char** argv)
     misc_opts.add_options()
 	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S"),
 	 "output file prefix")
-	("input,i", po::value<std::vector<std::string> >(),
+	("input,I", po::value<std::vector<std::string> >(),
 	 "parameter input file")
 	("dry-run,n", po::bool_switch(),
 	 "perform a trial run without simulation")
@@ -292,9 +294,9 @@ void options::parse(int argc, char** argv)
 	 "run program in background")
 	("verbose,v", po::accum_value<int>()->default_value(0),
 	 "increase verbosity")
-	("version,V",
+	("version",
 	 "output version and exit")
-	("help,h",
+	("help",
 	 "display this help and exit")
 	;
 
@@ -336,7 +338,7 @@ void options::parse(int argc, char** argv)
     try {
 	po::conflicting_options(vm, "density", "box-length");
 	po::conflicting_options(vm, "steps", "time");
-	po::dependent_option(vm, "sample", "trajectory");
+	po::dependent_option(vm, "trajectory-sample", "trajectory");
     }
     catch (std::exception const& e) {
 	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";
@@ -370,6 +372,7 @@ void options::parse(int argc, char** argv)
 	    node = param.openGroup("correlation");
 	    po::store(po::parse_attribute<uint64_t>(node, "steps"), vm_["steps"]);
 	    po::store(po::parse_attribute<float>(node, "time"), vm_["time"]);
+	    po::store(po::parse_attribute<float>(node, "sample_rate"), vm_["sample-rate"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "block_size"), vm_["block-size"]);
 	    po::store(po::parse_attribute<uint64_t>(node, "max_samples"), vm_["max-samples"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "q_values"), vm_["q-values"]);
