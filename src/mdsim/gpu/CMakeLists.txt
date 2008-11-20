@@ -1,11 +1,30 @@
-ADD_LIBRARY(radix_gpu radix.cu)
-ADD_LIBRARY(scan_gpu scan.cu)
-ADD_LIBRARY(rand48_gpu rand48.cu scan.cu)
-SET_TARGET_PROPERTIES(rand48_gpu PROPERTIES COMPILE_DEFINITIONS "USE_SCAN_RAND48")
+ADD_LIBRARY(radix_gpu
+  radix.cu
+  )
+
+ADD_LIBRARY(scan_gpu
+  scan.cu
+  )
+
+ADD_LIBRARY(rand48_gpu
+  rand48.cu
+  scan.cu
+  )
+SET_TARGET_PROPERTIES(rand48_gpu PROPERTIES
+  COMPILE_DEFINITIONS "USE_SCAN_RAND48"
+  )
 
 FOREACH(dim RANGE 2 3)
-  ADD_LIBRARY(ljfluid${dim}d_gpu ljfluid.cu)
-  SET_TARGET_PROPERTIES(ljfluid${dim}d_gpu PROPERTIES COMPILE_DEFINITIONS "DIM_${dim}D")
-  ADD_LIBRARY(ljfluid${dim}d_smooth_gpu ljfluid.cu)
-  SET_TARGET_PROPERTIES(ljfluid${dim}d_smooth_gpu PROPERTIES COMPILE_FLAGS "-DDIM_${dim}D -DUSE_SMOOTH_POTENTIAL")
+  ADD_LIBRARY(ljfluid${dim}d_gpu
+    ljfluid.cu
+    )
+  SET_TARGET_PROPERTIES(ljfluid${dim}d_gpu PROPERTIES
+    COMPILE_DEFINITIONS "DIM_${dim}D"
+    )
+  ADD_LIBRARY(ljfluid${dim}d_smooth_gpu
+    ljfluid.cu
+    )
+  SET_TARGET_PROPERTIES(ljfluid${dim}d_smooth_gpu PROPERTIES
+    COMPILE_FLAGS "-DDIM_${dim}D -DUSE_SMOOTH_POTENTIAL"
+    )
 ENDFOREACH(dim)
