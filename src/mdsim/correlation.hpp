@@ -92,6 +92,8 @@ public:
     void steps(uint64_t const& value, float const& timestep);
     /** set total simulation time */
     void time(float const& value, float const& timestep);
+    /** set sample rate for lowest block level */
+    void sample_rate(float const& sample_rate);
     /** set block size */
     void block_size(unsigned int const& value);
     /** set maximum number of samples per block */
@@ -103,6 +105,8 @@ public:
     uint64_t const& steps() const { return m_steps; }
     /** returns total simulation time */
     float const& time() const { return m_time; }
+    /** returns sample rate for lowest block level */
+    float const& sample_rate() const { return m_sample_rate; }
     /** returns block size */
     unsigned int const& block_size() const { return m_block_size; }
     /** returns block shift */
@@ -143,6 +147,8 @@ private:
 
     /** simulation timestep */
     float m_timestep;
+    /** sample rate for lowest block level */
+    float m_sample_rate;
     /** total number of simulation steps */
     uint64_t m_steps;
     /** total simulation time */
