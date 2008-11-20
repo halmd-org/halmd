@@ -6,7 +6,7 @@ ADD_EXECUTABLE(sample_smooth_function
   smooth.cpp
   )
 SET_TARGET_PROPERTIES(sample_smooth_function PROPERTIES
-  COMPILE_FLAGS "-DDIM_3D -DUSE_SMOOTH_POTENTIAL"
+  COMPILE_FLAGS "-DDIM_3D -DUSE_POTENTIAL_SMOOTHING"
   )
 TARGET_LINK_LIBRARIES(sample_smooth_function
   ljfluid3d_smooth_gpu

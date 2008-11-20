@@ -36,6 +36,12 @@ mdsim::mdsim(options const& opts) : opts(opts)
 {
     LOG("positional coordinates dimension: " << dimension);
 
+    // set cutoff radius
+    fluid.cutoff_radius(opts.cutoff_radius().value());
+#ifdef USE_POTENTIAL_SMOOTHING
+    // set potential smoothing function scale parameter
+    fluid.potential_smoothing(opts.potential_smoothing().value());
+#endif
     // set number of particles in system
     fluid.particles(opts.particles().value());
     // set simulation box length or particle density

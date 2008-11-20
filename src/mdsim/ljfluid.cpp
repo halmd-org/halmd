@@ -33,17 +33,16 @@ namespace mdsim
 {
 
 /**
- * initialise fixed simulation parameters
+ * set potential cutoff radius
  */
-ljfluid::ljfluid()
+void ljfluid::cutoff_radius(float value)
 {
-    // suppress attractive tail of Lennard-Jones potential
-    r_cut = std::pow(2, 1 / 6.f);
-    LOG("potential cutoff distance: " << r_cut);
+    r_cut = value;
+    LOG("potential cutoff radius: " << r_cut);
 
-    // squared cutoff distance
+    // squared cutoff radius
     float rr_cut = std::pow(r_cut, 2);
-    // potential energy at cutoff distance
+    // potential energy at cutoff radius
     float rri_cut = 1 / rr_cut;
     float r6i_cut = rri_cut * rri_cut * rri_cut;
     float en_cut = 4 * r6i_cut * (r6i_cut - 1);
@@ -58,10 +57,15 @@ ljfluid::ljfluid()
     catch (cuda::error const& e) {
 	throw exception("failed to copy potential cutoff parameters to device symbols");
     }
+}
 
-#ifdef USE_SMOOTH_POTENTIAL
-    // compute potential smoothing function scale parameter
-    r_smooth = 0.001;
+#ifdef USE_POTENTIAL_SMOOTHING
+/**
+ * set potential smoothing function scale parameter
+ */
+void ljfluid::potential_smoothing(float value)
+{
+    r_smooth = value;
     LOG("potential smoothing function scale parameter: " << r_smooth);
 
     // squared inverse potential smoothing function scale parameter
@@ -73,8 +77,8 @@ ljfluid::ljfluid()
     catch (cuda::error const& e) {
 	throw exception("failed to copy potential smoothing function scale parameter to device symbol");
     }
-#endif
 }
+#endif
 
 /**
  * set number of particles in system
@@ -191,7 +195,7 @@ void ljfluid::cell_occupancy(float value)
     // optimal number of cells with given cell occupancy as upper boundary
     ncell = std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension));
 
-    // set number of cells per dimension, respecting cutoff distance
+    // set number of cells per dimension, respecting cutoff radius
     ncell = std::min(ncell, uint(box_ / r_cut));
     LOG("number of cells per dimension: " << ncell);
 
@@ -667,15 +671,15 @@ void ljfluid::attrs(H5::Group const& param) const
     node["density"] = density_;
     node["box_length"] = box_;
     node["timestep"] = timestep_;
-    node["cutoff_distance"] = r_cut;
+    node["cutoff_radius"] = r_cut;
 #ifdef USE_CELL
     node["cells"] = ncell;
     node["placeholders"] = nplace;
     node["cell_length"] = cell_length_;
     node["cell_occupancy"] = cell_occupancy_;
 #endif
-#ifdef USE_SMOOTH_POTENTIAL
-    node["smooth_distance"] = r_smooth;
+#ifdef USE_POTENTIAL_SMOOTHING
+    node["potential_smoothing"] = r_smooth;
 #endif
 }
 

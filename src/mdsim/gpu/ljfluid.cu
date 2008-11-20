@@ -34,9 +34,9 @@ static __constant__ float timestep;
 /** periodic box length */
 static __constant__ float box;
 
-/** potential cutoff distance */
+/** potential cutoff radius */
 static __constant__ float r_cut;
-/** squared cutoff distance */
+/** squared cutoff radius */
 static __constant__ float rr_cut;
 /** cutoff energy for Lennard-Jones potential at cutoff length */
 static __constant__ float en_cut;
@@ -44,7 +44,7 @@ static __constant__ float en_cut;
 /** number of cells per dimension */
 static __constant__ unsigned int ncell;
 #endif
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
 /** squared inverse potential smoothing function scale parameter */
 static __constant__ float rri_smooth;
 #endif
@@ -103,8 +103,7 @@ __device__ void leapfrog_full_step(T& v, T const& f)
     v += f * (timestep / 2);
 }
 
-
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
 
 /**
  * calculate potential smoothing function and its first derivative
@@ -132,7 +131,7 @@ __global__ void sample_smooth_function(float3* g_h, const float2 r)
     g_h[GTID] = compute_smooth_function(r.x + (r.y - r.x) / GTDIM * GTID);
 }
 
-#endif /* USE_SMOOTH_POTENTIAL */
+#endif /* USE_POTENTIAL_SMOOTHING */
 
 /**
  * calculate particle force using Lennard-Jones potential
@@ -156,7 +155,7 @@ __device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float&
     float fval = 48 * rri * ri6 * (ri6 - 0.5f);
     // compute shifted Lennard-Jones potential
     float pot = 4 * ri6 * (ri6 - 1) - en_cut;
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
     // compute smoothing function and its first derivative
     const float3 h = compute_smooth_function(sqrtf(rr));
     // apply smoothing function to obtain C^1 force function
@@ -654,7 +653,7 @@ cuda::symbol<float> en_cut(mdsim::en_cut);
 cuda::symbol<unsigned int> ncell(mdsim::ncell);
 #endif
 
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
 cuda::symbol<float> rri_smooth(mdsim::rri_smooth);
 cuda::function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
 #endif

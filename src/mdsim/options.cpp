@@ -230,6 +230,12 @@ void options::parse(int argc, char** argv)
 	 "particle density")
 	("box-length,L", po::value<float>(),
 	 "simulation box length")
+	("cutoff,c", po::value<float>()->default_value(2.5),
+	 "truncate potential at cutoff radius")
+#ifdef USE_POTENTIAL_SMOOTHING
+	("smoothing,g", po::value<float>()->default_value(0.001),
+	 "potential smoothing function scale parameter")
+#endif
 #ifdef USE_CELL
 	("cell-occupancy,C", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
@@ -362,6 +368,10 @@ void options::parse(int argc, char** argv)
 	    po::store(po::parse_attribute<unsigned int>(node, "particles"), vm_["particles"]);
 	    po::store(po::parse_attribute<float>(node, "density"), vm_["density"]);
 	    po::store(po::parse_attribute<float>(node, "box_length"), vm_["box-length"]);
+	    po::store(po::parse_attribute<float>(node, "cutoff_radius"), vm_["cutoff"]);
+#ifdef USE_POTENTIAL_SMOOTHING
+	    po::store(po::parse_attribute<float>(node, "potential_smoothing"), vm_["smoothing"]);
+#endif
 	    po::store(po::parse_attribute<float>(node, "timestep"), vm_["timestep"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "threads"), vm_["threads"]);
 	    po::store(po::parse_attribute<float>(node, "temperature"), vm_["temperature"]);

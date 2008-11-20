@@ -25,6 +25,6 @@ FOREACH(dim RANGE 2 3)
     ljfluid.cu
     )
   SET_TARGET_PROPERTIES(ljfluid${dim}d_smooth_gpu PROPERTIES
-    COMPILE_FLAGS "-DDIM_${dim}D -DUSE_SMOOTH_POTENTIAL"
+    COMPILE_FLAGS "-DDIM_${dim}D -DUSE_POTENTIAL_SMOOTHING"
     )
 ENDFOREACH(dim)
