@@ -71,14 +71,14 @@ public:
     typedef boost::function<void (std::vector<hvector> const&, std::vector<hvector> const&, double, double)> mdsim_sample_visitor;
 
 public:
-    /** initialize fixed simulation parameters */
-    ljfluid();
     /** set number of particles */
     void particles(unsigned int value);
     /** set particle density */
     void density(double value);
     /** set periodic box length */
     void box(double value);
+    /** set potential cutoff radius */
+    void cutoff_radius(double value);
     /** initialize cell lists */
     void init_cell();
     /** set simulation timestep */
@@ -103,12 +103,12 @@ public:
     double const& density() const { return density_; }
     /** returns periodic box length */
     double const& box() const { return box_; }
+    /** returns potential cutoff radius */
+    double const& cutoff_radius() const { return r_cut; }
     /** returns cell length */
     double const& cell_length() { return cell_length_; }
     /** returns simulation timestep */
     double const& timestep() const { return timestep_; }
-    /** get potential cutoff distance */
-    double const& cutoff_distance() const { return r_cut; }
     /** returns and resets CPU tick statistics */
     perf_counters times();
 
@@ -149,11 +149,11 @@ private:
     double cell_length_;
     /** simulation timestep */
     double timestep_;
-    /** cutoff distance for shifted Lennard-Jones potential */
+    /** cutoff radius for shifted Lennard-Jones potential */
     double r_cut;
     /** neighbour list skin */
     double r_skin;
-    /** cutoff distance with neighbour list skin */
+    /** cutoff radius with neighbour list skin */
     double r_cut_skin;
 
     /** cell lists */
@@ -174,11 +174,11 @@ private:
 
     /** random number generator */
     rng::gsl::gfsr4 rng_;
-    /** squared cutoff distance */
+    /** squared cutoff radius */
     double rr_cut;
-    /** potential energy at cutoff distance */
+    /** potential energy at cutoff radius */
     double en_cut;
-    /** squared cutoff distance with neighbour list skin */
+    /** squared cutoff radius with neighbour list skin */
     double rr_cut_skin;
     /** sum over maximum velocity magnitudes since last neighbour lists update */
     double v_max_sum;

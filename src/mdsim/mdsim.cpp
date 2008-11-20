@@ -36,6 +36,8 @@ mdsim::mdsim(options const& opts) : opts(opts)
 {
     LOG("positional coordinates dimension: " << dimension);
 
+    // set cutoff radius
+    fluid.cutoff_radius(opts.cutoff_radius().value());
     // set number of particles in system
     fluid.particles(opts.particles().value());
     // set simulation box length or particle density

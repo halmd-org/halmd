@@ -230,6 +230,8 @@ void options::parse(int argc, char** argv)
 	 "particle density")
 	("box-length,L", po::value<double>(),
 	 "simulation box length")
+	("cutoff,c", po::value<double>()->default_value(2.5),
+	 "truncate potential at cutoff radius")
 	("timestep,h", po::value<double>()->default_value(0.001),
 	 "simulation timestep")
 	("temperature,K", po::value<double>()->default_value(1.),
@@ -347,6 +349,7 @@ void options::parse(int argc, char** argv)
 	    po::store(po::parse_attribute<unsigned int>(node, "particles"), vm_["particles"]);
 	    po::store(po::parse_attribute<double>(node, "density"), vm_["density"]);
 	    po::store(po::parse_attribute<double>(node, "box_length"), vm_["box-length"]);
+	    po::store(po::parse_attribute<double>(node, "cutoff_radius"), vm_["cutoff"]);
 	    po::store(po::parse_attribute<double>(node, "timestep"), vm_["timestep"]);
 	    po::store(po::parse_attribute<double>(node, "temperature"), vm_["temperature"]);
 

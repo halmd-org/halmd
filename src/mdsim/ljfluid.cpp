@@ -36,17 +36,16 @@ namespace mdsim
 {
 
 /**
- * initialize fixed simulation parameters
+ * set potential cutoff radius
  */
-ljfluid::ljfluid()
+void ljfluid::cutoff_radius(double value)
 {
-    // suppress attractive tail of Lennard-Jones potential
-    r_cut = std::pow(2.f, 1.f / 6.f);
-    LOG("potential cutoff distance: " << r_cut);
+    r_cut = value;
+    LOG("potential cutoff radius: " << r_cut);
 
-    // squared cutoff distance
+    // squared cutoff radius
     rr_cut = r_cut * r_cut;
-    // potential energy at cutoff distance
+    // potential energy at cutoff radius
     double rri_cut = 1. / rr_cut;
     double r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut = 4. * r6i_cut * (r6i_cut - 1.);
@@ -55,9 +54,9 @@ ljfluid::ljfluid()
     r_skin = 0.5;
     LOG("neighbour list skin: " << r_skin);
 
-    // cutoff distance with neighbour list skin
+    // cutoff radius with neighbour list skin
     r_cut_skin = r_skin + r_cut;
-    // squared cutoff distance with neighbour list skin
+    // squared cutoff radius with neighbour list skin
     rr_cut_skin = r_cut_skin * r_cut_skin;
 }
 
@@ -294,7 +293,7 @@ void ljfluid::attrs(H5::Group const& param) const
     node["density"] = density_;
     node["box_length"] = box_;
     node["timestep"] = timestep_;
-    node["cutoff_distance"] = r_cut;
+    node["cutoff_radius"] = r_cut;
 }
 
 /**
@@ -431,7 +430,7 @@ void ljfluid::compute_cell_neighbours(particle& p, cell_list& c)
 	// squared particle distance
 	double rr = r * r;
 
-	// enforce cutoff distance with neighbour list skin
+	// enforce cutoff radius with neighbour list skin
 	if (rr >= rr_cut_skin)
 	    continue;
 
@@ -469,7 +468,7 @@ void ljfluid::compute_forces()
 		// squared particle distance
 		double rr = r * r;
 
-		// enforce cutoff distance
+		// enforce cutoff radius
 		if (rr >= rr_cut)
 		    continue;
 

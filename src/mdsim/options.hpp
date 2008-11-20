@@ -96,6 +96,14 @@ public:
     }
 
     /**
+     * returns potential cutoff radius
+     */
+    option_value<double> cutoff_radius() const
+    {
+	return vm["cutoff"];
+    }
+
+    /**
      * returns simulation timestep
      */
     option_value<double> timestep() const
