@@ -127,6 +127,15 @@ public:
     {
 	return vm["time"];
     }
+
+    /**
+     * returns sample rate for lowest block level
+     */
+    option_value<unsigned int> sample_rate() const
+    {
+	return vm["sample-rate"];
+    }
+
 #endif
 
     /**
@@ -209,7 +218,7 @@ public:
      */
     option_value<int64_t> trajectory_sample() const
     {
-	return vm["sample"];
+	return vm["trajectory-sample"];
     }
 
     /**

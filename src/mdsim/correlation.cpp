@@ -67,6 +67,15 @@ void correlation::time(double const& value, double const& timestep)
 }
 
 /**
+ * set sample rate for lowest block level
+ */
+void correlation::sample_rate(unsigned int const& sample_rate)
+{
+    m_sample_rate = sample_rate;
+    LOG("sample rate for lowest block level: " << m_sample_rate);
+}
+
+/**
  * set block size
  */
 void correlation::block_size(unsigned int const& value)
@@ -106,7 +115,7 @@ void correlation::block_size(unsigned int const& value)
     m_block_samples.resize(m_block_count, 0);
 
     // calculate phase sample frequencies
-    for (uint64_t i = 0, n = 1, m = m_block_shift; i < m_block_count; ++i) {
+    for (uint64_t i = 0, n = m_sample_rate, m = n * m_block_shift; i < m_block_count; ++i) {
 	if (i % 2) {
 	    m_block_freq.push_back(m);
 	    m *= m_block_size;
@@ -121,7 +130,7 @@ void correlation::block_size(unsigned int const& value)
     m_block_time.resize(boost::extents[m_block_count][m_block_size]);
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	for (unsigned int j = 0; j < m_block_size; ++j) {
-	    m_block_time[i][j] = m_timestep * std::pow(m_block_size, i / 2) * j;
+	    m_block_time[i][j] = m_timestep * m_sample_rate * std::pow(m_block_size, i / 2) * j;
 	    // shifted block
 	    if (i % 2) {
 		m_block_time[i][j] *= m_block_shift;
@@ -230,6 +239,7 @@ void correlation::attrs(H5::Group const& param) const
     H5xx::group node(param.createGroup("correlation"));
     node["steps"] = m_steps;
     node["time"] = m_time;
+    node["sample_rate"] = m_sample_rate;
     node["block_size"] = m_block_size;
     node["block_shift"] = m_block_shift;
     node["block_count"] = m_block_count;

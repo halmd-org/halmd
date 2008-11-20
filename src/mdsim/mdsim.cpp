@@ -97,6 +97,8 @@ mdsim::mdsim(options const& opts) : opts(opts)
 	// set total number of simulation steps
 	tcf.steps(opts.steps().value(), opts.timestep().value());
     }
+    // set sample rate for lowest block level
+    tcf.sample_rate(opts.sample_rate().value());
     // set block size
     tcf.block_size(opts.block_size().value());
     // set maximum number of samples per block
