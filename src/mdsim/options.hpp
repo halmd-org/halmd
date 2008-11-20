@@ -95,6 +95,24 @@ public:
 	return vm["box-length"];
     }
 
+    /**
+     * returns potential cutoff radius
+     */
+    option_value<float> cutoff_radius() const
+    {
+	return vm["cutoff"];
+    }
+
+#ifdef USE_POTENTIAL_SMOOTHING
+    /**
+     * returns potential smoothing function scale parameter
+     */
+    option_value<float> potential_smoothing() const
+    {
+	return vm["smoothing"];
+    }
+#endif
+
 #ifdef USE_CELL
     /**
      * returns desired average cell occupancy

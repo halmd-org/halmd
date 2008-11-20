@@ -44,14 +44,18 @@ public:
     };
 
 public:
-    /** initialise fixed simulation parameters */
-    ljfluid();
     /** set number of particles in system */
     void particles(unsigned int value);
     /** set particle density */
     void density(float value);
     /** set periodic box length */
     void box(float value);
+    /** set potential cutoff radius */
+    void cutoff_radius(float value);
+#ifdef USE_POTENTIAL_SMOOTHING
+    /** set potential smoothing function scale parameter */
+    void potential_smoothing(float value);
+#endif
 #ifdef USE_CELL
     /** set desired average cell occupancy */
     void cell_occupancy(float value);
@@ -96,10 +100,14 @@ public:
     float const& density() const { return density_; }
     /** get periodic box length */
     float const& box() const { return box_; }
+    /** get potential cutoff radius */
+    float const& cutoff_radius() const { return r_cut; }
+#ifdef USE_POTENTIAL_SMOOTHING
+    /** get potential smoothing function scale parameter */
+    float const& potential_smoothing() const { return r_smooth; }
+#endif
     /** get simulation timestep */
     float const& timestep() const { return timestep_; }
-    /** get potential cutoff distance */
-    float const& cutoff_distance() const { return r_cut; }
     /** returns and resets GPU time statistics */
     perf_counters times();
 
@@ -160,7 +168,7 @@ private:
     float box_;
     /** simulation timestep */
     float timestep_;
-    /** cutoff distance for shifted Lennard-Jones potential */
+    /** cutoff radius for shifted Lennard-Jones potential */
     float r_cut;
 #ifdef USE_CELL
     /** cell skin */
@@ -168,7 +176,7 @@ private:
     /** sum over maximum velocity magnitudes since last cell lists update */
     float v_max_sum;
 #endif
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
     /** potential smoothing function scale parameter */
     float r_smooth;
 #endif

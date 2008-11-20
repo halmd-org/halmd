@@ -35,9 +35,9 @@ static __constant__ float timestep;
 /** periodic box length */
 static __constant__ float box;
 
-/** potential cutoff distance */
+/** potential cutoff radius */
 static __constant__ float r_cut;
-/** squared cutoff distance */
+/** squared cutoff radius */
 static __constant__ float rr_cut;
 /** cutoff energy for Lennard-Jones potential at cutoff length */
 static __constant__ float en_cut;
@@ -49,9 +49,9 @@ static __constant__ unsigned int ncell;
 static __constant__ unsigned int nbl_size;
 /** neighbour list stride */
 static __constant__ unsigned int nbl_stride;
-/** potential cutoff distance with cell skin */
+/** potential cutoff radius with cell skin */
 static __constant__ float r_cell;
-/** squared potential cutoff distance with cell skin */
+/** squared potential radius distance with cell skin */
 static __constant__ float rr_cell;
 # ifdef DIM_3D
 /** texture reference to periodic particle positions */
@@ -72,7 +72,7 @@ struct texture<float2, 1, cudaReadModeElementType> t_v;
 struct texture<int, 1, cudaReadModeElementType> t_tag;
 #endif
 
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
 /** squared inverse potential smoothing function scale parameter */
 static __constant__ float rri_smooth;
 #endif
@@ -105,7 +105,7 @@ __device__ void leapfrog_full_step(T& v, T const& f)
     v += f * (timestep / 2);
 }
 
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
 
 /**
  * calculate potential smoothing function and its first derivative
@@ -133,7 +133,7 @@ __global__ void sample_smooth_function(float3* g_h, const float2 r)
     g_h[GTID] = compute_smooth_function(r.x + (r.y - r.x) / GTDIM * GTID);
 }
 
-#endif /* USE_SMOOTH_POTENTIAL */
+#endif /* USE_POTENTIAL_SMOOTHING */
 
 /**
  * calculate particle force using Lennard-Jones potential
@@ -157,7 +157,7 @@ __device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float&
     float fval = 48 * rri * ri6 * (ri6 - 0.5f);
     // compute shifted Lennard-Jones potential
     float pot = 4 * ri6 * (ri6 - 1) - en_cut;
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
     // compute smoothing function and its first derivative
     const float3 h = compute_smooth_function(sqrtf(rr));
     // apply smoothing function to obtain C^1 force function
@@ -778,7 +778,7 @@ cuda::function<void (uint*, int*)> find_cell_offset(mdsim::find_cell_offset);
 cuda::function<void (int*)> gen_index(mdsim::gen_index);
 #endif
 
-#ifdef USE_SMOOTH_POTENTIAL
+#ifdef USE_POTENTIAL_SMOOTHING
 cuda::symbol<float> rri_smooth(mdsim::rri_smooth);
 cuda::function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
 #endif

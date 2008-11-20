@@ -10,7 +10,7 @@ FOREACH(dim RANGE 2 3)
   SET_TARGET_PROPERTIES(ljfluid${dim}d_gpu PROPERTIES COMPILE_DEFINITIONS "DIM_${dim}D")
 
   ADD_LIBRARY(ljfluid${dim}d_smooth_gpu ljfluid.cu)
-  SET_TARGET_PROPERTIES(ljfluid${dim}d_smooth_gpu PROPERTIES COMPILE_FLAGS "-DDIM_${dim}D -DUSE_SMOOTH_POTENTIAL")
+  SET_TARGET_PROPERTIES(ljfluid${dim}d_smooth_gpu PROPERTIES COMPILE_FLAGS "-DDIM_${dim}D -DUSE_POTENTIAL_SMOOTHING")
 
   ADD_LIBRARY(hilbert${dim}d_gpu hilbert.cu)
   SET_TARGET_PROPERTIES(hilbert${dim}d_gpu PROPERTIES COMPILE_DEFINITIONS "DIM_${dim}D")
