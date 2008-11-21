@@ -1,0 +1,101 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# mdparam - list simulation parameters in HDF5 data file
+#
+# Copyright (C) 2008  Peter Colberg
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import os, os.path
+import sys
+import argparse
+import tables
+from numpy import *
+
+# HDF5 parameter group descriptions
+title_group = {
+    'correlation':      'Correlation function parameters',
+    'program':          'Program info',
+    'mdsim':            'MD simulation parameters',
+}
+# HDF5 parameter descriptions
+title_param = {
+    'correlation': {
+        'steps':        'total number of simulation steps',
+        'time':         'total simulation time',
+        'sample_rate':  'sample rate for lowest block level',
+        'block_size':   'block size',
+        'block_shift':  'block shift',
+        'block_count':  'block count',
+        'max_samples':  'maximum number of samples per block',
+        'q_values':     'number of q-values for Fourier transform',
+    },
+    'mdsim': {
+        'dimension':            'dimensions',
+        'particles':            'number of particles',
+        'blocks':               'number of CUDA execution blocks',
+        'threads':              'number of CUDA execution threads',
+        'density':              'particle density',
+        'box_length':           'periodic simulation box length',
+        'timestep':             'simulation timestep',
+        'cutoff_radius':        'potential cutoff radius',
+        'cells':                'number of cells per dimension',
+        'placeholders':         'number of placeholders per cell',
+        'neighbours':           'number of placeholders per neighbour list',
+        'cell_length':          'cell length',
+        'cell_occupancy':       'effective average cell occupancy',
+    },
+    'program': {
+        'name':         'name',
+        'version':      'version',
+        'variant':      'variant',
+    },
+}
+
+
+# parse command line arguments
+parser = argparse.ArgumentParser(prog='mdparam')
+parser.add_argument('input', help='HDF5 simulation data file')
+args = parser.parse_args()
+
+# read parameters from HDF5 file
+try:
+    f = tables.openFile(args.input, mode='r')
+except IOError:
+    raise SystemExit('failed to open HDF5 file: %s' % args.input)
+
+try:
+    l = {}
+    for node in f.root.param:
+        l[node._v_name] = {}
+        for attr in node._v_attrs._f_list():
+            l[node._v_name][attr] = node._v_attrs.__getattr__(attr)
+except tables.exceptions.NoSuchNodeError:
+    raise SystemExit('missing simulation data in file: %s' % args.input)
+
+f.close()
+
+# print parameters
+lines = ['']
+for (group, params) in sorted(l.items()):
+    lines.append(u' • %s' % title_group[group])
+    block = []
+    for (name, value) in params.items():
+        block.append(u'   — %s: %s' % (title_param[group][name], str(value)))
+    lines += sorted(block)
+    lines.append('')
+print '\n'.join(lines)
+
