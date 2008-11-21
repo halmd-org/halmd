@@ -49,6 +49,6 @@
 #define PROGRAM_DATE		"@PROGRAM_DATE@"
 #define PROGRAM_BUILT		__DATE__ " " __TIME__
 #define PROGRAM_AUTHOR		"Peter Colberg <peter.colberg@physik.uni-muenchen.de>"
-#define PROGRAM_COPYRIGHT	"Copyright (C) 2007-2008  " PROGRAM_AUTHOR
+#define PROGRAM_COPYRIGHT	"Copyright © 2007-2008  " PROGRAM_AUTHOR
 
 #endif /* !MDSIM_VERSION_H */
