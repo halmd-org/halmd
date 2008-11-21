@@ -70,7 +70,7 @@ void correlation::time(float const& value, float const& timestep)
 /**
  * set sample rate for lowest block level
  */
-void correlation::sample_rate(float const& sample_rate)
+void correlation::sample_rate(unsigned int const& sample_rate)
 {
     m_sample_rate = sample_rate;
     LOG("sample rate for lowest block level: " << m_sample_rate);
