@@ -235,15 +235,13 @@ void options::parse(int argc, char** argv)
 	("timestep,h", po::value<double>()->default_value(0.001),
 	 "simulation timestep")
 	("temperature,K", po::value<double>()->default_value(1.),
-	 "initial temperature")
+	 "initial Maxwell-Boltzmann temperature")
 	("random-seed,m", po::value<unsigned int>(),
 	 "random number generator integer seed")
 #ifndef USE_BENCHMARK
 	("steps,s", po::value<uint64_t>()->default_value(10000),
 	 "number of simulation steps")
 	("time,t", po::value<double>(), "total simulation time")
-	("sample-rate,r", po::value<unsigned int>()->default_value(20),
-	 "sample rate for lowest block level")
 	("equilibrate,E", po::value<uint64_t>()->default_value(0),
 	 "number of equilibration steps")
 #else
@@ -253,18 +251,20 @@ void options::parse(int argc, char** argv)
 	("trajectory,J", po::value<std::string>(),
 	 "trajectory input file")
 	("trajectory-sample,S", po::value<int64_t>(),
-	 "use sample in trajectory file as initial state")
+	 "trajectory sample for initial state")
 	;
 
 #ifndef USE_BENCHMARK
     po::options_description tcf_opts("Time correlation function options");
     tcf_opts.add_options()
+	("sample-rate,r", po::value<unsigned int>()->default_value(20),
+	 "sample rate for lowest block level")
 	("block-size,B", po::value<unsigned int>()->default_value(10),
 	 "block size")
 	("max-samples,M", po::value<uint64_t>()->default_value(10000),
 	 "maximum number of samples per block")
 	("q-values,q", po::value<unsigned int>()->default_value(5),
-	 "largest multiple of smallest q-vector for Fourier transformation")
+	 "number of q-values for Fourier transform")
 	("dump-trajectories,j", po::bool_switch(),
 	 "dump particle trajectories")
 	;
@@ -277,8 +277,8 @@ void options::parse(int argc, char** argv)
 	("input,I", po::value<std::vector<std::string> >(),
 	 "parameter input file")
 	("dry-run,n", po::bool_switch(),
-	 "perform a trial run without simulation")
-	("daemon", po::bool_switch(),
+	 "test parameters")
+	("daemon,b", po::bool_switch(),
 	 "run program in background")
 	("verbose,v", po::accum_value<int>()->default_value(0),
 	 "increase verbosity")
