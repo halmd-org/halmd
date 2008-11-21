@@ -250,7 +250,7 @@ void options::parse(int argc, char** argv)
 	("steps,s", po::value<uint64_t>()->default_value(10000),
 	 "number of simulation steps")
 	("time,t", po::value<float>(), "total simulation time")
-	("sample-rate,r", po::value<float>()->default_value(20),
+	("sample-rate,r", po::value<unsigned int>()->default_value(20),
 	 "sample rate for lowest block level")
 	("equilibrate,E", po::value<uint64_t>()->default_value(0),
 	 "number of equilibration steps")
@@ -382,7 +382,7 @@ void options::parse(int argc, char** argv)
 	    node = param.openGroup("correlation");
 	    po::store(po::parse_attribute<uint64_t>(node, "steps"), vm_["steps"]);
 	    po::store(po::parse_attribute<float>(node, "time"), vm_["time"]);
-	    po::store(po::parse_attribute<float>(node, "sample_rate"), vm_["sample-rate"]);
+	    po::store(po::parse_attribute<unsigned int>(node, "sample_rate"), vm_["sample-rate"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "block_size"), vm_["block-size"]);
 	    po::store(po::parse_attribute<uint64_t>(node, "max_samples"), vm_["max-samples"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "q_values"), vm_["q-values"]);

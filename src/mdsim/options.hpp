@@ -159,7 +159,7 @@ public:
     /**
      * returns sample rate for lowest block level
      */
-    option_value<float> sample_rate() const
+    option_value<unsigned int> sample_rate() const
     {
 	return vm["sample-rate"];
     }
