@@ -224,9 +224,9 @@ void options::parse(int argc, char** argv)
 {
     po::options_description mdsim_opts("MD simulation parameters");
     mdsim_opts.add_options()
-	("particles,N", po::value<unsigned int>()->default_value(128),
+	("particles,N", po::value<unsigned int>()->default_value(1000),
 	 "number of particles")
-	("density,d", po::value<double>()->default_value(0.1),
+	("density,d", po::value<double>()->default_value(0.75),
 	 "particle density")
 	("box-length,L", po::value<double>(),
 	 "simulation box length")
@@ -234,7 +234,7 @@ void options::parse(int argc, char** argv)
 	 "truncate potential at cutoff radius")
 	("timestep,h", po::value<double>()->default_value(0.001),
 	 "simulation timestep")
-	("temperature,K", po::value<double>()->default_value(1.),
+	("temperature,K", po::value<double>()->default_value(1.12),
 	 "initial Maxwell-Boltzmann temperature")
 	("random-seed,m", po::value<unsigned int>(),
 	 "random number generator integer seed")
