@@ -24,6 +24,7 @@ import sys
 import argparse
 import tables
 from numpy import *
+import pager
 
 # HDF5 parameter group descriptions
 title_group = {
@@ -88,7 +89,7 @@ except tables.exceptions.NoSuchNodeError:
 
 f.close()
 
-# print parameters
+# format parameters
 lines = ['']
 for (group, params) in sorted(l.items()):
     lines.append(u' • %s' % title_group[group])
@@ -97,5 +98,8 @@ for (group, params) in sorted(l.items()):
         block.append(u'   — %s: %s' % (title_param[group][name], str(value)))
     lines += sorted(block)
     lines.append('')
+
+# print parameters, paging if output is longer than screen
+pager.setup_pager()
 print '\n'.join(lines)
 
