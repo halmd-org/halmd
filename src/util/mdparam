@@ -22,9 +22,10 @@
 import os, os.path
 import sys
 import argparse
+import pager
+import sets
 import tables
 from numpy import *
-import pager
 
 # HDF5 parameter group descriptions
 title_group = {
@@ -69,37 +70,50 @@ title_param = {
 
 # parse command line arguments
 parser = argparse.ArgumentParser(prog='mdparam')
-parser.add_argument('input', help='HDF5 simulation data file')
+parser.add_argument('input', nargs='+', help='HDF5 simulation data file')
 args = parser.parse_args()
 
-# read parameters from HDF5 file
-try:
-    f = tables.openFile(args.input, mode='r')
-except IOError:
-    raise SystemExit('failed to open HDF5 file: %s' % args.input)
+# read parameters from HDF5 files
+data = {}
+for i, fn in enumerate(args.input):
+    try:
+        f = tables.openFile(fn, mode='r')
+    except IOError:
+        raise SystemExit('failed to open HDF5 file: %s' % fn)
 
-try:
-    l = {}
-    for node in f.root.param:
-        l[node._v_name] = {}
-        for attr in node._v_attrs._f_list():
-            l[node._v_name][attr] = node._v_attrs.__getattr__(attr)
-except tables.exceptions.NoSuchNodeError:
-    raise SystemExit('missing simulation data in file: %s' % args.input)
+    try:
+        for node in f.root.param:
+            group = node._v_name
+            if not group in data:
+                data[group] = {}
 
-f.close()
+            for param in node._v_attrs._f_list():
+                if not param in data[group]:
+                    data[group][param] = [None] * len(args.input)
+                data[group][param][i] = node._v_attrs.__getattr__(param)
 
-# format parameters
-lines = ['']
-for (group, params) in sorted(l.items()):
-    lines.append(u' • %s' % title_group[group])
-    block = []
-    for (name, value) in params.items():
-        block.append(u'   — %s: %s' % (title_param[group][name], str(value)))
-    lines += sorted(block)
-    lines.append('')
+    except tables.exceptions.NoSuchNodeError:
+        raise SystemExit('missing simulation data in file: %s' % fn)
 
-# print parameters, paging if output is longer than screen
+    f.close()
+
+# page output if longer than screen
 pager.setup_pager()
-print '\n'.join(lines)
+
+# display parameters with colored output
+for group, params in sorted(data.items(), key=lambda x: x[0]):
+    # group title
+    s = u'%s[%s]%s\n' % ('\x1b[1;31m', title_group[group], '\x1b[0m')
+    for name, values in sorted(params.items(), key=lambda x: title_param[group][x[0]]):
+        # parameter name
+        s += u' — %s%s%s:' % ('\x1b[1;34m', title_param[group][name], '\x1b[0m')
+        if len(sets.Set(values)) == 1:
+            # common parameter value for all data sets
+            s += ' %s\n' % str(values[0])
+        else:
+            # different parameter values
+            s += '\n'
+            for i, value in enumerate(values):
+                s += u'   • %s %s[%s]%s\n' % (str(value), '\x1b[33m', args.input[i], '\x1b[0m')
+    print s
 
