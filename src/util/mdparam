@@ -19,51 +19,44 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os, os.path
-import sys
+import os, sys, os.path
 import argparse
 import pager
 import sets
 import tables
 from numpy import *
 
-# HDF5 parameter group descriptions
-title_group = {
-    'correlation':      'Correlation function parameters',
-    'program':          'Program info',
-    'mdsim':            'MD simulation parameters',
-}
 # HDF5 parameter descriptions
-title_param = {
+param_name = {
     'correlation': {
-        'steps':        'total number of simulation steps',
-        'time':         'total simulation time',
-        'sample_rate':  'sample rate for lowest block level',
-        'block_size':   'block size',
-        'block_shift':  'block shift',
         'block_count':  'block count',
-        'max_samples':  'maximum number of samples per block',
-        'q_values':     'number of q-values for Fourier transform',
+        'block_shift':  'block shift',
+        'block_size':   'block size',
+        'max_samples':  'maximum samples per block',
+        'q_values':     'q-values in Fourier transform',
+        'sample_rate':  'sample rate',
+        'steps':        'total simulation steps',
+        'time':         'total simulation time',
     },
     'mdsim': {
-        'dimension':            'dimensions',
-        'particles':            'number of particles',
-        'blocks':               'number of CUDA execution blocks',
-        'threads':              'number of CUDA execution threads',
-        'density':              'particle density',
-        'box_length':           'periodic simulation box length',
-        'timestep':             'simulation timestep',
-        'cutoff_radius':        'potential cutoff radius',
-        'cells':                'number of cells per dimension',
-        'placeholders':         'number of placeholders per cell',
-        'neighbours':           'number of placeholders per neighbour list',
+        'blocks':               'CUDA blocks',
+        'box_length':           'periodic box length',
         'cell_length':          'cell length',
-        'cell_occupancy':       'effective average cell occupancy',
+        'cell_occupancy':       'average cell occupancy',
+        'cells':                'cells per dimension',
+        'cutoff_radius':        'potential cutoff radius',
+        'density':              'density',
+        'dimension':            'dimensions',
+        'neighbours':           'neighbour list placeholders',
+        'particles':            'particles',
+        'placeholders':         'cell list placeholders',
+        'threads':              'CUDA threads',
+        'timestep':             'timestep',
     },
     'program': {
         'name':         'name',
-        'version':      'version',
         'variant':      'variant',
+        'version':      'version',
     },
 }
 
@@ -103,10 +96,10 @@ pager.setup_pager()
 # display parameters with colored output
 for group, params in sorted(data.items(), key=lambda x: x[0]):
     # group title
-    s = u'%s[%s]%s\n' % ('\x1b[1;31m', title_group[group], '\x1b[0m')
-    for name, values in sorted(params.items(), key=lambda x: title_param[group][x[0]]):
+    s = u'%s[%s]%s\n' % ('\x1b[1;31m', group, '\x1b[0m')
+    for name, values in sorted(params.items(), key=lambda x: param_name[group][x[0]]):
         # parameter name
-        s += u' — %s%s%s:' % ('\x1b[1;34m', title_param[group][name], '\x1b[0m')
+        s += u' • %s%s%s:' % ('\x1b[1;34m', param_name[group][name], '\x1b[0m')
         if len(sets.Set(values)) == 1:
             # common parameter value for all data sets
             s += ' %s\n' % str(values[0])
@@ -114,6 +107,6 @@ for group, params in sorted(data.items(), key=lambda x: x[0]):
             # different parameter values
             s += '\n'
             for i, value in enumerate(values):
-                s += u'   • %s %s[%s]%s\n' % (str(value), '\x1b[33m', args.input[i], '\x1b[0m')
+                s += u'    %s %s[%s]%s\n' % (str(value), '\x1b[36m', args.input[i], '\x1b[0m')
     print s
 
