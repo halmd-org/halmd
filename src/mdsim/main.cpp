@@ -73,7 +73,19 @@ int main(int argc, char **argv)
 	}
 
 	// set CUDA device for host context
-	cuda::device::set(opts.device().value());
+	int dev = opts.device().value();
+	if (opts.device().defaulted()) {
+	    char* env = getenv("CUDA_DEVICE");
+	    if (env != NULL && *env != '\0') {
+		char* endptr;
+		int i = strtol(env, &endptr, 10);
+		if (*endptr != '\0' || i < 0) {
+		    throw std::logic_error(std::string("CUDA_DEVICE environment variable invalid: ") + env);
+		}
+		dev = i;
+	    }
+	}
+	cuda::device::set(dev);
 	LOG("CUDA device: " << cuda::device::get());
 
 	// query CUDA device properties
