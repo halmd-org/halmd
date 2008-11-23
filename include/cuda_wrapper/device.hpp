@@ -201,8 +201,8 @@ public:
      */
     static unsigned int mem_get_total()
     {
-	unsigned int free, total;
-	cuMemGetInfo(&free, &total);
+	unsigned int free = 0, total = 0;
+	_mem_get_info(&free, &total);
 	return total;
     }
 
@@ -211,8 +211,8 @@ public:
      */
     static unsigned int mem_get_used()
     {
-	unsigned int free, total;
-	cuMemGetInfo(&free, &total);
+	unsigned int free = 0, total = 0;
+	_mem_get_info(&free, &total);
 	return (total - free);
     }
 
@@ -221,9 +221,21 @@ public:
      */
     static unsigned int mem_get_free()
     {
-	unsigned int free, total;
-	cuMemGetInfo(&free, &total);
+	unsigned int free = 0, total = 0;
+	_mem_get_info(&free, &total);
 	return free;
+    }
+
+private:
+    /**
+     * get free and total memory in the current context
+     */
+    static CUresult _mem_get_info(unsigned int* free, unsigned int* total)
+    {
+	// force initialization of device in an unused context
+	CUDA_CALL(cudaFree(NULL));
+
+	return cuMemGetInfo(free, total);
     }
 };
 
