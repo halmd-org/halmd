@@ -9,7 +9,7 @@ FIND_PACKAGE(Git)
 
 GIT_REPOSITORY_INFO(${ljfluid_SOURCE_DIR} ljfluid)
 
-SET(PROGRAM_NAME "ljfluid-cuda")
+SET(PROGRAM_NAME "ljfluid")
 
 IF(ljfluid_GIT_VERSION)
   STRING(REGEX MATCH "v[0-9].*" PROGRAM_VERSION "${ljfluid_GIT_VERSION}")
