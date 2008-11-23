@@ -34,4 +34,7 @@ FOREACH(dim RANGE 2 3)
     ${HDF5_CPP_LIBRARY}
     rt
     )
+  INSTALL(TARGETS ljfluid${dim}d
+    RUNTIME DESTINATION bin
+    )
 ENDFOREACH(dim)
