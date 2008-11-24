@@ -2,3 +2,7 @@ ADD_EXECUTABLE(nvlock nvlock.c)
 TARGET_LINK_LIBRARIES(nvlock
   ${CUDA_LIBRARY}
   )
+ADD_EXECUTABLE(cumem cumem.c)
+TARGET_LINK_LIBRARIES(cumem
+  ${CUDA_LIBRARY}
+  )
