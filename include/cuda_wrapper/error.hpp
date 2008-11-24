@@ -24,6 +24,7 @@
 #define CUDA_ERROR_HPP
 
 #include <cuda/cuda_runtime.h>
+#include <cuda/cuda.h>
 #include <exception>
 
 
@@ -60,6 +61,40 @@ public:
     const char* what() const throw()
     {
 	return cudaGetErrorString(err);
+    }
+};
+
+}
+
+#define CU_ERROR(err) throw cu::error(err)
+
+#define CU_CALL(x)							\
+    do {								\
+	CUresult err;							\
+	if (CUDA_SUCCESS != (err = x)) {					\
+	    CU_ERROR(err);						\
+	}								\
+    } while(0)
+
+
+namespace cu
+{
+
+class error : public std::exception
+{
+public:
+    const CUresult err;
+
+    error(CUresult err): err(err)
+    {
+    }
+
+    /*
+     * returns a message string for the CUDA error
+     */
+    const char* what() const throw()
+    {
+	return "CUDA driver error";
     }
 };
 

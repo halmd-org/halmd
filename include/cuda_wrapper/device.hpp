@@ -197,32 +197,32 @@ public:
     };
 
     /**
-     * get total memory in bytes in the current context
+     * get total memory in bytes for given device
      */
-    static unsigned int mem_get_total()
+    static unsigned int mem_get_total(int dev)
     {
 	unsigned int free = 0, total = 0;
-	_mem_get_info(&free, &total);
+	_mem_get_info(&free, &total, dev);
 	return total;
     }
 
     /**
-     * get allocated memory in bytes in the current context
+     * get allocated memory in bytes for given device
      */
-    static unsigned int mem_get_used()
+    static unsigned int mem_get_used(int dev)
     {
 	unsigned int free = 0, total = 0;
-	_mem_get_info(&free, &total);
+	_mem_get_info(&free, &total, dev);
 	return (total - free);
     }
 
     /**
-     * get available memory in bytes in the current context
+     * get available memory in bytes for given device
      */
-    static unsigned int mem_get_free()
+    static unsigned int mem_get_free(int dev)
     {
 	unsigned int free = 0, total = 0;
-	_mem_get_info(&free, &total);
+	_mem_get_info(&free, &total, dev);
 	return free;
     }
 
@@ -230,12 +230,21 @@ private:
     /**
      * get free and total memory in the current context
      */
-    static CUresult _mem_get_info(unsigned int* free, unsigned int* total)
+    static void _mem_get_info(unsigned int* free, unsigned int* total, int dev)
     {
-	// force initialization of device in an unused context
-	CUDA_CALL(cudaFree(NULL));
+	CUcontext cuctx;
+	CUdevice cudev;
 
-	return cuMemGetInfo(free, total);
+	/* create CUDA context for device */
+	CU_CALL(cuInit(0));
+	CU_CALL(cuDeviceGet(&cudev, dev));
+	CU_CALL(cuCtxCreate(&cuctx, 0, cudev));
+	/* query memory info */
+	CU_CALL(cuMemGetInfo(free, total));
+	/* restore previous context, if any */
+	CU_CALL(cuCtxPopCurrent(NULL));
+	/* destroy CUDA context */
+	CU_CALL(cuCtxDestroy(cuctx));
     }
 };
 
