@@ -1,0 +1,4 @@
+ADD_EXECUTABLE(nvlock nvlock.c)
+TARGET_LINK_LIBRARIES(nvlock
+  ${CUDA_LIBRARY}
+  )
