@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 	}
 
 	/* set numeric CUDA device in environment variable */
-        if (-1 == setenv("CUDA_DEVICE", globbuf.gl_pathv[i][11], 1)) {
+        if (-1 == setenv("CUDA_DEVICE", &globbuf.gl_pathv[i][11], 1)) {
 	    fprintf(stderr, "nvlock: failed to set CUDA_DEVICE environment variable\n");
 	    return 1;
 	}
