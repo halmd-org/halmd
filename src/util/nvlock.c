@@ -33,8 +33,8 @@ int main(int argc, char** argv)
 	return 1;
     }
 
+    globbuf.gl_offs = 0;
     glob("/dev/nvidia[0-9]", GLOB_DOOFFS, NULL, &globbuf);
-
     if (!globbuf.gl_pathc) {
 	fprintf(stderr, "nvlock: no NVIDIA devices found\n");
 	return 1;
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     /* use devices in reverse order as first device is CUDA default */
     for (i = globbuf.gl_pathc - 1; i >= 0; --i) {
 	if (-1 == (fd = open(globbuf.gl_pathv[i], O_RDWR))) {
-            fprintf(stderr, "nvlock: could not open device: %s", globbuf.gl_pathv[i]);
+            fprintf(stderr, "nvlock: could not open device: %s\n", globbuf.gl_pathv[i]);
 	    return 1;
 	}
 	if (-1 == flock(fd, LOCK_EX | LOCK_NB)) {
