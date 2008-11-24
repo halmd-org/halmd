@@ -104,9 +104,9 @@ int main(int argc, char **argv)
 	// initialize molecular dynamics simulation
 	mdsim::mdsim sim(opts);
 
-	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used() << " bytes");
-	LOG("GPU available global device memory: " << cuda::device::mem_get_free() << " bytes");
-	LOG("GPU total global device memory: " << cuda::device::mem_get_total() << " bytes");
+	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used(dev) << " bytes");
+	LOG("GPU available global device memory: " << cuda::device::mem_get_free(dev) << " bytes");
+	LOG("GPU total global device memory: " << cuda::device::mem_get_total(dev) << " bytes");
 
 	if (opts.daemon().value()) {
 	    // run program in background
