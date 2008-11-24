@@ -273,8 +273,10 @@ void options::parse(int argc, char** argv)
 	 "maximum number of samples per block")
 	("q-values,q", po::value<unsigned int>()->default_value(5),
 	 "number of q-values for Fourier transform")
-	("dump-trajectories,j", po::bool_switch(),
+	("enable-trajectories,j", po::bool_switch(),
 	 "dump particle trajectories")
+	("disable-correlation,F", po::bool_switch(),
+	 "disable trajectory correlation functions")
 	;
 #endif
 

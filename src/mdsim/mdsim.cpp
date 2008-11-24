@@ -182,8 +182,10 @@ void mdsim::operator()()
 
 #ifndef USE_BENCHMARK
     // time correlation functions
-    tcf.open(opts.output_file_prefix().value() + ".tcf");
-    tcf.attrs() << fluid << tcf;
+    if (!opts.disable_tcf().value()) {
+	tcf.open(opts.output_file_prefix().value() + ".tcf");
+	tcf.attrs() << fluid << tcf;
+    }
     // trajectory file writer
     traj.open(opts.output_file_prefix().value() + ".trj", fluid.particles());
     traj.attrs() << fluid << tcf;
@@ -208,11 +210,13 @@ void mdsim::operator()()
 	    // simulation time
 	    const float time = *step * fluid.timestep();
 	    // sample time correlation functions
-	    tcf.sample(fluid.trajectory(), *step, flush);
+	    if (!opts.disable_tcf().value()) {
+		tcf.sample(fluid.trajectory(), *step, flush);
+	    }
 	    // sample thermodynamic equilibrium properties
 	    tep.sample(fluid.trajectory(), fluid.density(), time);
 	    // sample trajectory
-	    if (opts.dump_trajectories().value() || *step == 0) {
+	    if (opts.enable_trajectories().value() || *step == 0) {
 		traj.sample(fluid.trajectory(), time);
 		if (*step == 0) {
 		    traj.flush();
@@ -223,8 +227,10 @@ void mdsim::operator()()
 		// sample performance counters
 		prf.sample(fluid.times());
 		// write partial results to HDF5 files and flush to disk
-		tcf.flush();
-		if (opts.dump_trajectories().value())
+		if (!opts.disable_tcf().value()) {
+		    tcf.flush();
+		}
+		if (opts.enable_trajectories().value())
 		    traj.flush();
 		tep.flush();
 		prf.flush();
@@ -261,8 +267,10 @@ void mdsim::operator()()
 		// sample performance counters
 		prf.sample(fluid.times());
 		// write partial results to HDF5 files and flush to disk
-		tcf.flush();
-		if (opts.dump_trajectories().value())
+		if (!opts.disable_tcf().value()) {
+		    tcf.flush();
+		}
+		if (opts.enable_trajectories().value())
 		    traj.flush();
 		tep.flush();
 		prf.flush();
@@ -296,7 +304,9 @@ void mdsim::operator()()
     // cancel previously scheduled disk flush
     alarm(0);
     // close HDF5 output files
-    tcf.close();
+    if (!opts.disable_tcf().value()) {
+	tcf.close();
+    }
     traj.close();
     tep.close();
 #endif
