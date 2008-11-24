@@ -202,9 +202,17 @@ public:
     /**
      * returns whether to dump particle trajectories
      */
-    option_value<bool> dump_trajectories() const
+    option_value<bool> enable_trajectories() const
     {
-	return vm["dump-trajectories"];
+	return vm["enable-trajectories"];
+    }
+
+    /**
+     * returns whether to disable trajectory correlation functions
+     */
+    option_value<bool> disable_tcf() const
+    {
+	return vm["disable-correlation"];
     }
 
 #endif
