@@ -265,7 +265,7 @@ void options::parse(int argc, char** argv)
 #ifndef USE_BENCHMARK
     po::options_description tcf_opts("Time correlation function options");
     tcf_opts.add_options()
-	("sample-rate,r", po::value<unsigned int>()->default_value(20),
+	("sample-rate,r", po::value<unsigned int>()->default_value(1),
 	 "sample rate for lowest block level")
 	("block-size,B", po::value<unsigned int>()->default_value(10),
 	 "block size")
