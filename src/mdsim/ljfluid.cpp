@@ -814,22 +814,12 @@ void ljfluid::synchronize()
     m_times[GPU_TIME_VIRIAL_SUM] += event_[0] - event_[4];
 #endif
 
-    // mean potential energy per particle
-    h_sample.en_pot = 0;
+    // for each CUDA block, test for finite potential energy sum
     for (unsigned int i = 0; i < h_part.en_sum.size(); ++i) {
-	h_sample.en_pot += (double) h_part.en_sum[i].x + (double) h_part.en_sum[i].y;
-    }
-    h_sample.en_pot /= npart;
-    // mean virial equation sum per particle
-    h_sample.virial = 0;
-    for (unsigned int i = 0; i < h_part.virial_sum.size(); ++i) {
-	h_sample.virial += (double) h_part.virial_sum[i].x + (double) h_part.virial_sum[i].y;
-    }
-    h_sample.virial /= npart;
-
-    // ensure that system is still in valid state after MD step
-    if (!std::isfinite(h_sample.en_pot)) {
-	throw exception("potential energy diverged");
+	// test of high-word float of the double-single pair suffices
+	if (!std::isfinite(h_part.en_sum[i].x)) {
+	    throw exception("potential energy diverged");
+	}
     }
 
 #ifdef USE_CELL
@@ -873,6 +863,22 @@ void ljfluid::sample()
 	// copy particle velocities
 	h_sample.v[n] = h_part.v[j];
     }
+
+    // mean potential energy per particle
+    h_sample.en_pot = 0;
+    for (unsigned int i = 0; i < h_part.en_sum.size(); ++i) {
+	// average over CUDA block sums
+	h_sample.en_pot += (double) h_part.en_sum[i].x + (double) h_part.en_sum[i].y;
+    }
+    h_sample.en_pot /= npart;
+
+    // mean virial equation sum per particle
+    h_sample.virial = 0;
+    for (unsigned int i = 0; i < h_part.virial_sum.size(); ++i) {
+	// average over CUDA block sums
+	h_sample.virial += (double) h_part.virial_sum[i].x + (double) h_part.virial_sum[i].y;
+    }
+    h_sample.virial /= npart;
 
     // GPU time for sample memcpy
     m_times[GPU_TIME_SAMPLE_MEMCPY] += event_[0] - event_[1];
