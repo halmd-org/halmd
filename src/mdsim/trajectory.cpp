@@ -45,6 +45,8 @@ void trajectory<true>::open(std::string const& filename, unsigned int const& npa
     H5::DSetCreatPropList cparms;
     hsize_t chunk_dim[3] = { 1, npart, dimension };
     cparms.setChunk(3, chunk_dim);
+    // GZIP compression
+    cparms.setDeflate(6);
 
     // create datasets
     hsize_t dim[3] = { 0, npart, dimension };
