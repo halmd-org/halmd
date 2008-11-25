@@ -246,7 +246,7 @@ public:
      */
     option_value<unsigned int> rng_seed() const
     {
-	return vm["rng-seed"];
+	return vm["random-seed"];
     }
 
     /**
