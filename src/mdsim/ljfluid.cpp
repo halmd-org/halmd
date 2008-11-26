@@ -418,7 +418,7 @@ void ljfluid::restore(trajectory_sample::visitor visitor)
 	// replicate to periodically extended particle positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
-	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
+	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(gvector), stream_);
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 
 	// maximum squared velocity
@@ -530,7 +530,7 @@ void ljfluid::lattice()
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
-	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
+	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(gvector), stream_);
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 #endif
 
@@ -574,7 +574,7 @@ void ljfluid::temperature(float temp)
 	// set velocities using Maxwell-Boltzmann distribution at temperature
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid::boltzmann(g_part.v, temp, rng_.state());
+	rng_.boltzmann(g_part.v, temp, stream_);
 	event_[1].record(stream_);
 	// copy particle velocities from GPU to host
 	cuda::copy(g_part.v, h_part.v, stream_);
@@ -744,7 +744,7 @@ void ljfluid::mdstep()
 
     // Lennard-Jones force calculation
     try {
-	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(g_vector), stream_);
+	cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(gvector), stream_);
 	gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
     }
     catch (cuda::error const& e) {
