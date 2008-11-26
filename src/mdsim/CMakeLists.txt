@@ -1,3 +1,28 @@
+# Add program variant compile flags to cmake GUI
+SET(ljfluid_VARIANT_C2POT CACHE BOOL
+  "Use C2 potential smoothing")
+IF(ljfluid_VARIANT_DSFUN)
+  ADD_DEFINITIONS(-DUSE_DSFUN)
+ENDIF(ljfluid_VARIANT_DSFUN)
+
+SET(ljfluid_VARIANT_CELL CACHE BOOL
+  "Use cell lists")
+IF(ljfluid_VARIANT_CELL)
+  ADD_DEFINITIONS(-DUSE_CELL)
+ENDIF(ljfluid_VARIANT_CELL)
+
+SET(ljfluid_VARIANT_CELL_SUMMATION_ORDER CACHE BOOL
+  "Use opposite cell summation order")
+IF(ljfluid_VARIANT_CELL_SUMMATION_ORDER)
+  ADD_DEFINITIONS(-DUSE_CELL_SUMMATION_ORDER)
+ENDIF(ljfluid_VARIANT_CELL_SUMMATION_ORDER)
+
+SET(ljfluid_VARIANT_DSFUN CACHE BOOL
+  "Use double-single precision functions")
+IF(ljfluid_VARIANT_C2POT)
+  ADD_DEFINITIONS(-DUSE_POTENTIAL_SMOOTHING)
+ENDIF(ljfluid_VARIANT_C2POT)
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 # Generate version header file
