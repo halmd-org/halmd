@@ -19,7 +19,9 @@
 #include <float.h>
 #include "ljfluid_glue.hpp"
 #include "cutil.h"
+#ifdef USE_DSFUN
 #include "dsfun.h"
+#endif
 #include "vector2d.h"
 #include "vector3d.h"
 
@@ -262,10 +264,18 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     // virial equation sum contribution
     float virial = 0;
 
-#ifdef DIM_3D
+#ifdef USE_DSFUN
+# ifdef DIM_3D
     dfloat3 f(make_float3(0, 0, 0));
-#else
+# else
     dfloat2 f(make_float2(0, 0));
+#  endif
+#else
+# ifdef DIM_3D
+    float3 f(make_float3(0, 0, 0));
+# else
+    float2 f(make_float2(0, 0));
+# endif
 #endif
 
     //
@@ -347,11 +357,19 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
 #endif
 
     // second leapfrog step as part of integration of equations of motion
+#ifdef USE_DSFUN
     leapfrog_full_step(v, f.f0);
+#else
+    leapfrog_full_step(v, f);
+#endif
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
+#ifdef USE_DSFUN
     g_f[GTID] = pack(f.f0);
+#else
+    g_f[GTID] = pack(f);
+#endif
     g_en[GTID] = en;
     g_virial[GTID] = virial;
 }
@@ -375,10 +393,18 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
     // virial equation sum contribution
     float virial = 0;
 
-#ifdef DIM_3D
+#ifdef USE_DSFUN
+# ifdef DIM_3D
     dfloat3 f(make_float3(0, 0, 0));
-#else
+# else
     dfloat2 f(make_float2(0, 0));
+#  endif
+#else
+# ifdef DIM_3D
+    float3 f(make_float3(0, 0, 0));
+# else
+    float2 f(make_float2(0, 0));
+# endif
 #endif
 
     // iterate over all blocks
@@ -403,11 +429,19 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
     }
 
     // second leapfrog step of integration of equations of motion
+#ifdef USE_DSFUN
     leapfrog_full_step(v, f.f0);
+#else
+    leapfrog_full_step(v, f);
+#endif
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
+#ifdef USE_DSFUN
     g_f[GTID] = pack(f.f0);
+#else
+    g_f[GTID] = pack(f);
+#endif
     g_en[GTID] = en;
     g_virial[GTID] = virial;
 }
