@@ -1,3 +1,22 @@
+# Add program variant compile flags to cmake GUI
+SET(ljfluid_VARIANT_CELL CACHE BOOL
+  "Use cell lists and Verlet neighbour lists")
+IF(ljfluid_VARIANT_CELL)
+  ADD_DEFINITIONS(-DUSE_CELL)
+ENDIF(ljfluid_VARIANT_CELL)
+
+SET(ljfluid_VARIANT_HILBERT CACHE BOOL
+  "Use Hilbert space-filling curve particle ordering")
+IF(ljfluid_VARIANT_HILBERT)
+  ADD_DEFINITIONS(-DUSE_HILBERT_ORDER)
+ENDIF(ljfluid_VARIANT_HILBERT)
+
+SET(ljfluid_VARIANT_C2POT CACHE BOOL
+  "Use C2 potential smoothing")
+IF(ljfluid_VARIANT_DSFUN)
+  ADD_DEFINITIONS(-DUSE_DSFUN)
+ENDIF(ljfluid_VARIANT_DSFUN)
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 # Generate version header file
