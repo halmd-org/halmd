@@ -278,6 +278,7 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
 # endif
 #endif
 
+#ifdef USE_CELL_SUMMATION_ORDER
     //
     // The summation of all forces acting on a particle is the most
     // critical part of the simulation concerning longtime accuracy.
@@ -312,7 +313,7 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     // opposite neighbour cell softens the velocity drift.
     //
 
-#ifdef DIM_3D
+# ifdef DIM_3D
     // sum forces over this cell
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
     // sum forces over 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
@@ -342,7 +343,7 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1,  0), r, tag, f, en, virial);
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, -1), r, tag, f, en, virial);
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, +1), r, tag, f, en, virial);
-#else
+# else
     // sum forces over this cell
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
     // sum forces over 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
@@ -354,7 +355,25 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1,  0), r, tag, f, en, virial);
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, -1), r, tag, f, en, virial);
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, +1), r, tag, f, en, virial);
-#endif
+# endif
+#else /* ! USE_CELL_SUMMATION_ORDER */
+# ifdef DIM_3D
+    // visit 26 neighbour cells
+    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
+    for (int x = -1; x <= 1; ++x)
+	for (int y = -1; y <= 1; ++y)
+	    for (int z = -1; z <= 1; ++z)
+		if (x != 0 || y != 0 || z != 0)
+		    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(x,  y,  z), r, tag, f, en, virial);
+# else
+    compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
+    // visit 8 neighbour cells
+    for (int x = -1; x <= 1; ++x)
+	for (int y = -1; y <= 1; ++y)
+	    if (x != 0 || y != 0)
+		compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(x, y), r, tag, f, en, virial);
+# endif
+#endif /* USE_CELL_SUMMATION_ORDER */
 
     // second leapfrog step as part of integration of equations of motion
 #ifdef USE_DSFUN
