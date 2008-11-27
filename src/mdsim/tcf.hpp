@@ -29,8 +29,8 @@
 namespace mdsim {
 
 /** correlation function result types */
-typedef boost::multi_array<accumulator<float>, 2> tcf_unary_result_type;
-typedef boost::multi_array<accumulator<float>, 3> tcf_binary_result_type;
+typedef boost::multi_array<accumulator<double>, 2> tcf_unary_result_type;
+typedef boost::multi_array<accumulator<double>, 3> tcf_binary_result_type;
 
 /**
  * mean-square displacement
@@ -267,7 +267,7 @@ public:
 	cparms.setChunk(3, chunk_dim);
 
 	// create dataset
-	dataset = file.createDataSet(name, H5::PredType::NATIVE_FLOAT, ds, cparms);
+	dataset = file.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
     }
 
     void create_dataset(H5::DataSet& dataset, tcf_binary_result_type const& result, char const* name) const
@@ -281,7 +281,7 @@ public:
 	cparms.setChunk(4, chunk_dim);
 
 	// create dataset
-	dataset = file.createDataSet(name, H5::PredType::NATIVE_FLOAT, ds, cparms);
+	dataset = file.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
     }
     
 private:
@@ -337,7 +337,7 @@ public:
 	// dataset dimensions
 	boost::array<hsize_t, 3> dim = {{ max_blocks, result.shape()[1], 5 }};
 	// memory buffer for results
-	boost::multi_array<float, 3> data(dim);
+	boost::multi_array<double, 3> data(dim);
 
 	for (unsigned int j = 0; j < dim[0]; ++j) {
 	    for (unsigned int k = 0; k < dim[1]; ++k) {
@@ -355,7 +355,7 @@ public:
 	}
 	dataset.extend(dim.c_array());
 	// write results to HDF5 file
-	dataset.write(data.data(), H5::PredType::NATIVE_FLOAT);
+	dataset.write(data.data(), H5::PredType::NATIVE_DOUBLE);
     }
 
     void write(H5::DataSet& dataset, tcf_binary_result_type const& result) const
@@ -363,7 +363,7 @@ public:
 	// dataset dimensions
 	boost::array<hsize_t, 4> dim = {{ result.shape()[2], max_blocks, result.shape()[1], 6 }};
 	// memory buffer for results
-	boost::multi_array<float, 4> data(dim);
+	boost::multi_array<double, 4> data(dim);
 
 	for (unsigned int j = 0; j < dim[0]; ++j) {
 	    for (unsigned int k = 0; k < dim[1]; ++k) {
@@ -385,7 +385,7 @@ public:
 	}
 	dataset.extend(dim.c_array());
 	// write results to HDF5 file
-	dataset.write(data.data(), H5::PredType::NATIVE_FLOAT);
+	dataset.write(data.data(), H5::PredType::NATIVE_DOUBLE);
     }
 
 private:
