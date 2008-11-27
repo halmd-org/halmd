@@ -584,15 +584,14 @@ void ljfluid::temperature(float temp)
     m_times[GPU_TIME_BOLTZMANN] += event_[1] - event_[0];
 
     //
-    // FIXME two conflicting constraints need be fullfilled:
+    // The particle velocities need to fullfill two constraints:
     //
-    //  1. set center of mass velocity to zero
-    //  2. set velocity distribution to accurate temperature
+    //  1. center of mass velocity shall be zero
+    //  2. temperature of the distribution shall equal exactly the given value
     //
-    // The following order has been chosen by testing convergence with
-    // temperatures (T = 0.76, 1.5, 4.5) and N = 10000 particles.
-    // 1->2 satifies both constraints (with 10^-7 relative error) after
-    // only one iteration, wheres 2->1 requires two iterations.
+    // We choose the above order because shifting the center of mass velocity
+    // means altering the first moment of the velocity distribution, which in
+    // consequence affects the second moment, i.e. the temperature.
     //
 
     // compute center of mass velocity
