@@ -161,6 +161,9 @@ void correlation::q_values(unsigned int const& n, float const& box)
     for (unsigned int k = 1; k <= n; ++k) {
 	m_q_vector.push_back(k * 2 * M_PI / box);
     }
+    // FIXME dynamic structure factor at q ~ 2pi/sigma
+    m_q_vector.push_back(floorf(box) * 2 * M_PI / box);
+    m_q_vector.push_back(ceilf(box) * 2 * M_PI / box);
 
     // allocate correlation function results
     try {
