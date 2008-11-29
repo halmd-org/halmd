@@ -247,6 +247,25 @@ __device__ float2 sqrtf(float2 v)
     return v;
 }
 
+/**
+ * componentwise cosine function
+ */
+__device__ float2 cosf(float2 v)
+{
+    v.x = cosf(v.x);
+    v.y = cosf(v.y);
+    return v;
+}
+
+/**
+ * componentwise sine function
+ */
+__device__ float2 sinf(float2 v)
+{
+    v.x = sinf(v.x);
+    v.y = sinf(v.y);
+    return v;
+}
 
 /**
  * convert floating-point components to integers, rounding to nearest even integer
