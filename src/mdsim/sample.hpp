@@ -50,39 +50,48 @@ struct trajectory_sample
  */
 struct correlation_sample
 {
-    // swappable host memory vector type
-    typedef std::vector<hvector> vector_type;
-    typedef hvector::value_type value_type;
-    typedef std::vector<std::pair<hvector, hvector> > density_vector_type;
+    // value types of these two vectors must match
+    typedef std::vector<hvector> sample_vector;
+    typedef std::vector<hvector::value_type> q_value_vector;
+    // summing over large particle numbers requires double precision!
+    typedef double density_value;
+    /** real or imaginary component vector */
+    typedef vector<density_value, hvector::static_size> density_vector;
+    /** real and imaginary components of Fourier transformed density rho(q) */
+    typedef std::pair<density_vector, density_vector> density_vector_pair;
+    /** vector of Fourier transformed densities for different q-values */
+    typedef std::vector<density_vector_pair> density_vector_vector;
+
+    /** particle positions */
+    sample_vector r;
+    /** particle velocities */
+    sample_vector v;
+    /** spatially Fourier transformed density for given q-values */
+    density_vector_vector rho;
 
     /**
      * initialise phase space sample
      */
-    correlation_sample(vector_type const& r, vector_type const& v, std::vector<value_type> const& q) : r(r), v(v), rho(q.size(), std::pair<hvector, hvector>(0, 0))
+    correlation_sample(sample_vector const& r, sample_vector const& v, q_value_vector const& q)
+    : r(r), v(v), rho(q.size(), density_vector_pair(0, 0))
     {
 	// spatial Fourier transformation
 	for (size_t i = 0; i < r.size(); ++i) {
-	    for (unsigned int j = 0; j < q.size(); ++j) {
-		// compute averages to maintain accuracy with single precision floating-point
-		rho[j].first += (cos(r[i] * q[j]) - rho[j].first) / (i + 1);
-		rho[j].second += (sin(r[i] * q[j]) - rho[j].second) / (i + 1);
+	    for (size_t j = 0; j < q.size(); ++j) {
+		// compute averages to maintain accuracy summing over small and large values
+		density_vector r_q(r[i] * q[j]);
+		rho[j].first += (cos(r_q) - rho[j].first) / (i + 1);
+		rho[j].second += (sin(r_q) - rho[j].second) / (i + 1);
 	    }
 	}
 	// normalize Fourier transformed density with N^(-1/2)
-	const value_type n = std::sqrt(r.size());
-	for (unsigned int j = 0; j < q.size(); ++j) {
-	    // multiply averages with N^(+1/2)
+	density_value n = sqrt(r.size());
+	for (size_t j = 0; j < q.size(); ++j) {
+	    // therefore multiply averages with N^(+1/2)
 	    rho[j].first *= n;
 	    rho[j].second *= n;
 	}
     }
-
-    /** particle positions */
-    vector_type r;
-    /** particle velocities */
-    vector_type v;
-    /** spatially Fourier transformed density for given q-values */
-    density_vector_type rho;
 };
 
 } // namespace mdsim

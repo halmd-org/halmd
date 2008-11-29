@@ -125,7 +125,7 @@ private:
     /** maximum number of correlation samples per block */
     uint64_t m_max_samples;
     /** q-values for spatial Fourier transformation */
-    std::vector<float> m_q_vector;
+    correlation_sample::q_value_vector m_q_vector;
 
     /** correlation functions and results */
     std::vector<tcf_type> m_tcf;
