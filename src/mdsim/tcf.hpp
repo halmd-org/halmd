@@ -47,9 +47,8 @@ struct mean_square_displacement
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::vector_type::const_iterator vector_const_iterator;
-	typedef typename input_iterator::first_type::value_type::vector_type::value_type vector_type;
-	typedef typename input_iterator::first_type::value_type::vector_type::value_type::value_type value_type;
+	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
+	typedef typename input_iterator::first_type::value_type::sample_vector::value_type vector_type;
 
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
@@ -79,9 +78,9 @@ struct mean_quartic_displacement
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::vector_type::const_iterator vector_const_iterator;
-	typedef typename input_iterator::first_type::value_type::vector_type::value_type vector_type;
-	typedef typename input_iterator::first_type::value_type::vector_type::value_type::value_type value_type;
+	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
+	typedef typename input_iterator::first_type::value_type::sample_vector::value_type vector_type;
+	typedef typename input_iterator::first_type::value_type::sample_vector::value_type::value_type value_type;
 
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
@@ -113,7 +112,7 @@ struct velocity_autocorrelation
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::vector_type::const_iterator vector_const_iterator;
+	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
 
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
@@ -141,16 +140,17 @@ struct intermediate_scattering_function
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::first_type::value_type::density_vector_type::const_iterator rho, rho0;
+	typename input_iterator::first_type::value_type::density_vector_vector::const_iterator rho, rho0;
 	typename output_iterator::value_type::iterator k;
+	size_t dim;
 
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over Fourier transformed densities in current and first sample
 	    for (rho = it->rho.begin(), rho0 = first.first->rho.begin(), k = result->begin(); rho != it->rho.end(); ++rho, ++rho0, ++k) {
 		// accumulate intermediate scattering function
-		for (unsigned int d = 0; d < rho->first.size(); ++d) {
-		    *k += rho->first[d] * rho0->first[d] + rho->second[d] * rho0->second[d];
+		for (dim = 0; dim < rho->first.size(); ++dim) {
+		    *k += rho->first[dim] * rho0->first[dim] + rho->second[dim] * rho0->second[dim];
 		}
 	    }
 	}
@@ -172,23 +172,27 @@ struct self_intermediate_scattering_function
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::first_type::value_type::vector_type::const_iterator r, r0;
+	typename input_iterator::first_type::value_type::sample_vector::const_iterator r, r0;
+	typename input_iterator::first_type::value_type::density_vector f, rq;
 	typename input_iterator::second_type q;
-	typename input_iterator::first_type::value_type::vector_type::value_type f;
-	unsigned int i;
 	typename output_iterator::value_type::iterator k;
+	size_t n, dim;
 
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over q-values
 	    for (q = first.second, k = result->begin(); q != last.second; ++q, ++k) {
 		// iterate over particle positions in current and first sample
-		for (f = 0, r = it->r.begin(), r0 = first.first->r.begin(), i = 0; r != it->r.end(); ++r, ++r0, ++i) {
-		    f += (cos((*r - *r0) * *q) - f) / (i + 1);
+		for (n = 0, f = 0, r = it->r.begin(), r0 = first.first->r.begin(); r != it->r.end(); ++r, ++r0, ++n) {
+		    // compute averages to maintain accuracy summing over small and large values
+		    rq = (*r - *r0) * (*q);
+		    f += (cos(rq) - f) / (n + 1);
 		}
 		// accumulate self-intermediate scattering function over mutually orthogonal q-vectors
-		for (i = 0; i < f.size(); ++i) {
-		    *k += f[i];
+		for (dim = 0; dim < f.size(); ++dim) {
+		    // result is already normalised due to averge calculation above
+		    // (norm is 1/sqrt(N) * 1/sqrt(N) == 1/N)
+		    *k += f[dim];
 		}
 	    }
 	}
