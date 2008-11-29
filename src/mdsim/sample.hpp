@@ -45,6 +45,46 @@ struct trajectory_sample
     double virial;
 };
 
+/**
+ * Phase space sample for evaluating correlation functions
+ */
+struct correlation_sample
+{
+    // swappable host memory vector type
+    typedef std::vector<hvector> vector_type;
+    typedef hvector::value_type value_type;
+    typedef std::vector<std::pair<hvector, hvector> > density_vector_type;
+
+    /**
+     * initialise phase space sample
+     */
+    correlation_sample(vector_type const& r, vector_type const& v, std::vector<value_type> const& q) : r(r), v(v), rho(q.size(), std::pair<hvector, hvector>(0, 0))
+    {
+	// spatial Fourier transformation
+	for (size_t i = 0; i < r.size(); ++i) {
+	    for (unsigned int j = 0; j < q.size(); ++j) {
+		// compute averages to maintain accuracy with single precision floating-point
+		rho[j].first += (cos(r[i] * q[j]) - rho[j].first) / (i + 1);
+		rho[j].second += (sin(r[i] * q[j]) - rho[j].second) / (i + 1);
+	    }
+	}
+	// normalize Fourier transformed density with N^(-1/2)
+	const value_type n = std::sqrt(r.size());
+	for (unsigned int j = 0; j < q.size(); ++j) {
+	    // multiply averages with N^(+1/2)
+	    rho[j].first *= n;
+	    rho[j].second *= n;
+	}
+    }
+
+    /** particle positions */
+    vector_type r;
+    /** particle velocities */
+    vector_type v;
+    /** spatially Fourier transformed density for given q-values */
+    density_vector_type rho;
+};
+
 } // namespace mdsim
 
 #endif /* ! MDSIM_SAMPLE_HPP */
