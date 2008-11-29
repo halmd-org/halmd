@@ -269,7 +269,7 @@ bool correlation::sample(uint64_t const& step) const
  */
 void correlation::sample(trajectory_sample const& sample, uint64_t const& step, bool& flush)
 {
-    phase_space_point p(sample.R, sample.v, m_q_vector);
+    correlation_sample p(sample.R, sample.v, m_q_vector);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
