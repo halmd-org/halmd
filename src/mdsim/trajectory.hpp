@@ -47,13 +47,17 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** write phase space sample */
-    void sample(trajectory_sample const& sample, float const& time);
+    void sample(trajectory_sample const& sample, float_type const& time);
 
 private:
     /** HDF5 trajectory output file */
     H5::H5File m_file;
     /** trajectory datasets for particle coordinates and velocities */
+#ifdef USE_CUDA
     boost::array<H5::DataSet, 4> m_dataset;
+#else
+    boost::array<H5::DataSet, 3> m_dataset;
+#endif
     /** memory dataspace for a single coordinates or velocities sample */
     H5::DataSpace m_ds_mem;
     /** file dataspace for a single coordinates or velocities sample */

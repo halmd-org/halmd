@@ -50,9 +50,9 @@ public:
     /** initialise with all correlation function types */
     correlation();
     /** set total number of simulation steps */
-    void steps(uint64_t const& value, float const& timestep);
+    void steps(uint64_t const& value, float_type const& timestep);
     /** set total simulation time */
-    void time(float const& value, float const& timestep);
+    void time(float_type const& value, float_type const& timestep);
     /** set sample rate for lowest block level */
     void sample_rate(unsigned int const& sample_rate);
     /** set block size */
@@ -60,12 +60,12 @@ public:
     /** set maximum number of samples per block */
     void max_samples(uint64_t const& value);
     /** set q-vectors for spatial Fourier transformation */
-    void q_values(unsigned int const& n, float const& box);
+    void q_values(unsigned int const& n, float_type const& box);
 
     /** returns total number of simulation steps */
     uint64_t const& steps() const { return m_steps; }
     /** returns total simulation time */
-    float const& time() const { return m_time; }
+    float_type const& time() const { return m_time; }
     /** returns sample rate for lowest block level */
     unsigned int const& sample_rate() const { return m_sample_rate; }
     /** returns block size */
@@ -107,13 +107,13 @@ private:
     std::vector<uint64_t> m_block_samples;
 
     /** simulation timestep */
-    float m_timestep;
+    float_type m_timestep;
     /** sample rate for lowest block level */
     unsigned int m_sample_rate;
     /** total number of simulation steps */
     uint64_t m_steps;
     /** total simulation time */
-    float m_time;
+    float_type m_time;
     /** block size */
     unsigned int m_block_size;
     /** block shift */
@@ -121,7 +121,7 @@ private:
     /** block count */
     unsigned int m_block_count;
     /** block time intervals */
-    boost::multi_array<float, 2> m_block_time;
+    boost::multi_array<float_type, 2> m_block_time;
     /** maximum number of correlation samples per block */
     uint64_t m_max_samples;
     /** q-values for spatial Fourier transformation */

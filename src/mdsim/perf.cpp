@@ -31,22 +31,30 @@ namespace mdsim
  * performance counter datasets
  */
 static char const* perf_dataset[][2] = {
+#ifdef USE_CUDA
     { "mdstep",			"GPU time for MD simulation step" },
     { "velocity_verlet",	"GPU time for velocity-Verlet integration" },
-#ifdef USE_HILBERT_ORDER
+# ifdef USE_HILBERT_ORDER
     { "hilbert_sort",		"GPU time for Hilbert space-filling curve sort" },
-#endif
-#ifdef USE_CELL
+# endif
+# ifdef USE_CELL
     { "update_cells",		"GPU time for cell lists update" },
     { "update_neighbours",	"GPU time for neighbour lists update" },
     { "maximum_velocity",	"GPU time for maximum velocity calculation" },
-#endif
+# endif
     { "update_forces",		"GPU time for Lennard-Jones force update" },
     { "potential_energy",	"GPU time for potential energy sum calculation" },
     { "virial_sum",		"GPU time for virial equation sum calculation" },
     { "sample_memcpy",		"GPU time for sample memcpy" },
     { "lattice",		"GPU time for lattice generation" },
     { "boltzmann",		"GPU time for Maxwell-Boltzmann distribution" },
+#else /* ! USE_CUDA */
+    { "update_cells",		"CPU time for cell lists update" },
+    { "update_neighbours",	"CPU time for neighbour lists update" },
+    { "update_forces",		"CPU time for Lennard-Jones force update" },
+    { "velocity_verlet",	"CPU time for velocity-Verlet integration" },
+    { "mdstep",			"CPU time for MD simulation step" },
+#endif /* ! USE_CUDA */
 };
 
 /**
@@ -66,7 +74,7 @@ void perf::open(std::string const& filename)
     m_file.createGroup("param");
 
     // floating-point data type
-    m_tid = H5::PredType::NATIVE_FLOAT;
+    m_tid = H5_NATIVE_FLOAT_TYPE;
 
     // extensible dataspace for performance data
     hsize_t dim[2] = { 0, 3 };
@@ -161,7 +169,7 @@ void perf::flush(bool force)
 
     // memory dataspace
     H5::DataSpace mem_ds(2, block);
-    boost::array<float, 3> data;
+    boost::array<float_type, 3> data;
     try {
 	for (unsigned int i = 0; i < m_times.size(); ++i) {
 	    // write to HDF5 dataset

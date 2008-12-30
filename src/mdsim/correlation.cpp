@@ -40,7 +40,7 @@ correlation::correlation()
 /**
  * set total number of simulation steps
  */
-void correlation::steps(uint64_t const& value, float const& timestep)
+void correlation::steps(uint64_t const& value, float_type const& timestep)
 {
     // set total number of simulation steps
     m_steps = value;
@@ -55,7 +55,7 @@ void correlation::steps(uint64_t const& value, float const& timestep)
 /**
  * set total simulation time
  */
-void correlation::time(float const& value, float const& timestep)
+void correlation::time(float_type const& value, float_type const& timestep)
 {
     // set total simulation time
     m_time = value;
@@ -155,7 +155,7 @@ void correlation::max_samples(uint64_t const& value)
 /**
  * set q-vectors for spatial Fourier transformation
  */
-void correlation::q_values(unsigned int const& n, float const& box)
+void correlation::q_values(unsigned int const& n, float_type const& box)
 {
     // integer multiples of q-value corresponding to periodic box length
     for (unsigned int k = 1; k <= n; ++k) {

@@ -19,7 +19,9 @@
 #include <H5Cpp.h>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>
+#ifdef USE_CUDA
 #include <cuda_wrapper.hpp>
+#endif
 #include <exception>
 #include <iostream>
 #include <sched.h>
@@ -59,6 +61,7 @@ int main(int argc, char **argv)
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
     try {
+#ifdef USE_CUDA
 	// bind process to CPU core(s)
 	if (!opts.processor().empty()) {
 	    cpu_set_t cpu_set;
@@ -100,13 +103,16 @@ int main(int argc, char **argv)
 	LOG("CUDA device major revision: " << prop.major());
 	LOG("CUDA device minor revision: " << prop.minor());
 	LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
+#endif
 
 	// initialize molecular dynamics simulation
 	mdsim::mdsim sim(opts);
 
+#ifdef USE_CUDA
 	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used(dev) << " bytes");
 	LOG("GPU available global device memory: " << cuda::device::mem_get_free(dev) << " bytes");
 	LOG("GPU total global device memory: " << cuda::device::mem_get_total(dev) << " bytes");
+#endif
 
 	if (opts.daemon().value()) {
 	    // run program in background
@@ -117,11 +123,13 @@ int main(int argc, char **argv)
 	    sim();
 	}
     }
+#ifdef USE_CUDA
     catch (cuda::error const& e) {
 	LOG_ERROR("CUDA: " << e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
+#endif
     catch (std::exception const& e) {
 	LOG_ERROR(e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");

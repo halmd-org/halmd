@@ -33,8 +33,10 @@ struct trajectory_sample
     /** trajectory sample visitor type */
     typedef boost::function<void (std::vector<hvector>&, std::vector<hvector>&)> visitor;
 
+#ifdef USE_CUDA
     /** periodically reduced particle positions */
     std::vector<hvector> r;
+#endif
     /** periodically extended particle positions */
     std::vector<hvector> R;
     /** particle velocities */

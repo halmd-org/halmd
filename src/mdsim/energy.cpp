@@ -109,7 +109,7 @@ H5param energy::attrs()
 /**
  * sample thermodynamic equilibrium properties
  */
-void energy::sample(trajectory_sample const& sample, float const& density, float const& time)
+void energy::sample(trajectory_sample const& sample, float_type const& density, float_type const& time)
 {
     vector<double, dimension> v_cm = 0;
     double vv = 0;

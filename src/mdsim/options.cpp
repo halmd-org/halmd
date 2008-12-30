@@ -34,13 +34,13 @@ namespace boost { namespace program_options
  * program option value validation for single precision floating-point values
  */
 template <>
-void validate(boost::any& value_store, std::vector<std::string> const& values, float*, long)
+void validate(boost::any& value_store, std::vector<std::string> const& values, float_type*, long)
 {
     std::string const& s = validators::get_single_string(values);
-    float value;
+    float_type value;
 
     try {
-	value = lexical_cast<float>(s);
+	value = lexical_cast<float_type>(s);
     }
     catch (bad_lexical_cast const& e)
     {
@@ -226,30 +226,30 @@ void options::parse(int argc, char** argv)
     mdsim_opts.add_options()
 	("particles,N", po::value<unsigned int>()->default_value(1000),
 	 "number of particles")
-	("density,d", po::value<float>()->default_value(0.75),
+	("density,d", po::value<float_type>()->default_value(0.75),
 	 "particle density")
-	("box-length,L", po::value<float>(),
+	("box-length,L", po::value<float_type>(),
 	 "simulation box length")
-	("cutoff,c", po::value<float>()->default_value(2.5),
+	("cutoff,c", po::value<float_type>()->default_value(2.5),
 	 "truncate potential at cutoff radius")
 #ifdef USE_POTENTIAL_SMOOTHING
-	("smoothing,g", po::value<float>()->default_value(0.001),
+	("smoothing,g", po::value<float_type>()->default_value(0.001),
 	 "C²-potential smoothing factor")
 #endif
-#ifdef USE_CELL
-	("cell-occupancy,C", po::value<float>()->default_value(0.5),
+#if defined(USE_CUDA) && defined(USE_CELL)
+	("cell-occupancy,C", po::value<float_type>()->default_value(0.5),
 	 "desired average cell occupancy")
 #endif
-	("timestep,h", po::value<float>()->default_value(0.001),
+	("timestep,h", po::value<float_type>()->default_value(0.001),
 	 "simulation timestep")
-	("temperature,K", po::value<float>()->default_value(1.12),
+	("temperature,K", po::value<float_type>()->default_value(1.12),
 	 "initial Maxwell-Boltzmann temperature")
 	("random-seed,m", po::value<unsigned int>(),
 	 "random number generator integer seed")
 #ifndef USE_BENCHMARK
 	("steps,s", po::value<uint64_t>()->default_value(10000),
 	 "number of simulation steps")
-	("time,t", po::value<float>(), "total simulation time")
+	("time,t", po::value<float_type>(), "total simulation time")
 	("equilibrate,E", po::value<uint64_t>()->default_value(0),
 	 "number of equilibration steps")
 #else
@@ -280,6 +280,7 @@ void options::parse(int argc, char** argv)
 	;
 #endif
 
+#ifdef USE_CUDA
     po::options_description cuda_opts("CUDA options");
     cuda_opts.add_options()
 	("device,D", po::value<unsigned short>()->default_value(0),
@@ -289,6 +290,7 @@ void options::parse(int argc, char** argv)
 	("threads,T", po::value<unsigned int>()->default_value(128),
 	 "number of threads per block")
 	;
+#endif
 
     po::options_description misc_opts("Other options");
     misc_opts.add_options()
@@ -313,7 +315,9 @@ void options::parse(int argc, char** argv)
 #ifndef USE_BENCHMARK
     opts.add(tcf_opts);
 #endif
+#ifdef USE_CUDA
     opts.add(cuda_opts);
+#endif
     opts.add(misc_opts);
 
     try {
@@ -368,22 +372,24 @@ void options::parse(int argc, char** argv)
 
 	    node = param.openGroup("mdsim");
 	    po::store(po::parse_attribute<unsigned int>(node, "particles"), vm_["particles"]);
-	    po::store(po::parse_attribute<float>(node, "density"), vm_["density"]);
-	    po::store(po::parse_attribute<float>(node, "box_length"), vm_["box-length"]);
-	    po::store(po::parse_attribute<float>(node, "cutoff_radius"), vm_["cutoff"]);
+	    po::store(po::parse_attribute<float_type>(node, "density"), vm_["density"]);
+	    po::store(po::parse_attribute<float_type>(node, "box_length"), vm_["box-length"]);
+	    po::store(po::parse_attribute<float_type>(node, "cutoff_radius"), vm_["cutoff"]);
 #ifdef USE_POTENTIAL_SMOOTHING
-	    po::store(po::parse_attribute<float>(node, "potential_smoothing"), vm_["smoothing"]);
+	    po::store(po::parse_attribute<float_type>(node, "potential_smoothing"), vm_["smoothing"]);
 #endif
-	    po::store(po::parse_attribute<float>(node, "timestep"), vm_["timestep"]);
+	    po::store(po::parse_attribute<float_type>(node, "timestep"), vm_["timestep"]);
+#ifdef USE_CUDA
 	    po::store(po::parse_attribute<unsigned int>(node, "threads"), vm_["threads"]);
-	    po::store(po::parse_attribute<float>(node, "temperature"), vm_["temperature"]);
-#ifdef USE_CELL
-	    po::store(po::parse_attribute<float>(node, "cell_occupancy"), vm_["cell-occupancy"]);
+#endif
+	    po::store(po::parse_attribute<float_type>(node, "temperature"), vm_["temperature"]);
+#if defined(USE_CUDA) && defined(USE_CELL)
+	    po::store(po::parse_attribute<float_type>(node, "cell_occupancy"), vm_["cell-occupancy"]);
 #endif
 
 	    node = param.openGroup("correlation");
 	    po::store(po::parse_attribute<uint64_t>(node, "steps"), vm_["steps"]);
-	    po::store(po::parse_attribute<float>(node, "time"), vm_["time"]);
+	    po::store(po::parse_attribute<float_type>(node, "time"), vm_["time"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "sample_rate"), vm_["sample-rate"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "block_size"), vm_["block-size"]);
 	    po::store(po::parse_attribute<uint64_t>(node, "max_samples"), vm_["max-samples"]);

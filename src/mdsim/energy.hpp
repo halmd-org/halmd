@@ -55,7 +55,7 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** sample thermodynamic equilibrium properties */
-    void sample(trajectory_sample const& sample, float const& density, float const& time);
+    void sample(trajectory_sample const& sample, float_type const& density, float_type const& time);
     /** write thermodynamic equilibrium properties to HDF5 file */
     void flush(bool force=true);
     /** close HDF5 file */

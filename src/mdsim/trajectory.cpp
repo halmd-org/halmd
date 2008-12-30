@@ -53,9 +53,11 @@ void trajectory<true>::open(std::string const& filename, unsigned int const& npa
     hsize_t max_dim[3] = { H5S_UNLIMITED, npart, dimension };
     m_ds_file = H5::DataSpace(3, dim, max_dim);
     H5::Group root(m_file.createGroup("trajectory"));
-    m_dataset[0] = root.createDataSet("r", H5::PredType::NATIVE_FLOAT, m_ds_file, cparms);
-    m_dataset[1] = root.createDataSet("R", H5::PredType::NATIVE_FLOAT, m_ds_file, cparms);
-    m_dataset[2] = root.createDataSet("v", H5::PredType::NATIVE_FLOAT, m_ds_file, cparms);
+    m_dataset[1] = root.createDataSet("R", H5_NATIVE_FLOAT_TYPE, m_ds_file, cparms);
+    m_dataset[2] = root.createDataSet("v", H5_NATIVE_FLOAT_TYPE, m_ds_file, cparms);
+#ifdef USE_CUDA
+    m_dataset[3] = root.createDataSet("r", H5_NATIVE_FLOAT_TYPE, m_ds_file, cparms);
+#endif
 
     hsize_t dim_mem[2] = { npart, dimension };
     m_ds_mem = H5::DataSpace(2, dim_mem);
@@ -66,7 +68,7 @@ void trajectory<true>::open(std::string const& filename, unsigned int const& npa
     hsize_t dim_scalar[1] = { 0 };
     hsize_t max_dim_scalar[1] = { H5S_UNLIMITED };
     m_ds_scalar = H5::DataSpace(1, dim_scalar, max_dim_scalar);
-    m_dataset[3] = root.createDataSet("t", H5::PredType::NATIVE_FLOAT, m_ds_scalar, cparms);
+    m_dataset[0] = root.createDataSet("t", H5_NATIVE_FLOAT_TYPE, m_ds_scalar, cparms);
 }
 
 /**
@@ -106,7 +108,7 @@ H5param trajectory<true>::attrs()
 /**
  * write phase space sample
  */
-void trajectory<true>::sample(trajectory_sample const& sample, float const& time)
+void trajectory<true>::sample(trajectory_sample const& sample, float_type const& time)
 {
     hsize_t dim[3];
     m_ds_file.getSimpleExtentDims(dim);
@@ -120,19 +122,23 @@ void trajectory<true>::sample(trajectory_sample const& sample, float const& time
     m_ds_file.setExtentSimple(3, dim);
     m_ds_file.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
+#ifdef USE_CUDA
     assert(sample.r.size() == dim[1]);
+#endif
     assert(sample.R.size() == dim[1]);
     assert(sample.v.size() == dim[1]);
 
+#ifdef USE_CUDA
     // write periodically reduced particle coordinates
-    m_dataset[0].extend(dim);
-    m_dataset[0].write(sample.r.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
+    m_dataset[3].extend(dim);
+    m_dataset[3].write(sample.r.data(), H5_NATIVE_FLOAT_TYPE, m_ds_mem, m_ds_file);
+#endif
     // write periodically extended particle coordinates
     m_dataset[1].extend(dim);
-    m_dataset[1].write(sample.R.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
+    m_dataset[1].write(sample.R.data(), H5_NATIVE_FLOAT_TYPE, m_ds_mem, m_ds_file);
     // write particle velocities
     m_dataset[2].extend(dim);
-    m_dataset[2].write(sample.v.data(), H5::PredType::NATIVE_FLOAT, m_ds_mem, m_ds_file);
+    m_dataset[2].write(sample.v.data(), H5_NATIVE_FLOAT_TYPE, m_ds_mem, m_ds_file);
 
     hsize_t dim_scalar[1];
     m_ds_scalar.getSimpleExtentDims(dim_scalar);
@@ -147,8 +153,8 @@ void trajectory<true>::sample(trajectory_sample const& sample, float const& time
     m_ds_scalar.selectHyperslab(H5S_SELECT_SET, count_scalar, start_scalar, stride_scalar, block_scalar);
 
     // write simulation time
-    m_dataset[3].extend(dim_scalar);
-    m_dataset[3].write(&time, H5::PredType::NATIVE_FLOAT, H5S_SCALAR, m_ds_scalar);
+    m_dataset[0].extend(dim_scalar);
+    m_dataset[0].write(&time, H5_NATIVE_FLOAT_TYPE, H5S_SCALAR, m_ds_scalar);
 }
 
 /**
@@ -253,10 +259,10 @@ void trajectory<false>::read(std::vector<hvector>& r, std::vector<hvector>& v, i
 
 	// read periodically reduced particle positions
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dataset_r.read(r.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_r);
+	dataset_r.read(r.data(), H5_NATIVE_FLOAT_TYPE, ds_mem, ds_r);
 	// read particle velocities
 	ds_v.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dataset_v.read(v.data(), H5::PredType::NATIVE_FLOAT, ds_mem, ds_v);
+	dataset_v.read(v.data(), H5_NATIVE_FLOAT_TYPE, ds_mem, ds_v);
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to read from HDF5 trajectory input file");

@@ -49,12 +49,17 @@ mdsim::mdsim(options const& opts) : opts(opts)
 	fluid.box(opts.box_length().value());
     else
 	fluid.density(opts.density().value());
-#ifdef USE_CELL
+#ifdef USE_CUDA
+# ifdef USE_CELL
     // compute cell parameters
     fluid.cell_occupancy(opts.cell_occupancy().value());
-#endif
+# endif
     // set number of CUDA execution threads
     fluid.threads(opts.threads().value());
+#else
+    // initialize cell lists
+    fluid.init_cell();
+#endif
     // initialize random number generator with seed
     if (opts.rng_seed().empty()) {
 	LOG("obtaining 32-bit integer seed from /dev/random");
@@ -142,8 +147,10 @@ void mdsim::operator()()
 	for (iterator_timer<uint64_t> step = 0; step < opts.equilibration_steps().value(); ++step) {
 	    // stream next MD simulation program step on GPU
 	    fluid.mdstep();
+#ifdef USE_CUDA
 	    // synchronize MD simulation program step on GPU
 	    fluid.synchronize();
+#endif
 
 	    // check whether a runtime estimate has finished
 	    if (step.elapsed() > 0) {
@@ -198,18 +205,22 @@ void mdsim::operator()()
     timer.start();
 
     for (iterator_timer<uint64_t> step = 0; step < tcf.steps(); ++step) {
+#ifdef USE_CUDA
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(*step)) {
 	    // copy previous MD simulation state from GPU to host
 	    fluid.sample();
 	}
+#endif
+#ifdef USE_CUDA
 	// stream next MD simulation program step on GPU
 	fluid.mdstep();
+#endif
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(*step)) {
 	    bool flush = false;
 	    // simulation time
-	    const float time = *step * fluid.timestep();
+	    const float_type time = *step * fluid.timestep();
 	    // sample time correlation functions
 	    if (!opts.disable_tcf().value()) {
 		tcf.sample(fluid.trajectory(), *step, flush);
@@ -243,8 +254,13 @@ void mdsim::operator()()
 		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
 	}
+#ifdef USE_CUDA
 	// synchronize MD simulation program step on GPU
 	fluid.synchronize();
+#else
+	// run MD simulation program step on CPU
+	fluid.mdstep();
+#endif
 
 	// check whether a runtime estimate has finished
 	if (step.elapsed() > 0) {
@@ -288,8 +304,10 @@ void mdsim::operator()()
 	}
     }
 
+#ifdef USE_CUDA
     // copy last MD simulation state from GPU to host
     fluid.sample();
+#endif
     // save last phase space sample
     traj.sample(fluid.trajectory(), tcf.steps() * fluid.timestep());
 

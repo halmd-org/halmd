@@ -23,9 +23,15 @@
 #define PROGRAM_VERSION		"@PROGRAM_VERSION@"
 
 #ifdef DIM_3D
-# define PROGRAM_VARIANT_0	"+3D +CUDA"
+# define PROGRAM_VARIANT_00	"+3D"
 #else
-# define PROGRAM_VARIANT_0	"+2D +CUDA"
+# define PROGRAM_VARIANT_00	"+2D"
+#endif
+
+#ifdef USE_CUDA
+# define PROGRAM_VARIANT_0	PROGRAM_VARIANT_00 " +CUDA"
+#else
+# define PROGRAM_VARIANT_0	PROGRAM_VARIANT_00
 #endif
 
 #ifdef USE_CELL

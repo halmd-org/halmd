@@ -328,7 +328,7 @@ private:
 class tcf_write_results : public boost::static_visitor<>
 {
 public:
-    tcf_write_results(boost::multi_array<float, 2> const& block_time, std::vector<float> const& q_vector, unsigned int const& max_blocks) : block_time(block_time), q_vector(q_vector), max_blocks(max_blocks) {}
+    tcf_write_results(boost::multi_array<float_type, 2> const& block_time, std::vector<float_type> const& q_vector, unsigned int const& max_blocks) : block_time(block_time), q_vector(q_vector), max_blocks(max_blocks) {}
 
     template <typename T>
     void operator()(T& tcf) const
@@ -393,8 +393,8 @@ public:
     }
 
 private:
-    boost::multi_array<float, 2> const& block_time;
-    std::vector<float> const& q_vector;
+    boost::multi_array<float_type, 2> const& block_time;
+    std::vector<float_type> const& q_vector;
     unsigned int const& max_blocks;
 };
 

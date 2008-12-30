@@ -19,7 +19,9 @@
 #ifndef MDSIM_CONFIG_HPP
 #define MDSIM_CONFIG_HPP
 
+#ifdef USE_CUDA
 #include <cuda/vector_types.h>
+#endif
 #include "vector2d.hpp"
 #include "vector3d.hpp"
 
@@ -30,14 +32,21 @@ static const unsigned int dimension = 3;
 static const unsigned int dimension = 2;
 #endif
 
-/** host vector type */
-typedef vector<float, dimension> hvector;
-
+#ifdef USE_CUDA /* USE_CUDA */
+typedef float float_type;
+#define H5_NATIVE_FLOAT_TYPE H5::PredType::NATIVE_FLOAT
 /** GPU vector type for coalesced memory access */
 #ifdef DIM_3D
 typedef float4 gvector;
 #else
 typedef float2 gvector;
 #endif
+#else /* USE_CUDA */
+typedef double float_type;
+#define H5_NATIVE_FLOAT_TYPE H5::PredType::NATIVE_DOUBLE
+#endif /* USE_CUDA */
+
+/** host vector type */
+typedef vector<float_type, dimension> hvector;
 
 #endif /* ! MDSIM_CONFIG_HPP */

@@ -24,6 +24,7 @@
 #include <string>
 #include "H5param.hpp"
 #include "accumulator.hpp"
+#include "config.hpp"
 
 namespace mdsim
 {
@@ -32,16 +33,17 @@ namespace mdsim
  * performance counter types
  */
 enum {
+#ifdef USE_CUDA
     GPU_TIME_MDSTEP,
     GPU_TIME_VELOCITY_VERLET,
-#ifdef USE_HILBERT_ORDER
+# ifdef USE_HILBERT_ORDER
     GPU_TIME_HILBERT_SORT,
-#endif
-#ifdef USE_CELL
+# endif
+# ifdef USE_CELL
     GPU_TIME_UPDATE_CELLS,
     GPU_TIME_UPDATE_NEIGHBOURS,
     GPU_TIME_MAXIMUM_VELOCITY,
-#endif
+# endif
     GPU_TIME_UPDATE_FORCES,
     GPU_TIME_POTENTIAL_ENERGY,
     GPU_TIME_VIRIAL_SUM,
@@ -49,12 +51,20 @@ enum {
     GPU_TIME_LATTICE,
     GPU_TIME_BOLTZMANN,
     NUM_PERF_COUNTERS,
+#else /* ! USE_CUDA */
+    GPU_TIME_UPDATE_CELLS,
+    GPU_TIME_UPDATE_NEIGHBOURS,
+    GPU_TIME_UPDATE_FORCES,
+    GPU_TIME_VELOCITY_VERLET,
+    GPU_TIME_MDSTEP,
+    NUM_PERF_COUNTERS,
+#endif /* ! USE_CUDA */
 };
 
 /**
  * performance class accumulators
  */
-typedef boost::array<accumulator<float>, NUM_PERF_COUNTERS> perf_counters;
+typedef boost::array<accumulator<float_type>, NUM_PERF_COUNTERS> perf_counters;
 
 /**
  * performance data
