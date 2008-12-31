@@ -20,8 +20,12 @@
 #include <boost/foreach.hpp>
 #include <cmath>
 #include "exception.hpp"
-#include "gpu/hilbert_glue.hpp"
+#ifdef USE_NEIGHBOUR
 #include "gpu/ljfluid_nbr_glue.hpp"
+#include "gpu/hilbert_glue.hpp"
+#else
+#include "gpu/ljfluid_simple_glue.hpp"
+#endif
 #include "ljfluid_gpu_nbr.hpp"
 #include "log.hpp"
 #include "statistics.hpp"
@@ -115,7 +119,9 @@ void ljfluid::particles(unsigned int value)
 	g_part.R.resize(npart);
 	g_part.v.resize(npart);
 	g_part.f.resize(npart);
+#ifdef USE_NEIGHBOUR
 	g_part.tag.resize(npart);
+#endif
 	g_part.en.resize(npart);
 	g_part.virial.resize(npart);
 
@@ -147,7 +153,9 @@ void ljfluid::particles(unsigned int value)
 	h_part.r.resize(npart);
 	h_part.R.resize(npart);
 	h_part.v.resize(npart);
+#ifdef USE_NEIGHBOUR
 	h_part.tag.resize(npart);
+#endif
 	// particle forces reside only in GPU memory
 
 	h_part.v_max.resize(REDUCE_BLOCKS);
@@ -340,7 +348,9 @@ void ljfluid::threads(unsigned int value)
 	g_part.R.reserve(dim_.threads());
 	g_part.v.reserve(dim_.threads());
 	g_part.f.reserve(dim_.threads());
+#ifdef USE_NEIGHBOUR
 	g_part.tag.reserve(dim_.threads());
+#endif
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
 #ifdef USE_NEIGHBOUR
@@ -414,9 +424,11 @@ void ljfluid::restore(trajectory_sample::visitor visitor)
     visitor(h_sample.r, h_sample.v);
 
     try {
+#ifdef USE_NEIGHBOUR
 	// assign particle tags
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::init_tags(g_part.tag);
+#endif
 	// copy periodically reduced particle positions from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
 	    h_part.r[i] = make_float(h_sample.r[i]);
@@ -518,9 +530,11 @@ void ljfluid::lattice()
     LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
     try {
+#ifdef USE_NEIGHBOUR
 	// assign particle tags
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::init_tags(g_part.tag);
+#endif
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
@@ -841,8 +855,10 @@ void ljfluid::sample()
 	cuda::copy(g_part.R, h_part.R, stream_);
 	// copy particle velocities
 	cuda::copy(g_part.v, h_part.v, stream_);
+#ifdef USE_NEIGHBOUR
 	// copy particle tags
 	cuda::copy(g_part.tag, h_part.tag, stream_);
+#endif
 	event_[0].record(stream_);
 
 	// wait for CUDA operations to finish
@@ -853,8 +869,12 @@ void ljfluid::sample()
     }
 
     for (unsigned int j = 0; j < npart; ++j) {
+#ifdef USE_NEIGHBOUR
 	// particle tracking number
 	const int n = h_part.tag[j];
+#else
+	const int n = j;
+#endif
 	// copy periodically reduced particle positions
 	h_sample.r[n] = h_part.r[j];
 	// copy periodically extended particle positions

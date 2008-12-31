@@ -18,6 +18,7 @@
 
 #include <float.h>
 #include "ljfluid_cell_glue.hpp"
+#include "ljfluid_base.cu"
 #include "cutil.h"
 #ifdef USE_DSFUN
 #include "dsfun.h"
@@ -25,34 +26,10 @@
 #include "vector2d.h"
 #include "vector3d.h"
 
-namespace mdsim
-{
-
-/** number of particles */
-static __constant__ unsigned int npart;
-
-/** simulation timestemp */
-static __constant__ float timestep;
-/** periodic box length */
-static __constant__ float box;
-
-/** potential cutoff radius */
-static __constant__ float r_cut;
-/** squared cutoff radius */
-static __constant__ float rr_cut;
-/** cutoff energy for Lennard-Jones potential at cutoff length */
-static __constant__ float en_cut;
-#ifdef USE_CELL
 /** number of cells per dimension */
 static __constant__ unsigned int ncell;
-#endif
-#ifdef USE_POTENTIAL_SMOOTHING
-/** squared inverse potential smoothing function scale parameter */
-static __constant__ float rri_smooth;
-#endif
 
 
-#ifdef USE_CELL
 /**
  * determine cell index for a particle
  */
@@ -76,123 +53,7 @@ __device__ unsigned int compute_cell(T const& r)
     return uint(cell.y) * ncell + uint(cell.x);
 #endif
 }
-#endif /* USE_CELL */
 
-/**
- * first leapfrog step of integration of equations of motion
- */
-template <typename T>
-__device__ void leapfrog_half_step(T& r, T& R, T& v, T const& f)
-{
-    // half step velocity
-    v += f * (timestep / 2);
-    // full step coordinates
-    T dr = v * timestep;
-    // periodically reduced coordinates
-    r += dr;
-    r -= floorf(r / box) * box;
-    // periodically extended coordinates
-    R += dr;
-}
-
-/**
- * second leapfrog step of integration of equations of motion
- */
-template <typename T>
-__device__ void leapfrog_full_step(T& v, T const& f)
-{
-    // full step velocity
-    v += f * (timestep / 2);
-}
-
-#ifdef USE_POTENTIAL_SMOOTHING
-
-/**
- * calculate potential smoothing function and its first derivative
- *
- * returns tuple (r, h(r), h'(r))
- */
-__device__ float3 compute_smooth_function(float const& r)
-{
-    float y = r - r_cut;
-    float x2 = y * y * rri_smooth;
-    float x4 = x2 * x2;
-    float x4i = 1 / (1 + x4);
-    float3 h;
-    h.x = r;
-    h.y = x4 * x4i;
-    h.z = 4 * y * x2 * x4i * x4i;
-    return h;
-}
-
-/**
- * sample potential smoothing function in given range
- */
-__global__ void sample_smooth_function(float3* g_h, const float2 r)
-{
-    g_h[GTID] = compute_smooth_function(r.x + (r.y - r.x) / GTDIM * GTID);
-}
-
-#endif /* USE_POTENTIAL_SMOOTHING */
-
-/**
- * calculate particle force using Lennard-Jones potential
- */
-template <typename T, typename TT>
-__device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float& virial)
-{
-    // particle distance vector
-    T r = r1 - r2;
-    // enforce periodic boundary conditions
-    r -= rintf(__fdividef(r, box)) * box;
-    // squared particle distance
-    float rr = r * r;
-
-    // enforce cutoff length
-    if (rr >= rr_cut) return;
-
-    // compute Lennard-Jones force in reduced units
-    float rri = 1 / rr;
-    float ri6 = rri * rri * rri;
-    float fval = 48 * rri * ri6 * (ri6 - 0.5f);
-    // compute shifted Lennard-Jones potential
-    float pot = 4 * ri6 * (ri6 - 1) - en_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
-    // compute smoothing function and its first derivative
-    const float3 h = compute_smooth_function(sqrtf(rr));
-    // apply smoothing function to obtain C^1 force function
-    fval = h.y * fval - h.z * pot / h.x;
-    // apply smoothing function to obtain C^2 potential function
-    pot = h.y * pot;
-#endif
-
-    // virial equation sum
-    virial += 0.5f * fval * rr;
-    // potential energy contribution of this particle
-    en += 0.5f * pot;
-    // force from other particle acting on this particle
-    f += fval * r;
-}
-
-/**
- * first leapfrog step of integration of equations of motion
- */
-template <typename T, typename U>
-__global__ void inteq(U* g_r, U* g_R, U* g_v, U const* g_f)
-{
-    T r = unpack(g_r[GTID]);
-    T R = unpack(g_R[GTID]);
-    T v = unpack(g_v[GTID]);
-    T f = unpack(g_f[GTID]);
-
-    leapfrog_half_step(r, R, v, f);
-
-    g_r[GTID] = pack(r);
-    g_R[GTID] = pack(R);
-    g_v[GTID] = pack(v);
-}
-
-#ifdef USE_CELL
 /**
  * compute neighbour cell
  */
@@ -393,121 +254,6 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     g_virial[GTID] = virial;
 }
 
-#else /* USE_CELL */
-
-/**
- * MD simulation step
- */
-template <typename T, typename U>
-__global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
-{
-    extern __shared__ T s_r[];
-
-    // load particle associated with this thread
-    T r = unpack(g_r[GTID]);
-    T v = unpack(g_v[GTID]);
-
-    // potential energy contribution
-    float en = 0;
-    // virial equation sum contribution
-    float virial = 0;
-
-#ifdef USE_DSFUN
-# ifdef DIM_3D
-    dfloat3 f(make_float3(0, 0, 0));
-# else
-    dfloat2 f(make_float2(0, 0));
-#  endif
-#else
-# ifdef DIM_3D
-    float3 f(make_float3(0, 0, 0));
-# else
-    float2 f(make_float2(0, 0));
-# endif
-#endif
-
-    // iterate over all blocks
-    for (unsigned int k = 0; k < gridDim.x; k++) {
-	// load positions of particles within block
-	s_r[TID] = unpack(g_r[k * blockDim.x + TID]);
-	__syncthreads();
-
-	// iterate over all particles within block
-	for (unsigned int j = 0; j < blockDim.x; j++) {
-	    // skip placeholder particles
-	    if (k * blockDim.x + j >= npart)
-		continue;
-	    // skip identical particle
-	    if (blockIdx.x == k && TID == j)
-		continue;
-
-	    // compute Lennard-Jones force with particle
-	    compute_force(r, s_r[j], f, en, virial);
-	}
-	__syncthreads();
-    }
-
-    // second leapfrog step of integration of equations of motion
-#ifdef USE_DSFUN
-    leapfrog_full_step(v, f.f0);
-#else
-    leapfrog_full_step(v, f);
-#endif
-
-    // store particle associated with this thread
-    g_v[GTID] = pack(v);
-#ifdef USE_DSFUN
-    g_f[GTID] = pack(f.f0);
-#else
-    g_f[GTID] = pack(f);
-#endif
-    g_en[GTID] = en;
-    g_virial[GTID] = virial;
-}
-
-#endif /* USE_CELL */
-
-/**
- * place particles on a face centered cubic (FCC) lattice
- */
-template <typename T, typename U>
-__global__ void lattice(U* g_r, unsigned int n)
-{
-    T r;
-#ifdef DIM_3D
-    // compose primitive vectors from 1-dimensional index
-    r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.f;
-    r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.f;
-    r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.f;
-#else
-    // compose primitive vectors from 1-dimensional index
-    r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
-    r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.f;
-#endif
-
-    g_r[GTID] = pack(r * (box / n));
-}
-
-/**
- * place particles on a simple cubic (SCC) lattice
- */
-template <typename T, typename U>
-__global__ void lattice_simple(U* g_r, unsigned int n)
-{
-    T r;
-#ifdef DIM_3D
-    r.x = (GTID % n) + 0.5f;
-    r.y = (GTID / n % n) + 0.5f;
-    r.z = (GTID / n / n) + 0.5f;
-#else
-    r.x = (GTID % n) + 0.5f;
-    r.y = (GTID / n) + 0.5f;
-#endif
-
-    g_r[GTID] = pack(r * (box / n));
-}
-
-#ifdef USE_CELL
 /**
  * assign particles to cells
  */
@@ -664,51 +410,21 @@ __global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int co
     g_ov[blockIdx.x * cell_size + threadIdx.x] = pack(s_ov[threadIdx.x]);
     g_otag[blockIdx.x * cell_size + threadIdx.x] = s_otag[threadIdx.x];
 }
-#endif  /* USE_CELL */
-
-} // namespace mdsim
 
 
 namespace mdsim { namespace gpu { namespace ljfluid
 {
 
+cuda::symbol<unsigned int> ncell(::ncell);
+
 #ifdef DIM_3D
-cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
-#ifdef USE_CELL
-cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float3>);
-cuda::function<void (float4 const*, float4*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE, float3>);
-cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells(mdsim::update_cells<CELL_SIZE, float3>);
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(::mdstep<CELL_SIZE, float3>);
+cuda::function<void (float4 const*, float4*, int*)> assign_cells(::assign_cells<CELL_SIZE, float3>);
+cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells(::update_cells<CELL_SIZE, float3>);
 #else
-cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(mdsim::mdstep<float3>);
-#endif
-cuda::function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
-cuda::function<void (float4*, unsigned int)> lattice_simple(mdsim::lattice_simple<float3>);
-#else /* DIM_3D */
-cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
-#ifdef USE_CELL
-cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<CELL_SIZE, float2>);
-cuda::function<void (float2 const*, float2*, int*)> assign_cells(mdsim::assign_cells<CELL_SIZE, float2>);
-cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells(mdsim::update_cells<CELL_SIZE, float2>);
-#else
-cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(mdsim::mdstep<float2>);
-#endif
-cuda::function<void (float2*, unsigned int)> lattice(mdsim::lattice<float2>);
-cuda::function<void (float2*, unsigned int)> lattice_simple(mdsim::lattice_simple<float2>);
-#endif /* DIM_3D */
-
-cuda::symbol<unsigned int> npart(mdsim::npart);
-cuda::symbol<float> box(mdsim::box);
-cuda::symbol<float> timestep(mdsim::timestep);
-cuda::symbol<float> r_cut(mdsim::r_cut);
-cuda::symbol<float> rr_cut(mdsim::rr_cut);
-cuda::symbol<float> en_cut(mdsim::en_cut);
-#ifdef USE_CELL
-cuda::symbol<unsigned int> ncell(mdsim::ncell);
-#endif
-
-#ifdef USE_POTENTIAL_SMOOTHING
-cuda::symbol<float> rri_smooth(mdsim::rri_smooth);
-cuda::function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(::mdstep<CELL_SIZE, float2>);
+cuda::function<void (float2 const*, float2*, int*)> assign_cells(::assign_cells<CELL_SIZE, float2>);
+cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells(::update_cells<CELL_SIZE, float2>);
 #endif
 
 }}} // namespace mdsim::gpu::ljfluid

@@ -192,8 +192,10 @@ private:
 	cuda::host::vector<gvector> R;
 	/** particle velocities */
 	cuda::host::vector<gvector> v;
+#ifdef USE_NEIGHBOUR
 	/** particle tags */
 	cuda::host::vector<int> tag;
+#endif
 	/** blockwise maximum particles velocity magnitudes */
 	cuda::host::vector<float> v_max;
 	/** blockwise potential energies sum per particle */
@@ -212,8 +214,10 @@ private:
 	cuda::vector<gvector> v;
 	/** particle forces */
 	cuda::vector<gvector> f;
+#ifdef USE_NEIGHBOUR
 	/** particle tags */
 	cuda::vector<int> tag;
+#endif
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */

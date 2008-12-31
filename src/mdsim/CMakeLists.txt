@@ -1,39 +1,3 @@
-# Add program variant compile flags to cmake GUI
-SET(ljfluid_VARIANT_CUDA TRUE CACHE BOOL
-  "Use CUDA")
-SET(ljfluid_VARIANT_CELL FALSE CACHE BOOL
-  "Use fixed-size cell lists")
-SET(ljfluid_VARIANT_CELL_SUMMATION_ORDER FALSE CACHE BOOL
-  "Use opposite cell summation order")
-SET(ljfluid_VARIANT_DSFUN FALSE CACHE BOOL
-  "Use double-single precision functions")
-SET(ljfluid_VARIANT_NEIGHBOUR TRUE CACHE BOOL
-  "Use Verlet neighbour lists")
-SET(ljfluid_VARIANT_HILBERT TRUE CACHE BOOL
-  "Use Hilbert space-filling curve particle ordering")
-SET(ljfluid_VARIANT_C2POT FALSE CACHE BOOL
-  "Use C2 potential smoothing")
-
-IF(ljfluid_VARIANT_CUDA)
-  ADD_DEFINITIONS(-DUSE_CUDA)
-  IF(ljfluid_VARIANT_NEIGHBOUR)
-    ADD_DEFINITIONS(-DUSE_NEIGHBOUR)
-    IF(ljfluid_VARIANT_HILBERT)
-      ADD_DEFINITIONS(-DUSE_HILBERT_ORDER)
-    ENDIF(ljfluid_VARIANT_HILBERT)
-  ELSE(ljfluid_VARIANT_NEIGHBOUR)
-    IF(ljfluid_VARIANT_CELL)
-      ADD_DEFINITIONS(-DUSE_CELL)
-      IF(ljfluid_VARIANT_CELL_SUMMATION_ORDER)
-	ADD_DEFINITIONS(-DUSE_CELL_SUMMATION_ORDER)
-      ENDIF(ljfluid_VARIANT_CELL_SUMMATION_ORDER)
-      IF(ljfluid_VARIANT_DSFUN)
-	ADD_DEFINITIONS(-DUSE_DSFUN)
-      ENDIF(ljfluid_VARIANT_DSFUN)
-    ENDIF(ljfluid_VARIANT_CELL)
-  ENDIF(ljfluid_VARIANT_NEIGHBOUR)
-ENDIF(ljfluid_VARIANT_CUDA)
-
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 # Generate version header file
@@ -93,32 +57,30 @@ FOREACH(dim RANGE 2 3)
     COMPILE_DEFINITIONS "DIM_${dim}D"
     )
   IF(ljfluid_VARIANT_CUDA)
-    IF(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
+    TARGET_LINK_LIBRARIES(ljfluid${dim}d
+      rand48_gpu
+      scan_gpu
+      radix_gpu
+      ${Boost_FILESYSTEM_LIBRARY}
+      ${Boost_PROGRAM_OPTIONS_LIBRARY}
+      ${CUDA_LIBRARIES}
+      ${HDF5_CPP_LIBRARY}
+      rt
+      )
+    IF(ljfluid_VARIANT_NEIGHBOUR)
       TARGET_LINK_LIBRARIES(ljfluid${dim}d
-	ljfluid${dim}d_gpu
+	ljfluid${dim}d_nbr_gpu
 	hilbert${dim}d_gpu
-	rand48_gpu
-	scan_gpu
-	radix_gpu
-	${Boost_FILESYSTEM_LIBRARY}
-	${Boost_PROGRAM_OPTIONS_LIBRARY}
-	${CUDA_LIBRARIES}
-	${HDF5_CPP_LIBRARY}
-	rt
 	)
-    ELSE(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
+    ELSEIF(ljfluid_VARIANT_CELL)
       TARGET_LINK_LIBRARIES(ljfluid${dim}d
-	ljfluid${dim}d_gpu
-	rand48_gpu
-	scan_gpu
-	radix_gpu
-	${Boost_FILESYSTEM_LIBRARY}
-	${Boost_PROGRAM_OPTIONS_LIBRARY}
-	${CUDA_LIBRARIES}
-	${HDF5_CPP_LIBRARY}
-	rt
+	ljfluid${dim}d_cell_gpu
 	)
-    ENDIF(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
+    ELSE(ljfluid_VARIANT_NEIGHBOUR)
+      TARGET_LINK_LIBRARIES(ljfluid${dim}d
+	ljfluid${dim}d_simple_gpu
+	)
+    ENDIF(ljfluid_VARIANT_NEIGHBOUR)
   ELSE(ljfluid_VARIANT_CUDA)
     TARGET_LINK_LIBRARIES(ljfluid${dim}d
       ${Boost_FILESYSTEM_LIBRARY}

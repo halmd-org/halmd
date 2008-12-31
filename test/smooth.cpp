@@ -24,7 +24,7 @@
 #include <iostream>
 #include <iomanip>
 #include <libgen.h>
-#include <gpu/ljfluid_glue.hpp>
+#include <gpu/ljfluid_base_glue.hpp>
 namespace po = boost::program_options;
 #define foreach BOOST_FOREACH
 

@@ -30,7 +30,7 @@
 #include <vector>
 
 #include <gpu/hilbert_glue.hpp>
-#include <gpu/ljfluid_glue.hpp>
+#include <gpu/ljfluid_base_glue.hpp>
 #include <rand48.hpp>
 #include <radix.hpp>
 #include <timer.hpp>
