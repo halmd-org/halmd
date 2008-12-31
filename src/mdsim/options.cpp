@@ -236,7 +236,7 @@ void options::parse(int argc, char** argv)
 	("smoothing,g", po::value<float_type>()->default_value(0.001),
 	 "C²-potential smoothing factor")
 #endif
-#if defined(USE_CUDA) && defined(USE_CELL)
+#if defined(USE_CUDA) && (defined(USE_CELL) || defined(USE_NEIGHBOUR))
 	("cell-occupancy,C", po::value<float_type>()->default_value(0.5),
 	 "desired average cell occupancy")
 #endif
@@ -383,7 +383,7 @@ void options::parse(int argc, char** argv)
 	    po::store(po::parse_attribute<unsigned int>(node, "threads"), vm_["threads"]);
 #endif
 	    po::store(po::parse_attribute<float_type>(node, "temperature"), vm_["temperature"]);
-#if defined(USE_CUDA) && defined(USE_CELL)
+#if defined(USE_CUDA) && (defined(USE_CELL) || defined(USE_NEIGHBOUR))
 	    po::store(po::parse_attribute<float_type>(node, "cell_occupancy"), vm_["cell-occupancy"]);
 #endif
 

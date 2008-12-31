@@ -21,8 +21,8 @@
 #include <cmath>
 #include "exception.hpp"
 #include "gpu/hilbert_glue.hpp"
-#include "gpu/ljfluid_glue.hpp"
-#include "ljfluid.hpp"
+#include "gpu/ljfluid_nbr_glue.hpp"
+#include "ljfluid_gpu_nbr.hpp"
 #include "log.hpp"
 #include "statistics.hpp"
 
@@ -127,7 +127,7 @@ void ljfluid::particles(unsigned int value)
 	throw exception("failed to allocate global device memory for system state");
     }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     // allocate global device memory for sorting buffers
     try {
 	g_sort.r.resize(npart);
@@ -201,7 +201,7 @@ void ljfluid::box(float value)
     LOG("particle density: " << density_);
 }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 /**
  * set desired average cell occupancy
  */
@@ -278,7 +278,7 @@ void ljfluid::cell_occupancy(float value)
 	throw exception("failed to copy Hilbert curve recursion level to device symbol");
     }
 }
-#endif /* USE_CELL */
+#endif /* USE_NEIGHBOUR */
 
 /**
  * set number of CUDA execution threads
@@ -317,7 +317,7 @@ void ljfluid::threads(unsigned int value)
 	LOG_WARNING("number of particles (" << npart << ") not a multiple of number of CUDA execution threads (" << dim_.threads() << ")");
     }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     // set CUDA execution dimensions for cell-specific kernels
     dim_cell_ = cuda::config(dim3(powf(ncell, dimension)), dim3(cell_size_));
     LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
@@ -332,7 +332,7 @@ void ljfluid::threads(unsigned int value)
 	throw exception("failed to allocate global device memory cell placeholders");
     }
 
-#endif /* USE_CELL */
+#endif /* USE_NEIGHBOUR */
 
     // allocate global device memory for placeholder particles
     try {
@@ -343,7 +343,7 @@ void ljfluid::threads(unsigned int value)
 	g_part.tag.reserve(dim_.threads());
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 	g_nbl.reserve(dim_.threads() * nbl_size);
 	cuda::copy(uint(dim_.threads()), gpu::ljfluid::nbl_stride);
 #endif
@@ -352,7 +352,7 @@ void ljfluid::threads(unsigned int value)
 	throw exception("failed to allocate global device memory for placeholder particles");
     }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     // bind GPU textures to global device memory arrays
     try {
 	gpu::ljfluid::r.bind(g_part.r);
@@ -422,7 +422,7 @@ void ljfluid::restore(trajectory_sample::visitor visitor)
 	    h_part.r[i] = make_float(h_sample.r[i]);
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 #ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
@@ -446,7 +446,7 @@ void ljfluid::restore(trajectory_sample::visitor visitor)
 	    h_part.v[i] = make_float(h_sample.v[i]);
 	}
 	cuda::copy(h_part.v, g_part.v, stream_);
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 	// calculate maximum velocity magnitude
 	maximum_velocity(stream_);
 #endif
@@ -458,7 +458,7 @@ void ljfluid::restore(trajectory_sample::visitor visitor)
 	throw exception("failed to restore system state from phase space sample");
     }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     // set initial sum over maximum velocity magnitudes since last cell lists update
     v_max_sum = *std::max_element(h_part.v_max.begin(), h_part.v_max.end());
 #endif
@@ -526,7 +526,7 @@ void ljfluid::lattice()
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	gpu::ljfluid::lattice(g_part.r, n);
 	event_[1].record(stream_);
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 #ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
@@ -618,7 +618,7 @@ void ljfluid::temperature(float temp)
 	    h_part.v[i] = make_float(h_sample.v[i]);
 	}
 	cuda::copy(h_part.v, g_part.v, stream_);
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 	// calculate maximum velocity magnitude
 	maximum_velocity(stream_);
 #endif
@@ -629,7 +629,7 @@ void ljfluid::temperature(float temp)
 	throw exception("failed to set center of mass velocity to zero");
     }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     // set initial sum over maximum velocity magnitudes since last cell lists update
     v_max_sum = *std::max_element(h_part.v_max.begin(), h_part.v_max.end());
 #endif
@@ -666,7 +666,7 @@ void ljfluid::attrs(H5::Group const& param) const
     node["box_length"] = box_;
     node["timestep"] = timestep_;
     node["cutoff_radius"] = r_cut;
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     node["cells"] = ncell;
     node["placeholders"] = nplace;
     node["neighbours"] = nbl_size;
@@ -694,7 +694,7 @@ void ljfluid::mdstep()
     }
     event_[2].record(stream_);
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     // update cell lists
     if (v_max_sum * timestep_ > r_skin / 2) {
 #ifdef USE_HILBERT_ORDER
@@ -751,7 +751,7 @@ void ljfluid::mdstep()
 	throw exception("failed to stream virial equation sum calculation on GPU");
     }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     event_[8].record(stream_);
 
     // maximum velocity calculation
@@ -782,7 +782,7 @@ void ljfluid::synchronize()
     m_times[GPU_TIME_MDSTEP] += event_[0] - event_[1];
     // GPU time for velocity-Verlet integration
     m_times[GPU_TIME_VELOCITY_VERLET] += event_[2] - event_[1];
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     // GPU time for Lennard-Jones force update
     m_times[GPU_TIME_UPDATE_FORCES] += event_[3] - event_[7];
     // GPU time for potential energy sum calculation
@@ -821,7 +821,7 @@ void ljfluid::synchronize()
 	}
     }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     // add to sum over maximum velocity magnitudes since last cell lists update
     v_max_sum += *std::max_element(h_part.v_max.begin(), h_part.v_max.end());
 #endif
@@ -910,7 +910,7 @@ void ljfluid::velocity_verlet(cuda::stream& stream)
  */
 void ljfluid::update_forces(cuda::stream& stream)
 {
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
     cuda::configure(dim_.grid, dim_.block, stream);
     gpu::ljfluid::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
 #else
@@ -939,7 +939,7 @@ void ljfluid::virial_sum(cuda::stream& stream)
     cuda::copy(g_part.virial_sum, h_part.virial_sum, stream);
 }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 
 /*
  * maximum velocity calculation
@@ -1014,6 +1014,6 @@ void ljfluid::hilbert_order(cuda::stream& stream)
 
 #endif /* USE_HILBERT_ORDER */
 
-#endif /* USE_CELL */
+#endif /* USE_NEIGHBOUR */
 
 } // namespace mdsim

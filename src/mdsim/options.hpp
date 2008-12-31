@@ -114,7 +114,7 @@ public:
     }
 #endif
 
-#if defined(USE_CUDA) && defined(USE_CELL)
+#if defined(USE_CUDA) && (defined(USE_CELL) || defined(USE_NEIGHBOUR))
     /**
      * returns desired average cell occupancy
      */

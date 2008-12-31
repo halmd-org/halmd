@@ -15,16 +15,28 @@ SET_TARGET_PROPERTIES(rand48_gpu PROPERTIES
   )
 
 FOREACH(dim RANGE 2 3)
-  ADD_LIBRARY(ljfluid${dim}d_gpu
-    ljfluid.cu
-    )
+  IF(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
+    ADD_LIBRARY(ljfluid${dim}d_gpu
+      ljfluid_nbr.cu
+      )
+  ELSE(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
+    ADD_LIBRARY(ljfluid${dim}d_gpu
+      ljfluid_cell.cu
+      )
+  ENDIF(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
   SET_TARGET_PROPERTIES(ljfluid${dim}d_gpu PROPERTIES
     COMPILE_DEFINITIONS "DIM_${dim}D"
     )
 
-  ADD_LIBRARY(ljfluid${dim}d_smooth_gpu
-    ljfluid.cu
-    )
+  IF(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
+    ADD_LIBRARY(ljfluid${dim}d_smooth_gpu
+      ljfluid_nbr.cu
+      )
+  ELSE(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
+    ADD_LIBRARY(ljfluid${dim}d_smooth_gpu
+      ljfluid_cell.cu
+      )
+  ENDIF(ljfluid_VARIANT_NEIGHBOUR OR NOT ljfluid_VARIANT_CELL)
   SET_TARGET_PROPERTIES(ljfluid${dim}d_smooth_gpu PROPERTIES
     COMPILE_FLAGS "-DDIM_${dim}D -DUSE_POTENTIAL_SMOOTHING"
     )

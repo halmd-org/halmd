@@ -17,7 +17,7 @@
  */
 
 #include <float.h>
-#include "ljfluid_glue.hpp"
+#include "ljfluid_nbr_glue.hpp"
 #include "algorithm.h"
 #include "cutil.h"
 #include "dsfun.h"
@@ -42,7 +42,7 @@ static __constant__ float rr_cut;
 /** cutoff energy for Lennard-Jones potential at cutoff length */
 static __constant__ float en_cut;
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 /** number of cells per dimension */
 static __constant__ unsigned int ncell;
 /** neighbour list length */
@@ -192,7 +192,7 @@ __global__ void inteq(U* g_r, U* g_R, U* g_v, U const* g_f)
     g_v[GTID] = pack(v);
 }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 
 /**
  * n-dimensional MD simulation step
@@ -297,7 +297,7 @@ __global__ void maximum_velocity(U const* g_v, float* g_vmax)
     }
 }
 
-#else /* USE_CELL */
+#else /* USE_NEIGHBOUR */
 
 /**
  * MD simulation step
@@ -353,7 +353,7 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
     g_virial[GTID] = virial;
 }
 
-#endif /* USE_CELL */
+#endif /* USE_NEIGHBOUR */
 
 /**
  * blockwise potential energy sum
@@ -468,7 +468,7 @@ __global__ void init_tags(int* g_tag)
     g_tag[GTID] = tag;
 }
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 
 /**
  * compute neighbour cell
@@ -715,7 +715,7 @@ __global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int
     g_otag[GTID] = tex1Dfetch(t_tag, j);
 }
 
-#endif  /* USE_CELL */
+#endif  /* USE_NEIGHBOUR */
 
 } // namespace mdsim
 
@@ -725,7 +725,7 @@ namespace mdsim { namespace gpu { namespace ljfluid
 
 #ifdef DIM_3D
 cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(mdsim::inteq<float3>);
-# ifdef USE_CELL
+# ifdef USE_NEIGHBOUR
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(mdsim::mdstep<float3>);
 cuda::function<void (float4 const*, float*)> maximum_velocity(mdsim::maximum_velocity<float3>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float3>);
@@ -741,7 +741,7 @@ cuda::function<void (float4*, unsigned int)> lattice(mdsim::lattice<float3>);
 cuda::function<void (float4*, unsigned int)> lattice_simple(mdsim::lattice_simple<float3>);
 #else /* DIM_3D */
 cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(mdsim::inteq<float2>);
-# ifdef USE_CELL
+# ifdef USE_NEIGHBOUR
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(mdsim::mdstep<float2>);
 cuda::function<void (float2 const*, float*)> maximum_velocity(mdsim::maximum_velocity<float2>);
 cuda::function<void (int const*, int*)> update_neighbours(mdsim::update_neighbours<CELL_SIZE, float2>);
@@ -766,7 +766,7 @@ cuda::symbol<float> en_cut(mdsim::en_cut);
 cuda::function<void (int*)> init_tags(mdsim::init_tags);
 cuda::function<void (float const* g_en, float2* g_en_sum)> potential_energy_sum(mdsim::potential_energy_sum);
 
-#ifdef USE_CELL
+#ifdef USE_NEIGHBOUR
 cuda::symbol<unsigned int> ncell(mdsim::ncell);
 cuda::symbol<unsigned int> nbl_size(mdsim::nbl_size);
 cuda::symbol<unsigned int> nbl_stride(mdsim::nbl_stride);

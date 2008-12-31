@@ -25,7 +25,7 @@
 #include "config.hpp"
 #include "exception.hpp"
 #include "gsl_rng.hpp"
-#include "ljfluid.hpp"
+#include "ljfluid_host.hpp"
 #include "log.hpp"
 #include "perf.hpp"
 #include "timer.hpp"

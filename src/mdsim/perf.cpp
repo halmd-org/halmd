@@ -34,17 +34,23 @@ static char const* perf_dataset[][2] = {
 #ifdef USE_CUDA
     { "mdstep",			"GPU time for MD simulation step" },
     { "velocity_verlet",	"GPU time for velocity-Verlet integration" },
-# ifdef USE_HILBERT_ORDER
+# if defined(USE_NEIGHBOUR) && defined(USE_HILBERT_ORDER)
     { "hilbert_sort",		"GPU time for Hilbert space-filling curve sort" },
 # endif
-# ifdef USE_CELL
+# if defined(USE_NEIGHBOUR)
     { "update_cells",		"GPU time for cell lists update" },
     { "update_neighbours",	"GPU time for neighbour lists update" },
     { "maximum_velocity",	"GPU time for maximum velocity calculation" },
+# elif defined(USE_CELL)
+    { "init_cells",		"GPU time for cell lists initialisation" },
+    { "update_cells",		"GPU time for cell lists update" },
+    { "memcpy_cells",		"GPU time for cell lists memcpy" },
 # endif
     { "update_forces",		"GPU time for Lennard-Jones force update" },
+# if defined(USE_NEIGHBOUR) || !defined(USE_CELL)
     { "potential_energy",	"GPU time for potential energy sum calculation" },
     { "virial_sum",		"GPU time for virial equation sum calculation" },
+# endif
     { "sample_memcpy",		"GPU time for sample memcpy" },
     { "lattice",		"GPU time for lattice generation" },
     { "boltzmann",		"GPU time for Maxwell-Boltzmann distribution" },

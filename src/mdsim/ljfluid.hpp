@@ -20,7 +20,11 @@
 #define MDSIM_LJFLUID_HPP
 
 #ifdef USE_CUDA
-# include "ljfluid_gpu.hpp"
+# if defined(USE_NEIGHBOUR) || !defined(USE_CELL)
+#  include "ljfluid_gpu_nbr.hpp"
+# else
+#  include "ljfluid_gpu_cell.hpp"
+# endif
 #else
 # include "ljfluid_host.hpp"
 #endif

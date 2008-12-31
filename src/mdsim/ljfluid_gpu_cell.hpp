@@ -16,13 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MDSIM_LJFLUID_GPU_HPP
-#define MDSIM_LJFLUID_GPU_HPP
+#ifndef MDSIM_LJFLUID_CELL_GPU_HPP
+#define MDSIM_LJFLUID_CELL_GPU_HPP
 
 #include <boost/array.hpp>
 #include <cuda_wrapper.hpp>
-#include <stdint.h>
-#include "H5xx.hpp"
 #include "config.hpp"
 #include "perf.hpp"
 #include "radix.hpp"
@@ -37,12 +35,6 @@ namespace mdsim
  */
 class ljfluid
 {
-public:
-    enum {
-	REDUCE_BLOCKS = 16,
-	REDUCE_THREADS = 512,
-    };
-
 public:
     /** set number of particles in system */
     void particles(unsigned int value);
@@ -83,8 +75,6 @@ public:
     unsigned int const& cells() const { return ncell; }
     /** get total number of cell placeholders */
     unsigned int const& placeholders() const { return nplace; }
-    /** get total number of placeholders per neighbour list */
-    unsigned int const& neighbours() const { return nbl_size; }
     /** get cell length */
     float const& cell_length() const { return cell_length_; }
     /** get effective average cell occupancy */
@@ -108,7 +98,7 @@ public:
 #endif
     /** get simulation timestep */
     float const& timestep() const { return timestep_; }
-    /** returns and resets GPU time statistics */
+    /** returns and resets CUDA time statistics */
     perf_counters times();
 
     /** write parameters to HDF5 parameter group */
@@ -124,28 +114,6 @@ public:
     trajectory_sample const& trajectory() const { return h_sample; }
 
 private:
-    /** first leapfrog step of integration of differential equations of motion */
-    void velocity_verlet(cuda::stream& stream);
-    /** Lennard-Jones force calculation */
-    void update_forces(cuda::stream& stream);
-    /** potential energy sum calculation */
-    void potential_energy(cuda::stream& stream);
-    /** virial equation sum calculation */
-    void virial_sum(cuda::stream& stream);
-#ifdef USE_CELL
-    /** maximum velocity calculation */
-    void maximum_velocity(cuda::stream& stream);
-    /** assign particles to cells */
-    void assign_cells(cuda::stream& stream);
-    /** update neighbour lists */
-    void update_neighbours(cuda::stream& stream);
-#ifdef USE_HILBERT_ORDER
-    /** order particles after Hilbert space-filling curve */
-    void hilbert_order(cuda::stream& stream);
-#endif
-#endif
-
-private:
     /** number of particles in system */
     unsigned int npart;
 #ifdef USE_CELL
@@ -153,8 +121,6 @@ private:
     unsigned int ncell;
     /** total number of cell placeholders */
     unsigned int nplace;
-    /** number of placeholders per neighbour list */
-    unsigned int nbl_size;
     /** cell length */
     float cell_length_;
     /** effective average cell occupancy */
@@ -170,6 +136,8 @@ private:
     float timestep_;
     /** cutoff radius for shifted Lennard-Jones potential */
     float r_cut;
+    /** maximum velocity magnitude after last MD step */
+    float v_max;
 #ifdef USE_CELL
     /** cell skin */
     float r_skin;
@@ -184,6 +152,23 @@ private:
     /** trajectory sample in swappable host memory */
     trajectory_sample h_sample;
 
+#ifdef USE_CELL
+    /** cell placeholders in page-locked host memory */
+    struct {
+	/** periodically reduced particle positions */
+	cuda::host::vector<gvector> r;
+	/** periodically extended particle positions */
+	cuda::host::vector<gvector> R;
+	/** particle velocities */
+	cuda::host::vector<gvector> v;
+	/** particle number tags */
+	cuda::host::vector<int> n;
+	/** potential energies per particle */
+	cuda::host::vector<float> en;
+	/** virial equation sums per particle */
+	cuda::host::vector<float> virial;
+    } h_cell;
+#else
     /** system state in page-locked host memory */
     struct {
 	/** periodically reduced particle positions */
@@ -192,16 +177,44 @@ private:
 	cuda::host::vector<gvector> R;
 	/** particle velocities */
 	cuda::host::vector<gvector> v;
-	/** particle tags */
-	cuda::host::vector<int> tag;
-	/** blockwise maximum particles velocity magnitudes */
-	cuda::host::vector<float> v_max;
-	/** blockwise potential energies sum per particle */
-	cuda::host::vector<float2> en_sum;
-	/** blockwise virial equation sum per particle */
-	cuda::host::vector<float2> virial_sum;
+	/** potential energies per particle */
+	cuda::host::vector<float> en;
+	/** virial equation sums per particle */
+	cuda::host::vector<float> virial;
     } h_part;
+#endif
 
+#ifdef USE_CELL
+    /** system state in global device memory */
+    struct {
+	/** periodically reduced particle positions */
+	cuda::vector<gvector> r;
+	/** periodically extended particle positions */
+	cuda::vector<gvector> R;
+	/** particle velocities */
+	cuda::vector<gvector> v;
+	/** particle number tags */
+	cuda::vector<int> n;
+	/** particle forces */
+	cuda::vector<gvector> f;
+	/** potential energies per particle */
+	cuda::vector<float> en;
+	/** virial equation sums per particle */
+	cuda::vector<float> virial;
+    } g_cell;
+
+    /** system state double buffer in global device memory */
+    struct {
+	/** periodically reduced particle positions */
+	cuda::vector<gvector> r;
+	/** periodically extended particle positions */
+	cuda::vector<gvector> R;
+	/** particle velocities */
+	cuda::vector<gvector> v;
+	/** particle number tags */
+	cuda::vector<int> n;
+    } g_cell2;
+#else
     /** system state in global device memory */
     struct {
 	/** periodically reduced particle positions */
@@ -212,56 +225,17 @@ private:
 	cuda::vector<gvector> v;
 	/** particle forces */
 	cuda::vector<gvector> f;
-	/** particle tags */
-	cuda::vector<int> tag;
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
 	cuda::vector<float> virial;
-	/** blockwise maximum particles velocity magnitudes */
-	cuda::vector<float> v_max;
-	/** blockwise potential energies sum per particle */
-	cuda::vector<float2> en_sum;
-	/** blockwise virial equation sum per particle */
-	cuda::vector<float2> virial_sum;
     } g_part;
-
-#ifdef USE_CELL
-    /** double buffers for particle sorting */
-    struct {
-	/** periodically reduced particle positions */
-	cuda::vector<gvector> r;
-	/** periodically extended particle positions */
-	cuda::vector<gvector> R;
-	/** particle velocities */
-	cuda::vector<gvector> v;
-	/** particle tags */
-	cuda::vector<int> tag;
-    } g_sort;
-
-    /** auxiliary device memory arrays for particle sorting */
-    struct {
-	/** particle cells */
-	cuda::vector<uint> cell;
-	/** cell offsets in sorted particle list */
-	cuda::vector<int> offset;
-	/** permutation indices */
-	cuda::vector<int> idx;
-    } g_aux;
-
-    /** cell lists in global device memory */
-    cuda::vector<int> g_cell;
-    /** neighbour lists in global device memory */
-    cuda::vector<int> g_nbl;
 #endif
 
     /** GPU random number generator */
     mdsim::rand48 rng_;
-#ifdef USE_CELL
-    /** GPU mdsim::radix sort */
-    mdsim::radix_sort<int> radix_sort;
-#endif
-
+    /** GPU mdsim::radix sort for particle positions */
+    mdsim::radix_sort<gvector> radix_sort;
     /** CUDA execution dimensions */
     cuda::config dim_;
 #ifdef USE_CELL
@@ -272,14 +246,14 @@ private:
     cuda::stream stream_;
     /** CUDA events for kernel timing */
 #ifdef USE_CELL
-    boost::array<cuda::event, 9> event_;
-#else
     boost::array<cuda::event, 5> event_;
+#else
+    boost::array<cuda::event, 3> event_;
 #endif
-    /** GPU time statistics */
+    /** CUDA time statistics */
     perf_counters m_times;
 };
 
 } // namespace mdsim
 
-#endif /* ! MDSIM_LJFLUID_GPU_HPP */
+#endif /* ! MDSIM_LJFLUID_CELL_GPU_HPP */

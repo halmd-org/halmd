@@ -50,7 +50,7 @@ mdsim::mdsim(options const& opts) : opts(opts)
     else
 	fluid.density(opts.density().value());
 #ifdef USE_CUDA
-# ifdef USE_CELL
+# if defined(USE_CELL) || defined(USE_NEIGHBOUR)
     // compute cell parameters
     fluid.cell_occupancy(opts.cell_occupancy().value());
 # endif
