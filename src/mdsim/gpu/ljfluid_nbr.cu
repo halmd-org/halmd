@@ -415,7 +415,7 @@ __global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int
 }
 
 
-namespace mdsim { namespace gpu { namespace ljfluid
+namespace mdsim { namespace gpu { namespace ljfluid_gpu_neighbour
 {
 
 cuda::symbol<unsigned int> ncell(::ncell);

@@ -79,7 +79,7 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 }
 
 
-namespace mdsim { namespace gpu { namespace ljfluid
+namespace mdsim { namespace gpu { namespace ljfluid_gpu_simple
 {
 
 #ifdef DIM_3D

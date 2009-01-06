@@ -16,13 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iomanip>
-#include <iostream>
-#include <limits>
 #include "exception.hpp"
 #include "log.hpp"
 #include "perf.hpp"
 #include "statistics.hpp"
+#include <boost/array.hpp>
+#include <boost/foreach.hpp>
+#include <iomanip>
+#include <iostream>
+#include <limits>
 
 namespace mdsim
 {
@@ -30,38 +32,41 @@ namespace mdsim
 /**
  * performance counter datasets
  */
-static char const* perf_dataset[][2] = {
-#ifdef USE_CUDA
-    { "mdstep",			"GPU time for MD simulation step" },
-    { "velocity_verlet",	"GPU time for velocity-Verlet integration" },
+typedef boost::unordered_map<std::string, std::string> perf_dataset_map;
+static perf_dataset_map const perf_dataset = boost::assign::map_list_of
+#if USE_CUDA
+    ("mdstep",			"GPU time for MD simulation step")
+    ("velocity_verlet",		"GPU time for velocity-Verlet integration")
 # if defined(USE_NEIGHBOUR) && defined(USE_HILBERT_ORDER)
-    { "hilbert_sort",		"GPU time for Hilbert space-filling curve sort" },
+    ("hilbert_sort",		"GPU time for Hilbert space-filling curve sort")
+# endif
+# if defined(USE_NEIGHBOUR) || defined(USE_CELL)
+    ("update_cells",		"GPU time for cell lists update")
 # endif
 # if defined(USE_NEIGHBOUR)
-    { "update_cells",		"GPU time for cell lists update" },
-    { "update_neighbours",	"GPU time for neighbour lists update" },
-    { "maximum_velocity",	"GPU time for maximum velocity calculation" },
-# elif defined(USE_CELL)
-    { "init_cells",		"GPU time for cell lists initialisation" },
-    { "update_cells",		"GPU time for cell lists update" },
-    { "memcpy_cells",		"GPU time for cell lists memcpy" },
+    ("update_neighbours",	"GPU time for neighbour lists update")
+    ("maximum_velocity",	"GPU time for maximum velocity calculation")
 # endif
-    { "update_forces",		"GPU time for Lennard-Jones force update" },
+# if defined(USE_CELL)
+    ("init_cells",		"GPU time for cell lists initialisation")
+    ("memcpy_cells",		"GPU time for cell lists memcpy")
+# endif
+    ("update_forces",		"GPU time for Lennard-Jones force update")
 # if defined(USE_NEIGHBOUR) || !defined(USE_CELL)
-    { "potential_energy",	"GPU time for potential energy sum calculation" },
-    { "virial_sum",		"GPU time for virial equation sum calculation" },
+    ("potential_energy",	"GPU time for potential energy sum calculation")
+    ("virial_sum",		"GPU time for virial equation sum calculation")
 # endif
-    { "sample_memcpy",		"GPU time for sample memcpy" },
-    { "lattice",		"GPU time for lattice generation" },
-    { "boltzmann",		"GPU time for Maxwell-Boltzmann distribution" },
+    ("sample_memcpy",		"GPU time for sample memcpy")
+    ("lattice",			"GPU time for lattice generation")
+    ("boltzmann",		"GPU time for Maxwell-Boltzmann distribution")
 #else /* ! USE_CUDA */
-    { "update_cells",		"CPU time for cell lists update" },
-    { "update_neighbours",	"CPU time for neighbour lists update" },
-    { "update_forces",		"CPU time for Lennard-Jones force update" },
-    { "velocity_verlet",	"CPU time for velocity-Verlet integration" },
-    { "mdstep",			"CPU time for MD simulation step" },
+    ("update_cells",		"CPU time for cell lists update")
+    ("update_neighbours",	"CPU time for neighbour lists update")
+    ("update_forces",		"CPU time for Lennard-Jones force update")
+    ("velocity_verlet",		"CPU time for velocity-Verlet integration")
+    ("mdstep",			"CPU time for MD simulation step")
 #endif /* ! USE_CUDA */
-};
+    ;
 
 /**
  * create HDF5 performance data output file
@@ -80,7 +85,7 @@ void perf::open(std::string const& filename)
     m_file.createGroup("param");
 
     // floating-point data type
-    m_tid = H5_NATIVE_FLOAT_TYPE;
+    m_tid = H5::PredType::NATIVE_FLOAT;
 
     // extensible dataspace for performance data
     hsize_t dim[2] = { 0, 3 };
@@ -92,8 +97,9 @@ void perf::open(std::string const& filename)
 
     try {
 	H5::Group node(m_file.createGroup("times"));
-	for (unsigned int i = 0; i < m_dataset.size(); ++i) {
-	    m_dataset[i] = node.createDataSet(perf_dataset[i][0], m_tid, ds, cparms);
+	// FIXME only create necessary (implementation-dependent) datasets
+	BOOST_FOREACH(perf_dataset_map::value_type const& i, perf_dataset) {
+	    m_dataset[i.first] = node.createDataSet(i.first.c_str(), m_tid, ds, cparms);
 	}
     }
     catch (H5::FileIException const& e) {
@@ -114,9 +120,9 @@ H5param perf::attrs()
  */
 void perf::sample(perf_counters const& times)
 {
-    for (unsigned int i = 0; i < m_times.size(); ++i) {
+    BOOST_FOREACH(perf_counters::value_type const& i, times) {
 	// accumulate values of accumulator
-	m_times[i] += times[i];
+	m_times[i.first] += i.second;
     }
     m_dirty = true;
 }
@@ -139,16 +145,16 @@ std::ostream& operator<<(std::ostream& os, accumulator<T> const& acc)
  */
 void perf::commit()
 {
-    for (unsigned int i = 0; i < m_times.size(); ++i) {
-	LOG("mean " << perf_dataset[i][1] << ": " << m_times[i]);
+    BOOST_FOREACH(perf_counters::value_type const& i, m_times) {
+	LOG("mean " << perf_dataset.at(i.first) << ": " << i.second);
     }
 
     // write pending performance data to HDF5 file
     flush(false);
 
-    for (unsigned int i = 0; i < m_times.size(); ++i) {
+    BOOST_FOREACH(perf_counters::value_type& i, m_times) {
 	// accumulate values of accumulator
-	m_times[i].clear();
+	i.second.clear();
     }
     // increment offset in HDF5 datasets
     m_offset++;
@@ -175,15 +181,15 @@ void perf::flush(bool force)
 
     // memory dataspace
     H5::DataSpace mem_ds(2, block);
-    boost::array<float_type, 3> data;
+    boost::array<float, 3> data;
     try {
-	for (unsigned int i = 0; i < m_times.size(); ++i) {
+	BOOST_FOREACH(perf_counters::value_type const& i, m_times) {
 	    // write to HDF5 dataset
-	    m_dataset[i].extend(dim);
-	    data[0] = m_times[i].mean();
-	    data[1] = m_times[i].std();
-	    data[2] = m_times[i].count();
-	    m_dataset[i].write(data.c_array(), m_tid, mem_ds, ds);
+	    m_dataset[i.first].extend(dim);
+	    data[0] = i.second.mean();
+	    data[1] = i.second.std();
+	    data[2] = i.second.count();
+	    m_dataset[i.first].write(data.c_array(), m_tid, mem_ds, ds);
 	}
     }
     catch (H5::FileIException const& e) {

@@ -34,7 +34,7 @@
 
 #define IS_REAL_PARTICLE(x)	(x >= 0)
 
-namespace mdsim { namespace gpu { namespace ljfluid
+namespace mdsim { namespace gpu { namespace ljfluid_gpu_cell
 {
 
 extern cuda::symbol<unsigned int> ncell;

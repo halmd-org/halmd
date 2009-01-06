@@ -19,14 +19,72 @@
 #ifndef MDSIM_LJFLUID_HPP
 #define MDSIM_LJFLUID_HPP
 
-#ifdef USE_CUDA
-# if defined(USE_NEIGHBOUR) || !defined(USE_CELL)
-#  include "ljfluid_gpu_nbr.hpp"
-# else
-#  include "ljfluid_gpu_cell.hpp"
-# endif
-#else
-# include "ljfluid_host.hpp"
+#include "ljfluid_gpu.hpp"
+#include "ljfluid_host.hpp"
+
+namespace mdsim
+{
+
+template <template<int> class ljfluid_impl, int dimension>
+class ljfluid : public ljfluid_impl<dimension>
+{
+public:
+    typedef typename ljfluid_impl<dimension>::float_type float_type;
+    typedef typename ljfluid_impl<dimension>::vector_type vector_type;
+    typedef typename ljfluid_impl<dimension>::trajectory_sample trajectory_sample;
+
+public:
+    /** returns and resets CPU or GPU time accumulators */
+    perf_counters times();
+    /** get trajectory sample */
+    trajectory_sample const& trajectory() const { return m_sample; }
+
+    /** write parameters to HDF5 parameter group */
+    void attrs(H5::Group const& param) const;
+
+protected:
+    using ljfluid_impl<dimension>::m_sample;
+    using ljfluid_impl<dimension>::m_times;
+
+    using ljfluid_impl<dimension>::npart;
+    using ljfluid_impl<dimension>::density_;
+    using ljfluid_impl<dimension>::box_;
+    using ljfluid_impl<dimension>::timestep_;
+    using ljfluid_impl<dimension>::r_cut;
+#ifdef USE_POTENTIAL_SMOOTHING
+    using ljfluid_impl<dimension>::r_smooth;
 #endif
+};
+
+template <template<int> class ljfluid_impl, int dimension>
+void ljfluid<ljfluid_impl, dimension>::attrs(H5::Group const& param) const
+{
+    H5xx::group node(param.createGroup("mdsim"));
+    node["dimension"] = dimension;
+    node["particles"] = npart;
+    node["density"] = density_;
+    node["box_length"] = box_;
+    node["timestep"] = timestep_;
+    node["cutoff_radius"] = r_cut;
+#ifdef USE_POTENTIAL_SMOOTHING
+    node["potential_smoothing"] = r_smooth;
+#endif
+
+    // implementation-dependent attributes
+    ljfluid_impl<dimension>::attrs(param);
+}
+
+template <template<int> class ljfluid_impl, int dimension>
+perf_counters ljfluid<ljfluid_impl, dimension>::times()
+{
+    perf_counters times(m_times);
+    BOOST_FOREACH(perf_counters::value_type& i, m_times) {
+	// reset performance counter
+	i.second.clear();
+    }
+    return times;
+}
+
+} // namespace mdsim
 
 #endif /* ! MDSIM_LJFLUID_HPP */

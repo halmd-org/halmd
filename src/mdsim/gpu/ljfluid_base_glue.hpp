@@ -40,11 +40,11 @@ extern cuda::function <void (float3*, const float2)> sample_smooth_function;
 extern cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
 extern cuda::function<void (float4*, unsigned int)> lattice;
 extern cuda::function<void (float4*, unsigned int)> lattice_simple;
-#else /* DIM_3D */
+#else /* ! DIM_3D */
 extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
 extern cuda::function<void (float2*, unsigned int)> lattice;
 extern cuda::function<void (float2*, unsigned int)> lattice_simple;
-#endif /* DIM_3D */
+#endif /* ! DIM_3D */
 extern cuda::function<void (float const*, float2*)> potential_energy_sum;
 
 }}} // namespace mdsim::gpu::ljfluid

@@ -60,7 +60,9 @@ int main(int argc, char **argv)
     std::vector<std::string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
+#ifdef NDEBUG
     try {
+#endif
 #ifdef USE_CUDA
 	// bind process to CPU core(s)
 	if (!opts.processor().empty()) {
@@ -106,7 +108,22 @@ int main(int argc, char **argv)
 #endif
 
 	// initialize molecular dynamics simulation
-	mdsim::mdsim sim(opts);
+	mdsim::mdsim<mdsim::ljfluid<
+#if defined(USE_CUDA) && defined(USE_NEIGHBOUR)
+	    mdsim::ljfluid_gpu_neighbour,
+#elif defined(USE_CUDA) && defined(USE_CELL)
+	    mdsim::ljfluid_gpu_cell,
+#elif defined(USE_CUDA)
+	    mdsim::ljfluid_gpu_simple,
+#else
+	    mdsim::ljfluid_host,
+#endif
+#ifdef DIM_3D
+	    3
+#else
+	    2
+#endif
+	    > > sim(opts);
 
 #ifdef USE_CUDA
 	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used(dev) << " bytes");
@@ -122,6 +139,7 @@ int main(int argc, char **argv)
 	    // run MD simulation
 	    sim();
 	}
+#ifdef NDEBUG
     }
 #ifdef USE_CUDA
     catch (cuda::error const& e) {
@@ -135,6 +153,7 @@ int main(int argc, char **argv)
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
+#endif /* NDEBUG */
 
     LOG(PROGRAM_NAME " exit");
     return EXIT_SUCCESS;

@@ -325,6 +325,7 @@ private:
 /**
  * write correlation function results to HDF5 file
  */
+template <typename float_type>
 class tcf_write_results : public boost::static_visitor<>
 {
 public:

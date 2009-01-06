@@ -21,26 +21,42 @@
 
 #include <boost/function.hpp>
 #include <vector>
-#include "config.hpp"
+#include "vector2d.hpp"
+#include "vector3d.hpp"
 
 namespace mdsim {
 
 /**
  * MD simulation sample
  */
-struct trajectory_sample
+template <typename vector_type>
+struct trajectory_gpu_sample
 {
     /** trajectory sample visitor type */
-    typedef boost::function<void (std::vector<hvector>&, std::vector<hvector>&)> visitor;
+    typedef boost::function<void (std::vector<vector_type>&, std::vector<vector_type>&)> visitor;
 
-#ifdef USE_CUDA
     /** periodically reduced particle positions */
-    std::vector<hvector> r;
-#endif
+    std::vector<vector_type> r;
     /** periodically extended particle positions */
-    std::vector<hvector> R;
+    std::vector<vector_type> R;
     /** particle velocities */
-    std::vector<hvector> v;
+    std::vector<vector_type> v;
+    /** potential energy per particle */
+    double en_pot;
+    /** virial equation sum per particle */
+    double virial;
+};
+
+template <typename vector_type>
+struct trajectory_host_sample
+{
+    /** trajectory sample visitor type */
+    typedef boost::function<void (std::vector<vector_type>&, std::vector<vector_type>&)> visitor;
+
+    /** periodically reduced particle positions */
+    std::vector<vector_type> R;
+    /** particle velocities */
+    std::vector<vector_type> v;
     /** potential energy per particle */
     double en_pot;
     /** virial equation sum per particle */
@@ -50,15 +66,16 @@ struct trajectory_sample
 /**
  * Phase space sample for evaluating correlation functions
  */
+template <typename vector_type>
 struct correlation_sample
 {
     // value types of these two vectors must match
-    typedef std::vector<hvector> sample_vector;
-    typedef std::vector<hvector::value_type> q_value_vector;
+    typedef std::vector<vector_type> sample_vector;
+    typedef std::vector<typename vector_type::value_type> q_value_vector;
     // summing over large particle numbers requires double precision!
     typedef double density_value;
     /** real or imaginary component vector */
-    typedef vector<density_value, hvector::static_size> density_vector;
+    typedef vector<density_value, vector_type::static_size> density_vector;
     /** real and imaginary components of Fourier transformed density rho(q) */
     typedef std::pair<density_vector, density_vector> density_vector_pair;
     /** vector of Fourier transformed densities for different q-values */

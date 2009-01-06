@@ -412,7 +412,7 @@ __global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int co
 }
 
 
-namespace mdsim { namespace gpu { namespace ljfluid
+namespace mdsim { namespace gpu { namespace ljfluid_gpu_cell
 {
 
 cuda::symbol<unsigned int> ncell(::ncell);

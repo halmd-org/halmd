@@ -22,7 +22,6 @@
 #include <boost/program_options.hpp>
 #include <stdint.h>
 #include <string>
-#include "config.hpp"
 
 
 namespace mdsim
@@ -83,7 +82,7 @@ public:
     /**
      * returns particle density
      */
-    option_value<float_type> density() const
+    option_value<float> density() const
     {
 	return vm["density"];
     }
@@ -91,7 +90,7 @@ public:
     /**
      * returns simulation box length
      */
-    option_value<float_type> box_length() const
+    option_value<float> box_length() const
     {
 	return vm["box-length"];
     }
@@ -99,7 +98,7 @@ public:
     /**
      * returns potential cutoff radius
      */
-    option_value<float_type> cutoff_radius() const
+    option_value<float> cutoff_radius() const
     {
 	return vm["cutoff"];
     }
@@ -108,7 +107,7 @@ public:
     /**
      * returns potential smoothing function scale parameter
      */
-    option_value<float_type> potential_smoothing() const
+    option_value<float> potential_smoothing() const
     {
 	return vm["smoothing"];
     }
@@ -118,7 +117,7 @@ public:
     /**
      * returns desired average cell occupancy
      */
-    option_value<float_type> cell_occupancy() const
+    option_value<float> cell_occupancy() const
     {
 	return vm["cell-occupancy"];
     }
@@ -127,7 +126,7 @@ public:
     /**
      * returns simulation timestep
      */
-    option_value<float_type> timestep() const
+    option_value<float> timestep() const
     {
 	return vm["timestep"];
     }
@@ -135,7 +134,7 @@ public:
     /**
      * return initial system temperature
      */
-    option_value<float_type> temperature() const
+    option_value<float> temperature() const
     {
 	return vm["temperature"];
     }
@@ -152,7 +151,7 @@ public:
     /**
      * returns total simulation time
      */
-    option_value<float_type> time() const
+    option_value<float> time() const
     {
 	return vm["time"];
     }

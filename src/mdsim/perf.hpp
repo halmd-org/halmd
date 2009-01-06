@@ -20,57 +20,19 @@
 #define MDSIM_PERF_HPP
 
 #include <H5Cpp.h>
-#include <boost/array.hpp>
+#include <boost/assign.hpp>
+#include <boost/unordered_map.hpp>
 #include <string>
 #include "H5param.hpp"
 #include "accumulator.hpp"
-#include "config.hpp"
 
 namespace mdsim
 {
 
 /**
- * performance counter types
- */
-enum {
-#ifdef USE_CUDA
-    GPU_TIME_MDSTEP,
-    GPU_TIME_VELOCITY_VERLET,
-# if defined(USE_NEIGHBOUR) && defined(USE_HILBERT_ORDER)
-    GPU_TIME_HILBERT_SORT,
-# endif
-# if defined(USE_NEIGHBOUR)
-    GPU_TIME_UPDATE_CELLS,
-    GPU_TIME_UPDATE_NEIGHBOURS,
-    GPU_TIME_MAXIMUM_VELOCITY,
-# elif defined(USE_CELL)
-    GPU_TIME_INIT_CELLS,
-    GPU_TIME_UPDATE_CELLS,
-    GPU_TIME_MEMCPY_CELLS,
-# endif
-    GPU_TIME_UPDATE_FORCES,
-# if defined(USE_NEIGHBOUR) || !defined(USE_CELL)
-    GPU_TIME_POTENTIAL_ENERGY,
-    GPU_TIME_VIRIAL_SUM,
-# endif
-    GPU_TIME_SAMPLE_MEMCPY,
-    GPU_TIME_LATTICE,
-    GPU_TIME_BOLTZMANN,
-    NUM_PERF_COUNTERS,
-#else /* ! USE_CUDA */
-    GPU_TIME_UPDATE_CELLS,
-    GPU_TIME_UPDATE_NEIGHBOURS,
-    GPU_TIME_UPDATE_FORCES,
-    GPU_TIME_VELOCITY_VERLET,
-    GPU_TIME_MDSTEP,
-    NUM_PERF_COUNTERS,
-#endif /* ! USE_CUDA */
-};
-
-/**
  * performance class accumulators
  */
-typedef boost::array<accumulator<float_type>, NUM_PERF_COUNTERS> perf_counters;
+typedef boost::unordered_map<std::string, accumulator<float> > perf_counters;
 
 /**
  * performance data
@@ -98,7 +60,7 @@ private:
     /** HDF5 performance data output file */
     H5::H5File m_file;
     /** HDF5 datasets */
-    boost::array<H5::DataSet, perf_counters::static_size> m_dataset;
+    boost::unordered_map<std::string, H5::DataSet> m_dataset;
     /** HDF5 floating-point data type */
     H5::DataType m_tid;
     /** dataset offset */

@@ -22,7 +22,7 @@
 #include <cuda_wrapper.hpp>
 #include "ljfluid_base_glue.hpp"
 
-namespace mdsim { namespace gpu { namespace ljfluid
+namespace mdsim { namespace gpu { namespace ljfluid_gpu_simple
 {
 
 #ifdef DIM_3D
