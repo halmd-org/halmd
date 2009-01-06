@@ -43,29 +43,40 @@ extern cuda::symbol<unsigned int> nbl_size;
 extern cuda::symbol<unsigned int> nbl_stride;
 extern cuda::symbol<float> r_cell;
 extern cuda::symbol<float> rr_cell;
-extern cuda::texture<int> tag;
 
-#ifdef DIM_3D
-extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float4 const*, float*)> maximum_velocity;
-extern cuda::function<void (float4 const*, uint*)> compute_cell;
-extern cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles;
-extern cuda::texture<float4> r;
-extern cuda::texture<float4> R;
-extern cuda::texture<float4> v;
-#else /* DIM_3D */
-extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float2 const*, float*)> maximum_velocity;
-extern cuda::function<void (float2 const*, uint*)> compute_cell;
-extern cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles;
-extern cuda::texture<float2> r;
-extern cuda::texture<float2> R;
-extern cuda::texture<float2> v;
-#endif /* DIM_3D */
+template <typename T>
+struct texref
+{
+    static cuda::texture<T> r;
+    static cuda::texture<T> R;
+    static cuda::texture<T> v;
+    static cuda::texture<int> tag;
+};
 
+extern cuda::function<
+    void (float4 const*, float4*, float4*, int const*, float*, float*),
+    void (float2 const*, float2*, float2*, int const*, float*, float*)
+    > mdstep;
+extern cuda::function<
+    void (float4 const*, float*),
+    void (float2 const*, float*)
+    > maximum_velocity;
+extern cuda::function<
+    void (int const*, int*, float4*),
+    void (int const*, int*, float2*)
+    > update_neighbours;
+extern cuda::function<
+    void (float4 const*, uint*),
+    void (float2 const*, uint*)
+    > compute_cell;
+extern cuda::function<
+    void (const int*, float4*, float4*, float4*, int*),
+    void (const int*, float2*, float2*, float2*, int*)
+    > order_particles;
 extern cuda::function<void (int*)> init_tags;
-extern cuda::function<void (int const*, int*)> update_neighbours;
-extern cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells;
+extern cuda::function<
+    void (uint const*, int const*, int const*, int*)
+    > assign_cells;
 extern cuda::function<void (uint*, int*)> find_cell_offset;
 extern cuda::function<void (int*)> gen_index;
 

@@ -35,29 +35,52 @@ static __constant__ unsigned int nbl_stride;
 static __constant__ float r_cell;
 /** squared potential radius distance with cell skin */
 static __constant__ float rr_cell;
-#ifdef DIM_3D
-/** texture reference to periodic particle positions */
-struct texture<float4, 1, cudaReadModeElementType> t_r;
-/** texture reference to extended particle positions */
-struct texture<float4, 1, cudaReadModeElementType> t_R;
-/** texture reference to particle velocities */
-struct texture<float4, 1, cudaReadModeElementType> t_v;
-#else
-/** texture reference to periodic particle positions */
-struct texture<float2, 1, cudaReadModeElementType> t_r;
-/** texture reference to extended particle positions */
-struct texture<float2, 1, cudaReadModeElementType> t_R;
-/** texture reference to particle velocities */
-struct texture<float2, 1, cudaReadModeElementType> t_v;
-#endif
-/** texture reference to particle tags */
-struct texture<int, 1, cudaReadModeElementType> t_tag;
 
+/** n-dimensional particle texture references */
+template <typename T>
+struct texref;
+
+template <>
+struct texref<float4>
+{
+    /** periodic particle positions */
+    static texture<float4, 1, cudaReadModeElementType> r;
+    /** extended particle positions */
+    static texture<float4, 1, cudaReadModeElementType> R;
+    /** particle velocities */
+    static texture<float4, 1, cudaReadModeElementType> v;
+    /** texture reference to particle tags */
+    static texture<int, 1, cudaReadModeElementType> tag;
+};
+
+template <>
+struct texref<float2>
+{
+    /** periodic particle positions */
+    static texture<float2, 1, cudaReadModeElementType> r;
+    /** extended particle positions */
+    static texture<float2, 1, cudaReadModeElementType> R;
+    /** particle velocities */
+    static texture<float2, 1, cudaReadModeElementType> v;
+    /** texture reference to particle tags */
+    static texture<int, 1, cudaReadModeElementType> tag;
+};
+
+// instantiate texture references
+texture<float4, 1, cudaReadModeElementType> texref<float4>::r;
+texture<float4, 1, cudaReadModeElementType> texref<float4>::R;
+texture<float4, 1, cudaReadModeElementType> texref<float4>::v;
+texture<int, 1, cudaReadModeElementType> texref<float4>::tag;
+
+texture<float2, 1, cudaReadModeElementType> texref<float2>::r;
+texture<float2, 1, cudaReadModeElementType> texref<float2>::R;
+texture<float2, 1, cudaReadModeElementType> texref<float2>::v;
+texture<int, 1, cudaReadModeElementType> texref<float2>::tag;
 
 /**
  * n-dimensional MD simulation step
  */
-template <typename T, typename U>
+template <typename T, typename TT, typename U>
 __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
@@ -68,12 +91,8 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
     float en = 0;
     // virial equation sum contribution
     float virial = 0;
-
-#ifdef DIM_3D
-    dfloat3 f(make_float3(0, 0, 0));
-#else
-    dfloat2 f(make_float2(0, 0));
-#endif
+    // force sum
+    TT f = 0;
 
     for (unsigned int i = 0; i < nbl_size; ++i) {
 	// coalesced read from neighbour list
@@ -82,7 +101,7 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
 	if (!IS_REAL_PARTICLE(n))
 	    break;
 	// accumulate force between particles
-	compute_force(r, unpack(tex1Dfetch(t_r, n)), f, en, virial);
+	compute_force(r, unpack(tex1Dfetch(texref<U>::r, n)), f, en, virial);
     }
 
     // second leapfrog step as part of integration of equations of motion
@@ -172,24 +191,30 @@ __global__ void init_tags(int* g_tag)
 /**
  * compute neighbour cell
  */
-template <typename I>
-__device__ unsigned int compute_neighbour_cell(I const& offset)
+__device__ unsigned int compute_neighbour_cell(int3 const &offset)
 {
-#ifdef DIM_3D
-    const int3 cell = make_int3(blockIdx.x % ncell, (blockIdx.x / ncell) % ncell, blockIdx.x / ncell / ncell);
-    const int3 neighbour = make_int3((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell, (cell.z + ncell + offset.z) % ncell);
-    return (neighbour.z * ncell + neighbour.y) * ncell + neighbour.x;
-#else
-    const int2 cell = make_int2(blockIdx.x % ncell, blockIdx.x / ncell);
-    const int2 neighbour = make_int2((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell);
-    return neighbour.y * ncell + neighbour.x;
-#endif
+    int3 i = make_int3(blockIdx.x % ncell,
+		       (blockIdx.x / ncell) % ncell,
+		       blockIdx.x / ncell / ncell);
+    i = make_int3((i.x + ncell + offset.x) % ncell,
+		  (i.y + ncell + offset.y) % ncell,
+		  (i.z + ncell + offset.z) % ncell);
+    return (i.z * ncell + i.y) * ncell + i.x;
+}
+
+__device__ unsigned int compute_neighbour_cell(int2 const& offset)
+{
+    int2 i = make_int2(blockIdx.x % ncell,
+		       blockIdx.x / ncell);
+    i = make_int2((i.x + ncell + offset.x) % ncell,
+		  (i.y + ncell + offset.y) % ncell);
+    return i.y * ncell + i.x;
 }
 
 /**
  * update neighbour list with particles of given cell
  */
-template <unsigned int cell_size, bool same_cell, typename T, typename I>
+template <unsigned int cell_size, typename U, bool same_cell, typename T, typename I>
 __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* g_nbl, T const& r, int const& n, unsigned int& count)
 {
     __shared__ int s_n[cell_size];
@@ -200,7 +225,7 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* 
 
     // load particles in cell
     s_n[threadIdx.x] = g_cell[cell * cell_size + threadIdx.x];
-    s_r[threadIdx.x] = unpack(tex1Dfetch(t_r, s_n[threadIdx.x]));
+    s_r[threadIdx.x] = unpack(tex1Dfetch(texref<U>::r, s_n[threadIdx.x]));
     __syncthreads();
 
     if (IS_REAL_PARTICLE(n)) {
@@ -235,12 +260,12 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* 
 /**
  * update neighbour lists
  */
-template <unsigned int cell_size, typename T>
-__global__ void update_neighbours(int const* g_cell, int* g_nbl)
+template <unsigned int cell_size>
+__global__ void update_neighbours(int const* g_cell, int* g_nbl, float4* __empty__)
 {
     // load particle from cell placeholder
     const int n = g_cell[GTID];
-    const T r = unpack(tex1Dfetch(t_r, n));
+    const float3 r = unpack(tex1Dfetch(texref<float4>::r, n));
     // number of particles in neighbour list
     unsigned int count = 0;
 
@@ -278,59 +303,65 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl)
     // opposite neighbour cell softens the velocity drift.
     //
 
-#ifdef DIM_3D
     // visit this cell
-    update_cell_neighbours<cell_size, true>(make_int3( 0,  0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, true>(make_int3( 0,  0,  0), g_cell, g_nbl, r, n, count);
     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-    update_cell_neighbours<cell_size, false>(make_int3(-1, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(-1, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(-1, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(-1, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(-1, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(-1, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(-1,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1,  0, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(-1,  0, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3( 0, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3( 0, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3( 0, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3( 0, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(-1,  0,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3(+1,  0,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3( 0, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3( 0, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3( 0,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int3( 0,  0, +1), g_cell, g_nbl, r, n, count);
-#else
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1,  0, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1,  0, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(-1,  0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3(+1,  0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3( 0,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float4, false>(make_int3( 0,  0, +1), g_cell, g_nbl, r, n, count);
+}
+
+template <unsigned int cell_size>
+__global__ void update_neighbours(int const* g_cell, int* g_nbl, float2* __empty__)
+{
+    // load particle from cell placeholder
+    const int n = g_cell[GTID];
+    const float2 r = unpack(tex1Dfetch(texref<float2>::r, n));
+    // number of particles in neighbour list
+    unsigned int count = 0;
+
     // visit this cell
-    update_cell_neighbours<cell_size, true>(make_int2( 0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float2, true>(make_int2( 0,  0), g_cell, g_nbl, r, n, count);
     // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-    update_cell_neighbours<cell_size, false>(make_int2(-1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int2(+1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int2(-1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int2(+1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int2(-1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int2(+1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int2( 0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, false>(make_int2( 0, +1), g_cell, g_nbl, r, n, count);
-#endif
+    update_cell_neighbours<cell_size, float2, false>(make_int2(-1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float2, false>(make_int2(+1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float2, false>(make_int2(-1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float2, false>(make_int2(+1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float2, false>(make_int2(-1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float2, false>(make_int2(+1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float2, false>(make_int2( 0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<cell_size, float2, false>(make_int2( 0, +1), g_cell, g_nbl, r, n, count);
 }
 
 /**
  * compute cell indices for given particle positions
  */
-template <typename T, typename U>
-__global__ void compute_cell(U const* g_part, uint* g_cell)
+__global__ void compute_cell(float4 const* g_part, uint* g_cell)
 {
-    const T r = unpack(g_part[GTID]);
-
+    float3 r = unpack(g_part[GTID]);
     //
     // Mapping the positional coordinates of a particle to its corresponding
     // cell index is the most delicate part of the cell lists update.
@@ -341,13 +372,15 @@ __global__ void compute_cell(U const* g_part, uint* g_cell)
     // half-open unit interval [0.0, 1.0) and multiply with the number
     // of cells per dimension afterwards.
     //
-    const T cell = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
+    r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
+    g_cell[GTID] = uint(r.x) + ncell * (uint(r.y) + ncell * uint(r.z));
+}
 
-#ifdef DIM_3D
-    g_cell[GTID] = uint(cell.x) + ncell * (uint(cell.y) + ncell * uint(cell.z));
-#else
-    g_cell[GTID] = uint(cell.x) + ncell * uint(cell.y);
-#endif
+__global__ void compute_cell(float2 const* g_part, uint* g_cell)
+{
+    float2 r = unpack(g_part[GTID]);
+    r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
+    g_cell[GTID] = uint(r.x) + ncell * uint(r.y);
 }
 
 /**
@@ -407,11 +440,11 @@ __global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int
     // permutation index
     const uint j = g_idx[GTID];
     // permute particle phase space coordinates
-    g_or[GTID] = tex1Dfetch(t_r, j);
-    g_oR[GTID] = tex1Dfetch(t_R, j);
-    g_ov[GTID] = tex1Dfetch(t_v, j);
+    g_or[GTID] = tex1Dfetch(texref<U>::r, j);
+    g_oR[GTID] = tex1Dfetch(texref<U>::R, j);
+    g_ov[GTID] = tex1Dfetch(texref<U>::v, j);
     // permute particle tracking number
-    g_otag[GTID] = tex1Dfetch(t_tag, j);
+    g_otag[GTID] = tex1Dfetch(texref<U>::tag, j);
 }
 
 
@@ -423,30 +456,41 @@ cuda::symbol<unsigned int> nbl_size(::nbl_size);
 cuda::symbol<unsigned int> nbl_stride(::nbl_stride);
 cuda::symbol<float> r_cell(::r_cell);
 cuda::symbol<float> rr_cell(::rr_cell);
-cuda::texture<int> tag(::t_tag);
 
-#ifdef DIM_3D
-cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(::mdstep<float3>);
-cuda::function<void (float4 const*, float*)> maximum_velocity(::maximum_velocity<float3>);
-cuda::function<void (int const*, int*)> update_neighbours(::update_neighbours<CELL_SIZE, float3>);
-cuda::function<void (float4 const*, uint*)> compute_cell(::compute_cell<float3>);
-cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles(::order_particles);
-cuda::texture<float4> r(::t_r);
-cuda::texture<float4> R(::t_R);
-cuda::texture<float4> v(::t_v);
-#else
-cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(::mdstep<float2>);
-cuda::function<void (float2 const*, float*)> maximum_velocity(::maximum_velocity<float2>);
-cuda::function<void (int const*, int*)> update_neighbours(::update_neighbours<CELL_SIZE, float2>);
-cuda::function<void (float2 const*, uint*)> compute_cell(::compute_cell<float2>);
-cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles(::order_particles);
-cuda::texture<float2> r(::t_r);
-cuda::texture<float2> R(::t_R);
-cuda::texture<float2> v(::t_v);
-#endif
+cuda::texture<float4> texref<float4>::r(::texref<float4>::r);
+cuda::texture<float4> texref<float4>::R(::texref<float4>::R);
+cuda::texture<float4> texref<float4>::v(::texref<float4>::v);
+cuda::texture<int> texref<float4>::tag(::texref<float4>::tag);
 
+cuda::texture<float2> texref<float2>::r(::texref<float2>::r);
+cuda::texture<float2> texref<float2>::R(::texref<float2>::R);
+cuda::texture<float2> texref<float2>::v(::texref<float2>::v);
+cuda::texture<int> texref<float2>::tag(::texref<float2>::tag);
+
+cuda::function<
+    void (float4 const*, float4*, float4*, int const*, float*, float*),
+    void (float2 const*, float2*, float2*, int const*, float*, float*)
+    > mdstep(::mdstep<float3, dfloat3>, ::mdstep<float2, dfloat2>);
+cuda::function<
+    void (float4 const*, float*),
+    void (float2 const*, float*)
+    > maximum_velocity(::maximum_velocity<float3>, ::maximum_velocity<float2>);
+cuda::function<
+    void (int const*, int*, float4*),
+    void (int const*, int*, float2*)
+    > update_neighbours(::update_neighbours<CELL_SIZE>, ::update_neighbours<CELL_SIZE>);
+cuda::function<
+    void (float4 const*, uint*),
+    void (float2 const*, uint*)
+    > compute_cell(::compute_cell, ::compute_cell);
+cuda::function<
+    void (const int*, float4*, float4*, float4*, int*),
+    void (const int*, float2*, float2*, float2*, int*)
+    > order_particles(::order_particles, ::order_particles);
 cuda::function<void (int*)> init_tags(::init_tags);
-cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells(::assign_cells<CELL_SIZE>);
+cuda::function<
+    void (uint const*, int const*, int const*, int*)
+    > assign_cells(::assign_cells<CELL_SIZE>);
 cuda::function<void (uint*, int*)> find_cell_offset(::find_cell_offset);
 cuda::function<void (int*)> gen_index(::gen_index);
 

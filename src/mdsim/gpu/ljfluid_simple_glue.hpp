@@ -25,11 +25,10 @@
 namespace mdsim { namespace gpu { namespace ljfluid_gpu_simple
 {
 
-#ifdef DIM_3D
-extern cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
-#else
-extern cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
-#endif
+extern cuda::function<
+    void (float2*, float2*, float2*, float*, float*),
+    void (float4*, float4*, float4*, float*, float*)
+    > mdstep;
 
 }}} // namespace mdsim::gpu::ljfluid
 

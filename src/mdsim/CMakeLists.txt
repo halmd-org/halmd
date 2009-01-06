@@ -34,16 +34,16 @@ FOREACH(dim RANGE 2 3)
       )
     IF(ljfluid_VARIANT_NEIGHBOUR)
       TARGET_LINK_LIBRARIES(ljfluid${dim}d
-	ljfluid${dim}d_nbr_gpu
-	hilbert${dim}d_gpu
+	ljfluid_nbr_gpu
+	hilbert_gpu
 	)
     ELSEIF(ljfluid_VARIANT_CELL)
       TARGET_LINK_LIBRARIES(ljfluid${dim}d
-	ljfluid${dim}d_cell_gpu
+	ljfluid_cell_gpu
 	)
     ELSE(ljfluid_VARIANT_NEIGHBOUR)
       TARGET_LINK_LIBRARIES(ljfluid${dim}d
-	ljfluid${dim}d_simple_gpu
+	ljfluid_simple_gpu
 	)
     ENDIF(ljfluid_VARIANT_NEIGHBOUR)
   ELSE(ljfluid_VARIANT_CUDA)

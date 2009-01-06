@@ -222,40 +222,41 @@ __global__ void potential_energy_sum(float const* g_en, float2* g_en_sum)
 /**
  * place particles on a face centered cubic lattice (fcc)
  */
-template <typename T, typename U>
-__global__ void lattice(U* g_r, unsigned int n)
+__global__ void lattice(float4* g_r, unsigned int n)
 {
-    T r;
-#ifdef DIM_3D
+    float3 r;
     // compose primitive vectors from 1-dimensional index
     r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.f;
     r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.f;
     r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.f;
-#else
-    // compose primitive vectors from 1-dimensional index
+    g_r[GTID] = pack(r * (box / n));
+}
+
+__global__ void lattice(float2* g_r, unsigned int n)
+{
+    float2 r;
     r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
     r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.f;
-#endif
-
     g_r[GTID] = pack(r * (box / n));
 }
 
 /**
  * place particles on a simple cubic lattice (scc)
  */
-template <typename T, typename U>
-__global__ void lattice_simple(U* g_r, unsigned int n)
+__global__ void lattice_simple(float4* g_r, unsigned int n)
 {
-    T r;
-#ifdef DIM_3D
+    float3 r;
     r.x = (GTID % n) + 0.5f;
     r.y = (GTID / n % n) + 0.5f;
     r.z = (GTID / n / n) + 0.5f;
-#else
+    g_r[GTID] = pack(r * (box / n));
+}
+
+__global__ void lattice_simple(float2* g_r, unsigned int n)
+{
+    float2 r;
     r.x = (GTID % n) + 0.5f;
     r.y = (GTID / n) + 0.5f;
-#endif
-
     g_r[GTID] = pack(r * (box / n));
 }
 
@@ -269,21 +270,26 @@ cuda::symbol<float> timestep(::timestep);
 cuda::symbol<float> r_cut(::r_cut);
 cuda::symbol<float> rr_cut(::rr_cut);
 cuda::symbol<float> en_cut(::en_cut);
-
+cuda::function<
+    void (float2*, float2*, float2*, float2 const*),
+    void (float4*, float4*, float4*, float4 const*)
+    > inteq(::inteq<float2>, ::inteq<float3>);
+cuda::function<
+    void (float2*, unsigned int),
+    void (float4*, unsigned int)
+    > lattice(::lattice, ::lattice);
+cuda::function<
+    void (float2*, unsigned int),
+    void (float4*, unsigned int)
+    > lattice_simple(::lattice_simple, ::lattice_simple);
+cuda::function<
+    void (float const* g_en, float2* g_en_sum)
+    > potential_energy_sum(::potential_energy_sum);
 #ifdef USE_POTENTIAL_SMOOTHING
 cuda::symbol<float> rri_smooth(::rri_smooth);
-cuda::function <void (float3*, const float2)> sample_smooth_function(sample_smooth_function);
+cuda::function <
+    void (float3*, const float2)
+    > sample_smooth_function(sample_smooth_function);
 #endif
-
-#ifdef DIM_3D
-cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq(::inteq<float3>);
-cuda::function<void (float4*, unsigned int)> lattice(::lattice<float3>);
-cuda::function<void (float4*, unsigned int)> lattice_simple(::lattice_simple<float3>);
-#else /* DIM_3D */
-cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq(::inteq<float2>);
-cuda::function<void (float2*, unsigned int)> lattice(::lattice<float2>);
-cuda::function<void (float2*, unsigned int)> lattice_simple(::lattice_simple<float2>);
-#endif /* DIM_3D */
-cuda::function<void (float const* g_en, float2* g_en_sum)> potential_energy_sum(::potential_energy_sum);
 
 }}} // namespace mdsim::gpu::ljfluid

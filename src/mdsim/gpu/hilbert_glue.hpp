@@ -24,14 +24,12 @@
 namespace mdsim { namespace gpu { namespace hilbert
 {
 
-#ifdef DIM_3D
-extern cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode;
-#else
-extern cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode;
-#endif
-
 extern cuda::symbol<float> box;
 extern cuda::symbol<unsigned int> sfc_level;
+extern cuda::function<
+    void (float4 const*, unsigned int*),
+    void (float2 const*, unsigned int*)
+    > sfc_hilbert_encode;
 
 }}} // namespace mdsim::gpu::hilbert
 

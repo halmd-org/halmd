@@ -27,7 +27,7 @@
 /**
  * MD simulation step
  */
-template <typename T, typename U>
+template <typename T, typename TT, typename U>
 __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 {
     extern __shared__ T s_r[];
@@ -40,12 +40,8 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
     float en = 0;
     // virial equation sum contribution
     float virial = 0;
-
-#ifdef DIM_3D
-    dfloat3 f(make_float3(0, 0, 0));
-#else
-    dfloat2 f(make_float2(0, 0));
-#endif
+    // force sum
+    TT f = 0;
 
     // iterate over all blocks
     for (unsigned int k = 0; k < gridDim.x; k++) {
@@ -82,10 +78,9 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 namespace mdsim { namespace gpu { namespace ljfluid_gpu_simple
 {
 
-#ifdef DIM_3D
-cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep(::mdstep<float3>);
-#else
-cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep(::mdstep<float2>);
-#endif
+cuda::function<
+    void (float2*, float2*, float2*, float*, float*),
+    void (float4*, float4*, float4*, float*, float*)
+    > mdstep(::mdstep<float2, dfloat2>, ::mdstep<float3, dfloat3>);
 
 }}} // namespace mdsim::gpu::ljfluid

@@ -33,8 +33,7 @@ static __constant__ unsigned int ncell;
 /**
  * determine cell index for a particle
  */
-template <typename T>
-__device__ unsigned int compute_cell(T const& r)
+__device__ unsigned int compute_cell(float3 r)
 {
     //
     // Mapping the positional coordinates of a particle to its corresponding
@@ -46,35 +45,51 @@ __device__ unsigned int compute_cell(T const& r)
     // half-open unit interval [0.0, 1.0) and multiply with the number
     // of cells per dimension afterwards.
     //
-    const T cell = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
-#ifdef DIM_3D
-    return (uint(cell.z) * ncell + uint(cell.y)) * ncell + uint(cell.x);
-#else
-    return uint(cell.y) * ncell + uint(cell.x);
-#endif
+    r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
+    return (uint(r.z) * ncell + uint(r.y)) * ncell + uint(r.x);
+}
+
+__device__ unsigned int compute_cell(float2 r)
+{
+    r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
+    return uint(r.y) * ncell + uint(r.x);
 }
 
 /**
  * compute neighbour cell
  */
-template <typename I>
-__device__ unsigned int compute_neighbour_cell(I const& offset)
+__device__ unsigned int compute_neighbour_cell(int3 const& offset)
 {
-#ifdef DIM_3D
     // cell belonging to this execution block
-    I cell = make_int3(blockIdx.x % ncell, (blockIdx.x / ncell) % ncell, blockIdx.x / ncell / ncell);
+    int3 cell = make_int3(
+		       blockIdx.x % ncell,
+		       (blockIdx.x / ncell) % ncell,
+		       blockIdx.x / ncell / ncell
+		       );
     // neighbour cell of this cell
-    I neighbour = make_int3((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell, (cell.z + ncell + offset.z) % ncell);
+    int3 neighbour = make_int3(
+			    (cell.x + ncell + offset.x) % ncell,
+			    (cell.y + ncell + offset.y) % ncell,
+			    (cell.z + ncell + offset.z) % ncell
+			    );
 
     return (neighbour.z * ncell + neighbour.y) * ncell + neighbour.x;
-#else
+}
+
+__device__ unsigned int compute_neighbour_cell(int2 const& offset)
+{
     // cell belonging to this execution block
-    I cell = make_int2(blockIdx.x % ncell, blockIdx.x / ncell);
+    int2 cell = make_int2(
+		       blockIdx.x % ncell,
+		       blockIdx.x / ncell
+		       );
     // neighbour cell of this cell
-    I neighbour = make_int2((cell.x + ncell + offset.x) % ncell, (cell.y + ncell + offset.y) % ncell);
+    int2 neighbour = make_int2(
+			    (cell.x + ncell + offset.x) % ncell,
+			    (cell.y + ncell + offset.y) % ncell
+			    );
 
     return neighbour.y * ncell + neighbour.x;
-#endif
 }
 
 /**
@@ -110,14 +125,14 @@ __device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offse
 }
 
 /**
- * n-dimensional MD simulation step
+ * 3-dimensional MD simulation step
  */
-template <unsigned int block_size, typename T, typename U>
-__global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_en, float* g_virial)
+template <unsigned int block_size>
+__global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g_tag, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
-    T r = unpack(g_r[GTID]);
-    T v = unpack(g_v[GTID]);
+    float3 r = unpack(g_r[GTID]);
+    float3 v = unpack(g_v[GTID]);
     int tag = g_tag[GTID];
 
     // potential energy contribution
@@ -126,17 +141,9 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     float virial = 0;
 
 #ifdef USE_DSFUN
-# ifdef DIM_3D
     dfloat3 f(make_float3(0, 0, 0));
-# else
-    dfloat2 f(make_float2(0, 0));
-#  endif
 #else
-# ifdef DIM_3D
     float3 f(make_float3(0, 0, 0));
-# else
-    float2 f(make_float2(0, 0));
-# endif
 #endif
 
 #ifdef USE_CELL_SUMMATION_ORDER
@@ -174,7 +181,6 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     // opposite neighbour cell softens the velocity drift.
     //
 
-# ifdef DIM_3D
     // sum forces over this cell
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
     // sum forces over 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
@@ -204,7 +210,58 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1,  0), r, tag, f, en, virial);
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, -1), r, tag, f, en, virial);
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, +1), r, tag, f, en, virial);
-# else
+
+#else /* ! USE_CELL_SUMMATION_ORDER */
+    // visit 26 neighbour cells
+    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
+    for (int x = -1; x <= 1; ++x)
+	for (int y = -1; y <= 1; ++y)
+	    for (int z = -1; z <= 1; ++z)
+		if (x != 0 || y != 0 || z != 0)
+		    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(x,  y,  z), r, tag, f, en, virial);
+#endif /* USE_CELL_SUMMATION_ORDER */
+
+    // second leapfrog step as part of integration of equations of motion
+#ifdef USE_DSFUN
+    leapfrog_full_step(v, f.f0);
+#else
+    leapfrog_full_step(v, f);
+#endif
+
+    // store particle associated with this thread
+    g_v[GTID] = pack(v);
+#ifdef USE_DSFUN
+    g_f[GTID] = pack(f.f0);
+#else
+    g_f[GTID] = pack(f);
+#endif
+    g_en[GTID] = en;
+    g_virial[GTID] = virial;
+}
+
+/**
+ * 2-dimensional MD simulation step
+ */
+template <unsigned int block_size>
+__global__ void mdstep(float2 const* g_r, float2* g_v, float2* g_f, int const* g_tag, float* g_en, float* g_virial)
+{
+    // load particle associated with this thread
+    float2 r = unpack(g_r[GTID]);
+    float2 v = unpack(g_v[GTID]);
+    int tag = g_tag[GTID];
+
+    // potential energy contribution
+    float en = 0;
+    // virial equation sum contribution
+    float virial = 0;
+
+#ifdef USE_DSFUN
+    dfloat2 f(make_float2(0, 0));
+#else
+    float2 f(make_float2(0, 0));
+#endif
+
+#ifdef USE_CELL_SUMMATION_ORDER
     // sum forces over this cell
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
     // sum forces over 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
@@ -216,25 +273,14 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_tag, float* g_
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1,  0), r, tag, f, en, virial);
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, -1), r, tag, f, en, virial);
     compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, +1), r, tag, f, en, virial);
-# endif
-#else /* ! USE_CELL_SUMMATION_ORDER */
-# ifdef DIM_3D
-    // visit 26 neighbour cells
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
-    for (int x = -1; x <= 1; ++x)
-	for (int y = -1; y <= 1; ++y)
-	    for (int z = -1; z <= 1; ++z)
-		if (x != 0 || y != 0 || z != 0)
-		    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(x,  y,  z), r, tag, f, en, virial);
-# else
+#else
     compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
     // visit 8 neighbour cells
     for (int x = -1; x <= 1; ++x)
 	for (int y = -1; y <= 1; ++y)
 	    if (x != 0 || y != 0)
 		compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(x, y), r, tag, f, en, virial);
-# endif
-#endif /* USE_CELL_SUMMATION_ORDER */
+#endif
 
     // second leapfrog step as part of integration of equations of motion
 #ifdef USE_DSFUN
@@ -345,24 +391,9 @@ __device__ void examine_cell(I const& offset, U const* g_ir, U const* g_iR, U co
     __syncthreads();
 }
 
-/**
- * update cells
- */
-template <unsigned int cell_size, typename T, typename U>
-__global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int const* g_itag, U* g_or, U* g_oR, U* g_ov, int* g_otag)
+template <unsigned int cell_size>
+__device__ void examine_cells(float4 const* g_ir, float4 const* g_iR, float4 const* g_iv, int const* g_itag, float3* s_or, float3* s_oR, float3* s_ov, int* s_otag, unsigned int& n)
 {
-    __shared__ T s_or[cell_size];
-    __shared__ T s_oR[cell_size];
-    __shared__ T s_ov[cell_size];
-    __shared__ int s_otag[cell_size];
-    // number of particles in cell
-    unsigned int n = 0;
-
-    // mark all particles in cell as virtual particles
-    s_otag[threadIdx.x] = VIRTUAL_PARTICLE;
-    __syncthreads();
-
-#ifdef DIM_3D
     examine_cell<cell_size>(make_int3( 0,  0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
     // visit 26 neighbour cells
     examine_cell<cell_size>(make_int3(-1,  0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
@@ -391,7 +422,11 @@ __global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int co
     examine_cell<cell_size>(make_int3(-1, +1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
     examine_cell<cell_size>(make_int3(+1, -1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
     examine_cell<cell_size>(make_int3(+1, +1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-#else
+}
+
+template <unsigned int cell_size>
+__device__ void examine_cells(float2 const* g_ir, float2 const* g_iR, float2 const* g_iv, int const* g_itag, float2* s_or, float2* s_oR, float2* s_ov, int* s_otag, unsigned int& n)
+{
     examine_cell<cell_size>(make_int2( 0,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
     // visit 8 neighbour cells
     examine_cell<cell_size>(make_int2(-1,  0), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
@@ -402,7 +437,26 @@ __global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int co
     examine_cell<cell_size>(make_int2(-1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
     examine_cell<cell_size>(make_int2(+1, -1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
     examine_cell<cell_size>(make_int2(+1, +1), g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
-#endif
+}
+
+/**
+ * update cells
+ */
+template <unsigned int cell_size, typename T, typename U>
+__global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int const* g_itag, U* g_or, U* g_oR, U* g_ov, int* g_otag)
+{
+    __shared__ T s_or[cell_size];
+    __shared__ T s_oR[cell_size];
+    __shared__ T s_ov[cell_size];
+    __shared__ int s_otag[cell_size];
+    // number of particles in cell
+    unsigned int n = 0;
+
+    // mark all particles in cell as virtual particles
+    s_otag[threadIdx.x] = VIRTUAL_PARTICLE;
+    __syncthreads();
+
+    examine_cells<cell_size>(g_ir, g_iR, g_iv, g_itag, s_or, s_oR, s_ov, s_otag, n);
 
     // store cell in global device memory
     g_or[blockIdx.x * cell_size + threadIdx.x] = pack(s_or[threadIdx.x]);
@@ -417,14 +471,17 @@ namespace mdsim { namespace gpu { namespace ljfluid_gpu_cell
 
 cuda::symbol<unsigned int> ncell(::ncell);
 
-#ifdef DIM_3D
-cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep(::mdstep<CELL_SIZE, float3>);
-cuda::function<void (float4 const*, float4*, int*)> assign_cells(::assign_cells<CELL_SIZE, float3>);
-cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells(::update_cells<CELL_SIZE, float3>);
-#else
-cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep(::mdstep<CELL_SIZE, float2>);
-cuda::function<void (float2 const*, float2*, int*)> assign_cells(::assign_cells<CELL_SIZE, float2>);
-cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells(::update_cells<CELL_SIZE, float2>);
-#endif
+cuda::function<
+    void (float2 const*, float2*, float2*, int const*, float*, float*),
+    void (float4 const*, float4*, float4*, int const*, float*, float*)
+    > mdstep(::mdstep<CELL_SIZE>, ::mdstep<CELL_SIZE>);
+cuda::function<
+    void (float2 const*, float2*, int*),
+    void (float4 const*, float4*, int*)
+    > assign_cells(::assign_cells<CELL_SIZE, float2>, ::assign_cells<CELL_SIZE, float3>);
+cuda::function<
+    void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*),
+    void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)
+    > update_cells(::update_cells<CELL_SIZE, float2>, ::update_cells<CELL_SIZE, float3>);
 
 }}} // namespace mdsim::gpu::ljfluid

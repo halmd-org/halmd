@@ -39,15 +39,18 @@ namespace mdsim { namespace gpu { namespace ljfluid_gpu_cell
 
 extern cuda::symbol<unsigned int> ncell;
 
-#ifdef DIM_3D
-extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float4 const*, float4*, int*)> assign_cells;
-extern cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells;
-#else
-extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float2 const*, float2*, int*)> assign_cells;
-extern cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells;
-#endif
+extern cuda::function<
+    void (float2 const*, float2*, float2*, int const*, float*, float*),
+    void (float4 const*, float4*, float4*, int const*, float*, float*)
+    > mdstep;
+extern cuda::function<
+    void (float2 const*, float2*, int*),
+    void (float4 const*, float4*, int*)
+    > assign_cells;
+extern cuda::function<
+    void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*),
+    void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)
+    > update_cells;
 
 }}} // namespace mdsim::gpu::ljfluid
 

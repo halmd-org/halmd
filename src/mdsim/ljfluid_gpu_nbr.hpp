@@ -402,10 +402,10 @@ void ljfluid_gpu_impl_neighbour<dimension>::threads()
 
     // bind GPU textures to global device memory arrays
     try {
-	gpu::ljfluid_gpu_neighbour::r.bind(g_part.r);
-	gpu::ljfluid_gpu_neighbour::v.bind(g_part.v);
-	gpu::ljfluid_gpu_neighbour::R.bind(g_part.R);
-	gpu::ljfluid_gpu_neighbour::tag.bind(g_part.tag);
+	gpu::ljfluid_gpu_neighbour::texref<gpu_vector_type>::r.bind(g_part.r);
+	gpu::ljfluid_gpu_neighbour::texref<gpu_vector_type>::v.bind(g_part.v);
+	gpu::ljfluid_gpu_neighbour::texref<gpu_vector_type>::R.bind(g_part.R);
+	gpu::ljfluid_gpu_neighbour::texref<gpu_vector_type>::tag.bind(g_part.tag);
     }
     catch (cuda::error const&) {
 	throw exception("failed to bind GPU textures to global device memory arrays");
@@ -890,7 +890,7 @@ void ljfluid_gpu_impl_neighbour<dimension>::update_neighbours(cuda::stream& stre
     cuda::memset(g_nbl, 0xff);
     // build neighbour lists
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
-    gpu::ljfluid_gpu_neighbour::update_neighbours(g_cell, g_nbl);
+    gpu::ljfluid_gpu_neighbour::update_neighbours(g_cell, g_nbl, g_part.r);
 }
 
 #if defined(USE_HILBERT_ORDER)

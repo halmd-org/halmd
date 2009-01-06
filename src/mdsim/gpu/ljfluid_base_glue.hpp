@@ -30,22 +30,27 @@ extern cuda::symbol<float> timestep;
 extern cuda::symbol<float> r_cut;
 extern cuda::symbol<float> rr_cut;
 extern cuda::symbol<float> en_cut;
-
+extern cuda::function<
+    void (float2*, float2*, float2*, float2 const*),
+    void (float4*, float4*, float4*, float4 const*)
+    > inteq;
+extern cuda::function<
+    void (float2*, unsigned int),
+    void (float4*, unsigned int)
+    > lattice;
+extern cuda::function<
+    void (float2*, unsigned int),
+    void (float4*, unsigned int)
+    > lattice_simple;
+extern cuda::function<
+    void (float const* g_en, float2* g_en_sum)
+    > potential_energy_sum;
 #ifdef USE_POTENTIAL_SMOOTHING
 extern cuda::symbol<float> rri_smooth;
-extern cuda::function <void (float3*, const float2)> sample_smooth_function;
+extern cuda::function <
+    void (float3*, const float2)
+    > sample_smooth_function;
 #endif
-
-#ifdef DIM_3D
-extern cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
-extern cuda::function<void (float4*, unsigned int)> lattice;
-extern cuda::function<void (float4*, unsigned int)> lattice_simple;
-#else /* ! DIM_3D */
-extern cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
-extern cuda::function<void (float2*, unsigned int)> lattice;
-extern cuda::function<void (float2*, unsigned int)> lattice_simple;
-#endif /* ! DIM_3D */
-extern cuda::function<void (float const*, float2*)> potential_energy_sum;
 
 }}} // namespace mdsim::gpu::ljfluid
 

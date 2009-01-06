@@ -45,10 +45,9 @@ __device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
 }
 
 /**
- * map n-dimensional point to 1-dimensional point on Hilbert space curve
+ * map 3-dimensional point to 1-dimensional point on Hilbert space curve
  */
-template <typename T, typename U>
-__global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
+__global__ void sfc_hilbert_encode(float4 const* g_r, unsigned int* g_sfc)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
@@ -72,12 +71,10 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
     // Hilbert cells per dimension at deepest recursion level
     const uint n = 1UL << sfc_level;
     // fractional index of particle's Hilbert cell in [0, n)
-    const T cell = (__saturatef(unpack(g_r[GTID]) / box) * (1.f - FLT_EPSILON)) * n;
-
-#ifdef DIM_3D
+    const float3 cell = (__saturatef(unpack(g_r[GTID]) / box) * (1.f - FLT_EPSILON)) * n;
 
     // round particle position to center of cell in unit coordinates
-    T r = (floorf(cell) + make_float3(0.5f, 0.5f, 0.5f)) / n;
+    float3 r = (floorf(cell) + make_float3(0.5f, 0.5f, 0.5f)) / n;
     // use symmetric coordinates
     r -= make_float3(0.5f, 0.5f, 0.5f);
 
@@ -136,10 +133,23 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	hcode = (hcode << 3) + v;
     }
 
-#else /* ! DIM_3D */
+#undef MASK
+
+    // store Hilbert code for particle
+    g_sfc[GTID] = hcode;
+}
+
+__global__ void sfc_hilbert_encode(float2 const* g_r, unsigned int* g_sfc)
+{
+    // Hilbert code for particle
+    unsigned int hcode = 0;
+    // Hilbert cells per dimension at deepest recursion level
+    const uint n = 1UL << sfc_level;
+    // fractional index of particle's Hilbert cell in [0, n)
+    const float2 cell = (__saturatef(unpack(g_r[GTID]) / box) * (1.f - FLT_EPSILON)) * n;
 
     // round particle position to center of cell in unit coordinates
-    T r = (floorf(cell) + make_float2(0.5f, 0.5f)) / n;
+    float2 r = (floorf(cell) + make_float2(0.5f, 0.5f)) / n;
     // use symmetric coordinates
     r -= make_float2(0.5f, 0.5f);
 
@@ -175,7 +185,6 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 	hcode = (hcode << 2) + v;
     }
 
-#endif /* DIM_3D */
 #undef MASK
 
     // store Hilbert code for particle
@@ -188,13 +197,11 @@ __global__ void sfc_hilbert_encode(U const* g_r, unsigned int* g_sfc)
 namespace mdsim { namespace gpu { namespace hilbert
 {
 
-#ifdef DIM_3D
-cuda::function<void (float4 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float3>);
-#else
-cuda::function<void (float2 const*, unsigned int*)> sfc_hilbert_encode(mdsim::sfc_hilbert_encode<float2>);
-#endif
-
 cuda::symbol<float> box(mdsim::box);
 cuda::symbol<unsigned int> sfc_level(mdsim::sfc_level);
+cuda::function<
+    void (float4 const*, unsigned int*),
+    void (float2 const*, unsigned int*)
+    > sfc_hilbert_encode(mdsim::sfc_hilbert_encode, mdsim::sfc_hilbert_encode);
 
 }}} // namespace mdsim::gpu::hilbert
