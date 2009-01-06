@@ -32,6 +32,7 @@
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/multi_array.hpp>
+#include <boost/ref.hpp>
 #include <cmath>
 #include <iostream>
 #include <list>
@@ -65,7 +66,7 @@ public:
 	/** particle force */
 	vector_type f;
 	/** particle neighbours list */
-	std::vector<particle*> neighbour;
+	std::vector<boost::reference_wrapper<particle> > neighbour;
 
 	particle(vector_type const& r, int n) : r(r), n(n) {}
 	particle(vector_type const& r, vector_type const& v, int n) : r(r), v(v), n(n) {}
@@ -576,15 +577,15 @@ out:
  */
 template <int dimension>
 template <bool same_cell>
-void ljfluid_host<dimension>::compute_cell_neighbours(particle& p, cell_list& c)
+void ljfluid_host<dimension>::compute_cell_neighbours(particle& p1, cell_list& c)
 {
-    BOOST_FOREACH(particle& pp, c) {
+    BOOST_FOREACH(particle& p2, c) {
 	// skip identical particle and particle pair permutations if same cell
-	if (same_cell && pp.n <= p.n)
+	if (same_cell && p2.n <= p1.n)
 	    continue;
 
 	// particle distance vector
-	vector_type r = p.r - pp.r;
+	vector_type r = p1.r - p2.r;
 	// enforce periodic boundary conditions
 	r -= round(r / box_) * box_;
 	// squared particle distance
@@ -595,7 +596,7 @@ void ljfluid_host<dimension>::compute_cell_neighbours(particle& p, cell_list& c)
 	    continue;
 
 	// add particle to neighbour list
-	p.neighbour.push_back(&pp);
+	p1.neighbour.push_back(boost::ref(p2));
     }
 }
 
@@ -619,11 +620,11 @@ void ljfluid_host<dimension>::compute_forces()
 
     // iterate over all particles
     for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	BOOST_FOREACH(particle& p, *it) {
+	BOOST_FOREACH(particle& p1, *it) {
 	    // calculate pairwise Lennard-Jones force with neighbour particles
-	    BOOST_FOREACH(particle* pp, p.neighbour) {
+	    BOOST_FOREACH(particle& p2, p1.neighbour) {
 		// particle distance vector
-		vector_type r = p.r - pp->r;
+		vector_type r = p1.r - p2.r;
 		// enforce periodic boundary conditions
 		r -= round(r / box_) * box_;
 		// squared particle distance
@@ -639,8 +640,8 @@ void ljfluid_host<dimension>::compute_forces()
 		double fval = 48. * rri * r6i * (r6i - 0.5);
 
 		// add force contribution to both particles
-		p.f += r * fval;
-		pp->f -= r * fval;
+		p1.f += r * fval;
+		p2.f -= r * fval;
 
 		// add contribution to potential energy
 		m_sample.en_pot += 4. * r6i * (r6i - 1.) - en_cut;
