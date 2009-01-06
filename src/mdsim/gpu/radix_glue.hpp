@@ -35,19 +35,16 @@ enum {
     BUCKETS_PER_THREAD = BUCKET_SIZE / HALF_WARP_SIZE,
 };
 
-extern cuda::function<void (uint const*, uint*, const uint, const uint)> histogram_keys;
+extern cuda::function<
+    void (uint const*, uint*, const uint, const uint)
+    > histogram_keys;
 
-template <typename T>
-struct __permute
-{
-    static cuda::function<void (uint const*, uint*, T const*, T*, uint const*, const uint, const uint)> ref;
-};
-
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-inline void permute(T0 const& t0, T1& t1, T2 const& t2, T3& t3, T4 const& t4, T5 const& t5, T6 const& t6)
-{
-    __permute<typename T3::value_type>::ref(t0, t1, t2, t3, t4, t5, t6);
-}
+extern cuda::function<
+    void (uint const*, uint*, uint const*, uint*, uint const*, const uint, const uint),
+    void (uint const*, uint*, int const*, int*, uint const*, const uint, const uint),
+    void (uint const*, uint*, float2 const*, float2*, uint const*, const uint, const uint),
+    void (uint const*, uint*, float4 const*, float4*, uint const*, const uint, const uint)
+    > permute;
 
 }}} // namespace mdsim::gpu::radix
 

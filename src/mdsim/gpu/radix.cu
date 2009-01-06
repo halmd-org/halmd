@@ -166,11 +166,15 @@ __global__ void permute(uint const* g_in, uint* g_out, T const* g_data_in, T* g_
 namespace mdsim { namespace gpu { namespace radix
 {
 
-cuda::function<void (uint const*, uint*, const uint, const uint)> histogram_keys(mdsim::histogram_keys);
+cuda::function<
+    void (uint const*, uint*, const uint, const uint)
+    > histogram_keys(mdsim::histogram_keys);
 
-cuda::function<void (uint const*, uint*, uint const*, uint*, uint const*, const uint, const uint)> __permute<uint>::ref(mdsim::permute);
-cuda::function<void (uint const*, uint*, int const*, int*, uint const*, const uint, const uint)> __permute<int>::ref(mdsim::permute);
-cuda::function<void (uint const*, uint*, float2 const*, float2*, uint const*, const uint, const uint)> __permute<float2>::ref(mdsim::permute);
-cuda::function<void (uint const*, uint*, float4 const*, float4*, uint const*, const uint, const uint)> __permute<float4>::ref(mdsim::permute);
+cuda::function<
+    void (uint const*, uint*, uint const*, uint*, uint const*, const uint, const uint),
+    void (uint const*, uint*, int const*, int*, uint const*, const uint, const uint),
+    void (uint const*, uint*, float2 const*, float2*, uint const*, const uint, const uint),
+    void (uint const*, uint*, float4 const*, float4*, uint const*, const uint, const uint)
+    > permute(mdsim::permute, mdsim::permute, mdsim::permute, mdsim::permute);
 
 }}} // namespace mdsim::gpu::radix
