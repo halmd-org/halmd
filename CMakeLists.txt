@@ -1,90 +1,91 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+cmake_minimum_required(VERSION 2.6)
 
-PROJECT(ljfluid)
+project(ljgpu)
 
-SET(CMAKE_MODULE_PATH ${ljfluid_SOURCE_DIR}/CMakeModules)
+set(CMAKE_MODULE_PATH ${ljgpu_SOURCE_DIR}/CMakeModules)
 
-SET(GIT_FIND_REQUIRED TRUE)
-FIND_PACKAGE(Git)
+set(GIT_FIND_REQUIRED TRUE)
+find_package(Git)
 
-GIT_REPOSITORY_INFO(${ljfluid_SOURCE_DIR} ljfluid)
+git_repository_info(${ljgpu_SOURCE_DIR} ljgpu)
 
-SET(PROGRAM_NAME "ljfluid")
+set(PROGRAM_NAME "ljgpu")
 
-IF(ljfluid_GIT_VERSION)
-  STRING(REGEX MATCH "v[0-9].*" PROGRAM_VERSION "${ljfluid_GIT_VERSION}")
-  IF(NOT PROGRAM_VERSION)
-    SET(PROGRAM_VERSION "(commit ${ljfluid_GIT_COMMIT})")
-  ENDIF(NOT PROGRAM_VERSION)
-ELSE(ljfluid_GIT_VERSION)
-  SET(PROGRAM_VERSION "(devel)")
-ENDIF(ljfluid_GIT_VERSION)
+if(ljgpu_GIT_VERSION)
+  string(REGEX MATCH "v[0-9].*" PROGRAM_VERSION "${ljgpu_GIT_VERSION}")
+  if(NOT PROGRAM_VERSION)
+    set(PROGRAM_VERSION "(commit ${ljgpu_GIT_COMMIT})")
+  endif(NOT PROGRAM_VERSION)
+else(ljgpu_GIT_VERSION)
+  set(PROGRAM_VERSION "(devel)")
+endif(ljgpu_GIT_VERSION)
 
-IF(ljfluid_GIT_AUTHOR_DATE)
-  SET(PROGRAM_DATE "${ljfluid_GIT_AUTHOR_DATE}")
-ELSE(ljfluid_GIT_AUTHOR_DATE)
-  SET(PROGRAM_DATE "unknown date")
-ENDIF(ljfluid_GIT_AUTHOR_DATE)
+if(ljgpu_GIT_AUTHOR_DATE)
+  set(PROGRAM_DATE "${ljgpu_GIT_AUTHOR_DATE}")
+else(ljgpu_GIT_AUTHOR_DATE)
+  set(PROGRAM_DATE "unknown date")
+endif(ljgpu_GIT_AUTHOR_DATE)
 
 
-SET(GSL_FIND_REQUIRED TRUE)
-SET(GSL_FIND_QUIETLY TRUE)
-FIND_PACKAGE(GSL)
+set(GSL_FIND_REQUIRED TRUE)
+set(GSL_FIND_QUIETLY TRUE)
+find_package(GSL)
 
-SET(Boost_FIND_REQUIRED TRUE)
-SET(Boost_FIND_QUIETLY TRUE)
-FIND_PACKAGE(Boost COMPONENTS filesystem date_time program_options)
+set(Boost_FIND_REQUIRED TRUE)
+set(Boost_FIND_QUIETLY TRUE)
+find_package(Boost COMPONENTS filesystem date_time program_options)
 
-ENABLE_LANGUAGE(CUDA)
+enable_language(CUDA)
 
-SET(CUDA_FIND_REQUIRED TRUE)
-SET(CUDA_FIND_QUIETLY TRUE)
-FIND_PACKAGE(CUDA)
+set(CUDA_FIND_REQUIRED TRUE)
+set(CUDA_FIND_QUIETLY TRUE)
+find_package(CUDA)
 
-SET(HDF5_FIND_REQUIRED TRUE)
-SET(HDF5_FIND_QUIETLY TRUE)
-FIND_PACKAGE(HDF5)
+set(HDF5_FIND_REQUIRED TRUE)
+set(HDF5_FIND_QUIETLY TRUE)
+find_package(HDF5)
 
 # Add program variant compile flags to cmake GUI
-SET(ljfluid_VARIANT_CUDA TRUE CACHE BOOL
+set(ljgpu_VARIANT_CUDA TRUE CACHE BOOL
   "Use CUDA")
-SET(ljfluid_VARIANT_CELL FALSE CACHE BOOL
+set(ljgpu_VARIANT_CELL FALSE CACHE BOOL
   "Use fixed-size cell lists")
-SET(ljfluid_VARIANT_CELL_SUMMATION_ORDER FALSE CACHE BOOL
+set(ljgpu_VARIANT_CELL_SUMMATION_ORDER FALSE CACHE BOOL
   "Use opposite cell summation order")
-SET(ljfluid_VARIANT_DSFUN FALSE CACHE BOOL
+set(ljgpu_VARIANT_DSFUN FALSE CACHE BOOL
   "Use double-single precision functions")
-SET(ljfluid_VARIANT_NEIGHBOUR TRUE CACHE BOOL
+set(ljgpu_VARIANT_NEIGHBOUR TRUE CACHE BOOL
   "Use Verlet neighbour lists")
-SET(ljfluid_VARIANT_HILBERT TRUE CACHE BOOL
+set(ljgpu_VARIANT_HILBERT TRUE CACHE BOOL
   "Use Hilbert space-filling curve particle ordering")
-SET(ljfluid_VARIANT_C2POT FALSE CACHE BOOL
+set(ljgpu_VARIANT_C2POT FALSE CACHE BOOL
   "Use C2 potential smoothing")
 
-IF(ljfluid_VARIANT_CUDA)
-  ADD_DEFINITIONS(-DUSE_CUDA)
-  IF(ljfluid_VARIANT_NEIGHBOUR)
-    ADD_DEFINITIONS(-DUSE_NEIGHBOUR)
-    IF(ljfluid_VARIANT_HILBERT)
-      ADD_DEFINITIONS(-DUSE_HILBERT_ORDER)
-    ENDIF(ljfluid_VARIANT_HILBERT)
-  ELSE(ljfluid_VARIANT_NEIGHBOUR)
-    IF(ljfluid_VARIANT_CELL)
-      ADD_DEFINITIONS(-DUSE_CELL)
-      IF(ljfluid_VARIANT_CELL_SUMMATION_ORDER)
-	ADD_DEFINITIONS(-DUSE_CELL_SUMMATION_ORDER)
-      ENDIF(ljfluid_VARIANT_CELL_SUMMATION_ORDER)
-      IF(ljfluid_VARIANT_DSFUN)
-	ADD_DEFINITIONS(-DUSE_DSFUN)
-      ENDIF(ljfluid_VARIANT_DSFUN)
-    ENDIF(ljfluid_VARIANT_CELL)
-  ENDIF(ljfluid_VARIANT_NEIGHBOUR)
-ENDIF(ljfluid_VARIANT_CUDA)
-IF(ljfluid_VARIANT_C2POT)
-  ADD_DEFINITIONS(-DUSE_POTENTIAL_SMOOTHING)
-ENDIF(ljfluid_VARIANT_C2POT)
+if(ljgpu_VARIANT_CUDA)
+  add_definitions(-DUSE_CUDA)
+  if(ljgpu_VARIANT_NEIGHBOUR)
+    add_definitions(-DUSE_NEIGHBOUR)
+    if(ljgpu_VARIANT_HILBERT)
+      add_definitions(-DUSE_HILBERT_ORDER)
+    endif(ljgpu_VARIANT_HILBERT)
+  else(ljgpu_VARIANT_NEIGHBOUR)
+    if(ljgpu_VARIANT_CELL)
+      add_definitions(-DUSE_CELL)
+      if(ljgpu_VARIANT_CELL_SUMMATION_ORDER)
+	add_definitions(-DUSE_CELL_SUMMATION_ORDER)
+      endif(ljgpu_VARIANT_CELL_SUMMATION_ORDER)
+      if(ljgpu_VARIANT_DSFUN)
+	add_definitions(-DUSE_DSFUN)
+      endif(ljgpu_VARIANT_DSFUN)
+    endif(ljgpu_VARIANT_CELL)
+  endif(ljgpu_VARIANT_NEIGHBOUR)
+endif(ljgpu_VARIANT_CUDA)
+if(ljgpu_VARIANT_C2POT)
+  add_definitions(-DUSE_POTENTIAL_SMOOTHING)
+endif(ljgpu_VARIANT_C2POT)
 
-INCLUDE_DIRECTORIES(${ljfluid_SOURCE_DIR}/include)
+include_directories(${ljgpu_SOURCE_DIR}/include)
+include_directories(${ljgpu_SOURCE_DIR}/src)
 
-ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(test)
+add_subdirectory(src)
+add_subdirectory(test)

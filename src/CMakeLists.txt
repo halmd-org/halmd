@@ -1,2 +1,2 @@
-ADD_SUBDIRECTORY(mdsim)
-ADD_SUBDIRECTORY(util)
+add_subdirectory(ljgpu)
+add_subdirectory(util)

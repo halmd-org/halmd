@@ -1,12 +1,12 @@
-ADD_EXECUTABLE(nvlock nvlock.c)
-TARGET_LINK_LIBRARIES(nvlock
+add_executable(nvlock nvlock.c)
+target_link_libraries(nvlock
   ${CUDA_LIBRARY}
   )
-ADD_EXECUTABLE(cumem cumem.c)
-TARGET_LINK_LIBRARIES(cumem
+add_executable(cumem cumem.c)
+target_link_libraries(cumem
   ${CUDA_LIBRARY}
   )
 
-INSTALL(TARGETS nvlock
+install(TARGETS nvlock
   RUNTIME DESTINATION bin
   )

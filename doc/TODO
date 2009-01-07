@@ -1,5 +1,5 @@
-ljfluid TODO
-============
+ljgpu TODO
+==========
 
 - add host conversion functions for double-single types
 - add accumulator traits with optimal accumuator types (e.g. double for float)
