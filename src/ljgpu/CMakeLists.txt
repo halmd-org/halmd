@@ -1,8 +1,8 @@
-if(ljgpu_VARIANT_CUDA)
-  add_subdirectory(gpu)
-endif(ljgpu_VARIANT_CUDA)
-
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+add_subdirectory(algorithm)
+add_subdirectory(mdsim)
+add_subdirectory(rng)
+add_subdirectory(sample)
+add_subdirectory(util)
 
 # Generate version header file
 configure_file(
@@ -13,37 +13,34 @@ configure_file(
 
 foreach(dim RANGE 2 3)
   add_executable(ljgpu${dim}d
-    H5param.cpp
-    H5xx.cpp
-    log.cpp
     main.cpp
     options.cpp
-    perf.cpp
     )
   target_link_libraries(ljgpu${dim}d
+    sample
+    util
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${HDF5_CPP_LIBRARY}
     )
   if(ljgpu_VARIANT_CUDA)
     target_link_libraries(ljgpu${dim}d
-      rand48_gpu
-      scan_gpu
-      radix_gpu
+      gpu_rand48
       ${CUDA_LIBRARIES}
       )
     if(ljgpu_VARIANT_NEIGHBOUR)
       target_link_libraries(ljgpu${dim}d
-	ljfluid_nbr_gpu
-	hilbert_gpu
+	gpu_hilbert
+	gpu_ljfluid_nbr
+	gpu_radix_sort
 	)
     elseif(ljgpu_VARIANT_CELL)
       target_link_libraries(ljgpu${dim}d
-	ljfluid_cell_gpu
+	gpu_ljfluid_cell
 	)
     else(ljgpu_VARIANT_NEIGHBOUR)
       target_link_libraries(ljgpu${dim}d
-	ljfluid_simple_gpu
+	gpu_ljfluid_square
 	)
     endif(ljgpu_VARIANT_NEIGHBOUR)
   else(ljgpu_VARIANT_CUDA)

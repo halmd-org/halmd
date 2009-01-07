@@ -21,17 +21,17 @@
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <cmath>
-#include <gpu/scan_glue.hpp>
-#include <rand48.hpp>
 #include <iomanip>
 #include <iostream>
 #include <libgen.h>
+#include <ljgpu/rng/rand48.hpp>
+#include <ljgpu/util/timer.hpp>
 #include <stdexcept>
 #include <stdio.h>
-#include <timer.hpp>
 #include <vector>
+using namespace ljgpu;
+
 namespace po = boost::program_options;
-#define foreach BOOST_FOREACH
 
 #define PROGRAM_NAME basename(argv[0])
 
@@ -87,8 +87,6 @@ int main(int argc, char **argv)
     }
 
     try {
-	using namespace mdsim::gpu;
-
 	// set CUDA device
 	cuda::device::set(device);
 	// asynchroneous GPU operations
@@ -103,7 +101,7 @@ int main(int argc, char **argv)
 
 	// seed GPU random number generator
 	cuda::config dim(blocks, threads);
-	mdsim::rand48 rng(dim);
+	rand48 rng(dim);
 	start[0].record(stream);
 	rng.set(seed, stream);
 	stop[0].record(stream);
@@ -120,7 +118,7 @@ int main(int argc, char **argv)
 	// serial GNU C library rand48
 	std::vector<uint> h_array2(count);
 	srand48(seed);
-	mdsim::real_timer timer;
+	real_timer timer;
 	timer.start();
 	std::generate(h_array2.begin(), h_array2.end(), mrand48);
 	timer.stop();

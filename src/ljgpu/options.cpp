@@ -1,6 +1,6 @@
 /* Molecular Dynamics simulation program options
  *
- * Copyright (C) 2008  Peter Colberg
+ * Copyright © 2008-2009  Peter Colberg
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 #include <H5Cpp.h>
 #include <boost/filesystem.hpp>
-#include <iostream>
 #include <fstream>
-#include "H5xx.hpp"
-#include "date_time.hpp"
-#include "options.hpp"
-#include "version.h"
+#include <iostream>
+#include <ljgpu/options.hpp>
+#include <ljgpu/util/H5xx.hpp>
+#include <ljgpu/util/date_time.hpp>
+#include <ljgpu/version.h>
 namespace po = boost::program_options;
-
 
 namespace boost { namespace program_options
 {
@@ -214,8 +213,7 @@ void store(boost::any const& value, variable_value& vv) {
 
 }} // namespace boost::program_options
 
-
-namespace mdsim {
+namespace ljgpu {
 
 /**
  * parse program option values
@@ -423,4 +421,4 @@ void options::parse(int argc, char** argv)
     }
 }
 
-} // namespace mdsim
+} // namespace ljgpu

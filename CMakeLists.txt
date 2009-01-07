@@ -86,6 +86,7 @@ endif(ljgpu_VARIANT_C2POT)
 
 include_directories(${ljgpu_SOURCE_DIR}/include)
 include_directories(${ljgpu_SOURCE_DIR}/src)
+include_directories(${ljgpu_BINARY_DIR}/src)
 
 add_subdirectory(src)
 add_subdirectory(test)

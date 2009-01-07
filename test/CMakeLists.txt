@@ -1,23 +1,21 @@
 ENABLE_TESTING()
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/mdsim)
-
-IF(ljfluid_VARIANT_CUDA)
-  IF(ljfluid_VARIANT_C2POT)
+IF(ljgpu_VARIANT_CUDA)
+  IF(ljgpu_VARIANT_C2POT)
     ADD_EXECUTABLE(sample_smooth_function smooth.cpp)
     SET_TARGET_PROPERTIES(sample_smooth_function PROPERTIES
       COMPILE_FLAGS "-DDIM_3D"
       )
     TARGET_LINK_LIBRARIES(sample_smooth_function
-      ljfluid3d_base_gpu
+      gpu_ljfluid_square
       ${Boost_PROGRAM_OPTIONS_LIBRARY}
       ${CUDA_LIBRARIES}
       )
-  ENDIF(ljfluid_VARIANT_C2POT)
+  ENDIF(ljgpu_VARIANT_C2POT)
 
   ADD_EXECUTABLE(parallel_scan scan.cpp)
   TARGET_LINK_LIBRARIES(parallel_scan
-    scan_gpu
+    gpu_prefix_sum
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CUDA_LIBRARIES}
     )
@@ -27,9 +25,8 @@ IF(ljfluid_VARIANT_CUDA)
 
   ADD_EXECUTABLE(parallel_radix_sort radix.cpp)
   TARGET_LINK_LIBRARIES(parallel_radix_sort
-    radix_gpu
-    scan_gpu
-    rand48_gpu
+    gpu_radix_sort
+    gpu_rand48
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CUDA_LIBRARIES}
     )
@@ -40,11 +37,10 @@ IF(ljfluid_VARIANT_CUDA)
       COMPILE_FLAGS "-DDIM_${dim}D"
       )
     TARGET_LINK_LIBRARIES(hilbert_curve_sort${dim}d
-      hilbert${dim}d_gpu
-      ljfluid${dim}d_nbr_gpu
-      radix_gpu
-      scan_gpu
-      rand48_gpu
+      gpu_hilbert
+      gpu_ljfluid_square
+      gpu_radix_sort
+      gpu_rand48
       ${Boost_PROGRAM_OPTIONS_LIBRARY}
       ${CUDA_LIBRARIES}
       )
@@ -52,9 +48,8 @@ IF(ljfluid_VARIANT_CUDA)
 
   ADD_EXECUTABLE(rand48_test rand48.cpp)
   TARGET_LINK_LIBRARIES(rand48_test
-    rand48_gpu
-    scan_gpu
+    gpu_rand48
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CUDA_LIBRARIES}
     )
-ENDIF(ljfluid_VARIANT_CUDA)
+ENDIF(ljgpu_VARIANT_CUDA)

@@ -1,6 +1,6 @@
 /* version.h
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright © 2007-2009  Peter Colberg
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,6 +73,6 @@
 #define PROGRAM_DATE		"@PROGRAM_DATE@"
 #define PROGRAM_BUILT		__DATE__ " " __TIME__
 #define PROGRAM_AUTHOR		"Peter Colberg <peter.colberg@physik.uni-muenchen.de>"
-#define PROGRAM_COPYRIGHT	"Copyright © 2007-2008  " PROGRAM_AUTHOR
+#define PROGRAM_COPYRIGHT	"Copyright © 2007-2009  " PROGRAM_AUTHOR
 
 #endif /* !MDSIM_VERSION_H */

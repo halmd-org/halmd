@@ -25,16 +25,15 @@
 #include <iomanip>
 #include <iostream>
 #include <libgen.h>
+#include <ljgpu/algorithm/radix_sort.hpp>
+#include <ljgpu/rng/rand48.hpp>
+#include <ljgpu/util/timer.hpp>
 #include <stdexcept>
 #include <stdio.h>
 #include <vector>
-
-#include <radix.hpp>
-#include <rand48.hpp>
-#include <timer.hpp>
+using namespace ljgpu;
 
 namespace po = boost::program_options;
-#define foreach BOOST_FOREACH
 
 #define PROGRAM_NAME basename(argv[0])
 
@@ -87,8 +86,6 @@ int main(int argc, char **argv)
     }
 
     try {
-	using namespace mdsim::gpu;
-
 	// set CUDA device
 	cuda::device::set(device);
 	// asynchroneous GPU operations
@@ -99,14 +96,14 @@ int main(int argc, char **argv)
 	cuda::vector<uint> g_array(count);
 	cuda::host::vector<uint> h_array(count);
 	cuda::config dim((count + threads - 1) / threads, threads);
-	mdsim::rand48 rng(dim);
+	rand48 rng(dim);
 	rng.set(seed, stream);
 	rng.get(g_array, stream);
 	cuda::copy(g_array, h_array, stream);
 	stream.synchronize();
 
 	// parallel radix sort
-	mdsim::radix_sort<uint> radix(count, blocks, threads);
+	radix_sort<uint> radix(count, blocks, threads);
 	cuda::vector<uint> g_dummy(count);
 	cuda::host::vector<uint> h_array2(count);
 	start.record(stream);
@@ -116,11 +113,11 @@ int main(int argc, char **argv)
 
 	// serial radix sort
 	std::vector<uint> h_array3(count);
-	boost::array<std::deque<uint>, radix::BUCKET_SIZE> h_buckets;
+	boost::array<std::deque<uint>, gpu::radix_sort::BUCKET_SIZE> h_buckets;
 	std::copy(h_array.begin(), h_array.end(), h_array3.begin());
-	mdsim::real_timer timer;
+	real_timer timer;
 	timer.start();
-	for (uint r = 0; r < 32; r += radix::RADIX) {
+	for (uint r = 0; r < 32; r += gpu::radix_sort::RADIX) {
 	    for (uint i = 0; i < count; ++i) {
 		h_buckets[(h_array3[i] >> r) & 0xff].push_back(h_array3[i]);
 	    }

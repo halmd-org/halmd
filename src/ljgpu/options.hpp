@@ -1,6 +1,6 @@
 /* Molecular Dynamics simulation program options
  *
- * Copyright (C) 2008  Peter Colberg
+ * Copyright © 2008-2009  Peter Colberg
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MDSIM_OPTIONS_HPP
-#define MDSIM_OPTIONS_HPP
+#ifndef LJGPU_OPTIONS_HPP
+#define LJGPU_OPTIONS_HPP
 
 #include <boost/program_options.hpp>
 #include <stdint.h>
 #include <string>
 
-
-namespace mdsim
+namespace ljgpu
 {
 
 /**
@@ -304,6 +303,6 @@ private:
     boost::program_options::variables_map vm;
 };
 
-} // namespace mdsim
+} // namespace ljgpu
 
-#endif /* ! MDSIM_OPTIONS_HPP */
+#endif /* ! LJGPU_OPTIONS_HPP */

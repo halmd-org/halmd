@@ -24,9 +24,10 @@
 #include <iostream>
 #include <iomanip>
 #include <libgen.h>
-#include <gpu/ljfluid_base_glue.hpp>
+#include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
+using namespace ljgpu;
+
 namespace po = boost::program_options;
-#define foreach BOOST_FOREACH
 
 #define PROGRAM_NAME basename(argv[0])
 
@@ -72,9 +73,9 @@ int main(int argc, char **argv)
 	cuda::device::set(device);
 
 	// copy constants to CUDA device symbols
-	cuda::copy(r_cutoff, mdsim::gpu::ljfluid::r_cut);
-	cuda::copy(std::pow(r_cutoff, 2), mdsim::gpu::ljfluid::rr_cut);
-	cuda::copy(std::pow(r_smooth, -2), mdsim::gpu::ljfluid::rri_smooth);
+	cuda::copy(r_cutoff, gpu::ljfluid_square::r_cut);
+	cuda::copy(std::pow(r_cutoff, 2), gpu::ljfluid_square::rr_cut);
+	cuda::copy(std::pow(r_smooth, -2), gpu::ljfluid_square::rri_smooth);
 
 	// CUDA execution dimensions
 	unsigned int count = std::max(threads, (unsigned int)((range.y - range.x) / range.z));
@@ -86,12 +87,12 @@ int main(int argc, char **argv)
 	cuda::stream stream;
 	cuda::configure(dim.grid, dim.block, stream);
 	float2 f = make_float2(range.x, range.y);
-	mdsim::gpu::ljfluid::sample_smooth_function(g_h, f);
+	gpu::ljfluid_square::sample_smooth_function(g_h, f);
 	cuda::copy(g_h, h_h, stream);
 	stream.synchronize();
 
 	// write results to stdout
-	foreach (float3& h, h_h) {
+	BOOST_FOREACH(float3& h, h_h) {
 	    std::cout << std::scientific << std::setprecision(7) << h.x << "\t" << h.y << "\t" << h.z << "\n";
 	}
 	std::cout << "\n\n";

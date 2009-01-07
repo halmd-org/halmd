@@ -25,20 +25,19 @@
 #include <iomanip>
 #include <iostream>
 #include <libgen.h>
+#include <ljgpu/algorithm/radix_sort.hpp>
+#include <ljgpu/math/vector2d.hpp>
+#include <ljgpu/math/vector3d.hpp>
+#include <ljgpu/mdsim/gpu/hilbert.hpp>
+#include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
+#include <ljgpu/rng/rand48.hpp>
+#include <ljgpu/util/timer.hpp>
 #include <stdexcept>
 #include <stdio.h>
 #include <vector>
-
-#include <gpu/hilbert_glue.hpp>
-#include <gpu/ljfluid_base_glue.hpp>
-#include <rand48.hpp>
-#include <radix.hpp>
-#include <timer.hpp>
-#include <vector2d.hpp>
-#include <vector3d.hpp>
+using namespace ljgpu;
 
 namespace po = boost::program_options;
-#define foreach BOOST_FOREACH
 
 #define PROGRAM_NAME basename(argv[0])
 
@@ -53,7 +52,7 @@ enum { dimension = 2 };
 int main(int argc, char **argv)
 {
     // program options
-    uint blocks, threads, seed, sfc_level;
+    uint blocks, threads, seed, depth;
     float box;
     ushort device;
 
@@ -63,7 +62,7 @@ int main(int argc, char **argv)
 	opts.add_options()
 	    ("box-length,L", po::value<float>(&box)->default_value(50.f),
 	     "periodic simulation box length")
-	    ("sfc-level,R", po::value<uint>(&sfc_level)->default_value(5),
+	    ("depth,R", po::value<uint>(&depth)->default_value(5),
 	     "Hilbert code recursion depth")
 	    ("device,D", po::value<ushort>(&device)->default_value(0),
 	     "CUDA device")
@@ -82,7 +81,7 @@ int main(int argc, char **argv)
 	if (threads == 0 || threads % 16) {
 	    throw std::logic_error("number of threads must be a multiple of half-warp");
 	}
-	if (sfc_level > 10) {
+	if (depth > 10) {
 	    throw std::logic_error("Hilbert code recursion too deep");
 	}
 
@@ -99,8 +98,6 @@ int main(int argc, char **argv)
     }
 
     try {
-	using namespace mdsim::gpu;
-
 	// set CUDA device
 	cuda::device::set(device);
 	// asynchroneous GPU operations
@@ -108,12 +105,12 @@ int main(int argc, char **argv)
 	boost::array<cuda::event, 4> start, stop;
 
 	// copy device symbols to GPU
-	cuda::copy(box, ljfluid::box);
-	cuda::copy(box, hilbert::box);
-	cuda::copy(sfc_level, hilbert::sfc_level);
+	cuda::copy(box, gpu::ljfluid_square::box);
+	cuda::copy(box, gpu::hilbert::box);
+	cuda::copy(depth, gpu::hilbert::depth);
 
 	// number of grid cells
-	uint count = (1UL << (dimension * sfc_level));
+	uint count = (1UL << (dimension * depth));
 
 	boost::array<cuda::vector<T>, 3> g_r;
 	boost::array<cuda::host::vector<T>, 3> h_r;
@@ -125,19 +122,19 @@ int main(int argc, char **argv)
 	g_r[0].reserve(dim.threads());
 	start[0].record(stream);
 	cuda::configure(dim.grid, dim.block, stream);
-	ljfluid::lattice_simple(g_r[0], (1UL << sfc_level));
+	gpu::ljfluid_square::lattice_simple(g_r[0], (1UL << depth));
 	stop[0].record(stream);
 	h_r[0].resize(count);
 	cuda::copy(g_r[0], h_r[0]);
 
 	// seed GPU random number generator
-	mdsim::rand48 rng(dim);
+	rand48 rng(dim);
 	start[1].record(stream);
 	rng.set(seed, stream);
 	stop[1].record(stream);
 
 	// parallel radix sort
-	mdsim::radix_sort<T> radix(count, blocks, threads);
+	radix_sort<T> radix(count, blocks, threads);
 
 	for (uint i = 0; i < g_sort.size(); ++i) {
 	    g_r[i + 1].resize(g_r[0].size());
@@ -155,7 +152,7 @@ int main(int argc, char **argv)
 		g_sort[1].resize(count);
 		g_sort[1].reserve(dim.threads());
 		cuda::configure(dim.grid, dim.block, stream);
-		hilbert::sfc_hilbert_encode(g_r[i + 1], g_sort[1]);
+		gpu::hilbert::curve(g_r[i + 1], g_sort[1]);
 	    }
 	    // radix sort integers and particle positions
 	    radix(g_sort[i], g_r[i + 1], stream);

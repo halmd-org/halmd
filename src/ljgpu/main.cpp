@@ -1,6 +1,6 @@
 /* Molecular Dynamics simulation of a Lennard-Jones fluid
  *
- * Copyright (C) 2008  Peter Colberg
+ * Copyright © 2008-2009  Peter Colberg
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,18 +19,16 @@
 #include <H5Cpp.h>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>
-#ifdef USE_CUDA
 #include <cuda_wrapper.hpp>
-#endif
 #include <exception>
 #include <iostream>
+#include <ljgpu/mdsim/mdsim.hpp>
+#include <ljgpu/options.hpp>
+#include <ljgpu/util/log.hpp>
+#include <ljgpu/version.h>
 #include <sched.h>
 #include <unistd.h>
-#include "log.hpp"
-#include "mdsim.hpp"
-#include "options.hpp"
-#include "version.h"
-#define foreach BOOST_FOREACH
+using namespace ljgpu;
 
 int main(int argc, char **argv)
 {
@@ -40,15 +38,15 @@ int main(int argc, char **argv)
 #endif
 
     // parse program options
-    mdsim::options opts;
+    options opts;
     try {
 	opts.parse(argc, argv);
     }
-    catch (mdsim::options::exit_exception const& e) {
+    catch (options::exit_exception const& e) {
 	return e.status();
     }
 
-    mdsim::log::init(opts);
+    log::init(opts);
 
     LOG(PROGRAM_NAME " " PROGRAM_VERSION);
     LOG("variant: " << PROGRAM_VARIANT);
@@ -68,7 +66,7 @@ int main(int argc, char **argv)
 	if (!opts.processor().empty()) {
 	    cpu_set_t cpu_set;
 	    CPU_ZERO(&cpu_set);
-	    foreach (unsigned short const& cpu, opts.processor().value()) {
+	    BOOST_FOREACH(unsigned short const& cpu, opts.processor().value()) {
 		LOG("adding CPU core " << cpu << " to process CPU affinity mask");
 		CPU_SET(cpu, &cpu_set);
 	    }
@@ -108,15 +106,15 @@ int main(int argc, char **argv)
 #endif
 
 	// initialize molecular dynamics simulation
-	mdsim::mdsim<mdsim::ljfluid<
+	mdsim<ljfluid<
 #if defined(USE_CUDA) && defined(USE_NEIGHBOUR)
-	    mdsim::ljfluid_gpu_neighbour,
+	    ljfluid_gpu_neighbour,
 #elif defined(USE_CUDA) && defined(USE_CELL)
-	    mdsim::ljfluid_gpu_cell,
+	    ljfluid_gpu_cell,
 #elif defined(USE_CUDA)
-	    mdsim::ljfluid_gpu_simple,
+	    ljfluid_gpu_square,
 #else
-	    mdsim::ljfluid_host,
+	    ljfluid_host,
 #endif
 #ifdef DIM_3D
 	    3

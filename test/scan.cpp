@@ -24,15 +24,14 @@
 #include <iomanip>
 #include <iostream>
 #include <libgen.h>
+#include <ljgpu/algorithm/prefix_sum.hpp>
+#include <ljgpu/util/timer.hpp>
 #include <stdexcept>
 #include <stdio.h>
 #include <vector>
-
-#include <scan.hpp>
-#include <timer.hpp>
+using namespace ljgpu;
 
 namespace po = boost::program_options;
-#define foreach BOOST_FOREACH
 
 #define PROGRAM_NAME basename(argv[0])
 
@@ -81,8 +80,6 @@ int main(int argc, char **argv)
     }
 
     try {
-	using namespace mdsim::gpu::scan;
-
 	// set CUDA device
 	cuda::device::set(device);
 	// asynchroneous GPU operations
@@ -98,7 +95,7 @@ int main(int argc, char **argv)
 	stream.synchronize();
 
 	// parallel exclusive prefix sum
-	mdsim::prefix_sum<uint> scan(count, threads);
+	prefix_sum<uint> scan(count, threads);
 	cuda::host::vector<uint> h_array2(count);
 	start.record(stream);
 	scan(g_array, stream);
@@ -107,7 +104,7 @@ int main(int argc, char **argv)
 
 	// serial prefix sum
 	std::vector<uint> h_array3(count);
-	mdsim::real_timer timer;
+	real_timer timer;
 	timer.start();
 	h_array3[0] = 0;
 	for (uint i = 1; i < count; ++i)
