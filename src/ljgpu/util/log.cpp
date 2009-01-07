@@ -19,6 +19,7 @@
 #include <boost/logging/format.hpp>
 #include <boost/logging/format/formatter/high_precision_time.hpp>
 #include <ljgpu/util/log.hpp>
+using namespace boost::logging;
 
 namespace ljgpu { namespace log
 {
@@ -28,44 +29,44 @@ namespace ljgpu { namespace log
  */
 void init(options const& opts) {
     // use microsecond-resolution log timestamps
-    boost::logging::formatter::high_precision_time hpt("[$dd-$MM-$yyyy $hh:$mm:$ss.$micro] ");
+    formatter::high_precision_time hpt("[$dd-$MM-$yyyy $hh:$mm:$ss.$micro] ");
 
     // add log formatters
     logger()->writer().add_formatter(hpt);
-    logger()->writer().add_formatter(boost::logging::formatter::append_newline());
+    logger()->writer().add_formatter(formatter::append_newline());
     logger_error()->writer().add_formatter(hpt);
-    logger_error()->writer().add_formatter(boost::logging::formatter::append_newline());
+    logger_error()->writer().add_formatter(formatter::append_newline());
     logger_warning()->writer().add_formatter(hpt);
-    logger_warning()->writer().add_formatter(boost::logging::formatter::append_newline());
+    logger_warning()->writer().add_formatter(formatter::append_newline());
 #ifndef NDEBUG
     logger_debug()->writer().add_formatter(hpt);
-    logger_debug()->writer().add_formatter(boost::logging::formatter::append_newline());
+    logger_debug()->writer().add_formatter(formatter::append_newline());
 #endif
 
-    boost::logging::destination::file logfile(opts.output_file_prefix().value() + ".log");
+    destination::file logfile(opts.output_file_prefix().value() + ".log");
 
     // output informational messages to file
     logger()->writer().add_destination(logfile);
     if (opts.verbosity().value() > 0) {
 	// output informational messages to console
-	logger()->writer().add_destination(boost::logging::destination::cerr());
+	logger()->writer().add_destination(destination::cerr());
     }
     logger()->mark_as_initialized();
 
     // output error messages to console and file
-    logger_error()->writer().add_destination(boost::logging::destination::cerr());
+    logger_error()->writer().add_destination(destination::cerr());
     logger_error()->writer().add_destination(logfile);
     logger_error()->mark_as_initialized();
 
     // output warning messages to console and file
-    logger_warning()->writer().add_destination(boost::logging::destination::cerr());
+    logger_warning()->writer().add_destination(destination::cerr());
     logger_warning()->writer().add_destination(logfile);
     logger_warning()->mark_as_initialized();
 
 #ifndef NDEBUG
     if (opts.verbosity().value() > 1) {
 	// output debug-level messages to console and file
-	logger_debug()->writer().add_destination(boost::logging::destination::cerr());
+	logger_debug()->writer().add_destination(destination::cerr());
 	logger_debug()->writer().add_destination(logfile);
     }
     logger_debug()->mark_as_initialized();
