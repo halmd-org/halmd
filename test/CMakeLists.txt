@@ -38,7 +38,7 @@ IF(ljgpu_VARIANT_CUDA)
       )
     TARGET_LINK_LIBRARIES(hilbert_curve_sort${dim}d
       gpu_hilbert
-      gpu_ljfluid_square
+      gpu_lattice
       gpu_radix_sort
       gpu_rand48
       ${Boost_PROGRAM_OPTIONS_LIBRARY}

@@ -10,3 +10,6 @@ add_library(gpu_ljfluid_nbr
 add_library(gpu_hilbert
   hilbert.cu
   )
+add_library(gpu_lattice
+  lattice.cu
+  )

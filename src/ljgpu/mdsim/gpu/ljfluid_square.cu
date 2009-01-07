@@ -79,12 +79,6 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 cuda::function<void (float2*, float2*, float2*, float2 const*),
 	       void (float4*, float4*, float4*, float4 const*)>
 	       ljfluid_square::inteq(gpu::inteq<float2>, gpu::inteq<float3>);
-cuda::function<void (float2*, unsigned int),
-	       void (float4*, unsigned int)>
-	       ljfluid_square::lattice(gpu::lattice, gpu::lattice);
-cuda::function<void (float2*, unsigned int),
-	       void (float4*, unsigned int)>
-	       ljfluid_square::lattice_simple(gpu::lattice_simple, gpu::lattice_simple);
 cuda::function<void (float const* g_en, float2* g_en_sum)>
 	       ljfluid_square::potential_energy_sum(gpu::potential_energy_sum);
 cuda::function<void (float3*, const float2)>

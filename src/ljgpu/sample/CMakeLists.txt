@@ -1,3 +1,3 @@
-add_library(sample
+add_library(mdsample
   perf.cpp
   )

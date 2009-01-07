@@ -452,12 +452,6 @@ __global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int
 cuda::function<void (float2*, float2*, float2*, float2 const*),
 	       void (float4*, float4*, float4*, float4 const*)>
 	       ljfluid_neighbour::inteq(gpu::inteq<float2>, gpu::inteq<float3>);
-cuda::function<void (float2*, unsigned int),
-	       void (float4*, unsigned int)>
-	       ljfluid_neighbour::lattice(gpu::lattice, gpu::lattice);
-cuda::function<void (float2*, unsigned int),
-	       void (float4*, unsigned int)>
-	       ljfluid_neighbour::lattice_simple(gpu::lattice_simple, gpu::lattice_simple);
 cuda::function<void (float const* g_en, float2* g_en_sum)>
 	       ljfluid_neighbour::potential_energy_sum(gpu::potential_energy_sum);
 cuda::function<void (float3*, const float2)>

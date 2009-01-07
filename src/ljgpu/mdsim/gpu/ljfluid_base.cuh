@@ -213,45 +213,4 @@ __global__ void potential_energy_sum(float const* g_en, float2* g_en_sum)
     }
 }
 
-/**
- * place particles on a face centered cubic lattice (fcc)
- */
-__global__ void lattice(float4* g_r, uint n)
-{
-    float3 r;
-    // compose primitive vectors from 1-dimensional index
-    r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.f;
-    r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.f;
-    r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.f;
-    g_r[GTID] = pack(r * (box / n));
-}
-
-__global__ void lattice(float2* g_r, uint n)
-{
-    float2 r;
-    r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
-    r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.f;
-    g_r[GTID] = pack(r * (box / n));
-}
-
-/**
- * place particles on a simple cubic lattice (scc)
- */
-__global__ void lattice_simple(float4* g_r, uint n)
-{
-    float3 r;
-    r.x = (GTID % n) + 0.5f;
-    r.y = (GTID / n % n) + 0.5f;
-    r.z = (GTID / n / n) + 0.5f;
-    g_r[GTID] = pack(r * (box / n));
-}
-
-__global__ void lattice_simple(float2* g_r, uint n)
-{
-    float2 r;
-    r.x = (GTID % n) + 0.5f;
-    r.y = (GTID / n) + 0.5f;
-    g_r[GTID] = pack(r * (box / n));
-}
-
 }} // namespace ljgpu::gpu

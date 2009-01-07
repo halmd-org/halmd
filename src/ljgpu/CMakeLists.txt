@@ -17,14 +17,15 @@ foreach(dim RANGE 2 3)
     options.cpp
     )
   target_link_libraries(ljgpu${dim}d
-    sample
-    util
+    mdsample
+    mdutil
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${HDF5_CPP_LIBRARY}
     )
   if(ljgpu_VARIANT_CUDA)
     target_link_libraries(ljgpu${dim}d
+      gpu_lattice
       gpu_rand48
       ${CUDA_LIBRARIES}
       )

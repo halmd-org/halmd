@@ -29,7 +29,7 @@
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/mdsim/gpu/hilbert.hpp>
-#include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
+#include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/rng/rand48.hpp>
 #include <ljgpu/util/timer.hpp>
 #include <stdexcept>
@@ -105,7 +105,6 @@ int main(int argc, char **argv)
 	boost::array<cuda::event, 4> start, stop;
 
 	// copy device symbols to GPU
-	cuda::copy(box, gpu::ljfluid_square::box);
 	cuda::copy(box, gpu::hilbert::box);
 	cuda::copy(depth, gpu::hilbert::depth);
 
@@ -122,7 +121,7 @@ int main(int argc, char **argv)
 	g_r[0].reserve(dim.threads());
 	start[0].record(stream);
 	cuda::configure(dim.grid, dim.block, stream);
-	gpu::ljfluid_square::lattice_simple(g_r[0], (1UL << depth));
+	gpu::lattice::sc(g_r[0], (1UL << depth), box);
 	stop[0].record(stream);
 	h_r[0].resize(count);
 	cuda::copy(g_r[0], h_r[0]);

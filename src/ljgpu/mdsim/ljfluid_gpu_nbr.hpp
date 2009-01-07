@@ -25,6 +25,7 @@
 #include <ljgpu/algorithm/radix_sort.hpp>
 #include <ljgpu/math/stat.hpp>
 #include <ljgpu/mdsim/gpu/hilbert.hpp>
+#include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
 #include <ljgpu/mdsim/ljfluid_traits.hpp>
 #include <ljgpu/rng/rand48.hpp>
@@ -596,7 +597,7 @@ void ljfluid_gpu_impl_neighbour<dimension>::lattice()
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid_neighbour::lattice(g_part.r, n);
+	gpu::lattice::fcc(g_part.r, n, box_);
 	event_[1].record(stream_);
 #ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve

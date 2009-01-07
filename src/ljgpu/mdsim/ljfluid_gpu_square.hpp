@@ -22,6 +22,7 @@
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
 #include <ljgpu/math/stat.hpp>
+#include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
 #include <ljgpu/mdsim/ljfluid_traits.hpp>
 #include <ljgpu/rng/rand48.hpp>
@@ -344,7 +345,7 @@ void ljfluid_gpu_impl_square<dimension>::lattice()
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::ljfluid_square::lattice(g_part.r, n);
+	gpu::lattice::fcc(g_part.r, n, box_);
 	event_[1].record(stream_);
 	// calculate forces
 	update_forces(stream_);

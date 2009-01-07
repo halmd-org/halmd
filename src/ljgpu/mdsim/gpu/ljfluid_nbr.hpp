@@ -33,10 +33,6 @@ enum {
 
 extern cuda::function<void (float2*, float2*, float2*, float2 const*),
 		      void (float4*, float4*, float4*, float4 const*)> inteq;
-extern cuda::function<void (float2*, uint),
-		      void (float4*, uint)> lattice;
-extern cuda::function<void (float2*, uint),
-		      void (float4*, uint)> lattice_simple;
 extern cuda::function<void (float const* g_en, float2* g_en_sum)> potential_energy_sum;
 extern cuda::function<void (float3*, const float2)> sample_smooth_function;
 extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*),
