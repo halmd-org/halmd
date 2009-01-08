@@ -7,3 +7,6 @@ add_library(gpu_radix_sort
 target_link_libraries(gpu_radix_sort
   gpu_prefix_sum
   )
+add_library(gpu_reduce
+  reduce.cu
+  )
