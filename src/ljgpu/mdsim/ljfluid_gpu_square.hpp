@@ -450,7 +450,7 @@ void ljfluid_gpu_impl_square<dimension>::mdstep()
 
     // virial equation sum calculation
     try {
-	g_reduce_en(g_part.virial, stream_);
+	g_reduce_virial(g_part.virial, stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream virial equation sum calculation on GPU");

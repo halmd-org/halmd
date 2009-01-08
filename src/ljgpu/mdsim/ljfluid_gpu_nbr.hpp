@@ -587,7 +587,7 @@ void ljfluid_gpu_impl_neighbour<dimension>::lattice()
 	// calculate potential energy
 	g_reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
-	g_reduce_en(g_part.virial, stream_);
+	g_reduce_virial(g_part.virial, stream_);
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 
@@ -737,7 +737,7 @@ void ljfluid_gpu_impl_neighbour<dimension>::mdstep()
 
     // virial equation sum calculation
     try {
-	g_reduce_en(g_part.virial, stream_);
+	g_reduce_virial(g_part.virial, stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream virial equation sum calculation on GPU");
