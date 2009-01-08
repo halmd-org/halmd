@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_LJFLUID_GPU_NBR_HPP
-#define LJGPU_MDSIM_LJFLUID_GPU_NBR_HPP
+#ifndef LJGPU_LJFLUID_LJFLUID_GPU_NBR_HPP
+#define LJGPU_LJFLUID_LJFLUID_GPU_NBR_HPP
 
 #include <algorithm>
 #include <boost/foreach.hpp>
@@ -25,10 +25,10 @@
 #include <ljgpu/algorithm/radix_sort.hpp>
 #include <ljgpu/algorithm/reduce.hpp>
 #include <ljgpu/math/stat.hpp>
-#include <ljgpu/mdsim/gpu/hilbert.hpp>
-#include <ljgpu/mdsim/gpu/lattice.hpp>
-#include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
-#include <ljgpu/mdsim/ljfluid_traits.hpp>
+#include <ljgpu/ljfluid/gpu/hilbert.hpp>
+#include <ljgpu/ljfluid/gpu/lattice.hpp>
+#include <ljgpu/ljfluid/gpu/ljfluid_nbr.hpp>
+#include <ljgpu/ljfluid/ljfluid_traits.hpp>
 #include <ljgpu/rng/rand48.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/sample/sample.hpp>
@@ -927,4 +927,4 @@ void ljfluid_gpu_impl_neighbour<dimension>::hilbert_order(cuda::stream& stream)
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_MDSIM_LJFLUID_GPU_NBR_HPP */
+#endif /* ! LJGPU_LJFLUID_LJFLUID_GPU_NBR_HPP */

@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_GPU_LJFLUID_SQUARE_HPP
-#define LJGPU_MDSIM_GPU_LJFLUID_SQUARE_HPP
+#ifndef LJGPU_LJFLUID_GPU_LJFLUID_SQUARE_HPP
+#define LJGPU_LJFLUID_GPU_LJFLUID_SQUARE_HPP
 
 #include <cuda_wrapper.hpp>
 
@@ -40,4 +40,4 @@ extern cuda::symbol<float> rri_smooth;
 
 }}} // namespace ljgpu::gpu::ljfluid_square
 
-#endif /* ! LJGPU_MDSIM_GPU_LJFLUID_SQUARE_HPP */
+#endif /* ! LJGPU_LJFLUID_GPU_LJFLUID_SQUARE_HPP */

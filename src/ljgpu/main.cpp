@@ -22,7 +22,7 @@
 #include <cuda_wrapper.hpp>
 #include <exception>
 #include <iostream>
-#include <ljgpu/mdsim/mdsim.hpp>
+#include <ljgpu/mdsim.hpp>
 #include <ljgpu/options.hpp>
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/version.h>

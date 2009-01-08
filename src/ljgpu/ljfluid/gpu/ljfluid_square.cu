@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <ljgpu/mdsim/gpu/ljfluid_base.cuh>
-#include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
+#include <ljgpu/ljfluid/gpu/ljfluid_base.cuh>
+#include <ljgpu/ljfluid/gpu/ljfluid_square.hpp>
 using namespace ljgpu::gpu::ljfluid_square;
 
 namespace ljgpu { namespace gpu

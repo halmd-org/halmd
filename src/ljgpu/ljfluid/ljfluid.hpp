@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_LJFLUID_HPP
-#define LJGPU_MDSIM_LJFLUID_HPP
+#ifndef LJGPU_LJFLUID_LJFLUID_HPP
+#define LJGPU_LJFLUID_LJFLUID_HPP
 
-#include <ljgpu/mdsim/ljfluid_gpu.hpp>
-#include <ljgpu/mdsim/ljfluid_host.hpp>
+#include <ljgpu/ljfluid/ljfluid_gpu.hpp>
+#include <ljgpu/ljfluid/ljfluid_host.hpp>
 
 namespace ljgpu
 {
@@ -87,4 +87,4 @@ perf_counters ljfluid<ljfluid_impl, dimension>::times()
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_MDSIM_LJFLUID_HPP */
+#endif /* ! LJGPU_LJFLUID_LJFLUID_HPP */

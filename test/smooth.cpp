@@ -24,7 +24,7 @@
 #include <iostream>
 #include <iomanip>
 #include <libgen.h>
-#include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
+#include <ljgpu/ljfluid/gpu/ljfluid_square.hpp>
 using namespace ljgpu;
 
 namespace po = boost::program_options;

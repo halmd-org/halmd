@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_LJFLUID_GPU_HPP
-#define LJGPU_MDSIM_LJFLUID_GPU_HPP
+#ifndef LJGPU_LJFLUID_LJFLUID_GPU_HPP
+#define LJGPU_LJFLUID_LJFLUID_GPU_HPP
 
-#include <ljgpu/mdsim/ljfluid_gpu_square.hpp>
-#include <ljgpu/mdsim/ljfluid_gpu_cell.hpp>
-#include <ljgpu/mdsim/ljfluid_gpu_nbr.hpp>
+#include <ljgpu/ljfluid/ljfluid_gpu_square.hpp>
+#include <ljgpu/ljfluid/ljfluid_gpu_cell.hpp>
+#include <ljgpu/ljfluid/ljfluid_gpu_nbr.hpp>
 
 namespace ljgpu
 {
@@ -292,4 +292,4 @@ class ljfluid_gpu_neighbour :
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_MDSIM_LJFLUID_GPU_HPP */
+#endif /* ! LJGPU_LJFLUID_LJFLUID_GPU_HPP */

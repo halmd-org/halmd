@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_GPU_LATTICE_HPP
-#define LJGPU_MDSIM_GPU_LATTICE_HPP
+#ifndef LJGPU_LJFLUID_GPU_LATTICE_HPP
+#define LJGPU_LJFLUID_GPU_LATTICE_HPP
 
 #include <cuda_wrapper.hpp>
 
@@ -29,4 +29,4 @@ extern cuda::function<void (float2*, uint, float), void (float4*, uint, float)> 
 
 }}} // namespace ljgpu::gpu::lattice
 
-#endif /* ! LJGPU_MDSIM_GPU_LATTICE_HPP */
+#endif /* ! LJGPU_LJFLUID_GPU_LATTICE_HPP */

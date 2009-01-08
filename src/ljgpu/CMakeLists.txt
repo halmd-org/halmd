@@ -1,5 +1,5 @@
 add_subdirectory(algorithm)
-add_subdirectory(mdsim)
+add_subdirectory(ljfluid)
 add_subdirectory(rng)
 add_subdirectory(sample)
 add_subdirectory(util)

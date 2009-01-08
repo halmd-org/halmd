@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_LJFLUID_HOST_HPP
-#define LJGPU_MDSIM_LJFLUID_HOST_HPP
+#ifndef LJGPU_LJFLUID_LJFLUID_HOST_HPP
+#define LJGPU_LJFLUID_LJFLUID_HOST_HPP
 
 #include <H5Cpp.h>
 #include <algorithm>
@@ -28,7 +28,7 @@
 #include <cmath>
 #include <iostream>
 #include <list>
-#include <ljgpu/mdsim/ljfluid_traits.hpp>
+#include <ljgpu/ljfluid/ljfluid_traits.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/sample/sample.hpp>
@@ -745,4 +745,4 @@ void ljfluid_host<dimension>::mdstep()
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_MDSIM_LJFLUID_HOST_HPP */
+#endif /* ! LJGPU_LJFLUID_LJFLUID_HOST_HPP */

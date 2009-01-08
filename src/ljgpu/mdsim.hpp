@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_MDSIM_HPP
-#define LJGPU_MDSIM_MDSIM_HPP
+#ifndef LJGPU_MDSIM_HPP
+#define LJGPU_MDSIM_HPP
 
 #include <boost/bind.hpp>
 #include <fstream>
 #include <iostream>
-#include <ljgpu/mdsim/ljfluid.hpp>
+#include <ljgpu/ljfluid/ljfluid.hpp>
 #include <ljgpu/options.hpp>
 #include <ljgpu/sample/correlation.hpp>
 #include <ljgpu/sample/energy.hpp>
@@ -388,4 +388,4 @@ void mdsim<ljfluid_impl>::operator()()
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_MDSIM_MDSIM_HPP */
+#endif /* ! LJGPU_MDSIM_HPP */

@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_LJFLUID_TRAITS_HPP
-#define LJGPU_MDSIM_LJFLUID_TRAITS_HPP
+#ifndef LJGPU_LJFLUID_LJFLUID_TRAITS_HPP
+#define LJGPU_LJFLUID_LJFLUID_TRAITS_HPP
 
 #include <cuda/vector_types.h>
 #include <ljgpu/math/vector2d.hpp>
@@ -69,4 +69,4 @@ struct ljfluid_host_traits<3>
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_MDSIM_LJFLUID_TRAITS_HPP */
+#endif /* ! LJGPU_LJFLUID_LJFLUID_TRAITS_HPP */

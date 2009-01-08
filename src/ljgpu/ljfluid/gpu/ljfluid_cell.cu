@@ -17,8 +17,8 @@
  */
 
 #include <float.h>
-#include <ljgpu/mdsim/gpu/ljfluid_base.cuh>
-#include <ljgpu/mdsim/gpu/ljfluid_cell.hpp>
+#include <ljgpu/ljfluid/gpu/ljfluid_base.cuh>
+#include <ljgpu/ljfluid/gpu/ljfluid_cell.hpp>
 using namespace ljgpu::gpu::ljfluid_cell;
 
 namespace ljgpu { namespace gpu

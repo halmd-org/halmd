@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_GPU_HILBERT_HPP
-#define LJGPU_MDSIM_GPU_HILBERT_HPP
+#ifndef LJGPU_LJFLUID_GPU_HILBERT_HPP
+#define LJGPU_LJFLUID_GPU_HILBERT_HPP
 
 #include <cuda_wrapper.hpp>
 
@@ -30,4 +30,4 @@ extern cuda::symbol<uint> depth;
 
 }}} // namespace ljgpu::gpu::hilbert
 
-#endif /* ! LJGPU_MDSIM_GPU_HILBERT_HPP */
+#endif /* ! LJGPU_LJFLUID_GPU_HILBERT_HPP */

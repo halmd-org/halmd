@@ -28,8 +28,8 @@
 #include <ljgpu/algorithm/radix_sort.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
-#include <ljgpu/mdsim/gpu/hilbert.hpp>
-#include <ljgpu/mdsim/gpu/lattice.hpp>
+#include <ljgpu/ljfluid/gpu/hilbert.hpp>
+#include <ljgpu/ljfluid/gpu/lattice.hpp>
 #include <ljgpu/rng/rand48.hpp>
 #include <ljgpu/util/timer.hpp>
 #include <stdexcept>
