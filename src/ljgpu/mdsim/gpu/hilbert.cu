@@ -47,7 +47,7 @@ __device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
 /**
  * map 3-dimensional point to 1-dimensional point on Hilbert space curve
  */
-__global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
+static __global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
@@ -139,7 +139,7 @@ __global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
     g_sfc[GTID] = hcode;
 }
 
-__global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
+static __global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
 {
     // Hilbert code for particle
     unsigned int hcode = 0;

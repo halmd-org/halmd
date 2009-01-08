@@ -116,7 +116,7 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
 /**
  * initialise particle tags
  */
-__global__ void init_tags(int* g_tag)
+static __global__ void init_tags(int* g_tag)
 {
     int tag = VIRTUAL_PARTICLE;
     if (GTID < npart) {
@@ -296,7 +296,7 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl, float2* __empty
 /**
  * compute cell indices for given particle positions
  */
-__global__ void compute_cell(float4 const* g_part, uint* g_cell)
+static __global__ void compute_cell(float4 const* g_part, uint* g_cell)
 {
     float3 r = unpack(g_part[GTID]);
     //
@@ -313,7 +313,7 @@ __global__ void compute_cell(float4 const* g_part, uint* g_cell)
     g_cell[GTID] = uint(r.x) + ncell * (uint(r.y) + ncell * uint(r.z));
 }
 
-__global__ void compute_cell(float2 const* g_part, uint* g_cell)
+static __global__ void compute_cell(float2 const* g_part, uint* g_cell)
 {
     float2 r = unpack(g_part[GTID]);
     r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
@@ -323,7 +323,7 @@ __global__ void compute_cell(float2 const* g_part, uint* g_cell)
 /**
  * compute global cell offsets in particle list
  */
-__global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
+static __global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
 {
     const uint j = g_cell[GTID];
     const uint k = (GTID > 0 && GTID < npart) ? g_cell[GTID - 1] : j;
@@ -363,7 +363,7 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
 /**
  * generate ascending index sequence
  */
-__global__ void gen_index(int* g_idx)
+static __global__ void gen_index(int* g_idx)
 {
     g_idx[GTID] = (GTID < npart) ? GTID : 0;
 }

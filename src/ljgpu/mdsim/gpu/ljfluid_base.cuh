@@ -90,7 +90,7 @@ __device__ float3 compute_smooth_function(float const& r)
 /**
  * sample potential smoothing function in given range
  */
-__global__ void sample_smooth_function(float3* g_h, const float2 r)
+static __global__ void sample_smooth_function(float3* g_h, const float2 r)
 {
     g_h[GTID] = compute_smooth_function(r.x + (r.y - r.x) / GTDIM * GTID);
 }

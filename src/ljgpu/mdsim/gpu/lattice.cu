@@ -28,7 +28,7 @@ namespace ljgpu { namespace gpu
 /**
  * place particles on a face centered cubic lattice (fcc)
  */
-__global__ void lattice_fcc(float4* g_r, uint n, float box)
+static __global__ void lattice_fcc(float4* g_r, uint n, float box)
 {
     float3 r;
     // compose primitive vectors from 1-dimensional index
@@ -38,7 +38,7 @@ __global__ void lattice_fcc(float4* g_r, uint n, float box)
     g_r[GTID] = pack(r * (box / n));
 }
 
-__global__ void lattice_fcc(float2* g_r, uint n, float box)
+static __global__ void lattice_fcc(float2* g_r, uint n, float box)
 {
     float2 r;
     r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
@@ -49,7 +49,7 @@ __global__ void lattice_fcc(float2* g_r, uint n, float box)
 /**
  * place particles on a simple cubic lattice (sc)
  */
-__global__ void lattice_sc(float4* g_r, uint n, float box)
+static __global__ void lattice_sc(float4* g_r, uint n, float box)
 {
     float3 r;
     r.x = (GTID % n) + 0.5f;
@@ -58,7 +58,7 @@ __global__ void lattice_sc(float4* g_r, uint n, float box)
     g_r[GTID] = pack(r * (box / n));
 }
 
-__global__ void lattice_sc(float2* g_r, uint n, float box)
+static __global__ void lattice_sc(float2* g_r, uint n, float box)
 {
     float2 r;
     r.x = (GTID % n) + 0.5f;
