@@ -33,12 +33,9 @@ enum {
 
 extern cuda::function<void (float2*, float2*, float2*, float2 const*),
 		      void (float4*, float4*, float4*, float4 const*)> inteq;
-extern cuda::function<void (float const* g_en, float2* g_en_sum)> potential_energy_sum;
 extern cuda::function<void (float3*, const float2)> sample_smooth_function;
 extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*),
 		      void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float4 const*, float*),
-		      void (float2 const*, float*)> maximum_velocity;
 extern cuda::function<void (int const*, int*, float4*),
 		      void (int const*, int*, float2*)> update_neighbours;
 extern cuda::function<void (float4 const*, uint*),

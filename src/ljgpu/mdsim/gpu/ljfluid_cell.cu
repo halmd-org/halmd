@@ -468,8 +468,6 @@ __global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int co
 cuda::function<void (float2*, float2*, float2*, float2 const*),
 	       void (float4*, float4*, float4*, float4 const*)>
 	       ljfluid_cell::inteq(gpu::inteq<float2>, gpu::inteq<float3>);
-cuda::function<void (float const* g_en, float2* g_en_sum)>
-	       ljfluid_cell::potential_energy_sum(gpu::potential_energy_sum);
 cuda::function<void (float3*, const float2)>
 	       ljfluid_cell::sample_smooth_function(gpu::sample_smooth_function);
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*),

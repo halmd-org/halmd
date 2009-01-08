@@ -114,68 +114,6 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
 }
 
 /**
- * blockwise maximum velocity magnitude
- */
-template <typename T, typename U>
-__global__ void maximum_velocity(U const* g_v, float* g_vmax)
-{
-    extern __shared__ float s_vv[];
-
-    // load particles from global device memory
-    float vv = 0;
-    for (uint i = GTID; i < npart; i += GTDIM) {
-	T v = unpack(g_v[i]);
-	vv = fmaxf(vv, v * v);
-    }
-    // maximum velocity for this thread
-    s_vv[TID] = vv;
-    __syncthreads();
-
-    // compute maximum velocity for all threads in block
-    if (TID < 256) {
-	vv = fmaxf(vv, s_vv[TID + 256]);
-	s_vv[TID] = vv;
-    }
-    __syncthreads();
-    if (TID < 128) {
-	vv = fmaxf(vv, s_vv[TID + 128]);
-	s_vv[TID] = vv;
-    }
-    __syncthreads();
-    if (TID < 64) {
-	vv = fmaxf(vv, s_vv[TID + 64]);
-	s_vv[TID] = vv;
-    }
-    __syncthreads();
-    if (TID < 32) {
-	vv = fmaxf(vv, s_vv[TID + 32]);
-	s_vv[TID] = vv;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (TID < 16) {
-	vv = fmaxf(vv, s_vv[TID + 16]);
-	s_vv[TID] = vv;
-    }
-    if (TID < 8) {
-	vv = fmaxf(vv, s_vv[TID + 8]);
-	s_vv[TID] = vv;
-    }
-    if (TID < 4) {
-	vv = fmaxf(vv, s_vv[TID + 4]);
-	s_vv[TID] = vv;
-    }
-    if (TID < 2) {
-	vv = fmaxf(vv, s_vv[TID + 2]);
-	s_vv[TID] = vv;
-    }
-    if (TID < 1) {
-	vv = fmaxf(vv, s_vv[TID + 1]);
-	// store maximum block velocity in global memory
-	g_vmax[blockIdx.x] = sqrtf(vv);
-    }
-}
-
-/**
  * initialise particle tags
  */
 __global__ void init_tags(int* g_tag)
@@ -452,18 +390,12 @@ __global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int
 cuda::function<void (float2*, float2*, float2*, float2 const*),
 	       void (float4*, float4*, float4*, float4 const*)>
 	       ljfluid_neighbour::inteq(gpu::inteq<float2>, gpu::inteq<float3>);
-cuda::function<void (float const* g_en, float2* g_en_sum)>
-	       ljfluid_neighbour::potential_energy_sum(gpu::potential_energy_sum);
 cuda::function<void (float3*, const float2)>
 	       ljfluid_neighbour::sample_smooth_function(gpu::sample_smooth_function);
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*),
 	       void (float2 const*, float2*, float2*, int const*, float*, float*)>
 	       ljfluid_neighbour::mdstep(gpu::mdstep<float3, dfloat3>,
 					 gpu::mdstep<float2, dfloat2>);
-cuda::function<void (float4 const*, float*),
-	       void (float2 const*, float*)>
-	       ljfluid_neighbour::maximum_velocity(gpu::maximum_velocity<float3>,
-						   gpu::maximum_velocity<float2>);
 cuda::function<void (int const*, int*, float4*),
 	       void (int const*, int*, float2*)>
 	       ljfluid_neighbour::update_neighbours(gpu::update_neighbours<CELL_SIZE>,

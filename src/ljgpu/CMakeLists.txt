@@ -25,6 +25,7 @@ foreach(dim RANGE 2 3)
     )
   if(ljgpu_VARIANT_CUDA)
     target_link_libraries(ljgpu${dim}d
+      gpu_reduce
       gpu_lattice
       gpu_rand48
       ${CUDA_LIBRARIES}

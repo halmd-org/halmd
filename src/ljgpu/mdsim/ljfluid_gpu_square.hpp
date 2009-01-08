@@ -16,11 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_LJFLUID_GPU_SIMPLE_HPP
-#define LJGPU_MDSIM_LJFLUID_GPU_SIMPLE_HPP
+#ifndef LJGPU_MDSIM_LJFLUID_GPU_SQUARE_HPP
+#define LJGPU_MDSIM_LJFLUID_GPU_SQUARE_HPP
 
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
+#include <ljgpu/algorithm/reduce.hpp>
 #include <ljgpu/math/stat.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
@@ -85,10 +86,6 @@ private:
     void velocity_verlet(cuda::stream& stream);
     /** Lennard-Jones force calculation */
     void update_forces(cuda::stream& stream);
-    /** potential energy sum calculation */
-    void potential_energy(cuda::stream& stream);
-    /** virial equation sum calculation */
-    void virial_sum(cuda::stream& stream);
 
 protected:
     /** number of particles in system */
@@ -129,12 +126,11 @@ protected:
     perf_counters m_times;
 
 private:
-    enum {
-	REDUCE_BLOCKS = 16,
-	REDUCE_THREADS = 512,
-    };
+    /** potential energy sum */
+    reduce<tag::sum, dfloat> g_reduce_en;
+    /** virial equation sum */
+    reduce<tag::sum, dfloat> g_reduce_virial;
 
-private:
     /** system state in page-locked host memory */
     struct {
 	/** periodically reduced particle positions */
@@ -147,10 +143,6 @@ private:
 	cuda::host::vector<int> tag;
 	/** blockwise maximum particles velocity magnitudes */
 	cuda::host::vector<float> v_max;
-	/** blockwise potential energies sum per particle */
-	cuda::host::vector<float2> en_sum;
-	/** blockwise virial equation sum per particle */
-	cuda::host::vector<float2> virial_sum;
     } h_part;
 
     /** system state in global device memory */
@@ -167,10 +159,6 @@ private:
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
 	cuda::vector<float> virial;
-	/** blockwise potential energies sum per particle */
-	cuda::vector<float2> en_sum;
-	/** blockwise virial equation sum per particle */
-	cuda::vector<float2> virial_sum;
     } g_part;
 
 };
@@ -194,9 +182,6 @@ void ljfluid_gpu_impl_square<dimension>::particles(unsigned int value)
 	g_part.f.resize(npart);
 	g_part.en.resize(npart);
 	g_part.virial.resize(npart);
-
-	g_part.en_sum.resize(REDUCE_BLOCKS);
-	g_part.virial_sum.resize(REDUCE_BLOCKS);
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for system state");
@@ -208,9 +193,6 @@ void ljfluid_gpu_impl_square<dimension>::particles(unsigned int value)
 	h_part.R.resize(npart);
 	h_part.v.resize(npart);
 	// particle forces reside only in GPU memory
-
-	h_part.en_sum.resize(REDUCE_BLOCKS);
-	h_part.virial_sum.resize(REDUCE_BLOCKS);
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate page-locked host memory for system state");
@@ -300,9 +282,9 @@ void ljfluid_gpu_impl_square<dimension>::restore(trajectory_visitor visitor)
 	// calculate forces
 	update_forces(stream_);
 	// calculate potential energy
-	potential_energy(stream_);
+	g_reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
-	virial_sum(stream_);
+	g_reduce_virial(g_part.virial, stream_);
 
 	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
@@ -350,9 +332,9 @@ void ljfluid_gpu_impl_square<dimension>::lattice()
 	// calculate forces
 	update_forces(stream_);
 	// calculate potential energy
-	potential_energy(stream_);
+	g_reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
-	virial_sum(stream_);
+	g_reduce_virial(g_part.virial, stream_);
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 
@@ -459,7 +441,7 @@ void ljfluid_gpu_impl_square<dimension>::mdstep()
 
     // potential energy sum calculation
     try {
-	potential_energy(stream_);
+	g_reduce_en(g_part.en, stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream potential energy sum calculation on GPU");
@@ -468,7 +450,7 @@ void ljfluid_gpu_impl_square<dimension>::mdstep()
 
     // virial equation sum calculation
     try {
-	virial_sum(stream_);
+	g_reduce_en(g_part.virial, stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream virial equation sum calculation on GPU");
@@ -501,12 +483,8 @@ void ljfluid_gpu_impl_square<dimension>::synchronize()
     // GPU time for virial equation sum calculation
     m_times["virial_sum"] += event_[0] - event_[4];
 
-    // for each CUDA block, test for finite potential energy sum
-    for (unsigned int i = 0; i < h_part.en_sum.size(); ++i) {
-	// test of high-word float of the double-single pair suffices
-	if (!std::isfinite(h_part.en_sum[i].x)) {
-	    throw exception("potential energy diverged");
-	}
+    if (!std::isfinite((double) g_reduce_en.value())) {
+	throw exception("potential energy diverged");
     }
 }
 
@@ -536,20 +514,9 @@ void ljfluid_gpu_impl_square<dimension>::sample()
     std::copy(h_part.v.begin(), h_part.v.end(), m_sample.v.begin());
 
     // mean potential energy per particle
-    m_sample.en_pot = 0;
-    for (unsigned int i = 0; i < h_part.en_sum.size(); ++i) {
-	// average over CUDA block sums
-	m_sample.en_pot += (double) h_part.en_sum[i].x + (double) h_part.en_sum[i].y;
-    }
-    m_sample.en_pot /= npart;
-
+    m_sample.en_pot = (double) g_reduce_en.value() / npart;
     // mean virial equation sum per particle
-    m_sample.virial = 0;
-    for (unsigned int i = 0; i < h_part.virial_sum.size(); ++i) {
-	// average over CUDA block sums
-	m_sample.virial += (double) h_part.virial_sum[i].x + (double) h_part.virial_sum[i].y;
-    }
-    m_sample.virial /= npart;
+    m_sample.virial = (double) g_reduce_virial.value() / npart;
 
     // GPU time for sample memcpy
     m_times["sample_memcpy"] += event_[0] - event_[1];
@@ -575,22 +542,6 @@ void ljfluid_gpu_impl_square<dimension>::update_forces(cuda::stream& stream)
     gpu::ljfluid_square::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 
-template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::potential_energy(cuda::stream& stream)
-{
-    cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream);
-    gpu::ljfluid_square::potential_energy_sum(g_part.en, g_part.en_sum);
-    cuda::copy(g_part.en_sum, h_part.en_sum, stream);
-}
-
-template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::virial_sum(cuda::stream& stream)
-{
-    cuda::configure(REDUCE_BLOCKS, REDUCE_THREADS, REDUCE_THREADS * sizeof(float2), stream);
-    gpu::ljfluid_square::potential_energy_sum(g_part.virial, g_part.virial_sum);
-    cuda::copy(g_part.virial_sum, h_part.virial_sum, stream);
-}
-
 } // namespace ljgpu
 
-#endif /* ! LJGPU_MDSIM_LJFLUID_GPU_SIMPLE_HPP */
+#endif /* ! LJGPU_MDSIM_LJFLUID_GPU_SQUARE_HPP */
