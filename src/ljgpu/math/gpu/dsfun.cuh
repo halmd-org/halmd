@@ -8,13 +8,10 @@
 #ifndef LJGPU_MATH_DSFUN_CUH
 #define LJGPU_MATH_DSFUN_CUH
 
-namespace ljgpu { namespace gpu
-{
-
 /**
  * This function sets the DS number A equal to the double precision floating point number B.
  */
-__device__ inline void __dsdeq(float &a0, float &a1, double b)
+__device__ __host__ inline void __dsdeq(float &a0, float &a1, double b)
 {
     a0 = (float)b;
     a1 = (float)(b - a0);
@@ -23,7 +20,7 @@ __device__ inline void __dsdeq(float &a0, float &a1, double b)
 /**
  * This function sets the DS number A equal to the single precision floating point number B.
  */
-__device__ inline void __dsfeq(float &a0, float &a1, float b)
+__device__ __host__ inline void __dsfeq(float &a0, float &a1, float b)
 {
     a0 = b;
     a1 = 0.0f;
@@ -32,7 +29,7 @@ __device__ inline void __dsfeq(float &a0, float &a1, float b)
 /**
  * This function computes c = a + b.
  */
-__device__ inline void __dsadd(float &c0, float &c1, const float a0, const float a1, const float b0, const float b1)
+__device__ __host__ inline void __dsadd(float &c0, float &c1, const float a0, const float a1, const float b0, const float b1)
 {
     // Compute __dsa + __dsb using Knuth's trick.
     float t1 = a0 + b0;
@@ -48,7 +45,7 @@ __device__ inline void __dsadd(float &c0, float &c1, const float a0, const float
  * This function computes c = a - b.
  */
 template <typename T>
-__device__ inline void __dssub(float &c0, T &c1, const T a0, const T a1, const T b0, const T b1)
+__device__ __host__ inline void __dssub(float &c0, T &c1, const T a0, const T a1, const T b0, const T b1)
 {
     // Compute __dsa - __dsb using Knuth's trick.
     float t1 = a0 - b0;
@@ -64,7 +61,7 @@ __device__ inline void __dssub(float &c0, T &c1, const T a0, const T a1, const T
  * This function multiplies DS numbers A and B to yield the DS product C.
  */
 template <typename T, typename U, typename V>
-__device__ inline void __dsmul(float &c0, T &c1, const float a0, const U a1, const V b0, const V b1)
+__device__ __host__ inline void __dsmul(float &c0, T &c1, const float a0, const U a1, const V b0, const V b1)
 {
     // This splits __dsa(1) and __dsb(1) into high-order and low-order words.
     float cona = a0 * 8193.0f;
@@ -94,45 +91,46 @@ __device__ inline void __dsmul(float &c0, T &c1, const float a0, const U a1, con
 /**
  * Double-single floating point vector types
  */
-__device__  struct __align__(8) dfloat
+__device__ __host__  struct __align__(8) dfloat
 {
     float f0, f1;
 #ifdef __cplusplus
-    dfloat(float const& f0, float const& f1) : f0(f0), f1(f1) {}
-    dfloat(float const& f0) : f0(f0), f1(0) {}
+    dfloat(float f0, float f1) : f0(f0), f1(f1) {}
+    dfloat(float f0) : f0(f0), f1(0) {}
     dfloat() {}
+    operator double() const { return (double) f0 + (double) f1; }
 #endif
 };
 
-__device__ struct __align__(16) dfloat2
+__device__ __host__ struct __align__(16) dfloat2
 {
     float2 f0, f1;
 #ifdef __cplusplus
     dfloat2(float2 const& f0, float2 const& f1) : f0(f0), f1(f1) {}
     dfloat2(float2 const& f0) : f0(f0), f1(make_float2(0, 0)) {}
-    dfloat2(float const& f0) : f0(make_float2(f0, f0)), f1(make_float2(0, 0)) {}
+    dfloat2(float f0) : f0(make_float2(f0, f0)), f1(make_float2(0, 0)) {}
     dfloat2() {}
 #endif
 };
 
-__device__ struct dfloat3
+__device__ __host__ struct dfloat3
 {
     float3 f0, f1;
 #ifdef __cplusplus
     dfloat3(float3 const& f0, float3 const& f1) : f0(f0), f1(f1) {}
     dfloat3(float3 const& f0) : f0(f0), f1(make_float3(0, 0, 0)) {}
-    dfloat3(float const& f0) : f0(make_float3(f0, f0, f0)), f1(make_float3(0, 0, 0)) {}
+    dfloat3(float f0) : f0(make_float3(f0, f0, f0)), f1(make_float3(0, 0, 0)) {}
     dfloat3() {}
 #endif
 };
 
-__device__ struct dfloat4
+__device__ __host__ struct dfloat4
 {
     float4 f0, f1;
 #ifdef __cplusplus
     dfloat4(float4 const& f0, float4 const& f1) : f0(f0), f1(f1) {}
     dfloat4(float4 const& f0) : f0(f0), f1(make_float4(0, 0, 0, 0)) {}
-    dfloat4(float const& f0) : f0(make_float4(f0, f0, f0, f0)), f1(make_float4(0, 0, 0, 0)) {}
+    dfloat4(float f0) : f0(make_float4(f0, f0, f0, f0)), f1(make_float4(0, 0, 0, 0)) {}
     dfloat4() {}
 #endif
 };
@@ -140,20 +138,20 @@ __device__ struct dfloat4
 /**
  * Double-single floating point vector addition
  */
-__device__ dfloat operator+(dfloat v, dfloat const& w)
+__device__ __host__ inline dfloat operator+(dfloat v, dfloat const& w)
 {
     __dsadd(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ dfloat2 operator+(dfloat2 v, dfloat2 const& w)
+__device__ __host__ inline dfloat2 operator+(dfloat2 v, dfloat2 const& w)
 {
     __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
     return v;
 }
 
-__device__ dfloat3 operator+(dfloat3 v, dfloat3 const& w)
+__device__ __host__ inline dfloat3 operator+(dfloat3 v, dfloat3 const& w)
 {
     __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
@@ -161,7 +159,7 @@ __device__ dfloat3 operator+(dfloat3 v, dfloat3 const& w)
     return v;
 }
 
-__device__ dfloat4 operator+(dfloat4 v, dfloat4 const& w)
+__device__ __host__ inline dfloat4 operator+(dfloat4 v, dfloat4 const& w)
 {
     __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
@@ -173,20 +171,20 @@ __device__ dfloat4 operator+(dfloat4 v, dfloat4 const& w)
 /**
  * Double-single floating point vector assignment by addition
  */
-__device__ dfloat& operator+=(dfloat& v, dfloat const& w)
+__device__ __host__ inline dfloat& operator+=(dfloat& v, dfloat const& w)
 {
     __dsadd(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ dfloat2& operator+=(dfloat2& v, dfloat2 const& w)
+__device__ __host__ inline dfloat2& operator+=(dfloat2& v, dfloat2 const& w)
 {
     __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
     return v;
 }
 
-__device__ dfloat3& operator+=(dfloat3& v, dfloat3 const& w)
+__device__ __host__ inline dfloat3& operator+=(dfloat3& v, dfloat3 const& w)
 {
     __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
@@ -194,7 +192,7 @@ __device__ dfloat3& operator+=(dfloat3& v, dfloat3 const& w)
     return v;
 }
 
-__device__ dfloat4& operator+=(dfloat4& v, dfloat4 const& w)
+__device__ __host__ inline dfloat4& operator+=(dfloat4& v, dfloat4 const& w)
 {
     __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
@@ -206,20 +204,20 @@ __device__ dfloat4& operator+=(dfloat4& v, dfloat4 const& w)
 /**
  * Double-single floating point vector subtraction
  */
-__device__ dfloat operator-(dfloat v, dfloat const& w)
+__device__ __host__ inline dfloat operator-(dfloat v, dfloat const& w)
 {
     __dssub(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ dfloat2 operator-(dfloat2 v, dfloat2 const& w)
+__device__ __host__ inline dfloat2 operator-(dfloat2 v, dfloat2 const& w)
 {
     __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
     return v;
 }
 
-__device__ dfloat3 operator-(dfloat3 v, dfloat3 const& w)
+__device__ __host__ inline dfloat3 operator-(dfloat3 v, dfloat3 const& w)
 {
     __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
@@ -227,7 +225,7 @@ __device__ dfloat3 operator-(dfloat3 v, dfloat3 const& w)
     return v;
 }
 
-__device__ dfloat4 operator-(dfloat4 v, dfloat4 const& w)
+__device__ __host__ inline dfloat4 operator-(dfloat4 v, dfloat4 const& w)
 {
     __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
@@ -239,20 +237,20 @@ __device__ dfloat4 operator-(dfloat4 v, dfloat4 const& w)
 /**
  * Double-single floating point vector assignment by subtraction
  */
-__device__ dfloat& operator-=(dfloat& v, dfloat const& w)
+__device__ __host__ inline dfloat& operator-=(dfloat& v, dfloat const& w)
 {
     __dssub(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ dfloat2& operator-=(dfloat2& v, dfloat2 const& w)
+__device__ __host__ inline dfloat2& operator-=(dfloat2& v, dfloat2 const& w)
 {
     __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
     return v;
 }
 
-__device__ dfloat3& operator-=(dfloat3& v, dfloat3 const& w)
+__device__ __host__ inline dfloat3& operator-=(dfloat3& v, dfloat3 const& w)
 {
     __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
@@ -260,7 +258,7 @@ __device__ dfloat3& operator-=(dfloat3& v, dfloat3 const& w)
     return v;
 }
 
-__device__ dfloat4& operator-=(dfloat4& v, dfloat4 const& w)
+__device__ __host__ inline dfloat4& operator-=(dfloat4& v, dfloat4 const& w)
 {
     __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
     __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
@@ -272,20 +270,20 @@ __device__ dfloat4& operator-=(dfloat4& v, dfloat4 const& w)
 /**
  * Double-single floating point vector scalar multiplication
  */
-__device__ dfloat operator*(dfloat v, dfloat const& w)
+__device__ __host__ inline dfloat operator*(dfloat v, dfloat const& w)
 {
     __dsmul(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ dfloat2 operator*(dfloat2 v, dfloat const& w)
+__device__ __host__ inline dfloat2 operator*(dfloat2 v, dfloat const& w)
 {
     __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
     __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
     return v;
 }
 
-__device__ dfloat3 operator*(dfloat3 v, dfloat const& w)
+__device__ __host__ inline dfloat3 operator*(dfloat3 v, dfloat const& w)
 {
     __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
     __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
@@ -293,7 +291,7 @@ __device__ dfloat3 operator*(dfloat3 v, dfloat const& w)
     return v;
 }
 
-__device__ dfloat4 operator*(dfloat4 v, dfloat const& w)
+__device__ __host__ inline dfloat4 operator*(dfloat4 v, dfloat const& w)
 {
     __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
     __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
@@ -305,20 +303,20 @@ __device__ dfloat4 operator*(dfloat4 v, dfloat const& w)
 /**
  * Double-single floating point vector assignment by scalar multiplication
  */
-__device__ dfloat& operator*=(dfloat& v, dfloat const& w)
+__device__ __host__ inline dfloat& operator*=(dfloat& v, dfloat const& w)
 {
     __dsmul(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ dfloat2& operator*=(dfloat2& v, dfloat const& w)
+__device__ __host__ inline dfloat2& operator*=(dfloat2& v, dfloat const& w)
 {
     __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
     __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
     return v;
 }
 
-__device__ dfloat3& operator*=(dfloat3& v, dfloat const& w)
+__device__ __host__ inline dfloat3& operator*=(dfloat3& v, dfloat const& w)
 {
     __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
     __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
@@ -326,7 +324,7 @@ __device__ dfloat3& operator*=(dfloat3& v, dfloat const& w)
     return v;
 }
 
-__device__ dfloat4& operator*=(dfloat4& v, dfloat const& w)
+__device__ __host__ inline dfloat4& operator*=(dfloat4& v, dfloat const& w)
 {
     __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
     __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
@@ -334,7 +332,5 @@ __device__ dfloat4& operator*=(dfloat4& v, dfloat const& w)
     __dsmul(v.f0.w, v.f1.w, v.f0.w, v.f1.w, w.f0, w.f1);
     return v;
 }
-
-}} // namespace ljfluid::gpu
 
 #endif /* ! LJGPU_MATH_DSFUN_CUH */

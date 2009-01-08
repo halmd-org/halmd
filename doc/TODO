@@ -1,7 +1,6 @@
 ljgpu TODO
 ==========
 
-- add host conversion functions for double-single types
 - add accumulator traits with optimal accumuator types (e.g. double for float)
 - support cooling to desired temperature
 - add random pertubations to initial fcc lattice
