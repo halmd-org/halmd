@@ -127,9 +127,9 @@ protected:
 
 private:
     /** potential energy sum */
-    reduce<tag::sum, dfloat> g_reduce_en;
+    reduce<tag::sum, dfloat> reduce_en;
     /** virial equation sum */
-    reduce<tag::sum, dfloat> g_reduce_virial;
+    reduce<tag::sum, dfloat> reduce_virial;
 
     /** system state in page-locked host memory */
     struct {
@@ -282,9 +282,9 @@ void ljfluid_gpu_impl_square<dimension>::restore(trajectory_visitor visitor)
 	// calculate forces
 	update_forces(stream_);
 	// calculate potential energy
-	g_reduce_en(g_part.en, stream_);
+	reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
-	g_reduce_virial(g_part.virial, stream_);
+	reduce_virial(g_part.virial, stream_);
 
 	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
@@ -332,9 +332,9 @@ void ljfluid_gpu_impl_square<dimension>::lattice()
 	// calculate forces
 	update_forces(stream_);
 	// calculate potential energy
-	g_reduce_en(g_part.en, stream_);
+	reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
-	g_reduce_virial(g_part.virial, stream_);
+	reduce_virial(g_part.virial, stream_);
 	// replicate particle positions to periodically extended positions
 	cuda::copy(g_part.r, g_part.R, stream_);
 
@@ -441,7 +441,7 @@ void ljfluid_gpu_impl_square<dimension>::mdstep()
 
     // potential energy sum calculation
     try {
-	g_reduce_en(g_part.en, stream_);
+	reduce_en(g_part.en, stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream potential energy sum calculation on GPU");
@@ -450,7 +450,7 @@ void ljfluid_gpu_impl_square<dimension>::mdstep()
 
     // virial equation sum calculation
     try {
-	g_reduce_virial(g_part.virial, stream_);
+	reduce_virial(g_part.virial, stream_);
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream virial equation sum calculation on GPU");
@@ -483,7 +483,7 @@ void ljfluid_gpu_impl_square<dimension>::synchronize()
     // GPU time for virial equation sum calculation
     m_times["virial_sum"] += event_[0] - event_[4];
 
-    if (!std::isfinite((double) g_reduce_en.value())) {
+    if (!std::isfinite((double) reduce_en.value())) {
 	throw exception("potential energy diverged");
     }
 }
@@ -514,9 +514,9 @@ void ljfluid_gpu_impl_square<dimension>::sample()
     std::copy(h_part.v.begin(), h_part.v.end(), m_sample.v.begin());
 
     // mean potential energy per particle
-    m_sample.en_pot = (double) g_reduce_en.value() / npart;
+    m_sample.en_pot = (double) reduce_en.value() / npart;
     // mean virial equation sum per particle
-    m_sample.virial = (double) g_reduce_virial.value() / npart;
+    m_sample.virial = (double) reduce_virial.value() / npart;
 
     // GPU time for sample memcpy
     m_times["sample_memcpy"] += event_[0] - event_[1];
