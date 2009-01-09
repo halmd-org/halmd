@@ -60,23 +60,21 @@ public:
 
 public:
     /** initialize MD simulation program */
-    mdsim(options const& opts);
+    mdsim(options const& opt);
     /** run MD simulation program */
     void operator()();
 
 private:
     /** program options */
-    options const& opts;
+    options const& opt;
     /** Lennard-Jones fluid simulation */
     ljfluid_impl fluid;
-#ifndef USE_BENCHMARK
     /** block correlations */
     correlation<float_type, dimension> tcf;
     /**  trajectory file writer */
     trajectory<true, float_type, dimension> traj;
     /** thermodynamic equilibrium properties */
     energy<float_type, dimension> tep;
-#endif
     /** performance data */
     perf prf;
 };
@@ -85,36 +83,10 @@ private:
  * initialize MD simulation program
  */
 template <typename ljfluid_impl>
-mdsim<ljfluid_impl>::mdsim(options const& opts) : opts(opts)
+mdsim<ljfluid_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
 {
-    LOG("positional coordinates dimension: " << dimension);
-
-    // set cutoff radius
-    fluid.cutoff_radius(opts.cutoff_radius().value());
-#ifdef USE_POTENTIAL_SMOOTHING
-    // set potential smoothing function scale parameter
-    fluid.potential_smoothing(opts.potential_smoothing().value());
-#endif
-    // set number of particles in system
-    fluid.particles(opts.particles().value());
-    // set simulation box length or particle density
-    if (opts.density().defaulted() && !opts.box_length().empty())
-	fluid.box(opts.box_length().value());
-    else
-	fluid.density(opts.density().value());
-#ifdef USE_CUDA
-# if defined(USE_CELL) || defined(USE_NEIGHBOUR)
-    // compute cell parameters
-    fluid.cell_occupancy(opts.cell_occupancy().value());
-# endif
-    // set number of CUDA execution threads
-    fluid.threads(opts.threads().value());
-#else
-    // initialize cell lists
-    fluid.init_cell();
-#endif
     // initialize random number generator with seed
-    if (opts.rng_seed().empty()) {
+    if (opt["rand-seed"].empty()) {
 	LOG("obtaining 32-bit integer seed from /dev/random");
 	unsigned int seed;
 	try {
@@ -130,15 +102,16 @@ mdsim<ljfluid_impl>::mdsim(options const& opts) : opts(opts)
 	fluid.rng(seed);
     }
     else {
-	fluid.rng(opts.rng_seed().value());
+	fluid.rng(opt["rand-seed"].as<unsigned int>());
     }
 
-    if (!opts.trajectory_sample().empty()) {
+    if (!opt["trajectory-sample"].empty()) {
 	trajectory<false, float_type, dimension> traj;
 	// open trajectory input file
-	traj.open(opts.trajectory_input_file().value());
+	traj.open(opt["trajectory"].as<std::string>());
 	// read trajectory sample and restore system state
-	fluid.restore(boost::bind(&trajectory<false, float_type, dimension>::read, boost::ref(traj), _1, _2, opts.trajectory_sample().value()));
+	fluid.restore(boost::bind(&trajectory<false, float_type, dimension>::read,
+				  boost::ref(traj), _1, _2, opt["trajectory-sample"].as<int>()));
 	// close trajectory input file
 	traj.close();
     }
@@ -147,33 +120,36 @@ mdsim<ljfluid_impl>::mdsim(options const& opts) : opts(opts)
 	fluid.lattice();
     }
 
-    if (opts.trajectory_sample().empty() || !opts.temperature().defaulted()) {
+    if (opt["trajectory-sample"].empty() || !opt["temperature"].defaulted()) {
 	// set system temperature according to Maxwell-Boltzmann distribution
-	fluid.temperature(opts.temperature().value());
+	fluid.temperature(opt["temperature"].as<float>());
     }
-    // set simulation timestep
-    fluid.timestep(opts.timestep().value());
 
-    LOG("number of equilibration steps: " << opts.equilibration_steps().value());
+    if (!opt["device"].empty()) {
+	int const dev = cuda::device::get();
+	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used(dev) << " bytes");
+	LOG("GPU available global device memory: " << cuda::device::mem_get_free(dev) << " bytes");
+	LOG("GPU total global device memory: " << cuda::device::mem_get_total(dev) << " bytes");
+    }
 
-#ifndef USE_BENCHMARK
-    if (!opts.time().empty()) {
-	// set total simulation time
-	tcf.time(opts.time().value(), opts.timestep().value());
+    if (!opt["disable-correlation"].as<bool>()) {
+	if (!opt["time"].empty()) {
+	    // set total simulation time
+	    tcf.time(opt["time"].as<float>(), fluid.timestep());
+	}
+	else {
+	    // set total number of simulation steps
+	    tcf.steps(opt["steps"].as<uint64_t>(), fluid.timestep());
+	}
+	// set sample rate for lowest block level
+	tcf.sample_rate(opt["sample-rate"].as<unsigned int>());
+	// set block size
+	tcf.block_size(opt["block-size"].as<unsigned int>());
+	// set maximum number of samples per block
+	tcf.max_samples(opt["max-samples"].as<uint64_t>());
+	// set q-vectors for spatial Fourier transformation
+	tcf.q_values(opt["q-values"].as<unsigned int>(), fluid.box());
     }
-    else {
-	// set total number of simulation steps
-	tcf.steps(opts.steps().value(), opts.timestep().value());
-    }
-    // set sample rate for lowest block level
-    tcf.sample_rate(opts.sample_rate().value());
-    // set block size
-    tcf.block_size(opts.block_size().value());
-    // set maximum number of samples per block
-    tcf.max_samples(opts.max_samples().value());
-    // set q-vectors for spatial Fourier transformation
-    tcf.q_values(opts.q_values().value(), fluid.box());
-#endif
 }
 
 /**
@@ -182,74 +158,34 @@ mdsim<ljfluid_impl>::mdsim(options const& opts) : opts(opts)
 template <typename ljfluid_impl>
 void mdsim<ljfluid_impl>::operator()()
 {
+    if (opt["dry-run"].as<bool>()) {
+	// test parameters only
+	return;
+    }
+    if (opt["daemon"].as<bool>()) {
+	// run program in background
+	daemon(0, 0);
+    }
+
     // handle non-lethal POSIX signals to allow for a partial simulation run
     signal_handler signal;
     // measure elapsed realtime
     real_timer timer;
 
     // performance data
-    prf.open(opts.output_file_prefix().value() + ".prf");
-#ifndef USE_BENCHMARK
+    prf.open(opt["output"].as<std::string>() + ".prf");
     prf.attrs() << fluid << tcf;
-#else
-    prf.attrs() << fluid;
-#endif
 
-    if (opts.equilibration_steps().value()) {
-	LOG("starting equilibration");
-	timer.start();
-	for (iterator_timer<uint64_t> step = 0; step < opts.equilibration_steps().value(); ++step) {
-	    // stream next MD simulation program step on GPU
-	    fluid.mdstep();
-#ifdef USE_CUDA
-	    // synchronize MD simulation program step on GPU
-	    fluid.synchronize();
-#endif
-
-	    // check whether a runtime estimate has finished
-	    if (step.elapsed() > 0) {
-		LOG("estimated remaining runtime: " << step);
-		step.clear();
-		// schedule next remaining runtime estimate
-		step.set(TIME_ESTIMATE_INTERVAL);
-	    }
-
-	    // process signal event
-	    if (*signal) {
-		LOG_WARNING("trapped signal " << signal << " at simulation step " << *step);
-
-		if (*signal == SIGUSR1) {
-		    // schedule runtime estimate now
-		    step.set(0);
-		}
-		else if (*signal == SIGINT || *signal == SIGTERM) {
-		    LOG_WARNING("aborting equilibration");
-		    signal.clear();
-		    break;
-		}
-		signal.clear();
-	    }
-	}
-	timer.stop();
-	LOG("finished equilibration");
-	LOG("total equilibration runtime: " << timer);
-    }
-    // sample performance counters
-    prf.sample(fluid.times());
-    // commit HDF5 performance datasets
-    prf.commit();
-
-#ifndef USE_BENCHMARK
     // time correlation functions
-    if (!opts.disable_tcf().value()) {
-	tcf.open(opts.output_file_prefix().value() + ".tcf");
+    if (!opt["disable-correlation"].as<bool>()) {
+	tcf.open(opt["output"].as<std::string>() + ".tcf");
 	tcf.attrs() << fluid << tcf;
     }
     // trajectory file writer
-    traj.open(opts.output_file_prefix().value() + ".trj", fluid.particles());
+    traj.open(opt["output"].as<std::string>() + ".trj", fluid.particles());
     traj.attrs() << fluid << tcf;
     // thermodynamic equilibrium properties
-    tep.open(opts.output_file_prefix().value() + ".tep");
+    tep.open(opt["output"].as<std::string>() + ".tep");
     tep.attrs() << fluid << tcf;
 
     // schedule first disk flush
@@ -259,30 +195,28 @@ void mdsim<ljfluid_impl>::operator()()
     timer.start();
 
     for (iterator_timer<uint64_t> step = 0; step < tcf.steps(); ++step) {
-#ifdef USE_CUDA
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(*step)) {
 	    // copy previous MD simulation state from GPU to host
 	    fluid.sample();
 	}
-#endif
-#ifdef USE_CUDA
+
 	// stream next MD simulation program step on GPU
 	fluid.mdstep();
-#endif
+
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(*step)) {
 	    bool flush = false;
 	    // simulation time
 	    double time = *step * (double)fluid.timestep();
 	    // sample time correlation functions
-	    if (!opts.disable_tcf().value()) {
+	    if (!opt["disable-correlation"].as<bool>()) {
 		tcf.sample(fluid.trajectory(), *step, flush);
 	    }
 	    // sample thermodynamic equilibrium properties
 	    tep.sample(fluid.trajectory(), fluid.density(), time);
 	    // sample trajectory
-	    if (opts.enable_trajectories().value() || *step == 0) {
+	    if (opt["enable-trajectory"].as<bool>() || *step == 0) {
 		traj.sample(fluid.trajectory(), time);
 		if (*step == 0) {
 		    traj.flush();
@@ -293,10 +227,10 @@ void mdsim<ljfluid_impl>::operator()()
 		// sample performance counters
 		prf.sample(fluid.times());
 		// write partial results to HDF5 files and flush to disk
-		if (!opts.disable_tcf().value()) {
+		if (!opt["disable-correlation"].as<bool>()) {
 		    tcf.flush();
 		}
-		if (opts.enable_trajectories().value())
+		if (opt["enable-trajectory"].as<bool>())
 		    traj.flush();
 		tep.flush();
 		prf.flush();
@@ -308,13 +242,8 @@ void mdsim<ljfluid_impl>::operator()()
 		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
 	}
-#ifdef USE_CUDA
 	// synchronize MD simulation program step on GPU
 	fluid.synchronize();
-#else
-	// run MD simulation program step on CPU
-	fluid.mdstep();
-#endif
 
 	// check whether a runtime estimate has finished
 	if (step.elapsed() > 0) {
@@ -338,10 +267,10 @@ void mdsim<ljfluid_impl>::operator()()
 		// sample performance counters
 		prf.sample(fluid.times());
 		// write partial results to HDF5 files and flush to disk
-		if (!opts.disable_tcf().value()) {
+		if (!opt["disable-correlation"].as<bool>()) {
 		    tcf.flush();
 		}
-		if (opts.enable_trajectories().value())
+		if (opt["enable-trajectory"].as<bool>())
 		    traj.flush();
 		tep.flush();
 		prf.flush();
@@ -358,10 +287,8 @@ void mdsim<ljfluid_impl>::operator()()
 	}
     }
 
-#ifdef USE_CUDA
     // copy last MD simulation state from GPU to host
     fluid.sample();
-#endif
     // save last phase space sample
     traj.sample(fluid.trajectory(), tcf.steps() * fluid.timestep());
 
@@ -377,12 +304,11 @@ void mdsim<ljfluid_impl>::operator()()
     // cancel previously scheduled disk flush
     alarm(0);
     // close HDF5 output files
-    if (!opts.disable_tcf().value()) {
+    if (!opt["disable-correlation"].as<bool>()) {
 	tcf.close();
     }
     traj.close();
     tep.close();
-#endif
     prf.close();
 }
 

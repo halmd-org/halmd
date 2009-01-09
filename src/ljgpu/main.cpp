@@ -38,15 +38,15 @@ int main(int argc, char **argv)
 #endif
 
     // parse program options
-    options opts;
+    options opt;
     try {
-	opts.parse(argc, argv);
+	opt.parse(argc, argv);
     }
     catch (options::exit_exception const& e) {
 	return e.status();
     }
 
-    log::init(opts);
+    log::init(opt);
 
     LOG(PROGRAM_NAME " " PROGRAM_VERSION);
     LOG("variant: " << PROGRAM_VARIANT);
@@ -61,12 +61,11 @@ int main(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
-#ifdef USE_CUDA
 	// bind process to CPU core(s)
-	if (!opts.processor().empty()) {
+	if (!opt["processor"].empty()) {
 	    cpu_set_t cpu_set;
 	    CPU_ZERO(&cpu_set);
-	    BOOST_FOREACH(unsigned short const& cpu, opts.processor().value()) {
+	    BOOST_FOREACH(int cpu, opt["processor"].as<std::vector<int> >()) {
 		LOG("adding CPU core " << cpu << " to process CPU affinity mask");
 		CPU_SET(cpu, &cpu_set);
 	    }
@@ -76,76 +75,78 @@ int main(int argc, char **argv)
 	}
 
 	// set CUDA device for host context
-	int dev = opts.device().value();
-	if (opts.device().defaulted()) {
-	    char* env = getenv("CUDA_DEVICE");
-	    if (env != NULL && *env != '\0') {
-		char* endptr;
-		int i = strtol(env, &endptr, 10);
-		if (*endptr != '\0' || i < 0) {
-		    throw std::logic_error(std::string("CUDA_DEVICE environment variable invalid: ") + env);
+	if (!opt["device"].empty()) {
+	    int dev = opt["device"].as<int>();
+	    if (opt["device"].defaulted()) {
+		char const* env = getenv("CUDA_DEVICE");
+		if (env != NULL && *env != '\0') {
+		    char* endptr;
+		    int i = strtol(env, &endptr, 10);
+		    if (*endptr != '\0' || i < 0) {
+			throw std::logic_error(std::string("CUDA_DEVICE environment variable invalid: ") + env);
+		    }
+		    dev = i;
 		}
-		dev = i;
 	    }
+	    cuda::device::set(dev);
+	    LOG("CUDA device: " << cuda::device::get());
+
+	    // query CUDA device properties
+	    cuda::device::properties prop(cuda::device::get());
+	    LOG("CUDA device name: " << prop.name());
+	    LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
+	    LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
+	    LOG("CUDA device registers per block: " << prop.regs_per_block());
+	    LOG("CUDA device warp size: " << prop.warp_size());
+	    LOG("CUDA device maximum number of threads per block: " << prop.max_threads_per_block());
+	    LOG("CUDA device total constant memory: " << prop.total_const_mem());
+	    LOG("CUDA device major revision: " << prop.major());
+	    LOG("CUDA device minor revision: " << prop.minor());
+	    LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 	}
-	cuda::device::set(dev);
-	LOG("CUDA device: " << cuda::device::get());
 
-	// query CUDA device properties
-	cuda::device::properties prop(cuda::device::get());
-	LOG("CUDA device name: " << prop.name());
-	LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
-	LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
-	LOG("CUDA device registers per block: " << prop.regs_per_block());
-	LOG("CUDA device warp size: " << prop.warp_size());
-	LOG("CUDA device maximum number of threads per block: " << prop.max_threads_per_block());
-	LOG("CUDA device total constant memory: " << prop.total_const_mem());
-	LOG("CUDA device major revision: " << prop.major());
-	LOG("CUDA device minor revision: " << prop.minor());
-	LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
-#endif
+	std::string const backend(opt["backend"].as<std::string>());
+	int const dimension(opt["dimension"].as<int>());
 
-	// initialize molecular dynamics simulation
-	mdsim<ljfluid<
-#if defined(USE_CUDA) && defined(USE_NEIGHBOUR)
-	    ljfluid_gpu_neighbour,
-#elif defined(USE_CUDA) && defined(USE_CELL)
-	    ljfluid_gpu_cell,
-#elif defined(USE_CUDA)
-	    ljfluid_gpu_square,
-#else
-	    ljfluid_host,
-#endif
-#ifdef DIM_3D
-	    3
-#else
-	    2
-#endif
-	    > > sim(opts);
-
-#ifdef USE_CUDA
-	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used(dev) << " bytes");
-	LOG("GPU available global device memory: " << cuda::device::mem_get_free(dev) << " bytes");
-	LOG("GPU total global device memory: " << cuda::device::mem_get_total(dev) << " bytes");
-#endif
-
-	if (opts.daemon().value()) {
-	    // run program in background
-	    daemon(0, 0);
+	if (backend == "neighbour" && dimension == 3) {
+	    mdsim<ljfluid<ljfluid_gpu_neighbour, 3> > md(opt);
+	    md();
 	}
-	if (!opts.dry_run().value()) {
-	    // run MD simulation
-	    sim();
+	else if (backend == "neighbour" && dimension == 2) {
+	    mdsim<ljfluid<ljfluid_gpu_neighbour, 2> > md(opt);
+	    md();
+	}
+	else if (backend == "cell" && dimension == 3) {
+	    mdsim<ljfluid<ljfluid_gpu_cell, 3> > md(opt);
+	    md();
+	}
+	else if (backend == "cell" && dimension == 2) {
+	    mdsim<ljfluid<ljfluid_gpu_cell, 2> > md(opt);
+	    md();
+	}
+	else if (backend == "square" && dimension == 3) {
+	    mdsim<ljfluid<ljfluid_gpu_square, 3> > md(opt);
+	    md();
+	}
+	else if (backend == "square" && dimension == 2) {
+	    mdsim<ljfluid<ljfluid_gpu_square, 2> > md(opt);
+	    md();
+	}
+	else if (backend == "host" && dimension == 3) {
+	    mdsim<ljfluid<ljfluid_host, 3> > md(opt);
+	    md();
+	}
+	else if (backend == "host" && dimension == 2) {
+	    mdsim<ljfluid<ljfluid_host, 2> > md(opt);
+	    md();
 	}
 #ifdef NDEBUG
     }
-#ifdef USE_CUDA
     catch (cuda::error const& e) {
 	LOG_ERROR("CUDA: " << e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
-#endif
     catch (std::exception const& e) {
 	LOG_ERROR(e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");

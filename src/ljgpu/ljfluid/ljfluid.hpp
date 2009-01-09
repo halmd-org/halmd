@@ -25,57 +25,81 @@
 namespace ljgpu
 {
 
+/**
+ * Lennard-Jones fluid interface
+ */
 template <template<int> class ljfluid_impl, int dimension>
-class ljfluid : public ljfluid_impl<dimension>
+class ljfluid_base : public ljfluid_impl<dimension>
 {
 public:
-    typedef typename ljfluid_impl<dimension>::float_type float_type;
-    typedef typename ljfluid_impl<dimension>::vector_type vector_type;
-    typedef typename ljfluid_impl<dimension>::trajectory_sample trajectory_sample;
+    typedef ljfluid_impl<dimension> _Base;
+    typedef typename _Base::float_type float_type;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::trajectory_sample trajectory_sample;
 
 public:
+    ljfluid_base(options const& opt);
+
+    using _Base::box;
+    using _Base::cutoff_radius;
+    using _Base::density;
+    using _Base::particles;
+#ifdef USE_POTENTIAL_SMOOTHING
+    using _Base::potential_smoothing;
+#endif
+    using _Base::timestep;
+
     /** returns and resets CPU or GPU time accumulators */
     perf_counters times();
     /** get trajectory sample */
     trajectory_sample const& trajectory() const { return m_sample; }
-
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
 
 protected:
-    using ljfluid_impl<dimension>::m_sample;
-    using ljfluid_impl<dimension>::m_times;
-
-    using ljfluid_impl<dimension>::npart;
-    using ljfluid_impl<dimension>::density_;
-    using ljfluid_impl<dimension>::box_;
-    using ljfluid_impl<dimension>::timestep_;
-    using ljfluid_impl<dimension>::r_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
-    using ljfluid_impl<dimension>::r_smooth;
-#endif
+    using _Base::m_sample;
+    using _Base::m_times;
 };
 
 template <template<int> class ljfluid_impl, int dimension>
-void ljfluid<ljfluid_impl, dimension>::attrs(H5::Group const& param) const
+ljfluid_base<ljfluid_impl, dimension>::ljfluid_base(options const& opt)
+{
+    LOG("positional coordinates dimension: " << dimension);
+
+    particles(opt["particles"].as<unsigned int>());
+    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
+	box(opt["box-length"].as<float>());
+    }
+    else {
+	density(opt["density"].as<float>());
+    }
+    cutoff_radius(opt["cutoff"].as<float>());
+#ifdef USE_POTENTIAL_SMOOTHING
+    potential_smoothing(opt["smoothing"].as<float>());
+#endif
+    timestep(opt["timestep"].as<float>());
+}
+
+template <template<int> class ljfluid_impl, int dimension>
+void ljfluid_base<ljfluid_impl, dimension>::attrs(H5::Group const& param) const
 {
     H5xx::group node(param.createGroup("mdsim"));
+    node["box_length"] = box();
+    node["cutoff_radius"] = cutoff_radius();
+    node["density"] = density();
     node["dimension"] = dimension;
-    node["particles"] = npart;
-    node["density"] = density_;
-    node["box_length"] = box_;
-    node["timestep"] = timestep_;
-    node["cutoff_radius"] = r_cut;
+    node["particles"] = particles();
 #ifdef USE_POTENTIAL_SMOOTHING
-    node["potential_smoothing"] = r_smooth;
+    node["potential_smoothing"] = potential_smoothing();
 #endif
+    node["timestep"] = timestep();
 
     // implementation-dependent attributes
     ljfluid_impl<dimension>::attrs(param);
 }
 
 template <template<int> class ljfluid_impl, int dimension>
-perf_counters ljfluid<ljfluid_impl, dimension>::times()
+perf_counters ljfluid_base<ljfluid_impl, dimension>::times()
 {
     perf_counters times(m_times);
     BOOST_FOREACH(perf_counters::value_type& i, m_times) {
@@ -84,6 +108,85 @@ perf_counters ljfluid<ljfluid_impl, dimension>::times()
     }
     return times;
 }
+
+/**
+ * specialised Lennard-Jones fluid interface
+ */
+template<template<int> class ljfluid_impl, int dimension>
+class ljfluid;
+
+template<int dimension>
+class ljfluid<ljfluid_host, dimension> : public ljfluid_base<ljfluid_host, dimension>
+{
+public:
+    typedef ljfluid_base<ljfluid_host, dimension> _Base;
+
+public:
+    ljfluid(options const& opt) : _Base(opt)
+    {
+	init_cell();
+    }
+
+    void mdstep() {}
+
+    void sample() {}
+
+    void synchronize()
+    {
+	_Base::mdstep();
+    }
+
+    using _Base::init_cell;
+};
+
+template<int dimension>
+class ljfluid<ljfluid_gpu_square, dimension> : public ljfluid_base<ljfluid_gpu_square, dimension>
+{
+public:
+    typedef ljfluid_base<ljfluid_gpu_square, dimension> _Base;
+
+public:
+    ljfluid(options const& opt) : _Base(opt)
+    {
+	threads(opt["threads"].as<unsigned int>());
+    }
+
+    using _Base::threads;
+};
+
+template<int dimension>
+class ljfluid<ljfluid_gpu_cell, dimension> : public ljfluid_base<ljfluid_gpu_cell, dimension>
+{
+public:
+    typedef ljfluid_base<ljfluid_gpu_cell, dimension> _Base;
+
+public:
+    ljfluid(options const& opt) : _Base(opt)
+    {
+	cell_occupancy(opt["cell-occupancy"].as<float>());
+	threads(opt["threads"].as<unsigned int>());
+    }
+
+    using _Base::cell_occupancy;
+    using _Base::threads;
+};
+
+template<int dimension>
+class ljfluid<ljfluid_gpu_neighbour, dimension> : public ljfluid_base<ljfluid_gpu_neighbour, dimension>
+{
+public:
+    typedef ljfluid_base<ljfluid_gpu_neighbour, dimension> _Base;
+
+public:
+    ljfluid(options const& opt) : _Base(opt)
+    {
+	cell_occupancy(opt["cell-occupancy"].as<float>());
+	threads(opt["threads"].as<unsigned int>());
+    }
+
+    using _Base::cell_occupancy;
+    using _Base::threads;
+};
 
 } // namespace ljgpu
 

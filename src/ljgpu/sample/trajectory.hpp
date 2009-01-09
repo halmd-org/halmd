@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <boost/array.hpp>
+#include <boost/type_traits.hpp>
 #include <ljgpu/sample/sample.hpp>
 #include <ljgpu/util/H5param.hpp>
 #include <ljgpu/util/H5xx.hpp>
@@ -57,15 +58,15 @@ public:
     template <typename trajectory_sample>
     void sample(trajectory_sample const& sample, float_type const& time);
 
+protected:
+    void write(hsize_t const* dim, trajectory_gpu_sample<vector_type> const& sample);
+    void write(hsize_t const* dim, trajectory_host_sample<vector_type> const& sample);
+
 private:
     /** HDF5 trajectory output file */
     H5::H5File m_file;
     /** trajectory datasets for particle coordinates and velocities */
-#ifdef USE_CUDA
     boost::array<H5::DataSet, 4> m_dataset;
-#else
-    boost::array<H5::DataSet, 3> m_dataset;
-#endif
     /** memory dataspace for a single coordinates or velocities sample */
     H5::DataSpace m_ds_mem;
     /** file dataspace for a single coordinates or velocities sample */
@@ -128,9 +129,9 @@ void trajectory<true, float_type, dimension>::open(std::string const& filename, 
     H5::Group root(m_file.createGroup("trajectory"));
     m_dataset[1] = root.createDataSet("R", H5xx::ctype<float_type>::type, m_ds_file, cparms);
     m_dataset[2] = root.createDataSet("v", H5xx::ctype<float_type>::type, m_ds_file, cparms);
-#ifdef USE_CUDA
-    m_dataset[3] = root.createDataSet("r", H5xx::ctype<float_type>::type, m_ds_file, cparms);
-#endif
+    if (boost::is_same<float_type, float>::value) {
+	m_dataset[3] = root.createDataSet("r", H5xx::ctype<float_type>::type, m_ds_file, cparms);
+    }
 
     hsize_t dim_mem[2] = { npart, dimension };
     m_ds_mem = H5::DataSpace(2, dim_mem);
@@ -200,23 +201,7 @@ void trajectory<true, float_type, dimension>::sample(trajectory_sample const& sa
     m_ds_file.setExtentSimple(3, dim);
     m_ds_file.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
-#ifdef USE_CUDA
-    assert(sample.r.size() == dim[1]);
-#endif
-    assert(sample.R.size() == dim[1]);
-    assert(sample.v.size() == dim[1]);
-
-#ifdef USE_CUDA
-    // write periodically reduced particle coordinates
-    m_dataset[3].extend(dim);
-    m_dataset[3].write(sample.r.data(), H5xx::ctype<float_type>::type, m_ds_mem, m_ds_file);
-#endif
-    // write periodically extended particle coordinates
-    m_dataset[1].extend(dim);
-    m_dataset[1].write(sample.R.data(), H5xx::ctype<float_type>::type, m_ds_mem, m_ds_file);
-    // write particle velocities
-    m_dataset[2].extend(dim);
-    m_dataset[2].write(sample.v.data(), H5xx::ctype<float_type>::type, m_ds_mem, m_ds_file);
+    write(dim, sample);
 
     hsize_t dim_scalar[1];
     m_ds_scalar.getSimpleExtentDims(dim_scalar);
@@ -233,6 +218,31 @@ void trajectory<true, float_type, dimension>::sample(trajectory_sample const& sa
     // write simulation time
     m_dataset[0].extend(dim_scalar);
     m_dataset[0].write(&time, H5xx::ctype<float_type>::type, H5S_SCALAR, m_ds_scalar);
+}
+
+template <typename float_type, int dimension>
+void trajectory<true, float_type, dimension>::write(hsize_t const* dim, trajectory_gpu_sample<vector_type> const& sample)
+{
+    // write periodically reduced particle coordinates
+    m_dataset[3].extend(dim);
+    m_dataset[3].write(sample.r.data(), H5xx::ctype<float_type>::type, m_ds_mem, m_ds_file);
+    // write periodically extended particle coordinates
+    m_dataset[1].extend(dim);
+    m_dataset[1].write(sample.R.data(), H5xx::ctype<float_type>::type, m_ds_mem, m_ds_file);
+    // write particle velocities
+    m_dataset[2].extend(dim);
+    m_dataset[2].write(sample.v.data(), H5xx::ctype<float_type>::type, m_ds_mem, m_ds_file);
+}
+
+template <typename float_type, int dimension>
+void trajectory<true, float_type, dimension>::write(hsize_t const* dim, trajectory_host_sample<vector_type> const& sample)
+{
+    // write periodically extended particle coordinates
+    m_dataset[1].extend(dim);
+    m_dataset[1].write(sample.R.data(), H5xx::ctype<float_type>::type, m_ds_mem, m_ds_file);
+    // write particle velocities
+    m_dataset[2].extend(dim);
+    m_dataset[2].write(sample.v.data(), H5xx::ctype<float_type>::type, m_ds_mem, m_ds_file);
 }
 
 /**

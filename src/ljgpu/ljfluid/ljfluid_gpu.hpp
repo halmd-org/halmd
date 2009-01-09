@@ -30,9 +30,10 @@ template <template <int> class ljfluid_gpu_impl, int dimension>
 class ljfluid_gpu : public ljfluid_gpu_impl<dimension>
 {
 public:
-    typedef typename ljfluid_gpu_impl<dimension>::float_type float_type;
-    typedef typename ljfluid_gpu_impl<dimension>::vector_type vector_type;
-    typedef typename ljfluid_gpu_impl<dimension>::gpu_vector_type gpu_vector_type;
+    typedef ljfluid_gpu_impl<dimension> _Base;
+    typedef typename _Base::float_type float_type;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::gpu_vector_type gpu_vector_type;
 
 public:
     /** set potential cutoff radius */
@@ -79,21 +80,23 @@ public:
     void attrs(H5::Group const& param) const;
 
 protected:
-    using ljfluid_gpu_impl<dimension>::r_cut;
+    using _Base::box_;
+    using _Base::density_;
+    using _Base::dim_;
+    using _Base::en_cut;
+    using _Base::m_sample;
+    using _Base::npart;
+    using _Base::r_cut;
 #ifdef USE_POTENTIAL_SMOOTHING
-    using ljfluid_gpu_impl<dimension>::r_smooth;
-    using ljfluid_gpu_impl<dimension>::rri_smooth;
+    using _Base::r_smooth;
 #endif
-    using ljfluid_gpu_impl<dimension>::rr_cut;
-    using ljfluid_gpu_impl<dimension>::en_cut;
-    using ljfluid_gpu_impl<dimension>::npart;
-    using ljfluid_gpu_impl<dimension>::density_;
-    using ljfluid_gpu_impl<dimension>::box_;
-    using ljfluid_gpu_impl<dimension>::timestep_;
-    using ljfluid_gpu_impl<dimension>::rng_;
-    using ljfluid_gpu_impl<dimension>::m_sample;
-    using ljfluid_gpu_impl<dimension>::dim_;
-    using ljfluid_gpu_impl<dimension>::stream_;
+    using _Base::rng_;
+    using _Base::rr_cut;
+#ifdef USE_POTENTIAL_SMOOTHING
+    using _Base::rri_smooth;
+#endif
+    using _Base::stream_;
+    using _Base::timestep_;
 };
 
 template <template <int> class ljfluid_gpu_impl, int dimension>
@@ -111,7 +114,7 @@ void ljfluid_gpu<ljfluid_gpu_impl, dimension>::cutoff_radius(float_type value)
 
     LOG("potential cutoff energy: " << en_cut);
 
-    ljfluid_gpu_impl<dimension>::cutoff_radius(r_cut);
+    _Base::cutoff_radius(r_cut);
 }
 
 #ifdef USE_POTENTIAL_SMOOTHING
@@ -124,7 +127,7 @@ void ljfluid_gpu<ljfluid_gpu_impl, dimension>::potential_smoothing(float_type va
     // squared inverse potential smoothing function scale parameter
     rri_smooth = std::pow(r_smooth, -2);
 
-    ljfluid_gpu_impl<dimension>::potential_smoothing(r_cut);
+    _Base::potential_smoothing(r_cut);
 }
 #endif /* USE_POTENTIAL_SMOOTHING */
 
@@ -150,7 +153,7 @@ void ljfluid_gpu<ljfluid_gpu_impl, dimension>::particles(unsigned int value)
     }
 
     // implementation-dependent memory allocation
-    ljfluid_gpu_impl<dimension>::particles(npart);
+    _Base::particles(npart);
 }
 
 template <template <int> class ljfluid_gpu_impl, int dimension>
@@ -193,7 +196,7 @@ void ljfluid_gpu<ljfluid_gpu_impl, dimension>::threads(unsigned int value)
     }
 
     // implementation-dependent thread allocation
-    ljfluid_gpu_impl<dimension>::threads();
+    _Base::threads();
 }
 
 template <template <int> class ljfluid_gpu_impl, int dimension>
@@ -208,7 +211,7 @@ void ljfluid_gpu<ljfluid_gpu_impl, dimension>::density(float_type value)
     LOG("periodic simulation box length: " << box_);
 
     // copy periodic box length to device symbol
-    ljfluid_gpu_impl<dimension>::box(box_);
+    _Base::box(box_);
 }
 
 template <template <int> class ljfluid_gpu_impl, int dimension>
@@ -223,7 +226,7 @@ void ljfluid_gpu<ljfluid_gpu_impl, dimension>::box(float_type value)
     LOG("particle density: " << density_);
 
     // copy periodic box length to device symbol
-    ljfluid_gpu_impl<dimension>::box(box_);
+    _Base::box(box_);
 }
 
 template <template <int> class ljfluid_gpu_impl, int dimension>
@@ -233,7 +236,7 @@ void ljfluid_gpu<ljfluid_gpu_impl, dimension>::timestep(float_type value)
     timestep_ = value;
     LOG("simulation timestep: " << timestep_);
     // copy simulation timestep to device symbol
-    ljfluid_gpu_impl<dimension>::timestep(timestep_);
+    _Base::timestep(timestep_);
 }
 
 /**
@@ -274,7 +277,7 @@ void ljfluid_gpu<ljfluid_gpu_impl, dimension>::attrs(H5::Group const& param) con
     node["threads"] = dim_.threads_per_block();
 
     // implementation-dependent attributes
-    ljfluid_gpu_impl<dimension>::attrs(param);
+    _Base::attrs(param);
 }
 
 // implementations for use with ljfluid class template
