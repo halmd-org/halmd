@@ -20,7 +20,26 @@
 #include <ljgpu/mdsim.hpp>
 #include <ljgpu/options.hpp>
 
-extern "C" void mdsim(ljgpu::options const& opt) {
-    ljgpu::mdsim<ljgpu::LJFLUID_IMPL<DIMENSION> > md(opt);
-    md();
+extern "C" void mdsim(ljgpu::options const& opt)
+{
+    using namespace std;
+    using namespace boost;
+
+    int const dimension = opt["dimension"].as<int>();
+    if (dimension == 3) {
+	ljgpu::mdsim<ljgpu::LJFLUID_IMPL<3> > md(opt);
+	md();
+    }
+    else if (dimension == 2) {
+	ljgpu::mdsim<ljgpu::LJFLUID_IMPL<2> > md(opt);
+	md();
+    }
+    else {
+	throw logic_error("invalid dimension: " + lexical_cast<string>(dimension));
+    }
+}
+
+extern "C" ljgpu::options::description options()
+{
+    return ljgpu::options_description<ljgpu::LJFLUID_IMPL>();
 }

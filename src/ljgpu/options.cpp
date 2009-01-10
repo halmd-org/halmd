@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
-#include <boost/lambda/bind.hpp>
 #include <fstream>
 #include <iostream>
 #include <ljgpu/options.hpp>
@@ -225,113 +224,16 @@ namespace ljgpu
  */
 void options::parse(int argc, char** argv)
 {
-    using boost::lambda::bind;
-    using boost::lambda::_1;
+    using namespace std;
 
-    typedef std::map<std::string, po::options_description> option_map;
-    typedef option_map::value_type option_pair;
-    typedef po::options_description& (po::options_description::*option_visitor)(po::options_description const&);
-    // use pointer to select from overloaded functions
-    option_visitor const visitor = &po::options_description::add;
-
-    option_map opt;
-    opt["all"];
-    opt["host"];
-    opt["gpu_square"];
-    opt["gpu_cell"];
-    opt["gpu_neighbour"];
-
-    po::options_description opt_ljfluid;
-    opt_ljfluid.add_options()
-	("dimension", po::value<int>()->default_value(3))
-	("particles,N", po::value<unsigned int>()->default_value(1000),
-	 "number of particles")
-	("density,d", po::value<float>()->default_value(0.75),
-	 "particle density")
-	("box-length,L", po::value<float>(),
-	 "simulation box length")
-	("timestep,h", po::value<float>()->default_value(0.001),
-	 "simulation timestep")
-	("cutoff", po::value<float>()->default_value(2.5),
-	 "truncate potential at cutoff radius")
-	("smoothing", po::value<float>()->default_value(0.001),
-	 "C²-potential smoothing factor")
-	("rand-seed", po::value<unsigned int>(),
-	 "random number generator integer seed")
-	;
-    std::for_each(opt.begin(), opt.end(), bind(visitor, bind(&option_pair::second, _1), opt_ljfluid));
-
-    po::options_description opt_tcf;
-    opt_tcf.add_options()
-	("sample-rate", po::value<unsigned int>()->default_value(1),
-	 "sample rate for lowest block level")
-	("block-size", po::value<unsigned int>()->default_value(10),
-	 "block size")
-	("max-samples", po::value<uint64_t>()->default_value(10000),
-	 "maximum number of samples per block")
-	("q-values", po::value<unsigned int>()->default_value(5),
-	 "number of q-values for Fourier transform")
-	;
-    std::for_each(opt.begin(), opt.end(), bind(visitor, bind(&option_pair::second, _1), opt_tcf));
-
-    po::options_description opt_mdsim;
-    opt_mdsim.add_options()
-	("temperature,K", po::value<float>()->default_value(1.12),
-	 "initial Maxwell-Boltzmann temperature")
-	("steps,s", po::value<uint64_t>()->default_value(10000),
-	 "number of simulation steps")
-	("time,t", po::value<float>(),
-	 "total simulation time")
-	("trajectory,J", po::value<std::string>(),
-	 "trajectory input file")
-	("trajectory-sample,S", po::value<int64_t>(),
-	 "trajectory sample for initial state")
-	("disable-correlation", po::bool_switch(),
-	 "disable trajectory correlation functions")
-	("disable-energy", po::bool_switch(),
-	 "disable thermal equilibrium properties")
-	("enable-trajectory", po::bool_switch(),
-	 "dump particle trajectories")
-	("dry-run,n", po::bool_switch(),
-	 "test parameters")
-	;
-    std::for_each(opt.begin(), opt.end(), bind(visitor, bind(&option_pair::second, _1), opt_mdsim));
-
-    po::options_description opt_backend;
-    opt_backend.add_options()
-	("backend,B", po::value<std::string>()->default_value("gpu_neighbour"),
-	 "MD simulation backend")
-	;
-    std::for_each(opt.begin(), opt.end(), bind(visitor, bind(&option_pair::second, _1), opt_backend));
-
-    po::options_description opt_gpu("options for all GPU backends");
-    opt_gpu.add_options()
-	("device,D", po::value<int>()->default_value(0),
-	 "CUDA device ordinal")
-	("threads,T", po::value<unsigned int>()->default_value(128),
-	 "number of CUDA threads per block")
-	;
-    opt["all"].add(opt_gpu);
-    opt["gpu_square"].add(opt_gpu);
-    opt["gpu_cell"].add(opt_gpu);
-    opt["gpu_neighbour"].add(opt_gpu);
-
-    po::options_description opt_gpu_cell("options for cell and neighbour GPU backends");
-    opt_gpu_cell.add_options()
-	("cell-occupancy", po::value<float>()->default_value(0.5),
-	 "desired average cell occupancy")
-	;
-    opt["all"].add(opt_gpu_cell);
-    opt["gpu_cell"].add(opt_gpu_cell);
-    opt["gpu_neighbour"].add(opt_gpu_cell);
-
-    po::options_description opt_program;
-    opt_program.add_options()
-	("output,o", po::value<std::string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S"),
+    po::options_description desc("Program options");
+    desc.add_options()
+	("output,o",
+	 po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S"),
 	 "output file prefix")
-	("input,I", po::value<std::vector<std::string> >(),
+	("input,I", po::value<vector<string> >(),
 	 "parameter input file")
-	("processor,P", po::value<std::vector<int> >(),
+	("processor,P", po::value<vector<int> >(),
 	 "CPU core(s)")
 	("daemon,b", po::bool_switch(),
 	 "run program in background")
@@ -341,27 +243,28 @@ void options::parse(int argc, char** argv)
 	 "output version and exit")
 	("help",
 	 "display this help and exit")
+	("backend,B", po::value<string>()->default_value("gpu_neighbour"),
+	 "MD simulation backend")
 	;
-    std::for_each(opt.begin(), opt.end(), bind(visitor, bind(&option_pair::second, _1), opt_program));
 
     try {
-	po::store(po::parse_command_line(argc, argv, opt["all"]), vm);
+	po::command_line_parser parser(argc, argv);
+	po::parsed_options parsed(parser.options(desc).allow_unregistered().run());
+	po::store(parsed, vm);
+	unparsed = po::collect_unrecognized(parsed.options, po::include_positional);
     }
-    catch (std::exception const& e) {
-	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";
-	std::cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
+    catch (exception const& e) {
+	cerr << PROGRAM_NAME ": " << e.what() << "\n";
+	cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
 	throw options::exit_exception(EXIT_FAILURE);
     }
 
-    po::notify(vm);
-
     if (vm.count("help")) {
-	std::cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << opt["all"] << "\n";
-	throw options::exit_exception(EXIT_SUCCESS);
+	cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << desc << "\n";
     }
 
     if (vm.count("version")) {
-	std::cout << PROGRAM_NAME " " PROGRAM_VERSION "\n"
+	cout << PROGRAM_NAME " " PROGRAM_VERSION "\n"
 	    "variant: " PROGRAM_VARIANT "\n"
 	    "\n" PROGRAM_COPYRIGHT "\n" "This is free software. "
 	    "You may redistribute copies of it under the terms of\n"
@@ -370,64 +273,66 @@ void options::parse(int argc, char** argv)
 	    "There is NO WARRANTY, to the extent permitted by law.\n";
 	throw options::exit_exception(EXIT_SUCCESS);
     }
+}
 
-    std::string const backend(vm["backend"].as<std::string>());
+/**
+ * parse backend option values
+ */
+void options::parse(po::options_description const& opt)
+{
+    using namespace std;
 
     try {
-	opt.erase("all");
-	if (opt.find(backend) == opt.end()) {
-	    po::invalid_option_value error(backend);
-	    error.set_option_name("backend");
-	    throw error;
-	}
-
-	vm = po::variables_map();
-	po::store(po::parse_command_line(argc, argv, opt[backend]), vm);
+	po::command_line_parser parser(unparsed);
+	po::store(parser.options(opt).run(), vm);
 
 	// parse optional parameter input files
 	if (vm.count("input")) {
-	    std::vector<std::string> const& files = vm["input"].as<std::vector<std::string> >();
-
-	    for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it) {
-		std::ifstream ifs(it->c_str());
+	    BOOST_FOREACH(string const& fn, vm["input"].as<vector<string> >()) {
+		ifstream ifs(fn.c_str());
 		if (ifs.fail()) {
-		    std::cerr << PROGRAM_NAME ": could not open parameter input file '" << *it << "'\n";
+		    cerr << PROGRAM_NAME ": could not open parameter input file '" << fn << "'\n";
 		    throw options::exit_exception(EXIT_FAILURE);
 		}
 
-		po::store(po::parse_config_file(ifs, opt[backend]), vm);
+		po::store(po::parse_config_file(ifs, opt), vm);
 	    }
 	}
     }
-    catch (std::exception const& e) {
-	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";
-	std::cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
+    catch (exception const& e) {
+	cerr << PROGRAM_NAME ": " << e.what() << "\n";
+	cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
 	throw options::exit_exception(EXIT_FAILURE);
     }
 
     po::notify(vm);
+
+    if (vm.count("help")) {
+	cout << opt << "\n";
+	throw options::exit_exception(EXIT_SUCCESS);
+    }
 
     try {
 	po::conflicting_options(vm, "density", "box-length");
 	po::conflicting_options(vm, "steps", "time");
 	po::dependent_option(vm, "trajectory-sample", "trajectory");
     }
-    catch (std::exception const& e) {
-	std::cerr << PROGRAM_NAME ": " << e.what() << "\n";
+    catch (exception const& e) {
+	cerr << PROGRAM_NAME ": " << e.what() << "\n";
 	throw options::exit_exception(EXIT_FAILURE);
     }
 
     // override const operator[] in variables_map
-    std::map<std::string, po::variable_value>& vm_(vm);
+    map<string, po::variable_value>& vm_(vm);
 
     // optionally read parameters from HDF5 input file
     if (vm.count("trajectory")) {
 	// store absolute input file path
-	boost::filesystem::path path(vm["trajectory"].as<std::string>());
+	boost::filesystem::path path(vm["trajectory"].as<string>());
 	vm_["trajectory"] = po::variable_value(boost::filesystem::complete(path).string(), false);
 
 	try {
-	    H5::H5File file(vm["trajectory"].as<std::string>(), H5F_ACC_RDONLY);
+	    H5::H5File file(vm["trajectory"].as<string>(), H5F_ACC_RDONLY);
 	    H5::Group param(file.openGroup("param"));
 	    H5::Group node(param.openGroup("mdsim"));
 	    po::store(po::parse_attribute<unsigned int>(node, "particles"), vm_["particles"]);
@@ -448,15 +353,124 @@ void options::parse(int argc, char** argv)
 	    po::store(po::parse_attribute<unsigned int>(node, "q_values"), vm_["q-values"]);
 	}
 	catch (H5::Exception const& e) {
-	    std::cerr << PROGRAM_NAME ": " << "failed to read parameters from HDF5 input file\n";
+	    cerr << PROGRAM_NAME ": " << "failed to read parameters from HDF5 input file\n";
 	    throw options::exit_exception(EXIT_FAILURE);
 	}
     }
 
     // format timestamp in output file prefix
-    boost::filesystem::path path(date_time::format(vm["output"].as<std::string>()));
+    boost::filesystem::path path(date_time::format(vm["output"].as<string>()));
     // store absolute output file path
     vm_["output"] = po::variable_value(boost::filesystem::complete(path).string(), false);
+}
+
+mdsim_options_description::mdsim_options_description() : _Base("MD simulation options")
+{
+    namespace po = boost::program_options;
+    add_options()
+	("particles,N", po::value<unsigned int>()->default_value(1000),
+	 "number of particles")
+	("dimension", po::value<int>()->default_value(3),
+	 "positional coordinates dimension")
+	("density,d", po::value<float>()->default_value(0.75),
+	 "particle density")
+	("box-length,L", po::value<float>(),
+	 "simulation box length")
+	("timestep,h", po::value<float>()->default_value(0.001),
+	 "simulation timestep")
+	("cutoff", po::value<float>()->default_value(2.5),
+	 "truncate potential at cutoff radius")
+	("smoothing", po::value<float>()->default_value(0.001),
+	 "C²-potential smoothing factor")
+	("rand-seed", po::value<unsigned int>(),
+	 "random number generator integer seed")
+	;
+
+    po::options_description mdsim_desc;
+    mdsim_desc.add_options()
+	("temperature,K", po::value<float>()->default_value(1.12),
+	 "Boltzmann distribution temperature")
+	("steps,s", po::value<uint64_t>()->default_value(10000),
+	 "number of simulation steps")
+	("time,t", po::value<float>(),
+	 "total simulation time")
+	("trajectory,J", po::value<std::string>(),
+	 "trajectory input file")
+	("trajectory-sample,S", po::value<int64_t>(),
+	 "trajectory sample for initial state")
+	;
+    add(mdsim_desc);
+
+    po::options_description tcf_desc;
+    tcf_desc.add_options()
+	("sample-rate", po::value<unsigned int>()->default_value(1),
+	 "sample rate for lowest block level")
+	("block-size", po::value<unsigned int>()->default_value(10),
+	 "block size")
+	("max-samples", po::value<uint64_t>()->default_value(10000),
+	 "maximum number of samples per block")
+	("q-values", po::value<unsigned int>()->default_value(5),
+	 "q-values for Fourier transform")
+	;
+    add(tcf_desc);
+
+    po::options_description desc;
+    desc.add_options()
+	("disable-correlation", po::bool_switch(),
+	 "disable correlation functions")
+	("disable-energy", po::bool_switch(),
+	 "disable thermal equilibrium properties")
+	("enable-trajectory", po::bool_switch(),
+	 "dump particle trajectories")
+	("dry-run,n", po::bool_switch(),
+	 "test parameters")
+	;
+    add(desc);
+}
+
+template <>
+options_description<ljfluid_impl_host>::options_description()
+{
+}
+
+template <>
+options_description<ljfluid_impl_gpu_square>::options_description()
+{
+    namespace po = boost::program_options;
+    add_options()
+	("device,D", po::value<int>()->default_value(0),
+	 "CUDA device ordinal")
+	("threads,T", po::value<unsigned int>()->default_value(128),
+	 "number of CUDA threads per block")
+	;
+}
+
+template <>
+options_description<ljfluid_impl_gpu_neighbour>::options_description()
+{
+    namespace po = boost::program_options;
+    add_options()
+	("device,D", po::value<int>()->default_value(0),
+	 "CUDA device ordinal")
+	("threads,T", po::value<unsigned int>()->default_value(128),
+	 "number of CUDA threads per block")
+	("cell-occupancy", po::value<float>()->default_value(0.5),
+	 "desired average cell occupancy")
+	;
+}
+
+template <>
+options_description<ljfluid_impl_gpu_cell>::options_description()
+{
+    namespace po = boost::program_options;
+    add_options()
+	("device,D", po::value<int>()->default_value(0),
+	 "CUDA device ordinal")
+	("threads,T", po::value<unsigned int>()->default_value(128),
+	 "number of CUDA threads per block")
+	("cell-occupancy", po::value<float>()->default_value(0.5),
+	 "desired average cell occupancy")
+	;
 }
 
 } // namespace ljgpu

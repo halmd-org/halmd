@@ -28,6 +28,7 @@
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/version.h>
 using namespace boost;
+using namespace std;
 
 int main(int argc, char **argv)
 {
@@ -45,6 +46,44 @@ int main(int argc, char **argv)
 	return e.status();
     }
 
+    string const backend(opt["backend"].as<string>());
+    LOG("MD simulation backend: " << backend);
+
+    string module(dirname(argv[0]) + ("/libljgpu_" + backend) + ".so");
+    void* handle = dlopen(module.c_str(), RTLD_LAZY);
+    if (!handle) {
+	cerr << dlerror() << "\n";
+	return EXIT_FAILURE;
+    }
+    // reset errors
+    dlerror();
+
+    typedef ljgpu::options::description (*options_t)();
+    options_t options = (options_t) dlsym(handle, "options");
+    char const* dlsym_error = dlerror();
+    if (dlsym_error) {
+	dlclose(handle);
+	cerr << "Cannot load symbol 'options': " << dlsym_error << "\n";
+	return EXIT_FAILURE;
+    }
+
+    typedef void (*mdsim_t)(ljgpu::options const& opt);
+    mdsim_t mdsim = (mdsim_t) dlsym(handle, "mdsim");
+    dlsym_error = dlerror();
+    if (dlsym_error) {
+	dlclose(handle);
+	cerr << "Cannot load symbol 'mdsim': " << dlsym_error << "\n";
+	return EXIT_FAILURE;
+    }
+
+    // parse backend options
+    try {
+	opt.parse(options());
+    }
+    catch (ljgpu::options::exit_exception const& e) {
+	return e.status();
+    }
+
     ljgpu::log::init(opt);
 
     LOG(PROGRAM_NAME " " PROGRAM_VERSION);
@@ -54,25 +93,22 @@ int main(int argc, char **argv)
 #endif
 
     // print command line
-    std::vector<std::string> cmd(argv, argv + argc);
+    vector<string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
 #ifdef NDEBUG
     try {
 #endif
-	std::string const backend(opt["backend"].as<std::string>());
-	LOG("MD simulation backend: " << backend);
-
 	// bind process to CPU core(s)
 	if (!opt["processor"].empty()) {
 	    cpu_set_t cpu_set;
 	    CPU_ZERO(&cpu_set);
-	    BOOST_FOREACH(int cpu, opt["processor"].as<std::vector<int> >()) {
+	    BOOST_FOREACH(int cpu, opt["processor"].as<vector<int> >()) {
 		LOG("adding CPU core " << cpu << " to process CPU affinity mask");
 		CPU_SET(cpu, &cpu_set);
 	    }
 	    if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpu_set)) {
-		throw std::logic_error("failed to set process CPU affinity mask");
+		throw logic_error("failed to set process CPU affinity mask");
 	    }
 	}
 
@@ -85,7 +121,7 @@ int main(int argc, char **argv)
 		    char* endptr;
 		    int i = strtol(env, &endptr, 10);
 		    if (*endptr != '\0' || i < 0) {
-			throw std::logic_error(std::string("CUDA_DEVICE environment variable invalid: ") + env);
+			throw logic_error(string("CUDA_DEVICE environment variable invalid: ") + env);
 		    }
 		    dev = i;
 		}
@@ -107,35 +143,8 @@ int main(int argc, char **argv)
 	    LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 	}
 
-	std::string dimension(lexical_cast<std::string>(opt["dimension"].as<int>()));
-	std::string base(dirname(argv[0]) + std::string("/libljgpu_"));
-	std::string module(base + backend + "_" + dimension + "d.so");
-
-	LOG_DEBUG("Loading backend '" << module << "'...");
-	void* handle = dlopen(module.c_str(), RTLD_LAZY);
-	if (!handle) {
-	    throw std::runtime_error(std::string("Cannot load backend: ") + dlerror());
-	}
-
-	// reset errors
-	dlerror();
-
-	LOG_DEBUG("Loading symbol 'mdsim'...");
-	typedef void (*mdsim_t)(ljgpu::options const& opt);
-	mdsim_t mdsim = (mdsim_t) dlsym(handle, "mdsim");
-	char const* dlsym_error = dlerror();
-	if (dlsym_error) {
-	    std::string error(std::string("Cannot load symbol 'mdsim': ") + dlsym_error);
-	    dlclose(handle);
-	    throw std::runtime_error(error);
-	}
-
 	// run MD simulation
 	mdsim(opt);
-
-	// close the library
-	LOG_DEBUG("Unloading backend...");
-	dlclose(handle);
 #ifdef NDEBUG
     }
     catch (cuda::error const& e) {
@@ -143,12 +152,15 @@ int main(int argc, char **argv)
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
-    catch (std::exception const& e) {
+    catch (exception const& e) {
 	LOG_ERROR(e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
 #endif /* NDEBUG */
+
+    // close the backend
+    dlclose(handle);
 
     LOG(PROGRAM_NAME " exit");
     return EXIT_SUCCESS;

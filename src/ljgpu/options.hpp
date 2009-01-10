@@ -20,6 +20,7 @@
 #define LJGPU_OPTIONS_HPP
 
 #include <boost/program_options.hpp>
+#include <ljgpu/ljfluid/impl.hpp>
 #include <stdint.h>
 #include <string>
 
@@ -31,6 +32,9 @@ namespace ljgpu
  */
 class options
 {
+public:
+    typedef boost::program_options::options_description description;
+
 public:
     class exit_exception
     {
@@ -47,9 +51,10 @@ public:
     };
 
 public:
-    options() {}
     /** parse program option values */
     void parse(int argc, char** argv);
+    /** parse backend option values */
+    void parse(description const& opt);
 
     /**
      * return option value
@@ -62,6 +67,20 @@ public:
 private:
     /** parsed program options */
     boost::program_options::variables_map vm;
+    /** unrecognised program options */
+    std::vector<std::string> unparsed;
+};
+
+struct mdsim_options_description : public boost::program_options::options_description
+{
+    typedef boost::program_options::options_description _Base;
+    mdsim_options_description();
+};
+
+template <template <int> class backend>
+struct options_description : public mdsim_options_description
+{
+    options_description();
 };
 
 } // namespace ljgpu
