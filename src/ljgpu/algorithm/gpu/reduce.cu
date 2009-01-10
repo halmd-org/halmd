@@ -20,9 +20,8 @@
 #include <ljgpu/algorithm/gpu/reduce.hpp>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
-using namespace ljgpu::gpu::reduce;
 
-namespace ljgpu { namespace gpu
+namespace ljgpu { namespace cu { namespace reduce
 {
 
 /**
@@ -148,13 +147,18 @@ __global__ void max(coalesced_input_type const* g_in, output_type* g_block_max, 
     }
 }
 
+}}} // namespace ljgpu::cu::reduce
+
+namespace ljgpu { namespace gpu
+{
+
 /**
  * device function wrappers
  */
 cuda::function<void(float const*, dfloat*, uint)>
-	       reduce::sum(gpu::sum);
+	       reduce::sum(cu::reduce::sum);
 cuda::function<void(float4 const*, float*, uint),
 	       void(float2 const*, float*, uint)>
-	       reduce::max(gpu::max<float3>, gpu::max<float2>);
+	       reduce::max(cu::reduce::max<float3>, cu::reduce::max<float2>);
 
 }} // namespace ljgpu::gpu

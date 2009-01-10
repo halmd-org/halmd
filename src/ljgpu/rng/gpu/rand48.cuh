@@ -19,9 +19,6 @@
 #ifndef LJGPU_RNG_GPU_RAND48_H
 #define LJGPU_RNG_GPU_RAND48_H
 
-namespace ljgpu { namespace gpu
-{
-
 /**
  * 48-bit uinteger operations
  */
@@ -107,7 +104,5 @@ __device__ uint48 operator+(uint48 const& a, uint48 b)
 }
 
 #endif /* __CUDACC__ */
-
-}} // namespace ljgpu::gpu
 
 #endif /* ! LJGPU_RNG_GPU_RAND48_H */

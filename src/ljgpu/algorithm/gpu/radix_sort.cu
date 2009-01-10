@@ -19,7 +19,7 @@
 #include <ljgpu/algorithm/gpu/radix_sort.hpp>
 using namespace ljgpu::gpu::radix_sort;
 
-namespace ljgpu { namespace gpu
+namespace ljgpu { namespace cu { namespace radix_sort
 {
 
 /**
@@ -160,15 +160,21 @@ __global__ void permute(uint const* g_in, uint* g_out, T const* g_data_in, T* g_
     }
 }
 
+}}} // namespace ljgpu::cu::radix_sort
+
+namespace ljgpu { namespace gpu
+{
+
 /**
  * device function wrappers
  */
 cuda::function<void (uint const*, uint*, uint, uint)>
-	       radix_sort::histogram_keys(gpu::histogram_keys);
+	       radix_sort::histogram_keys(cu::radix_sort::histogram_keys);
 cuda::function<void (uint const*, uint*, int const*, int*, uint const*, uint, uint),
 	       void (uint const*, uint*, uint const*, uint*, uint const*, uint, uint),
 	       void (uint const*, uint*, float2 const*, float2*, uint const*, uint, uint),
 	       void (uint const*, uint*, float4 const*, float4*, uint const*, uint, uint)>
-	       radix_sort::permute(gpu::permute, gpu::permute, gpu::permute, gpu::permute);
+	       radix_sort::permute(cu::radix_sort::permute, cu::radix_sort::permute,
+				   cu::radix_sort::permute, cu::radix_sort::permute);
 
 }} // namespace ljgpu::gpu

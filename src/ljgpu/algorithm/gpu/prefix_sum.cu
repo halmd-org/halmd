@@ -20,7 +20,7 @@
 #include <ljgpu/algorithm/gpu/prefix_sum.hpp>
 using namespace ljgpu::gpu::prefix_sum;
 
-namespace ljgpu { namespace gpu
+namespace ljgpu { namespace cu { namespace prefix_sum
 {
 
 /**
@@ -145,17 +145,25 @@ __global__ void add_block_sums(T const* g_in, T* g_out, T const* g_block_sum, co
 	g_out[i2] = g_in[i2] + s_block_sum[0];
 }
 
+}}} // namespace ljgpu::cu::prefix_sum
+
+namespace ljgpu { namespace gpu
+{
+
 /**
  * device function wrappers
  */
 cuda::function<void (uint const*, uint*, uint*, const uint),
                void (uint48 const*, uint48*, uint48*, const uint)>
-	       prefix_sum::grid_prefix_sum(gpu::grid_prefix_sum, gpu::grid_prefix_sum);
+	       prefix_sum::grid_prefix_sum(cu::prefix_sum::grid_prefix_sum,
+					   cu::prefix_sum::grid_prefix_sum);
 cuda::function<void (uint const*, uint*, uint const*, const uint),
 	       void (uint48 const*, uint48*, uint48 const*, const uint)>
-	       prefix_sum::add_block_sums(gpu::add_block_sums, gpu::add_block_sums);
+	       prefix_sum::add_block_sums(cu::prefix_sum::add_block_sums,
+					  cu::prefix_sum::add_block_sums);
 cuda::function<void (uint48 const*, uint48*, const uint),
 	       void (uint const*, uint*, const uint)>
-	       prefix_sum::block_prefix_sum(gpu::block_prefix_sum, gpu::block_prefix_sum);
+	       prefix_sum::block_prefix_sum(cu::prefix_sum::block_prefix_sum,
+					    cu::prefix_sum::block_prefix_sum);
 
 }} // namespace ljgpu::gpu

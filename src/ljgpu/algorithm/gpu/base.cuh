@@ -19,7 +19,7 @@
 #ifndef LJGPU_ALGORITHM_GPU_BASE_CUH
 #define LJGPU_ALGORITHM_GPU_BASE_CUH
 
-namespace ljgpu { namespace gpu
+namespace ljgpu { namespace cu
 {
 
 /**
@@ -32,6 +32,9 @@ __device__ __host__ void swap(T& a, T& b)
     b = a;
     a = c;
 }
+
+
+}} // namespace ljgpu::cu
 
 /*
  * CUDA kernel helper macros
@@ -62,7 +65,5 @@ __device__ __host__ void swap(T& a, T& b)
 #include <stdio.h>
 #include <assert.h>
 #endif
-
-}} // namespace ljgpu::gpu
 
 #endif /* ! LJGPU_ALGORITHM_GPU_BASE_CUH */

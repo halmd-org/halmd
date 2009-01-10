@@ -22,7 +22,7 @@
 #include <ljgpu/ljfluid/gpu/lattice.hpp>
 using namespace ljgpu::gpu::lattice;
 
-namespace ljgpu { namespace gpu
+namespace ljgpu { namespace cu { namespace lattice
 {
 
 /**
@@ -66,12 +66,17 @@ __global__ void sc(float2* g_r, uint n, float box)
     g_r[GTID] = pack(r * (box / n));
 }
 
+}}} // namespace ljgpu::cu::lattice
+
+namespace ljgpu { namespace gpu
+{
+
 /**
  * device function wrappers
  */
 cuda::function<void (float2*, uint, float), void (float4*, uint, float)>
-    lattice::fcc(gpu::lattice_fcc, gpu::lattice_fcc);
+    lattice::fcc(cu::lattice::fcc, cu::lattice::fcc);
 cuda::function<void (float2*, uint, float), void (float4*, uint, float)>
-    lattice::sc(gpu::lattice_sc, gpu::lattice_sc);
+    lattice::sc(cu::lattice::sc, cu::lattice::sc);
 
 }} // namespace ljgpu::gpu

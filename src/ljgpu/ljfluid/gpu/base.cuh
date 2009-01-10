@@ -21,7 +21,7 @@
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 
-namespace ljgpu { namespace gpu { namespace LJFLUID_NAMESPACE
+namespace ljgpu { namespace cu { namespace ljfluid { namespace LJFLUID_VARIANT
 {
 
 /** number of particles */
@@ -152,4 +152,4 @@ __global__ void inteq(U* g_r, U* g_R, U* g_v, U const* g_f)
     g_v[GTID] = pack(v);
 }
 
-}}} // namespace ljgpu::gpu::LJFLUID_NAMESPACE
+}}}} // namespace ljgpu::cu::ljfluid::LJFLUID_VARIANT

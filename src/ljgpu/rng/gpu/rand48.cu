@@ -21,12 +21,13 @@
 #include <ljgpu/rng/gpu/rand48.hpp>
 using namespace ljgpu::gpu::rand48;
 
+namespace ljgpu { namespace cu { namespace rand48
+{
+
 /*
  * This is a parallel version of the Unix rand48 generator for CUDA.
  * It is based on the GNU Scientific Library rand48 implementation.
  */
-namespace ljgpu { namespace gpu
-{
 
 /** leapfrogging multiplier */
 __constant__ uint48 a;
@@ -237,29 +238,34 @@ __global__ void boltzmann(float2* g_v, float temperature, ushort3* g_state)
     g_v[GTID] = v;
 }
 
+}}} // namespace ljgpu::cu::rand48
+
+namespace ljgpu { namespace gpu
+{
+
 /**
  * device function wrappers
  */
 cuda::function<void (uint48*)>
-    rand48::leapfrog(gpu::leapfrog);
+    rand48::leapfrog(cu::rand48::leapfrog);
 cuda::function<void (ushort3*, uint48 const*, uint48 const*, uint48*, uint48*, uint)>
-    rand48::set(gpu::set);
+    rand48::set(cu::rand48::set);
 cuda::function<void (ushort3*, uint48 const*, uint48 const*, uint48*, uint48*, ushort3)>
-    rand48::restore(gpu::restore);
+    rand48::restore(cu::rand48::restore);
 cuda::function<void (ushort3*, ushort3*)>
-    rand48::save(gpu::save);
+    rand48::save(cu::rand48::save);
 cuda::function<void (ushort3*, float*, uint)>
-    rand48::uniform(gpu::uniform);
+    rand48::uniform(cu::rand48::uniform);
 cuda::function<void (ushort3*, uint*, uint)>
-    rand48::get(gpu::get);
+    rand48::get(cu::rand48::get);
 cuda::function<void (float4*, float, ushort3*),
 	       void (float2*, float, ushort3*)>
-    rand48::boltzmann(gpu::boltzmann, gpu::boltzmann);
+    rand48::boltzmann(cu::rand48::boltzmann, cu::rand48::boltzmann);
 
 /**
  * device constant wrappers
  */
-cuda::symbol<uint48> rand48::a(gpu::a);
-cuda::symbol<uint48> rand48::c(gpu::c);
+cuda::symbol<uint48> rand48::a(cu::rand48::a);
+cuda::symbol<uint48> rand48::c(cu::rand48::c);
 
 }} // namespace ljgpu::gpu

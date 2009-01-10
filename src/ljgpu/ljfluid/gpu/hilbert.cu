@@ -23,7 +23,7 @@
 #include <ljgpu/ljfluid/gpu/hilbert.hpp>
 using namespace ljgpu::gpu::hilbert;
 
-namespace ljgpu { namespace gpu
+namespace ljgpu { namespace cu { namespace hilbert
 {
 
 /** periodic box length */
@@ -191,17 +191,22 @@ __global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
     g_sfc[GTID] = hcode;
 }
 
+}}} // namespace ljgpu::cu::hilbert
+
+namespace ljgpu { namespace gpu
+{
+
 /**
  * device function wrappers
  */
 cuda::function<void (float4 const*, unsigned int*),
 	       void (float2 const*, unsigned int*)>
-    hilbert::curve(gpu::hilbert_curve, gpu::hilbert_curve);
+    hilbert::curve(cu::hilbert::hilbert_curve, cu::hilbert::hilbert_curve);
 
 /**
  * device constant wrappers
  */
-cuda::symbol<float> hilbert::box(gpu::box);
-cuda::symbol<unsigned int> hilbert::depth(gpu::depth);
+cuda::symbol<float> hilbert::box(cu::hilbert::box);
+cuda::symbol<unsigned int> hilbert::depth(cu::hilbert::depth);
 
 }} // namespace ljgpu::gpu

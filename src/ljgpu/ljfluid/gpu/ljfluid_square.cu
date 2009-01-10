@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define LJFLUID_NAMESPACE cu_ljfluid_square
+#define LJFLUID_VARIANT square
 #include <ljgpu/ljfluid/gpu/base.cuh>
 #include <ljgpu/ljfluid/gpu/ljfluid_square.hpp>
 
-namespace ljgpu { namespace gpu { namespace LJFLUID_NAMESPACE
+namespace ljgpu { namespace cu { namespace ljfluid { namespace square
 {
 
 /**
@@ -73,33 +73,40 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
     g_virial[GTID] = virial;
 }
 
-} // namespace ljgpu::gpu::LJFLUID_NAMESPACE
+}}}} // namespace ljgpu::gpu::ljfluid::square
+
+namespace ljgpu { namespace gpu
+{
+
+typedef ljfluid_base<ljfluid_impl_gpu_square> _Base;
+typedef ljfluid<ljfluid_impl_gpu_square<3> > _3D;
+typedef ljfluid<ljfluid_impl_gpu_square<2> > _2D;
 
 /**
  * device constant wrappers
  */
-cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_square>::npart(LJFLUID_NAMESPACE::npart);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_square>::box(LJFLUID_NAMESPACE::box);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_square>::timestep(LJFLUID_NAMESPACE::timestep);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_square>::r_cut(LJFLUID_NAMESPACE::r_cut);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_square>::rr_cut(LJFLUID_NAMESPACE::rr_cut);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_square>::en_cut(LJFLUID_NAMESPACE::en_cut);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_square>::rri_smooth(LJFLUID_NAMESPACE::rri_smooth);
+cuda::symbol<uint> _Base::npart(cu::ljfluid::square::npart);
+cuda::symbol<float> _Base::box(cu::ljfluid::square::box);
+cuda::symbol<float> _Base::timestep(cu::ljfluid::square::timestep);
+cuda::symbol<float> _Base::r_cut(cu::ljfluid::square::r_cut);
+cuda::symbol<float> _Base::rr_cut(cu::ljfluid::square::rr_cut);
+cuda::symbol<float> _Base::en_cut(cu::ljfluid::square::en_cut);
+cuda::symbol<float> _Base::rri_smooth(cu::ljfluid::square::rri_smooth);
 
 /**
  * device function wrappers
  */
 cuda::function<void (float3*, const float2)>
-    ljfluid_base<ljfluid_impl_gpu_square>::sample_smooth_function(LJFLUID_NAMESPACE::sample_smooth_function);
+    _Base::sample_smooth_function(cu::ljfluid::square::sample_smooth_function);
 
 cuda::function<void (float4*, float4*, float4*, float4 const*)>
-    ljfluid<ljfluid_impl_gpu_square<3> >::inteq(LJFLUID_NAMESPACE::inteq<float3>);
+    _3D::inteq(cu::ljfluid::square::inteq<float3>);
 cuda::function<void (float4*, float4*, float4*, float*, float*)>
-    ljfluid<ljfluid_impl_gpu_square<3> >::mdstep(LJFLUID_NAMESPACE::mdstep<float3, dfloat3>);
+    _3D::mdstep(cu::ljfluid::square::mdstep<float3, dfloat3>);
 
 cuda::function<void (float2*, float2*, float2*, float2 const*)>
-    ljfluid<ljfluid_impl_gpu_square<2> >::inteq(LJFLUID_NAMESPACE::inteq<float2>);
+    _2D::inteq(cu::ljfluid::square::inteq<float2>);
 cuda::function<void (float2*, float2*, float2*, float*, float*)>
-    ljfluid<ljfluid_impl_gpu_square<2> >::mdstep(LJFLUID_NAMESPACE::mdstep<float2, dfloat2>);
+    _2D::mdstep(cu::ljfluid::square::mdstep<float2, dfloat2>);
 
 }} // namespace ljgpu::gpu

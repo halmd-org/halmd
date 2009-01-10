@@ -33,7 +33,6 @@ namespace ljgpu
 class rand48
 {
 public:
-    typedef gpu::uint48 uint48;
     /** type for saving or restoring generator state in memory */
     typedef ushort3 state_type;
 
