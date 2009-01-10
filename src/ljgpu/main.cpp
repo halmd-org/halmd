@@ -20,15 +20,14 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
+#include <dlfcn.h>
 #include <exception>
 #include <iostream>
-#include <ljgpu/mdsim.hpp>
+#include <libgen.h>
 #include <ljgpu/options.hpp>
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/version.h>
-#include <sched.h>
-#include <unistd.h>
-using namespace ljgpu;
+using namespace boost;
 
 int main(int argc, char **argv)
 {
@@ -38,15 +37,15 @@ int main(int argc, char **argv)
 #endif
 
     // parse program options
-    options opt;
+    ljgpu::options opt;
     try {
 	opt.parse(argc, argv);
     }
-    catch (options::exit_exception const& e) {
+    catch (ljgpu::options::exit_exception const& e) {
 	return e.status();
     }
 
-    log::init(opt);
+    ljgpu::log::init(opt);
 
     LOG(PROGRAM_NAME " " PROGRAM_VERSION);
     LOG("variant: " << PROGRAM_VARIANT);
@@ -61,6 +60,9 @@ int main(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
+	std::string const backend(opt["backend"].as<std::string>());
+	LOG("MD simulation backend: " << backend);
+
 	// bind process to CPU core(s)
 	if (!opt["processor"].empty()) {
 	    cpu_set_t cpu_set;
@@ -105,41 +107,35 @@ int main(int argc, char **argv)
 	    LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 	}
 
-	std::string const backend(opt["backend"].as<std::string>());
-	int const dimension(opt["dimension"].as<int>());
+	std::string dimension(lexical_cast<std::string>(opt["dimension"].as<int>()));
+	std::string base(dirname(argv[0]) + std::string("/libljgpu_"));
+	std::string module(base + backend + "_" + dimension + "d.so");
 
-	if (backend == "neighbour" && dimension == 3) {
-	    mdsim<ljfluid_impl_gpu_neighbour<3> > md(opt);
-	    md();
+	LOG_DEBUG("Loading backend '" << module << "'...");
+	void* handle = dlopen(module.c_str(), RTLD_LAZY);
+	if (!handle) {
+	    throw std::runtime_error(std::string("Cannot load backend: ") + dlerror());
 	}
-	else if (backend == "neighbour" && dimension == 2) {
-	    mdsim<ljfluid_impl_gpu_neighbour<2> > md(opt);
-	    md();
+
+	// reset errors
+	dlerror();
+
+	LOG_DEBUG("Loading symbol 'mdsim'...");
+	typedef void (*mdsim_t)(ljgpu::options const& opt);
+	mdsim_t mdsim = (mdsim_t) dlsym(handle, "mdsim");
+	char const* dlsym_error = dlerror();
+	if (dlsym_error) {
+	    std::string error(std::string("Cannot load symbol 'mdsim': ") + dlsym_error);
+	    dlclose(handle);
+	    throw std::runtime_error(error);
 	}
-	else if (backend == "cell" && dimension == 3) {
-	    mdsim<ljfluid_impl_gpu_cell<3> > md(opt);
-	    md();
-	}
-	else if (backend == "cell" && dimension == 2) {
-	    mdsim<ljfluid_impl_gpu_cell<2> > md(opt);
-	    md();
-	}
-	else if (backend == "square" && dimension == 3) {
-	    mdsim<ljfluid_impl_gpu_square<3> > md(opt);
-	    md();
-	}
-	else if (backend == "square" && dimension == 2) {
-	    mdsim<ljfluid_impl_gpu_square<2> > md(opt);
-	    md();
-	}
-	else if (backend == "host" && dimension == 3) {
-	    mdsim<ljfluid_impl_host<3> > md(opt);
-	    md();
-	}
-	else if (backend == "host" && dimension == 2) {
-	    mdsim<ljfluid_impl_host<2> > md(opt);
-	    md();
-	}
+
+	// run MD simulation
+	mdsim(opt);
+
+	// close the library
+	LOG_DEBUG("Unloading backend...");
+	dlclose(handle);
 #ifdef NDEBUG
     }
     catch (cuda::error const& e) {

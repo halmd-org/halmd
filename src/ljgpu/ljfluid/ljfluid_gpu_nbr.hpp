@@ -338,7 +338,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
 
     // copy cell parameters to device symbols
     try {
-	//cuda::copy(ncell, gpu::ljfluid_gpu_cell::ncell);
 	cuda::copy(ncell, _gpu::ncell);
 	cuda::copy(cell_length_, _gpu::r_cell);
 	cuda::copy(std::pow(cell_length_, 2), _gpu::rr_cell);

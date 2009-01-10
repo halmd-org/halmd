@@ -237,9 +237,9 @@ void options::parse(int argc, char** argv)
     option_map opt;
     opt["all"];
     opt["host"];
-    opt["square"];
-    opt["cell"];
-    opt["neighbour"];
+    opt["gpu_square"];
+    opt["gpu_cell"];
+    opt["gpu_neighbour"];
 
     po::options_description opt_ljfluid;
     opt_ljfluid.add_options()
@@ -299,7 +299,7 @@ void options::parse(int argc, char** argv)
 
     po::options_description opt_backend;
     opt_backend.add_options()
-	("backend,B", po::value<std::string>()->default_value("neighbour"),
+	("backend,B", po::value<std::string>()->default_value("gpu_neighbour"),
 	 "MD simulation backend")
 	;
     std::for_each(opt.begin(), opt.end(), bind(visitor, bind(&option_pair::second, _1), opt_backend));
@@ -312,9 +312,9 @@ void options::parse(int argc, char** argv)
 	 "number of CUDA threads per block")
 	;
     opt["all"].add(opt_gpu);
-    opt["square"].add(opt_gpu);
-    opt["cell"].add(opt_gpu);
-    opt["neighbour"].add(opt_gpu);
+    opt["gpu_square"].add(opt_gpu);
+    opt["gpu_cell"].add(opt_gpu);
+    opt["gpu_neighbour"].add(opt_gpu);
 
     po::options_description opt_gpu_cell("options for cell and neighbour GPU backends");
     opt_gpu_cell.add_options()
@@ -322,8 +322,8 @@ void options::parse(int argc, char** argv)
 	 "desired average cell occupancy")
 	;
     opt["all"].add(opt_gpu_cell);
-    opt["cell"].add(opt_gpu_cell);
-    opt["neighbour"].add(opt_gpu_cell);
+    opt["gpu_cell"].add(opt_gpu_cell);
+    opt["gpu_neighbour"].add(opt_gpu_cell);
 
     po::options_description opt_program;
     opt_program.add_options()

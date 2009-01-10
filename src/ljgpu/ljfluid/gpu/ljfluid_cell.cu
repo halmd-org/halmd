@@ -17,11 +17,10 @@
  */
 
 #include <float.h>
-#define LJFLUID_VARIANT cell
 #include <ljgpu/ljfluid/gpu/base.cuh>
 #include <ljgpu/ljfluid/gpu/ljfluid_cell.hpp>
 
-namespace ljgpu { namespace cu { namespace ljfluid { namespace cell
+namespace ljgpu { namespace cu { namespace ljfluid
 {
 
 enum {
@@ -469,7 +468,7 @@ __global__ void update_cells(U const* g_ir, U const* g_iR, U const* g_iv, int co
     g_otag[blockIdx.x * cell_size + threadIdx.x] = s_otag[threadIdx.x];
 }
 
-}}}} // namespace ljgpu::gpu::ljfluid::cell
+}}} // namespace ljgpu::gpu::ljfluid
 
 namespace ljgpu { namespace gpu
 {
@@ -481,37 +480,37 @@ typedef ljfluid<ljfluid_impl_gpu_cell<2> > _2D;
 /**
  * device constant wrappers
  */
-cuda::symbol<uint> _Base::npart(cu::ljfluid::cell::npart);
-cuda::symbol<float> _Base::box(cu::ljfluid::cell::box);
-cuda::symbol<float> _Base::timestep(cu::ljfluid::cell::timestep);
-cuda::symbol<float> _Base::r_cut(cu::ljfluid::cell::r_cut);
-cuda::symbol<float> _Base::rr_cut(cu::ljfluid::cell::rr_cut);
-cuda::symbol<float> _Base::en_cut(cu::ljfluid::cell::en_cut);
-cuda::symbol<float> _Base::rri_smooth(cu::ljfluid::cell::rri_smooth);
-cuda::symbol<uint> _Base::ncell(cu::ljfluid::cell::ncell);
+cuda::symbol<uint> _Base::npart(cu::ljfluid::npart);
+cuda::symbol<float> _Base::box(cu::ljfluid::box);
+cuda::symbol<float> _Base::timestep(cu::ljfluid::timestep);
+cuda::symbol<float> _Base::r_cut(cu::ljfluid::r_cut);
+cuda::symbol<float> _Base::rr_cut(cu::ljfluid::rr_cut);
+cuda::symbol<float> _Base::en_cut(cu::ljfluid::en_cut);
+cuda::symbol<float> _Base::rri_smooth(cu::ljfluid::rri_smooth);
+cuda::symbol<uint> _Base::ncell(cu::ljfluid::ncell);
 
 /**
  * device function wrappers
  */
 cuda::function<void (float3*, const float2)>
-    _Base::sample_smooth_function(cu::ljfluid::cell::sample_smooth_function);
+    _Base::sample_smooth_function(cu::ljfluid::sample_smooth_function);
 
 cuda::function<void (float4*, float4*, float4*, float4 const*)>
-    _3D::inteq(cu::ljfluid::cell::inteq<float3>);
+    _3D::inteq(cu::ljfluid::inteq<float3>);
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep(cu::ljfluid::cell::mdstep<CELL_SIZE>);
+    _3D::mdstep(cu::ljfluid::mdstep<CELL_SIZE>);
 cuda::function<void (float4 const*, float4*, int*)>
-    _3D::assign_cells(cu::ljfluid::cell::assign_cells<CELL_SIZE, float3>);
+    _3D::assign_cells(cu::ljfluid::assign_cells<CELL_SIZE, float3>);
 cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)>
-    _3D::update_cells(cu::ljfluid::cell::update_cells<CELL_SIZE, float3>);
+    _3D::update_cells(cu::ljfluid::update_cells<CELL_SIZE, float3>);
 
 cuda::function<void (float2*, float2*, float2*, float2 const*)>
-    _2D::inteq(cu::ljfluid::cell::inteq<float2>);
+    _2D::inteq(cu::ljfluid::inteq<float2>);
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep(cu::ljfluid::cell::mdstep<CELL_SIZE>);
+    _2D::mdstep(cu::ljfluid::mdstep<CELL_SIZE>);
 cuda::function<void (float2 const*, float2*, int*)>
-    _2D::assign_cells(cu::ljfluid::cell::assign_cells<CELL_SIZE, float2>);
+    _2D::assign_cells(cu::ljfluid::assign_cells<CELL_SIZE, float2>);
 cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)>
-    _2D::update_cells(cu::ljfluid::cell::update_cells<CELL_SIZE, float2>);
+    _2D::update_cells(cu::ljfluid::update_cells<CELL_SIZE, float2>);
 
 }} // namespace ljgpu::gpu

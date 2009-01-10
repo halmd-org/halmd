@@ -8,6 +8,8 @@
 #ifndef LJGPU_MATH_DSFUN_CUH
 #define LJGPU_MATH_DSFUN_CUH
 
+#include <cuda/cuda_runtime.h>
+
 /**
  * This function sets the DS number A equal to the double precision floating point number B.
  */
