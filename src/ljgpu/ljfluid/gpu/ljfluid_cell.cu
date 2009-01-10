@@ -32,7 +32,7 @@ enum {
 };
 
 /** number of cells per dimension */
-static __constant__ uint ncell;
+__constant__ uint ncell;
 
 /**
  * determine cell index for a particle

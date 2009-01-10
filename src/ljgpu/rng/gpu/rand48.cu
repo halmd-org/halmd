@@ -29,9 +29,9 @@ namespace ljgpu { namespace gpu
 {
 
 /** leapfrogging multiplier */
-static __constant__ uint48 a;
+__constant__ uint48 a;
 /** leapfrogging addend */
-static __constant__ uint48 c;
+__constant__ uint48 c;
 
 /**
  * compute leapfrog multipliers for initialization

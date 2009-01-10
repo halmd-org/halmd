@@ -25,22 +25,22 @@ namespace ljgpu { namespace gpu { namespace LJFLUID_NAMESPACE
 {
 
 /** number of particles */
-static __constant__ uint npart;
+__constant__ uint npart;
 
 /** simulation timestemp */
-static __constant__ float timestep;
+__constant__ float timestep;
 /** periodic box length */
-static __constant__ float box;
+__constant__ float box;
 
 /** potential cutoff radius */
-static __constant__ float r_cut;
+__constant__ float r_cut;
 /** squared cutoff radius */
-static __constant__ float rr_cut;
+__constant__ float rr_cut;
 /** cutoff energy for Lennard-Jones potential at cutoff length */
-static __constant__ float en_cut;
+__constant__ float en_cut;
 
 /** squared inverse potential smoothing function scale parameter */
-static __constant__ float rri_smooth;
+__constant__ float rri_smooth;
 
 /**
  * first leapfrog step of integration of equations of motion
@@ -90,7 +90,7 @@ __device__ float3 compute_smooth_function(float const& r)
 /**
  * sample potential smoothing function in given range
  */
-static __global__ void sample_smooth_function(float3* g_h, const float2 r)
+__global__ void sample_smooth_function(float3* g_h, const float2 r)
 {
     g_h[GTID] = compute_smooth_function(r.x + (r.y - r.x) / GTDIM * GTID);
 }

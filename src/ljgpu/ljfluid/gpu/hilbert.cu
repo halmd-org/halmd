@@ -27,9 +27,9 @@ namespace ljgpu { namespace gpu
 {
 
 /** periodic box length */
-static __constant__ float box;
+__constant__ float box;
 /** Hilbert space-filling curve recursion depth */
-static __constant__ unsigned int depth;
+__constant__ unsigned int depth;
 
 /**
  * swap Hilbert spacing-filling curve vertices
@@ -47,7 +47,7 @@ __device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
 /**
  * map 3-dimensional point to 1-dimensional point on Hilbert space curve
  */
-static __global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
+__global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
@@ -139,7 +139,7 @@ static __global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
     g_sfc[GTID] = hcode;
 }
 
-static __global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
+__global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
 {
     // Hilbert code for particle
     unsigned int hcode = 0;

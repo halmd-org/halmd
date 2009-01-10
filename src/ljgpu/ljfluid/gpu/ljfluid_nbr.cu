@@ -32,15 +32,15 @@ enum {
 };
 
 /** number of cells per dimension */
-static __constant__ uint ncell;
+__constant__ uint ncell;
 /** neighbour list length */
-static __constant__ uint nbl_size;
+__constant__ uint nbl_size;
 /** neighbour list stride */
-static __constant__ uint nbl_stride;
+__constant__ uint nbl_stride;
 /** potential cutoff radius with cell skin */
-static __constant__ float r_cell;
+__constant__ float r_cell;
 /** squared potential radius distance with cell skin */
-static __constant__ float rr_cell;
+__constant__ float rr_cell;
 
 /** n-dimensional particle texture references */
 template <typename T = void>
@@ -124,7 +124,7 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
 /**
  * initialise particle tags
  */
-static __global__ void init_tags(int* g_tag)
+__global__ void init_tags(int* g_tag)
 {
     int tag = VIRTUAL_PARTICLE;
     if (GTID < npart) {
@@ -304,7 +304,7 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl, float2* __empty
 /**
  * compute cell indices for given particle positions
  */
-static __global__ void compute_cell(float4 const* g_part, uint* g_cell)
+__global__ void compute_cell(float4 const* g_part, uint* g_cell)
 {
     float3 r = unpack(g_part[GTID]);
     //
@@ -321,7 +321,7 @@ static __global__ void compute_cell(float4 const* g_part, uint* g_cell)
     g_cell[GTID] = uint(r.x) + ncell * (uint(r.y) + ncell * uint(r.z));
 }
 
-static __global__ void compute_cell(float2 const* g_part, uint* g_cell)
+__global__ void compute_cell(float2 const* g_part, uint* g_cell)
 {
     float2 r = unpack(g_part[GTID]);
     r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
@@ -331,7 +331,7 @@ static __global__ void compute_cell(float2 const* g_part, uint* g_cell)
 /**
  * compute global cell offsets in particle list
  */
-static __global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
+__global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
 {
     const uint j = g_cell[GTID];
     const uint k = (GTID > 0 && GTID < npart) ? g_cell[GTID - 1] : j;
@@ -371,7 +371,7 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
 /**
  * generate ascending index sequence
  */
-static __global__ void gen_index(int* g_idx)
+__global__ void gen_index(int* g_idx)
 {
     g_idx[GTID] = (GTID < npart) ? GTID : 0;
 }
