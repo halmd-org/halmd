@@ -54,6 +54,9 @@ public:
     using _Base::box;
     using _Base::timestep;
     using _Base::cutoff_radius;
+#ifdef USE_POTENTIAL_SMOOTHING
+    using _Base::potential_smoothing;
+#endif
 
     /** set number of particles in system */
     void particles(unsigned int value);

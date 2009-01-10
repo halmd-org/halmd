@@ -73,9 +73,10 @@ int main(int argc, char **argv)
 	cuda::device::set(device);
 
 	// copy constants to CUDA device symbols
-	cuda::copy(r_cutoff, gpu::ljfluid_square::r_cut);
-	cuda::copy(std::pow(r_cutoff, 2), gpu::ljfluid_square::rr_cut);
-	cuda::copy(std::pow(r_smooth, -2), gpu::ljfluid_square::rri_smooth);
+	typedef gpu::ljfluid_base<ljfluid_impl_gpu_square> _gpu;
+	cuda::copy(r_cutoff, _gpu::r_cut);
+	cuda::copy(std::pow(r_cutoff, 2), _gpu::rr_cut);
+	cuda::copy(std::pow(r_smooth, -2), _gpu::rri_smooth);
 
 	// CUDA execution dimensions
 	unsigned int count = std::max(threads, (unsigned int)((range.y - range.x) / range.z));
@@ -87,7 +88,7 @@ int main(int argc, char **argv)
 	cuda::stream stream;
 	cuda::configure(dim.grid, dim.block, stream);
 	float2 f = make_float2(range.x, range.y);
-	gpu::ljfluid_square::sample_smooth_function(g_h, f);
+	_gpu::sample_smooth_function(g_h, f);
 	cuda::copy(g_h, h_h, stream);
 	stream.synchronize();
 

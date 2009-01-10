@@ -83,6 +83,9 @@ public:
     using _Base::density;
     using _Base::box;
     using _Base::timestep;
+#ifdef USE_POTENTIAL_SMOOTHING
+    using _Base::potential_smoothing;
+#endif
 
     /** set number of particles */
     void particles(unsigned int value);
