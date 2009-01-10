@@ -17,18 +17,19 @@
  */
 
 #include <float.h>
+#define LJFLUID_NAMESPACE cu_ljfluid_neighbour
 #include <ljgpu/ljfluid/gpu/base.cuh>
 #include <ljgpu/ljfluid/gpu/ljfluid_nbr.hpp>
 
-namespace ljgpu { namespace gpu
+namespace ljgpu { namespace gpu { namespace LJFLUID_NAMESPACE
 {
+
 enum {
     /** fixed number of placeholders per cell */
     CELL_SIZE = ljfluid_base<ljfluid_impl_gpu_neighbour>::CELL_SIZE,
     /** virtual particle tag */
     VIRTUAL_PARTICLE = ljfluid_base<ljfluid_impl_gpu_neighbour>::VIRTUAL_PARTICLE,
 };
-
 
 /** number of cells per dimension */
 static __constant__ uint ncell;
@@ -391,68 +392,70 @@ __global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int
     g_otag[GTID] = tex1Dfetch(tex<>::tag, j);
 }
 
+} // namespace ljgpu::gpu::LJFLUID_NAMESPACE
+
 /**
  * device constant wrappers
  */
-cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::npart(gpu::npart);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::box(gpu::box);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::timestep(gpu::timestep);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::r_cut(gpu::r_cut);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rr_cut(gpu::rr_cut);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::en_cut(gpu::en_cut);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rri_smooth(gpu::rri_smooth);
+cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::npart(LJFLUID_NAMESPACE::npart);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::box(LJFLUID_NAMESPACE::box);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::timestep(LJFLUID_NAMESPACE::timestep);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::r_cut(LJFLUID_NAMESPACE::r_cut);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rr_cut(LJFLUID_NAMESPACE::rr_cut);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::en_cut(LJFLUID_NAMESPACE::en_cut);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rri_smooth(LJFLUID_NAMESPACE::rri_smooth);
 
-cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::ncell(gpu::ncell);
-cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::nbl_size(gpu::nbl_size);
-cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::nbl_stride(gpu::nbl_stride);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::r_cell(gpu::r_cell);
-cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rr_cell(gpu::rr_cell);
+cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::ncell(LJFLUID_NAMESPACE::ncell);
+cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::nbl_size(LJFLUID_NAMESPACE::nbl_size);
+cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::nbl_stride(LJFLUID_NAMESPACE::nbl_stride);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::r_cell(LJFLUID_NAMESPACE::r_cell);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rr_cell(LJFLUID_NAMESPACE::rr_cell);
 
 /**
  * device texture wrappers
  */
-cuda::texture<int> ljfluid_base<ljfluid_impl_gpu_neighbour>::tag(gpu::tex<>::tag);
-cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::r(gpu::tex<float4>::r);
-cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::R(gpu::tex<float4>::R);
-cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::v(gpu::tex<float4>::v);
-cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::r(gpu::tex<float2>::r);
-cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::R(gpu::tex<float2>::R);
-cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::v(gpu::tex<float2>::v);
+cuda::texture<int> ljfluid_base<ljfluid_impl_gpu_neighbour>::tag(LJFLUID_NAMESPACE::tex<>::tag);
+cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::r(LJFLUID_NAMESPACE::tex<float4>::r);
+cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::R(LJFLUID_NAMESPACE::tex<float4>::R);
+cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::v(LJFLUID_NAMESPACE::tex<float4>::v);
+cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::r(LJFLUID_NAMESPACE::tex<float2>::r);
+cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::R(LJFLUID_NAMESPACE::tex<float2>::R);
+cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::v(LJFLUID_NAMESPACE::tex<float2>::v);
 
 /**
  * device function wrappers
  */
 cuda::function<void (float3*, const float2)>
-    ljfluid_base<ljfluid_impl_gpu_neighbour>::sample_smooth_function(gpu::sample_smooth_function);
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::sample_smooth_function(LJFLUID_NAMESPACE::sample_smooth_function);
 cuda::function<void (int*)>
-    ljfluid_base<ljfluid_impl_gpu_neighbour>::init_tags(gpu::init_tags);
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::init_tags(LJFLUID_NAMESPACE::init_tags);
 cuda::function<void (uint const*, int const*, int const*, int*)>
-    ljfluid_base<ljfluid_impl_gpu_neighbour>::assign_cells(gpu::assign_cells<CELL_SIZE>);
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::assign_cells(LJFLUID_NAMESPACE::assign_cells<CELL_SIZE>);
 cuda::function<void (uint*, int*)>
-    ljfluid_base<ljfluid_impl_gpu_neighbour>::find_cell_offset(gpu::find_cell_offset);
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::find_cell_offset(LJFLUID_NAMESPACE::find_cell_offset);
 cuda::function<void (int*)>
-    ljfluid_base<ljfluid_impl_gpu_neighbour>::gen_index(gpu::gen_index);
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::gen_index(LJFLUID_NAMESPACE::gen_index);
 
 cuda::function<void (float4*, float4*, float4*, float4 const*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<3> >::inteq(gpu::inteq<float3>);
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::inteq(LJFLUID_NAMESPACE::inteq<float3>);
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<3> >::mdstep(gpu::mdstep<float3, dfloat3>);
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::mdstep(LJFLUID_NAMESPACE::mdstep<float3, dfloat3>);
 cuda::function<void (int const*, int*, float4*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<3> >::update_neighbours(gpu::update_neighbours<CELL_SIZE>);
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::update_neighbours(LJFLUID_NAMESPACE::update_neighbours<CELL_SIZE>);
 cuda::function<void (float4 const*, uint*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<3> >::compute_cell(gpu::compute_cell);
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::compute_cell(LJFLUID_NAMESPACE::compute_cell);
 cuda::function<void (const int*, float4*, float4*, float4*, int*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<3> >::order_particles(gpu::order_particles);
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::order_particles(LJFLUID_NAMESPACE::order_particles);
 
 cuda::function<void (float2*, float2*, float2*, float2 const*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<2> >::inteq(gpu::inteq<float2>);
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::inteq(LJFLUID_NAMESPACE::inteq<float2>);
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<2> >::mdstep(gpu::mdstep<float2, dfloat2>);
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::mdstep(LJFLUID_NAMESPACE::mdstep<float2, dfloat2>);
 cuda::function<void (int const*, int*, float2*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<2> >::update_neighbours(gpu::update_neighbours<CELL_SIZE>);
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::update_neighbours(LJFLUID_NAMESPACE::update_neighbours<CELL_SIZE>);
 cuda::function<void (float2 const*, uint*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<2> >::compute_cell(gpu::compute_cell);
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::compute_cell(LJFLUID_NAMESPACE::compute_cell);
 cuda::function<void (const int*, float2*, float2*, float2*, int*)>
-    ljfluid<ljfluid_impl_gpu_neighbour<2> >::order_particles(gpu::order_particles);
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::order_particles(LJFLUID_NAMESPACE::order_particles);
 
 }} // namespace ljgpu::gpu
