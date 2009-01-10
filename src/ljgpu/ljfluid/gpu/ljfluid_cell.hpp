@@ -20,38 +20,60 @@
 #define LJGPU_LJFLUID_GPU_LJFLUID_CELL_HPP
 
 #include <cuda_wrapper.hpp>
+#include <ljgpu/ljfluid/impl.hpp>
 
-namespace ljgpu { namespace gpu { namespace ljfluid_cell
+namespace ljgpu { namespace gpu
 {
 
-enum {
-    /** fixed number of placeholders per cell */
-    CELL_SIZE = 32,
-    /** virtual particle tag */
-    VIRTUAL_PARTICLE = -1,
+template <template <int> class ljfluid_impl>
+struct ljfluid_base;
+
+template <>
+struct ljfluid_base<ljfluid_impl_gpu_cell>
+{
+    enum {
+	/** fixed number of placeholders per cell */
+	CELL_SIZE = 32,
+	/** virtual particle tag */
+	VIRTUAL_PARTICLE = -1,
+    };
+
+    static cuda::symbol<uint> npart;
+    static cuda::symbol<float> box;
+    static cuda::symbol<float> timestep;
+    static cuda::symbol<float> r_cut;
+    static cuda::symbol<float> rr_cut;
+    static cuda::symbol<float> en_cut;
+    static cuda::symbol<float> rri_smooth;
+    static cuda::symbol<uint> ncell;
+
+    static cuda::function<void (float3*, const float2)> sample_smooth_function;
 };
 
-extern cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*),
-		      void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (float2 const*, float2*, int*),
-		      void (float4 const*, float4*, int*)> assign_cells;
-extern cuda::function<void (float2 const*, float2 const*, float2 const*,
-		      int const*, float2*, float2*, float2*, int*),
-		      void (float4 const*, float4 const*, float4 const*,
-		      int const*, float4*, float4*, float4*, int*)> update_cells;
-extern cuda::function<void (float2*, float2*, float2*, float2 const*),
-		      void (float4*, float4*, float4*, float4 const*)> inteq;
-extern cuda::function<void (float3*, const float2)> sample_smooth_function;
+template <typename ljfluid_impl>
+struct ljfluid;
 
-extern cuda::symbol<uint> npart;
-extern cuda::symbol<float> box;
-extern cuda::symbol<float> timestep;
-extern cuda::symbol<float> r_cut;
-extern cuda::symbol<float> rr_cut;
-extern cuda::symbol<float> en_cut;
-extern cuda::symbol<float> rri_smooth;
-extern cuda::symbol<uint> ncell;
+template <>
+struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<3> >
+    : public ljfluid_base<ljfluid_impl_gpu_cell>
+{
+    static cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
+    static cuda::function<void (float4 const*, float4*, int*)> assign_cells;
+    static cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells;
+    static cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
+};
 
-}}} // namespace ljgpu::gpu::ljfluid_cell
+
+template <>
+struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<2> >
+    : public ljfluid_base<ljfluid_impl_gpu_cell>
+{
+    static cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
+    static cuda::function<void (float2 const*, float2*, int*)> assign_cells;
+    static cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells;
+    static cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
+};
+
+}} // namespace ljgpu::gpu
 
 #endif /* ! LJGPU_LJFLUID_GPU_LJFLUID_BASE_HPP */

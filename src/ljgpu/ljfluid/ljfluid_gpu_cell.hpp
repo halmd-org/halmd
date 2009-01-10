@@ -19,78 +19,73 @@
 #ifndef LJGPU_LJFLUID_LJFLUID_GPU_CELL_HPP
 #define LJGPU_LJFLUID_LJFLUID_GPU_CELL_HPP
 
-#include <boost/foreach.hpp>
-#include <cuda_wrapper.hpp>
-#include <ljgpu/math/stat.hpp>
+#include <ljgpu/ljfluid/base_gpu.hpp>
 #include <ljgpu/ljfluid/gpu/lattice.hpp>
-#include <ljgpu/ljfluid/gpu/ljfluid_cell.hpp>
-#include <ljgpu/ljfluid/ljfluid_traits.hpp>
-#include <ljgpu/rng/rand48.hpp>
-#include <ljgpu/sample/perf.hpp>
-#include <ljgpu/sample/sample.hpp>
-#include <ljgpu/util/H5param.hpp>
-#include <ljgpu/util/H5xx.hpp>
-#include <ljgpu/util/exception.hpp>
-#include <ljgpu/util/log.hpp>
+#include <ljgpu/math/stat.hpp>
 
 namespace ljgpu
 {
 
+template <typename ljfluid_impl>
+class ljfluid;
+
 template <int dimension>
-class ljfluid_gpu_impl_cell
+class ljfluid<ljfluid_impl_gpu_cell<dimension> >
+    : public ljfluid_base_gpu<ljfluid_impl_gpu_cell<dimension> >
 {
 public:
-    typedef typename ljfluid_gpu_traits<dimension>::float_type float_type;
-    typedef typename ljfluid_gpu_traits<dimension>::vector_type vector_type;
-    typedef typename ljfluid_gpu_traits<dimension>::gpu_vector_type gpu_vector_type;
-    typedef typename ljfluid_gpu_traits<dimension>::trajectory_sample trajectory_sample;
-    typedef typename trajectory_sample::visitor trajectory_visitor;
+    typedef ljfluid_base_gpu<ljfluid_impl_gpu_cell<dimension> > _Base;
+    typedef gpu::ljfluid<ljfluid_impl_gpu_cell<dimension> > _gpu;
+    typedef typename _Base::float_type float_type;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::gpu_vector_type gpu_vector_type;
+    typedef typename _Base::sample_type sample_type;
+    typedef typename sample_type::sample_visitor sample_visitor;
 
 public:
+    /** initialise fluid from program options */
+    ljfluid(options const& opt);
+
+    using _Base::particles;
+    using _Base::density;
+    using _Base::box;
+    using _Base::timestep;
+    using _Base::cutoff_radius;
+
+    /** set number of CUDA execution threads */
+    void threads(unsigned int value);
     /** set desired average cell occupancy */
     void cell_occupancy(float_type value);
+
     /** restore system state from phase space sample */
-    void restore(trajectory_visitor visitor);
+    void restore(sample_visitor visitor);
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
     void temperature(float_type temp);
 
     /** stream MD simulation step on GPU */
-    void mdstep();
+    void stream();
     /** synchronize MD simulation step on GPU */
-    void synchronize();
+    void mdstep();
     /** copy MD simulation step results from GPU to host */
-    void sample();
+    void copy();
 
+    /** get number of CUDA execution threads */
+    unsigned int threads() const { return dim_.threads_per_block(); }
+    /** get effective average cell occupancy */
+    float_type cell_occupancy() const { return cell_occupancy_; }
     /** get number of cells per dimension */
     unsigned int cells() const { return ncell; }
     /** get total number of cell placeholders */
     unsigned int placeholders() const { return nplace; }
     /** get cell length */
     float_type cell_length() const { return cell_length_; }
-    /** get effective average cell occupancy */
-    float_type cell_occupancy() const { return cell_occupancy_; }
     /** get number of placeholders per cell */
     unsigned int cell_size() const { return cell_size_; }
+
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
-
-protected:
-    /** set number of particles in system */
-    void particles(unsigned int value);
-    /** set potential cutoff radius */
-    void cutoff_radius(float_type value);
-#ifdef USE_POTENTIAL_SMOOTHING
-    /** set potential smoothing function scale parameter */
-    void potential_smoothing(float_type value);
-#endif
-    /** set number of CUDA execution threads */
-    void threads();
-    /* set periodic box length */
-    void box(float_type value);
-    /** set simulation timestep */
-    void timestep(float_type value);
 
 private:
     /** first leapfrog step of integration of differential equations of motion */
@@ -102,47 +97,29 @@ private:
     /** replicate cell lists */
     void copy_cells(cuda::stream& stream);
 
-protected:
-    /** number of particles in system */
-    unsigned int npart;
-    /** particle density */
-    float_type density_;
-    /** periodic box length */
-    float_type box_;
-    /** simulation timestep */
-    float_type timestep_;
-
-    /** cutoff radius for shifted Lennard-Jones potential */
-    float_type r_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
-    /** potential smoothing function scale parameter */
-    float_type r_smooth;
-    /** squared inverse potential smoothing function scale parameter */
-    float_type rri_smooth;
-#endif
-    /** squared cutoff radius */
-    float_type rr_cut;
-    /** potential energy at cutoff radius */
-    float_type en_cut;
-
-    /** GPU random number generator */
-    rand48 rng_;
-
-    /** CUDA execution dimensions */
-    cuda::config dim_;
-    /** CUDA asynchronous execution */
-    cuda::stream stream_;
-    /** CUDA events for kernel timing */
-    boost::array<cuda::event, 5> event_;
-
-    /** trajectory sample in swappable host memory */
-    trajectory_sample m_sample;
-    /** GPU time accumulators */
-    perf_counters m_times;
-
 private:
+    using _Base::npart;
+    using _Base::density_;
+    using _Base::box_;
+    using _Base::timestep_;
+    using _Base::r_cut;
+    using _Base::rr_cut;
+    using _Base::en_cut;
+#ifdef USE_POTENTIAL_SMOOTHING
+    using _Base::r_smooth;
+    using _Base::rri_smooth;
+#endif
+    using _Base::m_sample;
+    using _Base::m_times;
+
+    using _Base::dim_;
+    using _Base::stream_;
+    using _Base::rng_;
+
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
+    /** CUDA events for kernel timing */
+    boost::array<cuda::event, 9> event_;
 
     /** number of cells per dimension */
     unsigned int ncell;
@@ -210,50 +187,33 @@ private:
 };
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::particles(unsigned int value)
+ljfluid<ljfluid_impl_gpu_cell<dimension> >::ljfluid(options const& opt)
 {
-    // copy particle number to device symbol
-    try {
-	cuda::copy(npart, gpu::ljfluid_cell::npart);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy particle number to device symbol");
-    }
-}
+    LOG("positional coordinates dimension: " << dimension);
 
-template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::cutoff_radius(float_type value)
-{
-    try {
-	cuda::copy(r_cut, gpu::ljfluid_cell::r_cut);
-	cuda::copy(rr_cut, gpu::ljfluid_cell::rr_cut);
-	cuda::copy(en_cut, gpu::ljfluid_cell::en_cut);
+    particles(opt["particles"].as<unsigned int>());
+    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
+	box(opt["box-length"].as<float>());
     }
-    catch (cuda::error const&) {
-	throw exception("failed to copy potential cutoff symbols");
+    else {
+	density(opt["density"].as<float>());
     }
-}
-
+    cutoff_radius(opt["cutoff"].as<float>());
 #ifdef USE_POTENTIAL_SMOOTHING
-template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::potential_smoothing(float_type value)
-{
-    try {
-	cuda::copy(rri_smooth, gpu::ljfluid_cell::rri_smooth);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy potential smoothing function scale symbol");
-    }
+    potential_smoothing(opt["smoothing"].as<float>());
+#endif
+    timestep(opt["timestep"].as<float>());
+    cell_occupancy(opt["cell-occupancy"].as<float>());
+    threads(opt["threads"].as<unsigned int>());
 }
-#endif /* USE_POTENTIAL_SMOOTHING */
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::cell_occupancy(float_type value)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::cell_occupancy(float_type value)
 {
     LOG("desired average cell occupancy: " << value);
 
     // fixed cell size due to fixed number of CUDA execution threads per block
-    cell_size_ = gpu::ljfluid_cell::CELL_SIZE;
+    cell_size_ = _gpu::CELL_SIZE;
     LOG("number of placeholders per cell: " << cell_size_);
 
     // optimal number of cells with given cell occupancy as upper boundary
@@ -290,7 +250,7 @@ void ljfluid_gpu_impl_cell<dimension>::cell_occupancy(float_type value)
     }
 
     try {
-	cuda::copy(ncell, gpu::ljfluid_cell::ncell);
+	cuda::copy(ncell, _gpu::ncell);
     }
     catch (cuda::error const&) {
 	throw exception("failed to copy cell parameters to device symbols");
@@ -298,8 +258,10 @@ void ljfluid_gpu_impl_cell<dimension>::cell_occupancy(float_type value)
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::threads()
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::threads(unsigned int value)
 {
+    _Base::threads(value);
+
     // set CUDA execution dimensions for cell-specific kernels
     dim_cell_ = cuda::config(dim3(powf(ncell, dimension)), dim3(cell_size_));
     LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
@@ -346,29 +308,7 @@ void ljfluid_gpu_impl_cell<dimension>::threads()
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::box(float_type value)
-{
-    try {
-	cuda::copy(box_, gpu::ljfluid_cell::box);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy periodic box length to device symbol");
-    }
-}
-
-template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::timestep(float_type value)
-{
-    try {
-	cuda::copy(timestep_, gpu::ljfluid_cell::timestep);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy simulation timestep to device symbol");
-    }
-}
-
-template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::restore(trajectory_visitor visitor)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::restore(sample_visitor visitor)
 {
     // read phase space sample
     visitor(m_sample.r, m_sample.v);
@@ -382,7 +322,7 @@ void ljfluid_gpu_impl_cell<dimension>::restore(trajectory_visitor visitor)
 	// assign particles to cells
 	event_[0].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid_cell::assign_cells(g_part.R, g_part.r, g_part.tag);
+	_gpu::assign_cells(g_part.R, g_part.r, g_part.tag);
 	event_[1].record(stream_);
 	// replicate to periodically extended particle positions
 	cuda::copy(g_part.r, g_part.R, stream_);
@@ -399,7 +339,7 @@ void ljfluid_gpu_impl_cell<dimension>::restore(trajectory_visitor visitor)
 	for (unsigned int i = 0; i < nplace; ++i) {
 	    // particle number
 	    const int tag = h_part.tag[i];
-	    if (tag != gpu::ljfluid_cell::VIRTUAL_PARTICLE) {
+	    if (tag != _gpu::VIRTUAL_PARTICLE) {
 		h_part.v[i] = make_float(m_sample.v[tag]);
 		// calculate maximum squared velocity
 		vv_max = std::max(vv_max, m_sample.v[tag] * m_sample.v[tag]);
@@ -420,7 +360,7 @@ void ljfluid_gpu_impl_cell<dimension>::restore(trajectory_visitor visitor)
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::lattice()
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
@@ -454,7 +394,7 @@ void ljfluid_gpu_impl_cell<dimension>::lattice()
 	// assign particles to cells
 	event_[2].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid_cell::assign_cells(g_part_buf.r, g_part.r, g_part.tag);
+	_gpu::assign_cells(g_part_buf.r, g_part.r, g_part.tag);
 	event_[3].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
@@ -462,7 +402,7 @@ void ljfluid_gpu_impl_cell<dimension>::lattice()
 	cuda::copy(g_part.r, g_part.R, stream_);
 	// calculate forces, potential energy and virial equation sum
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	gpu::ljfluid_cell::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
+	_gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -478,7 +418,7 @@ void ljfluid_gpu_impl_cell<dimension>::lattice()
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::temperature(float_type temp)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
 {
     LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     try {
@@ -519,7 +459,7 @@ void ljfluid_gpu_impl_cell<dimension>::temperature(float_type temp)
 	for (unsigned int i = 0; i < nplace; ++i) {
 	    // particle number
 	    const int n = h_part.tag[i];
-	    if (n != gpu::ljfluid_cell::VIRTUAL_PARTICLE) {
+	    if (n != _gpu::VIRTUAL_PARTICLE) {
 		// assign velocity to cell placeholder
 		h_part.v[i] = make_float(m_sample.v[n]);
 		// calculate maximum squared velocity
@@ -538,7 +478,7 @@ void ljfluid_gpu_impl_cell<dimension>::temperature(float_type temp)
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::mdstep()
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::stream()
 {
     event_[1].record(stream_);
     // first leapfrog step of integration of differential equations of motion
@@ -583,7 +523,7 @@ void ljfluid_gpu_impl_cell<dimension>::mdstep()
  * synchronize MD simulation step on GPU
  */
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::synchronize()
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::mdstep()
 {
     try {
 	// wait for MD simulation step on GPU to finish
@@ -611,7 +551,7 @@ void ljfluid_gpu_impl_cell<dimension>::synchronize()
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::sample()
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 {
     // mean potential energy per particle
     m_sample.en_pot = 0;
@@ -651,7 +591,7 @@ void ljfluid_gpu_impl_cell<dimension>::sample()
 	// particle number
 	const int n = h_part.tag[i];
 	// check if real particle
-	if (n != gpu::ljfluid_cell::VIRTUAL_PARTICLE) {
+	if (n != _gpu::VIRTUAL_PARTICLE) {
 	    // copy periodically reduced particle positions
 	    m_sample.r[n] = h_part.r[i];
 	    // copy periodically extended particle positions
@@ -683,43 +623,45 @@ void ljfluid_gpu_impl_cell<dimension>::sample()
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::attrs(H5::Group const& param) const
-{
-    H5xx::group node(param.openGroup("mdsim"));
-    node["cells"] = ncell;
-    node["placeholders"] = nplace;
-    node["cell_length"] = cell_length_;
-    node["cell_occupancy"] = cell_occupancy_;
-}
-
-template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::velocity_verlet(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::velocity_verlet(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, stream);
-    gpu::ljfluid_cell::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
+    _gpu::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::update_forces(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-    gpu::ljfluid_cell::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
+    _gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::update_cells(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::update_cells(cuda::stream& stream)
 {
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
-    gpu::ljfluid_cell::update_cells(g_part.r, g_part.R, g_part.v, g_part.tag, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part_buf.tag);
+    _gpu::update_cells(g_part.r, g_part.R, g_part.v, g_part.tag, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part_buf.tag);
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_cell<dimension>::copy_cells(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy_cells(cuda::stream& stream)
 {
     cuda::copy(g_part_buf.r, g_part.r, stream);
     cuda::copy(g_part_buf.R, g_part.R, stream);
     cuda::copy(g_part_buf.v, g_part.v, stream);
     cuda::copy(g_part_buf.tag, g_part.tag, stream);
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::attrs(H5::Group const& param) const
+{
+    _Base::attrs(param);
+
+    H5xx::group node(param.openGroup("mdsim"));
+    node["cells"] = cells();
+    node["placeholders"] = placeholders();
+    node["cell_length"] = cell_length();
+    node["cell_occupancy"] = cell_occupancy();
 }
 
 } // namespace ljgpu

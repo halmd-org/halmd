@@ -109,35 +109,35 @@ int main(int argc, char **argv)
 	int const dimension(opt["dimension"].as<int>());
 
 	if (backend == "neighbour" && dimension == 3) {
-	    mdsim<ljfluid<ljfluid_gpu_neighbour, 3> > md(opt);
+	    mdsim<ljfluid_impl_gpu_neighbour<3> > md(opt);
 	    md();
 	}
 	else if (backend == "neighbour" && dimension == 2) {
-	    mdsim<ljfluid<ljfluid_gpu_neighbour, 2> > md(opt);
+	    mdsim<ljfluid_impl_gpu_neighbour<2> > md(opt);
 	    md();
 	}
 	else if (backend == "cell" && dimension == 3) {
-	    mdsim<ljfluid<ljfluid_gpu_cell, 3> > md(opt);
+	    mdsim<ljfluid_impl_gpu_cell<3> > md(opt);
 	    md();
 	}
 	else if (backend == "cell" && dimension == 2) {
-	    mdsim<ljfluid<ljfluid_gpu_cell, 2> > md(opt);
+	    mdsim<ljfluid_impl_gpu_cell<2> > md(opt);
 	    md();
 	}
 	else if (backend == "square" && dimension == 3) {
-	    mdsim<ljfluid<ljfluid_gpu_square, 3> > md(opt);
+	    mdsim<ljfluid_impl_gpu_square<3> > md(opt);
 	    md();
 	}
 	else if (backend == "square" && dimension == 2) {
-	    mdsim<ljfluid<ljfluid_gpu_square, 2> > md(opt);
+	    mdsim<ljfluid_impl_gpu_square<2> > md(opt);
 	    md();
 	}
 	else if (backend == "host" && dimension == 3) {
-	    mdsim<ljfluid<ljfluid_host, 3> > md(opt);
+	    mdsim<ljfluid_impl_host<3> > md(opt);
 	    md();
 	}
 	else if (backend == "host" && dimension == 2) {
-	    mdsim<ljfluid<ljfluid_host, 2> > md(opt);
+	    mdsim<ljfluid_impl_host<2> > md(opt);
 	    md();
 	}
 #ifdef NDEBUG

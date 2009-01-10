@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_LJFLUID_TRAITS_HPP
-#define LJGPU_LJFLUID_LJFLUID_TRAITS_HPP
+#ifndef LJGPU_LJFLUID_TRAITS_HPP
+#define LJGPU_LJFLUID_TRAITS_HPP
 
 #include <cuda/vector_types.h>
+#include <ljgpu/ljfluid/impl.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/sample/sample.hpp>
@@ -36,7 +37,8 @@ struct ljfluid_gpu_traits<2>
     typedef float float_type;
     typedef vector<float, 2> vector_type;
     typedef float2 gpu_vector_type;
-    typedef trajectory_gpu_sample<vector_type> trajectory_sample;
+    typedef trajectory_gpu_sample<vector_type> sample_type;
+    enum { dimension = 2 };
 };
 
 template <>
@@ -45,7 +47,8 @@ struct ljfluid_gpu_traits<3>
     typedef float float_type;
     typedef vector<float, 3> vector_type;
     typedef float4 gpu_vector_type;
-    typedef trajectory_gpu_sample<vector_type> trajectory_sample;
+    typedef trajectory_gpu_sample<vector_type> sample_type;
+    enum { dimension = 3 };
 };
 
 template <int dimension>
@@ -56,7 +59,8 @@ struct ljfluid_host_traits<2>
 {
     typedef double float_type;
     typedef vector<double, 2> vector_type;
-    typedef trajectory_host_sample<vector_type> trajectory_sample;
+    typedef trajectory_host_sample<vector_type> sample_type;
+    enum { dimension = 2 };
 };
 
 template <>
@@ -64,9 +68,30 @@ struct ljfluid_host_traits<3>
 {
     typedef double float_type;
     typedef vector<double, 3> vector_type;
-    typedef trajectory_host_sample<vector_type> trajectory_sample;
+    typedef trajectory_host_sample<vector_type> sample_type;
+    enum { dimension = 3 };
 };
+
+
+template <typename ljfluid_impl>
+struct ljfluid_traits;
+
+template <int dimension>
+struct ljfluid_traits<ljfluid_impl_gpu_square<dimension> >
+    : public ljfluid_gpu_traits<dimension> {};
+
+template <int dimension>
+struct ljfluid_traits<ljfluid_impl_gpu_cell<dimension> >
+    : public ljfluid_gpu_traits<dimension> {};
+
+template <int dimension>
+struct ljfluid_traits<ljfluid_impl_gpu_neighbour<dimension> >
+    : public ljfluid_gpu_traits<dimension> {};
+
+template <int dimension>
+struct ljfluid_traits<ljfluid_impl_host<dimension> >
+    : public ljfluid_host_traits<dimension> {};
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_LJFLUID_LJFLUID_TRAITS_HPP */
+#endif /* ! LJGPU_LJFLUID_TRAITS_HPP */

@@ -19,67 +19,61 @@
 #ifndef LJGPU_LJFLUID_LJFLUID_GPU_SQUARE_HPP
 #define LJGPU_LJFLUID_LJFLUID_GPU_SQUARE_HPP
 
-#include <boost/foreach.hpp>
-#include <cuda_wrapper.hpp>
 #include <ljgpu/algorithm/reduce.hpp>
-#include <ljgpu/math/stat.hpp>
+#include <ljgpu/ljfluid/base_gpu.hpp>
 #include <ljgpu/ljfluid/gpu/lattice.hpp>
-#include <ljgpu/ljfluid/gpu/ljfluid_square.hpp>
-#include <ljgpu/ljfluid/ljfluid_traits.hpp>
-#include <ljgpu/rng/rand48.hpp>
-#include <ljgpu/sample/perf.hpp>
-#include <ljgpu/sample/sample.hpp>
-#include <ljgpu/util/H5param.hpp>
-#include <ljgpu/util/H5xx.hpp>
-#include <ljgpu/util/exception.hpp>
-#include <ljgpu/util/log.hpp>
 
 namespace ljgpu
 {
 
+template <typename ljfluid_impl>
+class ljfluid;
+
 template <int dimension>
-class ljfluid_gpu_impl_square
+class ljfluid<ljfluid_impl_gpu_square<dimension> >
+    : public ljfluid_base_gpu<ljfluid_impl_gpu_square<dimension> >
 {
 public:
-    typedef typename ljfluid_gpu_traits<dimension>::float_type float_type;
-    typedef typename ljfluid_gpu_traits<dimension>::vector_type vector_type;
-    typedef typename ljfluid_gpu_traits<dimension>::gpu_vector_type gpu_vector_type;
-    typedef typename ljfluid_gpu_traits<dimension>::trajectory_sample trajectory_sample;
-    typedef typename trajectory_sample::visitor trajectory_visitor;
+    typedef ljfluid_base_gpu<ljfluid_impl_gpu_square<dimension> > _Base;
+    typedef gpu::ljfluid<ljfluid_impl_gpu_square<dimension> > _gpu;
+    typedef typename _Base::float_type float_type;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::gpu_vector_type gpu_vector_type;
+    typedef typename _Base::sample_type sample_type;
+    typedef typename sample_type::sample_visitor sample_visitor;
 
 public:
+    /** initialise fluid from program options */
+    ljfluid(options const& opt);
+
+    using _Base::density;
+    using _Base::box;
+    using _Base::timestep;
+    using _Base::cutoff_radius;
+
+    /** set number of particles in system */
+    void particles(unsigned int value);
+    /** set number of CUDA execution threads */
+    void threads(unsigned int value);
+
     /** restore system state from phase space sample */
-    void restore(trajectory_visitor visitor);
+    void restore(sample_visitor visitor);
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
     void temperature(float_type temp);
 
     /** stream MD simulation step on GPU */
-    void mdstep();
+    void stream();
     /** synchronize MD simulation step on GPU */
-    void synchronize();
+    void mdstep();
     /** copy MD simulation step results from GPU to host */
-    void sample();
+    void copy();
 
-    /** write parameters to HDF5 parameter group */
-    void attrs(H5::Group const& param) const;
-
-protected:
-    /** set number of particles in system */
-    void particles(unsigned int value);
-    /** set potential cutoff radius */
-    void cutoff_radius(float_type value);
-#ifdef USE_POTENTIAL_SMOOTHING
-    /** set potential smoothing function scale parameter */
-    void potential_smoothing(float_type value);
-#endif
-    /** set number of CUDA execution threads */
-    void threads();
-    /* set periodic box length */
-    void box(float_type value);
-    /** set simulation timestep */
-    void timestep(float_type value);
+    /** returns number of particles */
+    unsigned int particles() const { return npart; }
+    /** get number of CUDA execution threads */
+    unsigned int threads() const { return dim_.threads_per_block(); }
 
 private:
     /** first leapfrog step of integration of differential equations of motion */
@@ -87,45 +81,28 @@ private:
     /** Lennard-Jones force calculation */
     void update_forces(cuda::stream& stream);
 
-protected:
-    /** number of particles in system */
-    unsigned int npart;
-    /** particle density */
-    float_type density_;
-    /** periodic box length */
-    float_type box_;
-    /** simulation timestep */
-    float_type timestep_;
-
-    /** cutoff radius for shifted Lennard-Jones potential */
-    float_type r_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
-    /** potential smoothing function scale parameter */
-    float_type r_smooth;
-    /** squared inverse potential smoothing function scale parameter */
-    float_type rri_smooth;
-#endif
-    /** squared cutoff radius */
-    float_type rr_cut;
-    /** potential energy at cutoff radius */
-    float_type en_cut;
-
-    /** GPU random number generator */
-    rand48 rng_;
-
-    /** CUDA execution dimensions */
-    cuda::config dim_;
-    /** CUDA asynchronous execution */
-    cuda::stream stream_;
-    /** CUDA events for kernel timing */
-    boost::array<cuda::event, 5> event_;
-
-    /** trajectory sample in swappable host memory */
-    trajectory_sample m_sample;
-    /** GPU time accumulators */
-    perf_counters m_times;
-
 private:
+    using _Base::npart;
+    using _Base::density_;
+    using _Base::box_;
+    using _Base::timestep_;
+    using _Base::r_cut;
+    using _Base::rr_cut;
+    using _Base::en_cut;
+#ifdef USE_POTENTIAL_SMOOTHING
+    using _Base::r_smooth;
+    using _Base::rri_smooth;
+#endif
+    using _Base::m_sample;
+    using _Base::m_times;
+
+    using _Base::dim_;
+    using _Base::stream_;
+    using _Base::rng_;
+
+    /** CUDA events for kernel timing */
+    boost::array<cuda::event, 9> event_;
+
     /** potential energy sum */
     reduce<tag::sum, dfloat> reduce_en;
     /** virial equation sum */
@@ -164,15 +141,29 @@ private:
 };
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::particles(unsigned int value)
+ljfluid<ljfluid_impl_gpu_square<dimension> >::ljfluid(options const& opt)
 {
-    // copy particle number to device symbol
-    try {
-	cuda::copy(npart, gpu::ljfluid_square::npart);
+    LOG("positional coordinates dimension: " << dimension);
+
+    particles(opt["particles"].as<unsigned int>());
+    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
+	box(opt["box-length"].as<float>());
     }
-    catch (cuda::error const&) {
-	throw exception("failed to copy particle number to device symbol");
+    else {
+	density(opt["density"].as<float>());
     }
+    cutoff_radius(opt["cutoff"].as<float>());
+#ifdef USE_POTENTIAL_SMOOTHING
+    potential_smoothing(opt["smoothing"].as<float>());
+#endif
+    timestep(opt["timestep"].as<float>());
+    threads(opt["threads"].as<unsigned int>());
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(unsigned int value)
+{
+    _Base::particles(value);
 
     // allocate global device memory for system state
     try {
@@ -186,7 +177,6 @@ void ljfluid_gpu_impl_square<dimension>::particles(unsigned int value)
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for system state");
     }
-
     // allocate page-locked host memory for system state
     try {
 	h_part.r.resize(npart);
@@ -200,8 +190,10 @@ void ljfluid_gpu_impl_square<dimension>::particles(unsigned int value)
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::threads()
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::threads(unsigned int value)
 {
+    _Base::threads(value);
+
     // allocate global device memory for placeholder particles
     try {
 	g_part.r.reserve(dim_.threads());
@@ -214,59 +206,10 @@ void ljfluid_gpu_impl_square<dimension>::threads()
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for placeholder particles");
     }
-
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::cutoff_radius(float_type value)
-{
-    try {
-	cuda::copy(r_cut, gpu::ljfluid_square::r_cut);
-	cuda::copy(rr_cut, gpu::ljfluid_square::rr_cut);
-	cuda::copy(en_cut, gpu::ljfluid_square::en_cut);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy potential cutoff symbols");
-    }
-}
-
-#ifdef USE_POTENTIAL_SMOOTHING
-template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::potential_smoothing(float_type value)
-{
-    try {
-	cuda::copy(rri_smooth, gpu::ljfluid_square::rri_smooth);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy potential smoothing function scale symbol");
-    }
-}
-#endif /* USE_POTENTIAL_SMOOTHING */
-
-template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::box(float_type value)
-{
-    try {
-	cuda::copy(box_, gpu::ljfluid_square::box);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy periodic box length to device symbol");
-    }
-}
-
-template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::timestep(float_type value)
-{
-    try {
-	cuda::copy(timestep_, gpu::ljfluid_square::timestep);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy simulation timestep to device symbol");
-    }
-}
-
-template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::restore(trajectory_visitor visitor)
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::restore(sample_visitor visitor)
 {
     // read phase space sample
     visitor(m_sample.r, m_sample.v);
@@ -301,7 +244,7 @@ void ljfluid_gpu_impl_square<dimension>::restore(trajectory_visitor visitor)
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::lattice()
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
@@ -350,7 +293,7 @@ void ljfluid_gpu_impl_square<dimension>::lattice()
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::temperature(float_type temp)
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
 {
     LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     try {
@@ -418,7 +361,7 @@ void ljfluid_gpu_impl_square<dimension>::temperature(float_type temp)
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::mdstep()
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::stream()
 {
     event_[1].record(stream_);
     // first leapfrog step of integration of differential equations of motion
@@ -462,7 +405,7 @@ void ljfluid_gpu_impl_square<dimension>::mdstep()
  * synchronize MD simulation step on GPU
  */
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::synchronize()
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
 {
     try {
 	// wait for MD simulation step on GPU to finish
@@ -489,7 +432,7 @@ void ljfluid_gpu_impl_square<dimension>::synchronize()
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::sample()
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 {
     // copy MD simulation step results from GPU to host
     try {
@@ -523,23 +466,17 @@ void ljfluid_gpu_impl_square<dimension>::sample()
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::attrs(H5::Group const& param) const
-{
-    // no implementation-dependent parameters
-}
-
-template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::velocity_verlet(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::velocity_verlet(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, stream);
-    gpu::ljfluid_square::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
+    _gpu::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
 }
 
 template <int dimension>
-void ljfluid_gpu_impl_square<dimension>::update_forces(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(gpu_vector_type), stream);
-    gpu::ljfluid_square::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+    _gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 
 } // namespace ljgpu

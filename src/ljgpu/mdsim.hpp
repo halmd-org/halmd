@@ -44,9 +44,9 @@ template <typename ljfluid_impl>
 class mdsim
 {
 public:
-    typedef typename ljfluid_impl::float_type float_type;
-    typedef typename ljfluid_impl::vector_type vector_type;
-    static int const dimension = vector_type::static_size;
+    typedef typename ljfluid_traits<ljfluid_impl>::float_type float_type;
+    typedef typename ljfluid_traits<ljfluid_impl>::vector_type vector_type;
+    static int const dimension = ljfluid_traits<ljfluid_impl>::dimension;
 
 public:
     enum {
@@ -68,7 +68,7 @@ private:
     /** program options */
     options const& opt;
     /** Lennard-Jones fluid simulation */
-    ljfluid_impl fluid;
+    ljfluid<ljfluid_impl> fluid;
     /** block correlations */
     correlation<float_type, dimension> tcf;
     /**  trajectory file writer */
@@ -198,11 +198,11 @@ void mdsim<ljfluid_impl>::operator()()
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(*step)) {
 	    // copy previous MD simulation state from GPU to host
-	    fluid.sample();
+	    fluid.copy();
 	}
 
 	// stream next MD simulation program step on GPU
-	fluid.mdstep();
+	fluid.stream();
 
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(*step)) {
@@ -211,13 +211,13 @@ void mdsim<ljfluid_impl>::operator()()
 	    double time = *step * (double)fluid.timestep();
 	    // sample time correlation functions
 	    if (!opt["disable-correlation"].as<bool>()) {
-		tcf.sample(fluid.trajectory(), *step, flush);
+		tcf.sample(fluid.sample(), *step, flush);
 	    }
 	    // sample thermodynamic equilibrium properties
-	    tep.sample(fluid.trajectory(), fluid.density(), time);
+	    tep.sample(fluid.sample(), fluid.density(), time);
 	    // sample trajectory
 	    if (opt["enable-trajectory"].as<bool>() || *step == 0) {
-		traj.sample(fluid.trajectory(), time);
+		traj.sample(fluid.sample(), time);
 		if (*step == 0) {
 		    traj.flush();
 		}
@@ -243,7 +243,7 @@ void mdsim<ljfluid_impl>::operator()()
 	    }
 	}
 	// synchronize MD simulation program step on GPU
-	fluid.synchronize();
+	fluid.mdstep();
 
 	// check whether a runtime estimate has finished
 	if (step.elapsed() > 0) {
@@ -288,9 +288,9 @@ void mdsim<ljfluid_impl>::operator()()
     }
 
     // copy last MD simulation state from GPU to host
-    fluid.sample();
+    fluid.copy();
     // save last phase space sample
-    traj.sample(fluid.trajectory(), tcf.steps() * fluid.timestep());
+    traj.sample(fluid.sample(), tcf.steps() * fluid.timestep());
 
     // sample performance counters
     prf.sample(fluid.times());

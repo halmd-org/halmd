@@ -19,6 +19,7 @@
 #ifndef LJGPU_SAMPLE_SAMPLE_HPP
 #define LJGPU_SAMPLE_SAMPLE_HPP
 
+#include <algorithm>
 #include <boost/function.hpp>
 #include <vector>
 
@@ -30,15 +31,15 @@ namespace ljgpu {
 template <typename vector_type>
 struct trajectory_gpu_sample
 {
-    /** trajectory sample visitor type */
-    typedef boost::function<void (std::vector<vector_type>&, std::vector<vector_type>&)> visitor;
+    typedef std::vector<vector_type> sample_vector;
+    typedef boost::function<void (sample_vector&, sample_vector&)> sample_visitor;
 
-    /** periodically reduced particle positions */
-    std::vector<vector_type> r;
-    /** periodically extended particle positions */
-    std::vector<vector_type> R;
+    /** periodically extended and reduced particle positions */
+    // FIXME std::vector<std::pair<vector_type, vector_type> > r;
+    sample_vector R;
+    sample_vector r;
     /** particle velocities */
-    std::vector<vector_type> v;
+    sample_vector v;
     /** potential energy per particle */
     double en_pot;
     /** virial equation sum per particle */
@@ -48,13 +49,13 @@ struct trajectory_gpu_sample
 template <typename vector_type>
 struct trajectory_host_sample
 {
-    /** trajectory sample visitor type */
-    typedef boost::function<void (std::vector<vector_type>&, std::vector<vector_type>&)> visitor;
+    typedef std::vector<vector_type> sample_vector;
+    typedef boost::function<void (sample_vector&, sample_vector&)> sample_visitor;
 
-    /** periodically reduced particle positions */
-    std::vector<vector_type> R;
+    /** periodically extended particle positions */
+    sample_vector R;
     /** particle velocities */
-    std::vector<vector_type> v;
+    sample_vector v;
     /** potential energy per particle */
     double en_pot;
     /** virial equation sum per particle */

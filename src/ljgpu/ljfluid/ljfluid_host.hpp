@@ -1,4 +1,4 @@
-/* Lennard-Jones fluid simulation using CUDA
+/* Lennard-Jones fluid simulation
  *
  * Copyright © 2008-2009  Peter Colberg
  *
@@ -19,22 +19,15 @@
 #ifndef LJGPU_LJFLUID_LJFLUID_HOST_HPP
 #define LJGPU_LJFLUID_LJFLUID_HOST_HPP
 
-#include <H5Cpp.h>
 #include <algorithm>
 #include <boost/array.hpp>
-#include <boost/foreach.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/ref.hpp>
 #include <cmath>
 #include <iostream>
 #include <list>
-#include <ljgpu/ljfluid/ljfluid_traits.hpp>
+#include <ljgpu/ljfluid/base.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
-#include <ljgpu/sample/perf.hpp>
-#include <ljgpu/sample/sample.hpp>
-#include <ljgpu/util/H5xx.hpp>
-#include <ljgpu/util/exception.hpp>
-#include <ljgpu/util/log.hpp>
 #include <ljgpu/util/timer.hpp>
 #include <sys/times.h>
 #include <vector>
@@ -42,14 +35,19 @@
 namespace ljgpu
 {
 
-template <int dimension>
-class ljfluid_host
+template <typename ljfluid_impl>
+class ljfluid;
+
+template<int dimension>
+class ljfluid<ljfluid_impl_host<dimension> >
+    : public ljfluid_base<ljfluid_impl_host<dimension> >
 {
 public:
-    typedef typename ljfluid_host_traits<dimension>::float_type float_type;
-    typedef typename ljfluid_host_traits<dimension>::vector_type vector_type;
-    typedef typename ljfluid_host_traits<dimension>::trajectory_sample trajectory_sample;
-    typedef typename trajectory_sample::visitor trajectory_visitor;
+    typedef ljfluid_base<ljfluid_impl_host<dimension> > _Base;
+    typedef typename _Base::float_type float_type;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::sample_type sample_type;
+    typedef typename sample_type::sample_visitor sample_visitor;
 
     /**
      * MD simulation particle
@@ -79,21 +77,22 @@ public:
     typedef boost::array<int, dimension> cell_index;
 
 public:
+    /** initialise fluid from program options */
+    ljfluid(options const& opt);
+
+    using _Base::density;
+    using _Base::box;
+    using _Base::timestep;
+
     /** set number of particles */
     void particles(unsigned int value);
-    /** set particle density */
-    void density(double value);
-    /** set periodic box length */
-    void box(double value);
     /** set potential cutoff radius */
-    void cutoff_radius(double value);
+    void cutoff_radius(float_type value);
     /** initialize cell lists */
     void init_cell();
-    /** set simulation timestep */
-    void timestep(double value);
 
     /** set system state from phase space sample */
-    void restore(trajectory_visitor visitor);
+    void restore(sample_visitor visitor);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -105,23 +104,20 @@ public:
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
+    /** returns potential cutoff radius */
+    float_type cutoff_radius() const { return r_cut; }
     /** returns number of cells per dimension */
     int cells() const { return ncell; }
-    /** returns particle density */
-    double density() const { return density_; }
-    /** returns periodic box length */
-    double box() const { return box_; }
-    /** returns potential cutoff radius */
-    double cutoff_radius() const { return r_cut; }
     /** returns cell length */
-    double cell_length() { return cell_length_; }
-    /** returns simulation timestep */
-    double timestep() const { return timestep_; }
+    double cell_length() const { return cell_length_; }
 
     /** MD simulation step */
     void mdstep();
+    /** ljfluid GPU compat */
+    void stream() {}
+    /** ljfluid GPU compat */
+    void copy() {}
 
-protected:
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
 
@@ -143,29 +139,21 @@ private:
     /** second leapfrog step of integration of equations of motion */
     void leapfrog_full();
 
-protected:
-    /** number of particles */
-    unsigned int npart;
-    /** particle density */
-    double density_;
-    /** periodic box length */
-    double box_;
-    /** simulation timestep */
-    double timestep_;
-    /** cutoff radius for shifted Lennard-Jones potential */
-    double r_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
-    /** potential smoothing function scale parameter */
-    float_type r_smooth;
-#endif
-
-    /** trajectory sample */
-    trajectory_sample m_sample;
-
-    /** CPU tick statistics */
-    perf_counters m_times;
-
 private:
+    using _Base::npart;
+    using _Base::density_;
+    using _Base::box_;
+    using _Base::timestep_;
+    using _Base::r_cut;
+    using _Base::rr_cut;
+    using _Base::en_cut;
+#ifdef USE_POTENTIAL_SMOOTHING
+    using _Base::r_smooth;
+    using _Base::rri_smooth;
+#endif
+    using _Base::m_sample;
+    using _Base::m_times;
+
     /** cell lists */
     boost::multi_array<cell_list, dimension> cell;
     /** random number generator */
@@ -174,41 +162,48 @@ private:
     /** number of cells per dimension */
     int ncell;
     /** cell length */
-    double cell_length_;
+    float_type cell_length_;
     /** neighbour list skin */
-    double r_skin;
+    float_type r_skin;
     /** cutoff radius with neighbour list skin */
-    double r_cut_skin;
-    /** squared cutoff radius */
-    double rr_cut;
-    /** potential energy at cutoff radius */
-    double en_cut;
+    float_type r_cut_skin;
     /** squared cutoff radius with neighbour list skin */
-    double rr_cut_skin;
+    float_type rr_cut_skin;
     /** sum over maximum velocity magnitudes since last neighbour lists update */
-    double v_max_sum;
+    float_type v_max_sum;
 };
+
+template <int dimension>
+ljfluid<ljfluid_impl_host<dimension> >::ljfluid(options const& opt)
+{
+    LOG("positional coordinates dimension: " << dimension);
+
+    particles(opt["particles"].as<unsigned int>());
+    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
+	box(opt["box-length"].as<float>());
+    }
+    else {
+	density(opt["density"].as<float>());
+    }
+    cutoff_radius(opt["cutoff"].as<float>());
+#ifdef USE_POTENTIAL_SMOOTHING
+    potential_smoothing(opt["smoothing"].as<float>());
+#endif
+    timestep(opt["timestep"].as<float>());
+    init_cell();
+}
 
 /**
  * set potential cutoff radius
  */
 template <int dimension>
-void ljfluid_host<dimension>::cutoff_radius(double value)
+void ljfluid<ljfluid_impl_host<dimension> >::cutoff_radius(float_type value)
 {
-    r_cut = value;
-    LOG("potential cutoff radius: " << r_cut);
-
-    // squared cutoff radius
-    rr_cut = r_cut * r_cut;
-    // potential energy at cutoff radius
-    double rri_cut = 1. / rr_cut;
-    double r6i_cut = rri_cut * rri_cut * rri_cut;
-    en_cut = 4. * r6i_cut * (r6i_cut - 1.);
+    _Base::cutoff_radius(value);
 
     // neighbour list skin
     r_skin = 0.5;
     LOG("neighbour list skin: " << r_skin);
-
     // cutoff radius with neighbour list skin
     r_cut_skin = r_skin + r_cut;
     // squared cutoff radius with neighbour list skin
@@ -219,13 +214,9 @@ void ljfluid_host<dimension>::cutoff_radius(double value)
  * set number of particles in system
  */
 template <int dimension>
-void ljfluid_host<dimension>::particles(unsigned int value)
+void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
 {
-    if (value < 1) {
-	throw exception("number of particles must be non-zero");
-    }
-    npart = value;
-    LOG("number of particles: " << npart);
+    _Base::particles(value);
 
     try {
 	m_sample.R.resize(npart);
@@ -240,7 +231,7 @@ void ljfluid_host<dimension>::particles(unsigned int value)
  * set system state from phase space sample
  */
 template <int dimension>
-void ljfluid_host<dimension>::restore(trajectory_visitor visitor)
+void ljfluid<ljfluid_impl_host<dimension> >::restore(sample_visitor visitor)
 {
     // set system state from phase space sample
     visitor(m_sample.R, m_sample.v);
@@ -259,38 +250,10 @@ void ljfluid_host<dimension>::restore(trajectory_visitor visitor)
 }
 
 /**
- * set particle density
- */
-template <int dimension>
-void ljfluid_host<dimension>::density(double value)
-{
-    density_ = value;
-    LOG("particle density: " << density_);
-
-    // derive periodic box length
-    box_ = std::pow(npart / density_, 1. / dimension);
-    LOG("periodic box length: " << box_);
-}
-
-/**
- * set periodic box length
- */
-template <int dimension>
-void ljfluid_host<dimension>::box(double value)
-{
-    box_ = value;
-    LOG("periodic box length: " << box_);
-
-    // derive particle density
-    density_ = npart / std::pow(box_, 1. * dimension);
-    LOG("particle density: " << density_);
-}
-
-/**
  * initialize cell lists
  */
 template <int dimension>
-void ljfluid_host<dimension>::init_cell()
+void ljfluid<ljfluid_impl_host<dimension> >::init_cell()
 {
     // number of cells per dimension
     ncell = std::floor(box_ / r_cut_skin);
@@ -315,20 +278,10 @@ void ljfluid_host<dimension>::init_cell()
 }
 
 /**
- * set simulation timestep
- */
-template <int dimension>
-void ljfluid_host<dimension>::timestep(double value)
-{
-    timestep_ = value;
-    LOG("simulation timestep: " << timestep_);
-}
-
-/**
  * initialize random number generator with seed
  */
 template <int dimension>
-void ljfluid_host<dimension>::rng(unsigned int seed)
+void ljfluid<ljfluid_impl_host<dimension> >::rng(unsigned int seed)
 {
     rng_.set(seed);
     LOG("initializing random number generator with seed: " << seed);
@@ -338,7 +291,7 @@ void ljfluid_host<dimension>::rng(unsigned int seed)
  * initialize random number generator from state
  */
 template <int dimension>
-void ljfluid_host<dimension>::rng(gsl::gfsr4::state_type const& state)
+void ljfluid<ljfluid_impl_host<dimension> >::rng(gsl::gfsr4::state_type const& state)
 {
     rng_.restore(state);
     LOG("restoring random number generator from state");
@@ -348,7 +301,7 @@ void ljfluid_host<dimension>::rng(gsl::gfsr4::state_type const& state)
  * place particles on a face-centered cubic (fcc) lattice
  */
 template <int dimension>
-void ljfluid_host<dimension>::lattice()
+void ljfluid<ljfluid_impl_host<dimension> >::lattice()
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
@@ -402,7 +355,7 @@ void ljfluid_host<dimension>::lattice()
  * set system temperature according to Maxwell-Boltzmann distribution
  */
 template <int dimension>
-void ljfluid_host<dimension>::temperature(double value)
+void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
 {
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
@@ -444,21 +397,10 @@ void ljfluid_host<dimension>::temperature(double value)
 }
 
 /**
- * write parameters to HDF5 parameter group
- */
-template <int dimension>
-void ljfluid_host<dimension>::attrs(H5::Group const& param) const
-{
-    H5xx::group node(param.openGroup("mdsim"));
-    node["cells"] = ncell;
-    node["cell_length"] = cell_length_;
-}
-
-/**
  * update cell lists
  */
 template <int dimension>
-void ljfluid_host<dimension>::update_cells()
+void ljfluid<ljfluid_impl_host<dimension> >::update_cells()
 {
     // FIXME particle may be inspected twice if moved ahead in cell order
     for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
@@ -482,8 +424,8 @@ void ljfluid_host<dimension>::update_cells()
  * returns cell list which a particle belongs to
  */
 template <int dimension>
-typename ljfluid_host<dimension>::cell_list&
-ljfluid_host<dimension>::compute_cell(vector_type r)
+typename ljfluid<ljfluid_impl_host<dimension> >::cell_list&
+ljfluid<ljfluid_impl_host<dimension> >::compute_cell(vector_type r)
 {
     r = (r - floor(r / box_) * box_) / cell_length_;
     //
@@ -508,7 +450,7 @@ ljfluid_host<dimension>::compute_cell(vector_type r)
  * update neighbour lists
  */
 template <int dimension>
-void ljfluid_host<dimension>::update_neighbours()
+void ljfluid<ljfluid_impl_host<dimension> >::update_neighbours()
 {
     cell_index i;
     for (i[0] = 0; i[0] < ncell; ++i[0]) {
@@ -529,7 +471,7 @@ void ljfluid_host<dimension>::update_neighbours()
  * update neighbour lists for a single cell
  */
 template <int dimension>
-void ljfluid_host<dimension>::update_cell_neighbours(cell_index const& i)
+void ljfluid<ljfluid_impl_host<dimension> >::update_cell_neighbours(cell_index const& i)
 {
     BOOST_FOREACH(particle& p, cell(i)) {
 	// empty neighbour list of particle
@@ -577,7 +519,7 @@ out:
  */
 template <int dimension>
 template <bool same_cell>
-void ljfluid_host<dimension>::compute_cell_neighbours(particle& p1, cell_list& c)
+void ljfluid<ljfluid_impl_host<dimension> >::compute_cell_neighbours(particle& p1, cell_list& c)
 {
     BOOST_FOREACH(particle& p2, c) {
 	// skip identical particle and particle pair permutations if same cell
@@ -604,7 +546,7 @@ void ljfluid_host<dimension>::compute_cell_neighbours(particle& p1, cell_list& c
  * compute Lennard-Jones forces
  */
 template <int dimension>
-void ljfluid_host<dimension>::compute_forces()
+void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 {
     // initialize particle forces to zero
     for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
@@ -664,7 +606,7 @@ void ljfluid_host<dimension>::compute_forces()
  * first leapfrog step of integration of equations of motion
  */
 template <int dimension>
-void ljfluid_host<dimension>::leapfrog_half()
+void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 {
     for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
 	BOOST_FOREACH(particle& p, *it) {
@@ -682,7 +624,7 @@ void ljfluid_host<dimension>::leapfrog_half()
  * second leapfrog step of integration of equations of motion
  */
 template <int dimension>
-void ljfluid_host<dimension>::leapfrog_full()
+void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 {
     // maximum squared velocity
     double vv_max = 0.;
@@ -706,7 +648,7 @@ void ljfluid_host<dimension>::leapfrog_full()
  * MD simulation step
  */
 template <int dimension>
-void ljfluid_host<dimension>::mdstep()
+void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 {
     // nanosecond resolution process times
     boost::array<timespec, 5> t;
@@ -741,6 +683,19 @@ void ljfluid_host<dimension>::mdstep()
     m_times["update_forces"] += t[3] - t[2];
     m_times["velocity_verlet"] += (t[1] - t[0]) + (t[4] - t[3]);
     m_times["mdstep"] += t[4] - t[0];
+}
+
+/**
+ * write parameters to HDF5 parameter group
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::attrs(H5::Group const& param) const
+{
+    _Base::attrs(param);
+
+    H5xx::group node(param.openGroup("mdsim"));
+    node["cells"] = cells();
+    node["cell_length"] = cell_length();
 }
 
 } // namespace ljgpu

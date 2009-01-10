@@ -20,56 +20,80 @@
 #define LJGPU_LJFLUID_GPU_LJFLUID_NBR_HPP
 
 #include <cuda_wrapper.hpp>
+#include <ljgpu/ljfluid/impl.hpp>
 
-namespace ljgpu { namespace gpu { namespace ljfluid_neighbour
+namespace ljgpu { namespace gpu
 {
 
-enum {
-    /** fixed number of placeholders per cell */
-    CELL_SIZE = 32,
-    /** virtual particle tag */
-    VIRTUAL_PARTICLE = -1,
-};
+template <template <int> class ljfluid_impl>
+struct ljfluid_base;
 
-extern cuda::function<void (float2*, float2*, float2*, float2 const*),
-		      void (float4*, float4*, float4*, float4 const*)> inteq;
-extern cuda::function<void (float3*, const float2)> sample_smooth_function;
-extern cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*),
-		      void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
-extern cuda::function<void (int const*, int*, float4*),
-		      void (int const*, int*, float2*)> update_neighbours;
-extern cuda::function<void (float4 const*, uint*),
-		      void (float2 const*, uint*)> compute_cell;
-extern cuda::function<void (const int*, float4*, float4*, float4*, int*),
-		      void (const int*, float2*, float2*, float2*, int*)> order_particles;
-extern cuda::function<void (int*)> init_tags;
-extern cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells;
-extern cuda::function<void (uint*, int*)> find_cell_offset;
-extern cuda::function<void (int*)> gen_index;
-
-extern cuda::symbol<uint> npart;
-extern cuda::symbol<float> box;
-extern cuda::symbol<float> timestep;
-extern cuda::symbol<float> r_cut;
-extern cuda::symbol<float> rr_cut;
-extern cuda::symbol<float> en_cut;
-extern cuda::symbol<float> rri_smooth;
-
-extern cuda::symbol<uint> ncell;
-extern cuda::symbol<uint> nbl_size;
-extern cuda::symbol<uint> nbl_stride;
-extern cuda::symbol<float> r_cell;
-extern cuda::symbol<float> rr_cell;
-
-template <typename T>
-struct texref
+template <>
+struct ljfluid_base<ljfluid_impl_gpu_neighbour>
 {
-    static cuda::texture<T> r;
-    static cuda::texture<T> R;
-    static cuda::texture<T> v;
+    enum {
+	/** fixed number of placeholders per cell */
+	CELL_SIZE = 32,
+	/** virtual particle tag */
+	VIRTUAL_PARTICLE = -1,
+    };
+
+    static cuda::symbol<uint> npart;
+    static cuda::symbol<float> box;
+    static cuda::symbol<float> timestep;
+    static cuda::symbol<float> r_cut;
+    static cuda::symbol<float> rr_cut;
+    static cuda::symbol<float> en_cut;
+    static cuda::symbol<float> rri_smooth;
+
+    static cuda::symbol<uint> ncell;
+    static cuda::symbol<uint> nbl_size;
+    static cuda::symbol<uint> nbl_stride;
+    static cuda::symbol<float> r_cell;
+    static cuda::symbol<float> rr_cell;
+
     static cuda::texture<int> tag;
+
+    static cuda::function<void (float3*, const float2)> sample_smooth_function;
+    static cuda::function<void (int*)> init_tags;
+    static cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells;
+    static cuda::function<void (uint*, int*)> find_cell_offset;
+    static cuda::function<void (int*)> gen_index;
 };
 
-}}} // namespace ljgpu::gpu::ljfluid_neighbour
+template <typename ljfluid_impl>
+struct ljfluid;
+
+template <>
+struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<3> >
+    : public ljfluid_base<ljfluid_impl_gpu_neighbour>
+{
+    static cuda::texture<float4> r;
+    static cuda::texture<float4> R;
+    static cuda::texture<float4> v;
+
+    static cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
+    static cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
+    static cuda::function<void (int const*, int*, float4*)> update_neighbours;
+    static cuda::function<void (float4 const*, uint*)> compute_cell;
+    static cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles;
+};
+
+template <>
+struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<2> >
+    : public ljfluid_base<ljfluid_impl_gpu_neighbour>
+{
+    static cuda::texture<float2> r;
+    static cuda::texture<float2> R;
+    static cuda::texture<float2> v;
+
+    static cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
+    static cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
+    static cuda::function<void (int const*, int*, float2*)> update_neighbours;
+    static cuda::function<void (float2 const*, uint*)> compute_cell;
+    static cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles;
+};
+
+}} // namespace ljgpu::gpu
 
 #endif /* ! LJGPU_LJFLUID_GPU_LJFLUID_BASE_HPP */

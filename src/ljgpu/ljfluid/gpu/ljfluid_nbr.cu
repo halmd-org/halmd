@@ -17,12 +17,18 @@
  */
 
 #include <float.h>
-#include <ljgpu/ljfluid/gpu/ljfluid_base.cuh>
+#include <ljgpu/ljfluid/gpu/base.cuh>
 #include <ljgpu/ljfluid/gpu/ljfluid_nbr.hpp>
-using namespace ljgpu::gpu::ljfluid_neighbour;
 
 namespace ljgpu { namespace gpu
 {
+enum {
+    /** fixed number of placeholders per cell */
+    CELL_SIZE = ljfluid_base<ljfluid_impl_gpu_neighbour>::CELL_SIZE,
+    /** virtual particle tag */
+    VIRTUAL_PARTICLE = ljfluid_base<ljfluid_impl_gpu_neighbour>::VIRTUAL_PARTICLE,
+};
+
 
 /** number of cells per dimension */
 static __constant__ uint ncell;
@@ -36,11 +42,18 @@ static __constant__ float r_cell;
 static __constant__ float rr_cell;
 
 /** n-dimensional particle texture references */
-template <typename T>
-struct texref;
+template <typename T = void>
+struct tex;
 
 template <>
-struct texref<float4>
+struct tex<void>
+{
+    /** texture reference to particle tags */
+    static texture<int, 1, cudaReadModeElementType> tag;
+};
+
+template <>
+struct tex<float4>
 {
     /** periodic particle positions */
     static texture<float4, 1, cudaReadModeElementType> r;
@@ -48,12 +61,10 @@ struct texref<float4>
     static texture<float4, 1, cudaReadModeElementType> R;
     /** particle velocities */
     static texture<float4, 1, cudaReadModeElementType> v;
-    /** texture reference to particle tags */
-    static texture<int, 1, cudaReadModeElementType> tag;
 };
 
 template <>
-struct texref<float2>
+struct tex<float2>
 {
     /** periodic particle positions */
     static texture<float2, 1, cudaReadModeElementType> r;
@@ -61,20 +72,16 @@ struct texref<float2>
     static texture<float2, 1, cudaReadModeElementType> R;
     /** particle velocities */
     static texture<float2, 1, cudaReadModeElementType> v;
-    /** texture reference to particle tags */
-    static texture<int, 1, cudaReadModeElementType> tag;
 };
 
 // instantiate texture references
-texture<float4, 1, cudaReadModeElementType> texref<float4>::r;
-texture<float4, 1, cudaReadModeElementType> texref<float4>::R;
-texture<float4, 1, cudaReadModeElementType> texref<float4>::v;
-texture<int, 1, cudaReadModeElementType> texref<float4>::tag;
-
-texture<float2, 1, cudaReadModeElementType> texref<float2>::r;
-texture<float2, 1, cudaReadModeElementType> texref<float2>::R;
-texture<float2, 1, cudaReadModeElementType> texref<float2>::v;
-texture<int, 1, cudaReadModeElementType> texref<float2>::tag;
+texture<int, 1, cudaReadModeElementType> tex<>::tag;
+texture<float4, 1, cudaReadModeElementType> tex<float4>::r;
+texture<float4, 1, cudaReadModeElementType> tex<float4>::R;
+texture<float4, 1, cudaReadModeElementType> tex<float4>::v;
+texture<float2, 1, cudaReadModeElementType> tex<float2>::r;
+texture<float2, 1, cudaReadModeElementType> tex<float2>::R;
+texture<float2, 1, cudaReadModeElementType> tex<float2>::v;
 
 /**
  * n-dimensional MD simulation step
@@ -100,7 +107,7 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
 	if (n == VIRTUAL_PARTICLE)
 	    break;
 	// accumulate force between particles
-	compute_force(r, unpack(tex1Dfetch(texref<U>::r, n)), f, en, virial);
+	compute_force(r, unpack(tex1Dfetch(tex<U>::r, n)), f, en, virial);
     }
 
     // second leapfrog step as part of integration of equations of motion
@@ -162,7 +169,7 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* 
 
     // load particles in cell
     s_n[threadIdx.x] = g_cell[cell * cell_size + threadIdx.x];
-    s_r[threadIdx.x] = unpack(tex1Dfetch(texref<U>::r, s_n[threadIdx.x]));
+    s_r[threadIdx.x] = unpack(tex1Dfetch(tex<U>::r, s_n[threadIdx.x]));
     __syncthreads();
 
     if (n != VIRTUAL_PARTICLE) {
@@ -202,7 +209,7 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl, float4* __empty
 {
     // load particle from cell placeholder
     const int n = g_cell[GTID];
-    const float3 r = unpack(tex1Dfetch(texref<float4>::r, n));
+    const float3 r = unpack(tex1Dfetch(tex<float4>::r, n));
     // number of particles in neighbour list
     uint count = 0;
 
@@ -276,7 +283,7 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl, float2* __empty
 {
     // load particle from cell placeholder
     const int n = g_cell[GTID];
-    const float2 r = unpack(tex1Dfetch(texref<float2>::r, n));
+    const float2 r = unpack(tex1Dfetch(tex<float2>::r, n));
     // number of particles in neighbour list
     uint count = 0;
 
@@ -377,74 +384,75 @@ __global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int
     // permutation index
     const uint j = g_idx[GTID];
     // permute particle phase space coordinates
-    g_or[GTID] = tex1Dfetch(texref<U>::r, j);
-    g_oR[GTID] = tex1Dfetch(texref<U>::R, j);
-    g_ov[GTID] = tex1Dfetch(texref<U>::v, j);
+    g_or[GTID] = tex1Dfetch(tex<U>::r, j);
+    g_oR[GTID] = tex1Dfetch(tex<U>::R, j);
+    g_ov[GTID] = tex1Dfetch(tex<U>::v, j);
     // permute particle tracking number
-    g_otag[GTID] = tex1Dfetch(texref<U>::tag, j);
+    g_otag[GTID] = tex1Dfetch(tex<>::tag, j);
 }
-
-/**
- * device function wrappers
- */
-cuda::function<void (float2*, float2*, float2*, float2 const*),
-	       void (float4*, float4*, float4*, float4 const*)>
-	       ljfluid_neighbour::inteq(gpu::inteq<float2>, gpu::inteq<float3>);
-cuda::function<void (float3*, const float2)>
-	       ljfluid_neighbour::sample_smooth_function(gpu::sample_smooth_function);
-cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*),
-	       void (float2 const*, float2*, float2*, int const*, float*, float*)>
-	       ljfluid_neighbour::mdstep(gpu::mdstep<float3, dfloat3>,
-					 gpu::mdstep<float2, dfloat2>);
-cuda::function<void (int const*, int*, float4*),
-	       void (int const*, int*, float2*)>
-	       ljfluid_neighbour::update_neighbours(gpu::update_neighbours<CELL_SIZE>,
-						    gpu::update_neighbours<CELL_SIZE>);
-cuda::function<void (float4 const*, uint*),
-	       void (float2 const*, uint*)>
-	       ljfluid_neighbour::compute_cell(gpu::compute_cell,
-					       gpu::compute_cell);
-cuda::function<void (const int*, float4*, float4*, float4*, int*),
-	       void (const int*, float2*, float2*, float2*, int*)>
-	       ljfluid_neighbour::order_particles(gpu::order_particles,
-						  gpu::order_particles);
-cuda::function<void (int*)>
-               ljfluid_neighbour::init_tags(gpu::init_tags);
-cuda::function<void (uint const*, int const*, int const*, int*)>
-	       ljfluid_neighbour::assign_cells(gpu::assign_cells<CELL_SIZE>);
-cuda::function<void (uint*, int*)>
-               ljfluid_neighbour::find_cell_offset(gpu::find_cell_offset);
-cuda::function<void (int*)>
-	       ljfluid_neighbour::gen_index(gpu::gen_index);
 
 /**
  * device constant wrappers
  */
-cuda::symbol<uint> ljfluid_neighbour::npart(gpu::npart);
-cuda::symbol<float> ljfluid_neighbour::box(gpu::box);
-cuda::symbol<float> ljfluid_neighbour::timestep(gpu::timestep);
-cuda::symbol<float> ljfluid_neighbour::r_cut(gpu::r_cut);
-cuda::symbol<float> ljfluid_neighbour::rr_cut(gpu::rr_cut);
-cuda::symbol<float> ljfluid_neighbour::en_cut(gpu::en_cut);
-cuda::symbol<float> ljfluid_neighbour::rri_smooth(gpu::rri_smooth);
+cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::npart(gpu::npart);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::box(gpu::box);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::timestep(gpu::timestep);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::r_cut(gpu::r_cut);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rr_cut(gpu::rr_cut);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::en_cut(gpu::en_cut);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rri_smooth(gpu::rri_smooth);
 
-cuda::symbol<uint> ljfluid_neighbour::ncell(gpu::ncell);
-cuda::symbol<uint> ljfluid_neighbour::nbl_size(gpu::nbl_size);
-cuda::symbol<uint> ljfluid_neighbour::nbl_stride(gpu::nbl_stride);
-cuda::symbol<float> ljfluid_neighbour::r_cell(gpu::r_cell);
-cuda::symbol<float> ljfluid_neighbour::rr_cell(gpu::rr_cell);
+cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::ncell(gpu::ncell);
+cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::nbl_size(gpu::nbl_size);
+cuda::symbol<uint> ljfluid_base<ljfluid_impl_gpu_neighbour>::nbl_stride(gpu::nbl_stride);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::r_cell(gpu::r_cell);
+cuda::symbol<float> ljfluid_base<ljfluid_impl_gpu_neighbour>::rr_cell(gpu::rr_cell);
 
 /**
  * device texture wrappers
  */
-cuda::texture<float4> ljfluid_neighbour::texref<float4>::r(gpu::texref<float4>::r);
-cuda::texture<float4> ljfluid_neighbour::texref<float4>::R(gpu::texref<float4>::R);
-cuda::texture<float4> ljfluid_neighbour::texref<float4>::v(gpu::texref<float4>::v);
-cuda::texture<int> ljfluid_neighbour::texref<float4>::tag(gpu::texref<float4>::tag);
+cuda::texture<int> ljfluid_base<ljfluid_impl_gpu_neighbour>::tag(gpu::tex<>::tag);
+cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::r(gpu::tex<float4>::r);
+cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::R(gpu::tex<float4>::R);
+cuda::texture<float4> ljfluid<ljfluid_impl_gpu_neighbour<3> >::v(gpu::tex<float4>::v);
+cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::r(gpu::tex<float2>::r);
+cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::R(gpu::tex<float2>::R);
+cuda::texture<float2> ljfluid<ljfluid_impl_gpu_neighbour<2> >::v(gpu::tex<float2>::v);
 
-cuda::texture<float2> ljfluid_neighbour::texref<float2>::r(gpu::texref<float2>::r);
-cuda::texture<float2> ljfluid_neighbour::texref<float2>::R(gpu::texref<float2>::R);
-cuda::texture<float2> ljfluid_neighbour::texref<float2>::v(gpu::texref<float2>::v);
-cuda::texture<int> ljfluid_neighbour::texref<float2>::tag(gpu::texref<float2>::tag);
+/**
+ * device function wrappers
+ */
+cuda::function<void (float3*, const float2)>
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::sample_smooth_function(gpu::sample_smooth_function);
+cuda::function<void (int*)>
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::init_tags(gpu::init_tags);
+cuda::function<void (uint const*, int const*, int const*, int*)>
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::assign_cells(gpu::assign_cells<CELL_SIZE>);
+cuda::function<void (uint*, int*)>
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::find_cell_offset(gpu::find_cell_offset);
+cuda::function<void (int*)>
+    ljfluid_base<ljfluid_impl_gpu_neighbour>::gen_index(gpu::gen_index);
+
+cuda::function<void (float4*, float4*, float4*, float4 const*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::inteq(gpu::inteq<float3>);
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::mdstep(gpu::mdstep<float3, dfloat3>);
+cuda::function<void (int const*, int*, float4*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::update_neighbours(gpu::update_neighbours<CELL_SIZE>);
+cuda::function<void (float4 const*, uint*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::compute_cell(gpu::compute_cell);
+cuda::function<void (const int*, float4*, float4*, float4*, int*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<3> >::order_particles(gpu::order_particles);
+
+cuda::function<void (float2*, float2*, float2*, float2 const*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::inteq(gpu::inteq<float2>);
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::mdstep(gpu::mdstep<float2, dfloat2>);
+cuda::function<void (int const*, int*, float2*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::update_neighbours(gpu::update_neighbours<CELL_SIZE>);
+cuda::function<void (float2 const*, uint*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::compute_cell(gpu::compute_cell);
+cuda::function<void (const int*, float2*, float2*, float2*, int*)>
+    ljfluid<ljfluid_impl_gpu_neighbour<2> >::order_particles(gpu::order_particles);
 
 }} // namespace ljgpu::gpu

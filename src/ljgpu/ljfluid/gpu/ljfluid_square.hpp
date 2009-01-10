@@ -20,24 +20,47 @@
 #define LJGPU_LJFLUID_GPU_LJFLUID_SQUARE_HPP
 
 #include <cuda_wrapper.hpp>
+#include <ljgpu/ljfluid/impl.hpp>
 
-namespace ljgpu { namespace gpu { namespace ljfluid_square
+namespace ljgpu { namespace gpu
 {
 
-extern cuda::function<void (float2*, float2*, float2*, float2 const*),
-		      void (float4*, float4*, float4*, float4 const*)> inteq;
-extern cuda::function<void (float3*, const float2)> sample_smooth_function;
-extern cuda::function<void (float2*, float2*, float2*, float*, float*),
-		      void (float4*, float4*, float4*, float*, float*)> mdstep;
+template <template <int> class ljfluid_impl>
+struct ljfluid_base;
 
-extern cuda::symbol<uint> npart;
-extern cuda::symbol<float> box;
-extern cuda::symbol<float> timestep;
-extern cuda::symbol<float> r_cut;
-extern cuda::symbol<float> rr_cut;
-extern cuda::symbol<float> en_cut;
-extern cuda::symbol<float> rri_smooth;
+template <>
+struct ljfluid_base<ljfluid_impl_gpu_square>
+{
+    static cuda::symbol<uint> npart;
+    static cuda::symbol<float> box;
+    static cuda::symbol<float> timestep;
+    static cuda::symbol<float> r_cut;
+    static cuda::symbol<float> rr_cut;
+    static cuda::symbol<float> en_cut;
+    static cuda::symbol<float> rri_smooth;
 
-}}} // namespace ljgpu::gpu::ljfluid_square
+    static cuda::function<void (float3*, const float2)> sample_smooth_function;
+};
+
+template <typename ljfluid_impl>
+struct ljfluid;
+
+template <>
+struct ljfluid<ljgpu::ljfluid_impl_gpu_square<3> >
+    : public ljfluid_base<ljfluid_impl_gpu_square>
+{
+    static cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
+    static cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
+};
+
+template <>
+struct ljfluid<ljgpu::ljfluid_impl_gpu_square<2> >
+    : public ljfluid_base<ljfluid_impl_gpu_square>
+{
+    static cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
+    static cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
+};
+
+}} // namespace ljgpu::gpu
 
 #endif /* ! LJGPU_LJFLUID_GPU_LJFLUID_SQUARE_HPP */
