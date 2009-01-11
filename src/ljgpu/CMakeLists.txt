@@ -28,7 +28,7 @@ install(TARGETS ljgpu
 
 foreach(LJFLUID_IMPL host gpu_square gpu_cell gpu_neighbour)
   add_library(ljgpu_${LJFLUID_IMPL} MODULE
-    mdsim.cpp
+    mdlib.cpp
     )
   set_target_properties(ljgpu_${LJFLUID_IMPL} PROPERTIES
     COMPILE_DEFINITIONS "LJFLUID_IMPL=ljfluid_impl_${LJFLUID_IMPL}")

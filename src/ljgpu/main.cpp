@@ -20,10 +20,10 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
-#include <dlfcn.h>
 #include <exception>
 #include <iostream>
 #include <libgen.h>
+#include <ljgpu/mdlib.hpp>
 #include <ljgpu/options.hpp>
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/version.h>
@@ -47,38 +47,18 @@ int main(int argc, char **argv)
     }
 
     string const backend(opt["backend"].as<string>());
-    LOG("MD simulation backend: " << backend);
-
-    string module(dirname(argv[0]) + ("/libljgpu_" + backend) + ".so");
-    void* handle = dlopen(module.c_str(), RTLD_LAZY);
-    if (!handle) {
-	cerr << dlerror() << "\n";
-	return EXIT_FAILURE;
+    ljgpu::mdlib mdlib;
+    try {
+	mdlib.open(dirname(argv[0]) + ("/libljgpu_" + backend) + ".so");
     }
-    // reset errors
-    dlerror();
-
-    typedef ljgpu::options::description (*options_t)();
-    options_t options = (options_t) dlsym(handle, "options");
-    char const* dlsym_error = dlerror();
-    if (dlsym_error) {
-	dlclose(handle);
-	cerr << "Cannot load symbol 'options': " << dlsym_error << "\n";
-	return EXIT_FAILURE;
-    }
-
-    typedef void (*mdsim_t)(ljgpu::options const& opt);
-    mdsim_t mdsim = (mdsim_t) dlsym(handle, "mdsim");
-    dlsym_error = dlerror();
-    if (dlsym_error) {
-	dlclose(handle);
-	cerr << "Cannot load symbol 'mdsim': " << dlsym_error << "\n";
+    catch (std::exception const& e) {
+	cerr << e.what() << endl;
 	return EXIT_FAILURE;
     }
 
     // parse backend options
     try {
-	opt.parse(options());
+	opt.parse(mdlib.options());
     }
     catch (ljgpu::options::exit_exception const& e) {
 	return e.status();
@@ -95,6 +75,8 @@ int main(int argc, char **argv)
     // print command line
     vector<string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
+
+    LOG("MD simulation backend: " << backend);
 
 #ifdef NDEBUG
     try {
@@ -144,7 +126,7 @@ int main(int argc, char **argv)
 	}
 
 	// run MD simulation
-	mdsim(opt);
+	mdlib.mdsim(opt);
 #ifdef NDEBUG
     }
     catch (cuda::error const& e) {
@@ -158,9 +140,6 @@ int main(int argc, char **argv)
 	return EXIT_FAILURE;
     }
 #endif /* NDEBUG */
-
-    // close the backend
-    dlclose(handle);
 
     LOG(PROGRAM_NAME " exit");
     return EXIT_SUCCESS;
