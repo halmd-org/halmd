@@ -383,9 +383,9 @@ void options::parse(po::options_description const& opt)
     vm_["output"] = po::variable_value(boost::filesystem::complete(path).string(), false);
 }
 
-mdsim_options_description::mdsim_options_description() : _Base("MD simulation options")
+options_description<mdsim_impl>::options_description()
+    : po::options_description("MD simulation options")
 {
-    namespace po = boost::program_options;
     add_options()
 	("particles,N", po::value<unsigned int>()->default_value(1000),
 	 "number of particles")
@@ -443,10 +443,8 @@ mdsim_options_description::mdsim_options_description() : _Base("MD simulation op
     add(desc);
 }
 
-template <>
-options_description<ljfluid_impl_host>::options_description()
+options_description<ljfluid_impl_base>::options_description()
 {
-    namespace po = boost::program_options;
     add_options()
 	("cutoff", po::value<float>()->default_value(2.5),
 	 "truncate potential at cutoff radius")
@@ -455,62 +453,42 @@ options_description<ljfluid_impl_host>::options_description()
 	;
 }
 
-template <>
+options_description<ljfluid_impl_gpu_base>::options_description()
+{
+    add_options()
+	("device,D", po::value<int>()->default_value(0),
+	 "CUDA device ordinal")
+	("threads,T", po::value<unsigned int>()->default_value(128),
+	 "number of CUDA threads per block")
+	;
+}
+
 options_description<ljfluid_impl_gpu_square>::options_description()
 {
-    namespace po = boost::program_options;
-    add_options()
-	("cutoff", po::value<float>()->default_value(2.5),
-	 "truncate potential at cutoff radius")
-	("smoothing", po::value<float>()->default_value(0.001),
-	 "C²-potential smoothing factor")
-	("device,D", po::value<int>()->default_value(0),
-	 "CUDA device ordinal")
-	("threads,T", po::value<unsigned int>()->default_value(128),
-	 "number of CUDA threads per block")
-	;
 }
 
-template <>
 options_description<ljfluid_impl_gpu_neighbour>::options_description()
 {
-    namespace po = boost::program_options;
     add_options()
-	("cutoff", po::value<float>()->default_value(2.5),
-	 "truncate potential at cutoff radius")
-	("smoothing", po::value<float>()->default_value(0.001),
-	 "C²-potential smoothing factor")
-	("device,D", po::value<int>()->default_value(0),
-	 "CUDA device ordinal")
-	("threads,T", po::value<unsigned int>()->default_value(128),
-	 "number of CUDA threads per block")
 	("cell-occupancy", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
 	;
 }
 
-template <>
 options_description<ljfluid_impl_gpu_cell>::options_description()
 {
-    namespace po = boost::program_options;
     add_options()
-	("cutoff", po::value<float>()->default_value(2.5),
-	 "truncate potential at cutoff radius")
-	("smoothing", po::value<float>()->default_value(0.001),
-	 "C²-potential smoothing factor")
-	("device,D", po::value<int>()->default_value(0),
-	 "CUDA device ordinal")
-	("threads,T", po::value<unsigned int>()->default_value(128),
-	 "number of CUDA threads per block")
 	("cell-occupancy", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
 	;
 }
 
-template <>
-options_description<ljfluid_impl_hardsphere>::options_description()
+options_description<ljfluid_impl_host>::options_description()
 {
-    namespace po = boost::program_options;
+}
+
+options_description<hardsphere_impl>::options_description()
+{
     add_options()
 	("pair-separation,p", po::value<float>()->default_value(0.5),
 	 "particle pair separation")

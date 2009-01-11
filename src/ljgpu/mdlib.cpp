@@ -21,7 +21,7 @@
 #include <ljgpu/mdsim/ljfluid_gpu_nbr.hpp>
 #include <ljgpu/mdsim/ljfluid_gpu_square.hpp>
 #include <ljgpu/mdsim/ljfluid_host.hpp>
-#include <ljgpu/mdsim.hpp>
+#include <ljgpu/mdsim/mdsim.hpp>
 #include <ljgpu/options.hpp>
 using namespace ljgpu;
 
@@ -32,11 +32,11 @@ extern "C" void mdlib_mdsim(options const& opt)
 
     int const dimension = opt["dimension"].as<int>();
     if (dimension == 3) {
-	mdsim<LJFLUID_IMPL<3> > md(opt);
+	mdsim<MDSIM_BACKEND<MDSIM_IMPL<3> > > md(opt);
 	md();
     }
     else if (dimension == 2) {
-	mdsim<LJFLUID_IMPL<2> > md(opt);
+	mdsim<MDSIM_BACKEND<MDSIM_IMPL<2> > > md(opt);
 	md();
     }
     else {
@@ -46,5 +46,5 @@ extern "C" void mdlib_mdsim(options const& opt)
 
 extern "C" options::description mdlib_options()
 {
-    return options_description<LJFLUID_IMPL>();
+    return options_description<MDSIM_IMPL>();
 }

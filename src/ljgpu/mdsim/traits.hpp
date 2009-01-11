@@ -28,11 +28,11 @@
 namespace ljgpu
 {
 
-template <int dimension>
-struct ljfluid_gpu_traits;
+template <typename mdsim_impl>
+struct mdsim_traits;
 
 template <>
-struct ljfluid_gpu_traits<2>
+struct mdsim_traits<ljfluid_impl_gpu_base<2> >
 {
     typedef float float_type;
     typedef vector<float, 2> vector_type;
@@ -42,7 +42,7 @@ struct ljfluid_gpu_traits<2>
 };
 
 template <>
-struct ljfluid_gpu_traits<3>
+struct mdsim_traits<ljfluid_impl_gpu_base<3> >
 {
     typedef float float_type;
     typedef vector<float, 3> vector_type;
@@ -51,11 +51,8 @@ struct ljfluid_gpu_traits<3>
     enum { dimension = 3 };
 };
 
-template <int dimension>
-struct ljfluid_host_traits;
-
 template <>
-struct ljfluid_host_traits<2>
+struct mdsim_traits<ljfluid_impl_host<2> >
 {
     typedef double float_type;
     typedef vector<double, 2> vector_type;
@@ -64,7 +61,7 @@ struct ljfluid_host_traits<2>
 };
 
 template <>
-struct ljfluid_host_traits<3>
+struct mdsim_traits<ljfluid_impl_host<3> >
 {
     typedef double float_type;
     typedef vector<double, 3> vector_type;
@@ -72,29 +69,21 @@ struct ljfluid_host_traits<3>
     enum { dimension = 3 };
 };
 
-
-template <typename ljfluid_impl>
-struct mdsim_traits;
-
 template <int dimension>
 struct mdsim_traits<ljfluid_impl_gpu_square<dimension> >
-    : public ljfluid_gpu_traits<dimension> {};
+: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
 
 template <int dimension>
 struct mdsim_traits<ljfluid_impl_gpu_cell<dimension> >
-    : public ljfluid_gpu_traits<dimension> {};
+: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
 
 template <int dimension>
 struct mdsim_traits<ljfluid_impl_gpu_neighbour<dimension> >
-    : public ljfluid_gpu_traits<dimension> {};
+: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
 
 template <int dimension>
-struct mdsim_traits<ljfluid_impl_host<dimension> >
-    : public ljfluid_host_traits<dimension> {};
-
-template <int dimension>
-struct mdsim_traits<ljfluid_impl_hardsphere<dimension> >
-    : public ljfluid_host_traits<dimension> {};
+struct mdsim_traits<hardsphere_impl<dimension> >
+: public mdsim_traits<ljfluid_impl_host<dimension> > {};
 
 } // namespace ljgpu
 

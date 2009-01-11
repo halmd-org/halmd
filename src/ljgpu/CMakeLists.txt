@@ -27,23 +27,36 @@ install(TARGETS ljgpu
   RUNTIME DESTINATION bin
   )
 
-foreach(LJFLUID_IMPL host gpu_square gpu_cell gpu_neighbour hardsphere)
-  add_library(ljgpu_${LJFLUID_IMPL} MODULE
+foreach(impl
+    ljfluid_impl_host
+    ljfluid_impl_gpu_square
+    ljfluid_impl_gpu_cell
+    ljfluid_impl_gpu_neighbour
+    hardsphere_impl
+    )
+  string(REGEX REPLACE "_impl[_a-z]*$" "" backend ${impl})
+  if(impl MATCHES "_impl$")
+    string(REGEX REPLACE "_impl$" "" target ${impl})
+  else(impl MATCHES "_impl$")
+    string(REGEX REPLACE "^[a-z]+_impl_" "" target ${impl})
+  endif(impl MATCHES "_impl$")
+
+  add_library(ljgpu_${target} MODULE
     mdlib.cpp
     )
-  set_target_properties(ljgpu_${LJFLUID_IMPL} PROPERTIES
-    COMPILE_DEFINITIONS "LJFLUID_IMPL=ljfluid_impl_${LJFLUID_IMPL}")
-  target_link_libraries(ljgpu_${LJFLUID_IMPL}
+  set_target_properties(ljgpu_${target} PROPERTIES
+    COMPILE_DEFINITIONS "MDSIM_BACKEND=${backend};MDSIM_IMPL=${impl}")
+  target_link_libraries(ljgpu_${target}
     util_h5param
     mdsample
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${HDF5_CPP_LIBRARY}
     )
-  install(TARGETS ljgpu_${LJFLUID_IMPL}
+  install(TARGETS ljgpu_${target}
     LIBRARY DESTINATION bin
     )
-endforeach(LJFLUID_IMPL)
+endforeach(impl)
 
 target_link_libraries(ljgpu_host
   ${GSL_LIBRARIES}

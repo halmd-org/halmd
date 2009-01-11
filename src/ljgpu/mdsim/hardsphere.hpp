@@ -43,13 +43,13 @@ namespace ljgpu
 {
 
 template <typename mdsim_impl>
-class ljfluid;
+class hardsphere;
 
 /**
  * Hard Spheres simulation
  */
 template<int dimension>
-class ljfluid<ljfluid_impl_hardsphere<dimension> >
+class hardsphere<hardsphere_impl<dimension> >
 {
     //
     // Details of the implementation are described in
@@ -64,7 +64,7 @@ class ljfluid<ljfluid_impl_hardsphere<dimension> >
     //
 
 public:
-    typedef mdsim_traits<ljfluid_impl_hardsphere<dimension> > traits_type;
+    typedef mdsim_traits<hardsphere_impl<dimension> > traits_type;
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::sample_type sample_type;
@@ -128,7 +128,7 @@ public:
 
 public:
     /** initialise fluid from program options */
-    ljfluid(options const& opt);
+    hardsphere(options const& opt);
     /** set number of particles */
     void particles(unsigned int value);
     /** set pair separation at which particle collision occurs */
@@ -237,7 +237,7 @@ private:
 };
 
 template <int dimension>
-ljfluid<ljfluid_impl_hardsphere<dimension> >::ljfluid(options const& opt)
+hardsphere<hardsphere_impl<dimension> >::hardsphere(options const& opt)
 {
     LOG("positional coordinates dimension: " << dimension);
 
@@ -262,7 +262,7 @@ ljfluid<ljfluid_impl_hardsphere<dimension> >::ljfluid(options const& opt)
  * set number of particles in system
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::particles(unsigned int value)
+void hardsphere<hardsphere_impl<dimension> >::particles(unsigned int value)
 {
     if (value < 1) {
 	throw exception("number of particles must be non-zero");
@@ -284,7 +284,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::particles(unsigned int value)
  * set pair separation at which particle collision occurs
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::pair_separation(double value)
+void hardsphere<hardsphere_impl<dimension> >::pair_separation(double value)
 {
     if (value <= 0.) {
 	throw exception("pair separation must be greater than zero");
@@ -300,7 +300,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::pair_separation(double value)
  * set particle density
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::density(double value)
+void hardsphere<hardsphere_impl<dimension> >::density(double value)
 {
     density_ = value;
     LOG("particle density: " << density_);
@@ -314,7 +314,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::density(double value)
  * set periodic box length
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::box(double value)
+void hardsphere<hardsphere_impl<dimension> >::box(double value)
 {
     box_ = value;
     LOG("periodic box length: " << box_);
@@ -328,7 +328,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::box(double value)
  * initialize cells
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::init_cell()
+void hardsphere<hardsphere_impl<dimension> >::init_cell()
 {
     // FIXME optimal number of cells
     if (dimension == 3)
@@ -359,7 +359,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::init_cell()
  * set simulation timestep
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::timestep(double value)
+void hardsphere<hardsphere_impl<dimension> >::timestep(double value)
 {
     timestep_ = value;
     LOG("simulation timestep: " << timestep_);
@@ -369,7 +369,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::timestep(double value)
  * set system state from phase space sample
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::restore(trajectory_sample_visitor visitor)
+void hardsphere<hardsphere_impl<dimension> >::restore(trajectory_sample_visitor visitor)
 {
     // set system state from phase space sample
     visitor(m_sample.R, m_sample.v);
@@ -394,7 +394,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::restore(trajectory_sample_vis
  * initialize random number generator with seed
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::rng(unsigned int seed)
+void hardsphere<hardsphere_impl<dimension> >::rng(unsigned int seed)
 {
     rng_.set(seed);
     LOG("initializing random number generator with seed: " << seed);
@@ -404,7 +404,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::rng(unsigned int seed)
  * initialize random number generator from state
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::rng(gsl::gfsr4::state_type const& state)
+void hardsphere<hardsphere_impl<dimension> >::rng(gsl::gfsr4::state_type const& state)
 {
     rng_.restore(state);
     LOG("restoring random number generator from state");
@@ -414,7 +414,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::rng(gsl::gfsr4::state_type co
  * place particles on a face-centered cubic (fcc) lattice
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::lattice()
+void hardsphere<hardsphere_impl<dimension> >::lattice()
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
@@ -472,7 +472,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::lattice()
  * set system temperature according to Maxwell-Boltzmann distribution
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::temperature(double value)
+void hardsphere<hardsphere_impl<dimension> >::temperature(double value)
 {
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
@@ -501,7 +501,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::temperature(double value)
  * write parameters to HDF5 parameter group
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::attrs(H5::Group const& param) const
+void hardsphere<hardsphere_impl<dimension> >::attrs(H5::Group const& param) const
 {
     H5xx::group node(param.createGroup("mdsim"));
     node["dimension"] = dimension;
@@ -518,7 +518,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::attrs(H5::Group const& param)
  * initialize event list
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::init_event_list()
+void hardsphere<hardsphere_impl<dimension> >::init_event_list()
 {
     step_ = 0;
 
@@ -539,7 +539,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::init_event_list()
  * compute next collision event with particles of given cell
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::compute_collision_event(const unsigned int n, cell_type const& cell)
+void hardsphere<hardsphere_impl<dimension> >::compute_collision_event(const unsigned int n, cell_type const& cell)
 {
     double dt = std::numeric_limits<double>::max();
     int n2 = -1;
@@ -598,7 +598,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::compute_collision_event(const
  * compute next cell boundary event
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::compute_cell_event(const unsigned int n)
+void hardsphere<hardsphere_impl<dimension> >::compute_cell_event(const unsigned int n)
 {
     vector_type dt3(std::numeric_limits<double>::max());
     double dt = std::numeric_limits<double>::max();
@@ -630,7 +630,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::compute_cell_event(const unsi
  * schedule next particle event starting at given time
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::schedule_event(const unsigned int n)
+void hardsphere<hardsphere_impl<dimension> >::schedule_event(const unsigned int n)
 {
     // upper boundary for time of next particle event
     event_list[n].t = std::numeric_limits<double>::max();
@@ -671,7 +671,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::schedule_event(const unsigned
  * process particle collision event
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::process_collision_event(const unsigned int n1)
+void hardsphere<hardsphere_impl<dimension> >::process_collision_event(const unsigned int n1)
 {
     const vector_type dr1 = part[n1].v * (event_list[n1].t - part[n1].t);
     // update periodically extended particle position
@@ -728,7 +728,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::process_collision_event(const
  * process cell boundary event
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::process_cell_event(const unsigned int n)
+void hardsphere<hardsphere_impl<dimension> >::process_cell_event(const unsigned int n)
 {
     const vector_type dr = part[n].v * (event_list[n].t - part[n].t);
     // update periodically extended particle position
@@ -760,8 +760,8 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::process_cell_event(const unsi
  * returns cell which a particle belongs to
  */
 template <int dimension>
-typename ljfluid<ljfluid_impl_hardsphere<dimension> >::cell_index
-ljfluid<ljfluid_impl_hardsphere<dimension> >::compute_cell(vector_type const& r)
+typename hardsphere<hardsphere_impl<dimension> >::cell_index
+hardsphere<hardsphere_impl<dimension> >::compute_cell(vector_type const& r)
 {
     cell_index cell;
     for (int i = 0; i < dimension; ++i) {
@@ -774,7 +774,7 @@ ljfluid<ljfluid_impl_hardsphere<dimension> >::compute_cell(vector_type const& r)
  * advance phase space state to given sample time
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::mdstep()
+void hardsphere<hardsphere_impl<dimension> >::mdstep()
 {
     // nanosecond resolution process times
     boost::array<timespec, 2> t;
@@ -818,7 +818,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::mdstep()
  * advance phase space state to given sample time
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_hardsphere<dimension> >::copy()
+void hardsphere<hardsphere_impl<dimension> >::copy()
 {
     // nanosecond resolution process times
     boost::array<timespec, 2> t;
@@ -841,7 +841,7 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::copy()
 }
 
 template <int dimension>
-perf::counters ljfluid<ljfluid_impl_hardsphere<dimension> >::times()
+perf::counters hardsphere<hardsphere_impl<dimension> >::times()
 {
     perf::counters times(m_times);
     BOOST_FOREACH(perf::counter& i, m_times) {

@@ -43,7 +43,7 @@ template <typename mdsim_impl>
 class mdsim
 {
 public:
-    typedef mdsim_traits<mdsim_impl> traits_type;
+    typedef typename mdsim_impl::traits_type traits_type;
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     enum { dimension = traits_type::dimension };
@@ -68,7 +68,7 @@ private:
     /** program options */
     options const& opt;
     /** Lennard-Jones fluid simulation */
-    ljfluid<mdsim_impl> fluid;
+    mdsim_impl fluid;
     /** block correlations */
     correlation<float_type, dimension> tcf;
     /**  trajectory file writer */

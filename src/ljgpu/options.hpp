@@ -71,17 +71,41 @@ private:
     std::vector<std::string> unparsed;
 };
 
-struct mdsim_options_description : public boost::program_options::options_description
-{
-    typedef boost::program_options::options_description _Base;
-    mdsim_options_description();
-};
 
 template <template <int> class backend>
-struct options_description : public mdsim_options_description
-{
-    options_description();
-};
+struct options_description;
+
+template <>
+struct options_description<mdsim_impl>
+: public boost::program_options::options_description { options_description(); };
+
+template <>
+struct options_description<ljfluid_impl_base>
+: public options_description<mdsim_impl> { options_description(); };
+
+template <>
+struct options_description<ljfluid_impl_gpu_base>
+: public options_description<ljfluid_impl_base> { options_description(); };
+
+template <>
+struct options_description<ljfluid_impl_gpu_square>
+: public options_description<ljfluid_impl_gpu_base> { options_description(); };
+
+template <>
+struct options_description<ljfluid_impl_gpu_cell>
+: public options_description<ljfluid_impl_gpu_base> { options_description(); };
+
+template <>
+struct options_description<ljfluid_impl_gpu_neighbour>
+: public options_description<ljfluid_impl_gpu_base> { options_description(); };
+
+template <>
+struct options_description<ljfluid_impl_host>
+: public options_description<ljfluid_impl_base> { options_description(); };
+
+template <>
+struct options_description<hardsphere_impl>
+: public options_description<mdsim_impl> { options_description(); };
 
 } // namespace ljgpu
 
