@@ -30,15 +30,18 @@ namespace ljgpu
 {
 
 /**
- * performance class accumulators
- */
-typedef boost::unordered_map<std::string, accumulator<float> > perf_counters;
-
-/**
  * performance data
  */
 class perf
 {
+public:
+    /* performance accumulators */
+    typedef boost::unordered_map<std::string, accumulator<float> > counters;
+    /* performance accumulator */
+    typedef counters::value_type counter;
+    /* performance counter descriptions */
+    typedef boost::unordered_map<std::string, std::string> desc_map;
+
 public:
     perf() : m_offset(0), m_dirty(false) {}
     /** create HDF5 performance data output file */
@@ -46,7 +49,7 @@ public:
     /** returns HDF5 parameter group */
     H5param attrs();
     /** sample performance data */
-    void sample(perf_counters const& times);
+    void sample(counters const& times);
     /** clear performance counters */
     void commit();
     /** write performance data to HDF5 file */
@@ -55,8 +58,12 @@ public:
     void close();
 
 private:
+    void create_datasets();
+    void write_datasets();
+
+private:
     /** CPU tick accumulators */
-    perf_counters m_times;
+    counters m_times;
     /** HDF5 performance data output file */
     H5::H5File m_file;
     /** HDF5 datasets */
@@ -67,6 +74,8 @@ private:
     uint64_t m_offset;
     /** pending data bit */
     bool m_dirty;
+    /* performance counter descriptions */
+    static desc_map desc;
 };
 
 } // namespace ljgpu

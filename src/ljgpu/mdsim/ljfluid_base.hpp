@@ -79,7 +79,7 @@ public:
     /** returns trajectory sample */
     sample_type const& sample() const { return m_sample; }
     /** returns and resets CPU or GPU time accumulators */
-    perf_counters times();
+    perf::counters times();
 
     /** write parameters to HDF5 parameter group */
     void attrs(H5::Group const& param) const;
@@ -109,7 +109,7 @@ protected:
     /** trajectory sample in swappable host memory */
     sample_type m_sample;
     /** GPU time accumulators */
-    perf_counters m_times;
+    perf::counters m_times;
 };
 
 template <typename ljfluid_impl>
@@ -185,10 +185,10 @@ void ljfluid_base<ljfluid_impl>::timestep(float_type value)
 }
 
 template <typename ljfluid_impl>
-perf_counters ljfluid_base<ljfluid_impl>::times()
+perf::counters ljfluid_base<ljfluid_impl>::times()
 {
-    perf_counters times(m_times);
-    BOOST_FOREACH(perf_counters::value_type& i, m_times) {
+    perf::counters times(m_times);
+    BOOST_FOREACH(perf::counter& i, m_times) {
 	// reset performance counter
 	i.second.clear();
     }

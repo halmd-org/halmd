@@ -182,7 +182,7 @@ public:
     /** returns trajectory sample */
     sample_type const& sample() const { return m_sample; }
     /** returns and resets CPU or GPU time accumulators */
-    perf_counters times();
+    perf::counters times();
 
 private:
     /** schedule next particle event starting at given time */
@@ -233,7 +233,7 @@ private:
     /** trajectory sample in swappable host memory */
     sample_type m_sample;
     /** GPU time accumulators */
-    perf_counters m_times;
+    perf::counters m_times;
 };
 
 template <int dimension>
@@ -839,10 +839,10 @@ void ljfluid<ljfluid_impl_hardsphere<dimension> >::copy()
 }
 
 template <int dimension>
-perf_counters ljfluid<ljfluid_impl_hardsphere<dimension> >::times()
+perf::counters ljfluid<ljfluid_impl_hardsphere<dimension> >::times()
 {
-    perf_counters times(m_times);
-    BOOST_FOREACH(perf_counters::value_type& i, m_times) {
+    perf::counters times(m_times);
+    BOOST_FOREACH(perf::counter& i, m_times) {
 	// reset performance counter
 	i.second.clear();
     }
