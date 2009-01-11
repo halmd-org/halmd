@@ -144,46 +144,54 @@ public:
 	return m_count;
     }
 
-    bool operator<(T const& value)
+    template <typename U>
+    bool operator<(U const& value)
     {
 	handle_timer(value);
 	return (m_count < value);
     }
 
-    bool operator>(T const& value)
+    template <typename U>
+    bool operator>(U const& value)
     {
 	handle_timer(value);
 	return (m_count > value);
     }
 
-    bool operator<=(T const& value)
+    template <typename U>
+    bool operator<=(U const& value)
     {
 	handle_timer(value + 1);
 	return (m_count <= value);
     }
 
-    bool operator>=(T const& value)
+    template <typename U>
+    bool operator>=(U const& value)
     {
 	handle_timer(value - 1);
 	return (m_count >= value);
     }
 
-    friend bool operator<(T const& value, count_timer<T>& timer)
+    template <typename U>
+    friend bool operator<(U const& value, count_timer<T>& timer)
     {
 	return (timer > value);
     }
 
-    friend bool operator>(T const& value, count_timer<T>& timer)
+    template <typename U>
+    friend bool operator>(U const& value, count_timer<T>& timer)
     {
 	return (timer < value);
     }
 
-    friend bool operator<=(T const& value, count_timer<T>& timer)
+    template <typename U>
+    friend bool operator<=(U const& value, count_timer<T>& timer)
     {
 	return (timer >= value);
     }
 
-    friend bool operator>=(T const& value, count_timer<T>& timer)
+    template <typename U>
+    friend bool operator>=(U const& value, count_timer<T>& timer)
     {
 	return (timer <= value);
     }
