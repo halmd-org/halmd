@@ -194,9 +194,9 @@ void mdsim<ljfluid_impl>::operator()()
     LOG("starting MD simulation");
     timer.start();
 
-    for (iterator_timer<uint64_t> step = 0; step < tcf.steps(); ++step) {
+    for (count_timer<uint64_t> step(0); step < tcf.steps(); ++step) {
 	// check if sample is acquired for given simulation step
-	if (tcf.sample(*step)) {
+	if (tcf.sample(step)) {
 	    // copy previous MD simulation state from GPU to host
 	    fluid.copy();
 	}
@@ -205,20 +205,20 @@ void mdsim<ljfluid_impl>::operator()()
 	fluid.stream();
 
 	// check if sample is acquired for given simulation step
-	if (tcf.sample(*step)) {
+	if (tcf.sample(step)) {
 	    bool flush = false;
 	    // simulation time
-	    double time = *step * (double)fluid.timestep();
+	    double time = step * (double)fluid.timestep();
 	    // sample time correlation functions
 	    if (!opt["disable-correlation"].as<bool>()) {
-		tcf.sample(fluid.sample(), *step, flush);
+		tcf.sample(fluid.sample(), step, flush);
 	    }
 	    // sample thermodynamic equilibrium properties
 	    tep.sample(fluid.sample(), fluid.density(), time);
 	    // sample trajectory
-	    if (opt["enable-trajectory"].as<bool>() || *step == 0) {
+	    if (opt["enable-trajectory"].as<bool>() || step == 0) {
 		traj.sample(fluid.sample(), time);
-		if (*step == 0) {
+		if (step == 0) {
 		    traj.flush();
 		}
 	    }
@@ -246,8 +246,8 @@ void mdsim<ljfluid_impl>::operator()()
 	fluid.mdstep();
 
 	// check whether a runtime estimate has finished
-	if (step.elapsed() > 0) {
-	    LOG("estimated remaining runtime: " << step);
+	if (step.estimate() > 0) {
+	    LOG("estimated remaining runtime: " << real_timer::format(step.estimate()));
 	    step.clear();
 	    // schedule next remaining runtime estimate
 	    step.set(TIME_ESTIMATE_INTERVAL);
@@ -256,7 +256,7 @@ void mdsim<ljfluid_impl>::operator()()
 	// process signal event
 	if (*signal) {
 	    if (*signal != SIGALRM) {
-		LOG_WARNING("trapped signal " << signal << " at simulation step " << *step);
+		LOG_WARNING("trapped signal " << signal << " at simulation step " << step);
 	    }
 	    if (*signal == SIGUSR1) {
 		// schedule runtime estimate now

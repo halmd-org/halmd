@@ -97,13 +97,13 @@ private:
  * Iterator with remaining realtime estimator
  */
 template <typename T, time_t I = 15, time_t W = 60>
-class iterator_timer
+class count_timer
 {
 public:
     /**
      * initialize iterator variable and schedule timer
      */
-    iterator_timer(T const& i) : m_start(-1), m_stop(-1), m_count(i), m_time(0)
+    count_timer(T const& i) : m_start(-1), m_stop(-1), m_count(i), m_time(0)
     {
 	m_start = time(NULL) + W;
     }
@@ -127,9 +127,69 @@ public:
     }
 
     /**
-     * start and stop timer
+     * returns estimated remaining time
      */
+    double const& estimate()
+    {
+	return m_time;
+    }
+
+    operator T& ()
+    {
+	return m_count;
+    }
+
+    operator T const& () const
+    {
+	return m_count;
+    }
+
     bool operator<(T const& value)
+    {
+	handle_timer(value);
+	return (m_count < value);
+    }
+
+    bool operator>(T const& value)
+    {
+	handle_timer(value);
+	return (m_count > value);
+    }
+
+    bool operator<=(T const& value)
+    {
+	handle_timer(value + 1);
+	return (m_count <= value);
+    }
+
+    bool operator>=(T const& value)
+    {
+	handle_timer(value - 1);
+	return (m_count >= value);
+    }
+
+    friend bool operator<(T const& value, count_timer<T>& timer)
+    {
+	return (timer > value);
+    }
+
+    friend bool operator>(T const& value, count_timer<T>& timer)
+    {
+	return (timer < value);
+    }
+
+    friend bool operator<=(T const& value, count_timer<T>& timer)
+    {
+	return (timer >= value);
+    }
+
+    friend bool operator>=(T const& value, count_timer<T>& timer)
+    {
+	return (timer <= value);
+    }
+
+private:
+    void handle_timer(T const& limit)
     {
 	// time() is about an order of magnitude faster than gettimeofday()
 	const time_t t = time(NULL);
@@ -143,46 +203,8 @@ public:
 	else if (m_stop != -1 && t >= m_stop) {
 	    m_timer.stop();
 	    m_stop = -1;
-	    m_time = m_timer.elapsed() * (value - m_count) / (m_count - m_base);
+	    m_time = m_timer.elapsed() * (limit - m_count) / (m_count - m_base);
 	}
-	return (m_count < value);
-    }
-
-    /**
-     * returns estimated remaining time
-     */
-    double const& elapsed()
-    {
-	return m_time;
-    }
-
-    /**
-     * output formatted estimated remaining time to stream
-     */
-    friend std::ostream& operator<<(std::ostream& os, iterator_timer& tm)
-    {
-	os << real_timer::format(tm.elapsed());
-	return os;
-    }
-
-    T operator++(int)
-    {
-	return m_count++;
-    }
-
-    T operator++()
-    {
-	return ++m_count;
-    }
-
-    T& operator*()
-    {
-	return m_count;
-    }
-
-    T const& operator*() const
-    {
-	return m_count;
     }
 
 private:
