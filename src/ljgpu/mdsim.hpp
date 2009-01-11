@@ -22,7 +22,6 @@
 #include <boost/bind.hpp>
 #include <fstream>
 #include <iostream>
-#include <ljgpu/ljfluid/ljfluid.hpp>
 #include <ljgpu/options.hpp>
 #include <ljgpu/sample/correlation.hpp>
 #include <ljgpu/sample/energy.hpp>
@@ -40,13 +39,14 @@ namespace ljgpu
 /**
  * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
-template <typename ljfluid_impl>
+template <typename mdsim_impl>
 class mdsim
 {
 public:
-    typedef typename ljfluid_traits<ljfluid_impl>::float_type float_type;
-    typedef typename ljfluid_traits<ljfluid_impl>::vector_type vector_type;
-    static int const dimension = ljfluid_traits<ljfluid_impl>::dimension;
+    typedef mdsim_traits<mdsim_impl> traits_type;
+    typedef typename traits_type::float_type float_type;
+    typedef typename traits_type::vector_type vector_type;
+    enum { dimension = traits_type::dimension };
 
 public:
     enum {
@@ -68,7 +68,7 @@ private:
     /** program options */
     options const& opt;
     /** Lennard-Jones fluid simulation */
-    ljfluid<ljfluid_impl> fluid;
+    ljfluid<mdsim_impl> fluid;
     /** block correlations */
     correlation<float_type, dimension> tcf;
     /**  trajectory file writer */
@@ -82,8 +82,8 @@ private:
 /**
  * initialize MD simulation program
  */
-template <typename ljfluid_impl>
-mdsim<ljfluid_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
+template <typename mdsim_impl>
+mdsim<mdsim_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
 {
     // initialize random number generator with seed
     if (opt["rand-seed"].empty()) {
@@ -124,6 +124,8 @@ mdsim<ljfluid_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
 	// set system temperature according to Maxwell-Boltzmann distribution
 	fluid.temperature(opt["temperature"].as<float>());
     }
+    // initialize event list
+    fluid.init_event_list();
 
     if (!opt["device"].empty()) {
 	int const dev = cuda::device::get();
@@ -155,8 +157,8 @@ mdsim<ljfluid_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
 /**
  * run MD simulation program
  */
-template <typename ljfluid_impl>
-void mdsim<ljfluid_impl>::operator()()
+template <typename mdsim_impl>
+void mdsim<mdsim_impl>::operator()()
 {
     if (opt["dry-run"].as<bool>()) {
 	// test parameters only

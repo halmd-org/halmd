@@ -27,8 +27,8 @@ struct mdlib : public dl::library
     void open(std::string const& name)
     {
 	dl::library::open(name);
-	options.set(*this, "options");
-	mdsim.set(*this, "mdsim");
+	options.set(*this, "mdlib_options");
+	mdsim.set(*this, "mdlib_mdsim");
     }
 
     dl::symbol<options::description ()> options;

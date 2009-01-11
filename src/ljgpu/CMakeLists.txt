@@ -1,5 +1,5 @@
 add_subdirectory(algorithm)
-add_subdirectory(ljfluid)
+add_subdirectory(mdsim)
 add_subdirectory(rng)
 add_subdirectory(sample)
 add_subdirectory(util)
@@ -27,7 +27,7 @@ install(TARGETS ljgpu
   RUNTIME DESTINATION bin
   )
 
-foreach(LJFLUID_IMPL host gpu_square gpu_cell gpu_neighbour)
+foreach(LJFLUID_IMPL host gpu_square gpu_cell gpu_neighbour hardsphere)
   add_library(ljgpu_${LJFLUID_IMPL} MODULE
     mdlib.cpp
     )
@@ -73,4 +73,9 @@ target_link_libraries(ljgpu_gpu_neighbour
   gpu_radix_sort
   gpu_rand48
   gpu_reduce
+  )
+
+target_link_libraries(ljgpu_hardsphere
+  ${GSL_LIBRARIES}
+  rt
   )

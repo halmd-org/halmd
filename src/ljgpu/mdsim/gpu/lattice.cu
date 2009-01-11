@@ -19,7 +19,7 @@
 #include <ljgpu/algorithm/gpu/base.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
-#include <ljgpu/ljfluid/gpu/lattice.hpp>
+#include <ljgpu/mdsim/gpu/lattice.hpp>
 using namespace ljgpu::gpu::lattice;
 
 namespace ljgpu { namespace cu { namespace lattice

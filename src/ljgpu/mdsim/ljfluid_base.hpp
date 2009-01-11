@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_BASE_HPP
-#define LJGPU_LJFLUID_BASE_HPP
+#ifndef LJGPU_MDSIM_LJFLUID_BASE_HPP
+#define LJGPU_MDSIM_LJFLUID_BASE_HPP
 
 #include <boost/foreach.hpp>
-#include <ljgpu/ljfluid/traits.hpp>
+#include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/sample/sample.hpp>
 #include <ljgpu/util/H5xx.hpp>
@@ -37,7 +37,7 @@ template <typename ljfluid_impl>
 class ljfluid_base
 {
 public:
-    typedef ljfluid_traits<ljfluid_impl> traits_type;
+    typedef mdsim_traits<ljfluid_impl> traits_type;
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::sample_type sample_type;
@@ -74,6 +74,8 @@ public:
     float_type potential_smoothing() const { return r_smooth; }
 #endif
 
+    /** hardsphere compat */
+    void init_event_list() {}
     /** returns trajectory sample */
     sample_type const& sample() const { return m_sample; }
     /** returns and resets CPU or GPU time accumulators */
@@ -210,4 +212,4 @@ void ljfluid_base<ljfluid_impl>::attrs(H5::Group const& param) const
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_LJFLUID_BASE_HPP */
+#endif /* ! LJGPU_MDSIM_LJFLUID_BASE_HPP */

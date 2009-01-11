@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_TRAITS_HPP
-#define LJGPU_LJFLUID_TRAITS_HPP
+#ifndef LJGPU_MDSIM_TRAITS_HPP
+#define LJGPU_MDSIM_TRAITS_HPP
 
 #include <cuda/vector_types.h>
-#include <ljgpu/ljfluid/impl.hpp>
+#include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/sample/sample.hpp>
@@ -74,24 +74,28 @@ struct ljfluid_host_traits<3>
 
 
 template <typename ljfluid_impl>
-struct ljfluid_traits;
+struct mdsim_traits;
 
 template <int dimension>
-struct ljfluid_traits<ljfluid_impl_gpu_square<dimension> >
+struct mdsim_traits<ljfluid_impl_gpu_square<dimension> >
     : public ljfluid_gpu_traits<dimension> {};
 
 template <int dimension>
-struct ljfluid_traits<ljfluid_impl_gpu_cell<dimension> >
+struct mdsim_traits<ljfluid_impl_gpu_cell<dimension> >
     : public ljfluid_gpu_traits<dimension> {};
 
 template <int dimension>
-struct ljfluid_traits<ljfluid_impl_gpu_neighbour<dimension> >
+struct mdsim_traits<ljfluid_impl_gpu_neighbour<dimension> >
     : public ljfluid_gpu_traits<dimension> {};
 
 template <int dimension>
-struct ljfluid_traits<ljfluid_impl_host<dimension> >
+struct mdsim_traits<ljfluid_impl_host<dimension> >
+    : public ljfluid_host_traits<dimension> {};
+
+template <int dimension>
+struct mdsim_traits<ljfluid_impl_hardsphere<dimension> >
     : public ljfluid_host_traits<dimension> {};
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_LJFLUID_TRAITS_HPP */
+#endif /* ! LJGPU_MDSIM_TRAITS_HPP */

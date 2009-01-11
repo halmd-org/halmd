@@ -20,7 +20,7 @@
 #define LJGPU_OPTIONS_HPP
 
 #include <boost/program_options.hpp>
-#include <ljgpu/ljfluid/impl.hpp>
+#include <ljgpu/mdsim/impl.hpp>
 #include <stdint.h>
 #include <string>
 

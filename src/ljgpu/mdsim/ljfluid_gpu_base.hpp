@@ -16,21 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_BASE_GPU_HPP
-#define LJGPU_LJFLUID_BASE_GPU_HPP
+#ifndef LJGPU_MDSIM_LJFLUID_GPU_BASE_HPP
+#define LJGPU_MDSIM_LJFLUID_GPU_BASE_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/ljfluid/base.hpp>
-#include <ljgpu/ljfluid/gpu/ljfluid_cell.hpp>
-#include <ljgpu/ljfluid/gpu/ljfluid_nbr.hpp>
-#include <ljgpu/ljfluid/gpu/ljfluid_square.hpp>
+#include <ljgpu/mdsim/ljfluid_base.hpp>
+#include <ljgpu/mdsim/gpu/ljfluid_cell.hpp>
+#include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
+#include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
 #include <ljgpu/rng/rand48.hpp>
 
 namespace ljgpu
 {
 
 template <typename ljfluid_impl>
-class ljfluid_base_gpu : public ljfluid_base<ljfluid_impl>
+class ljfluid_gpu_base : public ljfluid_base<ljfluid_impl>
 {
 public:
     typedef ljfluid_base<ljfluid_impl> _Base;
@@ -108,7 +108,7 @@ protected:
 };
 
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::particles(unsigned int value)
+void ljfluid_gpu_base<ljfluid_impl>::particles(unsigned int value)
 {
     _Base::particles(value);
 
@@ -131,7 +131,7 @@ void ljfluid_base_gpu<ljfluid_impl>::particles(unsigned int value)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::cutoff_radius(float_type value)
+void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
 {
     _Base::cutoff_radius(value);
 
@@ -147,7 +147,7 @@ void ljfluid_base_gpu<ljfluid_impl>::cutoff_radius(float_type value)
 
 #ifdef USE_POTENTIAL_SMOOTHING
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::potential_smoothing(float_type value)
+void ljfluid_gpu_base<ljfluid_impl>::potential_smoothing(float_type value)
 {
     _Base::potential_smoothing(value);
 
@@ -162,7 +162,7 @@ void ljfluid_base_gpu<ljfluid_impl>::potential_smoothing(float_type value)
 
 
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::threads(unsigned int value)
+void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)
 {
     // query CUDA device properties
     cuda::device::properties prop;
@@ -202,7 +202,7 @@ void ljfluid_base_gpu<ljfluid_impl>::threads(unsigned int value)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::density(float_type value)
+void ljfluid_gpu_base<ljfluid_impl>::density(float_type value)
 {
     _Base::density(value);
 
@@ -215,7 +215,7 @@ void ljfluid_base_gpu<ljfluid_impl>::density(float_type value)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::box(float_type value)
+void ljfluid_gpu_base<ljfluid_impl>::box(float_type value)
 {
     _Base::box(value);
 
@@ -228,7 +228,7 @@ void ljfluid_base_gpu<ljfluid_impl>::box(float_type value)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::timestep(float_type value)
+void ljfluid_gpu_base<ljfluid_impl>::timestep(float_type value)
 {
     _Base::timestep(value);
 
@@ -244,7 +244,7 @@ void ljfluid_base_gpu<ljfluid_impl>::timestep(float_type value)
  * seed random number generator
  */
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::rng(unsigned int seed)
+void ljfluid_gpu_base<ljfluid_impl>::rng(unsigned int seed)
 {
     LOG("random number generator seed: " << seed);
     try {
@@ -260,7 +260,7 @@ void ljfluid_base_gpu<ljfluid_impl>::rng(unsigned int seed)
  * restore random number generator from state
  */
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::rng(rand48::state_type const& state)
+void ljfluid_gpu_base<ljfluid_impl>::rng(rand48::state_type const& state)
 {
     try {
 	rng_.restore(state);
@@ -271,7 +271,7 @@ void ljfluid_base_gpu<ljfluid_impl>::rng(rand48::state_type const& state)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base_gpu<ljfluid_impl>::attrs(H5::Group const& param) const
+void ljfluid_gpu_base<ljfluid_impl>::attrs(H5::Group const& param) const
 {
     _Base::attrs(param);
 
@@ -282,4 +282,4 @@ void ljfluid_base_gpu<ljfluid_impl>::attrs(H5::Group const& param) const
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_LJFLUID_BASE_GPU_HPP */
+#endif /* ! LJGPU_MDSIM_LJFLUID_GPU_BASE_HPP */

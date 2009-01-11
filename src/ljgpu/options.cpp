@@ -334,23 +334,42 @@ void options::parse(po::options_description const& opt)
 	try {
 	    H5::H5File file(vm["trajectory"].as<string>(), H5F_ACC_RDONLY);
 	    H5::Group param(file.openGroup("param"));
+
 	    H5::Group node(param.openGroup("mdsim"));
-	    po::store(po::parse_attribute<unsigned int>(node, "particles"), vm_["particles"]);
-	    po::store(po::parse_attribute<float>(node, "density"), vm_["density"]);
-	    po::store(po::parse_attribute<float>(node, "box_length"), vm_["box-length"]);
-	    po::store(po::parse_attribute<float>(node, "cutoff_radius"), vm_["cutoff"]);
-	    po::store(po::parse_attribute<float>(node, "potential_smoothing"), vm_["smoothing"]);
-	    po::store(po::parse_attribute<float>(node, "timestep"), vm_["timestep"]);
-	    po::store(po::parse_attribute<unsigned int>(node, "threads"), vm_["threads"]);
-	    po::store(po::parse_attribute<float>(node, "temperature"), vm_["temperature"]);
-	    po::store(po::parse_attribute<float>(node, "cell_occupancy"), vm_["cell-occupancy"]);
+	    po::store(po::parse_attribute<unsigned int>(node, "particles"),
+		      vm_["particles"]);
+	    po::store(po::parse_attribute<float>(node, "density"),
+		      vm_["density"]);
+	    po::store(po::parse_attribute<float>(node, "box_length"),
+		      vm_["box-length"]);
+	    po::store(po::parse_attribute<float>(node, "cutoff_radius"),
+		      vm_["cutoff"]);
+	    po::store(po::parse_attribute<float>(node, "potential_smoothing"),
+		      vm_["smoothing"]);
+	    po::store(po::parse_attribute<float>(node, "timestep"),
+		      vm_["timestep"]);
+	    po::store(po::parse_attribute<unsigned int>(node, "threads"),
+		      vm_["threads"]);
+	    po::store(po::parse_attribute<float>(node, "temperature"),
+		      vm_["temperature"]);
+	    po::store(po::parse_attribute<float>(node, "cell_occupancy"),
+		      vm_["cell-occupancy"]);
+	    po::store(po::parse_attribute<float>(node, "pair_separation"),
+		      vm_["pair-separation"]);
+
 	    node = param.openGroup("correlation");
-	    po::store(po::parse_attribute<uint64_t>(node, "steps"), vm_["steps"]);
-	    po::store(po::parse_attribute<float>(node, "time"), vm_["time"]);
-	    po::store(po::parse_attribute<unsigned int>(node, "sample_rate"), vm_["sample-rate"]);
-	    po::store(po::parse_attribute<unsigned int>(node, "block_size"), vm_["block-size"]);
-	    po::store(po::parse_attribute<uint64_t>(node, "max_samples"), vm_["max-samples"]);
-	    po::store(po::parse_attribute<unsigned int>(node, "q_values"), vm_["q-values"]);
+	    po::store(po::parse_attribute<uint64_t>(node, "steps"),
+		      vm_["steps"]);
+	    po::store(po::parse_attribute<float>(node, "time"),
+		      vm_["time"]);
+	    po::store(po::parse_attribute<unsigned int>(node, "sample_rate"),
+		      vm_["sample-rate"]);
+	    po::store(po::parse_attribute<unsigned int>(node, "block_size"),
+		      vm_["block-size"]);
+	    po::store(po::parse_attribute<uint64_t>(node, "max_samples"),
+		      vm_["max-samples"]);
+	    po::store(po::parse_attribute<unsigned int>(node, "q_values"),
+		      vm_["q-values"]);
 	}
 	catch (H5::Exception const& e) {
 	    cerr << PROGRAM_NAME ": " << "failed to read parameters from HDF5 input file\n";
@@ -378,10 +397,6 @@ mdsim_options_description::mdsim_options_description() : _Base("MD simulation op
 	 "simulation box length")
 	("timestep,h", po::value<float>()->default_value(0.001),
 	 "simulation timestep")
-	("cutoff", po::value<float>()->default_value(2.5),
-	 "truncate potential at cutoff radius")
-	("smoothing", po::value<float>()->default_value(0.001),
-	 "C²-potential smoothing factor")
 	("rand-seed", po::value<unsigned int>(),
 	 "random number generator integer seed")
 	;
@@ -431,6 +446,13 @@ mdsim_options_description::mdsim_options_description() : _Base("MD simulation op
 template <>
 options_description<ljfluid_impl_host>::options_description()
 {
+    namespace po = boost::program_options;
+    add_options()
+	("cutoff", po::value<float>()->default_value(2.5),
+	 "truncate potential at cutoff radius")
+	("smoothing", po::value<float>()->default_value(0.001),
+	 "C²-potential smoothing factor")
+	;
 }
 
 template <>
@@ -438,6 +460,10 @@ options_description<ljfluid_impl_gpu_square>::options_description()
 {
     namespace po = boost::program_options;
     add_options()
+	("cutoff", po::value<float>()->default_value(2.5),
+	 "truncate potential at cutoff radius")
+	("smoothing", po::value<float>()->default_value(0.001),
+	 "C²-potential smoothing factor")
 	("device,D", po::value<int>()->default_value(0),
 	 "CUDA device ordinal")
 	("threads,T", po::value<unsigned int>()->default_value(128),
@@ -450,6 +476,10 @@ options_description<ljfluid_impl_gpu_neighbour>::options_description()
 {
     namespace po = boost::program_options;
     add_options()
+	("cutoff", po::value<float>()->default_value(2.5),
+	 "truncate potential at cutoff radius")
+	("smoothing", po::value<float>()->default_value(0.001),
+	 "C²-potential smoothing factor")
 	("device,D", po::value<int>()->default_value(0),
 	 "CUDA device ordinal")
 	("threads,T", po::value<unsigned int>()->default_value(128),
@@ -464,12 +494,26 @@ options_description<ljfluid_impl_gpu_cell>::options_description()
 {
     namespace po = boost::program_options;
     add_options()
+	("cutoff", po::value<float>()->default_value(2.5),
+	 "truncate potential at cutoff radius")
+	("smoothing", po::value<float>()->default_value(0.001),
+	 "C²-potential smoothing factor")
 	("device,D", po::value<int>()->default_value(0),
 	 "CUDA device ordinal")
 	("threads,T", po::value<unsigned int>()->default_value(128),
 	 "number of CUDA threads per block")
 	("cell-occupancy", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
+	;
+}
+
+template <>
+options_description<ljfluid_impl_hardsphere>::options_description()
+{
+    namespace po = boost::program_options;
+    add_options()
+	("pair-separation,p", po::value<float>()->default_value(0.5),
+	 "particle pair separation")
 	;
 }
 

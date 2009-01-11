@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_LJFLUID_HOST_HPP
-#define LJGPU_LJFLUID_LJFLUID_HOST_HPP
+#ifndef LJGPU_MDSIM_LJFLUID_HOST_HPP
+#define LJGPU_MDSIM_LJFLUID_HOST_HPP
 
 #include <algorithm>
 #include <boost/array.hpp>
@@ -26,7 +26,7 @@
 #include <cmath>
 #include <iostream>
 #include <list>
-#include <ljgpu/ljfluid/base.hpp>
+#include <ljgpu/mdsim/ljfluid_base.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
 #include <ljgpu/util/timer.hpp>
 #include <sys/times.h>
@@ -703,4 +703,4 @@ void ljfluid<ljfluid_impl_host<dimension> >::attrs(H5::Group const& param) const
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_LJFLUID_LJFLUID_HOST_HPP */
+#endif /* ! LJGPU_MDSIM_LJFLUID_HOST_HPP */

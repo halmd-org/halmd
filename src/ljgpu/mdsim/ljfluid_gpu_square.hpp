@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_LJFLUID_GPU_SQUARE_HPP
-#define LJGPU_LJFLUID_LJFLUID_GPU_SQUARE_HPP
+#ifndef LJGPU_MDSIM_LJFLUID_GPU_SQUARE_HPP
+#define LJGPU_MDSIM_LJFLUID_GPU_SQUARE_HPP
 
 #include <ljgpu/algorithm/reduce.hpp>
-#include <ljgpu/ljfluid/base_gpu.hpp>
-#include <ljgpu/ljfluid/gpu/lattice.hpp>
+#include <ljgpu/mdsim/ljfluid_gpu_base.hpp>
+#include <ljgpu/mdsim/gpu/lattice.hpp>
 
 namespace ljgpu
 {
@@ -31,10 +31,10 @@ class ljfluid;
 
 template <int dimension>
 class ljfluid<ljfluid_impl_gpu_square<dimension> >
-    : public ljfluid_base_gpu<ljfluid_impl_gpu_square<dimension> >
+    : public ljfluid_gpu_base<ljfluid_impl_gpu_square<dimension> >
 {
 public:
-    typedef ljfluid_base_gpu<ljfluid_impl_gpu_square<dimension> > _Base;
+    typedef ljfluid_gpu_base<ljfluid_impl_gpu_square<dimension> > _Base;
     typedef gpu::ljfluid<ljfluid_impl_gpu_square<dimension> > _gpu;
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
@@ -484,4 +484,4 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::update_forces(cuda::stream& s
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_LJFLUID_LJFLUID_GPU_SQUARE_HPP */
+#endif /* ! LJGPU_MDSIM_LJFLUID_GPU_SQUARE_HPP */

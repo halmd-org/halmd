@@ -1,4 +1,4 @@
-/* Lennard-Jones fluid simulation using CUDA
+/* Hilbert spacing-filling curve kernel
  *
  * Copyright © 2008-2009  Peter Colberg
  *
@@ -16,24 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_IMPL_HPP
-#define LJGPU_LJFLUID_IMPL_HPP
+#ifndef LJGPU_MDSIM_GPU_HILBERT_HPP
+#define LJGPU_MDSIM_GPU_HILBERT_HPP
 
-namespace ljgpu
+#include <cuda_wrapper.hpp>
+
+namespace ljgpu { namespace gpu { namespace hilbert
 {
 
-template <int dimension>
-class ljfluid_impl_gpu_square;
+extern cuda::function<void (float4 const*, uint*), void (float2 const*, uint*)> curve;
+extern cuda::symbol<float> box;
+extern cuda::symbol<uint> depth;
 
-template <int dimension>
-class ljfluid_impl_gpu_cell;
+}}} // namespace ljgpu::gpu::hilbert
 
-template <int dimension>
-class ljfluid_impl_gpu_neighbour;
-
-template <int dimension>
-class ljfluid_impl_host;
-
-} // namespace ljgpu
-
-#endif /* ! LJGPU_LJFLUID_IMPL_HPP */
+#endif /* ! LJGPU_MDSIM_GPU_HILBERT_HPP */

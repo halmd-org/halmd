@@ -20,7 +20,7 @@
 #include <ljgpu/algorithm/gpu/base.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
-#include <ljgpu/ljfluid/gpu/hilbert.hpp>
+#include <ljgpu/mdsim/gpu/hilbert.hpp>
 using namespace ljgpu::gpu::hilbert;
 
 namespace ljgpu { namespace cu { namespace hilbert

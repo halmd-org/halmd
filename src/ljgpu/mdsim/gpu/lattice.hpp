@@ -1,4 +1,4 @@
-/* Hilbert spacing-filling curve kernel
+/* Lennard-Jones fluid kernel
  *
  * Copyright © 2008-2009  Peter Colberg
  *
@@ -16,18 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_GPU_HILBERT_HPP
-#define LJGPU_LJFLUID_GPU_HILBERT_HPP
+#ifndef LJGPU_MDSIM_GPU_LATTICE_HPP
+#define LJGPU_MDSIM_GPU_LATTICE_HPP
 
 #include <cuda_wrapper.hpp>
 
-namespace ljgpu { namespace gpu { namespace hilbert
+namespace ljgpu { namespace gpu { namespace lattice
 {
 
-extern cuda::function<void (float4 const*, uint*), void (float2 const*, uint*)> curve;
-extern cuda::symbol<float> box;
-extern cuda::symbol<uint> depth;
+extern cuda::function<void (float2*, uint, float), void (float4*, uint, float)> fcc;
+extern cuda::function<void (float2*, uint, float), void (float4*, uint, float)> sc;
 
-}}} // namespace ljgpu::gpu::hilbert
+}}} // namespace ljgpu::gpu::lattice
 
-#endif /* ! LJGPU_LJFLUID_GPU_HILBERT_HPP */
+#endif /* ! LJGPU_MDSIM_GPU_LATTICE_HPP */

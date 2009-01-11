@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_GPU_LJFLUID_CELL_HPP
-#define LJGPU_LJFLUID_GPU_LJFLUID_CELL_HPP
+#ifndef LJGPU_MDSIM_GPU_LJFLUID_CELL_HPP
+#define LJGPU_MDSIM_GPU_LJFLUID_CELL_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/ljfluid/impl.hpp>
+#include <ljgpu/mdsim/impl.hpp>
 
 namespace ljgpu { namespace gpu
 {
@@ -76,4 +76,4 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<2> >
 
 }} // namespace ljgpu::gpu
 
-#endif /* ! LJGPU_LJFLUID_GPU_LJFLUID_BASE_HPP */
+#endif /* ! LJGPU_MDSIM_GPU_LJFLUID_BASE_HPP */

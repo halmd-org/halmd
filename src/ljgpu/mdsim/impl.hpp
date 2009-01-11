@@ -1,4 +1,4 @@
-/* Lennard-Jones fluid simulation
+/* Lennard-Jones fluid simulation using CUDA
  *
  * Copyright © 2008-2009  Peter Colberg
  *
@@ -16,12 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_LJFLUID_LJFLUID_HPP
-#define LJGPU_LJFLUID_LJFLUID_HPP
+#ifndef LJGPU_MDSIM_IMPL_HPP
+#define LJGPU_MDSIM_IMPL_HPP
 
-#include <ljgpu/ljfluid/ljfluid_gpu_cell.hpp>
-#include <ljgpu/ljfluid/ljfluid_gpu_nbr.hpp>
-#include <ljgpu/ljfluid/ljfluid_gpu_square.hpp>
-#include <ljgpu/ljfluid/ljfluid_host.hpp>
+namespace ljgpu
+{
 
-#endif /* ! LJGPU_LJFLUID_LJFLUID_HPP */
+template <int dimension>
+class ljfluid_impl_gpu_square;
+
+template <int dimension>
+class ljfluid_impl_gpu_cell;
+
+template <int dimension>
+class ljfluid_impl_gpu_neighbour;
+
+template <int dimension>
+class ljfluid_impl_host;
+
+template <int dimension>
+class ljfluid_impl_hardsphere;
+
+} // namespace ljgpu
+
+#endif /* ! LJGPU_MDSIM_IMPL_HPP */

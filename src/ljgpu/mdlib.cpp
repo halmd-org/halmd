@@ -16,22 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <ljgpu/ljfluid/ljfluid.hpp>
+#include <ljgpu/mdsim/hardsphere.hpp>
+#include <ljgpu/mdsim/ljfluid_gpu_cell.hpp>
+#include <ljgpu/mdsim/ljfluid_gpu_nbr.hpp>
+#include <ljgpu/mdsim/ljfluid_gpu_square.hpp>
+#include <ljgpu/mdsim/ljfluid_host.hpp>
 #include <ljgpu/mdsim.hpp>
 #include <ljgpu/options.hpp>
+using namespace ljgpu;
 
-extern "C" void mdsim(ljgpu::options const& opt)
+extern "C" void mdlib_mdsim(options const& opt)
 {
     using namespace std;
     using namespace boost;
 
     int const dimension = opt["dimension"].as<int>();
     if (dimension == 3) {
-	ljgpu::mdsim<ljgpu::LJFLUID_IMPL<3> > md(opt);
+	mdsim<LJFLUID_IMPL<3> > md(opt);
 	md();
     }
     else if (dimension == 2) {
-	ljgpu::mdsim<ljgpu::LJFLUID_IMPL<2> > md(opt);
+	mdsim<LJFLUID_IMPL<2> > md(opt);
 	md();
     }
     else {
@@ -39,7 +44,7 @@ extern "C" void mdsim(ljgpu::options const& opt)
     }
 }
 
-extern "C" ljgpu::options::description options()
+extern "C" options::description mdlib_options()
 {
-    return ljgpu::options_description<ljgpu::LJFLUID_IMPL>();
+    return options_description<LJFLUID_IMPL>();
 }
