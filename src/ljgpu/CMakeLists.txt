@@ -16,7 +16,8 @@ add_executable(ljgpu
   options.cpp
   )
 target_link_libraries(ljgpu
-  mdutil
+  util_h5xx
+  util_log
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HDF5_CPP_LIBRARY}
@@ -33,8 +34,8 @@ foreach(LJFLUID_IMPL host gpu_square gpu_cell gpu_neighbour)
   set_target_properties(ljgpu_${LJFLUID_IMPL} PROPERTIES
     COMPILE_DEFINITIONS "LJFLUID_IMPL=ljfluid_impl_${LJFLUID_IMPL}")
   target_link_libraries(ljgpu_${LJFLUID_IMPL}
+    util_h5param
     mdsample
-    mdutil
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${HDF5_CPP_LIBRARY}
