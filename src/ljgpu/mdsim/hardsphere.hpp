@@ -252,6 +252,8 @@ ljfluid<ljfluid_impl_hardsphere<dimension> >::ljfluid(options const& opt)
     else {
 	density(opt["density"].as<float>());
     }
+    // set simulation timestep
+    timestep(opt["timestep"].as<float>());
     // initialize cells
     init_cell();
 }
