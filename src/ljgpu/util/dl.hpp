@@ -41,7 +41,7 @@ public:
     {
 	if (handle)
 	    close();
-	if (!(handle = dlopen(name.c_str(), RTLD_LAZY)))
+	if (!(handle = dlopen(name.c_str(), RTLD_GLOBAL|RTLD_NOW)))
 	    throw error(dlerror());
     }
 
