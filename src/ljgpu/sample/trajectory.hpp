@@ -216,66 +216,65 @@ void trajectory::write(sample_type const& sample, double time)
 	dset_v = root.openDataSet("v");
 	dset_t = root.openDataSet("t");
     }
-    catch (H5::Exception const&) {
-	H5::Group root(m_file.createGroup("trajectory"));
-
+    catch (H5::FileIException const&) {
 	// vector sample file dataspace
-	hsize_t dim_vector[3] = { 0, npart, dimension };
-	hsize_t max_dim_vector[3] = { H5S_UNLIMITED, npart, dimension };
-	H5::DataSpace ds_vector_file(3, dim_vector, max_dim_vector);
+	hsize_t dim_v[3] = { 0, npart, dimension };
+	hsize_t max_dim_v[3] = { H5S_UNLIMITED, npart, dimension };
+	H5::DataSpace ds_file_v(3, dim_v, max_dim_v);
+	// scalar sample file dataspace
+	hsize_t dim_s[1] = { 0 };
+	hsize_t max_dim_s[1] = { H5S_UNLIMITED };
+	H5::DataSpace ds_file_s(1, dim_s, max_dim_s);
 	// enable dataset chunking with GZIP compression
 	H5::DSetCreatPropList cparms;
 	hsize_t chunk_dim[3] = { 1, npart, dimension };
 	cparms.setChunk(3, chunk_dim);
 	cparms.setDeflate(6);
 
-	dset_r = root.createDataSet("r", tid_r, ds_vector_file, cparms);
-	dset_v = root.createDataSet("v", tid_v, ds_vector_file, cparms);
+	H5::Group root(m_file.createGroup("trajectory"));
+	dset_r = root.createDataSet("r", tid_r, ds_file_v, cparms);
+	dset_v = root.createDataSet("v", tid_v, ds_file_v, cparms);
 
-	// scalar sample file dataspace
-	hsize_t dim_scalar[1] = { 0 };
-	hsize_t max_dim_scalar[1] = { H5S_UNLIMITED };
-	H5::DataSpace ds_scalar_file(1, dim_scalar, max_dim_scalar);
-	hsize_t chunk_scalar[1] = { 1 };
-	cparms.setChunk(1, chunk_scalar);
+	hsize_t chunk_s[1] = { 1 };
+	cparms.setChunk(1, chunk_s);
 
-	dset_t = root.createDataSet("t", tid_t, ds_scalar_file, cparms);
+	dset_t = root.createDataSet("t", tid_t, ds_file_s, cparms);
     }
 
     // extend vector sample file dataspace
-    H5::DataSpace ds_vector_file(dset_r.getSpace());
-    hsize_t dim_vector[3];
-    ds_vector_file.getSimpleExtentDims(dim_vector);
-    hsize_t count_vector[3]  = { 1, 1, 1 };
-    hsize_t start_vector[3]  = { dim_vector[0], 0, 0 };
-    hsize_t stride_vector[3] = { 1, 1, 1 };
-    hsize_t block_vector[3]  = { 1, npart, dimension };
-    dim_vector[0]++;
-    ds_vector_file.setExtentSimple(3, dim_vector);
-    ds_vector_file.selectHyperslab(H5S_SELECT_SET, count_vector, start_vector, stride_vector, block_vector);
+    H5::DataSpace ds_file_v(dset_r.getSpace());
+    hsize_t dim_v[3];
+    ds_file_v.getSimpleExtentDims(dim_v);
+    hsize_t count_v[3]  = { 1, 1, 1 };
+    hsize_t start_v[3]  = { dim_v[0], 0, 0 };
+    hsize_t stride_v[3] = { 1, 1, 1 };
+    hsize_t block_v[3]  = { 1, npart, dimension };
+    dim_v[0]++;
+    ds_file_v.setExtentSimple(3, dim_v);
+    ds_file_v.selectHyperslab(H5S_SELECT_SET, count_v, start_v, stride_v, block_v);
 
     // extend scalar sample file dataspace
-    hsize_t count_scalar[1]  = { 1 };
-    hsize_t start_scalar[1]  = { start_vector[0] };
-    hsize_t stride_scalar[1] = { 1 };
-    hsize_t block_scalar[1]  = { 1 };
-    hsize_t dim_scalar[1] = { dim_vector[0] };
-    H5::DataSpace ds_scalar_file(1, dim_scalar);
-    ds_scalar_file.selectHyperslab(H5S_SELECT_SET, count_scalar, start_scalar, stride_scalar, block_scalar);
+    hsize_t count_s[1]  = { 1 };
+    hsize_t start_s[1]  = { start_v[0] };
+    hsize_t stride_s[1] = { 1 };
+    hsize_t block_s[1]  = { 1 };
+    hsize_t dim_s[1] = { dim_v[0] };
+    H5::DataSpace ds_file_s(1, dim_s);
+    ds_file_s.selectHyperslab(H5S_SELECT_SET, count_s, start_s, stride_s, block_s);
 
     // vector sample memory dataspace
     hsize_t dim_mem[2] = { npart, dimension };
-    H5::DataSpace ds_vector_sample(2, dim_mem);
+    H5::DataSpace ds_sample_v(2, dim_mem);
 
     // write periodically extended particle coordinates
-    dset_r.extend(dim_vector);
-    dset_r.write(sample.r.data(), tid_r, ds_vector_sample, ds_vector_file);
+    dset_r.extend(dim_v);
+    dset_r.write(sample.r.data(), tid_r, ds_sample_v, ds_file_v);
     // write particle velocities
-    dset_v.extend(dim_vector);
-    dset_v.write(sample.v.data(), tid_v, ds_vector_sample, ds_vector_file);
+    dset_v.extend(dim_v);
+    dset_v.write(sample.v.data(), tid_v, ds_sample_v, ds_file_v);
     // write simulation time
-    dset_t.extend(dim_scalar);
-    dset_t.write(&time, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, ds_scalar_file);
+    dset_t.extend(dim_s);
+    dset_t.write(&time, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, ds_file_s);
 }
 
 } // namespace ljgpu
