@@ -72,7 +72,7 @@ private:
     /** Lennard-Jones fluid simulation */
     mdsim_impl fluid;
     /** block correlations */
-    correlation<float_type, dimension> tcf;
+    correlation<dimension> tcf;
     /**  trajectory file writer */
     trajectory traj;
     /** thermodynamic equilibrium properties */

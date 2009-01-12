@@ -26,6 +26,8 @@
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
 #include <ljgpu/math/accum.hpp>
+#include <ljgpu/math/vector2d.hpp>
+#include <ljgpu/math/vector3d.hpp>
 #include <vector>
 
 namespace ljgpu {
@@ -33,27 +35,17 @@ namespace ljgpu {
 /**
  * Phase space sample for evaluating correlation functions
  */
-template <typename vector_type>
-struct correlation_sample
+template <int dimension>
+struct tcf_sample
 {
-    // value types of these two vectors must match
-    typedef std::vector<vector_type> sample_vector;
-    typedef std::vector<typename vector_type::value_type> q_value_vector;
-    // summing over large particle numbers requires double precision!
-    typedef double density_value;
+    typedef std::vector<vector<double, dimension> > sample_vector;
+    typedef std::vector<double> q_value_vector;
     /** real or imaginary component vector */
-    typedef vector<density_value, vector_type::static_size> density_vector;
+    typedef vector<double, dimension> density_vector;
     /** real and imaginary components of Fourier transformed density rho(q) */
     typedef std::pair<density_vector, density_vector> density_vector_pair;
     /** vector of Fourier transformed densities for different q-values */
     typedef std::vector<density_vector_pair> density_vector_vector;
-
-    /** particle positions */
-    sample_vector r;
-    /** particle velocities */
-    sample_vector v;
-    /** spatially Fourier transformed density for given q-values */
-    density_vector_vector rho;
 
     /**
      * initialise phase space sample
@@ -75,13 +67,20 @@ struct correlation_sample
 	    }
 	}
 	// normalize Fourier transformed density with N^(-1/2)
-	density_value n = sqrt(r.size());
+	double norm = sqrt(r.size());
 	for (size_t j = 0; j < q.size(); ++j) {
 	    // therefore multiply averages with N^(+1/2)
-	    rho[j].first *= n;
-	    rho[j].second *= n;
+	    rho[j].first *= norm;
+	    rho[j].second *= norm;
 	}
     }
+
+    /** particle positions */
+    sample_vector r;
+    /** particle velocities */
+    sample_vector v;
+    /** spatially Fourier transformed density for given q-values */
+    density_vector_vector rho;
 };
 
 /** correlation function result types */
@@ -269,7 +268,8 @@ template <typename T1, typename T2>
 class tcf_correlate_block : public boost::static_visitor<>
 {
 public:
-    tcf_correlate_block(unsigned int const& block, T1 const& sample, T2 const& q_vector) : block(block), sample(sample), q_vector(q_vector) {}
+    tcf_correlate_block(unsigned int block, T1 const& sample, T2 const& q_vector)
+	: block(block), sample(sample), q_vector(q_vector) {}
 
     template <typename T>
     void operator()(T& tcf) const
@@ -278,13 +278,13 @@ public:
     }
 
 private:
-    unsigned int const& block;
+    unsigned int block;
     T1 const& sample;
     T2 const& q_vector;
 };
 
 template <typename T1, typename T2>
-tcf_correlate_block<T1, T2> tcf_correlate_block_gen(unsigned int const& block, T1 const& sample, T2 const& q_vector)
+tcf_correlate_block<T1, T2> tcf_correlate_block_gen(unsigned int block, T1 const& sample, T2 const& q_vector)
 {
     return tcf_correlate_block<T1, T2>(block, sample, q_vector);
 }
@@ -354,7 +354,8 @@ private:
 class tcf_allocate_results : public boost::static_visitor<>
 {
 public:
-    tcf_allocate_results(unsigned int const& block_count, unsigned int const& block_size, unsigned int const& q_values) : block_count(block_count), block_size(block_size), q_values(q_values) {}
+    tcf_allocate_results(unsigned int block_count, unsigned int block_size, unsigned int q_values)
+	: block_count(block_count), block_size(block_size), q_values(q_values) {}
 
     template <typename T>
     void operator()(T& tcf) const
@@ -373,19 +374,23 @@ public:
     }
     
 private:
-    unsigned int const& block_count;
-    unsigned int const& block_size;
-    unsigned int const& q_values;
+    unsigned int block_count;
+    unsigned int block_size;
+    unsigned int q_values;
 };
 
 /**
  * write correlation function results to HDF5 file
  */
-template <typename float_type>
 class tcf_write_results : public boost::static_visitor<>
 {
 public:
-    tcf_write_results(boost::multi_array<float_type, 2> const& block_time, std::vector<float_type> const& q_vector, unsigned int const& max_blocks) : block_time(block_time), q_vector(q_vector), max_blocks(max_blocks) {}
+    typedef boost::multi_array<double, 2> block_time_type;
+    typedef std::vector<double> q_vector_type;
+
+public:
+    tcf_write_results(block_time_type const& block_time, q_vector_type const& q_vector, unsigned int max_blocks)
+	: block_time(block_time), q_vector(q_vector), max_blocks(max_blocks) {}
 
     template <typename T>
     void operator()(T& tcf) const
@@ -450,9 +455,9 @@ public:
     }
 
 private:
-    boost::multi_array<float_type, 2> const& block_time;
-    std::vector<float_type> const& q_vector;
-    unsigned int const& max_blocks;
+    block_time_type const& block_time;
+    q_vector_type const& q_vector;
+    unsigned int max_blocks;
 };
 
 } // namespace ljgpu
