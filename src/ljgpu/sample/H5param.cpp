@@ -16,11 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <ljgpu/util/H5param.hpp>
+#include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/util/H5xx.hpp>
-#include <ljgpu/util/exception.hpp>
 #include <ljgpu/version.h>
-#include <stdint.h>
 
 namespace ljgpu
 {
@@ -28,9 +26,16 @@ namespace ljgpu
 /**
  * initialize HDF5 parameter group
  */
-H5param::H5param(H5::Group param) : param(param)
+H5param::H5param(H5::H5File file)
 {
-    H5xx::group node(param.createGroup("program"));
+    try {
+	H5::Group::operator=(file.openGroup("param"));
+    }
+    catch (H5::FileIException const&) {
+	H5::Group::operator=(file.createGroup("param"));
+    }
+
+    H5xx::group node(createGroup("program"));
     // write program info attributes
     node["name"] = PROGRAM_NAME;
     node["version"] = PROGRAM_VERSION;

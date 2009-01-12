@@ -69,14 +69,6 @@ void perf::open(std::string const& filename)
 }
 
 /**
- * returns HDF5 parameter group
- */
-H5param perf::attrs()
-{
-    return H5param(m_file.openGroup("param"));
-}
-
-/**
  * sample performance data
  */
 void perf::sample(counters const& times)

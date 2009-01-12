@@ -177,19 +177,19 @@ void mdsim<mdsim_impl>::operator()()
 
     // performance data
     prf.open(opt["output"].as<std::string>() + ".prf");
-    prf.attrs() << fluid << tcf;
+    H5param(prf) << fluid << tcf;
 
     // time correlation functions
     if (!opt["disable-correlation"].as<bool>()) {
 	tcf.open(opt["output"].as<std::string>() + ".tcf");
-	tcf.attrs() << fluid << tcf;
+	H5param(tcf) << fluid << tcf;
     }
     // trajectory file writer
     traj.open(opt["output"].as<std::string>() + ".trj", trajectory::out);
-    traj.attrs() << fluid << tcf;
+    H5param(traj) << fluid << tcf;
     // thermodynamic equilibrium properties
     tep.open(opt["output"].as<std::string>() + ".tep");
-    tep.attrs() << fluid << tcf;
+    H5param(tep) << fluid << tcf;
 
     // schedule first disk flush
     alarm(FLUSH_TO_DISK_INTERVAL);

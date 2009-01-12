@@ -25,7 +25,7 @@
 #include <boost/variant.hpp>
 #include <cmath>
 #include <ljgpu/sample/tcf.hpp>
-#include <ljgpu/util/H5param.hpp>
+#include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/util/log.hpp>
 #include <string>
 #include <vector>
@@ -82,9 +82,9 @@ public:
     /** close HDF5 file */
     void close();
     /** returns HDF5 parameter group */
-    H5param attrs();
+    operator H5param() { return m_file; }
     /** write parameters to HDF5 parameter group */
-    void attrs(H5::Group const& param) const;
+    void param(H5::Group const& param) const;
     /** check if sample is acquired for given simulation step */
     bool sample(uint64_t step) const;
     /** sample time correlation functions */

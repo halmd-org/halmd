@@ -72,17 +72,4 @@ void trajectory::flush()
     }
 }
 
-/**
- * returns HDF5 parameter group
- */
-H5param trajectory::attrs()
-{
-    try {
-	return m_file.openGroup("param");
-    }
-    catch (H5::Exception const&) {
-	return m_file.createGroup("param");
-    }
-}
-
 } // namespace ljgpu

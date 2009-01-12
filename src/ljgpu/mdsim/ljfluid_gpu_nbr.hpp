@@ -97,7 +97,7 @@ public:
     /** get total number of placeholders per neighbour list */
     unsigned int neighbours() const { return nbl_size; }
     /** write parameters to HDF5 parameter group */
-    void attrs(H5::Group const& param) const;
+    void param(H5::Group const& param) const;
 
 private:
     /** first leapfrog step of integration of differential equations of motion */
@@ -861,9 +861,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
 #endif /* USE_HILBERT_ORDER */
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::attrs(H5::Group const& param) const
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::param(H5::Group const& param) const
 {
-    _Base::attrs(param);
+    _Base::param(param);
 
     H5xx::group node(param.openGroup("mdsim"));
     node["cells"] = cells();

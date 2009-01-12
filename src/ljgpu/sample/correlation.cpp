@@ -234,19 +234,10 @@ void correlation<dimension>::close()
 }
 
 /**
- * returns HDF5 parameter group
- */
-template <int dimension>
-H5param correlation<dimension>::attrs()
-{
-    return H5param(m_file.openGroup("param"));
-}
-
-/**
  * write parameters to HDF5 parameter group
  */
 template <int dimension>
-void correlation<dimension>::attrs(H5::Group const& param) const
+void correlation<dimension>::param(H5::Group const& param) const
 {
     H5xx::group node(param.createGroup("correlation"));
     node["steps"] = m_steps;

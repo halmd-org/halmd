@@ -27,7 +27,7 @@
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/mdsim/sample.hpp>
-#include <ljgpu/util/H5param.hpp>
+#include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
@@ -63,7 +63,7 @@ public:
     void write(sample_type const& sample, double time);
 
     /** returns HDF5 parameter group */
-    H5param attrs();
+    operator H5param() { return m_file; }
 
 private:
     /** HDF5 trajectory output file */

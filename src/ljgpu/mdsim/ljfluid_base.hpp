@@ -82,7 +82,7 @@ public:
     perf::counters times();
 
     /** write parameters to HDF5 parameter group */
-    void attrs(H5::Group const& param) const;
+    void param(H5::Group const& param) const;
 
 protected:
     /** number of particles in system */
@@ -196,7 +196,7 @@ perf::counters ljfluid_base<ljfluid_impl>::times()
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::attrs(H5::Group const& param) const
+void ljfluid_base<ljfluid_impl>::param(H5::Group const& param) const
 {
     H5xx::group node(param.createGroup("mdsim"));
     node["box_length"] = box();

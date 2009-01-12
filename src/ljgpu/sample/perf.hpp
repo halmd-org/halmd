@@ -23,7 +23,7 @@
 #include <boost/assign.hpp>
 #include <boost/unordered_map.hpp>
 #include <string>
-#include <ljgpu/util/H5param.hpp>
+#include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/math/accum.hpp>
 
 namespace ljgpu
@@ -47,7 +47,7 @@ public:
     /** create HDF5 performance data output file */
     void open(std::string const& filename);
     /** returns HDF5 parameter group */
-    H5param attrs();
+    operator H5param() { return m_file; }
     /** sample performance data */
     void sample(counters const& times);
     /** clear performance counters */

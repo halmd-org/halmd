@@ -165,7 +165,7 @@ public:
     double const& timestep() { return timestep_; }
 
     /** write parameters to HDF5 parameter group */
-    void attrs(H5::Group const& param) const;
+    void param(H5::Group const& param) const;
 
     /** initialize event list */
     void init_event_list();
@@ -496,7 +496,7 @@ void hardsphere<hardsphere_impl<dimension> >::temperature(double value)
  * write parameters to HDF5 parameter group
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::attrs(H5::Group const& param) const
+void hardsphere<hardsphere_impl<dimension> >::param(H5::Group const& param) const
 {
     H5xx::group node(param.createGroup("mdsim"));
     node["dimension"] = dimension;

@@ -182,20 +182,6 @@ void energy<dimension>::close()
     }
 }
 
-/**
- * returns HDF5 parameter group
- */
-template <int dimension>
-H5param energy<dimension>::attrs()
-{
-    try {
-	return m_file.openGroup("param");
-    }
-    catch (H5::Exception const&) {
-	return m_file.createGroup("param");
-    }
-}
-
 // explicit instantiation
 template class energy<2>;
 template class energy<3>;

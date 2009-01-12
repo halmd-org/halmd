@@ -27,26 +27,19 @@ namespace ljgpu
 /**
  * HDF5 parameter group
  */
-class H5param
+class H5param : public H5::Group
 {
 public:
-    /** initialize HDF5 parameter group */
-    H5param(H5::Group param);
+    H5param(H5::H5File file);
     /** write parameters of visitor to HDF5 parameter group */
     template <typename T>
     H5param& operator<<(T const& visitor);
-
-private:
-    H5::Group param;
 };
 
-/**
- * write parameters of visitor to HDF5 parameter group
- */
 template <typename T>
 H5param& H5param::operator<<(T const& visitor)
 {
-    visitor.attrs(param);
+    visitor.param(*this);
     return *this;
 }
 

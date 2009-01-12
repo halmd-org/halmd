@@ -24,7 +24,7 @@
 #include <ljgpu/math/stat.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
-#include <ljgpu/util/H5param.hpp>
+#include <ljgpu/sample/H5param.hpp>
 #include <string>
 #include <vector>
 
@@ -62,7 +62,7 @@ public:
     void sample(sample_type const& sample, float density, double time);
 
     /** returns HDF5 parameter group */
-    H5param attrs();
+    operator H5param() { return m_file; }
 private:
     /** number of aquired samples */
     unsigned int m_samples;
