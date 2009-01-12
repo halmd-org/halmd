@@ -313,13 +313,12 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::threads(unsigned int value)
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::restore(sample_visitor visitor)
 {
-    // read phase space sample
-    visitor(m_sample.r, m_sample.v);
+    visitor(m_sample);
 
     try {
 	// copy periodically reduced particle positions from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.r[i] = make_float(m_sample.r[i]);
+	    h_part.r[i] = make_float(make_periodic(m_sample.r[i], box_));
 	}
 	cuda::copy(h_part.r, g_part.R, stream_);
 	// assign particles to cells
@@ -595,10 +594,8 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 	const int n = h_part.tag[i];
 	// check if real particle
 	if (n != _gpu::VIRTUAL_PARTICLE) {
-	    // copy periodically reduced particle positions
-	    m_sample.r[n] = h_part.r[i];
 	    // copy periodically extended particle positions
-	    m_sample.R[n] = h_part.R[i];
+	    m_sample.r[n] = h_part.r[i] + floor((vector_type) h_part.R[i] / box_) * box_;
 	    // copy particle velocities
 	    m_sample.v[n] = h_part.v[i];
 	    // calculate mean potential energy per particle

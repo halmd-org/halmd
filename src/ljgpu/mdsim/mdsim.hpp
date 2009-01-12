@@ -22,6 +22,7 @@
 #include <boost/bind.hpp>
 #include <fstream>
 #include <iostream>
+#include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/options.hpp>
 #include <ljgpu/sample/correlation.hpp>
 #include <ljgpu/sample/energy.hpp>
@@ -47,7 +48,6 @@ public:
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::sample_type sample_type;
-    typedef typename sample_type::sample_vector sample_vector;
     enum { dimension = traits_type::dimension };
 
 public:
@@ -112,7 +112,7 @@ mdsim<mdsim_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
 	// open trajectory input file
 	traj.open(opt["trajectory"].as<std::string>(), trajectory::in);
 	// read trajectory sample and restore system state
-	fluid.restore(boost::bind(&trajectory::read<sample_vector>, boost::ref(traj), _1, _2, index));
+	fluid.restore(boost::bind(&trajectory::read<sample_type>, boost::ref(traj), _1, index));
 	// close trajectory input file
 	traj.close();
     }

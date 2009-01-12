@@ -115,7 +115,6 @@ void ljfluid_gpu_base<ljfluid_impl>::particles(unsigned int value)
     // allocate swappable host memory for trajectory sample
     try {
 	m_sample.r.resize(npart);
-	m_sample.R.resize(npart);
 	m_sample.v.resize(npart);
     }
     catch (cuda::error const&) {

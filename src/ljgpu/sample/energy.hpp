@@ -23,11 +23,10 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <ljgpu/math/stat.hpp>
-#include <ljgpu/sample/sample.hpp>
-#include <string>
 #include <ljgpu/util/H5param.hpp>
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
+#include <string>
 #include <vector>
 
 namespace ljgpu

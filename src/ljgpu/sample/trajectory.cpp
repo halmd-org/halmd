@@ -34,10 +34,6 @@ void trajectory::open(std::string const& filename, openmode mode)
 	catch (H5::FileIException const& e) {
 	    throw exception("failed to create trajectory output file");
 	}
-	// create parameter group
-	m_file.createGroup("param");
-	// reset sample index
-	m_index = 0;
     }
     else {
 	LOG("read trajectory file: " << filename);
@@ -81,7 +77,12 @@ void trajectory::flush()
  */
 H5param trajectory::attrs()
 {
-    return H5param(m_file.openGroup("param"));
+    try {
+	return m_file.openGroup("param");
+    }
+    catch (H5::Exception const&) {
+	return m_file.createGroup("param");
+    }
 }
 
 } // namespace ljgpu

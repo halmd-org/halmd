@@ -26,8 +26,9 @@
 #include <boost/type_traits.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
-#include <ljgpu/sample/sample.hpp>
+#include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/util/H5param.hpp>
+#include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
 #include <string>
@@ -51,79 +52,72 @@ public:
     void open(std::string const& filename, openmode mode = in);
     /** close HDF5 trajectory output file */
     void close();
+    /** flush HDF5 output file to disk */
+    void flush();
+
     /** read phase space sample */
-    template <typename sample_vector>
-    void read(sample_vector& r, sample_vector& v, int64_t index);
+    template <typename sample_type>
+    void read(sample_type& sample, int64_t index);
     /** write phase space sample */
     template <typename sample_type>
     void write(sample_type const& sample, double time);
-    /** flush HDF5 output file to disk */
-    void flush();
+
     /** returns HDF5 parameter group */
     H5param attrs();
 
 private:
-    /** create HDF5 datasets */
-    template <int dimension>
-    void create_datasets(trajectory_gpu_sample<vector<float, dimension> > const&,
-			 H5::DSetCreatPropList const& cparms);
-    template <int dimension>
-    void create_datasets(trajectory_host_sample<vector<double, dimension> > const&,
-			 H5::DSetCreatPropList const& cparms);
-    /** write HDF5 datasets */
-    template <int dimension>
-    void write_datasets(trajectory_gpu_sample<vector<float, dimension> > const& sample,
-			hsize_t const* dim);
-    template <int dimension>
-    void write_datasets(trajectory_host_sample<vector<double, dimension> > const& sample,
-			hsize_t const* dim);
-
-private:
     /** HDF5 trajectory output file */
     H5::H5File m_file;
-    /** trajectory datasets for particle coordinates and velocities */
-    boost::array<H5::DataSet, 4> m_dataset;
-    /** memory dataspace for a single coordinates or velocities sample */
-    H5::DataSpace m_ds_mem;
-    /** file dataspace for a single coordinates or velocities sample */
-    H5::DataSpace m_ds_file;
-    /** file dataspace for simulation time */
-    H5::DataSpace m_ds_scalar;
-    /** floating-point data type */
-    H5::DataType m_tid;
-    /** sample index */
-    int64_t m_index;
 };
 
 /**
  * read phase space sample
  */
-template <typename sample_vector>
-void trajectory::read(sample_vector& r, sample_vector& v, int64_t index)
+template <typename sample_type>
+void trajectory::read(sample_type& sample, int64_t index)
 {
-    enum { dimension = sample_vector::value_type::static_size };
-    typedef typename sample_vector::value_type::value_type float_type;
+    enum { dimension = sample_type::position_vector::static_size };
+    typedef typename sample_type::position_vector::value_type position_value_type;
+    typedef typename sample_type::velocity_vector::value_type velocity_value_type;
 
-    H5::DataSet dataset_r, dataset_v;
+    H5::DataType const tid_r(H5xx::ctype<position_value_type>::type);
+    H5::DataType const tid_v(H5xx::ctype<velocity_value_type>::type);
+
+    H5::DataSet dset_r, dset_v;
     try {
 	H5::Group root(m_file.openGroup("trajectory"));
 	try {
-	    // read reduced particle coordinates, if available
-	    dataset_r = root.openDataSet("r");
+	    // backwards compatibility with r:R:v:t format
+	    // 	 r = reduced single- or double-precision positions,
+	    //   R = extended single- or double-precision positions,
+	    //   v = single- or double-precision velocities
+	    //   t = single- or double-precision simulation time
+	    dset_r = root.openDataSet("R");
+	    LOG_WARNING("detected obsolete trajectory file format");
 	}
-	catch (H5::Exception const&) {
-	    LOG_WARNING("falling back to extended particle coordinates");
-	    dataset_r = root.openDataSet("R");
+	catch (H5::Exception const&)
+	{
+	    // new-style r:v:t format
+	    //   r = extended double-precision positions,
+	    //   v = single- or double-precision velocities
+	    //   t = double-precision simulation time
+	    dset_r = root.openDataSet("r");
 	}
-	dataset_v = root.openDataSet("v");
+	// backwards compatibility with r:R:v:t format
+	if (dset_r.getDataType() == H5::PredType::NATIVE_FLOAT) {
+	    // use reduced positions if extended positions are single-precision
+	    dset_r = root.openDataSet("r");
+	    LOG_WARNING("falling back to reduced particle position sample");
+	}
+	dset_v = root.openDataSet("v");
     }
     catch (H5::Exception const&) {
 	throw exception("failed to open HDF5 trajectory datasets");
     }
 
     // validate dataspace extents
-    H5::DataSpace ds_r(dataset_r.getSpace());
-    H5::DataSpace ds_v(dataset_v.getSpace());
+    H5::DataSpace ds_r(dset_r.getSpace());
+    H5::DataSpace ds_v(dset_v.getSpace());
     if (!ds_r.isSimple()) {
 	throw exception("trajectory dataspace is not a simple dataspace");
     }
@@ -171,8 +165,8 @@ void trajectory::read(sample_vector& r, sample_vector& v, int64_t index)
     LOG("resuming from trajectory sample at offset: " << index);
 
     try {
-	r.resize(npart);
-	v.resize(npart);
+	sample.r.resize(npart);
+	sample.v.resize(npart);
     }
     catch (std::bad_alloc const&) {
 	throw exception("failed to allocate memory for trajectory input sample");
@@ -187,18 +181,13 @@ void trajectory::read(sample_vector& r, sample_vector& v, int64_t index)
     hsize_t stride[3] = { 1, 1, 1 };
     hsize_t block[3]  = { 1, 1, dimension };
 
-    if (boost::is_same<float_type, double>::value)
-	m_tid = H5::PredType::NATIVE_DOUBLE;
-    else
-	m_tid = H5::PredType::NATIVE_FLOAT;
-
     try {
 	// read periodically reduced particle positions
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dataset_r.read(r.data(), m_tid, ds_mem, ds_r);
+	dset_r.read(sample.r.data(), tid_r, ds_mem, ds_r);
 	// read particle velocities
 	ds_v.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dataset_v.read(v.data(), m_tid, ds_mem, ds_v);
+	dset_v.read(sample.v.data(), tid_v, ds_mem, ds_v);
     }
     catch (H5::Exception const&) {
 	throw exception("failed to read sample from HDF5 trajectory input file");
@@ -211,125 +200,82 @@ void trajectory::read(sample_vector& r, sample_vector& v, int64_t index)
 template <typename sample_type>
 void trajectory::write(sample_type const& sample, double time)
 {
-    enum { dimension = sample_type::sample_vector::value_type::static_size };
-    typedef typename sample_type::sample_vector::value_type::value_type float_type;
+    enum { dimension = sample_type::position_vector::static_size };
+    typedef typename sample_type::position_vector::value_type position_value_type;
+    typedef typename sample_type::velocity_vector::value_type velocity_value_type;
 
-    // create datasets
-    if (!m_index) {
-	// create position and velocity datasets
-	unsigned int npart = sample.R.size();
-	hsize_t dim[3] = { 0, npart, dimension };
-	hsize_t max_dim[3] = { H5S_UNLIMITED, npart, dimension };
-	m_ds_file = H5::DataSpace(3, dim, max_dim);
-	// modify dataset creation properties to enable chunking
+    H5::DataType const tid_r(H5xx::ctype<position_value_type>::type);
+    H5::DataType const tid_v(H5xx::ctype<velocity_value_type>::type);
+    H5::DataType const tid_t(H5::PredType::NATIVE_DOUBLE);
+    unsigned int const npart = sample.r.size();
+
+    H5::DataSet dset_t, dset_r, dset_v;
+    try {
+	H5::Group root(m_file.openGroup("trajectory"));
+	dset_r = root.openDataSet("r");
+	dset_v = root.openDataSet("v");
+	dset_t = root.openDataSet("t");
+    }
+    catch (H5::Exception const&) {
+	H5::Group root(m_file.createGroup("trajectory"));
+
+	// vector sample file dataspace
+	hsize_t dim_vector[3] = { 0, npart, dimension };
+	hsize_t max_dim_vector[3] = { H5S_UNLIMITED, npart, dimension };
+	H5::DataSpace ds_vector_file(3, dim_vector, max_dim_vector);
+	// enable dataset chunking with GZIP compression
 	H5::DSetCreatPropList cparms;
 	hsize_t chunk_dim[3] = { 1, npart, dimension };
 	cparms.setChunk(3, chunk_dim);
-	// use GZIP compression
 	cparms.setDeflate(6);
-	create_datasets<dimension>(sample, cparms);
 
-	// create time dataset
-	H5::Group root(m_file.openGroup("trajectory"));
-	hsize_t dim_mem[2] = { npart, dimension };
-	m_ds_mem = H5::DataSpace(2, dim_mem);
-	hsize_t chunk_scalar[1] = { 1 };
-	cparms.setChunk(1, chunk_scalar);
+	dset_r = root.createDataSet("r", tid_r, ds_vector_file, cparms);
+	dset_v = root.createDataSet("v", tid_v, ds_vector_file, cparms);
+
+	// scalar sample file dataspace
 	hsize_t dim_scalar[1] = { 0 };
 	hsize_t max_dim_scalar[1] = { H5S_UNLIMITED };
-	m_ds_scalar = H5::DataSpace(1, dim_scalar, max_dim_scalar);
-	m_dataset[0] = root.createDataSet("t", H5::PredType::NATIVE_DOUBLE, m_ds_scalar, cparms);
+	H5::DataSpace ds_scalar_file(1, dim_scalar, max_dim_scalar);
+	hsize_t chunk_scalar[1] = { 1 };
+	cparms.setChunk(1, chunk_scalar);
+
+	dset_t = root.createDataSet("t", tid_t, ds_scalar_file, cparms);
     }
 
-    hsize_t dim[3];
-    m_ds_file.getSimpleExtentDims(dim);
+    // extend vector sample file dataspace
+    H5::DataSpace ds_vector_file(dset_r.getSpace());
+    hsize_t dim_vector[3];
+    ds_vector_file.getSimpleExtentDims(dim_vector);
+    hsize_t count_vector[3]  = { 1, 1, 1 };
+    hsize_t start_vector[3]  = { dim_vector[0], 0, 0 };
+    hsize_t stride_vector[3] = { 1, 1, 1 };
+    hsize_t block_vector[3]  = { 1, npart, dimension };
+    dim_vector[0]++;
+    ds_vector_file.setExtentSimple(3, dim_vector);
+    ds_vector_file.selectHyperslab(H5S_SELECT_SET, count_vector, start_vector, stride_vector, block_vector);
 
-    hsize_t count[3]  = { 1, 1, 1 };
-    hsize_t start[3]  = { dim[0], 0, 0 };
-    hsize_t stride[3] = { 1, 1, 1 };
-    hsize_t block[3]  = { 1, dim[1], dim[2] };
-
-    dim[0]++;
-    m_ds_file.setExtentSimple(3, dim);
-    m_ds_file.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-
-    write_datasets<dimension>(sample, dim);
-
-    hsize_t dim_scalar[1];
-    m_ds_scalar.getSimpleExtentDims(dim_scalar);
-
+    // extend scalar sample file dataspace
     hsize_t count_scalar[1]  = { 1 };
-    hsize_t start_scalar[1]  = { dim_scalar[0] };
+    hsize_t start_scalar[1]  = { start_vector[0] };
     hsize_t stride_scalar[1] = { 1 };
     hsize_t block_scalar[1]  = { 1 };
+    hsize_t dim_scalar[1] = { dim_vector[0] };
+    H5::DataSpace ds_scalar_file(1, dim_scalar);
+    ds_scalar_file.selectHyperslab(H5S_SELECT_SET, count_scalar, start_scalar, stride_scalar, block_scalar);
 
-    dim_scalar[0]++;
-    m_ds_scalar.setExtentSimple(1, dim_scalar);
-    m_ds_scalar.selectHyperslab(H5S_SELECT_SET, count_scalar, start_scalar, stride_scalar, block_scalar);
+    // vector sample memory dataspace
+    hsize_t dim_mem[2] = { npart, dimension };
+    H5::DataSpace ds_vector_sample(2, dim_mem);
 
+    // write periodically extended particle coordinates
+    dset_r.extend(dim_vector);
+    dset_r.write(sample.r.data(), tid_r, ds_vector_sample, ds_vector_file);
+    // write particle velocities
+    dset_v.extend(dim_vector);
+    dset_v.write(sample.v.data(), tid_v, ds_vector_sample, ds_vector_file);
     // write simulation time
-    m_dataset[0].extend(dim_scalar);
-    m_dataset[0].write(&time, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, m_ds_scalar);
-
-    m_index++;
-}
-
-template <int dimension>
-void trajectory::create_datasets(trajectory_gpu_sample<vector<float, dimension> > const&,
-				 H5::DSetCreatPropList const& cparms)
-{
-    m_tid = H5::PredType::NATIVE_FLOAT;
-    try {
-	H5::Group root(m_file.createGroup("trajectory"));
-	m_dataset[1] = root.createDataSet("r", m_tid, m_ds_file, cparms);
-	m_dataset[2] = root.createDataSet("R", m_tid, m_ds_file, cparms);
-	m_dataset[3] = root.createDataSet("v", m_tid, m_ds_file, cparms);
-    }
-    catch (H5::Exception const&) {
-	throw exception("failed to create HDF5 trajectory datasets");
-    }
-}
-
-template <int dimension>
-void trajectory::create_datasets(trajectory_host_sample<vector<double, dimension> > const&,
-				 H5::DSetCreatPropList const& cparms)
-{
-    m_tid = H5::PredType::NATIVE_DOUBLE;
-    try {
-	H5::Group root(m_file.createGroup("trajectory"));
-	m_dataset[1] = root.createDataSet("R", m_tid, m_ds_file, cparms);
-	m_dataset[2] = root.createDataSet("v", m_tid, m_ds_file, cparms);
-    }
-    catch (H5::Exception const&) {
-	throw exception("failed to create HDF5 trajectory datasets");
-    }
-}
-
-template <int dimension>
-void trajectory::write_datasets(trajectory_gpu_sample<vector<float, dimension> > const& sample,
-				hsize_t const* dim)
-{
-    // write periodically reduced particle coordinates
-    m_dataset[1].extend(dim);
-    m_dataset[1].write(sample.r.data(), m_tid, m_ds_mem, m_ds_file);
-    // write periodically extended particle coordinates
-    m_dataset[2].extend(dim);
-    m_dataset[2].write(sample.R.data(), m_tid, m_ds_mem, m_ds_file);
-    // write particle velocities
-    m_dataset[3].extend(dim);
-    m_dataset[3].write(sample.v.data(), m_tid, m_ds_mem, m_ds_file);
-}
-
-template <int dimension>
-void trajectory::write_datasets(trajectory_host_sample<vector<double, dimension> > const& sample,
-				hsize_t const* dim)
-{
-    // write periodically extended particle coordinates
-    m_dataset[1].extend(dim);
-    m_dataset[1].write(sample.R.data(), m_tid, m_ds_mem, m_ds_file);
-    // write particle velocities
-    m_dataset[2].extend(dim);
-    m_dataset[2].write(sample.v.data(), m_tid, m_ds_mem, m_ds_file);
+    dset_t.extend(dim_scalar);
+    dset_t.write(&time, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, ds_scalar_file);
 }
 
 } // namespace ljgpu

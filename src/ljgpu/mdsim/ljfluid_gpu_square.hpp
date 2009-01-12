@@ -214,13 +214,12 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::threads(unsigned int value)
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::restore(sample_visitor visitor)
 {
-    // read phase space sample
-    visitor(m_sample.r, m_sample.v);
+    visitor(m_sample);
 
     try {
 	// copy periodically reduced particle positions from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.r[i] = make_float(m_sample.r[i]);
+	    h_part.r[i] = make_float(make_periodic(m_sample.r[i], box_));
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
 	// replicate to periodically extended particle positions
@@ -455,9 +454,12 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
-    std::copy(h_part.r.begin(), h_part.r.end(), m_sample.r.begin());
-    std::copy(h_part.R.begin(), h_part.R.end(), m_sample.R.begin());
-    std::copy(h_part.v.begin(), h_part.v.end(), m_sample.v.begin());
+    for (unsigned int j = 0; j < npart; ++j) {
+	// copy periodically extended particle positions
+	m_sample.r[j] = h_part.r[j] + floor((vector_type) h_part.R[j] / box_) * box_;
+	// copy particle velocities
+	m_sample.v[j] = h_part.v[j];
+    }
 
     // mean potential energy per particle
     m_sample.en_pot = (double) reduce_en.value() / npart;

@@ -31,7 +31,6 @@
 #include <cmath>
 #include <cmath>
 #include <ljgpu/sample/tcf.hpp>
-#include <ljgpu/sample/sample.hpp>
 #include <string>
 #include <ljgpu/util/H5param.hpp>
 #include <ljgpu/util/H5xx.hpp>
@@ -99,8 +98,8 @@ public:
     /** check if sample is acquired for given simulation step */
     bool sample(uint64_t const& step) const;
     /** sample time correlation functions */
-    template <typename trajectory_sample>
-    void sample(trajectory_sample const& sample, uint64_t const& step, bool& flush);
+    template <typename sample_type>
+    void sample(sample_type const& sample, uint64_t const& step, bool& flush);
     /** write correlation function results to HDF5 file */
     void flush();
 
@@ -397,10 +396,13 @@ bool correlation<float_type, dimension>::sample(uint64_t const& step) const
  * sample time correlation functions
  */
 template <typename float_type, int dimension>
-template <typename trajectory_sample>
-void correlation<float_type, dimension>::sample(trajectory_sample const& sample, uint64_t const& step, bool& flush)
+template <typename sample_type>
+void correlation<float_type, dimension>::sample(sample_type const& sample, uint64_t const& step, bool& flush)
 {
-    correlation_sample<vector_type> p(sample.R, sample.v, m_q_vector);
+    correlation_sample<vector_type> csample;
+
+    // copy phase space coordinates and compute spatial Fourier transformation 
+    csample(sample.r, sample.v, m_q_vector);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
@@ -408,7 +410,7 @@ void correlation<float_type, dimension>::sample(trajectory_sample const& sample,
 	if (step % m_block_freq[i])
 	    continue;
 
-	m_block[i].push_back(p);
+	m_block[i].push_back(csample);
 
 	if (m_block[i].full()) {
 	    autocorrelate_block(i);

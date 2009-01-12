@@ -222,7 +222,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
     _Base::particles(value);
 
     try {
-	m_sample.R.resize(npart);
+	m_sample.r.resize(npart);
 	m_sample.v.resize(npart);
     }
     catch (std::bad_alloc const& e) {
@@ -236,12 +236,13 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::restore(sample_visitor visitor)
 {
-    // set system state from phase space sample
-    visitor(m_sample.R, m_sample.v);
+    visitor(m_sample);
 
     for (unsigned int i = 0; i < npart; ++i) {
+	// apply periodic boundary conditions
+	vector_type const r = make_periodic(m_sample.r[i], box_);
 	// add particle to appropriate cell list
-	compute_cell(m_sample.R[i]).push_back(particle(m_sample.R[i], m_sample.v[i], i));
+	compute_cell(r).push_back(particle(r, m_sample.v[i], i));
     }
 
     // update Verlet neighbour lists
@@ -343,7 +344,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
 	// add particle to appropriate cell list
 	compute_cell(r).push_back(particle(r, i));
 	// copy position to sorted particle list
-	m_sample.R[i] = r;
+	m_sample.r[i] = r;
     }
 
     // update Verlet neighbour lists
@@ -618,7 +619,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 	    // full step position
 	    p.r += p.v * timestep_;
 	    // copy position to sorted particle list
-	    m_sample.R[p.n] = p.r;
+	    m_sample.r[p.n] = p.r;
 	}
     }
 }

@@ -442,8 +442,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::restore(sample_visitor visitor)
 {
-    // read phase space sample
-    visitor(m_sample.r, m_sample.v);
+    visitor(m_sample);
 
     try {
 	// assign particle tags
@@ -451,7 +450,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::restore(sample_visitor vis
 	_gpu::init_tags(g_part.tag);
 	// copy periodically reduced particle positions from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.r[i] = make_float(m_sample.r[i]);
+	    h_part.r[i] = make_float(make_periodic(m_sample.r[i], box_));
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
 	// replicate to periodically extended particle positions
@@ -776,10 +775,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
     for (unsigned int j = 0; j < npart; ++j) {
 	// particle tracking number
 	const int n = h_part.tag[j];
-	// copy periodically reduced particle positions
-	m_sample.r[n] = h_part.r[j];
 	// copy periodically extended particle positions
-	m_sample.R[n] = h_part.R[j];
+	m_sample.r[n] = h_part.r[j] + floor((vector_type) h_part.R[j] / box_) * box_;
 	// copy particle velocities
 	m_sample.v[n] = h_part.v[j];
     }

@@ -20,13 +20,69 @@
 #define LJGPU_SAMPLE_TCF_HPP
 
 #include <H5Cpp.h>
+#include <algorithm>
 #include <boost/array.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
 #include <ljgpu/math/accum.hpp>
+#include <vector>
 
 namespace ljgpu {
+
+/**
+ * Phase space sample for evaluating correlation functions
+ */
+template <typename vector_type>
+struct correlation_sample
+{
+    // value types of these two vectors must match
+    typedef std::vector<vector_type> sample_vector;
+    typedef std::vector<typename vector_type::value_type> q_value_vector;
+    // summing over large particle numbers requires double precision!
+    typedef double density_value;
+    /** real or imaginary component vector */
+    typedef vector<density_value, vector_type::static_size> density_vector;
+    /** real and imaginary components of Fourier transformed density rho(q) */
+    typedef std::pair<density_vector, density_vector> density_vector_pair;
+    /** vector of Fourier transformed densities for different q-values */
+    typedef std::vector<density_vector_pair> density_vector_vector;
+
+    /** particle positions */
+    sample_vector r;
+    /** particle velocities */
+    sample_vector v;
+    /** spatially Fourier transformed density for given q-values */
+    density_vector_vector rho;
+
+    /**
+     * initialise phase space sample
+     */
+    template <typename position_sample_vector, typename velocity_sample_vector>
+    void operator()(position_sample_vector const& _r, velocity_sample_vector const& _v, q_value_vector const& q)
+    {
+	r.assign(_r.begin(), _r.end());
+	v.assign(_v.begin(), _v.end());
+	rho.assign(q.size(), density_vector_pair(0, 0));
+
+	// spatial Fourier transformation
+	for (size_t i = 0; i < r.size(); ++i) {
+	    for (size_t j = 0; j < q.size(); ++j) {
+		// compute averages to maintain accuracy summing over small and large values
+		density_vector r_q(r[i] * q[j]);
+		rho[j].first += (cos(r_q) - rho[j].first) / (i + 1);
+		rho[j].second += (sin(r_q) - rho[j].second) / (i + 1);
+	    }
+	}
+	// normalize Fourier transformed density with N^(-1/2)
+	density_value n = sqrt(r.size());
+	for (size_t j = 0; j < q.size(); ++j) {
+	    // therefore multiply averages with N^(+1/2)
+	    rho[j].first *= n;
+	    rho[j].second *= n;
+	}
+    }
+};
 
 /** correlation function result types */
 typedef boost::multi_array<accumulator<double>, 2> tcf_unary_result_type;

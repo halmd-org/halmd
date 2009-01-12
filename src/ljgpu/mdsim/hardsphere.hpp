@@ -27,10 +27,10 @@
 #include <iostream>
 #include <limits>
 #include <list>
+#include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
 #include <ljgpu/sample/perf.hpp>
-#include <ljgpu/sample/sample.hpp>
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
@@ -49,7 +49,7 @@ class hardsphere;
  * Hard Spheres simulation
  */
 template<int dimension>
-class hardsphere<hardsphere_impl<dimension> >
+class hardsphere<hardsphere_impl<dimension> > : public mdsim_base<hardsphere_impl<dimension> >
 {
     //
     // Details of the implementation are described in
@@ -267,7 +267,7 @@ void hardsphere<hardsphere_impl<dimension> >::particles(unsigned int value)
 
     try {
 	part.resize(npart);
-	m_sample.R.resize(npart);
+	m_sample.r.resize(npart);
 	m_sample.v.resize(npart);
     }
     catch (std::bad_alloc const&) {
@@ -366,14 +366,13 @@ void hardsphere<hardsphere_impl<dimension> >::timestep(double value)
 template <int dimension>
 void hardsphere<hardsphere_impl<dimension> >::restore(sample_visitor visitor)
 {
-    // set system state from phase space sample
-    visitor(m_sample.R, m_sample.v);
+    visitor(m_sample);
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// set periodically reduced particle position at simulation time zero
-	part[i].r = /*FIXME*/ m_sample.R[i];
+	part[i].r = make_periodic(m_sample.r[i], box_);
 	// set periodically extended particle position at simulation time zero
-	part[i].R = m_sample.R[i];
+	part[i].R = part[i].r;
 	// set cell which particle belongs to
 	part[i].cell = compute_cell(part[i].r);
 	// add particle to cell
@@ -825,7 +824,7 @@ void hardsphere<hardsphere_impl<dimension> >::copy()
     for (unsigned int i = 0; i < npart; ++i) {
 	const vector_type dr = part[i].v * (sample_time - part[i].t);
 	// periodically extended particle position
-	m_sample.R[i] = part[i].R + dr;
+	m_sample.r[i] = part[i].R + dr;
 	// particle velocity
 	m_sample.v[i] = part[i].v;
     }

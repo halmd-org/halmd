@@ -20,9 +20,9 @@
 #define LJGPU_MDSIM_LJFLUID_BASE_HPP
 
 #include <boost/foreach.hpp>
+#include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/sample/perf.hpp>
-#include <ljgpu/sample/sample.hpp>
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
@@ -34,7 +34,7 @@ namespace ljgpu
  * Lennard-Jones fluid interface
  */
 template <typename ljfluid_impl>
-class ljfluid_base
+class ljfluid_base : public mdsim_base<ljfluid_impl>
 {
 public:
     typedef mdsim_traits<ljfluid_impl> traits_type;

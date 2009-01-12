@@ -21,9 +21,9 @@
 
 #include <cuda/vector_types.h>
 #include <ljgpu/mdsim/impl.hpp>
+#include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
-#include <ljgpu/sample/sample.hpp>
 
 namespace ljgpu
 {
@@ -37,7 +37,7 @@ struct mdsim_traits<ljfluid_impl_gpu_base<2> >
     typedef float float_type;
     typedef vector<float, 2> vector_type;
     typedef float2 gpu_vector_type;
-    typedef trajectory_gpu_sample<vector_type> sample_type;
+    typedef mdsim_sample<ljfluid_impl_gpu_base<2> > sample_type;
     enum { dimension = 2 };
 };
 
@@ -47,7 +47,7 @@ struct mdsim_traits<ljfluid_impl_gpu_base<3> >
     typedef float float_type;
     typedef vector<float, 3> vector_type;
     typedef float4 gpu_vector_type;
-    typedef trajectory_gpu_sample<vector_type> sample_type;
+    typedef mdsim_sample<ljfluid_impl_gpu_base<3> > sample_type;
     enum { dimension = 3 };
 };
 
@@ -56,7 +56,7 @@ struct mdsim_traits<ljfluid_impl_host<2> >
 {
     typedef double float_type;
     typedef vector<double, 2> vector_type;
-    typedef trajectory_host_sample<vector_type> sample_type;
+    typedef mdsim_sample<ljfluid_impl_host<2> > sample_type;
     enum { dimension = 2 };
 };
 
@@ -65,7 +65,7 @@ struct mdsim_traits<ljfluid_impl_host<3> >
 {
     typedef double float_type;
     typedef vector<double, 3> vector_type;
-    typedef trajectory_host_sample<vector_type> sample_type;
+    typedef mdsim_sample<ljfluid_impl_host<3> > sample_type;
     enum { dimension = 3 };
 };
 
