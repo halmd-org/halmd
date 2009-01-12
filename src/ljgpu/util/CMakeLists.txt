@@ -1,9 +1,5 @@
-add_library(util_h5param
+add_library(util
   H5param.cpp
-  )
-add_library(util_h5xx
   H5xx.cpp
-  )
-add_library(util_log
   log.cpp
   )

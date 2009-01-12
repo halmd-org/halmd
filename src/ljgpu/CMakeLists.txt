@@ -16,8 +16,10 @@ add_executable(ljgpu
   options.cpp
   )
 target_link_libraries(ljgpu
-  util_h5xx
-  util_log
+  -Wl,-whole-archive
+  util
+  sample
+  -Wl,-no-whole-archive
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HDF5_CPP_LIBRARY}
@@ -45,13 +47,7 @@ foreach(impl
     mdlib.cpp
     )
   set_target_properties(ljgpu_${target} PROPERTIES
-    COMPILE_DEFINITIONS "MDSIM_BACKEND=${backend};MDSIM_IMPL=${impl}")
-  target_link_libraries(ljgpu_${target}
-    sample
-    util_h5param
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${HDF5_CPP_LIBRARY}
+    COMPILE_DEFINITIONS "MDSIM_BACKEND=${backend};MDSIM_IMPL=${impl}"
     )
   install(TARGETS ljgpu_${target}
     LIBRARY DESTINATION bin
