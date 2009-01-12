@@ -48,7 +48,7 @@ foreach(impl
     COMPILE_DEFINITIONS "MDSIM_BACKEND=${backend};MDSIM_IMPL=${impl}")
   target_link_libraries(ljgpu_${target}
     util_h5param
-    mdsample
+    sample
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${HDF5_CPP_LIBRARY}

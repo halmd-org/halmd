@@ -76,7 +76,7 @@ private:
     /**  trajectory file writer */
     trajectory traj;
     /** thermodynamic equilibrium properties */
-    energy<float_type, dimension> tep;
+    energy<dimension> tep;
     /** performance data */
     perf prf;
 };
