@@ -219,7 +219,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::restore(sample_visitor visito
     try {
 	// copy periodically reduced particle positions from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.r[i] = make_float(make_periodic(m_sample.r[i], box_));
+	    h_part.r[i] = make_periodic(m_sample.r[i], box_);
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
 	// replicate to periodically extended particle positions
@@ -233,7 +233,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::restore(sample_visitor visito
 
 	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.v[i] = make_float(m_sample.v[i]);
+	    h_part.v[i] = m_sample.v[i];
 	}
 	cuda::copy(h_part.v, g_part.v, stream_);
 
@@ -351,7 +351,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
     try {
 	// copy particle velocities from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.v[i] = make_float(m_sample.v[i]);
+	    h_part.v[i] = m_sample.v[i];
 	}
 	cuda::copy(h_part.v, g_part.v, stream_);
 

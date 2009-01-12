@@ -318,7 +318,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::restore(sample_visitor visitor)
     try {
 	// copy periodically reduced particle positions from host to GPU
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.r[i] = make_float(make_periodic(m_sample.r[i], box_));
+	    h_part.r[i] = make_periodic(m_sample.r[i], box_);
 	}
 	cuda::copy(h_part.r, g_part.R, stream_);
 	// assign particles to cells
@@ -342,7 +342,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::restore(sample_visitor visitor)
 	    // particle number
 	    const int tag = h_part.tag[i];
 	    if (tag != _gpu::VIRTUAL_PARTICLE) {
-		h_part.v[i] = make_float(m_sample.v[tag]);
+		h_part.v[i] = m_sample.v[tag];
 		// calculate maximum squared velocity
 		vv_max = std::max(vv_max, m_sample.v[tag] * m_sample.v[tag]);
 	    }
@@ -463,7 +463,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
 	    const int n = h_part.tag[i];
 	    if (n != _gpu::VIRTUAL_PARTICLE) {
 		// assign velocity to cell placeholder
-		h_part.v[i] = make_float(m_sample.v[n]);
+		h_part.v[i] = m_sample.v[n];
 		// calculate maximum squared velocity
 		vv_max = std::max(vv_max, m_sample.v[n] * m_sample.v[n]);
 	    }

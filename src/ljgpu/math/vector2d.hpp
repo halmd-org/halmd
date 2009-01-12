@@ -79,6 +79,15 @@ public:
 	(*this)[1] = y;
     }
 
+
+    /**
+     * convert to GPU floating-point type
+     */
+    operator float2()
+    {
+	return make_float2((*this)[0], (*this)[1]);
+    }
+
     /**
      * equality comparison
      */
@@ -379,15 +388,6 @@ vector<T, 2> sin(vector<T, 2> v)
     v[0] = std::sin(v[0]);
     v[1] = std::sin(v[1]);
     return v;
-}
-
-/**
- * convert to GPU floating-point type
- */
-template <typename T>
-float2 make_float(vector<T, 2> const& v)
-{
-    return make_float2(v[0], v[1]);
 }
 
 #endif /* ! LJGPU_MATH_VECTOR2D_HPP */

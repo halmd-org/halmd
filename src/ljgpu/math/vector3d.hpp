@@ -64,6 +64,16 @@ public:
     }
 
     /**
+     * initialization by uncoalesced GPU floating-point vector
+     */
+    vector(float3 const& v)
+    {
+	(*this)[0] = v.x;
+	(*this)[1] = v.y;
+	(*this)[2] = v.z;
+    }
+
+    /**
      * initialization by scalar
      */
     vector(T const& s)
@@ -81,6 +91,22 @@ public:
 	(*this)[0] = x;
 	(*this)[1] = y;
 	(*this)[2] = z;
+    }
+
+    /**
+     * convert to coalesced GPU floating-point vector
+     */
+    operator float4()
+    {
+	return make_float4((*this)[0], (*this)[1], (*this)[2], 0);
+    }
+
+    /**
+     * convert to uncoalesced GPU floating-point vector
+     */
+    operator float3()
+    {
+	return make_float3((*this)[0], (*this)[1], (*this)[2]);
     }
 
     /**
@@ -403,15 +429,6 @@ vector<T, 3> sin(vector<T, 3> v)
     v[1] = std::sin(v[1]);
     v[2] = std::sin(v[2]);
     return v;
-}
-
-/**
- * convert to coalesced GPU floating-point vector
- */
-template <typename T>
-float4 make_float(vector<T, 3> const& v)
-{
-    return make_float4(v[0], v[1], v[2], 0);
 }
 
 #endif /* ! LJGPU_MATH_VECTOR3D_HPP */
