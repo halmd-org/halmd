@@ -68,8 +68,8 @@ public:
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::sample_type sample_type;
+    typedef typename sample_type::sample_visitor sample_visitor;
 
-public:
     typedef std::list<unsigned int> cell_type;
     typedef boost::array<unsigned int, dimension> cell_index;
 
@@ -121,11 +121,6 @@ public:
     /** particle event queue item with event time and particle */
     typedef std::pair<double, unsigned int> event_queue_item;
 
-    /** trajectory sample visitor type */
-    typedef boost::function<void (std::vector<vector_type>&, std::vector<vector_type>&)> trajectory_sample_visitor;
-    /** MD simulation sample visitor type */
-    typedef boost::function<void (std::vector<vector_type> const&, std::vector<vector_type> const&, std::vector<vector_type> const&, double)> mdsim_sample_visitor;
-
 public:
     /** initialise fluid from program options */
     hardsphere(options const& opt);
@@ -143,7 +138,7 @@ public:
     void timestep(double value);
 
     /** set system state from phase space sample */
-    void restore(trajectory_sample_visitor visitor);
+    void restore(sample_visitor visitor);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -369,7 +364,7 @@ void hardsphere<hardsphere_impl<dimension> >::timestep(double value)
  * set system state from phase space sample
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::restore(trajectory_sample_visitor visitor)
+void hardsphere<hardsphere_impl<dimension> >::restore(sample_visitor visitor)
 {
     // set system state from phase space sample
     visitor(m_sample.R, m_sample.v);

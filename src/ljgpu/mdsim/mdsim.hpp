@@ -46,6 +46,8 @@ public:
     typedef typename mdsim_impl::traits_type traits_type;
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
+    typedef typename traits_type::sample_type sample_type;
+    typedef typename sample_type::sample_vector sample_vector;
     enum { dimension = traits_type::dimension };
 
 public:
@@ -72,7 +74,7 @@ private:
     /** block correlations */
     correlation<float_type, dimension> tcf;
     /**  trajectory file writer */
-    trajectory<true, float_type, dimension> traj;
+    trajectory traj;
     /** thermodynamic equilibrium properties */
     energy<float_type, dimension> tep;
     /** performance data */
@@ -106,12 +108,11 @@ mdsim<mdsim_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
     }
 
     if (!opt["trajectory-sample"].empty()) {
-	trajectory<false, float_type, dimension> traj;
+	int64_t const index = opt["trajectory-sample"].as<int64_t>();
 	// open trajectory input file
-	traj.open(opt["trajectory"].as<std::string>());
+	traj.open(opt["trajectory"].as<std::string>(), trajectory::in);
 	// read trajectory sample and restore system state
-	fluid.restore(boost::bind(&trajectory<false, float_type, dimension>::read,
-				  boost::ref(traj), _1, _2, opt["trajectory-sample"].as<int>()));
+	fluid.restore(boost::bind(&trajectory::read<sample_vector>, boost::ref(traj), _1, _2, index));
 	// close trajectory input file
 	traj.close();
     }
@@ -184,7 +185,7 @@ void mdsim<mdsim_impl>::operator()()
 	tcf.attrs() << fluid << tcf;
     }
     // trajectory file writer
-    traj.open(opt["output"].as<std::string>() + ".trj", fluid.particles());
+    traj.open(opt["output"].as<std::string>() + ".trj", trajectory::out);
     traj.attrs() << fluid << tcf;
     // thermodynamic equilibrium properties
     tep.open(opt["output"].as<std::string>() + ".tep");
@@ -219,7 +220,7 @@ void mdsim<mdsim_impl>::operator()()
 	    tep.sample(fluid.sample(), fluid.density(), time);
 	    // sample trajectory
 	    if (opt["enable-trajectory"].as<bool>() || step == 0) {
-		traj.sample(fluid.sample(), time);
+		traj.write(fluid.sample(), time);
 		if (step == 0) {
 		    traj.flush();
 		}
@@ -292,7 +293,7 @@ void mdsim<mdsim_impl>::operator()()
     // copy last MD simulation state from GPU to host
     fluid.copy();
     // save last phase space sample
-    traj.sample(fluid.sample(), tcf.steps() * fluid.timestep());
+    traj.write(fluid.sample(), tcf.steps() * fluid.timestep());
 
     // sample performance counters
     prf.sample(fluid.times());
