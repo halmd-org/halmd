@@ -27,7 +27,7 @@ namespace ljgpu { namespace log
 /**
  * initialize logging
  */
-void init(options const& opts) {
+void init(std::string const& filename, int verbosity) {
     // use microsecond-resolution log timestamps
     formatter::high_precision_time hpt("[$dd-$MM-$yyyy $hh:$mm:$ss.$micro] ");
 
@@ -43,11 +43,11 @@ void init(options const& opts) {
     logger_debug()->writer().add_formatter(formatter::append_newline());
 #endif
 
-    destination::file logfile(opts["output"].as<std::string>() + ".log");
+    destination::file logfile(filename);
 
     // output informational messages to file
     logger()->writer().add_destination(logfile);
-    if (opts["verbose"].as<int>() > 0) {
+    if (verbosity > 0) {
 	// output informational messages to console
 	logger()->writer().add_destination(destination::cerr());
     }
@@ -64,7 +64,7 @@ void init(options const& opts) {
     logger_warning()->mark_as_initialized();
 
 #ifndef NDEBUG
-    if (opts["verbose"].as<int>() > 1) {
+    if (verbosity > 1) {
 	// output debug-level messages to console and file
 	logger_debug()->writer().add_destination(destination::cerr());
 	logger_debug()->writer().add_destination(logfile);

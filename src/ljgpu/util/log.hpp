@@ -20,7 +20,6 @@
 #define LJGPU_UTIL_LOG_HPP
 
 #include <boost/logging/format_fwd.hpp>
-#include <ljgpu/options.hpp>
 
 /** log informational messages */
 #define LOG(fmt) L_(logger) << fmt
@@ -47,7 +46,7 @@ BOOST_LOG_FORMAT_MSG(boost::logging::optimize::cache_string_one_str<>)
 namespace ljgpu { namespace log
 {
 
-void init(options const& opts);
+void init(std::string const& filename, int verbosity);
 
 typedef boost::logging::scenario::ts::use<
     boost::logging::scenario::ts::filter_::none,

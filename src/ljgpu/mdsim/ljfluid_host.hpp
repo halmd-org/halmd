@@ -27,6 +27,7 @@
 #include <iostream>
 #include <list>
 #include <ljgpu/mdsim/ljfluid_base.hpp>
+#include <ljgpu/options.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
 #include <ljgpu/util/timer.hpp>
 #include <sys/times.h>

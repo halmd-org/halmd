@@ -29,6 +29,7 @@
 #include <list>
 #include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
+#include <ljgpu/options.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/util/H5xx.hpp>

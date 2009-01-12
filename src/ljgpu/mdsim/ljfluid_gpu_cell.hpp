@@ -22,6 +22,7 @@
 #include <ljgpu/mdsim/ljfluid_gpu_base.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/math/stat.hpp>
+#include <ljgpu/options.hpp>
 
 namespace ljgpu
 {

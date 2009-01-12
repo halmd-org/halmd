@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 	return e.status();
     }
 
-    ljgpu::log::init(opt);
+    ljgpu::log::init(opt["output"].as<std::string>() + ".log", opt["verbose"].as<int>());
 
     LOG(PROGRAM_NAME " " PROGRAM_VERSION);
     LOG("variant: " << PROGRAM_VARIANT);

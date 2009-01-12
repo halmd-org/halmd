@@ -26,6 +26,7 @@
 #include <ljgpu/mdsim/gpu/hilbert.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/math/stat.hpp>
+#include <ljgpu/options.hpp>
 
 namespace ljgpu
 {
