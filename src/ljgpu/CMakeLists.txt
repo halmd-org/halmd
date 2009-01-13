@@ -23,7 +23,7 @@ target_link_libraries(ljgpu
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HDF5_CPP_LIBRARY}
-  ${CUDA_LIBRARIES}
+  dl
   )
 install(TARGETS ljgpu
   RUNTIME DESTINATION bin

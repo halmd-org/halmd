@@ -81,50 +81,6 @@ int main(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
-	// bind process to CPU core(s)
-	if (!opt["processor"].empty()) {
-	    cpu_set_t cpu_set;
-	    CPU_ZERO(&cpu_set);
-	    BOOST_FOREACH(int cpu, opt["processor"].as<vector<int> >()) {
-		LOG("adding CPU core " << cpu << " to process CPU affinity mask");
-		CPU_SET(cpu, &cpu_set);
-	    }
-	    if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpu_set)) {
-		throw logic_error("failed to set process CPU affinity mask");
-	    }
-	}
-
-	// set CUDA device for host context
-	if (!opt["device"].empty()) {
-	    int dev = opt["device"].as<int>();
-	    if (opt["device"].defaulted()) {
-		char const* env = getenv("CUDA_DEVICE");
-		if (env != NULL && *env != '\0') {
-		    char* endptr;
-		    int i = strtol(env, &endptr, 10);
-		    if (*endptr != '\0' || i < 0) {
-			throw logic_error(string("CUDA_DEVICE environment variable invalid: ") + env);
-		    }
-		    dev = i;
-		}
-	    }
-	    cuda::device::set(dev);
-	    LOG("CUDA device: " << cuda::device::get());
-
-	    // query CUDA device properties
-	    cuda::device::properties prop(cuda::device::get());
-	    LOG("CUDA device name: " << prop.name());
-	    LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
-	    LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
-	    LOG("CUDA device registers per block: " << prop.regs_per_block());
-	    LOG("CUDA device warp size: " << prop.warp_size());
-	    LOG("CUDA device maximum number of threads per block: " << prop.max_threads_per_block());
-	    LOG("CUDA device total constant memory: " << prop.total_const_mem());
-	    LOG("CUDA device major revision: " << prop.major());
-	    LOG("CUDA device minor revision: " << prop.minor());
-	    LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
-	}
-
 	// run MD simulation
 	mdlib.mdsim(opt);
 #ifdef NDEBUG

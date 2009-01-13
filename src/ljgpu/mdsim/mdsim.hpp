@@ -20,6 +20,7 @@
 #define LJGPU_MDSIM_HPP
 
 #include <boost/bind.hpp>
+#include <cuda_wrapper.hpp>
 #include <fstream>
 #include <iostream>
 #include <ljgpu/mdsim/impl.hpp>
@@ -33,7 +34,9 @@
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/util/signal.hpp>
 #include <ljgpu/util/timer.hpp>
+#include <sched.h>
 #include <stdint.h>
+#include <vector>
 #include <unistd.h>
 
 namespace ljgpu
@@ -73,6 +76,8 @@ private:
     /** backend-specific API wrappers */
     void cutoff_radius(boost::true_type const&);
     void cutoff_radius(boost::false_type const&) {}
+    void potential_smoothing(boost::true_type const&);
+    void potential_smoothing(boost::false_type const&) {}
     void pair_separation(boost::true_type const&);
     void pair_separation(boost::false_type const&) {}
     void cell_occupancy(boost::true_type const&);
@@ -81,6 +86,14 @@ private:
     void init_cells(boost::false_type const&) {}
     void threads(boost::true_type const&);
     void threads(boost::false_type const&) {}
+
+    void cuda_device(boost::true_type const&);
+    void cuda_device(boost::false_type const&) {}
+    void cuda_allocated_memory(boost::true_type const&);
+    void cuda_allocated_memory(boost::false_type const&) {}
+
+    /** bind process to CPU core(s) */
+    void cpu_set(std::vector<int> const& cpu_set);
 
 private:
     /** program options */
@@ -103,8 +116,16 @@ private:
 template <typename mdsim_backend>
 mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 {
+    // set CPU core(s)
+    if (!opt["processor"].empty()) {
+	cpu_set(opt["processor"].as<std::vector<int> >());
+    }
+    // set CUDA device
+    cuda_device(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+
     LOG("positional coordinates dimension: " << dimension);
 
+    // set Lennard-Jones or hard-sphere system parameters
     fluid.particles(opt["particles"].as<unsigned int>());
     if (opt["density"].defaulted() && !opt["box-length"].empty()) {
 	fluid.box(opt["box-length"].as<float>());
@@ -115,6 +136,9 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     fluid.timestep(opt["timestep"].as<float>());
 
     cutoff_radius(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+#ifdef USE_POTENTIAL_SMOOTHING
+    potential_smoothing(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+#endif
     pair_separation(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
     cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
@@ -165,12 +189,8 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     // initialize event list
     fluid.init_event_list();
 
-    if (!opt["device"].empty()) {
-	int const dev = cuda::device::get();
-	LOG("GPU allocated global device memory: " << cuda::device::mem_get_used(dev) << " bytes");
-	LOG("GPU available global device memory: " << cuda::device::mem_get_free(dev) << " bytes");
-	LOG("GPU total global device memory: " << cuda::device::mem_get_total(dev) << " bytes");
-    }
+    // print GPU memory usage
+    cuda_allocated_memory(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
     if (!opt["disable-correlation"].as<bool>()) {
 	if (!opt["time"].empty()) {
@@ -190,39 +210,6 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 	// set q-vectors for spatial Fourier transformation
 	tcf.q_values(opt["q-values"].as<unsigned int>(), fluid.box());
     }
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::pair_separation(boost::true_type const&)
-{
-    fluid.pair_separation(opt["pair-separation"].as<float>());
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::cutoff_radius(boost::true_type const&)
-{
-    fluid.cutoff_radius(opt["cutoff"].as<float>());
-#ifdef USE_POTENTIAL_SMOOTHING
-    fluid.potential_smoothing(opt["smoothing"].as<float>());
-#endif
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::cell_occupancy(boost::true_type const&)
-{
-    fluid.cell_occupancy(opt["cell-occupancy"].as<float>());
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::threads(boost::true_type const&)
-{
-    fluid.threads(opt["threads"].as<unsigned int>());
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::init_cells(boost::true_type const&)
-{
-    fluid.init_cells();
 }
 
 /**
@@ -383,6 +370,106 @@ void mdsim<mdsim_backend>::operator()()
     traj.close();
     tep.close();
     prf.close();
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::cutoff_radius(boost::true_type const&)
+{
+    fluid.cutoff_radius(opt["cutoff"].as<float>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::potential_smoothing(boost::true_type const&)
+{
+    fluid.potential_smoothing(opt["smoothing"].as<float>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::pair_separation(boost::true_type const&)
+{
+    fluid.pair_separation(opt["pair-separation"].as<float>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::cell_occupancy(boost::true_type const&)
+{
+    fluid.cell_occupancy(opt["cell-occupancy"].as<float>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::threads(boost::true_type const&)
+{
+    fluid.threads(opt["threads"].as<unsigned int>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::init_cells(boost::true_type const&)
+{
+    fluid.init_cells();
+}
+
+/**
+ * set CUDA device for host context
+ */
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::cuda_device(boost::true_type const&)
+{
+    int dev = opt["device"].as<int>();
+    if (opt["device"].defaulted()) {
+	char const* env = getenv("CUDA_DEVICE");
+	if (env != NULL && *env != '\0') {
+	    char* endptr;
+	    int i = strtol(env, &endptr, 10);
+	    if (*endptr != '\0' || i < 0) {
+		throw std::logic_error(std::string("CUDA_DEVICE environment variable invalid: ") + env);
+	    }
+	    dev = i;
+	}
+    }
+    cuda::device::set(dev);
+    LOG("CUDA device: " << cuda::device::get());
+
+    // query CUDA device properties
+    cuda::device::properties prop(cuda::device::get());
+    LOG("CUDA device name: " << prop.name());
+    LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
+    LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
+    LOG("CUDA device registers per block: " << prop.regs_per_block());
+    LOG("CUDA device warp size: " << prop.warp_size());
+    LOG("CUDA device maximum number of threads per block: " << prop.max_threads_per_block());
+    LOG("CUDA device total constant memory: " << prop.total_const_mem());
+    LOG("CUDA device major revision: " << prop.major());
+    LOG("CUDA device minor revision: " << prop.minor());
+    LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
+}
+
+/**
+ * print GPU memory usage
+ */
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::cuda_allocated_memory(boost::true_type const&)
+{
+    int const dev = cuda::device::get();
+    LOG("GPU allocated global device memory: " << cuda::device::mem_get_used(dev) << " bytes");
+    LOG("GPU available global device memory: " << cuda::device::mem_get_free(dev) << " bytes");
+    LOG("GPU total global device memory: " << cuda::device::mem_get_total(dev) << " bytes");
+}
+
+/**
+ * bind process to CPU core(s)
+ */
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::cpu_set(std::vector<int> const& cpu_set)
+{
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    BOOST_FOREACH(int cpu, cpu_set) {
+	LOG("adding CPU core " << cpu << " to process CPU affinity mask");
+	CPU_SET(cpu, &mask);
+    }
+    if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &mask)) {
+	throw std::logic_error("failed to set process CPU affinity mask");
+    }
 }
 
 } // namespace ljgpu
