@@ -18,7 +18,6 @@
 
 #include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/util/H5xx.hpp>
-#include <ljgpu/version.h>
 
 namespace ljgpu
 {
@@ -34,12 +33,20 @@ H5param::H5param(H5::H5File file)
     catch (H5::FileIException const&) {
 	H5::Group::operator=(file.createGroup("param"));
     }
+}
 
-    H5xx::group node(createGroup("program"));
-    // write program info attributes
-    node["name"] = PROGRAM_NAME;
-    node["version"] = PROGRAM_VERSION;
-    node["variant"] = PROGRAM_VARIANT;
+/**
+ * create or open HDF5 group
+ */
+H5::Group H5param::operator[](std::string const& name)
+{
+    try {
+	H5XX_NO_AUTOPRINT(H5::GroupIException);
+	return openGroup(name);
+    }
+    catch (H5::GroupIException const&) {
+	return createGroup(name);
+    }
 }
 
 } // namespace ljgpu

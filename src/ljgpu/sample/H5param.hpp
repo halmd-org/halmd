@@ -34,6 +34,8 @@ public:
     /** write parameters of visitor to HDF5 parameter group */
     template <typename T>
     H5param& operator<<(T const& visitor);
+    /** create or open HDF5 group */
+    H5::Group operator[](std::string const& name);
 };
 
 template <typename T>

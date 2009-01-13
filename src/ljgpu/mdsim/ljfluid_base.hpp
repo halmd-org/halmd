@@ -82,7 +82,7 @@ public:
     perf::counters times();
 
     /** write parameters to HDF5 parameter group */
-    void param(H5::Group const& param) const;
+    void param(H5param& param) const;
 
 protected:
     /** number of particles in system */
@@ -196,13 +196,12 @@ perf::counters ljfluid_base<ljfluid_impl>::times()
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::param(H5::Group const& param) const
+void ljfluid_base<ljfluid_impl>::param(H5param& param) const
 {
-    H5xx::group node(param.createGroup("mdsim"));
+    H5xx::group node(param["mdsim"]);
     node["box_length"] = box();
     node["cutoff_radius"] = cutoff_radius();
     node["density"] = density();
-    node["dimension"] = (unsigned int) dimension;
     node["particles"] = particles();
 #ifdef USE_POTENTIAL_SMOOTHING
     node["potential_smoothing"] = potential_smoothing();

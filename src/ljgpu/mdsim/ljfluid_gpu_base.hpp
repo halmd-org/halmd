@@ -25,6 +25,7 @@
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
 #include <ljgpu/rng/rand48.hpp>
+#include <ljgpu/sample/H5param.hpp>
 
 namespace ljgpu
 {
@@ -81,7 +82,7 @@ public:
     float_type cutoff_radius() const { return r_cut; }
 
     /** write parameters to HDF5 parameter group */
-    void param(H5::Group const& param) const;
+    void param(H5param& param) const;
 
 protected:
     /** CUDA execution dimensions */
@@ -270,11 +271,11 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(rand48::state_type const& state)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::param(H5::Group const& param) const
+void ljfluid_gpu_base<ljfluid_impl>::param(H5param& param) const
 {
     _Base::param(param);
 
-    H5xx::group node(param.openGroup("mdsim"));
+    H5xx::group node(param["mdsim"]);
     node["blocks"] = blocks();
     node["threads"] = threads();
 }

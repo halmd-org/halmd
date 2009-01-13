@@ -30,6 +30,7 @@
 #include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
+#include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
@@ -162,7 +163,7 @@ public:
     double const& timestep() { return timestep_; }
 
     /** write parameters to HDF5 parameter group */
-    void param(H5::Group const& param) const;
+    void param(H5param& param) const;
 
     /** initialize event list */
     void init_event_list();
@@ -471,10 +472,9 @@ void hardsphere<hardsphere_impl<dimension> >::temperature(double value)
  * write parameters to HDF5 parameter group
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::param(H5::Group const& param) const
+void hardsphere<hardsphere_impl<dimension> >::param(H5param& param) const
 {
-    H5xx::group node(param.createGroup("mdsim"));
-    node["dimension"] = dimension;
+    H5xx::group node(param["mdsim"]);
     node["particles"] = npart;
     node["pair_separation"] = pair_sep_;
     node["cells"] = ncell;

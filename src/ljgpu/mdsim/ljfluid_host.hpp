@@ -119,7 +119,7 @@ public:
     void copy() {}
 
     /** write parameters to HDF5 parameter group */
-    void param(H5::Group const& param) const;
+    void param(H5param& param) const;
 
 private:
     /** update cell lists */
@@ -670,11 +670,11 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
  * write parameters to HDF5 parameter group
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::param(H5::Group const& param) const
+void ljfluid<ljfluid_impl_host<dimension> >::param(H5param& param) const
 {
     _Base::param(param);
 
-    H5xx::group node(param.openGroup("mdsim"));
+    H5xx::group node(param["mdsim"]);
     node["cells"] = cells();
     node["cell_length"] = cell_length();
 }

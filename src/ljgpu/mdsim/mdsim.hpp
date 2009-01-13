@@ -27,13 +27,16 @@
 #include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/options.hpp>
+#include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/sample/correlation.hpp>
 #include <ljgpu/sample/energy.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/sample/trajectory.hpp>
+#include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/util/signal.hpp>
 #include <ljgpu/util/timer.hpp>
+#include <ljgpu/version.h>
 #include <sched.h>
 #include <stdint.h>
 #include <vector>
@@ -71,6 +74,8 @@ public:
     mdsim(options const& opt);
     /** run MD simulation program */
     void operator()();
+    /** write parameters to HDF5 parameter group */
+    void param(H5param& param) const;
 
 private:
     /** backend-specific API wrappers */
@@ -234,19 +239,19 @@ void mdsim<mdsim_backend>::operator()()
 
     // performance data
     prf.open(opt["output"].as<std::string>() + ".prf");
-    H5param(prf) << fluid << tcf;
+    H5param(prf) << *this << fluid << tcf;
 
     // time correlation functions
     if (!opt["disable-correlation"].as<bool>()) {
 	tcf.open(opt["output"].as<std::string>() + ".tcf");
-	H5param(tcf) << fluid << tcf;
+	H5param(tcf) << *this << fluid << tcf;
     }
     // trajectory file writer
     traj.open(opt["output"].as<std::string>() + ".trj", trajectory::out);
-    H5param(traj) << fluid << tcf;
+    H5param(traj) << *this << fluid << tcf;
     // thermodynamic equilibrium properties
     tep.open(opt["output"].as<std::string>() + ".tep");
-    H5param(tep) << fluid << tcf;
+    H5param(tep) << *this << fluid << tcf;
 
     // schedule first disk flush
     alarm(FLUSH_TO_DISK_INTERVAL);
@@ -470,6 +475,22 @@ void mdsim<mdsim_backend>::cpu_set(std::vector<int> const& cpu_set)
     if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &mask)) {
 	throw std::logic_error("failed to set process CPU affinity mask");
     }
+}
+
+/**
+ * write parameters to HDF5 parameter group
+ */
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::param(H5param& param) const
+{
+    H5xx::group node(param["mdsim"]);
+    node["backend"] = opt["backend"].as<std::string>();
+    node["dimension"] = (unsigned int) dimension;
+
+    node = param["program"];
+    node["name"] = PROGRAM_NAME;
+    node["version"] = PROGRAM_VERSION;
+    node["variant"] = PROGRAM_VARIANT;
 }
 
 } // namespace ljgpu
