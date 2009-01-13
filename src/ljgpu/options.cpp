@@ -332,6 +332,7 @@ void options::parse(po::options_description const& opt)
 	vm_["trajectory"] = po::variable_value(boost::filesystem::complete(path).string(), false);
 
 	try {
+	    H5XX_NO_AUTO_PRINT(H5::Exception);
 	    H5::H5File file(vm["trajectory"].as<string>(), H5F_ACC_RDONLY);
 	    H5::Group param(file.openGroup("param"));
 

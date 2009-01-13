@@ -85,6 +85,7 @@ void trajectory::read(sample_type& sample, int64_t index)
 
     H5::DataSet dset_r, dset_v;
     try {
+	H5XX_NO_AUTO_PRINT(H5::FileIException);
 	H5::Group root(m_file.openGroup("trajectory"));
 	try {
 	    // backwards compatibility with r:R:v:t format
@@ -111,7 +112,7 @@ void trajectory::read(sample_type& sample, int64_t index)
 	}
 	dset_v = root.openDataSet("v");
     }
-    catch (H5::Exception const&) {
+    catch (H5::FileIException const&) {
 	throw exception("failed to open HDF5 trajectory datasets");
     }
 
@@ -211,6 +212,7 @@ void trajectory::write(sample_type const& sample, double time)
 
     H5::DataSet dset_t, dset_r, dset_v;
     try {
+	H5XX_NO_AUTO_PRINT(H5::FileIException);
 	H5::Group root(m_file.openGroup("trajectory"));
 	dset_r = root.openDataSet("r");
 	dset_v = root.openDataSet("v");
