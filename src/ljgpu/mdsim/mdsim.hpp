@@ -88,7 +88,7 @@ template <typename mdsim_impl>
 mdsim<mdsim_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
 {
     // initialize random number generator with seed
-    if (opt["rand-seed"].empty()) {
+    if (opt["random-seed"].empty()) {
 	LOG("obtaining 32-bit integer seed from /dev/random");
 	unsigned int seed;
 	try {
@@ -104,7 +104,7 @@ mdsim<mdsim_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
 	fluid.rng(seed);
     }
     else {
-	fluid.rng(opt["rand-seed"].as<unsigned int>());
+	fluid.rng(opt["random-seed"].as<unsigned int>());
     }
 
     if (!opt["trajectory-sample"].empty()) {

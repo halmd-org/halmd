@@ -397,7 +397,7 @@ options_description<mdsim_impl>::options_description()
 	 "simulation box length")
 	("timestep,h", po::value<float>()->default_value(0.001),
 	 "simulation timestep")
-	("rand-seed", po::value<unsigned int>(),
+	("random-seed", po::value<unsigned int>(),
 	 "random number generator integer seed")
 	;
 
