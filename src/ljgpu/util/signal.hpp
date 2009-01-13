@@ -58,7 +58,7 @@ public:
     /**
      * get signal number
      */
-    int const& operator*()
+    operator int()
     {
 	return m_signum;
     }

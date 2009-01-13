@@ -257,16 +257,16 @@ void mdsim<mdsim_impl>::operator()()
 	}
 
 	// process signal event
-	if (*signal) {
-	    if (*signal != SIGALRM) {
+	if (signal) {
+	    if (signal != SIGALRM) {
 		LOG_WARNING("trapped signal " << signal << " at simulation step " << step);
 	    }
-	    if (*signal == SIGUSR1) {
+	    if (signal == SIGUSR1) {
 		// schedule runtime estimate now
 		step.set(0);
 		signal.clear();
 	    }
-	    else if (*signal == SIGHUP || *signal == SIGALRM) {
+	    else if (signal == SIGHUP || signal == SIGALRM) {
 		// sample performance counters
 		prf.sample(fluid.times());
 		// write partial results to HDF5 files and flush to disk
@@ -281,7 +281,7 @@ void mdsim<mdsim_impl>::operator()()
 		// schedule next disk flush
 		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
-	    else if (*signal == SIGINT || *signal == SIGTERM) {
+	    else if (signal == SIGINT || signal == SIGTERM) {
 		LOG_WARNING("aborting simulation");
 		signal.clear();
 		break;
