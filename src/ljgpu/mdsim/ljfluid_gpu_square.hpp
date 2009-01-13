@@ -116,7 +116,7 @@ private:
     struct {
 	/** periodically reduced particle positions */
 	cuda::host::vector<gpu_vector_type> r;
-	/** periodically extended particle positions */
+	/** periodic box traversal vectors */
 	cuda::host::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::host::vector<gpu_vector_type> v;
@@ -130,7 +130,7 @@ private:
     struct {
 	/** periodically reduced particle positions */
 	cuda::vector<gpu_vector_type> r;
-	/** periodically extended particle positions */
+	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::vector<gpu_vector_type> v;
@@ -223,8 +223,8 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::restore(sample_visitor visito
 	    h_part.r[i] = make_periodic(m_sample.r[i], box_);
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
-	// replicate to periodically extended particle positions
-	cuda::copy(g_part.r, g_part.R, stream_);
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
 	// calculate forces
 	update_forces(stream_);
 	// calculate potential energy
@@ -281,8 +281,8 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 	reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
 	reduce_virial(g_part.virial, stream_);
-	// replicate particle positions to periodically extended positions
-	cuda::copy(g_part.r, g_part.R, stream_);
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -442,7 +442,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 	event_[1].record(stream_);
 	// copy periodically reduce particles positions
 	cuda::copy(g_part.r, h_part.r, stream_);
-	// copy periodically extended particles positions
+	// copy periodic box traversal vectors
 	cuda::copy(g_part.R, h_part.R, stream_);
 	// copy particle velocities
 	cuda::copy(g_part.v, h_part.v, stream_);
@@ -457,7 +457,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 
     for (unsigned int j = 0; j < npart; ++j) {
 	// copy periodically extended particle positions
-	m_sample.r[j] = h_part.r[j] + floor((vector_type) h_part.R[j] / box_) * box_;
+	m_sample.r[j] = h_part.r[j] + (vector_type) h_part.R[j] * box_;
 	// copy particle velocities
 	m_sample.v[j] = h_part.v[j];
     }

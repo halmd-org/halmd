@@ -168,7 +168,7 @@ private:
     struct {
 	/** periodically reduced particle positions */
 	cuda::host::vector<gpu_vector_type> r;
-	/** periodically extended particle positions */
+	/** periodic box traversal vectors */
 	cuda::host::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::host::vector<gpu_vector_type> v;
@@ -180,7 +180,7 @@ private:
     struct {
 	/** periodically reduced particle positions */
 	cuda::vector<gpu_vector_type> r;
-	/** periodically extended particle positions */
+	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::vector<gpu_vector_type> v;
@@ -198,7 +198,7 @@ private:
     struct {
 	/** periodically reduced particle positions */
 	cuda::vector<gpu_vector_type> r;
-	/** periodically extended particle positions */
+	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::vector<gpu_vector_type> v;
@@ -454,8 +454,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::restore(sample_visitor vis
 	    h_part.r[i] = make_periodic(m_sample.r[i], box_);
 	}
 	cuda::copy(h_part.r, g_part.r, stream_);
-	// replicate to periodically extended particle positions
-	cuda::copy(g_part.r, g_part.R, stream_);
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
 #ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
@@ -536,8 +536,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
 	reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
 	reduce_virial(g_part.virial, stream_);
-	// replicate particle positions to periodically extended positions
-	cuda::copy(g_part.r, g_part.R, stream_);
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -758,7 +758,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 	event_[1].record(stream_);
 	// copy periodically reduce particles positions
 	cuda::copy(g_part.r, h_part.r, stream_);
-	// copy periodically extended particles positions
+	// copy periodic box traversal vectors
 	cuda::copy(g_part.R, h_part.R, stream_);
 	// copy particle velocities
 	cuda::copy(g_part.v, h_part.v, stream_);
@@ -777,7 +777,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 	// particle tracking number
 	const int n = h_part.tag[j];
 	// copy periodically extended particle positions
-	m_sample.r[n] = h_part.r[j] + floor((vector_type) h_part.R[j] / box_) * box_;
+	m_sample.r[n] = h_part.r[j] + (vector_type) h_part.R[j] * box_;
 	// copy particle velocities
 	m_sample.v[n] = h_part.v[j];
     }

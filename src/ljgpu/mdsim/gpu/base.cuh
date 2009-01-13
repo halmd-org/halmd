@@ -51,17 +51,18 @@ __constant__ float rri_smooth;
  * first leapfrog step of integration of equations of motion
  */
 template <typename T>
-__device__ void leapfrog_half_step(T& r_, T& r, T& v, T const& f)
+__device__ void leapfrog_half_step(T& r, T& R, T& v, T const& f)
 {
     // half step velocity
     v += f * (timestep / 2);
     // full step coordinates
     T dr = v * timestep;
-    // periodically reduced coordinates
-    r_ += dr;
-    r_ -= floorf(r_ / box) * box;
-    // periodically extended coordinates
     r += dr;
+    // apply periodic boundary conditions
+    T dR = floorf(r / box);
+    r -= dR * box;
+    // periodic box traversal vector
+    R += dR;
 }
 
 /**

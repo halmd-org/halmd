@@ -145,7 +145,7 @@ private:
     struct {
 	/** periodically reduced particle positions */
 	cuda::host::vector<gpu_vector_type> r;
-	/** periodically extended particle positions */
+	/** periodic box traversal vectors */
 	cuda::host::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::host::vector<gpu_vector_type> v;
@@ -163,7 +163,7 @@ private:
     struct {
 	/** periodically reduced particle positions */
 	cuda::vector<gpu_vector_type> r;
-	/** periodically extended particle positions */
+	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::vector<gpu_vector_type> v;
@@ -181,7 +181,7 @@ private:
     struct {
 	/** periodically reduced particle positions */
 	cuda::vector<gpu_vector_type> r;
-	/** periodically extended particle positions */
+	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::vector<gpu_vector_type> v;
@@ -327,8 +327,8 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::restore(sample_visitor visitor)
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	_gpu::assign_cells(g_part.R, g_part.r, g_part.tag);
 	event_[1].record(stream_);
-	// replicate to periodically extended particle positions
-	cuda::copy(g_part.r, g_part.R, stream_);
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
 	// calculate forces
 	update_forces(stream_);
 
@@ -401,8 +401,8 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 	event_[3].record(stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
-	// replicate particle positions to periodically extended positions
-	cuda::copy(g_part.r, g_part.R, stream_);
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
 	// calculate forces, potential energy and virial equation sum
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	_gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
@@ -566,7 +566,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 	event_[1].record(stream_);
 	// copy periodically reduce particles positions
 	cuda::copy(g_part.r, h_part.r, stream_);
-	// copy periodically extended particles positions
+	// copy periodic box traversal vectors
 	cuda::copy(g_part.R, h_part.R, stream_);
 	// copy particle velocities
 	cuda::copy(g_part.v, h_part.v, stream_);
@@ -596,7 +596,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 	// check if real particle
 	if (n != _gpu::VIRTUAL_PARTICLE) {
 	    // copy periodically extended particle positions
-	    m_sample.r[n] = h_part.r[i] + floor((vector_type) h_part.R[i] / box_) * box_;
+	    m_sample.r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
 	    // copy particle velocities
 	    m_sample.v[n] = h_part.v[i];
 	    // calculate mean potential energy per particle
