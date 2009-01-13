@@ -30,6 +30,7 @@ attribute& attribute::operator=(T const& value)
 {
     H5::Attribute attr;
     try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
 	attr = m_node.openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
@@ -48,6 +49,7 @@ attribute& attribute::operator=(std::string const& value)
     H5::StrType tid(H5::PredType::C_S1, 256);
     H5::Attribute attr;
     try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
 	attr = m_node.openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
@@ -66,6 +68,7 @@ attribute& attribute::operator=(char const* value)
     H5::StrType tid(H5::PredType::C_S1, 256);
     H5::Attribute attr;
     try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
 	attr = m_node.openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
@@ -83,6 +86,7 @@ T attribute::as()
 {
     H5::Attribute attr;
     try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
 	attr = m_node.openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
@@ -101,6 +105,7 @@ std::string attribute::as()
 {
     H5::Attribute attr;
     try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
 	attr = m_node.openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {

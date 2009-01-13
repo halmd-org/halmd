@@ -39,12 +39,8 @@ struct ctype
 class attribute
 {
 public:
-    attribute(H5::Group const& node, std::string const& name) : m_node(node), m_name(name)
-    {
-	// turns off the automatic error printing from the HDF5 library
-	H5::AttributeIException::dontPrint();
-    }
-
+    attribute(H5::Group const& node, std::string const& name)
+	: m_node(node), m_name(name) {}
     template <typename T> attribute& operator=(T const& value);
     template <typename T> attribute& operator=(T const* value);
     template <typename T> T as();
@@ -74,19 +70,19 @@ public:
     }
 };
 
-template <typename exception>
-class no_autoprint : public exception
+template <typename Exception>
+class no_autoprint : public Exception
 {
 public:
     no_autoprint()
     {
-	H5::GroupIException::getAutoPrint(func, &client_data);
-	H5::GroupIException::dontPrint();
+	Exception::getAutoPrint(func, &client_data);
+	Exception::dontPrint();
     }
 
     ~no_autoprint()
     {
-	H5::GroupIException::setAutoPrint(func, client_data);
+	Exception::setAutoPrint(func, client_data);
     }
 
 private:
@@ -94,7 +90,7 @@ private:
     void* client_data;
 };
 
-#define H5XX_NO_AUTOPRINT(exception) H5xx::no_autoprint<exception> __no_autoprint;
+#define H5XX_NO_AUTO_PRINT(exception) H5xx::no_autoprint<exception> __no_autoprint;
 
 } // namespace H5xx
 
