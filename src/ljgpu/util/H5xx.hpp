@@ -74,6 +74,28 @@ public:
     }
 };
 
+template <typename exception>
+class no_autoprint : public exception
+{
+public:
+    no_autoprint()
+    {
+	H5::GroupIException::getAutoPrint(func, &client_data);
+	H5::GroupIException::dontPrint();
+    }
+
+    ~no_autoprint()
+    {
+	H5::GroupIException::setAutoPrint(func, client_data);
+    }
+
+private:
+    H5E_auto_t func;
+    void* client_data;
+};
+
+#define H5XX_NO_AUTOPRINT(exception) H5xx::no_autoprint<exception> __no_autoprint;
+
 } // namespace H5xx
 
 #endif /* ! LJGPU_UTIL_H5XX_HPP */
