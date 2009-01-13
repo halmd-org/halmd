@@ -26,7 +26,6 @@
 #include <ljgpu/mdsim/gpu/hilbert.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/math/stat.hpp>
-#include <ljgpu/options.hpp>
 
 namespace ljgpu
 {
@@ -48,9 +47,6 @@ public:
     typedef typename sample_type::sample_visitor sample_visitor;
 
 public:
-    /** initialise fluid from program options */
-    ljfluid(options const& opt);
-
     using _Base::density;
     using _Base::box;
     using _Base::timestep;
@@ -221,27 +217,6 @@ private:
     /** neighbour lists in global device memory */
     cuda::vector<int> g_nbl;
 };
-
-template <int dimension>
-ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::ljfluid(options const& opt)
-{
-    LOG("positional coordinates dimension: " << dimension);
-
-    cutoff_radius(opt["cutoff"].as<float>());
-#ifdef USE_POTENTIAL_SMOOTHING
-    potential_smoothing(opt["smoothing"].as<float>());
-#endif
-    particles(opt["particles"].as<unsigned int>());
-    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
-	box(opt["box-length"].as<float>());
-    }
-    else {
-	density(opt["density"].as<float>());
-    }
-    cell_occupancy(opt["cell-occupancy"].as<float>());
-    threads(opt["threads"].as<unsigned int>());
-    timestep(opt["timestep"].as<float>());
-}
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(unsigned int value)

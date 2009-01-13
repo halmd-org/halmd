@@ -29,7 +29,6 @@
 #include <list>
 #include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
-#include <ljgpu/options.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/util/H5xx.hpp>
@@ -123,8 +122,6 @@ public:
     typedef std::pair<double, unsigned int> event_queue_item;
 
 public:
-    /** initialise fluid from program options */
-    hardsphere(options const& opt);
     /** set number of particles */
     void particles(unsigned int value);
     /** set pair separation at which particle collision occurs */
@@ -134,7 +131,7 @@ public:
     /** set periodic box length */
     void box(double value);
     /** initialize cells */
-    void init_cell();
+    void init_cells();
     /** set simulation timestep */
     void timestep(double value);
 
@@ -232,28 +229,6 @@ private:
     perf::counters m_times;
 };
 
-template <int dimension>
-hardsphere<hardsphere_impl<dimension> >::hardsphere(options const& opt)
-{
-    LOG("positional coordinates dimension: " << dimension);
-
-    // set number of particles in system
-    particles(opt["particles"].as<unsigned int>());
-    // set pair separation at which particle collision occurs
-    pair_separation(opt["pair-separation"].as<float>());
-    // set simulation box length or particle density
-    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
-	box(opt["box-length"].as<float>());
-    }
-    else {
-	density(opt["density"].as<float>());
-    }
-    // set simulation timestep
-    timestep(opt["timestep"].as<float>());
-    // initialize cells
-    init_cell();
-}
-
 /**
  * set number of particles in system
  */
@@ -324,7 +299,7 @@ void hardsphere<hardsphere_impl<dimension> >::box(double value)
  * initialize cells
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::init_cell()
+void hardsphere<hardsphere_impl<dimension> >::init_cells()
 {
     // FIXME optimal number of cells
     if (dimension == 3)

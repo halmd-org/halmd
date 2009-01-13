@@ -23,28 +23,28 @@ namespace ljgpu
 {
 
 template <int dimension>
-class mdsim_impl;
+class mdsim_impl {};
 
 template <int dimension>
-class ljfluid_impl_base;
+class ljfluid_impl_base : public mdsim_impl<dimension> {};
 
 template <int dimension>
-class ljfluid_impl_gpu_base;
+class ljfluid_impl_gpu_base : public ljfluid_impl_base<dimension> {};
 
 template <int dimension>
-class ljfluid_impl_gpu_square;
+class ljfluid_impl_gpu_square : public ljfluid_impl_gpu_base<dimension> {};
 
 template <int dimension>
-class ljfluid_impl_gpu_cell;
+class ljfluid_impl_gpu_cell : public ljfluid_impl_gpu_base<dimension> {};
 
 template <int dimension>
-class ljfluid_impl_gpu_neighbour;
+class ljfluid_impl_gpu_neighbour : public ljfluid_impl_gpu_base<dimension> {};
 
 template <int dimension>
-class ljfluid_impl_host;
+class ljfluid_impl_host : public ljfluid_impl_base<dimension> {};
 
 template <int dimension>
-class hardsphere_impl;
+class hardsphere_impl : public mdsim_impl<dimension> {};
 
 } // namespace ljgpu
 

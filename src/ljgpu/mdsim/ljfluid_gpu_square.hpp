@@ -22,7 +22,6 @@
 #include <ljgpu/algorithm/reduce.hpp>
 #include <ljgpu/mdsim/ljfluid_gpu_base.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
-#include <ljgpu/options.hpp>
 
 namespace ljgpu
 {
@@ -44,9 +43,6 @@ public:
     typedef typename sample_type::sample_visitor sample_visitor;
 
 public:
-    /** initialise fluid from program options */
-    ljfluid(options const& opt);
-
     using _Base::density;
     using _Base::box;
     using _Base::timestep;
@@ -143,26 +139,6 @@ private:
     } g_part;
 
 };
-
-template <int dimension>
-ljfluid<ljfluid_impl_gpu_square<dimension> >::ljfluid(options const& opt)
-{
-    LOG("positional coordinates dimension: " << dimension);
-
-    particles(opt["particles"].as<unsigned int>());
-    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
-	box(opt["box-length"].as<float>());
-    }
-    else {
-	density(opt["density"].as<float>());
-    }
-    cutoff_radius(opt["cutoff"].as<float>());
-#ifdef USE_POTENTIAL_SMOOTHING
-    potential_smoothing(opt["smoothing"].as<float>());
-#endif
-    timestep(opt["timestep"].as<float>());
-    threads(opt["threads"].as<unsigned int>());
-}
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(unsigned int value)

@@ -22,7 +22,9 @@
 #include <boost/bind.hpp>
 #include <fstream>
 #include <iostream>
+#include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/mdsim/sample.hpp>
+#include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/options.hpp>
 #include <ljgpu/sample/correlation.hpp>
 #include <ljgpu/sample/energy.hpp>
@@ -40,11 +42,12 @@ namespace ljgpu
 /**
  * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
-template <typename mdsim_impl>
+template <typename mdsim_backend>
 class mdsim
 {
 public:
-    typedef typename mdsim_impl::traits_type traits_type;
+    typedef typename mdsim_backend::impl_type impl_type;
+    typedef typename mdsim_backend::traits_type traits_type;
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::sample_type sample_type;
@@ -67,10 +70,23 @@ public:
     void operator()();
 
 private:
+    /** backend-specific API wrappers */
+    void cutoff_radius(boost::true_type const&);
+    void cutoff_radius(boost::false_type const&) {}
+    void pair_separation(boost::true_type const&);
+    void pair_separation(boost::false_type const&) {}
+    void cell_occupancy(boost::true_type const&);
+    void cell_occupancy(boost::false_type const&) {}
+    void init_cells(boost::true_type const&);
+    void init_cells(boost::false_type const&) {}
+    void threads(boost::true_type const&);
+    void threads(boost::false_type const&) {}
+
+private:
     /** program options */
     options const& opt;
     /** Lennard-Jones fluid simulation */
-    mdsim_impl fluid;
+    mdsim_backend fluid;
     /** block correlations */
     correlation<dimension> tcf;
     /**  trajectory file writer */
@@ -84,9 +100,30 @@ private:
 /**
  * initialize MD simulation program
  */
-template <typename mdsim_impl>
-mdsim<mdsim_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
+template <typename mdsim_backend>
+mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 {
+    LOG("positional coordinates dimension: " << dimension);
+
+    fluid.particles(opt["particles"].as<unsigned int>());
+    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
+	fluid.box(opt["box-length"].as<float>());
+    }
+    else {
+	fluid.density(opt["density"].as<float>());
+    }
+    fluid.timestep(opt["timestep"].as<float>());
+
+    cutoff_radius(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    pair_separation(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
+
+    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
+    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_cell<dimension>, impl_type>());
+    threads(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+
+    init_cells(boost::is_base_of<ljfluid_impl_host<dimension>, impl_type>());
+    init_cells(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
+
     // initialize random number generator with seed
     if (opt["random-seed"].empty()) {
 	LOG("obtaining 32-bit integer seed from /dev/random");
@@ -155,11 +192,44 @@ mdsim<mdsim_impl>::mdsim(options const& opt) : opt(opt), fluid(opt)
     }
 }
 
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::pair_separation(boost::true_type const&)
+{
+    fluid.pair_separation(opt["pair-separation"].as<float>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::cutoff_radius(boost::true_type const&)
+{
+    fluid.cutoff_radius(opt["cutoff"].as<float>());
+#ifdef USE_POTENTIAL_SMOOTHING
+    fluid.potential_smoothing(opt["smoothing"].as<float>());
+#endif
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::cell_occupancy(boost::true_type const&)
+{
+    fluid.cell_occupancy(opt["cell-occupancy"].as<float>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::threads(boost::true_type const&)
+{
+    fluid.threads(opt["threads"].as<unsigned int>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::init_cells(boost::true_type const&)
+{
+    fluid.init_cells();
+}
+
 /**
  * run MD simulation program
  */
-template <typename mdsim_impl>
-void mdsim<mdsim_impl>::operator()()
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::operator()()
 {
     if (opt["dry-run"].as<bool>()) {
 	// test parameters only

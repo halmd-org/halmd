@@ -28,6 +28,9 @@ namespace ljgpu
 template <typename mdsim_impl>
 class mdsim_base
 {
+public:
+    typedef mdsim_impl impl_type;
+
 protected:
     /** apply periodic boundary conditions to given coordinates */
     template <typename T>

@@ -27,7 +27,6 @@
 #include <iostream>
 #include <list>
 #include <ljgpu/mdsim/ljfluid_base.hpp>
-#include <ljgpu/options.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
 #include <ljgpu/util/timer.hpp>
 #include <sys/times.h>
@@ -78,9 +77,6 @@ public:
     typedef boost::array<int, dimension> cell_index;
 
 public:
-    /** initialise fluid from program options */
-    ljfluid(options const& opt);
-
     using _Base::density;
     using _Base::box;
     using _Base::timestep;
@@ -93,7 +89,7 @@ public:
     /** set potential cutoff radius */
     void cutoff_radius(float_type value);
     /** initialize cell lists */
-    void init_cell();
+    void init_cells();
 
     /** set system state from phase space sample */
     void restore(sample_visitor visitor);
@@ -177,26 +173,6 @@ private:
     float_type v_max_sum;
 };
 
-template <int dimension>
-ljfluid<ljfluid_impl_host<dimension> >::ljfluid(options const& opt)
-{
-    LOG("positional coordinates dimension: " << dimension);
-
-    particles(opt["particles"].as<unsigned int>());
-    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
-	box(opt["box-length"].as<float>());
-    }
-    else {
-	density(opt["density"].as<float>());
-    }
-    cutoff_radius(opt["cutoff"].as<float>());
-#ifdef USE_POTENTIAL_SMOOTHING
-    potential_smoothing(opt["smoothing"].as<float>());
-#endif
-    timestep(opt["timestep"].as<float>());
-    init_cell();
-}
-
 /**
  * set potential cutoff radius
  */
@@ -258,7 +234,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::restore(sample_visitor visitor)
  * initialize cell lists
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::init_cell()
+void ljfluid<ljfluid_impl_host<dimension> >::init_cells()
 {
     // number of cells per dimension
     ncell = std::floor(box_ / r_cut_skin);

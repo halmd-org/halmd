@@ -22,7 +22,6 @@
 #include <ljgpu/mdsim/ljfluid_gpu_base.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/math/stat.hpp>
-#include <ljgpu/options.hpp>
 
 namespace ljgpu
 {
@@ -44,9 +43,6 @@ public:
     typedef typename sample_type::sample_visitor sample_visitor;
 
 public:
-    /** initialise fluid from program options */
-    ljfluid(options const& opt);
-
     using _Base::particles;
     using _Base::density;
     using _Base::box;
@@ -189,27 +185,6 @@ private:
 	cuda::vector<int> tag;
     } g_part_buf;
 };
-
-template <int dimension>
-ljfluid<ljfluid_impl_gpu_cell<dimension> >::ljfluid(options const& opt)
-{
-    LOG("positional coordinates dimension: " << dimension);
-
-    particles(opt["particles"].as<unsigned int>());
-    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
-	box(opt["box-length"].as<float>());
-    }
-    else {
-	density(opt["density"].as<float>());
-    }
-    cutoff_radius(opt["cutoff"].as<float>());
-#ifdef USE_POTENTIAL_SMOOTHING
-    potential_smoothing(opt["smoothing"].as<float>());
-#endif
-    timestep(opt["timestep"].as<float>());
-    cell_occupancy(opt["cell-occupancy"].as<float>());
-    threads(opt["threads"].as<unsigned int>());
-}
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::cell_occupancy(float_type value)
