@@ -20,6 +20,8 @@
 #include <ljgpu/math/gpu/dsfun.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
+#define CU_NAMESPACE ljfluid
+#include <ljgpu/rng/gpu/rand48.cuh>
 
 //
 // compile this code only *once* per program or dynamic library,
@@ -156,6 +158,26 @@ __global__ void inteq(U* g_r, U* g_R, U* g_v, U const* g_f)
     g_r[GTID] = pack(r);
     g_R[GTID] = pack(R);
     g_v[GTID] = pack(v);
+}
+
+/**
+ * generate 4-dimensional Maxwell-Boltzmann distributed vectors
+ */
+__global__ void boltzmann(float4* g_v, float temperature)
+{
+    float4 v;
+    rand48::gaussian(v, temperature);
+    g_v[GTID] = v;
+}
+
+/**
+ * generate 2-dimensional Maxwell-Boltzmann distributed vectors
+ */
+__global__ void boltzmann(float2* g_v, float temperature)
+{
+    float2 v;
+    rand48::gaussian(v, temperature);
+    g_v[GTID] = v;
 }
 
 }}} // namespace ljgpu::cu::ljfluid

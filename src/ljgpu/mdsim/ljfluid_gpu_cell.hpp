@@ -114,7 +114,6 @@ private:
 
     using _Base::dim_;
     using _Base::stream_;
-    using _Base::rng_;
 
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
@@ -399,59 +398,36 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
 {
     LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
+    cuda::vector<gpu_vector_type> g_v(npart);
+    cuda::host::vector<gpu_vector_type> h_v(npart);
+    g_v.reserve(dim_.threads());
+    h_v.reserve(dim_.threads());
+    boltzmann(g_v, h_v, temp);
+
     try {
-	g_part.v.reserve(dim_.threads());
-	// set velocities using Maxwell-Boltzmann distribution at temperature
-	event_[0].record(stream_);
-	rng_.boltzmann(g_part.v, temp, stream_);
-	event_[1].record(stream_);
-	// copy particle velocities from GPU to host
-	cuda::copy(g_part.v, h_part.v, stream_);
-	stream_.synchronize();
-	for (unsigned int i = 0; i < npart; ++i) {
-	    m_sample.v[i] = h_part.v[i];
-	}
-	// copy particle number tags from GPU to host
 	cuda::copy(g_part.tag, h_part.tag, stream_);
-	// wait for CUDA operations to finish
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
-	throw exception("failed to compute Maxwell-Boltzmann distributed velocities on GPU");
+	throw exception("failed to copy particle number tags from GPU to host");
     }
 
-    // CUDA time for Maxwell-Boltzmann distribution
-    m_times["boltzmann"] += event_[1] - event_[0];
-
-    // compute center of mass velocity
-    vector_type v_cm = mean(m_sample.v.begin(), m_sample.v.end());
-    // set center of mass velocity to zero
-    for (unsigned int i = 0; i < npart; ++i) {
-	m_sample.v[i] -= v_cm;
+    float vv_max = 0;
+    for (unsigned int i = 0; i < nplace; ++i) {
+	const int tag = h_part.tag[i];
+	if (tag == _gpu::VIRTUAL_PARTICLE)
+	    continue;
+	h_part.v[i] = h_v[tag];
+	vv_max = std::max(vv_max, (vector_type) h_v[tag] * h_v[tag]);
     }
+    v_max_sum = std::sqrt(vv_max);
 
     try {
-	// maximum squared velocity
-	float vv_max = 0;
-	// assign velocities to cell placeholders
-	for (unsigned int i = 0; i < nplace; ++i) {
-	    // particle number
-	    const int n = h_part.tag[i];
-	    if (n != _gpu::VIRTUAL_PARTICLE) {
-		// assign velocity to cell placeholder
-		h_part.v[i] = m_sample.v[n];
-		// calculate maximum squared velocity
-		vv_max = std::max(vv_max, m_sample.v[n] * m_sample.v[n]);
-	    }
-	}
-	// initialise sum over maximum velocity magnitudes since last cell lists update
-	v_max_sum = std::sqrt(vv_max);
-	// copy particle velocities from host to GPU
 	cuda::copy(h_part.v, g_part.v, stream_);
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
-	throw exception("failed to set center of mass velocity to zero");
+	throw exception("failed to assign velocities to cell placeholders");
     }
 }
 

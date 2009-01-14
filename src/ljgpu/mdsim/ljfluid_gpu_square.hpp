@@ -98,7 +98,6 @@ private:
 
     using _Base::dim_;
     using _Base::stream_;
-    using _Base::rng_;
 
     /** CUDA events for kernel timing */
     boost::array<cuda::event, 9> event_;
@@ -275,68 +274,7 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
 {
     LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
-    try {
-	// set velocities using Maxwell-Boltzmann distribution at temperature
-	event_[0].record(stream_);
-	rng_.boltzmann(g_part.v, temp, stream_);
-	event_[1].record(stream_);
-	// copy particle velocities from GPU to host
-	cuda::copy(g_part.v, h_part.v, stream_);
-	stream_.synchronize();
-	for (unsigned int i = 0; i < npart; ++i) {
-	    m_sample.v[i] = h_part.v[i];
-	}
-	// wait for CUDA operations to finish
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to compute Maxwell-Boltzmann distributed velocities on GPU");
-    }
-
-    // GPU time for Maxwell-Boltzmann distribution
-    m_times["boltzmann"] += event_[1] - event_[0];
-
-    //
-    // The particle velocities need to fullfill two constraints:
-    //
-    //  1. center of mass velocity shall be zero
-    //  2. temperature of the distribution shall equal exactly the given value
-    //
-    // We choose the above order because shifting the center of mass velocity
-    // means altering the first moment of the velocity distribution, which in
-    // consequence affects the second moment, i.e. the temperature.
-    //
-
-    // compute center of mass velocity
-    vector_type v_cm = mean(m_sample.v.begin(), m_sample.v.end());
-    // set center of mass velocity to zero
-    for (unsigned int i = 0; i < npart; ++i) {
-	m_sample.v[i] -= v_cm;
-    }
-
-    // compute mean squared velocity
-    double vv = 0;
-    for (unsigned int i = 0; i < npart; ++i) {
-	vv += (m_sample.v[i] * m_sample.v[i] - vv) / (i + 1);
-    }
-    // rescale velocities to accurate temperature
-    double s = sqrt(temp * dimension / vv);
-    for (unsigned int i = 0; i < npart; ++i) {
-	m_sample.v[i] *= s;
-    }
-
-    try {
-	// copy particle velocities from host to GPU
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.v[i] = m_sample.v[i];
-	}
-	cuda::copy(h_part.v, g_part.v, stream_);
-
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to set center of mass velocity to zero");
-    }
+    boltzmann(g_part.v, h_part.v, temp);
 }
 
 template <int dimension>

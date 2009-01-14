@@ -21,6 +21,7 @@
 
 #include <cuda_wrapper.hpp>
 #include <ljgpu/mdsim/impl.hpp>
+#include <ljgpu/rng/gpu/uint48.cuh>
 
 namespace ljgpu { namespace gpu
 {
@@ -39,6 +40,13 @@ struct ljfluid_base<ljfluid_impl_gpu_square>
     static cuda::symbol<float> en_cut;
     static cuda::symbol<float> rri_smooth;
 
+    struct rand48
+    {
+	static cuda::symbol<uint48> a;
+	static cuda::symbol<uint48> c;
+	static cuda::symbol<ushort3*> state;
+    };
+
     static cuda::function<void (float3*, const float2)> sample_smooth_function;
 };
 
@@ -50,6 +58,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_square<3> >
     : public ljfluid_base<ljfluid_impl_gpu_square>
 {
     static cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
+    static cuda::function<void (float4*, float)> boltzmann;
     static cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
 };
 
@@ -58,6 +67,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_square<2> >
     : public ljfluid_base<ljfluid_impl_gpu_square>
 {
     static cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
+    static cuda::function<void (float2*, float)> boltzmann;
     static cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
 };
 

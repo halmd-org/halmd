@@ -72,6 +72,7 @@ target_link_libraries(ljgpu_gpu_cell
   gpu_lattice
   gpu_ljfluid_cell
   gpu_rand48
+  gpu_reduce
   )
 
 target_link_libraries(ljgpu_gpu_neighbour

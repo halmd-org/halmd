@@ -42,6 +42,8 @@ perf::desc_map perf::desc = boost::assign::map_list_of
     ("mdstep",			"MD simulation step")
     ("memcpy_cells",		"cell lists memcpy")
     ("potential_energy",	"potential energy sum calculation")
+    ("reduce_squared_velocity",	"mean squared velocity calculation")
+    ("reduce_velocity",		"velocity center of mass calculation")
     ("sample",			"phase space sampling")
     ("sample_memcpy",		"sample memcpy")
     ("update_cells",		"cell lists update")

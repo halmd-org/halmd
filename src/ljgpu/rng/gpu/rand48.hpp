@@ -31,8 +31,6 @@ extern cuda::function<void (ushort3*)> save;
 extern cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3)> restore;
 extern cuda::function<void (float*, uint)> uniform;
 extern cuda::function<void (uint*, uint)> get;
-extern cuda::function<void (float4*, float),
-		      void (float2*, float)> boltzmann;
 
 extern cuda::symbol<uint48> a;
 extern cuda::symbol<uint48> c;

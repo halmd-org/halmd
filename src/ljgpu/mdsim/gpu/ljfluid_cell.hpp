@@ -21,6 +21,7 @@
 
 #include <cuda_wrapper.hpp>
 #include <ljgpu/mdsim/impl.hpp>
+#include <ljgpu/rng/gpu/uint48.cuh>
 
 namespace ljgpu { namespace gpu
 {
@@ -47,6 +48,13 @@ struct ljfluid_base<ljfluid_impl_gpu_cell>
     static cuda::symbol<float> rri_smooth;
     static cuda::symbol<uint> ncell;
 
+    struct rand48
+    {
+	static cuda::symbol<uint48> a;
+	static cuda::symbol<uint48> c;
+	static cuda::symbol<ushort3*> state;
+    };
+
     static cuda::function<void (float3*, const float2)> sample_smooth_function;
 };
 
@@ -61,6 +69,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<3> >
     static cuda::function<void (float4 const*, float4*, int*)> assign_cells;
     static cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells;
     static cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
+    static cuda::function<void (float4*, float)> boltzmann;
 };
 
 
@@ -72,6 +81,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<2> >
     static cuda::function<void (float2 const*, float2*, int*)> assign_cells;
     static cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells;
     static cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
+    static cuda::function<void (float2*, float)> boltzmann;
 };
 
 }} // namespace ljgpu::gpu

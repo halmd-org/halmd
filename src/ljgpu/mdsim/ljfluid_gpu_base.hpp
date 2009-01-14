@@ -20,10 +20,12 @@
 #define LJGPU_MDSIM_LJFLUID_GPU_BASE_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/mdsim/ljfluid_base.hpp>
+#include <ljgpu/algorithm/reduce.hpp>
+#include <ljgpu/math/gpu/dsfun.cuh>
 #include <ljgpu/mdsim/gpu/ljfluid_cell.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
+#include <ljgpu/mdsim/ljfluid_base.hpp>
 #include <ljgpu/rng/rand48.hpp>
 #include <ljgpu/sample/H5param.hpp>
 
@@ -85,10 +87,18 @@ public:
     void param(H5param& param) const;
 
 protected:
+    /** generate Maxwell-Boltzmann distributed velocities */
+    void boltzmann(cuda::vector<gpu_vector_type>& g_v,
+		   cuda::host::vector<gpu_vector_type>& h_v,
+		   float temp);
+
+protected:
     /** CUDA execution dimensions */
     cuda::config dim_;
     /** CUDA asynchronous execution */
     cuda::stream stream_;
+    /** CUDA timing */
+    boost::array<cuda::event, 2> event_;
     /** GPU random number generator */
     rand48 rng_;
 
@@ -106,6 +116,12 @@ protected:
 
     using _Base::m_sample;
     using _Base::m_times;
+
+private:
+    /** center of mass velocity */
+    reduce<tag::sum, gpu_vector_type, vector_type> reduce_velocity;
+    /** squared velocity sum */
+    reduce<tag::sum_of_squares, dfloat> reduce_squared_velocity;
 };
 
 template <typename ljfluid_impl>
@@ -254,6 +270,12 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(unsigned int seed)
     catch (cuda::error const&) {
 	throw exception("failed to seed random number generator");
     }
+    try {
+	rng_.init_symbols(_gpu::rand48::a, _gpu::rand48::c, _gpu::rand48::state);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to set random number generator symbols");
+    }
 }
 
 /**
@@ -267,6 +289,82 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(rand48::state_type const& state)
     }
     catch (cuda::error const&) {
 	throw exception("failed to restore random number generator state");
+    }
+}
+
+/**
+ * generate Maxwell-Boltzmann distributed velocities
+ */
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_v,
+					       cuda::host::vector<gpu_vector_type>& h_v,
+					       float temp)
+{
+    try {
+	event_[0].record(stream_);
+	cuda::configure(dim_.grid, dim_.block, stream_);
+	_gpu::boltzmann(g_v, temp);
+	event_[1].record(stream_);
+	cuda::copy(g_v, h_v, stream_);
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to compute Maxwell-Boltzmann distributed velocities on GPU");
+    }
+    m_times["boltzmann"] += event_[1] - event_[0];
+
+    //
+    // The particle velocities need to fullfill two constraints:
+    //
+    //  1. center of mass velocity shall be zero
+    //  2. temperature of the distribution shall equal exactly the given value
+    //
+    // The above order is chosen as shifting the center of mass velocity
+    // means altering the first moment of the velocity distribution, which
+    // in consequence affects the second moment, i.e. the temperature.
+    //
+
+    try {
+	event_[0].record(stream_);
+	reduce_velocity(g_v, stream_);
+	event_[1].record(stream_);
+	event_[1].synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to compute center of mass velocity");
+    }
+    m_times["reduce_velocity"] += event_[1] - event_[0];
+
+    // set center of mass velocity to zero
+    vector_type const v_cm = reduce_velocity.value() / npart;
+    BOOST_FOREACH (gpu_vector_type& v, h_v) {
+	v = (vector_type) v - v_cm;
+    }
+
+    try {
+	event_[0].record(stream_);
+	reduce_squared_velocity(g_v, stream_);
+	event_[1].record(stream_);
+	event_[1].synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to compute mean squared velocity");
+    }
+    m_times["reduce_squared_velocity"] += event_[1] - event_[0];
+
+    // rescale velocities to accurate temperature
+    float const vv = reduce_squared_velocity.value() / npart;
+    float const s = std::sqrt(temp * dimension / vv);
+    BOOST_FOREACH (gpu_vector_type& v, h_v) {
+	v = (vector_type) v * s;
+    }
+
+    try {
+	cuda::copy(h_v, g_v, stream_);
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy rescaled velocities to GPU");
     }
 }
 

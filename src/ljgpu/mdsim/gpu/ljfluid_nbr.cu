@@ -417,6 +417,10 @@ cuda::symbol<uint> _Base::nbl_stride(cu::ljfluid::nbl_stride);
 cuda::symbol<float> _Base::r_cell(cu::ljfluid::r_cell);
 cuda::symbol<float> _Base::rr_cell(cu::ljfluid::rr_cell);
 
+cuda::symbol<uint48> _Base::rand48::a(cu::ljfluid::rand48::a);
+cuda::symbol<uint48> _Base::rand48::c(cu::ljfluid::rand48::c);
+cuda::symbol<ushort3*> _Base::rand48::state(cu::ljfluid::rand48::g_state);
+
 /**
  * device texture wrappers
  */
@@ -444,6 +448,8 @@ cuda::function<void (int*)>
 
 cuda::function<void (float4*, float4*, float4*, float4 const*)>
     _3D::inteq(cu::ljfluid::inteq<float3>);
+cuda::function<void (float4*, float)>
+    _3D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
     _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3>);
 cuda::function<void (int const*, int*, float4*)>
@@ -455,6 +461,8 @@ cuda::function<void (const int*, float4*, float4*, float4*, int*)>
 
 cuda::function<void (float2*, float2*, float2*, float2 const*)>
     _2D::inteq(cu::ljfluid::inteq<float2>);
+cuda::function<void (float2*, float)>
+    _2D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
     _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2>);
 cuda::function<void (int const*, int*, float2*)>

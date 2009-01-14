@@ -159,26 +159,6 @@ __global__ void get(uint* v, uint len)
     g_state[GTID] = x;
 }
 
-/**
- * generate 4-dimensional Maxwell-Boltzmann distributed vectors
- */
-__global__ void boltzmann(float4* g_v, float temperature)
-{
-    float4 v;
-    gaussian(v, temperature);
-    g_v[GTID] = v;
-}
-
-/**
- * generate 2-dimensional Maxwell-Boltzmann distributed vectors
- */
-__global__ void boltzmann(float2* g_v, float temperature)
-{
-    float2 v;
-    gaussian(v, temperature);
-    g_v[GTID] = v;
-}
-
 }}} // namespace ljgpu::cu::rand48
 
 namespace ljgpu { namespace gpu
@@ -199,9 +179,6 @@ cuda::function<void (float*, uint)>
     rand48::uniform(cu::rand48::uniform);
 cuda::function<void (uint*, uint)>
     rand48::get(cu::rand48::get);
-cuda::function<void (float4*, float),
-	       void (float2*, float)>
-    rand48::boltzmann(cu::rand48::boltzmann, cu::rand48::boltzmann);
 
 /**
  * device constant wrappers

@@ -140,16 +140,6 @@ public:
     }
 
     /**
-     * generate random 2-dimensional Maxwell-Boltzmann distributed velocities
-     */
-    template <typename T>
-    void boltzmann(cuda::vector<T>& v, float temperature, cuda::stream& stream)
-    {
-	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::boltzmann(v, temperature);
-    }
-
-    /**
      * save generator state to memory
      */
     void save(state_type& mem)
