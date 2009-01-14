@@ -62,6 +62,26 @@ __device__ T sum_(T v1, T v2)
     return v1 + v2;
 }
 
+
+template <typename T>
+__device__ T zero_()
+{
+    return 0;
+}
+
+template <>
+__device__ float3 zero_()
+{
+    return make_float3(0, 0, 0);
+}
+
+template <>
+__device__ float2 zero_()
+{
+    return make_float2(0, 0);
+}
+
+
 /**
  * parallel reduction
  */
@@ -69,13 +89,13 @@ template <typename input_type, typename output_type,
 	  output_type (*input_function)(input_type),
 	  output_type (*reduce_function)(output_type, output_type),
 	  output_type (*output_function)(output_type),
-	  typename T, typename U>
-__device__ void reduce(T const* g_in, U* g_block_sum, uint n)
+	  typename coalesced_input_type, typename coalesced_output_type>
+__device__ void reduce(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
 {
     __shared__ output_type s_vv[THREADS];
 
     // load values from global device memory
-    output_type vv = 0;
+    output_type vv = zero_<output_type>();
     for (uint i = GTID; i < n; i += GTDIM) {
 	input_type v = identity_<input_type>(g_in[i]);
 	vv = reduce_function(vv, input_function(v));
@@ -124,24 +144,36 @@ __device__ void reduce(T const* g_in, U* g_block_sum, uint n)
     if (TID < 1) {
 	vv = reduce_function(vv, s_vv[TID + 1]);
 	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = identity_<U>(output_function(vv));
+	g_block_sum[blockIdx.x] = identity_<coalesced_output_type>(output_function(vv));
     }
 }
 
 /**
  * blockwise sum
  */
-template <typename input_type, typename output_type, typename T, typename U>
-__global__ void sum(T const* g_in, U* g_block_sum, uint n)
+template <typename input_type, typename output_type,
+	  typename coalesced_input_type, typename coalesced_output_type>
+__global__ void sum(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
 {
     reduce<input_type, output_type, identity_, sum_, identity_>(g_in, g_block_sum, n);
 }
 
 /**
+ * blockwise sum of squares
+ */
+template <typename input_type, typename output_type,
+	  typename coalesced_input_type, typename coalesced_output_type>
+__global__ void sum_of_squares(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
+{
+    reduce<input_type, output_type, square_, sum_, identity_>(g_in, g_block_sum, n);
+}
+
+/**
  * blockwise absolute maximum
  */
-template <typename input_type, typename output_type, typename T, typename U>
-__global__ void max(T const* g_in, U* g_block_max, uint n)
+template <typename input_type, typename output_type,
+	  typename coalesced_input_type, typename coalesced_output_type>
+__global__ void max(coalesced_input_type const* g_in, coalesced_output_type* g_block_max, uint n)
 {
     reduce<input_type, output_type, square_, fmaxf, sqrtf>(g_in, g_block_max, n);
 }
@@ -154,8 +186,16 @@ namespace ljgpu { namespace gpu
 /**
  * device function wrappers
  */
-cuda::function<void(float const*, dfloat*, uint)>
-	       reduce::sum(cu::reduce::sum<float, dfloat>);
+cuda::function<void(float const*, dfloat*, uint),
+	       void(float4 const*, float4*, uint),
+	       void(float2 const*, float2*, uint)>
+	       reduce::sum(cu::reduce::sum<float, dfloat>,
+			   cu::reduce::sum<float3, float3>,
+			   cu::reduce::sum<float2, float2>);
+cuda::function<void(float4 const*, dfloat*, uint),
+	       void(float2 const*, dfloat*, uint)>
+	       reduce::sum_of_squares(cu::reduce::sum_of_squares<float3, dfloat>,
+				   cu::reduce::sum_of_squares<float2, dfloat>);
 cuda::function<void(float4 const*, float*, uint),
 	       void(float2 const*, float*, uint)>
 	       reduce::max(cu::reduce::max<float3, float>,

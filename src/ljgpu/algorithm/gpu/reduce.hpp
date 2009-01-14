@@ -30,7 +30,11 @@ enum {
     THREADS = 512,
 };
 
-extern cuda::function<void(float const*, dfloat*, uint)> sum;
+extern cuda::function<void(float const*, dfloat*, uint),
+	       void(float4 const*, float4*, uint),
+	       void(float2 const*, float2*, uint)> sum;
+extern cuda::function<void(float4 const*, dfloat*, uint),
+		      void(float2 const*, dfloat*, uint)> sum_of_squares;
 extern cuda::function<void(float4 const*, float*, uint),
 		      void(float2 const*, float*, uint)> max;
 

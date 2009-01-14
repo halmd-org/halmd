@@ -30,8 +30,11 @@ namespace ljgpu
 /*
  * Parallel reduction
  */
-template <typename tag, typename output_type>
-class reduce : private tag
+template <
+    template <typename> class tag,
+    typename gpu_output_type,
+    typename output_type = gpu_output_type>
+class reduce
 {
 public:
     enum { BLOCKS = gpu::reduce::BLOCKS, THREADS = gpu::reduce::THREADS };
@@ -41,11 +44,11 @@ public:
     /**
      * stream parallel reduction kernel
      */
-    template <typename input_type>
-    void operator()(cuda::vector<input_type> const& g_in, cuda::stream& stream)
+    template <typename gpu_input_type>
+    void operator()(cuda::vector<gpu_input_type> const& g_in, cuda::stream& stream)
     {
 	cuda::configure(BLOCKS, THREADS, stream);
-	tag::reduce(g_in, g_block_sum, g_in.size());
+	tag<output_type>::reduce(g_in, g_block_sum, g_in.size());
 	cuda::copy(g_block_sum, h_block_sum, stream);
     }
 
@@ -54,12 +57,12 @@ public:
      */
     output_type value()
     {
-	return tag::value(h_block_sum);
+	return tag<output_type>::value(h_block_sum);
     }
 
 private:
-    cuda::vector<output_type> g_block_sum;
-    cuda::host::vector<output_type> h_block_sum;
+    cuda::vector<gpu_output_type> g_block_sum;
+    cuda::host::vector<gpu_output_type> h_block_sum;
 };
 
 namespace tag {
@@ -67,10 +70,12 @@ namespace tag {
 /**
  * sum
  */
+template <typename output_type>
 struct sum
 {
-    template <typename T, typename U>
-    void reduce(T const& g_in, U& g_block_sum, unsigned int count)
+    template <typename gpu_input_type, typename gpu_output_type>
+    static void reduce(cuda::vector<gpu_input_type> const& g_in,
+		       cuda::vector<gpu_output_type>& g_block_sum, unsigned int count)
     {
 	gpu::reduce::sum(g_in, g_block_sum, count);
     }
@@ -78,20 +83,45 @@ struct sum
     /**
      * returns sum after CUDA stream synchronisation
      */
-    template <typename U>
-    typename U::value_type value(U const& sum)
+    template <typename gpu_output_type>
+    static output_type value(cuda::host::vector<gpu_output_type> const& sum)
     {
-	return std::accumulate(sum.begin(), sum.end(), (typename U::value_type) 0);
+	return std::accumulate(sum.begin(), sum.end(), output_type(0));
+    }
+};
+
+/**
+ * sum of squares
+ */
+template <typename output_type>
+struct sum_of_squares
+{
+    template <typename gpu_input_type, typename gpu_output_type>
+    static void reduce(cuda::vector<gpu_input_type> const& g_in,
+		       cuda::vector<gpu_output_type>& g_block_sum, unsigned int count)
+    {
+	gpu::reduce::sum_of_squares(g_in, g_block_sum, count);
+    }
+
+    /**
+     * returns sum after CUDA stream synchronisation
+     */
+    template <typename gpu_output_type>
+    static output_type value(cuda::host::vector<gpu_output_type> const& sum)
+    {
+	return std::accumulate(sum.begin(), sum.end(), output_type(0));
     }
 };
 
 /**
  * absolute maximum
  */
+template <typename output_type>
 struct max
 {
-    template <typename T, typename U>
-    void reduce(T const& g_in, U& g_block_max, unsigned int count)
+    template <typename gpu_input_type, typename gpu_output_type>
+    static void reduce(cuda::vector<gpu_input_type> const& g_in,
+		       cuda::vector<gpu_output_type>& g_block_max, unsigned int count)
     {
 	gpu::reduce::max(g_in, g_block_max, count);
     }
@@ -99,8 +129,8 @@ struct max
     /**
      * returns max after CUDA stream synchronisation
      */
-    template <typename U>
-    typename U::value_type value(U const& max)
+    template <typename gpu_output_type>
+    static output_type value(cuda::host::vector<gpu_output_type> const& max)
     {
 	return *std::max_element(max.begin(), max.end());
     }
