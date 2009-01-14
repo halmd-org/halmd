@@ -20,7 +20,7 @@
 #define LJGPU_ALGORITHM_GPU_PREFIX_SUM_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/rng/gpu/rand48.cuh>
+#include <ljgpu/rng/gpu/uint48.cuh>
 
 namespace ljgpu { namespace gpu { namespace prefix_sum
 {

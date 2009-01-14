@@ -37,26 +37,50 @@ public:
     typedef ushort3 state_type;
 
 public:
-    rand48() {}
+    rand48()
+      : sym_a(gpu::rand48::a), sym_c(gpu::rand48::c),
+	sym_state(gpu::rand48::state) {}
 
     /**
      * initialize random number generator with CUDA execution dimensions
      */
-    rand48(cuda::config const& dim) : dim_(dim), state_(dim.threads()) {}
+    rand48(cuda::config const& dim)
+      : sym_a(gpu::rand48::a), sym_c(gpu::rand48::c),
+	sym_state(gpu::rand48::state), dim_(dim), g_state(dim.threads())
+    {
+	// copy state pointer to device symbol
+	cuda::copy(g_state.data(), sym_state);
+    }
+
+    /**
+     * initialise device symbols of arbitrary module for rand48 usage
+     */
+    void init_symbols(cuda::symbol<uint48>& a, cuda::symbol<uint48>& c,
+		      cuda::symbol<ushort3*>& state)
+    {
+	uint48 a_, c_;
+	cuda::copy(sym_a, a_);
+	cuda::copy(sym_c, c_);
+	cuda::copy(a_, a);
+	cuda::copy(c_, c);
+	cuda::copy(g_state.data(), state);
+    }
 
     /**
      * change random number generator CUDA execution dimensions
      */
     void resize(cuda::config const& dim)
     {
-	if (state_.size() > 0) {
+	if (g_state.size() > 0) {
 	    ushort3 x;
 	    // save generator state using old dimensions
 	    save(x);
 	    // set new CUDA execution dimensions
 	    dim_ = dim;
 	    // reallocate global device memory for generator state
-	    state_.resize(dim_.threads());
+	    g_state.resize(dim_.threads());
+	    // copy state pointer to device symbol
+	    cuda::copy(g_state.data(), sym_state);
 	    // restore generator state using new dimensions
 	    restore(x);
 	}
@@ -64,7 +88,9 @@ public:
 	    // set new CUDA execution dimensions
 	    dim_ = dim;
 	    // reallocate global device memory for generator state
-	    state_.resize(dim_.threads());
+	    g_state.resize(dim_.threads());
+	    // copy state pointer to device symbol
+	    cuda::copy(g_state.data(), sym_state);
 	}
     }
 
@@ -86,13 +112,13 @@ public:
 	// initialize generator with seed
 	cuda::vector<uint48> a(1), c(1);
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::set(state_, g_a, g_c, a, c, seed);
+	gpu::rand48::set(g_a, g_c, a, c, seed);
 	stream.synchronize();
 
 	// copy leapfrog multiplier into constant device memory
-	cuda::copy(a, gpu::rand48::a);
+	cuda::copy(a, sym_a);
 	// copy leapfrog addend into constant device memory
-	cuda::copy(c, gpu::rand48::c);
+	cuda::copy(c, sym_c);
     }
 
     /*
@@ -101,7 +127,7 @@ public:
     void uniform(cuda::vector<float>& r, cuda::stream& stream)
     {
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::uniform(state_, r, r.size());
+	gpu::rand48::uniform(r, r.size());
     }
 
     /**
@@ -110,17 +136,17 @@ public:
     void get(cuda::vector<uint>& r, cuda::stream& stream)
     {
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::get(state_, r, r.size());
+	gpu::rand48::get(r, r.size());
     }
 
     /**
      * generate random 2-dimensional Maxwell-Boltzmann distributed velocities
      */
     template <typename T>
-    void boltzmann(cuda::vector<T>& v, float const& temperature, cuda::stream& stream)
+    void boltzmann(cuda::vector<T>& v, float temperature, cuda::stream& stream)
     {
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::boltzmann(v, temperature, state_);
+	gpu::rand48::boltzmann(v, temperature);
     }
 
     /**
@@ -133,7 +159,7 @@ public:
 	cuda::host::vector<ushort3> buf(1);
 
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::save(state_, buf_gpu);
+	gpu::rand48::save(buf_gpu);
 	cuda::copy(buf_gpu, buf, stream);
 	stream.synchronize();
 
@@ -160,13 +186,13 @@ public:
 	// initialize generator from state
 	cuda::vector<uint48> a(1), c(1);
 	cuda::configure(dim_.grid, dim_.block, stream);
-	gpu::rand48::restore(state_, g_a, g_c, a, c, mem);
+	gpu::rand48::restore(g_a, g_c, a, c, mem);
 	stream.synchronize();
 
 	// copy leapfrog multiplier into constant device memory
-	cuda::copy(a, gpu::rand48::a);
+	cuda::copy(a, sym_a);
 	// copy leapfrog addend into constant device memory
-	cuda::copy(c, gpu::rand48::c);
+	cuda::copy(c, sym_c);
     }
 
     /**
@@ -174,9 +200,9 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, rand48& rng)
     {
-	state_type state_;
-	rng.save(state_);
-	os << state_.x << " " << state_.y << " " << state_.z << " ";
+	state_type state;
+	rng.save(state);
+	os << state.x << " " << state.y << " " << state.z << " ";
 	return os;
     }
 
@@ -185,15 +211,18 @@ public:
      */
     friend std::istream& operator>>(std::istream& is, rand48& rng)
     {
-	state_type state_;
-	is >> state_.x >> state_.y >> state_.z;
-	rng.restore(state_);
+	state_type state;
+	is >> state.x >> state.y >> state.z;
+	rng.restore(state);
 	return is;
     }
 
 private:
+    cuda::symbol<uint48>& sym_a;
+    cuda::symbol<uint48>& sym_c;
+    cuda::symbol<ushort3*>& sym_state;
     cuda::config dim_;
-    cuda::vector<ushort3> state_;
+    cuda::vector<ushort3> g_state;
 };
 
 } // namespace ljgpu

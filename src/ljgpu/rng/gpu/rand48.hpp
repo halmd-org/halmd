@@ -20,22 +20,23 @@
 #define LJGPU_RNG_GPU_RAND48_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/rng/gpu/rand48.cuh>
+#include <ljgpu/rng/gpu/uint48.cuh>
 
 namespace ljgpu { namespace gpu { namespace rand48
 {
 
 extern cuda::function<void (uint48*)> leapfrog;
-extern cuda::function<void (ushort3*, uint48 const*, uint48 const*, uint48*, uint48*, uint)> set;
-extern cuda::function<void (ushort3*, ushort3*)> save;
-extern cuda::function<void (ushort3*, uint48 const*, uint48 const*, uint48*, uint48*, ushort3)> restore;
-extern cuda::function<void (ushort3*, float*, uint)> uniform;
-extern cuda::function<void (ushort3*, uint*, uint)> get;
-extern cuda::function<void (float4*, float, ushort3*),
-		      void (float2*, float, ushort3*)> boltzmann;
+extern cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, uint)> set;
+extern cuda::function<void (ushort3*)> save;
+extern cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3)> restore;
+extern cuda::function<void (float*, uint)> uniform;
+extern cuda::function<void (uint*, uint)> get;
+extern cuda::function<void (float4*, float),
+		      void (float2*, float)> boltzmann;
 
 extern cuda::symbol<uint48> a;
 extern cuda::symbol<uint48> c;
+extern cuda::symbol<ushort3*> state;
 
 }}} // namespace ljgpu::gpu::rand48
 
