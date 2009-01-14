@@ -76,7 +76,7 @@ private:
  * CUDA device symbol vector
  */
 template <typename T>
-class symbol<T*>
+class symbol<T[]>
 {
 public:
     typedef symbol<T> vector_type;
