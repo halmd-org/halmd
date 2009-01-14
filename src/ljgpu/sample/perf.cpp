@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/array.hpp>
+#include <boost/lambda/bind.hpp>
 #include <boost/foreach.hpp>
 #include <iomanip>
 #include <iostream>
@@ -33,24 +35,24 @@ namespace ljgpu
  * performance counter descriptions
  */
 perf::desc_map perf::desc = boost::assign::map_list_of
-    ("boltzmann",		"Maxwell-Boltzmann distribution")
+    ("boltzmann",		"Boltzmann distribution")
     ("event_queue",		"event queue processing")
-    ("hilbert_sort",		"Hilbert space-filling curve sort")
+    ("hilbert_sort",		"Hilbert curve sort")
     ("init_cells",		"cell lists initialisation")
     ("lattice",			"lattice generation")
-    ("maximum_velocity",	"maximum velocity calculation")
+    ("maximum_velocity",	"maximum velocity reduction")
     ("mdstep",			"MD simulation step")
     ("memcpy_cells",		"cell lists memcpy")
-    ("potential_energy",	"potential energy sum calculation")
-    ("reduce_squared_velocity",	"mean squared velocity calculation")
-    ("reduce_velocity",		"velocity center of mass calculation")
+    ("potential_energy",	"potential energy sum reduction")
+    ("reduce_squared_velocity",	"mean squared velocity reduction")
+    ("reduce_velocity",		"velocity center of mass reduction")
     ("sample",			"phase space sampling")
     ("sample_memcpy",		"sample memcpy")
     ("update_cells",		"cell lists update")
     ("update_forces",		"Lennard-Jones force update")
     ("update_neighbours",	"neighbour lists update")
     ("velocity_verlet",		"velocity-Verlet integration")
-    ("virial_sum",		"virial equation sum calculation")
+    ("virial_sum",		"virial equation sum reduction")
     ;
 
 /**
@@ -101,8 +103,13 @@ std::ostream& operator<<(std::ostream& os, accumulator<T> const& acc)
  */
 void perf::commit()
 {
+    std::vector<std::string> keys;
     BOOST_FOREACH(counter const& i, m_times) {
-	LOG(desc.at(i.first) << " average time: " << i.second);
+	keys.push_back(i.first);
+    }
+    std::sort(keys.begin(), keys.end());
+    BOOST_FOREACH(std::string const& key, keys) {
+	LOG(desc.at(key) << ": " << m_times[key]);
     }
 
     // write pending performance data to HDF5 file
