@@ -44,7 +44,7 @@ public:
     template <typename input_type>
     void operator()(cuda::vector<input_type> const& g_in, cuda::stream& stream)
     {
-	cuda::configure(BLOCKS, THREADS, THREADS * sizeof(output_type), stream);
+	cuda::configure(BLOCKS, THREADS, stream);
 	tag::reduce(g_in, g_block_sum, g_in.size());
 	cuda::copy(g_block_sum, h_block_sum, stream);
     }

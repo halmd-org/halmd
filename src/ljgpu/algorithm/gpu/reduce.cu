@@ -24,6 +24,8 @@
 namespace ljgpu { namespace cu { namespace reduce
 {
 
+enum { THREADS = gpu::reduce::THREADS };
+
 /**
  * unary transformations
  */
@@ -70,7 +72,7 @@ template <typename input_type, typename output_type,
 	  typename T, typename U>
 __device__ void reduce(T const* g_in, U* g_block_sum, uint n)
 {
-    extern __shared__ output_type s_vv[];
+    __shared__ output_type s_vv[THREADS];
 
     // load values from global device memory
     output_type vv = 0;
