@@ -221,6 +221,19 @@ public:
 	r2 *= s;
     }
 
+    template <typename T>
+    void gaussian(vector<T, 3>& v, T const& var)
+    {
+	gaussian(v[0], v[1], var);
+	gaussian(v[2], v[0], var);
+    }
+
+    template <typename T>
+    void gaussian(vector<T, 2>& v, T const& var)
+    {
+	gaussian(v[0], v[1], var);
+    }
+
 private:
     gsl_rng *rng_;
 };

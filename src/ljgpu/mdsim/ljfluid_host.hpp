@@ -138,6 +138,8 @@ private:
     void leapfrog_half();
     /** second leapfrog step of integration of equations of motion */
     void leapfrog_full();
+    /** random collision with heat bath */
+    void anderson_thermostat();
 
 private:
     using _Base::npart;
@@ -629,13 +631,28 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 }
 
 /**
+ * random collisions with heat bath
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::anderson_thermostat()
+{
+    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
+	BOOST_FOREACH(particle& p, *it) {
+	    if (rng_.uniform() < (thermostat_nu * timestep_)) {
+		rng_.gaussian(p.v, thermostat_temp);
+	    }
+	}
+    }
+}
+
+/**
  * MD simulation step
  */
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 {
     // nanosecond resolution process times
-    boost::array<timespec, 5> t;
+    boost::array<timespec, 7> t;
 
     // calculate particle positions
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
@@ -663,10 +680,17 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
     leapfrog_full();
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
+    if (thermostat_nu > 0) {
+	anderson_thermostat();
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[5]);
+
+	m_times["anderson_thermostat"] += t[5] - t[4];
+    }
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[6]);
 
     m_times["update_forces"] += t[3] - t[2];
     m_times["velocity_verlet"] += (t[1] - t[0]) + (t[4] - t[3]);
-    m_times["mdstep"] += t[4] - t[0];
+    m_times["mdstep"] += t[6] - t[0];
 }
 
 /**

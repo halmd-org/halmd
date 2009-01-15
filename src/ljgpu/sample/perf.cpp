@@ -35,6 +35,7 @@ namespace ljgpu
  * performance counter descriptions
  */
 perf::desc_map perf::desc = boost::assign::map_list_of
+    ("anderson_thermostat",	"Anderson thermostat")
     ("boltzmann",		"Boltzmann distribution")
     ("event_queue",		"event queue processing")
     ("hilbert_sort",		"Hilbert curve sort")
