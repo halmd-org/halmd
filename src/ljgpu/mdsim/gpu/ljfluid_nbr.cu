@@ -160,22 +160,22 @@ __device__ uint compute_neighbour_cell(int2 const& offset)
 /**
  * update neighbour list with particles of given cell
  */
-template <uint cell_size, typename U, bool same_cell, typename T, typename I>
+template <typename U, bool same_cell, typename T, typename I>
 __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* g_nbl, T const& r, int const& n, uint& count)
 {
-    __shared__ int s_n[cell_size];
-    __shared__ T s_r[cell_size];
+    __shared__ int s_n[CELL_SIZE];
+    __shared__ T s_r[CELL_SIZE];
 
     // compute cell index
     const uint cell = compute_neighbour_cell(offset);
 
     // load particles in cell
-    s_n[threadIdx.x] = g_cell[cell * cell_size + threadIdx.x];
+    s_n[threadIdx.x] = g_cell[cell * CELL_SIZE + threadIdx.x];
     s_r[threadIdx.x] = unpack(tex1Dfetch(tex<U>::r, s_n[threadIdx.x]));
     __syncthreads();
 
     if (n != VIRTUAL_PARTICLE) {
-	for (uint i = 0; i < cell_size; ++i) {
+	for (uint i = 0; i < CELL_SIZE; ++i) {
 	    // particle number of cell placeholder
 	    const int m = s_n[i];
 	    // skip placeholder particles
@@ -206,7 +206,6 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* 
 /**
  * update neighbour lists
  */
-template <uint cell_size>
 __global__ void update_neighbours(int const* g_cell, int* g_nbl, float4* __empty__)
 {
     // load particle from cell placeholder
@@ -250,37 +249,36 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl, float4* __empty
     //
 
     // visit this cell
-    update_cell_neighbours<cell_size, float4, true>(make_int3( 0,  0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, true>(make_int3( 0,  0,  0), g_cell, g_nbl, r, n, count);
     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1,  0, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1,  0, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(-1,  0,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3(+1,  0,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3( 0, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3( 0,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float4, false>(make_int3( 0,  0, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1,  0, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1,  0, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3( 0, -1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3( 0, +1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3( 0, -1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3( 0, +1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(-1,  0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3(+1,  0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3( 0, -1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3( 0, +1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3( 0,  0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float4, false>(make_int3( 0,  0, +1), g_cell, g_nbl, r, n, count);
 }
 
-template <uint cell_size>
 __global__ void update_neighbours(int const* g_cell, int* g_nbl, float2* __empty__)
 {
     // load particle from cell placeholder
@@ -290,16 +288,16 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl, float2* __empty
     uint count = 0;
 
     // visit this cell
-    update_cell_neighbours<cell_size, float2, true>(make_int2( 0,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, true>(make_int2( 0,  0), g_cell, g_nbl, r, n, count);
     // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-    update_cell_neighbours<cell_size, float2, false>(make_int2(-1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float2, false>(make_int2(+1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float2, false>(make_int2(-1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float2, false>(make_int2(+1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float2, false>(make_int2(-1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float2, false>(make_int2(+1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float2, false>(make_int2( 0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<cell_size, float2, false>(make_int2( 0, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, false>(make_int2(-1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, false>(make_int2(+1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, false>(make_int2(-1, +1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, false>(make_int2(+1, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, false>(make_int2(-1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, false>(make_int2(+1,  0), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, false>(make_int2( 0, -1), g_cell, g_nbl, r, n, count);
+    update_cell_neighbours<float2, false>(make_int2( 0, +1), g_cell, g_nbl, r, n, count);
 }
 
 /**
@@ -346,7 +344,6 @@ __global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
 /**
  * assign particles to cells
  */
-template <uint cell_size>
 __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int const* g_itag, int* g_otag)
 {
     __shared__ int s_offset[1];
@@ -366,7 +363,7 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
 	tag = g_itag[n];
     }
     // store particle in this block's cell
-    g_otag[blockIdx.x * cell_size + threadIdx.x] = tag;
+    g_otag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
 }
 
 /**
@@ -427,7 +424,7 @@ cuda::texture<float2> _2D::v(cu::ljfluid::tex<float2>::v);
 cuda::function<void (int*)>
     _Base::init_tags(cu::ljfluid::init_tags);
 cuda::function<void (uint const*, int const*, int const*, int*)>
-    _Base::assign_cells(cu::ljfluid::assign_cells<CELL_SIZE>);
+    _Base::assign_cells(cu::ljfluid::assign_cells);
 cuda::function<void (uint*, int*)>
     _Base::find_cell_offset(cu::ljfluid::find_cell_offset);
 cuda::function<void (int*)>
@@ -443,7 +440,7 @@ cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*
     _3D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, true>);
 
 cuda::function<void (int const*, int*, float4*)>
-    _3D::update_neighbours(cu::ljfluid::update_neighbours<CELL_SIZE>);
+    _3D::update_neighbours(cu::ljfluid::update_neighbours);
 cuda::function<void (float4 const*, uint*)>
     _3D::compute_cell(cu::ljfluid::compute_cell);
 cuda::function<void (const int*, float4*, float4*, float4*, int*)>
@@ -459,7 +456,7 @@ cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*
     _2D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, true>);
 
 cuda::function<void (int const*, int*, float2*)>
-    _2D::update_neighbours(cu::ljfluid::update_neighbours<CELL_SIZE>);
+    _2D::update_neighbours(cu::ljfluid::update_neighbours);
 cuda::function<void (float2 const*, uint*)>
     _2D::compute_cell(cu::ljfluid::compute_cell);
 cuda::function<void (const int*, float2*, float2*, float2*, int*)>
