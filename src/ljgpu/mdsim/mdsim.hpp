@@ -201,24 +201,22 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     // print GPU memory usage
     cuda_allocated_memory(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
-    if (!opt["disable-correlation"].as<bool>()) {
-	if (!opt["time"].empty()) {
-	    // set total simulation time
-	    tcf.time(opt["time"].as<float>(), fluid.timestep());
-	}
-	else {
-	    // set total number of simulation steps
-	    tcf.steps(opt["steps"].as<uint64_t>(), fluid.timestep());
-	}
-	// set sample rate for lowest block level
-	tcf.sample_rate(opt["sample-rate"].as<unsigned int>());
-	// set block size
-	tcf.block_size(opt["block-size"].as<unsigned int>());
-	// set maximum number of samples per block
-	tcf.max_samples(opt["max-samples"].as<uint64_t>());
-	// set q-vectors for spatial Fourier transformation
-	tcf.q_values(opt["q-values"].as<unsigned int>(), fluid.box());
+    if (!opt["time"].empty()) {
+	// set total simulation time
+	tcf.time(opt["time"].as<float>(), fluid.timestep());
     }
+    else {
+	// set total number of simulation steps
+	tcf.steps(opt["steps"].as<uint64_t>(), fluid.timestep());
+    }
+    // set sample rate for lowest block level
+    tcf.sample_rate(opt["sample-rate"].as<unsigned int>());
+    // set block size
+    tcf.block_size(opt["block-size"].as<unsigned int>());
+    // set maximum number of samples per block
+    tcf.max_samples(opt["max-samples"].as<uint64_t>());
+    // set q-vectors for spatial Fourier transformation
+    tcf.q_values(opt["q-values"].as<unsigned int>(), fluid.box());
 }
 
 /**
@@ -254,8 +252,10 @@ void mdsim<mdsim_backend>::operator()()
     traj.open(opt["output"].as<std::string>() + ".trj", trajectory::out);
     H5param(traj) << *this << fluid << tcf;
     // thermodynamic equilibrium properties
-    tep.open(opt["output"].as<std::string>() + ".tep");
-    H5param(tep) << *this << fluid << tcf;
+    if (!opt["disable-energy"].as<bool>()) {
+	tep.open(opt["output"].as<std::string>() + ".tep");
+	H5param(tep) << *this << fluid << tcf;
+    }
 
     // schedule first disk flush
     alarm(FLUSH_TO_DISK_INTERVAL);
@@ -283,7 +283,9 @@ void mdsim<mdsim_backend>::operator()()
 		tcf.sample(fluid.sample(), step, flush);
 	    }
 	    // sample thermodynamic equilibrium properties
-	    tep.sample(fluid.sample(), fluid.density(), time);
+	    if (!opt["disable-energy"].as<bool>()) {
+		tep.sample(fluid.sample(), fluid.density(), time);
+	    }
 	    // sample trajectory
 	    if (opt["enable-trajectory"].as<bool>() || step == 0) {
 		traj.write(fluid.sample(), time);
@@ -299,9 +301,12 @@ void mdsim<mdsim_backend>::operator()()
 		if (!opt["disable-correlation"].as<bool>()) {
 		    tcf.flush();
 		}
-		if (opt["enable-trajectory"].as<bool>())
+		if (opt["enable-trajectory"].as<bool>()) {
 		    traj.flush();
-		tep.flush();
+		}
+		if (!opt["disable-energy"].as<bool>()) {
+		    tep.flush();
+		}
 		prf.flush();
 		LOG("flushed HDF5 buffers to disk");
 		// schedule remaining runtime estimate
@@ -339,9 +344,12 @@ void mdsim<mdsim_backend>::operator()()
 		if (!opt["disable-correlation"].as<bool>()) {
 		    tcf.flush();
 		}
-		if (opt["enable-trajectory"].as<bool>())
+		if (opt["enable-trajectory"].as<bool>()) {
 		    traj.flush();
-		tep.flush();
+		}
+		if (!opt["disable-energy"].as<bool>()) {
+		    tep.flush();
+		}
 		prf.flush();
 		LOG("flushed HDF5 buffers to disk");
 		// schedule next disk flush
@@ -377,7 +385,9 @@ void mdsim<mdsim_backend>::operator()()
 	tcf.close();
     }
     traj.close();
-    tep.close();
+    if (!opt["disable-energy"].as<bool>()) {
+	tep.close();
+    }
     prf.close();
 }
 
