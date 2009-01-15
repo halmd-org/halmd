@@ -92,6 +92,13 @@ __device__ void gaussian(float4& r, float var)
     gaussian(r.z, r.w, var, state);
 }
 
+__device__ void gaussian(float3& r, float var)
+{
+    ushort3 state = g_state[GTID];
+    gaussian(r.x, r.y, var, state);
+    gaussian(r.z, r.x, var, state);
+}
+
 __device__ void gaussian(float2& r, float var)
 {
     ushort3 state = g_state[GTID];

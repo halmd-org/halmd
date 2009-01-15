@@ -21,16 +21,15 @@
 
 #include <cuda_wrapper.hpp>
 #include <ljgpu/mdsim/impl.hpp>
+#include <ljgpu/mdsim/gpu/base.hpp>
 #include <ljgpu/rng/gpu/uint48.cuh>
 
 namespace ljgpu { namespace gpu
 {
 
-template <template <int> class ljfluid_impl>
-struct ljfluid_base;
-
 template <>
 struct ljfluid_base<ljfluid_impl_gpu_cell>
+: public ljfluid_base<ljfluid_impl_gpu_base>
 {
     enum {
 	/** fixed number of placeholders per cell */
@@ -39,49 +38,28 @@ struct ljfluid_base<ljfluid_impl_gpu_cell>
 	VIRTUAL_PARTICLE = -1,
     };
 
-    static cuda::symbol<uint> npart;
-    static cuda::symbol<float> box;
-    static cuda::symbol<float> timestep;
-    static cuda::symbol<float> r_cut;
-    static cuda::symbol<float> rr_cut;
-    static cuda::symbol<float> en_cut;
-    static cuda::symbol<float> rri_smooth;
     static cuda::symbol<uint> ncell;
-
-    struct rand48
-    {
-	static cuda::symbol<uint48> a;
-	static cuda::symbol<uint48> c;
-	static cuda::symbol<ushort3*> state;
-    };
-
-    static cuda::function<void (float3*, const float2)> sample_smooth_function;
 };
-
-template <typename ljfluid_impl>
-struct ljfluid;
 
 template <>
 struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<3> >
-    : public ljfluid_base<ljfluid_impl_gpu_cell>
+: public ljfluid_base<ljfluid_impl_gpu_cell>, public ljfluid<ljfluid_impl_gpu_base<3> >
 {
     static cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
+    static cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep_nvt;
     static cuda::function<void (float4 const*, float4*, int*)> assign_cells;
     static cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)> update_cells;
-    static cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
-    static cuda::function<void (float4*, float)> boltzmann;
 };
 
 
 template <>
 struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<2> >
-    : public ljfluid_base<ljfluid_impl_gpu_cell>
+: public ljfluid_base<ljfluid_impl_gpu_cell>, public ljfluid<ljfluid_impl_gpu_base<2> >
 {
     static cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
+    static cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep_nvt;
     static cuda::function<void (float2 const*, float2*, int*)> assign_cells;
     static cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)> update_cells;
-    static cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
-    static cuda::function<void (float2*, float)> boltzmann;
 };
 
 }} // namespace ljgpu::gpu

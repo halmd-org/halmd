@@ -151,6 +151,9 @@ private:
     using _Base::r_smooth;
     using _Base::rri_smooth;
 #endif
+    using _Base::thermostat_nu;
+    using _Base::thermostat_temp;
+
     using _Base::m_sample;
     using _Base::m_times;
 

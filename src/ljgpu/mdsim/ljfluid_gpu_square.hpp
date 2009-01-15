@@ -93,6 +93,9 @@ private:
     using _Base::r_smooth;
     using _Base::rri_smooth;
 #endif
+    using _Base::thermostat_nu;
+    using _Base::thermostat_temp;
+
     using _Base::m_sample;
     using _Base::m_times;
 
@@ -396,7 +399,12 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(gpu_vector_type), stream);
-    _gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+    if (thermostat_nu > 0) {
+	_gpu::mdstep_nvt(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+    }
+    else {
+	_gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+    }
 }
 
 } // namespace ljgpu

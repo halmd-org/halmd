@@ -25,7 +25,7 @@ namespace ljgpu { namespace cu { namespace ljfluid
 /**
  * MD simulation step
  */
-template <typename T, typename TT, typename U>
+template <typename T, typename TT, ensemble_type ensemble, typename U>
 __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 {
     extern __shared__ T s_r[];
@@ -64,6 +64,10 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 
     // second leapfrog step of integration of equations of motion
     leapfrog_full_step(v, f.f0);
+    // random collisions with heat bath
+    if (ensemble == NVT) {
+	anderson_thermostat(v);
+    }
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
@@ -82,38 +86,16 @@ typedef ljfluid<ljfluid_impl_gpu_square<3> > _3D;
 typedef ljfluid<ljfluid_impl_gpu_square<2> > _2D;
 
 /**
- * device constant wrappers
- */
-cuda::symbol<uint> _Base::npart(cu::ljfluid::npart);
-cuda::symbol<float> _Base::box(cu::ljfluid::box);
-cuda::symbol<float> _Base::timestep(cu::ljfluid::timestep);
-cuda::symbol<float> _Base::r_cut(cu::ljfluid::r_cut);
-cuda::symbol<float> _Base::rr_cut(cu::ljfluid::rr_cut);
-cuda::symbol<float> _Base::en_cut(cu::ljfluid::en_cut);
-cuda::symbol<float> _Base::rri_smooth(cu::ljfluid::rri_smooth);
-
-cuda::symbol<uint48> _Base::rand48::a(cu::ljfluid::rand48::a);
-cuda::symbol<uint48> _Base::rand48::c(cu::ljfluid::rand48::c);
-cuda::symbol<ushort3*> _Base::rand48::state(cu::ljfluid::rand48::g_state);
-
-/**
  * device function wrappers
  */
-cuda::function<void (float3*, const float2)>
-    _Base::sample_smooth_function(cu::ljfluid::sample_smooth_function);
-
-cuda::function<void (float4*, float4*, float4*, float4 const*)>
-    _3D::inteq(cu::ljfluid::inteq<float3>);
-cuda::function<void (float4*, float)>
-    _3D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float4*, float4*, float4*, float*, float*)>
-    _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3>);
+    _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE>);
+cuda::function<void (float4*, float4*, float4*, float*, float*)>
+    _3D::mdstep_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT>);
 
-cuda::function<void (float2*, float2*, float2*, float2 const*)>
-    _2D::inteq(cu::ljfluid::inteq<float2>);
-cuda::function<void (float2*, float)>
-    _2D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float2*, float2*, float2*, float*, float*)>
-    _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2>);
+    _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE>);
+cuda::function<void (float2*, float2*, float2*, float*, float*)>
+    _2D::mdstep_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT>);
 
 }} // namespace ljgpu::gpu

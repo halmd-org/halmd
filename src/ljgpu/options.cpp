@@ -316,6 +316,7 @@ void options::parse(po::options_description const& opt)
 	po::conflicting_options(vm, "density", "box-length");
 	po::conflicting_options(vm, "steps", "time");
 	po::dependent_option(vm, "trajectory-sample", "trajectory");
+	po::dependent_option(vm, "thermostat", "temperature");
     }
     catch (exception const& e) {
 	cerr << PROGRAM_NAME ": " << e.what() << "\n";
@@ -451,6 +452,8 @@ options_description<ljfluid_impl_base>::options_description()
 	 "truncate potential at cutoff radius")
 	("smoothing", po::value<float>()->default_value(0.001),
 	 "C²-potential smoothing factor")
+	("thermostat", po::value<float>()->default_value(0),
+	 "heat bath collision probability")
 	;
 }
 

@@ -91,6 +91,8 @@ private:
     void init_cells(boost::false_type const&) {}
     void threads(boost::true_type const&);
     void threads(boost::false_type const&) {}
+    void thermostat(boost::true_type const&);
+    void thermostat(boost::false_type const&) {}
 
     void cuda_device(boost::true_type const&);
     void cuda_device(boost::false_type const&) {}
@@ -152,6 +154,8 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 
     init_cells(boost::is_base_of<ljfluid_impl_host<dimension>, impl_type>());
     init_cells(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
+
+    thermostat(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
 
     // initialize random number generator with seed
     if (opt["random-seed"].empty()) {
@@ -411,6 +415,16 @@ template <typename mdsim_backend>
 void mdsim<mdsim_backend>::init_cells(boost::true_type const&)
 {
     fluid.init_cells();
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::thermostat(boost::true_type const&)
+{
+    float const nu = opt["thermostat"].as<float>();
+    float const temp = opt["temperature"].as<float>();
+    if (nu > 0) {
+	fluid.thermostat(nu, temp);
+    }
 }
 
 /**

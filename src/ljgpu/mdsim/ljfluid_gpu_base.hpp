@@ -62,6 +62,8 @@ public:
     /** set potential smoothing function scale parameter */
     void potential_smoothing(float_type value);
 #endif
+    /** set heat bath collision probability and temperature */
+    void thermostat(float_type nu, float_type temp);
 
     /** seed random number generator */
     void rng(unsigned int seed);
@@ -113,6 +115,8 @@ protected:
     using _Base::r_smooth;
     using _Base::rri_smooth;
 #endif
+    using _Base::thermostat_nu;
+    using _Base::thermostat_temp;
 
     using _Base::m_sample;
     using _Base::m_times;
@@ -256,6 +260,19 @@ void ljfluid_gpu_base<ljfluid_impl>::timestep(float_type value)
     }
 }
 
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
+{
+    _Base::thermostat(nu, temp);
+
+    try {
+	cuda::copy(thermostat_nu, _gpu::thermostat_nu);
+	cuda::copy(thermostat_temp, _gpu::thermostat_temp);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to set heat bath device symbols");
+    }
+}
 /**
  * seed random number generator
  */

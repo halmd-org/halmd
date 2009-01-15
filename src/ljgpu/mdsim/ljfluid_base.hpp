@@ -44,6 +44,7 @@ public:
     enum { dimension = traits_type::dimension };
 
 public:
+    ljfluid_base();
     /** set number of particles */
     void particles(unsigned int value);
     /** set particle density */
@@ -58,6 +59,8 @@ public:
     /** set potential smoothing function scale parameter */
     void potential_smoothing(float_type value);
 #endif
+    /** set heat bath collision probability and temperature */
+    void thermostat(float_type nu, float_type temp);
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
@@ -105,12 +108,21 @@ protected:
     /** squared inverse potential smoothing function scale parameter */
     float_type rri_smooth;
 #endif
+    /** heat bath collision probability */
+    float_type thermostat_nu;
+    /** heat bath temperature */
+    float_type thermostat_temp;
 
     /** trajectory sample in swappable host memory */
     sample_type m_sample;
     /** GPU time accumulators */
     perf::counters m_times;
 };
+
+template <typename ljfluid_impl>
+ljfluid_base<ljfluid_impl>::ljfluid_base() : thermostat_nu(0)
+{
+}
 
 template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::particles(unsigned int value)
@@ -182,6 +194,16 @@ void ljfluid_base<ljfluid_impl>::timestep(float_type value)
     // set simulation timestep
     timestep_ = value;
     LOG("simulation timestep: " << timestep_);
+}
+
+template <typename ljfluid_impl>
+void ljfluid_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
+{
+    thermostat_nu = nu;
+    LOG("heat bath collision probability: " << thermostat_nu);
+
+    thermostat_temp = temp;
+    LOG("heat bath temperature: " << thermostat_temp);
 }
 
 template <typename ljfluid_impl>

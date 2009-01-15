@@ -130,7 +130,7 @@ __device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offse
 /**
  * 3-dimensional MD simulation step
  */
-template <uint block_size>
+template <uint block_size, ensemble_type ensemble>
 __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g_tag, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
@@ -230,6 +230,10 @@ __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g
 #else
     leapfrog_full_step(v, f);
 #endif
+    // random collisions with heat bath
+    if (ensemble == NVT) {
+	anderson_thermostat(v);
+    }
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
@@ -245,7 +249,7 @@ __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g
 /**
  * 2-dimensional MD simulation step
  */
-template <uint block_size>
+template <uint block_size, ensemble_type ensemble>
 __global__ void mdstep(float2 const* g_r, float2* g_v, float2* g_f, int const* g_tag, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
@@ -291,6 +295,10 @@ __global__ void mdstep(float2 const* g_r, float2* g_v, float2* g_f, int const* g
 #else
     leapfrog_full_step(v, f);
 #endif
+    // random collisions with heat bath
+    if (ensemble == NVT) {
+	anderson_thermostat(v);
+    }
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
@@ -480,42 +488,24 @@ typedef ljfluid<ljfluid_impl_gpu_cell<2> > _2D;
 /**
  * device constant wrappers
  */
-cuda::symbol<uint> _Base::npart(cu::ljfluid::npart);
-cuda::symbol<float> _Base::box(cu::ljfluid::box);
-cuda::symbol<float> _Base::timestep(cu::ljfluid::timestep);
-cuda::symbol<float> _Base::r_cut(cu::ljfluid::r_cut);
-cuda::symbol<float> _Base::rr_cut(cu::ljfluid::rr_cut);
-cuda::symbol<float> _Base::en_cut(cu::ljfluid::en_cut);
-cuda::symbol<float> _Base::rri_smooth(cu::ljfluid::rri_smooth);
 cuda::symbol<uint> _Base::ncell(cu::ljfluid::ncell);
-
-cuda::symbol<uint48> _Base::rand48::a(cu::ljfluid::rand48::a);
-cuda::symbol<uint48> _Base::rand48::c(cu::ljfluid::rand48::c);
-cuda::symbol<ushort3*> _Base::rand48::state(cu::ljfluid::rand48::g_state);
 
 /**
  * device function wrappers
  */
-cuda::function<void (float3*, const float2)>
-    _Base::sample_smooth_function(cu::ljfluid::sample_smooth_function);
-
-cuda::function<void (float4*, float4*, float4*, float4 const*)>
-    _3D::inteq(cu::ljfluid::inteq<float3>);
-cuda::function<void (float4*, float)>
-    _3D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep(cu::ljfluid::mdstep<CELL_SIZE>);
+    _3D::mdstep(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVE>);
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
+    _3D::mdstep_nvt(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVT>);
 cuda::function<void (float4 const*, float4*, int*)>
     _3D::assign_cells(cu::ljfluid::assign_cells<CELL_SIZE, float3>);
 cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)>
     _3D::update_cells(cu::ljfluid::update_cells<CELL_SIZE, float3>);
 
-cuda::function<void (float2*, float2*, float2*, float2 const*)>
-    _2D::inteq(cu::ljfluid::inteq<float2>);
-cuda::function<void (float2*, float)>
-    _2D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep(cu::ljfluid::mdstep<CELL_SIZE>);
+    _2D::mdstep(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVE>);
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
+    _2D::mdstep_nvt(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVT>);
 cuda::function<void (float2 const*, float2*, int*)>
     _2D::assign_cells(cu::ljfluid::assign_cells<CELL_SIZE, float2>);
 cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)>

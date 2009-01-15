@@ -109,6 +109,9 @@ private:
     using _Base::r_smooth;
     using _Base::rri_smooth;
 #endif
+    using _Base::thermostat_nu;
+    using _Base::thermostat_temp;
+
     using _Base::m_sample;
     using _Base::m_times;
 
@@ -378,8 +381,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 	// set periodic box traversal vectors to zero
 	cuda::memset(g_part.R, 0);
 	// calculate forces, potential energy and virial equation sum
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	_gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
+	update_forces(stream_);
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -585,7 +587,12 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-    _gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
+    if (thermostat_nu > 0) {
+	_gpu::mdstep_nvt(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
+    }
+    else {
+	_gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
+    }
 }
 
 template <int dimension>
