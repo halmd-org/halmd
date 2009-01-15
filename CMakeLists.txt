@@ -45,45 +45,6 @@ set(HDF5_FIND_REQUIRED TRUE)
 set(HDF5_FIND_QUIETLY TRUE)
 find_package(HDF5)
 
-# Add program variant compile flags to cmake GUI
-set(ljgpu_VARIANT_CUDA TRUE CACHE BOOL
-  "Use CUDA")
-set(ljgpu_VARIANT_CELL FALSE CACHE BOOL
-  "Use fixed-size cell lists")
-set(ljgpu_VARIANT_CELL_SUMMATION_ORDER FALSE CACHE BOOL
-  "Use opposite cell summation order")
-set(ljgpu_VARIANT_DSFUN FALSE CACHE BOOL
-  "Use double-single precision functions")
-set(ljgpu_VARIANT_NEIGHBOUR TRUE CACHE BOOL
-  "Use Verlet neighbour lists")
-set(ljgpu_VARIANT_HILBERT TRUE CACHE BOOL
-  "Use Hilbert space-filling curve particle ordering")
-set(ljgpu_VARIANT_C2POT FALSE CACHE BOOL
-  "Use C2 potential smoothing")
-
-if(ljgpu_VARIANT_CUDA)
-  add_definitions(-DUSE_CUDA)
-  if(ljgpu_VARIANT_NEIGHBOUR)
-    add_definitions(-DUSE_NEIGHBOUR)
-    if(ljgpu_VARIANT_HILBERT)
-      add_definitions(-DUSE_HILBERT_ORDER)
-    endif(ljgpu_VARIANT_HILBERT)
-  else(ljgpu_VARIANT_NEIGHBOUR)
-    if(ljgpu_VARIANT_CELL)
-      add_definitions(-DUSE_CELL)
-      if(ljgpu_VARIANT_CELL_SUMMATION_ORDER)
-	add_definitions(-DUSE_CELL_SUMMATION_ORDER)
-      endif(ljgpu_VARIANT_CELL_SUMMATION_ORDER)
-      if(ljgpu_VARIANT_DSFUN)
-	add_definitions(-DUSE_DSFUN)
-      endif(ljgpu_VARIANT_DSFUN)
-    endif(ljgpu_VARIANT_CELL)
-  endif(ljgpu_VARIANT_NEIGHBOUR)
-endif(ljgpu_VARIANT_CUDA)
-if(ljgpu_VARIANT_C2POT)
-  add_definitions(-DUSE_POTENTIAL_SMOOTHING)
-endif(ljgpu_VARIANT_C2POT)
-
 include_directories(${ljgpu_SOURCE_DIR}/include)
 include_directories(${ljgpu_SOURCE_DIR}/src)
 include_directories(${ljgpu_BINARY_DIR}/src)

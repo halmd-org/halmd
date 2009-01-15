@@ -4,6 +4,29 @@ add_subdirectory(rng)
 add_subdirectory(sample)
 add_subdirectory(util)
 
+# add program variant compile flags to cmake GUI
+set(ljgpu_VARIANT_CELL_SUMMATION_ORDER TRUE CACHE BOOL
+  "Use opposite cell summation order")
+set(ljgpu_VARIANT_CELL_DSFUN TRUE CACHE BOOL
+  "Use double-single precision functions in cell summation")
+set(ljgpu_VARIANT_HILBERT_ORDER TRUE CACHE BOOL
+  "Use Hilbert space-filling curve particle ordering")
+set(ljgpu_VARIANT_HILBERT_ALT_3D FALSE CACHE BOOL
+  "Use alternative 3D Hilbert curve vertex rules")
+
+if(ljgpu_VARIANT_HILBERT_ORDER)
+  add_definitions(-DUSE_HILBERT_ORDER)
+endif(ljgpu_VARIANT_HILBERT_ORDER)
+if(ljgpu_VARIANT_CELL_SUMMATION_ORDER)
+  add_definitions(-DUSE_CELL_SUMMATION_ORDER)
+endif(ljgpu_VARIANT_CELL_SUMMATION_ORDER)
+if(ljgpu_VARIANT_CELL_DSFUN)
+  add_definitions(-DUSE_CELL_DSFUN)
+endif(ljgpu_VARIANT_CELL_DSFUN)
+if(ljgpu_VARIANT_HILBERT_ALT_3D)
+  add_definitions(-DUSE_HILBERT_ALT_3D)
+endif(ljgpu_VARIANT_HILBERT_ALT_3D)
+
 # Generate version header file
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/version.h.in

@@ -152,7 +152,7 @@ __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g
     // virial equation sum contribution
     float virial = 0;
 
-#ifdef USE_DSFUN
+#ifdef USE_CELL_DSFUN
     dfloat3 f(make_float3(0, 0, 0));
 #else
     float3 f(make_float3(0, 0, 0));
@@ -234,7 +234,7 @@ __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g
 #endif /* USE_CELL_SUMMATION_ORDER */
 
     // second leapfrog step as part of integration of equations of motion
-#ifdef USE_DSFUN
+#ifdef USE_CELL_DSFUN
     leapfrog_full_step(v, f.f0);
 #else
     leapfrog_full_step(v, f);
@@ -246,7 +246,7 @@ __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
-#ifdef USE_DSFUN
+#ifdef USE_CELL_DSFUN
     g_f[GTID] = pack(f.f0);
 #else
     g_f[GTID] = pack(f);
@@ -271,7 +271,7 @@ __global__ void mdstep(float2 const* g_r, float2* g_v, float2* g_f, int const* g
     // virial equation sum contribution
     float virial = 0;
 
-#ifdef USE_DSFUN
+#ifdef USE_CELL_DSFUN
     dfloat2 f(make_float2(0, 0));
 #else
     float2 f(make_float2(0, 0));
@@ -299,7 +299,7 @@ __global__ void mdstep(float2 const* g_r, float2* g_v, float2* g_f, int const* g
 #endif
 
     // second leapfrog step as part of integration of equations of motion
-#ifdef USE_DSFUN
+#ifdef USE_CELL_DSFUN
     leapfrog_full_step(v, f.f0);
 #else
     leapfrog_full_step(v, f);
@@ -311,7 +311,7 @@ __global__ void mdstep(float2 const* g_r, float2* g_v, float2* g_f, int const* g
 
     // store particle associated with this thread
     g_v[GTID] = pack(v);
-#ifdef USE_DSFUN
+#ifdef USE_CELL_DSFUN
     g_f[GTID] = pack(f.f0);
 #else
     g_f[GTID] = pack(f);

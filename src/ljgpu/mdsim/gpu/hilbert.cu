@@ -114,7 +114,7 @@ __global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
 	}
 	else if (v == 3 || v == 4) {
 	    vertex_swap(vc, a, c, MASK);
-#ifdef USE_ALTERNATIVE_HILBERT_3D
+#ifdef USE_HILBERT_ALT_3D
 	    vertex_swap(vc, b, d, MASK);
 	    vertex_swap(vc, e, g, MASK);
 #endif
