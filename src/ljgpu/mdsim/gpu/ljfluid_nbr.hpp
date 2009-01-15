@@ -33,7 +33,7 @@ struct ljfluid_base<ljfluid_impl_gpu_neighbour>
 {
     enum {
 	/** fixed number of placeholders per cell */
-	CELL_SIZE = 32,
+	CELL_SIZE = 64,
 	/** virtual particle tag */
 	VIRTUAL_PARTICLE = -1,
     };
