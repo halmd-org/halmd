@@ -316,6 +316,7 @@ void options::parse(po::options_description const& opt)
 	po::conflicting_options(vm, "density", "box-length");
 	po::conflicting_options(vm, "steps", "time");
 	po::dependent_option(vm, "trajectory-sample", "trajectory");
+	po::dependent_option(vm, "discard-velocities", "trajectory-sample");
 	po::dependent_option(vm, "thermostat", "temperature");
     }
     catch (exception const& e) {
@@ -415,6 +416,8 @@ options_description<mdsim_impl>::options_description()
 	 "trajectory input file")
 	("trajectory-sample,S", po::value<int64_t>(),
 	 "trajectory sample for initial state")
+	("discard-velocities", po::bool_switch(),
+	 "reset velocities to Boltzmann distribution")
 	;
     add(mdsim_desc);
 

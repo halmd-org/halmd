@@ -198,7 +198,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 	fluid.lattice();
     }
 
-    if (opt["trajectory-sample"].empty()) {
+    if (opt["trajectory-sample"].empty() || opt["discard-velocities"].as<bool>()) {
 	// set system temperature according to Maxwell-Boltzmann distribution
 	fluid.temperature(opt["temperature"].as<float>());
     }
