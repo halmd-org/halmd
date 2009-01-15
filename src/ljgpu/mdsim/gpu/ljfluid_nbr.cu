@@ -36,10 +36,8 @@ __constant__ uint ncell;
 __constant__ uint nbl_size;
 /** neighbour list stride */
 __constant__ uint nbl_stride;
-/** potential cutoff radius with cell skin */
-__constant__ float r_cell;
-/** squared potential radius distance with cell skin */
-__constant__ float rr_cell;
+/** squared potential cutoff distance with neighbour list skin */
+__constant__ float rr_nbl;
 
 /** n-dimensional particle texture references */
 template <typename T = void>
@@ -195,7 +193,7 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* 
 	    const float rr = dr * dr;
 
 	    // enforce cutoff length with neighbour list skin
-	    if (rr <= rr_cell && count < nbl_size) {
+	    if (rr <= rr_nbl && count < nbl_size) {
 		// scattered write to neighbour list
 		g_nbl[count * nbl_stride + n] = m;
 		// increment neighbour list particle count
@@ -410,8 +408,7 @@ typedef ljfluid<ljfluid_impl_gpu_neighbour<2> > _2D;
 cuda::symbol<uint> _Base::ncell(cu::ljfluid::ncell);
 cuda::symbol<uint> _Base::nbl_size(cu::ljfluid::nbl_size);
 cuda::symbol<uint> _Base::nbl_stride(cu::ljfluid::nbl_stride);
-cuda::symbol<float> _Base::r_cell(cu::ljfluid::r_cell);
-cuda::symbol<float> _Base::rr_cell(cu::ljfluid::rr_cell);
+cuda::symbol<float> _Base::rr_nbl(cu::ljfluid::rr_nbl);
 
 /**
  * device texture wrappers

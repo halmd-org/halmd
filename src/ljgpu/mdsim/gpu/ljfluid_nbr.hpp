@@ -41,8 +41,7 @@ struct ljfluid_base<ljfluid_impl_gpu_neighbour>
     static cuda::symbol<uint> ncell;
     static cuda::symbol<uint> nbl_size;
     static cuda::symbol<uint> nbl_stride;
-    static cuda::symbol<float> r_cell;
-    static cuda::symbol<float> rr_cell;
+    static cuda::symbol<float> rr_nbl;
 
     static cuda::texture<int> tag;
 

@@ -80,30 +80,31 @@ public:
 private:
     /** backend-specific API wrappers */
     void cutoff_radius(boost::true_type const&);
-    void cutoff_radius(boost::false_type const&) {}
     void potential_smoothing(boost::true_type const&);
-    void potential_smoothing(boost::false_type const&) {}
     void pair_separation(boost::true_type const&);
-    void pair_separation(boost::false_type const&) {}
     void cell_occupancy(boost::true_type const&);
-    void cell_occupancy(boost::false_type const&) {}
+    void nbl_skin(boost::true_type const&);
     void init_cells(boost::true_type const&);
-    void init_cells(boost::false_type const&) {}
     void init_event_list(boost::true_type const&);
-    void init_event_list(boost::false_type const&) {}
     void threads(boost::true_type const&);
-    void threads(boost::false_type const&) {}
     void thermostat(boost::true_type const&);
-    void thermostat(boost::false_type const&) {}
-
     void cuda_device(boost::true_type const&);
-    void cuda_device(boost::false_type const&) {}
     void cuda_allocated_memory(boost::true_type const&);
-    void cuda_allocated_memory(boost::false_type const&) {}
-
     void stream(boost::true_type const&);
-    void stream(boost::false_type const&) {}
     void copy(boost::true_type const&);
+
+    void cutoff_radius(boost::false_type const&) {}
+    void potential_smoothing(boost::false_type const&) {}
+    void pair_separation(boost::false_type const&) {}
+    void cell_occupancy(boost::false_type const&) {}
+    void nbl_skin(boost::false_type const&) {}
+    void init_cells(boost::false_type const&) {}
+    void init_event_list(boost::false_type const&) {}
+    void threads(boost::false_type const&) {}
+    void thermostat(boost::false_type const&) {}
+    void cuda_device(boost::false_type const&) {}
+    void cuda_allocated_memory(boost::false_type const&) {}
+    void stream(boost::false_type const&) {}
     void copy(boost::false_type const&) {}
 
     /** bind process to CPU core(s) */
@@ -153,11 +154,12 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     potential_smoothing(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
     pair_separation(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
-    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
     cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_cell<dimension>, impl_type>());
+    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
+    nbl_skin(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
     threads(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
-    init_cells(boost::is_base_of<ljfluid_impl_host<dimension>, impl_type>());
+    nbl_skin(boost::is_base_of<ljfluid_impl_host<dimension>, impl_type>());
     init_cells(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
     thermostat(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
@@ -428,6 +430,12 @@ template <typename mdsim_backend>
 void mdsim<mdsim_backend>::cell_occupancy(boost::true_type const&)
 {
     fluid.cell_occupancy(opt["cell-occupancy"].as<float>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::nbl_skin(boost::true_type const&)
+{
+    fluid.nbl_skin(opt["skin"].as<float>());
 }
 
 template <typename mdsim_backend>

@@ -53,6 +53,8 @@ public:
     void threads(unsigned int value);
     /** set desired average cell occupancy */
     void cell_occupancy(float_type value);
+    /** set neighbour list skin */
+    void nbl_skin(float value);
 
     /** restore system state from phase space sample */
     void restore(sample_visitor visitor);
@@ -144,11 +146,14 @@ private:
     float_type cell_occupancy_;
     /** number of placeholders per cell */
     unsigned int cell_size_;
+
+    /** neighbour list skin */
+    float_type r_skin;
+    /** cutoff distance with neighbour list skin */
+    float_type r_cut_skin;
     /** number of placeholders per neighbour list */
     unsigned int nbl_size;
 
-    /** cell skin */
-    float_type r_skin;
     /** sum over maximum velocity magnitudes since last cell lists update */
     float_type v_max_sum;
 
@@ -279,9 +284,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
     // derive cell length from number of cells
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
-    // set cell skin
-    r_skin = std::max(0.f, cell_length_ - r_cut);
-    LOG("cell skin: " << r_skin);
 
     // set total number of cell placeholders
     nplace = pow(ncell, dimension) * cell_size_;
@@ -298,21 +300,37 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
 	LOG_WARNING("average cell occupancy is larger than 0.5");
     }
 
+    try {
+	cuda::copy(ncell, _gpu::ncell);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to copy cell parameters to device symbols");
+    }
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
+{
+    r_skin = value;
+    r_cut_skin = r_cut + r_skin;
+    LOG("neighbour list skin: " << r_skin);
+
+    if (r_cut_skin > cell_length_) {
+	throw exception("neighbour list skin is larger than cell length");
+    }
+
     // volume of n-dimensional sphere with neighbour list radius
-    float_type nbl_sphere = ((dimension + 1) * M_PI / 3) * std::pow(cell_length_, dimension);
+    float nbl_sphere = ((dimension + 1) * M_PI / 3) * std::pow(r_cut_skin, dimension);
     // set number of placeholders per neighbour list
     nbl_size = std::ceil((density_ / value) * nbl_sphere);
     LOG("number of placeholders per neighbour list: " << nbl_size);
 
-    // copy cell parameters to device symbols
     try {
-	cuda::copy(ncell, _gpu::ncell);
-	cuda::copy(cell_length_, _gpu::r_cell);
-	cuda::copy(std::pow(cell_length_, 2), _gpu::rr_cell);
+	cuda::copy(std::pow(r_cut_skin, 2), _gpu::rr_nbl);
 	cuda::copy(nbl_size, _gpu::nbl_size);
     }
     catch (cuda::error const&) {
-	throw exception("failed to copy cell parameters to device symbols");
+	throw exception("failed to copy neighbour list parameters to device symbols");
     }
 
 #if defined(USE_HILBERT_ORDER)

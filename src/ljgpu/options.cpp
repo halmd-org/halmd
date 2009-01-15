@@ -476,6 +476,8 @@ options_description<ljfluid_impl_gpu_neighbour>::options_description()
     add_options()
 	("cell-occupancy", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
+	("skin", po::value<float>()->default_value(0.3),
+	 "neighbour list skin")
 	;
 }
 
@@ -489,6 +491,10 @@ options_description<ljfluid_impl_gpu_cell>::options_description()
 
 options_description<ljfluid_impl_host>::options_description()
 {
+    add_options()
+	("skin", po::value<float>()->default_value(0.3),
+	 "neighbour list skin")
+	;
 }
 
 options_description<hardsphere_impl>::options_description()

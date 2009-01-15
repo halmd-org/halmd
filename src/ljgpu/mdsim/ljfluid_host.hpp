@@ -79,10 +79,8 @@ public:
 public:
     /** set number of particles */
     void particles(unsigned int value);
-    /** set potential cutoff radius */
-    void cutoff_radius(float_type value);
-    /** initialize cell lists */
-    void init_cells();
+    /** set neighbour list skin */
+    void nbl_skin(float value);
 
     /** set system state from phase space sample */
     void restore(sample_visitor visitor);
@@ -97,8 +95,6 @@ public:
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
-    /** returns potential cutoff radius */
-    float_type cutoff_radius() const { return r_cut; }
     /** returns number of cells per dimension */
     int cells() const { return ncell; }
     /** returns cell length */
@@ -168,23 +164,6 @@ private:
 };
 
 /**
- * set potential cutoff radius
- */
-template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::cutoff_radius(float_type value)
-{
-    _Base::cutoff_radius(value);
-
-    // neighbour list skin
-    r_skin = 0.5;
-    LOG("neighbour list skin: " << r_skin);
-    // cutoff radius with neighbour list skin
-    r_cut_skin = r_skin + r_cut;
-    // squared cutoff radius with neighbour list skin
-    rr_cut_skin = r_cut_skin * r_cut_skin;
-}
-
-/**
  * set number of particles in system
  */
 template <int dimension>
@@ -224,12 +203,17 @@ void ljfluid<ljfluid_impl_host<dimension> >::restore(sample_visitor visitor)
     compute_forces();
 }
 
-/**
- * initialize cell lists
- */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::init_cells()
+void ljfluid<ljfluid_impl_host<dimension> >::nbl_skin(float value)
 {
+    r_skin = value;
+    LOG("neighbour list skin: " << r_skin);
+
+    // cutoff radius with neighbour list skin
+    r_cut_skin = r_skin + r_cut;
+    // squared cutoff radius with neighbour list skin
+    rr_cut_skin = r_cut_skin * r_cut_skin;
+
     // number of cells per dimension
     ncell = std::floor(box_ / r_cut_skin);
     LOG("number of cells per dimension: " << ncell);
