@@ -17,7 +17,6 @@
  */
 
 #include <ljgpu/sample/H5param.hpp>
-#include <ljgpu/util/H5xx.hpp>
 
 namespace ljgpu
 {
@@ -39,7 +38,7 @@ H5param::H5param(H5::H5File file)
 /**
  * create or open HDF5 group
  */
-H5::Group H5param::operator[](std::string const& name)
+H5xx::group H5param::operator[](std::string const& name)
 {
     try {
 	H5XX_NO_AUTO_PRINT(H5::GroupIException);

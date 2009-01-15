@@ -83,7 +83,7 @@ public:
     void nbl_skin(float value);
 
     /** set system state from phase space sample */
-    void restore(sample_visitor visitor);
+    void sample(sample_visitor visitor);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -95,6 +95,8 @@ public:
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
+    /** returns trajectory sample */
+    sample_type const& sample() const { return m_sample; }
     /** returns number of cells per dimension */
     int cells() const { return ncell; }
     /** returns cell length */
@@ -184,17 +186,14 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
  * set system state from phase space sample
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::restore(sample_visitor visitor)
+void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
 {
-    visitor(m_sample);
+    _Base::sample(visitor);
 
+    // add particles to cell lists
     for (unsigned int i = 0; i < npart; ++i) {
-	// apply periodic boundary conditions
-	vector_type const r = make_periodic(m_sample.r[i], box_);
-	// add particle to appropriate cell list
-	compute_cell(r).push_back(particle(r, m_sample.v[i], i));
+	compute_cell(m_sample.r[i]).push_back(particle(m_sample.r[i], m_sample.v[i], i));
     }
-
     // update Verlet neighbour lists
     update_neighbours();
     // reset sum over maximum velocity magnitudes to zero

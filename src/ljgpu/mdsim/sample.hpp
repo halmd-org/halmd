@@ -50,6 +50,8 @@ struct mdsim_sample<ljfluid_impl_gpu_base<dimension> >
     double en_pot;
     /** virial equation sum per particle */
     double virial;
+    /** simulation box length */
+    float box;
 };
 
 template <int dimension>
@@ -69,6 +71,8 @@ struct mdsim_sample<ljfluid_impl_host<dimension> >
     double en_pot;
     /** virial equation sum per particle */
     double virial;
+    /** simulation box length */
+    float box;
 };
 
 } // namespace ljgpu

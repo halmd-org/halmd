@@ -30,9 +30,7 @@
 #include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/rng/gsl_rng.hpp>
-#include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/sample/perf.hpp>
-#include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/util/timer.hpp>
@@ -65,10 +63,10 @@ class hardsphere<hardsphere_impl<dimension> > : public mdsim_base<hardsphere_imp
     //
 
 public:
-    typedef mdsim_traits<hardsphere_impl<dimension> > traits_type;
-    typedef typename traits_type::float_type float_type;
-    typedef typename traits_type::vector_type vector_type;
-    typedef typename traits_type::sample_type sample_type;
+    typedef mdsim_base<hardsphere_impl<dimension> > _Base;
+    typedef typename _Base::float_type float_type;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::sample_type sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
 
     typedef std::list<unsigned int> cell_type;
@@ -127,17 +125,13 @@ public:
     void particles(unsigned int value);
     /** set pair separation at which particle collision occurs */
     void pair_separation(double value);
-    /** set particle density */
-    void density(double value);
-    /** set periodic box length */
-    void box(double value);
     /** initialize cells */
     void init_cells();
     /** set simulation timestep */
     void timestep(double value);
 
     /** set system state from phase space sample */
-    void restore(sample_visitor visitor);
+    void sample(sample_visitor visitor);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -149,12 +143,10 @@ public:
 
     /** returns number of particles */
     unsigned int const& particles() const { return npart; }
+    /** returns trajectory sample */
+    sample_type const& sample() const { return m_sample; }
     /** returns pair separation at which particle collision occurs */
     double const& pair_separation() const { return pair_sep_; }
-    /** returns particle density */
-    double const& density() const { return density_; }
-    /** returns periodic box length */
-    double const& box() const { return box_; }
     /** returns number of cells per dimension */
     unsigned int const& cells() const { return ncell; }
     /** returns cell length */
@@ -171,8 +163,6 @@ public:
     void mdstep();
     /** sample phase space */
     void copy();
-    /** returns trajectory sample */
-    sample_type const& sample() const { return m_sample; }
     /** returns and resets CPU or GPU time accumulators */
     perf::counters times();
 
@@ -191,14 +181,14 @@ private:
     void compute_cell_event(unsigned int n);
 
 private:
-    /** number of particles */
-    unsigned int npart;
+    using _Base::npart;
+    using _Base::box_;
+    using _Base::density_;
+    using _Base::m_sample;
+    using _Base::m_times;
+
     /** pair separation at which particle collision occurs */
     double pair_sep_;
-    /** particle density */
-    double density_;
-    /** periodic box length */
-    double box_;
     /** number of cells per dimension */
     unsigned int ncell;
     /** cell length */
@@ -221,11 +211,6 @@ private:
     gsl::gfsr4 rng_;
     /** squared pair separation */
     double pair_sep_sq;
-
-    /** trajectory sample in swappable host memory */
-    sample_type m_sample;
-    /** GPU time accumulators */
-    perf::counters m_times;
 };
 
 /**
@@ -234,11 +219,7 @@ private:
 template <int dimension>
 void hardsphere<hardsphere_impl<dimension> >::particles(unsigned int value)
 {
-    if (value < 1) {
-	throw exception("number of particles must be non-zero");
-    }
-    npart = value;
-    LOG("number of particles: " << npart);
+    _Base::particles(value);
 
     try {
 	part.resize(npart);
@@ -264,34 +245,6 @@ void hardsphere<hardsphere_impl<dimension> >::pair_separation(double value)
 
     // squared pair separation
     pair_sep_sq = pair_sep_ * pair_sep_;
-}
-
-/**
- * set particle density
- */
-template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::density(double value)
-{
-    density_ = value;
-    LOG("particle density: " << density_);
-
-    // derive periodic box length
-    box_ = std::pow(npart / density_, 1. / dimension);
-    LOG("periodic box length: " << box_);
-}
-
-/**
- * set periodic box length
- */
-template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::box(double value)
-{
-    box_ = value;
-    LOG("periodic box length: " << box_);
-
-    // derive particle density
-    density_ = npart / std::pow(box_, 1. * dimension);
-    LOG("particle density: " << density_);
 }
 
 /**
@@ -339,13 +292,13 @@ void hardsphere<hardsphere_impl<dimension> >::timestep(double value)
  * set system state from phase space sample
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::restore(sample_visitor visitor)
+void hardsphere<hardsphere_impl<dimension> >::sample(sample_visitor visitor)
 {
-    visitor(m_sample);
+    _Base::sample(visitor);
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// set periodically reduced particle position at simulation time zero
-	part[i].r = make_periodic(m_sample.r[i], box_);
+	part[i].r = m_sample.r[i];
 	// set periodically extended particle position at simulation time zero
 	part[i].R = part[i].r;
 	// set cell which particle belongs to
@@ -472,13 +425,12 @@ void hardsphere<hardsphere_impl<dimension> >::temperature(double value)
 template <int dimension>
 void hardsphere<hardsphere_impl<dimension> >::param(H5param& param) const
 {
+    _Base::param(param);
+
     H5xx::group node(param["mdsim"]);
-    node["particles"] = npart;
     node["pair_separation"] = pair_sep_;
     node["cells"] = ncell;
     node["cell_length"] = cell_length_;
-    node["density"] = density_;
-    node["box_length"] = box_;
     node["timestep"] = timestep_;
 }
 
@@ -806,17 +758,6 @@ void hardsphere<hardsphere_impl<dimension> >::copy()
 
     // CPU ticks for phase space sampling
     m_times["sample"] += t[1] - t[0];
-}
-
-template <int dimension>
-perf::counters hardsphere<hardsphere_impl<dimension> >::times()
-{
-    perf::counters times(m_times);
-    BOOST_FOREACH(perf::counter& i, m_times) {
-	// reset performance counter
-	i.second.clear();
-    }
-    return times;
 }
 
 } // namespace ljgpu

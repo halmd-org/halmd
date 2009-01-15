@@ -22,10 +22,6 @@
 #include <boost/foreach.hpp>
 #include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
-#include <ljgpu/sample/perf.hpp>
-#include <ljgpu/util/H5xx.hpp>
-#include <ljgpu/util/exception.hpp>
-#include <ljgpu/util/log.hpp>
 
 namespace ljgpu
 {
@@ -37,20 +33,15 @@ template <typename ljfluid_impl>
 class ljfluid_base : public mdsim_base<ljfluid_impl>
 {
 public:
-    typedef mdsim_traits<ljfluid_impl> traits_type;
-    typedef typename traits_type::float_type float_type;
-    typedef typename traits_type::vector_type vector_type;
-    typedef typename traits_type::sample_type sample_type;
-    enum { dimension = traits_type::dimension };
+    typedef mdsim_base<ljfluid_impl> _Base;
+    typedef typename _Base::float_type float_type;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::sample_type sample_type;
+    typedef typename sample_type::sample_visitor sample_visitor;
+    enum { dimension = _Base::dimension };
 
 public:
     ljfluid_base();
-    /** set number of particles */
-    void particles(unsigned int value);
-    /** set particle density */
-    void density(float_type value);
-    /** set periodic box length */
-    void box(float_type value);
     /** set simulation timestep */
     void timestep(float_type value);
     /** set potential cutoff radius */
@@ -60,12 +51,6 @@ public:
     /** set heat bath collision probability and temperature */
     void thermostat(float_type nu, float_type temp);
 
-    /** returns number of particles */
-    unsigned int particles() const { return npart; }
-    /** returns particle density */
-    float_type density() const { return density_; }
-    /** returns periodic box length */
-    float_type box() const { return box_; }
     /** returns simulation timestep */
     float_type timestep() const { return timestep_; }
     /** returns potential cutoff radius */
@@ -73,21 +58,14 @@ public:
     /** returns potential smoothing function scale parameter */
     float_type potential_smoothing() const { return r_smooth; }
 
-    /** returns trajectory sample */
-    sample_type const& sample() const { return m_sample; }
-    /** returns and resets CPU or GPU time accumulators */
-    perf::counters times();
-
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;
 
 protected:
-    /** number of particles in system */
-    unsigned int npart;
-    /** particle density */
-    float_type density_;
-    /** periodic box length */
-    float_type box_;
+    using _Base::npart;
+    using _Base::box_;
+    using _Base::density_;
+
     /** simulation timestep */
     float_type timestep_;
     /** cutoff radius for shifted Lennard-Jones potential */
@@ -104,28 +82,11 @@ protected:
     float_type thermostat_nu;
     /** heat bath temperature */
     float_type thermostat_temp;
-
-    /** trajectory sample in swappable host memory */
-    sample_type m_sample;
-    /** GPU time accumulators */
-    perf::counters m_times;
 };
 
 template <typename ljfluid_impl>
 ljfluid_base<ljfluid_impl>::ljfluid_base() : r_smooth(0), thermostat_nu(0)
 {
-}
-
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::particles(unsigned int value)
-{
-    // validate particle number
-    if (value < 1) {
-	throw exception("invalid number of particles");
-    }
-    // set particle number
-    npart = value;
-    LOG("number of particles: " << npart);
 }
 
 template <typename ljfluid_impl>
@@ -155,30 +116,6 @@ void ljfluid_base<ljfluid_impl>::potential_smoothing(float_type value)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::density(float_type value)
-{
-    // set particle density
-    density_ = value;
-    LOG("particle density: " << density_);
-
-    // compute periodic box length
-    box_ = std::pow(npart / density_, (float_type) 1 / dimension);
-    LOG("periodic simulation box length: " << box_);
-}
-
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::box(float_type value)
-{
-    // set periodic box length
-    box_ = value;
-    LOG("periodic simulation box length: " << box_);
-
-    // compute particle density
-    density_ = npart / std::pow(box_, (float_type) dimension);
-    LOG("particle density: " << density_);
-}
-
-template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::timestep(float_type value)
 {
     // set simulation timestep
@@ -197,26 +134,13 @@ void ljfluid_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
 }
 
 template <typename ljfluid_impl>
-perf::counters ljfluid_base<ljfluid_impl>::times()
-{
-    perf::counters times(m_times);
-    BOOST_FOREACH(perf::counter& i, m_times) {
-	// reset performance counter
-	i.second.clear();
-    }
-    return times;
-}
-
-template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::param(H5param& param) const
 {
-    H5xx::group node(param["mdsim"]);
-    node["box_length"] = box_;
-    node["cutoff_radius"] = r_cut;
-    node["density"] = density_;
-    node["particles"] = npart;
-    node["timestep"] = timestep_;
+    _Base::param(param);
 
+    H5xx::group node(param["mdsim"]);
+    node["cutoff_radius"] = r_cut;
+    node["timestep"] = timestep_;
     if (r_smooth > 0) {
 	node["potential_smoothing"] = r_smooth;
     }

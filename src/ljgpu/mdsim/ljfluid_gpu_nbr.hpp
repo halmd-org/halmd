@@ -57,7 +57,7 @@ public:
     void nbl_skin(float value);
 
     /** restore system state from phase space sample */
-    void restore(sample_visitor visitor);
+    void sample(sample_visitor visitor);
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
@@ -72,6 +72,8 @@ public:
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
+    /** returns trajectory sample */
+    sample_type const& sample() const { return m_sample; }
     /** get number of CUDA execution threads */
     unsigned int threads() const { return dim_.threads_per_block(); }
     /** get effective average cell occupancy */
@@ -426,18 +428,16 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::restore(sample_visitor visitor)
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(sample_visitor visitor)
 {
-    visitor(m_sample);
+    _Base::sample(visitor);
 
     try {
 	// assign particle tags
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	_gpu::init_tags(g_part.tag);
 	// copy periodically reduced particle positions from host to GPU
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.r[i] = make_periodic(m_sample.r[i], box_);
-	}
+	std::copy(m_sample.r.begin(), m_sample.r.end(), h_part.r.begin());
 	cuda::copy(h_part.r, g_part.r, stream_);
 	// set periodic box traversal vectors to zero
 	cuda::memset(g_part.R, 0);

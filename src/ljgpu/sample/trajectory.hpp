@@ -183,6 +183,7 @@ void trajectory::read(sample_type& sample, int64_t index)
     hsize_t block[3]  = { 1, 1, dimension };
 
     try {
+	H5XX_NO_AUTO_PRINT(H5::Exception);
 	// read periodically reduced particle positions
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 	dset_r.read(sample.r.data(), tid_r, ds_mem, ds_r);
@@ -192,6 +193,14 @@ void trajectory::read(sample_type& sample, int64_t index)
     }
     catch (H5::Exception const&) {
 	throw exception("failed to read sample from HDF5 trajectory input file");
+    }
+
+    try {
+	H5XX_NO_AUTO_PRINT(H5::Exception);
+	sample.box = H5param(*this)["mdsim"]["box_length"].as<float>();
+    }
+    catch (H5::Exception const&) {
+	throw exception("failed to read simulation box length from HDF5 file");
     }
 }
 

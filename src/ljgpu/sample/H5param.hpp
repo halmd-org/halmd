@@ -19,7 +19,7 @@
 #ifndef LJGPU_UTIL_H5PARAM_HPP
 #define LJGPU_UTIL_H5PARAM_HPP
 
-#include <H5Cpp.h>
+#include <ljgpu/util/H5xx.hpp>
 
 namespace ljgpu
 {
@@ -35,7 +35,7 @@ public:
     template <typename T>
     H5param& operator<<(T const& visitor);
     /** create or open HDF5 group */
-    H5::Group operator[](std::string const& name);
+    H5xx::group operator[](std::string const& name);
 };
 
 template <typename T>
