@@ -123,6 +123,8 @@ private:
     template <bool same_cell> void compute_cell_neighbours(particle& p, cell_list& c);
     /** compute Lennard-Jones forces */
     void compute_forces();
+    /** compute C²-smooth potential */
+    void compute_smooth_potential(double r, double fval, double pot);
     /** first leapfrog step of integration of equations of motion */
     void leapfrog_half();
     /** second leapfrog step of integration of equations of motion */
@@ -524,14 +526,14 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
     // initialize particle forces to zero
     for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
 	BOOST_FOREACH(particle& p, *it) {
-	    p.f = 0.;
+	    p.f = 0;
 	}
     }
 
     // potential energy
-    m_sample.en_pot = 0.;
+    m_sample.en_pot = 0;
     // virial equation sum
-    m_sample.virial = 0.;
+    m_sample.virial = 0;
 
     // iterate over all particles
     for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
@@ -550,16 +552,21 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 		    continue;
 
 		// compute Lennard-Jones force in reduced units
-		double rri = 1. / rr;
+		double rri = 1 / rr;
 		double r6i = rri * rri * rri;
-		double fval = 48. * rri * r6i * (r6i - 0.5);
+		double fval = 48 * rri * r6i * (r6i - 0.5);
+		double pot = 4 * r6i * (r6i - 1) - en_cut;
+
+		if (r_smooth > 0) {
+		    compute_smooth_potential(std::sqrt(rr), fval, pot);
+		}
 
 		// add force contribution to both particles
 		p1.f += r * fval;
 		p2.f -= r * fval;
 
 		// add contribution to potential energy
-		m_sample.en_pot += 4. * r6i * (r6i - 1.) - en_cut;
+		m_sample.en_pot += pot;
 		// add contribution to virial equation sum
 		m_sample.virial += rr * fval;
 	    }
@@ -573,6 +580,26 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
     if (std::isinf(m_sample.en_pot)) {
 	throw exception("potential energy diverged due to excessive timestep or density");
     }
+}
+
+/**
+ * compute C²-smooth potential
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, double fval, double pot)
+{
+    double y = r - r_cut;
+    double x2 = y * y * rri_smooth;
+    double x4 = x2 * x2;
+    double x4i = 1 / (1 + x4);
+    // smoothing function
+    double h0_r = x4 * x4i;
+    // first derivative of smoothing function
+    double h1_r = 4 * y * x2 * x4i * x4i;
+    // apply smoothing function to obtain C¹ force function
+    fval = h0_r * fval - h1_r * pot / r;
+    // apply smoothing function to obtain C² potential function
+    pot = h0_r * pot;
 }
 
 /**
