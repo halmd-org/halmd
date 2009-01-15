@@ -98,8 +98,17 @@ __device__ uint compute_neighbour_cell(int2 const& offset)
 /**
  * compute forces with particles in a neighbour cell
  */
-template <uint block_size, bool same_cell, typename T, typename TT, typename U, typename I>
-__device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offset, T const& r, int const& n, TT& f, float& en, float& virial)
+template <uint block_size,
+	  bool same_cell,
+	  bool smooth,
+	  typename T,
+	  typename TT,
+	  typename U,
+	  typename I
+>
+__device__ void compute_cell_forces(U const* g_r, int const* g_n,
+				    I const& offset, T const& r, int const& n,
+				    TT& f, float& en, float& virial)
 {
     __shared__ T s_r[block_size];
     __shared__ int s_n[block_size];
@@ -121,7 +130,7 @@ __device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offse
 	    if (same_cell && threadIdx.x == i)
 		continue;
 
-	    compute_force(r, s_r[i], f, en, virial);
+	    compute_force<smooth>(r, s_r[i], f, en, virial);
 	}
     }
     __syncthreads();
@@ -130,7 +139,7 @@ __device__ void compute_cell_forces(U const* g_r, int const* g_n, I const& offse
 /**
  * 3-dimensional MD simulation step
  */
-template <uint block_size, ensemble_type ensemble>
+template <uint block_size, ensemble_type ensemble, bool smooth>
 __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g_tag, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
@@ -185,43 +194,43 @@ __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g
     //
 
     // sum forces over this cell
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, true, smooth>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
     // sum forces over 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, -1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, +1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1, +1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1, -1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(-1,  0,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(+1,  0,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, -1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0, +1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3( 0,  0, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1, -1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1, +1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1, -1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1, +1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1, +1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1, -1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1, -1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1, +1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1, -1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1, +1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1, +1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1, -1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1,  0, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1,  0, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1,  0, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1,  0, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3( 0, -1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3( 0, +1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3( 0, -1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3( 0, +1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(-1,  0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(+1,  0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3( 0, -1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3( 0, +1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3( 0,  0, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3( 0,  0, +1), r, tag, f, en, virial);
 
 #else /* ! USE_CELL_SUMMATION_ORDER */
     // visit 26 neighbour cells
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, true, smooth>(g_r, g_tag, make_int3( 0,  0,  0), r, tag, f, en, virial);
     for (int x = -1; x <= 1; ++x)
 	for (int y = -1; y <= 1; ++y)
 	    for (int z = -1; z <= 1; ++z)
 		if (x != 0 || y != 0 || z != 0)
-		    compute_cell_forces<block_size, false>(g_r, g_tag, make_int3(x,  y,  z), r, tag, f, en, virial);
+		    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int3(x,  y,  z), r, tag, f, en, virial);
 #endif /* USE_CELL_SUMMATION_ORDER */
 
     // second leapfrog step as part of integration of equations of motion
@@ -249,7 +258,7 @@ __global__ void mdstep(float4 const* g_r, float4* g_v, float4* g_f, int const* g
 /**
  * 2-dimensional MD simulation step
  */
-template <uint block_size, ensemble_type ensemble>
+template <uint block_size, ensemble_type ensemble, bool smooth>
 __global__ void mdstep(float2 const* g_r, float2* g_v, float2* g_f, int const* g_tag, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
@@ -270,23 +279,23 @@ __global__ void mdstep(float2 const* g_r, float2* g_v, float2* g_f, int const* g
 
 #ifdef USE_CELL_SUMMATION_ORDER
     // sum forces over this cell
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, true, smooth>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
     // sum forces over 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1, +1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(-1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(+1,  0), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, -1), r, tag, f, en, virial);
-    compute_cell_forces<block_size, false>(g_r, g_tag, make_int2( 0, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2(-1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2(+1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2(-1, +1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2(+1, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2(-1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2(+1,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2( 0, -1), r, tag, f, en, virial);
+    compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2( 0, +1), r, tag, f, en, virial);
 #else
-    compute_cell_forces<block_size, true>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
+    compute_cell_forces<block_size, true, smooth>(g_r, g_tag, make_int2( 0,  0), r, tag, f, en, virial);
     // visit 8 neighbour cells
     for (int x = -1; x <= 1; ++x)
 	for (int y = -1; y <= 1; ++y)
 	    if (x != 0 || y != 0)
-		compute_cell_forces<block_size, false>(g_r, g_tag, make_int2(x, y), r, tag, f, en, virial);
+		compute_cell_forces<block_size, false, smooth>(g_r, g_tag, make_int2(x, y), r, tag, f, en, virial);
 #endif
 
     // second leapfrog step as part of integration of equations of motion
@@ -494,18 +503,27 @@ cuda::symbol<uint> _Base::ncell(cu::ljfluid::ncell);
  * device function wrappers
  */
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVE>);
+    _3D::mdstep(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVE, false>);
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep_nvt(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVT>);
+    _3D::mdstep_nvt(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVT, false>);
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
+    _3D::mdstep_smooth(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVE, true>);
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
+    _3D::mdstep_smooth_nvt(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVT, true>);
+
 cuda::function<void (float4 const*, float4*, int*)>
     _3D::assign_cells(cu::ljfluid::assign_cells<CELL_SIZE, float3>);
 cuda::function<void (float4 const*, float4 const*, float4 const*, int const*, float4*, float4*, float4*, int*)>
     _3D::update_cells(cu::ljfluid::update_cells<CELL_SIZE, float3>);
 
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVE>);
+    _2D::mdstep(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVE, false>);
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep_nvt(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVT>);
+    _2D::mdstep_nvt(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVT, false>);
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
+    _2D::mdstep_smooth(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVE, true>);
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
+    _2D::mdstep_smooth_nvt(cu::ljfluid::mdstep<CELL_SIZE, cu::ljfluid::NVT, true>);
 cuda::function<void (float2 const*, float2*, int*)>
     _2D::assign_cells(cu::ljfluid::assign_cells<CELL_SIZE, float2>);
 cuda::function<void (float2 const*, float2 const*, float2 const*, int const*, float2*, float2*, float2*, int*)>

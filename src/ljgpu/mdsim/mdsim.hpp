@@ -150,9 +150,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     fluid.timestep(opt["timestep"].as<float>());
 
     cutoff_radius(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
-#ifdef USE_POTENTIAL_SMOOTHING
     potential_smoothing(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
-#endif
     pair_separation(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
     cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
@@ -415,7 +413,9 @@ void mdsim<mdsim_backend>::cutoff_radius(boost::true_type const&)
 template <typename mdsim_backend>
 void mdsim<mdsim_backend>::potential_smoothing(boost::true_type const&)
 {
-    fluid.potential_smoothing(opt["smoothing"].as<float>());
+    if (!opt["smooth"].empty()) {
+	fluid.potential_smoothing(opt["smooth"].as<float>());
+    }
 }
 
 template <typename mdsim_backend>
@@ -451,9 +451,9 @@ void mdsim<mdsim_backend>::init_event_list(boost::true_type const&)
 template <typename mdsim_backend>
 void mdsim<mdsim_backend>::thermostat(boost::true_type const&)
 {
-    float const nu = opt["thermostat"].as<float>();
-    float const temp = opt["temperature"].as<float>();
-    if (nu > 0) {
+    if (!opt["thermostat"].empty()) {
+	float const nu = opt["thermostat"].as<float>();
+	float const temp = opt["temperature"].as<float>();
 	fluid.thermostat(nu, temp);
     }
 }

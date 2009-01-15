@@ -25,7 +25,7 @@ namespace ljgpu { namespace cu { namespace ljfluid
 /**
  * MD simulation step
  */
-template <typename T, typename TT, ensemble_type ensemble, typename U>
+template <typename T, typename TT, ensemble_type ensemble, bool smooth, typename U>
 __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 {
     extern __shared__ T s_r[];
@@ -57,7 +57,7 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 		continue;
 
 	    // compute Lennard-Jones force with particle
-	    compute_force(r, s_r[j], f, en, virial);
+	    compute_force<smooth>(r, s_r[j], f, en, virial);
 	}
 	__syncthreads();
     }
@@ -89,13 +89,21 @@ typedef ljfluid<ljfluid_impl_gpu_square<2> > _2D;
  * device function wrappers
  */
 cuda::function<void (float4*, float4*, float4*, float*, float*)>
-    _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE>);
+    _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE, false>);
 cuda::function<void (float4*, float4*, float4*, float*, float*)>
-    _3D::mdstep_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT>);
+    _3D::mdstep_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, false>);
+cuda::function<void (float4*, float4*, float4*, float*, float*)>
+    _3D::mdstep_smooth(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE, true>);
+cuda::function<void (float4*, float4*, float4*, float*, float*)>
+    _3D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, true>);
 
 cuda::function<void (float2*, float2*, float2*, float*, float*)>
-    _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE>);
+    _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE, false>);
 cuda::function<void (float2*, float2*, float2*, float*, float*)>
-    _2D::mdstep_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT>);
+    _2D::mdstep_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, false>);
+cuda::function<void (float2*, float2*, float2*, float*, float*)>
+    _2D::mdstep_smooth(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE, true>);
+cuda::function<void (float2*, float2*, float2*, float*, float*)>
+    _2D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, true>);
 
 }} // namespace ljgpu::gpu

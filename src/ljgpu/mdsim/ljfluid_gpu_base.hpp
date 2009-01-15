@@ -58,10 +58,8 @@ public:
     void timestep(float_type value);
     /** set potential cutoff radius */
     void cutoff_radius(float_type value);
-#ifdef USE_POTENTIAL_SMOOTHING
     /** set potential smoothing function scale parameter */
     void potential_smoothing(float_type value);
-#endif
     /** set heat bath collision probability and temperature */
     void thermostat(float_type nu, float_type temp);
 
@@ -111,10 +109,8 @@ protected:
     using _Base::r_cut;
     using _Base::rr_cut;
     using _Base::en_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
     using _Base::r_smooth;
     using _Base::rri_smooth;
-#endif
     using _Base::thermostat_nu;
     using _Base::thermostat_temp;
 
@@ -165,7 +161,6 @@ void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
     }
 }
 
-#ifdef USE_POTENTIAL_SMOOTHING
 template <typename ljfluid_impl>
 void ljfluid_gpu_base<ljfluid_impl>::potential_smoothing(float_type value)
 {
@@ -178,8 +173,6 @@ void ljfluid_gpu_base<ljfluid_impl>::potential_smoothing(float_type value)
 	throw exception("failed to copy potential smoothing function scale symbol");
     }
 }
-#endif /* USE_POTENTIAL_SMOOTHING */
-
 
 template <typename ljfluid_impl>
 void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)

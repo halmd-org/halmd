@@ -62,6 +62,8 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<3> >
 
     static cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep;
     static cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep_nvt;
+    static cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep_smooth;
+    static cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)> mdstep_smooth_nvt;
     static cuda::function<void (int const*, int*, float4*)> update_neighbours;
     static cuda::function<void (float4 const*, uint*)> compute_cell;
     static cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles;
@@ -77,6 +79,8 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<2> >
 
     static cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep;
     static cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep_nvt;
+    static cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep_smooth;
+    static cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)> mdstep_smooth_nvt;
     static cuda::function<void (int const*, int*, float2*)> update_neighbours;
     static cuda::function<void (float2 const*, uint*)> compute_cell;
     static cuda::function<void (const int*, float2*, float2*, float2*, int*)> order_particles;

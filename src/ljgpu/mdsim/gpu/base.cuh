@@ -130,7 +130,7 @@ __global__ void sample_smooth_function(float3* g_h, const float2 r)
 /**
  * calculate particle force using Lennard-Jones potential
  */
-template <typename T, typename TT>
+template <bool smooth, typename T, typename TT>
 __device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float& virial)
 {
     // particle distance vector
@@ -149,14 +149,15 @@ __device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float&
     float fval = 48 * rri * ri6 * (ri6 - 0.5f);
     // compute shifted Lennard-Jones potential
     float pot = 4 * ri6 * (ri6 - 1) - en_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
-    // compute smoothing function and its first derivative
-    const float3 h = compute_smooth_function(sqrtf(rr));
-    // apply smoothing function to obtain C^1 force function
-    fval = h.y * fval - h.z * pot / h.x;
-    // apply smoothing function to obtain C^2 potential function
-    pot = h.y * pot;
-#endif
+
+    if (smooth) {
+	// compute smoothing function and its first derivative
+	const float3 h = compute_smooth_function(sqrtf(rr));
+	// apply smoothing function to obtain C¹ force function
+	fval = h.y * fval - h.z * pot / h.x;
+	// apply smoothing function to obtain C² potential function
+	pot = h.y * pot;
+    }
 
     // virial equation sum
     virial += 0.5f * fval * rr;

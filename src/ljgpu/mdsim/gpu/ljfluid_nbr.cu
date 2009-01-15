@@ -86,7 +86,7 @@ texture<float2, 1, cudaReadModeElementType> tex<float2>::v;
 /**
  * n-dimensional MD simulation step
  */
-template <typename T, typename TT, ensemble_type ensemble, typename U>
+template <typename T, typename TT, ensemble_type ensemble, bool smooth, typename U>
 __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_en, float* g_virial)
 {
     // load particle associated with this thread
@@ -107,7 +107,7 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
 	if (n == VIRTUAL_PARTICLE)
 	    break;
 	// accumulate force between particles
-	compute_force(r, unpack(tex1Dfetch(tex<U>::r, n)), f, en, virial);
+	compute_force<smooth>(r, unpack(tex1Dfetch(tex<U>::r, n)), f, en, virial);
     }
 
     // second leapfrog step as part of integration of equations of motion
@@ -437,9 +437,14 @@ cuda::function<void (int*)>
     _Base::gen_index(cu::ljfluid::gen_index);
 
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE>);
+    _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE, false>);
 cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT>);
+    _3D::mdstep_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, false>);
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
+    _3D::mdstep_smooth(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE, true>);
+cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
+    _3D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, true>);
+
 cuda::function<void (int const*, int*, float4*)>
     _3D::update_neighbours(cu::ljfluid::update_neighbours<CELL_SIZE>);
 cuda::function<void (float4 const*, uint*)>
@@ -448,9 +453,14 @@ cuda::function<void (const int*, float4*, float4*, float4*, int*)>
     _3D::order_particles(cu::ljfluid::order_particles);
 
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE>);
+    _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE, false>);
 cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT>);
+    _2D::mdstep_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, false>);
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
+    _2D::mdstep_smooth(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE, true>);
+cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
+    _2D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, true>);
+
 cuda::function<void (int const*, int*, float2*)>
     _2D::update_neighbours(cu::ljfluid::update_neighbours<CELL_SIZE>);
 cuda::function<void (float2 const*, uint*)>

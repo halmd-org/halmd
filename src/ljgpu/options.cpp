@@ -347,7 +347,7 @@ void options::parse(po::options_description const& opt)
 	    po::store(po::parse_attribute<float>(node, "cutoff_radius"),
 		      vm_["cutoff"]);
 	    po::store(po::parse_attribute<float>(node, "potential_smoothing"),
-		      vm_["smoothing"]);
+		      vm_["smooth"]);
 	    po::store(po::parse_attribute<float>(node, "timestep"),
 		      vm_["timestep"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "threads"),
@@ -450,9 +450,9 @@ options_description<ljfluid_impl_base>::options_description()
     add_options()
 	("cutoff", po::value<float>()->default_value(2.5),
 	 "truncate potential at cutoff radius")
-	("smoothing", po::value<float>()->default_value(0.001),
+	("smooth", po::value<float>(),
 	 "C²-potential smoothing factor")
-	("thermostat", po::value<float>()->default_value(0),
+	("thermostat", po::value<float>(),
 	 "heat bath collision probability")
 	;
 }

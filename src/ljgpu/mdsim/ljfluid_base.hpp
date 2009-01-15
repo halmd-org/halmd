@@ -55,10 +55,8 @@ public:
     void timestep(float_type value);
     /** set potential cutoff radius */
     void cutoff_radius(float_type value);
-#ifdef USE_POTENTIAL_SMOOTHING
     /** set potential smoothing function scale parameter */
     void potential_smoothing(float_type value);
-#endif
     /** set heat bath collision probability and temperature */
     void thermostat(float_type nu, float_type temp);
 
@@ -72,10 +70,8 @@ public:
     float_type timestep() const { return timestep_; }
     /** returns potential cutoff radius */
     float_type cutoff_radius() const { return r_cut; }
-#ifdef USE_POTENTIAL_SMOOTHING
     /** returns potential smoothing function scale parameter */
     float_type potential_smoothing() const { return r_smooth; }
-#endif
 
     /** returns trajectory sample */
     sample_type const& sample() const { return m_sample; }
@@ -100,12 +96,10 @@ protected:
     float_type rr_cut;
     /** potential energy at cutoff radius */
     float_type en_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
     /** potential smoothing function scale parameter */
     float_type r_smooth;
     /** squared inverse potential smoothing function scale parameter */
     float_type rri_smooth;
-#endif
     /** heat bath collision probability */
     float_type thermostat_nu;
     /** heat bath temperature */
@@ -118,7 +112,7 @@ protected:
 };
 
 template <typename ljfluid_impl>
-ljfluid_base<ljfluid_impl>::ljfluid_base() : thermostat_nu(0)
+ljfluid_base<ljfluid_impl>::ljfluid_base() : r_smooth(0), thermostat_nu(0)
 {
 }
 
@@ -150,7 +144,6 @@ void ljfluid_base<ljfluid_impl>::cutoff_radius(float_type value)
     LOG("potential cutoff energy: " << en_cut);
 }
 
-#ifdef USE_POTENTIAL_SMOOTHING
 template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::potential_smoothing(float_type value)
 {
@@ -160,7 +153,6 @@ void ljfluid_base<ljfluid_impl>::potential_smoothing(float_type value)
     // squared inverse potential smoothing function scale parameter
     rri_smooth = std::pow(r_smooth, -2);
 }
-#endif /* USE_POTENTIAL_SMOOTHING */
 
 template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::density(float_type value)
@@ -219,14 +211,19 @@ template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::param(H5param& param) const
 {
     H5xx::group node(param["mdsim"]);
-    node["box_length"] = box();
-    node["cutoff_radius"] = cutoff_radius();
-    node["density"] = density();
-    node["particles"] = particles();
-#ifdef USE_POTENTIAL_SMOOTHING
-    node["potential_smoothing"] = potential_smoothing();
-#endif
-    node["timestep"] = timestep();
+    node["box_length"] = box_;
+    node["cutoff_radius"] = r_cut;
+    node["density"] = density_;
+    node["particles"] = npart;
+    node["timestep"] = timestep_;
+
+    if (r_smooth > 0) {
+	node["potential_smoothing"] = r_smooth;
+    }
+    if (thermostat_nu > 0) {
+	node["thermostat_nu"] = thermostat_nu;
+	node["thermostat_temp"] = thermostat_temp;
+    }
 }
 
 } // namespace ljgpu

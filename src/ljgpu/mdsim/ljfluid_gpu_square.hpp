@@ -43,14 +43,6 @@ public:
     typedef typename sample_type::sample_visitor sample_visitor;
 
 public:
-    using _Base::density;
-    using _Base::box;
-    using _Base::timestep;
-    using _Base::cutoff_radius;
-#ifdef USE_POTENTIAL_SMOOTHING
-    using _Base::potential_smoothing;
-#endif
-
     /** set number of particles in system */
     void particles(unsigned int value);
     /** set number of CUDA execution threads */
@@ -89,10 +81,8 @@ private:
     using _Base::r_cut;
     using _Base::rr_cut;
     using _Base::en_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
     using _Base::r_smooth;
     using _Base::rri_smooth;
-#endif
     using _Base::thermostat_nu;
     using _Base::thermostat_temp;
 
@@ -399,7 +389,13 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(gpu_vector_type), stream);
-    if (thermostat_nu > 0) {
+    if (r_smooth > 0 && thermostat_nu > 0) {
+	_gpu::mdstep_smooth_nvt(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+    }
+    else if (r_smooth > 0) {
+	_gpu::mdstep_smooth(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+    }
+    else if (thermostat_nu > 0) {
 	_gpu::mdstep_nvt(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
     }
     else {

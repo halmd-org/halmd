@@ -77,13 +77,6 @@ public:
     typedef boost::array<int, dimension> cell_index;
 
 public:
-    using _Base::density;
-    using _Base::box;
-    using _Base::timestep;
-#ifdef USE_POTENTIAL_SMOOTHING
-    using _Base::potential_smoothing;
-#endif
-
     /** set number of particles */
     void particles(unsigned int value);
     /** set potential cutoff radius */
@@ -145,10 +138,8 @@ private:
     using _Base::r_cut;
     using _Base::rr_cut;
     using _Base::en_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
     using _Base::r_smooth;
     using _Base::rri_smooth;
-#endif
     using _Base::thermostat_nu;
     using _Base::thermostat_temp;
 
@@ -698,8 +689,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::param(H5param& param) const
     _Base::param(param);
 
     H5xx::group node(param["mdsim"]);
-    node["cells"] = cells();
-    node["cell_length"] = cell_length();
+    node["cells"] = ncell;
+    node["cell_length"] = cell_length_;
 }
 
 } // namespace ljgpu

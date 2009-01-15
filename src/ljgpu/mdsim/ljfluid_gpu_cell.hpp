@@ -43,15 +43,6 @@ public:
     typedef typename sample_type::sample_visitor sample_visitor;
 
 public:
-    using _Base::particles;
-    using _Base::density;
-    using _Base::box;
-    using _Base::timestep;
-    using _Base::cutoff_radius;
-#ifdef USE_POTENTIAL_SMOOTHING
-    using _Base::potential_smoothing;
-#endif
-
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
     /** set desired average cell occupancy */
@@ -105,10 +96,8 @@ private:
     using _Base::r_cut;
     using _Base::rr_cut;
     using _Base::en_cut;
-#ifdef USE_POTENTIAL_SMOOTHING
     using _Base::r_smooth;
     using _Base::rri_smooth;
-#endif
     using _Base::thermostat_nu;
     using _Base::thermostat_temp;
 
@@ -587,7 +576,13 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-    if (thermostat_nu > 0) {
+    if (r_smooth > 0 && thermostat_nu > 0) {
+	_gpu::mdstep_smooth_nvt(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
+    }
+    else if (r_smooth > 0) {
+	_gpu::mdstep_smooth(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
+    }
+    else if (thermostat_nu > 0) {
 	_gpu::mdstep_nvt(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
     }
     else {
@@ -617,10 +612,10 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::param(H5param& param) const
     _Base::param(param);
 
     H5xx::group node(param["mdsim"]);
-    node["cells"] = cells();
-    node["placeholders"] = placeholders();
-    node["cell_length"] = cell_length();
-    node["cell_occupancy"] = cell_occupancy();
+    node["cells"] = ncell;
+    node["placeholders"] = nplace;
+    node["cell_length"] = cell_length_;
+    node["cell_occupancy"] = cell_occupancy_;
 }
 
 } // namespace ljgpu
