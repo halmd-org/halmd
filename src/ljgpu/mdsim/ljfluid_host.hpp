@@ -113,10 +113,6 @@ public:
 
     /** MD simulation step */
     void mdstep();
-    /** ljfluid GPU compat */
-    void stream() {}
-    /** ljfluid GPU compat */
-    void copy() {}
 
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;

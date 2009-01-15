@@ -77,8 +77,6 @@ public:
     float_type potential_smoothing() const { return r_smooth; }
 #endif
 
-    /** hardsphere compat */
-    void init_event_list() {}
     /** returns trajectory sample */
     sample_type const& sample() const { return m_sample; }
     /** returns and resets CPU or GPU time accumulators */

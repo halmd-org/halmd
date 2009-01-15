@@ -89,6 +89,8 @@ private:
     void cell_occupancy(boost::false_type const&) {}
     void init_cells(boost::true_type const&);
     void init_cells(boost::false_type const&) {}
+    void init_event_list(boost::true_type const&);
+    void init_event_list(boost::false_type const&) {}
     void threads(boost::true_type const&);
     void threads(boost::false_type const&) {}
     void thermostat(boost::true_type const&);
@@ -98,6 +100,11 @@ private:
     void cuda_device(boost::false_type const&) {}
     void cuda_allocated_memory(boost::true_type const&);
     void cuda_allocated_memory(boost::false_type const&) {}
+
+    void stream(boost::true_type const&);
+    void stream(boost::false_type const&) {}
+    void copy(boost::true_type const&);
+    void copy(boost::false_type const&) {}
 
     /** bind process to CPU core(s) */
     void cpu_set(std::vector<int> const& cpu_set);
@@ -196,7 +203,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 	fluid.temperature(opt["temperature"].as<float>());
     }
     // initialize event list
-    fluid.init_event_list();
+    init_event_list(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
     // print GPU memory usage
     cuda_allocated_memory(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
@@ -267,11 +274,17 @@ void mdsim<mdsim_backend>::operator()()
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(step)) {
 	    // copy previous MD simulation state from GPU to host
-	    fluid.copy();
+	    copy(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+	    // sample phase space
+	    copy(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
+	}
+	else {
+	    // cell lists implementation requires GPU to host copy every step
+	    copy(boost::is_base_of<ljfluid_impl_gpu_cell<dimension>, impl_type>());
 	}
 
 	// stream next MD simulation program step on GPU
-	fluid.stream();
+	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
 	// check if sample is acquired for given simulation step
 	if (tcf.sample(step)) {
@@ -364,8 +377,10 @@ void mdsim<mdsim_backend>::operator()()
 	}
     }
 
-    // copy last MD simulation state from GPU to host
-    fluid.copy();
+    // copy previous MD simulation state from GPU to host
+    copy(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+    // sample phase space
+    copy(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
     // save last phase space sample
     traj.write(fluid.sample(), tcf.steps() * fluid.timestep());
 
@@ -425,6 +440,12 @@ template <typename mdsim_backend>
 void mdsim<mdsim_backend>::init_cells(boost::true_type const&)
 {
     fluid.init_cells();
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::init_event_list(boost::true_type const&)
+{
+    fluid.init_event_list();
 }
 
 template <typename mdsim_backend>
@@ -515,6 +536,18 @@ void mdsim<mdsim_backend>::param(H5param& param) const
     node["name"] = PROGRAM_NAME;
     node["version"] = PROGRAM_VERSION;
     node["variant"] = PROGRAM_VARIANT;
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::stream(boost::true_type const&)
+{
+    fluid.stream();
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::copy(boost::true_type const&)
+{
+    fluid.copy();
 }
 
 } // namespace ljgpu

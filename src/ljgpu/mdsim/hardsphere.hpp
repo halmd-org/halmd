@@ -171,8 +171,6 @@ public:
     void mdstep();
     /** sample phase space */
     void copy();
-    /** ljfluid GPU compat */
-    void stream() {}
     /** returns trajectory sample */
     sample_type const& sample() const { return m_sample; }
     /** returns and resets CPU or GPU time accumulators */
