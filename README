@@ -1,0 +1,18 @@
+Building
+========
+
+- debug version
+
+  $ CXXFLAGS="-fPIC -Wall" \
+	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+	cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+  $ make
+
+
+- release version
+
+  $ CXXFLAGS="-fPIC -Wall" \
+	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+	cmake -DCMAKE_BUILD_TYPE=Release .
+  $ make
+
