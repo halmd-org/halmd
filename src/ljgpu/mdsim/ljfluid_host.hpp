@@ -701,6 +701,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::param(H5param& param) const
     H5xx::group node(param["mdsim"]);
     node["cells"] = ncell;
     node["cell_length"] = cell_length_;
+    node["neighbour_skin"] = r_skin;
 }
 
 } // namespace ljgpu

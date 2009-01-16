@@ -357,6 +357,8 @@ void options::parse(po::options_description const& opt)
 		      vm_["temperature"]);
 	    po::store(po::parse_attribute<float>(node, "cell_occupancy"),
 		      vm_["cell-occupancy"]);
+	    po::store(po::parse_attribute<float>(node, "neighbour_skin"),
+		      vm_["skin"]);
 	    po::store(po::parse_attribute<float>(node, "pair_separation"),
 		      vm_["pair-separation"]);
 

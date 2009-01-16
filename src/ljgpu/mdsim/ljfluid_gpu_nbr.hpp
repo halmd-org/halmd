@@ -810,6 +810,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::param(H5param& param) cons
     node["neighbours"] = nbl_size;
     node["cell_length"] = cell_length_;
     node["cell_occupancy"] = cell_occupancy_;
+    node["neighbour_skin"] = r_skin;
 }
 
 } // namespace ljgpu
