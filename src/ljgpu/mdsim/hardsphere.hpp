@@ -163,8 +163,6 @@ public:
     void mdstep();
     /** sample phase space */
     void copy();
-    /** returns and resets CPU or GPU time accumulators */
-    perf::counters times();
 
 private:
     /** schedule next particle event starting at given time */
