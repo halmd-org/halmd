@@ -48,33 +48,33 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::sample_type sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
+    typedef typename sample_type::position_vector position_vector;
+    typedef typename sample_type::velocity_vector velocity_vector;
 
     /**
      * MD simulation particle
      */
     struct particle
     {
+	typedef boost::reference_wrapper<particle> ref;
+
 	/** particle position */
 	vector_type r;
 	/** particle velocity */
 	vector_type v;
-	/** particle number tag */
-	int n;
-
 	/** particle force */
 	vector_type f;
+	/** particle number */
+	unsigned int tag;
 	/** particle neighbours list */
-	std::vector<boost::reference_wrapper<particle> > neighbour;
-
-	particle(vector_type const& r, int n) : r(r), n(n) {}
-	particle(vector_type const& r, vector_type const& v, int n) : r(r), v(v), n(n) {}
-	particle() {}
+	std::vector<ref> neighbour;
     };
 
-    typedef typename std::list<particle> cell_list;
+    typedef typename std::vector<typename particle::ref> cell_list;
     typedef typename cell_list::iterator cell_list_iterator;
     typedef typename cell_list::const_iterator cell_list_const_iterator;
     typedef boost::array<int, dimension> cell_index;
+    typedef boost::multi_array<cell_list, dimension> cell_lists;
 
 public:
     /** set number of particles */
@@ -146,8 +146,10 @@ private:
     using _Base::m_sample;
     using _Base::m_times;
 
+    /** particles */
+    std::vector<particle> part;
     /** cell lists */
-    boost::multi_array<cell_list, dimension> cell;
+    cell_lists cell;
     /** random number generator */
     gsl::gfsr4 rng_;
 
@@ -176,6 +178,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
     try {
 	m_sample.r.resize(npart);
 	m_sample.v.resize(npart);
+	part.resize(npart);
     }
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate phase space state");
@@ -190,10 +193,13 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
 {
     _Base::sample(visitor);
 
-    // add particles to cell lists
     for (unsigned int i = 0; i < npart; ++i) {
-	compute_cell(m_sample.r[i]).push_back(particle(m_sample.r[i], m_sample.v[i], i));
+	part[i].r = m_sample.r[i];
+	part[i].v = m_sample.v[i];
+	part[i].tag = i;
     }
+    // update cell lists
+    update_cells();
     // update Verlet neighbour lists
     update_neighbours();
     // reset sum over maximum velocity magnitudes to zero
@@ -221,18 +227,14 @@ void ljfluid<ljfluid_impl_host<dimension> >::nbl_skin(float value)
 	throw exception("requires at least 3 cells per dimension");
     }
 
+    // create empty cell lists
+    cell_index size;
+    std::fill(size.begin(), size.end(), ncell);
+    cell.resize(size);
+
     // derive cell length from integer number of cells per dimension
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
-
-    try {
-	cell_index size;
-	std::fill(size.begin(), size.end(), ncell);
-	cell.resize(size);
-    }
-    catch (std::bad_alloc const& e) {
-	throw exception("failed to allocate initial cell lists");
-    }
 }
 
 /**
@@ -284,23 +286,23 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
     LOG("minimum lattice distance: " << a / std::sqrt(2.));
 
     for (unsigned int i = 0; i < npart; ++i) {
-	vector_type r(a);
+	part[i].tag = i;
+	vector_type& r = part[i].r;
 	// compose primitive vectors from 1-dimensional index
 	if (dimension == 3) {
-	    r[0] *= ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
-	    r[1] *= ((i >> 2) / n % n) + (i & 1) / 2.;
-	    r[2] *= ((i >> 2) / n / n) + (i & 2) / 4.;
+	    r[0] = ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
+	    r[1] = ((i >> 2) / n % n) + (i & 1) / 2.;
+	    r[2] = ((i >> 2) / n / n) + (i & 2) / 4.;
 	}
 	else {
-	    r[0] *= ((i >> 1) % n) + (i & 1) / 2.;
-	    r[1] *= ((i >> 1) / n) + (i & 1) / 2.;
+	    r[0] = ((i >> 1) % n) + (i & 1) / 2.;
+	    r[1] = ((i >> 1) / n) + (i & 1) / 2.;
 	}
-	// add particle to appropriate cell list
-	compute_cell(r).push_back(particle(r, i));
-	// copy position to sorted particle list
-	m_sample.r[i] = r;
+	r *= a;
     }
 
+    // update cell lists
+    update_cells();
     // update Verlet neighbour lists
     update_neighbours();
     // reset sum over maximum velocity magnitudes to zero
@@ -318,36 +320,25 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
     // center of mass velocity
-    vector_type v_cm = 0.;
+    vector_type v_cm = 0;
     // maximum squared velocity
-    double vv_max = 0.;
+    double vv_max = 0;
 
-    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	BOOST_FOREACH(particle& p, *it) {
-	    // generate random Maxwell-Boltzmann distributed velocity
-	    rng_.gaussian(p.v[0], p.v[1], value);
-	    if (dimension == 3) {
-		// Box-Muller transformation strictly generates 2 variates at once
-		rng_.gaussian(p.v[1], p.v[2], value);
-	    }
-	    v_cm += p.v;
-
-	    // initialize force to zero for first leapfrog half step
-	    p.f = 0.;
-	}
+    BOOST_FOREACH(particle& p, part) {
+	// generate random Maxwell-Boltzmann distributed velocity
+	rng_.gaussian(p.v, value);
+	v_cm += p.v;
+	// initialize force to zero for first leapfrog half step
+	p.f = 0;
     }
 
     v_cm /= npart;
 
-    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	BOOST_FOREACH(particle& p, *it) {
-	    // set center of mass velocity to zero
-	    p.v -= v_cm;
-	    // copy velocity to sorted particle list
-	    m_sample.v[p.n] = p.v;
+    BOOST_FOREACH(particle& p, part) {
+	// set center of mass velocity to zero
+	p.v -= v_cm;
 
-	    vv_max = std::max(vv_max, p.v * p.v);
-	}
+	vv_max = std::max(vv_max, p.v * p.v);
     }
 
     // initialize sum over maximum velocity magnitudes since last neighbour lists update
@@ -360,21 +351,13 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::update_cells()
 {
-    // FIXME particle may be inspected twice if moved ahead in cell order
-    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	for (cell_list_iterator it2 = it->begin(); it2 != it->end(); ) {
-	    // store old cell list iterator
-	    cell_list_iterator p(it2);
-	    // advance cell list iterator to next particle
-	    it2++;
-	    // compute cell which particle belongs to
-	    cell_list& c = compute_cell(p->r);
-	    // check whether cells are not identical
-	    if (&c != &(*it)) {
-		// move particle from old to new cell
-		c.splice(c.end(), *it, p);
-	    }
-	}
+    // create empty cell lists
+    cell_index size;
+    std::fill(size.begin(), size.end(), ncell);
+    cell = cell_lists(size);
+    // add particles to cells
+    BOOST_FOREACH(particle& p, part) {
+	compute_cell(p.r).push_back(boost::ref(p));
     }
 }
 
@@ -481,7 +464,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_cell_neighbours(particle& p
 {
     BOOST_FOREACH(particle& p2, c) {
 	// skip identical particle and particle pair permutations if same cell
-	if (same_cell && p2.n <= p1.n)
+	if (same_cell && p2.tag <= p1.tag)
 	    continue;
 
 	// particle distance vector
@@ -507,10 +490,8 @@ template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 {
     // initialize particle forces to zero
-    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	BOOST_FOREACH(particle& p, *it) {
-	    p.f = 0;
-	}
+    BOOST_FOREACH(particle& p, part) {
+	p.f = 0;
     }
 
     // potential energy
@@ -518,41 +499,38 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
     // virial equation sum
     m_sample.virial = 0;
 
-    // iterate over all particles
-    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	BOOST_FOREACH(particle& p1, *it) {
-	    // calculate pairwise Lennard-Jones force with neighbour particles
-	    BOOST_FOREACH(particle& p2, p1.neighbour) {
-		// particle distance vector
-		vector_type r = p1.r - p2.r;
-		// enforce periodic boundary conditions
-		r -= round(r / box_) * box_;
-		// squared particle distance
-		double rr = r * r;
+    BOOST_FOREACH(particle& p1, part) {
+	// calculate pairwise Lennard-Jones force with neighbour particles
+	BOOST_FOREACH(particle& p2, p1.neighbour) {
+	    // particle distance vector
+	    vector_type r = p1.r - p2.r;
+	    // enforce periodic boundary conditions
+	    r -= round(r / box_) * box_;
+	    // squared particle distance
+	    double rr = r * r;
 
-		// enforce cutoff radius
-		if (rr >= rr_cut)
-		    continue;
+	    // enforce cutoff radius
+	    if (rr >= rr_cut)
+		continue;
 
-		// compute Lennard-Jones force in reduced units
-		double rri = 1 / rr;
-		double r6i = rri * rri * rri;
-		double fval = 48 * rri * r6i * (r6i - 0.5);
-		double pot = 4 * r6i * (r6i - 1) - en_cut;
+	    // compute Lennard-Jones force in reduced units
+	    double rri = 1 / rr;
+	    double r6i = rri * rri * rri;
+	    double fval = 48 * rri * r6i * (r6i - 0.5);
+	    double pot = 4 * r6i * (r6i - 1) - en_cut;
 
-		if (r_smooth > 0) {
-		    compute_smooth_potential(std::sqrt(rr), fval, pot);
-		}
-
-		// add force contribution to both particles
-		p1.f += r * fval;
-		p2.f -= r * fval;
-
-		// add contribution to potential energy
-		m_sample.en_pot += pot;
-		// add contribution to virial equation sum
-		m_sample.virial += rr * fval;
+	    if (r_smooth > 0) {
+		compute_smooth_potential(std::sqrt(rr), fval, pot);
 	    }
+
+	    // add force contribution to both particles
+	    p1.f += r * fval;
+	    p2.f -= r * fval;
+
+	    // add contribution to potential energy
+	    m_sample.en_pot += pot;
+	    // add contribution to virial equation sum
+	    m_sample.virial += rr * fval;
 	}
     }
 
@@ -591,15 +569,13 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, 
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 {
-    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	BOOST_FOREACH(particle& p, *it) {
-	    // half step velocity
-	    p.v += p.f * (timestep_ / 2.);
-	    // full step position
-	    p.r += p.v * timestep_;
-	    // copy position to sorted particle list
-	    m_sample.r[p.n] = p.r;
-	}
+    BOOST_FOREACH(particle& p, part) {
+	// half step velocity
+	p.v += p.f * (timestep_ / 2.);
+	// full step position
+	p.r += p.v * timestep_;
+	// copy to phase space sample
+	m_sample.r[p.tag] = p.r;
     }
 }
 
@@ -612,15 +588,13 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
     // maximum squared velocity
     double vv_max = 0.;
 
-    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	BOOST_FOREACH(particle& p, *it) {
-	    // full step velocity
-	    p.v += p.f * (timestep_ / 2.);
-	    // copy velocity to sorted particle list
-	    m_sample.v[p.n] = p.v;
+    BOOST_FOREACH(particle& p, part) {
+	// full step velocity
+	p.v += p.f * (timestep_ / 2.);
+	// copy to phase space sample
+	m_sample.v[p.tag] = p.v;
 
-	    vv_max = std::max(vv_max, p.v * p.v);
-	}
+	vv_max = std::max(vv_max, p.v * p.v);
     }
 
     // add to sum over maximum velocity magnitudes since last neighbour lists update
@@ -633,11 +607,9 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::anderson_thermostat()
 {
-    for (cell_list* it = cell.data(); it != cell.data() + cell.num_elements(); ++it) {
-	BOOST_FOREACH(particle& p, *it) {
-	    if (rng_.uniform() < (thermostat_nu * timestep_)) {
-		rng_.gaussian(p.v, thermostat_temp);
-	    }
+    BOOST_FOREACH(particle& p, part) {
+	if (rng_.uniform() < (thermostat_nu * timestep_)) {
+	    rng_.gaussian(p.v, thermostat_temp);
 	}
     }
 }
