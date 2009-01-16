@@ -204,7 +204,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
     // update Verlet neighbour lists
     update_neighbours();
     // reset sum over maximum velocity magnitudes to zero
-    v_max_sum = 0.;
+    v_max_sum = 0;
     // calculate forces, potential energy and virial equation sum
     compute_forces();
 }
@@ -307,7 +307,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
     // update Verlet neighbour lists
     update_neighbours();
     // reset sum over maximum velocity magnitudes to zero
-    v_max_sum = 0.;
+    v_max_sum = 0;
     // calculate forces, potential energy and virial equation sum
     compute_forces();
 }
@@ -440,7 +440,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::update_cell_neighbours(cell_index c
 			goto out;
 		    }
 		    // update neighbour list of particle
-		    boost::array<unsigned int, dimension> k;
+		    cell_index k;
 		    for (int n = 0; n < dimension; ++n) {
 			k[n] = (i[n] + ncell + j[n]) % ncell;
 		    }
@@ -570,7 +570,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 {
     BOOST_FOREACH(particle& p, part) {
 	// half step velocity
-	p.v += p.f * (timestep_ / 2.);
+	p.v += p.f * (timestep_ / 2);
 	// full step position
 	p.r += p.v * timestep_;
 	// copy to phase space sample
@@ -585,11 +585,11 @@ template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 {
     // maximum squared velocity
-    double vv_max = 0.;
+    double vv_max = 0;
 
     BOOST_FOREACH(particle& p, part) {
 	// full step velocity
-	p.v += p.f * (timestep_ / 2.);
+	p.v += p.f * (timestep_ / 2);
 	// copy to phase space sample
 	m_sample.v[p.tag] = p.v;
 
@@ -627,7 +627,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
     leapfrog_half();
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 
-    if (v_max_sum * timestep_ > r_skin / 2.) {
+    if (v_max_sum * timestep_ > r_skin / 2) {
 	// update cell lists
 	update_cells();
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
@@ -635,7 +635,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 	update_neighbours();
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
 	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0.;
+	v_max_sum = 0;
 
 	m_times["update_cells"] += t[2] - t[1];
 	m_times["update_neighbours"] += t[3] - t[2];
