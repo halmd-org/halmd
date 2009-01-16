@@ -18,6 +18,8 @@
 
 #include <H5Cpp.h>
 #include <algorithm>
+#include <boost/array.hpp>
+#include <boost/assign.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <fstream>
@@ -216,6 +218,37 @@ void store(boost::any const& value, variable_value& vv) {
 
 }} // namespace boost::program_options
 
+namespace std
+{
+
+/**
+ * extract comma-separated option values into fixed-size array
+ */
+template <typename T, size_t size>
+static istream& operator>>(istream& is, boost::array<T, size>& value)
+{
+    BOOST_FOREACH(T& v, value) {
+	string str;
+	getline(is, str, ',');
+	v = boost::lexical_cast<T>(str);
+    }
+    return is;
+}
+
+template <typename T, size_t size>
+static ostream& operator<<(ostream& os, boost::array<T, size> const& value)
+{
+    BOOST_FOREACH(T const& v, value) {
+	if (&v != &value.front()) {
+	    os << ',';
+	}
+	os << v;
+    }
+    return os;
+}
+
+} // namespace std
+
 namespace ljgpu
 {
 
@@ -243,7 +276,7 @@ void options::parse(int argc, char** argv)
 	 "output version and exit")
 	("help",
 	 "display this help and exit")
-	("backend,B", po::value<string>()->default_value("gpu_neighbour"),
+	("backend", po::value<string>()->default_value("gpu_neighbour"),
 	 "MD simulation backend")
 	;
 
@@ -318,6 +351,7 @@ void options::parse(po::options_description const& opt)
 	po::dependent_option(vm, "trajectory-sample", "trajectory");
 	po::dependent_option(vm, "discard-velocities", "trajectory-sample");
 	po::dependent_option(vm, "thermostat", "temperature");
+	po::conflicting_options(vm, "binary", "particles");
     }
     catch (exception const& e) {
 	cerr << PROGRAM_NAME ": " << e.what() << "\n";
@@ -452,6 +486,7 @@ options_description<mdsim_impl>::options_description()
 
 options_description<ljfluid_impl_base>::options_description()
 {
+    using namespace boost::assign;
     add_options()
 	("cutoff", po::value<float>()->default_value(2.5),
 	 "truncate potential at cutoff radius")
@@ -459,6 +494,12 @@ options_description<ljfluid_impl_base>::options_description()
 	 "C²-potential smoothing factor")
 	("thermostat", po::value<float>(),
 	 "heat bath collision probability")
+	("binary,M", po::value<boost::array<unsigned int, 2> >(),
+	 "binary mixture with A,B particles")
+	("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
+	 "potential well depths AA,AB,BB")
+	("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
+	 "collision diameters AA,AB,BB")
 	;
 }
 
