@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <boost/array.hpp>
+#include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/ref.hpp>
 #include <cmath>
@@ -351,10 +352,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::update_cells()
 {
-    // create empty cell lists
-    cell_index size;
-    std::fill(size.begin(), size.end(), ncell);
-    cell = cell_lists(size);
+    // empty cell lists without memory reallocation
+    std::for_each(cell.data(), cell.data() + cell.num_elements(), boost::bind(&cell_list::clear, _1));
     // add particles to cells
     BOOST_FOREACH(particle& p, part) {
 	compute_cell(p.r).push_back(boost::ref(p));
