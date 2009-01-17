@@ -44,7 +44,8 @@ public:
 
 public:
     /** set number of particles in system */
-    void particles(unsigned int value);
+    template <typename T>
+    void particles(T const& value);
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
 
@@ -135,7 +136,8 @@ private:
 };
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(unsigned int value)
+template <typename T>
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(T const& value)
 {
     _Base::particles(value);
 

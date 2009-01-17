@@ -117,9 +117,9 @@ public:
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;
 
+    using _Base::is_binary;
+
 private:
-    /** returns true iff binary mixture */
-    bool is_binary() { return (mpart[0] && mpart[1]); }
     /** randomly assign particles types in a binary mixture */
     void random_binary_types();
     /** update cell lists */

@@ -69,6 +69,9 @@ public:
     /** returns and resets CPU or GPU time accumulators */
     perf::counters times();
 
+    /** returns true iff binary mixture */
+    bool is_binary() const { return (mpart[0] && mpart[1]); }
+
 protected:
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;
@@ -91,11 +94,9 @@ protected:
 template <typename mdsim_impl>
 void mdsim_base<mdsim_impl>::particles(unsigned int value)
 {
-    // validate particle number
     if (value < 1) {
 	throw exception("invalid number of particles");
     }
-    // set particle number
     npart = value;
     mpart = boost::assign::list_of(npart)(0);
     LOG("number of particles: " << npart);
@@ -104,6 +105,9 @@ void mdsim_base<mdsim_impl>::particles(unsigned int value)
 template <typename mdsim_impl>
 void mdsim_base<mdsim_impl>::particles(boost::array<unsigned int, 2> const& value)
 {
+    if (*std::min_element(value.begin(), value.end()) < 1) {
+	throw exception("invalid number of A or B particles");
+    }
     mpart = value;
     npart = std::accumulate(mpart.begin(), mpart.end(), 0);
     LOG("binary mixture with " << mpart[0] << " A particles and " << mpart[1] << " B particles");
@@ -185,7 +189,12 @@ void mdsim_base<mdsim_impl>::param(H5param& param) const
     H5xx::group node(param["mdsim"]);
     node["box_length"] = box_;
     node["density"] = density_;
-    node["particles"] = npart;
+    if (is_binary()) {
+	node["particles"] = mpart;
+    }
+    else {
+	node["particles"] = npart;
+    }
 }
 
 } // namespace ljgpu

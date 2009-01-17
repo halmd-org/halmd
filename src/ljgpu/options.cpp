@@ -208,10 +208,10 @@ boost::any parse_attribute(H5xx::group const& node, char const* name)
 }
 
 /**
- * override variable value if defaulted
+ * override variable value if defaulted or empty
  */
 void store(boost::any const& value, variable_value& vv) {
-    if (vv.defaulted() && !value.empty()) {
+    if (!value.empty() && (vv.defaulted() || vv.empty())) {
 	vv = variable_value(value, true);
     }
 }
@@ -375,10 +375,16 @@ void options::parse(po::options_description const& opt)
 	    H5::Group node(param.openGroup("mdsim"));
 	    po::store(po::parse_attribute<unsigned int>(node, "particles"),
 		      vm_["particles"]);
+	    po::store(po::parse_attribute<boost::array<unsigned int, 2> >(node, "particles"),
+		      vm_["binary"]);
 	    po::store(po::parse_attribute<float>(node, "density"),
 		      vm_["density"]);
 	    po::store(po::parse_attribute<float>(node, "box_length"),
 		      vm_["box-length"]);
+	    po::store(po::parse_attribute<boost::array<float, 3> >(node, "potential_epsilon"),
+		      vm_["epsilon"]);
+	    po::store(po::parse_attribute<boost::array<float, 3> >(node, "potential_sigma"),
+		      vm_["sigma"]);
 	    po::store(po::parse_attribute<float>(node, "cutoff_radius"),
 		      vm_["cutoff"]);
 	    po::store(po::parse_attribute<float>(node, "potential_smoothing"),
@@ -428,6 +434,8 @@ options_description<mdsim_impl>::options_description()
     add_options()
 	("particles,N", po::value<unsigned int>()->default_value(1000),
 	 "number of particles")
+	("binary,M", po::value<boost::array<unsigned int, 2> >(),
+	 "binary mixture with A,B particles")
 	("dimension", po::value<int>()->default_value(3),
 	 "positional coordinates dimension")
 	("density,d", po::value<float>()->default_value(0.75),
@@ -494,8 +502,6 @@ options_description<ljfluid_impl_base>::options_description()
 	 "C²-potential smoothing factor")
 	("thermostat", po::value<float>(),
 	 "heat bath collision probability")
-	("binary,M", po::value<boost::array<unsigned int, 2> >(),
-	 "binary mixture with A,B particles")
 	("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
 	 "potential well depths AA,AB,BB")
 	("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),

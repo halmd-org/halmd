@@ -122,7 +122,8 @@ public:
 
 public:
     /** set number of particles */
-    void particles(unsigned int value);
+    template <typename T>
+    void particles(T const& value);
     /** set pair separation at which particle collision occurs */
     void pair_separation(double value);
     /** initialize cells */
@@ -215,7 +216,8 @@ private:
  * set number of particles in system
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::particles(unsigned int value)
+template <typename T>
+void hardsphere<hardsphere_impl<dimension> >::particles(T const& value)
 {
     _Base::particles(value);
 

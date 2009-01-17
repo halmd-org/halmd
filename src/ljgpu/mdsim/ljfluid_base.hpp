@@ -70,6 +70,8 @@ public:
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;
 
+    using _Base::is_binary;
+
 protected:
     using _Base::npart;
     using _Base::mpart;
@@ -168,6 +170,10 @@ void ljfluid_base<ljfluid_impl>::param(H5param& param) const
     _Base::param(param);
 
     H5xx::group node(param["mdsim"]);
+    if (is_binary()) {
+	node["potential_epsilon"] = epsilon_;
+	node["potential_sigma"] = sigma_;
+    }
     node["cutoff_radius"] = r_cut;
     node["timestep"] = timestep_;
     if (r_smooth > 0) {

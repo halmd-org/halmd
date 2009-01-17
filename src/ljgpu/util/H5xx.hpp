@@ -20,18 +20,27 @@
 #define LJGPU_UTIL_H5XX_HPP
 
 #include <H5Cpp.h>
+#include <boost/array.hpp>
+#include <boost/type_traits.hpp>
+#include <boost/utility/enable_if.hpp>
 
 namespace H5xx
 {
 
 /*
- * C type to HDF5 native data type translation
+ * fundamental type to HDF5 native data type translation
  */
 template <typename T>
 struct ctype
 {
     static H5::PredType const& type;
 };
+
+template <typename T>
+struct is_boost_array : public boost::false_type {};
+
+template <typename T, size_t size>
+struct is_boost_array<boost::array<T, size> >: public boost::true_type {};
 
 /**
  * HDF5 attribute
@@ -41,9 +50,31 @@ class attribute
 public:
     attribute(H5::Group const& node, std::string const& name)
 	: m_node(node), m_name(name) {}
-    template <typename T> attribute& operator=(T const& value);
-    template <typename T> attribute& operator=(T const* value);
-    template <typename T> T as();
+
+    template <typename T>
+    typename boost::enable_if<boost::is_fundamental<T>, attribute&>::type
+    operator=(T const& value);
+    template <typename T>
+    typename boost::enable_if<boost::is_fundamental<T>, T>::type
+    as();
+
+    template <typename T>
+    typename boost::enable_if<boost::is_same<T, std::string>, attribute&>::type
+    operator=(T const& value);
+    template <typename T>
+    typename boost::enable_if<boost::is_same<T, std::string>, T>::type
+    as();
+
+    template <typename T>
+    typename boost::enable_if<boost::is_same<T, char const*>, attribute&>::type
+    operator=(T value);
+
+    template <typename T>
+    typename boost::enable_if<is_boost_array<T>, attribute&>::type
+    operator=(T const& value);
+    template <typename T>
+    typename boost::enable_if<is_boost_array<T>, T>::type
+    as();
 
 private:
     /** group which attribute belongs to */
@@ -91,6 +122,167 @@ private:
 };
 
 #define H5XX_NO_AUTO_PRINT(exception) H5xx::no_autoprint<exception> __no_autoprint;
+
+/*
+ * create and write fundamental type attribute
+ */
+template <typename T>
+typename boost::enable_if<boost::is_fundamental<T>, attribute&>::type
+attribute::operator=(T const& value)
+{
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	attr = m_node.createAttribute(m_name, ctype<T>::type, H5S_SCALAR);
+    }
+    attr.write(ctype<T>::type, &value);
+    return *this;
+}
+
+/**
+ * read fundamental type attribute
+ */
+template <typename T>
+typename boost::enable_if<boost::is_fundamental<T>, T>::type
+attribute::as()
+{
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	throw;
+    }
+    T value;
+    attr.read(ctype<T>::type, &value);
+    return value;
+}
+
+/**
+ * create and write string attribute
+ */
+template <typename T>
+typename boost::enable_if<boost::is_same<T, std::string>, attribute&>::type
+attribute::operator=(T const& value)
+{
+    H5::StrType tid(H5::PredType::C_S1, 256);
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	attr = m_node.createAttribute(m_name, tid, H5S_SCALAR);
+    }
+    attr.write(tid, value.c_str());
+    return *this;
+}
+
+/**
+ * read string attribute
+ */
+template <typename T>
+typename boost::enable_if<boost::is_same<T, std::string>, T>::type
+attribute::as()
+{
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	throw;
+    }
+    // fixed string length includes terminating NULL character
+    char value[256];
+    attr.read(H5::StrType(H5::PredType::C_S1, 256), value);
+    return value;
+}
+
+/**
+ * create and write C string attribute
+ */
+template <typename T>
+typename boost::enable_if<boost::is_same<T, char const*>, attribute&>::type
+attribute::operator=(T value)
+{
+    H5::StrType tid(H5::PredType::C_S1, 256);
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	attr = m_node.createAttribute(m_name, tid, H5S_SCALAR);
+    }
+    attr.write(tid, value);
+    return *this;
+}
+
+/*
+ * create and write fixed-size array type attribute
+ */
+template <typename T>
+typename boost::enable_if<is_boost_array<T>, attribute&>::type
+attribute::operator=(T const& value)
+{
+    typedef typename T::value_type value_type;
+    enum { size = T::static_size };
+
+    hsize_t dim[1] = { size };
+    H5::DataSpace ds(1, dim);
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	attr = m_node.createAttribute(m_name, ctype<value_type>::type, ds);
+    }
+    attr.write(ctype<value_type>::type, value.data());
+    return *this;
+}
+
+/**
+ * read fixed-size array type attribute
+ */
+template <typename T>
+typename boost::enable_if<is_boost_array<T>, T>::type
+attribute::as()
+{
+    typedef typename T::value_type value_type;
+    enum { size = T::static_size };
+
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	throw;
+    }
+
+    H5::DataSpace ds(attr.getSpace());
+    if (!ds.isSimple()) {
+	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
+    }
+    if (ds.getSimpleExtentNdims() != 1) {
+	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not one-dimensional");
+    }
+    hsize_t dim[1];
+    ds.getSimpleExtentDims(dim);
+    if (dim[0] != size) {
+	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace does not match array size");
+    }
+
+    boost::array<value_type, size> value;
+    attr.read(ctype<value_type>::type, value.data());
+    return value;
+}
 
 } // namespace H5xx
 

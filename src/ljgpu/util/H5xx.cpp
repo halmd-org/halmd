@@ -22,101 +22,6 @@
 namespace H5xx
 {
 
-/*
- * create and write C type attribute
- */
-template <typename T>
-attribute& attribute::operator=(T const& value)
-{
-    H5::Attribute attr;
-    try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
-    }
-    catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, ctype<T>::type, H5S_SCALAR);
-    }
-    attr.write(ctype<T>::type, &value);
-    return *this;
-}
-
-/**
- * create and write string attribute
- */
-template <>
-attribute& attribute::operator=(std::string const& value)
-{
-    H5::StrType tid(H5::PredType::C_S1, 256);
-    H5::Attribute attr;
-    try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
-    }
-    catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, tid, H5S_SCALAR);
-    }
-    attr.write(tid, value.c_str());
-    return *this;
-}
-
-/**
- * create and write C string attribute
- */
-template <>
-attribute& attribute::operator=(char const* value)
-{
-    H5::StrType tid(H5::PredType::C_S1, 256);
-    H5::Attribute attr;
-    try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
-    }
-    catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, tid, H5S_SCALAR);
-    }
-    attr.write(tid, value);
-    return *this;
-}
-
-/**
- * read C type attribute
- */
-template <typename T>
-T attribute::as()
-{
-    H5::Attribute attr;
-    try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
-    }
-    catch (H5::AttributeIException const&) {
-	throw;
-    }
-    T value;
-    attr.read(ctype<T>::type, &value);
-    return value;
-}
-
-/**
- * read string attribute
- */
-template <>
-std::string attribute::as()
-{
-    H5::Attribute attr;
-    try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
-    }
-    catch (H5::AttributeIException const&) {
-	throw;
-    }
-    // fixed string length includes terminating NULL character
-    char value[256];
-    attr.read(H5::StrType(H5::PredType::C_S1, 256), value);
-    return value;
-}
-
 template <> H5::PredType const& ctype<int8_t>::type = H5::PredType::NATIVE_INT8;
 template <> H5::PredType const& ctype<uint8_t>::type = H5::PredType::NATIVE_UINT8;
 template <> H5::PredType const& ctype<int16_t>::type = H5::PredType::NATIVE_INT16;
@@ -127,27 +32,5 @@ template <> H5::PredType const& ctype<int64_t>::type = H5::PredType::NATIVE_INT6
 template <> H5::PredType const& ctype<uint64_t>::type = H5::PredType::NATIVE_UINT64;
 template <> H5::PredType const& ctype<float>::type = H5::PredType::NATIVE_FLOAT;
 template <> H5::PredType const& ctype<double>::type = H5::PredType::NATIVE_DOUBLE;
-
-// explicit template instantiation
-template attribute& attribute::operator=(int8_t const&);
-template attribute& attribute::operator=(uint8_t const&);
-template attribute& attribute::operator=(int16_t const&);
-template attribute& attribute::operator=(uint16_t const&);
-template attribute& attribute::operator=(int32_t const&);
-template attribute& attribute::operator=(uint32_t const&);
-template attribute& attribute::operator=(int64_t const&);
-template attribute& attribute::operator=(uint64_t const&);
-template attribute& attribute::operator=(float const&);
-template attribute& attribute::operator=(double const&);
-template int8_t attribute::as();
-template uint8_t attribute::as();
-template int16_t attribute::as();
-template uint16_t attribute::as();
-template int32_t attribute::as();
-template uint32_t attribute::as();
-template int64_t attribute::as();
-template uint64_t attribute::as();
-template float attribute::as();
-template double attribute::as();
 
 } // namespace H5xx
