@@ -152,7 +152,7 @@ void ljfluid_base<ljfluid_impl>::cutoff_radius(float_type value)
     LOG("potential cutoff energy: " << en_cut);
 
     for (size_t i = 0; i < sigma_.size(); ++i) {
-	rr_cut[i] = std::pow(r_cut, 2) * sigma_[i];
+	rr_cut[i] = std::pow(r_cut * sigma_[i], 2);
     }
 }
 
