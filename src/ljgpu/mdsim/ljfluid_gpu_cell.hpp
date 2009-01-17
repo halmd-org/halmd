@@ -286,7 +286,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(sample_visitor visitor)
 
     try {
 	// copy periodically reduced particle positions from host to GPU
-	std::copy(m_sample.r.begin(), m_sample.r.end(), h_part.r.begin());
+	std::copy(m_sample[0].r.begin(), m_sample[0].r.end(), h_part.r.begin());
 	cuda::copy(h_part.r, g_part.R, stream_);
 	// assign particles to cells
 	event_[0].record(stream_);
@@ -309,9 +309,9 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(sample_visitor visitor)
 	    // particle number
 	    const int tag = h_part.tag[i];
 	    if (tag != _gpu::VIRTUAL_PARTICLE) {
-		h_part.v[i] = m_sample.v[tag];
+		h_part.v[i] = m_sample[0].v[tag];
 		// calculate maximum squared velocity
-		vv_max = std::max(vv_max, m_sample.v[tag] * m_sample.v[tag]);
+		vv_max = std::max(vv_max, m_sample[0].v[tag] * m_sample[0].v[tag]);
 	    }
 	}
 	// set initial sum over maximum velocity magnitudes since last cell lists update
@@ -538,15 +538,15 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 	// check if real particle
 	if (n != _gpu::VIRTUAL_PARTICLE) {
 	    // copy periodically extended particle positions
-	    m_sample.r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
+	    m_sample[0].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
 	    // copy particle velocities
-	    m_sample.v[n] = h_part.v[i];
+	    m_sample[0].v[n] = h_part.v[i];
 	    // calculate mean potential energy per particle
 	    m_sample.en_pot += (h_part.en[i] - m_sample.en_pot) / ++count;
 	    // calculate mean virial equation sum per particle
 	    m_sample.virial += (h_part.virial[i] - m_sample.virial) / count;
 	    // calculate maximum squared velocity
-	    vv_max = std::max(vv_max, m_sample.v[n] * m_sample.v[n]);
+	    vv_max = std::max(vv_max, m_sample[0].v[n] * m_sample[0].v[n]);
 	}
     }
     // add to sum over maximum velocity magnitudes since last cell lists update

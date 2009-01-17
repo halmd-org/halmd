@@ -52,6 +52,7 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::sample_type sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
+    typedef typename sample_type::uniform_sample uniform_sample;
     typedef typename sample_type::position_vector position_vector;
     typedef typename sample_type::velocity_vector velocity_vector;
 
@@ -84,8 +85,9 @@ public:
 
 public:
     /** set number of particles */
-    template <typename T>
-    void particles(T const& value);
+    void particles(unsigned int value);
+    /** set number of particles in a binary mixture */
+    void particles(boost::array<unsigned int, 2> const& value);
     /** set neighbour list skin */
     void nbl_skin(float value);
 
@@ -190,14 +192,30 @@ private:
  * set number of particles in system
  */
 template <int dimension>
-template <typename T>
-void ljfluid<ljfluid_impl_host<dimension> >::particles(T const& value)
+void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
 {
     _Base::particles(value);
 
     try {
-	m_sample.r.resize(npart);
-	m_sample.v.resize(npart);
+	m_sample[particle::A].r.resize(npart);
+	m_sample[particle::A].v.resize(npart);
+	part.resize(npart);
+    }
+    catch (std::bad_alloc const& e) {
+	throw exception("failed to allocate phase space state");
+    }
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::particles(boost::array<unsigned int, 2> const& value)
+{
+    _Base::particles(value);
+
+    try {
+	m_sample[particle::A].r.resize(mpart[particle::A]);
+	m_sample[particle::A].v.resize(mpart[particle::A]);
+	m_sample[particle::B].r.resize(mpart[particle::B]);
+	m_sample[particle::B].v.resize(mpart[particle::B]);
 	part.resize(npart);
     }
     catch (std::bad_alloc const& e) {
@@ -213,10 +231,27 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
 {
     _Base::sample(visitor);
 
-    for (unsigned int i = 0; i < npart; ++i) {
-	part[i].r = m_sample.r[i];
-	part[i].v = m_sample.v[i];
-	part[i].tag = i;
+    unsigned int tag = 0;
+    foreach (position_vector const& r, m_sample[particle::A].r) {
+	part[tag].type = particle::A;
+	part[tag].r = r;
+	part[tag].tag = tag;
+	tag++;
+    }
+    foreach (position_vector const& r, m_sample[particle::B].r) {
+	part[tag].type = particle::B;
+	part[tag].r = r;
+	part[tag].tag = tag;
+	tag++;
+    }
+    tag = 0;
+    foreach (velocity_vector const& v, m_sample[particle::A].v) {
+	part[tag].v = v;
+	tag++;
+    }
+    foreach (position_vector const& v, m_sample[particle::B].v) {
+	part[tag].v = v;
+	tag++;
     }
 
     // update cell lists
@@ -320,6 +355,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
     // minimum distance in 2- or 3-dimensional fcc lattice
     LOG("minimum lattice distance: " << a / std::sqrt(2.));
 
+    foreach (uniform_sample& sample, m_sample) {
+	sample.r.clear();
+    }
+
     for (unsigned int i = 0; i < npart; ++i) {
 	part[i].tag = i;
 	vector_type& r = part[i].r;
@@ -334,6 +373,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
 	    r[1] = ((i >> 1) / n) + (i & 1) / 2.;
 	}
 	r *= a;
+	// copy position to phase space sample
+	m_sample[part[i].type].r.push_back(r);
     }
 
     // update cell lists
@@ -367,6 +408,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
     // maximum squared velocity
     double vv_max = 0;
 
+    foreach (uniform_sample& sample, m_sample) {
+	sample.v.clear();
+    }
+
     foreach (particle& p, part) {
 	// generate random Maxwell-Boltzmann distributed velocity
 	rng_.gaussian(p.v, value);
@@ -380,6 +425,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
     foreach (particle& p, part) {
 	// set center of mass velocity to zero
 	p.v -= v_cm;
+	// copy position to phase space sample
+	m_sample[p.type].v.push_back(p.v);
 
 	vv_max = std::max(vv_max, p.v * p.v);
     }
@@ -640,13 +687,17 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, 
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 {
+    foreach (uniform_sample& sample, m_sample) {
+	sample.r.clear();
+    }
+
     foreach (particle& p, part) {
 	// half step velocity
 	p.v += p.f * (timestep_ / 2);
 	// full step position
 	p.r += p.v * timestep_;
 	// copy to phase space sample
-	m_sample.r[p.tag] = p.r;
+	m_sample[p.type].r.push_back(p.r);
     }
 }
 
@@ -656,6 +707,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 {
+    foreach (uniform_sample& sample, m_sample) {
+	sample.v.clear();
+    }
+
     // maximum squared velocity
     double vv_max = 0;
 
@@ -663,7 +718,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 	// full step velocity
 	p.v += p.f * (timestep_ / 2);
 	// copy to phase space sample
-	m_sample.v[p.tag] = p.v;
+	m_sample[p.type].v.push_back(p.v);
 
 	vv_max = std::max(vv_max, p.v * p.v);
     }

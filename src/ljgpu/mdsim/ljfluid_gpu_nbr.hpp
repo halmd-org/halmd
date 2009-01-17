@@ -437,7 +437,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(sample_visitor visi
 	cuda::configure(dim_.grid, dim_.block, stream_);
 	_gpu::init_tags(g_part.tag);
 	// copy periodically reduced particle positions from host to GPU
-	std::copy(m_sample.r.begin(), m_sample.r.end(), h_part.r.begin());
+	std::copy(m_sample[0].r.begin(), m_sample[0].r.end(), h_part.r.begin());
 	cuda::copy(h_part.r, g_part.r, stream_);
 	// set periodic box traversal vectors to zero
 	cuda::memset(g_part.R, 0);
@@ -458,7 +458,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(sample_visitor visi
 
 	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.v[i] = m_sample.v[i];
+	    h_part.v[i] = m_sample[0].v[i];
 	}
 	cuda::copy(h_part.v, g_part.v, stream_);
 	// calculate maximum velocity magnitude
@@ -705,9 +705,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 	// particle tracking number
 	const int n = h_part.tag[j];
 	// copy periodically extended particle positions
-	m_sample.r[n] = h_part.r[j] + (vector_type) h_part.R[j] * box_;
+	m_sample[0].r[n] = h_part.r[j] + (vector_type) h_part.R[j] * box_;
 	// copy particle velocities
-	m_sample.v[n] = h_part.v[j];
+	m_sample[0].v[n] = h_part.v[j];
     }
 
     // mean potential energy per particle

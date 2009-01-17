@@ -28,6 +28,8 @@
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
 
+#define foreach BOOST_FOREACH
+
 namespace ljgpu
 {
 
@@ -120,26 +122,31 @@ void mdsim_base<mdsim_impl>::box(float_type value)
 template <typename mdsim_impl>
 void mdsim_base<mdsim_impl>::sample(mdsim_base<mdsim_impl>::sample_visitor read)
 {
+    typedef typename sample_type::uniform_sample uniform_sample;
     typedef typename sample_type::position_vector position_vector;
     typedef typename position_vector::value_type position_value;
 
     read(m_sample);
 
-    if (m_sample.r.size() != npart) {
+    if (m_sample[0 /* FIXME */].r.size() != npart) {
 	throw exception("mismatching number of particles in phase space sample");
     }
 
     position_value const box = m_sample.box;
-    BOOST_FOREACH(position_vector &r, m_sample.r) {
-	// apply periodic boundary conditions to positions
-	r -= floor(r / box) * box;
+    foreach (uniform_sample& sample, m_sample) {
+	foreach (position_vector &r, sample.r) {
+	    // apply periodic boundary conditions to positions
+	    r -= floor(r / box) * box;
+	}
     }
 
     if (std::fabs(box - box_) > (box_ * std::numeric_limits<float>::epsilon())) {
 	LOG("rescaling periodic simulation box length from " << box);
 	position_value const scale = box_ / box;
-	BOOST_FOREACH(position_vector &r, m_sample.r) {
-	    r *= scale;
+	foreach (uniform_sample &sample, m_sample) {
+	    foreach (position_vector &r, sample.r) {
+		r *= scale;
+	    }
 	}
 	m_sample.box = box_;
     }
@@ -149,7 +156,7 @@ template <typename mdsim_impl>
 perf::counters mdsim_base<mdsim_impl>::times()
 {
     perf::counters times(m_times);
-    BOOST_FOREACH(perf::counter& i, m_times) {
+    foreach (perf::counter& i, m_times) {
 	// reset performance counter
 	i.second.clear();
     }
@@ -166,5 +173,7 @@ void mdsim_base<mdsim_impl>::param(H5param& param) const
 }
 
 } // namespace ljgpu
+
+#undef foreach
 
 #endif /* ! LJGPU_MDSIM_BASE_HPP */

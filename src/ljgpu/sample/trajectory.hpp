@@ -166,8 +166,8 @@ void trajectory::read(sample_type& sample, int64_t index)
     LOG("resuming from trajectory sample at offset: " << index);
 
     try {
-	sample.r.resize(npart);
-	sample.v.resize(npart);
+	sample[0 /* FIXME */].r.resize(npart);
+	sample[0 /* FIXME */].v.resize(npart);
     }
     catch (std::bad_alloc const&) {
 	throw exception("failed to allocate memory for trajectory input sample");
@@ -186,10 +186,10 @@ void trajectory::read(sample_type& sample, int64_t index)
 	H5XX_NO_AUTO_PRINT(H5::Exception);
 	// read periodically reduced particle positions
 	ds_r.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dset_r.read(sample.r.data(), tid_r, ds_mem, ds_r);
+	dset_r.read(sample[0 /* FIXME */].r.data(), tid_r, ds_mem, ds_r);
 	// read particle velocities
 	ds_v.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-	dset_v.read(sample.v.data(), tid_v, ds_mem, ds_v);
+	dset_v.read(sample[0 /* FIXME */].v.data(), tid_v, ds_mem, ds_v);
     }
     catch (H5::Exception const&) {
 	throw exception("failed to read sample from HDF5 trajectory input file");
@@ -217,7 +217,7 @@ void trajectory::write(sample_type const& sample, double time)
     H5::DataType const tid_r(H5xx::ctype<position_value_type>::type);
     H5::DataType const tid_v(H5xx::ctype<velocity_value_type>::type);
     H5::DataType const tid_t(H5::PredType::NATIVE_DOUBLE);
-    unsigned int const npart = sample.r.size();
+    unsigned int const npart = sample[0 /* FIXME */].r.size();
 
     H5::DataSet dset_t, dset_r, dset_v;
     try {
@@ -279,10 +279,10 @@ void trajectory::write(sample_type const& sample, double time)
 
     // write periodically extended particle coordinates
     dset_r.extend(dim_v);
-    dset_r.write(sample.r.data(), tid_r, ds_sample_v, ds_file_v);
+    dset_r.write(sample[0 /* FIXME */].r.data(), tid_r, ds_sample_v, ds_file_v);
     // write particle velocities
     dset_v.extend(dim_v);
-    dset_v.write(sample.v.data(), tid_v, ds_sample_v, ds_file_v);
+    dset_v.write(sample[0 /* FIXME */].v.data(), tid_v, ds_sample_v, ds_file_v);
     // write simulation time
     dset_t.extend(dim_s);
     dset_t.write(&time, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, ds_file_s);

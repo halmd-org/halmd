@@ -221,8 +221,8 @@ void hardsphere<hardsphere_impl<dimension> >::particles(unsigned int value)
 
     try {
 	part.resize(npart);
-	m_sample.r.resize(npart);
-	m_sample.v.resize(npart);
+	m_sample[0].r.resize(npart);
+	m_sample[0].v.resize(npart);
     }
     catch (std::bad_alloc const&) {
 	throw exception("failed to allocate particle states");
@@ -296,7 +296,7 @@ void hardsphere<hardsphere_impl<dimension> >::sample(sample_visitor visitor)
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// set periodically reduced particle position at simulation time zero
-	part[i].r = m_sample.r[i];
+	part[i].r = m_sample[0].r[i];
 	// set periodically extended particle position at simulation time zero
 	part[i].R = part[i].r;
 	// set cell which particle belongs to
@@ -304,7 +304,7 @@ void hardsphere<hardsphere_impl<dimension> >::sample(sample_visitor visitor)
 	// add particle to cell
 	cell_(part[i].cell).push_back(i);
 	// set particle velocity at simulation time zero
-	part[i].v = m_sample.v[i];
+	part[i].v = m_sample[0].v[i];
 	// set particle time
 	part[i].t = 0.;
     }
@@ -748,9 +748,9 @@ void hardsphere<hardsphere_impl<dimension> >::copy()
     for (unsigned int i = 0; i < npart; ++i) {
 	const vector_type dr = part[i].v * (sample_time - part[i].t);
 	// periodically extended particle position
-	m_sample.r[i] = part[i].R + dr;
+	m_sample[0].r[i] = part[i].R + dr;
 	// particle velocity
-	m_sample.v[i] = part[i].v;
+	m_sample[0].v[i] = part[i].v;
     }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 

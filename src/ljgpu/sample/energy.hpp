@@ -21,12 +21,15 @@
 
 #include <H5Cpp.h>
 #include <algorithm>
+#include <boost/foreach.hpp>
 #include <ljgpu/math/stat.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/sample/H5param.hpp>
 #include <string>
 #include <vector>
+
+#define foreach BOOST_FOREACH
 
 namespace ljgpu
 {
@@ -93,16 +96,20 @@ template <int dimension>
 template <typename sample_type>
 void energy<dimension>::sample(sample_type const& sample, float density, double time)
 {
+    typedef typename sample_type::uniform_sample uniform_sample;
+    // ensure double-precision floating point arithmetic
+    typedef vector<double, dimension> velocity_vector;
+
     vector<double, dimension> v_cm = 0;
     double vv = 0;
-
-    for (size_t i = 0; i < sample.v.size(); ++i) {
-	// ensure double-precision floating point arithmetic
-	vector<double, dimension> v(sample.v[i]);
-	// center of mass velocity
-	v_cm += (v - v_cm) / (i + 1);
-	// mean squared velocity
-	vv += (v * v - vv) / (i + 1);
+    size_t i = 0;
+    foreach (uniform_sample const& sample_, sample) {
+	foreach (velocity_vector v, sample_.v) {
+	    // center of mass velocity
+	    v_cm += (v - v_cm) / ++i;
+	    // mean squared velocity
+	    vv += (v * v - vv) / i;
+	}
     }
 
     // mean potential energy per particle
@@ -128,5 +135,7 @@ void energy<dimension>::sample(sample_type const& sample, float density, double 
 }
 
 } // namespace ljgpu
+
+#undef foreach
 
 #endif /* ! LJGPU_SAMPLE_ENERGY_HPP */

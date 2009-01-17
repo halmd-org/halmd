@@ -19,6 +19,7 @@
 #ifndef LJGPU_MDSIM_SAMPLE_HPP
 #define LJGPU_MDSIM_SAMPLE_HPP
 
+#include <boost/array.hpp>
 #include <boost/function.hpp>
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/math/vector2d.hpp>
@@ -28,45 +29,36 @@
 namespace ljgpu {
 
 /**
- * MD simulation sample
+ * phase space sample for A or B particles
  */
-template <typename mdsim_impl>
-struct mdsim_sample;
-
-template <int dimension>
-struct mdsim_sample<ljfluid_impl_gpu_base<dimension> >
+template <typename float_type, int dimension>
+struct phase_space_sample
 {
     typedef vector<double, dimension> position_vector;
-    typedef vector<float, dimension> velocity_vector;
+    typedef vector<float_type, dimension> velocity_vector;
     typedef std::vector<position_vector> position_sample_vector;
     typedef std::vector<velocity_vector> velocity_sample_vector;
-    typedef boost::function<void (mdsim_sample<ljfluid_impl_gpu_base<dimension> >&)> sample_visitor;
 
     /** periodically extended particle positions */
     position_sample_vector r;
     /** particle velocities */
     velocity_sample_vector v;
-    /** potential energy per particle */
-    double en_pot;
-    /** virial equation sum per particle */
-    double virial;
-    /** simulation box length */
-    float box;
 };
 
-template <int dimension>
-struct mdsim_sample<ljfluid_impl_host<dimension> >
+/**
+ * MD simulation sample for A and B particles
+ */
+template <typename float_type, int dimension>
+struct mdsim_sample
+: public boost::array<phase_space_sample<float_type, dimension>, 2>
 {
-    typedef vector<double, dimension> position_vector;
-    typedef vector<double, dimension> velocity_vector;
-    typedef std::vector<position_vector> position_sample_vector;
-    typedef std::vector<velocity_vector> velocity_sample_vector;
-    typedef boost::function<void (mdsim_sample<ljfluid_impl_host<dimension> >&)> sample_visitor;
+    typedef boost::function<void (mdsim_sample<float_type, dimension>&)> sample_visitor;
+    typedef phase_space_sample<float_type, dimension> uniform_sample;
+    typedef typename uniform_sample::position_vector position_vector;
+    typedef typename uniform_sample::velocity_vector velocity_vector;
+    typedef typename uniform_sample::position_sample_vector position_sample_vector;
+    typedef typename uniform_sample::velocity_sample_vector velocity_sample_vector;
 
-    /** periodically extended particle positions */
-    position_sample_vector r;
-    /** particle velocities */
-    velocity_sample_vector v;
     /** potential energy per particle */
     double en_pot;
     /** virial equation sum per particle */

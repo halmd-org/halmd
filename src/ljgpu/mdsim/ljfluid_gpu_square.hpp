@@ -189,7 +189,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(sample_visitor visitor
 
     try {
 	// copy periodically reduced particle positions from host to GPU
-	std::copy(m_sample.r.begin(), m_sample.r.end(), h_part.r.begin());
+	std::copy(m_sample[0].r.begin(), m_sample[0].r.end(), h_part.r.begin());
 	cuda::copy(h_part.r, g_part.r, stream_);
 	// set periodic box traversal vectors to zero
 	cuda::memset(g_part.R, 0);
@@ -202,7 +202,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(sample_visitor visitor
 
 	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.v[i] = m_sample.v[i];
+	    h_part.v[i] = m_sample[0].v[i];
 	}
 	cuda::copy(h_part.v, g_part.v, stream_);
 
@@ -364,9 +364,9 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 
     for (unsigned int j = 0; j < npart; ++j) {
 	// copy periodically extended particle positions
-	m_sample.r[j] = h_part.r[j] + (vector_type) h_part.R[j] * box_;
+	m_sample[0].r[j] = h_part.r[j] + (vector_type) h_part.R[j] * box_;
 	// copy particle velocities
-	m_sample.v[j] = h_part.v[j];
+	m_sample[0].v[j] = h_part.v[j];
     }
 
     // mean potential energy per particle

@@ -142,7 +142,7 @@ void correlation<dimension>::sample(sample_type const& sample, uint64_t step, bo
     tcf_sample<dimension> csample;
 
     // copy phase space coordinates and compute spatial Fourier transformation 
-    csample(sample.r, sample.v, m_q_vector);
+    csample(sample[0 /* FIXME */].r, sample[0 /* FIXME */].v, m_q_vector);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
