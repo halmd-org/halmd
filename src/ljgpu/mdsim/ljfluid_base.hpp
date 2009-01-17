@@ -19,7 +19,6 @@
 #ifndef LJGPU_MDSIM_LJFLUID_BASE_HPP
 #define LJGPU_MDSIM_LJFLUID_BASE_HPP
 
-#include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
@@ -42,11 +41,12 @@ public:
     enum { dimension = _Base::dimension };
 
 public:
-    ljfluid_base();
-    /** set number of particles */
-    void particles(unsigned int value);
-    /** set number of A and B particles in binary mixture */
-    void particles(boost::array<unsigned int, 2> const& value);
+    ljfluid_base() :
+	sigma_(boost::assign::list_of(1)(0)(0)),
+	epsilon_(boost::assign::list_of(1)(0)(0)),
+	r_smooth(0),
+	thermostat_nu(0) {}
+
     /** set simulation timestep */
     void timestep(float_type value);
     /** set potential cutoff radius */
@@ -72,11 +72,10 @@ public:
 
 protected:
     using _Base::npart;
+    using _Base::mpart;
     using _Base::box_;
     using _Base::density_;
 
-    /** number of A and B particles in binary mixture */
-    boost::array<unsigned int, 2> mpart;
     /** collision diameters */
     boost::array<float_type, 3> sigma_;
     /** squared collision diameters */
@@ -100,27 +99,6 @@ protected:
     /** heat bath temperature */
     float_type thermostat_temp;
 };
-
-template <typename ljfluid_impl>
-ljfluid_base<ljfluid_impl>::ljfluid_base()
-  : mpart(boost::assign::list_of(0)(0)), sigma_(boost::assign::list_of(1)(0)(0)),
-    epsilon_(boost::assign::list_of(1)(0)(0)), r_smooth(0), thermostat_nu(0)
-{
-}
-
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::particles(unsigned int value)
-{
-    _Base::particles(value);
-}
-
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::particles(boost::array<unsigned int, 2> const& value)
-{
-    mpart = value;
-    npart = std::accumulate(mpart.begin(), mpart.end(), 0);
-    LOG("binary mixture with " << mpart[0] << " A particles and " << mpart[1] << " B particles");
-}
 
 template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::epsilon(boost::array<float, 3> const& value)

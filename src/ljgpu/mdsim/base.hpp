@@ -19,6 +19,7 @@
 #ifndef LJGPU_MDSIM_BASE_HPP
 #define LJGPU_MDSIM_BASE_HPP
 
+#include <boost/assign.hpp>
 #include <cmath>
 #include <limits>
 #include <ljgpu/mdsim/impl.hpp>
@@ -48,6 +49,8 @@ public:
 public:
     /** set number of particles */
     void particles(unsigned int value);
+    /** set number of A and B particles in binary mixture */
+    void particles(boost::array<unsigned int, 2> const& value);
     /** set particle density */
     void density(float_type value);
     /** set periodic box length */
@@ -73,6 +76,8 @@ protected:
 protected:
     /** number of particles */
     unsigned int npart;
+    /** number of A and B particles in binary mixture */
+    boost::array<unsigned int, 2> mpart;
     /** particle density */
     float_type density_;
     /** periodic box length */
@@ -92,7 +97,16 @@ void mdsim_base<mdsim_impl>::particles(unsigned int value)
     }
     // set particle number
     npart = value;
+    mpart = boost::assign::list_of(npart)(0);
     LOG("number of particles: " << npart);
+}
+
+template <typename mdsim_impl>
+void mdsim_base<mdsim_impl>::particles(boost::array<unsigned int, 2> const& value)
+{
+    mpart = value;
+    npart = std::accumulate(mpart.begin(), mpart.end(), 0);
+    LOG("binary mixture with " << mpart[0] << " A particles and " << mpart[1] << " B particles");
 }
 
 template <typename mdsim_impl>
@@ -128,8 +142,10 @@ void mdsim_base<mdsim_impl>::sample(mdsim_base<mdsim_impl>::sample_visitor read)
 
     read(m_sample);
 
-    if (m_sample[0 /* FIXME */].r.size() != npart) {
-	throw exception("mismatching number of particles in phase space sample");
+    for (size_t i = 0; i < m_sample.size(); ++i) {
+	if (m_sample[i].r.size() != mpart[i]) {
+	    throw exception("mismatching number of particles in phase space sample");
+	}
     }
 
     position_value const box = m_sample.box;

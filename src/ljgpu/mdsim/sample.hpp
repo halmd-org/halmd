@@ -63,7 +63,10 @@ struct mdsim_sample
     double en_pot;
     /** virial equation sum per particle */
     double virial;
-    /** simulation box length */
+
+    /** simulation time */
+    double time;
+    /** periodic simulation box length */
     float box;
 };
 

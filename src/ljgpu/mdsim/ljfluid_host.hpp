@@ -119,7 +119,7 @@ public:
 
 private:
     /** returns true iff binary mixture */
-    bool is_binary() { return (mpart[0] || mpart[1]); }
+    bool is_binary() { return (mpart[0] && mpart[1]); }
     /** randomly assign particles types in a binary mixture */
     void random_binary_types();
     /** update cell lists */
