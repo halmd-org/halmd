@@ -66,6 +66,16 @@ public:
     operator H5param() { return m_file; }
 
 private:
+    template <typename sample_type>
+    H5::DataSet create_vector_dataset(H5::Group node, char const* name, sample_type const& sample);
+    template <typename sample_type>
+    H5::DataSet create_scalar_dataset(H5::Group node, char const* name, sample_type const&);
+    template <typename sample_type>
+    void write_vector_sample(H5::DataSet dset, sample_type const& sample);
+    template <typename sample_type>
+    void write_scalar_sample(H5::DataSet dset, sample_type const& sample);
+
+private:
     /** HDF5 trajectory output file */
     H5::H5File m_file;
 };
@@ -210,82 +220,147 @@ void trajectory::read(sample_type& sample, int64_t index)
 template <typename sample_type>
 void trajectory::write(sample_type const& sample, double time)
 {
-    enum { dimension = sample_type::position_vector::static_size };
-    typedef typename sample_type::position_vector::value_type position_value_type;
-    typedef typename sample_type::velocity_vector::value_type velocity_value_type;
+    boost::array<H5::DataSet, 2> dset_r;
+    boost::array<H5::DataSet, 2> dset_v;
+    H5::DataSet dset_t;
 
-    H5::DataType const tid_r(H5xx::ctype<position_value_type>::type);
-    H5::DataType const tid_v(H5xx::ctype<velocity_value_type>::type);
-    H5::DataType const tid_t(H5::PredType::NATIVE_DOUBLE);
-    unsigned int const npart = sample[0 /* FIXME */].r.size();
-
-    H5::DataSet dset_t, dset_r, dset_v;
     try {
 	H5XX_NO_AUTO_PRINT(H5::FileIException);
 	H5::Group root(m_file.openGroup("trajectory"));
-	dset_r = root.openDataSet("r");
-	dset_v = root.openDataSet("v");
+
+	if (sample[1].r.size()) {
+	    // binary mixture
+	    H5::Group a(root.openGroup("A"));
+	    dset_r[0] = a.openDataSet("r");
+	    dset_v[0] = a.openDataSet("v");
+	    H5::Group b(root.openGroup("B"));
+	    dset_r[1] = b.openDataSet("r");
+	    dset_v[1] = b.openDataSet("v");
+	}
+	else {
+	    dset_r[0] = root.openDataSet("r");
+	    dset_v[0] = root.openDataSet("v");
+	}
 	dset_t = root.openDataSet("t");
     }
     catch (H5::FileIException const&) {
-	// vector sample file dataspace
-	hsize_t dim_v[3] = { 0, npart, dimension };
-	hsize_t max_dim_v[3] = { H5S_UNLIMITED, npart, dimension };
-	H5::DataSpace ds_file_v(3, dim_v, max_dim_v);
-	// scalar sample file dataspace
-	hsize_t dim_s[1] = { 0 };
-	hsize_t max_dim_s[1] = { H5S_UNLIMITED };
-	H5::DataSpace ds_file_s(1, dim_s, max_dim_s);
-	// enable dataset chunking with GZIP compression
-	H5::DSetCreatPropList cparms;
-	hsize_t chunk_dim[3] = { 1, npart, dimension };
-	cparms.setChunk(3, chunk_dim);
-	cparms.setDeflate(6);
-
 	H5::Group root(m_file.createGroup("trajectory"));
-	dset_r = root.createDataSet("r", tid_r, ds_file_v, cparms);
-	dset_v = root.createDataSet("v", tid_v, ds_file_v, cparms);
 
-	hsize_t chunk_s[1] = { 1 };
-	cparms.setChunk(1, chunk_s);
-
-	dset_t = root.createDataSet("t", tid_t, ds_file_s, cparms);
+	if (sample[1].r.size()) {
+	    // binary mixture
+	    H5::Group a(root.createGroup("A"));
+	    dset_r[0] = create_vector_dataset(a, "r", sample[0].r);
+	    dset_v[0] = create_vector_dataset(a, "v", sample[0].v);
+	    H5::Group b(root.createGroup("B"));
+	    dset_r[1] = create_vector_dataset(b, "r", sample[1].r);
+	    dset_v[1] = create_vector_dataset(b, "v", sample[1].v);
+	}
+	else {
+	    dset_r[0] = create_vector_dataset(root, "r", sample[0].r);
+	    dset_v[0] = create_vector_dataset(root, "v", sample[0].v);
+	}
+	dset_t = create_scalar_dataset(root, "t", time);
     }
 
-    // extend vector sample file dataspace
-    H5::DataSpace ds_file_v(dset_r.getSpace());
-    hsize_t dim_v[3];
-    ds_file_v.getSimpleExtentDims(dim_v);
-    hsize_t count_v[3]  = { 1, 1, 1 };
-    hsize_t start_v[3]  = { dim_v[0], 0, 0 };
-    hsize_t stride_v[3] = { 1, 1, 1 };
-    hsize_t block_v[3]  = { 1, npart, dimension };
-    dim_v[0]++;
-    ds_file_v.setExtentSimple(3, dim_v);
-    ds_file_v.selectHyperslab(H5S_SELECT_SET, count_v, start_v, stride_v, block_v);
+    write_vector_sample(dset_r[0], sample[0].r);
+    write_vector_sample(dset_v[0], sample[0].v);
 
-    // extend scalar sample file dataspace
-    hsize_t count_s[1]  = { 1 };
-    hsize_t start_s[1]  = { start_v[0] };
-    hsize_t stride_s[1] = { 1 };
-    hsize_t block_s[1]  = { 1 };
-    hsize_t dim_s[1] = { dim_v[0] };
-    H5::DataSpace ds_file_s(1, dim_s);
-    ds_file_s.selectHyperslab(H5S_SELECT_SET, count_s, start_s, stride_s, block_s);
+    if (sample[1].r.size()) {
+	write_vector_sample(dset_r[1], sample[1].r);
+	write_vector_sample(dset_v[1], sample[1].v);
+    }
+
+    write_scalar_sample(dset_t, time);
+}
+
+template <typename sample_type>
+H5::DataSet trajectory::create_vector_dataset(H5::Group node, char const* name, sample_type const& sample)
+{
+    typedef typename sample_type::value_type::value_type float_type;
+    enum { dimension = sample_type::value_type::static_size };
+
+    H5::DataType const tid(H5xx::ctype<float_type>::type);
+    size_t const size = sample.size();
+
+    // vector sample file dataspace
+    hsize_t dim[3] = { 0, size, dimension };
+    hsize_t max_dim[3] = { H5S_UNLIMITED, size, dimension };
+    H5::DataSpace ds(3, dim, max_dim);
+
+    H5::DSetCreatPropList cparms;
+    hsize_t chunk_dim[3] = { 1, size, dimension };
+    cparms.setChunk(3, chunk_dim);
+    // enable GZIP compression
+    cparms.setDeflate(6);
+
+    return node.createDataSet(name, tid, ds, cparms);
+}
+
+template <typename sample_type>
+H5::DataSet trajectory::create_scalar_dataset(H5::Group node, char const* name, sample_type const&)
+{
+    H5::DataType const tid(H5xx::ctype<sample_type>::type);
+
+    // scalar sample file dataspace
+    hsize_t dim[1] = { 0 };
+    hsize_t max_dim[1] = { H5S_UNLIMITED };
+    H5::DataSpace ds(1, dim, max_dim);
+
+    H5::DSetCreatPropList cparms;
+    hsize_t chunk_dim[1] = { 1 };
+    cparms.setChunk(1, chunk_dim);
+
+    return node.createDataSet(name, tid, ds, cparms);
+}
+
+template <typename sample_type>
+void trajectory::write_vector_sample(H5::DataSet dset, sample_type const& sample)
+{
+    typedef typename sample_type::value_type::value_type float_type;
+    enum { dimension = sample_type::value_type::static_size };
+
+    H5::DataType const tid(H5xx::ctype<float_type>::type);
+    size_t const size = sample.size();
+
+    // extend vector sample file dataspace
+    H5::DataSpace ds(dset.getSpace());
+    hsize_t dim[3];
+    ds.getSimpleExtentDims(dim);
+    hsize_t count[3]  = { 1, 1, 1 };
+    hsize_t start[3]  = { dim[0], 0, 0 };
+    hsize_t stride[3] = { 1, 1, 1 };
+    hsize_t block[3]  = { 1, size, dimension };
+    dim[0]++;
+    ds.setExtentSimple(3, dim);
+    ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     // vector sample memory dataspace
-    hsize_t dim_mem[2] = { npart, dimension };
-    H5::DataSpace ds_sample_v(2, dim_mem);
+    hsize_t dim_sample[2] = { size, dimension };
+    H5::DataSpace ds_sample(2, dim_sample);
 
-    // write periodically extended particle coordinates
-    dset_r.extend(dim_v);
-    dset_r.write(sample[0 /* FIXME */].r.data(), tid_r, ds_sample_v, ds_file_v);
-    // write particle velocities
-    dset_v.extend(dim_v);
-    dset_v.write(sample[0 /* FIXME */].v.data(), tid_v, ds_sample_v, ds_file_v);
-    // write simulation time
-    dset_t.extend(dim_s);
-    dset_t.write(&time, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, ds_file_s);
+    dset.extend(dim);
+    dset.write(sample.data(), tid, ds_sample, ds);
+}
+
+template <typename sample_type>
+void trajectory::write_scalar_sample(H5::DataSet dset, sample_type const& sample)
+{
+    H5::DataType const tid(H5xx::ctype<sample_type>::type);
+
+    // extend scalar sample file dataspace
+    H5::DataSpace ds(dset.getSpace());
+    hsize_t dim[1];
+    ds.getSimpleExtentDims(dim);
+    hsize_t count[1]  = { 1 };
+    hsize_t start[1]  = { dim[0] };
+    hsize_t stride[1] = { 1 };
+    hsize_t block[1]  = { 1 };
+    dim[0]++;
+    ds.setExtentSimple(1, dim);
+    ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
+
+    dset.extend(dim);
+    dset.write(&sample, tid, H5S_SCALAR, ds);
 }
 
 } // namespace ljgpu
