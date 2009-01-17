@@ -79,6 +79,8 @@ public:
 
 private:
     /** backend-specific API wrappers */
+    void particles(boost::false_type const&);
+    void binary(boost::true_type const&);
     void cutoff_radius(boost::true_type const&);
     void potential_smoothing(boost::true_type const&);
     void pair_separation(boost::true_type const&);
@@ -93,6 +95,8 @@ private:
     void stream(boost::true_type const&);
     void copy(boost::true_type const&);
 
+    void particles(boost::true_type const&) {}
+    void binary(boost::false_type const&) {}
     void cutoff_radius(boost::false_type const&) {}
     void potential_smoothing(boost::false_type const&) {}
     void pair_separation(boost::false_type const&) {}
@@ -141,7 +145,8 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     LOG("positional coordinates dimension: " << dimension);
 
     // set Lennard-Jones or hard-sphere system parameters
-    fluid.particles(opt["particles"].as<unsigned int>());
+    particles(boost::is_base_of<ljfluid_impl_host<dimension>, impl_type>());
+    binary(boost::is_base_of<ljfluid_impl_host<dimension>, impl_type>());
     if (opt["density"].defaulted() && !opt["box-length"].empty()) {
 	fluid.box(opt["box-length"].as<float>());
     }
@@ -404,6 +409,25 @@ void mdsim<mdsim_backend>::operator()()
 	tep.close();
     }
     prf.close();
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::particles(boost::false_type const&)
+{
+    fluid.particles(opt["particles"].as<unsigned int>());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::binary(boost::true_type const&)
+{
+    if (!opt["binary"].empty()) {
+	fluid.particles(opt["binary"].as<boost::array<unsigned int, 2> >());
+	fluid.epsilon(opt["epsilon"].as<boost::array<float, 3> >());
+	fluid.sigma(opt["sigma"].as<boost::array<float, 3> >());
+    }
+    else {
+	fluid.particles(opt["particles"].as<unsigned int>());
+    }
 }
 
 template <typename mdsim_backend>

@@ -234,6 +234,23 @@ public:
 	gaussian(v[0], v[1], var);
     }
 
+    /**
+     * in-place array shuffle
+     */
+    template <typename T>
+    void shuffle(T& array)
+    {
+	//
+	// D.E. Knuth, Art of Computer Programming, Volume 2:
+	// Seminumerical Algorithms, 3rd Edition, 1997,
+	// Addison-Wesley, pp. 124-125.
+	//
+	for (typename T::size_type i = array.size(); i > 1; --i) {
+	    typename T::size_type r = i * uniform();
+	    std::swap(array[r], array[i - 1]);
+	}
+    }
+
 private:
     gsl_rng *rng_;
 };

@@ -33,6 +33,9 @@
 #include <sys/times.h>
 #include <vector>
 
+#define foreach BOOST_FOREACH
+#define range boost::make_iterator_range
+
 namespace ljgpu
 {
 
@@ -67,6 +70,8 @@ public:
 	vector_type f;
 	/** particle number */
 	unsigned int tag;
+	/** particle type */
+	enum { A = 0, B = 1 } type;
 	/** particle neighbours list */
 	std::vector<ref> neighbour;
     };
@@ -79,7 +84,8 @@ public:
 
 public:
     /** set number of particles */
-    void particles(unsigned int value);
+    template <typename T>
+    void particles(T const& value);
     /** set neighbour list skin */
     void nbl_skin(float value);
 
@@ -110,17 +116,25 @@ public:
     void param(H5param& param) const;
 
 private:
+    /** returns true iff binary mixture */
+    bool is_binary() { return (mpart[0] || mpart[1]); }
+    /** randomly assign particles types in a binary mixture */
+    void random_binary_types();
     /** update cell lists */
     void update_cells();
     /** returns cell list which a particle belongs to */
     cell_list& compute_cell(vector_type r);
     /** update neighbour lists */
+    template <bool binary>
     void update_neighbours();
     /** update neighbour lists for a single cell */
+    template <bool binary>
     void update_cell_neighbours(cell_index const& i);
     /** update neighbour list of particle */
-    template <bool same_cell> void compute_cell_neighbours(particle& p, cell_list& c);
+    template <bool same_cell, bool binary>
+    void compute_cell_neighbours(particle& p, cell_list& c);
     /** compute Lennard-Jones forces */
+    template <bool binary>
     void compute_forces();
     /** compute C²-smooth potential */
     void compute_smooth_potential(double r, double fval, double pot);
@@ -133,12 +147,16 @@ private:
 
 private:
     using _Base::npart;
+    using _Base::mpart;
     using _Base::density_;
     using _Base::box_;
     using _Base::timestep_;
     using _Base::r_cut;
     using _Base::rr_cut;
     using _Base::en_cut;
+    using _Base::sigma_;
+    using _Base::sigma2_;
+    using _Base::epsilon_;
     using _Base::r_smooth;
     using _Base::rri_smooth;
     using _Base::thermostat_nu;
@@ -160,10 +178,10 @@ private:
     float_type cell_length_;
     /** neighbour list skin */
     float_type r_skin;
-    /** cutoff radius with neighbour list skin */
-    float_type r_cut_skin;
-    /** squared cutoff radius with neighbour list skin */
-    float_type rr_cut_skin;
+    /** cutoff radii with neighbour list skin */
+    boost::array<float_type, 3> r_cut_skin;
+    /** squared cutoff radii with neighbour list skin */
+    boost::array<float_type, 3> rr_cut_skin;
     /** sum over maximum velocity magnitudes since last neighbour lists update */
     float_type v_max_sum;
 };
@@ -172,7 +190,8 @@ private:
  * set number of particles in system
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
+template <typename T>
+void ljfluid<ljfluid_impl_host<dimension> >::particles(T const& value)
 {
     _Base::particles(value);
 
@@ -199,14 +218,23 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
 	part[i].v = m_sample.v[i];
 	part[i].tag = i;
     }
+
     // update cell lists
     update_cells();
-    // update Verlet neighbour lists
-    update_neighbours();
+
+    if (is_binary()) {
+	// update Verlet neighbour lists
+	update_neighbours<true>();
+	// calculate forces, potential energy and virial equation sum
+	compute_forces<true>();
+    }
+    else {
+	update_neighbours<false>();
+	compute_forces<false>();
+    }
+
     // reset sum over maximum velocity magnitudes to zero
     v_max_sum = 0;
-    // calculate forces, potential energy and virial equation sum
-    compute_forces();
 }
 
 template <int dimension>
@@ -215,17 +243,17 @@ void ljfluid<ljfluid_impl_host<dimension> >::nbl_skin(float value)
     r_skin = value;
     LOG("neighbour list skin: " << r_skin);
 
-    // cutoff radius with neighbour list skin
-    r_cut_skin = r_skin + r_cut;
-    // squared cutoff radius with neighbour list skin
-    rr_cut_skin = r_cut_skin * r_cut_skin;
+    for (size_t i = 0; i < sigma_.size(); ++i) {
+	r_cut_skin[i] = r_cut * sigma_[i] + r_skin;
+	rr_cut_skin[i] = std::pow(r_cut_skin[i], 2);
+    }
 
     // number of cells per dimension
-    ncell = std::floor(box_ / r_cut_skin);
+    ncell = std::floor(box_ / *std::max_element(r_cut_skin.begin(), r_cut_skin.end()));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
-	throw exception("requires at least 3 cells per dimension");
+	throw exception("less than least 3 cells per dimension");
     }
 
     // create empty cell lists
@@ -264,7 +292,13 @@ void ljfluid<ljfluid_impl_host<dimension> >::rng(gsl::gfsr4::state_type const& s
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::lattice()
 {
-    LOG("placing particles on face-centered cubic (fcc) lattice");
+    if (is_binary()) {
+	LOG("randomly placing A and B particles on fcc lattice");
+	random_binary_types();
+    }
+    else {
+	LOG("placing particles on fcc lattice");
+    }
 
     // particles per 2- or 3-dimensional unit cell
     const unsigned int m = 2 * (dimension - 1);
@@ -304,12 +338,20 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
 
     // update cell lists
     update_cells();
-    // update Verlet neighbour lists
-    update_neighbours();
+
+    if (is_binary()) {
+	// update Verlet neighbour lists
+	update_neighbours<true>();
+	// calculate forces, potential energy and virial equation sum
+	compute_forces<true>();
+    }
+    else {
+	update_neighbours<false>();
+	compute_forces<false>();
+    }
+
     // reset sum over maximum velocity magnitudes to zero
     v_max_sum = 0;
-    // calculate forces, potential energy and virial equation sum
-    compute_forces();
 }
 
 /**
@@ -325,7 +367,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
     // maximum squared velocity
     double vv_max = 0;
 
-    BOOST_FOREACH(particle& p, part) {
+    foreach (particle& p, part) {
 	// generate random Maxwell-Boltzmann distributed velocity
 	rng_.gaussian(p.v, value);
 	v_cm += p.v;
@@ -335,7 +377,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
 
     v_cm /= npart;
 
-    BOOST_FOREACH(particle& p, part) {
+    foreach (particle& p, part) {
 	// set center of mass velocity to zero
 	p.v -= v_cm;
 
@@ -347,15 +389,36 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
 }
 
 /**
+ * randomly assign particles types in a binary mixture
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::random_binary_types()
+{
+    // create view on particle list
+    std::vector<typename particle::ref> part(this->part.begin(), this->part.end());
+
+    // shuffle view and assign particles types
+    rng_.shuffle(part);
+    foreach (particle& p, range(part.begin(), part.begin() + mpart[0])) {
+	p.type = particle::A;
+    }
+    foreach (particle& p, range(part.begin() + mpart[0], part.end())) {
+	p.type = particle::B;
+    }
+}
+
+/**
  * update cell lists
  */
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::update_cells()
 {
     // empty cell lists without memory reallocation
-    std::for_each(cell.data(), cell.data() + cell.num_elements(), boost::bind(&cell_list::clear, _1));
+    foreach (cell_list& c, range(cell.data(), cell.data() + cell.num_elements())) {
+	c.clear();
+    }
     // add particles to cells
-    BOOST_FOREACH(particle& p, part) {
+    foreach (particle& p, part) {
 	compute_cell(p.r).push_back(boost::ref(p));
     }
 }
@@ -390,6 +453,7 @@ ljfluid<ljfluid_impl_host<dimension> >::compute_cell(vector_type r)
  * update neighbour lists
  */
 template <int dimension>
+template <bool binary>
 void ljfluid<ljfluid_impl_host<dimension> >::update_neighbours()
 {
     cell_index i;
@@ -397,11 +461,11 @@ void ljfluid<ljfluid_impl_host<dimension> >::update_neighbours()
 	for (i[1] = 0; i[1] < ncell; ++i[1]) {
 	    if (dimension == 3) {
 		for (i[2] = 0; i[2] < ncell; ++i[2]) {
-		    update_cell_neighbours(i);
+		    update_cell_neighbours<binary>(i);
 		}
 	    }
 	    else {
-		update_cell_neighbours(i);
+		update_cell_neighbours<binary>(i);
 	    }
 	}
     }
@@ -411,9 +475,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::update_neighbours()
  * update neighbour lists for a single cell
  */
 template <int dimension>
+template <bool binary>
 void ljfluid<ljfluid_impl_host<dimension> >::update_cell_neighbours(cell_index const& i)
 {
-    BOOST_FOREACH(particle& p, cell(i)) {
+    foreach (particle& p, cell(i)) {
 	// empty neighbour list of particle
 	p.neighbour.clear();
 
@@ -431,7 +496,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::update_cell_neighbours(cell_index c
 			for (int n = 0; n < dimension; ++n) {
 			    k[n] = (i[n] + ncell + j[n]) % ncell;
 			}
-			compute_cell_neighbours<false>(p, cell(k));
+			compute_cell_neighbours<false, binary>(p, cell(k));
 		    }
 		}
 		else {
@@ -444,13 +509,13 @@ void ljfluid<ljfluid_impl_host<dimension> >::update_cell_neighbours(cell_index c
 		    for (int n = 0; n < dimension; ++n) {
 			k[n] = (i[n] + ncell + j[n]) % ncell;
 		    }
-		    compute_cell_neighbours<false>(p, cell(k));
+		    compute_cell_neighbours<false, binary>(p, cell(k));
 		}
 	    }
 	}
 out:
 	// visit this cell
-	compute_cell_neighbours<true>(p, cell(i));
+	compute_cell_neighbours<true, binary>(p, cell(i));
     }
 }
 
@@ -458,23 +523,25 @@ out:
  * update neighbour list of particle
  */
 template <int dimension>
-template <bool same_cell>
+template <bool same_cell, bool binary>
 void ljfluid<ljfluid_impl_host<dimension> >::compute_cell_neighbours(particle& p1, cell_list& c)
 {
-    BOOST_FOREACH(particle& p2, c) {
+    foreach (particle& p2, c) {
 	// skip identical particle and particle pair permutations if same cell
 	if (same_cell && p2.tag <= p1.tag)
 	    continue;
 
 	// particle distance vector
 	vector_type r = p1.r - p2.r;
+	// binary particles type
+	unsigned int type = (binary ? (p1.type + p2.type) : 0);
 	// enforce periodic boundary conditions
 	r -= round(r / box_) * box_;
 	// squared particle distance
 	double rr = r * r;
 
 	// enforce cutoff radius with neighbour list skin
-	if (rr >= rr_cut_skin)
+	if (rr >= rr_cut_skin[type])
 	    continue;
 
 	// add particle to neighbour list
@@ -486,10 +553,11 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_cell_neighbours(particle& p
  * compute Lennard-Jones forces
  */
 template <int dimension>
+template <bool binary>
 void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 {
     // initialize particle forces to zero
-    BOOST_FOREACH(particle& p, part) {
+    foreach (particle& p, part) {
 	p.f = 0;
     }
 
@@ -498,25 +566,29 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
     // virial equation sum
     m_sample.virial = 0;
 
-    BOOST_FOREACH(particle& p1, part) {
+    foreach (particle& p1, part) {
 	// calculate pairwise Lennard-Jones force with neighbour particles
-	BOOST_FOREACH(particle& p2, p1.neighbour) {
+	foreach (particle& p2, p1.neighbour) {
 	    // particle distance vector
 	    vector_type r = p1.r - p2.r;
+	    // binary particles type
+	    unsigned int type = (binary ? (p1.type + p2.type) : 0);
 	    // enforce periodic boundary conditions
 	    r -= round(r / box_) * box_;
 	    // squared particle distance
 	    double rr = r * r;
 
 	    // enforce cutoff radius
-	    if (rr >= rr_cut)
+	    if (rr >= rr_cut[type])
 		continue;
 
 	    // compute Lennard-Jones force in reduced units
-	    double rri = 1 / rr;
+	    double sigma2 = (binary ? sigma2_[type] : 1);
+	    double eps = (binary ? epsilon_[type] : 1);
+	    double rri = sigma2 / rr;
 	    double r6i = rri * rri * rri;
-	    double fval = 48 * rri * r6i * (r6i - 0.5);
-	    double pot = 4 * r6i * (r6i - 1) - en_cut;
+	    double fval = 48 * rri * r6i * (r6i - 0.5) * (eps / sigma2);
+	    double pot = (4 * r6i * (r6i - 1) - en_cut) * eps;
 
 	    if (r_smooth > 0) {
 		compute_smooth_potential(std::sqrt(rr), fval, pot);
@@ -568,7 +640,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, 
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 {
-    BOOST_FOREACH(particle& p, part) {
+    foreach (particle& p, part) {
 	// half step velocity
 	p.v += p.f * (timestep_ / 2);
 	// full step position
@@ -587,7 +659,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
     // maximum squared velocity
     double vv_max = 0;
 
-    BOOST_FOREACH(particle& p, part) {
+    foreach (particle& p, part) {
 	// full step velocity
 	p.v += p.f * (timestep_ / 2);
 	// copy to phase space sample
@@ -606,7 +678,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::anderson_thermostat()
 {
-    BOOST_FOREACH(particle& p, part) {
+    foreach (particle& p, part) {
 	if (rng_.uniform() < (thermostat_nu * timestep_)) {
 	    rng_.gaussian(p.v, thermostat_temp);
 	}
@@ -632,7 +704,12 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 	update_cells();
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
 	// update Verlet neighbour lists
-	update_neighbours();
+	if (is_binary()) {
+	    update_neighbours<true>();
+	}
+	else {
+	    update_neighbours<false>();
+	}
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
@@ -643,7 +720,12 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 
     // calculate forces, potential energy and virial equation sum
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
-    compute_forces();
+    if (is_binary()) {
+	compute_forces<true>();
+    }
+    else {
+	compute_forces<false>();
+    }
     // calculate velocities
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
     leapfrog_full();
@@ -676,5 +758,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::param(H5param& param) const
 }
 
 } // namespace ljgpu
+
+#undef foreach
+#undef range
 
 #endif /* ! LJGPU_MDSIM_LJFLUID_HOST_HPP */

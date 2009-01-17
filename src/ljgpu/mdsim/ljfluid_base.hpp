@@ -19,6 +19,7 @@
 #ifndef LJGPU_MDSIM_LJFLUID_BASE_HPP
 #define LJGPU_MDSIM_LJFLUID_BASE_HPP
 
+#include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <ljgpu/mdsim/base.hpp>
 #include <ljgpu/mdsim/traits.hpp>
@@ -42,6 +43,10 @@ public:
 
 public:
     ljfluid_base();
+    /** set number of particles */
+    void particles(unsigned int value);
+    /** set number of A and B particles in binary mixture */
+    void particles(boost::array<unsigned int, 2> const& value);
     /** set simulation timestep */
     void timestep(float_type value);
     /** set potential cutoff radius */
@@ -50,6 +55,10 @@ public:
     void potential_smoothing(float_type value);
     /** set heat bath collision probability and temperature */
     void thermostat(float_type nu, float_type temp);
+    /** set potential well depths */
+    void epsilon(boost::array<float, 3> const& value);
+    /** set collision diameters */
+    void sigma(boost::array<float, 3> const& value);
 
     /** returns simulation timestep */
     float_type timestep() const { return timestep_; }
@@ -66,18 +75,26 @@ protected:
     using _Base::box_;
     using _Base::density_;
 
-    /** simulation timestep */
-    float_type timestep_;
-    /** cutoff radius for shifted Lennard-Jones potential */
+    /** number of A and B particles in binary mixture */
+    boost::array<unsigned int, 2> mpart;
+    /** collision diameters */
+    boost::array<float_type, 3> sigma_;
+    /** squared collision diameters */
+    boost::array<float_type, 3> sigma2_;
+    /** potential well depths */
+    boost::array<float_type, 3> epsilon_;
+    /** cutoff radius in units of sigma */
     float_type r_cut;
-    /** squared cutoff radius */
-    float_type rr_cut;
-    /** potential energy at cutoff radius */
+    /** potential energy in units of epsilon at cutoff radius */
     float_type en_cut;
+    /** absolute squared cutoff radii */
+    boost::array<float_type, 3> rr_cut;
     /** potential smoothing function scale parameter */
     float_type r_smooth;
     /** squared inverse potential smoothing function scale parameter */
     float_type rri_smooth;
+    /** simulation timestep */
+    float_type timestep_;
     /** heat bath collision probability */
     float_type thermostat_nu;
     /** heat bath temperature */
@@ -85,8 +102,42 @@ protected:
 };
 
 template <typename ljfluid_impl>
-ljfluid_base<ljfluid_impl>::ljfluid_base() : r_smooth(0), thermostat_nu(0)
+ljfluid_base<ljfluid_impl>::ljfluid_base()
+  : mpart(boost::assign::list_of(0)(0)), sigma_(boost::assign::list_of(1)(0)(0)),
+    epsilon_(boost::assign::list_of(1)(0)(0)), r_smooth(0), thermostat_nu(0)
 {
+}
+
+template <typename ljfluid_impl>
+void ljfluid_base<ljfluid_impl>::particles(unsigned int value)
+{
+    _Base::particles(value);
+}
+
+template <typename ljfluid_impl>
+void ljfluid_base<ljfluid_impl>::particles(boost::array<unsigned int, 2> const& value)
+{
+    mpart = value;
+    npart = std::accumulate(mpart.begin(), mpart.end(), 0);
+    LOG("binary mixture with " << mpart[0] << " A particles and " << mpart[1] << " B particles");
+}
+
+template <typename ljfluid_impl>
+void ljfluid_base<ljfluid_impl>::epsilon(boost::array<float, 3> const& value)
+{
+    epsilon_ = value;
+    LOG("potential well depths: ε(AA) = " << epsilon_[0] << ", ε(AB) = " << epsilon_[1] << ", ε(BB) = " << epsilon_[2]);
+}
+
+template <typename ljfluid_impl>
+void ljfluid_base<ljfluid_impl>::sigma(boost::array<float, 3> const& value)
+{
+    sigma_ = value;
+    LOG("collision diameters: σ(AA) = " << sigma_[0] << ", σ(AB) = " << sigma_[1] << ", σ(BB) = " << sigma_[2]);
+
+    for (size_t i = 0; i < sigma_.size(); ++i) {
+	sigma2_[i] = std::pow(sigma_[i], 2);
+    }
 }
 
 template <typename ljfluid_impl>
@@ -95,14 +146,14 @@ void ljfluid_base<ljfluid_impl>::cutoff_radius(float_type value)
     r_cut = value;
     LOG("potential cutoff radius: " << r_cut);
 
-    // squared cutoff radius
-    rr_cut = std::pow(r_cut, 2);
-    // potential energy at cutoff radius
-    float_type rri_cut = 1 / rr_cut;
+    float_type rri_cut = 1 / std::pow(r_cut, 2);
     float_type r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut = 4 * r6i_cut * (r6i_cut - 1);
-
     LOG("potential cutoff energy: " << en_cut);
+
+    for (size_t i = 0; i < sigma_.size(); ++i) {
+	rr_cut[i] = std::pow(r_cut, 2) * sigma_[i];
+    }
 }
 
 template <typename ljfluid_impl>

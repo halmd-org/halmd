@@ -153,7 +153,7 @@ void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
 
     try {
 	cuda::copy(r_cut, _gpu::r_cut);
-	cuda::copy(rr_cut, _gpu::rr_cut);
+	cuda::copy(rr_cut[0], _gpu::rr_cut);
 	cuda::copy(en_cut, _gpu::en_cut);
     }
     catch (cuda::error const&) {
