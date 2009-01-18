@@ -22,12 +22,15 @@
 #include <H5Cpp.h>
 #include <algorithm>
 #include <boost/array.hpp>
+#include <boost/assign.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
 #include <ljgpu/math/accum.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
+#include <ljgpu/mdsim/sample.hpp>
+#include <ljgpu/util/H5xx.hpp>
 #include <vector>
 
 namespace ljgpu {
@@ -36,7 +39,7 @@ namespace ljgpu {
  * Phase space sample for evaluating correlation functions
  */
 template <int dimension>
-struct tcf_sample
+struct uniform_tcf_sample
 {
     typedef std::vector<vector<double, dimension> > sample_vector;
     typedef std::vector<double> q_value_vector;
@@ -83,6 +86,25 @@ struct tcf_sample
     density_vector_vector rho;
 };
 
+template <int dimension>
+struct tcf_sample : boost::array<uniform_tcf_sample<dimension>, 2>
+{
+    typedef boost::array<uniform_tcf_sample<dimension>, 2> _Base;
+    typedef typename _Base::value_type::sample_vector sample_vector;
+    typedef typename _Base::value_type::q_value_vector q_value_vector;
+    typedef typename _Base::value_type::density_vector density_vector;
+    typedef typename _Base::value_type::density_vector_pair density_vector_pair;
+    typedef typename _Base::value_type::density_vector_vector density_vector_vector;
+
+    template <typename sample_type>
+    void operator()(sample_type const& sample, q_value_vector const& q)
+    {
+	for (size_t i = 0; i < sample.size(); ++i) {
+	    (*this)[i](sample[i].r, sample[i].v, q);
+	}
+    }
+};
+
 /** correlation function result types */
 typedef boost::multi_array<accumulator<double>, 2> tcf_unary_result_type;
 typedef boost::multi_array<accumulator<double>, 3> tcf_binary_result_type;
@@ -96,8 +118,13 @@ struct mean_square_displacement
     tcf_unary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
+    /** particle types */
+    particle_type a, b;
 
-    char const* name() { return "MSD"; }
+    mean_square_displacement() : a(PART_A), b(PART_A) {}
+    mean_square_displacement(particle_type a, particle_type b) : a(a), b(b) {}
+
+    char const* name() const { return "MSD"; }
 
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
@@ -108,7 +135,7 @@ struct mean_square_displacement
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = it->r.begin(), r0 = first.first->r.begin(); r != it->r.end(); ++r, ++r0) {
+	    for (vector_const_iterator r = (*it)[b].r.begin(), r0 = (*first.first)[a].r.begin(); r != (*it)[b].r.end(); ++r, ++r0) {
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// accumulate square displacement
@@ -127,8 +154,13 @@ struct mean_quartic_displacement
     tcf_unary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
+    /** particle types */
+    particle_type a, b;
 
-    char const* name() { return "MQD"; }
+    mean_quartic_displacement() : a(PART_A), b(PART_A) {}
+    mean_quartic_displacement(particle_type a, particle_type b) : a(a), b(b) {}
+
+    char const* name() const { return "MQD"; }
 
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
@@ -140,7 +172,7 @@ struct mean_quartic_displacement
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = it->r.begin(), r0 = first.first->r.begin(); r != it->r.end(); ++r, ++r0) {
+	    for (vector_const_iterator r = (*it)[b].r.begin(), r0 = (*first.first)[a].r.begin(); r != (*it)[b].r.end(); ++r, ++r0) {
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// square displacement
@@ -161,8 +193,13 @@ struct velocity_autocorrelation
     tcf_unary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
+    /** particle types */
+    particle_type a, b;
 
-    char const* name() { return "VAC"; }
+    velocity_autocorrelation() : a(PART_A), b(PART_A) {}
+    velocity_autocorrelation(particle_type a, particle_type b) : a(a), b(b) {}
+
+    char const* name() const { return "VAC"; }
 
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
@@ -172,7 +209,7 @@ struct velocity_autocorrelation
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle velocities in current and first sample
-	    for (vector_const_iterator v = it->v.begin(), v0 = first.first->v.begin(); v != it->v.end(); ++v, ++v0) {
+	    for (vector_const_iterator v = (*it)[b].v.begin(), v0 = (*first.first)[a].v.begin(); v != (*it)[b].v.end(); ++v, ++v0) {
 		// accumulate velocity autocorrelation
 		*result += *v0 * *v;
 	    }
@@ -189,8 +226,13 @@ struct intermediate_scattering_function
     tcf_binary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
+    /** particle types */
+    particle_type a, b;
 
-    char const* name() { return "ISF"; }
+    intermediate_scattering_function() : a(PART_A), b(PART_A) {}
+    intermediate_scattering_function(particle_type a, particle_type b) : a(a), b(b) {}
+
+    char const* name() const { return "ISF"; }
 
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
@@ -202,7 +244,7 @@ struct intermediate_scattering_function
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over Fourier transformed densities in current and first sample
-	    for (rho = it->rho.begin(), rho0 = first.first->rho.begin(), k = result->begin(); rho != it->rho.end(); ++rho, ++rho0, ++k) {
+	    for (rho = (*it)[b].rho.begin(), rho0 = (*first.first)[a].rho.begin(), k = result->begin(); rho != (*it)[b].rho.end(); ++rho, ++rho0, ++k) {
 		// accumulate intermediate scattering function
 		for (dim = 0; dim < rho->first.size(); ++dim) {
 		    *k += rho->first[dim] * rho0->first[dim] + rho->second[dim] * rho0->second[dim];
@@ -221,8 +263,13 @@ struct self_intermediate_scattering_function
     tcf_binary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
+    /** particle types */
+    particle_type a, b;
 
-    char const* name() { return "SISF"; }
+    self_intermediate_scattering_function() : a(PART_A), b(PART_A) {}
+    self_intermediate_scattering_function(particle_type a, particle_type b) : a(a), b(b) {}
+
+    char const* name() const { return "SISF"; }
 
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
@@ -238,7 +285,7 @@ struct self_intermediate_scattering_function
 	    // iterate over q-values
 	    for (q = first.second, k = result->begin(); q != last.second; ++q, ++k) {
 		// iterate over particle positions in current and first sample
-		for (n = 0, f = 0, r = it->r.begin(), r0 = first.first->r.begin(); r != it->r.end(); ++r, ++r0, ++n) {
+		for (n = 0, f = 0, r = (*it)[b].r.begin(), r0 = (*first.first)[a].r.begin(); r != (*it)[b].r.end(); ++r, ++r0, ++n) {
 		    // compute averages to maintain accuracy summing over small and large values
 		    rq = (*r - *r0) * (*q);
 		    f += (cos(rq) - f) / (n + 1);
@@ -296,7 +343,7 @@ class tcf_name : public boost::static_visitor<char const*>
 {
 public:
     template <typename T>
-    char const* operator()(T& tcf) const
+    char const* operator()(T const& tcf) const
     {
 	return tcf.name();
     }
@@ -308,17 +355,30 @@ public:
 class tcf_create_dataset : public boost::static_visitor<>
 {
 public:
-    tcf_create_dataset(H5::H5File& file) : file(file) {}
+    tcf_create_dataset(H5::H5File& file, bool binary) : file(file), binary(binary) {}
 
     template <typename T>
     void operator()(T& tcf) const
     {
-	create_dataset(tcf.dataset, tcf.result, tcf.name());
+	using namespace boost::assign;
+	boost::array<char const*, 3> const str = list_of("AA")("AB")("BB");
+
+	H5::Group root(file.openGroup("/"));
+	if (binary) {
+	    try {
+		H5XX_NO_AUTO_PRINT(H5::GroupIException);
+		root = root.openGroup(str[tcf.a + tcf.b]);
+	    }
+	    catch (H5::GroupIException const&) {
+		root = root.createGroup(str[tcf.a + tcf.b]);
+	    }
+	}
+	tcf.dataset = create_dataset(root, tcf.name(), tcf.result);
     }
 
-    void create_dataset(H5::DataSet& dataset, tcf_unary_result_type const& result, char const* name) const
+    static H5::DataSet create_dataset(H5::Group const& node, char const* name, tcf_unary_result_type const& result)
     {
-	// extensible dataspace for correlation function results
+	// extensible dataspace for unary correlation function results
 	hsize_t dim[3] = { 0, result.shape()[1], 5 };
 	hsize_t max_dim[3] = { H5S_UNLIMITED, result.shape()[1], 5 };
 	hsize_t chunk_dim[3] = { 1, result.shape()[1], 3 };
@@ -326,11 +386,10 @@ public:
 	H5::DSetCreatPropList cparms;
 	cparms.setChunk(3, chunk_dim);
 
-	// create dataset
-	dataset = file.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
+	return node.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
     }
 
-    void create_dataset(H5::DataSet& dataset, tcf_binary_result_type const& result, char const* name) const
+    static H5::DataSet create_dataset(H5::Group const& node, char const* name, tcf_binary_result_type const& result)
     {
 	// extensible dataspace for binary correlation function results
 	hsize_t dim[4] = { result.shape()[2], 0, result.shape()[1], 6 };
@@ -340,12 +399,12 @@ public:
 	H5::DSetCreatPropList cparms;
 	cparms.setChunk(4, chunk_dim);
 
-	// create dataset
-	dataset = file.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
+	return node.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
     }
-    
+
 private:
     H5::H5File& file;
+    bool const binary;
 };
 
 /**
@@ -372,7 +431,7 @@ public:
     {
 	result.resize(boost::extents[block_count][block_size][q_values]);
     }
-    
+
 private:
     unsigned int block_count;
     unsigned int block_size;

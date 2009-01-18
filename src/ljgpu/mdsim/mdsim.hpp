@@ -263,7 +263,7 @@ void mdsim<mdsim_backend>::operator()()
 
     // time correlation functions
     if (!opt["disable-correlation"].as<bool>()) {
-	tcf.open(opt["output"].as<std::string>() + ".tcf");
+	tcf.open(opt["output"].as<std::string>() + ".tcf", fluid.is_binary());
 	H5param(tcf) << *this << fluid << tcf;
     }
     // trajectory file writer

@@ -45,8 +45,6 @@ public:
     typedef boost::make_variant_over<tcf_types>::type tcf_type;
 
 public:
-    /** initialise with all correlation function types */
-    correlation();
     /** set total number of simulation steps */
     void steps(uint64_t value, float timestep);
     /** set total simulation time */
@@ -78,7 +76,7 @@ public:
     unsigned int q_values() { return m_q_vector.size(); }
 
     /** create HDF5 correlations output file */
-    void open(std::string const& filename);
+    void open(std::string const& filename, bool binary = false);
     /** close HDF5 file */
     void close();
     /** returns HDF5 parameter group */
@@ -139,10 +137,10 @@ template <int dimension>
 template <typename sample_type>
 void correlation<dimension>::sample(sample_type const& sample, uint64_t step, bool& flush)
 {
-    tcf_sample<dimension> csample;
+    tcf_sample<dimension> sample_;
 
     // copy phase space coordinates and compute spatial Fourier transformation 
-    csample(sample[0 /* FIXME */].r, sample[0 /* FIXME */].v, m_q_vector);
+    sample_(sample, m_q_vector);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
@@ -150,12 +148,12 @@ void correlation<dimension>::sample(sample_type const& sample, uint64_t step, bo
 	if (step % m_block_freq[i])
 	    continue;
 
-	m_block[i].push_back(csample);
+	m_block[i].push_back(sample_);
 
 	if (m_block[i].full()) {
 	    autocorrelate_block(i);
 	    if (i < 2) {
-		// sample only full blocks in lowest levels to account for strong correlations
+		// sample_ only full blocks in lowest levels to account for strong correlations
 		m_block[i].clear();
 	    }
 	    m_block_samples[i]++;

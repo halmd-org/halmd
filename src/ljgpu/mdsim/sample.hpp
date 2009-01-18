@@ -29,6 +29,11 @@
 namespace ljgpu {
 
 /**
+ * particles types in a binary mixture
+ */
+enum particle_type { PART_A = 0, PART_B = 1 };
+
+/**
  * phase space sample for A or B particles
  */
 template <typename float_type, int dimension>

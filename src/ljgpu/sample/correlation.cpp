@@ -24,16 +24,9 @@
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 
-namespace ljgpu {
+#define foreach BOOST_FOREACH
 
-/**
- * initialise with all correlation function types
- */
-template <int dimension>
-correlation<dimension>::correlation()
-{
-    boost::mpl::for_each<tcf_types>(boost::bind(&std::vector<tcf_type>::push_back, boost::ref(m_tcf), _1));
-}
+namespace ljgpu {
 
 /**
  * set total number of simulation steps
@@ -168,23 +161,13 @@ void correlation<dimension>::q_values(unsigned int n, float box)
     // FIXME dynamic structure factor at q ~ 2pi/sigma
     m_q_vector.push_back(floorf(box) * 2 * M_PI / box);
     m_q_vector.push_back(ceilf(box) * 2 * M_PI / box);
-
-    // allocate correlation function results
-    try {
-	BOOST_FOREACH(tcf_type& tcf, m_tcf) {
-	    boost::apply_visitor(tcf_allocate_results(m_block_count, m_block_size, m_q_vector.size()), tcf);
-	}
-    }
-    catch (std::bad_alloc const& e) {
-	throw exception("failed to allocate binary correlation functions results");
-    }
 }
 
 /**
  * create HDF5 correlations output file
  */
 template <int dimension>
-void correlation<dimension>::open(std::string const& filename)
+void correlation<dimension>::open(std::string const& filename, bool binary)
 {
     LOG("write correlations to file: " << filename);
     try {
@@ -197,10 +180,39 @@ void correlation<dimension>::open(std::string const& filename)
     // create parameter group
     m_file.createGroup("param");
 
+    // add correlation functions
+    if (binary) {
+	using namespace boost::assign;
+	boost::array<particle_type, 2> const types = list_of(PART_A)(PART_B);
+
+	foreach (particle_type a, types) {
+	    m_tcf.push_back(mean_square_displacement(a, a));
+	    m_tcf.push_back(mean_quartic_displacement(a, a));
+	    m_tcf.push_back(velocity_autocorrelation(a, a));
+	    m_tcf.push_back(intermediate_scattering_function(a, a));
+	    m_tcf.push_back(self_intermediate_scattering_function(a, a));
+	}
+	m_tcf.push_back(intermediate_scattering_function(PART_A, PART_B));
+	// FIXME m_tcf.push_back(self_intermediate_scattering_function(PART_A, PART_B));
+    }
+    else {
+	boost::mpl::for_each<tcf_types>(boost::bind(&std::vector<tcf_type>::push_back, boost::ref(m_tcf), _1));
+    }
+
+    // allocate correlation function results
+    try {
+	foreach (tcf_type& tcf, m_tcf) {
+	    boost::apply_visitor(tcf_allocate_results(m_block_count, m_block_size, m_q_vector.size()), tcf);
+	}
+    }
+    catch (std::bad_alloc const& e) {
+	throw exception("failed to allocate binary correlation functions results");
+    }
+
     // create correlation function datasets
     try {
-	BOOST_FOREACH(tcf_type& tcf, m_tcf) {
-	    boost::apply_visitor(tcf_create_dataset(m_file), tcf);
+	foreach (tcf_type& tcf, m_tcf) {
+	    boost::apply_visitor(tcf_create_dataset(m_file, binary), tcf);
 	}
     }
     catch (H5::FileIException const& e) {
@@ -273,7 +285,7 @@ bool correlation<dimension>::sample(uint64_t step) const
 template <int dimension>
 void correlation<dimension>::autocorrelate_block(unsigned int n)
 {
-    BOOST_FOREACH(tcf_type& tcf, m_tcf) {
+    foreach (tcf_type& tcf, m_tcf) {
 	boost::apply_visitor(tcf_correlate_block_gen(n, m_block[n], m_q_vector), tcf);
     }
 }
@@ -294,7 +306,7 @@ void correlation<dimension>::flush()
 	return;
 
     try {
-	BOOST_FOREACH(tcf_type& tcf, m_tcf) {
+	foreach (tcf_type& tcf, m_tcf) {
 	    boost::apply_visitor(tcf_write_results(m_block_time, m_q_vector, max_blocks), tcf);
 	}
     }

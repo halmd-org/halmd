@@ -72,7 +72,7 @@ public:
 	/** particle number */
 	unsigned int tag;
 	/** particle type */
-	enum { A = 0, B = 1 } type;
+	enum particle_type type;
 	/** particle neighbours list */
 	std::vector<ref> neighbour;
     };
@@ -197,8 +197,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
     _Base::particles(value);
 
     try {
-	m_sample[particle::A].r.resize(npart);
-	m_sample[particle::A].v.resize(npart);
+	m_sample[PART_A].r.resize(npart);
+	m_sample[PART_A].v.resize(npart);
 	part.resize(npart);
     }
     catch (std::bad_alloc const& e) {
@@ -212,10 +212,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(boost::array<unsigned int
     _Base::particles(value);
 
     try {
-	m_sample[particle::A].r.resize(mpart[particle::A]);
-	m_sample[particle::A].v.resize(mpart[particle::A]);
-	m_sample[particle::B].r.resize(mpart[particle::B]);
-	m_sample[particle::B].v.resize(mpart[particle::B]);
+	m_sample[PART_A].r.resize(mpart[PART_A]);
+	m_sample[PART_A].v.resize(mpart[PART_A]);
+	m_sample[PART_B].r.resize(mpart[PART_B]);
+	m_sample[PART_B].v.resize(mpart[PART_B]);
 	part.resize(npart);
     }
     catch (std::bad_alloc const& e) {
@@ -232,24 +232,24 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
     _Base::sample(visitor);
 
     unsigned int tag = 0;
-    foreach (position_vector const& r, m_sample[particle::A].r) {
-	part[tag].type = particle::A;
+    foreach (position_vector const& r, m_sample[PART_A].r) {
+	part[tag].type = PART_A;
 	part[tag].r = r;
 	part[tag].tag = tag;
 	tag++;
     }
-    foreach (position_vector const& r, m_sample[particle::B].r) {
-	part[tag].type = particle::B;
+    foreach (position_vector const& r, m_sample[PART_B].r) {
+	part[tag].type = PART_B;
 	part[tag].r = r;
 	part[tag].tag = tag;
 	tag++;
     }
     tag = 0;
-    foreach (velocity_vector const& v, m_sample[particle::A].v) {
+    foreach (velocity_vector const& v, m_sample[PART_A].v) {
 	part[tag].v = v;
 	tag++;
     }
-    foreach (position_vector const& v, m_sample[particle::B].v) {
+    foreach (position_vector const& v, m_sample[PART_B].v) {
 	part[tag].v = v;
 	tag++;
     }
@@ -447,10 +447,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::random_binary_types()
     // shuffle view and assign particles types
     rng_.shuffle(part);
     foreach (particle& p, range(part.begin(), part.begin() + mpart[0])) {
-	p.type = particle::A;
+	p.type = PART_A;
     }
     foreach (particle& p, range(part.begin() + mpart[0], part.end())) {
-	p.type = particle::B;
+	p.type = PART_B;
     }
 }
 
