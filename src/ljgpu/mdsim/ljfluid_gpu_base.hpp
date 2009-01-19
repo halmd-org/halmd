@@ -21,8 +21,10 @@
 
 #include <boost/assign/list_of.hpp>
 #include <cuda_wrapper.hpp>
+#include <ljgpu/algorithm/radix_sort.hpp>
 #include <ljgpu/algorithm/reduce.hpp>
 #include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_cell.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
@@ -48,8 +50,13 @@ public:
 
 public:
     /** set number of particles in system */
-    template <typename T>
-    void particles(T const& value);
+    void particles(unsigned int value);
+    /** set number of A and B particles in binary mixture */
+    void particles(boost::array<unsigned int, 2> const& value);
+    /** set potential well depths */
+    void epsilon(boost::array<float, 3> const& value);
+    /** set collision diameters */
+    void sigma(boost::array<float, 3> const& value);
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
     /* set particle density */
@@ -70,8 +77,7 @@ public:
     /** restore random number generator from state */
     void rng(rand48::state_type const& state);
 
-    /** get number of particles */
-    unsigned int particles() const { return npart; }
+    using _Base::particles;
     /** get number of CUDA execution blocks */
     unsigned int blocks() const { return dim_.blocks_per_grid(); }
     /** get number of CUDA execution threads */
@@ -89,6 +95,12 @@ public:
     void param(H5param& param) const;
 
 protected:
+    /** place particles on an fcc lattice */
+    void lattice(cuda::vector<float4>& g_r, cuda::vector<gpu_vector_type>& g_R);
+    /** assign ascending particle numbers */
+    void init_tags(cuda::vector<float4>& g_r, cuda::vector<int>& g_tag);
+    /** randomly assign particle types in a binary mixture */
+    void init_types(cuda::vector<float4>& g_r, cuda::vector<int>& g_tag);
     /** generate Maxwell-Boltzmann distributed velocities */
     void boltzmann(cuda::vector<gpu_vector_type>& g_v,
 		   cuda::host::vector<gpu_vector_type>& h_v,
@@ -109,14 +121,19 @@ protected:
     boost::array<cuda::event, 2> event_;
     /** GPU random number generator */
     rand48 rng_;
+    /** GPU radix sort */
+    radix_sort<float4> radix_sort_;
 
     using _Base::npart;
+    using _Base::mpart;
     using _Base::density_;
     using _Base::box_;
     using _Base::timestep_;
     using _Base::r_cut;
     using _Base::rr_cut;
     using _Base::en_cut;
+    using _Base::epsilon_;
+    using _Base::sigma2_;
     using _Base::r_smooth;
     using _Base::rri_smooth;
     using _Base::thermostat_nu;
@@ -137,12 +154,10 @@ private:
 };
 
 template <typename ljfluid_impl>
-template <typename T>
-void ljfluid_gpu_base<ljfluid_impl>::particles(T const& value)
+void ljfluid_gpu_base<ljfluid_impl>::particles(unsigned int value)
 {
     _Base::particles(value);
 
-    // allocate swappable host memory for trajectory sample
     try {
 	m_sample[0].r.resize(npart);
 	m_sample[0].v.resize(npart);
@@ -153,9 +168,60 @@ void ljfluid_gpu_base<ljfluid_impl>::particles(T const& value)
 
     try {
 	cuda::copy(npart, _gpu::npart);
+	cuda::copy(mpart, _gpu::mpart);
     }
     catch (cuda::error const&) {
 	throw exception("failed to copy particle number to device symbol");
+    }
+}
+
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::particles(boost::array<unsigned int, 2> const& value)
+{
+    _Base::particles(value);
+
+    try {
+	for (size_t i = 0; i < mpart.size(); ++i) {
+	    m_sample[i].r.resize(mpart[i]);
+	    m_sample[i].v.resize(mpart[i]);
+	}
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to allocate swappable host memory for trajectory sample");
+    }
+
+    try {
+	cuda::copy(npart, _gpu::npart);
+	cuda::copy(mpart, _gpu::mpart);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to copy particle number to device symbol");
+    }
+}
+
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::epsilon(boost::array<float, 3> const& value)
+{
+    _Base::epsilon(value);
+
+    try {
+	cuda::copy(epsilon_, _gpu::epsilon);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to copy collision diameters to device symbol");
+    }
+}
+
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::sigma(boost::array<float, 3> const& value)
+{
+    _Base::sigma(value);
+
+    try {
+	cuda::copy(sigma2_, _gpu::sigma2);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to copy squared collision diameters to device symbol");
     }
 }
 
@@ -166,7 +232,7 @@ void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
 
     try {
 	cuda::copy(r_cut, _gpu::r_cut);
-	cuda::copy(rr_cut[0], _gpu::rr_cut);
+	cuda::copy(rr_cut, _gpu::rr_cut);
 	cuda::copy(en_cut, _gpu::en_cut);
     }
     catch (cuda::error const&) {
@@ -218,12 +284,28 @@ void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)
     LOG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
     LOG("number of CUDA execution threads: " << dim_.threads_per_block());
 
-    // change random number generator dimensions
     try {
 	rng_.resize(dim_);
     }
     catch (cuda::error const&) {
 	throw exception("failed to change random number generator dimensions");
+    }
+
+    try {
+	using namespace gpu::radix_sort;
+	// compute optimal number of blocks for GeForce 8800 with 16 multiprocessors
+	uint threads = dim_.threads_per_block();
+	uint max_blocks = (16 * 512) / (threads * BUCKETS_PER_THREAD / 2);
+	uint blocks = std::min((npart + 2 * threads - 1) / (2 * threads), max_blocks);
+
+	LOG("number of CUDA blocks for radix sort: " << blocks);
+	LOG("number of CUDA threads for radix sort: " << threads);
+
+	// allocate global device memory for radix sort
+	radix_sort_.resize(npart, blocks, threads);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to allocate global device memory for radix sort");
     }
 }
 
@@ -316,6 +398,87 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(rand48::state_type const& state)
 }
 
 /**
+ * place particles on an fcc lattice
+ */
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r,
+					     cuda::vector<gpu_vector_type>& g_R)
+{
+    LOG("placing particles on face-centered cubic (fcc) lattice");
+
+    // particles per 2- or 3-dimensional unit cell
+    uint const m = 2 * (dimension - 1);
+    // lower boundary for number of particles per lattice dimension
+    uint n = std::pow(npart / m, 1.f / dimension);
+    // lower boundary for total number of lattice sites
+    uint N = m * std::pow(n, static_cast<uint>(dimension));
+
+    if (N < npart) {
+	n += 1;
+	N = m * std::pow(n, static_cast<uint>(dimension));
+    }
+    if (N > npart) {
+	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+    }
+
+    // minimum distance in 2- or 3-dimensional fcc lattice
+    LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
+
+    try {
+	event_[0].record(stream_);
+	cuda::configure(dim_.grid, dim_.block, stream_);
+	gpu::lattice<dimension>::fcc(g_r, n, box_);
+	event_[1].record(stream_);
+	event_[1].synchronize();
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to compute particle lattice positions on GPU");
+    }
+    // set periodic box traversal vectors to zero
+    cuda::memset(g_R, 0);
+
+    m_times["lattice"] += event_[1] - event_[0];
+}
+
+/**
+ * assign ascending particle numbers
+ */
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
+					       cuda::vector<int>& g_tag)
+{
+    try {
+	cuda::configure(dim_.grid, dim_.block, stream_);
+	_gpu::init_tags(g_r, g_tag);
+	stream_.synchronize();
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to initialise particle tags on GPU");
+    }
+}
+
+/**
+ * randomly assign particle types in a binary mixture
+ */
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::init_types(cuda::vector<float4>& g_r,
+						cuda::vector<int>& g_tag)
+{
+    cuda::vector<unsigned int> g_sort_index(npart);
+    g_sort_index.reserve(dim_.threads());
+
+    try {
+	rng_.get(g_sort_index, stream_);
+	radix_sort_(g_sort_index, g_r, stream_);
+	cuda::configure(dim_.grid, dim_.block, stream_);
+	_gpu::init_types(g_r, g_tag);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to randomly assign particle types on GPU");
+    }
+}
+
+/**
  * generate Maxwell-Boltzmann distributed velocities
  */
 template <typename ljfluid_impl>
@@ -323,6 +486,8 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
 					       cuda::host::vector<gpu_vector_type>& h_v,
 					       float temp)
 {
+    LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
+
     try {
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
@@ -393,10 +558,10 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
 
 template <typename ljfluid_impl>
 void ljfluid_gpu_base<ljfluid_impl>::update_forces(cuda::vector<float4>& r,
-						  cuda::vector<gpu_vector_type>& v,
-						  cuda::vector<gpu_vector_type>& f,
-						  cuda::vector<float>& en,
-						  cuda::vector<float>& virial)
+						   cuda::vector<gpu_vector_type>& v,
+						   cuda::vector<gpu_vector_type>& f,
+						   cuda::vector<float>& en,
+						   cuda::vector<float>& virial)
 {
     // (CUDA kernel execution is configured in derived class)
     if (mixture_ == BINARY)

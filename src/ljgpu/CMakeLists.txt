@@ -86,6 +86,7 @@ target_link_libraries(ljgpu_gpu_square
   ${CUDA_LIBRARIES}
   gpu_lattice
   gpu_ljfluid_square
+  gpu_radix_sort
   gpu_rand48
   gpu_reduce
   )
@@ -94,6 +95,7 @@ target_link_libraries(ljgpu_gpu_cell
   ${CUDA_LIBRARIES}
   gpu_lattice
   gpu_ljfluid_cell
+  gpu_radix_sort
   gpu_rand48
   gpu_reduce
   )

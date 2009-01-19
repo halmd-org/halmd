@@ -53,7 +53,6 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<3> >
     static cuda::texture<float4> R;
     static cuda::texture<float4> v;
 
-    static cuda::function<void (float4*, int*)> init_tags;
     static cuda::function<void (int const*)> update_neighbours;
     static cuda::function<void (float4 const*, uint*)> compute_cell;
     static cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles;
@@ -73,7 +72,6 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<2> >
     static cuda::texture<float2> R;
     static cuda::texture<float2> v;
 
-    static cuda::function<void (float4*, int*)> init_tags;
     static cuda::function<void (int const*)> update_neighbours;
     static cuda::function<void (float4 const*, uint*)> compute_cell;
     static cuda::function<void (const int*, float4*, float2*, float2*, int*)> order_particles;

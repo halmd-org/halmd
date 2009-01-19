@@ -35,11 +35,16 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 {
     enum { dimension = vector_type::static_size };
 
-    extern __shared__ vector_type s_r[];
+    extern __shared__ int s_tag[];
+    vector_type* const s_r = reinterpret_cast<vector_type*>(&s_tag[TDIM]);
 
     // load particle associated with this thread
-    vector_type r = g_r[GTID];
-    vector_type v = g_v[GTID];
+    vector_type r, v;
+    int tag;
+    (r, tag) = g_r[GTID];
+    v = g_v[GTID];
+    // particle type in binary mixture
+    int const a = particle_type(tag);
 
     // potential energy contribution
     float en = 0;
@@ -51,7 +56,8 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     // iterate over all blocks
     for (unsigned int k = 0; k < gridDim.x; k++) {
 	// load positions of particles within block
-	s_r[TID] = g_r[k * blockDim.x + TID];
+	__syncthreads();
+	(s_r[TID], s_tag[TID]) = g_r[k * blockDim.x + TID];
 	__syncthreads();
 
 	// iterate over all particles within block
@@ -63,10 +69,11 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 	    if (blockIdx.x == k && TID == j)
 		continue;
 
+	    // particle type in binary mixture
+	    int const b = particle_type(s_tag[j]);
 	    // compute Lennard-Jones force with particle
-	    compute_force<mixture, potential>(r, s_r[j], f, en, virial);
+	    compute_force<mixture, potential>(r, s_r[j], f, en, virial, a + b);
 	}
-	__syncthreads();
     }
 
     // second leapfrog step of integration of equations of motion

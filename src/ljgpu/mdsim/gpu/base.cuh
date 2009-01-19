@@ -36,6 +36,8 @@ namespace ljgpu { namespace cu { namespace ljfluid
 
 /** number of particles */
 __constant__ uint npart;
+/** number of A and B particles in a binary mixture */
+__constant__ uint mpart[2];
 
 /** simulation timestemp */
 __constant__ float timestep;
@@ -45,7 +47,7 @@ __constant__ float box;
 /** potential cutoff radius */
 __constant__ float r_cut;
 /** squared cutoff radius */
-__constant__ float rr_cut;
+__constant__ float rr_cut[3];
 /** cutoff energy for Lennard-Jones potential at cutoff length */
 __constant__ float en_cut;
 /** potential well depths in binary mixture */
@@ -107,7 +109,7 @@ __device__ void anderson_thermostat(T& v)
  */
 __device__ float3 compute_smooth_function(float const& r)
 {
-    float y = r - r_cut;
+    float y = r - /*FIXME binary mixture */ r_cut;
     float x2 = y * y * rri_smooth;
     float x4 = x2 * x2;
     float x4i = 1 / (1 + x4);
@@ -150,7 +152,7 @@ __device__ void compute_force(T const& r1, T const& r2,
     float rr = r * r;
 
     // enforce cutoff length
-    if (rr >= rr_cut) return;
+    if (rr >= rr_cut[(mixture == BINARY) ? ab : 0]) return;
 
     // compute Lennard-Jones force in reduced units
     float rri = sig2 / rr;
@@ -197,23 +199,47 @@ __global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
 }
 
 /**
- * generate 4-dimensional Maxwell-Boltzmann distributed vectors
+ * generate n-dimensional Maxwell-Boltzmann distributed vectors
  */
-__global__ void boltzmann(float4* g_v, float temperature)
+template <typename T>
+__global__ void boltzmann(T* g_v, float temperature)
 {
-    float4 v;
+    T v;
     rand48::gaussian(v, temperature);
     g_v[GTID] = v;
 }
 
 /**
- * generate 2-dimensional Maxwell-Boltzmann distributed vectors
+ * assign ascending particle numbers
  */
-__global__ void boltzmann(float2* g_v, float temperature)
+template <typename vector_type>
+__global__ void init_tags(float4* g_r, int* g_tag)
 {
-    float2 v;
-    rand48::gaussian(v, temperature);
-    g_v[GTID] = v;
+    vector_type const r = g_r[GTID];
+    int tag = VIRTUAL_PARTICLE;
+    if (GTID < npart) {
+	tag = particle_tag(GTID);
+    }
+    g_r[GTID] = (r, tag);
+    g_tag[GTID] = tag;
+}
+
+/**
+ * assign particles types in a binary mixture
+ */
+template <typename vector_type>
+__global__ void init_types(float4* g_r, int* g_tag)
+{
+    vector_type const r = g_r[GTID];
+    int tag = VIRTUAL_PARTICLE;
+    if (GTID < mpart[0]) {
+	tag = particle_tag(GTID, 0);
+    }
+    else if (GTID - mpart[0] < mpart[1]) {
+	tag = particle_tag(GTID - mpart[0], 1);
+    }
+    g_r[GTID] = (r, tag);
+    g_tag[GTID] = tag;
 }
 
 }}} // namespace ljgpu::cu::ljfluid
@@ -229,10 +255,11 @@ typedef ljfluid<ljfluid_impl_gpu_base<2> > __2D;
  * device constant wrappers
  */
 cuda::symbol<uint> __Base::npart(cu::ljfluid::npart);
+cuda::symbol<uint[]> __Base::mpart(cu::ljfluid::mpart);
 cuda::symbol<float> __Base::box(cu::ljfluid::box);
 cuda::symbol<float> __Base::timestep(cu::ljfluid::timestep);
 cuda::symbol<float> __Base::r_cut(cu::ljfluid::r_cut);
-cuda::symbol<float> __Base::rr_cut(cu::ljfluid::rr_cut);
+cuda::symbol<float[]> __Base::rr_cut(cu::ljfluid::rr_cut);
 cuda::symbol<float> __Base::en_cut(cu::ljfluid::en_cut);
 cuda::symbol<float[]> __Base::epsilon(cu::ljfluid::epsilon);
 cuda::symbol<float[]> __Base::sigma2(cu::ljfluid::sigma2);
@@ -254,10 +281,18 @@ cuda::function<void (float4*, float4*, float4*, float4 const*)>
     __3D::inteq(cu::ljfluid::inteq<3>);
 cuda::function<void (float4*, float)>
     __3D::boltzmann(cu::ljfluid::boltzmann);
+cuda::function<void (float4*, int*)>
+    __3D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 3> >);
+cuda::function<void (float4*, int*)>
+    __3D::init_types(cu::ljfluid::init_types<cu::vector<float, 3> >);
 
 cuda::function<void (float4*, float2*, float2*, float2 const*)>
     __2D::inteq(cu::ljfluid::inteq<2>);
 cuda::function<void (float2*, float)>
     __2D::boltzmann(cu::ljfluid::boltzmann);
+cuda::function<void (float4*, int*)>
+    __2D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 2> >);
+cuda::function<void (float4*, int*)>
+    __2D::init_types(cu::ljfluid::init_types<cu::vector<float, 2> >);
 
 }} // namespace ljgpu::gpu

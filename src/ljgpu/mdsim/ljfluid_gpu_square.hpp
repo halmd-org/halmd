@@ -95,6 +95,10 @@ private:
     using _Base::dim_;
     using _Base::stream_;
 
+    using _Base::mixture_;
+    using _Base::potential_;
+    using _Base::ensemble_;
+
     /** CUDA events for kernel timing */
     boost::array<cuda::event, 9> event_;
 
@@ -127,6 +131,8 @@ private:
 	cuda::vector<gpu_vector_type> v;
 	/** particle forces */
 	cuda::vector<gpu_vector_type> f;
+	/** particle tags */
+	cuda::vector<int> tag;
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
@@ -147,6 +153,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(T const& value)
 	g_part.R.resize(npart);
 	g_part.v.resize(npart);
 	g_part.f.resize(npart);
+	g_part.tag.resize(npart);
 	g_part.en.resize(npart);
 	g_part.virial.resize(npart);
     }
@@ -159,6 +166,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(T const& value)
 	h_part.R.resize(npart);
 	h_part.v.resize(npart);
 	// particle forces reside only in GPU memory
+	h_part.tag.resize(npart);
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate page-locked host memory for system state");
@@ -176,6 +184,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::threads(unsigned int value)
 	g_part.R.reserve(dim_.threads());
 	g_part.v.reserve(dim_.threads());
 	g_part.f.reserve(dim_.threads());
+	g_part.tag.reserve(dim_.threads());
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
     }
@@ -219,40 +228,27 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(sample_visitor visitor
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 {
-    LOG("placing particles on face-centered cubic (fcc) lattice");
+    // place particles on an fcc lattice
+    _Base::lattice(g_part.r, g_part.R);
 
-    // particles per 2- or 3-dimensional unit cell
-    const unsigned int m = 2 * (dimension - 1);
-    // lower boundary for number of particles per lattice dimension
-    unsigned int n = std::pow(npart / m, 1.f / dimension);
-    // lower boundary for total number of lattice sites
-    unsigned int N = m * std::pow(n, dimension);
-
-    if (N < npart) {
-	n += 1;
-	N = m * std::pow(n, dimension);
+    if (mixture_ == BINARY) {
+	// randomly assign A and B particles types in a binary mixture
+	_Base::init_types(g_part.r, g_part.tag);
     }
-    if (N > npart) {
-	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+    else {
+	// assign ascending particle numbers
+	_Base::init_tags(g_part.r, g_part.tag);
     }
-
-    // minimum distance in 2- or 3-dimensional fcc lattice
-    LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
     try {
-	// compute particle lattice positions on GPU
-	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::lattice<dimension>::fcc(g_part.r, n, box_);
-	event_[1].record(stream_);
+	// copy particles tags from GPU to host
+	cuda::copy(g_part.tag, h_part.tag, stream_);
 	// calculate forces
 	update_forces(stream_);
 	// calculate potential energy
 	reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
 	reduce_virial(g_part.virial, stream_);
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -260,15 +256,11 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
     catch (cuda::error const& e) {
 	throw exception("failed to compute particle lattice positions on GPU");
     }
-
-    // GPU time for lattice generation
-    m_times["lattice"] += event_[1] - event_[0];
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
 {
-    LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     boltzmann(g_part.v, h_part.v, temp);
 }
 
@@ -364,11 +356,17 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
-    for (unsigned int j = 0; j < npart; ++j) {
+    for (unsigned int i = 0; i < npart; ++i) {
+	// particle tag
+	int const tag = h_part.tag[i];
+	// particle number
+	unsigned int const n = gpu::particle_id(tag);
+	// A or B particle type
+	unsigned int const type = gpu::particle_type(tag);
 	// copy periodically extended particle positions
-	m_sample[0].r[j] = h_part.r[j] + (vector_type) h_part.R[j] * box_;
+	m_sample[type].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
 	// copy particle velocities
-	m_sample[0].v[j] = h_part.v[j];
+	m_sample[type].v[n] = h_part.v[i];
     }
 
     // mean potential energy per particle
@@ -390,7 +388,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::velocity_verlet(cuda::stream&
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::update_forces(cuda::stream& stream)
 {
-    cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * dimension * sizeof(float), stream);
+    cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * (dimension + 1) * sizeof(int), stream);
     _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 

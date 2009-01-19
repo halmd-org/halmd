@@ -21,11 +21,9 @@
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
-#include <ljgpu/algorithm/radix_sort.hpp>
 #include <ljgpu/algorithm/reduce.hpp>
 #include <ljgpu/mdsim/ljfluid_gpu_base.hpp>
 #include <ljgpu/mdsim/gpu/hilbert.hpp>
-#include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/math/stat.hpp>
 
 namespace ljgpu

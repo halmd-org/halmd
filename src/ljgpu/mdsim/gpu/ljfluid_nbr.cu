@@ -131,21 +131,6 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 }
 
 /**
- * initialise particle tags
- */
-template <typename vector_type>
-__global__ void init_tags(float4* g_r, int* g_tag)
-{
-    vector_type const r = g_r[GTID];
-    int tag = VIRTUAL_PARTICLE;
-    if (GTID < npart) {
-	tag = GTID;
-    }
-    g_r[GTID] = (r, tag);
-    g_tag[GTID] = tag;
-}
-
-/**
  * compute neighbour cell
  */
 __device__ uint compute_neighbour_cell(int3 const &offset)
@@ -467,8 +452,6 @@ cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
     _3D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVT>);
 
-cuda::function<void (float4*, int*)>
-    _3D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 3> >);
 cuda::function<void (int const*)>
     _3D::update_neighbours(cu::ljfluid::update_neighbours<3>);
 cuda::function<void (float4 const*, uint*)>
@@ -494,8 +477,6 @@ cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVT>);
 
-cuda::function<void (float4*, int*)>
-    _2D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 2> >);
 cuda::function<void (int const*)>
     _2D::update_neighbours(cu::ljfluid::update_neighbours<2>);
 cuda::function<void (float4 const*, uint*)>

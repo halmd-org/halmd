@@ -669,7 +669,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, double fval, double pot)
 {
-    double y = r - r_cut;
+    double y = r - /* FIXME binary mixture */ r_cut;
     double x2 = y * y * rri_smooth;
     double x4 = x2 * x2;
     double x4i = 1 / (1 + x4);
