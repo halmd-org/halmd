@@ -184,6 +184,9 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, T con
     __shared__ T s_r[CELL_SIZE];
     enum { dimension = T::static_size };
 
+    // shared memory barrier for virtual particle threads
+    __syncthreads();
+
     // compute cell index
     uint const cell = compute_neighbour_cell(offset);
     // load particles in cell
