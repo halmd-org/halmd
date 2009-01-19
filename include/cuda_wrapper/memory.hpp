@@ -16,16 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_MEMORY_HPP
-#define CUDA_MEMORY_HPP
+#ifndef CUDA_WRAPPER_MEMORY_HPP
+#define CUDA_WRAPPER_MEMORY_HPP
 
 #include <assert.h>
+#include <boost/array.hpp>
 #include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/host/vector.hpp>
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/vector.hpp>
 #include <vector>
-
 
 namespace cuda
 {
@@ -83,8 +83,18 @@ void copy(symbol<T> const& src, T& dst)
 /**
  * copy from device symbol to host memory area
  */
+template <typename T, size_t size>
+void copy(symbol<T[]> const& src, boost::array<T, size>& dst)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
+}
+
+/**
+ * copy from device symbol to host memory area
+ */
 template <typename T, typename Alloc>
-void copy(symbol<T> const& src, std::vector<T, Alloc>& dst)
+void copy(symbol<T[]> const& src, std::vector<T, Alloc>& dst)
 {
     assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
@@ -95,6 +105,16 @@ void copy(symbol<T> const& src, std::vector<T, Alloc>& dst)
  */
 template <typename T>
 void copy(symbol<T> const& src, vector<T>& dst)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+}
+
+/*
+ * copy from device symbol to device memory area
+ */
+template <typename T>
+void copy(symbol<T[]> const& src, vector<T>& dst)
 {
     assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
@@ -113,8 +133,18 @@ void copy(T const& src, symbol<T>& dst)
 /**
  * copy from host memory area to device symbol
  */
+template <typename T, size_t size>
+void copy(boost::array<T, size> const& src, symbol<T[]>& dst)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
+}
+
+/**
+ * copy from host memory area to device symbol
+ */
 template <typename T, typename Alloc>
-void copy(std::vector<T, Alloc> const& src, symbol<T>& dst)
+void copy(std::vector<T, Alloc> const& src, symbol<T[]>& dst)
 {
     assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
@@ -125,6 +155,16 @@ void copy(std::vector<T, Alloc> const& src, symbol<T>& dst)
  */
 template <typename T>
 void copy(vector<T> const& src, symbol<T>& dst)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
+}
+
+/**
+ * copy from device memory area to device symbol
+ */
+template <typename T>
+void copy(vector<T> const& src, symbol<T[]>& dst)
 {
     assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice));
@@ -180,7 +220,17 @@ void copy(vector<T> const& src, host::vector<T>& dst, stream& stream)
  * asynchronous copy from device symbol to host memory area
  */
 template <typename T>
-void copy(symbol<T> const& src, std::vector<T>& dst, stream& stream)
+void copy(symbol<T> const& src, host::vector<T>& dst, stream& stream)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyFromSymbolAsync(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost, stream.data()));
+}
+
+/**
+ * asynchronous copy from device symbol to host memory area
+ */
+template <typename T>
+void copy(symbol<T[]> const& src, host::vector<T>& dst, stream& stream)
 {
     assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyFromSymbolAsync(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost, stream.data()));
@@ -196,11 +246,31 @@ void copy(symbol<T> const& src, vector<T>& dst, stream& stream)
     CUDA_CALL(cudaMemcpyFromSymbolAsync(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice, stream.data()));
 }
 
+/*
+ * asynchronous copy from device symbol to device memory area
+ */
+template <typename T>
+void copy(symbol<T[]> const& src, vector<T>& dst, stream& stream)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyFromSymbolAsync(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice, stream.data()));
+}
+
 /**
  * asynchronous copy from host memory area to device symbol
  */
 template <typename T>
-void copy(std::vector<T> const& src, symbol<T>& dst, stream& stream)
+void copy(host::vector<T> const& src, symbol<T>& dst, stream& stream)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyToSymbolAsync(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice, stream.data()));
+}
+
+/**
+ * asynchronous copy from host memory area to device symbol
+ */
+template <typename T>
+void copy(host::vector<T> const& src, symbol<T[]>& dst, stream& stream)
 {
     assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyToSymbolAsync(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice, stream.data()));
@@ -211,6 +281,16 @@ void copy(std::vector<T> const& src, symbol<T>& dst, stream& stream)
  */
 template <typename T>
 void copy(vector<T> const& src, symbol<T>& dst, stream& stream)
+{
+    assert(src.size() == dst.size());
+    CUDA_CALL(cudaMemcpyToSymbolAsync(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice, stream.data()));
+}
+
+/**
+ * asynchronous copy from device memory area to device symbol
+ */
+template <typename T>
+void copy(vector<T> const& src, symbol<T[]>& dst, stream& stream)
 {
     assert(src.size() == dst.size());
     CUDA_CALL(cudaMemcpyToSymbolAsync(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyDeviceToDevice, stream.data()));
@@ -229,4 +309,4 @@ void memset(vector<T>& array, int const& value)
 
 } // namespace cuda
 
-#endif /* ! CUDA_MEMORY_HPP */
+#endif /* ! CUDA_WRAPPER_MEMORY_HPP */
