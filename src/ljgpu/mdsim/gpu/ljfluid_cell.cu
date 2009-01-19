@@ -97,9 +97,11 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
     __shared__ T s_r[CELL_SIZE];
     __shared__ int s_tag[CELL_SIZE];
 
+    // shared memory barrier for virtual particle threads
+    __syncthreads();
+
     // compute cell index
     uint cell = compute_neighbour_cell(offset);
-
     // load particles coordinates for cell
     (s_r[threadIdx.x], s_tag[threadIdx.x]) = g_r[cell * CELL_SIZE + threadIdx.x];
     __syncthreads();
@@ -316,9 +318,11 @@ __device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR,
     __shared__ int s_itag[CELL_SIZE];
     __shared__ uint s_cell[CELL_SIZE];
 
+    // shared memory barrier for virtual particle threads
+    __syncthreads();
+
     // compute cell index
     uint cell = compute_neighbour_cell(offset);
-
     // load particles in cell from global device memory
     T r;
     (r, s_itag[threadIdx.x]) = g_ir[cell * CELL_SIZE + threadIdx.x];
@@ -346,7 +350,6 @@ __device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR,
 	    }
 	}
     }
-    __syncthreads();
 }
 
 /**
