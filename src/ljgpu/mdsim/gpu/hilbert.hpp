@@ -21,13 +21,30 @@
 
 #include <cuda_wrapper.hpp>
 
-namespace ljgpu { namespace gpu { namespace hilbert
+namespace ljgpu { namespace gpu
 {
 
-extern cuda::function<void (float4 const*, uint*), void (float2 const*, uint*)> curve;
-extern cuda::symbol<float> box;
-extern cuda::symbol<uint> depth;
+struct hilbert_base
+{
+    static cuda::symbol<float> box;
+    static cuda::symbol<uint> depth;
+};
 
-}}} // namespace ljgpu::gpu::hilbert
+template <int dimension>
+struct hilbert;
+
+template <>
+struct hilbert<3> : public hilbert_base
+{
+    static cuda::function<void (float4 const*, uint*)> curve;
+};
+
+template <>
+struct hilbert<2> : public hilbert_base
+{
+    static cuda::function<void (float4 const*, uint*)> curve;
+};
+
+}} // namespace ljgpu::gpu
 
 #endif /* ! LJGPU_MDSIM_GPU_HILBERT_HPP */

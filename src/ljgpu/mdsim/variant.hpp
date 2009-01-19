@@ -1,4 +1,4 @@
-/* Lennard-Jones fluid kernel
+/* Lennard-Jones fluid simulation using CUDA
  *
  * Copyright © 2008-2009  Peter Colberg
  *
@@ -16,31 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MDSIM_GPU_LATTICE_HPP
-#define LJGPU_MDSIM_GPU_LATTICE_HPP
+#ifndef LJGPU_MDSIM_VARIANT_HPP
+#define LJGPU_MDSIM_VARIANT_HPP
 
-#include <cuda_wrapper.hpp>
-
-namespace ljgpu { namespace gpu
+namespace ljgpu
 {
 
-template <int dimension>
-struct lattice;
-
-template <>
-struct lattice<3>
-{
-    static cuda::function<void (float4*, uint, float)> fcc;
-    static cuda::function<void (float4*, uint, float)> sc;
+enum ensemble_type {
+    // constant energy simulation or microcanoncial ensemble
+    NVE,
+    // constant temperature simulation or canonical ensemble
+    NVT,
 };
 
-template <>
-struct lattice<2>
-{
-    static cuda::function<void (float4*, uint, float)> fcc;
-    static cuda::function<void (float4*, uint, float)> sc;
+enum mixture_type {
+    // homogenous fluid
+    UNARY,
+    // binary mixture
+    BINARY,
 };
 
-}} // namespace ljgpu::gpu
+enum potential_type {
+    // no smoothing
+    C0POT,
+    // C² potential smoothing
+    C2POT,
+};
 
-#endif /* ! LJGPU_MDSIM_GPU_LATTICE_HPP */
+} // namespace ljgpu
+
+#endif /* ! LJGPU_MDSIM_VARIANT_HPP */

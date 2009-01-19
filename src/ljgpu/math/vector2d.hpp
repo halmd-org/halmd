@@ -53,9 +53,21 @@ public:
     }
 
     /**
-     * initialization by coalesced GPU floating-point vector
+     * initialization by GPU floating-point vector
      */
     vector(float2 const& v)
+    {
+	(*this)[0] = v.x;
+	(*this)[1] = v.y;
+    }
+
+    vector(float3 const& v)
+    {
+	(*this)[0] = v.x;
+	(*this)[1] = v.y;
+    }
+
+    vector(float4 const& v)
     {
 	(*this)[0] = v.x;
 	(*this)[1] = v.y;
@@ -86,6 +98,16 @@ public:
     operator float2()
     {
 	return make_float2((*this)[0], (*this)[1]);
+    }
+
+    operator float3()
+    {
+	return make_float3((*this)[0], (*this)[1], 0);
+    }
+
+    operator float4()
+    {
+	return make_float4((*this)[0], (*this)[1], 0, 0);
     }
 
     /**

@@ -117,8 +117,6 @@ public:
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;
 
-    using _Base::is_binary;
-
 private:
     /** randomly assign particles types in a binary mixture */
     void random_binary_types();
@@ -166,6 +164,10 @@ private:
 
     using _Base::m_sample;
     using _Base::m_times;
+
+    using _Base::mixture_;
+    using _Base::potential_;
+    using _Base::ensemble_;
 
     /** particles */
     std::vector<particle> part;
@@ -257,7 +259,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
     // update cell lists
     update_cells();
 
-    if (is_binary()) {
+    if (mixture_ == BINARY) {
 	// update Verlet neighbour lists
 	update_neighbours<true>();
 	// calculate forces, potential energy and virial equation sum
@@ -327,7 +329,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::rng(gsl::gfsr4::state_type const& s
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::lattice()
 {
-    if (is_binary()) {
+    if (mixture_ == BINARY) {
 	LOG("randomly placing A and B particles on fcc lattice");
 	random_binary_types();
     }
@@ -380,7 +382,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
     // update cell lists
     update_cells();
 
-    if (is_binary()) {
+    if (mixture_ == BINARY) {
 	// update Verlet neighbour lists
 	update_neighbours<true>();
 	// calculate forces, potential energy and virial equation sum
@@ -637,7 +639,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 	    double fval = 48 * rri * r6i * (r6i - 0.5) * (eps / sigma2);
 	    double pot = (4 * r6i * (r6i - 1) - en_cut) * eps;
 
-	    if (r_smooth > 0) {
+	    if (potential_ == C2POT) {
 		compute_smooth_potential(std::sqrt(rr), fval, pot);
 	    }
 
@@ -759,7 +761,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 	update_cells();
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
 	// update Verlet neighbour lists
-	if (is_binary()) {
+	if (mixture_ == BINARY) {
 	    update_neighbours<true>();
 	}
 	else {
@@ -775,7 +777,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 
     // calculate forces, potential energy and virial equation sum
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
-    if (is_binary()) {
+    if (mixture_ == BINARY) {
 	compute_forces<true>();
     }
     else {
@@ -785,7 +787,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
     leapfrog_full();
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
-    if (thermostat_nu > 0) {
+    if (ensemble_ == NVT) {
 	anderson_thermostat();
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[5]);
 

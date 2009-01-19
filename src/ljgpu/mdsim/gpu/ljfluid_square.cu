@@ -18,6 +18,7 @@
 
 #include <ljgpu/mdsim/gpu/base.cuh>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
+using namespace ljgpu::gpu;
 
 namespace ljgpu { namespace cu { namespace ljfluid
 {
@@ -25,26 +26,32 @@ namespace ljgpu { namespace cu { namespace ljfluid
 /**
  * MD simulation step
  */
-template <typename T, typename TT, ensemble_type ensemble, bool smooth, typename U>
-__global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
+template <typename vector_type,
+          mixture_type mixture,
+	  potential_type potential,
+	  ensemble_type ensemble,
+	  typename T>
+__global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
 {
-    extern __shared__ T s_r[];
+    enum { dimension = vector_type::static_size };
+
+    extern __shared__ vector_type s_r[];
 
     // load particle associated with this thread
-    T r = unpack(g_r[GTID]);
-    T v = unpack(g_v[GTID]);
+    vector_type r = g_r[GTID];
+    vector_type v = g_v[GTID];
 
     // potential energy contribution
     float en = 0;
     // virial equation sum contribution
     float virial = 0;
     // force sum
-    TT f = 0;
+    vector<dfloat, dimension> f = 0;
 
     // iterate over all blocks
     for (unsigned int k = 0; k < gridDim.x; k++) {
 	// load positions of particles within block
-	s_r[TID] = unpack(g_r[k * blockDim.x + TID]);
+	s_r[TID] = g_r[k * blockDim.x + TID];
 	__syncthreads();
 
 	// iterate over all particles within block
@@ -57,21 +64,22 @@ __global__ void mdstep(U* g_r, U* g_v, U* g_f, float* g_en, float* g_virial)
 		continue;
 
 	    // compute Lennard-Jones force with particle
-	    compute_force<smooth>(r, s_r[j], f, en, virial);
+	    compute_force<mixture, potential>(r, s_r[j], f, en, virial);
 	}
 	__syncthreads();
     }
 
     // second leapfrog step of integration of equations of motion
-    leapfrog_full_step(v, f.f0);
+    leapfrog_full_step(v, static_cast<vector_type>(f));
+
     // random collisions with heat bath
     if (ensemble == NVT) {
 	anderson_thermostat(v);
     }
 
     // store particle associated with this thread
-    g_v[GTID] = pack(v);
-    g_f[GTID] = pack(f.f0);
+    g_v[GTID] = v;
+    g_f[GTID] = static_cast<vector_type>(f);
     g_en[GTID] = en;
     g_virial[GTID] = virial;
 }
@@ -88,22 +96,40 @@ typedef ljfluid<ljfluid_impl_gpu_square<2> > _2D;
 /**
  * device function wrappers
  */
-cuda::function<void (float4*, float4*, float4*, float*, float*)>
-    _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE, false>);
-cuda::function<void (float4*, float4*, float4*, float*, float*)>
-    _3D::mdstep_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, false>);
-cuda::function<void (float4*, float4*, float4*, float*, float*)>
-    _3D::mdstep_smooth(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE, true>);
-cuda::function<void (float4*, float4*, float4*, float*, float*)>
-    _3D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, true>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<UNARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C0POT, NVE>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<UNARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C0POT, NVT>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<UNARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C2POT, NVE>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<UNARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C2POT, NVT>);
 
-cuda::function<void (float2*, float2*, float2*, float*, float*)>
-    _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE, false>);
-cuda::function<void (float2*, float2*, float2*, float*, float*)>
-    _2D::mdstep_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, false>);
-cuda::function<void (float2*, float2*, float2*, float*, float*)>
-    _2D::mdstep_smooth(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE, true>);
-cuda::function<void (float2*, float2*, float2*, float*, float*)>
-    _2D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, true>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<BINARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C0POT, NVE>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<BINARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C0POT, NVT>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<BINARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVE>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVT>);
+
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<UNARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT, NVE>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<UNARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT, NVT>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<UNARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C2POT, NVE>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<UNARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C2POT, NVT>);
+
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<BINARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C0POT, NVE>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<BINARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C0POT, NVT>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<BINARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVE>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVT>);
 
 }} // namespace ljgpu::gpu

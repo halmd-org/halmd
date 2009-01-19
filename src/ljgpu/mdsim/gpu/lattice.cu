@@ -20,7 +20,6 @@
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
-using namespace ljgpu::gpu::lattice;
 
 namespace ljgpu { namespace cu { namespace lattice
 {
@@ -28,42 +27,42 @@ namespace ljgpu { namespace cu { namespace lattice
 /**
  * place particles on a face centered cubic lattice (fcc)
  */
-__global__ void fcc(float4* g_r, uint n, float box)
+__device__ void fcc(vector<float, 3>& r, uint n)
 {
-    float3 r;
     // compose primitive vectors from 1-dimensional index
     r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.f;
     r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.f;
     r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.f;
-    g_r[GTID] = pack(r * (box / n));
 }
 
-__global__ void fcc(float2* g_r, uint n, float box)
+__device__ void fcc(vector<float, 2>& r, uint n)
 {
-    float2 r;
     r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
     r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.f;
-    g_r[GTID] = pack(r * (box / n));
 }
 
 /**
  * place particles on a simple cubic lattice (sc)
  */
-__global__ void sc(float4* g_r, uint n, float box)
+__device__ void sc(vector<float, 3>& r, uint n)
 {
-    float3 r;
     r.x = (GTID % n) + 0.5f;
     r.y = (GTID / n % n) + 0.5f;
     r.z = (GTID / n / n) + 0.5f;
-    g_r[GTID] = pack(r * (box / n));
 }
 
-__global__ void sc(float2* g_r, uint n, float box)
+__device__ void sc(vector<float, 2>& r, uint n)
 {
-    float2 r;
     r.x = (GTID % n) + 0.5f;
     r.y = (GTID / n) + 0.5f;
-    g_r[GTID] = pack(r * (box / n));
+}
+
+template <int dimension, void (*primitive)(vector<float, dimension>&, uint)>
+__global__ void lattice(float4* g_r, uint n, float box)
+{
+    vector<float, dimension> r;
+    primitive(r, n);
+    g_r[GTID] = r * (box / n);
 }
 
 }}} // namespace ljgpu::cu::lattice
@@ -71,12 +70,19 @@ __global__ void sc(float2* g_r, uint n, float box)
 namespace ljgpu { namespace gpu
 {
 
+typedef lattice<3> __3D;
+typedef lattice<2> __2D;
+
 /**
  * device function wrappers
  */
-cuda::function<void (float2*, uint, float), void (float4*, uint, float)>
-    lattice::fcc(cu::lattice::fcc, cu::lattice::fcc);
-cuda::function<void (float2*, uint, float), void (float4*, uint, float)>
-    lattice::sc(cu::lattice::sc, cu::lattice::sc);
+cuda::function<void (float4*, uint, float)>
+    __3D::fcc(cu::lattice::lattice<3, cu::lattice::fcc>);
+cuda::function<void (float4*, uint, float)>
+    __3D::sc(cu::lattice::lattice<3, cu::lattice::sc>);
+cuda::function<void (float4*, uint, float)>
+    __2D::fcc(cu::lattice::lattice<2, cu::lattice::fcc>);
+cuda::function<void (float4*, uint, float)>
+    __2D::sc(cu::lattice::lattice<2, cu::lattice::sc>);
 
 }} // namespace ljgpu::gpu

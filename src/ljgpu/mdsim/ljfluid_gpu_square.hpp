@@ -105,8 +105,8 @@ private:
 
     /** system state in page-locked host memory */
     struct {
-	/** periodically reduced particle positions */
-	cuda::host::vector<gpu_vector_type> r;
+	/** tagged periodically reduced particle positions */
+	cuda::host::vector<float4> r;
 	/** periodic box traversal vectors */
 	cuda::host::vector<gpu_vector_type> R;
 	/** particle velocities */
@@ -119,8 +119,8 @@ private:
 
     /** system state in global device memory */
     struct {
-	/** periodically reduced particle positions */
-	cuda::vector<gpu_vector_type> r;
+	/** tagged periodically reduced particle positions */
+	cuda::vector<float4> r;
 	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
@@ -243,7 +243,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::lattice::fcc(g_part.r, n, box_);
+	gpu::lattice<dimension>::fcc(g_part.r, n, box_);
 	event_[1].record(stream_);
 	// calculate forces
 	update_forces(stream_);
@@ -390,19 +390,8 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::velocity_verlet(cuda::stream&
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::update_forces(cuda::stream& stream)
 {
-    cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * sizeof(gpu_vector_type), stream);
-    if (r_smooth > 0 && thermostat_nu > 0) {
-	_gpu::mdstep_smooth_nvt(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
-    }
-    else if (r_smooth > 0) {
-	_gpu::mdstep_smooth(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
-    }
-    else if (thermostat_nu > 0) {
-	_gpu::mdstep_nvt(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
-    }
-    else {
-	_gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
-    }
+    cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * dimension * sizeof(float), stream);
+    _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 
 } // namespace ljgpu

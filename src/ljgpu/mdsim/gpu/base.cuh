@@ -18,11 +18,13 @@
 
 #include <ljgpu/algorithm/gpu/base.cuh>
 #include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/math/gpu/pack.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 #include <ljgpu/mdsim/gpu/base.hpp>
 #define CU_NAMESPACE ljfluid
 #include <ljgpu/rng/gpu/rand48.cuh>
+using namespace ljgpu::gpu;
 
 //
 // compile this code only *once* per program or dynamic library,
@@ -31,13 +33,6 @@
 
 namespace ljgpu { namespace cu { namespace ljfluid
 {
-
-enum ensemble_type {
-    // constant energy simulation or microcanoncial ensemble
-    NVE,
-    // constant temperature simulation or canonical ensemble
-    NVT,
-};
 
 /** number of particles */
 __constant__ uint npart;
@@ -53,6 +48,10 @@ __constant__ float r_cut;
 __constant__ float rr_cut;
 /** cutoff energy for Lennard-Jones potential at cutoff length */
 __constant__ float en_cut;
+/** potential well depths in binary mixture */
+__constant__ float epsilon[3];
+/** squared collision diameters in binary mixture */
+__constant__ float sigma2[3];
 
 /** squared inverse potential smoothing function scale parameter */
 __constant__ float rri_smooth;
@@ -130,9 +129,19 @@ __global__ void sample_smooth_function(float3* g_h, const float2 r)
 /**
  * calculate particle force using Lennard-Jones potential
  */
-template <bool smooth, typename T, typename TT>
-__device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float& virial)
+template <mixture_type mixture,
+	  potential_type potential,
+	  typename T,
+          typename U>
+__device__ void compute_force(T const& r1, T const& r2,
+			      U& f, float& en, float& virial,
+			      unsigned int ab = 0)
 {
+    // potential well depth
+    float const eps = (mixture == BINARY) ? epsilon[ab] : 1;
+    // squared collision diameter
+    float const sig2 = (mixture == BINARY) ? sigma2[ab] : 1;
+
     // particle distance vector
     T r = r1 - r2;
     // enforce periodic boundary conditions
@@ -144,13 +153,13 @@ __device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float&
     if (rr >= rr_cut) return;
 
     // compute Lennard-Jones force in reduced units
-    float rri = 1 / rr;
+    float rri = sig2 / rr;
     float ri6 = rri * rri * rri;
-    float fval = 48 * rri * ri6 * (ri6 - 0.5f);
+    float fval = 48 * eps * rri * ri6 * (ri6 - 0.5f) / sig2;
     // compute shifted Lennard-Jones potential
-    float pot = 4 * ri6 * (ri6 - 1) - en_cut;
+    float pot = (4 * ri6 * (ri6 - 1) - en_cut) * eps;
 
-    if (smooth) {
+    if (potential == C2POT) {
 	// compute smoothing function and its first derivative
 	const float3 h = compute_smooth_function(sqrtf(rr));
 	// apply smoothing function to obtain C¹ force function
@@ -170,19 +179,21 @@ __device__ void compute_force(T const& r1, T const& r2, TT& f, float& en, float&
 /**
  * first leapfrog step of integration of equations of motion
  */
-template <typename T, typename U>
-__global__ void inteq(U* g_r, U* g_R, U* g_v, U const* g_f)
+template <int dimension, typename T>
+__global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
 {
-    T r = unpack(g_r[GTID]);
-    T R = unpack(g_R[GTID]);
-    T v = unpack(g_v[GTID]);
-    T f = unpack(g_f[GTID]);
+    vector<float, dimension> r, R, v, f;
+    int tag;
+    (r, tag) = g_r[GTID];
+    R = g_R[GTID];
+    v = g_v[GTID];
+    f = g_f[GTID];
 
     leapfrog_half_step(r, R, v, f);
 
-    g_r[GTID] = pack(r);
-    g_R[GTID] = pack(R);
-    g_v[GTID] = pack(v);
+    g_r[GTID] = (r, tag);
+    g_R[GTID] = R;
+    g_v[GTID] = v;
 }
 
 /**
@@ -223,6 +234,8 @@ cuda::symbol<float> __Base::timestep(cu::ljfluid::timestep);
 cuda::symbol<float> __Base::r_cut(cu::ljfluid::r_cut);
 cuda::symbol<float> __Base::rr_cut(cu::ljfluid::rr_cut);
 cuda::symbol<float> __Base::en_cut(cu::ljfluid::en_cut);
+cuda::symbol<float[]> __Base::epsilon(cu::ljfluid::epsilon);
+cuda::symbol<float[]> __Base::sigma2(cu::ljfluid::sigma2);
 cuda::symbol<float> __Base::rri_smooth(cu::ljfluid::rri_smooth);
 cuda::symbol<float> __Base::thermostat_nu(cu::ljfluid::thermostat_nu);
 cuda::symbol<float> __Base::thermostat_temp(cu::ljfluid::thermostat_temp);
@@ -238,12 +251,12 @@ cuda::function<void (float3*, const float2)>
     __Base::sample_smooth_function(cu::ljfluid::sample_smooth_function);
 
 cuda::function<void (float4*, float4*, float4*, float4 const*)>
-    __3D::inteq(cu::ljfluid::inteq<float3>);
+    __3D::inteq(cu::ljfluid::inteq<3>);
 cuda::function<void (float4*, float)>
     __3D::boltzmann(cu::ljfluid::boltzmann);
 
-cuda::function<void (float2*, float2*, float2*, float2 const*)>
-    __2D::inteq(cu::ljfluid::inteq<float2>);
+cuda::function<void (float4*, float2*, float2*, float2 const*)>
+    __2D::inteq(cu::ljfluid::inteq<2>);
 cuda::function<void (float2*, float)>
     __2D::boltzmann(cu::ljfluid::boltzmann);
 

@@ -37,20 +37,22 @@ template <>
 struct ljfluid<ljfluid_impl_gpu_square<3> >
 : public ljfluid_base<ljfluid_impl_gpu_square>, public ljfluid<ljfluid_impl_gpu_base<3> >
 {
-    static cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep;
-    static cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep_nvt;
-    static cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep_smooth;
-    static cuda::function<void (float4*, float4*, float4*, float*, float*)> mdstep_smooth_nvt;
+    template <mixture_type, potential_type, ensemble_type>
+    struct variant
+    {
+	static cuda::function<void (float4 const*, float4*, float4*, float*, float*)> mdstep;
+    };
 };
 
 template <>
 struct ljfluid<ljfluid_impl_gpu_square<2> >
 : public ljfluid_base<ljfluid_impl_gpu_square>, public ljfluid<ljfluid_impl_gpu_base<2> >
 {
-    static cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep;
-    static cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep_nvt;
-    static cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep_smooth;
-    static cuda::function<void (float2*, float2*, float2*, float*, float*)> mdstep_smooth_nvt;
+    template <mixture_type, potential_type, ensemble_type>
+    struct variant
+    {
+	static cuda::function<void (float4 const*, float2*, float2*, float*, float*)> mdstep;
+    };
 };
 
 }} // namespace ljgpu::gpu

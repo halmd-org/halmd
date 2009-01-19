@@ -45,7 +45,9 @@ public:
 	sigma_(boost::assign::list_of(1)(0)(0)),
 	epsilon_(boost::assign::list_of(1)(0)(0)),
 	r_smooth(0),
-	thermostat_nu(0) {}
+	thermostat_nu(0),
+	potential_(C0POT),
+	ensemble_(NVE) {}
 
     /** set simulation timestep */
     void timestep(float_type value);
@@ -70,13 +72,15 @@ public:
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;
 
-    using _Base::is_binary;
+    potential_type potential() const { return potential_ ; }
+    ensemble_type ensemble() const { return ensemble_ ; }
 
 protected:
     using _Base::npart;
     using _Base::mpart;
     using _Base::box_;
     using _Base::density_;
+    using _Base::mixture_;
 
     /** collision diameters */
     boost::array<float_type, 3> sigma_;
@@ -100,6 +104,9 @@ protected:
     float_type thermostat_nu;
     /** heat bath temperature */
     float_type thermostat_temp;
+
+    potential_type potential_;
+    ensemble_type ensemble_;
 };
 
 template <typename ljfluid_impl>
@@ -140,6 +147,7 @@ template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::potential_smoothing(float_type value)
 {
     r_smooth = value;
+    potential_ = C2POT;
     LOG("potential smoothing function scale parameter: " << r_smooth);
 
     // squared inverse potential smoothing function scale parameter
@@ -159,9 +167,9 @@ void ljfluid_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
 {
     thermostat_nu = nu;
     LOG("heat bath collision probability: " << thermostat_nu);
-
     thermostat_temp = temp;
     LOG("heat bath temperature: " << thermostat_temp);
+    ensemble_ = NVT;
 }
 
 template <typename ljfluid_impl>
@@ -170,16 +178,16 @@ void ljfluid_base<ljfluid_impl>::param(H5param& param) const
     _Base::param(param);
 
     H5xx::group node(param["mdsim"]);
-    if (is_binary()) {
+    if (mixture_ == BINARY) {
 	node["potential_epsilon"] = epsilon_;
 	node["potential_sigma"] = sigma_;
     }
     node["cutoff_radius"] = r_cut;
     node["timestep"] = timestep_;
-    if (r_smooth > 0) {
+    if (potential_ == C2POT) {
 	node["potential_smoothing"] = r_smooth;
     }
-    if (thermostat_nu > 0) {
+    if (ensemble_ == NVT) {
 	node["thermostat_nu"] = thermostat_nu;
 	node["thermostat_temp"] = thermostat_temp;
     }

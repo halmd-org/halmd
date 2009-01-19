@@ -20,6 +20,8 @@
 #define LJGPU_RNG_GPU_RAND48_H
 
 #include <ljgpu/rng/gpu/uint48.cuh>
+#include <ljgpu/math/gpu/vector2d.cuh>
+#include <ljgpu/math/gpu/vector3d.cuh>
 
 namespace ljgpu { namespace cu
 {
@@ -83,6 +85,20 @@ __device__ void gaussian(float& r1, float& r2, float var, ushort3& state)
     s = sqrtf(-2 * var * logf(s) / s);
     r1 *= s;
     r2 *= s;
+}
+
+__device__ void gaussian(vector<float, 3>& r, float var)
+{
+    ushort3 state = g_state[GTID];
+    gaussian(r.x, r.y, var, state);
+    gaussian(r.z, r.x, var, state);
+}
+
+__device__ void gaussian(vector<float, 2>& r, float var)
+{
+    ushort3 state = g_state[GTID];
+    gaussian(r.x, r.y, var, state);
+    g_state[GTID] = state;
 }
 
 __device__ void gaussian(float4& r, float var)

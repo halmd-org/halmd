@@ -35,18 +35,6 @@ __device__ T identity_(U v)
     return v;
 }
 
-template <>
-__device__ float3 identity_(float4 v)
-{
-    return make_float3(v.x, v.y, v.z);
-}
-
-template <>
-__device__ float4 identity_(float3 v)
-{
-    return make_float4(v.x, v.y, v.z, 0);
-}
-
 template <typename T, typename U>
 __device__ T square_(U v)
 {
@@ -62,26 +50,6 @@ __device__ T sum_(T v1, T v2)
     return v1 + v2;
 }
 
-
-template <typename T>
-__device__ T zero_()
-{
-    return 0;
-}
-
-template <>
-__device__ float3 zero_()
-{
-    return make_float3(0, 0, 0);
-}
-
-template <>
-__device__ float2 zero_()
-{
-    return make_float2(0, 0);
-}
-
-
 /**
  * parallel reduction
  */
@@ -95,9 +63,9 @@ __device__ void reduce(coalesced_input_type const* g_in, coalesced_output_type* 
     __shared__ output_type s_vv[THREADS];
 
     // load values from global device memory
-    output_type vv = zero_<output_type>();
+    output_type vv = 0;
     for (uint i = GTID; i < n; i += GTDIM) {
-	input_type v = identity_<input_type>(g_in[i]);
+	input_type v = g_in[i];
 	vv = reduce_function(vv, input_function(v));
     }
     // reduced value for this thread
@@ -144,7 +112,7 @@ __device__ void reduce(coalesced_input_type const* g_in, coalesced_output_type* 
     if (TID < 1) {
 	vv = reduce_function(vv, s_vv[TID + 1]);
 	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = identity_<coalesced_output_type>(output_function(vv));
+	g_block_sum[blockIdx.x] = output_function(vv);
     }
 }
 
@@ -189,16 +157,16 @@ namespace ljgpu { namespace gpu
 cuda::function<void(float const*, dfloat*, uint),
 	       void(float4 const*, float4*, uint),
 	       void(float2 const*, float2*, uint)>
-	       reduce::sum(cu::reduce::sum<float, dfloat>,
-			   cu::reduce::sum<float3, float3>,
-			   cu::reduce::sum<float2, float2>);
+    reduce::sum(cu::reduce::sum<float, dfloat>,
+		cu::reduce::sum<cu::vector<float, 3>, cu::vector<float, 3> >,
+		cu::reduce::sum<cu::vector<float, 2>, cu::vector<float, 2> >);
 cuda::function<void(float4 const*, dfloat*, uint),
 	       void(float2 const*, dfloat*, uint)>
-	       reduce::sum_of_squares(cu::reduce::sum_of_squares<float3, dfloat>,
-				   cu::reduce::sum_of_squares<float2, dfloat>);
+    reduce::sum_of_squares(cu::reduce::sum_of_squares<cu::vector<float, 3>, dfloat>,
+			   cu::reduce::sum_of_squares<cu::vector<float, 2>, dfloat>);
 cuda::function<void(float4 const*, float*, uint),
 	       void(float2 const*, float*, uint)>
-	       reduce::max(cu::reduce::max<float3, float>,
-			   cu::reduce::max<float2, float>);
+    reduce::max(cu::reduce::max<cu::vector<float, 3>, float>,
+		cu::reduce::max<cu::vector<float, 2>, float>);
 
 }} // namespace ljgpu::gpu

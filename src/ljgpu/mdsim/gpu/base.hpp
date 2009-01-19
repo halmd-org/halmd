@@ -21,10 +21,13 @@
 
 #include <cuda_wrapper.hpp>
 #include <ljgpu/mdsim/impl.hpp>
+#include <ljgpu/mdsim/variant.hpp>
 #include <ljgpu/rng/gpu/uint48.cuh>
 
 namespace ljgpu { namespace gpu
 {
+
+enum { VIRTUAL_PARTICLE = -1 };
 
 template <template <int> class ljfluid_impl>
 struct ljfluid_base;
@@ -38,6 +41,8 @@ struct ljfluid_base<ljfluid_impl_gpu_base>
     static cuda::symbol<float> r_cut;
     static cuda::symbol<float> rr_cut;
     static cuda::symbol<float> en_cut;
+    static cuda::symbol<float[]> epsilon;
+    static cuda::symbol<float[]> sigma2;
     static cuda::symbol<float> rri_smooth;
     static cuda::symbol<float> thermostat_nu;
     static cuda::symbol<float> thermostat_temp;
@@ -67,7 +72,7 @@ template <>
 struct ljfluid<ljgpu::ljfluid_impl_gpu_base<2> >
 : public ljfluid_base<ljfluid_impl_gpu_base>
 {
-    static cuda::function<void (float2*, float2*, float2*, float2 const*)> inteq;
+    static cuda::function<void (float4*, float2*, float2*, float2 const*)> inteq;
     static cuda::function<void (float2*, float)> boltzmann;
 };
 

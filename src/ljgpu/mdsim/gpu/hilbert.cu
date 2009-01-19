@@ -21,7 +21,6 @@
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 #include <ljgpu/mdsim/gpu/hilbert.hpp>
-using namespace ljgpu::gpu::hilbert;
 
 namespace ljgpu { namespace cu { namespace hilbert
 {
@@ -37,8 +36,8 @@ __constant__ unsigned int depth;
 __device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
 {
     // swap bits comprising Hilbert codes in vertex-to-code lookup table
-    const uint va = ((v >> a) & mask);
-    const uint vb = ((v >> b) & mask);
+    uint const va = ((v >> a) & mask);
+    uint const vb = ((v >> b) & mask);
     v = v ^ (va << a) ^ (vb << b) ^ (va << b) ^ (vb << a);
     // update code-to-vertex lookup table
     swap(a, b);
@@ -47,7 +46,7 @@ __device__ void vertex_swap(uint& v, uint& a, uint& b, uint const& mask)
 /**
  * map 3-dimensional point to 1-dimensional point on Hilbert space curve
  */
-__global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
+__device__ unsigned int hilbert_code(vector<float, 3> r)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
@@ -56,28 +55,6 @@ __global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
 
     // Hilbert code for particle
     unsigned int hcode = 0;
-
-    //
-    // We need to avoid ambiguities during the assignment of a particle
-    // to a subcell, i.e. the particle position should never lie on an
-    // edge or corner of multiple subcells, or the algorithm will have
-    // trouble converging to a definite Hilbert curve.
-    //
-    // Therefore, we use a simple cubic lattice of predefined dimensions
-    // according to the number of cells at the deepest recursion level,
-    // and round the particle position to the nearest center of a cell.
-    //
-
-    // Hilbert cells per dimension at deepest recursion level
-    const uint n = 1UL << depth;
-    // fractional index of particle's Hilbert cell in [0, n)
-    const float3 cell = (__saturatef(unpack(g_r[GTID]) / box) * (1.f - FLT_EPSILON)) * n;
-
-    // round particle position to center of cell in unit coordinates
-    float3 r = (floorf(cell) + make_float3(0.5f, 0.5f, 0.5f)) / n;
-    // use symmetric coordinates
-    r -= make_float3(0.5f, 0.5f, 0.5f);
-
     // Hilbert code-to-vertex lookup table
     uint a = 21;
     uint b = 18;
@@ -102,7 +79,7 @@ __global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
 	const uint v = (vc >> (3 * (x + (y << 1) + (z << 2))) & MASK);
 
 	// scale particle coordinates to subcell
-	r = 2 * r - make_float3(0.5f - x, 0.5f - y, 0.5f - z);
+	r = 2 * r - vector<float, 3>(0.5f - x, 0.5f - y, 0.5f - z);
 	// apply permutation rule according to Hilbert code
 	if (v == 0) {
 	    vertex_swap(vc, b, h, MASK);
@@ -132,27 +109,17 @@ __global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
 	// add vertex code to partial Hilbert code
 	hcode = (hcode << 3) + v;
     }
-
 #undef MASK
-
-    // store Hilbert code for particle
-    g_sfc[GTID] = hcode;
+    return hcode;
 }
 
-__global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
+/**
+ * map 2-dimensional point to 1-dimensional point on Hilbert space curve
+ */
+__device__ unsigned int hilbert_code(vector<float, 2> r)
 {
     // Hilbert code for particle
     unsigned int hcode = 0;
-    // Hilbert cells per dimension at deepest recursion level
-    const uint n = 1UL << depth;
-    // fractional index of particle's Hilbert cell in [0, n)
-    const float2 cell = (__saturatef(unpack(g_r[GTID]) / box) * (1.f - FLT_EPSILON)) * n;
-
-    // round particle position to center of cell in unit coordinates
-    float2 r = (floorf(cell) + make_float2(0.5f, 0.5f)) / n;
-    // use symmetric coordinates
-    r -= make_float2(0.5f, 0.5f);
-
     // Hilbert code-to-vertex lookup table
     uint a = 6;
     uint b = 4;
@@ -172,7 +139,7 @@ __global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
 	const uint v = (vc >> (2 * (x + (y << 1))) & MASK);
 
 	// scale particle coordinates to subcell
-	r = 2 * r - make_float2(0.5f - x, 0.5f - y);
+	r = 2 * r - vector<float, 2>(0.5f - x, 0.5f - y);
 	// apply permutation rule according to Hilbert code
 	if (v == 0) {
 	    vertex_swap(vc, b, d, MASK);
@@ -184,11 +151,39 @@ __global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
 	// add vertex code to partial Hilbert code
 	hcode = (hcode << 2) + v;
     }
-
 #undef MASK
+    return hcode;
+}
 
-    // store Hilbert code for particle
-    g_sfc[GTID] = hcode;
+template <typename vector_type>
+__global__ void hilbert_curve(float4 const* g_r, unsigned int* g_sfc)
+{
+    enum { dimension = vector_type::static_size };
+
+    //
+    // We need to avoid ambiguities during the assignment of a particle
+    // to a subcell, i.e. the particle position should never lie on an
+    // edge or corner of multiple subcells, or the algorithm will have
+    // trouble converging to a definite Hilbert curve.
+    //
+    // Therefore, we use a simple cubic lattice of predefined dimensions
+    // according to the number of cells at the deepest recursion level,
+    // and round the particle position to the nearest center of a cell.
+    //
+
+    vector_type r = g_r[GTID];
+    // Hilbert cells per dimension at deepest recursion level
+    uint const n = 1UL << depth;
+    // fractional index of particle's Hilbert cell in [0, n)
+    r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * n;
+
+    // round particle position to center of cell in unit coordinates
+    r = (floorf(r) + vector_type(0.5f)) / n;
+    // use symmetric coordinates
+    r -= vector_type(0.5f);
+
+    // compute Hilbert code for particle
+    g_sfc[GTID] = hilbert_code(r);
 }
 
 }}} // namespace ljgpu::cu::hilbert
@@ -196,17 +191,22 @@ __global__ void hilbert_curve(float2 const* g_r, unsigned int* g_sfc)
 namespace ljgpu { namespace gpu
 {
 
+typedef hilbert_base _Base;
+typedef hilbert<3> _3D;
+typedef hilbert<2> _2D;
+
 /**
  * device function wrappers
  */
-cuda::function<void (float4 const*, unsigned int*),
-	       void (float2 const*, unsigned int*)>
-    hilbert::curve(cu::hilbert::hilbert_curve, cu::hilbert::hilbert_curve);
+cuda::function<void (float4 const*, unsigned int*)>
+    _3D::curve(cu::hilbert::hilbert_curve<cu::vector<float, 3> >);
+cuda::function<void (float4 const*, unsigned int*)>
+    _2D::curve(cu::hilbert::hilbert_curve<cu::vector<float, 2> >);
 
 /**
  * device constant wrappers
  */
-cuda::symbol<float> hilbert::box(cu::hilbert::box);
-cuda::symbol<unsigned int> hilbert::depth(cu::hilbert::depth);
+cuda::symbol<float> _Base::box(cu::hilbert::box);
+cuda::symbol<unsigned int> _Base::depth(cu::hilbert::depth);
 
 }} // namespace ljgpu::gpu

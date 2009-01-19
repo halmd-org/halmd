@@ -20,6 +20,7 @@
 #define LJGPU_MDSIM_LJFLUID_GPU_NBR_HPP
 
 #include <algorithm>
+#include <boost/lexical_cast.hpp>
 #include <ljgpu/algorithm/radix_sort.hpp>
 #include <ljgpu/algorithm/reduce.hpp>
 #include <ljgpu/mdsim/ljfluid_gpu_base.hpp>
@@ -162,8 +163,8 @@ private:
 
     /** system state in page-locked host memory */
     struct {
-	/** periodically reduced particle positions */
-	cuda::host::vector<gpu_vector_type> r;
+	/** tagged periodically reduced particle positions */
+	cuda::host::vector<float4> r;
 	/** periodic box traversal vectors */
 	cuda::host::vector<gpu_vector_type> R;
 	/** particle velocities */
@@ -174,8 +175,8 @@ private:
 
     /** system state in global device memory */
     struct {
-	/** periodically reduced particle positions */
-	cuda::vector<gpu_vector_type> r;
+	/** tagged periodically reduced particle positions */
+	cuda::vector<float4> r;
 	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
@@ -192,15 +193,13 @@ private:
 
     /** double buffers for particle sorting */
     struct {
-	/** periodically reduced particle positions */
-	cuda::vector<gpu_vector_type> r;
+	/** tagged periodically reduced particle positions */
+	cuda::vector<float4> r;
 	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::vector<gpu_vector_type> v;
-	/** particle tags */
-	cuda::vector<int> tag;
-    } g_sort;
+    } g_part_buf;
 
     /** auxiliary device memory arrays for particle sorting */
     struct {
@@ -239,10 +238,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
     }
     // allocate global device memory for sorting buffers
     try {
-	g_sort.r.resize(npart);
-	g_sort.R.resize(npart);
-	g_sort.v.resize(npart);
-	g_sort.tag.resize(npart);
+	g_part_buf.r.resize(npart);
+	g_part_buf.R.resize(npart);
+	g_part_buf.v.resize(npart);
 	g_aux.cell.resize(npart);
 	g_aux.idx.resize(npart);
     }
@@ -341,8 +339,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
     uint depth = std::min((dimension == 3) ? 10.f : 16.f, ceilf(logf(box_) / M_LN2));
     LOG("Hilbert space-filling curve recursion depth: " << depth);
     try {
-	cuda::copy(box_, gpu::hilbert::box);
-	cuda::copy(depth, gpu::hilbert::depth);
+	cuda::copy(box_, gpu::hilbert<dimension>::box);
+	cuda::copy(depth, gpu::hilbert<dimension>::depth);
     }
     catch (cuda::error const&) {
 	throw exception("failed to copy Hilbert curve recursion depth to device symbol");
@@ -379,6 +377,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	g_part.en.reserve(dim_.threads());
 	g_part.virial.reserve(dim_.threads());
 	g_nbl.reserve(dim_.threads() * nbl_size);
+	cuda::copy(g_nbl.data(), _gpu::g_nbl);
 	cuda::copy(uint(dim_.threads()), _gpu::nbl_stride);
     }
     catch (cuda::error const&) {
@@ -390,7 +389,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	_gpu::r.bind(g_part.r);
 	_gpu::v.bind(g_part.v);
 	_gpu::R.bind(g_part.R);
-	_gpu::tag.bind(g_part.tag);
     }
     catch (cuda::error const&) {
 	throw exception("failed to bind GPU textures to global device memory arrays");
@@ -398,10 +396,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 
     // allocate global device memory for sorting buffers
     try {
-	g_sort.r.reserve(dim_.threads());
-	g_sort.R.reserve(dim_.threads());
-	g_sort.v.reserve(dim_.threads());
-	g_sort.tag.reserve(dim_.threads());
+	g_part_buf.r.reserve(dim_.threads());
+	g_part_buf.R.reserve(dim_.threads());
+	g_part_buf.v.reserve(dim_.threads());
 	g_aux.cell.reserve(dim_.threads());
 	g_aux.offset.resize(dim_cell_.blocks_per_grid());
 	g_aux.idx.reserve(dim_.threads());
@@ -434,14 +431,16 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(sample_visitor visi
     _Base::sample(visitor);
 
     try {
-	// assign particle tags
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	_gpu::init_tags(g_part.tag);
 	// copy periodically reduced particle positions from host to GPU
 	std::copy(m_sample[0].r.begin(), m_sample[0].r.end(), h_part.r.begin());
 	cuda::copy(h_part.r, g_part.r, stream_);
 	// set periodic box traversal vectors to zero
 	cuda::memset(g_part.R, 0);
+	// assign particle tags (after particle positions!)
+	cuda::configure(dim_.grid, dim_.block, stream_);
+	_gpu::init_tags(g_part.r, g_part.tag);
+	cuda::copy(g_part.tag, h_part.tag, stream_);
+	stream_.synchronize();
 #ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
@@ -459,7 +458,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(sample_visitor visi
 
 	// copy particle velocities from host to GPU (after force calculation!)
 	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.v[i] = m_sample[0].v[i];
+	    h_part.v[i] = m_sample[0].v[h_part.tag[i]];
 	}
 	cuda::copy(h_part.v, g_part.v, stream_);
 	// calculate maximum velocity magnitude
@@ -500,14 +499,17 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
     LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
     try {
-	// assign particle tags
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	_gpu::init_tags(g_part.tag);
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::lattice::fcc(g_part.r, n, box_);
+	gpu::lattice<dimension>::fcc(g_part.r, n, box_);
 	event_[1].record(stream_);
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
+	// assign particle tags (after particle positions!)
+	cuda::configure(dim_.grid, dim_.block, stream_);
+	_gpu::init_tags(g_part.r, g_part.tag);
+	cuda::copy(g_part.tag, h_part.tag, stream_);
 #ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
@@ -522,8 +524,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
 	reduce_en(g_part.en, stream_);
 	// calculate virial equation sum
 	reduce_virial(g_part.virial, stream_);
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -731,18 +731,7 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, stream);
-    if (r_smooth > 0 && thermostat_nu > 0) {
-	_gpu::mdstep_smooth_nvt(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
-    }
-    else if (r_smooth > 0) {
-	_gpu::mdstep_smooth(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
-    }
-    else if (thermostat_nu > 0) {
-	_gpu::mdstep_nvt(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
-    }
-    else {
-	_gpu::mdstep(g_part.r, g_part.v, g_part.f, g_nbl, g_part.en, g_part.virial);
-    }
+    _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 
 template <int dimension>
@@ -774,7 +763,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_neighbours(cuda::st
     cuda::memset(g_nbl, 0xff);
     // build neighbour lists
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
-    _gpu::update_neighbours(g_cell, g_nbl, g_part.r);
+    _gpu::update_neighbours(g_cell);
 }
 
 #if defined(USE_HILBERT_ORDER)
@@ -783,7 +772,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
 {
     // compute Hilbert space-filling curve for particles
     cuda::configure(dim_.grid, dim_.block, stream);
-    gpu::hilbert::curve(g_part.r, g_aux.cell);
+    gpu::hilbert<dimension>::curve(g_part.r, g_aux.cell);
 
     // generate permutation array
     cuda::configure(dim_.grid, dim_.block, stream);
@@ -792,11 +781,10 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
 
     // order particles by permutation
     cuda::configure(dim_.grid, dim_.block, stream);
-    _gpu::order_particles(g_aux.idx, g_sort.r, g_sort.R, g_sort.v, g_sort.tag);
-    cuda::copy(g_sort.r, g_part.r, stream);
-    cuda::copy(g_sort.R, g_part.R, stream);
-    cuda::copy(g_sort.v, g_part.v, stream);
-    cuda::copy(g_sort.tag, g_part.tag, stream);
+    _gpu::order_particles(g_aux.idx, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part.tag);
+    cuda::copy(g_part_buf.r, g_part.r, stream);
+    cuda::copy(g_part_buf.R, g_part.R, stream);
+    cuda::copy(g_part_buf.v, g_part.v, stream);
 }
 #endif /* USE_HILBERT_ORDER */
 

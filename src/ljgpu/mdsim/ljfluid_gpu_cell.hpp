@@ -132,8 +132,8 @@ private:
 
     /** system state in page-locked host memory */
     struct {
-	/** periodically reduced particle positions */
-	cuda::host::vector<gpu_vector_type> r;
+	/** tagged periodically reduced particle positions */
+	cuda::host::vector<float4> r;
 	/** periodic box traversal vectors */
 	cuda::host::vector<gpu_vector_type> R;
 	/** particle velocities */
@@ -150,8 +150,8 @@ private:
 
     /** system state in global device memory */
     struct {
-	/** periodically reduced particle positions */
-	cuda::vector<gpu_vector_type> r;
+	/** tagged periodically reduced particle positions */
+	cuda::vector<float4> r;
 	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
@@ -168,14 +168,12 @@ private:
 
     /** system state double buffer in global device memory */
     struct {
-	/** periodically reduced particle positions */
-	cuda::vector<gpu_vector_type> r;
+	/** tagged periodically reduced particle positions */
+	cuda::vector<float4> r;
 	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
 	cuda::vector<gpu_vector_type> v;
-	/** particle tags */
-	cuda::vector<int> tag;
     } g_part_buf;
 };
 
@@ -272,7 +270,6 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::threads(unsigned int value)
 	g_part_buf.r.resize(dim_cell_.threads());
 	g_part_buf.R.resize(dim_cell_.threads());
 	g_part_buf.v.resize(dim_cell_.threads());
-	g_part_buf.tag.resize(dim_cell_.threads());
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory double buffers");
@@ -287,11 +284,11 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(sample_visitor visitor)
     try {
 	// copy periodically reduced particle positions from host to GPU
 	std::copy(m_sample[0].r.begin(), m_sample[0].r.end(), h_part.r.begin());
-	cuda::copy(h_part.r, g_part.R, stream_);
+	cuda::copy(h_part.r, g_part_buf.r, stream_);
 	// assign particles to cells
 	event_[0].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	_gpu::assign_cells(g_part.R, g_part.r, g_part.tag);
+	_gpu::assign_cells(g_part_buf.r, g_part.r, g_part.tag);
 	event_[1].record(stream_);
 	// set periodic box traversal vectors to zero
 	cuda::memset(g_part.R, 0);
@@ -308,7 +305,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(sample_visitor visitor)
 	for (unsigned int i = 0; i < nplace; ++i) {
 	    // particle number
 	    const int tag = h_part.tag[i];
-	    if (tag != _gpu::VIRTUAL_PARTICLE) {
+	    if (tag != gpu::VIRTUAL_PARTICLE) {
 		h_part.v[i] = m_sample[0].v[tag];
 		// calculate maximum squared velocity
 		vv_max = std::max(vv_max, m_sample[0].v[tag] * m_sample[0].v[tag]);
@@ -356,7 +353,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 	// compute particle lattice positions on GPU
 	event_[0].record(stream_);
 	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::lattice::fcc(g_part.r, n, box_);
+	gpu::lattice<dimension>::fcc(g_part.r, n, box_);
 	event_[1].record(stream_);
 	// TODO randomly permute particles to increase force summing accuracy
 	cuda::copy(g_part.r, g_part_buf.r, stream_);
@@ -365,6 +362,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	_gpu::assign_cells(g_part_buf.r, g_part.r, g_part.tag);
 	event_[3].record(stream_);
+	cuda::copy(g_part.tag, h_part.tag, stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
 	// set periodic box traversal vectors to zero
@@ -406,7 +404,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
     float vv_max = 0;
     for (unsigned int i = 0; i < nplace; ++i) {
 	const int tag = h_part.tag[i];
-	if (tag == _gpu::VIRTUAL_PARTICLE)
+	if (tag == gpu::VIRTUAL_PARTICLE)
 	    continue;
 	h_part.v[i] = h_v[tag];
 	vv_max = std::max(vv_max, (vector_type) h_v[tag] * h_v[tag]);
@@ -486,8 +484,6 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::mdstep()
     m_times["update_forces"] += event_[0] - event_[4];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
 	// CUDA time for cell lists update
 	m_times["update_cells"] += event_[3] - event_[2];
 	// CUDA time for cell lists memcpy
@@ -512,8 +508,12 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 	cuda::copy(g_part.R, h_part.R, stream_);
 	// copy particle velocities
 	cuda::copy(g_part.v, h_part.v, stream_);
-	// copy particle number tags
-	cuda::copy(g_part.tag, h_part.tag, stream_);
+	if (v_max_sum * timestep_ > r_skin / 2) {
+	    // reset sum over maximum velocity magnitudes to zero
+	    v_max_sum = 0;
+	    // copy particle number tags
+	    cuda::copy(g_part.tag, h_part.tag, stream_);
+	}
 	// copy potential energies per particle and virial equation sums
 	cuda::copy(g_part.en, h_part.en, stream_);
 	// copy virial equation sums per particle
@@ -536,7 +536,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 	// particle number
 	const int n = h_part.tag[i];
 	// check if real particle
-	if (n != _gpu::VIRTUAL_PARTICLE) {
+	if (n != gpu::VIRTUAL_PARTICLE) {
 	    // copy periodically extended particle positions
 	    m_sample[0].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
 	    // copy particle velocities
@@ -576,25 +576,14 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-    if (r_smooth > 0 && thermostat_nu > 0) {
-	_gpu::mdstep_smooth_nvt(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
-    }
-    else if (r_smooth > 0) {
-	_gpu::mdstep_smooth(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
-    }
-    else if (thermostat_nu > 0) {
-	_gpu::mdstep_nvt(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
-    }
-    else {
-	_gpu::mdstep(g_part.r, g_part.v, g_part.f, g_part.tag, g_part.en, g_part.virial);
-    }
+    _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::update_cells(cuda::stream& stream)
 {
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
-    _gpu::update_cells(g_part.r, g_part.R, g_part.v, g_part.tag, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part_buf.tag);
+    _gpu::update_cells(g_part.r, g_part.R, g_part.v, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part.tag);
 }
 
 template <int dimension>
@@ -603,7 +592,6 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy_cells(cuda::stream& stream
     cuda::copy(g_part_buf.r, g_part.r, stream);
     cuda::copy(g_part_buf.R, g_part.R, stream);
     cuda::copy(g_part_buf.v, g_part.v, stream);
-    cuda::copy(g_part_buf.tag, g_part.tag, stream);
 }
 
 template <int dimension>

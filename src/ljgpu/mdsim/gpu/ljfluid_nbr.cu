@@ -19,16 +19,13 @@
 #include <float.h>
 #include <ljgpu/mdsim/gpu/base.cuh>
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
+using namespace ljgpu::gpu;
 
 namespace ljgpu { namespace cu { namespace ljfluid
 {
 
-enum {
-    /** fixed number of placeholders per cell */
-    CELL_SIZE = gpu::ljfluid_base<ljfluid_impl_gpu_neighbour>::CELL_SIZE,
-    /** virtual particle tag */
-    VIRTUAL_PARTICLE = gpu::ljfluid_base<ljfluid_impl_gpu_neighbour>::VIRTUAL_PARTICLE,
-};
+/** fixed number of placeholders per cell */
+enum { CELL_SIZE = ljfluid_base<ljfluid_impl_gpu_neighbour>::CELL_SIZE };
 
 /** number of cells per dimension */
 __constant__ uint ncell;
@@ -38,20 +35,15 @@ __constant__ uint nbl_size;
 __constant__ uint nbl_stride;
 /** squared potential cutoff distance with neighbour list skin */
 __constant__ float rr_nbl;
+/** neighbour lists in global device memory */
+__constant__ int* g_nbl;
 
 /** n-dimensional particle texture references */
-template <typename T = void>
+template <int dimension>
 struct tex;
 
 template <>
-struct tex<void>
-{
-    /** texture reference to particle tags */
-    static texture<int, 1, cudaReadModeElementType> tag;
-};
-
-template <>
-struct tex<float4>
+struct tex<3>
 {
     /** periodic particle positions */
     static texture<float4, 1, cudaReadModeElementType> r;
@@ -62,10 +54,10 @@ struct tex<float4>
 };
 
 template <>
-struct tex<float2>
+struct tex<2>
 {
     /** periodic particle positions */
-    static texture<float2, 1, cudaReadModeElementType> r;
+    static texture<float4, 1, cudaReadModeElementType> r;
     /** extended particle positions */
     static texture<float2, 1, cudaReadModeElementType> R;
     /** particle velocities */
@@ -73,51 +65,67 @@ struct tex<float2>
 };
 
 // instantiate texture references
-texture<int, 1, cudaReadModeElementType> tex<>::tag;
-texture<float4, 1, cudaReadModeElementType> tex<float4>::r;
-texture<float4, 1, cudaReadModeElementType> tex<float4>::R;
-texture<float4, 1, cudaReadModeElementType> tex<float4>::v;
-texture<float2, 1, cudaReadModeElementType> tex<float2>::r;
-texture<float2, 1, cudaReadModeElementType> tex<float2>::R;
-texture<float2, 1, cudaReadModeElementType> tex<float2>::v;
+texture<float4, 1, cudaReadModeElementType> tex<3>::r;
+texture<float4, 1, cudaReadModeElementType> tex<2>::r;
+texture<float4, 1, cudaReadModeElementType> tex<3>::R;
+texture<float2, 1, cudaReadModeElementType> tex<2>::R;
+texture<float4, 1, cudaReadModeElementType> tex<3>::v;
+texture<float2, 1, cudaReadModeElementType> tex<2>::v;
 
 /**
  * n-dimensional MD simulation step
  */
-template <typename T, typename TT, ensemble_type ensemble, bool smooth, typename U>
-__global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_en, float* g_virial)
+template <typename vector_type,
+          mixture_type mixture,
+	  potential_type potential,
+	  ensemble_type ensemble,
+	  typename T>
+__global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
 {
+    enum { dimension = vector_type::static_size };
+
     // load particle associated with this thread
-    const T r = unpack(g_r[GTID]);
-    T v = unpack(g_v[GTID]);
+    vector_type r, v;
+    int tag;
+    (r, tag) = g_r[GTID];
+    v = g_v[GTID];
+    // extract particle type from tag
+    uint const a = (tag >> 31);
 
     // potential energy contribution
     float en = 0;
     // virial equation sum contribution
     float virial = 0;
     // force sum
-    TT f = 0;
+    vector<dfloat, dimension> f = 0;
 
     for (uint i = 0; i < nbl_size; ++i) {
 	// coalesced read from neighbour list
-	const int n = g_nbl[i * nbl_stride + GTID];
+	int const n = g_nbl[i * nbl_stride + GTID];
 	// skip placeholder particles
-	if (n == VIRTUAL_PARTICLE)
-	    break;
+	if (n == VIRTUAL_PARTICLE) break;
+
+	vector_type r_;
+	int tag_;
+	(r_, tag_) = tex1Dfetch(tex<dimension>::r, n);
+	// particle type
+	uint const b = (tag_ >> 31);
+
 	// accumulate force between particles
-	compute_force<smooth>(r, unpack(tex1Dfetch(tex<U>::r, n)), f, en, virial);
+	compute_force<mixture, potential>(r, r_, f, en, virial, a + b);
     }
 
     // second leapfrog step as part of integration of equations of motion
-    leapfrog_full_step(v, f.f0);
+    leapfrog_full_step(v, static_cast<vector_type>(f));
+
     // random collisions with heat bath
     if (ensemble == NVT) {
 	anderson_thermostat(v);
     }
 
     // store particle associated with this thread
-    g_v[GTID] = pack(v);
-    g_f[GTID] = pack(f.f0);
+    g_v[GTID] = v;
+    g_f[GTID] = static_cast<vector_type>(f);
     g_en[GTID] = en;
     g_virial[GTID] = virial;
 }
@@ -125,12 +133,15 @@ __global__ void mdstep(U const* g_r, U* g_v, U* g_f, int const* g_nbl, float* g_
 /**
  * initialise particle tags
  */
-__global__ void init_tags(int* g_tag)
+template <typename vector_type>
+__global__ void init_tags(float4* g_r, int* g_tag)
 {
+    vector_type const r = g_r[GTID];
     int tag = VIRTUAL_PARTICLE;
     if (GTID < npart) {
 	tag = GTID;
     }
+    g_r[GTID] = (r, tag);
     g_tag[GTID] = tag;
 }
 
@@ -139,66 +150,71 @@ __global__ void init_tags(int* g_tag)
  */
 __device__ uint compute_neighbour_cell(int3 const &offset)
 {
-    int3 i = make_int3(blockIdx.x % ncell,
-		       (blockIdx.x / ncell) % ncell,
-		       blockIdx.x / ncell / ncell);
-    i = make_int3((i.x + ncell + offset.x) % ncell,
-		  (i.y + ncell + offset.y) % ncell,
-		  (i.z + ncell + offset.z) % ncell);
-    return (i.z * ncell + i.y) * ncell + i.x;
+    // cell belonging to this execution block
+    int x = blockIdx.x % ncell;
+    int y = (blockIdx.x / ncell) % ncell;
+    int z = blockIdx.x / ncell / ncell;
+    // neighbour cell of this cell
+    x = (x + ncell + offset.x) % ncell;
+    y = (y + ncell + offset.y) % ncell;
+    z = (z + ncell + offset.z) % ncell;
+
+    return (z * ncell + y) * ncell + x;
 }
 
 __device__ uint compute_neighbour_cell(int2 const& offset)
 {
-    int2 i = make_int2(blockIdx.x % ncell,
-		       blockIdx.x / ncell);
-    i = make_int2((i.x + ncell + offset.x) % ncell,
-		  (i.y + ncell + offset.y) % ncell);
-    return i.y * ncell + i.x;
+    // cell belonging to this execution block
+    int x = blockIdx.x % ncell;
+    int y = blockIdx.x / ncell;
+    // neighbour cell of this cell
+    x = (x + ncell + offset.x) % ncell;
+    y = (y + ncell + offset.y) % ncell;
+
+    return y * ncell + x;
 }
 
 /**
  * update neighbour list with particles of given cell
  */
-template <typename U, bool same_cell, typename T, typename I>
-__device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* g_nbl, T const& r, int const& n, uint& count)
+template <bool same_cell, typename T, typename I>
+__device__ void update_cell_neighbours(I const& offset, int const* g_cell, T const& r, int const& n, uint& count)
 {
     __shared__ int s_n[CELL_SIZE];
     __shared__ T s_r[CELL_SIZE];
+    enum { dimension = T::static_size };
 
     // compute cell index
-    const uint cell = compute_neighbour_cell(offset);
-
+    uint const cell = compute_neighbour_cell(offset);
     // load particles in cell
-    s_n[threadIdx.x] = g_cell[cell * CELL_SIZE + threadIdx.x];
-    s_r[threadIdx.x] = unpack(tex1Dfetch(tex<U>::r, s_n[threadIdx.x]));
+    int const n_ = g_cell[cell * CELL_SIZE + threadIdx.x];
+    s_n[threadIdx.x] = n_;
+    s_r[threadIdx.x] = tex1Dfetch(tex<dimension>::r, n_);
     __syncthreads();
 
-    if (n != VIRTUAL_PARTICLE) {
-	for (uint i = 0; i < CELL_SIZE; ++i) {
-	    // particle number of cell placeholder
-	    const int m = s_n[i];
-	    // skip placeholder particles
-	    if (m == VIRTUAL_PARTICLE)
-		break;
-	    // skip same particle
-	    if (same_cell && i == threadIdx.x)
-		continue;
+    if (n == VIRTUAL_PARTICLE) return;
 
-	    // particle distance vector
-	    T dr = r - s_r[i];
-	    // enforce periodic boundary conditions
-	    dr -= rintf(__fdividef(dr, box)) * box;
-	    // squared particle distance
-	    const float rr = dr * dr;
+    for (uint i = 0; i < CELL_SIZE; ++i) {
+	// particle number of cell placeholder
+	int const m = s_n[i];
+	// skip placeholder particles
+	if (m == VIRTUAL_PARTICLE) break;
+	// skip same particle
+	if (same_cell && i == threadIdx.x) continue;
 
-	    // enforce cutoff length with neighbour list skin
-	    if (rr <= rr_nbl && count < nbl_size) {
-		// scattered write to neighbour list
-		g_nbl[count * nbl_stride + n] = m;
-		// increment neighbour list particle count
-		count++;
-	    }
+	// particle distance vector
+	T dr = r - s_r[i];
+	// enforce periodic boundary conditions
+	dr -= rintf(__fdividef(dr, box)) * box;
+	// squared particle distance
+	float rr = dr * dr;
+
+	// enforce cutoff length with neighbour list skin
+	if (rr <= rr_nbl && count < nbl_size) {
+	    // scattered write to neighbour list
+	    g_nbl[count * nbl_stride + n] = m;
+	    // increment neighbour list particle count
+	    count++;
 	}
     }
 }
@@ -206,11 +222,12 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, int* 
 /**
  * update neighbour lists
  */
-__global__ void update_neighbours(int const* g_cell, int* g_nbl, float4* __empty__)
+template <uint dimension>
+__global__ void update_neighbours(int const* g_cell)
 {
     // load particle from cell placeholder
-    const int n = g_cell[GTID];
-    const float3 r = unpack(tex1Dfetch(tex<float4>::r, n));
+    int const n = g_cell[GTID];
+    vector<float, dimension> const r = tex1Dfetch(tex<dimension>::r, n);
     // number of particles in neighbour list
     uint count = 0;
 
@@ -248,64 +265,57 @@ __global__ void update_neighbours(int const* g_cell, int* g_nbl, float4* __empty
     // opposite neighbour cell softens the velocity drift.
     //
 
-    // visit this cell
-    update_cell_neighbours<float4, true>(make_int3( 0,  0,  0), g_cell, g_nbl, r, n, count);
-    // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-    update_cell_neighbours<float4, false>(make_int3(-1, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(-1, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(-1, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(-1, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(-1, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(-1, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(-1,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1,  0, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(-1,  0, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3( 0, -1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3( 0, +1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3( 0, -1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3( 0, +1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(-1,  0,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3(+1,  0,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3( 0, -1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3( 0, +1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3( 0,  0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float4, false>(make_int3( 0,  0, +1), g_cell, g_nbl, r, n, count);
-}
-
-__global__ void update_neighbours(int const* g_cell, int* g_nbl, float2* __empty__)
-{
-    // load particle from cell placeholder
-    const int n = g_cell[GTID];
-    const float2 r = unpack(tex1Dfetch(tex<float2>::r, n));
-    // number of particles in neighbour list
-    uint count = 0;
-
-    // visit this cell
-    update_cell_neighbours<float2, true>(make_int2( 0,  0), g_cell, g_nbl, r, n, count);
-    // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-    update_cell_neighbours<float2, false>(make_int2(-1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float2, false>(make_int2(+1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float2, false>(make_int2(-1, +1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float2, false>(make_int2(+1, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float2, false>(make_int2(-1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float2, false>(make_int2(+1,  0), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float2, false>(make_int2( 0, -1), g_cell, g_nbl, r, n, count);
-    update_cell_neighbours<float2, false>(make_int2( 0, +1), g_cell, g_nbl, r, n, count);
+    if (dimension == 3) {
+	// visit this cell
+	update_cell_neighbours<true>(make_int3( 0,  0,  0), g_cell, r, n, count);
+	// visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
+	update_cell_neighbours<false>(make_int3(-1, -1, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1, +1, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(-1, -1, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1, +1, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(-1, +1, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1, -1, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1, -1, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(-1, +1, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(-1, -1,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1, +1,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(-1, +1,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1, -1,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(-1,  0, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1,  0, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(-1,  0, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1,  0, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3( 0, -1, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3( 0, +1, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3( 0, -1, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3( 0, +1, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(-1,  0,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3(+1,  0,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3( 0, -1,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3( 0, +1,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3( 0,  0, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int3( 0,  0, +1), g_cell, r, n, count);
+    }
+    else {
+	// visit this cell
+	update_cell_neighbours<true>(make_int2( 0,  0), g_cell, r, n, count);
+	// visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
+	update_cell_neighbours<false>(make_int2(-1, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int2(+1, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int2(-1, +1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int2(+1, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int2(-1,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int2(+1,  0), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int2( 0, -1), g_cell, r, n, count);
+	update_cell_neighbours<false>(make_int2( 0, +1), g_cell, r, n, count);
+    }
 }
 
 /**
  * compute cell indices for given particle positions
  */
-__global__ void compute_cell(float4 const* g_part, uint* g_cell)
+__device__ uint compute_cell_index(vector<float, 3> r)
 {
-    float3 r = unpack(g_part[GTID]);
     //
     // Mapping the positional coordinates of a particle to its corresponding
     // cell index is the most delicate part of the cell lists update.
@@ -317,14 +327,20 @@ __global__ void compute_cell(float4 const* g_part, uint* g_cell)
     // of cells per dimension afterwards.
     //
     r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
-    g_cell[GTID] = uint(r.x) + ncell * (uint(r.y) + ncell * uint(r.z));
+    return uint(r.x) + ncell * (uint(r.y) + ncell * uint(r.z));
 }
 
-__global__ void compute_cell(float2 const* g_part, uint* g_cell)
+__device__ uint compute_cell_index(vector<float, 2> r)
 {
-    float2 r = unpack(g_part[GTID]);
     r = (__saturatef(r / box) * (1.f - FLT_EPSILON)) * ncell;
-    g_cell[GTID] = uint(r.x) + ncell * uint(r.y);
+    return uint(r.x) + ncell * uint(r.y);
+}
+
+template <uint dimension>
+__global__ void compute_cell(float4 const* g_part, uint* g_cell)
+{
+    vector<float, dimension> const r = g_part[GTID];
+    g_cell[GTID] = compute_cell_index(r);
 }
 
 /**
@@ -377,17 +393,19 @@ __global__ void gen_index(int* g_idx)
 /**
  * order particles after given permutation
  */
-template <typename U>
-__global__ void order_particles(const int* g_idx, U* g_or, U* g_oR, U* g_ov, int* g_otag)
+template <int dimension, typename T>
+__global__ void order_particles(const int* g_idx, float4* g_or, T* g_oR, T* g_ov, int* g_tag)
 {
     // permutation index
-    const uint j = g_idx[GTID];
+    uint const j = g_idx[GTID];
     // permute particle phase space coordinates
-    g_or[GTID] = tex1Dfetch(tex<U>::r, j);
-    g_oR[GTID] = tex1Dfetch(tex<U>::R, j);
-    g_ov[GTID] = tex1Dfetch(tex<U>::v, j);
-    // permute particle tracking number
-    g_otag[GTID] = tex1Dfetch(tex<>::tag, j);
+    vector<float, dimension> r;
+    int tag;
+    (r, tag) = tex1Dfetch(tex<dimension>::r, j);
+    g_or[GTID] = (r, tag);
+    g_oR[GTID] = tex1Dfetch(tex<dimension>::R, j);
+    g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
+    g_tag[GTID] = tag;
 }
 
 }}} // namespace ljgpu::gpu::ljfluid
@@ -406,23 +424,21 @@ cuda::symbol<uint> _Base::ncell(cu::ljfluid::ncell);
 cuda::symbol<uint> _Base::nbl_size(cu::ljfluid::nbl_size);
 cuda::symbol<uint> _Base::nbl_stride(cu::ljfluid::nbl_stride);
 cuda::symbol<float> _Base::rr_nbl(cu::ljfluid::rr_nbl);
+cuda::symbol<int*> _Base::g_nbl(cu::ljfluid::g_nbl);
 
 /**
  * device texture wrappers
  */
-cuda::texture<int> _Base::tag(cu::ljfluid::tex<>::tag);
-cuda::texture<float4> _3D::r(cu::ljfluid::tex<float4>::r);
-cuda::texture<float4> _3D::R(cu::ljfluid::tex<float4>::R);
-cuda::texture<float4> _3D::v(cu::ljfluid::tex<float4>::v);
-cuda::texture<float2> _2D::r(cu::ljfluid::tex<float2>::r);
-cuda::texture<float2> _2D::R(cu::ljfluid::tex<float2>::R);
-cuda::texture<float2> _2D::v(cu::ljfluid::tex<float2>::v);
+cuda::texture<float4> _3D::r(cu::ljfluid::tex<3>::r);
+cuda::texture<float4> _2D::r(cu::ljfluid::tex<2>::r);
+cuda::texture<float4> _3D::R(cu::ljfluid::tex<3>::R);
+cuda::texture<float2> _2D::R(cu::ljfluid::tex<2>::R);
+cuda::texture<float4> _3D::v(cu::ljfluid::tex<3>::v);
+cuda::texture<float2> _2D::v(cu::ljfluid::tex<2>::v);
 
 /**
  * device function wrappers
  */
-cuda::function<void (int*)>
-    _Base::init_tags(cu::ljfluid::init_tags);
 cuda::function<void (uint const*, int const*, int const*, int*)>
     _Base::assign_cells(cu::ljfluid::assign_cells);
 cuda::function<void (uint*, int*)>
@@ -430,36 +446,58 @@ cuda::function<void (uint*, int*)>
 cuda::function<void (int*)>
     _Base::gen_index(cu::ljfluid::gen_index);
 
-cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE, false>);
-cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, false>);
-cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep_smooth(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVE, true>);
-cuda::function<void (float4 const*, float4*, float4*, int const*, float*, float*)>
-    _3D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float3, dfloat3, cu::ljfluid::NVT, true>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<UNARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C0POT, NVE>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<UNARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C0POT, NVT>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<UNARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C2POT, NVE>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<UNARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C2POT, NVT>);
 
-cuda::function<void (int const*, int*, float4*)>
-    _3D::update_neighbours(cu::ljfluid::update_neighbours);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<BINARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C0POT, NVE>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<BINARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C0POT, NVT>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<BINARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVE>);
+cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
+    _3D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVT>);
+
+cuda::function<void (float4*, int*)>
+    _3D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 3> >);
+cuda::function<void (int const*)>
+    _3D::update_neighbours(cu::ljfluid::update_neighbours<3>);
 cuda::function<void (float4 const*, uint*)>
-    _3D::compute_cell(cu::ljfluid::compute_cell);
+    _3D::compute_cell(cu::ljfluid::compute_cell<3>);
 cuda::function<void (const int*, float4*, float4*, float4*, int*)>
-    _3D::order_particles(cu::ljfluid::order_particles);
+    _3D::order_particles(cu::ljfluid::order_particles<3>);
 
-cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE, false>);
-cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, false>);
-cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep_smooth(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVE, true>);
-cuda::function<void (float2 const*, float2*, float2*, int const*, float*, float*)>
-    _2D::mdstep_smooth_nvt(cu::ljfluid::mdstep<float2, dfloat2, cu::ljfluid::NVT, true>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<UNARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT, NVE>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<UNARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT, NVT>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<UNARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C2POT, NVE>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<UNARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C2POT, NVT>);
 
-cuda::function<void (int const*, int*, float2*)>
-    _2D::update_neighbours(cu::ljfluid::update_neighbours);
-cuda::function<void (float2 const*, uint*)>
-    _2D::compute_cell(cu::ljfluid::compute_cell);
-cuda::function<void (const int*, float2*, float2*, float2*, int*)>
-    _2D::order_particles(cu::ljfluid::order_particles);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<BINARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C0POT, NVE>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<BINARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C0POT, NVT>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<BINARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVE>);
+cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
+    _2D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVT>);
+
+cuda::function<void (float4*, int*)>
+    _2D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 2> >);
+cuda::function<void (int const*)>
+    _2D::update_neighbours(cu::ljfluid::update_neighbours<2>);
+cuda::function<void (float4 const*, uint*)>
+    _2D::compute_cell(cu::ljfluid::compute_cell<2>);
+cuda::function<void (const int*, float4*, float2*, float2*, int*)>
+    _2D::order_particles(cu::ljfluid::order_particles<2>);
 
 }} // namespace ljgpu::gpu

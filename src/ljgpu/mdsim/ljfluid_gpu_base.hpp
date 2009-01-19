@@ -19,6 +19,7 @@
 #ifndef LJGPU_MDSIM_LJFLUID_GPU_BASE_HPP
 #define LJGPU_MDSIM_LJFLUID_GPU_BASE_HPP
 
+#include <boost/assign/list_of.hpp>
 #include <cuda_wrapper.hpp>
 #include <ljgpu/algorithm/reduce.hpp>
 #include <ljgpu/math/gpu/dsfun.cuh>
@@ -92,6 +93,12 @@ protected:
     void boltzmann(cuda::vector<gpu_vector_type>& g_v,
 		   cuda::host::vector<gpu_vector_type>& h_v,
 		   float temp);
+    /** update Lennard-Jones forces */
+    void update_forces(cuda::vector<float4>& r,
+		       cuda::vector<gpu_vector_type>& v,
+		       cuda::vector<gpu_vector_type>& f,
+		       cuda::vector<float>& en,
+		       cuda::vector<float>& virial);
 
 protected:
     /** CUDA execution dimensions */
@@ -117,6 +124,10 @@ protected:
 
     using _Base::m_sample;
     using _Base::m_times;
+
+    using _Base::mixture_;
+    using _Base::potential_;
+    using _Base::ensemble_;
 
 private:
     /** center of mass velocity */
@@ -159,7 +170,7 @@ void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
 	cuda::copy(en_cut, _gpu::en_cut);
     }
     catch (cuda::error const&) {
-	throw exception("failed to copy potential cutoff symbols");
+	throw exception("failed to copy potential symbols");
     }
 }
 
@@ -365,7 +376,7 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
     m_times["reduce_squared_velocity"] += event_[1] - event_[0];
 
     // rescale velocities to accurate temperature
-    float const vv = reduce_squared_velocity.value() / npart;
+    float const vv = (float) reduce_squared_velocity.value() / npart;
     float const s = std::sqrt(temp * dimension / vv);
     BOOST_FOREACH (gpu_vector_type& v, h_v) {
 	v = (vector_type) v * s;
@@ -378,6 +389,38 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
     catch (cuda::error const& e) {
 	throw exception("failed to copy rescaled velocities to GPU");
     }
+}
+
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::update_forces(cuda::vector<float4>& r,
+						  cuda::vector<gpu_vector_type>& v,
+						  cuda::vector<gpu_vector_type>& f,
+						  cuda::vector<float>& en,
+						  cuda::vector<float>& virial)
+{
+    // (CUDA kernel execution is configured in derived class)
+    if (mixture_ == BINARY)
+	if (potential_ == C2POT)
+	    if (ensemble_ == NVT)
+		_gpu::template variant<BINARY, C2POT, NVT>::mdstep(r, v, f, en, virial);
+	    else
+		_gpu::template variant<BINARY, C2POT, NVE>::mdstep(r, v, f, en, virial);
+	else
+	    if (ensemble_ == NVT)
+		_gpu::template variant<BINARY, C0POT, NVT>::mdstep(r, v, f, en, virial);
+	    else
+		_gpu::template variant<BINARY, C0POT, NVE>::mdstep(r, v, f, en, virial);
+    else
+	if (potential_ == C2POT)
+	    if (ensemble_ == NVT)
+		_gpu::template variant<UNARY, C2POT, NVT>::mdstep(r, v, f, en, virial);
+	    else
+		_gpu::template variant<UNARY, C2POT, NVE>::mdstep(r, v, f, en, virial);
+	else
+	    if (ensemble_ == NVT)
+		_gpu::template variant<UNARY, C0POT, NVT>::mdstep(r, v, f, en, virial);
+	    else
+		_gpu::template variant<UNARY, C0POT, NVE>::mdstep(r, v, f, en, virial);
 }
 
 template <typename ljfluid_impl>

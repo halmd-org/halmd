@@ -20,77 +20,59 @@
 #define LJGPU_MATH_GPU_VECTOR2D_CUH
 
 #include <cuda/cuda_runtime.h>
+#include <ljgpu/math/gpu/dsfun.cuh>
 
-// overloaded CUDA math functions must be defined in global namespace
-
-/**
- * convert non-coalesced vector type to coalesced vector type
- */
-__device__ __inline__ float2 pack(float2 const& v)
+namespace ljgpu { namespace cu
 {
-    return v;
-}
 
-/**
- * convert coalesced vector type to non-coalesced vector type
- */
-__device__ __inline__ float2 unpack(float2 const& v)
+template <typename T, unsigned int dimension>
+struct vector;
+
+template <>
+struct vector<float, 2>
 {
-    return v;
-}
+    enum { static_size = 2 };
+
+    float x, y;
+
+    __device__ inline vector() {}
+
+    __device__ inline vector(float s) : x(s), y(s) {}
+
+    __device__ inline vector(float x, float y) : x(x), y(y) {}
+
+    __device__ inline vector(float2 const& v) : x(v.x), y(v.y) {}
+
+    __device__ inline vector(float3 const& v) : x(v.x), y(v.y) {}
+
+    __device__ inline vector(float4 const& v) : x(v.x), y(v.y) {}
+
+    __device__ inline operator float2() const
+    {
+	return make_float2(x, y);
+    }
+
+    __device__ inline operator float3() const
+    {
+	return make_float3(x, y, 0);
+    }
+
+    __device__ inline operator float4() const
+    {
+	return make_float4(x, y, 0, 0);
+    }
+
+    template <typename T>
+    __device__ inline operator vector<T, 2>() const
+    {
+	return vector<T, 2>(x, y);
+    }
+};
 
 /**
- * equality comparison
+ * assignment by componentwise vector<float, 2> addition
  */
-__device__ bool operator==(float2 const& v, float2 const& w)
-{
-    return (v.x == w.x && v.y == w.y);
-}
-
-/**
- * inequality comparison
- */
-__device__ bool operator!=(float2 const& v, float2 const& w)
-{
-    return (v.x != w.x || v.y != w.y);
-}
-
-/**
- * componentwise less than comparison
- */
-__device__ bool operator<(float2 const& v, float2 const& w)
-{
-    return (v.x < w.x && v.y < w.y);
-}
-
-/**
- * componentwise greater than comparison
- */
-__device__ bool operator>(float2 const& v, float2 const& w)
-{
-    return (v.x > w.x && v.y > w.y);
-}
-
-/**
- * componentwise less than or equal to comparison
- */
-__device__ bool operator<=(float2 const& v, float2 const& w)
-{
-    return (v.x <= w.x && v.y <= w.y);
-}
-
-/**
- * componentwise greater than or equal to comparison
- */
-__device__ bool operator>=(float2 const& v, float2 const& w)
-{
-    return (v.x >= w.x && v.y >= w.y);
-}
-
-/**
- * assignment by componentwise vector addition
- */
-__device__ float2& operator+=(float2& v, float2 const& w)
+__device__ inline vector<float, 2>& operator+=(vector<float, 2>& v, vector<float, 2> const& w)
 {
     v.x += w.x;
     v.y += w.y;
@@ -98,9 +80,9 @@ __device__ float2& operator+=(float2& v, float2 const& w)
 }
 
 /**
- * assignment by componentwise vector subtraction
+ * assignment by componentwise vector<float, 2> subtraction
  */
-__device__ float2& operator-=(float2& v, float2 const& w)
+__device__ inline vector<float, 2>& operator-=(vector<float, 2>& v, vector<float, 2> const& w)
 {
     v.x -= w.x;
     v.y -= w.y;
@@ -110,7 +92,7 @@ __device__ float2& operator-=(float2& v, float2 const& w)
 /**
  * assignment by scalar multiplication
  */
-__device__ float2& operator*=(float2& v, float const& s)
+__device__ inline vector<float, 2>& operator*=(vector<float, 2>& v, float s)
 {
     v.x *= s;
     v.y *= s;
@@ -120,7 +102,7 @@ __device__ float2& operator*=(float2& v, float const& s)
 /**
  * assignment by scalar division
  */
-__device__ float2& operator/=(float2& v, float const& s)
+__device__ inline vector<float, 2>& operator/=(vector<float, 2>& v, float s)
 {
     v.x /= s;
     v.y /= s;
@@ -128,29 +110,27 @@ __device__ float2& operator/=(float2& v, float const& s)
 }
 
 /**
- * componentwise vector addition
+ * componentwise vector<float, 2> addition
  */
-__device__ float2 operator+(float2 v, float2 const& w)
+__device__ inline vector<float, 2> operator+(vector<float, 2> v, vector<float, 2> const& w)
 {
-    v.x += w.x;
-    v.y += w.y;
+    v += w;
     return v;
 }
 
 /**
- * componentwise vector subtraction
+ * componentwise vector<float, 2> subtraction
  */
-__device__ float2 operator-(float2 v, float2 const& w)
+__device__ inline vector<float, 2> operator-(vector<float, 2> v, vector<float, 2> const& w)
 {
-    v.x -= w.x;
-    v.y -= w.y;
+    v -= w;
     return v;
 }
 
 /**
  * componentwise change of sign
  */
-__device__ float2 operator-(float2 v)
+__device__ inline vector<float, 2> operator-(vector<float, 2> v)
 {
     v.x = -v.x;
     v.y = -v.y;
@@ -160,7 +140,7 @@ __device__ float2 operator-(float2 v)
 /**
  * scalar product
  */
-__device__ float operator*(float2 const& v, float2 const& w)
+float __device__ inline operator*(vector<float, 2> const& v, vector<float, 2> const& w)
 {
     return v.x * w.x + v.y * w.y;
 }
@@ -168,7 +148,7 @@ __device__ float operator*(float2 const& v, float2 const& w)
 /**
  * scalar multiplication
  */
-__device__ float2 operator*(float2 v, float const& s)
+__device__ inline vector<float, 2> operator*(vector<float, 2> v, float s)
 {
     v.x *= s;
     v.y *= s;
@@ -178,7 +158,7 @@ __device__ float2 operator*(float2 v, float const& s)
 /**
  * scalar multiplication
  */
-__device__ float2 operator*(float const& s, float2 v)
+__device__ inline vector<float, 2> operator*(float s, vector<float, 2> v)
 {
     v.x *= s;
     v.y *= s;
@@ -188,50 +168,68 @@ __device__ float2 operator*(float const& s, float2 v)
 /**
  * scalar division
  */
-__device__ float2 operator/(float2 v, float const& s)
+__device__ inline vector<float, 2> operator/(vector<float, 2> v, float s)
 {
     v.x /= s;
     v.y /= s;
     return v;
 }
 
+// import predefined CUDA math functions into namespace
+using ::ceilf;
+using ::cosf;
+using ::floorf;
+using ::fmodf;
+using ::remainderf;
+using ::rintf;
+using ::roundf;
+using ::sinf;
+using ::sqrtf;
+using ::__fdividef;
+using ::__float2int_rd;
+using ::__float2int_rn;
+using ::__float2int_ru;
+using ::__float2int_rz;
+using ::__float2uint_rd;
+using ::__float2uint_rn;
+using ::__float2uint_ru;
+using ::__float2uint_rz;
+using ::__saturatef;
+
 /**
  * componentwise round to nearest integer
  */
-__device__ float2 rintf(float2 v)
+__device__ inline vector<float, 2> rintf(vector<float, 2> v)
 {
     v.x = rintf(v.x);
     v.y = rintf(v.y);
     return v;
 }
 
-
 /**
  * componentwise round to nearest integer, away from zero
  */
-__device__ float2 roundf(float2 v)
+__device__ inline vector<float, 2> roundf(vector<float, 2> v)
 {
     v.x = roundf(v.x);
     v.y = roundf(v.y);
     return v;
 }
 
-
 /**
  * componentwise round to nearest integer not greater than argument
  */
-__device__ float2 floorf(float2 v)
+__device__ inline vector<float, 2> floorf(vector<float, 2> v)
 {
     v.x = floorf(v.x);
     v.y = floorf(v.y);
     return v;
 }
 
-
 /**
  * componentwise round to nearest integer not less argument
  */
-__device__ float2 ceilf(float2 v)
+__device__ inline vector<float, 2> ceilf(vector<float, 2> v)
 {
     v.x = ceilf(v.x);
     v.y = ceilf(v.y);
@@ -241,7 +239,7 @@ __device__ float2 ceilf(float2 v)
 /**
  * componentwise square root function
  */
-__device__ float2 sqrtf(float2 v)
+__device__ inline vector<float, 2> sqrtf(vector<float, 2> v)
 {
     v.x = sqrtf(v.x);
     v.y = sqrtf(v.y);
@@ -251,7 +249,7 @@ __device__ float2 sqrtf(float2 v)
 /**
  * componentwise cosine function
  */
-__device__ float2 cosf(float2 v)
+__device__ inline vector<float, 2> cosf(vector<float, 2> v)
 {
     v.x = cosf(v.x);
     v.y = cosf(v.y);
@@ -261,7 +259,7 @@ __device__ float2 cosf(float2 v)
 /**
  * componentwise sine function
  */
-__device__ float2 sinf(float2 v)
+__device__ inline vector<float, 2> sinf(vector<float, 2> v)
 {
     v.x = sinf(v.x);
     v.y = sinf(v.y);
@@ -271,7 +269,7 @@ __device__ float2 sinf(float2 v)
 /**
  * convert floating-point components to integers, rounding to nearest even integer
  */
-__device__ int2 __float2int_rn(float2 const& v)
+__device__ inline int2 __float2int_rn(vector<float, 2> const& v)
 {
     int2 w;
     w.x = __float2int_rn(v.x);
@@ -282,7 +280,7 @@ __device__ int2 __float2int_rn(float2 const& v)
 /**
  * convert floating-point components to integers, rounding towards zero
  */
-__device__ int2 __float2int_rz(float2 const& v)
+__device__ inline int2 __float2int_rz(vector<float, 2> const& v)
 {
     int2 w;
     w.x = __float2int_rz(v.x);
@@ -293,7 +291,7 @@ __device__ int2 __float2int_rz(float2 const& v)
 /**
  * convert floating-point components to integers, rounding to positive infinity
  */
-__device__ int2 __float2int_ru(float2 const& v)
+__device__ inline int2 __float2int_ru(vector<float, 2> const& v)
 {
     int2 w;
     w.x = __float2int_ru(v.x);
@@ -304,7 +302,7 @@ __device__ int2 __float2int_ru(float2 const& v)
 /**
  * convert floating-point components to integers, rounding to negative infinity
  */
-__device__ int2 __float2int_rd(float2 const& v)
+__device__ inline int2 __float2int_rd(vector<float, 2> const& v)
 {
     int2 w;
     w.x = __float2int_rd(v.x);
@@ -315,7 +313,7 @@ __device__ int2 __float2int_rd(float2 const& v)
 /**
  * convert floating-point components to unsigned integers, rounding to nearest even integer
  */
-__device__ uint2 __float2uint_rn(float2 const& v)
+__device__ inline uint2 __float2uint_rn(vector<float, 2> const& v)
 {
     uint2 w;
     w.x = __float2uint_rn(v.x);
@@ -326,7 +324,7 @@ __device__ uint2 __float2uint_rn(float2 const& v)
 /**
  * convert floating-point components to unsigned integers, rounding towards zero
  */
-__device__ uint2 __float2uint_rz(float2 const& v)
+__device__ inline uint2 __float2uint_rz(vector<float, 2> const& v)
 {
     uint2 w;
     w.x = __float2uint_rz(v.x);
@@ -337,7 +335,7 @@ __device__ uint2 __float2uint_rz(float2 const& v)
 /**
  * convert floating-point components to unsigned integers, rounding to positive infinity
  */
-__device__ uint2 __float2uint_ru(float2 const& v)
+__device__ inline uint2 __float2uint_ru(vector<float, 2> const& v)
 {
     uint2 w;
     w.x = __float2uint_ru(v.x);
@@ -348,7 +346,7 @@ __device__ uint2 __float2uint_ru(float2 const& v)
 /**
  * convert floating-point components to unsigned integers, rounding to negative infinity
  */
-__device__ uint2 __float2uint_rd(float2 const& v)
+__device__ inline uint2 __float2uint_rd(vector<float, 2> const& v)
 {
     uint2 w;
     w.x = __float2uint_rd(v.x);
@@ -359,7 +357,7 @@ __device__ uint2 __float2uint_rd(float2 const& v)
 /**
  * limit floating-point components to unit interval [0, 1]
  */
-__device__ float2 __saturatef(float2 v)
+__device__ inline vector<float, 2> __saturatef(vector<float, 2> v)
 {
     v.x = __saturatef(v.x);
     v.y = __saturatef(v.y);
@@ -369,7 +367,7 @@ __device__ float2 __saturatef(float2 v)
 /**
  * floating-point remainder function, round towards nearest integer
  */
-__device__ float2 remainderf(float2 v, const float s)
+__device__ inline vector<float, 2> remainderf(vector<float, 2> v, float s)
 {
     v.x = remainderf(v.x, s);
     v.y = remainderf(v.y, s);
@@ -379,7 +377,7 @@ __device__ float2 remainderf(float2 v, const float s)
 /**
  * floating-point remainder function, round towards zero
  */
-__device__ float2 fmodf(float2 v, const float s)
+__device__ inline vector<float, 2> fmodf(vector<float, 2> v, float s)
 {
     v.x = fmodf(v.x, s);
     v.y = fmodf(v.y, s);
@@ -389,11 +387,119 @@ __device__ float2 fmodf(float2 v, const float s)
 /**
  * fast, accurate floating-point division by s < 2^126
  */
-__device__ float2 __fdividef(float2 v, const float s)
+__device__ inline vector<float, 2> __fdividef(vector<float, 2> v, float s)
 {
     v.x = __fdividef(v.x, s);
     v.y = __fdividef(v.y, s);
     return v;
 }
+
+
+template <>
+struct vector<dfloat, 2>
+{
+    typedef vector<dfloat, 2> _vector;
+    enum { static_size = 3 };
+
+    dfloat x, y;
+
+    __device__ inline vector() {}
+
+    __device__ inline vector(float const& s) : x(s), y(s) {}
+
+    __device__ inline vector(dfloat const& s) : x(s), y(s) {}
+
+    __device__ inline vector(dfloat x, dfloat y) : x(x), y(y) {}
+
+    __device__ inline vector(float2 const& v) : x(v.x), y(v.y) {}
+
+    __device__ inline vector(float3 const& v) : x(v.x), y(v.y) {}
+
+    __device__ inline vector(float4 const& v) : x(v.x), y(v.y) {}
+
+    template <typename T>
+    __device__ inline operator vector<T, 2>() const
+    {
+	return vector<T, 2>(x, y);
+    }
+};
+
+/**
+ * assignment by componentwise _vector addition
+ */
+__device__ inline vector<dfloat, 2>& operator+=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
+{
+    v.x += w.x;
+    v.y += w.y;
+    return v;
+}
+
+/**
+ * assignment by componentwise vector<dfloat, 2> subtraction
+ */
+__device__ inline vector<dfloat, 2>& operator-=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
+{
+    v.x -= w.x;
+    v.y -= w.y;
+    return v;
+}
+
+/**
+ * assignment by scalar multiplication
+ */
+__device__ inline vector<dfloat, 2>& operator*=(vector<dfloat, 2>& v, dfloat const& s)
+{
+    v.x *= s;
+    v.y *= s;
+    return v;
+}
+
+/**
+ * componentwise vector<dfloat, 2> addition
+ */
+__device__ inline vector<dfloat, 2> operator+(vector<dfloat, 2> v, vector<dfloat, 2> const& w)
+{
+    v += w;
+    return v;
+}
+
+/**
+ * componentwise vector<dfloat, 2> subtraction
+ */
+__device__ inline vector<dfloat, 2> operator-(vector<dfloat, 2> v, vector<dfloat, 2> const& w)
+{
+    v -= w;
+    return v;
+}
+
+/**
+ * scalar product
+ */
+__device__ inline dfloat operator*(vector<dfloat, 2> const& v, vector<dfloat, 2> const& w)
+{
+    return v.x * w.x + v.y * w.y;
+}
+
+/**
+ * scalar multiplication
+ */
+__device__ inline vector<dfloat, 2> operator*(vector<dfloat, 2> v, dfloat const& s)
+{
+    v.x *= s;
+    v.y *= s;
+    return v;
+}
+
+/**
+ * scalar multiplication
+ */
+__device__ inline vector<dfloat, 2> operator*(dfloat const& s, vector<dfloat, 2> v)
+{
+    v.x *= s;
+    v.y *= s;
+    return v;
+}
+
+}} // namespace ljgpu::cu
 
 #endif /* ! LJGPU_MATH_GPU_VECTOR2D_CUH */

@@ -42,10 +42,8 @@ namespace po = boost::program_options;
 #define PROGRAM_NAME basename(argv[0])
 
 #ifdef DIM_3D
-typedef float4 T;
 enum { dimension = 3 };
 #else
-typedef float2 T;
 enum { dimension = 2 };
 #endif
 
@@ -105,14 +103,14 @@ int main(int argc, char **argv)
 	boost::array<cuda::event, 4> start, stop;
 
 	// copy device symbols to GPU
-	cuda::copy(box, gpu::hilbert::box);
-	cuda::copy(depth, gpu::hilbert::depth);
+	cuda::copy(box, gpu::hilbert<dimension>::box);
+	cuda::copy(depth, gpu::hilbert<dimension>::depth);
 
 	// number of grid cells
 	uint count = (1UL << (dimension * depth));
 
-	boost::array<cuda::vector<T>, 3> g_r;
-	boost::array<cuda::host::vector<T>, 3> h_r;
+	boost::array<cuda::vector<float4>, 3> g_r;
+	boost::array<cuda::host::vector<float4>, 3> h_r;
 	boost::array<cuda::vector<uint>, 2> g_sort;
 
 	// compute lattice points on GPU
@@ -121,7 +119,7 @@ int main(int argc, char **argv)
 	g_r[0].reserve(dim.threads());
 	start[0].record(stream);
 	cuda::configure(dim.grid, dim.block, stream);
-	gpu::lattice::sc(g_r[0], (1UL << depth), box);
+	gpu::lattice<dimension>::sc(g_r[0], (1UL << depth), box);
 	stop[0].record(stream);
 	h_r[0].resize(count);
 	cuda::copy(g_r[0], h_r[0]);
@@ -133,7 +131,7 @@ int main(int argc, char **argv)
 	stop[1].record(stream);
 
 	// parallel radix sort
-	radix_sort<T> radix(count, blocks, threads);
+	radix_sort<float4> radix(count, blocks, threads);
 
 	for (uint i = 0; i < g_sort.size(); ++i) {
 	    g_r[i + 1].resize(g_r[0].size());
@@ -151,7 +149,7 @@ int main(int argc, char **argv)
 		g_sort[1].resize(count);
 		g_sort[1].reserve(dim.threads());
 		cuda::configure(dim.grid, dim.block, stream);
-		gpu::hilbert::curve(g_r[i + 1], g_sort[1]);
+		gpu::hilbert<dimension>::curve(g_r[i + 1], g_sort[1]);
 	    }
 	    // radix sort integers and particle positions
 	    radix(g_sort[i], g_r[i + 1], stream);

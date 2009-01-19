@@ -24,6 +24,7 @@
 #include <limits>
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/mdsim/traits.hpp>
+#include <ljgpu/mdsim/variant.hpp>
 #include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/util/exception.hpp>
@@ -47,6 +48,9 @@ public:
     enum { dimension = traits_type::dimension };
 
 public:
+    mdsim_base() :
+	mixture_(UNARY) {}
+
     /** set number of particles */
     void particles(unsigned int value);
     /** set number of A and B particles in binary mixture */
@@ -69,8 +73,7 @@ public:
     /** returns and resets CPU or GPU time accumulators */
     perf::counters times();
 
-    /** returns true iff binary mixture */
-    bool is_binary() const { return (mpart[0] && mpart[1]); }
+    mixture_type mixture() const { return mixture_ ; }
 
 protected:
     /** write parameters to HDF5 parameter group */
@@ -89,6 +92,8 @@ protected:
     sample_type m_sample;
     /** GPU time accumulators */
     perf::counters m_times;
+
+    mixture_type mixture_;
 };
 
 template <typename mdsim_impl>
@@ -99,6 +104,7 @@ void mdsim_base<mdsim_impl>::particles(unsigned int value)
     }
     npart = value;
     mpart = boost::assign::list_of(npart)(0);
+    mixture_ = UNARY;
     LOG("number of particles: " << npart);
 }
 
@@ -110,6 +116,7 @@ void mdsim_base<mdsim_impl>::particles(boost::array<unsigned int, 2> const& valu
     }
     mpart = value;
     npart = std::accumulate(mpart.begin(), mpart.end(), 0);
+    mixture_ = BINARY;
     LOG("binary mixture with " << mpart[0] << " A particles and " << mpart[1] << " B particles");
 }
 
@@ -189,7 +196,7 @@ void mdsim_base<mdsim_impl>::param(H5param& param) const
     H5xx::group node(param["mdsim"]);
     node["box_length"] = box_;
     node["density"] = density_;
-    if (is_binary()) {
+    if (mixture_ == BINARY) {
 	node["particles"] = mpart;
     }
     else {

@@ -91,247 +91,62 @@ __device__ __host__ inline void __dsmul(float &c0, T &c1, const float a0, const 
 }
 
 /**
- * Double-single floating point vector types
+ * double-single floating point value
  */
-__device__ __host__  struct __align__(8) dfloat
+__device__ __host__  struct dfloat
 {
     float f0, f1;
-#ifdef __cplusplus
-    dfloat(float f0, float f1) : f0(f0), f1(f1) {}
-    dfloat(float f0) : f0(f0), f1(0) {}
-    dfloat() {}
-    operator double() const { return (double) f0 + (double) f1; }
-#endif
+
+    __device__ __host__ inline dfloat() {}
+
+    __device__ __host__ inline dfloat(float f0, float f1) : f0(f0), f1(f1) {}
+
+    __device__ __host__ inline dfloat(float f0) : f0(f0), f1(0) {}
+
+    __device__ __host__ inline operator float() const
+    {
+	return f0;
+    }
+
+    __device__ __host__ inline operator double() const
+    {
+	return (double) f0 + (double) f1;
+    }
 };
 
-__device__ __host__ struct __align__(16) dfloat2
-{
-    float2 f0, f1;
-#ifdef __cplusplus
-    dfloat2(float2 const& f0, float2 const& f1) : f0(f0), f1(f1) {}
-    dfloat2(float2 const& f0) : f0(f0), f1(make_float2(0, 0)) {}
-    dfloat2(float f0) : f0(make_float2(f0, f0)), f1(make_float2(0, 0)) {}
-    dfloat2() {}
-#endif
-};
-
-__device__ __host__ struct dfloat3
-{
-    float3 f0, f1;
-#ifdef __cplusplus
-    dfloat3(float3 const& f0, float3 const& f1) : f0(f0), f1(f1) {}
-    dfloat3(float3 const& f0) : f0(f0), f1(make_float3(0, 0, 0)) {}
-    dfloat3(float f0) : f0(make_float3(f0, f0, f0)), f1(make_float3(0, 0, 0)) {}
-    dfloat3() {}
-#endif
-};
-
-__device__ __host__ struct dfloat4
-{
-    float4 f0, f1;
-#ifdef __cplusplus
-    dfloat4(float4 const& f0, float4 const& f1) : f0(f0), f1(f1) {}
-    dfloat4(float4 const& f0) : f0(f0), f1(make_float4(0, 0, 0, 0)) {}
-    dfloat4(float f0) : f0(make_float4(f0, f0, f0, f0)), f1(make_float4(0, 0, 0, 0)) {}
-    dfloat4() {}
-#endif
-};
-
-/**
- * Double-single floating point vector addition
- */
-__device__ __host__ inline dfloat operator+(dfloat v, dfloat const& w)
-{
-    __dsadd(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
-    return v;
-}
-
-__device__ __host__ inline dfloat2 operator+(dfloat2 v, dfloat2 const& w)
-{
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    return v;
-}
-
-__device__ __host__ inline dfloat3 operator+(dfloat3 v, dfloat3 const& w)
-{
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dsadd(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    return v;
-}
-
-__device__ __host__ inline dfloat4 operator+(dfloat4 v, dfloat4 const& w)
-{
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dsadd(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    __dsadd(v.f0.w, v.f1.w, v.f0.w, v.f1.w, w.f0.w, w.f1.w);
-    return v;
-}
-
-/**
- * Double-single floating point vector assignment by addition
- */
 __device__ __host__ inline dfloat& operator+=(dfloat& v, dfloat const& w)
 {
     __dsadd(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ __host__ inline dfloat2& operator+=(dfloat2& v, dfloat2 const& w)
-{
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    return v;
-}
-
-__device__ __host__ inline dfloat3& operator+=(dfloat3& v, dfloat3 const& w)
-{
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dsadd(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    return v;
-}
-
-__device__ __host__ inline dfloat4& operator+=(dfloat4& v, dfloat4 const& w)
-{
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dsadd(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    __dsadd(v.f0.w, v.f1.w, v.f0.w, v.f1.w, w.f0.w, w.f1.w);
-    return v;
-}
-
-/**
- * Double-single floating point vector subtraction
- */
-__device__ __host__ inline dfloat operator-(dfloat v, dfloat const& w)
-{
-    __dssub(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
-    return v;
-}
-
-__device__ __host__ inline dfloat2 operator-(dfloat2 v, dfloat2 const& w)
-{
-    __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    return v;
-}
-
-__device__ __host__ inline dfloat3 operator-(dfloat3 v, dfloat3 const& w)
-{
-    __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dssub(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    return v;
-}
-
-__device__ __host__ inline dfloat4 operator-(dfloat4 v, dfloat4 const& w)
-{
-    __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dssub(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    __dssub(v.f0.w, v.f1.w, v.f0.w, v.f1.w, w.f0.w, w.f1.w);
-    return v;
-}
-
-/**
- * Double-single floating point vector assignment by subtraction
- */
 __device__ __host__ inline dfloat& operator-=(dfloat& v, dfloat const& w)
 {
     __dssub(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ __host__ inline dfloat2& operator-=(dfloat2& v, dfloat2 const& w)
-{
-    __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    return v;
-}
-
-__device__ __host__ inline dfloat3& operator-=(dfloat3& v, dfloat3 const& w)
-{
-    __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dssub(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    return v;
-}
-
-__device__ __host__ inline dfloat4& operator-=(dfloat4& v, dfloat4 const& w)
-{
-    __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dssub(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    __dssub(v.f0.w, v.f1.w, v.f0.w, v.f1.w, w.f0.w, w.f1.w);
-    return v;
-}
-
-/**
- * Double-single floating point vector scalar multiplication
- */
-__device__ __host__ inline dfloat operator*(dfloat v, dfloat const& w)
-{
-    __dsmul(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
-    return v;
-}
-
-__device__ __host__ inline dfloat2 operator*(dfloat2 v, dfloat const& w)
-{
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
-    return v;
-}
-
-__device__ __host__ inline dfloat3 operator*(dfloat3 v, dfloat const& w)
-{
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
-    __dsmul(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0, w.f1);
-    return v;
-}
-
-__device__ __host__ inline dfloat4 operator*(dfloat4 v, dfloat const& w)
-{
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
-    __dsmul(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0, w.f1);
-    __dsmul(v.f0.w, v.f1.w, v.f0.w, v.f1.w, w.f0, w.f1);
-    return v;
-}
-
-/**
- * Double-single floating point vector assignment by scalar multiplication
- */
 __device__ __host__ inline dfloat& operator*=(dfloat& v, dfloat const& w)
 {
     __dsmul(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ __host__ inline dfloat2& operator*=(dfloat2& v, dfloat const& w)
+__device__ __host__ inline dfloat operator+(dfloat v, dfloat const& w)
 {
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
+    v += w;
     return v;
 }
 
-__device__ __host__ inline dfloat3& operator*=(dfloat3& v, dfloat const& w)
+__device__ __host__ inline dfloat operator-(dfloat v, dfloat const& w)
 {
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
-    __dsmul(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0, w.f1);
+    v -= w;
     return v;
 }
 
-__device__ __host__ inline dfloat4& operator*=(dfloat4& v, dfloat const& w)
+__device__ __host__ inline dfloat operator*(dfloat v, dfloat const& w)
 {
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0, w.f1);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0, w.f1);
-    __dsmul(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0, w.f1);
-    __dsmul(v.f0.w, v.f1.w, v.f0.w, v.f1.w, w.f0, w.f1);
+    v *= w;
     return v;
 }
 

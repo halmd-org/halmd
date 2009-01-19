@@ -54,7 +54,7 @@ public:
     }
 
     /**
-     * initialization by coalesced GPU floating-point vector
+     * initialization by GPU floating-point vector
      */
     vector(float4 const& v)
     {
@@ -63,9 +63,6 @@ public:
 	(*this)[2] = v.z;
     }
 
-    /**
-     * initialization by uncoalesced GPU floating-point vector
-     */
     vector(float3 const& v)
     {
 	(*this)[0] = v.x;
