@@ -315,18 +315,17 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
 {
-    r_skin = value;
+    r_skin = std::min(value, cell_length_ - r_cut);
+    if (r_skin < value) {
+	LOG_WARNING("reducing neighbour list skin to fixed-size cell skin");
+    }
     r_cut_skin = r_cut + r_skin;
     LOG("neighbour list skin: " << r_skin);
-
-    if (r_cut_skin > cell_length_) {
-	throw exception("neighbour list skin is larger than cell length");
-    }
 
     // volume of n-dimensional sphere with neighbour list radius
     float nbl_sphere = ((dimension + 1) * M_PI / 3) * std::pow(r_cut_skin, dimension);
     // set number of placeholders per neighbour list
-    nbl_size = std::ceil((density_ / value) * nbl_sphere);
+    nbl_size = std::ceil((density_ / cell_occupancy_) * nbl_sphere);
     LOG("number of placeholders per neighbour list: " << nbl_size);
 
     try {
