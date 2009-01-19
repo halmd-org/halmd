@@ -97,7 +97,7 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
     __shared__ T s_r[CELL_SIZE];
     __shared__ int s_tag[CELL_SIZE];
 
-    // shared memory barrier for virtual particle threads
+    // shared memory barrier
     __syncthreads();
 
     // compute cell index
@@ -318,7 +318,7 @@ __device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR,
     __shared__ int s_itag[CELL_SIZE];
     __shared__ uint s_cell[CELL_SIZE];
 
-    // shared memory barrier for virtual particle threads
+    // shared memory barrier
     __syncthreads();
 
     // compute cell index
