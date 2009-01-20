@@ -137,7 +137,7 @@ private:
     template <bool binary>
     void compute_forces();
     /** compute C²-smooth potential */
-    void compute_smooth_potential(double r, double fval, double pot);
+    void compute_smooth_potential(double r, double& fval, double& pot);
     /** first leapfrog step of integration of equations of motion */
     void leapfrog_half();
     /** second leapfrog step of integration of equations of motion */
@@ -667,7 +667,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
  * compute C²-smooth potential
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, double fval, double pot)
+void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, double& fval, double& pot)
 {
     double y = r - /* FIXME binary mixture */ r_cut;
     double x2 = y * y * rri_smooth;
