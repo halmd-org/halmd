@@ -393,11 +393,12 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
 
     float vv_max = 0;
     for (unsigned int i = 0; i < nplace; ++i) {
-	const int tag = h_part.tag[i];
-	if (tag == gpu::VIRTUAL_PARTICLE)
-	    continue;
-	h_part.v[i] = h_v[tag];
-	vv_max = std::max(vv_max, (vector_type) h_v[tag] * h_v[tag]);
+	int const tag = h_part.tag[i];
+	if (tag != gpu::VIRTUAL_PARTICLE) {
+	    int const n = gpu::particle_type(tag) * mpart[0] + gpu::particle_id(tag);
+	    h_part.v[i] = h_v[n];
+	    vv_max = std::max(vv_max, (vector_type) h_v[n] * h_v[n]);
+	}
     }
     v_max_sum = std::sqrt(vv_max);
 
