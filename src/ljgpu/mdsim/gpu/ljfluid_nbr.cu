@@ -90,7 +90,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     (r, tag) = g_r[GTID];
     v = g_v[GTID];
     // particle type in binary mixture
-    int const a = particle_type(tag);
+    int const a = (tag >= mpart[0]);
 
     // potential energy contribution
     float en = 0;
@@ -109,7 +109,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 	int tag_;
 	(r_, tag_) = tex1Dfetch(tex<dimension>::r, n);
 	// particle type in binary mixture
-	int const b = particle_type(tag_);
+	int const b = (tag_ >= mpart[0]);
 
 	// accumulate force between particles
 	compute_force<mixture, potential>(r, r_, f, en, virial, a + b);

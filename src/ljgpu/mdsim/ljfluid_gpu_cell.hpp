@@ -338,15 +338,10 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
     cuda::vector<float4> g_r(npart);
     g_r.reserve(dim_.threads());
     _Base::lattice(g_r);
-
-    if (mixture_ == BINARY) {
-	// randomly assign A and B particles types in a binary mixture
-	_Base::init_types(g_r, g_part.tag);
-    }
-    else {
-	// assign ascending particle numbers
-	_Base::init_tags(g_r, g_part.tag);
-    }
+    // randomly permute particle coordinates for binary mixture
+    _Base::random_permute(g_r);
+    // assign ascending particle numbers
+    _Base::init_tags(g_r, g_part.tag);
 
     try {
 	// assign particles to cells
@@ -395,9 +390,8 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
     for (unsigned int i = 0; i < nplace; ++i) {
 	int const tag = h_part.tag[i];
 	if (tag != gpu::VIRTUAL_PARTICLE) {
-	    int const n = gpu::particle_type(tag) * mpart[0] + gpu::particle_id(tag);
-	    h_part.v[i] = h_v[n];
-	    vv_max = std::max(vv_max, (vector_type) h_v[n] * h_v[n]);
+	    h_part.v[i] = h_v[tag];
+	    vv_max = std::max(vv_max, (vector_type) h_v[tag] * h_v[tag]);
 	}
     }
     v_max_sum = std::sqrt(vv_max);
@@ -529,10 +523,10 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 	// skip virtual particles
 	if (tag == gpu::VIRTUAL_PARTICLE) continue;
 
-	// particle number
-	unsigned int const n = gpu::particle_id(tag);
 	// A or B particle type
-	unsigned int const type = gpu::particle_type(tag);
+	unsigned int const type = (static_cast<unsigned int>(tag) >= mpart[0]);
+	// particle number
+	unsigned int const n = type ? (tag - mpart[0]) : tag;
 	// copy periodically extended particle positions
 	m_sample[type].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
 	// copy particle velocities

@@ -78,6 +78,7 @@ private:
 
 private:
     using _Base::npart;
+    using _Base::mpart;
     using _Base::density_;
     using _Base::box_;
     using _Base::timestep_;
@@ -230,15 +231,10 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 {
     // place particles on an fcc lattice
     _Base::lattice(g_part.r);
-
-    if (mixture_ == BINARY) {
-	// randomly assign A and B particles types in a binary mixture
-	_Base::init_types(g_part.r, g_part.tag);
-    }
-    else {
-	// assign ascending particle numbers
-	_Base::init_tags(g_part.r, g_part.tag);
-    }
+    // randomly permute particle coordinates for binary mixture
+    _Base::random_permute(g_part.r);
+    // assign ascending particle numbers
+    _Base::init_tags(g_part.r, g_part.tag);
 
     try {
 	// set periodic box traversal vectors to zero
@@ -263,7 +259,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
 {
-    boltzmann(g_part.v, h_part.v, temp);
+    _Base::boltzmann(g_part.v, h_part.v, temp);
 }
 
 template <int dimension>
@@ -361,10 +357,10 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
     for (unsigned int i = 0; i < npart; ++i) {
 	// particle tag
 	int const tag = h_part.tag[i];
-	// particle number
-	unsigned int const n = gpu::particle_id(tag);
 	// A or B particle type
-	unsigned int const type = gpu::particle_type(tag);
+	unsigned int const type = (static_cast<unsigned int>(tag) >= mpart[0]);
+	// particle number
+	unsigned int const n = type ? (tag - mpart[0]) : tag;
 	// copy periodically extended particle positions
 	m_sample[type].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
 	// copy particle velocities

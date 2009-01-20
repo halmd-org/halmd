@@ -94,10 +94,10 @@ public:
 protected:
     /** place particles on an fcc lattice */
     void lattice(cuda::vector<float4>& g_r);
+    /** randomly permute particle coordinates */
+    void random_permute(cuda::vector<float4>& g_r);
     /** assign ascending particle numbers */
     void init_tags(cuda::vector<float4>& g_r, cuda::vector<int>& g_tag);
-    /** randomly assign particle types in a binary mixture */
-    void init_types(cuda::vector<float4>& g_r, cuda::vector<int>& g_tag);
     /** generate Maxwell-Boltzmann distributed velocities */
     void boltzmann(cuda::vector<gpu_vector_type>& g_v,
 		   cuda::host::vector<gpu_vector_type>& h_v,
@@ -435,6 +435,25 @@ void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r)
 }
 
 /**
+ * randomly assign particle types in a binary mixture
+ */
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::random_permute(cuda::vector<float4>& g_r)
+{
+    cuda::vector<unsigned int> g_sort_index(npart);
+    g_sort_index.reserve(dim_.threads());
+
+    try {
+	rng_.get(g_sort_index, stream_);
+	radix_sort_(g_sort_index, g_r, stream_);
+	stream_.synchronize();
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to randomly permute particle coordinates on GPU");
+    }
+}
+
+/**
  * assign ascending particle numbers
  */
 template <typename ljfluid_impl>
@@ -448,27 +467,6 @@ void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
     }
     catch (cuda::error const&) {
 	throw exception("failed to initialise particle tags on GPU");
-    }
-}
-
-/**
- * randomly assign particle types in a binary mixture
- */
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::init_types(cuda::vector<float4>& g_r,
-						cuda::vector<int>& g_tag)
-{
-    cuda::vector<unsigned int> g_sort_index(npart);
-    g_sort_index.reserve(dim_.threads());
-
-    try {
-	rng_.get(g_sort_index, stream_);
-	radix_sort_(g_sort_index, g_r, stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	_gpu::init_types(g_r, g_tag);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to randomly assign particle types on GPU");
     }
 }
 

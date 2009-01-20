@@ -44,7 +44,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     (r, tag) = g_r[GTID];
     v = g_v[GTID];
     // particle type in binary mixture
-    int const a = particle_type(tag);
+    int const a = (tag >= mpart[0]);
 
     // potential energy contribution
     float en = 0;
@@ -70,7 +70,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 		continue;
 
 	    // particle type in binary mixture
-	    int const b = particle_type(s_tag[j]);
+	    int const b = (s_tag[j] >= mpart[0]);
 	    // compute Lennard-Jones force with particle
 	    compute_force<mixture, potential>(r, s_r[j], f, en, virial, a + b);
 	}

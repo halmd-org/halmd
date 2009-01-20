@@ -217,25 +217,7 @@ __global__ void init_tags(float4* g_r, int* g_tag)
     vector_type const r = g_r[GTID];
     int tag = VIRTUAL_PARTICLE;
     if (GTID < npart) {
-	tag = particle_tag(GTID);
-    }
-    g_r[GTID] = (r, tag);
-    g_tag[GTID] = tag;
-}
-
-/**
- * assign particles types in a binary mixture
- */
-template <typename vector_type>
-__global__ void init_types(float4* g_r, int* g_tag)
-{
-    vector_type const r = g_r[GTID];
-    int tag = VIRTUAL_PARTICLE;
-    if (GTID < mpart[0]) {
-	tag = particle_tag(GTID, 0);
-    }
-    else if (GTID - mpart[0] < mpart[1]) {
-	tag = particle_tag(GTID - mpart[0], 1);
+	tag = GTID;
     }
     g_r[GTID] = (r, tag);
     g_tag[GTID] = tag;
@@ -282,8 +264,6 @@ cuda::function<void (float4*, float)>
     __3D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float4*, int*)>
     __3D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 3> >);
-cuda::function<void (float4*, int*)>
-    __3D::init_types(cu::ljfluid::init_types<cu::vector<float, 3> >);
 
 cuda::function<void (float4*, float2*, float2*, float2 const*)>
     __2D::inteq(cu::ljfluid::inteq<2>);
@@ -291,7 +271,5 @@ cuda::function<void (float2*, float)>
     __2D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float4*, int*)>
     __2D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 2> >);
-cuda::function<void (float4*, int*)>
-    __2D::init_types(cu::ljfluid::init_types<cu::vector<float, 2> >);
 
 }} // namespace ljgpu::gpu

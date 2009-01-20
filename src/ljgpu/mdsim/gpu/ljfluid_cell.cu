@@ -109,7 +109,7 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
     if (tag == VIRTUAL_PARTICLE) return;
 
     // particle type in binary mixture
-    int const a = particle_type(tag);
+    int const a = (tag >= mpart[0]);
 
     for (uint i = 0; i < CELL_SIZE; ++i) {
 	// skip placeholder particles
@@ -118,7 +118,7 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
 	if (same_cell && threadIdx.x == i) continue;
 
 	// particle type in binary mixture
-	int const b = particle_type(s_tag[i]);
+	int const b = (s_tag[i] >= mpart[0]);
 
 	compute_force<mixture, potential>(r, s_r[i], f, en, virial, a + b);
     }
