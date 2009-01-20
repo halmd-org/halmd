@@ -124,6 +124,10 @@ private:
     using _Base::dim_;
     using _Base::stream_;
 
+    using _Base::mixture_;
+    using _Base::potential_;
+    using _Base::ensemble_;
+
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA events for kernel timing */
@@ -206,7 +210,7 @@ private:
 	/** cell offsets in sorted particle list */
 	cuda::vector<int> offset;
 	/** permutation indices */
-	cuda::vector<int> idx;
+	cuda::vector<int> index;
     } g_aux;
 
     /** cell lists in global device memory */
@@ -240,7 +244,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
 	g_part_buf.R.resize(npart);
 	g_part_buf.v.resize(npart);
 	g_aux.cell.resize(npart);
-	g_aux.idx.resize(npart);
+	g_aux.index.resize(npart);
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for sorting buffers");
@@ -399,7 +403,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	g_part_buf.v.reserve(dim_.threads());
 	g_aux.cell.reserve(dim_.threads());
 	g_aux.offset.resize(dim_cell_.blocks_per_grid());
-	g_aux.idx.reserve(dim_.threads());
+	g_aux.index.reserve(dim_.threads());
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for sorting buffers");
@@ -476,42 +480,25 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(sample_visitor visi
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
 {
-    LOG("placing particles on face-centered cubic (fcc) lattice");
+    // place particles on an fcc lattice
+    _Base::lattice(g_part.r, g_part.R);
 
-    // particles per 2- or 3-dimensional unit cell
-    const unsigned int m = 2 * (dimension - 1);
-    // lower boundary for number of particles per lattice dimension
-    unsigned int n = std::pow(npart / m, 1.f / dimension);
-    // lower boundary for total number of lattice sites
-    unsigned int N = m * std::pow(n, dimension);
-
-    if (N < npart) {
-	n += 1;
-	N = m * std::pow(n, dimension);
+    if (mixture_ == BINARY) {
+	// randomly assign A and B particles types in a binary mixture
+	_Base::init_types(g_part.r, g_part.tag);
     }
-    if (N > npart) {
-	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+    else {
+	// assign ascending particle numbers
+	_Base::init_tags(g_part.r, g_part.tag);
     }
-
-    // minimum distance in 2- or 3-dimensional fcc lattice
-    LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
     try {
-	// compute particle lattice positions on GPU
-	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::lattice<dimension>::fcc(g_part.r, n, box_);
-	event_[1].record(stream_);
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
-	// assign particle tags (after particle positions!)
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	_gpu::init_tags(g_part.r, g_part.tag);
-	cuda::copy(g_part.tag, h_part.tag, stream_);
 #ifdef USE_HILBERT_ORDER
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
 #endif
+	// copy particles tags from GPU to host
+	cuda::copy(g_part.tag, h_part.tag, stream_);
 	// assign particles to cells
 	assign_cells(stream_);
 	// update neighbour lists
@@ -529,15 +516,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
     catch (cuda::error const& e) {
 	throw exception("failed to compute particle lattice positions on GPU");
     }
-
-    // GPU time for lattice generation
-    m_times["lattice"] += event_[1] - event_[0];
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::temperature(float_type temp)
 {
-    LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     boltzmann(g_part.v, h_part.v, temp);
 
     try {
@@ -700,13 +683,17 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
 
-    for (unsigned int j = 0; j < npart; ++j) {
-	// particle tracking number
-	const int n = h_part.tag[j];
+    for (unsigned int i = 0; i < npart; ++i) {
+	// particle tag
+	int const tag = h_part.tag[i];
+	// particle number
+	unsigned int const n = gpu::particle_id(tag);
+	// A or B particle type
+	unsigned int const type = gpu::particle_type(tag);
 	// copy periodically extended particle positions
-	m_sample[0].r[n] = h_part.r[j] + (vector_type) h_part.R[j] * box_;
+	m_sample[type].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
 	// copy particle velocities
-	m_sample[0].v[n] = h_part.v[j];
+	m_sample[type].v[n] = h_part.v[i];
     }
 
     // mean potential energy per particle
@@ -741,8 +728,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_cells(cuda::stream&
 
     // generate permutation array
     cuda::configure(dim_.grid, dim_.block, stream);
-    _gpu::gen_index(g_aux.idx);
-    radix_(g_aux.cell, g_aux.idx, stream);
+    _gpu::gen_index(g_aux.index);
+    radix_(g_aux.cell, g_aux.index, stream);
 
     // compute global cell offsets in sorted particle list
     cuda::memset(g_aux.offset, 0xff);
@@ -751,7 +738,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_cells(cuda::stream&
 
     // assign particles to cells
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
-    _gpu::assign_cells(g_aux.cell, g_aux.offset, g_aux.idx, g_cell);
+    _gpu::assign_cells(g_aux.cell, g_aux.offset, g_aux.index, g_cell);
 }
 
 template <int dimension>
@@ -774,12 +761,12 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
 
     // generate permutation array
     cuda::configure(dim_.grid, dim_.block, stream);
-    _gpu::gen_index(g_aux.idx);
-    radix_(g_aux.cell, g_aux.idx, stream);
+    _gpu::gen_index(g_aux.index);
+    radix_(g_aux.cell, g_aux.index, stream);
 
     // order particles by permutation
     cuda::configure(dim_.grid, dim_.block, stream);
-    _gpu::order_particles(g_aux.idx, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part.tag);
+    _gpu::order_particles(g_aux.index, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part.tag);
     cuda::copy(g_part_buf.r, g_part.r, stream);
     cuda::copy(g_part_buf.R, g_part.R, stream);
     cuda::copy(g_part_buf.v, g_part.v, stream);

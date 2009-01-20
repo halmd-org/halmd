@@ -491,11 +491,11 @@ ljfluid<ljfluid_impl_host<dimension> >::compute_cell(vector_type r)
     // index after rounding and integer conversion. Therefore, we have to
     // add integer modulo operations as a safeguard.
     //
-    cell_index idx;
+    cell_index index;
     for (int i = 0; i < dimension; ++i) {
-	idx[i] = (unsigned int)(r[i]) % ncell;
+	index[i] = (unsigned int)(r[i]) % ncell;
     }
-    return cell(idx);
+    return cell(index);
 }
 
 /**

@@ -89,8 +89,8 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     int tag;
     (r, tag) = g_r[GTID];
     v = g_v[GTID];
-    // extract particle type from tag
-    uint const a = (tag >> 31);
+    // particle type in binary mixture
+    int const a = particle_type(tag);
 
     // potential energy contribution
     float en = 0;
@@ -108,8 +108,8 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 	vector_type r_;
 	int tag_;
 	(r_, tag_) = tex1Dfetch(tex<dimension>::r, n);
-	// particle type
-	uint const b = (tag_ >> 31);
+	// particle type in binary mixture
+	int const b = particle_type(tag_);
 
 	// accumulate force between particles
 	compute_force<mixture, potential>(r, r_, f, en, virial, a + b);
@@ -373,19 +373,19 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
 /**
  * generate ascending index sequence
  */
-__global__ void gen_index(int* g_idx)
+__global__ void gen_index(int* g_index)
 {
-    g_idx[GTID] = (GTID < npart) ? GTID : 0;
+    g_index[GTID] = (GTID < npart) ? GTID : 0;
 }
 
 /**
  * order particles after given permutation
  */
 template <int dimension, typename T>
-__global__ void order_particles(const int* g_idx, float4* g_or, T* g_oR, T* g_ov, int* g_tag)
+__global__ void order_particles(const int* g_index, float4* g_or, T* g_oR, T* g_ov, int* g_otag)
 {
     // permutation index
-    uint const j = g_idx[GTID];
+    uint const j = g_index[GTID];
     // permute particle phase space coordinates
     vector<float, dimension> r;
     int tag;
@@ -393,7 +393,7 @@ __global__ void order_particles(const int* g_idx, float4* g_or, T* g_oR, T* g_ov
     g_or[GTID] = (r, tag);
     g_oR[GTID] = tex1Dfetch(tex<dimension>::R, j);
     g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
-    g_tag[GTID] = tag;
+    g_otag[GTID] = tag;
 }
 
 }}} // namespace ljgpu::gpu::ljfluid
