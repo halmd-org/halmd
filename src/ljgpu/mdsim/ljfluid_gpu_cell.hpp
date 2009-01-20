@@ -559,7 +559,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::velocity_verlet(cuda::stream& stream)
 {
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
     _gpu::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
 }
 
