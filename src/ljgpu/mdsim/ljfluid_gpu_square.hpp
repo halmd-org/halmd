@@ -71,34 +71,27 @@ public:
     unsigned int threads() const { return dim_.threads_per_block(); }
 
 private:
+    /** assign particle positions */
+    void assign_positions();
     /** first leapfrog step of integration of differential equations of motion */
     void velocity_verlet(cuda::stream& stream);
     /** Lennard-Jones force calculation */
     void update_forces(cuda::stream& stream);
 
 private:
-    using _Base::npart;
-    using _Base::mpart;
-    using _Base::density_;
     using _Base::box_;
-    using _Base::timestep_;
-    using _Base::r_cut;
-    using _Base::rr_cut;
-    using _Base::en_cut;
-    using _Base::r_smooth;
-    using _Base::rri_smooth;
-    using _Base::thermostat_nu;
-    using _Base::thermostat_temp;
-
+    using _Base::density_;
+    using _Base::dim_;
+    using _Base::ensemble_;
     using _Base::m_sample;
     using _Base::m_times;
-
-    using _Base::dim_;
-    using _Base::stream_;
-
     using _Base::mixture_;
+    using _Base::mpart;
+    using _Base::npart;
     using _Base::potential_;
-    using _Base::ensemble_;
+    using _Base::r_cut;
+    using _Base::stream_;
+    using _Base::timestep_;
 
     /** CUDA events for kernel timing */
     boost::array<cuda::event, 9> event_;
@@ -197,33 +190,18 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::threads(unsigned int value)
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(sample_visitor visitor)
 {
-    _Base::sample(visitor);
+    _Base::sample(visitor, h_part.r, h_part.v);
 
     try {
-	// copy periodically reduced particle positions from host to GPU
-	std::copy(m_sample[0].r.begin(), m_sample[0].r.end(), h_part.r.begin());
 	cuda::copy(h_part.r, g_part.r, stream_);
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
-	// calculate forces
-	update_forces(stream_);
-	// calculate potential energy
-	reduce_en(g_part.en, stream_);
-	// calculate virial equation sum
-	reduce_virial(g_part.virial, stream_);
-
-	// copy particle velocities from host to GPU (after force calculation!)
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.v[i] = m_sample[0].v[i];
-	}
 	cuda::copy(h_part.v, g_part.v, stream_);
-
-	// wait for GPU operations to finish
 	stream_.synchronize();
     }
-    catch (cuda::error const& e) {
-	throw exception("failed to restore system state from phase space sample");
+    catch (cuda::error const&) {
+	throw exception("failed to copy phase space sample to GPU");
     }
+
+    assign_positions();
 }
 
 template <int dimension>
@@ -233,27 +211,8 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
     _Base::lattice(g_part.r);
     // randomly permute particle coordinates for binary mixture
     _Base::random_permute(g_part.r);
-    // assign ascending particle numbers
-    _Base::init_tags(g_part.r, g_part.tag);
 
-    try {
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
-	// copy particles tags from GPU to host
-	cuda::copy(g_part.tag, h_part.tag, stream_);
-	// calculate forces
-	update_forces(stream_);
-	// calculate potential energy
-	reduce_en(g_part.en, stream_);
-	// calculate virial equation sum
-	reduce_virial(g_part.virial, stream_);
-
-	// wait for CUDA operations to finish
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to compute particle lattice positions on GPU");
-    }
+    assign_positions();
 }
 
 template <int dimension>
@@ -374,6 +333,32 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 
     // GPU time for sample memcpy
     m_times["sample_memcpy"] += event_[0] - event_[1];
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::assign_positions()
+{
+    // assign ascending particle numbers
+    _Base::init_tags(g_part.r, g_part.tag);
+
+    try {
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
+	// copy particles tags from GPU to host
+	cuda::copy(g_part.tag, h_part.tag, stream_);
+	// calculate forces
+	update_forces(stream_);
+	// calculate potential energy
+	reduce_en(g_part.en, stream_);
+	// calculate virial equation sum
+	reduce_virial(g_part.virial, stream_);
+
+	// wait for CUDA operations to finish
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to assign particle positions on GPU");
+    }
 }
 
 template <int dimension>

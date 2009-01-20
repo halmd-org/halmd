@@ -102,6 +102,10 @@ protected:
     void boltzmann(cuda::vector<gpu_vector_type>& g_v,
 		   cuda::host::vector<gpu_vector_type>& h_v,
 		   float temp);
+    /** restore system state from phase space sample */
+    void sample(sample_visitor visitor,
+		cuda::host::vector<float4>& h_r,
+		cuda::host::vector<gpu_vector_type>& h_v);
     /** update Lennard-Jones forces */
     void update_forces(cuda::vector<float4>& r,
 		       cuda::vector<gpu_vector_type>& v,
@@ -110,6 +114,26 @@ protected:
 		       cuda::vector<float>& virial);
 
 protected:
+    using _Base::box_;
+    using _Base::density_;
+    using _Base::en_cut;
+    using _Base::ensemble_;
+    using _Base::epsilon_;
+    using _Base::m_sample;
+    using _Base::m_times;
+    using _Base::mixture_;
+    using _Base::mpart;
+    using _Base::npart;
+    using _Base::potential_;
+    using _Base::r_cut;
+    using _Base::r_smooth;
+    using _Base::rr_cut;
+    using _Base::rri_smooth;
+    using _Base::sigma2_;
+    using _Base::thermostat_nu;
+    using _Base::thermostat_temp;
+    using _Base::timestep_;
+
     /** CUDA execution dimensions */
     cuda::config dim_;
     /** CUDA asynchronous execution */
@@ -120,28 +144,6 @@ protected:
     rand48 rng_;
     /** GPU radix sort */
     radix_sort<float4> radix_sort_;
-
-    using _Base::npart;
-    using _Base::mpart;
-    using _Base::density_;
-    using _Base::box_;
-    using _Base::timestep_;
-    using _Base::r_cut;
-    using _Base::rr_cut;
-    using _Base::en_cut;
-    using _Base::epsilon_;
-    using _Base::sigma2_;
-    using _Base::r_smooth;
-    using _Base::rri_smooth;
-    using _Base::thermostat_nu;
-    using _Base::thermostat_temp;
-
-    using _Base::m_sample;
-    using _Base::m_times;
-
-    using _Base::mixture_;
-    using _Base::potential_;
-    using _Base::ensemble_;
 
 private:
     /** center of mass velocity */
@@ -545,6 +547,19 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy rescaled velocities to GPU");
+    }
+}
+
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::sample(sample_visitor visitor,
+					    cuda::host::vector<float4>& h_r,
+					    cuda::host::vector<gpu_vector_type>& h_v)
+{
+    _Base::sample(visitor);
+
+    for (size_t i = 0, j = 0; i < mpart.size(); j += mpart[i++]) {
+	std::copy(m_sample[i].r.begin(), m_sample[i].r.end(), h_r.begin() + j);
+	std::copy(m_sample[i].v.begin(), m_sample[i].v.end(), h_v.begin() + j);
     }
 }
 

@@ -92,6 +92,10 @@ public:
     void param(H5param& param) const;
 
 private:
+    /** assign particle positions */
+    void assign_positions();
+    /** assign particle velocities */
+    void assign_velocities();
     /** first leapfrog step of integration of differential equations of motion */
     void velocity_verlet(cuda::stream& stream);
     /** Lennard-Jones force calculation */
@@ -106,28 +110,19 @@ private:
 #endif
 
 private:
-    using _Base::mpart;
-    using _Base::npart;
-    using _Base::density_;
     using _Base::box_;
-    using _Base::timestep_;
-    using _Base::r_cut;
-    using _Base::rr_cut;
-    using _Base::en_cut;
-    using _Base::r_smooth;
-    using _Base::rri_smooth;
-    using _Base::thermostat_nu;
-    using _Base::thermostat_temp;
-
+    using _Base::density_;
+    using _Base::dim_;
+    using _Base::ensemble_;
     using _Base::m_sample;
     using _Base::m_times;
-
-    using _Base::dim_;
-    using _Base::stream_;
-
     using _Base::mixture_;
+    using _Base::mpart;
+    using _Base::npart;
     using _Base::potential_;
-    using _Base::ensemble_;
+    using _Base::r_cut;
+    using _Base::stream_;
+    using _Base::timestep_;
 
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
@@ -432,51 +427,19 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(sample_visitor visitor)
 {
-    _Base::sample(visitor);
+    _Base::sample(visitor, h_part.r, h_part.v);
 
     try {
-	// copy periodically reduced particle positions from host to GPU
-	std::copy(m_sample[0].r.begin(), m_sample[0].r.end(), h_part.r.begin());
 	cuda::copy(h_part.r, g_part.r, stream_);
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
-	// assign particle tags (after particle positions!)
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	_gpu::init_tags(g_part.r, g_part.tag);
-	cuda::copy(g_part.tag, h_part.tag, stream_);
-	stream_.synchronize();
-#ifdef USE_HILBERT_ORDER
-	// order particles after Hilbert space-filling curve
-	hilbert_order(stream_);
-#endif
-	// assign particles to cells
-	assign_cells(stream_);
-	// update neighbour lists
-	update_neighbours(stream_);
-	// calculate forces
-	update_forces(stream_);
-	// calculate potential energy
-	reduce_en(g_part.en, stream_);
-	// calculate virial equation sum
-	reduce_virial(g_part.virial, stream_);
-
-	// copy particle velocities from host to GPU (after force calculation!)
-	for (unsigned int i = 0; i < npart; ++i) {
-	    h_part.v[i] = m_sample[0].v[h_part.tag[i]];
-	}
 	cuda::copy(h_part.v, g_part.v, stream_);
-	// calculate maximum velocity magnitude
-	reduce_v_max(g_part.v, stream_);
-
-	// wait for GPU operations to finish
 	stream_.synchronize();
     }
-    catch (cuda::error const& e) {
-	throw exception("failed to restore system state from phase space sample");
+    catch (cuda::error const&) {
+	throw exception("failed to copy phase space sample to GPU");
     }
 
-    // set initial sum over maximum velocity magnitudes since last cell lists update
-    v_max_sum = reduce_v_max.value();
+    assign_positions();
+    assign_velocities();
 }
 
 template <int dimension>
@@ -486,50 +449,16 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
     _Base::lattice(g_part.r);
     // randomly permute particle coordinates for binary mixture
     _Base::random_permute(g_part.r);
-    // assign ascending particle numbers
-    _Base::init_tags(g_part.r, g_part.tag);
 
-    try {
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
-#ifdef USE_HILBERT_ORDER
-	// order particles after Hilbert space-filling curve
-	hilbert_order(stream_);
-#endif
-	// copy particles tags from GPU to host
-	cuda::copy(g_part.tag, h_part.tag, stream_);
-	// assign particles to cells
-	assign_cells(stream_);
-	// update neighbour lists
-	update_neighbours(stream_);
-	// calculate forces
-	update_forces(stream_);
-	// calculate potential energy
-	reduce_en(g_part.en, stream_);
-	// calculate virial equation sum
-	reduce_virial(g_part.virial, stream_);
-
-	// wait for CUDA operations to finish
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to compute particle lattice positions on GPU");
-    }
+    assign_positions();
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::temperature(float_type temp)
 {
-    boltzmann(g_part.v, h_part.v, temp);
+    _Base::boltzmann(g_part.v, h_part.v, temp);
 
-    try {
-	reduce_v_max(g_part.v, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to calculate maximum velocity magnitude on GPU");
-    }
-    v_max_sum = reduce_v_max.value();
+    assign_velocities();
 }
 
 template <int dimension>
@@ -702,6 +631,53 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 
     // GPU time for sample memcpy
     m_times["sample_memcpy"] += event_[0] - event_[1];
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
+{
+    // assign ascending particle numbers
+    _Base::init_tags(g_part.r, g_part.tag);
+
+    try {
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
+#ifdef USE_HILBERT_ORDER
+	// order particles after Hilbert space-filling curve
+	hilbert_order(stream_);
+#endif
+	// copy particles tags from GPU to host
+	cuda::copy(g_part.tag, h_part.tag, stream_);
+	// assign particles to cells
+	assign_cells(stream_);
+	// update neighbour lists
+	update_neighbours(stream_);
+	// calculate forces
+	update_forces(stream_);
+	// calculate potential energy
+	reduce_en(g_part.en, stream_);
+	// calculate virial equation sum
+	reduce_virial(g_part.virial, stream_);
+
+	// wait for CUDA operations to finish
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to assign particle positions on GPU");
+    }
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_velocities()
+{
+    try {
+	reduce_v_max(g_part.v, stream_);
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to assign particle velocities on GPU");
+    }
+    v_max_sum = reduce_v_max.value();
 }
 
 template <int dimension>
