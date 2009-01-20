@@ -93,7 +93,7 @@ public:
 
 protected:
     /** place particles on an fcc lattice */
-    void lattice(cuda::vector<float4>& g_r, cuda::vector<gpu_vector_type>& g_R);
+    void lattice(cuda::vector<float4>& g_r);
     /** assign ascending particle numbers */
     void init_tags(cuda::vector<float4>& g_r, cuda::vector<int>& g_tag);
     /** randomly assign particle types in a binary mixture */
@@ -398,8 +398,7 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(rand48::state_type const& state)
  * place particles on an fcc lattice
  */
 template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r,
-					     cuda::vector<gpu_vector_type>& g_R)
+void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r)
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
@@ -431,8 +430,6 @@ void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r,
     catch (cuda::error const&) {
 	throw exception("failed to compute particle lattice positions on GPU");
     }
-    // set periodic box traversal vectors to zero
-    cuda::memset(g_R, 0);
 
     m_times["lattice"] += event_[1] - event_[0];
 }

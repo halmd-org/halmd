@@ -92,6 +92,7 @@ private:
 
 private:
     using _Base::npart;
+    using _Base::mpart;
     using _Base::density_;
     using _Base::box_;
     using _Base::timestep_;
@@ -333,27 +334,28 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(sample_visitor visitor)
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 {
-    g_part.r.reserve(dim_.threads());
-
     // place particles on an fcc lattice
-    _Base::lattice(g_part.r, g_part.R);
+    cuda::vector<float4> g_r(npart);
+    g_r.reserve(dim_.threads());
+    _Base::lattice(g_r);
 
     if (mixture_ == BINARY) {
 	// randomly assign A and B particles types in a binary mixture
-	_Base::init_types(g_part.r, g_part.tag);
+	_Base::init_types(g_r, g_part.tag);
     }
     else {
 	// assign ascending particle numbers
-	_Base::init_tags(g_part.r, g_part.tag);
+	_Base::init_tags(g_r, g_part.tag);
     }
 
     try {
 	// assign particles to cells
-	cuda::copy(g_part.r, g_part_buf.r, stream_);
 	event_[0].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	_gpu::assign_cells(g_part_buf.r, g_part.r, g_part.tag);
+	_gpu::assign_cells(g_r, g_part.r, g_part.tag);
 	event_[1].record(stream_);
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
 	// copy particles tags from GPU to host
 	cuda::copy(g_part.tag, h_part.tag, stream_);
 	// reset sum over maximum velocity magnitudes to zero

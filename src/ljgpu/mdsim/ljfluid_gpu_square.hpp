@@ -229,7 +229,7 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 {
     // place particles on an fcc lattice
-    _Base::lattice(g_part.r, g_part.R);
+    _Base::lattice(g_part.r);
 
     if (mixture_ == BINARY) {
 	// randomly assign A and B particles types in a binary mixture
@@ -241,6 +241,8 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
     }
 
     try {
+	// set periodic box traversal vectors to zero
+	cuda::memset(g_part.R, 0);
 	// copy particles tags from GPU to host
 	cuda::copy(g_part.tag, h_part.tag, stream_);
 	// calculate forces
