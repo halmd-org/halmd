@@ -91,7 +91,7 @@ template <bool same_cell,
 	  potential_type potential,
 	  typename I, typename T, typename U>
 __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
-				    T const& r, int const& n, U& f,
+				    T const& r, int const tag, U& f,
 				    float& en, float& virial)
 {
     __shared__ T s_r[CELL_SIZE];
@@ -106,7 +106,10 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
     (s_r[threadIdx.x], s_tag[threadIdx.x]) = g_r[cell * CELL_SIZE + threadIdx.x];
     __syncthreads();
 
-    if (n == VIRTUAL_PARTICLE) return;
+    if (tag == VIRTUAL_PARTICLE) return;
+
+    // particle type in binary mixture
+    int const a = particle_type(tag);
 
     for (uint i = 0; i < CELL_SIZE; ++i) {
 	// skip placeholder particles
@@ -114,7 +117,10 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
 	// skip same particle
 	if (same_cell && threadIdx.x == i) continue;
 
-	compute_force<mixture, potential>(r, s_r[i], f, en, virial);
+	// particle type in binary mixture
+	int const b = particle_type(s_tag[i]);
+
+	compute_force<mixture, potential>(r, s_r[i], f, en, virial, a + b);
     }
 }
 
@@ -265,33 +271,35 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
  * assign particles to cells
  */
 template <typename T>
-__global__ void assign_cells(float4 const* g_part, float4* g_r, int* g_tag)
+__global__ void assign_cells(float4 const* g_ir, float4* g_or, int* g_otag)
 {
-    __shared__ T s_block[CELL_SIZE];
-    __shared__ T s_r[CELL_SIZE];
-    __shared__ int s_icell[CELL_SIZE];
-    __shared__ int s_tag[CELL_SIZE];
+    __shared__ T s_ir[CELL_SIZE];
+    __shared__ T s_or[CELL_SIZE];
+    __shared__ int s_itag[CELL_SIZE];
+    __shared__ int s_otag[CELL_SIZE];
+    __shared__ int s_cell[CELL_SIZE];
+
     // number of particles in cell
     uint n = 0;
-
     // mark all particles in cell as virtual particles
-    s_tag[threadIdx.x] = VIRTUAL_PARTICLE;
+    s_otag[threadIdx.x] = VIRTUAL_PARTICLE;
     __syncthreads();
 
     for (uint i = 0; i < npart; i += CELL_SIZE) {
 	// load block of particles from global device memory
-	T const r = g_part[i + threadIdx.x];
-	s_block[threadIdx.x] = r;
-	s_icell[threadIdx.x] = compute_cell(r);
+	T r;
+	(r, s_itag[threadIdx.x]) = g_ir[i + threadIdx.x];
+	s_ir[threadIdx.x] = r;
+	s_cell[threadIdx.x] = compute_cell(r);
 	__syncthreads();
 
 	if (threadIdx.x == 0) {
 	    for (uint j = 0; j < CELL_SIZE && (i + j) < npart; j++) {
-		if (s_icell[j] == blockIdx.x) {
+		if (s_cell[j] == blockIdx.x) {
 		    // store particle in cell
-		    s_r[n] = s_block[j];
-		    // store particle number
-		    s_tag[n] = i + j;
+		    s_or[n] = s_ir[j];
+		    // store particle tag
+		    s_otag[n] = s_itag[j];
 		    // increment particle count in cell
 		    ++n;
 		}
@@ -301,9 +309,9 @@ __global__ void assign_cells(float4 const* g_part, float4* g_r, int* g_tag)
     }
 
     // store cell in global device memory
-    int const tag = s_tag[threadIdx.x];
-    g_r[blockIdx.x * CELL_SIZE + threadIdx.x] = (s_r[threadIdx.x], tag);
-    g_tag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
+    int const tag = s_otag[threadIdx.x];
+    g_or[blockIdx.x * CELL_SIZE + threadIdx.x] = (s_or[threadIdx.x], tag);
+    g_otag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
 }
 
 /**
@@ -356,7 +364,7 @@ __device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR,
  * update cells
  */
 template <typename T, typename U>
-__global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, float4* g_or, U* g_oR, U* g_ov, int* g_tag)
+__global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, float4* g_or, U* g_oR, U* g_ov, int* g_otag)
 {
     enum { dimension = T::static_size };
 
@@ -419,7 +427,7 @@ __global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, f
     g_or[blockIdx.x * CELL_SIZE + threadIdx.x] = (s_or[threadIdx.x], tag);
     g_oR[blockIdx.x * CELL_SIZE + threadIdx.x] = s_oR[threadIdx.x];
     g_ov[blockIdx.x * CELL_SIZE + threadIdx.x] = s_ov[threadIdx.x];
-    g_tag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
+    g_otag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
 }
 
 }}} // namespace ljgpu::gpu::ljfluid

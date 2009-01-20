@@ -109,6 +109,10 @@ private:
     using _Base::dim_;
     using _Base::stream_;
 
+    using _Base::mixture_;
+    using _Base::potential_;
+    using _Base::ensemble_;
+
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA events for kernel timing */
@@ -328,45 +332,31 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(sample_visitor visitor)
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 {
-    LOG("placing particles on face-centered cubic (fcc) lattice");
+    g_part.r.reserve(dim_.threads());
 
-    // particles per 2- or 3-dimensional unit cell
-    const unsigned int m = 2 * (dimension - 1);
-    // lower boundary for number of particles per lattice dimension
-    unsigned int n = std::pow(npart / m, 1.f / dimension);
-    // lower boundary for total number of lattice sites
-    unsigned int N = m * std::pow(n, dimension);
+    // place particles on an fcc lattice
+    _Base::lattice(g_part.r, g_part.R);
 
-    if (N < npart) {
-	n += 1;
-	N = m * std::pow(n, dimension);
+    if (mixture_ == BINARY) {
+	// randomly assign A and B particles types in a binary mixture
+	_Base::init_types(g_part.r, g_part.tag);
     }
-    if (N > npart) {
-	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+    else {
+	// assign ascending particle numbers
+	_Base::init_tags(g_part.r, g_part.tag);
     }
-
-    // minimum distance in 2- or 3-dimensional fcc lattice
-    LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
     try {
-	g_part.r.reserve(dim_.threads());
-	// compute particle lattice positions on GPU
-	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::lattice<dimension>::fcc(g_part.r, n, box_);
-	event_[1].record(stream_);
-	// TODO randomly permute particles to increase force summing accuracy
-	cuda::copy(g_part.r, g_part_buf.r, stream_);
 	// assign particles to cells
-	event_[2].record(stream_);
+	cuda::copy(g_part.r, g_part_buf.r, stream_);
+	event_[0].record(stream_);
 	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
 	_gpu::assign_cells(g_part_buf.r, g_part.r, g_part.tag);
-	event_[3].record(stream_);
+	event_[1].record(stream_);
+	// copy particles tags from GPU to host
 	cuda::copy(g_part.tag, h_part.tag, stream_);
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
 	// calculate forces, potential energy and virial equation sum
 	update_forces(stream_);
 
@@ -377,16 +367,13 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 	throw exception("failed to compute particle lattice positions on GPU");
     }
 
-    // CUDA time for lattice generation
-    m_times["lattice"] += event_[1] - event_[0];
     // CUDA time for cell lists initialisation
-    m_times["init_cells"] += event_[3] - event_[2];
+    m_times["init_cells"] += event_[1] - event_[0];
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
 {
-    LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
     cuda::vector<gpu_vector_type> g_v(npart);
     cuda::host::vector<gpu_vector_type> h_v(npart);
     g_v.reserve(dim_.threads());
@@ -533,21 +520,25 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
     float vv_max = 0;
 
     for (unsigned int i = 0; i < nplace; ++i) {
+	// particle tag
+	int const tag = h_part.tag[i];
+	// skip virtual particles
+	if (tag == gpu::VIRTUAL_PARTICLE) continue;
+
 	// particle number
-	const int n = h_part.tag[i];
-	// check if real particle
-	if (n != gpu::VIRTUAL_PARTICLE) {
-	    // copy periodically extended particle positions
-	    m_sample[0].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
-	    // copy particle velocities
-	    m_sample[0].v[n] = h_part.v[i];
-	    // calculate mean potential energy per particle
-	    m_sample.en_pot += (h_part.en[i] - m_sample.en_pot) / ++count;
-	    // calculate mean virial equation sum per particle
-	    m_sample.virial += (h_part.virial[i] - m_sample.virial) / count;
-	    // calculate maximum squared velocity
-	    vv_max = std::max(vv_max, m_sample[0].v[n] * m_sample[0].v[n]);
-	}
+	unsigned int const n = gpu::particle_id(tag);
+	// A or B particle type
+	unsigned int const type = gpu::particle_type(tag);
+	// copy periodically extended particle positions
+	m_sample[type].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
+	// copy particle velocities
+	m_sample[type].v[n] = h_part.v[i];
+	// calculate mean potential energy per particle
+	m_sample.en_pot += (h_part.en[i] - m_sample.en_pot) / ++count;
+	// calculate mean virial equation sum per particle
+	m_sample.virial += (h_part.virial[i] - m_sample.virial) / count;
+	// calculate maximum squared velocity
+	vv_max = std::max(vv_max, m_sample[type].v[n] * m_sample[type].v[n]);
     }
     // add to sum over maximum velocity magnitudes since last cell lists update
     v_max_sum += std::sqrt(vv_max);
