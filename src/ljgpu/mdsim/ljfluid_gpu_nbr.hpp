@@ -155,8 +155,6 @@ private:
 
     /** neighbour list skin */
     float_type r_skin;
-    /** cutoff distance with neighbour list skin */
-    float_type r_cut_skin;
     /** number of placeholders per neighbour list */
     unsigned int nbl_size;
 
@@ -268,17 +266,18 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type value)
 {
-    LOG("desired average cell occupancy: " << value);
+    float const r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
 
     // fixed cell size due to fixed number of CUDA execution threads per block
     cell_size_ = _gpu::CELL_SIZE;
     LOG("number of placeholders per cell: " << cell_size_);
 
     // optimal number of cells with given cell occupancy as upper boundary
+    LOG("desired average cell occupancy: " << value);
     ncell = std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension));
 
     // set number of cells per dimension, respecting cutoff radius
-    ncell = std::min(ncell, uint(box_ / r_cut));
+    ncell = std::min(ncell, uint(box_ / r_cut_max));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
@@ -294,13 +293,13 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
     LOG("total number of cell placeholders: " << nplace);
 
     // set effective average cell occupancy
-    cell_occupancy_ = npart * 1. / nplace;
+    cell_occupancy_ = npart * 1.f / nplace;
     LOG("effective average cell occupancy: " << cell_occupancy_);
 
-    if (cell_occupancy_ > 1.) {
+    if (cell_occupancy_ > 1) {
 	throw exception("average cell occupancy must not be larger than 1.0");
     }
-    else if (cell_occupancy_ > 0.5) {
+    else if (cell_occupancy_ > 0.5f) {
 	LOG_WARNING("average cell occupancy is larger than 0.5");
     }
 
@@ -315,21 +314,23 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
 {
-    r_skin = std::min(value, cell_length_ - r_cut);
+    float const r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
+
+    r_skin = std::min(value, cell_length_ - r_cut_max);
     if (r_skin < value) {
 	LOG_WARNING("reducing neighbour list skin to fixed-size cell skin");
     }
-    r_cut_skin = r_cut + r_skin;
     LOG("neighbour list skin: " << r_skin);
 
+    float const r_nbl = r_cut_max + r_skin;
     // volume of n-dimensional sphere with neighbour list radius
-    float nbl_sphere = ((dimension + 1) * M_PI / 3) * std::pow(r_cut_skin, dimension);
-    // set number of placeholders per neighbour list
-    nbl_size = std::ceil((density_ / cell_occupancy_) * nbl_sphere);
+    float const v_nbl = ((dimension + 1) * M_PI / 3) * std::pow(r_nbl, dimension);
+
+    nbl_size = std::ceil(v_nbl * (density_ / cell_occupancy_));
     LOG("number of placeholders per neighbour list: " << nbl_size);
 
     try {
-	cuda::copy(std::pow(r_cut_skin, 2), _gpu::rr_nbl);
+	cuda::copy(std::pow(r_nbl, 2), _gpu::rr_nbl);
 	cuda::copy(nbl_size, _gpu::nbl_size);
     }
     catch (cuda::error const&) {

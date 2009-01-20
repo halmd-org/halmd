@@ -184,17 +184,18 @@ private:
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::cell_occupancy(float_type value)
 {
-    LOG("desired average cell occupancy: " << value);
+    float const r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
 
     // fixed cell size due to fixed number of CUDA execution threads per block
     cell_size_ = _gpu::CELL_SIZE;
     LOG("number of placeholders per cell: " << cell_size_);
 
     // optimal number of cells with given cell occupancy as upper boundary
+    LOG("desired average cell occupancy: " << value);
     ncell = std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension));
 
     // set number of cells per dimension, respecting cutoff radius
-    ncell = std::min(ncell, uint(box_ / r_cut));
+    ncell = std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
@@ -205,21 +206,21 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::cell_occupancy(float_type value
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
     // set cell skin
-    r_skin = std::max(0.f, cell_length_ - r_cut);
+    r_skin = std::max(0.f, cell_length_ - r_cut_max);
     LOG("cell skin: " << r_skin);
 
     // set total number of cell placeholders
-    nplace = pow(ncell, dimension) * cell_size_;
+    nplace = std::pow(ncell, dimension) * cell_size_;
     LOG("total number of cell placeholders: " << nplace);
 
     // set effective average cell occupancy
-    cell_occupancy_ = npart * 1. / nplace;
+    cell_occupancy_ = npart * 1.f / nplace;
     LOG("effective average cell occupancy: " << cell_occupancy_);
 
-    if (cell_occupancy_ > 1.) {
+    if (cell_occupancy_ > 1) {
 	throw exception("average cell occupancy must not be larger than 1.0");
     }
-    else if (cell_occupancy_ > 0.5) {
+    else if (cell_occupancy_ > 0.5f) {
 	LOG_WARNING("average cell occupancy is larger than 0.5");
     }
 

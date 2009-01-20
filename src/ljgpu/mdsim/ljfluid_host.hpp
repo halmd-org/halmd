@@ -137,7 +137,8 @@ private:
     template <bool binary>
     void compute_forces();
     /** compute C²-smooth potential */
-    void compute_smooth_potential(double r, double& fval, double& pot);
+    template <bool binary>
+    void compute_smooth_potential(double r, double& fval, double& pot, unsigned int type);
     /** first leapfrog step of integration of equations of motion */
     void leapfrog_half();
     /** second leapfrog step of integration of equations of motion */
@@ -281,7 +282,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::nbl_skin(float value)
     LOG("neighbour list skin: " << r_skin);
 
     for (size_t i = 0; i < sigma_.size(); ++i) {
-	r_cut_skin[i] = r_cut * sigma_[i] + r_skin;
+	r_cut_skin[i] = r_cut[i] + r_skin;
 	rr_cut_skin[i] = std::pow(r_cut_skin[i], 2);
     }
 
@@ -640,7 +641,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 	    double pot = (4 * r6i * (r6i - 1) - en_cut) * eps;
 
 	    if (potential_ == C2POT) {
-		compute_smooth_potential(std::sqrt(rr), fval, pot);
+		compute_smooth_potential<binary>(std::sqrt(rr), fval, pot, type);
 	    }
 
 	    // add force contribution to both particles
@@ -667,9 +668,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
  * compute C²-smooth potential
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, double& fval, double& pot)
+template <bool binary>
+void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, double& fval, double& pot, unsigned int type)
 {
-    double y = r - /* FIXME binary mixture */ r_cut;
+    double y = r - r_cut[binary ? type : 0];
     double x2 = y * y * rri_smooth;
     double x4 = x2 * x2;
     double x4i = 1 / (1 + x4);

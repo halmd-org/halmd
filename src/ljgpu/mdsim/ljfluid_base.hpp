@@ -42,8 +42,8 @@ public:
 
 public:
     ljfluid_base() :
-	sigma_(boost::assign::list_of(1)(0)(0)),
 	epsilon_(boost::assign::list_of(1)(0)(0)),
+	sigma_(boost::assign::list_of(1)(0)(0)),
 	r_smooth(0),
 	thermostat_nu(0),
 	potential_(C0POT),
@@ -65,7 +65,7 @@ public:
     /** returns simulation timestep */
     float_type timestep() const { return timestep_; }
     /** returns potential cutoff radius */
-    float_type cutoff_radius() const { return r_cut; }
+    float_type cutoff_radius() const { return r_cut_sigma; }
     /** returns potential smoothing function scale parameter */
     float_type potential_smoothing() const { return r_smooth; }
 
@@ -82,18 +82,18 @@ protected:
     using _Base::density_;
     using _Base::mixture_;
 
+    /** cutoff radii in binary mixture */
+    boost::array<float_type, 3> r_cut;
+    /** squared cutoff radii */
+    boost::array<float_type, 3> rr_cut;
+    /** potential well depths */
+    boost::array<float_type, 3> epsilon_;
     /** collision diameters */
     boost::array<float_type, 3> sigma_;
     /** squared collision diameters */
     boost::array<float_type, 3> sigma2_;
-    /** potential well depths */
-    boost::array<float_type, 3> epsilon_;
-    /** cutoff radius in units of sigma */
-    float_type r_cut;
-    /** potential energy in units of epsilon at cutoff radius */
+    /** Lennard-Jones potential at cutoff radius in units of epsilon */
     float_type en_cut;
-    /** absolute squared cutoff radii */
-    boost::array<float_type, 3> rr_cut;
     /** potential smoothing function scale parameter */
     float_type r_smooth;
     /** squared inverse potential smoothing function scale parameter */
@@ -107,6 +107,10 @@ protected:
 
     potential_type potential_;
     ensemble_type ensemble_;
+
+private:
+    /** cutoff radius in units of sigma */
+    float_type r_cut_sigma;
 };
 
 template <typename ljfluid_impl>
@@ -130,16 +134,17 @@ void ljfluid_base<ljfluid_impl>::sigma(boost::array<float, 3> const& value)
 template <typename ljfluid_impl>
 void ljfluid_base<ljfluid_impl>::cutoff_radius(float_type value)
 {
-    r_cut = value;
-    LOG("potential cutoff radius: " << r_cut);
+    r_cut_sigma = value;
+    LOG("potential cutoff radius: " << r_cut_sigma);
 
-    float_type rri_cut = 1 / std::pow(r_cut, 2);
+    float_type rri_cut = 1 / std::pow(r_cut_sigma, 2);
     float_type r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut = 4 * r6i_cut * (r6i_cut - 1);
     LOG("potential cutoff energy: " << en_cut);
 
     for (size_t i = 0; i < sigma_.size(); ++i) {
-	rr_cut[i] = std::pow(r_cut * sigma_[i], 2);
+	r_cut[i] = r_cut_sigma * sigma_[i];
+	rr_cut[i] = std::pow(r_cut[i], 2);
     }
 }
 
@@ -182,7 +187,7 @@ void ljfluid_base<ljfluid_impl>::param(H5param& param) const
 	node["potential_epsilon"] = epsilon_;
 	node["potential_sigma"] = sigma_;
     }
-    node["cutoff_radius"] = r_cut;
+    node["cutoff_radius"] = r_cut_sigma;
     node["timestep"] = timestep_;
     if (potential_ == C2POT) {
 	node["potential_smoothing"] = r_smooth;

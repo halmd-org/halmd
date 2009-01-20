@@ -45,10 +45,10 @@ __constant__ float timestep;
 __constant__ float box;
 
 /** potential cutoff radius */
-__constant__ float r_cut;
+__constant__ float r_cut[3];
 /** squared cutoff radius */
 __constant__ float rr_cut[3];
-/** cutoff energy for Lennard-Jones potential at cutoff length */
+/** Lennard-Jones potential at cutoff length in units of epsilon */
 __constant__ float en_cut;
 /** potential well depths in binary mixture */
 __constant__ float epsilon[3];
@@ -107,9 +107,10 @@ __device__ void anderson_thermostat(T& v)
  *
  * returns tuple (r, h(r), h'(r))
  */
-__device__ float3 compute_smooth_function(float const& r)
+template <mixture_type mixture>
+__device__ float3 compute_smooth_function(float r, unsigned int ab)
 {
-    float y = r - /*FIXME binary mixture */ r_cut;
+    float y = r - r_cut[(mixture == BINARY) ? ab : 0];
     float x2 = y * y * rri_smooth;
     float x4 = x2 * x2;
     float x4i = 1 / (1 + x4);
@@ -125,7 +126,7 @@ __device__ float3 compute_smooth_function(float const& r)
  */
 __global__ void sample_smooth_function(float3* g_h, const float2 r)
 {
-    g_h[GTID] = compute_smooth_function(r.x + (r.y - r.x) / GTDIM * GTID);
+    g_h[GTID] = compute_smooth_function<UNARY>(r.x + (r.y - r.x) / GTDIM * GTID, 0);
 }
 
 /**
@@ -135,9 +136,7 @@ template <mixture_type mixture,
 	  potential_type potential,
 	  typename T,
           typename U>
-__device__ void compute_force(T const& r1, T const& r2,
-			      U& f, float& en, float& virial,
-			      unsigned int ab = 0)
+__device__ void compute_force(T const& r1, T const& r2, U& f, float& en, float& virial, unsigned int ab)
 {
     // potential well depth
     float const eps = (mixture == BINARY) ? epsilon[ab] : 1;
@@ -163,7 +162,7 @@ __device__ void compute_force(T const& r1, T const& r2,
 
     if (potential == C2POT) {
 	// compute smoothing function and its first derivative
-	const float3 h = compute_smooth_function(sqrtf(rr));
+	const float3 h = compute_smooth_function<mixture>(sqrtf(rr), ab);
 	// apply smoothing function to obtain C¹ force function
 	fval = h.y * fval - h.z * pot / h.x;
 	// apply smoothing function to obtain C² potential function
@@ -258,7 +257,7 @@ cuda::symbol<uint> __Base::npart(cu::ljfluid::npart);
 cuda::symbol<uint[]> __Base::mpart(cu::ljfluid::mpart);
 cuda::symbol<float> __Base::box(cu::ljfluid::box);
 cuda::symbol<float> __Base::timestep(cu::ljfluid::timestep);
-cuda::symbol<float> __Base::r_cut(cu::ljfluid::r_cut);
+cuda::symbol<float[]> __Base::r_cut(cu::ljfluid::r_cut);
 cuda::symbol<float[]> __Base::rr_cut(cu::ljfluid::rr_cut);
 cuda::symbol<float> __Base::en_cut(cu::ljfluid::en_cut);
 cuda::symbol<float[]> __Base::epsilon(cu::ljfluid::epsilon);
