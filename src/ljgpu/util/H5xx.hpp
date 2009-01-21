@@ -21,8 +21,10 @@
 
 #include <H5Cpp.h>
 #include <boost/array.hpp>
+#include <boost/multi_array.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <vector>
 
 namespace H5xx
 {
@@ -41,6 +43,19 @@ struct is_boost_array : public boost::false_type {};
 
 template <typename T, size_t size>
 struct is_boost_array<boost::array<T, size> >: public boost::true_type {};
+
+template <typename T>
+struct is_boost_multi_array : public boost::false_type {};
+
+template <typename T, size_t dimension>
+struct is_boost_multi_array<boost::multi_array<T, dimension> >: public boost::true_type {};
+
+template <typename T>
+struct is_vector : public boost::false_type {};
+
+template <typename T>
+struct is_vector<std::vector<T> >: public boost::true_type {};
+
 
 /**
  * HDF5 attribute
@@ -74,6 +89,20 @@ public:
     operator=(T const& value);
     template <typename T>
     typename boost::enable_if<is_boost_array<T>, T>::type
+    as();
+
+    template <typename T>
+    typename boost::enable_if<is_boost_multi_array<T>, attribute&>::type
+    operator=(T const& value);
+    template <typename T>
+    typename boost::enable_if<is_boost_multi_array<T>, T>::type
+    as();
+
+    template <typename T>
+    typename boost::enable_if<is_vector<T>, attribute&>::type
+    operator=(T const& value);
+    template <typename T>
+    typename boost::enable_if<is_vector<T>, T>::type
     as();
 
 private:
@@ -280,6 +309,121 @@ attribute::as()
     }
 
     boost::array<value_type, size> value;
+    attr.read(ctype<value_type>::type, value.data());
+    return value;
+}
+
+/*
+ * create and write multi-dimensional array type attribute
+ */
+template <typename T>
+typename boost::enable_if<is_boost_multi_array<T>, attribute&>::type
+attribute::operator=(T const& value)
+{
+    typedef typename T::value_type value_type;
+    enum { dimension = T::dimensionality };
+
+    hsize_t dim[dimension];
+    std::copy(value.shape(), value.shape() + dimension, dim);
+    H5::DataSpace ds(dimension, dim);
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	attr = m_node.createAttribute(m_name, ctype<value_type>::type, ds);
+    }
+    attr.write(ctype<value_type>::type, value.data());
+    return *this;
+}
+
+/**
+ * read multi-dimensional array type attribute
+ */
+template <typename T>
+typename boost::enable_if<is_boost_multi_array<T>, T>::type
+attribute::as()
+{
+    typedef typename T::value_type value_type;
+    enum { dimension = T::dimensionality };
+
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	throw;
+    }
+
+    H5::DataSpace ds(attr.getSpace());
+    if (!ds.isSimple()) {
+	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
+    }
+    if (ds.getSimpleExtentNdims() != dimension) {
+	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace dimensionality mismatch");
+    }
+    hsize_t dim[dimension];
+    ds.getSimpleExtentDims(dim);
+    boost::array<size_t, dimension> shape;
+    std::copy(dim, dim + dimension, shape.begin());
+    boost::multi_array<value_type, dimension> value(shape);
+    attr.read(ctype<value_type>::type, value.data());
+    return value;
+}
+
+/*
+ * create and write vector type attribute
+ */
+template <typename T>
+typename boost::enable_if<is_vector<T>, attribute&>::type
+attribute::operator=(T const& value)
+{
+    typedef typename T::value_type value_type;
+
+    hsize_t dim[1] = { value.size() };
+    H5::DataSpace ds(1, dim);
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	attr = m_node.createAttribute(m_name, ctype<value_type>::type, ds);
+    }
+    attr.write(ctype<value_type>::type, value.data());
+    return *this;
+}
+
+/**
+ * read vector type attribute
+ */
+template <typename T>
+typename boost::enable_if<is_vector<T>, T>::type
+attribute::as()
+{
+    typedef typename T::value_type value_type;
+
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node.openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	throw;
+    }
+
+    H5::DataSpace ds(attr.getSpace());
+    if (!ds.isSimple()) {
+	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
+    }
+    if (ds.getSimpleExtentNdims() != 1) {
+	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not one-dimensional");
+    }
+    hsize_t dim[1];
+    ds.getSimpleExtentDims(dim);
+    std::vector<value_type> value(dim[0]);
     attr.read(ctype<value_type>::type, value.data());
     return value;
 }
