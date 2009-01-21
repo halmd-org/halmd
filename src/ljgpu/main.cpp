@@ -55,6 +55,10 @@ int main(int argc, char **argv)
 	cerr << e.what() << endl;
 	return EXIT_FAILURE;
     }
+    if (mdlib.version() != PROGRAM_VERSION) {
+	cerr << PROGRAM_NAME << ": mismatching program and backend version" << endl;
+	return EXIT_FAILURE;
+    }
 
     // parse backend options
     try {

@@ -23,6 +23,8 @@
 #include <ljgpu/mdsim/ljfluid_host.hpp>
 #include <ljgpu/mdsim/mdsim.hpp>
 #include <ljgpu/options.hpp>
+#include <ljgpu/version.h>
+#include <string>
 using namespace ljgpu;
 
 extern "C" void mdlib_mdsim(options const& opt)
@@ -47,4 +49,9 @@ extern "C" void mdlib_mdsim(options const& opt)
 extern "C" options::description mdlib_options()
 {
     return options_description<MDSIM_IMPL>();
+}
+
+extern "C" std::string mdlib_version()
+{
+    return PROGRAM_VERSION;
 }

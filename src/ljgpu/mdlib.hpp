@@ -29,10 +29,12 @@ struct mdlib : public dl::library
 	dl::library::open(name);
 	options.set(*this, "mdlib_options");
 	mdsim.set(*this, "mdlib_mdsim");
+	version.set(*this, "mdlib_version");
     }
 
     dl::symbol<options::description ()> options;
     dl::symbol<void (ljgpu::options const&)> mdsim;
+    dl::symbol<std::string ()> version;
 };
 
 } // namespace ljgpu
