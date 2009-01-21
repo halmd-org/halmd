@@ -74,7 +74,7 @@ foreach(impl
     COMPILE_DEFINITIONS "MDSIM_BACKEND=${backend};MDSIM_IMPL=${impl}"
     )
   install(TARGETS ljgpu_${target}
-    LIBRARY DESTINATION bin
+    LIBRARY DESTINATION lib
     )
 endforeach(impl)
 
