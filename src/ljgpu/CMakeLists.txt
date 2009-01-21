@@ -2,6 +2,7 @@ add_subdirectory(algorithm)
 add_subdirectory(mdsim)
 add_subdirectory(rng)
 add_subdirectory(sample)
+add_subdirectory(test)
 add_subdirectory(util)
 
 # add program variant compile flags to cmake GUI
