@@ -255,7 +255,7 @@ struct intermediate_scattering_function
 	    density_vector_iterator j0 = (*first.first)[a].rho.begin();
 	    for (density_vector_iterator j = (*i)[b].rho.begin(); j != (*i)[b].rho.end(); ++j, ++j0, ++k) {
 		density_iterator rho0 = (*j0).begin();
-		for (density_iterator rho = (*j).begin(); rho != (*j).end(); ++rho, ++rho0, ++k) {
+		for (density_iterator rho = (*j).begin(); rho != (*j).end(); ++rho, ++rho0) {
 		    *k += rho->first * rho0->first + rho->second * rho0->second;
 		}
 	    }
