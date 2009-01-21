@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     string const backend(opt["backend"].as<string>());
     ljgpu::mdlib mdlib;
     try {
-	mdlib.open(dirname(argv[0]) + ("/libljgpu_" + backend) + ".so");
+	mdlib.open(("libljgpu_" + backend) + ".so");
     }
     catch (std::exception const& e) {
 	cerr << e.what() << endl;
