@@ -152,15 +152,69 @@ void correlation<dimension>::max_samples(uint64_t value)
  * set q-vectors for spatial Fourier transformation
  */
 template <int dimension>
-void correlation<dimension>::q_values(unsigned int n, float box)
+void correlation<dimension>::q_values(std::vector<float> const& values, float margin, float box)
 {
-    // integer multiples of q-value corresponding to periodic box length
-    for (unsigned int k = 1; k <= n; ++k) {
-	m_q_vector.push_back(k * 2 * M_PI / box);
+    m_q_value.resize(values.size());
+    m_q_vector.resize(values.size());
+    m_q_margin = margin;
+
+    double q_lattice = 2 * M_PI / box;
+
+    for (size_t i = 0; i < values.size(); ++i) {
+	// adjust q-value to reciprocal lattice
+	m_q_value[i] = round(values[i] / q_lattice);
+	// upper and lower boundaries within given margin
+	double qq_min = pow(m_q_value[i] * (1 - m_q_margin), 2);
+	double qq_max = pow(m_q_value[i] * (1 + m_q_margin), 2);
+
+	find_q_vectors(qq_min, qq_max, m_q_vector[i]);
+	foreach(vector_type& q, m_q_vector[i]) {
+	    q *= q_lattice;
+	}
+	m_q_value[i] *= q_lattice;
     }
-    // FIXME dynamic structure factor at q ~ 2pi/sigma
-    m_q_vector.push_back(floorf(box) * 2 * M_PI / box);
-    m_q_vector.push_back(ceilf(box) * 2 * M_PI / box);
+}
+
+/**
+ * compute q-vectors within given 3-dimensional spherical shell
+ */
+template <int dimension>
+template <typename T>
+typename boost::enable_if<boost::is_same<vector<double, 3>, T>, void>::type
+correlation<dimension>::find_q_vectors(double qq_min, double qq_max, std::vector<T>& qv)
+{
+    int m = ceil(qq_max);
+    for (int x = -m; x < m; ++x) {
+	for (int y = -m; y < m; ++y) {
+	    for (int z = -m; z < m; ++z) {
+		vector_type q(x, y, z);
+		double qq = q * q;
+		if (qq >= qq_min && qq <= qq_max) {
+		    qv.push_back(q);
+		}
+	    }
+	}
+    }
+}
+
+/**
+ * compute q-vectors within given 2-dimensional spherical shell
+ */
+template <int dimension>
+template <typename T>
+typename boost::enable_if<boost::is_same<vector<double, 2>, T>, void>::type
+correlation<dimension>::find_q_vectors(double qq_min, double qq_max, std::vector<T>& qv)
+{
+    int m = ceil(qq_max);
+    for (int x = -m; x < m; ++x) {
+	for (int y = -m; y < m; ++y) {
+	    vector_type q(x, y);
+	    double qq = q * q;
+	    if (qq >= qq_min && qq <= qq_max) {
+		qv.push_back(q);
+	    }
+	}
+    }
 }
 
 /**
@@ -202,7 +256,7 @@ void correlation<dimension>::open(std::string const& filename, bool binary)
     // allocate correlation function results
     try {
 	foreach (tcf_type& tcf, m_tcf) {
-	    boost::apply_visitor(tcf_allocate_results(m_block_count, m_block_size, m_q_vector.size()), tcf);
+	    boost::apply_visitor(tcf_allocate_results(m_block_count, m_block_size, m_q_value.size()), tcf);
 	}
     }
     catch (std::bad_alloc const& e) {
@@ -259,7 +313,8 @@ void correlation<dimension>::param(H5::Group const& param) const
     node["block_shift"] = m_block_shift;
     node["block_count"] = m_block_count;
     node["max_samples"] = m_max_samples;
-    node["q_values"] = m_q_vector.size();
+    node["q_values"] = m_q_value;
+    node["q_margin"] = m_q_margin;
 }
 
 /**
@@ -307,7 +362,7 @@ void correlation<dimension>::flush()
 
     try {
 	foreach (tcf_type& tcf, m_tcf) {
-	    boost::apply_visitor(tcf_write_results(m_block_time, m_q_vector, max_blocks), tcf);
+	    boost::apply_visitor(tcf_write_results(m_block_time, m_q_value, max_blocks), tcf);
 	}
     }
     catch (H5::FileIException const& e) {

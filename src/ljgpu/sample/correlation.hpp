@@ -22,6 +22,7 @@
 #include <H5Cpp.h>
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
 #include <ljgpu/sample/tcf.hpp>
@@ -44,6 +45,10 @@ public:
     /** correlation function variant type */
     typedef boost::make_variant_over<tcf_types>::type tcf_type;
 
+    typedef typename tcf_sample<dimension>::vector_type vector_type;
+    typedef typename tcf_sample<dimension>::q_value_vector q_value_vector;
+    typedef typename tcf_sample<dimension>::q_vector_vector q_vector_vector;
+
 public:
     /** set total number of simulation steps */
     void steps(uint64_t value, float timestep);
@@ -56,7 +61,7 @@ public:
     /** set maximum number of samples per block */
     void max_samples(uint64_t value);
     /** set q-vectors for spatial Fourier transformation */
-    void q_values(unsigned int n, float box);
+    void q_values(std::vector<float> const& values, float margin, float box);
 
     /** returns total number of simulation steps */
     uint64_t steps() const { return m_steps; }
@@ -92,6 +97,14 @@ public:
     void flush();
 
 private:
+    /** compute q-vectors within given 3-dimensional spherical shell */
+    template <typename vector_type>
+    typename boost::enable_if<boost::is_same<vector<double, 3>, vector_type>, void>::type
+    find_q_vectors(double qq_min, double qq_max, std::vector<vector_type>& qv);
+    /** compute q-vectors within given 2-dimensional spherical shell */
+    template <typename vector_type>
+    typename boost::enable_if<boost::is_same<vector<double, 2>, vector_type>, void>::type
+    find_q_vectors(double qq_min, double qq_max, std::vector<vector_type>& qv);
     /** apply correlation functions to block samples */
     void autocorrelate_block(unsigned int n);
 
@@ -121,8 +134,12 @@ private:
     typename tcf_write_results::block_time_type m_block_time;
     /** maximum number of correlation samples per block */
     uint64_t m_max_samples;
-    /** q-values for spatial Fourier transformation */
-    typename tcf_sample<dimension>::q_value_vector m_q_vector;
+    /** q values for spatial Fourier transformation */
+    q_value_vector m_q_value;
+    /** q vectors for spatial Fourier transformation */
+    q_vector_vector m_q_vector;
+    /** relative deviation of averaging wave vectors */
+    float m_q_margin;
 
     /** correlation functions and results */
     std::vector<tcf_type> m_tcf;

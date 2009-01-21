@@ -41,40 +41,46 @@ namespace ljgpu {
 template <int dimension>
 struct uniform_tcf_sample
 {
-    typedef std::vector<vector<double, dimension> > sample_vector;
+    typedef vector<double, dimension> vector_type;
+    typedef std::vector<vector_type> sample_vector;
     typedef std::vector<double> q_value_vector;
-    /** real or imaginary component vector */
-    typedef vector<double, dimension> density_vector;
+    typedef std::vector<std::vector<vector_type> > q_vector_vector;
+
     /** real and imaginary components of Fourier transformed density rho(q) */
-    typedef std::pair<density_vector, density_vector> density_vector_pair;
+    typedef std::pair<double, double> density_vector_pair;
     /** vector of Fourier transformed densities for different q-values */
-    typedef std::vector<density_vector_pair> density_vector_vector;
+    typedef std::vector<std::vector<density_vector_pair> > density_vector_vector;
 
     /**
      * initialise phase space sample
      */
     template <typename position_sample_vector, typename velocity_sample_vector>
-    void operator()(position_sample_vector const& _r, velocity_sample_vector const& _v, q_value_vector const& q)
+    void operator()(position_sample_vector const& _r, velocity_sample_vector const& _v, q_vector_vector const& q)
     {
+	// copy particle positions
 	r.assign(_r.begin(), _r.end());
+	// copy particle velocities
 	v.assign(_v.begin(), _v.end());
-	rho.assign(q.size(), density_vector_pair(0, 0));
+
+	rho.resize(q.size());
+	for (size_t i = 0; i < rho.size(); ++i) {
+	    rho[i].assign(q[i].size(), density_vector_pair(0, 0));
+	}
 
 	// spatial Fourier transformation
-	for (size_t i = 0; i < r.size(); ++i) {
-	    for (size_t j = 0; j < q.size(); ++j) {
-		// compute averages to maintain accuracy summing over small and large values
-		density_vector r_q(r[i] * q[j]);
-		rho[j].first += (cos(r_q) - rho[j].first) / (i + 1);
-		rho[j].second += (sin(r_q) - rho[j].second) / (i + 1);
+	double const norm = sqrt(r.size());
+	for (size_t i = 0; i < q.size(); ++i) {
+	    for (size_t j = 0; j < q[i].size(); ++j) {
+		for (size_t k = 0; k < r.size(); ++k) {
+		    double const value = r[k] * q[i][j];
+		    // sum over differences to maintain accuracy with small and large values
+		    rho[i][j].first += (std::cos(value) - rho[i][j].first) / (k + 1);
+		    rho[i][j].second += (std::sin(value) - rho[i][j].second) / (k + 1);
+		}
+		// multiply with norm as we compute average value above
+		rho[i][j].first *= norm;
+		rho[i][j].second *= norm;
 	    }
-	}
-	// normalize Fourier transformed density with N^(-1/2)
-	double norm = sqrt(r.size());
-	for (size_t j = 0; j < q.size(); ++j) {
-	    // therefore multiply averages with N^(+1/2)
-	    rho[j].first *= norm;
-	    rho[j].second *= norm;
 	}
     }
 
@@ -90,14 +96,15 @@ template <int dimension>
 struct tcf_sample : boost::array<uniform_tcf_sample<dimension>, 2>
 {
     typedef boost::array<uniform_tcf_sample<dimension>, 2> _Base;
+    typedef typename _Base::value_type::vector_type vector_type;
     typedef typename _Base::value_type::sample_vector sample_vector;
     typedef typename _Base::value_type::q_value_vector q_value_vector;
-    typedef typename _Base::value_type::density_vector density_vector;
+    typedef typename _Base::value_type::q_vector_vector q_vector_vector;
     typedef typename _Base::value_type::density_vector_pair density_vector_pair;
     typedef typename _Base::value_type::density_vector_vector density_vector_vector;
 
     template <typename sample_type>
-    void operator()(sample_type const& sample, q_value_vector const& q)
+    void operator()(sample_type const& sample, q_vector_vector const& q)
     {
 	for (size_t i = 0; i < sample.size(); ++i) {
 	    (*this)[i](sample[i].r, sample[i].v, q);
@@ -237,17 +244,19 @@ struct intermediate_scattering_function
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::first_type::value_type::density_vector_vector::const_iterator rho, rho0;
-	typename output_iterator::value_type::iterator k;
-	size_t dim;
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type sample_type;
+	typedef typename sample_type::density_vector_vector::const_iterator density_vector_iterator;
+	typedef typename sample_type::density_vector_vector::value_type::const_iterator density_iterator;
+	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
 
-	// iterate over phase space samples in block
-	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
-	    // iterate over Fourier transformed densities in current and first sample
-	    for (rho = (*it)[b].rho.begin(), rho0 = (*first.first)[a].rho.begin(), k = result->begin(); rho != (*it)[b].rho.end(); ++rho, ++rho0, ++k) {
-		// accumulate intermediate scattering function
-		for (dim = 0; dim < rho->first.size(); ++dim) {
-		    *k += rho->first[dim] * rho0->first[dim] + rho->second[dim] * rho0->second[dim];
+	for (sample_iterator i = first.first; i != last.first; ++i, ++result) {
+	    q_value_result_iterator k = (*result).begin();
+	    density_vector_iterator j0 = (*first.first)[a].rho.begin();
+	    for (density_vector_iterator j = (*i)[b].rho.begin(); j != (*i)[b].rho.end(); ++j, ++j0, ++k) {
+		density_iterator rho0 = (*j0).begin();
+		for (density_iterator rho = (*j).begin(); rho != (*j).end(); ++rho, ++rho0, ++k) {
+		    *k += rho->first * rho0->first + rho->second * rho0->second;
 		}
 	    }
 	}
@@ -274,27 +283,26 @@ struct self_intermediate_scattering_function
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typename input_iterator::first_type::value_type::sample_vector::const_iterator r, r0;
-	typename input_iterator::first_type::value_type::density_vector f, rq;
-	typename input_iterator::second_type q;
-	typename output_iterator::value_type::iterator k;
-	size_t n, dim;
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type sample_type;
+	typedef typename sample_type::sample_vector::const_iterator position_iterator;
+	typedef typename sample_type::vector_type vector_type;
+	typedef typename input_iterator::second_type q_value_iterator;
+	typedef typename q_value_iterator::value_type::const_iterator q_vector_iterator;
+	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
 
-	// iterate over phase space samples in block
-	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
-	    // iterate over q-values
-	    for (q = first.second, k = result->begin(); q != last.second; ++q, ++k) {
-		// iterate over particle positions in current and first sample
-		for (n = 0, f = 0, r = (*it)[b].r.begin(), r0 = (*first.first)[a].r.begin(); r != (*it)[b].r.end(); ++r, ++r0, ++n) {
-		    // compute averages to maintain accuracy summing over small and large values
-		    rq = (*r - *r0) * (*q);
-		    f += (cos(rq) - f) / (n + 1);
-		}
-		// accumulate self-intermediate scattering function over mutually orthogonal q-vectors
-		for (dim = 0; dim < f.size(); ++dim) {
-		    // result is already normalised due to averge calculation above
-		    // (norm is 1/sqrt(N) * 1/sqrt(N) == 1/N)
-		    *k += f[dim];
+	for (sample_iterator i = first.first; i != last.first; ++i, ++result) {
+	    q_value_result_iterator k = (*result).begin();
+	    for (q_value_iterator j = first.second; j != last.second; ++j, ++k) {
+		for (q_vector_iterator q = (*j).begin(); q != (*j).end(); ++q) {
+		    double value = 0;
+		    size_t count = 0;
+		    position_iterator r0 = (*first.first)[a].r.begin();
+		    for (position_iterator r = (*i)[b].r.begin(); r != (*i)[b].r.end(); ++r, ++r0) {
+			value += (std::cos((*r - *r0) * (*q)) - value) / (count + 1);
+		    }
+		    // result is normalised as we computed the average above
+		    *k += value;
 		}
 	    }
 	}
@@ -445,11 +453,11 @@ class tcf_write_results : public boost::static_visitor<>
 {
 public:
     typedef boost::multi_array<double, 2> block_time_type;
-    typedef std::vector<double> q_vector_type;
+    typedef std::vector<double> q_value_vector;
 
 public:
-    tcf_write_results(block_time_type const& block_time, q_vector_type const& q_vector, unsigned int max_blocks)
-	: block_time(block_time), q_vector(q_vector), max_blocks(max_blocks) {}
+    tcf_write_results(block_time_type const& block_time, q_value_vector const& q_value, unsigned int max_blocks)
+	: block_time(block_time), q_value(q_value), max_blocks(max_blocks) {}
 
     template <typename T>
     void operator()(T& tcf) const
@@ -494,7 +502,7 @@ public:
 	    for (unsigned int k = 0; k < dim[1]; ++k) {
 		for (unsigned int l = 0; l < dim[2]; ++l) {
 		    // q-value
-		    data[j][k][l][0] = q_vector[j];
+		    data[j][k][l][0] = q_value[j];
 		    // time interval
 		    data[j][k][l][1] = block_time[k][l];
 		    // mean average
@@ -515,7 +523,7 @@ public:
 
 private:
     block_time_type const& block_time;
-    q_vector_type const& q_vector;
+    q_value_vector const& q_value;
     unsigned int max_blocks;
 };
 

@@ -22,6 +22,7 @@
 #include <boost/assign.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <boost/multi_array.hpp>
 #include <fstream>
 #include <iostream>
 #include <ljgpu/options.hpp>
@@ -30,6 +31,8 @@
 #include <ljgpu/version.h>
 #include <map>
 namespace po = boost::program_options;
+
+#define foreach BOOST_FOREACH
 
 namespace boost { namespace program_options
 {
@@ -227,7 +230,7 @@ namespace std
 template <typename T, size_t size>
 static istream& operator>>(istream& is, boost::array<T, size>& value)
 {
-    BOOST_FOREACH(T& v, value) {
+    foreach (T& v, value) {
 	string str;
 	getline(is, str, ',');
 	v = boost::lexical_cast<T>(str);
@@ -238,8 +241,38 @@ static istream& operator>>(istream& is, boost::array<T, size>& value)
 template <typename T, size_t size>
 static ostream& operator<<(ostream& os, boost::array<T, size> const& value)
 {
-    BOOST_FOREACH(T const& v, value) {
+    foreach (T const& v, value) {
 	if (&v != &value.front()) {
+	    os << ',';
+	}
+	os << v;
+    }
+    return os;
+}
+
+/**
+ * extract comma-separated option values into variable-size array
+ */
+template <typename T>
+static istream& operator>>(istream& is, boost::multi_array<T, 1>& value)
+{
+    std::vector<T> v;
+    string str;
+    while (!is.eof()) {
+	getline(is, str, ',');
+	v.push_back(boost::lexical_cast<T>(str));
+    }
+    boost::array<size_t, 1> extents = boost::assign::list_of(v.size());
+    value.resize(extents);
+    std::copy(v.begin(), v.end(), value.begin());
+    return is;
+}
+
+template <typename T>
+static ostream& operator<<(ostream& os, boost::multi_array<T, 1> const& value)
+{
+    foreach (T const& v, value) {
+	if (&v != &(*value.begin())) {
 	    os << ',';
 	}
 	os << v;
@@ -321,7 +354,7 @@ void options::parse(po::options_description const& opt)
 
 	// parse optional parameter input files
 	if (vm.count("input")) {
-	    BOOST_FOREACH(string const& fn, vm["input"].as<vector<string> >()) {
+	    foreach (string const& fn, vm["input"].as<vector<string> >()) {
 		ifstream ifs(fn.c_str());
 		if (ifs.fail()) {
 		    cerr << PROGRAM_NAME ": could not open parameter input file '" << fn << "'\n";
@@ -413,8 +446,10 @@ void options::parse(po::options_description const& opt)
 		      vm_["block-size"]);
 	    po::store(po::parse_attribute<uint64_t>(node, "max_samples"),
 		      vm_["max-samples"]);
-	    po::store(po::parse_attribute<unsigned int>(node, "q_values"),
+	    po::store(po::parse_attribute<boost::multi_array<float, 1> >(node, "q_values"),
 		      vm_["q-values"]);
+	    po::store(po::parse_attribute<float>(node, "q_margin"),
+		      vm_["q-margin"]);
 	}
 	catch (H5::Exception const& e) {
 	    cerr << PROGRAM_NAME ": " << "failed to read parameters from HDF5 input file\n";
@@ -473,8 +508,10 @@ options_description<mdsim_impl>::options_description()
 	 "block size")
 	("max-samples", po::value<uint64_t>()->default_value(10000),
 	 "maximum number of samples per block")
-	("q-values", po::value<unsigned int>()->default_value(5),
-	 "q-values for Fourier transform")
+	("q-values", po::value<boost::multi_array<float, 1> >(),
+	 "wave vector value(s) for correlation functions")
+	("q-margin", po::value<float>()->default_value(0.001),
+	 "relative deviation of averaging wave vectors")
 	;
     add(tcf_desc);
 

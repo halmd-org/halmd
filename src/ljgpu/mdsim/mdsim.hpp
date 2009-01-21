@@ -20,6 +20,7 @@
 #define LJGPU_MDSIM_HPP
 
 #include <boost/bind.hpp>
+#include <boost/multi_array.hpp>
 #include <cuda_wrapper.hpp>
 #include <fstream>
 #include <iostream>
@@ -233,8 +234,17 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     tcf.block_size(opt["block-size"].as<unsigned int>());
     // set maximum number of samples per block
     tcf.max_samples(opt["max-samples"].as<uint64_t>());
-    // set q-vectors for spatial Fourier transformation
-    tcf.q_values(opt["q-values"].as<unsigned int>(), fluid.box());
+
+    std::vector<float> q;
+    if (!opt["q-values"].empty()) {
+	boost::multi_array<float, 1> v = opt["q-values"].as<boost::multi_array<float, 1> >();
+	q.assign(v.begin(), v.end());
+    }
+    else {
+	// static structure factor peak at q ~ 2pi/sigma
+	q.push_back(2 * M_PI);
+    }
+    tcf.q_values(q, opt["q-margin"].as<float>(), fluid.box());
 }
 
 /**
