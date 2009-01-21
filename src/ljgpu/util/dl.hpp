@@ -42,11 +42,11 @@ public:
 	if (handle)
 	    close();
 
-	// search for library in system paths, as described in dlopen(3)
-	handle = dlopen(name.c_str(), RTLD_GLOBAL|RTLD_NOW);
+	// search for library in current directory
+	handle = dlopen(("./" + name).c_str(), RTLD_GLOBAL|RTLD_NOW);
 	if (!handle) {
-	    // fall back to current directory
-	    handle = dlopen(("./" + name).c_str(), RTLD_GLOBAL|RTLD_NOW);
+	    // fall back to default search paths, as described in dlopen(3)
+	    handle = dlopen(name.c_str(), RTLD_GLOBAL|RTLD_NOW);
 	    if (!handle) {
 		throw error(dlerror());
 	    }
