@@ -244,7 +244,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 	// static structure factor peak at q ~ 2pi/sigma
 	q.push_back(2 * M_PI);
     }
-    tcf.q_values(q, opt["q-margin"].as<float>(), fluid.box());
+    tcf.q_values(q, opt["q-error"].as<float>(), fluid.box());
 }
 
 /**

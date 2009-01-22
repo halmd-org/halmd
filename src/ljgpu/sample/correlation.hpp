@@ -61,7 +61,7 @@ public:
     /** set maximum number of samples per block */
     void max_samples(uint64_t value);
     /** set q-vectors for spatial Fourier transformation */
-    void q_values(std::vector<float> const& values, float margin, float box);
+    void q_values(std::vector<float> const& values, float error, float box);
 
     /** returns total number of simulation steps */
     uint64_t steps() const { return m_steps; }
@@ -97,14 +97,14 @@ public:
     void flush();
 
 private:
-    /** compute q-vectors within given 3-dimensional spherical shell */
-    template <typename vector_type>
-    typename boost::enable_if<boost::is_same<vector<double, 3>, vector_type>, void>::type
-    find_q_vectors(int q_min, int q_max, std::vector<vector_type>& q);
-    /** compute q-vectors within given 2-dimensional spherical shell */
-    template <typename vector_type>
-    typename boost::enable_if<boost::is_same<vector<double, 2>, vector_type>, void>::type
-    find_q_vectors(int q_min, int q_max, std::vector<vector_type>& q);
+    /** compute lattice points in first octant on surface of 3-dimensional spheres */
+    template <typename T>
+    typename boost::enable_if<boost::is_same<vector<double, 3>, T>, void>::type
+    find_q_vectors(std::vector<std::pair<int, int> > const& qq, int q_max, std::vector<std::vector<T> >& q);
+    /** compute lattice points in first quadrant on surface of 2-dimensional spheres */
+    template <typename T>
+    typename boost::enable_if<boost::is_same<vector<double, 2>, T>, void>::type
+    find_q_vectors(std::vector<std::pair<int, int> > const& qq, int q_max, std::vector<std::vector<T> >& q);
     /** apply correlation functions to block samples */
     void autocorrelate_block(unsigned int n);
 
@@ -139,7 +139,7 @@ private:
     /** q vectors for spatial Fourier transformation */
     q_vector_vector m_q_vector;
     /** relative deviation of averaging wave vectors */
-    float m_q_margin;
+    float m_q_error;
 
     /** correlation functions and results */
     std::vector<tcf_type> m_tcf;

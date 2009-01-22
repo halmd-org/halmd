@@ -152,22 +152,33 @@ void correlation<dimension>::max_samples(uint64_t value)
  * set q-vectors for spatial Fourier transformation
  */
 template <int dimension>
-void correlation<dimension>::q_values(std::vector<float> const& values, float margin, float box)
+void correlation<dimension>::q_values(std::vector<float> const& values, float error, float box)
 {
+    typedef std::pair<int, int> q_pair;
+    typedef typename q_vector_vector::value_type q_vector_value;
+
     m_q_value.resize(values.size());
     m_q_vector.resize(values.size());
-    m_q_margin = margin;
+    m_q_error = error;
 
-    double q_lattice = 2 * M_PI / box;
+    double const q_lattice = 2 * M_PI / box;
+    std::vector<q_pair> qq;
+    int q_max = 0;
 
     for (size_t i = 0; i < values.size(); ++i) {
 	// adjust q-value to reciprocal lattice
 	m_q_value[i] = round(values[i] / q_lattice);
-	// upper and lower boundaries within given margin
-	int q_max = std::floor(m_q_value[i] * (1 + m_q_margin));
-	int q_min = std::ceil(m_q_value[i] * (1 - m_q_margin));
+	// upper and lower boundaries within given error
+	int q_upper = std::floor(m_q_value[i] * (1 + m_q_error));
+	int q_lower = std::ceil(m_q_value[i] * (1 - m_q_error));
 
-	find_q_vectors(q_min, q_max, m_q_vector[i]);
+	qq.push_back(q_pair(q_lower * q_lower, q_upper * q_upper));
+	q_max = std::max(q_max, q_upper);
+    }
+
+    find_q_vectors(qq, q_max, m_q_vector);
+
+    for (size_t i = 0; i < values.size(); ++i) {
 	foreach(vector_type& q, m_q_vector[i]) {
 	    q *= q_lattice;
 	}
@@ -178,24 +189,24 @@ void correlation<dimension>::q_values(std::vector<float> const& values, float ma
 }
 
 /**
- * compute q-vectors within given 3-dimensional spherical shell
+ * compute lattice points in first octant on surface of 3-dimensional spheres
  */
 template <int dimension>
 template <typename T>
 typename boost::enable_if<boost::is_same<vector<double, 3>, T>, void>::type
-correlation<dimension>::find_q_vectors(int q_min, int q_max, std::vector<T>& q)
+correlation<dimension>::find_q_vectors(std::vector<std::pair<int, int> > const& qq, int q_max, std::vector<std::vector<T> >& q)
 {
-    // FIXME fast algorithm for lattice points on Ewald's sphere
-    int qq_max = q_max * q_max;
-    int qq_min = q_min * q_min;
-    for (int x = -q_max; x <= q_max; ++x) {
+    // FIXME fast algorithm for lattice points on surface of Ewald's sphere
+    for (int x = 0; x <= q_max; ++x) {
 	int xx = x * x;
-	for (int y = -q_max; y <= q_max; ++y) {
+	for (int y = 0; y <= q_max; ++y) {
 	    int yy = xx + y * y;
-	    for (int z = -q_max; z <= q_max; ++z) {
+	    for (int z = 0; z <= q_max; ++z) {
 		int zz = yy + z * z;
-		if (zz >= qq_min && zz <= qq_max) {
-		    q.push_back(vector_type(x, y, z));
+		for (size_t i = 0; i < qq.size(); ++i) {
+		    if (zz >= qq[i].first && zz <= qq[i].second) {
+			q[i].push_back(vector_type(x, y, z));
+		    }
 		}
 	    }
 	}
@@ -203,22 +214,22 @@ correlation<dimension>::find_q_vectors(int q_min, int q_max, std::vector<T>& q)
 }
 
 /**
- * compute q-vectors within given 2-dimensional spherical shell
+ * compute lattice points in first quadrant on surface of 2-dimensional spheres
  */
 template <int dimension>
 template <typename T>
 typename boost::enable_if<boost::is_same<vector<double, 2>, T>, void>::type
-correlation<dimension>::find_q_vectors(int q_min, int q_max, std::vector<T>& q)
+correlation<dimension>::find_q_vectors(std::vector<std::pair<int, int> > const& qq, int q_max, std::vector<std::vector<T> >& q)
 {
-    // FIXME fast algorithm for lattice points on Ewald's sphere
-    int qq_max = q_max * q_max;
-    int qq_min = q_min * q_min;
-    for (int x = -q_max; x <= q_max; ++x) {
+    // FIXME fast algorithm for lattice points on surface of Ewald's sphere
+    for (int x = 0; x <= q_max; ++x) {
 	int xx = x * x;
-	for (int y = -q_max; y <= q_max; ++y) {
+	for (int y = 0; y <= q_max; ++y) {
 	    int yy = xx + y * y;
-	    if (yy >= qq_min && yy <= qq_max) {
-		q.push_back(vector_type(x, y));
+	    for (size_t i = 0; i < qq.size(); ++i) {
+		if (yy >= qq[i].first && yy <= qq[i].second) {
+		    q[i].push_back(vector_type(x, y));
+		}
 	    }
 	}
     }
@@ -321,7 +332,7 @@ void correlation<dimension>::param(H5::Group const& param) const
     node["block_count"] = m_block_count;
     node["max_samples"] = m_max_samples;
     node["q_values"] = m_q_value;
-    node["q_margin"] = m_q_margin;
+    node["q_error"] = m_q_error;
 }
 
 /**

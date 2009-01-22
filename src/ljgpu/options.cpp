@@ -448,8 +448,8 @@ void options::parse(po::options_description const& opt)
 		      vm_["max-samples"]);
 	    po::store(po::parse_attribute<boost::multi_array<float, 1> >(node, "q_values"),
 		      vm_["q-values"]);
-	    po::store(po::parse_attribute<float>(node, "q_margin"),
-		      vm_["q-margin"]);
+	    po::store(po::parse_attribute<float>(node, "q_error"),
+		      vm_["q-error"]);
 	}
 	catch (H5::Exception const& e) {
 	    cerr << PROGRAM_NAME ": " << "failed to read parameters from HDF5 input file\n";
@@ -510,7 +510,7 @@ options_description<mdsim_impl>::options_description()
 	 "maximum number of samples per block")
 	("q-values", po::value<boost::multi_array<float, 1> >(),
 	 "wave vector value(s) for correlation functions")
-	("q-margin", po::value<float>()->default_value(0.001),
+	("q-error", po::value<float>()->default_value(0.001),
 	 "relative deviation of averaging wave vectors")
 	;
     add(tcf_desc);
