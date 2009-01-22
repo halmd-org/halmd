@@ -21,7 +21,9 @@
 
 #include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
-#include <cuda_wrapper.hpp>
+#ifdef WITH_CUDA
+# include <cuda_wrapper.hpp>
+#endif
 #include <fstream>
 #include <iostream>
 #include <ljgpu/mdsim/impl.hpp>
@@ -514,6 +516,7 @@ void mdsim<mdsim_backend>::thermostat(boost::true_type const&)
 template <typename mdsim_backend>
 void mdsim<mdsim_backend>::cuda_device(boost::true_type const&)
 {
+#ifdef WITH_CUDA
     int dev = opt["device"].as<int>();
     if (opt["device"].defaulted()) {
 	char const* env = getenv("CUDA_DEVICE");
@@ -541,6 +544,7 @@ void mdsim<mdsim_backend>::cuda_device(boost::true_type const&)
     LOG("CUDA device major revision: " << prop.major());
     LOG("CUDA device minor revision: " << prop.minor());
     LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
+#endif /* WITH_CUDA */
 }
 
 /**
@@ -549,10 +553,12 @@ void mdsim<mdsim_backend>::cuda_device(boost::true_type const&)
 template <typename mdsim_backend>
 void mdsim<mdsim_backend>::cuda_allocated_memory(boost::true_type const&)
 {
+#ifdef WITH_CUDA
     int const dev = cuda::device::get();
     LOG("GPU allocated global device memory: " << cuda::device::mem_get_used(dev) << " bytes");
     LOG("GPU available global device memory: " << cuda::device::mem_get_free(dev) << " bytes");
     LOG("GPU total global device memory: " << cuda::device::mem_get_total(dev) << " bytes");
+#endif /* WITH_CUDA */
 }
 
 /**

@@ -309,7 +309,12 @@ void options::parse(int argc, char** argv)
 	 "output version and exit")
 	("help",
 	 "display this help and exit")
-	("backend", po::value<string>()->default_value("gpu_neighbour"),
+	("backend",
+#ifdef WITH_CUDA
+	 po::value<string>()->default_value("gpu_neighbour"),
+#else
+	 po::value<string>()->default_value("host"),
+#endif
 	 "MD simulation backend")
 	;
 

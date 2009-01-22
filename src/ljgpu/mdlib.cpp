@@ -17,9 +17,11 @@
  */
 
 #include <ljgpu/mdsim/hardsphere.hpp>
-#include <ljgpu/mdsim/ljfluid_gpu_cell.hpp>
-#include <ljgpu/mdsim/ljfluid_gpu_nbr.hpp>
-#include <ljgpu/mdsim/ljfluid_gpu_square.hpp>
+#ifdef WITH_CUDA
+# include <ljgpu/mdsim/ljfluid_gpu_cell.hpp>
+# include <ljgpu/mdsim/ljfluid_gpu_nbr.hpp>
+# include <ljgpu/mdsim/ljfluid_gpu_square.hpp>
+#endif
 #include <ljgpu/mdsim/ljfluid_host.hpp>
 #include <ljgpu/mdsim/mdsim.hpp>
 #include <ljgpu/options.hpp>

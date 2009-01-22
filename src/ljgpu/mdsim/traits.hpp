@@ -19,7 +19,9 @@
 #ifndef LJGPU_MDSIM_TRAITS_HPP
 #define LJGPU_MDSIM_TRAITS_HPP
 
-#include <cuda/vector_types.h>
+#ifdef WITH_CUDA
+# include <cuda/vector_types.h>
+#endif
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/math/vector2d.hpp>
@@ -31,6 +33,7 @@ namespace ljgpu
 template <typename mdsim_impl>
 struct mdsim_traits;
 
+#ifdef WITH_CUDA
 template <>
 struct mdsim_traits<ljfluid_impl_gpu_base<2> >
 {
@@ -51,6 +54,19 @@ struct mdsim_traits<ljfluid_impl_gpu_base<3> >
     typedef mdsim_sample<float_type, dimension> sample_type;
 };
 
+template <int dimension>
+struct mdsim_traits<ljfluid_impl_gpu_square<dimension> >
+: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
+
+template <int dimension>
+struct mdsim_traits<ljfluid_impl_gpu_cell<dimension> >
+: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
+
+template <int dimension>
+struct mdsim_traits<ljfluid_impl_gpu_neighbour<dimension> >
+: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
+#endif /* WITH_CUDA */
+
 template <>
 struct mdsim_traits<ljfluid_impl_host<2> >
 {
@@ -68,18 +84,6 @@ struct mdsim_traits<ljfluid_impl_host<3> >
     typedef vector<float_type, dimension> vector_type;
     typedef mdsim_sample<float_type, dimension> sample_type;
 };
-
-template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_square<dimension> >
-: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
-
-template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_cell<dimension> >
-: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
-
-template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_neighbour<dimension> >
-: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
 
 template <int dimension>
 struct mdsim_traits<hardsphere_impl<dimension> >

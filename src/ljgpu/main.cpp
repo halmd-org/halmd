@@ -20,7 +20,9 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
-#include <cuda_wrapper.hpp>
+#ifdef WITH_CUDA
+# include <cuda_wrapper.hpp>
+#endif
 #include <exception>
 #include <iostream>
 #include <libgen.h>
@@ -92,11 +94,13 @@ int main(int argc, char **argv)
 	mdlib.mdsim(opt);
 #ifdef NDEBUG
     }
+#ifdef WITH_CUDA
     catch (cuda::error const& e) {
 	LOG_ERROR("CUDA: " << e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
+#endif
     catch (std::exception const& e) {
 	LOG_ERROR(e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");

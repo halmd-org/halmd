@@ -1,1 +1,3 @@
-add_subdirectory(gpu)
+if(WITH_CUDA)
+  add_subdirectory(gpu)
+endif(WITH_CUDA)

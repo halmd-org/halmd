@@ -22,7 +22,9 @@
 #include <boost/array.hpp>
 #include <cmath>
 #include <iostream>
-#include <cuda_wrapper.hpp>
+#ifdef WITH_CUDA
+# include <cuda/cuda_runtime.h>
+#endif
 #include <xdr/iostream.hpp>
 
 // overloaded math functions must be defined in global namespace
@@ -55,6 +57,7 @@ public:
     /**
      * initialization by GPU floating-point vector
      */
+#ifdef WITH_CUDA
     vector(float2 const& v)
     {
 	(*this)[0] = v.x;
@@ -72,6 +75,7 @@ public:
 	(*this)[0] = v.x;
 	(*this)[1] = v.y;
     }
+#endif /* WITH_CUDA */
 
     /**
      * initialization by scalar
@@ -91,10 +95,10 @@ public:
 	(*this)[1] = y;
     }
 
-
     /**
      * convert to GPU floating-point type
      */
+#ifdef WITH_CUDA
     operator float2()
     {
 	return make_float2((*this)[0], (*this)[1]);
@@ -109,6 +113,7 @@ public:
     {
 	return make_float4((*this)[0], (*this)[1], 0, 0);
     }
+#endif /* WITH_CUDA */
 
     /**
      * equality comparison

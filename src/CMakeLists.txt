@@ -1,3 +1,6 @@
-add_subdirectory(cumem)
 add_subdirectory(ljgpu)
-add_subdirectory(nvlock)
+
+if(WITH_CUDA)
+  add_subdirectory(cumem)
+  add_subdirectory(nvlock)
+endif(WITH_CUDA)
