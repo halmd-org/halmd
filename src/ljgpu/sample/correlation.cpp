@@ -164,14 +164,16 @@ void correlation<dimension>::q_values(std::vector<float> const& values, float ma
 	// adjust q-value to reciprocal lattice
 	m_q_value[i] = round(values[i] / q_lattice);
 	// upper and lower boundaries within given margin
-	double qq_min = pow(m_q_value[i] * (1 - m_q_margin), 2);
-	double qq_max = pow(m_q_value[i] * (1 + m_q_margin), 2);
+	int q_max = std::floor(m_q_value[i] * (1 + m_q_margin));
+	int q_min = std::ceil(m_q_value[i] * (1 - m_q_margin));
 
-	find_q_vectors(qq_min, qq_max, m_q_vector[i]);
+	find_q_vectors(q_min, q_max, m_q_vector[i]);
 	foreach(vector_type& q, m_q_vector[i]) {
 	    q *= q_lattice;
 	}
 	m_q_value[i] *= q_lattice;
+
+	LOG("|q| = " << m_q_value[i] << " with " << m_q_vector[i].size() << " vectors");
     }
 }
 
@@ -181,16 +183,19 @@ void correlation<dimension>::q_values(std::vector<float> const& values, float ma
 template <int dimension>
 template <typename T>
 typename boost::enable_if<boost::is_same<vector<double, 3>, T>, void>::type
-correlation<dimension>::find_q_vectors(double qq_min, double qq_max, std::vector<T>& qv)
+correlation<dimension>::find_q_vectors(int q_min, int q_max, std::vector<T>& q)
 {
-    int m = ceil(qq_max);
-    for (int x = -m; x < m; ++x) {
-	for (int y = -m; y < m; ++y) {
-	    for (int z = -m; z < m; ++z) {
-		vector_type q(x, y, z);
-		double qq = q * q;
-		if (qq >= qq_min && qq <= qq_max) {
-		    qv.push_back(q);
+    // FIXME fast algorithm for lattice points on Ewald's sphere
+    int qq_max = q_max * q_max;
+    int qq_min = q_min * q_min;
+    for (int x = -q_max; x <= q_max; ++x) {
+	int xx = x * x;
+	for (int y = -q_max; y <= q_max; ++y) {
+	    int yy = xx + y * y;
+	    for (int z = -q_max; z <= q_max; ++z) {
+		int zz = yy + z * z;
+		if (zz >= qq_min && zz <= qq_max) {
+		    q.push_back(vector_type(x, y, z));
 		}
 	    }
 	}
@@ -203,15 +208,17 @@ correlation<dimension>::find_q_vectors(double qq_min, double qq_max, std::vector
 template <int dimension>
 template <typename T>
 typename boost::enable_if<boost::is_same<vector<double, 2>, T>, void>::type
-correlation<dimension>::find_q_vectors(double qq_min, double qq_max, std::vector<T>& qv)
+correlation<dimension>::find_q_vectors(int q_min, int q_max, std::vector<T>& q)
 {
-    int m = ceil(qq_max);
-    for (int x = -m; x < m; ++x) {
-	for (int y = -m; y < m; ++y) {
-	    vector_type q(x, y);
-	    double qq = q * q;
-	    if (qq >= qq_min && qq <= qq_max) {
-		qv.push_back(q);
+    // FIXME fast algorithm for lattice points on Ewald's sphere
+    int qq_max = q_max * q_max;
+    int qq_min = q_min * q_min;
+    for (int x = -q_max; x <= q_max; ++x) {
+	int xx = x * x;
+	for (int y = -q_max; y <= q_max; ++y) {
+	    int yy = xx + y * y;
+	    if (yy >= qq_min && yy <= qq_max) {
+		q.push_back(vector_type(x, y));
 	    }
 	}
     }

@@ -100,11 +100,11 @@ private:
     /** compute q-vectors within given 3-dimensional spherical shell */
     template <typename vector_type>
     typename boost::enable_if<boost::is_same<vector<double, 3>, vector_type>, void>::type
-    find_q_vectors(double qq_min, double qq_max, std::vector<vector_type>& qv);
+    find_q_vectors(int q_min, int q_max, std::vector<vector_type>& q);
     /** compute q-vectors within given 2-dimensional spherical shell */
     template <typename vector_type>
     typename boost::enable_if<boost::is_same<vector<double, 2>, vector_type>, void>::type
-    find_q_vectors(double qq_min, double qq_max, std::vector<vector_type>& qv);
+    find_q_vectors(int q_min, int q_max, std::vector<vector_type>& q);
     /** apply correlation functions to block samples */
     void autocorrelate_block(unsigned int n);
 
