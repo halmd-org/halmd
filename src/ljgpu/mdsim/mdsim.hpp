@@ -404,11 +404,16 @@ void mdsim<mdsim_backend>::operator()()
     copy(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
     // save last phase space sample
     traj.write(fluid.sample(), tcf.steps() * fluid.timestep());
-
     // sample performance counters
     prf.sample(fluid.times());
-    // commit HDF5 performance datasets
-    prf.commit();
+
+    // print performance statistics
+    std::stringstream is;
+    std::string str;
+    is << prf.times();
+    while (std::getline(is, str)) {
+	LOG(str);
+    }
 
     timer.stop();
     LOG("finished MD simulation");

@@ -25,8 +25,11 @@
 #include <limits>
 #include <ljgpu/math/stat.hpp>
 #include <ljgpu/sample/perf.hpp>
+#include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
+
+#define foreach BOOST_FOREACH
 
 namespace ljgpu
 {
@@ -34,7 +37,7 @@ namespace ljgpu
 /**
  * performance counter descriptions
  */
-perf::desc_map perf::desc = boost::assign::map_list_of
+perf::desc_map perf::m_desc = boost::assign::map_list_of
     ("anderson_thermostat",	"Anderson thermostat")
     ("boltzmann",		"Boltzmann distribution")
     ("event_queue",		"event queue processing")
@@ -70,7 +73,6 @@ void perf::open(std::string const& filename)
 	throw exception("failed to create performance data file");
     }
     m_tid = H5::PredType::NATIVE_FLOAT;
-    m_file.createGroup("param");
 }
 
 /**
@@ -78,11 +80,10 @@ void perf::open(std::string const& filename)
  */
 void perf::sample(counters const& times)
 {
-    BOOST_FOREACH(counter const& i, times) {
+    foreach (counter const& i, times) {
 	// accumulate values of accumulator
 	m_times[i.first] += i.second;
     }
-    m_dirty = true;
 }
 
 /**
@@ -100,53 +101,73 @@ std::ostream& operator<<(std::ostream& os, accumulator<T> const& acc)
 }
 
 /**
- * commit HDF5 performance datasets
+ * output formatted performance statistics to stream
  */
-void perf::commit()
+std::ostream& operator<<(std::ostream& os, perf::counters const& times)
 {
     std::vector<std::string> keys;
-    BOOST_FOREACH(counter const& i, m_times) {
+    foreach (perf::counter const& i, times) {
 	keys.push_back(i.first);
     }
     std::sort(keys.begin(), keys.end());
-    BOOST_FOREACH(std::string const& key, keys) {
-	LOG(desc.at(key) << ": " << m_times[key]);
+    foreach (std::string const& key, keys) {
+	os << perf::desc(key) << ": " << times.at(key) << std::endl;
     }
-
-    // write pending performance data to HDF5 file
-    flush(false);
-
-    BOOST_FOREACH(counter& i, m_times) {
-	// accumulate values of accumulator
-	i.second.clear();
-    }
-    // increment offset in HDF5 datasets
-    m_offset++;
-    // clear pending data bit
-    m_dirty = false;
+    return os;
 }
 
 /**
  * write performance data to HDF5 file
  */
-void perf::flush(bool force)
+void perf::flush()
 {
-    if (!m_dirty)
-	return;
-
-    if (m_offset == 0) {
-	create_datasets();
+    H5::Group node;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::FileIException);
+	node = m_file.openGroup("times");
+    }
+    catch (H5::FileIException const&) {
+	node = m_file.createGroup("times");
     }
 
-    write_datasets();
+    // dataspace for performance data
+    hsize_t dim[2] = { 1, 3 };
+    H5::DataSpace ds_file(2, dim);
 
-    if (force) {
-	try {
-	    m_file.flush(H5F_SCOPE_GLOBAL);
+    try {
+	foreach (counter const& i, m_times) {
+	    std::string const& key = i.first;
+	    if (m_dataset.find(key) == m_dataset.end()) {
+		m_dataset[key] = node.createDataSet(key.c_str(), m_tid, ds_file);
+	    }
 	}
-	catch (H5::FileIException const& e) {
-	    throw exception("failed to flush HDF5 performance file to disk");
+    }
+    catch (H5::FileIException const&) {
+	throw exception("failed to create HDF5 performance datasets");
+    }
+
+    // memory dataspace
+    H5::DataSpace ds_mem(2, dim);
+    boost::array<float, 3> data;
+    try {
+	foreach (counter const& i, m_times) {
+	    // write to HDF5 dataset
+	    m_dataset[i.first].extend(dim);
+	    data[0] = i.second.mean();
+	    data[1] = i.second.std();
+	    data[2] = i.second.count();
+	    m_dataset[i.first].write(data.c_array(), m_tid, ds_mem, ds_file);
 	}
+    }
+    catch (H5::FileIException const&) {
+	throw exception("failed to write performance data to HDF5 file");
+    }
+
+    try {
+	m_file.flush(H5F_SCOPE_GLOBAL);
+    }
+    catch (H5::FileIException const& e) {
+	throw exception("failed to flush HDF5 performance file to disk");
     }
 }
 
@@ -156,66 +177,13 @@ void perf::flush(bool force)
 void perf::close()
 {
     // write pending performance data to HDF5 file
-    flush(false);
+    flush();
 
     try {
 	m_file.close();
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to close performance data file");
-    }
-}
-
-void perf::create_datasets()
-{
-    // extensible dataspace for performance data
-    hsize_t dim[2] = { 0, 3 };
-    hsize_t max_dim[2] = { H5S_UNLIMITED, 3 };
-    hsize_t chunk_dim[2] = { 1, 3 };
-    H5::DataSpace ds(2, dim, max_dim);
-    H5::DSetCreatPropList cparms;
-    cparms.setChunk(2, chunk_dim);
-
-    try {
-	H5::Group node(m_file.createGroup("times"));
-	BOOST_FOREACH(counter const& i, m_times) {
-	    std::string const& key = i.first;
-	    if (m_dataset.find(key) == m_dataset.end()) {
-		m_dataset[key] = node.createDataSet(key.c_str(), m_tid, ds, cparms);
-	    }
-	}
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create HDF5 performance datasets");
-    }
-}
-
-void perf::write_datasets()
-{
-    // file dataspace
-    hsize_t dim[2] = { m_offset + 1, 3 };
-    hsize_t count[2] = { 1, 1 };
-    hsize_t start[2] = { m_offset, 0 };
-    hsize_t stride[2] = { 1, 1 };
-    hsize_t block[2] = { 1, 3 };
-    H5::DataSpace ds(2, dim);
-    ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-
-    // memory dataspace
-    H5::DataSpace mem_ds(2, block);
-    boost::array<float, 3> data;
-    try {
-	BOOST_FOREACH(counter const& i, m_times) {
-	    // write to HDF5 dataset
-	    m_dataset[i.first].extend(dim);
-	    data[0] = i.second.mean();
-	    data[1] = i.second.std();
-	    data[2] = i.second.count();
-	    m_dataset[i.first].write(data.c_array(), m_tid, mem_ds, ds);
-	}
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to write performance data to HDF5 file");
     }
 }
 

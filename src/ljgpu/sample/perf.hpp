@@ -43,23 +43,21 @@ public:
     typedef boost::unordered_map<std::string, std::string> desc_map;
 
 public:
-    perf() : m_offset(0), m_dirty(false) {}
     /** create HDF5 performance data output file */
     void open(std::string const& filename);
     /** returns HDF5 parameter group */
     operator H5param() { return m_file; }
     /** sample performance data */
     void sample(counters const& times);
-    /** clear performance counters */
-    void commit();
     /** write performance data to HDF5 file */
-    void flush(bool force=true);
+    void flush();
     /** close HDF5 file */
     void close();
 
-private:
-    void create_datasets();
-    void write_datasets();
+    /** returns accumulators */
+    counters const& times() const { return m_times; }
+    /** returns accumulator description */
+    static std::string const& desc(std::string name) { return m_desc.at(name); }
 
 private:
     /** CPU tick accumulators */
@@ -70,13 +68,12 @@ private:
     boost::unordered_map<std::string, H5::DataSet> m_dataset;
     /** HDF5 floating-point data type */
     H5::DataType m_tid;
-    /** dataset offset */
-    uint64_t m_offset;
-    /** pending data bit */
-    bool m_dirty;
     /* performance counter descriptions */
-    static desc_map desc;
+    static desc_map m_desc;
 };
+
+/** output formatted performance statistics to stream */
+std::ostream& operator<<(std::ostream& os, perf::counters const& times);
 
 } // namespace ljgpu
 
