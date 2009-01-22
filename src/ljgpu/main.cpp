@@ -18,6 +18,7 @@
 
 #include <H5Cpp.h>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <cuda_wrapper.hpp>
 #include <exception>
@@ -49,7 +50,9 @@ int main(int argc, char **argv)
     string const backend(opt["backend"].as<string>());
     ljgpu::mdlib mdlib;
     try {
-	mdlib.open(("libljgpu_" + backend) + ".so");
+	boost::filesystem::path exe(argv[0]);
+	boost::filesystem::path lib("libljgpu_" + backend + ".so");
+	mdlib.open((exe.parent_path() / lib));
     }
     catch (std::exception const& e) {
 	cerr << e.what() << endl;

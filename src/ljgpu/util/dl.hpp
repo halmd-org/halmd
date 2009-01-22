@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/filesystem.hpp>
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 #include <dlfcn.h>
@@ -34,22 +35,22 @@ class library : boost::noncopyable
 {
 public:
     library() : handle(NULL) {}
-    library(std::string const& name) { open(name); }
+    library(boost::filesystem::path const& path) { open(path); }
     ~library() { close(); }
 
-    void open(std::string const& name)
+    void open(boost::filesystem::path const& path)
     {
 	if (handle)
 	    close();
 
-	// search for library in current directory
-	handle = dlopen(("./" + name).c_str(), RTLD_GLOBAL|RTLD_NOW);
+	// search for library within given directory, if any
+	handle = dlopen(path.string().c_str(), RTLD_GLOBAL|RTLD_NOW);
+	// fall back to default search paths, as described in dlopen(3)
+	if (!handle && path.has_parent_path()) {
+	    handle = dlopen(path.filename().c_str(), RTLD_GLOBAL|RTLD_NOW);
+	}
 	if (!handle) {
-	    // fall back to default search paths, as described in dlopen(3)
-	    handle = dlopen(name.c_str(), RTLD_GLOBAL|RTLD_NOW);
-	    if (!handle) {
-		throw error(dlerror());
-	    }
+	    throw error(dlerror());
 	}
     }
 

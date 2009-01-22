@@ -24,9 +24,9 @@ namespace ljgpu
 
 struct mdlib : public dl::library
 {
-    void open(std::string const& name)
+    void open(boost::filesystem::path const& path)
     {
-	dl::library::open(name);
+	dl::library::open(path);
 	options.set(*this, "mdlib_options");
 	mdsim.set(*this, "mdlib_mdsim");
 	version.set(*this, "mdlib_version");
