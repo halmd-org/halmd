@@ -35,20 +35,19 @@ class library : boost::noncopyable
 {
 public:
     library() : handle(NULL) {}
-    library(boost::filesystem::path const& path) { open(path); }
+    library(boost::filesystem::path path) { open(path); }
     ~library() { close(); }
 
-    void open(boost::filesystem::path const& path)
+    void open(boost::filesystem::path path)
     {
 	if (handle)
 	    close();
 
-	// search for library within given directory, if any
-	handle = dlopen(path.string().c_str(), RTLD_GLOBAL|RTLD_NOW);
-	// fall back to default search paths, as described in dlopen(3)
-	if (!handle && path.has_parent_path()) {
-	    handle = dlopen(path.filename().c_str(), RTLD_GLOBAL|RTLD_NOW);
+	if (path.has_parent_path() && !boost::filesystem::exists(path)) {
+	    // fall back to default search paths, as described in dlopen(3)
+	    path = path.filename();
 	}
+	handle = dlopen(path.string().c_str(), RTLD_GLOBAL|RTLD_NOW);
 	if (!handle) {
 	    throw error(dlerror());
 	}
