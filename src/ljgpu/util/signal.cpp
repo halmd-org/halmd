@@ -16,57 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_UTIL_SIGNAL_HPP
-#define LJGPU_UTIL_SIGNAL_HPP
-
-#include <algorithm>
-#include <signal.h>
-#include <stdlib.h>
+#include <ljgpu/util/signal.hpp>
 
 namespace ljgpu { namespace signal
 {
 
-/**
- * synchronous signal handler
- */
-class handler
-{
-public:
-    /**
-     * block all signals in this process
-     */
-    handler() {
-	sigset_t set;
-	sigfillset(&set);
-	sigprocmask(SIG_BLOCK, &set, NULL);
-    }
+handler _handler;
 
-    /**
-     * unblock all signals in this process
-     */
-    ~handler() {
-	sigset_t set;
-	sigfillset(&set);
-	sigprocmask(SIG_UNBLOCK, &set, NULL);
-    }
-};
-
-extern int signal;
-
-/**
- * poll signal queue
- */
-inline int poll()
-{
-    timespec tv;
-    tv.tv_sec = 0;
-    tv.tv_nsec = 0;
-    sigset_t set;
-    sigfillset(&set);
-    signal = std::max(0, sigtimedwait(&set, NULL, &tv));
-    return signal;
-}
+int signal = 0;
 
 }} // namespace ljgpu::signal
-
-#endif /* ! LJGPU_UTIL_SIGNAL_HPP */

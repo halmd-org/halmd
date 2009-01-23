@@ -264,8 +264,6 @@ void mdsim<mdsim_backend>::operator()()
 	daemon(0, 0);
     }
 
-    // handle non-lethal POSIX signals to allow for a partial simulation run
-    signal_handler signal;
     // measure elapsed realtime
     real_timer timer;
 
@@ -364,16 +362,15 @@ void mdsim<mdsim_backend>::operator()()
 	}
 
 	// process signal event
-	if (signal) {
-	    if (signal != SIGALRM) {
-		LOG_WARNING("trapped signal " << signal << " at simulation step " << step);
+	if (signal::poll()) {
+	    if (signal::signal != SIGALRM) {
+		LOG_WARNING("trapped signal " << signal::signal << " at simulation step " << step);
 	    }
-	    if (signal == SIGUSR1) {
+	    if (signal::signal == SIGUSR1) {
 		// schedule runtime estimate now
 		step.set(0);
-		signal.clear();
 	    }
-	    else if (signal == SIGHUP || signal == SIGALRM) {
+	    else if (signal::signal == SIGHUP || signal::signal == SIGALRM) {
 		// sample performance counters
 		prf.sample(fluid.times());
 		// write partial results to HDF5 files and flush to disk
@@ -391,12 +388,10 @@ void mdsim<mdsim_backend>::operator()()
 		// schedule next disk flush
 		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
-	    else if (signal == SIGINT || signal == SIGTERM) {
+	    else if (signal::signal == SIGINT || signal::signal == SIGTERM) {
 		LOG_WARNING("aborting simulation");
-		signal.clear();
 		break;
 	    }
-	    signal.clear();
 	}
     }
 
