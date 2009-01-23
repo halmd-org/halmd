@@ -264,8 +264,6 @@ void correlation<dimension>::open(std::string const& filename, bool binary)
 	    m_tcf.push_back(intermediate_scattering_function(a, a));
 	    m_tcf.push_back(self_intermediate_scattering_function(a, a));
 	}
-	m_tcf.push_back(intermediate_scattering_function(PART_A, PART_B));
-	// FIXME m_tcf.push_back(self_intermediate_scattering_function(PART_A, PART_B));
     }
     else {
 	boost::mpl::for_each<tcf_types>(boost::bind(&std::vector<tcf_type>::push_back, boost::ref(m_tcf), _1));
