@@ -89,7 +89,7 @@ public:
     /** write parameters to HDF5 parameter group */
     void param(H5::Group const& param) const;
     /** check if sample is acquired for given simulation step */
-    bool sample(uint64_t step) const;
+    bool sample(int64_t step) const;
     /** sample time correlation functions */
     template <typename sample_type>
     void sample(sample_type const& sample, uint64_t step, bool& flush);

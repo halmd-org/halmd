@@ -103,7 +103,7 @@ public:
     /**
      * initialize iterator variable and schedule timer
      */
-    count_timer(T const& i) : m_start(-1), m_stop(-1), m_count(i), m_time(0)
+    count_timer(T const& i = T()) : m_start(-1), m_stop(-1), m_count(i), m_time(0)
     {
 	m_start = time(NULL) + W;
     }
