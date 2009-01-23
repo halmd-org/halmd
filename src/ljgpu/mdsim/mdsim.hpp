@@ -264,6 +264,8 @@ void mdsim<mdsim_backend>::operator()()
 	daemon(0, 0);
     }
 
+    // handle non-lethal POSIX signals to allow for a partial simulation run
+    signal_handler signal;
     // measure elapsed realtime
     real_timer timer;
 
@@ -292,123 +294,109 @@ void mdsim<mdsim_backend>::operator()()
     timer.start();
 
     for (count_timer<uint64_t> step(0); step < tcf.steps(); ++step) {
-	try {
-	    // check if sample is acquired for given simulation step
-	    if (tcf.sample(step)) {
-		// copy previous MD simulation state from GPU to host
-		copy(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
-		// sample phase space
-		copy(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
-	    }
-	    else {
-		// cell lists implementation requires GPU to host copy every step
-		copy(boost::is_base_of<ljfluid_impl_gpu_cell<dimension>, impl_type>());
-	    }
+	// check if sample is acquired for given simulation step
+	if (tcf.sample(step)) {
+	    // copy previous MD simulation state from GPU to host
+	    copy(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+	    // sample phase space
+	    copy(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
+	}
+	else {
+	    // cell lists implementation requires GPU to host copy every step
+	    copy(boost::is_base_of<ljfluid_impl_gpu_cell<dimension>, impl_type>());
+	}
 
-	    // stream next MD simulation program step on GPU
-	    stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+	// stream next MD simulation program step on GPU
+	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
-	    // check if sample is acquired for given simulation step
-	    if (tcf.sample(step)) {
-		bool flush = false;
-		// simulation time
-		double time = step * (double)fluid.timestep();
-		// sample time correlation functions
+	// check if sample is acquired for given simulation step
+	if (tcf.sample(step)) {
+	    bool flush = false;
+	    // simulation time
+	    double time = step * (double)fluid.timestep();
+	    // sample time correlation functions
+	    if (!opt["disable-correlation"].as<bool>()) {
+		tcf.sample(fluid.sample(), step, flush);
+	    }
+	    // sample thermodynamic equilibrium properties
+	    if (!opt["disable-energy"].as<bool>()) {
+		tep.sample(fluid.sample(), fluid.density(), time);
+	    }
+	    // sample trajectory
+	    if (opt["enable-trajectory"].as<bool>() || step == 0) {
+		traj.write(fluid.sample(), time);
+		if (step == 0) {
+		    traj.flush();
+		}
+	    }
+	    // acquired maximum number of samples for a block level
+	    if (flush) {
+		// sample performance counters
+		prf.sample(fluid.times());
+		// write partial results to HDF5 files and flush to disk
 		if (!opt["disable-correlation"].as<bool>()) {
-		    tcf.sample(fluid.sample(), step, flush);
+		    tcf.flush();
 		}
-		// sample thermodynamic equilibrium properties
+		if (opt["enable-trajectory"].as<bool>()) {
+		    traj.flush();
+		}
 		if (!opt["disable-energy"].as<bool>()) {
-		    tep.sample(fluid.sample(), fluid.density(), time);
+		    tep.flush();
 		}
-		// sample trajectory
-		if (opt["enable-trajectory"].as<bool>() || step == 0) {
-		    traj.write(fluid.sample(), time);
-		    if (step == 0) {
-			traj.flush();
-		    }
-		}
-		// acquired maximum number of samples for a block level
-		if (flush) {
-		    // sample performance counters
-		    prf.sample(fluid.times());
-		    // write partial results to HDF5 files and flush to disk
-		    if (!opt["disable-correlation"].as<bool>()) {
-			tcf.flush();
-		    }
-		    if (opt["enable-trajectory"].as<bool>()) {
-			traj.flush();
-		    }
-		    if (!opt["disable-energy"].as<bool>()) {
-			tep.flush();
-		    }
-		    prf.flush();
-		    LOG("flushed HDF5 buffers to disk");
-		    // schedule remaining runtime estimate
-		    step.clear();
-		    step.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
-		    // schedule next disk flush
-		    alarm(FLUSH_TO_DISK_INTERVAL);
-		}
-	    }
-	    // synchronize MD simulation program step on GPU
-	    fluid.mdstep();
-
-	    // check whether a runtime estimate has finished
-	    if (step.estimate() > 0) {
-		LOG("estimated remaining runtime: " << real_timer::format(step.estimate()));
+		prf.flush();
+		LOG("flushed HDF5 buffers to disk");
+		// schedule remaining runtime estimate
 		step.clear();
-		// schedule next remaining runtime estimate
-		step.set(TIME_ESTIMATE_INTERVAL);
+		step.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
+		// schedule next disk flush
+		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
 	}
-	catch (signal::ALRM const&) {
-	    // sample performance counters
-	    prf.sample(fluid.times());
-	    // write partial results to HDF5 files and flush to disk
-	    if (!opt["disable-correlation"].as<bool>()) {
-		tcf.flush();
-	    }
-	    if (opt["enable-trajectory"].as<bool>()) {
-		traj.flush();
-	    }
-	    if (!opt["disable-energy"].as<bool>()) {
-		tep.flush();
-	    }
-	    prf.flush();
-	    LOG("flushed HDF5 buffers to disk");
-	    // schedule next disk flush
-	    alarm(FLUSH_TO_DISK_INTERVAL);
+	// synchronize MD simulation program step on GPU
+	fluid.mdstep();
+
+	// check whether a runtime estimate has finished
+	if (step.estimate() > 0) {
+	    LOG("estimated remaining runtime: " << real_timer::format(step.estimate()));
+	    step.clear();
+	    // schedule next remaining runtime estimate
+	    step.set(TIME_ESTIMATE_INTERVAL);
 	}
-	catch (signal::HUP const&) {
-	    // sample performance counters
-	    prf.sample(fluid.times());
-	    // write partial results to HDF5 files and flush to disk
-	    if (!opt["disable-correlation"].as<bool>()) {
-		tcf.flush();
+
+	// process signal event
+	if (signal) {
+	    if (signal != SIGALRM) {
+		LOG_WARNING("trapped signal " << signal << " at simulation step " << step);
 	    }
-	    if (opt["enable-trajectory"].as<bool>()) {
-		traj.flush();
+	    if (signal == SIGUSR1) {
+		// schedule runtime estimate now
+		step.set(0);
+		signal.clear();
 	    }
-	    if (!opt["disable-energy"].as<bool>()) {
-		tep.flush();
+	    else if (signal == SIGHUP || signal == SIGALRM) {
+		// sample performance counters
+		prf.sample(fluid.times());
+		// write partial results to HDF5 files and flush to disk
+		if (!opt["disable-correlation"].as<bool>()) {
+		    tcf.flush();
+		}
+		if (opt["enable-trajectory"].as<bool>()) {
+		    traj.flush();
+		}
+		if (!opt["disable-energy"].as<bool>()) {
+		    tep.flush();
+		}
+		prf.flush();
+		LOG("flushed HDF5 buffers to disk");
+		// schedule next disk flush
+		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
-	    prf.flush();
-	    LOG("flushed HDF5 buffers to disk");
-	    // schedule next disk flush
-	    alarm(FLUSH_TO_DISK_INTERVAL);
-	}
-	catch (signal::INT const&) {
-	    LOG_WARNING("aborting simulation at step " << step);
-	    break;
-	}
-	catch (signal::TERM const&) {
-	    LOG_WARNING("aborting simulation at step " << step);
-	    break;
-	}
-	catch (signal::USR1 const&) {
-	    // schedule runtime estimate now
-	    step.set(0);
+	    else if (signal == SIGINT || signal == SIGTERM) {
+		LOG_WARNING("aborting simulation");
+		signal.clear();
+		break;
+	    }
+	    signal.clear();
 	}
     }
 

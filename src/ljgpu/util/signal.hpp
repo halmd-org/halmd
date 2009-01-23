@@ -19,89 +19,94 @@
 #ifndef LJGPU_UTIL_SIGNAL_HPP
 #define LJGPU_UTIL_SIGNAL_HPP
 
-#include <exception>
+#include <boost/array.hpp>
 #include <signal.h>
-#include <stdlib.h>
 
-namespace ljgpu { namespace signal
+namespace ljgpu
 {
 
-//
-// Based on »C++ exception-handling tricks for Linux«,
-// http://www.ibm.com/developerworks/linux/library/l-cppexcep.html
-//
-
-template <typename exception>
-class translator
+/**
+ * Signal handling
+ */
+class signal_handler
 {
-private:
-    class singleton_translator
-    {
-    public:
-	singleton_translator()
-	{
-	    struct sigaction act;
-	    act.sa_handler = handler;
-	    act.sa_flags = 0;
-	    sigemptyset(&act.sa_mask);
-	    sigaction(exception::signal(), &act, NULL);
-	}
-
-	static void handler(int)
-	{
-	    throw exception();
-	}
-    };
-
 public:
-    translator()
+    /**
+     * set signal handlers
+     */
+    signal_handler()
     {
-	static singleton_translator translator;
+	m_sigh[0] = signal(SIGHUP, set);
+	m_sigh[1] = signal(SIGINT, set);
+	m_sigh[2] = signal(SIGTERM, set);
+	m_sigh[3] = signal(SIGUSR1, set);
+	m_sigh[4] = signal(SIGALRM, set);
     }
+
+    /**
+     * restore previous signal handlers
+     */
+    ~signal_handler()
+    {
+	signal(SIGHUP, m_sigh[0]);
+	signal(SIGINT, m_sigh[1]);
+	signal(SIGTERM, m_sigh[2]);
+	signal(SIGUSR1, m_sigh[3]);
+	signal(SIGALRM, m_sigh[4]);
+    }
+
+    /**
+     * get signal number
+     */
+    operator int()
+    {
+	return m_signum;
+    }
+
+    /**
+     * reset signal number
+     */
+    void clear()
+    {
+	m_signum = 0;
+    }
+
+    /**
+     * output signal description to stream
+     */
+    friend std::ostream& operator<<(std::ostream& os, signal_handler const& sig)
+    {
+	if (sig.m_signum == SIGHUP)
+	    os << "HUP";
+	else if (sig.m_signum == SIGINT)
+	    os << "INT";
+	else if (sig.m_signum == SIGTERM)
+	    os << "TERM";
+	else if (sig.m_signum == SIGUSR1)
+	    os << "USR1";
+	else if (sig.m_signum == SIGALRM)
+	    os << "ALRM";
+	return os;
+    }
+
+private:
+    /**
+     * signal handler callback
+     */
+    static void set(int signum)
+    {
+	m_signum = signum;
+    }
+
+private:
+    /** signal number */
+    static int m_signum;
+    /** previous signal handlers */
+    boost::array<sighandler_t, 5> m_sigh;
 };
 
-class HUP : public std::exception
-{
-public:
-    static int signal() { return SIGHUP; }
-    virtual char const* what() const throw() { return "SIGHUP"; }
-};
+int signal_handler::m_signum(0);
 
-class TERM : public std::exception
-{
-public:
-    static int signal() { return SIGTERM; }
-    virtual char const* what() const throw() { return "SIGTERM"; }
-};
-
-class INT : public std::exception
-{
-public:
-    static int signal() { return SIGINT; }
-    virtual char const* what() const throw() { return "SIGINT"; }
-};
-
-class ALRM : public std::exception
-{
-public:
-    static int signal() { return SIGALRM; }
-    virtual char const* what() const throw() { return "SIGALRM"; }
-};
-
-class USR1 : public std::exception
-{
-public:
-    static int signal() { return SIGUSR1; }
-    virtual char const* what() const throw() { return "SIGUSR1"; }
-};
-
-class USR2 : public std::exception
-{
-public:
-    static int signal() { return SIGUSR2; }
-    virtual char const* what() const throw() { return "SIGUSR2"; }
-};
-
-}} // namespace ljgpu::signal
+} // namespace ljgpu
 
 #endif /* ! LJGPU_UTIL_SIGNAL_HPP */
