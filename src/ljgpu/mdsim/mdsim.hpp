@@ -236,7 +236,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     // print GPU memory usage
     cuda_allocated_memory(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
-    if (!opt["time"].empty()) {
+    if (opt["steps"].defaulted() && !opt["time"].empty()) {
 	// set total simulation time
 	tcf.time(opt["time"].as<float>(), fluid.timestep());
     }
