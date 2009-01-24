@@ -67,6 +67,13 @@ private:
     int& s;
 };
 
+__device__ inline __pack<vector<float, 2>&, int&>
+operator,(vector<float, 2>& v, int& s)
+{
+    return __pack<vector<float, 2>&, int&>(v, s);
+}
+
+
 template <>
 class __pack<vector<float, 2> const&, int const&>
 {
@@ -90,6 +97,13 @@ private:
     vector_type const& v;
     int const& s;
 };
+
+__device__ inline __pack<vector<float, 2> const&, int const&>
+operator,(vector<float, 2> const& v, int const& s)
+{
+    return __pack<vector<float, 2> const&, int const&>(v, s);
+}
+
 
 template <>
 class __pack<vector<float, 3>&, int&>
@@ -117,6 +131,13 @@ private:
     int& s;
 };
 
+__device__ inline __pack<vector<float, 3>&, int&>
+operator,(vector<float, 3>& v, int& s)
+{
+    return __pack<vector<float, 3>&, int&>(v, s);
+}
+
+
 template <>
 class __pack<vector<float, 3> const&, int const&>
 {
@@ -136,28 +157,145 @@ private:
     int const& s;
 };
 
-__device__ inline __pack<vector<float, 2>&, int&>
-operator,(vector<float, 2>& v, int& s)
-{
-    return __pack<vector<float, 2>&, int&>(v, s);
-}
-
-__device__ inline __pack<vector<float, 2> const&, int const&>
-operator,(vector<float, 2> const& v, int const& s)
-{
-    return __pack<vector<float, 2> const&, int const&>(v, s);
-}
-
-__device__ inline __pack<vector<float, 3>&, int&>
-operator,(vector<float, 3>& v, int& s)
-{
-    return __pack<vector<float, 3>&, int&>(v, s);
-}
-
 __device__ inline __pack<vector<float, 3> const&, int const&>
 operator,(vector<float, 3> const& v, int const& s)
 {
     return __pack<vector<float, 3> const&, int const&>(v, s);
+}
+
+
+template <>
+class __pack<vector<float, 2>&, unsigned int&>
+{
+public:
+    typedef vector<float, 2> vector_type;
+    typedef __pack<vector_type&, unsigned int&> type;
+
+    __device__ inline __pack(vector_type& v, unsigned int& s): v(v), s(s) {}
+
+    __device__ inline type& operator=(float3 const& w)
+    {
+	v = vector_type(w.x, w.y);
+	s = __float_as_int(w.z);
+	return *this;
+    }
+
+    __device__ inline type& operator=(float4 const& w)
+    {
+	v = vector_type(w.x, w.y);
+	s = __float_as_int(w.z);
+	return *this;
+    }
+
+    __device__ inline operator float4() const
+    {
+	return make_float4(v.x, v.y, __int_as_float(s), 0);
+    }
+
+    __device__ inline operator float3() const
+    {
+	return make_float3(v.x, v.y, __int_as_float(s));
+    }
+
+private:
+    vector_type& v;
+    unsigned int& s;
+};
+
+__device__ inline __pack<vector<float, 2>&, unsigned int&>
+operator,(vector<float, 2>& v, unsigned int& s)
+{
+    return __pack<vector<float, 2>&, unsigned int&>(v, s);
+}
+
+
+template <>
+class __pack<vector<float, 2> const&, unsigned int const&>
+{
+public:
+    typedef vector<float, 2> vector_type;
+    typedef __pack<vector_type const&, unsigned int const&> type;
+
+    __device__ inline __pack(vector_type const& v, unsigned int const& s): v(v), s(s) {}
+
+    __device__ inline operator float4() const
+    {
+	return make_float4(v.x, v.y, __int_as_float(s), 0);
+    }
+
+    __device__ inline operator float3() const
+    {
+	return make_float3(v.x, v.y, __int_as_float(s));
+    }
+
+private:
+    vector_type const& v;
+    unsigned int const& s;
+};
+
+__device__ inline __pack<vector<float, 2> const&, unsigned int const&>
+operator,(vector<float, 2> const& v, unsigned int const& s)
+{
+    return __pack<vector<float, 2> const&, unsigned int const&>(v, s);
+}
+
+
+template <>
+class __pack<vector<float, 3>&, unsigned int&>
+{
+public:
+    typedef vector<float, 3> vector_type;
+    typedef __pack<vector_type&, unsigned int&> type;
+
+    __device__ inline __pack(vector_type& v, unsigned int& s): v(v), s(s) {}
+
+    __device__ inline type& operator=(float4 const& w)
+    {
+	v = vector_type(w.x, w.y, w.z);
+	s = __float_as_int(w.w);
+	return *this;
+    }
+
+    __device__ inline operator float4() const
+    {
+	return make_float4(v.x, v.y, v.z, __int_as_float(s));
+    }
+
+private:
+    vector_type& v;
+    unsigned int& s;
+};
+
+__device__ inline __pack<vector<float, 3>&, unsigned int&>
+operator,(vector<float, 3>& v, unsigned int& s)
+{
+    return __pack<vector<float, 3>&, unsigned int&>(v, s);
+}
+
+
+template <>
+class __pack<vector<float, 3> const&, unsigned int const&>
+{
+public:
+    typedef vector<float, 3> vector_type;
+    typedef __pack<vector_type const&, unsigned int const&> type;
+
+    __device__ inline __pack(vector_type const& v, unsigned int const& s): v(v), s(s) {}
+
+    __device__ inline operator float4() const
+    {
+	return make_float4(v.x, v.y, v.z, __int_as_float(s));
+    }
+
+private:
+    vector_type const& v;
+    unsigned int const& s;
+};
+
+__device__ inline __pack<vector<float, 3> const&, unsigned int const&>
+operator,(vector<float, 3> const& v, unsigned int const& s)
+{
+    return __pack<vector<float, 3> const&, unsigned int const&>(v, s);
 }
 
 }} // namespace ljgpu::cu
