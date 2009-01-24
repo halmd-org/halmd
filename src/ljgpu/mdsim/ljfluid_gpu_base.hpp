@@ -97,7 +97,7 @@ protected:
     /** randomly permute particle coordinates */
     void random_permute(cuda::vector<float4>& g_r);
     /** assign ascending particle numbers */
-    void init_tags(cuda::vector<float4>& g_r, cuda::vector<int>& g_tag);
+    void init_tags(cuda::vector<float4>& g_r, cuda::vector<unsigned int>& g_tag);
     /** generate Maxwell-Boltzmann distributed velocities */
     void boltzmann(cuda::vector<gpu_vector_type>& g_v,
 		   cuda::host::vector<gpu_vector_type>& h_v,
@@ -293,9 +293,9 @@ void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)
     try {
 	using namespace gpu::radix_sort;
 	// compute optimal number of blocks for GeForce 8800 with 16 multiprocessors
-	uint threads = dim_.threads_per_block();
-	uint max_blocks = (16 * 512) / (threads * BUCKETS_PER_THREAD / 2);
-	uint blocks = std::min((npart + 2 * threads - 1) / (2 * threads), max_blocks);
+	unsigned int threads = dim_.threads_per_block();
+	unsigned int max_blocks = (16 * 512) / (threads * BUCKETS_PER_THREAD / 2);
+	unsigned int blocks = std::min((npart + 2 * threads - 1) / (2 * threads), max_blocks);
 
 	LOG("number of CUDA blocks for radix sort: " << blocks);
 	LOG("number of CUDA threads for radix sort: " << threads);
@@ -405,15 +405,15 @@ void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r)
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
     // particles per 2- or 3-dimensional unit cell
-    uint const m = 2 * (dimension - 1);
+    unsigned int const m = 2 * (dimension - 1);
     // lower boundary for number of particles per lattice dimension
-    uint n = std::pow(npart / m, 1.f / dimension);
+    unsigned int n = std::pow(npart / m, 1.f / dimension);
     // lower boundary for total number of lattice sites
-    uint N = m * std::pow(n, static_cast<uint>(dimension));
+    unsigned int N = m * std::pow(n, static_cast<unsigned int>(dimension));
 
     if (N < npart) {
 	n += 1;
-	N = m * std::pow(n, static_cast<uint>(dimension));
+	N = m * std::pow(n, static_cast<unsigned int>(dimension));
     }
     if (N > npart) {
 	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
@@ -460,7 +460,7 @@ void ljfluid_gpu_base<ljfluid_impl>::random_permute(cuda::vector<float4>& g_r)
  */
 template <typename ljfluid_impl>
 void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
-					       cuda::vector<int>& g_tag)
+					       cuda::vector<unsigned int>& g_tag)
 {
     try {
 	cuda::configure(dim_.grid, dim_.block, stream_);

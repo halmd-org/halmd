@@ -35,12 +35,12 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 {
     enum { dimension = vector_type::static_size };
 
-    extern __shared__ int s_tag[];
+    extern __shared__ unsigned int s_tag[];
     vector_type* const s_r = reinterpret_cast<vector_type*>(&s_tag[TDIM]);
 
     // load particle associated with this thread
     vector_type r, v;
-    int tag;
+    unsigned int tag;
     (r, tag) = g_r[GTID];
     v = g_v[GTID];
     // particle type in binary mixture

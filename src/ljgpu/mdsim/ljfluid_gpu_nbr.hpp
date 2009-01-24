@@ -130,7 +130,7 @@ private:
     boost::array<cuda::event, 9> event_;
 
     /** GPU radix sort */
-    radix_sort<int> radix_;
+    radix_sort<unsigned int> radix_;
     /** potential energy sum */
     reduce<tag::sum, dfloat> reduce_en;
     /** virial equation sum */
@@ -166,7 +166,7 @@ private:
 	/** particle velocities */
 	cuda::host::vector<gpu_vector_type> v;
 	/** particle tags */
-	cuda::host::vector<int> tag;
+	cuda::host::vector<unsigned int> tag;
     } h_part;
 
     /** system state in global device memory */
@@ -180,7 +180,7 @@ private:
 	/** particle forces */
 	cuda::vector<gpu_vector_type> f;
 	/** particle tags */
-	cuda::vector<int> tag;
+	cuda::vector<unsigned int> tag;
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
@@ -200,17 +200,17 @@ private:
     /** auxiliary device memory arrays for particle sorting */
     struct {
 	/** particle cells */
-	cuda::vector<uint> cell;
+	cuda::vector<unsigned int> cell;
 	/** cell offsets in sorted particle list */
-	cuda::vector<int> offset;
+	cuda::vector<unsigned int> offset;
 	/** permutation indices */
-	cuda::vector<int> index;
+	cuda::vector<unsigned int> index;
     } g_aux;
 
     /** cell lists in global device memory */
-    cuda::vector<int> g_cell;
+    cuda::vector<unsigned int> g_cell;
     /** neighbour lists in global device memory */
-    cuda::vector<int> g_nbl;
+    cuda::vector<unsigned int> g_nbl;
 };
 
 template <int dimension>
@@ -273,7 +273,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
     ncell = std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension));
 
     // set number of cells per dimension, respecting cutoff radius
-    ncell = std::min(ncell, uint(box_ / r_cut_max));
+    ncell = std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
@@ -335,7 +335,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
 
 #if defined(USE_HILBERT_ORDER)
     // set Hilbert space-filling curve recursion depth
-    uint depth = std::min((dimension == 3) ? 10.f : 16.f, ceilf(logf(box_) / M_LN2));
+    unsigned int depth = std::min((dimension == 3) ? 10.f : 16.f, ceilf(logf(box_) / M_LN2));
     LOG("Hilbert space-filling curve recursion depth: " << depth);
     try {
 	cuda::copy(box_, gpu::hilbert<dimension>::box);
@@ -377,7 +377,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	g_part.virial.reserve(dim_.threads());
 	g_nbl.reserve(dim_.threads() * nbl_size);
 	cuda::copy(g_nbl.data(), _gpu::g_nbl);
-	cuda::copy(uint(dim_.threads()), _gpu::nbl_stride);
+	cuda::copy(static_cast<unsigned int>(dim_.threads()), _gpu::nbl_stride);
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for placeholder particles");
@@ -409,9 +409,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
     // allocate global device memory for radix sort
     try {
 	// compute optimal number of blocks for GeForce 8800 with 16 multiprocessors
-	uint threads = dim_.threads_per_block();
-	uint max_blocks = (16 * 512) / (threads * gpu::radix_sort::BUCKETS_PER_THREAD / 2);
-	uint blocks = std::min((npart + 2 * threads - 1) / (2 * threads), max_blocks);
+	unsigned int threads = dim_.threads_per_block();
+	unsigned int max_blocks = (16 * 512) / (threads * gpu::radix_sort::BUCKETS_PER_THREAD / 2);
+	unsigned int blocks = std::min((npart + 2 * threads - 1) / (2 * threads), max_blocks);
 
 	LOG("number of CUDA blocks for radix sort: " << blocks);
 	LOG("number of CUDA threads for radix sort: " << threads);
@@ -613,9 +613,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// particle tag
-	int const tag = h_part.tag[i];
+	unsigned int const tag = h_part.tag[i];
 	// A or B particle type
-	unsigned int const type = (static_cast<unsigned int>(tag) >= mpart[0]);
+	unsigned int const type = (tag >= mpart[0]);
 	// particle number
 	unsigned int const n = type ? (tag - mpart[0]) : tag;
 	// copy periodically extended particle positions
@@ -707,7 +707,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_cells(cuda::stream&
     radix_(g_aux.cell, g_aux.index, stream);
 
     // compute global cell offsets in sorted particle list
-    cuda::memset(g_aux.offset, 0xff);
+    cuda::memset(g_aux.offset, 0xFF);
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::find_cell_offset(g_aux.cell, g_aux.offset);
 
@@ -720,7 +720,7 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_neighbours(cuda::stream& stream)
 {
     // mark neighbour list placeholders as virtual particles
-    cuda::memset(g_nbl, 0xff);
+    cuda::memset(g_nbl, 0xFF);
     // build neighbour lists
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
     _gpu::update_neighbours(g_cell);

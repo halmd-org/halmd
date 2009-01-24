@@ -27,7 +27,7 @@
 namespace ljgpu { namespace gpu
 {
 
-enum { VIRTUAL_PARTICLE = -1 };
+enum { VIRTUAL_PARTICLE = -1U };
 
 template <template <int> class ljfluid_impl>
 struct ljfluid_base;
@@ -70,7 +70,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base<3> >
 {
     static cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
     static cuda::function<void (float4*, float)> boltzmann;
-    static cuda::function<void (float4*, int*)> init_tags;
+    static cuda::function<void (float4*, unsigned int*)> init_tags;
 };
 
 template <>
@@ -79,7 +79,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base<2> >
 {
     static cuda::function<void (float4*, float2*, float2*, float2 const*)> inteq;
     static cuda::function<void (float2*, float)> boltzmann;
-    static cuda::function<void (float4*, int*)> init_tags;
+    static cuda::function<void (float4*, unsigned int*)> init_tags;
 };
 
 }} // namespace ljgpu::gpu

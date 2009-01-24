@@ -91,11 +91,11 @@ template <bool same_cell,
 	  potential_type potential,
 	  typename I, typename T, typename U>
 __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
-				    T const& r, int const tag, U& f,
+				    T const& r, unsigned int const tag, U& f,
 				    float& en, float& virial)
 {
     __shared__ T s_r[CELL_SIZE];
-    __shared__ int s_tag[CELL_SIZE];
+    __shared__ unsigned int s_tag[CELL_SIZE];
 
     // shared memory barrier
     __syncthreads();
@@ -138,7 +138,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 
     // load particle associated with this thread
     vector_type r, v;
-    int tag;
+    unsigned int tag;
     (r, tag) = g_r[GTID];
     v = g_v[GTID];
     // potential energy contribution
@@ -271,13 +271,13 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
  * assign particles to cells
  */
 template <typename T>
-__global__ void assign_cells(float4 const* g_ir, float4* g_or, int* g_otag)
+__global__ void assign_cells(float4 const* g_ir, float4* g_or, unsigned int* g_otag)
 {
     __shared__ T s_ir[CELL_SIZE];
     __shared__ T s_or[CELL_SIZE];
-    __shared__ int s_itag[CELL_SIZE];
-    __shared__ int s_otag[CELL_SIZE];
-    __shared__ int s_cell[CELL_SIZE];
+    __shared__ unsigned int s_itag[CELL_SIZE];
+    __shared__ unsigned int s_otag[CELL_SIZE];
+    __shared__ unsigned int s_cell[CELL_SIZE];
 
     // number of particles in cell
     uint n = 0;
@@ -309,7 +309,7 @@ __global__ void assign_cells(float4 const* g_ir, float4* g_or, int* g_otag)
     }
 
     // store cell in global device memory
-    int const tag = s_otag[threadIdx.x];
+    unsigned int const tag = s_otag[threadIdx.x];
     g_or[blockIdx.x * CELL_SIZE + threadIdx.x] = (s_or[threadIdx.x], tag);
     g_otag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
 }
@@ -318,12 +318,12 @@ __global__ void assign_cells(float4 const* g_ir, float4* g_or, int* g_otag)
  * examine neighbour cell for particles which moved into this block's cell
  */
 template <typename T, typename U, typename I>
-__device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR, U const* g_iv, T* s_or, T* s_oR, T* s_ov, int* s_otag, uint& npart)
+__device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR, U const* g_iv, T* s_or, T* s_oR, T* s_ov, unsigned int* s_otag, uint& npart)
 {
     __shared__ T s_ir[CELL_SIZE];
     __shared__ T s_iR[CELL_SIZE];
     __shared__ T s_iv[CELL_SIZE];
-    __shared__ int s_itag[CELL_SIZE];
+    __shared__ unsigned int s_itag[CELL_SIZE];
     __shared__ uint s_cell[CELL_SIZE];
 
     // shared memory barrier
@@ -364,14 +364,14 @@ __device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR,
  * update cells
  */
 template <typename T, typename U>
-__global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, float4* g_or, U* g_oR, U* g_ov, int* g_otag)
+__global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, float4* g_or, U* g_oR, U* g_ov, unsigned int* g_otag)
 {
     enum { dimension = T::static_size };
 
     __shared__ T s_or[CELL_SIZE];
     __shared__ T s_oR[CELL_SIZE];
     __shared__ T s_ov[CELL_SIZE];
-    __shared__ int s_otag[CELL_SIZE];
+    __shared__ unsigned int s_otag[CELL_SIZE];
     // number of particles in cell
     uint n = 0;
 
@@ -423,7 +423,7 @@ __global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, f
     }
 
     // store cell in global device memory
-    int const tag = s_otag[threadIdx.x];
+    unsigned int const tag = s_otag[threadIdx.x];
     g_or[blockIdx.x * CELL_SIZE + threadIdx.x] = (s_or[threadIdx.x], tag);
     g_oR[blockIdx.x * CELL_SIZE + threadIdx.x] = s_oR[threadIdx.x];
     g_ov[blockIdx.x * CELL_SIZE + threadIdx.x] = s_ov[threadIdx.x];
@@ -465,9 +465,9 @@ cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
     _3D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVT>);
 
-cuda::function<void (float4 const*, float4*, int*)>
+cuda::function<void (float4 const*, float4*, unsigned int*)>
     _3D::assign_cells(cu::ljfluid::assign_cells<cu::vector<float, 3> >);
-cuda::function<void (float4 const*, float4 const*, float4 const*, float4*, float4*, float4*, int*)>
+cuda::function<void (float4 const*, float4 const*, float4 const*, float4*, float4*, float4*, unsigned int*)>
     _3D::update_cells(cu::ljfluid::update_cells<cu::vector<float, 3> >);
 
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
@@ -488,9 +488,9 @@ cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVT>);
 
-cuda::function<void (float4 const*, float4*, int*)>
+cuda::function<void (float4 const*, float4*, unsigned int*)>
     _2D::assign_cells(cu::ljfluid::assign_cells<cu::vector<float, 2> >);
-cuda::function<void (float4 const*, float2 const*, float2 const*, float4*, float2*, float2*, int*)>
+cuda::function<void (float4 const*, float2 const*, float2 const*, float4*, float2*, float2*, unsigned int*)>
     _2D::update_cells(cu::ljfluid::update_cells<cu::vector<float, 2> >);
 
 }} // namespace ljgpu::gpu

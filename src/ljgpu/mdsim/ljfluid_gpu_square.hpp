@@ -110,7 +110,7 @@ private:
 	/** particle velocities */
 	cuda::host::vector<gpu_vector_type> v;
 	/** particle tags */
-	cuda::host::vector<int> tag;
+	cuda::host::vector<unsigned int> tag;
 	/** blockwise maximum particles velocity magnitudes */
 	cuda::host::vector<float> v_max;
     } h_part;
@@ -126,7 +126,7 @@ private:
 	/** particle forces */
 	cuda::vector<gpu_vector_type> f;
 	/** particle tags */
-	cuda::vector<int> tag;
+	cuda::vector<unsigned int> tag;
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
@@ -315,9 +315,9 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// particle tag
-	int const tag = h_part.tag[i];
+	unsigned int const tag = h_part.tag[i];
 	// A or B particle type
-	unsigned int const type = (static_cast<unsigned int>(tag) >= mpart[0]);
+	unsigned int const type = (tag >= mpart[0]);
 	// particle number
 	unsigned int const n = type ? (tag - mpart[0]) : tag;
 	// copy periodically extended particle positions

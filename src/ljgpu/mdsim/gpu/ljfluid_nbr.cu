@@ -36,7 +36,7 @@ __constant__ uint nbl_stride;
 /** squared potential cutoff distance with neighbour list skin */
 __constant__ float rr_nbl;
 /** neighbour lists in global device memory */
-__constant__ int* g_nbl;
+__constant__ unsigned int* g_nbl;
 
 /** n-dimensional particle texture references */
 template <int dimension>
@@ -86,7 +86,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 
     // load particle associated with this thread
     vector_type r, v;
-    int tag;
+    unsigned int tag;
     (r, tag) = g_r[GTID];
     v = g_v[GTID];
     // particle type in binary mixture
@@ -101,12 +101,12 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 
     for (uint i = 0; i < nbl_size; ++i) {
 	// coalesced read from neighbour list
-	int const n = g_nbl[i * nbl_stride + GTID];
+	unsigned int const n = g_nbl[i * nbl_stride + GTID];
 	// skip placeholder particles
 	if (n == VIRTUAL_PARTICLE) break;
 
 	vector_type r_;
-	int tag_;
+	unsigned int tag_;
 	(r_, tag_) = tex1Dfetch(tex<dimension>::r, n);
 	// particle type in binary mixture
 	int const b = (tag_ >= mpart[0]);
@@ -163,9 +163,9 @@ __device__ uint compute_neighbour_cell(int2 const& offset)
  * update neighbour list with particles of given cell
  */
 template <bool same_cell, typename T, typename I>
-__device__ void update_cell_neighbours(I const& offset, int const* g_cell, T const& r, int const& n, uint& count)
+__device__ void update_cell_neighbours(I const& offset, unsigned int const* g_cell, T const& r, unsigned int const& n, uint& count)
 {
-    __shared__ int s_n[CELL_SIZE];
+    __shared__ unsigned int s_n[CELL_SIZE];
     __shared__ T s_r[CELL_SIZE];
     enum { dimension = T::static_size };
 
@@ -175,7 +175,7 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, T con
     // compute cell index
     uint const cell = compute_neighbour_cell(offset);
     // load particles in cell
-    int const n_ = g_cell[cell * CELL_SIZE + threadIdx.x];
+    unsigned int const n_ = g_cell[cell * CELL_SIZE + threadIdx.x];
     s_n[threadIdx.x] = n_;
     s_r[threadIdx.x] = tex1Dfetch(tex<dimension>::r, n_);
     __syncthreads();
@@ -184,7 +184,7 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, T con
 
     for (uint i = 0; i < CELL_SIZE; ++i) {
 	// particle number of cell placeholder
-	int const m = s_n[i];
+	unsigned int const m = s_n[i];
 	// skip placeholder particles
 	if (m == VIRTUAL_PARTICLE) break;
 	// skip same particle
@@ -211,10 +211,10 @@ __device__ void update_cell_neighbours(I const& offset, int const* g_cell, T con
  * update neighbour lists
  */
 template <uint dimension>
-__global__ void update_neighbours(int const* g_cell)
+__global__ void update_neighbours(unsigned int const* g_cell)
 {
     // load particle from cell placeholder
-    int const n = g_cell[GTID];
+    unsigned int const n = g_cell[GTID];
     vector<float, dimension> const r = tex1Dfetch(tex<dimension>::r, n);
     // number of particles in neighbour list
     uint count = 0;
@@ -334,7 +334,7 @@ __global__ void compute_cell(float4 const* g_part, uint* g_cell)
 /**
  * compute global cell offsets in particle list
  */
-__global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
+__global__ void find_cell_offset(uint* g_cell, unsigned int* g_cell_offset)
 {
     const uint j = g_cell[GTID];
     const uint k = (GTID > 0 && GTID < npart) ? g_cell[GTID - 1] : j;
@@ -348,22 +348,22 @@ __global__ void find_cell_offset(uint* g_cell, int* g_cell_offset)
 /**
  * assign particles to cells
  */
-__global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int const* g_itag, int* g_otag)
+__global__ void assign_cells(uint const* g_cell, unsigned int const* g_cell_offset, unsigned int const* g_itag, unsigned int* g_otag)
 {
-    __shared__ int s_offset[1];
+    __shared__ unsigned int s_offset[1];
 
     if (threadIdx.x == 0) {
 	s_offset[0] = g_cell_offset[blockIdx.x];
     }
     __syncthreads();
     // global offset of first particle in this block's cell
-    const int offset = s_offset[0];
+    const unsigned int offset = s_offset[0];
     // global offset of this thread's particle
-    const int n = offset + threadIdx.x;
+    const unsigned int n = offset + threadIdx.x;
     // mark as virtual particle
-    int tag = -1;
+    unsigned int tag = VIRTUAL_PARTICLE;
     // mark as real particle if appropriate
-    if (offset >= 0 && n < npart && g_cell[n] == blockIdx.x) {
+    if (offset != VIRTUAL_PARTICLE && n < npart && g_cell[n] == blockIdx.x) {
 	tag = g_itag[n];
     }
     // store particle in this block's cell
@@ -373,7 +373,7 @@ __global__ void assign_cells(uint const* g_cell, int const* g_cell_offset, int c
 /**
  * generate ascending index sequence
  */
-__global__ void gen_index(int* g_index)
+__global__ void gen_index(unsigned int* g_index)
 {
     g_index[GTID] = (GTID < npart) ? GTID : 0;
 }
@@ -382,13 +382,13 @@ __global__ void gen_index(int* g_index)
  * order particles after given permutation
  */
 template <int dimension, typename T>
-__global__ void order_particles(const int* g_index, float4* g_or, T* g_oR, T* g_ov, int* g_otag)
+__global__ void order_particles(unsigned int const* g_index, float4* g_or, T* g_oR, T* g_ov, unsigned int* g_otag)
 {
     // permutation index
     uint const j = g_index[GTID];
     // permute particle phase space coordinates
     vector<float, dimension> r;
-    int tag;
+    unsigned int tag;
     (r, tag) = tex1Dfetch(tex<dimension>::r, j);
     g_or[GTID] = (r, tag);
     g_oR[GTID] = tex1Dfetch(tex<dimension>::R, j);
@@ -412,7 +412,7 @@ cuda::symbol<uint> _Base::ncell(cu::ljfluid::ncell);
 cuda::symbol<uint> _Base::nbl_size(cu::ljfluid::nbl_size);
 cuda::symbol<uint> _Base::nbl_stride(cu::ljfluid::nbl_stride);
 cuda::symbol<float> _Base::rr_nbl(cu::ljfluid::rr_nbl);
-cuda::symbol<int*> _Base::g_nbl(cu::ljfluid::g_nbl);
+cuda::symbol<unsigned int*> _Base::g_nbl(cu::ljfluid::g_nbl);
 
 /**
  * device texture wrappers
@@ -427,11 +427,11 @@ cuda::texture<float2> _2D::v(cu::ljfluid::tex<2>::v);
 /**
  * device function wrappers
  */
-cuda::function<void (uint const*, int const*, int const*, int*)>
+cuda::function<void (uint const*, unsigned int const*, unsigned int const*, unsigned int*)>
     _Base::assign_cells(cu::ljfluid::assign_cells);
-cuda::function<void (uint*, int*)>
+cuda::function<void (uint*, unsigned int*)>
     _Base::find_cell_offset(cu::ljfluid::find_cell_offset);
-cuda::function<void (int*)>
+cuda::function<void (unsigned int*)>
     _Base::gen_index(cu::ljfluid::gen_index);
 
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
@@ -452,11 +452,11 @@ cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
     _3D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVT>);
 
-cuda::function<void (int const*)>
+cuda::function<void (unsigned int const*)>
     _3D::update_neighbours(cu::ljfluid::update_neighbours<3>);
 cuda::function<void (float4 const*, uint*)>
     _3D::compute_cell(cu::ljfluid::compute_cell<3>);
-cuda::function<void (const int*, float4*, float4*, float4*, int*)>
+cuda::function<void (unsigned int const*, float4*, float4*, float4*, unsigned int*)>
     _3D::order_particles(cu::ljfluid::order_particles<3>);
 
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
@@ -477,11 +477,11 @@ cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVT>);
 
-cuda::function<void (int const*)>
+cuda::function<void (unsigned int const*)>
     _2D::update_neighbours(cu::ljfluid::update_neighbours<2>);
 cuda::function<void (float4 const*, uint*)>
     _2D::compute_cell(cu::ljfluid::compute_cell<2>);
-cuda::function<void (const int*, float4*, float2*, float2*, int*)>
+cuda::function<void (unsigned int const*, float4*, float2*, float2*, unsigned int*)>
     _2D::order_particles(cu::ljfluid::order_particles<2>);
 
 }} // namespace ljgpu::gpu

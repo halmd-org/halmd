@@ -184,7 +184,7 @@ template <int dimension, typename T>
 __global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
 {
     vector<float, dimension> r, R, v, f;
-    int tag;
+    unsigned int tag;
     (r, tag) = g_r[GTID];
     R = g_R[GTID];
     v = g_v[GTID];
@@ -212,10 +212,10 @@ __global__ void boltzmann(T* g_v, float temperature)
  * assign ascending particle numbers
  */
 template <typename vector_type>
-__global__ void init_tags(float4* g_r, int* g_tag)
+__global__ void init_tags(float4* g_r, unsigned int* g_tag)
 {
     vector_type const r = g_r[GTID];
-    int tag = VIRTUAL_PARTICLE;
+    unsigned int tag = VIRTUAL_PARTICLE;
     if (GTID < npart) {
 	tag = GTID;
     }
@@ -262,14 +262,14 @@ cuda::function<void (float4*, float4*, float4*, float4 const*)>
     __3D::inteq(cu::ljfluid::inteq<3>);
 cuda::function<void (float4*, float)>
     __3D::boltzmann(cu::ljfluid::boltzmann);
-cuda::function<void (float4*, int*)>
+cuda::function<void (float4*, unsigned int*)>
     __3D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 3> >);
 
 cuda::function<void (float4*, float2*, float2*, float2 const*)>
     __2D::inteq(cu::ljfluid::inteq<2>);
 cuda::function<void (float2*, float)>
     __2D::boltzmann(cu::ljfluid::boltzmann);
-cuda::function<void (float4*, int*)>
+cuda::function<void (float4*, unsigned int*)>
     __2D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 2> >);
 
 }} // namespace ljgpu::gpu

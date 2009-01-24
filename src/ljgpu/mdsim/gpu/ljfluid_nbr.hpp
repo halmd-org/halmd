@@ -38,11 +38,11 @@ struct ljfluid_base<ljfluid_impl_gpu_neighbour>
     static cuda::symbol<uint> nbl_size;
     static cuda::symbol<uint> nbl_stride;
     static cuda::symbol<float> rr_nbl;
-    static cuda::symbol<int*> g_nbl;
+    static cuda::symbol<unsigned int*> g_nbl;
 
-    static cuda::function<void (uint const*, int const*, int const*, int*)> assign_cells;
-    static cuda::function<void (uint*, int*)> find_cell_offset;
-    static cuda::function<void (int*)> gen_index;
+    static cuda::function<void (uint const*, unsigned int const*, unsigned int const*, unsigned int*)> assign_cells;
+    static cuda::function<void (uint*, unsigned int*)> find_cell_offset;
+    static cuda::function<void (unsigned int*)> gen_index;
 };
 
 template <>
@@ -53,9 +53,9 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<3> >
     static cuda::texture<float4> R;
     static cuda::texture<float4> v;
 
-    static cuda::function<void (int const*)> update_neighbours;
+    static cuda::function<void (unsigned int const*)> update_neighbours;
     static cuda::function<void (float4 const*, uint*)> compute_cell;
-    static cuda::function<void (const int*, float4*, float4*, float4*, int*)> order_particles;
+    static cuda::function<void (unsigned int const*, float4*, float4*, float4*, unsigned int*)> order_particles;
 
     template <mixture_type, potential_type, ensemble_type>
     struct variant
@@ -72,9 +72,9 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<2> >
     static cuda::texture<float2> R;
     static cuda::texture<float2> v;
 
-    static cuda::function<void (int const*)> update_neighbours;
+    static cuda::function<void (unsigned int const*)> update_neighbours;
     static cuda::function<void (float4 const*, uint*)> compute_cell;
-    static cuda::function<void (const int*, float4*, float2*, float2*, int*)> order_particles;
+    static cuda::function<void (unsigned int const*, float4*, float2*, float2*, unsigned int*)> order_particles;
 
     template <mixture_type, potential_type, ensemble_type>
     struct variant

@@ -139,7 +139,7 @@ private:
 	/** particle velocities */
 	cuda::host::vector<gpu_vector_type> v;
 	/** particle tags */
-	cuda::host::vector<int> tag;
+	cuda::host::vector<unsigned int> tag;
 	/** blockwise maximum particles velocity magnitudes */
 	cuda::host::vector<float> v_max;
 	/** potential energies per particle */
@@ -159,7 +159,7 @@ private:
 	/** particle forces */
 	cuda::vector<gpu_vector_type> f;
 	/** particle tags */
-	cuda::vector<int> tag;
+	cuda::vector<unsigned int> tag;
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
@@ -438,12 +438,12 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
 
     for (unsigned int i = 0; i < nplace; ++i) {
 	// particle tag
-	int const tag = h_part.tag[i];
+	unsigned int const tag = h_part.tag[i];
 	// skip virtual particles
 	if (tag == gpu::VIRTUAL_PARTICLE) continue;
 
 	// A or B particle type
-	unsigned int const type = (static_cast<unsigned int>(tag) >= mpart[0]);
+	unsigned int const type = (tag >= mpart[0]);
 	// particle number
 	unsigned int const n = type ? (tag - mpart[0]) : tag;
 	// copy periodically extended particle positions
@@ -508,7 +508,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::assign_velocities(cuda::host::v
 {
     float vv_max = 0;
     for (unsigned int i = 0; i < nplace; ++i) {
-	int const tag = h_part.tag[i];
+	unsigned int const tag = h_part.tag[i];
 	if (tag != gpu::VIRTUAL_PARTICLE) {
 	    h_part.v[i] = h_v[tag];
 	    vv_max = std::max(vv_max, (vector_type) h_v[tag] * h_v[tag]);

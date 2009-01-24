@@ -41,8 +41,8 @@ template <>
 struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<3> >
 : public ljfluid_base<ljfluid_impl_gpu_cell>, public ljfluid<ljfluid_impl_gpu_base<3> >
 {
-    static cuda::function<void (float4 const*, float4*, int*)> assign_cells;
-    static cuda::function<void (float4 const*, float4 const*, float4 const*, float4*, float4*, float4*, int*)> update_cells;
+    static cuda::function<void (float4 const*, float4*, unsigned int*)> assign_cells;
+    static cuda::function<void (float4 const*, float4 const*, float4 const*, float4*, float4*, float4*, unsigned int*)> update_cells;
     template <mixture_type, potential_type, ensemble_type>
     struct variant
     {
@@ -55,8 +55,8 @@ template <>
 struct ljfluid<ljgpu::ljfluid_impl_gpu_cell<2> >
 : public ljfluid_base<ljfluid_impl_gpu_cell>, public ljfluid<ljfluid_impl_gpu_base<2> >
 {
-    static cuda::function<void (float4 const*, float4*, int*)> assign_cells;
-    static cuda::function<void (float4 const*, float2 const*, float2 const*, float4*, float2*, float2*, int*)> update_cells;
+    static cuda::function<void (float4 const*, float4*, unsigned int*)> assign_cells;
+    static cuda::function<void (float4 const*, float2 const*, float2 const*, float4*, float2*, float2*, unsigned int*)> update_cells;
     template <mixture_type, potential_type, ensemble_type>
     struct variant
     {
