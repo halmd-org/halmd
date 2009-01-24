@@ -194,6 +194,24 @@ public:
 	{
 	    return prop.textureAlignment;
 	}
+
+#if (CUDART_VERSION >= 2000)
+	/**
+	 * asynchronous kernel and memory operations capability
+	 */
+	int device_overlap()
+	{
+	    return prop.deviceOverlap;
+	}
+
+	/**
+	 * number of multiprocessors
+	 */
+	int multi_processor_count()
+	{
+	    return prop.multiProcessorCount;
+	}
+#endif /* CUDART_VERSION >= 2000 */
     };
 
     /**
