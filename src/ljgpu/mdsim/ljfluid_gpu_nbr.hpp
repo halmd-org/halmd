@@ -406,18 +406,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	throw exception("failed to allocate global device memory for sorting buffers");
     }
 
-    // allocate global device memory for radix sort
     try {
-	// compute optimal number of blocks for GeForce 8800 with 16 multiprocessors
-	unsigned int threads = dim_.threads_per_block();
-	unsigned int max_blocks = (16 * 512) / (threads * gpu::radix_sort::BUCKETS_PER_THREAD / 2);
-	unsigned int blocks = std::min((npart + 2 * threads - 1) / (2 * threads), max_blocks);
-
-	LOG("number of CUDA blocks for radix sort: " << blocks);
-	LOG("number of CUDA threads for radix sort: " << threads);
-
-	// allocate global device memory for radix sort
-	radix_.resize(npart, blocks, threads);
+	radix_.resize(npart, dim_.threads_per_block());
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for radix sort");

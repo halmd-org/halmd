@@ -50,7 +50,7 @@ enum { dimension = 2 };
 int main(int argc, char **argv)
 {
     // program options
-    uint blocks, threads, seed, depth;
+    uint threads, seed, depth;
     float box;
     ushort device;
 
@@ -64,8 +64,6 @@ int main(int argc, char **argv)
 	     "Hilbert code recursion depth")
 	    ("device,D", po::value<ushort>(&device)->default_value(0),
 	     "CUDA device")
-	    ("blocks,B", po::value<uint>(&blocks)->default_value(16),
-	     "number of blocks in grid")
 	    ("threads,T", po::value<uint>(&threads)->default_value(128),
 	     "number of threads per block")
 	    ("seed,S", po::value<uint>(&seed)->default_value(42),
@@ -131,7 +129,8 @@ int main(int argc, char **argv)
 	stop[1].record(stream);
 
 	// parallel radix sort
-	radix_sort<float4> radix(count, blocks, threads);
+	radix_sort<float4> radix;
+	radix.resize(count, threads);
 
 	for (uint i = 0; i < g_sort.size(); ++i) {
 	    g_r[i + 1].resize(g_r[0].size());

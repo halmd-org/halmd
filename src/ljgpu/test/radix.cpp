@@ -40,7 +40,7 @@ namespace po = boost::program_options;
 int main(int argc, char **argv)
 {
     // program options
-    uint count, blocks, threads, seed;
+    uint count, threads, seed;
     unsigned short device;
     bool verbose;
 
@@ -52,8 +52,6 @@ int main(int argc, char **argv)
 	     "number of elements")
 	    ("device,D", po::value<unsigned short>(&device)->default_value(0),
 	     "CUDA device")
-	    ("blocks,B", po::value<uint>(&blocks)->default_value(16),
-	     "number of blocks in grid")
 	    ("threads,T", po::value<uint>(&threads)->default_value(128),
 	     "number of threads per block")
 	    ("seed,S", po::value<uint>(&seed)->default_value(42),
@@ -103,7 +101,8 @@ int main(int argc, char **argv)
 	stream.synchronize();
 
 	// parallel radix sort
-	radix_sort<uint> radix(count, blocks, threads);
+	radix_sort<uint> radix;
+	radix.resize(count, threads);
 	cuda::vector<uint> g_dummy(count);
 	cuda::host::vector<uint> h_array2(count);
 	start.record(stream);

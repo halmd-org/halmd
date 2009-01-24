@@ -34,64 +34,67 @@ template <typename T>
 class radix_sort
 {
 public:
-    radix_sort() : blocks(0), threads(0) {}
+    typedef cuda::vector<unsigned int> key_vector;
+    typedef cuda::vector<T> val_vector;
 
-    /**
-     * allocate parallel radix sort for given element count
-     */
-    radix_sort(unsigned int count, unsigned int blocks, unsigned int threads)
-      : blocks(blocks), threads(threads), g_bucket(bucket_size()),
-       	g_key(count), g_val(count), g_scan(scan_size(), scan_threads()) {}
+    enum { BUCKETS_PER_THREAD = gpu::radix_sort::BUCKETS_PER_THREAD };
+    enum { BUCKET_SIZE = gpu::radix_sort::BUCKET_SIZE };
+    enum { RADIX = gpu::radix_sort::RADIX };
+
+public:
+    radix_sort() {}
 
     /**
      * reallocate parallel radix sort for given element count
      */
-    void resize(unsigned int count, unsigned int blocks, unsigned int threads)
+    void resize(unsigned int count, unsigned int threads)
     {
-	radix_sort temp(count, blocks, threads);
-	swap(temp);
-    }
+	// compute optimal CUDA thread configuration
+	int dev = cuda::device::get();
+	unsigned int max_threads, max_blocks;
+	cuda::device::properties prop(dev);
+	max_threads = prop.multi_processor_count() * prop.max_threads_per_block();
+	max_blocks = max_threads / (threads * BUCKETS_PER_THREAD / 2);
+	blocks_ = std::min((count + 2 * threads - 1) / (2 * threads), max_blocks);
+	threads_ = threads;
 
-    /**
-     * swap dimensions and device memory with another parallel radix sort
-     */
-    void swap(radix_sort& r)
-    {
-	std::swap(blocks, r.blocks);
-	std::swap(threads, r.threads);
-	g_bucket.swap(r.g_bucket);
-	g_key.swap(r.g_key);
-	g_val.swap(r.g_val);
-	g_scan.swap(r.g_scan);
+	// allocate global device memory
+	g_scan.resize(blocks_ * threads_ * BUCKETS_PER_THREAD, BUCKET_SIZE);
+	g_bucket.resize(blocks_ * threads_ * BUCKETS_PER_THREAD);
+	g_key.resize(count);
+	g_val.resize(count);
     }
 
     /**
      * radix sort given keys and values in-place
      */
-    void operator()(cuda::vector<unsigned int>& g_key_, cuda::vector<T>& g_val_,
-		    cuda::stream& stream)
+    void operator()(key_vector& g_key_, val_vector& g_val_, cuda::stream& stream)
     {
+	typedef boost::reference_wrapper<key_vector> key_ref;
+	typedef boost::reference_wrapper<val_vector> val_ref;
+	size_t const shmem = threads_ * BUCKETS_PER_THREAD * sizeof(unsigned int);
+
 	assert(g_key_.size() == g_key.size());
 	assert(g_val_.size() == g_val.size());
 
 	// assign GPU dual buffers, as in the CUDA SDK radix sort example
-	boost::reference_wrapper<cuda::vector<unsigned int> > key[2] = {
-	    boost::ref(g_key_), boost::ref(g_key) };
-	boost::reference_wrapper<cuda::vector<T> > val[2] = {
-	    boost::ref(g_val_), boost::ref(g_val) };
+	key_ref key[2] = { boost::ref(g_key_), boost::ref(g_key) };
+	val_ref val[2] = { boost::ref(g_val_), boost::ref(g_val) };
 
-	for (unsigned int r = 0; r < 32; r += gpu::radix_sort::RADIX) {
+	for (unsigned int r = 0; r < 32; r += RADIX) {
+	    key_vector const& ikey = key[0];
+	    key_vector& okey = key[1];
+	    val_vector const& ival = val[0];
+	    val_vector& oval = val[1];
+
 	    // compute partial radix counts
-	    cuda::configure(blocks, threads, shared_mem(), stream);
-	    gpu::radix_sort::histogram_keys(key[0].get(), g_bucket, g_key.size(), r);
-
+	    cuda::configure(blocks_, threads_, shmem, stream);
+	    gpu::radix_sort::histogram_keys(ikey, g_bucket, g_key.size(), r);
 	    // parallel prefix sum over radix counts
 	    g_scan(g_bucket, stream);
-
 	    // permute array
-	    cuda::configure(blocks, threads, shared_mem(), stream);
-	    gpu::radix_sort::permute(key[0].get(), key[1].get(), val[0].get(), val[1].get(),
-				     g_bucket, g_key.size(), r);
+	    cuda::configure(blocks_, threads_, shmem, stream);
+	    gpu::radix_sort::permute(ikey, okey, ival, oval, g_bucket, g_key.size(), r);
 
 	    // swap GPU dual buffers
 	    std::swap(key[0], key[1]);
@@ -100,43 +103,10 @@ public:
     }
 
 private:
-    /**
-     * returns shared memory size in bytes for GPU radix kernels
-     */
-    unsigned int shared_mem()
-    {
-	return threads * gpu::radix_sort::BUCKETS_PER_THREAD * sizeof(unsigned int);
-    }
-
-    /**
-     * returns element count for GPU prefix sum
-     */
-    unsigned int scan_size()
-    {
-	return blocks * threads * gpu::radix_sort::BUCKETS_PER_THREAD;
-    }
-
-    /**
-     * returns number of CUDA threads per block for GPU prefix sum
-     */
-    unsigned int scan_threads()
-    {
-	return gpu::radix_sort::BUCKET_SIZE;
-    }
-
-    /**
-     * returns radix count bucket element count
-     */
-    unsigned int bucket_size()
-    {
-	return blocks * threads * gpu::radix_sort::BUCKETS_PER_THREAD;
-    }
-
-private:
-    unsigned int blocks, threads;
-    cuda::vector<unsigned int> g_bucket, g_key;
-    cuda::vector<T> g_val;
+    unsigned int blocks_, threads_;
     prefix_sum<unsigned int> g_scan;
+    key_vector g_bucket, g_key;
+    val_vector g_val;
 };
 
 } // namespace ljgpu
