@@ -16,14 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_MATH_ACCUM_HPP
-#define LJGPU_MATH_ACCUM_HPP
+#ifndef LJGPU_MATH_GPU_ACCUM_CUH
+#define LJGPU_MATH_GPU_ACCUM_CUH
 
-#include <cmath>
-#include <limits>
-#include <stdint.h>
-
-namespace ljgpu
+namespace ljgpu { namespace gpu
 {
 
 /**
@@ -33,14 +29,14 @@ template <typename T>
 class accumulator
 {
 public:
-    accumulator() : n_(0), m_(0), v_(0) {}
+    __device__ __host__ inline accumulator() : n_(0), m_(0), v_(0) {}
 
-    accumulator(uint64_t n, T const& m, T const& v) : n_(n), m_(m), v_(v) {}
+    __device__ __host__ inline accumulator(unsigned int n, T const& m, T const& v) : n_(n), m_(m), v_(v) {}
 
     /**
      * accumulate a value
      */
-    accumulator<T>& operator+=(T const& val)
+    __device__ __host__ inline accumulator<T>& operator+=(T const& val)
     {
 	//
 	// The following method for calculating means and standard
@@ -49,9 +45,9 @@ public:
 	// D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
 	// Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
 	//
-	const T t = val - m_;
+	T const t = val - m_;
 	n_++;
-	m_ += t / n_;
+	m_ += t / T(n_);
 	v_ += t * (val - m_);
 	return *this;
     }
@@ -59,29 +55,20 @@ public:
     /**
      * accumulate values of another accumulator
      */
-    accumulator<T>& operator +=(accumulator<T> const& acc)
+    __device__ __host__ inline accumulator<T>& operator +=(accumulator<T> const& acc)
     {
-	const uint64_t n = n_ + acc.n_;
-	v_ = v_ + acc.v_ + std::pow(m_ - acc.m_, 2) * n_ * acc.n_ / n;
-	m_ = (n_ * m_ + acc.n_ * acc.m_) / n;
+	unsigned int const n = n_ + acc.n_;
+	T const d = m_ - acc.m_;
+	v_ = v_ + acc.v_ + d * d * T(n_) * T(acc.n_) / T(n);
+	m_ = (T(n_) * m_ + T(acc.n_) * acc.m_) / T(n);
 	n_ = n;
 	return *this;
     }
 
     /**
-     * reset accumulator to empty state
-     */
-    void clear()
-    {
-	n_ = 0;
-	m_ = 0;
-	v_ = 0;
-    }
-
-    /**
      * get accumulator value count
      */
-    uint64_t const& count() const
+    __device__ __host__ inline unsigned int count() const
     {
 	return n_;
     }
@@ -89,56 +76,28 @@ public:
     /**
      * compute mean average
      */
-    T mean() const
+    __device__ __host__ inline T mean() const
     {
-	if (n_ < 1) {
-	    return std::numeric_limits<T>::quiet_NaN();
-	}
 	return m_;
     }
 
     /**
      * compute variance
      */
-    T var() const
+    __device__ __host__ inline T var() const
     {
-	if (n_ < 2) {
-	    return std::numeric_limits<T>::quiet_NaN();
-	}
 	return v_;
-    }
-
-    /**
-     * compute standard deviation
-     */
-    T std() const
-    {
-	if (n_ < 2) {
-	    return std::numeric_limits<T>::quiet_NaN();
-	}
-	return std::sqrt(v_ / (n_ - 1));
-    }
-
-    /**
-     * compute standard error of mean
-     */
-    T err() const
-    {
-	if (n_ < 2) {
-	    return std::numeric_limits<T>::quiet_NaN();
-	}
-	return sqrt(v_ / (n_ - 1) / n_);
     }
 
 private:
     /** count */
-    uint64_t n_;
+    unsigned int n_;
     /** mean */
     T m_;
     /** variance */
     T v_;
 };
 
-} // namespace ljgpu
+}} // namespace ljgpu::gpu
 
-#endif /* ! LJGPU_MATH_ACCUM_HPP */
+#endif /* ! LJGPU_MATH_GPU_ACCUM_CUH */
