@@ -69,6 +69,8 @@ public:
     void mdstep();
     /** copy MD simulation step results from GPU to host */
     void copy();
+    /** sample phase space on GPU */
+    void sample(cuda::vector<gpu_vector_type>& r, cuda::vector<gpu_vector_type>& v);
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
@@ -104,10 +106,10 @@ private:
     void assign_cells(cuda::stream& stream);
     /** update neighbour lists */
     void update_neighbours(cuda::stream& stream);
-#if defined(USE_HILBERT_ORDER)
     /** order particles after Hilbert space-filling curve */
     void hilbert_order(cuda::stream& stream);
-#endif
+    /** generate permutation for phase space sampling */
+    void permutation(cuda::stream& stream);
 
 private:
     using _Base::box_;
@@ -127,7 +129,7 @@ private:
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 9> event_;
+    boost::array<cuda::event, 10> event_;
 
     /** GPU radix sort */
     radix_sort<unsigned int> radix_;
@@ -490,6 +492,16 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream neighbour lists update on GPU");
 	}
+	event_[9].record(stream_);
+
+#ifdef USE_HILBERT_ORDER
+	try {
+	    permutation(stream_);
+	}
+	catch (cuda::error const& e) {
+	    throw exception("failed to generate permutation for phase space sampling");
+	}
+#endif
     }
     event_[5].record(stream_);
 
@@ -567,7 +579,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
 	// GPU time for cell lists update
 	m_times["update_cells"] += event_[4] - event_[3];
 	// GPU time for neighbour lists update
-	m_times["update_neighbours"] += event_[5] - event_[4];
+	m_times["update_neighbours"] += event_[9] - event_[4];
+#if defined(USE_HILBERT_ORDER)
+	// GPU time for permutation sort
+	m_times["permutation"] += event_[5] - event_[9];
+#endif
     }
 
     if (!std::isfinite((double) reduce_en.value())) {
@@ -624,6 +640,24 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 }
 
 template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(cuda::vector<gpu_vector_type>& r, cuda::vector<gpu_vector_type>& v)
+{
+    assert(r.size() == g_part.r.size());
+    assert(v.size() == g_part.v.size());
+    assert(r.capacity() == g_part.r.capacity());
+    assert(v.capacity() == g_part.v.capacity());
+
+    // order particles by permutation
+    event_[0].record(stream_);
+    cuda::configure(dim_.grid, dim_.block, stream_);
+    _gpu::sample(g_aux.index, r, v);
+    event_[1].record(stream_);
+    event_[1].synchronize();
+
+    m_times["sample"] += event_[1] - event_[0];
+}
+
+template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
 {
     // assign ascending particle numbers
@@ -642,6 +676,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
 	assign_cells(stream_);
 	// update neighbour lists
 	update_neighbours(stream_);
+	// generate permutation for phase space sampling
+	permutation(stream_);
 	// calculate forces
 	update_forces(stream_);
 	// calculate potential energy
@@ -691,7 +727,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_cells(cuda::stream&
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::compute_cell(g_part.r, g_aux.cell);
 
-    // generate permutation array
+    // generate permutation
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::gen_index(g_aux.index);
     radix_(g_aux.cell, g_aux.index, stream);
@@ -716,7 +752,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_neighbours(cuda::st
     _gpu::update_neighbours(g_cell);
 }
 
-#if defined(USE_HILBERT_ORDER)
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream& stream)
 {
@@ -724,7 +759,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
     cuda::configure(dim_.grid, dim_.block, stream);
     gpu::hilbert<dimension>::curve(g_part.r, g_aux.cell);
 
-    // generate permutation array
+    // generate permutation
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::gen_index(g_aux.index);
     radix_(g_aux.cell, g_aux.index, stream);
@@ -736,7 +771,20 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
     cuda::copy(g_part_buf.R, g_part.R, stream);
     cuda::copy(g_part_buf.v, g_part.v, stream);
 }
-#endif /* USE_HILBERT_ORDER */
+
+/**
+ * generate permutation for phase space sampling
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::permutation(cuda::stream& stream)
+{
+    cuda::configure(dim_.grid, dim_.block, stream_);
+    _gpu::gen_index(g_aux.index);
+#ifdef USE_HILBERT_ORDER
+    cuda::copy(g_part.tag, g_aux.cell, stream_);
+    radix_(g_aux.cell, g_aux.index, stream_);
+#endif
+}
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::param(H5param& param) const

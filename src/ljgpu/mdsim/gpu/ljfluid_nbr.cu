@@ -396,6 +396,21 @@ __global__ void order_particles(unsigned int const* g_index, float4* g_or, T* g_
     g_otag[GTID] = tag;
 }
 
+/**
+ * sample trajectories
+ */
+template <int dimension, typename T>
+__global__ void sample(unsigned int const* g_perm, T* g_or, T* g_ov)
+{
+    // permutation index
+    uint const j = g_perm[GTID];
+    // permute particle phase space coordinates
+    vector<float, dimension> const r = tex1Dfetch(tex<dimension>::r, j);
+    vector<float, dimension> const R = tex1Dfetch(tex<dimension>::R, j);
+    g_or[GTID] = r + box * R;
+    g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
+}
+
 }}} // namespace ljgpu::gpu::ljfluid
 
 namespace ljgpu { namespace gpu
@@ -458,6 +473,8 @@ cuda::function<void (float4 const*, uint*)>
     _3D::compute_cell(cu::ljfluid::compute_cell<3>);
 cuda::function<void (unsigned int const*, float4*, float4*, float4*, unsigned int*)>
     _3D::order_particles(cu::ljfluid::order_particles<3>);
+cuda::function<void (unsigned int const*, float4*, float4*)>
+    _3D::sample(cu::ljfluid::sample<3>);
 
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<UNARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT, NVE>);
@@ -483,5 +500,7 @@ cuda::function<void (float4 const*, uint*)>
     _2D::compute_cell(cu::ljfluid::compute_cell<2>);
 cuda::function<void (unsigned int const*, float4*, float2*, float2*, unsigned int*)>
     _2D::order_particles(cu::ljfluid::order_particles<2>);
+cuda::function<void (unsigned int const*, float2*, float2*)>
+    _2D::sample(cu::ljfluid::sample<2>);
 
 }} // namespace ljgpu::gpu

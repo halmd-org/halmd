@@ -47,6 +47,7 @@ perf::desc_map perf::m_desc = boost::assign::map_list_of
     ("maximum_velocity",	"maximum velocity reduction")
     ("mdstep",			"MD simulation step")
     ("memcpy_cells",		"cell lists memcpy")
+    ("permutation",		"phase space sample sort")
     ("potential_energy",	"potential energy sum reduction")
     ("reduce_squared_velocity",	"mean squared velocity reduction")
     ("reduce_velocity",		"velocity center of mass reduction")
