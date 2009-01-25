@@ -126,10 +126,20 @@ public:
 	return _Base::data();
     }
 
+    operator value_type*()
+    {
+	return _Base::data();
+    }
+
     /**
      * returns device pointer to allocated device memory
      */
     value_type const* data() const
+    {
+	return _Base::data();
+    }
+
+    operator value_type const*() const
     {
 	return _Base::data();
     }
