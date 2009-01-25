@@ -98,7 +98,7 @@ public:
      * convert to coalesced GPU floating-point vector
      */
 #ifdef WITH_CUDA
-    operator float4()
+    operator float4() const
     {
 	return make_float4((*this)[0], (*this)[1], (*this)[2], 0);
     }
@@ -106,7 +106,7 @@ public:
     /**
      * convert to uncoalesced GPU floating-point vector
      */
-    operator float3()
+    operator float3() const
     {
 	return make_float3((*this)[0], (*this)[1], (*this)[2]);
     }

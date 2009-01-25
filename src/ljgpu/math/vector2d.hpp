@@ -99,17 +99,17 @@ public:
      * convert to GPU floating-point type
      */
 #ifdef WITH_CUDA
-    operator float2()
+    operator float2() const
     {
 	return make_float2((*this)[0], (*this)[1]);
     }
 
-    operator float3()
+    operator float3() const
     {
 	return make_float3((*this)[0], (*this)[1], 0);
     }
 
-    operator float4()
+    operator float4() const
     {
 	return make_float4((*this)[0], (*this)[1], 0, 0);
     }
