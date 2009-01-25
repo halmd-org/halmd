@@ -21,7 +21,6 @@
 
 #include <cuda_wrapper.hpp>
 #include <ljgpu/math/gpu/dsfun.cuh>
-#include <ljgpu/math/gpu/accum.cuh>
 
 namespace ljgpu { namespace gpu
 {
@@ -33,6 +32,10 @@ struct tcf_base
 	THREADS = 512,
 	WARP_SIZE = 32,
     };
+
+    static cuda::symbol<unsigned int*> count;
+    static cuda::symbol<dfloat*> mean;
+    static cuda::symbol<dfloat*> variance;
 };
 
 template <int dimension>
@@ -41,22 +44,22 @@ struct tcf;
 template <>
 struct tcf<3> : public tcf_base
 {
-    static cuda::function<void (float4 const*, float4 const*, accumulator<dfloat>*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint)>
        	mean_square_displacement;
-    static cuda::function<void (float4 const*, float4 const*, accumulator<dfloat>*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint)>
        	mean_quartic_displacement;
-    static cuda::function<void (float4 const*, float4 const*, accumulator<dfloat>*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint)>
        	velocity_autocorrelation;
 };
 
 template <>
 struct tcf<2> : public tcf_base
 {
-    static cuda::function<void (float2 const*, float2 const*, accumulator<dfloat>*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint)>
        	mean_square_displacement;
-    static cuda::function<void (float2 const*, float2 const*, accumulator<dfloat>*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint)>
        	mean_quartic_displacement;
-    static cuda::function<void (float2 const*, float2 const*, accumulator<dfloat>*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint)>
        	velocity_autocorrelation;
 };
 

@@ -19,85 +19,41 @@
 #ifndef LJGPU_MATH_GPU_ACCUM_CUH
 #define LJGPU_MATH_GPU_ACCUM_CUH
 
-namespace ljgpu { namespace gpu
+namespace ljgpu { namespace cu { namespace accumulator
 {
 
 /**
- * Accumulator with statistical evaluation functions
+ * accumulate a value
  */
 template <typename T>
-class accumulator
+__device__ inline void add(unsigned int& n, T& m, T& v, T const& val)
 {
-public:
-    __device__ __host__ inline accumulator() : n_(0), m_(0), v_(0) {}
+    //
+    // The following method for calculating means and standard
+    // deviations with floating point arithmetic is described in
+    //
+    // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+    // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
+    //
+    T const t = val - m;
+    n++;
+    m += t / static_cast<T>(n);
+    v += t * (val - m);
+}
 
-    __device__ __host__ inline accumulator(unsigned int n, T const& m, T const& v) : n_(n), m_(m), v_(v) {}
+/**
+ * accumulate values of another accumulator
+ */
+template <typename T>
+__device__ inline void add(unsigned int& n, T& m, T& v, unsigned int n_, T const& m_, T const& v_)
+{
+    unsigned int const s = n + n_;
+    T const d = m - m_;
+    v = v + v_ + d * d * T(n) * T(n_) / T(s);
+    m = (T(n) * m + T(n_) * m_) / T(s);
+    n = s;
+}
 
-    /**
-     * accumulate a value
-     */
-    __device__ __host__ inline accumulator<T>& operator+=(T const& val)
-    {
-	//
-	// The following method for calculating means and standard
-	// deviations with floating point arithmetic is described in
-	//
-	// D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
-	// Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
-	//
-	T const t = val - m_;
-	n_++;
-	m_ += t / T(n_);
-	v_ += t * (val - m_);
-	return *this;
-    }
-
-    /**
-     * accumulate values of another accumulator
-     */
-    __device__ __host__ inline accumulator<T>& operator +=(accumulator<T> const& acc)
-    {
-	unsigned int const n = n_ + acc.n_;
-	T const d = m_ - acc.m_;
-	v_ = v_ + acc.v_ + d * d * T(n_) * T(acc.n_) / T(n);
-	m_ = (T(n_) * m_ + T(acc.n_) * acc.m_) / T(n);
-	n_ = n;
-	return *this;
-    }
-
-    /**
-     * get accumulator value count
-     */
-    __device__ __host__ inline unsigned int count() const
-    {
-	return n_;
-    }
-
-    /**
-     * compute mean average
-     */
-    __device__ __host__ inline T mean() const
-    {
-	return m_;
-    }
-
-    /**
-     * compute variance
-     */
-    __device__ __host__ inline T var() const
-    {
-	return v_;
-    }
-
-private:
-    /** count */
-    unsigned int n_;
-    /** mean */
-    T m_;
-    /** variance */
-    T v_;
-};
-
-}} // namespace ljgpu::gpu
+}}} // namespace ljgpu::cu::accumulator
 
 #endif /* ! LJGPU_MATH_GPU_ACCUM_CUH */
