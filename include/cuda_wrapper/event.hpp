@@ -19,6 +19,8 @@
 #ifndef CUDA_EVENT_HPP
 #define CUDA_EVENT_HPP
 
+#include <boost/shared_ptr.hpp>
+#include <boost/utility.hpp>
 #include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/error.hpp>
 #include <cuda_wrapper/stream.hpp>
@@ -33,22 +35,33 @@ namespace cuda
  */
 class event
 {
+private:
+    struct container : boost::noncopyable
+    {
+	/**
+	 * creates an event
+	 */
+	container()
+	{
+	    CUDA_CALL(cudaEventCreate(&m_event));
+	}
+
+	/**
+	 * destroys the event
+	 */
+	~container() throw() // no-throw guarantee
+	{
+	    cudaEventDestroy(m_event);
+	}
+
+	cudaEvent_t m_event;
+    };
+
 public:
     /**
      * creates an event
      */
-    event()
-    {
-	CUDA_CALL(cudaEventCreate(&event_));
-    }
-
-    /**
-     * destroys the event
-     */
-    ~event() throw() // no-throw guarantee
-    {
-	cudaEventDestroy(event_);
-    }
+    event() : m_event(new container) {}
 
     /**
      * records an event
@@ -57,7 +70,7 @@ public:
      */
     void record()
     {
-	CUDA_CALL(cudaEventRecord(event_, 0));
+	CUDA_CALL(cudaEventRecord(m_event->m_event, 0));
     }
 
     /**
@@ -67,7 +80,7 @@ public:
      */
     void record(const stream& stream)
     {
-	CUDA_CALL(cudaEventRecord(event_, stream.data()));
+	CUDA_CALL(cudaEventRecord(m_event->m_event, stream.data()));
     }
 
     /**
@@ -75,7 +88,7 @@ public:
      */
     void synchronize()
     {
-	CUDA_CALL(cudaEventSynchronize(event_));
+	CUDA_CALL(cudaEventSynchronize(m_event->m_event));
     }
 
     /**
@@ -85,7 +98,7 @@ public:
      */
     bool query()
     {
-	cudaError_t err = cudaEventQuery(event_);
+	cudaError_t err = cudaEventQuery(m_event->m_event);
 	if (cudaSuccess == err)
 	    return true;
 	else if (cudaErrorNotReady == err)
@@ -101,7 +114,7 @@ public:
     float operator-(const event &start)
     {
 	float time;
-	CUDA_CALL(cudaEventElapsedTime(&time, start.event_, event_));
+	CUDA_CALL(cudaEventElapsedTime(&time, start.m_event->m_event, m_event->m_event));
 	return (1.e-3f * time);
     }
 
@@ -110,17 +123,11 @@ public:
      */
     cudaEvent_t data() const
     {
-	return event_;
+	return m_event->m_event;
     }
 
 private:
-    // disable default copy constructor
-    event(const event&);
-    // disable default assignment operator
-    event& operator=(const event&);
-
-private:
-    cudaEvent_t event_;
+    boost::shared_ptr<container> m_event;
 };
 
 #endif /* CUDART_VERSION >= 1010 */
