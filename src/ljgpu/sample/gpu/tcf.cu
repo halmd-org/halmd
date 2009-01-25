@@ -45,7 +45,7 @@ __device__ void reduce(accumulator<dfloat>& acc, unsigned int s_n[], dfloat s_m[
     reduce<threads / 2>(acc, s_n, s_m, s_v);
 }
 template <>
-__device__ void reduce<0>(accumulator<dfloat>& acc, unsigned int s_n[], dfloat s_m[], dfloat s_v[])
+__device__ void reduce<1>(accumulator<dfloat>& acc, unsigned int s_n[], dfloat s_m[], dfloat s_v[])
 {
     if (TID < 1) {
 	acc += accumulator<dfloat>(s_n[TID + 1], s_m[TID + 1], s_v[TID + 1]);
