@@ -137,36 +137,38 @@
     class arg<T*>
     {
     public:
-	arg(vector<T>& a) : a(a) {}
+	arg(vector<T>& a) : a(a.data()) {}
+	arg(T* a) : a(a) {}
 
 	/**
 	 * returns pointer to CUDA device memory array
 	 */
 	T* operator*()
 	{
-	    return a.data();
+	    return a;
 	}
 
     private:
-	vector<T>& a;
+	T* a;
     };
 
     template <typename T>
     class arg<T const*>
     {
     public:
-	arg(vector<T> const& a) : a(a) {}
+	arg(vector<T> const& a) : a(a.data()) {}
+	arg(T const* a) : a(a) {}
 
 	/**
 	 * returns const pointer to CUDA device memory array
 	 */
 	T const* operator*()
 	{
-	    return a.data();
+	    return a;
 	}
 
     private:
-	vector<T> const& a;
+	T const* a;
     };
 
     #endif /* ! __CUDACC__ */
