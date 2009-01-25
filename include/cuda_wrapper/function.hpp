@@ -112,65 +112,6 @@
 
     #endif /* CUDART_VERSION >= 1010 */
 
-    /**
-     * CUDA device function argument wrapper
-     */
-    template <typename T>
-    class arg
-    {
-    public:
-	arg(T const& a) : a(a) {}
-
-	/**
-	 * returns const reference to arbitrary argument
-	 */
-	T const& operator*()
-	{
-	    return a;
-	}
-
-    private:
-	T const& a;
-    };
-
-    template <typename T>
-    class arg<T*>
-    {
-    public:
-	arg(vector<T>& a) : a(a.data()) {}
-	arg(T* a) : a(a) {}
-
-	/**
-	 * returns pointer to CUDA device memory array
-	 */
-	T* operator*()
-	{
-	    return a;
-	}
-
-    private:
-	T* a;
-    };
-
-    template <typename T>
-    class arg<T const*>
-    {
-    public:
-	arg(vector<T> const& a) : a(a.data()) {}
-	arg(T const* a) : a(a) {}
-
-	/**
-	 * returns const pointer to CUDA device memory array
-	 */
-	T const* operator*()
-	{
-	    return a;
-	}
-
-    private:
-	T const* a;
-    };
-
     #endif /* ! __CUDACC__ */
 
     template <
@@ -221,7 +162,7 @@
 	/**
 	 * execute kernel
 	 */
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, arg<T, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, T, x))
 	{
 	    // properly align CUDA device function arguments
 	    struct {
@@ -229,7 +170,7 @@
 		BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS_1, DECL_ARG, a)
 		#undef DECL_ARG
 	    } args = {
-		BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, *x)
+		BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, x)
 	    };
 	    // push aligned arguments onto CUDA execution stack
 	    CUDA_CALL(cudaSetupArgument(&args, sizeof(args), 0));
@@ -282,11 +223,11 @@
 	function(T *f1, U *f2) : f1(f1), f2(f2) {}
 
     #ifndef __CUDACC__
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, arg<T, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, T, x))
 	{
 	    f1(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, x));
 	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, arg<U, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, U, x))
 	{
 	    f2(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, x));
 	}
@@ -337,15 +278,15 @@
 	function(T *f1, U *f2, V *f3) : f1(f1), f2(f2), f3(f3) {}
 
     #ifndef __CUDACC__
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, arg<T, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, T, x))
 	{
 	    f1(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, x));
 	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, arg<U, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, U, x))
 	{
 	    f2(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, x));
 	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_3, arg<V, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_3, V, x))
 	{
 	    f3(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, x));
 	}
@@ -399,19 +340,19 @@
 	function(T *f1, U *f2, V *f3, W *f4) : f1(f1), f2(f2), f3(f3), f4(f4) {}
 
     #ifndef __CUDACC__
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, arg<T, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, T, x))
 	{
 	    f1(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, x));
 	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, arg<U, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, U, x))
 	{
 	    f2(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, x));
 	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_3, arg<V, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_3, V, x))
 	{
 	    f3(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, x));
 	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_4, arg<W, > x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_4, W, x))
 	{
 	    f4(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_4, x));
 	}
