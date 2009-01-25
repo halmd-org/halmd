@@ -32,10 +32,6 @@ struct tcf_base
 	THREADS = 512,
 	WARP_SIZE = 32,
     };
-
-    static cuda::symbol<unsigned int*> count;
-    static cuda::symbol<dfloat*> mean;
-    static cuda::symbol<dfloat*> variance;
 };
 
 template <int dimension>
@@ -44,23 +40,31 @@ struct tcf;
 template <>
 struct tcf<3> : public tcf_base
 {
-    static cuda::function<void (float4 const*, float4 const*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
        	mean_square_displacement;
-    static cuda::function<void (float4 const*, float4 const*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
        	mean_quartic_displacement;
-    static cuda::function<void (float4 const*, float4 const*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
        	velocity_autocorrelation;
+    static cuda::function<void (float4 const*, float4 const*, float3 const, dfloat*, uint)>
+	incoherent_scattering_function;
+    static cuda::function<void (float4 const*, float3 const, dfloat*, dfloat*, uint)>
+	coherent_scattering_function;
 };
 
 template <>
 struct tcf<2> : public tcf_base
 {
-    static cuda::function<void (float2 const*, float2 const*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
        	mean_square_displacement;
-    static cuda::function<void (float2 const*, float2 const*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
        	mean_quartic_displacement;
-    static cuda::function<void (float2 const*, float2 const*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
        	velocity_autocorrelation;
+    static cuda::function<void (float2 const*, float2 const*, float2 const, dfloat*, uint)>
+	incoherent_scattering_function;
+    static cuda::function<void (float2 const*, float2 const, dfloat*, dfloat*, uint)>
+	coherent_scattering_function;
 };
 
 }} // namespace ljgpu::gpu
