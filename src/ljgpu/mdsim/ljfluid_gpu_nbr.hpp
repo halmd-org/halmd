@@ -134,9 +134,9 @@ private:
     /** GPU radix sort */
     radix_sort<unsigned int> radix_;
     /** potential energy sum */
-    reduce<tag::sum, dfloat> reduce_en;
+    reduce<tag::sum, dfloat, double> reduce_en;
     /** virial equation sum */
-    reduce<tag::sum, dfloat> reduce_virial;
+    reduce<tag::sum, dfloat, double> reduce_virial;
     /** maximum absolute velocity */
     reduce<tag::max, float> reduce_v_max;
 
@@ -586,7 +586,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
 #endif
     }
 
-    if (!std::isfinite((double) reduce_en.value())) {
+    if (!std::isfinite(reduce_en.value())) {
 	throw exception("potential energy diverged");
     }
 
@@ -631,9 +631,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
     }
 
     // mean potential energy per particle
-    m_sample.en_pot = (double) reduce_en.value() / npart;
+    m_sample.en_pot = reduce_en.value() / npart;
     // mean virial equation sum per particle
-    m_sample.virial = (double) reduce_virial.value() / npart;
+    m_sample.virial = reduce_virial.value() / npart;
 
     // GPU time for sample memcpy
     m_times["sample_memcpy"] += event_[0] - event_[1];

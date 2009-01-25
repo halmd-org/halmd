@@ -8,7 +8,9 @@
 #ifndef LJGPU_MATH_DSFUN_CUH
 #define LJGPU_MATH_DSFUN_CUH
 
-#include <cuda/cuda_runtime.h>
+#ifdef __CUDACC__
+# include <cuda/cuda_runtime.h>
+#endif
 
 /**
  * This function sets the DS number A equal to the double precision floating point number B.
@@ -158,7 +160,7 @@ __device__ __host__ inline void __dsdiv(float &dsc0, float &dsc1, float const ds
 __device__ __host__  struct dfloat
 {
     float f0, f1;
-
+#ifdef __CUDACC__
     __device__ __host__ inline dfloat() {}
 
     __device__ __host__ inline dfloat(float f0, float f1) : f0(f0), f1(f1) {}
@@ -169,12 +171,15 @@ __device__ __host__  struct dfloat
     {
 	return f0;
     }
-
+#else
     __device__ __host__ inline operator double() const
     {
 	return (double) f0 + (double) f1;
     }
+#endif
 };
+
+#ifdef __CUDACC__
 
 __device__ __host__ inline dfloat& operator+=(dfloat& v, dfloat const& w)
 {
@@ -223,5 +228,7 @@ __device__ __host__ inline dfloat operator/(dfloat v, dfloat const& w)
     v /= w;
     return v;
 }
+
+#endif /* __CUDACC__ */
 
 #endif /* ! LJGPU_MATH_DSFUN_CUH */

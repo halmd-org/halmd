@@ -97,9 +97,9 @@ private:
     boost::array<cuda::event, 9> event_;
 
     /** potential energy sum */
-    reduce<tag::sum, dfloat> reduce_en;
+    reduce<tag::sum, dfloat, double> reduce_en;
     /** virial equation sum */
-    reduce<tag::sum, dfloat> reduce_virial;
+    reduce<tag::sum, dfloat, double> reduce_virial;
 
     /** system state in page-locked host memory */
     struct {
@@ -287,7 +287,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
     // GPU time for virial equation sum calculation
     m_times["virial_sum"] += event_[0] - event_[4];
 
-    if (!std::isfinite((double) reduce_en.value())) {
+    if (!std::isfinite(reduce_en.value())) {
 	throw exception("potential energy diverged");
     }
 }
@@ -327,9 +327,9 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
     }
 
     // mean potential energy per particle
-    m_sample.en_pot = (double) reduce_en.value() / npart;
+    m_sample.en_pot = reduce_en.value() / npart;
     // mean virial equation sum per particle
-    m_sample.virial = (double) reduce_virial.value() / npart;
+    m_sample.virial = reduce_virial.value() / npart;
 
     // GPU time for sample memcpy
     m_times["sample_memcpy"] += event_[0] - event_[1];
