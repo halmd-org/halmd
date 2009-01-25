@@ -19,9 +19,10 @@
 #ifndef CUDA_STREAM_HPP
 #define CUDA_STREAM_HPP
 
+#include <boost/shared_ptr.hpp>
+#include <boost/utility.hpp>
 #include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/error.hpp>
-
 
 namespace cuda
 {
@@ -33,29 +34,40 @@ namespace cuda
  */
 class stream
 {
+private:
+    struct container : boost::noncopyable
+    {
+	/**
+	 * creates a stream
+	 */
+	container()
+	{
+	    CUDA_CALL(cudaStreamCreate(&m_stream));
+	}
+
+	/**
+	 * destroys the stream
+	 */
+	~container() throw() // no-throw guarantee
+	{
+	    cudaStreamDestroy(m_stream);
+	}
+
+	cudaStream_t m_stream;
+    };
+
 public:
     /**
      * creates a stream
      */
-    stream()
-    {
-	CUDA_CALL(cudaStreamCreate(&stream_));
-    }
-
-    /**
-     * destroys the stream
-     */
-    ~stream() throw() // no-throw guarantee
-    {
-	cudaStreamDestroy(stream_);
-    }
+    stream() : m_stream(new container) {}
 
     /**
      * blocks until the device has completed all operations in the stream
      */
     void synchronize()
     {
-	CUDA_CALL(cudaStreamSynchronize(stream_));
+	CUDA_CALL(cudaStreamSynchronize(m_stream->m_stream));
     }
 
     /**
@@ -65,7 +77,7 @@ public:
      */
     bool query()
     {
-	cudaError_t err = cudaStreamQuery(stream_);
+	cudaError_t err = cudaStreamQuery(m_stream->m_stream);
 	if (cudaSuccess == err)
 	    return true;
 	else if (cudaErrorNotReady == err)
@@ -78,17 +90,11 @@ public:
      */
     cudaStream_t data() const
     {
-	return stream_;
+	return m_stream->m_stream;
     }
 
 private:
-    // disable default copy constructor
-    stream(const stream&);
-    // disable default assignment operator
-    stream& operator=(const stream&);
-
-private:
-    cudaStream_t stream_;
+    boost::shared_ptr<container> m_stream;
 };
 
 #endif /* CUDART_VERSION >= 1010 */
