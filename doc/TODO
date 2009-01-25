@@ -1,12 +1,4 @@
 ljgpu TODO
 ==========
 
-- add custom option value validators (e.g. --backend)
-- add accumulator traits with optimal accumuator types (e.g. double for float)
-- support cooling to desired temperature
-- add random pertubations to initial fcc lattice
-- average over all q vectors approximately on the surface of a sphere
-- auto-configure optimal CUDA thread configuration
-- implement binary mixture
-- fix Verlet neighbour list skin
-- split sampling schemes of correlation, energy and trajectory(?)
+- inspect all CUDA kernels for local memory use
