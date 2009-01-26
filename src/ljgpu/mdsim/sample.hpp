@@ -19,14 +19,93 @@
 #ifndef LJGPU_MDSIM_SAMPLE_HPP
 #define LJGPU_MDSIM_SAMPLE_HPP
 
-#include <boost/array.hpp>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
+#ifdef WITH_CUDA
+# include <cuda_wrapper.hpp>
+#endif
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <vector>
 
 namespace ljgpu {
+
+/**
+ * phase space sample for binary mixture
+ */
+template <typename float_type, int dimension>
+struct trajectory_host_sample
+{
+    typedef vector<double, dimension> position_vector;
+    typedef std::vector<position_vector> position_sample_vector;
+    typedef vector<float_type, dimension> velocity_vector;
+    typedef std::vector<velocity_vector> velocity_sample_vector;
+
+    /** periodically extended particle positions */
+    std::vector<boost::shared_ptr<position_sample_vector > > r;
+    /** particle velocities */
+    std::vector<boost::shared_ptr<velocity_sample_vector > > v;
+};
+
+#if WITH_CUDA
+
+template <int dimension>
+struct trajectory_gpu_sample;
+
+template <>
+struct trajectory_gpu_sample<3>
+{
+    typedef float4 position_vector;
+    typedef cuda::vector<position_vector> position_sample_vector;
+    typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
+    typedef float4 velocity_vector;
+    typedef cuda::vector<velocity_vector> velocity_sample_vector;
+    typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_ptr;
+
+    /** periodically extended particle positions */
+    std::vector<position_sample_ptr> r;
+    /** particle velocities */
+    std::vector<velocity_sample_ptr> v;
+};
+
+template <>
+struct trajectory_gpu_sample<2>
+{
+    typedef float2 position_vector;
+    typedef cuda::vector<position_vector> position_sample_vector;
+    typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
+    typedef float2 velocity_vector;
+    typedef cuda::vector<velocity_vector> velocity_sample_vector;
+    typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_ptr;
+
+    /** periodically extended particle positions */
+    std::vector<position_sample_ptr> r;
+    /** particle velocities */
+    std::vector<velocity_sample_ptr> v;
+};
+
+#endif /* WITH_CUDA */
+
+/**
+ * MD simulation sample for A and B particles
+ */
+template <int dimension>
+struct energy_sample
+{
+    /** mean potential energy per particle */
+    double en_pot;
+    /** virial equation sum per particle */
+    double virial;
+    /** mean squared velocity per particle */
+    double vv;
+    /** mean velocity per particle */
+    vector<double, dimension> v_cm;
+};
+
+//
+// OBSOLETE
+//
 
 /**
  * particles types in a binary mixture

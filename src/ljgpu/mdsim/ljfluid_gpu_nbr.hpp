@@ -70,7 +70,7 @@ public:
     /** copy MD simulation step results from GPU to host */
     void copy();
     /** sample phase space on GPU */
-    void sample(cuda::vector<gpu_vector_type>& r, cuda::vector<gpu_vector_type>& v) const;
+    void sample(trajectory_gpu_sample<dimension>& sample) const;
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
@@ -206,7 +206,7 @@ private:
 	/** cell offsets in sorted particle list */
 	cuda::vector<unsigned int> offset;
 	/** permutation indices */
-	cuda::vector<unsigned int> index;
+	cuda::vector<unsigned int> mutable index;
     } g_aux;
 
     /** cell lists in global device memory */
@@ -640,20 +640,34 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(cuda::vector<gpu_vector_type>& r, cuda::vector<gpu_vector_type>& v) const
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(trajectory_gpu_sample<dimension>& sample) const
 {
-    r.resize(g_part.r.size());
-    r.reserve(g_part.r.capacity());
-    v.resize(g_part.v.size());
-    v.reserve(g_part.v.capacity());
+    typedef trajectory_gpu_sample<dimension> sample_type;
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
-    // order particles by permutation
     event_[0].record(stream_);
-    cuda::configure(dim_.grid, dim_.block, stream_);
-    _gpu::sample(g_aux.index, r, v);
+
+    for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
+	// allocate global device memory for phase space sample
+	position_sample_ptr r(new position_sample_vector(mpart[i]));
+	sample.r.push_back(r);
+	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
+	sample.v.push_back(v);
+	// allocate additional memory to match CUDA grid dimensions
+	cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
+	r->reserve(dim.threads());
+	v->reserve(dim.threads());
+	g_aux.index.reserve(n + dim.threads());
+	// order particles by permutation
+	cuda::configure(dim.grid, dim.block, stream_);
+	_gpu::sample(g_aux.index.data() + n, *r, *v);
+    }
+
     event_[1].record(stream_);
     event_[1].synchronize();
-
     m_times["sample"] += event_[1] - event_[0];
 }
 

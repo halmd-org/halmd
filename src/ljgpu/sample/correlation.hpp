@@ -168,7 +168,12 @@ template <typename mdsim_backend>
 typename boost::enable_if<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type>, void>::type
 correlation<dimension>::sample(mdsim_backend const& fluid, sample_type& sample_)
 {
-    fluid.sample(sample_.r, sample_.v);
+    trajectory_gpu_sample<dimension> sample;
+    fluid.sample(sample);
+    sample_.r.resize(sample.r[0]->size());
+    sample_.v.resize(sample.v[0]->size());
+    cuda::copy(*sample.r[0], sample_.r);
+    cuda::copy(*sample.v[0], sample_.v);
 }
 
 /**
