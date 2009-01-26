@@ -22,6 +22,8 @@
 #include <H5Cpp.h>
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
+#include <boost/mpl/not.hpp>
+#include <boost/mpl/logical.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -96,16 +98,18 @@ public:
     /** sample time correlation functions */
     template <typename mdsim_backend>
     void sample(mdsim_backend const& fluid, uint64_t step, bool& flush);
-    /** sample from global device memory */
-    template <typename mdsim_backend>
-    void sample(mdsim_backend const& fluid, sample_type& sample_, boost::true_type const&);
-    /** sample from host memory */
-    template <typename mdsim_backend>
-    void sample(mdsim_backend const& fluid, sample_type& sample_, boost::false_type const&);
     /** write correlation function results to HDF5 file */
     void flush();
 
 private:
+    /** sample from global device memory */
+    template <typename mdsim_backend>
+    typename boost::enable_if<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type>, void>::type
+    sample(mdsim_backend const& fluid, sample_type& sample_);
+    /** sample from host memory */
+    template <typename mdsim_backend>
+    typename boost::enable_if<boost::mpl::not_<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type> >, void>::type
+    sample(mdsim_backend const& fluid, sample_type& sample_);
     /** compute lattice points in first octant on surface of 3-dimensional spheres */
     template <typename T>
     typename boost::enable_if<boost::is_same<vector<double, 3>, T>, void>::type
@@ -161,7 +165,8 @@ private:
  */
 template <int dimension>
 template <typename mdsim_backend>
-void correlation<dimension>::sample(mdsim_backend const& fluid, sample_type& sample_, boost::true_type const&)
+typename boost::enable_if<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type>, void>::type
+correlation<dimension>::sample(mdsim_backend const& fluid, sample_type& sample_)
 {
     fluid.sample(sample_.r, sample_.v);
 }
@@ -171,7 +176,8 @@ void correlation<dimension>::sample(mdsim_backend const& fluid, sample_type& sam
  */
 template <int dimension>
 template <typename mdsim_backend>
-void correlation<dimension>::sample(mdsim_backend const& fluid, sample_type& sample_, boost::false_type const&)
+typename boost::enable_if<boost::mpl::not_<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type> >, void>::type
+correlation<dimension>::sample(mdsim_backend const& fluid, sample_type& sample_)
 {
     typedef typename tcf_sample<dimension>::gpu_vector_type gpu_vector_type;
     cuda::host::vector<gpu_vector_type> r(fluid.sample()[0].r.size());
@@ -191,10 +197,8 @@ template <int dimension>
 template <typename mdsim_backend>
 void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, bool& flush)
 {
-    typedef typename mdsim_backend::impl_type impl_type;
-
     sample_ptr sample_(new sample_type);
-    sample(fluid, *sample_, boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
+    sample(fluid, *sample_);
     // copy phase space coordinates and compute spatial Fourier transformation 
     (*sample_)(m_q_vector);
 
