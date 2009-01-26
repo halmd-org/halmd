@@ -104,7 +104,7 @@ void correlation<dimension>::block_size(unsigned int value)
 
     // allocate phase space sample blocks
     try {
-	m_block.resize(m_block_count, block_type(m_block_size));
+	m_block.resize(m_block_count, boost::circular_buffer<sample_ptr>(m_block_size));
     }
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate phase space sample blocks");
@@ -290,8 +290,8 @@ void correlation<dimension>::close()
 {
     // compute higher block correlations for remaining samples
     for (unsigned int i = 2; i < m_block_count; ++i) {
-	while (m_block[i].size() > 2) {
-	    m_block[i].pop_front();
+	while (boost::apply_visitor(tcf_block_size(), m_block[i]) > 2) {
+	    boost::apply_visitor(tcf_block_pop_front(), m_block[i]);
 	    autocorrelate_block(i);
 	}
     }
@@ -354,7 +354,7 @@ template <int dimension>
 void correlation<dimension>::autocorrelate_block(unsigned int n)
 {
     foreach (tcf_type& tcf, m_tcf) {
-	boost::apply_visitor(tcf_correlate_block_gen(n, m_block[n], m_q_vector), tcf);
+	boost::apply_visitor(tcf_correlate_block(n, m_q_vector), tcf, m_block[n]);
     }
 }
 

@@ -39,7 +39,7 @@ namespace ljgpu {
  * Phase space sample for evaluating correlation functions
  */
 template <int dimension>
-struct tcf_sample
+struct tcf_gpu_sample
 {
     typedef vector<double, dimension> vector_type;
     typedef std::vector<vector_type> sample_vector;
@@ -115,10 +115,20 @@ struct tcf_sample
 typedef boost::multi_array<accumulator<double>, 2> tcf_unary_result_type;
 typedef boost::multi_array<accumulator<double>, 3> tcf_binary_result_type;
 
+template <template <int> class sample_type>
+struct correlation_function;
+
+template <>
+struct correlation_function<tcf_gpu_sample> {};
+
 /**
  * mean-square displacement
  */
-struct mean_square_displacement
+template <template <int> class sample_type>
+struct mean_square_displacement;
+
+template <>
+struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
     /** block sample results */
     tcf_unary_result_type result;
@@ -181,7 +191,11 @@ struct mean_square_displacement
 /**
  * mean-quartic displacement
  */
-struct mean_quartic_displacement
+template <template <int> class sample_type>
+struct mean_quartic_displacement;
+
+template <>
+struct mean_quartic_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
     /** block sample results */
     tcf_unary_result_type result;
@@ -244,7 +258,11 @@ struct mean_quartic_displacement
 /**
  * velocity autocorrelation
  */
-struct velocity_autocorrelation
+template <template <int> class sample_type>
+struct velocity_autocorrelation;
+
+template <>
+struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
     /** block sample results */
     tcf_unary_result_type result;
@@ -307,7 +325,11 @@ struct velocity_autocorrelation
 /**
  * intermediate scattering function
  */
-struct intermediate_scattering_function
+template <template <int> class sample_type>
+struct intermediate_scattering_function;
+
+template <>
+struct intermediate_scattering_function<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
     /** block sample results */
     tcf_binary_result_type result;
@@ -346,7 +368,11 @@ struct intermediate_scattering_function
 /**
  * self-intermediate scattering function
  */
-struct self_intermediate_scattering_function
+template <template <int> class sample_type>
+struct self_intermediate_scattering_function;
+
+template <>
+struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
     /** block sample results */
     tcf_binary_result_type result;
@@ -410,11 +436,11 @@ struct self_intermediate_scattering_function
 };
 
 /** correlation function types */
-typedef boost::mpl::vector<mean_square_displacement> _tcf_types_0;
-typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement>::type _tcf_types_1;
-typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation>::type _tcf_types_2;
-typedef boost::mpl::push_back<_tcf_types_2, intermediate_scattering_function>::type _tcf_types_3;
-typedef boost::mpl::push_back<_tcf_types_3, self_intermediate_scattering_function>::type tcf_types;
+typedef boost::mpl::vector<mean_square_displacement<tcf_gpu_sample> > _tcf_types_0;
+typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement<tcf_gpu_sample> >::type _tcf_types_1;
+typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation<tcf_gpu_sample> >::type _tcf_types_2;
+typedef boost::mpl::push_back<_tcf_types_2, intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_types_3;
+typedef boost::mpl::push_back<_tcf_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type tcf_types;
 
 } // namespace ljgpu
 

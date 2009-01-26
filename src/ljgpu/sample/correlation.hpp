@@ -22,14 +22,13 @@
 #include <H5Cpp.h>
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
-#include <boost/mpl/not.hpp>
-#include <boost/mpl/logical.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
 #include <ljgpu/sample/tcf.hpp>
+#include <ljgpu/sample/tcf_visitor.hpp>
 #include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/util/log.hpp>
 #include <string>
@@ -44,9 +43,10 @@ template <int dimension>
 class correlation
 {
 public:
-    typedef tcf_sample<dimension> sample_type;
+    typedef tcf_gpu_sample<dimension> sample_type;
     typedef boost::shared_ptr<sample_type> sample_ptr;
-    typedef boost::circular_buffer<sample_ptr> block_type;
+    typedef boost::variant<sample_ptr> sample_variant;
+    typedef boost::variant<boost::circular_buffer<sample_ptr> > block_type;
     typedef boost::make_variant_over<tcf_types>::type tcf_type;
 
     typedef typename sample_type::vector_type vector_type;
@@ -102,14 +102,6 @@ public:
     void flush();
 
 private:
-    /** sample from global device memory */
-    template <typename mdsim_backend>
-    typename boost::enable_if<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type>, void>::type
-    sample(mdsim_backend const& fluid, sample_type& sample_);
-    /** sample from host memory */
-    template <typename mdsim_backend>
-    typename boost::enable_if<boost::mpl::not_<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type> >, void>::type
-    sample(mdsim_backend const& fluid, sample_type& sample_);
     /** compute lattice points in first octant on surface of 3-dimensional spheres */
     template <typename T>
     typename boost::enable_if<boost::is_same<vector<double, 3>, T>, void>::type
@@ -161,51 +153,17 @@ private:
 };
 
 /**
- * sample from global device memory
- */
-template <int dimension>
-template <typename mdsim_backend>
-typename boost::enable_if<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type>, void>::type
-correlation<dimension>::sample(mdsim_backend const& fluid, sample_type& sample_)
-{
-    trajectory_gpu_sample<dimension> sample;
-    fluid.sample(sample);
-    sample_.r.resize(sample.r[0]->size());
-    sample_.v.resize(sample.v[0]->size());
-    cuda::copy(*sample.r[0], sample_.r);
-    cuda::copy(*sample.v[0], sample_.v);
-}
-
-/**
- * sample from host memory
- */
-template <int dimension>
-template <typename mdsim_backend>
-typename boost::enable_if<boost::mpl::not_<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type> >, void>::type
-correlation<dimension>::sample(mdsim_backend const& fluid, sample_type& sample_)
-{
-    typedef typename tcf_sample<dimension>::gpu_vector_type gpu_vector_type;
-    cuda::host::vector<gpu_vector_type> r(fluid.sample()[0].r.size());
-    cuda::host::vector<gpu_vector_type> v(fluid.sample()[0].v.size());
-    std::copy(fluid.sample()[0].r.begin(), fluid.sample()[0].r.end(), r.begin());
-    std::copy(fluid.sample()[0].v.begin(), fluid.sample()[0].v.end(), v.begin());
-    sample_.r.resize(r.size());
-    sample_.v.resize(v.size());
-    cuda::copy(r, sample_.r);
-    cuda::copy(v, sample_.v);
-}
-
-/**
  * sample time correlation functions
  */
 template <int dimension>
 template <typename mdsim_backend>
 void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, bool& flush)
 {
-    sample_ptr sample_(new sample_type);
-    sample(fluid, *sample_);
+    sample_variant sample(sample_ptr(new sample_type));
+
     // copy phase space coordinates and compute spatial Fourier transformation 
-    (*sample_)(m_q_vector);
+    boost::apply_visitor(tcf_sample(fluid), sample);
+    boost::apply_visitor(tcf_fourier_transform_sample(m_q_vector), sample);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
@@ -213,13 +171,13 @@ void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, b
 	if (step % m_block_freq[i])
 	    continue;
 
-	m_block[i].push_back(sample_);
+	boost::apply_visitor(tcf_block_add_sample(), m_block[i], sample);
 
-	if (m_block[i].full()) {
+	if (boost::apply_visitor(tcf_block_is_full(), m_block[i])) {
 	    autocorrelate_block(i);
 	    if (i < 2) {
 		// sample_ only full blocks in lowest levels to account for strong correlations
-		m_block[i].clear();
+		boost::apply_visitor(tcf_block_clear(), m_block[i]);
 	    }
 	    m_block_samples[i]++;
 
