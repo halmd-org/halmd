@@ -70,7 +70,7 @@ public:
     /** copy MD simulation step results from GPU to host */
     void copy();
     /** sample phase space on GPU */
-    void sample(cuda::vector<gpu_vector_type>& r, cuda::vector<gpu_vector_type>& v);
+    void sample(cuda::vector<gpu_vector_type>& r, cuda::vector<gpu_vector_type>& v) const;
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
@@ -129,7 +129,7 @@ private:
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 10> event_;
+    boost::array<cuda::event, 10> mutable event_;
 
     /** GPU radix sort */
     radix_sort<unsigned int> radix_;
@@ -640,12 +640,12 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(cuda::vector<gpu_vector_type>& r, cuda::vector<gpu_vector_type>& v)
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(cuda::vector<gpu_vector_type>& r, cuda::vector<gpu_vector_type>& v) const
 {
-    assert(r.size() == g_part.r.size());
-    assert(v.size() == g_part.v.size());
-    assert(r.capacity() == g_part.r.capacity());
-    assert(v.capacity() == g_part.v.capacity());
+    r.resize(g_part.r.size());
+    r.reserve(g_part.r.capacity());
+    v.resize(g_part.v.size());
+    v.reserve(g_part.v.capacity());
 
     // order particles by permutation
     event_[0].record(stream_);

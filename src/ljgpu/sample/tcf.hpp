@@ -19,18 +19,18 @@
 #ifndef LJGPU_SAMPLE_TCF_HPP
 #define LJGPU_SAMPLE_TCF_HPP
 
-#include <H5Cpp.h>
 #include <algorithm>
 #include <boost/array.hpp>
-#include <boost/assign.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
+#include <cuda_wrapper.hpp>
 #include <ljgpu/math/accum.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/mdsim/sample.hpp>
-#include <ljgpu/util/H5xx.hpp>
+#include <ljgpu/mdsim/traits.hpp>
+#include <ljgpu/sample/gpu/tcf.hpp>
 #include <vector>
 
 namespace ljgpu {
@@ -39,7 +39,7 @@ namespace ljgpu {
  * Phase space sample for evaluating correlation functions
  */
 template <int dimension>
-struct uniform_tcf_sample
+struct tcf_sample
 {
     typedef vector<double, dimension> vector_type;
     typedef std::vector<vector_type> sample_vector;
@@ -51,65 +51,64 @@ struct uniform_tcf_sample
     /** vector of Fourier transformed densities for different q-values */
     typedef std::vector<std::vector<density_vector_pair> > density_vector_vector;
 
+    typedef mdsim_traits<ljfluid_impl_gpu_base<dimension> > traits_type;
+    typedef typename traits_type::gpu_vector_type gpu_vector_type;
+    typedef cuda::vector<gpu_vector_type> gpu_sample_vector;
+    typedef gpu::tcf<dimension> _gpu;
+
     /**
      * initialise phase space sample
      */
-    template <typename position_sample_vector, typename velocity_sample_vector>
-    void operator()(position_sample_vector const& _r, velocity_sample_vector const& _v, q_vector_vector const& q)
+    void operator()(q_vector_vector const& q)
     {
-	// copy particle positions
-	r.assign(_r.begin(), _r.end());
-	// copy particle velocities
-	v.assign(_v.begin(), _v.end());
+	// CUDA execution dimensions for accumulator
+	enum { BLOCKS = _gpu::BLOCKS };
+	enum { THREADS = _gpu::THREADS };
 
+	// q-vector iterators
+	typename q_vector_vector::const_iterator q0;
+	typename q_vector_vector::value_type::const_iterator q1;
+	// Fourier-transformed density iterators
+	typename density_vector_vector::iterator rho0;
+	typename density_vector_vector::value_type::iterator rho1;
+	// accumulator iterator
+	dfloat* sum0;
+
+	// allocate memory for Fourier-transformed densities
+	size_t size = 0;
 	rho.resize(q.size());
-	for (size_t i = 0; i < rho.size(); ++i) {
-	    rho[i].assign(q[i].size(), density_vector_pair(0, 0));
+	for (q0 = q.begin(), rho0 = rho.begin(); q0 != q.end(); ++q0, ++rho0) {
+	    rho0->assign(q0->size(), density_vector_pair(0, 0));
+	    size += q0->size();
 	}
+	// allocate device and host memory for accumulators
+	cuda::vector<dfloat> g_sum(2 * size * BLOCKS);
+	cuda::host::vector<dfloat> h_sum(g_sum.size());
 
-	// spatial Fourier transformation
-	double const norm = sqrt(r.size());
-	for (size_t i = 0; i < q.size(); ++i) {
-	    for (size_t j = 0; j < q[i].size(); ++j) {
-		for (size_t k = 0; k < r.size(); ++k) {
-		    double const value = r[k] * q[i][j];
-		    // sum over differences to maintain accuracy with small and large values
-		    rho[i][j].first += (std::cos(value) - rho[i][j].first) / (k + 1);
-		    rho[i][j].second += (std::sin(value) - rho[i][j].second) / (k + 1);
-		}
-		// multiply with norm as we compute average value above
-		rho[i][j].first *= norm;
-		rho[i][j].second *= norm;
+	// compute Fourier-transformed densities on GPU
+	for (q0 = q.begin(), sum0 = g_sum.data(); q0 != q.end(); ++q0) {
+	    for (q1 = q0->begin(); q1 != q0->end(); ++q1, sum0 += 2 * BLOCKS) {
+		cuda::configure(BLOCKS, THREADS);
+		_gpu::coherent_scattering_function(r, *q1, sum0, sum0 + BLOCKS, r.size());
+	    }
+	}
+	// copy accumulator block results from GPU to host
+	cuda::copy(g_sum, h_sum);
+	// accumulate Fourier-transformed densities on host
+	for (rho0 = rho.begin(), sum0 = h_sum.data(); rho0 != rho.end(); ++rho0) {
+	    for (rho1 = rho0->begin(); rho1 != rho0->end(); ++rho1, sum0 += 2 * BLOCKS) {
+		rho1->first = std::accumulate(sum0, sum0 + BLOCKS, 0.);
+		rho1->second = std::accumulate(sum0 + BLOCKS, sum0 + 2 * BLOCKS, 0.);
 	    }
 	}
     }
 
     /** particle positions */
-    sample_vector r;
+    gpu_sample_vector r;
     /** particle velocities */
-    sample_vector v;
+    gpu_sample_vector v;
     /** spatially Fourier transformed density for given q-values */
     density_vector_vector rho;
-};
-
-template <int dimension>
-struct tcf_sample : boost::array<uniform_tcf_sample<dimension>, 2>
-{
-    typedef boost::array<uniform_tcf_sample<dimension>, 2> _Base;
-    typedef typename _Base::value_type::vector_type vector_type;
-    typedef typename _Base::value_type::sample_vector sample_vector;
-    typedef typename _Base::value_type::q_value_vector q_value_vector;
-    typedef typename _Base::value_type::q_vector_vector q_vector_vector;
-    typedef typename _Base::value_type::density_vector_pair density_vector_pair;
-    typedef typename _Base::value_type::density_vector_vector density_vector_vector;
-
-    template <typename sample_type>
-    void operator()(sample_type const& sample, q_vector_vector const& q)
-    {
-	for (size_t i = 0; i < sample.size(); ++i) {
-	    (*this)[i](sample[i].r, sample[i].v, q);
-	}
-    }
 };
 
 /** correlation function result types */
@@ -125,28 +124,55 @@ struct mean_square_displacement
     tcf_unary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
-    /** particle types */
-    particle_type a, b;
 
-    mean_square_displacement() : a(PART_A), b(PART_A) {}
-    mean_square_displacement(particle_type a, particle_type b) : a(a), b(b) {}
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dfloat> g_mean;
+    cuda::host::vector<dfloat> h_mean;
+    cuda::vector<dfloat> g_var;
+    cuda::host::vector<dfloat> h_var;
 
     char const* name() const { return "MSD"; }
 
+    /**
+     * autocorrelate samples in block
+     */
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
-	typedef typename input_iterator::first_type::value_type::sample_vector::value_type vector_type;
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type sample_type;
+	typedef typename sample_type::_gpu _gpu;
+	typedef typename output_iterator::value_type accumulator_type;
+	enum { BLOCKS = _gpu::BLOCKS };
+	enum { THREADS = _gpu::THREADS };
 
-	// iterate over phase space samples in block
-	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
-	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = (*it)[b].r.begin(), r0 = (*first.first)[a].r.begin(); r != (*it)[b].r.end(); ++r, ++r0) {
-		// displacement of particle
-		vector_type dr = *r0 - *r;
-		// accumulate square displacement
-		*result += dr * dr;
+	sample_iterator sample;
+	unsigned int *count, *count0;
+	dfloat *mean, *var;
+
+	// allocate device and host memory for accumulators, if necessary
+	g_count.resize((last.first - first.first) * BLOCKS);
+	h_count.resize(g_count.size());
+	g_mean.resize((last.first - first.first) * BLOCKS);
+	h_mean.resize(g_mean.size());
+	g_var.resize((last.first - first.first) * BLOCKS);
+	h_var.resize(g_var.size());
+
+	// compute mean square displacements on GPU
+	for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+	    cuda::configure(BLOCKS, THREADS);
+	    _gpu::mean_square_displacement(sample->r, first.first->r, count, mean, var, sample->r.size());
+	}
+	// copy accumulator block results from GPU to host
+	cuda::copy(g_count, h_count);
+	cuda::copy(g_mean, h_mean);
+	cuda::copy(g_var, h_var);
+	// accumulate mean square displacements on host
+	for (sample = first.first, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last.first; ++sample, ++result, count0 += BLOCKS) {
+	    for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+		*result += accumulator_type(*count, *mean, *var);
 	    }
 	}
     }
@@ -161,31 +187,55 @@ struct mean_quartic_displacement
     tcf_unary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
-    /** particle types */
-    particle_type a, b;
 
-    mean_quartic_displacement() : a(PART_A), b(PART_A) {}
-    mean_quartic_displacement(particle_type a, particle_type b) : a(a), b(b) {}
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dfloat> g_mean;
+    cuda::host::vector<dfloat> h_mean;
+    cuda::vector<dfloat> g_var;
+    cuda::host::vector<dfloat> h_var;
 
     char const* name() const { return "MQD"; }
 
+    /**
+     * autocorrelate samples in block
+     */
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
-	typedef typename input_iterator::first_type::value_type::sample_vector::value_type vector_type;
-	typedef typename input_iterator::first_type::value_type::sample_vector::value_type::value_type value_type;
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type sample_type;
+	typedef typename sample_type::_gpu _gpu;
+	typedef typename output_iterator::value_type accumulator_type;
+	enum { BLOCKS = _gpu::BLOCKS };
+	enum { THREADS = _gpu::THREADS };
 
-	// iterate over phase space samples in block
-	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
-	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = (*it)[b].r.begin(), r0 = (*first.first)[a].r.begin(); r != (*it)[b].r.end(); ++r, ++r0) {
-		// displacement of particle
-		vector_type dr = *r0 - *r;
-		// square displacement
-		value_type rr = dr * dr;
-		// accumulate quartic displacement
-		*result += rr * rr;
+	sample_iterator sample;
+	unsigned int *count, *count0;
+	dfloat *mean, *var;
+
+	// allocate device and host memory for accumulators, if necessary
+	g_count.resize((last.first - first.first) * BLOCKS);
+	h_count.resize(g_count.size());
+	g_mean.resize((last.first - first.first) * BLOCKS);
+	h_mean.resize(g_mean.size());
+	g_var.resize((last.first - first.first) * BLOCKS);
+	h_var.resize(g_var.size());
+
+	// compute mean quartic displacements on GPU
+	for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+	    cuda::configure(BLOCKS, THREADS);
+	    _gpu::mean_quartic_displacement(sample->r, first.first->r, count, mean, var, sample->r.size());
+	}
+	// copy accumulator block results from GPU to host
+	cuda::copy(g_count, h_count);
+	cuda::copy(g_mean, h_mean);
+	cuda::copy(g_var, h_var);
+	// accumulate mean quartic displacements on host
+	for (sample = first.first, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last.first; ++sample, ++result, count0 += BLOCKS) {
+	    for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+		*result += accumulator_type(*count, *mean, *var);
 	    }
 	}
     }
@@ -200,25 +250,55 @@ struct velocity_autocorrelation
     tcf_unary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
-    /** particle types */
-    particle_type a, b;
 
-    velocity_autocorrelation() : a(PART_A), b(PART_A) {}
-    velocity_autocorrelation(particle_type a, particle_type b) : a(a), b(b) {}
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dfloat> g_mean;
+    cuda::host::vector<dfloat> h_mean;
+    cuda::vector<dfloat> g_var;
+    cuda::host::vector<dfloat> h_var;
 
     char const* name() const { return "VAC"; }
 
+    /**
+     * autocorrelate samples in block
+     */
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type sample_type;
+	typedef typename sample_type::_gpu _gpu;
+	typedef typename output_iterator::value_type accumulator_type;
+	enum { BLOCKS = _gpu::BLOCKS };
+	enum { THREADS = _gpu::THREADS };
 
-	// iterate over phase space samples in block
-	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
-	    // iterate over particle velocities in current and first sample
-	    for (vector_const_iterator v = (*it)[b].v.begin(), v0 = (*first.first)[a].v.begin(); v != (*it)[b].v.end(); ++v, ++v0) {
-		// accumulate velocity autocorrelation
-		*result += *v0 * *v;
+	sample_iterator sample;
+	unsigned int *count, *count0;
+	dfloat *mean, *var;
+
+	// allocate device and host memory for accumulators, if necessary
+	g_count.resize((last.first - first.first) * BLOCKS);
+	h_count.resize(g_count.size());
+	g_mean.resize((last.first - first.first) * BLOCKS);
+	h_mean.resize(g_mean.size());
+	g_var.resize((last.first - first.first) * BLOCKS);
+	h_var.resize(g_var.size());
+
+	// compute velocity autocorrelations on GPU
+	for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+	    cuda::configure(BLOCKS, THREADS);
+	    _gpu::velocity_autocorrelation(sample->v, first.first->v, count, mean, var, sample->v.size());
+	}
+	// copy accumulator block results from GPU to host
+	cuda::copy(g_count, h_count);
+	cuda::copy(g_mean, h_mean);
+	cuda::copy(g_var, h_var);
+	// accumulate velocity autocorrelations on host
+	for (sample = first.first, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last.first; ++sample, ++result, count0 += BLOCKS) {
+	    for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+		*result += accumulator_type(*count, *mean, *var);
 	    }
 	}
     }
@@ -233,30 +313,30 @@ struct intermediate_scattering_function
     tcf_binary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
-    /** particle types */
-    particle_type a, b;
-
-    intermediate_scattering_function() : a(PART_A), b(PART_A) {}
-    intermediate_scattering_function(particle_type a, particle_type b) : a(a), b(b) {}
 
     char const* name() const { return "ISF"; }
 
+    /**
+     * autocorrelate samples in block
+     */
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
 	typedef typename sample_iterator::value_type sample_type;
-	typedef typename sample_type::density_vector_vector::const_iterator density_vector_iterator;
-	typedef typename sample_type::density_vector_vector::value_type::const_iterator density_iterator;
-	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
+	typedef typename sample_type::density_vector_vector density_vector_vector;
+	typedef typename output_iterator::value_type result_vector;
 
-	for (sample_iterator i = first.first; i != last.first; ++i, ++result) {
-	    q_value_result_iterator k = (*result).begin();
-	    density_vector_iterator j0 = (*first.first)[a].rho.begin();
-	    for (density_vector_iterator j = (*i)[b].rho.begin(); j != (*i)[b].rho.end(); ++j, ++j0, ++k) {
-		density_iterator rho0 = (*j0).begin();
-		for (density_iterator rho = (*j).begin(); rho != (*j).end(); ++rho, ++rho0) {
-		    *k += rho->first * rho0->first + rho->second * rho0->second;
+	sample_iterator sample;
+	typename density_vector_vector::const_iterator rho0, rho0_0;
+	typename density_vector_vector::value_type::const_iterator rho1, rho1_0;
+	typename result_vector::iterator result0;
+
+	// accumulate intermediate scattering functions on host
+	for (sample = first.first; sample != last.first; ++sample, ++result) {
+	    for (rho0 = sample->rho.begin(), rho0_0 = first.first->rho.begin(), result0 = result->begin(); rho0 != sample->rho.end(); ++rho0, ++rho0_0, ++result0) {
+		for (rho1 = rho0->begin(), rho1_0 = rho0_0->begin(); rho1 != rho0->end(); ++rho1, ++rho1_0) {
+		    *result0 += (rho1->first * rho1_0->first + rho1->second * rho1_0->second) / sample->r.size();
 		}
 	    }
 	}
@@ -272,37 +352,57 @@ struct self_intermediate_scattering_function
     tcf_binary_result_type result;
     /** HDF5 dataset */
     H5::DataSet dataset;
-    /** particle types */
-    particle_type a, b;
 
-    self_intermediate_scattering_function() : a(PART_A), b(PART_A) {}
-    self_intermediate_scattering_function(particle_type a, particle_type b) : a(a), b(b) {}
+    /** device and host memory for accumulators */
+    cuda::vector<dfloat> g_sum;
+    cuda::host::vector<dfloat> h_sum;
 
     char const* name() const { return "SISF"; }
 
+    /**
+     * autocorrelate samples in block
+     */
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
 	typedef typename sample_iterator::value_type sample_type;
-	typedef typename sample_type::sample_vector::const_iterator position_iterator;
-	typedef typename sample_type::vector_type vector_type;
-	typedef typename input_iterator::second_type q_value_iterator;
-	typedef typename q_value_iterator::value_type::const_iterator q_vector_iterator;
-	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
+	typedef typename sample_type::_gpu _gpu;
+	typedef typename sample_type::q_vector_vector q_vector_vector;
+	typedef typename output_iterator::value_type result_vector;
+	enum { BLOCKS = _gpu::BLOCKS };
+	enum { THREADS = _gpu::THREADS };
 
-	for (sample_iterator i = first.first; i != last.first; ++i, ++result) {
-	    q_value_result_iterator k = (*result).begin();
-	    for (q_value_iterator j = first.second; j != last.second; ++j, ++k) {
-		for (q_vector_iterator q = (*j).begin(); q != (*j).end(); ++q) {
-		    double value = 0;
-		    size_t count = 0;
-		    position_iterator r0 = (*first.first)[a].r.begin();
-		    for (position_iterator r = (*i)[b].r.begin(); r != (*i)[b].r.end(); ++r, ++r0) {
-			value += (std::cos((*r - *r0) * (*q)) - value) / (count + 1);
-		    }
-		    // result is normalised as we computed the average above
-		    *k += value;
+	sample_iterator sample;
+	typename q_vector_vector::const_iterator q0;
+	typename q_vector_vector::value_type::const_iterator q1;
+	typename result_vector::iterator result0;
+	dfloat* sum;
+
+	// allocate device and host memory for accumulators, if necessary
+	size_t size = 0;
+	for (q0 = first.second; q0 != last.second; ++q0) {
+	    size += q0->size();
+	}
+	g_sum.resize((last.first - first.first) * size * BLOCKS);
+	h_sum.resize(g_sum.size());
+
+	// compute self-intermediate scattering functions on GPU
+	for (sample = first.first, sum = g_sum.data(); sample != last.first; ++sample) {
+	    for (q0 = first.second; q0 != last.second; ++q0) {
+		for (q1 = q0->begin(); q1 != q0->end(); ++q1, sum += BLOCKS) {
+		    cuda::configure(BLOCKS, THREADS);
+		    _gpu::incoherent_scattering_function(sample->r, first.first->r, *q1, sum, sample->r.size());
+		}
+	    }
+	}
+	// copy accumulator block results from GPU to host
+	cuda::copy(g_sum, h_sum);
+	// accumulate self-intermediate scattering functions on host
+	for (sample = first.first, sum = h_sum.data(); sample != last.first; ++sample, ++result) {
+	    for (q0 = first.second, result0 = result->begin(); q0 != last.second; ++q0, ++result0) {
+		for (q1 = q0->begin(); q1 != q0->end(); ++q1, sum += BLOCKS) {
+		    *result0 += std::accumulate(sum, sum + BLOCKS, 0.) / sample->r.size();
 		}
 	    }
 	}
@@ -315,217 +415,6 @@ typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement>::type _tc
 typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation>::type _tcf_types_2;
 typedef boost::mpl::push_back<_tcf_types_2, intermediate_scattering_function>::type _tcf_types_3;
 typedef boost::mpl::push_back<_tcf_types_3, self_intermediate_scattering_function>::type tcf_types;
-
-/**
- * apply correlation function to block of phase space samples
- */
-template <typename T1, typename T2>
-class tcf_correlate_block : public boost::static_visitor<>
-{
-public:
-    tcf_correlate_block(unsigned int block, T1 const& sample, T2 const& q_vector)
-	: block(block), sample(sample), q_vector(q_vector) {}
-
-    template <typename T>
-    void operator()(T& tcf) const
-    {
-	tcf(std::make_pair(sample.begin(), q_vector.begin()), std::make_pair(sample.end(), q_vector.end()), tcf.result[block].begin());
-    }
-
-private:
-    unsigned int block;
-    T1 const& sample;
-    T2 const& q_vector;
-};
-
-template <typename T1, typename T2>
-tcf_correlate_block<T1, T2> tcf_correlate_block_gen(unsigned int block, T1 const& sample, T2 const& q_vector)
-{
-    return tcf_correlate_block<T1, T2>(block, sample, q_vector);
-}
-
-/**
- * retrieve name of a correlation function
- */
-class tcf_name : public boost::static_visitor<char const*>
-{
-public:
-    template <typename T>
-    char const* operator()(T const& tcf) const
-    {
-	return tcf.name();
-    }
-};
-
-/**
- * create correlation function HDF5 dataset
- */
-class tcf_create_dataset : public boost::static_visitor<>
-{
-public:
-    tcf_create_dataset(H5::H5File& file, bool binary) : file(file), binary(binary) {}
-
-    template <typename T>
-    void operator()(T& tcf) const
-    {
-	using namespace boost::assign;
-	boost::array<char const*, 3> const str = list_of("AA")("AB")("BB");
-
-	H5::Group root(file.openGroup("/"));
-	if (binary) {
-	    try {
-		H5XX_NO_AUTO_PRINT(H5::GroupIException);
-		root = root.openGroup(str[tcf.a + tcf.b]);
-	    }
-	    catch (H5::GroupIException const&) {
-		root = root.createGroup(str[tcf.a + tcf.b]);
-	    }
-	}
-	tcf.dataset = create_dataset(root, tcf.name(), tcf.result);
-    }
-
-    static H5::DataSet create_dataset(H5::Group const& node, char const* name, tcf_unary_result_type const& result)
-    {
-	// extensible dataspace for unary correlation function results
-	hsize_t dim[3] = { 0, result.shape()[1], 5 };
-	hsize_t max_dim[3] = { H5S_UNLIMITED, result.shape()[1], 5 };
-	hsize_t chunk_dim[3] = { 1, result.shape()[1], 3 };
-	H5::DataSpace ds(3, dim, max_dim);
-	H5::DSetCreatPropList cparms;
-	cparms.setChunk(3, chunk_dim);
-
-	return node.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
-    }
-
-    static H5::DataSet create_dataset(H5::Group const& node, char const* name, tcf_binary_result_type const& result)
-    {
-	// extensible dataspace for binary correlation function results
-	hsize_t dim[4] = { result.shape()[2], 0, result.shape()[1], 6 };
-	hsize_t max_dim[4] = { result.shape()[2], H5S_UNLIMITED, result.shape()[1], 6 };
-	hsize_t chunk_dim[4] = { result.shape()[2], 1, result.shape()[1], 4 };
-	H5::DataSpace ds(4, dim, max_dim);
-	H5::DSetCreatPropList cparms;
-	cparms.setChunk(4, chunk_dim);
-
-	return node.createDataSet(name, H5::PredType::NATIVE_DOUBLE, ds, cparms);
-    }
-
-private:
-    H5::H5File& file;
-    bool const binary;
-};
-
-/**
- * allocate correlation functions results
- */
-class tcf_allocate_results : public boost::static_visitor<>
-{
-public:
-    tcf_allocate_results(unsigned int block_count, unsigned int block_size, unsigned int q_values)
-	: block_count(block_count), block_size(block_size), q_values(q_values) {}
-
-    template <typename T>
-    void operator()(T& tcf) const
-    {
-	resize(tcf.result);
-    }
-
-    void resize(tcf_unary_result_type& result) const
-    {
-	result.resize(boost::extents[block_count][block_size]);
-    }
-
-    void resize(tcf_binary_result_type& result) const
-    {
-	result.resize(boost::extents[block_count][block_size][q_values]);
-    }
-
-private:
-    unsigned int block_count;
-    unsigned int block_size;
-    unsigned int q_values;
-};
-
-/**
- * write correlation function results to HDF5 file
- */
-class tcf_write_results : public boost::static_visitor<>
-{
-public:
-    typedef boost::multi_array<double, 2> block_time_type;
-    typedef std::vector<double> q_value_vector;
-
-public:
-    tcf_write_results(block_time_type const& block_time, q_value_vector const& q_value, unsigned int max_blocks)
-	: block_time(block_time), q_value(q_value), max_blocks(max_blocks) {}
-
-    template <typename T>
-    void operator()(T& tcf) const
-    {
-	write(tcf.dataset, tcf.result);
-    }
-
-    void write(H5::DataSet& dataset, tcf_unary_result_type const& result) const
-    {
-	// dataset dimensions
-	boost::array<hsize_t, 3> dim = {{ max_blocks, result.shape()[1], 5 }};
-	// memory buffer for results
-	boost::multi_array<double, 3> data(dim);
-
-	for (unsigned int j = 0; j < dim[0]; ++j) {
-	    for (unsigned int k = 0; k < dim[1]; ++k) {
-		// time interval
-		data[j][k][0] = block_time[j][k];
-		// mean average
-		data[j][k][1] = result[j][k].mean();
-		// standard error of mean
-		data[j][k][2] = result[j][k].err();
-		// variance
-		data[j][k][3] = result[j][k].var();
-		// count
-		data[j][k][4] = result[j][k].count();
-	    }
-	}
-	dataset.extend(dim.c_array());
-	// write results to HDF5 file
-	dataset.write(data.data(), H5::PredType::NATIVE_DOUBLE);
-    }
-
-    void write(H5::DataSet& dataset, tcf_binary_result_type const& result) const
-    {
-	// dataset dimensions
-	boost::array<hsize_t, 4> dim = {{ result.shape()[2], max_blocks, result.shape()[1], 6 }};
-	// memory buffer for results
-	boost::multi_array<double, 4> data(dim);
-
-	for (unsigned int j = 0; j < dim[0]; ++j) {
-	    for (unsigned int k = 0; k < dim[1]; ++k) {
-		for (unsigned int l = 0; l < dim[2]; ++l) {
-		    // q-value
-		    data[j][k][l][0] = q_value[j];
-		    // time interval
-		    data[j][k][l][1] = block_time[k][l];
-		    // mean average
-		    data[j][k][l][2] = result[k][l][j].mean();
-		    // standard error of mean
-		    data[j][k][l][3] = result[k][l][j].err();
-		    // variance
-		    data[j][k][l][4] = result[k][l][j].var();
-		    // count
-		    data[j][k][l][5] = result[k][l][j].count();
-		}
-	    }
-	}
-	dataset.extend(dim.c_array());
-	// write results to HDF5 file
-	dataset.write(data.data(), H5::PredType::NATIVE_DOUBLE);
-    }
-
-private:
-    block_time_type const& block_time;
-    q_value_vector const& q_value;
-    unsigned int max_blocks;
-};
 
 } // namespace ljgpu
 

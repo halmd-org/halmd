@@ -417,7 +417,7 @@ bool mdsim<mdsim_backend>::sample()
 	tep.sample(fluid.sample(), fluid.density(), time_);
     }
     if (tcf.sample(step_) && !opt["disable-correlation"].as<bool>()) {
-	tcf.sample(fluid.sample(), step_, flush);
+	tcf.sample(fluid, step_, flush);
     }
     if ((tcf.sample(step_) && opt["enable-trajectory"].as<bool>()) || step_ == 0 || step_ == tcf.steps()) {
 	traj.write(fluid.sample(), time_);

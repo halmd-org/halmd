@@ -21,6 +21,7 @@
 #include <boost/foreach.hpp>
 #include <boost/mpl/for_each.hpp>
 #include <ljgpu/sample/correlation.hpp>
+#include <ljgpu/sample/tcf_visitor.hpp>
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 
@@ -254,16 +255,7 @@ void correlation<dimension>::open(std::string const& filename, bool binary)
 
     // add correlation functions
     if (binary) {
-	using namespace boost::assign;
-	boost::array<particle_type, 2> const types = list_of(PART_A)(PART_B);
-
-	foreach (particle_type a, types) {
-	    m_tcf.push_back(mean_square_displacement(a, a));
-	    m_tcf.push_back(mean_quartic_displacement(a, a));
-	    m_tcf.push_back(velocity_autocorrelation(a, a));
-	    m_tcf.push_back(intermediate_scattering_function(a, a));
-	    m_tcf.push_back(self_intermediate_scattering_function(a, a));
-	}
+	throw exception("FIXME correlation functions for binary mixture");
     }
     else {
 	boost::mpl::for_each<tcf_types>(boost::bind(&std::vector<tcf_type>::push_back, boost::ref(m_tcf), _1));

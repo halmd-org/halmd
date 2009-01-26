@@ -91,7 +91,7 @@ protected:
     /** trajectory sample in swappable host memory */
     sample_type m_sample;
     /** GPU time accumulators */
-    perf::counters m_times;
+    perf::counters mutable m_times;
 
     mixture_type mixture_;
 };

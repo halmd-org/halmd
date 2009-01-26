@@ -137,9 +137,9 @@ protected:
     /** CUDA execution dimensions */
     cuda::config dim_;
     /** CUDA asynchronous execution */
-    cuda::stream stream_;
+    cuda::stream mutable stream_;
     /** CUDA timing */
-    boost::array<cuda::event, 2> event_;
+    boost::array<cuda::event, 2> mutable event_;
     /** GPU random number generator */
     rand48 rng_;
     /** GPU radix sort */

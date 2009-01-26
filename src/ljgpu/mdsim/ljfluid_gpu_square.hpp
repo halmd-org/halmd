@@ -94,7 +94,7 @@ private:
     using _Base::timestep_;
 
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 9> event_;
+    boost::array<cuda::event, 9> mutable event_;
 
     /** potential energy sum */
     reduce<tag::sum, dfloat, double> reduce_en;

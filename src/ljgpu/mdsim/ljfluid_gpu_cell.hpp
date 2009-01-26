@@ -112,7 +112,7 @@ private:
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 9> event_;
+    boost::array<cuda::event, 9> mutable event_;
 
     /** number of cells per dimension */
     unsigned int ncell;

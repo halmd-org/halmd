@@ -22,6 +22,7 @@
 #include <H5Cpp.h>
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
+#include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
@@ -48,6 +49,7 @@ public:
     typedef typename tcf_sample<dimension>::vector_type vector_type;
     typedef typename tcf_sample<dimension>::q_value_vector q_value_vector;
     typedef typename tcf_sample<dimension>::q_vector_vector q_vector_vector;
+    typedef boost::multi_array<double, 2> block_time_type;
 
 public:
     /** set total number of simulation steps */
@@ -91,8 +93,14 @@ public:
     /** check if sample is acquired for given simulation step */
     bool sample(int64_t step) const;
     /** sample time correlation functions */
-    template <typename sample_type>
-    void sample(sample_type const& sample, uint64_t step, bool& flush);
+    template <typename mdsim_backend>
+    void sample(mdsim_backend const& fluid, uint64_t step, bool& flush);
+    /** sample from global device memory */
+    template <typename mdsim_backend>
+    void sample(mdsim_backend const& fluid, tcf_sample<dimension>& sample_, boost::true_type const&);
+    /** sample from host memory */
+    template <typename mdsim_backend>
+    void sample(mdsim_backend const& fluid, tcf_sample<dimension>& sample_, boost::false_type const&);
     /** write correlation function results to HDF5 file */
     void flush();
 
@@ -131,7 +139,7 @@ private:
     /** block count */
     unsigned int m_block_count;
     /** block time intervals */
-    typename tcf_write_results::block_time_type m_block_time;
+    block_time_type m_block_time;
     /** maximum number of correlation samples per block */
     uint64_t m_max_samples;
     /** q values for spatial Fourier transformation */
@@ -148,16 +156,46 @@ private:
 };
 
 /**
+ * sample from global device memory
+ */
+template <int dimension>
+template <typename mdsim_backend>
+void correlation<dimension>::sample(mdsim_backend const& fluid, tcf_sample<dimension>& sample_, boost::true_type const&)
+{
+    fluid.sample(sample_.r, sample_.v);
+}
+
+/**
+ * sample from host memory
+ */
+template <int dimension>
+template <typename mdsim_backend>
+void correlation<dimension>::sample(mdsim_backend const& fluid, tcf_sample<dimension>& sample_, boost::false_type const&)
+{
+    typedef typename tcf_sample<dimension>::gpu_vector_type gpu_vector_type;
+    cuda::host::vector<gpu_vector_type> r(fluid.sample()[0].r.size());
+    cuda::host::vector<gpu_vector_type> v(fluid.sample()[0].v.size());
+    std::copy(fluid.sample()[0].r.begin(), fluid.sample()[0].r.end(), r.begin());
+    std::copy(fluid.sample()[0].v.begin(), fluid.sample()[0].v.end(), v.begin());
+    sample_.r.resize(r.size());
+    sample_.v.resize(v.size());
+    cuda::copy(r, sample_.r);
+    cuda::copy(v, sample_.v);
+}
+
+/**
  * sample time correlation functions
  */
 template <int dimension>
-template <typename sample_type>
-void correlation<dimension>::sample(sample_type const& sample, uint64_t step, bool& flush)
+template <typename mdsim_backend>
+void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, bool& flush)
 {
-    tcf_sample<dimension> sample_;
+    typedef typename mdsim_backend::impl_type impl_type;
 
+    tcf_sample<dimension> sample_;
+    sample(fluid, sample_, boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
     // copy phase space coordinates and compute spatial Fourier transformation 
-    sample_(sample, m_q_vector);
+    sample_(m_q_vector);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
