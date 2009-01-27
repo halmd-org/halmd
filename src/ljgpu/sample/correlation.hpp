@@ -23,7 +23,6 @@
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
 #include <boost/mpl/insert_range.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/variant.hpp>
@@ -50,7 +49,7 @@ public:
     typedef tcf_host_sample<dimension> host_sample_type;
     typedef boost::circular_buffer<host_sample_type> host_block_type;
 #ifdef WITH_CUDA
-    typedef boost::shared_ptr<tcf_gpu_sample<dimension> > gpu_sample_type;
+    typedef tcf_gpu_sample<dimension> gpu_sample_type;
     typedef boost::circular_buffer<gpu_sample_type> gpu_block_type;
     typedef boost::variant<gpu_sample_type, host_sample_type> sample_variant;
     typedef boost::variant<gpu_block_type, host_block_type> block_variant;

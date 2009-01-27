@@ -41,7 +41,8 @@ struct tcf_host_sample : public tcf_sample<dimension>
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::q_value_vector q_value_vector;
     typedef typename _Base::q_vector_vector q_vector_vector;
-    typedef typename _Base::density_vector_pair density_vector_pair;
+    typedef typename _Base::density_pair density_pair;
+    typedef typename _Base::density_vector density_vector;
     typedef typename _Base::density_vector_vector density_vector_vector;
     typedef std::vector<vector_type> sample_vector;
 
@@ -50,34 +51,35 @@ struct tcf_host_sample : public tcf_sample<dimension>
      */
     void operator()(q_vector_vector const& q)
     {
-	rho.resize(q.size());
-	for (size_t i = 0; i < rho.size(); ++i) {
-	    rho[i].assign(q[i].size(), density_vector_pair(0, 0));
-	}
+	typename q_vector_vector::const_iterator q0;
+	typename q_vector_vector::value_type::const_iterator q1;
+	typename density_vector_vector::iterator rho0;
+	typename density_vector_vector::value_type::iterator rho1;
+	typename sample_vector::const_iterator r0;
 
+	// allocate memory for Fourier transformed densities
+	rho = boost::shared_ptr<density_vector_vector>(new density_vector_vector(q.size()));
+	for (q0 = q.begin(), rho0 = rho->begin(); q0 != q.end(); ++q0, ++rho0) {
+	    rho0->assign(q0->size(), density_pair(0, 0));
+	}
 	// spatial Fourier transformation
-	double const norm = sqrt(r.size());
-	for (size_t i = 0; i < q.size(); ++i) {
-	    for (size_t j = 0; j < q[i].size(); ++j) {
-		for (size_t k = 0; k < r.size(); ++k) {
-		    double const value = r[k] * q[i][j];
-		    // sum over differences to maintain accuracy with small and large values
-		    rho[i][j].first += (std::cos(value) - rho[i][j].first) / (k + 1);
-		    rho[i][j].second += (std::sin(value) - rho[i][j].second) / (k + 1);
+	for (q0 = q.begin(), rho0 = rho->begin(); q0 != q.end(); ++q0, ++rho0) {
+	    for (q1 = q0->begin(), rho1 = rho0->begin(); q1 != q0->end(); ++q1, ++rho1) {
+		for (r0 = r->begin(); r0 != r->end(); ++r0) {
+		    double const r_q = (*r0) * (*q1);
+		    rho1->first += std::cos(r_q);
+		    rho1->second += std::sin(r_q);
 		}
-		// multiply with norm as we compute average value above
-		rho[i][j].first *= norm;
-		rho[i][j].second *= norm;
 	    }
 	}
     }
 
     /** particle positions */
-    sample_vector r;
+    boost::shared_ptr<sample_vector> r;
     /** particle velocities */
-    sample_vector v;
-    /** spatially Fourier transformed density for given q-values */
-    using _Base::rho;
+    boost::shared_ptr<sample_vector> v;
+    /** Fourier transformed density for different |q| values and vectors */
+    boost::shared_ptr<density_vector_vector> rho;
 };
 
 template <>
@@ -105,7 +107,7 @@ struct mean_square_displacement<tcf_host_sample> : correlation_function<tcf_host
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = it->r.begin(), r0 = first.first->r.begin(); r != it->r.end(); ++r, ++r0) {
+	    for (vector_const_iterator r = it->r->begin(), r0 = first.first->r->begin(); r != it->r->end(); ++r, ++r0) {
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// accumulate square displacement
@@ -138,7 +140,7 @@ struct mean_quartic_displacement<tcf_host_sample> : correlation_function<tcf_hos
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = it->r.begin(), r0 = first.first->r.begin(); r != it->r.end(); ++r, ++r0) {
+	    for (vector_const_iterator r = it->r->begin(), r0 = first.first->r->begin(); r != it->r->end(); ++r, ++r0) {
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// square displacement
@@ -171,7 +173,7 @@ struct velocity_autocorrelation<tcf_host_sample> : correlation_function<tcf_host
 	// iterate over phase space samples in block
 	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle velocities in current and first sample
-	    for (vector_const_iterator v = it->v.begin(), v0 = first.first->v.begin(); v != it->v.end(); ++v, ++v0) {
+	    for (vector_const_iterator v = it->v->begin(), v0 = first.first->v->begin(); v != it->v->end(); ++v, ++v0) {
 		// accumulate velocity autocorrelation
 		*result += *v0 * *v;
 	    }
@@ -203,11 +205,11 @@ struct intermediate_scattering_function<tcf_host_sample> : correlation_function<
 
 	for (sample_iterator i = first.first; i != last.first; ++i, ++result) {
 	    q_value_result_iterator k = (*result).begin();
-	    density_vector_iterator j0 = first.first->rho.begin();
-	    for (density_vector_iterator j = i->rho.begin(); j != i->rho.end(); ++j, ++j0, ++k) {
+	    density_vector_iterator j0 = first.first->rho->begin();
+	    for (density_vector_iterator j = i->rho->begin(); j != i->rho->end(); ++j, ++j0, ++k) {
 		density_iterator rho0 = (*j0).begin();
 		for (density_iterator rho = (*j).begin(); rho != (*j).end(); ++rho, ++rho0) {
-		    *k += rho->first * rho0->first + rho->second * rho0->second;
+		    *k += (rho->first * rho0->first + rho->second * rho0->second) / i->r->size();
 		}
 	    }
 	}
@@ -244,8 +246,8 @@ struct self_intermediate_scattering_function<tcf_host_sample> : correlation_func
 		for (q_vector_iterator q = (*j).begin(); q != (*j).end(); ++q) {
 		    double value = 0;
 		    size_t count = 0;
-		    position_iterator r0 = first.first->r.begin();
-		    for (position_iterator r = i->r.begin(); r != i->r.end(); ++r, ++r0) {
+		    position_iterator r0 = first.first->r->begin();
+		    for (position_iterator r = i->r->begin(); r != i->r->end(); ++r, ++r0) {
 			value += (std::cos((*r - *r0) * (*q)) - value) / (count + 1);
 		    }
 		    // result is normalised as we computed the average above

@@ -20,6 +20,7 @@
 #define LJGPU_SAMPLE_TCF_BASE_HPP
 
 #include <algorithm>
+#include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <ljgpu/math/accum.hpp>
 #include <vector>
@@ -29,17 +30,18 @@ namespace ljgpu {
 template <int dimension>
 struct tcf_sample
 {
+    /** q vector in momentum space */
     typedef vector<double, dimension> vector_type;
+    /** |q| value vector */
     typedef std::vector<double> q_value_vector;
+    /** vector of q vectors for different |q| values */
     typedef std::vector<std::vector<vector_type> > q_vector_vector;
-
     /** real and imaginary components of Fourier transformed density rho(q) */
-    typedef std::pair<double, double> density_vector_pair;
-    /** vector of Fourier transformed densities for different q-values */
-    typedef std::vector<std::vector<density_vector_pair> > density_vector_vector;
-
-    /** spatially Fourier transformed density for given q-values */
-    density_vector_vector rho;
+    typedef std::pair<double, double> density_pair;
+    /** vector of Fourier transformed densities for |q| value */
+    typedef std::vector<density_pair> density_vector;
+    /** vector of density vectors */
+    typedef std::vector<density_vector> density_vector_vector;
 };
 
 /** correlation function result types */

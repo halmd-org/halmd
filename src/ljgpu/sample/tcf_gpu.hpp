@@ -43,7 +43,8 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::q_value_vector q_value_vector;
     typedef typename _Base::q_vector_vector q_vector_vector;
-    typedef typename _Base::density_vector_pair density_vector_pair;
+    typedef typename _Base::density_pair density_pair;
+    typedef typename _Base::density_vector density_vector;
     typedef typename _Base::density_vector_vector density_vector_vector;
     typedef std::vector<vector_type> sample_vector;
 
@@ -71,10 +72,10 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
 	dfloat* sum0;
 
 	// allocate memory for Fourier-transformed densities
+	rho = boost::shared_ptr<density_vector_vector>(new density_vector_vector(q.size()));
 	size_t size = 0;
-	rho.resize(q.size());
-	for (q0 = q.begin(), rho0 = rho.begin(); q0 != q.end(); ++q0, ++rho0) {
-	    rho0->assign(q0->size(), density_vector_pair(0, 0));
+	for (q0 = q.begin(), rho0 = rho->begin(); q0 != q.end(); ++q0, ++rho0) {
+	    rho0->assign(q0->size(), density_pair(0, 0));
 	    size += q0->size();
 	}
 	// allocate device and host memory for accumulators
@@ -85,13 +86,13 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
 	for (q0 = q.begin(), sum0 = g_sum.data(); q0 != q.end(); ++q0) {
 	    for (q1 = q0->begin(); q1 != q0->end(); ++q1, sum0 += 2 * BLOCKS) {
 		cuda::configure(BLOCKS, THREADS);
-		_gpu::coherent_scattering_function(r, *q1, sum0, sum0 + BLOCKS, r.size());
+		_gpu::coherent_scattering_function(*r, *q1, sum0, sum0 + BLOCKS, r->size());
 	    }
 	}
 	// copy accumulator block results from GPU to host
 	cuda::copy(g_sum, h_sum);
 	// accumulate Fourier-transformed densities on host
-	for (rho0 = rho.begin(), sum0 = h_sum.data(); rho0 != rho.end(); ++rho0) {
+	for (rho0 = rho->begin(), sum0 = h_sum.data(); rho0 != rho->end(); ++rho0) {
 	    for (rho1 = rho0->begin(); rho1 != rho0->end(); ++rho1, sum0 += 2 * BLOCKS) {
 		rho1->first = std::accumulate(sum0, sum0 + BLOCKS, 0.);
 		rho1->second = std::accumulate(sum0 + BLOCKS, sum0 + 2 * BLOCKS, 0.);
@@ -100,11 +101,11 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     }
 
     /** particle positions */
-    gpu_sample_vector r;
+    boost::shared_ptr<gpu_sample_vector> r;
     /** particle velocities */
-    gpu_sample_vector v;
-    /** spatially Fourier transformed density for given q-values */
-    using _Base::rho;
+    boost::shared_ptr<gpu_sample_vector> v;
+    /** Fourier transformed density for different |q| values and vectors */
+    boost::shared_ptr<density_vector_vector> rho;
 };
 
 template <>
@@ -138,7 +139,7 @@ struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_s
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_iterator::value_type sample_type;
 	typedef typename sample_type::_gpu _gpu;
 	typedef typename output_iterator::value_type accumulator_type;
 	enum { BLOCKS = _gpu::BLOCKS };
@@ -159,7 +160,7 @@ struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 	// compute mean square displacements on GPU
 	for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
 	    cuda::configure(BLOCKS, THREADS);
-	    _gpu::mean_square_displacement((*sample)->r, (*first.first)->r, count, mean, var, (*sample)->r.size());
+	    _gpu::mean_square_displacement(*sample->r, *first.first->r, count, mean, var, sample->r->size());
 	}
 	// copy accumulator block results from GPU to host
 	cuda::copy(g_count, h_count);
@@ -202,7 +203,7 @@ struct mean_quartic_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_iterator::value_type sample_type;
 	typedef typename sample_type::_gpu _gpu;
 	typedef typename output_iterator::value_type accumulator_type;
 	enum { BLOCKS = _gpu::BLOCKS };
@@ -223,7 +224,7 @@ struct mean_quartic_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_
 	// compute mean quartic displacements on GPU
 	for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
 	    cuda::configure(BLOCKS, THREADS);
-	    _gpu::mean_quartic_displacement((*sample)->r, (*first.first)->r, count, mean, var, (*sample)->r.size());
+	    _gpu::mean_quartic_displacement(*sample->r, *first.first->r, count, mean, var, sample->r->size());
 	}
 	// copy accumulator block results from GPU to host
 	cuda::copy(g_count, h_count);
@@ -266,7 +267,7 @@ struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_s
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_iterator::value_type sample_type;
 	typedef typename sample_type::_gpu _gpu;
 	typedef typename output_iterator::value_type accumulator_type;
 	enum { BLOCKS = _gpu::BLOCKS };
@@ -287,7 +288,7 @@ struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 	// compute velocity autocorrelations on GPU
 	for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
 	    cuda::configure(BLOCKS, THREADS);
-	    _gpu::velocity_autocorrelation((*sample)->v, (*first.first)->v, count, mean, var, (*sample)->v.size());
+	    _gpu::velocity_autocorrelation(*sample->v, *first.first->v, count, mean, var, sample->v->size());
 	}
 	// copy accumulator block results from GPU to host
 	cuda::copy(g_count, h_count);
@@ -322,7 +323,7 @@ struct intermediate_scattering_function<tcf_gpu_sample> : correlation_function<t
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_iterator::value_type sample_type;
 	typedef typename sample_type::density_vector_vector density_vector_vector;
 	typedef typename output_iterator::value_type result_vector;
 
@@ -333,9 +334,9 @@ struct intermediate_scattering_function<tcf_gpu_sample> : correlation_function<t
 
 	// accumulate intermediate scattering functions on host
 	for (sample = first.first; sample != last.first; ++sample, ++result) {
-	    for (rho0 = (*sample)->rho.begin(), rho0_0 = (*first.first)->rho.begin(), result0 = result->begin(); rho0 != (*sample)->rho.end(); ++rho0, ++rho0_0, ++result0) {
+	    for (rho0 = sample->rho->begin(), rho0_0 = first.first->rho->begin(), result0 = result->begin(); rho0 != sample->rho->end(); ++rho0, ++rho0_0, ++result0) {
 		for (rho1 = rho0->begin(), rho1_0 = rho0_0->begin(); rho1 != rho0->end(); ++rho1, ++rho1_0) {
-		    *result0 += (rho1->first * rho1_0->first + rho1->second * rho1_0->second) / (*sample)->r.size();
+		    *result0 += (rho1->first * rho1_0->first + rho1->second * rho1_0->second) / sample->r->size();
 		}
 	    }
 	}
@@ -369,7 +370,7 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_iterator::value_type sample_type;
 	typedef typename sample_type::_gpu _gpu;
 	typedef typename sample_type::q_vector_vector q_vector_vector;
 	typedef typename output_iterator::value_type result_vector;
@@ -395,7 +396,7 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 	    for (q0 = first.second; q0 != last.second; ++q0) {
 		for (q1 = q0->begin(); q1 != q0->end(); ++q1, sum += BLOCKS) {
 		    cuda::configure(BLOCKS, THREADS);
-		    _gpu::incoherent_scattering_function((*sample)->r, (*first.first)->r, *q1, sum, (*sample)->r.size());
+		    _gpu::incoherent_scattering_function(*sample->r, *first.first->r, *q1, sum, sample->r->size());
 		}
 	    }
 	}
@@ -405,7 +406,7 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 	for (sample = first.first, sum = h_sum.data(); sample != last.first; ++sample, ++result) {
 	    for (q0 = first.second, result0 = result->begin(); q0 != last.second; ++q0, ++result0) {
 		for (q1 = q0->begin(); q1 != q0->end(); ++q1, sum += BLOCKS) {
-		    *result0 += std::accumulate(sum, sum + BLOCKS, 0.) / (*sample)->r.size();
+		    *result0 += std::accumulate(sum, sum + BLOCKS, 0.) / sample->r->size();
 		}
 	    }
 	}
