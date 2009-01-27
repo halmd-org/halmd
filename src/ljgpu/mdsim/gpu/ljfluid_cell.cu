@@ -260,6 +260,14 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 	anderson_thermostat(v);
     }
 
+    // zero values for virtual particles to allow parallel reduction
+    if (tag == VIRTUAL_PARTICLE) {
+	v = 0;
+	f = 0;
+	en = 0;
+	virial = 0;
+    }
+
     // store particle associated with this thread
     g_v[GTID] = v;
     g_f[GTID] = static_cast<vector_type>(f);
