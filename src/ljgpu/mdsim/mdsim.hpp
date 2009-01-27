@@ -251,6 +251,17 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     // set maximum number of samples per block
     tcf.max_samples(opt["max-samples"].as<uint64_t>());
 
+    std::vector<float> q;
+    if (!opt["q-values"].empty()) {
+	boost::multi_array<float, 1> v = opt["q-values"].as<boost::multi_array<float, 1> >();
+	q.assign(v.begin(), v.end());
+    }
+    else {
+	// static structure factor peak at q ~ 2pi/sigma
+	q.push_back(2 * M_PI);
+    }
+    tcf.q_values(q, opt["q-error"].as<float>(), fluid.box());
+
     std::string const tcf_backend(opt["tcf-backend"].as<std::string>());
     if (tcf_backend == "host") {
 	tcf.add_host_correlation_functions();
@@ -263,17 +274,6 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     else {
 	throw std::logic_error("unknown correlation function backend: " + tcf_backend);
     }
-
-    std::vector<float> q;
-    if (!opt["q-values"].empty()) {
-	boost::multi_array<float, 1> v = opt["q-values"].as<boost::multi_array<float, 1> >();
-	q.assign(v.begin(), v.end());
-    }
-    else {
-	// static structure factor peak at q ~ 2pi/sigma
-	q.push_back(2 * M_PI);
-    }
-    tcf.q_values(q, opt["q-error"].as<float>(), fluid.box());
 }
 
 /**
