@@ -144,12 +144,16 @@ protected:
     rand48 rng_;
     /** GPU radix sort */
     radix_sort<float4> radix_sort_;
-
-private:
     /** center of mass velocity */
-    reduce<tag::sum, gpu_vector_type, vector_type> reduce_velocity;
+    reduce<tag::sum, gpu_vector_type, vector_type> mutable reduce_velocity;
     /** squared velocity sum */
-    reduce<tag::sum_of_squares, dfloat, double> reduce_squared_velocity;
+    reduce<tag::sum_of_squares, dfloat, double> mutable reduce_squared_velocity;
+    /** potential energy sum */
+    reduce<tag::sum, dfloat, double> mutable reduce_en;
+    /** virial equation sum */
+    reduce<tag::sum, dfloat, double> mutable reduce_virial;
+    /** maximum absolute velocity */
+    reduce<tag::max, float> mutable reduce_v_max;
 };
 
 template <typename ljfluid_impl>

@@ -309,13 +309,9 @@ void mdsim<mdsim_backend>::operator()()
 	    // sample phase space
 	    copy(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 	}
-	else {
-	    // cell lists implementation requires GPU to host copy every step
-	    copy(boost::is_base_of<ljfluid_impl_gpu_cell<dimension>, impl_type>());
-	}
 
 	// stream next MD simulation program step on GPU
-	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+	// FIXME if host sampling -> stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
 	// sample properties
 	if (sample()) {
@@ -328,6 +324,8 @@ void mdsim<mdsim_backend>::operator()()
 	    alarm(FLUSH_TO_DISK_INTERVAL);
 	}
 
+	// stream next MD simulation program step on GPU
+	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 	// synchronize MD simulation program step on GPU
 	fluid.mdstep();
 
@@ -427,7 +425,7 @@ bool mdsim<mdsim_backend>::sample()
 {
     bool flush = false;
     if (tcf.sample(step_) && !opt["disable-energy"].as<bool>()) {
-	tep.sample(fluid.sample(), fluid.density(), time_);
+	tep.sample(fluid, fluid.density(), time_);
     }
     if (tcf.sample(step_) && !opt["disable-correlation"].as<bool>()) {
 	tcf.sample(fluid, step_, flush);

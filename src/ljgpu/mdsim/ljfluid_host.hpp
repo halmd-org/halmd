@@ -113,6 +113,8 @@ public:
 
     /** MD simulation step */
     void mdstep();
+    /** sample thermodynamic equilibrium properties */
+    void sample(energy_sample<dimension>& sample) const;
 
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;
@@ -187,6 +189,11 @@ private:
     boost::array<float_type, 3> r_cut_skin;
     /** squared cutoff radii with neighbour list skin */
     boost::array<float_type, 3> rr_cut_skin;
+
+    /** potential energy per particle */
+    double en_pot;
+    /** virial equation sum per particle */
+    double virial;
     /** sum over maximum velocity magnitudes since last neighbour lists update */
     float_type v_max_sum;
 };
@@ -612,9 +619,9 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
     }
 
     // potential energy
-    m_sample.en_pot = 0;
+    en_pot = 0;
     // virial equation sum
-    m_sample.virial = 0;
+    virial = 0;
 
     foreach (particle& p1, part) {
 	// calculate pairwise Lennard-Jones force with neighbour particles
@@ -649,17 +656,17 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 	    p2.f -= r * fval;
 
 	    // add contribution to potential energy
-	    m_sample.en_pot += pot;
+	    en_pot += pot;
 	    // add contribution to virial equation sum
-	    m_sample.virial += rr * fval;
+	    virial += rr * fval;
 	}
     }
 
-    m_sample.en_pot /= npart;
-    m_sample.virial /= npart;
+    en_pot /= npart;
+    virial /= npart;
 
     // ensure that system is still in valid state
-    if (std::isinf(m_sample.en_pot)) {
+    if (std::isinf(en_pot)) {
 	throw exception("potential energy diverged due to excessive timestep or density");
     }
 }
@@ -800,6 +807,26 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
     m_times["update_forces"] += t[3] - t[2];
     m_times["velocity_verlet"] += (t[1] - t[0]) + (t[4] - t[3]);
     m_times["mdstep"] += t[6] - t[0];
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::sample(energy_sample<dimension>& sample) const
+{
+    typename std::vector<particle>::const_iterator p;
+
+    // mean potential energy per particle
+    sample.en_pot = en_pot;
+    // mean virial equation sum per particle
+    sample.virial = virial;
+
+    for (p = part.begin(), sample.vv = 0, sample.v_cm = 0; p != part.end(); ++p) {
+	sample.vv += p->v * p->v;
+	sample.v_cm += p->v;
+    }
+    // mean squared velocity per particle
+    sample.vv /= npart;
+    // mean velocity per particle
+    sample.v_cm /= npart;
 }
 
 /**

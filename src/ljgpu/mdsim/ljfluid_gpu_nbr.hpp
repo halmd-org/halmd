@@ -71,7 +71,8 @@ public:
     void copy();
     /** sample phase space on GPU */
     void sample(trajectory_gpu_sample<dimension>& sample) const;
-
+    /** sample thermodynamic equilibrium properties */
+    void sample(energy_sample<dimension>& sample) const;
     /** returns number of particles */
     unsigned int particles() const { return npart; }
     /** returns trajectory sample */
@@ -133,12 +134,12 @@ private:
 
     /** GPU radix sort */
     radix_sort<unsigned int> radix_;
-    /** potential energy sum */
-    reduce<tag::sum, dfloat, double> reduce_en;
-    /** virial equation sum */
-    reduce<tag::sum, dfloat, double> reduce_virial;
-    /** maximum absolute velocity */
-    reduce<tag::max, float> reduce_v_max;
+
+    using _Base::reduce_squared_velocity;
+    using _Base::reduce_velocity;
+    using _Base::reduce_en;
+    using _Base::reduce_virial;
+    using _Base::reduce_v_max;
 
     /** number of cells per dimension */
     unsigned int ncell;
@@ -523,15 +524,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
     }
     event_[7].record(stream_);
 
-    // virial equation sum calculation
-    try {
-	reduce_virial(g_part.virial, stream_);
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to stream virial equation sum calculation on GPU");
-    }
-    event_[8].record(stream_);
-
     // maximum velocity calculation
     try {
 	reduce_v_max(g_part.v, stream_);
@@ -564,10 +556,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
     m_times["update_forces"] += event_[6] - event_[5];
     // GPU time for potential energy sum calculation
     m_times["potential_energy"] += event_[7] - event_[6];
-    // GPU time for virial equation sum calculation
-    m_times["virial_sum"] += event_[8] - event_[7];
     // GPU time for maximum velocity calculation
-    m_times["maximum_velocity"] += event_[0] - event_[8];
+    m_times["maximum_velocity"] += event_[0] - event_[7];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
@@ -630,11 +620,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::copy()
 	m_sample[type].v[n] = h_part.v[i];
     }
 
-    // mean potential energy per particle
-    m_sample.en_pot = reduce_en.value() / npart;
-    // mean virial equation sum per particle
-    m_sample.virial = reduce_virial.value() / npart;
-
     // GPU time for sample memcpy
     m_times["sample_memcpy"] += event_[0] - event_[1];
 }
@@ -648,27 +633,81 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(trajectory_gpu_samp
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
-    event_[0].record(stream_);
+    static cuda::event ev0, ev1;
+    static cuda::stream stream;
+
+    ev0.record(stream_);
 
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
 	// allocate global device memory for phase space sample
 	position_sample_ptr r(new position_sample_vector(mpart[i]));
-	sample.r.push_back(r);
 	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
+	sample.r.push_back(r);
 	sample.v.push_back(v);
+
 	// allocate additional memory to match CUDA grid dimensions
 	cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
 	r->reserve(dim.threads());
 	v->reserve(dim.threads());
 	g_aux.index.reserve(n + dim.threads());
+
 	// order particles by permutation
-	cuda::configure(dim.grid, dim.block, stream_);
+	cuda::configure(dim.grid, dim.block, stream);
 	_gpu::sample(g_aux.index.data() + n, *r, *v);
     }
 
-    event_[1].record(stream_);
-    event_[1].synchronize();
-    m_times["sample"] += event_[1] - event_[0];
+    ev1.record(stream_);
+    ev1.synchronize();
+    m_times["sample"] += ev1 - ev0;
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(energy_sample<dimension>& sample) const
+{
+    static cuda::event ev0, ev1;
+    static cuda::stream stream;
+
+    // mean potential energy per particle
+    sample.en_pot = reduce_en.value() / npart;
+
+    // mean virial equation sum per particle
+    try {
+	ev0.record(stream);
+	reduce_virial(g_part.virial, stream);
+	ev1.record(stream);
+	ev1.synchronize();
+	m_times["virial_sum"] += ev1 - ev0;
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to calculate virial equation sum on GPU");
+    }
+    sample.virial = reduce_virial.value() / npart;
+
+    // mean squared velocity per particle
+    try {
+	ev0.record(stream);
+	reduce_squared_velocity(g_part.v, stream);
+	ev1.record(stream);
+	ev1.synchronize();
+	m_times["reduce_squared_velocity"] += ev1 - ev0;
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to calculate mean squared velocity on GPU");
+    }
+    sample.vv = reduce_squared_velocity.value() / npart;
+
+    // mean velocity per particle
+    try {
+	ev0.record(stream);
+	reduce_velocity(g_part.v, stream);
+	ev1.record(stream);
+	ev1.synchronize();
+	m_times["reduce_velocity"] += ev1 - ev0;
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to calculate mean velocity on GPU");
+    }
+    sample.v_cm = reduce_velocity.value() / npart;
 }
 
 template <int dimension>

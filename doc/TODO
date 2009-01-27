@@ -2,4 +2,5 @@ ljgpu TODO
 ==========
 
 - fix boost::array<cuda::event>... "MD simulation step: 18446746124288.0000 ms (0.0000 ms, 20000 calls)"
+- dump trajectories at highest block level
 - inspect all CUDA kernels for local memory use

@@ -25,6 +25,7 @@
 #include <ljgpu/math/stat.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
+#include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/sample/H5param.hpp>
 #include <string>
 #include <vector>
@@ -61,8 +62,8 @@ public:
     void close();
 
     /** sample thermodynamic equilibrium properties */
-    template <typename sample_type>
-    void sample(sample_type const& sample, float density, double time);
+    template <typename mdsim_backend>
+    void sample(mdsim_backend const& fluid, float density, double time);
 
     /** returns HDF5 parameter group */
     operator H5param() { return m_file; }
@@ -89,41 +90,26 @@ private:
     H5::DataType m_tid;
 };
 
-/**
- * sample thermodynamic equilibrium properties
- */
 template <int dimension>
-template <typename sample_type>
-void energy<dimension>::sample(sample_type const& sample, float density, double time)
+template <typename mdsim_backend>
+void energy<dimension>::sample(mdsim_backend const& fluid, float density, double time)
 {
-    typedef typename sample_type::uniform_sample uniform_sample;
-    // ensure double-precision floating point arithmetic
-    typedef vector<double, dimension> velocity_vector;
-
-    vector<double, dimension> v_cm = 0;
-    double vv = 0;
-    size_t i = 0;
-    foreach (uniform_sample const& sample_, sample) {
-	foreach (velocity_vector v, sample_.v) {
-	    // center of mass velocity
-	    v_cm += (v - v_cm) / ++i;
-	    // mean squared velocity
-	    vv += (v * v - vv) / i;
-	}
-    }
+    // sample thermodynamic equilibrium properties
+    energy_sample<dimension> sample;
+    fluid.sample(sample);
 
     // mean potential energy per particle
     m_en_pot.push_back(scalar_pair(time, sample.en_pot));
     // mean kinetic energy per particle
-    m_en_kin.push_back(scalar_pair(time, vv / 2));
+    m_en_kin.push_back(scalar_pair(time, sample.vv / 2));
     // mean total energy per particle
     m_en_tot.push_back(scalar_pair(time, m_en_pot.back().second + m_en_kin.back().second));
     // temperature
-    m_temp.push_back(scalar_pair(time, vv / dimension));
+    m_temp.push_back(scalar_pair(time, sample.vv / dimension));
     // pressure
-    m_press.push_back(scalar_pair(time, density / dimension * (vv + sample.virial)));
+    m_press.push_back(scalar_pair(time, density / dimension * (sample.vv + sample.virial)));
     // velocity center of mass
-    m_v_cm.push_back(vector_pair(time, v_cm));
+    m_v_cm.push_back(vector_pair(time, sample.v_cm));
 
     m_samples++;
     m_samples_buffer++;

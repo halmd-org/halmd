@@ -164,6 +164,8 @@ public:
     void mdstep();
     /** sample phase space */
     void copy();
+    /** sample thermodynamic equilibrium properties */
+    void sample(energy_sample<dimension>& sample) const;
 
 private:
     /** schedule next particle event starting at given time */
@@ -205,6 +207,8 @@ private:
     std::priority_queue<event_queue_item, std::vector<event_queue_item>, std::greater<event_queue_item> > event_queue;
     /** current simulation step */
     uint64_t step_;
+    /** virial equation sum per particle */
+    double virial;
 
     /** random number generator */
     gsl::gfsr4 rng_;
@@ -633,7 +637,7 @@ void hardsphere<hardsphere_impl<dimension> >::process_collision_event(const unsi
     part[n2].v += dv;
 
     // add contribution to impulsive limit of the virial expression sum
-    m_sample.virial += dr * dv;
+    virial += dr * dv;
 
     // update particle event counters
     part[n1].count++;
@@ -701,7 +705,7 @@ void hardsphere<hardsphere_impl<dimension> >::mdstep()
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
 
     // impulsive limit of the virial expression sum
-    m_sample.virial = 0.;
+    virial = 0.;
 
     // advance simulation time
     const double sample_time = ++step_ * timestep_;
@@ -728,7 +732,7 @@ void hardsphere<hardsphere_impl<dimension> >::mdstep()
     }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 
-    m_sample.virial /= npart;
+    virial /= npart;
 
     // CPU ticks for event queue processing
     m_times["event_queue"] += t[1] - t[0];
@@ -758,6 +762,26 @@ void hardsphere<hardsphere_impl<dimension> >::copy()
 
     // CPU ticks for phase space sampling
     m_times["sample"] += t[1] - t[0];
+}
+
+template <int dimension>
+void hardsphere<hardsphere_impl<dimension> >::sample(energy_sample<dimension>& sample) const
+{
+    typename std::vector<particle>::const_iterator p;
+
+    // mean potential energy per particle
+    sample.en_pot = 0;
+    // mean virial equation sum per particle
+    sample.virial = virial;
+
+    for (p = part.begin(), sample.vv = 0, sample.v_cm = 0; p != part.end(); ++p) {
+	sample.vv += p->v * p->v;
+	sample.v_cm += p->v;
+    }
+    // mean squared velocity per particle
+    sample.vv /= npart;
+    // mean velocity per particle
+    sample.v_cm /= npart;
 }
 
 } // namespace ljgpu

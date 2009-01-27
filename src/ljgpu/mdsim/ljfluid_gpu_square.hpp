@@ -62,6 +62,8 @@ public:
     void mdstep();
     /** copy MD simulation step results from GPU to host */
     void copy();
+    /** sample thermodynamic equilibrium properties */
+    void sample(energy_sample<dimension>& sample) const;
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
@@ -96,10 +98,11 @@ private:
     /** CUDA events for kernel timing */
     boost::array<cuda::event, 9> mutable event_;
 
-    /** potential energy sum */
-    reduce<tag::sum, dfloat, double> reduce_en;
-    /** virial equation sum */
-    reduce<tag::sum, dfloat, double> reduce_virial;
+    using _Base::reduce_squared_velocity;
+    using _Base::reduce_velocity;
+    using _Base::reduce_en;
+    using _Base::reduce_virial;
+    using _Base::reduce_v_max;
 
     /** system state in page-locked host memory */
     struct {
@@ -333,6 +336,55 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::copy()
 
     // GPU time for sample memcpy
     m_times["sample_memcpy"] += event_[0] - event_[1];
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(energy_sample<dimension>& sample) const
+{
+    static cuda::event ev0, ev1;
+    static cuda::stream stream;
+
+    // mean potential energy per particle
+    sample.en_pot = reduce_en.value() / npart;
+
+    // mean virial equation sum per particle
+    try {
+	ev0.record(stream);
+	reduce_virial(g_part.virial, stream);
+	ev1.record(stream);
+	ev1.synchronize();
+	m_times["virial_sum"] += ev1 - ev0;
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to calculate virial equation sum on GPU");
+    }
+    sample.virial = reduce_virial.value() / npart;
+
+    // mean squared velocity per particle
+    try {
+	ev0.record(stream);
+	reduce_squared_velocity(g_part.v, stream);
+	ev1.record(stream);
+	ev1.synchronize();
+	m_times["reduce_squared_velocity"] += ev1 - ev0;
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to calculate mean squared velocity on GPU");
+    }
+    sample.vv = reduce_squared_velocity.value() / npart;
+
+    // mean velocity per particle
+    try {
+	ev0.record(stream);
+	reduce_velocity(g_part.v, stream);
+	ev1.record(stream);
+	ev1.synchronize();
+	m_times["reduce_velocity"] += ev1 - ev0;
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to calculate mean velocity on GPU");
+    }
+    sample.v_cm = reduce_velocity.value() / npart;
 }
 
 template <int dimension>
