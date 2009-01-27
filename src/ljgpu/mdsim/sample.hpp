@@ -38,9 +38,11 @@ template <typename float_type, int dimension>
 struct trajectory_host_sample
 {
     typedef vector<double, dimension> position_vector;
-    typedef std::vector<position_vector> position_sample_vector;
     typedef vector<float_type, dimension> velocity_vector;
+    typedef std::vector<position_vector> position_sample_vector;
     typedef std::vector<velocity_vector> velocity_sample_vector;
+    typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
+    typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_ptr;
 
     /** periodically extended particle positions */
     std::vector<boost::shared_ptr<position_sample_vector > > r;
@@ -57,10 +59,10 @@ template <>
 struct trajectory_gpu_sample<3>
 {
     typedef float4 position_vector;
-    typedef cuda::vector<position_vector> position_sample_vector;
-    typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
     typedef float4 velocity_vector;
+    typedef cuda::vector<position_vector> position_sample_vector;
     typedef cuda::vector<velocity_vector> velocity_sample_vector;
+    typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
     typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_ptr;
 
     /** periodically extended particle positions */
@@ -73,10 +75,10 @@ template <>
 struct trajectory_gpu_sample<2>
 {
     typedef float2 position_vector;
-    typedef cuda::vector<position_vector> position_sample_vector;
-    typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
     typedef float2 velocity_vector;
+    typedef cuda::vector<position_vector> position_sample_vector;
     typedef cuda::vector<velocity_vector> velocity_sample_vector;
+    typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
     typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_ptr;
 
     /** periodically extended particle positions */
@@ -110,7 +112,6 @@ struct energy_sample
 /**
  * particles types in a binary mixture
  */
-enum particle_type { PART_A = 0, PART_B = 1 };
 
 /**
  * phase space sample for A or B particles

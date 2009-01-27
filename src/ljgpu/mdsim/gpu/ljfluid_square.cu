@@ -91,6 +91,19 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     g_virial[GTID] = virial;
 }
 
+/**
+ * sample trajectories
+ */
+template <int dimension, typename T>
+__global__ void sample(float4 const* g_ir, T const* g_iR, T const* g_iv, T* g_or, T* g_ov)
+{
+    // permute particle phase space coordinates
+    vector<float, dimension> const r = g_ir[GTID];
+    vector<float, dimension> const R = g_iR[GTID];
+    g_or[GTID] = r + box * R;
+    g_ov[GTID] = g_iv[GTID];
+}
+
 }}} // namespace ljgpu::gpu::ljfluid
 
 namespace ljgpu { namespace gpu
@@ -121,6 +134,9 @@ cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
     _3D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVT>);
 
+cuda::function<void (float4 const*, float4 const*, float4 const*, float4*, float4*)>
+    _3D::sample(cu::ljfluid::sample<3>);
+
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<UNARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT, NVE>);
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
@@ -138,5 +154,8 @@ cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<BINARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVE>);
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVT>);
+
+cuda::function<void (float4 const*, float2 const*, float2 const*, float2*, float2*)>
+    _2D::sample(cu::ljfluid::sample<2>);
 
 }} // namespace ljgpu::gpu

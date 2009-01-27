@@ -45,6 +45,9 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::traits_type::gpu_vector_type gpu_vector_type;
     typedef typename _Base::sample_type sample_type;
+    typedef typename _Base::host_sample_type host_sample_type;
+    typedef typename _Base::energy_sample_type energy_sample_type;
+    typedef typename _Base::traits_type::gpu_sample_type gpu_sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
     enum { dimension = _Base::dimension };
 

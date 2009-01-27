@@ -59,6 +59,8 @@ public:
     typedef typename mdsim_backend::traits_type traits_type;
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
+    typedef typename traits_type::host_sample_type host_sample_type;
+    typedef typename traits_type::energy_sample_type energy_sample_type;
     typedef typename traits_type::sample_type sample_type;
     enum { dimension = traits_type::dimension };
 
@@ -105,7 +107,6 @@ private:
     void cuda_device(boost::true_type const&);
     void cuda_allocated_memory(boost::true_type const&);
     void stream(boost::true_type const&);
-    void copy(boost::true_type const&);
 
     void epsilon(boost::false_type const&) {}
     void sigma(boost::false_type const&) {}
@@ -121,7 +122,6 @@ private:
     void cuda_device(boost::false_type const&) {}
     void cuda_allocated_memory(boost::false_type const&) {}
     void stream(boost::false_type const&) {}
-    void copy(boost::false_type const&) {}
 
     /** bind process to CPU core(s) */
     void cpu_set(std::vector<int> const& cpu_set);
@@ -302,14 +302,6 @@ void mdsim<mdsim_backend>::operator()()
     timer.start();
 
     for (step_ = 0; step_ < tcf.steps(); ++step_, time_= step_ * static_cast<double>(fluid.timestep())) {
-	// check if sample is acquired for given simulation step
-	if (tcf.sample(step_)) {
-	    // copy previous MD simulation state from GPU to host
-	    copy(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
-	    // sample phase space
-	    copy(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
-	}
-
 	// stream next MD simulation program step on GPU
 	// FIXME if host sampling -> stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
@@ -366,11 +358,6 @@ void mdsim<mdsim_backend>::operator()()
 	    }
 	}
     }
-
-    // copy previous MD simulation state from GPU to host
-    copy(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
-    // sample phase space
-    copy(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
     // sample properties
     sample();
 
@@ -621,12 +608,6 @@ template <typename mdsim_backend>
 void mdsim<mdsim_backend>::stream(boost::true_type const&)
 {
     fluid.stream();
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::copy(boost::true_type const&)
-{
-    fluid.copy();
 }
 
 } // namespace ljgpu

@@ -51,6 +51,8 @@ public:
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::sample_type sample_type;
+    typedef typename _Base::host_sample_type host_sample_type;
+    typedef typename _Base::energy_sample_type energy_sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
     typedef typename sample_type::uniform_sample uniform_sample;
     typedef typename sample_type::position_vector position_vector;
@@ -72,7 +74,7 @@ public:
 	/** particle number */
 	unsigned int tag;
 	/** particle type */
-	enum particle_type type;
+	enum { A = 0, B = 1 } type;
 	/** particle neighbours list */
 	std::vector<ref> neighbour;
     };
@@ -113,8 +115,10 @@ public:
 
     /** MD simulation step */
     void mdstep();
+    /** sample phase space on host */
+    void sample(host_sample_type& sample) const;
     /** sample thermodynamic equilibrium properties */
-    void sample(energy_sample<dimension>& sample) const;
+    void sample(energy_sample_type& sample) const;
 
     /** write parameters to HDF5 parameter group */
     void param(H5param& param) const;
@@ -207,8 +211,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(unsigned int value)
     _Base::particles(value);
 
     try {
-	m_sample[PART_A].r.resize(npart);
-	m_sample[PART_A].v.resize(npart);
+	m_sample[particle::A].r.resize(npart);
+	m_sample[particle::A].v.resize(npart);
 	part.resize(npart);
     }
     catch (std::bad_alloc const& e) {
@@ -222,10 +226,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(boost::array<unsigned int
     _Base::particles(value);
 
     try {
-	m_sample[PART_A].r.resize(mpart[PART_A]);
-	m_sample[PART_A].v.resize(mpart[PART_A]);
-	m_sample[PART_B].r.resize(mpart[PART_B]);
-	m_sample[PART_B].v.resize(mpart[PART_B]);
+	m_sample[particle::A].r.resize(mpart[particle::A]);
+	m_sample[particle::A].v.resize(mpart[particle::A]);
+	m_sample[particle::B].r.resize(mpart[particle::B]);
+	m_sample[particle::B].v.resize(mpart[particle::B]);
 	part.resize(npart);
     }
     catch (std::bad_alloc const& e) {
@@ -242,24 +246,24 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
     _Base::sample(visitor);
 
     unsigned int tag = 0;
-    foreach (position_vector const& r, m_sample[PART_A].r) {
-	part[tag].type = PART_A;
+    foreach (position_vector const& r, m_sample[particle::A].r) {
+	part[tag].type = particle::A;
 	part[tag].r = r;
 	part[tag].tag = tag;
 	tag++;
     }
-    foreach (position_vector const& r, m_sample[PART_B].r) {
-	part[tag].type = PART_B;
+    foreach (position_vector const& r, m_sample[particle::B].r) {
+	part[tag].type = particle::B;
 	part[tag].r = r;
 	part[tag].tag = tag;
 	tag++;
     }
     tag = 0;
-    foreach (velocity_vector const& v, m_sample[PART_A].v) {
+    foreach (velocity_vector const& v, m_sample[particle::A].v) {
 	part[tag].v = v;
 	tag++;
     }
-    foreach (position_vector const& v, m_sample[PART_B].v) {
+    foreach (position_vector const& v, m_sample[particle::B].v) {
 	part[tag].v = v;
 	tag++;
     }
@@ -457,10 +461,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::random_binary_types()
     // shuffle view and assign particles types
     rng_.shuffle(part);
     foreach (particle& p, range(part.begin(), part.begin() + mpart[0])) {
-	p.type = PART_A;
+	p.type = particle::A;
     }
     foreach (particle& p, range(part.begin() + mpart[0], part.end())) {
-	p.type = PART_B;
+	p.type = particle::B;
     }
 }
 
@@ -707,8 +711,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 	p.v += p.f * (timestep_ / 2);
 	// full step position
 	p.r += p.v * timestep_;
-	// copy to phase space sample
-	m_sample[p.type].r.push_back(p.r);
     }
 }
 
@@ -728,8 +730,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
     foreach (particle& p, part) {
 	// full step velocity
 	p.v += p.f * (timestep_ / 2);
-	// copy to phase space sample
-	m_sample[p.type].v.push_back(p.v);
 
 	vv_max = std::max(vv_max, p.v * p.v);
     }
@@ -810,7 +810,35 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::sample(energy_sample<dimension>& sample) const
+void ljfluid<ljfluid_impl_host<dimension> >::sample(host_sample_type& sample) const
+{
+    typedef host_sample_type sample_type;
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+
+    for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
+	// allocate memory for trajectory sample
+	position_sample_ptr r(new position_sample_vector);
+	velocity_sample_ptr v(new velocity_sample_vector);
+	sample.r.push_back(r);
+	sample.v.push_back(v);
+	r->reserve(mpart[i]);
+	v->reserve(mpart[i]);
+	// assign particle positions and velocities of homogenous type
+	typename std::vector<particle>::const_iterator p;
+	for (p = part.begin(); p != part.end(); ++p) {
+	    // periodically extended particle position
+	    r->push_back(p->r);
+	    // particle velocity
+	    v->push_back(p->v);
+	}
+    }
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::sample(energy_sample_type& sample) const
 {
     typename std::vector<particle>::const_iterator p;
 

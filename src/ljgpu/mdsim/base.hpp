@@ -44,6 +44,8 @@ public:
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::sample_type sample_type;
+    typedef typename traits_type::host_sample_type host_sample_type;
+    typedef typename traits_type::energy_sample_type energy_sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
     enum { dimension = traits_type::dimension };
 

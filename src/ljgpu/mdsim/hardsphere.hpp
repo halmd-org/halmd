@@ -67,6 +67,8 @@ public:
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::sample_type sample_type;
+    typedef typename _Base::host_sample_type host_sample_type;
+    typedef typename _Base::energy_sample_type energy_sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
 
     typedef std::list<unsigned int> cell_type;
@@ -162,10 +164,10 @@ public:
     void init_event_list();
     /** advance phase space state to given sample time */
     void mdstep();
-    /** sample phase space */
-    void copy();
+    /** sample phase space on host */
+    void sample(host_sample_type& sample) const;
     /** sample thermodynamic equilibrium properties */
-    void sample(energy_sample<dimension>& sample) const;
+    void sample(energy_sample_type& sample) const;
 
 private:
     /** schedule next particle event starting at given time */
@@ -742,21 +744,34 @@ void hardsphere<hardsphere_impl<dimension> >::mdstep()
  * advance phase space state to given sample time
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::copy()
+void hardsphere<hardsphere_impl<dimension> >::sample(host_sample_type& sample) const
 {
+    typedef host_sample_type sample_type;
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+
     // nanosecond resolution process times
     boost::array<timespec, 2> t;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
 
-    // sample phase space at given time
-    // advance simulation time
-    const double sample_time = step_ * timestep_;
-    for (unsigned int i = 0; i < npart; ++i) {
-	const vector_type dr = part[i].v * (sample_time - part[i].t);
+    // allocate memory for phase space sample
+    position_sample_ptr r(new position_sample_vector);
+    velocity_sample_ptr v(new velocity_sample_vector);
+    sample.r.push_back(r);
+    sample.v.push_back(v);
+    r->reserve(npart);
+    v->reserve(npart);
+
+    double const sample_time = step_ * static_cast<double>(timestep_);
+    typename std::vector<particle>::const_iterator p;
+
+    for (p = part.begin(); p != part.end(); ++p) {
 	// periodically extended particle position
-	m_sample[0].r[i] = part[i].R + dr;
+	r->push_back(p->R + p->v * (sample_time - p->t));
 	// particle velocity
-	m_sample[0].v[i] = part[i].v;
+	v->push_back(p->v);
     }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 
@@ -765,7 +780,7 @@ void hardsphere<hardsphere_impl<dimension> >::copy()
 }
 
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::sample(energy_sample<dimension>& sample) const
+void hardsphere<hardsphere_impl<dimension> >::sample(energy_sample_type& sample) const
 {
     typename std::vector<particle>::const_iterator p;
 

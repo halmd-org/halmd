@@ -40,6 +40,9 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::gpu_vector_type gpu_vector_type;
     typedef typename _Base::sample_type sample_type;
+    typedef typename _Base::host_sample_type host_sample_type;
+    typedef typename _Base::gpu_sample_type gpu_sample_type;
+    typedef typename _Base::energy_sample_type energy_sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
 
 public:
@@ -59,10 +62,10 @@ public:
     void stream();
     /** synchronize MD simulation step on GPU */
     void mdstep();
-    /** copy MD simulation step results from GPU to host */
-    void copy();
+    /** sample phase space on host */
+    void sample(host_sample_type& sample) const;
     /** sample thermodynamic equilibrium properties */
-    void sample(energy_sample<dimension>& sample) const;
+    void sample(energy_sample_type& sample) const;
 
     /** returns trajectory sample */
     sample_type const& sample() const { return m_sample; }
@@ -114,7 +117,7 @@ private:
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 9> mutable event_;
+    boost::array<cuda::event, 9> event_;
 
     using _Base::reduce_squared_velocity;
     using _Base::reduce_velocity;
@@ -141,13 +144,13 @@ private:
     /** system state in page-locked host memory */
     struct {
 	/** tagged periodically reduced particle positions */
-	cuda::host::vector<float4> r;
+	cuda::host::vector<float4> mutable r;
 	/** periodic box traversal vectors */
-	cuda::host::vector<gpu_vector_type> R;
+	cuda::host::vector<gpu_vector_type> mutable R;
 	/** particle velocities */
-	cuda::host::vector<gpu_vector_type> v;
+	cuda::host::vector<gpu_vector_type> mutable v;
 	/** particle tags */
-	cuda::host::vector<unsigned int> tag;
+	cuda::host::vector<unsigned int> mutable tag;
     } h_part;
 
     /** system state in global device memory */
@@ -416,63 +419,59 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::mdstep()
 	throw exception("potential energy diverged");
     }
 
-    // add to sum over maximum velocity magnitudes since last cell lists update
     v_max_sum += reduce_v_max.value();
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_cell<dimension> >::copy()
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(host_sample_type& sample) const
 {
-    // copy MD simulation step results from GPU to host
-    try {
-	event_[1].record(stream_);
-	// copy periodically reduce particles positions
-	cuda::copy(g_part.r, h_part.r, stream_);
-	// copy periodic box traversal vectors
-	cuda::copy(g_part.R, h_part.R, stream_);
-	// copy particle velocities
-	cuda::copy(g_part.v, h_part.v, stream_);
-	// copy particle number tags
-	cuda::copy(g_part.tag, h_part.tag, stream_);
-	event_[0].record(stream_);
+    typedef host_sample_type sample_type;
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
-	// wait for CUDA operations to finish
-	event_[0].synchronize();
+    static cuda::event ev0, ev1;
+    static cuda::stream stream;
+
+    try {
+	ev0.record(stream);
+	cuda::copy(g_part.r, h_part.r, stream);
+	cuda::copy(g_part.R, h_part.R, stream);
+	cuda::copy(g_part.v, h_part.v, stream);
+	cuda::copy(g_part.tag, h_part.tag, stream);
+	ev1.record(stream);
+	ev1.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
+    m_times["sample_memcpy"] += ev1 - ev0;
 
-    // number of particles found in cells
-    unsigned int count = 0;
-
-    for (unsigned int i = 0; i < nplace; ++i) {
-	// particle tag
-	unsigned int const tag = h_part.tag[i];
-	// skip virtual particles
-	if (tag == gpu::VIRTUAL_PARTICLE) continue;
-
-	count++;
-	// A or B particle type
-	unsigned int const type = (tag >= mpart[0]);
-	// particle number
-	unsigned int const n = type ? (tag - mpart[0]) : tag;
-	// copy periodically extended particle positions
-	m_sample[type].r[n] = h_part.r[i] + (vector_type) h_part.R[i] * box_;
-	// copy particle velocities
-	m_sample[type].v[n] = h_part.v[i];
+    // allocate memory for phase space sample
+    for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
+	sample.r.push_back(position_sample_ptr(new position_sample_vector(mpart[i])));
+	sample.v.push_back(velocity_sample_ptr(new velocity_sample_vector(mpart[i])));
     }
-    // validate number of particles
+
+    // copy particle positions and velocities in binary mixture
+    size_t count = 0;
+    for (size_t i = 0, tag; i < h_part.tag.size(); ++i) {
+	if ((tag = h_part.tag[i]) != gpu::VIRTUAL_PARTICLE) {
+	    unsigned int const type = (tag >= mpart[0]);
+	    unsigned int const n = type ? (tag - mpart[0]) : tag;
+	    (*sample.r[type])[n] = h_part.r[i] + box_ * static_cast<vector_type>(h_part.R[i]);
+	    (*sample.v[type])[n] = h_part.v[i];
+	    count++;
+	}
+    }
     if (count != npart) {
 	throw exception("particle loss while updating cell lists");
     }
-
-    // GPU time for sample memcpy
-    m_times["sample_memcpy"] += event_[0] - event_[1];
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(energy_sample<dimension>& sample) const
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(energy_sample_type& sample) const
 {
     static cuda::event ev0, ev1;
     static cuda::stream stream;

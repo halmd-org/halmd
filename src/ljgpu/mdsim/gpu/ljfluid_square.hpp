@@ -42,6 +42,8 @@ struct ljfluid<ljfluid_impl_gpu_square<3> >
     {
 	static cuda::function<void (float4 const*, float4*, float4*, float*, float*)> mdstep;
     };
+
+    static cuda::function<void (float4 const*, float4 const*, float4 const*, float4*, float4*)> sample;
 };
 
 template <>
@@ -53,6 +55,8 @@ struct ljfluid<ljfluid_impl_gpu_square<2> >
     {
 	static cuda::function<void (float4 const*, float2*, float2*, float*, float*)> mdstep;
     };
+
+    static cuda::function<void (float4 const*, float2 const*, float2 const*, float2*, float2*)> sample;
 };
 
 }} // namespace ljgpu::gpu
