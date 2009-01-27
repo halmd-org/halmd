@@ -102,13 +102,6 @@ void correlation<dimension>::block_size(unsigned int value)
 	throw exception("computed block count is zero, more simulations steps required");
     }
 
-    // allocate phase space sample blocks
-    try {
-	m_block.resize(m_block_count, boost::circular_buffer<sample_ptr>(m_block_size));
-    }
-    catch (std::bad_alloc const& e) {
-	throw exception("failed to allocate phase space sample blocks");
-    }
     m_block_samples.resize(m_block_count, 0);
 
     // calculate phase sample frequencies
@@ -189,51 +182,24 @@ void correlation<dimension>::q_values(std::vector<float> const& values, float er
     }
 }
 
-/**
- * compute lattice points in first octant on surface of 3-dimensional spheres
- */
+#if WITH_CUDA
 template <int dimension>
-template <typename T>
-typename boost::enable_if<boost::is_same<vector<double, 3>, T>, void>::type
-correlation<dimension>::find_q_vectors(std::vector<std::pair<int, int> > const& qq, int q_max, std::vector<std::vector<T> >& q)
+void correlation<dimension>::add_gpu_correlation_functions()
 {
-    // FIXME fast algorithm for lattice points on surface of Ewald's sphere
-    for (int x = 0; x <= q_max; ++x) {
-	int xx = x * x;
-	for (int y = 0; y <= q_max; ++y) {
-	    int yy = xx + y * y;
-	    for (int z = 0; z <= q_max; ++z) {
-		int zz = yy + z * z;
-		for (size_t i = 0; i < qq.size(); ++i) {
-		    if (zz >= qq[i].first && zz <= qq[i].second) {
-			q[i].push_back(vector_type(x, y, z));
-		    }
-		}
-	    }
-	}
-    }
+    LOG("computing correlation functions on GPU");
+    boost::mpl::for_each<tcf_gpu_types>(boost::bind(&tcf_vector::push_back, boost::ref(m_tcf), _1));
+    m_block.resize(m_block_count, gpu_block_type(m_block_size));
+    m_sample = gpu_sample_type();
 }
+#endif /* WITH_CUDA */
 
-/**
- * compute lattice points in first quadrant on surface of 2-dimensional spheres
- */
 template <int dimension>
-template <typename T>
-typename boost::enable_if<boost::is_same<vector<double, 2>, T>, void>::type
-correlation<dimension>::find_q_vectors(std::vector<std::pair<int, int> > const& qq, int q_max, std::vector<std::vector<T> >& q)
+void correlation<dimension>::add_host_correlation_functions()
 {
-    // FIXME fast algorithm for lattice points on surface of Ewald's sphere
-    for (int x = 0; x <= q_max; ++x) {
-	int xx = x * x;
-	for (int y = 0; y <= q_max; ++y) {
-	    int yy = xx + y * y;
-	    for (size_t i = 0; i < qq.size(); ++i) {
-		if (yy >= qq[i].first && yy <= qq[i].second) {
-		    q[i].push_back(vector_type(x, y));
-		}
-	    }
-	}
-    }
+    LOG("computing correlation functions on host");
+    boost::mpl::for_each<tcf_host_types>(boost::bind(&tcf_vector::push_back, boost::ref(m_tcf), _1));
+    m_block.resize(m_block_count, host_block_type(m_block_size));
+    m_sample = host_sample_type();
 }
 
 /**
@@ -250,30 +216,18 @@ void correlation<dimension>::open(std::string const& filename, bool binary)
     catch (H5::FileIException const& e) {
 	throw exception("failed to create HDF5 correlations output file");
     }
-    // create parameter group
-    m_file.createGroup("param");
 
-    // add correlation functions
-    if (binary) {
-	throw exception("FIXME correlation functions for binary mixture");
-    }
-    else {
-	boost::mpl::for_each<tcf_types>(boost::bind(&std::vector<tcf_type>::push_back, boost::ref(m_tcf), _1));
-    }
-
-    // allocate correlation function results
     try {
-	foreach (tcf_type& tcf, m_tcf) {
+	foreach (tcf_variant& tcf, m_tcf) {
 	    boost::apply_visitor(tcf_allocate_results(m_block_count, m_block_size, m_q_value.size()), tcf);
 	}
     }
     catch (std::bad_alloc const& e) {
-	throw exception("failed to allocate binary correlation functions results");
+	throw exception("failed to allocate correlation functions results");
     }
 
-    // create correlation function datasets
     try {
-	foreach (tcf_type& tcf, m_tcf) {
+	foreach (tcf_variant& tcf, m_tcf) {
 	    boost::apply_visitor(tcf_create_dataset(m_file, binary), tcf);
 	}
     }
@@ -348,12 +302,59 @@ bool correlation<dimension>::sample(int64_t step) const
 }
 
 /**
+ * compute lattice points in first octant on surface of 3-dimensional spheres
+ */
+template <int dimension>
+template <typename T>
+typename boost::enable_if<boost::is_same<vector<double, 3>, T>, void>::type
+correlation<dimension>::find_q_vectors(std::vector<std::pair<int, int> > const& qq, int q_max, std::vector<std::vector<T> >& q)
+{
+    // FIXME fast algorithm for lattice points on surface of Ewald's sphere
+    for (int x = 0; x <= q_max; ++x) {
+	int xx = x * x;
+	for (int y = 0; y <= q_max; ++y) {
+	    int yy = xx + y * y;
+	    for (int z = 0; z <= q_max; ++z) {
+		int zz = yy + z * z;
+		for (size_t i = 0; i < qq.size(); ++i) {
+		    if (zz >= qq[i].first && zz <= qq[i].second) {
+			q[i].push_back(vector_type(x, y, z));
+		    }
+		}
+	    }
+	}
+    }
+}
+
+/**
+ * compute lattice points in first quadrant on surface of 2-dimensional spheres
+ */
+template <int dimension>
+template <typename T>
+typename boost::enable_if<boost::is_same<vector<double, 2>, T>, void>::type
+correlation<dimension>::find_q_vectors(std::vector<std::pair<int, int> > const& qq, int q_max, std::vector<std::vector<T> >& q)
+{
+    // FIXME fast algorithm for lattice points on surface of Ewald's sphere
+    for (int x = 0; x <= q_max; ++x) {
+	int xx = x * x;
+	for (int y = 0; y <= q_max; ++y) {
+	    int yy = xx + y * y;
+	    for (size_t i = 0; i < qq.size(); ++i) {
+		if (yy >= qq[i].first && yy <= qq[i].second) {
+		    q[i].push_back(vector_type(x, y));
+		}
+	    }
+	}
+    }
+}
+
+/**
  * apply correlation functions to block samples
  */
 template <int dimension>
 void correlation<dimension>::autocorrelate_block(unsigned int n)
 {
-    foreach (tcf_type& tcf, m_tcf) {
+    foreach (tcf_variant& tcf, m_tcf) {
 	boost::apply_visitor(tcf_correlate_block(n, m_q_vector), tcf, m_block[n]);
     }
 }
@@ -374,7 +375,7 @@ void correlation<dimension>::flush()
 	return;
 
     try {
-	foreach (tcf_type& tcf, m_tcf) {
+	foreach (tcf_variant& tcf, m_tcf) {
 	    boost::apply_visitor(tcf_write_results(m_block_time, m_q_value, max_blocks), tcf);
 	}
     }

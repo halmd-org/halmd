@@ -554,6 +554,8 @@ options_description<ljfluid_impl_base>::options_description()
 options_description<ljfluid_impl_gpu_base>::options_description()
 {
     add_options()
+	("tcf-backend", po::value<std::string>()->default_value("gpu"),
+	 "compute correlation functions on GPU or host")
 	("device,D", po::value<int>()->default_value(0),
 	 "CUDA device ordinal")
 	("threads,T", po::value<unsigned int>()->default_value(128),
@@ -586,6 +588,8 @@ options_description<ljfluid_impl_gpu_cell>::options_description()
 options_description<ljfluid_impl_host>::options_description()
 {
     add_options()
+	("tcf-backend", po::value<std::string>()->default_value("host"),
+	 "compute correlation functions on GPU or host")
 	("skin", po::value<float>()->default_value(0.3),
 	 "neighbour list skin")
 	;
@@ -594,6 +598,8 @@ options_description<ljfluid_impl_host>::options_description()
 options_description<hardsphere_impl>::options_description()
 {
     add_options()
+	("tcf-backend", po::value<std::string>()->default_value("host"),
+	 "compute correlation functions on GPU or host")
 	("pair-separation,p", po::value<float>()->default_value(0.5),
 	 "particle pair separation")
 	;

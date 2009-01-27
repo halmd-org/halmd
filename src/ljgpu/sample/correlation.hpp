@@ -22,12 +22,16 @@
 #include <H5Cpp.h>
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
+#include <boost/mpl/insert_range.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
-#include <ljgpu/sample/tcf.hpp>
+#ifdef WITH_CUDA
+# include <ljgpu/sample/tcf_gpu.hpp>
+#endif
+#include <ljgpu/sample/tcf_host.hpp>
 #include <ljgpu/sample/tcf_visitor.hpp>
 #include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/util/log.hpp>
@@ -43,12 +47,23 @@ template <int dimension>
 class correlation
 {
 public:
-    typedef tcf_gpu_sample<dimension> sample_type;
-    typedef boost::shared_ptr<sample_type> sample_ptr;
-    typedef boost::variant<sample_ptr> sample_variant;
-    typedef boost::variant<boost::circular_buffer<sample_ptr> > block_type;
-    typedef boost::make_variant_over<tcf_types>::type tcf_type;
+    typedef tcf_host_sample<dimension> host_sample_type;
+    typedef boost::circular_buffer<host_sample_type> host_block_type;
+#ifdef WITH_CUDA
+    typedef boost::shared_ptr<tcf_gpu_sample<dimension> > gpu_sample_type;
+    typedef boost::circular_buffer<gpu_sample_type> gpu_block_type;
+    typedef boost::variant<gpu_sample_type, host_sample_type> sample_variant;
+    typedef boost::variant<gpu_block_type, host_block_type> block_variant;
+    typedef typename boost::mpl::insert_range<tcf_gpu_types, typename boost::mpl::end<tcf_gpu_types>::type, tcf_host_types>::type tcf_types;
+#else
+    typedef boost::variant<host_sample_type> sample_variant;
+    typedef boost::variant<host_block_type> block_variant;
+    typedef tcf_host_types tcf_types;
+#endif
+    typedef boost::make_variant_over<tcf_types>::type tcf_variant;
+    typedef std::vector<tcf_variant> tcf_vector;
 
+    typedef tcf_sample<dimension> sample_type;
     typedef typename sample_type::vector_type vector_type;
     typedef typename sample_type::q_value_vector q_value_vector;
     typedef typename sample_type::q_vector_vector q_vector_vector;
@@ -67,6 +82,12 @@ public:
     void max_samples(uint64_t value);
     /** set q-vectors for spatial Fourier transformation */
     void q_values(std::vector<float> const& values, float error, float box);
+#ifdef WITH_CUDA
+    /** add correlation functions for GPU */
+    void add_gpu_correlation_functions();
+#endif
+    /** add correlation functions for host */
+    void add_host_correlation_functions();
 
     /** returns total number of simulation steps */
     uint64_t steps() const { return m_steps; }
@@ -115,7 +136,9 @@ private:
 
 private:
     /** phase space sample blocks */
-    std::vector<block_type> m_block;
+    std::vector<block_variant> m_block;
+    /** GPU or host sample */
+    sample_variant m_sample;
     /** phase sample frequencies for block levels */
     std::vector<uint64_t> m_block_freq;
     /** correlation sample counts for block levels */
@@ -147,7 +170,7 @@ private:
     float m_q_error;
 
     /** correlation functions and results */
-    std::vector<tcf_type> m_tcf;
+    tcf_vector m_tcf;
     /** HDF5 output file */
     H5::H5File m_file;
 };
@@ -159,11 +182,9 @@ template <int dimension>
 template <typename mdsim_backend>
 void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, bool& flush)
 {
-    sample_variant sample(sample_ptr(new sample_type));
-
     // copy phase space coordinates and compute spatial Fourier transformation 
-    boost::apply_visitor(tcf_sample(fluid), sample);
-    boost::apply_visitor(tcf_fourier_transform_sample(m_q_vector), sample);
+    boost::apply_visitor(tcf_sample_phase_space(fluid), m_sample);
+    boost::apply_visitor(tcf_fourier_transform_sample(m_q_vector), m_sample);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
@@ -171,7 +192,7 @@ void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, b
 	if (step % m_block_freq[i])
 	    continue;
 
-	boost::apply_visitor(tcf_block_add_sample(), m_block[i], sample);
+	boost::apply_visitor(tcf_block_add_sample(), m_block[i], m_sample);
 
 	if (boost::apply_visitor(tcf_block_is_full(), m_block[i])) {
 	    autocorrelate_block(i);

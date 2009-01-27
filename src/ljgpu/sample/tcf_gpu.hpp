@@ -1,4 +1,4 @@
-/* Time correlation functions
+/* Time correlation functions for CUDA
  *
  * Copyright © 2008-2009  Peter Colberg
  *
@@ -16,21 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LJGPU_SAMPLE_TCF_HPP
-#define LJGPU_SAMPLE_TCF_HPP
+#ifndef LJGPU_SAMPLE_TCF_GPU_HPP
+#define LJGPU_SAMPLE_TCF_GPU_HPP
 
 #include <algorithm>
-#include <boost/array.hpp>
 #include <boost/mpl/vector.hpp>
-#include <boost/multi_array.hpp>
 #include <boost/variant.hpp>
 #include <cuda_wrapper.hpp>
-#include <ljgpu/math/accum.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/sample/gpu/tcf.hpp>
+#include <ljgpu/sample/tcf_base.hpp>
 #include <vector>
 
 namespace ljgpu {
@@ -39,17 +37,15 @@ namespace ljgpu {
  * Phase space sample for evaluating correlation functions
  */
 template <int dimension>
-struct tcf_gpu_sample
+struct tcf_gpu_sample : public tcf_sample<dimension>
 {
-    typedef vector<double, dimension> vector_type;
+    typedef tcf_sample<dimension> _Base;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::q_value_vector q_value_vector;
+    typedef typename _Base::q_vector_vector q_vector_vector;
+    typedef typename _Base::density_vector_pair density_vector_pair;
+    typedef typename _Base::density_vector_vector density_vector_vector;
     typedef std::vector<vector_type> sample_vector;
-    typedef std::vector<double> q_value_vector;
-    typedef std::vector<std::vector<vector_type> > q_vector_vector;
-
-    /** real and imaginary components of Fourier transformed density rho(q) */
-    typedef std::pair<double, double> density_vector_pair;
-    /** vector of Fourier transformed densities for different q-values */
-    typedef std::vector<std::vector<density_vector_pair> > density_vector_vector;
 
     typedef mdsim_traits<ljfluid_impl_gpu_base<dimension> > traits_type;
     typedef typename traits_type::gpu_vector_type gpu_vector_type;
@@ -108,15 +104,8 @@ struct tcf_gpu_sample
     /** particle velocities */
     gpu_sample_vector v;
     /** spatially Fourier transformed density for given q-values */
-    density_vector_vector rho;
+    using _Base::rho;
 };
-
-/** correlation function result types */
-typedef boost::multi_array<accumulator<double>, 2> tcf_unary_result_type;
-typedef boost::multi_array<accumulator<double>, 3> tcf_binary_result_type;
-
-template <template <int> class sample_type>
-struct correlation_function;
 
 template <>
 struct correlation_function<tcf_gpu_sample> {};
@@ -124,9 +113,6 @@ struct correlation_function<tcf_gpu_sample> {};
 /**
  * mean-square displacement
  */
-template <template <int> class sample_type>
-struct mean_square_displacement;
-
 template <>
 struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
@@ -191,9 +177,6 @@ struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 /**
  * mean-quartic displacement
  */
-template <template <int> class sample_type>
-struct mean_quartic_displacement;
-
 template <>
 struct mean_quartic_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
@@ -258,9 +241,6 @@ struct mean_quartic_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_
 /**
  * velocity autocorrelation
  */
-template <template <int> class sample_type>
-struct velocity_autocorrelation;
-
 template <>
 struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
@@ -325,9 +305,6 @@ struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 /**
  * intermediate scattering function
  */
-template <template <int> class sample_type>
-struct intermediate_scattering_function;
-
 template <>
 struct intermediate_scattering_function<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
@@ -436,12 +413,12 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 };
 
 /** correlation function types */
-typedef boost::mpl::vector<mean_square_displacement<tcf_gpu_sample> > _tcf_types_0;
-typedef boost::mpl::push_back<_tcf_types_0, mean_quartic_displacement<tcf_gpu_sample> >::type _tcf_types_1;
-typedef boost::mpl::push_back<_tcf_types_1, velocity_autocorrelation<tcf_gpu_sample> >::type _tcf_types_2;
-typedef boost::mpl::push_back<_tcf_types_2, intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_types_3;
-typedef boost::mpl::push_back<_tcf_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type tcf_types;
+typedef boost::mpl::vector<mean_square_displacement<tcf_gpu_sample> > _tcf_gpu_types_0;
+typedef boost::mpl::push_back<_tcf_gpu_types_0, mean_quartic_displacement<tcf_gpu_sample> >::type _tcf_gpu_types_1;
+typedef boost::mpl::push_back<_tcf_gpu_types_1, velocity_autocorrelation<tcf_gpu_sample> >::type _tcf_gpu_types_2;
+typedef boost::mpl::push_back<_tcf_gpu_types_2, intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_3;
+typedef boost::mpl::push_back<_tcf_gpu_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type tcf_gpu_types;
 
 } // namespace ljgpu
 
-#endif /* ! LJGPU_SAMPLE_TCF_HPP */
+#endif /* ! LJGPU_SAMPLE_TCF_GPU_HPP */

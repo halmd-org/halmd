@@ -30,19 +30,29 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/variant.hpp>
 #ifdef WITH_CUDA
-# include <cuda_wrapper.hpp>
+# include <ljgpu/sample/tcf_gpu.hpp>
 #endif
-#include <ljgpu/sample/tcf.hpp>
+#include <ljgpu/sample/tcf_host.hpp>
 #include <ljgpu/util/H5xx.hpp>
 #include <vector>
 
 namespace ljgpu {
 
 template <typename mdsim_backend>
-class _tcf_sample : public boost::static_visitor<>
+class _tcf_sample_phase_space : public boost::static_visitor<>
 {
 public:
-    _tcf_sample(mdsim_backend const& fluid) : fluid(fluid) {}
+    _tcf_sample_phase_space(mdsim_backend const& fluid) : fluid(fluid) {}
+
+    template <int dimension>
+    void operator() (tcf_host_sample<dimension>& sample) const
+    {
+	sample = tcf_host_sample<dimension>();
+	sample.r.assign(fluid.sample()[0].r.begin(), fluid.sample()[0].r.end());
+	sample.v.assign(fluid.sample()[0].v.begin(), fluid.sample()[0].v.end());
+    }
+
+#ifdef WITH_CUDA
 
     /**
      * sample from global device memory
@@ -51,8 +61,12 @@ public:
     typename boost::enable_if<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type>, void>::type
     operator() (boost::shared_ptr<tcf_gpu_sample<dimension> >& sample) const
     {
+	typedef tcf_gpu_sample<dimension> sample_type;
+
 	trajectory_gpu_sample<dimension> sample_;
 	fluid.sample(sample_);
+
+	sample = boost::shared_ptr<sample_type>(new sample_type);
 	sample->r.resize(sample_.r[0]->size());
 	sample->v.resize(sample_.v[0]->size());
 	cuda::copy(*sample_.r[0], sample->r);
@@ -66,25 +80,31 @@ public:
     typename boost::enable_if<boost::mpl::not_<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, typename mdsim_backend::impl_type> >, void>::type
     operator() (boost::shared_ptr<tcf_gpu_sample<dimension> >& sample) const
     {
-	typedef typename tcf_gpu_sample<dimension>::gpu_vector_type gpu_vector_type;
+	typedef tcf_gpu_sample<dimension> sample_type;
+	typedef typename sample_type::gpu_vector_type gpu_vector_type;
+
 	cuda::host::vector<gpu_vector_type> r(fluid.sample()[0].r.size());
 	cuda::host::vector<gpu_vector_type> v(fluid.sample()[0].v.size());
 	std::copy(fluid.sample()[0].r.begin(), fluid.sample()[0].r.end(), r.begin());
 	std::copy(fluid.sample()[0].v.begin(), fluid.sample()[0].v.end(), v.begin());
+
+	sample = boost::shared_ptr<sample_type>(new sample_type);
 	sample->r.resize(r.size());
 	sample->v.resize(v.size());
 	cuda::copy(r, sample->r);
 	cuda::copy(v, sample->v);
     }
 
+#endif /* WITH_CUDA */
+
 private:
     mdsim_backend const& fluid;
 };
 
 template <typename mdsim_backend>
-_tcf_sample<mdsim_backend> tcf_sample(mdsim_backend const& fluid)
+_tcf_sample_phase_space<mdsim_backend> tcf_sample_phase_space(mdsim_backend const& fluid)
 {
-    return _tcf_sample<mdsim_backend>(fluid);
+    return _tcf_sample_phase_space<mdsim_backend>(fluid);
 }
 
 template <typename U>
@@ -94,9 +114,15 @@ public:
     _tcf_fourier_transform_sample(U const& q_vector) : q_vector(q_vector) {}
 
     template <typename T>
-    void operator() (T& sample) const
+    void operator() (boost::shared_ptr<T>& sample) const
     {
 	(*sample)(q_vector);
+    }
+
+    template <typename T>
+    void operator() (T& sample) const
+    {
+	sample(q_vector);
     }
 
 private:
@@ -113,7 +139,10 @@ class tcf_block_add_sample : public boost::static_visitor<>
 {
 public:
     template <typename T, typename U>
-    void operator() (T const&, U const&) const {}
+    void operator() (T const&, U const&) const
+    {
+	throw std::runtime_error("block sample mismatch");
+    }
 
     template <typename T>
     void operator() (boost::circular_buffer<T>& block, T const& sample) const
@@ -172,11 +201,21 @@ public:
     _tcf_correlate_block(unsigned int block, V const& q_vector) : block(block), q_vector(q_vector) {}
 
     template <typename T, typename U>
-    void operator()(T&, U&) const {}
+    void operator()(T&, U&) const
+    {
+	throw std::runtime_error("correlation function mismatch");
+    }
 
     template <typename T, template <int> class sample_type, int dimension>
     typename boost::enable_if<boost::is_base_of<correlation_function<sample_type>, T>, void>::type
     operator()(T& tcf, boost::circular_buffer<boost::shared_ptr<sample_type<dimension> > >& sample) const
+    {
+	tcf(std::make_pair(sample.begin(), q_vector.begin()), std::make_pair(sample.end(), q_vector.end()), tcf.result[block].begin());
+    }
+
+    template <typename T, template <int> class sample_type, int dimension>
+    typename boost::enable_if<boost::is_base_of<correlation_function<sample_type>, T>, void>::type
+    operator()(T& tcf, boost::circular_buffer<sample_type<dimension> >& sample) const
     {
 	tcf(std::make_pair(sample.begin(), q_vector.begin()), std::make_pair(sample.end(), q_vector.end()), tcf.result[block].begin());
     }

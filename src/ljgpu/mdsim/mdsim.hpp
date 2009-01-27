@@ -251,6 +251,19 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     // set maximum number of samples per block
     tcf.max_samples(opt["max-samples"].as<uint64_t>());
 
+    std::string const tcf_backend(opt["tcf-backend"].as<std::string>());
+    if (tcf_backend == "host") {
+	tcf.add_host_correlation_functions();
+    }
+#if WITH_CUDA
+    else if (tcf_backend == "gpu") {
+	tcf.add_gpu_correlation_functions();
+    }
+#endif
+    else {
+	throw std::logic_error("unknown correlation function backend: " + tcf_backend);
+    }
+
     std::vector<float> q;
     if (!opt["q-values"].empty()) {
 	boost::multi_array<float, 1> v = opt["q-values"].as<boost::multi_array<float, 1> >();
