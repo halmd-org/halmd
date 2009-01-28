@@ -96,6 +96,7 @@ protected:
     /** GPU time accumulators */
     perf::counters mutable m_times;
 
+    /** uniform fluid or binary mixture */
     mixture_type mixture_;
 };
 

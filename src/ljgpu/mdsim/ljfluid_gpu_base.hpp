@@ -80,11 +80,16 @@ public:
     /** restore random number generator from state */
     void rng(rand48::state_type const& state);
 
-    using _Base::particles;
-    using _Base::density;
-    using _Base::box;
-    using _Base::timestep;
-    using _Base::cutoff_radius;
+    /** returns number of particles */
+    unsigned int particles() const { return npart; }
+    /** returns particle density */
+    float_type density() const { return density_; }
+    /** returns periodic box length */
+    float_type box() const { return box_; }
+    /** returns simulation timestep */
+    float_type timestep() const { return timestep_; }
+    /** returns potential cutoff radius */
+    float_type cutoff_radius() const { return r_cut_sigma; }
 
     /** get number of CUDA execution blocks */
     unsigned int blocks() const { return dim_.blocks_per_grid(); }
@@ -128,6 +133,7 @@ protected:
     using _Base::npart;
     using _Base::potential_;
     using _Base::r_cut;
+    using _Base::r_cut_sigma;
     using _Base::r_smooth;
     using _Base::rr_cut;
     using _Base::rri_smooth;

@@ -82,6 +82,8 @@ protected:
     using _Base::density_;
     using _Base::mixture_;
 
+    /** cutoff radius in units of sigma */
+    float_type r_cut_sigma;
     /** cutoff radii in binary mixture */
     boost::array<float_type, 3> r_cut;
     /** squared cutoff radii */
@@ -105,12 +107,10 @@ protected:
     /** heat bath temperature */
     float_type thermostat_temp;
 
+    /** C⁰ or C²-smooth potential */
     potential_type potential_;
+    /** NVE or NVT ensemble */
     ensemble_type ensemble_;
-
-private:
-    /** cutoff radius in units of sigma */
-    float_type r_cut_sigma;
 };
 
 template <typename ljfluid_impl>
