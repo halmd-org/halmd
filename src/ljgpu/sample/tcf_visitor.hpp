@@ -23,9 +23,6 @@
 #include <boost/array.hpp>
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
-#include <boost/mpl/not.hpp>
-#include <boost/mpl/or.hpp>
-#include <boost/mpl/logical.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -39,22 +36,18 @@
 
 namespace ljgpu {
 
-template <typename mdsim_backend>
-class _tcf_sample_phase_space : public boost::static_visitor<>
+class tcf_sample_phase_space : public boost::static_visitor<>
 {
 public:
-    typedef typename mdsim_backend::impl_type impl_type;
-
-    _tcf_sample_phase_space(mdsim_backend const& fluid) : fluid(fluid) {}
-
 #ifdef WITH_CUDA
     /**
      * sample from global device memory to global device memory
      */
-    template <int dimension>
-    typename boost::enable_if<boost::mpl::or_<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>, boost::is_base_of<ljfluid_impl_gpu_square<dimension>, impl_type> >,void>::type
-    operator() (tcf_gpu_sample<dimension>& sample) const
+    template <typename mdsim_backend>
+    typename boost::enable_if<typename mdsim_backend::has_trajectory_gpu_sample, void>::type
+    operator() (tcf_gpu_sample<mdsim_backend::dimension>& sample, mdsim_backend const& fluid) const
     {
+	enum { dimension = mdsim_backend::dimension };
 	typedef typename mdsim_backend::gpu_sample_type trajectory_sample_type;
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
@@ -65,10 +58,11 @@ public:
     /**
      * sample from host memory to global device memory
      */
-    template <int dimension>
-    typename boost::enable_if<boost::mpl::not_<boost::mpl::or_<boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>, boost::is_base_of<ljfluid_impl_gpu_square<dimension>, impl_type> > >, void>::type
-    operator() (tcf_gpu_sample<dimension>& sample) const
+    template <typename mdsim_backend>
+    typename boost::disable_if<typename mdsim_backend::has_trajectory_gpu_sample, void>::type
+    operator() (tcf_gpu_sample<mdsim_backend::dimension>& sample, mdsim_backend const& fluid) const
     {
+	enum { dimension = mdsim_backend::dimension };
 	typedef typename mdsim_backend::host_sample_type trajectory_sample_type;
 	typedef tcf_gpu_sample<dimension> sample_type;
 	typedef typename sample_type::gpu_sample_vector gpu_sample_vector;
@@ -91,9 +85,10 @@ public:
     /**
      * sample from host memory to host memory
      */
-    template <int dimension>
-    void operator() (tcf_host_sample<dimension>& sample) const
+    template <typename mdsim_backend>
+    void operator() (tcf_host_sample<mdsim_backend::dimension>& sample, mdsim_backend const& fluid) const
     {
+	enum { dimension = mdsim_backend::dimension };
 	typedef typename mdsim_backend::host_sample_type trajectory_sample_type;
 	typedef tcf_host_sample<dimension> sample_type;
 	typedef typename sample_type::sample_vector sample_vector;
@@ -104,16 +99,7 @@ public:
 	sample.r = sample_ptr(new sample_vector(sample_.r[0]->begin(), sample_.r[0]->end()));
 	sample.v = sample_ptr(new sample_vector(sample_.v[0]->begin(), sample_.v[0]->end()));
     }
-
-private:
-    mdsim_backend const& fluid;
 };
-
-template <typename mdsim_backend>
-_tcf_sample_phase_space<mdsim_backend> tcf_sample_phase_space(mdsim_backend const& fluid)
-{
-    return _tcf_sample_phase_space<mdsim_backend>(fluid);
-}
 
 template <typename U>
 class _tcf_fourier_transform_sample : public boost::static_visitor<>

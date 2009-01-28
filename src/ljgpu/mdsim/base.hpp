@@ -20,6 +20,7 @@
 #define LJGPU_MDSIM_BASE_HPP
 
 #include <boost/assign.hpp>
+#include <boost/type_traits.hpp>
 #include <cmath>
 #include <limits>
 #include <ljgpu/mdsim/impl.hpp>
@@ -48,6 +49,11 @@ public:
     typedef typename traits_type::energy_sample_type energy_sample_type;
     typedef typename sample_type::sample_visitor sample_visitor;
     enum { dimension = traits_type::dimension };
+
+    /** static implementation properties */
+    typedef boost::false_type has_gpu;
+    typedef boost::false_type has_trajectory_gpu_sample;
+    typedef boost::false_type has_energy_gpu_sample;
 
 public:
     mdsim_base() :

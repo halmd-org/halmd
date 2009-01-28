@@ -182,7 +182,8 @@ template <typename mdsim_backend>
 void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, bool& flush)
 {
     // copy phase space coordinates and compute spatial Fourier transformation 
-    boost::apply_visitor(tcf_sample_phase_space(fluid), m_sample);
+    boost::variant<mdsim_backend> fluid_(fluid);
+    boost::apply_visitor(tcf_sample_phase_space(), m_sample, fluid_);
     boost::apply_visitor(tcf_fourier_transform_sample(m_q_vector), m_sample);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {

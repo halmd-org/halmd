@@ -51,6 +51,9 @@ public:
     typedef typename sample_type::sample_visitor sample_visitor;
     enum { dimension = _Base::dimension };
 
+    /** static implementation properties */
+    typedef boost::true_type has_gpu;
+
 public:
     /** set number of particles in system */
     void particles(unsigned int value);
