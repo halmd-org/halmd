@@ -77,10 +77,8 @@ public:
 	fluid.sample(sample_);
 	for (sample_iterator s = sample_.begin(); s != sample_.end(); ++s) {
 	    // copy sample to page-locked host memory
-	    cuda::host::vector<gpu_vector_type> h_r(s->r->size());
-	    cuda::host::vector<gpu_vector_type> h_v(s->v->size());
-	    std::copy(s->r->begin(), s->r->end(), h_r.begin());
-	    std::copy(s->v->begin(), s->v->end(), h_v.begin());
+	    cuda::host::vector<gpu_vector_type> h_r(s->r->begin(), s->r->end());
+	    cuda::host::vector<gpu_vector_type> h_v(s->v->begin(), s->v->end());
 	    // copy from host to GPU
 	    gpu_sample_ptr g_r(new gpu_sample_vector(h_r.size()));
 	    gpu_sample_ptr g_v(new gpu_sample_vector(h_v.size()));
