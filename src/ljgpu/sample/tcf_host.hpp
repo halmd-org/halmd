@@ -46,6 +46,9 @@ struct tcf_host_sample : public tcf_sample<dimension>
     typedef typename _Base::density_vector_vector density_vector_vector;
     typedef std::vector<vector_type> sample_vector;
 
+    tcf_host_sample() {}
+    tcf_host_sample(boost::shared_ptr<sample_vector> r, boost::shared_ptr<sample_vector> v): r(r), v(v) {}
+
     /**
      * initialise phase space sample
      */

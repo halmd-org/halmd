@@ -41,8 +41,8 @@ struct mdsim_traits<ljfluid_impl_gpu_base<2> >
     typedef float float_type;
     typedef vector<float_type, dimension> vector_type;
     typedef float2 gpu_vector_type;
-    typedef trajectory_host_sample<float_type, dimension> host_sample_type;
-    typedef trajectory_gpu_sample<dimension> gpu_sample_type;
+    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
+    typedef std::vector<trajectory_gpu_sample<dimension> > gpu_sample_type;
     typedef energy_sample<dimension> energy_sample_type;
 };
 
@@ -53,8 +53,8 @@ struct mdsim_traits<ljfluid_impl_gpu_base<3> >
     typedef float float_type;
     typedef vector<float_type, dimension> vector_type;
     typedef float4 gpu_vector_type;
-    typedef trajectory_host_sample<float_type, dimension> host_sample_type;
-    typedef trajectory_gpu_sample<dimension> gpu_sample_type;
+    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
+    typedef std::vector<trajectory_gpu_sample<dimension> > gpu_sample_type;
     typedef energy_sample<dimension> energy_sample_type;
 };
 
@@ -77,7 +77,7 @@ struct mdsim_traits<ljfluid_impl_host<2> >
     enum { dimension = 2 };
     typedef double float_type;
     typedef vector<float_type, dimension> vector_type;
-    typedef trajectory_host_sample<float_type, dimension> host_sample_type;
+    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
     typedef energy_sample<dimension> energy_sample_type;
 };
 
@@ -87,7 +87,7 @@ struct mdsim_traits<ljfluid_impl_host<3> >
     enum { dimension = 3 };
     typedef double float_type;
     typedef vector<float_type, dimension> vector_type;
-    typedef trajectory_host_sample<float_type, dimension> host_sample_type;
+    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
     typedef energy_sample<dimension> energy_sample_type;
 };
 

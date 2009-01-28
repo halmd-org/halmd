@@ -48,15 +48,13 @@ public:
     operator()(std::vector<tcf_gpu_sample<T::dimension> >& sample, T const& fluid) const
     {
 	typedef typename T::gpu_sample_type trajectory_sample_type;
+	typedef typename trajectory_sample_type::iterator sample_iterator;
 
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	for (size_t i = 0; i < sample_.r.size(); ++i) {
-	    tcf_gpu_sample<T::dimension> s;
-	    // copy shared pointers to global device memory
-	    s.r = sample_.r[i];
-	    s.v = sample_.v[i];
-	    sample.push_back(s);
+	for (sample_iterator s = sample_.begin(); s != sample_.end(); ++s) {
+	    // copy shared global device memory pointers
+	    sample.push_back(tcf_gpu_sample<T::dimension>(s->r, s->v));
 	}
     }
 
@@ -69,6 +67,7 @@ public:
     {
 	enum { dimension = T::dimension };
 	typedef typename T::host_sample_type trajectory_sample_type;
+	typedef typename trajectory_sample_type::iterator sample_iterator;
 	typedef tcf_gpu_sample<dimension> sample_type;
 	typedef typename sample_type::gpu_sample_vector gpu_sample_vector;
 	typedef boost::shared_ptr<gpu_sample_vector> gpu_sample_ptr;
@@ -76,19 +75,18 @@ public:
 
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	for (size_t i = 0; i < sample_.r.size(); ++i) {
+	for (sample_iterator s = sample_.begin(); s != sample_.end(); ++s) {
 	    // copy sample to page-locked host memory
-	    cuda::host::vector<gpu_vector_type> r(sample_.r[i]->size());
-	    cuda::host::vector<gpu_vector_type> v(sample_.v[i]->size());
-	    std::copy(sample_.r[i]->begin(), sample_.r[i]->end(), r.begin());
-	    std::copy(sample_.v[i]->begin(), sample_.v[i]->end(), v.begin());
+	    cuda::host::vector<gpu_vector_type> h_r(s->r->size());
+	    cuda::host::vector<gpu_vector_type> h_v(s->v->size());
+	    std::copy(s->r->begin(), s->r->end(), h_r.begin());
+	    std::copy(s->v->begin(), s->v->end(), h_v.begin());
 	    // copy from host to GPU
-	    sample_type s;
-	    s.r = gpu_sample_ptr(new gpu_sample_vector(r.size()));
-	    s.v = gpu_sample_ptr(new gpu_sample_vector(v.size()));
-	    sample.push_back(s);
-	    cuda::copy(r, *s.r);
-	    cuda::copy(v, *s.v);
+	    gpu_sample_ptr g_r(new gpu_sample_vector(h_r.size()));
+	    gpu_sample_ptr g_v(new gpu_sample_vector(h_v.size()));
+	    sample.push_back(sample_type(g_r, g_v));
+	    cuda::copy(h_r, *g_r);
+	    cuda::copy(h_v, *g_v);
 	}
     }
 #endif /* WITH_CUDA */
@@ -101,17 +99,17 @@ public:
     {
 	enum { dimension = T::dimension };
 	typedef typename T::host_sample_type trajectory_sample_type;
+	typedef typename trajectory_sample_type::iterator sample_iterator;
 	typedef tcf_host_sample<dimension> sample_type;
 	typedef typename sample_type::sample_vector sample_vector;
 	typedef boost::shared_ptr<sample_vector> sample_ptr;
 
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	for (size_t i = 0; i < sample_.r.size(); ++i) {
-	    sample_type s;
-	    s.r = sample_ptr(new sample_vector(sample_.r[i]->begin(), sample_.r[i]->end()));
-	    s.v = sample_ptr(new sample_vector(sample_.v[i]->begin(), sample_.v[i]->end()));
-	    sample.push_back(s);
+	for (sample_iterator s = sample_.begin(); s != sample_.end(); ++s) {
+	    sample_ptr r(new sample_vector(s->r->begin(), s->r->end()));
+	    sample_ptr v(new sample_vector(s->v->begin(), s->v->end()));
+	    sample.push_back(sample_type(r, v));
 	}
     }
 };

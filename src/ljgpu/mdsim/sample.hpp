@@ -44,10 +44,13 @@ struct trajectory_host_sample
     typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
     typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_ptr;
 
+    trajectory_host_sample() {}
+    trajectory_host_sample(position_sample_ptr r, velocity_sample_ptr v) : r(r), v(v) {}
+
     /** periodically extended particle positions */
-    std::vector<boost::shared_ptr<position_sample_vector > > r;
+    position_sample_ptr r;
     /** particle velocities */
-    std::vector<boost::shared_ptr<velocity_sample_vector > > v;
+    velocity_sample_ptr v;
 };
 
 #if WITH_CUDA
@@ -65,10 +68,13 @@ struct trajectory_gpu_sample<3>
     typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
     typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_ptr;
 
+    trajectory_gpu_sample() {}
+    trajectory_gpu_sample(position_sample_ptr r, velocity_sample_ptr v) : r(r), v(v) {}
+
     /** periodically extended particle positions */
-    std::vector<position_sample_ptr> r;
+    position_sample_ptr r;
     /** particle velocities */
-    std::vector<velocity_sample_ptr> v;
+    velocity_sample_ptr v;
 };
 
 template <>
@@ -81,10 +87,13 @@ struct trajectory_gpu_sample<2>
     typedef boost::shared_ptr<position_sample_vector> position_sample_ptr;
     typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_ptr;
 
+    trajectory_gpu_sample() {}
+    trajectory_gpu_sample(position_sample_ptr r, velocity_sample_ptr v) : r(r), v(v) {}
+
     /** periodically extended particle positions */
-    std::vector<position_sample_ptr> r;
+    position_sample_ptr r;
     /** particle velocities */
-    std::vector<velocity_sample_ptr> v;
+    velocity_sample_ptr v;
 };
 
 #endif /* WITH_CUDA */

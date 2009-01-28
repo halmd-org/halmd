@@ -424,10 +424,11 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::mdstep()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(host_sample_type& sample) const
 {
-    typedef typename host_sample_type::position_sample_vector position_sample_vector;
-    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename host_sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename host_sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename host_sample_type::value_type sample_type;
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     static cuda::event ev0, ev1;
     static cuda::stream stream;
@@ -448,8 +449,9 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(host_sample_type& sample
 
     // allocate memory for phase space sample
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
-	sample.r.push_back(position_sample_ptr(new position_sample_vector(mpart[i])));
-	sample.v.push_back(velocity_sample_ptr(new velocity_sample_vector(mpart[i])));
+	position_sample_ptr r(new position_sample_vector(mpart[i]));
+	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
+	sample.push_back(sample_type(r, v));
     }
 
     // copy particle positions and velocities in binary mixture
@@ -458,8 +460,8 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(host_sample_type& sample
 	if ((tag = h_part.tag[i]) != gpu::VIRTUAL_PARTICLE) {
 	    unsigned int const type = (tag >= mpart[0]);
 	    unsigned int const n = type ? (tag - mpart[0]) : tag;
-	    (*sample.r[type])[n] = h_part.r[i] + box_ * static_cast<vector_type>(h_part.R[i]);
-	    (*sample.v[type])[n] = h_part.v[i];
+	    (*sample[type].r)[n] = h_part.r[i] + box_ * static_cast<vector_type>(h_part.R[i]);
+	    (*sample[type].v)[n] = h_part.v[i];
 	    count++;
 	}
     }

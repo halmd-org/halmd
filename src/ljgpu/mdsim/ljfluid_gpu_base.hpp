@@ -523,8 +523,8 @@ void ljfluid_gpu_base<ljfluid_impl>::state(host_sample_type& sample, float_type 
     _Base::state(sample, box);
 
     for (size_t i = 0, n = 0; n < npart; n += mpart[i], ++i) {
-	std::copy(sample.r[i]->begin(), sample.r[i]->end(), h_r.begin() + n);
-	std::copy(sample.v[i]->begin(), sample.v[i]->end(), h_v.begin() + n);
+	std::copy(sample[i].r->begin(), sample[i].r->end(), h_r.begin() + n);
+	std::copy(sample[i].v->begin(), sample[i].v->end(), h_v.begin() + n);
     }
 }
 

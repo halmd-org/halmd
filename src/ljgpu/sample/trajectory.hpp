@@ -56,11 +56,11 @@ public:
     void flush();
 
     /** read phase space sample */
-    template <typename sample_type>
-    void read(sample_type& sample, ssize_t index);
+    template <typename host_sample_type>
+    void read(host_sample_type& sample, ssize_t index);
     /** write phase space sample */
-    template <typename sample_type>
-    void write(sample_type const& sample, double time);
+    template <typename host_sample_type>
+    void write(host_sample_type const& sample, double time);
 
     /** returns HDF5 parameter group */
     operator H5param() { return m_file; }
@@ -91,9 +91,10 @@ private:
 /**
  * read phase space sample
  */
-template <typename sample_type>
-void trajectory::read(sample_type& sample, ssize_t index)
+template <typename host_sample_type>
+void trajectory::read(host_sample_type& sample, ssize_t index)
 {
+    typedef typename host_sample_type::value_type sample_type;
     typedef typename sample_type::position_sample_vector position_sample_vector;
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::position_sample_ptr position_sample_ptr;
@@ -153,10 +154,9 @@ void trajectory::read(sample_type& sample, ssize_t index)
     for (size_t i = 0; i < mpart.size(); ++i) {
 	position_sample_ptr r(new position_sample_vector(mpart[i]));
 	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
-	sample.r.push_back(r);
-	sample.v.push_back(v);
 	read_vector_sample(dset_r[i], *r, index);
 	read_vector_sample(dset_v[i], *v, index);
+	sample.push_back(sample_type(r, v));
     }
     double time;
     read_scalar_sample(dset_t, time, index);
@@ -166,33 +166,33 @@ void trajectory::read(sample_type& sample, ssize_t index)
 /**
  * write phase space sample
  */
-template <typename sample_type>
-void trajectory::write(sample_type const& sample, double time)
+template <typename host_sample_type>
+void trajectory::write(host_sample_type const& sample, double time)
 {
     if (m_dset_r.empty()) {
 	H5::Group root(m_file.createGroup("trajectory"));
-	m_dset_r.reserve(sample.r.size());
-	m_dset_v.reserve(sample.v.size());
+	m_dset_r.reserve(sample.size());
+	m_dset_v.reserve(sample.size());
 
-	for (size_t i = 0; i < sample.r.size(); ++i) {
+	for (size_t i = 0; i < sample.size(); ++i) {
 	    H5::Group node(root);
-	    if (sample.r.size() > 1) {
+	    if (sample.size() > 1) {
 		std::string name;
 		name.push_back('A' + i);
 		node = H5::Group(root.createGroup(name));
 	    }
-	    m_dset_r.push_back(create_vector_dataset(node, "r", *sample.r[i]));
-	    m_dset_v.push_back(create_vector_dataset(node, "v", *sample.v[i]));
+	    m_dset_r.push_back(create_vector_dataset(node, "r", *sample[i].r));
+	    m_dset_v.push_back(create_vector_dataset(node, "v", *sample[i].v));
 	}
 	m_dset_t = create_scalar_dataset(root, "t", time);
     }
 
-    assert(m_dset_r.size() == sample.r.size());
-    assert(m_dset_v.size() == sample.v.size());
+    assert(m_dset_r.size() == sample.size());
+    assert(m_dset_v.size() == sample.size());
 
-    for (size_t i = 0; i < sample.r.size(); ++i) {
-	write_vector_sample(m_dset_r[i], *sample.r[i]);
-	write_vector_sample(m_dset_v[i], *sample.v[i]);
+    for (size_t i = 0; i < sample.size(); ++i) {
+	write_vector_sample(m_dset_r[i], *sample[i].r);
+	write_vector_sample(m_dset_v[i], *sample[i].v);
     }
     write_scalar_sample(m_dset_t, time);
 }

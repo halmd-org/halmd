@@ -308,10 +308,11 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(host_sample_type& sample) const
 {
-    typedef typename host_sample_type::position_sample_vector position_sample_vector;
-    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename host_sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename host_sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename host_sample_type::value_type sample_type;
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     static cuda::event ev0, ev1;
     static cuda::stream stream;
@@ -333,8 +334,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(host_sample_type& samp
 	// allocate memory for trajectory sample
 	position_sample_ptr r(new position_sample_vector);
 	velocity_sample_ptr v(new velocity_sample_vector);
-	sample.r.push_back(r);
-	sample.v.push_back(v);
+	sample.push_back(sample_type(r, v));
 	r->reserve(mpart[i]);
 	v->reserve(mpart[i]);
 	// assign particle positions and velocities of homogenous type
@@ -348,10 +348,11 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(host_sample_type& samp
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(gpu_sample_type& sample) const
 {
-    typedef typename gpu_sample_type::position_sample_vector position_sample_vector;
-    typedef typename gpu_sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename gpu_sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename gpu_sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename gpu_sample_type::value_type sample_type;
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     static cuda::event ev0, ev1;
     static cuda::stream stream;
@@ -362,8 +363,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(gpu_sample_type& sampl
 	// allocate global device memory for phase space sample
 	position_sample_ptr r(new position_sample_vector(mpart[i]));
 	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
-	sample.r.push_back(r);
-	sample.v.push_back(v);
+	sample.push_back(sample_type(r, v));
 	// allocate additional memory to match CUDA grid dimensions
 	r->reserve(dim_sample[i].threads());
 	v->reserve(dim_sample[i].threads());

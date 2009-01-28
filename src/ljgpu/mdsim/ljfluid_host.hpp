@@ -216,16 +216,17 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(T const& value)
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::state(host_sample_type& sample, float_type box)
 {
-    using namespace boost::assign;
-    boost::array<typename particle::types, 2> const types = list_of(particle::A)(particle::B);
+    typedef typename host_sample_type::value_type sample_type;
 
     _Base::state(sample, box);
 
-    typename host_sample_type::position_sample_vector::const_iterator r;
-    typename host_sample_type::velocity_sample_vector::const_iterator v;
+    using namespace boost::assign;
+    boost::array<typename particle::types, 2> const types = list_of(particle::A)(particle::B);
+    typename sample_type::position_sample_vector::const_iterator r;
+    typename sample_type::velocity_sample_vector::const_iterator v;
 
     for (size_t i = 0, n = 0; n < npart; ++i) {
-	for (r = sample.r[i]->begin(), v = sample.v[i]->begin(); r != sample.r[i]->end(); ++r, ++v, ++n) {
+	for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
 	    part[n].type = types[i];
 	    part[n].r = *r;
 	    part[n].v = *v;
@@ -756,17 +757,17 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::sample(host_sample_type& sample) const
 {
-    typedef typename host_sample_type::position_sample_vector position_sample_vector;
-    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename host_sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename host_sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename host_sample_type::value_type sample_type;
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     for (size_t n = 0, i = 0; n < npart; ++i) {
 	// allocate memory for trajectory sample
 	position_sample_ptr r(new position_sample_vector);
 	velocity_sample_ptr v(new velocity_sample_vector);
-	sample.r.push_back(r);
-	sample.v.push_back(v);
+	sample.push_back(sample_type(r, v));
 	r->reserve(mpart[i]);
 	v->reserve(mpart[i]);
 	// assign particle positions and velocities of homogenous type

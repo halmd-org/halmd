@@ -27,7 +27,6 @@
 #include <iostream>
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/mdsim/sample.hpp>
-#include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/options.hpp>
 #include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/sample/correlation.hpp>
@@ -55,12 +54,11 @@ class mdsim
 {
 public:
     typedef typename mdsim_backend::impl_type impl_type;
-    typedef typename mdsim_backend::traits_type traits_type;
-    typedef typename traits_type::float_type float_type;
-    typedef typename traits_type::vector_type vector_type;
-    typedef typename traits_type::host_sample_type host_sample_type;
-    typedef typename traits_type::energy_sample_type energy_sample_type;
-    enum { dimension = traits_type::dimension };
+    typedef typename mdsim_backend::float_type float_type;
+    typedef typename mdsim_backend::vector_type vector_type;
+    typedef typename mdsim_backend::host_sample_type host_sample_type;
+    typedef typename mdsim_backend::energy_sample_type energy_sample_type;
+    enum { dimension = mdsim_backend::dimension };
 
 public:
     enum {

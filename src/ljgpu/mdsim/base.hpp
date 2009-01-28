@@ -150,18 +150,18 @@ void mdsim_base<mdsim_impl>::box(float_type value)
 template <typename mdsim_impl>
 void mdsim_base<mdsim_impl>::state(host_sample_type& sample, float_type box)
 {
-    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename host_sample_type::position_vector position_vector;
+    typedef typename host_sample_type::value_type sample_type;
+    typedef typename sample_type::position_vector position_vector;
     typedef typename position_vector::value_type position_value;
 
-    for (size_t i = 0; i < sample.r.size(); ++i) {
-	if (sample.r[i]->size() != mpart[i]) {
+    for (size_t i = 0; i < sample.size(); ++i) {
+	if (sample[i].r->size() != mpart[i]) {
 	    throw exception("mismatching number of particles in phase space sample");
 	}
     }
 
-    foreach (position_sample_ptr& p, sample.r) {
-	foreach (position_vector &r, *p) {
+    foreach (sample_type& s, sample) {
+	foreach (position_vector &r, *s.r) {
 	    // apply periodic boundary conditions to positions
 	    r -= floor(r / static_cast<position_value>(box)) * static_cast<position_value>(box);
 	}
@@ -169,8 +169,8 @@ void mdsim_base<mdsim_impl>::state(host_sample_type& sample, float_type box)
 
     if (std::fabs(box - box_) > (box_ * std::numeric_limits<float>::epsilon())) {
 	position_value const scale = box_ / box;
-	foreach (position_sample_ptr& p, sample.r) {
-	    foreach (position_vector &r, *p) {
+	foreach (sample_type& s, sample) {
+	    foreach (position_vector &r, *s.r) {
 		r *= scale;
 	    }
 	}

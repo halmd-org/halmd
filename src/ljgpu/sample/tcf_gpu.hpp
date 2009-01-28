@@ -53,6 +53,9 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     typedef cuda::vector<gpu_vector_type> gpu_sample_vector;
     typedef gpu::tcf<dimension> _gpu;
 
+    tcf_gpu_sample() {}
+    tcf_gpu_sample(boost::shared_ptr<gpu_sample_vector> r, boost::shared_ptr<gpu_sample_vector> v): r(r), v(v) {}
+
     /**
      * initialise phase space sample
      */
