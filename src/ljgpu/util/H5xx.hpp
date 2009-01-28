@@ -418,12 +418,13 @@ attribute::as()
     if (!ds.isSimple()) {
 	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
     }
-    if (ds.getSimpleExtentNdims() != 1) {
-	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not one-dimensional");
+    std::vector<hsize_t> dim(ds.getSimpleExtentNdims());
+    ds.getSimpleExtentDims(dim.data());
+    size_t size = 1;
+    for (size_t i = 0; i < dim.size(); ++i) {
+	size *= dim[i];
     }
-    hsize_t dim[1];
-    ds.getSimpleExtentDims(dim);
-    std::vector<value_type> value(dim[0]);
+    std::vector<value_type> value(size);
     attr.read(ctype<value_type>::type, value.data());
     return value;
 }
