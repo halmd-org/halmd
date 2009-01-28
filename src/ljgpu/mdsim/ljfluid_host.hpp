@@ -818,7 +818,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(host_sample_type& sample) co
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
-    for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
+    for (size_t n = 0, i = 0; n < npart; ++i) {
 	// allocate memory for trajectory sample
 	position_sample_ptr r(new position_sample_vector);
 	velocity_sample_ptr v(new velocity_sample_vector);
@@ -827,12 +827,11 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(host_sample_type& sample) co
 	r->reserve(mpart[i]);
 	v->reserve(mpart[i]);
 	// assign particle positions and velocities of homogenous type
-	typename std::vector<particle>::const_iterator p;
-	for (p = part.begin(); p != part.end(); ++p) {
+	for (size_t j = 0; j < mpart[i]; ++j, ++n) {
 	    // periodically extended particle position
-	    r->push_back(p->r);
+	    r->push_back(part[n].r);
 	    // particle velocity
-	    v->push_back(p->v);
+	    v->push_back(part[n].v);
 	}
     }
 }
