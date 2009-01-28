@@ -21,6 +21,7 @@
 
 #include <boost/assign.hpp>
 #include <boost/type_traits.hpp>
+#include <boost/utility.hpp>
 #include <cmath>
 #include <limits>
 #include <ljgpu/mdsim/impl.hpp>
@@ -37,7 +38,7 @@ namespace ljgpu
 {
 
 template <typename mdsim_impl>
-class mdsim_base
+class mdsim_base : boost::noncopyable
 {
 public:
     typedef mdsim_impl impl_type;
