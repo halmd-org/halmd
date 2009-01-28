@@ -105,56 +105,6 @@ struct energy_sample
     vector<double, dimension> v_cm;
 };
 
-//
-// OBSOLETE
-//
-
-/**
- * particles types in a binary mixture
- */
-
-/**
- * phase space sample for A or B particles
- */
-template <typename float_type, int dimension>
-struct phase_space_sample
-{
-    typedef vector<double, dimension> position_vector;
-    typedef vector<float_type, dimension> velocity_vector;
-    typedef std::vector<position_vector> position_sample_vector;
-    typedef std::vector<velocity_vector> velocity_sample_vector;
-
-    /** periodically extended particle positions */
-    position_sample_vector r;
-    /** particle velocities */
-    velocity_sample_vector v;
-};
-
-/**
- * MD simulation sample for A and B particles
- */
-template <typename float_type, int dimension>
-struct mdsim_sample
-: public boost::array<phase_space_sample<float_type, dimension>, 2>
-{
-    typedef boost::function<void (mdsim_sample<float_type, dimension>&)> sample_visitor;
-    typedef phase_space_sample<float_type, dimension> uniform_sample;
-    typedef typename uniform_sample::position_vector position_vector;
-    typedef typename uniform_sample::velocity_vector velocity_vector;
-    typedef typename uniform_sample::position_sample_vector position_sample_vector;
-    typedef typename uniform_sample::velocity_sample_vector velocity_sample_vector;
-
-    /** potential energy per particle */
-    double en_pot;
-    /** virial equation sum per particle */
-    double virial;
-
-    /** simulation time */
-    double time;
-    /** periodic simulation box length */
-    float box;
-};
-
 } // namespace ljgpu
 
 #endif /* ! LJGPU_MDSIM_SAMPLE_HPP */

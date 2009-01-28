@@ -45,10 +45,8 @@ public:
     typedef mdsim_traits<impl_type> traits_type;
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
-    typedef typename traits_type::sample_type sample_type;
     typedef typename traits_type::host_sample_type host_sample_type;
     typedef typename traits_type::energy_sample_type energy_sample_type;
-    typedef typename sample_type::sample_visitor sample_visitor;
     enum { dimension = traits_type::dimension };
 
     /** static implementation properties */
@@ -77,8 +75,6 @@ public:
     float_type density() const { return density_; }
     /** returns periodic box length */
     float_type box() const { return box_; }
-    /** returns trajectory sample */
-    sample_type const& sample() const { return m_sample; }
     /** returns and resets CPU or GPU time accumulators */
     perf::counters times();
 
@@ -97,8 +93,6 @@ protected:
     float_type density_;
     /** periodic box length */
     float_type box_;
-    /** trajectory sample in swappable host memory */
-    sample_type m_sample;
     /** GPU time accumulators */
     perf::counters mutable m_times;
 

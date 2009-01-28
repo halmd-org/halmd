@@ -66,10 +66,8 @@ public:
     typedef mdsim_base<hardsphere_impl<dimension> > _Base;
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::sample_type sample_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
-    typedef typename sample_type::sample_visitor sample_visitor;
 
     typedef std::list<unsigned int> cell_type;
     typedef boost::array<unsigned int, dimension> cell_index;
@@ -146,8 +144,6 @@ public:
 
     /** returns number of particles */
     unsigned int const& particles() const { return npart; }
-    /** returns trajectory sample */
-    sample_type const& sample() const { return m_sample; }
     /** returns pair separation at which particle collision occurs */
     double const& pair_separation() const { return pair_sep_; }
     /** returns number of cells per dimension */
@@ -187,7 +183,6 @@ private:
     using _Base::npart;
     using _Base::box_;
     using _Base::density_;
-    using _Base::m_sample;
     using _Base::m_times;
 
     /** pair separation at which particle collision occurs */
@@ -229,8 +224,6 @@ void hardsphere<hardsphere_impl<dimension> >::particles(T const& value)
 
     try {
 	part.resize(npart);
-	m_sample[0].r.resize(npart);
-	m_sample[0].v.resize(npart);
     }
     catch (std::bad_alloc const&) {
 	throw exception("failed to allocate particle states");

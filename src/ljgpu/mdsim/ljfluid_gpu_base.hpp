@@ -44,11 +44,9 @@ public:
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::traits_type::gpu_vector_type gpu_vector_type;
-    typedef typename _Base::sample_type sample_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
     typedef typename _Base::traits_type::gpu_sample_type gpu_sample_type;
-    typedef typename sample_type::sample_visitor sample_visitor;
     enum { dimension = _Base::dimension };
 
     /** static implementation properties */
@@ -56,9 +54,8 @@ public:
 
 public:
     /** set number of particles in system */
-    void particles(unsigned int value);
-    /** set number of A and B particles in binary mixture */
-    void particles(boost::array<unsigned int, 2> const& value);
+    template <typename T>
+    void particles(T const& value);
     /** set potential well depths */
     void epsilon(boost::array<float, 3> const& value);
     /** set collision diameters */
@@ -125,7 +122,6 @@ protected:
     using _Base::en_cut;
     using _Base::ensemble_;
     using _Base::epsilon_;
-    using _Base::m_sample;
     using _Base::m_times;
     using _Base::mixture_;
     using _Base::mpart;
@@ -163,41 +159,10 @@ protected:
 };
 
 template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::particles(unsigned int value)
+template <typename T>
+void ljfluid_gpu_base<ljfluid_impl>::particles(T const& value)
 {
     _Base::particles(value);
-
-    try {
-	m_sample[0].r.resize(npart);
-	m_sample[0].v.resize(npart);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to allocate swappable host memory for trajectory sample");
-    }
-
-    try {
-	cuda::copy(npart, _gpu::npart);
-	cuda::copy(mpart, _gpu::mpart);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy particle number to device symbol");
-    }
-}
-
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::particles(boost::array<unsigned int, 2> const& value)
-{
-    _Base::particles(value);
-
-    try {
-	for (size_t i = 0; i < mpart.size(); ++i) {
-	    m_sample[i].r.resize(mpart[i]);
-	    m_sample[i].v.resize(mpart[i]);
-	}
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to allocate swappable host memory for trajectory sample");
-    }
 
     try {
 	cuda::copy(npart, _gpu::npart);

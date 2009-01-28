@@ -39,11 +39,9 @@ public:
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::gpu_vector_type gpu_vector_type;
-    typedef typename _Base::sample_type sample_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::gpu_sample_type gpu_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
-    typedef typename sample_type::sample_visitor sample_visitor;
 
     /** static implementation properties */
     typedef boost::false_type has_trajectory_gpu_sample;
@@ -71,8 +69,6 @@ public:
     /** sample thermodynamic equilibrium properties */
     void sample(energy_sample_type& sample) const;
 
-    /** returns trajectory sample */
-    sample_type const& sample() const { return m_sample; }
     /** get number of CUDA execution threads */
     unsigned int threads() const { return dim_.threads_per_block(); }
     /** get effective average cell occupancy */
@@ -108,7 +104,6 @@ private:
     using _Base::density_;
     using _Base::dim_;
     using _Base::ensemble_;
-    using _Base::m_sample;
     using _Base::m_times;
     using _Base::mixture_;
     using _Base::mpart;

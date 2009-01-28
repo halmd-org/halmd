@@ -60,7 +60,6 @@ public:
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::host_sample_type host_sample_type;
     typedef typename traits_type::energy_sample_type energy_sample_type;
-    typedef typename traits_type::sample_type sample_type;
     enum { dimension = traits_type::dimension };
 
 public:
