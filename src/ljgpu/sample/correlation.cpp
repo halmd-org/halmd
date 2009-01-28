@@ -184,20 +184,34 @@ void correlation<dimension>::q_values(std::vector<float> const& values, float er
 
 #if WITH_CUDA
 template <int dimension>
-void correlation<dimension>::add_gpu_correlation_functions()
+void correlation<dimension>::add_gpu_correlation_functions(size_t types)
 {
     LOG("computing correlation functions on GPU");
-    boost::mpl::for_each<tcf_gpu_types>(boost::bind(&tcf_vector::push_back, boost::ref(m_tcf), _1));
+    for (size_t type = 0; type < types; ++type) {
+	tcf_vector tcf_;
+	boost::mpl::for_each<tcf_gpu_types>(boost::bind(&tcf_vector::push_back, boost::ref(tcf_), _1));
+	foreach (tcf_variant& tcf, tcf_) {
+	    boost::apply_visitor(tcf_set_type(type), tcf);
+	}
+	m_tcf.insert(m_tcf.end(), tcf_.begin(), tcf_.end());
+    }
     m_block.resize(m_block_count, gpu_block_type(m_block_size));
     m_sample = gpu_sample_type();
 }
 #endif /* WITH_CUDA */
 
 template <int dimension>
-void correlation<dimension>::add_host_correlation_functions()
+void correlation<dimension>::add_host_correlation_functions(size_t types)
 {
     LOG("computing correlation functions on host");
-    boost::mpl::for_each<tcf_host_types>(boost::bind(&tcf_vector::push_back, boost::ref(m_tcf), _1));
+    for (size_t type = 0; type < types; ++type) {
+	tcf_vector tcf_;
+	boost::mpl::for_each<tcf_host_types>(boost::bind(&tcf_vector::push_back, boost::ref(tcf_), _1));
+	foreach (tcf_variant& tcf, tcf_) {
+	    boost::apply_visitor(tcf_set_type(type), tcf);
+	}
+	m_tcf.insert(m_tcf.end(), tcf_.begin(), tcf_.end());
+    }
     m_block.resize(m_block_count, host_block_type(m_block_size));
     m_sample = host_sample_type();
 }
@@ -206,7 +220,7 @@ void correlation<dimension>::add_host_correlation_functions()
  * create HDF5 correlations output file
  */
 template <int dimension>
-void correlation<dimension>::open(std::string const& filename, bool binary)
+void correlation<dimension>::open(std::string const& filename, size_t types)
 {
     LOG("write correlations to file: " << filename);
     try {
@@ -228,7 +242,7 @@ void correlation<dimension>::open(std::string const& filename, bool binary)
 
     try {
 	foreach (tcf_variant& tcf, m_tcf) {
-	    boost::apply_visitor(tcf_create_dataset(m_file, binary), tcf);
+	    boost::apply_visitor(tcf_create_dataset(m_file, types), tcf);
 	}
     }
     catch (H5::FileIException const& e) {

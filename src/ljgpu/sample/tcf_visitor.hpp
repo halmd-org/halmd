@@ -43,27 +43,33 @@ public:
     /**
      * sample from global device memory to global device memory
      */
-    template <typename mdsim_backend>
-    typename boost::enable_if<typename mdsim_backend::has_trajectory_gpu_sample, void>::type
-    operator() (tcf_gpu_sample<mdsim_backend::dimension>& sample, mdsim_backend const& fluid) const
+    template <typename T>
+    typename boost::enable_if<typename T::has_trajectory_gpu_sample, void>::type
+    operator()(std::vector<tcf_gpu_sample<T::dimension> >& sample, T const& fluid) const
     {
-	enum { dimension = mdsim_backend::dimension };
-	typedef typename mdsim_backend::gpu_sample_type trajectory_sample_type;
+	typedef typename T::gpu_sample_type trajectory_sample_type;
+
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	sample.r = sample_.r[0];
-	sample.v = sample_.v[0];
+	sample.clear();
+	for (size_t i = 0; i < sample_.r.size(); ++i) {
+	    tcf_gpu_sample<T::dimension> s;
+	    // copy shared pointers to global device memory
+	    s.r = sample_.r[i];
+	    s.v = sample_.v[i];
+	    sample.push_back(s);
+	}
     }
 
     /**
      * sample from host memory to global device memory
      */
-    template <typename mdsim_backend>
-    typename boost::disable_if<typename mdsim_backend::has_trajectory_gpu_sample, void>::type
-    operator() (tcf_gpu_sample<mdsim_backend::dimension>& sample, mdsim_backend const& fluid) const
+    template <typename T>
+    typename boost::disable_if<typename T::has_trajectory_gpu_sample, void>::type
+    operator()(std::vector<tcf_gpu_sample<T::dimension> >& sample, T const& fluid) const
     {
-	enum { dimension = mdsim_backend::dimension };
-	typedef typename mdsim_backend::host_sample_type trajectory_sample_type;
+	enum { dimension = T::dimension };
+	typedef typename T::host_sample_type trajectory_sample_type;
 	typedef tcf_gpu_sample<dimension> sample_type;
 	typedef typename sample_type::gpu_sample_vector gpu_sample_vector;
 	typedef boost::shared_ptr<gpu_sample_vector> gpu_sample_ptr;
@@ -71,33 +77,45 @@ public:
 
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	cuda::host::vector<gpu_vector_type> r(sample_.r[0]->size());
-	cuda::host::vector<gpu_vector_type> v(sample_.v[0]->size());
-	std::copy(sample_.r[0]->begin(), sample_.r[0]->end(), r.begin());
-	std::copy(sample_.v[0]->begin(), sample_.v[0]->end(), v.begin());
-	sample.r = gpu_sample_ptr(new gpu_sample_vector(r.size()));
-	sample.v = gpu_sample_ptr(new gpu_sample_vector(v.size()));
-	cuda::copy(r, *sample.r);
-	cuda::copy(v, *sample.v);
+	sample.clear();
+	for (size_t i = 0; i < sample_.r.size(); ++i) {
+	    // copy sample to page-locked host memory
+	    cuda::host::vector<gpu_vector_type> r(sample_.r[i]->size());
+	    cuda::host::vector<gpu_vector_type> v(sample_.v[i]->size());
+	    std::copy(sample_.r[i]->begin(), sample_.r[i]->end(), r.begin());
+	    std::copy(sample_.v[i]->begin(), sample_.v[i]->end(), v.begin());
+	    // copy from host to GPU
+	    sample_type s;
+	    s.r = gpu_sample_ptr(new gpu_sample_vector(r.size()));
+	    s.v = gpu_sample_ptr(new gpu_sample_vector(v.size()));
+	    sample.push_back(s);
+	    cuda::copy(r, *s.r);
+	    cuda::copy(v, *s.v);
+	}
     }
 #endif /* WITH_CUDA */
 
     /**
      * sample from host memory to host memory
      */
-    template <typename mdsim_backend>
-    void operator() (tcf_host_sample<mdsim_backend::dimension>& sample, mdsim_backend const& fluid) const
+    template <typename T>
+    void operator()(std::vector<tcf_host_sample<T::dimension> >& sample, T const& fluid) const
     {
-	enum { dimension = mdsim_backend::dimension };
-	typedef typename mdsim_backend::host_sample_type trajectory_sample_type;
+	enum { dimension = T::dimension };
+	typedef typename T::host_sample_type trajectory_sample_type;
 	typedef tcf_host_sample<dimension> sample_type;
 	typedef typename sample_type::sample_vector sample_vector;
 	typedef boost::shared_ptr<sample_vector> sample_ptr;
 
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	sample.r = sample_ptr(new sample_vector(sample_.r[0]->begin(), sample_.r[0]->end()));
-	sample.v = sample_ptr(new sample_vector(sample_.v[0]->begin(), sample_.v[0]->end()));
+	sample.clear();
+	for (size_t i = 0; i < sample_.r.size(); ++i) {
+	    sample_type s;
+	    s.r = sample_ptr(new sample_vector(sample_.r[i]->begin(), sample_.r[i]->end()));
+	    s.v = sample_ptr(new sample_vector(sample_.v[i]->begin(), sample_.v[i]->end()));
+	    sample.push_back(s);
+	}
     }
 };
 
@@ -108,9 +126,11 @@ public:
     _tcf_fourier_transform_sample(U const& q_vector) : q_vector(q_vector) {}
 
     template <typename T>
-    void operator() (T& sample) const
+    void operator()(T& sample) const
     {
-	sample(q_vector);
+	for (typename T::iterator s = sample.begin(); s != sample.end(); ++s) {
+	    (*s)(q_vector);
+	}
     }
 
 private:
@@ -127,13 +147,13 @@ class tcf_block_add_sample : public boost::static_visitor<>
 {
 public:
     template <typename T, typename U>
-    void operator() (T const&, U const&) const
+    void operator()(T const&, U const&) const
     {
 	throw std::runtime_error("block sample mismatch");
     }
 
     template <typename T>
-    void operator() (boost::circular_buffer<T>& block, T const& sample) const
+    void operator()(boost::circular_buffer<T>& block, T const& sample) const
     {
 	block.push_back(sample);
     }
@@ -143,7 +163,7 @@ class tcf_block_is_full : public boost::static_visitor<bool>
 {
 public:
     template <typename T>
-    bool operator() (boost::circular_buffer<T> const& block) const
+    bool operator()(boost::circular_buffer<T> const& block) const
     {
 	return block.full();
     }
@@ -153,7 +173,7 @@ class tcf_block_clear : public boost::static_visitor<>
 {
 public:
     template <typename T>
-    void operator() (boost::circular_buffer<T>& block) const
+    void operator()(boost::circular_buffer<T>& block) const
     {
 	block.clear();
     }
@@ -163,7 +183,7 @@ class tcf_block_pop_front : public boost::static_visitor<>
 {
 public:
     template <typename T>
-    void operator() (boost::circular_buffer<T>& block) const
+    void operator()(boost::circular_buffer<T>& block) const
     {
 	block.pop_front();
     }
@@ -173,10 +193,28 @@ class tcf_block_size : public boost::static_visitor<size_t>
 {
 public:
     template <typename T>
-    size_t operator() (boost::circular_buffer<T> const& block) const
+    size_t operator()(boost::circular_buffer<T> const& block) const
     {
 	return block.size();
     }
+};
+
+/**
+ * set particle type for a correlation function
+ */
+class tcf_set_type : public boost::static_visitor<>
+{
+public:
+    tcf_set_type(size_t type) : type(type) {}
+
+    template <typename T>
+    void operator()(T& tcf) const
+    {
+	tcf.type = type;
+    }
+
+private:
+    size_t type;
 };
 
 /**
@@ -196,7 +234,7 @@ public:
 
     template <typename T, template <int> class sample_type, int dimension>
     typename boost::enable_if<boost::is_base_of<correlation_function<sample_type>, T>, void>::type
-    operator()(T& tcf, boost::circular_buffer<sample_type<dimension> >& sample) const
+    operator()(T& tcf, boost::circular_buffer<std::vector<sample_type<dimension> > >& sample) const
     {
 	tcf(std::make_pair(sample.begin(), q_vector.begin()), std::make_pair(sample.end(), q_vector.end()), tcf.result[block].begin());
     }
@@ -231,12 +269,25 @@ public:
 class tcf_create_dataset : public boost::static_visitor<>
 {
 public:
-    tcf_create_dataset(H5::H5File& file, bool binary) : file(file), binary(binary) {}
+    tcf_create_dataset(H5::H5File& file, size_t types) : file(file), types(types) {}
 
     template <typename T>
     void operator()(T& tcf) const
     {
 	H5::Group root(file.openGroup("/"));
+	if (types > 1) {
+	    std::string name;
+	    // AA, BB, ... correlation function
+	    name.push_back('A' + tcf.type);
+	    name.push_back('A' + tcf.type);
+	    try {
+		H5XX_NO_AUTO_PRINT(H5::GroupIException);
+		root = root.createGroup(name);
+	    }
+	    catch (H5::GroupIException const&) {
+		root = root.openGroup(name);
+	    }
+	}
 	tcf.dataset = create_dataset(root, tcf.name(), tcf.result);
     }
 
@@ -268,7 +319,7 @@ public:
 
 private:
     H5::H5File& file;
-    bool const binary;
+    size_t types;
 };
 
 /**

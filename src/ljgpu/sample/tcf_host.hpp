@@ -83,7 +83,13 @@ struct tcf_host_sample : public tcf_sample<dimension>
 };
 
 template <>
-struct correlation_function<tcf_host_sample> {};
+struct correlation_function<tcf_host_sample>
+{
+    /** HDF5 dataset */
+    H5::DataSet dataset;
+    /** particle type */
+    size_t type;
+};
 
 /**
  * mean-square displacement
@@ -93,21 +99,21 @@ struct mean_square_displacement<tcf_host_sample> : correlation_function<tcf_host
 {
     /** block sample results */
     tcf_unary_result_type result;
-    /** HDF5 dataset */
-    H5::DataSet dataset;
 
     char const* name() const { return "MSD"; }
 
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
-	typedef typename input_iterator::first_type::value_type::sample_vector::value_type vector_type;
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_type::sample_vector::const_iterator vector_const_iterator;
+	typedef typename sample_type::sample_vector::value_type vector_type;
 
 	// iterate over phase space samples in block
-	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
+	for (sample_iterator it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = it->r->begin(), r0 = first.first->r->begin(); r != it->r->end(); ++r, ++r0) {
+	    for (vector_const_iterator r = (*it)[type].r->begin(), r0 = (*first.first)[type].r->begin(); r != (*it)[type].r->end(); ++r, ++r0) {
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// accumulate square displacement
@@ -125,22 +131,22 @@ struct mean_quartic_displacement<tcf_host_sample> : correlation_function<tcf_hos
 {
     /** block sample results */
     tcf_unary_result_type result;
-    /** HDF5 dataset */
-    H5::DataSet dataset;
 
     char const* name() const { return "MQD"; }
 
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
-	typedef typename input_iterator::first_type::value_type::sample_vector::value_type vector_type;
-	typedef typename input_iterator::first_type::value_type::sample_vector::value_type::value_type value_type;
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_type::sample_vector::const_iterator vector_const_iterator;
+	typedef typename sample_type::sample_vector::value_type vector_type;
+	typedef typename sample_type::sample_vector::value_type::value_type value_type;
 
 	// iterate over phase space samples in block
-	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
+	for (sample_iterator it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle coordinates in current and first sample
-	    for (vector_const_iterator r = it->r->begin(), r0 = first.first->r->begin(); r != it->r->end(); ++r, ++r0) {
+	    for (vector_const_iterator r = (*it)[type].r->begin(), r0 = (*first.first)[type].r->begin(); r != (*it)[type].r->end(); ++r, ++r0) {
 		// displacement of particle
 		vector_type dr = *r0 - *r;
 		// square displacement
@@ -160,20 +166,20 @@ struct velocity_autocorrelation<tcf_host_sample> : correlation_function<tcf_host
 {
     /** block sample results */
     tcf_unary_result_type result;
-    /** HDF5 dataset */
-    H5::DataSet dataset;
 
     char const* name() const { return "VAC"; }
 
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type::value_type::sample_vector::const_iterator vector_const_iterator;
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_type::sample_vector::const_iterator vector_const_iterator;
 
 	// iterate over phase space samples in block
-	for (typename input_iterator::first_type it = first.first; it != last.first; ++it, ++result) {
+	for (sample_iterator it = first.first; it != last.first; ++it, ++result) {
 	    // iterate over particle velocities in current and first sample
-	    for (vector_const_iterator v = it->v->begin(), v0 = first.first->v->begin(); v != it->v->end(); ++v, ++v0) {
+	    for (vector_const_iterator v = (*it)[type].v->begin(), v0 = (*first.first)[type].v->begin(); v != (*it)[type].v->end(); ++v, ++v0) {
 		// accumulate velocity autocorrelation
 		*result += *v0 * *v;
 	    }
@@ -189,8 +195,6 @@ struct intermediate_scattering_function<tcf_host_sample> : correlation_function<
 {
     /** block sample results */
     tcf_binary_result_type result;
-    /** HDF5 dataset */
-    H5::DataSet dataset;
 
     char const* name() const { return "ISF"; }
 
@@ -198,18 +202,18 @@ struct intermediate_scattering_function<tcf_host_sample> : correlation_function<
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type sample_type;
+	typedef typename sample_iterator::value_type::value_type sample_type;
 	typedef typename sample_type::density_vector_vector::const_iterator density_vector_iterator;
 	typedef typename sample_type::density_vector_vector::value_type::const_iterator density_iterator;
 	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
 
-	for (sample_iterator i = first.first; i != last.first; ++i, ++result) {
+	for (sample_iterator it = first.first; it != last.first; ++it, ++result) {
 	    q_value_result_iterator k = (*result).begin();
-	    density_vector_iterator j0 = first.first->rho->begin();
-	    for (density_vector_iterator j = i->rho->begin(); j != i->rho->end(); ++j, ++j0, ++k) {
+	    density_vector_iterator j0 = (*first.first)[type].rho->begin();
+	    for (density_vector_iterator j = (*it)[type].rho->begin(); j != (*it)[type].rho->end(); ++j, ++j0, ++k) {
 		density_iterator rho0 = (*j0).begin();
 		for (density_iterator rho = (*j).begin(); rho != (*j).end(); ++rho, ++rho0) {
-		    *k += (rho->first * rho0->first + rho->second * rho0->second) / i->r->size();
+		    *k += (rho->first * rho0->first + rho->second * rho0->second) / (*it)[type].r->size();
 		}
 	    }
 	}
@@ -224,8 +228,6 @@ struct self_intermediate_scattering_function<tcf_host_sample> : correlation_func
 {
     /** block sample results */
     tcf_binary_result_type result;
-    /** HDF5 dataset */
-    H5::DataSet dataset;
 
     char const* name() const { return "SISF"; }
 
@@ -233,21 +235,21 @@ struct self_intermediate_scattering_function<tcf_host_sample> : correlation_func
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
 	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type sample_type;
+	typedef typename sample_iterator::value_type::value_type sample_type;
 	typedef typename sample_type::sample_vector::const_iterator position_iterator;
 	typedef typename sample_type::vector_type vector_type;
 	typedef typename input_iterator::second_type q_value_iterator;
 	typedef typename q_value_iterator::value_type::const_iterator q_vector_iterator;
 	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
 
-	for (sample_iterator i = first.first; i != last.first; ++i, ++result) {
+	for (sample_iterator it = first.first; it != last.first; ++it, ++result) {
 	    q_value_result_iterator k = (*result).begin();
 	    for (q_value_iterator j = first.second; j != last.second; ++j, ++k) {
 		for (q_vector_iterator q = (*j).begin(); q != (*j).end(); ++q) {
 		    double value = 0;
 		    size_t count = 0;
-		    position_iterator r0 = first.first->r->begin();
-		    for (position_iterator r = i->r->begin(); r != i->r->end(); ++r, ++r0) {
+		    position_iterator r0 = (*first.first)[type].r->begin();
+		    for (position_iterator r = (*it)[type].r->begin(); r != (*it)[type].r->end(); ++r, ++r0) {
 			value += (std::cos((*r - *r0) * (*q)) - value) / (count + 1);
 		    }
 		    // result is normalised as we computed the average above

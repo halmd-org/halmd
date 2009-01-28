@@ -46,10 +46,10 @@ template <int dimension>
 class correlation
 {
 public:
-    typedef tcf_host_sample<dimension> host_sample_type;
+    typedef std::vector<tcf_host_sample<dimension> > host_sample_type;
     typedef boost::circular_buffer<host_sample_type> host_block_type;
 #ifdef WITH_CUDA
-    typedef tcf_gpu_sample<dimension> gpu_sample_type;
+    typedef std::vector<tcf_gpu_sample<dimension> > gpu_sample_type;
     typedef boost::circular_buffer<gpu_sample_type> gpu_block_type;
     typedef boost::variant<gpu_sample_type, host_sample_type> sample_variant;
     typedef boost::variant<gpu_block_type, host_block_type> block_variant;
@@ -83,10 +83,10 @@ public:
     void q_values(std::vector<float> const& values, float error, float box);
 #ifdef WITH_CUDA
     /** add correlation functions for GPU */
-    void add_gpu_correlation_functions();
+    void add_gpu_correlation_functions(size_t types);
 #endif
     /** add correlation functions for host */
-    void add_host_correlation_functions();
+    void add_host_correlation_functions(size_t types);
 
     /** returns total number of simulation steps */
     uint64_t steps() const { return m_steps; }
@@ -106,7 +106,7 @@ public:
     unsigned int q_values() { return m_q_vector.size(); }
 
     /** create HDF5 correlations output file */
-    void open(std::string const& filename, bool binary = false);
+    void open(std::string const& filename, size_t types);
     /** close HDF5 file */
     void close();
     /** returns HDF5 parameter group */

@@ -263,11 +263,11 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 
     std::string const tcf_backend(opt["tcf-backend"].as<std::string>());
     if (tcf_backend == "host") {
-	tcf.add_host_correlation_functions();
+	tcf.add_host_correlation_functions(fluid.mixture() == BINARY ? 2 : 1);
     }
 #if WITH_CUDA
     else if (tcf_backend == "gpu") {
-	tcf.add_gpu_correlation_functions();
+	tcf.add_gpu_correlation_functions(fluid.mixture() == BINARY ? 2 : 1);
     }
 #endif
     else {
@@ -382,7 +382,7 @@ void mdsim<mdsim_backend>::open()
     traj.open(opt["output"].as<std::string>() + ".trj", trajectory::out);
     H5param(traj) << *this << fluid << tcf;
     if (!opt["disable-correlation"].as<bool>()) {
-	tcf.open(opt["output"].as<std::string>() + ".tcf", fluid.mixture() == BINARY);
+	tcf.open(opt["output"].as<std::string>() + ".tcf", (fluid.mixture() == BINARY) ? 2 : 1);
 	H5param(tcf) << *this << fluid << tcf;
     }
     if (!opt["disable-energy"].as<bool>()) {
