@@ -22,7 +22,6 @@
 #include <cuda_wrapper/host/allocator.hpp>
 #include <vector>
 
-
 namespace cuda { namespace host
 {
 
@@ -33,19 +32,19 @@ template <typename T>
 class vector : public std::vector<T, allocator<T> >
 {
 public:
-    typedef allocator<T> _Alloc;
     typedef std::vector<T, allocator<T> > _Base;
-    typedef vector<T> vector_type;
-    typedef T value_type;
-    typedef size_t size_type;
+    typedef typename _Base::size_type size_type;
 
 public:
+    /** creates an empty vector */
     vector() {}
-
-    /**
-     * initialize host vector with copies of value
-     */
-    vector(size_type size, value_type const& value = value_type()) : _Base(size, value) {}
+    /** creates a vector with n elements */
+    vector(size_type n) : _Base(n) {}
+    /** creates a vector with n copies of t */
+    vector(size_type n, T const& t) : _Base(n, t) {}
+    /** creates a vector with a copy of a range */
+    template <class InputIterator>
+    vector(InputIterator begin, InputIterator end) : _Base(begin, end) {}
 };
 
 }} // namespace cuda::host
