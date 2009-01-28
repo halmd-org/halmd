@@ -134,7 +134,7 @@ public:
     void timestep(double value);
 
     /** set system state from phase space sample */
-    void state(sample_visitor visitor);
+    void state(host_sample_type& sample, float_type box);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -298,23 +298,28 @@ void hardsphere<hardsphere_impl<dimension> >::timestep(double value)
  * set system state from phase space sample
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::state(sample_visitor visitor)
+void hardsphere<hardsphere_impl<dimension> >::state(host_sample_type& sample, float_type box)
 {
-    _Base::state(visitor);
+    _Base::state(sample, box);
 
-    for (unsigned int i = 0; i < npart; ++i) {
-	// set periodically reduced particle position at simulation time zero
-	part[i].r = m_sample[0].r[i];
-	// set periodically extended particle position at simulation time zero
-	part[i].R = part[i].r;
-	// set cell which particle belongs to
-	part[i].cell = compute_cell(part[i].r);
-	// add particle to cell
-	cell_(part[i].cell).push_back(i);
-	// set particle velocity at simulation time zero
-	part[i].v = m_sample[0].v[i];
-	// set particle time
-	part[i].t = 0.;
+    typename host_sample_type::position_sample_vector::const_iterator r;
+    typename host_sample_type::velocity_sample_vector::const_iterator v;
+
+    for (size_t i = 0, n = 0; n < npart; ++i) {
+	for (r = sample.r[i]->begin(), v = sample.v[i]->begin(); r != sample.r[i]->end(); ++r, ++v, ++n) {
+	    // set periodically reduced particle position at simulation time zero
+	    part[n].r = *r;
+	    // set periodically extended particle position at simulation time zero
+	    part[n].R = *r;
+	    // set cell which particle belongs to
+	    part[n].cell = compute_cell(*r);
+	    // add particle to cell
+	    cell_(part[n].cell).push_back(n);
+	    // set particle velocity at simulation time zero
+	    part[n].v = *v;
+	    // set particle time
+	    part[n].t = 0;
+	}
     }
 }
 
@@ -746,11 +751,10 @@ void hardsphere<hardsphere_impl<dimension> >::mdstep()
 template <int dimension>
 void hardsphere<hardsphere_impl<dimension> >::sample(host_sample_type& sample) const
 {
-    typedef host_sample_type sample_type;
-    typedef typename sample_type::position_sample_vector position_sample_vector;
-    typedef typename sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename host_sample_type::position_sample_vector position_sample_vector;
+    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename host_sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename host_sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     // nanosecond resolution process times
     boost::array<timespec, 2> t;

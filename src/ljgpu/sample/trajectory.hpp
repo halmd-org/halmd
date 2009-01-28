@@ -94,30 +94,37 @@ private:
 template <typename sample_type>
 void trajectory::read(sample_type& sample, ssize_t index)
 {
+    typedef typename sample_type::position_sample_vector position_sample_vector;
+    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+
     std::vector<H5::DataSet> dset_r;
     std::vector<H5::DataSet> dset_v;
     H5::DataSet dset_t;
+    std::vector<unsigned int> mpart;
 
     try {
 	H5XX_NO_AUTO_PRINT(H5::Exception);
 	H5::Group root(m_file.openGroup("trajectory"));
-	try {
-	    // binary mixture
-	    H5::Group a(root.openGroup("A"));
-	    dset_r.push_back(a.openDataSet("r"));
-	    dset_v.push_back(a.openDataSet("v"));
-	    H5::Group b(root.openGroup("B"));
-	    dset_r.push_back(b.openDataSet("r"));
-	    dset_v.push_back(b.openDataSet("v"));
-	}
-	catch (H5::GroupIException const&) {
+
+	// read particle numbers in binary mixture
+	mpart = H5param(*this)["mdsim"]["particles"].as<std::vector<unsigned int> >();
+
+	for (size_t i = 0; i < mpart.size(); ++i) {
+	    H5::Group node(root);
+	    if (mpart.size() > 1) {
+		std::string name;
+		name.push_back('A' + i);
+		node = H5::Group(root.openGroup(name));
+	    }
 	    try {
 		// backwards compatibility with r:R:v:t format
-		// 	 r = reduced single- or double-precision positions,
+		//   r = reduced single- or double-precision positions,
 		//   R = extended single- or double-precision positions,
 		//   v = single- or double-precision velocities
 		//   t = single- or double-precision simulation time
-		dset_r.push_back(root.openDataSet("R"));
+		dset_r.push_back(node.openDataSet("R"));
 		LOG_WARNING("detected obsolete trajectory file format");
 	    }
 	    catch (H5::GroupIException const&)
@@ -126,16 +133,16 @@ void trajectory::read(sample_type& sample, ssize_t index)
 		//   r = extended double-precision positions,
 		//   v = single- or double-precision velocities
 		//   t = double-precision simulation time
-		dset_r.push_back(root.openDataSet("r"));
+		dset_r.push_back(node.openDataSet("r"));
 	    }
 	    // backwards compatibility with r:R:v:t format
 	    if (dset_r.back().getDataType() == H5::PredType::NATIVE_FLOAT) {
 		// use reduced positions if extended positions are single-precision
 		dset_r.pop_back();
-		dset_r.push_back(root.openDataSet("r"));
+		dset_r.push_back(node.openDataSet("r"));
 		LOG_WARNING("falling back to reduced particle position sample");
 	    }
-	    dset_v.push_back(root.openDataSet("v"));
+	    dset_v.push_back(node.openDataSet("v"));
 	}
 	dset_t = root.openDataSet("t");
     }
@@ -143,21 +150,17 @@ void trajectory::read(sample_type& sample, ssize_t index)
 	throw exception("failed to open HDF5 trajectory datasets");
     }
 
-    for (size_t i = 0; i < dset_r.size(); ++i) {
-	read_vector_sample(dset_r[i], sample[i].r, index);
-	read_vector_sample(dset_v[i], sample[i].v, index);
+    for (size_t i = 0; i < mpart.size(); ++i) {
+	position_sample_ptr r(new position_sample_vector(mpart[i]));
+	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
+	sample.r.push_back(r);
+	sample.v.push_back(v);
+	read_vector_sample(dset_r[i], *r, index);
+	read_vector_sample(dset_v[i], *v, index);
     }
-    read_scalar_sample(dset_t, sample.time, index);
-
-    LOG("resuming from trajectory sample at offset " << index << " with time " << sample.time);
-
-    try {
-	H5XX_NO_AUTO_PRINT(H5::Exception);
-	sample.box = H5param(*this)["mdsim"]["box_length"].as<float>();
-    }
-    catch (H5::Exception const&) {
-	throw exception("failed to read simulation box length from HDF5 file");
-    }
+    double time;
+    read_scalar_sample(dset_t, time, index);
+    LOG("resuming from trajectory sample at offset " << index << " with time " << time);
 }
 
 /**

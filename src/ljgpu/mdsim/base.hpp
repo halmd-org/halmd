@@ -69,7 +69,7 @@ public:
     /** set periodic box length */
     void box(float_type value);
     /** set system state from phase space sample */
-    void state(sample_visitor read);
+    void state(host_sample_type& sample, float_type box);
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
@@ -154,37 +154,33 @@ void mdsim_base<mdsim_impl>::box(float_type value)
 }
 
 template <typename mdsim_impl>
-void mdsim_base<mdsim_impl>::state(mdsim_base<mdsim_impl>::sample_visitor read)
+void mdsim_base<mdsim_impl>::state(host_sample_type& sample, float_type box)
 {
-    typedef typename sample_type::uniform_sample uniform_sample;
-    typedef typename sample_type::position_vector position_vector;
+    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename host_sample_type::position_vector position_vector;
     typedef typename position_vector::value_type position_value;
 
-    read(m_sample);
-
-    for (size_t i = 0; i < m_sample.size(); ++i) {
-	if (m_sample[i].r.size() != mpart[i]) {
+    for (size_t i = 0; i < sample.r.size(); ++i) {
+	if (sample.r[i]->size() != mpart[i]) {
 	    throw exception("mismatching number of particles in phase space sample");
 	}
     }
 
-    position_value const box = m_sample.box;
-    foreach (uniform_sample& sample, m_sample) {
-	foreach (position_vector &r, sample.r) {
+    foreach (position_sample_ptr& p, sample.r) {
+	foreach (position_vector &r, *p) {
 	    // apply periodic boundary conditions to positions
-	    r -= floor(r / box) * box;
+	    r -= floor(r / static_cast<position_value>(box)) * static_cast<position_value>(box);
 	}
     }
 
     if (std::fabs(box - box_) > (box_ * std::numeric_limits<float>::epsilon())) {
-	LOG("rescaling periodic simulation box length from " << box);
 	position_value const scale = box_ / box;
-	foreach (uniform_sample &sample, m_sample) {
-	    foreach (position_vector &r, sample.r) {
+	foreach (position_sample_ptr& p, sample.r) {
+	    foreach (position_vector &r, *p) {
 		r *= scale;
 	    }
 	}
-	m_sample.box = box_;
+	LOG("rescaled periodic simulation box length from " << box);
     }
 }
 

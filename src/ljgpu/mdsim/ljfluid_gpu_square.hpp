@@ -57,7 +57,7 @@ public:
     void threads(unsigned int value);
 
     /** restore system state from phase space sample */
-    void state(sample_visitor visitor);
+    void state(host_sample_type& sample, float_type box);
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
@@ -206,9 +206,9 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::threads(unsigned int value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::state(sample_visitor visitor)
+void ljfluid<ljfluid_impl_gpu_square<dimension> >::state(host_sample_type& sample, float_type box)
 {
-    _Base::state(visitor, h_part.r, h_part.v);
+    _Base::state(sample, box, h_part.r, h_part.v);
 
     try {
 	cuda::copy(h_part.r, g_part.r, stream_);
@@ -313,11 +313,10 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(host_sample_type& sample) const
 {
-    typedef host_sample_type sample_type;
-    typedef typename sample_type::position_sample_vector position_sample_vector;
-    typedef typename sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename host_sample_type::position_sample_vector position_sample_vector;
+    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename host_sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename host_sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     static cuda::event ev0, ev1;
     static cuda::stream stream;
@@ -354,11 +353,10 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(host_sample_type& samp
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(gpu_sample_type& sample) const
 {
-    typedef gpu_sample_type sample_type;
-    typedef typename sample_type::position_sample_vector position_sample_vector;
-    typedef typename sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename gpu_sample_type::position_sample_vector position_sample_vector;
+    typedef typename gpu_sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename gpu_sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename gpu_sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     static cuda::event ev0, ev1;
     static cuda::stream stream;

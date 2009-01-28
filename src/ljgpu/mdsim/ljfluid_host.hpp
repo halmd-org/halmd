@@ -74,7 +74,7 @@ public:
 	/** particle number */
 	unsigned int tag;
 	/** particle type */
-	enum { A = 0, B = 1 } type;
+	enum types { A = 0, B = 1 } type;
 	/** particle neighbours list */
 	std::vector<ref> neighbour;
     };
@@ -94,7 +94,7 @@ public:
     void nbl_skin(float value);
 
     /** set system state from phase space sample */
-    void state(sample_visitor visitor);
+    void state(host_sample_type& sample, float_type box);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -241,31 +241,22 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(boost::array<unsigned int
  * set system state from phase space sample
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::state(sample_visitor visitor)
+void ljfluid<ljfluid_impl_host<dimension> >::state(host_sample_type& sample, float_type box)
 {
-    _Base::state(visitor);
+    using namespace boost::assign;
+    boost::array<typename particle::types, 2> const types = list_of(particle::A)(particle::B);
 
-    unsigned int tag = 0;
-    foreach (position_vector const& r, m_sample[particle::A].r) {
-	part[tag].type = particle::A;
-	part[tag].r = r;
-	part[tag].tag = tag;
-	tag++;
-    }
-    foreach (position_vector const& r, m_sample[particle::B].r) {
-	part[tag].type = particle::B;
-	part[tag].r = r;
-	part[tag].tag = tag;
-	tag++;
-    }
-    tag = 0;
-    foreach (velocity_vector const& v, m_sample[particle::A].v) {
-	part[tag].v = v;
-	tag++;
-    }
-    foreach (position_vector const& v, m_sample[particle::B].v) {
-	part[tag].v = v;
-	tag++;
+    _Base::state(sample, box);
+
+    typename host_sample_type::position_sample_vector::const_iterator r;
+    typename host_sample_type::velocity_sample_vector::const_iterator v;
+
+    for (size_t i = 0, n = 0; n < npart; ++i) {
+	for (r = sample.r[i]->begin(), v = sample.v[i]->begin(); r != sample.r[i]->end(); ++r, ++v, ++n) {
+	    part[n].type = types[i];
+	    part[n].r = *r;
+	    part[n].v = *v;
+	}
     }
 
     // update cell lists
@@ -812,11 +803,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::sample(host_sample_type& sample) const
 {
-    typedef host_sample_type sample_type;
-    typedef typename sample_type::position_sample_vector position_sample_vector;
-    typedef typename sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename host_sample_type::position_sample_vector position_sample_vector;
+    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename host_sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename host_sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     for (size_t n = 0, i = 0; n < npart; ++i) {
 	// allocate memory for trajectory sample

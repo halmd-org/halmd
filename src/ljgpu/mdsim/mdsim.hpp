@@ -19,7 +19,6 @@
 #ifndef LJGPU_MDSIM_HPP
 #define LJGPU_MDSIM_HPP
 
-#include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
@@ -213,11 +212,12 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     }
 
     if (!opt["trajectory-sample"].empty()) {
-	int64_t const index = opt["trajectory-sample"].as<int64_t>();
 	// open trajectory input file
 	traj.open(opt["trajectory"].as<std::string>(), trajectory::in);
 	// read trajectory sample and restore system state
-	fluid.state(boost::bind(&trajectory::read<sample_type>, boost::ref(traj), _1, index));
+	host_sample_type sample;
+	traj.read(sample, opt["trajectory-sample"].as<int64_t>());
+	fluid.state(sample, H5param(traj)["mdsim"]["box_length"].as<float_type>());
 	// close trajectory input file
 	traj.close();
     }

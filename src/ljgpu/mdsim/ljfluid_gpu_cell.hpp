@@ -56,7 +56,7 @@ public:
     void cell_occupancy(float_type value);
 
     /** restore system state from phase space sample */
-    void state(sample_visitor visitor);
+    void state(host_sample_type& sample, float_type box);
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
@@ -285,11 +285,11 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::threads(unsigned int value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_cell<dimension> >::state(sample_visitor visitor)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::state(host_sample_type& sample, float_type box)
 {
     cuda::host::vector<float4> h_r(npart);
     cuda::host::vector<gpu_vector_type> h_v(npart);
-    _Base::state(visitor, h_r, h_v);
+    _Base::state(sample, box, h_r, h_v);
 
     cuda::vector<float4> g_r(npart);
     g_r.reserve(dim_.threads());
@@ -429,11 +429,10 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::mdstep()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(host_sample_type& sample) const
 {
-    typedef host_sample_type sample_type;
-    typedef typename sample_type::position_sample_vector position_sample_vector;
-    typedef typename sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename host_sample_type::position_sample_vector position_sample_vector;
+    typedef typename host_sample_type::position_sample_ptr position_sample_ptr;
+    typedef typename host_sample_type::velocity_sample_vector velocity_sample_vector;
+    typedef typename host_sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     static cuda::event ev0, ev1;
     static cuda::stream stream;
