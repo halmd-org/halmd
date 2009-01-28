@@ -51,7 +51,6 @@ public:
 
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	sample.clear();
 	for (size_t i = 0; i < sample_.r.size(); ++i) {
 	    tcf_gpu_sample<T::dimension> s;
 	    // copy shared pointers to global device memory
@@ -77,7 +76,6 @@ public:
 
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	sample.clear();
 	for (size_t i = 0; i < sample_.r.size(); ++i) {
 	    // copy sample to page-locked host memory
 	    cuda::host::vector<gpu_vector_type> r(sample_.r[i]->size());
@@ -109,7 +107,6 @@ public:
 
 	trajectory_sample_type sample_;
 	fluid.sample(sample_);
-	sample.clear();
 	for (size_t i = 0; i < sample_.r.size(); ++i) {
 	    sample_type s;
 	    s.r = sample_ptr(new sample_vector(sample_.r[i]->begin(), sample_.r[i]->end()));

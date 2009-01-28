@@ -181,10 +181,12 @@ template <int dimension>
 template <typename mdsim_backend>
 void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, bool& flush)
 {
+    // empty sample of GPU or host type
+    sample_variant sample(m_sample);
     // copy phase space coordinates and compute spatial Fourier transformation 
     boost::variant<mdsim_backend const&> fluid_(fluid);
-    boost::apply_visitor(tcf_sample_phase_space(), m_sample, fluid_);
-    boost::apply_visitor(tcf_fourier_transform_sample(m_q_vector), m_sample);
+    boost::apply_visitor(tcf_sample_phase_space(), sample, fluid_);
+    boost::apply_visitor(tcf_fourier_transform_sample(m_q_vector), sample);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)
@@ -192,7 +194,7 @@ void correlation<dimension>::sample(mdsim_backend const& fluid, uint64_t step, b
 	if (step % m_block_freq[i])
 	    continue;
 
-	boost::apply_visitor(tcf_block_add_sample(), m_block[i], m_sample);
+	boost::apply_visitor(tcf_block_add_sample(), m_block[i], sample);
 
 	if (boost::apply_visitor(tcf_block_is_full(), m_block[i])) {
 	    autocorrelate_block(i);
