@@ -5,11 +5,10 @@ add_library(sample
   perf.cpp
   trajectory.cpp
   )
-target_link_libraries(sample
-  ${CUDA_LIBRARIES}
-  gpu_tcf
-  )
-
 if(WITH_CUDA)
+  target_link_libraries(sample
+    ${CUDA_LIBRARIES}
+    gpu_tcf
+    )
   add_subdirectory(gpu)
 endif(WITH_CUDA)
