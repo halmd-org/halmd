@@ -228,6 +228,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::state(host_sample_type& sample, flo
     for (size_t i = 0, n = 0; n < npart; ++i) {
 	for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
 	    part[n].type = types[i];
+	    part[n].tag = n;
 	    part[n].r = *r;
 	    part[n].v = *v;
 	}
