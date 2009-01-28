@@ -94,7 +94,7 @@ public:
     void nbl_skin(float value);
 
     /** set system state from phase space sample */
-    void sample(sample_visitor visitor);
+    void state(sample_visitor visitor);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -241,9 +241,9 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(boost::array<unsigned int
  * set system state from phase space sample
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::sample(sample_visitor visitor)
+void ljfluid<ljfluid_impl_host<dimension> >::state(sample_visitor visitor)
 {
-    _Base::sample(visitor);
+    _Base::state(visitor);
 
     unsigned int tag = 0;
     foreach (position_vector const& r, m_sample[particle::A].r) {

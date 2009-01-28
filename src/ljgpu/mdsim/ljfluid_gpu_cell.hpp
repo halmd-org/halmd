@@ -56,7 +56,7 @@ public:
     void cell_occupancy(float_type value);
 
     /** restore system state from phase space sample */
-    void sample(sample_visitor visitor);
+    void state(sample_visitor visitor);
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
@@ -285,11 +285,11 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::threads(unsigned int value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(sample_visitor visitor)
+void ljfluid<ljfluid_impl_gpu_cell<dimension> >::state(sample_visitor visitor)
 {
     cuda::host::vector<float4> h_r(npart);
     cuda::host::vector<gpu_vector_type> h_v(npart);
-    _Base::sample(visitor, h_r, h_v);
+    _Base::state(visitor, h_r, h_v);
 
     cuda::vector<float4> g_r(npart);
     g_r.reserve(dim_.threads());

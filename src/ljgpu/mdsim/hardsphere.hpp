@@ -134,7 +134,7 @@ public:
     void timestep(double value);
 
     /** set system state from phase space sample */
-    void sample(sample_visitor visitor);
+    void state(sample_visitor visitor);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -298,9 +298,9 @@ void hardsphere<hardsphere_impl<dimension> >::timestep(double value)
  * set system state from phase space sample
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::sample(sample_visitor visitor)
+void hardsphere<hardsphere_impl<dimension> >::state(sample_visitor visitor)
 {
-    _Base::sample(visitor);
+    _Base::state(visitor);
 
     for (unsigned int i = 0; i < npart; ++i) {
 	// set periodically reduced particle position at simulation time zero

@@ -109,7 +109,7 @@ protected:
 		   cuda::host::vector<gpu_vector_type>& h_v,
 		   float temp);
     /** restore system state from phase space sample */
-    void sample(sample_visitor visitor,
+    void state(sample_visitor visitor,
 		cuda::host::vector<float4>& h_r,
 		cuda::host::vector<gpu_vector_type>& h_v);
     /** update Lennard-Jones forces */
@@ -551,11 +551,11 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
 }
 
 template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::sample(sample_visitor visitor,
+void ljfluid_gpu_base<ljfluid_impl>::state(sample_visitor visitor,
 					    cuda::host::vector<float4>& h_r,
 					    cuda::host::vector<gpu_vector_type>& h_v)
 {
-    _Base::sample(visitor);
+    _Base::state(visitor);
 
     for (size_t i = 0, j = 0; i < mpart.size(); j += mpart[i++]) {
 	std::copy(m_sample[i].r.begin(), m_sample[i].r.end(), h_r.begin() + j);

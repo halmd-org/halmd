@@ -64,7 +64,7 @@ public:
     void nbl_skin(float value);
 
     /** restore system state from phase space sample */
-    void sample(sample_visitor visitor);
+    void state(sample_visitor visitor);
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
@@ -435,9 +435,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(sample_visitor visitor)
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::state(sample_visitor visitor)
 {
-    _Base::sample(visitor, h_part.r, h_part.v);
+    _Base::state(visitor, h_part.r, h_part.v);
 
     try {
 	cuda::copy(h_part.r, g_part.r, stream_);

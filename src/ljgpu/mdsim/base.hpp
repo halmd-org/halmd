@@ -69,7 +69,7 @@ public:
     /** set periodic box length */
     void box(float_type value);
     /** set system state from phase space sample */
-    void sample(sample_visitor read);
+    void state(sample_visitor read);
 
     /** returns number of particles */
     unsigned int particles() const { return npart; }
@@ -154,7 +154,7 @@ void mdsim_base<mdsim_impl>::box(float_type value)
 }
 
 template <typename mdsim_impl>
-void mdsim_base<mdsim_impl>::sample(mdsim_base<mdsim_impl>::sample_visitor read)
+void mdsim_base<mdsim_impl>::state(mdsim_base<mdsim_impl>::sample_visitor read)
 {
     typedef typename sample_type::uniform_sample uniform_sample;
     typedef typename sample_type::position_vector position_vector;

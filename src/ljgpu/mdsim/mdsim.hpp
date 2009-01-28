@@ -217,7 +217,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
 	// open trajectory input file
 	traj.open(opt["trajectory"].as<std::string>(), trajectory::in);
 	// read trajectory sample and restore system state
-	fluid.sample(boost::bind(&trajectory::read<sample_type>, boost::ref(traj), _1, index));
+	fluid.state(boost::bind(&trajectory::read<sample_type>, boost::ref(traj), _1, index));
 	// close trajectory input file
 	traj.close();
     }
