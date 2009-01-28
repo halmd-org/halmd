@@ -82,6 +82,10 @@ private:
 private:
     /** HDF5 trajectory output file */
     H5::H5File m_file;
+    /** HDF5 data sets */
+    std::vector<H5::DataSet> m_dset_r;
+    std::vector<H5::DataSet> m_dset_v;
+    H5::DataSet m_dset_t;
 };
 
 /**
@@ -162,57 +166,32 @@ void trajectory::read(sample_type& sample, ssize_t index)
 template <typename sample_type>
 void trajectory::write(sample_type const& sample, double time)
 {
-    boost::array<H5::DataSet, 2> dset_r;
-    boost::array<H5::DataSet, 2> dset_v;
-    H5::DataSet dset_t;
-
-    try {
-	H5XX_NO_AUTO_PRINT(H5::FileIException);
-	H5::Group root(m_file.openGroup("trajectory"));
-
-	if (sample[1].r.size()) {
-	    // binary mixture
-	    H5::Group a(root.openGroup("A"));
-	    dset_r[0] = a.openDataSet("r");
-	    dset_v[0] = a.openDataSet("v");
-	    H5::Group b(root.openGroup("B"));
-	    dset_r[1] = b.openDataSet("r");
-	    dset_v[1] = b.openDataSet("v");
-	}
-	else {
-	    dset_r[0] = root.openDataSet("r");
-	    dset_v[0] = root.openDataSet("v");
-	}
-	dset_t = root.openDataSet("t");
-    }
-    catch (H5::FileIException const&) {
+    if (m_dset_r.empty()) {
 	H5::Group root(m_file.createGroup("trajectory"));
+	m_dset_r.reserve(sample.r.size());
+	m_dset_v.reserve(sample.v.size());
 
-	if (sample[1].r.size()) {
-	    // binary mixture
-	    H5::Group a(root.createGroup("A"));
-	    dset_r[0] = create_vector_dataset(a, "r", sample[0].r);
-	    dset_v[0] = create_vector_dataset(a, "v", sample[0].v);
-	    H5::Group b(root.createGroup("B"));
-	    dset_r[1] = create_vector_dataset(b, "r", sample[1].r);
-	    dset_v[1] = create_vector_dataset(b, "v", sample[1].v);
+	for (size_t i = 0; i < sample.r.size(); ++i) {
+	    H5::Group node(root);
+	    if (sample.r.size() > 1) {
+		std::string name;
+		name.push_back('A' + i);
+		node = H5::Group(root.createGroup(name));
+	    }
+	    m_dset_r.push_back(create_vector_dataset(node, "r", *sample.r[i]));
+	    m_dset_v.push_back(create_vector_dataset(node, "v", *sample.v[i]));
 	}
-	else {
-	    dset_r[0] = create_vector_dataset(root, "r", sample[0].r);
-	    dset_v[0] = create_vector_dataset(root, "v", sample[0].v);
-	}
-	dset_t = create_scalar_dataset(root, "t", time);
+	m_dset_t = create_scalar_dataset(root, "t", time);
     }
 
-    write_vector_sample(dset_r[0], sample[0].r);
-    write_vector_sample(dset_v[0], sample[0].v);
+    assert(m_dset_r.size() == sample.r.size());
+    assert(m_dset_v.size() == sample.v.size());
 
-    if (sample[1].r.size()) {
-	write_vector_sample(dset_r[1], sample[1].r);
-	write_vector_sample(dset_v[1], sample[1].v);
+    for (size_t i = 0; i < sample.r.size(); ++i) {
+	write_vector_sample(m_dset_r[i], *sample.r[i]);
+	write_vector_sample(m_dset_v[i], *sample.v[i]);
     }
-
-    write_scalar_sample(dset_t, time);
+    write_scalar_sample(m_dset_t, time);
 }
 
 template <typename sample_type>

@@ -418,7 +418,9 @@ bool mdsim<mdsim_backend>::sample()
 	tcf.sample(fluid, step_, flush);
     }
     if ((tcf.sample(step_) && opt["enable-trajectory"].as<bool>()) || step_ == 0 || step_ == tcf.steps()) {
-	traj.write(fluid.sample(), time_);
+	host_sample_type sample;
+	fluid.sample(sample);
+	traj.write(sample, time_);
     }
     if (step_ == tcf.steps()) {
 	prf.sample(fluid.times());
