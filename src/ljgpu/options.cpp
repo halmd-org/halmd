@@ -527,7 +527,7 @@ options_description<mdsim_impl>::options_description()
 	("disable-energy", po::bool_switch(),
 	 "disable thermal equilibrium properties")
 	("disable-trajectory", po::bool_switch(),
-	 "disable particle trajectories")
+	 "dump only start and end trajectory sample")
 	("dry-run,n", po::bool_switch(),
 	 "test parameters")
 	;
