@@ -426,7 +426,7 @@ void mdsim<mdsim_backend>::sample_fluid()
     }
     // sample trajectory on host
     traj_sample.first = ((tcf.is_trajectory_step(step_) && !opt["disable-trajectory"].as<bool>()) || !step_ || step_ == tcf.steps());
-    if (traj_sample.first || (tcf_sample.first && !mdsim_backend::has_trajectory_gpu_sample::value && opt["tcf-backend"].as<std::string>() == "host")) {
+    if (traj_sample.first || (tcf_sample.first && (!mdsim_backend::has_trajectory_gpu_sample::value || opt["tcf-backend"].as<std::string>() != "gpu"))) {
 	traj_sample.second.clear();
 	fluid.sample(traj_sample.second);
 	tcf_sample.second = traj_sample.second;
