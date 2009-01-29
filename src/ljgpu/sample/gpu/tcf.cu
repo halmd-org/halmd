@@ -215,8 +215,9 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
 template <typename vector_type>
 __device__ vector<dfloat, 2> coherent_scattering_function(vector_type const& r, vector_type const& q)
 {
-    dfloat const r_q = r * q;
-    return vector<dfloat, 2> (cosf(r_q), sinf(r_q));
+    float c, s;
+    sincosf(r * q, &s, &c);
+    return vector<dfloat, 2> (c, s);
 }
 
 }}} // namespace ljgpu::cu::tcf
