@@ -1,4 +1,3 @@
 ljgpu TODO
 ==========
 
-- inspect all CUDA kernels for local memory use

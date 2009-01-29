@@ -157,6 +157,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 template <typename vector_type>
 __device__ dfloat incoherent_scattering_function(vector_type const& r, vector_type const& r0, vector_type const& q)
 {
+    // accurate trigonometric function requires local memory
     return cosf((r - r0) * q);
 }
 
@@ -219,6 +220,7 @@ template <typename vector_type>
 __device__ void coherent_scattering_function(dfloat& real, dfloat& imag, vector_type const& r, vector_type const& q)
 {
     float c, s;
+    // accurate trigonometric function requires local memory
     sincosf(r * q, &s, &c);
     real += c;
     imag += s;
