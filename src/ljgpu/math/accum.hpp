@@ -33,6 +33,9 @@ template <typename T>
 class accumulator
 {
 public:
+    typedef T value_type;
+
+public:
     accumulator() : n_(0), m_(0), v_(0) {}
 
     /**

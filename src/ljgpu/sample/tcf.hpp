@@ -290,19 +290,18 @@ struct self_intermediate_scattering_function
 	typedef typename input_iterator::second_type q_value_iterator;
 	typedef typename q_value_iterator::value_type::const_iterator q_vector_iterator;
 	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
+	typedef typename output_iterator::value_type::value_type::value_type q_value_result_value;
 
 	for (sample_iterator i = first.first; i != last.first; ++i, ++result) {
 	    q_value_result_iterator k = (*result).begin();
 	    for (q_value_iterator j = first.second; j != last.second; ++j, ++k) {
 		for (q_vector_iterator q = (*j).begin(); q != (*j).end(); ++q) {
-		    double value = 0;
-		    size_t count = 0;
+		    q_value_result_value value = 0;
 		    position_iterator r0 = (*first.first)[a].r.begin();
 		    for (position_iterator r = (*i)[b].r.begin(); r != (*i)[b].r.end(); ++r, ++r0) {
-			value += (std::cos((*r - *r0) * (*q)) - value) / (count + 1);
+			value += std::cos((*r - *r0) * (*q));
 		    }
-		    // result is normalised as we computed the average above
-		    *k += value;
+		    *k += value / (*i)[b].r.size();
 		}
 	    }
 	}
