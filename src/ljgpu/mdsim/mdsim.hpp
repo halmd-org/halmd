@@ -596,6 +596,7 @@ void mdsim<mdsim_backend>::param(H5param& param) const
     H5xx::group node(param["mdsim"]);
     node["backend"] = opt["backend"].as<std::string>();
     node["dimension"] = (unsigned int) dimension;
+    node["tcf_backend"] = opt["tcf-backend"].as<std::string>();
 
     node = param["program"];
     node["name"] = PROGRAM_NAME;
