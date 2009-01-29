@@ -161,29 +161,31 @@ __device__ dfloat incoherent_scattering_function(vector_type const& r, vector_ty
 }
 
 template <int threads>
-__device__ void reduce(vector<dfloat, 2>& sum, dfloat s_imag[], dfloat s_real[])
+__device__ void reduce(dfloat& real, dfloat& imag, dfloat s_imag[], dfloat s_real[])
 {
     if (TID < threads) {
-	sum += vector<dfloat, 2>(s_real[TID + threads], s_imag[TID + threads]);
-	s_real[TID] = sum.x;
-	s_imag[TID] = sum.y;
+	real += s_real[TID + threads];
+	imag += s_imag[TID + threads];
+	s_real[TID] = real;
+	s_imag[TID] = imag;
     }
     // no further syncs needed within execution warp of 32 threads
     if (threads >= WARP_SIZE) __syncthreads();
 
-    reduce<threads / 2>(sum, s_real, s_imag);
+    reduce<threads / 2>(real, imag, s_real, s_imag);
 }
 
 template <>
-__device__ void reduce<1>(vector<dfloat, 2>& sum, dfloat s_imag[], dfloat s_real[])
+__device__ void reduce<1>(dfloat& real, dfloat& imag, dfloat s_imag[], dfloat s_real[])
 {
     if (TID < 1) {
-	sum += vector<dfloat, 2>(s_real[TID + 1], s_imag[TID + 1]);
+	real += s_real[TID + 1];
+	imag += s_imag[TID + 1];
     }
 }
 
 template <typename vector_type,
-	  vector<dfloat, 2> (*correlation_function)(vector_type const&, vector_type const&),
+	  void (*correlation_function)(dfloat&, dfloat&, vector_type const&, vector_type const&),
 	  typename coalesced_vector_type,
 	  typename uncoalesced_vector_type>
 __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector_type const q_vector, dfloat* g_real, dfloat* g_imag, uint n)
@@ -191,33 +193,35 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
     __shared__ dfloat s_real[THREADS];
     __shared__ dfloat s_imag[THREADS];
 
-    vector<dfloat, 2> sum = 0;
+    dfloat real = 0;
+    dfloat imag = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	sum += correlation_function(g_in[i], q_vector);
+	correlation_function(real, imag, g_in[i], q_vector);
     }
     // reduced value for this thread
-    s_real[TID] = sum.x;
-    s_imag[TID] = sum.y;
+    s_real[TID] = real;
+    s_imag[TID] = imag;
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2>(sum, s_real, s_imag);
+    reduce<THREADS / 2>(real, imag, s_real, s_imag);
 
     if (TID < 1) {
 	// store block reduced value in global memory
-	g_real[blockIdx.x] = sum.x;
-	g_imag[blockIdx.x] = sum.y;
+	g_real[blockIdx.x] = real;
+	g_imag[blockIdx.x] = imag;
     }
 }
 
 template <typename vector_type>
-__device__ vector<dfloat, 2> coherent_scattering_function(vector_type const& r, vector_type const& q)
+__device__ void coherent_scattering_function(dfloat& real, dfloat& imag, vector_type const& r, vector_type const& q)
 {
     float c, s;
     sincosf(r * q, &s, &c);
-    return vector<dfloat, 2> (c, s);
+    real += c;
+    imag += s;
 }
 
 }}} // namespace ljgpu::cu::tcf
