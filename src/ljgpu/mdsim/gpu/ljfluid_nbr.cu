@@ -87,7 +87,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     // load particle associated with this thread
     vector_type r, v;
     unsigned int tag;
-    (r, tag) = g_r[GTID];
+    unwrap_particle(g_r[GTID], r, tag);
     v = g_v[GTID];
     // particle type in binary mixture
     int const a = (tag >= mpart[0]);
@@ -107,7 +107,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 
 	vector_type r_;
 	unsigned int tag_;
-	(r_, tag_) = tex1Dfetch(tex<dimension>::r, n);
+	unwrap_particle(tex1Dfetch(tex<dimension>::r, n), r_, tag_);
 	// particle type in binary mixture
 	int const b = (tag_ >= mpart[0]);
 
@@ -389,8 +389,8 @@ __global__ void order_particles(unsigned int const* g_index, float4* g_or, T* g_
     // permute particle phase space coordinates
     vector<float, dimension> r;
     unsigned int tag;
-    (r, tag) = tex1Dfetch(tex<dimension>::r, j);
-    g_or[GTID] = (r, tag);
+    unwrap_particle(tex1Dfetch(tex<dimension>::r, j), r, tag);
+    g_or[GTID] = wrap_particle(r, tag);
     g_oR[GTID] = tex1Dfetch(tex<dimension>::R, j);
     g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
     g_otag[GTID] = tag;

@@ -41,7 +41,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     // load particle associated with this thread
     vector_type r, v;
     unsigned int tag;
-    (r, tag) = g_r[GTID];
+    unwrap_particle(g_r[GTID], r, tag);
     v = g_v[GTID];
     // particle type in binary mixture
     int const a = (tag >= mpart[0]);
@@ -57,7 +57,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     for (unsigned int k = 0; k < gridDim.x; k++) {
 	// load positions of particles within block
 	__syncthreads();
-	(s_r[TID], s_tag[TID]) = g_r[k * blockDim.x + TID];
+	unwrap_particle(g_r[k * blockDim.x + TID], s_r[TID], s_tag[TID]);
 	__syncthreads();
 
 	// iterate over all particles within block

@@ -18,7 +18,6 @@
 
 #include <ljgpu/algorithm/gpu/base.cuh>
 #include <ljgpu/math/gpu/dsfun.cuh>
-#include <ljgpu/math/gpu/pack.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 #include <ljgpu/mdsim/gpu/base.hpp>
@@ -62,6 +61,34 @@ __constant__ float rri_smooth;
 __constant__ float thermostat_nu;
 /** heat bath temperature */
 __constant__ float thermostat_temp;
+
+/**
+ * convert particle position and tag to coalesced vector type
+ */
+__device__ float4 wrap_particle(vector<float, 3> const& r, unsigned int tag)
+{
+    return make_float4(r.x, r.y, r.z, __int_as_float(tag));
+}
+
+__device__ float4 wrap_particle(vector<float, 2> const& r, unsigned int tag)
+{
+    return make_float4(r.x, r.y, 0, __int_as_float(tag));
+}
+
+/**
+ * convert coalesced vector type to particle position and tag
+ */
+__device__ void unwrap_particle(float4 const& v, vector<float, 3>& r, unsigned int& tag)
+{
+    r = vector<float, 3>(v.x, v.y, v.z);
+    tag = __float_as_int(v.w);
+}
+
+__device__ void unwrap_particle(float4 const& v, vector<float, 2>& r, unsigned int& tag)
+{
+    r = vector<float, 2>(v.x, v.y);
+    tag = __float_as_int(v.w);
+}
 
 /**
  * first leapfrog step of integration of equations of motion
@@ -185,14 +212,14 @@ __global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
 {
     vector<float, dimension> r, R, v, f;
     unsigned int tag;
-    (r, tag) = g_r[GTID];
+    unwrap_particle(g_r[GTID], r, tag);
     R = g_R[GTID];
     v = g_v[GTID];
     f = g_f[GTID];
 
     leapfrog_half_step(r, R, v, f);
 
-    g_r[GTID] = (r, tag);
+    g_r[GTID] = wrap_particle(r, tag);
     g_R[GTID] = R;
     g_v[GTID] = v;
 }
@@ -219,7 +246,7 @@ __global__ void init_tags(float4* g_r, unsigned int* g_tag)
     if (GTID < npart) {
 	tag = GTID;
     }
-    g_r[GTID] = (r, tag);
+    g_r[GTID] = wrap_particle(r, tag);
     g_tag[GTID] = tag;
 }
 
