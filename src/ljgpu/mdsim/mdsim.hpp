@@ -57,6 +57,8 @@ public:
     typedef typename mdsim_backend::float_type float_type;
     typedef typename mdsim_backend::vector_type vector_type;
     typedef typename mdsim_backend::host_sample_type host_sample_type;
+    typedef typename mdsim_backend::trajectory_sample_type trajectory_sample_type;
+    typedef typename mdsim_backend::trajectory_sample_variant trajectory_sample_variant;
     typedef typename mdsim_backend::energy_sample_type energy_sample_type;
     enum { dimension = mdsim_backend::dimension };
 
@@ -412,7 +414,18 @@ bool mdsim<mdsim_backend>::sample()
 	tep.sample(fluid, fluid.density(), time_);
     }
     if (tcf.sample(step_) && !opt["disable-correlation"].as<bool>()) {
-	tcf.sample(fluid, step_, flush);
+	trajectory_sample_variant sample;
+	if (opt["tcf-backend"].as<std::string>() == "gpu") {
+	    trajectory_sample_type s;
+	    fluid.sample(s);
+	    sample = s;
+	}
+	else {
+	    host_sample_type s;
+	    fluid.sample(s);
+	    sample = s;
+	}
+	tcf.sample(sample, step_, flush);
     }
     if ((tcf.sample(step_) && opt["enable-trajectory"].as<bool>()) || step_ == 0 || step_ == tcf.steps()) {
 	host_sample_type sample;

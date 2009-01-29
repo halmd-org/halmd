@@ -39,42 +39,60 @@ namespace ljgpu {
 class tcf_sample_phase_space : public boost::static_visitor<>
 {
 public:
+    /**
+     * sample from host memory to host memory
+     */
+    template <typename T, int dimension>
+    void operator()(std::vector<tcf_host_sample<dimension> >& sample, std::vector<trajectory_host_sample<T, dimension> > const& sample_) const
+    {
+	typedef std::vector<trajectory_host_sample<T, dimension> > trajectory_sample_type;
+	typedef typename trajectory_sample_type::const_iterator sample_iterator;
+	typedef tcf_host_sample<dimension> sample_type;
+	typedef typename sample_type::sample_vector sample_vector;
+	typedef boost::shared_ptr<sample_vector> sample_ptr;
+
+	for (sample_iterator s = sample_.begin(); s != sample_.end(); ++s) {
+	    sample_ptr r(new sample_vector(s->r->begin(), s->r->end()));
+	    sample_ptr v(new sample_vector(s->v->begin(), s->v->end()));
+	    sample.push_back(sample_type(r, v));
+	}
+    }
+
 #ifdef WITH_CUDA
+    template <int dimension>
+    void operator()(std::vector<tcf_host_sample<dimension> >& sample, std::vector<trajectory_gpu_sample<dimension> > const& sample_) const
+    {
+	throw std::runtime_error("correlation host backend does not support GPU samples");
+    }
+
     /**
      * sample from global device memory to global device memory
      */
-    template <typename T>
-    typename boost::enable_if<typename T::has_trajectory_gpu_sample, void>::type
-    operator()(std::vector<tcf_gpu_sample<T::dimension> >& sample, T const& fluid) const
+    template <int dimension>
+    void operator()(std::vector<tcf_gpu_sample<dimension> >& sample, std::vector<trajectory_gpu_sample<dimension> > const& sample_) const
     {
-	typedef typename T::gpu_sample_type trajectory_sample_type;
-	typedef typename trajectory_sample_type::iterator sample_iterator;
+	typedef std::vector<trajectory_gpu_sample<dimension> > trajectory_sample_type;
+	typedef typename trajectory_sample_type::const_iterator sample_iterator;
 
-	trajectory_sample_type sample_;
-	fluid.sample(sample_);
 	for (sample_iterator s = sample_.begin(); s != sample_.end(); ++s) {
 	    // copy shared global device memory pointers
-	    sample.push_back(tcf_gpu_sample<T::dimension>(s->r, s->v));
+	    sample.push_back(tcf_gpu_sample<dimension>(s->r, s->v));
 	}
     }
 
     /**
      * sample from host memory to global device memory
      */
-    template <typename T>
-    typename boost::disable_if<typename T::has_trajectory_gpu_sample, void>::type
-    operator()(std::vector<tcf_gpu_sample<T::dimension> >& sample, T const& fluid) const
+    template <typename T, int dimension>
+    void operator()(std::vector<tcf_gpu_sample<dimension> >& sample, std::vector<trajectory_host_sample<T, dimension> > const& sample_) const
     {
-	enum { dimension = T::dimension };
-	typedef typename T::host_sample_type trajectory_sample_type;
-	typedef typename trajectory_sample_type::iterator sample_iterator;
+	typedef std::vector<trajectory_host_sample<T, dimension> > trajectory_sample_type;
+	typedef typename trajectory_sample_type::const_iterator sample_iterator;
 	typedef tcf_gpu_sample<dimension> sample_type;
 	typedef typename sample_type::gpu_sample_vector gpu_sample_vector;
 	typedef boost::shared_ptr<gpu_sample_vector> gpu_sample_ptr;
 	typedef typename sample_type::gpu_vector_type gpu_vector_type;
 
-	trajectory_sample_type sample_;
-	fluid.sample(sample_);
 	for (sample_iterator s = sample_.begin(); s != sample_.end(); ++s) {
 	    // copy sample to page-locked host memory
 	    cuda::host::vector<gpu_vector_type> h_r(s->r->begin(), s->r->end());
@@ -88,28 +106,6 @@ public:
 	}
     }
 #endif /* WITH_CUDA */
-
-    /**
-     * sample from host memory to host memory
-     */
-    template <typename T>
-    void operator()(std::vector<tcf_host_sample<T::dimension> >& sample, T const& fluid) const
-    {
-	enum { dimension = T::dimension };
-	typedef typename T::host_sample_type trajectory_sample_type;
-	typedef typename trajectory_sample_type::iterator sample_iterator;
-	typedef tcf_host_sample<dimension> sample_type;
-	typedef typename sample_type::sample_vector sample_vector;
-	typedef boost::shared_ptr<sample_vector> sample_ptr;
-
-	trajectory_sample_type sample_;
-	fluid.sample(sample_);
-	for (sample_iterator s = sample_.begin(); s != sample_.end(); ++s) {
-	    sample_ptr r(new sample_vector(s->r->begin(), s->r->end()));
-	    sample_ptr v(new sample_vector(s->v->begin(), s->v->end()));
-	    sample.push_back(sample_type(r, v));
-	}
-    }
 };
 
 template <typename U>

@@ -22,6 +22,7 @@
 #include <boost/assign.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility.hpp>
+#include <boost/variant.hpp>
 #include <cmath>
 #include <limits>
 #include <ljgpu/mdsim/impl.hpp>
@@ -46,6 +47,8 @@ public:
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::host_sample_type host_sample_type;
+    typedef host_sample_type trajectory_sample_type;
+    typedef boost::variant<host_sample_type> trajectory_sample_variant;
     typedef typename traits_type::energy_sample_type energy_sample_type;
     enum { dimension = traits_type::dimension };
 

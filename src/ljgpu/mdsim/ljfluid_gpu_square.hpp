@@ -41,6 +41,8 @@ public:
     typedef typename _Base::gpu_vector_type gpu_vector_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::gpu_sample_type gpu_sample_type;
+    typedef gpu_sample_type trajectory_sample_type;
+    typedef boost::variant<host_sample_type, gpu_sample_type> trajectory_sample_variant;
     typedef typename _Base::energy_sample_type energy_sample_type;
 
     /** static implementation properties */
