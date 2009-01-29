@@ -62,8 +62,7 @@ public:
     void close();
 
     /** sample thermodynamic equilibrium properties */
-    template <typename mdsim_backend>
-    void sample(mdsim_backend const& fluid, float density, double time);
+    void sample(energy_sample<dimension> const& sample, float density, double time);
 
     /** returns HDF5 parameter group */
     operator H5param() { return m_file; }
@@ -91,13 +90,8 @@ private:
 };
 
 template <int dimension>
-template <typename mdsim_backend>
-void energy<dimension>::sample(mdsim_backend const& fluid, float density, double time)
+void energy<dimension>::sample(energy_sample<dimension> const& sample, float density, double time)
 {
-    // sample thermodynamic equilibrium properties
-    energy_sample<dimension> sample;
-    fluid.sample(sample);
-
     // mean potential energy per particle
     m_en_pot.push_back(scalar_pair(time, sample.en_pot));
     // mean kinetic energy per particle

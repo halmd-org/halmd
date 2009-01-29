@@ -411,7 +411,9 @@ bool mdsim<mdsim_backend>::sample()
 {
     bool flush = false;
     if (tcf.sample(step_) && !opt["disable-energy"].as<bool>()) {
-	tep.sample(fluid, fluid.density(), time_);
+	energy_sample_type sample;
+	fluid.sample(sample);
+	tep.sample(sample, fluid.density(), time_);
     }
     if (tcf.sample(step_) && !opt["disable-correlation"].as<bool>()) {
 	trajectory_sample_variant sample;
