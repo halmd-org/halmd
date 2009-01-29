@@ -85,8 +85,10 @@ private:
     void open();
     /** close HDF5 output files */
     void close();
-    /** sample properties */
-    bool sample();
+    /** aquire fluid sample */
+    void sample_fluid();
+    /** process fluid sample */
+    void sample_functions(bool& flush);
     /** write partial results to HDF5 files and flush to disk */
     void flush();
 
@@ -142,6 +144,12 @@ private:
     count_timer<uint64_t> step_;
     /** current simulation time */
     double time_;
+    /** current trajectory sample */
+    std::pair<bool, host_sample_type> traj_sample;
+    /** current trajectory sample for correlation functions */
+    std::pair<bool, trajectory_sample_variant> tcf_sample;
+    /** current thermodynamic equilibrium properties sample */
+    std::pair<bool, energy_sample_type> tep_sample;
 };
 
 /**
@@ -300,13 +308,17 @@ void mdsim<mdsim_backend>::operator()()
     LOG("starting MD simulation");
     timer.start();
 
+    bool flush_;
     for (step_ = 0; step_ < tcf.steps(); ++step_, time_= step_ * static_cast<double>(fluid.timestep())) {
+	// aquire fluid sample
+	sample_fluid();
 	// stream next MD simulation program step on GPU
-	// FIXME if host sampling -> stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
-
-	// sample properties
-	if (sample()) {
-	    // acquired maximum number of samples for a block level
+	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+	// process fluid sample
+	flush_ = false;
+	sample_functions(flush_);
+	// acquired maximum number of samples for a block level
+	if (flush_) {
 	    flush();
 	    // schedule remaining runtime estimate
 	    step_.clear();
@@ -314,12 +326,8 @@ void mdsim<mdsim_backend>::operator()()
 	    // schedule next disk flush
 	    alarm(FLUSH_TO_DISK_INTERVAL);
 	}
-
-	// stream next MD simulation program step on GPU
-	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 	// synchronize MD simulation program step on GPU
 	fluid.mdstep();
-
 	// check whether a runtime estimate has finished
 	if (step_.estimate() > 0) {
 	    LOG("estimated remaining runtime: " << real_timer::format(step_.estimate()));
@@ -327,7 +335,7 @@ void mdsim<mdsim_backend>::operator()()
 	    // schedule next remaining runtime estimate
 	    step_.set(TIME_ESTIMATE_INTERVAL);
 	}
-
+	// process next signal in signal queue
 	if (signal::poll()) {
 	    if (signal::signal == SIGINT) {
 		LOG_WARNING("trapped signal INT at simulation step " << step_);
@@ -357,9 +365,9 @@ void mdsim<mdsim_backend>::operator()()
 	    }
 	}
     }
-    // sample properties
-    sample();
-
+    sample_fluid();
+    sample_functions(flush_);
+    prf.sample(fluid.times());
     timer.stop();
     LOG("finished MD simulation");
 
@@ -407,37 +415,41 @@ void mdsim<mdsim_backend>::close()
 }
 
 template <typename mdsim_backend>
-bool mdsim<mdsim_backend>::sample()
+void mdsim<mdsim_backend>::sample_fluid()
 {
-    bool flush = false;
-    if (tcf.sample(step_) && !opt["disable-energy"].as<bool>()) {
-	energy_sample_type sample;
+    // sample trajectory on GPU
+    tcf_sample.first = (tcf.is_sample_step(step_) && !opt["disable-correlation"].as<bool>());
+    if (tcf_sample.first && mdsim_backend::has_trajectory_gpu_sample::value && opt["tcf-backend"].as<std::string>() == "gpu") {
+	trajectory_sample_type sample;
 	fluid.sample(sample);
-	tep.sample(sample, fluid.density(), time_);
+	tcf_sample.second = sample;
     }
-    if (tcf.sample(step_) && !opt["disable-correlation"].as<bool>()) {
-	trajectory_sample_variant sample;
-	if (opt["tcf-backend"].as<std::string>() == "gpu") {
-	    trajectory_sample_type s;
-	    fluid.sample(s);
-	    sample = s;
-	}
-	else {
-	    host_sample_type s;
-	    fluid.sample(s);
-	    sample = s;
-	}
-	tcf.sample(sample, step_, flush);
+    // sample trajectory on host
+    traj_sample.first = ((tcf.is_trajectory_step(step_) && !opt["disable-trajectory"].as<bool>()) || !step_ || step_ == tcf.steps());
+    if (traj_sample.first || (tcf_sample.first && !mdsim_backend::has_trajectory_gpu_sample::value && opt["tcf-backend"].as<std::string>() == "host")) {
+	traj_sample.second.clear();
+	fluid.sample(traj_sample.second);
+	tcf_sample.second = traj_sample.second;
     }
-    if ((tcf.sample(step_) && opt["enable-trajectory"].as<bool>()) || step_ == 0 || step_ == tcf.steps()) {
-	host_sample_type sample;
-	fluid.sample(sample);
-	traj.write(sample, time_);
+    // sample thermodynamic equilibrium properties
+    tep_sample.first = (tcf.is_sample_step(step_) && !opt["disable-energy"].as<bool>());
+    if (tep_sample.first) {
+	fluid.sample(tep_sample.second);
     }
-    if (step_ == tcf.steps()) {
-	prf.sample(fluid.times());
+}
+
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::sample_functions(bool& flush)
+{
+    if (tcf_sample.first) {
+	tcf.sample(tcf_sample.second, step_, flush);
     }
-    return flush;
+    if (traj_sample.first) {
+	traj.write(traj_sample.second, time_);
+    }
+    if (tep_sample.first) {
+	tep.sample(tep_sample.second, fluid.density(), time_);
+    }
 }
 
 template <typename mdsim_backend>
@@ -446,9 +458,7 @@ void mdsim<mdsim_backend>::flush()
     if (!opt["disable-correlation"].as<bool>()) {
 	tcf.flush();
     }
-    if (opt["enable-trajectory"].as<bool>()) {
-	traj.flush();
-    }
+    traj.flush();
     if (!opt["disable-energy"].as<bool>()) {
 	tep.flush();
     }

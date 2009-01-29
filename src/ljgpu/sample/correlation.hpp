@@ -114,7 +114,9 @@ public:
     /** write parameters to HDF5 parameter group */
     void param(H5::Group const& param) const;
     /** check if sample is acquired for given simulation step */
-    bool sample(int64_t step) const;
+    bool is_sample_step(int64_t step) const;
+    /** whether to sample trajectory for given simulation step */
+    bool is_trajectory_step(int64_t step) const;
     /** sample time correlation functions */
     template <typename trajectory_sample_variant>
     void sample(trajectory_sample_variant const& sample_, uint64_t step, bool& flush);
@@ -210,6 +212,29 @@ void correlation<dimension>::sample(trajectory_sample_variant const& sample_, ui
 	    }
 	}
     }
+}
+
+/**
+ * check if sample is acquired for given simulation step
+ */
+template <int dimension>
+bool correlation<dimension>::is_sample_step(int64_t step) const
+{
+    for (unsigned int i = 0; i < m_block_count; ++i) {
+	if ((m_block_samples[i] < m_max_samples) && !(step % m_block_freq[i])) {
+	    return true;
+	}
+    }
+    return false;
+}
+
+/**
+ * whether to sample trajectory for given simulation step
+ */
+template <int dimension>
+bool correlation<dimension>::is_trajectory_step(int64_t step) const
+{
+    return !(step % m_block_freq[m_block_count - 1]);
 }
 
 } // namespace ljgpu

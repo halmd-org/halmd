@@ -526,8 +526,8 @@ options_description<mdsim_impl>::options_description()
 	 "disable correlation functions")
 	("disable-energy", po::bool_switch(),
 	 "disable thermal equilibrium properties")
-	("enable-trajectory", po::bool_switch(),
-	 "dump particle trajectories")
+	("disable-trajectory", po::bool_switch(),
+	 "disable particle trajectories")
 	("dry-run,n", po::bool_switch(),
 	 "test parameters")
 	;

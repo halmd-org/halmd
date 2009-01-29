@@ -294,28 +294,6 @@ void correlation<dimension>::param(H5::Group const& param) const
 }
 
 /**
- * check if sample is acquired for given simulation step
- */
-template <int dimension>
-bool correlation<dimension>::sample(int64_t step) const
-{
-    static bool _value = false;
-    static int64_t _step = -1;
-
-    if (_step != step) {
-	_value = false;
-	_step = step;
-	for (unsigned int i = 0; i < m_block_count; ++i) {
-	    if ((m_block_samples[i] < m_max_samples) && !(step % m_block_freq[i])) {
-		_value = true;
-		break;
-	    }
-	}
-    }
-    return _value;
-}
-
-/**
  * compute lattice points in first octant on surface of 3-dimensional spheres
  */
 template <int dimension>
