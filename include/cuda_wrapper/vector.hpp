@@ -21,7 +21,7 @@
 
 #include <algorithm>
 #include <cuda_wrapper/allocator.hpp>
-#include <cuda_wrapper/memory.hpp>
+#include <cuda_wrapper/copy.hpp>
 #include <vector>
 
 
