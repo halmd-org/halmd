@@ -20,9 +20,11 @@
 #include <algorithm>
 #include <boost/array.hpp>
 #include <boost/assign.hpp>
+#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/multi_array.hpp>
+#include <boost/unordered_map.hpp>
 #include <fstream>
 #include <iostream>
 #include <ljgpu/options.hpp>
@@ -369,6 +371,11 @@ void options::parse(po::options_description const& opt)
 		po::store(po::parse_config_file(ifs, opt), vm);
 	    }
 	}
+
+	// parse environment variables
+	typedef boost::unordered_map<std::string, std::string> env_map;
+	env_map env = boost::assign::map_list_of("CUDA_DEVICE", "device");
+	po::store(po::parse_environment(opt, boost::bind(&env_map::operator[], boost::ref(env), _1)), vm);
     }
     catch (exception const& e) {
 	cerr << PROGRAM_NAME ": " << e.what() << "\n";
