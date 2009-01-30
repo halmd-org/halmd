@@ -31,6 +31,7 @@
 
 #ifndef __CUDACC__
 #include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/context.hpp>
 #include <cuda_wrapper/device.hpp>
 #include <cuda_wrapper/thread.hpp>
 #include <cuda_wrapper/event.hpp>
