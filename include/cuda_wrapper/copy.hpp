@@ -1,4 +1,4 @@
-/* CUDA memory management functions
+/* CUDA memcpy functions
  *
  * Copyright (C) 2008  Peter Colberg
  *
@@ -16,13 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_WRAPPER_MEMORY_HPP
-#define CUDA_WRAPPER_MEMORY_HPP
+#ifndef CUDA_WRAPPER_COPY_HPP
+#define CUDA_WRAPPER_COPY_HPP
 
 #include <assert.h>
 #include <boost/array.hpp>
 #include <cuda/cuda_runtime.h>
 #include <cuda_wrapper/host/vector.hpp>
+#include <cuda_wrapper/stream.hpp>
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/vector.hpp>
 #include <vector>
@@ -309,4 +310,4 @@ void memset(vector<T>& array, int const& value)
 
 } // namespace cuda
 
-#endif /* ! CUDA_WRAPPER_MEMORY_HPP */
+#endif /* ! CUDA_WRAPPER_COPY_HPP */

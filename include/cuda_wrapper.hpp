@@ -30,17 +30,18 @@
  */
 
 #ifndef __CUDACC__
-#include <cuda_wrapper/error.hpp>
-#include <cuda_wrapper/context.hpp>
-#include <cuda_wrapper/device.hpp>
-#include <cuda_wrapper/thread.hpp>
-#include <cuda_wrapper/event.hpp>
-#include <cuda_wrapper/stream.hpp>
-#include <cuda_wrapper/memory.hpp>
 #include <cuda_wrapper/allocator.hpp>
-#include <cuda_wrapper/vector.hpp>
+#include <cuda_wrapper/context.hpp>
+#include <cuda_wrapper/copy.hpp>
+#include <cuda_wrapper/device.hpp>
+#include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/event.hpp>
 #include <cuda_wrapper/host/allocator.hpp>
 #include <cuda_wrapper/host/vector.hpp>
+#include <cuda_wrapper/mem.hpp>
+#include <cuda_wrapper/stream.hpp>
+#include <cuda_wrapper/thread.hpp>
+#include <cuda_wrapper/vector.hpp>
 #endif /* ! __CUDACC__ */
 
 /*
