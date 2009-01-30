@@ -30,6 +30,7 @@
 #include <ljgpu/options.hpp>
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/version.h>
+#include <sched.h>
 using namespace boost;
 using namespace std;
 
@@ -90,6 +91,19 @@ int main(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
+	// bind process to CPU core(s)
+	if (!opt["processor"].empty()) {
+	    cpu_set_t mask;
+	    CPU_ZERO(&mask);
+	    BOOST_FOREACH(int cpu, opt["processor"].as<std::vector<int> >()) {
+		LOG("adding CPU core " << cpu << " to process CPU affinity mask");
+		CPU_SET(cpu, &mask);
+	    }
+	    if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &mask)) {
+		throw std::logic_error("failed to set process CPU affinity mask");
+	    }
+	}
+
 	// run MD simulation
 	mdlib.mdsim(opt);
 #ifdef NDEBUG
