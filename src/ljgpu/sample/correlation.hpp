@@ -75,10 +75,12 @@ public:
     void time(double value, float timestep);
     /** set sample rate for lowest block level */
     void sample_rate(unsigned int sample_rate);
-    /** set block size */
-    void block_size(unsigned int value);
     /** set maximum number of samples per block */
     void max_samples(uint64_t value);
+    /** set minimum number of samples per block */
+    void min_samples(uint64_t value);
+    /** set block size */
+    void block_size(unsigned int value);
     /** set q-vectors for spatial Fourier transformation */
     void q_values(std::vector<float> const& values, float error, float box);
 #ifdef WITH_CUDA
@@ -94,14 +96,16 @@ public:
     double time() const { return m_time; }
     /** returns sample rate for lowest block level */
     unsigned int sample_rate() const { return m_sample_rate; }
+    /** returns maximum number of samples per block */
+    uint64_t max_samples() const { return m_max_samples; }
+    /** returns minimum number of samples per block */
+    uint64_t min_samples() const { return m_min_samples; }
     /** returns block size */
     unsigned int block_size() const { return m_block_size; }
     /** returns block shift */
     unsigned int block_shift() const { return m_block_shift; }
     /** returns block count */
     unsigned int block_count() const { return m_block_count; }
-    /** returns maximum number of samples per block */
-    uint64_t max_samples() const { return m_max_samples; }
     /** returns number of wave vectors */
     unsigned int q_values() { return m_q_vector.size(); }
 
@@ -163,6 +167,8 @@ private:
     block_time_type m_block_time;
     /** maximum number of correlation samples per block */
     uint64_t m_max_samples;
+    /** minimum number of correlation samples per block */
+    uint64_t m_min_samples;
     /** q values for spatial Fourier transformation */
     q_value_vector m_q_value;
     /** q vectors for spatial Fourier transformation */

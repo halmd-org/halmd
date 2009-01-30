@@ -253,10 +253,12 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
     }
     // set sample rate for lowest block level
     tcf.sample_rate(opt["sample-rate"].as<unsigned int>());
-    // set block size
-    tcf.block_size(opt["block-size"].as<unsigned int>());
+    // set minimum number of samples per block
+    tcf.min_samples(opt["min-samples"].as<uint64_t>());
     // set maximum number of samples per block
     tcf.max_samples(opt["max-samples"].as<uint64_t>());
+    // set block size
+    tcf.block_size(opt["block-size"].as<unsigned int>());
 
     std::vector<float> q;
     if (!opt["q-values"].empty()) {

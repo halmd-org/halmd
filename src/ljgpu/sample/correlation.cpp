@@ -72,6 +72,26 @@ void correlation<dimension>::sample_rate(unsigned int sample_rate)
 }
 
 /**
+ * set maximum number of samples per block
+ */
+template <int dimension>
+void correlation<dimension>::max_samples(uint64_t value)
+{
+    m_max_samples = value;
+    LOG("maximum number of samples per block: " << m_max_samples);
+}
+
+/**
+ * set minimum number of samples per block
+ */
+template <int dimension>
+void correlation<dimension>::min_samples(uint64_t value)
+{
+    m_min_samples = value;
+    LOG("minimum number of samples per block: " << m_min_samples);
+}
+
+/**
  * set block size
  */
 template <int dimension>
@@ -88,14 +108,19 @@ void correlation<dimension>::block_size(unsigned int value)
 	throw exception("computed block shift is less than 2, larger block size required");
     }
 
-    // derive block count from block size and block shift
+    // derive block count and sample frequencies from block size and block shift
     m_block_count = 0;
-    for (uint64_t n = m_block_size; n <= m_steps; n *= m_block_size) {
-	m_block_count++;
-	if ((n * m_block_shift) > m_steps) {
-	    break;
+    for (uint64_t n = m_sample_rate, m = n * m_block_shift; ; ++m_block_count) {
+	if (m_block_count % 2) {
+	    if ((m_steps / m) < m_min_samples) break;
+	    m_block_freq.push_back(m);
+	    m *= m_block_size;
 	}
-	m_block_count ++;
+	else {
+	    if ((m_steps / n) < m_min_samples) break;
+	    m_block_freq.push_back(n);
+	    n *= m_block_size;
+	}
     }
     LOG("block count: " << m_block_count);
     if (!m_block_count) {
@@ -103,18 +128,6 @@ void correlation<dimension>::block_size(unsigned int value)
     }
 
     m_block_samples.resize(m_block_count, 0);
-
-    // calculate phase sample frequencies
-    for (uint64_t i = 0, n = m_sample_rate, m = n * m_block_shift; i < m_block_count; ++i) {
-	if (i % 2) {
-	    m_block_freq.push_back(m);
-	    m *= m_block_size;
-	}
-	else {
-	    m_block_freq.push_back(n);
-	    n *= m_block_size;
-	}
-    }
 
     // compute block time intervals
     m_block_time.resize(boost::extents[m_block_count][m_block_size]);
@@ -126,19 +139,6 @@ void correlation<dimension>::block_size(unsigned int value)
 		m_block_time[i][j] *= m_block_shift;
 	    }
 	}
-    }
-}
-
-/**
- * set maximum number of samples per block
- */
-template <int dimension>
-void correlation<dimension>::max_samples(uint64_t value)
-{
-    m_max_samples = value;
-    LOG("maximum number of samples per block: " << m_max_samples);
-    if (m_max_samples < m_block_size) {
-	throw exception("maximum number of samples must not be smaller than block size");
     }
 }
 
@@ -289,6 +289,7 @@ void correlation<dimension>::param(H5::Group const& param) const
     node["block_shift"] = m_block_shift;
     node["block_count"] = m_block_count;
     node["max_samples"] = m_max_samples;
+    node["min_samples"] = m_min_samples;
     node["q_values"] = m_q_value;
     node["q_error"] = m_q_error;
 }

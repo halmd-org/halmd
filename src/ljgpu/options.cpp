@@ -451,6 +451,8 @@ void options::parse(po::options_description const& opt)
 		      vm_["block-size"]);
 	    po::store(po::parse_attribute<uint64_t>(node, "max_samples"),
 		      vm_["max-samples"]);
+	    po::store(po::parse_attribute<uint64_t>(node, "min_samples"),
+		      vm_["min-samples"]);
 	    po::store(po::parse_attribute<boost::multi_array<float, 1> >(node, "q_values"),
 		      vm_["q-values"]);
 	    po::store(po::parse_attribute<float>(node, "q_error"),
@@ -513,6 +515,8 @@ options_description<mdsim_impl>::options_description()
 	 "block size")
 	("max-samples", po::value<uint64_t>()->default_value(10000),
 	 "maximum number of samples per block")
+	("min-samples", po::value<uint64_t>()->default_value(100),
+	 "minimum number of samples per block")
 	("q-values", po::value<boost::multi_array<float, 1> >(),
 	 "wave vector value(s) for correlation functions")
 	("q-error", po::value<float>()->default_value(0.001),
