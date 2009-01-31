@@ -397,6 +397,8 @@ void options::parse(po::options_description const& opt)
 	po::dependent_option(vm, "discard-velocities", "trajectory-sample");
 	po::dependent_option(vm, "thermostat", "temperature");
 	po::conflicting_options(vm, "binary", "particles");
+	po::conflicting_options(vm, "disable-correlation", "q-values");
+	po::conflicting_options(vm, "disable-correlation", "q-error");
     }
     catch (exception const& e) {
 	cerr << PROGRAM_NAME ": " << e.what() << "\n";
