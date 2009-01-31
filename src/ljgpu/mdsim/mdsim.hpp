@@ -453,7 +453,7 @@ bool mdsim<mdsim_backend>::sample_properties(uint64_t step)
     if (m_is_en_step) {
 	m_en.sample(m_en_sample, m_fluid.density(), time);
     }
-    if (flush || step == m_corr.steps()) {
+    if (step == m_corr.steps()) {
 	m_perf.sample(m_fluid.times());
     }
     return flush;
@@ -500,6 +500,7 @@ void mdsim<mdsim_backend>::flush()
 	m_en.flush();
     }
     if (m_perf.is_open()) {
+	m_perf.sample(m_fluid.times());
 	m_perf.flush();
     }
     LOG("flushed HDF5 buffers to disk");
