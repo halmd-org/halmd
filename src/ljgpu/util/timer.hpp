@@ -103,10 +103,11 @@ public:
     /**
      * initialize iterator variable and schedule timer
      */
-    count_timer(T const& i = T()) : m_start(-1), m_stop(-1), m_count(i), m_time(0)
-    {
-	m_start = time(NULL) + W;
-    }
+    count_timer(T const& i = T()) :
+	m_start(time(NULL) + W),
+	m_stop(-1),
+	m_count(i),
+	m_time(0) {}
 
     /**
      * schedule timer after given time interval in seconds
@@ -114,6 +115,8 @@ public:
     void set(time_t wait = W)
     {
 	m_start = time(NULL) + wait;
+	m_stop = -1;
+	m_time = 0;
     }
 
     /**

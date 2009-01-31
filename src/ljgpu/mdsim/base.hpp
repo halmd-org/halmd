@@ -81,7 +81,8 @@ public:
     /** returns and resets CPU or GPU time accumulators */
     perf::counters times();
 
-    mixture_type mixture() const { return mixture_ ; }
+    mixture_type mixture() const { return mixture_; }
+    bool is_binary () const { return mixture_ == BINARY; }
 
 protected:
     /** write parameters to HDF5 parameter group */

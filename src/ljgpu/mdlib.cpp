@@ -53,10 +53,17 @@ _mdsim(options const& opt)
     LOG("CUDA device minor revision: " << prop.minor());
     LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 
-    mdsim<mdsim_backend > md(opt);
+    mdsim<mdsim_backend> md(opt);
     LOG("GPU allocated global device memory: " << cuda::mem::used() << " bytes");
     LOG("GPU available global device memory: " << cuda::mem::free() << " bytes");
     LOG("GPU total global device memory: " << cuda::mem::total() << " bytes");
+
+    if (opt["dry-run"].as<bool>()) {
+	return;
+    }
+    if (opt["daemon"].as<bool>()) {
+	daemon(0, 0);
+    }
 
     md();
 }
@@ -66,7 +73,15 @@ template <typename mdsim_backend>
 static typename boost::disable_if<typename mdsim_backend::has_gpu, void>::type
 _mdsim(options const& opt)
 {
-    mdsim<mdsim_backend > md(opt);
+    mdsim<mdsim_backend> md(opt);
+
+    if (opt["dry-run"].as<bool>()) {
+	return;
+    }
+    if (opt["daemon"].as<bool>()) {
+	daemon(0, 0);
+    }
+
     md();
 }
 

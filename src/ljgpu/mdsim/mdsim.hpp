@@ -19,7 +19,9 @@
 #ifndef LJGPU_MDSIM_HPP
 #define LJGPU_MDSIM_HPP
 
+#include <boost/assign.hpp>
 #include <boost/multi_array.hpp>
+#include <boost/unordered_map.hpp>
 #include <fstream>
 #include <iostream>
 #include <ljgpu/mdsim/impl.hpp>
@@ -59,303 +61,341 @@ public:
     enum { dimension = mdsim_backend::dimension };
 
 public:
-    enum {
-	/** HDF5 buffers flush to disk interval in seconds */
-	FLUSH_TO_DISK_INTERVAL = 900,
-	/** waiting time in seconds before runtime estimate after block completion */
-	TIME_ESTIMATE_WAIT_AFTER_BLOCK = 300,
-	/** runtime estimate interval in seconds */
-	TIME_ESTIMATE_INTERVAL = 1800,
-    };
-
-public:
-    /** initialize MD simulation program */
+    /** initialise MD simulation */
     mdsim(options const& opt);
-    /** run MD simulation program */
+    /** run MD simulation */
     void operator()();
     /** write parameters to HDF5 parameter group */
-    void param(H5param& param) const;
+    void param(H5param param) const;
 
 private:
+    /** aquire fluid sample */
+    void sample_fluid(uint64_t step);
+    /** process fluid sample */
+    bool sample_properties(uint64_t step);
     /** open HDF5 output files */
     void open();
-    /** close HDF5 output files */
-    void close();
-    /** aquire fluid sample */
-    void sample_fluid();
-    /** process fluid sample */
-    void sample_functions(bool& flush);
     /** write partial results to HDF5 files and flush to disk */
     void flush();
+    /** close HDF5 output files */
+    void close();
+    /** obtain integer seed from file */
+    static unsigned int read_random_seed(std::string const& fn);
 
     /** backend-specific API wrappers */
-    void epsilon(boost::true_type const&);
-    void sigma(boost::true_type const&);
-    void cutoff_radius(boost::true_type const&);
-    void potential_smoothing(boost::true_type const&);
-    void pair_separation(boost::true_type const&);
-    void cell_occupancy(boost::true_type const&);
-    void nbl_skin(boost::true_type const&);
-    void init_cells(boost::true_type const&);
-    void init_event_list(boost::true_type const&);
-    void threads(boost::true_type const&);
-    void thermostat(boost::true_type const&);
-    void stream(boost::true_type const&);
-
     void epsilon(boost::false_type const&) {}
+    void epsilon(boost::true_type const&)
+    {
+	if (!m_opt["binary"].empty() && m_opt["particles"].defaulted()) {
+	    m_fluid.epsilon(m_opt["epsilon"].as<boost::array<float, 3> >());
+	}
+    }
+
     void sigma(boost::false_type const&) {}
+    void sigma(boost::true_type const&)
+    {
+	if (!m_opt["binary"].empty() && m_opt["particles"].defaulted()) {
+	    m_fluid.sigma(m_opt["sigma"].as<boost::array<float, 3> >());
+	}
+    }
+
     void cutoff_radius(boost::false_type const&) {}
+    void cutoff_radius(boost::true_type const&)
+    {
+	m_fluid.cutoff_radius(m_opt["cutoff"].as<float>());
+    }
+
     void potential_smoothing(boost::false_type const&) {}
+    void potential_smoothing(boost::true_type const&)
+    {
+	if (!m_opt["smooth"].empty()) {
+	    m_fluid.potential_smoothing(m_opt["smooth"].as<float>());
+	}
+    }
+
     void pair_separation(boost::false_type const&) {}
+    void pair_separation(boost::true_type const&)
+    {
+	m_fluid.pair_separation(m_opt["pair-separation"].as<float>());
+    }
+
     void cell_occupancy(boost::false_type const&) {}
+    void cell_occupancy(boost::true_type const&)
+    {
+	m_fluid.cell_occupancy(m_opt["cell-occupancy"].as<float>());
+    }
+
     void nbl_skin(boost::false_type const&) {}
-    void init_cells(boost::false_type const&) {}
-    void init_event_list(boost::false_type const&) {}
+    void nbl_skin(boost::true_type const&)
+    {
+	m_fluid.nbl_skin(m_opt["skin"].as<float>());
+    }
+
     void threads(boost::false_type const&) {}
+    void threads(boost::true_type const&)
+    {
+	m_fluid.threads(m_opt["threads"].as<unsigned int>());
+    }
+
+    void init_cells(boost::false_type const&) {}
+    void init_cells(boost::true_type const&)
+    {
+	m_fluid.init_cells();
+    }
+
+    void init_event_list(boost::false_type const&) {}
+    void init_event_list(boost::true_type const&)
+    {
+	m_fluid.init_event_list();
+    }
+
     void thermostat(boost::false_type const&) {}
+    void thermostat(boost::true_type const&)
+    {
+	if (!m_opt["thermostat"].empty()) {
+	    float const nu = m_opt["thermostat"].as<float>();
+	    float const temp = m_opt["temperature"].as<float>();
+	    m_fluid.thermostat(nu, temp);
+	}
+    }
+
     void stream(boost::false_type const&) {}
+    void stream(boost::true_type const&)
+    {
+	m_fluid.stream();
+    }
 
 private:
     /** program options */
-    options const& opt;
+    options const& m_opt;
     /** Lennard-Jones fluid simulation */
-    mdsim_backend fluid;
-    /** block correlations */
-    correlation<dimension> tcf;
-    /**  trajectory file writer */
-    trajectory traj;
-    /** thermodynamic equilibrium properties */
-    energy<dimension> tep;
-    /** performance data */
-    perf prf;
+    mdsim_backend m_fluid;
 
-    /** current MD step */
-    count_timer<uint64_t> step_;
-    /** current simulation time */
-    double time_;
-    /** current trajectory sample */
-    std::pair<bool, host_sample_type> traj_sample;
-    /** current trajectory sample for correlation functions */
-    std::pair<bool, trajectory_sample_variant> tcf_sample;
-    /** current thermodynamic equilibrium properties sample */
-    std::pair<bool, energy_sample_type> tep_sample;
+    /** block correlations */
+    correlation<dimension> m_corr;
+    /**  trajectory file writer */
+    trajectory m_traj;
+    /** thermodynamic equilibrium properties */
+    energy<dimension> m_en;
+    /** performance data */
+    perf m_perf;
+
+    /** trajectory sample */
+    host_sample_type m_traj_sample;
+    /** trajectory sample for correlation functions */
+    trajectory_sample_variant m_corr_sample;
+    /** thermodynamic equilibrium properties sample */
+    energy_sample_type m_en_sample;
+
+    bool m_is_traj_step;
+    bool m_is_corr_step;
+    bool m_is_en_step;
+    bool m_is_corr_sample_gpu;
 };
 
 /**
- * initialize MD simulation program
+ * initialise MD simulation
  */
 template <typename mdsim_backend>
-mdsim<mdsim_backend>::mdsim(options const& opt) : opt(opt)
+mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 {
     LOG("positional coordinates dimension: " << dimension);
 
-    // set Lennard-Jones or hard-sphere system parameters
-    if (!opt["binary"].empty() && opt["particles"].defaulted()) {
-	fluid.particles(opt["binary"].as<boost::array<unsigned int, 2> >());
+    // number of particles in periodic simulation box
+    if (!m_opt["binary"].empty() && m_opt["particles"].defaulted()) {
+	m_fluid.particles(m_opt["binary"].as<boost::array<unsigned int, 2> >());
     }
     else {
-	fluid.particles(opt["particles"].as<unsigned int>());
+	m_fluid.particles(m_opt["particles"].as<unsigned int>());
     }
-    if (opt["density"].defaulted() && !opt["box-length"].empty()) {
-	fluid.box(opt["box-length"].as<float>());
+    if (m_opt["density"].defaulted() && !m_opt["box-length"].empty()) {
+	// periodic simulation box length
+	m_fluid.box(m_opt["box-length"].as<float>());
     }
     else {
-	fluid.density(opt["density"].as<float>());
+	// number density
+	m_fluid.density(m_opt["density"].as<float>());
     }
-    fluid.timestep(opt["timestep"].as<float>());
+    // simulation timestep
+    m_fluid.timestep(m_opt["timestep"].as<float>());
 
+    // potential well depths
     epsilon(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    // collision diameters
     sigma(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    // potential cutoff radius
     cutoff_radius(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    // potential smoothing function scale parameter
     potential_smoothing(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    // pair separation at which particle collision occurs
     pair_separation(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
+    // desired average cell occupancy
     cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_cell<dimension>, impl_type>());
     cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
+    // neighbour list skin
     nbl_skin(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
-    threads(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
-
     nbl_skin(boost::is_base_of<ljfluid_impl_host<dimension>, impl_type>());
+    // number of CUDA execution threads
+    threads(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+    // initialise hard-sphere cell lists
     init_cells(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
+    // heat bath collision probability and temperature
     thermostat(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
 
-    // initialize random number generator with seed
-    if (opt["random-seed"].empty()) {
-	LOG("obtaining 32-bit integer seed from /dev/random");
-	unsigned int seed;
-	try {
-	    std::ifstream rand;
-	    rand.exceptions(std::ifstream::eofbit|std::ifstream::failbit|std::ifstream::badbit);
-	    rand.open("/dev/random");
-	    rand.read(reinterpret_cast<char*>(&seed), sizeof(seed));
-	    rand.close();
-	}
-	catch (std::ifstream::failure const& e) {
-	    throw std::logic_error(std::string("failed to read from /dev/random: ") + e.what());
-	}
-	fluid.rng(seed);
+    if (m_opt["random-seed"].empty()) {
+	m_fluid.rng(read_random_seed("/dev/random"));
     }
     else {
-	fluid.rng(opt["random-seed"].as<unsigned int>());
+	m_fluid.rng(m_opt["random-seed"].as<unsigned int>());
     }
 
-    if (!opt["trajectory-sample"].empty()) {
-	// open trajectory input file
-	traj.open(opt["trajectory"].as<std::string>(), trajectory::in);
-	// read trajectory sample and restore system state
-	host_sample_type sample;
-	traj.read(sample, opt["trajectory-sample"].as<int64_t>());
-	fluid.state(sample, H5param(traj)["mdsim"]["box_length"].as<float_type>());
-	// close trajectory input file
-	traj.close();
+    if (!m_opt["trajectory-sample"].empty()) {
+	// read trajectory sample and periodic simulation box length
+	m_traj.open(m_opt["trajectory"].as<std::string>(), trajectory::in);
+	m_traj.read(m_traj_sample, m_opt["trajectory-sample"].as<int64_t>());
+	float box = H5param(m_traj)["mdsim"]["box_length"].as<float>();
+	m_traj.close();
+	// restore system state
+	m_fluid.state(m_traj_sample, box);
+	m_traj_sample.clear();
     }
     else {
 	// arrange particles on a face-centered cubic (fcc) lattice
-	fluid.lattice();
+	m_fluid.lattice();
     }
 
-    if (opt["trajectory-sample"].empty() || opt["discard-velocities"].as<bool>()) {
-	// set system temperature according to Maxwell-Boltzmann distribution
-	fluid.temperature(opt["temperature"].as<float>());
+    if (m_opt["trajectory-sample"].empty() || m_opt["discard-velocities"].as<bool>()) {
+	// initialise velocities from Maxwell-Boltzmann distribution
+	m_fluid.temperature(m_opt["temperature"].as<float>());
     }
-    // initialize event list
+    // initialise hard-sphere event list
     init_event_list(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
-    if (opt["steps"].defaulted() && !opt["time"].empty()) {
-	// set total simulation time
-	tcf.time(opt["time"].as<float>(), fluid.timestep());
+    if (m_opt["steps"].defaulted() && !m_opt["time"].empty()) {
+	// total simulation time
+	m_corr.time(m_opt["time"].as<float>(), m_fluid.timestep());
     }
     else {
-	// set total number of simulation steps
-	tcf.steps(opt["steps"].as<uint64_t>(), fluid.timestep());
+	// total number of simulation steps
+	m_corr.steps(m_opt["steps"].as<uint64_t>(), m_fluid.timestep());
     }
-    // set sample rate for lowest block level
-    tcf.sample_rate(opt["sample-rate"].as<unsigned int>());
-    // set minimum number of samples per block
-    tcf.min_samples(opt["min-samples"].as<uint64_t>());
-    // set maximum number of samples per block
-    tcf.max_samples(opt["max-samples"].as<uint64_t>());
-    // set block size
-    tcf.block_size(opt["block-size"].as<unsigned int>());
+    // sample rate for lowest block level
+    m_corr.sample_rate(m_opt["sample-rate"].as<unsigned int>());
+    // minimum number of samples per block
+    m_corr.min_samples(m_opt["min-samples"].as<uint64_t>());
+    // maximum number of samples per block
+    m_corr.max_samples(m_opt["max-samples"].as<uint64_t>());
+    // block size
+    m_corr.block_size(m_opt["block-size"].as<unsigned int>());
 
-    std::vector<float> q;
-    if (!opt["q-values"].empty()) {
-	boost::multi_array<float, 1> v = opt["q-values"].as<boost::multi_array<float, 1> >();
-	q.assign(v.begin(), v.end());
-    }
-    else {
-	// static structure factor peak at q ~ 2pi/sigma
-	q.push_back(2 * M_PI);
-    }
-    tcf.q_values(q, opt["q-error"].as<float>(), fluid.box());
+    if (!m_opt["disable-correlation"].as<bool>()) {
+	std::vector<float> q;
+	if (m_opt["q-values"].empty()) {
+	    // static structure factor peak at q ~ 2pi/sigma
+	    q.push_back(2 * M_PI);
+	}
+	else {
+	    typedef boost::multi_array<float, 1> q_value_vector;
+	    q_value_vector v = m_opt["q-values"].as<q_value_vector>();
+	    q.assign(v.begin(), v.end());
+	}
+	m_corr.q_values(q, m_opt["q-error"].as<float>(), m_fluid.box());
 
-    std::string const tcf_backend(opt["tcf-backend"].as<std::string>());
-    if (tcf_backend == "host") {
-	tcf.add_host_correlation_functions(fluid.mixture() == BINARY ? 2 : 1);
-    }
+	std::string const backend(m_opt["tcf-backend"].as<std::string>());
+	if (backend == "host") {
+	    m_corr.add_host_correlation_functions(m_fluid.is_binary() ? 2 : 1);
+	    m_is_corr_sample_gpu = false;
+	}
 #if WITH_CUDA
-    else if (tcf_backend == "gpu") {
-	tcf.add_gpu_correlation_functions(fluid.mixture() == BINARY ? 2 : 1);
-    }
+	else if (backend == "gpu") {
+	    m_corr.add_gpu_correlation_functions(m_fluid.is_binary() ? 2 : 1);
+	    m_is_corr_sample_gpu = mdsim_backend::has_trajectory_gpu_sample::value;
+	}
 #endif
-    else {
-	throw std::logic_error("unknown correlation function backend: " + tcf_backend);
+	else {
+	    throw std::logic_error("unknown correlation function backend: " + backend);
+	}
     }
 }
 
 /**
- * run MD simulation program
+ * run MD simulation
  */
 template <typename mdsim_backend>
 void mdsim<mdsim_backend>::operator()()
 {
-    if (opt["dry-run"].as<bool>()) {
-	// test parameters only
-	return;
-    }
-    if (opt["daemon"].as<bool>()) {
-	// run program in background
-	daemon(0, 0);
-    }
+    /** HDF5 buffers flush to disk interval in seconds */
+    enum { FLUSH_TO_DISK_INTERVAL = 900 };
+    /** runtime estimate interval in seconds */
+    enum { TIME_ESTIMATE_INTERVAL = 1800 };
+    /** waiting time in seconds before runtime estimate after block completion */
+    enum { TIME_ESTIMATE_WAIT_AFTER_BLOCK = 300 };
+
+    boost::unordered_map<int, std::string> const signals = boost::assign::map_list_of
+	(SIGINT, "INT")
+	(SIGTERM, "TERM")
+	(SIGHUP, "HUP")
+	(SIGUSR1, "USR1");
 
     // open HDF5 output files
     open();
     // schedule first disk flush
     alarm(FLUSH_TO_DISK_INTERVAL);
 
-    // measure elapsed realtime
-    real_timer timer;
     LOG("starting MD simulation");
+    real_timer timer;
     timer.start();
 
-    bool flush_;
-    for (step_ = 0; step_ < tcf.steps(); ++step_, time_= step_ * static_cast<double>(fluid.timestep())) {
-	// aquire fluid sample
-	sample_fluid();
+    for (count_timer<uint64_t> step = 0; step < m_corr.steps(); ++step) {
+	sample_fluid(step);
 	// stream next MD simulation program step on GPU
 	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
-	// process fluid sample
-	flush_ = false;
-	sample_functions(flush_);
-	// acquired maximum number of samples for a block level
-	if (flush_) {
+
+	if (sample_properties(step)) {
+	    // acquired maximum number of samples for a block level
 	    flush();
-	    // schedule remaining runtime estimate
-	    step_.clear();
-	    step_.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
-	    // schedule next disk flush
+	    step.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
 	    alarm(FLUSH_TO_DISK_INTERVAL);
 	}
-	// synchronize MD simulation program step on GPU
-	fluid.mdstep();
-	// check whether a runtime estimate has finished
-	if (step_.estimate() > 0) {
-	    LOG("estimated remaining runtime: " << real_timer::format(step_.estimate()));
-	    step_.clear();
-	    // schedule next remaining runtime estimate
-	    step_.set(TIME_ESTIMATE_INTERVAL);
-	}
-	// process next signal in signal queue
-	if (signal::poll()) {
-	    if (signal::signal == SIGINT) {
-		LOG_WARNING("trapped signal INT at simulation step " << step_);
-	    }
-	    else if (signal::signal == SIGTERM) {
-		LOG_WARNING("trapped signal TERM at simulation step " << step_);
-	    }
-	    else if (signal::signal == SIGHUP) {
-		LOG_WARNING("trapped signal HUP at simulation step " << step_);
-	    }
-	    else if (signal::signal == SIGUSR1) {
-		LOG_WARNING("trapped signal USR1 at simulation step " << step_);
-	    }
 
+	// synchronize MD simulation program step on GPU
+	m_fluid.mdstep();
+
+	if (step.estimate() > 0) {
+	    LOG("estimated remaining runtime: " << real_timer::format(step.estimate()));
+	    step.set(TIME_ESTIMATE_INTERVAL);
+	}
+
+	if (signal::poll()) {
+	    if (signals.find(signal::signal) != signals.end()) {
+		std::string const& name = signals.at(signal::signal);
+		LOG_WARNING("trapped signal " + name + " at simulation step " << step);
+	    }
 	    if (signal::signal == SIGINT || signal::signal == SIGTERM) {
-		LOG_WARNING("aborting simulation at step " << step_);
+		LOG_WARNING("aborting simulation at step " << step);
 		break;
 	    }
 	    else if (signal::signal == SIGHUP || signal::signal == SIGALRM) {
 		flush();
-		// schedule next disk flush
 		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
 	    else if (signal::signal == SIGUSR1) {
-		// schedule runtime estimate now
-		step_.set(0);
+		step.set(0);
 	    }
 	}
     }
-    sample_fluid();
-    sample_functions(flush_);
-    prf.sample(fluid.times());
+    sample_fluid(m_corr.steps());
+    sample_properties(m_corr.steps());
+
     timer.stop();
     LOG("finished MD simulation");
 
     // print performance statistics
     std::stringstream is;
     std::string str;
-    is << prf.times();
+    is << m_perf.times();
     while (std::getline(is, str)) {
 	LOG(str);
     }
@@ -365,187 +405,167 @@ void mdsim<mdsim_backend>::operator()()
     close();
 }
 
+/**
+ * aquire fluid sample
+ */
+template <typename mdsim_backend>
+void mdsim<mdsim_backend>::sample_fluid(uint64_t step)
+{
+    m_is_corr_step = (m_corr.is_sample_step(step) && m_corr.is_open());
+    // sample trajectory on GPU
+    if (m_is_corr_sample_gpu && m_is_corr_step) {
+	trajectory_sample_type sample;
+	m_fluid.sample(sample);
+	m_corr_sample = sample;
+    }
+
+    m_is_traj_step = (m_corr.is_trajectory_step(step) && m_traj.is_open());
+    // sample trajectory on host
+    if ((!m_is_corr_sample_gpu && m_is_corr_step) || m_is_traj_step) {
+	m_fluid.sample(m_traj_sample);
+	m_corr_sample = m_traj_sample;
+    }
+
+    m_is_en_step = (m_en.is_open() && m_corr.is_sample_step(step));
+    // sample thermodynamic equilibrium properties
+    if (m_is_en_step) {
+	m_fluid.sample(m_en_sample);
+    }
+}
+
+/**
+ * process fluid sample
+ */
+template <typename mdsim_backend>
+bool mdsim<mdsim_backend>::sample_properties(uint64_t step)
+{
+    double time = step * static_cast<double>(m_fluid.timestep());
+    bool flush = false;
+
+    if (m_is_corr_step) {
+	m_corr.sample(m_corr_sample, step, flush);
+    }
+    if (m_is_traj_step) {
+	m_traj.write(m_traj_sample, time);
+	m_traj_sample.clear();
+    }
+    if (m_is_en_step) {
+	m_en.sample(m_en_sample, m_fluid.density(), time);
+    }
+    if (flush || step == m_corr.steps()) {
+	m_perf.sample(m_fluid.times());
+    }
+    return flush;
+}
+
+/**
+ * open HDF5 output files
+ */
 template <typename mdsim_backend>
 void mdsim<mdsim_backend>::open()
 {
-    traj.open(opt["output"].as<std::string>() + ".trj", trajectory::out);
-    H5param(traj) << *this << fluid << tcf;
-    if (!opt["disable-correlation"].as<bool>()) {
-	tcf.open(opt["output"].as<std::string>() + ".tcf", (fluid.mixture() == BINARY) ? 2 : 1);
-	H5param(tcf) << *this << fluid << tcf;
+    std::string fn = m_opt["output"].as<std::string>();
+
+    if (!m_opt["disable-correlation"].as<bool>()) {
+	m_corr.open(fn + ".tcf", m_fluid.is_binary() ? 2 : 1);
+	param(m_corr);
     }
-    if (!opt["disable-energy"].as<bool>()) {
-	tep.open(opt["output"].as<std::string>() + ".tep");
-	H5param(tep) << *this << fluid << tcf;
+
+    m_traj.open(fn + ".trj", trajectory::out);
+    param(m_traj);
+
+    if (!m_opt["disable-energy"].as<bool>()) {
+	m_en.open(fn + ".tep");
+	param(m_en);
     }
-    prf.open(opt["output"].as<std::string>() + ".prf");
-    H5param(prf) << *this << fluid << tcf;
+
+    m_perf.open(fn + ".prf");
+    param(m_perf);
 }
 
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::close()
-{
-    traj.close();
-    if (!opt["disable-correlation"].as<bool>()) {
-	tcf.close();
-    }
-    if (!opt["disable-energy"].as<bool>()) {
-	tep.close();
-    }
-    prf.close();
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::sample_fluid()
-{
-    // sample trajectory on GPU
-    tcf_sample.first = (tcf.is_sample_step(step_) && !opt["disable-correlation"].as<bool>());
-    if (tcf_sample.first && mdsim_backend::has_trajectory_gpu_sample::value && opt["tcf-backend"].as<std::string>() == "gpu") {
-	trajectory_sample_type sample;
-	fluid.sample(sample);
-	tcf_sample.second = sample;
-    }
-    // sample trajectory on host
-    traj_sample.first = ((tcf.is_trajectory_step(step_) && !opt["disable-trajectory"].as<bool>()) || !step_ || step_ == tcf.steps());
-    if (traj_sample.first || (tcf_sample.first && (!mdsim_backend::has_trajectory_gpu_sample::value || opt["tcf-backend"].as<std::string>() != "gpu"))) {
-	traj_sample.second.clear();
-	fluid.sample(traj_sample.second);
-	tcf_sample.second = traj_sample.second;
-    }
-    // sample thermodynamic equilibrium properties
-    tep_sample.first = (tcf.is_sample_step(step_) && !opt["disable-energy"].as<bool>());
-    if (tep_sample.first) {
-	fluid.sample(tep_sample.second);
-    }
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::sample_functions(bool& flush)
-{
-    if (tcf_sample.first) {
-	tcf.sample(tcf_sample.second, step_, flush);
-    }
-    if (traj_sample.first) {
-	traj.write(traj_sample.second, time_);
-    }
-    if (tep_sample.first) {
-	tep.sample(tep_sample.second, fluid.density(), time_);
-    }
-}
-
+/**
+ * write partial results to HDF5 files and flush to disk
+ */
 template <typename mdsim_backend>
 void mdsim<mdsim_backend>::flush()
 {
-    if (!opt["disable-correlation"].as<bool>()) {
-	tcf.flush();
+    if (m_corr.is_open()) {
+	m_corr.flush();
     }
-    traj.flush();
-    if (!opt["disable-energy"].as<bool>()) {
-	tep.flush();
+    if (m_traj.is_open()) {
+	m_traj.flush();
     }
-    prf.sample(fluid.times());
-    prf.flush();
-
+    if (m_en.is_open()) {
+	m_en.flush();
+    }
+    if (m_perf.is_open()) {
+	m_perf.flush();
+    }
     LOG("flushed HDF5 buffers to disk");
 }
 
+/**
+ * close HDF5 output files
+ */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::epsilon(boost::true_type const&)
+void mdsim<mdsim_backend>::close()
 {
-    if (!opt["binary"].empty() && opt["particles"].defaulted()) {
-	fluid.epsilon(opt["epsilon"].as<boost::array<float, 3> >());
+    if (m_corr.is_open()) {
+	m_corr.close();
+    }
+    if (m_traj.is_open()) {
+	m_traj.close();
+    }
+    if (m_en.is_open()) {
+	m_en.close();
+    }
+    if (m_perf.is_open()) {
+	m_perf.close();
     }
 }
 
+/**
+ * obtain integer seed from file
+ */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::sigma(boost::true_type const&)
+unsigned int mdsim<mdsim_backend>::read_random_seed(std::string const& fn)
 {
-    if (!opt["binary"].empty() && opt["particles"].defaulted()) {
-	fluid.sigma(opt["sigma"].as<boost::array<float, 3> >());
+    using namespace std;
+    unsigned int seed;
+
+    LOG("obtaining 32-bit integer seed from " + fn);
+    try {
+	ifstream rand;
+	rand.exceptions(ifstream::eofbit|ifstream::failbit|ifstream::badbit);
+	rand.open(fn.c_str());
+	rand.read(reinterpret_cast<char*>(&seed), sizeof(seed));
+	rand.close();
     }
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::cutoff_radius(boost::true_type const&)
-{
-    fluid.cutoff_radius(opt["cutoff"].as<float>());
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::potential_smoothing(boost::true_type const&)
-{
-    if (!opt["smooth"].empty()) {
-	fluid.potential_smoothing(opt["smooth"].as<float>());
+    catch (ifstream::failure const& e) {
+	throw logic_error("failed to read from " + fn + e.what());
     }
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::pair_separation(boost::true_type const&)
-{
-    fluid.pair_separation(opt["pair-separation"].as<float>());
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::cell_occupancy(boost::true_type const&)
-{
-    fluid.cell_occupancy(opt["cell-occupancy"].as<float>());
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::nbl_skin(boost::true_type const&)
-{
-    fluid.nbl_skin(opt["skin"].as<float>());
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::threads(boost::true_type const&)
-{
-    fluid.threads(opt["threads"].as<unsigned int>());
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::init_cells(boost::true_type const&)
-{
-    fluid.init_cells();
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::init_event_list(boost::true_type const&)
-{
-    fluid.init_event_list();
-}
-
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::thermostat(boost::true_type const&)
-{
-    if (!opt["thermostat"].empty()) {
-	float const nu = opt["thermostat"].as<float>();
-	float const temp = opt["temperature"].as<float>();
-	fluid.thermostat(nu, temp);
-    }
+    return seed;
 }
 
 /**
  * write parameters to HDF5 parameter group
  */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::param(H5param& param) const
+void mdsim<mdsim_backend>::param(H5param param) const
 {
     H5xx::group node(param["mdsim"]);
-    node["backend"] = opt["backend"].as<std::string>();
+    node["backend"] = m_opt["backend"].as<std::string>();
+    if (!m_opt["disable-correlation"].as<bool>()) {
+	node["tcf_backend"] = m_opt["tcf-backend"].as<std::string>();
+    }
     node["dimension"] = (unsigned int) dimension;
-    node["tcf_backend"] = opt["tcf-backend"].as<std::string>();
 
     node = param["program"];
     node["name"] = PROGRAM_NAME;
     node["version"] = PROGRAM_VERSION;
     node["variant"] = PROGRAM_VARIANT;
-}
 
-template <typename mdsim_backend>
-void mdsim<mdsim_backend>::stream(boost::true_type const&)
-{
-    fluid.stream();
+    param << m_fluid << m_corr;
 }
 
 } // namespace ljgpu

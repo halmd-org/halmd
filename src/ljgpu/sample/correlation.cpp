@@ -292,8 +292,10 @@ void correlation<dimension>::param(H5::Group const& param) const
     node["block_count"] = m_block_count;
     node["max_samples"] = m_max_samples;
     node["min_samples"] = m_min_samples;
-    node["q_values"] = m_q_value;
-    node["q_error"] = m_q_error;
+    if (!m_q_value.empty()) {
+	node["q_values"] = m_q_value;
+	node["q_error"] = m_q_error;
+    }
 }
 
 /**
