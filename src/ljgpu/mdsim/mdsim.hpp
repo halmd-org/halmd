@@ -21,6 +21,7 @@
 
 #include <boost/assign.hpp>
 #include <boost/multi_array.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/unordered_map.hpp>
 #include <fstream>
 #include <iostream>
@@ -48,7 +49,7 @@ namespace ljgpu
  * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
 template <typename mdsim_backend>
-class mdsim
+class mdsim : boost::noncopyable
 {
 public:
     typedef typename mdsim_backend::impl_type impl_type;

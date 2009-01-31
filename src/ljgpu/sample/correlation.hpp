@@ -23,6 +23,7 @@
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
 #include <boost/mpl/insert_range.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/variant.hpp>
@@ -43,7 +44,7 @@ namespace ljgpu {
  * Block correlations
  */
 template <int dimension>
-class correlation
+class correlation : boost::noncopyable
 {
 public:
     typedef std::vector<tcf_host_sample<dimension> > host_sample_type;

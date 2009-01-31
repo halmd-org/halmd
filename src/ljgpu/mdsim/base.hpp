@@ -20,8 +20,8 @@
 #define LJGPU_MDSIM_BASE_HPP
 
 #include <boost/assign.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/type_traits.hpp>
-#include <boost/utility.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
 #include <limits>

@@ -19,6 +19,7 @@
 #ifndef LJGPU_OPTIONS_HPP
 #define LJGPU_OPTIONS_HPP
 
+#include <boost/noncopyable.hpp>
 #include <boost/program_options.hpp>
 #include <ljgpu/mdsim/impl.hpp>
 #include <stdint.h>
@@ -30,7 +31,7 @@ namespace ljgpu
 /**
  * Molecular Dynamics simulation program options
  */
-class options
+class options : boost::noncopyable
 {
 public:
     typedef boost::program_options::options_description description;

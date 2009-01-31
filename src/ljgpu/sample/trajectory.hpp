@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <boost/array.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/type_traits.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
@@ -38,7 +39,7 @@ namespace ljgpu {
 /**
  * trajectory file writer
  */
-class trajectory
+class trajectory : boost::noncopyable
 {
 public:
     /** io flags */

@@ -22,6 +22,7 @@
 #include <H5Cpp.h>
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <boost/noncopyable.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/mdsim/sample.hpp>
@@ -38,7 +39,7 @@ namespace ljgpu
  * Thermodynamic equilibrium properties
  */
 template <int dimension>
-class energy
+class energy : boost::noncopyable
 {
 public:
     /** time and scalar property */

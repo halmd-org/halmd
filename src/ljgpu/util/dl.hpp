@@ -18,7 +18,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/function.hpp>
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 #include <dlfcn.h>
 #include <string>
 

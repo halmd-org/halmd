@@ -21,6 +21,7 @@
 
 #include <H5Cpp.h>
 #include <boost/assign.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/unordered_map.hpp>
 #include <string>
 #include <ljgpu/sample/H5param.hpp>
@@ -32,7 +33,7 @@ namespace ljgpu
 /**
  * performance data
  */
-class perf
+class perf : boost::noncopyable
 {
 public:
     /* performance accumulators */
