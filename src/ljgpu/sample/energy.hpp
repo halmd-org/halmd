@@ -53,13 +53,15 @@ public:
     };
 
 public:
-    energy() : m_samples(0), m_samples_buffer(0), m_samples_file(0) {}
+    energy() : m_samples(0), m_samples_buffer(0), m_samples_file(0), m_is_open(false) {}
     /** create HDF5 thermodynamic equilibrium properties output file */
     void open(std::string const& filename);
     /** write thermodynamic equilibrium properties to HDF5 file */
     void flush(bool force=true);
     /** close HDF5 file */
     void close();
+    /** returns true iff associated with HDF5 file */
+    bool is_open() const { return m_is_open; }
 
     /** sample thermodynamic equilibrium properties */
     void sample(energy_sample<dimension> const& sample, float density, double time);
@@ -87,6 +89,8 @@ private:
     boost::array<H5::DataSet, 6> m_dataset;
     /** HDF5 floating-point data type */
     H5::DataType m_tid;
+    /** true iff associated with HDF5 file */
+    bool m_is_open;
 };
 
 template <int dimension>

@@ -43,6 +43,7 @@ public:
     typedef boost::unordered_map<std::string, std::string> desc_map;
 
 public:
+    perf() : m_is_open(false) {}
     /** create HDF5 performance data output file */
     void open(std::string const& filename);
     /** returns HDF5 parameter group */
@@ -53,6 +54,8 @@ public:
     void flush();
     /** close HDF5 file */
     void close();
+    /** returns true iff associated with HDF5 file */
+    bool is_open() const { return m_is_open; }
 
     /** returns accumulators */
     counters const& times() const { return m_times; }
@@ -64,6 +67,8 @@ private:
     counters m_times;
     /** HDF5 performance data output file */
     H5::H5File m_file;
+    /** true iff associated with HDF5 file */
+    bool m_is_open;
     /** HDF5 datasets */
     boost::unordered_map<std::string, H5::DataSet> m_dataset;
     /** HDF5 floating-point data type */

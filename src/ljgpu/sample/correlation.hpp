@@ -69,6 +69,7 @@ public:
     typedef boost::multi_array<double, 2> block_time_type;
 
 public:
+    correlation() : m_is_open(false) {}
     /** set total number of simulation steps */
     void steps(uint64_t value, float timestep);
     /** set total simulation time */
@@ -113,6 +114,8 @@ public:
     void open(std::string const& filename, size_t types);
     /** close HDF5 file */
     void close();
+    /** returns true iff associated with HDF5 file */
+    bool is_open() const { return m_is_open; }
     /** returns HDF5 parameter group */
     operator H5param() { return m_file; }
     /** write parameters to HDF5 parameter group */
@@ -180,6 +183,8 @@ private:
     tcf_vector m_tcf;
     /** HDF5 output file */
     H5::H5File m_file;
+    /** true iff associated with HDF5 file */
+    bool m_is_open;
 };
 
 /**

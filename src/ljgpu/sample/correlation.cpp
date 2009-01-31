@@ -226,6 +226,7 @@ void correlation<dimension>::open(std::string const& filename, size_t types)
     try {
 	// truncate existing file
 	m_file = H5::H5File(filename, H5F_ACC_TRUNC);
+	m_is_open = true;
     }
     catch (H5::FileIException const& e) {
 	throw exception("failed to create HDF5 correlations output file");
@@ -269,6 +270,7 @@ void correlation<dimension>::close()
 
     try {
 	m_file.close();
+	m_is_open = false;
     }
     catch (H5::Exception const& e) {
 	throw exception("failed to close HDF5 correlations output file");

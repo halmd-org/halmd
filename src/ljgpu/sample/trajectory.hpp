@@ -48,10 +48,13 @@ public:
     };
 
 public:
+    trajectory() : m_is_open(false) {}
     /** create HDF5 trajectory output file */
     void open(std::string const& filename, openmode mode = in);
     /** close HDF5 trajectory output file */
     void close();
+    /** returns true iff associated with HDF5 file */
+    bool is_open() const { return m_is_open; }
     /** flush HDF5 output file to disk */
     void flush();
 
@@ -86,6 +89,8 @@ private:
     std::vector<H5::DataSet> m_dset_r;
     std::vector<H5::DataSet> m_dset_v;
     H5::DataSet m_dset_t;
+    /** true iff associated with HDF5 file */
+    bool m_is_open;
 };
 
 /**
