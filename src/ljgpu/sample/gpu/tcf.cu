@@ -162,7 +162,7 @@ __device__ dfloat incoherent_scattering_function(vector_type const& r, vector_ty
 }
 
 template <int threads>
-__device__ void reduce(dfloat& real, dfloat& imag, dfloat s_imag[], dfloat s_real[])
+__device__ void reduce(dfloat& real, dfloat& imag, dfloat s_real[], dfloat s_imag[])
 {
     if (TID < threads) {
 	real += s_real[TID + threads];
@@ -177,7 +177,7 @@ __device__ void reduce(dfloat& real, dfloat& imag, dfloat s_imag[], dfloat s_rea
 }
 
 template <>
-__device__ void reduce<1>(dfloat& real, dfloat& imag, dfloat s_imag[], dfloat s_real[])
+__device__ void reduce<1>(dfloat& real, dfloat& imag, dfloat s_real[], dfloat s_imag[])
 {
     if (TID < 1) {
 	real += s_real[TID + 1];
