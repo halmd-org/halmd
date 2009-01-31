@@ -23,7 +23,6 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <ljgpu/math/stat.hpp>
 #include <ljgpu/sample/perf.hpp>
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
