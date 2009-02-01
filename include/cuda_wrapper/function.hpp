@@ -31,15 +31,9 @@
     #include <cuda_wrapper/stream.hpp>
     #endif
 
-
     /* maximum number of arguments passed to device functions */
     #ifndef CUDA_FUNCTION_MAX_ARGS
     #define CUDA_FUNCTION_MAX_ARGS 10
-    #endif
-
-    /* enable function overloading for varying number of arguments */
-    #ifndef CUDA_FUNCTION_VARY_ARGS
-    #define CUDA_FUNCTION_VARY_ARGS 0	/* set to 1 for extended coffee break… */
     #endif
 
     namespace cuda
@@ -114,13 +108,89 @@
 
     #endif /* ! __CUDACC__ */
 
-    template <
-	typename T,
-	typename U = void(),
-	typename V = void(),
-	typename W = void()
-	>
+    template <typename T0,
+	      typename T1 = void,
+	      typename T2 = void,
+	      typename T3 = void,
+	      typename T4 = void>
     class function;
+
+    template <typename T0, typename T1>
+    class function<T0, T1> :
+	function<T0>, function<T1>
+    {
+	typedef function<T0> F0;
+	typedef function<T1> F1;
+
+    public:
+	function(T0* f0, T1* f1) :
+	    F0(f0), F1(f1) {}
+    #ifndef __CUDACC__
+	using F0::operator();
+	using F1::operator();
+    #endif
+    };
+
+    template <typename T0, typename T1, typename T2>
+    class function<T0, T1, T2> :
+	function<T0>, function<T1>, function<T2>
+    {
+	typedef function<T0> F0;
+	typedef function<T1> F1;
+	typedef function<T2> F2;
+
+    public:
+	function(T0* f0, T1* f1, T2* f2) :
+	    F0(f0), F1(f1), F2(f2) {}
+    #ifndef __CUDACC__
+	using F0::operator();
+	using F1::operator();
+	using F2::operator();
+    #endif
+    };
+
+    template <typename T0, typename T1, typename T2, typename T3>
+    class function<T0, T1, T2, T3> :
+	function<T0>, function<T1>, function<T2>, function<T3>
+    {
+	typedef function<T0> F0;
+	typedef function<T1> F1;
+	typedef function<T2> F2;
+	typedef function<T3> F3;
+
+    public:
+	function(T0* f0, T1* f1, T2* f2, T3* f3) :
+	    F0(f0), F1(f1), F2(f2), F3(f3) {}
+    #ifndef __CUDACC__
+	using F0::operator();
+	using F1::operator();
+	using F2::operator();
+	using F3::operator();
+    #endif
+    };
+
+
+    template <typename T0, typename T1, typename T2, typename T3, typename T4>
+    class function :
+	function<T0>, function<T1>, function<T2>, function<T3>, function<T4>
+    {
+	typedef function<T0> F0;
+	typedef function<T1> F1;
+	typedef function<T2> F2;
+	typedef function<T3> F3;
+	typedef function<T4> F4;
+
+    public:
+	function(T0* f0, T1* f1, T2* f2, T3* f3, T4* f4) :
+	    F0(f0), F1(f1), F2(f2), F3(f3), F4(f4) {}
+    #ifndef __CUDACC__
+	using F0::operator();
+	using F1::operator();
+	using F2::operator();
+	using F3::operator();
+	using F4::operator();
+    #endif
+    };
 
     } // namespace cuda
 
@@ -141,15 +211,8 @@
     /**
      * CUDA kernel execution wrapper for n-ary device function
      */
-    template <
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, typename T)
-	>
-    class function<
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T)),
-	void(),
-	void(),
-	void()
-	>
+    template <BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, typename T)>
+    class function<void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T))>
     {
     public:
 	typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T));
@@ -187,186 +250,6 @@
 
     } // namespace cuda
 
-    #define BOOST_PP_FILENAME_2 "cuda_wrapper/function.hpp"
-    #if CUDA_FUNCTION_VARY_ARGS
-    #define BOOST_PP_ITERATION_LIMITS (1, CUDA_FUNCTION_MAX_ARGS)
-    #else
-    #define BOOST_PP_ITERATION_LIMITS (CUDA_FUNCTION_ARGS_1, CUDA_FUNCTION_ARGS_1)
-    #endif
-    #include BOOST_PP_ITERATE()
-
     #undef CUDA_FUNCTION_ARGS_1
-
-#elif BOOST_PP_ITERATION_DEPTH() == 2
-
-    #define CUDA_FUNCTION_ARGS_2 BOOST_PP_FRAME_ITERATION(2)
-
-    namespace cuda
-    {
-
-    template <
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, typename T),
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, typename U)
-	>
-    class function<
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T)),
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, U)),
-	void (),
-	void ()
-	>
-    {
-    public:
-	typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T));
-	typedef void U (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, U));
-
-    public:
-	function(T *f1, U *f2) : f1(f1), f2(f2) {}
-
-    #ifndef __CUDACC__
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, T, x))
-	{
-	    f1(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, x));
-	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, U, x))
-	{
-	    f2(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, x));
-	}
-    #endif
-
-    private:
-	function<T> f1;
-	function<U> f2;
-    };
-
-    } // namespace cuda
-
-    #define BOOST_PP_FILENAME_3 "cuda_wrapper/function.hpp"
-    #if CUDA_FUNCTION_VARY_ARGS
-    #define BOOST_PP_ITERATION_LIMITS (1, CUDA_FUNCTION_MAX_ARGS)
-    #else
-    #define BOOST_PP_ITERATION_LIMITS (CUDA_FUNCTION_ARGS_2, CUDA_FUNCTION_ARGS_2)
-    #endif
-    #include BOOST_PP_ITERATE()
-
-    #undef CUDA_FUNCTION_ARGS_2
-
-#elif BOOST_PP_ITERATION_DEPTH() == 3
-
-    #define CUDA_FUNCTION_ARGS_3 BOOST_PP_FRAME_ITERATION(3)
-
-    namespace cuda
-    {
-
-    template <
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, typename T),
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, typename U),
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, typename V)
-	>
-    class function<
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T)),
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, U)),
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, V)),
-	void ()
-	>
-    {
-    public:
-	typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T));
-	typedef void U (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, U));
-	typedef void V (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, V));
-
-    public:
-	function(T *f1, U *f2, V *f3) : f1(f1), f2(f2), f3(f3) {}
-
-    #ifndef __CUDACC__
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, T, x))
-	{
-	    f1(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, x));
-	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, U, x))
-	{
-	    f2(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, x));
-	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_3, V, x))
-	{
-	    f3(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, x));
-	}
-    #endif
-
-    private:
-	function<T> f1;
-	function<U> f2;
-	function<V> f3;
-    };
-
-    } // namespace cuda
-
-    #define BOOST_PP_FILENAME_4 "cuda_wrapper/function.hpp"
-    #if CUDA_FUNCTION_VARY_ARGS
-    #define BOOST_PP_ITERATION_LIMITS (1, CUDA_FUNCTION_MAX_ARGS)
-    #else
-    #define BOOST_PP_ITERATION_LIMITS (CUDA_FUNCTION_ARGS_3, CUDA_FUNCTION_ARGS_3)
-    #endif
-    #include BOOST_PP_ITERATE()
-
-    #undef CUDA_FUNCTION_ARGS_3
-
-#elif BOOST_PP_ITERATION_DEPTH() == 4
-
-    #define CUDA_FUNCTION_ARGS_4 BOOST_PP_FRAME_ITERATION(4)
-
-    namespace cuda
-    {
-
-    template <
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, typename T),
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, typename U),
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, typename V),
-	BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_4, typename W)
-	>
-    class function<
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T)),
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, U)),
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, V)),
-	void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_4, W))
-	>
-    {
-    public:
-	typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T));
-	typedef void U (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, U));
-	typedef void V (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, V));
-	typedef void W (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_4, W));
-
-    public:
-	function(T *f1, U *f2, V *f3, W *f4) : f1(f1), f2(f2), f3(f3), f4(f4) {}
-
-    #ifndef __CUDACC__
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, T, x))
-	{
-	    f1(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, x));
-	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_2, U, x))
-	{
-	    f2(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_2, x));
-	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_3, V, x))
-	{
-	    f3(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_3, x));
-	}
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_4, W, x))
-	{
-	    f4(BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_4, x));
-	}
-    #endif
-
-    private:
-	function<T> f1;
-	function<U> f2;
-	function<V> f3;
-	function<W> f4;
-    };
-
-    } // namespace cuda
-
-    #undef CUDA_FUNCTION_ARGS_4
 
 #endif /* !BOOST_PP_IS_ITERATING */
