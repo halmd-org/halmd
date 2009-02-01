@@ -27,6 +27,7 @@
     #include <boost/preprocessor/repetition/repeat.hpp>
     #include <cuda/cuda_runtime.h>
     #ifndef __CUDACC__
+    #include <boost/tuple/tuple.hpp>
     #include <cuda_wrapper/error.hpp>
     #include <cuda_wrapper/stream.hpp>
     #endif
@@ -194,8 +195,7 @@
 
     } // namespace cuda
 
-
-    #define BOOST_PP_FILENAME_1 "cuda_wrapper/function.hpp"
+    #define BOOST_PP_FILENAME_1 <cuda_wrapper/function.hpp>
     #define BOOST_PP_ITERATION_LIMITS (1, CUDA_FUNCTION_MAX_ARGS)
     #include BOOST_PP_ITERATE()
 
@@ -203,7 +203,9 @@
 
 #elif BOOST_PP_ITERATION_DEPTH() == 1
 
-    #define CUDA_FUNCTION_ARGS_1 BOOST_PP_FRAME_ITERATION(1)
+    #define CUDA_FUNCTION_ARGS BOOST_PP_FRAME_ITERATION(1)
+    #define CUDA_FUNCTION_PARAM_VALUES BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, x)
+    #define CUDA_FUNCTION_PARAM_TYPES BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T)
 
     namespace cuda
     {
@@ -211,11 +213,11 @@
     /**
      * CUDA kernel execution wrapper for n-ary device function
      */
-    template <BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, typename T)>
-    class function<void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T))>
+    template <BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, typename T)>
+    class function<void (CUDA_FUNCTION_PARAM_TYPES)>
     {
     public:
-	typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, T));
+	typedef void T (CUDA_FUNCTION_PARAM_TYPES);
 
     public:
 	function(T *f) : f(f) {}
@@ -225,16 +227,10 @@
 	/**
 	 * execute kernel
 	 */
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS_1, T, x))
+	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS, T, x))
 	{
 	    // properly align CUDA device function arguments
-	    struct {
-		#define DECL_ARG(z, n, x) T##n x##n;
-		BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS_1, DECL_ARG, a)
-		#undef DECL_ARG
-	    } args = {
-		BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS_1, x)
-	    };
+	    boost::tuple<CUDA_FUNCTION_PARAM_TYPES> args(CUDA_FUNCTION_PARAM_VALUES);
 	    // push aligned arguments onto CUDA execution stack
 	    CUDA_CALL(cudaSetupArgument(&args, sizeof(args), 0));
 	    // launch CUDA device function
@@ -250,6 +246,8 @@
 
     } // namespace cuda
 
-    #undef CUDA_FUNCTION_ARGS_1
+    #undef CUDA_FUNCTION_ARGS
+    #undef CUDA_FUNCTION_PARAM_TYPES
+    #undef CUDA_FUNCTION_PARAM_VALUES
 
 #endif /* !BOOST_PP_IS_ITERATING */
