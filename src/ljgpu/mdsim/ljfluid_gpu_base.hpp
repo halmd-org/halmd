@@ -493,6 +493,13 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
     BOOST_FOREACH (gpu_vector_type& v, h_v) {
 	v = (vector_type) v - v_cm;
     }
+    try {
+	cuda::copy(h_v, g_v, stream_);
+	stream_.synchronize();
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to copy center of mass shifted velocities to GPU");
+    }
 
     try {
 	event_[0].record(stream_);
