@@ -254,13 +254,13 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 
     if (!m_opt["trajectory-sample"].empty()) {
 	// read trajectory sample and periodic simulation box length
+	host_sample_type sample;
 	m_traj.open(m_opt["trajectory"].as<std::string>(), trajectory::in);
-	m_traj.read(m_traj_sample, m_opt["trajectory-sample"].as<int64_t>());
+	m_traj.read(sample, m_opt["trajectory-sample"].as<int64_t>());
 	float box = H5param(m_traj)["mdsim"]["box_length"].as<float>();
 	m_traj.close();
 	// restore system state
-	m_fluid.state(m_traj_sample, box);
-	m_traj_sample.clear();
+	m_fluid.state(sample, box);
     }
     else {
 	// arrange particles on a face-centered cubic (fcc) lattice
@@ -417,14 +417,20 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step)
     if (m_is_corr_sample_gpu && m_is_corr_step) {
 	trajectory_sample_type sample;
 	m_fluid.sample(sample);
+	// copy pointers to GPU phase space samples in binary mixture
 	m_corr_sample = sample;
     }
 
     m_is_traj_step = (m_corr.is_trajectory_step(step) && m_traj.is_open());
     // sample trajectory on host
     if ((!m_is_corr_sample_gpu && m_is_corr_step) || m_is_traj_step) {
-	m_fluid.sample(m_traj_sample);
-	m_corr_sample = m_traj_sample;
+	host_sample_type sample;
+	m_fluid.sample(sample);
+	// copy pointers to host phase space samples in binary mixture
+	if (!m_is_corr_sample_gpu) {
+	    m_corr_sample = sample;
+	}
+	m_traj_sample = sample;
     }
 
     m_is_en_step = (m_en.is_open() && m_corr.is_sample_step(step));
@@ -448,7 +454,6 @@ bool mdsim<mdsim_backend>::sample_properties(uint64_t step)
     }
     if (m_is_traj_step) {
 	m_traj.write(m_traj_sample, time);
-	m_traj_sample.clear();
     }
     if (m_is_en_step) {
 	m_en.sample(m_en_sample, m_fluid.density(), time);
