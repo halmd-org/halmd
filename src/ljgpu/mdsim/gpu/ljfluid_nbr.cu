@@ -118,11 +118,6 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     // second leapfrog step as part of integration of equations of motion
     leapfrog_full_step(v, static_cast<vector_type>(f));
 
-    // random collisions with heat bath
-    if (ensemble == NVT) {
-	anderson_thermostat(v);
-    }
-
     // store particle associated with this thread
     g_v[GTID] = v;
     g_f[GTID] = static_cast<vector_type>(f);

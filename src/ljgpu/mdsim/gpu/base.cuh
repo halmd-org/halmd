@@ -21,8 +21,6 @@
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 #include <ljgpu/mdsim/gpu/base.hpp>
-#define CU_NAMESPACE ljfluid
-#include <ljgpu/rng/gpu/rand48.cuh>
 using namespace ljgpu::gpu;
 
 //
@@ -56,11 +54,6 @@ __constant__ float sigma2[3];
 
 /** squared inverse potential smoothing function scale parameter */
 __constant__ float rri_smooth;
-
-/** heat bath coupling constant */
-__constant__ float thermostat_nu;
-/** heat bath temperature */
-__constant__ float thermostat_temp;
 
 /**
  * convert particle position and tag to coalesced vector type
@@ -116,17 +109,6 @@ __device__ void leapfrog_full_step(T& v, T const& f)
 {
     // full step velocity
     v += f * (timestep / 2);
-}
-
-/**
- * random collision with heat bath
- */
-template <typename T>
-__device__ void anderson_thermostat(T& v)
-{
-    if (rand48::uniform() < (thermostat_nu * timestep)) {
-	rand48::gaussian(v, thermostat_temp);
-    }
 }
 
 /**
@@ -225,17 +207,6 @@ __global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
 }
 
 /**
- * generate n-dimensional Maxwell-Boltzmann distributed vectors
- */
-template <typename T>
-__global__ void boltzmann(T* g_v, float temperature)
-{
-    T v;
-    rand48::gaussian(v, temperature);
-    g_v[GTID] = v;
-}
-
-/**
  * assign ascending particle numbers
  */
 template <typename vector_type>
@@ -272,12 +243,6 @@ cuda::symbol<float> __Base::en_cut(cu::ljfluid::en_cut);
 cuda::symbol<float[]> __Base::epsilon(cu::ljfluid::epsilon);
 cuda::symbol<float[]> __Base::sigma2(cu::ljfluid::sigma2);
 cuda::symbol<float> __Base::rri_smooth(cu::ljfluid::rri_smooth);
-cuda::symbol<float> __Base::thermostat_nu(cu::ljfluid::thermostat_nu);
-cuda::symbol<float> __Base::thermostat_temp(cu::ljfluid::thermostat_temp);
-
-cuda::symbol<uint48> __Base::rand48::a(cu::ljfluid::rand48::a);
-cuda::symbol<uint48> __Base::rand48::c(cu::ljfluid::rand48::c);
-cuda::symbol<ushort3*> __Base::rand48::state(cu::ljfluid::rand48::g_state);
 
 /**
  * device function wrappers
@@ -287,15 +252,11 @@ cuda::function<void (float3*, const float2)>
 
 cuda::function<void (float4*, float4*, float4*, float4 const*)>
     __3D::inteq(cu::ljfluid::inteq<3>);
-cuda::function<void (float4*, float)>
-    __3D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float4*, unsigned int*)>
     __3D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 3> >);
 
 cuda::function<void (float4*, float2*, float2*, float2 const*)>
     __2D::inteq(cu::ljfluid::inteq<2>);
-cuda::function<void (float2*, float)>
-    __2D::boltzmann(cu::ljfluid::boltzmann);
 cuda::function<void (float4*, unsigned int*)>
     __2D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 2> >);
 

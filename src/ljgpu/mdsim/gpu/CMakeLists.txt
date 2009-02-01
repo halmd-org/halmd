@@ -13,3 +13,6 @@ add_library(gpu_hilbert
 add_library(gpu_lattice
   lattice.cu
   )
+add_library(gpu_boltzmann
+  boltzmann.cu
+  )

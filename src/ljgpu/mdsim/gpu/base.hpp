@@ -47,16 +47,6 @@ struct ljfluid_base<ljfluid_impl_gpu_base>
     static cuda::symbol<float[]> sigma2;
     /** C² potential */
     static cuda::symbol<float> rri_smooth;
-    /** NVT ensemble */
-    static cuda::symbol<float> thermostat_nu;
-    static cuda::symbol<float> thermostat_temp;
-
-    struct rand48
-    {
-	static cuda::symbol<uint48> a;
-	static cuda::symbol<uint48> c;
-	static cuda::symbol<ushort3*> state;
-    };
 
     static cuda::function<void (float3*, const float2)> sample_smooth_function;
 };
@@ -69,7 +59,6 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base<3> >
 : public ljfluid_base<ljfluid_impl_gpu_base>
 {
     static cuda::function<void (float4*, float4*, float4*, float4 const*)> inteq;
-    static cuda::function<void (float4*, float)> boltzmann;
     static cuda::function<void (float4*, unsigned int*)> init_tags;
 };
 
@@ -78,7 +67,6 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base<2> >
 : public ljfluid_base<ljfluid_impl_gpu_base>
 {
     static cuda::function<void (float4*, float2*, float2*, float2 const*)> inteq;
-    static cuda::function<void (float2*, float)> boltzmann;
     static cuda::function<void (float4*, unsigned int*)> init_tags;
 };
 

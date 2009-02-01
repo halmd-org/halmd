@@ -320,8 +320,10 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
     cuda::host::vector<gpu_vector_type> h_v(npart);
     g_v.reserve(dim_.threads());
     h_v.reserve(dim_.threads());
-    _Base::boltzmann(g_v, h_v, temp);
 
+    _Base::boltzmann(g_v, temp);
+
+    cuda::copy(g_v, h_v);
     assign_velocities(h_v);
 }
 

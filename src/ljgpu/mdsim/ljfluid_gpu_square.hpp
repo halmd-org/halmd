@@ -233,7 +233,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
 {
-    _Base::boltzmann(g_part.v, h_part.v, temp);
+    _Base::boltzmann(g_part.v, temp);
 }
 
 template <int dimension>

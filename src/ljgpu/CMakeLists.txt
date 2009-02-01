@@ -93,6 +93,7 @@ target_link_libraries(ljgpu_hardsphere
 if(WITH_CUDA)
   target_link_libraries(ljgpu_gpu_square
     ${CUDA_LIBRARIES}
+    gpu_boltzmann
     gpu_lattice
     gpu_ljfluid_square
     gpu_radix_sort
@@ -101,6 +102,7 @@ if(WITH_CUDA)
     )
   target_link_libraries(ljgpu_gpu_cell
     ${CUDA_LIBRARIES}
+    gpu_boltzmann
     gpu_lattice
     gpu_ljfluid_cell
     gpu_radix_sort
@@ -109,6 +111,7 @@ if(WITH_CUDA)
     )
   target_link_libraries(ljgpu_gpu_neighbour
     ${CUDA_LIBRARIES}
+    gpu_boltzmann
     gpu_hilbert
     gpu_lattice
     gpu_ljfluid_nbr

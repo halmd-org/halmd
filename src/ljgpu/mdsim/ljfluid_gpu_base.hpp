@@ -24,6 +24,7 @@
 #include <ljgpu/algorithm/radix_sort.hpp>
 #include <ljgpu/algorithm/reduce.hpp>
 #include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/mdsim/gpu/boltzmann.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_cell.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
@@ -72,8 +73,6 @@ public:
     void cutoff_radius(float_type value);
     /** set potential smoothing function scale parameter */
     void potential_smoothing(float_type value);
-    /** set heat bath collision probability and temperature */
-    void thermostat(float_type nu, float_type temp);
 
     /** seed random number generator */
     void rng(unsigned int seed);
@@ -107,9 +106,7 @@ protected:
     /** assign ascending particle numbers */
     void init_tags(cuda::vector<float4>& g_r, cuda::vector<unsigned int>& g_tag);
     /** generate Maxwell-Boltzmann distributed velocities */
-    void boltzmann(cuda::vector<gpu_vector_type>& g_v,
-		   cuda::host::vector<gpu_vector_type>& h_v,
-		   float temp);
+    void boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp);
     /** restore system state from phase space sample */
     void state(host_sample_type& sample, float_type box,
 	       cuda::host::vector<float4>& h_r,
@@ -138,8 +135,6 @@ protected:
     using _Base::rr_cut;
     using _Base::rri_smooth;
     using _Base::sigma2_;
-    using _Base::thermostat_nu;
-    using _Base::thermostat_temp;
     using _Base::timestep_;
 
     /** CUDA execution dimensions */
@@ -150,6 +145,10 @@ protected:
     boost::array<cuda::event, 2> mutable event_;
     /** GPU random number generator */
     rand48 rng_;
+    /** block sum of velocity */
+    cuda::vector<gpu_vector_type> g_vcm;
+    /** block sum of squared velocity */
+    cuda::vector<dfloat> g_vv;
     /** GPU radix sort */
     radix_sort<float4> radix_sort_;
     /** center of mass velocity */
@@ -265,13 +264,6 @@ void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)
     LOG("number of CUDA execution threads: " << dim_.threads_per_block());
 
     try {
-	rng_.resize(dim_);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to change random number generator dimensions");
-    }
-
-    try {
 	radix_sort_.resize(npart, dim_.threads_per_block());
     }
     catch (cuda::error const&) {
@@ -318,38 +310,32 @@ void ljfluid_gpu_base<ljfluid_impl>::timestep(float_type value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
-{
-    _Base::thermostat(nu, temp);
-
-    try {
-	cuda::copy(thermostat_nu, _gpu::thermostat_nu);
-	cuda::copy(thermostat_temp, _gpu::thermostat_temp);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to set heat bath device symbols");
-    }
-}
 /**
  * seed random number generator
  */
 template <typename ljfluid_impl>
 void ljfluid_gpu_base<ljfluid_impl>::rng(unsigned int seed)
 {
+    typedef gpu::boltzmann<dimension> _gpu;
+
+    try {
+	rng_.resize(cuda::config(_gpu::BLOCKS, _gpu::THREADS));
+	g_vcm.resize(_gpu::BLOCKS);
+	g_vv.resize(_gpu::BLOCKS);
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to change random number generator dimensions");
+    }
+
     LOG("random number generator seed: " << seed);
+
     try {
 	rng_.set(seed, stream_);
 	stream_.synchronize();
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to seed random number generator");
-    }
-    try {
 	rng_.init_symbols(_gpu::rand48::a, _gpu::rand48::c, _gpu::rand48::state);
     }
     catch (cuda::error const&) {
-	throw exception("failed to set random number generator symbols");
+	throw exception("failed to seed random number generator");
     }
 }
 
@@ -447,24 +433,11 @@ void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
  * generate Maxwell-Boltzmann distributed velocities
  */
 template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_v,
-					       cuda::host::vector<gpu_vector_type>& h_v,
-					       float temp)
+void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp)
 {
-    LOG("initialising velocities from Maxwell-Boltzmann distribution at temperature: " << temp);
+    typedef gpu::boltzmann<dimension> _gpu;
 
-    try {
-	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	_gpu::boltzmann(g_v, temp);
-	event_[1].record(stream_);
-	cuda::copy(g_v, h_v, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to compute Maxwell-Boltzmann distributed velocities on GPU");
-    }
-    m_times["boltzmann"] += event_[1] - event_[0];
+    LOG("set velocities from Boltzmann distribution at temperature: " << temp);
 
     //
     // The particle velocities need to fullfill two constraints:
@@ -479,53 +452,24 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
 
     try {
 	event_[0].record(stream_);
-	reduce_velocity(g_v, stream_);
+
+	// generate Maxwell-Boltzmann distributed velocities and reduce velocity
+	cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream_);
+	_gpu::gaussian(g_v, npart, temp, g_vcm);
+	// set center of mass velocity to zero and reduce squared velocity
+	cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream_);
+	_gpu::shift_velocity(g_v, npart, g_vcm, g_vv);
+	// rescale velocities to accurate temperature
+	cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream_);
+	_gpu::scale_velocity(g_v, npart, g_vv, temp);
+
 	event_[1].record(stream_);
 	event_[1].synchronize();
     }
-    catch (cuda::error const& e) {
-	throw exception("failed to compute center of mass velocity");
+    catch (cuda::error const&) {
+	throw exception("failed to compute Boltzmann distributed velocities on GPU");
     }
-    m_times["reduce_velocity"] += event_[1] - event_[0];
-
-    // set center of mass velocity to zero
-    vector_type const v_cm = reduce_velocity.value() / npart;
-    BOOST_FOREACH (gpu_vector_type& v, h_v) {
-	v = (vector_type) v - v_cm;
-    }
-    try {
-	cuda::copy(h_v, g_v, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to copy center of mass shifted velocities to GPU");
-    }
-
-    try {
-	event_[0].record(stream_);
-	reduce_squared_velocity(g_v, stream_);
-	event_[1].record(stream_);
-	event_[1].synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to compute mean squared velocity");
-    }
-    m_times["reduce_squared_velocity"] += event_[1] - event_[0];
-
-    // rescale velocities to accurate temperature
-    float const vv = reduce_squared_velocity.value() / npart;
-    float const s = std::sqrt(temp * dimension / vv);
-    BOOST_FOREACH (gpu_vector_type& v, h_v) {
-	v = (vector_type) v * s;
-    }
-
-    try {
-	cuda::copy(h_v, g_v, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to copy rescaled velocities to GPU");
-    }
+    m_times["boltzmann"] += event_[1] - event_[0];
 }
 
 template <typename ljfluid_impl>
