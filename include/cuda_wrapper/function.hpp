@@ -27,7 +27,6 @@
     #include <boost/preprocessor/repetition/repeat.hpp>
     #include <cuda/cuda_runtime.h>
     #ifndef __CUDACC__
-    #include <boost/tuple/tuple.hpp>
     #include <cuda_wrapper/error.hpp>
     #include <cuda_wrapper/stream.hpp>
     #endif
@@ -204,8 +203,6 @@
 #elif BOOST_PP_ITERATION_DEPTH() == 1
 
     #define CUDA_FUNCTION_ARGS BOOST_PP_FRAME_ITERATION(1)
-    #define CUDA_FUNCTION_PARAM_VALUES BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, x)
-    #define CUDA_FUNCTION_PARAM_TYPES BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T)
 
     namespace cuda
     {
@@ -214,10 +211,10 @@
      * CUDA kernel execution wrapper for n-ary device function
      */
     template <BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, typename T)>
-    class function<void (CUDA_FUNCTION_PARAM_TYPES)>
+    class function<void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T))>
     {
     public:
-	typedef void T (CUDA_FUNCTION_PARAM_TYPES);
+	typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T));
 
     public:
 	function(T *f) : f(f) {}
@@ -230,7 +227,13 @@
 	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS, T, x))
 	{
 	    // properly align CUDA device function arguments
-	    boost::tuple<CUDA_FUNCTION_PARAM_TYPES> args(CUDA_FUNCTION_PARAM_VALUES);
+	    struct {
+		#define DECL_ARG(z, n, x) T##n x##n;
+		BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS, DECL_ARG, a)
+		#undef DECL_ARG
+	    } args = {
+		BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, x)
+	    };
 	    // push aligned arguments onto CUDA execution stack
 	    CUDA_CALL(cudaSetupArgument(&args, sizeof(args), 0));
 	    // launch CUDA device function
@@ -243,11 +246,8 @@
 	T *f;
     };
 
-
     } // namespace cuda
 
     #undef CUDA_FUNCTION_ARGS
-    #undef CUDA_FUNCTION_PARAM_TYPES
-    #undef CUDA_FUNCTION_PARAM_VALUES
 
 #endif /* !BOOST_PP_IS_ITERATING */
