@@ -17,11 +17,12 @@
  */
 
 #include <ljgpu/algorithm/gpu/base.cuh>
+#include <ljgpu/algorithm/gpu/reduce.cuh>
 #include <ljgpu/algorithm/gpu/reduce.hpp>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 
-namespace ljgpu { namespace cu { namespace reduce
+namespace ljgpu { namespace cu { namespace algorithm
 {
 
 enum { THREADS = gpu::reduce::THREADS };
@@ -58,7 +59,7 @@ template <typename input_type, typename output_type,
 	  output_type (*reduce_function)(output_type, output_type),
 	  output_type (*output_function)(output_type),
 	  typename coalesced_input_type, typename coalesced_output_type>
-__device__ void reduce(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
+__device__ void accumulate(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
 {
     __shared__ output_type s_vv[THREADS];
 
@@ -73,44 +74,9 @@ __device__ void reduce(coalesced_input_type const* g_in, coalesced_output_type* 
     __syncthreads();
 
     // compute reduced value for all threads in block
-    if (TID < 256) {
-	vv = reduce_function(vv, s_vv[TID + 256]);
-	s_vv[TID] = vv;
-    }
-    __syncthreads();
-    if (TID < 128) {
-	vv = reduce_function(vv, s_vv[TID + 128]);
-	s_vv[TID] = vv;
-    }
-    __syncthreads();
-    if (TID < 64) {
-	vv = reduce_function(vv, s_vv[TID + 64]);
-	s_vv[TID] = vv;
-    }
-    __syncthreads();
-    if (TID < 32) {
-	vv = reduce_function(vv, s_vv[TID + 32]);
-	s_vv[TID] = vv;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (TID < 16) {
-	vv = reduce_function(vv, s_vv[TID + 16]);
-	s_vv[TID] = vv;
-    }
-    if (TID < 8) {
-	vv = reduce_function(vv, s_vv[TID + 8]);
-	s_vv[TID] = vv;
-    }
-    if (TID < 4) {
-	vv = reduce_function(vv, s_vv[TID + 4]);
-	s_vv[TID] = vv;
-    }
-    if (TID < 2) {
-	vv = reduce_function(vv, s_vv[TID + 2]);
-	s_vv[TID] = vv;
-    }
+    reduce<THREADS / 2>(vv, s_vv);
+
     if (TID < 1) {
-	vv = reduce_function(vv, s_vv[TID + 1]);
 	// store block reduced value in global memory
 	g_block_sum[blockIdx.x] = output_function(vv);
     }
@@ -123,7 +89,7 @@ template <typename input_type, typename output_type,
 	  typename coalesced_input_type, typename coalesced_output_type>
 __global__ void sum(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
 {
-    reduce<input_type, output_type, identity_, sum_, identity_>(g_in, g_block_sum, n);
+    accumulate<input_type, output_type, identity_, sum_, identity_>(g_in, g_block_sum, n);
 }
 
 /**
@@ -133,7 +99,7 @@ template <typename input_type, typename output_type,
 	  typename coalesced_input_type, typename coalesced_output_type>
 __global__ void sum_of_squares(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
 {
-    reduce<input_type, output_type, square_, sum_, identity_>(g_in, g_block_sum, n);
+    accumulate<input_type, output_type, square_, sum_, identity_>(g_in, g_block_sum, n);
 }
 
 /**
@@ -143,10 +109,10 @@ template <typename input_type, typename output_type,
 	  typename coalesced_input_type, typename coalesced_output_type>
 __global__ void max(coalesced_input_type const* g_in, coalesced_output_type* g_block_max, uint n)
 {
-    reduce<input_type, output_type, square_, fmaxf, sqrtf>(g_in, g_block_max, n);
+    accumulate<input_type, output_type, square_, fmaxf, sqrtf>(g_in, g_block_max, n);
 }
 
-}}} // namespace ljgpu::cu::reduce
+}}} // namespace ljgpu::cu::algorithm
 
 namespace ljgpu { namespace gpu
 {
@@ -157,16 +123,16 @@ namespace ljgpu { namespace gpu
 cuda::function<void(float const*, dfloat*, uint),
 	       void(float4 const*, float4*, uint),
 	       void(float2 const*, float2*, uint)>
-    reduce::sum(cu::reduce::sum<float, dfloat>,
-		cu::reduce::sum<cu::vector<float, 3>, cu::vector<float, 3> >,
-		cu::reduce::sum<cu::vector<float, 2>, cu::vector<float, 2> >);
+    reduce::sum(cu::algorithm::sum<float, dfloat>,
+		cu::algorithm::sum<cu::vector<float, 3>, cu::vector<float, 3> >,
+		cu::algorithm::sum<cu::vector<float, 2>, cu::vector<float, 2> >);
 cuda::function<void(float4 const*, dfloat*, uint),
 	       void(float2 const*, dfloat*, uint)>
-    reduce::sum_of_squares(cu::reduce::sum_of_squares<cu::vector<float, 3>, dfloat>,
-			   cu::reduce::sum_of_squares<cu::vector<float, 2>, dfloat>);
+    reduce::sum_of_squares(cu::algorithm::sum_of_squares<cu::vector<float, 3>, dfloat>,
+			   cu::algorithm::sum_of_squares<cu::vector<float, 2>, dfloat>);
 cuda::function<void(float4 const*, float*, uint),
 	       void(float2 const*, float*, uint)>
-    reduce::max(cu::reduce::max<cu::vector<float, 3>, float>,
-		cu::reduce::max<cu::vector<float, 2>, float>);
+    reduce::max(cu::algorithm::max<cu::vector<float, 3>, float>,
+		cu::algorithm::max<cu::vector<float, 2>, float>);
 
 }} // namespace ljgpu::gpu
