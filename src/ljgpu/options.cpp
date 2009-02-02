@@ -584,7 +584,7 @@ options_description<ljfluid_impl_gpu_neighbour>::options_description()
     add_options()
 	("cell-occupancy", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
-	("skin", po::value<float>()->default_value(0.3),
+	("skin", po::value<float>()->default_value(0.5),
 	 "neighbour list skin")
 	("thermostat", po::value<float>(),
 	 "heat bath collision probability")
@@ -604,7 +604,7 @@ options_description<ljfluid_impl_host>::options_description()
     add_options()
 	("tcf-backend", po::value<std::string>()->default_value("host"),
 	 "correlation functions backend")
-	("skin", po::value<float>()->default_value(0.3),
+	("skin", po::value<float>()->default_value(0.5),
 	 "neighbour list skin")
 	("thermostat", po::value<float>(),
 	 "heat bath collision probability")
