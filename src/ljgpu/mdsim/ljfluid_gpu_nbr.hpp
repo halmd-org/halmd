@@ -544,7 +544,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
     event_[6].record(stream_);
 
     // heat bath coupling
-    if (++thermostat_count > thermostat_steps) {
+    if (thermostat_steps && ++thermostat_count > thermostat_steps) {
 	try {
 	    _Base::boltzmann(g_part.v, thermostat_temp, stream_);
 	}
@@ -598,7 +598,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
     // GPU time for maximum velocity calculation
     m_times["maximum_velocity"] += event_[0] - event_[7];
 
-    if (thermostat_count > thermostat_steps) {
+    if (thermostat_steps && thermostat_count > thermostat_steps) {
 	// reset MD steps since last heatbath coupling
 	thermostat_count = 0;
 	// GPU time for Maxwell-Boltzmann distribution

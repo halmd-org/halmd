@@ -274,7 +274,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::stream()
     event_[3].record(stream_);
 
     // heat bath coupling
-    if (++thermostat_count > thermostat_steps) {
+    if (thermostat_steps && ++thermostat_count > thermostat_steps) {
 	try {
 	    _Base::boltzmann(g_part.v, thermostat_temp, stream_);
 	}
@@ -328,7 +328,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
     // GPU time for virial equation sum calculation
     m_times["virial_sum"] += event_[0] - event_[5];
 
-    if (thermostat_count > thermostat_steps) {
+    if (thermostat_steps && thermostat_count > thermostat_steps) {
 	// reset MD steps since last heatbath coupling
 	thermostat_count = 0;
 	// GPU time for Maxwell-Boltzmann distribution

@@ -750,7 +750,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
     }
     // calculate velocities
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
-    if (++thermostat_count > thermostat_steps) {
+    if (thermostat_steps && ++thermostat_count > thermostat_steps) {
 	boltzmann(thermostat_temp);
     }
     else {
@@ -758,7 +758,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
     }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
 
-    if (thermostat_count > thermostat_steps) {
+    if (thermostat_steps && thermostat_count > thermostat_steps) {
 	// reset MD steps since last heatbath coupling
 	thermostat_count = 0;
 	m_times["boltzmann"] += t[4] - t[3];
