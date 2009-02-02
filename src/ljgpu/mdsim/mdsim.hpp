@@ -73,7 +73,7 @@ private:
     /** aquire fluid sample */
     void sample_fluid(uint64_t step, bool dump);
     /** process fluid sample */
-    bool sample_properties(uint64_t step);
+    bool sample_properties(uint64_t step, bool perf);
     /** open HDF5 output files */
     void open();
     /** write partial results to HDF5 files and flush to disk */
@@ -356,7 +356,7 @@ void mdsim<mdsim_backend>::operator()()
 	// stream next MD simulation program step on GPU
 	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
-	if (sample_properties(step)) {
+	if (sample_properties(step, false)) {
 	    // acquired maximum number of samples for a block level
 	    flush();
 	    step.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
@@ -391,7 +391,7 @@ void mdsim<mdsim_backend>::operator()()
 	}
     }
     sample_fluid(step, true);
-    sample_properties(step);
+    sample_properties(step, true);
 
     timer.stop();
     LOG("finished MD simulation");
@@ -450,7 +450,7 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step, bool dump)
  * process fluid sample
  */
 template <typename mdsim_backend>
-bool mdsim<mdsim_backend>::sample_properties(uint64_t step)
+bool mdsim<mdsim_backend>::sample_properties(uint64_t step, bool perf)
 {
     double time = step * static_cast<double>(m_fluid.timestep());
     bool flush = false;
@@ -464,7 +464,7 @@ bool mdsim<mdsim_backend>::sample_properties(uint64_t step)
     if (m_is_en_step) {
 	m_en.sample(m_en_sample, m_fluid.density(), time);
     }
-    if (step == m_corr.steps()) {
+    if (perf) {
 	m_perf.sample(m_fluid.times());
     }
     return flush;
