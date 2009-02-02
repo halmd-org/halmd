@@ -117,6 +117,8 @@ public:
     void param(H5param& param) const;
 
 private:
+    /** initialise velocities from Maxwell-Boltzmann distribution */
+    void boltzmann(double temp);
     /** randomly assign particles types in a binary mixture */
     void random_binary_types();
     /** update cell lists */
@@ -142,8 +144,6 @@ private:
     void leapfrog_half();
     /** second leapfrog step of integration of equations of motion */
     void leapfrog_full();
-    /** random collision with heat bath */
-    void anderson_thermostat();
 
 private:
     using _Base::npart;
@@ -159,7 +159,8 @@ private:
     using _Base::epsilon_;
     using _Base::r_smooth;
     using _Base::rri_smooth;
-    using _Base::thermostat_nu;
+    using _Base::thermostat_steps;
+    using _Base::thermostat_count;
     using _Base::thermostat_temp;
 
     using _Base::m_times;
@@ -371,13 +372,29 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
 }
 
 /**
- * set system temperature according to Maxwell-Boltzmann distribution
+ * initialise velocities from Maxwell-Boltzmann distribution
  */
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
 {
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
+    // initialize force to zero for first leapfrog half step
+    foreach (particle& p, part) {
+	p.f = 0;
+    }
+    // initialize sum over maximum velocity magnitudes since last neighbour lists update
+    v_max_sum = 0;
+
+    boltzmann(value);
+}
+
+/**
+ * set system temperature according to Maxwell-Boltzmann distribution
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::boltzmann(double temp)
+{
     // center of mass velocity
     vector_type v_cm = 0;
     // mean squared velocity
@@ -385,17 +402,15 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
     // maximum squared velocity
     double vv_max = 0;
 
+    // generate random Maxwell-Boltzmann distributed velocity
     foreach (particle& p, part) {
-	// generate random Maxwell-Boltzmann distributed velocity
-	rng_.gaussian(p.v, value);
+	rng_.gaussian(p.v, temp);
 	v_cm += p.v;
-	// initialize force to zero for first leapfrog half step
-	p.f = 0;
     }
     v_cm /= npart;
 
+    // set center of mass velocity to zero
     foreach (particle& p, part) {
-	// set center of mass velocity to zero
 	p.v -= v_cm;
 	vv += p.v * p.v;
 	vv_max = std::max(vv_max, p.v * p.v);
@@ -403,13 +418,12 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
     vv /= npart;
 
     // rescale velocities to accurate temperature
-    double s = std::sqrt(value * dimension / vv);
+    double s = std::sqrt(temp * dimension / vv);
     foreach (particle& p, part) {
 	p.v *= s;
     }
 
-    // initialize sum over maximum velocity magnitudes since last neighbour lists update
-    v_max_sum = std::sqrt(vv_max);
+    v_max_sum += std::sqrt(vv_max);
 }
 
 /**
@@ -694,26 +708,13 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 }
 
 /**
- * random collisions with heat bath
- */
-template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::anderson_thermostat()
-{
-    foreach (particle& p, part) {
-	if (rng_.uniform() < (thermostat_nu * timestep_)) {
-	    rng_.gaussian(p.v, thermostat_temp);
-	}
-    }
-}
-
-/**
  * MD simulation step
  */
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 {
     // nanosecond resolution process times
-    boost::array<timespec, 7> t;
+    boost::array<timespec, 5> t;
 
     // calculate particle positions
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
@@ -749,19 +750,25 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
     }
     // calculate velocities
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
-    leapfrog_full();
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
-    if (ensemble_ == NVT) {
-	anderson_thermostat();
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[5]);
-
-	m_times["anderson_thermostat"] += t[5] - t[4];
+    if (++thermostat_count > thermostat_steps) {
+	boltzmann(thermostat_temp);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[6]);
+    else {
+	leapfrog_full();
+    }
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
 
+    if (thermostat_count > thermostat_steps) {
+	// reset MD steps since last heatbath coupling
+	thermostat_count = 0;
+	m_times["boltzmann"] += t[4] - t[3];
+	m_times["velocity_verlet"] += t[1] - t[0];
+    }
+    else {
+	m_times["velocity_verlet"] += (t[1] - t[0]) + (t[4] - t[3]);
+    }
     m_times["update_forces"] += t[3] - t[2];
-    m_times["velocity_verlet"] += (t[1] - t[0]) + (t[4] - t[3]);
-    m_times["mdstep"] += t[6] - t[0];
+    m_times["mdstep"] += t[4] - t[0];
 }
 
 template <int dimension>
