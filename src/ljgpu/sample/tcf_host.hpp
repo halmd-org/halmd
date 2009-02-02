@@ -41,6 +41,7 @@ struct tcf_host_sample : public tcf_sample<dimension>
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::q_value_vector q_value_vector;
     typedef typename _Base::q_vector_vector q_vector_vector;
+    typedef typename _Base::isf_vector_vector isf_vector_vector;
     typedef typename _Base::density_pair density_pair;
     typedef typename _Base::density_vector density_vector;
     typedef typename _Base::density_vector_vector density_vector_vector;
@@ -58,12 +59,15 @@ struct tcf_host_sample : public tcf_sample<dimension>
 	typename q_vector_vector::value_type::const_iterator q1;
 	typename density_vector_vector::iterator rho0;
 	typename density_vector_vector::value_type::iterator rho1;
+	typename isf_vector_vector::iterator isf0;
 	typename sample_vector::const_iterator r0;
 
 	// allocate memory for Fourier transformed densities
 	rho = boost::shared_ptr<density_vector_vector>(new density_vector_vector(q.size()));
-	for (q0 = q.begin(), rho0 = rho->begin(); q0 != q.end(); ++q0, ++rho0) {
+	isf = boost::shared_ptr<isf_vector_vector>(new isf_vector_vector(q.size()));
+	for (q0 = q.begin(), rho0 = rho->begin(), isf0 = isf->begin(); q0 != q.end(); ++q0, ++rho0, ++isf0) {
 	    rho0->assign(q0->size(), density_pair(0, 0));
+	    isf0->resize(q0->size());
 	}
 	// spatial Fourier transformation
 	for (q0 = q.begin(), rho0 = rho->begin(); q0 != q.end(); ++q0, ++rho0) {
@@ -83,15 +87,8 @@ struct tcf_host_sample : public tcf_sample<dimension>
     boost::shared_ptr<sample_vector> v;
     /** Fourier transformed density for different |q| values and vectors */
     boost::shared_ptr<density_vector_vector> rho;
-};
-
-template <>
-struct correlation_function<tcf_host_sample>
-{
-    /** HDF5 dataset */
-    H5::DataSet dataset;
-    /** particle type */
-    size_t type;
+    /** self-intermediate scattering function for different |q| values and vectors */
+    boost::shared_ptr<isf_vector_vector> isf;
 };
 
 /**
@@ -191,39 +188,6 @@ struct velocity_autocorrelation<tcf_host_sample> : correlation_function<tcf_host
 };
 
 /**
- * intermediate scattering function
- */
-template <>
-struct intermediate_scattering_function<tcf_host_sample> : correlation_function<tcf_host_sample>
-{
-    /** block sample results */
-    tcf_binary_result_type result;
-
-    char const* name() const { return "ISF"; }
-
-    template <typename input_iterator, typename output_iterator>
-    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
-    {
-	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
-	typedef typename sample_type::density_vector_vector::const_iterator density_vector_iterator;
-	typedef typename sample_type::density_vector_vector::value_type::const_iterator density_iterator;
-	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
-
-	for (sample_iterator it = first.first; it != last.first; ++it, ++result) {
-	    q_value_result_iterator k = (*result).begin();
-	    density_vector_iterator j0 = (*first.first)[type].rho->begin();
-	    for (density_vector_iterator j = (*it)[type].rho->begin(); j != (*it)[type].rho->end(); ++j, ++j0, ++k) {
-		density_iterator rho0 = (*j0).begin();
-		for (density_iterator rho = (*j).begin(); rho != (*j).end(); ++rho, ++rho0) {
-		    *k += (rho->first * rho0->first + rho->second * rho0->second) / (*it)[type].r->size();
-		}
-	    }
-	}
-    }
-};
-
-/**
  * self-intermediate scattering function
  */
 template <>
@@ -241,6 +205,9 @@ struct self_intermediate_scattering_function<tcf_host_sample> : correlation_func
 	typedef typename sample_iterator::value_type::value_type sample_type;
 	typedef typename sample_type::sample_vector::const_iterator position_iterator;
 	typedef typename sample_type::vector_type vector_type;
+	typedef typename sample_type::isf_vector_vector isf_vector_vector;
+	typedef typename isf_vector_vector::iterator isf_vector_iterator;
+	typedef typename isf_vector_vector::value_type::iterator isf_value_iterator;
 	typedef typename input_iterator::second_type q_value_iterator;
 	typedef typename q_value_iterator::value_type::const_iterator q_vector_iterator;
 	typedef typename output_iterator::value_type::iterator q_value_result_iterator;
@@ -248,14 +215,17 @@ struct self_intermediate_scattering_function<tcf_host_sample> : correlation_func
 
 	for (sample_iterator it = first.first; it != last.first; ++it, ++result) {
 	    q_value_result_iterator k = (*result).begin();
-	    for (q_value_iterator j = first.second; j != last.second; ++j, ++k) {
-		for (q_vector_iterator q = (*j).begin(); q != (*j).end(); ++q) {
+	    isf_vector_iterator isf0 = (*it)[type].isf->begin();
+	    for (q_value_iterator j = first.second; j != last.second; ++j, ++k, ++isf0) {
+		isf_value_iterator isf = isf0->begin();
+		for (q_vector_iterator q = (*j).begin(); q != (*j).end(); ++q, ++isf) {
 		    q_value_result_value value = 0;
 		    position_iterator r0 = (*first.first)[type].r->begin();
 		    for (position_iterator r = (*it)[type].r->begin(); r != (*it)[type].r->end(); ++r, ++r0) {
 			value += std::cos((*r - *r0) * (*q));
 		    }
-		    *k += value / (*it)[type].r->size();
+		    *isf = value / (*it)[type].r->size();
+		    *k += *isf;
 		}
 	    }
 	}
@@ -267,7 +237,8 @@ typedef boost::mpl::vector<mean_square_displacement<tcf_host_sample> > _tcf_host
 typedef boost::mpl::push_back<_tcf_host_types_0, mean_quartic_displacement<tcf_host_sample> >::type _tcf_host_types_1;
 typedef boost::mpl::push_back<_tcf_host_types_1, velocity_autocorrelation<tcf_host_sample> >::type _tcf_host_types_2;
 typedef boost::mpl::push_back<_tcf_host_types_2, intermediate_scattering_function<tcf_host_sample> >::type _tcf_host_types_3;
-typedef boost::mpl::push_back<_tcf_host_types_3, self_intermediate_scattering_function<tcf_host_sample> >::type tcf_host_types;
+typedef boost::mpl::push_back<_tcf_host_types_3, self_intermediate_scattering_function<tcf_host_sample> >::type _tcf_host_types_4;
+typedef boost::mpl::push_back<_tcf_host_types_4, squared_self_intermediate_scattering_function<tcf_host_sample> >::type tcf_host_types;
 
 } // namespace ljgpu
 

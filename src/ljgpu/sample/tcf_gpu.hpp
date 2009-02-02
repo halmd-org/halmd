@@ -118,15 +118,6 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     boost::shared_ptr<isf_vector_vector> isf;
 };
 
-template <>
-struct correlation_function<tcf_gpu_sample>
-{
-    /** HDF5 dataset */
-    H5::DataSet dataset;
-    /** particle type */
-    size_t type;
-};
-
 /**
  * mean-square displacement
  */
@@ -314,49 +305,8 @@ struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 };
 
 /**
- * intermediate scattering function
- */
-template <>
-struct intermediate_scattering_function<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
-{
-    /** block sample results */
-    tcf_binary_result_type result;
-
-    char const* name() const { return "ISF"; }
-
-    /**
-     * autocorrelate samples in block
-     */
-    template <typename input_iterator, typename output_iterator>
-    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
-    {
-	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
-	typedef typename sample_type::density_vector_vector density_vector_vector;
-	typedef typename output_iterator::value_type result_vector;
-
-	sample_iterator sample;
-	typename density_vector_vector::const_iterator rho0, rho0_0;
-	typename density_vector_vector::value_type::const_iterator rho1, rho1_0;
-	typename result_vector::iterator result0;
-
-	// accumulate intermediate scattering functions on host
-	for (sample = first.first; sample != last.first; ++sample, ++result) {
-	    for (rho0 = (*sample)[type].rho->begin(), rho0_0 = (*first.first)[type].rho->begin(), result0 = result->begin(); rho0 != (*sample)[type].rho->end(); ++rho0, ++rho0_0, ++result0) {
-		for (rho1 = rho0->begin(), rho1_0 = rho0_0->begin(); rho1 != rho0->end(); ++rho1, ++rho1_0) {
-		    *result0 += (rho1->first * rho1_0->first + rho1->second * rho1_0->second) / (*sample)[type].r->size();
-		}
-	    }
-	}
-    }
-};
-
-/**
  * self-intermediate scattering function
  */
-template <template <int> class sample_type>
-struct self_intermediate_scattering_function;
-
 template <>
 struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
@@ -388,7 +338,7 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 	typename q_vector_vector::const_iterator q0;
 	typename q_vector_vector::value_type::const_iterator q1;
 	typename isf_vector_vector::iterator isf0;
-	typename isf_vector_vector::value_type::iterator isf1;
+	typename isf_vector_vector::value_type::iterator isf;
 	typename result_vector::iterator result0;
 	dfloat* sum;
 
@@ -414,53 +364,9 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 	// accumulate self-intermediate scattering functions on host
 	for (sample = first.first, sum = h_sum.data(); sample != last.first; ++sample, ++result) {
 	    for (q0 = first.second, isf0 = (*sample)[type].isf->begin(), result0 = result->begin(); q0 != last.second; ++q0, ++isf0, ++result0) {
-		for (q1 = q0->begin(), isf1 = isf0->begin(); q1 != q0->end(); ++q1, ++isf1, sum += BLOCKS) {
-		    *isf1 = std::accumulate(sum, sum + BLOCKS, 0.) / (*sample)[type].r->size();
-		    *result0 += *isf1;
-		}
-	    }
-	}
-    }
-};
-
-/**
- * squared self-intermediate scattering function
- */
-template <template <int> class sample_type>
-struct squared_self_intermediate_scattering_function;
-
-template <>
-struct squared_self_intermediate_scattering_function<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
-{
-    /** block sample results */
-    tcf_binary_result_type result;
-
-    char const* name() const { return "SISF2"; }
-
-    /**
-     * autocorrelate samples in block
-     */
-    template <typename input_iterator, typename output_iterator>
-    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
-    {
-	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
-	typedef typename sample_type::_gpu _gpu;
-	typedef typename sample_type::q_vector_vector q_vector_vector;
-	typedef typename sample_type::isf_vector_vector isf_vector_vector;
-	typedef typename output_iterator::value_type result_vector;
-	enum { BLOCKS = _gpu::BLOCKS };
-	enum { THREADS = _gpu::THREADS };
-
-	sample_iterator sample;
-	typename isf_vector_vector::iterator isf0;
-	typename isf_vector_vector::value_type::iterator isf1;
-	typename result_vector::iterator result0;
-
-	for (sample = first.first; sample != last.first; ++sample, ++result) {
-	    for (isf0 = (*sample)[type].isf->begin(), result0 = result->begin(); isf0 != (*sample)[type].isf->end(); ++isf0, ++result0) {
-		for (isf1 = isf0->begin(); isf1 != isf0->end(); ++isf1) {
-		    *result0 += (*isf1) * (*isf1);
+		for (q1 = q0->begin(), isf = isf0->begin(); q1 != q0->end(); ++q1, ++isf, sum += BLOCKS) {
+		    *isf = std::accumulate(sum, sum + BLOCKS, 0.) / (*sample)[type].r->size();
+		    *result0 += *isf;
 		}
 	    }
 	}
