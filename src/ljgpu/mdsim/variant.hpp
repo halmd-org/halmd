@@ -22,13 +22,6 @@
 namespace ljgpu
 {
 
-enum ensemble_type {
-    // constant energy simulation or microcanoncial ensemble
-    NVE,
-    // constant temperature simulation or canonical ensemble
-    NVT,
-};
-
 enum mixture_type {
     // homogenous fluid
     UNARY,

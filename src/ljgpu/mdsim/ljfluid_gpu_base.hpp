@@ -122,7 +122,6 @@ protected:
     using _Base::box_;
     using _Base::density_;
     using _Base::en_cut;
-    using _Base::ensemble_;
     using _Base::epsilon_;
     using _Base::m_times;
     using _Base::mixture_;
@@ -480,28 +479,22 @@ void ljfluid_gpu_base<ljfluid_impl>::update_forces(cuda::vector<float4>& r,
 						   cuda::vector<float>& virial)
 {
     // (CUDA kernel execution is configured in derived class)
-    if (mixture_ == BINARY)
-	if (potential_ == C2POT)
-	    if (ensemble_ == NVT)
-		_gpu::template variant<BINARY, C2POT, NVT>::mdstep(r, v, f, en, virial);
-	    else
-		_gpu::template variant<BINARY, C2POT, NVE>::mdstep(r, v, f, en, virial);
-	else
-	    if (ensemble_ == NVT)
-		_gpu::template variant<BINARY, C0POT, NVT>::mdstep(r, v, f, en, virial);
-	    else
-		_gpu::template variant<BINARY, C0POT, NVE>::mdstep(r, v, f, en, virial);
-    else
-	if (potential_ == C2POT)
-	    if (ensemble_ == NVT)
-		_gpu::template variant<UNARY, C2POT, NVT>::mdstep(r, v, f, en, virial);
-	    else
-		_gpu::template variant<UNARY, C2POT, NVE>::mdstep(r, v, f, en, virial);
-	else
-	    if (ensemble_ == NVT)
-		_gpu::template variant<UNARY, C0POT, NVT>::mdstep(r, v, f, en, virial);
-	    else
-		_gpu::template variant<UNARY, C0POT, NVE>::mdstep(r, v, f, en, virial);
+    if (mixture_ == BINARY) {
+	if (potential_ == C2POT) {
+	    _gpu::template variant<BINARY, C2POT>::mdstep(r, v, f, en, virial);
+	}
+	else {
+	    _gpu::template variant<BINARY, C0POT>::mdstep(r, v, f, en, virial);
+	}
+    }
+    else {
+	if (potential_ == C2POT) {
+	    _gpu::template variant<UNARY, C2POT>::mdstep(r, v, f, en, virial);
+	}
+	else {
+	    _gpu::template variant<UNARY, C0POT>::mdstep(r, v, f, en, virial);
+	}
+    }
 }
 
 template <typename ljfluid_impl>

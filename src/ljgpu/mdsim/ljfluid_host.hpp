@@ -167,7 +167,6 @@ private:
 
     using _Base::mixture_;
     using _Base::potential_;
-    using _Base::ensemble_;
 
     /** particles */
     std::vector<particle> part;

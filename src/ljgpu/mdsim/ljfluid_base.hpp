@@ -48,8 +48,7 @@ public:
 	thermostat_nu(0),
 	thermostat_steps(0),
 	thermostat_count(0),
-	potential_(C0POT),
-	ensemble_(NVE) {}
+	potential_(C0POT) {}
 
     /** set simulation timestep */
     void timestep(float_type value);
@@ -75,7 +74,6 @@ public:
     void param(H5param& param) const;
 
     potential_type potential() const { return potential_ ; }
-    ensemble_type ensemble() const { return ensemble_ ; }
 
 protected:
     using _Base::npart;
@@ -115,8 +113,6 @@ protected:
 
     /** C⁰ or C²-smooth potential */
     potential_type potential_;
-    /** NVE or NVT ensemble */
-    ensemble_type ensemble_;
 };
 
 template <typename ljfluid_impl>
@@ -182,7 +178,6 @@ void ljfluid_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
     LOG("heat bath coupling frequency: " << thermostat_steps);
     thermostat_temp = temp;
     LOG("heat bath temperature: " << thermostat_temp);
-    ensemble_ = NVT;
 }
 
 template <typename ljfluid_impl>
@@ -200,8 +195,9 @@ void ljfluid_base<ljfluid_impl>::param(H5param& param) const
     if (potential_ == C2POT) {
 	node["potential_smoothing"] = r_smooth;
     }
-    if (ensemble_ == NVT) {
+    if (thermostat_steps) {
 	node["thermostat_nu"] = thermostat_nu;
+	node["thermostat_steps"] = thermostat_steps;
 	node["thermostat_temp"] = thermostat_temp;
     }
 }

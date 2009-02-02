@@ -122,7 +122,6 @@ private:
     using _Base::box_;
     using _Base::density_;
     using _Base::dim_;
-    using _Base::ensemble_;
     using _Base::m_times;
     using _Base::mixture_;
     using _Base::mpart;

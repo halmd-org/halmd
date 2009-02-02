@@ -78,7 +78,6 @@ texture<float2, 1, cudaReadModeElementType> tex<2>::v;
 template <typename vector_type,
           mixture_type mixture,
 	  potential_type potential,
-	  ensemble_type ensemble,
 	  typename T>
 __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_virial)
 {
@@ -445,22 +444,13 @@ cuda::function<void (unsigned int*)>
     _Base::gen_index(cu::ljfluid::gen_index);
 
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
-    _3D::template variant<UNARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C0POT, NVE>);
+    _3D::template variant<UNARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C0POT>);
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
-    _3D::template variant<UNARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C0POT, NVT>);
+    _3D::template variant<UNARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C2POT>);
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
-    _3D::template variant<UNARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C2POT, NVE>);
+    _3D::template variant<BINARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C0POT>);
 cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
-    _3D::template variant<UNARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C2POT, NVT>);
-
-cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
-    _3D::template variant<BINARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C0POT, NVE>);
-cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
-    _3D::template variant<BINARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C0POT, NVT>);
-cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
-    _3D::template variant<BINARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVE>);
-cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
-    _3D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT, NVT>);
+    _3D::template variant<BINARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT>);
 
 cuda::function<void (unsigned int const*)>
     _3D::update_neighbours(cu::ljfluid::update_neighbours<3>);
@@ -472,22 +462,14 @@ cuda::function<void (unsigned int const*, float4*, float4*)>
     _3D::sample(cu::ljfluid::sample<3>);
 
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
-    _2D::template variant<UNARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT, NVE>);
+    _2D::template variant<UNARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT>);
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
-    _2D::template variant<UNARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT, NVT>);
-cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
-    _2D::template variant<UNARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C2POT, NVE>);
-cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
-    _2D::template variant<UNARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C2POT, NVT>);
+    _2D::template variant<UNARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C2POT>);
 
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
-    _2D::template variant<BINARY, C0POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C0POT, NVE>);
+    _2D::template variant<BINARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C0POT>);
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
-    _2D::template variant<BINARY, C0POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C0POT, NVT>);
-cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
-    _2D::template variant<BINARY, C2POT, NVE>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVE>);
-cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
-    _2D::template variant<BINARY, C2POT, NVT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT, NVT>);
+    _2D::template variant<BINARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT>);
 
 cuda::function<void (unsigned int const*)>
     _2D::update_neighbours(cu::ljfluid::update_neighbours<2>);
