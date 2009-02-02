@@ -113,7 +113,6 @@ private:
     using _Base::reduce_velocity;
     using _Base::reduce_en;
     using _Base::reduce_virial;
-    using _Base::reduce_v_max;
 
     /** system state in page-locked host memory */
     struct {

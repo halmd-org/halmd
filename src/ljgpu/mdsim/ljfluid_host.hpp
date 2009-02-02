@@ -398,8 +398,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::boltzmann(double temp)
     vector_type v_cm = 0;
     // mean squared velocity
     double vv = 0;
-    // maximum squared velocity
-    double vv_max = 0;
 
     // generate random Maxwell-Boltzmann distributed velocity
     foreach (particle& p, part) {
@@ -412,7 +410,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::boltzmann(double temp)
     foreach (particle& p, part) {
 	p.v -= v_cm;
 	vv += p.v * p.v;
-	vv_max = std::max(vv_max, p.v * p.v);
     }
     vv /= npart;
 
@@ -421,8 +418,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::boltzmann(double temp)
     foreach (particle& p, part) {
 	p.v *= s;
     }
-
-    v_max_sum += std::sqrt(vv_max);
 }
 
 /**
@@ -678,12 +673,18 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, 
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 {
+    double vv_max = 0;
+
     foreach (particle& p, part) {
 	// half step velocity
 	p.v += p.f * (timestep_ / 2);
 	// full step position
 	p.r += p.v * timestep_;
+	// maximum squared velocity
+	vv_max = std::max(vv_max, p.v * p.v);
     }
+
+    v_max_sum += std::sqrt(vv_max);
 }
 
 /**
@@ -692,18 +693,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
 {
-    // maximum squared velocity
-    double vv_max = 0;
-
     foreach (particle& p, part) {
 	// full step velocity
 	p.v += p.f * (timestep_ / 2);
-
-	vv_max = std::max(vv_max, p.v * p.v);
     }
-
-    // add to sum over maximum velocity magnitudes since last neighbour lists update
-    v_max_sum += std::sqrt(vv_max);
 }
 
 /**

@@ -139,7 +139,7 @@ private:
     /** CUDA execution dimensions for phase space sampling */
     std::vector<cuda::config> dim_sample;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 11> event_;
+    boost::array<cuda::event, 10> event_;
 
     /** GPU radix sort */
     radix_sort<unsigned int> radix_;
@@ -497,6 +497,19 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
     }
     event_[2].record(stream_);
 
+    // maximum velocity calculation
+    try {
+	reduce_v_max(g_part.v, stream_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to stream maximum velocity calculation on GPU");
+    }
+    event_[3].record(stream_);
+    event_[3].synchronize();
+
+    // add to sum over maximum velocity magnitudes since last cell lists update
+    v_max_sum += reduce_v_max.value();
+
     // update cell lists
     if (v_max_sum * timestep_ > r_skin / 2) {
 #ifdef USE_HILBERT_ORDER
@@ -507,7 +520,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	    throw exception("failed to stream hilbert space-filling curve sort on GPU");
 	}
 #endif
-	event_[3].record(stream_);
+	event_[4].record(stream_);
 
 	try {
 	    assign_cells(stream_);
@@ -515,7 +528,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream cell list update on GPU");
 	}
-	event_[4].record(stream_);
+	event_[5].record(stream_);
 
 	try {
 	    update_neighbours(stream_);
@@ -523,7 +536,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream neighbour lists update on GPU");
 	}
-	event_[9].record(stream_);
+	event_[6].record(stream_);
 
 #ifdef USE_HILBERT_ORDER
 	try {
@@ -534,7 +547,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	}
 #endif
     }
-    event_[5].record(stream_);
+    event_[7].record(stream_);
 
     // Lennard-Jones force calculation
     try {
@@ -543,7 +556,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
     }
-    event_[6].record(stream_);
+    event_[8].record(stream_);
 
     // heat bath coupling
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
@@ -554,7 +567,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	    throw exception("failed to compute Boltzmann distributed velocities on GPU");
 	}
     }
-    event_[10].record(stream_);
+    event_[9].record(stream_);
 
     // potential energy sum calculation
     try {
@@ -562,15 +575,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream potential energy sum calculation on GPU");
-    }
-    event_[7].record(stream_);
-
-    // maximum velocity calculation
-    try {
-	reduce_v_max(g_part.v, stream_);
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to stream maximum velocity calculation on GPU");
     }
     event_[0].record(stream_);
 }
@@ -593,43 +597,42 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
     m_times["mdstep"] += event_[0] - event_[1];
     // GPU time for velocity-Verlet integration
     m_times["velocity_verlet"] += event_[2] - event_[1];
-    // GPU time for Lennard-Jones force update
-    m_times["update_forces"] += event_[6] - event_[5];
-    // GPU time for potential energy sum calculation
-    m_times["potential_energy"] += event_[7] - event_[10];
     // GPU time for maximum velocity calculation
-    m_times["maximum_velocity"] += event_[0] - event_[7];
-
-    if (thermostat_steps && thermostat_count > thermostat_steps) {
-	// reset MD steps since last heatbath coupling
-	thermostat_count = 0;
-	// GPU time for Maxwell-Boltzmann distribution
-	m_times["boltzmann"] += event_[10] - event_[6];
-    }
+    m_times["maximum_velocity"] += event_[3] - event_[2];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
 #ifdef USE_HILBERT_ORDER
 	// GPU time for Hilbert curve sort
-	m_times["hilbert_sort"] += event_[3] - event_[2];
+	m_times["hilbert_sort"] += event_[4] - event_[3];
 #endif
 	// GPU time for cell lists update
-	m_times["update_cells"] += event_[4] - event_[3];
+	m_times["update_cells"] += event_[5] - event_[4];
 	// GPU time for neighbour lists update
-	m_times["update_neighbours"] += event_[9] - event_[4];
+	m_times["update_neighbours"] += event_[6] - event_[5];
 #if defined(USE_HILBERT_ORDER)
 	// GPU time for permutation sort
-	m_times["permutation"] += event_[5] - event_[9];
+	m_times["permutation"] += event_[7] - event_[6];
 #endif
     }
+
+    // GPU time for Lennard-Jones force update
+    m_times["update_forces"] += event_[8] - event_[7];
+
+    if (thermostat_steps && thermostat_count > thermostat_steps) {
+	// reset MD steps since last heatbath coupling
+	thermostat_count = 0;
+	// GPU time for Maxwell-Boltzmann distribution
+	m_times["boltzmann"] += event_[9] - event_[8];
+    }
+
+    // GPU time for potential energy sum calculation
+    m_times["potential_energy"] += event_[0] - event_[9];
 
     if (!std::isfinite(reduce_en.value())) {
 	throw exception("potential energy diverged");
     }
-
-    // add to sum over maximum velocity magnitudes since last cell lists update
-    v_max_sum += reduce_v_max.value();
 }
 
 template <int dimension>
@@ -796,14 +799,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_velocities()
 {
-    try {
-	reduce_v_max(g_part.v, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to assign particle velocities on GPU");
-    }
-    v_max_sum = reduce_v_max.value();
+    v_max_sum = 0;
 }
 
 template <int dimension>

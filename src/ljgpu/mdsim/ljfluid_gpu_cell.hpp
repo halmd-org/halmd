@@ -114,7 +114,7 @@ private:
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 9> event_;
+    boost::array<cuda::event, 7> event_;
 
     using _Base::reduce_squared_velocity;
     using _Base::reduce_velocity;
@@ -350,6 +350,18 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::stream()
     }
     event_[2].record(stream_);
 
+    // maximum velocity calculation
+    try {
+	reduce_v_max(g_part.v, stream_);
+    }
+    catch (cuda::error const& e) {
+	throw exception("failed to stream maximum velocity calculation on GPU");
+    }
+    event_[3].record(stream_);
+    event_[3].synchronize();
+
+    v_max_sum += reduce_v_max.value();
+
     // update cell lists
     if (v_max_sum * timestep_ > r_skin / 2) {
 	try {
@@ -358,7 +370,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::stream()
 	catch (cuda::error const& e) {
 	    throw exception("failed to stream cell list update on GPU");
 	}
-	event_[3].record(stream_);
+	event_[4].record(stream_);
 
 	try {
 	    copy_cells(stream_);
@@ -367,7 +379,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::stream()
 	    throw exception("failed to replicate cell lists on GPU");
 	}
     }
-    event_[4].record(stream_);
+    event_[5].record(stream_);
 
     // Lennard-Jones force calculation
     try {
@@ -376,7 +388,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::stream()
     catch (cuda::error const& e) {
 	throw exception("failed to stream force calculation on GPU");
     }
-    event_[5].record(stream_);
+    event_[6].record(stream_);
 
     // potential energy sum calculation
     try {
@@ -384,15 +396,6 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::stream()
     }
     catch (cuda::error const& e) {
 	throw exception("failed to stream potential energy sum calculation on GPU");
-    }
-    event_[6].record(stream_);
-
-    // maximum velocity calculation
-    try {
-	reduce_v_max(g_part.v, stream_);
-    }
-    catch (cuda::error const& e) {
-	throw exception("failed to stream maximum velocity calculation on GPU");
     }
     event_[0].record(stream_);
 }
@@ -413,23 +416,22 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::mdstep()
 
     m_times["mdstep"] += event_[0] - event_[1];
     m_times["velocity_verlet"] += event_[2] - event_[1];
-    m_times["update_forces"] += event_[5] - event_[4];
-    m_times["potential_energy"] += event_[6] - event_[5];
-    m_times["maximum_velocity"] += event_[0] - event_[6];
+    m_times["maximum_velocity"] += event_[3] - event_[2];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero
 	v_max_sum = 0;
 
-	m_times["update_cells"] += event_[3] - event_[2];
-	m_times["memcpy_cells"] += event_[4] - event_[3];
+	m_times["update_cells"] += event_[4] - event_[3];
+	m_times["memcpy_cells"] += event_[5] - event_[4];
     }
+
+    m_times["update_forces"] += event_[6] - event_[5];
+    m_times["potential_energy"] += event_[0] - event_[6];
 
     if (!std::isfinite(reduce_en.value())) {
 	throw exception("potential energy diverged");
     }
-
-    v_max_sum += reduce_v_max.value();
 }
 
 template <int dimension>
@@ -577,13 +579,13 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::assign_velocities(cuda::host::v
 
     try {
 	cuda::copy(h_part.v, g_part.v, stream_);
-	reduce_v_max(g_part.v, stream_);
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
 	throw exception("failed to assign velocities to cell placeholders");
     }
-    v_max_sum = reduce_v_max.value();
+
+    v_max_sum = 0;
 }
 
 template <int dimension>
