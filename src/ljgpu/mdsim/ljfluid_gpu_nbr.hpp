@@ -268,38 +268,46 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
     }
 }
 
-/**
- * set desired average cell occupancy
- */
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type value)
 {
-    float const r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
+    cell_occupancy_ = value;
+    LOG("desired average cell occupancy: " << cell_occupancy_);
+}
 
-    // fixed cell size due to fixed number of CUDA execution threads per block
-    cell_size_ = /* FIXME */ 64;
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
+{
+    float r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
+    cuda::device::properties prop(cuda::context::device());
+
+    for (unsigned int i = 32; i <= prop.max_threads_per_block(); i *= 2) {
+	// number of placeholders per cell
+	cell_size_ = i;
+	// optimal number of cells with given cell occupancy as upper boundary
+	ncell = std::ceil(std::pow(npart / (cell_occupancy_ * cell_size_), 1.f / dimension));
+	// set number of cells per dimension, respecting cutoff radius
+	ncell = std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max));
+	// derive cell length from number of cells
+	cell_length_ = box_ / ncell;
+
+	if (value < (cell_length_ - r_cut_max)) {
+	    // cell size is adequately large
+	    break;
+	}
+    }
+
     LOG("number of placeholders per cell: " << cell_size_);
-
-    // optimal number of cells with given cell occupancy as upper boundary
-    LOG("desired average cell occupancy: " << value);
-    ncell = std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension));
-
-    // set number of cells per dimension, respecting cutoff radius
-    ncell = std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
 	throw exception("number of cells per dimension must be at least 3");
     }
 
-    // derive cell length from number of cells
-    cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
-
     // set total number of cell placeholders
     nplace = pow(ncell, dimension) * cell_size_;
     LOG("total number of cell placeholders: " << nplace);
-
     // set effective average cell occupancy
     cell_occupancy_ = npart * 1.f / nplace;
     LOG("effective average cell occupancy: " << cell_occupancy_);
@@ -317,14 +325,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
     catch (cuda::error const&) {
 	throw exception("failed to copy cell parameters to device symbols");
     }
-}
-
-template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
-{
-    float const r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
 
     r_skin = std::min(value, cell_length_ - r_cut_max);
+
     if (r_skin < value) {
 	LOG_WARNING("reducing neighbour list skin to fixed-size cell skin");
     }
