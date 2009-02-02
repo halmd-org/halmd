@@ -42,6 +42,8 @@ struct tcf_sample
     typedef std::vector<density_pair> density_vector;
     /** vector of density vectors */
     typedef std::vector<density_vector> density_vector_vector;
+    /** self-intermediate scattering function */
+    typedef std::vector<std::vector<double> > isf_vector_vector;
 };
 
 /** correlation function result types */

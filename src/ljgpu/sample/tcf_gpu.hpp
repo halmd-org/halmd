@@ -43,6 +43,7 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::q_value_vector q_value_vector;
     typedef typename _Base::q_vector_vector q_vector_vector;
+    typedef typename _Base::isf_vector_vector isf_vector_vector;
     typedef typename _Base::density_pair density_pair;
     typedef typename _Base::density_vector density_vector;
     typedef typename _Base::density_vector_vector density_vector_vector;
@@ -71,14 +72,18 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
 	// Fourier-transformed density iterators
 	typename density_vector_vector::iterator rho0;
 	typename density_vector_vector::value_type::iterator rho1;
+	// self-intermediate scattering function iterator
+	typename isf_vector_vector::iterator isf0;
 	// accumulator iterator
 	dfloat* sum0;
 
-	// allocate memory for Fourier-transformed densities
+	// allocate memory for Fourier-transformed densities and self-intermediate scattering function
 	rho = boost::shared_ptr<density_vector_vector>(new density_vector_vector(q.size()));
+	isf = boost::shared_ptr<isf_vector_vector>(new isf_vector_vector(q.size()));
 	size_t size = 0;
-	for (q0 = q.begin(), rho0 = rho->begin(); q0 != q.end(); ++q0, ++rho0) {
+	for (q0 = q.begin(), rho0 = rho->begin(), isf0 = isf->begin(); q0 != q.end(); ++q0, ++rho0, ++isf0) {
 	    rho0->assign(q0->size(), density_pair(0, 0));
+	    isf0->resize(q0->size());
 	    size += q0->size();
 	}
 	// allocate device and host memory for accumulators
@@ -109,6 +114,8 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     boost::shared_ptr<gpu_sample_vector> v;
     /** Fourier transformed density for different |q| values and vectors */
     boost::shared_ptr<density_vector_vector> rho;
+    /** self-intermediate scattering function for different |q| values and vectors */
+    boost::shared_ptr<isf_vector_vector> isf;
 };
 
 template <>
@@ -372,6 +379,7 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 	typedef typename sample_iterator::value_type::value_type sample_type;
 	typedef typename sample_type::_gpu _gpu;
 	typedef typename sample_type::q_vector_vector q_vector_vector;
+	typedef typename sample_type::isf_vector_vector isf_vector_vector;
 	typedef typename output_iterator::value_type result_vector;
 	enum { BLOCKS = _gpu::BLOCKS };
 	enum { THREADS = _gpu::THREADS };
@@ -379,6 +387,8 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 	sample_iterator sample;
 	typename q_vector_vector::const_iterator q0;
 	typename q_vector_vector::value_type::const_iterator q1;
+	typename isf_vector_vector::iterator isf0;
+	typename isf_vector_vector::value_type::iterator isf1;
 	typename result_vector::iterator result0;
 	dfloat* sum;
 
@@ -403,9 +413,54 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 	cuda::copy(g_sum, h_sum);
 	// accumulate self-intermediate scattering functions on host
 	for (sample = first.first, sum = h_sum.data(); sample != last.first; ++sample, ++result) {
-	    for (q0 = first.second, result0 = result->begin(); q0 != last.second; ++q0, ++result0) {
-		for (q1 = q0->begin(); q1 != q0->end(); ++q1, sum += BLOCKS) {
-		    *result0 += std::accumulate(sum, sum + BLOCKS, 0.) / (*sample)[type].r->size();
+	    for (q0 = first.second, isf0 = (*sample)[type].isf->begin(), result0 = result->begin(); q0 != last.second; ++q0, ++isf0, ++result0) {
+		for (q1 = q0->begin(), isf1 = isf0->begin(); q1 != q0->end(); ++q1, ++isf1, sum += BLOCKS) {
+		    *isf1 = std::accumulate(sum, sum + BLOCKS, 0.) / (*sample)[type].r->size();
+		    *result0 += *isf1;
+		}
+	    }
+	}
+    }
+};
+
+/**
+ * squared self-intermediate scattering function
+ */
+template <template <int> class sample_type>
+struct squared_self_intermediate_scattering_function;
+
+template <>
+struct squared_self_intermediate_scattering_function<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    tcf_binary_result_type result;
+
+    char const* name() const { return "SISF2"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_type::_gpu _gpu;
+	typedef typename sample_type::q_vector_vector q_vector_vector;
+	typedef typename sample_type::isf_vector_vector isf_vector_vector;
+	typedef typename output_iterator::value_type result_vector;
+	enum { BLOCKS = _gpu::BLOCKS };
+	enum { THREADS = _gpu::THREADS };
+
+	sample_iterator sample;
+	typename isf_vector_vector::iterator isf0;
+	typename isf_vector_vector::value_type::iterator isf1;
+	typename result_vector::iterator result0;
+
+	for (sample = first.first; sample != last.first; ++sample, ++result) {
+	    for (isf0 = (*sample)[type].isf->begin(), result0 = result->begin(); isf0 != (*sample)[type].isf->end(); ++isf0, ++result0) {
+		for (isf1 = isf0->begin(); isf1 != isf0->end(); ++isf1) {
+		    *result0 += (*isf1) * (*isf1);
 		}
 	    }
 	}
@@ -417,7 +472,8 @@ typedef boost::mpl::vector<mean_square_displacement<tcf_gpu_sample> > _tcf_gpu_t
 typedef boost::mpl::push_back<_tcf_gpu_types_0, mean_quartic_displacement<tcf_gpu_sample> >::type _tcf_gpu_types_1;
 typedef boost::mpl::push_back<_tcf_gpu_types_1, velocity_autocorrelation<tcf_gpu_sample> >::type _tcf_gpu_types_2;
 typedef boost::mpl::push_back<_tcf_gpu_types_2, intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_3;
-typedef boost::mpl::push_back<_tcf_gpu_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type tcf_gpu_types;
+typedef boost::mpl::push_back<_tcf_gpu_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_4;
+typedef boost::mpl::push_back<_tcf_gpu_types_4, squared_self_intermediate_scattering_function<tcf_gpu_sample> >::type tcf_gpu_types;
 
 } // namespace ljgpu
 
