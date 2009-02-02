@@ -380,6 +380,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
 
     // center of mass velocity
     vector_type v_cm = 0;
+    // mean squared velocity
+    double vv = 0;
     // maximum squared velocity
     double vv_max = 0;
 
@@ -390,14 +392,20 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
 	// initialize force to zero for first leapfrog half step
 	p.f = 0;
     }
-
     v_cm /= npart;
 
     foreach (particle& p, part) {
 	// set center of mass velocity to zero
 	p.v -= v_cm;
-
+	vv += p.v * p.v;
 	vv_max = std::max(vv_max, p.v * p.v);
+    }
+    vv /= npart;
+
+    // rescale velocities to accurate temperature
+    double s = std::sqrt(value * dimension / vv);
+    foreach (particle& p, part) {
+	p.v *= s;
     }
 
     // initialize sum over maximum velocity magnitudes since last neighbour lists update
