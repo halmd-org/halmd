@@ -56,6 +56,7 @@ public:
     typedef boost::false_type has_gpu;
     typedef boost::false_type has_trajectory_gpu_sample;
     typedef boost::false_type has_energy_gpu_sample;
+    typedef boost::false_type has_thermostat;
 
 public:
     mdsim_base() :

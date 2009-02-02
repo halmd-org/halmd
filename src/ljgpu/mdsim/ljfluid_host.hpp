@@ -52,6 +52,7 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
+    typedef boost::true_type has_thermostat;
 
     /**
      * MD simulation particle

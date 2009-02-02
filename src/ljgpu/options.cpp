@@ -555,8 +555,6 @@ options_description<ljfluid_impl_base>::options_description()
 	 "truncate potential at cutoff radius")
 	("smooth", po::value<float>(),
 	 "C²-potential smoothing factor")
-	("thermostat", po::value<float>(),
-	 "heat bath collision probability")
 	("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
 	 "potential well depths AA,AB,BB")
 	("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
@@ -568,7 +566,7 @@ options_description<ljfluid_impl_gpu_base>::options_description()
 {
     add_options()
 	("tcf-backend", po::value<std::string>()->default_value("gpu"),
-	 "compute correlation functions on GPU or host")
+	 "correlation functions backend")
 	("device,D", po::value<int>()->default_value(0),
 	 "CUDA device ordinal")
 	("threads,T", po::value<unsigned int>()->default_value(128),
@@ -578,6 +576,10 @@ options_description<ljfluid_impl_gpu_base>::options_description()
 
 options_description<ljfluid_impl_gpu_square>::options_description()
 {
+    add_options()
+	("thermostat", po::value<float>(),
+	 "heat bath collision probability")
+	;
 }
 
 options_description<ljfluid_impl_gpu_neighbour>::options_description()
@@ -587,6 +589,8 @@ options_description<ljfluid_impl_gpu_neighbour>::options_description()
 	 "desired average cell occupancy")
 	("skin", po::value<float>()->default_value(0.3),
 	 "neighbour list skin")
+	("thermostat", po::value<float>(),
+	 "heat bath collision probability")
 	;
 }
 
@@ -602,9 +606,11 @@ options_description<ljfluid_impl_host>::options_description()
 {
     add_options()
 	("tcf-backend", po::value<std::string>()->default_value("host"),
-	 "compute correlation functions on GPU or host")
+	 "correlation functions backend")
 	("skin", po::value<float>()->default_value(0.3),
 	 "neighbour list skin")
+	("thermostat", po::value<float>(),
+	 "heat bath collision probability")
 	;
 }
 
@@ -612,7 +618,7 @@ options_description<hardsphere_impl>::options_description()
 {
     add_options()
 	("tcf-backend", po::value<std::string>()->default_value("host"),
-	 "compute correlation functions on GPU or host")
+	 "correlation functions backend")
 	("pair-separation,p", po::value<float>()->default_value(0.5),
 	 "particle pair separation")
 	;

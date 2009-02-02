@@ -106,7 +106,7 @@ protected:
     /** assign ascending particle numbers */
     void init_tags(cuda::vector<float4>& g_r, cuda::vector<unsigned int>& g_tag);
     /** generate Maxwell-Boltzmann distributed velocities */
-    void boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp);
+    void boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp, cuda::stream& stream);
     /** restore system state from phase space sample */
     void state(host_sample_type& sample, float_type box,
 	       cuda::host::vector<float4>& h_r,
@@ -433,11 +433,9 @@ void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
  * generate Maxwell-Boltzmann distributed velocities
  */
 template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp)
+void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp, cuda::stream& stream)
 {
     typedef gpu::boltzmann<dimension> _gpu;
-
-    LOG("set velocities from Boltzmann distribution at temperature: " << temp);
 
     //
     // The particle velocities need to fullfill two constraints:
@@ -450,26 +448,15 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
     // in consequence affects the second moment, i.e. the temperature.
     //
 
-    try {
-	event_[0].record(stream_);
-
-	// generate Maxwell-Boltzmann distributed velocities and reduce velocity
-	cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream_);
-	_gpu::gaussian(g_v, npart, temp, g_vcm);
-	// set center of mass velocity to zero and reduce squared velocity
-	cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream_);
-	_gpu::shift_velocity(g_v, npart, g_vcm, g_vv);
-	// rescale velocities to accurate temperature
-	cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream_);
-	_gpu::scale_velocity(g_v, npart, g_vv, temp);
-
-	event_[1].record(stream_);
-	event_[1].synchronize();
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to compute Boltzmann distributed velocities on GPU");
-    }
-    m_times["boltzmann"] += event_[1] - event_[0];
+    // generate Maxwell-Boltzmann distributed velocities and reduce velocity
+    cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
+    _gpu::gaussian(g_v, npart, temp, g_vcm);
+    // set center of mass velocity to zero and reduce squared velocity
+    cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
+    _gpu::shift_velocity(g_v, npart, g_vcm, g_vv);
+    // rescale velocities to accurate temperature
+    cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
+    _gpu::scale_velocity(g_v, npart, g_vv, temp);
 }
 
 template <typename ljfluid_impl>

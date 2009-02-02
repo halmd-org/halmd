@@ -243,7 +243,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     init_cells(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
 
     // heat bath collision probability and temperature
-    thermostat(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    thermostat(typename mdsim_backend::has_thermostat());
 
     if (m_opt["random-seed"].empty()) {
 	m_fluid.rng(read_random_seed("/dev/random"));

@@ -50,6 +50,7 @@ public:
     /** static implementation properties */
     typedef boost::true_type has_trajectory_gpu_sample;
     typedef boost::true_type has_energy_gpu_sample;
+    typedef boost::true_type has_thermostat;
 
 public:
     /** set number of particles in system */
@@ -130,13 +131,16 @@ private:
     using _Base::r_cut;
     using _Base::stream_;
     using _Base::timestep_;
+    using _Base::thermostat_steps;
+    using _Base::thermostat_count;
+    using _Base::thermostat_temp;
 
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA execution dimensions for phase space sampling */
     std::vector<cuda::config> dim_sample;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 10> event_;
+    boost::array<cuda::event, 11> event_;
 
     /** GPU radix sort */
     radix_sort<unsigned int> radix_;
@@ -462,7 +466,18 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::temperature(float_type temp)
 {
-    _Base::boltzmann(g_part.v, temp);
+    LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
+
+    try {
+	event_[0].record(stream_);
+	_Base::boltzmann(g_part.v, temp, stream_);
+	event_[1].record(stream_);
+	event_[1].synchronize();
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to compute Boltzmann distributed velocities on GPU");
+    }
+    m_times["boltzmann"] += event_[1] - event_[0];
 
     assign_velocities();
 }
@@ -528,6 +543,17 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
     }
     event_[6].record(stream_);
 
+    // heat bath coupling
+    if (++thermostat_count > thermostat_steps) {
+	try {
+	    _Base::boltzmann(g_part.v, thermostat_temp, stream_);
+	}
+	catch (cuda::error const&) {
+	    throw exception("failed to compute Boltzmann distributed velocities on GPU");
+	}
+    }
+    event_[10].record(stream_);
+
     // potential energy sum calculation
     try {
 	reduce_en(g_part.en, stream_);
@@ -568,9 +594,16 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
     // GPU time for Lennard-Jones force update
     m_times["update_forces"] += event_[6] - event_[5];
     // GPU time for potential energy sum calculation
-    m_times["potential_energy"] += event_[7] - event_[6];
+    m_times["potential_energy"] += event_[7] - event_[10];
     // GPU time for maximum velocity calculation
     m_times["maximum_velocity"] += event_[0] - event_[7];
+
+    if (thermostat_count > thermostat_steps) {
+	// reset MD steps since last heatbath coupling
+	thermostat_count = 0;
+	// GPU time for Maxwell-Boltzmann distribution
+	m_times["boltzmann"] += event_[10] - event_[6];
+    }
 
     if (v_max_sum * timestep_ > r_skin / 2) {
 	// reset sum over maximum velocity magnitudes to zero

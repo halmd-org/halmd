@@ -48,6 +48,7 @@ public:
     /** static implementation properties */
     typedef boost::true_type has_trajectory_gpu_sample;
     typedef boost::true_type has_energy_gpu_sample;
+    typedef boost::true_type has_thermostat;
 
 public:
     /** set number of particles in system */
@@ -100,6 +101,9 @@ private:
     using _Base::r_cut;
     using _Base::stream_;
     using _Base::timestep_;
+    using _Base::thermostat_steps;
+    using _Base::thermostat_count;
+    using _Base::thermostat_temp;
 
     /** CUDA events for kernel timing */
     boost::array<cuda::event, 9> event_;
@@ -233,7 +237,18 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
 {
-    _Base::boltzmann(g_part.v, temp);
+    LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
+
+    try {
+	event_[0].record(stream_);
+	_Base::boltzmann(g_part.v, temp, stream_);
+	event_[1].record(stream_);
+	event_[1].synchronize();
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to compute Boltzmann distributed velocities on GPU");
+    }
+    m_times["boltzmann"] += event_[1] - event_[0];
 }
 
 template <int dimension>
@@ -258,6 +273,17 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::stream()
     }
     event_[3].record(stream_);
 
+    // heat bath coupling
+    if (++thermostat_count > thermostat_steps) {
+	try {
+	    _Base::boltzmann(g_part.v, thermostat_temp, stream_);
+	}
+	catch (cuda::error const&) {
+	    throw exception("failed to compute Boltzmann distributed velocities on GPU");
+	}
+    }
+    event_[4].record(stream_);
+
     // potential energy sum calculation
     try {
 	reduce_en(g_part.en, stream_);
@@ -265,7 +291,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::stream()
     catch (cuda::error const& e) {
 	throw exception("failed to stream potential energy sum calculation on GPU");
     }
-    event_[4].record(stream_);
+    event_[5].record(stream_);
 
     // virial equation sum calculation
     try {
@@ -298,9 +324,16 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
     // GPU time for Lennard-Jones force update
     m_times["update_forces"] += event_[3] - event_[2];
     // GPU time for potential energy sum calculation
-    m_times["potential_energy"] += event_[4] - event_[3];
+    m_times["potential_energy"] += event_[5] - event_[4];
     // GPU time for virial equation sum calculation
-    m_times["virial_sum"] += event_[0] - event_[4];
+    m_times["virial_sum"] += event_[0] - event_[5];
+
+    if (thermostat_count > thermostat_steps) {
+	// reset MD steps since last heatbath coupling
+	thermostat_count = 0;
+	// GPU time for Maxwell-Boltzmann distribution
+	m_times["boltzmann"] += event_[4] - event_[3];
+    }
 
     if (!std::isfinite(reduce_en.value())) {
 	throw exception("potential energy diverged");

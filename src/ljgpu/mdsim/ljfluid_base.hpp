@@ -46,6 +46,8 @@ public:
 	sigma_(boost::assign::list_of(1)(0)(0)),
 	r_smooth(0),
 	thermostat_nu(0),
+	thermostat_steps(0),
+	thermostat_count(0),
 	potential_(C0POT),
 	ensemble_(NVE) {}
 
@@ -104,6 +106,10 @@ protected:
     float_type timestep_;
     /** heat bath collision probability */
     float_type thermostat_nu;
+    /** heat bath coupling frequency */
+    unsigned int thermostat_steps;
+    /** MD steps since last heat bath coupling */
+    unsigned int thermostat_count;
     /** heat bath temperature */
     float_type thermostat_temp;
 
@@ -172,6 +178,8 @@ void ljfluid_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
 {
     thermostat_nu = nu;
     LOG("heat bath collision probability: " << thermostat_nu);
+    thermostat_steps = 1 / (nu * timestep_);
+    LOG("heat bath coupling frequency: " << thermostat_steps);
     thermostat_temp = temp;
     LOG("heat bath temperature: " << thermostat_temp);
     ensemble_ = NVT;

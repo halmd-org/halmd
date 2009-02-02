@@ -316,12 +316,23 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::lattice()
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
 {
+    LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
+
     cuda::vector<gpu_vector_type> g_v(npart);
     cuda::host::vector<gpu_vector_type> h_v(npart);
     g_v.reserve(dim_.threads());
     h_v.reserve(dim_.threads());
 
-    _Base::boltzmann(g_v, temp);
+    try {
+	event_[0].record(stream_);
+	_Base::boltzmann(g_v, temp, stream_);
+	event_[1].record(stream_);
+	event_[1].synchronize();
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to compute Boltzmann distributed velocities on GPU");
+    }
+    m_times["boltzmann"] += event_[1] - event_[0];
 
     cuda::copy(g_v, h_v);
     assign_velocities(h_v);
