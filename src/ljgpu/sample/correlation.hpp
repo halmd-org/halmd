@@ -246,7 +246,7 @@ bool correlation<dimension>::is_sample_step(uint64_t step) const
 template <int dimension>
 bool correlation<dimension>::is_trajectory_step(uint64_t step) const
 {
-    return (!step || (step == m_steps) || !(step % m_block_freq[m_block_count - 1]));
+    return !(step % m_block_freq[m_block_count - 1]);
 }
 
 } // namespace ljgpu

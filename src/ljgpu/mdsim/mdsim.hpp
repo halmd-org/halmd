@@ -413,6 +413,7 @@ template <typename mdsim_backend>
 void mdsim<mdsim_backend>::sample_fluid(uint64_t step)
 {
     m_is_corr_step = (m_corr.is_sample_step(step) && m_corr.is_open());
+
     // sample trajectory on GPU
     if (m_is_corr_sample_gpu && m_is_corr_step) {
 	trajectory_sample_type sample;
@@ -421,7 +422,10 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step)
 	m_corr_sample = sample;
     }
 
-    m_is_traj_step = (m_corr.is_trajectory_step(step) && m_traj.is_open());
+    m_is_traj_step = (m_corr.is_trajectory_step(step) && !m_opt["disable-trajectory"].as<bool>());
+    // always save first and last phase space sample
+    m_is_traj_step = (m_is_traj_step || !step || step == m_corr.steps());
+
     // sample trajectory on host
     if ((!m_is_corr_sample_gpu && m_is_corr_step) || m_is_traj_step) {
 	host_sample_type sample;
@@ -434,6 +438,7 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step)
     }
 
     m_is_en_step = (m_en.is_open() && m_corr.is_sample_step(step));
+
     // sample thermodynamic equilibrium properties
     if (m_is_en_step) {
 	m_fluid.sample(m_en_sample);
@@ -476,14 +481,15 @@ void mdsim<mdsim_backend>::open()
 	m_corr.open(fn + ".tcf", m_fluid.is_binary() ? 2 : 1);
 	param(m_corr);
     }
-    if (!m_opt["disable-trajectory"].as<bool>()) {
-	m_traj.open(fn + ".trj", trajectory::out);
-	param(m_traj);
-    }
+
+    m_traj.open(fn + ".trj", trajectory::out);
+    param(m_traj);
+
     if (!m_opt["disable-energy"].as<bool>()) {
 	m_en.open(fn + ".tep");
 	param(m_en);
     }
+
     m_perf.open(fn + ".prf");
     param(m_perf);
 }
