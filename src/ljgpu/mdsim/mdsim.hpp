@@ -71,7 +71,7 @@ public:
 
 private:
     /** aquire fluid sample */
-    void sample_fluid(uint64_t step);
+    void sample_fluid(uint64_t step, bool dump);
     /** process fluid sample */
     bool sample_properties(uint64_t step);
     /** open HDF5 output files */
@@ -349,8 +349,10 @@ void mdsim<mdsim_backend>::operator()()
     real_timer timer;
     timer.start();
 
-    for (count_timer<uint64_t> step = 0; step < m_corr.steps(); ++step) {
-	sample_fluid(step);
+    count_timer<uint64_t> step;
+
+    for (step = 0; step < m_corr.steps(); ++step) {
+	sample_fluid(step, !step);
 	// stream next MD simulation program step on GPU
 	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
 
@@ -375,6 +377,7 @@ void mdsim<mdsim_backend>::operator()()
 		LOG_WARNING("trapped signal " + name + " at simulation step " << step);
 	    }
 	    if (signal::signal == SIGINT || signal::signal == SIGTERM) {
+		step++;
 		LOG_WARNING("aborting simulation at step " << step);
 		break;
 	    }
@@ -387,8 +390,8 @@ void mdsim<mdsim_backend>::operator()()
 	    }
 	}
     }
-    sample_fluid(m_corr.steps());
-    sample_properties(m_corr.steps());
+    sample_fluid(step, true);
+    sample_properties(step);
 
     timer.stop();
     LOG("finished MD simulation");
@@ -410,7 +413,7 @@ void mdsim<mdsim_backend>::operator()()
  * aquire fluid sample
  */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::sample_fluid(uint64_t step)
+void mdsim<mdsim_backend>::sample_fluid(uint64_t step, bool dump)
 {
     m_is_corr_step = (m_corr.is_sample_step(step) && m_corr.is_open());
 
@@ -422,9 +425,7 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step)
 	m_corr_sample = sample;
     }
 
-    m_is_traj_step = (m_corr.is_trajectory_step(step) && !m_opt["disable-trajectory"].as<bool>());
-    // always save first and last phase space sample
-    m_is_traj_step = (m_is_traj_step || !step || step == m_corr.steps());
+    m_is_traj_step = dump || (m_corr.is_trajectory_step(step) && !m_opt["disable-trajectory"].as<bool>());
 
     // sample trajectory on host
     if ((!m_is_corr_sample_gpu && m_is_corr_step) || m_is_traj_step) {
