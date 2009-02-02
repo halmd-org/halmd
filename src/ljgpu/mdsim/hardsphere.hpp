@@ -405,23 +405,28 @@ void hardsphere<hardsphere_impl<dimension> >::temperature(double value)
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
     // center of mass velocity
-    vector_type v_cm = 0.;
+    vector_type v_cm = 0;
+    // mean squared velocity
+    double vv = 0;
 
     BOOST_FOREACH(particle& p, part) {
 	// generate random Maxwell-Boltzmann distributed velocity
-	rng_.gaussian(p.v[0], p.v[1], value);
-	if (dimension == 3) {
-	    // Box-Muller transformation strictly generates 2 variates at once
-	    rng_.gaussian(p.v[1], p.v[2], value);
-	}
+	rng_.gaussian(p.v, value);
 	v_cm += p.v;
     }
-
     v_cm /= npart;
 
-    for (unsigned int i = 0; i < npart; ++i) {
+    BOOST_FOREACH(particle& p, part) {
 	// set center of mass velocity to zero
-	part[i].v -= v_cm;
+	p.v -= v_cm;
+	vv += p.v * p.v;
+    }
+    vv /= npart;
+
+    // rescale velocities to accurate temperature
+    double s = std::sqrt(value * dimension / vv);
+    BOOST_FOREACH(particle& p, part) {
+	p.v *= s;
     }
 }
 
