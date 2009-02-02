@@ -476,15 +476,14 @@ void mdsim<mdsim_backend>::open()
 	m_corr.open(fn + ".tcf", m_fluid.is_binary() ? 2 : 1);
 	param(m_corr);
     }
-
-    m_traj.open(fn + ".trj", trajectory::out);
-    param(m_traj);
-
+    if (!m_opt["disable-trajectory"].as<bool>()) {
+	m_traj.open(fn + ".trj", trajectory::out);
+	param(m_traj);
+    }
     if (!m_opt["disable-energy"].as<bool>()) {
 	m_en.open(fn + ".tep");
 	param(m_en);
     }
-
     m_perf.open(fn + ".prf");
     param(m_perf);
 }
