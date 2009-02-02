@@ -24,9 +24,6 @@ using namespace ljgpu::gpu;
 namespace ljgpu { namespace cu { namespace ljfluid
 {
 
-/** fixed number of placeholders per cell */
-enum { CELL_SIZE = ljfluid_base<ljfluid_impl_gpu_neighbour>::CELL_SIZE };
-
 /** number of cells per dimension */
 __constant__ uint ncell;
 /** neighbour list length */
@@ -159,8 +156,8 @@ __device__ uint compute_neighbour_cell(int2 const& offset)
 template <bool same_cell, typename T, typename I>
 __device__ void update_cell_neighbours(I const& offset, unsigned int const* g_cell, T const& r, unsigned int const& n, uint& count)
 {
-    __shared__ unsigned int s_n[CELL_SIZE];
-    __shared__ T s_r[CELL_SIZE];
+    extern __shared__ unsigned int s_n[];
+    T* const s_r = reinterpret_cast<T*>(&s_n[blockDim.x]);
     enum { dimension = T::static_size };
 
     // shared memory barrier
@@ -169,14 +166,14 @@ __device__ void update_cell_neighbours(I const& offset, unsigned int const* g_ce
     // compute cell index
     uint const cell = compute_neighbour_cell(offset);
     // load particles in cell
-    unsigned int const n_ = g_cell[cell * CELL_SIZE + threadIdx.x];
+    unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
     s_r[threadIdx.x] = tex1Dfetch(tex<dimension>::r, n_);
     __syncthreads();
 
     if (n == VIRTUAL_PARTICLE) return;
 
-    for (uint i = 0; i < CELL_SIZE; ++i) {
+    for (uint i = 0; i < blockDim.x; ++i) {
 	// particle number of cell placeholder
 	unsigned int const m = s_n[i];
 	// skip placeholder particles
@@ -361,7 +358,7 @@ __global__ void assign_cells(uint const* g_cell, unsigned int const* g_cell_offs
 	tag = g_itag[n];
     }
     // store particle in this block's cell
-    g_otag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
+    g_otag[blockIdx.x * blockDim.x + threadIdx.x] = tag;
 }
 
 /**

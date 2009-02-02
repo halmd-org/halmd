@@ -31,9 +31,6 @@ template <>
 struct ljfluid_base<ljfluid_impl_gpu_neighbour>
 : public ljfluid_base<ljfluid_impl_gpu_base>
 {
-    /** fixed number of placeholders per cell */
-    enum { CELL_SIZE = 64 };
-
     static cuda::symbol<uint> ncell;
     static cuda::symbol<uint> nbl_size;
     static cuda::symbol<uint> nbl_stride;

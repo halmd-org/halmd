@@ -277,7 +277,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type 
     float const r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
 
     // fixed cell size due to fixed number of CUDA execution threads per block
-    cell_size_ = _gpu::CELL_SIZE;
+    cell_size_ = /* FIXME */ 64;
     LOG("number of placeholders per cell: " << cell_size_);
 
     // optimal number of cells with given cell occupancy as upper boundary
@@ -845,7 +845,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_neighbours(cuda::st
     // mark neighbour list placeholders as virtual particles
     cuda::memset(g_nbl, 0xFF);
     // build neighbour lists
-    cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
+    cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (dimension + 1) * sizeof(float), stream);
     _gpu::update_neighbours(g_cell);
 }
 
