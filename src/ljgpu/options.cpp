@@ -484,8 +484,6 @@ options_description<mdsim_impl>::options_description()
     add_options()
 	("particles,N", po::value<unsigned int>()->default_value(1000),
 	 "number of particles")
-	("binary,M", po::value<boost::array<unsigned int, 2> >(),
-	 "binary mixture with A,B particles")
 	("dimension", po::value<int>()->default_value(3),
 	 "positional coordinates dimension")
 	("density,d", po::value<float>()->default_value(0.75),
@@ -552,6 +550,8 @@ options_description<ljfluid_impl_base>::options_description()
 	 "truncate potential at cutoff radius")
 	("smooth", po::value<float>(),
 	 "C²-potential smoothing factor")
+	("binary,M", po::value<boost::array<unsigned int, 2> >(),
+	 "binary mixture with A,B particles")
 	("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
 	 "potential well depths AA,AB,BB")
 	("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
