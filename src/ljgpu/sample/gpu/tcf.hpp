@@ -30,7 +30,6 @@ struct tcf_base
     enum {
 	BLOCKS = 16,
 	THREADS = 512,
-	WARP_SIZE = 32,
     };
 };
 

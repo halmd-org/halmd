@@ -17,7 +17,7 @@
  */
 
 #include <ljgpu/algorithm/gpu/base.cuh>
-#include <ljgpu/math/gpu/accum.cuh>
+#include <ljgpu/algorithm/gpu/reduce.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 #include <ljgpu/sample/gpu/tcf.hpp>
@@ -26,30 +26,6 @@ namespace ljgpu { namespace cu { namespace tcf
 {
 
 enum { THREADS = gpu::tcf_base::THREADS };
-enum { WARP_SIZE = gpu::tcf_base::WARP_SIZE };
-
-template <int threads>
-__device__ void reduce(unsigned int& n, dfloat& m, dfloat& v, unsigned int s_n[], dfloat s_m[], dfloat s_v[])
-{
-    if (TID < threads) {
-	accumulator::add(n, m, v, s_n[TID + threads], s_m[TID + threads], s_v[TID + threads]);
-	s_n[TID] = n;
-	s_m[TID] = m;
-	s_v[TID] = v;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (threads >= WARP_SIZE) __syncthreads();
-
-    reduce<threads / 2>(n, m, v, s_n, s_m, s_v);
-}
-
-template <>
-__device__ void reduce<1>(unsigned int& n, dfloat& m, dfloat& v, unsigned int s_n[], dfloat s_m[], dfloat s_v[])
-{
-    if (TID < 1) {
-	accumulator::add(n, m, v, s_n[TID + 1], s_m[TID + 1], s_v[TID + 1]);
-    }
-}
 
 template <typename vector_type,
 	  dfloat (*correlation_function)(vector_type const&, vector_type const&),
@@ -66,7 +42,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	accumulator::add(count, mean, variance, correlation_function(g_in[i], g_in0[i]));
+	transform<accumulate_>(count, mean, variance, correlation_function(g_in[i], g_in0[i]));
     }
     // reduced value for this thread
     s_n[TID] = count;
@@ -75,7 +51,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2>(count, mean, variance, s_n, s_m, s_v);
+    reduce<THREADS / 2, accumulate_>(count, mean, variance, s_n, s_m, s_v);
 
     if (TID < 1) {
 	// store block reduced value in global memory
@@ -106,27 +82,6 @@ __device__ dfloat velocity_autocorrelation(vector_type const& v, vector_type con
     return v * v0;
 }
 
-template <int threads>
-__device__ void reduce(dfloat& sum, dfloat s_sum[])
-{
-    if (TID < threads) {
-	sum += s_sum[TID + threads];
-	s_sum[TID] = sum;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (threads >= WARP_SIZE) __syncthreads();
-
-    reduce<threads / 2>(sum, s_sum);
-}
-
-template <>
-__device__ void reduce<1>(dfloat& sum, dfloat s_sum[])
-{
-    if (TID < 1) {
-	sum += s_sum[TID + 1];
-    }
-}
-
 template <typename vector_type,
 	  dfloat (*correlation_function)(vector_type const&, vector_type const&, vector_type const&),
 	  typename coalesced_vector_type,
@@ -146,7 +101,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2>(sum, s_sum);
+    reduce<THREADS / 2, sum_>(sum, s_sum);
 
     if (TID < 1) {
 	// store block reduced value in global memory
@@ -159,30 +114,6 @@ __device__ dfloat incoherent_scattering_function(vector_type const& r, vector_ty
 {
     // accurate trigonometric function requires local memory
     return cosf((r - r0) * q);
-}
-
-template <int threads>
-__device__ void reduce(dfloat& real, dfloat& imag, dfloat s_real[], dfloat s_imag[])
-{
-    if (TID < threads) {
-	real += s_real[TID + threads];
-	imag += s_imag[TID + threads];
-	s_real[TID] = real;
-	s_imag[TID] = imag;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (threads >= WARP_SIZE) __syncthreads();
-
-    reduce<threads / 2>(real, imag, s_real, s_imag);
-}
-
-template <>
-__device__ void reduce<1>(dfloat& real, dfloat& imag, dfloat s_real[], dfloat s_imag[])
-{
-    if (TID < 1) {
-	real += s_real[TID + 1];
-	imag += s_imag[TID + 1];
-    }
 }
 
 template <typename vector_type,
@@ -207,7 +138,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2>(real, imag, s_real, s_imag);
+    reduce<THREADS / 2, complex_sum_>(real, imag, s_real, s_imag);
 
     if (TID < 1) {
 	// store block reduced value in global memory

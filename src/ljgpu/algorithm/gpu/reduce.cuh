@@ -22,10 +22,13 @@
 #include <boost/mpl/int.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <ljgpu/math/gpu/accum.cuh>
 using namespace boost;
 
 namespace ljgpu { namespace cu
 {
+
+enum { WARP_SIZE = 32 };
 
 /**
  * transformation types
@@ -34,6 +37,7 @@ struct identity_;
 struct square_;
 struct sqrt_;
 struct sum_;
+struct complex_sum_;
 struct max_;
 
 /**
@@ -71,6 +75,14 @@ transform(T v1, T v2)
 }
 
 template <typename transform_, typename T>
+__device__ typename enable_if<is_same<transform_, complex_sum_>, void>::type
+transform(T& r1, T& i1, T r2, T i2)
+{
+    r1 += r2;
+    i1 += i2;
+}
+
+template <typename transform_, typename T>
 __device__ typename enable_if<is_same<transform_, max_>, T>::type
 transform(T v1, T v2)
 {
@@ -78,16 +90,15 @@ transform(T v1, T v2)
 }
 
 /**
- * parallel reduction
+ * parallel unary reduction
  */
-enum { WARP_SIZE = 32 };
-
 template <int threads, typename transform_, typename T>
 __device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
 reduce(T& sum, T s_sum[])
 {
-    if (threadIdx.x < threads) {
-	sum = transform<transform_>(sum, s_sum[threadIdx.x + threads]);
+    int const tid = threadIdx.x;
+    if (tid < threads) {
+	sum = transform<transform_>(sum, s_sum[tid + threads]);
     }
 }
 
@@ -95,9 +106,10 @@ template <int threads, typename transform_, typename T>
 __device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
 reduce(T& sum, T s_sum[])
 {
-    if (threadIdx.x < threads) {
-	sum = transform<transform_>(sum, s_sum[threadIdx.x + threads]);
-	s_sum[threadIdx.x] = sum;
+    int const tid = threadIdx.x;
+    if (tid < threads) {
+	sum = transform<transform_>(sum, s_sum[tid + threads]);
+	s_sum[tid] = sum;
     }
     // no further syncs needed within execution warp of 32 threads
     if (threads >= WARP_SIZE) {
@@ -105,6 +117,69 @@ reduce(T& sum, T s_sum[])
     }
 
     reduce<threads / 2, transform_>(sum, s_sum);
+}
+
+/**
+ * parallel binary reduction
+ */
+template <int threads, typename transform_, typename T0, typename T1>
+__device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
+reduce(T0& sum0, T1& sum1, T0 s_sum0[], T1 s_sum1[])
+{
+    int const tid = threadIdx.x;
+    if (tid < threads) {
+	transform<transform_>(sum0, sum1, s_sum0[tid + threads], s_sum1[tid + threads]);
+    }
+}
+
+template <int threads, typename transform_, typename T0, typename T1>
+__device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
+reduce(T0& sum0, T1& sum1, T0 s_sum0[], T1 s_sum1[])
+{
+    int const tid = threadIdx.x;
+    if (tid < threads) {
+	transform<transform_>(sum0, sum1, s_sum0[tid + threads], s_sum1[tid + threads]);
+	s_sum0[tid] = sum0;
+	s_sum1[tid] = sum1;
+    }
+    // no further syncs needed within execution warp of 32 threads
+    if (threads >= WARP_SIZE) {
+	__syncthreads();
+    }
+
+    reduce<threads / 2, transform_>(sum0, sum1, s_sum0, s_sum1);
+}
+
+/**
+ * parallel ternary reduction
+ */
+template <int threads, typename transform_, typename T0, typename T1, typename T2>
+__device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
+reduce(T0& sum0, T1& sum1, T2& sum2, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[])
+{
+    int const tid = threadIdx.x;
+    if (tid < threads) {
+	transform<transform_>(sum0, sum1, sum2, s_sum0[tid + threads], s_sum1[tid + threads], s_sum2[tid + threads]);
+    }
+}
+
+template <int threads, typename transform_, typename T0, typename T1, typename T2>
+__device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
+reduce(T0& sum0, T1& sum1, T2& sum2, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[])
+{
+    int const tid = threadIdx.x;
+    if (tid < threads) {
+	transform<transform_>(sum0, sum1, sum2, s_sum0[tid + threads], s_sum1[tid + threads], s_sum2[tid + threads]);
+	s_sum0[tid] = sum0;
+	s_sum1[tid] = sum1;
+	s_sum2[tid] = sum2;
+    }
+    // no further syncs needed within execution warp of 32 threads
+    if (threads >= WARP_SIZE) {
+	__syncthreads();
+    }
+
+    reduce<threads / 2, transform_>(sum0, sum1, sum2, s_sum0, s_sum1, s_sum2);
 }
 
 }} // namespace ljgpu::cu

@@ -19,14 +19,24 @@
 #ifndef LJGPU_MATH_GPU_ACCUM_CUH
 #define LJGPU_MATH_GPU_ACCUM_CUH
 
-namespace ljgpu { namespace cu { namespace accumulator
+#include <boost/type_traits/is_same.hpp>
+#include <boost/utility/enable_if.hpp>
+using namespace boost;
+
+namespace ljgpu { namespace cu
 {
+
+/**
+ * transformation type
+ */
+struct accumulate_;
 
 /**
  * accumulate a value
  */
-template <typename T>
-__device__ inline void add(unsigned int& n, T& m, T& v, T const& val)
+template <typename transform_, typename T>
+__device__ typename enable_if<is_same<transform_, accumulate_>, void>::type
+transform(unsigned int& n, T& m, T& v, T const& val)
 {
     //
     // The following method for calculating means and standard
@@ -44,8 +54,9 @@ __device__ inline void add(unsigned int& n, T& m, T& v, T const& val)
 /**
  * accumulate values of another accumulator
  */
-template <typename T>
-__device__ inline void add(unsigned int& n, T& m, T& v, unsigned int n_, T const& m_, T const& v_)
+template <typename transform_, typename T>
+__device__ typename enable_if<is_same<transform_, accumulate_>, void>::type
+transform(unsigned int& n, T& m, T& v, unsigned int n_, T const& m_, T const& v_)
 {
     unsigned int const s = n + n_;
     T const d = m - m_;
@@ -54,6 +65,6 @@ __device__ inline void add(unsigned int& n, T& m, T& v, unsigned int n_, T const
     n = s;
 }
 
-}}} // namespace ljgpu::cu::accumulator
+}} // namespace ljgpu::cu
 
 #endif /* ! LJGPU_MATH_GPU_ACCUM_CUH */
