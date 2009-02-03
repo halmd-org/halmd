@@ -546,7 +546,7 @@ options_description<ljfluid_impl_base>::options_description()
 {
     using namespace boost::assign;
     add_options()
-	("cutoff", po::value<float>()->default_value(2.5),
+	("cutoff", po::value<float>()->default_value(std::pow(2., 1 / 6.)),
 	 "truncate potential at cutoff radius")
 	("smooth", po::value<float>(),
 	 "C²-potential smoothing factor")
