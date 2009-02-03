@@ -32,32 +32,29 @@ namespace CU_NAMESPACE
 namespace rand48
 {
 
+typedef ushort3 state_type;
+
 /** leapfrogging multiplier */
 __constant__ uint48 a;
 /** leapfrogging addend */
 __constant__ uint48 c;
 /** generator state in global device memory */
-__constant__ ushort3* g_state;
+__constant__ state_type* g_state;
 
 /**
  * returns uniform random number in [0.0, 1.0)
  */
-__device__ float uniform(ushort3& state)
+__device__ float uniform(state_type& state)
 {
     float r = state.z / 65536.f + state.y / 4294967296.f;
     state = muladd(a, state, c);
     return r;
 }
 
-__device__ float uniform()
-{
-    return uniform(g_state[GTID]);
-}
-
 /**
  * generate 2 random numbers from Gaussian distribution with given variance
  */
-__device__ void gaussian(float& r1, float& r2, float var, ushort3& state)
+__device__ void gaussian(float& r1, float& r2, float var, state_type& state)
 {
     //
     // The Box-Muller transformation for generating random numbers
@@ -87,39 +84,15 @@ __device__ void gaussian(float& r1, float& r2, float var, ushort3& state)
     r2 *= s;
 }
 
-__device__ void gaussian(vector<float, 3>& r, float var)
+__device__ void gaussian(float4& v, float var, state_type& state)
 {
-    ushort3 state = g_state[GTID];
-    gaussian(r.x, r.y, var, state);
-    gaussian(r.z, r.x, var, state);
+    gaussian(v.x, v.y, var, state);
+    gaussian(v.z, v.w, var, state);
 }
 
-__device__ void gaussian(vector<float, 2>& r, float var)
+__device__ void gaussian(float2& v, float var, state_type& state)
 {
-    ushort3 state = g_state[GTID];
-    gaussian(r.x, r.y, var, state);
-    g_state[GTID] = state;
-}
-
-__device__ void gaussian(float4& r, float var)
-{
-    ushort3 state = g_state[GTID];
-    gaussian(r.x, r.y, var, state);
-    gaussian(r.z, r.w, var, state);
-}
-
-__device__ void gaussian(float3& r, float var)
-{
-    ushort3 state = g_state[GTID];
-    gaussian(r.x, r.y, var, state);
-    gaussian(r.z, r.x, var, state);
-}
-
-__device__ void gaussian(float2& r, float var)
-{
-    ushort3 state = g_state[GTID];
-    gaussian(r.x, r.y, var, state);
-    g_state[GTID] = state;
+    gaussian(v.x, v.y, var, state);
 }
 
 }

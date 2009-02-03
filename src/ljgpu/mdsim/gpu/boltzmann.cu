@@ -44,12 +44,18 @@ __global__ void gaussian(T* g_v, uint npart, float temp, T* g_vcm)
     __shared__ vector_type s_vcm[THREADS];
     vector_type vcm = 0;
 
+    // read random number generator state from global device memory
+    rand48::state_type state = rand48::g_state[GTID];
+
     for (uint i = GTID; i < npart; i += GTDIM) {
 	T v;
-	rand48::gaussian(v, temp);
+	rand48::gaussian(v, temp, state);
 	g_v[i] = v;
 	vcm += v;
     }
+    // store random number generator state in global device memory
+    rand48::g_state[GTID] = state;
+
     // reduced value for this thread
     s_vcm[TID] = vcm;
     __syncthreads();
