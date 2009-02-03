@@ -120,7 +120,6 @@ private:
     using _Base::reduce_velocity;
     using _Base::reduce_en;
     using _Base::reduce_virial;
-    using _Base::reduce_v_max;
 
     /** number of cells per dimension */
     unsigned int ncell;
@@ -135,6 +134,8 @@ private:
 
     /** cell skin */
     float_type r_skin;
+    /** maximum absolute velocity */
+    reduce<tag::max, float> reduce_v_max;
     /** sum over maximum velocity magnitudes since last cell lists update */
     float_type v_max_sum;
 

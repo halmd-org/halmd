@@ -103,8 +103,6 @@ public:
 private:
     /** assign particle positions */
     void assign_positions();
-    /** assign particle velocities */
-    void assign_velocities();
     /** first leapfrog step of integration of differential equations of motion */
     void velocity_verlet(cuda::stream& stream);
     /** Lennard-Jones force calculation */
@@ -148,7 +146,6 @@ private:
     using _Base::reduce_velocity;
     using _Base::reduce_en;
     using _Base::reduce_virial;
-    using _Base::reduce_v_max;
 
     /** number of cells per dimension */
     unsigned int ncell;
@@ -166,8 +163,12 @@ private:
     /** number of placeholders per neighbour list */
     unsigned int nbl_size;
 
-    /** sum over maximum velocity magnitudes since last cell lists update */
-    float_type v_max_sum;
+    /** blockwise maximum absolute particle displacement */
+    reduce<tag::max, float> reduce_r_max;
+    /** maximum absolute particle displacement */
+    float r_max_;
+    /** upper boundary for maximum particle displacement */
+    float_type r_skin_half;
 
     /** system state in page-locked host memory */
     struct {
@@ -185,6 +186,8 @@ private:
     struct {
 	/** tagged periodically reduced particle positions */
 	cuda::vector<float4> r;
+	/** particle displacements */
+	cuda::vector<gpu_vector_type> dr;
 	/** periodic box traversal vectors */
 	cuda::vector<gpu_vector_type> R;
 	/** particle velocities */
@@ -234,6 +237,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
     // allocate global device memory for system state
     try {
 	g_part.r.resize(npart);
+	g_part.dr.resize(npart);
 	g_part.R.resize(npart);
 	g_part.v.resize(npart);
 	g_part.f.resize(npart);
@@ -333,6 +337,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
     }
     LOG("neighbour list skin: " << r_skin);
 
+    // upper boundary for maximum particle displacement since last neighbour list update
+    r_skin_half = r_skin / 2;
+
     float const r_nbl = r_cut_max + r_skin;
     // volume of n-dimensional sphere with neighbour list radius
     float const v_nbl = ((dimension + 1) * M_PI / 3) * std::pow(r_nbl, dimension);
@@ -384,6 +391,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
     // allocate global device memory for placeholder particles
     try {
 	g_part.r.reserve(dim_.threads());
+	g_part.dr.reserve(dim_.threads());
 	g_part.R.reserve(dim_.threads());
 	g_part.v.reserve(dim_.threads());
 	g_part.f.reserve(dim_.threads());
@@ -451,7 +459,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::state(host_sample_type& sa
     }
 
     assign_positions();
-    assign_velocities();
 }
 
 template <int dimension>
@@ -480,8 +487,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::temperature(float_type tem
 	throw exception("failed to compute Boltzmann distributed velocities on GPU");
     }
     m_times["boltzmann"] += event_[1] - event_[0];
-
-    assign_velocities();
 }
 
 template <int dimension>
@@ -497,21 +502,18 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
     }
     event_[2].record(stream_);
 
-    // maximum velocity calculation
+    // maximum absolute particle displacement reduction
     try {
-	reduce_v_max(g_part.v, stream_);
+	reduce_r_max(g_part.dr, stream_);
     }
     catch (cuda::error const& e) {
-	throw exception("failed to stream maximum velocity calculation on GPU");
+	throw exception("failed to stream maximum particle displacement reduction on GPU");
     }
     event_[3].record(stream_);
     event_[3].synchronize();
 
-    // add to sum over maximum velocity magnitudes since last cell lists update
-    v_max_sum += reduce_v_max.value();
-
     // update cell lists
-    if (v_max_sum * timestep_ > r_skin / 2) {
+    if ((r_max_ = reduce_r_max.value()) > r_skin_half) {
 #ifdef USE_HILBERT_ORDER
 	try {
 	    hilbert_order(stream_);
@@ -598,11 +600,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
     // GPU time for velocity-Verlet integration
     m_times["velocity_verlet"] += event_[2] - event_[1];
     // GPU time for maximum velocity calculation
-    m_times["maximum_velocity"] += event_[3] - event_[2];
+    m_times["maximum_displacement"] += event_[3] - event_[2];
 
-    if (v_max_sum * timestep_ > r_skin / 2) {
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
+    if (r_max_ > r_skin_half) {
 #ifdef USE_HILBERT_ORDER
 	// GPU time for Hilbert curve sort
 	m_times["hilbert_sort"] += event_[4] - event_[3];
@@ -797,16 +797,10 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_velocities()
-{
-    v_max_sum = 0;
-}
-
-template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::velocity_verlet(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, stream);
-    _gpu::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
+    _gpu::inteq(g_part.r, g_part.dr, g_part.R, g_part.v, g_part.f);
 }
 
 template <int dimension>
@@ -841,6 +835,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_cells(cuda::stream&
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_neighbours(cuda::stream& stream)
 {
+    // set particle displacements to floating-point zero
+    cuda::memset(g_part.dr, 0);
     // mark neighbour list placeholders as virtual particles
     cuda::memset(g_nbl, 0xFF);
     // build neighbour lists

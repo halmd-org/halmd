@@ -43,6 +43,7 @@ perf::desc_map perf::m_desc = boost::assign::map_list_of
     ("hilbert_sort",		"Hilbert curve sort")
     ("init_cells",		"cell lists initialisation")
     ("lattice",			"lattice generation")
+    ("maximum_displacement",	"maximum particle displacement reduction")
     ("maximum_velocity",	"maximum velocity reduction")
     ("mdstep",			"MD simulation step")
     ("memcpy_cells",		"cell lists memcpy")

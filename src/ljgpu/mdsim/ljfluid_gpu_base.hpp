@@ -158,8 +158,6 @@ protected:
     reduce<tag::sum, dfloat, double> mutable reduce_en;
     /** virial equation sum */
     reduce<tag::sum, dfloat, double> mutable reduce_virial;
-    /** maximum absolute velocity */
-    reduce<tag::max, float> mutable reduce_v_max;
 };
 
 template <typename ljfluid_impl>
