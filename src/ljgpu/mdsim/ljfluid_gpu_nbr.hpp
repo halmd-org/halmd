@@ -115,6 +115,8 @@ private:
     void hilbert_order(cuda::stream& stream);
     /** generate permutation for phase space sampling */
     void permutation(cuda::stream& stream);
+    /** generate Maxwell-Boltzmann distributed velocities */
+    void boltzmann(float temp, cuda::stream& stream);
 
 private:
     using _Base::box_;
@@ -479,7 +481,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::temperature(float_type tem
 
     try {
 	event_[0].record(stream_);
-	_Base::boltzmann(g_part.v, temp, stream_);
+	boltzmann(temp, stream_);
 	event_[1].record(stream_);
 	event_[1].synchronize();
     }
@@ -563,7 +565,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
     // heat bath coupling
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
 	try {
-	    _Base::boltzmann(g_part.v, thermostat_temp, stream_);
+	    boltzmann(thermostat_temp, stream_);
 	}
 	catch (cuda::error const&) {
 	    throw exception("failed to compute Boltzmann distributed velocities on GPU");
@@ -773,8 +775,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
 	// order particles after Hilbert space-filling curve
 	hilbert_order(stream_);
 #endif
-	// copy particles tags from GPU to host
-	cuda::copy(g_part.tag, h_part.tag, stream_);
 	// assign particles to cells
 	assign_cells(stream_);
 	// update neighbour lists
@@ -870,11 +870,25 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::permutation(cuda::stream& stream)
 {
-    cuda::configure(dim_.grid, dim_.block, stream_);
+    cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::gen_index(g_aux.index);
 #ifdef USE_HILBERT_ORDER
-    cuda::copy(g_part.tag, g_aux.cell, stream_);
-    radix_(g_aux.cell, g_aux.index, stream_);
+    cuda::copy(g_part.tag, g_aux.cell, stream);
+    radix_(g_aux.cell, g_aux.index, stream);
+#endif
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::boltzmann(float temp, cuda::stream& stream)
+{
+    _Base::boltzmann(g_part.v, temp, stream);
+
+#ifdef USE_HILBERT_ORDER
+    // assign velocities after particle order to make thermostat
+    // independent of neighbour list update frequency or skin
+    cuda::configure(dim_.grid, dim_.block, stream);
+    _gpu::order_velocities(g_part.tag, g_part_buf.v);
+    cuda::copy(g_part_buf.v, g_part.v, stream);
 #endif
 }
 

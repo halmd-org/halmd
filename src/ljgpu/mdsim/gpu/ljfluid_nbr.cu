@@ -388,6 +388,15 @@ __global__ void order_particles(unsigned int const* g_index, float4* g_or, T* g_
 }
 
 /**
+ * assign velocities given particle order in memory
+ */
+template <int dimension, typename T>
+__global__ void order_velocities(uint const* g_tag, T* g_v)
+{
+    g_v[GTID] = tex1Dfetch(tex<dimension>::v, g_tag[GTID]);
+}
+
+/**
  * sample trajectories
  */
 template <int dimension, typename T>
@@ -455,6 +464,8 @@ cuda::function<void (float4 const*, uint*)>
     _3D::compute_cell(cu::ljfluid::compute_cell<3>);
 cuda::function<void (unsigned int const*, float4*, float4*, float4*, unsigned int*)>
     _3D::order_particles(cu::ljfluid::order_particles<3>);
+cuda::function<void (uint const*, float4*)>
+    _3D::order_velocities(cu::ljfluid::order_velocities<3>);
 cuda::function<void (unsigned int const*, float4*, float4*)>
     _3D::sample(cu::ljfluid::sample<3>);
 
@@ -474,6 +485,8 @@ cuda::function<void (float4 const*, uint*)>
     _2D::compute_cell(cu::ljfluid::compute_cell<2>);
 cuda::function<void (unsigned int const*, float4*, float2*, float2*, unsigned int*)>
     _2D::order_particles(cu::ljfluid::order_particles<2>);
+cuda::function<void (uint const*, float2*)>
+    _2D::order_velocities(cu::ljfluid::order_velocities<2>);
 cuda::function<void (unsigned int const*, float2*, float2*)>
     _2D::sample(cu::ljfluid::sample<2>);
 
