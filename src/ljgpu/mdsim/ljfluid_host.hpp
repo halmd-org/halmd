@@ -63,6 +63,8 @@ public:
 
 	/** particle position */
 	vector_type r;
+	/** particle displacement since last neighbour list update */
+	vector_type dr;
 	/** particle velocity */
 	vector_type v;
 	/** particle force */
@@ -181,6 +183,10 @@ private:
     float_type cell_length_;
     /** neighbour list skin */
     float_type r_skin;
+    /** maximum squared particle displacement since last neighbour list update */
+    float_type rr_max_;
+    /** upper boundary for maximum squared particle displacement */
+    float_type rr_skin_half;
     /** cutoff radii with neighbour list skin */
     boost::array<float_type, 3> r_cut_skin;
     /** squared cutoff radii with neighbour list skin */
@@ -190,8 +196,6 @@ private:
     double en_pot;
     /** virial equation sum per particle */
     double virial;
-    /** sum over maximum velocity magnitudes since last neighbour lists update */
-    float_type v_max_sum;
 };
 
 /**
@@ -248,9 +252,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::state(host_sample_type& sample, flo
 	update_neighbours<false>();
 	compute_forces<false>();
     }
-
-    // reset sum over maximum velocity magnitudes to zero
-    v_max_sum = 0;
 }
 
 template <int dimension>
@@ -258,6 +259,9 @@ void ljfluid<ljfluid_impl_host<dimension> >::nbl_skin(float value)
 {
     r_skin = value;
     LOG("neighbour list skin: " << r_skin);
+
+    // upper boundary for maximum particle displacement since last neighbour list update
+    rr_skin_half = std::pow(r_skin / 2, 2);
 
     for (size_t i = 0; i < sigma_.size(); ++i) {
 	r_cut_skin[i] = r_cut[i] + r_skin;
@@ -365,9 +369,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
 	update_neighbours<false>();
 	compute_forces<false>();
     }
-
-    // reset sum over maximum velocity magnitudes to zero
-    v_max_sum = 0;
 }
 
 /**
@@ -382,8 +383,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
     foreach (particle& p, part) {
 	p.f = 0;
     }
-    // initialize sum over maximum velocity magnitudes since last neighbour lists update
-    v_max_sum = 0;
 
     boltzmann(value);
 }
@@ -500,6 +499,11 @@ void ljfluid<ljfluid_impl_host<dimension> >::update_neighbours()
 		update_cell_neighbours<binary>(i);
 	    }
 	}
+    }
+
+    // reset particle displacements to zero
+    foreach (particle& p, part) {
+	p.dr = 0;
     }
 }
 
@@ -673,18 +677,20 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, 
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
 {
-    double vv_max = 0;
+    rr_max_ = 0;
 
     foreach (particle& p, part) {
 	// half step velocity
 	p.v += p.f * (timestep_ / 2);
+	// particle displacement
+	vector_type dr = p.v * timestep_;
 	// full step position
-	p.r += p.v * timestep_;
-	// maximum squared velocity
-	vv_max = std::max(vv_max, p.v * p.v);
+	p.r += dr;
+	// particle displacement since last neighbour list update
+	p.dr += dr;
+	// maximum squared particle displacement
+	rr_max_ = std::max(p.dr * p.dr, rr_max_);
     }
-
-    v_max_sum += std::sqrt(vv_max);
 }
 
 /**
@@ -713,7 +719,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
     leapfrog_half();
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 
-    if (v_max_sum * timestep_ > r_skin / 2) {
+    if (rr_max_ > rr_skin_half) {
 	// update cell lists
 	update_cells();
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
@@ -725,8 +731,6 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 	    update_neighbours<false>();
 	}
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
 
 	m_times["update_cells"] += t[2] - t[1];
 	m_times["update_neighbours"] += t[3] - t[2];
