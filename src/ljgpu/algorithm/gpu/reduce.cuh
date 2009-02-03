@@ -27,23 +27,76 @@ using namespace boost;
 namespace ljgpu { namespace cu
 {
 
+/**
+ * transformation types
+ */
+struct identity_;
+struct square_;
+struct sqrt_;
+struct sum_;
+struct max_;
+
+/**
+ * unary transformations
+ */
+template <typename transform_, typename input_type, typename output_type>
+__device__ typename enable_if<is_same<transform_, identity_>, output_type>::type
+transform(input_type v)
+{
+    return v;
+}
+
+template <typename transform_, typename input_type, typename output_type>
+__device__ typename enable_if<is_same<transform_, square_>, output_type>::type
+transform(input_type v)
+{
+    return v * v;
+}
+
+template <typename transform_, typename input_type, typename output_type>
+__device__ typename enable_if<is_same<transform_, sqrt_>, output_type>::type
+transform(input_type v)
+{
+    return sqrtf(v);
+}
+
+/**
+ * binary transformations
+ */
+template <typename transform_, typename T>
+__device__ typename enable_if<is_same<transform_, sum_>, T>::type
+transform(T v1, T v2)
+{
+    return v1 + v2;
+}
+
+template <typename transform_, typename T>
+__device__ typename enable_if<is_same<transform_, max_>, T>::type
+transform(T v1, T v2)
+{
+    return fmaxf(v1, v2);
+}
+
+/**
+ * parallel reduction
+ */
 enum { WARP_SIZE = 32 };
 
-template <int threads, typename T>
+template <int threads, typename transform_, typename T>
 __device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
 reduce(T& sum, T s_sum[])
 {
     if (threadIdx.x < threads) {
-	sum += s_sum[threadIdx.x + threads];
+	sum = transform<transform_>(sum, s_sum[threadIdx.x + threads]);
     }
 }
 
-template <int threads, typename T>
+template <int threads, typename transform_, typename T>
 __device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
 reduce(T& sum, T s_sum[])
 {
     if (threadIdx.x < threads) {
-	sum += s_sum[threadIdx.x + threads];
+	sum = transform<transform_>(sum, s_sum[threadIdx.x + threads]);
 	s_sum[threadIdx.x] = sum;
     }
     // no further syncs needed within execution warp of 32 threads
@@ -51,7 +104,7 @@ reduce(T& sum, T s_sum[])
 	__syncthreads();
     }
 
-    reduce<threads / 2>(sum, s_sum);
+    reduce<threads / 2, transform_>(sum, s_sum);
 }
 
 }} // namespace ljgpu::cu
