@@ -28,36 +28,12 @@ namespace ljgpu { namespace cu { namespace algorithm
 enum { THREADS = gpu::reduce::THREADS };
 
 /**
- * unary transformations
- */
-template <typename T, typename U>
-__device__ T identity_(U v)
-{
-    return v;
-}
-
-template <typename T, typename U>
-__device__ T square_(U v)
-{
-    return v * v;
-}
-
-/**
- * binary transformations
- */
-template <typename T>
-__device__ T sum_(T v1, T v2)
-{
-    return v1 + v2;
-}
-
-/**
  * parallel reduction
  */
 template <typename input_type, typename output_type,
-	  output_type (*input_function)(input_type),
-	  output_type (*reduce_function)(output_type, output_type),
-	  output_type (*output_function)(output_type),
+	  typename input_transform,
+	  typename reduce_transform,
+	  typename output_transform,
 	  typename coalesced_input_type, typename coalesced_output_type>
 __device__ void accumulate(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
 {
@@ -66,19 +42,19 @@ __device__ void accumulate(coalesced_input_type const* g_in, coalesced_output_ty
     // load values from global device memory
     output_type vv = 0;
     for (uint i = GTID; i < n; i += GTDIM) {
-	input_type v = g_in[i];
-	vv = reduce_function(vv, input_function(v));
+	output_type v = transform<input_transform, input_type, output_type>(g_in[i]);
+	vv = transform<reduce_transform>(vv, v);
     }
     // reduced value for this thread
     s_vv[TID] = vv;
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2>(vv, s_vv);
+    reduce<THREADS / 2, reduce_transform>(vv, s_vv);
 
     if (TID < 1) {
 	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = output_function(vv);
+	g_block_sum[blockIdx.x] = transform<output_transform, output_type, output_type>(vv);
     }
 }
 
@@ -109,7 +85,7 @@ template <typename input_type, typename output_type,
 	  typename coalesced_input_type, typename coalesced_output_type>
 __global__ void max(coalesced_input_type const* g_in, coalesced_output_type* g_block_max, uint n)
 {
-    accumulate<input_type, output_type, square_, fmaxf, sqrtf>(g_in, g_block_max, n);
+    accumulate<input_type, output_type, square_, max_, sqrt_>(g_in, g_block_max, n);
 }
 
 }}} // namespace ljgpu::cu::algorithm

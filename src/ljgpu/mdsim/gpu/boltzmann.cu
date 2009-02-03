@@ -55,7 +55,7 @@ __global__ void gaussian(T* g_v, uint npart, float temp, T* g_vcm)
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2>(vcm, s_vcm);
+    reduce<THREADS / 2, sum_>(vcm, s_vcm);
 
     if (TID < 1) {
 	// store block reduced value in global memory
@@ -95,7 +95,7 @@ __global__ void shift_velocity(T* g_v, uint npart, T const* g_vcm, dfloat* g_vv)
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2>(vv, s_vv);
+    reduce<THREADS / 2, sum_>(vv, s_vv);
 
     if (TID < 1) {
 	// store block reduced value in global memory
