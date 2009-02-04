@@ -334,7 +334,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
     }
 
     if (!std::isfinite(reduce_en.value())) {
-	throw exception("potential energy diverged");
+	throw potential_energy_divergence();
     }
 }
 

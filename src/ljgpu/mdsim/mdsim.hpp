@@ -363,8 +363,15 @@ void mdsim<mdsim_backend>::operator()()
 	    alarm(FLUSH_TO_DISK_INTERVAL);
 	}
 
-	// synchronize MD simulation program step on GPU
-	m_fluid.mdstep();
+	try {
+	    // synchronize MD simulation program step on GPU
+	    m_fluid.mdstep();
+	}
+	catch (potential_energy_divergence const& e) {
+	    step++;
+	    LOG_ERROR(e.what() << " at step " << step);
+	    break;
+	}
 
 	if (step.estimate() > 0) {
 	    LOG("estimated remaining runtime: " << real_timer::format(step.estimate()));

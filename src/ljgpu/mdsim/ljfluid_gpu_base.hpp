@@ -212,7 +212,7 @@ void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
 	cuda::copy(en_cut, _gpu::en_cut);
     }
     catch (cuda::error const&) {
-	throw exception("failed to copy potential symbols");
+	throw potential_energy_divergence();
     }
 }
 

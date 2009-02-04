@@ -431,7 +431,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::mdstep()
     m_times["potential_energy"] += event_[0] - event_[6];
 
     if (!std::isfinite(reduce_en.value())) {
-	throw exception("potential energy diverged");
+	throw potential_energy_divergence();
     }
 }
 

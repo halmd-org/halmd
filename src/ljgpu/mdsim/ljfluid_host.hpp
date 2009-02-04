@@ -642,7 +642,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 
     // ensure that system is still in valid state
     if (std::isinf(en_pot)) {
-	throw exception("potential energy diverged due to excessive timestep or density");
+	throw potential_energy_divergence();
     }
 }
 

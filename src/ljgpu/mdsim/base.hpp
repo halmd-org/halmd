@@ -25,6 +25,7 @@
 #include <boost/variant.hpp>
 #include <cmath>
 #include <limits>
+#include <ljgpu/mdsim/exception.hpp>
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/mdsim/traits.hpp>
 #include <ljgpu/mdsim/variant.hpp>
