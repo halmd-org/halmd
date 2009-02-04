@@ -25,6 +25,7 @@
 #include <iostream>
 #include <iomanip>
 #include <libgen.h>
+#include <limits>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
 #include <ljgpu/math/vector3d.hpp>
 using namespace boost::assign;
@@ -81,31 +82,57 @@ int main(int argc, char **argv)
     }
 
     try {
+	typedef gpu::ljfluid_base<ljfluid_impl_gpu_square> _gpu;
+	typedef vector<float, 3> vector_type;
+
 	// set CUDA device
 	cuda::device::set(device);
 
 	// copy constants to CUDA device symbols
-	typedef gpu::ljfluid_base<ljfluid_impl_gpu_square> _gpu;
 	boost::array<float, 3> r_cut_ = list_of(r_cut)(0)(0);
 	boost::array<float, 3> rr_cut_ = list_of(std::pow(r_cut, 2))(0)(0);
+	float rri_cut = 1 / std::pow(r_cut, 2);
+	float r6i_cut = rri_cut * rri_cut * rri_cut;
+	float en_cut = 4 * r6i_cut * (r6i_cut - 1);
 	cuda::copy(r_cut_, _gpu::r_cut);
 	cuda::copy(rr_cut_, _gpu::rr_cut);
 	cuda::copy(std::pow(r_smooth, -2), _gpu::rri_smooth);
+	cuda::copy(en_cut, _gpu::en_cut);
+	cuda::copy(std::numeric_limits<float>::max(), _gpu::box);
 
 	// CUDA execution dimensions
 	unsigned int count = (range.y - range.x) / range.z;
 	cuda::config dim((std::max(count, threads) + threads - 1) / threads, threads);
 
-	// sample potential smoothing function in given range
 	cuda::vector<float3> g_h(dim.threads());
 	cuda::host::vector<float3> h_h(g_h.size());
-	cuda::configure(dim.grid, dim.block);
 	float2 f = make_float2(range.x, range.y);
+
+	// sample potential smoothing function in given range
+	cuda::configure(dim.grid, dim.block);
 	_gpu::sample_smooth_function(g_h, f);
 	cuda::copy(g_h, h_h);
+	std::cout << "# potential smoothing function\n" << "# r\th(r)\th'(r)\n";
+	foreach (vector_type h, h_h) {
+	    std::cout << std::scientific << std::setprecision(7) << h << "\n";
+	}
+	std::cout << "\n" << std::endl;
 
-	// write results to stdout
-	typedef vector<float, 3> vector_type;
+	// sample C⁰-potential and force
+	cuda::configure(dim.grid, dim.block);
+	_gpu::sample_potential(g_h, f);
+	cuda::copy(g_h, h_h);
+	std::cout << "# C⁰-potential and force\n" << "# r\tU(r)\t|F(r)|\n";
+	foreach (vector_type h, h_h) {
+	    std::cout << std::scientific << std::setprecision(7) << h << "\n";
+	}
+	std::cout << "\n" << std::endl;
+
+	// sample C²-potential and force
+	cuda::configure(dim.grid, dim.block);
+	_gpu::sample_smooth_potential(g_h, f);
+	cuda::copy(g_h, h_h);
+	std::cout << "# C²-potential and force\n" << "# r\tU(r)\t|F(r)|\n";
 	foreach (vector_type h, h_h) {
 	    std::cout << std::scientific << std::setprecision(7) << h << "\n";
 	}

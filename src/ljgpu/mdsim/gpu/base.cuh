@@ -131,14 +131,6 @@ __device__ float3 compute_smooth_function(float r, unsigned int ab)
 }
 
 /**
- * sample potential smoothing function in given range
- */
-__global__ void sample_smooth_function(float3* g_h, const float2 r)
-{
-    g_h[GTID] = compute_smooth_function<UNARY>(r.x + (r.y - r.x) / GTDIM * GTID, 0);
-}
-
-/**
  * calculate particle force using Lennard-Jones potential
  */
 template <mixture_type mixture,
@@ -184,6 +176,28 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, float& 
     en += 0.5f * pot;
     // force from other particle acting on this particle
     f += fval * r;
+}
+
+/**
+ * sample potential smoothing function in given range
+ */
+__global__ void sample_smooth_function(float3* g_h, const float2 r)
+{
+    g_h[GTID] = compute_smooth_function<UNARY>(r.x + ((r.y - r.x) / GTDIM * GTID), 0);
+}
+
+/**
+ * sample potential and force in given range
+ */
+template <potential_type potential>
+__global__ void sample_potential(float3* g_h, const float2 r)
+{
+    vector<float, 3> r1(0, 0, 0);
+    vector<float, 3> r2(r.x + ((r.y - r.x) / GTDIM * GTID), 0, 0);
+    vector<float, 3> f = 0;
+    float en = 0, virial = 0;
+    compute_force<UNARY, potential>(r1, r2, f, en, virial, 0);
+    g_h[GTID] = make_float3(r2.x, en, f.x);
 }
 
 /**
@@ -268,6 +282,10 @@ cuda::symbol<float> __Base::rri_smooth(cu::ljfluid::rri_smooth);
  */
 cuda::function<void (float3*, const float2)>
     __Base::sample_smooth_function(cu::ljfluid::sample_smooth_function);
+cuda::function<void (float3*, const float2)>
+    __Base::sample_potential(cu::ljfluid::sample_potential<C0POT>);
+cuda::function<void (float3*, const float2)>
+    __Base::sample_smooth_potential(cu::ljfluid::sample_potential<C2POT>);
 
 cuda::function<void (float4*, float4*, float4*, float4 const*),
     void (float4*, float4*, float4*, float4*, float4 const*)>

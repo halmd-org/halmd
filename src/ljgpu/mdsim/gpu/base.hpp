@@ -49,6 +49,8 @@ struct ljfluid_base<ljfluid_impl_gpu_base>
     static cuda::symbol<float> rri_smooth;
 
     static cuda::function<void (float3*, const float2)> sample_smooth_function;
+    static cuda::function<void (float3*, const float2)> sample_potential;
+    static cuda::function<void (float3*, const float2)> sample_smooth_potential;
 };
 
 template <typename ljfluid_impl>
