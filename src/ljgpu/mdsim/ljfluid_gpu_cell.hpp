@@ -21,6 +21,7 @@
 
 #include <ljgpu/mdsim/ljfluid_gpu_base.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
+#include <limits>
 
 namespace ljgpu
 {
@@ -214,6 +215,10 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::cell_occupancy(float_type value
 
     // set effective average cell occupancy
     cell_occupancy_ = npart * 1.f / nplace;
+    // round up this value by ULP, so that setting an exact desired cell
+    // occupancy will yield the exact same effective cell occupancy,
+    // e.g. if reading the value from a HDF5 attribute
+    cell_occupancy_ *= (1.f + std::numeric_limits<float>::epsilon());
     LOG("effective average cell occupancy: " << cell_occupancy_);
 
     if (cell_occupancy_ > 1) {
