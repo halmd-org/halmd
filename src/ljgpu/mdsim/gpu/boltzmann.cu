@@ -16,9 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/mpl/int.hpp>
 #include <ljgpu/algorithm/gpu/base.cuh>
 #include <ljgpu/algorithm/gpu/reduce.cuh>
 #include <ljgpu/math/gpu/dsfun.cuh>
@@ -27,7 +24,6 @@
 #include <ljgpu/mdsim/gpu/boltzmann.hpp>
 #define CU_NAMESPACE boltzmann
 #include <ljgpu/rng/gpu/rand48.cuh>
-using namespace boost;
 
 namespace ljgpu { namespace cu { namespace boltzmann
 {
