@@ -124,9 +124,12 @@ __device__ float3 compute_smooth_function(float r, unsigned int ab)
     float x4 = x2 * x2;
     float x4i = 1 / (1 + x4);
     float3 h;
+    // absolute distance of particles
     h.x = r;
+    // potential smoothing function
     h.y = x4 * x4i;
-    h.z = 4 * y * x2 * x4i * x4i;
+    // first derivative times (r_smooth)^(-1) [sic!]
+    h.z = 4 * y * rri_smooth * x2 * x4i * x4i;
     return h;
 }
 
@@ -165,7 +168,7 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, float& 
 	// compute smoothing function and its first derivative
 	const float3 h = compute_smooth_function<mixture>(sqrtf(rr), ab);
 	// apply smoothing function to obtain C¹ force function
-	fval = h.y * fval - h.z * pot / h.x;
+	fval = h.y * fval - h.z * (pot / h.x);
 	// apply smoothing function to obtain C² potential function
 	pot = h.y * pot;
     }

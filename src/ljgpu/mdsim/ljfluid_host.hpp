@@ -659,10 +659,10 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, 
     double x4i = 1 / (1 + x4);
     // smoothing function
     double h0_r = x4 * x4i;
-    // first derivative of smoothing function
-    double h1_r = 4 * y * x2 * x4i * x4i;
+    // first derivative times (r_smooth)^(-1) [sic!]
+    double h1_r = 4 * y * rri_smooth * x2 * x4i * x4i;
     // apply smoothing function to obtain C¹ force function
-    fval = h0_r * fval - h1_r * pot / r;
+    fval = h0_r * fval - h1_r * (pot / r);
     // apply smoothing function to obtain C² potential function
     pot = h0_r * pot;
 }
