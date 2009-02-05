@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	    ("to", po::value<float>(&range.y)->default_value(1.14),
 	     "second endpoint of interval")
 	    ("step", po::value<float>(&range.z)->default_value(0.001),
-	     "upper boundary for inteval step")
+	     "sample interval step")
 	    ("cutoff-distance",
 	     po::value<float>(&r_cut)->default_value(std::pow(2, 1 / 6.f)),
 	     "potential cutoff distance")
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 	     "potential smoothing distance")
 	    ("device,D", po::value<unsigned short>(&device)->default_value(0),
 	     "CUDA device")
-	    ("threads,T", po::value<unsigned int>(&threads)->default_value(128),
+	    ("threads,T", po::value<unsigned int>(&threads)->default_value(32),
 	     "number of threads per block")
 	    ("help,h", "display this help and exit");
 
@@ -106,35 +106,41 @@ int main(int argc, char **argv)
 
 	cuda::vector<float3> g_h(dim.threads());
 	cuda::host::vector<float3> h_h(g_h.size());
-	float2 f = make_float2(range.x, range.y);
+	float2 r = make_float2(range.x, range.z);
 
 	// sample potential smoothing function in given range
 	cuda::configure(dim.grid, dim.block);
-	_gpu::sample_smooth_function(g_h, f);
+	_gpu::sample_smooth_function(g_h, r);
 	cuda::copy(g_h, h_h);
 	std::cout << "# potential smoothing function\n" << "# r\th(r)\th'(r)\n";
 	foreach (vector_type h, h_h) {
-	    std::cout << std::scientific << std::setprecision(7) << h << "\n";
+	    if (h[0] >= range.x && h[0] <= range.y) {
+		std::cout << std::scientific << std::setprecision(7) << h << "\n";
+	    }
 	}
 	std::cout << "\n" << std::endl;
 
 	// sample C⁰-potential and force
 	cuda::configure(dim.grid, dim.block);
-	_gpu::sample_potential(g_h, f);
+	_gpu::sample_potential(g_h, r);
 	cuda::copy(g_h, h_h);
 	std::cout << "# C⁰-potential and force\n" << "# r\tU(r)\t|F(r)|\n";
 	foreach (vector_type h, h_h) {
-	    std::cout << std::scientific << std::setprecision(7) << h << "\n";
+	    if (h[0] >= range.x && h[0] <= range.y) {
+		std::cout << std::scientific << std::setprecision(7) << h << "\n";
+	    }
 	}
 	std::cout << "\n" << std::endl;
 
 	// sample C²-potential and force
 	cuda::configure(dim.grid, dim.block);
-	_gpu::sample_smooth_potential(g_h, f);
+	_gpu::sample_smooth_potential(g_h, r);
 	cuda::copy(g_h, h_h);
 	std::cout << "# C²-potential and force\n" << "# r\tU(r)\t|F(r)|\n";
 	foreach (vector_type h, h_h) {
-	    std::cout << std::scientific << std::setprecision(7) << h << "\n";
+	    if (h[0] >= range.x && h[0] <= range.y) {
+		std::cout << std::scientific << std::setprecision(7) << h << "\n";
+	    }
 	}
 	std::cout << "\n" << std::endl;
     }

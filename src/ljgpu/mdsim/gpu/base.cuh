@@ -183,7 +183,7 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, float& 
  */
 __global__ void sample_smooth_function(float3* g_h, const float2 r)
 {
-    g_h[GTID] = compute_smooth_function<UNARY>(r.x + ((r.y - r.x) / GTDIM * GTID), 0);
+    g_h[GTID] = compute_smooth_function<UNARY>(r.x + r.y * GTID, 0);
 }
 
 /**
@@ -193,7 +193,7 @@ template <potential_type potential>
 __global__ void sample_potential(float3* g_h, const float2 r)
 {
     vector<float, 3> r1(0, 0, 0);
-    vector<float, 3> r2(r.x + ((r.y - r.x) / GTDIM * GTID), 0, 0);
+    vector<float, 3> r2(r.x + r.y * GTID, 0, 0);
     vector<float, 3> f = 0;
     float en = 0, virial = 0;
     compute_force<UNARY, potential>(r1, r2, f, en, virial, 0);
