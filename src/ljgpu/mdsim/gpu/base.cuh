@@ -192,12 +192,12 @@ __global__ void sample_smooth_function(float3* g_h, const float2 r)
 template <potential_type potential>
 __global__ void sample_potential(float3* g_h, const float2 r)
 {
-    vector<float, 3> r1(0, 0, 0);
-    vector<float, 3> r2(r.x + r.y * GTID, 0, 0);
+    vector<float, 3> r1(r.x + r.y * GTID, 0, 0);
+    vector<float, 3> r2(0, 0, 0);
     vector<float, 3> f = 0;
     float en = 0, virial = 0;
     compute_force<UNARY, potential>(r1, r2, f, en, virial, 0);
-    g_h[GTID] = make_float3(r2.x, en, f.x);
+    g_h[GTID] = make_float3(r1.x, en, f.x);
 }
 
 /**
