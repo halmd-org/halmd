@@ -40,6 +40,9 @@ public:
     typedef typename _Base::energy_sample_type energy_sample_type;
     enum { dimension = _Base::dimension };
 
+    /** static implementation properties */
+    typedef boost::true_type has_thermostat;
+
 public:
     ljfluid_base() :
 	epsilon_(boost::assign::list_of(1)(0)(0)),

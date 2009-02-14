@@ -522,6 +522,8 @@ options_description<ljfluid_impl_base>::options_description()
 	 "truncate potential at cutoff radius")
 	("smooth", po::value<float>(),
 	 "C²-potential smoothing factor")
+	("thermostat", po::value<float>(),
+	 "heat bath collision probability")
 	("binary,M", po::value<boost::array<unsigned int, 2> >(),
 	 "binary mixture with A,B particles")
 	("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
@@ -545,10 +547,6 @@ options_description<ljfluid_impl_gpu_base>::options_description()
 
 options_description<ljfluid_impl_gpu_square>::options_description()
 {
-    add_options()
-	("thermostat", po::value<float>(),
-	 "heat bath collision probability")
-	;
 }
 
 options_description<ljfluid_impl_gpu_neighbour>::options_description()
@@ -558,8 +556,6 @@ options_description<ljfluid_impl_gpu_neighbour>::options_description()
 	 "desired average cell occupancy")
 	("skin", po::value<float>()->default_value(0.5),
 	 "neighbour list skin")
-	("thermostat", po::value<float>(),
-	 "heat bath collision probability")
 	;
 }
 
@@ -578,8 +574,6 @@ options_description<ljfluid_impl_host>::options_description()
 	 "correlation functions backend")
 	("skin", po::value<float>()->default_value(0.5),
 	 "neighbour list skin")
-	("thermostat", po::value<float>(),
-	 "heat bath collision probability")
 	;
 }
 

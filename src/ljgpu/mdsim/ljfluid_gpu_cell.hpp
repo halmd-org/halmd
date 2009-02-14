@@ -111,11 +111,14 @@ private:
     using _Base::r_cut;
     using _Base::stream_;
     using _Base::timestep_;
+    using _Base::thermostat_steps;
+    using _Base::thermostat_count;
+    using _Base::thermostat_temp;
 
     /** CUDA execution dimensions for cell-specific kernels */
     cuda::config dim_cell_;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 7> event_;
+    boost::array<cuda::event, 8> event_;
 
     using _Base::reduce_squared_velocity;
     using _Base::reduce_velocity;
@@ -179,6 +182,10 @@ private:
 	/** particle velocities */
 	cuda::vector<gpu_vector_type> v;
     } g_part_buf;
+
+    /** velocity assignment on host */
+    cuda::vector<gpu_vector_type> g_v;
+    cuda::host::vector<gpu_vector_type> h_v;
 };
 
 template <int dimension>
@@ -281,13 +288,17 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::threads(unsigned int value)
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory double buffers");
     }
+
+    h_v.resize(npart);
+    g_v.resize(npart);
+    g_v.reserve(dim_.threads());
+    h_v.reserve(dim_.threads());
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::state(host_sample_type& sample, float_type box)
 {
     cuda::host::vector<float4> h_r(npart);
-    cuda::host::vector<gpu_vector_type> h_v(npart);
     _Base::state(sample, box, h_r, h_v);
 
     cuda::vector<float4> g_r(npart);
@@ -322,11 +333,6 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::temperature(float_type temp)
 {
     LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
-
-    cuda::vector<gpu_vector_type> g_v(npart);
-    cuda::host::vector<gpu_vector_type> h_v(npart);
-    g_v.reserve(dim_.threads());
-    h_v.reserve(dim_.threads());
 
     try {
 	event_[0].record(stream_);
@@ -396,6 +402,18 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::stream()
     }
     event_[6].record(stream_);
 
+    // heat bath coupling
+    if (thermostat_steps && ++thermostat_count > thermostat_steps) {
+	try {
+	    _Base::boltzmann(g_v, thermostat_temp, stream_);
+	    cuda::copy(g_v, h_v, stream_);
+	}
+	catch (cuda::error const&) {
+	    throw exception("failed to compute Boltzmann distributed velocities on GPU");
+	}
+    }
+    event_[7].record(stream_);
+
     // potential energy sum calculation
     try {
 	reduce_en(g_part.en, stream_);
@@ -433,7 +451,17 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::mdstep()
     }
 
     m_times["update_forces"] += event_[6] - event_[5];
-    m_times["potential_energy"] += event_[0] - event_[6];
+
+    if (thermostat_steps && thermostat_count > thermostat_steps) {
+	// assign Boltzmann velocities to placeholders
+	assign_velocities(h_v);
+	// reset MD steps since last heatbath coupling
+	thermostat_count = 0;
+	// GPU time for Maxwell-Boltzmann distribution
+	m_times["boltzmann"] += event_[7] - event_[6];
+    }
+
+    m_times["potential_energy"] += event_[0] - event_[7];
 
     if (!std::isfinite(reduce_en.value())) {
 	throw potential_energy_divergence();
@@ -565,9 +593,9 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::assign_positions(cuda::vector<f
     catch (cuda::error const& e) {
 	throw exception("failed to assign positions to cell placeholders");
     }
-
-    // CUDA time for cell lists initialisation
     m_times["init_cells"] += event_[1] - event_[0];
+
+    v_max_sum = 0;
 }
 
 template <int dimension>
@@ -590,8 +618,6 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::assign_velocities(cuda::host::v
     catch (cuda::error const& e) {
 	throw exception("failed to assign velocities to cell placeholders");
     }
-
-    v_max_sum = 0;
 }
 
 template <int dimension>
