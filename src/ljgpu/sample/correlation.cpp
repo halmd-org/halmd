@@ -33,7 +33,7 @@ namespace ljgpu {
  * set total number of simulation steps
  */
 template <int dimension>
-void correlation<dimension>::steps(uint64_t value, float timestep)
+void correlation<dimension>::steps(uint64_t value, double timestep)
 {
     // set total number of simulation steps
     m_steps = value;
@@ -49,7 +49,7 @@ void correlation<dimension>::steps(uint64_t value, float timestep)
  * set total simulation time
  */
 template <int dimension>
-void correlation<dimension>::time(double value, float timestep)
+void correlation<dimension>::time(double value, double timestep)
 {
     // set total simulation time
     m_time = value;
@@ -57,7 +57,7 @@ void correlation<dimension>::time(double value, float timestep)
     // set simulation timestep
     m_timestep = timestep;
     // derive total number of simulation steps
-    m_steps = roundf(m_time / m_timestep);
+    m_steps = round(m_time / m_timestep);
     LOG("total number of simulation steps: " << m_steps);
 }
 

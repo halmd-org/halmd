@@ -72,9 +72,9 @@ public:
 public:
     correlation() : m_is_open(false) {}
     /** set total number of simulation steps */
-    void steps(uint64_t value, float timestep);
+    void steps(uint64_t value, double timestep);
     /** set total simulation time */
-    void time(double value, float timestep);
+    void time(double value, double timestep);
     /** set sample rate for lowest block level */
     void sample_rate(unsigned int sample_rate);
     /** set maximum number of samples per block */
@@ -154,7 +154,7 @@ private:
     std::vector<uint64_t> m_block_samples;
 
     /** simulation timestep */
-    float m_timestep;
+    double m_timestep;
     /** sample rate for lowest block level */
     unsigned int m_sample_rate;
     /** total number of simulation steps */

@@ -407,7 +407,7 @@ void options::parse(po::options_description const& opt)
 		      vm_["cutoff"]);
 	    po::store(po::parse_attribute<float>(node, "potential_smoothing"),
 		      vm_["smooth"]);
-	    po::store(po::parse_attribute<float>(node, "timestep"),
+	    po::store(po::parse_attribute<double>(node, "timestep"),
 		      vm_["timestep"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "threads"),
 		      vm_["threads"]);
@@ -423,7 +423,7 @@ void options::parse(po::options_description const& opt)
 	    node = param.openGroup("correlation");
 	    po::store(po::parse_attribute<uint64_t>(node, "steps"),
 		      vm_["steps"]);
-	    po::store(po::parse_attribute<float>(node, "time"),
+	    po::store(po::parse_attribute<double>(node, "time"),
 		      vm_["time"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "sample_rate"),
 		      vm_["sample-rate"]);
@@ -462,7 +462,7 @@ options_description<mdsim_impl>::options_description()
 	 "particle density")
 	("box-length,L", po::value<float>(),
 	 "simulation box length")
-	("timestep,h", po::value<float>()->default_value(0.001),
+	("timestep,h", po::value<double>()->default_value(0.001),
 	 "simulation timestep")
 	("random-seed", po::value<unsigned int>(),
 	 "random number generator integer seed")
@@ -474,7 +474,7 @@ options_description<mdsim_impl>::options_description()
 	 "Boltzmann distribution temperature")
 	("steps,s", po::value<uint64_t>()->default_value(10000),
 	 "number of simulation steps")
-	("time,t", po::value<float>(),
+	("time,t", po::value<double>(),
 	 "total simulation time")
 	("trajectory,J", po::value<std::string>(),
 	 "trajectory input file")

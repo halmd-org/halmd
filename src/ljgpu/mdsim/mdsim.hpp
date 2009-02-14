@@ -218,7 +218,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 	m_fluid.density(m_opt["density"].as<float>());
     }
     // simulation timestep
-    m_fluid.timestep(m_opt["timestep"].as<float>());
+    m_fluid.timestep(m_opt["timestep"].as<double>());
 
     // potential well depths
     epsilon(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
@@ -276,11 +276,11 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 
     if (m_opt["steps"].defaulted() && !m_opt["time"].empty()) {
 	// total simulation time
-	m_corr.time(m_opt["time"].as<float>(), m_fluid.timestep());
+	m_corr.time(m_opt["time"].as<double>(), m_opt["timestep"].as<double>());
     }
     else {
 	// total number of simulation steps
-	m_corr.steps(m_opt["steps"].as<uint64_t>(), m_fluid.timestep());
+	m_corr.steps(m_opt["steps"].as<uint64_t>(), m_opt["timestep"].as<double>());
     }
     // sample rate for lowest block level
     m_corr.sample_rate(m_opt["sample-rate"].as<unsigned int>());
