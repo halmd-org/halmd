@@ -174,7 +174,7 @@ void ljfluid_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
 {
     thermostat_nu = nu;
     LOG("heat bath collision probability: " << thermostat_nu);
-    thermostat_steps = std::max(static_cast<int>(1 / (nu * timestep_)), 1);
+    thermostat_steps = std::max(round(1 / (nu * timestep_)), 1.);
     LOG("heat bath coupling frequency: " << thermostat_steps);
     thermostat_temp = temp;
     LOG("heat bath temperature: " << thermostat_temp);
