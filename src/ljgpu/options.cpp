@@ -40,42 +40,16 @@ namespace boost { namespace program_options
 {
 
 /**
- * program option value validation for single precision floating-point values
+ * program option value validation for positive, non-zero values
  */
-template <>
-void validate(boost::any& value_store, std::vector<std::string> const& values, float*, long)
+template <typename T>
+void validate(any& v, std::vector<std::string> const& values, T*)
 {
     std::string const& s = validators::get_single_string(values);
-    float value;
+    T value;
 
     try {
-	value = lexical_cast<float>(s);
-    }
-    catch (bad_lexical_cast const& e)
-    {
-	throw invalid_option_value(s);
-    }
-
-    // require positive value
-    if (value > 0.) {
-	value_store = boost::any(value);
-    }
-    else {
-	throw invalid_option_value(s);
-    }
-}
-
-/**
- * program option value validation for unsigned integer values
- */
-template <>
-void validate(boost::any& value_store, std::vector<std::string> const& values, unsigned int*, long)
-{
-    std::string const& s = validators::get_single_string(values);
-    unsigned int value;
-
-    try {
-	value = lexical_cast<unsigned int>(s);
+	value = lexical_cast<T>(s);
     }
     catch (bad_lexical_cast const& e)
     {
@@ -84,37 +58,35 @@ void validate(boost::any& value_store, std::vector<std::string> const& values, u
 
     // require positive value
     if (value > 0) {
-	value_store = boost::any(value);
+	v = any(value);
     }
     else {
 	throw invalid_option_value(s);
     }
 }
 
-/**
- * program option value validation for 64-bit unsigned integer values
- */
 template <>
-void validate(boost::any& value_store, std::vector<std::string> const& values, uint64_t*, long)
+void validate(any& v, std::vector<std::string> const& values, float*, long)
 {
-    std::string const& s = validators::get_single_string(values);
-    uint64_t value;
+    validate(v, values, (float*)0);
+}
 
-    try {
-	value = lexical_cast<uint64_t>(s);
-    }
-    catch (bad_lexical_cast const& e)
-    {
-	throw invalid_option_value(s);
-    }
+template <>
+void validate(any& v, std::vector<std::string> const& values, double*, long)
+{
+    validate(v, values, (double*)0);
+}
 
-    // require positive value
-    if (value > 0) {
-	value_store = boost::any(value);
-    }
-    else {
-	throw invalid_option_value(s);
-    }
+template <>
+void validate(any& v, std::vector<std::string> const& values, unsigned int*, long)
+{
+    validate(v, values, (unsigned int*)0);
+}
+
+template <>
+void validate(any& v, std::vector<std::string> const& values, uint64_t*, long)
+{
+    validate(v, values, (uint64_t*)0);
 }
 
 /**
