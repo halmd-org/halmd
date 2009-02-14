@@ -370,6 +370,8 @@ void options::parse(po::options_description const& opt)
 	po::conflicting_options(vm, "binary", "particles");
 	po::conflicting_options(vm, "disable-correlation", "q-values");
 	po::conflicting_options(vm, "disable-correlation", "q-error");
+	po::dependent_option(vm, "energy", "trajectory-sample");
+	po::conflicting_options(vm, "temperature", "energy");
     }
     catch (exception const& e) {
 	cerr << PROGRAM_NAME ": " << e.what() << "\n";
@@ -472,6 +474,8 @@ options_description<mdsim_impl>::options_description()
     mdsim_desc.add_options()
 	("temperature,K", po::value<float>()->default_value(1.12),
 	 "Boltzmann distribution temperature")
+	("energy", po::value<float>(),
+	 "rescale velocities to mean particle energy")
 	("steps,s", po::value<uint64_t>()->default_value(10000),
 	 "number of simulation steps")
 	("time,t", po::value<double>(),

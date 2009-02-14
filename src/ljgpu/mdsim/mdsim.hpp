@@ -150,6 +150,14 @@ private:
 	m_fluid.init_event_list();
     }
 
+    void rescale_energy(boost::false_type const&) {}
+    void rescale_energy(boost::true_type const&)
+    {
+	if (!m_opt["energy"].empty()) {
+	    m_fluid.rescale_energy(m_opt["energy"].as<float>());
+	}
+    }
+
     void thermostat(boost::false_type const&) {}
     void thermostat(boost::true_type const&)
     {
@@ -266,6 +274,9 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 	// arrange particles on a face-centered cubic (fcc) lattice
 	m_fluid.lattice();
     }
+
+    // rescale mean particle energy
+    rescale_energy(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
 
     if (m_opt["trajectory-sample"].empty() || !m_opt["temperature"].defaulted()) {
 	// initialise velocities from Maxwell-Boltzmann distribution

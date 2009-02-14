@@ -89,6 +89,8 @@ public:
 
     /** set system state from phase space sample */
     void state(host_sample_type& sample, float_type box);
+    /** rescale mean particle energy */
+    void rescale_energy(float_type en);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -279,6 +281,20 @@ void ljfluid<ljfluid_impl_host<dimension> >::nbl_skin(float value)
     // derive cell length from integer number of cells per dimension
     cell_length_ = box_ / ncell;
     LOG("cell length: " << cell_length_);
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_host<dimension> >::rescale_energy(float_type en)
+{
+    LOG("rescaling velocities to mean particle energy: " << en);
+    float_type vv = 0;
+    foreach (particle const& p, part) {
+	vv += p.v * p.v;
+    }
+    float_type s = std::sqrt(2 * (en - en_pot) * npart / vv);
+    foreach (particle& p, part) {
+	p.v *= s;
+    }
 }
 
 /**

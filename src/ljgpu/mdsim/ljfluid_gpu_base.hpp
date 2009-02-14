@@ -105,6 +105,11 @@ protected:
     void random_permute(cuda::vector<float4>& g_r);
     /** assign ascending particle numbers */
     void init_tags(cuda::vector<float4>& g_r, cuda::vector<unsigned int>& g_tag);
+    /** rescale mean particle energy */
+    void rescale_energy(cuda::vector<gpu_vector_type>& g_v,
+			float en,
+			cuda::config const& dim,
+			cuda::stream& stream);
     /** generate Maxwell-Boltzmann distributed velocities */
     void boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp, cuda::stream& stream);
     /** restore system state from phase space sample */
@@ -423,6 +428,36 @@ void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
     }
     catch (cuda::error const&) {
 	throw exception("failed to initialise particle tags on GPU");
+    }
+}
+
+/**
+ * rescale mean particle energy
+ */
+template <typename ljfluid_impl>
+void ljfluid_gpu_base<ljfluid_impl>::rescale_energy(cuda::vector<gpu_vector_type>& g_v,
+						    float en,
+						    cuda::config const& dim,
+						    cuda::stream& stream)
+{
+    try {
+	reduce_squared_velocity(g_v, stream);
+	stream.synchronize();
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to reduce squared velocity on GPU");
+    }
+
+    float_type vv = 2 * (en * npart - reduce_en.value());
+    float_type s = std::sqrt(vv / reduce_squared_velocity.value());
+
+    try {
+	cuda::configure(dim.grid, dim.block, stream);
+	_gpu::rescale_velocity(g_v, s);
+	stream.synchronize();
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to rescale velocities on GPU");
     }
 }
 

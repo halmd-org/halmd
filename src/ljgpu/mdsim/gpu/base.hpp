@@ -63,6 +63,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base<3> >
     static cuda::function<void (float4*, float4*, float4*, float4 const*),
 	void (float4*, float4*, float4*, float4*, float4 const*)> inteq;
     static cuda::function<void (float4*, unsigned int*)> init_tags;
+    static cuda::function<void (float4*, float)> rescale_velocity;
 };
 
 template <>
@@ -72,6 +73,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base<2> >
     static cuda::function<void (float4*, float2*, float2*, float2 const*),
 	void (float4*, float2*, float2*, float2*, float2 const*)> inteq;
     static cuda::function<void (float4*, unsigned int*)> init_tags;
+    static cuda::function<void (float2*, float)> rescale_velocity;
 };
 
 }} // namespace ljgpu::gpu
