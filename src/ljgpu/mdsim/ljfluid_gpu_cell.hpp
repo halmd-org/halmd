@@ -301,19 +301,11 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell<dimension> >::state(host_sample_type& sample, float_type box)
 {
     cuda::host::vector<float4> h_r(npart);
-    _Base::state(sample, box, h_r, h_v);
-
     cuda::vector<float4> g_r(npart);
     g_r.reserve(dim_.threads());
 
-    try {
-	cuda::copy(h_r, g_r, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy particle positions to GPU");
-    }
-
+    _Base::state(sample, box, h_r, h_v);
+    cuda::copy(h_r, g_r);
     assign_positions(g_r);
     assign_velocities(h_v);
 }

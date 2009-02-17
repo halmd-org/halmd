@@ -209,17 +209,9 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square<dimension> >::state(host_sample_type& sample, float_type box)
 {
     _Base::state(sample, box, h_part.r, h_part.v);
-
-    try {
-	cuda::copy(h_part.r, g_part.r, stream_);
-	cuda::copy(h_part.v, g_part.v, stream_);
-	stream_.synchronize();
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to copy phase space sample to GPU");
-    }
-
+    cuda::copy(h_part.r, g_part.r);
     assign_positions();
+    cuda::copy(h_part.v, g_part.v);
 }
 
 template <int dimension>
