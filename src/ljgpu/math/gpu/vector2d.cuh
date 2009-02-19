@@ -20,7 +20,6 @@
 #define LJGPU_MATH_GPU_VECTOR2D_CUH
 
 #include <cuda/cuda_runtime.h>
-#include <ljgpu/math/gpu/dsfun.cuh>
 
 namespace ljgpu { namespace cu
 {
@@ -32,6 +31,7 @@ template <>
 struct vector<float, 2>
 {
     enum { static_size = 2 };
+    typedef float value_type;
 
     float x, y;
 
@@ -60,12 +60,6 @@ struct vector<float, 2>
     __device__ inline operator float4() const
     {
 	return make_float4(x, y, 0, 0);
-    }
-
-    template <typename T>
-    __device__ inline operator vector<T, 2>() const
-    {
-	return vector<T, 2>(x, y);
     }
 };
 
@@ -391,112 +385,6 @@ __device__ inline vector<float, 2> __fdividef(vector<float, 2> v, float s)
 {
     v.x = __fdividef(v.x, s);
     v.y = __fdividef(v.y, s);
-    return v;
-}
-
-
-template <>
-struct vector<dfloat, 2>
-{
-    typedef vector<dfloat, 2> _vector;
-    enum { static_size = 3 };
-
-    dfloat x, y;
-
-    __device__ inline vector() {}
-
-    __device__ inline vector(float const& s) : x(s), y(s) {}
-
-    __device__ inline vector(dfloat const& s) : x(s), y(s) {}
-
-    __device__ inline vector(dfloat x, dfloat y) : x(x), y(y) {}
-
-    __device__ inline vector(float2 const& v) : x(v.x), y(v.y) {}
-
-    __device__ inline vector(float3 const& v) : x(v.x), y(v.y) {}
-
-    __device__ inline vector(float4 const& v) : x(v.x), y(v.y) {}
-
-    template <typename T>
-    __device__ inline operator vector<T, 2>() const
-    {
-	return vector<T, 2>(x, y);
-    }
-};
-
-/**
- * assignment by componentwise _vector addition
- */
-__device__ inline vector<dfloat, 2>& operator+=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
-{
-    v.x += w.x;
-    v.y += w.y;
-    return v;
-}
-
-/**
- * assignment by componentwise vector<dfloat, 2> subtraction
- */
-__device__ inline vector<dfloat, 2>& operator-=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
-{
-    v.x -= w.x;
-    v.y -= w.y;
-    return v;
-}
-
-/**
- * assignment by scalar multiplication
- */
-__device__ inline vector<dfloat, 2>& operator*=(vector<dfloat, 2>& v, dfloat const& s)
-{
-    v.x *= s;
-    v.y *= s;
-    return v;
-}
-
-/**
- * componentwise vector<dfloat, 2> addition
- */
-__device__ inline vector<dfloat, 2> operator+(vector<dfloat, 2> v, vector<dfloat, 2> const& w)
-{
-    v += w;
-    return v;
-}
-
-/**
- * componentwise vector<dfloat, 2> subtraction
- */
-__device__ inline vector<dfloat, 2> operator-(vector<dfloat, 2> v, vector<dfloat, 2> const& w)
-{
-    v -= w;
-    return v;
-}
-
-/**
- * scalar product
- */
-__device__ inline dfloat operator*(vector<dfloat, 2> const& v, vector<dfloat, 2> const& w)
-{
-    return v.x * w.x + v.y * w.y;
-}
-
-/**
- * scalar multiplication
- */
-__device__ inline vector<dfloat, 2> operator*(vector<dfloat, 2> v, dfloat const& s)
-{
-    v.x *= s;
-    v.y *= s;
-    return v;
-}
-
-/**
- * scalar multiplication
- */
-__device__ inline vector<dfloat, 2> operator*(dfloat const& s, vector<dfloat, 2> v)
-{
-    v.x *= s;
-    v.y *= s;
     return v;
 }
 

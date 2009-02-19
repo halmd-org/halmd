@@ -32,6 +32,7 @@ template <>
 struct vector<float, 3>
 {
     enum { static_size = 3 };
+    typedef float value_type;
 
     float x, y, z;
 
@@ -53,12 +54,6 @@ struct vector<float, 3>
     __device__ inline operator float4() const
     {
 	return make_float4(x, y, z, 0);
-    }
-
-    template <typename T>
-    __device__ inline operator vector<T, 3>() const
-    {
-	return vector<T, 3>(x, y, z);
     }
 };
 
@@ -411,115 +406,6 @@ __device__ inline vector<float, 3> __fdividef(vector<float, 3> v, float s)
     v.x = __fdividef(v.x, s);
     v.y = __fdividef(v.y, s);
     v.z = __fdividef(v.z, s);
-    return v;
-}
-
-
-template <>
-struct vector<dfloat, 3>
-{
-    typedef vector<dfloat, 3> _vector;
-    enum { static_size = 3 };
-
-    dfloat x, y, z;
-
-    __device__ inline vector() {}
-
-    __device__ inline vector(float const& s) : x(s), y(s), z(s) {}
-
-    __device__ inline vector(dfloat const& s) : x(s), y(s), z(s) {}
-
-    __device__ inline vector(dfloat x, dfloat y, dfloat z) : x(x), y(y), z(z) {}
-
-    __device__ inline vector(float3 const& v) : x(v.x), y(v.y), z(v.z) {}
-
-    __device__ inline vector(float4 const& v) : x(v.x), y(v.y), z(v.z) {}
-
-    template <typename T>
-    __device__ inline operator vector<T, 3>() const
-    {
-	return vector<T, 3>(x, y, z);
-    }
-};
-
-/**
- * assignment by componentwise _vector addition
- */
-__device__ inline vector<dfloat, 3>& operator+=(vector<dfloat, 3>& v, vector<dfloat, 3> const& w)
-{
-    v.x += w.x;
-    v.y += w.y;
-    v.z += w.z;
-    return v;
-}
-
-/**
- * assignment by componentwise vector<dfloat, 3> subtraction
- */
-__device__ inline vector<dfloat, 3>& operator-=(vector<dfloat, 3>& v, vector<dfloat, 3> const& w)
-{
-    v.x -= w.x;
-    v.y -= w.y;
-    v.z -= w.z;
-    return v;
-}
-
-/**
- * assignment by scalar multiplication
- */
-__device__ inline vector<dfloat, 3>& operator*=(vector<dfloat, 3>& v, dfloat const& s)
-{
-    v.x *= s;
-    v.y *= s;
-    v.z *= s;
-    return v;
-}
-
-/**
- * componentwise vector<dfloat, 3> addition
- */
-__device__ inline vector<dfloat, 3> operator+(vector<dfloat, 3> v, vector<dfloat, 3> const& w)
-{
-    v += w;
-    return v;
-}
-
-/**
- * componentwise vector<dfloat, 3> subtraction
- */
-__device__ inline vector<dfloat, 3> operator-(vector<dfloat, 3> v, vector<dfloat, 3> const& w)
-{
-    v -= w;
-    return v;
-}
-
-/**
- * scalar product
- */
-__device__ inline dfloat operator*(vector<dfloat, 3> const& v, vector<dfloat, 3> const& w)
-{
-    return v.x * w.x + v.y * w.y + v.z * w.z;
-}
-
-/**
- * scalar multiplication
- */
-__device__ inline vector<dfloat, 3> operator*(vector<dfloat, 3> v, dfloat const& s)
-{
-    v.x *= s;
-    v.y *= s;
-    v.z *= s;
-    return v;
-}
-
-/**
- * scalar multiplication
- */
-__device__ inline vector<dfloat, 3> operator*(dfloat const& s, vector<dfloat, 3> v)
-{
-    v.x *= s;
-    v.y *= s;
-    v.z *= s;
     return v;
 }
 
