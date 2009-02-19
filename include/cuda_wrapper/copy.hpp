@@ -372,6 +372,13 @@ void memset(vector<T>& array, int const& value)
     CUDA_CALL(cudaMemset(array.data(), value, array.size() * sizeof(T)));
 }
 
+template <typename T>
+void memset(vector<T>& array, int const& value, size_t size)
+{
+    assert(size <= array.capacity());
+    CUDA_CALL(cudaMemset(array.data(), value, size * sizeof(T)));
+}
+
 } // namespace cuda
 
 #endif /* ! CUDA_WRAPPER_COPY_HPP */
