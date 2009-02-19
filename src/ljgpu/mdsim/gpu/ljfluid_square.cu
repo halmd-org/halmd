@@ -98,6 +98,26 @@ __global__ void sample(float4 const* g_ir, T const* g_iR, T const* g_iv, T* g_or
     g_ov[GTID] = g_iv[GTID];
 }
 
+/**
+ * first leapfrog step of integration of equations of motion
+ */
+template <int dimension, typename T>
+__global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
+{
+    vector<float, dimension> r, dr, R, v, f;
+    unsigned int tag;
+    unwrap_particle(g_r[GTID], r, tag);
+    R = g_R[GTID];
+    v = g_v[GTID];
+    f = g_f[GTID];
+
+    leapfrog_half_step(r, dr, R, v, f);
+
+    g_r[GTID] = wrap_particle(r, tag);
+    g_R[GTID] = R;
+    g_v[GTID] = v;
+}
+
 }}} // namespace ljgpu::gpu::ljfluid
 
 namespace ljgpu { namespace gpu
@@ -121,6 +141,8 @@ cuda::function<void (float4 const*, float4*, float4*, float*, float*)>
 
 cuda::function<void (float4 const*, float4 const*, float4 const*, float4*, float4*)>
     _3D::sample(cu::ljfluid::sample<3>);
+cuda::function<void (float4*, float4*, float4*, float4 const*)>
+    _3D::inteq(cu::ljfluid::inteq<3>);
 
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<UNARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT>);
@@ -133,5 +155,7 @@ cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
 
 cuda::function<void (float4 const*, float2 const*, float2 const*, float2*, float2*)>
     _2D::sample(cu::ljfluid::sample<2>);
+cuda::function<void (float4*, float2*, float2*, float2 const*)>
+    _2D::inteq(cu::ljfluid::inteq<2>);
 
 }} // namespace ljgpu::gpu

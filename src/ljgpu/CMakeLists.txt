@@ -22,6 +22,13 @@ if(WITH_CUDA)
   if(ljgpu_VARIANT_HILBERT_ALT_3D)
     add_definitions(-DUSE_HILBERT_ALT_3D)
   endif(ljgpu_VARIANT_HILBERT_ALT_3D)
+
+  set(ljgpu_VARIANT_VERLET_DSFUN TRUE CACHE BOOL
+    "Use double-single precision functions in Verlet integrator")
+  if(ljgpu_VARIANT_VERLET_DSFUN)
+    add_definitions(-DUSE_VERLET_DSFUN)
+  endif(ljgpu_VARIANT_VERLET_DSFUN)
+
 endif(WITH_CUDA)
 
 # Generate version header file

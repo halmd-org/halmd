@@ -55,6 +55,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<3> >
     static cuda::function<void (unsigned int const*, float4*, float4*, float4*, unsigned int*)> order_particles;
     static cuda::function<void (uint const*, float4*)> order_velocities;
     static cuda::function<void (unsigned int const*, float4*, float4*)> sample;
+    static cuda::function<void (float4*, float4*, float4*, float4*, float4 const*)> inteq;
 
     template <mixture_type, potential_type>
     struct variant
@@ -76,6 +77,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<2> >
     static cuda::function<void (unsigned int const*, float4*, float2*, float2*, unsigned int*)> order_particles;
     static cuda::function<void (uint const*, float2*)> order_velocities;
     static cuda::function<void (unsigned int const*, float2*, float2*)> sample;
+    static cuda::function<void (float4*, float2*, float2*, float2*, float2 const*)> inteq;
 
     template <mixture_type, potential_type>
     struct variant

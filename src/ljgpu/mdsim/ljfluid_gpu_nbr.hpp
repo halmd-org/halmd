@@ -398,10 +398,16 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 
     // allocate global device memory for placeholder particles
     try {
+#ifdef USE_VERLET_DSFUN
+	LOG("using double-single arithmetic in Verlet integration");
+	g_part.r.reserve(2 * dim_.threads());
+	g_part.v.reserve(2 * dim_.threads());
+#else
 	g_part.r.reserve(dim_.threads());
+	g_part.v.reserve(dim_.threads());
+#endif
 	g_part.dr.reserve(dim_.threads());
 	g_part.R.reserve(dim_.threads());
-	g_part.v.reserve(dim_.threads());
 	g_part.f.reserve(dim_.threads());
 	g_part.tag.reserve(dim_.threads());
 	g_part.en.reserve(dim_.threads());
@@ -426,9 +432,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 
     // allocate global device memory for sorting buffers
     try {
-	g_part_buf.r.reserve(dim_.threads());
-	g_part_buf.R.reserve(dim_.threads());
-	g_part_buf.v.reserve(dim_.threads());
+	g_part_buf.r.reserve(g_part.r.capacity());
+	g_part_buf.R.reserve(g_part.R.capacity());
+	g_part_buf.v.reserve(g_part.v.capacity());
 	g_aux.cell.reserve(dim_.threads());
 	g_aux.offset.resize(dim_cell_.blocks_per_grid());
 	g_aux.index.reserve(dim_.threads());
@@ -456,8 +462,14 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::state(host_sample_type& sample, float_type box)
 {
     _Base::state(sample, box, h_part.r, h_part.v);
+#ifdef USE_VERLET_DSFUN
+    cuda::memset(g_part.r, 0, g_part.r.capacity());
+#endif
     cuda::copy(h_part.r, g_part.r);
     assign_positions();
+#ifdef USE_VERLET_DSFUN
+    cuda::memset(g_part.v, 0, g_part.v.capacity());
+#endif
     cuda::copy(h_part.v, g_part.v);
 }
 
@@ -471,6 +483,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::rescale_energy(float_type 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
 {
+#ifdef USE_VERLET_DSFUN
+    cuda::memset(g_part.r, 0, g_part.r.capacity());
+#endif
     // place particles on an fcc lattice
     _Base::lattice(g_part.r);
     // randomly permute particle coordinates for binary mixture
@@ -864,9 +879,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
     // order particles by permutation
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::order_particles(g_aux.index, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part.tag);
-    cuda::copy(g_part_buf.r, g_part.r, stream);
-    cuda::copy(g_part_buf.R, g_part.R, stream);
-    cuda::copy(g_part_buf.v, g_part.v, stream);
+    cuda::copy(g_part_buf.r, g_part.r, g_part.r.capacity(), stream);
+    cuda::copy(g_part_buf.R, g_part.R, g_part.R.capacity(), stream);
+    cuda::copy(g_part_buf.v, g_part.v, g_part.v.capacity(), stream);
 }
 
 /**
@@ -886,6 +901,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::permutation(cuda::stream& 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::boltzmann(float temp, cuda::stream& stream)
 {
+#ifdef USE_VERLET_DSFUN
+    cuda::memset(g_part.v, 0, g_part.v.capacity());
+#endif
     _Base::boltzmann(g_part.v, temp, stream);
 
 #ifdef USE_HILBERT_ORDER

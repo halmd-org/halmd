@@ -81,10 +81,14 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     enum { dimension = vector_type::static_size };
 
     // load particle associated with this thread
-    vector_type r, v;
+    vector_type r;
     unsigned int tag;
     unwrap_particle(g_r[GTID], r, tag);
-    v = g_v[GTID];
+#ifdef USE_VERLET_DSFUN
+    vector<dfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
+#else
+    vector_type v = g_v[GTID];
+#endif
     // particle type in binary mixture
     int const a = (tag >= mpart[0]);
 
@@ -115,7 +119,10 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     leapfrog_full_step(v, static_cast<vector_type>(f));
 
     // store particle associated with this thread
-    g_v[GTID] = v;
+    g_v[GTID] = static_cast<vector_type>(v);
+#ifdef USE_VERLET_DSFUN
+    g_v[GTID + GTDIM] = v.f1;
+#endif
     g_f[GTID] = static_cast<vector_type>(f);
     g_en[GTID] = en;
     g_virial[GTID] = virial;
@@ -384,6 +391,10 @@ __global__ void order_particles(unsigned int const* g_index, float4* g_or, T* g_
     g_or[GTID] = wrap_particle(r, tag);
     g_oR[GTID] = tex1Dfetch(tex<dimension>::R, j);
     g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
+#ifdef USE_VERLET_DSFUN
+    g_or[GTID + GTDIM] = tex1Dfetch(tex<dimension>::r, j + GTDIM);
+    g_ov[GTID + GTDIM] = tex1Dfetch(tex<dimension>::v, j + GTDIM);
+#endif
     g_otag[GTID] = tag;
 }
 
@@ -409,6 +420,49 @@ __global__ void sample(unsigned int const* g_perm, T* g_or, T* g_ov)
     vector<float, dimension> const R = tex1Dfetch(tex<dimension>::R, j);
     g_or[GTID] = r + box * R;
     g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
+}
+
+/**
+ * first leapfrog step of integration of equations of motion
+ */
+template <int dimension, typename T>
+__global__ void inteq(float4* g_r, T* g_dr, T* g_R, T* g_v, T const* g_f)
+{
+    unsigned int tag;
+#ifdef USE_VERLET_DSFUN
+    vector<dfloat, dimension> r, dr, v;
+#else
+    vector<float, dimension> r, dr, v;
+#endif
+    vector<float, dimension> R, f;
+
+#ifdef USE_VERLET_DSFUN
+    unwrap_particle(g_r[GTID], r.f0, tag);
+    r.f1 = g_r[GTID + GTDIM];
+    v.f0 = g_v[GTID];
+    v.f1 = g_v[GTID + GTDIM];
+#else
+    unwrap_particle(g_r[GTID], r, tag);
+    v = g_v[GTID];
+#endif
+    R = g_R[GTID];
+    f = g_f[GTID];
+
+    leapfrog_half_step(r, dr, R, v, f);
+
+#ifdef USE_VERLET_DSFUN
+    g_r[GTID] = wrap_particle(r.f0, tag);
+    g_r[GTID + GTDIM] = r.f1;
+    // particle displacement for neighbour list update constraint
+    g_dr[GTID] = dr.f0 + g_dr[GTID];
+    g_v[GTID] = v.f0;
+    g_v[GTID + GTDIM] = v.f1;
+#else
+    g_r[GTID] = wrap_particle(r, tag);
+    g_dr[GTID] = dr + g_dr[GTID];
+    g_v[GTID] = v;
+#endif
+    g_R[GTID] = R;
 }
 
 }}} // namespace ljgpu::gpu::ljfluid
@@ -468,6 +522,8 @@ cuda::function<void (uint const*, float4*)>
     _3D::order_velocities(cu::ljfluid::order_velocities<3>);
 cuda::function<void (unsigned int const*, float4*, float4*)>
     _3D::sample(cu::ljfluid::sample<3>);
+cuda::function<void (float4*, float4*, float4*, float4*, float4 const*)>
+    _3D::inteq(cu::ljfluid::inteq<3>);
 
 cuda::function<void (float4 const*, float2*, float2*, float*, float*)>
     _2D::template variant<UNARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT>);
@@ -489,5 +545,7 @@ cuda::function<void (uint const*, float2*)>
     _2D::order_velocities(cu::ljfluid::order_velocities<2>);
 cuda::function<void (unsigned int const*, float2*, float2*)>
     _2D::sample(cu::ljfluid::sample<2>);
+cuda::function<void (float4*, float2*, float2*, float2*, float2 const*)>
+    _2D::inteq(cu::ljfluid::inteq<2>);
 
 }} // namespace ljgpu::gpu

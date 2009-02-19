@@ -87,16 +87,18 @@ __device__ void unwrap_particle(float4 const& v, vector<float, 2>& r, unsigned i
 /**
  * first leapfrog step of integration of equations of motion
  */
-template <typename T>
-__device__ void leapfrog_half_step(T& r, T& dr, T& R, T& v, T const& f)
+template <typename T, typename U>
+__device__ void leapfrog_half_step(T& r, T& dr, U& R, T& v, U const& f)
 {
+    U dR;
+
     // half step velocity
     v += f * (timestep / 2);
     // full step coordinates
-    dr = v * timestep;
+    dr = v * static_cast<typename T::value_type>(timestep);
     r += dr;
     // apply periodic boundary conditions
-    T dR = floorf(r / box);
+    dR = floorf(r / box);
     r -= dR * box;
     // periodic box traversal vector
     R += dR;
@@ -105,8 +107,8 @@ __device__ void leapfrog_half_step(T& r, T& dr, T& R, T& v, T const& f)
 /**
  * second leapfrog step of integration of equations of motion
  */
-template <typename T>
-__device__ void leapfrog_full_step(T& v, T const& f)
+template <typename T, typename U>
+__device__ void leapfrog_full_step(T& v, U const& f)
 {
     // full step velocity
     v += f * (timestep / 2);
@@ -205,45 +207,6 @@ __global__ void sample_potential(float3* g_h, const float2 r)
 }
 
 /**
- * first leapfrog step of integration of equations of motion
- */
-template <int dimension, typename T>
-__global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
-{
-    vector<float, dimension> r, dr, R, v, f;
-    unsigned int tag;
-    unwrap_particle(g_r[GTID], r, tag);
-    R = g_R[GTID];
-    v = g_v[GTID];
-    f = g_f[GTID];
-
-    leapfrog_half_step(r, dr, R, v, f);
-
-    g_r[GTID] = wrap_particle(r, tag);
-    g_R[GTID] = R;
-    g_v[GTID] = v;
-}
-
-template <int dimension, typename T>
-__global__ void inteq(float4* g_r, T* g_dr, T* g_R, T* g_v, T const* g_f)
-{
-    vector<float, dimension> r, dr, R, v, f;
-    unsigned int tag;
-    unwrap_particle(g_r[GTID], r, tag);
-    R = g_R[GTID];
-    v = g_v[GTID];
-    f = g_f[GTID];
-
-    leapfrog_half_step(r, dr, R, v, f);
-
-    g_r[GTID] = wrap_particle(r, tag);
-    // particle displacement for neighbour list update constraint
-    g_dr[GTID] = dr + g_dr[GTID];
-    g_R[GTID] = R;
-    g_v[GTID] = v;
-}
-
-/**
  * assign ascending particle numbers
  */
 template <typename vector_type>
@@ -302,17 +265,11 @@ cuda::function<void (float3*, const float2)>
 cuda::function<void (float3*, const float2)>
     __Base::sample_smooth_potential(cu::ljfluid::sample_potential<C2POT>);
 
-cuda::function<void (float4*, float4*, float4*, float4 const*),
-    void (float4*, float4*, float4*, float4*, float4 const*)>
-    __3D::inteq(cu::ljfluid::inteq<3>, cu::ljfluid::inteq<3>);
 cuda::function<void (float4*, unsigned int*)>
     __3D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 3> >);
 cuda::function<void (float4*, float)>
     __3D::rescale_velocity(cu::ljfluid::rescale_velocity<cu::vector<float, 3> >);
 
-cuda::function<void (float4*, float2*, float2*, float2 const*),
-    void (float4*, float2*, float2*, float2*, float2 const*)>
-    __2D::inteq(cu::ljfluid::inteq<2>, cu::ljfluid::inteq<2>);
 cuda::function<void (float4*, unsigned int*)>
     __2D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 2> >);
 cuda::function<void (float2*, float)>
