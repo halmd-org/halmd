@@ -84,11 +84,6 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
     vector_type r;
     unsigned int tag;
     unwrap_particle(g_r[GTID], r, tag);
-#ifdef USE_VERLET_DSFUN
-    vector<dfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
-#else
-    vector_type v = g_v[GTID];
-#endif
     // particle type in binary mixture
     int const a = (tag >= mpart[0]);
 
@@ -115,6 +110,11 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, float* g_
 	compute_force<mixture, potential>(r, r_, f, en, virial, a + b);
     }
 
+#ifdef USE_VERLET_DSFUN
+    vector<dfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
+#else
+    vector_type v = g_v[GTID];
+#endif
     // second leapfrog step as part of integration of equations of motion
     leapfrog_full_step(v, static_cast<vector_type>(f));
 
