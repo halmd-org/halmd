@@ -349,7 +349,8 @@ void mdsim<mdsim_backend>::operator()()
 	(SIGINT, "INT")
 	(SIGTERM, "TERM")
 	(SIGHUP, "HUP")
-	(SIGUSR1, "USR1");
+	(SIGUSR1, "USR1")
+	(SIGUSR2, "USR2");
 
     // open HDF5 output files
     open();
@@ -393,6 +394,12 @@ void mdsim<mdsim_backend>::operator()()
 	    if (signals.find(signal::signal) != signals.end()) {
 		std::string const& name = signals.at(signal::signal);
 		LOG_WARNING("trapped signal " + name + " at simulation step " << step);
+	    }
+	    if (signal::signal == SIGUSR2) {
+		// block process until further signal is received
+		LOG("pausing simulation");
+		signal::wait();
+		LOG("resuming simulation");
 	    }
 	    if (signal::signal == SIGINT || signal::signal == SIGTERM) {
 		step++;
