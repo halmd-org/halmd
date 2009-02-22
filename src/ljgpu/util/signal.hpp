@@ -67,6 +67,17 @@ inline int poll()
     return signal;
 }
 
+/**
+ * block process until signal is received
+ */
+inline int wait()
+{
+    sigset_t set;
+    sigfillset(&set);
+    signal = std::max(0, sigwaitinfo(&set, NULL));
+    return signal;
+}
+
 }} // namespace ljgpu::signal
 
 #endif /* ! LJGPU_UTIL_SIGNAL_HPP */
