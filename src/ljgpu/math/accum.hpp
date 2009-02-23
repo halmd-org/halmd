@@ -64,10 +64,12 @@ public:
      */
     accumulator<T>& operator +=(accumulator<T> const& acc)
     {
-	const uint64_t n = n_ + acc.n_;
-	v_ = v_ + acc.v_ + std::pow(m_ - acc.m_, 2) * n_ * acc.n_ / n;
-	m_ = (n_ * m_ + acc.n_ * acc.m_) / n;
-	n_ = n;
+	if (acc.n_ > 0) {
+	    const uint64_t n = n_ + acc.n_;
+	    v_ = v_ + acc.v_ + std::pow(m_ - acc.m_, 2) * n_ * acc.n_ / n;
+	    m_ = (n_ * m_ + acc.n_ * acc.m_) / n;
+	    n_ = n;
+	}
 	return *this;
     }
 
