@@ -68,7 +68,7 @@ public:
     /* set periodic box length */
     void box(float_type value);
     /** set simulation timestep */
-    void timestep(float_type value);
+    void timestep(double value);
     /** set potential cutoff radius */
     void cutoff_radius(float_type value);
     /** set potential smoothing function scale parameter */
@@ -86,7 +86,7 @@ public:
     /** returns periodic box length */
     float_type box() const { return box_; }
     /** returns simulation timestep */
-    float_type timestep() const { return timestep_; }
+    double timestep() const { return timestep_; }
     /** returns potential cutoff radius */
     float_type cutoff_radius() const { return r_cut_sigma; }
 
@@ -300,12 +300,12 @@ void ljfluid_gpu_base<ljfluid_impl>::box(float_type value)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::timestep(float_type value)
+void ljfluid_gpu_base<ljfluid_impl>::timestep(double value)
 {
     _Base::timestep(value);
 
     try {
-	cuda::copy(timestep_, _gpu::timestep);
+	cuda::copy(static_cast<float_type>(timestep_), _gpu::timestep);
     }
     catch (cuda::error const&) {
 	throw exception("failed to copy simulation timestep to device symbol");

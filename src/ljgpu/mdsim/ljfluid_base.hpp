@@ -54,7 +54,7 @@ public:
 	potential_(C0POT) {}
 
     /** set simulation timestep */
-    void timestep(float_type value);
+    void timestep(double value);
     /** set potential cutoff radius */
     void cutoff_radius(float_type value);
     /** set potential smoothing function scale parameter */
@@ -67,7 +67,7 @@ public:
     void sigma(boost::array<float, 3> const& value);
 
     /** returns simulation timestep */
-    float_type timestep() const { return timestep_; }
+    double timestep() const { return timestep_; }
     /** returns potential cutoff radius */
     float_type cutoff_radius() const { return r_cut_sigma; }
     /** returns potential smoothing function scale parameter */
@@ -104,7 +104,7 @@ protected:
     /** squared inverse potential smoothing function scale parameter */
     float_type rri_smooth;
     /** simulation timestep */
-    float_type timestep_;
+    double timestep_;
     /** heat bath collision probability */
     float_type thermostat_nu;
     /** heat bath coupling frequency */
@@ -165,7 +165,7 @@ void ljfluid_base<ljfluid_impl>::potential_smoothing(float_type value)
 }
 
 template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::timestep(float_type value)
+void ljfluid_base<ljfluid_impl>::timestep(double value)
 {
     // set simulation timestep
     timestep_ = value;
