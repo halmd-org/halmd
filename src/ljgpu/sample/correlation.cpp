@@ -82,13 +82,13 @@ void correlation<dimension>::max_samples(uint64_t value)
 }
 
 /**
- * set minimum number of samples per block
+ * set minimum number of trajectory samples
  */
 template <int dimension>
 void correlation<dimension>::min_samples(uint64_t value)
 {
     m_min_samples = value;
-    LOG("minimum number of samples per block: " << m_min_samples);
+    LOG("minimum number of trajectory samples: " << m_min_samples);
 }
 
 /**
@@ -110,14 +110,25 @@ void correlation<dimension>::block_size(unsigned int value)
 
     // derive block count and sample frequencies from block size and block shift
     m_block_count = 0;
+    m_trajectory_block = 0;
     for (uint64_t n = m_sample_rate, m = n * m_block_shift; ; ++m_block_count) {
 	if (m_block_count % 2) {
-	    if ((m_steps / m) < m_min_samples) break;
+	    if ((m_steps / m) >= m_min_samples) {
+		++m_trajectory_block;
+	    }
+	    if (m > m_steps) {
+		break;
+	    }
 	    m_block_freq.push_back(m);
 	    m *= m_block_size;
 	}
 	else {
-	    if ((m_steps / n) < m_min_samples) break;
+	    if ((m_steps / n) >= m_min_samples) {
+		++m_trajectory_block;
+	    }
+	    if (n > m_steps) {
+		break;
+	    }
 	    m_block_freq.push_back(n);
 	    n *= m_block_size;
 	}
@@ -126,6 +137,11 @@ void correlation<dimension>::block_size(unsigned int value)
     if (!m_block_count) {
 	throw exception("computed block count is zero, more simulations steps required");
     }
+    if (!m_trajectory_block) {
+	LOG_WARNING("minimum number of trajectory samples not satisfied");
+    }
+    // convert trajectory block count to block level
+    m_trajectory_block = std::max(m_trajectory_block, 1U) - 1;
 
     m_block_samples.resize(m_block_count, 0);
 

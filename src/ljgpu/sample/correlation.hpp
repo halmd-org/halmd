@@ -79,7 +79,7 @@ public:
     void sample_rate(unsigned int sample_rate);
     /** set maximum number of samples per block */
     void max_samples(uint64_t value);
-    /** set minimum number of samples per block */
+    /** set minimum number of trajectory samples */
     void min_samples(uint64_t value);
     /** set block size */
     void block_size(unsigned int value);
@@ -171,8 +171,10 @@ private:
     block_time_type m_block_time;
     /** maximum number of correlation samples per block */
     uint64_t m_max_samples;
-    /** minimum number of correlation samples per block */
+    /** minimum number of trajectory samples */
     uint64_t m_min_samples;
+    /** trajectory block level */
+    unsigned int m_trajectory_block;
     /** q values for spatial Fourier transformation */
     q_value_vector m_q_value;
     /** q vectors for spatial Fourier transformation */
@@ -246,7 +248,7 @@ bool correlation<dimension>::is_sample_step(uint64_t step) const
 template <int dimension>
 bool correlation<dimension>::is_trajectory_step(uint64_t step) const
 {
-    return !(step % m_block_freq[m_block_count - 1]);
+    return !(step % m_block_freq[m_trajectory_block]);
 }
 
 } // namespace ljgpu

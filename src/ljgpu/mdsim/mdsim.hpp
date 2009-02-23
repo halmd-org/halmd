@@ -295,7 +295,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     }
     // sample rate for lowest block level
     m_corr.sample_rate(m_opt["sample-rate"].as<unsigned int>());
-    // minimum number of samples per block
+    // minimum number of trajectory samples
     m_corr.min_samples(m_opt["min-samples"].as<uint64_t>());
     // maximum number of samples per block
     m_corr.max_samples(m_opt["max-samples"].as<uint64_t>());

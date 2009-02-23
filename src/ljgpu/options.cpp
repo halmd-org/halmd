@@ -496,7 +496,7 @@ options_description<mdsim_impl>::options_description()
 	("max-samples", po::value<uint64_t>()->default_value(10000),
 	 "maximum number of samples per block")
 	("min-samples", po::value<uint64_t>()->default_value(100),
-	 "minimum number of samples per block")
+	 "minimum number of trajectory samples")
 	("q-values", po::value<boost::multi_array<float, 1> >(),
 	 "wave vector value(s) for correlation functions")
 	("q-error", po::value<float>()->default_value(0.001),
