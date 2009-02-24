@@ -393,6 +393,8 @@ void options::parse(po::options_description const& opt)
 	    H5::Group param(file.openGroup("param"));
 
 	    H5::Group node(param.openGroup("mdsim"));
+	    po::store(po::parse_attribute<int>(node, "dimension"),
+		      vm_["dimension"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "particles"),
 		      vm_["particles"]);
 	    po::store(po::parse_attribute<boost::array<unsigned int, 2> >(node, "particles"),
