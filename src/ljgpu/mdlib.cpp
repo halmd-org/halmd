@@ -17,6 +17,7 @@
  */
 
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility.hpp>
 #include <ljgpu/mdsim/hardsphere.hpp>
@@ -38,7 +39,14 @@ static typename boost::enable_if<typename mdsim_backend::has_gpu, void>::type
 _mdsim(options const& opt)
 {
     // create CUDA context and associate it with this thread
-    cuda::context ctx(opt["device"].as<int>());
+    boost::shared_ptr<cuda::context> ctx;
+    try {
+	// CUDA context may have been created via LD_PRELOAD
+	cuda::context::device();
+    }
+    catch (cu::error const&) {
+	ctx.reset(new cuda::context(opt["device"].as<int>()));
+    }
     LOG("CUDA device: " << cuda::context::device());
 
     cuda::device::properties prop(cuda::context::device());
