@@ -232,13 +232,48 @@ struct self_intermediate_scattering_function<tcf_host_sample> : correlation_func
     }
 };
 
+/**
+ * shear viscosity
+ */
+template <>
+struct shear_viscosity<tcf_host_sample> : correlation_function<tcf_host_sample>
+{
+    /** block sample results */
+    tcf_unary_result_type result;
+
+    char const* name() const { return "SVISC"; }
+
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_type::sample_vector::const_iterator sample_vector_iterator;
+	typedef typename sample_type::vector_type vector_type;
+	typedef typename output_iterator::value_type::value_type value_type;
+	enum { dimension = vector_type::static_size };
+
+	// iterate over phase space samples in block
+	for (sample_iterator it = first.first; it != last.first; ++it, ++result) {
+	    // iterate over particles in current and first sample
+	    value_type s = 0;
+	    for (sample_vector_iterator r = (*it)[type].r->begin(), v = (*it)[type].v->begin(), r0 = (*first.first)[type].r->begin(), v0 = (*first.first)[type].v->begin(); r != (*it)[type].r->end(); ++r, ++v, ++r0, ++v0) {
+		s += (*v)[0] * (*r)[dimension - 1] - (*v0)[0] * (*r0)[dimension - 1];
+	    }
+	    // accumulate shear viscosity
+	    *result += s * s;
+	}
+    }
+};
+
 /** correlation function types */
 typedef boost::mpl::vector<mean_square_displacement<tcf_host_sample> > _tcf_host_types_0;
 typedef boost::mpl::push_back<_tcf_host_types_0, mean_quartic_displacement<tcf_host_sample> >::type _tcf_host_types_1;
 typedef boost::mpl::push_back<_tcf_host_types_1, velocity_autocorrelation<tcf_host_sample> >::type _tcf_host_types_2;
 typedef boost::mpl::push_back<_tcf_host_types_2, intermediate_scattering_function<tcf_host_sample> >::type _tcf_host_types_3;
 typedef boost::mpl::push_back<_tcf_host_types_3, self_intermediate_scattering_function<tcf_host_sample> >::type _tcf_host_types_4;
-typedef boost::mpl::push_back<_tcf_host_types_4, squared_self_intermediate_scattering_function<tcf_host_sample> >::type tcf_host_types;
+typedef boost::mpl::push_back<_tcf_host_types_4, squared_self_intermediate_scattering_function<tcf_host_sample> >::type _tcf_host_types_5;
+typedef boost::mpl::push_back<_tcf_host_types_5, shear_viscosity<tcf_host_sample> >::type tcf_host_types;
 
 } // namespace ljgpu
 

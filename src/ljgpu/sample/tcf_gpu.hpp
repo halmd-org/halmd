@@ -373,13 +373,64 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
     }
 };
 
+/**
+ * shear viscosity
+ */
+template <>
+struct shear_viscosity<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    tcf_unary_result_type result;
+
+    /** device and host memory for accumulators */
+    cuda::vector<dfloat> g_sum;
+    cuda::host::vector<dfloat> h_sum;
+
+    char const* name() const { return "SVISC"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_type::_gpu _gpu;
+	typedef typename output_iterator::value_type::value_type value_type;
+	enum { BLOCKS = _gpu::BLOCKS };
+	enum { THREADS = _gpu::THREADS };
+
+	sample_iterator sample;
+	dfloat* sum;
+
+	// allocate device and host memory for accumulators, if necessary
+	g_sum.resize((last.first - first.first) * BLOCKS);
+	h_sum.resize(g_sum.size());
+
+	// compute shear viscosity on GPU
+	for (sample = first.first, sum = g_sum.data(); sample != last.first; ++sample, sum += BLOCKS) {
+	    cuda::configure(BLOCKS, THREADS);
+	    _gpu::shear_viscosity(*(*sample)[type].r, *(*sample)[type].v, *(*first.first)[type].r, *(*first.first)[type].v, sum, (*sample)[type].r->size());
+	}
+	// copy accumulator block results from GPU to host
+	cuda::copy(g_sum, h_sum);
+	// accumulate shear viscosity on host
+	for (sample = first.first, sum = h_sum.data(); sample != last.first; ++sample, ++result, sum += BLOCKS) {
+	    value_type s = std::accumulate(sum, sum + BLOCKS, 0.);
+	    *result += s * s;
+	}
+    }
+};
+
 /** correlation function types */
 typedef boost::mpl::vector<mean_square_displacement<tcf_gpu_sample> > _tcf_gpu_types_0;
 typedef boost::mpl::push_back<_tcf_gpu_types_0, mean_quartic_displacement<tcf_gpu_sample> >::type _tcf_gpu_types_1;
 typedef boost::mpl::push_back<_tcf_gpu_types_1, velocity_autocorrelation<tcf_gpu_sample> >::type _tcf_gpu_types_2;
 typedef boost::mpl::push_back<_tcf_gpu_types_2, intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_3;
 typedef boost::mpl::push_back<_tcf_gpu_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_4;
-typedef boost::mpl::push_back<_tcf_gpu_types_4, squared_self_intermediate_scattering_function<tcf_gpu_sample> >::type tcf_gpu_types;
+typedef boost::mpl::push_back<_tcf_gpu_types_4, squared_self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_5;
+typedef boost::mpl::push_back<_tcf_gpu_types_5, shear_viscosity<tcf_gpu_sample> >::type tcf_gpu_types;
 
 } // namespace ljgpu
 

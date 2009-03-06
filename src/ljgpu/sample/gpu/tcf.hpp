@@ -49,6 +49,8 @@ struct tcf<3> : public tcf_base
 	incoherent_scattering_function;
     static cuda::function<void (float4 const*, float3 const, dfloat*, dfloat*, uint)>
 	coherent_scattering_function;
+    static cuda::function<void (float4 const*, float4 const*, float4 const*, float4 const*, dfloat*, uint)>
+	shear_viscosity;
 };
 
 template <>
@@ -64,6 +66,8 @@ struct tcf<2> : public tcf_base
 	incoherent_scattering_function;
     static cuda::function<void (float2 const*, float2 const, dfloat*, dfloat*, uint)>
 	coherent_scattering_function;
+    static cuda::function<void (float2 const*, float2 const*, float2 const*, float2 const*, dfloat*, uint)>
+	shear_viscosity;
 };
 
 }} // namespace ljgpu::gpu
