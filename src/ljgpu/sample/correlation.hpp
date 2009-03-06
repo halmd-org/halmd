@@ -214,13 +214,15 @@ void correlation<dimension>::sample(trajectory_sample_variant const& sample_, ui
 	if (boost::apply_visitor(tcf_block_is_full(), m_block[i])) {
 	    autocorrelate_block(i);
 	    if (i < 2) {
-		// sample_ only full blocks in lowest levels to account for strong correlations
+		// sample only full blocks in lowest levels to account for strong correlations
 		boost::apply_visitor(tcf_block_clear(), m_block[i]);
 	    }
 	    m_block_samples[i]++;
 
 	    if (m_max_samples == m_block_samples[i]) {
 		LOG("finished sampling on block level " << i << " at step " << step);
+		// free block samples memory
+		boost::apply_visitor(tcf_block_clear(), m_block[i]);
 		// trigger global write of partial results to disk
 		flush = true;
 	    }
