@@ -398,7 +398,9 @@ void mdsim<mdsim_backend>::operator()()
 	    if (signal::signal == SIGUSR2) {
 		// block process until further signal is received
 		LOG("pausing simulation");
+		unsigned int seconds = alarm(0);
 		signal::wait();
+		alarm(seconds);
 		LOG("resuming simulation");
 	    }
 	    if (signal::signal == SIGINT || signal::signal == SIGTERM) {
