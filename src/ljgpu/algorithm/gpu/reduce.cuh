@@ -38,6 +38,7 @@ struct square_;
 struct sqrt_;
 struct sum_;
 struct complex_sum_;
+struct quaternion_sum_;
 struct max_;
 
 /**
@@ -80,6 +81,16 @@ transform(T& r1, T& i1, T r2, T i2)
 {
     r1 += r2;
     i1 += i2;
+}
+
+template <typename transform_, typename T>
+__device__ typename enable_if<is_same<transform_, quaternion_sum_>, void>::type
+transform(T& r1, T& i1, T& j1, T& k1, T r2, T i2, T j2, T k2)
+{
+    r1 += r2;
+    i1 += i2;
+    j1 += j2;
+    k1 += k2;
 }
 
 template <typename transform_, typename T>
@@ -180,6 +191,39 @@ reduce(T0& sum0, T1& sum1, T2& sum2, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[])
     }
 
     reduce<threads / 2, transform_>(sum0, sum1, sum2, s_sum0, s_sum1, s_sum2);
+}
+
+/**
+ * parallel quartenary reduction
+ */
+template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3>
+__device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
+reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[], T3 s_sum3[])
+{
+    int const tid = threadIdx.x;
+    if (tid < threads) {
+	transform<transform_>(sum0, sum1, sum2, sum3, s_sum0[tid + threads], s_sum1[tid + threads], s_sum2[tid + threads], s_sum3[tid + threads]);
+    }
+}
+
+template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3>
+__device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
+reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[], T3 s_sum3[])
+{
+    int const tid = threadIdx.x;
+    if (tid < threads) {
+	transform<transform_>(sum0, sum1, sum2, sum3, s_sum0[tid + threads], s_sum1[tid + threads], s_sum2[tid + threads], s_sum3[tid + threads]);
+	s_sum0[tid] = sum0;
+	s_sum1[tid] = sum1;
+	s_sum2[tid] = sum2;
+	s_sum3[tid] = sum3;
+    }
+    // no further syncs needed within execution warp of 32 threads
+    if (threads >= WARP_SIZE) {
+	__syncthreads();
+    }
+
+    reduce<threads / 2, transform_>(sum0, sum1, sum2, sum3, s_sum0, s_sum1, s_sum2, s_sum3);
 }
 
 }} // namespace ljgpu::cu
