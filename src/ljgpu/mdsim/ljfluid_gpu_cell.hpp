@@ -605,6 +605,8 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::assign_velocities(cuda::host::v
     typename cuda::host::vector<unsigned int>::const_iterator tag;
     typename cuda::host::vector<gpu_vector_type>::iterator v;
 
+    // clear cell placeholders
+    std::fill(h_part.v.begin(), h_part.v.end(), vector_type(0));
     // assign particle velocities to cell placeholders
     for (tag = h_part.tag.begin(), v = h_part.v.begin(); tag != h_part.tag.end(); ++tag, ++v) {
 	if (*tag != gpu::VIRTUAL_PARTICLE) {
