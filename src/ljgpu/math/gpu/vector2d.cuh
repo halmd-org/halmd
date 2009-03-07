@@ -179,6 +179,7 @@ using ::rintf;
 using ::roundf;
 using ::sinf;
 using ::sqrtf;
+using ::fabsf;
 using ::__fdividef;
 using ::__float2int_rd;
 using ::__float2int_rn;
@@ -257,6 +258,16 @@ __device__ inline vector<float, 2> sinf(vector<float, 2> v)
 {
     v.x = sinf(v.x);
     v.y = sinf(v.y);
+    return v;
+}
+
+/**
+ * componentwise absolute value
+ */
+__device__ inline vector<float, 2> fabsf(vector<float, 2> v)
+{
+    v.x = fabsf(v.x);
+    v.y = fabsf(v.y);
     return v;
 }
 
