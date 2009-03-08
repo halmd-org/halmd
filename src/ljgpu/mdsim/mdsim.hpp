@@ -468,7 +468,7 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step, bool dump)
     m_is_en_step = (m_en.is_open() && m_corr.is_sample_step(step));
 
     // sample thermodynamic equilibrium properties
-    if (m_is_en_step) {
+    if (m_is_corr_step || m_is_en_step) {
 	m_fluid.sample(m_en_sample);
     }
 }
@@ -483,7 +483,7 @@ bool mdsim<mdsim_backend>::sample_properties(uint64_t step, bool perf)
     bool flush = false;
 
     if (m_is_corr_step) {
-	m_corr.sample(m_corr_sample, step, flush);
+	m_corr.sample(m_corr_sample, m_en_sample, step, flush);
     }
     if (m_is_traj_step) {
 	m_traj.write(m_traj_sample, time);

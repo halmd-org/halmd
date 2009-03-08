@@ -20,6 +20,7 @@
 #define LJGPU_SAMPLE_TCF_BASE_HPP
 
 #include <algorithm>
+#include <boost/array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <ljgpu/math/accum.hpp>
@@ -44,6 +45,8 @@ struct tcf_sample
     typedef std::vector<density_vector> density_vector_vector;
     /** self-intermediate scattering function */
     typedef std::vector<std::vector<double> > isf_vector_vector;
+    /** off-diagonal elements of virial stress tensor */
+    typedef boost::array<double, (dimension - 1) * dimension / 2> virial_tensor;
 };
 
 /** correlation function result types */
@@ -168,6 +171,39 @@ struct squared_self_intermediate_scattering_function : correlation_function<samp
  */
 template <template <int> class sample_type>
 struct shear_viscosity;
+
+/**
+ * virial stress
+ */
+template <template <int> class sample_type>
+struct virial_stress: correlation_function<sample_type>
+{
+    /** block sample results */
+    tcf_unary_result_type result;
+
+    using correlation_function<sample_type>::type;
+
+    char const* name() const { return "STRESS"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+	typedef typename input_iterator::first_type sample_iterator;
+	typedef typename sample_iterator::value_type::value_type sample_type;
+	typedef typename sample_type::vector_type vector_type;
+	typedef typename sample_type::virial_tensor::const_iterator virial_iterator;
+	enum { dimension = vector_type::static_size };
+
+	for (sample_iterator sample = first.first; sample != last.first; ++sample, ++result) {
+	    for (virial_iterator vir = (*sample)[type].virial->begin(), vir0 = (*first.first)[type].virial->begin(); vir != (*sample)[type].virial->end(); ++vir, ++vir0) {
+		*result += (*vir) * (*vir0);
+	    }
+	}
+    }
+};
 
 } // namespace ljgpu
 

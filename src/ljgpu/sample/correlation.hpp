@@ -126,8 +126,8 @@ public:
     /** whether to sample trajectory for given simulation step */
     bool is_trajectory_step(uint64_t step) const;
     /** sample time correlation functions */
-    template <typename trajectory_sample_variant>
-    void sample(trajectory_sample_variant const& sample_, uint64_t step, bool& flush);
+    template <typename trajectory_sample_variant, typename energy_sample>
+    void sample(trajectory_sample_variant const& sample_, energy_sample const& en_, uint64_t step, bool& flush);
     /** write correlation function results to HDF5 file */
     void flush();
 
@@ -194,14 +194,16 @@ private:
  * sample time correlation functions
  */
 template <int dimension>
-template <typename trajectory_sample_variant>
-void correlation<dimension>::sample(trajectory_sample_variant const& sample_, uint64_t step, bool& flush)
+template <typename trajectory_sample_variant, typename energy_sample>
+void correlation<dimension>::sample(trajectory_sample_variant const& sample_, energy_sample const& en_, uint64_t step, bool& flush)
 {
     // empty sample of GPU or host type
     sample_variant sample(m_sample);
     // copy phase space coordinates and compute spatial Fourier transformation 
     boost::apply_visitor(tcf_sample_phase_space(), sample, sample_);
     boost::apply_visitor(tcf_fourier_transform_sample(m_q_vector), sample);
+    // copy off-diagonal elements of virial tensor
+    boost::apply_visitor(tcf_sample_virial(en_.virial), sample);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	if (m_block_samples[i] >= m_max_samples)

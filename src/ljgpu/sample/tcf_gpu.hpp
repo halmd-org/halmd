@@ -47,6 +47,7 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     typedef typename _Base::density_pair density_pair;
     typedef typename _Base::density_vector density_vector;
     typedef typename _Base::density_vector_vector density_vector_vector;
+    typedef typename _Base::virial_tensor virial_tensor;
     typedef std::vector<vector_type> sample_vector;
 
     typedef mdsim_traits<ljfluid_impl_gpu_base<dimension> > traits_type;
@@ -116,6 +117,8 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     boost::shared_ptr<density_vector_vector> rho;
     /** self-intermediate scattering function for different |q| values and vectors */
     boost::shared_ptr<isf_vector_vector> isf;
+    /** off-diagonal elements of virial stress tensor */
+    boost::shared_ptr<virial_tensor> virial;
 };
 
 /**
@@ -430,7 +433,8 @@ typedef boost::mpl::push_back<_tcf_gpu_types_1, velocity_autocorrelation<tcf_gpu
 typedef boost::mpl::push_back<_tcf_gpu_types_2, intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_3;
 typedef boost::mpl::push_back<_tcf_gpu_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_4;
 typedef boost::mpl::push_back<_tcf_gpu_types_4, squared_self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_5;
-typedef boost::mpl::push_back<_tcf_gpu_types_5, shear_viscosity<tcf_gpu_sample> >::type tcf_gpu_types;
+typedef boost::mpl::push_back<_tcf_gpu_types_5, shear_viscosity<tcf_gpu_sample> >::type _tcf_gpu_types_6;
+typedef boost::mpl::push_back<_tcf_gpu_types_6, virial_stress<tcf_gpu_sample> >::type tcf_gpu_types;
 
 } // namespace ljgpu
 

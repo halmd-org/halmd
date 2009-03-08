@@ -108,6 +108,9 @@ public:
 #endif /* WITH_CUDA */
 };
 
+/**
+ * compute Fourier-transformed densities
+ */
 template <typename U>
 class _tcf_fourier_transform_sample : public boost::static_visitor<>
 {
@@ -130,6 +133,35 @@ template <typename U>
 _tcf_fourier_transform_sample<U> tcf_fourier_transform_sample(U const& q_vector)
 {
    return _tcf_fourier_transform_sample<U>(q_vector);
+}
+
+/**
+ * copy off-diagonal elements of virial tensor
+ */
+template <typename U>
+class _tcf_sample_virial : public boost::static_visitor<>
+{
+public:
+    _tcf_sample_virial(U const& virial) : virial(virial) {}
+
+    template <typename T>
+    void operator()(T& sample) const
+    {
+	typename U::const_iterator vir = virial.begin();
+	for (typename T::iterator s = sample.begin(); s != sample.end(); ++s, ++vir) {
+	    s->virial.reset(new typename T::value_type::virial_tensor);
+	    std::copy(vir->begin() + 1, vir->end(), s->virial->begin());
+	}
+    }
+
+private:
+    U const& virial;
+};
+
+template <typename U>
+_tcf_sample_virial<U> tcf_sample_virial(U const& virial)
+{
+   return _tcf_sample_virial<U>(virial);
 }
 
 class tcf_block_add_sample : public boost::static_visitor<>
