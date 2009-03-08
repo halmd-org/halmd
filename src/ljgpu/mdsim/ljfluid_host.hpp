@@ -52,6 +52,7 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
+    typedef typename _Base::virial_tensor virial_tensor;
 
     /**
      * MD simulation particle
@@ -190,7 +191,7 @@ private:
     /** potential energy per particle */
     double en_pot;
     /** virial equation sum per particle */
-    double virial;
+    std::vector<virial_tensor> virial;
     /** sum over maximum velocity magnitudes since last neighbour lists update */
     float_type v_max_sum;
 };
@@ -611,7 +612,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
     // potential energy
     en_pot = 0;
     // virial equation sum
-    virial = 0;
+    virial.assign(binary ? 2 : 1, 0);
 
     foreach (particle& p1, part) {
 	// calculate pairwise Lennard-Jones force with neighbour particles
@@ -647,13 +648,35 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
 
 	    // add contribution to potential energy
 	    en_pot += pot;
+
 	    // add contribution to virial equation sum
-	    virial += rr * fval;
+	    double vir = 0.5 * rr * fval;
+	    virial[p1.type][0] += vir;
+	    virial[p2.type][0] += vir;
+
+	    // compute off-diagonal virial stress tensor elements
+	    if (dimension == 3) {
+		vir = 0.5 * r[1] * r[2] * fval;
+		virial[p1.type][1] += vir;
+		virial[p2.type][1] += vir;
+
+		vir = 0.5 * r[2] * r[0] * fval;
+		virial[p1.type][2] += vir;
+		virial[p2.type][2] += vir;
+
+		vir = 0.5 * r[0] * r[1] * fval;
+		virial[p1.type][3] += vir;
+		virial[p2.type][3] += vir;
+	    }
+	    else {
+		vir = 0.5 * r[0] * r[1] * fval;
+		virial[p1.type][1] += vir;
+		virial[p2.type][1] += vir;
+	    }
 	}
     }
 
     en_pot /= npart;
-    virial /= npart;
 
     // ensure that system is still in valid state
     if (std::isinf(en_pot)) {
@@ -807,17 +830,36 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(host_sample_type& sample) co
 template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::sample(energy_sample_type& sample) const
 {
-    typename std::vector<particle>::const_iterator p;
+    typedef typename std::vector<particle>::const_iterator iterator;
 
-    // mean potential energy per particle
-    sample.en_pot = en_pot;
-    // mean virial equation sum per particle
+    // virial tensor trace and off-diagonal elements for particle species
     sample.virial = virial;
 
-    for (p = part.begin(), sample.vv = 0, sample.v_cm = 0; p != part.end(); ++p) {
+    sample.vv = 0;
+    sample.v_cm = 0;
+
+    for (iterator p = part.begin(); p != part.end(); ++p) {
+	// kinetic terms of virial stress tensor
+	sample.virial[p->type][0] += p->v * p->v;
+	if (dimension == 3) {
+	    sample.virial[p->type][1] += p->v[1] * p->v[2];
+	    sample.virial[p->type][2] += p->v[2] * p->v[0];
+	    sample.virial[p->type][3] += p->v[0] * p->v[1];
+	}
+	else {
+	    sample.virial[p->type][1] += p->v[0] * p->v[1];
+	}
+
 	sample.vv += p->v * p->v;
 	sample.v_cm += p->v;
     }
+
+    foreach (virial_tensor& vir, sample.virial) {
+	vir /= npart;
+    }
+
+    // mean potential energy per particle
+    sample.en_pot = en_pot;
     // mean squared velocity per particle
     sample.vv /= npart;
     // mean velocity per particle

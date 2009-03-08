@@ -23,6 +23,8 @@
 #include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <limits>
 
+#define foreach BOOST_FOREACH
+
 namespace ljgpu
 {
 
@@ -42,6 +44,7 @@ public:
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::gpu_sample_type gpu_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
+    typedef typename _Base::virial_tensor virial_tensor;
 
     /** static implementation properties */
     typedef boost::false_type has_trajectory_gpu_sample;
@@ -172,7 +175,7 @@ private:
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
-	cuda::vector<float> virial;
+	cuda::vector<gpu_vector_type> virial;
     } g_part;
 
     /** system state double buffer in global device memory */
@@ -527,10 +530,15 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(energy_sample_type& samp
     // mean potential energy per particle
     sample.en_pot = reduce_en.value() / npart;
 
-    // mean virial equation sum per particle
+    // virial tensor trace and off-diagonal elements for particle species
     try {
 	ev0.record(stream);
-	reduce_virial(g_part.virial, stream);
+	if (mixture_ == BINARY) {
+	    reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream);
+	}
+	else {
+	    reduce_virial(g_part.virial, g_part.v, stream);
+	}
 	ev1.record(stream);
 	ev1.synchronize();
 	m_times["virial_sum"] += ev1 - ev0;
@@ -538,7 +546,10 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::sample(energy_sample_type& samp
     catch (cuda::error const& e) {
 	throw exception("failed to calculate virial equation sum on GPU");
     }
-    sample.virial = reduce_virial.value() / npart;
+    sample.virial = reduce_virial.value();
+    foreach (virial_tensor& virial, sample.virial) {
+	virial /= npart;
+    }
 
     // mean squared velocity per particle
     try {
@@ -665,5 +676,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::param(H5param& param) const
 }
 
 } // namespace ljgpu
+
+#undef foreach
 
 #endif /* ! LJGPU_MDSIM_LJFLUID_GPU_CELL_HPP */

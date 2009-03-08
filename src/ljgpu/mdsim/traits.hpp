@@ -26,6 +26,7 @@
 #include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
+#include <ljgpu/math/vector4d.hpp>
 
 namespace ljgpu
 {

@@ -60,7 +60,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<3> >
     template <mixture_type, potential_type>
     struct variant
     {
-	static cuda::function<void (float4 const*, float4*, float4*, float*, float*)> mdstep;
+	static cuda::function<void (float4 const*, float4*, float4*, float*, float4*)> mdstep;
     };
 };
 
@@ -82,7 +82,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<2> >
     template <mixture_type, potential_type>
     struct variant
     {
-	static cuda::function<void (float4 const*, float2*, float2*, float*, float*)> mdstep;
+	static cuda::function<void (float4 const*, float2*, float2*, float*, float2*)> mdstep;
     };
 };
 

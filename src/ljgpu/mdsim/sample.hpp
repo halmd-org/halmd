@@ -27,6 +27,7 @@
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
+#include <ljgpu/math/vector4d.hpp>
 #include <vector>
 
 namespace ljgpu {
@@ -104,10 +105,12 @@ struct trajectory_gpu_sample<2>
 template <int dimension>
 struct energy_sample
 {
+    typedef vector<double, 1 + (dimension - 1) * dimension / 2> virial_tensor;
+
     /** mean potential energy per particle */
     double en_pot;
-    /** virial equation sum per particle */
-    double virial;
+    /** virial tensor trace and off-diagonal elements for particle species */
+    std::vector<virial_tensor> virial;
     /** mean squared velocity per particle */
     double vv;
     /** mean velocity per particle */

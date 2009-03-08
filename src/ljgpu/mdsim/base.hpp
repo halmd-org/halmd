@@ -51,6 +51,7 @@ public:
     typedef host_sample_type trajectory_sample_type;
     typedef boost::variant<host_sample_type> trajectory_sample_variant;
     typedef typename traits_type::energy_sample_type energy_sample_type;
+    typedef typename energy_sample_type::virial_tensor virial_tensor;
     enum { dimension = traits_type::dimension };
 
     /** static implementation properties */

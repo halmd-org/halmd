@@ -30,6 +30,7 @@
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
 #include <ljgpu/mdsim/ljfluid_base.hpp>
+#include <ljgpu/mdsim/virial.hpp>
 #include <ljgpu/rng/rand48.hpp>
 #include <ljgpu/sample/H5param.hpp>
 
@@ -47,6 +48,7 @@ public:
     typedef typename _Base::traits_type::gpu_vector_type gpu_vector_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
+    typedef typename _Base::virial_tensor virial_tensor;
     typedef typename _Base::traits_type::gpu_sample_type gpu_sample_type;
     enum { dimension = _Base::dimension };
 
@@ -121,7 +123,7 @@ protected:
 		       cuda::vector<gpu_vector_type>& v,
 		       cuda::vector<gpu_vector_type>& f,
 		       cuda::vector<float>& en,
-		       cuda::vector<float>& virial);
+		       cuda::vector<gpu_vector_type>& virial);
 
 protected:
     using _Base::box_;
@@ -162,7 +164,7 @@ protected:
     /** potential energy sum */
     reduce<tag::sum, dfloat, double> mutable reduce_en;
     /** virial equation sum */
-    reduce<tag::sum, dfloat, double> mutable reduce_virial;
+    virial_sum<dfloat, virial_tensor> mutable reduce_virial;
 };
 
 template <typename ljfluid_impl>
@@ -509,7 +511,7 @@ void ljfluid_gpu_base<ljfluid_impl>::update_forces(cuda::vector<float4>& r,
 						   cuda::vector<gpu_vector_type>& v,
 						   cuda::vector<gpu_vector_type>& f,
 						   cuda::vector<float>& en,
-						   cuda::vector<float>& virial)
+						   cuda::vector<gpu_vector_type>& virial)
 {
     // (CUDA kernel execution is configured in derived class)
     if (mixture_ == BINARY) {

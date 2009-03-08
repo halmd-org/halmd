@@ -96,6 +96,8 @@ private:
 template <int dimension>
 void energy<dimension>::sample(energy_sample<dimension> const& sample, float density, double time)
 {
+    typedef typename energy_sample<dimension>::virial_tensor virial_tensor;
+
     // mean potential energy per particle
     m_en_pot.push_back(scalar_pair(time, sample.en_pot));
     // mean kinetic energy per particle
@@ -105,7 +107,11 @@ void energy<dimension>::sample(energy_sample<dimension> const& sample, float den
     // temperature
     m_temp.push_back(scalar_pair(time, sample.vv / dimension));
     // pressure
-    m_press.push_back(scalar_pair(time, density / dimension * (sample.vv + sample.virial)));
+    double virial = 0;
+    foreach(virial_tensor const& vir, sample.virial) {
+	virial += vir.front();
+    }
+    m_press.push_back(scalar_pair(time, density / dimension * virial));
     // velocity center of mass
     m_v_cm.push_back(vector_pair(time, sample.v_cm));
 

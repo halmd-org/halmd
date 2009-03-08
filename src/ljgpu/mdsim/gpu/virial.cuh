@@ -1,0 +1,46 @@
+/* Lennard-Jones fluid kernel
+ *
+ * Copyright © 2008-2009  Peter Colberg
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef LJGPU_MDSIM_GPU_VIRIAL_CUH
+#define LJGPU_MDSIM_GPU_VIRIAL_CUH
+
+#include <ljgpu/math/gpu/vector2d.cuh>
+#include <ljgpu/math/gpu/vector3d.cuh>
+#include <ljgpu/math/gpu/vector4d.cuh>
+
+namespace ljgpu { namespace cu { namespace virial
+{
+
+/**
+ * trace and off-diagonal elements of distance tensor
+ */
+template <typename T>
+__device__ vector<T, 4> tensor(T rr, vector<T, 3> const& r)
+{
+    return vector<T, 4>(rr, r.y * r.z, r.z * r.x, r.x * r.y);
+}
+
+template <typename T>
+__device__ vector<T, 2> tensor(T rr, vector<T, 2> const& r)
+{
+    return vector<T, 2>(rr, r.x * r.y);
+}
+
+}}} // namespace ljgpu::cu::virial
+
+#endif /* LJGPU_MDSIM_GPU_VIRIAL_CUH */

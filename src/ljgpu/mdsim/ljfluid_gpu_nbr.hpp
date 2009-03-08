@@ -26,6 +26,8 @@
 #include <ljgpu/mdsim/gpu/hilbert.hpp>
 #include <limits>
 
+#define foreach BOOST_FOREACH
+
 namespace ljgpu
 {
 
@@ -47,6 +49,7 @@ public:
     typedef gpu_sample_type trajectory_sample_type;
     typedef boost::variant<host_sample_type, gpu_sample_type> trajectory_sample_variant;
     typedef typename _Base::energy_sample_type energy_sample_type;
+    typedef typename _Base::virial_tensor virial_tensor;
 
     /** static implementation properties */
     typedef boost::true_type has_trajectory_gpu_sample;
@@ -203,7 +206,7 @@ private:
 	/** potential energies per particle */
 	cuda::vector<float> en;
 	/** virial equation sums per particle */
-	cuda::vector<float> virial;
+	cuda::vector<gpu_vector_type> virial;
     } g_part;
 
     /** double buffers for particle sorting */
@@ -742,10 +745,15 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(energy_sample_type&
     // mean potential energy per particle
     sample.en_pot = reduce_en.value() / npart;
 
-    // mean virial equation sum per particle
+    // virial tensor trace and off-diagonal elements for particle species
     try {
 	ev0.record(stream);
-	reduce_virial(g_part.virial, stream);
+	if (mixture_ == BINARY) {
+	    reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream);
+	}
+	else {
+	    reduce_virial(g_part.virial, g_part.v, stream);
+	}
 	ev1.record(stream);
 	ev1.synchronize();
 	m_times["virial_sum"] += ev1 - ev0;
@@ -753,7 +761,10 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(energy_sample_type&
     catch (cuda::error const& e) {
 	throw exception("failed to calculate virial equation sum on GPU");
     }
-    sample.virial = reduce_virial.value() / npart;
+    sample.virial = reduce_virial.value();
+    foreach (virial_tensor& virial, sample.virial) {
+	virial /= npart;
+    }
 
     // mean squared velocity per particle
     try {
@@ -805,8 +816,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
 	update_forces(stream_);
 	// calculate potential energy
 	reduce_en(g_part.en, stream_);
-	// calculate virial equation sum
-	reduce_virial(g_part.virial, stream_);
 
 	// wait for CUDA operations to finish
 	stream_.synchronize();
@@ -930,5 +939,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::param(H5param& param) cons
 }
 
 } // namespace ljgpu
+
+#undef foreach
 
 #endif /* ! LJGPU_MDSIM_LJFLUID_GPU_NBR_HPP */

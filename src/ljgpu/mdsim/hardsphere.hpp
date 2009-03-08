@@ -68,6 +68,7 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
+    typedef typename _Base::virial_tensor virial_tensor;
 
     typedef std::list<unsigned int> cell_type;
     typedef boost::array<unsigned int, dimension> cell_index;
@@ -205,7 +206,7 @@ private:
     /** current simulation step */
     uint64_t step_;
     /** virial equation sum per particle */
-    double virial;
+    virial_tensor virial;
 
     /** random number generator */
     gsl::gfsr4 rng_;
@@ -644,7 +645,30 @@ void hardsphere<hardsphere_impl<dimension> >::process_collision_event(const unsi
     part[n2].v += dv;
 
     // add contribution to impulsive limit of the virial expression sum
-    virial += dr * dv;
+    virial[0] += dr * dv;
+    // add kinetic terms
+    virial[0] += part[n1].v * part[n1].v;
+    virial[0] += part[n2].v * part[n2].v;
+
+    // compute off-diagonal virial stress tensor elements
+    if (dimension == 3) {
+	virial[1] += dr[1] * dv[2];
+	virial[1] += part[n1].v[1] * part[n1].v[2];
+	virial[1] += part[n2].v[1] * part[n2].v[2];
+
+	virial[2] += dr[2] * dv[0];
+	virial[2] += part[n1].v[2] * part[n1].v[0];
+	virial[2] += part[n2].v[2] * part[n2].v[0];
+
+	virial[3] += dr[0] * dv[1];
+	virial[3] += part[n1].v[0] * part[n1].v[1];
+	virial[3] += part[n2].v[0] * part[n2].v[1];
+    }
+    else {
+	virial[1] += dr[0] * dv[1];
+	virial[1] += part[n1].v[0] * part[n1].v[1];
+	virial[1] += part[n2].v[0] * part[n2].v[1];
+    }
 
     // update particle event counters
     part[n1].count++;
@@ -712,7 +736,7 @@ void hardsphere<hardsphere_impl<dimension> >::mdstep()
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
 
     // impulsive limit of the virial expression sum
-    virial = 0.;
+    virial = 0;
 
     // advance simulation time
     const double sample_time = ++step_ * timestep_;
@@ -791,7 +815,7 @@ void hardsphere<hardsphere_impl<dimension> >::sample(energy_sample_type& sample)
     // mean potential energy per particle
     sample.en_pot = 0;
     // mean virial equation sum per particle
-    sample.virial = virial;
+    sample.virial.assign(1, virial);
 
     for (p = part.begin(), sample.vv = 0, sample.v_cm = 0; p != part.end(); ++p) {
 	sample.vv += p->v * p->v;

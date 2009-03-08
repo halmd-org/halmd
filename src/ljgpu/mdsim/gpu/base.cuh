@@ -21,7 +21,9 @@
 #include <ljgpu/math/gpu/dsvector.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
+#include <ljgpu/math/gpu/vector4d.cuh>
 #include <ljgpu/mdsim/gpu/base.hpp>
+#include <ljgpu/mdsim/gpu/virial.cuh>
 using namespace ljgpu::gpu;
 
 //
@@ -142,8 +144,9 @@ __device__ float3 compute_smooth_function(float r, unsigned int ab)
 template <mixture_type mixture,
 	  potential_type potential,
 	  typename T,
-          typename U>
-__device__ void compute_force(T const& r1, T const& r2, U& f, float& en, float& virial, unsigned int ab)
+          typename U,
+          typename V>
+__device__ void compute_force(T const& r1, T const& r2, U& f, float& en, V& virial, unsigned int ab)
 {
     // potential well depth
     float const eps = (mixture == BINARY) ? epsilon[ab] : 1;
@@ -177,7 +180,7 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, float& 
     }
 
     // virial equation sum
-    virial += 0.5f * fval * rr;
+    virial += 0.5f * fval * virial::tensor(rr, r);
     // potential energy contribution of this particle
     en += 0.5f * pot;
     // force from other particle acting on this particle
@@ -201,7 +204,8 @@ __global__ void sample_potential(float3* g_h, const float2 r)
     vector<float, 3> r1(r.x + r.y * GTID, 0, 0);
     vector<float, 3> r2(0, 0, 0);
     vector<float, 3> f = 0;
-    float en = 0, virial = 0;
+    float en = 0;
+    vector<float, 4> virial = 0;
     compute_force<UNARY, potential>(r1, r2, f, en, virial, 0);
     g_h[GTID] = make_float3(r1.x, en, f.x);
 }
