@@ -854,8 +854,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(energy_sample_type& sample) 
 	sample.v_cm += p->v;
     }
 
-    foreach (virial_tensor& vir, sample.virial) {
-	vir /= npart;
+    for (size_t i = 0; i < sample.virial.size(); ++i) {
+	sample.virial[i] /= mpart[i];
     }
 
     // mean potential energy per particle

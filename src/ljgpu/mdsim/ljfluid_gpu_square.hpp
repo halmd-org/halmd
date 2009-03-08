@@ -428,8 +428,8 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(energy_sample_type& sa
 	throw exception("failed to calculate virial equation sum on GPU");
     }
     sample.virial = reduce_virial.value();
-    foreach (virial_tensor& virial, sample.virial) {
-	virial /= npart;
+    for (size_t i = 0; i < sample.virial.size(); ++i) {
+	sample.virial[i] /= mpart[i];
     }
 
     // mean squared velocity per particle
