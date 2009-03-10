@@ -199,7 +199,7 @@ struct virial_stress: correlation_function<sample_type>
 
 	for (sample_iterator sample = first.first; sample != last.first; ++sample, ++result) {
 	    for (virial_iterator vir = (*sample)[type].virial->begin(), vir0 = (*first.first)[type].virial->begin(); vir != (*sample)[type].virial->end(); ++vir, ++vir0) {
-		*result += (*vir) * (*vir0);
+		*result += ((*vir) * (*vir0)) * (*sample)[type].r->size();
 	    }
 	}
     }
