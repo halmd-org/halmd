@@ -465,7 +465,7 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step, bool dump)
 	m_traj_sample = sample;
     }
 
-    m_is_en_step = (m_en.is_open() && m_corr.is_sample_step(step));
+    m_is_en_step = (m_en.is_open() && (m_is_corr_step || m_corr.is_trajectory_step(step)));
 
     // sample thermodynamic equilibrium properties
     if (m_is_corr_step || m_is_en_step) {
