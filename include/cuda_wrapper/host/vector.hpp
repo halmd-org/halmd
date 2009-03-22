@@ -34,6 +34,7 @@ class vector : public std::vector<T, allocator<T> >
 public:
     typedef std::vector<T, allocator<T> > _Base;
     typedef typename _Base::size_type size_type;
+    typedef typename _Base::value_type value_type;
 
 public:
     /** creates an empty vector */
@@ -45,6 +46,25 @@ public:
     /** creates a vector with a copy of a range */
     template <class InputIterator>
     vector(InputIterator begin, InputIterator end) : _Base(begin, end) {}
+
+#if (CUDART_VERSION >= 2020)
+    /**
+     * returns device pointer to page-locked host memory
+     */
+    operator value_type*()
+    {
+	void* ptr = NULL;
+	CUDA_CALL(cudaHostGetDevicePointer(&ptr, _Base::data(), 0));
+	return reinterpret_cast<value_type*>(ptr);
+    }
+
+    operator value_type const*() const
+    {
+	void* ptr = NULL;
+	CUDA_CALL(cudaHostGetDevicePointer(&ptr, _Base::data(), 0));
+	return reinterpret_cast<value_type const*>(ptr);
+    }
+#endif
 };
 
 }} // namespace cuda::host
