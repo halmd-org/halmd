@@ -36,7 +36,11 @@ public:
     /**
      * create a CUDA context and associate it with the calling thread
      */
+#if (CUDART_VERSION >= 2020)
+    context(int ordinal, unsigned int flags = CU_CTX_MAP_HOST) : m_ctx(new CUcontext)
+#else
     context(int ordinal, unsigned int flags = 0) : m_ctx(new CUcontext)
+#endif
     {
 	CUdevice dev;
 	CU_CALL(cuInit(0));

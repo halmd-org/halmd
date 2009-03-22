@@ -86,7 +86,11 @@ public:
 	if (__builtin_expect(__n > this->max_size(), false))
 	    std::__throw_bad_alloc();
 
+#if (CUDART_VERSION >= 2020)
+	CUDA_CALL(cudaHostAlloc(&__ret, __n * sizeof(_Tp), cudaHostAllocMapped));
+#else
 	CUDA_CALL(cudaMallocHost(&__ret, __n * sizeof(_Tp)));
+#endif
 
 	return reinterpret_cast<pointer>(__ret);
     }
