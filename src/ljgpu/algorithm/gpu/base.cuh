@@ -51,10 +51,14 @@ __device__ __host__ void swap(T& a, T& b)
 #define TID	threadIdx.x
 // number of threads per block
 #define TDIM	blockDim.x
+// block ID within grid
+#define BID	(blockIdx.y * gridDim.x + blockIdx.x)
+// number of blocks within grid
+#define BDIM	(gridDim.y * gridDim.x)
 // thread ID within grid
-#define GTID	((blockIdx.y * gridDim.x + blockIdx.x) * TDIM + TID)
+#define GTID	(BID * TDIM + TID)
 // number of threads per grid
-#define GTDIM	(gridDim.y * gridDim.x * TDIM)
+#define GTDIM	(BDIM * TDIM)
 
 
 /*

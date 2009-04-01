@@ -134,9 +134,9 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
 __device__ uint compute_neighbour_cell(int3 const &offset)
 {
     // cell belonging to this execution block
-    int x = blockIdx.x % ncell;
-    int y = (blockIdx.x / ncell) % ncell;
-    int z = blockIdx.x / ncell / ncell;
+    int x = BID % ncell;
+    int y = (BID / ncell) % ncell;
+    int z = BID / ncell / ncell;
     // neighbour cell of this cell
     x = (x + ncell + offset.x) % ncell;
     y = (y + ncell + offset.y) % ncell;
@@ -148,8 +148,8 @@ __device__ uint compute_neighbour_cell(int3 const &offset)
 __device__ uint compute_neighbour_cell(int2 const& offset)
 {
     // cell belonging to this execution block
-    int x = blockIdx.x % ncell;
-    int y = blockIdx.x / ncell;
+    int x = BID % ncell;
+    int y = BID / ncell;
     // neighbour cell of this cell
     x = (x + ncell + offset.x) % ncell;
     y = (y + ncell + offset.y) % ncell;
@@ -351,7 +351,7 @@ __global__ void assign_cells(uint const* g_cell, unsigned int const* g_cell_offs
     __shared__ unsigned int s_offset[1];
 
     if (threadIdx.x == 0) {
-	s_offset[0] = g_cell_offset[blockIdx.x];
+	s_offset[0] = g_cell_offset[BID];
     }
     __syncthreads();
     // global offset of first particle in this block's cell
@@ -361,11 +361,11 @@ __global__ void assign_cells(uint const* g_cell, unsigned int const* g_cell_offs
     // mark as virtual particle
     unsigned int tag = VIRTUAL_PARTICLE;
     // mark as real particle if appropriate
-    if (offset != VIRTUAL_PARTICLE && n < npart && g_cell[n] == blockIdx.x) {
+    if (offset != VIRTUAL_PARTICLE && n < npart && g_cell[n] == BID) {
 	tag = g_itag[n];
     }
     // store particle in this block's cell
-    g_otag[blockIdx.x * blockDim.x + threadIdx.x] = tag;
+    g_otag[BID * blockDim.x + threadIdx.x] = tag;
 }
 
 /**

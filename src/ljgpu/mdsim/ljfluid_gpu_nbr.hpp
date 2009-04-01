@@ -386,7 +386,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
     _Base::threads(value);
 
     // set CUDA execution dimensions for cell-specific kernels
-    dim_cell_ = cuda::config(dim3(powf(ncell, dimension)), dim3(cell_size_));
+    dim_cell_ = cuda::config(dim3(powf(ncell, dimension - 1), ncell), cell_size_);
     LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
     LOG("number of cell CUDA execution threads: " << dim_cell_.threads_per_block());
 
