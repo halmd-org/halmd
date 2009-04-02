@@ -20,10 +20,8 @@
 #define CUDA_VECTOR_HPP
 
 #include <algorithm>
-#include <cuda_wrapper/allocator.hpp>
-#include <cuda_wrapper/copy.hpp>
-#include <vector>
-
+#include <boost/shared_ptr.hpp>
+#include <boost/utility.hpp>
 
 namespace cuda
 {
@@ -32,74 +30,52 @@ namespace cuda
  * CUDA global device memory vector
  */
 template <typename T>
-class vector : private std::vector<T, allocator<T> >
+class vector
 {
 public:
-    typedef allocator<T> _Alloc;
-    typedef std::vector<T, allocator<T> > _Base;
     typedef vector<T> vector_type;
     typedef T value_type;
+    typedef T* pointer;
+    typedef T const* const_pointer;
     typedef size_t size_type;
 
-public:
-    vector() : size_(0) {}
+private:
+    struct container : boost::noncopyable
+    {
+	/**
+	 * allocate global device memory
+	 */
+	container(size_type size) : m_size(size)
+	{
+	    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&m_ptr), m_size * sizeof(value_type)));
+	}
 
+	/**
+	 * free global device memory
+	 */
+	~container() throw()
+	{
+	    cudaFree(reinterpret_cast<void*>(m_ptr));
+	}
+
+	pointer m_ptr;
+	size_type m_size;
+    };
+
+public:
     /**
      * initialize device vector of given size
      */
-    vector(size_type size) : size_(size)
-    {
-	_Base::reserve(size_);
-    }
+    vector(size_type size) : m_mem(new container(size)), m_size(size) {}
 
-    /**
-     * deep copy constructor
-     */
-    vector(vector_type const& v)
-    {
-	vector w(v.size());
-	copy(v, w);
-	swap(w);
-    }
-
-    /**
-     * deep assignment operator
-     */
-    vector_type& operator=(vector_type const& v)
-    {
-	vector w(v.size());
-	copy(v, w);
-	swap(w);
-	return *this;
-    }
-
-    /**
-     * swap device memory with another vector
-     */
-    void swap(vector_type& v)
-    {
-	std::swap(v.size_, size_);
-	_Base::swap(v);
-    }
+    vector() {}
 
     /**
      * returns element count of device vector
      */
     size_type size() const
     {
-	return size_;
-    }
-
-    /**
-     * resize element count of device vector
-     */
-    void resize(size_type size)
-    {
-	// size of vector must always be kept at zero to prevent
-	// initialization of vector elements, so use vector::reserve
-	// in place of vector::resize
-	_Base::reserve(size);
-	size_ = size;
+	return m_size;
     }
 
     /**
@@ -107,45 +83,67 @@ public:
      */
     size_type capacity() const
     {
-	return _Base::capacity();
+	return m_mem->m_size;
+    }
+
+    /**
+     * resize element count of device vector
+     */
+    void resize(size_type size)
+    {
+	if (size != m_size) {
+	    m_mem.reset();
+	    m_mem.reset(new container(size));
+	    m_size = size;
+	}
     }
 
     /**
      * allocate enough memory for specified number of elements
      */
-    void reserve(size_type n)
+    void reserve(size_type size)
     {
-	_Base::reserve(std::max(size_, n));
+	if (size > m_size) {
+	    m_mem.reset();
+	    m_mem.reset(new container(size));
+	}
+    }
+
+    /**
+     * swap device memory with vector
+     */
+    void swap(vector_type& v)
+    {
+	m_mem.swap(v.m_mem);
+	std::swap(m_size, v.m_size);
     }
 
     /**
      * returns device pointer to allocated device memory
      */
-    value_type* data()
+    pointer data()
     {
-	return _Base::data();
+	return m_mem->m_ptr;
     }
 
-    operator value_type*()
+    operator pointer()
     {
-	return _Base::data();
+	return m_mem->m_ptr;
     }
 
-    /**
-     * returns device pointer to allocated device memory
-     */
-    value_type const* data() const
+    const_pointer data() const
     {
-	return _Base::data();
+	return m_mem->m_ptr;
     }
 
-    operator value_type const*() const
+    operator const_pointer() const
     {
-	return _Base::data();
+	return m_mem->m_ptr;
     }
 
 private:
-    size_type size_;
+    boost::shared_ptr<container> m_mem;
+    size_type m_size;
 };
 
 } // namespace cuda
