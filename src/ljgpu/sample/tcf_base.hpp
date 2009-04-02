@@ -167,12 +167,6 @@ struct squared_self_intermediate_scattering_function : correlation_function<samp
 };
 
 /**
- * shear viscosity
- */
-template <template <int> class sample_type>
-struct shear_viscosity;
-
-/**
  * virial stress
  */
 template <template <int> class sample_type>

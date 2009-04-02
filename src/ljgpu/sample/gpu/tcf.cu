@@ -16,15 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/mpl/int.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <ljgpu/algorithm/gpu/base.cuh>
 #include <ljgpu/algorithm/gpu/reduce.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 #include <ljgpu/sample/gpu/tcf.hpp>
-using namespace boost;
 
 namespace ljgpu { namespace cu { namespace tcf
 {
@@ -161,46 +157,6 @@ __device__ void coherent_scattering_function(dfloat& real, dfloat& imag, vector_
     imag += s;
 }
 
-template <typename vector_type,
-	  dfloat (*correlation_function)(vector_type const&, vector_type const&, vector_type const&, vector_type const&),
-	  typename coalesced_vector_type>
-__global__ void accumulate(coalesced_vector_type const* g_r, coalesced_vector_type const* g_v, coalesced_vector_type const* g_r0, coalesced_vector_type const* g_v0, dfloat* g_sum, uint n)
-{
-    __shared__ dfloat s_sum[THREADS];
-
-    dfloat sum = 0;
-
-    // load values from global device memory
-    for (uint i = GTID; i < n; i += GTDIM) {
-	sum += correlation_function(g_r[i], g_v[i], g_r0[i], g_v0[i]);
-    }
-    // reduced value for this thread
-    s_sum[TID] = sum;
-    __syncthreads();
-
-    // compute reduced value for all threads in block
-    reduce<THREADS / 2, sum_>(sum, s_sum);
-
-    if (TID < 1) {
-	// store block reduced value in global memory
-	g_sum[blockIdx.x] = sum;
-    }
-}
-
-template <typename vector_type>
-__device__ typename enable_if<is_same<mpl::int_<vector_type::static_size>, mpl::int_<3> >, dfloat>::type
-shear_viscosity(vector_type const& r, vector_type const& v, vector_type const& r0, vector_type const& v0)
-{
-    return v.x * r.z - v0.x * r0.z;
-}
-
-template <typename vector_type>
-__device__ typename enable_if<is_same<mpl::int_<vector_type::static_size>, mpl::int_<2> >, dfloat>::type
-shear_viscosity(vector_type const& r, vector_type const& v, vector_type const& r0, vector_type const& v0)
-{
-    return v.x * r.y - v0.x * r0.y;
-}
-
 }}} // namespace ljgpu::cu::tcf
 
 namespace ljgpu { namespace gpu
@@ -219,8 +175,6 @@ cuda::function<void (float4 const*, float4 const*, float3 const, dfloat*, uint)>
     tcf<3>::incoherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::incoherent_scattering_function>);
 cuda::function<void (float4 const*, float3 const, dfloat*, dfloat*, uint)>
     tcf<3>::coherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::coherent_scattering_function>);
-cuda::function<void (float4 const*, float4 const*, float4 const*, float4 const*, dfloat*, uint)>
-    tcf<3>::shear_viscosity(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::shear_viscosity>);
 
 cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
     tcf<2>::mean_square_displacement(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::mean_square_displacement>);
@@ -232,7 +186,5 @@ cuda::function<void (float2 const*, float2 const*, float2 const, dfloat*, uint)>
     tcf<2>::incoherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::incoherent_scattering_function>);
 cuda::function<void (float2 const*, float2 const, dfloat*, dfloat*, uint)>
     tcf<2>::coherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::coherent_scattering_function>);
-cuda::function<void (float2 const*, float2 const*, float2 const*, float2 const*, dfloat*, uint)>
-    tcf<2>::shear_viscosity(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::shear_viscosity>);
 
 }} // namespace ljgpu::gpu
