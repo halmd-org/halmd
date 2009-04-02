@@ -249,7 +249,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
 	h_part.tag.resize(npart);
 	// particle forces reside only in GPU memory
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to allocate page-locked host memory for system state");
     }
 }
@@ -312,7 +313,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
     try {
 	cuda::copy(ncell, _gpu::ncell);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy cell parameters to device symbols");
     }
 
@@ -337,7 +339,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
 	cuda::copy(std::pow(r_nbl, 2), _gpu::rr_nbl);
 	cuda::copy(nbl_size, _gpu::nbl_size);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy neighbour list parameters to device symbols");
     }
 
@@ -349,7 +352,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
 	cuda::copy(box_, gpu::hilbert<dimension>::box);
 	cuda::copy(depth, gpu::hilbert<dimension>::depth);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy Hilbert curve recursion depth to device symbol");
     }
 #endif
@@ -390,7 +394,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	g_part.virial.reserve(dim_.threads());
 	g_part.virial.resize(npart);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to allocate global device memory for system state");
     }
 
@@ -402,7 +407,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	cuda::copy(g_nbl.data(), _gpu::g_nbl);
 	cuda::copy(static_cast<unsigned int>(dim_.threads()), _gpu::nbl_stride);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to allocate global device memory cell placeholders");
     }
 
@@ -412,7 +418,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	_gpu::v.bind(g_part.v);
 	_gpu::R.bind(g_part.R);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to bind GPU textures to global device memory arrays");
     }
 
@@ -436,7 +443,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 	}
 	g_aux.index.resize(npart);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to allocate global device memory for sorting buffers");
     }
 
@@ -444,7 +452,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
     try {
 	radix_.resize(npart, dim_.threads_per_block());
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to allocate global device memory for radix sort");
     }
 }
@@ -496,7 +505,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::temperature(float_type tem
 	event_[1].record(stream_);
 	event_[1].synchronize();
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to compute Boltzmann distributed velocities on GPU");
     }
     m_times["boltzmann"] += event_[1] - event_[0];
@@ -511,6 +521,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	velocity_verlet(stream_);
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to stream first leapfrog step on GPU");
     }
     event_[2].record(stream_);
@@ -520,6 +531,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	reduce_r_max(g_part.dr, stream_);
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to stream maximum particle displacement reduction on GPU");
     }
     event_[3].record(stream_);
@@ -532,6 +544,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	    hilbert_order(stream_);
 	}
 	catch (cuda::error const& e) {
+	    LOG_ERROR("CUDA: " << e.what());
 	    throw exception("failed to stream hilbert space-filling curve sort on GPU");
 	}
 #endif
@@ -541,6 +554,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	    assign_cells(stream_);
 	}
 	catch (cuda::error const& e) {
+	    LOG_ERROR("CUDA: " << e.what());
 	    throw exception("failed to stream cell list update on GPU");
 	}
 	event_[5].record(stream_);
@@ -549,6 +563,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	    update_neighbours(stream_);
 	}
 	catch (cuda::error const& e) {
+	    LOG_ERROR("CUDA: " << e.what());
 	    throw exception("failed to stream neighbour lists update on GPU");
 	}
 	event_[6].record(stream_);
@@ -558,6 +573,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	    permutation(stream_);
 	}
 	catch (cuda::error const& e) {
+	    LOG_ERROR("CUDA: " << e.what());
 	    throw exception("failed to generate permutation for phase space sampling");
 	}
 #endif
@@ -569,6 +585,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	update_forces(stream_);
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to stream force calculation on GPU");
     }
     event_[8].record(stream_);
@@ -578,7 +595,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	try {
 	    boltzmann(thermostat_temp, stream_);
 	}
-	catch (cuda::error const&) {
+	catch (cuda::error const& e) {
+	    LOG_ERROR("CUDA: " << e.what());
 	    throw exception("failed to compute Boltzmann distributed velocities on GPU");
 	}
     }
@@ -589,6 +607,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
 	reduce_en(g_part.en, stream_);
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to stream potential energy sum calculation on GPU");
     }
     event_[0].record(stream_);
@@ -605,6 +624,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
 	event_[0].synchronize();
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("MD simulation step on GPU failed");
     }
 
@@ -669,7 +689,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(host_sample_type& s
 	ev1.record(stream);
 	ev1.synchronize();
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy MD simulation step results from GPU to host");
     }
     m_times["sample_memcpy"] += ev1 - ev0;
@@ -748,6 +769,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(energy_sample_type&
 	m_times["virial_sum"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to calculate virial equation sum on GPU");
     }
     sample.virial = reduce_virial.value();
@@ -764,6 +786,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(energy_sample_type&
 	m_times["reduce_squared_velocity"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to calculate mean squared velocity on GPU");
     }
     sample.vv = reduce_squared_velocity.value() / npart;
@@ -777,6 +800,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(energy_sample_type&
 	m_times["reduce_velocity"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to calculate mean velocity on GPU");
     }
     sample.v_cm = reduce_velocity.value() / npart;
@@ -810,6 +834,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
 	stream_.synchronize();
     }
     catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to assign particle positions on GPU");
     }
 }

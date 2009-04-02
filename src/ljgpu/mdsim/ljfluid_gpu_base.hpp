@@ -177,7 +177,8 @@ void ljfluid_gpu_base<ljfluid_impl>::particles(T const& value)
 	cuda::copy(npart, _gpu::npart);
 	cuda::copy(mpart, _gpu::mpart);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy particle number to device symbol");
     }
 }
@@ -190,7 +191,8 @@ void ljfluid_gpu_base<ljfluid_impl>::epsilon(boost::array<float, 3> const& value
     try {
 	cuda::copy(epsilon_, _gpu::epsilon);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy collision diameters to device symbol");
     }
 }
@@ -203,7 +205,8 @@ void ljfluid_gpu_base<ljfluid_impl>::sigma(boost::array<float, 3> const& value)
     try {
 	cuda::copy(sigma2_, _gpu::sigma2);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy squared collision diameters to device symbol");
     }
 }
@@ -218,7 +221,8 @@ void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
 	cuda::copy(rr_cut, _gpu::rr_cut);
 	cuda::copy(en_cut, _gpu::en_cut);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw potential_energy_divergence();
     }
 }
@@ -231,7 +235,8 @@ void ljfluid_gpu_base<ljfluid_impl>::potential_smoothing(float_type value)
     try {
 	cuda::copy(rri_smooth, _gpu::rri_smooth);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy potential smoothing function scale symbol");
     }
 }
@@ -244,7 +249,8 @@ void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)
     try {
 	prop = cuda::device::properties(cuda::device::get());
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to query CUDA device properties");
     }
 
@@ -270,7 +276,8 @@ void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)
     try {
 	radix_sort_.resize(npart, dim_.threads_per_block());
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to allocate global device memory for radix sort");
     }
 }
@@ -283,7 +290,8 @@ void ljfluid_gpu_base<ljfluid_impl>::density(float_type value)
     try {
 	cuda::copy(box_, _gpu::box);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy periodic box length to device symbol");
     }
 }
@@ -296,7 +304,8 @@ void ljfluid_gpu_base<ljfluid_impl>::box(float_type value)
     try {
 	cuda::copy(box_, _gpu::box);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy periodic box length to device symbol");
     }
 }
@@ -309,7 +318,8 @@ void ljfluid_gpu_base<ljfluid_impl>::timestep(double value)
     try {
 	cuda::copy(static_cast<float_type>(timestep_), _gpu::timestep);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to copy simulation timestep to device symbol");
     }
 }
@@ -327,7 +337,8 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(unsigned int seed)
 	g_vcm.resize(_gpu::BLOCKS);
 	g_vv.resize(_gpu::BLOCKS);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to change random number generator dimensions");
     }
 
@@ -338,7 +349,8 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(unsigned int seed)
 	stream_.synchronize();
 	rng_.init_symbols(_gpu::rand48::a, _gpu::rand48::c, _gpu::rand48::state);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to seed random number generator");
     }
 }
@@ -352,7 +364,8 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(rand48::state_type const& state)
     try {
 	rng_.restore(state);
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to restore random number generator state");
     }
 }
@@ -390,7 +403,8 @@ void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r)
 	event_[1].record(stream_);
 	event_[1].synchronize();
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to compute particle lattice positions on GPU");
     }
 
@@ -411,7 +425,8 @@ void ljfluid_gpu_base<ljfluid_impl>::random_permute(cuda::vector<float4>& g_r)
 	radix_sort_(g_sort_index, g_r, stream_);
 	stream_.synchronize();
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to randomly permute particle coordinates on GPU");
     }
 }
@@ -428,7 +443,8 @@ void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
 	_gpu::init_tags(g_r, g_tag);
 	stream_.synchronize();
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to initialise particle tags on GPU");
     }
 }
@@ -446,7 +462,8 @@ void ljfluid_gpu_base<ljfluid_impl>::rescale_energy(cuda::vector<gpu_vector_type
 	reduce_squared_velocity(g_v, stream);
 	stream.synchronize();
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to reduce squared velocity on GPU");
     }
 
@@ -458,7 +475,8 @@ void ljfluid_gpu_base<ljfluid_impl>::rescale_energy(cuda::vector<gpu_vector_type
 	_gpu::rescale_velocity(g_v, s);
 	stream.synchronize();
     }
-    catch (cuda::error const&) {
+    catch (cuda::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to rescale velocities on GPU");
     }
 }
