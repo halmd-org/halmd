@@ -47,6 +47,7 @@ private:
 	 */
 	container(size_type size) : m_size(size)
 	{
+	    // returns NULL pointer upon zero allocation
 	    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&m_ptr), m_size * sizeof(value_type)));
 	}
 
@@ -66,9 +67,7 @@ public:
     /**
      * initialize device vector of given size
      */
-    vector(size_type size) : m_mem(new container(size)), m_size(size) {}
-
-    vector() {}
+    vector(size_type size = 0) : m_mem(new container(size)), m_size(size) {}
 
     /**
      * returns element count of device vector
@@ -91,19 +90,16 @@ public:
      */
     void resize(size_type size)
     {
-	if (size != m_size) {
-	    m_mem.reset();
-	    m_mem.reset(new container(size));
-	    m_size = size;
-	}
+	this->reserve(size);
+	m_size = size;
     }
 
     /**
-     * allocate enough memory for specified number of elements
+     * allocate sufficient memory for specified number of elements
      */
     void reserve(size_type size)
     {
-	if (size > m_size) {
+	if (size > m_mem->m_size) {
 	    m_mem.reset();
 	    m_mem.reset(new container(size));
 	}
