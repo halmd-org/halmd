@@ -32,20 +32,19 @@ template <typename T>
 class vector : public std::vector<T, allocator<T> >
 {
 public:
+    typedef allocator<T> _Alloc;
     typedef std::vector<T, allocator<T> > _Base;
     typedef typename _Base::size_type size_type;
     typedef typename _Base::value_type value_type;
 
 public:
     /** creates an empty vector */
-    vector() {}
+    vector(_Alloc const& alloc = _Alloc()) : _Base(alloc) {}
     /** creates a vector with n elements */
-    vector(size_type n) : _Base(n) {}
-    /** creates a vector with n copies of t */
-    vector(size_type n, T const& t) : _Base(n, t) {}
+    vector(size_type n, T const& t = T(), _Alloc const& alloc = _Alloc()) : _Base(n, t, alloc) {}
     /** creates a vector with a copy of a range */
     template <class InputIterator>
-    vector(InputIterator begin, InputIterator end) : _Base(begin, end) {}
+    vector(InputIterator begin, InputIterator end, _Alloc const& alloc = _Alloc()) : _Base(begin, end, alloc) {}
 
 #if (CUDART_VERSION >= 2020)
     /**
