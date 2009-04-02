@@ -154,19 +154,6 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(T const& value)
 {
     _Base::particles(value);
 
-    // allocate global device memory for system state
-    try {
-	g_part.r.resize(npart);
-	g_part.R.resize(npart);
-	g_part.v.resize(npart);
-	g_part.f.resize(npart);
-	g_part.tag.resize(npart);
-	g_part.en.resize(npart);
-	g_part.virial.resize(npart);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to allocate global device memory for system state");
-    }
     // allocate page-locked host memory for system state
     try {
 	h_part.r.resize(npart);
@@ -184,27 +171,30 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::threads(unsigned int value)
 {
     _Base::threads(value);
 
-    // allocate global device memory for placeholder particles
     try {
 	g_part.r.reserve(dim_.threads());
-	g_part.R.reserve(dim_.threads());
-	g_part.v.reserve(dim_.threads());
+	// allocate sufficient memory for binary mixture sampling
+	for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
+	    cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
+	    g_part.r.reserve(n + dim.threads());
+	    dim_sample.push_back(dim);
+	}
+	g_part.r.resize(npart);
+	g_part.R.reserve(g_part.r.capacity());
+	g_part.R.resize(npart);
+	g_part.v.reserve(g_part.r.capacity());
+	g_part.v.resize(npart);
 	g_part.f.reserve(dim_.threads());
+	g_part.f.resize(npart);
 	g_part.tag.reserve(dim_.threads());
+	g_part.tag.resize(npart);
 	g_part.en.reserve(dim_.threads());
+	g_part.en.resize(npart);
 	g_part.virial.reserve(dim_.threads());
+	g_part.virial.resize(npart);
     }
     catch (cuda::error const&) {
-	throw exception("failed to allocate global device memory for placeholder particles");
-    }
-
-    // allocate global device memory for binary mixture sampling
-    for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
-	cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
-	g_part.r.reserve(n + dim.threads());
-	g_part.R.reserve(n + dim.threads());
-	g_part.v.reserve(n + dim.threads());
-	dim_sample.push_back(dim);
+	throw exception("failed to allocate global device memory for system state");
     }
 }
 
@@ -358,10 +348,10 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(host_sample_type& samp
     for (size_t n = 0, i = 0; n < npart; ++i) {
 	// allocate memory for trajectory sample
 	position_sample_ptr r(new position_sample_vector);
-	velocity_sample_ptr v(new velocity_sample_vector);
-	sample.push_back(sample_type(r, v));
 	r->reserve(mpart[i]);
+	velocity_sample_ptr v(new velocity_sample_vector);
 	v->reserve(mpart[i]);
+	sample.push_back(sample_type(r, v));
 	// assign particle positions and velocities of homogenous type
 	for (size_t j = 0; j < mpart[i]; ++j, ++n) {
 	    r->push_back(h_part.r[n] + box_ * static_cast<vector_type>(h_part.R[n]));
@@ -386,12 +376,13 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(gpu_sample_type& sampl
 
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
 	// allocate global device memory for phase space sample
-	position_sample_ptr r(new position_sample_vector(mpart[i]));
-	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
-	sample.push_back(sample_type(r, v));
-	// allocate additional memory to match CUDA grid dimensions
+	position_sample_ptr r(new position_sample_vector);
 	r->reserve(dim_sample[i].threads());
+	r->resize(mpart[i]);
+	velocity_sample_ptr v(new velocity_sample_vector);
 	v->reserve(dim_sample[i].threads());
+	v->resize(mpart[i]);
+	sample.push_back(sample_type(r, v));
 	// sample trajectories
 	cuda::configure(dim_sample[i].grid, dim_sample[i].block, stream);
 	_gpu::sample(g_part.r.data() + n, g_part.R.data() + n, g_part.v.data() + n, *r, *v);
