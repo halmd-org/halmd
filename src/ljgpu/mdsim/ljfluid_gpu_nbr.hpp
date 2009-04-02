@@ -241,31 +241,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
 {
     _Base::particles(value);
 
-    // allocate global device memory for system state
-    try {
-	g_part.r.resize(npart);
-	g_part.dr.resize(npart);
-	g_part.R.resize(npart);
-	g_part.v.resize(npart);
-	g_part.f.resize(npart);
-	g_part.tag.resize(npart);
-	g_part.en.resize(npart);
-	g_part.virial.resize(npart);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to allocate global device memory for system state");
-    }
-    // allocate global device memory for sorting buffers
-    try {
-	g_part_buf.r.resize(npart);
-	g_part_buf.R.resize(npart);
-	g_part_buf.v.resize(npart);
-	g_aux.cell.resize(npart);
-	g_aux.index.resize(npart);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to allocate global device memory for sorting buffers");
-    }
     // allocate page-locked host memory for system state
     try {
 	h_part.r.resize(npart);
@@ -390,37 +365,47 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
     LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
     LOG("number of cell CUDA execution threads: " << dim_cell_.threads_per_block());
 
-    // allocate global device memory for cell placeholders
-    try {
-	g_cell.resize(dim_cell_.threads());
-	g_nbl.resize(npart * nbl_size);
-    }
-    catch (cuda::error const&) {
-	throw exception("failed to allocate global device memory cell placeholders");
-    }
-
     // allocate global device memory for placeholder particles
     try {
 #ifdef USE_VERLET_DSFUN
 	LOG("using double-single arithmetic in Verlet integration");
+	g_part.r.resize(npart);
 	g_part.r.reserve(2 * dim_.threads());
+	g_part.v.resize(npart);
 	g_part.v.reserve(2 * dim_.threads());
 #else
+	g_part.r.resize(npart);
 	g_part.r.reserve(dim_.threads());
+	g_part.v.resize(npart);
 	g_part.v.reserve(dim_.threads());
 #endif
+	g_part.dr.resize(npart);
 	g_part.dr.reserve(dim_.threads());
+	g_part.R.resize(npart);
 	g_part.R.reserve(dim_.threads());
+	g_part.f.resize(npart);
 	g_part.f.reserve(dim_.threads());
+	g_part.tag.resize(npart);
 	g_part.tag.reserve(dim_.threads());
+	g_part.en.resize(npart);
 	g_part.en.reserve(dim_.threads());
+	g_part.virial.resize(npart);
 	g_part.virial.reserve(dim_.threads());
+    }
+    catch (cuda::error const&) {
+	throw exception("failed to allocate global device memory for system state");
+    }
+
+    // allocate global device memory for cell placeholders
+    try {
+	g_cell.resize(dim_cell_.threads());
+	g_nbl.resize(npart * nbl_size);
 	g_nbl.reserve(dim_.threads() * nbl_size);
 	cuda::copy(g_nbl.data(), _gpu::g_nbl);
 	cuda::copy(static_cast<unsigned int>(dim_.threads()), _gpu::nbl_stride);
     }
     catch (cuda::error const&) {
-	throw exception("failed to allocate global device memory for placeholder particles");
+	throw exception("failed to allocate global device memory cell placeholders");
     }
 
     // bind GPU textures to global device memory arrays
@@ -435,11 +420,16 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 
     // allocate global device memory for sorting buffers
     try {
+	g_part_buf.r.resize(npart);
 	g_part_buf.r.reserve(g_part.r.capacity());
+	g_part_buf.R.resize(npart);
 	g_part_buf.R.reserve(g_part.R.capacity());
+	g_part_buf.v.resize(npart);
 	g_part_buf.v.reserve(g_part.v.capacity());
+	g_aux.cell.resize(npart);
 	g_aux.cell.reserve(dim_.threads());
 	g_aux.offset.resize(dim_cell_.blocks_per_grid());
+	g_aux.index.resize(npart);
 	g_aux.index.reserve(dim_.threads());
     }
     catch (cuda::error const&) {
