@@ -60,9 +60,9 @@ __device__ uint compute_cell(vector<float, 2> r)
 __device__ uint compute_neighbour_cell(int3 const& offset)
 {
     // cell belonging to this execution block
-    int x = blockIdx.x % ncell;
-    int y = (blockIdx.x / ncell) % ncell;
-    int z = blockIdx.x / ncell / ncell;
+    int x = BID % ncell;
+    int y = (BID / ncell) % ncell;
+    int z = BID / ncell / ncell;
     // neighbour cell of this cell
     x = (x + ncell + offset.x) % ncell;
     y = (y + ncell + offset.y) % ncell;
@@ -74,8 +74,8 @@ __device__ uint compute_neighbour_cell(int3 const& offset)
 __device__ uint compute_neighbour_cell(int2 const& offset)
 {
     // cell belonging to this execution block
-    int x = blockIdx.x % ncell;
-    int y = blockIdx.x / ncell;
+    int x = BID % ncell;
+    int y = BID / ncell;
     // neighbour cell of this cell
     x = (x + ncell + offset.x) % ncell;
     y = (y + ncell + offset.y) % ncell;
@@ -297,7 +297,7 @@ __global__ void assign_cells(float4 const* g_ir, float4* g_or, unsigned int* g_o
 
 	if (threadIdx.x == 0) {
 	    for (uint j = 0; j < CELL_SIZE && (i + j) < npart; j++) {
-		if (s_cell[j] == blockIdx.x) {
+		if (s_cell[j] == BID) {
 		    // store particle in cell
 		    s_or[n] = s_ir[j];
 		    // store particle tag
@@ -312,8 +312,8 @@ __global__ void assign_cells(float4 const* g_ir, float4* g_or, unsigned int* g_o
 
     // store cell in global device memory
     unsigned int const tag = s_otag[threadIdx.x];
-    g_or[blockIdx.x * CELL_SIZE + threadIdx.x] = wrap_particle(s_or[threadIdx.x], tag);
-    g_otag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
+    g_or[BID * CELL_SIZE + threadIdx.x] = wrap_particle(s_or[threadIdx.x], tag);
+    g_otag[BID * CELL_SIZE + threadIdx.x] = tag;
 }
 
 /**
@@ -349,7 +349,7 @@ __device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR,
 	    if (s_itag[j] == VIRTUAL_PARTICLE) break;
 
 	    // if particle belongs to this cell
-	    if (s_cell[j] == blockIdx.x && npart < CELL_SIZE) {
+	    if (s_cell[j] == BID && npart < CELL_SIZE) {
 		// store particle in cell
 		s_or[npart] = s_ir[j];
 		s_oR[npart] = s_iR[j];
@@ -426,10 +426,10 @@ __global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, f
 
     // store cell in global device memory
     unsigned int const tag = s_otag[threadIdx.x];
-    g_or[blockIdx.x * CELL_SIZE + threadIdx.x] = wrap_particle(s_or[threadIdx.x], tag);
-    g_oR[blockIdx.x * CELL_SIZE + threadIdx.x] = s_oR[threadIdx.x];
-    g_ov[blockIdx.x * CELL_SIZE + threadIdx.x] = s_ov[threadIdx.x];
-    g_otag[blockIdx.x * CELL_SIZE + threadIdx.x] = tag;
+    g_or[BID * CELL_SIZE + threadIdx.x] = wrap_particle(s_or[threadIdx.x], tag);
+    g_oR[BID * CELL_SIZE + threadIdx.x] = s_oR[threadIdx.x];
+    g_ov[BID * CELL_SIZE + threadIdx.x] = s_ov[threadIdx.x];
+    g_otag[BID * CELL_SIZE + threadIdx.x] = tag;
 }
 
 /**
