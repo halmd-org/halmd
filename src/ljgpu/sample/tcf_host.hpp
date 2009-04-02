@@ -264,7 +264,7 @@ struct shear_viscosity<tcf_host_sample> : correlation_function<tcf_host_sample>
 		s += (*v)[0] * (*r)[dimension - 1] - (*v0)[0] * (*r0)[dimension - 1];
 	    }
 	    // accumulate shear viscosity
-	    *result += (s * s) / (*it)[type].r->size();
+	    *result += s * s;
 	}
     }
 };

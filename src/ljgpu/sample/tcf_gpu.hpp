@@ -421,7 +421,7 @@ struct shear_viscosity<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 	// accumulate shear viscosity on host
 	for (sample = first.first, sum = h_sum.data(); sample != last.first; ++sample, ++result, sum += BLOCKS) {
 	    value_type s = std::accumulate(sum, sum + BLOCKS, 0.);
-	    *result += (s * s) / (*sample)[type].r->size();
+	    *result += s * s;
 	}
     }
 };
