@@ -369,28 +369,26 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
     try {
 #ifdef USE_VERLET_DSFUN
 	LOG("using double-single arithmetic in Verlet integration");
-	g_part.r.resize(npart);
 	g_part.r.reserve(2 * dim_.threads());
-	g_part.v.resize(npart);
 	g_part.v.reserve(2 * dim_.threads());
 #else
-	g_part.r.resize(npart);
 	g_part.r.reserve(dim_.threads());
-	g_part.v.resize(npart);
 	g_part.v.reserve(dim_.threads());
 #endif
-	g_part.dr.resize(npart);
+	g_part.r.resize(npart);
+	g_part.v.resize(npart);
 	g_part.dr.reserve(dim_.threads());
-	g_part.R.resize(npart);
+	g_part.dr.resize(npart);
 	g_part.R.reserve(dim_.threads());
-	g_part.f.resize(npart);
+	g_part.R.resize(npart);
 	g_part.f.reserve(dim_.threads());
-	g_part.tag.resize(npart);
+	g_part.f.resize(npart);
 	g_part.tag.reserve(dim_.threads());
-	g_part.en.resize(npart);
+	g_part.tag.resize(npart);
 	g_part.en.reserve(dim_.threads());
-	g_part.virial.resize(npart);
+	g_part.en.resize(npart);
 	g_part.virial.reserve(dim_.threads());
+	g_part.virial.resize(npart);
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for system state");
@@ -399,8 +397,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
     // allocate global device memory for cell placeholders
     try {
 	g_cell.resize(dim_cell_.threads());
-	g_nbl.resize(npart * nbl_size);
 	g_nbl.reserve(dim_.threads() * nbl_size);
+	g_nbl.resize(npart * nbl_size);
 	cuda::copy(g_nbl.data(), _gpu::g_nbl);
 	cuda::copy(static_cast<unsigned int>(dim_.threads()), _gpu::nbl_stride);
     }
@@ -420,28 +418,28 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 
     // allocate global device memory for sorting buffers
     try {
-	g_part_buf.r.resize(npart);
 	g_part_buf.r.reserve(g_part.r.capacity());
-	g_part_buf.R.resize(npart);
+	g_part_buf.r.resize(npart);
 	g_part_buf.R.reserve(g_part.R.capacity());
-	g_part_buf.v.resize(npart);
+	g_part_buf.R.resize(npart);
 	g_part_buf.v.reserve(g_part.v.capacity());
-	g_aux.cell.resize(npart);
+	g_part_buf.v.resize(npart);
 	g_aux.cell.reserve(dim_.threads());
+	g_aux.cell.resize(npart);
 	g_aux.offset.resize(dim_cell_.blocks_per_grid());
-	g_aux.index.resize(npart);
 	g_aux.index.reserve(dim_.threads());
+	// allocate sufficient memory for binary mixture sampling
+	for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
+	    cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
+	    g_aux.index.reserve(n + dim.threads());
+	    dim_sample.push_back(dim);
+	}
+	g_aux.index.resize(npart);
     }
     catch (cuda::error const&) {
 	throw exception("failed to allocate global device memory for sorting buffers");
     }
 
-    // allocate global device memory for binary mixture sampling
-    for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
-	cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
-	g_aux.index.reserve(n + dim.threads());
-	dim_sample.push_back(dim);
-    }
 
     try {
 	radix_.resize(npart, dim_.threads_per_block());
@@ -710,12 +708,13 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(gpu_sample_type& sa
 
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
 	// allocate global device memory for phase space sample
-	position_sample_ptr r(new position_sample_vector(mpart[i]));
-	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
-	sample.push_back(sample_type(r, v));
-	// allocate additional memory to match CUDA grid dimensions
+	position_sample_ptr r(new position_sample_vector);
 	r->reserve(dim_sample[i].threads());
+	r->resize(mpart[i]);
+	velocity_sample_ptr v(new velocity_sample_vector);
 	v->reserve(dim_sample[i].threads());
+	v->resize(mpart[i]);
+	sample.push_back(sample_type(r, v));
 	// order particles by permutation
 	cuda::configure(dim_sample[i].grid, dim_sample[i].block, stream);
 	_gpu::sample(g_aux.index.data() + n, *r, *v);
