@@ -58,7 +58,11 @@ public:
 	typedef allocator<_Tp1> other;
     };
 
+#if (CUDART_VERSION >= 2020)
+    allocator(unsigned int flags = cudaHostAllocDefault) throw() : _flags(flags) { }
+#else
     allocator() throw() { }
+#endif
 
     allocator(const allocator&) throw() { }
 
@@ -87,7 +91,7 @@ public:
 	    std::__throw_bad_alloc();
 
 #if (CUDART_VERSION >= 2020)
-	CUDA_CALL(cudaHostAlloc(&__ret, __n * sizeof(_Tp), cudaHostAllocMapped));
+	CUDA_CALL(cudaHostAlloc(&__ret, __n * sizeof(_Tp), _flags));
 #else
 	CUDA_CALL(cudaMallocHost(&__ret, __n * sizeof(_Tp)));
 #endif
@@ -115,6 +119,11 @@ public:
     {
 	__p->~_Tp();
     }
+
+private:
+#if (CUDART_VERSION >= 2020)
+    unsigned int _flags;
+#endif
 };
 
 template<typename _Tp>
