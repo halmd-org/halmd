@@ -60,14 +60,19 @@ public:
 
 #if (CUDART_VERSION >= 2020)
     allocator(unsigned int flags = cudaHostAllocDefault) throw() : _flags(flags) { }
+
+    allocator(const allocator& alloc) throw() : _flags(alloc._flags) { }
+
+    template<typename _Tp1>
+    allocator(const allocator<_Tp1>& alloc) throw() : _flags(alloc._flags) { }
 #else
     allocator() throw() { }
-#endif
 
     allocator(const allocator&) throw() { }
 
     template<typename _Tp1>
     allocator(const allocator<_Tp1>&) throw() { }
+#endif
 
     ~allocator() throw() { }
 
