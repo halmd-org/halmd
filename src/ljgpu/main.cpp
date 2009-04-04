@@ -114,6 +114,11 @@ int main(int argc, char **argv)
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return EXIT_FAILURE;
     }
+    catch (cu::error const& e) {
+	LOG_ERROR("CUDA: " << e.what());
+	LOG_WARNING(PROGRAM_NAME " aborted");
+	return EXIT_FAILURE;
+    }
 #endif
     catch (std::exception const& e) {
 	LOG_ERROR(e.what());
