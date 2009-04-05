@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cuda/cuda.h>
+#include <cuda.h>
 #include <stdio.h>
 
 int cufree(int d)
