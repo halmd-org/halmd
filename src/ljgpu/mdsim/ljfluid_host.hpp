@@ -443,7 +443,10 @@ template <int dimension>
 void ljfluid<ljfluid_impl_host<dimension> >::random_binary_types()
 {
     // create view on particle list
-    std::vector<typename particle::ref> part(this->part.begin(), this->part.end());
+    std::vector<typename particle::ref> part;
+    foreach (particle& p, this->part) {
+	part.push_back(boost::ref(p));
+    }
 
     // shuffle view and assign particles types
     rng_.shuffle(part);
