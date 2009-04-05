@@ -19,7 +19,7 @@
 #ifndef CUDA_TEXTURE_HPP
 #define CUDA_TEXTURE_HPP
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #ifndef __CUDACC__
 # include <cuda_wrapper/error.hpp>
 # include <cuda_wrapper/vector.hpp>

@@ -23,7 +23,7 @@
 #ifndef CUDA_WRAPPER_HPP
 #define CUDA_WRAPPER_HPP
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 
 /*
  * C++ wrappers requiring runtime functionality (e.g. exceptions)

@@ -21,7 +21,7 @@
 
 #include <assert.h>
 #include <boost/array.hpp>
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #include <cuda_wrapper/host/vector.hpp>
 #include <cuda_wrapper/stream.hpp>
 #include <cuda_wrapper/symbol.hpp>
