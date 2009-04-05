@@ -47,8 +47,10 @@ private:
 	 */
 	container(size_type size) : m_size(size)
 	{
+	    void* ptr;
 	    // returns NULL pointer upon zero allocation
-	    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&m_ptr), m_size * sizeof(value_type)));
+	    CUDA_CALL(cudaMalloc(&ptr, m_size * sizeof(value_type)));
+	    m_ptr = reinterpret_cast<pointer>(ptr);
 	}
 
 	/**
