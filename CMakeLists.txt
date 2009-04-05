@@ -38,5 +38,6 @@ endif(ljgpu_GIT_AUTHOR_DATE)
 include_directories(${ljgpu_SOURCE_DIR}/include)
 include_directories(${ljgpu_SOURCE_DIR}/src)
 include_directories(${ljgpu_BINARY_DIR}/src)
+include_directories(${Boost_INCLUDE_DIR})
 
 add_subdirectory(src)
