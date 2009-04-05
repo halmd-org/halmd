@@ -222,7 +222,7 @@ void ljfluid<ljfluid_impl_gpu_cell<dimension> >::cell_occupancy(float_type value
     LOG("cell skin: " << r_skin);
 
     // set total number of cell placeholders
-    nplace = std::pow(ncell, dimension) * cell_size_;
+    nplace = pow(ncell, dimension) * cell_size_;
     LOG("total number of cell placeholders: " << nplace);
 
     // set effective average cell occupancy
