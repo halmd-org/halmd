@@ -15,6 +15,7 @@ The following software packages are required for compilation.
   · Boost C++ Libraries >= 1.37.0
   · HDF5 C++ Library >= 1.6.6
   · GNU Scientific Library
+  · Git >= 1.5.6.2
 
 
 To compile, switch to a newly created directory and execute:
