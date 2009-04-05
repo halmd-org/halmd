@@ -66,6 +66,7 @@ else(ljgpu_LINK_STATIC)
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${HDF5_CPP_LIBRARY}
+    ${HDF5_LIBRARY}
     )
 endif(ljgpu_LINK_STATIC)
 install(TARGETS ljgpu
