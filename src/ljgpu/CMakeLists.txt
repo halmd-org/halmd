@@ -47,28 +47,12 @@ target_link_libraries(ljgpu
   util
   sample
   -Wl,-no-whole-archive
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${HDF5_CPP_LIBRARY}
+  ${HDF5_LIBRARY}
   dl
   )
-set(ljgpu_LINK_STATIC FALSE CACHE BOOL
-  "Link third-party libraries statically")
-if(ljgpu_LINK_STATIC)
-  target_link_libraries(ljgpu
-    -Wl,-Bstatic
-    ${Boost_SYSTEM_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${HDF5_CPP_LIBRARY}
-    ${HDF5_LIBRARY}
-    -Wl,-Bdynamic
-    )
-else(ljgpu_LINK_STATIC)
-  target_link_libraries(ljgpu
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${HDF5_CPP_LIBRARY}
-    ${HDF5_LIBRARY}
-    )
-endif(ljgpu_LINK_STATIC)
 install(TARGETS ljgpu
   RUNTIME DESTINATION bin
   )
