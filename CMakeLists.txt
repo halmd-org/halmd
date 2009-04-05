@@ -39,5 +39,8 @@ include_directories(${ljgpu_SOURCE_DIR}/include)
 include_directories(${ljgpu_SOURCE_DIR}/src)
 include_directories(${ljgpu_BINARY_DIR}/src)
 include_directories(${Boost_INCLUDE_DIR})
+if(WITH_CUDA)
+  include_directories(${CUDA_INCLUDE_DIR})
+endif(WITH_CUDA)
 
 add_subdirectory(src)
