@@ -23,7 +23,7 @@
 #include <cmath>
 #include <iostream>
 #ifdef WITH_CUDA
-# include <cuda/cuda_runtime.h>
+# include <cuda_runtime.h>
 #endif
 #include <xdr/iostream.hpp>
 

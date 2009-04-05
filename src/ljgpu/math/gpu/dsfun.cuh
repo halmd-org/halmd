@@ -9,7 +9,7 @@
 #define LJGPU_MATH_DSFUN_CUH
 
 #ifdef __CUDACC__
-# include <cuda/cuda_runtime.h>
+# include <cuda_runtime.h>
 #endif
 
 /**

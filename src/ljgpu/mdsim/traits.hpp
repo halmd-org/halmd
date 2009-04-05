@@ -20,7 +20,7 @@
 #define LJGPU_MDSIM_TRAITS_HPP
 
 #ifdef WITH_CUDA
-# include <cuda/vector_types.h>
+# include <vector_types.h>
 #endif
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/mdsim/sample.hpp>

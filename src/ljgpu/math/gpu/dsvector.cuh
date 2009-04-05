@@ -19,7 +19,7 @@
 #ifndef LJGPU_MATH_GPU_DSVECTOR_CUH
 #define LJGPU_MATH_GPU_DSVECTOR_CUH
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime.h>
 #include <ljgpu/math/gpu/dsfun.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
