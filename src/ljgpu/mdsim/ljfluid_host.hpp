@@ -337,11 +337,11 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
     // lower boundary for number of particles per lattice dimension
     unsigned int n = std::pow(npart / m, 1. / dimension);
     // lower boundary for total number of lattice sites
-    unsigned int N = m * std::pow(n, dimension);
+    unsigned int N = m * pow(n, dimension);
 
     if (N < npart) {
 	n += 1;
-	N = m * std::pow(n, dimension);
+	N = m * pow(n, dimension);
     }
     if (N > npart) {
 	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
