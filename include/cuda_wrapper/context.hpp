@@ -20,7 +20,7 @@
 #define CUDA_CONTEXT_HPP
 
 #include <boost/shared_ptr.hpp>
-#include <cuda/cuda.h>
+#include <cuda.h>
 #include <cuda_wrapper/error.hpp>
 #include <string>
 
