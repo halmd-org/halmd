@@ -48,6 +48,7 @@ target_link_libraries(ljgpu
   sample
   -Wl,-no-whole-archive
   ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HDF5_CPP_LIBRARY}
   ${HDF5_LIBRARY}
