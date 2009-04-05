@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cuda/cuda.h>
+#include <cuda.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/file.h>
