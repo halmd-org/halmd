@@ -149,7 +149,7 @@ void correlation<dimension>::block_size(unsigned int value)
     m_block_time.resize(boost::extents[m_block_count][m_block_size]);
     for (unsigned int i = 0; i < m_block_count; ++i) {
 	for (unsigned int j = 0; j < m_block_size; ++j) {
-	    m_block_time[i][j] = m_timestep * m_sample_rate * std::pow(m_block_size, i / 2) * j;
+	    m_block_time[i][j] = m_timestep * m_sample_rate * pow(m_block_size, i / 2) * j;
 	    // shifted block
 	    if (i % 2) {
 		m_block_time[i][j] *= m_block_shift;
