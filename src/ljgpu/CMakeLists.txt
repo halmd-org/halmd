@@ -53,6 +53,8 @@ target_link_libraries(ljgpu
   ${HDF5_CPP_LIBRARY}
   ${HDF5_LIBRARY}
   dl
+  pthread
+  z
   )
 install(TARGETS ljgpu
   RUNTIME DESTINATION bin
