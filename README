@@ -25,13 +25,14 @@ To compile, switch to a newly created directory and execute:
 	cmake -DCMAKE_BUILD_TYPE=Release ~/path/to/ljgpu_source
   $ make
 
-For static linking to the Boost and HDF5 libraries, use:
+For static linking to the Boost, HDF5 and GSL libraries, use:
 
   $ CXXFLAGS="-fPIC -Wall" \
 	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
 	cmake -DCMAKE_BUILD_TYPE=Release \
 	-DBoost_USE_STATIC_LIBS=TRUE \
 	-DHDF5_USE_STATIC_LIBS=TRUE \
+	-DGSL_USE_STATIC_LIBS=TRUE \
 	~/path/to/ljgpu_source
   $ make
 
