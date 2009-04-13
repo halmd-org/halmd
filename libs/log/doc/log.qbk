@@ -1,0 +1,337 @@
+[library Boost.Log
+    [quickbook 1.3]
+    [authors [Semashev, Andrey]]
+    [copyright 2007, 2008 Andrey Semashev]
+    [license
+        Distributed under the Boost Software License, Version 1.0.
+        (See accompanying file LICENSE_1_0.txt or copy at
+        [@http://www.boost.org/LICENSE_1_0.txt]).
+    ]
+    [id log]
+    [source-mode c++]
+    [last-revision $Date: 2009/04/06 17:29:52 $]
+]
+
+[c++]
+
+[def __boost_smart_ptr__ [@http://www.boost.org/doc/libs/release/libs/smart_ptr/smart_ptr.htm Boost.SmartPtr]]
+[def __boost_function__ [@http://www.boost.org/doc/libs/release/doc/html/function.html Boost.Function]]
+[def __boost_filesystem__ [@http://www.boost.org/doc/libs/release/libs/filesystem/doc/index.htm Boost.Filesystem]]
+[def __boost_system__ [@http://www.boost.org/doc/libs/release/libs/system/doc/index.html Boost.System]]
+[def __boost_date_time__ [@http://www.boost.org/doc/libs/release/doc/html/date_time.html Boost.DateTime]]
+[def __boost_thread__ [@http://www.boost.org/doc/libs/release/doc/html/thread.html Boost.Thread]]
+[def __boost_regex__ [@http://www.boost.org/doc/libs/release/libs/regex/index.html Boost.Regex]]
+[def __boost_xpressive__ [@http://www.boost.org/doc/libs/release/doc/html/xpressive.html Boost.Xpressive]]
+[def __boost_parameter__ [@http://www.boost.org/doc/libs/release/libs/parameter/doc/html/index.html Boost.Parameter]]
+[def __boost_format__ [@http://www.boost.org/doc/libs/release/libs/format/index.html Boost.Format]]
+[def __boost_preprocessor__ [@http://www.boost.org/doc/libs/release/libs/preprocessor/doc/index.html Boost.Preprocessor]]
+[def __boost_bind__ [@http://www.boost.org/doc/libs/release/libs/bind/bind.html Boost.Bind]]
+[def __boost_lambda__ [@http://www.boost.org/doc/libs/release/doc/html/lambda.html Boost.Lambda]]
+[def __boost_phoenix__ [@http://www.boost.org/doc/libs/release/libs/spirit/doc/phoenix.html Boost.Phoenix]]
+[def __boost_spirit__ [@http://www.boost.org/doc/libs/release/libs/spirit/classic/index.html Boost.Spirit]]
+[def __boost_optional__ [@http://www.boost.org/doc/libs/release/libs/optional/index.html Boost.Optional]]
+[def __boost_intrusive__ [@http://www.boost.org/doc/libs/release/doc/html/intrusive.html Boost.Intrusive]]
+[def __boost_iostreams__ [@http://www.boost.org/doc/libs/release/libs/iostreams/doc/index.html Boost.IOStreams]]
+[def __boost_mpl__ [@http://www.boost.org/doc/libs/release/libs/mpl/doc/index.html Boost.MPL]]
+[def __boost_exception__ [@http://www.boost.org/doc/libs/release/libs/exception/doc/boost-exception.html Boost.Exception]]
+
+[section Disclaimer]
+
+This library is not an official part of [@http://www.boost.org Boost libraries collection] although it is aimed to be proposed for inclusion at some point.
+
+[endsect]
+
+[section:moti Motivation]
+
+Today applications grow rapidly, becoming complicated and difficult to test and debug. Most of the time applications run on a remote site, leaving the developer little chance to monitor its execution and figure out the reason of its failure, once it should happen. Moreover, even the local debugging may become problematic if the application behavior depends heavily on asynchronous third-party events, like device feedback or another process activity.
+
+This is where logging may help. The application stores all essential information of its run time to log, and once something goes wrong this information can be used to analyze program behavior and make necessary corrections. There are other very useful applications of logging, such as gathering statistic information and highlighting events (i.e. indicating that some situation has occurred or the application is experiencing some problems). These tasks have proved to be vital for many real-world industrial applications.
+
+This library aims to make logging significantly easier for the application developer. It provides a wide range of out-of-box tools, along with public interfaces ready to be used to extend the library. The main goals of the library are:
+
+* Simplicity. A small example code snippet should be enough to get the feel of the library and be ready to use its basic features.
+* Extensibility. A user should be able to extend functionality of the library with regard to collecting and storing information into logs.
+* Performance. The library should make as least performance impact on the user's application as possible.
+
+[endsect]
+
+[section:how_to_read How to read the documentation]
+
+The documentation is oriented to both newbies and experienced library users. However, users are expected to be familiar with the commonly used Boost components, such as `shared_ptr`, `make_shared` (see __boost_smart_ptr__), and `function` (__boost_function__). Some parts of the documentation will refer to other Boost libraries, as needed.
+
+If this is your first experience with the library, it is recommended to read the [link log.design Design overview] section first in order to have the first glance on the library capabilities and architecture. The [link log.installation Installation] and [link tutorial.tutorial Tutorial] sections will help to get started experimenting with the library. The tutorial gives the overview of the library features with sample code snippets. Some tutorial steps are presented in two forms: simple and advanced. The simple form typically describes the most common and easy way to do the task and it is being recommended to be read by newbies. The advanced form usually gives an expanded way to do the same thing but with ability to do some extra customization and in-depth explanation. This form may come handy for more experienced users and should generally be read if your needs are not satisfied with the easy way.
+
+Besides the tutorial there is an [link advanced.advanced Detailed features description] chapter. This part gives description of other tools provided by the library that were not covered by the tutorial. This chapter is better to be read on per-case basis.
+
+Last, but not least, there is a reference which gives the formal description of library components.
+
+For simplicity in the code snippets in this documentation it shall be assumed that the following namespace aliases were defined:
+
+    namespace logging = boost::log;
+    namespace sinks = boost::log::sinks;
+    namespace src = boost::log::sources;
+    namespace fmt = boost::log::formatters;
+    namespace flt = boost::log::filters;
+    namespace attrs = boost::log::attributes;
+    namespace keywords = boost::log::keywords;
+
+Aside from these namespaces the library also provides `boost::log::experimental` namespace. Tools defined in this namespace, as the naming implies, are not stable and thus are not advertized for productional usage. However, adventurous developers are encouraged to explore fresh features that appear in that namespace. Due to lack of their stability, these instruments are not covered by this documentation.
+
+[endsect]
+
+[section:supported_compilers Supported compilers]
+
+The library should build and work with a reasonably well-compliant compiler. The library was successfully built and tested on the following platforms:
+
+* Windows XP, Windows Vista. MSVC 8.0, 9.0. MSVC 7.1 should work too, but it was not tested.
+* Windows Vista. Intel C++ Compiler 10.1.022.
+* Linux. GCC 4.2, 4.3. However, all GCC 4.x should work well.
+
+The following compilers are not supported and will likely fail to compile the library:
+
+* MSVC 7.0 and older.
+* Borland C++ 5.5.1 (free version). Newer versions might or might not work.
+* GCC 3.3 and older.
+
+[endsect]
+
+[section:installation Installation]
+
+The library has the compiled part which should be built as described in the [@http://www.boost.org/doc/libs/release/more/getting_started/ Getting Started] article. One thing should be noted, though. If your application consists of more than one module (e.g. an exe and one or several dll's) the library _must_ be built as a shared object. If you have a single executable, you may build the library as a static library.
+
+The library supports a number of configuration macros:
+
+[table Configuration macros
+    [[Macro name]                               [Effect]]
+    [[`BOOST_LOG_DYN_LINK`]                     [If defined in user code, the library will assume the binary is built as a dynamically loaded library (dll or so). Otherwise it is assumed that the library is built in static mode. This macro must be either defined or not defined for all translation units of user application that use logging. This macro can help with auto-linking on platforms that support it.]]
+    [[`BOOST_ALL_DYN_LINK`]                     [Same as `BOOST_LOG_DYN_LINK` but also affects other Boost libraries the same way.]]
+    [[`BOOST_LOG_NO_THREADS`]                   [If defined, disables multithreading support. Has effect on both the library compilation and user's code compilation. The macro is automatically defined if no threading support detected.]]
+    [[`BOOST_LOG_USE_CHAR`]                     [If defined, enables support for narrow character logging. Has effect on both the library compilation and user's code compilation.]]
+    [[`BOOST_LOG_USE_WCHAR_T`]                  [If defined, enables support for wide character logging. Has effect on both the library compilation and user's code compilation. If neither `BOOST_LOG_USE_CHAR` nor `BOOST_LOG_USE_WCHAR_T` is defined, it is assumed the both character types support is enabled. Defining only one of them allows to significantly reduce binary size of the library.]]
+    [[`BOOST_LOG_NO_QUERY_PERFORMANCE_COUNTER`] [Has effect on Windows platform only, on both the library compilation and user's code compilation stages. If defined, disables support for `QueryPerformanceCounter` API in the `timer` attribute. This will result in a significantly less accurate time readings and on some platforms may reduce performance a little. The macro is intended to solve possible problems with earlier revisions of AMD Athlon CPU, described [@http://support.microsoft.com/?scid=kb;en-us;895980 here] and [@http://support.microsoft.com/?id=896256 here]. There are also known chipset hardware failures that may prevent this API from functioning properly (see [@http://support.microsoft.com/kb/274323 here]).]]
+    [[`BOOST_LOG_USE_NATIVE_SYSLOG`]            [Has effect on the library compilation stage. If for some reason the support for native SysLog API is not detected, define this macro to forcibly enable support for native SysLog.]]
+    [[`BOOST_LOG_NO_SETTINGS_PARSERS_SUPPORT`]  [Has effect on the library compilation stage. If defined, all facilities related to settings parsing are not built into the library binary. This can substantially reduce the binary size, as well as remove dependencies on some other Boost libraries, such as __boost_bind__ and __boost_spirit__.]]
+    [[`BOOST_LOG_NO_SHORTHAND_NAMES`]           [Has effect on user's code compilation stage. If defined, some deprecated shorthand macro names will not be available.]]
+    [[`BOOST_LOG_USE_WINNT6_API`]               [Has effect both on the library and the user's code compilation stages. This macro is Windows-specific. If defined, the library makes use of the Windows NT 6 (Vista, Server 2008) and later APIs to generate more efficient code. This macro will also enable some experimental features of the library. Note, however, that the resulting binary will not run on Windows prior to NT 6. In order to use this feature Platform SDK 6.0 is required.]]
+]
+
+You may define configuration macros in the `bjam` command line, like this:
+
+[pre
+    bjam --with-log variant=release define=BOOST_LOG_USE_CHAR stage
+]
+
+The logging library also uses several Boost libraries that need building too. These are __boost_filesystem__, __boost_system__, __boost_date_time__, __boost_thread__ and __boost_regex__. Refer to their documentation for detailed instructions on building procedure.
+
+One final thing should be added. The library requires run-time type information (RTTI) to be enabled for both the library compilation and user's code compilation. Normally, this won't need anything from you except to check that RTTI support is not disabled in your project.
+
+[endsect]
+
+[section:defs Definitions]
+
+Here are definitions of some terms that will be used widely throughout the documentation:
+
+[variablelist
+    [[Log record][A single pack of information, collected from the user's application, that is candidate to be put in log. In a simple case the log record will be represented as a line of text in the log file after being processed by the logging library.]]
+    [[Log attribute][An "attribute" is basically a piece of information of which the logging record consists. Attributes may have different types (integers, strings and more complex, including user defined types). Some examples of attributes: current time stamp, file name, line number, current scope name, etc..]]
+    [[Log sink][A target, to which all log records are fed after being collected from user's application. It is sink's nature that defines where and how the log is going to be stored.]]
+    [[Log source][An entry point for user's application to put log records to. In a simple case it is an object (logger) which maintains a set of attributes that will form a log record upon user's request. However, one can surely create a source that would emit log records on some third-party events (for example, by intercepting another application's console output).]]
+    [[Log filter][A predicate that takes a log record and tells whether this record should be passed through or discarded.]]
+    [[Log formatter][A functional object that forms up the final shape of the output. Some sinks, like binary logging sink, may not need it although almost any text-based sink would use a formatter to compose its output.]]
+    [[Logging core][The global entity that maintains connection between sources and sinks and applies filters to records. It is mainly used on the logging library initialization stage.]]
+    [[i18n][Internationalization. The ability to manipulate wide characters.]]
+]
+
+[endsect]
+
+[section:design Design overview]
+
+The library was designed to be very modular and extensible. The logging library supports both narrow-character and wide-character logging. Actually, the two methods of logging are implemented independently (i.e. there are different instances of logging cores for each character type and, therefore, a separate processing pipeline for each character type), so user will probably want to decide, which one he will use. Both narrow and wide-character versions of the library provide similar capabilities, so through most of the documentation only the narrow-character will be described. The library provides configuration facilities to leave only one needed version of the library to be compiled.
+
+The library consists of three main layers: the layer of log data collection, the layer of processing the collected data and the central hub that interconnects the former two layers. The design is presented on the figure below.
+
+[$images/log/Design.png]
+
+The arrows show the direction of logging information flow - from parts of your application at the right to the final storage, if any, at the left.  I say "if any" because the result of log processing may include some actions without actually storing the information anywhere. For example, if your application is in critical state, it can emit a special log record that will be processed so that user sees an error message as a balloon tool-tip over the application icon in the system tray and hears an alarming sound. This is a very important library feature: it is orthogonal to collecting, processing logging data and, in fact, what data logging records consist of. This allows to use the library not only for classic logging, but to indicate some important events to the application user and accumulate statistical data.
+
+Getting back to the scheme, in the right side your application emits log records with help of loggers - special objects that provide streams to format messages that will eventually be put to log. There are a number of different logger types provided by the library and there are much more that you can craft yourself, extending the existing ones. Loggers are designed as a mixture of distinct features that can be combined with each other in any combination. You can simply develop your own feature and add it to the soup. You will be able to use the constructed logger just like the others - embed it into your application classes or create and use a global instance of the logger. Either approach provides its benefits. Embedding a logger into some class provides a way to differentiate logs from different instances of the class. On the other hand, in functional-style programming it may be more convenient to have a single global logger somewhere and have a simple access to it.
+
+Generally speaking, the library does not require users to use loggers to write logs. The more generic term "log source" is used to designate the entity that initiates logging by constructing a log record. Other log sources might include captured console output of a child application or data received from network. However, loggers are the most common kind of log sources. In any case, in order to initiate logging a log source must pass all data, associated with the log record, to the logging core. This data or, more precisely, the logic of the data acquisition is presented as a set of named attributes. Each attribute is, basically, a function, whose result is called "attribute value" and is actually processed on further stages. An example of an attribute is a function that returns the current time. Its result - the particular time point - is the attribute value.
+
+There are three kinds of attribute sets: global, thread-specific and source-specific. You may see on the scheme that the former two are maintained by the logging core and thus need not to be passed by the log source in order to initiate logging. Attributes that participate in the global attribute set are attached to any log record ever made. Obviously, thread-specific attributes are attached only to the records made from the thread in which they were registered in the set. Source-specific attribute set is maintained by the source that initiates logging, these attributes are attached only to the records being made through that particular source. When a source initiates logging, attribute values are acquired from attributes of all three attribute sets. These attribute values then form a single view of named attribute values, which is processed further. As you may notice, it is possible for a same-named attribute to appear in several attribute sets. Such conflicts are solved on priority basis: global attributes have the least priority, source-specific attributes have the highest; the lower priority attributes are discarded from consideration in case of conflicts.
+
+When the set of attribute values is composed, the logging core decides if this log record is going to be processed in sinks. This is called filtering. There are two layers of filtering available: the global filtering is applied first within the logging core itself and allows to quickly wipe away unneeded log records; the sink-specific filtering is applied second, for each sink separately. The sink-specific filtering allows to direct log records to particular sinks. Note that at this point it is not significant which log source emitted the record, the filtering relies solely on the set of attribute values attached to the record.
+
+If a log record passes filtering for at least one sink, the record is considered to be consumable. This is the point when log message formatting takes place. The formatted message, along with the composed attribute values view, is passed to the sinks that accepted the record. As you may have noticed on the figure above, sinks consist of two parts: the frontend and the backend. This division is made in order to extract the common functionality of sinks, such as filtering and thread synchronization, into separate entities (frontends). Sink frontends are provided by the library, most likely users won't have to re-implement them. Backends, on the opposite, are one of the most probable places of the library extension. It is sink backends that do the actual processing of log records. There may be a sink that formats the attribute values and the log message and stores it into a file; there may be a sink that sends log records over the network to the remote processing center; there may be the aforementioned sink that puts record messages into tool-tip balloons - you name it. The most commonly used sink backends are already provided by the library.
+
+Along with the described above primary facilities, the library provides a wide variety of auxiliary tools, such as attributes, support for formatters and filters, represented as lambda expressions, and even basic helpers for the library initialization. You will find their description in the [link advanced.advanced Detailed features description] section. However, for newbies it is recommended to start discovering the library from the [link tutorial.tutorial Tutorial] section.
+
+[endsect]
+
+[include:tutorial tutorial.qbk]
+[include:advanced advanced.qbk]
+[include:extension extension.qbk]
+
+[section:rationale Rationale]
+
+[section:why_str_lit Why string literals as scope names?]
+
+One may wonder why not to allow to use arbitrary strings as named scope names. The answer is simple: for performance and safety reasons. Named scope support functionality has one significant difference from other attribute-related features of the library. The scope stack is maintained even when no logging is done, so if a function `foo` has a `BOOST_LOG_FUNCTION()` statement in its body, it is always a slowdown. Allowing the scope name to be an arbitrary string would make slowdown significantly greater because of the need to dynamically allocate memory and copy the string (not to say there would be a need to previously format it, which also takes its toll).
+
+Dynamic memory allocation also introduces exception safety issues: the `BOOST_LOG_FUNCTION()` statement (and alikes) will become a potential source of exception. These issues would complicate user's code if he wants to solve memory allocation problems gracefully.
+
+One possible alternative solution would be pooling pre-formatted and pre-allocated scope names somewhere but this would surely degrade performance even more and introduce the problem of detecting when to update or free pooled strings.
+
+Therefore restricting to string literals seems the optimal decision, which minimizes dynamic memory usage and provides enough flexibility for common needs.
+
+[endsect]
+
+[section:why_weak_scoped_attributes Why scoped attributes don't override existing attributes?]
+
+Initially scoped attributes were able to override other attributes with the same name if they were already registered by the time when a scoped attribute encountered. This allowed some interesting use cases like this:
+
+    BOOST_LOG_DECLARE_GLOBAL_LOGGER(my_logger, src::logger_mt)
+
+    void foo()
+    {
+        // This scoped attribute would temporarily replace the existing tag
+        BOOST_LOG_SCOPED_THREAD_TAG("Section", std::string, "In foo");
+
+        // This log record will have a "Section" attribute with value "In foo"
+        BOOST_LOG(get_my_logger()) << "We're in foo section";
+    }
+
+    int main(int, char*[])
+    {
+        BOOST_LOG_SCOPED_THREAD_TAG("Section", std::string, "In main");
+
+        // This log record will have a "Section" attribute with value "In main"
+        BOOST_LOG(get_my_logger()) << "We're in main section";
+
+        foo();
+
+        // This log record will have a "Section" attribute with value "In main" again
+        BOOST_LOG(get_my_logger()) << "We're in main section again";
+
+        return 0;
+    }
+
+However, this feature introduced a number of safety problems, including thread safety issues, that might be difficult to locate. For example, it was no longer safe to use logger-wide scoped attributes on the same logger from different threads, because the resulting attribute would be undefined:
+
+    BOOST_LOG_DECLARE_GLOBAL_LOGGER(my_logger, src::logger_mt)
+
+    void thread1()
+    {
+        BOOST_LOG_SCOPED_LOGGER_TAG(get_my_logger(), "Tag", std::string, "thread1");
+        BOOST_LOG(get_my_logger()) << "We're in thread1";
+    }
+
+    void thread2()
+    {
+        BOOST_LOG_SCOPED_LOGGER_TAG(get_my_logger(), "Tag", int, 10);
+        BOOST_LOG(get_my_logger()) << "We're in thread2";
+    }
+
+    int main(int, char*[])
+    {
+        BOOST_LOG_SCOPED_LOGGER_TAG(get_my_logger(), "Tag", double, -2.2);
+
+        BOOST_LOG(get_my_logger()) << "We're in main";
+
+        boost::thread t1(&thread1);
+        boost::thread t2(&thread2);
+
+        t1.join();
+        t2.join();
+
+        // Which "Tag" is registered here?
+        BOOST_LOG(get_my_logger()) << "We're in main again";
+
+        return 0;
+    }
+
+There were other issues, like having an attribute set iterator that points to one attribute object, then suddenly without seemingly modifying it it becomes to point to a different attribute object (of, possibly, a different type). Such behavior could lead to tricky failures that would be difficult to investigate. Therefore this feature was eventually dropped, which simplified scoped attributes implementation significantly.
+
+[endsect]
+
+[section:why_weak_record_ordering Why log records are weakly ordered in a multithreaded application?]
+
+Although the library guarantees that log records made in a given thread are always delivered to sinks in the same order as they were made in, the library cannot provide such guarantee for different threads. E.g. it is possible that thread A emits a log record and gets preempted, then thread B emits its log record and manages to deliver it to a sink before being preempted. The resulting log will contain log record from thread B before the record made in thread A. However, attribute values attached to the records will always be actual with regard to the moment of emitting the record and not the moment of passing the record to the sink. This is the reason for a strange, at first glance, situation when, e.g. a log record with an earlier time stamp follows a record with a later time stamp. The problem shows quite rarely, usually when thread contention on logging is very high.
+
+There are two possible ways to cope with the problem:
+
+* Enforce strict serialization of log record being made throughout the application. This solution implies a severe performance impact in multithreaded application because log records that otherwise could be processed concurrently will have to go serial. Since this controverses one of the [link log.moti main library goals], it was rejected.
+* Attempt to maintain log record ordering on the sink level. This solution is more or less viable. On the downside, it would introduce log record buffering, which in turn would compromise logs reliability. In case of application crash all buffered records would be lost. It was decided not to be implemented in the current library version.
+
+However, since log record buffering is already present in asynchronous logging, the latter solution may be implemented as a part of the [link advanced.advanced.sink_frontends.async asynchronous sink frontend] functionality in future library versions.
+
+[endsect]
+
+[section:why_wide_attribute_names Why wide-character version of the library requires wide attribute names?]
+
+The short answer: for consistency. I mean, if a user chooses to write wide logs, he probably knows that national characters may appear in log messages and attributes. Attribute names may too be put into log and, in fact, may too be composed by the application and therefore may contain national characters. Another reason for this decision is the library interface unification. For instance, in many cases users won't have to remember to write either `attr` or `wattr`, but to always write `attr`, whatever character type they are using.
+
+[endsect]
+
+[section:why_no_attribute_manips Why attributes cannot be set with stream manipulators?]
+
+One may wonder why the following syntax is not supported:
+
+    BOOST_LOG(logger) << set_attr("MyInt", 10) << set_attr("MyString", "string attribute value")
+        << "Some log message";
+
+The answer is quite simple. The streaming expression is executed after the filtering takes place and only if the filter passed the log record. At this point the set of attributes that are attached to the record is already fixed, so these manipulators cannot attach any more attributes to it. So, all attributes that are to be present with the record must be set up before filtering tares place. The easiest way to do it is to use scoped attributes or tags (see [link advanced.advanced.utilities.scoped_attributes here]).
+
+[endsect]
+
+[section:why_not_lazy_streaming Why not using lazy streaming?]
+
+One of the possible library implementations would be using lazy expressions to delay log record formatting. That would allow to use manipulators for attributes set up. In essence, the expression:
+
+    logger << "Hello, world!";
+
+would become a lambda-expression, that is only invoked if the filtering is successful. Although this approach has advantages, it must be noted that lazy expression construction is not zero-cost in terms of performance, code size and compile times. The following expression:
+
+    logger << "Received packet from " << ip << " of " << packet.size() << " bytes";
+
+would generate a considerable amount of code (proportionally to the number of streaming operators) to be executed before filtering takes place. Another drawback is that the `packet.size()` is always called, whether or not the record is actually written to log. In order to delay this call, yet more scaffolding is needed, possibly involving __boost_bind__, __boost_lambda__ or __boost_phoenix__. This complication is not acceptable for such a basic use case, like this.
+
+Although lazy streaming is not provided by the library out of the box, nothing prevents to develop it in a separate hierarchy of loggers. See the [link extension.extension.sources Extending the library] section for more information.
+
+[endsect]
+
+[endsect]
+
+[xinclude autodoc.xml]
+
+[section:todo TODO in future releases]
+
+Points in this section are not necessarily going to be implemented. These are mainly some thoughts on further improvements of the library.
+
+* Optimize scoped attributes. The idea is to store both the attribute and the `shared_ptr` counter on the stack. Currently, only the attribute is stored on the stack.
+* Optimize single-threaded configuration. In many places dynamic memory allocation can be removed if multithreading support is disabled.
+* Support C++0x language features, like variadic templates.
+* Optionally support [@http://www.threadingbuildingblocks.org Intel TBB]. In particular, atomic types and thread-safe queue could be useful.
+* Move from __boost_regex__ to __boost_xpressive__ internally. This would remove the dependency in the __boost_regex__ library module. However, __boost_regex__ support should be retained.
+* SNMP support. The idea is to implement a sink backend that would emit SNMP traps as a result of processing log records. This needs quite an amount of research and thinking over.
+* Implement log record ordering feature for asynchronous logging (see [link log.rationale.why_weak_record_ordering here]).
+* Improve flexibility of file rotation. The idea is to make the rotation criteria user-definable. Allow to put attribute values into the file name.
+* Provide a compile-time option to remove all logging from the application (the compiled binary should contain no traces of logging internally). There are two reasons for this request: attempting to achieve maximum performance and concealing internal information, such as function names and internal messages, to prevent reverse engineering in no-logging builds. Effectively, this would require not only all library macros to be redefined to emptiness, but also to provide dummy implementations of many library components. Needs more consideration. Perhaps, suppressing only macros would be sufficient.
+* Provide a set of macros for __boost_exception__ support. E.g. throwing an exception with call stack embedded or writing a message into log when throwing an exception.
+* Provide a macro, like `BOOST_LOG_FUNCTION`, but with ability to automatically log all function arguments.
+* Think over a header-only configuration. Perhaps, with a reduced functionality.
+* Add support for logging to a remote server for the Event Log sink.
+* Add support for scoped log records, in order to be able to construct the record message with multiple streaming expressions.
+* Support for optional exception hiding. The idea is to make it possible to mute or un-mute exceptions from the library either on the core level, or on the source level (the latter is preferred).
+* Improve the settings file parsing. The idea is to open an interface that would allow to set independent parameters during the parsing process. This would allow users to implement their own parsers and load library settings from e.g. Windows registry or XML files.
+
+[endsect]
+
+[section:acknowledgments Acknowledgments]
+
+* Luca Rigini wrote the initial implementation of the NT event log sink and made a lot of suggestions on how to improve the library in regard of writing user-defined sinks.
+* Jean-Daniel Michaud, Michael Lacher and all others who took part in the discussion of the requirements to the library on [@http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?Boost.Logging Wiki].
+* John Torjo, Gennadiy Rozental and others for their discussion on the John's logging library on the Boost developers list. It helped a lot to learn the requirements and possible solutions for the library.
+* All authors of the great Boost libraries that were involved in this library (notably, __boost_smart_ptr__, __boost_thread__, __boost_function__, __boost_optional__, __boost_date_time__, __boost_filesystem__, __boost_intrusive__, __boost_iostreams__ and other).
+
+[endsect]
