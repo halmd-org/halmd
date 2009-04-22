@@ -21,6 +21,7 @@ The following software packages are required for compilation.
 To compile, switch to a newly created directory and execute:
 
   $ CXXFLAGS="-fPIC -Wall" \
+	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
 	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
 	cmake -DCMAKE_BUILD_TYPE=Release ~/path/to/ljgpu_source
   $ make
@@ -40,6 +41,7 @@ to the arguments passed to cmake.
 For static linking to the Boost, HDF5 and GSL libraries, use:
 
   $ CXXFLAGS="-fPIC -Wall" \
+	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
 	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
 	cmake -DCMAKE_BUILD_TYPE=Release \
 	-DBoost_USE_STATIC_LIBS=TRUE \
@@ -51,6 +53,7 @@ For static linking to the Boost, HDF5 and GSL libraries, use:
 For a build with debugging symbols, use the following:
 
   $ CXXFLAGS="-fPIC -Wall" \
+	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
 	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
 	cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ~/path/to/ljgpu_source
   $ make
