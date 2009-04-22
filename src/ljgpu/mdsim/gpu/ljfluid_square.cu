@@ -50,7 +50,11 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     // virial equation sum contribution
     vector<float, (dimension - 1) * dimension / 2 + 1> virial = 0;
     // force sum
+#ifdef USE_FORCE_DSFUN
     vector<dfloat, dimension> f = 0;
+#else
+    vector_type f = 0;
+#endif
 
     // iterate over all blocks
     for (unsigned int k = 0; k < gridDim.x; k++) {

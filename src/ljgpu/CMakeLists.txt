@@ -5,11 +5,11 @@ if(WITH_CUDA)
     add_definitions(-DUSE_CELL_SUMMATION_ORDER)
   endif(ljgpu_VARIANT_CELL_SUMMATION_ORDER)
 
-  set(ljgpu_VARIANT_CELL_DSFUN TRUE CACHE BOOL
+  set(ljgpu_VARIANT_FORCE_DSFUN TRUE CACHE BOOL
     "Use double-single precision functions in cell summation")
-  if(ljgpu_VARIANT_CELL_DSFUN)
-    add_definitions(-DUSE_CELL_DSFUN)
-  endif(ljgpu_VARIANT_CELL_DSFUN)
+  if(ljgpu_VARIANT_FORCE_DSFUN)
+    add_definitions(-DUSE_FORCE_DSFUN)
+  endif(ljgpu_VARIANT_FORCE_DSFUN)
 
   set(ljgpu_VARIANT_HILBERT_ORDER TRUE CACHE BOOL
     "Use Hilbert space-filling curve particle ordering")
