@@ -35,7 +35,9 @@ or
   -DCMAKE_INCLUDE_PATH=$HOME/usr/include
   -DCMAKE_LIBRARY_PATH=$HOME/usr/lib
 
-to the arguments passed to cmake.
+to the arguments passed to cmake and use the following CXXFLAGS:
+
+  CXXFLAGS="-fPIC -Wall -I$HOME/usr/include"
 
 
 For static linking to the Boost, HDF5 and GSL libraries, use:
