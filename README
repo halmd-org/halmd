@@ -25,6 +25,18 @@ To compile, switch to a newly created directory and execute:
 	cmake -DCMAKE_BUILD_TYPE=Release ~/path/to/ljgpu_source
   $ make
 
+If cmake should look for third-party libraries in a custom path, add
+
+  -DCMAKE_PREFIX_PATH=$HOME/usr
+
+or
+
+  -DCMAKE_INCLUDE_PATH=$HOME/usr/include
+  -DCMAKE_LIBRARY_PATH=$HOME/usr/lib
+
+to the arguments passed to cmake.
+
+
 For static linking to the Boost, HDF5 and GSL libraries, use:
 
   $ CXXFLAGS="-fPIC -Wall" \
