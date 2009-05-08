@@ -39,15 +39,15 @@
 namespace ljgpu
 {
 
-template <typename ljfluid_impl>
+template <typename ljfluid_impl, int dimension>
 class ljfluid;
 
-template<int dimension>
-class ljfluid<ljfluid_impl_host<dimension> >
-    : public ljfluid_base<ljfluid_impl_host<dimension> >
+template <int dimension>
+class ljfluid<ljfluid_impl_host, dimension>
+    : public ljfluid_base<ljfluid_impl_host, dimension>
 {
 public:
-    typedef ljfluid_base<ljfluid_impl_host<dimension> > _Base;
+    typedef ljfluid_base<ljfluid_impl_host, dimension> _Base;
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::host_sample_type host_sample_type;
@@ -201,7 +201,7 @@ private:
  */
 template <int dimension>
 template <typename T>
-void ljfluid<ljfluid_impl_host<dimension> >::particles(T const& value)
+void ljfluid<ljfluid_impl_host, dimension>::particles(T const& value)
 {
     _Base::particles(value);
 
@@ -217,7 +217,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::particles(T const& value)
  * set system state from phase space sample
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::state(host_sample_type& sample, float_type box)
+void ljfluid<ljfluid_impl_host, dimension>::state(host_sample_type& sample, float_type box)
 {
     typedef typename host_sample_type::value_type sample_type;
 
@@ -256,7 +256,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::state(host_sample_type& sample, flo
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::nbl_skin(float value)
+void ljfluid<ljfluid_impl_host, dimension>::nbl_skin(float value)
 {
     r_skin = value;
     LOG("neighbour list skin: " << r_skin);
@@ -285,7 +285,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::nbl_skin(float value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::rescale_energy(float_type en)
+void ljfluid<ljfluid_impl_host, dimension>::rescale_energy(float_type en)
 {
     LOG("rescaling velocities to mean particle energy: " << en);
     float_type vv = 0;
@@ -302,7 +302,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::rescale_energy(float_type en)
  * initialize random number generator with seed
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::rng(unsigned int seed)
+void ljfluid<ljfluid_impl_host, dimension>::rng(unsigned int seed)
 {
     rng_.set(seed);
     LOG("initializing random number generator with seed: " << seed);
@@ -312,7 +312,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::rng(unsigned int seed)
  * initialize random number generator from state
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::rng(gsl::gfsr4::state_type const& state)
+void ljfluid<ljfluid_impl_host, dimension>::rng(gsl::gfsr4::state_type const& state)
 {
     rng_.restore(state);
     LOG("restoring random number generator from state");
@@ -322,7 +322,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::rng(gsl::gfsr4::state_type const& s
  * place particles on a face-centered cubic (fcc) lattice
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::lattice()
+void ljfluid<ljfluid_impl_host, dimension>::lattice()
 {
     if (mixture_ == BINARY) {
 	LOG("randomly placing A and B particles on fcc lattice");
@@ -390,7 +390,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::lattice()
  * initialise velocities from Maxwell-Boltzmann distribution
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
+void ljfluid<ljfluid_impl_host, dimension>::temperature(double value)
 {
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
@@ -408,7 +408,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::temperature(double value)
  * set system temperature according to Maxwell-Boltzmann distribution
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::boltzmann(double temp)
+void ljfluid<ljfluid_impl_host, dimension>::boltzmann(double temp)
 {
     // center of mass velocity
     vector_type v_cm = 0;
@@ -440,7 +440,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::boltzmann(double temp)
  * randomly assign particles types in a binary mixture
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::random_binary_types()
+void ljfluid<ljfluid_impl_host, dimension>::random_binary_types()
 {
     // create view on particle list
     std::vector<typename particle::ref> part;
@@ -462,7 +462,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::random_binary_types()
  * update cell lists
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::update_cells()
+void ljfluid<ljfluid_impl_host, dimension>::update_cells()
 {
     // empty cell lists without memory reallocation
     foreach (cell_list& c, range(cell.data(), cell.data() + cell.num_elements())) {
@@ -478,8 +478,8 @@ void ljfluid<ljfluid_impl_host<dimension> >::update_cells()
  * returns cell list which a particle belongs to
  */
 template <int dimension>
-typename ljfluid<ljfluid_impl_host<dimension> >::cell_list&
-ljfluid<ljfluid_impl_host<dimension> >::compute_cell(vector_type r)
+typename ljfluid<ljfluid_impl_host, dimension>::cell_list&
+ljfluid<ljfluid_impl_host, dimension>::compute_cell(vector_type r)
 {
     r = (r - floor(r / box_) * box_) / cell_length_;
     //
@@ -505,7 +505,7 @@ ljfluid<ljfluid_impl_host<dimension> >::compute_cell(vector_type r)
  */
 template <int dimension>
 template <bool binary>
-void ljfluid<ljfluid_impl_host<dimension> >::update_neighbours()
+void ljfluid<ljfluid_impl_host, dimension>::update_neighbours()
 {
     cell_index i;
     for (i[0] = 0; i[0] < ncell; ++i[0]) {
@@ -527,7 +527,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::update_neighbours()
  */
 template <int dimension>
 template <bool binary>
-void ljfluid<ljfluid_impl_host<dimension> >::update_cell_neighbours(cell_index const& i)
+void ljfluid<ljfluid_impl_host, dimension>::update_cell_neighbours(cell_index const& i)
 {
     foreach (particle& p, cell(i)) {
 	// empty neighbour list of particle
@@ -575,7 +575,7 @@ out:
  */
 template <int dimension>
 template <bool same_cell, bool binary>
-void ljfluid<ljfluid_impl_host<dimension> >::compute_cell_neighbours(particle& p1, cell_list& c)
+void ljfluid<ljfluid_impl_host, dimension>::compute_cell_neighbours(particle& p1, cell_list& c)
 {
     foreach (particle& p2, c) {
 	// skip identical particle and particle pair permutations if same cell
@@ -605,7 +605,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_cell_neighbours(particle& p
  */
 template <int dimension>
 template <bool binary>
-void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
+void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
 {
     // initialize particle forces to zero
     foreach (particle& p, part) {
@@ -692,7 +692,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_forces()
  */
 template <int dimension>
 template <bool binary>
-void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, double& fval, double& pot, unsigned int type)
+void ljfluid<ljfluid_impl_host, dimension>::compute_smooth_potential(double r, double& fval, double& pot, unsigned int type)
 {
     double y = r - r_cut[binary ? type : 0];
     double x2 = y * y * rri_smooth;
@@ -712,7 +712,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::compute_smooth_potential(double r, 
  * first leapfrog step of integration of equations of motion
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
+void ljfluid<ljfluid_impl_host, dimension>::leapfrog_half()
 {
     double vv_max = 0;
 
@@ -732,7 +732,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_half()
  * second leapfrog step of integration of equations of motion
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
+void ljfluid<ljfluid_impl_host, dimension>::leapfrog_full()
 {
     foreach (particle& p, part) {
 	// full step velocity
@@ -744,7 +744,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::leapfrog_full()
  * MD simulation step
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
+void ljfluid<ljfluid_impl_host, dimension>::mdstep()
 {
     // nanosecond resolution process times
     boost::array<timespec, 5> t;
@@ -805,7 +805,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::mdstep()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::sample(host_sample_type& sample) const
+void ljfluid<ljfluid_impl_host, dimension>::sample(host_sample_type& sample) const
 {
     typedef typename host_sample_type::value_type sample_type;
     typedef typename sample_type::position_sample_vector position_sample_vector;
@@ -831,7 +831,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(host_sample_type& sample) co
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::sample(energy_sample_type& sample) const
+void ljfluid<ljfluid_impl_host, dimension>::sample(energy_sample_type& sample) const
 {
     typedef typename std::vector<particle>::const_iterator iterator;
 
@@ -873,7 +873,7 @@ void ljfluid<ljfluid_impl_host<dimension> >::sample(energy_sample_type& sample) 
  * write parameters to HDF5 parameter group
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_host<dimension> >::param(H5param& param) const
+void ljfluid<ljfluid_impl_host, dimension>::param(H5param& param) const
 {
     _Base::param(param);
 

@@ -229,26 +229,26 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     m_fluid.timestep(m_opt["timestep"].as<double>());
 
     // potential well depths
-    epsilon(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    epsilon(boost::is_base_of<ljfluid_impl_base, impl_type>());
     // collision diameters
-    sigma(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    sigma(boost::is_base_of<ljfluid_impl_base, impl_type>());
     // potential cutoff radius
-    cutoff_radius(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    cutoff_radius(boost::is_base_of<ljfluid_impl_base, impl_type>());
     // potential smoothing function scale parameter
-    potential_smoothing(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    potential_smoothing(boost::is_base_of<ljfluid_impl_base, impl_type>());
     // pair separation at which particle collision occurs
-    pair_separation(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
+    pair_separation(boost::is_base_of<hardsphere_impl, impl_type>());
 
     // desired average cell occupancy
-    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_cell<dimension>, impl_type>());
-    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
+    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_cell, impl_type>());
+    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour, impl_type>());
     // neighbour list skin
-    nbl_skin(boost::is_base_of<ljfluid_impl_gpu_neighbour<dimension>, impl_type>());
-    nbl_skin(boost::is_base_of<ljfluid_impl_host<dimension>, impl_type>());
+    nbl_skin(boost::is_base_of<ljfluid_impl_gpu_neighbour, impl_type>());
+    nbl_skin(boost::is_base_of<ljfluid_impl_host, impl_type>());
     // number of CUDA execution threads
-    threads(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+    threads(boost::is_base_of<ljfluid_impl_gpu_base, impl_type>());
     // initialise hard-sphere cell lists
-    init_cells(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
+    init_cells(boost::is_base_of<hardsphere_impl, impl_type>());
 
     // heat bath collision probability and temperature
     thermostat(typename mdsim_backend::has_thermostat());
@@ -276,14 +276,14 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     }
 
     // rescale mean particle energy
-    rescale_energy(boost::is_base_of<ljfluid_impl_base<dimension>, impl_type>());
+    rescale_energy(boost::is_base_of<ljfluid_impl_base, impl_type>());
 
     if (m_opt["trajectory-sample"].empty() || !m_opt["temperature"].defaulted()) {
 	// initialise velocities from Maxwell-Boltzmann distribution
 	m_fluid.temperature(m_opt["temperature"].as<float>());
     }
     // initialise hard-sphere event list
-    init_event_list(boost::is_base_of<hardsphere_impl<dimension>, impl_type>());
+    init_event_list(boost::is_base_of<hardsphere_impl, impl_type>());
 
     if (m_opt["steps"].defaulted() && !m_opt["time"].empty()) {
 	// total simulation time
@@ -366,7 +366,7 @@ void mdsim<mdsim_backend>::operator()()
     for (step = 0; step < m_corr.steps(); ++step) {
 	sample_fluid(step, !step);
 	// stream next MD simulation program step on GPU
-	stream(boost::is_base_of<ljfluid_impl_gpu_base<dimension>, impl_type>());
+	stream(boost::is_base_of<ljfluid_impl_gpu_base, impl_type>());
 
 	if (sample_properties(step, false)) {
 	    // acquired maximum number of samples for a block level

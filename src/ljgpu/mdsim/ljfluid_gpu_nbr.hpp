@@ -31,16 +31,16 @@
 namespace ljgpu
 {
 
-template <typename ljfluid_impl>
+template <typename ljfluid_impl, int dimension>
 class ljfluid;
 
-template<int dimension>
-class ljfluid<ljfluid_impl_gpu_neighbour<dimension> >
-    : public ljfluid_gpu_base<ljfluid_impl_gpu_neighbour<dimension> >
+template <int dimension>
+class ljfluid<ljfluid_impl_gpu_neighbour, dimension>
+    : public ljfluid_gpu_base<ljfluid_impl_gpu_neighbour, dimension>
 {
 public:
-    typedef ljfluid_gpu_base<ljfluid_impl_gpu_neighbour<dimension> > _Base;
-    typedef gpu::ljfluid<ljfluid_impl_gpu_neighbour<dimension> > _gpu;
+    typedef ljfluid_gpu_base<ljfluid_impl_gpu_neighbour, dimension> _Base;
+    typedef gpu::ljfluid<ljfluid_impl_gpu_neighbour, dimension> _gpu;
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::gpu_vector_type gpu_vector_type;
@@ -237,7 +237,7 @@ private:
 
 template <int dimension>
 template <typename T>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::particles(T const& value)
 {
     _Base::particles(value);
 
@@ -256,14 +256,14 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::particles(T const& value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::cell_occupancy(float_type value)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::cell_occupancy(float_type value)
 {
     cell_occupancy_ = value;
     LOG("desired average cell occupancy: " << cell_occupancy_);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
 {
     float r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
     cuda::device::properties prop(cuda::context::device());
@@ -360,7 +360,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::nbl_skin(float value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::threads(unsigned int value)
 {
     _Base::threads(value);
 
@@ -459,7 +459,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::threads(unsigned int value
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::state(host_sample_type& sample, float_type box)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::state(host_sample_type& sample, float_type box)
 {
     _Base::state(sample, box, h_part.r, h_part.v);
 #ifdef USE_VERLET_DSFUN
@@ -474,14 +474,14 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::state(host_sample_type& sa
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::rescale_energy(float_type en)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::rescale_energy(float_type en)
 {
     LOG("rescaling velocities to mean particle energy: " << en);
     _Base::rescale_energy(g_part.v, en, dim_, stream_);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::lattice()
 {
 #ifdef USE_VERLET_DSFUN
     cuda::memset(g_part.r, 0, g_part.r.capacity());
@@ -495,7 +495,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::lattice()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::temperature(float_type temp)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::temperature(float_type temp)
 {
     LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
 
@@ -513,7 +513,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::temperature(float_type tem
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::stream()
 {
     event_[1].record(stream_);
     // first leapfrog step of integration of differential equations of motion
@@ -617,7 +617,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::stream()
  * synchronize MD simulation step on GPU
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
 {
     try {
 	// wait for MD simulation step on GPU to finish
@@ -669,7 +669,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::mdstep()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(host_sample_type& sample) const
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(host_sample_type& sample) const
 {
     typedef typename host_sample_type::value_type sample_type;
     typedef typename sample_type::position_sample_vector position_sample_vector;
@@ -714,7 +714,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(host_sample_type& s
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(gpu_sample_type& sample) const
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(gpu_sample_type& sample) const
 {
     typedef typename gpu_sample_type::value_type sample_type;
     typedef typename sample_type::position_sample_vector position_sample_vector;
@@ -747,7 +747,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(gpu_sample_type& sa
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(energy_sample_type& sample) const
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& sample) const
 {
     static cuda::event ev0, ev1;
     static cuda::stream stream;
@@ -807,7 +807,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::sample(energy_sample_type&
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_positions()
 {
     // assign ascending particle numbers
     _Base::init_tags(g_part.r, g_part.tag);
@@ -840,21 +840,21 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_positions()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::velocity_verlet(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::velocity_verlet(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::inteq(g_part.r, g_part.dr, g_part.R, g_part.v, g_part.f);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_forces(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, stream);
     _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_cells(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_cells(cuda::stream& stream)
 {
     // compute cell indices for particle positions
     cuda::configure(dim_.grid, dim_.block, stream);
@@ -876,7 +876,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::assign_cells(cuda::stream&
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_neighbours(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_neighbours(cuda::stream& stream)
 {
     // set particle displacements to floating-point zero
     cuda::memset(g_part.dr, 0);
@@ -888,7 +888,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::update_neighbours(cuda::st
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::hilbert_order(cuda::stream& stream)
 {
     // compute Hilbert space-filling curve for particles
     cuda::configure(dim_.grid, dim_.block, stream);
@@ -911,7 +911,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::hilbert_order(cuda::stream
  * generate permutation for phase space sampling
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::permutation(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::permutation(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::gen_index(g_aux.index);
@@ -922,7 +922,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::permutation(cuda::stream& 
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::boltzmann(float temp, cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::boltzmann(float temp, cuda::stream& stream)
 {
 #ifdef USE_VERLET_DSFUN
     cuda::memset(g_part.v, 0, g_part.v.capacity());
@@ -939,7 +939,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::boltzmann(float temp, cuda
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour<dimension> >::param(H5param& param) const
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::param(H5param& param) const
 {
     _Base::param(param);
 

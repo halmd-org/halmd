@@ -242,8 +242,8 @@ namespace ljgpu { namespace gpu
 {
 
 typedef ljfluid_base<ljfluid_impl_gpu_base> __Base;
-typedef ljfluid<ljfluid_impl_gpu_base<3> > __3D;
-typedef ljfluid<ljfluid_impl_gpu_base<2> > __2D;
+typedef ljfluid<ljfluid_impl_gpu_base, 3> __3D;
+typedef ljfluid<ljfluid_impl_gpu_base, 2> __2D;
 
 /**
  * device constant wrappers

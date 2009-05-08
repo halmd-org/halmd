@@ -34,8 +34,8 @@ struct ljfluid_base<ljfluid_impl_gpu_square>
 };
 
 template <>
-struct ljfluid<ljfluid_impl_gpu_square<3> >
-: public ljfluid_base<ljfluid_impl_gpu_square>, public ljfluid<ljfluid_impl_gpu_base<3> >
+struct ljfluid<ljfluid_impl_gpu_square, 3>
+: public ljfluid_base<ljfluid_impl_gpu_square>, public ljfluid<ljfluid_impl_gpu_base, 3>
 {
     template <mixture_type, potential_type>
     struct variant
@@ -48,8 +48,8 @@ struct ljfluid<ljfluid_impl_gpu_square<3> >
 };
 
 template <>
-struct ljfluid<ljfluid_impl_gpu_square<2> >
-: public ljfluid_base<ljfluid_impl_gpu_square>, public ljfluid<ljfluid_impl_gpu_base<2> >
+struct ljfluid<ljfluid_impl_gpu_square, 2>
+: public ljfluid_base<ljfluid_impl_gpu_square>, public ljfluid<ljfluid_impl_gpu_base, 2>
 {
     template <mixture_type, potential_type>
     struct variant

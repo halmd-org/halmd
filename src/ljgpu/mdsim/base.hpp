@@ -39,12 +39,12 @@
 namespace ljgpu
 {
 
-template <typename mdsim_impl>
+template <typename mdsim_impl, int dimension_>
 class mdsim_base : boost::noncopyable
 {
 public:
     typedef mdsim_impl impl_type;
-    typedef mdsim_traits<impl_type> traits_type;
+    typedef mdsim_traits<impl_type, dimension_> traits_type;
     typedef typename traits_type::float_type float_type;
     typedef typename traits_type::vector_type vector_type;
     typedef typename traits_type::host_sample_type host_sample_type;
@@ -52,7 +52,7 @@ public:
     typedef boost::variant<host_sample_type> trajectory_sample_variant;
     typedef typename traits_type::energy_sample_type energy_sample_type;
     typedef typename energy_sample_type::virial_tensor virial_tensor;
-    enum { dimension = traits_type::dimension };
+    enum { dimension = dimension_ };
 
     /** static implementation properties */
     typedef boost::false_type has_gpu;
@@ -107,8 +107,8 @@ protected:
     mixture_type mixture_;
 };
 
-template <typename mdsim_impl>
-void mdsim_base<mdsim_impl>::particles(unsigned int value)
+template <typename mdsim_impl, int dimension_>
+void mdsim_base<mdsim_impl, dimension_>::particles(unsigned int value)
 {
     if (value < 1) {
 	throw exception("invalid number of particles");
@@ -119,8 +119,8 @@ void mdsim_base<mdsim_impl>::particles(unsigned int value)
     LOG("number of particles: " << npart);
 }
 
-template <typename mdsim_impl>
-void mdsim_base<mdsim_impl>::particles(boost::array<unsigned int, 2> const& value)
+template <typename mdsim_impl, int dimension_>
+void mdsim_base<mdsim_impl, dimension_>::particles(boost::array<unsigned int, 2> const& value)
 {
     if (*std::min_element(value.begin(), value.end()) < 1) {
 	throw exception("invalid number of A or B particles");
@@ -131,8 +131,8 @@ void mdsim_base<mdsim_impl>::particles(boost::array<unsigned int, 2> const& valu
     LOG("binary mixture with " << mpart[0] << " A particles and " << mpart[1] << " B particles");
 }
 
-template <typename mdsim_impl>
-void mdsim_base<mdsim_impl>::density(float_type value)
+template <typename mdsim_impl, int dimension_>
+void mdsim_base<mdsim_impl, dimension_>::density(float_type value)
 {
     // set particle density
     density_ = value;
@@ -143,8 +143,8 @@ void mdsim_base<mdsim_impl>::density(float_type value)
     LOG("periodic simulation box length: " << box_);
 }
 
-template <typename mdsim_impl>
-void mdsim_base<mdsim_impl>::box(float_type value)
+template <typename mdsim_impl, int dimension_>
+void mdsim_base<mdsim_impl, dimension_>::box(float_type value)
 {
     // set periodic box length
     box_ = value;
@@ -155,8 +155,8 @@ void mdsim_base<mdsim_impl>::box(float_type value)
     LOG("particle density: " << density_);
 }
 
-template <typename mdsim_impl>
-void mdsim_base<mdsim_impl>::state(host_sample_type& sample, float_type box)
+template <typename mdsim_impl, int dimension_>
+void mdsim_base<mdsim_impl, dimension_>::state(host_sample_type& sample, float_type box)
 {
     typedef typename host_sample_type::value_type sample_type;
     typedef typename sample_type::position_vector position_vector;
@@ -186,8 +186,8 @@ void mdsim_base<mdsim_impl>::state(host_sample_type& sample, float_type box)
     }
 }
 
-template <typename mdsim_impl>
-perf::counters mdsim_base<mdsim_impl>::times()
+template <typename mdsim_impl, int dimension_>
+perf::counters mdsim_base<mdsim_impl, dimension_>::times()
 {
     perf::counters times(m_times);
     foreach (perf::counter& i, m_times) {
@@ -197,8 +197,8 @@ perf::counters mdsim_base<mdsim_impl>::times()
     return times;
 }
 
-template <typename mdsim_impl>
-void mdsim_base<mdsim_impl>::param(H5param& param) const
+template <typename mdsim_impl, int dimension_>
+void mdsim_base<mdsim_impl, dimension_>::param(H5param& param) const
 {
     H5xx::group node(param["mdsim"]);
     node["box_length"] = box_;

@@ -449,7 +449,7 @@ void options::parse(po::options_description const& opt)
     vm_["output"] = po::variable_value(boost::filesystem::complete(path).string(), false);
 }
 
-options_description<mdsim_impl>::options_description()
+options_description<mdsim_impl_base>::options_description()
     : po::options_description("MD simulation options")
 {
     add_options()

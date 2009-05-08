@@ -31,70 +31,57 @@
 namespace ljgpu
 {
 
-template <typename mdsim_impl>
+template <typename mdsim_impl, int dimension_>
 struct mdsim_traits;
+
+template <int dimension_>
+struct mdsim_traits<mdsim_impl_base, dimension_>
+{
+    enum { dimension = dimension_ };
+    typedef energy_sample<dimension> energy_sample_type;
+};
 
 #ifdef WITH_CUDA
 template <>
-struct mdsim_traits<ljfluid_impl_gpu_base<2> >
+struct mdsim_traits<ljfluid_impl_gpu_base, 2> : mdsim_traits<mdsim_impl_base, 2>
 {
-    enum { dimension = 2 };
     typedef float float_type;
-    typedef vector<float_type, dimension> vector_type;
+    typedef vector<float_type, 2> vector_type;
     typedef float2 gpu_vector_type;
-    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
-    typedef std::vector<trajectory_gpu_sample<dimension> > gpu_sample_type;
-    typedef energy_sample<dimension> energy_sample_type;
+    typedef std::vector<trajectory_host_sample<float_type, 2> > host_sample_type;
+    typedef std::vector<trajectory_gpu_sample<2> > gpu_sample_type;
 };
 
 template <>
-struct mdsim_traits<ljfluid_impl_gpu_base<3> >
+struct mdsim_traits<ljfluid_impl_gpu_base, 3> : mdsim_traits<mdsim_impl_base, 3>
 {
-    enum { dimension = 3 };
     typedef float float_type;
-    typedef vector<float_type, dimension> vector_type;
+    typedef vector<float_type, 3> vector_type;
     typedef float4 gpu_vector_type;
-    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
-    typedef std::vector<trajectory_gpu_sample<dimension> > gpu_sample_type;
-    typedef energy_sample<dimension> energy_sample_type;
+    typedef std::vector<trajectory_host_sample<float_type, 3> > host_sample_type;
+    typedef std::vector<trajectory_gpu_sample<3> > gpu_sample_type;
 };
 
 template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_square<dimension> >
-: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
+struct mdsim_traits<ljfluid_impl_gpu_square, dimension> : mdsim_traits<ljfluid_impl_gpu_base, dimension> {};
 
 template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_cell<dimension> >
-: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
+struct mdsim_traits<ljfluid_impl_gpu_cell, dimension> : mdsim_traits<ljfluid_impl_gpu_base, dimension> {};
 
 template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_neighbour<dimension> >
-: public mdsim_traits<ljfluid_impl_gpu_base<dimension> > {};
+struct mdsim_traits<ljfluid_impl_gpu_neighbour, dimension> : mdsim_traits<ljfluid_impl_gpu_base, dimension> {};
 #endif /* WITH_CUDA */
 
-template <>
-struct mdsim_traits<ljfluid_impl_host<2> >
+template <int dimension>
+struct mdsim_traits<ljfluid_impl_host, dimension> : mdsim_traits<mdsim_impl_base, dimension>
 {
-    enum { dimension = 2 };
     typedef double float_type;
     typedef vector<float_type, dimension> vector_type;
     typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
-    typedef energy_sample<dimension> energy_sample_type;
-};
-
-template <>
-struct mdsim_traits<ljfluid_impl_host<3> >
-{
-    enum { dimension = 3 };
-    typedef double float_type;
-    typedef vector<float_type, dimension> vector_type;
-    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
-    typedef energy_sample<dimension> energy_sample_type;
 };
 
 template <int dimension>
-struct mdsim_traits<hardsphere_impl<dimension> >
-: public mdsim_traits<ljfluid_impl_host<dimension> > {};
+struct mdsim_traits<hardsphere_impl, dimension> : mdsim_traits<ljfluid_impl_host, dimension> {};
 
 } // namespace ljgpu
 

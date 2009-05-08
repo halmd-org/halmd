@@ -73,16 +73,16 @@ private:
 };
 
 
-template <template <int> class backend>
+template <typename mdsim_impl>
 struct options_description;
 
 template <>
-struct options_description<mdsim_impl>
+struct options_description<mdsim_impl_base>
 : public boost::program_options::options_description { options_description(); };
 
 template <>
 struct options_description<ljfluid_impl_base>
-: public options_description<mdsim_impl> { options_description(); };
+: public options_description<mdsim_impl_base> { options_description(); };
 
 template <>
 struct options_description<ljfluid_impl_gpu_base>
@@ -106,7 +106,7 @@ struct options_description<ljfluid_impl_host>
 
 template <>
 struct options_description<hardsphere_impl>
-: public options_description<mdsim_impl> { options_description(); };
+: public options_description<mdsim_impl_base> { options_description(); };
 
 } // namespace ljgpu
 

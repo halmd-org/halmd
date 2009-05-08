@@ -28,16 +28,16 @@
 namespace ljgpu
 {
 
-template <typename ljfluid_impl>
+template <typename ljfluid_impl, int dimension>
 class ljfluid;
 
 template <int dimension>
-class ljfluid<ljfluid_impl_gpu_square<dimension> >
-    : public ljfluid_gpu_base<ljfluid_impl_gpu_square<dimension> >
+class ljfluid<ljfluid_impl_gpu_square, dimension>
+    : public ljfluid_gpu_base<ljfluid_impl_gpu_square, dimension>
 {
 public:
-    typedef ljfluid_gpu_base<ljfluid_impl_gpu_square<dimension> > _Base;
-    typedef gpu::ljfluid<ljfluid_impl_gpu_square<dimension> > _gpu;
+    typedef ljfluid_gpu_base<ljfluid_impl_gpu_square, dimension> _Base;
+    typedef gpu::ljfluid<ljfluid_impl_gpu_square, dimension> _gpu;
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::gpu_vector_type gpu_vector_type;
@@ -150,7 +150,7 @@ private:
 
 template <int dimension>
 template <typename T>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(T const& value)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::particles(T const& value)
 {
     _Base::particles(value);
 
@@ -168,7 +168,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::particles(T const& value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::threads(unsigned int value)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::threads(unsigned int value)
 {
     _Base::threads(value);
 
@@ -201,7 +201,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::threads(unsigned int value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::state(host_sample_type& sample, float_type box)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::state(host_sample_type& sample, float_type box)
 {
     _Base::state(sample, box, h_part.r, h_part.v);
     cuda::copy(h_part.r, g_part.r);
@@ -210,14 +210,14 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::state(host_sample_type& sampl
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::rescale_energy(float_type en)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::rescale_energy(float_type en)
 {
     LOG("rescaling velocities to mean particle energy: " << en);
     _Base::rescale_energy(g_part.v, en, dim_, stream_);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
+void ljfluid<ljfluid_impl_gpu_square, dimension>::lattice()
 {
     // place particles on an fcc lattice
     _Base::lattice(g_part.r);
@@ -228,7 +228,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::lattice()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::temperature(float_type temp)
 {
     LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
 
@@ -246,7 +246,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::temperature(float_type temp)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::stream()
+void ljfluid<ljfluid_impl_gpu_square, dimension>::stream()
 {
     event_[1].record(stream_);
     // first leapfrog step of integration of differential equations of motion
@@ -296,7 +296,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::stream()
  * synchronize MD simulation step on GPU
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
+void ljfluid<ljfluid_impl_gpu_square, dimension>::mdstep()
 {
     try {
 	// wait for MD simulation step on GPU to finish
@@ -329,7 +329,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::mdstep()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(host_sample_type& sample) const
+void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(host_sample_type& sample) const
 {
     typedef typename host_sample_type::value_type sample_type;
     typedef typename sample_type::position_sample_vector position_sample_vector;
@@ -370,7 +370,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(host_sample_type& samp
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(gpu_sample_type& sample) const
+void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(gpu_sample_type& sample) const
 {
     typedef typename gpu_sample_type::value_type sample_type;
     typedef typename sample_type::position_sample_vector position_sample_vector;
@@ -403,7 +403,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(gpu_sample_type& sampl
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(energy_sample_type& sample) const
+void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(energy_sample_type& sample) const
 {
     static cuda::event ev0, ev1;
     static cuda::stream stream;
@@ -463,7 +463,7 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::sample(energy_sample_type& sa
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::assign_positions()
+void ljfluid<ljfluid_impl_gpu_square, dimension>::assign_positions()
 {
     // assign ascending particle numbers
     _Base::init_tags(g_part.r, g_part.tag);
@@ -486,14 +486,14 @@ void ljfluid<ljfluid_impl_gpu_square<dimension> >::assign_positions()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::velocity_verlet(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::velocity_verlet(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square<dimension> >::update_forces(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::update_forces(cuda::stream& stream)
 {
     cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * (dimension + 1) * sizeof(int), stream);
     _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);

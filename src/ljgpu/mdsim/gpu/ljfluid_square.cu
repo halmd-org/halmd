@@ -128,8 +128,8 @@ namespace ljgpu { namespace gpu
 {
 
 typedef ljfluid_base<ljfluid_impl_gpu_square> _Base;
-typedef ljfluid<ljfluid_impl_gpu_square<3> > _3D;
-typedef ljfluid<ljfluid_impl_gpu_square<2> > _2D;
+typedef ljfluid<ljfluid_impl_gpu_square, 3> _3D;
+typedef ljfluid<ljfluid_impl_gpu_square, 2> _2D;
 
 /**
  * device function wrappers

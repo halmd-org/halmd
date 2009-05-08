@@ -458,8 +458,8 @@ namespace ljgpu { namespace gpu
 {
 
 typedef ljfluid_base<ljfluid_impl_gpu_cell> _Base;
-typedef ljfluid<ljfluid_impl_gpu_cell<3> > _3D;
-typedef ljfluid<ljfluid_impl_gpu_cell<2> > _2D;
+typedef ljfluid<ljfluid_impl_gpu_cell, 3> _3D;
+typedef ljfluid<ljfluid_impl_gpu_cell, 2> _2D;
 
 /**
  * device constant wrappers

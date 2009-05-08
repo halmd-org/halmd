@@ -50,7 +50,7 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
     typedef typename _Base::virial_tensor virial_tensor;
     typedef std::vector<vector_type> sample_vector;
 
-    typedef mdsim_traits<ljfluid_impl_gpu_base<dimension> > traits_type;
+    typedef mdsim_traits<ljfluid_impl_gpu_base, dimension> traits_type;
     typedef typename traits_type::gpu_vector_type gpu_vector_type;
     typedef cuda::vector<gpu_vector_type> gpu_sample_vector;
     typedef gpu::tcf<dimension> _gpu;

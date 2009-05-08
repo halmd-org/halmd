@@ -37,12 +37,12 @@
 namespace ljgpu
 {
 
-template <typename ljfluid_impl>
-class ljfluid_gpu_base : public ljfluid_base<ljfluid_impl>
+template <typename ljfluid_impl, int dimension>
+class ljfluid_gpu_base : public ljfluid_base<ljfluid_impl, dimension>
 {
 public:
-    typedef ljfluid_base<ljfluid_impl> _Base;
-    typedef gpu::ljfluid<ljfluid_impl> _gpu;
+    typedef ljfluid_base<ljfluid_impl, dimension> _Base;
+    typedef gpu::ljfluid<ljfluid_impl, dimension> _gpu;
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::traits_type::gpu_vector_type gpu_vector_type;
@@ -50,7 +50,6 @@ public:
     typedef typename _Base::energy_sample_type energy_sample_type;
     typedef typename _Base::virial_tensor virial_tensor;
     typedef typename _Base::traits_type::gpu_sample_type gpu_sample_type;
-    enum { dimension = _Base::dimension };
 
     /** static implementation properties */
     typedef boost::true_type has_gpu;
@@ -167,9 +166,9 @@ protected:
     virial_sum<dfloat, virial_tensor> mutable reduce_virial;
 };
 
-template <typename ljfluid_impl>
+template <typename ljfluid_impl, int dimension>
 template <typename T>
-void ljfluid_gpu_base<ljfluid_impl>::particles(T const& value)
+void ljfluid_gpu_base<ljfluid_impl, dimension>::particles(T const& value)
 {
     _Base::particles(value);
 
@@ -183,8 +182,8 @@ void ljfluid_gpu_base<ljfluid_impl>::particles(T const& value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::epsilon(boost::array<float, 3> const& value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::epsilon(boost::array<float, 3> const& value)
 {
     _Base::epsilon(value);
 
@@ -197,8 +196,8 @@ void ljfluid_gpu_base<ljfluid_impl>::epsilon(boost::array<float, 3> const& value
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::sigma(boost::array<float, 3> const& value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::sigma(boost::array<float, 3> const& value)
 {
     _Base::sigma(value);
 
@@ -211,8 +210,8 @@ void ljfluid_gpu_base<ljfluid_impl>::sigma(boost::array<float, 3> const& value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::cutoff_radius(float_type value)
 {
     _Base::cutoff_radius(value);
 
@@ -227,8 +226,8 @@ void ljfluid_gpu_base<ljfluid_impl>::cutoff_radius(float_type value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::potential_smoothing(float_type value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::potential_smoothing(float_type value)
 {
     _Base::potential_smoothing(value);
 
@@ -241,8 +240,8 @@ void ljfluid_gpu_base<ljfluid_impl>::potential_smoothing(float_type value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::threads(unsigned int value)
 {
     // query CUDA device properties
     cuda::device::properties prop;
@@ -282,8 +281,8 @@ void ljfluid_gpu_base<ljfluid_impl>::threads(unsigned int value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::density(float_type value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::density(float_type value)
 {
     _Base::density(value);
 
@@ -296,8 +295,8 @@ void ljfluid_gpu_base<ljfluid_impl>::density(float_type value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::box(float_type value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::box(float_type value)
 {
     _Base::box(value);
 
@@ -310,8 +309,8 @@ void ljfluid_gpu_base<ljfluid_impl>::box(float_type value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::timestep(double value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::timestep(double value)
 {
     _Base::timestep(value);
 
@@ -327,8 +326,8 @@ void ljfluid_gpu_base<ljfluid_impl>::timestep(double value)
 /**
  * seed random number generator
  */
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::rng(unsigned int seed)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::rng(unsigned int seed)
 {
     typedef gpu::boltzmann<dimension> _gpu;
 
@@ -358,8 +357,8 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(unsigned int seed)
 /**
  * restore random number generator from state
  */
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::rng(rand48::state_type const& state)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::rng(rand48::state_type const& state)
 {
     try {
 	rng_.restore(state);
@@ -373,8 +372,8 @@ void ljfluid_gpu_base<ljfluid_impl>::rng(rand48::state_type const& state)
 /**
  * place particles on an fcc lattice
  */
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::lattice(cuda::vector<float4>& g_r)
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
@@ -414,8 +413,8 @@ void ljfluid_gpu_base<ljfluid_impl>::lattice(cuda::vector<float4>& g_r)
 /**
  * randomly assign particle types in a binary mixture
  */
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::random_permute(cuda::vector<float4>& g_r)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::random_permute(cuda::vector<float4>& g_r)
 {
     cuda::vector<unsigned int> g_sort_index(npart);
     g_sort_index.reserve(dim_.threads());
@@ -434,8 +433,8 @@ void ljfluid_gpu_base<ljfluid_impl>::random_permute(cuda::vector<float4>& g_r)
 /**
  * assign ascending particle numbers
  */
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::init_tags(cuda::vector<float4>& g_r,
 					       cuda::vector<unsigned int>& g_tag)
 {
     try {
@@ -452,8 +451,8 @@ void ljfluid_gpu_base<ljfluid_impl>::init_tags(cuda::vector<float4>& g_r,
 /**
  * rescale mean particle energy
  */
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::rescale_energy(cuda::vector<gpu_vector_type>& g_v,
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::rescale_energy(cuda::vector<gpu_vector_type>& g_v,
 						    float en,
 						    cuda::config const& dim,
 						    cuda::stream& stream)
@@ -484,8 +483,8 @@ void ljfluid_gpu_base<ljfluid_impl>::rescale_energy(cuda::vector<gpu_vector_type
 /**
  * generate Maxwell-Boltzmann distributed velocities
  */
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp, cuda::stream& stream)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp, cuda::stream& stream)
 {
     typedef gpu::boltzmann<dimension> _gpu;
 
@@ -511,8 +510,8 @@ void ljfluid_gpu_base<ljfluid_impl>::boltzmann(cuda::vector<gpu_vector_type>& g_
     _gpu::scale_velocity(g_v, npart, g_vv, temp);
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::state(host_sample_type& sample, float_type box,
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::state(host_sample_type& sample, float_type box,
 					    cuda::host::vector<float4>& h_r,
 					    cuda::host::vector<gpu_vector_type>& h_v)
 {
@@ -524,8 +523,8 @@ void ljfluid_gpu_base<ljfluid_impl>::state(host_sample_type& sample, float_type 
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::update_forces(cuda::vector<float4>& r,
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::update_forces(cuda::vector<float4>& r,
 						   cuda::vector<gpu_vector_type>& v,
 						   cuda::vector<gpu_vector_type>& f,
 						   cuda::vector<float>& en,
@@ -550,8 +549,8 @@ void ljfluid_gpu_base<ljfluid_impl>::update_forces(cuda::vector<float4>& r,
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_gpu_base<ljfluid_impl>::param(H5param& param) const
+template <typename ljfluid_impl, int dimension>
+void ljfluid_gpu_base<ljfluid_impl, dimension>::param(H5param& param) const
 {
     _Base::param(param);
 

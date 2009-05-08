@@ -41,14 +41,14 @@
 namespace ljgpu
 {
 
-template <typename mdsim_impl>
+template <typename mdsim_impl, int dimension>
 class hardsphere;
 
 /**
  * Hard Spheres simulation
  */
-template<int dimension>
-class hardsphere<hardsphere_impl<dimension> > : public mdsim_base<hardsphere_impl<dimension> >
+template <int dimension>
+class hardsphere<hardsphere_impl, dimension> : public mdsim_base<hardsphere_impl, dimension>
 {
     //
     // Details of the implementation are described in
@@ -63,7 +63,7 @@ class hardsphere<hardsphere_impl<dimension> > : public mdsim_base<hardsphere_imp
     //
 
 public:
-    typedef mdsim_base<hardsphere_impl<dimension> > _Base;
+    typedef mdsim_base<hardsphere_impl, dimension> _Base;
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::host_sample_type host_sample_type;
@@ -219,7 +219,7 @@ private:
  */
 template <int dimension>
 template <typename T>
-void hardsphere<hardsphere_impl<dimension> >::particles(T const& value)
+void hardsphere<hardsphere_impl, dimension>::particles(T const& value)
 {
     _Base::particles(value);
 
@@ -235,7 +235,7 @@ void hardsphere<hardsphere_impl<dimension> >::particles(T const& value)
  * set pair separation at which particle collision occurs
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::pair_separation(double value)
+void hardsphere<hardsphere_impl, dimension>::pair_separation(double value)
 {
     if (value <= 0.) {
 	throw exception("pair separation must be greater than zero");
@@ -251,7 +251,7 @@ void hardsphere<hardsphere_impl<dimension> >::pair_separation(double value)
  * initialize cells
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::init_cells()
+void hardsphere<hardsphere_impl, dimension>::init_cells()
 {
     // FIXME optimal number of cells
     if (dimension == 3)
@@ -282,7 +282,7 @@ void hardsphere<hardsphere_impl<dimension> >::init_cells()
  * set simulation timestep
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::timestep(double value)
+void hardsphere<hardsphere_impl, dimension>::timestep(double value)
 {
     timestep_ = value;
     LOG("simulation timestep: " << timestep_);
@@ -292,7 +292,7 @@ void hardsphere<hardsphere_impl<dimension> >::timestep(double value)
  * set system state from phase space sample
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::state(host_sample_type& sample, float_type box)
+void hardsphere<hardsphere_impl, dimension>::state(host_sample_type& sample, float_type box)
 {
     typedef typename host_sample_type::value_type sample_type;
 
@@ -323,7 +323,7 @@ void hardsphere<hardsphere_impl<dimension> >::state(host_sample_type& sample, fl
  * initialize random number generator with seed
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::rng(unsigned int seed)
+void hardsphere<hardsphere_impl, dimension>::rng(unsigned int seed)
 {
     rng_.set(seed);
     LOG("initializing random number generator with seed: " << seed);
@@ -333,7 +333,7 @@ void hardsphere<hardsphere_impl<dimension> >::rng(unsigned int seed)
  * initialize random number generator from state
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::rng(gsl::gfsr4::state_type const& state)
+void hardsphere<hardsphere_impl, dimension>::rng(gsl::gfsr4::state_type const& state)
 {
     rng_.restore(state);
     LOG("restoring random number generator from state");
@@ -343,7 +343,7 @@ void hardsphere<hardsphere_impl<dimension> >::rng(gsl::gfsr4::state_type const& 
  * place particles on a face-centered cubic (fcc) lattice
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::lattice()
+void hardsphere<hardsphere_impl, dimension>::lattice()
 {
     LOG("placing particles on face-centered cubic (fcc) lattice");
 
@@ -401,7 +401,7 @@ void hardsphere<hardsphere_impl<dimension> >::lattice()
  * set system temperature according to Maxwell-Boltzmann distribution
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::temperature(double value)
+void hardsphere<hardsphere_impl, dimension>::temperature(double value)
 {
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
@@ -435,7 +435,7 @@ void hardsphere<hardsphere_impl<dimension> >::temperature(double value)
  * write parameters to HDF5 parameter group
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::param(H5param& param) const
+void hardsphere<hardsphere_impl, dimension>::param(H5param& param) const
 {
     _Base::param(param);
 
@@ -450,7 +450,7 @@ void hardsphere<hardsphere_impl<dimension> >::param(H5param& param) const
  * initialize event list
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::init_event_list()
+void hardsphere<hardsphere_impl, dimension>::init_event_list()
 {
     step_ = 0;
 
@@ -471,7 +471,7 @@ void hardsphere<hardsphere_impl<dimension> >::init_event_list()
  * compute next collision event with particles of given cell
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::compute_collision_event(const unsigned int n, cell_type const& cell)
+void hardsphere<hardsphere_impl, dimension>::compute_collision_event(const unsigned int n, cell_type const& cell)
 {
     double dt = std::numeric_limits<double>::max();
     int n2 = -1;
@@ -530,7 +530,7 @@ void hardsphere<hardsphere_impl<dimension> >::compute_collision_event(const unsi
  * compute next cell boundary event
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::compute_cell_event(const unsigned int n)
+void hardsphere<hardsphere_impl, dimension>::compute_cell_event(const unsigned int n)
 {
     vector_type dt3(std::numeric_limits<double>::max());
     double dt = std::numeric_limits<double>::max();
@@ -562,7 +562,7 @@ void hardsphere<hardsphere_impl<dimension> >::compute_cell_event(const unsigned 
  * schedule next particle event starting at given time
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::schedule_event(const unsigned int n)
+void hardsphere<hardsphere_impl, dimension>::schedule_event(const unsigned int n)
 {
     // upper boundary for time of next particle event
     event_list[n].t = std::numeric_limits<double>::max();
@@ -603,7 +603,7 @@ void hardsphere<hardsphere_impl<dimension> >::schedule_event(const unsigned int 
  * process particle collision event
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::process_collision_event(const unsigned int n1)
+void hardsphere<hardsphere_impl, dimension>::process_collision_event(const unsigned int n1)
 {
     const vector_type dr1 = part[n1].v * (event_list[n1].t - part[n1].t);
     // update periodically extended particle position
@@ -683,7 +683,7 @@ void hardsphere<hardsphere_impl<dimension> >::process_collision_event(const unsi
  * process cell boundary event
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::process_cell_event(const unsigned int n)
+void hardsphere<hardsphere_impl, dimension>::process_cell_event(const unsigned int n)
 {
     const vector_type dr = part[n].v * (event_list[n].t - part[n].t);
     // update periodically extended particle position
@@ -715,8 +715,8 @@ void hardsphere<hardsphere_impl<dimension> >::process_cell_event(const unsigned 
  * returns cell which a particle belongs to
  */
 template <int dimension>
-typename hardsphere<hardsphere_impl<dimension> >::cell_index
-hardsphere<hardsphere_impl<dimension> >::compute_cell(vector_type const& r)
+typename hardsphere<hardsphere_impl, dimension>::cell_index
+hardsphere<hardsphere_impl, dimension>::compute_cell(vector_type const& r)
 {
     cell_index cell;
     for (int i = 0; i < dimension; ++i) {
@@ -729,7 +729,7 @@ hardsphere<hardsphere_impl<dimension> >::compute_cell(vector_type const& r)
  * advance phase space state to given sample time
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::mdstep()
+void hardsphere<hardsphere_impl, dimension>::mdstep()
 {
     // nanosecond resolution process times
     boost::array<timespec, 2> t;
@@ -773,7 +773,7 @@ void hardsphere<hardsphere_impl<dimension> >::mdstep()
  * advance phase space state to given sample time
  */
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::sample(host_sample_type& sample) const
+void hardsphere<hardsphere_impl, dimension>::sample(host_sample_type& sample) const
 {
     typedef typename host_sample_type::value_type sample_type;
     typedef typename sample_type::position_sample_vector position_sample_vector;
@@ -808,7 +808,7 @@ void hardsphere<hardsphere_impl<dimension> >::sample(host_sample_type& sample) c
 }
 
 template <int dimension>
-void hardsphere<hardsphere_impl<dimension> >::sample(energy_sample_type& sample) const
+void hardsphere<hardsphere_impl, dimension>::sample(energy_sample_type& sample) const
 {
     typename std::vector<particle>::const_iterator p;
 

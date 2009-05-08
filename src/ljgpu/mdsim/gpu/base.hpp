@@ -29,7 +29,7 @@ namespace ljgpu { namespace gpu
 
 enum { VIRTUAL_PARTICLE = -1U };
 
-template <template <int> class ljfluid_impl>
+template <typename ljfluid_impl>
 struct ljfluid_base;
 
 template <>
@@ -53,11 +53,11 @@ struct ljfluid_base<ljfluid_impl_gpu_base>
     static cuda::function<void (float3*, const float2)> sample_smooth_potential;
 };
 
-template <typename ljfluid_impl>
+template <typename ljfluid_impl, int dimension>
 struct ljfluid;
 
 template <>
-struct ljfluid<ljgpu::ljfluid_impl_gpu_base<3> >
+struct ljfluid<ljgpu::ljfluid_impl_gpu_base, 3>
 : public ljfluid_base<ljfluid_impl_gpu_base>
 {
     static cuda::function<void (float4*, unsigned int*)> init_tags;
@@ -65,7 +65,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base<3> >
 };
 
 template <>
-struct ljfluid<ljgpu::ljfluid_impl_gpu_base<2> >
+struct ljfluid<ljgpu::ljfluid_impl_gpu_base, 2>
 : public ljfluid_base<ljfluid_impl_gpu_base>
 {
     static cuda::function<void (float4*, unsigned int*)> init_tags;

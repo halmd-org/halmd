@@ -97,10 +97,10 @@ extern "C" void mdlib_mdsim(options const& opt)
 {
     int const dimension = opt["dimension"].as<int>();
     if (dimension == 3) {
-	_mdsim<MDSIM_BACKEND<MDSIM_IMPL<3> > >(opt);
+	_mdsim<MDSIM_BACKEND<MDSIM_IMPL, 3> >(opt);
     }
     else if (dimension == 2) {
-	_mdsim<MDSIM_BACKEND<MDSIM_IMPL<2> > >(opt);
+	_mdsim<MDSIM_BACKEND<MDSIM_IMPL, 2> >(opt);
     }
     else {
 	throw std::logic_error("invalid dimension: " + boost::lexical_cast<std::string>(dimension));

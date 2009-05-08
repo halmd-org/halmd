@@ -29,16 +29,15 @@ namespace ljgpu
 /**
  * Lennard-Jones fluid interface
  */
-template <typename ljfluid_impl>
-class ljfluid_base : public mdsim_base<ljfluid_impl>
+template <typename ljfluid_impl, int dimension>
+class ljfluid_base : public mdsim_base<ljfluid_impl, dimension>
 {
 public:
-    typedef mdsim_base<ljfluid_impl> _Base;
+    typedef mdsim_base<ljfluid_impl, dimension> _Base;
     typedef typename _Base::float_type float_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
-    enum { dimension = _Base::dimension };
 
     /** static implementation properties */
     typedef boost::true_type has_thermostat;
@@ -118,15 +117,15 @@ protected:
     potential_type potential_;
 };
 
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::epsilon(boost::array<float, 3> const& value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_base<ljfluid_impl, dimension>::epsilon(boost::array<float, 3> const& value)
 {
     epsilon_ = value;
     LOG("potential well depths: ε(AA) = " << epsilon_[0] << ", ε(AB) = " << epsilon_[1] << ", ε(BB) = " << epsilon_[2]);
 }
 
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::sigma(boost::array<float, 3> const& value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_base<ljfluid_impl, dimension>::sigma(boost::array<float, 3> const& value)
 {
     sigma_ = value;
     LOG("collision diameters: σ(AA) = " << sigma_[0] << ", σ(AB) = " << sigma_[1] << ", σ(BB) = " << sigma_[2]);
@@ -136,8 +135,8 @@ void ljfluid_base<ljfluid_impl>::sigma(boost::array<float, 3> const& value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::cutoff_radius(float_type value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_base<ljfluid_impl, dimension>::cutoff_radius(float_type value)
 {
     r_cut_sigma = value;
     LOG("potential cutoff radius: " << r_cut_sigma);
@@ -153,8 +152,8 @@ void ljfluid_base<ljfluid_impl>::cutoff_radius(float_type value)
     }
 }
 
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::potential_smoothing(float_type value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_base<ljfluid_impl, dimension>::potential_smoothing(float_type value)
 {
     r_smooth = value;
     potential_ = C2POT;
@@ -164,16 +163,16 @@ void ljfluid_base<ljfluid_impl>::potential_smoothing(float_type value)
     rri_smooth = std::pow(r_smooth, -2);
 }
 
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::timestep(double value)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_base<ljfluid_impl, dimension>::timestep(double value)
 {
     // set simulation timestep
     timestep_ = value;
     LOG("simulation timestep: " << timestep_);
 }
 
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
+template <typename ljfluid_impl, int dimension>
+void ljfluid_base<ljfluid_impl, dimension>::thermostat(float_type nu, float_type temp)
 {
     thermostat_nu = nu;
     LOG("heat bath collision probability: " << thermostat_nu);
@@ -183,8 +182,8 @@ void ljfluid_base<ljfluid_impl>::thermostat(float_type nu, float_type temp)
     LOG("heat bath temperature: " << thermostat_temp);
 }
 
-template <typename ljfluid_impl>
-void ljfluid_base<ljfluid_impl>::param(H5param& param) const
+template <typename ljfluid_impl, int dimension>
+void ljfluid_base<ljfluid_impl, dimension>::param(H5param& param) const
 {
     _Base::param(param);
 

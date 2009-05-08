@@ -43,8 +43,8 @@ struct ljfluid_base<ljfluid_impl_gpu_neighbour>
 };
 
 template <>
-struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<3> >
-: public ljfluid_base<ljfluid_impl_gpu_neighbour>, public ljfluid<ljfluid_impl_gpu_base<3> >
+struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour, 3>
+: public ljfluid_base<ljfluid_impl_gpu_neighbour>, public ljfluid<ljfluid_impl_gpu_base, 3>
 {
     static cuda::texture<float4> r;
     static cuda::texture<float4> R;
@@ -65,8 +65,8 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<3> >
 };
 
 template <>
-struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour<2> >
-: public ljfluid_base<ljfluid_impl_gpu_neighbour>, public ljfluid<ljfluid_impl_gpu_base<2> >
+struct ljfluid<ljgpu::ljfluid_impl_gpu_neighbour, 2>
+: public ljfluid_base<ljfluid_impl_gpu_neighbour>, public ljfluid<ljfluid_impl_gpu_base, 2>
 {
     static cuda::texture<float4> r;
     static cuda::texture<float2> R;
