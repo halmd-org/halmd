@@ -32,7 +32,7 @@ struct mdlib : public dl::library
 	version.set(*this, "mdlib_version");
     }
 
-    dl::symbol<options::description ()> options;
+    dl::symbol<boost::program_options::options_description ()> options;
     dl::symbol<void (ljgpu::options const&)> mdsim;
     dl::symbol<std::string ()> version;
 };

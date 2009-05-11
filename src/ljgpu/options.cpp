@@ -449,10 +449,10 @@ void options::parse(po::options_description const& opt)
     vm_["output"] = po::variable_value(boost::filesystem::complete(path).string(), false);
 }
 
-options_description<mdsim_impl_base>::options_description()
-    : po::options_description("MD simulation options")
+template <>
+void options::add<mdsim_impl_base>::operator()(po::options_description& desc)
 {
-    add_options()
+    desc.add_options()
 	("particles,N", po::value<unsigned int>()->default_value(1000),
 	 "number of particles")
 	("dimension", po::value<int>()->default_value(3),
@@ -482,7 +482,7 @@ options_description<mdsim_impl_base>::options_description()
 	("trajectory-sample,S", po::value<int64_t>(),
 	 "trajectory sample for initial state")
 	;
-    add(mdsim_desc);
+    desc.add(mdsim_desc);
 
     po::options_description tcf_desc;
     tcf_desc.add_options()
@@ -499,10 +499,10 @@ options_description<mdsim_impl_base>::options_description()
 	("q-error", po::value<float>()->default_value(0.001),
 	 "relative deviation of averaging wave vectors")
 	;
-    add(tcf_desc);
+    desc.add(tcf_desc);
 
-    po::options_description desc;
-    desc.add_options()
+    po::options_description misc_desc;
+    misc_desc.add_options()
 	("disable-correlation", po::bool_switch(),
 	 "disable correlation functions")
 	("disable-energy", po::bool_switch(),
@@ -512,13 +512,14 @@ options_description<mdsim_impl_base>::options_description()
 	("dry-run,n", po::bool_switch(),
 	 "test parameters")
 	;
-    add(desc);
+    desc.add(misc_desc);
 }
 
-options_description<ljfluid_impl_base>::options_description()
+template <>
+void options::add<ljfluid_impl_base>::operator()(po::options_description& desc)
 {
     using namespace boost::assign;
-    add_options()
+    desc.add_options()
 	("cutoff", po::value<float>()->default_value(std::pow(2., 1 / 6.)),
 	 "truncate potential at cutoff radius")
 	("smooth", po::value<float>(),
@@ -534,9 +535,10 @@ options_description<ljfluid_impl_base>::options_description()
 	;
 }
 
-options_description<ljfluid_impl_gpu_base>::options_description()
+template <>
+void options::add<ljfluid_impl_gpu_base>::operator()(po::options_description& desc)
 {
-    add_options()
+    desc.add_options()
 	("tcf-backend", po::value<std::string>()->default_value("gpu"),
 	 "correlation functions backend")
 	("device,D", po::value<int>()->default_value(0),
@@ -546,13 +548,15 @@ options_description<ljfluid_impl_gpu_base>::options_description()
 	;
 }
 
-options_description<ljfluid_impl_gpu_square>::options_description()
+template <>
+void options::add<ljfluid_impl_gpu_square>::operator()(po::options_description& desc)
 {
 }
 
-options_description<ljfluid_impl_gpu_neighbour>::options_description()
+template <>
+void options::add<ljfluid_impl_gpu_neighbour>::operator()(po::options_description& desc)
 {
-    add_options()
+    desc.add_options()
 	("cell-occupancy", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
 	("skin", po::value<float>()->default_value(0.5),
@@ -560,17 +564,19 @@ options_description<ljfluid_impl_gpu_neighbour>::options_description()
 	;
 }
 
-options_description<ljfluid_impl_gpu_cell>::options_description()
+template <>
+void options::add<ljfluid_impl_gpu_cell>::operator()(po::options_description& desc)
 {
-    add_options()
+    desc.add_options()
 	("cell-occupancy", po::value<float>()->default_value(0.5),
 	 "desired average cell occupancy")
 	;
 }
 
-options_description<ljfluid_impl_host>::options_description()
+template <>
+void options::add<ljfluid_impl_host>::operator()(po::options_description& desc)
 {
-    add_options()
+    desc.add_options()
 	("tcf-backend", po::value<std::string>()->default_value("host"),
 	 "correlation functions backend")
 	("skin", po::value<float>()->default_value(0.5),
@@ -578,9 +584,10 @@ options_description<ljfluid_impl_host>::options_description()
 	;
 }
 
-options_description<hardsphere_impl>::options_description()
+template <>
+void options::add<hardsphere_impl>::operator()(po::options_description& desc)
 {
-    add_options()
+    desc.add_options()
 	("tcf-backend", po::value<std::string>()->default_value("host"),
 	 "correlation functions backend")
 	("pair-separation,p", po::value<float>()->default_value(0.5),

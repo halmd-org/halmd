@@ -107,9 +107,9 @@ extern "C" void mdlib_mdsim(options const& opt)
     }
 }
 
-extern "C" options::description mdlib_options()
+extern "C" boost::program_options::options_description mdlib_options()
 {
-    return options_description<MDSIM_IMPL>();
+    return options::description<MDSIM_IMPL>();
 }
 
 extern "C" std::string mdlib_version()
