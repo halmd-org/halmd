@@ -35,7 +35,7 @@ using namespace ljgpu;
 
 #ifdef WITH_CUDA
 template <typename mdsim_backend>
-static typename boost::enable_if<typename mdsim_backend::has_gpu, void>::type
+static typename boost::enable_if<typename mdsim_backend::impl_type::impl_gpu, void>::type
 _mdsim(options const& opt)
 {
     // create CUDA context and associate it with this thread
@@ -78,7 +78,7 @@ _mdsim(options const& opt)
 #endif /* WITH_CUDA */
 
 template <typename mdsim_backend>
-static typename boost::disable_if<typename mdsim_backend::has_gpu, void>::type
+static typename boost::disable_if<typename mdsim_backend::impl_type::impl_gpu, void>::type
 _mdsim(options const& opt)
 {
     mdsim<mdsim_backend> md(opt);

@@ -22,6 +22,8 @@
 #ifdef WITH_CUDA
 # include <vector_types.h>
 #endif
+#include <boost/mpl/if.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/math/vector2d.hpp>
@@ -31,57 +33,32 @@
 namespace ljgpu
 {
 
-template <typename mdsim_impl, int dimension_>
+template <typename impl, int dimension_, typename Enable = void>
 struct mdsim_traits;
 
-template <int dimension_>
-struct mdsim_traits<mdsim_impl_base, dimension_>
+#ifdef WITH_CUDA
+template <typename impl, int dimension_>
+struct mdsim_traits<impl, dimension_, typename boost::enable_if<typename impl::impl_gpu>::type>
 {
     enum { dimension = dimension_ };
     typedef energy_sample<dimension> energy_sample_type;
-};
-
-#ifdef WITH_CUDA
-template <>
-struct mdsim_traits<ljfluid_impl_gpu_base, 2> : mdsim_traits<mdsim_impl_base, 2>
-{
     typedef float float_type;
-    typedef vector<float_type, 2> vector_type;
-    typedef float2 gpu_vector_type;
-    typedef std::vector<trajectory_host_sample<float_type, 2> > host_sample_type;
-    typedef std::vector<trajectory_gpu_sample<2> > gpu_sample_type;
+    typedef vector<float_type, dimension> vector_type;
+    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_vector_type;
+    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
+    typedef std::vector<trajectory_gpu_sample<dimension> > gpu_sample_type;
 };
-
-template <>
-struct mdsim_traits<ljfluid_impl_gpu_base, 3> : mdsim_traits<mdsim_impl_base, 3>
-{
-    typedef float float_type;
-    typedef vector<float_type, 3> vector_type;
-    typedef float4 gpu_vector_type;
-    typedef std::vector<trajectory_host_sample<float_type, 3> > host_sample_type;
-    typedef std::vector<trajectory_gpu_sample<3> > gpu_sample_type;
-};
-
-template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_square, dimension> : mdsim_traits<ljfluid_impl_gpu_base, dimension> {};
-
-template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_cell, dimension> : mdsim_traits<ljfluid_impl_gpu_base, dimension> {};
-
-template <int dimension>
-struct mdsim_traits<ljfluid_impl_gpu_neighbour, dimension> : mdsim_traits<ljfluid_impl_gpu_base, dimension> {};
 #endif /* WITH_CUDA */
 
-template <int dimension>
-struct mdsim_traits<ljfluid_impl_host, dimension> : mdsim_traits<mdsim_impl_base, dimension>
+template <typename impl, int dimension_>
+struct mdsim_traits<impl, dimension_, typename boost::enable_if<typename impl::impl_host>::type>
 {
+    enum { dimension = dimension_ };
+    typedef energy_sample<dimension> energy_sample_type;
     typedef double float_type;
     typedef vector<float_type, dimension> vector_type;
     typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
 };
-
-template <int dimension>
-struct mdsim_traits<hardsphere_impl, dimension> : mdsim_traits<ljfluid_impl_host, dimension> {};
 
 } // namespace ljgpu
 

@@ -39,9 +39,6 @@ public:
     typedef typename _Base::host_sample_type host_sample_type;
     typedef typename _Base::energy_sample_type energy_sample_type;
 
-    /** static implementation properties */
-    typedef boost::true_type has_thermostat;
-
 public:
     ljfluid_base() :
 	epsilon_(boost::assign::list_of(1)(0)(0)),

@@ -19,14 +19,8 @@
 #ifndef LJGPU_OPTIONS_HPP
 #define LJGPU_OPTIONS_HPP
 
-#include <boost/mpl/filter_view.hpp>
-#include <boost/mpl/for_each.hpp>
-#include <boost/mpl/transform_view.hpp>
-#include <boost/mpl/vector.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/program_options.hpp>
-#include <boost/type_traits/is_base_of.hpp>
-#include <ljgpu/mdsim/impl.hpp>
 #include <stdint.h>
 #include <string>
 
@@ -46,41 +40,7 @@ public:
     class description : public boost::program_options::options_description
     {
     public:
-	typedef boost::program_options::options_description _Base;
-
-	description() : _Base("MD simulation options")
-	{
-	    boost::mpl::for_each<
-		boost::mpl::transform_view<
-		    boost::mpl::filter_view<
-			boost::mpl::vector<
-			    mdsim_impl_base,
-			    ljfluid_impl_base,
-			    ljfluid_impl_gpu_base,
-			    ljfluid_impl_gpu_square,
-			    ljfluid_impl_gpu_cell,
-			    ljfluid_impl_gpu_neighbour,
-			    ljfluid_impl_host,
-			    hardsphere_impl>,
-			boost::is_base_of<boost::mpl::_, mdsim_impl> >,
-		    options::add<boost::mpl::_> > >(boost::ref(*this));
-	}
-
-	template <typename functor>
-	void operator()(functor& f)
-	{
-	    f(*this);
-	}
-    };
-
-private:
-    /**
-     * functor to add implementation-specific options
-     */
-    template <typename mdsim_impl>
-    struct add
-    {
-	void operator()(boost::program_options::options_description& desc);
+	description();
     };
 
 public:

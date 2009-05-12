@@ -27,6 +27,7 @@
 #include <boost/unordered_map.hpp>
 #include <fstream>
 #include <iostream>
+#include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/options.hpp>
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/date_time.hpp>
@@ -449,10 +450,14 @@ void options::parse(po::options_description const& opt)
     vm_["output"] = po::variable_value(boost::filesystem::complete(path).string(), false);
 }
 
-template <>
-void options::add<mdsim_impl_base>::operator()(po::options_description& desc)
+#define IMPL(x) typename mdsim_impl::impl_##x()
+
+template <typename mdsim_impl>
+options::description<mdsim_impl>::description() : po::options_description("MD simulation options")
 {
-    desc.add_options()
+    using namespace boost::assign;
+
+    add_options()
 	("particles,N", po::value<unsigned int>()->default_value(1000),
 	 "number of particles")
 	("dimension", po::value<int>()->default_value(3),
@@ -467,8 +472,8 @@ void options::add<mdsim_impl_base>::operator()(po::options_description& desc)
 	 "random number generator integer seed")
 	;
 
-    po::options_description mdsim_desc;
-    mdsim_desc.add_options()
+    po::options_description mdsim;
+    mdsim.add_options()
 	("temperature,K", po::value<float>()->default_value(1.12),
 	 "Boltzmann distribution temperature")
 	("energy", po::value<float>(),
@@ -482,10 +487,10 @@ void options::add<mdsim_impl_base>::operator()(po::options_description& desc)
 	("trajectory-sample,S", po::value<int64_t>(),
 	 "trajectory sample for initial state")
 	;
-    desc.add(mdsim_desc);
+    add(mdsim);
 
-    po::options_description tcf_desc;
-    tcf_desc.add_options()
+    po::options_description tcf;
+    tcf.add_options()
 	("sample-rate", po::value<unsigned int>()->default_value(1),
 	 "sample rate for lowest block level")
 	("block-size", po::value<unsigned int>()->default_value(10),
@@ -499,10 +504,10 @@ void options::add<mdsim_impl_base>::operator()(po::options_description& desc)
 	("q-error", po::value<float>()->default_value(0.001),
 	 "relative deviation of averaging wave vectors")
 	;
-    desc.add(tcf_desc);
+    add(tcf);
 
-    po::options_description misc_desc;
-    misc_desc.add_options()
+    po::options_description misc;
+    misc.add_options()
 	("disable-correlation", po::bool_switch(),
 	 "disable correlation functions")
 	("disable-energy", po::bool_switch(),
@@ -512,87 +517,71 @@ void options::add<mdsim_impl_base>::operator()(po::options_description& desc)
 	("dry-run,n", po::bool_switch(),
 	 "test parameters")
 	;
-    desc.add(misc_desc);
+    add(misc);
+
+    if (IMPL(lennard_jones_potential)) {
+	add_options()
+	    ("cutoff", po::value<float>()->default_value(std::pow(2., 1 / 6.)),
+	     "truncate potential at cutoff radius")
+	    ("smooth", po::value<float>(),
+	     "C²-potential smoothing factor")
+	    ("binary,M", po::value<boost::array<unsigned int, 2> >(),
+	     "binary mixture with A,B particles")
+	    ("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
+	     "potential well depths AA,AB,BB")
+	    ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
+	     "collision diameters AA,AB,BB")
+	    ;
+    }
+    if (IMPL(thermostat)) {
+	add_options()
+	    ("thermostat", po::value<float>(),
+	     "heat bath collision probability")
+	    ;
+    }
+    if (IMPL(gpu)) {
+	add_options()
+	    ("tcf-backend", po::value<std::string>()->default_value("gpu"),
+	     "correlation functions backend")
+	    ("device,D", po::value<int>()->default_value(0),
+	     "CUDA device ordinal")
+	    ("threads,T", po::value<unsigned int>()->default_value(128),
+	     "number of CUDA threads per block")
+	    ;
+    }
+    if (IMPL(host)) {
+	add_options()
+	    ("tcf-backend", po::value<std::string>()->default_value("host"),
+	     "correlation functions backend")
+	    ;
+    }
+    if (IMPL(fixed_size_cell_lists)) {
+	add_options()
+	    ("cell-occupancy", po::value<float>()->default_value(0.5),
+	     "desired average cell occupancy")
+	    ;
+    }
+    if (IMPL(neighbour_lists)) {
+	add_options()
+	    ("skin", po::value<float>()->default_value(0.5),
+	     "neighbour list skin")
+	    ;
+    }
+    if (IMPL(hardsphere_potential)) {
+	add_options()
+	    ("pair-separation,p", po::value<float>()->default_value(0.5),
+	     "particle pair separation")
+	    ;
+    }
 }
 
-template <>
-void options::add<ljfluid_impl_base>::operator()(po::options_description& desc)
-{
-    using namespace boost::assign;
-    desc.add_options()
-	("cutoff", po::value<float>()->default_value(std::pow(2., 1 / 6.)),
-	 "truncate potential at cutoff radius")
-	("smooth", po::value<float>(),
-	 "C²-potential smoothing factor")
-	("thermostat", po::value<float>(),
-	 "heat bath collision probability")
-	("binary,M", po::value<boost::array<unsigned int, 2> >(),
-	 "binary mixture with A,B particles")
-	("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
-	 "potential well depths AA,AB,BB")
-	("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
-	 "collision diameters AA,AB,BB")
-	;
-}
+#undef IMPL
 
-template <>
-void options::add<ljfluid_impl_gpu_base>::operator()(po::options_description& desc)
-{
-    desc.add_options()
-	("tcf-backend", po::value<std::string>()->default_value("gpu"),
-	 "correlation functions backend")
-	("device,D", po::value<int>()->default_value(0),
-	 "CUDA device ordinal")
-	("threads,T", po::value<unsigned int>()->default_value(128),
-	 "number of CUDA threads per block")
-	;
-}
-
-template <>
-void options::add<ljfluid_impl_gpu_square>::operator()(po::options_description& desc)
-{
-}
-
-template <>
-void options::add<ljfluid_impl_gpu_neighbour>::operator()(po::options_description& desc)
-{
-    desc.add_options()
-	("cell-occupancy", po::value<float>()->default_value(0.5),
-	 "desired average cell occupancy")
-	("skin", po::value<float>()->default_value(0.5),
-	 "neighbour list skin")
-	;
-}
-
-template <>
-void options::add<ljfluid_impl_gpu_cell>::operator()(po::options_description& desc)
-{
-    desc.add_options()
-	("cell-occupancy", po::value<float>()->default_value(0.5),
-	 "desired average cell occupancy")
-	;
-}
-
-template <>
-void options::add<ljfluid_impl_host>::operator()(po::options_description& desc)
-{
-    desc.add_options()
-	("tcf-backend", po::value<std::string>()->default_value("host"),
-	 "correlation functions backend")
-	("skin", po::value<float>()->default_value(0.5),
-	 "neighbour list skin")
-	;
-}
-
-template <>
-void options::add<hardsphere_impl>::operator()(po::options_description& desc)
-{
-    desc.add_options()
-	("tcf-backend", po::value<std::string>()->default_value("host"),
-	 "correlation functions backend")
-	("pair-separation,p", po::value<float>()->default_value(0.5),
-	 "particle pair separation")
-	;
-}
+// explicit instantiation
+template class options::description<ljfluid_impl_gpu_square>;
+template class options::description<ljfluid_impl_gpu_cell>;
+template class options::description<ljfluid_impl_gpu_neighbour>;
+template class options::description<ljfluid_impl_host>;
+template class options::description<hardsphere_impl>;
 
 } // namespace ljgpu

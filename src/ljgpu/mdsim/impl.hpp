@@ -19,24 +19,84 @@
 #ifndef LJGPU_MDSIM_IMPL_HPP
 #define LJGPU_MDSIM_IMPL_HPP
 
+#include <boost/type_traits/integral_constant.hpp>
+
 namespace ljgpu
 {
 
-struct mdsim_impl_base {};
+struct mdsim_impl_base
+{
+    // set all implementation properties to false by default
+    typedef boost::false_type impl_energy_gpu_sample;
+    typedef boost::false_type impl_fixed_size_cell_lists;
+    typedef boost::false_type impl_gpu;
+    typedef boost::false_type impl_hardsphere_cell_lists;
+    typedef boost::false_type impl_hardsphere_event_lists;
+    typedef boost::false_type impl_hardsphere_potential;
+    typedef boost::false_type impl_host;
+    typedef boost::false_type impl_lennard_jones_potential;
+    typedef boost::false_type impl_neighbour_lists;
+    typedef boost::false_type impl_thermostat;
+    typedef boost::false_type impl_trajectory_gpu_sample;
+};
 
-struct ljfluid_impl_base : mdsim_impl_base {};
+struct ljfluid_impl_base : mdsim_impl_base
+{
+    typedef boost::true_type impl_lennard_jones_potential;
+    typedef boost::true_type impl_thermostat;
+};
 
-struct ljfluid_impl_gpu_base : ljfluid_impl_base {};
+struct ljfluid_impl_gpu_base : mdsim_impl_base
+{
+    typedef boost::true_type impl_gpu;
+    typedef boost::true_type impl_lennard_jones_potential;
+    typedef boost::true_type impl_thermostat;
+};
 
-struct ljfluid_impl_gpu_square : ljfluid_impl_gpu_base {};
+struct ljfluid_impl_gpu_square : mdsim_impl_base
+{
+    typedef boost::true_type impl_energy_gpu_sample;
+    typedef boost::true_type impl_gpu;
+    typedef boost::true_type impl_lennard_jones_potential;
+    typedef boost::true_type impl_thermostat;
+    typedef boost::true_type impl_trajectory_gpu_sample;
+};
 
-struct ljfluid_impl_gpu_cell : ljfluid_impl_gpu_base {};
+struct ljfluid_impl_gpu_cell : mdsim_impl_base
+{
+    typedef boost::true_type impl_energy_gpu_sample;
+    typedef boost::true_type impl_fixed_size_cell_lists;
+    typedef boost::true_type impl_gpu;
+    typedef boost::true_type impl_lennard_jones_potential;
+    typedef boost::true_type impl_thermostat;
+};
 
-struct ljfluid_impl_gpu_neighbour : ljfluid_impl_gpu_base {};
+struct ljfluid_impl_gpu_neighbour : mdsim_impl_base
+{
+    typedef boost::true_type impl_energy_gpu_sample;
+    typedef boost::true_type impl_fixed_size_cell_lists;
+    typedef boost::true_type impl_gpu;
+    typedef boost::true_type impl_lennard_jones_potential;
+    typedef boost::true_type impl_neighbour_lists;
+    typedef boost::true_type impl_thermostat;
+    typedef boost::true_type impl_trajectory_gpu_sample;
+};
 
-struct ljfluid_impl_host : ljfluid_impl_base {};
+struct ljfluid_impl_host : mdsim_impl_base
+{
+    typedef boost::true_type impl_host;
+    typedef boost::true_type impl_lennard_jones_potential;
+    typedef boost::true_type impl_neighbour_lists;
+    typedef boost::true_type impl_thermostat;
+};
 
-struct hardsphere_impl : mdsim_impl_base {};
+struct hardsphere_impl : mdsim_impl_base
+{
+    typedef boost::true_type impl_hardsphere_cell_lists;
+    typedef boost::true_type impl_hardsphere_event_lists;
+    typedef boost::true_type impl_hardsphere_potential;
+    typedef boost::true_type impl_host;
+};
 
 } // namespace ljgpu
 

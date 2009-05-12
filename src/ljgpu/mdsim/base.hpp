@@ -54,12 +54,6 @@ public:
     typedef typename energy_sample_type::virial_tensor virial_tensor;
     enum { dimension = dimension_ };
 
-    /** static implementation properties */
-    typedef boost::false_type has_gpu;
-    typedef boost::false_type has_trajectory_gpu_sample;
-    typedef boost::false_type has_energy_gpu_sample;
-    typedef boost::false_type has_thermostat;
-
 public:
     mdsim_base() :
 	mixture_(UNARY) {}

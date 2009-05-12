@@ -51,10 +51,6 @@ public:
     typedef typename _Base::energy_sample_type energy_sample_type;
     typedef typename _Base::virial_tensor virial_tensor;
 
-    /** static implementation properties */
-    typedef boost::true_type has_trajectory_gpu_sample;
-    typedef boost::true_type has_energy_gpu_sample;
-
 public:
     /** set number of particles in system */
     template <typename T>

@@ -45,6 +45,8 @@
 namespace ljgpu
 {
 
+#define IMPL(x) typename mdsim_backend::impl_type::impl_##x()
+
 /**
  * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
@@ -52,7 +54,6 @@ template <typename mdsim_backend>
 class mdsim : boost::noncopyable
 {
 public:
-    typedef typename mdsim_backend::impl_type impl_type;
     typedef typename mdsim_backend::float_type float_type;
     typedef typename mdsim_backend::vector_type vector_type;
     typedef typename mdsim_backend::host_sample_type host_sample_type;
@@ -229,29 +230,27 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     m_fluid.timestep(m_opt["timestep"].as<double>());
 
     // potential well depths
-    epsilon(boost::is_base_of<ljfluid_impl_base, impl_type>());
+    epsilon(IMPL(lennard_jones_potential));
     // collision diameters
-    sigma(boost::is_base_of<ljfluid_impl_base, impl_type>());
+    sigma(IMPL(lennard_jones_potential));
     // potential cutoff radius
-    cutoff_radius(boost::is_base_of<ljfluid_impl_base, impl_type>());
+    cutoff_radius(IMPL(lennard_jones_potential));
     // potential smoothing function scale parameter
-    potential_smoothing(boost::is_base_of<ljfluid_impl_base, impl_type>());
+    potential_smoothing(IMPL(lennard_jones_potential));
     // pair separation at which particle collision occurs
-    pair_separation(boost::is_base_of<hardsphere_impl, impl_type>());
+    pair_separation(IMPL(hardsphere_potential));
 
     // desired average cell occupancy
-    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_cell, impl_type>());
-    cell_occupancy(boost::is_base_of<ljfluid_impl_gpu_neighbour, impl_type>());
+    cell_occupancy(IMPL(fixed_size_cell_lists));
     // neighbour list skin
-    nbl_skin(boost::is_base_of<ljfluid_impl_gpu_neighbour, impl_type>());
-    nbl_skin(boost::is_base_of<ljfluid_impl_host, impl_type>());
+    nbl_skin(IMPL(neighbour_lists));
     // number of CUDA execution threads
-    threads(boost::is_base_of<ljfluid_impl_gpu_base, impl_type>());
+    threads(IMPL(gpu));
     // initialise hard-sphere cell lists
-    init_cells(boost::is_base_of<hardsphere_impl, impl_type>());
+    init_cells(IMPL(hardsphere_cell_lists));
 
     // heat bath collision probability and temperature
-    thermostat(typename mdsim_backend::has_thermostat());
+    thermostat(IMPL(thermostat));
 
     if (m_opt["random-seed"].empty()) {
 	m_fluid.rng(read_random_seed("/dev/random"));
@@ -276,14 +275,14 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     }
 
     // rescale mean particle energy
-    rescale_energy(boost::is_base_of<ljfluid_impl_base, impl_type>());
+    rescale_energy(IMPL(lennard_jones_potential));
 
     if (m_opt["trajectory-sample"].empty() || !m_opt["temperature"].defaulted()) {
 	// initialise velocities from Maxwell-Boltzmann distribution
 	m_fluid.temperature(m_opt["temperature"].as<float>());
     }
     // initialise hard-sphere event list
-    init_event_list(boost::is_base_of<hardsphere_impl, impl_type>());
+    init_event_list(IMPL(hardsphere_event_lists));
 
     if (m_opt["steps"].defaulted() && !m_opt["time"].empty()) {
 	// total simulation time
@@ -323,7 +322,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 #if WITH_CUDA
 	else if (backend == "gpu") {
 	    m_corr.add_gpu_correlation_functions(m_fluid.is_binary() ? 2 : 1);
-	    m_is_corr_sample_gpu = mdsim_backend::has_trajectory_gpu_sample::value;
+	    m_is_corr_sample_gpu = IMPL(trajectory_gpu_sample);
 	}
 #endif
 	else {
@@ -366,7 +365,7 @@ void mdsim<mdsim_backend>::operator()()
     for (step = 0; step < m_corr.steps(); ++step) {
 	sample_fluid(step, !step);
 	// stream next MD simulation program step on GPU
-	stream(boost::is_base_of<ljfluid_impl_gpu_base, impl_type>());
+	stream(IMPL(gpu));
 
 	if (sample_properties(step, false)) {
 	    // acquired maximum number of samples for a block level
@@ -609,5 +608,7 @@ void mdsim<mdsim_backend>::param(H5param param) const
 }
 
 } // namespace ljgpu
+
+#undef IMPL
 
 #endif /* ! LJGPU_MDSIM_HPP */
