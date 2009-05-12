@@ -72,6 +72,13 @@ The following compilation flags are highly recommended:
     CMAKE_CUDA_FLAGS		--host-compilation=c -Xcompiler -fPIC -Xptxas -v
     CMAKE_CXX_FLAGS		-Wall -fPIC
 
+On some 64-bit systems (e.g. Mandriva), cmake may accidently use a 32-bit
+library instead of its 64-bit counterpart, which results in linker errors.
+With Mandriva Linux, the following adjustments are required in ccmake:
+
+    GSL_CBLAS_LIBRARY		/usr/lib64/libgslcblas.so.0
+    GSL_LIBRARY			/usr/lib64/libgsl.so.0
+
 
 INSTALLATION
 ------------
