@@ -413,6 +413,8 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::lattice(cuda::vector<float4>& g_
 template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::random_permute(cuda::vector<float4>& g_r)
 {
+    LOG("randomly permuting particle coordinates");
+
     cuda::vector<unsigned int> g_sort_index(npart);
     g_sort_index.reserve(dim_.threads());
 
