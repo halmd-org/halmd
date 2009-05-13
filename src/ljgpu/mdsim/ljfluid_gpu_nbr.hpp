@@ -104,6 +104,8 @@ public:
 private:
     /** assign particle positions */
     void assign_positions();
+    /** assign single-precision velocities according to particle order */
+    void order_velocities(cuda::stream& stream);
     /** first leapfrog step of integration of differential equations of motion */
     void velocity_verlet(cuda::stream& stream);
     /** Lennard-Jones force calculation */
@@ -467,6 +469,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::state(host_sample_type& sam
     cuda::memset(g_part.v, 0, g_part.v.capacity());
 #endif
     cuda::copy(h_part.v, g_part.v);
+#ifdef USE_HILBERT_ORDER
+    order_velocities(stream_);
+#endif
 }
 
 template <int dimension>
@@ -926,12 +931,20 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::boltzmann(float temp, cuda:
     _Base::boltzmann(g_part.v, temp, stream);
 
 #ifdef USE_HILBERT_ORDER
-    // assign velocities after particle order to make thermostat
-    // independent of neighbour list update frequency or skin
+    // make thermostat independent of neighbour list update frequency or skin
+    order_velocities(stream);
+#endif
+}
+
+/**
+ * assign single-precision velocities according to particle order
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::order_velocities(cuda::stream& stream)
+{
     cuda::configure(dim_.grid, dim_.block, stream);
     _gpu::order_velocities(g_part.tag, g_part_buf.v);
     cuda::copy(g_part_buf.v, g_part.v, stream);
-#endif
 }
 
 template <int dimension>
