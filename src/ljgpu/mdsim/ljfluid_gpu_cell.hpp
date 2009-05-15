@@ -200,10 +200,10 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::cell_occupancy(float_type value)
 
     // optimal number of cells with given cell occupancy as upper boundary
     LOG("desired average cell occupancy: " << value);
-    ncell = std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension));
+    ncell = static_cast<unsigned int>(std::ceil(std::pow(npart / (value * cell_size_), 1.f / dimension)));
 
     // set number of cells per dimension, respecting cutoff radius
-    ncell = std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max));
+    ncell = static_cast<unsigned int>(std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max)));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
@@ -218,7 +218,7 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::cell_occupancy(float_type value)
     LOG("cell skin: " << r_skin);
 
     // set total number of cell placeholders
-    nplace = pow(ncell, dimension) * cell_size_;
+    nplace = static_cast<unsigned int>(pow(ncell, dimension)) * cell_size_;
     LOG("total number of cell placeholders: " << nplace);
 
     // set effective average cell occupancy
@@ -251,7 +251,7 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::threads(unsigned int value)
     _Base::threads(value);
 
     // set CUDA execution dimensions for cell-specific kernels
-    dim_cell_ = cuda::config(dim3(powf(ncell, dimension - 1), ncell), cell_size_);
+    dim_cell_ = cuda::config(dim3(static_cast<unsigned int>(powf(ncell, dimension - 1)), ncell), cell_size_);
     LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
     LOG("number of cell CUDA execution threads: " << dim_cell_.threads_per_block());
 
