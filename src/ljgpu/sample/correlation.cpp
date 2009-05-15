@@ -57,7 +57,7 @@ void correlation<dimension>::time(double value, double timestep)
     // set simulation timestep
     m_timestep = timestep;
     // derive total number of simulation steps
-    m_steps = round(m_time / m_timestep);
+    m_steps = static_cast<uint64_t>(round(m_time / m_timestep));
     LOG("total number of simulation steps: " << m_steps);
 }
 
@@ -102,7 +102,7 @@ void correlation<dimension>::block_size(unsigned int value)
     LOG("block size: " << m_block_size);
 
     // derive block shift from block size
-    m_block_shift = std::floor(std::sqrt(m_block_size));
+    m_block_shift = static_cast<unsigned int>(std::sqrt(m_block_size));
     LOG("block shift: " << m_block_shift);
     if (m_block_shift < 2) {
 	throw exception("computed block shift is less than 2, larger block size required");
@@ -179,8 +179,8 @@ void correlation<dimension>::q_values(std::vector<float> const& values, float er
 	// adjust q-value to reciprocal lattice
 	m_q_value[i] = round(values[i] / q_lattice);
 	// upper and lower boundaries within given error
-	int q_upper = std::floor(m_q_value[i] * (1 + m_q_error));
-	int q_lower = std::ceil(m_q_value[i] * (1 - m_q_error));
+	int q_upper = static_cast<int>(std::floor(m_q_value[i] * (1 + m_q_error)));
+	int q_lower = static_cast<int>(std::ceil(m_q_value[i] * (1 - m_q_error)));
 
 	qq.push_back(q_pair(q_lower * q_lower, q_upper * q_upper));
 	q_max = std::max(q_max, q_upper);
