@@ -37,6 +37,22 @@ private:
     char const* str_;
 };
 
+/**
+ * exit codes
+ */
+enum {
+    // no errors
+    LJGPU_EXIT_SUCCESS = 0,
+    // aborted simulation on SIGTERM or SIGINT
+    LJGPU_EXIT_TERM = 1,
+    // caught standard exception
+    LJGPU_EXIT_EXCEPTION = 2,
+    // caught CUDA error
+    LJGPU_EXIT_CUDA_ERROR = 3,
+    // potential energy diverged
+    LJGPU_EXIT_POTENTIAL_ENERGY_DIVERGENCE = 4,
+};
+
 } // namespace ljgpu
 
 #endif /* ! LJGPU_UTIL_EXCEPTION_HPP */

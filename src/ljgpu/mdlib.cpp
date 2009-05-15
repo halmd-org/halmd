@@ -35,7 +35,7 @@ using namespace ljgpu;
 
 #ifdef WITH_CUDA
 template <typename mdsim_backend>
-static typename boost::enable_if<typename mdsim_backend::impl_type::impl_gpu, void>::type
+static typename boost::enable_if<typename mdsim_backend::impl_type::impl_gpu, int>::type
 _mdsim(options const& opt)
 {
     // create CUDA context and associate it with this thread
@@ -67,30 +67,30 @@ _mdsim(options const& opt)
     LOG("GPU total global device memory: " << cuda::mem::total() << " bytes");
 
     if (opt["dry-run"].as<bool>()) {
-	return;
+	return LJGPU_EXIT_SUCCESS;
     }
     if (opt["daemon"].as<bool>()) {
 	daemon(0, 0);
     }
 
-    md();
+    return md();
 }
 #endif /* WITH_CUDA */
 
 template <typename mdsim_backend>
-static typename boost::disable_if<typename mdsim_backend::impl_type::impl_gpu, void>::type
+static typename boost::disable_if<typename mdsim_backend::impl_type::impl_gpu, int>::type
 _mdsim(options const& opt)
 {
     mdsim<mdsim_backend> md(opt);
 
     if (opt["dry-run"].as<bool>()) {
-	return;
+	return LJGPU_EXIT_SUCCESS;
     }
     if (opt["daemon"].as<bool>()) {
 	daemon(0, 0);
     }
 
-    md();
+    return md();
 }
 
 extern "C" void mdlib_mdsim(options const& opt)

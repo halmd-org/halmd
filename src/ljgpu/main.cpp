@@ -28,6 +28,7 @@
 #include <libgen.h>
 #include <ljgpu/mdlib.hpp>
 #include <ljgpu/options.hpp>
+#include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/version.h>
 #include <sched.h>
@@ -88,6 +89,7 @@ int main(int argc, char **argv)
 
     LOG("MD simulation backend: " << backend);
 
+    int status_ = ljgpu::LJGPU_EXIT_SUCCESS;
 #ifdef NDEBUG
     try {
 #endif
@@ -105,28 +107,28 @@ int main(int argc, char **argv)
 	}
 
 	// run MD simulation
-	mdlib.mdsim(opt);
+	status_ = mdlib.mdsim(opt);
 #ifdef NDEBUG
     }
 #ifdef WITH_CUDA
     catch (cuda::error const& e) {
 	LOG_ERROR("CUDA: " << e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");
-	return EXIT_FAILURE;
+	return ljgpu::LJGPU_EXIT_CUDA_ERROR;
     }
     catch (cu::error const& e) {
 	LOG_ERROR("CUDA: " << e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");
-	return EXIT_FAILURE;
+	return ljgpu::LJGPU_EXIT_CUDA_ERROR;
     }
 #endif
     catch (std::exception const& e) {
 	LOG_ERROR(e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");
-	return EXIT_FAILURE;
+	return ljgpu::LJGPU_EXIT_EXCEPTION;
     }
 #endif /* NDEBUG */
 
     LOG(PROGRAM_NAME " exit");
-    return EXIT_SUCCESS;
+    return status_;
 }

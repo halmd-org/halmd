@@ -66,7 +66,7 @@ public:
     /** initialise MD simulation */
     mdsim(options const& opt);
     /** run MD simulation */
-    void operator()();
+    int operator()();
     /** write parameters to HDF5 parameter group */
     void param(H5param param) const;
 
@@ -335,7 +335,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
  * run MD simulation
  */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::operator()()
+int mdsim<mdsim_backend>::operator()()
 {
     /** HDF5 buffers flush to disk interval in seconds */
     enum { FLUSH_TO_DISK_INTERVAL = 900 };
@@ -343,6 +343,9 @@ void mdsim<mdsim_backend>::operator()()
     enum { TIME_ESTIMATE_INTERVAL = 1800 };
     /** waiting time in seconds before runtime estimate after block completion */
     enum { TIME_ESTIMATE_WAIT_AFTER_BLOCK = 300 };
+
+    /** exit code */
+    int status_ = LJGPU_EXIT_SUCCESS;
 
     boost::unordered_map<int, std::string> const signals = boost::assign::map_list_of
 	(SIGINT, "INT")
@@ -381,6 +384,7 @@ void mdsim<mdsim_backend>::operator()()
 	catch (potential_energy_divergence const& e) {
 	    step++;
 	    LOG_ERROR(e.what() << " at step " << step);
+	    status_ = LJGPU_EXIT_POTENTIAL_ENERGY_DIVERGENCE;
 	    break;
 	}
 
@@ -405,6 +409,7 @@ void mdsim<mdsim_backend>::operator()()
 	    if (signal::signal == SIGINT || signal::signal == SIGTERM) {
 		step++;
 		LOG_WARNING("aborting simulation at step " << step);
+		status_ = LJGPU_EXIT_TERM;
 		break;
 	    }
 	    else if (signal::signal == SIGHUP || signal::signal == SIGALRM) {
@@ -433,6 +438,8 @@ void mdsim<mdsim_backend>::operator()()
 
     // close HDF5 output files
     close();
+
+    return status_;
 }
 
 /**
