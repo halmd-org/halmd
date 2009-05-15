@@ -270,7 +270,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
 	// number of placeholders per cell
 	cell_size_ = i;
 	// optimal number of cells with given cell occupancy as upper boundary
-	ncell = std::ceil(std::pow(npart / (cell_occupancy_ * cell_size_), 1.f / dimension));
+	ncell = static_cast<unsigned int>(std::ceil(std::pow(npart / (cell_occupancy_ * cell_size_), 1.f / dimension)));
 	// set number of cells per dimension, respecting cutoff radius
 	ncell = std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max));
 	// derive cell length from number of cells
@@ -291,7 +291,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
 
     LOG("cell length: " << cell_length_);
     // set total number of cell placeholders
-    nplace = pow(ncell, dimension) * cell_size_;
+    nplace = static_cast<unsigned int>(pow(ncell, dimension)) * cell_size_;
     LOG("total number of cell placeholders: " << nplace);
     // set effective average cell occupancy
     cell_occupancy_ = npart * 1.f / nplace;
@@ -330,7 +330,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
     // volume of n-dimensional sphere with neighbour list radius
     float const v_nbl = ((dimension + 1) * M_PI / 3) * std::pow(r_nbl, dimension);
 
-    nbl_size = std::ceil(v_nbl * (density_ / cell_occupancy_));
+    nbl_size = static_cast<unsigned int>(std::ceil(v_nbl * (density_ / cell_occupancy_)));
     LOG("number of placeholders per neighbour list: " << nbl_size);
 
     try {
@@ -344,8 +344,12 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
 
 #if defined(USE_HILBERT_ORDER)
     // set Hilbert space-filling curve recursion depth
-    unsigned int depth = std::min((dimension == 3) ? 10.f : 16.f, ceilf(logf(box_) / M_LN2));
+    unsigned int depth = static_cast<unsigned int>(ceilf(logf(box_) / M_LN2));
+    // 32-bit integer for 2D Hilbert code allows a maximum of 16/10 levels
+    depth = std::min((dimension == 3) ? 10U : 16U, depth);
+
     LOG("Hilbert space-filling curve recursion depth: " << depth);
+
     try {
 	cuda::copy(box_, gpu::hilbert<dimension>::box);
 	cuda::copy(depth, gpu::hilbert<dimension>::depth);
@@ -363,7 +367,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::threads(unsigned int value)
     _Base::threads(value);
 
     // set CUDA execution dimensions for cell-specific kernels
-    dim_cell_ = cuda::config(dim3(powf(ncell, dimension - 1), ncell), cell_size_);
+    dim_cell_ = cuda::config(dim3(static_cast<unsigned int>(powf(ncell, dimension - 1)), ncell), cell_size_);
     LOG("number of cell CUDA execution blocks: " << dim_cell_.blocks_per_grid());
     LOG("number of cell CUDA execution threads: " << dim_cell_.threads_per_block());
 
