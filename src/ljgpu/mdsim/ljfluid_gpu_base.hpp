@@ -377,13 +377,13 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::lattice(cuda::vector<float4>& g_
     // particles per 2- or 3-dimensional unit cell
     unsigned int const m = 2 * (dimension - 1);
     // lower boundary for number of particles per lattice dimension
-    unsigned int n = std::pow(npart / m, 1.f / dimension);
+    unsigned int n = static_cast<unsigned int>(std::pow(npart / m, 1.f / dimension));
     // lower boundary for total number of lattice sites
-    unsigned int N = m * pow(n, static_cast<unsigned int>(dimension));
+    unsigned int N = m * static_cast<unsigned int>(pow(n, static_cast<unsigned int>(dimension)));
 
     if (N < npart) {
 	n += 1;
-	N = m * pow(n, static_cast<unsigned int>(dimension));
+	N = m * static_cast<unsigned int>(pow(n, dimension));
     }
     if (N > npart) {
 	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
