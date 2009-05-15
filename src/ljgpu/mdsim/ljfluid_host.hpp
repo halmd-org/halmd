@@ -267,7 +267,7 @@ void ljfluid<ljfluid_impl_host, dimension>::nbl_skin(float value)
     }
 
     // number of cells per dimension
-    ncell = std::floor(box_ / *std::max_element(r_cut_skin.begin(), r_cut_skin.end()));
+    ncell = static_cast<int>(box_ / *std::max_element(r_cut_skin.begin(), r_cut_skin.end()));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
@@ -335,13 +335,13 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     // particles per 2- or 3-dimensional unit cell
     const unsigned int m = 2 * (dimension - 1);
     // lower boundary for number of particles per lattice dimension
-    unsigned int n = std::pow(npart / m, 1. / dimension);
+    unsigned int n = static_cast<unsigned int>(std::pow(npart / m, 1. / dimension));
     // lower boundary for total number of lattice sites
-    unsigned int N = m * pow(n, dimension);
+    unsigned int N = m * static_cast<unsigned int>(pow(n, dimension));
 
     if (N < npart) {
 	n += 1;
-	N = m * pow(n, dimension);
+	N = m * static_cast<unsigned int>(pow(n, dimension));
     }
     if (N > npart) {
 	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
