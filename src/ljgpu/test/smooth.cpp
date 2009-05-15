@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 	cuda::copy(std::numeric_limits<float>::max(), _gpu::box);
 
 	// CUDA execution dimensions
-	unsigned int count = (range.y - range.x) / range.z;
+	unsigned int count = static_cast<unsigned int>((range.y - range.x) / range.z);
 	cuda::config dim((std::max(count, threads) + threads - 1) / threads, threads);
 
 	cuda::vector<float3> g_h(dim.threads());
