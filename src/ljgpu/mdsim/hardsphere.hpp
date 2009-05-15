@@ -255,9 +255,9 @@ void hardsphere<hardsphere_impl, dimension>::init_cells()
 {
     // FIXME optimal number of cells
     if (dimension == 3)
-	ncell = std::min(cbrt(npart * 8.), std::floor(box_ / pair_sep_));
+	ncell = static_cast<unsigned int>(std::min(cbrt(npart * 8.), std::floor(box_ / pair_sep_)));
     else
-	ncell = std::min(sqrt(npart * 1.5), std::floor(box_ / pair_sep_));
+	ncell = static_cast<unsigned int>(std::min(sqrt(npart * 1.5), std::floor(box_ / pair_sep_)));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
@@ -350,13 +350,13 @@ void hardsphere<hardsphere_impl, dimension>::lattice()
     // particles per 2- or 3-dimensional unit cell
     const unsigned int m = 2 * (dimension - 1);
     // lower boundary for number of particles per lattice dimension
-    unsigned int n = std::pow(npart / m, 1. / dimension);
+    unsigned int n = static_cast<unsigned int>(std::pow(npart / m, 1. / dimension));
     // lower boundary for total number of lattice sites
-    unsigned int N = m * pow(n, dimension);
+    unsigned int N = m * static_cast<unsigned int>(pow(n, dimension));
 
     if (N < npart) {
 	n += 1;
-	N = m * pow(n, dimension);
+	N = m * static_cast<unsigned int>(pow(n, dimension));
     }
     if (N > npart) {
 	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
