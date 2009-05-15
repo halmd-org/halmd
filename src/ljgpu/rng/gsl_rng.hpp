@@ -246,7 +246,7 @@ public:
 	// Addison-Wesley, pp. 124-125.
 	//
 	for (typename T::size_type i = array.size(); i > 1; --i) {
-	    typename T::size_type r = i * uniform();
+	    typename T::size_type r = static_cast<typename T::size_type>(i * uniform());
 	    std::swap(array[r], array[i - 1]);
 	}
     }
