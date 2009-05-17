@@ -16,11 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LJGPU_MDLIB_HPP
+#define LJGPU_MDLIB_HPP
+
 #include <ljgpu/options.hpp>
 #include <ljgpu/util/dl.hpp>
 
+extern "C" int mdlib_mdsim(ljgpu::options const& opt);
+extern "C" boost::program_options::options_description mdlib_options();
+extern "C" std::string mdlib_backend();
+extern "C" std::string mdlib_version();
+
 namespace ljgpu
 {
+
+#ifndef STATIC_BACKEND
 
 struct mdlib : public dl::library
 {
@@ -29,12 +39,29 @@ struct mdlib : public dl::library
 	dl::library::open(path);
 	options.set(*this, "mdlib_options");
 	mdsim.set(*this, "mdlib_mdsim");
+	backend.set(*this, "mdlib_backend");
 	version.set(*this, "mdlib_version");
     }
 
     dl::symbol<boost::program_options::options_description ()> options;
     dl::symbol<int (ljgpu::options const&)> mdsim;
+    dl::symbol<std::string ()> backend;
     dl::symbol<std::string ()> version;
 };
 
+#else /* ! STATIC_BACKEND */
+
+struct mdlib
+{
+    mdlib() : options(mdlib_options), mdsim(mdlib_mdsim), backend(mdlib_backend) {}
+
+    boost::function<boost::program_options::options_description ()> options;
+    boost::function<int (ljgpu::options const&)> mdsim;
+    boost::function<std::string ()> backend;
+};
+
+#endif /* ! STATIC_BACKEND */
+
 } // namespace ljgpu
+
+#endif /* ! LJGPU_MDLIB_HPP */

@@ -284,6 +284,7 @@ void options::parse(int argc, char** argv)
 	 "output version and exit")
 	("help",
 	 "display this help and exit")
+#ifndef STATIC_BACKEND
 	("backend",
 #ifdef WITH_CUDA
 	 po::value<string>()->default_value("gpu_neighbour"),
@@ -291,6 +292,7 @@ void options::parse(int argc, char** argv)
 	 po::value<string>()->default_value("host"),
 #endif
 	 "MD simulation backend")
+#endif /* ! STATIC_BACKEND */
 	;
 
     try {

@@ -600,7 +600,7 @@ template <typename mdsim_backend>
 void mdsim<mdsim_backend>::param(H5param param) const
 {
     H5xx::group node(param["mdsim"]);
-    node["backend"] = m_opt["backend"].as<std::string>();
+    node["backend"] = MDSIM_BACKEND;
     if (!m_opt["disable-correlation"].as<bool>()) {
 	node["tcf_backend"] = m_opt["tcf-backend"].as<std::string>();
     }

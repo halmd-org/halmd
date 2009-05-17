@@ -20,6 +20,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility.hpp>
+#include <ljgpu/mdlib.hpp>
 #include <ljgpu/mdsim/hardsphere.hpp>
 #ifdef WITH_CUDA
 # include <ljgpu/mdsim/ljfluid_gpu_cell.hpp>
@@ -97,10 +98,10 @@ extern "C" int mdlib_mdsim(options const& opt)
 {
     int const dimension = opt["dimension"].as<int>();
     if (dimension == 3) {
-	return _mdsim<MDSIM_BACKEND<MDSIM_IMPL, 3> >(opt);
+	return _mdsim<MDSIM_CLASS<MDSIM_IMPL, 3> >(opt);
     }
     else if (dimension == 2) {
-	return _mdsim<MDSIM_BACKEND<MDSIM_IMPL, 2> >(opt);
+	return _mdsim<MDSIM_CLASS<MDSIM_IMPL, 2> >(opt);
     }
     else {
 	throw std::logic_error("invalid dimension: " + boost::lexical_cast<std::string>(dimension));
@@ -110,6 +111,11 @@ extern "C" int mdlib_mdsim(options const& opt)
 extern "C" boost::program_options::options_description mdlib_options()
 {
     return options::description<MDSIM_IMPL>();
+}
+
+extern "C" std::string mdlib_backend()
+{
+    return MDSIM_BACKEND;
 }
 
 extern "C" std::string mdlib_version()

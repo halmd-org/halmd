@@ -51,21 +51,24 @@ int main(int argc, char **argv)
 	return e.status();
     }
 
-    string const backend(opt["backend"].as<string>());
+    // load backend library
     ljgpu::mdlib mdlib;
+#ifndef STATIC_BACKEND
     try {
+	string const backend(opt["backend"].as<string>());
 	boost::filesystem::path exe(argv[0]);
 	boost::filesystem::path lib("libljgpu_" + backend + ".so");
 	mdlib.open((exe.parent_path() / lib));
     }
     catch (std::exception const& e) {
-	cerr << e.what() << endl;
+	cerr << PROGRAM_NAME ": " << e.what() << endl;
 	return EXIT_FAILURE;
     }
     if (mdlib.version() != PROGRAM_VERSION) {
-	cerr << PROGRAM_NAME << ": mismatching program and backend version" << endl;
+	cerr << PROGRAM_NAME ": mismatching program and backend version" << endl;
 	return EXIT_FAILURE;
     }
+#endif
 
     // parse backend options
     try {
@@ -87,7 +90,7 @@ int main(int argc, char **argv)
     vector<string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
-    LOG("MD simulation backend: " << backend);
+    LOG("MD simulation backend: " << mdlib.backend());
 
     int status_ = ljgpu::LJGPU_EXIT_SUCCESS;
 #ifdef NDEBUG

@@ -1,3 +1,9 @@
+set(ljgpu_STATIC_BACKEND FALSE CACHE BOOL
+  "Build separate executable for each backend")
+if(ljgpu_STATIC_BACKEND)
+  add_definitions(-DSTATIC_BACKEND)
+endif(ljgpu_STATIC_BACKEND)
+
 if(WITH_CUDA)
   set(ljgpu_VARIANT_CELL_SUMMATION_ORDER TRUE CACHE BOOL
     "Use opposite cell summation order")
@@ -38,11 +44,7 @@ configure_file(
   ESCAPE_QUOTES @ONLY
   )
 
-add_executable(ljgpu
-  main.cpp
-  options.cpp
-  )
-target_link_libraries(ljgpu
+set(ljgpu_common_libraries
   -Wl,-whole-archive
   util
   sample
@@ -56,9 +58,19 @@ target_link_libraries(ljgpu
   pthread
   z
   )
-install(TARGETS ljgpu
-  RUNTIME DESTINATION bin
-  )
+
+if(NOT ljgpu_STATIC_BACKEND)
+  add_executable(ljgpu
+    main.cpp
+    options.cpp
+    )
+  target_link_libraries(ljgpu
+    ${ljgpu_common_libraries}
+    )
+  install(TARGETS ljgpu
+    RUNTIME DESTINATION bin
+    )
+endif(NOT ljgpu_STATIC_BACKEND)
 
 set(ljgpu_impl
     ljfluid_impl_host
@@ -74,22 +86,35 @@ if(WITH_CUDA)
 endif(WITH_CUDA)
 
 foreach(impl ${ljgpu_impl})
-  string(REGEX REPLACE "_impl[_a-z]*$" "" backend ${impl})
-  if(impl MATCHES "_impl$")
-    string(REGEX REPLACE "_impl$" "" target ${impl})
-  else(impl MATCHES "_impl$")
-    string(REGEX REPLACE "^[a-z]+_impl_" "" target ${impl})
-  endif(impl MATCHES "_impl$")
+  string(REGEX REPLACE "_impl[_a-z]*$" "" class ${impl})
+  string(REGEX REPLACE "(^ljfluid_impl_|_impl)" "" backend ${impl})
 
-  add_library(ljgpu_${target} MODULE
-    mdlib.cpp
-    )
-  set_target_properties(ljgpu_${target} PROPERTIES
-    COMPILE_DEFINITIONS "MDSIM_BACKEND=${backend};MDSIM_IMPL=${impl}"
-    )
-  install(TARGETS ljgpu_${target}
-    LIBRARY DESTINATION lib
-    )
+  if(ljgpu_STATIC_BACKEND)
+    add_executable(ljgpu_${backend}
+      main.cpp
+      options.cpp
+      mdlib.cpp
+      )
+    set_target_properties(ljgpu_${backend} PROPERTIES
+      COMPILE_DEFINITIONS "MDSIM_CLASS=${class};MDSIM_IMPL=${impl};MDSIM_BACKEND=\"${backend}\""
+      )
+    target_link_libraries(ljgpu_${backend}
+      ${ljgpu_common_libraries}
+      )
+    install(TARGETS ljgpu_${backend}
+      RUNTIME DESTINATION bin
+      )
+  else(ljgpu_STATIC_BACKEND)
+    add_library(ljgpu_${backend} MODULE
+      mdlib.cpp
+      )
+    set_target_properties(ljgpu_${backend} PROPERTIES
+      COMPILE_DEFINITIONS "MDSIM_CLASS=${class};MDSIM_IMPL=${impl};MDSIM_BACKEND=\"${backend}\""
+      )
+    install(TARGETS ljgpu_${backend}
+      LIBRARY DESTINATION lib
+      )
+  endif(ljgpu_STATIC_BACKEND)
 endforeach(impl)
 
 target_link_libraries(ljgpu_host
