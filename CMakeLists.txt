@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 2.6)
 
 project(ljgpu)
 
+if (ljgpu_USE_STATIC_LIBS)
+  set(ljgpu_USE_STATIC_LIBS TRUE CACHE INTERNAL
+    "Build statically linked backend executables")
+  set(Boost_USE_STATIC_LIBS TRUE)
+  set(HDF5_USE_STATIC_LIBS TRUE)
+  set(GSL_USE_STATIC_LIBS TRUE)
+endif(ljgpu_USE_STATIC_LIBS)
+
 set(CMAKE_MODULE_PATH ${ljgpu_SOURCE_DIR}/CMakeModules)
 
 find_package(Boost QUIET REQUIRED COMPONENTS filesystem system date_time program_options)
@@ -10,13 +18,13 @@ find_package(Git QUIET REQUIRED)
 find_package(GSL QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)
 
-if(CUDA_FOUND)
+if(CUDA_FOUND AND NOT ljgpu_USE_STATIC_LIBS)
   set(WITH_CUDA TRUE)
   enable_language(CUDA)
   add_definitions(-DWITH_CUDA)
-else(CUDA_FOUND)
+else(CUDA_FOUND AND NOT ljgpu_USE_STATIC_LIBS)
   set(WITH_CUDA FALSE)
-endif(CUDA_FOUND)
+endif(CUDA_FOUND AND NOT ljgpu_USE_STATIC_LIBS)
 
 git_repository_info(${ljgpu_SOURCE_DIR} ljgpu)
 
