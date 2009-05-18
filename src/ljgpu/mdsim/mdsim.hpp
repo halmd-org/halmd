@@ -201,6 +201,9 @@ private:
     bool m_is_corr_step;
     bool m_is_en_step;
     bool m_is_corr_sample_gpu;
+
+    /** current MD step */
+    count_timer<uint64_t> step;
 };
 
 /**
@@ -363,17 +366,15 @@ int mdsim<mdsim_backend>::operator()()
     real_timer timer;
     timer.start();
 
-    count_timer<uint64_t> step;
-
-    for (step = 0; step < m_corr.steps(); ++step) {
-	sample_fluid(step, !step);
+    for (this->step = 0; this->step < m_corr.steps(); ++this->step) {
+	sample_fluid(this->step, !this->step);
 	// stream next MD simulation program step on GPU
 	stream(IMPL(gpu));
 
-	if (sample_properties(step, false)) {
+	if (sample_properties(this->step, false)) {
 	    // acquired maximum number of samples for a block level
 	    flush();
-	    step.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
+	    this->step.set(TIME_ESTIMATE_WAIT_AFTER_BLOCK);
 	    alarm(FLUSH_TO_DISK_INTERVAL);
 	}
 
@@ -382,21 +383,21 @@ int mdsim<mdsim_backend>::operator()()
 	    m_fluid.mdstep();
 	}
 	catch (potential_energy_divergence const& e) {
-	    step++;
-	    LOG_ERROR(e.what() << " at step " << step);
+	    this->step++;
+	    LOG_ERROR(e.what() << " at step " << this->step);
 	    status_ = LJGPU_EXIT_POTENTIAL_ENERGY_DIVERGENCE;
 	    break;
 	}
 
-	if (step.estimate() > 0) {
-	    LOG("estimated remaining runtime: " << real_timer::format(step.estimate()));
-	    step.set(TIME_ESTIMATE_INTERVAL);
+	if (this->step.estimate() > 0) {
+	    LOG("estimated remaining runtime: " << real_timer::format(this->step.estimate()));
+	    this->step.set(TIME_ESTIMATE_INTERVAL);
 	}
 
 	if (signal::poll()) {
 	    if (signals.find(signal::signal) != signals.end()) {
 		std::string const& name = signals.at(signal::signal);
-		LOG_WARNING("trapped signal " + name + " at simulation step " << step);
+		LOG_WARNING("trapped signal " + name + " at simulation step " << this->step);
 	    }
 	    if (signal::signal == SIGUSR2) {
 		// block process until further signal is received
@@ -407,8 +408,8 @@ int mdsim<mdsim_backend>::operator()()
 		LOG("resuming simulation");
 	    }
 	    if (signal::signal == SIGINT || signal::signal == SIGTERM) {
-		step++;
-		LOG_WARNING("aborting simulation at step " << step);
+		this->step++;
+		LOG_WARNING("aborting simulation at step " << this->step);
 		status_ = LJGPU_EXIT_TERM;
 		break;
 	    }
@@ -417,12 +418,12 @@ int mdsim<mdsim_backend>::operator()()
 		alarm(FLUSH_TO_DISK_INTERVAL);
 	    }
 	    else if (signal::signal == SIGUSR1) {
-		step.set(0);
+		this->step.set(0);
 	    }
 	}
     }
-    sample_fluid(step, true);
-    sample_properties(step, true);
+    sample_fluid(this->step, true);
+    sample_properties(this->step, true);
 
     timer.stop();
     LOG("finished MD simulation");
@@ -557,15 +558,19 @@ template <typename mdsim_backend>
 void mdsim<mdsim_backend>::close()
 {
     if (m_corr.is_open()) {
+	param(m_corr);
 	m_corr.close();
     }
     if (m_traj.is_open()) {
+	param(m_traj);
 	m_traj.close();
     }
     if (m_en.is_open()) {
+	param(m_en);
 	m_en.close();
     }
     if (m_perf.is_open()) {
+	param(m_perf);
 	m_perf.close();
     }
 }
@@ -605,6 +610,9 @@ void mdsim<mdsim_backend>::param(H5param param) const
 	node["tcf_backend"] = m_opt["tcf-backend"].as<std::string>();
     }
     node["dimension"] = (unsigned int) dimension;
+    if (this->step > 0) {
+	node["effective_steps"] = static_cast<uint64_t>(this->step);
+    }
 
     node = param["program"];
     node["name"] = PROGRAM_NAME;
