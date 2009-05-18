@@ -120,7 +120,7 @@ public:
     /** returns HDF5 parameter group */
     operator H5param() { return m_file; }
     /** write parameters to HDF5 parameter group */
-    void param(H5::Group const& param) const;
+    void param(H5param& param) const;
     /** check if sample is acquired for given simulation step */
     bool is_sample_step(uint64_t step) const;
     /** whether to sample trajectory for given simulation step */

@@ -297,9 +297,9 @@ void correlation<dimension>::close()
  * write parameters to HDF5 parameter group
  */
 template <int dimension>
-void correlation<dimension>::param(H5::Group const& param) const
+void correlation<dimension>::param(H5param& param) const
 {
-    H5xx::group node(param.createGroup("correlation"));
+    H5xx::group node(param["correlation"]);
     node["steps"] = m_steps;
     node["time"] = m_time;
     node["sample_rate"] = m_sample_rate;
