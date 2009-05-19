@@ -63,8 +63,8 @@ struct is_vector<std::vector<T> >: public boost::true_type {};
 class attribute
 {
 public:
-    attribute(H5::Group const& node, std::string const& name)
-	: m_node(node), m_name(name) {}
+    attribute(H5::H5Object const& node, std::string const& name)
+	: m_node(&node), m_name(name) {}
 
     template <typename T>
     typename boost::enable_if<boost::is_fundamental<T>, attribute&>::type
@@ -106,8 +106,8 @@ public:
     as();
 
 private:
-    /** group which attribute belongs to */
-    H5::Group m_node;
+    /** object which attribute belongs to */
+    H5::H5Object const* m_node;
     /** attribute name */
     std::string m_name;
 };
@@ -120,6 +120,24 @@ class group : public H5::Group
 public:
     group() {}
     group(H5::Group const& node) : H5::Group(node) {}
+
+    /**
+     * returns existing or creates attribute
+     */
+    attribute operator[](char const* name) const
+    {
+	return attribute(*this, name);
+    }
+};
+
+/**
+ * HDF5 dataset
+ */
+class dataset : public H5::DataSet
+{
+public:
+    dataset() {}
+    dataset(H5::DataSet const& node) : H5::DataSet(node) {}
 
     /**
      * returns existing or creates attribute
@@ -162,10 +180,10 @@ attribute::operator=(T const& value)
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, ctype<T>::type, H5S_SCALAR);
+	attr = m_node->createAttribute(m_name, ctype<T>::type, H5S_SCALAR);
     }
     attr.write(ctype<T>::type, &value);
     return *this;
@@ -181,7 +199,7 @@ attribute::as()
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
 	throw;
@@ -202,10 +220,10 @@ attribute::operator=(T const& value)
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, tid, H5S_SCALAR);
+	attr = m_node->createAttribute(m_name, tid, H5S_SCALAR);
     }
     attr.write(tid, value.c_str());
     return *this;
@@ -221,7 +239,7 @@ attribute::as()
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
 	throw;
@@ -243,10 +261,10 @@ attribute::operator=(T value)
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, tid, H5S_SCALAR);
+	attr = m_node->createAttribute(m_name, tid, H5S_SCALAR);
     }
     attr.write(tid, value);
     return *this;
@@ -267,10 +285,10 @@ attribute::operator=(T const& value)
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, ctype<value_type>::type, ds);
+	attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
     }
     attr.write(ctype<value_type>::type, value.data());
     return *this;
@@ -289,7 +307,7 @@ attribute::as()
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
 	throw;
@@ -329,10 +347,10 @@ attribute::operator=(T const& value)
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, ctype<value_type>::type, ds);
+	attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
     }
     attr.write(ctype<value_type>::type, value.data());
     return *this;
@@ -351,7 +369,7 @@ attribute::as()
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
 	throw;
@@ -387,10 +405,10 @@ attribute::operator=(T const& value)
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node.createAttribute(m_name, ctype<value_type>::type, ds);
+	attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
     }
     attr.write(ctype<value_type>::type, value.data());
     return *this;
@@ -408,7 +426,7 @@ attribute::as()
     H5::Attribute attr;
     try {
 	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node.openAttribute(m_name);
+	attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
 	throw;
