@@ -119,11 +119,14 @@ void trajectory::read(host_sample_type& sample, ssize_t index)
 	mpart = H5param(*this)["mdsim"]["particles"].as<std::vector<unsigned int> >();
 
 	for (size_t i = 0; i < mpart.size(); ++i) {
-	    H5::Group node(root);
+	    H5::Group node;
 	    if (mpart.size() > 1) {
 		std::string name;
 		name.push_back('A' + i);
-		node = H5::Group(root.openGroup(name));
+		node = root.openGroup(name);
+	    }
+	    else {
+		node = root;
 	    }
 	    try {
 		// backwards compatibility with r:R:v:t format
