@@ -21,6 +21,7 @@
 
 #include <H5Cpp.h>
 #include <boost/array.hpp>
+#include <boost/mpl/and.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -85,11 +86,15 @@ public:
     operator=(T value);
 
     template <typename T>
-    typename boost::enable_if<is_boost_array<T>, attribute&>::type
+    typename boost::enable_if<boost::mpl::and_<is_boost_array<T>, boost::is_fundamental<typename T::value_type> >, attribute&>::type
     operator=(T const& value);
     template <typename T>
-    typename boost::enable_if<is_boost_array<T>, T>::type
+    typename boost::enable_if<boost::mpl::and_<is_boost_array<T>, boost::is_fundamental<typename T::value_type> >, T>::type
     as();
+
+    template <typename T>
+    typename boost::enable_if<boost::mpl::and_<is_boost_array<T>, boost::is_same<typename T::value_type, char const*> >, attribute&>::type
+    operator=(T const& value);
 
     template <typename T>
     typename boost::enable_if<is_boost_multi_array<T>, attribute&>::type
@@ -274,7 +279,7 @@ attribute::operator=(T value)
  * create and write fixed-size array type attribute
  */
 template <typename T>
-typename boost::enable_if<is_boost_array<T>, attribute&>::type
+typename boost::enable_if<boost::mpl::and_<is_boost_array<T>, boost::is_fundamental<typename T::value_type> >, attribute&>::type
 attribute::operator=(T const& value)
 {
     typedef typename T::value_type value_type;
@@ -294,11 +299,40 @@ attribute::operator=(T const& value)
     return *this;
 }
 
+/*
+ * create and write fixed-size C string array type attribute
+ */
+template <typename T>
+typename boost::enable_if<boost::mpl::and_<is_boost_array<T>, boost::is_same<typename T::value_type, char const*> >, attribute&>::type
+attribute::operator=(T const& value)
+{
+    typedef typename T::value_type value_type;
+    enum { size = T::static_size };
+
+    hsize_t dim[1] = { size };
+    H5::DataSpace ds(1, dim);
+    H5::StrType tid(H5::PredType::C_S1, 256);
+    H5::Attribute attr;
+    try {
+	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+	attr = m_node->openAttribute(m_name);
+    }
+    catch (H5::AttributeIException const&) {
+	attr = m_node->createAttribute(m_name, tid, ds);
+    }
+    boost::array<char[256], size> data;
+    for (size_t i = 0; i < size; ++i) {
+	strncpy(data[i], value[i], 256);
+    }
+    attr.write(tid, data.data());
+    return *this;
+}
+
 /**
  * read fixed-size array type attribute
  */
 template <typename T>
-typename boost::enable_if<is_boost_array<T>, T>::type
+typename boost::enable_if<boost::mpl::and_<is_boost_array<T>, boost::is_fundamental<typename T::value_type> >, T>::type
 attribute::as()
 {
     typedef typename T::value_type value_type;
