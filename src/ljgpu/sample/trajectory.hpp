@@ -181,11 +181,14 @@ void trajectory::write(host_sample_type const& sample, double time)
 	m_dset_v.reserve(sample.size());
 
 	for (size_t i = 0; i < sample.size(); ++i) {
-	    H5::Group node(root);
+	    H5::Group node;
 	    if (sample.size() > 1) {
 		std::string name;
 		name.push_back('A' + i);
-		node = H5::Group(root.createGroup(name));
+		node = root.createGroup(name);
+	    }
+	    else {
+		node = root;
 	    }
 	    m_dset_r.push_back(create_vector_dataset(node, "r", *sample[i].r));
 	    m_dset_v.push_back(create_vector_dataset(node, "v", *sample[i].v));
