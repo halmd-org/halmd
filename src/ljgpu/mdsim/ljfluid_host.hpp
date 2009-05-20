@@ -368,6 +368,16 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
 	r *= a;
     }
 
+    // sort particles after binary mixture species for trajectory output
+    struct compare
+    {
+	static bool _(particle const& p1, particle const& p2)
+	{
+	    return (p1.type < p2.type);
+	}
+    };
+    std::stable_sort(this->part.begin(), this->part.end(), compare::_);
+
     // update cell lists
     update_cells();
 
