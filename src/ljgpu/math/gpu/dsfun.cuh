@@ -106,29 +106,22 @@ __device__ inline void __dsdiv(float& dsc0, float& dsc1, float const dsa0, float
     // Compute a DP approximation to the quotient.
 
     float s1 = dsa0 / dsb0;
-    //>
-    // On systems with a fused multiply add, such as IBM systems, it is faster to
-    // uncomment the next two lines and comment out the following lines until //>.
-    // On other systems, do the opposite.
-
-    float c11 = s1 * dsb0;
-    float c21 = s1 * dsb0 - c11;
 
     // This splits s1 and dsb0 into high-order and low-order words.
 
-    // float const split = 8193;
-    // float cona = s1 * split;
-    // float conb = dsb0 * split;
-    // float a1 = cona - (cona - s1);
-    // float b1 = conb - (conb - dsb0);
-    // float a2 = s1 - a1;
-    // float b2 = dsb0 - b1;
+    float const split = 8193;
+    float cona = s1 * split;
+    float conb = dsb0 * split;
+    float a1 = cona - (cona - s1);
+    float b1 = conb - (conb - dsb0);
+    float a2 = s1 - a1;
+    float b2 = dsb0 - b1;
 
     // Multiply s1 * dsb0 using Dekker's method.
 
-    // float c11 = s1 * dsb0;
-    // float c21 = (((a1 * b1 - c11) + a1 * b2) + a2 * b1) + a2 * b2;
-    //>
+    float c11 = s1 * dsb0;
+    float c21 = (((a1 * b1 - c11) + a1 * b2) + a2 * b1) + a2 * b2;
+
     // Compute s1 * dsb1 (only high-order word is needed).
 
     float c2 = s1 * dsb1;
