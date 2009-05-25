@@ -15,7 +15,7 @@
 /**
  * This function sets the DS number A equal to the double precision floating point number B.
  */
-__device__ __host__ inline void __dsdeq(float &a0, float &a1, double b)
+__device__ __host__ inline void __dsdeq(float& a0, float& a1, double b)
 {
     a0 = (float)b;
     a1 = (float)(b - a0);
@@ -24,16 +24,18 @@ __device__ __host__ inline void __dsdeq(float &a0, float &a1, double b)
 /**
  * This function sets the DS number A equal to the single precision floating point number B.
  */
-__device__ __host__ inline void __dsfeq(float &a0, float &a1, float b)
+__device__ __host__ inline void __dsfeq(float& a0, float& a1, float b)
 {
     a0 = b;
     a1 = 0.0f;
 }
 
+#ifdef __CUDACC__
+
 /**
  * This function computes c = a + b.
  */
-__device__ __host__ inline void __dsadd(float &c0, float &c1, const float a0, const float a1, const float b0, const float b1)
+__device__ inline void __dsadd(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
 {
     // Compute __dsa + __dsb using Knuth's trick.
     float t1 = a0 + b0;
@@ -48,8 +50,7 @@ __device__ __host__ inline void __dsadd(float &c0, float &c1, const float a0, co
 /**
  * This function computes c = a - b.
  */
-template <typename T>
-__device__ __host__ inline void __dssub(float &c0, T &c1, const T a0, const T a1, const T b0, const T b1)
+__device__ inline void __dssub(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
 {
     // Compute __dsa - __dsb using Knuth's trick.
     float t1 = a0 - b0;
@@ -64,8 +65,7 @@ __device__ __host__ inline void __dssub(float &c0, T &c1, const T a0, const T a1
 /**
  * This function multiplies DS numbers A and B to yield the DS product C.
  */
-template <typename T, typename U, typename V>
-__device__ __host__ inline void __dsmul(float &c0, T &c1, const float a0, const U a1, const V b0, const V b1)
+__device__ inline void __dsmul(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
 {
     // This splits __dsa(1) and __dsb(1) into high-order and low-order words.
     float cona = a0 * 8193.0f;
@@ -95,7 +95,7 @@ __device__ __host__ inline void __dsmul(float &c0, T &c1, const float a0, const 
 /**
  * This divides the DS number DSA by the DS number DSB to yield the DS quotient DSC.
  */
-__device__ __host__ inline void __dsdiv(float &dsc0, float &dsc1, float const dsa0, float const dsa1, float const dsb0, float const dsb1)
+__device__ inline void __dsdiv(float& dsc0, float& dsc1, float const dsa0, float const dsa1, float const dsb0, float const dsb1)
 {
     // Compute a DP approximation to the quotient.
 
@@ -157,9 +157,8 @@ __device__ __host__ inline void __dsdiv(float &dsc0, float &dsc1, float const ds
 /**
  * This subroutine computes dsc = da x db.
  */
-__device__ __host__ inline void __dsmulss(float &dsc0, float &dsc1, float const da, float const db)
+__device__ inline void __dsmulss(float& dsc0, float& dsc1, float const da, float const db)
 {
-
     float const split = 8193;
 
     //>
@@ -191,7 +190,7 @@ __device__ __host__ inline void __dsmulss(float &dsc0, float &dsc1, float const 
 /**
  * This computes the square root of the DS number A and returns the DS result in B.
  */
-__device__ __host__ inline void __dssqrt(float &dsb0, float &dsb1, float const dsa0, float const dsa1)
+__device__ inline void __dssqrt(float& dsb0, float& dsb1, float const dsa0, float const dsa1)
 {
     // This subroutine employs the following formula (due to Alan Karp):
     //
@@ -220,25 +219,36 @@ __device__ __host__ inline void __dssqrt(float &dsb0, float &dsb1, float const d
     __dsadd(dsb0, dsb1, s00, s01, s10, s11);
 }
 
+#endif /* __CUDACC__ */
+
 /**
  * double-single floating point value
  */
 __device__ __host__  struct dfloat
 {
     float f0, f1;
-#ifdef __CUDACC__
+
     __device__ __host__ inline dfloat() {}
 
-    __device__ __host__ inline dfloat(float f0, float f1) : f0(f0), f1(f1) {}
+#ifdef __CUDACC__
+    __device__ inline dfloat(float f0, float f1) : f0(f0), f1(f1) {}
 
-    __device__ __host__ inline dfloat(float f0) : f0(f0), f1(0) {}
+    __device__ inline dfloat(float f)
+    {
+	__dsfeq(f0, f1, f);
+    }
 
-    __device__ __host__ inline operator float() const
+    __device__ inline operator float() const
     {
 	return f0;
     }
 #else
-    __device__ __host__ inline operator double() const
+    __host__ inline dfloat(double d)
+    {
+	__dsdeq(f0, f1, d);
+    }
+
+    __host__ inline operator double() const
     {
 	return (double) f0 + (double) f1;
     }
@@ -247,55 +257,55 @@ __device__ __host__  struct dfloat
 
 #ifdef __CUDACC__
 
-__device__ __host__ inline dfloat& operator+=(dfloat& v, dfloat const& w)
+__device__ inline dfloat& operator+=(dfloat& v, dfloat const& w)
 {
     __dsadd(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ __host__ inline dfloat& operator-=(dfloat& v, dfloat const& w)
+__device__ inline dfloat& operator-=(dfloat& v, dfloat const& w)
 {
     __dssub(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ __host__ inline dfloat& operator*=(dfloat& v, dfloat const& w)
+__device__ inline dfloat& operator*=(dfloat& v, dfloat const& w)
 {
     __dsmul(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ __host__ inline dfloat& operator/=(dfloat& v, dfloat const& w)
+__device__ inline dfloat& operator/=(dfloat& v, dfloat const& w)
 {
     __dsdiv(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
     return v;
 }
 
-__device__ __host__ inline dfloat operator+(dfloat v, dfloat const& w)
+__device__ inline dfloat operator+(dfloat v, dfloat const& w)
 {
     v += w;
     return v;
 }
 
-__device__ __host__ inline dfloat operator-(dfloat v, dfloat const& w)
+__device__ inline dfloat operator-(dfloat v, dfloat const& w)
 {
     v -= w;
     return v;
 }
 
-__device__ __host__ inline dfloat operator*(dfloat v, dfloat const& w)
+__device__ inline dfloat operator*(dfloat v, dfloat const& w)
 {
     v *= w;
     return v;
 }
 
-__device__ __host__ inline dfloat operator/(dfloat v, dfloat const& w)
+__device__ inline dfloat operator/(dfloat v, dfloat const& w)
 {
     v /= w;
     return v;
 }
 
-__device__ __host__ inline dfloat sqrt(dfloat v)
+__device__ inline dfloat sqrt(dfloat v)
 {
     dfloat w;
     __dssqrt(w.f0, w.f1, v.f0, v.f1);
