@@ -155,6 +155,72 @@ __device__ __host__ inline void __dsdiv(float &dsc0, float &dsc1, float const ds
 }
 
 /**
+ * This subroutine computes dsc = da x db.
+ */
+__device__ __host__ inline void __dsmulss(float &dsc0, float &dsc1, float const da, float const db)
+{
+
+    float const split = 8193;
+
+    //>
+    // On systems with a fused multiply add, such as IBM systems, it is faster to
+    // uncomment the next two lines and comment out the following lines until //>.
+    // On other systems, do the opposite.
+
+    float s1 = da * db;
+    float s2 = da * db - s1;
+
+    // This splits da and db into high-order and low-order words.
+
+    float cona = da * split;
+    float conb = db * split;
+    float a1 = cona - (cona - da);
+    float b1 = conb - (conb - db);
+    float a2 = da - a1;
+    float b2 = db - b1;
+
+    // Multiply da * db using Dekker's method.
+
+    s1 = da * db;
+    s2 = (((a1 * b1 - s1) + a1 * b2) + a2 * b1) + a2 * b2;
+    //>
+    dsc0 = s1;
+    dsc1 = s2;
+}
+
+/**
+ * This computes the square root of the DS number A and returns the DS result in B.
+ */
+__device__ __host__ inline void __dssqrt(float &dsb0, float &dsb1, float const dsa0, float const dsa1)
+{
+    // This subroutine employs the following formula (due to Alan Karp):
+    //
+    //       Sqrt(A) = (A * X) + 0.5 * [A - (A * X)^2] * X  (approx.)
+    //
+    // where X is a double precision approximation to the reciprocal square root,
+    // and where the multiplications A * X and [] * X are performed with only
+    // double precision.
+
+    if (dsa0 == 0) {
+	dsb0 = 0;
+	dsb1 = 0;
+	return;
+    }
+
+    float t1 = 1.f / sqrtf(dsa0);
+    float t2 = dsa1 * t1;
+    float s00, s01, s10, s11;
+    __dsmulss(s00, s01, t2, t2);
+    __dssub(s10, s11, dsa0, dsa1, s00, s01);
+    float t3 = 0.5f * s10 * t1;
+    s00 = t2;
+    s01 = 0;
+    s10 = t3;
+    s11 = 0;
+    __dsadd(dsb0, dsb1, s00, s01, s10, s11);
+}
+
+/**
  * double-single floating point value
  */
 __device__ __host__  struct dfloat
@@ -227,6 +293,13 @@ __device__ __host__ inline dfloat operator/(dfloat v, dfloat const& w)
 {
     v /= w;
     return v;
+}
+
+__device__ __host__ inline dfloat sqrt(dfloat v)
+{
+    dfloat w;
+    __dssqrt(w.f0, w.f1, v.f0, v.f1);
+    return w;
 }
 
 #endif /* __CUDACC__ */
