@@ -12,7 +12,7 @@ endif(ljgpu_USE_STATIC_LIBS)
 
 set(CMAKE_MODULE_PATH ${ljgpu_SOURCE_DIR}/CMakeModules)
 
-find_package(Boost QUIET REQUIRED COMPONENTS filesystem system date_time program_options)
+find_package(Boost QUIET REQUIRED COMPONENTS filesystem system date_time program_options unit_test_framework)
 find_package(CUDA QUIET)
 find_package(Git QUIET REQUIRED)
 find_package(GSL QUIET REQUIRED)

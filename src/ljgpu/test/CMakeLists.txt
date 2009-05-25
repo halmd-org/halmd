@@ -1,5 +1,7 @@
 enable_testing()
 
+add_subdirectory(dsfun)
+
 if(WITH_CUDA)
   add_executable(sample_smooth_function smooth.cpp)
   set_target_properties(sample_smooth_function PROPERTIES
