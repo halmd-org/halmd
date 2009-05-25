@@ -208,7 +208,7 @@ __device__ __host__ inline void __dssqrt(float &dsb0, float &dsb1, float const d
     }
 
     float t1 = 1.f / sqrtf(dsa0);
-    float t2 = dsa1 * t1;
+    float t2 = dsa0 * t1;
     float s00, s01, s10, s11;
     __dsmulss(s00, s01, t2, t2);
     __dssub(s10, s11, dsa0, dsa1, s00, s01);
