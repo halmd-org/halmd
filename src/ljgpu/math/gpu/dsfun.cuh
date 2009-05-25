@@ -160,14 +160,6 @@ __device__ inline void __dsmulss(float& dsc0, float& dsc1, float const da, float
 {
     float const split = 8193;
 
-    //>
-    // On systems with a fused multiply add, such as IBM systems, it is faster to
-    // uncomment the next two lines and comment out the following lines until //>.
-    // On other systems, do the opposite.
-
-    float s1 = da * db;
-    float s2 = da * db - s1;
-
     // This splits da and db into high-order and low-order words.
 
     float cona = da * split;
@@ -179,11 +171,8 @@ __device__ inline void __dsmulss(float& dsc0, float& dsc1, float const da, float
 
     // Multiply da * db using Dekker's method.
 
-    s1 = da * db;
-    s2 = (((a1 * b1 - s1) + a1 * b2) + a2 * b1) + a2 * b2;
-    //>
-    dsc0 = s1;
-    dsc1 = s2;
+    dsc0 = da * db;
+    dsc1 = (((a1 * b1 - dsc0) + a1 * b2) + a2 * b1) + a2 * b2;
 }
 
 /**
