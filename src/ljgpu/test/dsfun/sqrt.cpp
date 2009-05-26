@@ -49,6 +49,6 @@ BOOST_AUTO_TEST_CASE(test_dsfun_sqrt)
     std::copy(h_dsp.begin(), h_dsp.end(), h_b.begin());
 
     for (size_t i = 0; i < h_b.size(); ++i) {
-	BOOST_CHECK_CLOSE_FRACTION(h_b[i], std::sqrt(h_a[i]), 3e-14);
+	BOOST_CHECK_CLOSE_FRACTION(h_b[i], std::sqrt(h_a[i]), 2e-13);
     }
 }

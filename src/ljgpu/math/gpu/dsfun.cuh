@@ -171,7 +171,7 @@ __device__ inline void __dsmulss(float& dsc0, float& dsc1, float const da, float
 
     // Multiply da * db using Dekker's method.
 
-    dsc0 = da * db;
+    dsc0 = __fmul_rn(da, db);
     dsc1 = (((a1 * b1 - dsc0) + a1 * b2) + a2 * b1) + a2 * b2;
 }
 
