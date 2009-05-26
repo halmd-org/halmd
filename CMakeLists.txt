@@ -14,6 +14,7 @@ set(CMAKE_MODULE_PATH ${ljgpu_SOURCE_DIR}/CMakeModules)
 
 find_package(Boost QUIET REQUIRED COMPONENTS filesystem system date_time program_options unit_test_framework)
 find_package(CUDA QUIET)
+find_package(Doxygen QUIET)
 find_package(Git QUIET REQUIRED)
 find_package(GSL QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)
@@ -54,4 +55,5 @@ if(WITH_CUDA)
   include_directories(${CUDA_INCLUDE_DIR})
 endif(WITH_CUDA)
 
+add_subdirectory(doc)
 add_subdirectory(src)
