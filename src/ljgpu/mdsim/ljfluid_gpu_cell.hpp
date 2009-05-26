@@ -54,8 +54,8 @@ public:
 
     /** restore system state from phase space sample */
     void state(host_sample_type& sample, float_type box);
-    /** rescale mean particle energy */
-    void rescale_energy(float_type en);
+    /** rescale particle velocities */
+    void rescale_velocities(double coeff);
     /** place particles on a face-centered cubic (fcc) lattice */
     void lattice();
     /** set system temperature according to Maxwell-Boltzmann distribution */
@@ -314,10 +314,10 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::state(host_sample_type& sample, 
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_cell, dimension>::rescale_energy(float_type en)
+void ljfluid<ljfluid_impl_gpu_cell, dimension>::rescale_velocities(double coeff)
 {
-    LOG("rescaling velocities to mean particle energy: " << en);
-    _Base::rescale_energy(g_part.v, en, dim_cell_, stream_);
+    LOG("rescaling velocities with coefficient: " << coeff);
+    _Base::rescale_velocities(g_part.v, coeff, dim_cell_, stream_);
 }
 
 template <int dimension>

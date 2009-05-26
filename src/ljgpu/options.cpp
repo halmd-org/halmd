@@ -368,8 +368,9 @@ void options::parse(po::options_description const& opt)
 	po::conflicting_options(vm, "binary", "particles");
 	po::conflicting_options(vm, "disable-correlation", "q-values");
 	po::conflicting_options(vm, "disable-correlation", "q-error");
-	po::dependent_option(vm, "energy", "trajectory-sample");
-	po::conflicting_options(vm, "temperature", "energy");
+	po::dependent_option(vm, "measure-temperature-after-time", "trajectory-sample");
+	po::dependent_option(vm, "measure-temperature-after-time", "energy");
+	po::dependent_option(vm, "measure-temperature-after-time", "temperature");
     }
     catch (exception const& e) {
 	cerr << PROGRAM_NAME ": " << e.what() << "\n";
@@ -478,8 +479,6 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
     mdsim.add_options()
 	("temperature,K", po::value<float>()->default_value(1.12),
 	 "Boltzmann distribution temperature")
-	("energy", po::value<float>(),
-	 "rescale velocities to mean particle energy")
 	("steps,s", po::value<uint64_t>()->default_value(10000),
 	 "number of simulation steps")
 	("time,t", po::value<double>(),
@@ -533,6 +532,10 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 	     "potential well depths AA,AB,BB")
 	    ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
 	     "collision diameters AA,AB,BB")
+	    ("energy", po::value<std::string>(),
+	     "energy input file")
+	    ("measure-temperature-after-time", po::value<double>(),
+	     "rescale velocities to temperature measured after time")
 	    ;
     }
     if (IMPL(thermostat)) {

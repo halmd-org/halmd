@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/noncopyable.hpp>
+#include <ljgpu/math/accum.hpp>
 #include <ljgpu/math/vector2d.hpp>
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/mdsim/sample.hpp>
@@ -42,6 +43,12 @@ template <int dimension>
 class energy : boost::noncopyable
 {
 public:
+    /** io flags */
+    enum openmode {
+	in = 0x1,
+	out = 0x2,
+    };
+
     /** time and scalar property */
     typedef std::pair<double, double> scalar_pair;
     /** time and vector property */
@@ -55,7 +62,7 @@ public:
 public:
     energy() : m_samples(0), m_samples_buffer(0), m_samples_file(0), m_is_open(false) {}
     /** create HDF5 thermodynamic equilibrium properties output file */
-    void open(std::string const& filename);
+    void open(std::string const& filename, openmode mode = in);
     /** write thermodynamic equilibrium properties to HDF5 file */
     void flush(bool force=true);
     /** close HDF5 file */
@@ -65,9 +72,12 @@ public:
 
     /** sample thermodynamic equilibrium properties */
     void sample(energy_sample<dimension> const& sample, float density, double time);
+    /** calculate temperature from given start time */
+    void temperature(accumulator<double>& en, double start_time = 0);
 
     /** returns HDF5 parameter group */
     operator H5param() { return m_file; }
+
 private:
     /** number of aquired samples */
     unsigned int m_samples;

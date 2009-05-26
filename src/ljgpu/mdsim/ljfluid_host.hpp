@@ -90,8 +90,8 @@ public:
 
     /** set system state from phase space sample */
     void state(host_sample_type& sample, float_type box);
-    /** rescale mean particle energy */
-    void rescale_energy(float_type en);
+    /** rescale particle velocities */
+    void rescale_velocities(double coeff);
     /** initialize random number generator with seed */
     void rng(unsigned int seed);
     /** initialize random number generator from state */
@@ -285,16 +285,11 @@ void ljfluid<ljfluid_impl_host, dimension>::nbl_skin(float value)
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_host, dimension>::rescale_energy(float_type en)
+void ljfluid<ljfluid_impl_host, dimension>::rescale_velocities(double coeff)
 {
-    LOG("rescaling velocities to mean particle energy: " << en);
-    float_type vv = 0;
-    foreach (particle const& p, part) {
-	vv += p.v * p.v;
-    }
-    float_type s = std::sqrt(2 * (en - en_pot) * npart / vv);
+    LOG("rescaling velocities with coefficient: " << coeff);
     foreach (particle& p, part) {
-	p.v *= s;
+	p.v *= coeff;
     }
 }
 

@@ -27,70 +27,84 @@ namespace ljgpu
  * create HDF5 thermodynamic equilibrium properties output file
  */
 template <int dimension>
-void energy<dimension>::open(std::string const& filename)
+void energy<dimension>::open(std::string const& filename, openmode mode)
 {
-    LOG("write thermodynamic equilibrium properties to file: " << filename);
-    try {
-	// truncate existing file
-	m_file = H5::H5File(filename, H5F_ACC_TRUNC);
-	m_is_open = true;
-    }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create thermodynamic equilibrium properties output file");
-    }
+    if (mode & out) {
+	LOG("write thermodynamic equilibrium properties to file: " << filename);
+	try {
+	    // truncate existing file
+	    m_file = H5::H5File(filename, H5F_ACC_TRUNC);
+	    m_is_open = true;
+	}
+	catch (H5::FileIException const& e) {
+	    throw exception("failed to create thermodynamic equilibrium properties output file");
+	}
 
-    // extensible dataspace for scalar properties
-    hsize_t scalar_dim[2] = { 0, 2 };
-    hsize_t scalar_max_dim[2] = { H5S_UNLIMITED, 2 };
-    hsize_t scalar_chunk_dim[2] = { CHUNK_SIZE, 2 };
-    H5::DataSpace scalar_ds(2, scalar_dim, scalar_max_dim);
-    H5::DSetCreatPropList scalar_cparms;
-    scalar_cparms.setChunk(2, scalar_chunk_dim);
-    // GZIP compression
-    scalar_cparms.setDeflate(6);
+	// extensible dataspace for scalar properties
+	hsize_t scalar_dim[2] = { 0, 2 };
+	hsize_t scalar_max_dim[2] = { H5S_UNLIMITED, 2 };
+	hsize_t scalar_chunk_dim[2] = { CHUNK_SIZE, 2 };
+	H5::DataSpace scalar_ds(2, scalar_dim, scalar_max_dim);
+	H5::DSetCreatPropList scalar_cparms;
+	scalar_cparms.setChunk(2, scalar_chunk_dim);
+	// GZIP compression
+	scalar_cparms.setDeflate(6);
 
-    // extensible dataspace for vector properties
-    hsize_t vector_dim[2] = { 0, dimension + 1 };
-    hsize_t vector_max_dim[2] = { H5S_UNLIMITED, dimension + 1 };
-    hsize_t vector_chunk_dim[2] = { CHUNK_SIZE, dimension + 1 };
-    H5::DataSpace vector_ds(2, vector_dim, vector_max_dim);
-    H5::DSetCreatPropList vector_cparms;
-    vector_cparms.setChunk(2, vector_chunk_dim);
-    // GZIP compression
-    vector_cparms.setDeflate(6);
+	// extensible dataspace for vector properties
+	hsize_t vector_dim[2] = { 0, dimension + 1 };
+	hsize_t vector_max_dim[2] = { H5S_UNLIMITED, dimension + 1 };
+	hsize_t vector_chunk_dim[2] = { CHUNK_SIZE, dimension + 1 };
+	H5::DataSpace vector_ds(2, vector_dim, vector_max_dim);
+	H5::DSetCreatPropList vector_cparms;
+	vector_cparms.setChunk(2, vector_chunk_dim);
+	// GZIP compression
+	vector_cparms.setDeflate(6);
 
-    // floating-point data type
-    m_tid = H5::PredType::NATIVE_DOUBLE;
+	// floating-point data type
+	m_tid = H5::PredType::NATIVE_DOUBLE;
 
-    try {
-	// mean potential energy per particle
-	m_dataset[0] = m_file.createDataSet("EPOT", m_tid, scalar_ds, scalar_cparms);
-	// mean kinetic energy per particle
-	m_dataset[1] = m_file.createDataSet("EKIN", m_tid, scalar_ds, scalar_cparms);
-	// mean total energy per particle
-	m_dataset[2] = m_file.createDataSet("ETOT", m_tid, scalar_ds, scalar_cparms);
-	// temperature
-	m_dataset[3] = m_file.createDataSet("TEMP", m_tid, scalar_ds, scalar_cparms);
-	// pressure
-	m_dataset[4] = m_file.createDataSet("PRESS", m_tid, scalar_ds, scalar_cparms);
-	// velocity center of mass
-	m_dataset[5] = m_file.createDataSet("VCM", m_tid, vector_ds, vector_cparms);
+	try {
+	    // mean potential energy per particle
+	    m_dataset[0] = m_file.createDataSet("EPOT", m_tid, scalar_ds, scalar_cparms);
+	    // mean kinetic energy per particle
+	    m_dataset[1] = m_file.createDataSet("EKIN", m_tid, scalar_ds, scalar_cparms);
+	    // mean total energy per particle
+	    m_dataset[2] = m_file.createDataSet("ETOT", m_tid, scalar_ds, scalar_cparms);
+	    // temperature
+	    m_dataset[3] = m_file.createDataSet("TEMP", m_tid, scalar_ds, scalar_cparms);
+	    // pressure
+	    m_dataset[4] = m_file.createDataSet("PRESS", m_tid, scalar_ds, scalar_cparms);
+	    // velocity center of mass
+	    m_dataset[5] = m_file.createDataSet("VCM", m_tid, vector_ds, vector_cparms);
+	}
+	catch (H5::FileIException const& e) {
+	    throw exception("failed to create datasets in HDF5 energy file");
+	}
+
+	try {
+	    // allocate thermodynamic equilibrium property buffers
+	    m_en_pot.reserve(CHUNK_SIZE);
+	    m_en_kin.reserve(CHUNK_SIZE);
+	    m_en_tot.reserve(CHUNK_SIZE);
+	    m_temp.reserve(CHUNK_SIZE);
+	    m_press.reserve(CHUNK_SIZE);
+	    m_v_cm.reserve(CHUNK_SIZE);
+	}
+	catch (std::bad_alloc const&) {
+	    throw exception("failed to allocate thermodynamic equilibrium property buffers");
+	}
     }
-    catch (H5::FileIException const& e) {
-	throw exception("failed to create datasets in HDF5 energy file");
-    }
+    else {
+	LOG("read thermodynamic equilibrium properties file: " << filename);
+	try {
+	    // truncate existing file
+	    m_file = H5::H5File(filename, H5F_ACC_RDONLY);
+	    m_is_open = true;
+	}
+	catch (H5::FileIException const&) {
+	    throw exception("failed to open thermodynamic equilibrium properties file");
+	}
 
-    try {
-	// allocate thermodynamic equilibrium property buffers
-	m_en_pot.reserve(CHUNK_SIZE);
-	m_en_kin.reserve(CHUNK_SIZE);
-	m_en_tot.reserve(CHUNK_SIZE);
-	m_temp.reserve(CHUNK_SIZE);
-	m_press.reserve(CHUNK_SIZE);
-	m_v_cm.reserve(CHUNK_SIZE);
-    }
-    catch (std::bad_alloc const&) {
-	throw exception("failed to allocate thermodynamic equilibrium property buffers");
     }
 }
 
@@ -182,6 +196,73 @@ void energy<dimension>::close()
     catch (H5::Exception const& e) {
 	throw exception("failed to close HDF5 correlations output file");
     }
+}
+
+/**
+ * calculate temperature from given start time
+ */
+template <int dimension>
+void energy<dimension>::temperature(accumulator<double>& en, double start_time)
+{
+    H5::DataSet dset;
+
+    try {
+	H5XX_NO_AUTO_PRINT(H5::FileIException);
+	dset = m_file.openDataSet("TEMP");
+    }
+    catch (H5::FileIException const&) {
+	throw exception("failed to open temperature dataset");
+    }
+
+    H5::DataType const tid(H5::PredType::NATIVE_DOUBLE);
+    H5::DataSpace const ds(dset.getSpace());
+
+    if (!ds.isSimple()) {
+	throw exception("HDF5 vector dataspace is not a simple dataspace");
+    }
+    if (ds.getSimpleExtentNdims() != 2) {
+	throw exception("HDF5 vector dataspace has invalid dimensionality");
+    }
+
+    hsize_t dim[2];
+    ds.getSimpleExtentDims(dim);
+
+    if (dim[1] != 2) {
+	throw exception("temperature dataset has invalid dimensions");
+    }
+    size_t const size = dim[0];
+
+    std::vector<scalar_pair> sample;
+    sample.reserve(CHUNK_SIZE);
+
+    for (size_t i = 0; i < size; i += sample.capacity()) {
+	sample.resize(std::min(sample.capacity(), size - i));
+	hsize_t dim_sample[2] = { sample.size(), 2 };
+	H5::DataSpace ds_sample(2, dim_sample);
+	H5::DataSpace ds_file(ds);
+	hsize_t count[2]  = { 1, 1 };
+	hsize_t start[2]  = { i, 0 };
+	hsize_t stride[2] = { 1, 1 };
+	hsize_t block[2]  = { sample.size(), 2 };
+	ds_file.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
+	try {
+	    H5XX_NO_AUTO_PRINT(H5::DataSetIException);
+	    dset.read(sample.data(), tid, ds_sample, ds_file);
+	}
+	catch (H5::DataSetIException const&) {
+	    throw exception("failed to read sample samples from HDF5 temperature dataset");
+	}
+	for (size_t j = 0; j < sample.size(); j++) {
+	    if (sample[j].first >= start_time) {
+		en += sample[j].second;
+	    }
+	}
+    }
+
+    if (!en.count()) {
+	throw exception("could not find temperature samples after given start time");
+    }
+    LOG("calculated temperature from samples at time " << start_time << " to " << sample.back().first);
 }
 
 // explicit instantiation

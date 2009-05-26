@@ -154,8 +154,14 @@ private:
     void rescale_energy(boost::false_type const&) {}
     void rescale_energy(boost::true_type const&)
     {
-	if (!m_opt["energy"].empty()) {
-	    m_fluid.rescale_energy(m_opt["energy"].as<float>());
+	if (!m_opt["measure-temperature-after-time"].empty()) {
+	    m_en.open(m_opt["energy"].as<std::string>(), energy<dimension>::in);
+	    accumulator<double> en;
+	    m_en.temperature(en, m_opt["measure-temperature-after-time"].as<double>());
+	    LOG("temperature: " << en.mean() << " (" << en.std() << ", " << en.count() << " samples)");
+	    m_en.close();
+	    // rescale velocities to yield desired temperature
+	    m_fluid.rescale_velocities(std::sqrt(m_opt["temperature"].as<float>() / en.mean()));
 	}
     }
 
@@ -280,7 +286,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     // rescale mean particle energy
     rescale_energy(IMPL(lennard_jones_potential));
 
-    if (m_opt["trajectory-sample"].empty() || !m_opt["temperature"].defaulted()) {
+    if (m_opt["trajectory-sample"].empty() || (m_opt["measure-temperature-after-time"].empty() && !m_opt["temperature"].defaulted())) {
 	// initialise velocities from Maxwell-Boltzmann distribution
 	m_fluid.temperature(m_opt["temperature"].as<float>());
     }
@@ -521,7 +527,7 @@ void mdsim<mdsim_backend>::open()
     param(m_traj);
 
     if (!m_opt["disable-energy"].as<bool>()) {
-	m_en.open(fn + ".tep");
+	m_en.open(fn + ".tep", energy<dimension>::out);
 	param(m_en);
     }
 
