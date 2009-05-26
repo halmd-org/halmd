@@ -86,12 +86,12 @@ __device__ inline void __dsmul(float& c0, float& c1, float const a0, float const
     float c21 = (((sa1 * sb1 - c11) + sa1 * sb2) + sa2 * sb1) + sa2 * sb2;
 
     // Compute a0 * b1 + a1 * b0 (only high-order word is needed).
-    float c2 = __fmul_rn(a0, b1) + __fmul_rn(a1, b0);
+    float c2 = a0 * b1 + a1 * b0;
 
     // Compute (c11, c21) + c2 using Knuth's trick, also adding low-order product.
     float t1 = c11 + c2;
     float e = t1 - c11;
-    float t2 = ((c2 - e) + (c11 - (t1 - e))) + c21 + __fmul_rn(a1, b1);
+    float t2 = ((c2 - e) + (c11 - (t1 - e))) + c21 + a1 * b1;
 
     // The result is t1 + t2, after normalization.
     c0 = e = t1 + t2;
