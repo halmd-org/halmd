@@ -24,5 +24,14 @@ foreach(OUTPUT_TYPE ${DOC_OUTPUT_TYPES})
     -d ${DOC_CACHE_DIRECTORY}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${OUTPUT_TYPE}
+    COMMENT "Building ${OUTPUT_TYPE} documentation"
     )
 endforeach(OUTPUT_TYPE)
+
+add_custom_target(doc_pdf ALL
+  ${CMAKE_MAKE_PROGRAM}
+  -C ${CMAKE_CURRENT_BINARY_DIR}/latex
+  LATEXOPTS=-interaction=batchmode
+  COMMENT "Building pdf documentation"
+  )
+add_dependencies(doc_pdf doc_latex)
