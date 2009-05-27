@@ -13,6 +13,7 @@ Contents:
 
    intro
    usage
+   units
 
 Indices and tables
 ==================
