@@ -1,10 +1,6 @@
 ljgpu documentation
 ===================
 
-.. image:: _images/logo.png
-
-Contents:
-
 .. toctree::
    :maxdepth: 2
 
