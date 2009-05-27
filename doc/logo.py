@@ -1,9 +1,9 @@
 #!/usr/bin/python
 from pylab import *
-figure(figsize=(1, 1))
+fig = figure(figsize=(1, 1))
 ax = axes((0, 0, 1, 1), frameon=False)
 lj = lambda r: 4 * (pow(r, -12) - pow(r, -6))
-x = linspace(0.5, 3, 1000)
+x = linspace(0.969, 2.95, 1000)
 ax.plot(x, lj(x), color="darkblue", lw=2, alpha=0.8)
 ax.plot(x, lj(x), color="darkblue", lw=4, alpha=0.6)
 ax.plot(x, lj(x), color="darkblue", lw=6, alpha=0.4)
@@ -21,7 +21,7 @@ ax.scatter(P[0] * 0.3 + 1.95, P[1] * 0.3 + 0.35, s=120, color="green", alpha=0.2
 ax.scatter(P[0] * 0.3 + 1.95, P[1] * 0.3 + 0.35, s=40, color="green", alpha=0.8)
 ax.scatter(U[0] * 0.3 + 2.55, U[1] * 0.3 + 0.35, s=120, color="orange", alpha=0.2)
 ax.scatter(U[0] * 0.3 + 2.55, U[1] * 0.3 + 0.35, s=40, color="orange", alpha=0.8)
-ax.axis((0.85, 3.1, -1.1, 1.15))
+ax.axis((0.8, 3.1, -1.15, 1.15))
 for tick in ax.xaxis.get_major_ticks():
     tick.set_visible(False)
 for tick in ax.yaxis.get_major_ticks():
