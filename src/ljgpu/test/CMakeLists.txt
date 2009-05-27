@@ -1,6 +1,6 @@
-add_subdirectory(dsfun)
-
 if(WITH_CUDA)
+  add_subdirectory(dsfun)
+
   add_executable(sample_smooth_function smooth.cpp)
   set_target_properties(sample_smooth_function PROPERTIES
     COMPILE_FLAGS "-DDIM_3D"
