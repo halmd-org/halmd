@@ -1,24 +1,29 @@
-README for LJGPU
-================
-Peter Colberg <peter.colberg@physik.uni-muenchen.de>
+Introduction
+************
+
+License
+=======
 
 ljgpu is licensed under the GNU General Public License version 3.
 
 
-COMPILATION
------------
+Prerequisites
+=============
 
 The following software packages are required for compilation.
 
-  · NVIDIA CUDA toolkit >= 1.1
-  · CMake >= 2.6.0 with custom CUDA compiler support patch
-  · Boost C++ Libraries >= 1.37.0
-  · HDF5 C++ Library >= 1.6.6
-  · GNU Scientific Library
-  · Git >= 1.5.6.2
+* NVIDIA CUDA toolkit >= 1.1
+* CMake >= 2.6.0 with custom CUDA compiler support patch
+* Boost C++ Libraries >= 1.37.0
+* HDF5 C++ Library >= 1.6.6
+* GNU Scientific Library
+* Git >= 1.5.6.2
 
 
-To compile, switch to a newly created directory and execute:
+Installation
+============
+
+To compile, switch to a newly created directory and execute::
 
   $ CXXFLAGS="-fPIC -Wall" \
 	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
@@ -26,7 +31,7 @@ To compile, switch to a newly created directory and execute:
 	cmake -DCMAKE_BUILD_TYPE=Release ~/path/to/ljgpu_source
   $ make
 
-If cmake should look for third-party libraries in a custom path, add
+If cmake should look for third-party libraries in a custom path, add::
 
   -DCMAKE_PREFIX_PATH=$HOME/usr
 
@@ -35,13 +40,13 @@ or
   -DCMAKE_INCLUDE_PATH=$HOME/usr/include
   -DCMAKE_LIBRARY_PATH=$HOME/usr/lib
 
-to the arguments passed to cmake and use the following CXXFLAGS:
+to the arguments passed to cmake and use the following CXXFLAGS::
 
   CXXFLAGS="-fPIC -Wall -I$HOME/usr/include"
 
 
 On non-Debian systems, the paths to the Boost headers and libraries
-have to be specified, using BOOST_INCLUDEDIR and BOOST_LIBRARYDIR:
+have to be specified, using BOOST_INCLUDEDIR and BOOST_LIBRARYDIR::
 
   $ CXXFLAGS="-fPIC -Wall" \
 	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
@@ -52,7 +57,7 @@ have to be specified, using BOOST_INCLUDEDIR and BOOST_LIBRARYDIR:
   $ make
 
 
-For static linking to the Boost, HDF5 and GSL libraries, use:
+For static linking to the Boost, HDF5 and GSL libraries, use::
 
   $ CXXFLAGS="-fPIC -Wall" \
 	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
@@ -66,7 +71,7 @@ For static linking to the Boost, HDF5 and GSL libraries, use:
 	~/path/to/ljgpu_source
   $ make
 
-To compile separate executables for each backend:
+To compile separate executables for each backend::
 
   $ CXXFLAGS="-fPIC -Wall" \
 	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
@@ -78,7 +83,7 @@ To compile separate executables for each backend:
 	~/path/to/ljgpu_source
   $ make
 
-To compile statically linked backend executables:
+To compile statically linked backend executables::
 
   $ CXXFLAGS="-fPIC -Wall" \
 	BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
@@ -91,7 +96,7 @@ To compile statically linked backend executables:
 Note that this only compiles the host backends, as the CUDA runtime library
 requires dynmamic linking as it dynamically loads the CUDA driver library.
 
-For a build with debugging symbols, use the following:
+For a build with debugging symbols, use the following::
 
   $ CXXFLAGS="-fPIC -Wall" \
 	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
@@ -100,68 +105,34 @@ For a build with debugging symbols, use the following:
   $ make
 
 
-Compilation flags may be configured via the CMake GUI.
+Compilation flags may be configured via the CMake GUI::
 
   $ ccmake .
 
 To finish configuration, hit "c" and "g" to apply and recompile with make.
 
-The following compilation flags are highly recommended:
+The following compilation flags are highly recommended::
 
     CMAKE_CUDA_FLAGS		--host-compilation=c -Xcompiler -fPIC -Xptxas -v
     CMAKE_CXX_FLAGS		-Wall -fPIC
 
-To display the actual compilation commands, set:
+To display the actual compilation commands, set::
 
     CMAKE_VERBOSE_MAKEFILE	ON
 
 On some 64-bit systems (e.g. Mandriva), cmake may accidently use a 32-bit
 library instead of its 64-bit counterpart, which results in linker errors.
-With Mandriva Linux, the following adjustments are required in ccmake:
+With Mandriva Linux, the following adjustments are required in ccmake::
 
     GSL_CBLAS_LIBRARY		/usr/lib64/libgslcblas.so.0
     GSL_LIBRARY			/usr/lib64/libgsl.so.0
 
 
-INSTALLATION
-------------
-
-An installation prefix may be specified as following:
+An installation prefix may be specified as following::
 
     CMAKE_INSTALL_PREFIX	/home/Peter.Colberg/usr
 
-The compiled program is then installed into this tree with:
+The compiled program is then installed into this tree with::
 
     $ make install
-
-To allow the shell to find the program and its required libraries, set these
-environment variables in the shell initialization file (e.g. ~/.bashrc):
-
-    export PATH="$HOME/usr/bin${PATH+:$PATH}"
-    export LD_LIBRARY_PATH="$HOME/usr/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
-
-
-USAGE
------
-
-ljgpu has three ways of accepting program parameters:
-
-    · pass directly as command line parameters
-    · read from parameter input file [INI format]
-    · read from HDF5 data file, optionally resuming from a prior trajectory
-
-Options are described in the command line help:
-
-    $ ljgpu --help
-
-
-On a machine with multiple GPUs, it is advisable to use the nvlock
-program to exclusively assign a GPU to each process. This is only
-necessary for CUDA <= 2.1.
-
-    $ nvlock ljgpu [...]
-
-For optimal exploitation of a multi-GPU machine, a job scheduler is highly
-recommended, e.g. SLURM — Simple Linux Utility for Resource Management.
-https://computing.llnl.gov/linux/slurm/
 
