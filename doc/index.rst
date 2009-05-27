@@ -6,6 +6,8 @@
 ljgpu documentation
 ===================
 
+.. image:: logo.png
+
 Contents:
 
 .. toctree::
