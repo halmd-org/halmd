@@ -1,0 +1,20 @@
+ljgpu documentation
+===================
+
+.. image:: _images/logo.png
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+
+   intro
+   usage
+   units
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`search`
+

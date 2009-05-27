@@ -28,7 +28,7 @@ extensions = ['sphinx.ext.pngmath']
 templates_path = ['@CMAKE_CURRENT_SOURCE_DIR@/_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = '.txt'
 
 # The encoding of source files.
 #source_encoding = 'utf-8'
@@ -60,7 +60,7 @@ release = '@PROGRAM_VERSION@'[1:]
 #today_fmt = '%B %d, %Y'
 
 # List of documents that shouldn't be included in the build.
-#unused_docs = []
+unused_docs = ['CMakeLists']
 
 # List of directories, relative to source directory, that shouldn't be searched
 # for source files.

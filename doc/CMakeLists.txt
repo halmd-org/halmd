@@ -5,7 +5,7 @@ set(DOC_OUTPUT_TYPES
 set(DOC_CACHE_DIRECTORY ".doctrees")
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/conf.py.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/_conf.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/conf.py
   ESCAPE_QUOTES @ONLY
   )
