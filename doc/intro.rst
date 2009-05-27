@@ -18,6 +18,7 @@ The following software packages are required for compilation.
 * HDF5 C++ Library >= 1.6.6
 * GNU Scientific Library
 * Git >= 1.5.6.2
+* Sphinx documentation generator >= 0.6.1
 
 
 Installation
@@ -35,7 +36,7 @@ If cmake should look for third-party libraries in a custom path, add::
 
   -DCMAKE_PREFIX_PATH=$HOME/usr
 
-or
+or ::
 
   -DCMAKE_INCLUDE_PATH=$HOME/usr/include
   -DCMAKE_LIBRARY_PATH=$HOME/usr/lib
