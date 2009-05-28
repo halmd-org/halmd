@@ -28,7 +28,7 @@ Interaction laws
   .. math::
     \vec{F}(\vec{r}_{ij}) = \frac{48\epsilon}{\sigma}
     \Bigl(\bigl(\frac{\sigma}{r_{ij}}\bigr)^{13}
-    - \frac{1}{2}\bigl(\frac{\sigma}{r_{ij}}\bigr)^8\Bigr) \hat{r}_{ij}
+    - \frac{1}{2}\bigl(\frac{\sigma}{r_{ij}}\bigr)^7\Bigr) \hat{r}_{ij}
 
 
 Base MD units
