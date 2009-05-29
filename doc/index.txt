@@ -4,7 +4,7 @@ ljgpu documentation
 .. toctree::
    :maxdepth: 2
 
-   intro
+   readme
    usage
    units
 
