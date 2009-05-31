@@ -213,7 +213,7 @@ __device__ void update_cell_neighbours(I const& offset, unsigned int const* g_ce
  * update neighbour lists
  */
 template <uint dimension>
-__global__ void update_neighbours(unsigned int const* g_cell)
+__global__ void update_neighbours(unsigned int* g_ret, unsigned int const* g_cell)
 {
     // load particle from cell placeholder
     unsigned int const n = g_cell[GTID];
@@ -299,6 +299,11 @@ __global__ void update_neighbours(unsigned int const* g_cell)
 	update_cell_neighbours<false>(make_int2( 0, -1), g_cell, r, n, count);
 	update_cell_neighbours<false>(make_int2( 0, +1), g_cell, r, n, count);
     }
+
+    // return failure if any neighbour list is fully occupied
+    if (count == nbl_size) {
+	*g_ret = EXIT_FAILURE;
+    }
 }
 
 /**
@@ -350,7 +355,7 @@ __global__ void find_cell_offset(uint* g_cell, unsigned int* g_cell_offset)
 /**
  * assign particles to cells
  */
-__global__ void assign_cells(uint const* g_cell, unsigned int const* g_cell_offset, unsigned int const* g_itag, unsigned int* g_otag)
+__global__ void assign_cells(unsigned int* g_ret, uint const* g_cell, unsigned int const* g_cell_offset, unsigned int const* g_itag, unsigned int* g_otag)
 {
     __shared__ unsigned int s_offset[1];
 
@@ -367,6 +372,10 @@ __global__ void assign_cells(uint const* g_cell, unsigned int const* g_cell_offs
     // mark as real particle if appropriate
     if (offset != VIRTUAL_PARTICLE && n < npart && g_cell[n] == BID) {
 	tag = g_itag[n];
+    }
+    // return failure if any cell list is fully occupied
+    if (tag != VIRTUAL_PARTICLE && (threadIdx.x + 1) == blockDim.x) {
+	*g_ret = EXIT_FAILURE;
     }
     // store particle in this block's cell
     g_otag[BID * blockDim.x + threadIdx.x] = tag;
@@ -500,7 +509,7 @@ cuda::texture<float2> _2D::v(cu::ljfluid::tex<2>::v);
 /**
  * device function wrappers
  */
-cuda::function<void (uint const*, unsigned int const*, unsigned int const*, unsigned int*)>
+cuda::function<void (unsigned int*, uint const*, unsigned int const*, unsigned int const*, unsigned int*)>
     _Base::assign_cells(cu::ljfluid::assign_cells);
 cuda::function<void (uint*, unsigned int*)>
     _Base::find_cell_offset(cu::ljfluid::find_cell_offset);
@@ -516,7 +525,7 @@ cuda::function<void (float4 const*, float4*, float4*, float*, float4*)>
 cuda::function<void (float4 const*, float4*, float4*, float*, float4*)>
     _3D::template variant<BINARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT>);
 
-cuda::function<void (unsigned int const*)>
+cuda::function<void (unsigned int*, unsigned int const*)>
     _3D::update_neighbours(cu::ljfluid::update_neighbours<3>);
 cuda::function<void (float4 const*, uint*)>
     _3D::compute_cell(cu::ljfluid::compute_cell<3>);
@@ -538,7 +547,7 @@ cuda::function<void (float4 const*, float2*, float2*, float*, float2*)>
 cuda::function<void (float4 const*, float2*, float2*, float*, float2*)>
     _2D::template variant<BINARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT>);
 
-cuda::function<void (unsigned int const*)>
+cuda::function<void (unsigned int*, unsigned int const*)>
     _2D::update_neighbours(cu::ljfluid::update_neighbours<2>);
 cuda::function<void (float4 const*, uint*)>
     _2D::compute_cell(cu::ljfluid::compute_cell<2>);

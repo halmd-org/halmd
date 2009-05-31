@@ -231,6 +231,16 @@ private:
     cuda::vector<unsigned int> g_cell;
     /** neighbour lists in global device memory */
     cuda::vector<unsigned int> g_nbl;
+
+    /** CUDA kernel return values */
+    struct {
+	cuda::vector<unsigned int> assign_cells;
+	cuda::vector<unsigned int> update_neighbours;
+    } g_ret;
+    struct {
+	cuda::host::vector<unsigned int> assign_cells;
+	cuda::host::vector<unsigned int> update_neighbours;
+    } h_ret;
 };
 
 template <int dimension>
@@ -458,6 +468,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::threads(unsigned int value)
 	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to allocate global device memory for radix sort");
     }
+
+    g_ret.assign_cells.resize(1);
+    h_ret.assign_cells.resize(1);
+    g_ret.update_neighbours.resize(1);
+    h_ret.update_neighbours.resize(1);
 }
 
 template <int dimension>
@@ -668,6 +683,14 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
     // GPU time for potential energy sum calculation
     m_times["potential_energy"] += event_[0] - event_[9];
 
+    if (r_max_ > r_skin_half) {
+	if (h_ret.assign_cells.front() != EXIT_SUCCESS) {
+	    throw exception("potentially lost particles in cell lists update");
+	}
+	if (h_ret.update_neighbours.front() != EXIT_SUCCESS) {
+	    throw exception("potentially lost particles in neighbour lists update");
+	}
+    }
     if (!std::isfinite(reduce_en.value())) {
 	throw potential_energy_divergence();
     }
@@ -842,6 +865,13 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_positions()
 	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to assign particle positions on GPU");
     }
+
+    if (h_ret.assign_cells.front() != EXIT_SUCCESS) {
+	throw exception("potentially lost particles in cell lists update");
+    }
+    if (h_ret.update_neighbours.front() != EXIT_SUCCESS) {
+	throw exception("potentially lost particles in neighbour lists update");
+    }
 }
 
 template <int dimension>
@@ -876,8 +906,10 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_cells(cuda::stream& 
     _gpu::find_cell_offset(g_aux.cell, g_aux.offset);
 
     // assign particles to cells
+    cuda::memset(g_ret.assign_cells, EXIT_SUCCESS);
     cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
-    _gpu::assign_cells(g_aux.cell, g_aux.offset, g_aux.index, g_cell);
+    _gpu::assign_cells(g_ret.assign_cells, g_aux.cell, g_aux.offset, g_aux.index, g_cell);
+    cuda::copy(g_ret.assign_cells, h_ret.assign_cells, stream);
 }
 
 template <int dimension>
@@ -887,9 +919,12 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_neighbours(cuda::str
     cuda::memset(g_part.dr, 0);
     // mark neighbour list placeholders as virtual particles
     cuda::memset(g_nbl, 0xFF);
+    // reset return value
+    cuda::memset(g_ret.update_neighbours, EXIT_SUCCESS);
     // build neighbour lists
     cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (dimension + 1) * sizeof(float), stream);
-    _gpu::update_neighbours(g_cell);
+    _gpu::update_neighbours(g_ret.update_neighbours, g_cell);
+    cuda::copy(g_ret.update_neighbours, h_ret.update_neighbours, stream);
 }
 
 template <int dimension>
