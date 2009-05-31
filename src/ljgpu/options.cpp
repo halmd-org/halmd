@@ -562,7 +562,7 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
     }
     if (IMPL(fixed_size_cell_lists)) {
 	add_options()
-	    ("cell-occupancy", po::value<float>()->default_value(0.5),
+	    ("cell-occupancy", po::value<float>()->default_value(0.4),
 	     "desired average cell occupancy")
 	    ;
     }
