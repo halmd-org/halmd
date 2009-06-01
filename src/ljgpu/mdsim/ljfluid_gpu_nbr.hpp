@@ -75,6 +75,8 @@ public:
     void stream();
     /** synchronize MD simulation step on GPU */
     void mdstep();
+    /** save state to an empty HDF5 group */
+    void dump_internal_state(H5::Group traj) const;
     /** sample phase space on host */
     void sample(host_sample_type& sample) const;
     /** sample phase space on GPU */
@@ -694,6 +696,179 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
     if (!std::isfinite(reduce_en.value())) {
 	throw potential_energy_divergence();
     }
+}
+
+/**
+ * Save exact simulation state to an empty HDF5 group.
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::dump_internal_state(H5::Group traj) const
+{
+    using namespace boost::assign;
+
+    // g_part.r
+
+    H5::DataType tid(H5xx::ctype<float>::type);
+    size_t size = dim_.threads();
+
+    boost::array<hsize_t, 3> count, start, stride, block;
+    boost::array<hsize_t, 3> dim = list_of(size)(sizeof(float4) / sizeof(float))(2);
+    H5::DataSpace ds(3, dim.data());
+    boost::array<hsize_t, 2> dim_mem = list_of(2 * size)(sizeof(float4) / sizeof(float));
+    H5::DataSpace ds_mem(2, dim_mem.data());
+
+    H5::DSetCreatPropList cparms;
+    cparms.setChunk(3, dim.data());
+    cparms.setDeflate(6);
+    H5::DataSet dset(traj.createDataSet("r", tid, ds, cparms));
+
+    // store high-word floating-point vectors
+    H5::DataSpace ds_slab(ds);
+    count = list_of(1)(1)(1);
+    start = list_of(0)(0)(0);
+    stride = list_of(1)(1)(2);
+    block = list_of(size)(sizeof(float4) / sizeof(float))(1);
+    ds_slab.selectHyperslab(H5S_SELECT_SET, count.data(), start.data(), stride.data(), block.data());
+
+    H5::DataSpace ds_mem_slab(ds_mem);
+    count = list_of(1)(1)(1);
+    start = list_of(0)(0)(0);
+    stride = list_of(1)(1)(1);
+    block = list_of(size)(sizeof(float4) / sizeof(float))(1);
+    ds_mem_slab.selectHyperslab(H5S_SELECT_SET, count.data(), start.data(), stride.data(), block.data());
+
+    cuda::host::vector<float4> h_vector(2 * size);
+    cuda::copy(g_part.r, h_vector, g_part.r.capacity());
+    dset.write(h_vector.data(), tid, ds_mem_slab, ds_slab);
+
+    // store low-word floating-point vectors
+    ds_slab = ds;
+    count = list_of(1)(1)(1);
+    start = list_of(0)(0)(1);
+    stride = list_of(1)(1)(2);
+    block = list_of(size)(sizeof(float4) / sizeof(float))(1);
+    ds_slab.selectHyperslab(H5S_SELECT_SET, count.data(), start.data(), stride.data(), block.data());
+
+    ds_mem_slab = ds_mem;
+    count = list_of(1)(1)(1);
+    start = list_of(size)(0)(0);
+    stride = list_of(1)(1)(1);
+    block = list_of(size)(sizeof(float4) / sizeof(float))(1);
+    ds_mem_slab.selectHyperslab(H5S_SELECT_SET, count.data(), start.data(), stride.data(), block.data());
+
+    dset.write(h_vector.data(), tid, ds_mem_slab, ds_slab);
+
+    // g_part.R
+
+    dim = list_of(size)(sizeof(gpu_vector_type) / sizeof(float))(1);
+    ds = H5::DataSpace(2, dim.data());
+    cparms = H5::DSetCreatPropList();
+    cparms.setChunk(2, dim.data());
+    cparms.setDeflate(6);
+    dset = H5::DataSet(traj.createDataSet("R", tid, ds, cparms));
+
+    cuda::host::vector<gpu_vector_type> h_vector2(size);
+    cuda::copy(g_part.R, h_vector2, g_part.R.capacity());
+    dset.write(h_vector2.data(), tid, ds, ds);
+
+    // g_part.v
+
+    dim = list_of(size)(sizeof(gpu_vector_type) / sizeof(float))(2);
+
+    ds = H5::DataSpace(3, dim.data());
+    cparms = H5::DSetCreatPropList();
+    cparms.setChunk(3, dim.data());
+    cparms.setDeflate(6);
+    dset = H5::DataSet(traj.createDataSet("v", tid, ds, cparms));
+
+    // store high-word floating-point vectors
+    ds_slab = ds;
+    count = list_of(1)(1)(1);
+    start = list_of(0)(0)(0);
+    stride = list_of(1)(1)(2);
+    block = list_of(size)(sizeof(gpu_vector_type) / sizeof(float))(1);
+    ds_slab.selectHyperslab(H5S_SELECT_SET, count.data(), start.data(), stride.data(), block.data());
+
+    ds_mem_slab = ds_mem;
+    count = list_of(1)(1)(1);
+    start = list_of(0)(0)(0);
+    stride = list_of(1)(1)(1);
+    block = list_of(size)(sizeof(gpu_vector_type) / sizeof(float))(1);
+    ds_mem_slab.selectHyperslab(H5S_SELECT_SET, count.data(), start.data(), stride.data(), block.data());
+
+    h_vector2.resize(2 * size);
+    cuda::copy(g_part.v, h_vector2, g_part.v.capacity());
+    dset.write(h_vector2.data(), tid, ds_mem_slab, ds_slab);
+
+    // store low-word floating-point vectors
+    ds_slab = ds;
+    count = list_of(1)(1)(1);
+    start = list_of(0)(0)(1);
+    stride = list_of(1)(1)(2);
+    block = list_of(size)(sizeof(gpu_vector_type) / sizeof(float))(1);
+    ds_slab.selectHyperslab(H5S_SELECT_SET, count.data(), start.data(), stride.data(), block.data());
+
+    ds_mem_slab = ds_mem;
+    count = list_of(1)(1)(1);
+    start = list_of(size)(0)(0);
+    stride = list_of(1)(1)(1);
+    block = list_of(size)(sizeof(gpu_vector_type) / sizeof(float))(1);
+    ds_mem_slab.selectHyperslab(H5S_SELECT_SET, count.data(), start.data(), stride.data(), block.data());
+
+    dset.write(h_vector2.data(), tid, ds_mem_slab, ds_slab);
+
+    // g_part.f
+
+    dim = list_of(size)(sizeof(gpu_vector_type) / sizeof(float))(1);
+    ds = H5::DataSpace(2, dim.data());
+    cparms = H5::DSetCreatPropList();
+    cparms.setChunk(2, dim.data());
+    cparms.setDeflate(6);
+    dset = H5::DataSet(traj.createDataSet("f", tid, ds, cparms));
+
+    h_vector2.resize(size);
+    cuda::copy(g_part.f, h_vector2, g_part.f.capacity());
+    dset.write(h_vector2.data(), tid, ds, ds);
+
+    // g_part.tag
+
+    tid = H5xx::ctype<int>::type;
+    dim = list_of(size)(1)(1);
+    ds = H5::DataSpace(1, dim.data());
+    cparms = H5::DSetCreatPropList();
+    cparms.setChunk(1, dim.data());
+    cparms.setDeflate(6);
+    dset = H5::DataSet(traj.createDataSet("tag", tid, ds, cparms));
+
+    cuda::host::vector<unsigned int> h_vector3(size);
+    cuda::copy(g_part.tag, h_vector3, g_part.tag.capacity());
+    dset.write(h_vector3.data(), tid, ds, ds);
+
+    // g_cell
+
+    dim = list_of(static_cast<hsize_t>(std::pow(ncell, dimension)))(cell_size_)(1);
+    ds = H5::DataSpace(2, dim.data());
+    cparms = H5::DSetCreatPropList();
+    cparms.setChunk(2, dim.data());
+    cparms.setDeflate(6);
+    dset = H5::DataSet(traj.createDataSet("cell", tid, ds, cparms));
+
+    h_vector3.resize(dim[0] * dim[1]);
+    cuda::copy(g_cell, h_vector3, g_cell.capacity());
+    dset.write(h_vector3.data(), tid, ds, ds);
+
+    // g_nbl
+
+    dim = list_of(nbl_size)(size)(1);
+    ds = H5::DataSpace(2, dim.data());
+    cparms = H5::DSetCreatPropList();
+    cparms.setChunk(2, dim.data());
+    cparms.setDeflate(6);
+    dset = H5::DataSet(traj.createDataSet("nbl", tid, ds, cparms));
+
+    h_vector3.resize(dim[0] * dim[1]);
+    cuda::copy(g_nbl, h_vector3, g_nbl.capacity());
+    dset.write(h_vector3.data(), tid, ds, ds);
 }
 
 template <int dimension>

@@ -38,6 +38,7 @@ struct mdsim_impl_base
     typedef boost::false_type impl_neighbour_lists;
     typedef boost::false_type impl_thermostat;
     typedef boost::false_type impl_trajectory_gpu_sample;
+    typedef boost::false_type impl_dump_internal_state;
 };
 
 struct ljfluid_impl_base : mdsim_impl_base
@@ -80,6 +81,7 @@ struct ljfluid_impl_gpu_neighbour : mdsim_impl_base
     typedef boost::true_type impl_neighbour_lists;
     typedef boost::true_type impl_thermostat;
     typedef boost::true_type impl_trajectory_gpu_sample;
+    typedef boost::true_type impl_dump_internal_state;
 };
 
 struct ljfluid_impl_host : mdsim_impl_base
