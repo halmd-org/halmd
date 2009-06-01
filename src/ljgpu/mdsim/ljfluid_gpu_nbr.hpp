@@ -416,8 +416,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::threads(unsigned int value)
     // allocate global device memory for cell placeholders
     try {
 	g_cell.resize(dim_cell_.threads());
-	g_nbl.reserve(dim_.threads() * nbl_size);
-	g_nbl.resize(npart * nbl_size);
+	g_nbl.resize(dim_.threads() * nbl_size);
 	cuda::copy(g_nbl.data(), _gpu::g_nbl);
 	cuda::copy(static_cast<unsigned int>(dim_.threads()), _gpu::nbl_stride);
     }
