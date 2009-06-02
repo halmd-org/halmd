@@ -38,7 +38,7 @@ template <typename vector_type, typename T>
 __global__ void gaussian(T* g_v, uint npart, uint nplace, float temp, T* g_vcm)
 {
     enum { dimension = vector_type::static_size };
-    __shared__ __vector<dfloat, dimension> s_vcm[THREADS];
+    __shared__ vector_type s_vcm[THREADS];
     vector_type vcm = 0;
 
     // read random number generator state from global device memory
@@ -79,7 +79,7 @@ template <typename vector_type, typename T>
 __global__ void shift_velocity(T* g_v, uint npart, uint nplace, T const* g_vcm, dfloat* g_vv)
 {
     enum { dimension = vector_type::static_size };
-    __shared__ __vector<dfloat, dimension> s_vcm[BLOCKS];
+    __shared__ vector_type s_vcm[BLOCKS];
     __shared__ dfloat s_vv[THREADS];
     vector_type vcm = 0;
     dfloat vv = 0;
