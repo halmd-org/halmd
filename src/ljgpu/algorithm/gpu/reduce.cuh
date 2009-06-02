@@ -103,23 +103,23 @@ transform(T v1, T v2)
 /**
  * parallel unary reduction
  */
-template <int threads, typename transform_, typename T>
+template <int threads, typename transform_, typename T, typename V>
 __device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
-reduce(T& sum, T s_sum[])
+reduce(T& sum, V s_sum[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	sum = transform<transform_>(sum, s_sum[tid + threads]);
+	sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
     }
 }
 
-template <int threads, typename transform_, typename T>
+template <int threads, typename transform_, typename T, typename V>
 __device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
-reduce(T& sum, T s_sum[])
+reduce(T& sum, V s_sum[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	sum = transform<transform_>(sum, s_sum[tid + threads]);
+	sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
 	s_sum[tid] = sum;
     }
     // no further syncs needed within execution warp of 32 threads
@@ -133,23 +133,23 @@ reduce(T& sum, T s_sum[])
 /**
  * parallel binary reduction
  */
-template <int threads, typename transform_, typename T0, typename T1>
+template <int threads, typename transform_, typename T0, typename T1, typename V0, typename V1>
 __device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T0 s_sum0[], T1 s_sum1[])
+reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, s_sum0[tid + threads], s_sum1[tid + threads]);
+	transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
     }
 }
 
-template <int threads, typename transform_, typename T0, typename T1>
+template <int threads, typename transform_, typename T0, typename T1, typename V0, typename V1>
 __device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T0 s_sum0[], T1 s_sum1[])
+reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, s_sum0[tid + threads], s_sum1[tid + threads]);
+	transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
 	s_sum0[tid] = sum0;
 	s_sum1[tid] = sum1;
     }
@@ -164,23 +164,23 @@ reduce(T0& sum0, T1& sum1, T0 s_sum0[], T1 s_sum1[])
 /**
  * parallel ternary reduction
  */
-template <int threads, typename transform_, typename T0, typename T1, typename T2>
+template <int threads, typename transform_, typename T0, typename T1, typename T2, typename V0, typename V1, typename V2>
 __device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[])
+reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, sum2, s_sum0[tid + threads], s_sum1[tid + threads], s_sum2[tid + threads]);
+	transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
     }
 }
 
-template <int threads, typename transform_, typename T0, typename T1, typename T2>
+template <int threads, typename transform_, typename T0, typename T1, typename T2, typename V0, typename V1, typename V2>
 __device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[])
+reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, sum2, s_sum0[tid + threads], s_sum1[tid + threads], s_sum2[tid + threads]);
+	transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
 	s_sum0[tid] = sum0;
 	s_sum1[tid] = sum1;
 	s_sum2[tid] = sum2;
@@ -196,23 +196,23 @@ reduce(T0& sum0, T1& sum1, T2& sum2, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[])
 /**
  * parallel quartenary reduction
  */
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3>
+template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3, typename V0, typename V1, typename V2, typename V3>
 __device__ typename enable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[], T3 s_sum3[])
+reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[], V3 s_sum3[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, sum2, sum3, s_sum0[tid + threads], s_sum1[tid + threads], s_sum2[tid + threads], s_sum3[tid + threads]);
+	transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
     }
 }
 
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3>
+template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3, typename V0, typename V1, typename V2, typename V3>
 __device__ typename disable_if<is_same<mpl::int_<threads>, mpl::int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, T0 s_sum0[], T1 s_sum1[], T2 s_sum2[], T3 s_sum3[])
+reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[], V3 s_sum3[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, sum2, sum3, s_sum0[tid + threads], s_sum1[tid + threads], s_sum2[tid + threads], s_sum3[tid + threads]);
+	transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
 	s_sum0[tid] = sum0;
 	s_sum1[tid] = sum1;
 	s_sum2[tid] = sum2;
