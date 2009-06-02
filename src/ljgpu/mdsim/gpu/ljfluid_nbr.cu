@@ -81,9 +81,8 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     enum { dimension = vector_type::static_size };
 
     // load particle associated with this thread
-    vector_type r;
     unsigned int tag;
-    unwrap_particle(g_r[GTID], r, tag);
+    vector_type r = detach_particle_tag(g_r[GTID], tag);
     // particle type in binary mixture
     int const a = (tag >= mpart[0]);
 
@@ -104,9 +103,8 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
 	// skip placeholder particles
 	if (n == VIRTUAL_PARTICLE) break;
 
-	vector_type r_;
 	unsigned int tag_;
-	unwrap_particle(tex1Dfetch(tex<dimension>::r, n), r_, tag_);
+	vector_type r_ = detach_particle_tag(tex1Dfetch(tex<dimension>::r, n), tag_);
 	// particle type in binary mixture
 	int const b = (tag_ >= mpart[0]);
 
@@ -125,7 +123,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     // store particle associated with this thread
     g_v[GTID] = static_cast<vector_type>(v);
 #ifdef USE_VERLET_DSFUN
-    g_v[GTID + GTDIM] = v.f1;
+    g_v[GTID + GTDIM] = dfloat2lo(v);
 #endif
     g_f[GTID] = static_cast<vector_type>(f);
     g_en[GTID] = en;
@@ -398,10 +396,9 @@ __global__ void order_particles(unsigned int const* g_index, float4* g_or, T* g_
     // permutation index
     uint const j = g_index[GTID];
     // permute particle phase space coordinates
-    vector<float, dimension> r;
     unsigned int tag;
-    unwrap_particle(tex1Dfetch(tex<dimension>::r, j), r, tag);
-    g_or[GTID] = wrap_particle(r, tag);
+    vector<float, dimension> r = detach_particle_tag(tex1Dfetch(tex<dimension>::r, j), tag);
+    g_or[GTID] = attach_particle_tag(r, tag);
     g_oR[GTID] = tex1Dfetch(tex<dimension>::R, j);
     g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
 #ifdef USE_VERLET_DSFUN
@@ -443,35 +440,28 @@ __global__ void inteq(float4* g_r, T* g_dr, T* g_R, T* g_v, T const* g_f)
 {
     unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-    vector<dfloat, dimension> r, dr, v;
+    vector<dfloat, dimension> r(detach_particle_tag(g_r[GTID], tag), g_r[GTID + GTDIM]);
+    vector<dfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
+    vector<dfloat, dimension> dr;
 #else
-    vector<float, dimension> r, dr, v;
+    vector<float, dimension> r = detach_particle_tag(g_r[GTID], tag);
+    vector<float, dimension> v = g_v[GTID];
+    vector<float, dimension> dr;
 #endif
-    vector<float, dimension> R, f;
-
-#ifdef USE_VERLET_DSFUN
-    unwrap_particle(g_r[GTID], r.f0, tag);
-    r.f1 = g_r[GTID + GTDIM];
-    v.f0 = g_v[GTID];
-    v.f1 = g_v[GTID + GTDIM];
-#else
-    unwrap_particle(g_r[GTID], r, tag);
-    v = g_v[GTID];
-#endif
-    R = g_R[GTID];
-    f = g_f[GTID];
+    vector<float, dimension> R = g_R[GTID];
+    vector<float, dimension> f = g_f[GTID];
 
     leapfrog_half_step(r, dr, R, v, f);
 
 #ifdef USE_VERLET_DSFUN
-    g_r[GTID] = wrap_particle(r.f0, tag);
-    g_r[GTID + GTDIM] = r.f1;
+    g_r[GTID] = attach_particle_tag(dfloat2hi(r), tag);
+    g_r[GTID + GTDIM] = dfloat2lo(r);
     // particle displacement for neighbour list update constraint
-    g_dr[GTID] = dr.f0 + g_dr[GTID];
-    g_v[GTID] = v.f0;
-    g_v[GTID + GTDIM] = v.f1;
+    g_dr[GTID] = dfloat2hi(dr) + g_dr[GTID];
+    g_v[GTID] = dfloat2hi(v);
+    g_v[GTID + GTDIM] = dfloat2lo(v);
 #else
-    g_r[GTID] = wrap_particle(r, tag);
+    g_r[GTID] = attach_particle_tag(r, tag);
     g_dr[GTID] = dr + g_dr[GTID];
     g_v[GTID] = v;
 #endif

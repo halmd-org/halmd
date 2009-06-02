@@ -61,29 +61,18 @@ __constant__ float rri_smooth;
 /**
  * convert particle position and tag to coalesced vector type
  */
-__device__ float4 wrap_particle(vector<float, 3> const& r, unsigned int tag)
+__device__ float4 attach_particle_tag(float4 r, unsigned int tag)
 {
     return make_float4(r.x, r.y, r.z, __int_as_float(tag));
-}
-
-__device__ float4 wrap_particle(vector<float, 2> const& r, unsigned int tag)
-{
-    return make_float4(r.x, r.y, 0, __int_as_float(tag));
 }
 
 /**
  * convert coalesced vector type to particle position and tag
  */
-__device__ void unwrap_particle(float4 const& v, vector<float, 3>& r, unsigned int& tag)
+__device__ float4 detach_particle_tag(float4 r, unsigned int& tag)
 {
-    r = vector<float, 3>(v.x, v.y, v.z);
-    tag = __float_as_int(v.w);
-}
-
-__device__ void unwrap_particle(float4 const& v, vector<float, 2>& r, unsigned int& tag)
-{
-    r = vector<float, 2>(v.x, v.y);
-    tag = __float_as_int(v.w);
+    tag = __float_as_int(r.w);
+    return r;
 }
 
 /**
@@ -221,7 +210,7 @@ __global__ void init_tags(float4* g_r, unsigned int* g_tag)
     if (GTID < npart) {
 	tag = GTID;
     }
-    g_r[GTID] = wrap_particle(r, tag);
+    g_r[GTID] = attach_particle_tag(r, tag);
     g_tag[GTID] = tag;
 }
 
@@ -239,7 +228,7 @@ __global__ void rescale_velocity(T* g_v, dfloat coeff)
     v *= coeff;
     g_v[GTID] = static_cast<vector_type>(v);
 #ifdef USE_VERLET_DSFUN
-    g_v[GTID + GTDIM] = v.f1;
+    g_v[GTID + GTDIM] = dfloat2lo(v);
 #endif
 }
 

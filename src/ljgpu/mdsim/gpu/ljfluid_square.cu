@@ -38,10 +38,9 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     vector_type* const s_r = reinterpret_cast<vector_type*>(&s_tag[TDIM]);
 
     // load particle associated with this thread
-    vector_type r, v;
     unsigned int tag;
-    unwrap_particle(g_r[GTID], r, tag);
-    v = g_v[GTID];
+    vector_type r = detach_particle_tag(g_r[GTID], tag);
+    vector_type v = g_v[GTID];
     // particle type in binary mixture
     int const a = (tag >= mpart[0]);
 
@@ -60,7 +59,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     for (unsigned int k = 0; k < gridDim.x; k++) {
 	// load positions of particles within block
 	__syncthreads();
-	unwrap_particle(g_r[k * blockDim.x + TID], s_r[TID], s_tag[TID]);
+	s_r[TID] = detach_particle_tag(g_r[k * blockDim.x + TID], s_tag[TID]);
 	__syncthreads();
 
 	// iterate over all particles within block
@@ -110,14 +109,14 @@ __global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
 {
     vector<float, dimension> r, dr, R, v, f;
     unsigned int tag;
-    unwrap_particle(g_r[GTID], r, tag);
+    r = detach_particle_tag(g_r[GTID], tag);
     R = g_R[GTID];
     v = g_v[GTID];
     f = g_f[GTID];
 
     leapfrog_half_step(r, dr, R, v, f);
 
-    g_r[GTID] = wrap_particle(r, tag);
+    g_r[GTID] = attach_particle_tag(r, tag);
     g_R[GTID] = R;
     g_v[GTID] = v;
 }

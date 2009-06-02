@@ -67,7 +67,7 @@ __global__ void gaussian(T* g_v, uint npart, uint nplace, float temp, T* g_vcm)
 	// store block reduced value in global memory
 	g_vcm[blockIdx.x] = static_cast<vector<float, dimension> >(vcm);
 #ifdef USE_VERLET_DSFUN
-	g_vcm[blockIdx.x + BDIM] = vcm.f1;
+	g_vcm[blockIdx.x + BDIM] = dfloat2lo(vcm);
 #endif
     }
 }
@@ -107,7 +107,7 @@ __global__ void shift_velocity(T* g_v, uint npart, uint nplace, T const* g_vcm, 
 	v -= vcm;
 	g_v[i] = static_cast<vector<float, dimension> >(v);
 #ifdef USE_VERLET_DSFUN
-	g_v[i + nplace] = v.f1;
+	g_v[i + nplace] = dfloat2lo(v);
 #endif
 	vv += v * v;
     }
@@ -155,7 +155,7 @@ __global__ void scale_velocity(T* g_v, uint npart, uint nplace, dfloat const* g_
 	v *= coeff;
 	g_v[i] = static_cast<vector<float, dimension> >(v);
 #ifdef USE_VERLET_DSFUN
-	g_v[i + nplace] = v.f1;
+	g_v[i + nplace] = dfloat2lo(v);
 #endif
     }
 }

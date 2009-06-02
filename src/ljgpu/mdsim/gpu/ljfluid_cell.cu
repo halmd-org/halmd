@@ -103,7 +103,7 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
     // compute cell index
     uint cell = compute_neighbour_cell(offset);
     // load particles coordinates for cell
-    unwrap_particle(g_r[cell * CELL_SIZE + threadIdx.x], s_r[threadIdx.x], s_tag[threadIdx.x]);
+    s_r[threadIdx.x] = detach_particle_tag(g_r[cell * CELL_SIZE + threadIdx.x], s_tag[threadIdx.x]);
     __syncthreads();
 
     if (tag == VIRTUAL_PARTICLE) return;
@@ -136,10 +136,9 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     enum { dimension = vector_type::static_size };
 
     // load particle associated with this thread
-    vector_type r, v;
     unsigned int tag;
-    unwrap_particle(g_r[GTID], r, tag);
-    v = g_v[GTID];
+    vector_type r = detach_particle_tag(g_r[GTID], tag);
+    vector_type v = g_v[GTID];
     // potential energy contribution
     float en = 0;
     // virial equation sum contribution
@@ -289,8 +288,7 @@ __global__ void assign_cells(float4 const* g_ir, float4* g_or, unsigned int* g_o
 
     for (uint i = 0; i < npart; i += CELL_SIZE) {
 	// load block of particles from global device memory
-	T r;
-	unwrap_particle(g_ir[i + threadIdx.x], r, s_itag[threadIdx.x]);
+	T r = detach_particle_tag(g_ir[i + threadIdx.x], s_itag[threadIdx.x]);
 	s_ir[threadIdx.x] = r;
 	s_cell[threadIdx.x] = compute_cell(r);
 	__syncthreads();
@@ -312,7 +310,7 @@ __global__ void assign_cells(float4 const* g_ir, float4* g_or, unsigned int* g_o
 
     // store cell in global device memory
     unsigned int const tag = s_otag[threadIdx.x];
-    g_or[BID * CELL_SIZE + threadIdx.x] = wrap_particle(s_or[threadIdx.x], tag);
+    g_or[BID * CELL_SIZE + threadIdx.x] = attach_particle_tag(s_or[threadIdx.x], tag);
     g_otag[BID * CELL_SIZE + threadIdx.x] = tag;
 }
 
@@ -334,8 +332,7 @@ __device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR,
     // compute cell index
     uint cell = compute_neighbour_cell(offset);
     // load particles in cell from global device memory
-    T r;
-    unwrap_particle(g_ir[cell * CELL_SIZE + threadIdx.x], r, s_itag[threadIdx.x]);
+    T r = detach_particle_tag(g_ir[cell * CELL_SIZE + threadIdx.x], s_itag[threadIdx.x]);
     s_ir[threadIdx.x] = r;
     s_iR[threadIdx.x] = g_iR[cell * CELL_SIZE + threadIdx.x];
     s_iv[threadIdx.x] = g_iv[cell * CELL_SIZE + threadIdx.x];
@@ -426,7 +423,7 @@ __global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, f
 
     // store cell in global device memory
     unsigned int const tag = s_otag[threadIdx.x];
-    g_or[BID * CELL_SIZE + threadIdx.x] = wrap_particle(s_or[threadIdx.x], tag);
+    g_or[BID * CELL_SIZE + threadIdx.x] = attach_particle_tag(s_or[threadIdx.x], tag);
     g_oR[BID * CELL_SIZE + threadIdx.x] = s_oR[threadIdx.x];
     g_ov[BID * CELL_SIZE + threadIdx.x] = s_ov[threadIdx.x];
     g_otag[BID * CELL_SIZE + threadIdx.x] = tag;
@@ -440,14 +437,14 @@ __global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
 {
     vector<float, dimension> r, dr, R, v, f;
     unsigned int tag;
-    unwrap_particle(g_r[GTID], r, tag);
+    r = detach_particle_tag(g_r[GTID], tag);
     R = g_R[GTID];
     v = g_v[GTID];
     f = g_f[GTID];
 
     leapfrog_half_step(r, dr, R, v, f);
 
-    g_r[GTID] = wrap_particle(r, tag);
+    g_r[GTID] = attach_particle_tag(r, tag);
     g_R[GTID] = R;
     g_v[GTID] = v;
 }
