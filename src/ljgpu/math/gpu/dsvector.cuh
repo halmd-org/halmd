@@ -139,6 +139,24 @@ struct __vector<dfloat, 3>
 };
 
 /**
+ * returns high-word floating point vector
+ */
+template <unsigned int dimension>
+__device__ inline vector<float, dimension> dfloat2hi(vector<dfloat, dimension> const& v)
+{
+    return v.f0;
+}
+
+/**
+ * returns low-word floating point vector
+ */
+template <unsigned int dimension>
+__device__ inline vector<float, dimension> dfloat2lo(vector<dfloat, dimension> const& v)
+{
+    return v.f1;
+}
+
+/**
  * assignment by componentwise vector addition
  */
 __device__ inline vector<dfloat, 2>& operator+=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
