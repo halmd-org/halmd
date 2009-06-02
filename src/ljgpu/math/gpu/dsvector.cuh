@@ -40,19 +40,19 @@ struct vector<dfloat, 2>
     // A __shared__ array may only be declared as a struct type if the
     // struct's members are POD or CUDA types, e.g. we cannot use a custom
     // two- or three-dimensional vector of dfloats.
-    float2 f0, f1;
+    float2 __hi, __lo;
 
     __device__ inline vector() {}
 
-    __device__ inline vector(dfloat s) : f0(make_float2(s.f0, s.f0)), f1(make_float2(s.f1, s.f1)) {}
+    __device__ inline vector(dfloat s) : __hi(make_float2(s.__hi, s.__hi)), __lo(make_float2(s.__lo, s.__lo)) {}
 
-    __device__ inline vector(float s) : f0(make_float2(s, s)), f1(make_float2(0, 0)) {}
+    __device__ inline vector(float s) : __hi(make_float2(s, s)), __lo(make_float2(0, 0)) {}
 
-    __device__ inline vector(vector<float, 2> v, vector<float, 2> w) : f0(v), f1(w) {}
+    __device__ inline vector(vector<float, 2> v, vector<float, 2> w) : __hi(v), __lo(w) {}
 
-    __device__ inline vector(vector<float, 2> v) : f0(v), f1(make_float2(0, 0)) {}
+    __device__ inline vector(vector<float, 2> v) : __hi(v), __lo(make_float2(0, 0)) {}
 
-    __device__ inline operator vector<float, 2>() const { return f0; }
+    __device__ inline operator vector<float, 2>() const { return __hi; }
 };
 
 /**
@@ -68,19 +68,19 @@ struct vector<dfloat, 3>
     // A __shared__ array may only be declared as a struct type if the
     // struct's members are POD or CUDA types, e.g. we cannot use a custom
     // two- or three-dimensional vector of dfloats.
-    float3 f0, f1;
+    float3 __hi, __lo;
 
     __device__ inline vector() {}
 
-    __device__ inline vector(dfloat s) : f0(make_float3(s.f0, s.f0, s.f0)), f1(make_float3(s.f1, s.f1, s.f1)) {}
+    __device__ inline vector(dfloat s) : __hi(make_float3(s.__hi, s.__hi, s.__hi)), __lo(make_float3(s.__lo, s.__lo, s.__lo)) {}
 
-    __device__ inline vector(float s) : f0(make_float3(s, s, s)), f1(make_float3(0, 0, 0)) {}
+    __device__ inline vector(float s) : __hi(make_float3(s, s, s)), __lo(make_float3(0, 0, 0)) {}
 
-    __device__ inline vector(vector<float, 3> v, vector<float, 3> w) : f0(v), f1(w) {}
+    __device__ inline vector(vector<float, 3> v, vector<float, 3> w) : __hi(v), __lo(w) {}
 
-    __device__ inline vector(vector<float, 3> v) : f0(v), f1(make_float3(0, 0, 0)) {}
+    __device__ inline vector(vector<float, 3> v) : __hi(v), __lo(make_float3(0, 0, 0)) {}
 
-    __device__ inline operator vector<float, 3>() const { return f0; }
+    __device__ inline operator vector<float, 3>() const { return __hi; }
 };
 
 /**
@@ -89,7 +89,7 @@ struct vector<dfloat, 3>
 template <unsigned int dimension>
 __device__ inline vector<float, dimension> dfloat2hi(vector<dfloat, dimension> const& v)
 {
-    return v.f0;
+    return v.__hi;
 }
 
 /**
@@ -98,7 +98,7 @@ __device__ inline vector<float, dimension> dfloat2hi(vector<dfloat, dimension> c
 template <unsigned int dimension>
 __device__ inline vector<float, dimension> dfloat2lo(vector<dfloat, dimension> const& v)
 {
-    return v.f1;
+    return v.__lo;
 }
 
 /**
@@ -106,16 +106,16 @@ __device__ inline vector<float, dimension> dfloat2lo(vector<dfloat, dimension> c
  */
 __device__ inline vector<dfloat, 2>& operator+=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
 {
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
+    __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
+    __dsadd(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
     return v;
 }
 
 __device__ inline vector<dfloat, 3>& operator+=(vector<dfloat, 3>& v, vector<dfloat, 3> const& w)
 {
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsadd(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dsadd(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
+    __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
+    __dsadd(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
+    __dsadd(v.__hi.z, v.__lo.z, v.__hi.z, v.__lo.z, w.__hi.z, w.__lo.z);
     return v;
 }
 
@@ -124,16 +124,16 @@ __device__ inline vector<dfloat, 3>& operator+=(vector<dfloat, 3>& v, vector<dfl
  */
 __device__ inline vector<dfloat, 2>& operator-=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
 {
-    __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
+    __dssub(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
+    __dssub(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
     return v;
 }
 
 __device__ inline vector<dfloat, 3>& operator-=(vector<dfloat, 3>& v, vector<dfloat, 3> const& w)
 {
-    __dssub(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dssub(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dssub(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
+    __dssub(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
+    __dssub(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
+    __dssub(v.__hi.z, v.__lo.z, v.__hi.z, v.__lo.z, w.__hi.z, w.__lo.z);
     return v;
 }
 /**
@@ -141,16 +141,16 @@ __device__ inline vector<dfloat, 3>& operator-=(vector<dfloat, 3>& v, vector<dfl
  */
 __device__ inline vector<dfloat, 2>& operator*=(vector<dfloat, 2>& v, dfloat const& s)
 {
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, s.f0, s.f1);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, s.f0, s.f1);
+    __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
+    __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
     return v;
 }
 
 __device__ inline vector<dfloat, 3>& operator*=(vector<dfloat, 3>& v, dfloat const& s)
 {
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, s.f0, s.f1);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, s.f0, s.f1);
-    __dsmul(v.f0.z, v.f1.z, v.f0.z, v.f1.z, s.f0, s.f1);
+    __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
+    __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
+    __dsmul(v.__hi.z, v.__lo.z, v.__hi.z, v.__lo.z, s.__hi, s.__lo);
     return v;
 }
 
@@ -159,16 +159,16 @@ __device__ inline vector<dfloat, 3>& operator*=(vector<dfloat, 3>& v, dfloat con
  */
 __device__ inline vector<dfloat, 2>& operator/=(vector<dfloat, 2>& v, dfloat const& s)
 {
-    __dsdiv(v.f0.x, v.f1.x, v.f0.x, v.f1.x, s.f0, s.f1);
-    __dsdiv(v.f0.y, v.f1.y, v.f0.y, v.f1.y, s.f0, s.f1);
+    __dsdiv(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
+    __dsdiv(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
     return v;
 }
 
 __device__ inline vector<dfloat, 3>& operator/=(vector<dfloat, 3>& v, dfloat const& s)
 {
-    __dsdiv(v.f0.x, v.f1.x, v.f0.x, v.f1.x, s.f0, s.f1);
-    __dsdiv(v.f0.y, v.f1.y, v.f0.y, v.f1.y, s.f0, s.f1);
-    __dsdiv(v.f0.z, v.f1.z, v.f0.z, v.f1.z, s.f0, s.f1);
+    __dsdiv(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
+    __dsdiv(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
+    __dsdiv(v.__hi.z, v.__lo.z, v.__hi.z, v.__lo.z, s.__hi, s.__lo);
     return v;
 }
 
@@ -177,20 +177,20 @@ __device__ inline vector<dfloat, 3>& operator/=(vector<dfloat, 3>& v, dfloat con
  */
 __device__ inline dfloat operator*(vector<dfloat, 2> v, vector<dfloat, 2> const& w)
 {
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, v.f0.y, v.f1.y);
-    return dfloat(v.f0.x, v.f1.x);
+    __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
+    __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
+    __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.y, v.__lo.y);
+    return dfloat(v.__hi.x, v.__lo.x);
 }
 
 __device__ inline dfloat operator*(vector<dfloat, 3> v, vector<dfloat, 3> const& w)
 {
-    __dsmul(v.f0.x, v.f1.x, v.f0.x, v.f1.x, w.f0.x, w.f1.x);
-    __dsmul(v.f0.y, v.f1.y, v.f0.y, v.f1.y, w.f0.y, w.f1.y);
-    __dsmul(v.f0.z, v.f1.z, v.f0.z, v.f1.z, w.f0.z, w.f1.z);
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, v.f0.y, v.f1.y);
-    __dsadd(v.f0.x, v.f1.x, v.f0.x, v.f1.x, v.f0.z, v.f1.z);
-    return dfloat(v.f0.x, v.f1.x);
+    __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
+    __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
+    __dsmul(v.__hi.z, v.__lo.z, v.__hi.z, v.__lo.z, w.__hi.z, w.__lo.z);
+    __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.y, v.__lo.y);
+    __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.z, v.__lo.z);
+    return dfloat(v.__hi.x, v.__lo.x);
 }
 
 /**

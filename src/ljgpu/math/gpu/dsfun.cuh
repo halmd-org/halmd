@@ -214,31 +214,31 @@ __device__ inline void __dssqrt(float& dsb0, float& dsb1, float const dsa0, floa
  */
 __device__ __host__  struct dfloat
 {
-    float f0, f1;
+    float __hi, __lo;
 
     __device__ __host__ inline dfloat() {}
 
 #ifdef __CUDACC__
-    __device__ inline dfloat(float f0, float f1) : f0(f0), f1(f1) {}
+    __device__ inline dfloat(float __hi, float __lo) : __hi(__hi), __lo(__lo) {}
 
     __device__ inline dfloat(float f)
     {
-	__dsfeq(f0, f1, f);
+	__dsfeq(__hi, __lo, f);
     }
 
     __device__ inline operator float() const
     {
-	return f0;
+	return __hi;
     }
 #else
     __host__ inline dfloat(double d)
     {
-	__dsdeq(f0, f1, d);
+	__dsdeq(__hi, __lo, d);
     }
 
     __host__ inline operator double() const
     {
-	return (double) f0 + (double) f1;
+	return (double) __hi + (double) __lo;
     }
 #endif
 };
@@ -247,25 +247,25 @@ __device__ __host__  struct dfloat
 
 __device__ inline dfloat& operator+=(dfloat& v, dfloat const& w)
 {
-    __dsadd(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
+    __dsadd(v.__hi, v.__lo, v.__hi, v.__lo, w.__hi, w.__lo);
     return v;
 }
 
 __device__ inline dfloat& operator-=(dfloat& v, dfloat const& w)
 {
-    __dssub(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
+    __dssub(v.__hi, v.__lo, v.__hi, v.__lo, w.__hi, w.__lo);
     return v;
 }
 
 __device__ inline dfloat& operator*=(dfloat& v, dfloat const& w)
 {
-    __dsmul(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
+    __dsmul(v.__hi, v.__lo, v.__hi, v.__lo, w.__hi, w.__lo);
     return v;
 }
 
 __device__ inline dfloat& operator/=(dfloat& v, dfloat const& w)
 {
-    __dsdiv(v.f0, v.f1, v.f0, v.f1, w.f0, w.f1);
+    __dsdiv(v.__hi, v.__lo, v.__hi, v.__lo, w.__hi, w.__lo);
     return v;
 }
 
@@ -296,7 +296,7 @@ __device__ inline dfloat operator/(dfloat v, dfloat const& w)
 __device__ inline dfloat sqrt(dfloat v)
 {
     dfloat w;
-    __dssqrt(w.f0, w.f1, v.f0, v.f1);
+    __dssqrt(w.__hi, w.__lo, v.__hi, v.__lo);
     return w;
 }
 

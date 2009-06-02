@@ -22,7 +22,7 @@ __global__ void __kernel_mulss(float const* g_a, float const* g_b, dfloat* g_c)
 {
     unsigned int gid = threadIdx.x + blockIdx.x * blockDim.x;
     dfloat c;
-    __dsmulss(c.f0, c.f1, g_a[gid], g_b[gid]);
+    __dsmulss(c.__hi, c.__lo, g_a[gid], g_b[gid]);
     g_c[gid] = c;
 }
 
