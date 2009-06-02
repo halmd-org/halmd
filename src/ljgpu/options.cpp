@@ -520,12 +520,6 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 	;
     add(misc);
 
-    if (IMPL(dump_internal_state)) {
-	add_options()
-	("dump-state", po::value<uint64_t>(),
-	 "dump internal simulation state every given steps")
-	;
-    }
     if (IMPL(lennard_jones_potential)) {
 	add_options()
 	    ("cutoff", po::value<float>()->default_value(std::pow(2., 1 / 6.)),

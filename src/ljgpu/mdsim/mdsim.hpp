@@ -181,38 +181,6 @@ private:
 	m_fluid.stream();
     }
 
-    void dump_internal_state(boost::false_type const&) {}
-    void dump_internal_state(boost::true_type const&)
-    {
-	if (m_opt["dump-state"].empty()) {
-	    return;
-	}
-	if (this->step % m_opt["dump-state"].as<uint64_t>()) {
-	    return;
-	}
-
-	std::string fn = m_opt["output"].as<std::string>();
-	H5::H5File f;
-	try {
-	    // truncate existing file
-	    f = H5::H5File(fn + ".dump", H5F_ACC_TRUNC);
-	}
-	catch (H5::FileIException const& e) {
-	    throw exception("failed to create or overwrite dump file");
-	}
-
-	param(f);
-	H5::Group node(f.createGroup(MDSIM_BACKEND));
-	m_fluid.dump_internal_state(node);
-
-	try {
-	    f.close();
-	}
-	catch (H5::FileIException const& e) {
-	    throw exception("failed to write to dump file");
-	}
-    }
-
 private:
     /** program options */
     options const& m_opt;
@@ -426,8 +394,6 @@ int mdsim<mdsim_backend>::operator()()
 	    status_ = LJGPU_EXIT_POTENTIAL_ENERGY_DIVERGENCE;
 	    break;
 	}
-
-	dump_internal_state(IMPL(dump_internal_state));
 
 	if (this->step.estimate() > 0) {
 	    LOG("estimated remaining runtime: " << real_timer::format(this->step.estimate()));
