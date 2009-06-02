@@ -229,11 +229,18 @@ __global__ void init_tags(float4* g_r, unsigned int* g_tag)
  * rescale velocities
  */
 template <typename vector_type, typename T>
-__global__ void rescale_velocity(T* g_v, float s)
+__global__ void rescale_velocity(T* g_v, dfloat coeff)
 {
+#ifdef USE_VERLET_DSFUN
+    vector<dfloat, vector_type::static_size> v(g_v[GTID], g_v[GTID + GTDIM]);
+#else
     vector_type v = g_v[GTID];
-    v *= s;
-    g_v[GTID] = v;
+#endif
+    v *= coeff;
+    g_v[GTID] = static_cast<vector_type>(v);
+#ifdef USE_VERLET_DSFUN
+    g_v[GTID + GTDIM] = v.f1;
+#endif
 }
 
 }}} // namespace ljgpu::cu::ljfluid
@@ -271,12 +278,12 @@ cuda::function<void (float3*, const float2)>
 
 cuda::function<void (float4*, unsigned int*)>
     __3D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 3> >);
-cuda::function<void (float4*, float)>
+cuda::function<void (float4*, dfloat)>
     __3D::rescale_velocity(cu::ljfluid::rescale_velocity<cu::vector<float, 3> >);
 
 cuda::function<void (float4*, unsigned int*)>
     __2D::init_tags(cu::ljfluid::init_tags<cu::vector<float, 2> >);
-cuda::function<void (float2*, float)>
+cuda::function<void (float2*, dfloat)>
     __2D::rescale_velocity(cu::ljfluid::rescale_velocity<cu::vector<float, 2> >);
 
 }} // namespace ljgpu::gpu

@@ -20,6 +20,7 @@
 #define LJGPU_MDSIM_GPU_LJFLUID_BASE_HPP
 
 #include <cuda_wrapper.hpp>
+#include <ljgpu/math/gpu/dsfun.cuh>
 #include <ljgpu/mdsim/impl.hpp>
 #include <ljgpu/mdsim/variant.hpp>
 #include <ljgpu/rng/gpu/uint48.cuh>
@@ -61,7 +62,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base, 3>
 : public ljfluid_base<ljfluid_impl_gpu_base>
 {
     static cuda::function<void (float4*, unsigned int*)> init_tags;
-    static cuda::function<void (float4*, float)> rescale_velocity;
+    static cuda::function<void (float4*, dfloat)> rescale_velocity;
 };
 
 template <>
@@ -69,7 +70,7 @@ struct ljfluid<ljgpu::ljfluid_impl_gpu_base, 2>
 : public ljfluid_base<ljfluid_impl_gpu_base>
 {
     static cuda::function<void (float4*, unsigned int*)> init_tags;
-    static cuda::function<void (float2*, float)> rescale_velocity;
+    static cuda::function<void (float2*, dfloat)> rescale_velocity;
 };
 
 }} // namespace ljgpu::gpu
