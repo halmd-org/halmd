@@ -46,17 +46,17 @@ struct boltzmann<>
 template <>
 struct boltzmann<3> : boltzmann<>
 {
-    static cuda::function<void (float4*, uint, float, float4*)> gaussian;
-    static cuda::function<void (float4*, uint, float4 const*, dfloat*)> shift_velocity;
-    static cuda::function<void (float4*, uint, dfloat const*, float)> scale_velocity;
+    static cuda::function<void (float4*, uint, uint, float, float4*)> gaussian;
+    static cuda::function<void (float4*, uint, uint, float4 const*, dfloat*)> shift_velocity;
+    static cuda::function<void (float4*, uint, uint, dfloat const*, dfloat)> scale_velocity;
 };
 
 template <>
 struct boltzmann<2> : boltzmann<>
 {
-    static cuda::function<void (float2*, uint, float, float2*)> gaussian;
-    static cuda::function<void (float2*, uint, float2 const*, dfloat*)> shift_velocity;
-    static cuda::function<void (float2*, uint, dfloat const*, float)> scale_velocity;
+    static cuda::function<void (float2*, uint, uint, float, float2*)> gaussian;
+    static cuda::function<void (float2*, uint, uint, float2 const*, dfloat*)> shift_velocity;
+    static cuda::function<void (float2*, uint, uint, dfloat const*, dfloat)> scale_velocity;
 };
 
 }} // namespace ljgpu::gpu

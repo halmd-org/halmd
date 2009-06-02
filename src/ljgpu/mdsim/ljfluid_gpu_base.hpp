@@ -109,7 +109,7 @@ protected:
 			cuda::config const& dim,
 			cuda::stream& stream);
     /** generate Maxwell-Boltzmann distributed velocities */
-    void boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp, cuda::stream& stream);
+    void boltzmann(cuda::vector<gpu_vector_type>& g_v, double temp, cuda::stream& stream);
     /** restore system state from phase space sample */
     void state(host_sample_type& sample, float_type box,
 	       cuda::host::vector<float4>& h_r,
@@ -330,7 +330,11 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::rng(unsigned int seed)
 
     try {
 	rng_.resize(cuda::config(_gpu::BLOCKS, _gpu::THREADS));
+#ifdef USE_VERLET_DSFUN
+	g_vcm.resize(2 * _gpu::BLOCKS);
+#else
 	g_vcm.resize(_gpu::BLOCKS);
+#endif
 	g_vv.resize(_gpu::BLOCKS);
     }
     catch (cuda::error const& e) {
@@ -471,7 +475,7 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::rescale_velocities(cuda::vector<
  * generate Maxwell-Boltzmann distributed velocities
  */
 template <typename ljfluid_impl, int dimension>
-void ljfluid_gpu_base<ljfluid_impl, dimension>::boltzmann(cuda::vector<gpu_vector_type>& g_v, float temp, cuda::stream& stream)
+void ljfluid_gpu_base<ljfluid_impl, dimension>::boltzmann(cuda::vector<gpu_vector_type>& g_v, double temp, cuda::stream& stream)
 {
     typedef gpu::boltzmann<dimension> _gpu;
 
@@ -488,13 +492,13 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::boltzmann(cuda::vector<gpu_vecto
 
     // generate Maxwell-Boltzmann distributed velocities and reduce velocity
     cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
-    _gpu::gaussian(g_v, npart, temp, g_vcm);
+    _gpu::gaussian(g_v, npart, dim_.threads(), temp, g_vcm);
     // set center of mass velocity to zero and reduce squared velocity
     cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
-    _gpu::shift_velocity(g_v, npart, g_vcm, g_vv);
+    _gpu::shift_velocity(g_v, npart, dim_.threads(), g_vcm, g_vv);
     // rescale velocities to accurate temperature
     cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
-    _gpu::scale_velocity(g_v, npart, g_vv, temp);
+    _gpu::scale_velocity(g_v, npart, dim_.threads(), g_vv, temp);
 }
 
 template <typename ljfluid_impl, int dimension>
