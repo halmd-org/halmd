@@ -27,26 +27,60 @@
 namespace ljgpu { namespace cu
 {
 
-template <unsigned int dimension>
-struct vector<dfloat, dimension>
+/**
+ * Two-dimensional double-single floating point vector
+ */
+template <>
+struct vector<dfloat, 2>
 {
-    enum { static_size = dimension };
-    typedef vector<float, dimension> _Base;
+    enum { static_size = 2 };
     typedef dfloat value_type;
 
-    _Base f0, f1;
+    // Use float2 as high- and low-word to work around an NVCC compiler bug:
+    // A __shared__ array may only be declared as a struct type if the
+    // struct's members are POD or CUDA types, e.g. we cannot use a custom
+    // two- or three-dimensional vector of dfloats.
+    float2 f0, f1;
 
     __device__ inline vector() {}
 
-    __device__ inline vector(dfloat s) : f0(s.f0), f1(s.f1) {}
+    __device__ inline vector(dfloat s) : f0(make_float2(s.f0, s.f0)), f1(make_float2(s.f1, s.f1)) {}
 
-    __device__ inline vector(float s) : f0(s), f1(0) {}
+    __device__ inline vector(float s) : f0(make_float2(s, s)), f1(make_float2(0, 0)) {}
 
-    __device__ inline vector(_Base v, _Base w) : f0(v), f1(w) {}
+    __device__ inline vector(vector<float, 2> v, vector<float, 2> w) : f0(v), f1(w) {}
 
-    __device__ inline vector(_Base v) : f0(v), f1(0) {}
+    __device__ inline vector(vector<float, 2> v) : f0(v), f1(make_float2(0, 0)) {}
 
-    __device__ inline operator _Base() const { return f0; }
+    __device__ inline operator vector<float, 2>() const { return f0; }
+};
+
+/**
+ * Three-dimensional double-single floating point vector
+ */
+template <>
+struct vector<dfloat, 3>
+{
+    enum { static_size = 3 };
+    typedef dfloat value_type;
+
+    // Use float3 as high- and low-word to work around an NVCC compiler bug:
+    // A __shared__ array may only be declared as a struct type if the
+    // struct's members are POD or CUDA types, e.g. we cannot use a custom
+    // two- or three-dimensional vector of dfloats.
+    float3 f0, f1;
+
+    __device__ inline vector() {}
+
+    __device__ inline vector(dfloat s) : f0(make_float3(s.f0, s.f0, s.f0)), f1(make_float3(s.f1, s.f1, s.f1)) {}
+
+    __device__ inline vector(float s) : f0(make_float3(s, s, s)), f1(make_float3(0, 0, 0)) {}
+
+    __device__ inline vector(vector<float, 3> v, vector<float, 3> w) : f0(v), f1(w) {}
+
+    __device__ inline vector(vector<float, 3> v) : f0(v), f1(make_float3(0, 0, 0)) {}
+
+    __device__ inline operator vector<float, 3>() const { return f0; }
 };
 
 /**
