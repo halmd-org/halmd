@@ -25,7 +25,6 @@
 #ifdef WITH_CUDA
 # include <cuda_runtime.h>
 #endif
-#include <xdr/iostream.hpp>
 
 // overloaded math functions must be defined in global namespace
 
@@ -297,24 +296,6 @@ public:
     {
 	is >> v[0] >> v[1];
 	return is;
-    }
-
-    /**
-     * translate from vector to XDR vector
-     */
-    friend xdr::ostream& operator<<(xdr::ostream& xdrs, vector<T, 2> const& v)
-    {
-	xdrs << v[0] << v[1];
-	return xdrs;
-    }
-
-    /**
-     * translate to vector from XDR vector
-     */
-    friend xdr::istream& operator>>(xdr::istream& xdrs, vector<T, 2>& v)
-    {
-	xdrs >> v[0] >> v[1];
-	return xdrs;
     }
 };
 
