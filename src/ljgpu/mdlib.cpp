@@ -40,17 +40,17 @@ static typename boost::enable_if<typename mdsim_backend::impl_type::impl_gpu, in
 _mdsim(options const& opt)
 {
     // create CUDA context and associate it with this thread
-    boost::shared_ptr<cuda::context> ctx;
+    boost::shared_ptr<cuda::driver::context> ctx;
     try {
 	// CUDA context may have been created via LD_PRELOAD
-	cuda::context::device();
+	cuda::driver::context::device();
     }
-    catch (cu::error const&) {
-	ctx.reset(new cuda::context(opt["device"].as<int>()));
+    catch (cuda::driver::error const&) {
+	ctx.reset(new cuda::driver::context(opt["device"].as<int>()));
     }
-    LOG("CUDA device: " << cuda::context::device());
+    LOG("CUDA device: " << cuda::driver::context::device());
 
-    cuda::device::properties prop(cuda::context::device());
+    cuda::device::properties prop(cuda::driver::context::device());
     LOG("CUDA device name: " << prop.name());
     LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
     LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
@@ -63,9 +63,9 @@ _mdsim(options const& opt)
     LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 
     mdsim<mdsim_backend> md(opt);
-    LOG("GPU allocated global device memory: " << cuda::mem::used() << " bytes");
-    LOG("GPU available global device memory: " << cuda::mem::free() << " bytes");
-    LOG("GPU total global device memory: " << cuda::mem::total() << " bytes");
+    LOG("GPU allocated global device memory: " << cuda::driver::mem::used() << " bytes");
+    LOG("GPU available global device memory: " << cuda::driver::mem::free() << " bytes");
+    LOG("GPU total global device memory: " << cuda::driver::mem::total() << " bytes");
 
     if (opt["dry-run"].as<bool>()) {
 	return LJGPU_EXIT_SUCCESS;

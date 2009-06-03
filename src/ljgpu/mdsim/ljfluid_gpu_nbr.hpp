@@ -274,7 +274,7 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
 {
     float r_cut_max = *std::max_element(r_cut.begin(), r_cut.end());
-    cuda::device::properties prop(cuda::context::device());
+    cuda::device::properties prop(cuda::driver::context::device());
 
     for (unsigned int i = prop.warp_size(); i <= prop.max_threads_per_block(); i += prop.warp_size()) {
 	// number of placeholders per cell

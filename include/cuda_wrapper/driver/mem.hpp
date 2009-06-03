@@ -16,15 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_MEM_HPP
-#define CUDA_MEM_HPP
+#ifndef CUDA_DRIVER_MEM_HPP
+#define CUDA_DRIVER_MEM_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <cuda.h>
-#include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/driver/error.hpp>
 #include <string>
 
-namespace cuda { namespace mem
+namespace cuda { namespace driver { namespace mem
 {
 
 /**
@@ -57,6 +57,6 @@ inline unsigned int free()
     return free;
 }
 
-}} // namespace cuda::mem
+}}} // namespace cuda::driver::mem
 
-#endif /* ! CUDA_MEM_HPP */
+#endif /* ! CUDA_DRIVER_MEM_HPP */

@@ -16,15 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_CONTEXT_HPP
-#define CUDA_CONTEXT_HPP
+#ifndef CUDA_DRIVER_CONTEXT_HPP
+#define CUDA_DRIVER_CONTEXT_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <cuda.h>
-#include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/driver/error.hpp>
 #include <string>
 
-namespace cuda
+namespace cuda { namespace driver
 {
 
 /**
@@ -95,6 +95,6 @@ private:
     boost::shared_ptr<CUcontext> m_ctx;
 };
 
-} // namespace cuda
+}} // namespace cuda::driver
 
-#endif /* ! CUDA_CONTEXT_HPP */
+#endif /* ! CUDA_DRIVER_CONTEXT_HPP */
