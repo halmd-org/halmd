@@ -18,6 +18,7 @@
 
 #include <ljgpu/algorithm/gpu/base.cuh>
 #include <ljgpu/algorithm/gpu/reduce.cuh>
+#include <ljgpu/math/gpu/dsvector.cuh>
 #include <ljgpu/mdsim/gpu/virial.cuh>
 #include <ljgpu/mdsim/gpu/virial.hpp>
 
@@ -27,194 +28,140 @@ namespace ljgpu { namespace cu { namespace virial
 enum { THREADS = gpu::virial::THREADS };
 
 /**
- * parallel reduction
+ * Virial stress tensor for three-dimensional monodisperse system
  */
 __global__ void sum(float4 const* g_virial, float4 const* g_v,
-		    dfloat* g_block_sum, uint n)
+		    vector<dfloat, 4>* g_block_sum, uint n)
 {
-    __shared__ dfloat s_v0[THREADS];
-    __shared__ dfloat s_v1[THREADS];
-    __shared__ dfloat s_v2[THREADS];
-    __shared__ dfloat s_v3[THREADS];
-
-    dfloat v0 = 0;
-    dfloat v1 = 0;
-    dfloat v2 = 0;
-    dfloat v3 = 0;
+    __shared__ vector<dfloat, 4> s_virial[THREADS];
+    vector<dfloat, 4> virial = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
 	vector<float, 3> v = g_v[i];
-	vector<float, 4> virial = tensor(v * v, v) + g_virial[i];
-	v0 += virial.x;
-	v1 += virial.y;
-	v2 += virial.z;
-	v3 += virial.w;
+	virial += tensor(v * v, v) + g_virial[i];
     }
     // reduced value for this thread
-    s_v0[TID] = v0;
-    s_v1[TID] = v1;
-    s_v2[TID] = v2;
-    s_v3[TID] = v3;
+    s_virial[TID] = virial;
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2, quaternion_sum_>(v0, v1, v2, v3, s_v0, s_v1, s_v2, s_v3);
+    reduce<THREADS / 2, sum_>(virial, s_virial);
 
     if (TID < 1) {
 	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = v0;
-	g_block_sum[blockIdx.x + gridDim.x] = v1;
-	g_block_sum[blockIdx.x + 2 * gridDim.x] = v2;
-	g_block_sum[blockIdx.x + 3 * gridDim.x] = v3;
+	g_block_sum[blockIdx.x] = virial;
     }
 }
 
+/**
+ * Virial stress tensor for two-dimensional monodisperse system
+ */
 __global__ void sum(float2 const* g_virial, float2 const* g_v,
-		    dfloat* g_block_sum, uint n)
+		    vector<dfloat, 2>* g_block_sum, uint n)
 {
-    __shared__ dfloat s_v0[THREADS];
-    __shared__ dfloat s_v1[THREADS];
-
-    dfloat v0 = 0;
-    dfloat v1 = 0;
+    __shared__ vector<dfloat, 2> s_virial[THREADS];
+    vector<dfloat, 2> virial = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
 	vector<float, 2> v = g_v[i];
-	vector<float, 2> virial = tensor(v * v, v) + g_virial[i];
-	v0 += virial.x;
-	v1 += virial.y;
+	virial += tensor(v * v, v) + g_virial[i];
     }
     // reduced value for this thread
-    s_v0[TID] = v0;
-    s_v1[TID] = v1;
+    s_virial[TID] = virial;
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2, complex_sum_>(v0, v1, s_v0, s_v1);
+    reduce<THREADS / 2, sum_>(virial, s_virial);
 
     if (TID < 1) {
 	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = v0;
-	g_block_sum[blockIdx.x + gridDim.x] = v1;
+	g_block_sum[blockIdx.x] = virial;
     }
 }
 
+/**
+ * Virial stress tensor for three-dimensional bidisperse system
+ */
 __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag,
-		    dfloat* g_block_sum, uint n, uint mpart)
+		    vector<dfloat, 4>* g_block_sum, uint n, uint mpart)
 {
-    __shared__ dfloat s_v0[THREADS];
-    __shared__ dfloat s_v1[THREADS];
-    __shared__ dfloat s_v2[THREADS];
-    __shared__ dfloat s_v3[THREADS];
-
-    dfloat v0 = 0;
-    dfloat v1 = 0;
-    dfloat v2 = 0;
-    dfloat v3 = 0;
-    dfloat v4 = 0;
-    dfloat v5 = 0;
-    dfloat v6 = 0;
-    dfloat v7 = 0;
+    __shared__ vector<dfloat, 4> s_virial[THREADS];
+    vector<dfloat, 4> virial_a = 0;
+    vector<dfloat, 4> virial_b = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
 	vector<float, 3> v = g_v[i];
 	vector<float, 4> virial = tensor(v * v, v) + g_virial[i];
 	if (g_tag[i] < mpart) {
-	    v0 += virial.x;
-	    v1 += virial.y;
-	    v2 += virial.z;
-	    v3 += virial.w;
+	    virial_a += virial;
 	}
 	else {
-	    v4 += virial.x;
-	    v5 += virial.y;
-	    v6 += virial.z;
-	    v7 += virial.w;
+	    virial_b += virial;
 	}
     }
     // reduced value for this thread
-    s_v0[TID] = v0;
-    s_v1[TID] = v1;
-    s_v2[TID] = v2;
-    s_v3[TID] = v3;
+    s_virial[TID] = virial_a;
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2, quaternion_sum_>(v0, v1, v2, v3, s_v0, s_v1, s_v2, s_v3);
+    reduce<THREADS / 2, sum_>(virial_a, s_virial);
 
     if (TID < 1) {
 	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = v0;
-	g_block_sum[blockIdx.x + gridDim.x] = v1;
-	g_block_sum[blockIdx.x + 2 * gridDim.x] = v2;
-	g_block_sum[blockIdx.x + 3 * gridDim.x] = v3;
+	g_block_sum[blockIdx.x] = virial_a;
     }
 
     // reduced value for this thread
     __syncthreads();
-    s_v0[TID] = v4;
-    s_v1[TID] = v5;
-    s_v2[TID] = v6;
-    s_v3[TID] = v7;
+    s_virial[TID] = virial_b;
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2, quaternion_sum_>(v4, v5, v6, v7, s_v0, s_v1, s_v2, s_v3);
+    reduce<THREADS / 2, sum_>(virial_b, s_virial);
 
     if (TID < 1) {
 	// store block reduced value in global memory
-	g_block_sum[blockIdx.x + 4 * gridDim.x] = v4;
-	g_block_sum[blockIdx.x + 5 * gridDim.x] = v5;
-	g_block_sum[blockIdx.x + 6 * gridDim.x] = v6;
-	g_block_sum[blockIdx.x + 7 * gridDim.x] = v7;
+	g_block_sum[blockIdx.x + gridDim.x] = virial_b;
     }
 }
 
+/**
+ * Virial stress tensor for two-dimensional bidisperse system
+ */
 __global__ void sum(float2 const* g_virial, float2 const* g_v, uint const* g_tag,
-		    dfloat* g_block_sum, uint n, uint mpart)
+		    vector<dfloat, 2>* g_block_sum, uint n, uint mpart)
 {
-    __shared__ dfloat s_v0[THREADS];
-    __shared__ dfloat s_v1[THREADS];
-    __shared__ dfloat s_v2[THREADS];
-    __shared__ dfloat s_v3[THREADS];
-
-    dfloat v0 = 0;
-    dfloat v1 = 0;
-    dfloat v2 = 0;
-    dfloat v3 = 0;
+    __shared__ vector<dfloat, 2> s_virial_a[THREADS];
+    __shared__ vector<dfloat, 2> s_virial_b[THREADS];
+    vector<dfloat, 2> virial_a = 0;
+    vector<dfloat, 2> virial_b = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
 	vector<float, 2> v = g_v[i];
 	vector<float, 2> virial = tensor(v * v, v) + g_virial[i];
 	if (g_tag[i] < mpart) {
-	    v0 += virial.x;
-	    v1 += virial.y;
+	    virial_a += virial;
 	}
 	else {
-	    v2 += virial.x;
-	    v3 += virial.y;
+	    virial_b += virial;
 	}
     }
     // reduced value for this thread
-    s_v0[TID] = v0;
-    s_v1[TID] = v1;
-    s_v2[TID] = v2;
-    s_v3[TID] = v3;
+    s_virial_a[TID] = virial_a;
+    s_virial_b[TID] = virial_b;
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<THREADS / 2, quaternion_sum_>(v0, v1, v2, v3, s_v0, s_v1, s_v2, s_v3);
+    reduce<THREADS / 2, complex_sum_>(virial_a, virial_b, s_virial_a, s_virial_b);
 
     if (TID < 1) {
 	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = v0;
-	g_block_sum[blockIdx.x + gridDim.x] = v1;
-	g_block_sum[blockIdx.x + 2 * gridDim.x] = v2;
-	g_block_sum[blockIdx.x + 3 * gridDim.x] = v3;
+	g_block_sum[blockIdx.x] = virial_a;
+	g_block_sum[blockIdx.x + gridDim.x] = virial_b;
     }
 }
 
@@ -227,10 +174,10 @@ namespace ljgpu { namespace gpu
  * device function wrappers
  */
 cuda::function<
-    void(float4 const*, float4 const*, dfloat*, uint),
-    void(float2 const*, float2 const*, dfloat*, uint),
-    void(float4 const*, float4 const*, uint const*, dfloat*, uint, uint),
-    void(float2 const*, float2 const*, uint const*, dfloat*, uint, uint)>
+    void(float4 const*, float4 const*, cu::vector<dfloat, 4>*, uint),
+    void(float2 const*, float2 const*, cu::vector<dfloat, 2>*, uint),
+    void(float4 const*, float4 const*, uint const*, cu::vector<dfloat, 4>*, uint, uint),
+    void(float2 const*, float2 const*, uint const*, cu::vector<dfloat, 2>*, uint, uint)>
     virial::sum(cu::virial::sum, cu::virial::sum, cu::virial::sum, cu::virial::sum);
 
 }} // namespace ljgpu::gpu

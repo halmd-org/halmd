@@ -160,7 +160,7 @@ protected:
     /** potential energy sum */
     reduce<tag::sum, dfloat, double> mutable reduce_en;
     /** virial equation sum */
-    virial_sum<dfloat, virial_tensor> mutable reduce_virial;
+    virial_sum<ljgpu::cu::vector<dfloat, virial_tensor::static_size>, virial_tensor> mutable reduce_virial;
 };
 
 template <typename ljfluid_impl, int dimension>

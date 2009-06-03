@@ -34,8 +34,8 @@ template <typename gpu_output_type, typename output_type>
 class virial_sum
 {
 public:
-    enum { BLOCKS = gpu::virial::BLOCKS, THREADS = gpu::virial::THREADS };
-    enum { ELEMENTS = output_type::static_size };
+    enum { BLOCKS = gpu::virial::BLOCKS };
+    enum { THREADS = gpu::virial::THREADS };
 
     /**
      * stream parallel reduction kernel
@@ -43,8 +43,8 @@ public:
     template <typename T>
     void operator()(T const& g_in, T const& g_v, cuda::stream& stream)
     {
-	g_block_sum.resize(ELEMENTS * BLOCKS);
-	h_block_sum.resize(ELEMENTS * BLOCKS);
+	g_block_sum.resize(BLOCKS);
+	h_block_sum.resize(BLOCKS);
 	cuda::configure(BLOCKS, THREADS, stream);
 	gpu::virial::sum(g_in, g_v, g_block_sum, g_in.size());
 	cuda::copy(g_block_sum, h_block_sum, stream);
@@ -54,8 +54,8 @@ public:
     void operator()(T const& g_in, T const& g_v, U const& g_tag,
 		    boost::array<uint, 2> const& mpart, cuda::stream& stream)
     {
-	g_block_sum.resize(2 * ELEMENTS * BLOCKS);
-	h_block_sum.resize(2 * ELEMENTS * BLOCKS);
+	g_block_sum.resize(2 * BLOCKS);
+	h_block_sum.resize(2 * BLOCKS);
 	cuda::configure(BLOCKS, THREADS, stream);
 	gpu::virial::sum(g_in, g_v, g_tag, g_block_sum, g_in.size(), mpart.front());
 	cuda::copy(g_block_sum, h_block_sum, stream);
@@ -71,12 +71,8 @@ public:
 	typedef typename output_type::value_type value_type;
 
 	std::vector<output_type> v;
-	for (iterator sum = h_block_sum.begin(); sum != h_block_sum.end(); ) {
-	    output_type w;
-	    for (output_iterator it = w.begin(); it != w.end(); ++it, sum += BLOCKS) {
-		*it = std::accumulate(sum, sum + BLOCKS, value_type(0));
-	    }
-	    v.push_back(w);
+	for (iterator sum = h_block_sum.begin(); sum != h_block_sum.end(); sum += BLOCKS) {
+	    v.push_back(std::accumulate(sum, sum + BLOCKS, output_type(0)));
 	}
 	return v;
     }
