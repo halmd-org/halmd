@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return ljgpu::LJGPU_EXIT_CUDA_ERROR;
     }
-    catch (cu::error const& e) {
+    catch (cuda::driver::error const& e) {
 	LOG_ERROR("CUDA: " << e.what());
 	LOG_WARNING(PROGRAM_NAME " aborted");
 	return ljgpu::LJGPU_EXIT_CUDA_ERROR;
