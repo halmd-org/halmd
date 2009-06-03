@@ -63,6 +63,8 @@ struct vector<float, 2>
     }
 };
 
+#ifdef __CUDACC__
+
 /**
  * assignment by componentwise vector<float, 2> addition
  */
@@ -398,6 +400,8 @@ __device__ inline vector<float, 2> __fdividef(vector<float, 2> v, float s)
     v.y = __fdividef(v.y, s);
     return v;
 }
+
+#endif /* __CUDACC__ */
 
 }} // namespace ljgpu::cu
 

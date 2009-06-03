@@ -24,6 +24,11 @@
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
 #include <ljgpu/math/gpu/vector4d.cuh>
+#ifndef __CUDACC__
+# include <ljgpu/math/vector2d.hpp>
+# include <ljgpu/math/vector3d.hpp>
+# include <ljgpu/math/vector4d.hpp>
+#endif
 
 namespace ljgpu { namespace cu
 {
@@ -54,6 +59,16 @@ struct vector<dfloat, 2>
     __device__ inline vector(vector<float, 2> v) : __hi(v), __lo(make_float2(0, 0)) {}
 
     __device__ inline operator vector<float, 2>() const { return __hi; }
+
+#ifndef __CUDACC__
+    __device__ inline operator ::vector<double, 2>() const
+    {
+	::vector<double, 2> v;
+	v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
+	v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
+	return v;
+    }
+#endif
 };
 
 /**
@@ -82,6 +97,17 @@ struct vector<dfloat, 3>
     __device__ inline vector(vector<float, 3> v) : __hi(v), __lo(make_float3(0, 0, 0)) {}
 
     __device__ inline operator vector<float, 3>() const { return __hi; }
+
+#ifndef __CUDACC__
+    __device__ inline operator ::vector<double, 3>() const
+    {
+	::vector<double, 3> v;
+	v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
+	v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
+	v[2] = static_cast<double>(__hi.z) + static_cast<double>(__lo.z);
+	return v;
+    }
+#endif
 };
 
 /**
@@ -110,7 +136,21 @@ struct vector<dfloat, 4>
     __device__ inline vector(vector<float, 4> v) : __hi(v), __lo(make_float4(0, 0, 0, 0)) {}
 
     __device__ inline operator vector<float, 4>() const { return __hi; }
+
+#ifndef __CUDACC__
+    __device__ inline operator ::vector<double, 4>() const
+    {
+	::vector<double, 4> v;
+	v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
+	v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
+	v[2] = static_cast<double>(__hi.z) + static_cast<double>(__lo.z);
+	v[3] = static_cast<double>(__hi.w) + static_cast<double>(__lo.w);
+	return v;
+    }
+#endif
 };
+
+#ifdef __CUDACC__
 
 /**
  * returns high-word floating point vector
@@ -310,6 +350,8 @@ __device__ inline vector<dfloat, dimension> operator*(dfloat const& s, vector<df
     v *= s;
     return v;
 }
+
+#endif /* __CUDACC__ */
 
 }} // namespace ljgpu::cu
 
