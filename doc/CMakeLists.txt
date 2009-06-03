@@ -28,6 +28,9 @@ foreach(OUTPUT_TYPE ${DOC_OUTPUT_TYPES})
     )
 endforeach(OUTPUT_TYPE)
 
+# serialise targets with a common cache directory
+add_dependencies(doc_latex doc_html)
+
 add_custom_target(doc_pdf ALL
   ${CMAKE_MAKE_PROGRAM}
   -C ${CMAKE_CURRENT_BINARY_DIR}/latex
