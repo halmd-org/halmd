@@ -396,7 +396,7 @@ int mdsim<mdsim_backend>::operator()()
 	}
 
 	if (this->step.estimate() > 0) {
-	    LOG("estimated remaining runtime at step " << this->step << ": " << real_timer::format(this->step.estimate()));
+	    LOG(real_timer::format(this->step.estimate()) << " estimated remaining runtime at step " << this->step);
 	    this->step.set(TIME_ESTIMATE_INTERVAL);
 	}
 
