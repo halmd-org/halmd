@@ -1,4 +1,4 @@
-Introduction
+Installation
 ************
 
 License
@@ -6,23 +6,93 @@ License
 
 ljgpu is licensed under the GNU General Public License version 3.
 
+Website
+=======
 
-Prerequisites
-=============
-
-The following software packages are required for compilation.
-
-* NVIDIA CUDA toolkit >= 1.1
-* CMake >= 2.6.0 with custom CUDA compiler support patch
-* Boost C++ Libraries >= 1.37.0
-* HDF5 C++ Library >= 1.6.6
-* GNU Scientific Library
-* Git >= 1.5.6.2
-* Sphinx documentation generator >= 0.6.1
+The documentation for the current release is available at
+http://colberg.org/code/ljgpu/.
 
 
-Installation
-============
+Getting the source code
+=======================
+
+ljgpu is maintained in a private `Git <http://git-scm.com/>`_ repository, which
+requires a git account at the physics faculty of the LMU.
+If you are new to Git or version control in general, the `Git tutorial
+<http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html>`_
+will get you started.
+Former Subversion users may also read the `Git SVN Crash Course
+<http://git.or.cz/course/svn.html>`_.
+For in-depth documentation, see the `Git User's Manual
+<http://www.kernel.org/pub/software/scm/git/docs/user-manual.html>`_.
+
+To checkout the main repository::
+
+  git clone username@git.physik.uni-muenchen.de:/pub/scm/granmat/ljgpu
+
+Updates may retrieved within the cloned repository using::
+
+  git pull
+
+Individual releases may be checked out with::
+
+  git checkout ljgpu-v0.3.6.1
+
+To revert to the main development branch after a release checkout, use::
+
+  git checkout master
+
+
+Software prerequisites
+======================
+
+ljgpu is based on variety of high-quality open source software packages.
+If you share the disdain of many scientists of installing third-party software
+oneself and are in the fortunate position to freely choose the operating system
+on your CUDA machines, you may save yourself a lot of trouble by choosing an
+operating system which includes the software in its official package repository,
+for example `Debian GNU/Linux <http://www.debian.org/>`_ or `Ubuntu
+<http://www.ubuntu.com>`_. The Debian distribution and its derivatives have a
+strong focus on universality and therefore come bundled with a plethora of
+scientific packages.
+
+These software packages are required for compilation:
+
+* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ >= 1.1
+
+  For Tesla C1060 or GeForce GT200-based cards, **CUDA 2.0 is strongly
+  recommended**.
+
+  With CUDA 2.1 we experienced minor performance degradation on a GeForce GTX
+  280, while CUDA 2.2 using the NVIDIA driver 185.18.08 causes hanging GPU
+  kernels for long-time simulations running more than a day.
+
+* `CMake <http://www.cmake.org/>`_ >= 2.6.0 with custom CUDA compiler support patch
+
+  The patched CMake version, which adds native CUDA language support, is
+  available at::
+
+    git clone username@git.physik.uni-muenchen.de:/pub/scm/granmat/ljgpu
+
+* `Boost C++ Libraries <http://www.boost.org/>`_ >= 1.37.0
+
+* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ >= 1.6.6
+
+  It is recommended to install a 1.6.x version (instead of 1.8.x), as the
+  current version of PyTables is not compatible with HDF5 1.8.x.  Note that
+  PyTables is **not** required for ljgpu, but for the ``mdplot`` plot package.
+
+* `GNU Scientific Library <http://www.gnu.org/software/gsl/>`_ (GSL)
+
+* `Git <http://git-scm.com/>`_ >= 1.5.6.2
+
+* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ >= 0.6.1
+
+* LaTeX including pdflatex and dvipng
+
+
+Compilation
+===========
 
 To compile, switch to a newly created directory and execute::
 

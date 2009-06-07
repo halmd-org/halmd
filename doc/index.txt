@@ -1,12 +1,18 @@
 ljgpu documentation
 ===================
 
+Welcome to ljgpu, a high-precision molecular dynamics simulation of
+Lennard-Jones fluids for NVIDIA CUDA devices.
+
 .. toctree::
    :maxdepth: 2
 
    readme
    usage
    units
+
+For suggestions or bug reports, send a mail to
+Peter Colberg <peter.colberg@physik.uni-muenchen.de>.
 
 Indices and tables
 ==================
