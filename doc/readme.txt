@@ -94,116 +94,169 @@ These software packages are required for compilation:
 Compilation
 ===========
 
-To compile, switch to a newly created directory and execute::
+ljgpu uses `CMake <http://www.cmake.org/>`_ to generate its make files, which is
+similar to the more commonly used Autotools suite recognisable by the
+``configure`` script accompanying a software package, but much faster and much
+easier to develop with.
 
-  $ CXXFLAGS="-fPIC -Wall" \
-	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-	cmake -DCMAKE_BUILD_TYPE=Release ~/path/to/ljgpu_source
-  $ make
+With cmake, out-of-tree compilation is preferred, so we generate the compilation
+or build tree in a separate directory. This allows one to have multiple builds
+of the same software at the same time, for example a release build with
+aggressive optimisation and a debug build including debugging symbols. Note that
+the build directory may be a subdirectory in the source tree.
 
-If cmake should look for third-party libraries in a custom path, add::
+Setting up the cmake build tree
+-------------------------------
 
-  -DCMAKE_PREFIX_PATH=$HOME/usr
+In the cloned ljgpu repository, switch to a new build directory::
 
-or ::
+  mkdir -p build/release && cd build/release
 
-  -DCMAKE_INCLUDE_PATH=$HOME/usr/include
-  -DCMAKE_LIBRARY_PATH=$HOME/usr/lib
+If the third-party packages are installed in standard locations, run::
 
-to the arguments passed to cmake and use the following CXXFLAGS::
+  CXXFLAGS="-fPIC -Wall" \
+  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+  cmake -DCMAKE_BUILD_TYPE=Release ../..
 
-  CXXFLAGS="-fPIC -Wall -I$HOME/usr/include"
+This will detect all necessary software, and then generate the make files.
+
+Compilation is done using make, which supports parallel builds::
+
+  nice make -j4
+
+Individual backends may be compiled selectively::
+
+  nice make -j4 ljgpu ljgpu_gpu_neighbour ljgpu_host
+
+Note that due to extensive use of C++ templates, a **single compiler process**
+may easily consume **more than 500MB of memory**, so be sure to adjust the
+number of parallel builds to the available resources.
 
 
-On non-Debian systems, the paths to the Boost headers and libraries
-have to be specified, using BOOST_INCLUDEDIR and BOOST_LIBRARYDIR::
+Updating the build tree
+-----------------------
 
-  $ CXXFLAGS="-fPIC -Wall" \
-	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-	BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
-	BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
-	cmake -DCMAKE_BUILD_TYPE=Release ~/path/to/ljgpu_source
-  $ make
+After checking out a new git commit, **switch to the build directory** (e.g.
+``build/release``) and run::
 
+  cmake .
+
+This instructs cmake to regenerate the build tree using the configuration from a
+previous cmake run. Then compile with ``make`` as usual.
+
+
+Non-standard third-party library locations
+------------------------------------------
+
+If cmake should look for third-party libraries in a custom path, set the
+CMAKE_PREFIX_PATH variable::
+
+  CXXFLAGS="-fPIC -Wall" \
+  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$HOME/usr ../..
+
+
+On non-Debian systems, the Boost header and library locations have to be
+passed to cmake::
+
+  CXXFLAGS="-fPIC -Wall" \
+  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+  BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
+  BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
+  cmake -DCMAKE_BUILD_TYPE=Release ../..
+
+
+Static linking
+--------------
 
 For static linking to the Boost, HDF5 and GSL libraries, use::
 
-  $ CXXFLAGS="-fPIC -Wall" \
-	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-	BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
-	BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
-	cmake -DCMAKE_BUILD_TYPE=Release \
-	-DBoost_USE_STATIC_LIBS=TRUE \
-	-DHDF5_USE_STATIC_LIBS=TRUE \
-	-DGSL_USE_STATIC_LIBS=TRUE \
-	~/path/to/ljgpu_source
-  $ make
+  CXXFLAGS="-fPIC -Wall"
+  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+  BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
+  BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
+  cmake -DCMAKE_BUILD_TYPE=Release \
+  -DBoost_USE_STATIC_LIBS=TRUE \
+  -DHDF5_USE_STATIC_LIBS=TRUE \
+  -DGSL_USE_STATIC_LIBS=TRUE \
+  ../..
 
-To compile separate executables for each backend::
+To compile separate, dynamically linked executables for each backend::
 
-  $ CXXFLAGS="-fPIC -Wall" \
-	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-	BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
-	BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
-	cmake -DCMAKE_BUILD_TYPE=Release \
-	-Dljgpu_STATIC_BACKEND=TRUE \
-	~/path/to/ljgpu_source
-  $ make
+  CXXFLAGS="-fPIC -Wall" \
+  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+  BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
+  BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
+  cmake -DCMAKE_BUILD_TYPE=Release -Dljgpu_STATIC_BACKEND=TRUE ../..
 
-To compile statically linked backend executables::
+To compile separate, statically linked executables for each backend::
 
-  $ CXXFLAGS="-fPIC -Wall" \
-	BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
-	BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
-	cmake -DCMAKE_BUILD_TYPE=Release \
-	-Dljgpu_USE_STATIC_LIBS=TRUE \
-	~/path/to/ljgpu_source
-  $ make
+  CXXFLAGS="-fPIC -Wall" \
+  BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
+  BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
+  cmake -DCMAKE_BUILD_TYPE=Release -Dljgpu_USE_STATIC_LIBS=TRUE ../..
 
-Note that this only compiles the host backends, as the CUDA runtime library
-requires dynmamic linking as it dynamically loads the CUDA driver library.
+This only compiles the host backends, as the CUDA runtime library
+requires dynamic linking to load the CUDA driver.
 
-For a build with debugging symbols, use the following::
 
-  $ CXXFLAGS="-fPIC -Wall" \
-	CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-	NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-	cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ~/path/to/ljgpu_source
-  $ make
+Debug build
+-----------
 
+To configure a build with debugging symbols, switch to a new subdirectory (e.g.
+``build/debug``) and run::
+
+  CXXFLAGS="-fPIC -Wall" \
+  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../..
+
+
+Further cmake configuration
+---------------------------
 
 Compilation flags may be configured via the CMake GUI::
 
-  $ ccmake .
+  ccmake .
 
 To finish configuration, hit "c" and "g" to apply and recompile with make.
 
 The following compilation flags are highly recommended::
 
-    CMAKE_CUDA_FLAGS		--host-compilation=c -Xcompiler -fPIC -Xptxas -v
-    CMAKE_CXX_FLAGS		-Wall -fPIC
+  CMAKE_CUDA_FLAGS		--host-compilation=c -Xcompiler -fPIC -Xptxas -v
+  CMAKE_CXX_FLAGS		-Wall -fPIC
 
 To display the actual compilation commands, set::
 
-    CMAKE_VERBOSE_MAKEFILE	ON
+  CMAKE_VERBOSE_MAKEFILE	ON
 
-On some 64-bit systems (e.g. Mandriva), cmake may accidently use a 32-bit
-library instead of its 64-bit counterpart, which results in linker errors.
-With Mandriva Linux, the following adjustments are required in ccmake::
+On some 64-bit systems, cmake may accidently use a 32-bit library instead of its
+64-bit counterpart, which results in linker errors. With Mandriva Linux, the
+following adjustments are required in ccmake::
 
-    GSL_CBLAS_LIBRARY		/usr/lib64/libgslcblas.so.0
-    GSL_LIBRARY			/usr/lib64/libgsl.so.0
+  GSL_CBLAS_LIBRARY		/usr/lib64/libgslcblas.so.0
+  GSL_LIBRARY			/usr/lib64/libgsl.so.0
 
 
 An installation prefix may be specified as following::
 
-    CMAKE_INSTALL_PREFIX	/home/Peter.Colberg/usr
+  CMAKE_INSTALL_PREFIX		/home/Peter.Colberg/usr
 
 The compiled program is then installed into this tree with::
 
-    $ make install
+  make install
+
+
+Testing
+=======
+
+ljgpu includes a preliminary test suite, which may be started in the build tree with::
+
+  ctest
+
 
