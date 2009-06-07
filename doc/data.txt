@@ -1,0 +1,245 @@
+Data files
+**********
+
+Why HDF5?
+=========
+
+While ASCII is a nice way to effortlessly dump arbitrary data in human readable
+form without worrying much about portability, it has some serious drawbacks:
+
+* ASCII representation requires about twice as much storage to represent
+  floating-point number data than the binary equivalent. Large datasets such as
+  particle trajectories require compression for reasonable file sizes.
+
+* The conversion between binary and ASCII is lossy: A binary floating-point number
+  may not have an exact decimal representation. From the physics point of view,
+  loss of accuracy in the least significant digit is bearable—for exact
+  reproducibility of a simulation, for example to inspect software bugs, it is
+  not.
+
+* Most importantly, ASCII does not enforce any data structure.
+
+
+The HDF5 file format presents a solution to these problems:
+
+* Data is stored in a binary *and* portable format.
+  HDF5 transparently handles any C data type: 8/16/32/64-bit integers and
+  single- or double precision floating point numbers, whether in big- or
+  little-Endian representation.
+
+* A file is structured hierarchically: Every file contains a root group,
+  which may itself contain named datasets or further named groups. Both
+  datasets and groups may described with attributes of arbitrary type.
+
+Furthermore, HDF5 is a well established scientific file format, with C, C++,
+Fortran and python bindings available.
+
+
+Working with HDF5 files
+=======================
+
+Using the h5dump tool
+---------------------
+
+For a quick analysis of HDF5 data files, use the h5dump tool::
+
+  h5dump file | less -S
+
+Individual groups or datasets may be displayed with::
+
+  h5dump -g /path/to/group file
+  h5dump -d /path/to/dataset file
+
+To inspect only the structure of a file, ommitting the data, use::
+
+  h5dump -A file
+
+
+Using Python and PyTables
+-------------------------
+
+PyTables is a python module wrapping the HDF5 library. It is based on NumPy,
+which implements a MATLAB-like interface to multi-dimensional arrays.
+This is where the HDF5 format reveals its true strength, as NumPy allows
+arbitrary transformations of HDF5 datasets, all while using a real programming
+language.
+
+As a simple example, we open a HDF5 file and print a dataset::
+
+  import tables
+  f = tables.openFile("file")
+  d = f.root.path.to.dataset[:]
+  print d
+  f.close()
+
+Attributes may be read with the _v_attr class member::
+
+  print f.root.param.mdsim._v_attrs.dimension
+  print f.root.param.program._v_attrs.version
+
+
+For further information, refer to the `Numpy and Scipy Documentation
+<http://docs.scipy.org/doc/>`_ and the `PyTables User's Manual
+<http://www.pytables.org/moin/HowToUse>`_.
+
+A last hint: Try ``ipython``, an interactive python shell with auto-completion.
+
+
+File formats
+============
+
+Simulation parameters
+---------------------
+
+All data files contain an identical ``param`` group with all simulation
+parameters. This is the definitive place to gather parameter values in your
+evaluation scripts. *Do not (ab)use the log file for evaluation purposes.*
+
+::
+
+  param
+   \-- correlation
+   |    \-- block_count		number of blocks
+   |    \-- block_shift		block shift of intermediate block levels
+   |    \-- block_size		number of samples per block
+   |    \-- max_samples		maximum number of acquired samples per block
+   |    \-- min_samples		minimum number of acquired samples per block
+   |    \-- q_error		relative deviation of averaging wave vectors
+   |    \-- q_values		wave vector value(s) for correlation functions
+   |    \-- sample_rate		sample frequency at lowest block level 
+   |    \-- steps		scheduled number of steps
+   |    \-- time		scheduled simulation time
+   |
+   \-- mdsim
+   |    \-- backend		simulation backend name
+   |    \-- blocks		number of CUDA blocks in grid
+   |    \-- box_length		simulation box edge length
+   |    \-- cell_length		cell edge length
+   |    \-- cell_occupancy	average ratio of particles to cell placeholders
+   |    \-- cells		number of cells per dimension
+   |    \-- cutoff_radius	potential cut-off radius
+   |    \-- density		number density
+   |    \-- dimension		positional coordinates dimension
+   |    \-- effective_steps	simulated number of steps
+   |    \-- neighbour_skin	neighbour list skin
+   |    \-- neighbours		number of placeholders per neighbour list
+   |    \-- pair_separation	hard-sphere pair separation
+   |    \-- particles		number of particles per species
+   |    \-- placeholders	total number of cell list placeholders
+   |    \-- potential_epsilon	potential well depths AA,AB,BB
+   |    \-- potential_sigma	collision diameters AA,AB,BB
+   |    \-- potential_smoothing	C²-potential smoothing factor
+   |    \-- tcf_backend		correlation functions backend (host or gpu)
+   |    \-- thermostat_nu	heat bath collision probability
+   |    \-- thermostat_steps	heat bath coupling frequency
+   |    \-- thermostat_temp	heat bath temperature
+   |    \-- threads		number of CUDA threads per block
+   |    \-- timestep		simulation time-step
+   |
+   \-- program
+        \-- name		program name (ljgpu)
+        \-- variant		compile-time feature flags
+        \-- version		git repository version
+
+
+Trajectories (TRJ)
+------------------
+
+A particle trajectory file contains three datasets::
+
+  trajectory
+   \-- r			periodically extended particle coordinates
+   \-- v			particle velocities
+   \-- t			trajectory times
+
+.. glossary::
+
+   periodically extended particle coordinates
+     A three-dimensional double-precision floating-point dataset.
+     The first dimension is the trajectory sample number.
+     The second dimension is the particle number.
+     The third dimension is the coordinates dimension.
+
+     For the host backend, the particle coordinates reflect the internal state
+     of the simulation. For the GPU backend, the coordinates are calculated from
+     the periodic box traversal vector (an integer multiple of the box size) and
+     the periodically reduced single-precision coordinates, which introduces
+     rounding errors.
+
+   particle velocities
+     A three-dimensional double- or single precision floating-point dataset.
+     The first dimension is the trajectory sample number.
+     The second dimension is the particle number.
+     The third dimension is the coordinates dimension.
+
+   trajectory times
+     A one-dimensional double-precision floating-point dataset.
+     The first dimension is the trajectory sample number.
+
+
+Thermodynamic variables (TEP)
+-----------------------------
+
+A thermodynamic variables file contains one dataset per measured variable::
+
+  \-- EKIN			mean kinetic energy per particle
+  \-- EPOT			mean potential energy per particle
+  \-- ETOT			mean total energy per particle
+  \-- PRESS			virial pressure
+  \-- TEMP			temperature
+  \-- VCM			velocity center of mass
+
+All datasets except for the velocity of mass are two-dimensional.
+The first dimension describes the sample number.
+The second dimension contains the sample time and the variable value.
+All values are double-precision floating point numbers, but may be measured
+in single-precision internally depending on the backend.
+
+.. glossary::
+
+   mean kinetic energy per particle
+     .. math::
+
+        \langle E^*_{kin}\rangle =
+        \frac{1}{N} \sum_{i=1}^N \frac{(\vec{v}^*_i)^2}{2}
+
+   mean potential energy per particle
+     .. math::
+
+        \langle U^*\rangle = \frac{1}{N}
+        \sum_{i=1}^N \bigl(\sum_{j>i}^N U(\vec{r}^*_{ij})\bigr)
+
+     With the GPU backend, the inner sum is truncated to single-precision.
+
+   mean total energy per particle
+     .. math::
+
+        \langle E^*\rangle = \langle U^*\rangle + \langle E^*_{kin}\rangle
+
+   virial pressure
+     .. math::
+
+        \langle P^*\rangle = \frac{N}{d V^*} \sum_{i=1}^N
+        \bigl(\sum_{j>i}^N \vec{F}(\vec{r}^*_{ij})\cdot\vec{r}^*_{ij}\bigr)
+
+     With the GPU backend, the inner sum is truncated to single-precision.
+
+   temperature
+     .. math::
+
+        \langle T^*\rangle = \frac{1}{d N} \sum_{i=1}^N (\vec{v}^*_i)^2
+
+   velocity center of mass
+     .. math::
+
+        \langle \vec{v}^*\rangle = \frac{1}{N} \sum_{i=1}^N \vec{v}^*
+
+
+Time-correlation functions (TCF)
+--------------------------------
+
+
+Profiling (PRF)
+---------------
+
+

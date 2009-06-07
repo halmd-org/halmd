@@ -9,6 +9,7 @@ Lennard-Jones fluids for NVIDIA CUDA devices.
 
    readme
    usage
+   data
    units
 
 For suggestions or bug reports, send a mail to
