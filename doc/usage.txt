@@ -14,6 +14,74 @@ environment variables in the shell initialization file (e.g. ~/.bashrc)::
 Getting started
 ===============
 
+Simulation backends
+-------------------
+
+ljgpu implements various simulation backends using dynamically loaded plugins.
+
+.. glossary::
+
+   host backend
+     A single-threaded soft-sphere molecular dynamics simulation.
+
+     This is a straight-forward reference implementation using cell and
+     neighbour lists.
+
+     D. C. Rapaport,
+     *The Art of Molecular Dynamics Simulation*,
+     Cambridge University Press, 2004
+
+   gpu_square backend
+     A naive soft-sphere molecular dynamics simulation for the GPU.
+
+     This is a straight-forward implementation without cell or neighbour lists.
+     Simulation time therefore **scales quadratically** with the system size.
+
+   gpu_cell backend
+     An optimised soft-sphere molecular dynamics simulation for the GPU.
+
+     This implementation for the GPU uses fixed-size cell lists, which yields
+     a speedup over the CPU of order 10.
+
+     J. A. van Meel, A. Arnold, D. Frenkel, S.F. Portegies Zwart and R. G. Belleman,
+     *Harvesting graphics power for MD simulations*,
+     `Simulation, Taylor & Francis, 2008, 34, 259-266 <http://dx.doi.org/10.1080/08927020701744295>`_
+
+   gpu_neighbour backend
+     An optimised soft-sphere molecular dynamics simulation for the GPU.
+
+     This implementation for the GPU uses fixed-size cell and neighbour lists, which yields
+     a speedup over the CPU of order 100.
+
+     P. H. Colberg and F. Höfling,
+     *Accelerating glassy dynamics using graphics processing units*,
+     in preparation
+
+     J. A. Anderson, C. D. Lorenz and A. Travesset,
+     *General purpose molecular dynamics simulations fully implemented on graphics processing units*,
+     `Journal of Computational Physics, 2008, 227, 5342-5359 <http://dx.doi.org/10.1016/j.jcp.2008.01.047>`_
+
+     H. Sagan,
+     *A three-dimensional Hilbert curve*,
+     `International Journal of Mathematical Education in Science and Technology, Taylor & Francis, 1993, 24, 541-545 <http://dx.doi.org/10.1080/0020739930240405>`_
+
+   hardsphere backend
+     A single-threaded, event-based hard-sphere molecular dynamics simulation.
+
+     This is a straight-forward reference implementation using cell lists.
+
+     M. P. Allen, D. Frenkel and J. Talbot,
+     *Molecular dynamics simulation using hard particles*,
+     `Computer Physics reports, 1989, 9, 301-353 <http://dx.doi.org/10.1016/0167-7977(89)90009-9>`_
+
+     S. Miller and S. Luding,
+     *Event-driven molecular dynamics in parallel*,
+     `Journal of Computational Physics, 2004, 193, 306-316 <http://dx.doi.org/10.1016/j.jcp.2003.08.009>`_
+
+
+Program parameters
+------------------
+
 ljgpu has three ways of accepting program parameters:
 
 * pass directly as command line parameters
