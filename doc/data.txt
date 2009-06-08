@@ -239,8 +239,124 @@ in single-precision internally depending on the backend.
 Time-correlation functions (TCF)
 --------------------------------
 
+A time-correlation functions file contains one dataset per function::
+
+  \-- MSD			mean squared displacement
+  \-- MQD			mean quartic displacement
+  \-- VAC			velocity auto-correlation function
+  \-- ISF			coherent/intermediate scattering function
+  \-- SISF			incoherent/self-intermediate scattering function
+  \-- SISF2			squared self-intermediate scattering function
+  \-- STRESS			virial stress
+
+Datasets are either of three- or four-dimensional double-precision type.
+
+For three-dimensional datasets, the first dimension is the block level.
+The second dimension is the block size.
+The third dimension contains the correlation time, the mean average,
+the standard error of mean, the variance and the count.
+
+For four-dimensional datasets, the first dimension is the wave vector.
+The second dimension is the block level.
+The third dimension is the block size.
+The fourth dimension contains the wave number, the correlation time, the mean
+average, the standard error of mean, the variance and the count.
+
+.. glossary::
+
+   mean squared displacement
+     A three-dimensional dataset.
+
+     .. math::
+
+        \delta r(t)^2 = \left\langle\lvert \vec{r_i}(t)-\vec{r_i}(0)\rvert^2\right\rangle
+
+   mean quartic displacement
+     A three-dimensional dataset.
+
+     .. math::
+
+        \delta r(t)^4 = \left\langle\lvert \vec{r_i}(t)-\vec{r_i}(0)\rvert^4\right\rangle
+
+   velocity auto-correlation function
+     A three-dimensional dataset.
+
+     .. math::
+
+        \mathcal{Z}(t) = \Big\langle \vec{v}(t)\cdot\vec{v}(0)\Big\rangle
+
+   coherent/intermediate scattering function
+     A four-dimensional dataset.
+
+     .. math::
+
+        F(\vec{q},t) = \frac{1}{N}\Bigl\langle
+        \Bigl(\sum_{i=1}^N e^{-i\vec{q}\cdot\vec{r_i}(t)}\Bigr)
+        \Bigl(\sum_{i=1}^N e^{i\vec{q}\cdot\vec{r_i}(0)}\Bigr)\Bigr\rangle
+
+   incoherent/self-intermediate scattering function
+     A four-dimensional dataset.
+
+     .. math::
+
+        F_s(\vec{q},t) = \frac{1}{N} \Bigl\langle\sum_{i=1}^N
+	e^{-i\vec{q}\cdot\bigl(\vec{r_i}(t)-\vec{r_i}(0)\bigr)}\Bigr\rangle
+
+   squared self-intermediate scattering function
+     A four-dimensional dataset.
+
+     .. math::
+
+        F_s(\vec{q}, t)^2 = \frac{1}{N} \Bigl\langle\Bigl(\sum_{i=1}^N
+	e^{-i\vec{q}\cdot\bigl(\vec{r_i}(t)-\vec{r_i}(0)\bigr)}\Bigr)^2
+        \Bigr\rangle
+
+   virial stress
+     A three-dimensional dataset.
+
+     .. math::
+
+        J(t) = \Bigl\langle \Bigl(\sum_{i=1}^N
+        \bigl(v^*_k(t) v^*_l(t) +
+        \sum_{j>i}^N F^*_{k,ij}(t) r^*_{l,ij}(t)\bigr)
+	\Bigr)\Bigl( \sum_{i=1}^N
+        \bigl(v^*_k(0) v^*_l(0) +
+        \sum_{j>i}^N F^*_{k,ij}(0) r^*_{l,ij}(0)\bigr)
+	\Bigr) \Bigr\rangle_{k\le l}
+
 
 Profiling (PRF)
 ---------------
 
+A profile file contains a dataset for each CPU or GPU performance counter.
+
+::
+
+  times
+   \-- anderson_thermostat	Anderson thermostat
+   \-- boltzmann		Boltzmann distribution
+   \-- event_queue		event queue processing
+   \-- hilbert_sort		Hilbert curve sort
+   \-- init_cells		cell lists initialisation
+   \-- lattice			lattice generation
+   \-- maximum_displacement	maximum particle displacement reduction
+   \-- maximum_velocity		maximum velocity reduction
+   \-- mdstep			MD simulation step
+   \-- memcpy_cells		cell lists memcpy
+   \-- permutation		phase space sample sort
+   \-- potential_energy		potential energy sum reduction
+   \-- random_config		random initial particle configuration
+   \-- reduce_contacts		mean number of contacts reduction
+   \-- reduce_squared_velocity	mean squared velocity reduction
+   \-- reduce_velocity		velocity center of mass reduction
+   \-- sample			phase space sampling
+   \-- sample_memcpy		sample memcpy
+   \-- update_cells		cell lists update
+   \-- update_forces		Lennard-Jones force update
+   \-- update_neighbours	neighbour lists update
+   \-- velocity_verlet		velocity-Verlet integration
+   \-- virial_sum		virial equation sum reduction
+
+Each dataset contains the average execution time of a GPU or CPU function in
+seconds, the standard deviation in seconds and the number of measurements.
 
