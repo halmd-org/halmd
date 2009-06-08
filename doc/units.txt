@@ -4,6 +4,24 @@ Formulae and units
 Lennard-Jones
 =============
 
+Propagation laws
+----------------
+
+.. glossary::
+
+ velocity-Verlet algorithm
+  .. math::
+    :nowrap:
+
+    \begin{align*}
+      \vec{r}_i(t+\Delta t) &= \vec{r}_i(t) + \vec{v}_i(t+\frac{\Delta t}{2})\Delta t \\
+      \vec{v}_i(t+\frac{\Delta t}{2}) &= \vec{v}_i(t) +
+      \frac{\vec{F}_i(t)}{m}\frac{\Delta t}{2} \\
+      \vec{v}_i(t+\Delta t) &= \vec{v}_i(t+\frac{\Delta t}{2}) +
+      \frac{\vec{F}_i(t+\Delta t)}{m}\frac{\Delta t}{2}
+    \end{align*}
+
+
 Interaction laws
 ----------------
 
@@ -15,7 +33,7 @@ Interaction laws
     \Bigl(\bigl(\frac{\sigma}{r_{ij}}\bigr)^{12}
     - \bigl(\frac{\sigma}{r_{ij}}\bigr)^6\Bigr)
 
- Shifted, truncated Lennard-Jones potential
+ shifted, truncated Lennard-Jones potential
   .. math::
     U_s(r_{ij}) =
     \begin{cases}
@@ -36,12 +54,12 @@ Base MD units
 
 .. glossary::
 
- length
+ unit of length
   .. math:: [r] = \sigma
 
- energy
+ unit of energy
   .. math:: [E] = \epsilon
 
- time
+ unit of time
   .. math:: [t] = \sqrt{\frac{m\sigma^2}{\epsilon}}
 
