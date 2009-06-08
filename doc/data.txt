@@ -220,7 +220,8 @@ in single-precision internally depending on the backend.
      .. math::
 
         \langle P^*\rangle = \frac{N}{d V^*} \sum_{i=1}^N
-        \bigl(\sum_{j>i}^N \vec{F}(\vec{r}^*_{ij})\cdot\vec{r}^*_{ij}\bigr)
+        \bigl( (\vec{v}^*_i)^2 +
+        \sum_{j>i}^N \vec{F}(\vec{r}^*_{ij})\cdot\vec{r}^*_{ij}\bigr)
 
      With the GPU backend, the inner sum is truncated to single-precision.
 
