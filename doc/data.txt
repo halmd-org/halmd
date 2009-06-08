@@ -189,7 +189,7 @@ A thermodynamic variables file contains one dataset per measured variable::
   \-- TEMP			temperature
   \-- VCM			velocity center of mass
 
-All datasets except for the velocity of mass are two-dimensional.
+All datasets are two-dimensional.
 The first dimension describes the sample number.
 The second dimension contains the sample time and the variable value.
 All values are double-precision floating point numbers, but may be measured
