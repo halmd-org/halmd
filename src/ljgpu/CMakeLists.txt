@@ -42,6 +42,19 @@ if(WITH_CUDA)
 
 endif(WITH_CUDA)
 
+#
+# The following option only works on x86-64 by default, which always uses the
+# SSE instruction set for floating-point math. On i386, the x87 floating-point
+# unit provides 80-bit extended double precision math internally, causing
+# excess precision even if values are stored in single-precision.
+# See the -mfpmath option in the gcc manpage for details.
+#
+set(ljgpu_VARIANT_HOST_SINGLE_PRECISION FALSE CACHE BOOL
+  "Use single-precision math in host implementation (requires SSE)")
+if(ljgpu_VARIANT_HOST_SINGLE_PRECISION)
+  add_definitions(-DUSE_HOST_SINGLE_PRECISION)
+endif(ljgpu_VARIANT_HOST_SINGLE_PRECISION)
+
 # Generate version header file
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/version.h.in

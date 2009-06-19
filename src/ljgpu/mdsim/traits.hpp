@@ -22,6 +22,7 @@
 #ifdef WITH_CUDA
 # include <vector_types.h>
 #endif
+#include <boost/mpl/and.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <ljgpu/mdsim/impl.hpp>
@@ -51,7 +52,21 @@ struct mdsim_traits<impl, dimension_, typename boost::enable_if<typename impl::i
 #endif /* WITH_CUDA */
 
 template <typename impl, int dimension_>
-struct mdsim_traits<impl, dimension_, typename boost::enable_if<typename impl::impl_host>::type>
+struct mdsim_traits<impl, dimension_, typename boost::enable_if<boost::mpl::and_<typename impl::impl_host, typename impl::impl_lennard_jones_potential> >::type>
+{
+    enum { dimension = dimension_ };
+    typedef energy_sample<dimension> energy_sample_type;
+#ifdef USE_HOST_SINGLE_PRECISION
+    typedef float float_type;
+#else
+    typedef double float_type;
+#endif
+    typedef vector<float_type, dimension> vector_type;
+    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
+};
+
+template <typename impl, int dimension_>
+struct mdsim_traits<impl, dimension_, typename boost::enable_if<boost::mpl::and_<typename impl::impl_host, typename impl::impl_hardsphere_potential> >::type>
 {
     enum { dimension = dimension_ };
     typedef energy_sample<dimension> energy_sample_type;

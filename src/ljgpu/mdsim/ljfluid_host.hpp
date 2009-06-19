@@ -141,7 +141,7 @@ private:
     void compute_forces();
     /** compute C²-smooth potential */
     template <bool binary>
-    void compute_smooth_potential(double r, double& fval, double& pot, unsigned int type);
+    void compute_smooth_potential(float_type r, float_type& fval, float_type& pot, unsigned int type);
     /** first leapfrog step of integration of equations of motion */
     void leapfrog_half();
     /** second leapfrog step of integration of equations of motion */
@@ -343,7 +343,7 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     }
 
     // lattice distance
-    double a = box_ / n;
+    float_type a = box_ / n;
     // minimum distance in 2- or 3-dimensional fcc lattice
     LOG("minimum lattice distance: " << a / std::sqrt(2.));
 
@@ -422,7 +422,7 @@ void ljfluid<ljfluid_impl_host, dimension>::boltzmann(double temp)
 
     // generate random Maxwell-Boltzmann distributed velocity
     foreach (particle& p, part) {
-	rng_.gaussian(p.v, temp);
+	rng_.gaussian(p.v, static_cast<float_type>(temp));
 	v_cm += p.v;
     }
     v_cm /= npart;
@@ -594,10 +594,10 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_cell_neighbours(particle& p1
 	// enforce periodic boundary conditions
 	r -= round(r / box_) * box_;
 	// squared particle distance
-	double rr = r * r;
+	float_type rr = r * r;
 
 	// enforce cutoff radius with neighbour list skin
-	if (rr >= rr_cut_skin[type])
+	if (rr >= static_cast<float_type>(rr_cut_skin[type]))
 	    continue;
 
 	// add particle to neighbour list
@@ -632,19 +632,19 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
 	    // enforce periodic boundary conditions
 	    r -= round(r / box_) * box_;
 	    // squared particle distance
-	    double rr = r * r;
+	    float_type rr = r * r;
 
 	    // enforce cutoff radius
 	    if (rr >= rr_cut[type])
 		continue;
 
 	    // compute Lennard-Jones force in reduced units
-	    double sigma2 = (binary ? sigma2_[type] : 1);
-	    double eps = (binary ? epsilon_[type] : 1);
-	    double rri = sigma2 / rr;
-	    double r6i = rri * rri * rri;
-	    double fval = 48 * rri * r6i * (r6i - 0.5) * (eps / sigma2);
-	    double pot = (4 * r6i * (r6i - 1) - en_cut) * eps;
+	    float_type sigma2 = (binary ? sigma2_[type] : 1);
+	    float_type eps = (binary ? epsilon_[type] : 1);
+	    float_type rri = sigma2 / rr;
+	    float_type r6i = rri * rri * rri;
+	    float_type fval = 48 * rri * r6i * (r6i - 0.5) * (eps / sigma2);
+	    float_type pot = (4 * r6i * (r6i - 1) - en_cut) * eps;
 
 	    if (potential_ == C2POT) {
 		compute_smooth_potential<binary>(std::sqrt(rr), fval, pot, type);
@@ -658,7 +658,7 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
 	    en_pot += pot;
 
 	    // add contribution to virial equation sum
-	    double vir = 0.5 * rr * fval;
+	    float_type vir = 0.5 * rr * fval;
 	    virial[p1.type][0] += vir;
 	    virial[p2.type][0] += vir;
 
@@ -697,16 +697,16 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
  */
 template <int dimension>
 template <bool binary>
-void ljfluid<ljfluid_impl_host, dimension>::compute_smooth_potential(double r, double& fval, double& pot, unsigned int type)
+void ljfluid<ljfluid_impl_host, dimension>::compute_smooth_potential(float_type r, float_type& fval, float_type& pot, unsigned int type)
 {
-    double y = r - r_cut[binary ? type : 0];
-    double x2 = y * y * rri_smooth;
-    double x4 = x2 * x2;
-    double x4i = 1 / (1 + x4);
+    float_type y = r - r_cut[binary ? type : 0];
+    float_type x2 = y * y * rri_smooth;
+    float_type x4 = x2 * x2;
+    float_type x4i = 1 / (1 + x4);
     // smoothing function
-    double h0_r = x4 * x4i;
+    float_type h0_r = x4 * x4i;
     // first derivative times (r_smooth)^(-1) [sic!]
-    double h1_r = 4 * y * rri_smooth * x2 * x4i * x4i;
+    float_type h1_r = 4 * y * rri_smooth * x2 * x4i * x4i;
     // apply smoothing function to obtain C¹ force function
     fval = h0_r * fval - h1_r * (pot / r);
     // apply smoothing function to obtain C² potential function
@@ -719,13 +719,13 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_smooth_potential(double r, d
 template <int dimension>
 void ljfluid<ljfluid_impl_host, dimension>::leapfrog_half()
 {
-    double vv_max = 0;
+    float_type vv_max = 0;
 
     foreach (particle& p, part) {
 	// half step velocity
-	p.v += p.f * (timestep_ / 2);
+	p.v += p.f * (static_cast<float_type>(timestep_) / 2);
 	// full step position
-	p.r += p.v * timestep_;
+	p.r += p.v * static_cast<float_type>(timestep_);
 	// maximum squared velocity
 	vv_max = std::max(vv_max, p.v * p.v);
     }
@@ -741,7 +741,7 @@ void ljfluid<ljfluid_impl_host, dimension>::leapfrog_full()
 {
     foreach (particle& p, part) {
 	// full step velocity
-	p.v += p.f * (timestep_ / 2);
+	p.v += p.f * (static_cast<float_type>(timestep_) / 2);
     }
 }
 
