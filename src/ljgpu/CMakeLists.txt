@@ -47,7 +47,11 @@ endif(WITH_CUDA)
 # SSE instruction set for floating-point math. On i386, the x87 floating-point
 # unit provides 80-bit extended double precision math internally, causing
 # excess precision even if values are stored in single-precision.
-# See the -mfpmath option in the gcc manpage for details.
+#
+# See the -mfpmath option in the gcc manpage for details, and
+#
+# Deterministic cross-platform floating point arithmetics
+# http://www.christian-seiler.de/projekte/fpmath/
 #
 set(ljgpu_VARIANT_HOST_SINGLE_PRECISION FALSE CACHE BOOL
   "Use single-precision math in host implementation (requires SSE)")
