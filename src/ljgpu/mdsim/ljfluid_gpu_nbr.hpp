@@ -684,10 +684,10 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
 
     if (r_max_ > r_skin_half) {
 	if (h_ret.assign_cells.front() != EXIT_SUCCESS) {
-	    throw exception("potentially lost particles in cell lists update");
+	    throw exception("overcrowded placeholders in cell lists update");
 	}
 	if (h_ret.update_neighbours.front() != EXIT_SUCCESS) {
-	    throw exception("potentially lost particles in neighbour lists update");
+	    throw exception("overcrowded placeholders in neighbour lists update");
 	}
     }
     if (!std::isfinite(reduce_en.value())) {
@@ -866,10 +866,10 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_positions()
     }
 
     if (h_ret.assign_cells.front() != EXIT_SUCCESS) {
-	throw exception("potentially lost particles in cell lists update");
+	throw exception("overcrowded placeholders in cell lists update");
     }
     if (h_ret.update_neighbours.front() != EXIT_SUCCESS) {
-	throw exception("potentially lost particles in neighbour lists update");
+	throw exception("overcrowded placeholders in neighbour lists update");
     }
 }
 
