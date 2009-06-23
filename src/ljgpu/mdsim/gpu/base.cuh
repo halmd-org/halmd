@@ -111,21 +111,17 @@ __device__ void leapfrog_full_step(T& v, U const& f)
  *
  * returns tuple (r, h(r), h'(r))
  */
-template <mixture_type mixture>
-__device__ float3 compute_smooth_function(float r, unsigned int ab)
+template <mixture_type mixture, typename T>
+__device__ void compute_smooth_function(T r, T& s, T& ds, unsigned int ab)
 {
-    float y = r - r_cut[(mixture == BINARY) ? ab : 0];
-    float x2 = y * y * rri_smooth;
-    float x4 = x2 * x2;
-    float x4i = 1 / (1 + x4);
-    float3 h;
-    // absolute distance of particles
-    h.x = r;
+    T y = r - r_cut[(mixture == BINARY) ? ab : 0];
+    T x2 = y * y * rri_smooth;
+    T x4 = x2 * x2;
+    T x4i = 1 / (1 + x4);
     // potential smoothing function
-    h.y = x4 * x4i;
+    s = x4 * x4i;
     // first derivative times (r_smooth)^(-1) [sic!]
-    h.z = 4 * y * rri_smooth * x2 * x4i * x4i;
-    return h;
+    ds = 4 * y * rri_smooth * x2 * x4i * x4i;
 }
 
 /**
@@ -163,12 +159,13 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, E& en, V& virial, 
     typename T::value_type pot = (4 * ri6 * (ri6 - 1) - en_cut) * eps;
 
     if (potential == C2POT) {
+	typename T::value_type s, ds, r_abs = sqrt(rr);
 	// compute smoothing function and its first derivative
-	const float3 h = compute_smooth_function<mixture>(sqrtf(rr), ab);
+	compute_smooth_function<mixture>(r_abs, s, ds, ab);
 	// apply smoothing function to obtain C¹ force function
-	fval = h.y * fval - h.z * (pot / h.x);
+	fval = s * fval - ds * (pot / r_abs);
 	// apply smoothing function to obtain C² potential function
-	pot = h.y * pot;
+	pot = s * pot;
     }
 
     // virial equation sum
@@ -182,9 +179,11 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, E& en, V& virial, 
 /**
  * sample potential smoothing function in given range
  */
-__global__ void sample_smooth_function(float3* g_h, const float2 r)
+__global__ void sample_smooth_function(float3* g_h, const float2 ri)
 {
-    g_h[GTID] = compute_smooth_function<UNARY>(r.x + r.y * GTID, 0);
+    float s, ds, r = ri.x + ri.y * GTID;
+    compute_smooth_function<UNARY>(r, s, ds, 0);
+    g_h[GTID] = make_float3(r, s, ds);
 }
 
 /**
