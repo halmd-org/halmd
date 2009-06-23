@@ -78,18 +78,19 @@ __device__ float4 detach_particle_tag(float4 r, unsigned int& tag)
 /**
  * first leapfrog step of integration of equations of motion
  */
-template <typename T, typename U>
-__device__ void leapfrog_half_step(T& r, T& dr, U& R, T& v, U const& f)
+template <typename T, typename U, typename V>
+__device__ void leapfrog_half_step(T& r, T& dr, U& R, T& v, V const& f)
 {
+    enum { dimension = T::static_size };
     U dR;
 
     // half step velocity
     v += f * (timestep / 2);
     // full step coordinates
-    dr = v * static_cast<typename T::value_type>(timestep);
+    dr = v * timestep;
     r += dr;
     // apply periodic boundary conditions
-    dR = floorf(r / box);
+    dR = floorf(static_cast<vector<float, dimension> >(r) / box);
     r -= dR * box;
     // periodic box traversal vector
     R += dR;
@@ -137,6 +138,7 @@ template <mixture_type mixture,
           typename V>
 __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, V& virial, unsigned int ab)
 {
+    enum { dimension = T::static_size };
     // potential well depth
     float const eps = (mixture == BINARY) ? epsilon[ab] : 1;
     // squared collision diameter
@@ -147,17 +149,17 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, V& viri
     // enforce periodic boundary conditions
     r -= rintf(__fdividef(r, box)) * box;
     // squared particle distance
-    float rr = r * r;
+    typename T::value_type rr = r * r;
 
     // enforce cutoff length
     if (rr >= rr_cut[(mixture == BINARY) ? ab : 0]) return;
 
     // compute Lennard-Jones force in reduced units
-    float rri = sig2 / rr;
-    float ri6 = rri * rri * rri;
-    float fval = 48 * eps * rri * ri6 * (ri6 - 0.5f) / sig2;
+    typename T::value_type rri = sig2 / rr;
+    typename T::value_type ri6 = rri * rri * rri;
+    typename T::value_type fval = 48 * eps * rri * ri6 * (ri6 - 0.5f) / sig2;
     // compute shifted Lennard-Jones potential
-    float pot = (4 * ri6 * (ri6 - 1) - en_cut) * eps;
+    typename T::value_type pot = (4 * ri6 * (ri6 - 1) - en_cut) * eps;
 
     if (potential == C2POT) {
 	// compute smoothing function and its first derivative
@@ -169,7 +171,7 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, V& viri
     }
 
     // virial equation sum
-    virial += 0.5f * fval * virial::tensor(rr, r);
+    virial += 0.5f * fval * virial::tensor(static_cast<float>(rr), static_cast<vector<float, dimension> >(r));
     // potential energy contribution of this particle
     en += 0.5f * pot;
     // force from other particle acting on this particle

@@ -387,9 +387,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::threads(unsigned int value)
 	LOG("using double-single arithmetic in Verlet integration");
 	g_part.r.reserve(2 * dim_.threads());
 	g_part.v.reserve(2 * dim_.threads());
+	g_part.f.reserve(2 * dim_.threads());
 #else
 	g_part.r.reserve(dim_.threads());
 	g_part.v.reserve(dim_.threads());
+	g_part.f.reserve(dim_.threads());
 #endif
 	g_part.r.resize(npart);
 	g_part.v.resize(npart);
@@ -397,7 +399,6 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::threads(unsigned int value)
 	g_part.dr.resize(npart);
 	g_part.R.reserve(dim_.threads());
 	g_part.R.resize(npart);
-	g_part.f.reserve(dim_.threads());
 	g_part.f.resize(npart);
 	g_part.tag.reserve(dim_.threads());
 	g_part.tag.resize(npart);

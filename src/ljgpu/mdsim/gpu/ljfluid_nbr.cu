@@ -82,7 +82,11 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
 
     // load particle associated with this thread
     unsigned int tag;
+#ifdef USE_VERLET_DSFUN
+    vector<dsfloat, dimension> r(detach_particle_tag(g_r[GTID], tag), g_r[GTID + GTDIM]);
+#else
     vector_type r = detach_particle_tag(g_r[GTID], tag);
+#endif
     // particle type in binary mixture
     int const a = (tag >= mpart[0]);
 
@@ -91,7 +95,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     // virial equation sum contribution
     vector<float, (dimension - 1) * dimension / 2 + 1> virial = 0;
     // force sum
-#ifdef USE_FORCE_DSFUN
+#if defined(USE_FORCE_DSFUN) || defined(USE_VERLET_DSFUN)
     vector<dsfloat, dimension> f = 0;
 #else
     vector_type f = 0;
@@ -104,7 +108,13 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
 	if (n == VIRTUAL_PARTICLE) break;
 
 	unsigned int tag_;
+#ifdef USE_VERLET_DSFUN
+	float4 _hi = detach_particle_tag(tex1Dfetch(tex<dimension>::r, n), tag_);
+	float4 _lo = tex1Dfetch(tex<dimension>::r, n + GTDIM);
+	vector<dsfloat, dimension> r_(_hi, _lo);
+#else
 	vector_type r_ = detach_particle_tag(tex1Dfetch(tex<dimension>::r, n), tag_);
+#endif
 	// particle type in binary mixture
 	int const b = (tag_ >= mpart[0]);
 
@@ -118,14 +128,19 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     vector_type v = g_v[GTID];
 #endif
     // second leapfrog step as part of integration of equations of motion
+#ifdef USE_VERLET_DSFUN
+    leapfrog_full_step(v, f);
+#else
     leapfrog_full_step(v, static_cast<vector_type>(f));
+#endif
 
     // store particle associated with this thread
     g_v[GTID] = static_cast<vector_type>(v);
+    g_f[GTID] = static_cast<vector_type>(f);
 #ifdef USE_VERLET_DSFUN
     g_v[GTID + GTDIM] = dsfloat2lo(v);
+    g_f[GTID + GTDIM] = dsfloat2lo(f);
 #endif
-    g_f[GTID] = static_cast<vector_type>(f);
     g_en[GTID] = en;
     g_virial[GTID] = virial;
 }
@@ -442,14 +457,15 @@ __global__ void inteq(float4* g_r, T* g_dr, T* g_R, T* g_v, T const* g_f)
 #ifdef USE_VERLET_DSFUN
     vector<dsfloat, dimension> r(detach_particle_tag(g_r[GTID], tag), g_r[GTID + GTDIM]);
     vector<dsfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
+    vector<dsfloat, dimension> f(g_f[GTID], g_f[GTID + GTDIM]);
     vector<dsfloat, dimension> dr;
 #else
     vector<float, dimension> r = detach_particle_tag(g_r[GTID], tag);
     vector<float, dimension> v = g_v[GTID];
+    vector<float, dimension> f = g_f[GTID];
     vector<float, dimension> dr;
 #endif
     vector<float, dimension> R = g_R[GTID];
-    vector<float, dimension> f = g_f[GTID];
 
     leapfrog_half_step(r, dr, R, v, f);
 
