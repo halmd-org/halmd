@@ -342,11 +342,27 @@ __device__ inline vector<dsfloat, dimension> operator*(vector<dsfloat, dimension
     return v;
 }
 
+template <unsigned int dimension, typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, vector<dsfloat, dimension> >::type
+operator*(vector<dsfloat, dimension> v, T const& s)
+{
+    v *= s;
+    return v;
+}
+
 /**
  * scalar multiplication
  */
 template <unsigned int dimension>
 __device__ inline vector<dsfloat, dimension> operator*(dsfloat const& s, vector<dsfloat, dimension> v)
+{
+    v *= s;
+    return v;
+}
+
+template <unsigned int dimension, typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, vector<dsfloat, dimension> >::type
+operator*(T const& s, vector<dsfloat, dimension> v)
 {
     v *= s;
     return v;
