@@ -118,7 +118,7 @@ protected:
     void update_forces(cuda::vector<float4>& r,
 		       cuda::vector<gpu_vector_type>& v,
 		       cuda::vector<gpu_vector_type>& f,
-		       cuda::vector<float>& en,
+		       cuda::vector<dsfloat>& en,
 		       cuda::vector<gpu_vector_type>& virial);
 
 protected:
@@ -518,7 +518,7 @@ template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::update_forces(cuda::vector<float4>& r,
 						   cuda::vector<gpu_vector_type>& v,
 						   cuda::vector<gpu_vector_type>& f,
-						   cuda::vector<float>& en,
+						   cuda::vector<dsfloat>& en,
 						   cuda::vector<gpu_vector_type>& virial)
 {
     // (CUDA kernel execution is configured in derived class)
