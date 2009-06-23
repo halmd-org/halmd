@@ -20,7 +20,7 @@
 #define LJGPU_ALGORITHM_GPU_TCF_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/math/gpu/dsfloat.cuh>
 
 namespace ljgpu { namespace gpu
 {
@@ -39,30 +39,30 @@ struct tcf;
 template <>
 struct tcf<3> : public tcf_base
 {
-    static cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
        	mean_square_displacement;
-    static cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
        	mean_quartic_displacement;
-    static cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
        	velocity_autocorrelation;
-    static cuda::function<void (float4 const*, float4 const*, float3 const, dfloat*, uint)>
+    static cuda::function<void (float4 const*, float4 const*, float3 const, dsfloat*, uint)>
 	incoherent_scattering_function;
-    static cuda::function<void (float4 const*, float3 const, dfloat*, dfloat*, uint)>
+    static cuda::function<void (float4 const*, float3 const, dsfloat*, dsfloat*, uint)>
 	coherent_scattering_function;
 };
 
 template <>
 struct tcf<2> : public tcf_base
 {
-    static cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
        	mean_square_displacement;
-    static cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
        	mean_quartic_displacement;
-    static cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
        	velocity_autocorrelation;
-    static cuda::function<void (float2 const*, float2 const*, float2 const, dfloat*, uint)>
+    static cuda::function<void (float2 const*, float2 const*, float2 const, dsfloat*, uint)>
 	incoherent_scattering_function;
-    static cuda::function<void (float2 const*, float2 const, dfloat*, dfloat*, uint)>
+    static cuda::function<void (float2 const*, float2 const, dsfloat*, dsfloat*, uint)>
 	coherent_scattering_function;
 };
 

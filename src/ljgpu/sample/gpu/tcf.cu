@@ -28,17 +28,17 @@ namespace ljgpu { namespace cu { namespace tcf
 enum { THREADS = gpu::tcf_base::THREADS };
 
 template <typename vector_type,
-	  dfloat (*correlation_function)(vector_type const&, vector_type const&),
+	  dsfloat (*correlation_function)(vector_type const&, vector_type const&),
 	  typename coalesced_vector_type>
-__global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_type const* g_in0, uint* g_n, dfloat* g_m, dfloat* g_v, uint n)
+__global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_type const* g_in0, uint* g_n, dsfloat* g_m, dsfloat* g_v, uint n)
 {
     __shared__ unsigned int s_n[THREADS];
-    __shared__ dfloat s_m[THREADS];
-    __shared__ dfloat s_v[THREADS];
+    __shared__ dsfloat s_m[THREADS];
+    __shared__ dsfloat s_v[THREADS];
 
     unsigned int count = 0;
-    dfloat mean = 0;
-    dfloat variance = 0;
+    dsfloat mean = 0;
+    dsfloat variance = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
@@ -62,35 +62,35 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 }
 
 template <typename vector_type>
-__device__ dfloat mean_square_displacement(vector_type const& r, vector_type const& r0)
+__device__ dsfloat mean_square_displacement(vector_type const& r, vector_type const& r0)
 {
     vector_type const dr = r - r0;
     return dr * dr;
 }
 
 template <typename vector_type>
-__device__ dfloat mean_quartic_displacement(vector_type const& r, vector_type const& r0)
+__device__ dsfloat mean_quartic_displacement(vector_type const& r, vector_type const& r0)
 {
     vector_type const dr = r - r0;
-    dfloat const rr = dr * dr;
+    dsfloat const rr = dr * dr;
     return rr * rr;
 }
 
 template <typename vector_type>
-__device__ dfloat velocity_autocorrelation(vector_type const& v, vector_type const& v0)
+__device__ dsfloat velocity_autocorrelation(vector_type const& v, vector_type const& v0)
 {
     return v * v0;
 }
 
 template <typename vector_type,
-	  dfloat (*correlation_function)(vector_type const&, vector_type const&, vector_type const&),
+	  dsfloat (*correlation_function)(vector_type const&, vector_type const&, vector_type const&),
 	  typename coalesced_vector_type,
 	  typename uncoalesced_vector_type>
-__global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_type const* g_in0, uncoalesced_vector_type const q_vector, dfloat* g_sum, uint n)
+__global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_type const* g_in0, uncoalesced_vector_type const q_vector, dsfloat* g_sum, uint n)
 {
-    __shared__ dfloat s_sum[THREADS];
+    __shared__ dsfloat s_sum[THREADS];
 
-    dfloat sum = 0;
+    dsfloat sum = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
@@ -110,23 +110,23 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 }
 
 template <typename vector_type>
-__device__ dfloat incoherent_scattering_function(vector_type const& r, vector_type const& r0, vector_type const& q)
+__device__ dsfloat incoherent_scattering_function(vector_type const& r, vector_type const& r0, vector_type const& q)
 {
     // accurate trigonometric function requires local memory
     return cosf((r - r0) * q);
 }
 
 template <typename vector_type,
-	  void (*correlation_function)(dfloat&, dfloat&, vector_type const&, vector_type const&),
+	  void (*correlation_function)(dsfloat&, dsfloat&, vector_type const&, vector_type const&),
 	  typename coalesced_vector_type,
 	  typename uncoalesced_vector_type>
-__global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector_type const q_vector, dfloat* g_real, dfloat* g_imag, uint n)
+__global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector_type const q_vector, dsfloat* g_real, dsfloat* g_imag, uint n)
 {
-    __shared__ dfloat s_real[THREADS];
-    __shared__ dfloat s_imag[THREADS];
+    __shared__ dsfloat s_real[THREADS];
+    __shared__ dsfloat s_imag[THREADS];
 
-    dfloat real = 0;
-    dfloat imag = 0;
+    dsfloat real = 0;
+    dsfloat imag = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
@@ -148,7 +148,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
 }
 
 template <typename vector_type>
-__device__ void coherent_scattering_function(dfloat& real, dfloat& imag, vector_type const& r, vector_type const& q)
+__device__ void coherent_scattering_function(dsfloat& real, dsfloat& imag, vector_type const& r, vector_type const& q)
 {
     float c, s;
     // accurate trigonometric function requires local memory
@@ -165,26 +165,26 @@ namespace ljgpu { namespace gpu
 /**
  * device function wrappers
  */
-cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
+cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf<3>::mean_square_displacement(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::mean_square_displacement>);
-cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
+cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf<3>::mean_quartic_displacement(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::mean_quartic_displacement>);
-cuda::function<void (float4 const*, float4 const*, uint*, dfloat*, dfloat*, uint)>
+cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf<3>::velocity_autocorrelation(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::velocity_autocorrelation>);
-cuda::function<void (float4 const*, float4 const*, float3 const, dfloat*, uint)>
+cuda::function<void (float4 const*, float4 const*, float3 const, dsfloat*, uint)>
     tcf<3>::incoherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::incoherent_scattering_function>);
-cuda::function<void (float4 const*, float3 const, dfloat*, dfloat*, uint)>
+cuda::function<void (float4 const*, float3 const, dsfloat*, dsfloat*, uint)>
     tcf<3>::coherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::coherent_scattering_function>);
 
-cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
+cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf<2>::mean_square_displacement(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::mean_square_displacement>);
-cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
+cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf<2>::mean_quartic_displacement(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::mean_quartic_displacement>);
-cuda::function<void (float2 const*, float2 const*, uint*, dfloat*, dfloat*, uint)>
+cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf<2>::velocity_autocorrelation(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::velocity_autocorrelation>);
-cuda::function<void (float2 const*, float2 const*, float2 const, dfloat*, uint)>
+cuda::function<void (float2 const*, float2 const*, float2 const, dsfloat*, uint)>
     tcf<2>::incoherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::incoherent_scattering_function>);
-cuda::function<void (float2 const*, float2 const, dfloat*, dfloat*, uint)>
+cuda::function<void (float2 const*, float2 const, dsfloat*, dsfloat*, uint)>
     tcf<2>::coherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::coherent_scattering_function>);
 
 }} // namespace ljgpu::gpu

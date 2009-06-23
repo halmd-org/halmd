@@ -20,7 +20,6 @@
 #define LJGPU_MATH_GPU_VECTOR4D_CUH
 
 #include <cuda_runtime.h>
-#include <ljgpu/math/gpu/dsfun.cuh>
 
 namespace ljgpu { namespace cu
 {

@@ -30,10 +30,10 @@ BOOST_AUTO_TEST_CASE(test_dsfun_mulss)
     cuda::host::vector<float> h_a(BLOCKS * THREADS);
     cuda::host::vector<float> h_b(h_a.size());
     cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dfloat> h_dsp(h_a.size());
+    cuda::host::vector<dsfloat> h_dsp(h_a.size());
     cuda::vector<float> g_a(h_dsp.size());
     cuda::vector<float> g_b(h_dsp.size());
-    cuda::vector<dfloat> g_c(h_dsp.size());
+    cuda::vector<dsfloat> g_c(h_dsp.size());
 
     srand48(42);
     std::generate(h_a.begin(), h_a.end(), drand48);

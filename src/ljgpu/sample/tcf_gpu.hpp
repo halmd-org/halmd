@@ -76,7 +76,7 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
 	// self-intermediate scattering function iterator
 	typename isf_vector_vector::iterator isf0;
 	// accumulator iterator
-	dfloat* sum0;
+	dsfloat* sum0;
 
 	// allocate memory for Fourier-transformed densities and self-intermediate scattering function
 	rho = boost::shared_ptr<density_vector_vector>(new density_vector_vector(q.size()));
@@ -88,8 +88,8 @@ struct tcf_gpu_sample : public tcf_sample<dimension>
 	    size += q0->size();
 	}
 	// allocate device and host memory for accumulators
-	cuda::vector<dfloat> g_sum(2 * size * BLOCKS);
-	cuda::host::vector<dfloat> h_sum(g_sum.size());
+	cuda::vector<dsfloat> g_sum(2 * size * BLOCKS);
+	cuda::host::vector<dsfloat> h_sum(g_sum.size());
 
 	// compute Fourier-transformed densities on GPU
 	for (q0 = q.begin(), sum0 = g_sum.data(); q0 != q.end(); ++q0) {
@@ -133,10 +133,10 @@ struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_s
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
     cuda::host::vector<unsigned int> h_count;
-    cuda::vector<dfloat> g_mean;
-    cuda::host::vector<dfloat> h_mean;
-    cuda::vector<dfloat> g_var;
-    cuda::host::vector<dfloat> h_var;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
 
     char const* name() const { return "MSD"; }
 
@@ -155,7 +155,7 @@ struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 
 	sample_iterator sample;
 	unsigned int *count, *count0;
-	dfloat *mean, *var;
+	dsfloat *mean, *var;
 
 	// allocate device and host memory for accumulators, if necessary
 	g_count.resize((last.first - first.first) * BLOCKS);
@@ -195,10 +195,10 @@ struct mean_quartic_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
     cuda::host::vector<unsigned int> h_count;
-    cuda::vector<dfloat> g_mean;
-    cuda::host::vector<dfloat> h_mean;
-    cuda::vector<dfloat> g_var;
-    cuda::host::vector<dfloat> h_var;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
 
     char const* name() const { return "MQD"; }
 
@@ -217,7 +217,7 @@ struct mean_quartic_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_
 
 	sample_iterator sample;
 	unsigned int *count, *count0;
-	dfloat *mean, *var;
+	dsfloat *mean, *var;
 
 	// allocate device and host memory for accumulators, if necessary
 	g_count.resize((last.first - first.first) * BLOCKS);
@@ -257,10 +257,10 @@ struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_s
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
     cuda::host::vector<unsigned int> h_count;
-    cuda::vector<dfloat> g_mean;
-    cuda::host::vector<dfloat> h_mean;
-    cuda::vector<dfloat> g_var;
-    cuda::host::vector<dfloat> h_var;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
 
     char const* name() const { return "VAC"; }
 
@@ -279,7 +279,7 @@ struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 
 	sample_iterator sample;
 	unsigned int *count, *count0;
-	dfloat *mean, *var;
+	dsfloat *mean, *var;
 
 	// allocate device and host memory for accumulators, if necessary
 	g_count.resize((last.first - first.first) * BLOCKS);
@@ -317,8 +317,8 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
     tcf_binary_result_type result;
 
     /** device and host memory for accumulators */
-    cuda::vector<dfloat> g_sum;
-    cuda::host::vector<dfloat> h_sum;
+    cuda::vector<dsfloat> g_sum;
+    cuda::host::vector<dsfloat> h_sum;
 
     char const* name() const { return "SISF"; }
 
@@ -343,7 +343,7 @@ struct self_intermediate_scattering_function<tcf_gpu_sample> : correlation_funct
 	typename isf_vector_vector::iterator isf0;
 	typename isf_vector_vector::value_type::iterator isf;
 	typename result_vector::iterator result0;
-	dfloat* sum;
+	dsfloat* sum;
 
 	// allocate device and host memory for accumulators, if necessary
 	size_t size = 0;

@@ -20,8 +20,8 @@
 #define TEST_DSFUN_SSMUL_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/math/gpu/dsfloat.cuh>
 
-extern cuda::function<void (float const*, float const*, dfloat*)> kernel_mulss;
+extern cuda::function<void (float const*, float const*, dsfloat*)> kernel_mulss;
 
 #endif /* ! TEST_DSFUN_SSMUL_HPP */

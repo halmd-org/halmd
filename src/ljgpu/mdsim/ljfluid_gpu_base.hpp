@@ -23,7 +23,7 @@
 #include <cuda_wrapper.hpp>
 #include <ljgpu/algorithm/radix_sort.hpp>
 #include <ljgpu/algorithm/reduce.hpp>
-#include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/math/gpu/dsfloat.cuh>
 #include <ljgpu/mdsim/gpu/boltzmann.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_cell.hpp>
@@ -150,17 +150,17 @@ protected:
     /** block sum of velocity */
     cuda::vector<gpu_vector_type> g_vcm;
     /** block sum of squared velocity */
-    cuda::vector<dfloat> g_vv;
+    cuda::vector<dsfloat> g_vv;
     /** GPU radix sort */
     radix_sort<float4> radix_sort_;
     /** center of mass velocity */
     reduce<tag::sum, gpu_vector_type, vector_type> mutable reduce_velocity;
     /** squared velocity sum */
-    reduce<tag::sum_of_squares, dfloat, double> mutable reduce_squared_velocity;
+    reduce<tag::sum_of_squares, dsfloat, double> mutable reduce_squared_velocity;
     /** potential energy sum */
-    reduce<tag::sum, dfloat, double> mutable reduce_en;
+    reduce<tag::sum, dsfloat, double> mutable reduce_en;
     /** virial equation sum */
-    virial_sum<ljgpu::cu::vector<dfloat, virial_tensor::static_size>, virial_tensor> mutable reduce_virial;
+    virial_sum<ljgpu::cu::vector<dsfloat, virial_tensor::static_size>, virial_tensor> mutable reduce_virial;
 };
 
 template <typename ljfluid_impl, int dimension>

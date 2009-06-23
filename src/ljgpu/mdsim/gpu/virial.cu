@@ -31,10 +31,10 @@ enum { THREADS = gpu::virial::THREADS };
  * Virial stress tensor for three-dimensional monodisperse system
  */
 __global__ void sum(float4 const* g_virial, float4 const* g_v,
-		    vector<dfloat, 4>* g_block_sum, uint n)
+		    vector<dsfloat, 4>* g_block_sum, uint n)
 {
-    __shared__ vector<dfloat, 4> s_virial[THREADS];
-    vector<dfloat, 4> virial = 0;
+    __shared__ vector<dsfloat, 4> s_virial[THREADS];
+    vector<dsfloat, 4> virial = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
@@ -58,10 +58,10 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v,
  * Virial stress tensor for two-dimensional monodisperse system
  */
 __global__ void sum(float2 const* g_virial, float2 const* g_v,
-		    vector<dfloat, 2>* g_block_sum, uint n)
+		    vector<dsfloat, 2>* g_block_sum, uint n)
 {
-    __shared__ vector<dfloat, 2> s_virial[THREADS];
-    vector<dfloat, 2> virial = 0;
+    __shared__ vector<dsfloat, 2> s_virial[THREADS];
+    vector<dsfloat, 2> virial = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
@@ -85,11 +85,11 @@ __global__ void sum(float2 const* g_virial, float2 const* g_v,
  * Virial stress tensor for three-dimensional bidisperse system
  */
 __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag,
-		    vector<dfloat, 4>* g_block_sum, uint n, uint mpart)
+		    vector<dsfloat, 4>* g_block_sum, uint n, uint mpart)
 {
-    __shared__ vector<dfloat, 4> s_virial[THREADS];
-    vector<dfloat, 4> virial_a = 0;
-    vector<dfloat, 4> virial_b = 0;
+    __shared__ vector<dsfloat, 4> s_virial[THREADS];
+    vector<dsfloat, 4> virial_a = 0;
+    vector<dsfloat, 4> virial_b = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
@@ -132,12 +132,12 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag
  * Virial stress tensor for two-dimensional bidisperse system
  */
 __global__ void sum(float2 const* g_virial, float2 const* g_v, uint const* g_tag,
-		    vector<dfloat, 2>* g_block_sum, uint n, uint mpart)
+		    vector<dsfloat, 2>* g_block_sum, uint n, uint mpart)
 {
-    __shared__ vector<dfloat, 2> s_virial_a[THREADS];
-    __shared__ vector<dfloat, 2> s_virial_b[THREADS];
-    vector<dfloat, 2> virial_a = 0;
-    vector<dfloat, 2> virial_b = 0;
+    __shared__ vector<dsfloat, 2> s_virial_a[THREADS];
+    __shared__ vector<dsfloat, 2> s_virial_b[THREADS];
+    vector<dsfloat, 2> virial_a = 0;
+    vector<dsfloat, 2> virial_b = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
@@ -174,10 +174,10 @@ namespace ljgpu { namespace gpu
  * device function wrappers
  */
 cuda::function<
-    void(float4 const*, float4 const*, cu::vector<dfloat, 4>*, uint),
-    void(float2 const*, float2 const*, cu::vector<dfloat, 2>*, uint),
-    void(float4 const*, float4 const*, uint const*, cu::vector<dfloat, 4>*, uint, uint),
-    void(float2 const*, float2 const*, uint const*, cu::vector<dfloat, 2>*, uint, uint)>
+    void(float4 const*, float4 const*, cu::vector<dsfloat, 4>*, uint),
+    void(float2 const*, float2 const*, cu::vector<dsfloat, 2>*, uint),
+    void(float4 const*, float4 const*, uint const*, cu::vector<dsfloat, 4>*, uint, uint),
+    void(float2 const*, float2 const*, uint const*, cu::vector<dsfloat, 2>*, uint, uint)>
     virial::sum(cu::virial::sum, cu::virial::sum, cu::virial::sum, cu::virial::sum);
 
 }} // namespace ljgpu::gpu

@@ -92,7 +92,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     vector<float, (dimension - 1) * dimension / 2 + 1> virial = 0;
     // force sum
 #ifdef USE_FORCE_DSFUN
-    vector<dfloat, dimension> f = 0;
+    vector<dsfloat, dimension> f = 0;
 #else
     vector_type f = 0;
 #endif
@@ -113,7 +113,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     }
 
 #ifdef USE_VERLET_DSFUN
-    vector<dfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
+    vector<dsfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
 #else
     vector_type v = g_v[GTID];
 #endif
@@ -123,7 +123,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     // store particle associated with this thread
     g_v[GTID] = static_cast<vector_type>(v);
 #ifdef USE_VERLET_DSFUN
-    g_v[GTID + GTDIM] = dfloat2lo(v);
+    g_v[GTID + GTDIM] = dsfloat2lo(v);
 #endif
     g_f[GTID] = static_cast<vector_type>(f);
     g_en[GTID] = en;
@@ -440,9 +440,9 @@ __global__ void inteq(float4* g_r, T* g_dr, T* g_R, T* g_v, T const* g_f)
 {
     unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-    vector<dfloat, dimension> r(detach_particle_tag(g_r[GTID], tag), g_r[GTID + GTDIM]);
-    vector<dfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
-    vector<dfloat, dimension> dr;
+    vector<dsfloat, dimension> r(detach_particle_tag(g_r[GTID], tag), g_r[GTID + GTDIM]);
+    vector<dsfloat, dimension> v(g_v[GTID], g_v[GTID + GTDIM]);
+    vector<dsfloat, dimension> dr;
 #else
     vector<float, dimension> r = detach_particle_tag(g_r[GTID], tag);
     vector<float, dimension> v = g_v[GTID];
@@ -454,12 +454,12 @@ __global__ void inteq(float4* g_r, T* g_dr, T* g_R, T* g_v, T const* g_f)
     leapfrog_half_step(r, dr, R, v, f);
 
 #ifdef USE_VERLET_DSFUN
-    g_r[GTID] = attach_particle_tag(dfloat2hi(r), tag);
-    g_r[GTID + GTDIM] = dfloat2lo(r);
+    g_r[GTID] = attach_particle_tag(dsfloat2hi(r), tag);
+    g_r[GTID + GTDIM] = dsfloat2lo(r);
     // particle displacement for neighbour list update constraint
-    g_dr[GTID] = dfloat2hi(dr) + g_dr[GTID];
-    g_v[GTID] = dfloat2hi(v);
-    g_v[GTID + GTDIM] = dfloat2lo(v);
+    g_dr[GTID] = dsfloat2hi(dr) + g_dr[GTID];
+    g_v[GTID] = dsfloat2hi(v);
+    g_v[GTID + GTDIM] = dsfloat2lo(v);
 #else
     g_r[GTID] = attach_particle_tag(r, tag);
     g_dr[GTID] = dr + g_dr[GTID];

@@ -67,7 +67,7 @@ __global__ void gaussian(T* g_v, uint npart, uint nplace, float temp, T* g_vcm)
 	// store block reduced value in global memory
 	g_vcm[blockIdx.x] = static_cast<vector<float, dimension> >(vcm);
 #ifdef USE_VERLET_DSFUN
-	g_vcm[blockIdx.x + BDIM] = dfloat2lo(vcm);
+	g_vcm[blockIdx.x + BDIM] = dsfloat2lo(vcm);
 #endif
     }
 }
@@ -76,13 +76,13 @@ __global__ void gaussian(T* g_v, uint npart, uint nplace, float temp, T* g_vcm)
  * set center of mass velocity to zero and reduce squared velocity
  */
 template <typename vector_type, typename T>
-__global__ void shift_velocity(T* g_v, uint npart, uint nplace, T const* g_vcm, dfloat* g_vv)
+__global__ void shift_velocity(T* g_v, uint npart, uint nplace, T const* g_vcm, dsfloat* g_vv)
 {
     enum { dimension = vector_type::static_size };
     __shared__ vector_type s_vcm[BLOCKS];
-    __shared__ dfloat s_vv[THREADS];
+    __shared__ dsfloat s_vv[THREADS];
     vector_type vcm = 0;
-    dfloat vv = 0;
+    dsfloat vv = 0;
 
     // compute mean center of mass velocity from block reduced values
     for (uint i = TID; i < BLOCKS; i += TDIM) {
@@ -107,7 +107,7 @@ __global__ void shift_velocity(T* g_v, uint npart, uint nplace, T const* g_vcm, 
 	v -= vcm;
 	g_v[i] = static_cast<vector<float, dimension> >(v);
 #ifdef USE_VERLET_DSFUN
-	g_v[i + nplace] = dfloat2lo(v);
+	g_v[i + nplace] = dsfloat2lo(v);
 #endif
 	vv += v * v;
     }
@@ -128,11 +128,11 @@ __global__ void shift_velocity(T* g_v, uint npart, uint nplace, T const* g_vcm, 
  * rescale velocities to accurate temperature
  */
 template <typename vector_type, typename T>
-__global__ void scale_velocity(T* g_v, uint npart, uint nplace, dfloat const* g_vv, dfloat temp)
+__global__ void scale_velocity(T* g_v, uint npart, uint nplace, dsfloat const* g_vv, dsfloat temp)
 {
     enum { dimension = vector_type::static_size };
-    __shared__ dfloat s_vv[THREADS];
-    dfloat vv = 0;
+    __shared__ dsfloat s_vv[THREADS];
+    dsfloat vv = 0;
 
     // compute squared velocity sum from block reduced values
     for (uint i = TID; i < BLOCKS; i += TDIM) {
@@ -144,7 +144,7 @@ __global__ void scale_velocity(T* g_v, uint npart, uint nplace, dfloat const* g_
     }
 
     int dim = vector_type::static_size;
-    dfloat coeff = sqrt(temp * static_cast<dfloat>(dim) * (static_cast<dfloat>(npart) / vv));
+    dsfloat coeff = sqrt(temp * static_cast<dsfloat>(dim) * (static_cast<dsfloat>(npart) / vv));
 
     for (uint i = GTID; i < npart; i += GTDIM) {
 #ifdef USE_VERLET_DSFUN
@@ -155,7 +155,7 @@ __global__ void scale_velocity(T* g_v, uint npart, uint nplace, dfloat const* g_
 	v *= coeff;
 	g_v[i] = static_cast<vector<float, dimension> >(v);
 #ifdef USE_VERLET_DSFUN
-	g_v[i + nplace] = dfloat2lo(v);
+	g_v[i + nplace] = dsfloat2lo(v);
 #endif
     }
 }
@@ -166,7 +166,7 @@ namespace ljgpu { namespace gpu
 {
 
 #ifdef USE_VERLET_DSFUN
-typedef dfloat float_type;
+typedef dsfloat float_type;
 #else
 typedef float float_type;
 #endif
@@ -187,16 +187,16 @@ cuda::symbol<ushort3*>
 
 cuda::function<void (float4*, uint, uint, float, float4*)>
     boltzmann<3>::gaussian(cu::boltzmann::gaussian<cu::vector<float_type, 3> >);
-cuda::function<void (float4*, uint, uint, float4 const*, dfloat*)>
+cuda::function<void (float4*, uint, uint, float4 const*, dsfloat*)>
     boltzmann<3>::shift_velocity(cu::boltzmann::shift_velocity<cu::vector<float_type, 3> >);
-cuda::function<void (float4*, uint, uint, dfloat const*, dfloat)>
+cuda::function<void (float4*, uint, uint, dsfloat const*, dsfloat)>
     boltzmann<3>::scale_velocity(cu::boltzmann::scale_velocity<cu::vector<float_type, 3> >);
 
 cuda::function<void (float2*, uint, uint, float, float2*)>
     boltzmann<2>::gaussian(cu::boltzmann::gaussian<cu::vector<float_type, 2> >);
-cuda::function<void (float2*, uint, uint, float2 const*, dfloat*)>
+cuda::function<void (float2*, uint, uint, float2 const*, dsfloat*)>
     boltzmann<2>::shift_velocity(cu::boltzmann::shift_velocity<cu::vector<float_type, 2> >);
-cuda::function<void (float2*, uint, uint, dfloat const*, dfloat)>
+cuda::function<void (float2*, uint, uint, dsfloat const*, dsfloat)>
     boltzmann<2>::scale_velocity(cu::boltzmann::scale_velocity<cu::vector<float_type, 2> >);
 
 }} // namespace ljgpu::gpu

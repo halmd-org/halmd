@@ -18,10 +18,10 @@
 
 #include "div_kernel.hpp"
 
-__global__ void __kernel_div(dfloat const* g_a, dfloat const* g_b, dfloat* g_c)
+__global__ void __kernel_div(dsfloat const* g_a, dsfloat const* g_b, dsfloat* g_c)
 {
     unsigned int gid = threadIdx.x + blockIdx.x * blockDim.x;
     g_c[gid] = g_a[gid] / g_b[gid];
 }
 
-cuda::function<void (dfloat const*, dfloat const*, dfloat*)> kernel_div(__kernel_div);
+cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_div(__kernel_div);

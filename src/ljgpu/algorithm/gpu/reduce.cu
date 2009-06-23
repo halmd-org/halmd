@@ -96,16 +96,16 @@ namespace ljgpu { namespace gpu
 /**
  * device function wrappers
  */
-cuda::function<void(float const*, dfloat*, uint),
+cuda::function<void(float const*, dsfloat*, uint),
 	       void(float4 const*, float4*, uint),
 	       void(float2 const*, float2*, uint)>
-    reduce::sum(cu::algorithm::sum<float, dfloat>,
+    reduce::sum(cu::algorithm::sum<float, dsfloat>,
 		cu::algorithm::sum<cu::vector<float, 3>, cu::vector<float, 3> >,
 		cu::algorithm::sum<cu::vector<float, 2>, cu::vector<float, 2> >);
-cuda::function<void(float4 const*, dfloat*, uint),
-	       void(float2 const*, dfloat*, uint)>
-    reduce::sum_of_squares(cu::algorithm::sum_of_squares<cu::vector<float, 3>, dfloat>,
-			   cu::algorithm::sum_of_squares<cu::vector<float, 2>, dfloat>);
+cuda::function<void(float4 const*, dsfloat*, uint),
+	       void(float2 const*, dsfloat*, uint)>
+    reduce::sum_of_squares(cu::algorithm::sum_of_squares<cu::vector<float, 3>, dsfloat>,
+			   cu::algorithm::sum_of_squares<cu::vector<float, 2>, dsfloat>);
 cuda::function<void(float4 const*, float*, uint),
 	       void(float2 const*, float*, uint)>
     reduce::max(cu::algorithm::max<cu::vector<float, 3>, float>,

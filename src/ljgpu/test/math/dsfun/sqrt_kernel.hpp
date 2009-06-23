@@ -20,8 +20,8 @@
 #define TEST_DSFUN_MUL_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/math/gpu/dsfloat.cuh>
 
-extern cuda::function<void (dfloat const*, dfloat*)> kernel_sqrt;
+extern cuda::function<void (dsfloat const*, dsfloat*)> kernel_sqrt;
 
 #endif /* ! TEST_DSFUN_MUL_HPP */

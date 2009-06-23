@@ -18,12 +18,12 @@
 
 #include "mulss_kernel.hpp"
 
-__global__ void __kernel_mulss(float const* g_a, float const* g_b, dfloat* g_c)
+__global__ void __kernel_mulss(float const* g_a, float const* g_b, dsfloat* g_c)
 {
     unsigned int gid = threadIdx.x + blockIdx.x * blockDim.x;
-    dfloat c;
+    dsfloat c;
     __dsmulss(c.__hi, c.__lo, g_a[gid], g_b[gid]);
     g_c[gid] = c;
 }
 
-cuda::function<void (float const*, float const*, dfloat*)> kernel_mulss(__kernel_mulss);
+cuda::function<void (float const*, float const*, dsfloat*)> kernel_mulss(__kernel_mulss);

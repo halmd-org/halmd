@@ -30,10 +30,10 @@ BOOST_AUTO_TEST_CASE(test_dsfun_add)
     cuda::host::vector<double> h_a(BLOCKS * THREADS);
     cuda::host::vector<double> h_b(h_a.size());
     cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<dfloat> h_dsp(h_a.size());
-    cuda::vector<dfloat> g_a(h_dsp.size());
-    cuda::vector<dfloat> g_b(h_dsp.size());
-    cuda::vector<dfloat> g_c(h_dsp.size());
+    cuda::host::vector<dsfloat> h_dsp(h_a.size());
+    cuda::vector<dsfloat> g_a(h_dsp.size());
+    cuda::vector<dsfloat> g_b(h_dsp.size());
+    cuda::vector<dsfloat> g_c(h_dsp.size());
 
     // generate double-precision random numbers on host
     srand48(42);

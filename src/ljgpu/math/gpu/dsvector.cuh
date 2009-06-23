@@ -20,6 +20,7 @@
 #define LJGPU_MATH_GPU_DSVECTOR_CUH
 
 #include <cuda_runtime.h>
+#include <ljgpu/math/gpu/dsfloat.cuh>
 #include <ljgpu/math/gpu/dsfun.cuh>
 #include <ljgpu/math/gpu/vector2d.cuh>
 #include <ljgpu/math/gpu/vector3d.cuh>
@@ -37,20 +38,20 @@ namespace ljgpu { namespace cu
  * Two-dimensional double-single floating point vector
  */
 template <>
-struct vector<dfloat, 2>
+struct vector<dsfloat, 2>
 {
     enum { static_size = 2 };
-    typedef dfloat value_type;
+    typedef dsfloat value_type;
 
     // Use float2 as high- and low-word to work around an NVCC compiler bug:
     // A __shared__ array may only be declared as a struct type if the
     // struct's members are POD or CUDA types, e.g. we cannot use a custom
-    // two- or three-dimensional vector of dfloats.
+    // two- or three-dimensional vector of dsfloats.
     float2 __hi, __lo;
 
     __device__ inline vector() {}
 
-    __device__ inline vector(dfloat s) : __hi(make_float2(s.__hi, s.__hi)), __lo(make_float2(s.__lo, s.__lo)) {}
+    __device__ inline vector(dsfloat s) : __hi(make_float2(s.__hi, s.__hi)), __lo(make_float2(s.__lo, s.__lo)) {}
 
     __device__ inline vector(float s) : __hi(make_float2(s, s)), __lo(make_float2(0, 0)) {}
 
@@ -75,20 +76,20 @@ struct vector<dfloat, 2>
  * Three-dimensional double-single floating point vector
  */
 template <>
-struct vector<dfloat, 3>
+struct vector<dsfloat, 3>
 {
     enum { static_size = 3 };
-    typedef dfloat value_type;
+    typedef dsfloat value_type;
 
     // Use float3 as high- and low-word to work around an NVCC compiler bug:
     // A __shared__ array may only be declared as a struct type if the
     // struct's members are POD or CUDA types, e.g. we cannot use a custom
-    // two- or three-dimensional vector of dfloats.
+    // two- or three-dimensional vector of dsfloats.
     float3 __hi, __lo;
 
     __device__ inline vector() {}
 
-    __device__ inline vector(dfloat s) : __hi(make_float3(s.__hi, s.__hi, s.__hi)), __lo(make_float3(s.__lo, s.__lo, s.__lo)) {}
+    __device__ inline vector(dsfloat s) : __hi(make_float3(s.__hi, s.__hi, s.__hi)), __lo(make_float3(s.__lo, s.__lo, s.__lo)) {}
 
     __device__ inline vector(float s) : __hi(make_float3(s, s, s)), __lo(make_float3(0, 0, 0)) {}
 
@@ -114,20 +115,20 @@ struct vector<dfloat, 3>
  * Four-dimensional double-single floating point vector
  */
 template <>
-struct vector<dfloat, 4>
+struct vector<dsfloat, 4>
 {
     enum { static_size = 4 };
-    typedef dfloat value_type;
+    typedef dsfloat value_type;
 
     // Use float4 as high- and low-word to work around an NVCC compiler bug:
     // A __shared__ array may only be declared as a struct type if the
     // struct's members are POD or CUDA types, e.g. we cannot use a custom
-    // two- or three-dimensional vector of dfloats.
+    // two- or three-dimensional vector of dsfloats.
     float4 __hi, __lo;
 
     __device__ inline vector() {}
 
-    __device__ inline vector(dfloat s) : __hi(make_float4(s.__hi, s.__hi, s.__hi, s.__hi)), __lo(make_float4(s.__lo, s.__lo, s.__lo, s.__lo)) {}
+    __device__ inline vector(dsfloat s) : __hi(make_float4(s.__hi, s.__hi, s.__hi, s.__hi)), __lo(make_float4(s.__lo, s.__lo, s.__lo, s.__lo)) {}
 
     __device__ inline vector(float s) : __hi(make_float4(s, s, s, s)), __lo(make_float4(0, 0, 0, 0)) {}
 
@@ -156,7 +157,7 @@ struct vector<dfloat, 4>
  * returns high-word floating point vector
  */
 template <unsigned int dimension>
-__device__ inline vector<float, dimension> dfloat2hi(vector<dfloat, dimension> const& v)
+__device__ inline vector<float, dimension> dsfloat2hi(vector<dsfloat, dimension> const& v)
 {
     return v.__hi;
 }
@@ -165,7 +166,7 @@ __device__ inline vector<float, dimension> dfloat2hi(vector<dfloat, dimension> c
  * returns low-word floating point vector
  */
 template <unsigned int dimension>
-__device__ inline vector<float, dimension> dfloat2lo(vector<dfloat, dimension> const& v)
+__device__ inline vector<float, dimension> dsfloat2lo(vector<dsfloat, dimension> const& v)
 {
     return v.__lo;
 }
@@ -173,14 +174,14 @@ __device__ inline vector<float, dimension> dfloat2lo(vector<dfloat, dimension> c
 /**
  * assignment by componentwise vector addition
  */
-__device__ inline vector<dfloat, 2>& operator+=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
+__device__ inline vector<dsfloat, 2>& operator+=(vector<dsfloat, 2>& v, vector<dsfloat, 2> const& w)
 {
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dsadd(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
     return v;
 }
 
-__device__ inline vector<dfloat, 3>& operator+=(vector<dfloat, 3>& v, vector<dfloat, 3> const& w)
+__device__ inline vector<dsfloat, 3>& operator+=(vector<dsfloat, 3>& v, vector<dsfloat, 3> const& w)
 {
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dsadd(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
@@ -188,7 +189,7 @@ __device__ inline vector<dfloat, 3>& operator+=(vector<dfloat, 3>& v, vector<dfl
     return v;
 }
 
-__device__ inline vector<dfloat, 4>& operator+=(vector<dfloat, 4>& v, vector<dfloat, 4> const& w)
+__device__ inline vector<dsfloat, 4>& operator+=(vector<dsfloat, 4>& v, vector<dsfloat, 4> const& w)
 {
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dsadd(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
@@ -200,14 +201,14 @@ __device__ inline vector<dfloat, 4>& operator+=(vector<dfloat, 4>& v, vector<dfl
 /**
  * assignment by componentwise vector subtraction
  */
-__device__ inline vector<dfloat, 2>& operator-=(vector<dfloat, 2>& v, vector<dfloat, 2> const& w)
+__device__ inline vector<dsfloat, 2>& operator-=(vector<dsfloat, 2>& v, vector<dsfloat, 2> const& w)
 {
     __dssub(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dssub(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
     return v;
 }
 
-__device__ inline vector<dfloat, 3>& operator-=(vector<dfloat, 3>& v, vector<dfloat, 3> const& w)
+__device__ inline vector<dsfloat, 3>& operator-=(vector<dsfloat, 3>& v, vector<dsfloat, 3> const& w)
 {
     __dssub(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dssub(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
@@ -215,7 +216,7 @@ __device__ inline vector<dfloat, 3>& operator-=(vector<dfloat, 3>& v, vector<dfl
     return v;
 }
 
-__device__ inline vector<dfloat, 4>& operator-=(vector<dfloat, 4>& v, vector<dfloat, 4> const& w)
+__device__ inline vector<dsfloat, 4>& operator-=(vector<dsfloat, 4>& v, vector<dsfloat, 4> const& w)
 {
     __dssub(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dssub(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
@@ -227,14 +228,14 @@ __device__ inline vector<dfloat, 4>& operator-=(vector<dfloat, 4>& v, vector<dfl
 /**
  * assignment by scalar multiplication
  */
-__device__ inline vector<dfloat, 2>& operator*=(vector<dfloat, 2>& v, dfloat const& s)
+__device__ inline vector<dsfloat, 2>& operator*=(vector<dsfloat, 2>& v, dsfloat const& s)
 {
     __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
     __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
     return v;
 }
 
-__device__ inline vector<dfloat, 3>& operator*=(vector<dfloat, 3>& v, dfloat const& s)
+__device__ inline vector<dsfloat, 3>& operator*=(vector<dsfloat, 3>& v, dsfloat const& s)
 {
     __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
     __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
@@ -242,7 +243,7 @@ __device__ inline vector<dfloat, 3>& operator*=(vector<dfloat, 3>& v, dfloat con
     return v;
 }
 
-__device__ inline vector<dfloat, 4>& operator*=(vector<dfloat, 4>& v, dfloat const& s)
+__device__ inline vector<dsfloat, 4>& operator*=(vector<dsfloat, 4>& v, dsfloat const& s)
 {
     __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
     __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
@@ -254,14 +255,14 @@ __device__ inline vector<dfloat, 4>& operator*=(vector<dfloat, 4>& v, dfloat con
 /**
  * assignment by scalar division
  */
-__device__ inline vector<dfloat, 2>& operator/=(vector<dfloat, 2>& v, dfloat const& s)
+__device__ inline vector<dsfloat, 2>& operator/=(vector<dsfloat, 2>& v, dsfloat const& s)
 {
     __dsdiv(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
     __dsdiv(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
     return v;
 }
 
-__device__ inline vector<dfloat, 3>& operator/=(vector<dfloat, 3>& v, dfloat const& s)
+__device__ inline vector<dsfloat, 3>& operator/=(vector<dsfloat, 3>& v, dsfloat const& s)
 {
     __dsdiv(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
     __dsdiv(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
@@ -269,7 +270,7 @@ __device__ inline vector<dfloat, 3>& operator/=(vector<dfloat, 3>& v, dfloat con
     return v;
 }
 
-__device__ inline vector<dfloat, 4>& operator/=(vector<dfloat, 4>& v, dfloat const& s)
+__device__ inline vector<dsfloat, 4>& operator/=(vector<dsfloat, 4>& v, dsfloat const& s)
 {
     __dsdiv(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, s.__hi, s.__lo);
     __dsdiv(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, s.__hi, s.__lo);
@@ -281,25 +282,25 @@ __device__ inline vector<dfloat, 4>& operator/=(vector<dfloat, 4>& v, dfloat con
 /**
  * scalar product
  */
-__device__ inline dfloat operator*(vector<dfloat, 2> v, vector<dfloat, 2> const& w)
+__device__ inline dsfloat operator*(vector<dsfloat, 2> v, vector<dsfloat, 2> const& w)
 {
     __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.y, v.__lo.y);
-    return dfloat(v.__hi.x, v.__lo.x);
+    return dsfloat(v.__hi.x, v.__lo.x);
 }
 
-__device__ inline dfloat operator*(vector<dfloat, 3> v, vector<dfloat, 3> const& w)
+__device__ inline dsfloat operator*(vector<dsfloat, 3> v, vector<dsfloat, 3> const& w)
 {
     __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
     __dsmul(v.__hi.z, v.__lo.z, v.__hi.z, v.__lo.z, w.__hi.z, w.__lo.z);
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.y, v.__lo.y);
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.z, v.__lo.z);
-    return dfloat(v.__hi.x, v.__lo.x);
+    return dsfloat(v.__hi.x, v.__lo.x);
 }
 
-__device__ inline dfloat operator*(vector<dfloat, 4> v, vector<dfloat, 4> const& w)
+__device__ inline dsfloat operator*(vector<dsfloat, 4> v, vector<dsfloat, 4> const& w)
 {
     __dsmul(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, w.__hi.x, w.__lo.x);
     __dsmul(v.__hi.y, v.__lo.y, v.__hi.y, v.__lo.y, w.__hi.y, w.__lo.y);
@@ -308,14 +309,14 @@ __device__ inline dfloat operator*(vector<dfloat, 4> v, vector<dfloat, 4> const&
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.y, v.__lo.y);
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.z, v.__lo.z);
     __dsadd(v.__hi.x, v.__lo.x, v.__hi.x, v.__lo.x, v.__hi.w, v.__lo.w);
-    return dfloat(v.__hi.x, v.__lo.x);
+    return dsfloat(v.__hi.x, v.__lo.x);
 }
 
 /**
  * componentwise vector addition
  */
 template <unsigned int dimension>
-__device__ inline vector<dfloat, dimension> operator+(vector<dfloat, dimension> v, vector<dfloat, dimension> const& w)
+__device__ inline vector<dsfloat, dimension> operator+(vector<dsfloat, dimension> v, vector<dsfloat, dimension> const& w)
 {
     v += w;
     return v;
@@ -325,7 +326,7 @@ __device__ inline vector<dfloat, dimension> operator+(vector<dfloat, dimension> 
  * componentwise vector subtraction
  */
 template <unsigned int dimension>
-__device__ inline vector<dfloat, dimension> operator-(vector<dfloat, dimension> v, vector<dfloat, dimension> const& w)
+__device__ inline vector<dsfloat, dimension> operator-(vector<dsfloat, dimension> v, vector<dsfloat, dimension> const& w)
 {
     v -= w;
     return v;
@@ -335,7 +336,7 @@ __device__ inline vector<dfloat, dimension> operator-(vector<dfloat, dimension> 
  * scalar multiplication
  */
 template <unsigned int dimension>
-__device__ inline vector<dfloat, dimension> operator*(vector<dfloat, dimension> v, dfloat const& s)
+__device__ inline vector<dsfloat, dimension> operator*(vector<dsfloat, dimension> v, dsfloat const& s)
 {
     v *= s;
     return v;
@@ -345,7 +346,7 @@ __device__ inline vector<dfloat, dimension> operator*(vector<dfloat, dimension> 
  * scalar multiplication
  */
 template <unsigned int dimension>
-__device__ inline vector<dfloat, dimension> operator*(dfloat const& s, vector<dfloat, dimension> v)
+__device__ inline vector<dsfloat, dimension> operator*(dsfloat const& s, vector<dsfloat, dimension> v)
 {
     v *= s;
     return v;

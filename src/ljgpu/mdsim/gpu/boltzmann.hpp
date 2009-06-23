@@ -20,7 +20,7 @@
 #define LJGPU_MDSIM_GPU_BOLTZMANN_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/math/gpu/dsfloat.cuh>
 #include <ljgpu/rng/gpu/uint48.cuh>
 
 namespace ljgpu { namespace gpu
@@ -47,16 +47,16 @@ template <>
 struct boltzmann<3> : boltzmann<>
 {
     static cuda::function<void (float4*, uint, uint, float, float4*)> gaussian;
-    static cuda::function<void (float4*, uint, uint, float4 const*, dfloat*)> shift_velocity;
-    static cuda::function<void (float4*, uint, uint, dfloat const*, dfloat)> scale_velocity;
+    static cuda::function<void (float4*, uint, uint, float4 const*, dsfloat*)> shift_velocity;
+    static cuda::function<void (float4*, uint, uint, dsfloat const*, dsfloat)> scale_velocity;
 };
 
 template <>
 struct boltzmann<2> : boltzmann<>
 {
     static cuda::function<void (float2*, uint, uint, float, float2*)> gaussian;
-    static cuda::function<void (float2*, uint, uint, float2 const*, dfloat*)> shift_velocity;
-    static cuda::function<void (float2*, uint, uint, dfloat const*, dfloat)> scale_velocity;
+    static cuda::function<void (float2*, uint, uint, float2 const*, dsfloat*)> shift_velocity;
+    static cuda::function<void (float2*, uint, uint, dsfloat const*, dsfloat)> scale_velocity;
 };
 
 }} // namespace ljgpu::gpu

@@ -20,7 +20,7 @@
 #define LJGPU_MDSIM_GPU_VIRIAL_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/math/gpu/dsfloat.cuh>
 #include <ljgpu/math/gpu/dsvector.cuh>
 
 namespace ljgpu { namespace gpu { namespace virial
@@ -32,10 +32,10 @@ enum {
 };
 
 extern cuda::function<
-    void(float4 const*, float4 const*, cu::vector<dfloat, 4>*, uint),
-    void(float2 const*, float2 const*, cu::vector<dfloat, 2>*, uint),
-    void(float4 const*, float4 const*, uint const*, cu::vector<dfloat, 4>*, uint, uint),
-    void(float2 const*, float2 const*, uint const*, cu::vector<dfloat, 2>*, uint, uint)>
+    void(float4 const*, float4 const*, cu::vector<dsfloat, 4>*, uint),
+    void(float2 const*, float2 const*, cu::vector<dsfloat, 2>*, uint),
+    void(float4 const*, float4 const*, uint const*, cu::vector<dsfloat, 4>*, uint, uint),
+    void(float2 const*, float2 const*, uint const*, cu::vector<dsfloat, 2>*, uint, uint)>
     sum;
 
 }}} // namespace ljgpu::gpu::virial

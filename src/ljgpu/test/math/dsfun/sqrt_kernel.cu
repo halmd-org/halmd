@@ -18,10 +18,10 @@
 
 #include "sqrt_kernel.hpp"
 
-__global__ void __kernel_sqrt(dfloat const* g_a, dfloat* g_b)
+__global__ void __kernel_sqrt(dsfloat const* g_a, dsfloat* g_b)
 {
     unsigned int gid = threadIdx.x + blockIdx.x * blockDim.x;
     g_b[gid] = sqrt(g_a[gid]);
 }
 
-cuda::function<void (dfloat const*, dfloat*)> kernel_sqrt(__kernel_sqrt);
+cuda::function<void (dsfloat const*, dsfloat*)> kernel_sqrt(__kernel_sqrt);

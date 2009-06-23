@@ -20,7 +20,7 @@
 #define LJGPU_ALGORITHM_GPU_REDUCE_HPP
 
 #include <cuda_wrapper.hpp>
-#include <ljgpu/math/gpu/dsfun.cuh>
+#include <ljgpu/math/gpu/dsfloat.cuh>
 
 namespace ljgpu { namespace gpu { namespace reduce
 {
@@ -30,11 +30,11 @@ enum {
     THREADS = 512,
 };
 
-extern cuda::function<void(float const*, dfloat*, uint),
+extern cuda::function<void(float const*, dsfloat*, uint),
 	       void(float4 const*, float4*, uint),
 	       void(float2 const*, float2*, uint)> sum;
-extern cuda::function<void(float4 const*, dfloat*, uint),
-		      void(float2 const*, dfloat*, uint)> sum_of_squares;
+extern cuda::function<void(float4 const*, dsfloat*, uint),
+		      void(float2 const*, dsfloat*, uint)> sum_of_squares;
 extern cuda::function<void(float4 const*, float*, uint),
 		      void(float2 const*, float*, uint)> max;
 
