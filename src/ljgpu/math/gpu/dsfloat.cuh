@@ -9,6 +9,8 @@
 #define LJGPU_MATH_DSFLOAT_CUH
 
 #include <ljgpu/math/gpu/dsfun.cuh>
+#include <boost/type_traits/arithmetic_traits.hpp>
+#include <boost/utility/enable_if.hpp>
 
 /**
  * double-single floating point value
@@ -46,46 +48,109 @@ __device__ __host__  struct dsfloat
 
 #ifdef __CUDACC__
 
+/**
+ * addition by assignment
+ */
 __device__ inline dsfloat& operator+=(dsfloat& v, dsfloat const& w)
 {
     __dsadd(v.__hi, v.__lo, v.__hi, v.__lo, w.__hi, w.__lo);
     return v;
 }
 
+/**
+ * subtraction by assignment
+ */
 __device__ inline dsfloat& operator-=(dsfloat& v, dsfloat const& w)
 {
     __dssub(v.__hi, v.__lo, v.__hi, v.__lo, w.__hi, w.__lo);
     return v;
 }
 
+/**
+ * multiplication by assignment
+ */
 __device__ inline dsfloat& operator*=(dsfloat& v, dsfloat const& w)
 {
     __dsmul(v.__hi, v.__lo, v.__hi, v.__lo, w.__hi, w.__lo);
     return v;
 }
 
+/**
+ * division by assignment
+ */
 __device__ inline dsfloat& operator/=(dsfloat& v, dsfloat const& w)
 {
     __dsdiv(v.__hi, v.__lo, v.__hi, v.__lo, w.__hi, w.__lo);
     return v;
 }
 
+/**
+ * addition
+ */
 __device__ inline dsfloat operator+(dsfloat v, dsfloat const& w)
 {
     v += w;
     return v;
 }
 
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+operator+(T const& v, dsfloat const& w)
+{
+    return static_cast<dsfloat>(v) + w;
+}
+
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+operator+(dsfloat const& v, T const& w)
+{
+    return v + static_cast<dsfloat>(w);
+}
+
+/**
+ * subtraction
+ */
 __device__ inline dsfloat operator-(dsfloat v, dsfloat const& w)
 {
     v -= w;
     return v;
 }
 
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+operator-(T const& v, dsfloat const& w)
+{
+    return static_cast<dsfloat>(v) - w;
+}
+
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+operator-(dsfloat const& v, T const& w)
+{
+    return v - static_cast<dsfloat>(w);
+}
+
+/**
+ * multiplication
+ */
 __device__ inline dsfloat operator*(dsfloat v, dsfloat const& w)
 {
     v *= w;
     return v;
+}
+
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+operator*(T const& v, dsfloat const& w)
+{
+    return static_cast<dsfloat>(v) * w;
+}
+
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+operator*(dsfloat const& v, T const& w)
+{
+    return v * static_cast<dsfloat>(w);
 }
 
 __device__ inline dsfloat operator/(dsfloat v, dsfloat const& w)
@@ -94,6 +159,26 @@ __device__ inline dsfloat operator/(dsfloat v, dsfloat const& w)
     return v;
 }
 
+/**
+ * division
+ */
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+operator/(T const& v, dsfloat const& w)
+{
+    return static_cast<dsfloat>(v) / w;
+}
+
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+operator/(dsfloat const& v, T const& w)
+{
+    return v / static_cast<dsfloat>(w);
+}
+
+/**
+ * square root function
+ */
 __device__ inline dsfloat sqrt(dsfloat v)
 {
     dsfloat w;
