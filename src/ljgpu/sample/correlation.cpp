@@ -17,8 +17,10 @@
  */
 
 #include <algorithm>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/mpl/for_each.hpp>
 #include <ljgpu/sample/correlation.hpp>
 #include <ljgpu/sample/tcf_visitor.hpp>
@@ -75,10 +77,13 @@ void correlation<dimension>::sample_rate(unsigned int sample_rate)
  * set maximum number of samples per block
  */
 template <int dimension>
-void correlation<dimension>::max_samples(uint64_t value)
+void correlation<dimension>::max_samples(std::vector<uint64_t> const& value)
 {
-    m_max_samples = value;
-    LOG("maximum number of samples per block: " << m_max_samples);
+    m_max_samples.assign(value.begin(), value.end());
+
+    std::vector<std::string> s(m_max_samples.size());
+    std::transform(m_max_samples.begin(), m_max_samples.end(), s.begin(), boost::lexical_cast<std::string, uint64_t>);
+    LOG("maximum number of samples for lowest blocks: " << boost::algorithm::join(s, " "));
 }
 
 /**
@@ -144,6 +149,7 @@ void correlation<dimension>::block_size(unsigned int value)
     m_trajectory_block = std::max(m_trajectory_block, 1U) - 1;
 
     m_block_samples.resize(m_block_count, 0);
+    m_max_samples.resize(m_block_count, std::numeric_limits<uint64_t>::max());
 
     // compute block time intervals
     m_block_time.resize(boost::extents[m_block_count][m_block_size]);
@@ -306,8 +312,15 @@ void correlation<dimension>::param(H5param& param) const
     node["block_size"] = m_block_size;
     node["block_shift"] = m_block_shift;
     node["block_count"] = m_block_count;
-    node["max_samples"] = m_max_samples;
     node["min_samples"] = m_min_samples;
+
+    // store maximum number of samples for lowest blocks only
+    std::vector<uint64_t>::const_iterator it(m_max_samples.end());
+    while (it != m_max_samples.begin() && *(it - 1) == std::numeric_limits<uint64_t>::max()) --it;
+    if (it != m_max_samples.begin()) {
+	node["max_samples"] = std::vector<uint64_t>(m_max_samples.begin(), it);
+    }
+
     if (!m_q_value.empty()) {
 	node["q_values"] = m_q_value;
 	node["q_error"] = m_q_error;

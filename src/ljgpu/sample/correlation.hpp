@@ -78,7 +78,7 @@ public:
     /** set sample rate for lowest block level */
     void sample_rate(unsigned int sample_rate);
     /** set maximum number of samples per block */
-    void max_samples(uint64_t value);
+    void max_samples(std::vector<uint64_t> const& value);
     /** set minimum number of trajectory samples */
     void min_samples(uint64_t value);
     /** set block size */
@@ -99,7 +99,7 @@ public:
     /** returns sample rate for lowest block level */
     unsigned int sample_rate() const { return m_sample_rate; }
     /** returns maximum number of samples per block */
-    uint64_t max_samples() const { return m_max_samples; }
+    std::vector<uint64_t> max_samples() const { return m_max_samples; }
     /** returns minimum number of samples per block */
     uint64_t min_samples() const { return m_min_samples; }
     /** returns block size */
@@ -170,7 +170,7 @@ private:
     /** block time intervals */
     block_time_type m_block_time;
     /** maximum number of correlation samples per block */
-    uint64_t m_max_samples;
+    std::vector<uint64_t> m_max_samples;
     /** minimum number of trajectory samples */
     uint64_t m_min_samples;
     /** trajectory block level */
@@ -206,7 +206,7 @@ void correlation<dimension>::sample(trajectory_sample_variant const& sample_, en
     boost::apply_visitor(tcf_sample_virial(en_.virial), sample);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
-	if (m_block_samples[i] >= m_max_samples)
+	if (m_block_samples[i] >= m_max_samples[i])
 	    continue;
 	if (step % m_block_freq[i])
 	    continue;
@@ -221,7 +221,7 @@ void correlation<dimension>::sample(trajectory_sample_variant const& sample_, en
 	    }
 	    m_block_samples[i]++;
 
-	    if (m_max_samples == m_block_samples[i]) {
+	    if (m_max_samples[i] == m_block_samples[i]) {
 		LOG("finished sampling on block level " << i << " at step " << step);
 		// free block samples memory
 		boost::apply_visitor(tcf_block_clear(), m_block[i]);
@@ -239,7 +239,7 @@ template <int dimension>
 bool correlation<dimension>::is_sample_step(uint64_t step) const
 {
     for (unsigned int i = 0; i < m_block_count; ++i) {
-	if ((m_block_samples[i] < m_max_samples) && !(step % m_block_freq[i])) {
+	if ((m_block_samples[i] < m_max_samples[i]) && !(step % m_block_freq[i])) {
 	    return true;
 	}
     }

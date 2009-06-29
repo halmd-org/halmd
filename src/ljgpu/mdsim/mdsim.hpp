@@ -306,7 +306,10 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     // minimum number of trajectory samples
     m_corr.min_samples(m_opt["min-samples"].as<uint64_t>());
     // maximum number of samples per block
-    m_corr.max_samples(m_opt["max-samples"].as<uint64_t>());
+    if (!m_opt["max-samples"].empty()) {
+	boost::multi_array<uint64_t, 1> max_samples(m_opt["max-samples"].as<boost::multi_array<uint64_t, 1> >());
+	m_corr.max_samples(std::vector<uint64_t>(max_samples.begin(), max_samples.end()));
+    }
     // block size
     m_corr.block_size(m_opt["block-size"].as<unsigned int>());
 

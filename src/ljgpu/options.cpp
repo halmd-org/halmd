@@ -432,7 +432,7 @@ void options::parse(po::options_description const& opt)
 		      vm_["sample-rate"]);
 	    po::store(po::parse_attribute<unsigned int>(node, "block_size"),
 		      vm_["block-size"]);
-	    po::store(po::parse_attribute<uint64_t>(node, "max_samples"),
+	    po::store(po::parse_attribute<boost::multi_array<uint64_t, 1> >(node, "max_samples"),
 		      vm_["max-samples"]);
 	    po::store(po::parse_attribute<uint64_t>(node, "min_samples"),
 		      vm_["min-samples"]);
@@ -496,8 +496,8 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 	 "sample rate for lowest block level")
 	("block-size", po::value<unsigned int>()->default_value(10),
 	 "block size")
-	("max-samples", po::value<uint64_t>()->default_value(10000),
-	 "maximum number of samples per block")
+	("max-samples", po::value<boost::multi_array<uint64_t, 1> >(),
+	 "maximum number of samples for lowest blocks")
 	("min-samples", po::value<uint64_t>()->default_value(100),
 	 "minimum number of trajectory samples")
 	("q-values", po::value<boost::multi_array<float, 1> >(),
