@@ -97,11 +97,9 @@ namespace ljgpu { namespace gpu
  * device function wrappers
  */
 cuda::function<void(float const*, dsfloat*, uint),
-	       void(dsfloat const*, dsfloat*, uint),
 	       void(float4 const*, float4*, uint),
 	       void(float2 const*, float2*, uint)>
     reduce::sum(cu::algorithm::sum<float, dsfloat>,
-		cu::algorithm::sum<dsfloat, dsfloat>,
 		cu::algorithm::sum<cu::vector<float, 3>, cu::vector<float, 3> >,
 		cu::algorithm::sum<cu::vector<float, 2>, cu::vector<float, 2> >);
 cuda::function<void(float4 const*, dsfloat*, uint),

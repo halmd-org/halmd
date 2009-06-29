@@ -135,9 +135,8 @@ template <mixture_type mixture,
 	  potential_type potential,
 	  typename T,
           typename U,
-	  typename E,
           typename V>
-__device__ void compute_force(T const& r1, T const& r2, U& f, E& en, V& virial, unsigned int ab)
+__device__ void compute_force(T const& r1, T const& r2, U& f, float& en, V& virial, unsigned int ab)
 {
     enum { dimension = T::static_size };
     // potential well depth

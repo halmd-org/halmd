@@ -31,7 +31,6 @@ enum {
 };
 
 extern cuda::function<void(float const*, dsfloat*, uint),
-	       void(dsfloat const*, dsfloat*, uint),
 	       void(float4 const*, float4*, uint),
 	       void(float2 const*, float2*, uint)> sum;
 extern cuda::function<void(float4 const*, dsfloat*, uint),

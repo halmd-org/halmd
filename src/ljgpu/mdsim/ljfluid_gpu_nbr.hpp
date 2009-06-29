@@ -202,7 +202,7 @@ private:
 	/** particle tags */
 	cuda::vector<unsigned int> tag;
 	/** potential energies per particle */
-	cuda::vector<dsfloat> en;
+	cuda::vector<float> en;
 	/** virial equation sums per particle */
 	cuda::vector<gpu_vector_type> virial;
     } g_part;
