@@ -177,7 +177,6 @@ if(WITH_CUDA)
     gpu_radix_sort
     gpu_rand48
     gpu_reduce
-    gpu_velocity
     gpu_virial
     )
   target_link_libraries(ljgpu_gpu_cell
@@ -188,7 +187,6 @@ if(WITH_CUDA)
     gpu_radix_sort
     gpu_rand48
     gpu_reduce
-    gpu_velocity
     gpu_virial
     )
   target_link_libraries(ljgpu_gpu_neighbour
@@ -200,7 +198,6 @@ if(WITH_CUDA)
     gpu_radix_sort
     gpu_rand48
     gpu_reduce
-    gpu_velocity
     gpu_virial
     )
 endif(WITH_CUDA)

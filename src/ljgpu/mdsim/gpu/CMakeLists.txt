@@ -16,9 +16,6 @@ add_library(gpu_lattice
 add_library(gpu_boltzmann
   boltzmann.cu
   )
-add_library(gpu_velocity
-  velocity.cu
-  )
 add_library(gpu_virial
   virial.cu
   )

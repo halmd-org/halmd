@@ -808,7 +808,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& 
     // mean squared velocity per particle
     try {
 	ev0.record(stream);
-	reduce_squared_velocity(g_part.v, dim_.threads(), stream);
+	reduce_squared_velocity(g_part.v, stream);
 	ev1.record(stream);
 	ev1.synchronize();
 	m_times["reduce_squared_velocity"] += ev1 - ev0;

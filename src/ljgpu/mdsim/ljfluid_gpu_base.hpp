@@ -30,7 +30,6 @@
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
 #include <ljgpu/mdsim/ljfluid_base.hpp>
-#include <ljgpu/mdsim/velocity.hpp>
 #include <ljgpu/mdsim/virial.hpp>
 #include <ljgpu/rng/rand48.hpp>
 #include <ljgpu/sample/H5param.hpp>
@@ -157,7 +156,7 @@ protected:
     /** center of mass velocity */
     reduce<tag::sum, gpu_vector_type, vector_type> mutable reduce_velocity;
     /** squared velocity sum */
-    squared_velocity_sum<dsfloat, double> mutable reduce_squared_velocity;
+    reduce<tag::sum_of_squares, dsfloat, double> mutable reduce_squared_velocity;
     /** potential energy sum */
     reduce<tag::sum, dsfloat, double> mutable reduce_en;
     /** virial equation sum */
