@@ -490,18 +490,22 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 	;
     add(mdsim);
 
+    boost::array<uint64_t, 2> i = list_of(10000)(10000);
+    boost::multi_array<uint64_t, 1> max_samples(boost::extents[i.size()]);
+    max_samples.assign(i.begin(), i.end());
+
     po::options_description tcf;
     tcf.add_options()
 	("sample-rate", po::value<unsigned int>()->default_value(1),
 	 "sample rate for lowest block level")
 	("block-size", po::value<unsigned int>()->default_value(10),
 	 "block size")
-	("max-samples", po::value<boost::multi_array<uint64_t, 1> >(),
+	("max-samples", po::value<boost::multi_array<uint64_t, 1> >()->default_value(max_samples),
 	 "maximum number of samples for lowest blocks")
 	("min-samples", po::value<uint64_t>()->default_value(100),
 	 "minimum number of trajectory samples")
 	("q-values", po::value<boost::multi_array<float, 1> >(),
-	 "wave vector value(s) for correlation functions")
+	 "wave vector values for correlation functions")
 	("q-error", po::value<float>()->default_value(0.001),
 	 "relative deviation of averaging wave vectors")
 	;
