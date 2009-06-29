@@ -219,7 +219,7 @@ in single-precision internally depending on the backend.
    virial pressure
      .. math::
 
-        \langle P^*\rangle = \frac{N}{d V^*} \sum_{i=1}^N
+        P^* = \frac{N}{d V^*} \sum_{i=1}^N
         \bigl( (\vec{v}^*_i)^2 +
         \sum_{j>i}^N \vec{F}(\vec{r}^*_{ij})\cdot\vec{r}^*_{ij}\bigr)
 
@@ -228,7 +228,7 @@ in single-precision internally depending on the backend.
    temperature
      .. math::
 
-        \langle T^*\rangle = \frac{1}{d N} \sum_{i=1}^N (\vec{v}^*_i)^2
+        T^* = \frac{1}{d N} \sum_{i=1}^N (\vec{v}^*_i)^2
 
    velocity center of mass
      .. math::
