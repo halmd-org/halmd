@@ -25,6 +25,7 @@
 extern "C" int mdlib_mdsim(ljgpu::options const& opt);
 extern "C" boost::program_options::options_description mdlib_options();
 extern "C" std::string mdlib_backend();
+extern "C" std::string mdlib_variant();
 extern "C" std::string mdlib_version();
 
 namespace ljgpu
@@ -40,12 +41,14 @@ struct mdlib : public dl::library
 	options.set(*this, "mdlib_options");
 	mdsim.set(*this, "mdlib_mdsim");
 	backend.set(*this, "mdlib_backend");
+	variant.set(*this, "mdlib_variant");
 	version.set(*this, "mdlib_version");
     }
 
     dl::symbol<boost::program_options::options_description ()> options;
     dl::symbol<int (ljgpu::options const&)> mdsim;
     dl::symbol<std::string ()> backend;
+    dl::symbol<std::string ()> variant;
     dl::symbol<std::string ()> version;
 };
 
@@ -53,11 +56,12 @@ struct mdlib : public dl::library
 
 struct mdlib
 {
-    mdlib() : options(mdlib_options), mdsim(mdlib_mdsim), backend(mdlib_backend) {}
+    mdlib() : options(mdlib_options), mdsim(mdlib_mdsim), backend(mdlib_backend), variant(mdlib_variant) {}
 
     boost::function<boost::program_options::options_description ()> options;
     boost::function<int (ljgpu::options const&)> mdsim;
     boost::function<std::string ()> backend;
+    boost::function<std::string ()> variant;
 };
 
 #endif /* ! STATIC_BACKEND */

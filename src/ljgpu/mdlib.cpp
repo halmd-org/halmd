@@ -118,6 +118,11 @@ extern "C" std::string mdlib_backend()
     return MDSIM_BACKEND;
 }
 
+extern "C" std::string mdlib_variant()
+{
+    return PROGRAM_VARIANT;
+}
+
 extern "C" std::string mdlib_version()
 {
     return PROGRAM_VERSION;
