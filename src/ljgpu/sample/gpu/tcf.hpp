@@ -28,8 +28,8 @@ namespace ljgpu { namespace gpu
 struct tcf_base
 {
     enum {
-	BLOCKS = 16,
-	THREADS = 512,
+	BLOCKS = 32,
+	THREADS = 256,
     };
 };
 
