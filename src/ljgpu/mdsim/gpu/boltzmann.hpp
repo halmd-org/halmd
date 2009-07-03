@@ -32,8 +32,8 @@ struct boltzmann;
 template <>
 struct boltzmann<>
 {
-    enum { BLOCKS = 16 };
-    enum { THREADS = 512 };
+    enum { BLOCKS = 32 };
+    enum { THREADS = 256 };
 
     struct rand48
     {
