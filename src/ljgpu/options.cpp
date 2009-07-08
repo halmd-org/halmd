@@ -405,6 +405,9 @@ void options::parse(po::options_description const& opt)
 		      vm_["epsilon"]);
 	    po::store(po::parse_attribute<boost::array<float, 3> >(node, "potential_sigma"),
 		      vm_["sigma"]);
+	    // parse scalar cutoff radius for backwards compatibility
+	    po::store(po::parse_attribute<float>(node, "cutoff_radius"),
+		      vm_["cutoff"]);
 	    po::store(po::parse_attribute<boost::array<float, 3> >(node, "cutoff_radius"),
 		      vm_["cutoff"]);
 	    po::store(po::parse_attribute<float>(node, "potential_smoothing"),

@@ -104,7 +104,15 @@ private:
     void cutoff_radius(boost::false_type const&) {}
     void cutoff_radius(boost::true_type const&)
     {
-	m_fluid.cutoff_radius(m_opt["cutoff"].as<boost::array<float, 3> >());
+	boost::array<float, 3> r_cut;
+	try {
+	    r_cut = m_opt["cutoff"].as<boost::array<float, 3> >();
+	}
+	catch (boost::bad_any_cast const&) {
+	    // backwards compatibility
+	    r_cut[0] = r_cut[1] = r_cut[2] = m_opt["cutoff"].as<float>();
+	}
+	m_fluid.cutoff_radius(r_cut);
     }
 
     void potential_smoothing(boost::false_type const&) {}
