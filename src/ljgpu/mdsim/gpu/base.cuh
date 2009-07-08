@@ -49,7 +49,7 @@ __constant__ float r_cut[3];
 /** squared cutoff radius */
 __constant__ float rr_cut[3];
 /** Lennard-Jones potential at cutoff length in units of epsilon */
-__constant__ float en_cut;
+__constant__ float en_cut[3];
 /** potential well depths in binary mixture */
 __constant__ float epsilon[3];
 /** squared collision diameters in binary mixture */
@@ -155,7 +155,7 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, V& viri
     typename T::value_type ri6 = rri * rri * rri;
     typename T::value_type fval = 48 * eps * rri * ri6 * (ri6 - 0.5f) / sig2;
     // compute shifted Lennard-Jones potential
-    typename T::value_type pot = (4 * ri6 * (ri6 - 1) - en_cut) * eps;
+    typename T::value_type pot = (4 * ri6 * (ri6 - 1) - en_cut[(mixture == BINARY) ? ab : 0]) * eps;
 
     if (potential == C2POT) {
 	typename T::value_type s, ds, r_abs = sqrt(rr);
@@ -251,7 +251,7 @@ cuda::symbol<float> __Base::box(cu::ljfluid::box);
 cuda::symbol<float> __Base::timestep(cu::ljfluid::timestep);
 cuda::symbol<float[]> __Base::r_cut(cu::ljfluid::r_cut);
 cuda::symbol<float[]> __Base::rr_cut(cu::ljfluid::rr_cut);
-cuda::symbol<float> __Base::en_cut(cu::ljfluid::en_cut);
+cuda::symbol<float[]> __Base::en_cut(cu::ljfluid::en_cut);
 cuda::symbol<float[]> __Base::epsilon(cu::ljfluid::epsilon);
 cuda::symbol<float[]> __Base::sigma2(cu::ljfluid::sigma2);
 cuda::symbol<float> __Base::rri_smooth(cu::ljfluid::rri_smooth);

@@ -68,7 +68,7 @@ public:
     /** set simulation timestep */
     void timestep(double value);
     /** set potential cutoff radius */
-    void cutoff_radius(float_type value);
+    void cutoff_radius(boost::array<float, 3> const& value);
     /** set potential smoothing function scale parameter */
     void potential_smoothing(float_type value);
 
@@ -86,7 +86,7 @@ public:
     /** returns simulation timestep */
     double timestep() const { return timestep_; }
     /** returns potential cutoff radius */
-    float_type cutoff_radius() const { return r_cut_sigma; }
+    boost::array<float_type, 3> const& cutoff_radius() const { return r_cut_sigma; }
 
     /** get number of CUDA execution blocks */
     unsigned int blocks() const { return dim_.blocks_per_grid(); }
@@ -208,7 +208,7 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::sigma(boost::array<float, 3> con
 }
 
 template <typename ljfluid_impl, int dimension>
-void ljfluid_gpu_base<ljfluid_impl, dimension>::cutoff_radius(float_type value)
+void ljfluid_gpu_base<ljfluid_impl, dimension>::cutoff_radius(boost::array<float, 3> const& value)
 {
     _Base::cutoff_radius(value);
 

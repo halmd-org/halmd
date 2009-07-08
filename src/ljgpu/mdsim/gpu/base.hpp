@@ -41,7 +41,7 @@ struct ljfluid_base<ljfluid_impl_gpu_base>
     static cuda::symbol<float> timestep;
     static cuda::symbol<float[]> r_cut;
     static cuda::symbol<float[]> rr_cut;
-    static cuda::symbol<float> en_cut;
+    static cuda::symbol<float[]> en_cut;
     /** binary mixture */
     static cuda::symbol<uint[]> mpart;
     static cuda::symbol<float[]> epsilon;

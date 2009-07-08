@@ -405,7 +405,7 @@ void options::parse(po::options_description const& opt)
 		      vm_["epsilon"]);
 	    po::store(po::parse_attribute<boost::array<float, 3> >(node, "potential_sigma"),
 		      vm_["sigma"]);
-	    po::store(po::parse_attribute<float>(node, "cutoff_radius"),
+	    po::store(po::parse_attribute<boost::array<float, 3> >(node, "cutoff_radius"),
 		      vm_["cutoff"]);
 	    po::store(po::parse_attribute<float>(node, "potential_smoothing"),
 		      vm_["smooth"]);
@@ -525,7 +525,7 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 
     if (IMPL(lennard_jones_potential)) {
 	add_options()
-	    ("cutoff", po::value<float>()->default_value(std::pow(2., 1 / 6.)),
+	    ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
 	     "truncate potential at cutoff radius")
 	    ("smooth", po::value<float>(),
 	     "C²-potential smoothing factor")

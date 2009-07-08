@@ -644,7 +644,7 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
 	    float_type rri = sigma2 / rr;
 	    float_type r6i = rri * rri * rri;
 	    float_type fval = 48 * rri * r6i * (r6i - 0.5) * (eps / sigma2);
-	    float_type pot = (4 * r6i * (r6i - 1) - en_cut) * eps;
+	    float_type pot = (4 * r6i * (r6i - 1) - en_cut[type]) * eps;
 
 	    if (potential_ == C2POT) {
 		compute_smooth_potential<binary>(std::sqrt(rr), fval, pot, type);

@@ -52,7 +52,7 @@ public:
     /** set simulation timestep */
     void timestep(double value);
     /** set potential cutoff radius */
-    void cutoff_radius(float_type value);
+    void cutoff_radius(boost::array<float, 3> const& value);
     /** set potential smoothing function scale parameter */
     void potential_smoothing(float_type value);
     /** set heat bath collision probability and temperature */
@@ -65,7 +65,7 @@ public:
     /** returns simulation timestep */
     double timestep() const { return timestep_; }
     /** returns potential cutoff radius */
-    float_type cutoff_radius() const { return r_cut_sigma; }
+    boost::array<float_type, 3> const& cutoff_radius() const { return r_cut_sigma; }
     /** returns potential smoothing function scale parameter */
     float_type potential_smoothing() const { return r_smooth; }
 
@@ -82,7 +82,7 @@ protected:
     using _Base::mixture_;
 
     /** cutoff radius in units of sigma */
-    float_type r_cut_sigma;
+    boost::array<float_type, 3> r_cut_sigma;
     /** cutoff radii in binary mixture */
     boost::array<float_type, 3> r_cut;
     /** squared cutoff radii */
@@ -94,7 +94,7 @@ protected:
     /** squared collision diameters */
     boost::array<float_type, 3> sigma2_;
     /** Lennard-Jones potential at cutoff radius in units of epsilon */
-    float_type en_cut;
+    boost::array<float_type, 3> en_cut;
     /** potential smoothing function scale parameter */
     float_type r_smooth;
     /** squared inverse potential smoothing function scale parameter */
@@ -133,18 +133,27 @@ void ljfluid_base<ljfluid_impl, dimension>::sigma(boost::array<float, 3> const& 
 }
 
 template <typename ljfluid_impl, int dimension>
-void ljfluid_base<ljfluid_impl, dimension>::cutoff_radius(float_type value)
+void ljfluid_base<ljfluid_impl, dimension>::cutoff_radius(boost::array<float, 3> const& value)
 {
     r_cut_sigma = value;
-    LOG("potential cutoff radius: " << r_cut_sigma);
 
-    float_type rri_cut = 1 / std::pow(r_cut_sigma, 2);
-    float_type r6i_cut = rri_cut * rri_cut * rri_cut;
-    en_cut = 4 * r6i_cut * (r6i_cut - 1);
-    LOG("potential cutoff energy: " << en_cut);
+    for (size_t i = 0; i < r_cut_sigma.size(); ++i) {
+	float_type rri_cut = 1 / std::pow(r_cut_sigma[i], 2);
+	float_type r6i_cut = rri_cut * rri_cut * rri_cut;
+	en_cut[i] = 4 * r6i_cut * (r6i_cut - 1);
+    }
+
+    if (mixture_ == BINARY) {
+	LOG("potential cutoff radii: r(AA) = " << r_cut_sigma[0] << ", r(AB) = " << r_cut_sigma[1] << ", r(BB) = " << r_cut_sigma[2]);
+	LOG("potential cutoff energies: E(AA) = " << en_cut[0] << ", E(AB) = " << en_cut[1] << ", E(BB) = " << en_cut[2]);
+    }
+    else {
+	LOG("potential cutoff radius: " << r_cut_sigma[0]);
+	LOG("potential cutoff energy: " << en_cut[0]);
+    }
 
     for (size_t i = 0; i < sigma_.size(); ++i) {
-	r_cut[i] = r_cut_sigma * sigma_[i];
+	r_cut[i] = r_cut_sigma[i] * sigma_[i];
 	rr_cut[i] = std::pow(r_cut[i], 2);
     }
 }
