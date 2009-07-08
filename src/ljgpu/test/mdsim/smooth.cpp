@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 	boost::array<float, 3> rr_cut_ = list_of(std::pow(r_cut, 2))(0)(0);
 	float rri_cut = 1 / std::pow(r_cut, 2);
 	float r6i_cut = rri_cut * rri_cut * rri_cut;
-	float en_cut = 4 * r6i_cut * (r6i_cut - 1);
+	boost::array<float, 3> en_cut = list_of(4 * r6i_cut * (r6i_cut - 1))(0)(0);
 	cuda::copy(r_cut_, _gpu::r_cut);
 	cuda::copy(rr_cut_, _gpu::rr_cut);
 	cuda::copy(std::pow(r_smooth, -2), _gpu::rri_smooth);
