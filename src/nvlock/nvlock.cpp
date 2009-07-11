@@ -33,7 +33,7 @@ struct nvlock
 {
     nvlock()
     {
-	int i, fd;
+	int n, i, fd;
 	char fn[16];
 	CUcontext ctx;
 	CUdevice dev;
@@ -41,11 +41,10 @@ struct nvlock
 	if (CUDA_SUCCESS != cuInit(0)) {
 	    ERROR("failed to initialize the CUDA driver API\n");
 	}
-	if (CUDA_SUCCESS != cuDeviceGetCount(&i)) {
+	if (CUDA_SUCCESS != cuDeviceGetCount(&n)) {
 	    ERROR("failed to get CUDA device count\n");
 	}
-	/* use devices in reverse order as first device is CUDA default */
-	while (--i >= 0) {
+	for (i = 0; i < n; ++i) {
 	    snprintf(fn, sizeof(fn), "/dev/nvidia%d", i);
 	    if (-1 == (fd = open(fn, O_RDWR))) {
 		ERROR("could not open device: %s\n", fn);
