@@ -72,7 +72,7 @@ As a simple example, we open a HDF5 file and print a dataset::
   print d
   f.close()
 
-Attributes may be read with the _v_attr class member::
+Attributes may be read with the _v_attrs class member::
 
   print f.root.param.mdsim._v_attrs.dimension
   print f.root.param.program._v_attrs.version
