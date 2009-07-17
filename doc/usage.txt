@@ -7,8 +7,8 @@ Prerequisites
 To allow the shell to find the program and its required libraries, set these
 environment variables in the shell initialization file (e.g. ~/.bashrc)::
 
-    export PATH="$HOME/usr/bin${PATH+:$PATH}"
-    export LD_LIBRARY_PATH="$HOME/usr/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+  export PATH="$HOME/usr/bin${PATH+:$PATH}"
+  export LD_LIBRARY_PATH="$HOME/usr/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
 
 
 Getting started
@@ -90,7 +90,7 @@ ljgpu has three ways of accepting program parameters:
 
 Options are described in the command line help::
 
-    $ ljgpu --help
+  ljgpu --help
 
 
 Multi-GPU machines
