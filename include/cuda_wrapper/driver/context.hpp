@@ -49,6 +49,14 @@ public:
     }
 
     /**
+     * attaches to the current CUDA context
+     */
+    context() : m_ctx(new CUcontext)
+    {
+	CU_CALL(cuCtxAttach(&(*m_ctx), 0));
+    }
+
+    /**
      * detaches a CUDA context, and destroys it if usage count is zero
      */
     ~context()
