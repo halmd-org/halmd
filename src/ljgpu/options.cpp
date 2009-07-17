@@ -554,7 +554,7 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 	add_options()
 	    ("tcf-backend", po::value<std::string>()->default_value("gpu"),
 	     "correlation functions backend")
-	    ("device,D", po::value<int>()->default_value(0),
+	    ("device,D", po::value<int>(),
 	     "CUDA device ordinal")
 	    ("threads,T", po::value<unsigned int>()->default_value(128),
 	     "number of CUDA threads per block")

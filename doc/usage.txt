@@ -96,14 +96,24 @@ Options are described in the command line help::
 Multi-GPU machines
 ==================
 
-On a machine with multiple GPUs, it is advisable to use the nvlock
-program to exclusively assign a GPU to each process::
+If your NVIDIA driver version comes with the nvidia-smi tool, set all CUDA
+devices to *compute exclusive mode* to restrict use to one process per device::
 
-    $ nvlock ljgpu [...]
+  sudo nvidia-smi --gpu=0 --compute-mode-rules=1
+  sudo nvidia-smi --gpu=1 --compute-mode-rules=1
 
-This is only necessary for CUDA <= 2.1.
+ljgpu will then choose the first available CUDA device if the ``--device``
+option is not given. Note that this works with all CUDA versions, not only
+CUDA >= 2.2.
+
+
+If your NVIDIA driver version does not support the nvidia-smi tool, or if you
+wish not to set the devices to compute exclusive mode, the nvlock tool
+accompanying ljgpu may be used to exclusively assign a GPU to each process::
+
+  nvlock ljgpu [...]
+
 
 For optimal exploitation of a multi-GPU machine, a job scheduler is highly
-recommended, e.g. SLURM — Simple Linux Utility for Resource Management.
-https://computing.llnl.gov/linux/slurm/
+recommended, e.g. `SLURM <https://computing.llnl.gov/linux/slurm/>`_.
 
