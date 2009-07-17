@@ -72,7 +72,7 @@ These software packages are required for compilation:
   The patched CMake version, which adds native CUDA language support, is
   available at::
 
-    git clone username@git.physik.uni-muenchen.de:/pub/scm/granmat/ljgpu
+    git clone username@git.physik.uni-muenchen.de:/pub/scm/granmat/cmake-cuda
 
 * `Boost C++ Libraries <http://www.boost.org/>`_ >= 1.37.0
 
