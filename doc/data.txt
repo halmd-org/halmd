@@ -102,7 +102,7 @@ evaluation scripts. *Do not (ab)use the log file for evaluation purposes.*
    |    \-- block_count		number of blocks
    |    \-- block_shift		block shift of intermediate block levels
    |    \-- block_size		number of samples per block
-   |    \-- max_samples		maximum number of acquired samples per block
+   |    \-- max_samples		maximum number of acquired samples for lowest blocks
    |    \-- min_samples		minimum number of acquired samples per block
    |    \-- q_error		relative deviation of averaging wave vectors
    |    \-- q_values		wave vector value(s) for correlation functions
@@ -117,7 +117,7 @@ evaluation scripts. *Do not (ab)use the log file for evaluation purposes.*
    |    \-- cell_length		cell edge length
    |    \-- cell_occupancy	average ratio of particles to cell placeholders
    |    \-- cells		number of cells per dimension
-   |    \-- cutoff_radius	potential cut-off radius
+   |    \-- cutoff_radius	potential cut-off radii AA,AB,BB in units of sigma
    |    \-- density		number density
    |    \-- dimension		positional coordinates dimension
    |    \-- effective_steps	simulated number of steps
