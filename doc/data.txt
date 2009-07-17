@@ -333,7 +333,6 @@ A profile file contains a dataset for each CPU or GPU performance counter.
 ::
 
   times
-   \-- anderson_thermostat	Anderson thermostat
    \-- boltzmann		Boltzmann distribution
    \-- event_queue		event queue processing
    \-- hilbert_sort		Hilbert curve sort
