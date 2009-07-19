@@ -16,10 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility.hpp>
+#include <fstream>
+#include <iostream>
 #include <ljgpu/mdlib.hpp>
 #include <ljgpu/mdsim/hardsphere.hpp>
 #ifdef WITH_CUDA
@@ -39,6 +42,16 @@ template <typename mdsim_backend>
 static typename boost::enable_if<typename mdsim_backend::impl_type::impl_gpu, int>::type
 _mdsim(options const& opt)
 {
+    // query NVIDIA driver version
+    std::stringbuf buf;
+    std::ifstream ifs("/proc/driver/nvidia/version");
+    ifs.exceptions(std::ifstream::failbit|std::ifstream::badbit);
+    ifs.get(buf, '\n');
+    ifs.close();
+    std::string nvidia_version(buf.str());
+    boost::algorithm::trim(nvidia_version);
+    LOG(nvidia_version);
+
     // create CUDA context and associate it with this thread
     boost::shared_ptr<cuda::driver::context> ctx;
     try {
