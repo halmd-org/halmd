@@ -26,12 +26,12 @@
 #define NVIDIA_DEVICE_FILENAME "/dev/nvidia%d"
 
 static CUresult (*_cuCtxCreate)(CUcontext *pctx, unsigned int flags, CUdevice dev) = 0;
+static int fd = -1;
 
 CUresult cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev)
 {
     void *handle;
     char fn[16];
-    int fd;
 
     // open dynamic library and load real function symbol
     if (!_cuCtxCreate) {
@@ -50,11 +50,16 @@ CUresult cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev)
 
     // lock NVIDIA device file
     snprintf(fn, sizeof(fn), NVIDIA_DEVICE_FILENAME, dev);
+    if (-1 != fd) {
+	close(fd);
+	fd = -1;
+    }
     if (-1 == (fd = open(fn, O_RDWR))) {
 	return CUDA_ERROR_UNKNOWN;
     }
     if (-1 == flock(fd, LOCK_EX | LOCK_NB)) {
 	close(fd);
+	fd = -1;
 	return CUDA_ERROR_UNKNOWN;
     }
 
