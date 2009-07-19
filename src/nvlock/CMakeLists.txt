@@ -6,10 +6,10 @@ install(TARGETS nvlock
   )
 
 add_library(libnvlock SHARED
-  nvlock.cpp
+  nvlock.c
   )
 target_link_libraries(libnvlock
-  ${CUDA_LIBRARY}
+  dl
   )
 set_target_properties(libnvlock PROPERTIES
   PREFIX ""
