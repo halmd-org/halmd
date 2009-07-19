@@ -52,6 +52,13 @@ _mdsim(options const& opt)
     boost::algorithm::trim(nvidia_version);
     LOG(nvidia_version);
 
+#if (CUDA_VERSION >= 2020)
+    LOG("CUDA driver version: " << (cuda::driver::version() / 1000) << "." << (cuda::driver::version() / 10 % 10));
+#endif
+#if (CUDART_VERSION >= 2020)
+    LOG("CUDA runtime version: " << (cuda::version() / 1000) << "." << (cuda::version() / 10 % 10));
+#endif
+
     // create CUDA context and associate it with this thread
     boost::shared_ptr<cuda::driver::context> ctx;
     try {
