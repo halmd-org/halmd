@@ -36,6 +36,7 @@
 #include <cuda_wrapper/driver/context.hpp>
 #include <cuda_wrapper/driver/error.hpp>
 #include <cuda_wrapper/driver/mem.hpp>
+#include <cuda_wrapper/driver/version.hpp>
 #include <cuda_wrapper/error.hpp>
 #include <cuda_wrapper/event.hpp>
 #include <cuda_wrapper/host/allocator.hpp>
@@ -43,6 +44,7 @@
 #include <cuda_wrapper/stream.hpp>
 #include <cuda_wrapper/thread.hpp>
 #include <cuda_wrapper/vector.hpp>
+#include <cuda_wrapper/version.hpp>
 #endif /* ! __CUDACC__ */
 
 /*
