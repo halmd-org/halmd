@@ -46,16 +46,6 @@ To revert to the main development branch after a release checkout, use::
 Software prerequisites
 ======================
 
-ljgpu is based on variety of high-quality open source software packages.
-If you share the disdain of many scientists of installing third-party software
-oneself and are in the fortunate position to freely choose the operating system
-on your CUDA machines, you may save yourself a lot of trouble by choosing an
-operating system which includes the software in its official package repository,
-for example `Debian GNU/Linux <http://www.debian.org/>`_ or `Ubuntu
-<http://www.ubuntu.com>`_. The Debian distribution and its derivatives have a
-strong focus on universality and therefore come bundled with a plethora of
-scientific packages.
-
 These software packages are required for compilation:
 
 * `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ >= 1.1
