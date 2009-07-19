@@ -61,27 +61,19 @@ _mdsim(options const& opt)
 
     // create CUDA context and associate it with this thread
     boost::shared_ptr<cuda::driver::context> ctx;
-    try {
-	// CUDA context may have been created via LD_PRELOAD
-	(void) cuda::driver::context::device();
-	// attach to the current context
-	ctx.reset(new cuda::driver::context);
+    if (!opt["device"].empty()) {
+	// create a CUDA context for the desired CUDA device
+	ctx.reset(new cuda::driver::context(opt["device"].as<int>()));
     }
-    catch (cuda::driver::error const&) {
-	if (!opt["device"].empty()) {
-	    // create a CUDA context for the desired CUDA device
-	    ctx.reset(new cuda::driver::context(opt["device"].as<int>()));
-	}
-	else {
-	    // choose first available CUDA device
-	    for (int i = 0, j = cuda::device::count(); i < j; ++i) {
-		try {
-		    ctx.reset(new cuda::driver::context(i));
-		    break;
-		}
-		catch (cuda::driver::error const&) {
-		    // device is compute-exlusive mode and in use
-		}
+    else {
+	// choose first available CUDA device
+	for (int i = 0, j = cuda::device::count(); i < j; ++i) {
+	    try {
+		ctx.reset(new cuda::driver::context(i));
+		break;
+	    }
+	    catch (cuda::driver::error const&) {
+		// device is compute-exlusive mode and in use
 	    }
 	}
     }
