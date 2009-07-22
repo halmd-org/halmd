@@ -118,7 +118,7 @@ private:
     void potential_smoothing(boost::false_type const&) {}
     void potential_smoothing(boost::true_type const&)
     {
-	if (!m_opt["smooth"].empty()) {
+	if (!m_opt["smooth"].empty() && m_opt["smooth"].as<float>() > 0) {
 	    m_fluid.potential_smoothing(m_opt["smooth"].as<float>());
 	}
     }
