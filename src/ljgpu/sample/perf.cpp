@@ -153,7 +153,6 @@ void perf::flush()
     try {
 	foreach (counter const& i, m_times) {
 	    // write to HDF5 dataset
-	    m_dataset[i.first].extend(dim);
 	    data[0] = i.second.mean();
 	    data[1] = i.second.std();
 	    data[2] = i.second.count();
