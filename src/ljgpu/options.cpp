@@ -41,56 +41,6 @@ namespace boost { namespace program_options
 {
 
 /**
- * program option value validation for positive, non-zero values
- */
-template <typename T>
-void validate(any& v, std::vector<std::string> const& values, T*)
-{
-    std::string const& s = validators::get_single_string(values);
-    T value;
-
-    try {
-	value = lexical_cast<T>(s);
-    }
-    catch (bad_lexical_cast const& e)
-    {
-	throw invalid_option_value(s);
-    }
-
-    // require positive value
-    if (value > 0) {
-	v = any(value);
-    }
-    else {
-	throw invalid_option_value(s);
-    }
-}
-
-template <>
-void validate(any& v, std::vector<std::string> const& values, float*, long)
-{
-    validate(v, values, (float*)0);
-}
-
-template <>
-void validate(any& v, std::vector<std::string> const& values, double*, long)
-{
-    validate(v, values, (double*)0);
-}
-
-template <>
-void validate(any& v, std::vector<std::string> const& values, unsigned int*, long)
-{
-    validate(v, values, (unsigned int*)0);
-}
-
-template <>
-void validate(any& v, std::vector<std::string> const& values, uint64_t*, long)
-{
-    validate(v, values, (uint64_t*)0);
-}
-
-/**
  * Function used to check that 'opt1' and 'opt2' are not specified at the same time.
  */
 void conflicting_options(const variables_map& vm, char const* opt1, char const* opt2)
