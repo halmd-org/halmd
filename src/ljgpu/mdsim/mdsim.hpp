@@ -194,6 +194,7 @@ private:
 	signal::wait();
     }
 
+#ifdef WITH_CUDA
     void pause(boost::true_type const&)
     {
 	// pop current context from context stack
@@ -202,6 +203,7 @@ private:
 	signal::wait();
 	// push floating context onto context stack
     }
+#endif /* WITH_CUDA */
 
 private:
     /** program options */
