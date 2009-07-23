@@ -25,7 +25,9 @@
 
 #define NVIDIA_DEVICE_FILENAME "/dev/nvidia%d"
 
-static CUresult (*_cuCtxCreate)(CUcontext *pctx, unsigned int flags, CUdevice dev) = 0;
+static CUresult (*_cuCtxCreate)(CUcontext *, unsigned int, CUdevice) = 0;
+static CUresult (*_cuCtxPopCurrent)(CUcontext *) = 0;
+static CUresult (*_cuCtxPushCurrent)(CUcontext) = 0;
 static int fd = -1;
 
 CUresult cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev)
@@ -48,7 +50,7 @@ CUresult cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev)
 	}
     }
 
-    // lock NVIDIA device file
+    // lock NVIDIA device file with non-blocking request
     snprintf(fn, sizeof(fn), NVIDIA_DEVICE_FILENAME, dev);
     if (-1 != fd) {
 	close(fd);
@@ -65,4 +67,59 @@ CUresult cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev)
 
     // create CUDA context
     return _cuCtxCreate(pctx, flags, dev);
+}
+
+CUresult cuCtxPopCurrent(CUcontext *pctx)
+{
+    void *handle;
+
+    // open dynamic library and load real function symbol
+    if (!_cuCtxPopCurrent) {
+	handle = dlopen("libcuda.so", RTLD_GLOBAL | RTLD_NOW);
+	if (!handle) {
+	    return CUDA_ERROR_UNKNOWN;
+	}
+	_cuCtxPopCurrent = dlsym(handle, "cuCtxPopCurrent");
+	if (!_cuCtxPopCurrent) {
+	    return CUDA_ERROR_UNKNOWN;
+	}
+	if (dlclose(handle)) {
+	    return CUDA_ERROR_UNKNOWN;
+	}
+    }
+
+    // unlock the device file
+    flock(fd, LOCK_UN);
+
+    // pop current context from CUDA context stack
+    return _cuCtxPopCurrent(pctx);
+}
+
+CUresult cuCtxPushCurrent(CUcontext ctx)
+{
+    void *handle;
+    CUresult ret;
+    CUdevice dev;
+    char fn[16];
+
+    // open dynamic library and load real function symbol
+    if (!_cuCtxPushCurrent) {
+	handle = dlopen("libcuda.so", RTLD_GLOBAL | RTLD_NOW);
+	if (!handle) {
+	    return CUDA_ERROR_UNKNOWN;
+	}
+	_cuCtxPushCurrent = dlsym(handle, "cuCtxPushCurrent");
+	if (!_cuCtxPushCurrent) {
+	    return CUDA_ERROR_UNKNOWN;
+	}
+	if (dlclose(handle)) {
+	    return CUDA_ERROR_UNKNOWN;
+	}
+    }
+
+    // lock the device file with blocking request
+    flock(fd, LOCK_EX);
+
+    // push floating context onto CUDA context stack
+    return _cuCtxPushCurrent(ctx);
 }
