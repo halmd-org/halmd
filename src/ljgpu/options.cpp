@@ -399,6 +399,12 @@ void options::parse(po::options_description const& opt)
 	}
     }
 
+    if (vm.count("energy")) {
+	// store absolute input file path
+	boost::filesystem::path path(vm["energy"].as<string>());
+	vm_["energy"] = po::variable_value(boost::filesystem::complete(path).string(), false);
+    }
+
     // format timestamp in output file prefix
     boost::filesystem::path path(date_time::format(vm["output"].as<string>()));
     // store absolute output file path
