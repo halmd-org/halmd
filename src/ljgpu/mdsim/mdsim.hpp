@@ -189,6 +189,20 @@ private:
 	m_fluid.stream();
     }
 
+    void pause(boost::false_type const&)
+    {
+	signal::wait();
+    }
+
+    void pause(boost::true_type const&)
+    {
+	// pop current context from context stack
+	cuda::driver::context::floating ctx;
+	// pause simulation
+	signal::wait();
+	// push floating context onto context stack
+    }
+
 private:
     /** program options */
     options const& m_opt;
@@ -420,7 +434,7 @@ int mdsim<mdsim_backend>::operator()()
 		// block process until further signal is received
 		LOG("pausing simulation");
 		unsigned int seconds = alarm(0);
-		signal::wait();
+		pause(IMPL(gpu));
 		alarm(seconds);
 		LOG("resuming simulation");
 	    }
