@@ -34,6 +34,63 @@ class context
 {
 public:
     /**
+     * transform current context into floating context
+     */
+    class floating : boost::noncopyable
+    {
+    public:
+	/**
+	 * pop current context from CUDA context stack
+	 */
+	floating()
+	{
+	    // attach to current context
+	    CU_CALL(cuCtxAttach(&m_ctx, 0));
+	    // copy context pointer
+	    CUcontext ctx(m_ctx);
+	    // set internal usage count
+	    m_usage = 0;
+
+	    while (ctx == m_ctx) {
+		// decrement usage count of current context
+		CU_CALL(cuCtxDetach(ctx));
+		// requires context usage count of 1
+		CU_CALL(cuCtxPopCurrent(NULL));
+		try {
+		    // is there a current context?
+		    CU_CALL(cuCtxAttach(&ctx, 0));
+		}
+		catch (cuda::driver::error const&) {
+		    // no current context
+		    break;
+		}
+		// decrement usage count of current context
+		CU_CALL(cuCtxDetach(ctx));
+		// increment internal usage count
+		m_usage++;
+	    }
+	}
+
+	/**
+	 * push floating context onto CUDA context stack
+	 */
+	~floating()
+	{
+	    CU_CALL(cuCtxPushCurrent(m_ctx));
+	    // restore usage count of context
+	    while (m_usage) {
+		CU_CALL(cuCtxAttach(&m_ctx, 0));
+		m_usage--;
+	    }
+	}
+
+    private:
+	CUcontext m_ctx;
+	size_t m_usage;
+    };
+
+public:
+    /**
      * create a CUDA context and associate it with the calling thread
      */
 #if (CUDART_VERSION >= 2020)
