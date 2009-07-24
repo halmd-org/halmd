@@ -17,13 +17,15 @@
  */
 
 #include <H5Cpp.h>
-#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <boost/unordered_map.hpp>
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
 #endif
 #include <exception>
+#include <fstream>
 #include <iostream>
 #include <libgen.h>
 #include <ljgpu/mdlib.hpp>
@@ -96,6 +98,37 @@ int main(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
+	// parse processor info
+	ifstream ifs("/proc/cpuinfo");
+	ifs.exceptions(ifstream::failbit|ifstream::badbit);
+	std::stringbuf buf;
+	ifs.get(buf, '\0');
+	ifs.close();
+	string str(buf.str());
+	boost::algorithm::trim(str);
+	vector<string> cpuinfo;
+	boost::algorithm::split(cpuinfo, str, boost::algorithm::is_any_of("\n"));
+	typedef boost::unordered_map<string, string> cpu_map;
+	vector<cpu_map> cpus;
+	BOOST_FOREACH(string const& line, cpuinfo) {
+	    size_t pos = line.find(':');
+	    if (pos != string::npos) {
+		pair<string, string> tokens(line.substr(0, pos), line.substr(pos + 1));
+		boost::algorithm::trim(tokens.first);
+		boost::algorithm::trim(tokens.second);
+		if (cpus.empty() || cpus.back().find(tokens.first) != cpus.back().end()) {
+		    cpus.push_back(cpu_map());
+		}
+		cpus.back().insert(tokens);
+	    }
+	}
+	BOOST_FOREACH(cpu_map& cpu, cpus) {
+	    LOG("CPU: " << cpu["processor"]);
+	    LOG("CPU family: " << cpu["cpu family"] << "  model: " << cpu["model"] << "  stepping: " << cpu["stepping"]);
+	    LOG("CPU model name: " << cpu["model name"]);
+	    LOG("CPU clock rate: " << cpu["cpu MHz"] << " MHz");
+	}
+
 	// bind process to CPU core(s)
 	if (!opt["processor"].empty()) {
 	    cpu_set_t mask;
