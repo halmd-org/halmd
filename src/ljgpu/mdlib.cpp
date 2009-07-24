@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
+#include <boost/unordered_map.hpp>
 #include <boost/utility.hpp>
 #include <fstream>
 #include <iostream>
@@ -111,6 +112,37 @@ template <typename mdsim_backend>
 static typename boost::disable_if<typename mdsim_backend::impl_type::impl_gpu, int>::type
 _mdsim(options const& opt)
 {
+    // parse processor info
+    std::ifstream ifs("/proc/cpuinfo");
+    ifs.exceptions(std::ifstream::failbit|std::ifstream::badbit);
+    std::stringbuf buf;
+    ifs.get(buf, '\0');
+    ifs.close();
+    std::string str(buf.str());
+    boost::algorithm::trim(str);
+    std::vector<std::string> cpuinfo;
+    boost::algorithm::split(cpuinfo, str, boost::algorithm::is_any_of("\n"));
+    typedef boost::unordered_map<std::string, std::string> cpu_map;
+    std::vector<cpu_map> cpus;
+    BOOST_FOREACH(std::string const& line, cpuinfo) {
+	size_t pos = line.find(':');
+	if (pos != std::string::npos) {
+	    std::pair<std::string, std::string> tokens(line.substr(0, pos), line.substr(pos + 1));
+	    boost::algorithm::trim(tokens.first);
+	    boost::algorithm::trim(tokens.second);
+	    if (cpus.empty() || cpus.back().find(tokens.first) != cpus.back().end()) {
+		cpus.push_back(cpu_map());
+	    }
+	    cpus.back().insert(tokens);
+	}
+    }
+    BOOST_FOREACH(cpu_map& cpu, cpus) {
+	LOG("CPU: " << cpu["processor"]);
+	LOG("CPU family: " << cpu["cpu family"] << "  model: " << cpu["model"] << "  stepping: " << cpu["stepping"]);
+	LOG("CPU model name: " << cpu["model name"]);
+	LOG("CPU clock rate: " << cpu["cpu MHz"] << " MHz");
+    }
+
     mdsim<mdsim_backend> md(opt);
 
     if (opt["dry-run"].as<bool>()) {
