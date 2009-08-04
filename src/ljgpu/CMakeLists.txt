@@ -40,6 +40,10 @@ if(WITH_CUDA)
     add_definitions(-DUSE_VERLET_DSFUN)
   endif(ljgpu_VARIANT_VERLET_DSFUN)
 
+  set(ljgpu_DEVICE_SCALE "3" CACHE STRING
+    "Scale/size of the CUDA device (try to reduce in case of insufficient resources)")
+  add_definitions(-DDEVICE_SCALE=${ljgpu_DEVICE_SCALE})
+
 endif(WITH_CUDA)
 
 #

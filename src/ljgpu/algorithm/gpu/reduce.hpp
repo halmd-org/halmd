@@ -27,7 +27,7 @@ namespace ljgpu { namespace gpu { namespace reduce
 
 enum {
     BLOCKS = 16,
-    THREADS = 512,
+    THREADS = 64 >> DEVICE_SCALE
 };
 
 extern cuda::function<void(float const*, dsfloat*, uint),

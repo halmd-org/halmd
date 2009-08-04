@@ -28,7 +28,7 @@ namespace ljgpu { namespace gpu { namespace virial
 
 enum {
     BLOCKS = 32,
-    THREADS = 256,
+    THREADS = 32 >> DEVICE_SCALE
 };
 
 extern cuda::function<
