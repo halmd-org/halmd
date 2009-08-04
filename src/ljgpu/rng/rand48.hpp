@@ -153,7 +153,7 @@ public:
 	cuda::copy(buf_gpu, buf, stream);
 	stream.synchronize();
 
-	mem = buf[0];
+	mem = buf[0u];
     }
 
     /**
