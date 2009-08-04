@@ -197,8 +197,10 @@ private:
 #ifdef WITH_CUDA
     void pause(boost::true_type const&)
     {
+#ifndef __DEVICE_EMULATION__
 	// pop current context from context stack
 	cuda::driver::context::floating ctx;
+#endif
 	// pause simulation
 	signal::wait();
 	// push floating context onto context stack
