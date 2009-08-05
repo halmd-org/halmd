@@ -207,6 +207,18 @@ To configure a build with debugging symbols, switch to a new subdirectory (e.g.
   cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../..
 
 
+Device emulation build
+----------------------
+
+To configure a build with CUDA device emulation, set the build type to
+``DeviceEmu``::
+
+  CXXFLAGS="-fPIC -Wall" \
+  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+  cmake -DCMAKE_BUILD_TYPE=DeviceEmu ../..
+
+
 Further cmake configuration
 ---------------------------
 

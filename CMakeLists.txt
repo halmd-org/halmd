@@ -19,16 +19,49 @@ find_package(Git QUIET REQUIRED)
 find_package(GSL QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)
 
-set(CUDA_EMULATION FALSE CACHE BOOL "Compile with device emulation")
-if(CUDA_EMULATION AND NOT CUDA_FOUND)
-if(CUDA_RUNTIME_LIBRARY AND CUDA_INCLUDE_DIR)
-  set(CUDA_LIBRARIES ${CUDA_RUNTIME_LIBRARY})
-  set(CUDA_LIBRARY "")
-  set(CMAKE_CUDA_FLAGS "-deviceemu")
-  add_definitions(-D__DEVICE_EMULATION__)
+set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
+  "Choose the type of build, options are: None Debug DeviceEmu Release RelWithDebInfo MinSizeRel." FORCE)
+
+set(CMAKE_CXX_FLAGS_DEVICEEMU "-O2 -g -D__DEVICE_EMULATION__" CACHE STRING
+  "Flags used by the compiler during device emulation builds." FORCE)
+
+set(CMAKE_C_FLAGS_DEVICEEMU "-O2 -g -D__DEVICE_EMULATION__" CACHE STRING
+  "Flags used by the compiler during device emulation builds." FORCE)
+
+set(CMAKE_EXE_LINKER_FLAGS_DEVICEEMU "" CACHE STRING
+  "Flags used by the linker during device emulation builds." FORCE)
+
+set(CMAKE_MODULE_LINKER_FLAGS_DEVICEEMU "" CACHE STRING
+  "Flags used by the linker during device emulation builds." FORCE)
+
+set(CMAKE_SHARED_LINKER_FLAGS_DEVICEEMU "" CACHE STRING
+  "Flags used by the shared libraries linker during device emulation builds." FORCE)
+
+mark_as_advanced(
+  CMAKE_CXX_FLAGS_DEVICEEMU
+  CMAKE_C_FLAGS_DEVICEEMU
+  CMAKE_EXE_LINKER_FLAGS_DEVICEEMU
+  CMAKE_MODULE_LINKER_FLAGS_DEVICEEMU
+  CMAKE_SHARED_LINKER_FLAGS_DEVICEEMU
+  )
+
+if(CMAKE_BUILD_TYPE STREQUAL "DeviceEmu")
+  set(CUDA_EMULATION TRUE)
+endif(CMAKE_BUILD_TYPE STREQUAL "DeviceEmu")
+
+if(CUDA_EMULATION AND CUDA_RUNTIME_LIBRARY AND CUDA_INCLUDE_DIR AND NOT CUDA_FOUND)
+  set(CUDA_LIBRARIES "${CUDA_RUNTIME_LIBRARY}")
   set(CUDA_FOUND "YES")
-endif(CUDA_RUNTIME_LIBRARY AND CUDA_INCLUDE_DIR)
-endif(CUDA_EMULATION AND NOT CUDA_FOUND)
+endif(CUDA_EMULATION AND CUDA_RUNTIME_LIBRARY AND CUDA_INCLUDE_DIR AND NOT CUDA_FOUND)
+
+if(CUDA_FOUND)
+  set(CMAKE_CUDA_FLAGS_DEVICEEMU "-O2 -g -deviceemu" CACHE STRING
+   "Flags used by the compiler during device emulation builds." FORCE)
+
+  mark_as_advanced(
+    CMAKE_CUDA_FLAGS_DEVICEEMU
+  )
+endif(CUDA_FOUND)
 
 if(CUDA_FOUND AND NOT ljgpu_USE_STATIC_LIBS)
   set(WITH_CUDA TRUE)
