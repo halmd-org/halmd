@@ -15,9 +15,3 @@ FAQ
   integration time-step is too large.
 
   Try lowering the ``--timestep`` value.
-
-**How do I compile with device emulation?**
-
-  Add ``-deviceemu`` to the CMAKE_CUDA_FLAGS, and ``-D__DEVICE_EMULATION__`` to
-  the CMAKE_CXX_FLAGS.
-
