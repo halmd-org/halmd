@@ -33,10 +33,6 @@
 #include <cuda_wrapper/allocator.hpp>
 #include <cuda_wrapper/copy.hpp>
 #include <cuda_wrapper/device.hpp>
-#include <cuda_wrapper/driver/context.hpp>
-#include <cuda_wrapper/driver/error.hpp>
-#include <cuda_wrapper/driver/mem.hpp>
-#include <cuda_wrapper/driver/version.hpp>
 #include <cuda_wrapper/error.hpp>
 #include <cuda_wrapper/event.hpp>
 #include <cuda_wrapper/host/allocator.hpp>
@@ -46,6 +42,13 @@
 #include <cuda_wrapper/vector.hpp>
 #include <cuda_wrapper/version.hpp>
 #endif /* ! __CUDACC__ */
+
+#if !defined(__CUDACC__) && !defined(__DEVICE_EMULATION__)
+#include <cuda_wrapper/driver/context.hpp>
+#include <cuda_wrapper/driver/error.hpp>
+#include <cuda_wrapper/driver/mem.hpp>
+#include <cuda_wrapper/driver/version.hpp>
+#endif
 
 /*
  * C++ wrappers *not* requiring runtime functionality

@@ -20,7 +20,6 @@
 #define CUDA_DEVICE_HPP
 
 #include <cuda_runtime.h>
-#include <cuda.h>
 #include <cuda_wrapper/error.hpp>
 #include <string>
 
