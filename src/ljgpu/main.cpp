@@ -85,6 +85,9 @@ int main(int argc, char **argv)
 #ifndef NDEBUG
     LOG_WARNING("built with enabled debugging");
 #endif
+#ifdef __DEVICE_EMULATION__
+    LOG_WARNING("built with device emulation");
+#endif
 
     // print command line
     vector<string> cmd(argv, argv + argc);
