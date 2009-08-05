@@ -33,7 +33,7 @@ template <>
 struct boltzmann<>
 {
     enum { BLOCKS = 32 };
-    enum { THREADS = 32 >> DEVICE_SCALE };
+    enum { THREADS = 32 << DEVICE_SCALE };
 
     struct rand48
     {
