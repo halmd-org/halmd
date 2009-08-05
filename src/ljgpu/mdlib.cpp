@@ -53,13 +53,14 @@ _mdsim(options const& opt)
     boost::algorithm::trim(nvidia_version);
     LOG(nvidia_version);
 
-#if (CUDA_VERSION >= 2020)
+#if !defined(__DEVICE_EMULATION__) && (CUDA_VERSION >= 2020)
     LOG("CUDA driver version: " << (cuda::driver::version() / 1000) << "." << (cuda::driver::version() / 10 % 10));
 #endif
 #if (CUDART_VERSION >= 2020)
     LOG("CUDA runtime version: " << (cuda::version() / 1000) << "." << (cuda::version() / 10 % 10));
 #endif
 
+#ifndef __DEVICE_EMULATION__
     // create CUDA context and associate it with this thread
     boost::shared_ptr<cuda::driver::context> ctx;
     if (!opt["device"].empty()) {
@@ -79,8 +80,19 @@ _mdsim(options const& opt)
 	}
     }
     LOG("CUDA device: " << cuda::driver::context::device());
+#else /* ! __DEVICE_EMULATION__ */
+    if (!opt["device"].empty()) {
+	// create a CUDA context for the desired CUDA device
+	cuda::device::set(opt["device"].as<int>());
+    }
+    LOG("CUDA device: " << cuda::device::get());
+#endif /* ! __DEVICE_EMULATION__ */
 
+#ifndef __DEVICE_EMULATION__
     cuda::device::properties prop(cuda::driver::context::device());
+#else
+    cuda::device::properties prop(cuda::device::get());
+#endif
     LOG("CUDA device name: " << prop.name());
     LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
     LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
@@ -93,9 +105,11 @@ _mdsim(options const& opt)
     LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 
     mdsim<mdsim_backend> md(opt);
+#ifndef __DEVICE_EMULATION__
     LOG("GPU allocated global device memory: " << cuda::driver::mem::used() << " bytes");
     LOG("GPU available global device memory: " << cuda::driver::mem::free() << " bytes");
     LOG("GPU total global device memory: " << cuda::driver::mem::total() << " bytes");
+#endif /* ! __DEVICE_EMULATION__ */
 
     if (opt["dry-run"].as<bool>()) {
 	return LJGPU_EXIT_SUCCESS;
