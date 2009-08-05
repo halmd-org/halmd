@@ -44,6 +44,7 @@ static typename boost::enable_if<typename mdsim_backend::impl_type::impl_gpu, in
 _mdsim(options const& opt)
 {
     // query NVIDIA driver version
+#if !defined(__DEVICE_EMULATION__)
     std::stringbuf buf;
     std::ifstream ifs("/proc/driver/nvidia/version");
     ifs.exceptions(std::ifstream::failbit|std::ifstream::badbit);
@@ -52,6 +53,7 @@ _mdsim(options const& opt)
     std::string nvidia_version(buf.str());
     boost::algorithm::trim(nvidia_version);
     LOG(nvidia_version);
+#endif /* ! __DEVICE_EMULATION__ */
 
 #if !defined(__DEVICE_EMULATION__) && (CUDA_VERSION >= 2020)
     LOG("CUDA driver version: " << (cuda::driver::version() / 1000) << "." << (cuda::driver::version() / 10 % 10));
