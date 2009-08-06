@@ -18,6 +18,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
+#include <boost/iterator/counting_iterator.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/unordered_map.hpp>
@@ -65,38 +66,36 @@ _mdsim(options const& opt)
 #endif
 
 #ifndef __DEVICE_EMULATION__
-    // create CUDA context and associate it with this thread
-    boost::shared_ptr<cuda::driver::context> ctx;
+    // build list of chosen or available CUDA devices
+    std::vector<int> devices;
     if (!opt["device"].empty()) {
-	// create a CUDA context for the desired CUDA device
-	ctx.reset(new cuda::driver::context(opt["device"].as<int>()));
+	boost::multi_array<int, 1> d(opt["device"].as<boost::multi_array<int, 1> >());
+	std::copy(d.begin(), d.end(), std::back_inserter(devices));
     }
     else {
-	// choose first available CUDA device
-	for (int i = 0, j = cuda::device::count(); i < j; ++i) {
-	    try {
-		ctx.reset(new cuda::driver::context(i));
-		break;
-	    }
-	    catch (cuda::driver::error const&) {
-		// device is compute-exlusive mode and in use
-	    }
+	std::copy(boost::counting_iterator<int>(0),
+		  boost::counting_iterator<int>(cuda::device::count() - 1),
+		  std::back_inserter(devices));
+    }
+    // choose first available CUDA device
+    boost::shared_ptr<cuda::driver::context> ctx;
+    foreach (int i, devices) {
+	try {
+	    // create CUDA context and associate it with this thread
+	    ctx.reset(new cuda::driver::context(i));
+	    break;
+	}
+	catch (cuda::driver::error const&) {
+	    // device is compute-exlusive mode and in use
 	}
     }
     LOG("CUDA device: " << cuda::driver::context::device());
+    cuda::device::properties prop(cuda::driver::context::device());
 #else /* ! __DEVICE_EMULATION__ */
-    if (!opt["device"].empty()) {
-	// create a CUDA context for the desired CUDA device
-	cuda::device::set(opt["device"].as<int>());
-    }
     LOG("CUDA device: " << cuda::device::get());
+    cuda::device::properties prop(cuda::device::get());
 #endif /* ! __DEVICE_EMULATION__ */
 
-#ifndef __DEVICE_EMULATION__
-    cuda::device::properties prop(cuda::driver::context::device());
-#else
-    cuda::device::properties prop(cuda::device::get());
-#endif
     LOG("CUDA device name: " << prop.name());
     LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
     LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
