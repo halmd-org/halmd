@@ -117,7 +117,9 @@ _mdsim(options const& opt)
 	return LJGPU_EXIT_SUCCESS;
     }
     if (opt["daemon"].as<bool>()) {
-	daemon(0, 0);
+	if (daemon(0, 0)) {
+	    throw std::runtime_error(std::string("failed to detach process: ") + std::string(strerror(errno)));
+	}
     }
 
     return md();
@@ -165,7 +167,9 @@ _mdsim(options const& opt)
 	return LJGPU_EXIT_SUCCESS;
     }
     if (opt["daemon"].as<bool>()) {
-	daemon(0, 0);
+	if (daemon(0, 0)) {
+	    throw std::runtime_error(std::string("failed to detach process: ") + std::string(strerror(errno)));
+	}
     }
 
     return md();
