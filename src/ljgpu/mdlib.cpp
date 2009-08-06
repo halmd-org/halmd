@@ -38,6 +38,8 @@
 #include <string>
 using namespace ljgpu;
 
+#define foreach BOOST_FOREACH
+
 #ifdef WITH_CUDA
 template <typename mdsim_backend>
 static typename boost::enable_if<typename mdsim_backend::impl_type::impl_gpu, int>::type
@@ -143,7 +145,7 @@ _mdsim(options const& opt)
     boost::algorithm::split(cpuinfo, str, boost::algorithm::is_any_of("\n"));
     typedef boost::unordered_map<std::string, std::string> cpu_map;
     std::vector<cpu_map> cpus;
-    BOOST_FOREACH(std::string const& line, cpuinfo) {
+    foreach (std::string const& line, cpuinfo) {
 	size_t pos = line.find(':');
 	if (pos != std::string::npos) {
 	    std::pair<std::string, std::string> tokens(line.substr(0, pos), line.substr(pos + 1));
@@ -155,7 +157,7 @@ _mdsim(options const& opt)
 	    cpus.back().insert(tokens);
 	}
     }
-    BOOST_FOREACH(cpu_map& cpu, cpus) {
+    foreach (cpu_map& cpu, cpus) {
 	LOG("CPU: " << cpu["processor"]);
 	LOG("CPU family: " << cpu["cpu family"] << "  model: " << cpu["model"] << "  stepping: " << cpu["stepping"]);
 	LOG("CPU model name: " << cpu["model name"]);
