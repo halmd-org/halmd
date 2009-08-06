@@ -249,7 +249,31 @@ void options::parse(int argc, char** argv)
 	po::command_line_parser parser(argc, argv);
 	po::parsed_options parsed(parser.options(desc).allow_unregistered().run());
 	po::store(parsed, vm);
-	unparsed = po::collect_unrecognized(parsed.options, po::include_positional);
+	unparsed_command_line_options = po::collect_unrecognized(parsed.options, po::include_positional);
+
+	// parse optional parameter input files
+	if (vm.count("input")) {
+	    foreach (string const& fn, vm["input"].as<vector<string> >()) {
+		ifstream ifs(fn.c_str());
+		if (ifs.fail()) {
+		    cerr << PROGRAM_NAME ": could not open parameter input file '" << fn << "'\n";
+		    throw options::exit_exception(EXIT_FAILURE);
+		}
+
+		po::parsed_options parsed(po::parse_config_file(ifs, desc, true));
+		po::store(parsed, vm);
+
+		// store unparsed options
+		std::vector<po::basic_option<char> > unparsed;
+		foreach (po::basic_option<char>& option, parsed.options) {
+		    if (option.unregistered) {
+			option.unregistered = false;
+			unparsed.push_back(option);
+		    }
+		}
+		unparsed_config_file_options.push_back(unparsed);
+	    }
+	}
     }
     catch (exception const& e) {
 	cerr << PROGRAM_NAME ": " << e.what() << "\n";
@@ -280,20 +304,14 @@ void options::parse(po::options_description const& opt)
     using namespace std;
 
     try {
-	po::command_line_parser parser(unparsed);
+	po::command_line_parser parser(unparsed_command_line_options);
 	po::store(parser.options(opt).run(), vm);
 
-	// parse optional parameter input files
-	if (vm.count("input")) {
-	    foreach (string const& fn, vm["input"].as<vector<string> >()) {
-		ifstream ifs(fn.c_str());
-		if (ifs.fail()) {
-		    cerr << PROGRAM_NAME ": could not open parameter input file '" << fn << "'\n";
-		    throw options::exit_exception(EXIT_FAILURE);
-		}
-
-		po::store(po::parse_config_file(ifs, opt), vm);
-	    }
+	// parse unrecognised options from parameter input files
+	foreach (std::vector<po::basic_option<char> > const& unparsed, unparsed_config_file_options) {
+	    po::parsed_options parsed(&opt);
+	    std::copy(unparsed.begin(), unparsed.end(), std::back_inserter(parsed.options));
+	    po::store(parsed, vm);
 	}
     }
     catch (exception const& e) {

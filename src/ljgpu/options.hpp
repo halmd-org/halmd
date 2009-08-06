@@ -75,8 +75,10 @@ public:
 private:
     /** parsed program options */
     boost::program_options::variables_map vm;
-    /** unrecognised program options */
-    std::vector<std::string> unparsed;
+    /** unrecognised program options from command line parser */
+    std::vector<std::string> unparsed_command_line_options;
+    /** unrecognised program options from config file parser */
+    std::vector<std::vector<boost::program_options::basic_option<char> > > unparsed_config_file_options;
 };
 
 } // namespace ljgpu
