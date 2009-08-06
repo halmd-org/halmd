@@ -15,3 +15,9 @@ FAQ
   integration time-step is too large.
 
   Try lowering the ``--timestep`` value.
+
+**nvcc fails with 'cudafe++' died due to signal 11 (Invalid memory reference)**
+  This is due to a bug in the CUDA compiler, which may be circumvented by
+  including ``--host-compilation=c`` in the ``NVCCFLAGS`` environment variable
+  passed to cmake, or in CMAKE_CUDA_FLAGS using ccmake.
+
