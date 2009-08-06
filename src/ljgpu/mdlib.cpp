@@ -118,7 +118,8 @@ _mdsim(options const& opt)
     }
     if (opt["daemon"].as<bool>()) {
 	if (daemon(0, 0)) {
-	    throw std::runtime_error(std::string("failed to detach process: ") + std::string(strerror(errno)));
+	    char const* str = strerror(errno);
+	    throw std::runtime_error(std::string("failed to detach process: ") + str);
 	}
     }
 
@@ -168,7 +169,8 @@ _mdsim(options const& opt)
     }
     if (opt["daemon"].as<bool>()) {
 	if (daemon(0, 0)) {
-	    throw std::runtime_error(std::string("failed to detach process: ") + std::string(strerror(errno)));
+	    char const* str = strerror(errno);
+	    throw std::runtime_error(std::string("failed to detach process: ") + str);
 	}
     }
 
