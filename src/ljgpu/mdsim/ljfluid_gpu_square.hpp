@@ -83,6 +83,8 @@ public:
 private:
     /** assign particle positions */
     void assign_positions();
+    /** generate Maxwell-Boltzmann distributed velocities */
+    void boltzmann(float temp, cuda::stream& stream);
     /** first leapfrog step of integration of differential equations of motion */
     void velocity_verlet(cuda::stream& stream);
     /** Lennard-Jones force calculation */
@@ -169,7 +171,12 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::threads(unsigned int value)
     _Base::threads(value);
 
     try {
+#ifdef USE_VERLET_DSFUN
+	LOG("using double-single arithmetic in Verlet integration");
+	g_part.r.reserve(2 * dim_.threads());
+#else
 	g_part.r.reserve(dim_.threads());
+#endif
 	// allocate sufficient memory for binary mixture sampling
 	for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
 	    cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
@@ -200,8 +207,14 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square, dimension>::state(host_sample_type& sample, float_type box)
 {
     _Base::state(sample, box, h_part.r, h_part.v);
+#ifdef USE_VERLET_DSFUN
+    cuda::memset(g_part.r, 0, g_part.r.capacity());
+#endif
     cuda::copy(h_part.r, g_part.r);
     assign_positions();
+#ifdef USE_VERLET_DSFUN
+    cuda::memset(g_part.v, 0, g_part.v.capacity());
+#endif
     cuda::copy(h_part.v, g_part.v);
 }
 
@@ -215,6 +228,9 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::rescale_velocities(double coef
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square, dimension>::lattice()
 {
+#ifdef USE_VERLET_DSFUN
+    cuda::memset(g_part.r, 0, g_part.r.capacity());
+#endif
     // place particles on an fcc lattice
     _Base::lattice(g_part.r);
     // randomly permute particle coordinates for binary mixture
@@ -230,7 +246,7 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::temperature(float_type temp)
 
     try {
 	event_[0].record(stream_);
-	_Base::boltzmann(g_part.v, temp, stream_);
+	boltzmann(temp, stream_);
 	event_[1].record(stream_);
 	event_[1].synchronize();
     }
@@ -268,7 +284,7 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::stream()
     // heat bath coupling
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
 	try {
-	    _Base::boltzmann(g_part.v, thermostat_temp, stream_);
+	    boltzmann(thermostat_temp, stream_);
 	}
 	catch (cuda::error const& e) {
 	    LOG_ERROR("CUDA: " << e.what());
@@ -479,6 +495,15 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::assign_positions()
 	LOG_ERROR("CUDA: " << e.what());
 	throw exception("failed to assign particle positions on GPU");
     }
+}
+
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_square, dimension>::boltzmann(float temp, cuda::stream& stream)
+{
+#ifdef USE_VERLET_DSFUN
+    cuda::memset(g_part.v, 0, g_part.v.capacity());
+#endif
+    _Base::boltzmann(g_part.v, temp, stream);
 }
 
 template <int dimension>
