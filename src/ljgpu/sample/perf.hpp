@@ -19,13 +19,13 @@
 #ifndef LJGPU_SAMPLE_PERF_HPP
 #define LJGPU_SAMPLE_PERF_HPP
 
-#include <H5Cpp.h>
 #include <boost/assign.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/unordered_map.hpp>
 #include <string>
 #include <ljgpu/sample/H5param.hpp>
 #include <ljgpu/math/accum.hpp>
+#include <ljgpu/util/H5xx.hpp>
 
 namespace ljgpu
 {

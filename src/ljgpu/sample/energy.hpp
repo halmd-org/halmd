@@ -19,7 +19,6 @@
 #ifndef LJGPU_SAMPLE_ENERGY_HPP
 #define LJGPU_SAMPLE_ENERGY_HPP
 
-#include <H5Cpp.h>
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/noncopyable.hpp>
@@ -28,6 +27,7 @@
 #include <ljgpu/math/vector3d.hpp>
 #include <ljgpu/mdsim/sample.hpp>
 #include <ljgpu/sample/H5param.hpp>
+#include <ljgpu/util/H5xx.hpp>
 #include <string>
 #include <vector>
 

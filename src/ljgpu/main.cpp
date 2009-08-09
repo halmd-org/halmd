@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <H5Cpp.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
@@ -28,6 +27,7 @@
 #include <libgen.h>
 #include <ljgpu/mdlib.hpp>
 #include <ljgpu/options.hpp>
+#include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/exception.hpp>
 #include <ljgpu/util/log.hpp>
 #include <ljgpu/version.h>

@@ -19,7 +19,6 @@
 #ifndef LJGPU_SAMPLE_TRAJECTORY_HPP
 #define LJGPU_SAMPLE_TRAJECTORY_HPP
 
-#include <H5Cpp.h>
 #include <algorithm>
 #include <assert.h>
 #include <boost/array.hpp>

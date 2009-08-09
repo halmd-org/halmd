@@ -24,6 +24,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <ljgpu/math/accum.hpp>
+#include <ljgpu/util/H5xx.hpp>
 #include <vector>
 
 namespace ljgpu {

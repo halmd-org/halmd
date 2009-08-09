@@ -19,7 +19,6 @@
 #ifndef LJGPU_SAMPLE_CORRELATION_HPP
 #define LJGPU_SAMPLE_CORRELATION_HPP
 
-#include <H5Cpp.h>
 // requires boost 1.37.0 or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
 #include <boost/mpl/insert_range.hpp>
@@ -34,6 +33,7 @@
 #include <ljgpu/sample/tcf_host.hpp>
 #include <ljgpu/sample/tcf_visitor.hpp>
 #include <ljgpu/sample/H5param.hpp>
+#include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/log.hpp>
 #include <string>
 #include <vector>

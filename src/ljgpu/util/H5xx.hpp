@@ -19,6 +19,7 @@
 #ifndef LJGPU_UTIL_H5XX_HPP
 #define LJGPU_UTIL_H5XX_HPP
 
+#define H5E_auto_t_vers 2
 #include <H5Cpp.h>
 #include <boost/array.hpp>
 #include <boost/mpl/and.hpp>
