@@ -12,7 +12,14 @@ endif(ljgpu_USE_STATIC_LIBS)
 
 set(CMAKE_MODULE_PATH ${ljgpu_SOURCE_DIR}/CMakeModules)
 
-find_package(Boost QUIET REQUIRED COMPONENTS filesystem system date_time program_options unit_test_framework)
+find_package(Boost QUIET REQUIRED COMPONENTS
+  date_time
+  filesystem
+  program_options
+  regex
+  system
+  unit_test_framework
+  )
 find_package(CUDA QUIET)
 find_package(Sphinx QUIET REQUIRED)
 find_package(Git QUIET REQUIRED)
@@ -103,4 +110,5 @@ if(WITH_CUDA)
 endif(WITH_CUDA)
 
 add_subdirectory(doc)
+add_subdirectory(libs)
 add_subdirectory(src)

@@ -1,0 +1,34 @@
+add_library(boost_log
+  attribute_set.cpp
+  attribute_values_view.cpp
+  slim_string.cpp
+  code_conversion.cpp
+  core.cpp
+  stream_provider.cpp
+  severity_level.cpp
+  global_logger_storage.cpp
+  named_scope.cpp
+  timer.cpp
+  sink.cpp
+  text_ostream_backend.cpp
+  syslog_backend.cpp
+  thread_specific.cpp
+  parser_utils.cpp
+  init_from_stream.cpp
+  filter_parser.cpp
+  formatter_parser.cpp
+  )
+target_link_libraries(boost_log
+  ${Boost_DATE_TIME_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_REGEX_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  )
+set(boost_log_COMPILE_DEFINITIONS
+  BOOST_LOG_BUILDING_THE_LIB=1
+  BOOST_LOG_USE_NATIVE_SYSLOG=1
+  BOOST_LOG_NO_THREADS
+  )
+set_target_properties(boost_log PROPERTIES
+  COMPILE_DEFINITIONS "${boost_log_COMPILE_DEFINITIONS}"
+  )
