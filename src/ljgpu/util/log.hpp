@@ -19,51 +19,43 @@
 #ifndef LJGPU_UTIL_LOG_HPP
 #define LJGPU_UTIL_LOG_HPP
 
-#include <boost/logging/format_fwd.hpp>
-
-/** log informational messages */
-#define LOG(fmt) L_(logger) << fmt
-
-/** log error messages */
-#define LOG_ERROR(fmt) L_(logger_error) << "[ERROR] " << fmt
-
-/** log warning messages */
-#define LOG_WARNING(fmt) L_(logger_warning) << "[WARNING] " << fmt
-
-/** log debug-level messages */
-#ifndef NDEBUG
-# define LOG_DEBUG(fmt) L_(logger_debug) << "[DEBUG] " << fmt
-# define SCOPED_LOG_DEBUG(fmt) BOOST_SCOPED_LOG_CTX(L_(logger_debug)) << "[DEBUG] " << fmt
-#else
-# define LOG_DEBUG(fmt)
-# define SCOPED_LOG_DEBUG(fmt)
-#endif
-
-
-// use a cache string to make message formatting faster
-BOOST_LOG_FORMAT_MSG(boost::logging::optimize::cache_string_one_str<>)
+#define BOOST_LOG_NO_THREADS
+# include <boost/log/sources/record_ostream.hpp>
+# include <boost/log/sources/severity_logger.hpp>
+#undef BOOST_LOG_NO_THREADS
 
 namespace ljgpu { namespace log
 {
 
-void init(std::string const& filename, int verbosity);
+enum severity_level
+{
+    debug,
+    info,
+    warning,
+    error,
+};
 
-typedef boost::logging::scenario::ts::use<
-    boost::logging::scenario::ts::filter_::none,
-    boost::logging::scenario::ts::level_::no_levels,
-    boost::logging::scenario::ts::logger_::none> finder;
-
-BOOST_DECLARE_LOG_FILTER(log_filter, finder::filter)
-
-BOOST_DECLARE_LOG(logger, finder::logger)
-BOOST_DECLARE_LOG(logger_error, finder::logger)
-BOOST_DECLARE_LOG(logger_warning, finder::logger)
-#ifndef NDEBUG
-BOOST_DECLARE_LOG(logger_debug, finder::logger)
-#endif
+extern boost::log::sources::severity_logger<severity_level> slg;
+extern void init(std::string const& filename, int verbosity);
 
 }} // namespace ljgpu::log
 
-#define L_(logger) BOOST_LOG_USE_LOG_IF_FILTER(ljgpu::log::logger(), ljgpu::log::log_filter()->is_enabled())
+#define _LOGGER(level) BOOST_LOG_SEV(ljgpu::log::slg, ljgpu::log::level)
+
+/** log informational messages */
+#define LOG(fmt) _LOGGER(info) << fmt
+
+/** log warning messages */
+#define LOG_WARNING(fmt) _LOGGER(warning) << "[WARNING] " << fmt
+
+/** log error messages */
+#define LOG_ERROR(fmt) _LOGGER(error) << "[ERROR] " << fmt
+
+/** log debug-level messages */
+#ifndef NDEBUG
+# define LOG_DEBUG(fmt) _LOGGER(debug) << "[DEBUG] " << fmt
+#else
+# define LOG_DEBUG(fmt)
+#endif
 
 #endif /* ! LJGPU_UTIL_LOG_HPP */

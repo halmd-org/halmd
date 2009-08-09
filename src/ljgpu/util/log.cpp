@@ -16,70 +16,59 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/logging/format.hpp>
-#include <boost/logging/format/formatter/high_precision_time.hpp>
+#define BOOST_LOG_NO_THREADS
+# include <boost/log/attributes/timer.hpp>
+# include <boost/log/filters/attr.hpp>
+# include <boost/log/formatters/attr.hpp>
+# include <boost/log/formatters/date_time.hpp>
+# include <boost/log/formatters/format.hpp>
+# include <boost/log/formatters/message.hpp>
+# include <boost/log/utility/init/common_attributes.hpp>
+# include <boost/log/utility/init/to_console.hpp>
+# include <boost/log/utility/init/to_file.hpp>
+#undef BOOST_LOG_NO_THREADS
 #include <ljgpu/util/log.hpp>
-using namespace boost::logging;
+
+#define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
+
+namespace logging = boost::log;
+namespace fmt = boost::log::formatters;
+namespace flt = boost::log::filters;
+namespace sinks = boost::log::sinks;
+namespace attrs = boost::log::attributes;
+namespace src = boost::log::sources;
+namespace keywords = boost::log::keywords;
 
 namespace ljgpu { namespace log
 {
 
+src::severity_logger<severity_level> slg;
+
 /**
  * initialize logging
  */
-void init(std::string const& filename, int verbosity) {
-    // use microsecond-resolution log timestamps
-    formatter::high_precision_time hpt("[$dd-$MM-$yyyy $hh:$mm:$ss.$micro] ");
-
-    // add log formatters
-    logger()->writer().add_formatter(hpt);
-    logger()->writer().add_formatter(formatter::append_newline());
-    logger_error()->writer().add_formatter(hpt);
-    logger_error()->writer().add_formatter(formatter::append_newline());
-    logger_warning()->writer().add_formatter(hpt);
-    logger_warning()->writer().add_formatter(formatter::append_newline());
-#ifndef NDEBUG
-    logger_debug()->writer().add_formatter(hpt);
-    logger_debug()->writer().add_formatter(formatter::append_newline());
-#endif
-
-    destination::file logfile(filename);
-
-    // output informational messages to file
-    logger()->writer().add_destination(logfile);
-    if (verbosity > 0) {
-	// output informational messages to console
-	logger()->writer().add_destination(destination::cerr());
-    }
-    logger()->mark_as_initialized();
-
-    // output error messages to console and file
-    logger_error()->writer().add_destination(destination::cerr());
-    logger_error()->writer().add_destination(logfile);
-    logger_error()->mark_as_initialized();
-
-    // output warning messages to console and file
-    logger_warning()->writer().add_destination(destination::cerr());
-    logger_warning()->writer().add_destination(logfile);
-    logger_warning()->mark_as_initialized();
-
-#ifndef NDEBUG
-    if (verbosity > 1) {
-	// output debug-level messages to console and file
-	logger_debug()->writer().add_destination(destination::cerr());
-	logger_debug()->writer().add_destination(logfile);
-    }
-    logger_debug()->mark_as_initialized();
-#endif
+void init(std::string const& filename, int verbosity)
+{
+    // log to file
+    logging::init_log_to_file
+    (
+	filename,
+        keywords::format = fmt::format("[%1%] %2%")
+            % fmt::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
+            % fmt::message()
+    );
+    // log to console
+    severity_level sl = (verbosity > 1 ? debug : (verbosity > 0 ? info : warning));
+    logging::init_log_to_console
+    (
+	std::clog,
+	keywords::filter = flt::attr<severity_level>("Severity") >= sl,
+        keywords::format = fmt::format("[%1%] %2%")
+            % fmt::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
+            % fmt::message()
+    );
+    // add timestamp and record counter
+    logging::add_common_attributes();
 }
-
-BOOST_DEFINE_LOG_FILTER(log_filter, finder::filter)
-
-BOOST_DEFINE_LOG(logger, finder::logger)
-BOOST_DEFINE_LOG(logger_error, finder::logger)
-BOOST_DEFINE_LOG(logger_warning, finder::logger)
-#ifndef NDEBUG
-BOOST_DEFINE_LOG(logger_debug, finder::logger)
-#endif
 
 }} // namespace ljgpu::log

@@ -3,3 +3,6 @@ add_library(util
   log.cpp
   signal.cpp
   )
+target_link_libraries(util
+  boost_log
+  )
