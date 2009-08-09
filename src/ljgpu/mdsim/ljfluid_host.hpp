@@ -60,6 +60,9 @@ public:
     struct particle
     {
 	typedef boost::reference_wrapper<particle> ref;
+	enum types { A = 0, B = 1 };
+
+	particle(unsigned int tag, types type = A) : tag(tag), type(type) {}
 
 	/** particle position */
 	vector_type r;
@@ -70,7 +73,7 @@ public:
 	/** particle number */
 	unsigned int tag;
 	/** particle type */
-	enum types { A = 0, B = 1 } type;
+	types type;
 	/** particle neighbours list */
 	std::vector<ref> neighbour;
     };
@@ -121,8 +124,6 @@ public:
 private:
     /** initialise velocities from Maxwell-Boltzmann distribution */
     void boltzmann(double temp);
-    /** randomly assign particles types in a binary mixture */
-    void random_binary_types();
     /** update cell lists */
     void update_cells();
     /** returns cell list which a particle belongs to */
@@ -206,7 +207,7 @@ void ljfluid<ljfluid_impl_host, dimension>::particles(T const& value)
     _Base::particles(value);
 
     try {
-	part.resize(npart);
+	part.reserve(npart);
     }
     catch (std::bad_alloc const& e) {
 	throw exception("failed to allocate phase space state");
@@ -228,12 +229,13 @@ void ljfluid<ljfluid_impl_host, dimension>::state(host_sample_type& sample, floa
     typename sample_type::position_sample_vector::const_iterator r;
     typename sample_type::velocity_sample_vector::const_iterator v;
 
+    part.clear();
     for (size_t i = 0, n = 0; n < npart; ++i) {
 	for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
-	    part[n].type = types[i];
-	    part[n].tag = n;
-	    part[n].r = *r;
-	    part[n].v = *v;
+	    particle p(n, types[i]);
+	    p.r = *r;
+	    p.v = *v;
+	    part.push_back(p);
 	}
     }
 
@@ -319,12 +321,16 @@ void ljfluid<ljfluid_impl_host, dimension>::rng(gsl::gfsr4::state_type const& st
 template <int dimension>
 void ljfluid<ljfluid_impl_host, dimension>::lattice()
 {
+    std::vector<typename particle::types> types;
     if (mixture_ == BINARY) {
 	LOG("randomly placing A and B particles on fcc lattice");
-	random_binary_types();
+	types.resize(mpart[0], particle::A);
+	types.resize(npart, particle::B);
+	rng_.shuffle(types);
     }
     else {
 	LOG("placing particles on fcc lattice");
+	types.resize(npart, particle::A);
     }
 
     // particles per 2- or 3-dimensional unit cell
@@ -347,9 +353,10 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     // minimum distance in 2- or 3-dimensional fcc lattice
     LOG("minimum lattice distance: " << a / std::sqrt(2.));
 
+    part.clear();
     for (unsigned int i = 0; i < npart; ++i) {
-	part[i].tag = i;
-	vector_type& r = part[i].r;
+	particle p(i, types[i]);
+	vector_type& r = p.r;
 	// compose primitive vectors from 1-dimensional index
 	if (dimension == 3) {
 	    r[0] = ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
@@ -361,6 +368,7 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
 	    r[1] = ((i >> 1) / n) + (i & 1) / 2.;
 	}
 	r *= a;
+	part.push_back(p);
     }
 
     // sort particles after binary mixture species for trajectory output
@@ -438,28 +446,6 @@ void ljfluid<ljfluid_impl_host, dimension>::boltzmann(double temp)
     double s = std::sqrt(temp * dimension / vv);
     foreach (particle& p, part) {
 	p.v *= s;
-    }
-}
-
-/**
- * randomly assign particles types in a binary mixture
- */
-template <int dimension>
-void ljfluid<ljfluid_impl_host, dimension>::random_binary_types()
-{
-    // create view on particle list
-    std::vector<typename particle::ref> part;
-    foreach (particle& p, this->part) {
-	part.push_back(boost::ref(p));
-    }
-
-    // shuffle view and assign particles types
-    rng_.shuffle(part);
-    foreach (particle& p, range(part.begin(), part.begin() + mpart[0])) {
-	p.type = particle::A;
-    }
-    foreach (particle& p, range(part.begin() + mpart[0], part.end())) {
-	p.type = particle::B;
     }
 }
 
