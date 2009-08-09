@@ -74,7 +74,7 @@ _mdsim(options const& opt)
     }
     else {
 	std::copy(boost::counting_iterator<int>(0),
-		  boost::counting_iterator<int>(cuda::device::count() - 1),
+		  boost::counting_iterator<int>(cuda::device::count()),
 		  std::back_inserter(devices));
     }
     // choose first available CUDA device
