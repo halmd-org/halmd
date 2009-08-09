@@ -56,7 +56,7 @@ public:
     /**
      * returns elapsed realtime in seconds
      */
-    double elapsed()
+    double elapsed() const
     {
 	timeval tv;
 	timersub(&m_stop, &m_start, &tv);
@@ -83,7 +83,7 @@ public:
     /**
      * output formatted time to stream
      */
-    friend std::ostream& operator<<(std::ostream& os, real_timer& tm)
+    friend std::ostream& operator<<(std::ostream& os, real_timer const& tm)
     {
 	os << format(tm.elapsed());
 	return os;
