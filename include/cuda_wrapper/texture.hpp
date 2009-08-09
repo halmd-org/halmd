@@ -57,6 +57,12 @@ public:
     {
 	CUDA_CALL(cudaUnbindTexture(&tex));
     }
+
+private:
+    /**
+     * bogus constructor to avoid GCC 4.4 compiler warning
+     */
+    texture(textureReference const& tex) : tex(tex) {}
 #endif
 
 private:
