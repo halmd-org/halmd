@@ -244,7 +244,7 @@ private:
 template <typename mdsim_backend>
 mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 {
-    LOG("positional coordinates dimension: " << dimension);
+    LOG("positional coordinates dimension: " << static_cast<unsigned>(dimension));
 
     // number of particles in periodic simulation box
     if (!m_opt["binary"].empty() && m_opt["particles"].defaulted()) {
@@ -644,7 +644,7 @@ void mdsim<mdsim_backend>::param(H5param param) const
     if (!m_opt["disable-correlation"].as<bool>()) {
 	node["tcf_backend"] = m_opt["tcf-backend"].as<std::string>();
     }
-    node["dimension"] = (unsigned int) dimension;
+    node["dimension"] = static_cast<unsigned>(dimension);
     if (this->step > 0) {
 	node["effective_steps"] = static_cast<uint64_t>(this->step);
     }
