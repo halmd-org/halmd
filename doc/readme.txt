@@ -80,6 +80,8 @@ These software packages are required for compilation:
 
 * LaTeX including pdflatex and dvipng
 
+* graphviz
+
 
 Compilation
 ===========

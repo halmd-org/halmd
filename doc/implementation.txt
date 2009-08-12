@@ -1,0 +1,101 @@
+Implementation
+**************
+
+MD simulation
+=============
+
+Inheritance hierarchy
+---------------------
+
+The following is a simple diagram of the class hierarchy representing the MD
+simulation core. Classes which represent a backend are filled.
+
+.. graphviz::
+
+   digraph hierarchy_of_D {
+       rankdir="BT"
+
+       node [shape=rect,color="#86989B",fontname=Helvetica,fontsize=12]
+
+       base	[ label="mdsim_base<…>" ]
+       ljfluid_base [ label="ljfluid_base<…>" ]
+       ljfluid_gpu_base [ label="ljfluid_gpu_base<…>" ]
+
+       subgraph backends {
+	   node [style=filled,fillcolor="#AFC1C4",fontcolor=white];
+	   ljfluid_gpu_square [ label="ljfluid<ljfluid_impl_gpu_square, …>" ]
+	   ljfluid_gpu_cell [ label="ljfluid<ljfluid_impl_gpu_cell, …>" ]
+	   ljfluid_gpu_neighbour [ label="ljfluid<ljfluid_impl_gpu_neighbour, …>" ]
+	   ljfluid_host [ label="ljfluid<ljfluid_impl_host, …>" ]
+	   hardsphere [ label="hardsphere<hardsphere_impl, …>" ]
+       }
+
+       ljfluid_base -> base
+       ljfluid_gpu_base -> ljfluid_base
+       ljfluid_gpu_square -> ljfluid_gpu_base
+       ljfluid_gpu_cell -> ljfluid_gpu_base
+       ljfluid_gpu_neighbour -> ljfluid_gpu_base
+       ljfluid_host -> ljfluid_base
+       hardsphere -> base
+
+       { rank=same; ljfluid_gpu_base ljfluid_host }
+   }
+
+
+Classes summary
+---------------
+
+A short description of the basic functionality of each class template.
+
+.. glossary::
+
+   mdsim_base<…>
+      This class implements the common basis of a hard- or soft-sphere simulation.
+      It contains the size of the system (number of particles), the mixture type
+      (monodisperse or bidisperse) and the density and rectangular box length.
+      It holds the performance accumulators for measuring the average times
+      of individual functions or GPU kernels comprising the MD algorithm.
+
+      The function ``state``, which is used upon restoring the system state
+      from a trajectory sample and checks for matching particle number, wraps
+      coordinates to periodic boundary conditions and optionally rescales the
+      density or box size to a new value.
+
+   ljfluid_base<…>
+      This class implements extends its base class to Lennard-Jones systems,
+      or soft-sphere simulations employing a discrete integration of the
+      equations of motion, and contains common functionality of host and GPU
+      backends. It contains the potential cutoff radii, the timestep, collision
+      diameters, potential smoothing parameters, thermostat temperature and
+      frequency, and the simulation time-step.
+
+   ljfluid_gpu_base<…>
+      This class implements the common functionality of the GPU backends.
+      It holds the CUDA streams and events used for ordering and profiling CUDA
+      kernel launches. It contains common reduction kernels to compute the
+      potential energy sum, virial equation sum, center of mass velocity and
+      squared velocity sum. It contains a particle sorting kernel for sorting
+      integers in GPU memory by their respective tags.
+
+      Notable functions include the ``lattice`` to generate an fcc lattice in
+      GPU memory, ``random_permute`` to randomly assign particle types in a
+      binary mixture, ``init_tags`` to initialise particle numbers,
+      ``rescale_velocities`` to scale velocities to a desired temperature,
+      ``boltzmann`` to assign Maxwell-Boltzmann distributed velocities, and
+      ``update_forces`` to wrap the mdstep GPU kernel.
+
+   ljfluid<ljfluid_impl_gpu_square, …>
+      This class implements the gpu_square backend.
+
+   ljfluid<ljfluid_impl_gpu_cell, …>
+      This class implements the gpu_cell backend.
+
+   ljfluid<ljfluid_impl_gpu_neighbour, …>
+      This class implements the gpu_neighbour backend.
+
+   ljfluid<ljfluid_impl_host, …>
+      This class implements the host backend.
+
+   hardsphere<hardsphere_impl, …>
+      This class implements the hardsphere backend.
+
