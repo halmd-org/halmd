@@ -85,7 +85,7 @@ public:
 	/**
 	 * ASCII string identifying the device
 	 */
-	std::string name()
+	std::string name() const
 	{
 	    return prop.name;
 	}
@@ -93,7 +93,7 @@ public:
 	/**
 	 * total amount of global memory available on the device in bytes
 	 */
-	size_t total_global_mem()
+	size_t total_global_mem() const
 	{
 	    return prop.totalGlobalMem;
 	}
@@ -101,7 +101,7 @@ public:
 	/**
 	 * total amount of shared memory available per block in bytes
 	 */
-	size_t shared_mem_per_block()
+	size_t shared_mem_per_block() const
 	{
 	    return prop.sharedMemPerBlock;
 	}
@@ -109,7 +109,7 @@ public:
 	/**
 	 * total number of registers available per block
 	 */
-	size_t regs_per_block()
+	size_t regs_per_block() const
 	{
 	    return prop.regsPerBlock;
 	}
@@ -117,7 +117,7 @@ public:
 	/**
 	 * wrap size
 	 */
-	size_t warp_size()
+	size_t warp_size() const
 	{
 	    return prop.warpSize;
 	}
@@ -125,7 +125,7 @@ public:
 	/**
 	 * maximum allowed memory allocation pitch
 	 */
-	size_t mem_pitch()
+	size_t mem_pitch() const
 	{
 	    return prop.memPitch;
 	}
@@ -133,7 +133,7 @@ public:
 	/**
 	 * maximum number of threads per block
 	 */
-	unsigned int max_threads_per_block()
+	unsigned int max_threads_per_block() const
 	{
 	    return prop.maxThreadsPerBlock;
 	}
@@ -141,7 +141,7 @@ public:
 	/**
 	 * maximum sizes of each dimension of a block
 	 */
-	dim3 max_threads_dim()
+	dim3 max_threads_dim() const
 	{
 	    return dim3(prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
 	}
@@ -149,7 +149,7 @@ public:
 	/**
 	 * maximum sizes of each dimension of a grid
 	 */
-	dim3 max_grid_size()
+	dim3 max_grid_size() const
 	{
 	    return dim3(prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
 	}
@@ -157,7 +157,7 @@ public:
 	/**
 	 * total amount of constant memory available on the device in bytes
 	 */
-	size_t total_const_mem()
+	size_t total_const_mem() const
 	{
 	    return prop.totalConstMem;
 	}
@@ -165,7 +165,7 @@ public:
 	/**
 	 * major revision number of device's compute capatibility
 	 */
-	unsigned int major()
+	unsigned int major() const
 	{
 	    return prop.major;
 	}
@@ -173,7 +173,7 @@ public:
 	/**
 	 * minor revision number of device's compute capatibility
 	 */
-	unsigned int minor()
+	unsigned int minor() const
 	{
 	    return prop.minor;
 	}
@@ -181,7 +181,7 @@ public:
 	/**
 	 * clock frequency in kHz
 	 */
-	unsigned int clock_rate()
+	unsigned int clock_rate() const
 	{
 	    return prop.clockRate;
 	}
@@ -189,7 +189,7 @@ public:
 	/**
 	 * texture alignment requirement
 	 */
-	size_t texture_alignment()
+	size_t texture_alignment() const
 	{
 	    return prop.textureAlignment;
 	}
@@ -198,7 +198,7 @@ public:
 	/**
 	 * asynchronous kernel and memory operations capability
 	 */
-	int device_overlap()
+	int device_overlap() const
 	{
 	    return prop.deviceOverlap;
 	}
@@ -206,7 +206,7 @@ public:
 	/**
 	 * number of multiprocessors
 	 */
-	int multi_processor_count()
+	int multi_processor_count() const
 	{
 	    return prop.multiProcessorCount;
 	}
