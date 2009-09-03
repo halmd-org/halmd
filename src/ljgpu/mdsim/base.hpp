@@ -56,7 +56,7 @@ public:
 
 public:
     mdsim_base() :
-	mixture_(UNARY) {}
+        mixture_(UNARY) {}
 
     /** set number of particles */
     void particles(unsigned int value);
@@ -105,7 +105,7 @@ template <typename mdsim_impl, int dimension_>
 void mdsim_base<mdsim_impl, dimension_>::particles(unsigned int value)
 {
     if (value < 1) {
-	throw exception("invalid number of particles");
+        throw exception("invalid number of particles");
     }
     npart = value;
     mpart = boost::assign::list_of(npart)(0);
@@ -117,7 +117,7 @@ template <typename mdsim_impl, int dimension_>
 void mdsim_base<mdsim_impl, dimension_>::particles(boost::array<unsigned int, 2> const& value)
 {
     if (*std::min_element(value.begin(), value.end()) < 1) {
-	throw exception("invalid number of A or B particles");
+        throw exception("invalid number of A or B particles");
     }
     mpart = value;
     npart = std::accumulate(mpart.begin(), mpart.end(), 0);
@@ -157,26 +157,26 @@ void mdsim_base<mdsim_impl, dimension_>::state(host_sample_type& sample, float_t
     typedef typename position_vector::value_type position_value;
 
     for (size_t i = 0; i < sample.size(); ++i) {
-	if (sample[i].r->size() != mpart[i]) {
-	    throw exception("mismatching number of particles in phase space sample");
-	}
+        if (sample[i].r->size() != mpart[i]) {
+            throw exception("mismatching number of particles in phase space sample");
+        }
     }
 
     foreach (sample_type& s, sample) {
-	foreach (position_vector &r, *s.r) {
-	    // apply periodic boundary conditions to positions
-	    r -= floor(r / static_cast<position_value>(box)) * static_cast<position_value>(box);
-	}
+        foreach (position_vector &r, *s.r) {
+            // apply periodic boundary conditions to positions
+            r -= floor(r / static_cast<position_value>(box)) * static_cast<position_value>(box);
+        }
     }
 
     if (std::fabs(box - box_) > (box_ * std::numeric_limits<float>::epsilon())) {
-	position_value const scale = box_ / box;
-	foreach (sample_type& s, sample) {
-	    foreach (position_vector &r, *s.r) {
-		r *= scale;
-	    }
-	}
-	LOG("rescaled periodic simulation box length from " << box);
+        position_value const scale = box_ / box;
+        foreach (sample_type& s, sample) {
+            foreach (position_vector &r, *s.r) {
+                r *= scale;
+            }
+        }
+        LOG("rescaled periodic simulation box length from " << box);
     }
 }
 
@@ -185,8 +185,8 @@ perf::counters mdsim_base<mdsim_impl, dimension_>::times()
 {
     perf::counters times(m_times);
     foreach (perf::counter& i, m_times) {
-	// reset performance counter
-	i.second.clear();
+        // reset performance counter
+        i.second.clear();
     }
     return times;
 }
@@ -198,10 +198,10 @@ void mdsim_base<mdsim_impl, dimension_>::param(H5param& param) const
     node["box_length"] = box_;
     node["density"] = density_;
     if (mixture_ == BINARY) {
-	node["particles"] = mpart;
+        node["particles"] = mpart;
     }
     else {
-	node["particles"] = npart;
+        node["particles"] = npart;
     }
 }
 

@@ -105,21 +105,21 @@ protected:
     void init_tags(cuda::vector<float4>& g_r, cuda::vector<unsigned int>& g_tag);
     /** rescale particle velocities */
     void rescale_velocities(cuda::vector<gpu_vector_type>& g_v,
-			double coeff,
-			cuda::config const& dim,
-			cuda::stream& stream);
+                        double coeff,
+                        cuda::config const& dim,
+                        cuda::stream& stream);
     /** generate Maxwell-Boltzmann distributed velocities */
     void boltzmann(cuda::vector<gpu_vector_type>& g_v, double temp, cuda::stream& stream);
     /** restore system state from phase space sample */
     void state(host_sample_type& sample, float_type box,
-	       cuda::host::vector<float4>& h_r,
-	       cuda::host::vector<gpu_vector_type>& h_v);
+               cuda::host::vector<float4>& h_r,
+               cuda::host::vector<gpu_vector_type>& h_v);
     /** update Lennard-Jones forces */
     void update_forces(cuda::vector<float4>& r,
-		       cuda::vector<gpu_vector_type>& v,
-		       cuda::vector<gpu_vector_type>& f,
-		       cuda::vector<float>& en,
-		       cuda::vector<gpu_vector_type>& virial);
+                       cuda::vector<gpu_vector_type>& v,
+                       cuda::vector<gpu_vector_type>& f,
+                       cuda::vector<float>& en,
+                       cuda::vector<gpu_vector_type>& virial);
 
 protected:
     using _Base::box_;
@@ -170,12 +170,12 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::particles(T const& value)
     _Base::particles(value);
 
     try {
-	cuda::copy(npart, _gpu::npart);
-	cuda::copy(mpart, _gpu::mpart);
+        cuda::copy(npart, _gpu::npart);
+        cuda::copy(mpart, _gpu::mpart);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy particle number to device symbol");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy particle number to device symbol");
     }
 }
 
@@ -185,11 +185,11 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::epsilon(boost::array<float, 3> c
     _Base::epsilon(value);
 
     try {
-	cuda::copy(epsilon_, _gpu::epsilon);
+        cuda::copy(epsilon_, _gpu::epsilon);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy collision diameters to device symbol");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy collision diameters to device symbol");
     }
 }
 
@@ -199,11 +199,11 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::sigma(boost::array<float, 3> con
     _Base::sigma(value);
 
     try {
-	cuda::copy(sigma2_, _gpu::sigma2);
+        cuda::copy(sigma2_, _gpu::sigma2);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy squared collision diameters to device symbol");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy squared collision diameters to device symbol");
     }
 }
 
@@ -213,13 +213,13 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::cutoff_radius(boost::array<float
     _Base::cutoff_radius(value);
 
     try {
-	cuda::copy(r_cut, _gpu::r_cut);
-	cuda::copy(rr_cut, _gpu::rr_cut);
-	cuda::copy(en_cut, _gpu::en_cut);
+        cuda::copy(r_cut, _gpu::r_cut);
+        cuda::copy(rr_cut, _gpu::rr_cut);
+        cuda::copy(en_cut, _gpu::en_cut);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw potential_energy_divergence();
+        LOG_ERROR("CUDA: " << e.what());
+        throw potential_energy_divergence();
     }
 }
 
@@ -229,11 +229,11 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::potential_smoothing(float_type v
     _Base::potential_smoothing(value);
 
     try {
-	cuda::copy(rri_smooth, _gpu::rri_smooth);
+        cuda::copy(rri_smooth, _gpu::rri_smooth);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy potential smoothing function scale symbol");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy potential smoothing function scale symbol");
     }
 }
 
@@ -243,25 +243,25 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::threads(unsigned int value)
     // query CUDA device properties
     cuda::device::properties prop;
     try {
-	prop = cuda::device::properties(cuda::device::get());
+        prop = cuda::device::properties(cuda::device::get());
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to query CUDA device properties");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to query CUDA device properties");
     }
 
     // validate number of CUDA execution threads
     if (value < 1) {
-	throw exception("invalid number of CUDA execution threads");
+        throw exception("invalid number of CUDA execution threads");
     }
     if (value > prop.max_threads_per_block()) {
-	throw exception("number of CUDA execution threads exceeds maximum number of threads per block");
+        throw exception("number of CUDA execution threads exceeds maximum number of threads per block");
     }
     if (value & (value - 1)) {
-	LOG_WARNING("number of CUDA execution threads not a power of 2");
+        LOG_WARNING("number of CUDA execution threads not a power of 2");
     }
     if (value % prop.warp_size()) {
-	LOG_WARNING("number of CUDA execution threads not a multiple of warp size (" << prop.warp_size() << ")");
+        LOG_WARNING("number of CUDA execution threads not a multiple of warp size (" << prop.warp_size() << ")");
     }
 
     // set CUDA execution dimensions
@@ -270,11 +270,11 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::threads(unsigned int value)
     LOG("number of CUDA execution threads: " << dim_.threads_per_block());
 
     try {
-	radix_sort_.resize(npart, dim_.threads_per_block());
+        radix_sort_.resize(npart, dim_.threads_per_block());
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate global device memory for radix sort");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate global device memory for radix sort");
     }
 }
 
@@ -284,11 +284,11 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::density(float_type value)
     _Base::density(value);
 
     try {
-	cuda::copy(box_, _gpu::box);
+        cuda::copy(box_, _gpu::box);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy periodic box length to device symbol");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy periodic box length to device symbol");
     }
 }
 
@@ -298,11 +298,11 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::box(float_type value)
     _Base::box(value);
 
     try {
-	cuda::copy(box_, _gpu::box);
+        cuda::copy(box_, _gpu::box);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy periodic box length to device symbol");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy periodic box length to device symbol");
     }
 }
 
@@ -312,11 +312,11 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::timestep(double value)
     _Base::timestep(value);
 
     try {
-	cuda::copy(static_cast<float_type>(timestep_), _gpu::timestep);
+        cuda::copy(static_cast<float_type>(timestep_), _gpu::timestep);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy simulation timestep to device symbol");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy simulation timestep to device symbol");
     }
 }
 
@@ -329,29 +329,29 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::rng(unsigned int seed)
     typedef gpu::boltzmann<dimension> _gpu;
 
     try {
-	rng_.resize(cuda::config(_gpu::BLOCKS, _gpu::THREADS));
+        rng_.resize(cuda::config(_gpu::BLOCKS, _gpu::THREADS));
 #ifdef USE_VERLET_DSFUN
-	g_vcm.resize(2 * _gpu::BLOCKS);
+        g_vcm.resize(2 * _gpu::BLOCKS);
 #else
-	g_vcm.resize(_gpu::BLOCKS);
+        g_vcm.resize(_gpu::BLOCKS);
 #endif
-	g_vv.resize(_gpu::BLOCKS);
+        g_vv.resize(_gpu::BLOCKS);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to change random number generator dimensions");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to change random number generator dimensions");
     }
 
     LOG("random number generator seed: " << seed);
 
     try {
-	rng_.set(seed, stream_);
-	stream_.synchronize();
-	rng_.init_symbols(_gpu::rand48::a, _gpu::rand48::c, _gpu::rand48::state);
+        rng_.set(seed, stream_);
+        stream_.synchronize();
+        rng_.init_symbols(_gpu::rand48::a, _gpu::rand48::c, _gpu::rand48::state);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to seed random number generator");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to seed random number generator");
     }
 }
 
@@ -362,11 +362,11 @@ template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::rng(rand48::state_type const& state)
 {
     try {
-	rng_.restore(state);
+        rng_.restore(state);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to restore random number generator state");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to restore random number generator state");
     }
 }
 
@@ -386,26 +386,26 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::lattice(cuda::vector<float4>& g_
     unsigned int N = m * static_cast<unsigned int>(pow(n, static_cast<unsigned int>(dimension)));
 
     if (N < npart) {
-	n += 1;
-	N = m * static_cast<unsigned int>(pow(n, dimension));
+        n += 1;
+        N = m * static_cast<unsigned int>(pow(n, dimension));
     }
     if (N > npart) {
-	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+        LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
     // minimum distance in 2- or 3-dimensional fcc lattice
     LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
     try {
-	event_[0].record(stream_);
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	gpu::lattice<dimension>::fcc(g_r, n, box_);
-	event_[1].record(stream_);
-	event_[1].synchronize();
+        event_[0].record(stream_);
+        cuda::configure(dim_.grid, dim_.block, stream_);
+        gpu::lattice<dimension>::fcc(g_r, n, box_);
+        event_[1].record(stream_);
+        event_[1].synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to compute particle lattice positions on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to compute particle lattice positions on GPU");
     }
 
     m_times["lattice"] += event_[1] - event_[0];
@@ -423,13 +423,13 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::random_permute(cuda::vector<floa
     g_sort_index.reserve(dim_.threads());
 
     try {
-	rng_.get(g_sort_index, stream_);
-	radix_sort_(g_sort_index, g_r, stream_);
-	stream_.synchronize();
+        rng_.get(g_sort_index, stream_);
+        radix_sort_(g_sort_index, g_r, stream_);
+        stream_.synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to randomly permute particle coordinates on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to randomly permute particle coordinates on GPU");
     }
 }
 
@@ -438,16 +438,16 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::random_permute(cuda::vector<floa
  */
 template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::init_tags(cuda::vector<float4>& g_r,
-					       cuda::vector<unsigned int>& g_tag)
+                                               cuda::vector<unsigned int>& g_tag)
 {
     try {
-	cuda::configure(dim_.grid, dim_.block, stream_);
-	_gpu::init_tags(g_r, g_tag);
-	stream_.synchronize();
+        cuda::configure(dim_.grid, dim_.block, stream_);
+        _gpu::init_tags(g_r, g_tag);
+        stream_.synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to initialise particle tags on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to initialise particle tags on GPU");
     }
 }
 
@@ -456,18 +456,18 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::init_tags(cuda::vector<float4>& 
  */
 template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::rescale_velocities(cuda::vector<gpu_vector_type>& g_v,
-						    double coeff,
-						    cuda::config const& dim,
-						    cuda::stream& stream)
+                                                    double coeff,
+                                                    cuda::config const& dim,
+                                                    cuda::stream& stream)
 {
     try {
-	cuda::configure(dim.grid, dim.block, stream);
-	_gpu::rescale_velocity(g_v, coeff);
-	stream.synchronize();
+        cuda::configure(dim.grid, dim.block, stream);
+        _gpu::rescale_velocity(g_v, coeff);
+        stream.synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to rescale velocities on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to rescale velocities on GPU");
     }
 }
 
@@ -503,40 +503,40 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::boltzmann(cuda::vector<gpu_vecto
 
 template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::state(host_sample_type& sample, float_type box,
-					    cuda::host::vector<float4>& h_r,
-					    cuda::host::vector<gpu_vector_type>& h_v)
+                                            cuda::host::vector<float4>& h_r,
+                                            cuda::host::vector<gpu_vector_type>& h_v)
 {
     _Base::state(sample, box);
 
     for (size_t i = 0, n = 0; n < npart; n += mpart[i], ++i) {
-	std::copy(sample[i].r->begin(), sample[i].r->end(), h_r.begin() + n);
-	std::copy(sample[i].v->begin(), sample[i].v->end(), h_v.begin() + n);
+        std::copy(sample[i].r->begin(), sample[i].r->end(), h_r.begin() + n);
+        std::copy(sample[i].v->begin(), sample[i].v->end(), h_v.begin() + n);
     }
 }
 
 template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::update_forces(cuda::vector<float4>& r,
-						   cuda::vector<gpu_vector_type>& v,
-						   cuda::vector<gpu_vector_type>& f,
-						   cuda::vector<float>& en,
-						   cuda::vector<gpu_vector_type>& virial)
+                                                   cuda::vector<gpu_vector_type>& v,
+                                                   cuda::vector<gpu_vector_type>& f,
+                                                   cuda::vector<float>& en,
+                                                   cuda::vector<gpu_vector_type>& virial)
 {
     // (CUDA kernel execution is configured in derived class)
     if (mixture_ == BINARY) {
-	if (potential_ == C2POT) {
-	    _gpu::template variant<BINARY, C2POT>::mdstep(r, v, f, en, virial);
-	}
-	else {
-	    _gpu::template variant<BINARY, C0POT>::mdstep(r, v, f, en, virial);
-	}
+        if (potential_ == C2POT) {
+            _gpu::template variant<BINARY, C2POT>::mdstep(r, v, f, en, virial);
+        }
+        else {
+            _gpu::template variant<BINARY, C0POT>::mdstep(r, v, f, en, virial);
+        }
     }
     else {
-	if (potential_ == C2POT) {
-	    _gpu::template variant<UNARY, C2POT>::mdstep(r, v, f, en, virial);
-	}
-	else {
-	    _gpu::template variant<UNARY, C0POT>::mdstep(r, v, f, en, virial);
-	}
+        if (potential_ == C2POT) {
+            _gpu::template variant<UNARY, C2POT>::mdstep(r, v, f, en, virial);
+        }
+        else {
+            _gpu::template variant<UNARY, C0POT>::mdstep(r, v, f, en, virial);
+        }
     }
 }
 

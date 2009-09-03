@@ -45,37 +45,37 @@ int main(int argc, char **argv)
     // parse program options
     ljgpu::options opt;
     try {
-	opt.parse(argc, argv);
+        opt.parse(argc, argv);
     }
     catch (ljgpu::options::exit_exception const& e) {
-	return e.status();
+        return e.status();
     }
 
     // load backend library
     ljgpu::mdlib mdlib;
 #ifndef STATIC_BACKEND
     try {
-	string const backend(opt["backend"].as<string>());
-	boost::filesystem::path exe(argv[0]);
-	boost::filesystem::path lib("libljgpu_" + backend + ".so");
-	mdlib.open((exe.parent_path() / lib));
+        string const backend(opt["backend"].as<string>());
+        boost::filesystem::path exe(argv[0]);
+        boost::filesystem::path lib("libljgpu_" + backend + ".so");
+        mdlib.open((exe.parent_path() / lib));
     }
     catch (std::exception const& e) {
-	cerr << PROGRAM_NAME ": " << e.what() << endl;
-	return EXIT_FAILURE;
+        cerr << PROGRAM_NAME ": " << e.what() << endl;
+        return EXIT_FAILURE;
     }
     if (mdlib.version() != PROGRAM_VERSION) {
-	cerr << PROGRAM_NAME ": mismatching program and backend version" << endl;
-	return EXIT_FAILURE;
+        cerr << PROGRAM_NAME ": mismatching program and backend version" << endl;
+        return EXIT_FAILURE;
     }
 #endif
 
     // parse backend options
     try {
-	opt.parse(mdlib.options());
+        opt.parse(mdlib.options());
     }
     catch (ljgpu::options::exit_exception const& e) {
-	return e.status();
+        return e.status();
     }
 
     ljgpu::log::init(opt["output"].as<std::string>() + ".log", opt["verbose"].as<int>());
@@ -99,41 +99,41 @@ int main(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
-	// bind process to CPU core(s)
-	if (!opt["processor"].empty()) {
-	    cpu_set_t mask;
-	    CPU_ZERO(&mask);
-	    BOOST_FOREACH(int cpu, opt["processor"].as<std::vector<int> >()) {
-		LOG("adding CPU core " << cpu << " to process CPU affinity mask");
-		CPU_SET(cpu, &mask);
-	    }
-	    if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &mask)) {
-		throw std::logic_error("failed to set process CPU affinity mask");
-	    }
-	}
+        // bind process to CPU core(s)
+        if (!opt["processor"].empty()) {
+            cpu_set_t mask;
+            CPU_ZERO(&mask);
+            BOOST_FOREACH(int cpu, opt["processor"].as<std::vector<int> >()) {
+                LOG("adding CPU core " << cpu << " to process CPU affinity mask");
+                CPU_SET(cpu, &mask);
+            }
+            if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &mask)) {
+                throw std::logic_error("failed to set process CPU affinity mask");
+            }
+        }
 
-	// run MD simulation
-	status_ = mdlib.mdsim(opt);
+        // run MD simulation
+        status_ = mdlib.mdsim(opt);
 #ifdef NDEBUG
     }
 #ifdef WITH_CUDA
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	LOG_WARNING(PROGRAM_NAME " aborted");
-	return ljgpu::LJGPU_EXIT_CUDA_ERROR;
+        LOG_ERROR("CUDA: " << e.what());
+        LOG_WARNING(PROGRAM_NAME " aborted");
+        return ljgpu::LJGPU_EXIT_CUDA_ERROR;
     }
 #ifndef __DEVICE_EMULATION__
     catch (cuda::driver::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	LOG_WARNING(PROGRAM_NAME " aborted");
-	return ljgpu::LJGPU_EXIT_CUDA_ERROR;
+        LOG_ERROR("CUDA: " << e.what());
+        LOG_WARNING(PROGRAM_NAME " aborted");
+        return ljgpu::LJGPU_EXIT_CUDA_ERROR;
     }
 #endif /* ! __DEVICE_EMULATION__ */
 #endif /* WITH_CUDA */
     catch (std::exception const& e) {
-	LOG_ERROR(e.what());
-	LOG_WARNING(PROGRAM_NAME " aborted");
-	return ljgpu::LJGPU_EXIT_EXCEPTION;
+        LOG_ERROR(e.what());
+        LOG_WARNING(PROGRAM_NAME " aborted");
+        return ljgpu::LJGPU_EXIT_EXCEPTION;
     }
 #endif /* NDEBUG */
 

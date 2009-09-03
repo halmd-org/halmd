@@ -40,36 +40,36 @@ public:
 
     void open(boost::filesystem::path path)
     {
-	if (handle)
-	    close();
+        if (handle)
+            close();
 
-	if (path.has_parent_path() && !boost::filesystem::exists(path)) {
-	    // fall back to default search paths, as described in dlopen(3)
-	    path = path.filename();
-	}
-	handle = dlopen(path.string().c_str(), RTLD_GLOBAL|RTLD_NOW);
-	if (!handle) {
-	    throw error(dlerror());
-	}
+        if (path.has_parent_path() && !boost::filesystem::exists(path)) {
+            // fall back to default search paths, as described in dlopen(3)
+            path = path.filename();
+        }
+        handle = dlopen(path.string().c_str(), RTLD_GLOBAL|RTLD_NOW);
+        if (!handle) {
+            throw error(dlerror());
+        }
     }
 
     void close()
     {
-	if (handle)
-	    dlclose(handle);
-	handle = NULL;
+        if (handle)
+            dlclose(handle);
+        handle = NULL;
     }
 
     template <typename T>
     T* symbol(std::string const& name)
     {
-	// reset errors
-	dlerror();
-	T* sym = reinterpret_cast<T*>(dlsym(handle, name.c_str()));
-	char const* dlsym_error = dlerror();
-	if (dlsym_error)
-	    throw error(dlsym_error);
-	return sym;
+        // reset errors
+        dlerror();
+        T* sym = reinterpret_cast<T*>(dlsym(handle, name.c_str()));
+        char const* dlsym_error = dlerror();
+        if (dlsym_error)
+            throw error(dlsym_error);
+        return sym;
     }
 
 protected:
@@ -88,7 +88,7 @@ public:
 
     void set(library& dl, std::string const& name)
     {
-	_Base::operator=(dl.symbol<T>(name));
+        _Base::operator=(dl.symbol<T>(name));
     }
 };
 

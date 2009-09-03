@@ -31,12 +31,12 @@ enum {
 };
 
 extern cuda::function<void(float const*, dsfloat*, uint),
-	       void(float4 const*, float4*, uint),
-	       void(float2 const*, float2*, uint)> sum;
+               void(float4 const*, float4*, uint),
+               void(float2 const*, float2*, uint)> sum;
 extern cuda::function<void(float4 const*, dsfloat*, uint),
-		      void(float2 const*, dsfloat*, uint)> sum_of_squares;
+                      void(float2 const*, dsfloat*, uint)> sum_of_squares;
 extern cuda::function<void(float4 const*, float*, uint),
-		      void(float2 const*, float*, uint)> max;
+                      void(float2 const*, float*, uint)> max;
 
 }}} // namespace ljgpu::gpu::reduce
 

@@ -37,12 +37,12 @@ struct mdlib : public dl::library
 {
     void open(boost::filesystem::path const& path)
     {
-	dl::library::open(path);
-	options.set(*this, "mdlib_options");
-	mdsim.set(*this, "mdlib_mdsim");
-	backend.set(*this, "mdlib_backend");
-	variant.set(*this, "mdlib_variant");
-	version.set(*this, "mdlib_version");
+        dl::library::open(path);
+        options.set(*this, "mdlib_options");
+        mdsim.set(*this, "mdlib_mdsim");
+        backend.set(*this, "mdlib_backend");
+        variant.set(*this, "mdlib_variant");
+        version.set(*this, "mdlib_version");
     }
 
     dl::symbol<boost::program_options::options_description ()> options;

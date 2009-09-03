@@ -45,35 +45,35 @@
     class config
     {
     public:
-	/* grid dimensions */
-	dim3 grid;
-	/* block dimensions */
-	dim3 block;
-	/* FIXME store useful numbers (no. of threads per grid/block) */
+        /* grid dimensions */
+        dim3 grid;
+        /* block dimensions */
+        dim3 block;
+        /* FIXME store useful numbers (no. of threads per grid/block) */
 
-	config()
-	{
-	}
+        config()
+        {
+        }
 
-	config(dim3 grid, dim3 block) : grid(grid), block(block)
-	{
-	    /* FIXME store useful numbers (no. of threads per grid/block) */
-	}
+        config(dim3 grid, dim3 block) : grid(grid), block(block)
+        {
+            /* FIXME store useful numbers (no. of threads per grid/block) */
+        }
 
-	size_t threads() const
-	{
-	    return grid.y * grid.x * block.z * block.y * block.x;
-	}
+        size_t threads() const
+        {
+            return grid.y * grid.x * block.z * block.y * block.x;
+        }
 
-	size_t blocks_per_grid() const
-	{
-	    return grid.y * grid.x;
-	}
+        size_t blocks_per_grid() const
+        {
+            return grid.y * grid.x;
+        }
 
-	size_t threads_per_block() const
-	{
-	    return block.z * block.y * block.x;
-	}
+        size_t threads_per_block() const
+        {
+            return block.z * block.y * block.x;
+        }
     };
 
     #ifndef __CUDACC__
@@ -83,7 +83,7 @@
      */
     __inline__ void configure(dim3 const& grid, dim3 const& block, size_t shared_mem = 0)
     {
-	CUDA_CALL(cudaConfigureCall(grid, block, shared_mem, 0));
+        CUDA_CALL(cudaConfigureCall(grid, block, shared_mem, 0));
     }
 
     #if (CUDART_VERSION >= 1010)
@@ -93,7 +93,7 @@
      */
     __inline__ void configure(dim3 const& grid, dim3 const& block, stream& stream)
     {
-	CUDA_CALL(cudaConfigureCall(grid, block, 0, stream.data()));
+        CUDA_CALL(cudaConfigureCall(grid, block, 0, stream.data()));
     }
 
     /**
@@ -101,7 +101,7 @@
      */
     __inline__ void configure(dim3 const& grid, dim3 const& block, size_t shared_mem, stream& stream)
     {
-	CUDA_CALL(cudaConfigureCall(grid, block, shared_mem, stream.data()));
+        CUDA_CALL(cudaConfigureCall(grid, block, shared_mem, stream.data()));
     }
 
     #endif /* CUDART_VERSION >= 1010 */
@@ -109,86 +109,86 @@
     #endif /* ! __CUDACC__ */
 
     template <typename T0,
-	      typename T1 = void,
-	      typename T2 = void,
-	      typename T3 = void,
-	      typename T4 = void>
+              typename T1 = void,
+              typename T2 = void,
+              typename T3 = void,
+              typename T4 = void>
     class function;
 
     template <typename T0, typename T1>
     class function<T0, T1> :
-	function<T0>, function<T1>
+        function<T0>, function<T1>
     {
-	typedef function<T0> F0;
-	typedef function<T1> F1;
+        typedef function<T0> F0;
+        typedef function<T1> F1;
 
     public:
-	function(T0* f0, T1* f1) :
-	    F0(f0), F1(f1) {}
+        function(T0* f0, T1* f1) :
+            F0(f0), F1(f1) {}
     #ifndef __CUDACC__
-	using F0::operator();
-	using F1::operator();
+        using F0::operator();
+        using F1::operator();
     #endif
     };
 
     template <typename T0, typename T1, typename T2>
     class function<T0, T1, T2> :
-	function<T0>, function<T1>, function<T2>
+        function<T0>, function<T1>, function<T2>
     {
-	typedef function<T0> F0;
-	typedef function<T1> F1;
-	typedef function<T2> F2;
+        typedef function<T0> F0;
+        typedef function<T1> F1;
+        typedef function<T2> F2;
 
     public:
-	function(T0* f0, T1* f1, T2* f2) :
-	    F0(f0), F1(f1), F2(f2) {}
+        function(T0* f0, T1* f1, T2* f2) :
+            F0(f0), F1(f1), F2(f2) {}
     #ifndef __CUDACC__
-	using F0::operator();
-	using F1::operator();
-	using F2::operator();
+        using F0::operator();
+        using F1::operator();
+        using F2::operator();
     #endif
     };
 
     template <typename T0, typename T1, typename T2, typename T3>
     class function<T0, T1, T2, T3> :
-	function<T0>, function<T1>, function<T2>, function<T3>
+        function<T0>, function<T1>, function<T2>, function<T3>
     {
-	typedef function<T0> F0;
-	typedef function<T1> F1;
-	typedef function<T2> F2;
-	typedef function<T3> F3;
+        typedef function<T0> F0;
+        typedef function<T1> F1;
+        typedef function<T2> F2;
+        typedef function<T3> F3;
 
     public:
-	function(T0* f0, T1* f1, T2* f2, T3* f3) :
-	    F0(f0), F1(f1), F2(f2), F3(f3) {}
+        function(T0* f0, T1* f1, T2* f2, T3* f3) :
+            F0(f0), F1(f1), F2(f2), F3(f3) {}
     #ifndef __CUDACC__
-	using F0::operator();
-	using F1::operator();
-	using F2::operator();
-	using F3::operator();
+        using F0::operator();
+        using F1::operator();
+        using F2::operator();
+        using F3::operator();
     #endif
     };
 
 
     template <typename T0, typename T1, typename T2, typename T3, typename T4>
     class function :
-	function<T0>, function<T1>, function<T2>, function<T3>, function<T4>
+        function<T0>, function<T1>, function<T2>, function<T3>, function<T4>
     {
-	typedef function<T0> F0;
-	typedef function<T1> F1;
-	typedef function<T2> F2;
-	typedef function<T3> F3;
-	typedef function<T4> F4;
+        typedef function<T0> F0;
+        typedef function<T1> F1;
+        typedef function<T2> F2;
+        typedef function<T3> F3;
+        typedef function<T4> F4;
 
     public:
-	function(T0* f0, T1* f1, T2* f2, T3* f3, T4* f4) :
-	    F0(f0), F1(f1), F2(f2), F3(f3), F4(f4) {}
+        function(T0* f0, T1* f1, T2* f2, T3* f3, T4* f4) :
+            F0(f0), F1(f1), F2(f2), F3(f3), F4(f4) {}
     #ifndef __CUDACC__
-	using F0::operator();
-	using F1::operator();
-	using F2::operator();
-	using F3::operator();
-	using F4::operator();
+        using F0::operator();
+        using F1::operator();
+        using F2::operator();
+        using F3::operator();
+        using F4::operator();
     #endif
     };
 
@@ -214,36 +214,36 @@
     class function<void (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T))>
     {
     public:
-	typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T));
+        typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T));
 
     public:
-	function(T *f) : f(f) {}
+        function(T *f) : f(f) {}
 
     #ifndef __CUDACC__
 
-	/**
-	 * execute kernel
-	 */
-	void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS, T, x))
-	{
-	    // properly align CUDA device function arguments
-	    struct {
-		#define DECL_ARG(z, n, x) T##n x##n;
-		BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS, DECL_ARG, a)
-		#undef DECL_ARG
-	    } args = {
-		BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, x)
-	    };
-	    // push aligned arguments onto CUDA execution stack
-	    CUDA_CALL(cudaSetupArgument(&args, sizeof(args), 0));
-	    // launch CUDA device function
-	    CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(f)));
-	}
+        /**
+         * execute kernel
+         */
+        void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS, T, x))
+        {
+            // properly align CUDA device function arguments
+            struct {
+                #define DECL_ARG(z, n, x) T##n x##n;
+                BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS, DECL_ARG, a)
+                #undef DECL_ARG
+            } args = {
+                BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, x)
+            };
+            // push aligned arguments onto CUDA execution stack
+            CUDA_CALL(cudaSetupArgument(&args, sizeof(args), 0));
+            // launch CUDA device function
+            CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(f)));
+        }
 
     #endif /* ! __CUDACC__ */
 
     private:
-	T *f;
+        T *f;
     };
 
     } // namespace cuda

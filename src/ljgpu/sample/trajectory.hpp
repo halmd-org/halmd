@@ -43,8 +43,8 @@ class trajectory : boost::noncopyable
 public:
     /** io flags */
     enum openmode {
-	in = 0x1,
-	out = 0x2,
+        in = 0x1,
+        out = 0x2,
     };
 
 public:
@@ -111,60 +111,60 @@ void trajectory::read(host_sample_type& sample, ssize_t index)
     std::vector<unsigned int> mpart;
 
     try {
-	H5XX_NO_AUTO_PRINT(H5::Exception);
-	H5::Group root(m_file.openGroup("trajectory"));
+        H5XX_NO_AUTO_PRINT(H5::Exception);
+        H5::Group root(m_file.openGroup("trajectory"));
 
-	// read particle numbers in binary mixture
-	mpart = H5param(*this)["mdsim"]["particles"].as<std::vector<unsigned int> >();
+        // read particle numbers in binary mixture
+        mpart = H5param(*this)["mdsim"]["particles"].as<std::vector<unsigned int> >();
 
-	for (size_t i = 0; i < mpart.size(); ++i) {
-	    H5::Group node;
-	    if (mpart.size() > 1) {
-		std::string name;
-		name.push_back('A' + i);
-		node = root.openGroup(name);
-	    }
-	    else {
-		node = root;
-	    }
-	    try {
-		// backwards compatibility with r:R:v:t format
-		//   r = reduced single- or double-precision positions,
-		//   R = extended single- or double-precision positions,
-		//   v = single- or double-precision velocities
-		//   t = single- or double-precision simulation time
-		dset_r.push_back(node.openDataSet("R"));
-		LOG_WARNING("detected obsolete trajectory file format");
-	    }
-	    catch (H5::GroupIException const&)
-	    {
-		// new-style r:v:t format
-		//   r = extended double-precision positions,
-		//   v = single- or double-precision velocities
-		//   t = double-precision simulation time
-		dset_r.push_back(node.openDataSet("r"));
-	    }
-	    // backwards compatibility with r:R:v:t format
-	    if (dset_r.back().getDataType() == H5::PredType::NATIVE_FLOAT) {
-		// use reduced positions if extended positions are single-precision
-		dset_r.pop_back();
-		dset_r.push_back(node.openDataSet("r"));
-		LOG_WARNING("falling back to reduced particle position sample");
-	    }
-	    dset_v.push_back(node.openDataSet("v"));
-	}
-	dset_t = root.openDataSet("t");
+        for (size_t i = 0; i < mpart.size(); ++i) {
+            H5::Group node;
+            if (mpart.size() > 1) {
+                std::string name;
+                name.push_back('A' + i);
+                node = root.openGroup(name);
+            }
+            else {
+                node = root;
+            }
+            try {
+                // backwards compatibility with r:R:v:t format
+                //   r = reduced single- or double-precision positions,
+                //   R = extended single- or double-precision positions,
+                //   v = single- or double-precision velocities
+                //   t = single- or double-precision simulation time
+                dset_r.push_back(node.openDataSet("R"));
+                LOG_WARNING("detected obsolete trajectory file format");
+            }
+            catch (H5::GroupIException const&)
+            {
+                // new-style r:v:t format
+                //   r = extended double-precision positions,
+                //   v = single- or double-precision velocities
+                //   t = double-precision simulation time
+                dset_r.push_back(node.openDataSet("r"));
+            }
+            // backwards compatibility with r:R:v:t format
+            if (dset_r.back().getDataType() == H5::PredType::NATIVE_FLOAT) {
+                // use reduced positions if extended positions are single-precision
+                dset_r.pop_back();
+                dset_r.push_back(node.openDataSet("r"));
+                LOG_WARNING("falling back to reduced particle position sample");
+            }
+            dset_v.push_back(node.openDataSet("v"));
+        }
+        dset_t = root.openDataSet("t");
     }
     catch (H5::Exception const&) {
-	throw exception("failed to open HDF5 trajectory datasets");
+        throw exception("failed to open HDF5 trajectory datasets");
     }
 
     for (size_t i = 0; i < mpart.size(); ++i) {
-	position_sample_ptr r(new position_sample_vector(mpart[i]));
-	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
-	read_vector_sample(dset_r[i], *r, index);
-	read_vector_sample(dset_v[i], *v, index);
-	sample.push_back(sample_type(r, v));
+        position_sample_ptr r(new position_sample_vector(mpart[i]));
+        velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
+        read_vector_sample(dset_r[i], *r, index);
+        read_vector_sample(dset_v[i], *v, index);
+        sample.push_back(sample_type(r, v));
     }
     double time;
     read_scalar_sample(dset_t, time, index);
@@ -178,32 +178,32 @@ template <typename host_sample_type>
 void trajectory::write(host_sample_type const& sample, double time)
 {
     if (m_dset_r.empty()) {
-	H5::Group root(m_file.createGroup("trajectory"));
-	m_dset_r.reserve(sample.size());
-	m_dset_v.reserve(sample.size());
+        H5::Group root(m_file.createGroup("trajectory"));
+        m_dset_r.reserve(sample.size());
+        m_dset_v.reserve(sample.size());
 
-	for (size_t i = 0; i < sample.size(); ++i) {
-	    H5::Group node;
-	    if (sample.size() > 1) {
-		std::string name;
-		name.push_back('A' + i);
-		node = root.createGroup(name);
-	    }
-	    else {
-		node = root;
-	    }
-	    m_dset_r.push_back(create_vector_dataset(node, "r", *sample[i].r));
-	    m_dset_v.push_back(create_vector_dataset(node, "v", *sample[i].v));
-	}
-	m_dset_t = create_scalar_dataset(root, "t", time);
+        for (size_t i = 0; i < sample.size(); ++i) {
+            H5::Group node;
+            if (sample.size() > 1) {
+                std::string name;
+                name.push_back('A' + i);
+                node = root.createGroup(name);
+            }
+            else {
+                node = root;
+            }
+            m_dset_r.push_back(create_vector_dataset(node, "r", *sample[i].r));
+            m_dset_v.push_back(create_vector_dataset(node, "v", *sample[i].v));
+        }
+        m_dset_t = create_scalar_dataset(root, "t", time);
     }
 
     assert(m_dset_r.size() == sample.size());
     assert(m_dset_v.size() == sample.size());
 
     for (size_t i = 0; i < sample.size(); ++i) {
-	write_vector_sample(m_dset_r[i], *sample[i].r);
-	write_vector_sample(m_dset_v[i], *sample[i].v);
+        write_vector_sample(m_dset_r[i], *sample[i].r);
+        write_vector_sample(m_dset_v[i], *sample[i].v);
     }
     write_scalar_sample(m_dset_t, time);
 }
@@ -258,10 +258,10 @@ void trajectory::read_vector_sample(H5::DataSet dset, sample_type& sample, ssize
     H5::DataSpace ds(dset.getSpace());
 
     if (!ds.isSimple()) {
-	throw exception("HDF5 vector dataspace is not a simple dataspace");
+        throw exception("HDF5 vector dataspace is not a simple dataspace");
     }
     if (ds.getSimpleExtentNdims() != 3) {
-	throw exception("HDF5 vector dataspace has invalid dimensionality");
+        throw exception("HDF5 vector dataspace has invalid dimensionality");
     }
 
     hsize_t dim[3];
@@ -269,23 +269,23 @@ void trajectory::read_vector_sample(H5::DataSet dset, sample_type& sample, ssize
 
     ssize_t const len = dim[0];
     if ((index >= len) || ((-index) > len)) {
-	throw exception("trajectory input sample number out of bounds");
+        throw exception("trajectory input sample number out of bounds");
     }
     index = (index < 0) ? (index + len) : index;
 
     size_t const size = dim[1];
     if (size < 1) {
-	throw exception("trajectory input file has invalid number of particles");
+        throw exception("trajectory input file has invalid number of particles");
     }
     if (dim[2] != dimension) {
-	throw exception("trajectory input file has invalid coordinate dimension");
+        throw exception("trajectory input file has invalid coordinate dimension");
     }
 
     try {
-	sample.resize(size);
+        sample.resize(size);
     }
     catch (std::bad_alloc const&) {
-	throw exception("failed to allocate memory for phase space sample vector");
+        throw exception("failed to allocate memory for phase space sample vector");
     }
 
     hsize_t dim_sample[2] = { size, dimension };
@@ -298,11 +298,11 @@ void trajectory::read_vector_sample(H5::DataSet dset, sample_type& sample, ssize
     ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     try {
-	H5XX_NO_AUTO_PRINT(H5::Exception);
-	dset.read(sample.data(), tid, ds_sample, ds);
+        H5XX_NO_AUTO_PRINT(H5::Exception);
+        dset.read(sample.data(), tid, ds_sample, ds);
     }
     catch (H5::Exception const&) {
-	throw exception("failed to read vector sample from HDF5 trajectory input file");
+        throw exception("failed to read vector sample from HDF5 trajectory input file");
     }
 }
 
@@ -313,10 +313,10 @@ void trajectory::read_scalar_sample(H5::DataSet dset, sample_type& sample, ssize
     H5::DataSpace ds(dset.getSpace());
 
     if (!ds.isSimple()) {
-	throw exception("HDF5 scalar dataspace is not a simple dataspace");
+        throw exception("HDF5 scalar dataspace is not a simple dataspace");
     }
     if (ds.getSimpleExtentNdims() != 1) {
-	throw exception("HDF5 scalar dataspace has invalid dimensionality");
+        throw exception("HDF5 scalar dataspace has invalid dimensionality");
     }
 
     hsize_t dim[1];
@@ -324,7 +324,7 @@ void trajectory::read_scalar_sample(H5::DataSet dset, sample_type& sample, ssize
 
     ssize_t const len = dim[0];
     if ((index >= len) || ((-index) > len)) {
-	throw exception("trajectory input sample number out of bounds");
+        throw exception("trajectory input sample number out of bounds");
     }
     index = (index < 0) ? (index + len) : index;
 
@@ -335,11 +335,11 @@ void trajectory::read_scalar_sample(H5::DataSet dset, sample_type& sample, ssize
     ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     try {
-	H5XX_NO_AUTO_PRINT(H5::Exception);
-	dset.read(&sample, tid, H5S_SCALAR, ds);
+        H5XX_NO_AUTO_PRINT(H5::Exception);
+        dset.read(&sample, tid, H5S_SCALAR, ds);
     }
     catch (H5::Exception const&) {
-	throw exception("failed to read scalar sample from HDF5 trajectory input file");
+        throw exception("failed to read scalar sample from HDF5 trajectory input file");
     }
 }
 

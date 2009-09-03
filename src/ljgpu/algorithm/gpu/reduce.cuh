@@ -109,7 +109,7 @@ reduce(T& sum, V s_sum[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
+        sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
     }
 }
 
@@ -119,12 +119,12 @@ reduce(T& sum, V s_sum[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
-	s_sum[tid] = sum;
+        sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
+        s_sum[tid] = sum;
     }
     // no further syncs needed within execution warp of 32 threads
     if (threads >= WARP_SIZE) {
-	__syncthreads();
+        __syncthreads();
     }
 
     reduce<threads / 2, transform_>(sum, s_sum);
@@ -139,7 +139,7 @@ reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
+        transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
     }
 }
 
@@ -149,13 +149,13 @@ reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
-	s_sum0[tid] = sum0;
-	s_sum1[tid] = sum1;
+        transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
+        s_sum0[tid] = sum0;
+        s_sum1[tid] = sum1;
     }
     // no further syncs needed within execution warp of 32 threads
     if (threads >= WARP_SIZE) {
-	__syncthreads();
+        __syncthreads();
     }
 
     reduce<threads / 2, transform_>(sum0, sum1, s_sum0, s_sum1);
@@ -170,7 +170,7 @@ reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
+        transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
     }
 }
 
@@ -180,14 +180,14 @@ reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
-	s_sum0[tid] = sum0;
-	s_sum1[tid] = sum1;
-	s_sum2[tid] = sum2;
+        transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
+        s_sum0[tid] = sum0;
+        s_sum1[tid] = sum1;
+        s_sum2[tid] = sum2;
     }
     // no further syncs needed within execution warp of 32 threads
     if (threads >= WARP_SIZE) {
-	__syncthreads();
+        __syncthreads();
     }
 
     reduce<threads / 2, transform_>(sum0, sum1, sum2, s_sum0, s_sum1, s_sum2);
@@ -202,7 +202,7 @@ reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_su
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
+        transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
     }
 }
 
@@ -212,15 +212,15 @@ reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_su
 {
     int const tid = threadIdx.x;
     if (tid < threads) {
-	transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
-	s_sum0[tid] = sum0;
-	s_sum1[tid] = sum1;
-	s_sum2[tid] = sum2;
-	s_sum3[tid] = sum3;
+        transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
+        s_sum0[tid] = sum0;
+        s_sum1[tid] = sum1;
+        s_sum2[tid] = sum2;
+        s_sum3[tid] = sum3;
     }
     // no further syncs needed within execution warp of 32 threads
     if (threads >= WARP_SIZE) {
-	__syncthreads();
+        __syncthreads();
     }
 
     reduce<threads / 2, transform_>(sum0, sum1, sum2, sum3, s_sum0, s_sum1, s_sum2, s_sum3);

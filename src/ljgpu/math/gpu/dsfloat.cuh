@@ -26,22 +26,22 @@ __device__ __host__  struct dsfloat
 
     __device__ inline dsfloat(float f)
     {
-	__dsfeq(__hi, __lo, f);
+        __dsfeq(__hi, __lo, f);
     }
 
     __device__ inline operator float() const
     {
-	return __hi;
+        return __hi;
     }
 #else
     __host__ inline dsfloat(double d)
     {
-	__dsdeq(__hi, __lo, d);
+        __dsdeq(__hi, __lo, d);
     }
 
     __host__ inline operator double() const
     {
-	return (double) __hi + (double) __lo;
+        return (double) __hi + (double) __lo;
     }
 #endif
 };

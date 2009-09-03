@@ -59,23 +59,23 @@ public:
      */
     struct particle
     {
-	typedef boost::reference_wrapper<particle> ref;
-	enum types { A = 0, B = 1 };
+        typedef boost::reference_wrapper<particle> ref;
+        enum types { A = 0, B = 1 };
 
-	particle(unsigned int tag, types type = A) : tag(tag), type(type) {}
+        particle(unsigned int tag, types type = A) : tag(tag), type(type) {}
 
-	/** particle position */
-	vector_type r;
-	/** particle velocity */
-	vector_type v;
-	/** particle force */
-	vector_type f;
-	/** particle number */
-	unsigned int tag;
-	/** particle type */
-	types type;
-	/** particle neighbours list */
-	std::vector<ref> neighbour;
+        /** particle position */
+        vector_type r;
+        /** particle velocity */
+        vector_type v;
+        /** particle force */
+        vector_type f;
+        /** particle number */
+        unsigned int tag;
+        /** particle type */
+        types type;
+        /** particle neighbours list */
+        std::vector<ref> neighbour;
     };
 
     typedef typename std::vector<typename particle::ref> cell_list;
@@ -207,10 +207,10 @@ void ljfluid<ljfluid_impl_host, dimension>::particles(T const& value)
     _Base::particles(value);
 
     try {
-	part.reserve(npart);
+        part.reserve(npart);
     }
     catch (std::bad_alloc const& e) {
-	throw exception("failed to allocate phase space state");
+        throw exception("failed to allocate phase space state");
     }
 }
 
@@ -231,26 +231,26 @@ void ljfluid<ljfluid_impl_host, dimension>::state(host_sample_type& sample, floa
 
     part.clear();
     for (size_t i = 0, n = 0; n < npart; ++i) {
-	for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
-	    particle p(n, types[i]);
-	    p.r = *r;
-	    p.v = *v;
-	    part.push_back(p);
-	}
+        for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
+            particle p(n, types[i]);
+            p.r = *r;
+            p.v = *v;
+            part.push_back(p);
+        }
     }
 
     // update cell lists
     update_cells();
 
     if (mixture_ == BINARY) {
-	// update Verlet neighbour lists
-	update_neighbours<true>();
-	// calculate forces, potential energy and virial equation sum
-	compute_forces<true>();
+        // update Verlet neighbour lists
+        update_neighbours<true>();
+        // calculate forces, potential energy and virial equation sum
+        compute_forces<true>();
     }
     else {
-	update_neighbours<false>();
-	compute_forces<false>();
+        update_neighbours<false>();
+        compute_forces<false>();
     }
 
     // reset sum over maximum velocity magnitudes to zero
@@ -264,8 +264,8 @@ void ljfluid<ljfluid_impl_host, dimension>::nbl_skin(float value)
     LOG("neighbour list skin: " << r_skin);
 
     for (size_t i = 0; i < sigma_.size(); ++i) {
-	r_cut_skin[i] = r_cut[i] + r_skin;
-	rr_cut_skin[i] = std::pow(r_cut_skin[i], 2);
+        r_cut_skin[i] = r_cut[i] + r_skin;
+        rr_cut_skin[i] = std::pow(r_cut_skin[i], 2);
     }
 
     // number of cells per dimension
@@ -273,7 +273,7 @@ void ljfluid<ljfluid_impl_host, dimension>::nbl_skin(float value)
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
-	throw exception("less than least 3 cells per dimension");
+        throw exception("less than least 3 cells per dimension");
     }
 
     // create empty cell lists
@@ -291,7 +291,7 @@ void ljfluid<ljfluid_impl_host, dimension>::rescale_velocities(double coeff)
 {
     LOG("rescaling velocities with coefficient: " << coeff);
     foreach (particle& p, part) {
-	p.v *= coeff;
+        p.v *= coeff;
     }
 }
 
@@ -323,14 +323,14 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
 {
     std::vector<typename particle::types> types;
     if (mixture_ == BINARY) {
-	LOG("randomly placing A and B particles on fcc lattice");
-	types.resize(mpart[0], particle::A);
-	types.resize(npart, particle::B);
-	rng_.shuffle(types);
+        LOG("randomly placing A and B particles on fcc lattice");
+        types.resize(mpart[0], particle::A);
+        types.resize(npart, particle::B);
+        rng_.shuffle(types);
     }
     else {
-	LOG("placing particles on fcc lattice");
-	types.resize(npart, particle::A);
+        LOG("placing particles on fcc lattice");
+        types.resize(npart, particle::A);
     }
 
     // particles per 2- or 3-dimensional unit cell
@@ -341,11 +341,11 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     unsigned int N = m * static_cast<unsigned int>(pow(n, dimension));
 
     if (N < npart) {
-	n += 1;
-	N = m * static_cast<unsigned int>(pow(n, dimension));
+        n += 1;
+        N = m * static_cast<unsigned int>(pow(n, dimension));
     }
     if (N > npart) {
-	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+        LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
     // lattice distance
@@ -355,29 +355,29 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
 
     part.clear();
     for (unsigned int i = 0; i < npart; ++i) {
-	particle p(i, types[i]);
-	vector_type& r = p.r;
-	// compose primitive vectors from 1-dimensional index
-	if (dimension == 3) {
-	    r[0] = ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
-	    r[1] = ((i >> 2) / n % n) + (i & 1) / 2.;
-	    r[2] = ((i >> 2) / n / n) + (i & 2) / 4.;
-	}
-	else {
-	    r[0] = ((i >> 1) % n) + (i & 1) / 2.;
-	    r[1] = ((i >> 1) / n) + (i & 1) / 2.;
-	}
-	r *= a;
-	part.push_back(p);
+        particle p(i, types[i]);
+        vector_type& r = p.r;
+        // compose primitive vectors from 1-dimensional index
+        if (dimension == 3) {
+            r[0] = ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
+            r[1] = ((i >> 2) / n % n) + (i & 1) / 2.;
+            r[2] = ((i >> 2) / n / n) + (i & 2) / 4.;
+        }
+        else {
+            r[0] = ((i >> 1) % n) + (i & 1) / 2.;
+            r[1] = ((i >> 1) / n) + (i & 1) / 2.;
+        }
+        r *= a;
+        part.push_back(p);
     }
 
     // sort particles after binary mixture species for trajectory output
     struct compare
     {
-	static bool _(particle const& p1, particle const& p2)
-	{
-	    return (p1.type < p2.type);
-	}
+        static bool _(particle const& p1, particle const& p2)
+        {
+            return (p1.type < p2.type);
+        }
     };
     std::stable_sort(this->part.begin(), this->part.end(), compare::_);
 
@@ -385,14 +385,14 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     update_cells();
 
     if (mixture_ == BINARY) {
-	// update Verlet neighbour lists
-	update_neighbours<true>();
-	// calculate forces, potential energy and virial equation sum
-	compute_forces<true>();
+        // update Verlet neighbour lists
+        update_neighbours<true>();
+        // calculate forces, potential energy and virial equation sum
+        compute_forces<true>();
     }
     else {
-	update_neighbours<false>();
-	compute_forces<false>();
+        update_neighbours<false>();
+        compute_forces<false>();
     }
 
     // reset sum over maximum velocity magnitudes to zero
@@ -409,7 +409,7 @@ void ljfluid<ljfluid_impl_host, dimension>::temperature(double value)
 
     // initialize force to zero for first leapfrog half step
     foreach (particle& p, part) {
-	p.f = 0;
+        p.f = 0;
     }
     // initialize sum over maximum velocity magnitudes since last neighbour lists update
     v_max_sum = 0;
@@ -430,22 +430,22 @@ void ljfluid<ljfluid_impl_host, dimension>::boltzmann(double temp)
 
     // generate random Maxwell-Boltzmann distributed velocity
     foreach (particle& p, part) {
-	rng_.gaussian(p.v, static_cast<float_type>(temp));
-	v_cm += p.v;
+        rng_.gaussian(p.v, static_cast<float_type>(temp));
+        v_cm += p.v;
     }
     v_cm /= npart;
 
     // set center of mass velocity to zero
     foreach (particle& p, part) {
-	p.v -= v_cm;
-	vv += p.v * p.v;
+        p.v -= v_cm;
+        vv += p.v * p.v;
     }
     vv /= npart;
 
     // rescale velocities to accurate temperature
     double s = std::sqrt(temp * dimension / vv);
     foreach (particle& p, part) {
-	p.v *= s;
+        p.v *= s;
     }
 }
 
@@ -457,11 +457,11 @@ void ljfluid<ljfluid_impl_host, dimension>::update_cells()
 {
     // empty cell lists without memory reallocation
     foreach (cell_list& c, range(cell.data(), cell.data() + cell.num_elements())) {
-	c.clear();
+        c.clear();
     }
     // add particles to cells
     foreach (particle& p, part) {
-	compute_cell(p.r).push_back(boost::ref(p));
+        compute_cell(p.r).push_back(boost::ref(p));
     }
 }
 
@@ -486,7 +486,7 @@ ljfluid<ljfluid_impl_host, dimension>::compute_cell(vector_type r)
     //
     cell_index index;
     for (int i = 0; i < dimension; ++i) {
-	index[i] = (unsigned int)(r[i]) % ncell;
+        index[i] = (unsigned int)(r[i]) % ncell;
     }
     return cell(index);
 }
@@ -500,16 +500,16 @@ void ljfluid<ljfluid_impl_host, dimension>::update_neighbours()
 {
     cell_index i;
     for (i[0] = 0; i[0] < ncell; ++i[0]) {
-	for (i[1] = 0; i[1] < ncell; ++i[1]) {
-	    if (dimension == 3) {
-		for (i[2] = 0; i[2] < ncell; ++i[2]) {
-		    update_cell_neighbours<binary>(i);
-		}
-	    }
-	    else {
-		update_cell_neighbours<binary>(i);
-	    }
-	}
+        for (i[1] = 0; i[1] < ncell; ++i[1]) {
+            if (dimension == 3) {
+                for (i[2] = 0; i[2] < ncell; ++i[2]) {
+                    update_cell_neighbours<binary>(i);
+                }
+            }
+            else {
+                update_cell_neighbours<binary>(i);
+            }
+        }
     }
 }
 
@@ -521,43 +521,43 @@ template <bool binary>
 void ljfluid<ljfluid_impl_host, dimension>::update_cell_neighbours(cell_index const& i)
 {
     foreach (particle& p, cell(i)) {
-	// empty neighbour list of particle
-	p.neighbour.clear();
+        // empty neighbour list of particle
+        p.neighbour.clear();
 
-	cell_index j;
-	for (j[0] = -1; j[0] <= 1; ++j[0]) {
-	    for (j[1] = -1; j[1] <= 1; ++j[1]) {
-		if (dimension == 3) {
-		    for (j[2] = -1; j[2] <= 1; ++j[2]) {
-			// visit half of 26 neighbour cells due to pair potential
-			if (j[0] == 0 && j[1] == 0 && j[2] == 0) {
-			    goto out;
-			}
-			// update neighbour list of particle
-			cell_index k;
-			for (int n = 0; n < dimension; ++n) {
-			    k[n] = (i[n] + ncell + j[n]) % ncell;
-			}
-			compute_cell_neighbours<false, binary>(p, cell(k));
-		    }
-		}
-		else {
-		    // visit half of 8 neighbour cells due to pair potential
-		    if (j[0] == 0 && j[1] == 0) {
-			goto out;
-		    }
-		    // update neighbour list of particle
-		    cell_index k;
-		    for (int n = 0; n < dimension; ++n) {
-			k[n] = (i[n] + ncell + j[n]) % ncell;
-		    }
-		    compute_cell_neighbours<false, binary>(p, cell(k));
-		}
-	    }
-	}
+        cell_index j;
+        for (j[0] = -1; j[0] <= 1; ++j[0]) {
+            for (j[1] = -1; j[1] <= 1; ++j[1]) {
+                if (dimension == 3) {
+                    for (j[2] = -1; j[2] <= 1; ++j[2]) {
+                        // visit half of 26 neighbour cells due to pair potential
+                        if (j[0] == 0 && j[1] == 0 && j[2] == 0) {
+                            goto out;
+                        }
+                        // update neighbour list of particle
+                        cell_index k;
+                        for (int n = 0; n < dimension; ++n) {
+                            k[n] = (i[n] + ncell + j[n]) % ncell;
+                        }
+                        compute_cell_neighbours<false, binary>(p, cell(k));
+                    }
+                }
+                else {
+                    // visit half of 8 neighbour cells due to pair potential
+                    if (j[0] == 0 && j[1] == 0) {
+                        goto out;
+                    }
+                    // update neighbour list of particle
+                    cell_index k;
+                    for (int n = 0; n < dimension; ++n) {
+                        k[n] = (i[n] + ncell + j[n]) % ncell;
+                    }
+                    compute_cell_neighbours<false, binary>(p, cell(k));
+                }
+            }
+        }
 out:
-	// visit this cell
-	compute_cell_neighbours<true, binary>(p, cell(i));
+        // visit this cell
+        compute_cell_neighbours<true, binary>(p, cell(i));
     }
 }
 
@@ -569,25 +569,25 @@ template <bool same_cell, bool binary>
 void ljfluid<ljfluid_impl_host, dimension>::compute_cell_neighbours(particle& p1, cell_list& c)
 {
     foreach (particle& p2, c) {
-	// skip identical particle and particle pair permutations if same cell
-	if (same_cell && p2.tag <= p1.tag)
-	    continue;
+        // skip identical particle and particle pair permutations if same cell
+        if (same_cell && p2.tag <= p1.tag)
+            continue;
 
-	// particle distance vector
-	vector_type r = p1.r - p2.r;
-	// binary particles type
-	unsigned int type = (binary ? (p1.type + p2.type) : 0);
-	// enforce periodic boundary conditions
-	r -= round(r / box_) * box_;
-	// squared particle distance
-	float_type rr = r * r;
+        // particle distance vector
+        vector_type r = p1.r - p2.r;
+        // binary particles type
+        unsigned int type = (binary ? (p1.type + p2.type) : 0);
+        // enforce periodic boundary conditions
+        r -= round(r / box_) * box_;
+        // squared particle distance
+        float_type rr = r * r;
 
-	// enforce cutoff radius with neighbour list skin
-	if (rr >= static_cast<float_type>(rr_cut_skin[type]))
-	    continue;
+        // enforce cutoff radius with neighbour list skin
+        if (rr >= static_cast<float_type>(rr_cut_skin[type]))
+            continue;
 
-	// add particle to neighbour list
-	p1.neighbour.push_back(boost::ref(p2));
+        // add particle to neighbour list
+        p1.neighbour.push_back(boost::ref(p2));
     }
 }
 
@@ -600,7 +600,7 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
 {
     // initialize particle forces to zero
     foreach (particle& p, part) {
-	p.f = 0;
+        p.f = 0;
     }
 
     // potential energy
@@ -609,72 +609,72 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
     virial.assign(binary ? 2 : 1, 0);
 
     foreach (particle& p1, part) {
-	// calculate pairwise Lennard-Jones force with neighbour particles
-	foreach (particle& p2, p1.neighbour) {
-	    // particle distance vector
-	    vector_type r = p1.r - p2.r;
-	    // binary particles type
-	    unsigned int type = (binary ? (p1.type + p2.type) : 0);
-	    // enforce periodic boundary conditions
-	    r -= round(r / box_) * box_;
-	    // squared particle distance
-	    float_type rr = r * r;
+        // calculate pairwise Lennard-Jones force with neighbour particles
+        foreach (particle& p2, p1.neighbour) {
+            // particle distance vector
+            vector_type r = p1.r - p2.r;
+            // binary particles type
+            unsigned int type = (binary ? (p1.type + p2.type) : 0);
+            // enforce periodic boundary conditions
+            r -= round(r / box_) * box_;
+            // squared particle distance
+            float_type rr = r * r;
 
-	    // enforce cutoff radius
-	    if (rr >= rr_cut[type])
-		continue;
+            // enforce cutoff radius
+            if (rr >= rr_cut[type])
+                continue;
 
-	    // compute Lennard-Jones force in reduced units
-	    float_type sigma2 = (binary ? sigma2_[type] : 1);
-	    float_type eps = (binary ? epsilon_[type] : 1);
-	    float_type rri = sigma2 / rr;
-	    float_type r6i = rri * rri * rri;
-	    float_type fval = 48 * rri * r6i * (r6i - 0.5) * (eps / sigma2);
-	    float_type pot = (4 * r6i * (r6i - 1) - en_cut[type]) * eps;
+            // compute Lennard-Jones force in reduced units
+            float_type sigma2 = (binary ? sigma2_[type] : 1);
+            float_type eps = (binary ? epsilon_[type] : 1);
+            float_type rri = sigma2 / rr;
+            float_type r6i = rri * rri * rri;
+            float_type fval = 48 * rri * r6i * (r6i - 0.5) * (eps / sigma2);
+            float_type pot = (4 * r6i * (r6i - 1) - en_cut[type]) * eps;
 
-	    if (potential_ == C2POT) {
-		compute_smooth_potential<binary>(std::sqrt(rr), fval, pot, type);
-	    }
+            if (potential_ == C2POT) {
+                compute_smooth_potential<binary>(std::sqrt(rr), fval, pot, type);
+            }
 
-	    // add force contribution to both particles
-	    p1.f += r * fval;
-	    p2.f -= r * fval;
+            // add force contribution to both particles
+            p1.f += r * fval;
+            p2.f -= r * fval;
 
-	    // add contribution to potential energy
-	    en_pot += pot;
+            // add contribution to potential energy
+            en_pot += pot;
 
-	    // add contribution to virial equation sum
-	    float_type vir = 0.5 * rr * fval;
-	    virial[p1.type][0] += vir;
-	    virial[p2.type][0] += vir;
+            // add contribution to virial equation sum
+            float_type vir = 0.5 * rr * fval;
+            virial[p1.type][0] += vir;
+            virial[p2.type][0] += vir;
 
-	    // compute off-diagonal virial stress tensor elements
-	    if (dimension == 3) {
-		vir = 0.5 * r[1] * r[2] * fval;
-		virial[p1.type][1] += vir;
-		virial[p2.type][1] += vir;
+            // compute off-diagonal virial stress tensor elements
+            if (dimension == 3) {
+                vir = 0.5 * r[1] * r[2] * fval;
+                virial[p1.type][1] += vir;
+                virial[p2.type][1] += vir;
 
-		vir = 0.5 * r[2] * r[0] * fval;
-		virial[p1.type][2] += vir;
-		virial[p2.type][2] += vir;
+                vir = 0.5 * r[2] * r[0] * fval;
+                virial[p1.type][2] += vir;
+                virial[p2.type][2] += vir;
 
-		vir = 0.5 * r[0] * r[1] * fval;
-		virial[p1.type][3] += vir;
-		virial[p2.type][3] += vir;
-	    }
-	    else {
-		vir = 0.5 * r[0] * r[1] * fval;
-		virial[p1.type][1] += vir;
-		virial[p2.type][1] += vir;
-	    }
-	}
+                vir = 0.5 * r[0] * r[1] * fval;
+                virial[p1.type][3] += vir;
+                virial[p2.type][3] += vir;
+            }
+            else {
+                vir = 0.5 * r[0] * r[1] * fval;
+                virial[p1.type][1] += vir;
+                virial[p2.type][1] += vir;
+            }
+        }
     }
 
     en_pot /= npart;
 
     // ensure that system is still in valid state
     if (std::isinf(en_pot)) {
-	throw potential_energy_divergence();
+        throw potential_energy_divergence();
     }
 }
 
@@ -708,12 +708,12 @@ void ljfluid<ljfluid_impl_host, dimension>::leapfrog_half()
     float_type vv_max = 0;
 
     foreach (particle& p, part) {
-	// half step velocity
-	p.v += p.f * (static_cast<float_type>(timestep_) / 2);
-	// full step position
-	p.r += p.v * static_cast<float_type>(timestep_);
-	// maximum squared velocity
-	vv_max = std::max(vv_max, p.v * p.v);
+        // half step velocity
+        p.v += p.f * (static_cast<float_type>(timestep_) / 2);
+        // full step position
+        p.r += p.v * static_cast<float_type>(timestep_);
+        // maximum squared velocity
+        vv_max = std::max(vv_max, p.v * p.v);
     }
 
     v_max_sum += std::sqrt(vv_max);
@@ -726,8 +726,8 @@ template <int dimension>
 void ljfluid<ljfluid_impl_host, dimension>::leapfrog_full()
 {
     foreach (particle& p, part) {
-	// full step velocity
-	p.v += p.f * (static_cast<float_type>(timestep_) / 2);
+        // full step velocity
+        p.v += p.f * (static_cast<float_type>(timestep_) / 2);
     }
 }
 
@@ -746,50 +746,50 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 
     if (v_max_sum * timestep_ > r_skin / 2) {
-	// update cell lists
-	update_cells();
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
-	// update Verlet neighbour lists
-	if (mixture_ == BINARY) {
-	    update_neighbours<true>();
-	}
-	else {
-	    update_neighbours<false>();
-	}
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
+        // update cell lists
+        update_cells();
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
+        // update Verlet neighbour lists
+        if (mixture_ == BINARY) {
+            update_neighbours<true>();
+        }
+        else {
+            update_neighbours<false>();
+        }
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
+        // reset sum over maximum velocity magnitudes to zero
+        v_max_sum = 0;
 
-	m_times["update_cells"] += t[2] - t[1];
-	m_times["update_neighbours"] += t[3] - t[2];
+        m_times["update_cells"] += t[2] - t[1];
+        m_times["update_neighbours"] += t[3] - t[2];
     }
 
     // calculate forces, potential energy and virial equation sum
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
     if (mixture_ == BINARY) {
-	compute_forces<true>();
+        compute_forces<true>();
     }
     else {
-	compute_forces<false>();
+        compute_forces<false>();
     }
     // calculate velocities
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
-	boltzmann(thermostat_temp);
+        boltzmann(thermostat_temp);
     }
     else {
-	leapfrog_full();
+        leapfrog_full();
     }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
 
     if (thermostat_steps && thermostat_count > thermostat_steps) {
-	// reset MD steps since last heatbath coupling
-	thermostat_count = 0;
-	m_times["boltzmann"] += t[4] - t[3];
-	m_times["velocity_verlet"] += t[1] - t[0];
+        // reset MD steps since last heatbath coupling
+        thermostat_count = 0;
+        m_times["boltzmann"] += t[4] - t[3];
+        m_times["velocity_verlet"] += t[1] - t[0];
     }
     else {
-	m_times["velocity_verlet"] += (t[1] - t[0]) + (t[4] - t[3]);
+        m_times["velocity_verlet"] += (t[1] - t[0]) + (t[4] - t[3]);
     }
     m_times["update_forces"] += t[3] - t[2];
     m_times["mdstep"] += t[4] - t[0];
@@ -805,19 +805,19 @@ void ljfluid<ljfluid_impl_host, dimension>::sample(host_sample_type& sample) con
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
     for (size_t n = 0, i = 0; n < npart; ++i) {
-	// allocate memory for trajectory sample
-	position_sample_ptr r(new position_sample_vector);
-	velocity_sample_ptr v(new velocity_sample_vector);
-	sample.push_back(sample_type(r, v));
-	r->reserve(mpart[i]);
-	v->reserve(mpart[i]);
-	// assign particle positions and velocities of homogenous type
-	for (size_t j = 0; j < mpart[i]; ++j, ++n) {
-	    // periodically extended particle position
-	    r->push_back(part[n].r);
-	    // particle velocity
-	    v->push_back(part[n].v);
-	}
+        // allocate memory for trajectory sample
+        position_sample_ptr r(new position_sample_vector);
+        velocity_sample_ptr v(new velocity_sample_vector);
+        sample.push_back(sample_type(r, v));
+        r->reserve(mpart[i]);
+        v->reserve(mpart[i]);
+        // assign particle positions and velocities of homogenous type
+        for (size_t j = 0; j < mpart[i]; ++j, ++n) {
+            // periodically extended particle position
+            r->push_back(part[n].r);
+            // particle velocity
+            v->push_back(part[n].v);
+        }
     }
 }
 
@@ -833,23 +833,23 @@ void ljfluid<ljfluid_impl_host, dimension>::sample(energy_sample_type& sample) c
     sample.v_cm = 0;
 
     for (iterator p = part.begin(); p != part.end(); ++p) {
-	// kinetic terms of virial stress tensor
-	sample.virial[p->type][0] += p->v * p->v;
-	if (dimension == 3) {
-	    sample.virial[p->type][1] += p->v[1] * p->v[2];
-	    sample.virial[p->type][2] += p->v[2] * p->v[0];
-	    sample.virial[p->type][3] += p->v[0] * p->v[1];
-	}
-	else {
-	    sample.virial[p->type][1] += p->v[0] * p->v[1];
-	}
+        // kinetic terms of virial stress tensor
+        sample.virial[p->type][0] += p->v * p->v;
+        if (dimension == 3) {
+            sample.virial[p->type][1] += p->v[1] * p->v[2];
+            sample.virial[p->type][2] += p->v[2] * p->v[0];
+            sample.virial[p->type][3] += p->v[0] * p->v[1];
+        }
+        else {
+            sample.virial[p->type][1] += p->v[0] * p->v[1];
+        }
 
-	sample.vv += p->v * p->v;
-	sample.v_cm += p->v;
+        sample.vv += p->v * p->v;
+        sample.v_cm += p->v;
     }
 
     for (size_t i = 0; i < sample.virial.size(); ++i) {
-	sample.virial[i] /= mpart[i];
+        sample.virial[i] /= mpart[i];
     }
 
     // mean potential energy per particle

@@ -37,23 +37,23 @@ class stream
 private:
     struct container : boost::noncopyable
     {
-	/**
-	 * creates a stream
-	 */
-	container()
-	{
-	    CUDA_CALL(cudaStreamCreate(&m_stream));
-	}
+        /**
+         * creates a stream
+         */
+        container()
+        {
+            CUDA_CALL(cudaStreamCreate(&m_stream));
+        }
 
-	/**
-	 * destroys the stream
-	 */
-	~container() throw() // no-throw guarantee
-	{
-	    cudaStreamDestroy(m_stream);
-	}
+        /**
+         * destroys the stream
+         */
+        ~container() throw() // no-throw guarantee
+        {
+            cudaStreamDestroy(m_stream);
+        }
 
-	cudaStream_t m_stream;
+        cudaStream_t m_stream;
     };
 
 public:
@@ -67,7 +67,7 @@ public:
      */
     void synchronize()
     {
-	CUDA_CALL(cudaStreamSynchronize(m_stream->m_stream));
+        CUDA_CALL(cudaStreamSynchronize(m_stream->m_stream));
     }
 
     /**
@@ -77,12 +77,12 @@ public:
      */
     bool query()
     {
-	cudaError_t err = cudaStreamQuery(m_stream->m_stream);
-	if (cudaSuccess == err)
-	    return true;
-	else if (cudaErrorNotReady == err)
-	    return false;
-	CUDA_ERROR(err);
+        cudaError_t err = cudaStreamQuery(m_stream->m_stream);
+        if (cudaSuccess == err)
+            return true;
+        else if (cudaErrorNotReady == err)
+            return false;
+        CUDA_ERROR(err);
     }
 
     /**
@@ -90,7 +90,7 @@ public:
      */
     cudaStream_t data() const
     {
-	return m_stream->m_stream;
+        return m_stream->m_stream;
     }
 
 private:

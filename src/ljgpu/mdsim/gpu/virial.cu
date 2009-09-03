@@ -31,15 +31,15 @@ enum { THREADS = gpu::virial::THREADS };
  * Virial stress tensor for three-dimensional monodisperse system
  */
 __global__ void sum(float4 const* g_virial, float4 const* g_v,
-		    vector<dsfloat, 4>* g_block_sum, uint n)
+                    vector<dsfloat, 4>* g_block_sum, uint n)
 {
     __shared__ vector<dsfloat, 4> s_virial[THREADS];
     vector<dsfloat, 4> virial = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	vector<float, 3> v = g_v[i];
-	virial += tensor(v * v, v) + g_virial[i];
+        vector<float, 3> v = g_v[i];
+        virial += tensor(v * v, v) + g_virial[i];
     }
     // reduced value for this thread
     s_virial[TID] = virial;
@@ -49,8 +49,8 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v,
     reduce<THREADS / 2, sum_>(virial, s_virial);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = virial;
+        // store block reduced value in global memory
+        g_block_sum[blockIdx.x] = virial;
     }
 }
 
@@ -58,15 +58,15 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v,
  * Virial stress tensor for two-dimensional monodisperse system
  */
 __global__ void sum(float2 const* g_virial, float2 const* g_v,
-		    vector<dsfloat, 2>* g_block_sum, uint n)
+                    vector<dsfloat, 2>* g_block_sum, uint n)
 {
     __shared__ vector<dsfloat, 2> s_virial[THREADS];
     vector<dsfloat, 2> virial = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	vector<float, 2> v = g_v[i];
-	virial += tensor(v * v, v) + g_virial[i];
+        vector<float, 2> v = g_v[i];
+        virial += tensor(v * v, v) + g_virial[i];
     }
     // reduced value for this thread
     s_virial[TID] = virial;
@@ -76,8 +76,8 @@ __global__ void sum(float2 const* g_virial, float2 const* g_v,
     reduce<THREADS / 2, sum_>(virial, s_virial);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = virial;
+        // store block reduced value in global memory
+        g_block_sum[blockIdx.x] = virial;
     }
 }
 
@@ -85,7 +85,7 @@ __global__ void sum(float2 const* g_virial, float2 const* g_v,
  * Virial stress tensor for three-dimensional bidisperse system
  */
 __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag,
-		    vector<dsfloat, 4>* g_block_sum, uint n, uint mpart)
+                    vector<dsfloat, 4>* g_block_sum, uint n, uint mpart)
 {
     __shared__ vector<dsfloat, 4> s_virial[THREADS];
     vector<dsfloat, 4> virial_a = 0;
@@ -93,14 +93,14 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	vector<float, 3> v = g_v[i];
-	vector<float, 4> virial = tensor(v * v, v) + g_virial[i];
-	if (g_tag[i] < mpart) {
-	    virial_a += virial;
-	}
-	else {
-	    virial_b += virial;
-	}
+        vector<float, 3> v = g_v[i];
+        vector<float, 4> virial = tensor(v * v, v) + g_virial[i];
+        if (g_tag[i] < mpart) {
+            virial_a += virial;
+        }
+        else {
+            virial_b += virial;
+        }
     }
     // reduced value for this thread
     s_virial[TID] = virial_a;
@@ -110,8 +110,8 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag
     reduce<THREADS / 2, sum_>(virial_a, s_virial);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = virial_a;
+        // store block reduced value in global memory
+        g_block_sum[blockIdx.x] = virial_a;
     }
 
     // reduced value for this thread
@@ -123,8 +123,8 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag
     reduce<THREADS / 2, sum_>(virial_b, s_virial);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_block_sum[blockIdx.x + gridDim.x] = virial_b;
+        // store block reduced value in global memory
+        g_block_sum[blockIdx.x + gridDim.x] = virial_b;
     }
 }
 
@@ -132,7 +132,7 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag
  * Virial stress tensor for two-dimensional bidisperse system
  */
 __global__ void sum(float2 const* g_virial, float2 const* g_v, uint const* g_tag,
-		    vector<dsfloat, 2>* g_block_sum, uint n, uint mpart)
+                    vector<dsfloat, 2>* g_block_sum, uint n, uint mpart)
 {
     __shared__ vector<dsfloat, 2> s_virial_a[THREADS];
     __shared__ vector<dsfloat, 2> s_virial_b[THREADS];
@@ -141,14 +141,14 @@ __global__ void sum(float2 const* g_virial, float2 const* g_v, uint const* g_tag
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	vector<float, 2> v = g_v[i];
-	vector<float, 2> virial = tensor(v * v, v) + g_virial[i];
-	if (g_tag[i] < mpart) {
-	    virial_a += virial;
-	}
-	else {
-	    virial_b += virial;
-	}
+        vector<float, 2> v = g_v[i];
+        vector<float, 2> virial = tensor(v * v, v) + g_virial[i];
+        if (g_tag[i] < mpart) {
+            virial_a += virial;
+        }
+        else {
+            virial_b += virial;
+        }
     }
     // reduced value for this thread
     s_virial_a[TID] = virial_a;
@@ -159,9 +159,9 @@ __global__ void sum(float2 const* g_virial, float2 const* g_v, uint const* g_tag
     reduce<THREADS / 2, complex_sum_>(virial_a, virial_b, s_virial_a, s_virial_b);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_block_sum[blockIdx.x] = virial_a;
-	g_block_sum[blockIdx.x + gridDim.x] = virial_b;
+        // store block reduced value in global memory
+        g_block_sum[blockIdx.x] = virial_a;
+        g_block_sum[blockIdx.x + gridDim.x] = virial_b;
     }
 }
 

@@ -40,22 +40,22 @@ public:
     class description : public boost::program_options::options_description
     {
     public:
-	description();
+        description();
     };
 
 public:
     class exit_exception
     {
     public:
-	exit_exception(int status) : status_(status) {}
+        exit_exception(int status) : status_(status) {}
 
-	int status() const
-	{
-	    return status_;
-	}
+        int status() const
+        {
+            return status_;
+        }
 
     private:
-	int status_;
+        int status_;
     };
 
 public:
@@ -69,7 +69,7 @@ public:
      */
     boost::program_options::variable_value const& operator[](std::string const& vv) const
     {
-	return vm[vv];
+        return vm[vv];
     }
 
 private:

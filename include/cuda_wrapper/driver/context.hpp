@@ -39,54 +39,54 @@ public:
     class floating : boost::noncopyable
     {
     public:
-	/**
-	 * pop current context from CUDA context stack
-	 */
-	floating()
-	{
-	    // attach to current context
-	    CU_CALL(cuCtxAttach(&m_ctx, 0));
-	    // copy context pointer
-	    CUcontext ctx(m_ctx);
-	    // set internal usage count
-	    m_usage = 0;
+        /**
+         * pop current context from CUDA context stack
+         */
+        floating()
+        {
+            // attach to current context
+            CU_CALL(cuCtxAttach(&m_ctx, 0));
+            // copy context pointer
+            CUcontext ctx(m_ctx);
+            // set internal usage count
+            m_usage = 0;
 
-	    while (ctx == m_ctx) {
-		// decrement usage count of current context
-		CU_CALL(cuCtxDetach(ctx));
-		// requires context usage count of 1
-		CU_CALL(cuCtxPopCurrent(NULL));
-		try {
-		    // is there a current context?
-		    CU_CALL(cuCtxAttach(&ctx, 0));
-		}
-		catch (cuda::driver::error const&) {
-		    // no current context
-		    break;
-		}
-		// decrement usage count of current context
-		CU_CALL(cuCtxDetach(ctx));
-		// increment internal usage count
-		m_usage++;
-	    }
-	}
+            while (ctx == m_ctx) {
+                // decrement usage count of current context
+                CU_CALL(cuCtxDetach(ctx));
+                // requires context usage count of 1
+                CU_CALL(cuCtxPopCurrent(NULL));
+                try {
+                    // is there a current context?
+                    CU_CALL(cuCtxAttach(&ctx, 0));
+                }
+                catch (cuda::driver::error const&) {
+                    // no current context
+                    break;
+                }
+                // decrement usage count of current context
+                CU_CALL(cuCtxDetach(ctx));
+                // increment internal usage count
+                m_usage++;
+            }
+        }
 
-	/**
-	 * push floating context onto CUDA context stack
-	 */
-	~floating()
-	{
-	    CU_CALL(cuCtxPushCurrent(m_ctx));
-	    // restore usage count of context
-	    while (m_usage) {
-		CU_CALL(cuCtxAttach(&m_ctx, 0));
-		m_usage--;
-	    }
-	}
+        /**
+         * push floating context onto CUDA context stack
+         */
+        ~floating()
+        {
+            CU_CALL(cuCtxPushCurrent(m_ctx));
+            // restore usage count of context
+            while (m_usage) {
+                CU_CALL(cuCtxAttach(&m_ctx, 0));
+                m_usage--;
+            }
+        }
 
     private:
-	CUcontext m_ctx;
-	size_t m_usage;
+        CUcontext m_ctx;
+        size_t m_usage;
     };
 
 public:
@@ -99,10 +99,10 @@ public:
     context(int ordinal, unsigned int flags = 0) : m_ctx(new CUcontext)
 #endif
     {
-	CUdevice dev;
-	CU_CALL(cuInit(0));
-	CU_CALL(cuDeviceGet(&dev, ordinal));
-	CU_CALL(cuCtxCreate(&(*m_ctx), flags, dev));
+        CUdevice dev;
+        CU_CALL(cuInit(0));
+        CU_CALL(cuDeviceGet(&dev, ordinal));
+        CU_CALL(cuCtxCreate(&(*m_ctx), flags, dev));
     }
 
     /**
@@ -110,7 +110,7 @@ public:
      */
     context() : m_ctx(new CUcontext)
     {
-	CU_CALL(cuCtxAttach(&(*m_ctx), 0));
+        CU_CALL(cuCtxAttach(&(*m_ctx), 0));
     }
 
     /**
@@ -118,8 +118,8 @@ public:
      */
     ~context()
     {
-	// discard return value to guarantee no-throw deconstructor
-	cuCtxDetach(*m_ctx);
+        // discard return value to guarantee no-throw deconstructor
+        cuCtxDetach(*m_ctx);
     }
 
     /**
@@ -127,15 +127,15 @@ public:
      */
     context(context const& ctx) : m_ctx(ctx.m_ctx)
     {
-	CU_CALL(cuCtxAttach(&(*m_ctx), 0));
+        CU_CALL(cuCtxAttach(&(*m_ctx), 0));
     }
 
     context& operator=(context const& ctx)
     {
-	CU_CALL(cuCtxDetach(*m_ctx));
-	m_ctx = ctx.m_ctx;
-	CU_CALL(cuCtxAttach(&(*m_ctx), 0));
-	return *this;
+        CU_CALL(cuCtxDetach(*m_ctx));
+        m_ctx = ctx.m_ctx;
+        CU_CALL(cuCtxAttach(&(*m_ctx), 0));
+        return *this;
     }
 
     /**
@@ -143,9 +143,9 @@ public:
      */
     static CUdevice device()
     {
-	CUdevice dev;
-	CU_CALL(cuCtxGetDevice(&dev));
-	return dev;
+        CUdevice dev;
+        CU_CALL(cuCtxGetDevice(&dev));
+        return dev;
     }
 
     /**
@@ -153,7 +153,7 @@ public:
      */
     static void synchronize()
     {
-	CU_CALL(cuCtxSynchronize());
+        CU_CALL(cuCtxSynchronize());
     }
 
 private:

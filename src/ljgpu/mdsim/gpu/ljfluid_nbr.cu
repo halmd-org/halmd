@@ -74,8 +74,8 @@ texture<float2, 1, cudaReadModeElementType> tex<2>::v;
  */
 template <typename vector_type,
           mixture_type mixture,
-	  potential_type potential,
-	  typename T>
+          potential_type potential,
+          typename T>
 __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_virial)
 {
     enum { dimension = vector_type::static_size };
@@ -98,18 +98,18 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
 #endif
 
     for (uint i = 0; i < nbl_size; ++i) {
-	// coalesced read from neighbour list
-	unsigned int const n = g_nbl[i * nbl_stride + GTID];
-	// skip placeholder particles
-	if (n == VIRTUAL_PARTICLE) break;
+        // coalesced read from neighbour list
+        unsigned int const n = g_nbl[i * nbl_stride + GTID];
+        // skip placeholder particles
+        if (n == VIRTUAL_PARTICLE) break;
 
-	unsigned int tag_;
-	vector_type r_ = detach_particle_tag(tex1Dfetch(tex<dimension>::r, n), tag_);
-	// particle type in binary mixture
-	int const b = (tag_ >= mpart[0]);
+        unsigned int tag_;
+        vector_type r_ = detach_particle_tag(tex1Dfetch(tex<dimension>::r, n), tag_);
+        // particle type in binary mixture
+        int const b = (tag_ >= mpart[0]);
 
-	// accumulate force between particles
-	compute_force<mixture, potential>(r, r_, f, en, virial, a + b);
+        // accumulate force between particles
+        compute_force<mixture, potential>(r, r_, f, en, virial, a + b);
     }
 
 #ifdef USE_VERLET_DSFUN
@@ -183,27 +183,27 @@ __device__ void update_cell_neighbours(I const& offset, unsigned int const* g_ce
     if (n == VIRTUAL_PARTICLE) return;
 
     for (uint i = 0; i < blockDim.x; ++i) {
-	// particle number of cell placeholder
-	unsigned int const m = s_n[i];
-	// skip placeholder particles
-	if (m == VIRTUAL_PARTICLE) break;
-	// skip same particle
-	if (same_cell && i == threadIdx.x) continue;
+        // particle number of cell placeholder
+        unsigned int const m = s_n[i];
+        // skip placeholder particles
+        if (m == VIRTUAL_PARTICLE) break;
+        // skip same particle
+        if (same_cell && i == threadIdx.x) continue;
 
-	// particle distance vector
-	T dr = r - s_r[i];
-	// enforce periodic boundary conditions
-	dr -= rintf(__fdividef(dr, box)) * box;
-	// squared particle distance
-	float rr = dr * dr;
+        // particle distance vector
+        T dr = r - s_r[i];
+        // enforce periodic boundary conditions
+        dr -= rintf(__fdividef(dr, box)) * box;
+        // squared particle distance
+        float rr = dr * dr;
 
-	// enforce cutoff length with neighbour list skin
-	if (rr <= rr_nbl && count < nbl_size) {
-	    // scattered write to neighbour list
-	    g_nbl[count * nbl_stride + n] = m;
-	    // increment neighbour list particle count
-	    count++;
-	}
+        // enforce cutoff length with neighbour list skin
+        if (rr <= rr_nbl && count < nbl_size) {
+            // scattered write to neighbour list
+            g_nbl[count * nbl_stride + n] = m;
+            // increment neighbour list particle count
+            count++;
+        }
     }
 }
 
@@ -254,53 +254,53 @@ __global__ void update_neighbours(unsigned int* g_ret, unsigned int const* g_cel
     //
 
     if (dimension == 3) {
-	// visit this cell
-	update_cell_neighbours<true>(make_int3( 0,  0,  0), g_cell, r, n, count);
-	// visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-	update_cell_neighbours<false>(make_int3(-1, -1, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1, +1, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(-1, -1, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1, +1, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(-1, +1, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1, -1, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1, -1, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(-1, +1, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(-1, -1,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1, +1,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(-1, +1,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1, -1,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(-1,  0, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1,  0, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(-1,  0, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1,  0, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3( 0, -1, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3( 0, +1, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3( 0, -1, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3( 0, +1, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(-1,  0,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3(+1,  0,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3( 0, -1,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3( 0, +1,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3( 0,  0, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int3( 0,  0, +1), g_cell, r, n, count);
+        // visit this cell
+        update_cell_neighbours<true>(make_int3( 0,  0,  0), g_cell, r, n, count);
+        // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
+        update_cell_neighbours<false>(make_int3(-1, -1, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1, +1, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(-1, -1, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1, +1, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(-1, +1, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1, -1, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1, -1, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(-1, +1, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(-1, -1,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1, +1,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(-1, +1,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1, -1,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(-1,  0, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1,  0, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(-1,  0, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1,  0, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3( 0, -1, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3( 0, +1, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3( 0, -1, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3( 0, +1, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(-1,  0,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3(+1,  0,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3( 0, -1,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3( 0, +1,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3( 0,  0, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int3( 0,  0, +1), g_cell, r, n, count);
     }
     else {
-	// visit this cell
-	update_cell_neighbours<true>(make_int2( 0,  0), g_cell, r, n, count);
-	// visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-	update_cell_neighbours<false>(make_int2(-1, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int2(+1, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int2(-1, +1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int2(+1, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int2(-1,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int2(+1,  0), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int2( 0, -1), g_cell, r, n, count);
-	update_cell_neighbours<false>(make_int2( 0, +1), g_cell, r, n, count);
+        // visit this cell
+        update_cell_neighbours<true>(make_int2( 0,  0), g_cell, r, n, count);
+        // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
+        update_cell_neighbours<false>(make_int2(-1, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int2(+1, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int2(-1, +1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int2(+1, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int2(-1,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int2(+1,  0), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int2( 0, -1), g_cell, r, n, count);
+        update_cell_neighbours<false>(make_int2( 0, +1), g_cell, r, n, count);
     }
 
     // return failure if any neighbour list is fully occupied
     if (count == nbl_size) {
-	*g_ret = EXIT_FAILURE;
+        *g_ret = EXIT_FAILURE;
     }
 }
 
@@ -345,8 +345,8 @@ __global__ void find_cell_offset(uint* g_cell, unsigned int* g_cell_offset)
     const uint k = (GTID > 0 && GTID < npart) ? g_cell[GTID - 1] : j;
 
     if (GTID == 0 || k < j) {
-	// particle marks the start of a cell
-	g_cell_offset[j] = GTID;
+        // particle marks the start of a cell
+        g_cell_offset[j] = GTID;
     }
 }
 
@@ -358,7 +358,7 @@ __global__ void assign_cells(unsigned int* g_ret, uint const* g_cell, unsigned i
     __shared__ unsigned int s_offset[1];
 
     if (threadIdx.x == 0) {
-	s_offset[0] = g_cell_offset[BID];
+        s_offset[0] = g_cell_offset[BID];
     }
     __syncthreads();
     // global offset of first particle in this block's cell
@@ -369,11 +369,11 @@ __global__ void assign_cells(unsigned int* g_ret, uint const* g_cell, unsigned i
     unsigned int tag = VIRTUAL_PARTICLE;
     // mark as real particle if appropriate
     if (offset != VIRTUAL_PARTICLE && n < npart && g_cell[n] == BID) {
-	tag = g_itag[n];
+        tag = g_itag[n];
     }
     // return failure if any cell list is fully occupied
     if (tag != VIRTUAL_PARTICLE && (threadIdx.x + 1) == blockDim.x) {
-	*g_ret = EXIT_FAILURE;
+        *g_ret = EXIT_FAILURE;
     }
     // store particle in this block's cell
     g_otag[BID * blockDim.x + threadIdx.x] = tag;

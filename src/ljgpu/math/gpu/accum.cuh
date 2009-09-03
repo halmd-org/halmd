@@ -59,11 +59,11 @@ __device__ typename enable_if<is_same<transform_, accumulate_>, void>::type
 transform(unsigned int& n, T& m, T& v, unsigned int n_, T const& m_, T const& v_)
 {
     if (n_ > 0) {
-	unsigned int const s = n + n_;
-	T const d = m - m_;
-	v = v + v_ + d * d * T(n) * T(n_) / T(s);
-	m = (T(n) * m + T(n_) * m_) / T(s);
-	n = s;
+        unsigned int const s = n + n_;
+        T const d = m - m_;
+        v = v + v_ + d * d * T(n) * T(n_) / T(s);
+        m = (T(n) * m + T(n_) * m_) / T(s);
+        n = s;
     }
 }
 

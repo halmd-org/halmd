@@ -37,9 +37,9 @@ public:
      */
     static int count()
     {
-	int count;
-	CUDA_CALL(cudaGetDeviceCount(&count));
-	return count;
+        int count;
+        CUDA_CALL(cudaGetDeviceCount(&count));
+        return count;
     }
 
     /**
@@ -47,7 +47,7 @@ public:
      */
     static void set(int dev)
     {
-	CUDA_CALL(cudaSetDevice(dev));
+        CUDA_CALL(cudaSetDevice(dev));
     }
 
     /**
@@ -55,9 +55,9 @@ public:
      */
     static int get()
     {
-	int dev;
-	CUDA_CALL(cudaGetDevice(&dev));
-	return dev;
+        int dev;
+        CUDA_CALL(cudaGetDevice(&dev));
+        return dev;
     }
 
     /**
@@ -66,150 +66,150 @@ public:
     class properties
     {
     private:
-	cudaDeviceProp prop;
+        cudaDeviceProp prop;
 
     public:
-	/**
-	 * empty initializer
-	 */
-	properties() {}
+        /**
+         * empty initializer
+         */
+        properties() {}
 
-	/**
-	 * retrieve properties of given device
-	 */
-	properties(int dev)
-	{
-	    CUDA_CALL(cudaGetDeviceProperties(&prop, dev));
-	}
+        /**
+         * retrieve properties of given device
+         */
+        properties(int dev)
+        {
+            CUDA_CALL(cudaGetDeviceProperties(&prop, dev));
+        }
 
-	/**
-	 * ASCII string identifying the device
-	 */
-	std::string name() const
-	{
-	    return prop.name;
-	}
+        /**
+         * ASCII string identifying the device
+         */
+        std::string name() const
+        {
+            return prop.name;
+        }
 
-	/**
-	 * total amount of global memory available on the device in bytes
-	 */
-	size_t total_global_mem() const
-	{
-	    return prop.totalGlobalMem;
-	}
+        /**
+         * total amount of global memory available on the device in bytes
+         */
+        size_t total_global_mem() const
+        {
+            return prop.totalGlobalMem;
+        }
 
-	/**
-	 * total amount of shared memory available per block in bytes
-	 */
-	size_t shared_mem_per_block() const
-	{
-	    return prop.sharedMemPerBlock;
-	}
+        /**
+         * total amount of shared memory available per block in bytes
+         */
+        size_t shared_mem_per_block() const
+        {
+            return prop.sharedMemPerBlock;
+        }
 
-	/**
-	 * total number of registers available per block
-	 */
-	size_t regs_per_block() const
-	{
-	    return prop.regsPerBlock;
-	}
+        /**
+         * total number of registers available per block
+         */
+        size_t regs_per_block() const
+        {
+            return prop.regsPerBlock;
+        }
 
-	/**
-	 * wrap size
-	 */
-	size_t warp_size() const
-	{
-	    return prop.warpSize;
-	}
+        /**
+         * wrap size
+         */
+        size_t warp_size() const
+        {
+            return prop.warpSize;
+        }
 
-	/**
-	 * maximum allowed memory allocation pitch
-	 */
-	size_t mem_pitch() const
-	{
-	    return prop.memPitch;
-	}
+        /**
+         * maximum allowed memory allocation pitch
+         */
+        size_t mem_pitch() const
+        {
+            return prop.memPitch;
+        }
 
-	/**
-	 * maximum number of threads per block
-	 */
-	unsigned int max_threads_per_block() const
-	{
-	    return prop.maxThreadsPerBlock;
-	}
+        /**
+         * maximum number of threads per block
+         */
+        unsigned int max_threads_per_block() const
+        {
+            return prop.maxThreadsPerBlock;
+        }
 
-	/**
-	 * maximum sizes of each dimension of a block
-	 */
-	dim3 max_threads_dim() const
-	{
-	    return dim3(prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
-	}
+        /**
+         * maximum sizes of each dimension of a block
+         */
+        dim3 max_threads_dim() const
+        {
+            return dim3(prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
+        }
 
-	/**
-	 * maximum sizes of each dimension of a grid
-	 */
-	dim3 max_grid_size() const
-	{
-	    return dim3(prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
-	}
+        /**
+         * maximum sizes of each dimension of a grid
+         */
+        dim3 max_grid_size() const
+        {
+            return dim3(prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
+        }
 
-	/**
-	 * total amount of constant memory available on the device in bytes
-	 */
-	size_t total_const_mem() const
-	{
-	    return prop.totalConstMem;
-	}
+        /**
+         * total amount of constant memory available on the device in bytes
+         */
+        size_t total_const_mem() const
+        {
+            return prop.totalConstMem;
+        }
 
-	/**
-	 * major revision number of device's compute capatibility
-	 */
-	unsigned int major() const
-	{
-	    return prop.major;
-	}
+        /**
+         * major revision number of device's compute capatibility
+         */
+        unsigned int major() const
+        {
+            return prop.major;
+        }
 
-	/**
-	 * minor revision number of device's compute capatibility
-	 */
-	unsigned int minor() const
-	{
-	    return prop.minor;
-	}
+        /**
+         * minor revision number of device's compute capatibility
+         */
+        unsigned int minor() const
+        {
+            return prop.minor;
+        }
 
-	/**
-	 * clock frequency in kHz
-	 */
-	unsigned int clock_rate() const
-	{
-	    return prop.clockRate;
-	}
+        /**
+         * clock frequency in kHz
+         */
+        unsigned int clock_rate() const
+        {
+            return prop.clockRate;
+        }
 
-	/**
-	 * texture alignment requirement
-	 */
-	size_t texture_alignment() const
-	{
-	    return prop.textureAlignment;
-	}
+        /**
+         * texture alignment requirement
+         */
+        size_t texture_alignment() const
+        {
+            return prop.textureAlignment;
+        }
 
 #if (CUDART_VERSION >= 2000)
-	/**
-	 * asynchronous kernel and memory operations capability
-	 */
-	int device_overlap() const
-	{
-	    return prop.deviceOverlap;
-	}
+        /**
+         * asynchronous kernel and memory operations capability
+         */
+        int device_overlap() const
+        {
+            return prop.deviceOverlap;
+        }
 
-	/**
-	 * number of multiprocessors
-	 */
-	int multi_processor_count() const
-	{
-	    return prop.multiProcessorCount;
-	}
+        /**
+         * number of multiprocessors
+         */
+        int multi_processor_count() const
+        {
+            return prop.multiProcessorCount;
+        }
 #endif /* CUDART_VERSION >= 2000 */
     };
 };

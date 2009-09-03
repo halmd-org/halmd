@@ -50,6 +50,6 @@ BOOST_AUTO_TEST_CASE(test_dsfun_mulss)
     std::copy(h_dsp.begin(), h_dsp.end(), h_c.begin());
 
     for (size_t i = 0; i < h_c.size(); ++i) {
-	BOOST_CHECK_CLOSE_FRACTION(h_c[i], (double) h_a[i] * h_b[i], 1e-14);
+        BOOST_CHECK_CLOSE_FRACTION(h_c[i], (double) h_a[i] * h_b[i], 1e-14);
     }
 }

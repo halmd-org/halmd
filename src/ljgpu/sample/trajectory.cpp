@@ -26,25 +26,25 @@ namespace ljgpu {
 void trajectory::open(std::string const& filename, openmode mode)
 {
     if (mode & out) {
-	LOG("write trajectories to file: " << filename);
-	try {
-	    // truncate existing file
-	    m_file = H5::H5File(filename, H5F_ACC_TRUNC);
-	    m_is_open = true;
-	}
-	catch (H5::FileIException const& e) {
-	    throw exception("failed to create trajectory output file");
-	}
+        LOG("write trajectories to file: " << filename);
+        try {
+            // truncate existing file
+            m_file = H5::H5File(filename, H5F_ACC_TRUNC);
+            m_is_open = true;
+        }
+        catch (H5::FileIException const& e) {
+            throw exception("failed to create trajectory output file");
+        }
     }
     else {
-	LOG("read trajectory file: " << filename);
-	try {
-	    m_file = H5::H5File(filename, H5F_ACC_RDONLY);
-	    m_is_open = true;
-	}
-	catch (H5::Exception const& e) {
-	    throw exception("failed to open HDF5 trajectory input file");
-	}
+        LOG("read trajectory file: " << filename);
+        try {
+            m_file = H5::H5File(filename, H5F_ACC_RDONLY);
+            m_is_open = true;
+        }
+        catch (H5::Exception const& e) {
+            throw exception("failed to open HDF5 trajectory input file");
+        }
     }
 }
 
@@ -54,11 +54,11 @@ void trajectory::open(std::string const& filename, openmode mode)
 void trajectory::close()
 {
     try {
-	m_file.close();
-	m_is_open = false;
+        m_file.close();
+        m_is_open = false;
     }
     catch (H5::Exception const& e) {
-	throw exception("failed to close HDF5 trajectory file");
+        throw exception("failed to close HDF5 trajectory file");
     }
 }
 
@@ -68,10 +68,10 @@ void trajectory::close()
 void trajectory::flush()
 {
     try {
-	m_file.flush(H5F_SCOPE_GLOBAL);
+        m_file.flush(H5F_SCOPE_GLOBAL);
     }
     catch (H5::Exception const& e) {
-	throw exception("failed to flush HDF5 trajectory output file");
+        throw exception("failed to flush HDF5 trajectory output file");
     }
 }
 

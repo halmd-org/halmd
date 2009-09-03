@@ -189,9 +189,9 @@ __device__ inline void __dssqrt(float& dsb0, float& dsb1, float const dsa0, floa
     // double precision.
 
     if (dsa0 == 0) {
-	dsb0 = 0;
-	dsb1 = 0;
-	return;
+        dsb0 = 0;
+        dsb1 = 0;
+        return;
     }
 
     float t1 = 1.f / sqrtf(dsa0);

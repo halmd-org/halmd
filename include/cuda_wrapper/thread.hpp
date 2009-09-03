@@ -37,7 +37,7 @@ public:
      */
     static void synchronize()
     {
-	CUDA_CALL(cudaThreadSynchronize());
+        CUDA_CALL(cudaThreadSynchronize());
     }
 
     /*
@@ -45,7 +45,7 @@ public:
      */
     static void exit()
     {
-	CUDA_CALL(cudaThreadExit());
+        CUDA_CALL(cudaThreadExit());
     }
 };
 

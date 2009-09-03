@@ -49,20 +49,20 @@ public:
      */
     void resize(unsigned int count, unsigned int threads)
     {
-	// compute optimal CUDA thread configuration
-	int dev = cuda::device::get();
-	unsigned int max_threads, max_blocks;
-	cuda::device::properties prop(dev);
-	max_threads = prop.multi_processor_count() * prop.max_threads_per_block();
-	max_blocks = max_threads / (threads * BUCKETS_PER_THREAD / 2);
-	blocks_ = std::min((count + 2 * threads - 1) / (2 * threads), max_blocks);
-	threads_ = threads;
+        // compute optimal CUDA thread configuration
+        int dev = cuda::device::get();
+        unsigned int max_threads, max_blocks;
+        cuda::device::properties prop(dev);
+        max_threads = prop.multi_processor_count() * prop.max_threads_per_block();
+        max_blocks = max_threads / (threads * BUCKETS_PER_THREAD / 2);
+        blocks_ = std::min((count + 2 * threads - 1) / (2 * threads), max_blocks);
+        threads_ = threads;
 
-	// allocate global device memory
-	g_scan.resize(blocks_ * threads_ * BUCKETS_PER_THREAD, BUCKET_SIZE);
-	g_bucket.resize(blocks_ * threads_ * BUCKETS_PER_THREAD);
-	g_key.resize(count);
-	g_val.resize(count);
+        // allocate global device memory
+        g_scan.resize(blocks_ * threads_ * BUCKETS_PER_THREAD, BUCKET_SIZE);
+        g_bucket.resize(blocks_ * threads_ * BUCKETS_PER_THREAD);
+        g_key.resize(count);
+        g_val.resize(count);
     }
 
     /**
@@ -70,36 +70,36 @@ public:
      */
     void operator()(key_vector& g_key_, val_vector& g_val_, cuda::stream& stream)
     {
-	typedef boost::reference_wrapper<key_vector> key_ref;
-	typedef boost::reference_wrapper<val_vector> val_ref;
-	size_t const shmem = threads_ * BUCKETS_PER_THREAD * sizeof(unsigned int);
+        typedef boost::reference_wrapper<key_vector> key_ref;
+        typedef boost::reference_wrapper<val_vector> val_ref;
+        size_t const shmem = threads_ * BUCKETS_PER_THREAD * sizeof(unsigned int);
 
-	assert(g_key_.size() == g_key.size());
-	assert(g_val_.size() == g_val.size());
+        assert(g_key_.size() == g_key.size());
+        assert(g_val_.size() == g_val.size());
 
-	// assign GPU dual buffers, as in the CUDA SDK radix sort example
-	key_ref key[2] = { boost::ref(g_key_), boost::ref(g_key) };
-	val_ref val[2] = { boost::ref(g_val_), boost::ref(g_val) };
+        // assign GPU dual buffers, as in the CUDA SDK radix sort example
+        key_ref key[2] = { boost::ref(g_key_), boost::ref(g_key) };
+        val_ref val[2] = { boost::ref(g_val_), boost::ref(g_val) };
 
-	for (unsigned int r = 0; r < 32; r += RADIX) {
-	    key_vector const& ikey = key[0];
-	    key_vector& okey = key[1];
-	    val_vector const& ival = val[0];
-	    val_vector& oval = val[1];
+        for (unsigned int r = 0; r < 32; r += RADIX) {
+            key_vector const& ikey = key[0];
+            key_vector& okey = key[1];
+            val_vector const& ival = val[0];
+            val_vector& oval = val[1];
 
-	    // compute partial radix counts
-	    cuda::configure(blocks_, threads_, shmem, stream);
-	    gpu::radix_sort::histogram_keys(ikey, g_bucket, g_key.size(), r);
-	    // parallel prefix sum over radix counts
-	    g_scan(g_bucket, stream);
-	    // permute array
-	    cuda::configure(blocks_, threads_, shmem, stream);
-	    gpu::radix_sort::permute(ikey, okey, ival, oval, g_bucket, g_key.size(), r);
+            // compute partial radix counts
+            cuda::configure(blocks_, threads_, shmem, stream);
+            gpu::radix_sort::histogram_keys(ikey, g_bucket, g_key.size(), r);
+            // parallel prefix sum over radix counts
+            g_scan(g_bucket, stream);
+            // permute array
+            cuda::configure(blocks_, threads_, shmem, stream);
+            gpu::radix_sort::permute(ikey, okey, ival, oval, g_bucket, g_key.size(), r);
 
-	    // swap GPU dual buffers
-	    std::swap(key[0], key[1]);
-	    std::swap(val[0], val[1]);
-	}
+            // swap GPU dual buffers
+            std::swap(key[0], key[1]);
+            std::swap(val[0], val[1]);
+        }
     }
 
 private:

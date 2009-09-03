@@ -44,15 +44,15 @@ public:
      */
     rng()
     {
-	// do not abort program after GSL error
-	gsl_error_handler_t* handler = gsl_set_error_handler_off();
+        // do not abort program after GSL error
+        gsl_error_handler_t* handler = gsl_set_error_handler_off();
 
-	if (NULL == (rng_ = gsl_rng_alloc(rng_type))) {
-	    throw std::bad_alloc();
-	}
+        if (NULL == (rng_ = gsl_rng_alloc(rng_type))) {
+            throw std::bad_alloc();
+        }
 
-	// restore previous error handler
-	gsl_set_error_handler(handler);
+        // restore previous error handler
+        gsl_set_error_handler(handler);
     }
 
     /**
@@ -60,15 +60,15 @@ public:
      */
     rng(rng<rng_type> const& src)
     {
-	// do not abort program after GSL error
-	gsl_error_handler_t* handler = gsl_set_error_handler_off();
+        // do not abort program after GSL error
+        gsl_error_handler_t* handler = gsl_set_error_handler_off();
 
-	if (NULL == (rng_ = gsl_rng_clone(src.rng_))) {
-	    throw std::bad_alloc();
-	}
+        if (NULL == (rng_ = gsl_rng_clone(src.rng_))) {
+            throw std::bad_alloc();
+        }
 
-	// restore previous error handler
-	gsl_set_error_handler(handler);
+        // restore previous error handler
+        gsl_set_error_handler(handler);
     }
 
     /**
@@ -76,8 +76,8 @@ public:
      */
     rng<rng_type>& operator=(rng<rng_type> const& src)
     {
-	gsl_rng_memcpy(rng_, src.rng_);
-	return *this;
+        gsl_rng_memcpy(rng_, src.rng_);
+        return *this;
     }
 
     /**
@@ -85,7 +85,7 @@ public:
      */
     ~rng()
     {
-	gsl_rng_free(rng_);
+        gsl_rng_free(rng_);
     }
 
     /**
@@ -93,8 +93,8 @@ public:
      */
     void save(state_type& state) const
     {
-	state.resize(rng_type->size);
-	memcpy(state.data(), rng_->state, rng_type->size);
+        state.resize(rng_type->size);
+        memcpy(state.data(), rng_->state, rng_type->size);
     }
 
     /**
@@ -102,8 +102,8 @@ public:
      */
     void restore(state_type const& state)
     {
-	assert(state.size() == rng_type->size);
-	memcpy(rng_->state, state.data(), rng_type->size);
+        assert(state.size() == rng_type->size);
+        memcpy(rng_->state, state.data(), rng_type->size);
     }
 
     /**
@@ -111,7 +111,7 @@ public:
      */
     void set(unsigned long int seed)
     {
-	gsl_rng_set(rng_, seed);
+        gsl_rng_set(rng_, seed);
     }
 
     /**
@@ -119,7 +119,7 @@ public:
      */
     unsigned long int get()
     {
-	return gsl_rng_get(rng_);
+        return gsl_rng_get(rng_);
     }
 
     /**
@@ -127,7 +127,7 @@ public:
      */
     unsigned long int min() const
     {
-	return gsl_rng_min(rng_);
+        return gsl_rng_min(rng_);
     }
 
     /**
@@ -135,7 +135,7 @@ public:
      */
     unsigned long int max() const
     {
-	return gsl_rng_max(rng_);
+        return gsl_rng_max(rng_);
     }
 
     /**
@@ -143,7 +143,7 @@ public:
      */
     double uniform()
     {
-	return gsl_rng_uniform(rng_);
+        return gsl_rng_uniform(rng_);
     }
 
     /**
@@ -152,9 +152,9 @@ public:
     template <typename T>
     void unit_vector(vector<T, 2>& v)
     {
-	T s = 2. * M_PI * uniform();
-	v.x = std::cos(s);
-	v.y = std::sin(s);
+        T s = 2. * M_PI * uniform();
+        v.x = std::cos(s);
+        v.y = std::sin(s);
     }
 
     /**
@@ -163,28 +163,28 @@ public:
     template <typename T>
     void unit_vector(vector<T, 3>& v)
     {
-	//
-	// The following method requires an average of 8/Pi =~ 2.55
-	// uniform random numbers. It is described in
-	//
-	// G. Marsaglia, Choosing a Point from the Surface of a Sphere,
-	// The Annals of Mathematical Statistics, 1972, 43, p. 645-646
-	//
-	// http://projecteuclid.org/euclid.aoms/1177692644#
-	//
+        //
+        // The following method requires an average of 8/Pi =~ 2.55
+        // uniform random numbers. It is described in
+        //
+        // G. Marsaglia, Choosing a Point from the Surface of a Sphere,
+        // The Annals of Mathematical Statistics, 1972, 43, p. 645-646
+        //
+        // http://projecteuclid.org/euclid.aoms/1177692644#
+        //
 
-	T s;
+        T s;
 
-	do {
-	    v.x = 2. * uniform() - 1.;
-	    v.y = 2. * uniform() - 1.;
-	    s = v.x * v.x + v.y * v.y;
-	} while (s >= 1.);
+        do {
+            v.x = 2. * uniform() - 1.;
+            v.y = 2. * uniform() - 1.;
+            s = v.x * v.x + v.y * v.y;
+        } while (s >= 1.);
 
-	v.z = 1. - 2. * s;
-	s = 2. * std::sqrt(1. - s);
-	v.x *= s;
-	v.y *= s;
+        v.z = 1. - 2. * s;
+        s = 2. * std::sqrt(1. - s);
+        v.x *= s;
+        v.y *= s;
     }
 
     /**
@@ -193,45 +193,45 @@ public:
     template <typename T>
     void gaussian(T& r1, T& r2, T const& var)
     {
-	//
-	// The Box-Muller transformation for generating random numbers
-	// in the normal distribution was originally described in
-	//
-	// G.E.P. Box and M.E. Muller, A Note on the Generation of
-	// Random Normal Deviates, The Annals of Mathematical Statistics,
-	// 1958, 29, p. 610-611
-	//
-	// Here, we use instead the faster polar method of the Box-Muller
-	// transformation, see
-	//
-	// D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
-	// Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
-	//
+        //
+        // The Box-Muller transformation for generating random numbers
+        // in the normal distribution was originally described in
+        //
+        // G.E.P. Box and M.E. Muller, A Note on the Generation of
+        // Random Normal Deviates, The Annals of Mathematical Statistics,
+        // 1958, 29, p. 610-611
+        //
+        // Here, we use instead the faster polar method of the Box-Muller
+        // transformation, see
+        //
+        // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+        // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
+        //
 
-	T s;
+        T s;
 
-	do {
-	    r1 = 2. * uniform() - 1.;
-	    r2 = 2. * uniform() - 1.;
-	    s = r1 * r1 + r2 * r2;
-	} while (s >= 1.);
+        do {
+            r1 = 2. * uniform() - 1.;
+            r2 = 2. * uniform() - 1.;
+            s = r1 * r1 + r2 * r2;
+        } while (s >= 1.);
 
-	s = std::sqrt(-2. * var * std::log(s) / s);
-	r1 *= s;
-	r2 *= s;
+        s = std::sqrt(-2. * var * std::log(s) / s);
+        r1 *= s;
+        r2 *= s;
     }
 
     template <typename T>
     void gaussian(vector<T, 3>& v, T const& var)
     {
-	gaussian(v[0], v[1], var);
-	gaussian(v[2], v[0], var);
+        gaussian(v[0], v[1], var);
+        gaussian(v[2], v[0], var);
     }
 
     template <typename T>
     void gaussian(vector<T, 2>& v, T const& var)
     {
-	gaussian(v[0], v[1], var);
+        gaussian(v[0], v[1], var);
     }
 
     /**
@@ -240,15 +240,15 @@ public:
     template <typename T>
     void shuffle(T& array)
     {
-	//
-	// D.E. Knuth, Art of Computer Programming, Volume 2:
-	// Seminumerical Algorithms, 3rd Edition, 1997,
-	// Addison-Wesley, pp. 124-125.
-	//
-	for (typename T::size_type i = array.size(); i > 1; --i) {
-	    typename T::size_type r = static_cast<typename T::size_type>(i * uniform());
-	    std::swap(array[r], array[i - 1]);
-	}
+        //
+        // D.E. Knuth, Art of Computer Programming, Volume 2:
+        // Seminumerical Algorithms, 3rd Edition, 1997,
+        // Addison-Wesley, pp. 124-125.
+        //
+        for (typename T::size_type i = array.size(); i > 1; --i) {
+            typename T::size_type r = static_cast<typename T::size_type>(i * uniform());
+            std::swap(array[r], array[i - 1]);
+        }
     }
 
 private:

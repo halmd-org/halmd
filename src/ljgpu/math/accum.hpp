@@ -45,18 +45,18 @@ public:
      */
     accumulator<T>& operator+=(T const& val)
     {
-	//
-	// The following method for calculating means and standard
-	// deviations with floating point arithmetic is described in
-	//
-	// D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
-	// Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
-	//
-	const T t = val - m_;
-	n_++;
-	m_ += t / n_;
-	v_ += t * (val - m_);
-	return *this;
+        //
+        // The following method for calculating means and standard
+        // deviations with floating point arithmetic is described in
+        //
+        // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+        // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
+        //
+        const T t = val - m_;
+        n_++;
+        m_ += t / n_;
+        v_ += t * (val - m_);
+        return *this;
     }
 
     /**
@@ -64,13 +64,13 @@ public:
      */
     accumulator<T>& operator +=(accumulator<T> const& acc)
     {
-	if (acc.n_ > 0) {
-	    const uint64_t n = n_ + acc.n_;
-	    v_ = v_ + acc.v_ + std::pow(m_ - acc.m_, 2) * n_ * acc.n_ / n;
-	    m_ = (n_ * m_ + acc.n_ * acc.m_) / n;
-	    n_ = n;
-	}
-	return *this;
+        if (acc.n_ > 0) {
+            const uint64_t n = n_ + acc.n_;
+            v_ = v_ + acc.v_ + std::pow(m_ - acc.m_, 2) * n_ * acc.n_ / n;
+            m_ = (n_ * m_ + acc.n_ * acc.m_) / n;
+            n_ = n;
+        }
+        return *this;
     }
 
     /**
@@ -78,9 +78,9 @@ public:
      */
     void clear()
     {
-	n_ = 0;
-	m_ = 0;
-	v_ = 0;
+        n_ = 0;
+        m_ = 0;
+        v_ = 0;
     }
 
     /**
@@ -88,7 +88,7 @@ public:
      */
     uint64_t const& count() const
     {
-	return n_;
+        return n_;
     }
 
     /**
@@ -96,10 +96,10 @@ public:
      */
     T mean() const
     {
-	if (n_ < 1) {
-	    return std::numeric_limits<T>::quiet_NaN();
-	}
-	return m_;
+        if (n_ < 1) {
+            return std::numeric_limits<T>::quiet_NaN();
+        }
+        return m_;
     }
 
     /**
@@ -107,10 +107,10 @@ public:
      */
     T var() const
     {
-	if (n_ < 2) {
-	    return std::numeric_limits<T>::quiet_NaN();
-	}
-	return v_;
+        if (n_ < 2) {
+            return std::numeric_limits<T>::quiet_NaN();
+        }
+        return v_;
     }
 
     /**
@@ -118,10 +118,10 @@ public:
      */
     T std() const
     {
-	if (n_ < 2) {
-	    return std::numeric_limits<T>::quiet_NaN();
-	}
-	return std::sqrt(v_ / (n_ - 1));
+        if (n_ < 2) {
+            return std::numeric_limits<T>::quiet_NaN();
+        }
+        return std::sqrt(v_ / (n_ - 1));
     }
 
     /**
@@ -129,10 +129,10 @@ public:
      */
     T err() const
     {
-	if (n_ < 2) {
-	    return std::numeric_limits<T>::quiet_NaN();
-	}
-	return sqrt(v_ / (n_ - 1) / n_);
+        if (n_ < 2) {
+            return std::numeric_limits<T>::quiet_NaN();
+        }
+        return sqrt(v_ / (n_ - 1) / n_);
     }
 
 private:

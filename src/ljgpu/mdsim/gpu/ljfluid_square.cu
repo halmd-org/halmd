@@ -28,8 +28,8 @@ namespace ljgpu { namespace cu { namespace ljfluid
  */
 template <typename vector_type,
           mixture_type mixture,
-	  potential_type potential,
-	  typename T>
+          potential_type potential,
+          typename T>
 __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_virial)
 {
     enum { dimension = vector_type::static_size };
@@ -57,25 +57,25 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
 
     // iterate over all blocks
     for (unsigned int k = 0; k < gridDim.x; k++) {
-	// load positions of particles within block
-	__syncthreads();
-	s_r[TID] = detach_particle_tag(g_r[k * blockDim.x + TID], s_tag[TID]);
-	__syncthreads();
+        // load positions of particles within block
+        __syncthreads();
+        s_r[TID] = detach_particle_tag(g_r[k * blockDim.x + TID], s_tag[TID]);
+        __syncthreads();
 
-	// iterate over all particles within block
-	for (unsigned int j = 0; j < blockDim.x; j++) {
-	    // skip placeholder particles
-	    if (k * blockDim.x + j >= npart)
-		continue;
-	    // skip identical particle
-	    if (blockIdx.x == k && TID == j)
-		continue;
+        // iterate over all particles within block
+        for (unsigned int j = 0; j < blockDim.x; j++) {
+            // skip placeholder particles
+            if (k * blockDim.x + j >= npart)
+                continue;
+            // skip identical particle
+            if (blockIdx.x == k && TID == j)
+                continue;
 
-	    // particle type in binary mixture
-	    int const b = (s_tag[j] >= mpart[0]);
-	    // compute Lennard-Jones force with particle
-	    compute_force<mixture, potential>(r, s_r[j], f, en, virial, a + b);
-	}
+            // particle type in binary mixture
+            int const b = (s_tag[j] >= mpart[0]);
+            // compute Lennard-Jones force with particle
+            compute_force<mixture, potential>(r, s_r[j], f, en, virial, a + b);
+        }
     }
 
     // second leapfrog step of integration of equations of motion

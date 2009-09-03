@@ -100,24 +100,24 @@ struct intermediate_scattering_function : correlation_function<sample_type>
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
-	typedef typename sample_type::density_vector_vector density_vector_vector;
-	typedef typename output_iterator::value_type result_vector;
+        typedef typename input_iterator::first_type sample_iterator;
+        typedef typename sample_iterator::value_type::value_type sample_type;
+        typedef typename sample_type::density_vector_vector density_vector_vector;
+        typedef typename output_iterator::value_type result_vector;
 
-	sample_iterator sample;
-	typename density_vector_vector::const_iterator rho0, rho0_0;
-	typename density_vector_vector::value_type::const_iterator rho1, rho1_0;
-	typename result_vector::iterator result0;
+        sample_iterator sample;
+        typename density_vector_vector::const_iterator rho0, rho0_0;
+        typename density_vector_vector::value_type::const_iterator rho1, rho1_0;
+        typename result_vector::iterator result0;
 
-	// accumulate intermediate scattering functions on host
-	for (sample = first.first; sample != last.first; ++sample, ++result) {
-	    for (rho0 = (*sample)[type].rho->begin(), rho0_0 = (*first.first)[type].rho->begin(), result0 = result->begin(); rho0 != (*sample)[type].rho->end(); ++rho0, ++rho0_0, ++result0) {
-		for (rho1 = rho0->begin(), rho1_0 = rho0_0->begin(); rho1 != rho0->end(); ++rho1, ++rho1_0) {
-		    *result0 += (rho1->first * rho1_0->first + rho1->second * rho1_0->second) / (*sample)[type].r->size();
-		}
-	    }
-	}
+        // accumulate intermediate scattering functions on host
+        for (sample = first.first; sample != last.first; ++sample, ++result) {
+            for (rho0 = (*sample)[type].rho->begin(), rho0_0 = (*first.first)[type].rho->begin(), result0 = result->begin(); rho0 != (*sample)[type].rho->end(); ++rho0, ++rho0_0, ++result0) {
+                for (rho1 = rho0->begin(), rho1_0 = rho0_0->begin(); rho1 != rho0->end(); ++rho1, ++rho1_0) {
+                    *result0 += (rho1->first * rho1_0->first + rho1->second * rho1_0->second) / (*sample)[type].r->size();
+                }
+            }
+        }
     }
 };
 
@@ -146,24 +146,24 @@ struct squared_self_intermediate_scattering_function : correlation_function<samp
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
-	typedef typename sample_type::q_vector_vector q_vector_vector;
-	typedef typename sample_type::isf_vector_vector isf_vector_vector;
-	typedef typename output_iterator::value_type result_vector;
+        typedef typename input_iterator::first_type sample_iterator;
+        typedef typename sample_iterator::value_type::value_type sample_type;
+        typedef typename sample_type::q_vector_vector q_vector_vector;
+        typedef typename sample_type::isf_vector_vector isf_vector_vector;
+        typedef typename output_iterator::value_type result_vector;
 
-	sample_iterator sample;
-	typename isf_vector_vector::iterator isf0;
-	typename isf_vector_vector::value_type::iterator isf;
-	typename result_vector::iterator result0;
+        sample_iterator sample;
+        typename isf_vector_vector::iterator isf0;
+        typename isf_vector_vector::value_type::iterator isf;
+        typename result_vector::iterator result0;
 
-	for (sample = first.first; sample != last.first; ++sample, ++result) {
-	    for (isf0 = (*sample)[type].isf->begin(), result0 = result->begin(); isf0 != (*sample)[type].isf->end(); ++isf0, ++result0) {
-		for (isf = isf0->begin(); isf != isf0->end(); ++isf) {
-		    *result0 += (*isf) * (*isf);
-		}
-	    }
-	}
+        for (sample = first.first; sample != last.first; ++sample, ++result) {
+            for (isf0 = (*sample)[type].isf->begin(), result0 = result->begin(); isf0 != (*sample)[type].isf->end(); ++isf0, ++result0) {
+                for (isf = isf0->begin(); isf != isf0->end(); ++isf) {
+                    *result0 += (*isf) * (*isf);
+                }
+            }
+        }
     }
 };
 
@@ -186,17 +186,17 @@ struct virial_stress: correlation_function<sample_type>
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
     {
-	typedef typename input_iterator::first_type sample_iterator;
-	typedef typename sample_iterator::value_type::value_type sample_type;
-	typedef typename sample_type::vector_type vector_type;
-	typedef typename sample_type::virial_tensor::const_iterator virial_iterator;
-	enum { dimension = vector_type::static_size };
+        typedef typename input_iterator::first_type sample_iterator;
+        typedef typename sample_iterator::value_type::value_type sample_type;
+        typedef typename sample_type::vector_type vector_type;
+        typedef typename sample_type::virial_tensor::const_iterator virial_iterator;
+        enum { dimension = vector_type::static_size };
 
-	for (sample_iterator sample = first.first; sample != last.first; ++sample, ++result) {
-	    for (virial_iterator vir = (*sample)[type].virial->begin(), vir0 = (*first.first)[type].virial->begin(); vir != (*sample)[type].virial->end(); ++vir, ++vir0) {
-		*result += ((*vir) * (*vir0)) * (*sample)[type].r->size();
-	    }
-	}
+        for (sample_iterator sample = first.first; sample != last.first; ++sample, ++result) {
+            for (virial_iterator vir = (*sample)[type].virial->begin(), vir0 = (*first.first)[type].virial->begin(); vir != (*sample)[type].virial->end(); ++vir, ++vir0) {
+                *result += ((*vir) * (*vir0)) * (*sample)[type].r->size();
+            }
+        }
     }
 };
 

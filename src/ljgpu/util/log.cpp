@@ -52,7 +52,7 @@ void init(std::string const& filename, int verbosity)
     // log to file
     logging::init_log_to_file
     (
-	filename,
+        filename,
         keywords::format = fmt::format("[%1%] %2%")
             % fmt::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
             % fmt::message()
@@ -61,8 +61,8 @@ void init(std::string const& filename, int verbosity)
     severity_level sl = (verbosity > 1 ? debug : (verbosity > 0 ? info : warning));
     logging::init_log_to_console
     (
-	std::clog,
-	keywords::filter = flt::attr<severity_level>("Severity") >= sl,
+        std::clog,
+        keywords::filter = flt::attr<severity_level>("Severity") >= sl,
         keywords::format = fmt::format("[%1%] %2%")
             % fmt::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
             % fmt::message()

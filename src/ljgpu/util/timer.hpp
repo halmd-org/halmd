@@ -42,7 +42,7 @@ public:
      */
     void start()
     {
-	gettimeofday(&m_start, NULL);
+        gettimeofday(&m_start, NULL);
     }
 
     /**
@@ -50,7 +50,7 @@ public:
      */
     void stop()
     {
-	gettimeofday(&m_stop, NULL);
+        gettimeofday(&m_stop, NULL);
     }
 
     /**
@@ -58,9 +58,9 @@ public:
      */
     double elapsed() const
     {
-	timeval tv;
-	timersub(&m_stop, &m_start, &tv);
-	return tv.tv_sec + tv.tv_usec * 1.0E-6;
+        timeval tv;
+        timersub(&m_stop, &m_start, &tv);
+        return tv.tv_sec + tv.tv_usec * 1.0E-6;
     }
 
     /**
@@ -68,16 +68,16 @@ public:
      */
     static std::string format(double t)
     {
-	std::ostringstream os;
-	if (t < 60)
-	    os << std::fixed << std::setprecision(1) << t << " s";
-	else if (t < 3600)
-	    os << std::fixed << std::setprecision(1) << (t / 60) << " min";
-	else if (t < 86400)
-	    os << std::fixed << std::setprecision(1) << (t / 3600) << " h";
-	else
-	    os << std::fixed << std::setprecision(1) << (t / 86400) << " d";
-	return os.str();
+        std::ostringstream os;
+        if (t < 60)
+            os << std::fixed << std::setprecision(1) << t << " s";
+        else if (t < 3600)
+            os << std::fixed << std::setprecision(1) << (t / 60) << " min";
+        else if (t < 86400)
+            os << std::fixed << std::setprecision(1) << (t / 3600) << " h";
+        else
+            os << std::fixed << std::setprecision(1) << (t / 86400) << " d";
+        return os.str();
     }
 
     /**
@@ -85,8 +85,8 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, real_timer const& tm)
     {
-	os << format(tm.elapsed());
-	return os;
+        os << format(tm.elapsed());
+        return os;
     }
 
 private:
@@ -104,19 +104,19 @@ public:
      * initialize iterator variable and schedule timer
      */
     count_timer(T const& i = T()) :
-	m_start(time(NULL) + W),
-	m_stop(-1),
-	m_count(i),
-	m_time(0) {}
+        m_start(time(NULL) + W),
+        m_stop(-1),
+        m_count(i),
+        m_time(0) {}
 
     /**
      * schedule timer after given time interval in seconds
      */
     void set(time_t wait = W)
     {
-	m_start = time(NULL) + wait;
-	m_stop = -1;
-	m_time = 0;
+        m_start = time(NULL) + wait;
+        m_stop = -1;
+        m_time = 0;
     }
 
     /**
@@ -124,9 +124,9 @@ public:
      */
     void clear()
     {
-	m_start = -1;
-	m_stop = -1;
-	m_time = 0;
+        m_start = -1;
+        m_stop = -1;
+        m_time = 0;
     }
 
     /**
@@ -134,88 +134,88 @@ public:
      */
     double const& estimate()
     {
-	return m_time;
+        return m_time;
     }
 
     operator T& ()
     {
-	return m_count;
+        return m_count;
     }
 
     operator T const& () const
     {
-	return m_count;
+        return m_count;
     }
 
     template <typename U>
     bool operator<(U const& value)
     {
-	handle_timer(value);
-	return (m_count < value);
+        handle_timer(value);
+        return (m_count < value);
     }
 
     template <typename U>
     bool operator>(U const& value)
     {
-	handle_timer(value);
-	return (m_count > value);
+        handle_timer(value);
+        return (m_count > value);
     }
 
     template <typename U>
     bool operator<=(U const& value)
     {
-	handle_timer(value + 1);
-	return (m_count <= value);
+        handle_timer(value + 1);
+        return (m_count <= value);
     }
 
     template <typename U>
     bool operator>=(U const& value)
     {
-	handle_timer(value - 1);
-	return (m_count >= value);
+        handle_timer(value - 1);
+        return (m_count >= value);
     }
 
     template <typename U>
     friend bool operator<(U const& value, count_timer<T>& timer)
     {
-	return (timer > value);
+        return (timer > value);
     }
 
     template <typename U>
     friend bool operator>(U const& value, count_timer<T>& timer)
     {
-	return (timer < value);
+        return (timer < value);
     }
 
     template <typename U>
     friend bool operator<=(U const& value, count_timer<T>& timer)
     {
-	return (timer >= value);
+        return (timer >= value);
     }
 
     template <typename U>
     friend bool operator>=(U const& value, count_timer<T>& timer)
     {
-	return (timer <= value);
+        return (timer <= value);
     }
 
 private:
     void handle_timer(T const& limit)
     {
-	// time() is about an order of magnitude faster than gettimeofday()
-	const time_t t = time(NULL);
+        // time() is about an order of magnitude faster than gettimeofday()
+        const time_t t = time(NULL);
 
-	if (m_start != -1 && t >= m_start) {
-	    m_timer.start();
-	    m_stop = t + I;
-	    m_start = -1;
-	    m_base = m_count;
-	}
-	else if (m_stop != -1 && t >= m_stop) {
-	    m_timer.stop();
-	    m_stop = -1;
-	    m_time = m_timer.elapsed() * (limit - m_count) / (m_count - m_base);
-	}
+        if (m_start != -1 && t >= m_start) {
+            m_timer.start();
+            m_stop = t + I;
+            m_start = -1;
+            m_base = m_count;
+        }
+        else if (m_stop != -1 && t >= m_stop) {
+            m_timer.stop();
+            m_stop = -1;
+            m_time = m_timer.elapsed() * (limit - m_count) / (m_count - m_base);
+        }
     }
 
 private:

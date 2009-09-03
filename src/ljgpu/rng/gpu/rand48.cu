@@ -46,10 +46,10 @@ __global__ void leapfrog(uint48* g_la)
 
     // fast exponentiation by squares
     for (uint k = GTID; k > 0; k >>= 1) {
-	if (k % 2 == 1) {
-	    A = muladd(x, A, 0);
-	}
-	x = muladd(x, x, 0);
+        if (k % 2 == 1) {
+            A = muladd(x, A, 0);
+        }
+        x = muladd(x, x, 0);
     }
 
     g_la[GTID] = A;
@@ -71,17 +71,17 @@ __global__ void set(uint48 const* g_la, uint48 const* g_lc, uint48 *g_a, uint48 
     const uint48 C = muladd(c, g_lc[GTID], c);
 
     if (GTID == GTDIM - 1) {
-	// store leapfrog constants
-	*g_a = A;
-	*g_c = C;
+        // store leapfrog constants
+        *g_a = A;
+        *g_c = C;
     }
 
     // default seed
     ushort3 x = make_ushort3(0x330E, 0xABCD, 0x1234);
 
     if (seed > 0) {
-	x.y = seed & 0xFFFF;
-	x.z = (seed >> 16) & 0xFFFF;
+        x.y = seed & 0xFFFF;
+        x.z = (seed >> 16) & 0xFFFF;
     }
 
     // generate initial state
@@ -99,15 +99,15 @@ __global__ void restore(uint48 const* g_la, uint48 const* g_lc, uint48 *g_a, uin
     const uint48 C = muladd(c, g_lc[GTID], c);
 
     if (GTID == GTDIM - 1) {
-	// store leapfrog constants
-	*g_a = A;
-	*g_c = C;
+        // store leapfrog constants
+        *g_a = A;
+        *g_c = C;
 
-	g_state[0] = state;
+        g_state[0] = state;
     }
     else {
-	// generate initial states
-	g_state[GTID + 1] = muladd(A, state, C);
+        // generate initial states
+        g_state[GTID + 1] = muladd(A, state, C);
     }
 }
 
@@ -117,7 +117,7 @@ __global__ void restore(uint48 const* g_la, uint48 const* g_lc, uint48 *g_a, uin
 __global__ void save(ushort3 *state)
 {
     if (GTID == 0) {
-	*state = g_state[0];
+        *state = g_state[0];
     }
 }
 
@@ -129,7 +129,7 @@ __global__ void uniform(float* v, uint len)
     ushort3 x = g_state[GTID];
 
     for (uint k = GTID; k < len; k += GTDIM) {
-	v[k] = uniform(x);
+        v[k] = uniform(x);
     }
 
     g_state[GTID] = x;
@@ -153,7 +153,7 @@ __global__ void get(uint* v, uint len)
     ushort3 x = g_state[GTID];
 
     for (uint k = GTID; k < len; k += GTDIM) {
-	v[k] = get(x);
+        v[k] = get(x);
     }
 
     g_state[GTID] = x;

@@ -39,11 +39,11 @@ __device__ __host__ inline uint boff(uint const& i)
 }
 
 extern cuda::function<void (uint const*, uint*, uint*, const uint),
-		      void (uint48 const*, uint48*, uint48*, const uint)> grid_prefix_sum;
+                      void (uint48 const*, uint48*, uint48*, const uint)> grid_prefix_sum;
 extern cuda::function<void (uint const*, uint*, uint const*, const uint),
-		      void (uint48 const*, uint48*, uint48 const*, const uint)> add_block_sums;
+                      void (uint48 const*, uint48*, uint48 const*, const uint)> add_block_sums;
 extern cuda::function<void (uint48 const*, uint48*, const uint),
-		      void (uint const*, uint*, const uint)> block_prefix_sum;
+                      void (uint const*, uint*, const uint)> block_prefix_sum;
 
 }}} // namespace ljgpu::gpu::radix_sort
 

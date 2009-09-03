@@ -52,16 +52,16 @@ public:
      */
     operator value_type*()
     {
-	void* ptr = NULL;
-	CUDA_CALL(cudaHostGetDevicePointer(&ptr, _Base::data(), 0));
-	return reinterpret_cast<value_type*>(ptr);
+        void* ptr = NULL;
+        CUDA_CALL(cudaHostGetDevicePointer(&ptr, _Base::data(), 0));
+        return reinterpret_cast<value_type*>(ptr);
     }
 
     operator value_type const*() const
     {
-	void* ptr = NULL;
-	CUDA_CALL(cudaHostGetDevicePointer(&ptr, _Base::data(), 0));
-	return reinterpret_cast<value_type const*>(ptr);
+        void* ptr = NULL;
+        CUDA_CALL(cudaHostGetDevicePointer(&ptr, _Base::data(), 0));
+        return reinterpret_cast<value_type const*>(ptr);
     }
 #endif
 };

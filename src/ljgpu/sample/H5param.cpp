@@ -27,11 +27,11 @@ namespace ljgpu
 H5param::H5param(H5::H5File file)
 {
     try {
-	H5XX_NO_AUTO_PRINT(H5::FileIException);
-	H5::Group::operator=(file.openGroup("param"));
+        H5XX_NO_AUTO_PRINT(H5::FileIException);
+        H5::Group::operator=(file.openGroup("param"));
     }
     catch (H5::FileIException const&) {
-	H5::Group::operator=(file.createGroup("param"));
+        H5::Group::operator=(file.createGroup("param"));
     }
 }
 
@@ -41,11 +41,11 @@ H5param::H5param(H5::H5File file)
 H5xx::group H5param::operator[](std::string const& name)
 {
     try {
-	H5XX_NO_AUTO_PRINT(H5::GroupIException);
-	return openGroup(name);
+        H5XX_NO_AUTO_PRINT(H5::GroupIException);
+        return openGroup(name);
     }
     catch (H5::GroupIException const&) {
-	return createGroup(name);
+        return createGroup(name);
     }
 }
 

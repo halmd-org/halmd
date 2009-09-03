@@ -38,23 +38,23 @@ class event
 private:
     struct container : boost::noncopyable
     {
-	/**
-	 * creates an event
-	 */
-	container()
-	{
-	    CUDA_CALL(cudaEventCreate(&m_event));
-	}
+        /**
+         * creates an event
+         */
+        container()
+        {
+            CUDA_CALL(cudaEventCreate(&m_event));
+        }
 
-	/**
-	 * destroys the event
-	 */
-	~container() throw() // no-throw guarantee
-	{
-	    cudaEventDestroy(m_event);
-	}
+        /**
+         * destroys the event
+         */
+        ~container() throw() // no-throw guarantee
+        {
+            cudaEventDestroy(m_event);
+        }
 
-	cudaEvent_t m_event;
+        cudaEvent_t m_event;
     };
 
 public:
@@ -70,7 +70,7 @@ public:
      */
     void record()
     {
-	CUDA_CALL(cudaEventRecord(m_event->m_event, 0));
+        CUDA_CALL(cudaEventRecord(m_event->m_event, 0));
     }
 
     /**
@@ -80,7 +80,7 @@ public:
      */
     void record(const stream& stream)
     {
-	CUDA_CALL(cudaEventRecord(m_event->m_event, stream.data()));
+        CUDA_CALL(cudaEventRecord(m_event->m_event, stream.data()));
     }
 
     /**
@@ -88,7 +88,7 @@ public:
      */
     void synchronize()
     {
-	CUDA_CALL(cudaEventSynchronize(m_event->m_event));
+        CUDA_CALL(cudaEventSynchronize(m_event->m_event));
     }
 
     /**
@@ -98,12 +98,12 @@ public:
      */
     bool query()
     {
-	cudaError_t err = cudaEventQuery(m_event->m_event);
-	if (cudaSuccess == err)
-	    return true;
-	else if (cudaErrorNotReady == err)
-	    return false;
-	CUDA_ERROR(err);
+        cudaError_t err = cudaEventQuery(m_event->m_event);
+        if (cudaSuccess == err)
+            return true;
+        else if (cudaErrorNotReady == err)
+            return false;
+        CUDA_ERROR(err);
     }
 
     /**
@@ -113,9 +113,9 @@ public:
      */
     float operator-(const event &start)
     {
-	float time;
-	CUDA_CALL(cudaEventElapsedTime(&time, start.m_event->m_event, m_event->m_event));
-	return (1.e-3f * time);
+        float time;
+        CUDA_CALL(cudaEventElapsedTime(&time, start.m_event->m_event, m_event->m_event));
+        return (1.e-3f * time);
     }
 
     /**
@@ -123,7 +123,7 @@ public:
      */
     cudaEvent_t data() const
     {
-	return m_event->m_event;
+        return m_event->m_event;
     }
 
 private:

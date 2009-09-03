@@ -146,42 +146,42 @@ private:
 
     /** system state in page-locked host memory */
     struct {
-	/** tagged periodically reduced particle positions */
-	cuda::host::vector<float4> mutable r;
-	/** periodic box traversal vectors */
-	cuda::host::vector<gpu_vector_type> mutable R;
-	/** particle velocities */
-	cuda::host::vector<gpu_vector_type> mutable v;
-	/** particle tags */
-	cuda::host::vector<unsigned int> mutable tag;
+        /** tagged periodically reduced particle positions */
+        cuda::host::vector<float4> mutable r;
+        /** periodic box traversal vectors */
+        cuda::host::vector<gpu_vector_type> mutable R;
+        /** particle velocities */
+        cuda::host::vector<gpu_vector_type> mutable v;
+        /** particle tags */
+        cuda::host::vector<unsigned int> mutable tag;
     } h_part;
 
     /** system state in global device memory */
     struct {
-	/** tagged periodically reduced particle positions */
-	cuda::vector<float4> r;
-	/** periodic box traversal vectors */
-	cuda::vector<gpu_vector_type> R;
-	/** particle velocities */
-	cuda::vector<gpu_vector_type> v;
-	/** particle forces */
-	cuda::vector<gpu_vector_type> f;
-	/** particle tags */
-	cuda::vector<unsigned int> tag;
-	/** potential energies per particle */
-	cuda::vector<float> en;
-	/** virial equation sums per particle */
-	cuda::vector<gpu_vector_type> virial;
+        /** tagged periodically reduced particle positions */
+        cuda::vector<float4> r;
+        /** periodic box traversal vectors */
+        cuda::vector<gpu_vector_type> R;
+        /** particle velocities */
+        cuda::vector<gpu_vector_type> v;
+        /** particle forces */
+        cuda::vector<gpu_vector_type> f;
+        /** particle tags */
+        cuda::vector<unsigned int> tag;
+        /** potential energies per particle */
+        cuda::vector<float> en;
+        /** virial equation sums per particle */
+        cuda::vector<gpu_vector_type> virial;
     } g_part;
 
     /** system state double buffer in global device memory */
     struct {
-	/** tagged periodically reduced particle positions */
-	cuda::vector<float4> r;
-	/** periodic box traversal vectors */
-	cuda::vector<gpu_vector_type> R;
-	/** particle velocities */
-	cuda::vector<gpu_vector_type> v;
+        /** tagged periodically reduced particle positions */
+        cuda::vector<float4> r;
+        /** periodic box traversal vectors */
+        cuda::vector<gpu_vector_type> R;
+        /** particle velocities */
+        cuda::vector<gpu_vector_type> v;
     } g_part_buf;
 
     /** velocity assignment on host */
@@ -207,7 +207,7 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::cell_occupancy(float_type value)
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
-	throw exception("number of cells per dimension must be at least 3");
+        throw exception("number of cells per dimension must be at least 3");
     }
 
     // derive cell length from number of cells
@@ -230,18 +230,18 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::cell_occupancy(float_type value)
     LOG("effective average cell occupancy: " << cell_occupancy_);
 
     if (cell_occupancy_ > 1) {
-	throw exception("average cell occupancy must not be larger than 1.0");
+        throw exception("average cell occupancy must not be larger than 1.0");
     }
     else if (cell_occupancy_ > 0.5f) {
-	LOG_WARNING("average cell occupancy is larger than 0.5");
+        LOG_WARNING("average cell occupancy is larger than 0.5");
     }
 
     try {
-	cuda::copy(ncell, _gpu::ncell);
+        cuda::copy(ncell, _gpu::ncell);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy cell parameters to device symbols");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy cell parameters to device symbols");
     }
 }
 
@@ -257,41 +257,41 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::threads(unsigned int value)
 
     // allocate page-locked host memory for cell placeholders
     try {
-	h_part.r.resize(dim_cell_.threads());
-	h_part.R.resize(dim_cell_.threads());
-	h_part.v.resize(dim_cell_.threads());
-	h_part.tag.resize(dim_cell_.threads());
-	// particle forces reside only in GPU memory
+        h_part.r.resize(dim_cell_.threads());
+        h_part.R.resize(dim_cell_.threads());
+        h_part.v.resize(dim_cell_.threads());
+        h_part.tag.resize(dim_cell_.threads());
+        // particle forces reside only in GPU memory
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate page-locked host memory cell placeholders");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate page-locked host memory cell placeholders");
     }
 
     // allocate global device memory for cell placeholders
     try {
-	g_part.r.resize(dim_cell_.threads());
-	g_part.R.resize(dim_cell_.threads());
-	g_part.v.resize(dim_cell_.threads());
-	g_part.tag.resize(dim_cell_.threads());
-	g_part.f.resize(dim_cell_.threads());
-	g_part.en.resize(dim_cell_.threads());
-	g_part.virial.resize(dim_cell_.threads());
+        g_part.r.resize(dim_cell_.threads());
+        g_part.R.resize(dim_cell_.threads());
+        g_part.v.resize(dim_cell_.threads());
+        g_part.tag.resize(dim_cell_.threads());
+        g_part.f.resize(dim_cell_.threads());
+        g_part.en.resize(dim_cell_.threads());
+        g_part.virial.resize(dim_cell_.threads());
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate global device memory cell placeholders");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate global device memory cell placeholders");
     }
 
     // allocate global device memory for double buffers
     try {
-	g_part_buf.r.resize(dim_cell_.threads());
-	g_part_buf.R.resize(dim_cell_.threads());
-	g_part_buf.v.resize(dim_cell_.threads());
+        g_part_buf.r.resize(dim_cell_.threads());
+        g_part_buf.R.resize(dim_cell_.threads());
+        g_part_buf.v.resize(dim_cell_.threads());
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate global device memory double buffers");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate global device memory double buffers");
     }
 
     h_v.resize(npart);
@@ -339,14 +339,14 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::temperature(float_type temp)
     LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
 
     try {
-	event_[0].record(stream_);
-	_Base::boltzmann(g_v, temp, stream_);
-	event_[1].record(stream_);
-	event_[1].synchronize();
+        event_[0].record(stream_);
+        _Base::boltzmann(g_v, temp, stream_);
+        event_[1].record(stream_);
+        event_[1].synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to compute Boltzmann distributed velocities on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to compute Boltzmann distributed velocities on GPU");
     }
     m_times["boltzmann"] += event_[1] - event_[0];
 
@@ -360,21 +360,21 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::stream()
     event_[1].record(stream_);
     // first leapfrog step of integration of differential equations of motion
     try {
-	velocity_verlet(stream_);
+        velocity_verlet(stream_);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to stream first leapfrog step on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to stream first leapfrog step on GPU");
     }
     event_[2].record(stream_);
 
     // maximum velocity calculation
     try {
-	reduce_v_max(g_part.v, stream_);
+        reduce_v_max(g_part.v, stream_);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to stream maximum velocity calculation on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to stream maximum velocity calculation on GPU");
     }
     event_[3].record(stream_);
     event_[3].synchronize();
@@ -383,55 +383,55 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::stream()
 
     // update cell lists
     if (v_max_sum * timestep_ > r_skin / 2) {
-	try {
-	    update_cells(stream_);
-	}
-	catch (cuda::error const& e) {
-	    LOG_ERROR("CUDA: " << e.what());
-	    throw exception("failed to stream cell list update on GPU");
-	}
-	event_[4].record(stream_);
+        try {
+            update_cells(stream_);
+        }
+        catch (cuda::error const& e) {
+            LOG_ERROR("CUDA: " << e.what());
+            throw exception("failed to stream cell list update on GPU");
+        }
+        event_[4].record(stream_);
 
-	try {
-	    copy_cells(stream_);
-	}
-	catch (cuda::error const& e) {
-	    LOG_ERROR("CUDA: " << e.what());
-	    throw exception("failed to replicate cell lists on GPU");
-	}
+        try {
+            copy_cells(stream_);
+        }
+        catch (cuda::error const& e) {
+            LOG_ERROR("CUDA: " << e.what());
+            throw exception("failed to replicate cell lists on GPU");
+        }
     }
     event_[5].record(stream_);
 
     // Lennard-Jones force calculation
     try {
-	update_forces(stream_);
+        update_forces(stream_);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to stream force calculation on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to stream force calculation on GPU");
     }
     event_[6].record(stream_);
 
     // heat bath coupling
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
-	try {
-	    _Base::boltzmann(g_v, thermostat_temp, stream_);
-	    cuda::copy(g_v, h_v, stream_);
-	}
-	catch (cuda::error const& e) {
-	    LOG_ERROR("CUDA: " << e.what());
-	    throw exception("failed to compute Boltzmann distributed velocities on GPU");
-	}
+        try {
+            _Base::boltzmann(g_v, thermostat_temp, stream_);
+            cuda::copy(g_v, h_v, stream_);
+        }
+        catch (cuda::error const& e) {
+            LOG_ERROR("CUDA: " << e.what());
+            throw exception("failed to compute Boltzmann distributed velocities on GPU");
+        }
     }
     event_[7].record(stream_);
 
     // potential energy sum calculation
     try {
-	reduce_en(g_part.en, stream_);
+        reduce_en(g_part.en, stream_);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to stream potential energy sum calculation on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to stream potential energy sum calculation on GPU");
     }
     event_[0].record(stream_);
 }
@@ -443,12 +443,12 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell, dimension>::mdstep()
 {
     try {
-	// wait for MD simulation step on GPU to finish
-	event_[0].synchronize();
+        // wait for MD simulation step on GPU to finish
+        event_[0].synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("MD simulation step on GPU failed");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("MD simulation step on GPU failed");
     }
 
     m_times["mdstep"] += event_[0] - event_[1];
@@ -456,28 +456,28 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::mdstep()
     m_times["maximum_velocity"] += event_[3] - event_[2];
 
     if (v_max_sum * timestep_ > r_skin / 2) {
-	// reset sum over maximum velocity magnitudes to zero
-	v_max_sum = 0;
+        // reset sum over maximum velocity magnitudes to zero
+        v_max_sum = 0;
 
-	m_times["update_cells"] += event_[4] - event_[3];
-	m_times["memcpy_cells"] += event_[5] - event_[4];
+        m_times["update_cells"] += event_[4] - event_[3];
+        m_times["memcpy_cells"] += event_[5] - event_[4];
     }
 
     m_times["update_forces"] += event_[6] - event_[5];
 
     if (thermostat_steps && thermostat_count > thermostat_steps) {
-	// assign Boltzmann velocities to placeholders
-	assign_velocities(h_v);
-	// reset MD steps since last heatbath coupling
-	thermostat_count = 0;
-	// GPU time for Maxwell-Boltzmann distribution
-	m_times["boltzmann"] += event_[7] - event_[6];
+        // assign Boltzmann velocities to placeholders
+        assign_velocities(h_v);
+        // reset MD steps since last heatbath coupling
+        thermostat_count = 0;
+        // GPU time for Maxwell-Boltzmann distribution
+        m_times["boltzmann"] += event_[7] - event_[6];
     }
 
     m_times["potential_energy"] += event_[0] - event_[7];
 
     if (!std::isfinite(reduce_en.value())) {
-	throw potential_energy_divergence();
+        throw potential_energy_divergence();
     }
 }
 
@@ -494,40 +494,40 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::sample(host_sample_type& sample)
     static cuda::stream stream;
 
     try {
-	ev0.record(stream);
-	cuda::copy(g_part.r, h_part.r, stream);
-	cuda::copy(g_part.R, h_part.R, stream);
-	cuda::copy(g_part.v, h_part.v, stream);
-	cuda::copy(g_part.tag, h_part.tag, stream);
-	ev1.record(stream);
-	ev1.synchronize();
+        ev0.record(stream);
+        cuda::copy(g_part.r, h_part.r, stream);
+        cuda::copy(g_part.R, h_part.R, stream);
+        cuda::copy(g_part.v, h_part.v, stream);
+        cuda::copy(g_part.tag, h_part.tag, stream);
+        ev1.record(stream);
+        ev1.synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy MD simulation step results from GPU to host");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy MD simulation step results from GPU to host");
     }
     m_times["sample_memcpy"] += ev1 - ev0;
 
     // allocate memory for phase space sample
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
-	position_sample_ptr r(new position_sample_vector(mpart[i]));
-	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
-	sample.push_back(sample_type(r, v));
+        position_sample_ptr r(new position_sample_vector(mpart[i]));
+        velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
+        sample.push_back(sample_type(r, v));
     }
 
     // copy particle positions and velocities in binary mixture
     size_t count = 0;
     for (size_t i = 0, tag; i < h_part.tag.size(); ++i) {
-	if ((tag = h_part.tag[i]) != gpu::VIRTUAL_PARTICLE) {
-	    unsigned int const type = (tag >= mpart[0]);
-	    unsigned int const n = type ? (tag - mpart[0]) : tag;
-	    (*sample[type].r)[n] = h_part.r[i] + box_ * static_cast<vector_type>(h_part.R[i]);
-	    (*sample[type].v)[n] = h_part.v[i];
-	    count++;
-	}
+        if ((tag = h_part.tag[i]) != gpu::VIRTUAL_PARTICLE) {
+            unsigned int const type = (tag >= mpart[0]);
+            unsigned int const n = type ? (tag - mpart[0]) : tag;
+            (*sample[type].r)[n] = h_part.r[i] + box_ * static_cast<vector_type>(h_part.R[i]);
+            (*sample[type].v)[n] = h_part.v[i];
+            count++;
+        }
     }
     if (count != npart) {
-	throw exception("particle loss while updating cell lists");
+        throw exception("particle loss while updating cell lists");
     }
 }
 
@@ -542,51 +542,51 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::sample(energy_sample_type& sampl
 
     // virial tensor trace and off-diagonal elements for particle species
     try {
-	ev0.record(stream);
-	if (mixture_ == BINARY) {
-	    reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream);
-	}
-	else {
-	    reduce_virial(g_part.virial, g_part.v, stream);
-	}
-	ev1.record(stream);
-	ev1.synchronize();
-	m_times["virial_sum"] += ev1 - ev0;
+        ev0.record(stream);
+        if (mixture_ == BINARY) {
+            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream);
+        }
+        else {
+            reduce_virial(g_part.virial, g_part.v, stream);
+        }
+        ev1.record(stream);
+        ev1.synchronize();
+        m_times["virial_sum"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to calculate virial equation sum on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to calculate virial equation sum on GPU");
     }
     sample.virial = reduce_virial.value();
     for (size_t i = 0; i < sample.virial.size(); ++i) {
-	sample.virial[i] /= mpart[i];
+        sample.virial[i] /= mpart[i];
     }
 
     // mean squared velocity per particle
     try {
-	ev0.record(stream);
-	reduce_squared_velocity(g_part.v, stream);
-	ev1.record(stream);
-	ev1.synchronize();
-	m_times["reduce_squared_velocity"] += ev1 - ev0;
+        ev0.record(stream);
+        reduce_squared_velocity(g_part.v, stream);
+        ev1.record(stream);
+        ev1.synchronize();
+        m_times["reduce_squared_velocity"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to calculate mean squared velocity on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to calculate mean squared velocity on GPU");
     }
     sample.vv = reduce_squared_velocity.value() / npart;
 
     // mean velocity per particle
     try {
-	ev0.record(stream);
-	reduce_velocity(g_part.v, stream);
-	ev1.record(stream);
-	ev1.synchronize();
-	m_times["reduce_velocity"] += ev1 - ev0;
+        ev0.record(stream);
+        reduce_velocity(g_part.v, stream);
+        ev1.record(stream);
+        ev1.synchronize();
+        m_times["reduce_velocity"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to calculate mean velocity on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to calculate mean velocity on GPU");
     }
     sample.v_cm = reduce_velocity.value() / npart;
 }
@@ -598,26 +598,26 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::assign_positions(cuda::vector<fl
     _Base::init_tags(g_r, g_part.tag);
 
     try {
-	// assign particles to cells
-	event_[0].record(stream_);
-	cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
-	_gpu::assign_cells(g_r, g_part.r, g_part.tag);
-	event_[1].record(stream_);
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
-	// copy particles tags from GPU to host
-	cuda::copy(g_part.tag, h_part.tag, stream_);
-	// calculate forces, potential energy and virial equation sum
-	update_forces(stream_);
-	// potential energy sum calculation
-	reduce_en(g_part.en, stream_);
+        // assign particles to cells
+        event_[0].record(stream_);
+        cuda::configure(dim_cell_.grid, dim_cell_.block, stream_);
+        _gpu::assign_cells(g_r, g_part.r, g_part.tag);
+        event_[1].record(stream_);
+        // set periodic box traversal vectors to zero
+        cuda::memset(g_part.R, 0);
+        // copy particles tags from GPU to host
+        cuda::copy(g_part.tag, h_part.tag, stream_);
+        // calculate forces, potential energy and virial equation sum
+        update_forces(stream_);
+        // potential energy sum calculation
+        reduce_en(g_part.en, stream_);
 
-	// wait for CUDA operations to finish
-	stream_.synchronize();
+        // wait for CUDA operations to finish
+        stream_.synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to assign positions to cell placeholders");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to assign positions to cell placeholders");
     }
     m_times["init_cells"] += event_[1] - event_[0];
 
@@ -634,18 +634,18 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::assign_velocities(cuda::host::ve
     std::fill(h_part.v.begin(), h_part.v.end(), vector_type(0));
     // assign particle velocities to cell placeholders
     for (tag = h_part.tag.begin(), v = h_part.v.begin(); tag != h_part.tag.end(); ++tag, ++v) {
-	if (*tag != gpu::VIRTUAL_PARTICLE) {
-	    *v = h_v[*tag];
-	}
+        if (*tag != gpu::VIRTUAL_PARTICLE) {
+            *v = h_v[*tag];
+        }
     }
 
     try {
-	cuda::copy(h_part.v, g_part.v, stream_);
-	stream_.synchronize();
+        cuda::copy(h_part.v, g_part.v, stream_);
+        stream_.synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to assign velocities to cell placeholders");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to assign velocities to cell placeholders");
     }
 }
 

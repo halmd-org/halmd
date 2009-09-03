@@ -110,40 +110,40 @@ void correlation<dimension>::block_size(unsigned int value)
     m_block_shift = static_cast<unsigned int>(std::sqrt(m_block_size));
     LOG("block shift: " << m_block_shift);
     if (m_block_shift < 2) {
-	throw exception("computed block shift is less than 2, larger block size required");
+        throw exception("computed block shift is less than 2, larger block size required");
     }
 
     // derive block count and sample frequencies from block size and block shift
     m_block_count = 0;
     m_trajectory_block = 0;
     for (uint64_t n = m_sample_rate, m = n * m_block_shift; ; ++m_block_count) {
-	if (m_block_count % 2) {
-	    if ((m_steps / m) >= m_min_samples) {
-		++m_trajectory_block;
-	    }
-	    if (m > m_steps) {
-		break;
-	    }
-	    m_block_freq.push_back(m);
-	    m *= m_block_size;
-	}
-	else {
-	    if ((m_steps / n) >= m_min_samples) {
-		++m_trajectory_block;
-	    }
-	    if (n > m_steps) {
-		break;
-	    }
-	    m_block_freq.push_back(n);
-	    n *= m_block_size;
-	}
+        if (m_block_count % 2) {
+            if ((m_steps / m) >= m_min_samples) {
+                ++m_trajectory_block;
+            }
+            if (m > m_steps) {
+                break;
+            }
+            m_block_freq.push_back(m);
+            m *= m_block_size;
+        }
+        else {
+            if ((m_steps / n) >= m_min_samples) {
+                ++m_trajectory_block;
+            }
+            if (n > m_steps) {
+                break;
+            }
+            m_block_freq.push_back(n);
+            n *= m_block_size;
+        }
     }
     LOG("block count: " << m_block_count);
     if (!m_block_count) {
-	throw exception("computed block count is zero, more simulations steps required");
+        throw exception("computed block count is zero, more simulations steps required");
     }
     if (!m_trajectory_block) {
-	LOG_WARNING("minimum number of trajectory samples not satisfied");
+        LOG_WARNING("minimum number of trajectory samples not satisfied");
     }
     // convert trajectory block count to block level
     m_trajectory_block = std::max(m_trajectory_block, 1U) - 1;
@@ -154,13 +154,13 @@ void correlation<dimension>::block_size(unsigned int value)
     // compute block time intervals
     m_block_time.resize(boost::extents[m_block_count][m_block_size]);
     for (unsigned int i = 0; i < m_block_count; ++i) {
-	for (unsigned int j = 0; j < m_block_size; ++j) {
-	    m_block_time[i][j] = m_timestep * m_sample_rate * pow(m_block_size, i / 2) * j;
-	    // shifted block
-	    if (i % 2) {
-		m_block_time[i][j] *= m_block_shift;
-	    }
-	}
+        for (unsigned int j = 0; j < m_block_size; ++j) {
+            m_block_time[i][j] = m_timestep * m_sample_rate * pow(m_block_size, i / 2) * j;
+            // shifted block
+            if (i % 2) {
+                m_block_time[i][j] *= m_block_shift;
+            }
+        }
     }
 }
 
@@ -182,25 +182,25 @@ void correlation<dimension>::q_values(std::vector<float> const& values, float er
     int q_max = 0;
 
     for (size_t i = 0; i < values.size(); ++i) {
-	// adjust q-value to reciprocal lattice
-	m_q_value[i] = round(values[i] / q_lattice);
-	// upper and lower boundaries within given error
-	int q_upper = static_cast<int>(std::floor(m_q_value[i] * (1 + m_q_error)));
-	int q_lower = static_cast<int>(std::ceil(m_q_value[i] * (1 - m_q_error)));
+        // adjust q-value to reciprocal lattice
+        m_q_value[i] = round(values[i] / q_lattice);
+        // upper and lower boundaries within given error
+        int q_upper = static_cast<int>(std::floor(m_q_value[i] * (1 + m_q_error)));
+        int q_lower = static_cast<int>(std::ceil(m_q_value[i] * (1 - m_q_error)));
 
-	qq.push_back(q_pair(q_lower * q_lower, q_upper * q_upper));
-	q_max = std::max(q_max, q_upper);
+        qq.push_back(q_pair(q_lower * q_lower, q_upper * q_upper));
+        q_max = std::max(q_max, q_upper);
     }
 
     find_q_vectors(qq, q_max, m_q_vector);
 
     for (size_t i = 0; i < values.size(); ++i) {
-	foreach(vector_type& q, m_q_vector[i]) {
-	    q *= q_lattice;
-	}
-	m_q_value[i] *= q_lattice;
+        foreach(vector_type& q, m_q_vector[i]) {
+            q *= q_lattice;
+        }
+        m_q_value[i] *= q_lattice;
 
-	LOG("|q| = " << m_q_value[i] << " with " << m_q_vector[i].size() << " vectors");
+        LOG("|q| = " << m_q_value[i] << " with " << m_q_vector[i].size() << " vectors");
     }
 }
 
@@ -210,12 +210,12 @@ void correlation<dimension>::add_gpu_correlation_functions(size_t types)
 {
     LOG("computing correlation functions on GPU");
     for (size_t type = 0; type < types; ++type) {
-	tcf_vector tcf_;
-	boost::mpl::for_each<tcf_gpu_types>(boost::bind(&tcf_vector::push_back, boost::ref(tcf_), _1));
-	foreach (tcf_variant& tcf, tcf_) {
-	    boost::apply_visitor(tcf_set_type(type), tcf);
-	}
-	m_tcf.insert(m_tcf.end(), tcf_.begin(), tcf_.end());
+        tcf_vector tcf_;
+        boost::mpl::for_each<tcf_gpu_types>(boost::bind(&tcf_vector::push_back, boost::ref(tcf_), _1));
+        foreach (tcf_variant& tcf, tcf_) {
+            boost::apply_visitor(tcf_set_type(type), tcf);
+        }
+        m_tcf.insert(m_tcf.end(), tcf_.begin(), tcf_.end());
     }
     m_block.resize(m_block_count, gpu_block_type(m_block_size));
     m_sample = gpu_sample_type();
@@ -227,12 +227,12 @@ void correlation<dimension>::add_host_correlation_functions(size_t types)
 {
     LOG("computing correlation functions on host");
     for (size_t type = 0; type < types; ++type) {
-	tcf_vector tcf_;
-	boost::mpl::for_each<tcf_host_types>(boost::bind(&tcf_vector::push_back, boost::ref(tcf_), _1));
-	foreach (tcf_variant& tcf, tcf_) {
-	    boost::apply_visitor(tcf_set_type(type), tcf);
-	}
-	m_tcf.insert(m_tcf.end(), tcf_.begin(), tcf_.end());
+        tcf_vector tcf_;
+        boost::mpl::for_each<tcf_host_types>(boost::bind(&tcf_vector::push_back, boost::ref(tcf_), _1));
+        foreach (tcf_variant& tcf, tcf_) {
+            boost::apply_visitor(tcf_set_type(type), tcf);
+        }
+        m_tcf.insert(m_tcf.end(), tcf_.begin(), tcf_.end());
     }
     m_block.resize(m_block_count, host_block_type(m_block_size));
     m_sample = host_sample_type();
@@ -246,30 +246,30 @@ void correlation<dimension>::open(std::string const& filename, size_t types)
 {
     LOG("write correlations to file: " << filename);
     try {
-	// truncate existing file
-	m_file = H5::H5File(filename, H5F_ACC_TRUNC);
-	m_is_open = true;
+        // truncate existing file
+        m_file = H5::H5File(filename, H5F_ACC_TRUNC);
+        m_is_open = true;
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to create HDF5 correlations output file");
+        throw exception("failed to create HDF5 correlations output file");
     }
 
     try {
-	foreach (tcf_variant& tcf, m_tcf) {
-	    boost::apply_visitor(tcf_allocate_results(m_block_count, m_block_size, m_q_value.size()), tcf);
-	}
+        foreach (tcf_variant& tcf, m_tcf) {
+            boost::apply_visitor(tcf_allocate_results(m_block_count, m_block_size, m_q_value.size()), tcf);
+        }
     }
     catch (std::bad_alloc const& e) {
-	throw exception("failed to allocate correlation functions results");
+        throw exception("failed to allocate correlation functions results");
     }
 
     try {
-	foreach (tcf_variant& tcf, m_tcf) {
-	    boost::apply_visitor(tcf_create_dataset(m_file, types), tcf);
-	}
+        foreach (tcf_variant& tcf, m_tcf) {
+            boost::apply_visitor(tcf_create_dataset(m_file, types), tcf);
+        }
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to create correlation function datasets");
+        throw exception("failed to create correlation function datasets");
     }
 }
 
@@ -281,21 +281,21 @@ void correlation<dimension>::close()
 {
     // compute higher block correlations for remaining samples
     for (unsigned int i = 2; i < m_block_count; ++i) {
-	while (boost::apply_visitor(tcf_block_size(), m_block[i]) > 2) {
-	    boost::apply_visitor(tcf_block_pop_front(), m_block[i]);
-	    autocorrelate_block(i);
-	}
+        while (boost::apply_visitor(tcf_block_size(), m_block[i]) > 2) {
+            boost::apply_visitor(tcf_block_pop_front(), m_block[i]);
+            autocorrelate_block(i);
+        }
     }
 
     // write correlation function results to HDF5 file
     flush();
 
     try {
-	m_file.close();
-	m_is_open = false;
+        m_file.close();
+        m_is_open = false;
     }
     catch (H5::Exception const& e) {
-	throw exception("failed to close HDF5 correlations output file");
+        throw exception("failed to close HDF5 correlations output file");
     }
 }
 
@@ -318,12 +318,12 @@ void correlation<dimension>::param(H5param& param) const
     std::vector<uint64_t>::const_iterator it(m_max_samples.end());
     while (it != m_max_samples.begin() && *(it - 1) == std::numeric_limits<uint64_t>::max()) --it;
     if (it != m_max_samples.begin()) {
-	node["max_samples"] = std::vector<uint64_t>(m_max_samples.begin(), it);
+        node["max_samples"] = std::vector<uint64_t>(m_max_samples.begin(), it);
     }
 
     if (!m_q_value.empty()) {
-	node["q_values"] = m_q_value;
-	node["q_error"] = m_q_error;
+        node["q_values"] = m_q_value;
+        node["q_error"] = m_q_error;
     }
 }
 
@@ -337,18 +337,18 @@ correlation<dimension>::find_q_vectors(std::vector<std::pair<int, int> > const& 
 {
     // FIXME fast algorithm for lattice points on surface of Ewald's sphere
     for (int x = 0; x <= q_max; ++x) {
-	int xx = x * x;
-	for (int y = 0; y <= q_max; ++y) {
-	    int yy = xx + y * y;
-	    for (int z = 0; z <= q_max; ++z) {
-		int zz = yy + z * z;
-		for (size_t i = 0; i < qq.size(); ++i) {
-		    if (zz >= qq[i].first && zz <= qq[i].second) {
-			q[i].push_back(vector_type(x, y, z));
-		    }
-		}
-	    }
-	}
+        int xx = x * x;
+        for (int y = 0; y <= q_max; ++y) {
+            int yy = xx + y * y;
+            for (int z = 0; z <= q_max; ++z) {
+                int zz = yy + z * z;
+                for (size_t i = 0; i < qq.size(); ++i) {
+                    if (zz >= qq[i].first && zz <= qq[i].second) {
+                        q[i].push_back(vector_type(x, y, z));
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -362,15 +362,15 @@ correlation<dimension>::find_q_vectors(std::vector<std::pair<int, int> > const& 
 {
     // FIXME fast algorithm for lattice points on surface of Ewald's sphere
     for (int x = 0; x <= q_max; ++x) {
-	int xx = x * x;
-	for (int y = 0; y <= q_max; ++y) {
-	    int yy = xx + y * y;
-	    for (size_t i = 0; i < qq.size(); ++i) {
-		if (yy >= qq[i].first && yy <= qq[i].second) {
-		    q[i].push_back(vector_type(x, y));
-		}
-	    }
-	}
+        int xx = x * x;
+        for (int y = 0; y <= q_max; ++y) {
+            int yy = xx + y * y;
+            for (size_t i = 0; i < qq.size(); ++i) {
+                if (yy >= qq[i].first && yy <= qq[i].second) {
+                    q[i].push_back(vector_type(x, y));
+                }
+            }
+        }
     }
 }
 
@@ -381,7 +381,7 @@ template <int dimension>
 void correlation<dimension>::autocorrelate_block(unsigned int n)
 {
     foreach (tcf_variant& tcf, m_tcf) {
-	boost::apply_visitor(tcf_correlate_block(n, m_q_vector), tcf, m_block[n]);
+        boost::apply_visitor(tcf_correlate_block(n, m_q_vector), tcf, m_block[n]);
     }
 }
 
@@ -394,27 +394,27 @@ void correlation<dimension>::flush()
     // find highest block with adequate number of samples
     unsigned int max_blocks = 0;
     for (; max_blocks < m_block_count; ++max_blocks) {
-	if (m_block_samples[max_blocks] < 2)
-	    break;
+        if (m_block_samples[max_blocks] < 2)
+            break;
     }
     if (max_blocks < 1)
-	return;
+        return;
 
     try {
-	foreach (tcf_variant& tcf, m_tcf) {
-	    boost::apply_visitor(tcf_write_results(m_block_time, m_q_value, max_blocks), tcf);
-	}
+        foreach (tcf_variant& tcf, m_tcf) {
+            boost::apply_visitor(tcf_write_results(m_block_time, m_q_value, max_blocks), tcf);
+        }
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to write correlation function results");
+        throw exception("failed to write correlation function results");
     }
 
     try {
-	// flush file contents to disk
-	m_file.flush(H5F_SCOPE_GLOBAL);
+        // flush file contents to disk
+        m_file.flush(H5F_SCOPE_GLOBAL);
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to flush HDF5 correlations file");
+        throw exception("failed to flush HDF5 correlations file");
     }
 }
 

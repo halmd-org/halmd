@@ -206,29 +206,29 @@ void correlation<dimension>::sample(trajectory_sample_variant const& sample_, en
     boost::apply_visitor(tcf_sample_virial(en_.virial), sample);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
-	if (m_block_samples[i] >= m_max_samples[i])
-	    continue;
-	if (step % m_block_freq[i])
-	    continue;
+        if (m_block_samples[i] >= m_max_samples[i])
+            continue;
+        if (step % m_block_freq[i])
+            continue;
 
-	boost::apply_visitor(tcf_block_add_sample(), m_block[i], sample);
+        boost::apply_visitor(tcf_block_add_sample(), m_block[i], sample);
 
-	if (boost::apply_visitor(tcf_block_is_full(), m_block[i])) {
-	    autocorrelate_block(i);
-	    if (i < 2) {
-		// sample only full blocks in lowest levels to account for strong correlations
-		boost::apply_visitor(tcf_block_clear(), m_block[i]);
-	    }
-	    m_block_samples[i]++;
+        if (boost::apply_visitor(tcf_block_is_full(), m_block[i])) {
+            autocorrelate_block(i);
+            if (i < 2) {
+                // sample only full blocks in lowest levels to account for strong correlations
+                boost::apply_visitor(tcf_block_clear(), m_block[i]);
+            }
+            m_block_samples[i]++;
 
-	    if (m_max_samples[i] == m_block_samples[i]) {
-		LOG("finished sampling on block level " << i << " at step " << step);
-		// free block samples memory
-		boost::apply_visitor(tcf_block_clear(), m_block[i]);
-		// trigger global write of partial results to disk
-		flush = true;
-	    }
-	}
+            if (m_max_samples[i] == m_block_samples[i]) {
+                LOG("finished sampling on block level " << i << " at step " << step);
+                // free block samples memory
+                boost::apply_visitor(tcf_block_clear(), m_block[i]);
+                // trigger global write of partial results to disk
+                flush = true;
+            }
+        }
     }
 }
 
@@ -239,9 +239,9 @@ template <int dimension>
 bool correlation<dimension>::is_sample_step(uint64_t step) const
 {
     for (unsigned int i = 0; i < m_block_count; ++i) {
-	if ((m_block_samples[i] < m_max_samples[i]) && !(step % m_block_freq[i])) {
-	    return true;
-	}
+        if ((m_block_samples[i] < m_max_samples[i]) && !(step % m_block_freq[i])) {
+            return true;
+        }
     }
     return false;
 }

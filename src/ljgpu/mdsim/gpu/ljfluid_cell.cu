@@ -87,12 +87,12 @@ __device__ uint compute_neighbour_cell(int2 const& offset)
  * compute forces with particles in a neighbour cell
  */
 template <bool same_cell,
-	  mixture_type mixture,
-	  potential_type potential,
-	  typename I, typename T, typename U, typename V>
+          mixture_type mixture,
+          potential_type potential,
+          typename I, typename T, typename U, typename V>
 __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
-				    T const& r, unsigned int const tag, U& f,
-				    float& en, V& virial)
+                                    T const& r, unsigned int const tag, U& f,
+                                    float& en, V& virial)
 {
     __shared__ T s_r[CELL_SIZE];
     __shared__ unsigned int s_tag[CELL_SIZE];
@@ -112,15 +112,15 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
     int const a = (tag >= mpart[0]);
 
     for (uint i = 0; i < CELL_SIZE; ++i) {
-	// skip placeholder particles
-	if (s_tag[i] == VIRTUAL_PARTICLE) break;
-	// skip same particle
-	if (same_cell && threadIdx.x == i) continue;
+        // skip placeholder particles
+        if (s_tag[i] == VIRTUAL_PARTICLE) break;
+        // skip same particle
+        if (same_cell && threadIdx.x == i) continue;
 
-	// particle type in binary mixture
-	int const b = (s_tag[i] >= mpart[0]);
+        // particle type in binary mixture
+        int const b = (s_tag[i] >= mpart[0]);
 
-	compute_force<mixture, potential>(r, s_r[i], f, en, virial, a + b);
+        compute_force<mixture, potential>(r, s_r[i], f, en, virial, a + b);
     }
 }
 
@@ -128,9 +128,9 @@ __device__ void compute_cell_forces(float4 const* g_r, I const& offset,
  * 3-dimensional MD simulation step
  */
 template <typename vector_type,
-	  mixture_type mixture,
-	  potential_type potential,
-	  typename T>
+          mixture_type mixture,
+          potential_type potential,
+          typename T>
 __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_virial)
 {
     enum { dimension = vector_type::static_size };
@@ -186,67 +186,67 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     //
 
     if (dimension == 3) {
-	// sum forces over this cell
-	compute_cell_forces<true, mixture, potential>(g_r, make_int3( 0,  0,  0), r, tag, f, en, virial);
-	// sum forces over 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, -1, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, +1, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, -1, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, +1, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, +1, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, -1, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, -1, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, +1, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, -1,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, +1,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, +1,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, -1,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1,  0, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1,  0, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1,  0, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1,  0, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, -1, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, +1, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, -1, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, +1, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1,  0,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1,  0,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, -1,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, +1,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0,  0, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0,  0, +1), r, tag, f, en, virial);
+        // sum forces over this cell
+        compute_cell_forces<true, mixture, potential>(g_r, make_int3( 0,  0,  0), r, tag, f, en, virial);
+        // sum forces over 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, -1, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, +1, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, -1, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, +1, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, +1, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, -1, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, -1, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, +1, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, -1,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, +1,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1, +1,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1, -1,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1,  0, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1,  0, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1,  0, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1,  0, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, -1, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, +1, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, -1, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, +1, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(-1,  0,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3(+1,  0,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, -1,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0, +1,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0,  0, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int3( 0,  0, +1), r, tag, f, en, virial);
     }
     else {
-	// sum forces over this cell
-	compute_cell_forces<true, mixture, potential>(g_r, make_int2( 0,  0), r, tag, f, en, virial);
-	// sum forces over 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-	compute_cell_forces<false, mixture, potential>(g_r, make_int2(-1, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int2(+1, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int2(-1, +1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int2(+1, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int2(-1,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int2(+1,  0), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int2( 0, -1), r, tag, f, en, virial);
-	compute_cell_forces<false, mixture, potential>(g_r, make_int2( 0, +1), r, tag, f, en, virial);
+        // sum forces over this cell
+        compute_cell_forces<true, mixture, potential>(g_r, make_int2( 0,  0), r, tag, f, en, virial);
+        // sum forces over 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
+        compute_cell_forces<false, mixture, potential>(g_r, make_int2(-1, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int2(+1, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int2(-1, +1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int2(+1, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int2(-1,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int2(+1,  0), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int2( 0, -1), r, tag, f, en, virial);
+        compute_cell_forces<false, mixture, potential>(g_r, make_int2( 0, +1), r, tag, f, en, virial);
     }
 
 #else /* ! USE_CELL_SUMMATION_ORDER */
     if (dimension == 3) {
-	compute_cell_forces<true, mixture, potential>(g_r, make_int3( 0,  0,  0), r, tag, f, en, virial);
-	// visit 26 neighbour cells
-	for (int x = -1; x <= 1; ++x)
-	    for (int y = -1; y <= 1; ++y)
-		for (int z = -1; z <= 1; ++z)
-		    if (x != 0 || y != 0 || z != 0)
-			compute_cell_forces<false, mixture, potential>(g_r, make_int3(x,  y,  z), r, tag, f, en, virial);
+        compute_cell_forces<true, mixture, potential>(g_r, make_int3( 0,  0,  0), r, tag, f, en, virial);
+        // visit 26 neighbour cells
+        for (int x = -1; x <= 1; ++x)
+            for (int y = -1; y <= 1; ++y)
+                for (int z = -1; z <= 1; ++z)
+                    if (x != 0 || y != 0 || z != 0)
+                        compute_cell_forces<false, mixture, potential>(g_r, make_int3(x,  y,  z), r, tag, f, en, virial);
     }
     else {
-	compute_cell_forces<true, mixture, potential>(g_r, make_int2( 0,  0), r, tag, f, en, virial);
-	// visit 8 neighbour cells
-	for (int x = -1; x <= 1; ++x)
-	    for (int y = -1; y <= 1; ++y)
-		if (x != 0 || y != 0)
-		    compute_cell_forces<false, mixture, potential>(g_r, make_int2(x, y), r, tag, f, en, virial);
+        compute_cell_forces<true, mixture, potential>(g_r, make_int2( 0,  0), r, tag, f, en, virial);
+        // visit 8 neighbour cells
+        for (int x = -1; x <= 1; ++x)
+            for (int y = -1; y <= 1; ++y)
+                if (x != 0 || y != 0)
+                    compute_cell_forces<false, mixture, potential>(g_r, make_int2(x, y), r, tag, f, en, virial);
     }
 #endif /* USE_CELL_SUMMATION_ORDER */
 
@@ -255,10 +255,10 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
 
     // zero values for virtual particles to allow parallel reduction
     if (tag == VIRTUAL_PARTICLE) {
-	v = 0;
-	f = 0;
-	en = 0;
-	virial = 0;
+        v = 0;
+        f = 0;
+        en = 0;
+        virial = 0;
     }
 
     // store particle associated with this thread
@@ -287,25 +287,25 @@ __global__ void assign_cells(float4 const* g_ir, float4* g_or, unsigned int* g_o
     __syncthreads();
 
     for (uint i = 0; i < npart; i += CELL_SIZE) {
-	// load block of particles from global device memory
-	T r = detach_particle_tag(g_ir[i + threadIdx.x], s_itag[threadIdx.x]);
-	s_ir[threadIdx.x] = r;
-	s_cell[threadIdx.x] = compute_cell(r);
-	__syncthreads();
+        // load block of particles from global device memory
+        T r = detach_particle_tag(g_ir[i + threadIdx.x], s_itag[threadIdx.x]);
+        s_ir[threadIdx.x] = r;
+        s_cell[threadIdx.x] = compute_cell(r);
+        __syncthreads();
 
-	if (threadIdx.x == 0) {
-	    for (uint j = 0; j < CELL_SIZE && (i + j) < npart; j++) {
-		if (s_cell[j] == BID) {
-		    // store particle in cell
-		    s_or[n] = s_ir[j];
-		    // store particle tag
-		    s_otag[n] = s_itag[j];
-		    // increment particle count in cell
-		    ++n;
-		}
-	    }
-	}
-	__syncthreads();
+        if (threadIdx.x == 0) {
+            for (uint j = 0; j < CELL_SIZE && (i + j) < npart; j++) {
+                if (s_cell[j] == BID) {
+                    // store particle in cell
+                    s_or[n] = s_ir[j];
+                    // store particle tag
+                    s_otag[n] = s_itag[j];
+                    // increment particle count in cell
+                    ++n;
+                }
+            }
+        }
+        __syncthreads();
     }
 
     // store cell in global device memory
@@ -341,21 +341,21 @@ __device__ void examine_cell(I const& offset, float4 const* g_ir, U const* g_iR,
     __syncthreads();
 
     if (threadIdx.x == 0) {
-	for (uint j = 0; j < CELL_SIZE; j++) {
-	    // skip virtual particles
-	    if (s_itag[j] == VIRTUAL_PARTICLE) break;
+        for (uint j = 0; j < CELL_SIZE; j++) {
+            // skip virtual particles
+            if (s_itag[j] == VIRTUAL_PARTICLE) break;
 
-	    // if particle belongs to this cell
-	    if (s_cell[j] == BID && npart < CELL_SIZE) {
-		// store particle in cell
-		s_or[npart] = s_ir[j];
-		s_oR[npart] = s_iR[j];
-		s_ov[npart] = s_iv[j];
-		s_otag[npart] = s_itag[j];
-		// increment particle count in cell
-		++npart;
-	    }
-	}
+            // if particle belongs to this cell
+            if (s_cell[j] == BID && npart < CELL_SIZE) {
+                // store particle in cell
+                s_or[npart] = s_ir[j];
+                s_oR[npart] = s_iR[j];
+                s_ov[npart] = s_iv[j];
+                s_otag[npart] = s_itag[j];
+                // increment particle count in cell
+                ++npart;
+            }
+        }
     }
 }
 
@@ -379,46 +379,46 @@ __global__ void update_cells(float4 const* g_ir, U const* g_iR, U const* g_iv, f
     __syncthreads();
 
     if (dimension == 3) {
-	examine_cell(make_int3( 0,  0,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	// visit 26 neighbour cells
-	examine_cell(make_int3(-1,  0,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1,  0,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3( 0, -1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3( 0, +1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(-1, -1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(-1, +1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1, -1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1, +1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3( 0,  0, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(-1,  0, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1,  0, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3( 0, -1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3( 0, +1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(-1, -1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(-1, +1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1, -1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1, +1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3( 0,  0, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(-1,  0, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1,  0, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3( 0, -1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3( 0, +1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(-1, -1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(-1, +1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1, -1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int3(+1, +1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0,  0,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        // visit 26 neighbour cells
+        examine_cell(make_int3(-1,  0,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1,  0,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0, -1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0, +1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(-1, -1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(-1, +1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1, -1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1, +1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0,  0, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(-1,  0, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1,  0, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0, -1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0, +1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(-1, -1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(-1, +1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1, -1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1, +1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0,  0, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(-1,  0, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1,  0, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0, -1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3( 0, +1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(-1, -1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(-1, +1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1, -1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int3(+1, +1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
     }
     else {
-	examine_cell(make_int2( 0,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	// visit 8 neighbour cells
-	examine_cell(make_int2(-1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int2(+1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int2( 0, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int2( 0, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int2(-1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int2(-1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int2(+1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
-	examine_cell(make_int2(+1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int2( 0,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        // visit 8 neighbour cells
+        examine_cell(make_int2(-1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int2(+1,  0), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int2( 0, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int2( 0, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int2(-1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int2(-1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int2(+1, -1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
+        examine_cell(make_int2(+1, +1), g_ir, g_iR, g_iv, s_or, s_oR, s_ov, s_otag, n);
     }
 
     // store cell in global device memory

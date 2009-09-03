@@ -58,36 +58,36 @@ __device__ T grid_prefix_sum(T const* g_in, T* g_out, const uint count)
 
     // up-sweep phase from leaves to root of binary tree
     for (uint d = threads, n = 1; d > 0; d >>= 1, n <<= 1) {
-	if (tid < d) {
-	    s_array[boff(n * (2 * tid + 2) - 1)] += s_array[boff(n * (2 * tid + 1) - 1)];
-	}
-	__syncthreads();
+        if (tid < d) {
+            s_array[boff(n * (2 * tid + 2) - 1)] += s_array[boff(n * (2 * tid + 1) - 1)];
+        }
+        __syncthreads();
     }
 
     if (tid == 0) {
-	// set last element to zero for down-sweep phase
-	swap(s_array[boff(2 * threads - 1)], block_sum);
+        // set last element to zero for down-sweep phase
+        swap(s_array[boff(2 * threads - 1)], block_sum);
     }
     __syncthreads();
 
     // down-sweep phase from root to leaves of binary tree
     for (uint d = 1, n = threads; n > 0; d <<= 1, n >>= 1) {
-	if (tid < d) {
-	    const uint i1 = boff(n * (2 * tid + 1) - 1);
-	    const uint i2 = boff(n * (2 * tid + 2) - 1);
-	    const T t1 = s_array[i1];
-	    const T t2 = s_array[i2];
-	    s_array[i1] = t2;
-	    s_array[i2] = t1 + t2;
-	}
-	__syncthreads();
+        if (tid < d) {
+            const uint i1 = boff(n * (2 * tid + 1) - 1);
+            const uint i2 = boff(n * (2 * tid + 2) - 1);
+            const T t1 = s_array[i1];
+            const T t2 = s_array[i2];
+            s_array[i1] = t2;
+            s_array[i2] = t1 + t2;
+        }
+        __syncthreads();
     }
 
     // write partial prefix sums to global memory
     if (i1 < count)
-	g_out[i1] = s_array[boff(tid)];
+        g_out[i1] = s_array[boff(tid)];
     if (i2 < count)
-	g_out[i2] = s_array[boff(threads + tid)];
+        g_out[i2] = s_array[boff(threads + tid)];
 
     // block sum for last thread in block, otherwise zero
     return block_sum;
@@ -105,7 +105,7 @@ __global__ void grid_prefix_sum(T const* g_in, T* g_out, T* g_block_sum, const u
     const T block_sum =  grid_prefix_sum(g_in, g_out, count);
 
     if (tid == 0) {
-	g_block_sum[bid] = block_sum;
+        g_block_sum[bid] = block_sum;
     }
 }
 
@@ -131,18 +131,18 @@ __global__ void add_block_sums(T const* g_in, T* g_out, T const* g_block_sum, co
     const uint bid = blockIdx.x;
 
     if (tid == 0) {
-	// read block sum for subsequent shared memory broadcast
-	s_block_sum[0] = g_block_sum[bid];
+        // read block sum for subsequent shared memory broadcast
+        s_block_sum[0] = g_block_sum[bid];
     }
     __syncthreads();
 
     const uint i1 = 2 * bid * threads + tid;
     if (i1 < count)
-	g_out[i1] = g_in[i1] + s_block_sum[0];
+        g_out[i1] = g_in[i1] + s_block_sum[0];
 
     const uint i2 = (2 * bid + 1) * threads + tid;
     if (i2 < count)
-	g_out[i2] = g_in[i2] + s_block_sum[0];
+        g_out[i2] = g_in[i2] + s_block_sum[0];
 }
 
 }}} // namespace ljgpu::cu::prefix_sum
@@ -155,15 +155,15 @@ namespace ljgpu { namespace gpu
  */
 cuda::function<void (uint const*, uint*, uint*, const uint),
                void (uint48 const*, uint48*, uint48*, const uint)>
-	       prefix_sum::grid_prefix_sum(cu::prefix_sum::grid_prefix_sum,
-					   cu::prefix_sum::grid_prefix_sum);
+               prefix_sum::grid_prefix_sum(cu::prefix_sum::grid_prefix_sum,
+                                           cu::prefix_sum::grid_prefix_sum);
 cuda::function<void (uint const*, uint*, uint const*, const uint),
-	       void (uint48 const*, uint48*, uint48 const*, const uint)>
-	       prefix_sum::add_block_sums(cu::prefix_sum::add_block_sums,
-					  cu::prefix_sum::add_block_sums);
+               void (uint48 const*, uint48*, uint48 const*, const uint)>
+               prefix_sum::add_block_sums(cu::prefix_sum::add_block_sums,
+                                          cu::prefix_sum::add_block_sums);
 cuda::function<void (uint48 const*, uint48*, const uint),
-	       void (uint const*, uint*, const uint)>
-	       prefix_sum::block_prefix_sum(cu::prefix_sum::block_prefix_sum,
-					    cu::prefix_sum::block_prefix_sum);
+               void (uint const*, uint*, const uint)>
+               prefix_sum::block_prefix_sum(cu::prefix_sum::block_prefix_sum,
+                                            cu::prefix_sum::block_prefix_sum);
 
 }} // namespace ljgpu::gpu

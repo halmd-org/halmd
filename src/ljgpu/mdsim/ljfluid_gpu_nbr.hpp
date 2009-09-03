@@ -177,54 +177,54 @@ private:
 
     /** system state in page-locked host memory */
     struct {
-	/** tagged periodically reduced particle positions */
-	cuda::host::vector<float4> mutable r;
-	/** periodic box traversal vectors */
-	cuda::host::vector<gpu_vector_type> mutable R;
-	/** particle velocities */
-	cuda::host::vector<gpu_vector_type> mutable v;
-	/** particle tags */
-	cuda::host::vector<unsigned int> mutable tag;
+        /** tagged periodically reduced particle positions */
+        cuda::host::vector<float4> mutable r;
+        /** periodic box traversal vectors */
+        cuda::host::vector<gpu_vector_type> mutable R;
+        /** particle velocities */
+        cuda::host::vector<gpu_vector_type> mutable v;
+        /** particle tags */
+        cuda::host::vector<unsigned int> mutable tag;
     } h_part;
 
     /** system state in global device memory */
     struct {
-	/** tagged periodically reduced particle positions */
-	cuda::vector<float4> r;
-	/** particle displacements */
-	cuda::vector<gpu_vector_type> dr;
-	/** periodic box traversal vectors */
-	cuda::vector<gpu_vector_type> R;
-	/** particle velocities */
-	cuda::vector<gpu_vector_type> v;
-	/** particle forces */
-	cuda::vector<gpu_vector_type> f;
-	/** particle tags */
-	cuda::vector<unsigned int> tag;
-	/** potential energies per particle */
-	cuda::vector<float> en;
-	/** virial equation sums per particle */
-	cuda::vector<gpu_vector_type> virial;
+        /** tagged periodically reduced particle positions */
+        cuda::vector<float4> r;
+        /** particle displacements */
+        cuda::vector<gpu_vector_type> dr;
+        /** periodic box traversal vectors */
+        cuda::vector<gpu_vector_type> R;
+        /** particle velocities */
+        cuda::vector<gpu_vector_type> v;
+        /** particle forces */
+        cuda::vector<gpu_vector_type> f;
+        /** particle tags */
+        cuda::vector<unsigned int> tag;
+        /** potential energies per particle */
+        cuda::vector<float> en;
+        /** virial equation sums per particle */
+        cuda::vector<gpu_vector_type> virial;
     } g_part;
 
     /** double buffers for particle sorting */
     struct {
-	/** tagged periodically reduced particle positions */
-	cuda::vector<float4> r;
-	/** periodic box traversal vectors */
-	cuda::vector<gpu_vector_type> R;
-	/** particle velocities */
-	cuda::vector<gpu_vector_type> v;
+        /** tagged periodically reduced particle positions */
+        cuda::vector<float4> r;
+        /** periodic box traversal vectors */
+        cuda::vector<gpu_vector_type> R;
+        /** particle velocities */
+        cuda::vector<gpu_vector_type> v;
     } g_part_buf;
 
     /** auxiliary device memory arrays for particle sorting */
     struct {
-	/** particle cells */
-	cuda::vector<unsigned int> cell;
-	/** cell offsets in sorted particle list */
-	cuda::vector<unsigned int> offset;
-	/** permutation indices */
-	cuda::vector<unsigned int> index;
+        /** particle cells */
+        cuda::vector<unsigned int> cell;
+        /** cell offsets in sorted particle list */
+        cuda::vector<unsigned int> offset;
+        /** permutation indices */
+        cuda::vector<unsigned int> index;
     } g_aux;
 
     /** cell lists in global device memory */
@@ -234,12 +234,12 @@ private:
 
     /** CUDA kernel return values */
     struct {
-	cuda::vector<unsigned int> assign_cells;
-	cuda::vector<unsigned int> update_neighbours;
+        cuda::vector<unsigned int> assign_cells;
+        cuda::vector<unsigned int> update_neighbours;
     } g_ret;
     struct {
-	cuda::host::vector<unsigned int> assign_cells;
-	cuda::host::vector<unsigned int> update_neighbours;
+        cuda::host::vector<unsigned int> assign_cells;
+        cuda::host::vector<unsigned int> update_neighbours;
     } h_ret;
 };
 
@@ -251,15 +251,15 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::particles(T const& value)
 
     // allocate page-locked host memory for system state
     try {
-	h_part.r.resize(npart);
-	h_part.R.resize(npart);
-	h_part.v.resize(npart);
-	h_part.tag.resize(npart);
-	// particle forces reside only in GPU memory
+        h_part.r.resize(npart);
+        h_part.R.resize(npart);
+        h_part.v.resize(npart);
+        h_part.tag.resize(npart);
+        // particle forces reside only in GPU memory
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate page-locked host memory for system state");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate page-locked host memory for system state");
     }
 }
 
@@ -281,26 +281,26 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
 #endif
 
     for (unsigned int i = prop.warp_size(); i <= prop.max_threads_per_block(); i += prop.warp_size()) {
-	// number of placeholders per cell
-	cell_size_ = i;
-	// optimal number of cells with given cell occupancy as upper boundary
-	ncell = static_cast<unsigned int>(std::ceil(std::pow(npart / (cell_occupancy_ * cell_size_), 1.f / dimension)));
-	// set number of cells per dimension, respecting cutoff radius
-	ncell = std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max));
-	// derive cell length from number of cells
-	cell_length_ = box_ / ncell;
+        // number of placeholders per cell
+        cell_size_ = i;
+        // optimal number of cells with given cell occupancy as upper boundary
+        ncell = static_cast<unsigned int>(std::ceil(std::pow(npart / (cell_occupancy_ * cell_size_), 1.f / dimension)));
+        // set number of cells per dimension, respecting cutoff radius
+        ncell = std::min(ncell, static_cast<unsigned int>(box_ / r_cut_max));
+        // derive cell length from number of cells
+        cell_length_ = box_ / ncell;
 
-	if (value < (cell_length_ - r_cut_max)) {
-	    // cell size is adequately large
-	    break;
-	}
+        if (value < (cell_length_ - r_cut_max)) {
+            // cell size is adequately large
+            break;
+        }
     }
 
     LOG("number of placeholders per cell: " << cell_size_);
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
-	throw exception("number of cells per dimension must be at least 3");
+        throw exception("number of cells per dimension must be at least 3");
     }
 
     LOG("cell length: " << cell_length_);
@@ -316,24 +316,24 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
     LOG("effective average cell occupancy: " << cell_occupancy_);
 
     if (cell_occupancy_ > 1) {
-	throw exception("average cell occupancy must not be larger than 1.0");
+        throw exception("average cell occupancy must not be larger than 1.0");
     }
     else if (cell_occupancy_ > 0.5f) {
-	LOG_WARNING("average cell occupancy is larger than 0.5");
+        LOG_WARNING("average cell occupancy is larger than 0.5");
     }
 
     try {
-	cuda::copy(ncell, _gpu::ncell);
+        cuda::copy(ncell, _gpu::ncell);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy cell parameters to device symbols");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy cell parameters to device symbols");
     }
 
     r_skin = std::min(value, cell_length_ - r_cut_max);
 
     if (r_skin < value) {
-	LOG_WARNING("reducing neighbour list skin to fixed-size cell skin");
+        LOG_WARNING("reducing neighbour list skin to fixed-size cell skin");
     }
     LOG("neighbour list skin: " << r_skin);
 
@@ -348,12 +348,12 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
     LOG("number of placeholders per neighbour list: " << nbl_size);
 
     try {
-	cuda::copy(std::pow(r_nbl, 2), _gpu::rr_nbl);
-	cuda::copy(nbl_size, _gpu::nbl_size);
+        cuda::copy(std::pow(r_nbl, 2), _gpu::rr_nbl);
+        cuda::copy(nbl_size, _gpu::nbl_size);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy neighbour list parameters to device symbols");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy neighbour list parameters to device symbols");
     }
 
 #if defined(USE_HILBERT_ORDER)
@@ -365,12 +365,12 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::nbl_skin(float value)
     LOG("Hilbert space-filling curve recursion depth: " << depth);
 
     try {
-	cuda::copy(box_, gpu::hilbert<dimension>::box);
-	cuda::copy(depth, gpu::hilbert<dimension>::depth);
+        cuda::copy(box_, gpu::hilbert<dimension>::box);
+        cuda::copy(depth, gpu::hilbert<dimension>::depth);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy Hilbert curve recursion depth to device symbol");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy Hilbert curve recursion depth to device symbol");
     }
 #endif
 }
@@ -388,88 +388,88 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::threads(unsigned int value)
     // allocate global device memory for placeholder particles
     try {
 #ifdef USE_VERLET_DSFUN
-	LOG("using double-single arithmetic in Verlet integration");
-	g_part.r.reserve(2 * dim_.threads());
-	g_part.v.reserve(2 * dim_.threads());
+        LOG("using double-single arithmetic in Verlet integration");
+        g_part.r.reserve(2 * dim_.threads());
+        g_part.v.reserve(2 * dim_.threads());
 #else
-	g_part.r.reserve(dim_.threads());
-	g_part.v.reserve(dim_.threads());
+        g_part.r.reserve(dim_.threads());
+        g_part.v.reserve(dim_.threads());
 #endif
-	g_part.r.resize(npart);
-	g_part.v.resize(npart);
-	g_part.dr.reserve(dim_.threads());
-	g_part.dr.resize(npart);
-	g_part.R.reserve(dim_.threads());
-	g_part.R.resize(npart);
-	g_part.f.reserve(dim_.threads());
-	g_part.f.resize(npart);
-	g_part.tag.reserve(dim_.threads());
-	g_part.tag.resize(npart);
-	g_part.en.reserve(dim_.threads());
-	g_part.en.resize(npart);
-	g_part.virial.reserve(dim_.threads());
-	g_part.virial.resize(npart);
+        g_part.r.resize(npart);
+        g_part.v.resize(npart);
+        g_part.dr.reserve(dim_.threads());
+        g_part.dr.resize(npart);
+        g_part.R.reserve(dim_.threads());
+        g_part.R.resize(npart);
+        g_part.f.reserve(dim_.threads());
+        g_part.f.resize(npart);
+        g_part.tag.reserve(dim_.threads());
+        g_part.tag.resize(npart);
+        g_part.en.reserve(dim_.threads());
+        g_part.en.resize(npart);
+        g_part.virial.reserve(dim_.threads());
+        g_part.virial.resize(npart);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate global device memory for system state");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate global device memory for system state");
     }
 
     // allocate global device memory for cell placeholders
     try {
-	g_cell.resize(dim_cell_.threads());
-	g_nbl.resize(dim_.threads() * nbl_size);
-	cuda::copy(g_nbl.data(), _gpu::g_nbl);
-	cuda::copy(static_cast<unsigned int>(dim_.threads()), _gpu::nbl_stride);
+        g_cell.resize(dim_cell_.threads());
+        g_nbl.resize(dim_.threads() * nbl_size);
+        cuda::copy(g_nbl.data(), _gpu::g_nbl);
+        cuda::copy(static_cast<unsigned int>(dim_.threads()), _gpu::nbl_stride);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate global device memory cell placeholders");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate global device memory cell placeholders");
     }
 
     // bind GPU textures to global device memory arrays
     try {
-	_gpu::r.bind(g_part.r);
-	_gpu::v.bind(g_part.v);
-	_gpu::R.bind(g_part.R);
+        _gpu::r.bind(g_part.r);
+        _gpu::v.bind(g_part.v);
+        _gpu::R.bind(g_part.R);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to bind GPU textures to global device memory arrays");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to bind GPU textures to global device memory arrays");
     }
 
     // allocate global device memory for sorting buffers
     try {
-	g_part_buf.r.reserve(g_part.r.capacity());
-	g_part_buf.r.resize(npart);
-	g_part_buf.R.reserve(g_part.R.capacity());
-	g_part_buf.R.resize(npart);
-	g_part_buf.v.reserve(g_part.v.capacity());
-	g_part_buf.v.resize(npart);
-	g_aux.cell.reserve(dim_.threads());
-	g_aux.cell.resize(npart);
-	g_aux.offset.resize(dim_cell_.blocks_per_grid());
-	g_aux.index.reserve(dim_.threads());
-	// allocate sufficient memory for binary mixture sampling
-	for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
-	    cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
-	    g_aux.index.reserve(n + dim.threads());
-	    dim_sample.push_back(dim);
-	}
-	g_aux.index.resize(npart);
+        g_part_buf.r.reserve(g_part.r.capacity());
+        g_part_buf.r.resize(npart);
+        g_part_buf.R.reserve(g_part.R.capacity());
+        g_part_buf.R.resize(npart);
+        g_part_buf.v.reserve(g_part.v.capacity());
+        g_part_buf.v.resize(npart);
+        g_aux.cell.reserve(dim_.threads());
+        g_aux.cell.resize(npart);
+        g_aux.offset.resize(dim_cell_.blocks_per_grid());
+        g_aux.index.reserve(dim_.threads());
+        // allocate sufficient memory for binary mixture sampling
+        for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
+            cuda::config dim((mpart[i] + threads() - 1) / threads(), threads());
+            g_aux.index.reserve(n + dim.threads());
+            dim_sample.push_back(dim);
+        }
+        g_aux.index.resize(npart);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate global device memory for sorting buffers");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate global device memory for sorting buffers");
     }
 
 
     try {
-	radix_.resize(npart, dim_.threads_per_block());
+        radix_.resize(npart, dim_.threads_per_block());
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to allocate global device memory for radix sort");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate global device memory for radix sort");
     }
 
     g_ret.assign_cells.resize(1);
@@ -523,14 +523,14 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::temperature(float_type temp
     LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
 
     try {
-	event_[0].record(stream_);
-	boltzmann(temp, stream_);
-	event_[1].record(stream_);
-	event_[1].synchronize();
+        event_[0].record(stream_);
+        boltzmann(temp, stream_);
+        event_[1].record(stream_);
+        event_[1].synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to compute Boltzmann distributed velocities on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to compute Boltzmann distributed velocities on GPU");
     }
     m_times["boltzmann"] += event_[1] - event_[0];
 }
@@ -541,21 +541,21 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::stream()
     event_[1].record(stream_);
     // first leapfrog step of integration of differential equations of motion
     try {
-	velocity_verlet(stream_);
+        velocity_verlet(stream_);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to stream first leapfrog step on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to stream first leapfrog step on GPU");
     }
     event_[2].record(stream_);
 
     // maximum absolute particle displacement reduction
     try {
-	reduce_r_max(g_part.dr, stream_);
+        reduce_r_max(g_part.dr, stream_);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to stream maximum particle displacement reduction on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to stream maximum particle displacement reduction on GPU");
     }
     event_[3].record(stream_);
     event_[3].synchronize();
@@ -563,75 +563,75 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::stream()
     // update cell lists
     if ((r_max_ = reduce_r_max.value()) > r_skin_half) {
 #ifdef USE_HILBERT_ORDER
-	try {
-	    hilbert_order(stream_);
-	}
-	catch (cuda::error const& e) {
-	    LOG_ERROR("CUDA: " << e.what());
-	    throw exception("failed to stream hilbert space-filling curve sort on GPU");
-	}
+        try {
+            hilbert_order(stream_);
+        }
+        catch (cuda::error const& e) {
+            LOG_ERROR("CUDA: " << e.what());
+            throw exception("failed to stream hilbert space-filling curve sort on GPU");
+        }
 #endif
-	event_[4].record(stream_);
+        event_[4].record(stream_);
 
-	try {
-	    assign_cells(stream_);
-	}
-	catch (cuda::error const& e) {
-	    LOG_ERROR("CUDA: " << e.what());
-	    throw exception("failed to stream cell list update on GPU");
-	}
-	event_[5].record(stream_);
+        try {
+            assign_cells(stream_);
+        }
+        catch (cuda::error const& e) {
+            LOG_ERROR("CUDA: " << e.what());
+            throw exception("failed to stream cell list update on GPU");
+        }
+        event_[5].record(stream_);
 
-	try {
-	    update_neighbours(stream_);
-	}
-	catch (cuda::error const& e) {
-	    LOG_ERROR("CUDA: " << e.what());
-	    throw exception("failed to stream neighbour lists update on GPU");
-	}
-	event_[6].record(stream_);
+        try {
+            update_neighbours(stream_);
+        }
+        catch (cuda::error const& e) {
+            LOG_ERROR("CUDA: " << e.what());
+            throw exception("failed to stream neighbour lists update on GPU");
+        }
+        event_[6].record(stream_);
 
 #ifdef USE_HILBERT_ORDER
-	try {
-	    permutation(stream_);
-	}
-	catch (cuda::error const& e) {
-	    LOG_ERROR("CUDA: " << e.what());
-	    throw exception("failed to generate permutation for phase space sampling");
-	}
+        try {
+            permutation(stream_);
+        }
+        catch (cuda::error const& e) {
+            LOG_ERROR("CUDA: " << e.what());
+            throw exception("failed to generate permutation for phase space sampling");
+        }
 #endif
     }
     event_[7].record(stream_);
 
     // Lennard-Jones force calculation
     try {
-	update_forces(stream_);
+        update_forces(stream_);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to stream force calculation on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to stream force calculation on GPU");
     }
     event_[8].record(stream_);
 
     // heat bath coupling
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
-	try {
-	    boltzmann(thermostat_temp, stream_);
-	}
-	catch (cuda::error const& e) {
-	    LOG_ERROR("CUDA: " << e.what());
-	    throw exception("failed to compute Boltzmann distributed velocities on GPU");
-	}
+        try {
+            boltzmann(thermostat_temp, stream_);
+        }
+        catch (cuda::error const& e) {
+            LOG_ERROR("CUDA: " << e.what());
+            throw exception("failed to compute Boltzmann distributed velocities on GPU");
+        }
     }
     event_[9].record(stream_);
 
     // potential energy sum calculation
     try {
-	reduce_en(g_part.en, stream_);
+        reduce_en(g_part.en, stream_);
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to stream potential energy sum calculation on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to stream potential energy sum calculation on GPU");
     }
     event_[0].record(stream_);
 }
@@ -643,12 +643,12 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
 {
     try {
-	// wait for MD simulation step on GPU to finish
-	event_[0].synchronize();
+        // wait for MD simulation step on GPU to finish
+        event_[0].synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("MD simulation step on GPU failed");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("MD simulation step on GPU failed");
     }
 
     // CUDA time for MD simulation step
@@ -660,16 +660,16 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
 
     if (r_max_ > r_skin_half) {
 #ifdef USE_HILBERT_ORDER
-	// GPU time for Hilbert curve sort
-	m_times["hilbert_sort"] += event_[4] - event_[3];
+        // GPU time for Hilbert curve sort
+        m_times["hilbert_sort"] += event_[4] - event_[3];
 #endif
-	// GPU time for cell lists update
-	m_times["update_cells"] += event_[5] - event_[4];
-	// GPU time for neighbour lists update
-	m_times["update_neighbours"] += event_[6] - event_[5];
+        // GPU time for cell lists update
+        m_times["update_cells"] += event_[5] - event_[4];
+        // GPU time for neighbour lists update
+        m_times["update_neighbours"] += event_[6] - event_[5];
 #if defined(USE_HILBERT_ORDER)
-	// GPU time for permutation sort
-	m_times["permutation"] += event_[7] - event_[6];
+        // GPU time for permutation sort
+        m_times["permutation"] += event_[7] - event_[6];
 #endif
     }
 
@@ -677,25 +677,25 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
     m_times["update_forces"] += event_[8] - event_[7];
 
     if (thermostat_steps && thermostat_count > thermostat_steps) {
-	// reset MD steps since last heatbath coupling
-	thermostat_count = 0;
-	// GPU time for Maxwell-Boltzmann distribution
-	m_times["boltzmann"] += event_[9] - event_[8];
+        // reset MD steps since last heatbath coupling
+        thermostat_count = 0;
+        // GPU time for Maxwell-Boltzmann distribution
+        m_times["boltzmann"] += event_[9] - event_[8];
     }
 
     // GPU time for potential energy sum calculation
     m_times["potential_energy"] += event_[0] - event_[9];
 
     if (r_max_ > r_skin_half) {
-	if (h_ret.assign_cells.front() != EXIT_SUCCESS) {
-	    throw exception("overcrowded placeholders in cell lists update");
-	}
-	if (h_ret.update_neighbours.front() != EXIT_SUCCESS) {
-	    throw exception("overcrowded placeholders in neighbour lists update");
-	}
+        if (h_ret.assign_cells.front() != EXIT_SUCCESS) {
+            throw exception("overcrowded placeholders in cell lists update");
+        }
+        if (h_ret.update_neighbours.front() != EXIT_SUCCESS) {
+            throw exception("overcrowded placeholders in neighbour lists update");
+        }
     }
     if (!std::isfinite(reduce_en.value())) {
-	throw potential_energy_divergence();
+        throw potential_energy_divergence();
     }
 }
 
@@ -712,35 +712,35 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(host_sample_type& sa
     static cuda::stream stream;
 
     try {
-	ev0.record(stream);
-	cuda::copy(g_part.r, h_part.r, stream);
-	cuda::copy(g_part.R, h_part.R, stream);
-	cuda::copy(g_part.v, h_part.v, stream);
-	cuda::copy(g_part.tag, h_part.tag, stream);
-	ev1.record(stream);
-	ev1.synchronize();
+        ev0.record(stream);
+        cuda::copy(g_part.r, h_part.r, stream);
+        cuda::copy(g_part.R, h_part.R, stream);
+        cuda::copy(g_part.v, h_part.v, stream);
+        cuda::copy(g_part.tag, h_part.tag, stream);
+        ev1.record(stream);
+        ev1.synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to copy MD simulation step results from GPU to host");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to copy MD simulation step results from GPU to host");
     }
     m_times["sample_memcpy"] += ev1 - ev0;
 
     // allocate memory for phase space sample
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
-	position_sample_ptr r(new position_sample_vector(mpart[i]));
-	velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
-	sample.push_back(sample_type(r, v));
+        position_sample_ptr r(new position_sample_vector(mpart[i]));
+        velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
+        sample.push_back(sample_type(r, v));
     }
 
     // copy particle positions and velocities in binary mixture
     for (size_t i = 0, tag; i < h_part.tag.size(); ++i) {
-	if ((tag = h_part.tag[i]) != gpu::VIRTUAL_PARTICLE) {
-	    unsigned int const type = (tag >= mpart[0]);
-	    unsigned int const n = type ? (tag - mpart[0]) : tag;
-	    (*sample[type].r)[n] = h_part.r[i] + box_ * static_cast<vector_type>(h_part.R[i]);
-	    (*sample[type].v)[n] = h_part.v[i];
-	}
+        if ((tag = h_part.tag[i]) != gpu::VIRTUAL_PARTICLE) {
+            unsigned int const type = (tag >= mpart[0]);
+            unsigned int const n = type ? (tag - mpart[0]) : tag;
+            (*sample[type].r)[n] = h_part.r[i] + box_ * static_cast<vector_type>(h_part.R[i]);
+            (*sample[type].v)[n] = h_part.v[i];
+        }
     }
 }
 
@@ -759,17 +759,17 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(gpu_sample_type& sam
     ev0.record(stream_);
 
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
-	// allocate global device memory for phase space sample
-	position_sample_ptr r(new position_sample_vector);
-	r->reserve(dim_sample[i].threads());
-	r->resize(mpart[i]);
-	velocity_sample_ptr v(new velocity_sample_vector);
-	v->reserve(dim_sample[i].threads());
-	v->resize(mpart[i]);
-	sample.push_back(sample_type(r, v));
-	// order particles by permutation
-	cuda::configure(dim_sample[i].grid, dim_sample[i].block, stream);
-	_gpu::sample(g_aux.index.data() + n, *r, *v);
+        // allocate global device memory for phase space sample
+        position_sample_ptr r(new position_sample_vector);
+        r->reserve(dim_sample[i].threads());
+        r->resize(mpart[i]);
+        velocity_sample_ptr v(new velocity_sample_vector);
+        v->reserve(dim_sample[i].threads());
+        v->resize(mpart[i]);
+        sample.push_back(sample_type(r, v));
+        // order particles by permutation
+        cuda::configure(dim_sample[i].grid, dim_sample[i].block, stream);
+        _gpu::sample(g_aux.index.data() + n, *r, *v);
     }
 
     ev1.record(stream_);
@@ -788,51 +788,51 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& 
 
     // virial tensor trace and off-diagonal elements for particle species
     try {
-	ev0.record(stream);
-	if (mixture_ == BINARY) {
-	    reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream);
-	}
-	else {
-	    reduce_virial(g_part.virial, g_part.v, stream);
-	}
-	ev1.record(stream);
-	ev1.synchronize();
-	m_times["virial_sum"] += ev1 - ev0;
+        ev0.record(stream);
+        if (mixture_ == BINARY) {
+            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream);
+        }
+        else {
+            reduce_virial(g_part.virial, g_part.v, stream);
+        }
+        ev1.record(stream);
+        ev1.synchronize();
+        m_times["virial_sum"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to calculate virial equation sum on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to calculate virial equation sum on GPU");
     }
     sample.virial = reduce_virial.value();
     for (size_t i = 0; i < sample.virial.size(); ++i) {
-	sample.virial[i] /= mpart[i];
+        sample.virial[i] /= mpart[i];
     }
 
     // mean squared velocity per particle
     try {
-	ev0.record(stream);
-	reduce_squared_velocity(g_part.v, stream);
-	ev1.record(stream);
-	ev1.synchronize();
-	m_times["reduce_squared_velocity"] += ev1 - ev0;
+        ev0.record(stream);
+        reduce_squared_velocity(g_part.v, stream);
+        ev1.record(stream);
+        ev1.synchronize();
+        m_times["reduce_squared_velocity"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to calculate mean squared velocity on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to calculate mean squared velocity on GPU");
     }
     sample.vv = reduce_squared_velocity.value() / npart;
 
     // mean velocity per particle
     try {
-	ev0.record(stream);
-	reduce_velocity(g_part.v, stream);
-	ev1.record(stream);
-	ev1.synchronize();
-	m_times["reduce_velocity"] += ev1 - ev0;
+        ev0.record(stream);
+        reduce_velocity(g_part.v, stream);
+        ev1.record(stream);
+        ev1.synchronize();
+        m_times["reduce_velocity"] += ev1 - ev0;
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to calculate mean velocity on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to calculate mean velocity on GPU");
     }
     sample.v_cm = reduce_velocity.value() / npart;
 }
@@ -844,36 +844,36 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_positions()
     _Base::init_tags(g_part.r, g_part.tag);
 
     try {
-	// set periodic box traversal vectors to zero
-	cuda::memset(g_part.R, 0);
+        // set periodic box traversal vectors to zero
+        cuda::memset(g_part.R, 0);
 #ifdef USE_HILBERT_ORDER
-	// order particles after Hilbert space-filling curve
-	hilbert_order(stream_);
+        // order particles after Hilbert space-filling curve
+        hilbert_order(stream_);
 #endif
-	// assign particles to cells
-	assign_cells(stream_);
-	// update neighbour lists
-	update_neighbours(stream_);
-	// generate permutation for phase space sampling
-	permutation(stream_);
-	// calculate forces
-	update_forces(stream_);
-	// calculate potential energy
-	reduce_en(g_part.en, stream_);
+        // assign particles to cells
+        assign_cells(stream_);
+        // update neighbour lists
+        update_neighbours(stream_);
+        // generate permutation for phase space sampling
+        permutation(stream_);
+        // calculate forces
+        update_forces(stream_);
+        // calculate potential energy
+        reduce_en(g_part.en, stream_);
 
-	// wait for CUDA operations to finish
-	stream_.synchronize();
+        // wait for CUDA operations to finish
+        stream_.synchronize();
     }
     catch (cuda::error const& e) {
-	LOG_ERROR("CUDA: " << e.what());
-	throw exception("failed to assign particle positions on GPU");
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to assign particle positions on GPU");
     }
 
     if (h_ret.assign_cells.front() != EXIT_SUCCESS) {
-	throw exception("overcrowded placeholders in cell lists update");
+        throw exception("overcrowded placeholders in cell lists update");
     }
     if (h_ret.update_neighbours.front() != EXIT_SUCCESS) {
-	throw exception("overcrowded placeholders in neighbour lists update");
+        throw exception("overcrowded placeholders in neighbour lists update");
     }
 }
 

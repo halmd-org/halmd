@@ -45,8 +45,8 @@ class energy : boost::noncopyable
 public:
     /** io flags */
     enum openmode {
-	in = 0x1,
-	out = 0x2,
+        in = 0x1,
+        out = 0x2,
     };
 
     /** time and scalar property */
@@ -55,8 +55,8 @@ public:
     typedef std::pair<double, vector<double, dimension> > vector_pair;
 
     enum {
-	/** HDF5 dataset chunk size */
-	CHUNK_SIZE = 5000,
+        /** HDF5 dataset chunk size */
+        CHUNK_SIZE = 5000,
     };
 
 public:
@@ -119,7 +119,7 @@ void energy<dimension>::sample(energy_sample<dimension> const& sample, float den
     // pressure
     double virial = 0;
     foreach(virial_tensor const& vir, sample.virial) {
-	virial += vir.front();
+        virial += vir.front();
     }
     m_press.push_back(scalar_pair(time, density / dimension * virial));
     // velocity center of mass
@@ -129,8 +129,8 @@ void energy<dimension>::sample(energy_sample<dimension> const& sample, float den
     m_samples_buffer++;
 
     if (m_samples_buffer >= CHUNK_SIZE) {
-	// commit full buffers to file
-	flush(false);
+        // commit full buffers to file
+        flush(false);
     }
 }
 

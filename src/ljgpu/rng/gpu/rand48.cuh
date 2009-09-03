@@ -74,9 +74,9 @@ __device__ void gaussian(float& r1, float& r2, float var, state_type& state)
     float s;
 
     do {
-	r1 = 2 * uniform(state) - 1;
-	r2 = 2 * uniform(state) - 1;
-	s = r1 * r1 + r2 * r2;
+        r1 = 2 * uniform(state) - 1;
+        r2 = 2 * uniform(state) - 1;
+        s = r1 * r1 + r2 * r2;
     } while (s >= 1);
 
     s = sqrtf(-2 * var * logf(s) / s);

@@ -41,13 +41,13 @@ public:
 
 public:
     ljfluid_base() :
-	epsilon_(boost::assign::list_of(1)(0)(0)),
-	sigma_(boost::assign::list_of(1)(0)(0)),
-	r_smooth(0),
-	thermostat_nu(0),
-	thermostat_steps(0),
-	thermostat_count(0),
-	potential_(C0POT) {}
+        epsilon_(boost::assign::list_of(1)(0)(0)),
+        sigma_(boost::assign::list_of(1)(0)(0)),
+        r_smooth(0),
+        thermostat_nu(0),
+        thermostat_steps(0),
+        thermostat_count(0),
+        potential_(C0POT) {}
 
     /** set simulation timestep */
     void timestep(double value);
@@ -128,7 +128,7 @@ void ljfluid_base<ljfluid_impl, dimension>::sigma(boost::array<float, 3> const& 
     LOG("collision diameters: σ(AA) = " << sigma_[0] << ", σ(AB) = " << sigma_[1] << ", σ(BB) = " << sigma_[2]);
 
     for (size_t i = 0; i < sigma_.size(); ++i) {
-	sigma2_[i] = std::pow(sigma_[i], 2);
+        sigma2_[i] = std::pow(sigma_[i], 2);
     }
 }
 
@@ -138,23 +138,23 @@ void ljfluid_base<ljfluid_impl, dimension>::cutoff_radius(boost::array<float, 3>
     r_cut_sigma = value;
 
     for (size_t i = 0; i < r_cut_sigma.size(); ++i) {
-	float_type rri_cut = 1 / std::pow(r_cut_sigma[i], 2);
-	float_type r6i_cut = rri_cut * rri_cut * rri_cut;
-	en_cut[i] = 4 * r6i_cut * (r6i_cut - 1);
+        float_type rri_cut = 1 / std::pow(r_cut_sigma[i], 2);
+        float_type r6i_cut = rri_cut * rri_cut * rri_cut;
+        en_cut[i] = 4 * r6i_cut * (r6i_cut - 1);
     }
 
     if (mixture_ == BINARY) {
-	LOG("potential cutoff radii: r(AA) = " << r_cut_sigma[0] << ", r(AB) = " << r_cut_sigma[1] << ", r(BB) = " << r_cut_sigma[2]);
-	LOG("potential cutoff energies: E(AA) = " << en_cut[0] << ", E(AB) = " << en_cut[1] << ", E(BB) = " << en_cut[2]);
+        LOG("potential cutoff radii: r(AA) = " << r_cut_sigma[0] << ", r(AB) = " << r_cut_sigma[1] << ", r(BB) = " << r_cut_sigma[2]);
+        LOG("potential cutoff energies: E(AA) = " << en_cut[0] << ", E(AB) = " << en_cut[1] << ", E(BB) = " << en_cut[2]);
     }
     else {
-	LOG("potential cutoff radius: " << r_cut_sigma[0]);
-	LOG("potential cutoff energy: " << en_cut[0]);
+        LOG("potential cutoff radius: " << r_cut_sigma[0]);
+        LOG("potential cutoff energy: " << en_cut[0]);
     }
 
     for (size_t i = 0; i < sigma_.size(); ++i) {
-	r_cut[i] = r_cut_sigma[i] * sigma_[i];
-	rr_cut[i] = std::pow(r_cut[i], 2);
+        r_cut[i] = r_cut_sigma[i] * sigma_[i];
+        rr_cut[i] = std::pow(r_cut[i], 2);
     }
 }
 
@@ -195,18 +195,18 @@ void ljfluid_base<ljfluid_impl, dimension>::param(H5param& param) const
 
     H5xx::group node(param["mdsim"]);
     if (mixture_ == BINARY) {
-	node["potential_epsilon"] = epsilon_;
-	node["potential_sigma"] = sigma_;
+        node["potential_epsilon"] = epsilon_;
+        node["potential_sigma"] = sigma_;
     }
     node["cutoff_radius"] = r_cut_sigma;
     node["timestep"] = timestep_;
     if (potential_ == C2POT) {
-	node["potential_smoothing"] = r_smooth;
+        node["potential_smoothing"] = r_smooth;
     }
     if (thermostat_steps) {
-	node["thermostat_nu"] = thermostat_nu;
-	node["thermostat_steps"] = thermostat_steps;
-	node["thermostat_temp"] = thermostat_temp;
+        node["thermostat_nu"] = thermostat_nu;
+        node["thermostat_steps"] = thermostat_steps;
+        node["thermostat_temp"] = thermostat_temp;
     }
 }
 

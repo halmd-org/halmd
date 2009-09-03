@@ -47,9 +47,9 @@ public:
     template <typename gpu_input_type>
     void operator()(cuda::vector<gpu_input_type> const& g_in, cuda::stream& stream)
     {
-	cuda::configure(BLOCKS, THREADS, stream);
-	tag<output_type>::reduce(g_in, g_block_sum, g_in.size());
-	cuda::copy(g_block_sum, h_block_sum, stream);
+        cuda::configure(BLOCKS, THREADS, stream);
+        tag<output_type>::reduce(g_in, g_block_sum, g_in.size());
+        cuda::copy(g_block_sum, h_block_sum, stream);
     }
 
     /**
@@ -57,7 +57,7 @@ public:
      */
     output_type value()
     {
-	return tag<output_type>::value(h_block_sum);
+        return tag<output_type>::value(h_block_sum);
     }
 
 private:
@@ -75,9 +75,9 @@ struct sum
 {
     template <typename gpu_input_type, typename gpu_output_type>
     static void reduce(cuda::vector<gpu_input_type> const& g_in,
-		       cuda::vector<gpu_output_type>& g_block_sum, unsigned int count)
+                       cuda::vector<gpu_output_type>& g_block_sum, unsigned int count)
     {
-	gpu::reduce::sum(g_in, g_block_sum, count);
+        gpu::reduce::sum(g_in, g_block_sum, count);
     }
 
     /**
@@ -86,7 +86,7 @@ struct sum
     template <typename gpu_output_type>
     static output_type value(cuda::host::vector<gpu_output_type> const& sum)
     {
-	return std::accumulate(sum.begin(), sum.end(), output_type(0));
+        return std::accumulate(sum.begin(), sum.end(), output_type(0));
     }
 };
 
@@ -98,9 +98,9 @@ struct sum_of_squares
 {
     template <typename gpu_input_type, typename gpu_output_type>
     static void reduce(cuda::vector<gpu_input_type> const& g_in,
-		       cuda::vector<gpu_output_type>& g_block_sum, unsigned int count)
+                       cuda::vector<gpu_output_type>& g_block_sum, unsigned int count)
     {
-	gpu::reduce::sum_of_squares(g_in, g_block_sum, count);
+        gpu::reduce::sum_of_squares(g_in, g_block_sum, count);
     }
 
     /**
@@ -109,7 +109,7 @@ struct sum_of_squares
     template <typename gpu_output_type>
     static output_type value(cuda::host::vector<gpu_output_type> const& sum)
     {
-	return std::accumulate(sum.begin(), sum.end(), output_type(0));
+        return std::accumulate(sum.begin(), sum.end(), output_type(0));
     }
 };
 
@@ -121,9 +121,9 @@ struct max
 {
     template <typename gpu_input_type, typename gpu_output_type>
     static void reduce(cuda::vector<gpu_input_type> const& g_in,
-		       cuda::vector<gpu_output_type>& g_block_max, unsigned int count)
+                       cuda::vector<gpu_output_type>& g_block_max, unsigned int count)
     {
-	gpu::reduce::max(g_in, g_block_max, count);
+        gpu::reduce::max(g_in, g_block_max, count);
     }
 
     /**
@@ -132,7 +132,7 @@ struct max
     template <typename gpu_output_type>
     static output_type value(cuda::host::vector<gpu_output_type> const& max)
     {
-	return *std::max_element(max.begin(), max.end());
+        return *std::max_element(max.begin(), max.end());
     }
 };
 

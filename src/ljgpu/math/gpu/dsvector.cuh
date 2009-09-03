@@ -64,10 +64,10 @@ struct vector<dsfloat, 2>
 #ifndef __CUDACC__
     __device__ inline operator ::vector<double, 2>() const
     {
-	::vector<double, 2> v;
-	v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
-	v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
-	return v;
+        ::vector<double, 2> v;
+        v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
+        v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
+        return v;
     }
 #endif
 };
@@ -102,11 +102,11 @@ struct vector<dsfloat, 3>
 #ifndef __CUDACC__
     __device__ inline operator ::vector<double, 3>() const
     {
-	::vector<double, 3> v;
-	v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
-	v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
-	v[2] = static_cast<double>(__hi.z) + static_cast<double>(__lo.z);
-	return v;
+        ::vector<double, 3> v;
+        v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
+        v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
+        v[2] = static_cast<double>(__hi.z) + static_cast<double>(__lo.z);
+        return v;
     }
 #endif
 };
@@ -141,12 +141,12 @@ struct vector<dsfloat, 4>
 #ifndef __CUDACC__
     __device__ inline operator ::vector<double, 4>() const
     {
-	::vector<double, 4> v;
-	v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
-	v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
-	v[2] = static_cast<double>(__hi.z) + static_cast<double>(__lo.z);
-	v[3] = static_cast<double>(__hi.w) + static_cast<double>(__lo.w);
-	return v;
+        ::vector<double, 4> v;
+        v[0] = static_cast<double>(__hi.x) + static_cast<double>(__lo.x);
+        v[1] = static_cast<double>(__hi.y) + static_cast<double>(__lo.y);
+        v[2] = static_cast<double>(__hi.z) + static_cast<double>(__lo.z);
+        v[3] = static_cast<double>(__hi.w) + static_cast<double>(__lo.w);
+        return v;
     }
 #endif
 };

@@ -47,7 +47,7 @@ public:
      */
     void bind(cuda::vector<T> const& g_array)
     {
-	CUDA_CALL(cudaBindTexture(NULL, &tex, g_array.data(), &tex.channelDesc));
+        CUDA_CALL(cudaBindTexture(NULL, &tex, g_array.data(), &tex.channelDesc));
     }
 
     /**
@@ -55,7 +55,7 @@ public:
      */
     void unbind()
     {
-	CUDA_CALL(cudaUnbindTexture(&tex));
+        CUDA_CALL(cudaUnbindTexture(&tex));
     }
 
 private:

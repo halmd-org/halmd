@@ -29,12 +29,12 @@
 
 #define CUDA_ERROR(err) throw cuda::error(err)
 
-#define CUDA_CALL(x)							\
-    do {								\
-	cudaError_t err;						\
-	if (cudaSuccess != (err = x)) {					\
-	    CUDA_ERROR(err);						\
-	}								\
+#define CUDA_CALL(x)                                                        \
+    do {                                                                \
+        cudaError_t err;                                                \
+        if (cudaSuccess != (err = x)) {                                        \
+            CUDA_ERROR(err);                                                \
+        }                                                                \
     } while(0)
 
 
@@ -59,7 +59,7 @@ public:
      */
     const char* what() const throw()
     {
-	return cudaGetErrorString(err);
+        return cudaGetErrorString(err);
     }
 };
 

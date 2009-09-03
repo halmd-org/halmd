@@ -28,8 +28,8 @@ namespace ljgpu { namespace gpu
 struct tcf_base
 {
     enum {
-	BLOCKS = 32,
-	THREADS = 256,
+        BLOCKS = 32,
+        THREADS = 256,
     };
 };
 
@@ -40,30 +40,30 @@ template <>
 struct tcf<3> : public tcf_base
 {
     static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
-       	mean_square_displacement;
+               mean_square_displacement;
     static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
-       	mean_quartic_displacement;
+               mean_quartic_displacement;
     static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
-       	velocity_autocorrelation;
+               velocity_autocorrelation;
     static cuda::function<void (float4 const*, float4 const*, float3 const, dsfloat*, uint)>
-	incoherent_scattering_function;
+        incoherent_scattering_function;
     static cuda::function<void (float4 const*, float3 const, dsfloat*, dsfloat*, uint)>
-	coherent_scattering_function;
+        coherent_scattering_function;
 };
 
 template <>
 struct tcf<2> : public tcf_base
 {
     static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
-       	mean_square_displacement;
+               mean_square_displacement;
     static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
-       	mean_quartic_displacement;
+               mean_quartic_displacement;
     static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
-       	velocity_autocorrelation;
+               velocity_autocorrelation;
     static cuda::function<void (float2 const*, float2 const*, float2 const, dsfloat*, uint)>
-	incoherent_scattering_function;
+        incoherent_scattering_function;
     static cuda::function<void (float2 const*, float2 const, dsfloat*, dsfloat*, uint)>
-	coherent_scattering_function;
+        coherent_scattering_function;
 };
 
 }} // namespace ljgpu::gpu

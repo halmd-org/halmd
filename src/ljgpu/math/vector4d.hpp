@@ -49,10 +49,10 @@ public:
     template <typename U>
     vector(vector<U, 4> const& v)
     {
-	(*this)[0] = v[0];
-	(*this)[1] = v[1];
-	(*this)[2] = v[2];
-	(*this)[3] = v[3];
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+        (*this)[2] = v[2];
+        (*this)[3] = v[3];
     }
 
     /**
@@ -61,10 +61,10 @@ public:
 #ifdef WITH_CUDA
     vector(float4 const& v)
     {
-	(*this)[0] = v.x;
-	(*this)[1] = v.y;
-	(*this)[2] = v.z;
-	(*this)[3] = v.w;
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
+        (*this)[2] = v.z;
+        (*this)[3] = v.w;
     }
 #endif /* WITH_CUDA */
 
@@ -73,10 +73,10 @@ public:
      */
     vector(T const& s)
     {
-	(*this)[0] = s;
-	(*this)[1] = s;
-	(*this)[2] = s;
-	(*this)[3] = s;
+        (*this)[0] = s;
+        (*this)[1] = s;
+        (*this)[2] = s;
+        (*this)[3] = s;
     }
 
     /**
@@ -84,10 +84,10 @@ public:
      */
     vector(T const& x, T const& y, T const& z)
     {
-	(*this)[0] = x;
-	(*this)[1] = y;
-	(*this)[2] = z;
-	(*this)[3] = z;
+        (*this)[0] = x;
+        (*this)[1] = y;
+        (*this)[2] = z;
+        (*this)[3] = z;
     }
 
     /**
@@ -96,7 +96,7 @@ public:
 #ifdef WITH_CUDA
     operator float4() const
     {
-	return make_float4((*this)[0], (*this)[1], (*this)[2], (*this)[3]);
+        return make_float4((*this)[0], (*this)[1], (*this)[2], (*this)[3]);
     }
 #endif /* WITH_CUDA */
 
@@ -121,7 +121,7 @@ public:
      */
     bool operator<(vector<T, 4> const& v) const
     {
-	return (v[0] < (*this)[0] && v[1] < (*this)[1] && v[2] < (*this)[2] && v[3] < (*this)[3]);
+        return (v[0] < (*this)[0] && v[1] < (*this)[1] && v[2] < (*this)[2] && v[3] < (*this)[3]);
     }
 
     /**
@@ -129,7 +129,7 @@ public:
      */
     bool operator>(vector<T, 4> const& v) const
     {
-	return (v[0] > (*this)[0] && v[1] > (*this)[1] && v[2] > (*this)[2] && v[3] > (*this)[3]);
+        return (v[0] > (*this)[0] && v[1] > (*this)[1] && v[2] > (*this)[2] && v[3] > (*this)[3]);
     }
 
     /**
@@ -137,7 +137,7 @@ public:
      */
     bool operator<=(vector<T, 4> const& v) const
     {
-	return (v[0] <= (*this)[0] && v[1] <= (*this)[1] && v[2] <= (*this)[2] && v[3] <= (*this)[3]);
+        return (v[0] <= (*this)[0] && v[1] <= (*this)[1] && v[2] <= (*this)[2] && v[3] <= (*this)[3]);
     }
 
     /**
@@ -145,7 +145,7 @@ public:
      */
     bool operator>=(vector<T, 4> const& v) const
     {
-	return (v[0] >= (*this)[0] && v[1] >= (*this)[1] && v[2] >= (*this)[2] && v[3] >= (*this)[3]);
+        return (v[0] >= (*this)[0] && v[1] >= (*this)[1] && v[2] >= (*this)[2] && v[3] >= (*this)[3]);
     }
 
     /**
@@ -153,11 +153,11 @@ public:
      */
     vector<T, 4>& operator=(vector<T, 4> const& v)
     {
-	(*this)[0] = v[0];
-	(*this)[1] = v[1];
-	(*this)[2] = v[2];
-	(*this)[3] = v[3];
-	return *this;
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+        (*this)[2] = v[2];
+        (*this)[3] = v[3];
+        return *this;
     }
 
     /**
@@ -165,11 +165,11 @@ public:
      */
     vector<T, 4>& operator=(T const& s)
     {
-	(*this)[0] = s;
-	(*this)[1] = s;
-	(*this)[2] = s;
-	(*this)[3] = s;
-	return *this;
+        (*this)[0] = s;
+        (*this)[1] = s;
+        (*this)[2] = s;
+        (*this)[3] = s;
+        return *this;
     }
 
     /**
@@ -177,11 +177,11 @@ public:
      */
     vector<T, 4>& operator+=(vector<T, 4> const& v)
     {
-	(*this)[0] += v[0];
-	(*this)[1] += v[1];
-	(*this)[2] += v[2];
-	(*this)[3] += v[3];
-	return *this;
+        (*this)[0] += v[0];
+        (*this)[1] += v[1];
+        (*this)[2] += v[2];
+        (*this)[3] += v[3];
+        return *this;
     }
 
     /**
@@ -189,11 +189,11 @@ public:
      */
     vector<T, 4>& operator-=(vector<T, 4> const& v)
     {
-	(*this)[0] -= v[0];
-	(*this)[1] -= v[1];
-	(*this)[2] -= v[2];
-	(*this)[3] -= v[3];
-	return *this;
+        (*this)[0] -= v[0];
+        (*this)[1] -= v[1];
+        (*this)[2] -= v[2];
+        (*this)[3] -= v[3];
+        return *this;
     }
 
     /**
@@ -201,11 +201,11 @@ public:
      */
     vector<T, 4>& operator*=(T const& s)
     {
-	(*this)[0] *= s;
-	(*this)[1] *= s;
-	(*this)[2] *= s;
-	(*this)[3] *= s;
-	return *this;
+        (*this)[0] *= s;
+        (*this)[1] *= s;
+        (*this)[2] *= s;
+        (*this)[3] *= s;
+        return *this;
     }
 
     /**
@@ -213,11 +213,11 @@ public:
      */
     vector<T, 4>& operator/=(T const& s)
     {
-	(*this)[0] /= s;
-	(*this)[1] /= s;
-	(*this)[2] /= s;
-	(*this)[3] /= s;
-	return *this;
+        (*this)[0] /= s;
+        (*this)[1] /= s;
+        (*this)[2] /= s;
+        (*this)[3] /= s;
+        return *this;
     }
 
     /**
@@ -225,11 +225,11 @@ public:
      */
     friend vector<T, 4> operator+(vector<T, 4> v, vector<T, 4> const& w)
     {
-	v[0] += w[0];
-	v[1] += w[1];
-	v[2] += w[2];
-	v[3] += w[3];
-	return v;
+        v[0] += w[0];
+        v[1] += w[1];
+        v[2] += w[2];
+        v[3] += w[3];
+        return v;
     }
 
     /**
@@ -237,11 +237,11 @@ public:
      */
     friend vector<T, 4> operator-(vector<T, 4> v, vector<T, 4> const& w)
     {
-	v[0] -= w[0];
-	v[1] -= w[1];
-	v[2] -= w[2];
-	v[3] -= w[3];
-	return v;
+        v[0] -= w[0];
+        v[1] -= w[1];
+        v[2] -= w[2];
+        v[3] -= w[3];
+        return v;
     }
 
     /**
@@ -249,7 +249,7 @@ public:
      */
     T operator*(vector<T, 4> const& v) const
     {
-	return (*this)[0] * v[0] + (*this)[1] * v[1] + (*this)[2] * v[2] + (*this)[3] * v[3];
+        return (*this)[0] * v[0] + (*this)[1] * v[1] + (*this)[2] * v[2] + (*this)[3] * v[3];
     }
 
     /**
@@ -257,11 +257,11 @@ public:
      */
     friend vector<T, 4> operator*(vector<T, 4> v, T const& s)
     {
-	v[0] *= s;
-	v[1] *= s;
-	v[2] *= s;
-	v[3] *= s;
-	return v;
+        v[0] *= s;
+        v[1] *= s;
+        v[2] *= s;
+        v[3] *= s;
+        return v;
     }
 
     /**
@@ -269,11 +269,11 @@ public:
      */
     friend vector<T, 4> operator*(T const& s, vector<T, 4> v)
     {
-	v[0] *= s;
-	v[1] *= s;
-	v[2] *= s;
-	v[3] *= s;
-	return v;
+        v[0] *= s;
+        v[1] *= s;
+        v[2] *= s;
+        v[3] *= s;
+        return v;
     }
 
     /**
@@ -281,11 +281,11 @@ public:
      */
     friend vector<T, 4> operator/(vector<T, 4> v, T const& s)
     {
-	v[0] /= s;
-	v[1] /= s;
-	v[2] /= s;
-	v[3] /= s;
-	return v;
+        v[0] /= s;
+        v[1] /= s;
+        v[2] /= s;
+        v[3] /= s;
+        return v;
     }
 
     /**
@@ -293,8 +293,8 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, vector<T, 4> const& v)
     {
-	os << v[0] << "\t" << v[1] << "\t" << v[2] << "\t" << v[3];
-	return os;
+        os << v[0] << "\t" << v[1] << "\t" << v[2] << "\t" << v[3];
+        return os;
     }
 
     /**
@@ -302,8 +302,8 @@ public:
      */
     friend std::istream& operator>>(std::istream& is, vector<T, 4>& v)
     {
-	is >> v[0] >> v[1] >> v[2] >> v[3];
-	return is;
+        is >> v[0] >> v[1] >> v[2] >> v[3];
+        return is;
     }
 };
 

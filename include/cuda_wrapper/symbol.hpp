@@ -49,7 +49,7 @@ public:
      */
     size_type size() const
     {
-	return 1;
+        return 1;
     }
 
     /**
@@ -57,7 +57,7 @@ public:
      */
     value_type const* data() const
     {
-	return ptr_;
+        return ptr_;
     }
 
 private:
@@ -96,17 +96,17 @@ public:
      */
     size_type size() const
     {
-	//
-	// It would be preferable to issue the following CUDA runtime
-	// call directly upon construction. However, the constructor
-	// has to be compilable by the NVIDIA CUDA compiler as well,
-	// which does not support C++ runtime functionality, e.g.
-	// exceptions.
-	//
+        //
+        // It would be preferable to issue the following CUDA runtime
+        // call directly upon construction. However, the constructor
+        // has to be compilable by the NVIDIA CUDA compiler as well,
+        // which does not support C++ runtime functionality, e.g.
+        // exceptions.
+        //
 
-	size_t size;
-	CUDA_CALL(cudaGetSymbolSize(&size, reinterpret_cast<char const*>(ptr_)));
-	return (size / sizeof(value_type));
+        size_t size;
+        CUDA_CALL(cudaGetSymbolSize(&size, reinterpret_cast<char const*>(ptr_)));
+        return (size / sizeof(value_type));
     }
 
 #endif /* ! __CUDACC__ */
@@ -116,7 +116,7 @@ public:
      */
     value_type const* data() const
     {
-	return ptr_;
+        return ptr_;
     }
 
 private:

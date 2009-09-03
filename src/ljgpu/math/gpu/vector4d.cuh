@@ -45,7 +45,7 @@ struct vector<float, 4>
 
     __device__ inline operator float4() const
     {
-	return make_float4(x, y, z, w);
+        return make_float4(x, y, z, w);
     }
 };
 

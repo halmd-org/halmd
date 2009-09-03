@@ -45,13 +45,13 @@ __global__ void gaussian(T* g_v, uint npart, uint nplace, float temp, T* g_vcm)
     rand48::state_type state = rand48::g_state[GTID];
 
     for (uint i = GTID; i < npart; i += GTDIM) {
-	T v;
-	rand48::gaussian(v, temp, state);
-	g_v[i] = v;
+        T v;
+        rand48::gaussian(v, temp, state);
+        g_v[i] = v;
 #ifdef USE_VERLET_DSFUN
-	g_v[i + nplace] = vector<float, dimension>(0);
+        g_v[i + nplace] = vector<float, dimension>(0);
 #endif
-	vcm += vector<float, dimension>(v);
+        vcm += vector<float, dimension>(v);
     }
     // store random number generator state in global device memory
     rand48::g_state[GTID] = state;
@@ -64,10 +64,10 @@ __global__ void gaussian(T* g_v, uint npart, uint nplace, float temp, T* g_vcm)
     reduce<THREADS / 2, sum_>(vcm, s_vcm);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_vcm[blockIdx.x] = static_cast<vector<float, dimension> >(vcm);
+        // store block reduced value in global memory
+        g_vcm[blockIdx.x] = static_cast<vector<float, dimension> >(vcm);
 #ifdef USE_VERLET_DSFUN
-	g_vcm[blockIdx.x + BDIM] = dsfloat2lo(vcm);
+        g_vcm[blockIdx.x + BDIM] = dsfloat2lo(vcm);
 #endif
     }
 }
@@ -87,29 +87,29 @@ __global__ void shift_velocity(T* g_v, uint npart, uint nplace, T const* g_vcm, 
     // compute mean center of mass velocity from block reduced values
     for (uint i = TID; i < BLOCKS; i += TDIM) {
 #ifdef USE_VERLET_DSFUN
-	s_vcm[i] = vector_type(g_vcm[i], g_vcm[i + BDIM]);
+        s_vcm[i] = vector_type(g_vcm[i], g_vcm[i + BDIM]);
 #else
-	s_vcm[i] = g_vcm[i];
+        s_vcm[i] = g_vcm[i];
 #endif
     }
     __syncthreads();
     for (uint i = 0; i < BLOCKS; ++i) {
-	vcm += s_vcm[i];
+        vcm += s_vcm[i];
     }
     vcm /= npart;
 
     for (uint i = GTID; i < npart; i += GTDIM) {
 #ifdef USE_VERLET_DSFUN
-	vector_type v(g_v[i], g_v[i + nplace]);
+        vector_type v(g_v[i], g_v[i + nplace]);
 #else
-	vector_type v = g_v[i];
+        vector_type v = g_v[i];
 #endif
-	v -= vcm;
-	g_v[i] = static_cast<vector<float, dimension> >(v);
+        v -= vcm;
+        g_v[i] = static_cast<vector<float, dimension> >(v);
 #ifdef USE_VERLET_DSFUN
-	g_v[i + nplace] = dsfloat2lo(v);
+        g_v[i + nplace] = dsfloat2lo(v);
 #endif
-	vv += v * v;
+        vv += v * v;
     }
     // reduced value for this thread
     s_vv[TID] = vv;
@@ -119,8 +119,8 @@ __global__ void shift_velocity(T* g_v, uint npart, uint nplace, T const* g_vcm, 
     reduce<THREADS / 2, sum_>(vv, s_vv);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_vv[blockIdx.x] = vv;
+        // store block reduced value in global memory
+        g_vv[blockIdx.x] = vv;
     }
 }
 
@@ -136,11 +136,11 @@ __global__ void scale_velocity(T* g_v, uint npart, uint nplace, dsfloat const* g
 
     // compute squared velocity sum from block reduced values
     for (uint i = TID; i < BLOCKS; i += TDIM) {
-	s_vv[i] = g_vv[i];
+        s_vv[i] = g_vv[i];
     }
     __syncthreads();
     for (uint i = 0; i < BLOCKS; ++i) {
-	vv += s_vv[i];
+        vv += s_vv[i];
     }
 
     int dim = vector_type::static_size;
@@ -148,14 +148,14 @@ __global__ void scale_velocity(T* g_v, uint npart, uint nplace, dsfloat const* g
 
     for (uint i = GTID; i < npart; i += GTDIM) {
 #ifdef USE_VERLET_DSFUN
-	vector_type v(g_v[i], g_v[i + nplace]);
+        vector_type v(g_v[i], g_v[i + nplace]);
 #else
-	vector_type v = g_v[i];
+        vector_type v = g_v[i];
 #endif
-	v *= coeff;
-	g_v[i] = static_cast<vector<float, dimension> >(v);
+        v *= coeff;
+        g_v[i] = static_cast<vector<float, dimension> >(v);
 #ifdef USE_VERLET_DSFUN
-	g_v[i + nplace] = dsfloat2lo(v);
+        g_v[i + nplace] = dsfloat2lo(v);
 #endif
     }
 }

@@ -42,27 +42,27 @@ public:
 private:
     struct container : boost::noncopyable
     {
-	/**
-	 * allocate global device memory
-	 */
-	container(size_type size) : m_size(size)
-	{
-	    void* ptr;
-	    // returns NULL pointer upon zero allocation
-	    CUDA_CALL(cudaMalloc(&ptr, m_size * sizeof(value_type)));
-	    m_ptr = reinterpret_cast<pointer>(ptr);
-	}
+        /**
+         * allocate global device memory
+         */
+        container(size_type size) : m_size(size)
+        {
+            void* ptr;
+            // returns NULL pointer upon zero allocation
+            CUDA_CALL(cudaMalloc(&ptr, m_size * sizeof(value_type)));
+            m_ptr = reinterpret_cast<pointer>(ptr);
+        }
 
-	/**
-	 * free global device memory
-	 */
-	~container() throw()
-	{
-	    cudaFree(reinterpret_cast<void*>(m_ptr));
-	}
+        /**
+         * free global device memory
+         */
+        ~container() throw()
+        {
+            cudaFree(reinterpret_cast<void*>(m_ptr));
+        }
 
-	pointer m_ptr;
-	size_type m_size;
+        pointer m_ptr;
+        size_type m_size;
     };
 
 public:
@@ -76,7 +76,7 @@ public:
      */
     size_type size() const
     {
-	return m_size;
+        return m_size;
     }
 
     /**
@@ -84,7 +84,7 @@ public:
      */
     size_type capacity() const
     {
-	return m_mem->m_size;
+        return m_mem->m_size;
     }
 
     /**
@@ -92,8 +92,8 @@ public:
      */
     void resize(size_type size)
     {
-	this->reserve(size);
-	m_size = size;
+        this->reserve(size);
+        m_size = size;
     }
 
     /**
@@ -101,10 +101,10 @@ public:
      */
     void reserve(size_type size)
     {
-	if (size > m_mem->m_size) {
-	    m_mem.reset();
-	    m_mem.reset(new container(size));
-	}
+        if (size > m_mem->m_size) {
+            m_mem.reset();
+            m_mem.reset(new container(size));
+        }
     }
 
     /**
@@ -112,8 +112,8 @@ public:
      */
     void swap(vector_type& v)
     {
-	m_mem.swap(v.m_mem);
-	std::swap(m_size, v.m_size);
+        m_mem.swap(v.m_mem);
+        std::swap(m_size, v.m_size);
     }
 
     /**
@@ -121,22 +121,22 @@ public:
      */
     pointer data()
     {
-	return m_mem->m_ptr;
+        return m_mem->m_ptr;
     }
 
     operator pointer()
     {
-	return m_mem->m_ptr;
+        return m_mem->m_ptr;
     }
 
     const_pointer data() const
     {
-	return m_mem->m_ptr;
+        return m_mem->m_ptr;
     }
 
     operator const_pointer() const
     {
-	return m_mem->m_ptr;
+        return m_mem->m_ptr;
     }
 
 private:

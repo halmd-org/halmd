@@ -37,26 +37,26 @@ namespace ljgpu
  * performance counter descriptions
  */
 perf::desc_map perf::m_desc = boost::assign::map_list_of
-    ("boltzmann",		"Boltzmann distribution")
-    ("event_queue",		"event queue processing")
-    ("hilbert_sort",		"Hilbert curve sort")
-    ("init_cells",		"cell lists initialisation")
-    ("lattice",			"lattice generation")
-    ("maximum_displacement",	"maximum particle displacement reduction")
-    ("maximum_velocity",	"maximum velocity reduction")
-    ("mdstep",			"MD simulation step")
-    ("memcpy_cells",		"cell lists memcpy")
-    ("permutation",		"phase space sample sort")
-    ("potential_energy",	"potential energy sum reduction")
-    ("reduce_squared_velocity",	"mean squared velocity reduction")
-    ("reduce_velocity",		"velocity center of mass reduction")
-    ("sample",			"phase space sampling")
-    ("sample_memcpy",		"sample memcpy")
-    ("update_cells",		"cell lists update")
-    ("update_forces",		"Lennard-Jones force update")
-    ("update_neighbours",	"neighbour lists update")
-    ("velocity_verlet",		"velocity-Verlet integration")
-    ("virial_sum",		"virial equation sum reduction")
+    ("boltzmann",                "Boltzmann distribution")
+    ("event_queue",                "event queue processing")
+    ("hilbert_sort",                "Hilbert curve sort")
+    ("init_cells",                "cell lists initialisation")
+    ("lattice",                        "lattice generation")
+    ("maximum_displacement",        "maximum particle displacement reduction")
+    ("maximum_velocity",        "maximum velocity reduction")
+    ("mdstep",                        "MD simulation step")
+    ("memcpy_cells",                "cell lists memcpy")
+    ("permutation",                "phase space sample sort")
+    ("potential_energy",        "potential energy sum reduction")
+    ("reduce_squared_velocity",        "mean squared velocity reduction")
+    ("reduce_velocity",                "velocity center of mass reduction")
+    ("sample",                        "phase space sampling")
+    ("sample_memcpy",                "sample memcpy")
+    ("update_cells",                "cell lists update")
+    ("update_forces",                "Lennard-Jones force update")
+    ("update_neighbours",        "neighbour lists update")
+    ("velocity_verlet",                "velocity-Verlet integration")
+    ("virial_sum",                "virial equation sum reduction")
     ;
 
 /**
@@ -66,12 +66,12 @@ void perf::open(std::string const& filename)
 {
     LOG("write performance data to file: " << filename);
     try {
-	// truncate existing file
-	m_file = H5::H5File(filename, H5F_ACC_TRUNC);
-	m_is_open = true;
+        // truncate existing file
+        m_file = H5::H5File(filename, H5F_ACC_TRUNC);
+        m_is_open = true;
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to create performance data file");
+        throw exception("failed to create performance data file");
     }
     m_tid = H5::PredType::NATIVE_FLOAT;
 }
@@ -82,8 +82,8 @@ void perf::open(std::string const& filename)
 void perf::sample(counters const& times)
 {
     foreach (counter const& i, times) {
-	// accumulate values of accumulator
-	m_times[i.first] += i.second;
+        // accumulate values of accumulator
+        m_times[i.first] += i.second;
     }
 }
 
@@ -95,8 +95,8 @@ std::ostream& operator<<(std::ostream& os, accumulator<T> const& acc)
 {
     os << std::fixed << std::setprecision(4) << (acc.mean() * 1000) << " ms";
     if (acc.count() > 1) {
-	os << " (" << std::fixed << std::setprecision(4)
-	   << (acc.std() * 1000) << " ms, " << acc.count() << " calls)";
+        os << " (" << std::fixed << std::setprecision(4)
+           << (acc.std() * 1000) << " ms, " << acc.count() << " calls)";
     }
     return os;
 }
@@ -108,11 +108,11 @@ std::ostream& operator<<(std::ostream& os, perf::counters const& times)
 {
     std::vector<std::string> keys;
     foreach (perf::counter const& i, times) {
-	keys.push_back(i.first);
+        keys.push_back(i.first);
     }
     std::sort(keys.begin(), keys.end());
     foreach (std::string const& key, keys) {
-	os << perf::desc(key) << ": " << times.at(key) << std::endl;
+        os << perf::desc(key) << ": " << times.at(key) << std::endl;
     }
     return os;
 }
@@ -124,11 +124,11 @@ void perf::flush()
 {
     H5::Group node;
     try {
-	H5XX_NO_AUTO_PRINT(H5::FileIException);
-	node = m_file.openGroup("times");
+        H5XX_NO_AUTO_PRINT(H5::FileIException);
+        node = m_file.openGroup("times");
     }
     catch (H5::FileIException const&) {
-	node = m_file.createGroup("times");
+        node = m_file.createGroup("times");
     }
 
     // dataspace for performance data
@@ -136,38 +136,38 @@ void perf::flush()
     H5::DataSpace ds_file(2, dim);
 
     try {
-	foreach (counter const& i, m_times) {
-	    std::string const& key = i.first;
-	    if (m_dataset.find(key) == m_dataset.end()) {
-		m_dataset[key] = node.createDataSet(key.c_str(), m_tid, ds_file);
-	    }
-	}
+        foreach (counter const& i, m_times) {
+            std::string const& key = i.first;
+            if (m_dataset.find(key) == m_dataset.end()) {
+                m_dataset[key] = node.createDataSet(key.c_str(), m_tid, ds_file);
+            }
+        }
     }
     catch (H5::FileIException const&) {
-	throw exception("failed to create HDF5 performance datasets");
+        throw exception("failed to create HDF5 performance datasets");
     }
 
     // memory dataspace
     H5::DataSpace ds_mem(2, dim);
     boost::array<float, 3> data;
     try {
-	foreach (counter const& i, m_times) {
-	    // write to HDF5 dataset
-	    data[0] = i.second.mean();
-	    data[1] = i.second.std();
-	    data[2] = i.second.count();
-	    m_dataset[i.first].write(data.c_array(), m_tid, ds_mem, ds_file);
-	}
+        foreach (counter const& i, m_times) {
+            // write to HDF5 dataset
+            data[0] = i.second.mean();
+            data[1] = i.second.std();
+            data[2] = i.second.count();
+            m_dataset[i.first].write(data.c_array(), m_tid, ds_mem, ds_file);
+        }
     }
     catch (H5::FileIException const&) {
-	throw exception("failed to write performance data to HDF5 file");
+        throw exception("failed to write performance data to HDF5 file");
     }
 
     try {
-	m_file.flush(H5F_SCOPE_GLOBAL);
+        m_file.flush(H5F_SCOPE_GLOBAL);
     }
     catch (H5::FileIException const& e) {
-	throw exception("failed to flush HDF5 performance file to disk");
+        throw exception("failed to flush HDF5 performance file to disk");
     }
 }
 
@@ -180,11 +180,11 @@ void perf::close()
     flush();
 
     try {
-	m_file.close();
-	m_is_open = false;
+        m_file.close();
+        m_is_open = false;
     }
     catch (H5::Exception const& e) {
-	throw exception("failed to close performance data file");
+        throw exception("failed to close performance data file");
     }
 }
 

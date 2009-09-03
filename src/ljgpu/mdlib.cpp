@@ -69,25 +69,25 @@ _mdsim(options const& opt)
     // build list of chosen or available CUDA devices
     std::vector<int> devices;
     if (!opt["device"].empty()) {
-	boost::multi_array<int, 1> d(opt["device"].as<boost::multi_array<int, 1> >());
-	std::copy(d.begin(), d.end(), std::back_inserter(devices));
+        boost::multi_array<int, 1> d(opt["device"].as<boost::multi_array<int, 1> >());
+        std::copy(d.begin(), d.end(), std::back_inserter(devices));
     }
     else {
-	std::copy(boost::counting_iterator<int>(0),
-		  boost::counting_iterator<int>(cuda::device::count()),
-		  std::back_inserter(devices));
+        std::copy(boost::counting_iterator<int>(0),
+                  boost::counting_iterator<int>(cuda::device::count()),
+                  std::back_inserter(devices));
     }
     // choose first available CUDA device
     boost::shared_ptr<cuda::driver::context> ctx;
     foreach (int i, devices) {
-	try {
-	    // create CUDA context and associate it with this thread
-	    ctx.reset(new cuda::driver::context(i));
-	    break;
-	}
-	catch (cuda::driver::error const&) {
-	    // device is compute-exlusive mode and in use
-	}
+        try {
+            // create CUDA context and associate it with this thread
+            ctx.reset(new cuda::driver::context(i));
+            break;
+        }
+        catch (cuda::driver::error const&) {
+            // device is compute-exlusive mode and in use
+        }
     }
     LOG("CUDA device: " << cuda::driver::context::device());
     cuda::device::properties prop(cuda::driver::context::device());
@@ -115,13 +115,13 @@ _mdsim(options const& opt)
 #endif /* ! __DEVICE_EMULATION__ */
 
     if (opt["dry-run"].as<bool>()) {
-	return LJGPU_EXIT_SUCCESS;
+        return LJGPU_EXIT_SUCCESS;
     }
     if (opt["daemon"].as<bool>()) {
-	if (daemon(0, 0)) {
-	    char const* str = strerror(errno);
-	    throw std::runtime_error(std::string("failed to detach process: ") + str);
-	}
+        if (daemon(0, 0)) {
+            char const* str = strerror(errno);
+            throw std::runtime_error(std::string("failed to detach process: ") + str);
+        }
     }
 
     return md();
@@ -145,34 +145,34 @@ _mdsim(options const& opt)
     typedef boost::unordered_map<std::string, std::string> cpu_map;
     std::vector<cpu_map> cpus;
     foreach (std::string const& line, cpuinfo) {
-	size_t pos = line.find(':');
-	if (pos != std::string::npos) {
-	    std::pair<std::string, std::string> tokens(line.substr(0, pos), line.substr(pos + 1));
-	    boost::algorithm::trim(tokens.first);
-	    boost::algorithm::trim(tokens.second);
-	    if (cpus.empty() || cpus.back().find(tokens.first) != cpus.back().end()) {
-		cpus.push_back(cpu_map());
-	    }
-	    cpus.back().insert(tokens);
-	}
+        size_t pos = line.find(':');
+        if (pos != std::string::npos) {
+            std::pair<std::string, std::string> tokens(line.substr(0, pos), line.substr(pos + 1));
+            boost::algorithm::trim(tokens.first);
+            boost::algorithm::trim(tokens.second);
+            if (cpus.empty() || cpus.back().find(tokens.first) != cpus.back().end()) {
+                cpus.push_back(cpu_map());
+            }
+            cpus.back().insert(tokens);
+        }
     }
     foreach (cpu_map& cpu, cpus) {
-	LOG("CPU: " << cpu["processor"]);
-	LOG("CPU family: " << cpu["cpu family"] << "  model: " << cpu["model"] << "  stepping: " << cpu["stepping"]);
-	LOG("CPU model name: " << cpu["model name"]);
-	LOG("CPU clock rate: " << cpu["cpu MHz"] << " MHz");
+        LOG("CPU: " << cpu["processor"]);
+        LOG("CPU family: " << cpu["cpu family"] << "  model: " << cpu["model"] << "  stepping: " << cpu["stepping"]);
+        LOG("CPU model name: " << cpu["model name"]);
+        LOG("CPU clock rate: " << cpu["cpu MHz"] << " MHz");
     }
 
     mdsim<mdsim_backend> md(opt);
 
     if (opt["dry-run"].as<bool>()) {
-	return LJGPU_EXIT_SUCCESS;
+        return LJGPU_EXIT_SUCCESS;
     }
     if (opt["daemon"].as<bool>()) {
-	if (daemon(0, 0)) {
-	    char const* str = strerror(errno);
-	    throw std::runtime_error(std::string("failed to detach process: ") + str);
-	}
+        if (daemon(0, 0)) {
+            char const* str = strerror(errno);
+            throw std::runtime_error(std::string("failed to detach process: ") + str);
+        }
     }
 
     return md();
@@ -182,13 +182,13 @@ extern "C" int mdlib_mdsim(options const& opt)
 {
     int const dimension = opt["dimension"].as<int>();
     if (dimension == 3) {
-	return _mdsim<MDSIM_CLASS<MDSIM_IMPL, 3> >(opt);
+        return _mdsim<MDSIM_CLASS<MDSIM_IMPL, 3> >(opt);
     }
     else if (dimension == 2) {
-	return _mdsim<MDSIM_CLASS<MDSIM_IMPL, 2> >(opt);
+        return _mdsim<MDSIM_CLASS<MDSIM_IMPL, 2> >(opt);
     }
     else {
-	throw std::logic_error("invalid dimension: " + boost::lexical_cast<std::string>(dimension));
+        throw std::logic_error("invalid dimension: " + boost::lexical_cast<std::string>(dimension));
     }
 }
 

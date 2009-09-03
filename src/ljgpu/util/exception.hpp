@@ -30,7 +30,7 @@ public:
 
     char const* what() const throw()
     {
-	return str_;
+        return str_;
     }
 
 private:

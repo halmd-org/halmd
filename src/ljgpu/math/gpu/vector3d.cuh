@@ -47,12 +47,12 @@ struct vector<float, 3>
 
     __device__ inline operator float3() const
     {
-	return make_float3(x, y, z);
+        return make_float3(x, y, z);
     }
 
     __device__ inline operator float4() const
     {
-	return make_float4(x, y, z, 0);
+        return make_float4(x, y, z, 0);
     }
 };
 

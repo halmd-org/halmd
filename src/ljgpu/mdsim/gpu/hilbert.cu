@@ -71,43 +71,43 @@ __device__ unsigned int hilbert_code(vector<float, 3> r)
 
     // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
     for (unsigned int i = 0; i < depth; ++i) {
-	// determine Hilbert vertex closest to particle
-	const uint x = __signbitf(r.x) & 1;
-	const uint y = __signbitf(r.y) & 1;
-	const uint z = __signbitf(r.z) & 1;
-	// lookup Hilbert code
-	const uint v = (vc >> (3 * (x + (y << 1) + (z << 2))) & MASK);
+        // determine Hilbert vertex closest to particle
+        const uint x = __signbitf(r.x) & 1;
+        const uint y = __signbitf(r.y) & 1;
+        const uint z = __signbitf(r.z) & 1;
+        // lookup Hilbert code
+        const uint v = (vc >> (3 * (x + (y << 1) + (z << 2))) & MASK);
 
-	// scale particle coordinates to subcell
-	r = 2 * r - vector<float, 3>(0.5f - x, 0.5f - y, 0.5f - z);
-	// apply permutation rule according to Hilbert code
-	if (v == 0) {
-	    vertex_swap(vc, b, h, MASK);
-	    vertex_swap(vc, c, e, MASK);
-	}
-	else if (v == 1 || v == 2) {
-	    vertex_swap(vc, c, g, MASK);
-	    vertex_swap(vc, d, h, MASK);
-	}
-	else if (v == 3 || v == 4) {
-	    vertex_swap(vc, a, c, MASK);
+        // scale particle coordinates to subcell
+        r = 2 * r - vector<float, 3>(0.5f - x, 0.5f - y, 0.5f - z);
+        // apply permutation rule according to Hilbert code
+        if (v == 0) {
+            vertex_swap(vc, b, h, MASK);
+            vertex_swap(vc, c, e, MASK);
+        }
+        else if (v == 1 || v == 2) {
+            vertex_swap(vc, c, g, MASK);
+            vertex_swap(vc, d, h, MASK);
+        }
+        else if (v == 3 || v == 4) {
+            vertex_swap(vc, a, c, MASK);
 #ifdef USE_HILBERT_ALT_3D
-	    vertex_swap(vc, b, d, MASK);
-	    vertex_swap(vc, e, g, MASK);
+            vertex_swap(vc, b, d, MASK);
+            vertex_swap(vc, e, g, MASK);
 #endif
-	    vertex_swap(vc, f, h, MASK);
-	}
-	else if (v == 5 || v == 6) {
-	    vertex_swap(vc, a, e, MASK);
-	    vertex_swap(vc, b, f, MASK);
-	}
-	else if (v == 7) {
-	    vertex_swap(vc, a, g, MASK);
-	    vertex_swap(vc, d, f, MASK);
-	}
+            vertex_swap(vc, f, h, MASK);
+        }
+        else if (v == 5 || v == 6) {
+            vertex_swap(vc, a, e, MASK);
+            vertex_swap(vc, b, f, MASK);
+        }
+        else if (v == 7) {
+            vertex_swap(vc, a, g, MASK);
+            vertex_swap(vc, d, f, MASK);
+        }
 
-	// add vertex code to partial Hilbert code
-	hcode = (hcode << 3) + v;
+        // add vertex code to partial Hilbert code
+        hcode = (hcode << 3) + v;
     }
 #undef MASK
     return hcode;
@@ -132,24 +132,24 @@ __device__ unsigned int hilbert_code(vector<float, 2> r)
 
     // 32-bit integer for 2D Hilbert code allows a maximum of 16 levels
     for (unsigned int i = 0; i < depth; ++i) {
-	// determine Hilbert vertex closest to particle
-	const uint x = __signbitf(r.x) & 1;
-	const uint y = __signbitf(r.y) & 1;
-	// lookup Hilbert code
-	const uint v = (vc >> (2 * (x + (y << 1))) & MASK);
+        // determine Hilbert vertex closest to particle
+        const uint x = __signbitf(r.x) & 1;
+        const uint y = __signbitf(r.y) & 1;
+        // lookup Hilbert code
+        const uint v = (vc >> (2 * (x + (y << 1))) & MASK);
 
-	// scale particle coordinates to subcell
-	r = 2 * r - vector<float, 2>(0.5f - x, 0.5f - y);
-	// apply permutation rule according to Hilbert code
-	if (v == 0) {
-	    vertex_swap(vc, b, d, MASK);
-	}
-	else if (v == 3) {
-	    vertex_swap(vc, a, c, MASK);
-	}
+        // scale particle coordinates to subcell
+        r = 2 * r - vector<float, 2>(0.5f - x, 0.5f - y);
+        // apply permutation rule according to Hilbert code
+        if (v == 0) {
+            vertex_swap(vc, b, d, MASK);
+        }
+        else if (v == 3) {
+            vertex_swap(vc, a, c, MASK);
+        }
 
-	// add vertex code to partial Hilbert code
-	hcode = (hcode << 2) + v;
+        // add vertex code to partial Hilbert code
+        hcode = (hcode << 2) + v;
     }
 #undef MASK
     return hcode;

@@ -49,17 +49,17 @@ struct vector<float, 2>
 
     __device__ inline operator float2() const
     {
-	return make_float2(x, y);
+        return make_float2(x, y);
     }
 
     __device__ inline operator float3() const
     {
-	return make_float3(x, y, 0);
+        return make_float3(x, y, 0);
     }
 
     __device__ inline operator float4() const
     {
-	return make_float4(x, y, 0, 0);
+        return make_float4(x, y, 0, 0);
     }
 };
 

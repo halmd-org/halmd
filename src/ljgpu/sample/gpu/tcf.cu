@@ -28,8 +28,8 @@ namespace ljgpu { namespace cu { namespace tcf
 enum { THREADS = gpu::tcf_base::THREADS };
 
 template <typename vector_type,
-	  dsfloat (*correlation_function)(vector_type const&, vector_type const&),
-	  typename coalesced_vector_type>
+          dsfloat (*correlation_function)(vector_type const&, vector_type const&),
+          typename coalesced_vector_type>
 __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_type const* g_in0, uint* g_n, dsfloat* g_m, dsfloat* g_v, uint n)
 {
     __shared__ unsigned int s_n[THREADS];
@@ -42,7 +42,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	transform<accumulate_>(count, mean, variance, correlation_function(g_in[i], g_in0[i]));
+        transform<accumulate_>(count, mean, variance, correlation_function(g_in[i], g_in0[i]));
     }
     // reduced value for this thread
     s_n[TID] = count;
@@ -54,10 +54,10 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
     reduce<THREADS / 2, accumulate_>(count, mean, variance, s_n, s_m, s_v);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_n[blockIdx.x] = count;
-	g_m[blockIdx.x] = mean;
-	g_v[blockIdx.x] = variance;
+        // store block reduced value in global memory
+        g_n[blockIdx.x] = count;
+        g_m[blockIdx.x] = mean;
+        g_v[blockIdx.x] = variance;
     }
 }
 
@@ -83,9 +83,9 @@ __device__ dsfloat velocity_autocorrelation(vector_type const& v, vector_type co
 }
 
 template <typename vector_type,
-	  dsfloat (*correlation_function)(vector_type const&, vector_type const&, vector_type const&),
-	  typename coalesced_vector_type,
-	  typename uncoalesced_vector_type>
+          dsfloat (*correlation_function)(vector_type const&, vector_type const&, vector_type const&),
+          typename coalesced_vector_type,
+          typename uncoalesced_vector_type>
 __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_type const* g_in0, uncoalesced_vector_type const q_vector, dsfloat* g_sum, uint n)
 {
     __shared__ dsfloat s_sum[THREADS];
@@ -94,7 +94,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	sum += correlation_function(g_in[i], g_in0[i], q_vector);
+        sum += correlation_function(g_in[i], g_in0[i], q_vector);
     }
     // reduced value for this thread
     s_sum[TID] = sum;
@@ -104,8 +104,8 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
     reduce<THREADS / 2, sum_>(sum, s_sum);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_sum[blockIdx.x] = sum;
+        // store block reduced value in global memory
+        g_sum[blockIdx.x] = sum;
     }
 }
 
@@ -117,9 +117,9 @@ __device__ dsfloat incoherent_scattering_function(vector_type const& r, vector_t
 }
 
 template <typename vector_type,
-	  void (*correlation_function)(dsfloat&, dsfloat&, vector_type const&, vector_type const&),
-	  typename coalesced_vector_type,
-	  typename uncoalesced_vector_type>
+          void (*correlation_function)(dsfloat&, dsfloat&, vector_type const&, vector_type const&),
+          typename coalesced_vector_type,
+          typename uncoalesced_vector_type>
 __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector_type const q_vector, dsfloat* g_real, dsfloat* g_imag, uint n)
 {
     __shared__ dsfloat s_real[THREADS];
@@ -130,7 +130,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-	correlation_function(real, imag, g_in[i], q_vector);
+        correlation_function(real, imag, g_in[i], q_vector);
     }
     // reduced value for this thread
     s_real[TID] = real;
@@ -141,9 +141,9 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
     reduce<THREADS / 2, complex_sum_>(real, imag, s_real, s_imag);
 
     if (TID < 1) {
-	// store block reduced value in global memory
-	g_real[blockIdx.x] = real;
-	g_imag[blockIdx.x] = imag;
+        // store block reduced value in global memory
+        g_real[blockIdx.x] = real;
+        g_imag[blockIdx.x] = imag;
     }
 }
 

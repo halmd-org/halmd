@@ -36,18 +36,18 @@ public:
      * block all signals in this process
      */
     handler() {
-	sigset_t set;
-	sigfillset(&set);
-	sigprocmask(SIG_BLOCK, &set, NULL);
+        sigset_t set;
+        sigfillset(&set);
+        sigprocmask(SIG_BLOCK, &set, NULL);
     }
 
     /**
      * unblock all signals in this process
      */
     ~handler() {
-	sigset_t set;
-	sigfillset(&set);
-	sigprocmask(SIG_UNBLOCK, &set, NULL);
+        sigset_t set;
+        sigfillset(&set);
+        sigprocmask(SIG_UNBLOCK, &set, NULL);
     }
 };
 

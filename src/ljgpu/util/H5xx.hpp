@@ -66,7 +66,7 @@ class attribute
 {
 public:
     attribute(H5::H5Object const& node, std::string const& name)
-	: m_node(&node), m_name(name) {}
+        : m_node(&node), m_name(name) {}
 
     template <typename T>
     typename boost::enable_if<boost::is_fundamental<T>, attribute&>::type
@@ -132,7 +132,7 @@ public:
      */
     attribute operator[](char const* name) const
     {
-	return attribute(*this, name);
+        return attribute(*this, name);
     }
 };
 
@@ -150,7 +150,7 @@ public:
      */
     attribute operator[](char const* name) const
     {
-	return attribute(*this, name);
+        return attribute(*this, name);
     }
 };
 
@@ -160,13 +160,13 @@ class no_autoprint : public Exception
 public:
     no_autoprint()
     {
-	Exception::getAutoPrint(func, &client_data);
-	Exception::dontPrint();
+        Exception::getAutoPrint(func, &client_data);
+        Exception::dontPrint();
     }
 
     ~no_autoprint()
     {
-	Exception::setAutoPrint(func, client_data);
+        Exception::setAutoPrint(func, client_data);
     }
 
 private:
@@ -185,11 +185,11 @@ attribute::operator=(T const& value)
 {
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node->createAttribute(m_name, ctype<T>::type, H5S_SCALAR);
+        attr = m_node->createAttribute(m_name, ctype<T>::type, H5S_SCALAR);
     }
     attr.write(ctype<T>::type, &value);
     return *this;
@@ -204,11 +204,11 @@ attribute::as()
 {
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	throw;
+        throw;
     }
     T value;
     attr.read(ctype<T>::type, &value);
@@ -225,11 +225,11 @@ attribute::operator=(T const& value)
     H5::StrType tid(H5::PredType::C_S1, 256);
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node->createAttribute(m_name, tid, H5S_SCALAR);
+        attr = m_node->createAttribute(m_name, tid, H5S_SCALAR);
     }
     attr.write(tid, value.c_str());
     return *this;
@@ -244,11 +244,11 @@ attribute::as()
 {
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	throw;
+        throw;
     }
     // fixed string length includes terminating NULL character
     char value[256];
@@ -266,11 +266,11 @@ attribute::operator=(T value)
     H5::StrType tid(H5::PredType::C_S1, 256);
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node->createAttribute(m_name, tid, H5S_SCALAR);
+        attr = m_node->createAttribute(m_name, tid, H5S_SCALAR);
     }
     attr.write(tid, value);
     return *this;
@@ -290,11 +290,11 @@ attribute::operator=(T const& value)
     H5::DataSpace ds(1, dim);
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
+        attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
     }
     attr.write(ctype<value_type>::type, value.data());
     return *this;
@@ -315,15 +315,15 @@ attribute::operator=(T const& value)
     H5::StrType tid(H5::PredType::C_S1, 256);
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node->createAttribute(m_name, tid, ds);
+        attr = m_node->createAttribute(m_name, tid, ds);
     }
     boost::array<char[256], size> data;
     for (size_t i = 0; i < size; ++i) {
-	strncpy(data[i], value[i], 256);
+        strncpy(data[i], value[i], 256);
     }
     attr.write(tid, data.data());
     return *this;
@@ -341,24 +341,24 @@ attribute::as()
 
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	throw;
+        throw;
     }
 
     H5::DataSpace ds(attr.getSpace());
     if (!ds.isSimple()) {
-	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
+        throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
     }
     if (ds.getSimpleExtentNdims() != 1) {
-	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not one-dimensional");
+        throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not one-dimensional");
     }
     hsize_t dim[1];
     ds.getSimpleExtentDims(dim);
     if (dim[0] != size) {
-	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace does not match array size");
+        throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace does not match array size");
     }
 
     boost::array<value_type, size> value;
@@ -381,11 +381,11 @@ attribute::operator=(T const& value)
     H5::DataSpace ds(dimension, dim);
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
+        attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
     }
     attr.write(ctype<value_type>::type, value.data());
     return *this;
@@ -403,19 +403,19 @@ attribute::as()
 
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	throw;
+        throw;
     }
 
     H5::DataSpace ds(attr.getSpace());
     if (!ds.isSimple()) {
-	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
+        throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
     }
     if (ds.getSimpleExtentNdims() != dimension) {
-	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace dimensionality mismatch");
+        throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace dimensionality mismatch");
     }
     hsize_t dim[dimension];
     ds.getSimpleExtentDims(dim);
@@ -439,11 +439,11 @@ attribute::operator=(T const& value)
     H5::DataSpace ds(1, dim);
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
+        attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
     }
     attr.write(ctype<value_type>::type, value.data());
     return *this;
@@ -460,22 +460,22 @@ attribute::as()
 
     H5::Attribute attr;
     try {
-	H5XX_NO_AUTO_PRINT(H5::AttributeIException);
-	attr = m_node->openAttribute(m_name);
+        H5XX_NO_AUTO_PRINT(H5::AttributeIException);
+        attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-	throw;
+        throw;
     }
 
     H5::DataSpace ds(attr.getSpace());
     if (!ds.isSimple()) {
-	throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
+        throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not simple");
     }
     std::vector<hsize_t> dim(ds.getSimpleExtentNdims());
     ds.getSimpleExtentDims(dim.data());
     size_t size = 1;
     for (size_t i = 0; i < dim.size(); ++i) {
-	size *= dim[i];
+        size *= dim[i];
     }
     std::vector<value_type> value(size);
     attr.read(ctype<value_type>::type, value.data());

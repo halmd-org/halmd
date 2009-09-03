@@ -49,8 +49,8 @@ public:
     template <typename U>
     vector(vector<U, 2> const& v)
     {
-	(*this)[0] = v[0];
-	(*this)[1] = v[1];
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
     }
 
     /**
@@ -59,20 +59,20 @@ public:
 #ifdef WITH_CUDA
     vector(float2 const& v)
     {
-	(*this)[0] = v.x;
-	(*this)[1] = v.y;
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
     }
 
     vector(float3 const& v)
     {
-	(*this)[0] = v.x;
-	(*this)[1] = v.y;
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
     }
 
     vector(float4 const& v)
     {
-	(*this)[0] = v.x;
-	(*this)[1] = v.y;
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
     }
 #endif /* WITH_CUDA */
 
@@ -81,8 +81,8 @@ public:
      */
     vector(T const& s)
     {
-	(*this)[0] = s;
-	(*this)[1] = s;
+        (*this)[0] = s;
+        (*this)[1] = s;
     }
 
     /**
@@ -90,8 +90,8 @@ public:
      */
     vector(T const& x, T const& y)
     {
-	(*this)[0] = x;
-	(*this)[1] = y;
+        (*this)[0] = x;
+        (*this)[1] = y;
     }
 
     /**
@@ -100,17 +100,17 @@ public:
 #ifdef WITH_CUDA
     operator float2() const
     {
-	return make_float2((*this)[0], (*this)[1]);
+        return make_float2((*this)[0], (*this)[1]);
     }
 
     operator float3() const
     {
-	return make_float3((*this)[0], (*this)[1], 0);
+        return make_float3((*this)[0], (*this)[1], 0);
     }
 
     operator float4() const
     {
-	return make_float4((*this)[0], (*this)[1], 0, 0);
+        return make_float4((*this)[0], (*this)[1], 0, 0);
     }
 #endif /* WITH_CUDA */
 
@@ -119,7 +119,7 @@ public:
      */
     bool operator==(vector<T, 2> const& v) const
     {
-	return (v[0] == (*this)[0] && v[1] == (*this)[1]);
+        return (v[0] == (*this)[0] && v[1] == (*this)[1]);
     }
 
     /**
@@ -127,7 +127,7 @@ public:
      */
     bool operator!=(vector<T, 2> const& v) const
     {
-	return (v[0] != (*this)[0] || v[1] != (*this)[1]);
+        return (v[0] != (*this)[0] || v[1] != (*this)[1]);
     }
 
     /**
@@ -135,7 +135,7 @@ public:
      */
     bool operator<(vector<T, 2> const& v) const
     {
-	return (v[0] < (*this)[0] && v[1] < (*this)[1]);
+        return (v[0] < (*this)[0] && v[1] < (*this)[1]);
     }
 
     /**
@@ -143,7 +143,7 @@ public:
      */
     bool operator>(vector<T, 2> const& v) const
     {
-	return (v[0] > (*this)[0] && v[1] > (*this)[1]);
+        return (v[0] > (*this)[0] && v[1] > (*this)[1]);
     }
 
     /**
@@ -151,7 +151,7 @@ public:
      */
     bool operator<=(vector<T, 2> const& v) const
     {
-	return (v[0] <= (*this)[0] && v[1] <= (*this)[1]);
+        return (v[0] <= (*this)[0] && v[1] <= (*this)[1]);
     }
 
     /**
@@ -159,7 +159,7 @@ public:
      */
     bool operator>=(vector<T, 2> const& v) const
     {
-	return (v[0] >= (*this)[0] && v[1] >= (*this)[1]);
+        return (v[0] >= (*this)[0] && v[1] >= (*this)[1]);
     }
 
     /**
@@ -167,9 +167,9 @@ public:
      */
     vector<T, 2>& operator=(vector<T, 2> const& v)
     {
-	(*this)[0] = v[0];
-	(*this)[1] = v[1];
-	return *this;
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+        return *this;
     }
 
     /**
@@ -177,9 +177,9 @@ public:
      */
     vector<T, 2>& operator=(T const& s)
     {
-	(*this)[0] = s;
-	(*this)[1] = s;
-	return *this;
+        (*this)[0] = s;
+        (*this)[1] = s;
+        return *this;
     }
 
     /**
@@ -187,9 +187,9 @@ public:
      */
     vector<T, 2>& operator+=(vector<T, 2> const& v)
     {
-	(*this)[0] += v[0];
-	(*this)[1] += v[1];
-	return *this;
+        (*this)[0] += v[0];
+        (*this)[1] += v[1];
+        return *this;
     }
 
     /**
@@ -197,9 +197,9 @@ public:
      */
     vector<T, 2>& operator-=(vector<T, 2> const& v)
     {
-	(*this)[0] -= v[0];
-	(*this)[1] -= v[1];
-	return *this;
+        (*this)[0] -= v[0];
+        (*this)[1] -= v[1];
+        return *this;
     }
 
     /**
@@ -207,9 +207,9 @@ public:
      */
     vector<T, 2>& operator*=(T const& s)
     {
-	(*this)[0] *= s;
-	(*this)[1] *= s;
-	return *this;
+        (*this)[0] *= s;
+        (*this)[1] *= s;
+        return *this;
     }
 
     /**
@@ -217,9 +217,9 @@ public:
      */
     vector<T, 2>& operator/=(T const& s)
     {
-	(*this)[0] /= s;
-	(*this)[1] /= s;
-	return *this;
+        (*this)[0] /= s;
+        (*this)[1] /= s;
+        return *this;
     }
 
     /**
@@ -227,9 +227,9 @@ public:
      */
     friend vector<T, 2> operator+(vector<T, 2> v, vector<T, 2> const& w)
     {
-	v[0] += w[0];
-	v[1] += w[1];
-	return v;
+        v[0] += w[0];
+        v[1] += w[1];
+        return v;
     }
 
     /**
@@ -237,9 +237,9 @@ public:
      */
     friend vector<T, 2> operator-(vector<T, 2> v, vector<T, 2> const& w)
     {
-	v[0] -= w[0];
-	v[1] -= w[1];
-	return v;
+        v[0] -= w[0];
+        v[1] -= w[1];
+        return v;
     }
 
     /**
@@ -247,7 +247,7 @@ public:
      */
     T operator*(vector<T, 2> const& v) const
     {
-	return (*this)[0] * v[0] + (*this)[1] * v[1];
+        return (*this)[0] * v[0] + (*this)[1] * v[1];
     }
 
     /**
@@ -255,9 +255,9 @@ public:
      */
     friend vector<T, 2> operator*(vector<T, 2> v, T const& s)
     {
-	v[0] *= s;
-	v[1] *= s;
-	return v;
+        v[0] *= s;
+        v[1] *= s;
+        return v;
     }
 
     /**
@@ -265,9 +265,9 @@ public:
      */
     friend vector<T, 2> operator*(T const& s, vector<T, 2> v)
     {
-	v[0] *= s;
-	v[1] *= s;
-	return v;
+        v[0] *= s;
+        v[1] *= s;
+        return v;
     }
 
     /**
@@ -275,9 +275,9 @@ public:
      */
     friend vector<T, 2> operator/(vector<T, 2> v, T const& s)
     {
-	v[0] /= s;
-	v[1] /= s;
-	return v;
+        v[0] /= s;
+        v[1] /= s;
+        return v;
     }
 
     /**
@@ -285,8 +285,8 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, vector<T, 2> const& v)
     {
-	os << v[0] << "\t" << v[1];
-	return os;
+        os << v[0] << "\t" << v[1];
+        return os;
     }
 
     /**
@@ -294,8 +294,8 @@ public:
      */
     friend std::istream& operator>>(std::istream& is, vector<T, 2>& v)
     {
-	is >> v[0] >> v[1];
-	return is;
+        is >> v[0] >> v[1];
+        return is;
     }
 };
 

@@ -55,7 +55,7 @@ public:
     template<typename _Tp1>
     struct rebind
     {
-	typedef allocator<_Tp1> other;
+        typedef allocator<_Tp1> other;
     };
 
 #if (CUDART_VERSION >= 2020)
@@ -78,51 +78,51 @@ public:
 
     pointer address(reference __x) const
     {
-	return &__x;
+        return &__x;
     }
 
     const_pointer address(const_reference __x) const
     {
-	return &__x;
+        return &__x;
     }
 
     // NB: __n is permitted to be 0.  The C++ standard says nothing
     // about what the return value is when __n == 0.
     pointer allocate(size_type __n, const void* = 0)
     {
-	void* __ret;
+        void* __ret;
 
-	if (__builtin_expect(__n > this->max_size(), false))
-	    std::__throw_bad_alloc();
+        if (__builtin_expect(__n > this->max_size(), false))
+            std::__throw_bad_alloc();
 
 #if (CUDART_VERSION >= 2020)
-	CUDA_CALL(cudaHostAlloc(&__ret, __n * sizeof(_Tp), _flags));
+        CUDA_CALL(cudaHostAlloc(&__ret, __n * sizeof(_Tp), _flags));
 #else
-	CUDA_CALL(cudaMallocHost(&__ret, __n * sizeof(_Tp)));
+        CUDA_CALL(cudaMallocHost(&__ret, __n * sizeof(_Tp)));
 #endif
 
-	return reinterpret_cast<pointer>(__ret);
+        return reinterpret_cast<pointer>(__ret);
     }
 
     // __p is not permitted to be a null pointer.
     void deallocate(pointer __p, size_type) throw() // no-throw guarantee
     {
-	cudaFreeHost(reinterpret_cast<void *>(__p));
+        cudaFreeHost(reinterpret_cast<void *>(__p));
     }
 
     size_type max_size() const throw()
     {
-	return size_t(-1) / sizeof(_Tp);
+        return size_t(-1) / sizeof(_Tp);
     }
 
     void construct(pointer __p, const _Tp& __val)
     {
-	::new(__p) value_type(__val);
+        ::new(__p) value_type(__val);
     }
 
     void destroy(pointer __p)
     {
-	__p->~_Tp();
+        __p->~_Tp();
     }
 
 private:

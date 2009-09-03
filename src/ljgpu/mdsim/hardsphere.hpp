@@ -78,21 +78,21 @@ public:
      */
     struct particle
     {
-	/** periodically reduced particle position */
-	vector_type r;
-	/** periodically extended particle position */
-	vector_type R;
-	/** particle velocity */
-	vector_type v;
-	/** time of that event */
-	double t;
-	/** event counter */
-	uint64_t count;
-	/** cell which particle belongs to */
-	cell_index cell;
+        /** periodically reduced particle position */
+        vector_type r;
+        /** periodically extended particle position */
+        vector_type R;
+        /** particle velocity */
+        vector_type v;
+        /** time of that event */
+        double t;
+        /** event counter */
+        uint64_t count;
+        /** cell which particle belongs to */
+        cell_index cell;
 
-	/** initialize event counter to zero */
-	particle() : count(0) {}
+        /** initialize event counter to zero */
+        particle() : count(0) {}
     };
 
     /**
@@ -100,22 +100,22 @@ public:
      */
     struct event
     {
-	/** time of event */
-	double t;
-	/** event type */
-	enum {
-	    /** collision with other particle */
-	    COLLISION,
-	    /** cell boundary */
-	    CELL,
-	} type;
+        /** time of event */
+        double t;
+        /** event type */
+        enum {
+            /** collision with other particle */
+            COLLISION,
+            /** cell boundary */
+            CELL,
+        } type;
 
-	/** collision event partner */
-	unsigned int n2;
-	/** cell boundary */
-	cell_index cell2;
-	/** copy of event counter of partner at time of event */
-	uint64_t count2;
+        /** collision event partner */
+        unsigned int n2;
+        /** cell boundary */
+        cell_index cell2;
+        /** copy of event counter of partner at time of event */
+        uint64_t count2;
     };
 
     /** particle event queue item with event time and particle */
@@ -224,10 +224,10 @@ void hardsphere<hardsphere_impl, dimension>::particles(T const& value)
     _Base::particles(value);
 
     try {
-	part.resize(npart);
+        part.resize(npart);
     }
     catch (std::bad_alloc const&) {
-	throw exception("failed to allocate particle states");
+        throw exception("failed to allocate particle states");
     }
 }
 
@@ -238,7 +238,7 @@ template <int dimension>
 void hardsphere<hardsphere_impl, dimension>::pair_separation(double value)
 {
     if (value <= 0.) {
-	throw exception("pair separation must be greater than zero");
+        throw exception("pair separation must be greater than zero");
     }
     pair_sep_ = value;
     LOG("pair separation: " << pair_sep_);
@@ -255,22 +255,22 @@ void hardsphere<hardsphere_impl, dimension>::init_cells()
 {
     // FIXME optimal number of cells
     if (dimension == 3)
-	ncell = static_cast<unsigned int>(std::min(cbrt(npart * 8.), std::floor(box_ / pair_sep_)));
+        ncell = static_cast<unsigned int>(std::min(cbrt(npart * 8.), std::floor(box_ / pair_sep_)));
     else
-	ncell = static_cast<unsigned int>(std::min(sqrt(npart * 1.5), std::floor(box_ / pair_sep_)));
+        ncell = static_cast<unsigned int>(std::min(sqrt(npart * 1.5), std::floor(box_ / pair_sep_)));
     LOG("number of cells per dimension: " << ncell);
 
     if (ncell < 3) {
-	throw exception("number of cells per dimension must be at least 3");
+        throw exception("number of cells per dimension must be at least 3");
     }
 
     try {
-	cell_index size;
-	std::fill(size.begin(), size.end(), ncell);
-	cell_.resize(size);
+        cell_index size;
+        std::fill(size.begin(), size.end(), ncell);
+        cell_.resize(size);
     }
     catch (std::bad_alloc const&) {
-	throw exception("failed to allocate cells");
+        throw exception("failed to allocate cells");
     }
 
     // derive cell length
@@ -302,20 +302,20 @@ void hardsphere<hardsphere_impl, dimension>::state(host_sample_type& sample, flo
     typename sample_type::velocity_sample_vector::const_iterator v;
 
     for (size_t i = 0, n = 0; n < npart; ++i) {
-	for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
-	    // set periodically reduced particle position at simulation time zero
-	    part[n].r = *r;
-	    // set periodically extended particle position at simulation time zero
-	    part[n].R = *r;
-	    // set cell which particle belongs to
-	    part[n].cell = compute_cell(*r);
-	    // add particle to cell
-	    cell_(part[n].cell).push_back(n);
-	    // set particle velocity at simulation time zero
-	    part[n].v = *v;
-	    // set particle time
-	    part[n].t = 0;
-	}
+        for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
+            // set periodically reduced particle position at simulation time zero
+            part[n].r = *r;
+            // set periodically extended particle position at simulation time zero
+            part[n].R = *r;
+            // set cell which particle belongs to
+            part[n].cell = compute_cell(*r);
+            // add particle to cell
+            cell_(part[n].cell).push_back(n);
+            // set particle velocity at simulation time zero
+            part[n].v = *v;
+            // set particle time
+            part[n].t = 0;
+        }
     }
 }
 
@@ -355,11 +355,11 @@ void hardsphere<hardsphere_impl, dimension>::lattice()
     unsigned int N = m * static_cast<unsigned int>(pow(n, dimension));
 
     if (N < npart) {
-	n += 1;
-	N = m * static_cast<unsigned int>(pow(n, dimension));
+        n += 1;
+        N = m * static_cast<unsigned int>(pow(n, dimension));
     }
     if (N > npart) {
-	LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+        LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
     // lattice distance
@@ -370,30 +370,30 @@ void hardsphere<hardsphere_impl, dimension>::lattice()
 
     // ensure that particles do not overlap
     if (dist < pair_sep_) {
-	throw exception("minimum lattice distance smaller than pair separation");
+        throw exception("minimum lattice distance smaller than pair separation");
     }
 
     for (unsigned int i = 0; i < npart; ++i) {
-	// compose primitive vectors from 1-dimensional index
-	if (dimension == 3) {
-	    part[i].r[0] = ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
-	    part[i].r[1] = ((i >> 2) / n % n) + (i & 1) / 2.;
-	    part[i].r[2] = ((i >> 2) / n / n) + (i & 2) / 4.;
-	}
-	else {
-	    part[i].r[0] = ((i >> 1) % n) + (i & 1) / 2.;
-	    part[i].r[1] = ((i >> 1) / n) + (i & 1) / 2.;
-	}
-	// scale by lattice distance
-	part[i].r *= a;
-	// set periodically extended particle position
-	part[i].R = part[i].r;
-	// set cell which particle belongs to
-	part[i].cell = compute_cell(part[i].r);
-	// add particle to cell
-	cell_(part[i].cell).push_back(i);
-	// set particle time
-	part[i].t = 0.;
+        // compose primitive vectors from 1-dimensional index
+        if (dimension == 3) {
+            part[i].r[0] = ((i >> 2) % n) + ((i ^ (i >> 1)) & 1) / 2.;
+            part[i].r[1] = ((i >> 2) / n % n) + (i & 1) / 2.;
+            part[i].r[2] = ((i >> 2) / n / n) + (i & 2) / 4.;
+        }
+        else {
+            part[i].r[0] = ((i >> 1) % n) + (i & 1) / 2.;
+            part[i].r[1] = ((i >> 1) / n) + (i & 1) / 2.;
+        }
+        // scale by lattice distance
+        part[i].r *= a;
+        // set periodically extended particle position
+        part[i].R = part[i].r;
+        // set cell which particle belongs to
+        part[i].cell = compute_cell(part[i].r);
+        // add particle to cell
+        cell_(part[i].cell).push_back(i);
+        // set particle time
+        part[i].t = 0.;
     }
 }
 
@@ -411,23 +411,23 @@ void hardsphere<hardsphere_impl, dimension>::temperature(double value)
     double vv = 0;
 
     BOOST_FOREACH(particle& p, part) {
-	// generate random Maxwell-Boltzmann distributed velocity
-	rng_.gaussian(p.v, value);
-	v_cm += p.v;
+        // generate random Maxwell-Boltzmann distributed velocity
+        rng_.gaussian(p.v, value);
+        v_cm += p.v;
     }
     v_cm /= npart;
 
     BOOST_FOREACH(particle& p, part) {
-	// set center of mass velocity to zero
-	p.v -= v_cm;
-	vv += p.v * p.v;
+        // set center of mass velocity to zero
+        p.v -= v_cm;
+        vv += p.v * p.v;
     }
     vv /= npart;
 
     // rescale velocities to accurate temperature
     double s = std::sqrt(value * dimension / vv);
     BOOST_FOREACH(particle& p, part) {
-	p.v *= s;
+        p.v *= s;
     }
 }
 
@@ -455,15 +455,15 @@ void hardsphere<hardsphere_impl, dimension>::init_event_list()
     step_ = 0;
 
     try {
-	event_list.resize(npart);
+        event_list.resize(npart);
     }
     catch (std::bad_alloc const&) {
-	throw exception("failed to allocate event list");
+        throw exception("failed to allocate event list");
     }
 
     // schedule next event for each particle
     for (unsigned int i = 0; i < npart; ++i) {
-	schedule_event(i);
+        schedule_event(i);
     }
 }
 
@@ -478,51 +478,51 @@ void hardsphere<hardsphere_impl, dimension>::compute_collision_event(const unsig
 
     // iterate over particles in cell
     BOOST_FOREACH(unsigned int j, cell) {
-	// skip same particle if in same cell
-	if (j == n)
-	    continue;
+        // skip same particle if in same cell
+        if (j == n)
+            continue;
 
-	// particle distance vector at time of first particle
-	vector_type dr = part[j].r + part[j].v * (part[n].t - part[j].t) - part[n].r;
-	// enforce periodic boundary conditions
-	dr -= round(dr / box_) * box_;
-	// velocity difference at given time
-	vector_type dv = part[j].v - part[n].v;
+        // particle distance vector at time of first particle
+        vector_type dr = part[j].r + part[j].v * (part[n].t - part[j].t) - part[n].r;
+        // enforce periodic boundary conditions
+        dr -= round(dr / box_) * box_;
+        // velocity difference at given time
+        vector_type dv = part[j].v - part[n].v;
 
-	// check particle collision constraint
-	const double drdv = dr * dv;
-	if (drdv >= 0.)
-	    // no particle collision in future
-	    continue;
-	const double dvdv = dv * dv;
-	const double rad = (drdv * drdv) - dvdv * ((dr * dr) - pair_sep_sq);
-	if (rad < 0.)
-	    // no particle collision in future
-	    continue;
-	const double dt_ = (- drdv - std::sqrt(rad)) / dvdv;
-	if (dt_ < 0.)
-	    // no particle collision in future
-	    continue;
+        // check particle collision constraint
+        const double drdv = dr * dv;
+        if (drdv >= 0.)
+            // no particle collision in future
+            continue;
+        const double dvdv = dv * dv;
+        const double rad = (drdv * drdv) - dvdv * ((dr * dr) - pair_sep_sq);
+        if (rad < 0.)
+            // no particle collision in future
+            continue;
+        const double dt_ = (- drdv - std::sqrt(rad)) / dvdv;
+        if (dt_ < 0.)
+            // no particle collision in future
+            continue;
 
-	// particles will collide in the future in reference to given time
-	if (dt_ < dt) {
-	    // set smallest collision time interval
-	    dt = dt_;
-	    // set partner participating in that collision
-	    n2 = j;
-	}
+        // particles will collide in the future in reference to given time
+        if (dt_ < dt) {
+            // set smallest collision time interval
+            dt = dt_;
+            // set partner participating in that collision
+            n2 = j;
+        }
     }
 
     if (n2 < 0)
-	// no collision with particles in cell
-	return;
+        // no collision with particles in cell
+        return;
 
     if (dt < event_list[n].t - part[n].t) {
-	// generate particle collision event
-	event_list[n].type = event::COLLISION;
-	event_list[n].t = part[n].t + dt;
-	event_list[n].n2 = n2;
-	event_list[n].count2 = part[n2].count;
+        // generate particle collision event
+        event_list[n].type = event::COLLISION;
+        event_list[n].t = part[n].t + dt;
+        event_list[n].n2 = n2;
+        event_list[n].count2 = part[n2].count;
     }
 }
 
@@ -537,24 +537,24 @@ void hardsphere<hardsphere_impl, dimension>::compute_cell_event(const unsigned i
     cell_index cell2 = part[n].cell;
 
     for (unsigned int d = 0; d < dimension; ++d) {
-	if (part[n].v[d] < 0.) {
-	    dt3[d] = (part[n].cell[d] * cell_length_ - part[n].r[d]) / part[n].v[d];
-	    cell2[d] = (cell2[d] + ncell - 1) % ncell;
-	}
-	else if (part[n].v[d] > 0.) {
-	    dt3[d] = ((part[n].cell[d] + 1) * cell_length_ - part[n].r[d]) / part[n].v[d];
-	    cell2[d] = (cell2[d] + 1) % ncell;
-	}
-	dt = std::min(dt, dt3[d]);
+        if (part[n].v[d] < 0.) {
+            dt3[d] = (part[n].cell[d] * cell_length_ - part[n].r[d]) / part[n].v[d];
+            cell2[d] = (cell2[d] + ncell - 1) % ncell;
+        }
+        else if (part[n].v[d] > 0.) {
+            dt3[d] = ((part[n].cell[d] + 1) * cell_length_ - part[n].r[d]) / part[n].v[d];
+            cell2[d] = (cell2[d] + 1) % ncell;
+        }
+        dt = std::min(dt, dt3[d]);
     }
 
     if (dt < event_list[n].t - part[n].t) {
-	// generate cell boundary event
-	event_list[n].t = part[n].t + dt;
-	event_list[n].type = event::CELL;
-	for (unsigned int d = 0; d < dimension; ++d) {
-	    event_list[n].cell2[d] = (dt3[d] == dt) ? cell2[d] : part[n].cell[d];
-	}
+        // generate cell boundary event
+        event_list[n].t = part[n].t + dt;
+        event_list[n].type = event::CELL;
+        for (unsigned int d = 0; d < dimension; ++d) {
+            event_list[n].cell2[d] = (dt3[d] == dt) ? cell2[d] : part[n].cell[d];
+        }
     }
 }
 
@@ -575,24 +575,24 @@ void hardsphere<hardsphere_impl, dimension>::schedule_event(const unsigned int n
     // compute next collision event with particles of neighbour cells
     cell_index i;
     for (i[0] = -1; i[0] <= 1; ++i[0]) {
-	for (i[1] = -1; i[1] <= 1; ++i[1]) {
-	    if (dimension == 3) {
-		for (i[2] = -1; i[2] <= 1; ++i[2]) {
-		    cell_index j;
-		    for (int d = 0; d < dimension; ++d) {
-			j[d] = (part[n].cell[d] + ncell + i[d]) % ncell;
-		    }
-		    compute_collision_event(n, cell_(j));
-		}
-	    }
-	    else {
-		cell_index j;
-		for (int d = 0; d < dimension; ++d) {
-		    j[d] = (part[n].cell[d] + ncell + i[d]) % ncell;
-		}
-		compute_collision_event(n, cell_(j));
-	    }
-	}
+        for (i[1] = -1; i[1] <= 1; ++i[1]) {
+            if (dimension == 3) {
+                for (i[2] = -1; i[2] <= 1; ++i[2]) {
+                    cell_index j;
+                    for (int d = 0; d < dimension; ++d) {
+                        j[d] = (part[n].cell[d] + ncell + i[d]) % ncell;
+                    }
+                    compute_collision_event(n, cell_(j));
+                }
+            }
+            else {
+                cell_index j;
+                for (int d = 0; d < dimension; ++d) {
+                    j[d] = (part[n].cell[d] + ncell + i[d]) % ncell;
+                }
+                compute_collision_event(n, cell_(j));
+            }
+        }
     }
 
     // schedule particle event
@@ -618,9 +618,9 @@ void hardsphere<hardsphere_impl, dimension>::process_collision_event(const unsig
 
     // check if partner participated in another collision before this event
     if (part[n2].count != event_list[n1].count2) {
-	// schedule next event for this particle
-	schedule_event(n1);
-	return;
+        // schedule next event for this particle
+        schedule_event(n1);
+        return;
     }
 
     const vector_type dr2 = part[n2].v * (event_list[n1].t - part[n2].t);
@@ -652,22 +652,22 @@ void hardsphere<hardsphere_impl, dimension>::process_collision_event(const unsig
 
     // compute off-diagonal virial stress tensor elements
     if (dimension == 3) {
-	virial[1] += dr[1] * dv[2];
-	virial[1] += part[n1].v[1] * part[n1].v[2];
-	virial[1] += part[n2].v[1] * part[n2].v[2];
+        virial[1] += dr[1] * dv[2];
+        virial[1] += part[n1].v[1] * part[n1].v[2];
+        virial[1] += part[n2].v[1] * part[n2].v[2];
 
-	virial[2] += dr[2] * dv[0];
-	virial[2] += part[n1].v[2] * part[n1].v[0];
-	virial[2] += part[n2].v[2] * part[n2].v[0];
+        virial[2] += dr[2] * dv[0];
+        virial[2] += part[n1].v[2] * part[n1].v[0];
+        virial[2] += part[n2].v[2] * part[n2].v[0];
 
-	virial[3] += dr[0] * dv[1];
-	virial[3] += part[n1].v[0] * part[n1].v[1];
-	virial[3] += part[n2].v[0] * part[n2].v[1];
+        virial[3] += dr[0] * dv[1];
+        virial[3] += part[n1].v[0] * part[n1].v[1];
+        virial[3] += part[n2].v[0] * part[n2].v[1];
     }
     else {
-	virial[1] += dr[0] * dv[1];
-	virial[1] += part[n1].v[0] * part[n1].v[1];
-	virial[1] += part[n2].v[0] * part[n2].v[1];
+        virial[1] += dr[0] * dv[1];
+        virial[1] += part[n1].v[0] * part[n1].v[1];
+        virial[1] += part[n2].v[0] * part[n2].v[1];
     }
 
     // update particle event counters
@@ -692,10 +692,10 @@ void hardsphere<hardsphere_impl, dimension>::process_cell_event(const unsigned i
     part[n].r += dr;
     // enforce periodic boundary conditions
     for (unsigned int d = 0; d < dimension; ++d) {
-	if (part[n].cell[d] == ncell - 1 && event_list[n].cell2[d] == 0)
-	    part[n].r[d] -= box_;
-	if (part[n].cell[d] == 0 && event_list[n].cell2[d] == ncell - 1)
-	    part[n].r[d] += box_;
+        if (part[n].cell[d] == ncell - 1 && event_list[n].cell2[d] == 0)
+            part[n].r[d] -= box_;
+        if (part[n].cell[d] == 0 && event_list[n].cell2[d] == ncell - 1)
+            part[n].r[d] += box_;
     }
     // update particle time
     part[n].t = event_list[n].t;
@@ -720,7 +720,7 @@ hardsphere<hardsphere_impl, dimension>::compute_cell(vector_type const& r)
 {
     cell_index cell;
     for (int i = 0; i < dimension; ++i) {
-	cell[i] = (int)(r[i] / cell_length_) % ncell;
+        cell[i] = (int)(r[i] / cell_length_) % ncell;
     }
     return cell;
 }
@@ -742,24 +742,24 @@ void hardsphere<hardsphere_impl, dimension>::mdstep()
     const double sample_time = ++step_ * timestep_;
     // process particle event queue till sample time
     while (event_queue.top().first <= sample_time) {
-	if (event_queue.top().first != event_list[event_queue.top().second].t) {
-	    // discard invalidated event
-	    event_queue.pop();
-	    continue;
-	}
+        if (event_queue.top().first != event_list[event_queue.top().second].t) {
+            // discard invalidated event
+            event_queue.pop();
+            continue;
+        }
 
-	switch (event_list[event_queue.top().second].type) {
-	  case event::COLLISION:
-	    // process particle collision event
-	    process_collision_event(event_queue.top().second);
-	    break;
+        switch (event_list[event_queue.top().second].type) {
+          case event::COLLISION:
+            // process particle collision event
+            process_collision_event(event_queue.top().second);
+            break;
 
-	  case event::CELL:
-	    // process cell boundary event
-	    process_cell_event(event_queue.top().second);
-	    break;
-	}
-	event_queue.pop();
+          case event::CELL:
+            // process cell boundary event
+            process_cell_event(event_queue.top().second);
+            break;
+        }
+        event_queue.pop();
     }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 
@@ -796,10 +796,10 @@ void hardsphere<hardsphere_impl, dimension>::sample(host_sample_type& sample) co
     typename std::vector<particle>::const_iterator p;
 
     for (p = part.begin(); p != part.end(); ++p) {
-	// periodically extended particle position
-	r->push_back(p->R + p->v * (sample_time - p->t));
-	// particle velocity
-	v->push_back(p->v);
+        // periodically extended particle position
+        r->push_back(p->R + p->v * (sample_time - p->t));
+        // particle velocity
+        v->push_back(p->v);
     }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
 
@@ -818,8 +818,8 @@ void hardsphere<hardsphere_impl, dimension>::sample(energy_sample_type& sample) 
     sample.virial.assign(1, virial);
 
     for (p = part.begin(), sample.vv = 0, sample.v_cm = 0; p != part.end(); ++p) {
-	sample.vv += p->v * p->v;
-	sample.v_cm += p->v;
+        sample.vv += p->v * p->v;
+        sample.v_cm += p->v;
     }
     // mean squared velocity per particle
     sample.vv /= npart;

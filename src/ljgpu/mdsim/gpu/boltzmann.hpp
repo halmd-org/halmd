@@ -37,9 +37,9 @@ struct boltzmann<>
 
     struct rand48
     {
-	static cuda::symbol<uint48> a;
-	static cuda::symbol<uint48> c;
-	static cuda::symbol<ushort3*> state;
+        static cuda::symbol<uint48> a;
+        static cuda::symbol<uint48> c;
+        static cuda::symbol<ushort3*> state;
     };
 };
 

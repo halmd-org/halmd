@@ -36,15 +36,15 @@ public:
      */
     static std::string format(std::string const& fmt)
     {
-	char str[256];
-	time_t t;
+        char str[256];
+        time_t t;
 
-	// time in seconds since the epoch
-	time(&t);
-	// format local time
-	strftime(str, sizeof(str), fmt.c_str(), localtime(&t));
+        // time in seconds since the epoch
+        time(&t);
+        // format local time
+        strftime(str, sizeof(str), fmt.c_str(), localtime(&t));
 
-	return str;
+        return str;
     }
 };
 

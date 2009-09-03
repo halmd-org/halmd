@@ -128,8 +128,8 @@ __device__ void compute_smooth_function(T r, T& s, T& ds, unsigned int ab)
  * calculate particle force using Lennard-Jones potential
  */
 template <mixture_type mixture,
-	  potential_type potential,
-	  typename T,
+          potential_type potential,
+          typename T,
           typename U,
           typename V>
 __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, V& virial, unsigned int ab)
@@ -158,13 +158,13 @@ __device__ void compute_force(T const& r1, T const& r2, U& f, float& en, V& viri
     typename T::value_type pot = (4 * ri6 * (ri6 - 1) - en_cut[(mixture == BINARY) ? ab : 0]) * eps;
 
     if (potential == C2POT) {
-	typename T::value_type s, ds, r_abs = sqrt(rr);
-	// compute smoothing function and its first derivative
-	compute_smooth_function<mixture>(r_abs, s, ds, ab);
-	// apply smoothing function to obtain C¹ force function
-	fval = s * fval - ds * (pot / r_abs);
-	// apply smoothing function to obtain C² potential function
-	pot = s * pot;
+        typename T::value_type s, ds, r_abs = sqrt(rr);
+        // compute smoothing function and its first derivative
+        compute_smooth_function<mixture>(r_abs, s, ds, ab);
+        // apply smoothing function to obtain C¹ force function
+        fval = s * fval - ds * (pot / r_abs);
+        // apply smoothing function to obtain C² potential function
+        pot = s * pot;
     }
 
     // virial equation sum
@@ -209,7 +209,7 @@ __global__ void init_tags(float4* g_r, unsigned int* g_tag)
     vector_type const r = g_r[GTID];
     unsigned int tag = VIRTUAL_PARTICLE;
     if (GTID < npart) {
-	tag = GTID;
+        tag = GTID;
     }
     g_r[GTID] = attach_particle_tag(r, tag);
     g_tag[GTID] = tag;
