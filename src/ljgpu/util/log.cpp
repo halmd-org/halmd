@@ -53,6 +53,7 @@ void init(std::string const& filename, int verbosity)
     logging::init_log_to_file
     (
         filename,
+        keywords::auto_flush = true,
         keywords::format = fmt::format("[%1%] %2%")
             % fmt::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
             % fmt::message()
@@ -62,6 +63,7 @@ void init(std::string const& filename, int verbosity)
     logging::init_log_to_console
     (
         std::clog,
+        keywords::auto_flush = true,
         keywords::filter = flt::attr<severity_level>("Severity") >= sl,
         keywords::format = fmt::format("[%1%] %2%")
             % fmt::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
