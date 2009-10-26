@@ -64,8 +64,10 @@ public:
 
         particle(unsigned int tag, types type = A) : tag(tag), type(type) {}
 
-        /** particle position */
+        /** periodically reduced particle position */
         vector_type r;
+        /** periodic box traversal vector */
+        vector_type R;
         /** particle velocity */
         vector_type v;
         /** particle force */
@@ -127,7 +129,7 @@ private:
     /** update cell lists */
     void update_cells();
     /** returns cell list which a particle belongs to */
-    cell_list& compute_cell(vector_type r);
+    cell_list& compute_cell(vector_type const& r);
     /** update neighbour lists */
     template <bool binary>
     void update_neighbours();
@@ -234,6 +236,7 @@ void ljfluid<ljfluid_impl_host, dimension>::state(host_sample_type& sample, floa
         for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
             particle p(n, types[i]);
             p.r = *r;
+            p.R = 0;
             p.v = *v;
             part.push_back(p);
         }
@@ -368,6 +371,7 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
             r[1] = ((i >> 1) / n) + (i & 1) / 2.;
         }
         r *= a;
+        p.R = 0;
         part.push_back(p);
     }
 
@@ -470,23 +474,11 @@ void ljfluid<ljfluid_impl_host, dimension>::update_cells()
  */
 template <int dimension>
 typename ljfluid<ljfluid_impl_host, dimension>::cell_list&
-ljfluid<ljfluid_impl_host, dimension>::compute_cell(vector_type r)
+ljfluid<ljfluid_impl_host, dimension>::compute_cell(vector_type const& r)
 {
-    r = (r - floor(r / box_) * box_) / cell_length_;
-    //
-    // Wrapping the positional coordinates of a particle in the above way
-    // has proven to reliably deliver an integer in [0, ncell - 1] after
-    // conversion from floating-point for valid simulation parameters.
-    //
-    // However, in the extreme case of diverging potential energy (due to a
-    // too-large timestep) the coordinates may jump to several orders of
-    // magnitude of the box length, resulting in an out-of-bounds cell
-    // index after rounding and integer conversion. Therefore, we have to
-    // add integer modulo operations as a safeguard.
-    //
     cell_index index;
     for (int i = 0; i < dimension; ++i) {
-        index[i] = (unsigned int)(r[i]) % ncell;
+        index[i] = (unsigned int)(r[i] / cell_length_) % ncell;
     }
     return cell(index);
 }
@@ -568,6 +560,9 @@ template <int dimension>
 template <bool same_cell, bool binary>
 void ljfluid<ljfluid_impl_host, dimension>::compute_cell_neighbours(particle& p1, cell_list& c)
 {
+    // half periodic box length for nearest mirror-image particle
+    float_type box_half = 0.5 * box_;
+
     foreach (particle& p2, c) {
         // skip identical particle and particle pair permutations if same cell
         if (same_cell && p2.tag <= p1.tag)
@@ -578,7 +573,14 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_cell_neighbours(particle& p1
         // binary particles type
         unsigned int type = (binary ? (p1.type + p2.type) : 0);
         // enforce periodic boundary conditions
-        r -= round(r / box_) * box_;
+        for (int i = 0; i < dimension; ++i) {
+            if (r[i] > box_half) {
+                r[i] -= box_;
+            }
+            else if (r[i] < -box_half) {
+                r[i] += box_;
+            }
+        }
         // squared particle distance
         float_type rr = r * r;
 
@@ -607,6 +609,8 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
     en_pot = 0;
     // virial equation sum
     virial.assign(binary ? 2 : 1, 0);
+    // half periodic box length for nearest mirror-image particle
+    float_type box_half = 0.5 * box_;
 
     foreach (particle& p1, part) {
         // calculate pairwise Lennard-Jones force with neighbour particles
@@ -616,7 +620,14 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
             // binary particles type
             unsigned int type = (binary ? (p1.type + p2.type) : 0);
             // enforce periodic boundary conditions
-            r -= round(r / box_) * box_;
+            for (int i = 0; i < dimension; ++i) {
+                if (r[i] > box_half) {
+                    r[i] -= box_;
+                }
+                else if (r[i] < -box_half) {
+                    r[i] += box_;
+                }
+            }
             // squared particle distance
             float_type rr = r * r;
 
@@ -712,6 +723,18 @@ void ljfluid<ljfluid_impl_host, dimension>::leapfrog_half()
         p.v += p.f * (static_cast<float_type>(timestep_) / 2);
         // full step position
         p.r += p.v * static_cast<float_type>(timestep_);
+        // enforce periodic boundary conditions
+        for (int i = 0; i < dimension; ++i) {
+            // assumes that particle position wraps at most once per time-step
+            if (p.r[i] > box_) {
+                p.r[i] -= box_;
+                p.R[i] += 1;
+            }
+            else if (p.r[i] < 0) {
+                p.r[i] += box_;
+                p.R[i] -= 1;
+            }
+        }
         // maximum squared velocity
         vv_max = std::max(vv_max, p.v * p.v);
     }
@@ -814,7 +837,7 @@ void ljfluid<ljfluid_impl_host, dimension>::sample(host_sample_type& sample) con
         // assign particle positions and velocities of homogenous type
         for (size_t j = 0; j < mpart[i]; ++j, ++n) {
             // periodically extended particle position
-            r->push_back(part[n].r);
+            r->push_back(part[n].r + part[n].R * box_);
             // particle velocity
             v->push_back(part[n].v);
         }
