@@ -347,7 +347,7 @@ inline vector<double, 2> round(vector<double, 2> v)
  * componentwise round to nearest integer not greater than argument
  */
 template <typename T>
-vector<T, 2> floor(vector<T, 2> v)
+inline vector<T, 2> floor(vector<T, 2> v)
 {
     v[0] = std::floor(v[0]);
     v[1] = std::floor(v[1]);
@@ -358,7 +358,7 @@ vector<T, 2> floor(vector<T, 2> v)
  * componentwise round to nearest integer not less argument
  */
 template <typename T>
-vector<T, 2> ceil(vector<T, 2> v)
+inline vector<T, 2> ceil(vector<T, 2> v)
 {
     v[0] = std::ceil(v[0]);
     v[1] = std::ceil(v[1]);
@@ -369,7 +369,7 @@ vector<T, 2> ceil(vector<T, 2> v)
  * componentwise square root function
  */
 template <typename T>
-vector<T, 2> sqrt(vector<T, 2> v)
+inline vector<T, 2> sqrt(vector<T, 2> v)
 {
     v[0] = std::sqrt(v[0]);
     v[1] = std::sqrt(v[1]);
@@ -380,7 +380,7 @@ vector<T, 2> sqrt(vector<T, 2> v)
  * componentwise cos function
  */
 template <typename T>
-vector<T, 2> cos(vector<T, 2> v)
+inline vector<T, 2> cos(vector<T, 2> v)
 {
     v[0] = std::cos(v[0]);
     v[1] = std::cos(v[1]);
@@ -391,7 +391,7 @@ vector<T, 2> cos(vector<T, 2> v)
  * componentwise sin function
  */
 template <typename T>
-vector<T, 2> sin(vector<T, 2> v)
+inline vector<T, 2> sin(vector<T, 2> v)
 {
     v[0] = std::sin(v[0]);
     v[1] = std::sin(v[1]);
