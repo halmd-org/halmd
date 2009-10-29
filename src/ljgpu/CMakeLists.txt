@@ -1,13 +1,13 @@
 if(ljgpu_USE_STATIC_LIBS)
-  set(ljgpu_STATIC_BACKEND TRUE CACHE BOOL
+  set(ljgpu_BACKEND_EXECUTABLES TRUE CACHE BOOL
     "Build separate executable for each backend" FORCE)
 else(ljgpu_USE_STATIC_LIBS)
-  set(ljgpu_STATIC_BACKEND FALSE CACHE BOOL
+  set(ljgpu_BACKEND_EXECUTABLES FALSE CACHE BOOL
     "Build separate executable for each backend")
 endif(ljgpu_USE_STATIC_LIBS)
-if(ljgpu_STATIC_BACKEND)
-  add_definitions(-DSTATIC_BACKEND)
-endif(ljgpu_STATIC_BACKEND)
+if(ljgpu_BACKEND_EXECUTABLES)
+  add_definitions(-DBACKEND_EXECUTABLES)
+endif(ljgpu_BACKEND_EXECUTABLES)
 
 if(WITH_CUDA)
   set(ljgpu_VARIANT_CELL_SUMMATION_ORDER TRUE CACHE BOOL
@@ -98,7 +98,7 @@ set(ljgpu_COMMON_LIBRARIES
   z
   )
 
-if(NOT ljgpu_STATIC_BACKEND)
+if(NOT ljgpu_BACKEND_EXECUTABLES)
   add_executable(ljgpu
     main.cpp
     options.cpp
@@ -109,7 +109,7 @@ if(NOT ljgpu_STATIC_BACKEND)
   install(TARGETS ljgpu
     RUNTIME DESTINATION bin
     )
-endif(NOT ljgpu_STATIC_BACKEND)
+endif(NOT ljgpu_BACKEND_EXECUTABLES)
 
 set(ljgpu_impl
     ljfluid_impl_host
@@ -134,7 +134,7 @@ foreach(impl ${ljgpu_impl})
     MDSIM_BACKEND="${backend}"
     )
 
-  if(ljgpu_STATIC_BACKEND)
+  if(ljgpu_BACKEND_EXECUTABLES)
     add_executable(ljgpu_${backend}
       main.cpp
       options.cpp
@@ -146,14 +146,14 @@ foreach(impl ${ljgpu_impl})
     install(TARGETS ljgpu_${backend}
       RUNTIME DESTINATION bin
       )
-  else(ljgpu_STATIC_BACKEND)
+  else(ljgpu_BACKEND_EXECUTABLES)
     add_library(ljgpu_${backend} MODULE
       mdlib.cpp
       )
     install(TARGETS ljgpu_${backend}
       LIBRARY DESTINATION lib
       )
-  endif(ljgpu_STATIC_BACKEND)
+  endif(ljgpu_BACKEND_EXECUTABLES)
 
   set_target_properties(ljgpu_${backend} PROPERTIES
     COMPILE_DEFINITIONS "${ljgpu_COMPILE_DEFINITIONS}"

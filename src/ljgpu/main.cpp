@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 
     // load backend library
     ljgpu::mdlib mdlib;
-#ifndef STATIC_BACKEND
+#ifndef BACKEND_EXECUTABLES
     try {
         string const backend(opt["backend"].as<string>());
         boost::filesystem::path exe(argv[0]);

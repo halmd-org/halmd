@@ -31,7 +31,7 @@ extern "C" std::string mdlib_version();
 namespace ljgpu
 {
 
-#ifndef STATIC_BACKEND
+#ifndef BACKEND_EXECUTABLES
 
 struct mdlib : public dl::library
 {
@@ -52,7 +52,7 @@ struct mdlib : public dl::library
     dl::symbol<std::string ()> version;
 };
 
-#else /* ! STATIC_BACKEND */
+#else /* ! BACKEND_EXECUTABLES */
 
 struct mdlib
 {
@@ -64,7 +64,7 @@ struct mdlib
     boost::function<std::string ()> variant;
 };
 
-#endif /* ! STATIC_BACKEND */
+#endif /* ! BACKEND_EXECUTABLES */
 
 } // namespace ljgpu
 

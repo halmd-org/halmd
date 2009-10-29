@@ -184,7 +184,7 @@ To compile separate, dynamically linked executables for each backend::
   NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
   BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
   BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
-  cmake -DCMAKE_BUILD_TYPE=Release -Dljgpu_STATIC_BACKEND=TRUE ../..
+  cmake -DCMAKE_BUILD_TYPE=Release -Dljgpu_BACKEND_EXECUTABLES=TRUE ../..
 
 To compile separate, statically linked executables for each backend::
 
