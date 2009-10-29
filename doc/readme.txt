@@ -138,87 +138,146 @@ This instructs cmake to regenerate the build tree using the configuration from a
 previous cmake run. Then compile with ``make`` as usual.
 
 
-Non-standard third-party library locations
-------------------------------------------
+Setting build parameters
+------------------------
 
-If cmake should look for third-party libraries in a custom path, set the
-CMAKE_PREFIX_PATH variable::
+Parameters may be passed to cmake as environment variables or cache variables.
 
-  CXXFLAGS="-fPIC -Wall" \
-  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$HOME/usr ../..
+Environment variables are prepended to the cmake command::
 
+  CXXFLAGS="-fPIC -Wall" cmake ../..
 
-On non-Debian systems, the Boost header and library locations have to be
-passed to cmake::
+Cache variables are appended using the -D option::
 
-  CXXFLAGS="-fPIC -Wall" \
-  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-  BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
-  BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
   cmake -DCMAKE_BUILD_TYPE=Release ../..
 
 
-Static linking
---------------
+Useful cmake environment variables
+----------------------------------
 
-For static linking to the Boost, HDF5 and GSL libraries, use::
+.. glossary::
+
+   CXXFLAGS
+     Compilation flags for C++ compiler.
+
+     Recommended value is ``CXXFLAGS="-fPIC -Wall"``.
+
+   NVCCFLAGS
+     Compilation flags for CUDA compiler.
+
+     Recommended value is ``NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c"``.
+
+   CUDA_INSTALL_PREFIX
+     Path to CUDA toolkit.
+
+     This variable is not needed if the NVCC compiler is installed in a default
+     executable path, e.g. /usr/bin or /usr/local/bin.
+
+   BOOST_LIBRARYDIR
+     Path to boost libraries.
+
+   BOOST_INCLUDEDIR
+     Path to boost header files.
+
+
+Useful cmake cache variables
+----------------------------
+
+.. glossary::
+
+   CMAKE_BUILD_TYPE
+     CMake build type.
+
+     For production builds with -O3 optimisation,
+     use ``-DCMAKE_BUILD_TYPE=Release``.
+
+     For debugging builds with -O2 optimisation and debug symbols,
+     use ``-DCMAKE_BUILD_TYPE=RelWithDebInfo``.
+
+     To build with CUDA device emulation,
+     use ``-DCMAKE_BUILD_TYPE=DeviceEmu``.
+
+   CMAKE_PREFIX_PATH
+     Path to third-party libraries, e.g. ``-DCMAKE_PREFIX_PATH=$HOME/usr``.
+
+     This variable is only needed if libraries are installed in non-standard paths.
+
+   Boost_USE_STATIC_LIBS
+     Link to Boost libraries statically.
+
+     Recommended value is ``-DBoost_USE_STATIC_LIBS=TRUE``.
+
+   HDF5_USE_STATIC_LIBS
+     Link to HDF5 libraries statically.
+
+     Recommended value is ``-DHDF5_USE_STATIC_LIBS=TRUE``.
+
+   GSL_USE_STATIC_LIBS
+     Link to GNU Scientific Library statically.
+
+     Recommended value is ``-DGSL_USE_STATIC_LIBS=TRUE``.
+
+   ljgpu_BACKEND_EXECUTABLES
+     Compile separate, dynamically linked executable for each backend.
+
+     Recommended value is ``Dljgpu_BACKEND_EXECUTABLES=TRUE``.
+
+   ljgpu_USE_STATIC_LIBS
+     Compile separate, statically linked executable for each backend.
+
+     This only compiles the host backends, as the CUDA runtime library requires
+     dynamic linking to load the CUDA driver.
+
+
+   ljgpu_VARIANT_CELL_SUMMATION_ORDER
+     Use opposite cell summation order (GPU backends).
+
+     Default value is ``TRUE``.
+
+   ljgpu_VARIANT_FORCE_DSFUN
+     Use double-single precision functions in cell summation (GPU backends).
+
+     Default value is ``TRUE``.
+
+   ljgpu_VARIANT_HILBERT_ALT_3D
+     Use alternative 3D Hilbert curve vertex rules (GPU backends).
+
+     Default value is ``FALSE``.
+
+   ljgpu_VARIANT_HILBERT_ORDER
+     Use Hilbert space-filling curve particle ordering (GPU backends).
+
+     Default value is ``TRUE``.
+
+   ljgpu_VARIANT_HOST_SINGLE_PRECISION
+     Use single-precision math in host implementation (host backends).
+
+     Default value is ``FALSE``.
+
+     This option requires SSE, which is enabled by default on x86_64.
+
+   ljgpu_VARIANT_VERLET_DSFUN
+     Use double-single precision functions in Verlet integrator (GPU backends).
+
+     Default value is ``TRUE``.
+
+
+Build parameters example
+------------------------
+
+The following example demonstrates how to compile separate, dynamically linked
+executables for each backend, and statically link to all libraries except the
+standard C and C++ libraries::
 
   CXXFLAGS="-fPIC -Wall"
-  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
   NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-  BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
-  BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
-  cmake -DCMAKE_BUILD_TYPE=Release \
-  -DBoost_USE_STATIC_LIBS=TRUE \
-  -DHDF5_USE_STATIC_LIBS=TRUE \
-  -DGSL_USE_STATIC_LIBS=TRUE \
-  ../..
-
-To compile separate, dynamically linked executables for each backend::
-
-  CXXFLAGS="-fPIC -Wall" \
-  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-  BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
-  BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
-  cmake -DCMAKE_BUILD_TYPE=Release -Dljgpu_BACKEND_EXECUTABLES=TRUE ../..
-
-To compile separate, statically linked executables for each backend::
-
-  CXXFLAGS="-fPIC -Wall" \
-  BOOST_LIBRARYDIR=/usr/lib64/boost1_37 \
-  BOOST_INCLUDEDIR=/usr/include/boost-1_37 \
-  cmake -DCMAKE_BUILD_TYPE=Release -Dljgpu_USE_STATIC_LIBS=TRUE ../..
-
-This only compiles the host backends, as the CUDA runtime library
-requires dynamic linking to load the CUDA driver.
-
-
-Debug build
------------
-
-To configure a build with debugging symbols, switch to a new subdirectory (e.g.
-``build/debug``) and run::
-
-  CXXFLAGS="-fPIC -Wall" \
-  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../..
-
-
-Device emulation build
-----------------------
-
-To configure a build with CUDA device emulation, set the build type to
-``DeviceEmu``::
-
-  CXXFLAGS="-fPIC -Wall" \
-  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
-  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-  cmake -DCMAKE_BUILD_TYPE=DeviceEmu ../..
+  cmake \
+      -DCMAKE_BUILD_TYPE=Release \
+      -Dljgpu_BACKEND_EXECUTABLES=TRUE \
+      -DBoost_USE_STATIC_LIBS=TRUE \
+      -DHDF5_USE_STATIC_LIBS=TRUE \
+      -DGSL_USE_STATIC_LIBS=TRUE \
+      ../..
 
 
 Further cmake configuration
@@ -229,11 +288,6 @@ Compilation flags may be configured via the CMake GUI::
   ccmake .
 
 To finish configuration, hit "c" and "g" to apply and recompile with make.
-
-The following compilation flags are highly recommended::
-
-  CMAKE_CUDA_FLAGS		--host-compilation=c -Xcompiler -fPIC -Xptxas -v
-  CMAKE_CXX_FLAGS		-Wall -fPIC
 
 To display the actual compilation commands, set::
 
