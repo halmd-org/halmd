@@ -342,9 +342,9 @@ void ljfluid<ljfluid_impl_host, dimension>::nbl_skin(float value)
                      boost::bind(&hilbert_pair::second, _2));
     hilbert_cell.clear();
     hilbert_cell.reserve(cell.size());
-    foreach (hilbert_pair const& hp, hilbert_pairs) {
-        hilbert_cell.push_back(hp.first);
-    }
+    std::transform(hilbert_pairs.begin(), hilbert_pairs.end(),
+                   std::back_inserter(hilbert_cell),
+                   boost::bind(&hilbert_pair::first, _1));
 #endif
 }
 
