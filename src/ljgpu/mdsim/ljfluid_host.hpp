@@ -247,7 +247,7 @@ void ljfluid<ljfluid_impl_host, dimension>::state(host_sample_type& sample, floa
     typename sample_type::position_sample_vector::const_iterator r;
     typename sample_type::velocity_sample_vector::const_iterator v;
 
-    part.reset(new std::vector<particle>);
+    part->clear();
     for (size_t i = 0, n = 0; n < npart; ++i) {
         for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
             particle p(n, types[i]);
@@ -415,7 +415,7 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     // minimum distance in 2- or 3-dimensional fcc lattice
     LOG("minimum lattice distance: " << a / std::sqrt(2.));
 
-    part.reset(new std::vector<particle>);
+    part->clear();
     for (unsigned int i = 0; i < npart; ++i) {
         particle p(i, types[i]);
         vector_type& r = p.r;
