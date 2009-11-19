@@ -46,6 +46,16 @@ private:
             CUDA_CALL(cudaEventCreate(&m_event));
         }
 
+#if (CUDART_VERSION >= 2020)
+        /**
+         * creates an event with given flags
+         */
+        container(int flags)
+        {
+            CUDA_CALL(cudaEventCreateWithFlags(&m_event, flags));
+        }
+#endif
+
         /**
          * destroys the event
          */
@@ -62,6 +72,13 @@ public:
      * creates an event
      */
     event() : m_event(new container) {}
+
+#if (CUDART_VERSION >= 2020)
+    /**
+     * creates an event with given flags
+     */
+    event(int flags) : m_event(new container(flags)) {}
+#endif
 
     /**
      * records an event
