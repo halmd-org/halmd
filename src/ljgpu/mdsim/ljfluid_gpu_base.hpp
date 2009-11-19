@@ -286,7 +286,7 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::threads(unsigned int value)
 template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::blocking_sync()
 {
-    LOG("using blocking synchronization when waiting for GPU tasks to finish");
+    LOG("using blocking synchronization when waiting for GPU");
     for (size_t i = 0; i < event_.size(); ++i) {
         event_[i] = cuda::event(cudaEventBlockingSync);
     }
