@@ -49,6 +49,10 @@ public:
 public:
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
+#if (CUDART_VERSION >= 2020)
+    /** use blocking synchronization */
+    void blocking_sync();
+#endif
     /** set desired average cell occupancy */
     void cell_occupancy(float_type value);
 
@@ -299,6 +303,17 @@ void ljfluid<ljfluid_impl_gpu_cell, dimension>::threads(unsigned int value)
     g_v.reserve(dim_.threads());
     h_v.reserve(dim_.threads());
 }
+
+#if (CUDART_VERSION >= 2020)
+template <int dimension>
+void ljfluid<ljfluid_impl_gpu_cell, dimension>::blocking_sync()
+{
+    _Base::blocking_sync();
+    for (size_t i = 0; i < event_.size(); ++i) {
+        event_[i] = cuda::event(cudaEventBlockingSync);
+    }
+}
+#endif
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_cell, dimension>::state(host_sample_type& sample, float_type box)

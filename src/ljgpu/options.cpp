@@ -31,6 +31,9 @@
 #include <ljgpu/util/H5xx.hpp>
 #include <ljgpu/util/date_time.hpp>
 #include <ljgpu/version.h>
+#ifdef WITH_CUDA
+# include <cuda_wrapper.hpp>
+#endif
 #include <map>
 namespace po = boost::program_options;
 
@@ -533,6 +536,10 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 #endif
             ("threads,T", po::value<unsigned int>()->default_value(128),
              "number of CUDA threads per block")
+#if defined(WITH_CUDA) && (CUDART_VERSION >= 2020)
+            ("blocking-sync", po::bool_switch(),
+             "block CPU thread when waiting for GPU")
+#endif
             ;
     }
     if (IMPL(host)) {
