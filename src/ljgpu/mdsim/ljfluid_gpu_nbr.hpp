@@ -142,7 +142,7 @@ private:
     /** CUDA execution dimensions for phase space sampling */
     std::vector<cuda::config> dim_sample;
     /** CUDA events for kernel timing */
-    boost::array<cuda::event, 10> event_;
+    boost::array<cuda::event, 10> mutable event_;
 
     /** GPU radix sort */
     radix_sort<unsigned int> radix_;
@@ -708,23 +708,20 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(host_sample_type& sa
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
-    static cuda::event ev0, ev1;
-    static cuda::stream stream;
-
     try {
-        ev0.record(stream);
-        cuda::copy(g_part.r, h_part.r, stream);
-        cuda::copy(g_part.R, h_part.R, stream);
-        cuda::copy(g_part.v, h_part.v, stream);
-        cuda::copy(g_part.tag, h_part.tag, stream);
-        ev1.record(stream);
-        ev1.synchronize();
+        event_[1].record(stream_);
+        cuda::copy(g_part.r, h_part.r, stream_);
+        cuda::copy(g_part.R, h_part.R, stream_);
+        cuda::copy(g_part.v, h_part.v, stream_);
+        cuda::copy(g_part.tag, h_part.tag, stream_);
+        event_[0].record(stream_);
+        event_[0].synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to copy MD simulation step results from GPU to host");
     }
-    m_times["sample_memcpy"] += ev1 - ev0;
+    m_times["sample_memcpy"] += event_[0] - event_[1];
 
     // allocate memory for phase space sample
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
@@ -753,10 +750,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(gpu_sample_type& sam
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
-    static cuda::event ev0, ev1;
-    static cuda::stream stream;
-
-    ev0.record(stream_);
+    event_[1].record(stream_);
 
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
         // allocate global device memory for phase space sample
@@ -768,36 +762,33 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(gpu_sample_type& sam
         v->resize(mpart[i]);
         sample.push_back(sample_type(r, v));
         // order particles by permutation
-        cuda::configure(dim_sample[i].grid, dim_sample[i].block, stream);
+        cuda::configure(dim_sample[i].grid, dim_sample[i].block, stream_);
         _gpu::sample(g_aux.index.data() + n, *r, *v);
     }
 
-    ev1.record(stream_);
-    ev1.synchronize();
-    m_times["sample"] += ev1 - ev0;
+    event_[0].record(stream_);
+    event_[0].synchronize();
+    m_times["sample"] += event_[0] - event_[1];
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& sample) const
 {
-    static cuda::event ev0, ev1;
-    static cuda::stream stream;
-
     // mean potential energy per particle
     sample.en_pot = reduce_en.value() / npart;
 
     // virial tensor trace and off-diagonal elements for particle species
     try {
-        ev0.record(stream);
+        event_[1].record(stream_);
         if (mixture_ == BINARY) {
-            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream);
+            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream_);
         }
         else {
-            reduce_virial(g_part.virial, g_part.v, stream);
+            reduce_virial(g_part.virial, g_part.v, stream_);
         }
-        ev1.record(stream);
-        ev1.synchronize();
-        m_times["virial_sum"] += ev1 - ev0;
+        event_[0].record(stream_);
+        event_[0].synchronize();
+        m_times["virial_sum"] += event_[0] - event_[1];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -810,11 +801,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& 
 
     // mean squared velocity per particle
     try {
-        ev0.record(stream);
-        reduce_squared_velocity(g_part.v, stream);
-        ev1.record(stream);
-        ev1.synchronize();
-        m_times["reduce_squared_velocity"] += ev1 - ev0;
+        event_[1].record(stream_);
+        reduce_squared_velocity(g_part.v, stream_);
+        event_[0].record(stream_);
+        event_[0].synchronize();
+        m_times["reduce_squared_velocity"] += event_[0] - event_[1];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -824,11 +815,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& 
 
     // mean velocity per particle
     try {
-        ev0.record(stream);
-        reduce_velocity(g_part.v, stream);
-        ev1.record(stream);
-        ev1.synchronize();
-        m_times["reduce_velocity"] += ev1 - ev0;
+        event_[1].record(stream_);
+        reduce_velocity(g_part.v, stream_);
+        event_[0].record(stream_);
+        event_[0].synchronize();
+        m_times["reduce_velocity"] += event_[0] - event_[1];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
