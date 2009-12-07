@@ -45,7 +45,7 @@ ljgpu implements various simulation backends using dynamically loaded plugins.
 
      P. H. Colberg and F. Höfling,
      *Accelerating glassy dynamics using graphics processing units*,
-     in preparation
+     Submitted to Journal of Computational Physics
 
      J. A. Anderson, C. D. Lorenz and A. Travesset,
      *General purpose molecular dynamics simulations fully implemented on graphics processing units*,
