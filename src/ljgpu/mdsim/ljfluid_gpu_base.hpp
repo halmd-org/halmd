@@ -26,7 +26,6 @@
 #include <ljgpu/math/gpu/dsfloat.cuh>
 #include <ljgpu/mdsim/gpu/boltzmann.hpp>
 #include <ljgpu/mdsim/gpu/lattice.hpp>
-#include <ljgpu/mdsim/gpu/ljfluid_cell.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_nbr.hpp>
 #include <ljgpu/mdsim/gpu/ljfluid_square.hpp>
 #include <ljgpu/mdsim/ljfluid_base.hpp>

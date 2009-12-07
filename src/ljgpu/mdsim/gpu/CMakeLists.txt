@@ -1,9 +1,6 @@
 add_library(gpu_ljfluid_square
   ljfluid_square.cu
   )
-add_library(gpu_ljfluid_cell
-  ljfluid_cell.cu
-  )
 add_library(gpu_ljfluid_nbr
   ljfluid_nbr.cu
   )

@@ -37,16 +37,6 @@ ljgpu implements various simulation backends using dynamically loaded plugins.
      This is a straight-forward implementation without cell or neighbour lists.
      Simulation time therefore **scales quadratically** with the system size.
 
-   gpu_cell backend
-     An optimised soft-sphere molecular dynamics simulation for the GPU.
-
-     This implementation for the GPU uses fixed-size cell lists, which yields
-     a speedup over the CPU of order 10.
-
-     J. A. van Meel, A. Arnold, D. Frenkel, S.F. Portegies Zwart and R. G. Belleman,
-     *Harvesting graphics power for MD simulations*,
-     `Simulation, Taylor & Francis, 2008, 34, 259-266 <http://dx.doi.org/10.1080/08927020701744295>`_
-
    gpu_neighbour backend
      An optimised soft-sphere molecular dynamics simulation for the GPU.
 
@@ -60,6 +50,10 @@ ljgpu implements various simulation backends using dynamically loaded plugins.
      J. A. Anderson, C. D. Lorenz and A. Travesset,
      *General purpose molecular dynamics simulations fully implemented on graphics processing units*,
      `Journal of Computational Physics, 2008, 227, 5342-5359 <http://dx.doi.org/10.1016/j.jcp.2008.01.047>`_
+
+     J. A. van Meel, A. Arnold, D. Frenkel, S.F. Portegies Zwart and R. G. Belleman,
+     *Harvesting graphics power for MD simulations*,
+     `Simulation, Taylor & Francis, 2008, 34, 259-266 <http://dx.doi.org/10.1080/08927020701744295>`_
 
      H. Sagan,
      *A three-dimensional Hilbert curve*,

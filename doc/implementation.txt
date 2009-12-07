@@ -24,7 +24,6 @@ simulation core. Classes which represent a backend are filled.
        subgraph backends {
 	   node [style=filled,fillcolor="#AFC1C4",fontcolor=white];
 	   ljfluid_gpu_square [ label="ljfluid<ljfluid_impl_gpu_square, …>" ]
-	   ljfluid_gpu_cell [ label="ljfluid<ljfluid_impl_gpu_cell, …>" ]
 	   ljfluid_gpu_neighbour [ label="ljfluid<ljfluid_impl_gpu_neighbour, …>" ]
 	   ljfluid_host [ label="ljfluid<ljfluid_impl_host, …>" ]
 	   hardsphere [ label="hardsphere<hardsphere_impl, …>" ]
@@ -33,7 +32,6 @@ simulation core. Classes which represent a backend are filled.
        ljfluid_base -> base
        ljfluid_gpu_base -> ljfluid_base
        ljfluid_gpu_square -> ljfluid_gpu_base
-       ljfluid_gpu_cell -> ljfluid_gpu_base
        ljfluid_gpu_neighbour -> ljfluid_gpu_base
        ljfluid_host -> ljfluid_base
        hardsphere -> base
@@ -86,9 +84,6 @@ A short description of the basic functionality of each class template.
 
    ljfluid<ljfluid_impl_gpu_square, …>
       This class implements the gpu_square backend.
-
-   ljfluid<ljfluid_impl_gpu_cell, …>
-      This class implements the gpu_cell backend.
 
    ljfluid<ljfluid_impl_gpu_neighbour, …>
       This class implements the gpu_neighbour backend.

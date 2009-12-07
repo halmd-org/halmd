@@ -119,7 +119,6 @@ if(WITH_CUDA)
   set(ljgpu_impl
     ${ljgpu_impl}
     ljfluid_impl_gpu_square
-    ljfluid_impl_gpu_cell
     ljfluid_impl_gpu_neighbour
     )
 endif(WITH_CUDA)
@@ -178,16 +177,6 @@ if(WITH_CUDA)
     gpu_boltzmann
     gpu_lattice
     gpu_ljfluid_square
-    gpu_radix_sort
-    gpu_rand48
-    gpu_reduce
-    gpu_virial
-    )
-  target_link_libraries(ljgpu_gpu_cell
-    ${CUDA_LIBRARIES}
-    gpu_boltzmann
-    gpu_lattice
-    gpu_ljfluid_cell
     gpu_radix_sort
     gpu_rand48
     gpu_reduce

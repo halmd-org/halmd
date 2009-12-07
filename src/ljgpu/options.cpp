@@ -572,7 +572,6 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 
 // explicit instantiation
 template class options::description<ljfluid_impl_gpu_square>;
-template class options::description<ljfluid_impl_gpu_cell>;
 template class options::description<ljfluid_impl_gpu_neighbour>;
 template class options::description<ljfluid_impl_host>;
 template class options::description<hardsphere_impl>;

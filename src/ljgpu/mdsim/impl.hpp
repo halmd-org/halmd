@@ -62,15 +62,6 @@ struct ljfluid_impl_gpu_square : mdsim_impl_base
     typedef boost::true_type impl_trajectory_gpu_sample;
 };
 
-struct ljfluid_impl_gpu_cell : mdsim_impl_base
-{
-    typedef boost::true_type impl_energy_gpu_sample;
-    typedef boost::true_type impl_fixed_size_cell_lists;
-    typedef boost::true_type impl_gpu;
-    typedef boost::true_type impl_lennard_jones_potential;
-    typedef boost::true_type impl_thermostat;
-};
-
 struct ljfluid_impl_gpu_neighbour : mdsim_impl_base
 {
     typedef boost::true_type impl_energy_gpu_sample;
