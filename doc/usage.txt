@@ -37,6 +37,10 @@ ljgpu implements various simulation backends using dynamically loaded plugins.
      This is a straight-forward implementation without cell or neighbour lists.
      Simulation time therefore **scales quadratically** with the system size.
 
+     J. A. van Meel, A. Arnold, D. Frenkel, S.F. Portegies Zwart and R. G. Belleman,
+     *Harvesting graphics power for MD simulations*,
+     `Simulation, Taylor & Francis, 2008, 34, 259-266 <http://dx.doi.org/10.1080/08927020701744295>`_
+
    gpu_neighbour backend
      An optimised soft-sphere molecular dynamics simulation for the GPU.
 
