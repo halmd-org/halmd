@@ -137,7 +137,7 @@ evaluation scripts. *Do not (ab)use the log file for evaluation purposes.*
    |    \-- timestep		simulation time-step
    |
    \-- program
-        \-- name		program name (ljgpu)
+        \-- name		program name (HALMD)
         \-- variant		compile-time feature flags
         \-- version		git repository version
 

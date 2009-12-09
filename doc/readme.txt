@@ -4,20 +4,20 @@ Installation
 License
 =======
 
-ljgpu is licensed under the GNU General Public License version 3.
+HALMD is licensed under the GNU General Public License version 3.
 
 Website
 =======
 
 The documentation for the current release is available at
-http://colberg.org/code/ljgpu/.
+http://colberg.org/research/halmd/.
 
 
 Getting the source code
 =======================
 
-ljgpu is maintained in a private `Git <http://git-scm.com/>`_ repository, which
-requires a git account at the physics faculty of the LMU.
+HALMD is maintained in a private `Git <http://git-scm.com/>`_ repository,
+which requires a git account at the physics faculty of the LMU.
 If you are new to Git or version control in general, the `Git tutorial
 <http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html>`_
 will get you started.
@@ -36,7 +36,7 @@ Updates may retrieved within the cloned repository using::
 
 Individual releases may be checked out with::
 
-  git checkout ljgpu-v0.3.6.1
+  git checkout halmd-v0.3.6.1
 
 To revert to the main development branch after a release checkout, use::
 
@@ -70,7 +70,7 @@ These software packages are required for compilation:
 
   It is recommended to install a 1.6.x version (instead of 1.8.x), as the
   current version of PyTables is not compatible with HDF5 1.8.x.  Note that
-  PyTables is **not** required for ljgpu, but for the ``mdplot`` plot package.
+  PyTables is **not** required for HALMD, but for the ``mdplot`` plot package.
 
 * `GNU Scientific Library <http://www.gnu.org/software/gsl/>`_ (GSL)
 
@@ -86,7 +86,7 @@ These software packages are required for compilation:
 Compilation
 ===========
 
-ljgpu uses `CMake <http://www.cmake.org/>`_ to generate its make files, which is
+HALMD uses `CMake <http://www.cmake.org/>`_ to generate its make files, which is
 similar to the more commonly used Autotools suite recognisable by the
 ``configure`` script accompanying a software package, but much faster and much
 easier to develop with.
@@ -100,7 +100,7 @@ the build directory may be a subdirectory in the source tree.
 Setting up the cmake build tree
 -------------------------------
 
-In the cloned ljgpu repository, switch to a new build directory::
+In the cloned HALMD repository, switch to a new build directory::
 
   mkdir -p build/release && cd build/release
 
@@ -119,7 +119,7 @@ Compilation is done using make, which supports parallel builds::
 
 Individual backends may be compiled selectively::
 
-  nice make -j4 ljgpu ljgpu_gpu_neighbour ljgpu_host
+  nice make -j4 halmd halmd_gpu_neighbour halmd_host
 
 Note that due to extensive use of C++ templates, a **single compiler process**
 may easily consume **more than 500MB of memory**, so be sure to adjust the
@@ -217,46 +217,46 @@ Useful cmake cache variables
 
      Recommended value is ``-DGSL_USE_STATIC_LIBS=TRUE``.
 
-   ljgpu_BACKEND_EXECUTABLES
+   HALMD_BACKEND_EXECUTABLES
      Compile separate, dynamically linked executable for each backend.
 
-     Recommended value is ``Dljgpu_BACKEND_EXECUTABLES=TRUE``.
+     Recommended value is ``DHALMD_BACKEND_EXECUTABLES=TRUE``.
 
-   ljgpu_USE_STATIC_LIBS
+   HALMD_USE_STATIC_LIBS
      Compile separate, statically linked executable for each backend.
 
      This only compiles the host backends, as the CUDA runtime library requires
      dynamic linking to load the CUDA driver.
 
 
-   ljgpu_VARIANT_CELL_SUMMATION_ORDER
+   HALMD_VARIANT_CELL_SUMMATION_ORDER
      Use opposite cell summation order (GPU backends).
 
      Default value is ``TRUE``.
 
-   ljgpu_VARIANT_FORCE_DSFUN
+   HALMD_VARIANT_FORCE_DSFUN
      Use double-single precision functions in cell summation (GPU backends).
 
      Default value is ``TRUE``.
 
-   ljgpu_VARIANT_HILBERT_ALT_3D
+   HALMD_VARIANT_HILBERT_ALT_3D
      Use alternative 3D Hilbert curve vertex rules (GPU backends).
 
      Default value is ``FALSE``.
 
-   ljgpu_VARIANT_HILBERT_ORDER
+   HALMD_VARIANT_HILBERT_ORDER
      Use Hilbert space-filling curve particle ordering (GPU backends).
 
      Default value is ``TRUE``.
 
-   ljgpu_VARIANT_HOST_SINGLE_PRECISION
+   HALMD_VARIANT_HOST_SINGLE_PRECISION
      Use single-precision math in host implementation (host backends).
 
      Default value is ``FALSE``.
 
      This option requires SSE, which is enabled by default on x86_64.
 
-   ljgpu_VARIANT_VERLET_DSFUN
+   HALMD_VARIANT_VERLET_DSFUN
      Use double-single precision functions in Verlet integrator (GPU backends).
 
      Default value is ``TRUE``.
@@ -273,7 +273,7 @@ standard C and C++ libraries::
   NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
   cmake \
       -DCMAKE_BUILD_TYPE=Release \
-      -Dljgpu_BACKEND_EXECUTABLES=TRUE \
+      -DHALMD_BACKEND_EXECUTABLES=TRUE \
       -DBoost_USE_STATIC_LIBS=TRUE \
       -DHDF5_USE_STATIC_LIBS=TRUE \
       -DGSL_USE_STATIC_LIBS=TRUE \
@@ -313,7 +313,7 @@ The compiled program is then installed into this tree with::
 Testing
 =======
 
-ljgpu includes a preliminary test suite, which may be started in the build tree with::
+HALMD includes a preliminary test suite, which may be started in the build tree with::
 
   ctest
 

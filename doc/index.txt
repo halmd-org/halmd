@@ -1,7 +1,7 @@
-ljgpu documentation
+HALMD documentation
 ===================
 
-Welcome to ljgpu, a high-precision molecular dynamics simulation of
+Welcome to HALMD, a high-precision molecular dynamics simulation of
 Lennard-Jones fluids for NVIDIA CUDA devices.
 
 For suggestions or bug reports, send a mail to

@@ -17,7 +17,7 @@ Getting started
 Simulation backends
 -------------------
 
-ljgpu implements various simulation backends using dynamically loaded plugins.
+HALMD implements various simulation backends using dynamically loaded plugins.
 
 .. glossary::
 
@@ -80,7 +80,7 @@ ljgpu implements various simulation backends using dynamically loaded plugins.
 Program parameters
 ------------------
 
-ljgpu has three ways of accepting program parameters:
+HALMD has three ways of accepting program parameters:
 
 * pass directly as command line parameters
 * read from parameter input file [INI format]
@@ -88,7 +88,7 @@ ljgpu has three ways of accepting program parameters:
 
 Options are described in the command line help::
 
-  ljgpu --help
+  halmd --help
 
 
 Multi-GPU machines
@@ -100,16 +100,16 @@ devices to *compute exclusive mode* to restrict use to one process per device::
   sudo nvidia-smi --gpu=0 --compute-mode-rules=1
   sudo nvidia-smi --gpu=1 --compute-mode-rules=1
 
-ljgpu will then choose the first available CUDA device if the ``--device``
+HALMD will then choose the first available CUDA device if the ``--device``
 option is not given. Note that this works with all CUDA versions, not only
 CUDA >= 2.2.
 
 
 If your NVIDIA driver version does not support the nvidia-smi tool, or if you
 wish not to set the devices to compute exclusive mode, the nvlock tool
-accompanying ljgpu may be used to exclusively assign a GPU to each process::
+accompanying HALMD may be used to exclusively assign a GPU to each process::
 
-  nvlock ljgpu [...]
+  nvlock halmd [...]
 
 
 For optimal exploitation of a multi-GPU machine, a job scheduler is highly
