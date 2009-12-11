@@ -1,23 +1,17 @@
 Installation
 ************
 
-License
-=======
-
-HALMD is licensed under the GNU General Public License version 3.
-
 Website
 =======
 
 The documentation for the current release is available at
-http://colberg.org/research/halmd/.
-
+http://colberg.org/research/halmd.
 
 Getting the source code
 =======================
 
-HALMD is maintained in a private `Git <http://git-scm.com/>`_ repository,
-which requires a git account at the physics faculty of the LMU.
+HALMD is maintained in a `Git <http://git-scm.com/>`_ repository.
+
 If you are new to Git or version control in general, the `Git tutorial
 <http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html>`_
 will get you started.
@@ -26,22 +20,26 @@ Former Subversion users may also read the `Git SVN Crash Course
 For in-depth documentation, see the `Git User's Manual
 <http://www.kernel.org/pub/software/scm/git/docs/user-manual.html>`_.
 
-To checkout the main repository::
+Checkout of the main repository ::
 
-  git clone username@git.physik.uni-muenchen.de:/pub/scm/granmat/ljgpu
+  git clone git://git.colberg.org/research/halmd
 
-Updates may retrieved within the cloned repository using::
+Updates may be retrieved within the cloned repository using ::
 
   git pull
 
-Individual releases may be checked out with::
+A specific version may be checked out with ::
 
-  git checkout halmd-v0.3.6.1
+  git checkout halmd-v0.1
 
-To revert to the main development branch after a release checkout, use::
+To revert to the main development branch after a version checkout, use ::
 
   git checkout master
 
+License
+=======
+
+HALMD is licensed under the GNU General Public License version 3.
 
 Software prerequisites
 ======================
@@ -104,10 +102,9 @@ In the cloned HALMD repository, switch to a new build directory::
 
   mkdir -p build/release && cd build/release
 
-If the third-party packages are installed in standard locations, run::
+If the third-party packages are installed in standard locations, run ::
 
   CXXFLAGS="-fPIC -Wall" \
-  CUDA_INSTALL_PREFIX=/path/to/cuda/toolkit \
   NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
   cmake -DCMAKE_BUILD_TYPE=Release ../..
 
@@ -147,126 +144,16 @@ Environment variables are prepended to the cmake command::
 
   CXXFLAGS="-fPIC -Wall" cmake ../..
 
+:doc:`env_vars`
+
 Cache variables are appended using the -D option::
 
   cmake -DCMAKE_BUILD_TYPE=Release ../..
 
-
-Useful cmake environment variables
-----------------------------------
-
-.. glossary::
-
-   CXXFLAGS
-     Compilation flags for C++ compiler.
-
-     Recommended value is ``CXXFLAGS="-fPIC -Wall"``.
-
-   NVCCFLAGS
-     Compilation flags for CUDA compiler.
-
-     Recommended value is ``NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c"``.
-
-   CUDA_INSTALL_PREFIX
-     Path to CUDA toolkit.
-
-     This variable is not needed if the NVCC compiler is installed in a default
-     executable path, e.g. /usr/bin or /usr/local/bin.
-
-   BOOST_LIBRARYDIR
-     Path to boost libraries.
-
-   BOOST_INCLUDEDIR
-     Path to boost header files.
-
-
-Useful cmake cache variables
-----------------------------
-
-.. glossary::
-
-   CMAKE_BUILD_TYPE
-     CMake build type.
-
-     For production builds with -O3 optimisation,
-     use ``-DCMAKE_BUILD_TYPE=Release``.
-
-     For debugging builds with -O2 optimisation and debug symbols,
-     use ``-DCMAKE_BUILD_TYPE=RelWithDebInfo``.
-
-     To build with CUDA device emulation,
-     use ``-DCMAKE_BUILD_TYPE=DeviceEmu``.
-
-   CMAKE_PREFIX_PATH
-     Path to third-party libraries, e.g. ``-DCMAKE_PREFIX_PATH=$HOME/usr``.
-
-     This variable is only needed if libraries are installed in non-standard paths.
-
-   Boost_USE_STATIC_LIBS
-     Link to Boost libraries statically.
-
-     Recommended value is ``-DBoost_USE_STATIC_LIBS=TRUE``.
-
-   HDF5_USE_STATIC_LIBS
-     Link to HDF5 libraries statically.
-
-     Recommended value is ``-DHDF5_USE_STATIC_LIBS=TRUE``.
-
-   GSL_USE_STATIC_LIBS
-     Link to GNU Scientific Library statically.
-
-     Recommended value is ``-DGSL_USE_STATIC_LIBS=TRUE``.
-
-   HALMD_BACKEND_EXECUTABLES
-     Compile separate, dynamically linked executable for each backend.
-
-     Recommended value is ``DHALMD_BACKEND_EXECUTABLES=TRUE``.
-
-   HALMD_USE_STATIC_LIBS
-     Compile separate, statically linked executable for each backend.
-
-     This only compiles the host backends, as the CUDA runtime library requires
-     dynamic linking to load the CUDA driver.
-
-
-   HALMD_VARIANT_CELL_SUMMATION_ORDER
-     Use opposite cell summation order (GPU backends).
-
-     Default value is ``TRUE``.
-
-   HALMD_VARIANT_FORCE_DSFUN
-     Use double-single precision functions in cell summation (GPU backends).
-
-     Default value is ``TRUE``.
-
-   HALMD_VARIANT_HILBERT_ALT_3D
-     Use alternative 3D Hilbert curve vertex rules (GPU backends).
-
-     Default value is ``FALSE``.
-
-   HALMD_VARIANT_HILBERT_ORDER
-     Use Hilbert space-filling curve particle ordering (GPU backends).
-
-     Default value is ``TRUE``.
-
-   HALMD_VARIANT_HOST_SINGLE_PRECISION
-     Use single-precision math in host implementation (host backends).
-
-     Default value is ``FALSE``.
-
-     This option requires SSE, which is enabled by default on x86_64.
-
-   HALMD_VARIANT_VERLET_DSFUN
-     Use double-single precision functions in Verlet integrator (GPU backends).
-
-     Default value is ``TRUE``.
-
-
-Build parameters example
-------------------------
+:doc:`cache_vars`
 
 The following example demonstrates how to compile separate, dynamically linked
-executables for each backend, and statically link to all libraries except the
+executables for each backend, which are statically linked to all libraries except the
 standard C and C++ libraries::
 
   CXXFLAGS="-fPIC -Wall"
@@ -279,17 +166,21 @@ standard C and C++ libraries::
       -DGSL_USE_STATIC_LIBS=TRUE \
       ../..
 
+The options given here correspond to the default values.
 
 Further cmake configuration
 ---------------------------
 
-Compilation flags may be configured via the CMake GUI::
+Compilation flags may be configured via CMake's text mode interface::
 
   ccmake .
 
 To finish configuration, hit "c" and "g" to apply and recompile with make.
+Alternatively, you may use CMake's graphical interface::
 
-To display the actual compilation commands, set::
+  cmake-gui .
+
+The following switch displays the actual commands invoked by make::
 
   CMAKE_VERBOSE_MAKEFILE	ON
 
@@ -303,9 +194,9 @@ following adjustments are required in ccmake::
 
 An installation prefix may be specified as following::
 
-  CMAKE_INSTALL_PREFIX		/home/Peter.Colberg/usr
+  CMAKE_INSTALL_PREFIX		/your/home/directory/usr
 
-The compiled program is then installed into this tree with::
+The compiled program is then installed into this tree by ::
 
   make install
 
@@ -313,8 +204,7 @@ The compiled program is then installed into this tree with::
 Testing
 =======
 
-HALMD includes a preliminary test suite, which may be started in the build tree with::
+HALMD includes a preliminary test suite, which may be started in the build tree by ::
 
   ctest
-
 

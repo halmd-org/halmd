@@ -1,0 +1,83 @@
+Useful CMake cache variables
+----------------------------
+
+Cache variables are passed as options to CMake using ``-D...``
+
+.. glossary::
+
+   CMAKE_BUILD_TYPE
+     CMake build type.
+
+     For production builds with -O3 optimisation enabled,
+     use ``-DCMAKE_BUILD_TYPE=Release``.
+
+     For debugging builds with -O2 optimisation and debug symbols enabled,
+     use ``-DCMAKE_BUILD_TYPE=RelWithDebInfo``.
+
+     For builds using CUDA device emulation,
+     use ``-DCMAKE_BUILD_TYPE=DeviceEmu``.
+
+   CMAKE_PREFIX_PATH
+     Path to third-party libraries, e.g. ``-DCMAKE_PREFIX_PATH=$HOME/usr``.
+
+     This variable is only needed if libraries are installed in non-standard paths.
+
+   Boost_USE_STATIC_LIBS
+     Link to Boost libraries statically.
+
+     Recommended value is ``-DBoost_USE_STATIC_LIBS=TRUE``.
+
+   HDF5_USE_STATIC_LIBS
+     Link to HDF5 libraries statically.
+
+     Recommended value is ``-DHDF5_USE_STATIC_LIBS=TRUE``.
+
+   GSL_USE_STATIC_LIBS
+     Link to GNU Scientific Library statically.
+
+     Recommended value is ``-DGSL_USE_STATIC_LIBS=TRUE``.
+
+   HALMD_BACKEND_EXECUTABLES
+     Compile separate, dynamically linked executable for each backend.
+
+     Recommended value is ``-DHALMD_BACKEND_EXECUTABLES=TRUE``.
+
+   HALMD_USE_STATIC_LIBS
+     Compile separate, statically linked executable for each backend.
+
+     This only compiles the host backends, as the CUDA runtime library requires
+     dynamic linking to load the CUDA driver.
+
+
+   HALMD_VARIANT_CELL_SUMMATION_ORDER
+     Use opposite cell summation order (GPU backends only).
+
+     Default value is ``TRUE``.
+
+   HALMD_VARIANT_FORCE_DSFUN
+     Use double-single precision functions in force summation (GPU backends only).
+
+     Default value is ``TRUE``.
+
+   HALMD_VARIANT_HILBERT_ALT_3D
+     Use alternative 3D Hilbert curve vertex rules (GPU backends only).
+
+     Default value is ``FALSE``.
+
+   HALMD_VARIANT_HILBERT_ORDER
+     Use Hilbert space-filling curve particle ordering (GPU backends only).
+
+     Default value is ``TRUE``.
+
+   HALMD_VARIANT_HOST_SINGLE_PRECISION
+     Use single-precision math in host implementation (host backends only).
+
+     Default value is ``FALSE``.
+
+     This option requires SSE, which is enabled by default on x86_64.
+
+   HALMD_VARIANT_VERLET_DSFUN
+     Use double-single precision functions in Verlet integrator (GPU backends only).
+
+     Default value is ``TRUE``.
+
