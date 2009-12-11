@@ -21,7 +21,7 @@ find_package(Boost 1.37.0 QUIET REQUIRED COMPONENTS
   unit_test_framework
   )
 find_package(CUDA QUIET)
-find_package(Sphinx QUIET REQUIRED)
+find_package(Sphinx QUIET)
 find_package(Git QUIET REQUIRED)
 find_package(GSL QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)
@@ -110,6 +110,8 @@ if(WITH_CUDA)
   include_directories(${CUDA_INCLUDE_DIR})
 endif(WITH_CUDA)
 
-add_subdirectory(doc)
+if(SPHINX_FOUND)
+  add_subdirectory(doc)
+endif(SPHINX_FOUND)
 add_subdirectory(libs)
 add_subdirectory(src)
