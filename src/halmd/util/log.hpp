@@ -21,10 +21,8 @@
 #ifndef HALMD_UTIL_LOG_HPP
 #define HALMD_UTIL_LOG_HPP
 
-#define BOOST_LOG_NO_THREADS
-# include <boost/log/sources/record_ostream.hpp>
-# include <boost/log/sources/severity_logger.hpp>
-#undef BOOST_LOG_NO_THREADS
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/sources/severity_logger.hpp>
 
 namespace halmd { namespace log
 {

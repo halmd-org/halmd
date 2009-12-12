@@ -15,6 +15,7 @@ set(CMAKE_MODULE_PATH ${HALMD_SOURCE_DIR}/CMakeModules)
 find_package(Boost 1.37.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
+  log
   program_options
   regex
   system
@@ -113,5 +114,4 @@ endif(WITH_CUDA)
 if(SPHINX_FOUND)
   add_subdirectory(doc)
 endif(SPHINX_FOUND)
-add_subdirectory(libs)
 add_subdirectory(src)

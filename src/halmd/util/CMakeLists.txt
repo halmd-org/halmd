@@ -4,5 +4,5 @@ add_library(util
   signal.cpp
   )
 target_link_libraries(util
-  boost_log
+  ${Boost_LOG_LIBRARY}
   )

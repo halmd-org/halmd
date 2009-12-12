@@ -18,17 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_LOG_NO_THREADS
-# include <boost/log/attributes/timer.hpp>
-# include <boost/log/filters/attr.hpp>
-# include <boost/log/formatters/attr.hpp>
-# include <boost/log/formatters/date_time.hpp>
-# include <boost/log/formatters/format.hpp>
-# include <boost/log/formatters/message.hpp>
-# include <boost/log/utility/init/common_attributes.hpp>
-# include <boost/log/utility/init/to_console.hpp>
-# include <boost/log/utility/init/to_file.hpp>
-#undef BOOST_LOG_NO_THREADS
+#include <boost/log/attributes/timer.hpp>
+#include <boost/log/filters/attr.hpp>
+#include <boost/log/formatters/attr.hpp>
+#include <boost/log/formatters/date_time.hpp>
+#include <boost/log/formatters/format.hpp>
+#include <boost/log/formatters/message.hpp>
+#include <boost/log/utility/init/common_attributes.hpp>
+#include <boost/log/utility/init/to_console.hpp>
+#include <boost/log/utility/init/to_file.hpp>
 #include <halmd/util/log.hpp>
 
 #define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
