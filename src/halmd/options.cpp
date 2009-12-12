@@ -19,6 +19,7 @@
  */
 
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
 #include <boost/array.hpp>
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
@@ -220,11 +221,12 @@ namespace halmd
 void options::parse(int argc, char** argv)
 {
     using namespace std;
+    using namespace boost::algorithm;
 
     po::options_description desc("Program options");
     desc.add_options()
         ("output,o",
-         po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S"),
+         po::value<string>()->default_value(to_lower_copy(string(PROGRAM_NAME)) + "_%Y%m%d_%H%M%S"),
          "output file prefix")
         ("input,I", po::value<vector<string> >(),
          "parameter input file")
