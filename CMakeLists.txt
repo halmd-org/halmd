@@ -34,6 +34,13 @@ endif(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
   "Choose the type of build, options are: None Debug DeviceEmu Release RelWithDebInfo MinSizeRel." FORCE)
 
+if(NOT CMAKE_CXX_FLAGS)
+  set(CMAKE_CXX_FLAGS "-fPIC -Wall")
+endif(NOT CMAKE_CXX_FLAGS)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING
+  "Flags used by the compiler during all build types." FORCE)
+
 set(CMAKE_CXX_FLAGS_DEVICEEMU "-O2 -g -D__DEVICE_EMULATION__" CACHE STRING
   "Flags used by the compiler during device emulation builds." FORCE)
 
@@ -81,6 +88,14 @@ endif(CUDA_FOUND)
 if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   set(WITH_CUDA TRUE)
   enable_language(CUDA)
+
+  if(NOT CMAKE_CUDA_FLAGS)
+    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v --host-compilation=c")
+  endif(NOT CMAKE_CUDA_FLAGS)
+
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" CACHE STRING
+    "Flags used by the compiler during all build types." FORCE)
+
   add_definitions(-DWITH_CUDA)
 else(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   set(WITH_CUDA FALSE)
