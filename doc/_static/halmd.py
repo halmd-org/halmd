@@ -2,7 +2,7 @@
 from pylab import *
 import sys
 if len(sys.argv) < 2:
-    sys.exit("Usage: logo.py [OUTPUT] ...")
+    sys.exit("Usage: halmd.py [OUTPUT] ...")
 fig = figure(figsize=(1, 1))
 ax = axes((0, 0, 1, 1), frameon=False)
 lj = lambda r: 4 * (pow(r, -12) - pow(r, -6))
