@@ -19,6 +19,7 @@ find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
   program_options
   regex
   system
+  thread
   unit_test_framework
   )
 find_package(CUDA QUIET)
