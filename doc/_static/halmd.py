@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import matplotlib
+matplotlib.use("cairo.pdf")
 from pylab import *
 import sys
 if len(sys.argv) < 2:
@@ -34,10 +36,10 @@ for tick in ax.xaxis.get_major_ticks():
 for tick in ax.yaxis.get_major_ticks():
     tick.set_visible(False)
 rc("font", **{"family": "sans-serif", "sans-serif": ["Trebuchet MS"]})
-fig.text(0.145, 0.50, "HALMD: HAL's MD package",
-        color="#00545c", alpha=0.8, fontsize=42,
+fig.text(0.15, 0.60, u"HALMD—HAL’s MD package",
+        color="#00545c", alpha=0.8, fontsize=41,
         ha="left", va="center", transform=ax.transAxes)
-fig.text(0.155, 0.15, "Highly Accelerated Large-scale Molecular Dynamics",
+fig.text(0.16, 0.18, "Highly Accelerated Large-scale Molecular Dynamics",
         color="grey", alpha=0.8, fontsize=14,
         ha="left", va="center", transform=ax.transAxes)
 for fn in sys.argv[1:]:
