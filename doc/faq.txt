@@ -1,6 +1,13 @@
 FAQ
 ***
 
+**With HALMD, I could do simulations of breath-taking quality and obtain new scientific insight. How may I thank you?**
+  Please acknowledge the use of HALMD in your publications by citing our article:
+
+  P. H. Colberg and F. Höfling,
+  *Accelerating glassy dynamics on graphics processing units*,
+  `arXiv:0912.3824 [cond-mat.soft] <http://arxiv.org/abs/0912.3824>`_
+
 **Why does HALMD abort with “[ERROR] overcrowded placeholders in cell/neighbour lists update”?**
   The GPU backends of HALMD employ fixed-size cell and neighbour lists to
   accommodate for memory access pattern constraints.

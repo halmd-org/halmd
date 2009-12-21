@@ -1,11 +1,7 @@
+.. _installation:
+
 Installation
 ************
-
-Website
-=======
-
-The documentation for the current release is available at
-http://colberg.org/research/halmd.
 
 Getting the source code
 =======================
