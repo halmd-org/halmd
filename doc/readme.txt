@@ -20,13 +20,17 @@ Checkout of the main repository ::
 
   git clone git://git.colberg.org/research/halmd
 
+In case you are behind a firewall which blocks the git protocol port, use ::
+
+  git clone http://git.colberg.org/research/halmd
+
 Updates may be retrieved within the cloned repository using ::
 
   git pull
 
 A specific version may be checked out with ::
 
-  git checkout halmd-v0.1
+  git checkout v0.1
 
 To revert to the main development branch after a version checkout, use ::
 
@@ -54,21 +58,59 @@ These software packages are required for compilation:
 * `CMake <http://www.cmake.org/>`_ >= 2.6.0 with custom CUDA compiler support patch
 
   The patched CMake version, which adds native CUDA language support, is
-  available at::
+  available at ::
 
-    git clone username@git.physik.uni-muenchen.de:/pub/scm/granmat/cmake-cuda
+    git://git.colberg.org/gpgpu/cmake-cuda
 
-* `Boost C++ Libraries <http://www.boost.org/>`_ >= 1.37.0
+  To obtain the CUDA patch relative to the newestest supported CMake version ::
+
+    git diff cmake..master
+
+  Alternatively, you can use (or self-compile) these Debian packages:
+
+  * `CMakeCUDA packages for Debian squeeze/sid
+    <http://colberg.org/debian/pool/main/c/cmake>`_
+
+  * `CMakeCUDA packages for Ubuntu karmic
+    <http://colberg.org/ubuntu/pool/main/c/cmake>`_
+
+  .. note::
+
+     This patch adds *native* CUDA source file compilation and linking support
+     to CMake and is not to be confused nor compatible with the CUDA module in
+     CMake 2.8.
+
+* `Boost C++ Libraries <http://www.boost.org/>`_ >= 1.39.0
+
+  In addition, the proposed `Boost.Log <http://boost-log.sourceforge.net/>`_
+  library is needed, which is acquired with ::
+
+    svn co http://boost-log.svn.sourceforge.net/svnroot/boost-log/trunk/boost-log
+
+  To compile the Boost.Log library, copy the directories ``boost/log`` and
+  ``libs/log`` to the respective paths in the Boost source tree and
+  `compile Boost
+  <http://www.boost.org/doc/libs/1_41_0/more/getting_started/unix-variants.html#easy-build-and-install>`_
+  following the standard installation procedure.
+
+  Alternatively, you can use (or self-compile) these Debian packages:
+
+  * `Boost.Log packages for Debian squeeze/sid
+    <http://colberg.org/debian/pool/main/b/boost1.40>`_
+
+  * `Boost.Log packages for Ubuntu karmic
+    <http://colberg.org/ubuntu/pool/main/b/boost1.40>`_
+
+  The packages are installed alongside the Boost 1.40 packages in Debian/Ubuntu.
 
 * `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ >= 1.6.6
-
-  It is recommended to install a 1.6.x version (instead of 1.8.x), as the
-  current version of PyTables is not compatible with HDF5 1.8.x.  Note that
-  PyTables is **not** required for HALMD, but for the ``mdplot`` plot package.
 
 * `GNU Scientific Library <http://www.gnu.org/software/gsl/>`_ (GSL)
 
 * `Git <http://git-scm.com/>`_ >= 1.5.6.2
+
+
+To optionally generate documentation in HTML and PDF format:
 
 * `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ >= 0.6.1
 
