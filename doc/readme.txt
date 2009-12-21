@@ -140,13 +140,13 @@ Environment variables are prepended to the cmake command::
 
   CXXFLAGS="-fPIC -Wall" cmake ../..
 
-:doc:`env_vars`
+:doc:`cmake/env_vars`
 
 Cache variables are appended using the -D option::
 
   cmake -DCMAKE_BUILD_TYPE=Release ../..
 
-:doc:`cache_vars`
+:doc:`cmake/cache_vars`
 
 The following example demonstrates how to compile separate, dynamically linked
 executables for each backend, which are statically linked to all libraries except the
