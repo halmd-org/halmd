@@ -72,5 +72,5 @@ HAL's MD package employs
 Getting HAL's MD package
 ========================
 
-Please refer to the :ref:`installation section <installation>` of the documentation.
+Please refer to the :ref:`Download section <download>`.
 

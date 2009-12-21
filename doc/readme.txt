@@ -3,39 +3,6 @@
 Installation
 ************
 
-Getting the source code
-=======================
-
-HALMD is maintained in a `Git <http://git-scm.com/>`_ repository.
-
-If you are new to Git or version control in general, the `Git tutorial
-<http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html>`_
-will get you started.
-Former Subversion users may also read the `Git SVN Crash Course
-<http://git.or.cz/course/svn.html>`_.
-For in-depth documentation, see the `Git User's Manual
-<http://www.kernel.org/pub/software/scm/git/docs/user-manual.html>`_.
-
-Checkout of the main repository ::
-
-  git clone git://git.colberg.org/research/halmd
-
-In case you are behind a firewall which blocks the git protocol port, use ::
-
-  git clone http://git.colberg.org/research/halmd
-
-Updates may be retrieved within the cloned repository using ::
-
-  git pull
-
-A specific version may be checked out with ::
-
-  git checkout v0.1
-
-To revert to the main development branch after a version checkout, use ::
-
-  git checkout master
-
 License
 =======
 
