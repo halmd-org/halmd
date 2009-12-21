@@ -1,18 +1,22 @@
 Usage
 *****
 
-Prerequisites
-=============
-
-To allow the shell to find the program and its required libraries, set these
-environment variables in the shell initialization file (e.g. ~/.bashrc)::
-
-  export PATH="$HOME/usr/bin${PATH+:$PATH}"
-  export LD_LIBRARY_PATH="$HOME/usr/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
-
-
 Getting started
 ===============
+
+Program parameters
+------------------
+
+HALMD has three ways of accepting program parameters:
+
+* pass directly as command line parameters
+* read from parameter input file [INI format]
+* read from HDF5 data file, optionally resuming from a prior trajectory
+
+Options are described in the command line help::
+
+  halmd --help
+
 
 Simulation backends
 -------------------
@@ -49,7 +53,7 @@ HALMD implements various simulation backends using dynamically loaded plugins.
 
      P. H. Colberg and F. Höfling,
      *Accelerating glassy dynamics using graphics processing units*,
-     Submitted to Journal of Computational Physics
+     `arXiv:0912.3824 [cond-mat.soft] <http://arxiv.org/abs/0912.3824>`_
 
      J. A. Anderson, C. D. Lorenz and A. Travesset,
      *General purpose molecular dynamics simulations fully implemented on graphics processing units*,
@@ -66,7 +70,7 @@ HALMD implements various simulation backends using dynamically loaded plugins.
    hardsphere backend
      A single-threaded, event-based hard-sphere molecular dynamics simulation.
 
-     This is a straight-forward reference implementation using cell lists.
+     This is an **experimental** implementation, which has not been tested thoroughly.
 
      M. P. Allen, D. Frenkel and J. Talbot,
      *Molecular dynamics simulation using hard particles*,
@@ -75,20 +79,6 @@ HALMD implements various simulation backends using dynamically loaded plugins.
      S. Miller and S. Luding,
      *Event-driven molecular dynamics in parallel*,
      `Journal of Computational Physics, 2004, 193, 306-316 <http://dx.doi.org/10.1016/j.jcp.2003.08.009>`_
-
-
-Program parameters
-------------------
-
-HALMD has three ways of accepting program parameters:
-
-* pass directly as command line parameters
-* read from parameter input file [INI format]
-* read from HDF5 data file, optionally resuming from a prior trajectory
-
-Options are described in the command line help::
-
-  halmd --help
 
 
 Multi-GPU machines
