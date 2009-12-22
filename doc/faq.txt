@@ -6,7 +6,7 @@ FAQ
 
   P. H. Colberg and F. Höfling,
   *Accelerating glassy dynamics on graphics processing units*,
-  `arXiv:0912.3824 [cond-mat.soft] <http://arxiv.org/abs/0912.3824>`_
+  `arXiv:0912.3824 [physics.comp-ph] <http://arxiv.org/abs/0912.3824>`_
 
 **Why does HALMD abort with “[ERROR] overcrowded placeholders in cell/neighbour lists update”?**
   The GPU backends of HALMD employ fixed-size cell and neighbour lists to
