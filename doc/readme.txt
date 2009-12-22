@@ -104,9 +104,7 @@ In the cloned HALMD repository, switch to a new build directory::
 
 If the third-party packages are installed in standard locations, run ::
 
-  CXXFLAGS="-fPIC -Wall" \
-  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
-  cmake -DCMAKE_BUILD_TYPE=Release ../..
+  cmake ../..
 
 This will detect all necessary software, and then generate the make files.
 
