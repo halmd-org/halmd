@@ -417,9 +417,10 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     // minimum distance in 2- or 3-dimensional fcc lattice
     LOG("minimum lattice distance: " << a / std::sqrt(2.));
 
+    boost::array<unsigned int, 2> tag = boost::assign::list_of(0)(mpart[0]);
     part->clear();
-    for (unsigned int i = 0; i < npart; ++i) {
-        particle p(i, types[i]);
+    for (unsigned int i = 0; i < npart; ++tag[types[i]], ++i) {
+        particle p(tag[types[i]], types[i]);
         vector_type& r = p.r;
         // compose primitive vectors from 1-dimensional index
         if (dimension == 3) {
@@ -926,10 +927,11 @@ void ljfluid<ljfluid_impl_host, dimension>::sample(host_sample_type& sample) con
         // assign particle positions and velocities of homogenous type
         foreach (particle const& p, *part) {
             if (p.type == (int) i) {
+                assert(p.tag >= m && p.tag - m < mpart[p.type]);
                 // periodically extended particle position
-                (*r)[p.tag] = p.r + p.R * box_;
+                (*r)[p.tag - m] = p.r + p.R * box_;
                 // particle velocity
-                (*v)[p.tag] = p.v;
+                (*v)[p.tag - m] = p.v;
             }
         }
     }
