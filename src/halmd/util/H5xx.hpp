@@ -212,6 +212,10 @@ attribute::as()
     catch (H5::AttributeIException const&) {
         throw;
     }
+    H5::DataSpace ds(attr.getSpace());
+    if (ds.getSimpleExtentType() != H5S_SCALAR) {
+        throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not scalar");
+    }
     T value;
     attr.read(ctype<T>::type, &value);
     return value;
@@ -251,6 +255,10 @@ attribute::as()
     }
     catch (H5::AttributeIException const&) {
         throw;
+    }
+    H5::DataSpace ds(attr.getSpace());
+    if (ds.getSimpleExtentType() != H5S_SCALAR) {
+        throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not scalar");
     }
     // fixed string length includes terminating NULL character
     char value[256];
