@@ -26,6 +26,11 @@
 #include <boost/noncopyable.hpp>
 #include <boost/unordered_map.hpp>
 #include <fstream>
+#include <iostream>
+#include <stdint.h>
+#include <vector>
+#include <unistd.h>
+
 #include <halmd/mdsim/impl.hpp>
 #include <halmd/mdsim/sample.hpp>
 #include <halmd/options.hpp>
@@ -39,10 +44,6 @@
 #include <halmd/util/signal.hpp>
 #include <halmd/util/timer.hpp>
 #include <halmd/version.h>
-#include <iostream>
-#include <stdint.h>
-#include <vector>
-#include <unistd.h>
 
 namespace halmd
 {

@@ -22,6 +22,7 @@
 #define CUDA_VERSION_HPP
 
 #include <cuda_runtime.h>
+
 #include <cuda_wrapper/error.hpp>
 
 namespace cuda

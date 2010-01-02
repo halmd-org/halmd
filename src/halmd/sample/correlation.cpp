@@ -24,6 +24,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/mpl/for_each.hpp>
+
 #include <halmd/sample/correlation.hpp>
 #include <halmd/sample/tcf_visitor.hpp>
 #include <halmd/util/H5xx.hpp>

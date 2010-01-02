@@ -22,8 +22,9 @@
 #define CUDA_SYMBOL_HPP
 
 #include <cuda_runtime.h>
+
 #ifndef __CUDACC__
-#include <cuda_wrapper/error.hpp>
+# include <cuda_wrapper/error.hpp>
 #endif
 
 namespace cuda

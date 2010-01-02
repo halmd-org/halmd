@@ -23,9 +23,10 @@
 
 #include <cmath>
 #include <gsl/gsl_rng.h>
+#include <vector>
+
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <vector>
 
 namespace halmd { namespace gsl
 {

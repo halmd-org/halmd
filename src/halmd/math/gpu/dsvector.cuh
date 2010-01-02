@@ -22,6 +22,7 @@
 #define HALMD_MATH_GPU_DSVECTOR_CUH
 
 #include <cuda_runtime.h>
+
 #include <halmd/math/gpu/dsfloat.cuh>
 #include <halmd/math/gpu/dsfun.cuh>
 #include <halmd/math/gpu/vector2d.cuh>

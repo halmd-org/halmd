@@ -20,6 +20,7 @@
 
 #include <halmd/mdsim/gpu/base.cuh>
 #include <halmd/mdsim/gpu/ljfluid_square.hpp>
+
 using namespace halmd::gpu;
 
 namespace halmd { namespace cu { namespace ljfluid

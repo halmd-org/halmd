@@ -22,6 +22,7 @@
 #define HALMD_MDSIM_LJFLUID_GPU_BASE_HPP
 
 #include <boost/assign/list_of.hpp>
+
 #include <cuda_wrapper.hpp>
 #include <halmd/algorithm/radix_sort.hpp>
 #include <halmd/algorithm/reduce.hpp>

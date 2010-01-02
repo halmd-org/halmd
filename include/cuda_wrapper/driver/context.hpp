@@ -23,8 +23,9 @@
 
 #include <boost/shared_ptr.hpp>
 #include <cuda.h>
-#include <cuda_wrapper/driver/error.hpp>
 #include <string>
+
+#include <cuda_wrapper/driver/error.hpp>
 
 namespace cuda { namespace driver
 {

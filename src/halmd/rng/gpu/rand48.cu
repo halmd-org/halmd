@@ -21,6 +21,7 @@
 #include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/rng/gpu/rand48.cuh>
 #include <halmd/rng/gpu/rand48.hpp>
+
 using namespace halmd::gpu::rand48;
 
 namespace halmd { namespace cu { namespace rand48

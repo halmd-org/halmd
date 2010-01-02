@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cmath>
+
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/util/log.hpp>

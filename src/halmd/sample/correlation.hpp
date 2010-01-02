@@ -29,6 +29,9 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
+#include <string>
+#include <vector>
+
 #ifdef WITH_CUDA
 # include <halmd/sample/tcf_gpu.hpp>
 #endif
@@ -37,8 +40,6 @@
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/log.hpp>
-#include <string>
-#include <vector>
 
 namespace halmd {
 

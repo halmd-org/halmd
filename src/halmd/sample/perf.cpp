@@ -22,13 +22,14 @@
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lambda/bind.hpp>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+
 #include <halmd/sample/perf.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/util/log.hpp>
-#include <iomanip>
-#include <iostream>
-#include <limits>
 
 #define foreach BOOST_FOREACH
 

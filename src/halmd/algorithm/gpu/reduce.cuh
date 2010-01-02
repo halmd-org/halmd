@@ -24,7 +24,9 @@
 #include <boost/mpl/int.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
+
 #include <halmd/math/gpu/accum.cuh>
+
 using namespace boost;
 
 namespace halmd { namespace cu

@@ -22,9 +22,10 @@
 #define HALMD_RNG_RAND48_HPP
 
 #include <algorithm>
+#include <iostream>
+
 #include <halmd/algorithm/prefix_sum.hpp>
 #include <halmd/rng/gpu/rand48.hpp>
-#include <iostream>
 
 namespace halmd
 {

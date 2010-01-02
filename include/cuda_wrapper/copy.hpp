@@ -24,11 +24,12 @@
 #include <assert.h>
 #include <boost/array.hpp>
 #include <cuda_runtime.h>
+#include <vector>
+
 #include <cuda_wrapper/host/vector.hpp>
 #include <cuda_wrapper/stream.hpp>
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/vector.hpp>
-#include <vector>
 
 namespace cuda
 {

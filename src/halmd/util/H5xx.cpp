@@ -18,8 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/util/H5xx.hpp>
 #include <stdint.h>
+
+#include <halmd/util/H5xx.hpp>
 
 namespace H5xx
 {

@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <boost/ref.hpp>
+
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/algorithm/prefix_sum.hpp>
 

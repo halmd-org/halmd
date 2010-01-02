@@ -26,10 +26,11 @@
 #ifndef CUDA_ALLOCATOR_HPP
 #define CUDA_ALLOCATOR_HPP
 
-#include <cstdlib>
-#include <new>
 #include <bits/functexcept.h>
+#include <cstdlib>
 #include <cuda_runtime.h>
+#include <new>
+
 #include <cuda_wrapper/error.hpp>
 
 namespace cuda

@@ -26,6 +26,13 @@
 #include <boost/foreach.hpp>
 #include <boost/multi_array.hpp>
 #include <cmath>
+#include <iostream>
+#include <limits>
+#include <list>
+#include <queue>
+#include <sys/times.h>
+#include <vector>
+
 #include <halmd/mdsim/base.hpp>
 #include <halmd/mdsim/traits.hpp>
 #include <halmd/rng/gsl_rng.hpp>
@@ -33,12 +40,6 @@
 #include <halmd/util/exception.hpp>
 #include <halmd/util/log.hpp>
 #include <halmd/util/timer.hpp>
-#include <iostream>
-#include <limits>
-#include <list>
-#include <queue>
-#include <sys/times.h>
-#include <vector>
 
 namespace halmd
 {

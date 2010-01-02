@@ -19,8 +19,10 @@
  */
 
 #include <float.h>
+
 #include <halmd/mdsim/gpu/base.cuh>
 #include <halmd/mdsim/gpu/ljfluid_nbr.hpp>
+
 using namespace halmd::gpu;
 
 namespace halmd { namespace cu { namespace ljfluid

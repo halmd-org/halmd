@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <boost/mpl/vector.hpp>
 #include <boost/variant.hpp>
+#include <vector>
+
 #include <cuda_wrapper.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
@@ -31,7 +33,6 @@
 #include <halmd/mdsim/traits.hpp>
 #include <halmd/sample/gpu/tcf.hpp>
 #include <halmd/sample/tcf_base.hpp>
-#include <vector>
 
 namespace halmd {
 

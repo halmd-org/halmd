@@ -19,6 +19,7 @@
  */
 
 #include <float.h>
+
 #include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/math/gpu/vector2d.cuh>
 #include <halmd/math/gpu/vector3d.cuh>

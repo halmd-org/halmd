@@ -24,14 +24,15 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/noncopyable.hpp>
+#include <string>
+#include <vector>
+
 #include <halmd/math/accum.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/sample.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
-#include <string>
-#include <vector>
 
 #define foreach BOOST_FOREACH
 

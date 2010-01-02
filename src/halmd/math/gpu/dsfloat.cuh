@@ -10,6 +10,7 @@
 
 #include <boost/type_traits/arithmetic_traits.hpp>
 #include <boost/utility/enable_if.hpp>
+
 #include <halmd/math/gpu/dsfun.cuh>
 
 /**

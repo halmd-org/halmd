@@ -22,6 +22,7 @@
 #define HALMD_MDSIM_LJFLUID_BASE_HPP
 
 #include <boost/foreach.hpp>
+
 #include <halmd/mdsim/base.hpp>
 #include <halmd/mdsim/traits.hpp>
 

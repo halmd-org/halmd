@@ -27,17 +27,19 @@
 #include <boost/foreach.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/unordered_map.hpp>
+#include <fstream>
+#include <iostream>
+#include <map>
+
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
 #endif
-#include <fstream>
 #include <halmd/mdsim/impl.hpp>
 #include <halmd/options.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/date_time.hpp>
 #include <halmd/version.h>
-#include <iostream>
-#include <map>
+
 namespace po = boost::program_options;
 
 #define foreach BOOST_FOREACH

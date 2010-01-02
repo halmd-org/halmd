@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <boost/array.hpp>
+
 #include <cuda_wrapper.hpp>
 #include <halmd/mdsim/gpu/virial.hpp>
 

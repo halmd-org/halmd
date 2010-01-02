@@ -24,6 +24,13 @@
 #include <boost/program_options.hpp>
 #include <cmath>
 #include <deque>
+#include <iomanip>
+#include <iostream>
+#include <libgen.h>
+#include <stdexcept>
+#include <stdio.h>
+#include <vector>
+
 #include <halmd/algorithm/radix_sort.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
@@ -31,12 +38,7 @@
 #include <halmd/mdsim/gpu/lattice.hpp>
 #include <halmd/rng/rand48.hpp>
 #include <halmd/util/timer.hpp>
-#include <iomanip>
-#include <iostream>
-#include <libgen.h>
-#include <stdexcept>
-#include <stdio.h>
-#include <vector>
+
 using namespace halmd;
 
 namespace po = boost::program_options;

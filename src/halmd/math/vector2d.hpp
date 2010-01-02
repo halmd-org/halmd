@@ -24,6 +24,7 @@
 #include <boost/array.hpp>
 #include <cmath>
 #include <iostream>
+
 #ifdef WITH_CUDA
 # include <cuda_runtime.h>
 #endif

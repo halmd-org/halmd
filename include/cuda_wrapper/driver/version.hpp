@@ -22,6 +22,7 @@
 #define CUDA_DRIVER_VERSION_HPP
 
 #include <cuda.h>
+
 #include <cuda_wrapper/driver/error.hpp>
 
 namespace cuda { namespace driver

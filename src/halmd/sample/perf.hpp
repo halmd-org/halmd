@@ -24,10 +24,11 @@
 #include <boost/assign.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/unordered_map.hpp>
+#include <string>
+
 #include <halmd/math/accum.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
-#include <string>
 
 namespace halmd
 {

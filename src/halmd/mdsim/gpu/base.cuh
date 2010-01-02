@@ -26,6 +26,7 @@
 #include <halmd/math/gpu/vector4d.cuh>
 #include <halmd/mdsim/gpu/base.hpp>
 #include <halmd/mdsim/gpu/virial.cuh>
+
 using namespace halmd::gpu;
 
 //

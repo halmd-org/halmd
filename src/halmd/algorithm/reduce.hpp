@@ -22,9 +22,10 @@
 #define HALMD_ALGORITHM_REDUCE_HPP
 
 #include <algorithm>
+#include <numeric>
+
 #include <cuda_wrapper.hpp>
 #include <halmd/algorithm/gpu/reduce.hpp>
-#include <numeric>
 
 namespace halmd
 {

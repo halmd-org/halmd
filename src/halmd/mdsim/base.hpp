@@ -26,6 +26,8 @@
 #include <boost/type_traits.hpp>
 #include <boost/variant.hpp>
 #include <cmath>
+#include <limits>
+
 #include <halmd/mdsim/exception.hpp>
 #include <halmd/mdsim/impl.hpp>
 #include <halmd/mdsim/traits.hpp>
@@ -34,7 +36,6 @@
 #include <halmd/sample/perf.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/util/log.hpp>
-#include <limits>
 
 #define foreach BOOST_FOREACH
 

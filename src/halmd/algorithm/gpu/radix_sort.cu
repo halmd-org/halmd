@@ -19,6 +19,7 @@
  */
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
+
 using namespace halmd::gpu::radix_sort;
 
 namespace halmd { namespace cu { namespace radix_sort

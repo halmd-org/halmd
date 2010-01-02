@@ -20,6 +20,7 @@
 
 #include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/algorithm/gpu/prefix_sum.hpp>
+
 using namespace halmd::gpu::prefix_sum;
 
 namespace halmd { namespace cu { namespace prefix_sum

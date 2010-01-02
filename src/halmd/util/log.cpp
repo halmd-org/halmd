@@ -27,6 +27,7 @@
 #include <boost/log/utility/init/common_attributes.hpp>
 #include <boost/log/utility/init/to_console.hpp>
 #include <boost/log/utility/init/to_file.hpp>
+
 #include <halmd/util/log.hpp>
 
 #define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"

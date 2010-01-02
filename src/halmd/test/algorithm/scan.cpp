@@ -23,14 +23,16 @@
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <cmath>
-#include <halmd/algorithm/prefix_sum.hpp>
-#include <halmd/util/timer.hpp>
 #include <iomanip>
 #include <iostream>
 #include <libgen.h>
 #include <stdexcept>
 #include <stdio.h>
 #include <vector>
+
+#include <halmd/algorithm/prefix_sum.hpp>
+#include <halmd/util/timer.hpp>
+
 using namespace halmd;
 
 namespace po = boost::program_options;

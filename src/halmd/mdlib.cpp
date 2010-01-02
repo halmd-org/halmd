@@ -26,6 +26,9 @@
 #include <boost/unordered_map.hpp>
 #include <boost/utility.hpp>
 #include <fstream>
+#include <iostream>
+#include <string>
+
 #include <halmd/mdlib.hpp>
 #include <halmd/mdsim/hardsphere.hpp>
 #ifdef WITH_CUDA
@@ -36,8 +39,7 @@
 #include <halmd/mdsim/mdsim.hpp>
 #include <halmd/options.hpp>
 #include <halmd/version.h>
-#include <iostream>
-#include <string>
+
 using namespace halmd;
 
 #define foreach BOOST_FOREACH

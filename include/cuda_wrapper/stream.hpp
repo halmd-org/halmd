@@ -24,6 +24,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
 #include <cuda_runtime.h>
+
 #include <cuda_wrapper/error.hpp>
 
 namespace cuda

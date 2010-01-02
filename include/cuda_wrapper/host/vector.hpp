@@ -21,8 +21,9 @@
 #ifndef CUDA_HOST_VECTOR_HPP
 #define CUDA_HOST_VECTOR_HPP
 
-#include <cuda_wrapper/host/allocator.hpp>
 #include <vector>
+
+#include <cuda_wrapper/host/allocator.hpp>
 
 namespace cuda { namespace host
 {

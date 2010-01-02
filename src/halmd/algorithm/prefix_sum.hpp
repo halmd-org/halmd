@@ -21,9 +21,10 @@
 #ifndef HALMD_ALGORITHM_PREFIX_SUM_HPP
 #define HALMD_ALGORITHM_PREFIX_SUM_HPP
 
-#include <halmd/algorithm/gpu/prefix_sum.hpp>
 #include <stdexcept>
 #include <vector>
+
+#include <halmd/algorithm/gpu/prefix_sum.hpp>
 
 namespace halmd
 {

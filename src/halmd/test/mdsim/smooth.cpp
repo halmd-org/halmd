@@ -24,12 +24,14 @@
 #include <boost/foreach.hpp>
 #include <cmath>
 #include <exception>
-#include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/gpu/ljfluid_square.hpp>
 #include <iomanip>
 #include <iostream>
 #include <libgen.h>
 #include <limits>
+
+#include <halmd/math/vector3d.hpp>
+#include <halmd/mdsim/gpu/ljfluid_square.hpp>
+
 using namespace boost::assign;
 using namespace halmd;
 

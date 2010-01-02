@@ -21,19 +21,21 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <exception>
+#include <iostream>
+#include <libgen.h>
+#include <sched.h>
+
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
 #endif
-#include <exception>
 #include <halmd/mdlib.hpp>
 #include <halmd/options.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/util/log.hpp>
 #include <halmd/version.h>
-#include <iostream>
-#include <libgen.h>
-#include <sched.h>
+
 using namespace boost;
 using namespace std;
 

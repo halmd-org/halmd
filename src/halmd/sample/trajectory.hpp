@@ -26,6 +26,8 @@
 #include <boost/array.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/type_traits.hpp>
+#include <string>
+
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/sample.hpp>
@@ -33,7 +35,6 @@
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/util/log.hpp>
-#include <string>
 
 namespace halmd {
 

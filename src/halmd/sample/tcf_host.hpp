@@ -24,12 +24,13 @@
 #include <algorithm>
 #include <boost/mpl/vector.hpp>
 #include <boost/variant.hpp>
+#include <vector>
+
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/sample.hpp>
 #include <halmd/sample/tcf_base.hpp>
 #include <halmd/util/H5xx.hpp>
-#include <vector>
 
 namespace halmd {
 

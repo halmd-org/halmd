@@ -27,14 +27,15 @@
 #include <boost/multi_array.hpp>
 #include <boost/ref.hpp>
 #include <cmath>
-#include <halmd/mdsim/hilbert.hpp>
-#include <halmd/mdsim/ljfluid_base.hpp>
-#include <halmd/rng/gsl_rng.hpp>
-#include <halmd/util/timer.hpp>
 #include <iostream>
 #include <list>
 #include <sys/times.h>
 #include <vector>
+
+#include <halmd/mdsim/hilbert.hpp>
+#include <halmd/mdsim/ljfluid_base.hpp>
+#include <halmd/rng/gsl_rng.hpp>
+#include <halmd/util/timer.hpp>
 
 #define foreach BOOST_FOREACH
 #define range boost::make_iterator_range

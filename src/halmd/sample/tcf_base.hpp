@@ -25,9 +25,10 @@
 #include <boost/array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
+#include <vector>
+
 #include <halmd/math/accum.hpp>
 #include <halmd/util/H5xx.hpp>
-#include <vector>
 
 namespace halmd {
 

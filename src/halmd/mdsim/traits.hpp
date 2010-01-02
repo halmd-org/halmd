@@ -21,12 +21,13 @@
 #ifndef HALMD_MDSIM_TRAITS_HPP
 #define HALMD_MDSIM_TRAITS_HPP
 
-#ifdef WITH_CUDA
-# include <vector_types.h>
-#endif
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/utility/enable_if.hpp>
+#ifdef WITH_CUDA
+# include <vector_types.h>
+#endif
+
 #include <halmd/mdsim/impl.hpp>
 #include <halmd/mdsim/sample.hpp>
 #include <halmd/math/vector2d.hpp>

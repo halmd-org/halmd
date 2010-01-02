@@ -23,10 +23,11 @@
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
+#include <limits>
+
 #include <halmd/algorithm/reduce.hpp>
 #include <halmd/mdsim/ljfluid_gpu_base.hpp>
 #include <halmd/mdsim/gpu/hilbert.hpp>
-#include <limits>
 
 #define foreach BOOST_FOREACH
 
