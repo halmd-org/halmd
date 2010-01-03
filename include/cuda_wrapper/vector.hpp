@@ -42,17 +42,20 @@ public:
     typedef size_t size_type;
 
 private:
-    struct container : boost::noncopyable
+    class container : boost::noncopyable
     {
+    public:
         /**
          * allocate global device memory
          */
-        container(size_type size) : m_size(size)
+        container(size_type size) : m_size(size), m_ptr(NULL)
         {
-            void* ptr;
-            // returns NULL pointer upon zero allocation
-            CUDA_CALL(cudaMalloc(&ptr, m_size * sizeof(value_type)));
-            m_ptr = reinterpret_cast<pointer>(ptr);
+            // avoid zero-size allocation with cudaMalloc
+            if (m_size) {
+                void* ptr;
+                CUDA_CALL(cudaMalloc(&ptr, m_size * sizeof(value_type)));
+                m_ptr = reinterpret_cast<pointer>(ptr);
+            }
         }
 
         /**
@@ -60,11 +63,30 @@ private:
          */
         ~container() throw()
         {
-            cudaFree(reinterpret_cast<void*>(m_ptr));
+            // avoid freeing NULL pointer with cudaFree
+            if (m_size) {
+                cudaFree(reinterpret_cast<void*>(m_ptr));
+            }
         }
 
-        pointer m_ptr;
+        size_type size() const
+        {
+            return m_size;
+        }
+
+        operator pointer()
+        {
+            return m_ptr;
+        }
+
+        operator const_pointer() const
+        {
+            return m_ptr;
+        }
+
+    private:
         size_type m_size;
+        pointer m_ptr;
     };
 
 public:
@@ -86,7 +108,7 @@ public:
      */
     size_type capacity() const
     {
-        return m_mem->m_size;
+        return m_mem->size();
     }
 
     /**
@@ -103,7 +125,7 @@ public:
      */
     void reserve(size_type size)
     {
-        if (size > m_mem->m_size) {
+        if (size > m_mem->size()) {
             m_mem.reset();
             m_mem.reset(new container(size));
         }
@@ -123,22 +145,22 @@ public:
      */
     pointer data()
     {
-        return m_mem->m_ptr;
+        return *m_mem;
     }
 
     operator pointer()
     {
-        return m_mem->m_ptr;
+        return *m_mem;
     }
 
     const_pointer data() const
     {
-        return m_mem->m_ptr;
+        return *m_mem;
     }
 
     operator const_pointer() const
     {
-        return m_mem->m_ptr;
+        return *m_mem;
     }
 
 private:
