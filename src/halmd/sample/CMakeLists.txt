@@ -1,12 +1,20 @@
-add_library(sample
+add_library(sample_common
   H5param.cpp
-  correlation.cpp
   energy.cpp
   perf.cpp
   trajectory.cpp
   )
+add_library(sample_host
+  correlation.cpp
+  )
+set_target_properties(sample_host PROPERTIES
+  COMPILE_FLAGS "-UWITH_CUDA"
+  )
 if(WITH_CUDA)
-  target_link_libraries(sample
+  add_library(sample_gpu
+    correlation.cpp
+    )
+  target_link_libraries(sample_gpu
     ${CUDA_LIBRARIES}
     gpu_tcf
     )

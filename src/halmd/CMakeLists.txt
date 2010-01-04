@@ -73,7 +73,7 @@ configure_file(
 set(HALMD_COMMON_LIBRARIES
   -Wl,-whole-archive
   util
-  sample
+  sample_common
   -Wl,-no-whole-archive
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
@@ -166,9 +166,17 @@ endforeach(impl)
 
 target_link_libraries(halmd_host
   ${GSL_LIBRARIES}
+  sample_host
+  )
+set_target_properties(halmd_host PROPERTIES
+  COMPILE_FLAGS "-UWITH_CUDA"
   )
 target_link_libraries(halmd_hardsphere
   ${GSL_LIBRARIES}
+  sample_host
+  )
+set_target_properties(halmd_hardsphere PROPERTIES
+  COMPILE_FLAGS "-UWITH_CUDA"
   )
 
 if(WITH_CUDA)
@@ -181,6 +189,7 @@ if(WITH_CUDA)
     gpu_rand48
     gpu_reduce
     gpu_virial
+    sample_gpu
     )
   target_link_libraries(halmd_gpu_neighbour
     ${CUDA_LIBRARIES}
@@ -192,6 +201,7 @@ if(WITH_CUDA)
     gpu_rand48
     gpu_reduce
     gpu_virial
+    sample_gpu
     )
 endif(WITH_CUDA)
 
