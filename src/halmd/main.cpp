@@ -33,6 +33,7 @@
 #include <halmd/options.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
+#include <halmd/util/hostname.hpp>
 #include <halmd/util/log.hpp>
 #include <halmd/version.h>
 
@@ -98,6 +99,7 @@ int main(int argc, char **argv)
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
     LOG("MD simulation backend: " << mdlib.backend());
+    LOG("host name: " << halmd::get_fqdn_hostname());
 
     int status_ = halmd::HALMD_EXIT_SUCCESS;
 #ifdef NDEBUG
