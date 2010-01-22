@@ -56,10 +56,6 @@ public:
     void particles(T const& value);
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
-#if (CUDART_VERSION >= 2020)
-    /** use blocking synchronization */
-    void blocking_sync();
-#endif
 
     /** restore system state from phase space sample */
     void state(host_sample_type& sample, float_type box);
@@ -208,17 +204,6 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::threads(unsigned int value)
         throw exception("failed to allocate global device memory for system state");
     }
 }
-
-#if (CUDART_VERSION >= 2020)
-template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square, dimension>::blocking_sync()
-{
-    _Base::blocking_sync();
-    for (size_t i = 0; i < event_.size(); ++i) {
-        event_[i] = cuda::event(cudaEventBlockingSync);
-    }
-}
-#endif
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square, dimension>::state(host_sample_type& sample, float_type box)

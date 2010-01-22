@@ -150,16 +150,6 @@ private:
         m_fluid.threads(m_opt["threads"].as<unsigned int>());
     }
 
-#if defined(WITH_CUDA) && (CUDART_VERSION >= 2020)
-    void blocking_sync(boost::false_type const&) {}
-    void blocking_sync(boost::true_type const&)
-    {
-        if (m_opt["blocking-sync"].as<bool>()) {
-            m_fluid.blocking_sync();
-        }
-    }
-#endif
-
     void init_cells(boost::false_type const&) {}
     void init_cells(boost::true_type const&)
     {
@@ -294,10 +284,6 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     nbl_skin(IMPL(neighbour_lists));
     // number of CUDA execution threads
     threads(IMPL(gpu));
-#if defined(WITH_CUDA) && (CUDART_VERSION >= 2020)
-    // use blocking synchronization
-    blocking_sync(IMPL(gpu));
-#endif
     // initialise hard-sphere cell lists
     init_cells(IMPL(hardsphere_cell_lists));
 

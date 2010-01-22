@@ -63,10 +63,6 @@ public:
     void sigma(boost::array<float, 3> const& value);
     /** set number of CUDA execution threads */
     void threads(unsigned int value);
-#if (CUDART_VERSION >= 2020)
-    /** use blocking synchronization */
-    void blocking_sync();
-#endif
     /* set particle density */
     void density(float_type value);
     /* set periodic box length */
@@ -283,17 +279,6 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::threads(unsigned int value)
         throw exception("failed to allocate global device memory for radix sort");
     }
 }
-
-#if (CUDART_VERSION >= 2020)
-template <typename ljfluid_impl, int dimension>
-void ljfluid_gpu_base<ljfluid_impl, dimension>::blocking_sync()
-{
-    LOG("using blocking synchronization when waiting for GPU tasks to finish");
-    for (size_t i = 0; i < event_.size(); ++i) {
-        event_[i] = cuda::event(cudaEventBlockingSync);
-    }
-}
-#endif
 
 template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::density(float_type value)
