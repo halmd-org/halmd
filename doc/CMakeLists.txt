@@ -38,3 +38,13 @@ add_custom_target(doc_pdf ALL
   COMMENT "Building pdf documentation"
   )
 add_dependencies(doc_pdf doc_latex)
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
+  DESTINATION share/doc/halmd
+  PATTERN "cmake" EXCLUDE
+  )
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/latex/HALMD.pdf
+  DESTINATION share/doc/halmd
+  )
+
