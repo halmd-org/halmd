@@ -24,6 +24,7 @@ find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
   )
 find_package(CUDA QUIET)
 find_package(Sphinx QUIET)
+find_package(LATEX QUIET)
 find_package(Git QUIET REQUIRED)
 find_package(GSL QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)

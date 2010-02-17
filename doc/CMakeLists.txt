@@ -31,13 +31,15 @@ endforeach(OUTPUT_TYPE)
 # serialise targets with a common cache directory
 add_dependencies(doc_latex doc_html)
 
-add_custom_target(doc_pdf ALL
-  ${CMAKE_MAKE_PROGRAM}
-  -C ${CMAKE_CURRENT_BINARY_DIR}/latex
-  LATEXOPTS=-interaction=batchmode
-  COMMENT "Building pdf documentation"
-  )
-add_dependencies(doc_pdf doc_latex)
+if(PDFLATEX_COMPILER)
+  add_custom_target(doc_pdf ALL
+    ${CMAKE_MAKE_PROGRAM}
+    -C ${CMAKE_CURRENT_BINARY_DIR}/latex
+    LATEXOPTS=-interaction=batchmode
+    COMMENT "Building pdf documentation"
+    )
+  add_dependencies(doc_pdf doc_latex)
+endif(PDFLATEX_COMPILER)
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
   DESTINATION share/doc/halmd
