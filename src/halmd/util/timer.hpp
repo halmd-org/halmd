@@ -235,6 +235,46 @@ inline double operator-(timespec const& ts1, timespec const& ts2)
     return (ts1.tv_sec - ts2.tv_sec) + (ts1.tv_nsec - ts2.tv_nsec) * 1.E-9;
 }
 
+/**
+ * High-resolution timer
+ */
+class high_resolution_timer
+{
+public:
+    /**
+     * record current time
+     */
+    void record()
+    {
+        if (0 != clock_gettime(CLOCK_MONOTONIC, &ts)) {
+            throw std::runtime_error("clock_gettime returned non-zero value");
+        }
+    }
+
+    /**
+     * return time duration between two high-resolution timers in seconds
+     */
+    double operator-(high_resolution_timer const& timer)
+    {
+        return (ts.tv_sec - timer.ts.tv_sec) + 1.E-9 * (ts.tv_nsec - timer.ts.tv_nsec);
+    }
+
+    /**
+     * returns resolution of timer
+     */
+    static double resolution()
+    {
+        timespec res;
+        if (0 != clock_getres(CLOCK_MONOTONIC, &res)) {
+            throw std::runtime_error("clock_getres returned non-zero value");
+        }
+        return res.tv_sec + 1.E-9 * res.tv_nsec;
+    }
+
+private:
+    timespec ts;
+};
+
 } // namespace halmd
 
 #endif /* ! HALMD_UTIL_TIMER_HPP */
