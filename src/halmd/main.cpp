@@ -35,6 +35,7 @@
 #include <halmd/util/exception.hpp>
 #include <halmd/util/hostname.hpp>
 #include <halmd/util/log.hpp>
+#include <halmd/util/timer.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -100,6 +101,7 @@ int main(int argc, char **argv)
 
     LOG("MD simulation backend: " << mdlib.backend());
     LOG("host name: " << halmd::get_fqdn_hostname());
+    LOG("timer resolution: " << 1.E9 * halmd::high_resolution_timer::resolution() << " ns");
 
     int status_ = halmd::HALMD_EXIT_SUCCESS;
 #ifdef NDEBUG

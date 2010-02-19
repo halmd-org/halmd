@@ -29,7 +29,6 @@
 #include <cmath>
 #include <iostream>
 #include <list>
-#include <sys/times.h>
 #include <vector>
 
 #include <halmd/mdsim/hilbert.hpp>
@@ -846,22 +845,22 @@ template <int dimension>
 void ljfluid<ljfluid_impl_host, dimension>::mdstep()
 {
     // nanosecond resolution process times
-    boost::array<timespec, 5> t;
+    boost::array<high_resolution_timer, 5> t;
 
     // calculate particle positions
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
+    t[0].record();
     leapfrog_half();
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[1]);
+    t[1].record();
 
     if (v_max_sum * timestep_ > r_skin / 2) {
         // update cell lists
         update_cells();
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
+        t[2].record();
 #ifdef USE_HILBERT_ORDER
         // Hilbert space-filling curve particle sort
         hilbert_order();
 #endif
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
+        t[3].record();
         // update Verlet neighbour lists
         if (mixture_ == BINARY) {
             update_neighbours<true>();
@@ -869,7 +868,7 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
         else {
             update_neighbours<false>();
         }
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
+        t[4].record();
         // reset sum over maximum velocity magnitudes to zero
         v_max_sum = 0;
 
@@ -881,7 +880,7 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
     }
 
     // calculate forces, potential energy and virial equation sum
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[2]);
+    t[2].record();
     if (mixture_ == BINARY) {
         compute_forces<true>();
     }
@@ -889,14 +888,14 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
         compute_forces<false>();
     }
     // calculate velocities
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[3]);
+    t[3].record();
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
         boltzmann(thermostat_temp);
     }
     else {
         leapfrog_full();
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[4]);
+    t[4].record();
 
     if (thermostat_steps && thermostat_count > thermostat_steps) {
         // reset MD steps since last heatbath coupling
