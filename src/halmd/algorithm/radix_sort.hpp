@@ -71,7 +71,7 @@ public:
     /**
      * radix sort given keys and values in-place
      */
-    void operator()(key_vector& g_key_, val_vector& g_val_, cuda::stream& stream)
+    void operator()(key_vector& g_key_, val_vector& g_val_)
     {
         typedef boost::reference_wrapper<key_vector> key_ref;
         typedef boost::reference_wrapper<val_vector> val_ref;
@@ -91,12 +91,12 @@ public:
             val_vector& oval = val[1];
 
             // compute partial radix counts
-            cuda::configure(blocks_, threads_, shmem, stream);
+            cuda::configure(blocks_, threads_, shmem);
             gpu::radix_sort::histogram_keys(ikey, g_bucket, g_key.size(), r);
             // parallel prefix sum over radix counts
-            g_scan(g_bucket, stream);
+            g_scan(g_bucket);
             // permute array
-            cuda::configure(blocks_, threads_, shmem, stream);
+            cuda::configure(blocks_, threads_, shmem);
             gpu::radix_sort::permute(ikey, okey, ival, oval, g_bucket, g_key.size(), r);
 
             // swap GPU dual buffers

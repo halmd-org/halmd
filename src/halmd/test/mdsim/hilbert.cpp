@@ -98,11 +98,8 @@ int main(int argc, char **argv)
     }
 
     try {
-        // set CUDA device
         cuda::device::set(device);
-        // asynchroneous GPU operations
-        cuda::stream stream;
-        boost::array<cuda::event, 4> start, stop;
+        boost::array<high_resolution_timer, 4> start, stop;
 
         // copy device symbols to GPU
         cuda::copy(box, gpu::hilbert<dimension>::box);
@@ -119,18 +116,20 @@ int main(int argc, char **argv)
         cuda::config dim((count + threads - 1) / threads, threads);
         g_r[0].resize(count);
         g_r[0].reserve(dim.threads());
-        start[0].record(stream);
-        cuda::configure(dim.grid, dim.block, stream);
+        start[0].record();
+        cuda::configure(dim.grid, dim.block);
         gpu::lattice<dimension>::sc(g_r[0], (1UL << depth), box);
-        stop[0].record(stream);
+        cuda::thread::synchronize();
+        stop[0].record();
         h_r[0].resize(count);
         cuda::copy(g_r[0], h_r[0]);
 
         // seed GPU random number generator
         rand48 rng(dim);
-        start[1].record(stream);
-        rng.set(seed, stream);
-        stop[1].record(stream);
+        start[1].record();
+        rng.set(seed);
+        cuda::thread::synchronize();
+        stop[1].record();
 
         // parallel radix sort
         radix_sort<float4> radix;
@@ -140,30 +139,28 @@ int main(int argc, char **argv)
             g_r[i + 1].resize(g_r[0].size());
             cuda::copy(g_r[i], g_r[i + 1]);
 
-            start[i + 2].record(stream);
+            start[i + 2].record();
             if (i == 0) {
                 // generate array of random integers in [0, 2^32-1] on GPU
                 g_sort[0].resize(count);
                 g_sort[0].reserve(dim.threads());
-                rng.get(g_sort[0], stream);
+                rng.get(g_sort[0]);
             }
             else if (i == 1) {
                 // generate 3D Hilbert space-filling curve
                 g_sort[1].resize(count);
                 g_sort[1].reserve(dim.threads());
-                cuda::configure(dim.grid, dim.block, stream);
+                cuda::configure(dim.grid, dim.block);
                 gpu::hilbert<dimension>::curve(g_r[i + 1], g_sort[1]);
             }
             // radix sort integers and particle positions
-            radix(g_sort[i], g_r[i + 1], stream);
-            stop[i + 2].record(stream);
+            radix(g_sort[i], g_r[i + 1]);
+            cuda::thread::synchronize();
+            stop[i + 2].record();
 
             h_r[i + 1].resize(h_r[0].size());
-            cuda::copy(g_r[i + 1], h_r[i + 1], stream);
+            cuda::copy(g_r[i + 1], h_r[i + 1]);
         }
-
-        // wait for GPU to finish
-        stream.synchronize();
 
         boost::array<std::string, 4> title = {{ "lattice", "seed", "random", "hilbert" }};
 

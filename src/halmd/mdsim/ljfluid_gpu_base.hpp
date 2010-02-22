@@ -108,10 +108,9 @@ protected:
     /** rescale particle velocities */
     void rescale_velocities(cuda::vector<gpu_vector_type>& g_v,
                         double coeff,
-                        cuda::config const& dim,
-                        cuda::stream& stream);
+                        cuda::config const& dim);
     /** generate Maxwell-Boltzmann distributed velocities */
-    void boltzmann(cuda::vector<gpu_vector_type>& g_v, double temp, cuda::stream& stream);
+    void boltzmann(cuda::vector<gpu_vector_type>& g_v, double temp);
     /** restore system state from phase space sample */
     void state(host_sample_type& sample, float_type box,
                cuda::host::vector<float4>& h_r,
@@ -143,10 +142,6 @@ protected:
 
     /** CUDA execution dimensions */
     cuda::config dim_;
-    /** CUDA asynchronous execution */
-    cuda::stream mutable stream_;
-    /** CUDA timing */
-    boost::array<cuda::event, 2> mutable event_;
     /** GPU random number generator */
     rand48 rng_;
     /** block sum of velocity */
@@ -347,8 +342,8 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::rng(unsigned int seed)
     LOG("random number generator seed: " << seed);
 
     try {
-        rng_.set(seed, stream_);
-        stream_.synchronize();
+        rng_.set(seed);
+        cuda::thread::synchronize();
         rng_.init_symbols(_gpu::rand48::a, _gpu::rand48::c, _gpu::rand48::state);
     }
     catch (cuda::error const& e) {
@@ -398,19 +393,20 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::lattice(cuda::vector<float4>& g_
     // minimum distance in 2- or 3-dimensional fcc lattice
     LOG("minimum lattice distance: " << (box_ / n) / std::sqrt(2.f));
 
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
     try {
-        event_[0].record(stream_);
-        cuda::configure(dim_.grid, dim_.block, stream_);
+        timer[0].record();
+        cuda::configure(dim_.grid, dim_.block);
         gpu::lattice<dimension>::fcc(g_r, n, box_);
-        event_[1].record(stream_);
-        event_[1].synchronize();
+        cuda::thread::synchronize();
+        timer[1].record();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to compute particle lattice positions on GPU");
     }
-
-    m_times["lattice"] += event_[1] - event_[0];
+    m_times["lattice"] += timer[1] - timer[0];
 }
 
 /**
@@ -425,9 +421,9 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::random_permute(cuda::vector<floa
     g_sort_index.reserve(dim_.threads());
 
     try {
-        rng_.get(g_sort_index, stream_);
-        radix_sort_(g_sort_index, g_r, stream_);
-        stream_.synchronize();
+        rng_.get(g_sort_index);
+        radix_sort_(g_sort_index, g_r);
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -443,9 +439,9 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::init_tags(cuda::vector<float4>& 
                                                cuda::vector<unsigned int>& g_tag)
 {
     try {
-        cuda::configure(dim_.grid, dim_.block, stream_);
+        cuda::configure(dim_.grid, dim_.block);
         _gpu::init_tags(g_r, g_tag);
-        stream_.synchronize();
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -459,13 +455,12 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::init_tags(cuda::vector<float4>& 
 template <typename ljfluid_impl, int dimension>
 void ljfluid_gpu_base<ljfluid_impl, dimension>::rescale_velocities(cuda::vector<gpu_vector_type>& g_v,
                                                     double coeff,
-                                                    cuda::config const& dim,
-                                                    cuda::stream& stream)
+                                                    cuda::config const& dim)
 {
     try {
-        cuda::configure(dim.grid, dim.block, stream);
+        cuda::configure(dim.grid, dim.block);
         _gpu::rescale_velocity(g_v, coeff);
-        stream.synchronize();
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -477,7 +472,7 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::rescale_velocities(cuda::vector<
  * generate Maxwell-Boltzmann distributed velocities
  */
 template <typename ljfluid_impl, int dimension>
-void ljfluid_gpu_base<ljfluid_impl, dimension>::boltzmann(cuda::vector<gpu_vector_type>& g_v, double temp, cuda::stream& stream)
+void ljfluid_gpu_base<ljfluid_impl, dimension>::boltzmann(cuda::vector<gpu_vector_type>& g_v, double temp)
 {
     typedef gpu::boltzmann<dimension> _gpu;
 
@@ -493,13 +488,13 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::boltzmann(cuda::vector<gpu_vecto
     //
 
     // generate Maxwell-Boltzmann distributed velocities and reduce velocity
-    cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
+    cuda::configure(_gpu::BLOCKS, _gpu::THREADS);
     _gpu::gaussian(g_v, npart, dim_.threads(), temp, g_vcm);
     // set center of mass velocity to zero and reduce squared velocity
-    cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
+    cuda::configure(_gpu::BLOCKS, _gpu::THREADS);
     _gpu::shift_velocity(g_v, npart, dim_.threads(), g_vcm, g_vv);
     // rescale velocities to accurate temperature
-    cuda::configure(_gpu::BLOCKS, _gpu::THREADS, stream);
+    cuda::configure(_gpu::BLOCKS, _gpu::THREADS);
     _gpu::scale_velocity(g_v, npart, dim_.threads(), g_vv, temp);
 }
 

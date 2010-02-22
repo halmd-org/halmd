@@ -41,27 +41,27 @@ public:
     enum { THREADS = gpu::virial::THREADS };
 
     /**
-     * stream parallel reduction kernel
+     * parallel reduction kernel
      */
     template <typename T>
-    void operator()(T const& g_in, T const& g_v, cuda::stream& stream)
+    void operator()(T const& g_in, T const& g_v)
     {
         g_block_sum.resize(BLOCKS);
         h_block_sum.resize(BLOCKS);
-        cuda::configure(BLOCKS, THREADS, stream);
+        cuda::configure(BLOCKS, THREADS);
         gpu::virial::sum(g_in, g_v, g_block_sum, g_in.size());
-        cuda::copy(g_block_sum, h_block_sum, stream);
+        cuda::copy(g_block_sum, h_block_sum);
     }
 
     template <typename T, typename U>
     void operator()(T const& g_in, T const& g_v, U const& g_tag,
-                    boost::array<uint, 2> const& mpart, cuda::stream& stream)
+                    boost::array<uint, 2> const& mpart)
     {
         g_block_sum.resize(2 * BLOCKS);
         h_block_sum.resize(2 * BLOCKS);
-        cuda::configure(BLOCKS, THREADS, stream);
+        cuda::configure(BLOCKS, THREADS);
         gpu::virial::sum(g_in, g_v, g_tag, g_block_sum, g_in.size(), mpart.front());
-        cuda::copy(g_block_sum, h_block_sum, stream);
+        cuda::copy(g_block_sum, h_block_sum);
     }
 
     /**

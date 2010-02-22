@@ -100,23 +100,23 @@ public:
     /**
      * initialize generator with 32-bit integer seed
      */
-    void set(uint seed, cuda::stream& stream)
+    void set(uint seed)
     {
         // compute leapfrog multipliers for initialization
         cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
-        cuda::configure(dim_.grid, dim_.block, stream);
+        cuda::configure(dim_.grid, dim_.block);
         gpu::rand48::leapfrog(g_a);
 
         // compute leapfrog addends for initialization
-        cuda::copy(g_a, g_c, stream);
+        cuda::copy(g_a, g_c);
         prefix_sum<uint48> scan(g_c.size(), dim_.threads_per_block());
-        scan(g_c, stream);
+        scan(g_c);
 
         // initialize generator with seed
         cuda::vector<uint48> a(1), c(1);
-        cuda::configure(dim_.grid, dim_.block, stream);
+        cuda::configure(dim_.grid, dim_.block);
         gpu::rand48::set(g_a, g_c, a, c, seed);
-        stream.synchronize();
+        cuda::thread::synchronize();
 
         // copy leapfrog multiplier into constant device memory
         cuda::copy(a, sym_a);
@@ -127,18 +127,18 @@ public:
     /*
      * fill array with uniform random numbers in [0.0, 1.0)
      */
-    void uniform(cuda::vector<float>& r, cuda::stream& stream)
+    void uniform(cuda::vector<float>& r)
     {
-        cuda::configure(dim_.grid, dim_.block, stream);
+        cuda::configure(dim_.grid, dim_.block);
         gpu::rand48::uniform(r, r.size());
     }
 
     /**
      * fill array with random integers in [0, 2^32-1]
      */
-    void get(cuda::vector<uint>& r, cuda::stream& stream)
+    void get(cuda::vector<uint>& r)
     {
-        cuda::configure(dim_.grid, dim_.block, stream);
+        cuda::configure(dim_.grid, dim_.block);
         gpu::rand48::get(r, r.size());
     }
 
@@ -147,14 +147,13 @@ public:
      */
     void save(state_type& mem)
     {
-        cuda::stream stream;
         cuda::vector<ushort3> buf_gpu(1);
         cuda::host::vector<ushort3> buf(1);
 
-        cuda::configure(dim_.grid, dim_.block, stream);
+        cuda::configure(dim_.grid, dim_.block);
         gpu::rand48::save(buf_gpu);
-        cuda::copy(buf_gpu, buf, stream);
-        stream.synchronize();
+        cuda::copy(buf_gpu, buf);
+        cuda::thread::synchronize();
 
         mem = buf[0u];
     }
@@ -164,23 +163,21 @@ public:
      */
     void restore(state_type const& mem)
     {
-        cuda::stream stream;
-
         // compute leapfrog multipliers for initialization
         cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
-        cuda::configure(dim_.grid, dim_.block, stream);
+        cuda::configure(dim_.grid, dim_.block);
         gpu::rand48::leapfrog(g_a);
 
         // compute leapfrog addends for initialization
-        cuda::copy(g_a, g_c, stream);
+        cuda::copy(g_a, g_c);
         prefix_sum<uint48> scan(g_c.size(), dim_.threads_per_block());
-        scan(g_c, stream);
+        scan(g_c);
 
         // initialize generator from state
         cuda::vector<uint48> a(1), c(1);
-        cuda::configure(dim_.grid, dim_.block, stream);
+        cuda::configure(dim_.grid, dim_.block);
         gpu::rand48::restore(g_a, g_c, a, c, mem);
-        stream.synchronize();
+        cuda::thread::synchronize();
 
         // copy leapfrog multiplier into constant device memory
         cuda::copy(a, sym_a);

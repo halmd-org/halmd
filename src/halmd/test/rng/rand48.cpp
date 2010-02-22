@@ -91,11 +91,8 @@ int main(int argc, char **argv)
     }
 
     try {
-        // set CUDA device
         cuda::device::set(device);
-        // asynchroneous GPU operations
-        cuda::stream stream;
-        boost::array<cuda::event, 2> start, stop;
+        boost::array<high_resolution_timer, 2> start, stop;
 
         std::cout << "integers:\t\t" << std::setw(13) << count << "\n";
         std::cout << "blocks: \t\t" << std::setw(13) << blocks << "\n";
@@ -106,18 +103,20 @@ int main(int argc, char **argv)
         // seed GPU random number generator
         cuda::config dim(blocks, threads);
         rand48 rng(dim);
-        start[0].record(stream);
-        rng.set(seed, stream);
-        stop[0].record(stream);
+        start[0].record();
+        rng.set(seed);
+        cuda::thread::synchronize();
+        stop[0].record();
 
         // parallel GPU rand48
         cuda::vector<uint> g_array(count);
-        start[1].record(stream);
-        rng.get(g_array, stream);
-        stop[1].record(stream);
+        start[1].record();
+        rng.get(g_array);
+        cuda::thread::synchronize();
+        stop[1].record();
 
         cuda::host::vector<uint> h_array(count);
-        cuda::copy(g_array, h_array, stream);
+        cuda::copy(g_array, h_array);
 
         // serial GNU C library rand48
         std::vector<uint> h_array2(count);
@@ -126,9 +125,6 @@ int main(int argc, char **argv)
         timer.start();
         std::generate(h_array2.begin(), h_array2.end(), mrand48);
         timer.stop();
-
-        // wait for GPU to finish
-        stream.synchronize();
 
         if (verbose) {
             // write results to stdout

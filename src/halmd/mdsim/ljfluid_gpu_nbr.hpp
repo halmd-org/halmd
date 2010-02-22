@@ -74,9 +74,7 @@ public:
     /** set system temperature according to Maxwell-Boltzmann distribution */
     void temperature(float_type temp);
 
-    /** stream MD simulation step on GPU */
-    void stream();
-    /** synchronize MD simulation step on GPU */
+    /** MD integration step */
     void mdstep();
     /** sample phase space on host */
     void sample(host_sample_type& sample) const;
@@ -108,21 +106,21 @@ private:
     /** assign particle positions */
     void assign_positions();
     /** assign single-precision velocities according to particle order */
-    void order_velocities(cuda::stream& stream);
+    void order_velocities();
     /** first leapfrog step of integration of differential equations of motion */
-    void velocity_verlet(cuda::stream& stream);
+    void velocity_verlet();
     /** Lennard-Jones force calculation */
-    void update_forces(cuda::stream& stream);
+    void update_forces();
     /** assign particles to cells */
-    void assign_cells(cuda::stream& stream);
+    void assign_cells();
     /** update neighbour lists */
-    void update_neighbours(cuda::stream& stream);
+    void update_neighbours();
     /** order particles after Hilbert space-filling curve */
-    void hilbert_order(cuda::stream& stream);
+    void hilbert_order();
     /** generate permutation for phase space sampling */
-    void permutation(cuda::stream& stream);
+    void permutation();
     /** generate Maxwell-Boltzmann distributed velocities */
-    void boltzmann(float temp, cuda::stream& stream);
+    void boltzmann(float temp);
 
 private:
     using _Base::box_;
@@ -134,7 +132,6 @@ private:
     using _Base::npart;
     using _Base::potential_;
     using _Base::r_cut;
-    using _Base::stream_;
     using _Base::timestep_;
     using _Base::thermostat_steps;
     using _Base::thermostat_count;
@@ -144,8 +141,6 @@ private:
     cuda::config dim_cell_;
     /** CUDA execution dimensions for phase space sampling */
     std::vector<cuda::config> dim_sample;
-    /** CUDA events for kernel timing */
-    boost::array<cuda::event, 10> mutable event_;
 
     /** GPU radix sort */
     radix_sort<unsigned int> radix_;
@@ -495,7 +490,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::state(host_sample_type& sam
 #endif
     cuda::copy(h_part.v, g_part.v);
 #ifdef USE_HILBERT_ORDER
-    order_velocities(stream_);
+    order_velocities();
 #endif
 }
 
@@ -503,7 +498,7 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::rescale_velocities(double coeff)
 {
     LOG("rescaling velocities with coefficient: " << coeff);
-    _Base::rescale_velocities(g_part.v, coeff, dim_, stream_);
+    _Base::rescale_velocities(g_part.v, coeff, dim_);
 }
 
 template <int dimension>
@@ -525,78 +520,91 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::temperature(float_type temp
 {
     LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
 
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
     try {
-        event_[0].record(stream_);
-        boltzmann(temp, stream_);
-        event_[1].record(stream_);
-        event_[1].synchronize();
+        timer[0].record();
+        boltzmann(temp);
+        cuda::thread::synchronize();
+        timer[1].record();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to compute Boltzmann distributed velocities on GPU");
     }
-    m_times["boltzmann"] += event_[1] - event_[0];
+    m_times["boltzmann"] += timer[1] - timer[0];
 }
 
+/**
+ * MD integration step on GPU
+ */
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::stream()
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
 {
-    event_[1].record(stream_);
+    boost::array<high_resolution_timer, 10> timer;
+    cuda::thread::synchronize();
+    timer[1].record();
+
     // first leapfrog step of integration of differential equations of motion
     try {
-        velocity_verlet(stream_);
+        velocity_verlet();
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to stream first leapfrog step on GPU");
     }
-    event_[2].record(stream_);
+    timer[2].record();
 
     // maximum absolute particle displacement reduction
     try {
-        reduce_r_max(g_part.dr, stream_);
+        reduce_r_max(g_part.dr);
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to stream maximum particle displacement reduction on GPU");
     }
-    event_[3].record(stream_);
-    event_[3].synchronize();
+    timer[3].record();
 
     // update cell lists
     if ((r_max_ = reduce_r_max.value()) > r_skin_half) {
 #ifdef USE_HILBERT_ORDER
         try {
-            hilbert_order(stream_);
+            hilbert_order();
+            cuda::thread::synchronize();
         }
         catch (cuda::error const& e) {
             LOG_ERROR("CUDA: " << e.what());
             throw exception("failed to stream hilbert space-filling curve sort on GPU");
         }
 #endif
-        event_[4].record(stream_);
+        timer[4].record();
 
         try {
-            assign_cells(stream_);
+            assign_cells();
+            cuda::thread::synchronize();
         }
         catch (cuda::error const& e) {
             LOG_ERROR("CUDA: " << e.what());
             throw exception("failed to stream cell list update on GPU");
         }
-        event_[5].record(stream_);
+        timer[5].record();
 
         try {
-            update_neighbours(stream_);
+            update_neighbours();
+            cuda::thread::synchronize();
         }
         catch (cuda::error const& e) {
             LOG_ERROR("CUDA: " << e.what());
             throw exception("failed to stream neighbour lists update on GPU");
         }
-        event_[6].record(stream_);
+        timer[6].record();
 
 #ifdef USE_HILBERT_ORDER
         try {
-            permutation(stream_);
+            permutation();
+            cuda::thread::synchronize();
         }
         catch (cuda::error const& e) {
             LOG_ERROR("CUDA: " << e.what());
@@ -604,90 +612,77 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::stream()
         }
 #endif
     }
-    event_[7].record(stream_);
+    timer[7].record();
 
     // Lennard-Jones force calculation
     try {
-        update_forces(stream_);
+        update_forces();
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to stream force calculation on GPU");
     }
-    event_[8].record(stream_);
+    timer[8].record();
 
     // heat bath coupling
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
         try {
-            boltzmann(thermostat_temp, stream_);
+            boltzmann(thermostat_temp);
+            cuda::thread::synchronize();
         }
         catch (cuda::error const& e) {
             LOG_ERROR("CUDA: " << e.what());
             throw exception("failed to compute Boltzmann distributed velocities on GPU");
         }
     }
-    event_[9].record(stream_);
+    timer[9].record();
 
     // potential energy sum calculation
     try {
-        reduce_en(g_part.en, stream_);
+        reduce_en(g_part.en);
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to stream potential energy sum calculation on GPU");
     }
-    event_[0].record(stream_);
-}
-
-/**
- * synchronize MD simulation step on GPU
- */
-template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
-{
-    try {
-        // wait for MD simulation step on GPU to finish
-        event_[0].synchronize();
-    }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw exception("MD simulation step on GPU failed");
-    }
+    timer[0].record();
 
     // CUDA time for MD simulation step
-    m_times["mdstep"] += event_[0] - event_[1];
+    m_times["mdstep"] += timer[0] - timer[1];
     // GPU time for velocity-Verlet integration
-    m_times["velocity_verlet"] += event_[2] - event_[1];
+    m_times["velocity_verlet"] += timer[2] - timer[1];
     // GPU time for maximum velocity calculation
-    m_times["maximum_displacement"] += event_[3] - event_[2];
+    m_times["maximum_displacement"] += timer[3] - timer[2];
 
     if (r_max_ > r_skin_half) {
 #ifdef USE_HILBERT_ORDER
         // GPU time for Hilbert curve sort
-        m_times["hilbert_sort"] += event_[4] - event_[3];
+        m_times["hilbert_sort"] += timer[4] - timer[3];
 #endif
         // GPU time for cell lists update
-        m_times["update_cells"] += event_[5] - event_[4];
+        m_times["update_cells"] += timer[5] - timer[4];
         // GPU time for neighbour lists update
-        m_times["update_neighbours"] += event_[6] - event_[5];
+        m_times["update_neighbours"] += timer[6] - timer[5];
 #if defined(USE_HILBERT_ORDER)
         // GPU time for permutation sort
-        m_times["permutation"] += event_[7] - event_[6];
+        m_times["permutation"] += timer[7] - timer[6];
 #endif
     }
 
     // GPU time for Lennard-Jones force update
-    m_times["update_forces"] += event_[8] - event_[7];
+    m_times["update_forces"] += timer[8] - timer[7];
 
     if (thermostat_steps && thermostat_count > thermostat_steps) {
         // reset MD steps since last heatbath coupling
         thermostat_count = 0;
         // GPU time for Maxwell-Boltzmann distribution
-        m_times["boltzmann"] += event_[9] - event_[8];
+        m_times["boltzmann"] += timer[9] - timer[8];
     }
 
     // GPU time for potential energy sum calculation
-    m_times["potential_energy"] += event_[0] - event_[9];
+    m_times["potential_energy"] += timer[0] - timer[9];
 
     if (r_max_ > r_skin_half) {
         if (h_ret.assign_cells.front() != EXIT_SUCCESS) {
@@ -711,20 +706,21 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(host_sample_type& sa
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
+    timer[0].record();
     try {
-        event_[1].record(stream_);
-        cuda::copy(g_part.r, h_part.r, stream_);
-        cuda::copy(g_part.R, h_part.R, stream_);
-        cuda::copy(g_part.v, h_part.v, stream_);
-        cuda::copy(g_part.tag, h_part.tag, stream_);
-        event_[0].record(stream_);
-        event_[0].synchronize();
+        cuda::copy(g_part.r, h_part.r);
+        cuda::copy(g_part.R, h_part.R);
+        cuda::copy(g_part.v, h_part.v);
+        cuda::copy(g_part.tag, h_part.tag);
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to copy MD simulation step results from GPU to host");
     }
-    m_times["sample_memcpy"] += event_[0] - event_[1];
+    timer[1].record();
+    m_times["sample_memcpy"] += timer[1] - timer[0];
 
     // allocate memory for phase space sample
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
@@ -753,7 +749,9 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(gpu_sample_type& sam
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
-    event_[1].record(stream_);
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
+    timer[0].record();
 
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
         // allocate global device memory for phase space sample
@@ -765,33 +763,36 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(gpu_sample_type& sam
         v->resize(mpart[i]);
         sample.push_back(sample_type(r, v));
         // order particles by permutation
-        cuda::configure(dim_sample[i].grid, dim_sample[i].block, stream_);
+        cuda::configure(dim_sample[i].grid, dim_sample[i].block);
         _gpu::sample(g_aux.index.data() + n, *r, *v);
     }
 
-    event_[0].record(stream_);
-    event_[0].synchronize();
-    m_times["sample"] += event_[0] - event_[1];
+    cuda::thread::synchronize();
+    timer[1].record();
+    m_times["sample"] += timer[1] - timer[0];
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& sample) const
 {
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
+
     // mean potential energy per particle
     sample.en_pot = reduce_en.value() / npart;
 
     // virial tensor trace and off-diagonal elements for particle species
     try {
-        event_[1].record(stream_);
+        timer[0].record();
         if (mixture_ == BINARY) {
-            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream_);
+            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart);
         }
         else {
-            reduce_virial(g_part.virial, g_part.v, stream_);
+            reduce_virial(g_part.virial, g_part.v);
         }
-        event_[0].record(stream_);
-        event_[0].synchronize();
-        m_times["virial_sum"] += event_[0] - event_[1];
+        cuda::thread::synchronize();
+        timer[1].record();
+        m_times["virial_sum"] += timer[1] - timer[0];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -804,11 +805,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& 
 
     // mean squared velocity per particle
     try {
-        event_[1].record(stream_);
-        reduce_squared_velocity(g_part.v, stream_);
-        event_[0].record(stream_);
-        event_[0].synchronize();
-        m_times["reduce_squared_velocity"] += event_[0] - event_[1];
+        timer[0].record();
+        reduce_squared_velocity(g_part.v);
+        cuda::thread::synchronize();
+        timer[1].record();
+        m_times["reduce_squared_velocity"] += timer[1] - timer[0];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -818,11 +819,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& 
 
     // mean velocity per particle
     try {
-        event_[1].record(stream_);
-        reduce_velocity(g_part.v, stream_);
-        event_[0].record(stream_);
-        event_[0].synchronize();
-        m_times["reduce_velocity"] += event_[0] - event_[1];
+        timer[0].record();
+        reduce_velocity(g_part.v);
+        cuda::thread::synchronize();
+        timer[1].record();
+        m_times["reduce_velocity"] += timer[1] - timer[0];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -842,21 +843,21 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_positions()
         cuda::memset(g_part.R, 0);
 #ifdef USE_HILBERT_ORDER
         // order particles after Hilbert space-filling curve
-        hilbert_order(stream_);
+        hilbert_order();
 #endif
         // assign particles to cells
-        assign_cells(stream_);
+        assign_cells();
         // update neighbour lists
-        update_neighbours(stream_);
+        update_neighbours();
         // generate permutation for phase space sampling
-        permutation(stream_);
+        permutation();
         // calculate forces
-        update_forces(stream_);
+        update_forces();
         // calculate potential energy
-        reduce_en(g_part.en, stream_);
+        reduce_en(g_part.en);
 
         // wait for CUDA operations to finish
-        stream_.synchronize();
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -872,45 +873,45 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_positions()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::velocity_verlet(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::velocity_verlet()
 {
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::inteq(g_part.r, g_part.dr, g_part.R, g_part.v, g_part.f);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_forces(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_forces()
 {
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_cells(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::assign_cells()
 {
     // compute cell indices for particle positions
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::compute_cell(g_part.r, g_aux.cell);
 
     // generate permutation
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::gen_index(g_aux.index);
-    radix_(g_aux.cell, g_aux.index, stream);
+    radix_(g_aux.cell, g_aux.index);
 
     // compute global cell offsets in sorted particle list
     cuda::memset(g_aux.offset, 0xFF);
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::find_cell_offset(g_aux.cell, g_aux.offset);
 
     // assign particles to cells
     cuda::memset(g_ret.assign_cells, EXIT_SUCCESS);
-    cuda::configure(dim_cell_.grid, dim_cell_.block, stream);
+    cuda::configure(dim_cell_.grid, dim_cell_.block);
     _gpu::assign_cells(g_ret.assign_cells, g_aux.cell, g_aux.offset, g_aux.index, g_cell);
-    cuda::copy(g_ret.assign_cells, h_ret.assign_cells, stream);
+    cuda::copy(g_ret.assign_cells, h_ret.assign_cells);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_neighbours(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_neighbours()
 {
     // set particle displacements to floating-point zero
     cuda::memset(g_part.dr, 0);
@@ -919,56 +920,56 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_neighbours(cuda::str
     // reset return value
     cuda::memset(g_ret.update_neighbours, EXIT_SUCCESS);
     // build neighbour lists
-    cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (dimension + 1) * sizeof(float), stream);
+    cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (dimension + 1) * sizeof(float));
     _gpu::update_neighbours(g_ret.update_neighbours, g_cell);
-    cuda::copy(g_ret.update_neighbours, h_ret.update_neighbours, stream);
+    cuda::copy(g_ret.update_neighbours, h_ret.update_neighbours);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::hilbert_order(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::hilbert_order()
 {
     // compute Hilbert space-filling curve for particles
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     gpu::hilbert<dimension>::curve(g_part.r, g_aux.cell);
 
     // generate permutation
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::gen_index(g_aux.index);
-    radix_(g_aux.cell, g_aux.index, stream);
+    radix_(g_aux.cell, g_aux.index);
 
     // order particles by permutation
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::order_particles(g_aux.index, g_part_buf.r, g_part_buf.R, g_part_buf.v, g_part.tag);
-    cuda::copy(g_part_buf.r, g_part.r, g_part.r.capacity(), stream);
-    cuda::copy(g_part_buf.R, g_part.R, g_part.R.capacity(), stream);
-    cuda::copy(g_part_buf.v, g_part.v, g_part.v.capacity(), stream);
+    cuda::copy(g_part_buf.r, g_part.r, g_part.r.capacity());
+    cuda::copy(g_part_buf.R, g_part.R, g_part.R.capacity());
+    cuda::copy(g_part_buf.v, g_part.v, g_part.v.capacity());
 }
 
 /**
  * generate permutation for phase space sampling
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::permutation(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::permutation()
 {
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::gen_index(g_aux.index);
 #ifdef USE_HILBERT_ORDER
-    cuda::copy(g_part.tag, g_aux.cell, stream);
-    radix_(g_aux.cell, g_aux.index, stream);
+    cuda::copy(g_part.tag, g_aux.cell);
+    radix_(g_aux.cell, g_aux.index);
 #endif
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::boltzmann(float temp, cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::boltzmann(float temp)
 {
 #ifdef USE_VERLET_DSFUN
     cuda::memset(g_part.v, 0, g_part.v.capacity());
 #endif
-    _Base::boltzmann(g_part.v, temp, stream);
+    _Base::boltzmann(g_part.v, temp);
 
 #ifdef USE_HILBERT_ORDER
     // make thermostat independent of neighbour list update frequency or skin
-    order_velocities(stream);
+    order_velocities();
 #endif
 }
 
@@ -976,11 +977,11 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::boltzmann(float temp, cuda:
  * assign single-precision velocities according to particle order
  */
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::order_velocities(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::order_velocities()
 {
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::order_velocities(g_part.tag, g_part_buf.v);
-    cuda::copy(g_part_buf.v, g_part.v, stream);
+    cuda::copy(g_part_buf.v, g_part.v);
 }
 
 template <int dimension>

@@ -45,14 +45,14 @@ public:
     reduce() : g_block_sum(BLOCKS), h_block_sum(BLOCKS) {}
 
     /**
-     * stream parallel reduction kernel
+     * parallel reduction kernel
      */
     template <typename gpu_input_type>
-    void operator()(cuda::vector<gpu_input_type> const& g_in, cuda::stream& stream)
+    void operator()(cuda::vector<gpu_input_type> const& g_in)
     {
-        cuda::configure(BLOCKS, THREADS, stream);
+        cuda::configure(BLOCKS, THREADS);
         tag<output_type>::reduce(g_in, g_block_sum, g_in.size());
-        cuda::copy(g_block_sum, h_block_sum, stream);
+        cuda::copy(g_block_sum, h_block_sum);
     }
 
     /**

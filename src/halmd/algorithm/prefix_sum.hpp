@@ -86,28 +86,28 @@ public:
     /**
      * in-place parallel exclusive prefix sum
      */
-    void operator()(cuda::vector<T>& g_array, cuda::stream& stream)
+    void operator()(cuda::vector<T>& g_array)
     {
         assert(g_array.size() == count);
 
         // compute blockwise partial prefix sums
-        cuda::configure(blocks[0], threads, gpu::prefix_sum::boff(2 * threads * sizeof(T)), stream);
+        cuda::configure(blocks[0], threads, gpu::prefix_sum::boff(2 * threads * sizeof(T)));
         gpu::prefix_sum::grid_prefix_sum(g_array, g_array, g_sum[0], count);
 
         for (uint i = 1; i < blocks.size(); ++i) {
-            cuda::configure(blocks[i], threads, gpu::prefix_sum::boff(2 * threads * sizeof(T)), stream);
+            cuda::configure(blocks[i], threads, gpu::prefix_sum::boff(2 * threads * sizeof(T)));
             gpu::prefix_sum::grid_prefix_sum(g_sum[i - 1], g_sum[i - 1], g_sum[i], blocks[i - 1]);
         }
 
         // add block prefix sums to partial prefix sums
         if (blocks.size() > 1) {
             for (uint i = blocks.size() - 2; i > 0; --i) {
-                cuda::configure(g_sum[i].size(), threads, stream);
+                cuda::configure(g_sum[i].size(), threads);
                 gpu::prefix_sum::add_block_sums(g_sum[i - 1], g_sum[i - 1], g_sum[i], blocks[i - 1]);
             }
         }
         if (blocks[0] > 1) {
-            cuda::configure(blocks[0], threads, stream);
+            cuda::configure(blocks[0], threads);
             gpu::prefix_sum::add_block_sums(g_array, g_array, g_sum[0], count);
         }
     }

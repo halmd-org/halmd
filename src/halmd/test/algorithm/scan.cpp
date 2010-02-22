@@ -84,27 +84,24 @@ int main(int argc, char **argv)
     }
 
     try {
-        // set CUDA device
         cuda::device::set(device);
-        // asynchroneous GPU operations
-        cuda::stream stream;
-        cuda::event start, stop;
+        high_resolution_timer start, stop;
 
         // generate array of ascending integers
         cuda::host::vector<uint> h_array(count);
         cuda::vector<uint> g_array(count);
         for (uint i = 0; i < count; ++i)
             h_array[i] = i + 1;
-        cuda::copy(h_array, g_array, stream);
-        stream.synchronize();
+        cuda::copy(h_array, g_array);
 
         // parallel exclusive prefix sum
         prefix_sum<uint> scan(count, threads);
         cuda::host::vector<uint> h_array2(count);
-        start.record(stream);
-        scan(g_array, stream);
-        stop.record(stream);
-        cuda::copy(g_array, h_array2, stream);
+        start.record();
+        scan(g_array);
+        cuda::thread::synchronize();
+        stop.record();
+        cuda::copy(g_array, h_array2);
 
         // serial prefix sum
         std::vector<uint> h_array3(count);
@@ -114,9 +111,6 @@ int main(int argc, char **argv)
         for (uint i = 1; i < count; ++i)
             h_array3[i] = h_array[i - 1] + h_array3[i - 1];
         timer.stop();
-
-        // wait for GPU to finish
-        stream.synchronize();
 
         if (verbose) {
             // write results to stdout

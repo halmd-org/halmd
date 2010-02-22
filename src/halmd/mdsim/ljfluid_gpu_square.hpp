@@ -66,9 +66,7 @@ public:
     /** set system temperature according to Maxwell-Boltzmann distribution */
     void temperature(float_type temp);
 
-    /** stream MD simulation step on GPU */
-    void stream();
-    /** synchronize MD simulation step on GPU */
+    /** MD integration step on GPU */
     void mdstep();
     /** sample phase space on host */
     void sample(host_sample_type& sample) const;
@@ -86,11 +84,11 @@ private:
     /** assign particle positions */
     void assign_positions();
     /** generate Maxwell-Boltzmann distributed velocities */
-    void boltzmann(float temp, cuda::stream& stream);
+    void boltzmann(float temp);
     /** first leapfrog step of integration of differential equations of motion */
-    void velocity_verlet(cuda::stream& stream);
+    void velocity_verlet();
     /** Lennard-Jones force calculation */
-    void update_forces(cuda::stream& stream);
+    void update_forces();
 
 private:
     using _Base::box_;
@@ -102,14 +100,11 @@ private:
     using _Base::npart;
     using _Base::potential_;
     using _Base::r_cut;
-    using _Base::stream_;
     using _Base::timestep_;
     using _Base::thermostat_steps;
     using _Base::thermostat_count;
     using _Base::thermostat_temp;
 
-    /** CUDA events for kernel timing */
-    boost::array<cuda::event, 5> mutable event_;
     /** CUDA execution dimensions for phase space sampling */
     std::vector<cuda::config> dim_sample;
 
@@ -224,7 +219,7 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square, dimension>::rescale_velocities(double coeff)
 {
     LOG("rescaling velocities with coefficient: " << coeff);
-    _Base::rescale_velocities(g_part.v, coeff, dim_, stream_);
+    _Base::rescale_velocities(g_part.v, coeff, dim_);
 }
 
 template <int dimension>
@@ -246,95 +241,91 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::temperature(float_type temp)
 {
     LOG("initialising velocities from Boltzmann distribution at temperature: " << temp);
 
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
+    timer[0].record();
     try {
-        event_[0].record(stream_);
-        boltzmann(temp, stream_);
-        event_[1].record(stream_);
-        event_[1].synchronize();
+        boltzmann(temp);
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to compute Boltzmann distributed velocities on GPU");
     }
-    m_times["boltzmann"] += event_[1] - event_[0];
+    timer[1].record();
+    m_times["boltzmann"] += timer[1] - timer[0];
 }
 
+/**
+ * MD integration step on GPU
+ */
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square, dimension>::stream()
+void ljfluid<ljfluid_impl_gpu_square, dimension>::mdstep()
 {
-    event_[1].record(stream_);
+    boost::array<high_resolution_timer, 5> timer;
+    cuda::thread::synchronize();
+    timer[1].record();
+
     // first leapfrog step of integration of differential equations of motion
     try {
-        velocity_verlet(stream_);
+        velocity_verlet();
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to stream first leapfrog step on GPU");
     }
-    event_[2].record(stream_);
+    timer[2].record();
 
     // Lennard-Jones force calculation
     try {
-        update_forces(stream_);
+        update_forces();
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to stream force calculation on GPU");
     }
-    event_[3].record(stream_);
+    timer[3].record();
 
     // heat bath coupling
     if (thermostat_steps && ++thermostat_count > thermostat_steps) {
         try {
-            boltzmann(thermostat_temp, stream_);
+            boltzmann(thermostat_temp);
+            cuda::thread::synchronize();
         }
         catch (cuda::error const& e) {
             LOG_ERROR("CUDA: " << e.what());
             throw exception("failed to compute Boltzmann distributed velocities on GPU");
         }
     }
-    event_[4].record(stream_);
+    timer[4].record();
 
     // potential energy sum calculation
     try {
-        reduce_en(g_part.en, stream_);
+        reduce_en(g_part.en);
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to stream potential energy sum calculation on GPU");
     }
-    event_[0].record(stream_);
-}
-
-/**
- * synchronize MD simulation step on GPU
- */
-template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square, dimension>::mdstep()
-{
-    try {
-        // wait for MD simulation step on GPU to finish
-        event_[0].synchronize();
-    }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw exception("MD simulation step on GPU failed");
-    }
+    timer[0].record();
 
     // CUDA time for MD simulation step
-    m_times["mdstep"] += event_[0] - event_[1];
+    m_times["mdstep"] += timer[0] - timer[1];
     // GPU time for velocity-Verlet integration
-    m_times["velocity_verlet"] += event_[2] - event_[1];
+    m_times["velocity_verlet"] += timer[2] - timer[1];
     // GPU time for Lennard-Jones force update
-    m_times["update_forces"] += event_[3] - event_[2];
+    m_times["update_forces"] += timer[3] - timer[2];
     // GPU time for potential energy sum calculation
-    m_times["potential_energy"] += event_[0] - event_[4];
+    m_times["potential_energy"] += timer[0] - timer[4];
 
     if (thermostat_steps && thermostat_count > thermostat_steps) {
         // reset MD steps since last heatbath coupling
         thermostat_count = 0;
         // GPU time for Maxwell-Boltzmann distribution
-        m_times["boltzmann"] += event_[4] - event_[3];
+        m_times["boltzmann"] += timer[4] - timer[3];
     }
 
     if (!std::isfinite(reduce_en.value())) {
@@ -351,19 +342,20 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(host_sample_type& sampl
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
+    timer[0].record();
     try {
-        event_[1].record(stream_);
-        cuda::copy(g_part.r, h_part.r, stream_);
-        cuda::copy(g_part.R, h_part.R, stream_);
-        cuda::copy(g_part.v, h_part.v, stream_);
-        event_[0].record(stream_);
-        event_[0].synchronize();
+        cuda::copy(g_part.r, h_part.r);
+        cuda::copy(g_part.R, h_part.R);
+        cuda::copy(g_part.v, h_part.v);
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to copy MD simulation step results from GPU to host");
     }
-    m_times["sample_memcpy"] += event_[0] - event_[1];
+    timer[1].record();
+    m_times["sample_memcpy"] += timer[1] - timer[0];
 
     for (size_t n = 0, i = 0; n < npart; ++i) {
         // allocate memory for trajectory sample
@@ -389,7 +381,9 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(gpu_sample_type& sample
     typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
     typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
 
-    event_[1].record(stream_);
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
+    timer[0].record();
 
     for (size_t n = 0, i = 0; n < npart; n += mpart[i], ++i) {
         // allocate global device memory for phase space sample
@@ -401,33 +395,36 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(gpu_sample_type& sample
         v->resize(mpart[i]);
         sample.push_back(sample_type(r, v));
         // sample trajectories
-        cuda::configure(dim_sample[i].grid, dim_sample[i].block, stream_);
+        cuda::configure(dim_sample[i].grid, dim_sample[i].block);
         _gpu::sample(g_part.r.data() + n, g_part.R.data() + n, g_part.v.data() + n, *r, *v);
     }
 
-    event_[0].record(stream_);
-    event_[0].synchronize();
-    m_times["sample"] += event_[0] - event_[1];
+    cuda::thread::synchronize();
+    timer[1].record();
+    m_times["sample"] += timer[1] - timer[0];
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(energy_sample_type& sample) const
 {
+    boost::array<high_resolution_timer, 2> timer;
+    cuda::thread::synchronize();
+
     // mean potential energy per particle
     sample.en_pot = reduce_en.value() / npart;
 
     // virial tensor trace and off-diagonal elements for particle species
     try {
-        event_[1].record(stream_);
+        timer[0].record();
         if (mixture_ == BINARY) {
-            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart, stream_);
+            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart);
         }
         else {
-            reduce_virial(g_part.virial, g_part.v, stream_);
+            reduce_virial(g_part.virial, g_part.v);
         }
-        event_[0].record(stream_);
-        event_[0].synchronize();
-        m_times["virial_sum"] += event_[0] - event_[1];
+        cuda::thread::synchronize();
+        timer[1].record();
+        m_times["virial_sum"] += timer[1] - timer[0];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -440,11 +437,11 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(energy_sample_type& sam
 
     // mean squared velocity per particle
     try {
-        event_[1].record(stream_);
-        reduce_squared_velocity(g_part.v, stream_);
-        event_[0].record(stream_);
-        event_[0].synchronize();
-        m_times["reduce_squared_velocity"] += event_[0] - event_[1];
+        timer[0].record();
+        reduce_squared_velocity(g_part.v);
+        cuda::thread::synchronize();
+        timer[1].record();
+        m_times["reduce_squared_velocity"] += timer[1] - timer[0];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -454,11 +451,11 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(energy_sample_type& sam
 
     // mean velocity per particle
     try {
-        event_[1].record(stream_);
-        reduce_velocity(g_part.v, stream_);
-        event_[0].record(stream_);
-        event_[0].synchronize();
-        m_times["reduce_velocity"] += event_[0] - event_[1];
+        timer[0].record();
+        reduce_velocity(g_part.v);
+        cuda::thread::synchronize();
+        timer[1].record();
+        m_times["reduce_velocity"] += timer[1] - timer[0];
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -477,12 +474,12 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::assign_positions()
         // set periodic box traversal vectors to zero
         cuda::memset(g_part.R, 0);
         // calculate forces
-        update_forces(stream_);
+        update_forces();
         // calculate potential energy
-        reduce_en(g_part.en, stream_);
+        reduce_en(g_part.en);
 
         // wait for CUDA operations to finish
-        stream_.synchronize();
+        cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -491,25 +488,25 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::assign_positions()
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square, dimension>::boltzmann(float temp, cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::boltzmann(float temp)
 {
 #ifdef USE_VERLET_DSFUN
     cuda::memset(g_part.v, 0, g_part.v.capacity());
 #endif
-    _Base::boltzmann(g_part.v, temp, stream);
+    _Base::boltzmann(g_part.v, temp);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square, dimension>::velocity_verlet(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::velocity_verlet()
 {
-    cuda::configure(dim_.grid, dim_.block, stream);
+    cuda::configure(dim_.grid, dim_.block);
     _gpu::inteq(g_part.r, g_part.R, g_part.v, g_part.f);
 }
 
 template <int dimension>
-void ljfluid<ljfluid_impl_gpu_square, dimension>::update_forces(cuda::stream& stream)
+void ljfluid<ljfluid_impl_gpu_square, dimension>::update_forces()
 {
-    cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * (dimension + 1) * sizeof(int), stream);
+    cuda::configure(dim_.grid, dim_.block, dim_.threads_per_block() * (dimension + 1) * sizeof(int));
     _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
 }
 

@@ -88,31 +88,28 @@ int main(int argc, char **argv)
     }
 
     try {
-        // set CUDA device
         cuda::device::set(device);
-        // asynchroneous GPU operations
-        cuda::stream stream;
-        cuda::event start, stop;
+        high_resolution_timer start, stop;
 
         // generate array of random integers in [0, 2^32-1] on GPU
         cuda::vector<uint> g_array(count);
         cuda::host::vector<uint> h_array(count);
         cuda::config dim((count + threads - 1) / threads, threads);
         rand48 rng(dim);
-        rng.set(seed, stream);
-        rng.get(g_array, stream);
-        cuda::copy(g_array, h_array, stream);
-        stream.synchronize();
+        rng.set(seed);
+        rng.get(g_array);
+        cuda::copy(g_array, h_array);
 
         // parallel radix sort
         radix_sort<uint> radix;
         radix.resize(count, threads);
         cuda::vector<uint> g_dummy(count);
         cuda::host::vector<uint> h_array2(count);
-        start.record(stream);
-        radix(g_array, g_dummy, stream);
-        stop.record(stream);
-        cuda::copy(g_array, h_array2, stream);
+        start.record();
+        radix(g_array, g_dummy);
+        cuda::thread::synchronize();
+        stop.record();
+        cuda::copy(g_array, h_array2);
 
         // serial radix sort
         std::vector<uint> h_array3(count);
@@ -133,9 +130,6 @@ int main(int argc, char **argv)
             }
         }
         timer.stop();
-
-        // wait for GPU to finish
-        stream.synchronize();
 
         if (verbose) {
             // write results to stdout

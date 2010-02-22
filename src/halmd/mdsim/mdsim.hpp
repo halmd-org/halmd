@@ -186,12 +186,6 @@ private:
         }
     }
 
-    void stream(boost::false_type const&) {}
-    void stream(boost::true_type const&)
-    {
-        m_fluid.stream();
-    }
-
     void pause(boost::false_type const&)
     {
         signal::wait();
@@ -406,8 +400,6 @@ int mdsim<mdsim_backend>::operator()()
 
     for (this->step = 0; this->step < m_corr.steps(); ++this->step) {
         sample_fluid(this->step, !this->step);
-        // stream next MD simulation program step on GPU
-        stream(IMPL(gpu));
 
         if (sample_properties(this->step, false)) {
             // acquired maximum number of samples for a block level
@@ -417,7 +409,7 @@ int mdsim<mdsim_backend>::operator()()
         }
 
         try {
-            // synchronize MD simulation program step on GPU
+            // MD integration step
             m_fluid.mdstep();
         }
         catch (potential_energy_divergence const& e) {
