@@ -10,12 +10,16 @@ These software packages are required for compilation:
 
 * `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ >= 1.1
 
-  For Tesla C1060 or GeForce GT200-based cards, **CUDA 2.0 is strongly
-  recommended**.
+  For Tesla C1060 or GeForce GT200-based cards, **CUDA 2.2 or 2.3 is recommended**.
 
-  With CUDA 2.1 we experienced minor performance degradation on a GeForce GTX
-  280, while CUDA 2.2 using the NVIDIA driver 185.18.08 causes hanging GPU
-  kernels for long-time simulations running more than a day.
+  With CUDA 2.1 we experienced minor performance degradation on a GeForce GTX 280.
+
+  HALMD has proven to run reliably over 10⁸ or more integration steps using
+  CUDA driver version 185.18.36 (with CUDA 2.0 or 2.2 runtime) and 190.42 (with
+  CUDA 2.3 runtime). Always look for the newest NVIDIA driver version on the
+  `NVIDIA Linux driver website <http://www.nvidia.com/object/unix.html>`_, as
+  the CUDA driver accompanying a CUDA toolkit is not updated and may contain
+  serious bugs, e.g. that cause hanging GPU kernels.
 
 * `CMake <http://www.cmake.org/>`_ >= 2.6.0 with custom CUDA compiler support patch
 
