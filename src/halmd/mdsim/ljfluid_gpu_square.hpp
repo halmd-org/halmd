@@ -312,7 +312,7 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::mdstep()
     }
     timer[0].record();
 
-    // CUDA time for MD simulation step
+    // CUDA time for MD integration step
     m_times["mdstep"] += timer[0] - timer[1];
     // GPU time for velocity-Verlet integration
     m_times["velocity_verlet"] += timer[2] - timer[1];
@@ -352,7 +352,7 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(host_sample_type& sampl
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to copy MD simulation step results from GPU to host");
+        throw exception("failed to copy MD integration step results from GPU to host");
     }
     timer[1].record();
     m_times["sample_memcpy"] += timer[1] - timer[0];

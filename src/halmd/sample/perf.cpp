@@ -47,7 +47,7 @@ perf::desc_map perf::m_desc = boost::assign::map_list_of
     ("lattice",                        "lattice generation")
     ("maximum_displacement",        "maximum particle displacement reduction")
     ("maximum_velocity",        "maximum velocity reduction")
-    ("mdstep",                        "MD simulation step")
+    ("mdstep",                        "MD integration step")
     ("memcpy_cells",                "cell lists memcpy")
     ("permutation",                "phase space sample sort")
     ("potential_energy",        "potential energy sum reduction")

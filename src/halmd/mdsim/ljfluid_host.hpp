@@ -116,7 +116,7 @@ public:
     /** returns cell length */
     double cell_length() const { return cell_length_; }
 
-    /** MD simulation step */
+    /** MD integration step */
     void mdstep();
     /** sample phase space on host */
     void sample(host_sample_type& sample) const;
@@ -839,7 +839,7 @@ void ljfluid<ljfluid_impl_host, dimension>::hilbert_order()
 #endif /* USE_HILBERT_ORDER */
 
 /**
- * MD simulation step
+ * MD integration step
  */
 template <int dimension>
 void ljfluid<ljfluid_impl_host, dimension>::mdstep()

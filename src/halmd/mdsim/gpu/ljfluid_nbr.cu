@@ -74,7 +74,7 @@ texture<float4, 1, cudaReadModeElementType> tex<3>::v;
 texture<float2, 1, cudaReadModeElementType> tex<2>::v;
 
 /**
- * n-dimensional MD simulation step
+ * n-dimensional MD integration step
  */
 template <typename vector_type,
           mixture_type mixture,

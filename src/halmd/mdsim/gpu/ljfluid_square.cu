@@ -27,7 +27,7 @@ namespace halmd { namespace cu { namespace ljfluid
 {
 
 /**
- * MD simulation step
+ * MD integration step
  */
 template <typename vector_type,
           mixture_type mixture,
