@@ -454,6 +454,8 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
          "simulation timestep")
         ("random-seed", po::value<unsigned int>(),
          "random number generator integer seed")
+        ("random-device", po::value<std::string>()->default_value("/dev/random"),
+         "random number generator device")
         ;
 
     po::options_description mdsim;

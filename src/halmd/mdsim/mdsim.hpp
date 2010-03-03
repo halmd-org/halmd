@@ -285,7 +285,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     thermostat(IMPL(thermostat));
 
     if (m_opt["random-seed"].empty()) {
-        m_fluid.rng(read_random_seed("/dev/random"));
+        m_fluid.rng(read_random_seed(m_opt["random-device"].as<std::string>()));
     }
     else {
         m_fluid.rng(m_opt["random-seed"].as<unsigned int>());
