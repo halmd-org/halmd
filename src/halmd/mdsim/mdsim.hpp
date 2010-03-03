@@ -623,7 +623,7 @@ unsigned int mdsim<mdsim_backend>::read_random_seed(std::string const& fn)
         rand.close();
     }
     catch (ifstream::failure const& e) {
-        throw logic_error("failed to read from " + fn + e.what());
+        throw logic_error("failed to read from " + fn);
     }
     return seed;
 }
