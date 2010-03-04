@@ -100,7 +100,13 @@ int main(int argc, char **argv)
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
     LOG("MD simulation backend: " << mdlib.backend());
-    LOG("host name: " << halmd::get_fqdn_hostname());
+    std::string const hostname(halmd::get_hostname());
+    try {
+        LOG("host name: " << halmd::get_fqdn_hostname(hostname));
+    }
+    catch (std::runtime_error const&) {
+        LOG("host name: " << hostname);
+    }
     LOG("timer resolution: " << 1.E9 * halmd::high_resolution_timer::resolution() << " ns");
 
     int status_ = halmd::HALMD_EXIT_SUCCESS;

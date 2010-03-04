@@ -33,24 +33,32 @@ namespace halmd
 {
 
 /**
- * get fully qualified hostname of this machine
+ * get hostname of this machine
  */
-std::string get_fqdn_hostname()
+std::string get_hostname()
 {
     utsname name;
-    struct addrinfo hints, *result;
-    int gai_result;
 
     if (uname(&name) != 0) {
         throw std::runtime_error(strerror(errno));
     }
+    return name.nodename;
+}
+
+/**
+ * get fully qualified hostname of given node
+ */
+std::string get_fqdn_hostname(std::string const& node)
+{
+    struct addrinfo hints, *result;
+    int gai_result;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC; // either IPV4 or IPV6
     hints.ai_flags = AI_CANONNAME;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((gai_result = getaddrinfo(name.nodename, "domain", &hints, &result)) != 0) {
+    if ((gai_result = getaddrinfo(node.c_str(), "domain", &hints, &result)) != 0) {
         throw std::runtime_error(gai_strerror(gai_result));
     }
 
