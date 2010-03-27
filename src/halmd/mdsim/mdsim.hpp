@@ -126,12 +126,6 @@ private:
         }
     }
 
-    void pair_separation(boost::false_type const&) {}
-    void pair_separation(boost::true_type const&)
-    {
-        m_fluid.pair_separation(m_opt["pair-separation"].as<float>());
-    }
-
     void cell_occupancy(boost::false_type const&) {}
     void cell_occupancy(boost::true_type const&)
     {
@@ -148,18 +142,6 @@ private:
     void threads(boost::true_type const&)
     {
         m_fluid.threads(m_opt["threads"].as<unsigned int>());
-    }
-
-    void init_cells(boost::false_type const&) {}
-    void init_cells(boost::true_type const&)
-    {
-        m_fluid.init_cells();
-    }
-
-    void init_event_list(boost::false_type const&) {}
-    void init_event_list(boost::true_type const&)
-    {
-        m_fluid.init_event_list();
     }
 
     void rescale_energy(boost::false_type const&) {}
@@ -269,8 +251,6 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     cutoff_radius(IMPL(lennard_jones_potential));
     // potential smoothing function scale parameter
     potential_smoothing(IMPL(lennard_jones_potential));
-    // pair separation at which particle collision occurs
-    pair_separation(IMPL(hardsphere_potential));
 
     // desired average cell occupancy
     cell_occupancy(IMPL(fixed_size_cell_lists));
@@ -278,8 +258,6 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     nbl_skin(IMPL(neighbour_lists));
     // number of CUDA execution threads
     threads(IMPL(gpu));
-    // initialise hard-sphere cell lists
-    init_cells(IMPL(hardsphere_cell_lists));
 
     // heat bath collision probability and temperature
     thermostat(IMPL(thermostat));
@@ -313,8 +291,6 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
         // initialise velocities from Maxwell-Boltzmann distribution
         m_fluid.temperature(m_opt["temperature"].as<float>());
     }
-    // initialise hard-sphere event list
-    init_event_list(IMPL(hardsphere_event_lists));
 
     if (m_opt["steps"].defaulted() && !m_opt["time"].empty()) {
         // total simulation time

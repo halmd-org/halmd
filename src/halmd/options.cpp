@@ -561,12 +561,6 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
              "neighbour list skin")
             ;
     }
-    if (IMPL(hardsphere_potential)) {
-        add_options()
-            ("pair-separation,p", po::value<float>()->default_value(0.5),
-             "particle pair separation")
-            ;
-    }
 }
 
 #undef IMPL
@@ -575,6 +569,5 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
 template class options::description<ljfluid_impl_gpu_square>;
 template class options::description<ljfluid_impl_gpu_neighbour>;
 template class options::description<ljfluid_impl_host>;
-template class options::description<hardsphere_impl>;
 
 } // namespace halmd

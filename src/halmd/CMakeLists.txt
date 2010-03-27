@@ -113,7 +113,6 @@ endif(NOT HALMD_BACKEND_EXECUTABLES)
 
 set(HALMD_impl
     ljfluid_impl_host
-    hardsphere_impl
     )
 if(WITH_CUDA)
   set(HALMD_impl
@@ -169,13 +168,6 @@ target_link_libraries(halmd_host
   sample_host
   )
 set_target_properties(halmd_host PROPERTIES
-  COMPILE_FLAGS "-UWITH_CUDA"
-  )
-target_link_libraries(halmd_hardsphere
-  ${GSL_LIBRARIES}
-  sample_host
-  )
-set_target_properties(halmd_hardsphere PROPERTIES
   COMPILE_FLAGS "-UWITH_CUDA"
   )
 

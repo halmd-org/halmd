@@ -32,9 +32,6 @@ struct mdsim_impl_base
     typedef boost::false_type impl_energy_gpu_sample;
     typedef boost::false_type impl_fixed_size_cell_lists;
     typedef boost::false_type impl_gpu;
-    typedef boost::false_type impl_hardsphere_cell_lists;
-    typedef boost::false_type impl_hardsphere_event_lists;
-    typedef boost::false_type impl_hardsphere_potential;
     typedef boost::false_type impl_host;
     typedef boost::false_type impl_lennard_jones_potential;
     typedef boost::false_type impl_neighbour_lists;
@@ -81,14 +78,6 @@ struct ljfluid_impl_host : mdsim_impl_base
     typedef boost::true_type impl_lennard_jones_potential;
     typedef boost::true_type impl_neighbour_lists;
     typedef boost::true_type impl_thermostat;
-};
-
-struct hardsphere_impl : mdsim_impl_base
-{
-    typedef boost::true_type impl_hardsphere_cell_lists;
-    typedef boost::true_type impl_hardsphere_event_lists;
-    typedef boost::true_type impl_hardsphere_potential;
-    typedef boost::true_type impl_host;
 };
 
 } // namespace halmd

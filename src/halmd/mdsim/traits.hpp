@@ -68,16 +68,6 @@ struct mdsim_traits<impl, dimension_, typename boost::enable_if<boost::mpl::and_
     typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
 };
 
-template <typename impl, int dimension_>
-struct mdsim_traits<impl, dimension_, typename boost::enable_if<boost::mpl::and_<typename impl::impl_host, typename impl::impl_hardsphere_potential> >::type>
-{
-    enum { dimension = dimension_ };
-    typedef energy_sample<dimension> energy_sample_type;
-    typedef double float_type;
-    typedef vector<float_type, dimension> vector_type;
-    typedef std::vector<trajectory_host_sample<float_type, dimension> > host_sample_type;
-};
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_TRAITS_HPP */

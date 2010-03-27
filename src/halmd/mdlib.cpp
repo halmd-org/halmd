@@ -30,7 +30,6 @@
 #include <string>
 
 #include <halmd/mdlib.hpp>
-#include <halmd/mdsim/hardsphere.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/ljfluid_gpu_nbr.hpp>
 # include <halmd/mdsim/ljfluid_gpu_square.hpp>

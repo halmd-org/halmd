@@ -67,19 +67,6 @@ HALMD implements various simulation backends using dynamically loaded plugins.
      *A three-dimensional Hilbert curve*,
      `International Journal of Mathematical Education in Science and Technology, Taylor & Francis, 1993, 24, 541-545 <http://dx.doi.org/10.1080/0020739930240405>`_
 
-   hardsphere backend
-     A single-threaded, event-based hard-sphere molecular dynamics simulation.
-
-     This is an **experimental** implementation, which has not been tested thoroughly.
-
-     M. P. Allen, D. Frenkel and J. Talbot,
-     *Molecular dynamics simulation using hard particles*,
-     `Computer Physics reports, 1989, 9, 301-353 <http://dx.doi.org/10.1016/0167-7977(89)90009-9>`_
-
-     S. Miller and S. Luding,
-     *Event-driven molecular dynamics in parallel*,
-     `Journal of Computational Physics, 2004, 193, 306-316 <http://dx.doi.org/10.1016/j.jcp.2003.08.009>`_
-
 
 Multi-GPU machines
 ==================

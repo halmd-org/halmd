@@ -123,7 +123,6 @@ evaluation scripts. *Do not (ab)use the log file for evaluation purposes.*
    |    \-- effective_steps	simulated number of steps
    |    \-- neighbour_skin	neighbour list skin
    |    \-- neighbours		number of placeholders per neighbour list
-   |    \-- pair_separation	hard-sphere pair separation
    |    \-- particles		number of particles per species
    |    \-- placeholders	total number of cell list placeholders
    |    \-- potential_epsilon	potential well depths AA,AB,BB

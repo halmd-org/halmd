@@ -26,7 +26,6 @@ simulation core. Classes which represent a backend are filled.
 	   ljfluid_gpu_square [ label="ljfluid<ljfluid_impl_gpu_square, …>" ]
 	   ljfluid_gpu_neighbour [ label="ljfluid<ljfluid_impl_gpu_neighbour, …>" ]
 	   ljfluid_host [ label="ljfluid<ljfluid_impl_host, …>" ]
-	   hardsphere [ label="hardsphere<hardsphere_impl, …>" ]
        }
 
        ljfluid_base -> base
@@ -34,7 +33,6 @@ simulation core. Classes which represent a backend are filled.
        ljfluid_gpu_square -> ljfluid_gpu_base
        ljfluid_gpu_neighbour -> ljfluid_gpu_base
        ljfluid_host -> ljfluid_base
-       hardsphere -> base
 
        { rank=same; ljfluid_gpu_base ljfluid_host }
    }
@@ -90,7 +88,4 @@ A short description of the basic functionality of each class template.
 
    ljfluid<ljfluid_impl_host, …>
       This class implements the host backend.
-
-   hardsphere<hardsphere_impl, …>
-      This class implements the hardsphere backend.
 
