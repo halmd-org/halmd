@@ -109,7 +109,7 @@ _mdsim(options const& opt)
     LOG("CUDA device minor revision: " << prop.minor());
     LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 
-    mdsim<mdsim_backend> md(opt);
+    simulation<mdsim_backend> md(opt);
 #ifndef __DEVICE_EMULATION__
     LOG("GPU allocated global device memory: " << cuda::driver::mem::used() << " bytes");
     LOG("GPU available global device memory: " << cuda::driver::mem::free() << " bytes");
@@ -165,7 +165,7 @@ _mdsim(options const& opt)
         LOG("CPU clock rate: " << cpu["cpu MHz"] << " MHz");
     }
 
-    mdsim<mdsim_backend> md(opt);
+    simulation<mdsim_backend> md(opt);
 
     if (opt["dry-run"].as<bool>()) {
         return HALMD_EXIT_SUCCESS;

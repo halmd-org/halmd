@@ -54,7 +54,7 @@ namespace halmd
  * Molecular Dynamics simulation of a Lennard-Jones fluid
  */
 template <typename mdsim_backend>
-class mdsim : boost::noncopyable
+class simulation : boost::noncopyable
 {
 public:
     typedef typename mdsim_backend::float_type float_type;
@@ -67,7 +67,7 @@ public:
 
 public:
     /** initialise MD simulation */
-    mdsim(options const& opt);
+    simulation(options const& opt);
     /** run MD simulation */
     int operator()();
     /** write parameters to HDF5 parameter group */
@@ -221,7 +221,7 @@ private:
  * initialise MD simulation
  */
 template <typename mdsim_backend>
-mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
+simulation<mdsim_backend>::simulation(options const& opt) : m_opt(opt)
 {
     LOG("positional coordinates dimension: " << static_cast<unsigned>(dimension));
 
@@ -346,7 +346,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
  * run MD simulation
  */
 template <typename mdsim_backend>
-int mdsim<mdsim_backend>::operator()()
+int simulation<mdsim_backend>::operator()()
 {
     /** HDF5 buffers flush to disk interval in seconds */
     enum { FLUSH_TO_DISK_INTERVAL = 900 };
@@ -453,7 +453,7 @@ int mdsim<mdsim_backend>::operator()()
  * aquire fluid sample
  */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::sample_fluid(uint64_t step, bool dump)
+void simulation<mdsim_backend>::sample_fluid(uint64_t step, bool dump)
 {
     m_is_corr_step = (m_corr.is_sample_step(step) && m_corr.is_open());
 
@@ -490,7 +490,7 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step, bool dump)
  * process fluid sample
  */
 template <typename mdsim_backend>
-bool mdsim<mdsim_backend>::sample_properties(uint64_t step, bool perf)
+bool simulation<mdsim_backend>::sample_properties(uint64_t step, bool perf)
 {
     double time = step * static_cast<double>(m_fluid.timestep());
     bool flush = false;
@@ -514,7 +514,7 @@ bool mdsim<mdsim_backend>::sample_properties(uint64_t step, bool perf)
  * open HDF5 output files
  */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::open()
+void simulation<mdsim_backend>::open()
 {
     std::string fn = m_opt["output"].as<std::string>();
 
@@ -539,7 +539,7 @@ void mdsim<mdsim_backend>::open()
  * write partial results to HDF5 files and flush to disk
  */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::flush()
+void simulation<mdsim_backend>::flush()
 {
     if (m_corr.is_open()) {
         m_corr.flush();
@@ -561,7 +561,7 @@ void mdsim<mdsim_backend>::flush()
  * close HDF5 output files
  */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::close()
+void simulation<mdsim_backend>::close()
 {
     if (m_corr.is_open()) {
         param(m_corr);
@@ -585,7 +585,7 @@ void mdsim<mdsim_backend>::close()
  * obtain integer seed from file
  */
 template <typename mdsim_backend>
-unsigned int mdsim<mdsim_backend>::read_random_seed(std::string const& fn)
+unsigned int simulation<mdsim_backend>::read_random_seed(std::string const& fn)
 {
     using namespace std;
     unsigned int seed;
@@ -608,7 +608,7 @@ unsigned int mdsim<mdsim_backend>::read_random_seed(std::string const& fn)
  * write parameters to HDF5 parameter group
  */
 template <typename mdsim_backend>
-void mdsim<mdsim_backend>::param(H5param param) const
+void simulation<mdsim_backend>::param(H5param param) const
 {
     H5xx::group node(param["mdsim"]);
     node["backend"] = MDSIM_BACKEND;
