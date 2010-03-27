@@ -35,6 +35,7 @@
 #include <halmd/mdsim/virial.hpp>
 #include <halmd/rng/rand48.hpp>
 #include <halmd/sample/H5param.hpp>
+#include <halmd/util/timer.hpp>
 
 namespace halmd
 {
