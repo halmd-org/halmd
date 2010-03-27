@@ -28,8 +28,8 @@
 # include <vector_types.h>
 #endif
 
-#include <halmd/mdsim/impl.hpp>
-#include <halmd/mdsim/sample.hpp>
+#include <halmd/mdsim/backend/impl.hpp>
+#include <halmd/mdsim/backend/sample.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/math/vector4d.hpp>

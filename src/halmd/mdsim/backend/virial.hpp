@@ -25,7 +25,7 @@
 #include <boost/array.hpp>
 
 #include <cuda_wrapper.hpp>
-#include <halmd/mdsim/gpu/virial.hpp>
+#include <halmd/mdsim/backend/gpu/virial.hpp>
 
 namespace halmd
 {

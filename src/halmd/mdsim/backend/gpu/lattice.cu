@@ -21,7 +21,7 @@
 #include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/math/gpu/vector2d.cuh>
 #include <halmd/math/gpu/vector3d.cuh>
-#include <halmd/mdsim/gpu/lattice.hpp>
+#include <halmd/mdsim/backend/gpu/lattice.hpp>
 
 namespace halmd { namespace cu { namespace lattice
 {

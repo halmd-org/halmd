@@ -23,8 +23,8 @@
 
 #include <boost/foreach.hpp>
 
-#include <halmd/mdsim/base.hpp>
-#include <halmd/mdsim/traits.hpp>
+#include <halmd/mdsim/backend/base.hpp>
+#include <halmd/mdsim/backend/traits.hpp>
 
 namespace halmd
 {

@@ -30,7 +30,7 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/sample.hpp>
+#include <halmd/mdsim/backend/sample.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>

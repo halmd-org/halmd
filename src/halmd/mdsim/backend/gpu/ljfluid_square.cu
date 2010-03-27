@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/base.cuh>
-#include <halmd/mdsim/gpu/ljfluid_square.hpp>
+#include <halmd/mdsim/backend/gpu/base.cuh>
+#include <halmd/mdsim/backend/gpu/ljfluid_square.hpp>
 
 using namespace halmd::gpu;
 

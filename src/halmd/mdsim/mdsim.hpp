@@ -31,8 +31,8 @@
 #include <vector>
 #include <unistd.h>
 
-#include <halmd/mdsim/impl.hpp>
-#include <halmd/mdsim/sample.hpp>
+#include <halmd/mdsim/backend/impl.hpp>
+#include <halmd/mdsim/backend/sample.hpp>
 #include <halmd/options.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/sample/correlation.hpp>

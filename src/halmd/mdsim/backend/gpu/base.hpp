@@ -23,8 +23,8 @@
 
 #include <cuda_wrapper.hpp>
 #include <halmd/math/gpu/dsfloat.cuh>
-#include <halmd/mdsim/impl.hpp>
-#include <halmd/mdsim/variant.hpp>
+#include <halmd/mdsim/backend/impl.hpp>
+#include <halmd/mdsim/backend/variant.hpp>
 #include <halmd/rng/gpu/uint48.cuh>
 
 namespace halmd { namespace gpu

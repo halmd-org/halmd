@@ -26,8 +26,8 @@
 #include <limits>
 
 #include <halmd/algorithm/reduce.hpp>
-#include <halmd/mdsim/ljfluid_gpu_base.hpp>
-#include <halmd/mdsim/gpu/hilbert.hpp>
+#include <halmd/mdsim/backend/ljfluid_gpu_base.hpp>
+#include <halmd/mdsim/backend/gpu/hilbert.hpp>
 
 #define foreach BOOST_FOREACH
 

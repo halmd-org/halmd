@@ -20,8 +20,8 @@
 
 #include <float.h>
 
-#include <halmd/mdsim/gpu/base.cuh>
-#include <halmd/mdsim/gpu/ljfluid_nbr.hpp>
+#include <halmd/mdsim/backend/gpu/base.cuh>
+#include <halmd/mdsim/backend/gpu/ljfluid_nbr.hpp>
 
 using namespace halmd::gpu;
 

@@ -30,7 +30,7 @@
 #include <limits>
 
 #include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/gpu/ljfluid_square.hpp>
+#include <halmd/mdsim/backend/gpu/ljfluid_square.hpp>
 
 using namespace boost::assign;
 using namespace halmd;

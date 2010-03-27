@@ -31,7 +31,7 @@
 #include <iostream>
 #include <map>
 
-#include <halmd/mdsim/impl.hpp>
+#include <halmd/mdsim/backend/impl.hpp>
 #include <halmd/options.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/date_time.hpp>

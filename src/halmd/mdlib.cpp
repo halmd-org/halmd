@@ -31,10 +31,10 @@
 
 #include <halmd/mdlib.hpp>
 #ifdef WITH_CUDA
-# include <halmd/mdsim/ljfluid_gpu_nbr.hpp>
-# include <halmd/mdsim/ljfluid_gpu_square.hpp>
+# include <halmd/mdsim/backend/ljfluid_gpu_nbr.hpp>
+# include <halmd/mdsim/backend/ljfluid_gpu_square.hpp>
 #endif
-#include <halmd/mdsim/ljfluid_host.hpp>
+#include <halmd/mdsim/backend/ljfluid_host.hpp>
 #include <halmd/mdsim/mdsim.hpp>
 #include <halmd/options.hpp>
 #include <halmd/version.h>

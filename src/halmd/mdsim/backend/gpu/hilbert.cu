@@ -23,7 +23,7 @@
 #include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/math/gpu/vector2d.cuh>
 #include <halmd/math/gpu/vector3d.cuh>
-#include <halmd/mdsim/gpu/hilbert.hpp>
+#include <halmd/mdsim/backend/gpu/hilbert.hpp>
 
 namespace halmd { namespace cu { namespace hilbert
 {

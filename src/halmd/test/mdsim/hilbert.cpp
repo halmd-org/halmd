@@ -34,8 +34,8 @@
 #include <halmd/algorithm/radix_sort.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/gpu/hilbert.hpp>
-#include <halmd/mdsim/gpu/lattice.hpp>
+#include <halmd/mdsim/backend/gpu/hilbert.hpp>
+#include <halmd/mdsim/backend/gpu/lattice.hpp>
 #include <halmd/rng/rand48.hpp>
 #include <halmd/util/timer.hpp>
 

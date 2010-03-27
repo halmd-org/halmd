@@ -21,8 +21,8 @@
 #include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/algorithm/gpu/reduce.cuh>
 #include <halmd/math/gpu/dsvector.cuh>
-#include <halmd/mdsim/gpu/virial.cuh>
-#include <halmd/mdsim/gpu/virial.hpp>
+#include <halmd/mdsim/backend/gpu/virial.cuh>
+#include <halmd/mdsim/backend/gpu/virial.hpp>
 
 namespace halmd { namespace cu { namespace virial
 {

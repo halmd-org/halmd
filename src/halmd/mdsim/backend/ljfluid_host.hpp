@@ -31,8 +31,8 @@
 #include <list>
 #include <vector>
 
-#include <halmd/mdsim/hilbert.hpp>
-#include <halmd/mdsim/ljfluid_base.hpp>
+#include <halmd/mdsim/backend/hilbert.hpp>
+#include <halmd/mdsim/backend/ljfluid_base.hpp>
 #include <halmd/rng/gsl_rng.hpp>
 #include <halmd/util/timer.hpp>
 

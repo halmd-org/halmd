@@ -22,8 +22,8 @@
 #define HALMD_MDSIM_LJFLUID_GPU_SQUARE_HPP
 
 #include <halmd/algorithm/reduce.hpp>
-#include <halmd/mdsim/ljfluid_gpu_base.hpp>
-#include <halmd/mdsim/gpu/lattice.hpp>
+#include <halmd/mdsim/backend/ljfluid_gpu_base.hpp>
+#include <halmd/mdsim/backend/gpu/lattice.hpp>
 
 #define foreach BOOST_FOREACH
 

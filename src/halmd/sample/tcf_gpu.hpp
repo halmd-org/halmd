@@ -29,8 +29,8 @@
 #include <cuda_wrapper.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/sample.hpp>
-#include <halmd/mdsim/traits.hpp>
+#include <halmd/mdsim/backend/sample.hpp>
+#include <halmd/mdsim/backend/traits.hpp>
 #include <halmd/sample/gpu/tcf.hpp>
 #include <halmd/sample/tcf_base.hpp>
 

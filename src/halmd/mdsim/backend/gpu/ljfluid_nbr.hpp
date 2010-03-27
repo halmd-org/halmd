@@ -22,8 +22,8 @@
 #define HALMD_MDSIM_GPU_LJFLUID_NBR_HPP
 
 #include <cuda_wrapper.hpp>
-#include <halmd/mdsim/impl.hpp>
-#include <halmd/mdsim/gpu/base.hpp>
+#include <halmd/mdsim/backend/impl.hpp>
+#include <halmd/mdsim/backend/gpu/base.hpp>
 #include <halmd/rng/gpu/uint48.cuh>
 
 namespace halmd { namespace gpu

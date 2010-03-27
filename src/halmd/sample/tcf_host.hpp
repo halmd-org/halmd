@@ -28,7 +28,7 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/sample.hpp>
+#include <halmd/mdsim/backend/sample.hpp>
 #include <halmd/sample/tcf_base.hpp>
 #include <halmd/util/H5xx.hpp>
 

@@ -23,7 +23,7 @@
 #include <halmd/math/gpu/dsvector.cuh>
 #include <halmd/math/gpu/vector2d.cuh>
 #include <halmd/math/gpu/vector3d.cuh>
-#include <halmd/mdsim/gpu/boltzmann.hpp>
+#include <halmd/mdsim/backend/gpu/boltzmann.hpp>
 #define CU_NAMESPACE boltzmann
 #include <halmd/rng/gpu/rand48.cuh>
 

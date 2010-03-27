@@ -28,10 +28,10 @@
 #include <cmath>
 #include <limits>
 
-#include <halmd/mdsim/exception.hpp>
-#include <halmd/mdsim/impl.hpp>
-#include <halmd/mdsim/traits.hpp>
-#include <halmd/mdsim/variant.hpp>
+#include <halmd/mdsim/backend/exception.hpp>
+#include <halmd/mdsim/backend/impl.hpp>
+#include <halmd/mdsim/backend/traits.hpp>
+#include <halmd/mdsim/backend/variant.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/sample/perf.hpp>
 #include <halmd/util/exception.hpp>
