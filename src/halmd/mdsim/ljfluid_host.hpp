@@ -181,7 +181,7 @@ private:
     using _Base::potential_;
 
     /** particles */
-    boost::shared_ptr<std::vector<particle> > part;
+    std::vector<particle> part;
     /** cell lists */
     cell_lists cell;
     /** random number generator */
@@ -190,7 +190,7 @@ private:
     /** 1-dimensional Hilbert curve mapping of cell lists */
     std::vector<cell_list*> hilbert_cell;
     /** particles buffer */
-    boost::shared_ptr<std::vector<particle> > part_buf;
+    std::vector<particle> part_buf;
 #endif
 
     /** number of cells per dimension */
@@ -222,11 +222,9 @@ void ljfluid<ljfluid_impl_host, dimension>::particles(T const& value)
     _Base::particles(value);
 
     try {
-        part.reset(new std::vector<particle>);
-        part->reserve(npart);
+        part.reserve(npart);
 #ifdef USE_HILBERT_ORDER
-        part_buf.reset(new std::vector<particle>);
-        part_buf->reserve(npart);
+        part_buf.reserve(npart);
 #endif
     }
     catch (std::bad_alloc const& e) {
@@ -249,14 +247,14 @@ void ljfluid<ljfluid_impl_host, dimension>::state(host_sample_type& sample, floa
     typename sample_type::position_sample_vector::const_iterator r;
     typename sample_type::velocity_sample_vector::const_iterator v;
 
-    part->clear();
+    part.clear();
     for (size_t i = 0, n = 0; n < npart; ++i) {
         for (r = sample[i].r->begin(), v = sample[i].v->begin(); r != sample[i].r->end(); ++r, ++v, ++n) {
             particle p(n, types[i]);
             p.r = *r;
             p.R = 0;
             p.v = *v;
-            part->push_back(p);
+            part.push_back(p);
         }
     }
 
@@ -354,7 +352,7 @@ template <int dimension>
 void ljfluid<ljfluid_impl_host, dimension>::rescale_velocities(double coeff)
 {
     LOG("rescaling velocities with coefficient: " << coeff);
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         p.v *= coeff;
     }
 }
@@ -418,7 +416,7 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     LOG("minimum lattice distance: " << a / std::sqrt(2.));
 
     boost::array<unsigned int, 2> tag = boost::assign::list_of(0)(mpart[0]);
-    part->clear();
+    part.clear();
     for (unsigned int i = 0; i < npart; ++tag[types[i]], ++i) {
         particle p(tag[types[i]], types[i]);
         vector_type& r = p.r;
@@ -434,7 +432,7 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
         }
         r *= a;
         p.R = 0;
-        part->push_back(p);
+        part.push_back(p);
     }
 
     // sort particles after binary mixture species for trajectory output
@@ -445,7 +443,7 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
             return (p1.type < p2.type);
         }
     };
-    std::stable_sort(this->part->begin(), this->part->end(), compare::_);
+    std::stable_sort(this->part.begin(), this->part.end(), compare::_);
 
     // update cell lists
     update_cells();
@@ -478,7 +476,7 @@ void ljfluid<ljfluid_impl_host, dimension>::temperature(double value)
     LOG("initializing velocities from Maxwell-Boltzmann distribution at temperature: " << value);
 
     // initialize force to zero for first leapfrog half step
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         p.f = 0;
     }
     // initialize sum over maximum velocity magnitudes since last neighbour lists update
@@ -499,14 +497,14 @@ void ljfluid<ljfluid_impl_host, dimension>::boltzmann(double temp)
     double vv = 0;
 
     // generate random Maxwell-Boltzmann distributed velocity
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         rng_.gaussian(p.v, static_cast<float_type>(temp));
         v_cm += p.v;
     }
     v_cm /= npart;
 
     // set center of mass velocity to zero
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         p.v -= v_cm;
         vv += p.v * p.v;
     }
@@ -514,7 +512,7 @@ void ljfluid<ljfluid_impl_host, dimension>::boltzmann(double temp)
 
     // rescale velocities to accurate temperature
     double s = std::sqrt(temp * dimension / vv);
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         p.v *= s;
     }
 }
@@ -530,7 +528,7 @@ void ljfluid<ljfluid_impl_host, dimension>::update_cells()
         c.clear();
     }
     // add particles to cells
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         compute_cell(p.r).push_back(boost::ref(p));
     }
 }
@@ -667,7 +665,7 @@ template <bool binary>
 void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
 {
     // initialize particle forces to zero
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         p.f = 0;
     }
 
@@ -678,7 +676,7 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
     // half periodic box length for nearest mirror-image particle
     float_type box_half = 0.5 * box_;
 
-    foreach (particle& p1, *part) {
+    foreach (particle& p1, part) {
         // calculate pairwise Lennard-Jones force with neighbour particles
         foreach (particle& p2, p1.neighbour) {
             // particle distance vector
@@ -784,7 +782,7 @@ void ljfluid<ljfluid_impl_host, dimension>::leapfrog_half()
 {
     float_type vv_max = 0;
 
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         // half step velocity
         p.v += p.f * (static_cast<float_type>(timestep_) / 2);
         // full step position
@@ -814,7 +812,7 @@ void ljfluid<ljfluid_impl_host, dimension>::leapfrog_half()
 template <int dimension>
 void ljfluid<ljfluid_impl_host, dimension>::leapfrog_full()
 {
-    foreach (particle& p, *part) {
+    foreach (particle& p, part) {
         // full step velocity
         p.v += p.f * (static_cast<float_type>(timestep_) / 2);
     }
@@ -827,11 +825,11 @@ void ljfluid<ljfluid_impl_host, dimension>::leapfrog_full()
 template <int dimension>
 void ljfluid<ljfluid_impl_host, dimension>::hilbert_order()
 {
-    part_buf->clear();
+    part_buf.clear();
     foreach (cell_list* c, hilbert_cell) {
         foreach (typename particle::ref& p, *c) {
-            part_buf->push_back(p);
-            p = boost::ref(part_buf->back());
+            part_buf.push_back(p);
+            p = boost::ref(part_buf.back());
         }
     }
     part.swap(part_buf);
@@ -925,7 +923,7 @@ void ljfluid<ljfluid_impl_host, dimension>::sample(host_sample_type& sample) con
         velocity_sample_ptr v(new velocity_sample_vector(mpart[i]));
         sample.push_back(sample_type(r, v));
         // assign particle positions and velocities of homogenous type
-        foreach (particle const& p, *part) {
+        foreach (particle const& p, part) {
             if (p.type == (int) i) {
                 assert(p.tag >= m && p.tag - m < mpart[p.type]);
                 // periodically extended particle position
@@ -948,7 +946,7 @@ void ljfluid<ljfluid_impl_host, dimension>::sample(energy_sample_type& sample) c
     sample.vv = 0;
     sample.v_cm = 0;
 
-    for (iterator p = part->begin(); p != part->end(); ++p) {
+    for (iterator p = part.begin(); p != part.end(); ++p) {
         // kinetic terms of virial stress tensor
         sample.virial[p->type][0] += p->v * p->v;
         if (dimension == 3) {
