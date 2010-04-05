@@ -45,7 +45,7 @@ public:
 protected:
     /** average potential energy per particle */
     float_type en_pot_;
-    /** average virial per particle for each particle species */
+    /** average virial per particle for each particle type */
     std::vector<virial_type> virial_;
 };
 

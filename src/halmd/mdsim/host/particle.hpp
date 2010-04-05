@@ -25,27 +25,42 @@
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim { namespace host
 {
 
 template <unsigned int dimension, typename float_type>
-struct particle : mdsim::particle<dimension, float_type>
+class particle : public mdsim::particle<dimension, float_type>
 {
+public:
+    typedef mdsim::particle<dimension, float_type> _Base;
+    typedef vector<float_type, dimension> vector_type;
+
+public:
+    particle(options const& vm);
+    virtual ~particle() {}
+
+public:
     /** positions, reduced to extended domain box */
-    std::vector<vector<float_type, dimension> > r;
+    std::vector<vector_type > r;
     /** minimum image vectors */
     std::vector<vector<int, dimension> > image;
     /** velocities */
-    std::vector<vector<float_type, dimension> > v;
+    std::vector<vector_type > v;
     /** forces */
-    std::vector<vector<float_type, dimension> > f;
+    std::vector<vector_type > f;
     /** globally unique particle numbers */
     std::vector<unsigned int> tag;
     /** types */
     std::vector<unsigned int> type;
-    /** neighbours lists */
-    std::vector<std::vector<unsigned int> > neighbour;
+    /** neighbor lists */
+    std::vector<std::vector<unsigned int> > neighbor;
+
+    /** number of particles in simulation box */
+    using _Base::nbox;
+    /** number of particle types */
+    using _Base::ntype;
 };
 
 }}} // namespace halmd::mdsim::host

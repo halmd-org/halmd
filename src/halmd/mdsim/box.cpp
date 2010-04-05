@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/util/log.hpp>
@@ -55,10 +56,7 @@ void box<dimension, float_type>::length(vector_type const& value)
 {
     length_ = value;
     scale_ = length_ / *max_element(length_.begin(), length_.end());
-    float_type volume = 1;
-    for (size_t i = 0; i < dimension; ++i) {
-        volume *= length_[i];
-    }
+    float_type volume = accumulate(length_.begin(), length_.end(), static_cast<float_type>(1), multiplies<float_type>());
     density_ = particle->nbox / volume;
 
     LOG("simulation box edge lengths: " << length_);
@@ -72,17 +70,14 @@ template <int dimension, typename float_type>
 void box<dimension, float_type>::density(float_type value)
 {
     density_ = value;
-    float_type volume = particle->nbox / density_;
-    for (size_t i = 0; i < dimension; ++i) {
-        volume /= scale_[i];
-    }
+    float_type volume = particle->nbox / accumulate(scale_.begin(), scale_.end(), density_, multiplies<float_type>());
     length_ = scale_ * pow(volume, (float_type) 1 / dimension);
 
     LOG("simulation box edge lengths: " << length_);
     LOG("number density: " << density_);
 }
 
-// explicit instatiation
+// explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class box<3, double>;
 template class box<2, double>;

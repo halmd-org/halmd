@@ -100,8 +100,8 @@ void lj<dimension, float_type>::compute()
     vector_type box_half = static_cast<float_type>(0.5) * box->length();
 
     for (size_t i = 0; i < particle->nbox; ++i) {
-        // calculate pairwise Lennard-Jones force with neighbour particles
-        BOOST_FOREACH (size_t j, particle->neighbour[i]) {
+        // calculate pairwise Lennard-Jones force with neighbor particles
+        BOOST_FOREACH (size_t j, particle->neighbor[i]) {
             // particle distance vector
             vector_type r = particle->r[i] - particle->r[j];
             // particle types
@@ -174,7 +174,7 @@ void lj<dimension, float_type>::compute()
     }
 }
 
-// explicit instatiation
+// explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class lj<3, double>;
 template class lj<2, double>;

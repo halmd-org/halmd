@@ -20,12 +20,19 @@
 #ifndef HALMD_MDSIM_PARTICLE_HPP
 #define HALMD_MDSIM_PARTICLE_HPP
 
+#include <halmd/options.hpp>
+
 namespace halmd { namespace mdsim
 {
 
 template <int dimension, typename float_type>
-struct particle
+class particle
 {
+public:
+    particle(options const& vm);
+    virtual ~particle() {}
+
+public:
     /** number of particles in simulation box */
     unsigned int nbox;
     /** number of particle types */
