@@ -42,9 +42,9 @@ lj<dimension, float_type>::lj(particle_ptr const& particle, box_ptr const& box, 
     // allocate potential parameters
     , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
     , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
-    , r_cut_(particle->ntype, particle->ntype)
     , r_cut_sigma_(particle->ntype, particle->ntype)
-    , r_cut_sigma2_(particle->ntype, particle->ntype)
+    , r_cut_(particle->ntype, particle->ntype)
+    , rr_cut_(particle->ntype, particle->ntype)
     , sigma2_(particle->ntype, particle->ntype)
     , en_cut_(particle->ntype, particle->ntype)
 {
@@ -57,21 +57,21 @@ lj<dimension, float_type>::lj(particle_ptr const& particle, box_ptr const& box, 
     }
     try {
         boost::array<float, 3> r_cut(vm["cutoff"].as<boost::array<float, 3> >());
-        std::copy(r_cut.begin(), r_cut.end(), r_cut_.data().begin());
+        std::copy(r_cut.begin(), r_cut.end(), r_cut_sigma_.data().begin());
     }
     catch (boost::bad_any_cast const&) {
         // backwards compatibility
-        std::fill(r_cut_.data().begin(), r_cut_.data().end(), vm["cutoff"].as<float>());
+        std::fill(r_cut_sigma_.data().begin(), r_cut_sigma_.data().end(), vm["cutoff"].as<float>());
     }
 
     // precalculate derived parameters
     for (size_t i = 0; i < particle->ntype; ++i) {
         for (size_t j = i; j < particle->ntype; ++j) {
-            r_cut_sigma_(i, j) = r_cut_(i, j) * sigma_(i, j);
-            r_cut_sigma2_(i, j) = std::pow(r_cut_sigma_(i, j), 2);
+            r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
+            rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             // energy shift due to truncation at cutoff length
-            float_type rri_cut = std::pow(r_cut_(i, j), -2);
+            float_type rri_cut = std::pow(r_cut_sigma_(i, j), -2);
             float_type r6i_cut = rri_cut * rri_cut * rri_cut;
             en_cut_(i, j) = 4 * epsilon_(i, j) * r6i_cut * (r6i_cut - 1);
         }
@@ -79,7 +79,7 @@ lj<dimension, float_type>::lj(particle_ptr const& particle, box_ptr const& box, 
 
     LOG("potential well depths: ε = " << epsilon_);
     LOG("potential pair separation: σ = " << sigma_);
-    LOG("potential cutoff length: r = " << r_cut_);
+    LOG("potential cutoff length: r = " << r_cut_sigma_);
     LOG("potential cutoff energy: U = " << en_cut_);
 }
 
@@ -96,8 +96,9 @@ void lj<dimension, float_type>::compute()
     en_pot_ = 0;
     // virial equation sum
     std::fill(virial_.begin(), virial_.end(), 0);
-    // half periodic box edge lengths for nearest mirror-image particle
-    vector_type box_half = static_cast<float_type>(0.5) * box->length();
+
+    vector_type bl = box->length();
+    vector_type bl_half = static_cast<float_type>(0.5) * bl;
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbor particles
@@ -108,20 +109,19 @@ void lj<dimension, float_type>::compute()
             size_t a = particle->type[i];
             size_t b = particle->type[j];
             // enforce periodic boundary conditions
-            // FIXME use ghost particles to implement minimum image convention
             for (size_t k = 0; k < dimension; ++k) {
-                if (r[k] > box_half[k]) {
-                    r[k] -= box->length()[k];
+                if (r[k] > bl_half[k]) {
+                    r[k] -= bl[k];
                 }
-                else if (r[k] < -box_half[k]) {
-                    r[k] += box->length()[k];
+                else if (r[k] < -bl_half[k]) {
+                    r[k] += bl[k];
                 }
             }
             // squared particle distance
             float_type rr = r * r;
 
             // truncate potential at cutoff length
-            if (rr >= r_cut_sigma2_(a, b))
+            if (rr >= rr_cut_(a, b))
                 continue;
 
             // compute Lennard-Jones force in reduced units

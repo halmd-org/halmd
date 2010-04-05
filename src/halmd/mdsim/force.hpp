@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_FORCE_HPP
 #define HALMD_MDSIM_FORCE_HPP
 
+#include <boost/numeric/ublas/symmetric.hpp>
 #include <vector>
 
 #include <halmd/math/vector2d.hpp>
@@ -34,11 +35,14 @@ class force
 {
 public:
     typedef vector<float_type, dimension> vector_type;
+    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::upper> matrix_type;
     typedef vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
 
 public:
     virtual ~force() {};
     virtual void compute() = 0;
+    virtual matrix_type const& cutoff() = 0;
+
     float_type en_pot() { return en_pot_; }
     std::vector<virial_type> const& virial() { return virial_; }
 

@@ -34,6 +34,7 @@ namespace halmd { namespace mdsim
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(options const& vm)
 {
+    // parse options
     if (!vm["binary"].empty() && vm["particles"].defaulted()) {
         array<unsigned int, 2> value = vm["binary"].as<array<unsigned int, 2> >();
         if (*min_element(value.begin(), value.end()) < 1) {

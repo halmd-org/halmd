@@ -36,6 +36,7 @@ class particle : public mdsim::particle<dimension, float_type>
 public:
     typedef mdsim::particle<dimension, float_type> _Base;
     typedef vector<float_type, dimension> vector_type;
+    typedef std::vector<size_t> neighbor_list;
 
 public:
     particle(options const& vm);
@@ -55,7 +56,7 @@ public:
     /** types */
     std::vector<unsigned int> type;
     /** neighbor lists */
-    std::vector<std::vector<unsigned int> > neighbor;
+    std::vector<neighbor_list> neighbor;
 
     /** number of particles in simulation box */
     using _Base::nbox;
