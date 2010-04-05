@@ -35,7 +35,7 @@ class box
 {
 public:
     typedef vector<float_type, dimension> vector_type;
-    typedef boost::shared_ptr<particle<dimension, float_type> > particle_ptr;
+    typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
 
 public:
     box(particle_ptr const& particle, options const& vm);

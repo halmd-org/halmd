@@ -41,9 +41,9 @@ public:
     typedef vector<float_type, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::upper> matrix_type;
 
-    typedef particle<dimension, float_type> particle_type;
+    typedef host::particle<dimension, float_type> particle_type;
     typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
-    typedef box<dimension, float_type> box_type;
+    typedef mdsim::box<dimension, float_type> box_type;
     typedef boost::shared_ptr<mdsim::box<dimension, float_type> > box_ptr;
 
 public:
