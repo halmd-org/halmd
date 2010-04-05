@@ -296,7 +296,7 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, vector<T, 3> const& v)
     {
-        os << v[0] << "\t" << v[1] << "\t" << v[2];
+        os << v[0] << " " << v[1] << " " << v[2];
         return os;
     }
 
