@@ -33,7 +33,7 @@ namespace halmd { namespace mdsim
  * Set box edge lengths
  */
 template <int dimension, typename float_type>
-box<dimension, float_type>::box(particle_ptr const& particle, options const& vm)
+box<dimension, float_type>::box(particle_ptr particle, options const& vm)
     // dependency injection
     : particle(particle)
     // default to cube

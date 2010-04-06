@@ -44,13 +44,13 @@ public:
 
 public:
     /** positions, reduced to extended domain box */
-    std::vector<vector_type > r;
+    std::vector<vector_type> r;
     /** minimum image vectors */
-    std::vector<vector<int, dimension> > image;
+    std::vector<vector_type> image;
     /** velocities */
-    std::vector<vector_type > v;
+    std::vector<vector_type> v;
     /** forces */
-    std::vector<vector_type > f;
+    std::vector<vector_type> f;
     /** globally unique particle numbers */
     std::vector<unsigned int> tag;
     /** types */

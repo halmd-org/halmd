@@ -38,7 +38,7 @@ public:
     typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
 
 public:
-    box(particle_ptr const& particle, options const& vm);
+    box(particle_ptr particle, options const& vm);
     virtual ~box() {}
 
     void length(vector_type const& value_type);

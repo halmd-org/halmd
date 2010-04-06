@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_FORCES_LJ_HPP
-#define HALMD_MDSIM_HOST_FORCES_LJ_HPP
+#ifndef HALMD_MDSIM_HOST_VERLET_HPP
+#define HALMD_MDSIM_HOST_VERLET_HPP
 
 #include <boost/shared_ptr.hpp>
 
@@ -27,56 +27,52 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/integrator.hpp>
+#include <halmd/mdsim/neighbor.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace forces
+namespace halmd { namespace mdsim { namespace host { namespace integrator
 {
 
 template <int dimension, typename float_type>
-class lj : public force<dimension, float_type>
+class verlet : public mdsim::integrator<dimension, float_type>
 {
 public:
-    typedef force<dimension, float_type> _Base;
+    typedef mdsim::integrator<dimension, float_type> _Base;
     typedef vector<float_type, dimension> vector_type;
-    typedef typename _Base::matrix_type matrix_type;
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
     typedef mdsim::box<dimension, float_type> box_type;
     typedef boost::shared_ptr<mdsim::box<dimension, float_type> > box_ptr;
+    typedef mdsim::force<dimension, float_type> force_type;
+    typedef boost::shared_ptr<mdsim::force<dimension, float_type> > force_ptr;
+    typedef mdsim::neighbor<dimension, float_type> neighbor_type;
+    typedef boost::shared_ptr<mdsim::neighbor<dimension, float_type> > neighbor_ptr;
 
 public:
-    lj(particle_ptr particle, box_ptr box, options const& vm);
-    virtual ~lj() {}
-    virtual void compute();
-    matrix_type const& cutoff() { return r_cut_; }
+    verlet(particle_ptr particle, box_ptr box, force_ptr force, neighbor_ptr neighbor, options const& vm);
+    virtual ~verlet() {}
+    void integrate(uint64_t steps);
+    float_type timestep() { return timestep_; }
 
 public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<neighbor_type> neighbor;
 
 protected:
-    /** potential well depths in MD units */
-    matrix_type epsilon_;
-    /** pair separation in MD units */
-    matrix_type sigma_;
-    /** cutoff length in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
-    matrix_type r_cut_;
-    /** square of cutoff length */
-    matrix_type rr_cut_;
-    /** square of pair separation */
-    matrix_type sigma2_;
-    /** potential energy at cutoff length in MD units */
-    matrix_type en_cut_;
+    void pre_force();
+    void post_force();
 
-    /** average potential energy per particle */
-    using _Base::en_pot_;
-    /** average virial per particle for each particle types */
-    using _Base::virial_;
+protected:
+    /** integration time-step */
+    float_type timestep_;
+    /** half time-step */
+    float_type timestep_half_;
 };
 
-}}}} // namespace halmd::mdsim::host::forces
+}}}} // namespace halmd::mdsim::host::integrator
 
-#endif /* ! HALMD_MDSIM_HOST_FORCES_LJ_HPP */
+#endif /* ! HALMD_MDSIM_HOST_VERLET_HPP */

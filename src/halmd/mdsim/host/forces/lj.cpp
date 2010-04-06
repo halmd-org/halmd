@@ -35,7 +35,7 @@ namespace halmd { namespace mdsim { namespace host { namespace forces
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-lj<dimension, float_type>::lj(particle_ptr const& particle, box_ptr const& box, options const& vm)
+lj<dimension, float_type>::lj(particle_ptr particle, box_ptr box, options const& vm)
     // dependency injection
     : particle(static_pointer_cast<particle_type>(particle))
     , box(static_pointer_cast<box_type>(box))
@@ -97,8 +97,8 @@ void lj<dimension, float_type>::compute()
     // virial equation sum
     std::fill(virial_.begin(), virial_.end(), 0);
 
-    vector_type bl = box->length();
-    vector_type bl_half = static_cast<float_type>(0.5) * bl;
+    vector_type L = box->length();
+    vector_type L_half = static_cast<float_type>(0.5) * L;
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbor particles
@@ -110,11 +110,11 @@ void lj<dimension, float_type>::compute()
             size_t b = particle->type[j];
             // enforce periodic boundary conditions
             for (size_t k = 0; k < dimension; ++k) {
-                if (r[k] > bl_half[k]) {
-                    r[k] -= bl[k];
+                if (r[k] > L_half[k]) {
+                    r[k] -= L[k];
                 }
-                else if (r[k] < -bl_half[k]) {
-                    r[k] += bl[k];
+                else if (r[k] < -L_half[k]) {
+                    r[k] += L[k];
                 }
             }
             // squared particle distance

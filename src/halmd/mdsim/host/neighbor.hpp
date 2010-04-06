@@ -62,6 +62,7 @@ public:
     neighbor(particle_ptr particle, force_ptr force, box_ptr box, options const& vm);
     virtual ~neighbor() {}
     void update();
+    bool check();
 
 public:
     boost::shared_ptr<particle_type> particle;
@@ -86,6 +87,10 @@ protected:
     cell_index ncell_;
     /** cell edge lengths */
     vector_type cell_length_;
+    /** half neighbor list skin */
+    float_type r_skin_half_;
+    /** particle positions at last neighbour list update */
+    std::vector<vector_type> r0_;
 };
 
 }}} // namespace halmd::mdsim::host

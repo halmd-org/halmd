@@ -39,6 +39,7 @@ neighbor<dimension, float_type>::neighbor(particle_ptr particle, force_ptr force
     , box(static_pointer_cast<box_type>(box))
     // allocate parameters
     , rr_cut_skin_(particle->ntype, particle->ntype)
+    , r0_(particle->nbox)
 {
     // parse options
     r_skin_ = vm["skin"].as<float>();
@@ -53,17 +54,18 @@ neighbor<dimension, float_type>::neighbor(particle_ptr particle, force_ptr force
             r_cut_max = max(r_cut_skin(i, j), r_cut_max);
         }
     }
-    vector_type bl = box->length();
+    vector_type L = box->length();
     for (size_t i = 0; i < dimension; ++i) {
-        ncell_[i] = static_cast<size_t>(bl[i] / r_cut_max);
+        ncell_[i] = static_cast<size_t>(L[i] / r_cut_max);
     }
     if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
         throw logic_error("less than least 3 cells per dimension");
     }
     cell_.resize(ncell_);
     for (size_t i = 0; i < dimension; ++i) {
-        cell_length_[i] = bl[i] / ncell_[i];
+        cell_length_[i] = L[i] / ncell_[i];
     }
+    r_skin_half_ = r_skin_ / 2;
 
     LOG("neighbor list skin: " << r_skin_);
     LOG("number of cells per dimension: " << ncell_);
@@ -89,6 +91,21 @@ void neighbor<dimension, float_type>::update()
             }
         }
     }
+    copy(particle->r.begin(), particle->r.end(), r0_.begin());
+}
+
+/**
+ * Check if neighbour list update is needed
+ */
+template <int dimension, typename float_type>
+bool neighbor<dimension, float_type>::check()
+{
+    float_type rr_max = 0;
+    for (size_t i = 0; i < particle->nbox; ++i) {
+        vector_type r = particle->r[i] - r0_[i];
+        rr_max = max(rr_max, r * r);
+    }
+    return sqrt(rr_max) > r_skin_half_;
 }
 
 /**
@@ -175,8 +192,8 @@ template <int dimension, typename float_type>
 template <bool same_cell>
 void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list& c)
 {
-    vector_type bl = box->length();
-    vector_type bl_half = static_cast<float_type>(0.5) * bl;
+    vector_type L = box->length();
+    vector_type L_half = static_cast<float_type>(0.5) * L;
 
     BOOST_FOREACH(size_t j, c) {
         // skip identical particle and particle pair permutations if same cell
@@ -190,11 +207,11 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
         size_t b = particle->type[j];
         // enforce periodic boundary conditions
         for (size_t k = 0; k < dimension; ++k) {
-            if (r[k] > bl_half[k]) {
-                r[k] -= bl[k];
+            if (r[k] > L_half[k]) {
+                r[k] -= L[k];
             }
-            else if (r[k] < -bl_half[k]) {
-                r[k] += bl[k];
+            else if (r[k] < -L_half[k]) {
+                r[k] += L[k];
             }
         }
         // squared particle distance

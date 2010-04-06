@@ -17,23 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_NEIGHBOR_HPP
-#define HALMD_MDSIM_NEIGHBOR_HPP
+#ifndef HALMD_MDSIM_INTEGRATOR_HPP
+#define HALMD_MDSIM_INTEGRATOR_HPP
 
-#include <halmd/options.hpp>
+#include <halmd/math/vector2d.hpp>
+#include <halmd/math/vector3d.hpp>
 
 namespace halmd { namespace mdsim
 {
 
 template <int dimension, typename float_type>
-class neighbor
+class integrator
 {
 public:
-    virtual ~neighbor() {}
-    virtual void update() = 0;
-    virtual bool check() = 0;
+    typedef vector<float_type, dimension> vector_type;
+
+public:
+    virtual ~integrator() {}
+    virtual void integrate(uint64_t steps) = 0;
 };
 
 }} // namespace halmd::mdsim
 
-#endif /* ! HALMD_MDSIM_NEIGHBOR_HPP */
+#endif /* ! HALMD_MDSIM_INTEGRATOR_HPP */
