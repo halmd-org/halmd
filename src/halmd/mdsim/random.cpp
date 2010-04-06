@@ -17,22 +17,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_NEIGHBOR_HPP
-#define HALMD_MDSIM_NEIGHBOR_HPP
+#include <fstream>
 
-#include <halmd/options.hpp>
+#include <halmd/mdsim/random.hpp>
+#include <halmd/util/log.hpp>
+
+using namespace std;
 
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-class neighbor
+/**
+ * Obtain integer seed from file
+ */
+unsigned int random::readint(std::string const& file)
 {
-public:
-    virtual ~neighbor() {}
-    virtual void update() = 0;
-};
+    LOG("reading 32-bit integer seed from " << file);
+    unsigned int seed;
+    try {
+        ifstream f;
+        f.exceptions(ifstream::eofbit|ifstream::failbit|ifstream::badbit);
+        f.open(file.c_str());
+        f.read(reinterpret_cast<char*>(&seed), sizeof(seed));
+        f.close();
+    }
+    catch (ifstream::failure const& e) {
+        throw logic_error("failed to read from " + file);
+    }
+    return seed;
+}
 
 }} // namespace halmd::mdsim
-
-#endif /* ! HALMD_MDSIM_NEIGHBOR_HPP */

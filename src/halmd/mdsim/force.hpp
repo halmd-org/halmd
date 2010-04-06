@@ -39,7 +39,7 @@ public:
     typedef vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
 
 public:
-    virtual ~force() {};
+    virtual ~force() {}
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;
 

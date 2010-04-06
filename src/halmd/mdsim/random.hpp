@@ -17,22 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_NEIGHBOR_HPP
-#define HALMD_MDSIM_NEIGHBOR_HPP
+#ifndef HALMD_MDSIM_RANDOM_HPP
+#define HALMD_MDSIM_RANDOM_HPP
 
+#include <halmd/math/vector2d.hpp>
+#include <halmd/math/vector3d.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-class neighbor
+class random
 {
 public:
-    virtual ~neighbor() {}
-    virtual void update() = 0;
+    virtual ~random() {}
+    virtual void seed(unsigned int value) = 0;
+
+protected:
+    unsigned int readint(std::string const& fn);
 };
 
 }} // namespace halmd::mdsim
 
-#endif /* ! HALMD_MDSIM_NEIGHBOR_HPP */
+#endif /* ! HALMD_MDSIM_RANDOM_HPP */

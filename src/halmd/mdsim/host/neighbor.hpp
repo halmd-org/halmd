@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *

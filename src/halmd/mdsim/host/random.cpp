@@ -17,22 +17,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_NEIGHBOR_HPP
-#define HALMD_MDSIM_NEIGHBOR_HPP
+#include <halmd/mdsim/host/random.hpp>
+#include <halmd/util/log.hpp>
 
-#include <halmd/options.hpp>
+using namespace boost;
+using namespace std;
 
-namespace halmd { namespace mdsim
+namespace halmd { namespace mdsim { namespace host
 {
 
-template <int dimension, typename float_type>
-class neighbor
+random::random(options const& vm)
 {
-public:
-    virtual ~neighbor() {}
-    virtual void update() = 0;
-};
+    if (vm["random-seed"].empty()) {
+        seed(readint(vm["random-device"].as<std::string>()));
+    }
+    else {
+        seed(vm["random-seed"].as<unsigned int>());
+    }
+}
 
-}} // namespace halmd::mdsim
+void random::seed(unsigned int value)
+{
+    LOG("random number generator seed: " << value);
+    rng_.seed(value);
+}
 
-#endif /* ! HALMD_MDSIM_NEIGHBOR_HPP */
+}}} // namespace halmd::mdsim::host
