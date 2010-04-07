@@ -34,9 +34,9 @@ namespace halmd { namespace mdsim { namespace host
 template <int dimension, typename float_type>
 neighbor<dimension, float_type>::neighbor(particle_ptr particle, force_ptr force, box_ptr box, options const& vm)
     // dependency injection
-    : particle(static_pointer_cast<particle_type>(particle))
-    , force(static_pointer_cast<force_type>(force))
-    , box(static_pointer_cast<box_type>(box))
+    : particle(dynamic_pointer_cast<particle_type>(particle))
+    , force(dynamic_pointer_cast<force_type>(force))
+    , box(dynamic_pointer_cast<box_type>(box))
     // allocate parameters
     , rr_cut_skin_(particle->ntype, particle->ntype)
     , r0_(particle->nbox)

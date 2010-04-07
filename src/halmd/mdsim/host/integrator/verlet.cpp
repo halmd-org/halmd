@@ -32,10 +32,10 @@ namespace halmd { namespace mdsim { namespace host { namespace integrator
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(particle_ptr particle, box_ptr box, force_ptr force, neighbor_ptr neighbor, options const& vm)
     // dependency injection
-    : particle(static_pointer_cast<particle_type>(particle))
-    , box(static_pointer_cast<box_type>(box))
-    , force(static_pointer_cast<force_type>(force))
-    , neighbor(static_pointer_cast<neighbor_type>(neighbor))
+    : particle(dynamic_pointer_cast<particle_type>(particle))
+    , box(dynamic_pointer_cast<box_type>(box))
+    , force(dynamic_pointer_cast<force_type>(force))
+    , neighbor(dynamic_pointer_cast<neighbor_type>(neighbor))
 {
     // parse options
     timestep_ = vm["timestep"].as<double>();

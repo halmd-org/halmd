@@ -29,8 +29,8 @@ using namespace std;
 template <int dimension, typename float_type>
 boltzmann<dimension, float_type>::boltzmann(particle_ptr particle, random_ptr random, options const& vm)
     // dependency injection
-    : particle(static_pointer_cast<particle_type>(particle))
-    , random(static_pointer_cast<random_type>(random))
+    : particle(dynamic_pointer_cast<particle_type>(particle))
+    , random(dynamic_pointer_cast<random_type>(random))
 {
     // parse options
     temp_ = vm["temperature"].as<float>();

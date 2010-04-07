@@ -36,9 +36,9 @@ using namespace std;
 template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(particle_ptr particle, box_ptr box, random_ptr random, options const& vm)
     // dependency injection
-    : particle(static_pointer_cast<particle_type>(particle))
-    , box(static_pointer_cast<box_type>(box))
-    , random(static_pointer_cast<random_type>(random))
+    : particle(dynamic_pointer_cast<particle_type>(particle))
+    , box(dynamic_pointer_cast<box_type>(box))
+    , random(dynamic_pointer_cast<random_type>(random))
 {
     // parse options
     if (!vm["binary"].empty() && vm["particles"].defaulted()) {
