@@ -33,8 +33,6 @@ namespace halmd { namespace algorithm { namespace host
  *   Donald E. Knuth, Selected Papers on Analysis of Algorithms
  *   (Stanford, California: Center for the Study of Language and
  *   Information - CSLI Lecture Notes, no. 102), 2000.
- *
- * Note that the algorithm also *modifies* the index sequence.
  */
 template <typename input_iterator, typename index_iterator>
 void permute(input_iterator first, input_iterator last, index_iterator index)
@@ -42,16 +40,16 @@ void permute(input_iterator first, input_iterator last, index_iterator index)
     typedef typename input_iterator::difference_type difference_type;
     typedef typename input_iterator::value_type value_type;
 
+    std::vector<bool> follower(last - first, false);
     for (difference_type i = 0; i < last - first; ++i) {
-        if (*(index + i) != i) {
+        if (!follower[i]) {
             value_type temp = *(first + i);
             difference_type j = i;
             for (difference_type k = *(index + j); k != i; j = k, k = *(index + j)) {
                 *(first + j) = *(first + k);
-                *(index + j) = j;
+                follower[k] = true;
             }
             *(first + j) = temp;
-            *(index + j) = j;
         }
     }
 }
