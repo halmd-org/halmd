@@ -36,13 +36,12 @@ class particle : public mdsim::particle<dimension, float_type>
 public:
     typedef mdsim::particle<dimension, float_type> _Base;
     typedef vector<float_type, dimension> vector_type;
-    typedef std::vector<size_t> neighbor_list;
+    typedef std::vector<unsigned int> neighbor_list;
 
-public:
     particle(options const& vm);
     virtual ~particle() {}
+    virtual void rearrange(std::vector<unsigned int> const& index);
 
-public:
     /** positions, reduced to extended domain box */
     std::vector<vector_type> r;
     /** minimum image vectors */

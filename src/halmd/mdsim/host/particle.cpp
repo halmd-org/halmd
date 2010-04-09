@@ -21,6 +21,7 @@
 #include <exception>
 #include <numeric>
 
+#include <halmd/algorithm/host/permute.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/util/log.hpp>
 
@@ -42,6 +43,22 @@ particle<dimension, float_type>::particle(options const& vm)
     , type(nbox)
     , neighbor(nbox)
 {
+}
+
+/**
+ * Rearrange particles in memory according to an integer index sequence
+ *
+ * The neighbor lists must be rebuilt after calling this function!
+ */
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const& index)
+{
+    algorithm::host::permute(r.begin(), r.end(), index.begin());
+    algorithm::host::permute(image.begin(), image.end(), index.begin());
+    algorithm::host::permute(v.begin(), v.end(), index.begin());
+    algorithm::host::permute(f.begin(), f.end(), index.begin());
+    algorithm::host::permute(tag.begin(), tag.end(), index.begin());
+    algorithm::host::permute(type.begin(), type.end(), index.begin());
 }
 
 // explicit instantiation

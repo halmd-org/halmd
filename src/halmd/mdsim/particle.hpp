@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_PARTICLE_HPP
 #define HALMD_MDSIM_PARTICLE_HPP
 
+#include <vector>
+
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -32,7 +34,6 @@ public:
     particle(options const& vm);
     virtual ~particle() {}
 
-public:
     /** number of particles in simulation box */
     unsigned int nbox;
     /** number of particle types */
