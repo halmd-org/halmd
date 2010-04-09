@@ -1,5 +1,6 @@
 add_library(halmd_mdsim
   box.cpp
+  force.cpp
   particle.cpp
   random.cpp
   )

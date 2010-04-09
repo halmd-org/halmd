@@ -36,8 +36,9 @@ namespace halmd { namespace mdsim { namespace host { namespace forces
  */
 template <int dimension, typename float_type>
 lj<dimension, float_type>::lj(particle_ptr particle, box_ptr box, options const& vm)
+    : _Base(particle)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(particle))
+    , particle(dynamic_pointer_cast<particle_type>(particle))
     , box(dynamic_pointer_cast<box_type>(box))
     // allocate potential parameters
     , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
