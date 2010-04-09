@@ -72,6 +72,7 @@ configure_file(
 
 set(HALMD_COMMON_LIBRARIES
   -Wl,-whole-archive
+  halmd_mdsim
   util
   sample_common
   -Wl,-no-whole-archive

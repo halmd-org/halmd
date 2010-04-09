@@ -30,6 +30,7 @@
 # include <cuda_wrapper.hpp>
 #endif
 #include <halmd/mdlib.hpp>
+#include <halmd/mdsim/core.hpp>
 #include <halmd/options.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
@@ -127,7 +128,16 @@ int main(int argc, char **argv)
         }
 
         // run MD simulation
-        status_ = mdlib.mdsim(opt);
+        int const dimension = opt["dimension"].as<int>();
+        if (dimension == 3) {
+            halmd::mdsim::core<3, double> core(opt);
+        }
+        else if (dimension == 2) {
+            halmd::mdsim::core<2, double> core(opt);
+        }
+        else {
+            throw logic_error("invalid dimension: " + lexical_cast<string>(dimension));
+        }
 #ifdef NDEBUG
     }
 #ifdef WITH_CUDA
