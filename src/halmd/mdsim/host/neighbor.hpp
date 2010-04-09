@@ -58,25 +58,21 @@ public:
 
     typedef typename force_type::matrix_type matrix_type;
 
-public:
     neighbor(particle_ptr particle, force_ptr force, box_ptr box, options const& vm);
     virtual ~neighbor() {}
     void update();
     bool check();
 
-public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
 
 protected:
     void update_cells();
-    cell_list& compute_cell(vector_type const& r);
     void update_cell_neighbors(cell_index const& i);
     template <bool same_cell>
     void compute_cell_neighbors(size_t i, cell_list& c);
 
-protected:
     /** neighbor list skin in MD units */
     float_type r_skin_;
     /** (cutoff lengths + neighbor list skin)² */
@@ -89,7 +85,7 @@ protected:
     vector_type cell_length_;
     /** half neighbor list skin */
     float_type r_skin_half_;
-    /** particle positions at last neighbour list update */
+    /** particle positions at last neighbor list update */
     std::vector<vector_type> r0_;
 };
 

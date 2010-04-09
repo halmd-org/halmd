@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <exception>
@@ -78,6 +79,9 @@ neighbor<dimension, float_type>::neighbor(particle_ptr particle, force_ptr force
 template <int dimension, typename float_type>
 void neighbor<dimension, float_type>::update()
 {
+    // rebuild cell lists
+    update_cells();
+    // rebuild neighbor lists
     cell_index i;
     for (i[0] = 0; i[0] < ncell_[0]; ++i[0]) {
         for (i[1] = 0; i[1] < ncell_[1]; ++i[1]) {
@@ -91,11 +95,12 @@ void neighbor<dimension, float_type>::update()
             }
         }
     }
+    // make snapshot of absolute particle displacements
     copy(particle->r.begin(), particle->r.end(), r0_.begin());
 }
 
 /**
- * Check if neighbour list update is needed
+ * Check if neighbor list update is needed
  */
 template <int dimension, typename float_type>
 bool neighbor<dimension, float_type>::check()
@@ -115,27 +120,16 @@ template <int dimension, typename float_type>
 void neighbor<dimension, float_type>::update_cells()
 {
     // empty cell lists without memory reallocation
-    BOOST_FOREACH(cell_list& c, make_iterator_range(cell_.data(), cell_.data() + cell_.num_elements())) {
-        c.clear();
-    }
+    for_each(cell_.data(), cell_.data() + cell_.num_elements(), bind(&cell_list::clear, _1));
     // add particles to cells
     for (size_t i = 0; i < particle->nbox; ++i) {
-        compute_cell(particle->r[i]).push_back(i);
+        vector_type const& r = particle->r[i];
+        cell_index index;
+        for (size_t j = 0; j < dimension; ++j) {
+            index[j] = static_cast<size_t>(r[j] / cell_length_[j]) % ncell_[j];
+        }
+        cell_(index).push_back(i);
     }
-}
-
-/**
- * Returns cell list which a particle belongs to
- */
-template <int dimension, typename float_type>
-typename neighbor<dimension, float_type>::cell_list&
-neighbor<dimension, float_type>::compute_cell(vector_type const& r)
-{
-    cell_index i;
-    for (size_t j = 0; j < dimension; ++j) {
-        i[j] = static_cast<size_t>(r[j] / cell_length_[j]) % ncell_[j];
-    }
-    return cell_(i);
 }
 
 /**
