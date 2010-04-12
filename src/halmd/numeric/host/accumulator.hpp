@@ -108,7 +108,7 @@ public:
      */
     T var() const
     {
-        if (n_ < 2) {
+        if (n_ < 1) {
             return std::numeric_limits<T>::quiet_NaN();
         }
         return v_ / n_;
@@ -119,7 +119,7 @@ public:
      */
     T std() const
     {
-        if (n_ < 2) {
+        if (n_ < 1) {
             return std::numeric_limits<T>::quiet_NaN();
         }
         return std::sqrt(v_ / n_);
