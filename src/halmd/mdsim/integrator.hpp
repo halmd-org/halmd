@@ -34,7 +34,9 @@ public:
 
 public:
     virtual ~integrator() {}
-    virtual void integrate(uint64_t steps) = 0;
+    virtual void integrate() = 0;
+    virtual void finalize() = 0;
+    virtual float_type timestep() = 0;
 };
 
 }} // namespace halmd::mdsim

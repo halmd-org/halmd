@@ -20,6 +20,17 @@
 #ifndef HALMD_MDSIM_CORE_HPP
 #define HALMD_MDSIM_CORE_HPP
 
+#include <boost/shared_ptr.hpp>
+
+#include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/force.hpp>
+#include <halmd/mdsim/hook.hpp>
+#include <halmd/mdsim/integrator.hpp>
+#include <halmd/mdsim/neighbor.hpp>
+#include <halmd/mdsim/particle.hpp>
+#include <halmd/mdsim/position.hpp>
+#include <halmd/mdsim/random.hpp>
+#include <halmd/mdsim/velocity.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -30,6 +41,24 @@ class core
 {
 public:
     core(options const& vm);
+    void run();
+    uint64_t steps() { return steps_; }
+    double time() { return time_; }
+
+    boost::shared_ptr<mdsim::particle<dimension, float_type> > particle;
+    boost::shared_ptr<mdsim::box<dimension, float_type> > box;
+    boost::shared_ptr<mdsim::force<dimension, float_type> > force;
+    boost::shared_ptr<mdsim::neighbor<dimension, float_type> > neighbor;
+    boost::shared_ptr<mdsim::random> random;
+    boost::shared_ptr<mdsim::integrator<dimension, float_type> > integrator;
+    boost::shared_ptr<mdsim::position<dimension, float_type> > position;
+    boost::shared_ptr<mdsim::velocity<dimension, float_type> > velocity;
+
+private:
+    /** number of integration steps */
+    uint64_t steps_;
+    /** integration time in MD units */
+    double time_;
 };
 
 }} // namespace halmd::mdsim

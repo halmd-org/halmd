@@ -50,21 +50,16 @@ public:
     typedef mdsim::neighbor<dimension, float_type> neighbor_type;
     typedef boost::shared_ptr<mdsim::neighbor<dimension, float_type> > neighbor_ptr;
 
-public:
     verlet(particle_ptr particle, box_ptr box, force_ptr force, neighbor_ptr neighbor, options const& vm);
     virtual ~verlet() {}
-    void integrate(uint64_t steps);
+    void integrate();
+    void finalize();
     float_type timestep() { return timestep_; }
 
-public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<neighbor_type> neighbor;
-
-protected:
-    void pre_force();
-    void post_force();
 
 protected:
     /** integration time-step */

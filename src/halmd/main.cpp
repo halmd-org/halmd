@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 #endif
 
     // print command line
-    vector<string> cmd(argv, argv + argc);
+    std::vector<string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
     LOG("MD simulation backend: " << mdlib.backend());
@@ -131,9 +131,11 @@ int main(int argc, char **argv)
         int const dimension = opt["dimension"].as<int>();
         if (dimension == 3) {
             halmd::mdsim::core<3, double> core(opt);
+            core.run();
         }
         else if (dimension == 2) {
             halmd::mdsim::core<2, double> core(opt);
+            core.run();
         }
         else {
             throw logic_error("invalid dimension: " + lexical_cast<string>(dimension));

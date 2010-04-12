@@ -43,26 +43,11 @@ verlet<dimension, float_type>::verlet(particle_ptr particle, box_ptr box, force_
     LOG("integration timestep: " << timestep_);
 }
 
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::integrate(uint64_t steps)
-{
-    neighbor->update();
-    force->compute();
-    for (uint64_t i = 0; i < steps; ++i) {
-        pre_force();
-        if (neighbor->check()) {
-            neighbor->update();
-        }
-        force->compute();
-        post_force();
-    }
-}
-
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type>
-void verlet<dimension, float_type>::pre_force()
+void verlet<dimension, float_type>::integrate()
 {
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type& v = particle->v[i] += particle->f[i] * timestep_half_;
@@ -88,7 +73,7 @@ void verlet<dimension, float_type>::pre_force()
  * Second leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type>
-void verlet<dimension, float_type>::post_force()
+void verlet<dimension, float_type>::finalize()
 {
     for (size_t i = 0; i < particle->nbox; ++i) {
         particle->v[i] += particle->f[i] * timestep_half_;
