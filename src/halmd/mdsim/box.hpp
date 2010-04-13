@@ -36,7 +36,7 @@ class box
 {
 public:
     typedef vector<double, dimension> vector_type;
-    typedef particle<dimension> particle_type;
+    typedef mdsim::particle<dimension> particle_type;
 
 public:
     box(options const& vm);
