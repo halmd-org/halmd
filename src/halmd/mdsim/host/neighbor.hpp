@@ -37,6 +37,12 @@
 namespace halmd { namespace mdsim { namespace host
 {
 
+namespace sort
+{
+template <int dimension, typename float_type>
+class hilbert;
+}
+
 template <int dimension, typename float_type>
 class neighbor : public mdsim::neighbor<dimension>
 {
@@ -65,6 +71,8 @@ public:
     boost::shared_ptr<box_type> box;
 
 protected:
+    friend class sort::hilbert<dimension, float_type>;
+
     void update_cells();
     void update_cell_neighbors(cell_index const& i);
     template <bool same_cell>

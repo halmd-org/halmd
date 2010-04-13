@@ -35,6 +35,7 @@ template <int dimension>
 core<dimension>::core(options const& vm)
   : force(module<mdsim::force<dimension> >::fetch(vm))
   , neighbor(module<mdsim::neighbor<dimension> >::fetch(vm))
+  , sort(module<mdsim::sort<dimension> >::fetch(vm))
   , integrator(module<mdsim::integrator<dimension> >::fetch(vm))
   , position(module<mdsim::position<dimension> >::fetch(vm))
   , velocity(module<mdsim::velocity<dimension> >::fetch(vm))
@@ -69,6 +70,7 @@ void core<dimension>::run()
     for (uint64_t i = 0; i < steps_; ++i) {
         integrator->integrate();
         if (neighbor->check()) {
+            sort->order();
             neighbor->update();
         }
         force->compute();

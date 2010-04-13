@@ -26,6 +26,7 @@
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/mdsim/neighbor.hpp>
 #include <halmd/mdsim/position.hpp>
+#include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/options.hpp>
 
@@ -43,6 +44,7 @@ public:
 
     boost::shared_ptr<mdsim::force<dimension> > force;
     boost::shared_ptr<mdsim::neighbor<dimension> > neighbor;
+    boost::shared_ptr<mdsim::sort<dimension> > sort;
     boost::shared_ptr<mdsim::integrator<dimension> > integrator;
     boost::shared_ptr<mdsim::position<dimension> > position;
     boost::shared_ptr<mdsim::velocity<dimension> > velocity;

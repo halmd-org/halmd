@@ -7,6 +7,7 @@ add_library(halmd_mdsim
   particle.cpp
   position.cpp
   random.cpp
+  sort.cpp
   velocity.cpp
   )
 target_link_libraries(halmd_mdsim
