@@ -33,15 +33,15 @@ namespace halmd { namespace mdsim { namespace host { namespace forces
 {
 
 template <int dimension, typename float_type>
-class lj : public force<dimension, float_type>
+class lj : public mdsim::force<dimension>
 {
 public:
-    typedef force<dimension, float_type> _Base;
+    typedef mdsim::force<dimension> _Base;
     typedef vector<float_type, dimension> vector_type;
     typedef typename _Base::matrix_type matrix_type;
 
     typedef host::particle<dimension, float_type> particle_type;
-    typedef mdsim::box<dimension, float_type> box_type;
+    typedef mdsim::box<dimension> box_type;
 
 public:
     lj(options const& vm);

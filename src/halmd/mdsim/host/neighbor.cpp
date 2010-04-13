@@ -36,9 +36,9 @@ template <int dimension, typename float_type>
 neighbor<dimension, float_type>::neighbor(options const& vm)
     : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension, float_type> >::fetch(vm)))
-    , force(dynamic_pointer_cast<force_type>(factory<mdsim::force<dimension, float_type> >::fetch(vm)))
-    , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension, float_type> >::fetch(vm)))
+    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
+    , force(dynamic_pointer_cast<force_type>(factory<mdsim::force<dimension> >::fetch(vm)))
+    , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension> >::fetch(vm)))
     // allocate parameters
     , rr_cut_skin_(particle->ntype, particle->ntype)
     , r0_(particle->nbox)
@@ -48,7 +48,7 @@ neighbor<dimension, float_type>::neighbor(options const& vm)
 
     matrix_type r_cut = force->cutoff();
     matrix_type r_cut_skin(particle->ntype, particle->ntype);
-    float_type r_cut_max = 0;
+    typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle->ntype; ++i) {
         for (size_t j = i; j < particle->ntype; ++j) {
             r_cut_skin(i, j) = r_cut(i, j) + r_skin_;

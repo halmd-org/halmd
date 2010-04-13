@@ -28,25 +28,25 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
+template <int dimension>
 class integrator
 {
 public:
-    typedef vector<float_type, dimension> vector_type;
+    typedef vector<double, dimension> vector_type;
 
 public:
     integrator(options const& vm) {}
     virtual ~integrator() {}
     virtual void integrate() = 0;
     virtual void finalize() = 0;
-    virtual float_type timestep() = 0;
+    virtual double timestep() = 0;
 };
 
-template <int dimension, typename float_type>
-class factory<integrator<dimension, float_type> >
+template <int dimension>
+class factory<integrator<dimension> >
 {
 public:
-    typedef boost::shared_ptr<integrator<dimension, float_type> > integrator_ptr;
+    typedef boost::shared_ptr<integrator<dimension> > integrator_ptr;
     static integrator_ptr fetch(options const& vm);
 
 private:

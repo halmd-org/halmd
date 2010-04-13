@@ -33,10 +33,10 @@ template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(options const& vm)
     : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension, float_type> >::fetch(vm)))
-    , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension, float_type> >::fetch(vm)))
-    , force(dynamic_pointer_cast<force_type>(factory<mdsim::force<dimension, float_type> >::fetch(vm)))
-    , neighbor(dynamic_pointer_cast<neighbor_type>(factory<mdsim::neighbor<dimension, float_type> >::fetch(vm)))
+    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
+    , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension> >::fetch(vm)))
+    , force(dynamic_pointer_cast<force_type>(factory<mdsim::force<dimension> >::fetch(vm)))
+    , neighbor(dynamic_pointer_cast<neighbor_type>(factory<mdsim::neighbor<dimension> >::fetch(vm)))
 {
     // parse options
     timestep_ = vm["timestep"].as<double>();
@@ -51,8 +51,8 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& v = particle->v[i] += particle->f[i] * timestep_half_;
-        vector_type& r = particle->r[i] += v * timestep_;
+        vector_type& v = particle->v[i] += particle->f[i] * static_cast<float_type>(timestep_half_);
+        vector_type& r = particle->r[i] += v * static_cast<float_type>(timestep_);
         vector_type L = box->length();
         vector_type& image = particle->image[i];
         // enforce periodic boundary conditions
@@ -77,7 +77,7 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
     for (size_t i = 0; i < particle->nbox; ++i) {
-        particle->v[i] += particle->f[i] * timestep_half_;
+        particle->v[i] += particle->f[i] * static_cast<float_type>(timestep_half_);
     }
 }
 

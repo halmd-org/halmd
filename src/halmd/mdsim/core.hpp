@@ -32,7 +32,7 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
+template <int dimension>
 class core
 {
 public:
@@ -41,11 +41,11 @@ public:
     uint64_t steps() { return steps_; }
     double time() { return time_; }
 
-    boost::shared_ptr<mdsim::force<dimension, float_type> > force;
-    boost::shared_ptr<mdsim::neighbor<dimension, float_type> > neighbor;
-    boost::shared_ptr<mdsim::integrator<dimension, float_type> > integrator;
-    boost::shared_ptr<mdsim::position<dimension, float_type> > position;
-    boost::shared_ptr<mdsim::velocity<dimension, float_type> > velocity;
+    boost::shared_ptr<mdsim::force<dimension> > force;
+    boost::shared_ptr<mdsim::neighbor<dimension> > neighbor;
+    boost::shared_ptr<mdsim::integrator<dimension> > integrator;
+    boost::shared_ptr<mdsim::position<dimension> > position;
+    boost::shared_ptr<mdsim::velocity<dimension> > velocity;
 
 private:
     /** number of integration steps */

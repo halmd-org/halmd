@@ -38,15 +38,15 @@ namespace halmd { namespace mdsim { namespace host
 {
 
 template <int dimension, typename float_type>
-class neighbor : public mdsim::neighbor<dimension, float_type>
+class neighbor : public mdsim::neighbor<dimension>
 {
 public:
-    typedef mdsim::neighbor<dimension, float_type> _Base;
+    typedef mdsim::neighbor<dimension> _Base;
     typedef vector<float_type, dimension> vector_type;
 
     typedef host::particle<dimension, float_type> particle_type;
-    typedef mdsim::force<dimension, float_type> force_type;
-    typedef mdsim::box<dimension, float_type> box_type;
+    typedef mdsim::force<dimension> force_type;
+    typedef mdsim::box<dimension> box_type;
 
     typedef typename particle_type::neighbor_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;

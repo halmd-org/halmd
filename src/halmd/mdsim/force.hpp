@@ -33,37 +33,37 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
+template <int dimension>
 class force
 {
 public:
-    typedef vector<float_type, dimension> vector_type;
-    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::upper> matrix_type;
+    typedef vector<double, dimension> vector_type;
+    typedef boost::numeric::ublas::symmetric_matrix<double, boost::numeric::ublas::upper> matrix_type;
     typedef vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
-    typedef mdsim::particle<dimension, float_type> particle_type;
+    typedef mdsim::particle<dimension> particle_type;
 
     force(options const& vm);
     virtual ~force() {}
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;
 
-    float_type en_pot() { return en_pot_; }
+    double en_pot() { return en_pot_; }
     std::vector<virial_type> const& virial() { return virial_; }
 
     boost::shared_ptr<particle_type> particle;
 
 protected:
     /** average potential energy per particle */
-    float_type en_pot_;
+    double en_pot_;
     /** average virial per particle for each particle type */
     std::vector<virial_type> virial_;
 };
 
-template <int dimension, typename float_type>
-class factory<force<dimension, float_type> >
+template <int dimension>
+class factory<force<dimension> >
 {
 public:
-    typedef boost::shared_ptr<force<dimension, float_type> > force_ptr;
+    typedef boost::shared_ptr<force<dimension> > force_ptr;
     static force_ptr fetch(options const& vm);
 
 private:

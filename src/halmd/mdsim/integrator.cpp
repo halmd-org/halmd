@@ -24,26 +24,23 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-boost::shared_ptr<integrator<dimension, float_type> >
-factory<integrator<dimension, float_type> >::fetch(options const& vm)
+template <int dimension>
+boost::shared_ptr<integrator<dimension> >
+factory<integrator<dimension> >::fetch(options const& vm)
 {
     if (!integrator_) {
-        integrator_.reset(new host::integrator::verlet<dimension, float_type>(vm));
+#ifdef USE_HOST_SINGLE_PRECISION
+        integrator_.reset(new host::integrator::verlet<dimension, float>(vm));
+#else
+        integrator_.reset(new host::integrator::verlet<dimension, double>(vm));
+#endif
     }
     return integrator_;
 }
 
-#ifndef USE_HOST_SINGLE_PRECISION
-template <> factory<integrator<3, double> >::integrator_ptr factory<integrator<3, double> >::integrator_ = integrator_ptr();
-template class factory<integrator<3, double> >;
-template <> factory<integrator<2, double> >::integrator_ptr factory<integrator<2, double> >::integrator_ = integrator_ptr();
-template class factory<integrator<2, double> >;
-#else
-template <> factory<integrator<3, float> >::integrator_ptr factory<integrator<3, float> >::integrator_ = integrator_ptr();
-template class factory<integrator<3, float> >;
-template <> factory<integrator<2, float> >::integrator_ptr factory<integrator<2, float> >::integrator_ = integrator_ptr();
-template class factory<integrator<2, float> >;
-#endif
+template <> factory<integrator<3> >::integrator_ptr factory<integrator<3> >::integrator_ = integrator_ptr();
+template class factory<integrator<3> >;
+template <> factory<integrator<2> >::integrator_ptr factory<integrator<2> >::integrator_ = integrator_ptr();
+template class factory<integrator<2> >;
 
 }} // namespace halmd::mdsim

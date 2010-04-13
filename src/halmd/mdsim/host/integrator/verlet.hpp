@@ -35,22 +35,22 @@ namespace halmd { namespace mdsim { namespace host { namespace integrator
 {
 
 template <int dimension, typename float_type>
-class verlet : public mdsim::integrator<dimension, float_type>
+class verlet : public mdsim::integrator<dimension>
 {
 public:
-    typedef mdsim::integrator<dimension, float_type> _Base;
+    typedef mdsim::integrator<dimension> _Base;
     typedef vector<float_type, dimension> vector_type;
 
     typedef host::particle<dimension, float_type> particle_type;
-    typedef mdsim::box<dimension, float_type> box_type;
-    typedef mdsim::force<dimension, float_type> force_type;
-    typedef mdsim::neighbor<dimension, float_type> neighbor_type;
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::force<dimension> force_type;
+    typedef mdsim::neighbor<dimension> neighbor_type;
 
     verlet(options const& vm);
     virtual ~verlet() {}
     void integrate();
     void finalize();
-    float_type timestep() { return timestep_; }
+    double timestep() { return timestep_; }
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -59,9 +59,9 @@ public:
 
 protected:
     /** integration time-step */
-    float_type timestep_;
+    double timestep_;
     /** half time-step */
-    float_type timestep_half_;
+    double timestep_half_;
 };
 
 }}}} // namespace halmd::mdsim::host::integrator

@@ -24,26 +24,23 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-boost::shared_ptr<neighbor<dimension, float_type> >
-factory<neighbor<dimension, float_type> >::fetch(options const& vm)
+template <int dimension>
+boost::shared_ptr<neighbor<dimension> >
+factory<neighbor<dimension> >::fetch(options const& vm)
 {
     if (!neighbor_) {
-        neighbor_.reset(new host::neighbor<dimension, float_type>(vm));
+#ifdef USE_HOST_SINGLE_PRECISION
+        neighbor_.reset(new host::neighbor<dimension, float>(vm));
+#else
+        neighbor_.reset(new host::neighbor<dimension, double>(vm));
+#endif
     }
     return neighbor_;
 }
 
-#ifndef USE_HOST_SINGLE_PRECISION
-template <> factory<neighbor<3, double> >::neighbor_ptr factory<neighbor<3, double> >::neighbor_ = neighbor_ptr();
-template class factory<neighbor<3, double> >;
-template <> factory<neighbor<2, double> >::neighbor_ptr factory<neighbor<2, double> >::neighbor_ = neighbor_ptr();
-template class factory<neighbor<2, double> >;
-#else
-template <> factory<neighbor<3, float> >::neighbor_ptr factory<neighbor<3, float> >::neighbor_ = neighbor_ptr();
-template class factory<neighbor<3, float> >;
-template <> factory<neighbor<2, float> >::neighbor_ptr factory<neighbor<2, float> >::neighbor_ = neighbor_ptr();
-template class factory<neighbor<2, float> >;
-#endif
+template <> factory<neighbor<3> >::neighbor_ptr factory<neighbor<3> >::neighbor_ = neighbor_ptr();
+template class factory<neighbor<3> >;
+template <> factory<neighbor<2> >::neighbor_ptr factory<neighbor<2> >::neighbor_ = neighbor_ptr();
+template class factory<neighbor<2> >;
 
 }} // namespace halmd::mdsim

@@ -26,7 +26,7 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
+template <int dimension>
 class neighbor
 {
 public:
@@ -36,11 +36,11 @@ public:
     virtual bool check() = 0;
 };
 
-template <int dimension, typename float_type>
-class factory<neighbor<dimension, float_type> >
+template <int dimension>
+class factory<neighbor<dimension> >
 {
 public:
-    typedef boost::shared_ptr<neighbor<dimension, float_type> > neighbor_ptr;
+    typedef boost::shared_ptr<neighbor<dimension> > neighbor_ptr;
     static neighbor_ptr fetch(options const& vm);
 
 private:

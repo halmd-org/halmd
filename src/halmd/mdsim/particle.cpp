@@ -32,8 +32,8 @@ using namespace std;
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-particle<dimension, float_type>::particle(options const& vm)
+template <int dimension>
+particle<dimension>::particle(options const& vm)
 {
     // parse options
     if (!vm["binary"].empty() && vm["particles"].defaulted()) {
@@ -59,34 +59,26 @@ particle<dimension, float_type>::particle(options const& vm)
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class particle<3, double>;
-template class particle<2, double>;
-#else
-template class particle<3, float>;
-template class particle<2, float>;
-#endif
+template class particle<3>;
+template class particle<2>;
 
-template <int dimension, typename float_type>
-boost::shared_ptr<particle<dimension, float_type> >
-factory<particle<dimension, float_type> >::fetch(options const& vm)
+template <int dimension>
+boost::shared_ptr<particle<dimension> >
+factory<particle<dimension> >::fetch(options const& vm)
 {
     if (!particle_) {
-        particle_.reset(new host::particle<dimension, float_type>(vm));
+#ifdef USE_HOST_SINGLE_PRECISION
+        particle_.reset(new host::particle<dimension, float>(vm));
+#else
+        particle_.reset(new host::particle<dimension, double>(vm));
+#endif
     }
     return particle_;
 }
 
-#ifndef USE_HOST_SINGLE_PRECISION
-template <> factory<particle<3, double> >::particle_ptr factory<particle<3, double> >::particle_ = particle_ptr();
-template class factory<particle<3, double> >;
-template <> factory<particle<2, double> >::particle_ptr factory<particle<2, double> >::particle_ = particle_ptr();
-template class factory<particle<2, double> >;
-#else
-template <> factory<particle<3, float> >::particle_ptr factory<particle<3, float> >::particle_ = particle_ptr();
-template class factory<particle<3, float> >;
-template <> factory<particle<2, float> >::particle_ptr factory<particle<2, float> >::particle_ = particle_ptr();
-template class factory<particle<2, float> >;
-#endif
+template <> factory<particle<3> >::particle_ptr factory<particle<3> >::particle_ = particle_ptr();
+template class factory<particle<3> >;
+template <> factory<particle<2> >::particle_ptr factory<particle<2> >::particle_ = particle_ptr();
+template class factory<particle<2> >;
 
 }} // namespace halmd::mdsim

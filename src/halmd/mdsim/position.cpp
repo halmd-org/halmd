@@ -24,26 +24,23 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-boost::shared_ptr<position<dimension, float_type> >
-factory<position<dimension, float_type> >::fetch(options const& vm)
+template <int dimension>
+boost::shared_ptr<position<dimension> >
+factory<position<dimension> >::fetch(options const& vm)
 {
     if (!position_) {
-        position_.reset(new host::position::lattice<dimension, float_type>(vm));
+#ifdef USE_HOST_SINGLE_PRECISION
+        position_.reset(new host::position::lattice<dimension, float>(vm));
+#else
+        position_.reset(new host::position::lattice<dimension, double>(vm));
+#endif
     }
     return position_;
 }
 
-#ifndef USE_HOST_SINGLE_PRECISION
-template <> factory<position<3, double> >::position_ptr factory<position<3, double> >::position_ = position_ptr();
-template class factory<position<3, double> >;
-template <> factory<position<2, double> >::position_ptr factory<position<2, double> >::position_ = position_ptr();
-template class factory<position<2, double> >;
-#else
-template <> factory<position<3, float> >::position_ptr factory<position<3, float> >::position_ = position_ptr();
-template class factory<position<3, float> >;
-template <> factory<position<2, float> >::position_ptr factory<position<2, float> >::position_ = position_ptr();
-template class factory<position<2, float> >;
-#endif
+template <> factory<position<3> >::position_ptr factory<position<3> >::position_ = position_ptr();
+template class factory<position<3> >;
+template <> factory<position<2> >::position_ptr factory<position<2> >::position_ = position_ptr();
+template class factory<position<2> >;
 
 }} // namespace halmd::mdsim

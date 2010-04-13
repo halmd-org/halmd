@@ -24,26 +24,23 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-boost::shared_ptr<velocity<dimension, float_type> >
-factory<velocity<dimension, float_type> >::fetch(options const& vm)
+template <int dimension>
+boost::shared_ptr<velocity<dimension> >
+factory<velocity<dimension> >::fetch(options const& vm)
 {
     if (!velocity_) {
-        velocity_.reset(new host::velocity::boltzmann<dimension, float_type>(vm));
+#ifdef USE_HOST_SINGLE_PRECISION
+        velocity_.reset(new host::velocity::boltzmann<dimension, float>(vm));
+#else
+        velocity_.reset(new host::velocity::boltzmann<dimension, double>(vm));
+#endif
     }
     return velocity_;
 }
 
-#ifndef USE_HOST_SINGLE_PRECISION
-template <> factory<velocity<3, double> >::velocity_ptr factory<velocity<3, double> >::velocity_ = velocity_ptr();
-template class factory<velocity<3, double> >;
-template <> factory<velocity<2, double> >::velocity_ptr factory<velocity<2, double> >::velocity_ = velocity_ptr();
-template class factory<velocity<2, double> >;
-#else
-template <> factory<velocity<3, float> >::velocity_ptr factory<velocity<3, float> >::velocity_ = velocity_ptr();
-template class factory<velocity<3, float> >;
-template <> factory<velocity<2, float> >::velocity_ptr factory<velocity<2, float> >::velocity_ = velocity_ptr();
-template class factory<velocity<2, float> >;
-#endif
+template <> factory<velocity<3> >::velocity_ptr factory<velocity<3> >::velocity_ = velocity_ptr();
+template class factory<velocity<3> >;
+template <> factory<velocity<2> >::velocity_ptr factory<velocity<2> >::velocity_ = velocity_ptr();
+template class factory<velocity<2> >;
 
 }} // namespace halmd::mdsim

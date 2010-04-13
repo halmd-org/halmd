@@ -33,10 +33,10 @@ namespace halmd { namespace mdsim
 /**
  * Set box edge lengths
  */
-template <int dimension, typename float_type>
-box<dimension, float_type>::box(options const& vm)
+template <int dimension>
+box<dimension>::box(options const& vm)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension, float_type> >::fetch(vm)))
+    : particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
     // default to cube
     , scale_(1)
 {
@@ -52,12 +52,12 @@ box<dimension, float_type>::box(options const& vm)
 /**
  * Set edge lengths of cuboid
  */
-template <int dimension, typename float_type>
-void box<dimension, float_type>::length(vector_type const& value)
+template <int dimension>
+void box<dimension>::length(vector_type const& value)
 {
     length_ = value;
     scale_ = length_ / *max_element(length_.begin(), length_.end());
-    float_type volume = accumulate(length_.begin(), length_.end(), static_cast<float_type>(1), multiplies<float_type>());
+    double volume = accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
     density_ = particle->nbox / volume;
 
     LOG("simulation box edge lengths: " << length_);
@@ -67,46 +67,34 @@ void box<dimension, float_type>::length(vector_type const& value)
 /**
  * Set number density
  */
-template <int dimension, typename float_type>
-void box<dimension, float_type>::density(float_type value)
+template <int dimension>
+void box<dimension>::density(double value)
 {
     density_ = value;
-    float_type volume = particle->nbox / accumulate(scale_.begin(), scale_.end(), density_, multiplies<float_type>());
-    length_ = scale_ * pow(volume, (float_type) 1 / dimension);
+    double volume = particle->nbox / accumulate(scale_.begin(), scale_.end(), density_, multiplies<double>());
+    length_ = scale_ * pow(volume, 1. / dimension);
 
     LOG("simulation box edge lengths: " << length_);
     LOG("number density: " << density_);
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class box<3, double>;
-template class box<2, double>;
-#else
-template class box<3, float>;
-template class box<2, float>;
-#endif
+template class box<3>;
+template class box<2>;
 
-template <int dimension, typename float_type>
-boost::shared_ptr<box<dimension, float_type> >
-factory<box<dimension, float_type> >::fetch(options const& vm)
+template <int dimension>
+boost::shared_ptr<box<dimension> >
+factory<box<dimension> >::fetch(options const& vm)
 {
     if (!box_) {
-        box_.reset(new box<dimension, float_type>(vm));
+        box_.reset(new box<dimension>(vm));
     }
     return box_;
 }
 
-#ifndef USE_HOST_SINGLE_PRECISION
-template <> factory<box<3, double> >::box_ptr factory<box<3, double> >::box_ = box_ptr();
-template class factory<box<3, double> >;
-template <> factory<box<2, double> >::box_ptr factory<box<2, double> >::box_ = box_ptr();
-template class factory<box<2, double> >;
-#else
-template <> factory<box<3, float> >::box_ptr factory<box<3, float> >::box_ = box_ptr();
-template class factory<box<3, float> >;
-template <> factory<box<2, float> >::box_ptr factory<box<2, float> >::box_ = box_ptr();
-template class factory<box<2, float> >;
-#endif
+template <> factory<box<3> >::box_ptr factory<box<3> >::box_ = box_ptr();
+template class factory<box<3> >;
+template <> factory<box<2> >::box_ptr factory<box<2> >::box_ = box_ptr();
+template class factory<box<2> >;
 
 }} // namespace halmd::mdsim

@@ -27,43 +27,36 @@ using namespace std;
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-force<dimension, float_type>::force(options const& vm)
+template <int dimension>
+force<dimension>::force(options const& vm)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension, float_type> >::fetch(vm)))
+    : particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
     // allocate result variables
     , virial_(particle->ntype)
 {
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class force<3, double>;
-template class force<2, double>;
-#else
-template class force<3, float>;
-template class force<2, float>;
-#endif
+template class force<3>;
+template class force<2>;
 
-template <int dimension, typename float_type>
-boost::shared_ptr<force<dimension, float_type> >
-factory<force<dimension, float_type> >::fetch(options const& vm)
+template <int dimension>
+boost::shared_ptr<force<dimension> >
+factory<force<dimension> >::fetch(options const& vm)
 {
     if (!force_) {
-        force_.reset(new host::forces::lj<dimension, float_type>(vm));
+#ifdef USE_HOST_SINGLE_PRECISION
+        force_.reset(new host::forces::lj<dimension, float>(vm));
+#else
+        force_.reset(new host::forces::lj<dimension, double>(vm));
+#endif
     }
     return force_;
 }
 
-#ifndef USE_HOST_SINGLE_PRECISION
-template <> factory<force<3, double> >::force_ptr factory<force<3, double> >::force_ = force_ptr();
-template class factory<force<3, double> >;
-template <> factory<force<2, double> >::force_ptr factory<force<2, double> >::force_ = force_ptr();
-template class factory<force<2, double> >;
-#else
-template <> factory<force<3, float> >::force_ptr factory<force<3, float> >::force_ = force_ptr();
-template class factory<force<3, float> >;
-template <> factory<force<2, float> >::force_ptr factory<force<2, float> >::force_ = force_ptr();
-template class factory<force<2, float> >;
-#endif
+template <> factory<force<3> >::force_ptr factory<force<3> >::force_ = force_ptr();
+template class factory<force<3> >;
+template <> factory<force<2> >::force_ptr factory<force<2> >::force_ = force_ptr();
+template class factory<force<2> >;
+
 }} // namespace halmd::mdsim

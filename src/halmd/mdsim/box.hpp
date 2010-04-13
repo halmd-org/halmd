@@ -31,12 +31,12 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
+template <int dimension>
 class box
 {
 public:
-    typedef vector<float_type, dimension> vector_type;
-    typedef particle<dimension, float_type> particle_type;
+    typedef vector<double, dimension> vector_type;
+    typedef particle<dimension> particle_type;
 
 public:
     box(options const& vm);
@@ -44,8 +44,8 @@ public:
 
     void length(vector_type const& value_type);
     vector_type const& length() { return length_; }
-    void density(float_type value_type);
-    float_type density() { return density_; }
+    void density(double value_type);
+    double density() { return density_; }
 
 public:
     boost::shared_ptr<particle_type> particle;
@@ -56,14 +56,14 @@ protected:
     /** edge lengths of cuboid relative to maximum edge length */
     vector_type scale_;
     /** number density */
-    float_type density_;
+    double density_;
 };
 
-template <int dimension, typename float_type>
-class factory<box<dimension, float_type> >
+template <int dimension>
+class factory<box<dimension> >
 {
 public:
-    typedef boost::shared_ptr<box<dimension, float_type> > box_ptr;
+    typedef boost::shared_ptr<box<dimension> > box_ptr;
     static box_ptr fetch(options const& vm);
 
 private:

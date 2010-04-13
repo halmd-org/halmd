@@ -31,10 +31,10 @@ namespace halmd { namespace mdsim { namespace host
 {
 
 template <unsigned int dimension, typename float_type>
-class particle : public mdsim::particle<dimension, float_type>
+class particle : public mdsim::particle<dimension>
 {
 public:
-    typedef mdsim::particle<dimension, float_type> _Base;
+    typedef mdsim::particle<dimension> _Base;
     typedef vector<float_type, dimension> vector_type;
     typedef std::vector<unsigned int> neighbor_list;
 

@@ -31,13 +31,13 @@ namespace halmd { namespace mdsim
 /**
  * Initialize simulation
  */
-template <int dimension, typename float_type>
-core<dimension, float_type>::core(options const& vm)
-  : force(factory<mdsim::force<dimension, float_type> >::fetch(vm))
-  , neighbor(factory<mdsim::neighbor<dimension, float_type> >::fetch(vm))
-  , integrator(factory<mdsim::integrator<dimension, float_type> >::fetch(vm))
-  , position(factory<mdsim::position<dimension, float_type> >::fetch(vm))
-  , velocity(factory<mdsim::velocity<dimension, float_type> >::fetch(vm))
+template <int dimension>
+core<dimension>::core(options const& vm)
+  : force(factory<mdsim::force<dimension> >::fetch(vm))
+  , neighbor(factory<mdsim::neighbor<dimension> >::fetch(vm))
+  , integrator(factory<mdsim::integrator<dimension> >::fetch(vm))
+  , position(factory<mdsim::position<dimension> >::fetch(vm))
+  , velocity(factory<mdsim::velocity<dimension> >::fetch(vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {
@@ -56,8 +56,8 @@ core<dimension, float_type>::core(options const& vm)
 /**
  * Run simulation
  */
-template <int dimension, typename float_type>
-void core<dimension, float_type>::run()
+template <int dimension>
+void core<dimension>::run()
 {
     position->set();
     velocity->set();
@@ -79,12 +79,7 @@ void core<dimension, float_type>::run()
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class core<3, double>;
-template class core<2, double>;
-#else
-template class core<3, float>;
-template class core<2, float>;
-#endif
+template class core<3>;
+template class core<2>;
 
 }} // namespace halmd::mdsim

@@ -28,11 +28,11 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
+template <int dimension>
 class position
 {
 public:
-    typedef vector<float_type, dimension> vector_type;
+    typedef vector<double, dimension> vector_type;
 
 public:
     position(options const& vm) {}
@@ -40,11 +40,11 @@ public:
     virtual void set() = 0;
 };
 
-template <int dimension, typename float_type>
-class factory<position<dimension, float_type> >
+template <int dimension>
+class factory<position<dimension> >
 {
 public:
-    typedef boost::shared_ptr<position<dimension, float_type> > position_ptr;
+    typedef boost::shared_ptr<position<dimension> > position_ptr;
     static position_ptr fetch(options const& vm);
 
 private:

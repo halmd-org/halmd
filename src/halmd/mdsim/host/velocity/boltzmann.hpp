@@ -31,10 +31,10 @@ namespace halmd { namespace mdsim { namespace host { namespace velocity
 {
 
 template <int dimension, typename float_type>
-class boltzmann : public mdsim::velocity<dimension, float_type>
+class boltzmann : public mdsim::velocity<dimension>
 {
 public:
-    typedef mdsim::velocity<dimension, float_type> _Base;
+    typedef mdsim::velocity<dimension> _Base;
     typedef vector<float_type, dimension> vector_type;
     typedef host::particle<dimension, float_type> particle_type;
     typedef host::random random_type;

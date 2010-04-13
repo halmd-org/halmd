@@ -28,7 +28,7 @@
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
+template <int dimension>
 class particle
 {
 public:
@@ -41,11 +41,11 @@ public:
     unsigned int ntype;
 };
 
-template <int dimension, typename float_type>
-class factory<particle<dimension, float_type> >
+template <int dimension>
+class factory<particle<dimension> >
 {
 public:
-    typedef boost::shared_ptr<particle<dimension, float_type> > particle_ptr;
+    typedef boost::shared_ptr<particle<dimension> > particle_ptr;
     static particle_ptr fetch(options const& vm);
 
 private:

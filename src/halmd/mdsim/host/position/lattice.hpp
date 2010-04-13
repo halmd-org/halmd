@@ -34,14 +34,14 @@ namespace halmd { namespace mdsim { namespace host { namespace position
 {
 
 template <int dimension, typename float_type>
-class lattice : public mdsim::position<dimension, float_type>
+class lattice : public mdsim::position<dimension>
 {
 public:
-    typedef mdsim::position<dimension, float_type> _Base;
+    typedef mdsim::position<dimension> _Base;
     typedef vector<float_type, dimension> vector_type;
 
     typedef host::particle<dimension, float_type> particle_type;
-    typedef mdsim::box<dimension, float_type> box_type;
+    typedef mdsim::box<dimension> box_type;
     typedef host::random random_type;
 
 public:
