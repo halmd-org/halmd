@@ -19,7 +19,7 @@
 
 #include <halmd/mdsim/host/neighbor.hpp>
 #include <halmd/mdsim/neighbor.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd { namespace mdsim
 {

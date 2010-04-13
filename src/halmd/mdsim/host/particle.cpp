@@ -23,7 +23,7 @@
 
 #include <halmd/algorithm/host/permute.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

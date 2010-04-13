@@ -26,7 +26,7 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd
 {

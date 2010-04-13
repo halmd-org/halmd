@@ -21,7 +21,7 @@
 
 #include <halmd/mdsim/host/random.hpp>
 #include <halmd/mdsim/random.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 using namespace std;
 

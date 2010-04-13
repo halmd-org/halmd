@@ -18,13 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTIL_LOG_HPP
-#define HALMD_UTIL_LOG_HPP
+#ifndef HALMD_UTIL_LOGGER_HPP
+#define HALMD_UTIL_LOGGER_HPP
 
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 
-namespace halmd { namespace log
+namespace halmd { namespace logger
 {
 
 enum severity_level
@@ -38,9 +38,9 @@ enum severity_level
 extern boost::log::sources::severity_logger<severity_level> slg;
 extern void init(std::string const& filename, int verbosity);
 
-}} // namespace halmd::log
+}} // namespace halmd::logger
 
-#define _LOGGER(level) BOOST_LOG_SEV(halmd::log::slg, halmd::log::level)
+#define _LOGGER(level) BOOST_LOG_SEV(halmd::logger::slg, halmd::logger::level)
 
 /** log informational messages */
 #define LOG(fmt) _LOGGER(info) << fmt
@@ -58,4 +58,4 @@ extern void init(std::string const& filename, int verbosity);
 # define LOG_DEBUG(fmt)
 #endif
 
-#endif /* ! HALMD_UTIL_LOG_HPP */
+#endif /* ! HALMD_UTIL_LOGGER_HPP */

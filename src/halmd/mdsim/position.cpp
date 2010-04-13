@@ -19,7 +19,7 @@
 
 #include <halmd/mdsim/host/position/lattice.hpp>
 #include <halmd/mdsim/position.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd { namespace mdsim
 {

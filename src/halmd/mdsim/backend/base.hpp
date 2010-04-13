@@ -35,7 +35,7 @@
 #include <halmd/sample/H5param.hpp>
 #include <halmd/sample/perf.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 #define foreach BOOST_FOREACH
 

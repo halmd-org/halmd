@@ -21,7 +21,7 @@
 #include <cmath>
 
 #include <halmd/mdsim/host/integrator/verlet.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

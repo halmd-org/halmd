@@ -35,7 +35,7 @@
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/util/hostname.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 #include <halmd/util/timer.hpp>
 #include <halmd/version.h>
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
         return e.status();
     }
 
-    halmd::log::init(opt["output"].as<std::string>() + ".log", opt["verbose"].as<int>());
+    halmd::logger::init(opt["output"].as<std::string>() + ".log", opt["verbose"].as<int>());
 
     LOG(PROGRAM_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
     LOG("variant: " << mdlib.variant());

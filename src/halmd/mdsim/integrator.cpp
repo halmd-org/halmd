@@ -19,7 +19,7 @@
 
 #include <halmd/mdsim/host/integrator/verlet.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd { namespace mdsim
 {

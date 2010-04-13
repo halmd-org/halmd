@@ -39,7 +39,7 @@
 #include <halmd/sample/tcf_visitor.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd {
 

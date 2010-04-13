@@ -18,7 +18,7 @@
  */
 
 #include <halmd/mdsim/host/velocity/boltzmann.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd { namespace mdsim { namespace host { namespace velocity
 {

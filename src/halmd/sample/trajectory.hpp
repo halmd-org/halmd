@@ -34,7 +34,7 @@
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd {
 

@@ -28,7 +28,7 @@
 #include <boost/log/utility/init/to_console.hpp>
 #include <boost/log/utility/init/to_file.hpp>
 
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 #define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
 
@@ -40,7 +40,7 @@ namespace attrs = boost::log::attributes;
 namespace src = boost::log::sources;
 namespace keywords = boost::log::keywords;
 
-namespace halmd { namespace log
+namespace halmd { namespace logger
 {
 
 src::severity_logger<severity_level> slg;
@@ -74,4 +74,4 @@ void init(std::string const& filename, int verbosity)
     logging::add_common_attributes();
 }
 
-}} // namespace halmd::log
+}} // namespace halmd::logger

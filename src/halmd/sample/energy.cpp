@@ -20,7 +20,7 @@
 
 #include <halmd/sample/energy.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/util/log.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd
 {
