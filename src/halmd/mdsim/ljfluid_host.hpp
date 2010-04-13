@@ -1,6 +1,7 @@
 /* Lennard-Jones fluid simulation
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -148,6 +149,8 @@ private:
     /** compute C²-smooth potential */
     template <bool binary>
     void compute_smooth_potential(float_type r, float_type& fval, float_type& pot, unsigned int type);
+    /** compute kinetic part of virial stress tensor */
+    void compute_virial_kinetic();
     /** first leapfrog step of integration of equations of motion */
     void leapfrog_half();
     /** second leapfrog step of integration of equations of motion */
@@ -208,6 +211,8 @@ private:
     double en_pot;
     /** virial equation sum per particle */
     std::vector<virial_tensor> virial;
+    /** time integral of virial stress tensor to calculate Helfand moment */
+    std::vector<virial_tensor> helfand;
     /** sum over maximum velocity magnitudes since last neighbour lists update */
     float_type v_max_sum;
 };
@@ -264,6 +269,10 @@ void ljfluid<ljfluid_impl_host, dimension>::state(host_sample_type& sample, floa
     // Hilbert space-filling curve particle sort
     hilbert_order();
 #endif
+
+    // initialize virial tensor and compute `kinetic part'
+    compute_virial_kinetic();
+    helfand.assign(mixture_ == BINARY ? 2 : 1, 0);
 
     if (mixture_ == BINARY) {
         // update Verlet neighbour lists
@@ -452,6 +461,10 @@ void ljfluid<ljfluid_impl_host, dimension>::lattice()
     hilbert_order();
 #endif
 
+    // initialize virial tensor and compute `kinetic part'
+    compute_virial_kinetic();
+    helfand.assign(mixture_ == BINARY ? 2 : 1, 0);
+
     if (mixture_ == BINARY) {
         // update Verlet neighbour lists
         update_neighbours<true>();
@@ -481,6 +494,8 @@ void ljfluid<ljfluid_impl_host, dimension>::temperature(double value)
     }
     // initialize sum over maximum velocity magnitudes since last neighbour lists update
     v_max_sum = 0;
+    // and re-compute virial tensor
+    compute_virial_kinetic();
 
     boltzmann(value);
 }
@@ -671,8 +686,6 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
 
     // potential energy
     en_pot = 0;
-    // virial equation sum
-    virial.assign(binary ? 2 : 1, 0);
     // half periodic box length for nearest mirror-image particle
     float_type box_half = 0.5 * box_;
 
@@ -745,7 +758,11 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_forces()
         }
     }
 
+    // finalise averages
     en_pot /= npart;
+    for (size_t i = 0; i < virial.size(); ++i) {
+        virial[i] /= mpart[i];
+    }
 
     // ensure that system is still in valid state
     if (std::isinf(en_pot)) {
@@ -772,6 +789,29 @@ void ljfluid<ljfluid_impl_host, dimension>::compute_smooth_potential(float_type 
     fval = h0_r * fval - h1_r * (pot / r);
     // apply smoothing function to obtain C² potential function
     pot = h0_r * pot;
+}
+
+/**
+ * compute kinetic part of virial stress tensor
+ */
+template <int dimension>
+void ljfluid<ljfluid_impl_host, dimension>::compute_virial_kinetic()
+{
+    virial.assign(mixture_ == BINARY ? 2 : 1, 0);
+
+    foreach (particle& p, part) {
+        virial_tensor& vir = virial[p.type];
+        vector_type& v = p.v;
+        vir[0] += v * v;
+        if (dimension == 3) {
+            vir[1] += v[1] * v[2];
+            vir[2] += v[2] * v[0];
+            vir[3] += v[0] * v[1];
+        }
+        else {
+            vir[1] += v[0] * v[1];
+        }
+    }
 }
 
 /**
@@ -845,6 +885,10 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
     // nanosecond resolution process times
     boost::array<high_resolution_timer, 5> t;
 
+    // compute kinetic part of virial tensor with initial velocities,
+    // the "static" part is added in compute_forces()
+    compute_virial_kinetic();
+
     // calculate particle positions
     t[0].record();
     leapfrog_half();
@@ -895,6 +939,11 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
     }
     t[4].record();
 
+    // integrate virial tensor for each component
+    for (size_t i = 0; i < virial.size(); ++i) {
+        helfand[i] += virial[i] * static_cast<float_type>(timestep_);
+    }
+
     if (thermostat_steps && thermostat_count > thermostat_steps) {
         // reset MD steps since last heatbath coupling
         thermostat_count = 0;
@@ -942,28 +991,14 @@ void ljfluid<ljfluid_impl_host, dimension>::sample(energy_sample_type& sample) c
 
     // virial tensor trace and off-diagonal elements for particle species
     sample.virial = virial;
+    sample.helfand = helfand;
 
     sample.vv = 0;
     sample.v_cm = 0;
 
     for (iterator p = part.begin(); p != part.end(); ++p) {
-        // kinetic terms of virial stress tensor
-        sample.virial[p->type][0] += p->v * p->v;
-        if (dimension == 3) {
-            sample.virial[p->type][1] += p->v[1] * p->v[2];
-            sample.virial[p->type][2] += p->v[2] * p->v[0];
-            sample.virial[p->type][3] += p->v[0] * p->v[1];
-        }
-        else {
-            sample.virial[p->type][1] += p->v[0] * p->v[1];
-        }
-
         sample.vv += p->v * p->v;
         sample.v_cm += p->v;
-    }
-
-    for (size_t i = 0; i < sample.virial.size(); ++i) {
-        sample.virial[i] /= mpart[i];
     }
 
     // mean potential energy per particle

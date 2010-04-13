@@ -1,6 +1,7 @@
 /* Time correlation functions
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -51,6 +52,15 @@ struct tcf_sample
     typedef std::vector<std::vector<double> > isf_vector_vector;
     /** off-diagonal elements of virial stress tensor */
     typedef boost::array<double, (dimension - 1) * dimension / 2> virial_tensor;
+
+    /** Fourier transformed density for different |q| values and vectors */
+    boost::shared_ptr<density_vector_vector> rho;
+    /** self-intermediate scattering function for different |q| values and vectors */
+    boost::shared_ptr<isf_vector_vector> isf;
+    /** off-diagonal elements of virial stress tensor */
+    boost::shared_ptr<virial_tensor> virial;
+    /** time-integral of virial stress tensor */
+    boost::shared_ptr<virial_tensor> helfand;
 };
 
 /** correlation function result types */
@@ -174,7 +184,7 @@ struct squared_self_intermediate_scattering_function : correlation_function<samp
  * virial stress
  */
 template <template <int> class sample_type>
-struct virial_stress: correlation_function<sample_type>
+struct virial_stress : correlation_function<sample_type>
 {
     /** block sample results */
     tcf_unary_result_type result;
@@ -198,6 +208,45 @@ struct virial_stress: correlation_function<sample_type>
         for (sample_iterator sample = first.first; sample != last.first; ++sample, ++result) {
             for (virial_iterator vir = (*sample)[type].virial->begin(), vir0 = (*first.first)[type].virial->begin(); vir != (*sample)[type].virial->end(); ++vir, ++vir0) {
                 *result += ((*vir) * (*vir0)) * (*sample)[type].r->size();
+            }
+        }
+    }
+};
+
+/**
+ * Helfand moment for virial stress
+ *
+ * for background see doi:10.1103/PhysRevB.60.3169 and doi:10.1063/1.2724820
+ */
+template <template <int> class sample_type>
+struct helfand_moment : correlation_function<sample_type>
+{
+    /** block sample results */
+    tcf_unary_result_type result;
+
+    using correlation_function<sample_type>::type;
+
+    char const* name() const { return "HELFAND"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+        typedef typename input_iterator::first_type sample_iterator;
+        typedef typename sample_iterator::value_type::value_type sample_type;
+        typedef typename sample_type::vector_type vector_type;
+        typedef typename sample_type::virial_tensor::const_iterator virial_iterator;
+        typedef typename sample_type::virial_tensor::value_type virial_value;
+        enum { dimension = vector_type::static_size };
+
+        for (sample_iterator sample = first.first; sample != last.first; ++sample, ++result) {
+            for (virial_iterator h = (*sample)[type].helfand->begin(),
+                 h0 = (*first.first)[type].helfand->begin();
+                 h != (*sample)[type].helfand->end(); ++h, ++h0) {
+                virial_value dh = *h - *h0;
+                *result += (dh * dh) * (*sample)[type].r->size();
             }
         }
     }

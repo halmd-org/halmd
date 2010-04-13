@@ -1,6 +1,7 @@
 /* Time correlation functions
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -48,11 +49,13 @@ struct tcf_host_sample : public tcf_sample<dimension>
     typedef typename _Base::density_pair density_pair;
     typedef typename _Base::density_vector density_vector;
     typedef typename _Base::density_vector_vector density_vector_vector;
-    typedef typename _Base::virial_tensor virial_tensor;
     typedef std::vector<vector_type> sample_vector;
 
     tcf_host_sample() {}
     tcf_host_sample(boost::shared_ptr<sample_vector> r, boost::shared_ptr<sample_vector> v): r(r), v(v) {}
+
+    using _Base::rho;
+    using _Base::isf;
 
     /**
      * initialise phase space sample
@@ -67,8 +70,8 @@ struct tcf_host_sample : public tcf_sample<dimension>
         typename sample_vector::const_iterator r0;
 
         // allocate memory for Fourier transformed densities
-        rho = boost::shared_ptr<density_vector_vector>(new density_vector_vector(q.size()));
-        isf = boost::shared_ptr<isf_vector_vector>(new isf_vector_vector(q.size()));
+        rho.reset(new density_vector_vector(q.size()));
+        isf.reset(new isf_vector_vector(q.size()));
         for (q0 = q.begin(), rho0 = rho->begin(), isf0 = isf->begin(); q0 != q.end(); ++q0, ++rho0, ++isf0) {
             rho0->assign(q0->size(), density_pair(0, 0));
             isf0->resize(q0->size());
@@ -89,12 +92,6 @@ struct tcf_host_sample : public tcf_sample<dimension>
     boost::shared_ptr<sample_vector> r;
     /** particle velocities */
     boost::shared_ptr<sample_vector> v;
-    /** Fourier transformed density for different |q| values and vectors */
-    boost::shared_ptr<density_vector_vector> rho;
-    /** self-intermediate scattering function for different |q| values and vectors */
-    boost::shared_ptr<isf_vector_vector> isf;
-    /** off-diagonal elements of virial stress tensor */
-    boost::shared_ptr<virial_tensor> virial;
 };
 
 /**
@@ -245,7 +242,8 @@ typedef boost::mpl::push_back<_tcf_host_types_1, velocity_autocorrelation<tcf_ho
 typedef boost::mpl::push_back<_tcf_host_types_2, intermediate_scattering_function<tcf_host_sample> >::type _tcf_host_types_3;
 typedef boost::mpl::push_back<_tcf_host_types_3, self_intermediate_scattering_function<tcf_host_sample> >::type _tcf_host_types_4;
 typedef boost::mpl::push_back<_tcf_host_types_4, squared_self_intermediate_scattering_function<tcf_host_sample> >::type _tcf_host_types_5;
-typedef boost::mpl::push_back<_tcf_host_types_5, virial_stress<tcf_host_sample> >::type tcf_host_types;
+typedef boost::mpl::push_back<_tcf_host_types_5, virial_stress<tcf_host_sample> >::type _tcf_host_types_6;
+typedef boost::mpl::push_back<_tcf_host_types_6, helfand_moment<tcf_host_sample> >::type tcf_host_types;
 
 } // namespace halmd
 

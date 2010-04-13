@@ -1,6 +1,7 @@
 /* Phase space sample
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -114,6 +115,8 @@ struct energy_sample
     double en_pot;
     /** virial tensor trace and off-diagonal elements for particle species */
     std::vector<virial_tensor> virial;
+    /** time integral of virial stress tensor to calculate Helfand moment */
+    std::vector<virial_tensor> helfand;
     /** mean squared velocity per particle */
     double vv;
     /** mean velocity per particle */

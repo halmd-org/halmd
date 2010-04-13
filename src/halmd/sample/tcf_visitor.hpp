@@ -1,6 +1,7 @@
 /* Time correlation function visitors
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -165,6 +166,36 @@ template <typename U>
 _tcf_sample_virial<U> tcf_sample_virial(U const& virial)
 {
    return _tcf_sample_virial<U>(virial);
+}
+
+/**
+ * copy off-diagonal elements of Helfand moment
+ */
+template <typename U>
+class _tcf_sample_helfand : public boost::static_visitor<>
+{
+public:
+    _tcf_sample_helfand(U const& helfand) : helfand(helfand) {}
+
+    template <typename T>
+    void operator()(T& sample) const
+    {
+        assert(helfand.size() == sample.size());
+        typename U::const_iterator h = helfand.begin();
+        for (typename T::iterator s = sample.begin(); s != sample.end(); ++s, ++h) {
+            s->helfand.reset(new typename T::value_type::virial_tensor);
+            std::copy(h->begin() + 1, h->end(), s->helfand->begin());
+        }
+    }
+
+private:
+    U const& helfand;
+};
+
+template <typename U>
+_tcf_sample_helfand<U> tcf_sample_helfand(U const& helfand)
+{
+    return _tcf_sample_helfand<U>(helfand);
 }
 
 class tcf_block_add_sample : public boost::static_visitor<>

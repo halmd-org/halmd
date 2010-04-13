@@ -1,6 +1,7 @@
 /* Block correlations
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -202,11 +203,12 @@ void correlation<dimension>::sample(trajectory_sample_variant const& sample_, en
 {
     // empty sample of GPU or host type
     sample_variant sample(m_sample);
-    // copy phase space coordinates and compute spatial Fourier transformation 
+    // copy phase space coordinates and compute spatial Fourier transformation
     boost::apply_visitor(tcf_sample_phase_space(), sample, sample_);
     boost::apply_visitor(tcf_fourier_transform_sample(m_q_vector), sample);
-    // copy off-diagonal elements of virial tensor
+    // copy off-diagonal elements of virial tensor and Helfand moment
     boost::apply_visitor(tcf_sample_virial(en_.virial), sample);
+    boost::apply_visitor(tcf_sample_helfand(en_.helfand), sample);
 
     for (unsigned int i = 0; i < m_block_count; ++i) {
         if (m_block_samples[i] >= m_max_samples[i])
