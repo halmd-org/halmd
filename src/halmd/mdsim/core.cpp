@@ -20,13 +20,6 @@
 #include <cmath>
 
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/host/forces/lj.hpp>
-#include <halmd/mdsim/host/integrator/verlet.hpp>
-#include <halmd/mdsim/host/neighbor.hpp>
-#include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/position/lattice.hpp>
-#include <halmd/mdsim/host/random.hpp>
-#include <halmd/mdsim/host/velocity/boltzmann.hpp>
 #include <halmd/util/log.hpp>
 
 using namespace boost;
@@ -40,14 +33,11 @@ namespace halmd { namespace mdsim
  */
 template <int dimension, typename float_type>
 core<dimension, float_type>::core(options const& vm)
-  : particle(new mdsim::host::particle<dimension, float_type>(vm))
-  , box(new mdsim::box<dimension, float_type>(particle, vm))
-  , force(new mdsim::host::forces::lj<dimension, float_type>(particle, box, vm))
-  , neighbor(new mdsim::host::neighbor<dimension, float_type>(particle, force, box, vm))
-  , random(new mdsim::host::random(vm))
-  , integrator(new mdsim::host::integrator::verlet<dimension, float_type>(particle, box, force, neighbor, vm))
-  , position(new mdsim::host::position::lattice<dimension, float_type>(particle, box, random, vm))
-  , velocity(new mdsim::host::velocity::boltzmann<dimension, float_type>(particle, random, vm))
+  : force(factory<mdsim::force<dimension, float_type> >::fetch(vm))
+  , neighbor(factory<mdsim::neighbor<dimension, float_type> >::fetch(vm))
+  , integrator(factory<mdsim::integrator<dimension, float_type> >::fetch(vm))
+  , position(factory<mdsim::position<dimension, float_type> >::fetch(vm))
+  , velocity(factory<mdsim::velocity<dimension, float_type> >::fetch(vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {

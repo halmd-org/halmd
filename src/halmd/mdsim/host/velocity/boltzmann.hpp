@@ -34,19 +34,15 @@ template <int dimension, typename float_type>
 class boltzmann : public mdsim::velocity<dimension, float_type>
 {
 public:
+    typedef mdsim::velocity<dimension, float_type> _Base;
     typedef vector<float_type, dimension> vector_type;
-
     typedef host::particle<dimension, float_type> particle_type;
-    typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
     typedef host::random random_type;
-    typedef boost::shared_ptr<mdsim::random> random_ptr;
 
-public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<random_type> random;
 
-public:
-    boltzmann(particle_ptr particle, random_ptr random, options const& vm);
+    boltzmann(options const& vm);
     virtual ~boltzmann() {};
     void set();
 

@@ -35,11 +35,11 @@ namespace halmd { namespace mdsim { namespace host { namespace forces
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-lj<dimension, float_type>::lj(particle_ptr particle, box_ptr box, options const& vm)
-    : _Base(particle)
+lj<dimension, float_type>::lj(options const& vm)
+    : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(particle))
-    , box(dynamic_pointer_cast<box_type>(box))
+    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension, float_type> >::fetch(vm)))
+    , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension, float_type> >::fetch(vm)))
     // allocate potential parameters
     , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
     , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))

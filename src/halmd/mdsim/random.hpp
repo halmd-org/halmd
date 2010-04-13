@@ -22,6 +22,7 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
+#include <halmd/mdsim/factory.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -30,11 +31,23 @@ namespace halmd { namespace mdsim
 class random
 {
 public:
+    random(options const& vm) {}
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;
 
 protected:
     unsigned int readint(std::string const& fn);
+};
+
+template <>
+class factory<random>
+{
+public:
+    typedef boost::shared_ptr<random> random_ptr;
+    static random_ptr fetch(options const& vm);
+
+private:
+    static random_ptr random_;
 };
 
 }} // namespace halmd::mdsim

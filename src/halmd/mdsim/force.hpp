@@ -26,7 +26,9 @@
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/math/vector4d.hpp>
+#include <halmd/mdsim/factory.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
 {
@@ -38,11 +40,9 @@ public:
     typedef vector<float_type, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::upper> matrix_type;
     typedef vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
-
     typedef mdsim::particle<dimension, float_type> particle_type;
-    typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
 
-    force(particle_ptr particle);
+    force(options const& vm);
     virtual ~force() {}
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;
@@ -57,6 +57,17 @@ protected:
     float_type en_pot_;
     /** average virial per particle for each particle type */
     std::vector<virial_type> virial_;
+};
+
+template <int dimension, typename float_type>
+class factory<force<dimension, float_type> >
+{
+public:
+    typedef boost::shared_ptr<force<dimension, float_type> > force_ptr;
+    static force_ptr fetch(options const& vm);
+
+private:
+    static force_ptr force_;
 };
 
 }} // namespace halmd::mdsim

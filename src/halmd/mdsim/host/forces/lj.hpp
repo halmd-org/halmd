@@ -41,12 +41,10 @@ public:
     typedef typename _Base::matrix_type matrix_type;
 
     typedef host::particle<dimension, float_type> particle_type;
-    typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
     typedef mdsim::box<dimension, float_type> box_type;
-    typedef boost::shared_ptr<mdsim::box<dimension, float_type> > box_ptr;
 
 public:
-    lj(particle_ptr particle, box_ptr box, options const& vm);
+    lj(options const& vm);
     virtual ~lj() {}
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }

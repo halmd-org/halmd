@@ -42,15 +42,11 @@ public:
     typedef vector<float_type, dimension> vector_type;
 
     typedef host::particle<dimension, float_type> particle_type;
-    typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
     typedef mdsim::box<dimension, float_type> box_type;
-    typedef boost::shared_ptr<mdsim::box<dimension, float_type> > box_ptr;
     typedef mdsim::force<dimension, float_type> force_type;
-    typedef boost::shared_ptr<mdsim::force<dimension, float_type> > force_ptr;
     typedef mdsim::neighbor<dimension, float_type> neighbor_type;
-    typedef boost::shared_ptr<mdsim::neighbor<dimension, float_type> > neighbor_ptr;
 
-    verlet(particle_ptr particle, box_ptr box, force_ptr force, neighbor_ptr neighbor, options const& vm);
+    verlet(options const& vm);
     virtual ~verlet() {}
     void integrate();
     void finalize();

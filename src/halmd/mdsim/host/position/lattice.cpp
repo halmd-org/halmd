@@ -34,11 +34,12 @@ using namespace boost;
 using namespace std;
 
 template <int dimension, typename float_type>
-lattice<dimension, float_type>::lattice(particle_ptr particle, box_ptr box, random_ptr random, options const& vm)
+lattice<dimension, float_type>::lattice(options const& vm)
+    : _Base(vm)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(particle))
-    , box(dynamic_pointer_cast<box_type>(box))
-    , random(dynamic_pointer_cast<random_type>(random))
+    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension, float_type> >::fetch(vm)))
+    , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension, float_type> >::fetch(vm)))
+    , random(dynamic_pointer_cast<random_type>(factory<mdsim::random>::fetch(vm)))
 {
     // parse options
     if (!vm["binary"].empty() && vm["particles"].defaulted()) {

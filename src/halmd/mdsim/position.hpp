@@ -22,6 +22,8 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
+#include <halmd/mdsim/factory.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
 {
@@ -33,8 +35,20 @@ public:
     typedef vector<float_type, dimension> vector_type;
 
 public:
+    position(options const& vm) {}
     virtual ~position() {}
     virtual void set() = 0;
+};
+
+template <int dimension, typename float_type>
+class factory<position<dimension, float_type> >
+{
+public:
+    typedef boost::shared_ptr<position<dimension, float_type> > position_ptr;
+    static position_ptr fetch(options const& vm);
+
+private:
+    static position_ptr position_;
 };
 
 }} // namespace halmd::mdsim

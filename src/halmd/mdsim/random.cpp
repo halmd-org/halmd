@@ -19,6 +19,7 @@
 
 #include <fstream>
 
+#include <halmd/mdsim/host/random.hpp>
 #include <halmd/mdsim/random.hpp>
 #include <halmd/util/log.hpp>
 
@@ -46,5 +47,15 @@ unsigned int random::readint(std::string const& file)
     }
     return seed;
 }
+
+boost::shared_ptr<random> factory<random>::fetch(options const& vm)
+{
+    if (!random_) {
+        random_.reset(new host::random(vm));
+    }
+    return random_;
+}
+
+factory<random>::random_ptr factory<random>::random_ = random_ptr();
 
 }} // namespace halmd::mdsim

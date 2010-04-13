@@ -24,6 +24,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/util/log.hpp>
 
+using namespace boost;
 using namespace std;
 
 namespace halmd { namespace mdsim
@@ -33,9 +34,9 @@ namespace halmd { namespace mdsim
  * Set box edge lengths
  */
 template <int dimension, typename float_type>
-box<dimension, float_type>::box(particle_ptr particle, options const& vm)
+box<dimension, float_type>::box(options const& vm)
     // dependency injection
-    : particle(particle)
+    : particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension, float_type> >::fetch(vm)))
     // default to cube
     , scale_(1)
 {
@@ -84,6 +85,28 @@ template class box<2, double>;
 #else
 template class box<3, float>;
 template class box<2, float>;
+#endif
+
+template <int dimension, typename float_type>
+boost::shared_ptr<box<dimension, float_type> >
+factory<box<dimension, float_type> >::fetch(options const& vm)
+{
+    if (!box_) {
+        box_.reset(new box<dimension, float_type>(vm));
+    }
+    return box_;
+}
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template <> factory<box<3, double> >::box_ptr factory<box<3, double> >::box_ = box_ptr();
+template class factory<box<3, double> >;
+template <> factory<box<2, double> >::box_ptr factory<box<2, double> >::box_ = box_ptr();
+template class factory<box<2, double> >;
+#else
+template <> factory<box<3, float> >::box_ptr factory<box<3, float> >::box_ = box_ptr();
+template class factory<box<3, float> >;
+template <> factory<box<2, float> >::box_ptr factory<box<2, float> >::box_ = box_ptr();
+template class factory<box<2, float> >;
 #endif
 
 }} // namespace halmd::mdsim

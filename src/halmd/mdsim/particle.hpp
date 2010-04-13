@@ -22,6 +22,7 @@
 
 #include <vector>
 
+#include <halmd/mdsim/factory.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -38,6 +39,17 @@ public:
     unsigned int nbox;
     /** number of particle types */
     unsigned int ntype;
+};
+
+template <int dimension, typename float_type>
+class factory<particle<dimension, float_type> >
+{
+public:
+    typedef boost::shared_ptr<particle<dimension, float_type> > particle_ptr;
+    static particle_ptr fetch(options const& vm);
+
+private:
+    static particle_ptr particle_;
 };
 
 }} // namespace halmd::mdsim

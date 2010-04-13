@@ -17,36 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_NEIGHBOR_HPP
-#define HALMD_MDSIM_NEIGHBOR_HPP
-
-#include <halmd/mdsim/factory.hpp>
-#include <halmd/options.hpp>
+#ifndef HALMD_MDSIM_FACTORY_HPP
+#define HALMD_MDSIM_FACTORY_HPP
 
 namespace halmd { namespace mdsim
 {
 
-template <int dimension, typename float_type>
-class neighbor
-{
-public:
-    neighbor(options const& vm) {}
-    virtual ~neighbor() {}
-    virtual void update() = 0;
-    virtual bool check() = 0;
-};
-
-template <int dimension, typename float_type>
-class factory<neighbor<dimension, float_type> >
-{
-public:
-    typedef boost::shared_ptr<neighbor<dimension, float_type> > neighbor_ptr;
-    static neighbor_ptr fetch(options const& vm);
-
-private:
-    static neighbor_ptr neighbor_;
-};
+template <typename T>
+class factory;
 
 }} // namespace halmd::mdsim
 
-#endif /* ! HALMD_MDSIM_NEIGHBOR_HPP */
+#endif /* ! HALMD_MDSIM_FACTORY_HPP */

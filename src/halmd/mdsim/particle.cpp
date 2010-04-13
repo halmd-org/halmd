@@ -22,6 +22,7 @@
 #include <exception>
 #include <numeric>
 
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/util/log.hpp>
 
@@ -64,6 +65,28 @@ template class particle<2, double>;
 #else
 template class particle<3, float>;
 template class particle<2, float>;
+#endif
+
+template <int dimension, typename float_type>
+boost::shared_ptr<particle<dimension, float_type> >
+factory<particle<dimension, float_type> >::fetch(options const& vm)
+{
+    if (!particle_) {
+        particle_.reset(new host::particle<dimension, float_type>(vm));
+    }
+    return particle_;
+}
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template <> factory<particle<3, double> >::particle_ptr factory<particle<3, double> >::particle_ = particle_ptr();
+template class factory<particle<3, double> >;
+template <> factory<particle<2, double> >::particle_ptr factory<particle<2, double> >::particle_ = particle_ptr();
+template class factory<particle<2, double> >;
+#else
+template <> factory<particle<3, float> >::particle_ptr factory<particle<3, float> >::particle_ = particle_ptr();
+template class factory<particle<3, float> >;
+template <> factory<particle<2, float> >::particle_ptr factory<particle<2, float> >::particle_ = particle_ptr();
+template class factory<particle<2, float> >;
 #endif
 
 }} // namespace halmd::mdsim

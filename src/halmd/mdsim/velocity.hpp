@@ -22,6 +22,8 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
+#include <halmd/mdsim/factory.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
 {
@@ -33,8 +35,20 @@ public:
     typedef vector<float_type, dimension> vector_type;
 
 public:
+    velocity(options const& vm) {}
     virtual ~velocity() {}
     virtual void set() = 0;
+};
+
+template <int dimension, typename float_type>
+class factory<velocity<dimension, float_type> >
+{
+public:
+    typedef boost::shared_ptr<velocity<dimension, float_type> > velocity_ptr;
+    static velocity_ptr fetch(options const& vm);
+
+private:
+    static velocity_ptr velocity_;
 };
 
 }} // namespace halmd::mdsim

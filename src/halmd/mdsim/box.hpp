@@ -24,6 +24,7 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
+#include <halmd/mdsim/factory.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/options.hpp>
 
@@ -35,10 +36,10 @@ class box
 {
 public:
     typedef vector<float_type, dimension> vector_type;
-    typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
+    typedef particle<dimension, float_type> particle_type;
 
 public:
-    box(particle_ptr particle, options const& vm);
+    box(options const& vm);
     virtual ~box() {}
 
     void length(vector_type const& value_type);
@@ -47,7 +48,7 @@ public:
     float_type density() { return density_; }
 
 public:
-    particle_ptr particle;
+    boost::shared_ptr<particle_type> particle;
 
 protected:
     /** edge lengths of cuboid */
@@ -56,6 +57,17 @@ protected:
     vector_type scale_;
     /** number density */
     float_type density_;
+};
+
+template <int dimension, typename float_type>
+class factory<box<dimension, float_type> >
+{
+public:
+    typedef boost::shared_ptr<box<dimension, float_type> > box_ptr;
+    static box_ptr fetch(options const& vm);
+
+private:
+    static box_ptr box_;
 };
 
 }} // namespace halmd::mdsim

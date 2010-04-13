@@ -27,6 +27,7 @@ namespace halmd { namespace mdsim { namespace host
 {
 
 random::random(options const& vm)
+  : _Base(vm)
 {
     if (vm["random-seed"].empty()) {
         seed(readint(vm["random-device"].as<std::string>()));

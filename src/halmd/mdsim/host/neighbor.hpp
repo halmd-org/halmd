@@ -45,11 +45,8 @@ public:
     typedef vector<float_type, dimension> vector_type;
 
     typedef host::particle<dimension, float_type> particle_type;
-    typedef boost::shared_ptr<mdsim::particle<dimension, float_type> > particle_ptr;
     typedef mdsim::force<dimension, float_type> force_type;
-    typedef boost::shared_ptr<mdsim::force<dimension, float_type> > force_ptr;
     typedef mdsim::box<dimension, float_type> box_type;
-    typedef boost::shared_ptr<mdsim::box<dimension, float_type> > box_ptr;
 
     typedef typename particle_type::neighbor_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
@@ -58,7 +55,7 @@ public:
 
     typedef typename force_type::matrix_type matrix_type;
 
-    neighbor(particle_ptr particle, force_ptr force, box_ptr box, options const& vm);
+    neighbor(options const& vm);
     virtual ~neighbor() {}
     void update();
     bool check();
