@@ -44,11 +44,11 @@ template <int dimension>
 class factory<velocity<dimension> >
 {
 public:
-    typedef boost::shared_ptr<velocity<dimension> > velocity_ptr;
-    static velocity_ptr fetch(options const& vm);
+    typedef boost::shared_ptr<velocity<dimension> > pointer;
+    static pointer fetch(options const& vm);
 
 private:
-    static velocity_ptr velocity_;
+    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

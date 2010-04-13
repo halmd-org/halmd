@@ -25,22 +25,22 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-boost::shared_ptr<integrator<dimension> >
+typename factory<integrator<dimension> >::pointer
 factory<integrator<dimension> >::fetch(options const& vm)
 {
-    if (!integrator_) {
+    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        integrator_.reset(new host::integrator::verlet<dimension, float>(vm));
+        singleton_.reset(new host::integrator::verlet<dimension, float>(vm));
 #else
-        integrator_.reset(new host::integrator::verlet<dimension, double>(vm));
+        singleton_.reset(new host::integrator::verlet<dimension, double>(vm));
 #endif
     }
-    return integrator_;
+    return singleton_;
 }
 
-template <> factory<integrator<3> >::integrator_ptr factory<integrator<3> >::integrator_ = integrator_ptr();
+template <> factory<integrator<3> >::pointer factory<integrator<3> >::singleton_ = pointer();
 template class factory<integrator<3> >;
-template <> factory<integrator<2> >::integrator_ptr factory<integrator<2> >::integrator_ = integrator_ptr();
+template <> factory<integrator<2> >::pointer factory<integrator<2> >::singleton_ = pointer();
 template class factory<integrator<2> >;
 
 }} // namespace halmd::mdsim

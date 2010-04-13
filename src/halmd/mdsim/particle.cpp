@@ -63,22 +63,22 @@ template class particle<3>;
 template class particle<2>;
 
 template <int dimension>
-boost::shared_ptr<particle<dimension> >
+typename factory<particle<dimension> >::pointer
 factory<particle<dimension> >::fetch(options const& vm)
 {
-    if (!particle_) {
+    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        particle_.reset(new host::particle<dimension, float>(vm));
+        singleton_.reset(new host::particle<dimension, float>(vm));
 #else
-        particle_.reset(new host::particle<dimension, double>(vm));
+        singleton_.reset(new host::particle<dimension, double>(vm));
 #endif
     }
-    return particle_;
+    return singleton_;
 }
 
-template <> factory<particle<3> >::particle_ptr factory<particle<3> >::particle_ = particle_ptr();
+template <> factory<particle<3> >::pointer factory<particle<3> >::singleton_ = pointer();
 template class factory<particle<3> >;
-template <> factory<particle<2> >::particle_ptr factory<particle<2> >::particle_ = particle_ptr();
+template <> factory<particle<2> >::pointer factory<particle<2> >::singleton_ = pointer();
 template class factory<particle<2> >;
 
 }} // namespace halmd::mdsim

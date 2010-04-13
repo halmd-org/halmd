@@ -46,11 +46,11 @@ template <int dimension>
 class factory<integrator<dimension> >
 {
 public:
-    typedef boost::shared_ptr<integrator<dimension> > integrator_ptr;
-    static integrator_ptr fetch(options const& vm);
+    typedef boost::shared_ptr<integrator<dimension> > pointer;
+    static pointer fetch(options const& vm);
 
 private:
-    static integrator_ptr integrator_;
+    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

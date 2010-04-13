@@ -45,11 +45,11 @@ template <int dimension>
 class factory<particle<dimension> >
 {
 public:
-    typedef boost::shared_ptr<particle<dimension> > particle_ptr;
-    static particle_ptr fetch(options const& vm);
+    typedef boost::shared_ptr<particle<dimension> > pointer;
+    static pointer fetch(options const& vm);
 
 private:
-    static particle_ptr particle_;
+    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

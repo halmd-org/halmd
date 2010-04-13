@@ -83,18 +83,18 @@ template class box<3>;
 template class box<2>;
 
 template <int dimension>
-boost::shared_ptr<box<dimension> >
+typename factory<box<dimension> >::pointer
 factory<box<dimension> >::fetch(options const& vm)
 {
-    if (!box_) {
-        box_.reset(new box<dimension>(vm));
+    if (!singleton_) {
+        singleton_.reset(new box<dimension>(vm));
     }
-    return box_;
+    return singleton_;
 }
 
-template <> factory<box<3> >::box_ptr factory<box<3> >::box_ = box_ptr();
+template <> factory<box<3> >::pointer factory<box<3> >::singleton_ = pointer();
 template class factory<box<3> >;
-template <> factory<box<2> >::box_ptr factory<box<2> >::box_ = box_ptr();
+template <> factory<box<2> >::pointer factory<box<2> >::singleton_ = pointer();
 template class factory<box<2> >;
 
 }} // namespace halmd::mdsim

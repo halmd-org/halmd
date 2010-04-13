@@ -44,11 +44,11 @@ template <int dimension>
 class factory<position<dimension> >
 {
 public:
-    typedef boost::shared_ptr<position<dimension> > position_ptr;
-    static position_ptr fetch(options const& vm);
+    typedef boost::shared_ptr<position<dimension> > pointer;
+    static pointer fetch(options const& vm);
 
 private:
-    static position_ptr position_;
+    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

@@ -48,14 +48,14 @@ unsigned int random::readint(std::string const& file)
     return seed;
 }
 
-boost::shared_ptr<random> factory<random>::fetch(options const& vm)
+factory<random>::pointer factory<random>::fetch(options const& vm)
 {
-    if (!random_) {
-        random_.reset(new host::random(vm));
+    if (!singleton_) {
+        singleton_.reset(new host::random(vm));
     }
-    return random_;
+    return singleton_;
 }
 
-factory<random>::random_ptr factory<random>::random_ = random_ptr();
+factory<random>::pointer factory<random>::singleton_ = pointer();
 
 }} // namespace halmd::mdsim

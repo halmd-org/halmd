@@ -40,11 +40,11 @@ template <int dimension>
 class factory<neighbor<dimension> >
 {
 public:
-    typedef boost::shared_ptr<neighbor<dimension> > neighbor_ptr;
-    static neighbor_ptr fetch(options const& vm);
+    typedef boost::shared_ptr<neighbor<dimension> > pointer;
+    static pointer fetch(options const& vm);
 
 private:
-    static neighbor_ptr neighbor_;
+    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

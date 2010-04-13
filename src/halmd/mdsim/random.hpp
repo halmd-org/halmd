@@ -43,11 +43,11 @@ template <>
 class factory<random>
 {
 public:
-    typedef boost::shared_ptr<random> random_ptr;
-    static random_ptr fetch(options const& vm);
+    typedef boost::shared_ptr<random> pointer;
+    static pointer fetch(options const& vm);
 
 private:
-    static random_ptr random_;
+    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

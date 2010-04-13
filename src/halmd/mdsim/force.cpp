@@ -41,22 +41,22 @@ template class force<3>;
 template class force<2>;
 
 template <int dimension>
-boost::shared_ptr<force<dimension> >
+typename factory<force<dimension> >::pointer
 factory<force<dimension> >::fetch(options const& vm)
 {
-    if (!force_) {
+    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        force_.reset(new host::forces::lj<dimension, float>(vm));
+        singleton_.reset(new host::forces::lj<dimension, float>(vm));
 #else
-        force_.reset(new host::forces::lj<dimension, double>(vm));
+        singleton_.reset(new host::forces::lj<dimension, double>(vm));
 #endif
     }
-    return force_;
+    return singleton_;
 }
 
-template <> factory<force<3> >::force_ptr factory<force<3> >::force_ = force_ptr();
+template <> factory<force<3> >::pointer factory<force<3> >::singleton_ = pointer();
 template class factory<force<3> >;
-template <> factory<force<2> >::force_ptr factory<force<2> >::force_ = force_ptr();
+template <> factory<force<2> >::pointer factory<force<2> >::singleton_ = pointer();
 template class factory<force<2> >;
 
 }} // namespace halmd::mdsim

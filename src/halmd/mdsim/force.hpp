@@ -63,11 +63,11 @@ template <int dimension>
 class factory<force<dimension> >
 {
 public:
-    typedef boost::shared_ptr<force<dimension> > force_ptr;
-    static force_ptr fetch(options const& vm);
+    typedef boost::shared_ptr<force<dimension> > pointer;
+    static pointer fetch(options const& vm);
 
 private:
-    static force_ptr force_;
+    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

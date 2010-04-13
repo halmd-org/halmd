@@ -25,22 +25,22 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-boost::shared_ptr<velocity<dimension> >
+typename factory<velocity<dimension> >::pointer
 factory<velocity<dimension> >::fetch(options const& vm)
 {
-    if (!velocity_) {
+    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        velocity_.reset(new host::velocity::boltzmann<dimension, float>(vm));
+        singleton_.reset(new host::velocity::boltzmann<dimension, float>(vm));
 #else
-        velocity_.reset(new host::velocity::boltzmann<dimension, double>(vm));
+        singleton_.reset(new host::velocity::boltzmann<dimension, double>(vm));
 #endif
     }
-    return velocity_;
+    return singleton_;
 }
 
-template <> factory<velocity<3> >::velocity_ptr factory<velocity<3> >::velocity_ = velocity_ptr();
+template <> factory<velocity<3> >::pointer factory<velocity<3> >::singleton_ = pointer();
 template class factory<velocity<3> >;
-template <> factory<velocity<2> >::velocity_ptr factory<velocity<2> >::velocity_ = velocity_ptr();
+template <> factory<velocity<2> >::pointer factory<velocity<2> >::singleton_ = pointer();
 template class factory<velocity<2> >;
 
 }} // namespace halmd::mdsim
