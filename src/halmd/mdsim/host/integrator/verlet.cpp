@@ -35,8 +35,6 @@ verlet<dimension, float_type>::verlet(options const& vm)
     // dependency injection
     , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
     , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension> >::fetch(vm)))
-    , force(dynamic_pointer_cast<force_type>(factory<mdsim::force<dimension> >::fetch(vm)))
-    , neighbor(dynamic_pointer_cast<neighbor_type>(factory<mdsim::neighbor<dimension> >::fetch(vm)))
 {
     // parse options
     timestep_ = vm["timestep"].as<double>();

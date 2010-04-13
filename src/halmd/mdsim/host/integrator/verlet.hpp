@@ -25,10 +25,8 @@
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/mdsim/neighbor.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim { namespace host { namespace integrator
@@ -43,8 +41,6 @@ public:
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::force<dimension> force_type;
-    typedef mdsim::neighbor<dimension> neighbor_type;
 
     verlet(options const& vm);
     virtual ~verlet() {}
@@ -54,8 +50,6 @@ public:
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<neighbor_type> neighbor;
 
 protected:
     /** integration time-step */
