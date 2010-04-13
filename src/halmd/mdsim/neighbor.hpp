@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_NEIGHBOR_HPP
 #define HALMD_MDSIM_NEIGHBOR_HPP
 
-#include <halmd/mdsim/factory.hpp>
+#include <halmd/mdsim/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -37,7 +37,7 @@ public:
 };
 
 template <int dimension>
-class factory<neighbor<dimension> >
+class module<neighbor<dimension> >
 {
 public:
     typedef boost::shared_ptr<neighbor<dimension> > pointer;

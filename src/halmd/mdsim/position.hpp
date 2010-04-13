@@ -22,7 +22,7 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/factory.hpp>
+#include <halmd/mdsim/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -41,7 +41,7 @@ public:
 };
 
 template <int dimension>
-class factory<position<dimension> >
+class module<position<dimension> >
 {
 public:
     typedef boost::shared_ptr<position<dimension> > pointer;

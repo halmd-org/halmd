@@ -33,11 +33,11 @@ namespace halmd { namespace mdsim
  */
 template <int dimension>
 core<dimension>::core(options const& vm)
-  : force(factory<mdsim::force<dimension> >::fetch(vm))
-  , neighbor(factory<mdsim::neighbor<dimension> >::fetch(vm))
-  , integrator(factory<mdsim::integrator<dimension> >::fetch(vm))
-  , position(factory<mdsim::position<dimension> >::fetch(vm))
-  , velocity(factory<mdsim::velocity<dimension> >::fetch(vm))
+  : force(module<mdsim::force<dimension> >::fetch(vm))
+  , neighbor(module<mdsim::neighbor<dimension> >::fetch(vm))
+  , integrator(module<mdsim::integrator<dimension> >::fetch(vm))
+  , position(module<mdsim::position<dimension> >::fetch(vm))
+  , velocity(module<mdsim::velocity<dimension> >::fetch(vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {

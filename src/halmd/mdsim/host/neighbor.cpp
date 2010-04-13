@@ -36,9 +36,9 @@ template <int dimension, typename float_type>
 neighbor<dimension, float_type>::neighbor(options const& vm)
     : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
-    , force(dynamic_pointer_cast<force_type>(factory<mdsim::force<dimension> >::fetch(vm)))
-    , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension> >::fetch(vm)))
+    , particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
+    , force(dynamic_pointer_cast<force_type>(module<mdsim::force<dimension> >::fetch(vm)))
+    , box(dynamic_pointer_cast<box_type>(module<mdsim::box<dimension> >::fetch(vm)))
     // allocate parameters
     , rr_cut_skin_(particle->ntype, particle->ntype)
     , r0_(particle->nbox)

@@ -63,8 +63,8 @@ template class particle<3>;
 template class particle<2>;
 
 template <int dimension>
-typename factory<particle<dimension> >::pointer
-factory<particle<dimension> >::fetch(options const& vm)
+typename module<particle<dimension> >::pointer
+module<particle<dimension> >::fetch(options const& vm)
 {
     if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
@@ -76,9 +76,9 @@ factory<particle<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> factory<particle<3> >::pointer factory<particle<3> >::singleton_ = pointer();
-template class factory<particle<3> >;
-template <> factory<particle<2> >::pointer factory<particle<2> >::singleton_ = pointer();
-template class factory<particle<2> >;
+template <> module<particle<3> >::pointer module<particle<3> >::singleton_ = pointer();
+template class module<particle<3> >;
+template <> module<particle<2> >::pointer module<particle<2> >::singleton_ = pointer();
+template class module<particle<2> >;
 
 }} // namespace halmd::mdsim

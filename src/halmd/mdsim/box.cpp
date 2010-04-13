@@ -36,7 +36,7 @@ namespace halmd { namespace mdsim
 template <int dimension>
 box<dimension>::box(options const& vm)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
+    : particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
     // default to cube
     , scale_(1)
 {
@@ -83,8 +83,8 @@ template class box<3>;
 template class box<2>;
 
 template <int dimension>
-typename factory<box<dimension> >::pointer
-factory<box<dimension> >::fetch(options const& vm)
+typename module<box<dimension> >::pointer
+module<box<dimension> >::fetch(options const& vm)
 {
     if (!singleton_) {
         singleton_.reset(new box<dimension>(vm));
@@ -92,9 +92,9 @@ factory<box<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> factory<box<3> >::pointer factory<box<3> >::singleton_ = pointer();
-template class factory<box<3> >;
-template <> factory<box<2> >::pointer factory<box<2> >::singleton_ = pointer();
-template class factory<box<2> >;
+template <> module<box<3> >::pointer module<box<3> >::singleton_ = pointer();
+template class module<box<3> >;
+template <> module<box<2> >::pointer module<box<2> >::singleton_ = pointer();
+template class module<box<2> >;
 
 }} // namespace halmd::mdsim

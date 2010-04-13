@@ -48,7 +48,7 @@ unsigned int random::readint(std::string const& file)
     return seed;
 }
 
-factory<random>::pointer factory<random>::fetch(options const& vm)
+module<random>::pointer module<random>::fetch(options const& vm)
 {
     if (!singleton_) {
         singleton_.reset(new host::random(vm));
@@ -56,6 +56,6 @@ factory<random>::pointer factory<random>::fetch(options const& vm)
     return singleton_;
 }
 
-factory<random>::pointer factory<random>::singleton_ = pointer();
+module<random>::pointer module<random>::singleton_ = pointer();
 
 }} // namespace halmd::mdsim

@@ -24,7 +24,7 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/factory.hpp>
+#include <halmd/mdsim/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/options.hpp>
 
@@ -60,7 +60,7 @@ protected:
 };
 
 template <int dimension>
-class factory<box<dimension> >
+class module<box<dimension> >
 {
 public:
     typedef boost::shared_ptr<box<dimension> > pointer;

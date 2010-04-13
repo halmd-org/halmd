@@ -30,8 +30,8 @@ template <int dimension, typename float_type>
 boltzmann<dimension, float_type>::boltzmann(options const& vm)
     : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
-    , random(dynamic_pointer_cast<random_type>(factory<mdsim::random>::fetch(vm)))
+    , particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
+    , random(dynamic_pointer_cast<random_type>(module<mdsim::random>::fetch(vm)))
 {
     // parse options
     temp_ = vm["temperature"].as<float>();

@@ -22,7 +22,7 @@
 
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/mdsim/factory.hpp>
+#include <halmd/mdsim/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -40,7 +40,7 @@ protected:
 };
 
 template <>
-class factory<random>
+class module<random>
 {
 public:
     typedef boost::shared_ptr<random> pointer;

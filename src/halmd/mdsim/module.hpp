@@ -17,15 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_FACTORY_HPP
-#define HALMD_MDSIM_FACTORY_HPP
+#ifndef HALMD_MDSIM_MODULE_HPP
+#define HALMD_MDSIM_MODULE_HPP
 
 namespace halmd { namespace mdsim
 {
 
 template <typename T>
-class factory;
+class module;
 
 }} // namespace halmd::mdsim
 
-#endif /* ! HALMD_MDSIM_FACTORY_HPP */
+#endif /* ! HALMD_MDSIM_MODULE_HPP */

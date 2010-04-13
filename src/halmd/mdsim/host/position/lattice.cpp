@@ -37,9 +37,9 @@ template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(options const& vm)
     : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
-    , box(dynamic_pointer_cast<box_type>(factory<mdsim::box<dimension> >::fetch(vm)))
-    , random(dynamic_pointer_cast<random_type>(factory<mdsim::random>::fetch(vm)))
+    , particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
+    , box(dynamic_pointer_cast<box_type>(module<mdsim::box<dimension> >::fetch(vm)))
+    , random(dynamic_pointer_cast<random_type>(module<mdsim::random>::fetch(vm)))
 {
     // parse options
     if (!vm["binary"].empty() && vm["particles"].defaulted()) {

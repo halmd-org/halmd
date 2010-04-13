@@ -25,8 +25,8 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename factory<neighbor<dimension> >::pointer
-factory<neighbor<dimension> >::fetch(options const& vm)
+typename module<neighbor<dimension> >::pointer
+module<neighbor<dimension> >::fetch(options const& vm)
 {
     if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
@@ -38,9 +38,9 @@ factory<neighbor<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> factory<neighbor<3> >::pointer factory<neighbor<3> >::singleton_ = pointer();
-template class factory<neighbor<3> >;
-template <> factory<neighbor<2> >::pointer factory<neighbor<2> >::singleton_ = pointer();
-template class factory<neighbor<2> >;
+template <> module<neighbor<3> >::pointer module<neighbor<3> >::singleton_ = pointer();
+template class module<neighbor<3> >;
+template <> module<neighbor<2> >::pointer module<neighbor<2> >::singleton_ = pointer();
+template class module<neighbor<2> >;
 
 }} // namespace halmd::mdsim

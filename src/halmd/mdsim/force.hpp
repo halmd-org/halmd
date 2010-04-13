@@ -26,7 +26,7 @@
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/math/vector4d.hpp>
-#include <halmd/mdsim/factory.hpp>
+#include <halmd/mdsim/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/options.hpp>
 
@@ -60,7 +60,7 @@ protected:
 };
 
 template <int dimension>
-class factory<force<dimension> >
+class module<force<dimension> >
 {
 public:
     typedef boost::shared_ptr<force<dimension> > pointer;

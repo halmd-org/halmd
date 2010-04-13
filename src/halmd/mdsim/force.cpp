@@ -30,7 +30,7 @@ namespace halmd { namespace mdsim
 template <int dimension>
 force<dimension>::force(options const& vm)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(factory<mdsim::particle<dimension> >::fetch(vm)))
+    : particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
     // allocate result variables
     , virial_(particle->ntype)
 {
@@ -41,8 +41,8 @@ template class force<3>;
 template class force<2>;
 
 template <int dimension>
-typename factory<force<dimension> >::pointer
-factory<force<dimension> >::fetch(options const& vm)
+typename module<force<dimension> >::pointer
+module<force<dimension> >::fetch(options const& vm)
 {
     if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
@@ -54,9 +54,9 @@ factory<force<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> factory<force<3> >::pointer factory<force<3> >::singleton_ = pointer();
-template class factory<force<3> >;
-template <> factory<force<2> >::pointer factory<force<2> >::singleton_ = pointer();
-template class factory<force<2> >;
+template <> module<force<3> >::pointer module<force<3> >::singleton_ = pointer();
+template class module<force<3> >;
+template <> module<force<2> >::pointer module<force<2> >::singleton_ = pointer();
+template class module<force<2> >;
 
 }} // namespace halmd::mdsim
