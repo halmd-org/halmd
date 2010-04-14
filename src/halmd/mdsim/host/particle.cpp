@@ -56,9 +56,10 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     algorithm::host::permute(r.begin(), r.end(), index.begin());
     algorithm::host::permute(image.begin(), image.end(), index.begin());
     algorithm::host::permute(v.begin(), v.end(), index.begin());
-    algorithm::host::permute(f.begin(), f.end(), index.begin());
+    // no permutation of forces
     algorithm::host::permute(tag.begin(), tag.end(), index.begin());
     algorithm::host::permute(type.begin(), type.end(), index.begin());
+    // no permutation of neighbor lists
 }
 
 // explicit instantiation
