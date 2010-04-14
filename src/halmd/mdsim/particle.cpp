@@ -22,6 +22,9 @@
 #include <exception>
 #include <numeric>
 
+#ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/particle.hpp>
+#endif
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/util/logger.hpp>
@@ -67,11 +70,21 @@ typename module<particle<dimension> >::pointer
 module<particle<dimension> >::fetch(options const& vm)
 {
     if (!singleton_) {
+        if (vm["backend"].as<string>() == "host") {
 #ifdef USE_HOST_SINGLE_PRECISION
-        singleton_.reset(new host::particle<dimension, float>(vm));
+            singleton_.reset(new host::particle<dimension, float>(vm));
 #else
-        singleton_.reset(new host::particle<dimension, double>(vm));
+            singleton_.reset(new host::particle<dimension, double>(vm));
 #endif
+        }
+#ifdef WITH_CUDA
+        else if (vm["backend"].as<string>() == "gpu_neighbour") {
+            singleton_.reset(new gpu::particle<dimension, float>(vm));
+        }
+#endif
+        else {
+            throw std::runtime_error("not implemented");
+        }
     }
     return singleton_;
 }
