@@ -1,6 +1,7 @@
 /* Lennard-Jones fluid simulation using CUDA
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -149,6 +150,7 @@ private:
     using _Base::reduce_velocity;
     using _Base::reduce_en;
     using _Base::reduce_virial;
+    using _Base::reduce_helfand;
 
     /** number of cells per dimension */
     unsigned int ncell;
@@ -203,6 +205,8 @@ private:
         cuda::vector<float> en;
         /** virial equation sums per particle */
         cuda::vector<gpu_vector_type> virial;
+        /** time integral of virial stress tensor to calculate Helfand moment */
+        cuda::vector<gpu_vector_type> helfand;
     } g_part;
 
     /** double buffers for particle sorting */
@@ -407,6 +411,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::threads(unsigned int value)
         g_part.en.resize(npart);
         g_part.virial.reserve(dim_.threads());
         g_part.virial.resize(npart);
+        g_part.helfand.reserve(dim_.threads());
+        g_part.helfand.resize(npart);
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -492,6 +498,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::state(host_sample_type& sam
 #ifdef USE_HILBERT_ORDER
     order_velocities();
 #endif
+    // init accumulator for Helfand moment
+    cuda::memset(g_part.helfand, 0, g_part.helfand.capacity());
 }
 
 template <int dimension>
@@ -511,6 +519,8 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::lattice()
     _Base::lattice(g_part.r);
     // randomly permute particle coordinates for binary mixture
     _Base::random_permute(g_part.r);
+    // init accumulator for Helfand moment
+    cuda::memset(g_part.helfand, 0, g_part.helfand.capacity());
 
     assign_positions();
 }
@@ -785,10 +795,12 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& 
     try {
         timer[0].record();
         if (mixture_ == BINARY) {
-            reduce_virial(g_part.virial, g_part.v, g_part.tag, mpart);
+            reduce_virial(g_part.virial, g_part.tag, mpart);
+            reduce_helfand(g_part.helfand, g_part.tag, mpart);
         }
         else {
-            reduce_virial(g_part.virial, g_part.v);
+            reduce_virial(g_part.virial);
+            reduce_helfand(g_part.helfand);
         }
         cuda::thread::synchronize();
         timer[1].record();
@@ -801,6 +813,10 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::sample(energy_sample_type& 
     sample.virial = reduce_virial.value();
     for (size_t i = 0; i < sample.virial.size(); ++i) {
         sample.virial[i] /= mpart[i];
+    }
+    sample.helfand = reduce_helfand.value();
+    for (size_t i = 0; i < sample.helfand.size(); ++i) {
+        sample.helfand[i] /= mpart[i];
     }
 
     // mean squared velocity per particle
@@ -876,14 +892,14 @@ template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::velocity_verlet()
 {
     cuda::configure(dim_.grid, dim_.block);
-    _gpu::inteq(g_part.r, g_part.dr, g_part.R, g_part.v, g_part.f);
+    _gpu::inteq(g_part.r, g_part.dr, g_part.R, g_part.v, g_part.f, g_part.virial);
 }
 
 template <int dimension>
 void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::update_forces()
 {
     cuda::configure(dim_.grid, dim_.block);
-    _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial);
+    _Base::update_forces(g_part.r, g_part.v, g_part.f, g_part.en, g_part.virial, g_part.helfand);
 }
 
 template <int dimension>

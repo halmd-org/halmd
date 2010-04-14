@@ -1,6 +1,7 @@
 /* Lennard-Jones fluid kernel
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,6 +21,7 @@
 
 #include <halmd/mdsim/gpu/base.cuh>
 #include <halmd/mdsim/gpu/ljfluid_square.hpp>
+#include <halmd/mdsim/gpu/virial.cuh>
 
 using namespace halmd::gpu;
 
@@ -33,7 +35,7 @@ template <typename vector_type,
           mixture_type mixture,
           potential_type potential,
           typename T>
-__global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_virial)
+__global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_virial, T* g_helfand)
 {
     enum { dimension = vector_type::static_size };
 
@@ -50,7 +52,8 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     // potential energy contribution
     float en = 0;
     // virial equation sum contribution
-    vector<float, (dimension - 1) * dimension / 2 + 1> virial = 0;
+    // initialise with kinetic value computed by inteq() before leapfrog_half_step()
+    vector<float, (dimension - 1) * dimension / 2 + 1> virial = g_virial[GTID];
     // force sum
 #ifdef USE_FORCE_DSFUN
     vector<dsfloat, dimension> f = 0;
@@ -89,6 +92,11 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
     g_f[GTID] = static_cast<vector_type>(f);
     g_en[GTID] = en;
     g_virial[GTID] = virial;
+
+    // integrate virial tensor component-wise
+    vector<float, (dimension - 1) * dimension / 2 + 1> helfand = g_helfand[GTID];
+    helfand += virial * timestep;
+    g_helfand[GTID] = helfand;
 }
 
 /**
@@ -108,7 +116,7 @@ __global__ void sample(float4 const* g_ir, T const* g_iR, T const* g_iv, T* g_or
  * first leapfrog step of integration of equations of motion
  */
 template <int dimension, typename T>
-__global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
+__global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f, T* g_virial)
 {
     vector<float, dimension> r, dr, R, v, f;
     unsigned int tag;
@@ -116,6 +124,9 @@ __global__ void inteq(float4* g_r, T* g_R, T* g_v, T const* g_f)
     R = g_R[GTID];
     v = g_v[GTID];
     f = g_f[GTID];
+
+    /* compute kinetic part of virial tensor here */
+    g_virial[GTID] = virial::tensor<float>(v * v, v);
 
     leapfrog_half_step(r, dr, R, v, f);
 
@@ -136,32 +147,32 @@ typedef ljfluid<ljfluid_impl_gpu_square, 2> _2D;
 /**
  * device function wrappers
  */
-cuda::function<void (float4 const*, float4*, float4*, float*, float4*)>
+cuda::function<void (float4 const*, float4*, float4*, float*, float4*, float4*)>
     _3D::template variant<UNARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C0POT>);
-cuda::function<void (float4 const*, float4*, float4*, float*, float4*)>
+cuda::function<void (float4 const*, float4*, float4*, float*, float4*, float4*)>
     _3D::template variant<UNARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, UNARY, C2POT>);
-cuda::function<void (float4 const*, float4*, float4*, float*, float4*)>
+cuda::function<void (float4 const*, float4*, float4*, float*, float4*, float4*)>
     _3D::template variant<BINARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C0POT>);
-cuda::function<void (float4 const*, float4*, float4*, float*, float4*)>
+cuda::function<void (float4 const*, float4*, float4*, float*, float4*, float4*)>
     _3D::template variant<BINARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 3>, BINARY, C2POT>);
 
 cuda::function<void (float4 const*, float4 const*, float4 const*, float4*, float4*)>
     _3D::sample(cu::ljfluid::sample<3>);
-cuda::function<void (float4*, float4*, float4*, float4 const*)>
+cuda::function<void (float4*, float4*, float4*, float4 const*, float4*)>
     _3D::inteq(cu::ljfluid::inteq<3>);
 
-cuda::function<void (float4 const*, float2*, float2*, float*, float2*)>
+cuda::function<void (float4 const*, float2*, float2*, float*, float2*, float2*)>
     _2D::template variant<UNARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C0POT>);
-cuda::function<void (float4 const*, float2*, float2*, float*, float2*)>
+cuda::function<void (float4 const*, float2*, float2*, float*, float2*, float2*)>
     _2D::template variant<UNARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, UNARY, C2POT>);
-cuda::function<void (float4 const*, float2*, float2*, float*, float2*)>
+cuda::function<void (float4 const*, float2*, float2*, float*, float2*, float2*)>
     _2D::template variant<BINARY, C0POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C0POT>);
-cuda::function<void (float4 const*, float2*, float2*, float*, float2*)>
+cuda::function<void (float4 const*, float2*, float2*, float*, float2*, float2*)>
     _2D::template variant<BINARY, C2POT>::mdstep(cu::ljfluid::mdstep<cu::vector<float, 2>, BINARY, C2POT>);
 
 cuda::function<void (float4 const*, float2 const*, float2 const*, float2*, float2*)>
     _2D::sample(cu::ljfluid::sample<2>);
-cuda::function<void (float4*, float2*, float2*, float2 const*)>
+cuda::function<void (float4*, float2*, float2*, float2 const*, float2*)>
     _2D::inteq(cu::ljfluid::inteq<2>);
 
 }} // namespace halmd::gpu

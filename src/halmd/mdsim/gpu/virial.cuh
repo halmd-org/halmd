@@ -1,6 +1,7 @@
 /* Lennard-Jones fluid kernel
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -27,6 +28,8 @@
 
 namespace halmd { namespace cu { namespace virial
 {
+
+// TODO: shift to math/gpu directory and to namespace halmd::cu
 
 /**
  * trace and off-diagonal elements of distance tensor

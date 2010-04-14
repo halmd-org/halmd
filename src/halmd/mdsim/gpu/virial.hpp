@@ -1,6 +1,7 @@
 /* Parallel reduction kernel
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -34,10 +35,10 @@ enum {
 };
 
 extern cuda::function<
-    void(float4 const*, float4 const*, cu::vector<dsfloat, 4>*, uint),
-    void(float2 const*, float2 const*, cu::vector<dsfloat, 2>*, uint),
-    void(float4 const*, float4 const*, uint const*, cu::vector<dsfloat, 4>*, uint, uint),
-    void(float2 const*, float2 const*, uint const*, cu::vector<dsfloat, 2>*, uint, uint)>
+    void(float4 const*, cu::vector<dsfloat, 4>*, uint),
+    void(float2 const*, cu::vector<dsfloat, 2>*, uint),
+    void(float4 const*, uint const*, cu::vector<dsfloat, 4>*, uint, uint),
+    void(float2 const*, uint const*, cu::vector<dsfloat, 2>*, uint, uint)>
     sum;
 
 }}} // namespace halmd::gpu::virial

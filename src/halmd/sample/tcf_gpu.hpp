@@ -1,6 +1,7 @@
 /* Time correlation functions for CUDA
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -382,7 +383,8 @@ typedef boost::mpl::push_back<_tcf_gpu_types_1, velocity_autocorrelation<tcf_gpu
 typedef boost::mpl::push_back<_tcf_gpu_types_2, intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_3;
 typedef boost::mpl::push_back<_tcf_gpu_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_4;
 typedef boost::mpl::push_back<_tcf_gpu_types_4, squared_self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_5;
-typedef boost::mpl::push_back<_tcf_gpu_types_5, virial_stress<tcf_gpu_sample> >::type tcf_gpu_types;
+typedef boost::mpl::push_back<_tcf_gpu_types_5, virial_stress<tcf_gpu_sample> >::type _tcf_gpu_types_6;
+typedef boost::mpl::push_back<_tcf_gpu_types_6, helfand_moment<tcf_gpu_sample> >::type tcf_gpu_types;
 
 } // namespace halmd
 

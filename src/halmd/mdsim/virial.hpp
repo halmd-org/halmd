@@ -1,6 +1,7 @@
 /* Parallel reduction kernel
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -44,23 +45,23 @@ public:
      * parallel reduction kernel
      */
     template <typename T>
-    void operator()(T const& g_in, T const& g_v)
+    void operator()(T const& g_in)
     {
         g_block_sum.resize(BLOCKS);
         h_block_sum.resize(BLOCKS);
         cuda::configure(BLOCKS, THREADS);
-        gpu::virial::sum(g_in, g_v, g_block_sum, g_in.size());
+        gpu::virial::sum(g_in, g_block_sum, g_in.size());
         cuda::copy(g_block_sum, h_block_sum);
     }
 
     template <typename T, typename U>
-    void operator()(T const& g_in, T const& g_v, U const& g_tag,
+    void operator()(T const& g_in, U const& g_tag,
                     boost::array<uint, 2> const& mpart)
     {
         g_block_sum.resize(2 * BLOCKS);
         h_block_sum.resize(2 * BLOCKS);
         cuda::configure(BLOCKS, THREADS);
-        gpu::virial::sum(g_in, g_v, g_tag, g_block_sum, g_in.size(), mpart.front());
+        gpu::virial::sum(g_in, g_tag, g_block_sum, g_in.size(), mpart.front());
         cuda::copy(g_block_sum, h_block_sum);
     }
 

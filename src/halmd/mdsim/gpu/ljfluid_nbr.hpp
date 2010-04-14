@@ -1,6 +1,7 @@
 /* Lennard-Jones fluid kernel
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -57,12 +58,12 @@ struct ljfluid<halmd::ljfluid_impl_gpu_neighbour, 3>
     static cuda::function<void (unsigned int const*, float4*, float4*, float4*, unsigned int*)> order_particles;
     static cuda::function<void (uint const*, float4*)> order_velocities;
     static cuda::function<void (unsigned int const*, float4*, float4*)> sample;
-    static cuda::function<void (float4*, float4*, float4*, float4*, float4 const*)> inteq;
+    static cuda::function<void (float4*, float4*, float4*, float4*, float4 const*, float4*)> inteq;
 
     template <mixture_type, potential_type>
     struct variant
     {
-        static cuda::function<void (float4 const*, float4*, float4*, float*, float4*)> mdstep;
+        static cuda::function<void (float4 const*, float4*, float4*, float*, float4*, float4*)> mdstep;
     };
 };
 
@@ -79,12 +80,12 @@ struct ljfluid<halmd::ljfluid_impl_gpu_neighbour, 2>
     static cuda::function<void (unsigned int const*, float4*, float2*, float2*, unsigned int*)> order_particles;
     static cuda::function<void (uint const*, float2*)> order_velocities;
     static cuda::function<void (unsigned int const*, float2*, float2*)> sample;
-    static cuda::function<void (float4*, float2*, float2*, float2*, float2 const*)> inteq;
+    static cuda::function<void (float4*, float2*, float2*, float2*, float2 const*, float2*)> inteq;
 
     template <mixture_type, potential_type>
     struct variant
     {
-        static cuda::function<void (float4 const*, float2*, float2*, float*, float2*)> mdstep;
+        static cuda::function<void (float4 const*, float2*, float2*, float*, float2*, float2*)> mdstep;
     };
 };
 

@@ -1,6 +1,7 @@
 /* Parallel reduction kernel
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -32,16 +33,14 @@ enum { THREADS = gpu::virial::THREADS };
 /**
  * Virial stress tensor for three-dimensional monodisperse system
  */
-__global__ void sum(float4 const* g_virial, float4 const* g_v,
-                    vector<dsfloat, 4>* g_block_sum, uint n)
+__global__ void sum(float4 const* g_virial, vector<dsfloat, 4>* g_block_sum, uint n)
 {
     __shared__ vector<dsfloat, 4> s_virial[THREADS];
     vector<dsfloat, 4> virial = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-        vector<float, 3> v = g_v[i];
-        virial += tensor(v * v, v) + g_virial[i];
+        virial += static_cast<vector<float, 4> >(g_virial[i]);
     }
     // reduced value for this thread
     s_virial[TID] = virial;
@@ -59,16 +58,14 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v,
 /**
  * Virial stress tensor for two-dimensional monodisperse system
  */
-__global__ void sum(float2 const* g_virial, float2 const* g_v,
-                    vector<dsfloat, 2>* g_block_sum, uint n)
+__global__ void sum(float2 const* g_virial, vector<dsfloat, 2>* g_block_sum, uint n)
 {
     __shared__ vector<dsfloat, 2> s_virial[THREADS];
     vector<dsfloat, 2> virial = 0;
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-        vector<float, 2> v = g_v[i];
-        virial += tensor(v * v, v) + g_virial[i];
+        virial += static_cast<vector<float, 2> >(g_virial[i]);
     }
     // reduced value for this thread
     s_virial[TID] = virial;
@@ -86,7 +83,7 @@ __global__ void sum(float2 const* g_virial, float2 const* g_v,
 /**
  * Virial stress tensor for three-dimensional bidisperse system
  */
-__global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag,
+__global__ void sum(float4 const* g_virial, uint const* g_tag,
                     vector<dsfloat, 4>* g_block_sum, uint n, uint mpart)
 {
     __shared__ vector<dsfloat, 4> s_virial[THREADS];
@@ -95,13 +92,11 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-        vector<float, 3> v = g_v[i];
-        vector<float, 4> virial = tensor(v * v, v) + g_virial[i];
         if (g_tag[i] < mpart) {
-            virial_a += virial;
+            virial_a += static_cast<vector<float, 4> >(g_virial[i]);
         }
         else {
-            virial_b += virial;
+            virial_b += static_cast<vector<float, 4> >(g_virial[i]);
         }
     }
     // reduced value for this thread
@@ -133,7 +128,7 @@ __global__ void sum(float4 const* g_virial, float4 const* g_v, uint const* g_tag
 /**
  * Virial stress tensor for two-dimensional bidisperse system
  */
-__global__ void sum(float2 const* g_virial, float2 const* g_v, uint const* g_tag,
+__global__ void sum(float2 const* g_virial, uint const* g_tag,
                     vector<dsfloat, 2>* g_block_sum, uint n, uint mpart)
 {
     __shared__ vector<dsfloat, 2> s_virial_a[THREADS];
@@ -143,13 +138,11 @@ __global__ void sum(float2 const* g_virial, float2 const* g_v, uint const* g_tag
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-        vector<float, 2> v = g_v[i];
-        vector<float, 2> virial = tensor(v * v, v) + g_virial[i];
         if (g_tag[i] < mpart) {
-            virial_a += virial;
+            virial_a += static_cast<vector<float, 2> >(g_virial[i]);
         }
         else {
-            virial_b += virial;
+            virial_b += static_cast<vector<float, 2> >(g_virial[i]);
         }
     }
     // reduced value for this thread
@@ -176,10 +169,10 @@ namespace halmd { namespace gpu
  * device function wrappers
  */
 cuda::function<
-    void(float4 const*, float4 const*, cu::vector<dsfloat, 4>*, uint),
-    void(float2 const*, float2 const*, cu::vector<dsfloat, 2>*, uint),
-    void(float4 const*, float4 const*, uint const*, cu::vector<dsfloat, 4>*, uint, uint),
-    void(float2 const*, float2 const*, uint const*, cu::vector<dsfloat, 2>*, uint, uint)>
+    void(float4 const*, cu::vector<dsfloat, 4>*, uint),
+    void(float2 const*, cu::vector<dsfloat, 2>*, uint),
+    void(float4 const*, uint const*, cu::vector<dsfloat, 4>*, uint, uint),
+    void(float2 const*, uint const*, cu::vector<dsfloat, 2>*, uint, uint)>
     virial::sum(cu::virial::sum, cu::virial::sum, cu::virial::sum, cu::virial::sum);
 
 }} // namespace halmd::gpu

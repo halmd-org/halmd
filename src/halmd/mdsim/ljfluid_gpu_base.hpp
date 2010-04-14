@@ -1,6 +1,7 @@
 /* Lennard-Jones fluid simulation using CUDA
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
+ *                        Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -121,7 +122,8 @@ protected:
                        cuda::vector<gpu_vector_type>& v,
                        cuda::vector<gpu_vector_type>& f,
                        cuda::vector<float>& en,
-                       cuda::vector<gpu_vector_type>& virial);
+                       cuda::vector<gpu_vector_type>& virial,
+                       cuda::vector<gpu_vector_type>& helfand);
 
 protected:
     using _Base::box_;
@@ -159,6 +161,8 @@ protected:
     reduce<tag::sum, dsfloat, double> mutable reduce_en;
     /** virial equation sum */
     virial_sum<halmd::cu::vector<dsfloat, virial_tensor::static_size>, virial_tensor> mutable reduce_virial;
+    /** time integral of virial stress tensor to calculate Helfand moment */
+    virial_sum<halmd::cu::vector<dsfloat, virial_tensor::static_size>, virial_tensor> mutable reduce_helfand;
 };
 
 template <typename ljfluid_impl, int dimension>
@@ -517,23 +521,24 @@ void ljfluid_gpu_base<ljfluid_impl, dimension>::update_forces(cuda::vector<float
                                                    cuda::vector<gpu_vector_type>& v,
                                                    cuda::vector<gpu_vector_type>& f,
                                                    cuda::vector<float>& en,
-                                                   cuda::vector<gpu_vector_type>& virial)
+                                                   cuda::vector<gpu_vector_type>& virial,
+                                                   cuda::vector<gpu_vector_type>& helfand)
 {
     // (CUDA kernel execution is configured in derived class)
     if (mixture_ == BINARY) {
         if (potential_ == C2POT) {
-            _gpu::template variant<BINARY, C2POT>::mdstep(r, v, f, en, virial);
+            _gpu::template variant<BINARY, C2POT>::mdstep(r, v, f, en, virial, helfand);
         }
         else {
-            _gpu::template variant<BINARY, C0POT>::mdstep(r, v, f, en, virial);
+            _gpu::template variant<BINARY, C0POT>::mdstep(r, v, f, en, virial, helfand);
         }
     }
     else {
         if (potential_ == C2POT) {
-            _gpu::template variant<UNARY, C2POT>::mdstep(r, v, f, en, virial);
+            _gpu::template variant<UNARY, C2POT>::mdstep(r, v, f, en, virial, helfand);
         }
         else {
-            _gpu::template variant<UNARY, C0POT>::mdstep(r, v, f, en, virial);
+            _gpu::template variant<UNARY, C0POT>::mdstep(r, v, f, en, virial, helfand);
         }
     }
 }
