@@ -1,6 +1,7 @@
 /* CUDA device function execution
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright (C) 2007-2010  Peter Colberg
+ *                          Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -115,7 +116,8 @@
               typename T1 = void,
               typename T2 = void,
               typename T3 = void,
-              typename T4 = void>
+              typename T4 = void,
+              typename T5 = void>
     class function;
 
     template <typename T0, typename T1>
@@ -174,7 +176,7 @@
 
 
     template <typename T0, typename T1, typename T2, typename T3, typename T4>
-    class function :
+    class function<T0, T1, T2, T3, T4> :
         function<T0>, function<T1>, function<T2>, function<T3>, function<T4>
     {
         typedef function<T0> F0;
@@ -192,6 +194,30 @@
         using F2::operator();
         using F3::operator();
         using F4::operator();
+    #endif
+    };
+
+    template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
+    class function :
+        function<T0>, function<T1>, function<T2>, function<T3>, function<T4>, function<T5>
+    {
+        typedef function<T0> F0;
+        typedef function<T1> F1;
+        typedef function<T2> F2;
+        typedef function<T3> F3;
+        typedef function<T4> F4;
+        typedef function<T5> F5;
+
+    public:
+        function(T0* f0, T1* f1, T2* f2, T3* f3, T4* f4, T5* f5) :
+            F0(f0), F1(f1), F2(f2), F3(f3), F4(f4), F5(f5) {}
+    #ifndef __CUDACC__
+        using F0::operator();
+        using F1::operator();
+        using F2::operator();
+        using F3::operator();
+        using F4::operator();
+        using F5::operator();
     #endif
     };
 
