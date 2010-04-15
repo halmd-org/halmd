@@ -941,7 +941,7 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
 
     // integrate virial tensor for each component
     for (size_t i = 0; i < virial.size(); ++i) {
-        helfand[i] += virial[i] * static_cast<float_type>(timestep_);
+        helfand[i] += virial[i] * static_cast<typename virial_tensor::value_type>(timestep_);
     }
 
     if (thermostat_steps && thermostat_count > thermostat_steps) {
