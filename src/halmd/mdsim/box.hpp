@@ -46,6 +46,7 @@ public:
     vector_type const& length() { return length_; }
     void density(double value_type);
     double density() { return density_; }
+    vector_type reduce_periodic(vector_type& r) const;
 
 public:
     boost::shared_ptr<particle_type> particle;
@@ -53,11 +54,43 @@ public:
 protected:
     /** edge lengths of cuboid */
     vector_type length_;
+    /** store half value for efficient use in reduce_periodic() */
+    vector_type length_half_;
     /** edge lengths of cuboid relative to maximum edge length */
     vector_type scale_;
     /** number density */
     double density_;
 };
+
+/**
+ * enforce periodic boundary conditions on argument
+ *
+ * assumes that particle position wraps at most once per call
+ *
+ * map coordinates to (-length_half_[i], length_half_[i])
+ * which is appropriate too for relative vectors
+ *
+ * return reduction vector in units of box edge lengths
+ */
+template <int dimension>
+inline typename box<dimension>::vector_type
+box<dimension>::reduce_periodic(box<dimension>::vector_type& r) const
+{
+    vector_type image;
+    for (size_t j = 0; j < dimension; ++j) {
+        if (r[j] > length_half_[j]) {
+            r[j] -= length_[j];
+            image[j] = 1;
+        }
+        else if (r[j] < -length_half_[j]) {
+            r[j] += length_[j];
+            image[j] = -1;
+        }
+        else
+            image[j] = 0;
+    }
+    return image;
+}
 
 template <int dimension>
 class module<box<dimension> >

@@ -187,9 +187,6 @@ template <int dimension, typename float_type>
 template <bool same_cell>
 void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list& c)
 {
-    vector_type L = box->length();
-    vector_type L_half = static_cast<float_type>(0.5) * L;
-
     BOOST_FOREACH(size_t j, c) {
         // skip identical particle and particle pair permutations if same cell
         if (same_cell && particle->tag[j] <= particle->tag[i])
@@ -197,18 +194,10 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
 
         // particle distance vector
         vector_type r = particle->r[i] - particle->r[j];
+        box->reduce_periodic(r);
         // particle types
         size_t a = particle->type[i];
         size_t b = particle->type[j];
-        // enforce periodic boundary conditions
-        for (size_t k = 0; k < dimension; ++k) {
-            if (r[k] > L_half[k]) {
-                r[k] -= L[k];
-            }
-            else if (r[k] < -L_half[k]) {
-                r[k] += L[k];
-            }
-        }
         // squared particle distance
         float_type rr = r * r;
 

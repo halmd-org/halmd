@@ -51,20 +51,10 @@ void verlet<dimension, float_type>::integrate()
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type& v = particle->v[i] += particle->f[i] * static_cast<float_type>(timestep_half_);
         vector_type& r = particle->r[i] += v * static_cast<float_type>(timestep_);
-        vector_type L = box->length();
-        vector_type& image = particle->image[i];
         // enforce periodic boundary conditions
-        for (size_t j = 0; j < dimension; ++j) {
-            // assumes that particle position wraps at most once per time-step
-            if (r[j] > L[j]) {
-                r[j] -= L[j];
-                image[j] += 1;
-            }
-            else if (r[j] < 0) {
-                r[j] += L[j];
-                image[j] -= 1;
-            }
-        }
+        // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
+        // check that this is OK
+        particle->image[i] += box->reduce_periodic(r);
     }
 }
 

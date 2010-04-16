@@ -128,6 +128,8 @@ void lattice<dimension, float_type>::set()
             r[0] *= ((i >> 1) % n[0]) + (i & 1) / 2.;
             r[1] *= ((i >> 1) / n[0]) + (i & 1) / 2.;
         }
+        // shift particle positions to range (-L/2, L/2)
+        box->reduce_periodic(r);
     }
 
     // assign particle image vectors

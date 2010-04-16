@@ -56,6 +56,7 @@ template <int dimension>
 void box<dimension>::length(vector_type const& value)
 {
     length_ = value;
+    length_half_ = .5 * length_;
     scale_ = length_ / *max_element(length_.begin(), length_.end());
     double volume = accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
     density_ = particle->nbox / volume;
@@ -73,6 +74,7 @@ void box<dimension>::density(double value)
     density_ = value;
     double volume = particle->nbox / accumulate(scale_.begin(), scale_.end(), density_, multiplies<double>());
     length_ = scale_ * pow(volume, 1. / dimension);
+    length_half_ = .5 * length_;
 
     LOG("simulation box edge lengths: " << length_);
     LOG("number density: " << density_);

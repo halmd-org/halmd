@@ -98,26 +98,15 @@ void lj<dimension, float_type>::compute()
     // virial equation sum
     std::fill(virial_.begin(), virial_.end(), 0);
 
-    vector_type L = box->length();
-    vector_type L_half = static_cast<float_type>(0.5) * L;
-
     for (size_t i = 0; i < particle->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbor particles
         BOOST_FOREACH (size_t j, particle->neighbor[i]) {
             // particle distance vector
             vector_type r = particle->r[i] - particle->r[j];
+            box->reduce_periodic(r);
             // particle types
             size_t a = particle->type[i];
             size_t b = particle->type[j];
-            // enforce periodic boundary conditions
-            for (size_t k = 0; k < dimension; ++k) {
-                if (r[k] > L_half[k]) {
-                    r[k] -= L[k];
-                }
-                else if (r[k] < -L_half[k]) {
-                    r[k] += L[k];
-                }
-            }
             // squared particle distance
             float_type rr = r * r;
 
