@@ -168,7 +168,7 @@ struct vector<dsfloat, 4> : bounded_array<dsfloat, 4>
 /**
  * Returns "high" single precision floating-point vector
  */
-__device__ inline vector<float, 4> dsfloat_hi(vector<dsfloat, 4> v)
+__device__ inline vector<float, 4> dsfloat_hi(vector<dsfloat, 4> const& v)
 {
     vector<float, 4> w;
     w[0] = dsfloat_hi(v[0]);
@@ -181,7 +181,7 @@ __device__ inline vector<float, 4> dsfloat_hi(vector<dsfloat, 4> v)
 /**
  * Returns "low" single precision floating-point vector
  */
-__device__ inline vector<float, 4> dsfloat_lo(vector<dsfloat, 4> v)
+__device__ inline vector<float, 4> dsfloat_lo(vector<dsfloat, 4> const& v)
 {
     vector<float, 4> w;
     w[0] = dsfloat_lo(v[0]);

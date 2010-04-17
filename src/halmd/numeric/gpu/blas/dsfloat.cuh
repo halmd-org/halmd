@@ -82,7 +82,7 @@ struct dsfloat
 /**
  * Returns "high" single precision floating-point value
  */
-__device__ inline float dsfloat_hi(dsfloat v)
+__device__ inline float dsfloat_hi(dsfloat const& v)
 {
     return v.hi;
 }
@@ -90,7 +90,7 @@ __device__ inline float dsfloat_hi(dsfloat v)
 /**
  * Returns "low" single precision floating-point value
  */
-__device__ inline float dsfloat_lo(dsfloat v)
+__device__ inline float dsfloat_lo(dsfloat const& v)
 {
     return v.lo;
 }
