@@ -28,6 +28,7 @@
 #include <halmd/numeric/gpu/blas/vector.cuh>
 
 using namespace boost::mpl;
+using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
 
 namespace halmd { namespace mdsim { namespace gpu { namespace forces { namespace lj_kernel
@@ -76,7 +77,7 @@ __global__ void compute(
 
     // load particle associated with this thread
     unsigned int type1;
-    vector_type r1 = particle_kernel::untag<vector_type>(tex1Dfetch(particle<dimension>::r, i), type1);
+    vector_type r1 = untagged<vector_type>(tex1Dfetch(particle<dimension>::r, i), type1);
 
     // potential energy contribution
     float en_pot_ = 0;
@@ -99,7 +100,7 @@ __global__ void compute(
 
         // load particle
         unsigned int type2;
-        vector_type r2 = particle_kernel::untag<vector_type>(tex1Dfetch(particle<dimension>::r, j), type2);
+        vector_type r2 = untagged<vector_type>(tex1Dfetch(particle<dimension>::r, j), type2);
         // Lennard-Jones potential parameters
         vector<float, 4> lj = tex1Dfetch(ljparam_, symmetric_matrix::lower_index(type1, type2));
 

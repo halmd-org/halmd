@@ -31,10 +31,12 @@ namespace halmd { namespace mdsim { namespace gpu { namespace box_kernel
  *
  * return reduction vector in units of box edge lengths
  */
-template <typename vector_type>
-__device__ vector_type reduce_periodic(vector_type& r, vector_type const& L)
+template <typename vector_type, typename vector_type_>
+__device__ inline vector_type_ reduce_periodic(
+  vector_type& r,
+  vector_type_ const& L)
 {
-    vector_type image = rint(__fdivide(r, L));
+    vector_type_ image = rint(__fdivide(static_cast<vector_type_>(r), L));
     r -= element_prod(image, L);
     return image;
 }

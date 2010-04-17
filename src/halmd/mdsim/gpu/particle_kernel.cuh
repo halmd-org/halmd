@@ -33,14 +33,14 @@ enum { PLACEHOLDER = -1U };
  */
 template <typename vector_type>
 __device__ inline typename boost::enable_if_c<vector_type::static_size == 3, float4>::type
-tag(vector_type v, unsigned int tag)
+tagged(vector_type v, unsigned int tag)
 {
     return make_float4(v[0], v[1], v[2], __int_as_float(tag));
 }
 
 template <typename vector_type>
 __device__ inline typename boost::enable_if_c<vector_type::static_size == 2, float4>::type
-tag(vector_type v, unsigned int tag)
+tagged(vector_type v, unsigned int tag)
 {
     return make_float4(v[0], v[1], 0, __int_as_float(tag));
 }
@@ -50,7 +50,7 @@ tag(vector_type v, unsigned int tag)
  */
 template <typename vector_type>
 __device__ inline typename boost::enable_if_c<vector_type::static_size == 3, vector_type>::type
-untag(float4 v, unsigned int& tag)
+untagged(float4 v, unsigned int& tag)
 {
     vector_type w;
     w[0] = v.x;
@@ -62,7 +62,7 @@ untag(float4 v, unsigned int& tag)
 
 template <typename vector_type>
 __device__ inline typename boost::enable_if_c<vector_type::static_size == 2, vector_type>::type
-untag(float4 v, unsigned int& tag)
+untagged(float4 v, unsigned int& tag)
 {
     vector_type w;
     w[0] = v.x;
@@ -76,7 +76,7 @@ untag(float4 v, unsigned int& tag)
  */
 template <typename vector_type>
 __device__ inline typename boost::enable_if_c<vector_type::static_size == 3, vector_type>::type
-untag(float4 v)
+untagged(float4 v)
 {
     vector_type w;
     w[0] = v.x;
@@ -87,7 +87,7 @@ untag(float4 v)
 
 template <typename vector_type>
 __device__ inline typename boost::enable_if_c<vector_type::static_size == 2, vector_type>::type
-untag(float4 v)
+untagged(float4 v)
 {
     vector_type w;
     w[0] = v.x;
