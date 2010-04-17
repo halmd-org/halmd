@@ -60,15 +60,15 @@ __global__ void _integrate(
 {
     unsigned int const i = GTID;
     unsigned int const threads = GTDIM;
-    unsigned int tag, type;
+    unsigned int type, tag;
 #ifdef USE_VERLET_DSFUN
-    vector_type r      ( untagged<vector_type_>(g_r[i], tag),
+    vector_type r      ( untagged<vector_type_>(g_r[i], type),
                          untagged<vector_type_>(g_r[i + threads]));
-    vector_type v      ( untagged<vector_type_>(g_v[i], type),
+    vector_type v      ( untagged<vector_type_>(g_v[i], tag),
                          untagged<vector_type_>(g_v[i + threads]));
 #else
-    vector_type_ r     = untagged<vector_type_>(g_r[i], tag);
-    vector_type_ v     = untagged<vector_type_>(g_v[i], type);
+    vector_type_ r     = untagged<vector_type_>(g_r[i], type);
+    vector_type_ v     = untagged<vector_type_>(g_v[i], tag);
 #endif
     vector_type_ image = g_image[i];
     vector_type_ f     = g_f[i];
@@ -77,13 +77,13 @@ __global__ void _integrate(
     integrate(r, image, v, f, timestep_, L);
 
 #ifdef USE_VERLET_DSFUN
-    g_r[i]             = tagged(dsfloat_hi(r), tag);
+    g_r[i]             = tagged(dsfloat_hi(r), type);
     g_r[i + threads]   = tagged(dsfloat_lo(r), 0);
-    g_v[i]             = tagged(dsfloat_hi(v), type);
+    g_v[i]             = tagged(dsfloat_hi(v), tag);
     g_v[i + threads]   = tagged(dsfloat_lo(v), 0);
 #else
-    g_r[i]             = tagged(r, tag);
-    g_v[i]             = tagged(v, type);
+    g_r[i]             = tagged(r, type);
+    g_v[i]             = tagged(v, tag);
 #endif
     g_image[i]         = image;
 }
@@ -98,22 +98,22 @@ __global__ void _finalize(
 {
     unsigned int const i = GTID;
     unsigned int const threads = GTDIM;
-    unsigned int type;
+    unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-    vector_type v      ( untagged<vector_type_>(g_v[i], type),
+    vector_type v      ( untagged<vector_type_>(g_v[i], tag),
                          untagged<vector_type_>(g_v[i + threads]));
 #else
-    vector_type_ v     = untagged<vector_type_>(g_v[i], type);
+    vector_type_ v     = untagged<vector_type_>(g_v[i], tag);
 #endif
     vector_type_ f     = g_f[i];
 
     finalize(v, f, timestep_);
 
 #ifdef USE_VERLET_DSFUN
-    g_v[i]             = tagged(dsfloat_hi(v), type);
+    g_v[i]             = tagged(dsfloat_hi(v), tag);
     g_v[i + threads]   = tagged(dsfloat_lo(v), 0);
 #else
-    g_v[i]             = tagged(v, type);
+    g_v[i]             = tagged(v, tag);
 #endif
 }
 
