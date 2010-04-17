@@ -24,9 +24,8 @@
 #include <vector>
 
 #include <cuda_wrapper.hpp>
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim { namespace gpu
@@ -39,7 +38,7 @@ class particle
 public:
     typedef mdsim::particle<dimension> _Base;
     typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_vector_type;
-    typedef vector<float_type, dimension> vector_type;
+    typedef numeric::host::blas::vector<float_type, dimension> vector_type;
 
     particle(options const& vm);
     virtual ~particle() {}
@@ -48,12 +47,12 @@ public:
     // particles in global device memory
     //
 
-    /** positions, tags */
+    /** positions, types */
     cuda::vector<float4> g_r;
     /** minimum image vectors */
     cuda::vector<gpu_vector_type> g_image;
-    /** velocities, types */
-    cuda::vector<float4> g_v;
+    /** velocities, tags */
+    cuda::vector<gpu_vector_type> g_v;
     /** forces */
     cuda::vector<gpu_vector_type> g_f;
     /** neighbour lists */
@@ -63,17 +62,21 @@ public:
     // particles in page-locked host memory
     //
 
-    /** positions, tags */
+    /** positions, types */
     cuda::host::vector<float4> h_r;
     /** minimum image vectors */
     cuda::host::vector<gpu_vector_type> h_image;
-    /** velocities, types */
-    cuda::host::vector<float4> h_v;
+    /** velocities, tags */
+    cuda::host::vector<gpu_vector_type> h_v;
 
     /** number of particles in simulation box */
     using _Base::nbox;
     /** number of particle types */
     using _Base::ntype;
+    /** number of placeholders per neighbor list */
+    unsigned int neighbor_size;
+    /** neighbor list stride */
+    unsigned int neighbor_stride;
 };
 
 }}} // namespace halmd::mdsim::gpu
