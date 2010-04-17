@@ -72,7 +72,7 @@ template <>
 struct vector<float, 3> : bounded_array<float, 3>
 {
     typedef bounded_array<float, 3> _Base;
-    typedef typename _Base::value_type value_type;
+    typedef _Base::value_type value_type;
     enum { static_size = _Base::static_size };
 
     __device__ vector() {}
@@ -145,7 +145,7 @@ template <>
 struct vector<dsfloat, 3> : bounded_array<dsfloat, 3>
 {
     typedef bounded_array<dsfloat, 3> _Base;
-    typedef typename _Base::value_type value_type;
+    typedef _Base::value_type value_type;
     enum { static_size = _Base::static_size };
 
     __device__ vector() {}

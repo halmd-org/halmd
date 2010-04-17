@@ -24,10 +24,11 @@
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cmath>
-#ifdef WITH_CUDA
-# include <cuda_runtime.h>
-#endif
 #include <iostream>
+
+#ifdef WITH_CUDA
+# include <halmd/numeric/gpu/blas/vector/vector2d.cuh>
+#endif
 
 namespace halmd { namespace numeric { namespace host { namespace blas
 {
@@ -82,6 +83,32 @@ public:
         (*this)[0] = x;
         (*this)[1] = y;
     }
+
+#ifdef WITH_CUDA
+
+    /**
+     * Convert from GPU vector
+     */
+    template <typename T_>
+    vector(gpu::blas::vector<T_, 2> const& v,
+      typename boost::enable_if<boost::is_convertible<T_, T> >::type* dummy = 0)
+    {
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+    }
+
+    /**
+     * Convert to GPU vector
+     */
+    operator gpu::blas::vector<T, 2>()
+    {
+        gpu::blas::vector<T, 2> v;
+        v[0] = (*this)[0];
+        v[1] = (*this)[1];
+        return v;
+    }
+
+#endif /* WITH_CUDA */
 };
 
 template <>
@@ -126,6 +153,28 @@ public:
     }
 
 #ifdef WITH_CUDA
+
+    /**
+     * Convert from GPU vector
+     */
+    template <typename T_>
+    vector(gpu::blas::vector<T_, 2> const& v,
+      typename boost::enable_if<boost::is_convertible<T_, float> >::type* dummy = 0)
+    {
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+    }
+
+    /**
+     * Convert to GPU vector
+     */
+    operator gpu::blas::vector<float, 2>()
+    {
+        gpu::blas::vector<float, 2> v;
+        v[0] = (*this)[0];
+        v[1] = (*this)[1];
+        return v;
+    }
 
     /**
      * Convert from CUDA vector

@@ -24,10 +24,11 @@
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cmath>
-#ifdef WITH_CUDA
-# include <cuda_runtime.h>
-#endif
 #include <iostream>
+
+#ifdef WITH_CUDA
+# include <halmd/numeric/gpu/blas/vector/vector4d.cuh>
+#endif
 
 namespace halmd { namespace numeric { namespace host { namespace blas
 {
@@ -88,6 +89,59 @@ public:
         (*this)[2] = z;
         (*this)[3] = z;
     }
+
+#ifdef WITH_CUDA
+
+    /**
+     * Convert from GPU vector
+     */
+    template <typename T_>
+    vector(gpu::blas::vector<T_, 4> const& v,
+      typename boost::enable_if<boost::is_convertible<T_, T> >::type* dummy = 0)
+    {
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+        (*this)[2] = v[2];
+        (*this)[3] = v[3];
+    }
+
+    /**
+     * Convert to GPU vector
+     */
+    operator gpu::blas::vector<T, 4>()
+    {
+        gpu::blas::vector<T, 4> v;
+        v[0] = (*this)[0];
+        v[1] = (*this)[1];
+        v[2] = (*this)[2];
+        v[3] = (*this)[3];
+        return v;
+    }
+    /**
+     * Convert from CUDA vector
+     */
+    vector(float4 const& v)
+    {
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
+        (*this)[2] = v.z;
+        (*this)[3] = v.w;
+    }
+
+    /**
+     * Convert to CUDA vector
+     */
+    operator float4() const
+    {
+        float4 v;
+        v.x = (*this)[0];
+        v.y = (*this)[1];
+        v.z = (*this)[2];
+        v.w = (*this)[3];
+        return v;
+    }
+
+#endif /* WITH_CUDA */
 };
 
 template <>
@@ -139,6 +193,31 @@ public:
 
 #ifdef WITH_CUDA
 
+    /**
+     * Convert from GPU vector
+     */
+    template <typename T_>
+    vector(gpu::blas::vector<T_, 4> const& v,
+      typename boost::enable_if<boost::is_convertible<T_, float> >::type* dummy = 0)
+    {
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+        (*this)[2] = v[2];
+        (*this)[3] = v[3];
+    }
+
+    /**
+     * Convert to GPU vector
+     */
+    operator gpu::blas::vector<float, 4>()
+    {
+        gpu::blas::vector<float, 4> v;
+        v[0] = (*this)[0];
+        v[1] = (*this)[1];
+        v[2] = (*this)[2];
+        v[3] = (*this)[3];
+        return v;
+    }
     /**
      * Convert from CUDA vector
      */
