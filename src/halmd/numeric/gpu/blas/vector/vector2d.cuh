@@ -46,7 +46,9 @@ struct vector<T, 2> : bounded_array<T, 2>
     __device__ vector()
     {}
 
-    __device__ vector(T const& s)
+    template <typename T_>
+    __device__ vector(T_ const& s,
+      typename boost::enable_if<boost::is_convertible<T_, T> >::type* dummy = 0)
     {
         (*this)[0] = s;
         (*this)[1] = s;
@@ -120,7 +122,9 @@ struct vector<dsfloat, 2> : bounded_array<dsfloat, 2>
 
     __device__ vector() {}
 
-    __device__ vector(dsfloat const& s)
+    template <typename T_>
+    __device__ vector(T_ const& s,
+      typename boost::enable_if<boost::is_convertible<T_, dsfloat> >::type* dummy = 0)
     {
         (*this)[0] = s;
         (*this)[1] = s;
@@ -169,9 +173,8 @@ __device__ inline vector<float, 2> dsfloat_lo(vector<dsfloat, 2> v)
  * Assignment by componentwise vector addition
  */
 template <typename T>
-// work around NVCC compiler error with __device__ template function that returns reference
-__device__ inline typename boost::enable_if<boost::true_type, vector<T, 2>&>::type
-operator+=(vector<T, 2>& v, vector<T, 2> const& w)
+__device__ inline typename boost::enable_if<boost::is_convertible<T_, T>, vector<T, 2>&>::type
+operator+=(vector<T, 2>& v, vector<T_, 2> const& w)
 {
     v[0] += w[0];
     v[1] += w[1];
@@ -182,9 +185,8 @@ operator+=(vector<T, 2>& v, vector<T, 2> const& w)
  * Assignment by componentwise vector subtraction
  */
 template <typename T>
-// work around NVCC compiler error with __device__ template function that returns reference
-__device__ inline typename boost::enable_if<boost::true_type, vector<T, 2>&>::type
-operator-=(vector<T, 2>& v, vector<T, 2> const& w)
+__device__ inline typename boost::enable_if<boost::is_convertible<T_, T>, vector<T, 2>&>::type
+operator-=(vector<T, 2>& v, vector<T_, 2> const& w)
 {
     v[0] -= w[0];
     v[1] -= w[1];
