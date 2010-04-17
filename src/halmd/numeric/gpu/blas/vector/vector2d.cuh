@@ -170,7 +170,7 @@ __device__ inline vector<float, 2> dsfloat_lo(vector<dsfloat, 2> v)
 }
 
 /**
- * Assignment by componentwise vector addition
+ * Assignment by elementwise vector addition
  */
 template <typename T, typename T_>
 __device__ inline typename boost::enable_if<boost::is_convertible<T_, T>, vector<T, 2>&>::type
@@ -182,7 +182,7 @@ operator+=(vector<T, 2>& v, vector<T_, 2> const& w)
 }
 
 /**
- * Assignment by componentwise vector subtraction
+ * Assignment by elementwise vector subtraction
  */
 template <typename T, typename T_>
 __device__ inline typename boost::enable_if<boost::is_convertible<T_, T>, vector<T, 2>&>::type
@@ -218,7 +218,7 @@ operator/=(vector<T, 2>& v, T_ s)
 }
 
 /**
- * Componentwise vector addition
+ * Elementwise vector addition
  */
 template <typename T>
 __device__ inline vector<T, 2> operator+(vector<T, 2> v, vector<T, 2> const& w)
@@ -228,7 +228,7 @@ __device__ inline vector<T, 2> operator+(vector<T, 2> v, vector<T, 2> const& w)
 }
 
 /**
- * Componentwise vector subtraction
+ * Elementwise vector subtraction
  */
 template <typename T>
 __device__ inline vector<T, 2> operator-(vector<T, 2> v, vector<T, 2> const& w)
@@ -238,7 +238,7 @@ __device__ inline vector<T, 2> operator-(vector<T, 2> v, vector<T, 2> const& w)
 }
 
 /**
- * Componentwise change of sign
+ * Elementwise change of sign
  */
 template <typename T>
 __device__ inline vector<T, 2> operator-(vector<T, 2> v)
@@ -246,17 +246,6 @@ __device__ inline vector<T, 2> operator-(vector<T, 2> v)
     v[0] = -v[0];
     v[1] = -v[1];
     return v;
-}
-
-/**
- * Scalar product
- */
-template <typename T>
-__device__ inline T operator*(vector<T, 2> const& v, vector<T, 2> const& w)
-{
-    T s = v[0] * w[0];
-    s  += v[1] * w[1];
-    return s;
 }
 
 /**
@@ -296,7 +285,40 @@ operator/(vector<T, 2> v, T_ s)
 }
 
 /**
- * Componentwise round to nearest integer
+ * Inner product
+ */
+template <typename T>
+__device__ inline T inner_prod(vector<T, 2> const& v, vector<T, 2> const& w)
+{
+    T s = v[0] * w[0];
+    s  += v[1] * w[1];
+    return s;
+}
+
+/**
+ * Elementwise vector multiplication
+ */
+template <typename T>
+__device__ inline vector<T, 2> element_prod(vector<T, 2> v, vector<T, 2> const& w)
+{
+    v[0] *= w[0];
+    v[1] *= w[1];
+    return v;
+}
+
+/**
+ * Elementwise vector division
+ */
+template <typename T>
+__device__ inline vector<T, 2> element_div(vector<T, 2> v, vector<T, 2> const& w)
+{
+    v[0] /= w[0];
+    v[1] /= w[1];
+    return v;
+}
+
+/**
+ * Elementwise round to nearest integer
  */
 __device__ inline vector<float, 2> rint(vector<float, 2> v)
 {
@@ -306,7 +328,7 @@ __device__ inline vector<float, 2> rint(vector<float, 2> v)
 }
 
 /**
- * Componentwise round to nearest integer, away from zero
+ * Elementwise round to nearest integer, away from zero
  */
 __device__ vector<float, 2> round(vector<float, 2> v)
 {
@@ -316,7 +338,7 @@ __device__ vector<float, 2> round(vector<float, 2> v)
 }
 
 /**
- * Componentwise round to nearest integer not greater than argument
+ * Elementwise round to nearest integer not greater than argument
  */
 __device__ inline vector<float, 2> floor(vector<float, 2> v)
 {
@@ -326,7 +348,7 @@ __device__ inline vector<float, 2> floor(vector<float, 2> v)
 }
 
 /**
- * Componentwise round to nearest integer not less argument
+ * Elementwise round to nearest integer not less argument
  */
 __device__ inline vector<float, 2> ceil(vector<float, 2> v)
 {
@@ -336,7 +358,7 @@ __device__ inline vector<float, 2> ceil(vector<float, 2> v)
 }
 
 /**
- * Componentwise square root function
+ * Elementwise square root function
  */
 __device__ inline vector<float, 2> sqrt(vector<float, 2> v)
 {
@@ -346,7 +368,7 @@ __device__ inline vector<float, 2> sqrt(vector<float, 2> v)
 }
 
 /**
- * Componentwise cosine function
+ * Elementwise cosine function
  */
 __device__ inline vector<float, 2> cos(vector<float, 2> v)
 {
@@ -356,7 +378,7 @@ __device__ inline vector<float, 2> cos(vector<float, 2> v)
 }
 
 /**
- * Componentwise sine function
+ * Elementwise sine function
  */
 __device__ inline vector<float, 2> sin(vector<float, 2> v)
 {
@@ -366,7 +388,7 @@ __device__ inline vector<float, 2> sin(vector<float, 2> v)
 }
 
 /**
- * Componentwise absolute value
+ * Elementwise absolute value
  */
 __device__ inline vector<float, 2> fabs(vector<float, 2> v)
 {
@@ -376,7 +398,7 @@ __device__ inline vector<float, 2> fabs(vector<float, 2> v)
 }
 
 /**
- * Convert floating-point components to integers, rounding to nearest even integer
+ * Convert floating-point elements to integers, rounding to nearest even integer
  */
 __device__ inline vector<int, 2> __float2int_rn(vector<float, 2> const& v)
 {
@@ -387,7 +409,7 @@ __device__ inline vector<int, 2> __float2int_rn(vector<float, 2> const& v)
 }
 
 /**
- * Convert floating-point components to integers, rounding towards zero
+ * Convert floating-point elements to integers, rounding towards zero
  */
 __device__ inline vector<int, 2> __float2int_rz(vector<float, 2> const& v)
 {
@@ -398,7 +420,7 @@ __device__ inline vector<int, 2> __float2int_rz(vector<float, 2> const& v)
 }
 
 /**
- * Convert floating-point components to integers, rounding to positive infinity
+ * Convert floating-point elements to integers, rounding to positive infinity
  */
 __device__ inline vector<int, 2> __float2int_ru(vector<float, 2> const& v)
 {
@@ -409,7 +431,7 @@ __device__ inline vector<int, 2> __float2int_ru(vector<float, 2> const& v)
 }
 
 /**
- * Convert floating-point components to integers, rounding to negative infinity
+ * Convert floating-point elements to integers, rounding to negative infinity
  */
 __device__ inline vector<int, 2> __float2int_rd(vector<float, 2> const& v)
 {
@@ -420,7 +442,7 @@ __device__ inline vector<int, 2> __float2int_rd(vector<float, 2> const& v)
 }
 
 /**
- * Convert floating-point components to unsigned integers, rounding to nearest even integer
+ * Convert floating-point elements to unsigned integers, rounding to nearest even integer
  */
 __device__ inline vector<unsigned int, 2> __float2uint_rn(vector<float, 2> const& v)
 {
@@ -431,7 +453,7 @@ __device__ inline vector<unsigned int, 2> __float2uint_rn(vector<float, 2> const
 }
 
 /**
- * Convert floating-point components to unsigned integers, rounding towards zero
+ * Convert floating-point elements to unsigned integers, rounding towards zero
  */
 __device__ inline vector<unsigned int, 2> __float2uint_rz(vector<float, 2> const& v)
 {
@@ -442,7 +464,7 @@ __device__ inline vector<unsigned int, 2> __float2uint_rz(vector<float, 2> const
 }
 
 /**
- * Convert floating-point components to unsigned integers, rounding to positive infinity
+ * Convert floating-point elements to unsigned integers, rounding to positive infinity
  */
 __device__ inline vector<unsigned int, 2> __float2uint_ru(vector<float, 2> const& v)
 {
@@ -453,7 +475,7 @@ __device__ inline vector<unsigned int, 2> __float2uint_ru(vector<float, 2> const
 }
 
 /**
- * Convert floating-point components to unsigned integers, rounding to negative infinity
+ * Convert floating-point elements to unsigned integers, rounding to negative infinity
  */
 __device__ inline vector<unsigned int, 2> __float2uint_rd(vector<float, 2> const& v)
 {
@@ -464,7 +486,7 @@ __device__ inline vector<unsigned int, 2> __float2uint_rd(vector<float, 2> const
 }
 
 /**
- * Limit floating-point components to unit interval [0, 1]
+ * Limit floating-point elements to unit interval [0, 1]
  */
 __device__ inline vector<float, 2> __saturate(vector<float, 2> v)
 {
@@ -476,30 +498,30 @@ __device__ inline vector<float, 2> __saturate(vector<float, 2> v)
 /**
  * Floating-point remainder function, round towards nearest integer
  */
-__device__ inline vector<float, 2> remainder(vector<float, 2> v, float s)
+__device__ inline vector<float, 2> remainder(vector<float, 2> v, vector<float, 2> const& w)
 {
-    v[0] = ::remainderf(v[0], s);
-    v[1] = ::remainderf(v[1], s);
+    v[0] = ::remainderf(v[0], w[0]);
+    v[1] = ::remainderf(v[1], w[1]);
     return v;
 }
 
 /**
  * Floating-point remainder function, round towards zero
  */
-__device__ inline vector<float, 2> fmod(vector<float, 2> v, float s)
+__device__ inline vector<float, 2> fmod(vector<float, 2> v, vector<float, 2> const& w)
 {
-    v[0] = ::fmodf(v[0], s);
-    v[1] = ::fmodf(v[1], s);
+    v[0] = ::fmodf(v[0], w[0]);
+    v[1] = ::fmodf(v[1], w[1]);
     return v;
 }
 
 /**
  * Fast, accurate floating-point division by s < 2^126
  */
-__device__ inline vector<float, 2> __fdivide(vector<float, 2> v, float s)
+__device__ inline vector<float, 2> __fdivide(vector<float, 2> v, vector<float, 2> const& w)
 {
-    v[0] = ::__fdividef(v[0], s);
-    v[1] = ::__fdividef(v[1], s);
+    v[0] = ::__fdividef(v[0], w[0]);
+    v[1] = ::__fdividef(v[1], w[1]);
     return v;
 }
 
