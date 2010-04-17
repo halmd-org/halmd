@@ -29,9 +29,8 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/neighbor.hpp>
+#include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim { namespace host
@@ -48,16 +47,14 @@ class neighbor : public mdsim::neighbor<dimension>
 {
 public:
     typedef mdsim::neighbor<dimension> _Base;
-    typedef vector<float_type, dimension> vector_type;
-
     typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::force<dimension> force_type;
     typedef mdsim::box<dimension> box_type;
 
     typedef typename particle_type::neighbor_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
-    typedef vector<size_t, dimension> cell_index;
-    typedef vector<ssize_t, dimension> cell_diff;
+    typedef numeric::host::blas::vector<size_t, dimension> cell_index;
 
     typedef typename force_type::matrix_type matrix_type;
 

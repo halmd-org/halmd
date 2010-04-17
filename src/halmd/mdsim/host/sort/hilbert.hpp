@@ -20,8 +20,6 @@
 #ifndef HALMD_MDSIM_HOST_SORT_HILBERT_HPP
 #define HALMD_MDSIM_HOST_SORT_HILBERT_HPP
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/neighbor.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -37,9 +35,8 @@ class hilbert
 {
 public:
     typedef mdsim::sort<dimension> _Base;
-    typedef vector<float_type, dimension> vector_type;
-
     typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef host::neighbor<dimension, float_type> neighbor_type;
 

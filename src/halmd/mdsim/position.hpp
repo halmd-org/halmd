@@ -20,8 +20,6 @@
 #ifndef HALMD_MDSIM_POSITION_HPP
 #define HALMD_MDSIM_POSITION_HPP
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/module.hpp>
 #include <halmd/options.hpp>
 
@@ -31,9 +29,6 @@ namespace halmd { namespace mdsim
 template <int dimension>
 class position
 {
-public:
-    typedef vector<double, dimension> vector_type;
-
 public:
     position(options const& vm) {}
     virtual ~position() {}

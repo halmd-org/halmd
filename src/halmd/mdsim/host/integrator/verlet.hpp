@@ -22,8 +22,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/integrator.hpp>
@@ -37,9 +35,8 @@ class verlet : public mdsim::integrator<dimension>
 {
 public:
     typedef mdsim::integrator<dimension> _Base;
-    typedef vector<float_type, dimension> vector_type;
-
     typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
 
     verlet(options const& vm);

@@ -109,7 +109,7 @@ bool neighbor<dimension, float_type>::check()
     float_type rr_max = 0;
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type r = particle->r[i] - r0_[i];
-        rr_max = max(rr_max, r * r);
+        rr_max = max(rr_max, inner_prod(r, r));
     }
     return sqrt(rr_max) > r_skin_half_;
 }
@@ -199,7 +199,7 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
         size_t a = particle->type[i];
         size_t b = particle->type[j];
         // squared particle distance
-        float_type rr = r * r;
+        float_type rr = inner_prod(r, r);
 
         // enforce cutoff radius with neighbor list skin
         if (rr >= rr_cut_skin_(a, b))

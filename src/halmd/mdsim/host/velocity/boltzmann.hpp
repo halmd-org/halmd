@@ -20,8 +20,6 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITY_BOLTZMANN_HPP
 #define HALMD_MDSIM_HOST_VELOCITY_BOLTZMANN_HPP
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/random.hpp>
 #include <halmd/mdsim/velocity.hpp>
@@ -35,8 +33,8 @@ class boltzmann : public mdsim::velocity<dimension>
 {
 public:
     typedef mdsim::velocity<dimension> _Base;
-    typedef vector<float_type, dimension> vector_type;
     typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef host::random random_type;
 
     boost::shared_ptr<particle_type> particle;

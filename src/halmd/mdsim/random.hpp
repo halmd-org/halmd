@@ -20,8 +20,6 @@
 #ifndef HALMD_MDSIM_RANDOM_HPP
 #define HALMD_MDSIM_RANDOM_HPP
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/module.hpp>
 #include <halmd/options.hpp>
 

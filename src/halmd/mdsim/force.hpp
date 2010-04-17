@@ -23,11 +23,9 @@
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <vector>
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
-#include <halmd/math/vector4d.hpp>
 #include <halmd/mdsim/module.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -37,9 +35,9 @@ template <int dimension>
 class force
 {
 public:
-    typedef vector<double, dimension> vector_type;
+    typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<double, boost::numeric::ublas::upper> matrix_type;
-    typedef vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
+    typedef numeric::host::blas::vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
     typedef mdsim::particle<dimension> particle_type;
 
     force(options const& vm);

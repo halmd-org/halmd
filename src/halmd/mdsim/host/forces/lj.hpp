@@ -22,8 +22,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -37,10 +35,9 @@ class lj : public mdsim::force<dimension>
 {
 public:
     typedef mdsim::force<dimension> _Base;
-    typedef vector<float_type, dimension> vector_type;
     typedef typename _Base::matrix_type matrix_type;
-
     typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
 
 public:

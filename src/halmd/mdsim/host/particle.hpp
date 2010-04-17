@@ -22,9 +22,8 @@
 
 #include <vector>
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim { namespace host
@@ -35,7 +34,7 @@ class particle : public mdsim::particle<dimension>
 {
 public:
     typedef mdsim::particle<dimension> _Base;
-    typedef vector<float_type, dimension> vector_type;
+    typedef numeric::host::blas::vector<float_type, dimension> vector_type;
     typedef std::vector<unsigned int> neighbor_list;
 
     particle(options const& vm);

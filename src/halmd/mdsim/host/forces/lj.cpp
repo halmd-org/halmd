@@ -108,7 +108,7 @@ void lj<dimension, float_type>::compute()
             size_t a = particle->type[i];
             size_t b = particle->type[j];
             // squared particle distance
-            float_type rr = r * r;
+            float_type rr = inner_prod(r, r);
 
             // truncate potential at cutoff length
             if (rr >= rr_cut_(a, b))

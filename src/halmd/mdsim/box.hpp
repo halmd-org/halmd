@@ -22,10 +22,9 @@
 
 #include <vector>
 
-#include <halmd/math/vector2d.hpp>
-#include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/module.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -35,7 +34,7 @@ template <int dimension>
 class box
 {
 public:
-    typedef vector<double, dimension> vector_type;
+    typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
 public:
@@ -74,7 +73,7 @@ protected:
  */
 template <int dimension>
 inline typename box<dimension>::vector_type
-box<dimension>::reduce_periodic(box<dimension>::vector_type& r) const
+box<dimension>::reduce_periodic(vector_type& r) const
 {
     vector_type image;
     for (size_t j = 0; j < dimension; ++j) {
