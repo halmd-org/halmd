@@ -194,7 +194,7 @@ __device__ inline vector<float, 4> dsfloat_lo(vector<dsfloat, 4> v)
 /**
  * Assignment by componentwise vector addition
  */
-template <typename T>
+template <typename T, typename T_>
 __device__ inline typename boost::enable_if<boost::is_convertible<T_, T>, vector<T, 4>&>::type
 operator+=(vector<T, 4>& v, vector<T_, 4> const& w)
 {
@@ -208,7 +208,7 @@ operator+=(vector<T, 4>& v, vector<T_, 4> const& w)
 /**
  * Assignment by componentwise vector subtraction
  */
-template <typename T>
+template <typename T, typename T_>
 __device__ inline typename boost::enable_if<boost::is_convertible<T_, T>, vector<T, 4>&>::type
 operator-=(vector<T, 4>& v, vector<T_, 4> const& w)
 {
