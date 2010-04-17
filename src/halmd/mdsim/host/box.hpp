@@ -17,58 +17,74 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_BOX_HPP
-#define HALMD_MDSIM_BOX_HPP
+#ifndef HALMD_MDSIM_HOST_BOX_HPP
+#define HALMD_MDSIM_HOST_BOX_HPP
 
 #include <vector>
 
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd { namespace mdsim { namespace host
 {
 
 template <int dimension>
 class box
+  : public mdsim::box<dimension>
 {
 public:
+    typedef mdsim::box<dimension> _Base;
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
 public:
     box(options const& vm);
     virtual ~box() {}
-
-    void length(vector_type const& value_type);
-    vector_type const& length() { return length_; }
-    void density(double value_type);
-    double density() { return density_; }
+    vector_type reduce_periodic(vector_type& r) const;
 
 public:
     boost::shared_ptr<particle_type> particle;
 
 protected:
     /** edge lengths of cuboid */
-    vector_type length_;
-    /** edge lengths of cuboid relative to maximum edge length */
-    vector_type scale_;
-    /** number density */
-    double density_;
+    using _Base::length_;
+    /** store half value for efficient use in reduce_periodic() */
+    vector_type length_half_;
 };
 
+/**
+ * enforce periodic boundary conditions on argument
+ *
+ * assumes that particle position wraps at most once per call
+ *
+ * map coordinates to (-length_half_[i], length_half_[i])
+ * which is appropriate too for relative vectors
+ *
+ * return reduction vector in units of box edge lengths
+ */
 template <int dimension>
-class module<box<dimension> >
+inline typename box<dimension>::vector_type
+box<dimension>::reduce_periodic(vector_type& r) const
 {
-public:
-    typedef boost::shared_ptr<box<dimension> > pointer;
-    static pointer fetch(options const& vm);
+    vector_type image;
+    for (size_t j = 0; j < dimension; ++j) {
+        if (r[j] > length_half_[j]) {
+            r[j] -= length_[j];
+            image[j] = 1;
+        }
+        else if (r[j] < -length_half_[j]) {
+            r[j] += length_[j];
+            image[j] = -1;
+        }
+        else
+            image[j] = 0;
+    }
+    return image;
+}
 
-private:
-    static pointer singleton_;
-};
+}}} // namespace halmd::mdsim::host
 
-}} // namespace halmd::mdsim
-
-#endif /* ! HALMD_MDSIM_BOX_HPP */
+#endif /* ! HALMD_MDSIM_HOST_BOX_HPP */

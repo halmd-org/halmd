@@ -26,8 +26,8 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
-#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force.hpp>
+#include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbor.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
@@ -50,7 +50,7 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::force<dimension> force_type;
-    typedef mdsim::box<dimension> box_type;
+    typedef host::box<dimension> box_type;
 
     typedef typename particle_type::neighbor_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;

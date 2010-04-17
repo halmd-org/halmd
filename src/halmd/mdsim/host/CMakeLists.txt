@@ -1,4 +1,5 @@
 add_library(halmd_mdsim_host
+  box.cpp
   neighbor.cpp
   particle.cpp
   random.cpp

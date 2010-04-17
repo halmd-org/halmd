@@ -22,8 +22,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force.hpp>
+#include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/options.hpp>
 
@@ -38,7 +38,7 @@ public:
     typedef typename _Base::matrix_type matrix_type;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef mdsim::box<dimension> box_type;
+    typedef host::box<dimension> box_type;
 
 public:
     lj(options const& vm);

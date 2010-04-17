@@ -21,6 +21,7 @@
 #include <cmath>
 #include <numeric>
 
+#include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/util/logger.hpp>
 
@@ -56,7 +57,6 @@ template <int dimension>
 void box<dimension>::length(vector_type const& value)
 {
     length_ = value;
-    length_half_ = .5 * length_;
     scale_ = length_ / *max_element(length_.begin(), length_.end());
     double volume = accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
     density_ = particle->nbox / volume;
@@ -74,7 +74,6 @@ void box<dimension>::density(double value)
     density_ = value;
     double volume = particle->nbox / accumulate(scale_.begin(), scale_.end(), density_, multiplies<double>());
     length_ = scale_ * pow(volume, 1. / dimension);
-    length_half_ = .5 * length_;
 
     LOG("simulation box edge lengths: " << length_);
     LOG("number density: " << density_);
@@ -89,7 +88,12 @@ typename module<box<dimension> >::pointer
 module<box<dimension> >::fetch(options const& vm)
 {
     if (!singleton_) {
-        singleton_.reset(new box<dimension>(vm));
+        if (vm["backend"].as<string>() == "host") {
+            singleton_.reset(new host::box<dimension>(vm));
+        }
+        else {
+            singleton_.reset(new box<dimension>(vm));
+        }
     }
     return singleton_;
 }
