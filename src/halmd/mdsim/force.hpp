@@ -36,7 +36,7 @@ class force
 {
 public:
     typedef numeric::host::blas::vector<double, dimension> vector_type;
-    typedef boost::numeric::ublas::symmetric_matrix<double, boost::numeric::ublas::upper> matrix_type;
+    typedef boost::numeric::ublas::symmetric_matrix<double, boost::numeric::ublas::lower> matrix_type;
     typedef numeric::host::blas::vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
     typedef mdsim::particle<dimension> particle_type;
 
