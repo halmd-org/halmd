@@ -111,6 +111,53 @@ struct vector<float, 2> : bounded_array<float, 2>
 };
 
 /**
+ * Two-dimensional unsigned integer vector
+ */
+template <>
+struct vector<unsigned int, 2> : bounded_array<unsigned int, 2>
+{
+    typedef bounded_array<unsigned int, 2> _Base;
+    typedef _Base::value_type value_type;
+    enum { static_size = _Base::static_size };
+
+    __device__ vector() {}
+
+    __device__ vector(unsigned int const& s)
+    {
+        (*this)[0] = s;
+        (*this)[1] = s;
+    }
+
+    template <typename T_>
+    __device__ vector(vector<T_, 2> const& v,
+      typename boost::enable_if<boost::is_convertible<T_, unsigned int> >::type* dummy = 0)
+    {
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+    }
+
+    /**
+     * Convert from CUDA vector type
+     */
+    __device__ vector(uint2 const& v)
+    {
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
+    }
+
+    /**
+     * Convert to CUDA vector type
+     */
+    __device__ operator uint2() const
+    {
+        uint2 v;
+        v.x = (*this)[0];
+        v.y = (*this)[1];
+        return v;
+    }
+};
+
+/**
  * Two-dimensional double-single precision floating-point vector
  */
 template <>

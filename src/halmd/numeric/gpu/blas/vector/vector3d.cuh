@@ -139,6 +139,79 @@ struct vector<float, 3> : bounded_array<float, 3>
 };
 
 /**
+ * Three-dimensional unsigned integer vector
+ */
+template <>
+struct vector<unsigned int, 3> : bounded_array<unsigned int, 3>
+{
+    typedef bounded_array<unsigned int, 3> _Base;
+    typedef _Base::value_type value_type;
+    enum { static_size = _Base::static_size };
+
+    __device__ vector() {}
+
+    __device__ vector(unsigned int const& s)
+    {
+        (*this)[0] = s;
+        (*this)[1] = s;
+        (*this)[2] = s;
+    }
+
+    template <typename T_>
+    __device__ vector(vector<T_, 3> const& v,
+      typename boost::enable_if<boost::is_convertible<T_, unsigned int> >::type* dummy = 0)
+    {
+        (*this)[0] = v[0];
+        (*this)[1] = v[1];
+        (*this)[2] = v[2];
+    }
+
+    /**
+     * Convert from uncoalesced CUDA vector type
+     */
+    __device__ vector(uint3 const& v)
+    {
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
+        (*this)[2] = v.z;
+    }
+
+    /**
+     * Convert from coalesced CUDA vector type
+     */
+    __device__ vector(uint4 const& v)
+    {
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
+        (*this)[2] = v.z;
+    }
+
+    /**
+     * Convert to uncoalesced CUDA vector type
+     */
+    __device__ operator uint3() const
+    {
+        uint3 v;
+        v.x = (*this)[0];
+        v.y = (*this)[1];
+        v.z = (*this)[2];
+        return v;
+    }
+
+    /**
+     * Convert to coalesced CUDA vector type
+     */
+    __device__ operator uint4() const
+    {
+        uint4 v;
+        v.x = (*this)[0];
+        v.y = (*this)[1];
+        v.z = (*this)[2];
+        return v;
+    }
+};
+
+/**
  * Three-dimensional double-single precision floating-point vector
  */
 template <>
