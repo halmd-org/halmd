@@ -1,4 +1,5 @@
 add_library(halmd_mdsim_gpu
+  neighbor_wrapper.cu
   particle.cpp
   )
 target_link_libraries(halmd_mdsim_gpu

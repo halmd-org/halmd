@@ -24,9 +24,9 @@ namespace halmd { namespace mdsim { namespace gpu { namespace forces
 {
 
 cuda::texture<float4>
-  lj_wrapper<3>::r = lj_kernel::particle<3>::r;
+  lj_wrapper<3>::r = lj_kernel::dim_<3>::r;
 cuda::symbol<float3>
-  lj_wrapper<3>::length = lj_kernel::box<3>::length;
+  lj_wrapper<3>::length = lj_kernel::dim_<3>::box_length;
 cuda::symbol<unsigned int>
   lj_wrapper<3>::neighbor_size = lj_kernel::neighbor_size_;
 cuda::symbol<unsigned int>
@@ -37,9 +37,9 @@ cuda::function<void (float4*, unsigned int*, float*, float4*)>
   lj_wrapper<3>::compute = lj_kernel::compute<vector<float, 3> >;
 
 cuda::texture<float4>
-  lj_wrapper<2>::r = lj_kernel::particle<2>::r;
+  lj_wrapper<2>::r = lj_kernel::dim_<2>::r;
 cuda::symbol<float2>
-  lj_wrapper<2>::length = lj_kernel::box<2>::length;
+  lj_wrapper<2>::length = lj_kernel::dim_<2>::box_length;
 cuda::symbol<unsigned int>
   lj_wrapper<2>::neighbor_size = lj_kernel::neighbor_size_;
 cuda::symbol<unsigned int>

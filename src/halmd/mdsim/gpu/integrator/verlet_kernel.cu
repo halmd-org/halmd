@@ -38,15 +38,15 @@ namespace verlet_kernel
 __constant__ float timestep_;
 
 template <size_t N>
-struct box
+struct dim_
 {
     /** cubic box edgle length */
-    static __constant__ typename if_c<N == 3, float3, float2>::type length;
+    static __constant__ typename if_c<N == 3, float3, float2>::type box_length;
 };
 
 // explicit instantiation
-template class box<3>;
-template class box<2>;
+template class dim_<3>;
+template class dim_<2>;
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
@@ -72,7 +72,7 @@ __global__ void _integrate(
 #endif
     vector_type_ image = g_image[i];
     vector_type_ f     = g_f[i];
-    vector_type_ L     = box<vector_type::static_size>::length;
+    vector_type_ L     = dim_<vector_type::static_size>::box_length;
 
     integrate(r, image, v, f, timestep_, L);
 

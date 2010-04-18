@@ -26,7 +26,7 @@ namespace halmd { namespace mdsim { namespace gpu { namespace integrator
 cuda::symbol<float>
   verlet_wrapper<3>::timestep = verlet_kernel::timestep_;
 cuda::symbol<float3>
-  verlet_wrapper<3>::length = verlet_kernel::box<3>::length;
+  verlet_wrapper<3>::length = verlet_kernel::dim_<3>::box_length;
 cuda::function <void (float4*, float4*, float4*, float4 const*)>
   verlet_wrapper<3>::integrate = verlet_kernel::_integrate<vector<dsfloat, 3>, vector<float, 3> >;
 cuda::function <void (float4*, float4 const*)>
@@ -35,7 +35,7 @@ cuda::function <void (float4*, float4 const*)>
 cuda::symbol<float>
   verlet_wrapper<2>::timestep = verlet_kernel::timestep_;
 cuda::symbol<float2>
-  verlet_wrapper<2>::length = verlet_kernel::box<2>::length;
+  verlet_wrapper<2>::length = verlet_kernel::dim_<2>::box_length;
 cuda::function <void (float4*, float2*, float4*, float2 const*)>
   verlet_wrapper<2>::integrate = verlet_kernel::_integrate<vector<dsfloat, 2>, vector<float, 2> >;
 cuda::function <void (float4*, float2 const*)>

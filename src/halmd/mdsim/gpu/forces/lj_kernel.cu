@@ -35,24 +35,17 @@ namespace halmd { namespace mdsim { namespace gpu { namespace forces { namespace
 {
 
 template <size_t N>
-struct particle
+struct dim_
 {
     /** positions, tags */
     static texture<float4, 1, cudaReadModeElementType> r;
-};
-
-template <size_t N>
-struct box
-{
     /** cubic box edgle length */
-    static __constant__ typename if_c<N == 3, float3, float2>::type length;
+    static __constant__ typename if_c<N == 3, float3, float2>::type box_length;
 };
 
 // explicit instantiation
-template class particle<3>;
-template class particle<2>;
-template class box<3>;
-template class box<2>;
+template class dim_<3>;
+template class dim_<2>;
 
 /** number of placeholders per neighbor list */
 __constant__ unsigned int neighbor_size_;
@@ -77,7 +70,7 @@ __global__ void compute(
 
     // load particle associated with this thread
     unsigned int type1;
-    vector_type r1 = untagged<vector_type>(tex1Dfetch(particle<dimension>::r, i), type1);
+    vector_type r1 = untagged<vector_type>(tex1Dfetch(dim_<dimension>::r, i), type1);
 
     // potential energy contribution
     float en_pot_ = 0;
@@ -100,14 +93,14 @@ __global__ void compute(
 
         // load particle
         unsigned int type2;
-        vector_type r2 = untagged<vector_type>(tex1Dfetch(particle<dimension>::r, j), type2);
+        vector_type r2 = untagged<vector_type>(tex1Dfetch(dim_<dimension>::r, j), type2);
         // Lennard-Jones potential parameters
         vector<float, 4> lj = tex1Dfetch(ljparam_, symmetric_matrix::lower_index(type1, type2));
 
         // particle distance vector
         vector_type r = r1 - r2;
         // enforce periodic boundary conditions
-        box_kernel::reduce_periodic(r, static_cast<vector_type>(box<dimension>::length));
+        box_kernel::reduce_periodic(r, static_cast<vector_type>(dim_<dimension>::box_length));
         // squared particle distance
         value_type rr = inner_prod(r, r);
         // enforce cutoff length
