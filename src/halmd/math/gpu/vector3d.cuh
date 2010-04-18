@@ -26,6 +26,14 @@
 namespace halmd { namespace cu
 {
 
+// To prevent shadowing the math functions of the :: namespace,
+// we define the vector class in a child namespace and later
+// import the vector class into the parent namespace. Through the
+// magic of Koenig lookup, the vector math functions defined in
+// the child namespace will still be found by the compiler.
+namespace detail
+{
+
 template <typename T, unsigned int dimension>
 struct vector;
 
@@ -174,36 +182,14 @@ __device__ inline vector<float, 3> operator/(vector<float, 3> v, float s)
     return v;
 }
 
-// import predefined CUDA math functions into namespace
-using ::ceilf;
-using ::cosf;
-using ::floorf;
-using ::fmodf;
-using ::remainderf;
-using ::rintf;
-using ::roundf;
-using ::sinf;
-using ::sqrtf;
-using ::fabsf;
-using ::__fdividef;
-using ::__float2int_rd;
-using ::__float2int_rn;
-using ::__float2int_ru;
-using ::__float2int_rz;
-using ::__float2uint_rd;
-using ::__float2uint_rn;
-using ::__float2uint_ru;
-using ::__float2uint_rz;
-using ::__saturatef;
-
 /**
  * componentwise round to nearest integer
  */
 __device__ inline vector<float, 3> rintf(vector<float, 3> v)
 {
-    v.x = rintf(v.x);
-    v.y = rintf(v.y);
-    v.z = rintf(v.z);
+    v.x = ::rintf(v.x);
+    v.y = ::rintf(v.y);
+    v.z = ::rintf(v.z);
     return v;
 }
 
@@ -212,9 +198,9 @@ __device__ inline vector<float, 3> rintf(vector<float, 3> v)
  */
 __device__ inline vector<float, 3> roundf(vector<float, 3> v)
 {
-    v.x = roundf(v.x);
-    v.y = roundf(v.y);
-    v.z = roundf(v.z);
+    v.x = ::roundf(v.x);
+    v.y = ::roundf(v.y);
+    v.z = ::roundf(v.z);
     return v;
 }
 
@@ -223,9 +209,9 @@ __device__ inline vector<float, 3> roundf(vector<float, 3> v)
  */
 __device__ inline vector<float, 3> floorf(vector<float, 3> v)
 {
-    v.x = floorf(v.x);
-    v.y = floorf(v.y);
-    v.z = floorf(v.z);
+    v.x = ::floorf(v.x);
+    v.y = ::floorf(v.y);
+    v.z = ::floorf(v.z);
     return v;
 }
 
@@ -234,9 +220,9 @@ __device__ inline vector<float, 3> floorf(vector<float, 3> v)
  */
 __device__ inline vector<float, 3> ceilf(vector<float, 3> v)
 {
-    v.x = ceilf(v.x);
-    v.y = ceilf(v.y);
-    v.z = ceilf(v.z);
+    v.x = ::ceilf(v.x);
+    v.y = ::ceilf(v.y);
+    v.z = ::ceilf(v.z);
     return v;
 }
 
@@ -245,9 +231,9 @@ __device__ inline vector<float, 3> ceilf(vector<float, 3> v)
  */
 __device__ inline vector<float, 3> sqrtf(vector<float, 3> v)
 {
-    v.x = sqrtf(v.x);
-    v.y = sqrtf(v.y);
-    v.z = sqrtf(v.z);
+    v.x = ::sqrtf(v.x);
+    v.y = ::sqrtf(v.y);
+    v.z = ::sqrtf(v.z);
     return v;
 }
 
@@ -256,9 +242,9 @@ __device__ inline vector<float, 3> sqrtf(vector<float, 3> v)
  */
 __device__ inline vector<float, 3> cosf(vector<float, 3> v)
 {
-    v.x = cosf(v.x);
-    v.y = cosf(v.y);
-    v.z = cosf(v.z);
+    v.x = ::cosf(v.x);
+    v.y = ::cosf(v.y);
+    v.z = ::cosf(v.z);
     return v;
 }
 
@@ -267,9 +253,9 @@ __device__ inline vector<float, 3> cosf(vector<float, 3> v)
  */
 __device__ inline vector<float, 3> sinf(vector<float, 3> v)
 {
-    v.x = sinf(v.x);
-    v.y = sinf(v.y);
-    v.z = sinf(v.z);
+    v.x = ::sinf(v.x);
+    v.y = ::sinf(v.y);
+    v.z = ::sinf(v.z);
     return v;
 }
 
@@ -278,9 +264,9 @@ __device__ inline vector<float, 3> sinf(vector<float, 3> v)
  */
 __device__ inline vector<float, 3> fabsf(vector<float, 3> v)
 {
-    v.x = fabsf(v.x);
-    v.y = fabsf(v.y);
-    v.z = fabsf(v.z);
+    v.x = ::fabsf(v.x);
+    v.y = ::fabsf(v.y);
+    v.z = ::fabsf(v.z);
     return v;
 }
 
@@ -290,9 +276,9 @@ __device__ inline vector<float, 3> fabsf(vector<float, 3> v)
 __device__ inline int3 __float2int_rn(vector<float, 3> const& v)
 {
     int3 w;
-    w.x = __float2int_rn(v.x);
-    w.y = __float2int_rn(v.y);
-    w.z = __float2int_rn(v.z);
+    w.x = ::__float2int_rn(v.x);
+    w.y = ::__float2int_rn(v.y);
+    w.z = ::__float2int_rn(v.z);
     return w;
 }
 
@@ -302,9 +288,9 @@ __device__ inline int3 __float2int_rn(vector<float, 3> const& v)
 __device__ inline int3 __float2int_rz(vector<float, 3> const& v)
 {
     int3 w;
-    w.x = __float2int_rz(v.x);
-    w.y = __float2int_rz(v.y);
-    w.z = __float2int_rz(v.z);
+    w.x = ::__float2int_rz(v.x);
+    w.y = ::__float2int_rz(v.y);
+    w.z = ::__float2int_rz(v.z);
     return w;
 }
 
@@ -314,9 +300,9 @@ __device__ inline int3 __float2int_rz(vector<float, 3> const& v)
 __device__ inline int3 __float2int_ru(vector<float, 3> const& v)
 {
     int3 w;
-    w.x = __float2int_ru(v.x);
-    w.y = __float2int_ru(v.y);
-    w.z = __float2int_ru(v.z);
+    w.x = ::__float2int_ru(v.x);
+    w.y = ::__float2int_ru(v.y);
+    w.z = ::__float2int_ru(v.z);
     return w;
 }
 
@@ -326,9 +312,9 @@ __device__ inline int3 __float2int_ru(vector<float, 3> const& v)
 __device__ inline int3 __float2int_rd(vector<float, 3> const& v)
 {
     int3 w;
-    w.x = __float2int_rd(v.x);
-    w.y = __float2int_rd(v.y);
-    w.z = __float2int_rd(v.z);
+    w.x = ::__float2int_rd(v.x);
+    w.y = ::__float2int_rd(v.y);
+    w.z = ::__float2int_rd(v.z);
     return w;
 }
 
@@ -338,9 +324,9 @@ __device__ inline int3 __float2int_rd(vector<float, 3> const& v)
 __device__ inline uint3 __float2uint_rn(vector<float, 3> const& v)
 {
     uint3 w;
-    w.x = __float2uint_rn(v.x);
-    w.y = __float2uint_rn(v.y);
-    w.z = __float2uint_rn(v.z);
+    w.x = ::__float2uint_rn(v.x);
+    w.y = ::__float2uint_rn(v.y);
+    w.z = ::__float2uint_rn(v.z);
     return w;
 }
 
@@ -350,9 +336,9 @@ __device__ inline uint3 __float2uint_rn(vector<float, 3> const& v)
 __device__ inline uint3 __float2uint_rz(vector<float, 3> const& v)
 {
     uint3 w;
-    w.x = __float2uint_rz(v.x);
-    w.y = __float2uint_rz(v.y);
-    w.z = __float2uint_rz(v.z);
+    w.x = ::__float2uint_rz(v.x);
+    w.y = ::__float2uint_rz(v.y);
+    w.z = ::__float2uint_rz(v.z);
     return w;
 }
 
@@ -362,9 +348,9 @@ __device__ inline uint3 __float2uint_rz(vector<float, 3> const& v)
 __device__ inline uint3 __float2uint_ru(vector<float, 3> const& v)
 {
     uint3 w;
-    w.x = __float2uint_ru(v.x);
-    w.y = __float2uint_ru(v.y);
-    w.z = __float2uint_ru(v.z);
+    w.x = ::__float2uint_ru(v.x);
+    w.y = ::__float2uint_ru(v.y);
+    w.z = ::__float2uint_ru(v.z);
     return w;
 }
 
@@ -374,9 +360,9 @@ __device__ inline uint3 __float2uint_ru(vector<float, 3> const& v)
 __device__ inline uint3 __float2uint_rd(vector<float, 3> const& v)
 {
     uint3 w;
-    w.x = __float2uint_rd(v.x);
-    w.y = __float2uint_rd(v.y);
-    w.z = __float2uint_rd(v.z);
+    w.x = ::__float2uint_rd(v.x);
+    w.y = ::__float2uint_rd(v.y);
+    w.z = ::__float2uint_rd(v.z);
     return w;
 }
 
@@ -385,9 +371,9 @@ __device__ inline uint3 __float2uint_rd(vector<float, 3> const& v)
  */
 __device__ inline vector<float, 3> __saturatef(vector<float, 3> v)
 {
-    v.x = __saturatef(v.x);
-    v.y = __saturatef(v.y);
-    v.z = __saturatef(v.z);
+    v.x = ::__saturatef(v.x);
+    v.y = ::__saturatef(v.y);
+    v.z = ::__saturatef(v.z);
     return v;
 }
 
@@ -396,9 +382,9 @@ __device__ inline vector<float, 3> __saturatef(vector<float, 3> v)
  */
 __device__ inline vector<float, 3> remainderf(vector<float, 3> v, float s)
 {
-    v.x = remainderf(v.x, s);
-    v.y = remainderf(v.y, s);
-    v.z = remainderf(v.z, s);
+    v.x = ::remainderf(v.x, s);
+    v.y = ::remainderf(v.y, s);
+    v.z = ::remainderf(v.z, s);
     return v;
 }
 
@@ -407,9 +393,9 @@ __device__ inline vector<float, 3> remainderf(vector<float, 3> v, float s)
  */
 __device__ inline vector<float, 3> fmodf(vector<float, 3> v, float s)
 {
-    v.x = fmodf(v.x, s);
-    v.y = fmodf(v.y, s);
-    v.z = fmodf(v.z, s);
+    v.x = ::fmodf(v.x, s);
+    v.y = ::fmodf(v.y, s);
+    v.z = ::fmodf(v.z, s);
     return v;
 }
 
@@ -418,13 +404,18 @@ __device__ inline vector<float, 3> fmodf(vector<float, 3> v, float s)
  */
 __device__ inline vector<float, 3> __fdividef(vector<float, 3> v, float s)
 {
-    v.x = __fdividef(v.x, s);
-    v.y = __fdividef(v.y, s);
-    v.z = __fdividef(v.z, s);
+    v.x = ::__fdividef(v.x, s);
+    v.y = ::__fdividef(v.y, s);
+    v.z = ::__fdividef(v.z, s);
     return v;
 }
 
 #endif /* __CUDACC__ */
+
+} // namespace detail
+
+// import vector class into parent namespace
+using detail::vector;
 
 }} // namespace halmd::cu
 

@@ -34,7 +34,7 @@
 # include <halmd/math/vector4d.hpp>
 #endif
 
-namespace halmd { namespace cu
+namespace halmd { namespace cu { namespace detail
 {
 
 /**
@@ -373,6 +373,6 @@ operator*(T const& s, vector<dsfloat, dimension> v)
 
 #endif /* __CUDACC__ */
 
-}} // namespace halmd::cu
+}}} // namespace halmd::cu::detail
 
 #endif /* ! HALMD_MATH_GPU_DSVECTOR_CUH */
