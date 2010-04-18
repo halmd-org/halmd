@@ -31,11 +31,12 @@ template <size_t N>
 struct neighbor_wrapper
 {
     typedef typename boost::mpl::if_c<N == 3, float3, float2>::type vector_type;
+    typedef typename boost::mpl::if_c<N == 3, uint3, uint2>::type cell_index;
 
     /** (cutoff lengths + neighbor list skin)² */
     static cuda::texture<float> rr_cut_skin;
     /** number of cells per dimension */
-    static cuda::symbol<unsigned int> ncell;
+    static cuda::symbol<cell_index> ncell;
     /** neighbor list length */
     static cuda::symbol<unsigned int> neighbor_size;
     /** neighbor list stride */

@@ -25,8 +25,8 @@ namespace halmd { namespace mdsim { namespace gpu
 
 cuda::texture<float>
   neighbor_wrapper<3>::rr_cut_skin = neighbor_kernel::rr_cut_skin_;
-cuda::symbol<unsigned int>
-  neighbor_wrapper<3>::ncell = neighbor_kernel::ncell_;
+cuda::symbol<uint3>
+  neighbor_wrapper<3>::ncell = neighbor_kernel::dim_<3>::ncell;
 cuda::symbol<unsigned int>
   neighbor_wrapper<3>::neighbor_size = neighbor_kernel::neighbor_size_;
 cuda::symbol<unsigned int>
@@ -52,8 +52,8 @@ cuda::function<void (float4 const*, unsigned int*)>
 
 cuda::texture<float>
   neighbor_wrapper<2>::rr_cut_skin = neighbor_kernel::rr_cut_skin_;
-cuda::symbol<unsigned int>
-  neighbor_wrapper<2>::ncell = neighbor_kernel::ncell_;
+cuda::symbol<uint2>
+  neighbor_wrapper<2>::ncell = neighbor_kernel::dim_<2>::ncell;
 cuda::symbol<unsigned int>
   neighbor_wrapper<2>::neighbor_size = neighbor_kernel::neighbor_size_;
 cuda::symbol<unsigned int>

@@ -38,8 +38,6 @@ namespace neighbor_kernel
 
 /** (cutoff lengths + neighbor list skin)² */
 texture<float, 1, cudaReadModeElementType> rr_cut_skin_;
-/** number of cells per dimension */
-__constant__ unsigned int ncell_;
 /** neighbor list length */
 __constant__ unsigned int neighbor_size_;
 /** neighbor list stride */
@@ -52,6 +50,8 @@ struct dim_
 {
     /** positions, tags */
     static texture<float4, 1, cudaReadModeElementType> r;
+    /** number of cells per dimension */
+    static __constant__ typename if_c<N == 3, uint3, uint2>::type ncell;
     /** cubic box edgle length */
     static __constant__ typename if_c<N == 3, float3, float2>::type box_length;
     /** cell edge lengths */
@@ -67,28 +67,30 @@ template class dim_<2>;
  */
 __device__ unsigned int compute_neighbour_cell(int3 const &offset)
 {
+    vector<unsigned int, 3> ncell = dim_<3>::ncell;
     // cell belonging to this execution block
-    int x = BID % ncell_;
-    int y = (BID / ncell_) % ncell_;
-    int z = BID / ncell_ / ncell_;
+    int x = BID % ncell[0];
+    int y = (BID / ncell[0]) % ncell[1];
+    int z = BID / ncell[0] / ncell[1];
     // neighbour cell of this cell
-    x = (x + ncell_ + offset.x) % ncell_;
-    y = (y + ncell_ + offset.y) % ncell_;
-    z = (z + ncell_ + offset.z) % ncell_;
+    x = (x + ncell[0] + offset.x) % ncell[0];
+    y = (y + ncell[1] + offset.y) % ncell[1];
+    z = (z + ncell[2] + offset.z) % ncell[2];
 
-    return (z * ncell_ + y) * ncell_ + x;
+    return (z * ncell[1] + y) * ncell[0] + x;
 }
 
 __device__ unsigned int compute_neighbour_cell(int2 const& offset)
 {
+    vector<unsigned int, 2> ncell = dim_<2>::ncell;
     // cell belonging to this execution block
-    int x = BID % ncell_;
-    int y = BID / ncell_;
+    int x = BID % ncell[0];
+    int y = BID / ncell[0];
     // neighbour cell of this cell
-    x = (x + ncell_ + offset.x) % ncell_;
-    y = (y + ncell_ + offset.y) % ncell_;
+    x = (x + ncell[0] + offset.x) % ncell[0];
+    y = (y + ncell[1] + offset.y) % ncell[1];
 
-    return y * ncell_ + x;
+    return y * ncell[0] + x;
 }
 
 /**
@@ -266,15 +268,17 @@ __device__ unsigned int compute_cell_index(vector<float, 3> r)
     // of cells per dimension afterwards.
     //
     vector<float, 3> L = dim_<3>::box_length;
-    vector<unsigned int, 3> index = ncell_ * (__saturate(element_div(r, L)) * (1.f - FLT_EPSILON));
-    return index[0] + ncell_ * (index[1] + ncell_ * index[2]);
+    vector<unsigned int, 3> ncell = dim_<3>::ncell;
+    vector<unsigned int, 3> index = element_prod(static_cast<vector<float, 3> >(ncell), __saturate(element_div(r, L)) * (1.f - FLT_EPSILON));
+    return index[0] + ncell[0] * (index[1] + ncell[1] * index[2]);
 }
 
 __device__ unsigned int compute_cell_index(vector<float, 2> r)
 {
     vector<float, 2> L = dim_<2>::box_length;
-    vector<unsigned int, 2> index = ncell_ * (__saturate(element_div(r, L)) * (1.f - FLT_EPSILON));
-    return index[0] + ncell_ * index[1];
+    vector<unsigned int, 2> ncell = dim_<2>::ncell;
+    vector<unsigned int, 2> index = element_prod(static_cast<vector<float, 2> >(ncell), __saturate(element_div(r, L)) * (1.f - FLT_EPSILON));
+    return index[0] + ncell[0] * index[1];
 }
 
 /**
