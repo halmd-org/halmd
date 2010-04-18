@@ -30,7 +30,7 @@ namespace halmd { namespace cu { namespace tcf
 enum { THREADS = gpu::tcf_base::THREADS };
 
 template <typename vector_type,
-          dsfloat (*correlation_function)(vector_type const&, vector_type const&),
+          typename correlation_function,
           typename coalesced_vector_type>
 __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_type const* g_in0, uint* g_n, dsfloat* g_m, dsfloat* g_v, uint n)
 {
@@ -44,7 +44,8 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-        transform<accumulate_>(count, mean, variance, correlation_function(g_in[i], g_in0[i]));
+        vector_type a = g_in[i], b = g_in0[i];
+        transform<accumulate_>(count, mean, variance, correlation_function()(a, b));
     }
     // reduced value for this thread
     s_n[TID] = count;
@@ -63,29 +64,38 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
     }
 }
 
-template <typename vector_type>
-__device__ dsfloat mean_square_displacement(vector_type const& r, vector_type const& r0)
+struct mean_square_displacement
 {
-    vector_type const dr = r - r0;
-    return dr * dr;
-}
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0)
+    {
+        vector_type const dr = r - r0;
+        return dr * dr;
+    }
+};
 
-template <typename vector_type>
-__device__ dsfloat mean_quartic_displacement(vector_type const& r, vector_type const& r0)
+struct mean_quartic_displacement
 {
-    vector_type const dr = r - r0;
-    dsfloat const rr = dr * dr;
-    return rr * rr;
-}
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0)
+    {
+        vector_type const dr = r - r0;
+        dsfloat const rr = dr * dr;
+        return rr * rr;
+    }
+};
 
-template <typename vector_type>
-__device__ dsfloat velocity_autocorrelation(vector_type const& v, vector_type const& v0)
+struct velocity_autocorrelation
 {
-    return v * v0;
-}
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& v, vector_type const& v0)
+    {
+        return v * v0;
+    }
+};
 
 template <typename vector_type,
-          dsfloat (*correlation_function)(vector_type const&, vector_type const&, vector_type const&),
+          typename correlation_function,
           typename coalesced_vector_type,
           typename uncoalesced_vector_type>
 __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_type const* g_in0, uncoalesced_vector_type const q_vector, dsfloat* g_sum, uint n)
@@ -96,7 +106,8 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-        sum += correlation_function(g_in[i], g_in0[i], q_vector);
+        vector_type a = g_in[i], b = g_in0[i], q = q_vector;
+        sum += correlation_function()(a, b, q);
     }
     // reduced value for this thread
     s_sum[TID] = sum;
@@ -111,15 +122,18 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
     }
 }
 
-template <typename vector_type>
-__device__ dsfloat incoherent_scattering_function(vector_type const& r, vector_type const& r0, vector_type const& q)
+struct incoherent_scattering_function
 {
-    // accurate trigonometric function requires local memory
-    return cosf((r - r0) * q);
-}
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0, vector_type const& q)
+    {
+        // accurate trigonometric function requires local memory
+        return cosf((r - r0) * q);
+    }
+};
 
 template <typename vector_type,
-          void (*correlation_function)(dsfloat&, dsfloat&, vector_type const&, vector_type const&),
+          typename correlation_function,
           typename coalesced_vector_type,
           typename uncoalesced_vector_type>
 __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector_type const q_vector, dsfloat* g_real, dsfloat* g_imag, uint n)
@@ -132,7 +146,8 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
 
     // load values from global device memory
     for (uint i = GTID; i < n; i += GTDIM) {
-        correlation_function(real, imag, g_in[i], q_vector);
+        vector_type a = g_in[i], q = q_vector;
+        correlation_function()(real, imag, a, q);
     }
     // reduced value for this thread
     s_real[TID] = real;
@@ -149,15 +164,18 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
     }
 }
 
-template <typename vector_type>
-__device__ void coherent_scattering_function(dsfloat& real, dsfloat& imag, vector_type const& r, vector_type const& q)
+struct coherent_scattering_function
 {
-    float c, s;
-    // accurate trigonometric function requires local memory
-    sincosf(r * q, &s, &c);
-    real += c;
-    imag += s;
-}
+    template <typename vector_type>
+    __device__ void operator()(dsfloat& real, dsfloat& imag, vector_type const& r, vector_type const& q)
+    {
+        float c, s;
+        // accurate trigonometric function requires local memory
+        sincosf(r * q, &s, &c);
+        real += c;
+        imag += s;
+    }
+};
 
 }}} // namespace halmd::cu::tcf
 
