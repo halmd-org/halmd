@@ -45,7 +45,9 @@ __device__ T grid_prefix_sum(T const* g_in, T* g_out, const uint count)
     // Mark Harris, April 2007, NVIDIA Corporation
     //
 
-    extern __shared__ T s_array[];
+    extern __shared__ char __s_array[];
+    T* const s_array = reinterpret_cast<T*>(__s_array);
+
     T block_sum = 0;
 
     const uint tid = threadIdx.x;
