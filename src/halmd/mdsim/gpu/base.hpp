@@ -21,9 +21,6 @@
 #ifndef HALMD_MDSIM_GPU_LJFLUID_BASE_HPP
 #define HALMD_MDSIM_GPU_LJFLUID_BASE_HPP
 
-#include <boost/utility/enable_if.hpp>
-#include <boost/mpl/if.hpp>
-
 #include <cuda_wrapper.hpp>
 #include <halmd/math/gpu/dsfloat.cuh>
 #include <halmd/mdsim/impl.hpp>
@@ -34,40 +31,6 @@ namespace halmd { namespace gpu
 {
 
 enum { VIRTUAL_PARTICLE = -1U };
-
-/**
- * Returns reference to first argument in three-dimensional case
- */
-template <int dimension, typename first_type, typename second_type>
-__device__ inline typename boost::enable_if_c<dimension == 3, first_type&>::type
-if_3d(first_type& first, second_type& second)
-{
-    return first;
-}
-
-template <int dimension, typename first_type, typename second_type>
-__device__ inline typename boost::enable_if_c<dimension == 3, first_type const&>::type
-if_3d(first_type const& first, second_type const& second)
-{
-    return first;
-}
-
-/**
- * Returns reference to second argument in two-dimensional case
- */
-template <int dimension, typename first_type, typename second_type>
-__device__ inline typename boost::enable_if_c<dimension == 2, second_type&>::type
-if_3d(first_type& first, second_type& second)
-{
-    return second;
-}
-
-template <int dimension, typename first_type, typename second_type>
-__device__ inline typename boost::enable_if_c<dimension == 2, second_type const&>::type
-if_3d(first_type const& first, second_type const& second)
-{
-    return second;
-}
 
 template <typename ljfluid_impl>
 struct ljfluid_base;
