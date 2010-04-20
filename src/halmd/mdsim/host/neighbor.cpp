@@ -57,16 +57,12 @@ neighbor<dimension, float_type>::neighbor(options const& vm)
         }
     }
     vector_type L = box->length();
-    for (size_t i = 0; i < dimension; ++i) {
-        ncell_[i] = static_cast<size_t>(L[i] / r_cut_max);
-    }
+    ncell_ = static_cast<cell_index>(L / r_cut_max);
     if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
         throw logic_error("less than least 3 cells per dimension");
     }
     cell_.resize(ncell_);
-    for (size_t i = 0; i < dimension; ++i) {
-        cell_length_[i] = L[i] / ncell_[i];
-    }
+    cell_length_ = element_div(L, static_cast<vector_type>(ncell_));
     r_skin_half_ = r_skin_ / 2;
 
     LOG("neighbor list skin: " << r_skin_);

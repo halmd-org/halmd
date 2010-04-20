@@ -55,16 +55,16 @@ public:
     {}
 
     /**
-     * Initialization by vector of convertible element type
+     * Explicit conversion from vector of convertible element type
      */
     template <typename T_>
-    vector(vector<T_, 4> const& v,
+    explicit vector(vector<T_, 4> const& v,
       typename boost::enable_if<boost::is_convertible<T_, T> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
-        (*this)[2] = v[2];
-        (*this)[3] = v[3];
+        (*this)[0] = static_cast<T>(v[0]);
+        (*this)[1] = static_cast<T>(v[1]);
+        (*this)[2] = static_cast<T>(v[2]);
+        (*this)[3] = static_cast<T>(v[3]);
     }
 
     /**
@@ -160,16 +160,16 @@ public:
     {}
 
     /**
-     * Initialization by vector of convertible element type
+     * Explicit conversion from vector of convertible element type
      */
     template <typename T_>
-    vector(vector<T_, 4> const& v,
+    explicit vector(vector<T_, 4> const& v,
       typename boost::enable_if<boost::is_convertible<T_, float> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
-        (*this)[2] = v[2];
-        (*this)[3] = v[3];
+        (*this)[0] = static_cast<float>(v[0]);
+        (*this)[1] = static_cast<float>(v[1]);
+        (*this)[2] = static_cast<float>(v[2]);
+        (*this)[3] = static_cast<float>(v[3]);
     }
 
     /**

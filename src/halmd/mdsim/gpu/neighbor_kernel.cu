@@ -255,8 +255,13 @@ __global__ void update_neighbours(
 /**
  * compute cell indices for given particle positions
  */
-__device__ unsigned int compute_cell_index(vector<float, 3> r)
+template <typename vector_type>
+__device__ inline unsigned int compute_cell_index(vector_type r)
 {
+    enum { dimension = vector_type::static_size };
+    vector_type L = dim_<dimension>::box_length;
+    vector<unsigned int, dimension> ncell = dim_<dimension>::ncell;
+
     //
     // Mapping the positional coordinates of a particle to its corresponding
     // cell index is the most delicate part of the cell lists update.
@@ -267,18 +272,14 @@ __device__ unsigned int compute_cell_index(vector<float, 3> r)
     // half-open unit interval [0.0, 1.0) and multiply with the number
     // of cells per dimension afterwards.
     //
-    vector<float, 3> L = dim_<3>::box_length;
-    vector<unsigned int, 3> ncell = dim_<3>::ncell;
-    vector<unsigned int, 3> index = element_prod(static_cast<vector<float, 3> >(ncell), __saturate(element_div(r, L)) * (1.f - FLT_EPSILON));
-    return index[0] + ncell[0] * (index[1] + ncell[1] * index[2]);
-}
-
-__device__ unsigned int compute_cell_index(vector<float, 2> r)
-{
-    vector<float, 2> L = dim_<2>::box_length;
-    vector<unsigned int, 2> ncell = dim_<2>::ncell;
-    vector<unsigned int, 2> index = element_prod(static_cast<vector<float, 2> >(ncell), __saturate(element_div(r, L)) * (1.f - FLT_EPSILON));
-    return index[0] + ncell[0] * index[1];
+    vector_type frac = __saturate(element_div(r, L)) * (1.f - FLT_EPSILON);
+    vector<unsigned int, dimension> index(element_prod(static_cast<vector_type>(ncell), frac));
+    if (dimension == 3) {
+        return index[0] + ncell[0] * (index[1] + ncell[1] * index[2]);
+    }
+    else {
+        return index[0] + ncell[0] * index[1];
+    }
 }
 
 /**

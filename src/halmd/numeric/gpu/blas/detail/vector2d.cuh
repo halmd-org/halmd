@@ -49,6 +49,9 @@ struct vector<T, 2> : bounded_array<T, 2>
     __device__ vector()
     {}
 
+    /**
+     * Initialization by scalar
+     */
     template <typename T_>
     __device__ vector(T_ const& s,
       typename boost::enable_if<boost::is_convertible<T_, T> >::type* dummy = 0)
@@ -57,12 +60,15 @@ struct vector<T, 2> : bounded_array<T, 2>
         (*this)[1] = s;
     }
 
+    /**
+     * Explicit conversion from vector of convertible element type
+     */
     template <typename T_>
-    __device__ vector(vector<T_, 2> const& v,
+    __device__ explicit vector(vector<T_, 2> const& v,
       typename boost::enable_if<boost::is_convertible<T_, T> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
+        (*this)[0] = static_cast<T>(v[0]);
+        (*this)[1] = static_cast<T>(v[1]);
     }
 };
 
@@ -78,18 +84,24 @@ struct vector<float, 2> : bounded_array<float, 2>
 
     __device__ vector() {}
 
+    /**
+     * Initialization by scalar
+     */
     __device__ vector(float const& s)
     {
         (*this)[0] = s;
         (*this)[1] = s;
     }
 
+    /**
+     * Explicit conversion from vector of convertible element type
+     */
     template <typename T_>
-    __device__ vector(vector<T_, 2> const& v,
+    __device__ explicit vector(vector<T_, 2> const& v,
       typename boost::enable_if<boost::is_convertible<T_, float> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
+        (*this)[0] = static_cast<float>(v[0]);
+        (*this)[1] = static_cast<float>(v[1]);
     }
 
     /**
@@ -125,18 +137,24 @@ struct vector<unsigned int, 2> : bounded_array<unsigned int, 2>
 
     __device__ vector() {}
 
+    /**
+     * Initialization by scalar
+     */
     __device__ vector(unsigned int const& s)
     {
         (*this)[0] = s;
         (*this)[1] = s;
     }
 
+    /**
+     * Explicit conversion from vector of convertible element type
+     */
     template <typename T_>
-    __device__ vector(vector<T_, 2> const& v,
+    __device__ explicit vector(vector<T_, 2> const& v,
       typename boost::enable_if<boost::is_convertible<T_, unsigned int> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
+        (*this)[0] = static_cast<unsigned int>(v[0]);
+        (*this)[1] = static_cast<unsigned int>(v[1]);
     }
 
     /**
@@ -172,6 +190,9 @@ struct vector<dsfloat, 2> : bounded_array<dsfloat, 2>
 
     __device__ vector() {}
 
+    /**
+     * Initialization by scalar
+     */
     template <typename T_>
     __device__ vector(T_ const& s,
       typename boost::enable_if<boost::is_convertible<T_, dsfloat> >::type* dummy = 0)
@@ -180,12 +201,15 @@ struct vector<dsfloat, 2> : bounded_array<dsfloat, 2>
         (*this)[1] = s;
     }
 
+    /**
+     * Explicit conversion from vector of convertible element type
+     */
     template <typename T_>
-    __device__ vector(vector<T_, 2> const& v,
+    __device__ explicit vector(vector<T_, 2> const& v,
       typename boost::enable_if<boost::is_convertible<T_, dsfloat> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
+        (*this)[0] = static_cast<dsfloat>(v[0]);
+        (*this)[1] = static_cast<dsfloat>(v[1]);
     }
 
     __device__ vector(vector<float, 2> const& v, vector<float, 2> const& w)

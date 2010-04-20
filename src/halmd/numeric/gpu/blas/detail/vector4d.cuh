@@ -49,6 +49,9 @@ struct vector<T, 4> : bounded_array<T, 4>
     __device__ vector()
     {}
 
+    /**
+     * Initialization by scalar
+     */
     template <typename T_>
     __device__ vector(T_ const& s,
       typename boost::enable_if<boost::is_convertible<T_, T> >::type* dummy = 0)
@@ -59,14 +62,17 @@ struct vector<T, 4> : bounded_array<T, 4>
         (*this)[3] = s;
     }
 
+    /**
+     * Explicit conversion from vector of convertible element type
+     */
     template <typename T_>
-    __device__ vector(vector<T_, 4> const& v,
+    __device__ explicit vector(vector<T_, 4> const& v,
       typename boost::enable_if<boost::is_convertible<T_, T> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
-        (*this)[2] = v[2];
-        (*this)[3] = v[3];
+        (*this)[0] = static_cast<T>(v[0]);
+        (*this)[1] = static_cast<T>(v[1]);
+        (*this)[2] = static_cast<T>(v[2]);
+        (*this)[3] = static_cast<T>(v[3]);
     }
 };
 
@@ -82,6 +88,9 @@ struct vector<float, 4> : bounded_array<float, 4>
 
     __device__ vector() {}
 
+    /**
+     * Initialization by scalar
+     */
     __device__ vector(float const& s)
     {
         (*this)[0] = s;
@@ -90,14 +99,17 @@ struct vector<float, 4> : bounded_array<float, 4>
         (*this)[3] = s;
     }
 
+    /**
+     * Explicit conversion from vector of convertible element type
+     */
     template <typename T_>
-    __device__ vector(vector<T_, 4> const& v,
+    __device__ explicit vector(vector<T_, 4> const& v,
       typename boost::enable_if<boost::is_convertible<T_, float> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
-        (*this)[2] = v[2];
-        (*this)[3] = v[3];
+        (*this)[0] = static_cast<float>(v[0]);
+        (*this)[1] = static_cast<float>(v[1]);
+        (*this)[2] = static_cast<float>(v[2]);
+        (*this)[3] = static_cast<float>(v[3]);
     }
 
     /**
@@ -137,6 +149,9 @@ struct vector<unsigned int, 4> : bounded_array<unsigned int, 4>
 
     __device__ vector() {}
 
+    /**
+     * Initialization by scalar
+     */
     __device__ vector(unsigned int const& s)
     {
         (*this)[0] = s;
@@ -145,14 +160,17 @@ struct vector<unsigned int, 4> : bounded_array<unsigned int, 4>
         (*this)[3] = s;
     }
 
+    /**
+     * Explicit conversion from vector of convertible element type
+     */
     template <typename T_>
-    __device__ vector(vector<T_, 4> const& v,
+    __device__ explicit vector(vector<T_, 4> const& v,
       typename boost::enable_if<boost::is_convertible<T_, unsigned int> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
-        (*this)[2] = v[2];
-        (*this)[3] = v[3];
+        (*this)[0] = static_cast<unsigned int>(v[0]);
+        (*this)[1] = static_cast<unsigned int>(v[1]);
+        (*this)[2] = static_cast<unsigned int>(v[2]);
+        (*this)[3] = static_cast<unsigned int>(v[3]);
     }
 
     /**
@@ -192,6 +210,9 @@ struct vector<dsfloat, 4> : bounded_array<dsfloat, 4>
 
     __device__ vector() {}
 
+    /**
+     * Initialization by scalar
+     */
     template <typename T_>
     __device__ vector(T_ const& s,
       typename boost::enable_if<boost::is_convertible<T_, dsfloat> >::type* dummy = 0)
@@ -202,14 +223,17 @@ struct vector<dsfloat, 4> : bounded_array<dsfloat, 4>
         (*this)[3] = s;
     }
 
+    /**
+     * Explicit conversion from vector of convertible element type
+     */
     template <typename T_>
-    __device__ vector(vector<T_, 4> const& v,
+    __device__ explicit vector(vector<T_, 4> const& v,
       typename boost::enable_if<boost::is_convertible<T_, dsfloat> >::type* dummy = 0)
     {
-        (*this)[0] = v[0];
-        (*this)[1] = v[1];
-        (*this)[2] = v[2];
-        (*this)[3] = v[3];
+        (*this)[0] = static_cast<dsfloat>(v[0]);
+        (*this)[1] = static_cast<dsfloat>(v[1]);
+        (*this)[2] = static_cast<dsfloat>(v[2]);
+        (*this)[3] = static_cast<dsfloat>(v[3]);
     }
 
     __device__ vector(vector<float, 4> const& v, vector<float, 4> const& w)
