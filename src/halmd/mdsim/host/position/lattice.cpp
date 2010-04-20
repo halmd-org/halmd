@@ -31,6 +31,7 @@ namespace halmd { namespace mdsim { namespace host { namespace position
 {
 
 using namespace boost;
+using namespace numeric::host::blas;
 using namespace std;
 
 template <int dimension, typename float_type>
@@ -101,10 +102,7 @@ void lattice<dimension, float_type>::set()
     double u = (dimension == 3) ? 4 : 2;
     double V = accumulate(L.begin(), L.end(), 1. / ceil(particle->nbox / u), multiplies<double>());
     double a = pow(V, 1. / dimension);
-    array<unsigned int, dimension> n;
-    for (size_t i = 0; i < dimension; ++i) {
-        n[i] = static_cast<unsigned int>(L[i] / a);
-    }
+    vector<unsigned int, dimension> n(L / a);
     while (particle->nbox > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
         vector_type t;
         for (size_t i = 0; i < dimension; ++i) {

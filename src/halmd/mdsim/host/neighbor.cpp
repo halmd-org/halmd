@@ -121,10 +121,7 @@ void neighbor<dimension, float_type>::update_cells()
     // add particles to cells
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type const& r = particle->r[i];
-        cell_index index;
-        for (size_t j = 0; j < dimension; ++j) {
-            index[j] = static_cast<size_t>(r[j] / cell_length_[j]) % ncell_[j];
-        }
+        cell_index index = element_mod(static_cast<cell_index>(element_div(r, cell_length_)), ncell_);
         cell_(index).push_back(i);
     }
 }
@@ -149,10 +146,7 @@ void neighbor<dimension, float_type>::update_cell_neighbors(cell_index const& i)
                             goto self;
                         }
                         // update neighbor list of particle
-                        cell_index k;
-                        for (int n = 0; n < dimension; ++n) {
-                            k[n] = (i[n] + ncell_[n] + j[n]) % ncell_[n];
-                        }
+                        cell_index k = element_mod(i + ncell_ + j, ncell_);
                         compute_cell_neighbors<false>(p, cell_(k));
                     }
                 }
@@ -162,10 +156,7 @@ void neighbor<dimension, float_type>::update_cell_neighbors(cell_index const& i)
                         goto self;
                     }
                     // update neighbor list of particle
-                    cell_index k;
-                    for (int n = 0; n < dimension; ++n) {
-                        k[n] = (i[n] + ncell_[n] + j[n]) % ncell_[n];
-                    }
+                    cell_index k = element_mod(i + ncell_ + j, ncell_);
                     compute_cell_neighbors<false>(p, cell_(k));
                 }
             }

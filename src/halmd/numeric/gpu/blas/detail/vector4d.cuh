@@ -20,7 +20,9 @@
 #ifndef HALMD_NUMERIC_GPU_BLAS_DETAIL_VECTOR4D_CUH
 #define HALMD_NUMERIC_GPU_BLAS_DETAIL_VECTOR4D_CUH
 
+#include <boost/mpl/and.hpp>
 #include <boost/type_traits/is_convertible.hpp>
+#include <boost/type_traits/is_integral.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h>
 
@@ -330,6 +332,20 @@ operator/=(vector<T, 4>& v, T_ s)
 }
 
 /**
+ * Assignment by scalar modulus
+ */
+template <typename T, typename T_>
+__device__ inline typename boost::enable_if<boost::mpl::and_<boost::is_integral<T>, boost::is_integral<T_> >, vector<T, 4>&>::type
+operator%=(vector<T, 4>& v, T_ s)
+{
+    v[0] %= s;
+    v[1] %= s;
+    v[2] %= s;
+    v[3] %= s;
+    return v;
+}
+
+/**
  * Elementwise vector addition
  */
 template <typename T>
@@ -405,6 +421,20 @@ operator/(vector<T, 4> v, T_ s)
 }
 
 /**
+ * Scalar modulus
+ */
+template <typename T, typename T_>
+__device__ inline typename boost::enable_if<boost::mpl::and_<boost::is_integral<T>, boost::is_integral<T_> >, vector<T, 4> >::type
+operator%(vector<T, 4> v, T_ s)
+{
+    v[0] %= s;
+    v[1] %= s;
+    v[2] %= s;
+    v[3] %= s;
+    return v;
+}
+
+/**
  * Inner product
  */
 template <typename T>
@@ -440,6 +470,20 @@ __device__ inline vector<T, 4> element_div(vector<T, 4> v, vector<T, 4> const& w
     v[1] /= w[1];
     v[2] /= w[2];
     v[3] /= w[3];
+    return v;
+}
+
+/**
+ * Elementwise vector modulus
+ */
+template <typename T>
+__device__ inline typename boost::enable_if<boost::is_integral<T>, vector<T, 4> >::type
+element_mod(vector<T, 4> v, vector<T, 4> const& w)
+{
+    v[0] %= w[0];
+    v[1] %= w[1];
+    v[2] %= w[2];
+    v[3] %= w[3];
     return v;
 }
 

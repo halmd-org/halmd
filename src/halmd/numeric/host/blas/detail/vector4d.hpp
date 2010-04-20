@@ -21,7 +21,9 @@
 #define HALMD_NUMERIC_HOST_BLAS_DETAIL_VECTOR4D_HPP
 
 #include <boost/array.hpp>
+#include <boost/mpl/and.hpp>
 #include <boost/type_traits/is_convertible.hpp>
+#include <boost/type_traits/is_integral.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cmath>
 #include <iostream>
@@ -305,6 +307,20 @@ operator/=(vector<T, 4>& v, T_ const& s)
 }
 
 /**
+ * Assignment by scalar modulus
+ */
+template <typename T, typename T_>
+inline typename boost::enable_if<boost::mpl::and_<boost::is_integral<T>, boost::is_integral<T_> >, vector<T, 4>&>::type
+operator%=(vector<T, 4>& v, T_ const& s)
+{
+    v[0] %= s;
+    v[1] %= s;
+    v[2] %= s;
+    v[3] %= s;
+    return v;
+}
+
+/**
  * Elementwise vector addition
  */
 template <typename T>
@@ -373,6 +389,20 @@ operator/(vector<T, 4> v, T_ const& s)
 }
 
 /**
+ * Scalar modulus
+ */
+template <typename T, typename T_>
+inline typename boost::enable_if<boost::mpl::and_<boost::is_integral<T>, boost::is_integral<T_> >, vector<T, 4> >::type
+operator%(vector<T, 4> v, T_ const& s)
+{
+    v[0] %= s;
+    v[1] %= s;
+    v[2] %= s;
+    v[3] %= s;
+    return v;
+}
+
+/**
  * Inner product
  */
 template <typename T>
@@ -408,6 +438,20 @@ inline vector<T, 4> element_div(vector<T, 4> v, vector<T, 4> const& w)
     v[1] /= w[1];
     v[2] /= w[2];
     v[3] /= w[3];
+    return v;
+}
+
+/**
+ * Elementwise vector modulus
+ */
+template <typename T>
+inline typename boost::enable_if<boost::is_integral<T>, vector<T, 4> >::type
+element_mod(vector<T, 4> v, vector<T, 4> const& w)
+{
+    v[0] %= w[0];
+    v[1] %= w[1];
+    v[2] %= w[2];
+    v[3] %= w[3];
     return v;
 }
 
