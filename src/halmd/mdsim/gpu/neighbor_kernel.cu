@@ -65,32 +65,33 @@ template class dim_<2>;
 /**
  * compute neighbor cell
  */
-__device__ unsigned int compute_neighbor_cell(int3 const &offset)
+__device__ unsigned int compute_neighbor_cell(vector<int, 3> const &offset)
 {
-    vector<unsigned int, 3> ncell = dim_<3>::ncell;
-    // cell belonging to this execution block
-    int x = BID % ncell[0];
-    int y = (BID / ncell[0]) % ncell[1];
-    int z = BID / ncell[0] / ncell[1];
-    // neighbor cell of this cell
-    x = (x + ncell[0] + offset.x) % ncell[0];
-    y = (y + ncell[1] + offset.y) % ncell[1];
-    z = (z + ncell[2] + offset.z) % ncell[2];
+    vector<int, 3> ncell(static_cast<vector<unsigned int, 3> >(dim_<3>::ncell));
+    vector<int, 3> cell;
 
-    return (z * ncell[1] + y) * ncell[0] + x;
+    // cell belonging to this execution block
+    cell[0] = BID % ncell[0];
+    cell[1] = (BID / ncell[0]) % ncell[1];
+    cell[2] = BID / ncell[0] / ncell[1];
+    // neighbor cell of this cell
+    cell = element_mod(cell + ncell + offset, ncell);
+
+    return (cell[2] * ncell[1] + cell[1]) * ncell[0] + cell[0];
 }
 
-__device__ unsigned int compute_neighbor_cell(int2 const& offset)
+__device__ unsigned int compute_neighbor_cell(vector<int, 2> const& offset)
 {
-    vector<unsigned int, 2> ncell = dim_<2>::ncell;
-    // cell belonging to this execution block
-    int x = BID % ncell[0];
-    int y = BID / ncell[0];
-    // neighbor cell of this cell
-    x = (x + ncell[0] + offset.x) % ncell[0];
-    y = (y + ncell[1] + offset.y) % ncell[1];
+    vector<int, 2> ncell(static_cast<vector<unsigned int, 2> >(dim_<2>::ncell));
+    vector<int, 2> cell;
 
-    return y * ncell[0] + x;
+    // cell belonging to this execution block
+    cell[0] = BID % ncell[0];
+    cell[1] = BID / ncell[0];
+    // neighbor cell of this cell
+    cell = element_mod(cell + ncell + offset, ncell);
+
+    return cell[1] * ncell[0] + cell[0];
 }
 
 /**
