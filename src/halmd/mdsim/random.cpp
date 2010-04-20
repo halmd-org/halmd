@@ -56,6 +56,6 @@ module<random>::pointer module<random>::fetch(options const& vm)
     return singleton_;
 }
 
-module<random>::pointer module<random>::singleton_ = pointer();
+module<random>::pointer module<random>::singleton_;
 
 }} // namespace halmd::mdsim

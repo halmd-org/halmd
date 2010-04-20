@@ -89,9 +89,9 @@ module<particle<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> module<particle<3> >::pointer module<particle<3> >::singleton_ = pointer();
+template <int dimension> typename module<particle<dimension> >::pointer module<particle<dimension> >::singleton_;
+
 template class module<particle<3> >;
-template <> module<particle<2> >::pointer module<particle<2> >::singleton_ = pointer();
 template class module<particle<2> >;
 
 }} // namespace halmd::mdsim

@@ -54,9 +54,9 @@ module<force<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> module<force<3> >::pointer module<force<3> >::singleton_ = pointer();
+template <int dimension> typename module<force<dimension> >::pointer module<force<dimension> >::singleton_;
+
 template class module<force<3> >;
-template <> module<force<2> >::pointer module<force<2> >::singleton_ = pointer();
 template class module<force<2> >;
 
 }} // namespace halmd::mdsim

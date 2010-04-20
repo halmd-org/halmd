@@ -38,9 +38,9 @@ module<integrator<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> module<integrator<3> >::pointer module<integrator<3> >::singleton_ = pointer();
+template <int dimension> typename module<integrator<dimension> >::pointer module<integrator<dimension> >::singleton_;
+
 template class module<integrator<3> >;
-template <> module<integrator<2> >::pointer module<integrator<2> >::singleton_ = pointer();
 template class module<integrator<2> >;
 
 }} // namespace halmd::mdsim

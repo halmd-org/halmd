@@ -98,9 +98,9 @@ module<box<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> module<box<3> >::pointer module<box<3> >::singleton_ = pointer();
+template <int dimension> typename module<box<dimension> >::pointer module<box<dimension> >::singleton_;
+
 template class module<box<3> >;
-template <> module<box<2> >::pointer module<box<2> >::singleton_ = pointer();
 template class module<box<2> >;
 
 }} // namespace halmd::mdsim

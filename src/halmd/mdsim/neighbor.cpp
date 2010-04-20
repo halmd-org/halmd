@@ -38,9 +38,9 @@ module<neighbor<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> module<neighbor<3> >::pointer module<neighbor<3> >::singleton_ = pointer();
+template <int dimension> typename module<neighbor<dimension> >::pointer module<neighbor<dimension> >::singleton_;
+
 template class module<neighbor<3> >;
-template <> module<neighbor<2> >::pointer module<neighbor<2> >::singleton_ = pointer();
 template class module<neighbor<2> >;
 
 }} // namespace halmd::mdsim

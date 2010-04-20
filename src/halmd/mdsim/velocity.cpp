@@ -38,9 +38,9 @@ module<velocity<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> module<velocity<3> >::pointer module<velocity<3> >::singleton_ = pointer();
+template <int dimension> typename module<velocity<dimension> >::pointer module<velocity<dimension> >::singleton_;
+
 template class module<velocity<3> >;
-template <> module<velocity<2> >::pointer module<velocity<2> >::singleton_ = pointer();
 template class module<velocity<2> >;
 
 }} // namespace halmd::mdsim

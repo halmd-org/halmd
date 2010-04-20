@@ -38,9 +38,9 @@ module<sort<dimension> >::fetch(options const& vm)
     return singleton_;
 }
 
-template <> module<sort<3> >::pointer module<sort<3> >::singleton_ = pointer();
+template <int dimension> typename module<sort<dimension> >::pointer module<sort<dimension> >::singleton_;
+
 template class module<sort<3> >;
-template <> module<sort<2> >::pointer module<sort<2> >::singleton_ = pointer();
 template class module<sort<2> >;
 
 }} // namespace halmd::mdsim
