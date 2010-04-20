@@ -21,7 +21,7 @@
 #ifndef HALMD_ALGORITHM_GPU_BASE_CUH
 #define HALMD_ALGORITHM_GPU_BASE_CUH
 
-namespace halmd { namespace cu
+namespace halmd { namespace algorithm { namespace gpu
 {
 
 /**
@@ -36,7 +36,15 @@ __device__ __host__ void swap(T& a, T& b)
 }
 
 
-}} // namespace halmd::cu
+}}} // namespace halmd::algorithm::gpu
+
+// FIXME backwards compatibility
+namespace halmd { namespace cu
+{
+
+using namespace algorithm::gpu;
+
+}}
 
 /*
  * CUDA kernel helper macros
