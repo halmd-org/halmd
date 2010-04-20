@@ -21,6 +21,9 @@
 #ifndef HALMD_MDSIM_VARIANT_HPP
 #define HALMD_MDSIM_VARIANT_HPP
 
+namespace halmd
+{
+
 enum mixture_type {
     // homogenous fluid
     UNARY,
@@ -34,5 +37,7 @@ enum potential_type {
     // C² potential smoothing
     C2POT,
 };
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_VARIANT_HPP */
