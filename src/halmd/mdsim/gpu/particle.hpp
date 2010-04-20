@@ -55,7 +55,7 @@ public:
     cuda::vector<gpu_vector_type> g_v;
     /** forces */
     cuda::vector<gpu_vector_type> g_f;
-    /** neighbour lists */
+    /** neighbor lists */
     cuda::vector<unsigned int> g_neighbor;
 
     //

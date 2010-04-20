@@ -46,7 +46,7 @@ cuda::function<void (unsigned int*, unsigned int*)>
 cuda::function<void (unsigned int*)>
   neighbor_wrapper<3>::gen_index = neighbor_kernel::gen_index;
 cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)>
-  neighbor_wrapper<3>::update_neighbours = neighbor_kernel::update_neighbours<3>;
+  neighbor_wrapper<3>::update_neighbors = neighbor_kernel::update_neighbors<3>;
 cuda::function<void (float4 const*, unsigned int*)>
   neighbor_wrapper<3>::compute_cell = neighbor_kernel::compute_cell<3>;
 
@@ -73,7 +73,7 @@ cuda::function<void (unsigned int*, unsigned int*)>
 cuda::function<void (unsigned int*)>
   neighbor_wrapper<2>::gen_index = neighbor_kernel::gen_index;
 cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)>
-  neighbor_wrapper<2>::update_neighbours = neighbor_kernel::update_neighbours<2>;
+  neighbor_wrapper<2>::update_neighbors = neighbor_kernel::update_neighbors<2>;
 cuda::function<void (float4 const*, unsigned int*)>
   neighbor_wrapper<2>::compute_cell = neighbor_kernel::compute_cell<2>;
 

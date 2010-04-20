@@ -55,8 +55,8 @@ struct neighbor_wrapper
     static cuda::function<void (unsigned int*, unsigned int*)> find_cell_offset;
     /** generate ascending index sequence */
     static cuda::function<void (unsigned int*)> gen_index;
-    /** update neighbour lists */
-    static cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)> update_neighbours;
+    /** update neighbor lists */
+    static cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)> update_neighbors;
     /** compute cell indices for particle positions */
     static cuda::function<void (float4 const*, unsigned int*)> compute_cell;
 };

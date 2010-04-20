@@ -85,7 +85,7 @@ __global__ void compute(
 #endif
 
     for (unsigned int k = 0; k < neighbor_size_; ++k) {
-        // coalesced read from neighbour list
+        // coalesced read from neighbor list
         unsigned int j = g_neighbor[k * neighbor_stride_ + i];
         // skip placeholder particles
         if (j == particle_kernel::PLACEHOLDER) {
