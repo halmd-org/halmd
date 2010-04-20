@@ -17,16 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_GPU_BLAS_VECTOR_STORAGE_CUH
-#define HALMD_NUMERIC_GPU_BLAS_VECTOR_STORAGE_CUH
+#ifndef HALMD_NUMERIC_GPU_BLAS_DETAIL_STORAGE_CUH
+#define HALMD_NUMERIC_GPU_BLAS_DETAIL_STORAGE_CUH
 
 #include <boost/type_traits/is_pod.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h>
 
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/gpu/blas/detail/dsfloat.cuh>
 
 namespace halmd { namespace numeric { namespace gpu { namespace blas
+{
+
+namespace detail
 {
 
 template <typename T, size_t N>
@@ -105,6 +108,8 @@ struct _bounded_array<T, 4>
     T x, y, z, w;
 };
 
+} // namespace detail
+
 }}}} // namespace halmd::numeric::gpu::blas
 
-#endif /* ! HALMD_NUMERIC_GPU_BLAS_VECTOR_STORAGE_CUH */
+#endif /* ! HALMD_NUMERIC_GPU_BLAS_DETAIL_STORAGE_CUH */

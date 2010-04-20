@@ -17,17 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_GPU_BLAS_VECTOR_VECTOR3D_CUH
-#define HALMD_NUMERIC_GPU_BLAS_VECTOR_VECTOR3D_CUH
+#ifndef HALMD_NUMERIC_GPU_BLAS_DETAIL_VECTOR3D_CUH
+#define HALMD_NUMERIC_GPU_BLAS_DETAIL_VECTOR3D_CUH
 
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h>
 
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
-#include <halmd/numeric/gpu/blas/vector/storage.cuh>
+#include <halmd/numeric/gpu/blas/detail/dsfloat.cuh>
+#include <halmd/numeric/gpu/blas/detail/storage.cuh>
 
 namespace halmd { namespace numeric { namespace gpu { namespace blas
+{
+
+namespace detail
 {
 
 template <typename T, size_t N>
@@ -664,6 +667,8 @@ __device__ inline vector<float, 3> __fdivide(vector<float, 3> v, vector<float, 3
 
 #endif /* __CUDACC__ */
 
+} // namespace detail
+
 }}}} // namespace halmd::numeric::gpu::blas
 
-#endif /* ! HALMD_NUMERIC_GPU_BLAS_VECTOR_VECTOR3D_CUH */
+#endif /* ! HALMD_NUMERIC_GPU_BLAS_DETAIL_VECTOR3D_CUH */

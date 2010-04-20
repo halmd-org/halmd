@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_HOST_BLAS_VECTOR_VECTOR3D_HPP
-#define HALMD_NUMERIC_HOST_BLAS_VECTOR_VECTOR3D_HPP
+#ifndef HALMD_NUMERIC_HOST_BLAS_DETAIL_VECTOR3D_HPP
+#define HALMD_NUMERIC_HOST_BLAS_DETAIL_VECTOR3D_HPP
 
 #include <boost/array.hpp>
 #include <boost/type_traits/is_convertible.hpp>
@@ -27,10 +27,13 @@
 #include <iostream>
 
 #ifdef WITH_CUDA
-# include <halmd/numeric/gpu/blas/vector/vector3d.cuh>
+# include <halmd/numeric/gpu/blas/vector.cuh>
 #endif
 
 namespace halmd { namespace numeric { namespace host { namespace blas
+{
+
+namespace detail
 {
 
 template <typename T, size_t N>
@@ -531,6 +534,8 @@ inline vector<double, 3> sin(vector<double, 3> v)
     return v;
 }
 
+} // namespace detail
+
 }}}} // namespace halmd::numeric::host::blas
 
-#endif /* ! HALMD_NUMERIC_HOST_BLAS_VECTOR_VECTOR3D_HPP */
+#endif /* ! HALMD_NUMERIC_HOST_BLAS_DETAIL_VECTOR3D_HPP */

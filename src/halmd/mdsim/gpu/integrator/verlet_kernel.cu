@@ -22,6 +22,7 @@
 #include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/mdsim/gpu/integrator/verlet_kernel.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
+#include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 
 using namespace boost::mpl;

@@ -20,12 +20,7 @@
 #ifndef HALMD_NUMERIC_GPU_BLAS_SYMMETRIC_CUH
 #define HALMD_NUMERIC_GPU_BLAS_SYMMETRIC_CUH
 
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h>
-
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
-#include <halmd/numeric/gpu/blas/vector/storage.cuh>
 
 namespace halmd { namespace numeric { namespace gpu { namespace blas
 {

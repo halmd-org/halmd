@@ -20,8 +20,15 @@
 #ifndef HALMD_NUMERIC_HOST_BLAS_VECTOR_HPP
 #define HALMD_NUMERIC_HOST_BLAS_VECTOR_HPP
 
-#include <halmd/numeric/host/blas/vector/vector2d.hpp>
-#include <halmd/numeric/host/blas/vector/vector3d.hpp>
-#include <halmd/numeric/host/blas/vector/vector4d.hpp>
+#include <halmd/numeric/host/blas/detail/vector2d.hpp>
+#include <halmd/numeric/host/blas/detail/vector3d.hpp>
+#include <halmd/numeric/host/blas/detail/vector4d.hpp>
+
+namespace halmd { namespace numeric { namespace host { namespace blas
+{
+
+using detail::vector;
+
+}}}} // namespace halmd::numeric::host::blas
 
 #endif /* ! HALMD_NUMERIC_HOST_BLAS_VECTOR_HPP */

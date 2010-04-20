@@ -20,8 +20,15 @@
 #ifndef HALMD_NUMERIC_GPU_BLAS_VECTOR_CUH
 #define HALMD_NUMERIC_GPU_BLAS_VECTOR_CUH
 
-#include <halmd/numeric/gpu/blas/vector/vector2d.cuh>
-#include <halmd/numeric/gpu/blas/vector/vector3d.cuh>
-#include <halmd/numeric/gpu/blas/vector/vector4d.cuh>
+#include <halmd/numeric/gpu/blas/detail/vector2d.cuh>
+#include <halmd/numeric/gpu/blas/detail/vector3d.cuh>
+#include <halmd/numeric/gpu/blas/detail/vector4d.cuh>
+
+namespace halmd { namespace numeric { namespace gpu { namespace blas
+{
+
+using detail::vector;
+
+}}}} // namespace halmd::numeric::gpu::blas
 
 #endif /* ! HALMD_NUMERIC_GPU_BLAS_VECTOR_CUH */
