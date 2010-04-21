@@ -50,10 +50,6 @@ public:
     lattice(options const& vm);
     virtual ~lattice() {}
     void set();
-
-protected:
-    /** number of particles per types */
-    std::vector<unsigned int> ntypes_;
 };
 
 }}}} // namespace halmd::mdsim::host::position

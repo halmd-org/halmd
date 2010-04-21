@@ -19,6 +19,8 @@
 
 #include <algorithm>
 #include <boost/array.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/lexical_cast.hpp>
 #include <exception>
 #include <numeric>
 
@@ -30,6 +32,7 @@
 #include <halmd/util/logger.hpp>
 
 using namespace boost;
+using namespace boost::algorithm;
 using namespace std;
 
 namespace halmd { namespace mdsim
@@ -44,21 +47,25 @@ particle<dimension>::particle(options const& vm)
         if (*min_element(value.begin(), value.end()) < 1) {
             throw logic_error("invalid number of A or B particles");
         }
-        nbox = accumulate(value.begin(), value.end(), 0);
-        ntype = 2;
+        ntypes.assign(value.begin(), value.end());
     }
     else {
         unsigned int value = vm["particles"].as<unsigned int>();
         if (value < 1) {
             throw logic_error("invalid number of particles");
         }
-        nbox = value;
-        ntype = 1;
+        ntypes.push_back(value);
     }
+    nbox = accumulate(ntypes.begin(), ntypes.end(), 0);
+    ntype = ntypes.size();
+
+    vector<string> ntypes_(ntypes.size());
+    std::transform(ntypes.begin(), ntypes.end(), ntypes_.begin(), lexical_cast<string, unsigned int>);
 
     LOG("positional coordinates dimension: " << dimension);
     LOG("number of particles: " << nbox);
     LOG("number of particle types: " << ntype);
+    LOG("number of particles per type: " << join(ntypes_, " "));
 }
 
 // explicit instantiation

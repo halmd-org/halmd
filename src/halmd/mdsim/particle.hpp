@@ -39,6 +39,8 @@ public:
     unsigned int nbox;
     /** number of particle types */
     unsigned int ntype;
+    /** number of particles per type */
+    std::vector<unsigned int> ntypes;
 };
 
 template <int dimension>

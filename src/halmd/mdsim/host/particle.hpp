@@ -60,6 +60,8 @@ public:
     using _Base::nbox;
     /** number of particle types */
     using _Base::ntype;
+    /** number of particles per type */
+    using _Base::ntypes;
 };
 
 }}} // namespace halmd::mdsim::host

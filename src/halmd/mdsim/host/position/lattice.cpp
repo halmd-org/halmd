@@ -41,16 +41,7 @@ lattice<dimension, float_type>::lattice(options const& vm)
     , particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
     , box(dynamic_pointer_cast<box_type>(module<mdsim::box<dimension> >::fetch(vm)))
     , random(dynamic_pointer_cast<random_type>(module<mdsim::random>::fetch(vm)))
-{
-    // parse options
-    if (!vm["binary"].empty() && vm["particles"].defaulted()) {
-        array<unsigned int, 2> value = vm["binary"].as<array<unsigned int, 2> >();
-        ntypes_.assign(value.begin(), value.end());
-    }
-    else {
-        ntypes_.push_back(particle->nbox);
-    }
-}
+{}
 
 /**
  * Place particles on a face-centered cubic (fcc) lattice
@@ -87,7 +78,7 @@ template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
     // assign particle types in random order
-    for (size_t i = 0, j = 0, k = ntypes_[j]; j < particle->ntype; ++j, k += ntypes_[j]) {
+    for (size_t i = 0, j = 0, k = particle->ntypes[j]; j < particle->ntype; ++j, k += particle->ntypes[j]) {
         for (; i < k; ++i) {
             particle->type[i] = j;
         }

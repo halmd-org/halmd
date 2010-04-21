@@ -73,6 +73,8 @@ public:
     using _Base::nbox;
     /** number of particle types */
     using _Base::ntype;
+    /** number of particles per type */
+    using _Base::ntypes;
     /** number of placeholders per neighbor list */
     unsigned int neighbor_size;
     /** neighbor list stride */
