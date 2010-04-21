@@ -8,6 +8,7 @@ target_link_libraries(halmd_mdsim_host
   halmd_mdsim_host_forces
   halmd_mdsim_host_integrator
   halmd_mdsim_host_position
+  halmd_mdsim_host_sample
   halmd_mdsim_host_sort
   halmd_mdsim_host_velocity
   )
@@ -15,5 +16,6 @@ target_link_libraries(halmd_mdsim_host
 add_subdirectory(forces)
 add_subdirectory(integrator)
 add_subdirectory(position)
+add_subdirectory(sample)
 add_subdirectory(sort)
 add_subdirectory(velocity)
