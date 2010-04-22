@@ -23,7 +23,7 @@
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/module.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>

@@ -29,8 +29,8 @@ namespace halmd { namespace mdsim { namespace host { namespace sample
 template <int dimension, typename float_type>
 trajectory<dimension, float_type>::trajectory(options const& vm)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
-    , box(dynamic_pointer_cast<box_type>(module<mdsim::box<dimension> >::fetch(vm)))
+    : particle(module<particle_type>::fetch(vm))
+    , box(module<box_type>::fetch(vm))
 {}
 
 /**

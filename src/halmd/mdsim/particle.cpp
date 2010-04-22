@@ -68,37 +68,27 @@ particle<dimension>::particle(options const& vm)
     LOG("number of particles per type: " << join(ntypes_, " "));
 }
 
+template <int dimension>
+typename particle<dimension>::pointer particle<dimension>::create(options const& vm)
+{
+    LOG_DEBUG("creating PARTICLE");
+    if (vm["backend"].as<string>() == "host") {
+#ifdef USE_HOST_SINGLE_PRECISION
+        return pointer(new host::particle<dimension, float>(vm));
+#else
+        return pointer(new host::particle<dimension, double>(vm));
+#endif
+    }
+#ifdef WITH_CUDA
+    else if (vm["backend"].as<string>() == "gpu_neighbour") {
+        return pointer(new gpu::particle<dimension, float>(vm));
+    }
+#endif
+    throw std::runtime_error("not implemented");
+}
+
 // explicit instantiation
 template class particle<3>;
 template class particle<2>;
-
-template <int dimension>
-typename module<particle<dimension> >::pointer
-module<particle<dimension> >::fetch(options const& vm)
-{
-    if (!singleton_) {
-        if (vm["backend"].as<string>() == "host") {
-#ifdef USE_HOST_SINGLE_PRECISION
-            singleton_.reset(new host::particle<dimension, float>(vm));
-#else
-            singleton_.reset(new host::particle<dimension, double>(vm));
-#endif
-        }
-#ifdef WITH_CUDA
-        else if (vm["backend"].as<string>() == "gpu_neighbour") {
-            singleton_.reset(new gpu::particle<dimension, float>(vm));
-        }
-#endif
-        else {
-            throw std::runtime_error("not implemented");
-        }
-    }
-    return singleton_;
-}
-
-template <int dimension> typename module<particle<dimension> >::pointer module<particle<dimension> >::singleton_;
-
-template class module<particle<3> >;
-template class module<particle<2> >;
 
 }} // namespace halmd::mdsim

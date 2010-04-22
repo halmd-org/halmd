@@ -25,22 +25,17 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename module<integrator<dimension> >::pointer
-module<integrator<dimension> >::fetch(options const& vm)
+typename integrator<dimension>::pointer integrator<dimension>::create(options const& vm)
 {
-    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        singleton_.reset(new host::integrator::verlet<dimension, float>(vm));
+    return pointer(new host::integrator::verlet<dimension, float>(vm));
 #else
-        singleton_.reset(new host::integrator::verlet<dimension, double>(vm));
+    return pointer(new host::integrator::verlet<dimension, double>(vm));
 #endif
-    }
-    return singleton_;
 }
 
-template <int dimension> typename module<integrator<dimension> >::pointer module<integrator<dimension> >::singleton_;
-
-template class module<integrator<3> >;
-template class module<integrator<2> >;
+// explicit instantiation
+template class integrator<3>;
+template class integrator<2>;
 
 }} // namespace halmd::mdsim

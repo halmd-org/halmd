@@ -25,22 +25,16 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename module<neighbor<dimension> >::pointer
-module<neighbor<dimension> >::fetch(options const& vm)
+typename neighbor<dimension>::pointer neighbor<dimension>::create(options const& vm)
 {
-    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        singleton_.reset(new host::neighbor<dimension, float>(vm));
+    return pointer(new host::neighbor<dimension, float>(vm));
 #else
-        singleton_.reset(new host::neighbor<dimension, double>(vm));
+    return pointer(new host::neighbor<dimension, double>(vm));
 #endif
-    }
-    return singleton_;
 }
 
-template <int dimension> typename module<neighbor<dimension> >::pointer module<neighbor<dimension> >::singleton_;
-
-template class module<neighbor<3> >;
-template class module<neighbor<2> >;
+template class neighbor<3>;
+template class neighbor<2>;
 
 }} // namespace halmd::mdsim

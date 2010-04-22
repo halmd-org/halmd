@@ -22,7 +22,7 @@
 
 #include <vector>
 
-#include <halmd/mdsim/module.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -35,23 +35,15 @@ public:
     particle(options const& vm);
     virtual ~particle() {}
 
+    typedef typename module<particle>::pointer pointer;
+    static pointer create(options const& vm);
+
     /** number of particles in simulation box */
     unsigned int nbox;
     /** number of particle types */
     unsigned int ntype;
     /** number of particles per type */
     std::vector<unsigned int> ntypes;
-};
-
-template <int dimension>
-class module<particle<dimension> >
-{
-public:
-    typedef boost::shared_ptr<particle<dimension> > pointer;
-    static pointer fetch(options const& vm);
-
-private:
-    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

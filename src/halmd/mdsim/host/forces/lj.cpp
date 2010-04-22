@@ -38,8 +38,8 @@ template <int dimension, typename float_type>
 lj<dimension, float_type>::lj(options const& vm)
     : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
-    , box(dynamic_pointer_cast<box_type>(module<mdsim::box<dimension> >::fetch(vm)))
+    , particle(module<particle_type>::fetch(vm))
+    , box(module<box_type>::fetch(vm))
     // allocate potential parameters
     , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
     , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))

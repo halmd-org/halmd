@@ -37,7 +37,7 @@ template <int dimension>
 box<dimension>::box(options const& vm)
   : _Base(vm)
   // dependency injection
-  , particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
+  , particle(module<particle_type>::fetch(vm))
   // initialize parameters
   , length_half_(.5 * length_)
 {}

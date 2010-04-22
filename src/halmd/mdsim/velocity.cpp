@@ -25,22 +25,16 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename module<velocity<dimension> >::pointer
-module<velocity<dimension> >::fetch(options const& vm)
+typename velocity<dimension>::pointer velocity<dimension>::create(options const& vm)
 {
-    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        singleton_.reset(new host::velocity::boltzmann<dimension, float>(vm));
+    return pointer(new host::velocity::boltzmann<dimension, float>(vm));
 #else
-        singleton_.reset(new host::velocity::boltzmann<dimension, double>(vm));
+    return pointer(new host::velocity::boltzmann<dimension, double>(vm));
 #endif
-    }
-    return singleton_;
 }
 
-template <int dimension> typename module<velocity<dimension> >::pointer module<velocity<dimension> >::singleton_;
-
-template class module<velocity<3> >;
-template class module<velocity<2> >;
+template class velocity<3>;
+template class velocity<2>;
 
 }} // namespace halmd::mdsim

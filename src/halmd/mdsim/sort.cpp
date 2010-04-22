@@ -25,22 +25,16 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename module<sort<dimension> >::pointer
-module<sort<dimension> >::fetch(options const& vm)
+typename sort<dimension>::pointer sort<dimension>::create(options const& vm)
 {
-    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        singleton_.reset(new host::sort::hilbert<dimension, float>(vm));
+    return pointer(new host::sort::hilbert<dimension, float>(vm));
 #else
-        singleton_.reset(new host::sort::hilbert<dimension, double>(vm));
+    return pointer(new host::sort::hilbert<dimension, double>(vm));
 #endif
-    }
-    return singleton_;
 }
 
-template <int dimension> typename module<sort<dimension> >::pointer module<sort<dimension> >::singleton_;
-
-template class module<sort<3> >;
-template class module<sort<2> >;
+template class sort<3>;
+template class sort<2>;
 
 }} // namespace halmd::mdsim

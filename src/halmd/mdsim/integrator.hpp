@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_INTEGRATOR_HPP
 #define HALMD_MDSIM_INTEGRATOR_HPP
 
-#include <halmd/mdsim/module.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -35,17 +35,9 @@ public:
     virtual void integrate() = 0;
     virtual void finalize() = 0;
     virtual double timestep() = 0;
-};
 
-template <int dimension>
-class module<integrator<dimension> >
-{
-public:
-    typedef boost::shared_ptr<integrator<dimension> > pointer;
-    static pointer fetch(options const& vm);
-
-private:
-    static pointer singleton_;
+    typedef typename module<integrator>::pointer pointer;
+    static pointer create(options const& vm);
 };
 
 }} // namespace halmd::mdsim

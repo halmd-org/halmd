@@ -25,22 +25,16 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename module<position<dimension> >::pointer
-module<position<dimension> >::fetch(options const& vm)
+typename position<dimension>::pointer position<dimension>::create(options const& vm)
 {
-    if (!singleton_) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        singleton_.reset(new host::position::lattice<dimension, float>(vm));
+    return pointer(new host::position::lattice<dimension, float>(vm));
 #else
-        singleton_.reset(new host::position::lattice<dimension, double>(vm));
+    return pointer(new host::position::lattice<dimension, double>(vm));
 #endif
-    }
-    return singleton_;
 }
 
-template <int dimension> typename module<position<dimension> >::pointer module<position<dimension> >::singleton_;
-
-template class module<position<3> >;
-template class module<position<2> >;
+template class position<3>;
+template class position<2>;
 
 }} // namespace halmd::mdsim

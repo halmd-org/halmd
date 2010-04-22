@@ -36,9 +36,9 @@ template <int dimension, typename float_type>
 hilbert<dimension, float_type>::hilbert(options const& vm)
     : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
-    , box(dynamic_pointer_cast<box_type>(module<mdsim::box<dimension> >::fetch(vm)))
-    , neighbor(dynamic_pointer_cast<neighbor_type>(module<mdsim::neighbor<dimension> >::fetch(vm)))
+    , particle(module<particle_type>::fetch(vm))
+    , box(module<box_type>::fetch(vm))
+    , neighbor(module<neighbor_type>::fetch(vm))
 {
     // set Hilbert space-filling curve recursion depth
     unsigned int ncell = *max_element(neighbor->ncell_.begin(), neighbor->ncell_.end());

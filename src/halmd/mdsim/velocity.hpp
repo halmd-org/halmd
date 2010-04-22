@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_VELOCITY_HPP
 #define HALMD_MDSIM_VELOCITY_HPP
 
-#include <halmd/mdsim/module.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -33,17 +33,9 @@ public:
     velocity(options const& vm) {}
     virtual ~velocity() {}
     virtual void set() = 0;
-};
 
-template <int dimension>
-class module<velocity<dimension> >
-{
-public:
-    typedef boost::shared_ptr<velocity<dimension> > pointer;
-    static pointer fetch(options const& vm);
-
-private:
-    static pointer singleton_;
+    typedef typename module<velocity>::pointer pointer;
+    static pointer create(options const& vm);
 };
 
 }} // namespace halmd::mdsim

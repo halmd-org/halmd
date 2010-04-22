@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_NEIGHBOR_HPP
 #define HALMD_MDSIM_NEIGHBOR_HPP
 
-#include <halmd/mdsim/module.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -34,17 +34,9 @@ public:
     virtual ~neighbor() {}
     virtual void update() = 0;
     virtual bool check() = 0;
-};
 
-template <int dimension>
-class module<neighbor<dimension> >
-{
-public:
-    typedef boost::shared_ptr<neighbor<dimension> > pointer;
-    static pointer fetch(options const& vm);
-
-private:
-    static pointer singleton_;
+    typedef typename module<neighbor>::pointer pointer;
+    static pointer create(options const& vm);
 };
 
 }} // namespace halmd::mdsim

@@ -22,6 +22,7 @@
 #include <numeric>
 
 #include <halmd/mdsim/host/box.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/util/logger.hpp>
 
@@ -37,7 +38,7 @@ namespace halmd { namespace mdsim
 template <int dimension>
 box<dimension>::box(options const& vm)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
+    : particle(module<particle_type>::fetch(vm))
     // default to cube
     , scale_(1)
 {
@@ -79,28 +80,23 @@ void box<dimension>::density(double value)
     LOG("number density: " << density_);
 }
 
+template <int dimension>
+typename box<dimension>::pointer box<dimension>::create(options const& vm)
+{
+#ifdef USE_HOST_SINGLE_PRECISION
+    if (module<host::particle<dimension, double> >::exists()) {
+        return pointer(new host::box<dimension>(vm));
+    }
+#else
+    if (module<host::particle<dimension, float> >::exists()) {
+        return pointer(new host::box<dimension>(vm));
+    }
+#endif
+    return pointer(new box<dimension>(vm));
+}
+
 // explicit instantiation
 template class box<3>;
 template class box<2>;
-
-template <int dimension>
-typename module<box<dimension> >::pointer
-module<box<dimension> >::fetch(options const& vm)
-{
-    if (!singleton_) {
-        if (vm["backend"].as<string>() == "host") {
-            singleton_.reset(new host::box<dimension>(vm));
-        }
-        else {
-            singleton_.reset(new box<dimension>(vm));
-        }
-    }
-    return singleton_;
-}
-
-template <int dimension> typename module<box<dimension> >::pointer module<box<dimension> >::singleton_;
-
-template class module<box<3> >;
-template class module<box<2> >;
 
 }} // namespace halmd::mdsim

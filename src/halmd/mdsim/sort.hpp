@@ -33,17 +33,9 @@ public:
     sort(options const& vm) {}
     virtual ~sort() {}
     virtual void order() = 0;
-};
 
-template <int dimension>
-class module<sort<dimension> >
-{
-public:
-    typedef boost::shared_ptr<sort<dimension> > pointer;
-    static pointer fetch(options const& vm);
-
-private:
-    static pointer singleton_;
+    typedef typename module<sort>::pointer pointer;
+    static pointer create(options const& vm);
 };
 
 }} // namespace halmd::mdsim

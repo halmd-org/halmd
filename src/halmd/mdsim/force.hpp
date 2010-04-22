@@ -23,7 +23,7 @@
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <vector>
 
-#include <halmd/mdsim/module.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
@@ -50,22 +50,14 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
+    typedef typename module<force>::pointer pointer;
+    static pointer create(options const& vm);
+
 protected:
     /** average potential energy per particle */
     double en_pot_;
     /** average virial per particle for each particle type */
     std::vector<virial_type> virial_;
-};
-
-template <int dimension>
-class module<force<dimension> >
-{
-public:
-    typedef boost::shared_ptr<force<dimension> > pointer;
-    static pointer fetch(options const& vm);
-
-private:
-    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

@@ -30,33 +30,25 @@ namespace halmd { namespace mdsim
 template <int dimension>
 force<dimension>::force(options const& vm)
     // dependency injection
-    : particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
+    : particle(module<particle_type>::fetch(vm))
     // allocate result variables
     , virial_(particle->ntype)
 {
+}
+
+template <int dimension>
+typename force<dimension>::pointer force<dimension>::create(options const& vm)
+{
+#ifdef USE_HOST_SINGLE_PRECISION
+    return pointer(new host::forces::lj<dimension, float>(vm));
+#else
+    return pointer(new host::forces::lj<dimension, double>(vm));
+#endif
 }
 
 // explicit instantiation
 template class force<3>;
 template class force<2>;
 
-template <int dimension>
-typename module<force<dimension> >::pointer
-module<force<dimension> >::fetch(options const& vm)
-{
-    if (!singleton_) {
-#ifdef USE_HOST_SINGLE_PRECISION
-        singleton_.reset(new host::forces::lj<dimension, float>(vm));
-#else
-        singleton_.reset(new host::forces::lj<dimension, double>(vm));
-#endif
-    }
-    return singleton_;
-}
-
-template <int dimension> typename module<force<dimension> >::pointer module<force<dimension> >::singleton_;
-
-template class module<force<3> >;
-template class module<force<2> >;
 
 }} // namespace halmd::mdsim

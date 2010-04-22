@@ -22,7 +22,7 @@
 
 #include <vector>
 
-#include <halmd/mdsim/module.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
@@ -37,7 +37,6 @@ public:
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
-public:
     box(options const& vm);
     virtual ~box() {}
 
@@ -46,7 +45,9 @@ public:
     void density(double value_type);
     double density() { return density_; }
 
-public:
+    typedef typename module<box>::pointer pointer;
+    static pointer create(options const& vm);
+
     boost::shared_ptr<particle_type> particle;
 
 protected:
@@ -56,17 +57,6 @@ protected:
     vector_type scale_;
     /** number density */
     double density_;
-};
-
-template <int dimension>
-class module<box<dimension> >
-{
-public:
-    typedef boost::shared_ptr<box<dimension> > pointer;
-    static pointer fetch(options const& vm);
-
-private:
-    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

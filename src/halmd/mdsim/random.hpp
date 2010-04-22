@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_RANDOM_HPP
 #define HALMD_MDSIM_RANDOM_HPP
 
-#include <halmd/mdsim/module.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace mdsim
@@ -33,19 +33,11 @@ public:
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;
 
+    typedef module<random>::pointer pointer;
+    static pointer create(options const& vm);
+
 protected:
     unsigned int readint(std::string const& fn);
-};
-
-template <>
-class module<random>
-{
-public:
-    typedef boost::shared_ptr<random> pointer;
-    static pointer fetch(options const& vm);
-
-private:
-    static pointer singleton_;
 };
 
 }} // namespace halmd::mdsim

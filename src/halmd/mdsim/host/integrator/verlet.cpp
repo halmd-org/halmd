@@ -33,8 +33,8 @@ template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(options const& vm)
     : _Base(vm)
     // dependency injection
-    , particle(dynamic_pointer_cast<particle_type>(module<mdsim::particle<dimension> >::fetch(vm)))
-    , box(dynamic_pointer_cast<box_type>(module<mdsim::box<dimension> >::fetch(vm)))
+    , particle(module<particle_type>::fetch(vm))
+    , box(module<box_type>::fetch(vm))
 {
     // parse options
     timestep_ = vm["timestep"].as<double>();
