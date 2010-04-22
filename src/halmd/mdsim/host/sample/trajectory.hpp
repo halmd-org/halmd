@@ -37,7 +37,7 @@ public:
     typedef mdsim::samples::host::trajectory<dimension, float_type> _Base;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef box<dimension> box_type;
+    typedef mdsim::box<dimension> box_type;
 
     trajectory(options const& vm);
     virtual ~trajectory() {}
