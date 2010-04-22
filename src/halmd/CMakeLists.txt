@@ -83,6 +83,15 @@ set(HALMD_COMMON_LIBRARIES
   ${HDF5_LIBRARY}
   )
 
+if(WITH_CUDA)
+  set(HALMD_COMMON_LIBRARIES
+    ${HALMD_COMMON_LIBRARIES}
+    -Wl,-whole-archive
+    halmd_utility_gpu
+    -Wl,-no-whole-archive
+    )
+endif(WITH_CUDA)
+
 if(HALMD_USE_STATIC_LIBS)
   set(HALMD_COMMON_LIBRARIES
     ${HALMD_COMMON_LIBRARIES}
@@ -204,3 +213,4 @@ add_subdirectory(rng)
 add_subdirectory(sample)
 add_subdirectory(test)
 add_subdirectory(util)
+add_subdirectory(utility)

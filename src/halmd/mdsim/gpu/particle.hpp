@@ -27,6 +27,7 @@
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
+#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd { namespace mdsim { namespace gpu
 {
@@ -39,9 +40,12 @@ public:
     typedef mdsim::particle<dimension> _Base;
     typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_vector_type;
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;
+    typedef utility::gpu::device device_type;
 
     particle(options const& vm);
     virtual ~particle() {}
+
+    boost::shared_ptr<device_type> device;
 
     //
     // particles in global device memory

@@ -33,6 +33,8 @@ namespace halmd { namespace mdsim { namespace gpu
 template <unsigned int dimension, typename float_type>
 particle<dimension, float_type>::particle(options const& vm)
   : _Base(vm)
+  // dependency injection
+  , device(module<device_type>::fetch(vm))
   // allocate global device memory
   , g_r(nbox)
   , g_image(nbox)
