@@ -37,7 +37,7 @@ public:
     typedef boost::shared_ptr<T> pointer;
 
     /**
-     * Returns instance
+     * Returns singleton instance
      */
     static pointer fetch(options const& vm)
     {
@@ -45,7 +45,7 @@ public:
     }
 
     /**
-     * Check if an instantiation a given type exists
+     * Check if singleton instance of a given type exists
      */
     static bool exists()
     {
@@ -67,7 +67,10 @@ private:
     template <typename T_>
     static bool exists_(boost::shared_ptr<T_> (*create)(options const&))
     {
-        return module<T_>::singleton_;
+        if (!module<T_>::singleton_) {
+            return false;
+        }
+        return boost::dynamic_pointer_cast<T>(module<T_>::singleton_);
     }
 
     static pointer singleton_;
