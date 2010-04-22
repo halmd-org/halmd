@@ -22,11 +22,9 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
 #include <boost/multi_array.hpp>
 #include <exception>
 #include <fstream>
-#include <iterator>
 
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/util/logger.hpp>
