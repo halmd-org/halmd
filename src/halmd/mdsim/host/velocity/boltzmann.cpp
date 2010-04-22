@@ -28,10 +28,10 @@ using namespace std;
 
 template <int dimension, typename float_type>
 boltzmann<dimension, float_type>::boltzmann(options const& vm)
-    : _Base(vm)
-    // dependency injection
-    , particle(module<particle_type>::fetch(vm))
-    , random(module<random_type>::fetch(vm))
+  : _Base(vm)
+  // dependency injection
+  , particle(module<particle_type>::fetch(vm))
+  , random(module<random_type>::fetch(vm))
 {
     // parse options
     temp_ = vm["temperature"].as<float>();

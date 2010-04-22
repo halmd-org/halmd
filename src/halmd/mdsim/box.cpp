@@ -37,10 +37,10 @@ namespace halmd { namespace mdsim
  */
 template <int dimension>
 box<dimension>::box(options const& vm)
-    // dependency injection
-    : particle(module<particle_type>::fetch(vm))
-    // default to cube
-    , scale_(1)
+  // dependency injection
+  : particle(module<particle_type>::fetch(vm))
+  // default to cube
+  , scale_(1)
 {
     // parse options
     if (vm["density"].defaulted() && !vm["box-length"].empty()) {
@@ -81,7 +81,8 @@ void box<dimension>::density(double value)
 }
 
 template <int dimension>
-typename box<dimension>::pointer box<dimension>::create(options const& vm)
+typename box<dimension>::pointer
+box<dimension>::create(options const& vm)
 {
 #ifdef USE_HOST_SINGLE_PRECISION
     if (module<host::particle<dimension, double> >::exists()) {

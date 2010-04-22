@@ -25,7 +25,8 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename position<dimension>::pointer position<dimension>::create(options const& vm)
+typename position<dimension>::pointer
+position<dimension>::create(options const& vm)
 {
 #ifdef USE_HOST_SINGLE_PRECISION
     return pointer(new host::position::lattice<dimension, float>(vm));

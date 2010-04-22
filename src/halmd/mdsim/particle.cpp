@@ -69,9 +69,9 @@ particle<dimension>::particle(options const& vm)
 }
 
 template <int dimension>
-typename particle<dimension>::pointer particle<dimension>::create(options const& vm)
+typename particle<dimension>::pointer
+particle<dimension>::create(options const& vm)
 {
-    LOG_DEBUG("creating PARTICLE");
     if (vm["backend"].as<string>() == "host") {
 #ifdef USE_HOST_SINGLE_PRECISION
         return pointer(new host::particle<dimension, float>(vm));

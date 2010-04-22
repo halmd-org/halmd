@@ -32,7 +32,8 @@ namespace halmd { namespace mdsim { namespace host { namespace position
 {
 
 template <int dimension, typename float_type>
-class lattice : public mdsim::position<dimension>
+class lattice :
+  public mdsim::position<dimension>
 {
 public:
     typedef mdsim::position<dimension> _Base;
@@ -41,12 +42,10 @@ public:
     typedef host::box<dimension> box_type;
     typedef host::random random_type;
 
-public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;
 
-public:
     lattice(options const& vm);
     virtual ~lattice() {}
     void set();

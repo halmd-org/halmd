@@ -29,7 +29,8 @@ namespace halmd { namespace mdsim { namespace host { namespace velocity
 {
 
 template <int dimension, typename float_type>
-class boltzmann : public mdsim::velocity<dimension>
+class boltzmann
+  : public mdsim::velocity<dimension>
 {
 public:
     typedef mdsim::velocity<dimension> _Base;

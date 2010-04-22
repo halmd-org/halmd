@@ -34,14 +34,14 @@ namespace halmd { namespace mdsim { namespace host
 
 template <int dimension, typename float_type>
 neighbor<dimension, float_type>::neighbor(options const& vm)
-    : _Base(vm)
-    // dependency injection
-    , particle(module<particle_type>::fetch(vm))
-    , force(module<force_type>::fetch(vm))
-    , box(module<box_type>::fetch(vm))
-    // allocate parameters
-    , rr_cut_skin_(particle->ntype, particle->ntype)
-    , r0_(particle->nbox)
+  : _Base(vm)
+  // dependency injection
+  , particle(module<particle_type>::fetch(vm))
+  , force(module<force_type>::fetch(vm))
+  , box(module<box_type>::fetch(vm))
+  // allocate parameters
+  , rr_cut_skin_(particle->ntype, particle->ntype)
+  , r0_(particle->nbox)
 {
     // parse options
     r_skin_ = vm["skin"].as<float>();

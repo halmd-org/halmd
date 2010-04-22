@@ -29,15 +29,16 @@ namespace halmd { namespace mdsim
 
 template <int dimension>
 force<dimension>::force(options const& vm)
-    // dependency injection
-    : particle(module<particle_type>::fetch(vm))
-    // allocate result variables
-    , virial_(particle->ntype)
+  // dependency injection
+  : particle(module<particle_type>::fetch(vm))
+  // allocate result variables
+  , virial_(particle->ntype)
 {
 }
 
 template <int dimension>
-typename force<dimension>::pointer force<dimension>::create(options const& vm)
+typename force<dimension>::pointer
+force<dimension>::create(options const& vm)
 {
 #ifdef USE_HOST_SINGLE_PRECISION
     return pointer(new host::forces::lj<dimension, float>(vm));

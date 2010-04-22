@@ -30,7 +30,8 @@ namespace halmd { namespace mdsim { namespace host
 {
 
 template <unsigned int dimension, typename float_type>
-class particle : public mdsim::particle<dimension>
+class particle
+  : public mdsim::particle<dimension>
 {
 public:
     typedef mdsim::particle<dimension> _Base;

@@ -25,7 +25,8 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename velocity<dimension>::pointer velocity<dimension>::create(options const& vm)
+typename velocity<dimension>::pointer
+velocity<dimension>::create(options const& vm)
 {
 #ifdef USE_HOST_SINGLE_PRECISION
     return pointer(new host::velocity::boltzmann<dimension, float>(vm));

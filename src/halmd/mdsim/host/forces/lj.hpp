@@ -31,7 +31,8 @@ namespace halmd { namespace mdsim { namespace host { namespace forces
 {
 
 template <int dimension, typename float_type>
-class lj : public mdsim::force<dimension>
+class lj
+  : public mdsim::force<dimension>
 {
 public:
     typedef mdsim::force<dimension> _Base;
@@ -40,13 +41,11 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef host::box<dimension> box_type;
 
-public:
     lj(options const& vm);
     virtual ~lj() {}
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }
 
-public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 

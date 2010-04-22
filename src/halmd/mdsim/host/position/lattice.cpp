@@ -36,11 +36,11 @@ using namespace std;
 
 template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(options const& vm)
-    : _Base(vm)
-    // dependency injection
-    , particle(module<particle_type>::fetch(vm))
-    , box(module<box_type>::fetch(vm))
-    , random(module<random_type>::fetch(vm))
+  : _Base(vm)
+  // dependency injection
+  , particle(module<particle_type>::fetch(vm))
+  , box(module<box_type>::fetch(vm))
+  , random(module<random_type>::fetch(vm))
 {}
 
 /**

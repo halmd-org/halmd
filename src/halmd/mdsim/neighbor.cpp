@@ -25,7 +25,8 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename neighbor<dimension>::pointer neighbor<dimension>::create(options const& vm)
+typename neighbor<dimension>::pointer
+neighbor<dimension>::create(options const& vm)
 {
 #ifdef USE_HOST_SINGLE_PRECISION
     return pointer(new host::neighbor<dimension, float>(vm));

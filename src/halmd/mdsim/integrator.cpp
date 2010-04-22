@@ -25,7 +25,8 @@ namespace halmd { namespace mdsim
 {
 
 template <int dimension>
-typename integrator<dimension>::pointer integrator<dimension>::create(options const& vm)
+typename integrator<dimension>::pointer
+integrator<dimension>::create(options const& vm)
 {
 #ifdef USE_HOST_SINGLE_PRECISION
     return pointer(new host::integrator::verlet<dimension, float>(vm));

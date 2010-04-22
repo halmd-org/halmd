@@ -31,10 +31,10 @@ namespace halmd { namespace mdsim { namespace host { namespace integrator
 
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(options const& vm)
-    : _Base(vm)
-    // dependency injection
-    , particle(module<particle_type>::fetch(vm))
-    , box(module<box_type>::fetch(vm))
+  : _Base(vm)
+  // dependency injection
+  , particle(module<particle_type>::fetch(vm))
+  , box(module<box_type>::fetch(vm))
 {
     // parse options
     timestep_ = vm["timestep"].as<double>();

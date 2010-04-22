@@ -34,11 +34,11 @@ namespace halmd { namespace mdsim { namespace host { namespace sort
 
 template <int dimension, typename float_type>
 hilbert<dimension, float_type>::hilbert(options const& vm)
-    : _Base(vm)
-    // dependency injection
-    , particle(module<particle_type>::fetch(vm))
-    , box(module<box_type>::fetch(vm))
-    , neighbor(module<neighbor_type>::fetch(vm))
+  : _Base(vm)
+  // dependency injection
+  , particle(module<particle_type>::fetch(vm))
+  , box(module<box_type>::fetch(vm))
+  , neighbor(module<neighbor_type>::fetch(vm))
 {
     // set Hilbert space-filling curve recursion depth
     unsigned int ncell = *max_element(neighbor->ncell_.begin(), neighbor->ncell_.end());

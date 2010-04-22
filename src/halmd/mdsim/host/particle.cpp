@@ -33,15 +33,15 @@ namespace halmd { namespace mdsim { namespace host
 
 template <unsigned int dimension, typename float_type>
 particle<dimension, float_type>::particle(options const& vm)
-    : _Base(vm)
-    // allocate particle storage
-    , r(nbox)
-    , image(nbox)
-    , v(nbox)
-    , f(nbox)
-    , tag(nbox)
-    , type(nbox)
-    , neighbor(nbox)
+  : _Base(vm)
+  // allocate particle storage
+  , r(nbox)
+  , image(nbox)
+  , v(nbox)
+  , f(nbox)
+  , tag(nbox)
+  , type(nbox)
+  , neighbor(nbox)
 {
 }
 

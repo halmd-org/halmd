@@ -31,7 +31,8 @@ namespace halmd { namespace mdsim { namespace host { namespace integrator
 {
 
 template <int dimension, typename float_type>
-class verlet : public mdsim::integrator<dimension>
+class verlet
+  : public mdsim::integrator<dimension>
 {
 public:
     typedef mdsim::integrator<dimension> _Base;

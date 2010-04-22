@@ -43,7 +43,8 @@ class hilbert;
 }
 
 template <int dimension, typename float_type>
-class neighbor : public mdsim::neighbor<dimension>
+class neighbor
+  : public mdsim::neighbor<dimension>
 {
 public:
     typedef mdsim::neighbor<dimension> _Base;

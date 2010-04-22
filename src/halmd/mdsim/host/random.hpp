@@ -30,7 +30,8 @@
 namespace halmd { namespace mdsim { namespace host
 {
 
-class random : public mdsim::random
+class random
+  : public mdsim::random
 {
 public:
     typedef mdsim::random _Base;

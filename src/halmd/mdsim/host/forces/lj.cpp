@@ -36,18 +36,18 @@ namespace halmd { namespace mdsim { namespace host { namespace forces
  */
 template <int dimension, typename float_type>
 lj<dimension, float_type>::lj(options const& vm)
-    : _Base(vm)
-    // dependency injection
-    , particle(module<particle_type>::fetch(vm))
-    , box(module<box_type>::fetch(vm))
-    // allocate potential parameters
-    , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
-    , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
-    , r_cut_sigma_(particle->ntype, particle->ntype)
-    , r_cut_(particle->ntype, particle->ntype)
-    , rr_cut_(particle->ntype, particle->ntype)
-    , sigma2_(particle->ntype, particle->ntype)
-    , en_cut_(particle->ntype, particle->ntype)
+  : _Base(vm)
+  // dependency injection
+  , particle(module<particle_type>::fetch(vm))
+  , box(module<box_type>::fetch(vm))
+  // allocate potential parameters
+  , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
+  , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
+  , r_cut_sigma_(particle->ntype, particle->ntype)
+  , r_cut_(particle->ntype, particle->ntype)
+  , rr_cut_(particle->ntype, particle->ntype)
+  , sigma2_(particle->ntype, particle->ntype)
+  , en_cut_(particle->ntype, particle->ntype)
 {
     // parse options
     if (!vm["binary"].empty() && vm["particles"].defaulted()) {
