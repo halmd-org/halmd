@@ -44,14 +44,6 @@ public:
         return fetch_(vm, &T::create);
     }
 
-    /**
-     * Check if singleton instance of a given type exists
-     */
-    static bool exists()
-    {
-        return exists_(&T::create);
-    }
-
 private:
     template <typename T_> friend class module;
 
@@ -60,15 +52,6 @@ private:
     {
         if (!module<T_>::singleton_) {
             module<T_>::singleton_ = create(vm);
-        }
-        return boost::dynamic_pointer_cast<T>(module<T_>::singleton_);
-    }
-
-    template <typename T_>
-    static bool exists_(boost::shared_ptr<T_> (*create)(options const&))
-    {
-        if (!module<T_>::singleton_) {
-            return false;
         }
         return boost::dynamic_pointer_cast<T>(module<T_>::singleton_);
     }
