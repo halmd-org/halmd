@@ -17,6 +17,7 @@ if(WITH_CUDA)
 endif(WITH_CUDA)
 target_link_libraries(halmd_mdsim
   halmd_mdsim_host
+  halmd_mdsim_samples_host
   )
 
 add_subdirectory(backend)
@@ -24,3 +25,4 @@ if(WITH_CUDA)
   add_subdirectory(gpu)
 endif(WITH_CUDA)
 add_subdirectory(host)
+add_subdirectory(samples)

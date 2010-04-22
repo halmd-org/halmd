@@ -28,9 +28,10 @@ namespace halmd { namespace mdsim { namespace host { namespace sample
 
 template <int dimension, typename float_type>
 trajectory<dimension, float_type>::trajectory(options const& vm)
-    // dependency injection
-    : particle(module<particle_type>::fetch(vm))
-    , box(module<box_type>::fetch(vm))
+  : _Base(vm)
+  // dependency injection
+  , particle(module<particle_type>::fetch(vm))
+  , box(module<box_type>::fetch(vm))
 {}
 
 /**

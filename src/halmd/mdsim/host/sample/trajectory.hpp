@@ -20,11 +20,9 @@
 #ifndef HALMD_MDSIM_HOST_SAMPLE_HPP
 #define HALMD_MDSIM_HOST_SAMPLE_HPP
 
-#include <boost/shared_ptr.hpp>
-#include <vector>
-
-#include <halmd/mdsim/host/box.hpp>
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
@@ -33,11 +31,13 @@ namespace halmd { namespace mdsim { namespace host { namespace sample
 
 template <int dimension, typename float_type>
 class trajectory
+  : public mdsim::samples::host::trajectory<dimension, float_type>
 {
 public:
+    typedef mdsim::samples::host::trajectory<dimension, float_type> _Base;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef host::box<dimension> box_type;
+    typedef box<dimension> box_type;
 
     trajectory(options const& vm);
     virtual ~trajectory() {}
@@ -46,25 +46,13 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
-    /** sample vector types for single particle */
-    typedef numeric::host::blas::vector<float_type, dimension> position_vector;
-    typedef numeric::host::blas::vector<float_type, dimension> velocity_vector;
-    /** sample vector types for all particles of a species */
-    typedef std::vector<position_vector> position_sample_vector;
-    typedef std::vector<velocity_vector> velocity_sample_vector;
-    /** sample pointer types for all particle of a species */
-    typedef boost::shared_ptr<position_sample_vector> position_sample_pointer;
-    typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_pointer;
-    /** sample pointer types for all species */
-    typedef std::vector<position_sample_pointer> position_sample_pointer_vector;
-    typedef std::vector<velocity_sample_pointer> velocity_sample_pointer_vector;
+    typedef typename _Base::position_sample_vector position_sample_vector;
+    typedef typename _Base::velocity_sample_vector velocity_sample_vector;
 
     /** periodically extended particle positions */
-    position_sample_pointer_vector r;
+    using _Base::r;
     /** particle velocities */
-    velocity_sample_pointer_vector v;
-
-protected:
+    using _Base::v;
 };
 
 }}}} // namespace halmd::mdsim::host::sample
