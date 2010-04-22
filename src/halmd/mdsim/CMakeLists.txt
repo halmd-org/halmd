@@ -13,6 +13,7 @@ add_library(halmd_mdsim
 if(WITH_CUDA)
   target_link_libraries(halmd_mdsim
     halmd_mdsim_gpu
+    halmd_mdsim_samples_gpu
     )
 endif(WITH_CUDA)
 target_link_libraries(halmd_mdsim

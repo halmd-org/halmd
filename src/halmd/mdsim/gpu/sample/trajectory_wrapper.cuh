@@ -17,37 +17,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LJ_WRAPPER_CUH
-#define HALMD_MDSIM_GPU_FORCES_LJ_WRAPPER_CUH
+#ifndef HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH
+#define HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH
 
 #include <boost/mpl/if.hpp>
 
 #include <cuda_wrapper.hpp>
-#include <halmd/mdsim/gpu/forces/lj_kernel.cuh>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace forces
+namespace halmd { namespace mdsim { namespace gpu { namespace sample
 {
 
 template <size_t N>
-struct lj_wrapper
+struct trajectory_wrapper
 {
     typedef typename boost::mpl::if_c<N == 3, float4, float2>::type coalesced_vector_type;
     typedef typename boost::mpl::if_c<N == 3, float3, float2>::type vector_type;
 
     /** positions, types */
     static cuda::texture<float4> r;
+    /** minimum image vectors */
+    static cuda::texture<coalesced_vector_type> image;
+    /** velocities, tags */
+    static cuda::texture<float4> v;
     /** cubic box edgle length */
     static cuda::symbol<vector_type> box_length;
-    /** number of placeholders per neighbor list */
-    static cuda::symbol<unsigned int> neighbor_size;
-    /** neighbor list stride */
-    static cuda::symbol<unsigned int> neighbor_stride;
-    /** Lennard-Jones potential parameters */
-    static cuda::texture<float4> ljparam;
-    /** compute Lennard-Jones forces */
-    static cuda::function<void (coalesced_vector_type*, unsigned int*, float*, coalesced_vector_type*)> compute;
+    /** sample trajectory for all particle of a single species */
+    static cuda::function<void (unsigned int const*, coalesced_vector_type*, coalesced_vector_type*)> sample;
 };
 
-}}}} // namespace halmd::mdsim::gpu::forces
+}}}} // namespace halmd::mdsim::gpu::sample
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_WRAPPER_CUH */
+#endif /* ! HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH */

@@ -38,7 +38,7 @@ namespace halmd { namespace mdsim { namespace gpu { namespace forces { namespace
 template <size_t N>
 struct dim_
 {
-    /** positions, tags */
+    /** positions, types */
     static texture<float4, 1, cudaReadModeElementType> r;
     /** cubic box edgle length */
     static __constant__ typename if_c<N == 3, float3, float2>::type box_length;

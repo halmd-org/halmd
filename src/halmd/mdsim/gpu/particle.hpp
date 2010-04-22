@@ -52,7 +52,7 @@ public:
     /** minimum image vectors */
     cuda::vector<gpu_vector_type> g_image;
     /** velocities, tags */
-    cuda::vector<gpu_vector_type> g_v;
+    cuda::vector<float4> g_v;
     /** forces */
     cuda::vector<gpu_vector_type> g_f;
     /** neighbor lists */
@@ -67,7 +67,7 @@ public:
     /** minimum image vectors */
     cuda::host::vector<gpu_vector_type> h_image;
     /** velocities, tags */
-    cuda::host::vector<gpu_vector_type> h_v;
+    cuda::host::vector<float4> h_v;
 
     /** number of particles in simulation box */
     using _Base::nbox;

@@ -6,9 +6,11 @@ target_link_libraries(halmd_mdsim_gpu
   ${CUDA_LIBRARIES}
   halmd_mdsim_gpu_forces
   halmd_mdsim_gpu_integrator
+  halmd_mdsim_gpu_sample
   halmd_mdsim_gpu_sort
   )
 
 add_subdirectory(forces)
 add_subdirectory(integrator)
+add_subdirectory(sample)
 add_subdirectory(sort)

@@ -21,6 +21,8 @@
 #define HALMD_MDSIM_GPU_PARTICLE_KERNEL_CUH
 
 #include <boost/utility/enable_if.hpp>
+#include <cuda_runtime.h>
+#include <string.h>
 
 namespace halmd { namespace mdsim { namespace gpu { namespace particle_kernel
 {
@@ -35,14 +37,38 @@ template <typename vector_type>
 __device__ inline typename boost::enable_if_c<vector_type::static_size == 3, float4>::type
 tagged(vector_type v, unsigned int tag)
 {
-    return make_float4(v[0], v[1], v[2], __int_as_float(tag));
+    float4 w;
+    w.x = v[0];
+    w.y = v[1];
+    w.z = v[2];
+#ifdef __CUDACC__
+    w.w = __int_as_float(tag);
+#else
+    // We use memcpy instead of pointer casting to avoid dereferencing a
+    // type-punned pointer, which would break strict-aliasing rules.
+    // Same endianness is assumed on GPU and host.
+    memcpy(&w.w, &tag, sizeof(tag));
+#endif
+    return w;
 }
 
 template <typename vector_type>
 __device__ inline typename boost::enable_if_c<vector_type::static_size == 2, float4>::type
 tagged(vector_type v, unsigned int tag)
 {
-    return make_float4(v[0], v[1], 0, __int_as_float(tag));
+    float4 w;
+    w.x = v[0];
+    w.y = v[1];
+    w.z = 0;
+#ifdef __CUDACC__
+    w.w = __int_as_float(tag);
+#else
+    // We use memcpy instead of pointer casting to avoid dereferencing a
+    // type-punned pointer, which would break strict-aliasing rules.
+    // Same endianness is assumed on GPU and host.
+    memcpy(&w.w, &tag, sizeof(tag));
+#endif
+    return w;
 }
 
 /**
@@ -56,7 +82,14 @@ untagged(float4 v, unsigned int& tag)
     w[0] = v.x;
     w[1] = v.y;
     w[2] = v.z;
+#ifdef __CUDACC__
     tag = __float_as_int(v.w);
+#else
+    // We use memcpy instead of pointer casting to avoid dereferencing a
+    // type-punned pointer, which would break strict-aliasing rules.
+    // Same endianness is assumed on GPU and host.
+    memcpy(&tag, &v.w, sizeof(tag));
+#endif
     return w;
 }
 
@@ -67,7 +100,14 @@ untagged(float4 v, unsigned int& tag)
     vector_type w;
     w[0] = v.x;
     w[1] = v.y;
+#ifdef __CUDACC__
     tag = __float_as_int(v.w);
+#else
+    // We use memcpy instead of pointer casting to avoid dereferencing a
+    // type-punned pointer, which would break strict-aliasing rules.
+    // Same endianness is assumed on GPU and host.
+    memcpy(&tag, &v.w, sizeof(tag));
+#endif
     return w;
 }
 
