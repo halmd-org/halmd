@@ -26,23 +26,9 @@ namespace halmd
 namespace mdsim
 {
 
-template <int dimension>
-typename position<dimension>::pointer
-position<dimension>::create(options const& vm)
-{
-#ifdef USE_HOST_SINGLE_PRECISION
-    return pointer(new host::position::lattice<dimension, float>(vm));
-#else
-    return pointer(new host::position::lattice<dimension, double>(vm));
-#endif
-}
-
 template class position<3>;
 template class position<2>;
 
 } // namespace mdsim
-
-template class module<mdsim::position<3> >;
-template class module<mdsim::position<2> >;
 
 } // namespace halmd

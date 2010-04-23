@@ -94,15 +94,17 @@ class module
 {
 public:
     typedef boost::shared_ptr<T> pointer;
-    typedef typename T::factory factory;
 
     /**
      * Returns singleton instance of derived type
      */
     static pointer fetch(options const& vm)
     {
-        return boost::dynamic_pointer_cast<T>(factory::fetch(vm));
+        return boost::dynamic_pointer_cast<T>(factory_::fetch(vm));
     }
+
+private:
+    typedef typename T::factory_ factory_;
 
     /**
      * Register module singleton
@@ -111,11 +113,10 @@ public:
     {
         register_()
         {
-            factory::modules()->push_back(&T::create);
+            factory_::modules()->push_back(&T::create);
         }
     };
 
-private:
     static register_ register__;
 };
 

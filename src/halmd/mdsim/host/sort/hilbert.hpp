@@ -26,7 +26,9 @@
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace sort
+namespace halmd
+{
+namespace mdsim { namespace host { namespace sort
 {
 
 template <int dimension, typename float_type>
@@ -47,6 +49,9 @@ public:
     virtual ~hilbert() {}
     virtual void order();
 
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<neighbor_type> neighbor;
@@ -59,6 +64,8 @@ protected:
     std::vector<cell_list*> cell_;
 };
 
-}}}} // namespace halmd::mdsim::host::sort
+}}} // namespace mdsim::host::sort
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_SORT_HILBERT_HPP */

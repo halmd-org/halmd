@@ -23,7 +23,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace host { namespace sample
+namespace halmd
+{
+namespace mdsim { namespace host { namespace sample
 {
 
 template <int dimension, typename float_type>
@@ -54,6 +56,13 @@ void trajectory<dimension, float_type>::acquire()
     }
 }
 
+template <int dimension, typename float_type>
+typename trajectory<dimension, float_type>::pointer
+trajectory<dimension, float_type>::create(options const& vm)
+{
+    return pointer(new trajectory<dimension, float_type>(vm));
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class trajectory<3, double>;
@@ -63,4 +72,15 @@ template class trajectory<3, float>;
 template class trajectory<2, float>;
 #endif
 
-}}}} // namespace halmd::mdsim::host::sample
+}}} // namespace mdsim::host::sample
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::sample::trajectory<3, double> >;
+template class module<mdsim::host::sample::trajectory<2, double> >;
+#else
+template class module<mdsim::host::sample::trajectory<3, float> >;
+template class module<mdsim::host::sample::trajectory<2, float> >;
+#endif
+
+} // namespace halmd
+

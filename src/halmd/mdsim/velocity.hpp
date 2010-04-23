@@ -36,9 +36,8 @@ public:
     virtual ~velocity() {}
     virtual void set() = 0;
 
-    typedef factory<velocity> factory;
+    typedef factory<velocity> factory_;
     typedef typename module<velocity>::pointer pointer;
-    static pointer create(options const& vm);
 };
 
 } // namespace mdsim

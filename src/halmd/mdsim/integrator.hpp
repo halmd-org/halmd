@@ -38,9 +38,8 @@ public:
     virtual void finalize() = 0;
     virtual double timestep() = 0;
 
-    typedef factory<integrator> factory;
+    typedef factory<integrator> factory_;
     typedef typename module<integrator>::pointer pointer;
-    static pointer create(options const& vm);
 };
 
 } // namespace mdsim

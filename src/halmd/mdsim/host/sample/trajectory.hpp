@@ -26,7 +26,9 @@
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace sample
+namespace halmd
+{
+namespace mdsim { namespace host { namespace sample
 {
 
 template <int dimension, typename float_type>
@@ -43,6 +45,9 @@ public:
     virtual ~trajectory() {}
     void acquire();
 
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
@@ -55,6 +60,8 @@ public:
     using _Base::v;
 };
 
-}}}} // namespace halmd::mdsim::host::sample
+}}} // namespace mdsim::host::sample
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_SAMPLE_HPP */

@@ -30,35 +30,13 @@ namespace halmd
 namespace mdsim { namespace samples { namespace host
 {
 
-template <int dimension>
-typename trajectory<dimension, double>::pointer
-trajectory<dimension, double>::create(options const& vm)
-{
-    return pointer(new mdsim::host::sample::trajectory<dimension, double>(vm));
-}
-
-template <int dimension>
-typename trajectory<dimension, float>::pointer
-trajectory<dimension, float>::create(options const& vm)
-{
-#ifdef WITH_CUDA
-    if (module<mdsim::gpu::particle<dimension, float> >::fetch(vm)) {
-        return pointer(new mdsim::gpu::sample::trajectory<trajectory<dimension, float> >(vm));
-    }
-#endif
-    return pointer(new mdsim::host::sample::trajectory<dimension, float>(vm));
-}
-
+#ifndef USE_HOST_SINGLE_PRECISION
 template class trajectory<3, double>;
 template class trajectory<2, double>;
+#endif
 template class trajectory<3, float>;
 template class trajectory<2, float>;
 
 }}} // namespace mdsim::samples::host
-
-template class module<mdsim::samples::host::trajectory<3, double> >;
-template class module<mdsim::samples::host::trajectory<2, double> >;
-template class module<mdsim::samples::host::trajectory<3, float> >;
-template class module<mdsim::samples::host::trajectory<2, float> >;
 
 } // namespace halmd

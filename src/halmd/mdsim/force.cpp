@@ -38,24 +38,10 @@ force<dimension>::force(options const& vm)
 {
 }
 
-template <int dimension>
-typename force<dimension>::pointer
-force<dimension>::create(options const& vm)
-{
-#ifdef USE_HOST_SINGLE_PRECISION
-    return pointer(new host::forces::lj<dimension, float>(vm));
-#else
-    return pointer(new host::forces::lj<dimension, double>(vm));
-#endif
-}
-
 // explicit instantiation
 template class force<3>;
 template class force<2>;
 
 } // namespace mdsim
-
-template class module<mdsim::force<3> >;
-template class module<mdsim::force<2> >;
 
 } // namespace halmd

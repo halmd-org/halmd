@@ -29,7 +29,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace host
+namespace halmd
+{
+namespace mdsim { namespace host
 {
 
 template <int dimension, typename float_type>
@@ -197,6 +199,13 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
     }
 }
 
+template <int dimension, typename float_type>
+typename neighbor<dimension, float_type>::pointer
+neighbor<dimension, float_type>::create(options const& vm)
+{
+    return pointer(new host::neighbor<dimension, float_type>(vm));
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class neighbor<3, double>;
@@ -206,4 +215,14 @@ template class neighbor<3, float>;
 template class neighbor<2, float>;
 #endif
 
-}}} // namespace halmd::mdsim::host
+}} // namespace mdsim::host
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::neighbor<3, double> >;
+template class module<mdsim::host::neighbor<2, double> >;
+#else
+template class module<mdsim::host::neighbor<3, float> >;
+template class module<mdsim::host::neighbor<2, float> >;
+#endif
+
+} // namespace halmd

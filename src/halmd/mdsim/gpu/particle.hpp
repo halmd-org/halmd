@@ -29,7 +29,9 @@
 #include <halmd/options.hpp>
 #include <halmd/utility/gpu/device.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu
+namespace halmd
+{
+namespace mdsim { namespace gpu
 {
 
 template <unsigned int dimension, typename float_type>
@@ -44,6 +46,9 @@ public:
 
     particle(options const& vm);
     virtual ~particle() {}
+
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
 
     boost::shared_ptr<device_type> device;
 
@@ -85,6 +90,8 @@ public:
     unsigned int neighbor_stride;
 };
 
-}}} // namespace halmd::mdsim::gpu
+}} // namespace mdsim::gpu
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_PARTICLE_HPP */

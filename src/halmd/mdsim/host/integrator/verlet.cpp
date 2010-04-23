@@ -26,7 +26,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace host { namespace integrator
+namespace halmd
+{
+namespace mdsim { namespace host { namespace integrator
 {
 
 template <int dimension, typename float_type>
@@ -69,6 +71,16 @@ void verlet<dimension, float_type>::finalize()
     }
 }
 
+template <int dimension, typename float_type>
+typename verlet<dimension, float_type>::pointer
+verlet<dimension, float_type>::create(options const& vm)
+{
+    if (module<particle_type>::fetch(vm)) {
+        return pointer(new verlet<dimension, float_type>(vm));
+    }
+    return pointer();
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class verlet<3, double>;
@@ -78,4 +90,14 @@ template class verlet<3, float>;
 template class verlet<2, float>;
 #endif
 
-}}}} // namespace halmd::mdsim::host::integrator
+}}} // namespace mdsim::host::integrator
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::integrator::verlet<3, double> >;
+template class module<mdsim::host::integrator::verlet<2, double> >;
+#else
+template class module<mdsim::host::integrator::verlet<3, float> >;
+template class module<mdsim::host::integrator::verlet<2, float> >;
+#endif
+
+} // namespace halmd

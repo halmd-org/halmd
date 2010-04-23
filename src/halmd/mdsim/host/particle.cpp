@@ -64,6 +64,16 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     // no permutation of neighbor lists
 }
 
+template <unsigned int dimension, typename float_type>
+typename particle<dimension, float_type>::pointer
+particle<dimension, float_type>::create(options const& vm)
+{
+    if (vm["backend"].as<string>() == "host") {
+        return pointer(new particle<dimension, float_type>(vm));
+    }
+    return pointer();
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class particle<3, double>;
@@ -74,5 +84,13 @@ template class particle<2, float>;
 #endif
 
 }} // namespace mdsim::host
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::particle<3, double> >;
+template class module<mdsim::host::particle<2, double> >;
+#else
+template class module<mdsim::host::particle<3, float> >;
+template class module<mdsim::host::particle<2, float> >;
+#endif
 
 } // namespace halmd

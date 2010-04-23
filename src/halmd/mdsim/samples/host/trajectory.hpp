@@ -32,54 +32,20 @@ namespace mdsim { namespace samples { namespace host
 {
 
 template <int dimension, typename float_type>
-class trajectory;
-
-template <int dimension>
-class trajectory<dimension, double>
+class trajectory
 {
 public:
     trajectory(options const& vm) {}
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 
-    typedef factory<trajectory> factory;
+    typedef factory<trajectory> factory_;
     typedef typename module<trajectory>::pointer pointer;
     static pointer create(options const& vm);
 
     /** sample vector types for single particle */
-    typedef numeric::host::blas::vector<double, dimension> position_vector;
-    typedef numeric::host::blas::vector<double, dimension> velocity_vector;
-    /** sample vector types for all particles of a species */
-    typedef std::vector<position_vector> position_sample_vector;
-    typedef std::vector<velocity_vector> velocity_sample_vector;
-    /** sample pointer types for all particle of a species */
-    typedef boost::shared_ptr<position_sample_vector> position_sample_pointer;
-    typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_pointer;
-    /** sample pointer types for all species */
-    typedef std::vector<position_sample_pointer> position_sample_pointer_vector;
-    typedef std::vector<velocity_sample_pointer> velocity_sample_pointer_vector;
-
-    /** periodically extended particle positions */
-    position_sample_pointer_vector r;
-    /** particle velocities */
-    velocity_sample_pointer_vector v;
-};
-
-template <int dimension>
-class trajectory<dimension, float>
-{
-public:
-    trajectory(options const& vm) {}
-    virtual ~trajectory() {}
-    virtual void acquire() = 0;
-
-    typedef factory<trajectory> factory;
-    typedef typename module<trajectory>::pointer pointer;
-    static pointer create(options const& vm);
-
-    /** sample vector types for single particle */
-    typedef numeric::host::blas::vector<float, dimension> position_vector;
-    typedef numeric::host::blas::vector<float, dimension> velocity_vector;
+    typedef numeric::host::blas::vector<float_type, dimension> position_vector;
+    typedef numeric::host::blas::vector<float_type, dimension> velocity_vector;
     /** sample vector types for all particles of a species */
     typedef std::vector<position_vector> position_sample_vector;
     typedef std::vector<velocity_vector> velocity_sample_vector;

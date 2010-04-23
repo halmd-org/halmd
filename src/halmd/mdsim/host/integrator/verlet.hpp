@@ -27,7 +27,9 @@
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace integrator
+namespace halmd
+{
+namespace mdsim { namespace host { namespace integrator
 {
 
 template <int dimension, typename float_type>
@@ -46,6 +48,9 @@ public:
     void finalize();
     double timestep() { return timestep_; }
 
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
@@ -56,6 +61,8 @@ protected:
     double timestep_half_;
 };
 
-}}}} // namespace halmd::mdsim::host::integrator
+}}} // namespace mdsim::host::integrator
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_VERLET_HPP */

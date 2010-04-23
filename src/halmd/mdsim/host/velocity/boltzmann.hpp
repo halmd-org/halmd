@@ -25,7 +25,9 @@
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace velocity
+namespace halmd
+{
+namespace mdsim { namespace host { namespace velocity
 {
 
 template <int dimension, typename float_type>
@@ -45,11 +47,16 @@ public:
     virtual ~boltzmann() {};
     void set();
 
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
+
 protected:
     /** temperature */
     float_type temp_;
 };
 
-}}}} // namespace halmd::mdsim::host::velocity
+}}} // namespace mdsim::host::velocity
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_VELOCITY_BOLTZMANN_HPP */

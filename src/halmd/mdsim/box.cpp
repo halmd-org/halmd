@@ -87,15 +87,15 @@ typename box<dimension>::pointer
 box<dimension>::create(options const& vm)
 {
 #ifdef USE_HOST_SINGLE_PRECISION
-    if (module<host::particle<dimension, float> >::fetch(vm)) {
-        return pointer(new host::box<dimension>(vm));
+    if (!module<host::particle<dimension, float> >::fetch(vm)) {
+        return pointer(new box<dimension>(vm));
     }
 #else
-    if (module<host::particle<dimension, double> >::fetch(vm)) {
-        return pointer(new host::box<dimension>(vm));
+    if (!module<host::particle<dimension, double> >::fetch(vm)) {
+        return pointer(new box<dimension>(vm));
     }
 #endif
-    return pointer(new box<dimension>(vm));
+    return pointer();
 }
 
 // explicit instantiation

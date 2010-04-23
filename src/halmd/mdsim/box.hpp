@@ -47,7 +47,7 @@ public:
     void density(double value_type);
     double density() { return density_; }
 
-    typedef factory<box> factory;
+    typedef factory<box> factory_;
     typedef typename module<box>::pointer pointer;
     static pointer create(options const& vm);
 

@@ -20,7 +20,9 @@
 #include <halmd/mdsim/host/velocity/boltzmann.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace velocity
+namespace halmd
+{
+namespace mdsim { namespace host { namespace velocity
 {
 
 using namespace boost;
@@ -63,6 +65,16 @@ void boltzmann<dimension, float_type>::set()
     LOG("assigned Maxwell-Boltzmann velocity distribution: T = " << temp_);
 }
 
+template <int dimension, typename float_type>
+typename boltzmann<dimension, float_type>::pointer
+boltzmann<dimension, float_type>::create(options const& vm)
+{
+    if (module<particle_type>::fetch(vm)) {
+        return pointer(new boltzmann<dimension, float_type>(vm));
+    }
+    return pointer();
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class boltzmann<3, double>;
@@ -72,4 +84,14 @@ template class boltzmann<3, float>;
 template class boltzmann<2, float>;
 #endif
 
-}}}} // namespace halmd::mdsim::host::velocity
+}}} // namespace mdsim::host::velocity
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::velocity::boltzmann<3, double> >;
+template class module<mdsim::host::velocity::boltzmann<2, double> >;
+#else
+template class module<mdsim::host::velocity::boltzmann<3, float> >;
+template class module<mdsim::host::velocity::boltzmann<2, float> >;
+#endif
+
+} // namespace halmd

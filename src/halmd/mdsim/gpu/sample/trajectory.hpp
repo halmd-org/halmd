@@ -26,7 +26,9 @@
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace sample
+namespace halmd
+{
+namespace mdsim { namespace gpu { namespace sample
 {
 
 template <typename trajectory_type>
@@ -43,11 +45,14 @@ public:
     typedef mdsim::samples::gpu::trajectory<dimension, float_type> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef box<dimension> box_type;
+    typedef mdsim::box<dimension> box_type;
 
     trajectory(options const& vm);
     virtual ~trajectory() {}
     void acquire();
+
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -72,11 +77,14 @@ public:
     typedef mdsim::samples::host::trajectory<dimension, float_type> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef box<dimension> box_type;
+    typedef mdsim::box<dimension> box_type;
 
     trajectory(options const& vm);
     virtual ~trajectory() {}
     void acquire();
+
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -90,6 +98,8 @@ public:
     using _Base::v;
 };
 
-}}}} // namespace halmd::mdsim::gpu::sample
+}}} // namespace mdsim::gpu::sample
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_SAMPLE_HPP */

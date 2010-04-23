@@ -27,7 +27,9 @@
 #include <halmd/mdsim/random.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host
+namespace halmd
+{
+namespace mdsim { namespace host
 {
 
 class random
@@ -37,10 +39,12 @@ public:
     typedef mdsim::random _Base;
     typedef boost::mt19937 random_generator;
 
-public:
     random(options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);
+
+    typedef _Base::pointer pointer;
+    static pointer create(options const& vm);
 
     template <typename input_iterator>
     void shuffle(input_iterator first, input_iterator last);
@@ -101,6 +105,8 @@ void random::normal(value_type& x, value_type& y, value_type sigma)
     y *= s;
 }
 
-}}} // namespace halmd::mdsim::host
+}} // namespace mdsim::host
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_RANDOM_HPP */

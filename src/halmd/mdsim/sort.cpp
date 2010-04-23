@@ -26,23 +26,9 @@ namespace halmd
 namespace mdsim
 {
 
-template <int dimension>
-typename sort<dimension>::pointer
-sort<dimension>::create(options const& vm)
-{
-#ifdef USE_HOST_SINGLE_PRECISION
-    return pointer(new host::sort::hilbert<dimension, float>(vm));
-#else
-    return pointer(new host::sort::hilbert<dimension, double>(vm));
-#endif
-}
-
 template class sort<3>;
 template class sort<2>;
 
 } // namespace mdsim
-
-template class module<mdsim::sort<3> >;
-template class module<mdsim::sort<2> >;
 
 } // namespace halmd

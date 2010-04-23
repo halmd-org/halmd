@@ -28,7 +28,9 @@
 using namespace boost;
 using namespace boost::numeric::ublas;
 
-namespace halmd { namespace mdsim { namespace host { namespace forces
+namespace halmd
+{
+namespace mdsim { namespace host { namespace forces
 {
 
 /**
@@ -164,6 +166,16 @@ void lj<dimension, float_type>::compute()
     }
 }
 
+template <int dimension, typename float_type>
+typename lj<dimension, float_type>::pointer
+lj<dimension, float_type>::create(options const& vm)
+{
+    if (module<particle_type>::fetch(vm)) {
+        return pointer(new lj<dimension, float_type>(vm));
+    }
+    return pointer();
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class lj<3, double>;
@@ -173,4 +185,14 @@ template class lj<3, float>;
 template class lj<2, float>;
 #endif
 
-}}}} // namespace halmd::mdsim::host::forces
+}}} // namespace mdsim::host::forces
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::forces::lj<3, double> >;
+template class module<mdsim::host::forces::lj<2, double> >;
+#else
+template class module<mdsim::host::forces::lj<3, float> >;
+template class module<mdsim::host::forces::lj<2, float> >;
+#endif
+
+} // namespace halmd

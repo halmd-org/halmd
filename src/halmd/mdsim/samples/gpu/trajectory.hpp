@@ -41,7 +41,7 @@ public:
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 
-    typedef factory<trajectory> factory;
+    typedef factory<trajectory> factory_;
     typedef typename module<trajectory>::pointer pointer;
     static pointer create(options const& vm);
 

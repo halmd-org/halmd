@@ -33,7 +33,9 @@
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host
+namespace halmd
+{
+namespace mdsim { namespace host
 {
 
 namespace sort
@@ -64,6 +66,9 @@ public:
     void update();
     bool check();
 
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
@@ -92,6 +97,8 @@ protected:
     std::vector<vector_type> r0_;
 };
 
-}}} // namespace halmd::mdsim::host
+}} // namespace mdsim::host
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_NEIGHBOR_HPP */

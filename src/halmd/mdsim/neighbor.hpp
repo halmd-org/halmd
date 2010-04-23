@@ -37,9 +37,8 @@ public:
     virtual void update() = 0;
     virtual bool check() = 0;
 
-    typedef factory<neighbor> factory;
+    typedef factory<neighbor> factory_;
     typedef typename module<neighbor>::pointer pointer;
-    static pointer create(options const& vm);
 };
 
 } // namespace mdsim

@@ -26,7 +26,9 @@
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host
+namespace halmd
+{
+namespace mdsim { namespace host
 {
 
 template <unsigned int dimension, typename float_type>
@@ -41,6 +43,9 @@ public:
     particle(options const& vm);
     virtual ~particle() {}
     virtual void rearrange(std::vector<unsigned int> const& index);
+
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
 
     /** positions, reduced to extended domain box */
     std::vector<vector_type> r;
@@ -65,6 +70,8 @@ public:
     using _Base::ntypes;
 };
 
-}}} // namespace halmd::mdsim::host
+}} // namespace mdsim::host
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_PARTICLE_HPP */

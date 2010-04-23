@@ -28,7 +28,9 @@
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host
+namespace halmd
+{
+namespace mdsim { namespace host
 {
 
 template <int dimension>
@@ -40,12 +42,13 @@ public:
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
-public:
     box(options const& vm);
     virtual ~box() {}
     vector_type reduce_periodic(vector_type& r) const;
 
-public:
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
+
     boost::shared_ptr<particle_type> particle;
 
 protected:
@@ -85,6 +88,8 @@ box<dimension>::reduce_periodic(vector_type& r) const
     return image;
 }
 
-}}} // namespace halmd::mdsim::host
+}} // namespace mdsim::host
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_BOX_HPP */

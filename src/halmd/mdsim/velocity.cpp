@@ -26,23 +26,9 @@ namespace halmd
 namespace mdsim
 {
 
-template <int dimension>
-typename velocity<dimension>::pointer
-velocity<dimension>::create(options const& vm)
-{
-#ifdef USE_HOST_SINGLE_PRECISION
-    return pointer(new host::velocity::boltzmann<dimension, float>(vm));
-#else
-    return pointer(new host::velocity::boltzmann<dimension, double>(vm));
-#endif
-}
-
 template class velocity<3>;
 template class velocity<2>;
 
 } // namespace mdsim
-
-template class module<mdsim::velocity<3> >;
-template class module<mdsim::velocity<2> >;
 
 } // namespace halmd

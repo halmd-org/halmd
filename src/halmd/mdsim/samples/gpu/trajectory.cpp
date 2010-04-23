@@ -26,19 +26,9 @@ namespace halmd
 namespace mdsim { namespace samples { namespace gpu
 {
 
-template <int dimension, typename float_type>
-typename trajectory<dimension, float_type>::pointer
-trajectory<dimension, float_type>::create(options const& vm)
-{
-    return pointer(new mdsim::gpu::sample::trajectory<trajectory<dimension, float_type> >(vm));
-}
-
-template class trajectory<3, double>;
-template class trajectory<2, double>;
+template class trajectory<3, float>;
+template class trajectory<2, float>;
 
 }}} // namespace mdsim::samples::gpu
-
-template class module<mdsim::samples::gpu::trajectory<3, double> >;
-template class module<mdsim::samples::gpu::trajectory<2, double> >;
 
 } // namespace halmd

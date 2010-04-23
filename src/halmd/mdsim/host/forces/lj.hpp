@@ -27,7 +27,9 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace forces
+namespace halmd
+{
+namespace mdsim { namespace host { namespace forces
 {
 
 template <int dimension, typename float_type>
@@ -45,6 +47,9 @@ public:
     virtual ~lj() {}
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }
+
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -71,6 +76,8 @@ protected:
     using _Base::virial_;
 };
 
-}}}} // namespace halmd::mdsim::host::forces
+}}} // namespace mdsim::host::forces
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCES_LJ_HPP */

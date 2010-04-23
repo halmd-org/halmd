@@ -23,7 +23,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace host
+namespace halmd
+{
+namespace mdsim { namespace host
 {
 
 random::random(options const& vm)
@@ -43,4 +45,16 @@ void random::seed(unsigned int value)
     rng_.seed(value);
 }
 
-}}} // namespace halmd::mdsim::host
+random::pointer random::create(options const& vm)
+{
+    if (vm["backend"].as<string>() == "host") {
+        return pointer(new random(vm));
+    }
+    return pointer();
+}
+
+}} // namespace mdsim::host
+
+template class module<mdsim::host::random>;
+
+} // namespace halmd

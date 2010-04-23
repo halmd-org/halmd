@@ -50,13 +50,6 @@ unsigned int random::readint(std::string const& file)
     return seed;
 }
 
-random::pointer random::create(options const& vm)
-{
-    return pointer(new host::random(vm));
-}
-
 } // namespace mdsim
-
-template class module<mdsim::random>;
 
 } // namespace halmd

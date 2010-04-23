@@ -39,9 +39,8 @@ public:
     particle(options const& vm);
     virtual ~particle() {}
 
-    typedef factory<particle> factory;
+    typedef factory<particle> factory_;
     typedef typename module<particle>::pointer pointer;
-    static pointer create(options const& vm);
 
     /** number of particles in simulation box */
     unsigned int nbox;

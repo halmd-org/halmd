@@ -27,7 +27,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace gpu
+namespace halmd
+{
+namespace mdsim { namespace gpu
 {
 
 template <unsigned int dimension, typename float_type>
@@ -48,9 +50,23 @@ particle<dimension, float_type>::particle(options const& vm)
 {
 }
 
+template <unsigned int dimension, typename float_type>
+typename particle<dimension, float_type>::pointer
+particle<dimension, float_type>::create(options const& vm)
+{
+    if (vm["backend"].as<string>() == "gpu_neighbour") {
+        return pointer(new gpu::particle<dimension, float_type>(vm));
+    }
+    return pointer();
+}
 
 // explicit instantiation
 template class particle<3, float>;
 template class particle<2, float>;
 
-}}} // namespace halmd::mdsim::gpu
+}} // namespace mdsim::gpu
+
+template class module<mdsim::gpu::particle<3, float> >;
+template class module<mdsim::gpu::particle<2, float> >;
+
+} // namespace halmd

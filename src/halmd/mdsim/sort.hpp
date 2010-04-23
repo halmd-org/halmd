@@ -36,9 +36,8 @@ public:
     virtual ~sort() {}
     virtual void order() = 0;
 
-    typedef factory<sort> factory;
+    typedef factory<sort> factory_;
     typedef typename module<sort>::pointer pointer;
-    static pointer create(options const& vm);
 };
 
 } // namespace mdsim

@@ -27,7 +27,9 @@
 #include <halmd/mdsim/host/position/lattice.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace position
+namespace halmd
+{
+namespace mdsim { namespace host { namespace position
 {
 
 using namespace boost;
@@ -127,6 +129,16 @@ void lattice<dimension, float_type>::set()
     LOG("placed particles on fcc lattice: a = " << a);
 }
 
+template <int dimension, typename float_type>
+typename lattice<dimension, float_type>::pointer
+lattice<dimension, float_type>::create(options const& vm)
+{
+    if (module<particle_type>::fetch(vm)) {
+        return pointer(new lattice<dimension, float_type>(vm));
+    }
+    return pointer();
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class lattice<3, double>;
@@ -136,5 +148,14 @@ template class lattice<3, float>;
 template class lattice<2, float>;
 #endif
 
-}}}} // namespace halmd::mdsim::host::position
+}}} // namespace mdsim::host::position
 
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::position::lattice<3, double> >;
+template class module<mdsim::host::position::lattice<2, double> >;
+#else
+template class module<mdsim::host::position::lattice<3, float> >;
+template class module<mdsim::host::position::lattice<2, float> >;
+#endif
+
+} // namespace halmd

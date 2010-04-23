@@ -70,32 +70,10 @@ particle<dimension>::particle(options const& vm)
     LOG("number of particles per type: " << join(ntypes_, " "));
 }
 
-template <int dimension>
-typename particle<dimension>::pointer
-particle<dimension>::create(options const& vm)
-{
-    if (vm["backend"].as<string>() == "host") {
-#ifdef USE_HOST_SINGLE_PRECISION
-        return pointer(new host::particle<dimension, float>(vm));
-#else
-        return pointer(new host::particle<dimension, double>(vm));
-#endif
-    }
-#ifdef WITH_CUDA
-    else if (vm["backend"].as<string>() == "gpu_neighbour") {
-        return pointer(new gpu::particle<dimension, float>(vm));
-    }
-#endif
-    throw std::runtime_error("not implemented");
-}
-
 // explicit instantiation
 template class particle<3>;
 template class particle<2>;
 
 } // namespace mdsim
-
-template class module<mdsim::particle<3> >;
-template class module<mdsim::particle<2> >;
 
 } // namespace halmd

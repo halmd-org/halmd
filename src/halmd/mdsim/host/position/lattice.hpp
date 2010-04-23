@@ -28,7 +28,9 @@
 #include <halmd/mdsim/position.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace host { namespace position
+namespace halmd
+{
+namespace mdsim { namespace host { namespace position
 {
 
 template <int dimension, typename float_type>
@@ -46,11 +48,16 @@ public:
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;
 
+    typedef typename _Base::pointer pointer;
+    static pointer create(options const& vm);
+
     lattice(options const& vm);
     virtual ~lattice() {}
     void set();
 };
 
-}}}} // namespace halmd::mdsim::host::position
+}}} // namespace mdsim::host::position
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_POSITION_LATTICE_HPP */

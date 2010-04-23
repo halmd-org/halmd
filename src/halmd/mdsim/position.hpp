@@ -36,9 +36,8 @@ public:
     virtual ~position() {}
     virtual void set() = 0;
 
-    typedef factory<position> factory;
+    typedef factory<position> factory_;
     typedef typename module<position>::pointer pointer;
-    static pointer create(options const& vm);
 };
 
 } // namespace mdsim

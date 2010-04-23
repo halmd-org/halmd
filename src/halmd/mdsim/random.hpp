@@ -35,9 +35,8 @@ public:
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;
 
-    typedef factory<random> factory;
+    typedef factory<random> factory_;
     typedef module<random>::pointer pointer;
-    static pointer create(options const& vm);
 
 protected:
     unsigned int readint(std::string const& fn);

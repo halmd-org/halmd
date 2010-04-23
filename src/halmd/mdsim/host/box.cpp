@@ -22,12 +22,15 @@
 #include <numeric>
 
 #include <halmd/mdsim/host/box.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace host
+namespace halmd
+{
+namespace mdsim { namespace host
 {
 
 /**
@@ -42,8 +45,29 @@ box<dimension>::box(options const& vm)
   , length_half_(.5 * length_)
 {}
 
+template <int dimension>
+typename box<dimension>::pointer
+box<dimension>::create(options const& vm)
+{
+#ifdef USE_HOST_SINGLE_PRECISION
+    if (module<host::particle<dimension, float> >::fetch(vm)) {
+        return pointer(new box<dimension>(vm));
+    }
+#else
+    if (module<host::particle<dimension, double> >::fetch(vm)) {
+        return pointer(new box<dimension>(vm));
+    }
+#endif
+    return pointer();
+}
+
 // explicit instantiation
 template class box<3>;
 template class box<2>;
 
-}}} // namespace halmd::mdsim::host
+}} // namespace mdsim::host
+
+template class module<mdsim::host::box<3> >;
+template class module<mdsim::host::box<2> >;
+
+} // namespace halmd

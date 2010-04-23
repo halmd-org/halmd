@@ -29,7 +29,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace host { namespace sort
+namespace halmd
+{
+namespace mdsim { namespace host { namespace sort
 {
 
 template <int dimension, typename float_type>
@@ -244,6 +246,16 @@ void hilbert<dimension, float_type>::swap(unsigned int& v, unsigned int& a, unsi
     std::swap(a, b);
 }
 
+template <int dimension, typename float_type>
+typename hilbert<dimension, float_type>::pointer
+hilbert<dimension, float_type>::create(options const& vm)
+{
+    if (module<particle_type>::fetch(vm)) {
+        return pointer(new hilbert<dimension, float_type>(vm));
+    }
+    return pointer();
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class hilbert<3, double>;
@@ -253,4 +265,14 @@ template class hilbert<3, float>;
 template class hilbert<2, float>;
 #endif
 
-}}}} // namespace halmd::mdsim::host::sort
+}}} // namespace mdsim::host::sort
+
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::sort::hilbert<3, double> >;
+template class module<mdsim::host::sort::hilbert<2, double> >;
+#else
+template class module<mdsim::host::sort::hilbert<3, float> >;
+template class module<mdsim::host::sort::hilbert<2, float> >;
+#endif
+
+} // namespace halmd

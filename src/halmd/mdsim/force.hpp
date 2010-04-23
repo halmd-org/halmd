@@ -52,9 +52,8 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
-    typedef factory<force> factory;
+    typedef factory<force> factory_;
     typedef typename module<force>::pointer pointer;
-    static pointer create(options const& vm);
 
 protected:
     /** average potential energy per particle */

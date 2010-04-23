@@ -28,7 +28,9 @@ using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace gpu { namespace sample
+namespace halmd
+{
+namespace mdsim { namespace gpu { namespace sample
 {
 
 template <int dimension, typename float_type>
@@ -91,10 +93,37 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
     }
 }
 
+template <int dimension, typename float_type>
+typename trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::pointer
+trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::create(options const& vm)
+{
+    if (module<particle_type>::fetch(vm)) {
+        return pointer(new trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >(vm));
+    }
+    return pointer();
+}
+
+template <int dimension, typename float_type>
+typename trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::pointer
+trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::create(options const& vm)
+{
+    if (module<particle_type>::fetch(vm)) {
+        return pointer(new trajectory<mdsim::samples::host::trajectory<dimension, float_type> >(vm));
+    }
+    return pointer();
+}
+
 // explicit instantiation
 template class trajectory<mdsim::samples::gpu::trajectory<3, float> >;
 template class trajectory<mdsim::samples::gpu::trajectory<2, float> >;
 template class trajectory<mdsim::samples::host::trajectory<3, float> >;
 template class trajectory<mdsim::samples::host::trajectory<2, float> >;
 
-}}}} // namespace halmd::mdsim::gpu::sample
+}}} // namespace mdsim::gpu::sample
+
+template class module<mdsim::gpu::sample::trajectory<mdsim::samples::gpu::trajectory<3, float> > >;
+template class module<mdsim::gpu::sample::trajectory<mdsim::samples::gpu::trajectory<2, float> > >;
+template class module<mdsim::gpu::sample::trajectory<mdsim::samples::host::trajectory<3, float> > >;
+template class module<mdsim::gpu::sample::trajectory<mdsim::samples::host::trajectory<2, float> > >;
+
+} // namespace halmd

@@ -26,24 +26,10 @@ namespace halmd
 namespace mdsim
 {
 
-template <int dimension>
-typename integrator<dimension>::pointer
-integrator<dimension>::create(options const& vm)
-{
-#ifdef USE_HOST_SINGLE_PRECISION
-    return pointer(new host::integrator::verlet<dimension, float>(vm));
-#else
-    return pointer(new host::integrator::verlet<dimension, double>(vm));
-#endif
-}
-
 // explicit instantiation
 template class integrator<3>;
 template class integrator<2>;
 
 } // namespace mdsim
-
-template class module<mdsim::integrator<3> >;
-template class module<mdsim::integrator<2> >;
 
 } // namespace halmd
