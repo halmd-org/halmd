@@ -70,9 +70,33 @@ configure_file(
   ESCAPE_QUOTES @ONLY
   )
 
+set(HALMD_MODULES
+  halmd_mdsim
+  halmd_mdsim_host
+  halmd_mdsim_host_forces
+  halmd_mdsim_host_integrator
+  halmd_mdsim_host_position
+  halmd_mdsim_host_sample
+  halmd_mdsim_host_sort
+  halmd_mdsim_host_velocity
+  halmd_mdsim_samples_host
+  )
+if(WITH_CUDA)
+  set(HALMD_MODULES
+    ${HALMD_MODULES}
+    halmd_mdsim_gpu
+    halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_integrator
+    halmd_mdsim_gpu_sample
+    halmd_mdsim_gpu_sort
+    halmd_mdsim_samples_gpu
+    halmd_utility_gpu
+    )
+endif(WITH_CUDA)
+
 set(HALMD_COMMON_LIBRARIES
   -Wl,-whole-archive
-  halmd_mdsim
+  ${HALMD_MODULES}
   util
   sample_common
   -Wl,-no-whole-archive
@@ -82,15 +106,6 @@ set(HALMD_COMMON_LIBRARIES
   ${HDF5_CPP_LIBRARY}
   ${HDF5_LIBRARY}
   )
-
-if(WITH_CUDA)
-  set(HALMD_COMMON_LIBRARIES
-    ${HALMD_COMMON_LIBRARIES}
-    -Wl,-whole-archive
-    halmd_utility_gpu
-    -Wl,-no-whole-archive
-    )
-endif(WITH_CUDA)
 
 if(HALMD_USE_STATIC_LIBS)
   set(HALMD_COMMON_LIBRARIES

@@ -10,16 +10,6 @@ add_library(halmd_mdsim
   sort.cpp
   velocity.cpp
   )
-if(WITH_CUDA)
-  target_link_libraries(halmd_mdsim
-    halmd_mdsim_gpu
-    halmd_mdsim_samples_gpu
-    )
-endif(WITH_CUDA)
-target_link_libraries(halmd_mdsim
-  halmd_mdsim_host
-  halmd_mdsim_samples_host
-  )
 
 add_subdirectory(backend)
 if(WITH_CUDA)
