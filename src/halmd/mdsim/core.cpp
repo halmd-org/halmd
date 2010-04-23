@@ -25,7 +25,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 /**
@@ -84,4 +86,6 @@ void core<dimension>::run()
 template class core<3>;
 template class core<2>;
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd

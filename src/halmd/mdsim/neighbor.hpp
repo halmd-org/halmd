@@ -23,7 +23,9 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -35,10 +37,13 @@ public:
     virtual void update() = 0;
     virtual bool check() = 0;
 
+    typedef factory<neighbor> factory;
     typedef typename module<neighbor>::pointer pointer;
     static pointer create(options const& vm);
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_NEIGHBOR_HPP */

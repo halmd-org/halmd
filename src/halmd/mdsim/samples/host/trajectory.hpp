@@ -26,7 +26,9 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace samples { namespace host
+namespace halmd
+{
+namespace mdsim { namespace samples { namespace host
 {
 
 template <int dimension, typename float_type>
@@ -40,6 +42,7 @@ public:
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 
+    typedef factory<trajectory> factory;
     typedef typename module<trajectory>::pointer pointer;
     static pointer create(options const& vm);
 
@@ -70,6 +73,7 @@ public:
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 
+    typedef factory<trajectory> factory;
     typedef typename module<trajectory>::pointer pointer;
     static pointer create(options const& vm);
 
@@ -92,6 +96,8 @@ public:
     velocity_sample_pointer_vector v;
 };
 
-}}}} // namespace halmd::mdsim::samples::host
+}}} // namespace mdsim::samples::host
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_SAMPLES_HOST_TRAJECTORY_HPP */

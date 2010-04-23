@@ -25,7 +25,9 @@
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim { namespace samples { namespace host
+namespace halmd
+{
+namespace mdsim { namespace samples { namespace host
 {
 
 template <int dimension>
@@ -52,4 +54,11 @@ template class trajectory<2, double>;
 template class trajectory<3, float>;
 template class trajectory<2, float>;
 
-}}}} // namespace halmd::mdsim::samples::host
+}}} // namespace mdsim::samples::host
+
+template class module<mdsim::samples::host::trajectory<3, double> >;
+template class module<mdsim::samples::host::trajectory<2, double> >;
+template class module<mdsim::samples::host::trajectory<3, float> >;
+template class module<mdsim::samples::host::trajectory<2, float> >;
+
+} // namespace halmd

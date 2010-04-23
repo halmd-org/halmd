@@ -29,7 +29,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 /**
@@ -100,4 +102,9 @@ box<dimension>::create(options const& vm)
 template class box<3>;
 template class box<2>;
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+template class module<mdsim::box<3> >;
+template class module<mdsim::box<2> >;
+
+} // namespace halmd

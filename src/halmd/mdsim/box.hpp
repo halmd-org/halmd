@@ -27,7 +27,9 @@
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -45,6 +47,7 @@ public:
     void density(double value_type);
     double density() { return density_; }
 
+    typedef factory<box> factory;
     typedef typename module<box>::pointer pointer;
     static pointer create(options const& vm);
 
@@ -59,6 +62,8 @@ protected:
     double density_;
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_BOX_HPP */

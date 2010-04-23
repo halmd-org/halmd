@@ -21,7 +21,9 @@
 #include <halmd/mdsim/samples/gpu/trajectory.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim { namespace samples { namespace gpu
+namespace halmd
+{
+namespace mdsim { namespace samples { namespace gpu
 {
 
 template <int dimension, typename float_type>
@@ -34,4 +36,9 @@ trajectory<dimension, float_type>::create(options const& vm)
 template class trajectory<3, double>;
 template class trajectory<2, double>;
 
-}}}} // namespace halmd::mdsim::samples::gpu
+}}} // namespace mdsim::samples::gpu
+
+template class module<mdsim::samples::gpu::trajectory<3, double> >;
+template class module<mdsim::samples::gpu::trajectory<2, double> >;
+
+} // namespace halmd

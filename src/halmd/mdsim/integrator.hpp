@@ -23,7 +23,9 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -36,10 +38,13 @@ public:
     virtual void finalize() = 0;
     virtual double timestep() = 0;
 
+    typedef factory<integrator> factory;
     typedef typename module<integrator>::pointer pointer;
     static pointer create(options const& vm);
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_INTEGRATOR_HPP */

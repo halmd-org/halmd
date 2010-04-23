@@ -21,7 +21,9 @@
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -38,4 +40,9 @@ velocity<dimension>::create(options const& vm)
 template class velocity<3>;
 template class velocity<2>;
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+template class module<mdsim::velocity<3> >;
+template class module<mdsim::velocity<2> >;
+
+} // namespace halmd

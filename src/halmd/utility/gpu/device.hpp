@@ -40,6 +40,7 @@ public:
 
     unsigned int threads() { return threads_; }
 
+    typedef factory<device> factory;
     typedef module<device>::pointer pointer;
     static pointer create(options const& vm);
 

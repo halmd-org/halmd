@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_SORT_HPP
 #define HALMD_MDSIM_SORT_HPP
 
-#include <halmd/mdsim/sort.hpp>
 #include <halmd/options.hpp>
+#include <halmd/utility/module.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -34,10 +36,13 @@ public:
     virtual ~sort() {}
     virtual void order() = 0;
 
+    typedef factory<sort> factory;
     typedef typename module<sort>::pointer pointer;
     static pointer create(options const& vm);
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_SORT_HPP */

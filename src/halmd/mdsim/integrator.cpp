@@ -21,7 +21,9 @@
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -39,4 +41,9 @@ integrator<dimension>::create(options const& vm)
 template class integrator<3>;
 template class integrator<2>;
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+template class module<mdsim::integrator<3> >;
+template class module<mdsim::integrator<2> >;
+
+} // namespace halmd

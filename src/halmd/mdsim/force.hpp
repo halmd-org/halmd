@@ -28,7 +28,9 @@
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -50,6 +52,7 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
+    typedef factory<force> factory;
     typedef typename module<force>::pointer pointer;
     static pointer create(options const& vm);
 
@@ -60,6 +63,8 @@ protected:
     std::vector<virial_type> virial_;
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_FORCE_HPP */

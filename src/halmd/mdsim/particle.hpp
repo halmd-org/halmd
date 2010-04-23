@@ -25,16 +25,21 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
 class particle
 {
 public:
+    typedef factory<particle> _Factory;
+
     particle(options const& vm);
     virtual ~particle() {}
 
+    typedef factory<particle> factory;
     typedef typename module<particle>::pointer pointer;
     static pointer create(options const& vm);
 
@@ -46,6 +51,8 @@ public:
     std::vector<unsigned int> ntypes;
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_PARTICLE_HPP */

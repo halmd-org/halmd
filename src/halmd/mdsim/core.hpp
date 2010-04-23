@@ -30,7 +30,9 @@
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -56,6 +58,8 @@ private:
     double time_;
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_CORE_HPP */

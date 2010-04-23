@@ -21,7 +21,9 @@
 #include <halmd/mdsim/position.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -38,4 +40,9 @@ position<dimension>::create(options const& vm)
 template class position<3>;
 template class position<2>;
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+template class module<mdsim::position<3> >;
+template class module<mdsim::position<2> >;
+
+} // namespace halmd

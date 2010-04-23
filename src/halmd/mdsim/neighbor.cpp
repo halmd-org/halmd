@@ -21,7 +21,9 @@
 #include <halmd/mdsim/neighbor.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -38,4 +40,9 @@ neighbor<dimension>::create(options const& vm)
 template class neighbor<3>;
 template class neighbor<2>;
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+template class module<mdsim::neighbor<3> >;
+template class module<mdsim::neighbor<2> >;
+
+} // namespace halmd

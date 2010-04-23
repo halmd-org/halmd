@@ -28,7 +28,9 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim { namespace samples { namespace gpu
+namespace halmd
+{
+namespace mdsim { namespace samples { namespace gpu
 {
 
 template <int dimension, typename float_type>
@@ -39,6 +41,7 @@ public:
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 
+    typedef factory<trajectory> factory;
     typedef typename module<trajectory>::pointer pointer;
     static pointer create(options const& vm);
 
@@ -61,6 +64,8 @@ public:
     velocity_sample_pointer_vector v;
 };
 
-}}}} // namespace halmd::mdsim::samples::gpu
+}}} // namespace mdsim::samples::gpu
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_SAMPLES_GPU_TRAJECTORY_HPP */

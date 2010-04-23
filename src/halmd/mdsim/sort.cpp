@@ -21,7 +21,9 @@
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/util/logger.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -38,4 +40,9 @@ sort<dimension>::create(options const& vm)
 template class sort<3>;
 template class sort<2>;
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+template class module<mdsim::sort<3> >;
+template class module<mdsim::sort<2> >;
+
+} // namespace halmd

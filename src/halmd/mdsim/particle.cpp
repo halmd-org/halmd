@@ -35,7 +35,9 @@ using namespace boost;
 using namespace boost::algorithm;
 using namespace std;
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -91,4 +93,9 @@ particle<dimension>::create(options const& vm)
 template class particle<3>;
 template class particle<2>;
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+template class module<mdsim::particle<3> >;
+template class module<mdsim::particle<2> >;
+
+} // namespace halmd

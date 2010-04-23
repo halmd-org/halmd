@@ -25,7 +25,9 @@
 
 using namespace std;
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 /**
@@ -53,4 +55,8 @@ random::pointer random::create(options const& vm)
     return pointer(new host::random(vm));
 }
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+template class module<mdsim::random>;
+
+} // namespace halmd

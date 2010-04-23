@@ -33,7 +33,9 @@ using namespace boost;
 using namespace boost::algorithm;
 using namespace std;
 
-namespace halmd { namespace utility { namespace gpu
+namespace halmd
+{
+namespace utility { namespace gpu
 {
 
 /**
@@ -173,4 +175,8 @@ device::pointer device::create(options const& vm)
     return pointer(new device(vm));
 }
 
-}}} // namespace halmd::utility::gpu
+}} // namespace utility::gpu
+
+template class module<utility::gpu::device>;
+
+} // namespace halmd

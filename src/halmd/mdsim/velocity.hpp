@@ -23,7 +23,9 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -34,10 +36,13 @@ public:
     virtual ~velocity() {}
     virtual void set() = 0;
 
+    typedef factory<velocity> factory;
     typedef typename module<velocity>::pointer pointer;
     static pointer create(options const& vm);
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_VELOCITY_HPP */

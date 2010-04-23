@@ -23,7 +23,9 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 class random
@@ -33,6 +35,7 @@ public:
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;
 
+    typedef factory<random> factory;
     typedef module<random>::pointer pointer;
     static pointer create(options const& vm);
 
@@ -40,6 +43,8 @@ protected:
     unsigned int readint(std::string const& fn);
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_RANDOM_HPP */

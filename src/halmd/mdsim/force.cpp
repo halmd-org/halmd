@@ -24,7 +24,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -51,5 +53,9 @@ force<dimension>::create(options const& vm)
 template class force<3>;
 template class force<2>;
 
+} // namespace mdsim
 
-}} // namespace halmd::mdsim
+template class module<mdsim::force<3> >;
+template class module<mdsim::force<2> >;
+
+} // namespace halmd

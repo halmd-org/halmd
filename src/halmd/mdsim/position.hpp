@@ -23,7 +23,9 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
-namespace halmd { namespace mdsim
+namespace halmd
+{
+namespace mdsim
 {
 
 template <int dimension>
@@ -34,10 +36,13 @@ public:
     virtual ~position() {}
     virtual void set() = 0;
 
+    typedef factory<position> factory;
     typedef typename module<position>::pointer pointer;
     static pointer create(options const& vm);
 };
 
-}} // namespace halmd::mdsim
+} // namespace mdsim
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_POSITION_HPP */

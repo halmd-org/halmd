@@ -28,7 +28,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd { namespace mdsim { namespace host
+namespace halmd
+{
+namespace mdsim { namespace host
 {
 
 template <unsigned int dimension, typename float_type>
@@ -71,4 +73,6 @@ template class particle<3, float>;
 template class particle<2, float>;
 #endif
 
-}}} // namespace halmd::mdsim::host
+}} // namespace mdsim::host
+
+} // namespace halmd
