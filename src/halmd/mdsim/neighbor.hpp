@@ -32,13 +32,12 @@ template <int dimension>
 class neighbor
 {
 public:
+    typedef typename boost::shared_ptr<neighbor> module_ptr;
+
     neighbor(options const& vm) {}
     virtual ~neighbor() {}
     virtual void update() = 0;
     virtual bool check() = 0;
-
-    typedef factory<neighbor> factory_;
-    typedef typename module<neighbor>::pointer pointer;
 };
 
 } // namespace mdsim

@@ -37,15 +37,14 @@ class particle
 {
 public:
     typedef mdsim::particle<dimension> _Base;
+    typedef typename _Base::module_ptr module_ptr;
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;
     typedef std::vector<unsigned int> neighbor_list;
 
+    static module_ptr create(options const& vm);
     particle(options const& vm);
     virtual ~particle() {}
     virtual void rearrange(std::vector<unsigned int> const& index);
-
-    typedef typename _Base::pointer pointer;
-    static pointer create(options const& vm);
 
     /** positions, reduced to extended domain box */
     std::vector<vector_type> r;

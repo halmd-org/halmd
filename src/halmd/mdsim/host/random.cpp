@@ -45,12 +45,12 @@ void random::seed(unsigned int value)
     rng_.seed(value);
 }
 
-random::pointer random::create(options const& vm)
+random::module_ptr random::create(options const& vm)
 {
     if (vm["backend"].as<string>() == "host") {
-        return pointer(new random(vm));
+        return module_ptr(new random(vm));
     }
-    return pointer();
+    return module_ptr();
 }
 
 }} // namespace mdsim::host

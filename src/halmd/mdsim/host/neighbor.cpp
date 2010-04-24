@@ -200,10 +200,10 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
 }
 
 template <int dimension, typename float_type>
-typename neighbor<dimension, float_type>::pointer
+typename neighbor<dimension, float_type>::module_ptr
 neighbor<dimension, float_type>::create(options const& vm)
 {
-    return pointer(new host::neighbor<dimension, float_type>(vm));
+    return module_ptr(new host::neighbor<dimension, float_type>(vm));
 }
 
 // explicit instantiation

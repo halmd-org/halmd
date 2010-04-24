@@ -37,13 +37,11 @@ template <int dimension, typename float_type>
 class trajectory
 {
 public:
+    typedef typename boost::shared_ptr<trajectory> module_ptr;
+
     trajectory(options const& vm) {}
     virtual ~trajectory() {}
     virtual void acquire() = 0;
-
-    typedef factory<trajectory> factory_;
-    typedef typename module<trajectory>::pointer pointer;
-    static pointer create(options const& vm);
 
     /** sample vector types for single particle */
     typedef boost::mpl::if_c<dimension == 2, float4, float2> position_vector;

@@ -37,23 +37,20 @@ template <int dimension>
 class force
 {
 public:
+    typedef typename boost::shared_ptr<force> module_ptr;
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<double, boost::numeric::ublas::lower> matrix_type;
     typedef numeric::host::blas::vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
     typedef mdsim::particle<dimension> particle_type;
 
+    boost::shared_ptr<particle_type> particle;
+
     force(options const& vm);
     virtual ~force() {}
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;
-
     double en_pot() { return en_pot_; }
     std::vector<virial_type> const& virial() { return virial_; }
-
-    boost::shared_ptr<particle_type> particle;
-
-    typedef factory<force> factory_;
-    typedef typename module<force>::pointer pointer;
 
 protected:
     /** average potential energy per particle */

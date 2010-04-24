@@ -247,13 +247,13 @@ void hilbert<dimension, float_type>::swap(unsigned int& v, unsigned int& a, unsi
 }
 
 template <int dimension, typename float_type>
-typename hilbert<dimension, float_type>::pointer
+typename hilbert<dimension, float_type>::module_ptr
 hilbert<dimension, float_type>::create(options const& vm)
 {
     if (module<particle_type>::fetch(vm)) {
-        return pointer(new hilbert<dimension, float_type>(vm));
+        return module_ptr(new hilbert<dimension, float_type>(vm));
     }
-    return pointer();
+    return module_ptr();
 }
 
 // explicit instantiation

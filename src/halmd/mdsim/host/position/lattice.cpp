@@ -130,13 +130,13 @@ void lattice<dimension, float_type>::set()
 }
 
 template <int dimension, typename float_type>
-typename lattice<dimension, float_type>::pointer
+typename lattice<dimension, float_type>::module_ptr
 lattice<dimension, float_type>::create(options const& vm)
 {
     if (module<particle_type>::fetch(vm)) {
-        return pointer(new lattice<dimension, float_type>(vm));
+        return module_ptr(new lattice<dimension, float_type>(vm));
     }
-    return pointer();
+    return module_ptr();
 }
 
 // explicit instantiation

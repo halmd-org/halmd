@@ -36,22 +36,19 @@ template <int dimension>
 class box
 {
 public:
+    typedef typename boost::shared_ptr<box> module_ptr;
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
+    boost::shared_ptr<particle_type> particle;
+
+    static module_ptr create(options const& vm);
     box(options const& vm);
     virtual ~box() {}
-
     void length(vector_type const& value_type);
     vector_type const& length() { return length_; }
     void density(double value_type);
     double density() { return density_; }
-
-    typedef factory<box> factory_;
-    typedef typename module<box>::pointer pointer;
-    static pointer create(options const& vm);
-
-    boost::shared_ptr<particle_type> particle;
 
 protected:
     /** edge lengths of cuboid */

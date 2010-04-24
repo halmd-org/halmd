@@ -37,6 +37,7 @@ class hilbert
 {
 public:
     typedef mdsim::sort<dimension> _Base;
+    typedef typename _Base::module_ptr module_ptr;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
@@ -45,16 +46,14 @@ public:
     typedef typename neighbor_type::cell_list cell_list;
     typedef typename neighbor_type::cell_index cell_index;
 
-    hilbert(options const& vm);
-    virtual ~hilbert() {}
-    virtual void order();
-
-    typedef typename _Base::pointer pointer;
-    static pointer create(options const& vm);
-
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<neighbor_type> neighbor;
+
+    static module_ptr create(options const& vm);
+    hilbert(options const& vm);
+    virtual ~hilbert() {}
+    virtual void order();
 
 protected:
     unsigned int map(vector_type r, unsigned int depth);

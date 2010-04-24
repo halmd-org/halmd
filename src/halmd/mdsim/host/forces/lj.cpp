@@ -167,13 +167,13 @@ void lj<dimension, float_type>::compute()
 }
 
 template <int dimension, typename float_type>
-typename lj<dimension, float_type>::pointer
+typename lj<dimension, float_type>::module_ptr
 lj<dimension, float_type>::create(options const& vm)
 {
     if (module<particle_type>::fetch(vm)) {
-        return pointer(new lj<dimension, float_type>(vm));
+        return module_ptr(new lj<dimension, float_type>(vm));
     }
-    return pointer();
+    return module_ptr();
 }
 
 // explicit instantiation

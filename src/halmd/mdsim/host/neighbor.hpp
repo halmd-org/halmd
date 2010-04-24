@@ -50,28 +50,26 @@ class neighbor
 {
 public:
     typedef mdsim::neighbor<dimension> _Base;
+    typedef typename _Base::module_ptr module_ptr;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::force<dimension> force_type;
     typedef host::box<dimension> box_type;
+    typedef typename force_type::matrix_type matrix_type;
 
     typedef typename particle_type::neighbor_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
     typedef numeric::host::blas::vector<size_t, dimension> cell_index;
 
-    typedef typename force_type::matrix_type matrix_type;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<box_type> box;
 
+    static module_ptr create(options const& vm);
     neighbor(options const& vm);
     virtual ~neighbor() {}
     void update();
     bool check();
-
-    typedef typename _Base::pointer pointer;
-    static pointer create(options const& vm);
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<box_type> box;
 
 protected:
     friend class sort::hilbert<dimension, float_type>;

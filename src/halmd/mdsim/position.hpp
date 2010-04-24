@@ -32,12 +32,11 @@ template <int dimension>
 class position
 {
 public:
+    typedef typename boost::shared_ptr<position> module_ptr;
+
     position(options const& vm) {}
     virtual ~position() {}
     virtual void set() = 0;
-
-    typedef factory<position> factory_;
-    typedef typename module<position>::pointer pointer;
 };
 
 } // namespace mdsim

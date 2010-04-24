@@ -51,13 +51,13 @@ particle<dimension, float_type>::particle(options const& vm)
 }
 
 template <unsigned int dimension, typename float_type>
-typename particle<dimension, float_type>::pointer
+typename particle<dimension, float_type>::module_ptr
 particle<dimension, float_type>::create(options const& vm)
 {
     if (vm["backend"].as<string>() == "gpu_neighbour") {
-        return pointer(new gpu::particle<dimension, float_type>(vm));
+        return module_ptr(new gpu::particle<dimension, float_type>(vm));
     }
-    return pointer();
+    return module_ptr();
 }
 
 // explicit instantiation

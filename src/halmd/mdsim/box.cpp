@@ -83,19 +83,10 @@ void box<dimension>::density(double value)
 }
 
 template <int dimension>
-typename box<dimension>::pointer
+typename box<dimension>::module_ptr
 box<dimension>::create(options const& vm)
 {
-#ifdef USE_HOST_SINGLE_PRECISION
-    if (!module<host::particle<dimension, float> >::fetch(vm)) {
-        return pointer(new box<dimension>(vm));
-    }
-#else
-    if (!module<host::particle<dimension, double> >::fetch(vm)) {
-        return pointer(new box<dimension>(vm));
-    }
-#endif
-    return pointer();
+    return module_ptr(new box<dimension>(vm));
 }
 
 // explicit instantiation

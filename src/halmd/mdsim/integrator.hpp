@@ -32,14 +32,13 @@ template <int dimension>
 class integrator
 {
 public:
+    typedef typename boost::shared_ptr<integrator> module_ptr;
+
     integrator(options const& vm) {}
     virtual ~integrator() {}
     virtual void integrate() = 0;
     virtual void finalize() = 0;
     virtual double timestep() = 0;
-
-    typedef factory<integrator> factory_;
-    typedef typename module<integrator>::pointer pointer;
 };
 
 } // namespace mdsim

@@ -22,8 +22,10 @@
 
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <exception>
-#include <list>
+#include <set>
 #include <typeinfo>
 
 #include <halmd/options.hpp>
@@ -36,29 +38,35 @@ template <typename T>
 class module;
 
 /**
- * Module factory
+ * FIXME
  */
 template <typename T>
 class factory
 {
 public:
     typedef boost::shared_ptr<T> pointer;
-    typedef boost::shared_ptr<T> (*function)(options const&);
 
 private:
     template <typename T_> friend class module;
 
-    typedef std::list<function> functions;
-    typedef boost::shared_ptr<functions> functions_ptr;
+    typedef std::set<module<T> > module_set;
 
     //
     // What's the "static initialization order fiasco"?
     // http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
     //
-    static functions_ptr modules()
+    static boost::shared_ptr<module_set> modules()
     {
-        static functions_ptr modules_(new functions);
+        static boost::shared_ptr<module_set> modules_(new module_set);
         return modules_;
+    }
+
+    static void register_(module<T> const& module_)
+    {
+        std::string const type = typeid(T).name();
+        if (!modules()->insert(module_).second) {
+            throw std::logic_error("module already registered [" + type + "]");
+        }
     }
 
     static pointer fetch(options const& vm);
@@ -74,20 +82,35 @@ template <typename T>
 typename factory<T>::pointer factory<T>::fetch(options const& vm)
 {
     if (!singleton_) {
-        BOOST_FOREACH (function const& create, *modules()) {
-            singleton_ = create(vm);
+        BOOST_FOREACH (module<T> const& module_, *modules()) {
+            singleton_ = module_.create_(vm);
             if (singleton_) {
                 return singleton_;
             }
         }
         std::string type = typeid(T).name();
-        throw std::logic_error("no modules registered [" + type + "]");
+        throw std::logic_error("no matching modules available [" + type + "]");
     }
     return singleton_;
 }
 
 /**
- * Module
+ * FIXME
+ */
+template <typename T, typename Enable = void>
+struct _module_priority
+{
+    enum { value = _module_priority<typename T::_Base>::value + 1 };
+};
+
+template <typename T>
+struct _module_priority<T, typename boost::enable_if<boost::is_same<T, typename T::module_ptr::value_type> >::type>
+{
+    enum { value = 0 };
+};
+
+/**
+ * FIXME
  */
 template <typename T>
 class module
@@ -95,16 +118,32 @@ class module
 public:
     typedef boost::shared_ptr<T> pointer;
 
+    module(boost::shared_ptr<T> (*create)(options const&), int priority)
+      : create_(create)
+      , priority_(priority)
+    {}
+
+    bool operator<(module<T> const& module_) const
+    {
+        if (priority_ == module_.priority_) {
+            // order of modules with same priority is undefined
+            return create_ != module_.create_;
+        }
+        // order module with higher priority *before* module with lower priority
+        return priority_ > module_.priority_;
+    }
+
     /**
      * Returns singleton instance of derived type
      */
     static pointer fetch(options const& vm)
     {
-        return boost::dynamic_pointer_cast<T>(factory_::fetch(vm));
+        typedef typename T::module_ptr::value_type _Base;
+        return boost::dynamic_pointer_cast<T>(factory<_Base>::fetch(vm));
     }
 
 private:
-    typedef typename T::factory_ factory_;
+    template <typename T_> friend class factory;
 
     /**
      * Register module singleton
@@ -113,11 +152,18 @@ private:
     {
         register_()
         {
-            factory_::modules()->push_back(&T::create);
+            register__(&T::create);
+        }
+
+        template <typename T_>
+        void register__(boost::shared_ptr<T_> (*create)(options const&)) {
+            factory<T_>::register_(module<T_>(&T::create, _module_priority<T>::value));
         }
     };
 
     static register_ register__;
+    boost::shared_ptr<T> (*create_)(options const&);
+    int priority_;
 };
 
 template <typename T> typename module<T>::register_ module<T>::register__;

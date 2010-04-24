@@ -38,21 +38,20 @@ class verlet
 {
 public:
     typedef mdsim::integrator<dimension> _Base;
+    typedef typename _Base::module_ptr module_ptr;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef host::box<dimension> box_type;
 
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
+
+    static module_ptr create(options const& vm);
     verlet(options const& vm);
     virtual ~verlet() {}
     void integrate();
     void finalize();
     double timestep() { return timestep_; }
-
-    typedef typename _Base::pointer pointer;
-    static pointer create(options const& vm);
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
 
 protected:
     /** integration time-step */

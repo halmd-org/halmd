@@ -34,13 +34,10 @@ template <int dimension>
 class particle
 {
 public:
-    typedef factory<particle> _Factory;
+    typedef typename boost::shared_ptr<particle> module_ptr;
 
     particle(options const& vm);
     virtual ~particle() {}
-
-    typedef factory<particle> factory_;
-    typedef typename module<particle>::pointer pointer;
 
     /** number of particles in simulation box */
     unsigned int nbox;

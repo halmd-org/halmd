@@ -170,9 +170,9 @@ string device::cuda_runtime_version()
 
 #endif /* CUDART_VERSION >= 2020 */
 
-device::pointer device::create(options const& vm)
+device::module_ptr device::create(options const& vm)
 {
-    return pointer(new device(vm));
+    return module_ptr(new device(vm));
 }
 
 }} // namespace utility::gpu

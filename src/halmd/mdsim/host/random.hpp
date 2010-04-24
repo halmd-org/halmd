@@ -37,14 +37,13 @@ class random
 {
 public:
     typedef mdsim::random _Base;
+    typedef _Base::module_ptr module_ptr;
     typedef boost::mt19937 random_generator;
 
+    static module_ptr create(options const& vm);
     random(options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);
-
-    typedef _Base::pointer pointer;
-    static pointer create(options const& vm);
 
     template <typename input_iterator>
     void shuffle(input_iterator first, input_iterator last);

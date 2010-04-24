@@ -35,14 +35,12 @@ namespace halmd { namespace utility { namespace gpu
 class device
 {
 public:
+    typedef boost::shared_ptr<device> module_ptr;
+
+    static module_ptr create(options const& vm);
     device(options const& vm);
     virtual ~device() {}
-
     unsigned int threads() { return threads_; }
-
-    typedef factory<device> factory_;
-    typedef module<device>::pointer pointer;
-    static pointer create(options const& vm);
 
 protected:
     static std::string nvidia_driver_version();

@@ -66,13 +66,13 @@ void boltzmann<dimension, float_type>::set()
 }
 
 template <int dimension, typename float_type>
-typename boltzmann<dimension, float_type>::pointer
+typename boltzmann<dimension, float_type>::module_ptr
 boltzmann<dimension, float_type>::create(options const& vm)
 {
     if (module<particle_type>::fetch(vm)) {
-        return pointer(new boltzmann<dimension, float_type>(vm));
+        return module_ptr(new boltzmann<dimension, float_type>(vm));
     }
-    return pointer();
+    return module_ptr();
 }
 
 // explicit instantiation

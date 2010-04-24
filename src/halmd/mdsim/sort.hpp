@@ -32,12 +32,11 @@ template <int dimension>
 class sort
 {
 public:
+    typedef typename boost::shared_ptr<sort> module_ptr;
+
     sort(options const& vm) {}
     virtual ~sort() {}
     virtual void order() = 0;
-
-    typedef factory<sort> factory_;
-    typedef typename module<sort>::pointer pointer;
 };
 
 } // namespace mdsim

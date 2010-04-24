@@ -65,13 +65,13 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 }
 
 template <unsigned int dimension, typename float_type>
-typename particle<dimension, float_type>::pointer
+typename particle<dimension, float_type>::module_ptr
 particle<dimension, float_type>::create(options const& vm)
 {
     if (vm["backend"].as<string>() == "host") {
-        return pointer(new particle<dimension, float_type>(vm));
+        return module_ptr(new particle<dimension, float_type>(vm));
     }
-    return pointer();
+    return module_ptr();
 }
 
 // explicit instantiation

@@ -39,6 +39,7 @@ class lattice :
 {
 public:
     typedef mdsim::position<dimension> _Base;
+    typedef typename _Base::module_ptr module_ptr;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef host::box<dimension> box_type;
@@ -48,9 +49,7 @@ public:
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;
 
-    typedef typename _Base::pointer pointer;
-    static pointer create(options const& vm);
-
+    static module_ptr create(options const& vm);
     lattice(options const& vm);
     virtual ~lattice() {}
     void set();

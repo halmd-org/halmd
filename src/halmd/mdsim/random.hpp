@@ -31,12 +31,11 @@ namespace mdsim
 class random
 {
 public:
+    typedef boost::shared_ptr<random> module_ptr;
+
     random(options const& vm) {}
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;
-
-    typedef factory<random> factory_;
-    typedef module<random>::pointer pointer;
 
 protected:
     unsigned int readint(std::string const& fn);

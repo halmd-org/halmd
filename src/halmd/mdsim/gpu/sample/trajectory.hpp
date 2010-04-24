@@ -51,8 +51,8 @@ public:
     virtual ~trajectory() {}
     void acquire();
 
-    typedef typename _Base::pointer pointer;
-    static pointer create(options const& vm);
+    typedef typename _Base::module_ptr module_ptr;
+    static module_ptr create(options const& vm);
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -75,19 +75,18 @@ class trajectory<mdsim::samples::host::trajectory<dimension, float_type> >
 {
 public:
     typedef mdsim::samples::host::trajectory<dimension, float_type> _Base;
+    typedef typename _Base::module_ptr module_ptr;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
 
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
+
+    static module_ptr create(options const& vm);
     trajectory(options const& vm);
     virtual ~trajectory() {}
     void acquire();
-
-    typedef typename _Base::pointer pointer;
-    static pointer create(options const& vm);
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
 
     typedef typename _Base::position_sample_vector position_sample_vector;
     typedef typename _Base::velocity_sample_vector velocity_sample_vector;

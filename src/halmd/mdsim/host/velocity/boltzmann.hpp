@@ -36,6 +36,7 @@ class boltzmann
 {
 public:
     typedef mdsim::velocity<dimension> _Base;
+    typedef typename _Base::module_ptr module_ptr;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef host::random random_type;
@@ -43,12 +44,10 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<random_type> random;
 
+    static module_ptr create(options const& vm);
     boltzmann(options const& vm);
     virtual ~boltzmann() {};
     void set();
-
-    typedef typename _Base::pointer pointer;
-    static pointer create(options const& vm);
 
 protected:
     /** temperature */

@@ -32,12 +32,11 @@ template <int dimension>
 class velocity
 {
 public:
+    typedef typename boost::shared_ptr<velocity> module_ptr;
+
     velocity(options const& vm) {}
     virtual ~velocity() {}
     virtual void set() = 0;
-
-    typedef factory<velocity> factory_;
-    typedef typename module<velocity>::pointer pointer;
 };
 
 } // namespace mdsim

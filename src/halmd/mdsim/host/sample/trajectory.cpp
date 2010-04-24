@@ -57,10 +57,10 @@ void trajectory<dimension, float_type>::acquire()
 }
 
 template <int dimension, typename float_type>
-typename trajectory<dimension, float_type>::pointer
+typename trajectory<dimension, float_type>::module_ptr
 trajectory<dimension, float_type>::create(options const& vm)
 {
-    return pointer(new trajectory<dimension, float_type>(vm));
+    return module_ptr(new trajectory<dimension, float_type>(vm));
 }
 
 // explicit instantiation
