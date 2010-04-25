@@ -130,10 +130,12 @@ int main(int argc, char **argv)
         // run MD simulation
         int const dimension = opt["dimension"].as<int>();
         if (dimension == 3) {
+            halmd::mdsim::core<3>::resolve(opt);
             halmd::mdsim::core<3> core(opt);
             core.run();
         }
         else if (dimension == 2) {
+            halmd::mdsim::core<2>::resolve(opt);
             halmd::mdsim::core<2> core(opt);
             core.run();
         }

@@ -39,13 +39,12 @@ class box
 {
 public:
     typedef mdsim::box<dimension> _Base;
-    typedef typename _Base::module_ptr module_ptr;
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
     boost::shared_ptr<particle_type> particle;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     box(options const& vm);
     virtual ~box() {}
     vector_type reduce_periodic(vector_type& r) const;

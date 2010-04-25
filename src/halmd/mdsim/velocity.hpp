@@ -32,7 +32,7 @@ template <int dimension>
 class velocity
 {
 public:
-    typedef typename boost::shared_ptr<velocity> module_ptr;
+    typedef velocity module_type;
 
     velocity(options const& vm) {}
     virtual ~velocity() {}

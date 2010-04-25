@@ -35,9 +35,9 @@ namespace halmd { namespace utility { namespace gpu
 class device
 {
 public:
-    typedef boost::shared_ptr<device> module_ptr;
+    typedef device module_type;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     device(options const& vm);
     virtual ~device() {}
     unsigned int threads() { return threads_; }

@@ -50,14 +50,16 @@ particle<dimension, float_type>::particle(options const& vm)
 {
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <unsigned int dimension, typename float_type>
-typename particle<dimension, float_type>::module_ptr
-particle<dimension, float_type>::create(options const& vm)
+void particle<dimension, float_type>::resolve(options const& vm)
 {
-    if (vm["backend"].as<string>() == "gpu_neighbour") {
-        return module_ptr(new gpu::particle<dimension, float_type>(vm));
+    if (vm["backend"].as<string>() != "gpu_neighbour") {
+        throw std::runtime_error("not implemented");
     }
-    return module_ptr();
+    module<device_type>::resolve(vm);
 }
 
 // explicit instantiation

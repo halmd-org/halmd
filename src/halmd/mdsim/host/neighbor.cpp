@@ -199,11 +199,15 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
     }
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension, typename float_type>
-typename neighbor<dimension, float_type>::module_ptr
-neighbor<dimension, float_type>::create(options const& vm)
+void neighbor<dimension, float_type>::resolve(options const& vm)
 {
-    return module_ptr(new host::neighbor<dimension, float_type>(vm));
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
+    module<force_type>::resolve(vm);
 }
 
 // explicit instantiation

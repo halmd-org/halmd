@@ -62,7 +62,7 @@ std::string get_fqdn_hostname(std::string const& node)
         throw std::runtime_error(gai_strerror(gai_result));
     }
 
-    // return first resolved hostname
+    // return first buildd hostname
     std::string hostname(result->ai_canonname);
     freeaddrinfo(result);
     return hostname;

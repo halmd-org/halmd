@@ -32,7 +32,7 @@ template <int dimension>
 class integrator
 {
 public:
-    typedef typename boost::shared_ptr<integrator> module_ptr;
+    typedef integrator module_type;
 
     integrator(options const& vm) {}
     virtual ~integrator() {}

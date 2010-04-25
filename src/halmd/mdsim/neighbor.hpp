@@ -32,7 +32,7 @@ template <int dimension>
 class neighbor
 {
 public:
-    typedef typename boost::shared_ptr<neighbor> module_ptr;
+    typedef neighbor module_type;
 
     neighbor(options const& vm) {}
     virtual ~neighbor() {}

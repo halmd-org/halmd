@@ -65,14 +65,14 @@ void boltzmann<dimension, float_type>::set()
     LOG("assigned Maxwell-Boltzmann velocity distribution: T = " << temp_);
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension, typename float_type>
-typename boltzmann<dimension, float_type>::module_ptr
-boltzmann<dimension, float_type>::create(options const& vm)
+void boltzmann<dimension, float_type>::resolve(options const& vm)
 {
-    if (module<particle_type>::fetch(vm)) {
-        return module_ptr(new boltzmann<dimension, float_type>(vm));
-    }
-    return module_ptr();
+    module<particle_type>::resolve(vm);
+    module<random_type>::resolve(vm);
 }
 
 // explicit instantiation

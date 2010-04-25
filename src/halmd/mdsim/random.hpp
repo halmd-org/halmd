@@ -31,8 +31,7 @@ namespace mdsim
 class random
 {
 public:
-    typedef boost::shared_ptr<random> module_ptr;
-
+    typedef random module_type;
     random(options const& vm) {}
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;

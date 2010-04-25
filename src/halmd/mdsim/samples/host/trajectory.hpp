@@ -35,7 +35,7 @@ template <int dimension, typename float_type>
 class trajectory
 {
 public:
-    typedef typename boost::shared_ptr<trajectory> module_ptr;
+    typedef trajectory module_type;
 
     trajectory(options const& vm) {}
     virtual ~trajectory() {}

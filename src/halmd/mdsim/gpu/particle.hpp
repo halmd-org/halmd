@@ -40,14 +40,13 @@ class particle
 {
 public:
     typedef mdsim::particle<dimension> _Base;
-    typedef typename _Base::module_ptr module_ptr;
     typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_vector_type;
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;
     typedef utility::gpu::device device_type;
 
     boost::shared_ptr<device_type> device;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     particle(options const& vm);
     virtual ~particle() {}
 

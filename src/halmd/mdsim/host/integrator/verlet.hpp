@@ -38,7 +38,6 @@ class verlet
 {
 public:
     typedef mdsim::integrator<dimension> _Base;
-    typedef typename _Base::module_ptr module_ptr;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef host::box<dimension> box_type;
@@ -46,7 +45,7 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     verlet(options const& vm);
     virtual ~verlet() {}
     void integrate();

@@ -71,14 +71,14 @@ void verlet<dimension, float_type>::finalize()
     }
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension, typename float_type>
-typename verlet<dimension, float_type>::module_ptr
-verlet<dimension, float_type>::create(options const& vm)
+void verlet<dimension, float_type>::resolve(options const& vm)
 {
-    if (module<particle_type>::fetch(vm)) {
-        return module_ptr(new verlet<dimension, float_type>(vm));
-    }
-    return module_ptr();
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
 }
 
 // explicit instantiation

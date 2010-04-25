@@ -56,11 +56,14 @@ void trajectory<dimension, float_type>::acquire()
     }
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension, typename float_type>
-typename trajectory<dimension, float_type>::module_ptr
-trajectory<dimension, float_type>::create(options const& vm)
+void trajectory<dimension, float_type>::resolve(options const& vm)
 {
-    return module_ptr(new trajectory<dimension, float_type>(vm));
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
 }
 
 // explicit instantiation

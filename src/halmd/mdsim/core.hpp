@@ -39,6 +39,7 @@ template <int dimension>
 class core
 {
 public:
+    static void resolve(options const& vm);
     core(options const& vm);
     void run();
     uint64_t steps() { return steps_; }

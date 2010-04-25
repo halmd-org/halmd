@@ -166,14 +166,14 @@ void lj<dimension, float_type>::compute()
     }
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension, typename float_type>
-typename lj<dimension, float_type>::module_ptr
-lj<dimension, float_type>::create(options const& vm)
+void lj<dimension, float_type>::resolve(options const& vm)
 {
-    if (module<particle_type>::fetch(vm)) {
-        return module_ptr(new lj<dimension, float_type>(vm));
-    }
-    return module_ptr();
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
 }
 
 // explicit instantiation

@@ -36,13 +36,13 @@ template <int dimension>
 class box
 {
 public:
-    typedef typename boost::shared_ptr<box> module_ptr;
+    typedef box module_type;
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
     boost::shared_ptr<particle_type> particle;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     box(options const& vm);
     virtual ~box() {}
     void length(vector_type const& value_type);

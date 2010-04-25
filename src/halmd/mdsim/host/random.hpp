@@ -37,10 +37,9 @@ class random
 {
 public:
     typedef mdsim::random _Base;
-    typedef _Base::module_ptr module_ptr;
     typedef boost::mt19937 random_generator;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     random(options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);

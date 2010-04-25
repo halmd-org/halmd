@@ -34,7 +34,7 @@ template <int dimension>
 class particle
 {
 public:
-    typedef typename boost::shared_ptr<particle> module_ptr;
+    typedef particle module_type;
 
     particle(options const& vm);
     virtual ~particle() {}

@@ -64,14 +64,15 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     // no permutation of neighbor lists
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <unsigned int dimension, typename float_type>
-typename particle<dimension, float_type>::module_ptr
-particle<dimension, float_type>::create(options const& vm)
+void particle<dimension, float_type>::resolve(options const& vm)
 {
-    if (vm["backend"].as<string>() == "host") {
-        return module_ptr(new particle<dimension, float_type>(vm));
+    if (vm["backend"].as<string>() != "host") {
+        throw std::runtime_error("not implemented");
     }
-    return module_ptr();
 }
 
 // explicit instantiation

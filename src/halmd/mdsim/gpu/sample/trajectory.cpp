@@ -93,24 +93,21 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
     }
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension, typename float_type>
-typename trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::module_ptr
-trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::create(options const& vm)
+void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::resolve(options const& vm)
 {
-    if (module<particle_type>::fetch(vm)) {
-        return module_ptr(new trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >(vm));
-    }
-    return module_ptr();
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
 }
 
 template <int dimension, typename float_type>
-typename trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::module_ptr
-trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::create(options const& vm)
+void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::resolve(options const& vm)
 {
-    if (module<particle_type>::fetch(vm)) {
-        return module_ptr(new trajectory<mdsim::samples::host::trajectory<dimension, float_type> >(vm));
-    }
-    return module_ptr();
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
 }
 
 // explicit instantiation

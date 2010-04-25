@@ -82,11 +82,13 @@ void box<dimension>::density(double value)
     LOG("number density: " << density_);
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension>
-typename box<dimension>::module_ptr
-box<dimension>::create(options const& vm)
+void box<dimension>::resolve(options const& vm)
 {
-    return module_ptr(new box<dimension>(vm));
+    module<particle_type>::resolve(vm);
 }
 
 // explicit instantiation

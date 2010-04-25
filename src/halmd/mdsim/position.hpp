@@ -32,7 +32,7 @@ template <int dimension>
 class position
 {
 public:
-    typedef typename boost::shared_ptr<position> module_ptr;
+    typedef position module_type;
 
     position(options const& vm) {}
     virtual ~position() {}

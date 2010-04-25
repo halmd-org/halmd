@@ -50,7 +50,6 @@ class neighbor
 {
 public:
     typedef mdsim::neighbor<dimension> _Base;
-    typedef typename _Base::module_ptr module_ptr;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::force<dimension> force_type;
@@ -65,7 +64,7 @@ public:
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     neighbor(options const& vm);
     virtual ~neighbor() {}
     void update();

@@ -32,7 +32,7 @@ template <int dimension>
 class sort
 {
 public:
-    typedef typename boost::shared_ptr<sort> module_ptr;
+    typedef sort module_type;
 
     sort(options const& vm) {}
     virtual ~sort() {}

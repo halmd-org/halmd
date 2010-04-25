@@ -170,9 +170,12 @@ string device::cuda_runtime_version()
 
 #endif /* CUDART_VERSION >= 2020 */
 
-device::module_ptr device::create(options const& vm)
+/**
+ * Resolve module dependencies
+ */
+void device::resolve(options const& vm)
 {
-    return module_ptr(new device(vm));
+    // no dependencies
 }
 
 }} // namespace utility::gpu

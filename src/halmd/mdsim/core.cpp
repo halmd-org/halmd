@@ -82,6 +82,20 @@ void core<dimension>::run()
     LOG("finished simulation");
 }
 
+/**
+ * Resolve module dependencies
+ */
+template <int dimension>
+void core<dimension>::resolve(options const& vm)
+{
+    module<mdsim::force<dimension> >::resolve(vm);
+    module<mdsim::neighbor<dimension> >::resolve(vm);
+    module<mdsim::sort<dimension> >::resolve(vm);
+    module<mdsim::integrator<dimension> >::resolve(vm);
+    module<mdsim::position<dimension> >::resolve(vm);
+    module<mdsim::velocity<dimension> >::resolve(vm);
+}
+
 // explicit instantiation
 template class core<3>;
 template class core<2>;

@@ -45,20 +45,13 @@ box<dimension>::box(options const& vm)
   , length_half_(.5 * length_)
 {}
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension>
-typename box<dimension>::module_ptr
-box<dimension>::create(options const& vm)
+void box<dimension>::resolve(options const& vm)
 {
-#ifdef USE_HOST_SINGLE_PRECISION
-    if (module<host::particle<dimension, float> >::fetch(vm)) {
-        return module_ptr(new box<dimension>(vm));
-    }
-#else
-    if (module<host::particle<dimension, double> >::fetch(vm)) {
-        return module_ptr(new box<dimension>(vm));
-    }
-#endif
-    return module_ptr();
+    module<particle_type>::resolve(vm);
 }
 
 // explicit instantiation

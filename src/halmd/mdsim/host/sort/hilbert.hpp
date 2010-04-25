@@ -37,7 +37,6 @@ class hilbert
 {
 public:
     typedef mdsim::sort<dimension> _Base;
-    typedef typename _Base::module_ptr module_ptr;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
@@ -50,7 +49,7 @@ public:
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<neighbor_type> neighbor;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     hilbert(options const& vm);
     virtual ~hilbert() {}
     virtual void order();

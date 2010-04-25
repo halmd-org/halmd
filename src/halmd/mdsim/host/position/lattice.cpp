@@ -129,14 +129,15 @@ void lattice<dimension, float_type>::set()
     LOG("placed particles on fcc lattice: a = " << a);
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension, typename float_type>
-typename lattice<dimension, float_type>::module_ptr
-lattice<dimension, float_type>::create(options const& vm)
+void lattice<dimension, float_type>::resolve(options const& vm)
 {
-    if (module<particle_type>::fetch(vm)) {
-        return module_ptr(new lattice<dimension, float_type>(vm));
-    }
-    return module_ptr();
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
+    module<random_type>::resolve(vm);
 }
 
 // explicit instantiation

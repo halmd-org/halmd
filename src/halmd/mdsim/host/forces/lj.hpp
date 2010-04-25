@@ -38,7 +38,6 @@ class lj
 {
 public:
     typedef mdsim::force<dimension> _Base;
-    typedef typename _Base::module_ptr module_ptr;
     typedef typename _Base::matrix_type matrix_type;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
@@ -47,7 +46,7 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
-    static module_ptr create(options const& vm);
+    static void resolve(options const& vm);
     lj(options const& vm);
     virtual ~lj() {}
     virtual void compute();

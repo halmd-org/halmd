@@ -246,14 +246,15 @@ void hilbert<dimension, float_type>::swap(unsigned int& v, unsigned int& a, unsi
     std::swap(a, b);
 }
 
+/**
+ * Resolve module dependencies
+ */
 template <int dimension, typename float_type>
-typename hilbert<dimension, float_type>::module_ptr
-hilbert<dimension, float_type>::create(options const& vm)
+void hilbert<dimension, float_type>::resolve(options const& vm)
 {
-    if (module<particle_type>::fetch(vm)) {
-        return module_ptr(new hilbert<dimension, float_type>(vm));
-    }
-    return module_ptr();
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
+    module<neighbor_type>::resolve(vm);
 }
 
 // explicit instantiation
