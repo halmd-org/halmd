@@ -25,7 +25,7 @@
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -46,8 +46,9 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
-    static void resolve(options const& vm);
-    lj(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    lj(po::options const& vm);
     virtual ~lj() {}
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }

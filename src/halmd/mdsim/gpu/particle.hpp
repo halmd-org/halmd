@@ -26,7 +26,7 @@
 #include <cuda_wrapper.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 #include <halmd/utility/gpu/device.hpp>
 
 namespace halmd
@@ -46,8 +46,9 @@ public:
 
     boost::shared_ptr<device_type> device;
 
-    static void resolve(options const& vm);
-    particle(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    particle(po::options const& vm);
     virtual ~particle() {}
 
     //

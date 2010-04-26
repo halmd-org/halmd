@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_VELOCITY_HPP
 
 #include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -34,7 +34,7 @@ class velocity
 public:
     typedef velocity module_type;
 
-    velocity(options const& vm) {}
+    velocity(po::options const& vm) {}
     virtual ~velocity() {}
     virtual void set() = 0;
 };

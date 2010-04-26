@@ -24,7 +24,7 @@
 #include <halmd/mdsim/host/neighbor.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/sort.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -49,8 +49,9 @@ public:
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<neighbor_type> neighbor;
 
-    static void resolve(options const& vm);
-    hilbert(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    hilbert(po::options const& vm);
     virtual ~hilbert() {}
     virtual void order();
 

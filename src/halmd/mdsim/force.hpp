@@ -26,7 +26,7 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -45,7 +45,7 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
-    force(options const& vm);
+    force(po::options const& vm);
     virtual ~force() {}
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;

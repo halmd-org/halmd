@@ -32,7 +32,7 @@ namespace mdsim { namespace host { namespace integrator
 {
 
 template <int dimension, typename float_type>
-verlet<dimension, float_type>::verlet(options const& vm)
+verlet<dimension, float_type>::verlet(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
@@ -75,10 +75,25 @@ void verlet<dimension, float_type>::finalize()
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void verlet<dimension, float_type>::resolve(options const& vm)
+void verlet<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::resolve(vm);
     module<box_type>::resolve(vm);
+}
+
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+po::options_description
+verlet<dimension, float_type>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        ("timestep,h", po::value<double>()->default_value(0.001),
+         "simulation timestep")
+        ;
+    return desc;
 }
 
 // explicit instantiation

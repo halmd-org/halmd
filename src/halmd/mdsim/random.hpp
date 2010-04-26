@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_RANDOM_HPP
 
 #include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -32,7 +32,7 @@ class random
 {
 public:
     typedef random module_type;
-    random(options const& vm) {}
+    random(po::options const& vm) {}
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;
 

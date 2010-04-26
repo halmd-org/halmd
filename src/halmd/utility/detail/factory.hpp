@@ -25,8 +25,8 @@
 #include <set>
 #include <typeinfo>
 
-#include <halmd/options.hpp>
 #include <halmd/utility/detail/builder.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -41,7 +41,7 @@ struct factory
     typedef typename detail::builder<T>::less builder_compare;
     typedef std::set<builder_base_ptr, builder_compare> builder_set;
 
-    static base_ptr fetch(options const& vm)
+    static base_ptr fetch(po::options const& vm)
     {
         if (!singleton) {
             singleton = builder->create(vm);

@@ -29,7 +29,7 @@ namespace mdsim { namespace host { namespace sample
 {
 
 template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(options const& vm)
+trajectory<dimension, float_type>::trajectory(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
@@ -60,10 +60,24 @@ void trajectory<dimension, float_type>::acquire()
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::resolve(options const& vm)
+void trajectory<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::resolve(vm);
     module<box_type>::resolve(vm);
+}
+
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+po::options_description
+trajectory<dimension, float_type>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        // no module options
+        ;
+    return desc;
 }
 
 // explicit instantiation

@@ -24,7 +24,7 @@
 
 #include <cuda_wrapper.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd { namespace utility { namespace gpu
 {
@@ -37,8 +37,9 @@ class device
 public:
     typedef device module_type;
 
-    static void resolve(options const& vm);
-    device(options const& vm);
+    static po::options_description options();
+    static void resolve(po::options const& vm);
+    device(po::options const& vm);
     virtual ~device() {}
     unsigned int threads() { return threads_; }
 

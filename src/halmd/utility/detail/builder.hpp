@@ -25,7 +25,7 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -68,7 +68,7 @@ protected:
     enum { priority_ = _Base::priority_ + 1 };
 
 private:
-    static base_ptr create_(options const& vm)
+    static base_ptr create_(po::options const& vm)
     {
         return base_ptr(new T(vm));
     }
@@ -79,10 +79,10 @@ class builder<T, typename boost::enable_if<
   boost::is_same<T, typename T::module_type> >::type>
 {
 public:
-    typedef void (*resolve_ptr)(options const&);
+    typedef void (*resolve_ptr)(po::options const&);
     typedef typename T::module_type base_type;
     typedef boost::shared_ptr<base_type> base_ptr;
-    typedef base_ptr (*create_ptr)(options const&);
+    typedef base_ptr (*create_ptr)(po::options const&);
     typedef boost::shared_ptr<builder> builder_base_ptr;
 
     resolve_ptr const resolve;
@@ -131,7 +131,7 @@ protected:
     enum { priority_ = 0 };
 
 private:
-    static base_ptr create_(options const& vm)
+    static base_ptr create_(po::options const& vm)
     {
         return base_ptr(new T(vm));
     }

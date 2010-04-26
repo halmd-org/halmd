@@ -34,8 +34,10 @@ namespace mdsim
  * Initialize simulation
  */
 template <int dimension>
-core<dimension>::core(options const& vm)
-  : force(module<mdsim::force<dimension> >::fetch(vm))
+core<dimension>::core(po::options const& vm)
+  : _Base(vm)
+  // dependency injection
+  , force(module<mdsim::force<dimension> >::fetch(vm))
   , neighbor(module<mdsim::neighbor<dimension> >::fetch(vm))
   , sort(module<mdsim::sort<dimension> >::fetch(vm))
   , integrator(module<mdsim::integrator<dimension> >::fetch(vm))
@@ -86,8 +88,11 @@ void core<dimension>::run()
  * Resolve module dependencies
  */
 template <int dimension>
-void core<dimension>::resolve(options const& vm)
+void core<dimension>::resolve(po::options const& vm)
 {
+    if (vm["dimension"].as<int>() != dimension) {
+        throw std::runtime_error("not implemented");
+    }
     module<mdsim::force<dimension> >::resolve(vm);
     module<mdsim::neighbor<dimension> >::resolve(vm);
     module<mdsim::sort<dimension> >::resolve(vm);
@@ -96,10 +101,30 @@ void core<dimension>::resolve(options const& vm)
     module<mdsim::velocity<dimension> >::resolve(vm);
 }
 
+/**
+ * Assemble module options
+ */
+template <int dimension>
+po::options_description
+core<dimension>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        ("steps,s", po::value<uint64_t>()->default_value(10000),
+         "number of simulation steps")
+        ("time,t", po::value<double>(),
+         "total simulation time")
+        ;
+    return desc;
+}
+
 // explicit instantiation
 template class core<3>;
 template class core<2>;
 
 } // namespace mdsim
+
+template class module<mdsim::core<3> >;
+template class module<mdsim::core<2> >;
 
 } // namespace halmd

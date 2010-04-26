@@ -41,7 +41,7 @@ namespace utility { namespace gpu
 /**
  * Initialize CUDA device
  */
-device::device(options const& vm)
+device::device(po::options const& vm)
 {
 #ifndef __DEVICE_EMULATION__
     try {
@@ -173,9 +173,26 @@ string device::cuda_runtime_version()
 /**
  * Resolve module dependencies
  */
-void device::resolve(options const& vm)
+void device::resolve(po::options const& vm)
 {
     // no dependencies
+}
+
+/**
+ * Assemble module options
+ */
+po::options_description device::options()
+{
+    po::options_description desc;
+    desc.add_options()
+#ifndef __DEVICE_EMULATION__
+        ("device,D", po::value<boost::multi_array<int, 1> >(),
+         "CUDA device(s)")
+#endif
+        ("threads,T", po::value<unsigned int>()->default_value(128),
+         "number of CUDA threads per block")
+        ;
+    return desc;
 }
 
 }} // namespace utility::gpu

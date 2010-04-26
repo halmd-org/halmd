@@ -33,7 +33,7 @@ namespace mdsim { namespace gpu
 {
 
 template <unsigned int dimension, typename float_type>
-particle<dimension, float_type>::particle(options const& vm)
+particle<dimension, float_type>::particle(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , device(module<device_type>::fetch(vm))
@@ -54,12 +54,26 @@ particle<dimension, float_type>::particle(options const& vm)
  * Resolve module dependencies
  */
 template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::resolve(options const& vm)
+void particle<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["backend"].as<string>() != "gpu_neighbour") {
         throw std::runtime_error("not implemented");
     }
     module<device_type>::resolve(vm);
+}
+
+/**
+ * Assemble module options
+ */
+template <unsigned int dimension, typename float_type>
+po::options_description
+particle<dimension, float_type>::options()
+{
+    po::options_description desc(_Base::options());
+    desc.add_options()
+        // no module options
+        ;
+    return desc;
 }
 
 // explicit instantiation

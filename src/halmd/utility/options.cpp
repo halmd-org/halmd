@@ -17,39 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_PARTICLE_HPP
-#define HALMD_MDSIM_PARTICLE_HPP
-
-#include <vector>
-
-#include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim
+namespace po
 {
 
-template <int dimension>
-class particle
-{
-public:
-    typedef particle module_type;
-
-    static po::options_description options();
-    particle(po::options const& vm);
-    virtual ~particle() {}
-
-    /** number of particles in simulation box */
-    unsigned int nbox;
-    /** number of particle types */
-    unsigned int ntype;
-    /** number of particles per type */
-    std::vector<unsigned int> ntypes;
-};
-
-} // namespace mdsim
+} // namespace po
 
 } // namespace halmd
-
-#endif /* ! HALMD_MDSIM_PARTICLE_HPP */

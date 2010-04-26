@@ -37,7 +37,7 @@ using namespace numeric::host::blas;
 using namespace std;
 
 template <int dimension, typename float_type>
-lattice<dimension, float_type>::lattice(options const& vm)
+lattice<dimension, float_type>::lattice(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
@@ -133,11 +133,25 @@ void lattice<dimension, float_type>::set()
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void lattice<dimension, float_type>::resolve(options const& vm)
+void lattice<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::resolve(vm);
     module<box_type>::resolve(vm);
     module<random_type>::resolve(vm);
+}
+
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+po::options_description
+lattice<dimension, float_type>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        // no module options
+        ;
+    return desc;
 }
 
 // explicit instantiation

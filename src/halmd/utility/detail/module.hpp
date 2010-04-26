@@ -26,9 +26,9 @@
 #include <set>
 #include <typeinfo>
 
-#include <halmd/options.hpp>
-#include <halmd/utility/detail/factory.hpp>
 #include <halmd/utility/detail/builder.hpp>
+#include <halmd/utility/detail/factory.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -44,12 +44,12 @@ public:
     typedef boost::shared_ptr<detail::builder<base_type> > builder_base_ptr;
     typedef detail::builder<T> builder_type;
 
-    static boost::shared_ptr<T> fetch(options const& vm)
+    static boost::shared_ptr<T> fetch(po::options const& vm)
     {
         return boost::dynamic_pointer_cast<T>(factory::fetch(vm));
     }
 
-    static void resolve(options const& vm);
+    static void resolve(po::options const& vm);
 
 private:
     /**
@@ -72,7 +72,7 @@ template <typename T> typename module<T>::register_ module<T>::register__;
  * Resolve module dependency
  */
 template <typename T>
-void module<T>::resolve(options const& vm)
+void module<T>::resolve(po::options const& vm)
 {
     if (factory::builder) {
         if (boost::dynamic_pointer_cast<builder_type>(factory::builder)) {

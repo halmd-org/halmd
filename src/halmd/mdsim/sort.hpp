@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_SORT_HPP
 #define HALMD_MDSIM_SORT_HPP
 
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
@@ -34,7 +34,7 @@ class sort
 public:
     typedef sort module_type;
 
-    sort(options const& vm) {}
+    sort(po::options const& vm) {}
     virtual ~sort() {}
     virtual void order() = 0;
 };

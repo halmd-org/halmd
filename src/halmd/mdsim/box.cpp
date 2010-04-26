@@ -38,7 +38,7 @@ namespace mdsim
  * Set box edge lengths
  */
 template <int dimension>
-box<dimension>::box(options const& vm)
+box<dimension>::box(po::options const& vm)
   // dependency injection
   : particle(module<particle_type>::fetch(vm))
   // default to cube
@@ -86,9 +86,26 @@ void box<dimension>::density(double value)
  * Resolve module dependencies
  */
 template <int dimension>
-void box<dimension>::resolve(options const& vm)
+void box<dimension>::resolve(po::options const& vm)
 {
     module<particle_type>::resolve(vm);
+}
+
+/**
+ * Assemble module options
+ */
+template <int dimension>
+po::options_description
+box<dimension>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        ("density,d", po::value<float>()->default_value(0.75),
+         "particle density")
+        ("box-length,L", po::value<float>(),
+         "simulation box length")
+        ;
+    return desc;
 }
 
 // explicit instantiation

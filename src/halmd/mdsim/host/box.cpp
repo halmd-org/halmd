@@ -37,7 +37,7 @@ namespace mdsim { namespace host
  * Set box edge lengths
  */
 template <int dimension>
-box<dimension>::box(options const& vm)
+box<dimension>::box(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
@@ -49,7 +49,7 @@ box<dimension>::box(options const& vm)
  * Resolve module dependencies
  */
 template <int dimension>
-void box<dimension>::resolve(options const& vm)
+void box<dimension>::resolve(po::options const& vm)
 {
     module<particle_type>::resolve(vm);
 }

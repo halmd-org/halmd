@@ -22,13 +22,15 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/core.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/mdsim/neighbor.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
+#include <halmd/utility/module.hpp>
 
 namespace halmd
 {
@@ -37,10 +39,14 @@ namespace mdsim
 
 template <int dimension>
 class core
+  : public halmd::core
 {
 public:
-    static void resolve(options const& vm);
-    core(options const& vm);
+    typedef halmd::core _Base;
+
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    core(po::options const& vm);
     void run();
     uint64_t steps() { return steps_; }
     double time() { return time_; }

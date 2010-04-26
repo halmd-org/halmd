@@ -31,7 +31,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbor.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -64,8 +64,9 @@ public:
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
 
-    static void resolve(options const& vm);
-    neighbor(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    neighbor(po::options const& vm);
     virtual ~neighbor() {}
     void update();
     bool check();

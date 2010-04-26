@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_INTEGRATOR_HPP
 
 #include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -34,7 +34,7 @@ class integrator
 public:
     typedef integrator module_type;
 
-    integrator(options const& vm) {}
+    integrator(po::options const& vm) {}
     virtual ~integrator() {}
     virtual void integrate() = 0;
     virtual void finalize() = 0;

@@ -23,7 +23,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/random.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -43,8 +43,9 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<random_type> random;
 
-    static void resolve(options const& vm);
-    boltzmann(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    boltzmann(po::options const& vm);
     virtual ~boltzmann() {};
     void set();
 

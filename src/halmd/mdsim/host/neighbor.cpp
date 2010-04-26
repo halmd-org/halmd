@@ -35,7 +35,7 @@ namespace mdsim { namespace host
 {
 
 template <int dimension, typename float_type>
-neighbor<dimension, float_type>::neighbor(options const& vm)
+neighbor<dimension, float_type>::neighbor(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
@@ -203,11 +203,26 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::resolve(options const& vm)
+void neighbor<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::resolve(vm);
     module<box_type>::resolve(vm);
     module<force_type>::resolve(vm);
+}
+
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+po::options_description
+neighbor<dimension, float_type>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        ("skin", po::value<float>()->default_value(0.5),
+         "neighbour list skin")
+        ;
+    return desc;
 }
 
 // explicit instantiation

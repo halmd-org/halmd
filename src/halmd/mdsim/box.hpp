@@ -25,7 +25,7 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -42,8 +42,9 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
-    static void resolve(options const& vm);
-    box(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    box(po::options const& vm);
     virtual ~box() {}
     void length(vector_type const& value_type);
     vector_type const& length() { return length_; }

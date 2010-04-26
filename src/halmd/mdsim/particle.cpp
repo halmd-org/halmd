@@ -41,7 +41,7 @@ namespace mdsim
 {
 
 template <int dimension>
-particle<dimension>::particle(options const& vm)
+particle<dimension>::particle(po::options const& vm)
 {
     // parse options
     if (!vm["binary"].empty() && vm["particles"].defaulted()) {
@@ -68,6 +68,23 @@ particle<dimension>::particle(options const& vm)
     LOG("number of particles: " << nbox);
     LOG("number of particle types: " << ntype);
     LOG("number of particles per type: " << join(ntypes_, " "));
+}
+
+/**
+ * Assemble module options
+ */
+template <int dimension>
+po::options_description
+particle<dimension>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        ("particles,N", po::value<unsigned int>()->default_value(1000),
+         "number of particles")
+        ("binary,M", po::value<boost::array<unsigned int, 2> >(),
+         "binary mixture with A,B particles")
+        ;
+    return desc;
 }
 
 // explicit instantiation

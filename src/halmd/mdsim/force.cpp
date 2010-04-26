@@ -30,7 +30,7 @@ namespace mdsim
 {
 
 template <int dimension>
-force<dimension>::force(options const& vm)
+force<dimension>::force(po::options const& vm)
   // dependency injection
   : particle(module<particle_type>::fetch(vm))
   // allocate result variables

@@ -26,7 +26,7 @@
 
 #include <cuda_wrapper.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -39,7 +39,7 @@ class trajectory
 public:
     typedef trajectory module_type;
 
-    trajectory(options const& vm) {}
+    trajectory(po::options const& vm) {}
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 

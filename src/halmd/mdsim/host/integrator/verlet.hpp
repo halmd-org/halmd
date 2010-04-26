@@ -25,7 +25,7 @@
 #include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -45,8 +45,9 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
-    static void resolve(options const& vm);
-    verlet(options const& vm);
+    static po::options_description options();
+    static void resolve(po::options const& vm);
+    verlet(po::options const& vm);
     virtual ~verlet() {}
     void integrate();
     void finalize();

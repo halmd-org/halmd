@@ -28,7 +28,7 @@ namespace halmd
 namespace mdsim { namespace host
 {
 
-random::random(options const& vm)
+random::random(po::options const& vm)
   : _Base(vm)
 {
     if (vm["random-seed"].empty()) {
@@ -48,9 +48,24 @@ void random::seed(unsigned int value)
 /**
  * Resolve module dependencies
  */
-void random::resolve(options const& vm)
+void random::resolve(po::options const& vm)
 {
     // no dependencies
+}
+
+/**
+ * Assemble module options
+ */
+po::options_description random::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        ("random-seed", po::value<unsigned int>(),
+         "random number generator integer seed")
+        ("random-device", po::value<std::string>()->default_value("/dev/random"),
+         "random number generator device")
+        ;
+    return desc;
 }
 
 }} // namespace mdsim::host

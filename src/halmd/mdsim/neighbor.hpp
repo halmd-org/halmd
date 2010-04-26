@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_NEIGHBOR_HPP
 
 #include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -34,7 +34,7 @@ class neighbor
 public:
     typedef neighbor module_type;
 
-    neighbor(options const& vm) {}
+    neighbor(po::options const& vm) {}
     virtual ~neighbor() {}
     virtual void update() = 0;
     virtual bool check() = 0;

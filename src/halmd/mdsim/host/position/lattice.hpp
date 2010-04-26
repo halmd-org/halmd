@@ -26,7 +26,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/random.hpp>
 #include <halmd/mdsim/position.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -48,8 +48,9 @@ public:
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;
 
-    static void resolve(options const& vm);
-    lattice(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    lattice(po::options const& vm);
     virtual ~lattice() {}
     void set();
 };

@@ -26,6 +26,7 @@
 #include <halmd/util/logger.hpp>
 
 using namespace boost;
+using namespace boost::assign;
 using namespace boost::numeric::ublas;
 
 namespace halmd
@@ -37,7 +38,7 @@ namespace mdsim { namespace host { namespace forces
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-lj<dimension, float_type>::lj(options const& vm)
+lj<dimension, float_type>::lj(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
@@ -170,10 +171,29 @@ void lj<dimension, float_type>::compute()
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void lj<dimension, float_type>::resolve(options const& vm)
+void lj<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::resolve(vm);
     module<box_type>::resolve(vm);
+}
+
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+po::options_description
+lj<dimension, float_type>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
+         "truncate potential at cutoff radius")
+        ("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
+         "potential well depths AA,AB,BB")
+        ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
+         "collision diameters AA,AB,BB")
+        ;
+    return desc;
 }
 
 // explicit instantiation

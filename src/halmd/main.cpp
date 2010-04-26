@@ -30,16 +30,18 @@
 # include <cuda_wrapper.hpp>
 #endif
 #include <halmd/mdlib.hpp>
-#include <halmd/mdsim/core.hpp>
-#include <halmd/options.hpp>
+#include <halmd/core.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/util/hostname.hpp>
 #include <halmd/util/logger.hpp>
 #include <halmd/util/timer.hpp>
+#include <halmd/utility/module.hpp>
+#include <halmd/utility/options.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
+using namespace halmd;
 using namespace std;
 
 int main(int argc, char **argv)
@@ -50,9 +52,9 @@ int main(int argc, char **argv)
 #endif
 
     // parse program options
-    halmd::options opt;
+    po::options vm;
     try {
-        opt.parse(argc, argv);
+        vm.parse(argc, argv);
     }
     catch (halmd::options::exit_exception const& e) {
         return e.status();
@@ -62,7 +64,7 @@ int main(int argc, char **argv)
     halmd::mdlib mdlib;
 #ifndef BACKEND_EXECUTABLES
     try {
-        string const backend(opt["backend"].as<string>());
+        string const backend(vm["backend"].as<string>());
         boost::filesystem::path exe(argv[0]);
         boost::filesystem::path lib("libhalmd_" + backend + ".so");
         mdlib.open((exe.parent_path() / lib));
@@ -79,13 +81,13 @@ int main(int argc, char **argv)
 
     // parse backend options
     try {
-        opt.parse(mdlib.options());
+        vm.parse(mdlib.options());
     }
     catch (halmd::options::exit_exception const& e) {
         return e.status();
     }
 
-    halmd::logger::init(opt["output"].as<std::string>() + ".log", opt["verbose"].as<int>());
+    halmd::logger::init(vm["output"].as<std::string>() + ".log", vm["verbose"].as<int>());
 
     LOG(PROGRAM_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
     LOG("variant: " << mdlib.variant());
@@ -115,10 +117,10 @@ int main(int argc, char **argv)
     try {
 #endif
         // bind process to CPU core(s)
-        if (!opt["processor"].empty()) {
+        if (!vm["processor"].empty()) {
             cpu_set_t mask;
             CPU_ZERO(&mask);
-            BOOST_FOREACH(int cpu, opt["processor"].as<std::vector<int> >()) {
+            BOOST_FOREACH(int cpu, vm["processor"].as<std::vector<int> >()) {
                 LOG("adding CPU core " << cpu << " to process CPU affinity mask");
                 CPU_SET(cpu, &mask);
             }
@@ -128,20 +130,8 @@ int main(int argc, char **argv)
         }
 
         // run MD simulation
-        int const dimension = opt["dimension"].as<int>();
-        if (dimension == 3) {
-            halmd::mdsim::core<3>::resolve(opt);
-            halmd::mdsim::core<3> core(opt);
-            core.run();
-        }
-        else if (dimension == 2) {
-            halmd::mdsim::core<2>::resolve(opt);
-            halmd::mdsim::core<2> core(opt);
-            core.run();
-        }
-        else {
-            throw logic_error("invalid dimension: " + lexical_cast<string>(dimension));
-        }
+        module<core>::resolve(vm);
+        module<core>::fetch(vm)->run();
 #ifdef NDEBUG
     }
 #ifdef WITH_CUDA

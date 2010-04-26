@@ -24,7 +24,7 @@
 
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -40,8 +40,9 @@ public:
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;
     typedef std::vector<unsigned int> neighbor_list;
 
-    static void resolve(options const& vm);
-    particle(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    particle(po::options const& vm);
     virtual ~particle() {}
     virtual void rearrange(std::vector<unsigned int> const& index);
 

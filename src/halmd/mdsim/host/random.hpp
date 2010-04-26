@@ -25,7 +25,7 @@
 #include <iterator>
 
 #include <halmd/mdsim/random.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -39,8 +39,9 @@ public:
     typedef mdsim::random _Base;
     typedef boost::mt19937 random_generator;
 
-    static void resolve(options const& vm);
-    random(options const& vm);
+    static void resolve(po::options const& vm);
+    static po::options_description options();
+    random(po::options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);
 

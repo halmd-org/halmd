@@ -29,7 +29,7 @@ using namespace boost;
 using namespace std;
 
 template <int dimension, typename float_type>
-boltzmann<dimension, float_type>::boltzmann(options const& vm)
+boltzmann<dimension, float_type>::boltzmann(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
@@ -69,10 +69,25 @@ void boltzmann<dimension, float_type>::set()
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::resolve(options const& vm)
+void boltzmann<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::resolve(vm);
     module<random_type>::resolve(vm);
+}
+
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+po::options_description
+boltzmann<dimension, float_type>::options()
+{
+    po::options_description desc;
+    desc.add_options()
+        ("temperature,K", po::value<float>()->default_value(1.12),
+         "Boltzmann distribution temperature")
+        ;
+    return desc;
 }
 
 // explicit instantiation
