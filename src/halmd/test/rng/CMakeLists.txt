@@ -5,4 +5,12 @@ if(WITH_CUDA)
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CUDA_LIBRARIES}
     )
+
+  add_executable(test_rand_dist rand_dist.cpp)
+  target_link_libraries(test_rand_dist
+    gpu_rand48
+    ${CUDA_LIBRARIES}
+    ${GSL_LIBRARIES}
+    )
+  add_test(random_distributions test_rand_dist)
 endif(WITH_CUDA)
