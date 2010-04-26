@@ -112,7 +112,7 @@ public:
         if (n_ < 2) {
             return std::numeric_limits<T>::quiet_NaN();
         }
-        return v_;
+        return v_ / n_;
     }
 
     /**
@@ -123,7 +123,7 @@ public:
         if (n_ < 2) {
             return std::numeric_limits<T>::quiet_NaN();
         }
-        return std::sqrt(v_ / (n_ - 1));
+        return std::sqrt(v_ / n_);
     }
 
     /**
@@ -142,7 +142,7 @@ private:
     uint64_t n_;
     /** mean */
     T m_;
-    /** variance */
+    /** variance × count */
     T v_;
 };
 
