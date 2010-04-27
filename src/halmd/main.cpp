@@ -60,6 +60,10 @@ int main(int argc, char **argv)
         return e.status();
     }
 
+#ifdef DEBUG
+    // enable logging as early as possible if debugging
+    halmd::logger::init(vm["output"].as<std::string>() + ".log", vm["verbose"].as<int>());
+#endif
     // load backend library
     halmd::mdlib mdlib;
 #ifndef BACKEND_EXECUTABLES
@@ -87,7 +91,10 @@ int main(int argc, char **argv)
         return e.status();
     }
 
+#ifndef DEBUG
+    // enable logging after successful option parsing if not debugging
     halmd::logger::init(vm["output"].as<std::string>() + ".log", vm["verbose"].as<int>());
+#endif
 
     LOG(PROGRAM_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
     LOG("variant: " << mdlib.variant());
