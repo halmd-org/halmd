@@ -54,10 +54,15 @@ class inept_module
   : public module_exception
 {
 public:
+    inept_module() : name_(typeid(T).name()) {}
+    virtual ~inept_module() throw () {}
     virtual const char* what() const throw()
     {
-        return typeid(T).name();
+        return name_.c_str();
     }
+
+private:
+    std::string name_;
 };
 
 template <typename T>
@@ -65,10 +70,15 @@ class irresolvable_module
   : public module_exception
 {
 public:
+    irresolvable_module() : name_(typeid(T).name()) {}
+    virtual ~irresolvable_module() throw () {}
     virtual const char* what() const throw()
     {
-        return typeid(T).name();
+        return name_.c_str();
     }
+
+private:
+    std::string name_;
 };
 
 /**
