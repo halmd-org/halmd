@@ -44,25 +44,30 @@ using boost::shared_ptr;
  */
 class module_exception
   : public std::exception
-{};
+{
+public:
+    virtual const char* what() const throw() = 0;
+};
 
+template <typename T>
 class inept_module
   : public module_exception
 {
 public:
     virtual const char* what() const throw()
     {
-        return "module was not selected with option";
+        return typeid(T).name();
     }
 };
 
+template <typename T>
 class irresolvable_module
   : public module_exception
 {
 public:
     virtual const char* what() const throw()
     {
-        return "module could not be resolved";
+        return typeid(T).name();
     }
 };
 
@@ -167,14 +172,15 @@ void module<T>::resolve(po::options const& vm)
                 // resolvable module
                 return;
             }
-            catch (module_exception const&) {
+            catch (module_exception const& e) {
                 // irresolvable module
+                LOG_DEBUG("failed to resolve module " << e.what());
                 builders.erase(it++);
             }
         }
     }
     // no suitable modules available
-    throw irresolvable_module();
+    throw irresolvable_module<T>();
 }
 
 }} // namespace utility::detail
