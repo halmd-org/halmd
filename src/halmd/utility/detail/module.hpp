@@ -144,8 +144,8 @@ protected:
      */
     void _resolve(po::options const& vm)
     {
-        LOG_DEBUG("resolve module " + std::string(typeid(T).name()));
         if (!resolved_) {
+            LOG_DEBUG("resolve module " + std::string(typeid(T).name()));
             T::resolve(vm);
             // cache result
             resolved_ = true;
