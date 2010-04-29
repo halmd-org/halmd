@@ -54,7 +54,9 @@ class inept_module
   : public module_exception
 {
 public:
-    inept_module() : name_(typeid(T).name()) {}
+    inept_module()
+      : name_("inept module " + std::string(typeid(T).name()))
+    {}
     virtual ~inept_module() throw () {}
     virtual const char* what() const throw()
     {
@@ -66,12 +68,14 @@ private:
 };
 
 template <typename T>
-class irresolvable_module
+class irresolvable_builder
   : public module_exception
 {
 public:
-    irresolvable_module() : name_(typeid(T).name()) {}
-    virtual ~irresolvable_module() throw () {}
+    irresolvable_builder()
+      : name_("irresolvable builder " + std::string(typeid(T).name()))
+    {}
+    virtual ~irresolvable_builder() throw () {}
     virtual const char* what() const throw()
     {
         return name_.c_str();
@@ -140,6 +144,7 @@ protected:
      */
     void _resolve(po::options const& vm)
     {
+        LOG_DEBUG("resolve module " + std::string(typeid(T).name()));
         if (!resolved_) {
             T::resolve(vm);
             // cache result
@@ -168,7 +173,7 @@ template <typename T> typename module<T>::_register module<T>::register_;
 template <typename T>
 void module<T>::resolve(po::options const& vm)
 {
-    LOG_DEBUG("resolve module " << typeid(T).name());
+    LOG_DEBUG("resolve builder " << typeid(T).name());
     builder_set& builders = factory<_Base>::builders();
 
     for (builder_iterator it = builders.begin(); it != builders.end(); ) {
@@ -179,18 +184,18 @@ void module<T>::resolve(po::options const& vm)
         else {
             try {
                 (*it)->_resolve(vm);
-                // resolvable module
+                // resolvable builder
                 return;
             }
             catch (module_exception const& e) {
-                // irresolvable module
-                LOG_DEBUG("failed to resolve module " << e.what());
+                // irresolvable builder
+                LOG_DEBUG(e.what());
                 builders.erase(it++);
             }
         }
     }
     // no suitable modules available
-    throw irresolvable_module<T>();
+    throw irresolvable_builder<T>();
 }
 
 }} // namespace utility::detail
