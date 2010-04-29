@@ -27,52 +27,71 @@
 
 #include <halmd/utility/detail/builder.hpp>
 #include <halmd/utility/options.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd
 {
 namespace utility { namespace detail
 {
 
-template <typename T>
-struct factory
+// import into namespace
+using boost::dynamic_pointer_cast;
+using boost::shared_ptr;
+
+/**
+ * A factory is implicitly instantiated once per base type
+ * and holds a module singleton instance of that type.
+ */
+template <typename _Base>
+class factory
 {
-    typedef boost::shared_ptr<T> base_ptr;
-    typedef boost::shared_ptr<detail::builder<T> > builder_base_ptr;
-    typedef typename detail::builder<T>::less builder_compare;
-    typedef std::set<builder_base_ptr, builder_compare> builder_set;
+public:
+    typedef std::set<shared_ptr<builder<_Base> >, _builder_order<_Base> > builder_set;
 
-    static base_ptr fetch(po::options const& vm)
+    /**
+     * returns module singleton instance
+     */
+    static shared_ptr<_Base> fetch(po::options const& vm)
     {
-        if (!singleton) {
-            singleton = builder->create(vm);
+        if (!singleton_) {
+            if (builders().empty()) {
+                throw std::logic_error("no modules available [" + std::string(typeid(_Base).name()) + "]");
+            }
+            singleton_ = (*builders().begin())->_create(vm);
+            builders().clear();
         }
-        return singleton;
+        return singleton_;
     }
 
-    static void register_(builder_base_ptr const& builder)
+    /**
+     * register module builder
+     */
+    static void _register(shared_ptr<builder<_Base> > builder_)
     {
-        std::string const type = typeid(T).name();
-        if (!builders()->insert(builder).second) {
-            throw std::logic_error("module already registered [" + type + "]");
+        if (!builders().insert(builder_).second) {
+            throw std::logic_error("module already registered [" + std::string(typeid(_Base).name()) + "]");
         }
     }
 
-    //
-    // What's the "static initialization order fiasco"?
-    // http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
-    //
-    static boost::shared_ptr<builder_set> builders()
+    /**
+     * returns singleton builder set
+     */
+    static builder_set& builders()
     {
-        static boost::shared_ptr<builder_set> _(new builder_set);
-        return _;
+        //
+        // What's the "static initialization order fiasco"?
+        // http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
+        //
+        static shared_ptr<builder_set> _(new builder_set);
+        return *_;
     }
 
-    static base_ptr singleton;
-    static builder_base_ptr builder;
+private:
+    /** module singleton */
+    static shared_ptr<_Base> singleton_;
 };
 
-template <typename T> typename factory<T>::base_ptr factory<T>::singleton;
-template <typename T> typename factory<T>::builder_base_ptr factory<T>::builder;
+template <typename _Base> shared_ptr<_Base> factory<_Base>::singleton_;
 
 }} // namespace utility::detail
 

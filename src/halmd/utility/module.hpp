@@ -27,6 +27,7 @@ namespace halmd
 
 // import into top-level namespace
 using utility::detail::module;
+using utility::detail::inept_module;
 
 } // namespace halmd
 

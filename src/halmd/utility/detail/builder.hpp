@@ -21,119 +21,63 @@
 #define HALMD_UTILITY_DETAIL_BUILDER_HPP
 
 #include <boost/shared_ptr.hpp>
-#include <boost/type_traits/is_base_of.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
 #include <halmd/utility/options.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd
 {
 namespace utility { namespace detail
 {
 
-template <typename T, typename Enable = void>
-class builder
-  : public builder<typename T::_Base>
+// import into namespace
+using boost::dynamic_pointer_cast;
+using boost::shared_ptr;
+
+template <typename T = void, typename Enable = void>
+struct builder;
+
+/**
+ * Type-independent module base class
+ */
+template <>
+struct builder<>
 {
-public:
-    typedef builder<typename T::_Base> _Base;
-    typedef typename _Base::resolve_ptr resolve_ptr;
-    typedef typename _Base::create_ptr create_ptr;
-    typedef typename _Base::base_ptr base_ptr;
-    typedef typename _Base::builder_base_ptr builder_base_ptr;
-
-    builder()
-      : _Base(&T::resolve, &create_, priority_)
-    {}
-
-    template <typename builder_type>
-    builder(builder_type const& builder_, typename boost::enable_if<
-      boost::is_base_of<builder_type, builder>, void>::type* dummy = 0)
-      : _Base(builder_)
-    {}
-
     virtual ~builder() {}
-
-    virtual bool is_base_of(builder_base_ptr const& builder_)
-    {
-        return boost::dynamic_pointer_cast<builder>(builder_);
-    }
-
-protected:
-    builder(resolve_ptr resolve, create_ptr create, int priority)
-      : _Base(resolve, create, priority)
-    {}
-
-    enum { priority_ = _Base::priority_ + 1 };
-
-private:
-    static base_ptr create_(po::options const& vm)
-    {
-        return base_ptr(new T(vm));
-    }
+    virtual po::options_description _options() = 0;
+    virtual void _resolve(po::options const& vm) = 0;
 };
 
+/**
+ * Abstract module specification
+ */
+template <typename T, typename Enable>
+struct builder
+  : builder<typename T::_Base>
+{};
+
 template <typename T>
-class builder<T, typename boost::enable_if<
+struct builder<T, typename boost::enable_if<
   boost::is_same<T, typename T::module_type> >::type>
+  : public builder<>
 {
-public:
-    typedef void (*resolve_ptr)(po::options const&);
-    typedef typename T::module_type base_type;
-    typedef boost::shared_ptr<base_type> base_ptr;
-    typedef base_ptr (*create_ptr)(po::options const&);
-    typedef boost::shared_ptr<builder> builder_base_ptr;
+    typedef typename T::module_type _Base;
+    virtual bool _rank(shared_ptr<builder<_Base> > const& other) const = 0;
+    virtual shared_ptr<_Base> _create(po::options const& vm) = 0;
+};
 
-    resolve_ptr const resolve;
-    create_ptr const create;
-    int const priority;
-
-    builder()
-      : resolve(&T::resolve)
-      , create(&create_)
-      , priority(priority_)
-    {}
-
-    template <typename builder_type>
-    builder(builder_type const& builder_, typename boost::enable_if<
-      boost::is_base_of<builder_type, builder>, void>::type* dummy = 0)
-      : resolve(builder_.resolve)
-      , create(builder_.create)
-      , priority(builder_.priority)
-    {}
-
-    virtual ~builder() {}
-
-    virtual bool is_base_of(builder_base_ptr const& builder_)
+/**
+ * Helper class for builder ordering in STL set
+ */
+template <typename _Base>
+struct _builder_order
+{
+    typedef shared_ptr<builder<_Base> > pointer;
+    bool operator()(pointer const& first, pointer const& second) const
     {
-        return boost::dynamic_pointer_cast<builder>(builder_);
-    }
-
-    struct less
-    {
-        bool operator()(builder_base_ptr const& a, builder_base_ptr const& b) const
-        {
-            if (a->priority == b->priority) {
-                return a->resolve != b->resolve;
-            }
-            return a->priority > b->priority;
-        }
-    };
-
-protected:
-    builder(resolve_ptr resolve, create_ptr create, int priority)
-      : resolve(resolve)
-      , create(create)
-      , priority(priority)
-    {}
-
-    enum { priority_ = 0 };
-
-private:
-    static base_ptr create_(po::options const& vm)
-    {
-        return base_ptr(new T(vm));
+        return first->_rank(second);
     }
 };
 

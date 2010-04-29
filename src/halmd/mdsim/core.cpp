@@ -91,7 +91,7 @@ template <int dimension>
 void core<dimension>::resolve(po::options const& vm)
 {
     if (vm["dimension"].as<int>() != dimension) {
-        throw std::runtime_error("not implemented");
+        throw inept_module();
     }
     module<mdsim::force<dimension> >::resolve(vm);
     module<mdsim::neighbor<dimension> >::resolve(vm);

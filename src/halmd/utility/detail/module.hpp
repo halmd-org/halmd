@@ -20,7 +20,6 @@
 #ifndef HALMD_UTILITY_DETAIL_MODULE_HPP
 #define HALMD_UTILITY_DETAIL_MODULE_HPP
 
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <exception>
 #include <set>
@@ -29,73 +28,146 @@
 #include <halmd/utility/detail/builder.hpp>
 #include <halmd/utility/detail/factory.hpp>
 #include <halmd/utility/options.hpp>
+#include <halmd/util/logger.hpp>
 
 namespace halmd
 {
 namespace utility { namespace detail
 {
 
-template <typename T>
-class module
+// import into namespace
+using boost::dynamic_pointer_cast;
+using boost::shared_ptr;
+
+/**
+ * Module exceptions
+ */
+class module_exception
+  : public std::exception
+{};
+
+class inept_module
+  : public module_exception
 {
 public:
-    typedef typename T::module_type base_type;
-    typedef detail::factory<base_type> factory;
-    typedef boost::shared_ptr<detail::builder<base_type> > builder_base_ptr;
-    typedef detail::builder<T> builder_type;
-
-    static boost::shared_ptr<T> fetch(po::options const& vm)
+    virtual const char* what() const throw()
     {
-        return boost::dynamic_pointer_cast<T>(factory::fetch(vm));
+        return "module was not selected with option";
+    }
+};
+
+class irresolvable_module
+  : public module_exception
+{
+public:
+    virtual const char* what() const throw()
+    {
+        return "module could not be resolved";
+    }
+};
+
+/**
+ * Concrete module
+ */
+template <typename T>
+class module
+  : public builder<T>
+{
+public:
+    typedef typename T::module_type _Base;
+    typedef typename factory<_Base>::builder_set builder_set;
+    typedef typename builder_set::iterator builder_iterator;
+
+    /**
+     * returns singleton instance
+     */
+    static shared_ptr<T> fetch(po::options const& vm)
+    {
+        LOG_DEBUG("fetch module " << typeid(T).name());
+        return dynamic_pointer_cast<T>(factory<_Base>::fetch(vm));
     }
 
     static void resolve(po::options const& vm);
 
-private:
+protected:
     /**
-     * Register module builder singleton
+     * weak module ordering
      */
-    struct register_
+    bool _rank(shared_ptr<builder<_Base> > const& other) const
     {
-        register_()
+        // For the case that the *other* module derives from
+        // *this* module and should thus be ranked higher than
+        // this module, returns false. Otherwise returns true.
+        return !dynamic_pointer_cast<builder<T> >(other);
+    }
+
+    /**
+     * creates and returns module instance
+     */
+    shared_ptr<_Base> _create(po::options const& vm)
+    {
+        LOG_DEBUG("create module " << typeid(T).name());
+        return shared_ptr<_Base>(new T(vm));
+    }
+
+    /**
+     * returns module options
+     */
+    po::options_description _options()
+    {
+        return T::options();
+    }
+
+    /**
+     * resolve module dependencies
+     */
+    void _resolve(po::options const& vm)
+    {
+        T::resolve(vm);
+    }
+
+private:
+    struct _register
+    {
+        _register()
         {
-            factory::register_(builder_base_ptr(new builder_type));
+            factory<_Base>::_register(shared_ptr<builder<_Base> >(new module<T>));
         }
     };
 
-    static register_ register__;
+    static _register register_;
 };
 
-template <typename T> typename module<T>::register_ module<T>::register__;
+template <typename T> typename module<T>::_register module<T>::register_;
 
 /**
- * Resolve module dependency
+ * resolve dependencies for given module
  */
 template <typename T>
 void module<T>::resolve(po::options const& vm)
 {
-    if (factory::builder) {
-        if (boost::dynamic_pointer_cast<builder_type>(factory::builder)) {
-            return;
+    LOG_DEBUG("resolve module " << typeid(T).name());
+    builder_set& builders = factory<_Base>::builders();
+
+    for (builder_iterator it = builders.begin(); it != builders.end(); ) {
+        if (!dynamic_pointer_cast<builder<T> >(*it)) {
+            // module does not implement builder specification
+            builders.erase(it++);
         }
-    }
-    BOOST_FOREACH(builder_base_ptr const& builder, *factory::builders()) {
-        if (!boost::dynamic_pointer_cast<builder_type>(builder)) {
-            continue;
-        }
-        if (!factory::builder || factory::builder->is_base_of(builder)) {
+        else {
             try {
-                builder->resolve(vm);
+                (*it)->_resolve(vm);
+                // resolvable module
+                return;
             }
-            catch (std::exception const&) {
-                continue;
+            catch (module_exception const&) {
+                // irresolvable module
+                builders.erase(it++);
             }
-            factory::builder.reset(new builder_type(*builder));
-            return;
         }
     }
-    std::string type = typeid(T).name();
-    throw std::logic_error("no modules available [" + type + "]");
+    // no suitable modules available
+    throw irresolvable_module();
 }
 
 }} // namespace utility::detail
