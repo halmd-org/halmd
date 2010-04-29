@@ -80,7 +80,8 @@ template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
     // assign particle types in random order
-    for (size_t i = 0, j = 0, k = particle->ntypes[j]; j < particle->ntype; ++j, k += particle->ntypes[j]) {
+    for (size_t i = 0, j = 0, k = 0; j < particle->ntype; ++j) {
+        k += particle->ntypes[j];
         for (; i < k; ++i) {
             particle->type[i] = j;
         }
