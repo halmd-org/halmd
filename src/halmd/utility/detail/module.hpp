@@ -89,6 +89,8 @@ public:
 
     static void resolve(po::options const& vm);
 
+    module() : resolved_(false) {}
+
 protected:
     /**
      * weak module ordering
@@ -123,7 +125,11 @@ protected:
      */
     void _resolve(po::options const& vm)
     {
-        T::resolve(vm);
+        if (!resolved_) {
+            T::resolve(vm);
+            // cache result
+            resolved_ = true;
+        }
     }
 
 private:
@@ -136,6 +142,7 @@ private:
     };
 
     static _register register_;
+    bool resolved_;
 };
 
 template <typename T> typename module<T>::_register module<T>::register_;
