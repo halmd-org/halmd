@@ -52,20 +52,23 @@ lj<dimension, float_type>::lj(po::options const& vm)
   , sigma2_(particle->ntype, particle->ntype)
   , en_cut_(particle->ntype, particle->ntype)
 {
-    // parse options
-    if (!vm["binary"].empty() && vm["particles"].defaulted()) {
-        boost::array<float, 3> epsilon(vm["epsilon"].as<boost::array<float, 3> >());
-        std::copy(epsilon.begin(), epsilon.end(), epsilon_.data().begin());
-        boost::array<float, 3> sigma(vm["sigma"].as<boost::array<float, 3> >());
-        std::copy(sigma.begin(), sigma.end(), sigma_.data().begin());
-    }
+    // parse deprecated options
+    boost::array<float, 3> epsilon = vm["epsilon"].as<boost::array<float, 3> >();
+    boost::array<float, 3> sigma = vm["sigma"].as<boost::array<float, 3> >();
+    boost::array<float, 3> r_cut_sigma;
     try {
-        boost::array<float, 3> r_cut(vm["cutoff"].as<boost::array<float, 3> >());
-        std::copy(r_cut.begin(), r_cut.end(), r_cut_sigma_.data().begin());
+        r_cut_sigma = vm["cutoff"].as<boost::array<float, 3> >();
     }
     catch (boost::bad_any_cast const&) {
         // backwards compatibility
-        std::fill(r_cut_sigma_.data().begin(), r_cut_sigma_.data().end(), vm["cutoff"].as<float>());
+        std::fill(r_cut_sigma.begin(), r_cut_sigma.end(), vm["cutoff"].as<float>());
+    }
+    for (size_t i = 0; i < std::min(particle->ntype, 2U); ++i) {
+        for (size_t j = i; j < std::min(particle->ntype, 2U); ++j) {
+            epsilon_(i, j) = epsilon[i + j];
+            sigma_(i, j) = sigma[i + j];
+            r_cut_sigma_(i, j) = r_cut_sigma[i + j];
+        }
     }
 
     // precalculate derived parameters
