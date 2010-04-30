@@ -27,6 +27,7 @@
 #include <typeinfo>
 
 #include <halmd/utility/detail/builder.hpp>
+#include <halmd/utility/detail/exception.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/util/logger.hpp>
 
@@ -40,6 +41,8 @@ using boost::dynamic_pointer_cast;
 using boost::shared_ptr;
 using boost::weak_ptr;
 
+template <typename T = void>
+class module;
 template <typename _Base = void>
 class factory;
 
@@ -117,7 +120,7 @@ public:
         shared_ptr<_Base> singleton(singleton_.lock());
         if (!singleton) {
             if (_builders().empty()) {
-                throw std::logic_error("no modules available [" + std::string(typeid(_Base).name()) + "]");
+                throw module_exception("unavailable module " + module<_Base>::name());
             }
             singleton_ = singleton = (*_builders().begin())->_create(vm);
         }
@@ -130,7 +133,7 @@ public:
     static void _register(shared_ptr<builder<_Base> > builder_)
     {
         if (!_builders().insert(builder_).second) {
-            throw std::logic_error("module already registered [" + std::string(typeid(_Base).name()) + "]");
+            throw module_exception("duplicate builder " + module<_Base>::name());
         }
     }
 
@@ -154,7 +157,7 @@ protected:
     void _options(po::options_description& desc)
     {
         if (_builders().empty()) {
-            throw std::logic_error("no modules available [" + std::string(typeid(_Base).name()) + "]");
+            throw module_exception("unavailable module " + module<_Base>::name());
         }
         (*_builders().begin())->_options(desc);
     }

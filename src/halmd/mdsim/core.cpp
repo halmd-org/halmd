@@ -51,7 +51,7 @@ template <int dimension>
 void core<dimension>::resolve(po::options const& vm)
 {
     if (vm["dimension"].as<int>() != dimension) {
-        throw inept_module<core>();
+        throw module_exception("inept module " + module<core>::name());
     }
     module<mdsim::force<dimension> >::resolve(vm);
     module<mdsim::neighbor<dimension> >::resolve(vm);

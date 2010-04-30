@@ -57,7 +57,7 @@ template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["backend"].as<string>() != "gpu_neighbour") {
-        throw inept_module<particle>();
+        throw module_exception("inept module " + module<particle>::name());
     }
     module<device_type>::resolve(vm);
 }

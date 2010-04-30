@@ -17,18 +17,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_MODULE_HPP
-#define HALMD_UTILITY_MODULE_HPP
+#ifndef HALMD_UTILITY_DETAIL_EXCEPTION_HPP
+#define HALMD_UTILITY_DETAIL_EXCEPTION_HPP
 
-#include <halmd/utility/detail/module.hpp>
+#include <exception>
+#include <string>
 
 namespace halmd
 {
+namespace utility { namespace detail
+{
 
-// import into top-level namespace
-using utility::detail::module;
-using utility::detail::module_exception;
+/**
+ * Module exception
+ */
+class module_exception
+{
+public:
+    module_exception(std::string const& what_) : what_(what_) {}
+    virtual ~module_exception() throw () {}
+    virtual const char* what() const throw()
+    {
+        return what_.c_str();
+    }
+private:
+    std::string what_;
+};
+
+}} // namespace utility::detail
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_MODULE_HPP */
+#endif /* ! HALMD_UTILITY_DETAIL_EXCEPTION_HPP */

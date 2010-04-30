@@ -26,6 +26,7 @@
 #include <typeinfo>
 
 #include <halmd/utility/detail/builder.hpp>
+#include <halmd/utility/detail/exception.hpp>
 #include <halmd/utility/detail/factory.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/util/logger.hpp>
@@ -40,57 +41,8 @@ using boost::dynamic_pointer_cast;
 using boost::shared_ptr;
 
 /**
- * Module exceptions
- */
-class module_exception
-  : public std::exception
-{
-public:
-    virtual const char* what() const throw() = 0;
-};
-
-template <typename T>
-class inept_module
-  : public module_exception
-{
-public:
-    inept_module()
-      : name_("inept module " + std::string(typeid(T).name()))
-    {}
-    virtual ~inept_module() throw () {}
-    virtual const char* what() const throw()
-    {
-        return name_.c_str();
-    }
-
-private:
-    std::string name_;
-};
-
-template <typename T>
-class irresolvable_builder
-  : public module_exception
-{
-public:
-    irresolvable_builder()
-      : name_("irresolvable builder " + std::string(typeid(T).name()))
-    {}
-    virtual ~irresolvable_builder() throw () {}
-    virtual const char* what() const throw()
-    {
-        return name_.c_str();
-    }
-
-private:
-    std::string name_;
-};
-
-/**
  * Concrete module
  */
-template <typename T = void>
-class module;
-
 template <typename T>
 class module
   : public builder<T>
@@ -110,6 +62,14 @@ public:
     }
 
     static void resolve(po::options const& vm);
+
+    /**
+     * returns module name
+     */
+    static std::string name()
+    {
+        return typeid(T).name();
+    }
 
     module() : resolved_(false) {}
 
@@ -198,7 +158,7 @@ void module<T>::resolve(po::options const& vm)
         }
     }
     // no suitable modules available
-    throw irresolvable_builder<T>();
+    throw module_exception("irresolvable module " + module<T>::name());
 }
 
 /**
