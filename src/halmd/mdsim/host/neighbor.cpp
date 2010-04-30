@@ -214,15 +214,12 @@ void neighbor<dimension, float_type>::resolve(po::options const& vm)
  * Assemble module options
  */
 template <int dimension, typename float_type>
-po::options_description
-neighbor<dimension, float_type>::options()
+void neighbor<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         ("skin", po::value<float>()->default_value(0.5),
          "neighbour list skin")
         ;
-    return desc;
 }
 
 // explicit instantiation

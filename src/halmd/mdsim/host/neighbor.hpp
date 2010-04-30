@@ -65,7 +65,7 @@ public:
     boost::shared_ptr<box_type> box;
 
     static void resolve(po::options const& vm);
-    static po::options_description options();
+    static void options(po::options_description& desc);
     neighbor(po::options const& vm);
     virtual ~neighbor() {}
     void update();

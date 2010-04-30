@@ -45,7 +45,7 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
-    static po::options_description options();
+    static void options(po::options_description& desc);
     static void resolve(po::options const& vm);
     verlet(po::options const& vm);
     virtual ~verlet() {}

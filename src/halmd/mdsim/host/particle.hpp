@@ -41,7 +41,6 @@ public:
     typedef std::vector<unsigned int> neighbor_list;
 
     static void resolve(po::options const& vm);
-    static po::options_description options();
     particle(po::options const& vm);
     virtual ~particle() {}
     virtual void rearrange(std::vector<unsigned int> const& index);

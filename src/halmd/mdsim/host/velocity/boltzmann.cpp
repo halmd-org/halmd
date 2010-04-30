@@ -79,15 +79,12 @@ void boltzmann<dimension, float_type>::resolve(po::options const& vm)
  * Assemble module options
  */
 template <int dimension, typename float_type>
-po::options_description
-boltzmann<dimension, float_type>::options()
+void boltzmann<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         ("temperature,K", po::value<float>()->default_value(1.12),
          "Boltzmann distribution temperature")
         ;
-    return desc;
 }
 
 // explicit instantiation

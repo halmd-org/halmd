@@ -261,14 +261,11 @@ void hilbert<dimension, float_type>::resolve(po::options const& vm)
  * Assemble module options
  */
 template <int dimension, typename float_type>
-po::options_description
-hilbert<dimension, float_type>::options()
+void hilbert<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         // no module options
         ;
-    return desc;
 }
 
 // explicit instantiation

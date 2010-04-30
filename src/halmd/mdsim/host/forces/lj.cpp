@@ -184,10 +184,8 @@ void lj<dimension, float_type>::resolve(po::options const& vm)
  * Assemble module options
  */
 template <int dimension, typename float_type>
-po::options_description
-lj<dimension, float_type>::options()
+void lj<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
          "truncate potential at cutoff radius")
@@ -196,7 +194,6 @@ lj<dimension, float_type>::options()
         ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
          "collision diameters AA,AB,BB")
         ;
-    return desc;
 }
 
 // explicit instantiation

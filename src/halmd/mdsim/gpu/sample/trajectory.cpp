@@ -114,25 +114,19 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::resol
  * Assemble module options
  */
 template <int dimension, typename float_type>
-po::options_description
-trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::options()
+void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         // no module options
         ;
-    return desc;
 }
 
 template <int dimension, typename float_type>
-po::options_description
-trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::options()
+void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         // no module options
         ;
-    return desc;
 }
 
 // explicit instantiation

@@ -50,7 +50,7 @@ public:
     boost::shared_ptr<neighbor_type> neighbor;
 
     static void resolve(po::options const& vm);
-    static po::options_description options();
+    static void options(po::options_description& desc);
     hilbert(po::options const& vm);
     virtual ~hilbert() {}
     virtual void order();

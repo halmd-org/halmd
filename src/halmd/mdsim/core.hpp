@@ -45,7 +45,7 @@ public:
     typedef halmd::core _Base;
 
     static void resolve(po::options const& vm);
-    static po::options_description options();
+    static void options(po::options_description& desc);
     core(po::options const& vm);
     void run();
     uint64_t steps() { return steps_; }

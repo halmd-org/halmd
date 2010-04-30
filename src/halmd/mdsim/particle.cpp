@@ -74,17 +74,14 @@ particle<dimension>::particle(po::options const& vm)
  * Assemble module options
  */
 template <int dimension>
-po::options_description
-particle<dimension>::options()
+void particle<dimension>::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         ("particles,N", po::value<unsigned int>()->default_value(1000),
          "number of particles")
         ("binary,M", po::value<boost::array<unsigned int, 2> >(),
          "binary mixture with A,B particles")
         ;
-    return desc;
 }
 
 // explicit instantiation

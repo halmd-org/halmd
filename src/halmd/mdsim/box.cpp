@@ -95,17 +95,14 @@ void box<dimension>::resolve(po::options const& vm)
  * Assemble module options
  */
 template <int dimension>
-po::options_description
-box<dimension>::options()
+void box<dimension>::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         ("density,d", po::value<float>()->default_value(0.75),
          "particle density")
         ("box-length,L", po::value<float>(),
          "simulation box length")
         ;
-    return desc;
 }
 
 // explicit instantiation

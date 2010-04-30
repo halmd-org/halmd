@@ -44,7 +44,7 @@ template <typename _Base = void>
 class factory;
 
 /**
- * Type-independent builder registry
+ * Factory registry
  */
 template <>
 class factory<>
@@ -55,21 +55,19 @@ public:
     virtual ~factory() {}
 
     /**
-     * returns options of resolved builders
+     * assemble options of resolved builders
      */
-    static po::options_description options()
+    static void options(po::options_description& desc)
     {
         factory_set& factories = factory<>::factories();
-        po::options_description desc;
 
         for (factory_iterator it = factories.begin(); it != factories.end(); ++it) {
-            desc.add((*it)->_options());
+            (*it)->_options(desc);
         }
-        return desc;
     }
 
 protected:
-    virtual po::options_description _options() = 0;
+    virtual void _options(po::options_description& desc) = 0;
 
     /**
      * register factory
@@ -153,12 +151,12 @@ protected:
     /**
      * returns module options of builder with highest rank
      */
-    po::options_description _options()
+    void _options(po::options_description& desc)
     {
         if (_builders().empty()) {
             throw std::logic_error("no modules available [" + std::string(typeid(_Base).name()) + "]");
         }
-        return (*_builders().begin())->_options();
+        (*_builders().begin())->_options(desc);
     }
 
 private:

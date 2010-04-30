@@ -137,9 +137,9 @@ protected:
     /**
      * returns module options
      */
-    po::options_description _options()
+    void _options(po::options_description& desc)
     {
-        return T::options();
+        T::options(desc);
     }
 
     /**
@@ -213,7 +213,9 @@ public:
      */
     static po::options_description options()
     {
-        return factory<>::options();
+        po::options_description desc;
+        factory<>::options(desc);
+        return desc;
     }
 };
 

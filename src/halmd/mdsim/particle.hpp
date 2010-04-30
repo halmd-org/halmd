@@ -36,7 +36,7 @@ class particle
 public:
     typedef particle module_type;
 
-    static po::options_description options();
+    static void options(po::options_description& desc);
     particle(po::options const& vm);
     virtual ~particle() {}
 

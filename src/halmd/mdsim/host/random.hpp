@@ -40,7 +40,7 @@ public:
     typedef boost::mt19937 random_generator;
 
     static void resolve(po::options const& vm);
-    static po::options_description options();
+    static void options(po::options_description& desc);
     random(po::options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);

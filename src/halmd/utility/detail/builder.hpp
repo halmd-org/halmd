@@ -46,7 +46,7 @@ template <>
 struct builder<>
 {
     virtual ~builder() {}
-    virtual po::options_description _options() = 0;
+    virtual void _options(po::options_description& desc) = 0;
     virtual void _resolve(po::options const& vm) = 0;
 };
 

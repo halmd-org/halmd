@@ -85,15 +85,12 @@ void verlet<dimension, float_type>::resolve(po::options const& vm)
  * Assemble module options
  */
 template <int dimension, typename float_type>
-po::options_description
-verlet<dimension, float_type>::options()
+void verlet<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         ("timestep,h", po::value<double>()->default_value(0.001),
          "simulation timestep")
         ;
-    return desc;
 }
 
 // explicit instantiation

@@ -181,9 +181,8 @@ void device::resolve(po::options const& vm)
 /**
  * Assemble module options
  */
-po::options_description device::options()
+void device::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
 #ifndef __DEVICE_EMULATION__
         ("device,D", po::value<boost::multi_array<int, 1> >(),
@@ -192,7 +191,6 @@ po::options_description device::options()
         ("threads,T", po::value<unsigned int>()->default_value(128),
          "number of CUDA threads per block")
         ;
-    return desc;
 }
 
 }} // namespace utility::gpu

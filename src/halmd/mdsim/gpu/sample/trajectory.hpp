@@ -51,7 +51,7 @@ public:
     boost::shared_ptr<box_type> box;
 
     static void resolve(po::options const& vm);
-    static po::options_description options();
+    static void options(po::options_description& desc);
     trajectory(po::options const& vm);
     virtual ~trajectory() {}
     void acquire();
@@ -82,7 +82,7 @@ public:
     boost::shared_ptr<box_type> box;
 
     static void resolve(po::options const& vm);
-    static po::options_description options();
+    static void options(po::options_description& desc);
     trajectory(po::options const& vm);
     virtual ~trajectory() {}
     void acquire();

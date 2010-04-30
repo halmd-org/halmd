@@ -62,20 +62,6 @@ void particle<dimension, float_type>::resolve(po::options const& vm)
     module<device_type>::resolve(vm);
 }
 
-/**
- * Assemble module options
- */
-template <unsigned int dimension, typename float_type>
-po::options_description
-particle<dimension, float_type>::options()
-{
-    po::options_description desc(_Base::options());
-    desc.add_options()
-        // no module options
-        ;
-    return desc;
-}
-
 // explicit instantiation
 template class particle<3, float>;
 template class particle<2, float>;

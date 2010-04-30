@@ -44,7 +44,7 @@ public:
     boost::shared_ptr<random_type> random;
 
     static void resolve(po::options const& vm);
-    static po::options_description options();
+    static void options(po::options_description& desc);
     boltzmann(po::options const& vm);
     virtual ~boltzmann() {};
     void set();

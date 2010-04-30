@@ -56,16 +56,14 @@ void random::resolve(po::options const& vm)
 /**
  * Assemble module options
  */
-po::options_description random::options()
+void random::options(po::options_description& desc)
 {
-    po::options_description desc;
     desc.add_options()
         ("random-seed", po::value<unsigned int>(),
          "random number generator integer seed")
         ("random-device", po::value<std::string>()->default_value("/dev/random"),
          "random number generator device")
         ;
-    return desc;
 }
 
 }} // namespace mdsim::host
