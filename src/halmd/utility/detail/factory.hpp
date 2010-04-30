@@ -21,6 +21,7 @@
 #define HALMD_UTILITY_DETAIL_FACTORY_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <exception>
 #include <set>
 #include <typeinfo>
@@ -37,6 +38,7 @@ namespace utility { namespace detail
 // import into namespace
 using boost::dynamic_pointer_cast;
 using boost::shared_ptr;
+using boost::weak_ptr;
 
 /**
  * A factory is implicitly instantiated once per base type
@@ -53,14 +55,21 @@ public:
      */
     static shared_ptr<_Base> fetch(po::options const& vm)
     {
-        if (!singleton_) {
+        // We use an observing weak pointer instead of an owning
+        // shared pointer to let the caller decide when the
+        // singleton instance and its dependencies are destroyed.
+        //
+        // Special care has to be taken not to destroy the
+        // instance before returning it over to the caller.
+
+        shared_ptr<_Base> singleton(singleton_.lock());
+        if (!singleton) {
             if (builders().empty()) {
                 throw std::logic_error("no modules available [" + std::string(typeid(_Base).name()) + "]");
             }
-            singleton_ = (*builders().begin())->_create(vm);
-            builders().clear();
+            singleton_ = singleton = (*builders().begin())->_create(vm);
         }
-        return singleton_;
+        return singleton;
     }
 
     /**
@@ -88,10 +97,10 @@ public:
 
 private:
     /** module singleton */
-    static shared_ptr<_Base> singleton_;
+    static weak_ptr<_Base> singleton_;
 };
 
-template <typename _Base> shared_ptr<_Base> factory<_Base>::singleton_;
+template <typename _Base> weak_ptr<_Base> factory<_Base>::singleton_;
 
 }} // namespace utility::detail
 
