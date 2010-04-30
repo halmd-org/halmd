@@ -21,6 +21,7 @@
 #define HALMD_UTILITY_DETAIL_MODULE_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <exception>
 #include <set>
 #include <typeinfo>
@@ -39,6 +40,7 @@ namespace utility { namespace detail
 // import into namespace
 using boost::dynamic_pointer_cast;
 using boost::shared_ptr;
+using boost::weak_ptr;
 
 /**
  * Concrete module
@@ -66,12 +68,23 @@ public:
     }
 
     /**
-     * creates and returns module instance
+     * returns singleton instance
      */
-    shared_ptr<_Base> create(po::options const& vm)
+    shared_ptr<_Base> fetch(po::options const& vm)
     {
-        LOG_DEBUG("create module " << typeid(T).name());
-        return shared_ptr<_Base>(new T(vm));
+        // We use an observing weak pointer instead of an owning
+        // shared pointer to let the caller decide when the
+        // singleton instance and its dependencies are destroyed.
+        //
+        // Special care has to be taken not to destroy the
+        // instance before returning it over to the caller.
+
+        shared_ptr<T> singleton(singleton_.lock());
+        if (!singleton) {
+            singleton.reset(new T(vm));
+            singleton_ = singleton;
+        }
+        return singleton;
     }
 
     /**
@@ -95,9 +108,14 @@ public:
         }
     }
 
+    /** module instance observer */
+    static weak_ptr<T> singleton_;
+
 private:
     bool resolved_;
 };
+
+template <typename T> weak_ptr<T> module<T>::singleton_;
 
 }} // namespace utility::detail
 

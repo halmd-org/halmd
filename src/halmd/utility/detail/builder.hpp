@@ -65,7 +65,7 @@ struct builder<T, typename boost::enable_if<
 {
     typedef typename T::module_type _Base;
     virtual bool rank(shared_ptr<builder<_Base> > const& other) const = 0;
-    virtual shared_ptr<_Base> create(po::options const& vm) = 0;
+    virtual shared_ptr<_Base> fetch(po::options const& vm) = 0;
 };
 
 /**

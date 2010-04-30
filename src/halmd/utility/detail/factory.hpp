@@ -108,21 +108,10 @@ public:
      */
     static shared_ptr<_Base> fetch(po::options const& vm)
     {
-        // We use an observing weak pointer instead of an owning
-        // shared pointer to let the caller decide when the
-        // singleton instance and its dependencies are destroyed.
-        //
-        // Special care has to be taken not to destroy the
-        // instance before returning it over to the caller.
-
-        shared_ptr<_Base> singleton(singleton_.lock());
-        if (!singleton) {
-            if (_builders().empty()) {
-                throw module_exception(std::string("unavailable module ") + typeid(_Base).name());
-            }
-            singleton_ = singleton = (*_builders().begin())->create(vm);
+        if (_builders().empty()) {
+            throw module_exception(std::string("unavailable module ") + typeid(_Base).name());
         }
-        return singleton;
+        return (*_builders().begin())->fetch(vm);
     }
 
     /**
@@ -169,12 +158,7 @@ private:
         static shared_ptr<builder_set> _(new builder_set);
         return *_;
     }
-
-    /** module singleton */
-    static weak_ptr<_Base> singleton_;
 };
-
-template <typename _Base> weak_ptr<_Base> factory<_Base>::singleton_;
 
 }} // namespace utility::detail
 
