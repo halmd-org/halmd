@@ -60,7 +60,7 @@ int main(int argc, char **argv)
         return e.status();
     }
 
-#ifdef DEBUG
+#ifndef NDEBUG
     // enable logging as early as possible if debugging
     halmd::logger::init(vm["output"].as<std::string>() + ".log", vm["verbose"].as<int>());
 #endif
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
         return e.status();
     }
 
-#ifndef DEBUG
+#ifdef NDEBUG
     // enable logging after successful option parsing if not debugging
     halmd::logger::init(vm["output"].as<std::string>() + ".log", vm["verbose"].as<int>());
 #endif
