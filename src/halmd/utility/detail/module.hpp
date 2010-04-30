@@ -88,6 +88,9 @@ private:
 /**
  * Concrete module
  */
+template <typename T = void>
+class module;
+
 template <typename T>
 class module
   : public builder<T>
@@ -197,6 +200,22 @@ void module<T>::resolve(po::options const& vm)
     // no suitable modules available
     throw irresolvable_builder<T>();
 }
+
+/**
+ * Type-independent module interface
+ */
+template <>
+class module<>
+{
+public:
+    /**
+     * returns options of resolved modules
+     */
+    static po::options_description options()
+    {
+        return factory<>::options();
+    }
+};
 
 }} // namespace utility::detail
 

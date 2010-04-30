@@ -40,12 +40,66 @@ using boost::dynamic_pointer_cast;
 using boost::shared_ptr;
 using boost::weak_ptr;
 
+template <typename _Base = void>
+class factory;
+
+/**
+ * Type-independent builder registry
+ */
+template <>
+class factory<>
+{
+public:
+    typedef std::set<shared_ptr<factory<> > > factory_set;
+    typedef factory_set::iterator factory_iterator;
+    virtual ~factory() {}
+
+    /**
+     * returns options of resolved builders
+     */
+    static po::options_description options()
+    {
+        factory_set& factories = factory<>::factories();
+        po::options_description desc;
+
+        for (factory_iterator it = factories.begin(); it != factories.end(); ++it) {
+            desc.add((*it)->_options());
+        }
+        return desc;
+    }
+
+protected:
+    virtual po::options_description _options() = 0;
+
+    /**
+     * register factory
+     */
+    struct _register
+    {
+        _register(shared_ptr<factory<> > factory_)
+        {
+            factory<>::factories().insert(factory_);
+        }
+    };
+
+private:
+    /**
+     * returns singleton factory set
+     */
+    static factory_set& factories()
+    {
+        static shared_ptr<factory_set> _(new factory_set);
+        return *_;
+    }
+};
+
 /**
  * A factory is implicitly instantiated once per base type
  * and holds a module singleton instance of that type.
  */
 template <typename _Base>
 class factory
+  : public factory<>
 {
 public:
     typedef std::set<shared_ptr<builder<_Base> >, _builder_order<_Base> > builder_set;
@@ -64,10 +118,10 @@ public:
 
         shared_ptr<_Base> singleton(singleton_.lock());
         if (!singleton) {
-            if (builders().empty()) {
+            if (_builders().empty()) {
                 throw std::logic_error("no modules available [" + std::string(typeid(_Base).name()) + "]");
             }
-            singleton_ = singleton = (*builders().begin())->_create(vm);
+            singleton_ = singleton = (*_builders().begin())->_create(vm);
         }
         return singleton;
     }
@@ -77,7 +131,7 @@ public:
      */
     static void _register(shared_ptr<builder<_Base> > builder_)
     {
-        if (!builders().insert(builder_).second) {
+        if (!_builders().insert(builder_).second) {
             throw std::logic_error("module already registered [" + std::string(typeid(_Base).name()) + "]");
         }
     }
@@ -87,15 +141,36 @@ public:
      */
     static builder_set& builders()
     {
-        //
+        // Calling this function signals that the factory is in use.
+        // Therefore we register the factory (once) to enable options
+        // collection of the builder with the highest rank.
+
+        static factory<>::_register register_(shared_ptr<factory<> >(new factory<_Base>));
+        return _builders();
+    }
+
+protected:
+    /**
+     * returns module options of builder with highest rank
+     */
+    po::options_description _options()
+    {
+        if (_builders().empty()) {
+            throw std::logic_error("no modules available [" + std::string(typeid(_Base).name()) + "]");
+        }
+        return (*_builders().begin())->_options();
+    }
+
+private:
+    static builder_set& _builders()
+    {
         // What's the "static initialization order fiasco"?
         // http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
-        //
+
         static shared_ptr<builder_set> _(new builder_set);
         return *_;
     }
 
-private:
     /** module singleton */
     static weak_ptr<_Base> singleton_;
 };
