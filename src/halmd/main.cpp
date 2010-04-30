@@ -29,7 +29,6 @@
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
 #endif
-#include <halmd/mdlib.hpp>
 #include <halmd/core.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
@@ -64,28 +63,19 @@ int main(int argc, char **argv)
     // enable logging as early as possible if debugging
     halmd::logger::init(vm["output"].as<std::string>() + ".log", vm["verbose"].as<int>());
 #endif
-    // load backend library
-    halmd::mdlib mdlib;
-#ifndef BACKEND_EXECUTABLES
+
+    // resolve module dependencies
     try {
-        string const backend(vm["backend"].as<string>());
-        boost::filesystem::path exe(argv[0]);
-        boost::filesystem::path lib("libhalmd_" + backend + ".so");
-        mdlib.open((exe.parent_path() / lib));
+        module<core>::resolve(vm);
     }
     catch (std::exception const& e) {
         cerr << PROGRAM_NAME ": " << e.what() << endl;
         return EXIT_FAILURE;
     }
-    if (mdlib.version() != PROGRAM_VERSION) {
-        cerr << PROGRAM_NAME ": mismatching program and backend version" << endl;
-        return EXIT_FAILURE;
-    }
-#endif
 
-    // parse backend options
+    // parse module options
     try {
-        vm.parse(mdlib.options());
+        vm.parse(module<>::options());
     }
     catch (halmd::options::exit_exception const& e) {
         return e.status();
@@ -97,7 +87,7 @@ int main(int argc, char **argv)
 #endif
 
     LOG(PROGRAM_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
-    LOG("variant: " << mdlib.variant());
+    LOG("variant: " << PROGRAM_VARIANT);
 #ifndef NDEBUG
     LOG_WARNING("built with enabled debugging");
 #endif
@@ -109,7 +99,7 @@ int main(int argc, char **argv)
     std::vector<string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
-    LOG("MD simulation backend: " << mdlib.backend());
+    LOG("MD simulation backend: " << vm["backend"].as<string>());
     std::string const hostname(halmd::get_hostname());
     try {
         LOG("host name: " << halmd::get_fqdn_hostname(hostname));
@@ -137,7 +127,6 @@ int main(int argc, char **argv)
         }
 
         // run MD simulation
-        module<core>::resolve(vm);
         module<core>::fetch(vm)->run();
 #ifdef NDEBUG
     }

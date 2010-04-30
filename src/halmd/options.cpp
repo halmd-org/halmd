@@ -248,6 +248,8 @@ void options::parse(int argc, char** argv)
 #endif
          "MD simulation backend")
 #endif /* ! BACKEND_EXECUTABLES */
+        ("dimension", po::value<int>()->default_value(3),
+         "positional coordinates dimension")
         ;
 
     try {
