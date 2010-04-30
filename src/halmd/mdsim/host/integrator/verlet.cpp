@@ -31,6 +31,28 @@ namespace halmd
 namespace mdsim { namespace host { namespace integrator
 {
 
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+void verlet<dimension, float_type>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("timestep,h", po::value<double>()->default_value(0.001),
+         "simulation timestep")
+        ;
+}
+
+/**
+ * Resolve module dependencies
+ */
+template <int dimension, typename float_type>
+void verlet<dimension, float_type>::resolve(po::options const& vm)
+{
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
+}
+
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(po::options const& vm)
   : _Base(vm)
@@ -69,28 +91,6 @@ void verlet<dimension, float_type>::finalize()
     for (size_t i = 0; i < particle->nbox; ++i) {
         particle->v[i] += particle->f[i] * static_cast<float_type>(timestep_half_);
     }
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::resolve(po::options const& vm)
-{
-    module<particle_type>::resolve(vm);
-    module<box_type>::resolve(vm);
-}
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("timestep,h", po::value<double>()->default_value(0.001),
-         "simulation timestep")
-        ;
 }
 
 // explicit instantiation

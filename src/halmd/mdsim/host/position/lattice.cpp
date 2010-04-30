@@ -36,6 +36,17 @@ using namespace boost;
 using namespace numeric::host::blas;
 using namespace std;
 
+/**
+ * Resolve module dependencies
+ */
+template <int dimension, typename float_type>
+void lattice<dimension, float_type>::resolve(po::options const& vm)
+{
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
+    module<random_type>::resolve(vm);
+}
+
 template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(po::options const& vm)
   : _Base(vm)
@@ -128,28 +139,6 @@ void lattice<dimension, float_type>::set()
     fill(particle->image.begin(), particle->image.end(), 0);
 
     LOG("placed particles on fcc lattice: a = " << a);
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::resolve(po::options const& vm)
-{
-    module<particle_type>::resolve(vm);
-    module<box_type>::resolve(vm);
-    module<random_type>::resolve(vm);
-}
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        // no module options
-        ;
 }
 
 // explicit instantiation

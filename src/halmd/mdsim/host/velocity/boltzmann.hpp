@@ -43,8 +43,8 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<random_type> random;
 
-    static void resolve(po::options const& vm);
     static void options(po::options_description& desc);
+    static void resolve(po::options const& vm);
     boltzmann(po::options const& vm);
     virtual ~boltzmann() {};
     void set();

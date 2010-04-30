@@ -39,6 +39,21 @@ namespace utility { namespace gpu
 {
 
 /**
+ * Assemble module options
+ */
+void device::options(po::options_description& desc)
+{
+    desc.add_options()
+#ifndef __DEVICE_EMULATION__
+        ("device,D", po::value<boost::multi_array<int, 1> >(),
+         "CUDA device(s)")
+#endif
+        ("threads,T", po::value<unsigned int>()->default_value(128),
+         "number of CUDA threads per block")
+        ;
+}
+
+/**
  * Initialize CUDA device
  */
 device::device(po::options const& vm)
@@ -169,29 +184,6 @@ string device::cuda_runtime_version()
 }
 
 #endif /* CUDART_VERSION >= 2020 */
-
-/**
- * Resolve module dependencies
- */
-void device::resolve(po::options const& vm)
-{
-    // no dependencies
-}
-
-/**
- * Assemble module options
- */
-void device::options(po::options_description& desc)
-{
-    desc.add_options()
-#ifndef __DEVICE_EMULATION__
-        ("device,D", po::value<boost::multi_array<int, 1> >(),
-         "CUDA device(s)")
-#endif
-        ("threads,T", po::value<unsigned int>()->default_value(128),
-         "number of CUDA threads per block")
-        ;
-}
 
 }} // namespace utility::gpu
 

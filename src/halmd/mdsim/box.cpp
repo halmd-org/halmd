@@ -35,6 +35,29 @@ namespace mdsim
 {
 
 /**
+ * Assemble module options
+ */
+template <int dimension>
+void box<dimension>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("density,d", po::value<float>()->default_value(0.75),
+         "particle density")
+        ("box-length,L", po::value<float>(),
+         "simulation box length")
+        ;
+}
+
+/**
+ * Resolve module dependencies
+ */
+template <int dimension>
+void box<dimension>::resolve(po::options const& vm)
+{
+    module<particle_type>::resolve(vm);
+}
+
+/**
  * Set box edge lengths
  */
 template <int dimension>
@@ -80,29 +103,6 @@ void box<dimension>::density(double value)
 
     LOG("simulation box edge lengths: " << length_);
     LOG("number density: " << density_);
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension>
-void box<dimension>::resolve(po::options const& vm)
-{
-    module<particle_type>::resolve(vm);
-}
-
-/**
- * Assemble module options
- */
-template <int dimension>
-void box<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("density,d", po::value<float>()->default_value(0.75),
-         "particle density")
-        ("box-length,L", po::value<float>(),
-         "simulation box length")
-        ;
 }
 
 // explicit instantiation

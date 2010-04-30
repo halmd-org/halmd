@@ -48,8 +48,8 @@ public:
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;
 
+    static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm);
-    static void options(po::options_description& desc);
     lattice(po::options const& vm);
     virtual ~lattice() {}
     void set();

@@ -34,6 +34,29 @@ namespace halmd
 namespace mdsim { namespace host
 {
 
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+void neighbor<dimension, float_type>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("skin", po::value<float>()->default_value(0.5),
+         "neighbour list skin")
+        ;
+}
+
+/**
+ * Resolve module dependencies
+ */
+template <int dimension, typename float_type>
+void neighbor<dimension, float_type>::resolve(po::options const& vm)
+{
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
+    module<force_type>::resolve(vm);
+}
+
 template <int dimension, typename float_type>
 neighbor<dimension, float_type>::neighbor(po::options const& vm)
   : _Base(vm)
@@ -197,29 +220,6 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
         // add particle to neighbor list
         particle->neighbor[i].push_back(j);
     }
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::resolve(po::options const& vm)
-{
-    module<particle_type>::resolve(vm);
-    module<box_type>::resolve(vm);
-    module<force_type>::resolve(vm);
-}
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("skin", po::value<float>()->default_value(0.5),
-         "neighbour list skin")
-        ;
 }
 
 // explicit instantiation

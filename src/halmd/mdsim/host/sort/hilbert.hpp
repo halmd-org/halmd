@@ -49,8 +49,8 @@ public:
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<neighbor_type> neighbor;
 
+    static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm);
-    static void options(po::options_description& desc);
     hilbert(po::options const& vm);
     virtual ~hilbert() {}
     virtual void order();

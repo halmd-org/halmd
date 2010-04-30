@@ -42,8 +42,8 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
-    static void resolve(po::options const& vm);
     static void options(po::options_description& desc);
+    static void resolve(po::options const& vm);
     box(po::options const& vm);
     virtual ~box() {}
     void length(vector_type const& value_type);

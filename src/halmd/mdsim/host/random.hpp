@@ -39,8 +39,8 @@ public:
     typedef mdsim::random _Base;
     typedef boost::mt19937 random_generator;
 
-    static void resolve(po::options const& vm);
     static void options(po::options_description& desc);
+    static void resolve(po::options const& vm) {}
     random(po::options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);

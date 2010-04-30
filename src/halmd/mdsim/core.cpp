@@ -31,6 +31,37 @@ namespace mdsim
 {
 
 /**
+ * Assemble module options
+ */
+template <int dimension>
+void core<dimension>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("steps,s", po::value<uint64_t>()->default_value(10000),
+         "number of simulation steps")
+        ("time,t", po::value<double>(),
+         "total simulation time")
+        ;
+}
+
+/**
+ * Resolve module dependencies
+ */
+template <int dimension>
+void core<dimension>::resolve(po::options const& vm)
+{
+    if (vm["dimension"].as<int>() != dimension) {
+        throw inept_module<core>();
+    }
+    module<mdsim::force<dimension> >::resolve(vm);
+    module<mdsim::neighbor<dimension> >::resolve(vm);
+    module<mdsim::sort<dimension> >::resolve(vm);
+    module<mdsim::integrator<dimension> >::resolve(vm);
+    module<mdsim::position<dimension> >::resolve(vm);
+    module<mdsim::velocity<dimension> >::resolve(vm);
+}
+
+/**
  * Initialize simulation
  */
 template <int dimension>
@@ -82,37 +113,6 @@ void core<dimension>::run()
     }
 
     LOG("finished simulation");
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension>
-void core<dimension>::resolve(po::options const& vm)
-{
-    if (vm["dimension"].as<int>() != dimension) {
-        throw inept_module<core>();
-    }
-    module<mdsim::force<dimension> >::resolve(vm);
-    module<mdsim::neighbor<dimension> >::resolve(vm);
-    module<mdsim::sort<dimension> >::resolve(vm);
-    module<mdsim::integrator<dimension> >::resolve(vm);
-    module<mdsim::position<dimension> >::resolve(vm);
-    module<mdsim::velocity<dimension> >::resolve(vm);
-}
-
-/**
- * Assemble module options
- */
-template <int dimension>
-void core<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("steps,s", po::value<uint64_t>()->default_value(10000),
-         "number of simulation steps")
-        ("time,t", po::value<double>(),
-         "total simulation time")
-        ;
 }
 
 // explicit instantiation

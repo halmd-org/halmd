@@ -34,6 +34,17 @@ namespace halmd
 namespace mdsim { namespace host { namespace sort
 {
 
+/**
+ * Resolve module dependencies
+ */
+template <int dimension, typename float_type>
+void hilbert<dimension, float_type>::resolve(po::options const& vm)
+{
+    module<particle_type>::resolve(vm);
+    module<box_type>::resolve(vm);
+    module<neighbor_type>::resolve(vm);
+}
+
 template <int dimension, typename float_type>
 hilbert<dimension, float_type>::hilbert(po::options const& vm)
   : _Base(vm)
@@ -244,28 +255,6 @@ void hilbert<dimension, float_type>::swap(unsigned int& v, unsigned int& a, unsi
     v = v ^ (va << a) ^ (vb << b) ^ (va << b) ^ (vb << a);
     // update code-to-vertex lookup table
     std::swap(a, b);
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::resolve(po::options const& vm)
-{
-    module<particle_type>::resolve(vm);
-    module<box_type>::resolve(vm);
-    module<neighbor_type>::resolve(vm);
-}
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        // no module options
-        ;
 }
 
 // explicit instantiation

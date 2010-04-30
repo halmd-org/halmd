@@ -38,7 +38,7 @@ public:
     typedef device module_type;
 
     static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
+    static void resolve(po::options const& vm) {}
     device(po::options const& vm);
     virtual ~device() {}
     unsigned int threads() { return threads_; }

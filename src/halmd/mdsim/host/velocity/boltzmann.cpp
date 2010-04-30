@@ -28,6 +28,28 @@ namespace mdsim { namespace host { namespace velocity
 using namespace boost;
 using namespace std;
 
+/**
+ * Assemble module options
+ */
+template <int dimension, typename float_type>
+void boltzmann<dimension, float_type>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("temperature,K", po::value<float>()->default_value(1.12),
+         "Boltzmann distribution temperature")
+        ;
+}
+
+/**
+ * Resolve module dependencies
+ */
+template <int dimension, typename float_type>
+void boltzmann<dimension, float_type>::resolve(po::options const& vm)
+{
+    module<particle_type>::resolve(vm);
+    module<random_type>::resolve(vm);
+}
+
 template <int dimension, typename float_type>
 boltzmann<dimension, float_type>::boltzmann(po::options const& vm)
   : _Base(vm)
@@ -63,28 +85,6 @@ void boltzmann<dimension, float_type>::set()
         }
     }
     LOG("assigned Maxwell-Boltzmann velocity distribution: T = " << temp_);
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::resolve(po::options const& vm)
-{
-    module<particle_type>::resolve(vm);
-    module<random_type>::resolve(vm);
-}
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("temperature,K", po::value<float>()->default_value(1.12),
-         "Boltzmann distribution temperature")
-        ;
 }
 
 // explicit instantiation

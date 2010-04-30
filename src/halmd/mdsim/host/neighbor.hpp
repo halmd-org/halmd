@@ -64,8 +64,8 @@ public:
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
 
-    static void resolve(po::options const& vm);
     static void options(po::options_description& desc);
+    static void resolve(po::options const& vm);
     neighbor(po::options const& vm);
     virtual ~neighbor() {}
     void update();
