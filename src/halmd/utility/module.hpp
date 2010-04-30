@@ -26,8 +26,104 @@ namespace halmd
 {
 
 // import into top-level namespace
-using utility::detail::module;
 using utility::detail::module_exception;
+
+/**
+ * Concrete module
+ */
+template <typename T = void>
+class module
+{
+public:
+    typedef typename T::module_type _Base;
+    typedef utility::detail::module<T> _Module;
+    typedef utility::detail::builder<T> builder;
+    typedef utility::detail::builder<_Base> _Base_builder;
+    typedef utility::detail::factory<_Base> factory;
+    typedef typename factory::builder_set builder_set;
+    typedef typename builder_set::iterator builder_iterator;
+
+    /**
+     * returns singleton instance
+     */
+    static boost::shared_ptr<T> fetch(po::options const& vm)
+    {
+        LOG_DEBUG("fetch module " << typeid(T).name());
+        return boost::dynamic_pointer_cast<T>(factory::fetch(vm));
+    }
+
+    static void resolve(po::options const& vm);
+
+    /**
+     * returns module name
+     */
+    static std::string name()
+    {
+        return typeid(T).name();
+    }
+
+private:
+    struct _register
+    {
+        _register()
+        {
+            factory::_register(boost::shared_ptr<_Base_builder>(new _Module));
+        }
+    };
+
+    static _register register_;
+};
+
+template <typename T> typename module<T>::_register module<T>::register_;
+
+/**
+ * resolve dependencies for given module
+ */
+template <typename T>
+void module<T>::resolve(po::options const& vm)
+{
+    LOG_DEBUG("resolve builder " << typeid(T).name());
+    builder_set& builders = factory::builders();
+
+    for (builder_iterator it = builders.begin(); it != builders.end(); ) {
+        if (!boost::dynamic_pointer_cast<builder>(*it)) {
+            // module does not implement builder specification
+            builders.erase(it++);
+        }
+        else {
+            try {
+                (*it)->resolve(vm);
+                // resolvable builder
+                return;
+            }
+            catch (module_exception const& e) {
+                // irresolvable builder
+                LOG_DEBUG(e.what());
+                builders.erase(it++);
+            }
+        }
+    }
+    // no suitable modules available
+    throw module_exception("irresolvable module " + module<T>::name());
+}
+
+/**
+ * Type-independent module interface
+ */
+template <>
+class module<>
+{
+public:
+    /**
+     * returns options of resolved modules
+     */
+    static po::options_description options()
+    {
+        po::options_description desc;
+        utility::detail::factory<>::options(desc);
+        return desc;
+    }
+};
 
 } // namespace halmd
 

@@ -46,8 +46,8 @@ template <>
 struct builder<>
 {
     virtual ~builder() {}
-    virtual void _options(po::options_description& desc) = 0;
-    virtual void _resolve(po::options const& vm) = 0;
+    virtual void options(po::options_description& desc) = 0;
+    virtual void resolve(po::options const& vm) = 0;
 };
 
 /**
@@ -64,8 +64,8 @@ struct builder<T, typename boost::enable_if<
   : public builder<>
 {
     typedef typename T::module_type _Base;
-    virtual bool _rank(shared_ptr<builder<_Base> > const& other) const = 0;
-    virtual shared_ptr<_Base> _create(po::options const& vm) = 0;
+    virtual bool rank(shared_ptr<builder<_Base> > const& other) const = 0;
+    virtual shared_ptr<_Base> create(po::options const& vm) = 0;
 };
 
 /**
@@ -77,7 +77,7 @@ struct _builder_order
     typedef shared_ptr<builder<_Base> > pointer;
     bool operator()(pointer const& first, pointer const& second) const
     {
-        return first->_rank(second);
+        return first->rank(second);
     }
 };
 

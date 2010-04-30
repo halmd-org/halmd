@@ -52,32 +52,12 @@ public:
     typedef typename factory<_Base>::builder_set builder_set;
     typedef typename builder_set::iterator builder_iterator;
 
-    /**
-     * returns singleton instance
-     */
-    static shared_ptr<T> fetch(po::options const& vm)
-    {
-        LOG_DEBUG("fetch module " << typeid(T).name());
-        return dynamic_pointer_cast<T>(factory<_Base>::fetch(vm));
-    }
-
-    static void resolve(po::options const& vm);
-
-    /**
-     * returns module name
-     */
-    static std::string name()
-    {
-        return typeid(T).name();
-    }
-
     module() : resolved_(false) {}
 
-protected:
     /**
      * weak module ordering
      */
-    bool _rank(shared_ptr<builder<_Base> > const& other) const
+    bool rank(shared_ptr<builder<_Base> > const& other) const
     {
         // For the case that the *other* module derives from
         // *this* module and should thus be ranked higher than
@@ -88,7 +68,7 @@ protected:
     /**
      * creates and returns module instance
      */
-    shared_ptr<_Base> _create(po::options const& vm)
+    shared_ptr<_Base> create(po::options const& vm)
     {
         LOG_DEBUG("create module " << typeid(T).name());
         return shared_ptr<_Base>(new T(vm));
@@ -97,7 +77,7 @@ protected:
     /**
      * returns module options
      */
-    void _options(po::options_description& desc)
+    void options(po::options_description& desc)
     {
         T::options(desc);
     }
@@ -105,7 +85,7 @@ protected:
     /**
      * resolve module dependencies
      */
-    void _resolve(po::options const& vm)
+    void resolve(po::options const& vm)
     {
         if (!resolved_) {
             LOG_DEBUG("resolve module " + std::string(typeid(T).name()));
@@ -116,67 +96,7 @@ protected:
     }
 
 private:
-    struct _register
-    {
-        _register()
-        {
-            factory<_Base>::_register(shared_ptr<builder<_Base> >(new module<T>));
-        }
-    };
-
-    static _register register_;
     bool resolved_;
-};
-
-template <typename T> typename module<T>::_register module<T>::register_;
-
-/**
- * resolve dependencies for given module
- */
-template <typename T>
-void module<T>::resolve(po::options const& vm)
-{
-    LOG_DEBUG("resolve builder " << typeid(T).name());
-    builder_set& builders = factory<_Base>::builders();
-
-    for (builder_iterator it = builders.begin(); it != builders.end(); ) {
-        if (!dynamic_pointer_cast<builder<T> >(*it)) {
-            // module does not implement builder specification
-            builders.erase(it++);
-        }
-        else {
-            try {
-                (*it)->_resolve(vm);
-                // resolvable builder
-                return;
-            }
-            catch (module_exception const& e) {
-                // irresolvable builder
-                LOG_DEBUG(e.what());
-                builders.erase(it++);
-            }
-        }
-    }
-    // no suitable modules available
-    throw module_exception("irresolvable module " + module<T>::name());
-}
-
-/**
- * Type-independent module interface
- */
-template <>
-class module<>
-{
-public:
-    /**
-     * returns options of resolved modules
-     */
-    static po::options_description options()
-    {
-        po::options_description desc;
-        factory<>::options(desc);
-        return desc;
-    }
 };
 
 }} // namespace utility::detail
