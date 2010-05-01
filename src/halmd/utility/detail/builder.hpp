@@ -56,7 +56,27 @@ struct builder<>
 template <typename T, typename Enable>
 struct builder
   : builder<typename T::_Base>
-{};
+{
+    typedef typename T::_Base _Base;
+
+    /**
+     * assemble module options
+     */
+    virtual void options(po::options_description& desc)
+    {
+        builder<_Base>::options(desc);
+        T::options(desc);
+    }
+
+    /**
+     * resolve class dependencies
+     */
+    virtual void resolve(po::options const& vm)
+    {
+        builder<_Base>::resolve(vm);
+        T::resolve(vm);
+    }
+};
 
 template <typename T>
 struct builder<T, typename boost::enable_if<
@@ -66,6 +86,22 @@ struct builder<T, typename boost::enable_if<
     typedef typename T::module_type _Base;
     virtual bool rank(shared_ptr<builder<_Base> > const& other) const = 0;
     virtual shared_ptr<_Base> fetch(po::options const& vm) = 0;
+
+    /**
+     * assemble module options
+     */
+    virtual void options(po::options_description& desc)
+    {
+        T::options(desc);
+    }
+
+    /**
+     * resolve class dependencies
+     */
+    virtual void resolve(po::options const& vm)
+    {
+        T::resolve(vm);
+    }
 };
 
 /**

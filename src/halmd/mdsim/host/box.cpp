@@ -34,6 +34,15 @@ namespace mdsim { namespace host
 {
 
 /**
+ * Resolve module dependencies
+ */
+template <int dimension>
+void box<dimension>::resolve(po::options const& vm)
+{
+    module<particle_type>::resolve(vm);
+}
+
+/**
  * Set box edge lengths
  */
 template <int dimension>
@@ -44,15 +53,6 @@ box<dimension>::box(po::options const& vm)
   // initialize parameters
   , length_half_(.5 * length_)
 {}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension>
-void box<dimension>::resolve(po::options const& vm)
-{
-    module<particle_type>::resolve(vm);
-}
 
 // explicit instantiation
 template class box<3>;

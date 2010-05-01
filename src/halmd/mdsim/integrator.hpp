@@ -34,6 +34,8 @@ class integrator
 public:
     typedef integrator module_type;
 
+    static void options(po::options_description& desc) {}
+    static void resolve(po::options const& vm) {}
     integrator(po::options const& vm) {}
     virtual ~integrator() {}
     virtual void integrate() = 0;

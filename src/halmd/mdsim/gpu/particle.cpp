@@ -32,6 +32,18 @@ namespace halmd
 namespace mdsim { namespace gpu
 {
 
+/**
+ * Resolve module dependencies
+ */
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::resolve(po::options const& vm)
+{
+    if (vm["backend"].as<string>() != "gpu_neighbour") {
+        throw module_exception("inept module " + module<particle>::name());
+    }
+    module<device_type>::resolve(vm);
+}
+
 template <unsigned int dimension, typename float_type>
 particle<dimension, float_type>::particle(po::options const& vm)
   : _Base(vm)
@@ -48,18 +60,6 @@ particle<dimension, float_type>::particle(po::options const& vm)
   , h_image(nbox)
   , h_v(nbox)
 {
-}
-
-/**
- * Resolve module dependencies
- */
-template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::resolve(po::options const& vm)
-{
-    if (vm["backend"].as<string>() != "gpu_neighbour") {
-        throw module_exception("inept module " + module<particle>::name());
-    }
-    module<device_type>::resolve(vm);
 }
 
 // explicit instantiation

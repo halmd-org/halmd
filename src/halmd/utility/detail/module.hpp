@@ -88,11 +88,11 @@ public:
     }
 
     /**
-     * returns module options
+     * assemble module options
      */
     void options(po::options_description& desc)
     {
-        T::options(desc);
+        builder<T>::options(desc);
     }
 
     /**
@@ -102,7 +102,7 @@ public:
     {
         if (!resolved_) {
             LOG_DEBUG("resolve module " + std::string(typeid(T).name()));
-            T::resolve(vm);
+            builder<T>::resolve(vm);
             // cache result
             resolved_ = true;
         }

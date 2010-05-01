@@ -34,6 +34,8 @@ class sort
 public:
     typedef sort module_type;
 
+    static void options(po::options_description& desc) {}
+    static void resolve(po::options const& vm) {}
     sort(po::options const& vm) {}
     virtual ~sort() {}
     virtual void order() = 0;

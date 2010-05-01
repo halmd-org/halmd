@@ -39,6 +39,8 @@ class trajectory
 public:
     typedef trajectory module_type;
 
+    static void options(po::options_description& desc) {}
+    static void resolve(po::options const& vm) {}
     trajectory(po::options const& vm) {}
     virtual ~trajectory() {}
     virtual void acquire() = 0;

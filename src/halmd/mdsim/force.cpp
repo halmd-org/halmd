@@ -29,6 +29,15 @@ namespace halmd
 namespace mdsim
 {
 
+/**
+ * Resolve module dependencies
+ */
+template <int dimension>
+void force<dimension>::resolve(po::options const& vm)
+{
+    module<particle_type>::resolve(vm);
+}
+
 template <int dimension>
 force<dimension>::force(po::options const& vm)
   // dependency injection

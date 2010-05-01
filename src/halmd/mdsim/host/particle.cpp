@@ -33,6 +33,17 @@ namespace halmd
 namespace mdsim { namespace host
 {
 
+/**
+ * Resolve module dependencies
+ */
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::resolve(po::options const& vm)
+{
+    if (vm["backend"].as<string>() != "host") {
+        throw module_exception("inept module " + module<particle>::name());
+    }
+}
+
 template <unsigned int dimension, typename float_type>
 particle<dimension, float_type>::particle(po::options const& vm)
   : _Base(vm)
@@ -62,17 +73,6 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     algorithm::host::permute(tag.begin(), tag.end(), index.begin());
     algorithm::host::permute(type.begin(), type.end(), index.begin());
     // no permutation of neighbor lists
-}
-
-/**
- * Resolve module dependencies
- */
-template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::resolve(po::options const& vm)
-{
-    if (vm["backend"].as<string>() != "host") {
-        throw module_exception("inept module " + module<particle>::name());
-    }
 }
 
 // explicit instantiation

@@ -45,6 +45,8 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
+    static void options(po::options_description& desc) {}
+    static void resolve(po::options const& vm);
     force(po::options const& vm);
     virtual ~force() {}
     virtual void compute() = 0;
