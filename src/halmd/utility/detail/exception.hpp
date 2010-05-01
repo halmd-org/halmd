@@ -32,6 +32,7 @@ namespace utility { namespace detail
  * Module exception
  */
 class module_exception
+  : public std::exception
 {
 public:
     module_exception(std::string const& what_) : what_(what_) {}
