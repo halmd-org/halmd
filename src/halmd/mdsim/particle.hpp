@@ -34,8 +34,6 @@ template <int dimension>
 class particle
 {
 public:
-    typedef particle module_type;
-
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm) {}
     particle(po::options const& vm);

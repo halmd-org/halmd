@@ -35,8 +35,6 @@ namespace halmd { namespace utility { namespace gpu
 class device
 {
 public:
-    typedef device module_type;
-
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm) {}
     device(po::options const& vm);

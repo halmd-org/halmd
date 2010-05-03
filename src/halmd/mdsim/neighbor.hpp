@@ -32,8 +32,6 @@ template <int dimension>
 class neighbor
 {
 public:
-    typedef neighbor module_type;
-
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm) {}
     neighbor(po::options const& vm) {}

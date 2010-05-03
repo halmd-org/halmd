@@ -38,7 +38,6 @@ template <int dimension, typename float_type>
 class trajectory
 {
 public:
-    typedef trajectory module_type;
     typedef mdsim::particle<dimension> particle_type;
 
     static void options(po::options_description& desc) {}

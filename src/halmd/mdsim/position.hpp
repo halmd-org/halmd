@@ -32,8 +32,6 @@ template <int dimension>
 class position
 {
 public:
-    typedef position module_type;
-
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm) {}
     position(po::options const& vm) {}

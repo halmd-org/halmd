@@ -36,7 +36,6 @@ template <int dimension>
 class box
 {
 public:
-    typedef box module_type;
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 

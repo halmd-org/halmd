@@ -21,7 +21,7 @@
 #define HALMD_UTILITY_MODULE_BUILDER_HPP
 
 #include <boost/shared_ptr.hpp>
-#include <boost/type_traits/is_same.hpp>
+#include <boost/type_traits/is_object.hpp>
 #include <boost/utility/enable_if.hpp>
 
 #include <halmd/utility/options.hpp>
@@ -34,6 +34,8 @@ namespace utility { namespace module
 
 // import into namespace
 using boost::dynamic_pointer_cast;
+using boost::enable_if;
+using boost::is_object;
 using boost::shared_ptr;
 
 template <typename T = void, typename Enable = void>
@@ -55,9 +57,9 @@ struct builder<>
 /**
  * Abstract module specification
  */
-template <typename T, typename Enable>
-struct builder
-  : builder<typename T::_Base>
+template <typename T>
+struct builder<T, typename enable_if<is_object<typename T::_Base> >::type>
+  : public builder<typename T::_Base>
 {
     typedef typename T::_Base _Base;
 
@@ -86,13 +88,12 @@ struct builder
     }
 };
 
-template <typename T>
-struct builder<T, typename boost::enable_if<
-  boost::is_same<T, typename T::module_type> >::type>
+template <typename T, typename Enable>
+struct builder
   : public builder<>
 {
-    typedef typename T::module_type _Base;
-    virtual shared_ptr<_Base> fetch(po::options const& vm) = 0;
+    typedef T _Module_base;
+    virtual shared_ptr<_Module_base> fetch(po::options const& vm) = 0;
 
     /**
      * assemble module options

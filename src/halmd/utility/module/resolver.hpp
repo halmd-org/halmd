@@ -54,11 +54,11 @@ template <typename T>
 class resolver
 {
 public:
-    typedef typename T::module_type _Base;
+    typedef builder<T> _Builder;
+    typedef typename _Builder::_Module_base _Base;
     typedef shared_ptr<builder<_Base> > _Base_builder_ptr;
     typedef std::set<_Base_builder_ptr, _builder_rank_exclude_base> _Module_set;
     typedef factory<_Base> _Base_factory;
-    typedef builder<T> _Builder;
 
     static size_t resolve(po::options const& vm);
 

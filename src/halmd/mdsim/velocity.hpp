@@ -32,8 +32,6 @@ template <int dimension>
 class velocity
 {
 public:
-    typedef velocity module_type;
-
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm) {}
     velocity(po::options const& vm) {}

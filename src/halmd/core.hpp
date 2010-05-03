@@ -28,8 +28,6 @@ namespace halmd
 class core
 {
 public:
-    typedef core module_type;
-
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm) {}
     core(po::options const& vm) {}

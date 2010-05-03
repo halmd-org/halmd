@@ -49,7 +49,7 @@ class module
   : public builder<T>
 {
 public:
-    typedef typename T::module_type _Base;
+    typedef typename builder<T>::_Module_base _Base;
 
     module() : resolved_(boost::indeterminate) {}
 

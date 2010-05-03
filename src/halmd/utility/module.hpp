@@ -39,7 +39,8 @@ template <typename T = void>
 class module
 {
 public:
-    typedef typename T::module_type _Base;
+    typedef utility::module::builder<T> _Builder;
+    typedef typename _Builder::_Module_base _Base;
     typedef utility::module::module<T> _Module;
     typedef utility::module::resolver<T> _Resolver;
     typedef utility::module::factory<_Base> _Base_factory;
