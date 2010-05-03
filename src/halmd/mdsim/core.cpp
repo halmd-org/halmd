@@ -53,12 +53,12 @@ void core<dimension>::resolve(po::options const& vm)
     if (vm["dimension"].as<int>() != dimension) {
         throw module_exception("inept module " + module<core>::name());
     }
-    module<mdsim::force<dimension> >::required(vm);
-    module<mdsim::neighbor<dimension> >::required(vm);
-    module<mdsim::sort<dimension> >::optional(vm);
-    module<mdsim::integrator<dimension> >::required(vm);
-    module<mdsim::position<dimension> >::required(vm);
-    module<mdsim::velocity<dimension> >::required(vm);
+    module<force_type>::required(vm);
+    module<neighbor_type>::required(vm);
+    module<sort_type>::optional(vm);
+    module<integrator_type>::required(vm);
+    module<position_type>::required(vm);
+    module<velocity_type>::required(vm);
 }
 
 /**
@@ -68,12 +68,12 @@ template <int dimension>
 core<dimension>::core(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , force(module<mdsim::force<dimension> >::fetch(vm))
-  , neighbor(module<mdsim::neighbor<dimension> >::fetch(vm))
-  , sort(module<mdsim::sort<dimension> >::fetch(vm))
-  , integrator(module<mdsim::integrator<dimension> >::fetch(vm))
-  , position(module<mdsim::position<dimension> >::fetch(vm))
-  , velocity(module<mdsim::velocity<dimension> >::fetch(vm))
+  , force(module<force_type>::fetch(vm))
+  , neighbor(module<neighbor_type>::fetch(vm))
+  , sort(module<sort_type>::fetch(vm))
+  , integrator(module<integrator_type>::fetch(vm))
+  , position(module<position_type>::fetch(vm))
+  , velocity(module<velocity_type>::fetch(vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {

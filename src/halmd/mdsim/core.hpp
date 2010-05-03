@@ -43,6 +43,12 @@ class core
 {
 public:
     typedef halmd::core _Base;
+    typedef mdsim::force<dimension> force_type;
+    typedef mdsim::neighbor<dimension> neighbor_type;
+    typedef mdsim::sort<dimension> sort_type;
+    typedef mdsim::integrator<dimension> integrator_type;
+    typedef mdsim::position<dimension> position_type;
+    typedef mdsim::velocity<dimension> velocity_type;
 
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);
@@ -51,12 +57,12 @@ public:
     uint64_t steps() { return steps_; }
     double time() { return time_; }
 
-    boost::shared_ptr<mdsim::force<dimension> > force;
-    boost::shared_ptr<mdsim::neighbor<dimension> > neighbor;
-    boost::shared_ptr<mdsim::sort<dimension> > sort;
-    boost::shared_ptr<mdsim::integrator<dimension> > integrator;
-    boost::shared_ptr<mdsim::position<dimension> > position;
-    boost::shared_ptr<mdsim::velocity<dimension> > velocity;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<neighbor_type> neighbor;
+    boost::shared_ptr<sort_type> sort;
+    boost::shared_ptr<integrator_type> integrator;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<velocity_type> velocity;
 
 private:
     /** number of integration steps */
