@@ -67,7 +67,10 @@ struct builder
     virtual void options(po::options_description& desc)
     {
         builder<_Base>::options(desc);
-        T::options(desc);
+        // check for inherited base module function
+        if (T::options != _Base::options) {
+            T::options(desc);
+        }
     }
 
     /**
@@ -76,7 +79,10 @@ struct builder
     virtual void resolve(po::options const& vm)
     {
         builder<_Base>::resolve(vm);
-        T::resolve(vm);
+        // check for inherited base module function
+        if (T::resolve != _Base::resolve) {
+            T::resolve(vm);
+        }
     }
 };
 
