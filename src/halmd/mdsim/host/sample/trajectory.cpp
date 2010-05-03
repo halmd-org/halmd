@@ -52,8 +52,6 @@ trajectory<dimension, float_type>::trajectory(po::options const& vm)
 template <int dimension, typename float_type>
 void trajectory<dimension, float_type>::acquire()
 {
-    r.resize(particle->ntype);
-    v.resize(particle->ntype);
     for (size_t i = 0; i < particle->ntype; ++i) {
         r[i].reset(new position_sample_vector(particle->ntypes[i]));
         v[i].reset(new velocity_sample_vector(particle->ntypes[i]));

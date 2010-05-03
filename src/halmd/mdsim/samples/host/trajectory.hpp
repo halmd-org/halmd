@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
+#include <halmd/mdsim/particle.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -36,12 +37,15 @@ class trajectory
 {
 public:
     typedef trajectory module_type;
+    typedef mdsim::particle<dimension> particle_type;
 
     static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm) {}
-    trajectory(po::options const& vm) {}
+    static void resolve(po::options const& vm);
+    trajectory(po::options const& vm);
     virtual ~trajectory() {}
     virtual void acquire() = 0;
+
+    boost::shared_ptr<particle_type> particle;
 
     /** sample vector types for single particle */
     typedef numeric::host::blas::vector<float_type, dimension> position_vector;

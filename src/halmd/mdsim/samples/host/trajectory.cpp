@@ -30,6 +30,24 @@ namespace halmd
 namespace mdsim { namespace samples { namespace host
 {
 
+/**
+ * Resolve module dependencies
+ */
+template <int dimension, typename float_type>
+void trajectory<dimension, float_type>::resolve(po::options const& vm)
+{
+    module<particle_type>::required(vm);
+}
+
+template <int dimension, typename float_type>
+trajectory<dimension, float_type>::trajectory(po::options const& vm)
+  // dependency injection
+  : particle(module<particle_type>::fetch(vm))
+  // allocate sample pointers
+  , r(particle->ntype)
+  , v(particle->ntype)
+{}
+
 #ifndef USE_HOST_SINGLE_PRECISION
 template class trajectory<3, double>;
 template class trajectory<2, double>;
