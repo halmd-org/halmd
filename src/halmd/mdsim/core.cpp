@@ -55,7 +55,7 @@ void core<dimension>::resolve(po::options const& vm)
     }
     module<mdsim::force<dimension> >::required(vm);
     module<mdsim::neighbor<dimension> >::required(vm);
-    module<mdsim::sort<dimension> >::required(vm);
+    module<mdsim::sort<dimension> >::optional(vm);
     module<mdsim::integrator<dimension> >::required(vm);
     module<mdsim::position<dimension> >::required(vm);
     module<mdsim::velocity<dimension> >::required(vm);
@@ -105,7 +105,9 @@ void core<dimension>::run()
     for (uint64_t i = 0; i < steps_; ++i) {
         integrator->integrate();
         if (neighbor->check()) {
-            sort->order();
+            if (sort) {
+                sort->order();
+            }
             neighbor->update();
         }
         force->compute();
