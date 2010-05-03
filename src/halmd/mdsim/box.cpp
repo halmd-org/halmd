@@ -54,7 +54,7 @@ void box<dimension>::options(po::options_description& desc)
 template <int dimension>
 void box<dimension>::resolve(po::options const& vm)
 {
-    module<particle_type>::resolve(vm);
+    module<particle_type>::required(vm);
 }
 
 /**

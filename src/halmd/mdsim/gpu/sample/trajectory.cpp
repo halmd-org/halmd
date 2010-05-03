@@ -39,15 +39,15 @@ namespace mdsim { namespace gpu { namespace sample
 template <int dimension, typename float_type>
 void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::resolve(po::options const& vm)
 {
-    module<particle_type>::resolve(vm);
-    module<box_type>::resolve(vm);
+    module<particle_type>::required(vm);
+    module<box_type>::required(vm);
 }
 
 template <int dimension, typename float_type>
 void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::resolve(po::options const& vm)
 {
-    module<particle_type>::resolve(vm);
-    module<box_type>::resolve(vm);
+    module<particle_type>::required(vm);
+    module<box_type>::required(vm);
 }
 
 template <int dimension, typename float_type>

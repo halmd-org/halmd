@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_DETAIL_BUILDER_HPP
-#define HALMD_UTILITY_DETAIL_BUILDER_HPP
+#ifndef HALMD_UTILITY_MODULE_BUILDER_HPP
+#define HALMD_UTILITY_MODULE_BUILDER_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits/is_same.hpp>
@@ -29,7 +29,7 @@
 
 namespace halmd
 {
-namespace utility { namespace detail
+namespace utility { namespace module
 {
 
 // import into namespace
@@ -46,8 +46,10 @@ template <>
 struct builder<>
 {
     virtual ~builder() {}
+    virtual bool rank(shared_ptr<builder<> > const& other) const = 0;
     virtual void options(po::options_description& desc) = 0;
     virtual void resolve(po::options const& vm) = 0;
+    virtual std::string name() = 0;
 };
 
 /**
@@ -84,7 +86,6 @@ struct builder<T, typename boost::enable_if<
   : public builder<>
 {
     typedef typename T::module_type _Base;
-    virtual bool rank(shared_ptr<builder<_Base> > const& other) const = 0;
     virtual shared_ptr<_Base> fetch(po::options const& vm) = 0;
 
     /**
@@ -107,18 +108,26 @@ struct builder<T, typename boost::enable_if<
 /**
  * Helper class for builder ordering in STL set
  */
-template <typename _Base>
-struct _builder_order
+struct _builder_rank
 {
-    typedef shared_ptr<builder<_Base> > pointer;
+    typedef shared_ptr<builder<> > pointer;
     bool operator()(pointer const& first, pointer const& second) const
     {
         return first->rank(second);
     }
 };
 
-}} // namespace utility::detail
+struct _builder_rank_exclude_base
+{
+    typedef shared_ptr<builder<> > pointer;
+    bool operator()(pointer const& first, pointer const& second) const
+    {
+        return first->rank(second) && second->rank(first);
+    }
+};
+
+}} // namespace utility::module
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_DETAIL_BUILDER_HPP */
+#endif /* ! HALMD_UTILITY_MODULE_BUILDER_HPP */

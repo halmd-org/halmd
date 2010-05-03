@@ -20,13 +20,17 @@
 #ifndef HALMD_UTILITY_MODULE_HPP
 #define HALMD_UTILITY_MODULE_HPP
 
-#include <halmd/utility/detail/module.hpp>
+#include <halmd/utility/module/builder.hpp>
+#include <halmd/utility/module/exception.hpp>
+#include <halmd/utility/module/factory.hpp>
+#include <halmd/utility/module/module.hpp>
+#include <halmd/utility/module/resolver.hpp>
 
 namespace halmd
 {
 
 // import into top-level namespace
-using utility::detail::module_exception;
+using utility::module::module_exception;
 
 /**
  * Concrete module
@@ -36,38 +40,39 @@ class module
 {
 public:
     typedef typename T::module_type _Base;
-    typedef utility::detail::module<T> _Module;
-    typedef utility::detail::builder<T> builder;
-    typedef utility::detail::builder<_Base> _Base_builder;
-    typedef utility::detail::factory<_Base> factory;
-    typedef typename factory::builder_set builder_set;
-    typedef typename builder_set::iterator builder_iterator;
+    typedef utility::module::module<T> _Module;
+    typedef utility::module::resolver<T> _Resolver;
+    typedef utility::module::factory<_Base> _Base_factory;
+    typedef utility::module::builder<_Base> _Base_builder;
+    typedef typename _Base_factory::_Base_builder_set _Base_builder_set;
+    typedef typename _Base_builder_set::iterator builder_iterator;
 
     /**
      * returns singleton instance
      */
-    static boost::shared_ptr<T> fetch(po::options const& vm)
+    static typename _Resolver::_fetch fetch(po::options const& vm)
     {
-        LOG_DEBUG("fetch module " << typeid(T).name());
-        return boost::dynamic_pointer_cast<T>(factory::fetch(vm));
+        return _Resolver::fetch(vm);
     }
-
-    static void resolve(po::options const& vm);
 
     /**
      * returns module name
      */
     static std::string name()
     {
-        return typeid(T).name();
+        return _Resolver::name();
     }
+
+    static void required(po::options const& vm);
+    static void optional(po::options const& vm);
+    static void many(po::options const& vm);
 
 private:
     struct _register
     {
         _register()
         {
-            factory::_register(boost::shared_ptr<_Base_builder>(new _Module));
+            _Base_factory::_register(boost::shared_ptr<_Base_builder>(new _Module));
         }
     };
 
@@ -77,34 +82,41 @@ private:
 template <typename T> typename module<T>::_register module<T>::register_;
 
 /**
- * resolve dependencies for given module
+ * resolve required dependencies for given module
  */
 template <typename T>
-void module<T>::resolve(po::options const& vm)
+void module<T>::required(po::options const& vm)
 {
-    LOG_DEBUG("resolve builder " << typeid(T).name());
-    builder_set& builders = factory::builders();
+    size_t count = _Resolver::resolve(vm);
 
-    for (builder_iterator it = builders.begin(); it != builders.end(); ) {
-        if (!boost::dynamic_pointer_cast<builder>(*it)) {
-            // module does not implement builder specification
-            builders.erase(it++);
-        }
-        else {
-            try {
-                (*it)->resolve(vm);
-                // resolvable builder
-                return;
-            }
-            catch (module_exception const& e) {
-                // irresolvable builder
-                LOG_DEBUG(e.what());
-                builders.erase(it++);
-            }
-        }
+    if (count == 0) {
+        throw module_exception("irresolvable dependency " + module<T>::name());
     }
-    // no suitable modules available
-    throw module_exception("irresolvable module " + module<T>::name());
+    if (count > 1) {
+        throw module_exception("ambiguous dependency " + module<T>::name());
+    }
+}
+
+/**
+ * resolve optional dependencies for given module
+ */
+template <typename T>
+void module<T>::optional(po::options const& vm)
+{
+    size_t count = _Resolver::resolve(vm);
+
+    if (count > 1) {
+        throw module_exception("ambiguous dependency " + module<T>::name());
+    }
+}
+
+/**
+ * resolve one-to-many dependencies for given module
+ */
+template <typename T>
+void module<T>::many(po::options const& vm)
+{
+    _Resolver::resolve(vm);
 }
 
 /**
@@ -114,14 +126,14 @@ template <>
 class module<>
 {
 public:
+    typedef utility::module::resolver<> _Resolver;
+
     /**
      * returns options of resolved modules
      */
     static po::options_description options()
     {
-        po::options_description desc;
-        utility::detail::factory<>::options(desc);
-        return desc;
+        return _Resolver::options();
     }
 };
 

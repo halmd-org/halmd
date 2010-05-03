@@ -39,7 +39,7 @@ namespace mdsim { namespace host
 template <int dimension>
 void box<dimension>::resolve(po::options const& vm)
 {
-    module<particle_type>::resolve(vm);
+    module<particle_type>::required(vm);
 }
 
 /**

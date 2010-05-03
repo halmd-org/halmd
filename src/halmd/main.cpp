@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 
     // resolve module dependencies
     try {
-        module<core>::resolve(vm);
+        module<core>::required(vm);
     }
     catch (std::exception const& e) {
         cerr << PROGRAM_NAME ": " << e.what() << endl;
@@ -127,7 +127,8 @@ int main(int argc, char **argv)
         }
 
         // run MD simulation
-        module<core>::fetch(vm)->run();
+        shared_ptr<halmd::core> core(module<halmd::core>::fetch(vm));
+        core->run();
 #ifdef NDEBUG
     }
 #ifdef WITH_CUDA

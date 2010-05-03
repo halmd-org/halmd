@@ -52,9 +52,9 @@ void neighbor<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void neighbor<dimension, float_type>::resolve(po::options const& vm)
 {
-    module<particle_type>::resolve(vm);
-    module<box_type>::resolve(vm);
-    module<force_type>::resolve(vm);
+    module<particle_type>::required(vm);
+    module<box_type>::required(vm);
+    module<force_type>::required(vm);
 }
 
 template <int dimension, typename float_type>

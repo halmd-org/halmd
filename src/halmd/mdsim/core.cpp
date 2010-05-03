@@ -53,12 +53,12 @@ void core<dimension>::resolve(po::options const& vm)
     if (vm["dimension"].as<int>() != dimension) {
         throw module_exception("inept module " + module<core>::name());
     }
-    module<mdsim::force<dimension> >::resolve(vm);
-    module<mdsim::neighbor<dimension> >::resolve(vm);
-    module<mdsim::sort<dimension> >::resolve(vm);
-    module<mdsim::integrator<dimension> >::resolve(vm);
-    module<mdsim::position<dimension> >::resolve(vm);
-    module<mdsim::velocity<dimension> >::resolve(vm);
+    module<mdsim::force<dimension> >::required(vm);
+    module<mdsim::neighbor<dimension> >::required(vm);
+    module<mdsim::sort<dimension> >::required(vm);
+    module<mdsim::integrator<dimension> >::required(vm);
+    module<mdsim::position<dimension> >::required(vm);
+    module<mdsim::velocity<dimension> >::required(vm);
 }
 
 /**

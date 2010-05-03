@@ -35,7 +35,7 @@ namespace mdsim
 template <int dimension>
 void force<dimension>::resolve(po::options const& vm)
 {
-    module<particle_type>::resolve(vm);
+    module<particle_type>::required(vm);
 }
 
 template <int dimension>

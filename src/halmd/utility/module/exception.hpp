@@ -17,15 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_DETAIL_EXCEPTION_HPP
-#define HALMD_UTILITY_DETAIL_EXCEPTION_HPP
+#ifndef HALMD_UTILITY_MODULE_EXCEPTION_HPP
+#define HALMD_UTILITY_MODULE_EXCEPTION_HPP
 
 #include <exception>
 #include <string>
 
 namespace halmd
 {
-namespace utility { namespace detail
+namespace utility { namespace module
 {
 
 /**
@@ -45,8 +45,8 @@ private:
     std::string what_;
 };
 
-}} // namespace utility::detail
+}} // namespace utility::module
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_DETAIL_EXCEPTION_HPP */
+#endif /* ! HALMD_UTILITY_MODULE_EXCEPTION_HPP */

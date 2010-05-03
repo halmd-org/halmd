@@ -17,24 +17,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_DETAIL_MODULE_HPP
-#define HALMD_UTILITY_DETAIL_MODULE_HPP
+#ifndef HALMD_UTILITY_MODULE_MODULE_HPP
+#define HALMD_UTILITY_MODULE_MODULE_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <exception>
 #include <set>
 #include <typeinfo>
 
-#include <halmd/utility/detail/builder.hpp>
-#include <halmd/utility/detail/exception.hpp>
-#include <halmd/utility/detail/factory.hpp>
+#include <halmd/utility/module/builder.hpp>
+#include <halmd/utility/module/exception.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/util/logger.hpp>
 
 namespace halmd
 {
-namespace utility { namespace detail
+namespace utility { namespace module
 {
 
 // import into namespace
@@ -51,15 +49,13 @@ class module
 {
 public:
     typedef typename T::module_type _Base;
-    typedef typename factory<_Base>::builder_set builder_set;
-    typedef typename builder_set::iterator builder_iterator;
 
     module() : resolved_(false) {}
 
     /**
      * weak module ordering
      */
-    bool rank(shared_ptr<builder<_Base> > const& other) const
+    bool rank(shared_ptr<builder<> > const& other) const
     {
         // For the case that the *other* module derives from
         // *this* module and should thus be ranked higher than
@@ -101,11 +97,18 @@ public:
     void resolve(po::options const& vm)
     {
         if (!resolved_) {
-            LOG_DEBUG("resolve module " + std::string(typeid(T).name()));
             builder<T>::resolve(vm);
             // cache result
             resolved_ = true;
         }
+    }
+
+    /**
+     * returns module name
+     */
+    std::string name()
+    {
+        return typeid(T).name();
     }
 
     /** module instance observer */
@@ -117,8 +120,8 @@ private:
 
 template <typename T> weak_ptr<T> module<T>::singleton_;
 
-}} // namespace utility::detail
+}} // namespace utility::module
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_DETAIL_MODULE_HPP */
+#endif /* ! HALMD_UTILITY_MODULE_MODULE_HPP */

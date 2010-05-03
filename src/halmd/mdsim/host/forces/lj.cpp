@@ -56,8 +56,8 @@ void lj<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void lj<dimension, float_type>::resolve(po::options const& vm)
 {
-    module<particle_type>::resolve(vm);
-    module<box_type>::resolve(vm);
+    module<particle_type>::required(vm);
+    module<box_type>::required(vm);
 }
 
 /**
