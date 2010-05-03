@@ -20,6 +20,7 @@
 #ifndef HALMD_UTILITY_MODULE_MODULE_HPP
 #define HALMD_UTILITY_MODULE_MODULE_HPP
 
+#include <boost/logic/tribool.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <set>
@@ -50,7 +51,7 @@ class module
 public:
     typedef typename T::module_type _Base;
 
-    module() : resolved_(false) {}
+    module() : resolved_(boost::indeterminate) {}
 
     /**
      * weak module ordering
@@ -96,9 +97,16 @@ public:
      */
     void resolve(po::options const& vm)
     {
-        if (!resolved_) {
+        if (resolved_) {
+            LOG_DEBUG("cached resolvable module");
+        }
+        else if (!resolved_) {
+            LOG_DEBUG("cached irresolvable module");
+            throw module_exception("irresolvable module " + name());
+        }
+        else {
+            resolved_ = false;
             builder<T>::resolve(vm);
-            // cache result
             resolved_ = true;
         }
     }
@@ -115,7 +123,7 @@ public:
     static weak_ptr<T> singleton_;
 
 private:
-    bool resolved_;
+    boost::tribool resolved_;
 };
 
 template <typename T> weak_ptr<T> module<T>::singleton_;
