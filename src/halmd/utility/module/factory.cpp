@@ -73,8 +73,6 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
         _Module_map_iterator_pair range = fetch(rank_);
 
         for (_Module_map_iterator it = range.first; it != range.second; ) {
-            STACK_DEBUG("resolve module " << it->second->name());
-
             // Check if the set of suitable modules contains a
             // module which derives from this module. The module
             // set ordering guarantees that derived modules
@@ -85,6 +83,8 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
                 modules().erase(it++);
                 continue;
             }
+
+            STACK_DEBUG("resolve module " << it->second->name());
 
             // Take note of the current top of the dependency
             // resolution stack to rewind in case of failure.
