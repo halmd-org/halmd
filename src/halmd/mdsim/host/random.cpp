@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/random.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

@@ -30,10 +30,10 @@
 # include <cuda_wrapper.hpp>
 #endif
 #include <halmd/core.hpp>
+#include <halmd/io/logger.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/util/hostname.hpp>
-#include <halmd/util/logger.hpp>
 #include <halmd/util/timer.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
 #ifndef NDEBUG
     // enable logging as early as possible if debugging
-    halmd::logger::init(vm["output"].as<std::string>() + ".log", vm["verbose"].as<int>());
+    io::logger::init(vm);
 #endif
 
     // resolve module dependencies
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 
 #ifdef NDEBUG
     // enable logging after successful option parsing if not debugging
-    halmd::logger::init(vm["output"].as<std::string>() + ".log", vm["verbose"].as<int>());
+    io::logger::init(vm);
 #endif
 
     LOG(PROGRAM_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);

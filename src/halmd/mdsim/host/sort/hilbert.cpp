@@ -22,9 +22,9 @@
 #include <boost/foreach.hpp>
 #include <cmath>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/sort/hilbert.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

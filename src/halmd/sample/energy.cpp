@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
 #include <halmd/sample/energy.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd
 {

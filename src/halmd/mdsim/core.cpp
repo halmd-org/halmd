@@ -19,8 +19,8 @@
 
 #include <cmath>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

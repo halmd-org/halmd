@@ -71,6 +71,7 @@ configure_file(
   )
 
 set(HALMD_MODULES
+  halmd_io
   halmd_mdsim
   halmd_mdsim_host
   halmd_mdsim_host_forces
@@ -225,6 +226,7 @@ if(WITH_CUDA)
 endif(WITH_CUDA)
 
 add_subdirectory(algorithm)
+add_subdirectory(io)
 add_subdirectory(mdsim)
 add_subdirectory(rng)
 add_subdirectory(sample)

@@ -21,10 +21,10 @@
 #include <cmath>
 #include <numeric>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 

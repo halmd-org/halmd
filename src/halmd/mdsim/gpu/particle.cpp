@@ -21,8 +21,8 @@
 #include <exception>
 #include <numeric>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

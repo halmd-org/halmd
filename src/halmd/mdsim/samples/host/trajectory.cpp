@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/sample/trajectory.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 #endif
 #include <halmd/mdsim/host/sample/trajectory.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd
 {

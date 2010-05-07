@@ -19,10 +19,10 @@
 
 #include <exception>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/sample/trajectory.hpp>
 #include <halmd/mdsim/gpu/sample/trajectory_wrapper.cuh>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;

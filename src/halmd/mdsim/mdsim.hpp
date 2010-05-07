@@ -31,6 +31,7 @@
 #include <vector>
 #include <unistd.h>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/backend/impl.hpp>
 #include <halmd/mdsim/backend/sample.hpp>
 #include <halmd/options.hpp>
@@ -40,7 +41,6 @@
 #include <halmd/sample/perf.hpp>
 #include <halmd/sample/trajectory.hpp>
 #include <halmd/util/H5xx.hpp>
-#include <halmd/util/logger.hpp>
 #include <halmd/util/signal.hpp>
 #include <halmd/util/timer.hpp>
 #include <halmd/version.h>

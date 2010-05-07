@@ -19,9 +19,9 @@
 
 #include <boost/bind.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/utility/module/exception.hpp>
 #include <halmd/utility/module/factory.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

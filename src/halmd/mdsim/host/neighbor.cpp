@@ -23,8 +23,8 @@
 #include <boost/range/iterator_range.hpp>
 #include <exception>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/neighbor.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

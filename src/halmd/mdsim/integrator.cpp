@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrator/verlet.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd
 {

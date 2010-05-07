@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #ifdef WITH_CUDA
 # include <halmd/sample/tcf_gpu.hpp>
 #endif
@@ -39,7 +40,6 @@
 #include <halmd/sample/tcf_visitor.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd {
 

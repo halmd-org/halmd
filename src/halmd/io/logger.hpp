@@ -1,6 +1,5 @@
-/* Logging
- *
- * Copyright © 2008-2009  Peter Colberg
+/*
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,44 +17,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTIL_LOGGER_HPP
-#define HALMD_UTIL_LOGGER_HPP
+#ifndef HALMD_IO_LOGGER_HPP
+#define HALMD_IO_LOGGER_HPP
 
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 
-namespace halmd { namespace logger
+#include <halmd/options.hpp>
+
+namespace halmd
 {
+
+// import into current namespace
+using boost::log::sources::severity_logger;
 
 enum severity_level
 {
+    trace,
     debug,
     info,
     warning,
     error,
+    fatal,
 };
 
-extern boost::log::sources::severity_logger<severity_level> slg;
-extern void init(std::string const& filename, int verbosity);
+extern boost::log::sources::severity_logger<severity_level> logger_;
 
-}} // namespace halmd::logger
+#define _LOG(lvl)          BOOST_LOG_SEV(logger_, (lvl))
 
-#define _LOGGER(level) BOOST_LOG_SEV(halmd::logger::slg, halmd::logger::level)
-
-/** log informational messages */
-#define LOG(fmt) _LOGGER(info) << fmt
-
-/** log warning messages */
-#define LOG_WARNING(fmt) _LOGGER(warning) << "[WARNING] " << fmt
-
-/** log error messages */
-#define LOG_ERROR(fmt) _LOGGER(error) << "[ERROR] " << fmt
-
-/** log debug-level messages */
 #ifndef NDEBUG
-# define LOG_DEBUG(fmt) _LOGGER(debug) << "[DEBUG] " << fmt
+# define LOG_TRACE(fmt)    _LOG(trace) << fmt
+# define LOG_DEBUG(fmt)    _LOG(debug) << fmt
 #else
+# define LOG_TRACE(fmt)
 # define LOG_DEBUG(fmt)
 #endif
+#define LOG(fmt)           _LOG(info) << fmt
+#define LOG_WARNING(fmt)   _LOG(warning) << fmt
+#define LOG_ERROR(fmt)     _LOG(error) << fmt
+#define LOG_FATAL(fmt)     _LOG(fatal) << fmt
 
-#endif /* ! HALMD_UTIL_LOGGER_HPP */
+namespace io { namespace logger
+{
+
+extern void init(options const& vm);
+
+}} // namespace io::logger
+
+} // namespace halmd
+
+#endif /* ! HALMD_IO_LOGGER_HPP */

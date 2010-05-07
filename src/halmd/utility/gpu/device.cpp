@@ -26,8 +26,8 @@
 #include <exception>
 #include <fstream>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;

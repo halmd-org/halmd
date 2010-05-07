@@ -24,8 +24,8 @@
 #include <limits>
 #include <numeric>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/position/lattice.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd
 {

@@ -26,10 +26,10 @@
 #include <iostream>
 #include <limits>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/sample/perf.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/util/logger.hpp>
 
 #define foreach BOOST_FOREACH
 

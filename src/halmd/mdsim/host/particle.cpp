@@ -22,8 +22,8 @@
 #include <numeric>
 
 #include <halmd/algorithm/host/permute.hpp>
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace std;

@@ -24,9 +24,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd
 {

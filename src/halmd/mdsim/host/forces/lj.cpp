@@ -21,9 +21,9 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <cmath>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/host/forces/lj.hpp>
-#include <halmd/util/logger.hpp>
 
 using namespace boost;
 using namespace boost::assign;

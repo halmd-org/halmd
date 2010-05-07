@@ -28,13 +28,13 @@
 #include <boost/type_traits.hpp>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/backend/sample.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd {
 
