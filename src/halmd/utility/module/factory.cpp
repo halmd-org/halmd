@@ -44,7 +44,7 @@ void factory::_register(_Rank_ptr rank_, _Module_ptr module_)
 /**
  * resolve module dependencies
  *
- * returns the number of suitable modules, to can be used to
+ * returns the number of resolved modules, which is used to
  * validate a dependency as required, optional or one-to-many.
  */
 size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
@@ -131,18 +131,6 @@ po::options_description factory::options()
 }
 
 /**
- * returns singleton builder set
- */
-factory::_Module_map& factory::modules()
-{
-    // What's the "static initialization order fiasco"?
-    // http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
-
-    static _Module_map cache_;
-    return cache_;
-}
-
-/**
  * module map equality for modules with equal or derived dank
  */
 struct derived_rank_equality
@@ -178,6 +166,18 @@ struct derived_rank_equality
 factory::_Module_map_iterator_pair factory::fetch(_Rank_ptr rank_)
 {
     return equal_range(modules().begin(), modules().end(), rank_, derived_rank_equality());
+}
+
+/**
+ * returns singleton builder set
+ */
+factory::_Module_map& factory::modules()
+{
+    // What's the "static initialization order fiasco"?
+    // http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
+
+    static _Module_map modules_;
+    return modules_;
 }
 
 /** stack to keep track of used modules */

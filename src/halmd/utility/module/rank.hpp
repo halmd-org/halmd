@@ -44,8 +44,9 @@ struct _rank_left_is_base {};
 struct _rank_right_is_base {};
 
 /**
- * The rank template models a forest of disjunct class
- * hierarchy trees with a linear ordered STL sequence.
+ * The rank template models a forest of disjunct class hierarchy
+ * trees with a strict weak ordered STL container. This allows
+ * lookups with logarithmic complexity in a linear sequence.
  *
  * Two rank classes should be ordered thus that a derived
  * class comes before its base class, and any subtree of
@@ -127,8 +128,23 @@ public:
     typedef typename T::_Base _Base;
     typedef shared_ptr<rank<> > _Rank_ptr;
 
+    /**
+     * The less-than operator is called by a rank ordering class
+     * and marks the first phase of strict weak ordering.
+     */
     virtual bool operator<(_Rank_ptr const& other) const
     {
+        // We cast the other rank to every base rank that the
+        // rank on the *left* side of the inequality (directly or
+        // indirectly) derives from, starting with the top-most
+        // base rank and going downward to derived base ranks.
+        //
+        // Any common base class will trigger a rank base
+        // exception, which is caught by the directly derived
+        // rank. When the most derived base rank is reached, a
+        // rank of the next derived rank is passed to the
+        // greater-than operator of the other rank.
+
         try {
             return rank<_Base>::operator<(other);
         }
@@ -141,8 +157,18 @@ public:
         }
     }
 
+    /**
+     * The greater-than operator is called by the less-than
+     * operator of the other rank and marks the second phase.
+     */
     virtual bool operator>(_Rank_ptr const& other) const
     {
+        // This essentially does the same as the less-than
+        // operator, but for the rank on the *right* side of the
+        // inequality. If the most derived base rank is reached,
+        // we order the two ranks by their collation order, which
+        // is compiler-dependent but deterministic.
+
         try {
             return rank<_Base>::operator>(other);
         }
