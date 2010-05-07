@@ -40,7 +40,7 @@ template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["backend"].as<string>() != "host") {
-        throw module_exception("inept module " + module<particle>::name());
+        throw module_error("inept module " + module<particle>::name());
     }
 }
 

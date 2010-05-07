@@ -81,6 +81,7 @@ set(HALMD_MODULES
   halmd_mdsim_host_velocity
   halmd_mdsim_samples_host
   halmd_utility
+  halmd_utility_module
   )
 if(WITH_CUDA)
   set(HALMD_MODULES

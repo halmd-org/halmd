@@ -21,13 +21,13 @@
 #define HALMD_UTILITY_MODULE_FACTORY_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <deque>
+#include <map>
 #include <set>
-#include <typeinfo>
 
 #include <halmd/utility/module/builder.hpp>
-#include <halmd/utility/module/exception.hpp>
+#include <halmd/utility/module/rank.hpp>
 #include <halmd/utility/options.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd
 {
@@ -38,44 +38,34 @@ namespace utility { namespace module
 using boost::shared_ptr;
 
 /**
- * A factory is implicitly instantiated once per base type.
+ * The factory manages available modules, which are registered
+ * automagically during program startup. To provide a module with
+ * singleton instantiations of its dependent modules, the factory
+ * has a sophisticated dependency resolution algorithm. This
+ * algorithm is also used to keep track of used modules for
+ * assembling program options.
  */
-template <typename _Base>
 class factory
 {
 public:
-    typedef shared_ptr<builder<_Base> > _Base_builder_ptr;
-    typedef std::set<_Base_builder_ptr, _builder_rank> _Base_builder_set;
+    typedef shared_ptr<rank<> > _Rank_ptr;
+    typedef shared_ptr<builder<> > _Module_ptr;
+    typedef std::map<_Rank_ptr, _Module_ptr, rank_order> _Module_map;
+    typedef _Module_map::iterator _Module_map_iterator;
+    typedef std::pair<_Module_map_iterator, _Module_map_iterator> _Module_map_iterator_pair;
+    typedef std::map<_Rank_ptr, size_t, rank_order> _Rank_cache;
+    typedef std::deque<_Module_ptr> _Module_stack;
+    typedef _Module_stack::iterator _Module_stack_iterator;
 
-    /**
-     * register module builder
-     */
-    static void _register(_Base_builder_ptr builder_)
-    {
-        if (!modules().insert(builder_).second) {
-            throw module_exception("duplicate builder " + name());
-        }
-    }
+    static void _register(_Rank_ptr rank_, _Module_ptr module_);
+    static _Module_map_iterator_pair fetch(_Rank_ptr rank_);
+    static size_t resolve(_Rank_ptr rank_, po::options const& vm);
+    static po::options_description options();
 
-    /**
-     * returns singleton builder set
-     */
-    static _Base_builder_set& modules()
-    {
-        // What's the "static initialization order fiasco"?
-        // http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
-
-        static _Base_builder_set modules_;
-        return modules_;
-    }
-
-    /**
-     * returns module name
-     */
-    static std::string name()
-    {
-        return typeid(_Base).name();
-    }
+private:
+    static _Module_map& modules();
+    static _Rank_cache cache_;
+    static _Module_stack stack_;
 };
 
 }} // namespace utility::module

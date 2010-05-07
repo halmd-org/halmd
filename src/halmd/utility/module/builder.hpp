@@ -25,7 +25,6 @@
 #include <boost/utility/enable_if.hpp>
 
 #include <halmd/utility/options.hpp>
-#include <halmd/util/logger.hpp>
 
 namespace halmd
 {
@@ -33,29 +32,64 @@ namespace utility { namespace module
 {
 
 // import into namespace
+using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 using boost::enable_if;
 using boost::is_object;
-using boost::shared_ptr;
 
+/**
+ * The builder serves as an abstract base hierarchy to the module
+ * wrapper. The builder has three variants:
+ */
 template <typename T = void, typename Enable = void>
 struct builder;
 
 /**
- * Type-independent module base class
+ * A type-independent base class, which is used in the factory to
+ * store pointers of arbitrary module wrapper instances in a
+ * container.
  */
 template <>
 struct builder<>
 {
     virtual ~builder() {}
-    virtual bool rank(shared_ptr<builder<> > const& other) const = 0;
     virtual void options(po::options_description& desc) = 0;
     virtual void resolve(po::options const& vm) = 0;
     virtual std::string name() = 0;
 };
 
 /**
- * Abstract module specification
+ * A base template, which corresponds to the base class of a
+ * module (e.g. force, particle). The module fetch function
+ * casts type-independent builder pointers to this type to
+ * create module instances.
+ */
+template <typename T, typename Enable>
+struct builder
+  : public builder<>
+{
+    typedef T _Module_base;
+    virtual shared_ptr<_Module_base> fetch(po::options const& vm) = 0;
+
+    /**
+     * assemble module options
+     */
+    virtual void options(po::options_description& desc)
+    {
+        T::options(desc);
+    }
+
+    /**
+     * resolve class dependencies
+     */
+    virtual void resolve(po::options const& vm)
+    {
+        T::resolve(vm);
+    }
+};
+
+/**
+ * A deriving template to the base template.
  */
 template <typename T>
 struct builder<T, typename enable_if<is_object<typename T::_Base> >::type>
@@ -85,51 +119,6 @@ struct builder<T, typename enable_if<is_object<typename T::_Base> >::type>
         if (T::resolve != _Base::resolve) {
             T::resolve(vm);
         }
-    }
-};
-
-template <typename T, typename Enable>
-struct builder
-  : public builder<>
-{
-    typedef T _Module_base;
-    virtual shared_ptr<_Module_base> fetch(po::options const& vm) = 0;
-
-    /**
-     * assemble module options
-     */
-    virtual void options(po::options_description& desc)
-    {
-        T::options(desc);
-    }
-
-    /**
-     * resolve class dependencies
-     */
-    virtual void resolve(po::options const& vm)
-    {
-        T::resolve(vm);
-    }
-};
-
-/**
- * Helper class for builder ordering in STL set
- */
-struct _builder_rank
-{
-    typedef shared_ptr<builder<> > pointer;
-    bool operator()(pointer const& first, pointer const& second) const
-    {
-        return first->rank(second);
-    }
-};
-
-struct _builder_rank_exclude_base
-{
-    typedef shared_ptr<builder<> > pointer;
-    bool operator()(pointer const& first, pointer const& second) const
-    {
-        return first->rank(second) && second->rank(first);
     }
 };
 

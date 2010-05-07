@@ -51,7 +51,7 @@ template <int dimension>
 void core<dimension>::resolve(po::options const& vm)
 {
     if (vm["dimension"].as<int>() != dimension) {
-        throw module_exception("inept module " + module<core>::name());
+        throw module_error("inept module " + module<core>::name());
     }
     module<force_type>::required(vm);
     module<neighbor_type>::required(vm);

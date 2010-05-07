@@ -29,18 +29,21 @@ namespace utility { namespace module
 {
 
 /**
- * Module exception
+ * This exception is thrown if a module is disabled due to a
+ * program option, or if a required dependency of a module is
+ * a disabled module.
  */
-class module_exception
-  : public std::exception
+class module_error
+  : public virtual std::exception // virtual inheritance avoids ambiguity
 {
 public:
-    module_exception(std::string const& what_) : what_(what_) {}
-    virtual ~module_exception() throw () {}
+    module_error(std::string const& what_) : what_(what_) {}
+    virtual ~module_error() throw () {}
     virtual const char* what() const throw()
     {
         return what_.c_str();
     }
+
 private:
     std::string what_;
 };

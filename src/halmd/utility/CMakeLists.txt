@@ -8,3 +8,4 @@ target_link_libraries(halmd_utility
 if(WITH_CUDA)
   add_subdirectory(gpu)
 endif(WITH_CUDA)
+add_subdirectory(module)

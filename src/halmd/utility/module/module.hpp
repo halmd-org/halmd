@@ -20,16 +20,11 @@
 #ifndef HALMD_UTILITY_MODULE_MODULE_HPP
 #define HALMD_UTILITY_MODULE_MODULE_HPP
 
-#include <boost/logic/tribool.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
-#include <set>
-#include <typeinfo>
+#include <exception>
 
-#include <halmd/utility/module/builder.hpp>
 #include <halmd/utility/module/exception.hpp>
-#include <halmd/utility/options.hpp>
-#include <halmd/util/logger.hpp>
+#include <halmd/utility/module/factory.hpp>
+#include <halmd/utility/module/wrapper.hpp>
 
 namespace halmd
 {
@@ -37,96 +32,151 @@ namespace utility { namespace module
 {
 
 // import into namespace
-using boost::dynamic_pointer_cast;
 using boost::shared_ptr;
-using boost::weak_ptr;
+using boost::dynamic_pointer_cast;
+using std::logic_error;
 
 /**
- * Concrete module
+ * This template wraps static module functions.
  */
-template <typename T>
+template <typename T = void>
 class module
-  : public builder<T>
 {
 public:
-    typedef typename builder<T>::_Module_base _Base;
-
-    module() : resolved_(boost::indeterminate) {}
-
-    /**
-     * weak module ordering
-     */
-    bool rank(shared_ptr<builder<> > const& other) const
-    {
-        // For the case that the *other* module derives from
-        // *this* module and should thus be ranked higher than
-        // this module, returns false. Otherwise returns true.
-        return !dynamic_pointer_cast<builder<T> >(other);
-    }
+    typedef rank<T> _Rank;
+    typedef wrapper<T> _Wrapper;
+    typedef factory::_Module_ptr _Module_ptr;
+    typedef factory::_Rank_ptr _Rank_ptr;
+    typedef typename _Rank::_Module_base _Base;
+    typedef builder<_Base> _Base_module;
+    typedef factory::_Module_map_iterator_pair _Module_map_iterator_pair;
+    typedef factory::_Module_map_iterator _Module_map_iterator;
 
     /**
-     * returns singleton instance
+     * returns module singleton instance(s)
      */
-    shared_ptr<_Base> fetch(po::options const& vm)
+    struct _fetch
     {
-        // We use an observing weak pointer instead of an owning
-        // shared pointer to let the caller decide when the
-        // singleton instance and its dependencies are destroyed.
-        //
-        // Special care has to be taken not to destroy the
-        // instance before returning it over to the caller.
+        _fetch(po::options const& vm) : vm(vm) {}
+        options const& vm;
 
-        shared_ptr<T> singleton(singleton_.lock());
-        if (!singleton) {
-            singleton.reset(new T(vm));
-            singleton_ = singleton;
+        /**
+         * returns required or optional instance
+         */
+        operator shared_ptr<T>()
+        {
+            shared_ptr<T> result;
+            _Module_map_iterator_pair range = factory::fetch(_Rank_ptr(new _Rank));
+
+            if (range.first != range.second) {
+                shared_ptr<_Base_module> module_ = dynamic_pointer_cast<_Base_module>(range.first->second);
+                result = dynamic_pointer_cast<T>(module_->fetch(vm));
+            }
+            return result;
         }
-        return singleton;
-    }
 
-    /**
-     * assemble module options
-     */
-    void options(po::options_description& desc)
+        /**
+         * returns many instances
+         */
+        operator std::vector<shared_ptr<T> >()
+        {
+            std::vector<shared_ptr<T> > result;
+            _Module_map_iterator_pair range = factory::fetch(_Rank_ptr(new _Rank));
+
+            for (_Module_map_iterator it = range.first; it != range.second; ++it) {
+                shared_ptr<_Base_module> module_ = dynamic_pointer_cast<_Base_module>(it->second);
+                result.push_back(dynamic_pointer_cast<T>(module_->fetch(vm)));
+            }
+            return result;
+        }
+    };
+
+    static _fetch fetch(po::options const& vm)
     {
-        builder<T>::options(desc);
-    }
-
-    /**
-     * resolve module dependencies
-     */
-    void resolve(po::options const& vm)
-    {
-        if (resolved_) {
-            LOG_DEBUG("cached resolvable module");
-        }
-        else if (!resolved_) {
-            LOG_DEBUG("cached irresolvable module");
-            throw module_exception("irresolvable module " + name());
-        }
-        else {
-            resolved_ = false;
-            builder<T>::resolve(vm);
-            resolved_ = true;
-        }
+        return _fetch(vm);
     }
 
     /**
      * returns module name
      */
-    std::string name()
+    static std::string name()
     {
         return typeid(T).name();
     }
 
-    /** module instance observer */
-    static weak_ptr<T> singleton_;
+    static void required(po::options const& vm);
+    static void optional(po::options const& vm);
+    static void many(po::options const& vm);
 
 private:
-    boost::tribool resolved_;
+    struct _register
+    {
+        _register()
+        {
+            factory::_register(_Rank_ptr(new _Rank), _Module_ptr(new _Wrapper));
+        }
+    };
+
+    static _register register_;
 };
 
-template <typename T> weak_ptr<T> module<T>::singleton_;
+template <typename T> typename module<T>::_register module<T>::register_;
+
+/**
+ * resolve required dependencies for given module
+ */
+template <typename T>
+void module<T>::required(po::options const& vm)
+{
+    size_t count = factory::resolve(_Rank_ptr(new _Rank), vm);
+
+    if (count == 0) {
+        throw module_error("irresolvable dependency " + module<T>::name());
+    }
+    if (count > 1) {
+        // this is programming error, therefore throw a lethal exception
+        throw logic_error("ambiguous dependency " + module<T>::name());
+    }
+}
+
+/**
+ * resolve optional dependencies for given module
+ */
+template <typename T>
+void module<T>::optional(po::options const& vm)
+{
+    size_t count = factory::resolve(_Rank_ptr(new _Rank), vm);
+
+    if (count > 1) {
+        // this is programming error, therefore throw a lethal exception
+        throw logic_error("ambiguous dependency " + module<T>::name());
+    }
+}
+
+/**
+ * resolve one-to-many dependencies for given module
+ */
+template <typename T>
+void module<T>::many(po::options const& vm)
+{
+    factory::resolve(_Rank_ptr(new _Rank), vm);
+}
+
+/**
+ * Type-independent module interface
+ */
+template <>
+class module<>
+{
+public:
+    /**
+     * returns options of resolved modules
+     */
+    static po::options_description options()
+    {
+        return factory::options();
+    }
+};
 
 }} // namespace utility::module
 
