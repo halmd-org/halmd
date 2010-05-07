@@ -69,6 +69,11 @@ public:
             _Module_map_iterator_pair range = factory::fetch(_Rank_ptr(new _Rank));
 
             if (range.first != range.second) {
+                // ensure that range contains only a single module
+                if (range.first != --range.second) {
+                    throw logic_error("ambiguous dependency " + module<T>::name());
+                }
+
                 shared_ptr<_Base_module> module_ = dynamic_pointer_cast<_Base_module>(range.first->second);
                 result = dynamic_pointer_cast<T>(module_->fetch(vm));
             }
@@ -104,9 +109,23 @@ public:
         return typeid(T).name();
     }
 
-    static void required(po::options const& vm);
-    static void optional(po::options const& vm);
-    static void many(po::options const& vm);
+    /**
+     * resolve required dependencies for given module
+     */
+    static void required(po::options const& vm)
+    {
+        if (!factory::resolve(_Rank_ptr(new _Rank), vm)) {
+            throw module_error("irresolvable dependency " + module<T>::name());
+        }
+    }
+
+    /**
+     * resolve optional dependencies for given module
+     */
+    static void optional(po::options const& vm)
+    {
+        factory::resolve(_Rank_ptr(new _Rank), vm);
+    }
 
 private:
     struct _register
@@ -121,46 +140,6 @@ private:
 };
 
 template <typename T> typename module<T>::_register module<T>::register_;
-
-/**
- * resolve required dependencies for given module
- */
-template <typename T>
-void module<T>::required(po::options const& vm)
-{
-    size_t count = factory::resolve(_Rank_ptr(new _Rank), vm);
-
-    if (count == 0) {
-        throw module_error("irresolvable dependency " + module<T>::name());
-    }
-    if (count > 1) {
-        // this is programming error, therefore throw a lethal exception
-        throw logic_error("ambiguous dependency " + module<T>::name());
-    }
-}
-
-/**
- * resolve optional dependencies for given module
- */
-template <typename T>
-void module<T>::optional(po::options const& vm)
-{
-    size_t count = factory::resolve(_Rank_ptr(new _Rank), vm);
-
-    if (count > 1) {
-        // this is programming error, therefore throw a lethal exception
-        throw logic_error("ambiguous dependency " + module<T>::name());
-    }
-}
-
-/**
- * resolve one-to-many dependencies for given module
- */
-template <typename T>
-void module<T>::many(po::options const& vm)
-{
-    factory::resolve(_Rank_ptr(new _Rank), vm);
-}
 
 /**
  * Type-independent module interface
