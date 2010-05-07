@@ -217,7 +217,7 @@ H5::DataSet trajectory::create_vector_dataset(H5::Group node, char const* name, 
     typedef typename sample_type::value_type::value_type float_type;
     enum { dimension = sample_type::value_type::static_size };
 
-    H5::DataType const tid(H5xx::ctype<float_type>::type);
+    H5::DataType const tid(H5xx::ctype<float_type>());
     size_t const size = sample.size();
 
     // vector sample file dataspace
@@ -237,7 +237,7 @@ H5::DataSet trajectory::create_vector_dataset(H5::Group node, char const* name, 
 template <typename sample_type>
 H5::DataSet trajectory::create_scalar_dataset(H5::Group node, char const* name, sample_type const&)
 {
-    H5::DataType const tid(H5xx::ctype<sample_type>::type);
+    H5::DataType const tid(H5xx::ctype<sample_type>());
 
     // scalar sample file dataspace
     hsize_t dim[1] = { 0 };
@@ -257,7 +257,7 @@ void trajectory::read_vector_sample(H5::DataSet dset, sample_type& sample, ssize
     typedef typename sample_type::value_type::value_type float_type;
     enum { dimension = sample_type::value_type::static_size };
 
-    H5::DataType const tid(H5xx::ctype<float_type>::type);
+    H5::DataType const tid(H5xx::ctype<float_type>());
     H5::DataSpace ds(dset.getSpace());
 
     if (!ds.isSimple()) {
@@ -312,7 +312,7 @@ void trajectory::read_vector_sample(H5::DataSet dset, sample_type& sample, ssize
 template <typename sample_type>
 void trajectory::read_scalar_sample(H5::DataSet dset, sample_type& sample, ssize_t& index)
 {
-    H5::DataType const tid(H5xx::ctype<sample_type>::type);
+    H5::DataType const tid(H5xx::ctype<sample_type>());
     H5::DataSpace ds(dset.getSpace());
 
     if (!ds.isSimple()) {
@@ -352,7 +352,7 @@ void trajectory::write_vector_sample(H5::DataSet dset, sample_type const& sample
     typedef typename sample_type::value_type::value_type float_type;
     enum { dimension = sample_type::value_type::static_size };
 
-    H5::DataType const tid(H5xx::ctype<float_type>::type);
+    H5::DataType const tid(H5xx::ctype<float_type>());
     size_t const size = sample.size();
 
     // extend vector sample file dataspace
@@ -378,7 +378,7 @@ void trajectory::write_vector_sample(H5::DataSet dset, sample_type const& sample
 template <typename sample_type>
 void trajectory::write_scalar_sample(H5::DataSet dset, sample_type const& sample)
 {
-    H5::DataType const tid(H5xx::ctype<sample_type>::type);
+    H5::DataType const tid(H5xx::ctype<sample_type>());
 
     // extend scalar sample file dataspace
     H5::DataSpace ds(dset.getSpace());

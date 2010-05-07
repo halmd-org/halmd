@@ -37,9 +37,96 @@ namespace H5xx
  * fundamental type to HDF5 native data type translation
  */
 template <typename T>
-struct ctype
+struct ctype;
+
+template <>
+struct ctype<float>
 {
-    static H5::PredType const& type;
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_FLOAT;
+    }
+};
+
+template <>
+struct ctype<double>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_DOUBLE;
+    }
+};
+
+template <>
+struct ctype<int8_t>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_INT8;
+    }
+};
+
+template <>
+struct ctype<uint8_t>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_UINT8;
+    }
+};
+
+template <>
+struct ctype<int16_t>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_INT16;
+    }
+};
+
+template <>
+struct ctype<uint16_t>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_UINT16;
+    }
+};
+
+template <>
+struct ctype<int32_t>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_INT32;
+    }
+};
+
+template <>
+struct ctype<uint32_t>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_UINT32;
+    }
+};
+
+template <>
+struct ctype<int64_t>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_INT64;
+    }
+};
+
+template <>
+struct ctype<uint64_t>
+{
+    operator H5::PredType const& ()
+    {
+        return H5::PredType::NATIVE_UINT64;
+    }
 };
 
 template <typename T>
@@ -191,9 +278,9 @@ attribute::operator=(T const& value)
         attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-        attr = m_node->createAttribute(m_name, ctype<T>::type, H5S_SCALAR);
+        attr = m_node->createAttribute(m_name, ctype<T>(), H5S_SCALAR);
     }
-    attr.write(ctype<T>::type, &value);
+    attr.write(ctype<T>(), &value);
     return *this;
 }
 
@@ -217,7 +304,7 @@ attribute::as()
         throw H5::AttributeIException("H5xx::attribute::as", "attribute dataspace is not scalar");
     }
     T value;
-    attr.read(ctype<T>::type, &value);
+    attr.read(ctype<T>(), &value);
     return value;
 }
 
@@ -304,9 +391,9 @@ attribute::operator=(T const& value)
         attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-        attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
+        attr = m_node->createAttribute(m_name, ctype<value_type>(), ds);
     }
-    attr.write(ctype<value_type>::type, value.data());
+    attr.write(ctype<value_type>(), value.data());
     return *this;
 }
 
@@ -372,7 +459,7 @@ attribute::as()
     }
 
     boost::array<value_type, size> value;
-    attr.read(ctype<value_type>::type, value.data());
+    attr.read(ctype<value_type>(), value.data());
     return value;
 }
 
@@ -395,9 +482,9 @@ attribute::operator=(T const& value)
         attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-        attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
+        attr = m_node->createAttribute(m_name, ctype<value_type>(), ds);
     }
-    attr.write(ctype<value_type>::type, value.data());
+    attr.write(ctype<value_type>(), value.data());
     return *this;
 }
 
@@ -432,7 +519,7 @@ attribute::as()
     boost::array<size_t, dimension> shape;
     std::copy(dim, dim + dimension, shape.begin());
     boost::multi_array<value_type, dimension> value(shape);
-    attr.read(ctype<value_type>::type, value.data());
+    attr.read(ctype<value_type>(), value.data());
     return value;
 }
 
@@ -453,9 +540,9 @@ attribute::operator=(T const& value)
         attr = m_node->openAttribute(m_name);
     }
     catch (H5::AttributeIException const&) {
-        attr = m_node->createAttribute(m_name, ctype<value_type>::type, ds);
+        attr = m_node->createAttribute(m_name, ctype<value_type>(), ds);
     }
-    attr.write(ctype<value_type>::type, value.data());
+    attr.write(ctype<value_type>(), value.data());
     return *this;
 }
 
@@ -488,7 +575,7 @@ attribute::as()
         size *= dim[i];
     }
     std::vector<value_type> value(size);
-    attr.read(ctype<value_type>::type, value.data());
+    attr.read(ctype<value_type>(), value.data());
     return value;
 }
 
