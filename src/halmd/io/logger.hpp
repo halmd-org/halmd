@@ -28,9 +28,6 @@
 namespace halmd
 {
 
-// import into current namespace
-using boost::log::sources::severity_logger;
-
 enum severity_level
 {
     trace,
