@@ -54,16 +54,16 @@ public:
     typedef std::vector<position_vector> position_sample_vector;
     typedef std::vector<velocity_vector> velocity_sample_vector;
     /** sample pointer types for all particle of a species */
-    typedef shared_ptr<position_sample_vector> position_sample_pointer;
-    typedef shared_ptr<velocity_sample_vector> velocity_sample_pointer;
+    typedef shared_ptr<position_sample_vector> position_sample_ptr;
+    typedef shared_ptr<velocity_sample_vector> velocity_sample_ptr;
     /** sample pointer types for all species */
-    typedef std::vector<position_sample_pointer> position_sample_pointer_vector;
-    typedef std::vector<velocity_sample_pointer> velocity_sample_pointer_vector;
+    typedef std::vector<position_sample_ptr> position_sample_ptr_vector;
+    typedef std::vector<velocity_sample_ptr> velocity_sample_ptr_vector;
 
     /** periodically extended particle positions */
-    position_sample_pointer_vector r;
+    position_sample_ptr_vector r;
     /** particle velocities */
-    velocity_sample_pointer_vector v;
+    velocity_sample_ptr_vector v;
 };
 
 }}} // namespace mdsim::samples::host

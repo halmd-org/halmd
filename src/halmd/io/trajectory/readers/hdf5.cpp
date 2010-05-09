@@ -108,7 +108,7 @@ hdf5<dimension, float_type>::hdf5(po::options const& vm)
  * read vector sample dataset
  */
 template <int dimension, typename float_type>
-size_t hdf5<dimension, float_type>::read(H5::DataSet dset, position_sample_pointer sample)
+size_t hdf5<dimension, float_type>::read(H5::DataSet dset, position_sample_ptr sample)
 {
     H5::DataSpace ds(dset.getSpace());
 
