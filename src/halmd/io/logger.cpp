@@ -83,7 +83,7 @@ void init(options const& vm)
 
     init_log_to_file
     (
-        vm["output"].as<string>(),
+        vm["output"].as<string>() + ".log",
         keywords::auto_flush = true,
         keywords::filter = filters::attr<severity_level>("Severity") >= lvl_file,
         keywords::format = formatters::format("[%1%] %2%%3%")
