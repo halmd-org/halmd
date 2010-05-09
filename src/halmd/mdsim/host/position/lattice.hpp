@@ -44,9 +44,9 @@ public:
     typedef host::box<dimension> box_type;
     typedef host::random random_type;
 
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<random_type> random;
+    shared_ptr<particle_type> particle;
+    shared_ptr<box_type> box;
+    shared_ptr<random_type> random;
 
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm);

@@ -42,7 +42,7 @@ public:
     typedef numeric::host::blas::vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
     typedef mdsim::particle<dimension> particle_type;
 
-    boost::shared_ptr<particle_type> particle;
+    shared_ptr<particle_type> particle;
 
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm);

@@ -45,7 +45,7 @@ public:
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 
-    boost::shared_ptr<particle_type> particle;
+    shared_ptr<particle_type> particle;
 
     /** sample vector types for single particle */
     typedef numeric::host::blas::vector<float_type, dimension> position_vector;
@@ -54,8 +54,8 @@ public:
     typedef std::vector<position_vector> position_sample_vector;
     typedef std::vector<velocity_vector> velocity_sample_vector;
     /** sample pointer types for all particle of a species */
-    typedef boost::shared_ptr<position_sample_vector> position_sample_pointer;
-    typedef boost::shared_ptr<velocity_sample_vector> velocity_sample_pointer;
+    typedef shared_ptr<position_sample_vector> position_sample_pointer;
+    typedef shared_ptr<velocity_sample_vector> velocity_sample_pointer;
     /** sample pointer types for all species */
     typedef std::vector<position_sample_pointer> position_sample_pointer_vector;
     typedef std::vector<velocity_sample_pointer> velocity_sample_pointer_vector;

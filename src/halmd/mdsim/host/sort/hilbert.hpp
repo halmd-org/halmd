@@ -45,9 +45,9 @@ public:
     typedef typename neighbor_type::cell_list cell_list;
     typedef typename neighbor_type::cell_index cell_index;
 
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<neighbor_type> neighbor;
+    shared_ptr<particle_type> particle;
+    shared_ptr<box_type> box;
+    shared_ptr<neighbor_type> neighbor;
 
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm);

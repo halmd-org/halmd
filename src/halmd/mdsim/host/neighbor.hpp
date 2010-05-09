@@ -60,9 +60,9 @@ public:
     typedef boost::multi_array<cell_list, dimension> cell_lists;
     typedef numeric::host::blas::vector<size_t, dimension> cell_index;
 
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<box_type> box;
+    shared_ptr<particle_type> particle;
+    shared_ptr<force_type> force;
+    shared_ptr<box_type> box;
 
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);

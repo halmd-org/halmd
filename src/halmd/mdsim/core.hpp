@@ -57,12 +57,12 @@ public:
     uint64_t steps() { return steps_; }
     double time() { return time_; }
 
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<neighbor_type> neighbor;
-    boost::shared_ptr<sort_type> sort;
-    boost::shared_ptr<integrator_type> integrator;
-    boost::shared_ptr<position_type> position;
-    boost::shared_ptr<velocity_type> velocity;
+    shared_ptr<force_type> force;
+    shared_ptr<neighbor_type> neighbor;
+    shared_ptr<sort_type> sort;
+    shared_ptr<integrator_type> integrator;
+    shared_ptr<position_type> position;
+    shared_ptr<velocity_type> velocity;
 
 private:
     /** number of integration steps */

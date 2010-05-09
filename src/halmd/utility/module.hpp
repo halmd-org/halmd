@@ -20,6 +20,8 @@
 #ifndef HALMD_UTILITY_MODULE_HPP
 #define HALMD_UTILITY_MODULE_HPP
 
+#include <boost/shared_ptr.hpp>
+
 #include <halmd/utility/module/exception.hpp>
 #include <halmd/utility/module/module.hpp>
 
@@ -29,6 +31,7 @@ namespace halmd
 // import into top-level namespace
 using utility::module::module;
 using utility::module::module_error;
+using boost::shared_ptr;
 
 } // namespace halmd
 

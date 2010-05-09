@@ -44,9 +44,9 @@ public:
     typedef io::trajectory::reader<dimension> reader_type;
     typedef samples::host::trajectory<dimension, float_type> sample_type;
 
-    boost::shared_ptr<reader_type> reader;
-    boost::shared_ptr<sample_type> sample;
-    boost::shared_ptr<particle_type> particle;
+    shared_ptr<reader_type> reader;
+    shared_ptr<sample_type> sample;
+    shared_ptr<particle_type> particle;
 
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm);

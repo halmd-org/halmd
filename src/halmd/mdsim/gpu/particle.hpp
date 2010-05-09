@@ -44,7 +44,7 @@ public:
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;
     typedef utility::gpu::device device_type;
 
-    boost::shared_ptr<device_type> device;
+    shared_ptr<device_type> device;
 
     static void resolve(po::options const& vm);
     particle(po::options const& vm);

@@ -48,8 +48,8 @@ public:
     static void resolve(po::options const& vm);
     hdf5(po::options const& vm);
 
-    boost::shared_ptr<sample_type> sample;
-    boost::shared_ptr<particle_type> particle;
+    shared_ptr<sample_type> sample;
+    shared_ptr<particle_type> particle;
 
 private:
     size_t read(H5::DataSet dset, position_sample_pointer sample);
