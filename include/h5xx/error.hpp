@@ -78,8 +78,9 @@ public:
     /**
      * scoped error handler
      */
-    struct _register
+    class _register
     {
+    public:
         /**
          * set error handler
          */
@@ -97,10 +98,12 @@ public:
             H5Eset_auto(func, client_data);
         }
 
+    private:
         H5E_auto_t func;
         void* client_data;
     };
 
+private:
     /**
      * custom HDF5 error handler
      */
@@ -121,7 +124,6 @@ public:
         throw error(err_desc->func_name + std::string(": ") + err_desc->desc);
     }
 
-private:
     /** error description */
     std::string err_;
 };
