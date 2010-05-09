@@ -250,6 +250,10 @@ void options::parse(int argc, char** argv)
 #endif /* ! BACKEND_EXECUTABLES */
         ("dimension", po::value<int>()->default_value(3),
          "positional coordinates dimension")
+        ("trajectory,J", po::value<string>(),
+         "trajectory input file")
+        ("trajectory-sample,S", po::value<ssize_t>(),
+         "trajectory sample for initial state")
         ;
 
     try {

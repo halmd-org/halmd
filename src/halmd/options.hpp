@@ -74,6 +74,11 @@ public:
         return vm[vv];
     }
 
+    size_t count(std::string const& name) const
+    {
+        return vm.count(name);
+    }
+
 private:
     /** parsed program options */
     boost::program_options::variables_map vm;

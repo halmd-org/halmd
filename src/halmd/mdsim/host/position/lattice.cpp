@@ -42,6 +42,10 @@ using namespace std;
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::resolve(po::options const& vm)
 {
+    if (vm.count("trajectory-sample")) {
+        throw module_error("inept module " + module<lattice>::name());
+    }
+
     module<particle_type>::required(vm);
     module<box_type>::required(vm);
     module<random_type>::required(vm);

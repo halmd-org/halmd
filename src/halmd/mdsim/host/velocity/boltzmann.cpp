@@ -46,6 +46,10 @@ void boltzmann<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::resolve(po::options const& vm)
 {
+    if (vm.count("trajectory-sample")) {
+        throw module_error("inept module " + module<boltzmann>::name());
+    }
+
     module<particle_type>::required(vm);
     module<random_type>::required(vm);
 }
