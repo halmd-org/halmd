@@ -91,8 +91,8 @@ hdf5<dimension, float_type>::hdf5(po::options const& vm)
         }
         H5::DataSet v = type.openDataSet("v");
 
-        sample->r[i].reset(new position_sample_vector(particle->ntypes[i]));
-        sample->v[i].reset(new velocity_sample_vector(particle->ntypes[i]));
+        sample->r[i].reset(new sample_vector(particle->ntypes[i]));
+        sample->v[i].reset(new sample_vector(particle->ntypes[i]));
 
         read(r, sample->r[i]);
         read(v, sample->v[i]);
@@ -108,7 +108,7 @@ hdf5<dimension, float_type>::hdf5(po::options const& vm)
  * read vector sample dataset
  */
 template <int dimension, typename float_type>
-size_t hdf5<dimension, float_type>::read(H5::DataSet dset, position_sample_ptr sample)
+size_t hdf5<dimension, float_type>::read(H5::DataSet dset, sample_vector_ptr sample)
 {
     H5::DataSpace ds(dset.getSpace());
 

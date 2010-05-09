@@ -23,7 +23,7 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
-#include <halmd/mdsim/particle.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -37,7 +37,8 @@ template <int dimension, typename float_type>
 class trajectory
 {
 public:
-    typedef mdsim::particle<dimension> particle_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
 
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm);
@@ -47,23 +48,17 @@ public:
 
     shared_ptr<particle_type> particle;
 
-    /** sample vector types for single particle */
-    typedef numeric::host::blas::vector<float_type, dimension> position_vector;
-    typedef numeric::host::blas::vector<float_type, dimension> velocity_vector;
-    /** sample vector types for all particles of a species */
-    typedef std::vector<position_vector> position_sample_vector;
-    typedef std::vector<velocity_vector> velocity_sample_vector;
-    /** sample pointer types for all particle of a species */
-    typedef shared_ptr<position_sample_vector> position_sample_ptr;
-    typedef shared_ptr<velocity_sample_vector> velocity_sample_ptr;
-    /** sample pointer types for all species */
-    typedef std::vector<position_sample_ptr> position_sample_ptr_vector;
-    typedef std::vector<velocity_sample_ptr> velocity_sample_ptr_vector;
+    /** sample vector type for all particles of a species */
+    typedef std::vector<vector_type> sample_vector;
+    /** sample pointer type for all particle of a species */
+    typedef shared_ptr<sample_vector> sample_vector_ptr;
+    /** sample pointer type for all species */
+    typedef std::vector<sample_vector_ptr> sample_vector_ptr_vector;
 
     /** periodically extended particle positions */
-    position_sample_ptr_vector r;
+    sample_vector_ptr_vector r;
     /** particle velocities */
-    velocity_sample_ptr_vector v;
+    sample_vector_ptr_vector v;
 };
 
 }}} // namespace mdsim::samples::host

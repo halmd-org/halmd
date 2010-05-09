@@ -92,8 +92,8 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
     }
 
     for (size_t i = 0; i < particle->ntype; ++i) {
-        r[i].reset(new position_sample_vector(particle->ntypes[i]));
-        v[i].reset(new velocity_sample_vector(particle->ntypes[i]));
+        r[i].reset(new sample_vector(particle->ntypes[i]));
+        v[i].reset(new sample_vector(particle->ntypes[i]));
     }
     for (size_t i = 0; i < particle->nbox; ++i) {
         unsigned int type, tag;

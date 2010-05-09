@@ -39,10 +39,8 @@ class hdf5
 public:
     typedef trajectory::reader<dimension> _Base;
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
-    typedef typename sample_type::position_sample_vector position_sample_vector;
-    typedef typename sample_type::velocity_sample_vector velocity_sample_vector;
-    typedef typename sample_type::position_sample_ptr position_sample_ptr;
-    typedef typename sample_type::velocity_sample_ptr velocity_sample_ptr;
+    typedef typename sample_type::sample_vector sample_vector;
+    typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
     typedef mdsim::particle<dimension> particle_type;
 
     static void resolve(po::options const& vm);
@@ -52,7 +50,7 @@ public:
     shared_ptr<particle_type> particle;
 
 private:
-    size_t read(H5::DataSet dset, position_sample_ptr sample);
+    size_t read(H5::DataSet dset, sample_vector_ptr sample);
     size_t read(H5::DataSet dset, float_type& sample);
 
     /** absolute path to HDF5 trajectory file */

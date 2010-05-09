@@ -56,8 +56,7 @@ public:
     virtual ~trajectory() {}
     void acquire();
 
-    typedef typename _Base::position_sample_vector position_sample_vector;
-    typedef typename _Base::velocity_sample_vector velocity_sample_vector;
+    typedef typename _Base::sample_vector sample_vector;
 
     /** periodically extended particle positions */
     using _Base::r;
@@ -87,8 +86,7 @@ public:
     virtual ~trajectory() {}
     void acquire();
 
-    typedef typename _Base::position_sample_vector position_sample_vector;
-    typedef typename _Base::velocity_sample_vector velocity_sample_vector;
+    typedef typename _Base::sample_vector sample_vector;
 
     /** periodically extended particle positions */
     using _Base::r;
