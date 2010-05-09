@@ -55,7 +55,7 @@ namespace h5xx
 /**
  * wrap any HDF5 C or C++ call with this macro for sane error handling
  */
-#define H5XX_CALL for (h5xx::error::_register register_;;)
+#define H5XX_CALL(expr) do { h5xx::error::_register register_; expr; } while(0)
 
 /**
  * HDF5 exception
