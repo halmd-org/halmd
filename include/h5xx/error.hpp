@@ -27,8 +27,6 @@
 #define H5_USE_16_API_DEFAULT
 #include <hdf5.h>
 
-#include <h5xx/error.hpp>
-
 namespace h5xx
 {
 
