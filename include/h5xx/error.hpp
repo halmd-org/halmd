@@ -101,7 +101,7 @@ public:
          */
         ~_register()
         {
-            H5Eset_auto(reinterpret_cast<H5E_auto_t>(H5Eprint), stderr);
+            H5Eset_auto(reinterpret_cast<H5E_auto_t>(H5Eprint), NULL);
         }
     };
 
