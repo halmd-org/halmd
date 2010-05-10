@@ -86,7 +86,13 @@ public:
          */
         _register()
         {
-            H5Eget_auto(&func, &client_data);
+            // We do not use H5Eget_auto to save and later restore the
+            // current error handler, as for HDF5 1.8.x the type of
+            // the returned function pointer may vary depending on the
+            // compile time option --with-default-api-version, even if
+            // we set a compatibility macro to explicitly demand the
+            // HDF 1.6 API.
+
             H5Eset_auto(&error::handler, NULL);
         }
 
@@ -95,12 +101,8 @@ public:
          */
         ~_register()
         {
-            H5Eset_auto(func, client_data);
+            H5Eset_auto(reinterpret_cast<H5E_auto_t>(H5Eprint), stderr);
         }
-
-    private:
-        H5E_auto_t func;
-        void* client_data;
     };
 
 private:
