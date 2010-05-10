@@ -79,7 +79,6 @@ public:
     error()
     {
         H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(walk), &err_);
-        H5Eclear();
     }
 
     /**
@@ -122,16 +121,18 @@ public:
 
 private:
     /**
-     * retrieve function name and error description of error stack entry
+     * retrieve function name and error description of top stack entry
      */
     static herr_t walk(int n, H5E_error_t* err_desc, std::string* err)
     {
-        *err = err_desc->func_name;
-        if (err_desc->desc) {
-            *err += std::string(": ") + err_desc->desc;
+        if (n == 0) {
+            *err = err_desc->func_name;
+            if (err_desc->desc) {
+                *err += std::string(": ") + err_desc->desc;
+            }
         }
-        // signal failure to abort error stack walk
-        return -1;
+        // value of HDF5-internal macro SUCCESS
+        return 0;
     }
 
     /** error description */
