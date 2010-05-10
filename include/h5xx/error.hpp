@@ -53,9 +53,15 @@ namespace h5xx
 //
 
 /**
- * wrap any HDF5 C or C++ call with this macro for sane error handling
+ * wrap HDF5 C API calls with this macro for error handling
  */
-#define H5XX_CALL(expr) do { h5xx::error::_register register_; expr; } while(0)
+#define H5XX_CALL(expr) \
+    do { \
+        h5xx::error::_register register_; \
+        if ((expr) < 0) { \
+            throw error(); \
+        } \
+    } while(0)
 
 /**
  * HDF5 exception
@@ -64,8 +70,17 @@ class error
   : virtual public std::exception
 {
 public:
-    error(std::string err) : err_(err) {}
+    explicit error(std::string err) : err_(err) {}
     virtual ~error() throw() {}
+
+    /**
+     * retrieve error description from HDF5 error stack
+     */
+    error()
+    {
+        H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(walk), &err_);
+        H5Eclear();
+    }
 
     /**
      * returns error description
@@ -93,7 +108,7 @@ public:
             // we set a compatibility macro to explicitly demand the
             // HDF 1.6 API.
 
-            H5Eset_auto(&error::handler, NULL);
+            H5Eset_auto(NULL, NULL);
         }
 
         /**
@@ -107,23 +122,16 @@ public:
 
 private:
     /**
-     * custom HDF5 error handler
+     * retrieve function name and error description of error stack entry
      */
-    static herr_t handler(void* client_data)
+    static herr_t walk(int n, H5E_error_t* err_desc, std::string* err)
     {
-        H5Ewalk(H5E_WALK_DOWNWARD, walk, NULL);
-        throw error("error handler failed");
-    }
-
-    /**
-     * custom HDF5 error stack walk
-     */
-    static herr_t walk(int n, H5E_error_t* err_desc, void* client_data)
-    {
-        if (!err_desc->desc) {
-            throw error(err_desc->func_name + std::string(" failed"));
+        *err = err_desc->func_name;
+        if (err_desc->desc) {
+            *err += std::string(": ") + err_desc->desc;
         }
-        throw error(err_desc->func_name + std::string(": ") + err_desc->desc);
+        // signal failure to abort error stack walk
+        return -1;
     }
 
     /** error description */
