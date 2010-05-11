@@ -59,7 +59,7 @@ namespace h5xx
     do { \
         h5xx::error::_register register_; \
         if ((expr) < 0) { \
-            throw error(); \
+            throw h5xx::error(); \
         } \
     } while(0)
 
