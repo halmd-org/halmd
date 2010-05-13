@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(test_throw_exception)
 BOOST_AUTO_TEST_CASE(test_disable_handler)
 {
     void* data_ = stderr;
-#ifndef H5_USE_16_API
+#ifndef H5_USE_16_API_DEFAULT
     H5E_auto2_t auto_ = reinterpret_cast<H5E_auto2_t>(H5Eprint2);
     H5XX_CALL(H5Eget_auto2(H5E_DEFAULT, &auto_, &data_));
 #else
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(test_disable_handler)
 BOOST_AUTO_TEST_CASE(test_reset_default_error_handler)
 {
     void* data_ = stderr;
-#ifndef H5_USE_16_API
+#ifndef H5_USE_16_API_DEFAULT
     H5E_auto2_t auto_ = NULL;
     H5Eget_auto2(H5E_DEFAULT, &auto_, &data_);
     BOOST_REQUIRE(reinterpret_cast<H5E_auto2_t>(H5Eprint2) == auto_);

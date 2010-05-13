@@ -117,7 +117,7 @@ inline herr_t _walk_stack(unsigned int n, H5E_error2_t const* err, void* err_ptr
 struct _error_handler
 {
 #ifndef HDF5_DEBUG
-# ifndef H5_USE_16_API
+# ifndef H5_USE_16_API_DEFAULT
     _error_handler()
     {
         H5Eget_auto2(H5E_DEFAULT, &auto_, NULL);
@@ -130,7 +130,7 @@ struct _error_handler
     }
 
     H5E_auto2_t auto_;
-# else /* ! H5_USE_16_API */
+# else /* ! H5_USE_16_API_DEFAULT */
     _error_handler()
     {
         H5Eget_auto1(&auto_, NULL);
@@ -143,7 +143,7 @@ struct _error_handler
     }
 
     H5E_auto1_t auto_;
-# endif /* ! H5_USE_16_API */
+# endif /* ! H5_USE_16_API_DEFAULT */
 #endif /* ! HDF5_DEBUG */
 };
 
