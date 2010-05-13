@@ -23,9 +23,10 @@
 #include <exception>
 #include <string>
 
-// ensure compatibility with HDF5 1.6.x and 1.8.x
-#define H5_USE_16_API_DEFAULT
 #include <hdf5.h>
+#if H5_VERS_MAJOR <= 1 && H5_VERS_MINOR < 8
+# error "h5xx wrapper requires HDF5 >= 1.8"
+#endif
 
 namespace h5xx
 {
@@ -53,90 +54,84 @@ namespace h5xx
 //
 
 /**
- * wrap HDF5 C API calls with this macro for error handling
- */
-#define H5XX_CALL(expr) \
-    do { \
-        h5xx::error::_register register_; \
-        if ((expr) < 0) { \
-            throw h5xx::error(); \
-        } \
-    } while(0)
-
-/**
  * HDF5 exception
  */
 class error
   : virtual public std::exception
 {
 public:
-    explicit error(std::string err) : err_(err) {}
-    virtual ~error() throw() {}
+    /**
+     * set HDF5 library error description
+     */
+    error(H5E_error_t const* err)
+      : desc_(err->func_name + std::string(": ") + err->desc) {}
 
     /**
-     * retrieve error description from HDF5 error stack
+     * set custom error description
      */
-    error()
-    {
-        H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(walk), &err_);
-    }
+    error(std::string const& desc)
+      : desc_(desc) {}
+
+    virtual ~error() throw() {}
 
     /**
      * returns error description
      */
     char const* what() const throw()
     {
-        return err_.c_str();
+        return desc_.c_str();
     }
-
-    /**
-     * scoped error handler
-     */
-    class _register
-    {
-    public:
-        /**
-         * set error handler
-         */
-        _register()
-        {
-            // We do not use H5Eget_auto to save and later restore the
-            // current error handler, as for HDF5 1.8.x the type of
-            // the returned function pointer may vary depending on the
-            // compile time option --with-default-api-version, even if
-            // we set a compatibility macro to explicitly demand the
-            // HDF 1.6 API.
-
-            H5Eset_auto(NULL, NULL);
-        }
-
-        /**
-         * unset error handler
-         */
-        ~_register()
-        {
-            H5Eset_auto(reinterpret_cast<H5E_auto_t>(H5Eprint), NULL);
-        }
-    };
 
 private:
-    /**
-     * retrieve function name and error description of top stack entry
-     */
-    static herr_t walk(int n, H5E_error_t* err_desc, std::string* err)
+    std::string desc_;
+};
+
+/**
+ * wrap HDF5 C API calls with this macro for error interception
+ */
+#define H5XX_CALL(expr) \
+    do { \
+        h5xx::_error_handler _no_print; \
+        if ((expr) < 0) { \
+            H5E_error_t const* _err; \
+            H5Ewalk(H5E_DEFAULT, H5E_WALK_DOWNWARD, h5xx::_walk_stack, &_err); \
+            throw h5xx::error(_err); \
+        } \
+    } while(0)
+
+/**
+ * retrieve error description on top of error stack
+ */
+inline herr_t _walk_stack(unsigned int n, H5E_error_t const* err, void* err_ptr)
+{
+    if (n == 0) {
+        *reinterpret_cast<void const**>(err_ptr) = err;
+    }
+    // value of HDF5-internal macro SUCCESS
+    return 0;
+}
+
+/**
+ * silence HDF5 error stack printing
+ */
+struct _error_handler
+{
+#ifndef HDF5_DEBUG
+    _error_handler()
     {
-        if (n == 0) {
-            *err = err_desc->func_name;
-            if (err_desc->desc) {
-                *err += std::string(": ") + err_desc->desc;
-            }
-        }
-        // value of HDF5-internal macro SUCCESS
-        return 0;
+        // We do not use H5Eget_auto to save and later restore the
+        // current error handler, as for HDF5 1.8.x the type of
+        // the returned function pointer may vary depending on the
+        // compile time option --with-default-api-version.
+
+        H5Eset_auto(H5E_DEFAULT, NULL, NULL);
     }
 
-    /** error description */
-    std::string err_;
+    ~_error_handler()
+    {
+        H5Eset_auto(H5E_DEFAULT, reinterpret_cast<H5E_auto_t>(H5Eprint), NULL);
+    }
+#endif /* ! HDF5_DEBUG */
 };
 
 } // namespace h5xx
