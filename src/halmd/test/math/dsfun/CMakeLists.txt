@@ -12,6 +12,7 @@ if(WITH_CUDA)
       ${test}_kernel.cu
       )
     target_link_libraries(test_dsfun_${test}
+      ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
       ${CUDA_LIBRARIES}
       )
     add_test(dsfun_${test} test_dsfun_${test})

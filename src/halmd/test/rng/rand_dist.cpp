@@ -18,8 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #define BOOST_TEST_MODULE test_random_distributions
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE test_random_distributions
+#include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
 #include <cuda_wrapper.hpp>
@@ -143,7 +144,7 @@ void test_gsl_rng( unsigned long count )
     BOOST_CHECK_CLOSE_FRACTION(a.var(), 1, tol);
 }
 
-boost::unit_test::test_suite* init_unit_test_suite( int argc, char* argv[] )
+int init_unit_test_suite()
 {
     using namespace boost::unit_test::framework;
 
@@ -165,3 +166,4 @@ boost::unit_test::test_suite* init_unit_test_suite( int argc, char* argv[] )
     return 0;
 }
 
+static int _dummy = init_unit_test_suite();

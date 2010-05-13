@@ -20,8 +20,9 @@
 
 #include "div_kernel.hpp"
 
+#define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE test_dsfun_div
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #define BLOCKS 4096
 #define THREADS 128
