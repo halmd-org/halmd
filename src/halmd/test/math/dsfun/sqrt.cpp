@@ -23,6 +23,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE test_dsfun_sqrt
 #include <boost/test/unit_test.hpp>
+#include <cmath>
 
 #define BLOCKS 4096
 #define THREADS 128
