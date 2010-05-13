@@ -48,19 +48,30 @@ BOOST_AUTO_TEST_CASE(test_throw_exception)
 
 BOOST_AUTO_TEST_CASE(test_disable_handler)
 {
-    H5E_auto_t auto_ = reinterpret_cast<H5E_auto_t>(H5Eprint);
     void* data_ = stderr;
-    H5XX_CALL(H5Eget_auto(H5E_DEFAULT, &auto_, &data_));
+#ifndef H5_USE_16_API
+    H5E_auto2_t auto_ = reinterpret_cast<H5E_auto2_t>(H5Eprint2);
+    H5XX_CALL(H5Eget_auto2(H5E_DEFAULT, &auto_, &data_));
+#else
+    H5E_auto1_t auto_ = reinterpret_cast<H5E_auto1_t>(H5Eprint1);
+    H5XX_CALL(H5Eget_auto1(&auto_, &data_));
+#endif
     BOOST_REQUIRE(NULL == auto_);
     BOOST_REQUIRE(NULL == data_);
 }
 
 BOOST_AUTO_TEST_CASE(test_reset_default_error_handler)
 {
-    H5E_auto_t auto_ = NULL;
     void* data_ = stderr;
-    H5Eget_auto(H5E_DEFAULT, &auto_, &data_);
-    BOOST_REQUIRE(reinterpret_cast<H5E_auto_t>(H5Eprint) == auto_);
+#ifndef H5_USE_16_API
+    H5E_auto2_t auto_ = NULL;
+    H5Eget_auto2(H5E_DEFAULT, &auto_, &data_);
+    BOOST_REQUIRE(reinterpret_cast<H5E_auto2_t>(H5Eprint2) == auto_);
+#else
+    H5E_auto1_t auto_ = NULL;
+    H5Eget_auto1(&auto_, &data_);
+    BOOST_REQUIRE(reinterpret_cast<H5E_auto1_t>(H5Eprint1) == auto_);
+#endif
     BOOST_REQUIRE(NULL == data_);
 }
 

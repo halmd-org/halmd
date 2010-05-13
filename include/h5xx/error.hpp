@@ -63,7 +63,7 @@ public:
     /**
      * set HDF5 library error description
      */
-    error(H5E_error_t const* err)
+    error(H5E_error2_t const* err)
       : desc_(err->func_name + std::string(": ") + err->desc) {}
 
     /**
@@ -93,8 +93,8 @@ private:
     do { \
         h5xx::_error_handler _no_print; \
         if ((expr) < 0) { \
-            H5E_error_t const* _err; \
-            H5Ewalk(H5E_DEFAULT, H5E_WALK_DOWNWARD, h5xx::_walk_stack, &_err); \
+            H5E_error2_t const* _err; \
+            H5Ewalk2(H5E_DEFAULT, H5E_WALK_DOWNWARD, h5xx::_walk_stack, &_err); \
             throw h5xx::error(_err); \
         } \
     } while(0)
@@ -102,7 +102,7 @@ private:
 /**
  * retrieve error description on top of error stack
  */
-inline herr_t _walk_stack(unsigned int n, H5E_error_t const* err, void* err_ptr)
+inline herr_t _walk_stack(unsigned int n, H5E_error2_t const* err, void* err_ptr)
 {
     if (n == 0) {
         *reinterpret_cast<void const**>(err_ptr) = err;
@@ -117,20 +117,33 @@ inline herr_t _walk_stack(unsigned int n, H5E_error_t const* err, void* err_ptr)
 struct _error_handler
 {
 #ifndef HDF5_DEBUG
+# ifndef H5_USE_16_API
     _error_handler()
     {
-        // We do not use H5Eget_auto to save and later restore the
-        // current error handler, as for HDF5 1.8.x the type of
-        // the returned function pointer may vary depending on the
-        // compile time option --with-default-api-version.
-
-        H5Eset_auto(H5E_DEFAULT, NULL, NULL);
+        H5Eget_auto2(H5E_DEFAULT, &auto_, NULL);
+        H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
     }
 
     ~_error_handler()
     {
-        H5Eset_auto(H5E_DEFAULT, reinterpret_cast<H5E_auto_t>(H5Eprint), NULL);
+        H5Eset_auto2(H5E_DEFAULT, auto_, NULL);
     }
+
+    H5E_auto2_t auto_;
+# else /* ! H5_USE_16_API */
+    _error_handler()
+    {
+        H5Eget_auto1(&auto_, NULL);
+        H5Eset_auto1(NULL, NULL);
+    }
+
+    ~_error_handler()
+    {
+        H5Eset_auto1(auto_, NULL);
+    }
+
+    H5E_auto1_t auto_;
+# endif /* ! H5_USE_16_API */
 #endif /* ! HDF5_DEBUG */
 };
 
