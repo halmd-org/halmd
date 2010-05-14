@@ -99,7 +99,6 @@ BOOST_AUTO_TEST_CASE(test_custom_error_description)
 {
     try {
         throw h5xx::error("test custom error description");
-        BOOST_FAIL("no h5xx::error exception thrown");
     }
     catch (h5xx::error const& e) {
         BOOST_REQUIRE(0 == strcmp(e.what(), "test custom error description"));
