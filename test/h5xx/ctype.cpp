@@ -20,44 +20,46 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE test_ctype
 #include <algorithm>
+#include <boost/assign.hpp>
 #include <boost/test/unit_test.hpp>
 #include <vector>
 
 #include <h5xx/ctype.hpp>
 
+using namespace boost::assign;
 using namespace std;
 
 typedef vector<pair<hid_t, hid_t> > type_pairs_vector;
 
 static void add_native_types(type_pairs_vector& types)
 {
-    types.push_back(make_pair(h5xx::ctype<float>(), H5T_NATIVE_FLOAT));
-    types.push_back(make_pair(h5xx::ctype<double>(), H5T_NATIVE_DOUBLE));
-    types.push_back(make_pair(h5xx::ctype<signed char>(), H5T_NATIVE_CHAR));
-    types.push_back(make_pair(h5xx::ctype<unsigned char>(), H5T_NATIVE_UCHAR));
-    types.push_back(make_pair(h5xx::ctype<short>(), H5T_NATIVE_SHORT));
-    types.push_back(make_pair(h5xx::ctype<unsigned short>(), H5T_NATIVE_USHORT));
-    types.push_back(make_pair(h5xx::ctype<int>(), H5T_NATIVE_INT));
-    types.push_back(make_pair(h5xx::ctype<unsigned int>(), H5T_NATIVE_UINT));
+    types += make_pair(h5xx::ctype<float>(), H5T_NATIVE_FLOAT);
+    types += make_pair(h5xx::ctype<double>(), H5T_NATIVE_DOUBLE);
+    types += make_pair(h5xx::ctype<signed char>(), H5T_NATIVE_CHAR);
+    types += make_pair(h5xx::ctype<unsigned char>(), H5T_NATIVE_UCHAR);
+    types += make_pair(h5xx::ctype<short>(), H5T_NATIVE_SHORT);
+    types += make_pair(h5xx::ctype<unsigned short>(), H5T_NATIVE_USHORT);
+    types += make_pair(h5xx::ctype<int>(), H5T_NATIVE_INT);
+    types += make_pair(h5xx::ctype<unsigned int>(), H5T_NATIVE_UINT);
 #if __WORDSIZE == 64
-    types.push_back(make_pair(h5xx::ctype<long>(), H5T_NATIVE_LONG));
-    types.push_back(make_pair(h5xx::ctype<unsigned long>(), H5T_NATIVE_ULONG));
+    types += make_pair(h5xx::ctype<long>(), H5T_NATIVE_LONG);
+    types += make_pair(h5xx::ctype<unsigned long>(), H5T_NATIVE_ULONG);
 #else /* __WORDSIZE == 32 */
-    types.push_back(make_pair(h5xx::ctype<long long>(), H5T_NATIVE_LLONG));
-    types.push_back(make_pair(h5xx::ctype<unsigned long long>(), H5T_NATIVE_ULLONG));
+    types += make_pair(h5xx::ctype<long long>(), H5T_NATIVE_LLONG);
+    types += make_pair(h5xx::ctype<unsigned long long>(), H5T_NATIVE_ULLONG);
 #endif
 }
 
 static void add_integer_types(type_pairs_vector& types)
 {
-    types.push_back(make_pair(h5xx::ctype<int8_t>(), H5T_NATIVE_INT8));
-    types.push_back(make_pair(h5xx::ctype<uint8_t>(), H5T_NATIVE_UINT8));
-    types.push_back(make_pair(h5xx::ctype<int16_t>(), H5T_NATIVE_INT16));
-    types.push_back(make_pair(h5xx::ctype<uint16_t>(), H5T_NATIVE_UINT16));
-    types.push_back(make_pair(h5xx::ctype<int32_t>(), H5T_NATIVE_INT32));
-    types.push_back(make_pair(h5xx::ctype<uint32_t>(), H5T_NATIVE_UINT32));
-    types.push_back(make_pair(h5xx::ctype<int64_t>(), H5T_NATIVE_INT64));
-    types.push_back(make_pair(h5xx::ctype<uint64_t>(), H5T_NATIVE_UINT64));
+    types += make_pair(h5xx::ctype<int8_t>(), H5T_NATIVE_INT8);
+    types += make_pair(h5xx::ctype<uint8_t>(), H5T_NATIVE_UINT8);
+    types += make_pair(h5xx::ctype<int16_t>(), H5T_NATIVE_INT16);
+    types += make_pair(h5xx::ctype<uint16_t>(), H5T_NATIVE_UINT16);
+    types += make_pair(h5xx::ctype<int32_t>(), H5T_NATIVE_INT32);
+    types += make_pair(h5xx::ctype<uint32_t>(), H5T_NATIVE_UINT32);
+    types += make_pair(h5xx::ctype<int64_t>(), H5T_NATIVE_INT64);
+    types += make_pair(h5xx::ctype<uint64_t>(), H5T_NATIVE_UINT64);
 }
 
 static void test_equality(type_pairs_vector const& types)
