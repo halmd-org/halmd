@@ -35,19 +35,17 @@ static void add_native_types(type_pairs_vector& types)
 {
     types += make_pair(h5xx::ctype<float>(), H5T_NATIVE_FLOAT);
     types += make_pair(h5xx::ctype<double>(), H5T_NATIVE_DOUBLE);
-    types += make_pair(h5xx::ctype<signed char>(), H5T_NATIVE_CHAR);
+    types += make_pair(h5xx::ctype<char>(), H5T_NATIVE_CHAR);
+    types += make_pair(h5xx::ctype<signed char>(), H5T_NATIVE_SCHAR);
     types += make_pair(h5xx::ctype<unsigned char>(), H5T_NATIVE_UCHAR);
     types += make_pair(h5xx::ctype<short>(), H5T_NATIVE_SHORT);
     types += make_pair(h5xx::ctype<unsigned short>(), H5T_NATIVE_USHORT);
     types += make_pair(h5xx::ctype<int>(), H5T_NATIVE_INT);
     types += make_pair(h5xx::ctype<unsigned int>(), H5T_NATIVE_UINT);
-#if __WORDSIZE == 64
     types += make_pair(h5xx::ctype<long>(), H5T_NATIVE_LONG);
     types += make_pair(h5xx::ctype<unsigned long>(), H5T_NATIVE_ULONG);
-#else /* __WORDSIZE == 32 */
     types += make_pair(h5xx::ctype<long long>(), H5T_NATIVE_LLONG);
     types += make_pair(h5xx::ctype<unsigned long long>(), H5T_NATIVE_ULLONG);
-#endif
 }
 
 static void add_integer_types(type_pairs_vector& types)
@@ -62,15 +60,27 @@ static void add_integer_types(type_pairs_vector& types)
     types += make_pair(h5xx::ctype<uint64_t>(), H5T_NATIVE_UINT64);
 }
 
-static void test_equality(type_pairs_vector const& types)
+/**
+ * Test if C to HDF5 type translation is correct.
+ */
+BOOST_AUTO_TEST_CASE(test_type_equality)
 {
+    type_pairs_vector types;
+    add_native_types(types);
+    add_integer_types(types);
     for (size_t i = 0; i < types.size(); ++i) {
         BOOST_CHECK(0 < H5Tequal(types[i].first, types[i].second));
     }
 }
 
-static void test_inequality(type_pairs_vector const& types)
+/**
+ * Test whether H5Tequal detects unequal types.
+ */
+BOOST_AUTO_TEST_CASE(test_type_inequality)
 {
+    type_pairs_vector types;
+    // skip native types, which contain two equal HDF5 char types
+    add_integer_types(types);
     for (size_t i = 0; i < types.size(); ++i) {
         for (size_t j = 0; j < types.size(); ++j) {
             if (i != j) {
@@ -78,32 +88,4 @@ static void test_inequality(type_pairs_vector const& types)
             }
         }
     }
-}
-
-BOOST_AUTO_TEST_CASE(test_native_types_equality)
-{
-    type_pairs_vector types;
-    add_native_types(types);
-    test_equality(types);
-}
-
-BOOST_AUTO_TEST_CASE(test_native_types_inequality)
-{
-    type_pairs_vector types;
-    add_native_types(types);
-    test_inequality(types);
-}
-
-BOOST_AUTO_TEST_CASE(test_integer_types_equality)
-{
-    type_pairs_vector types;
-    add_integer_types(types);
-    test_equality(types);
-}
-
-BOOST_AUTO_TEST_CASE(test_integer_types_inequality)
-{
-    type_pairs_vector types;
-    add_integer_types(types);
-    test_inequality(types);
 }

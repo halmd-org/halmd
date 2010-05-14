@@ -50,77 +50,103 @@ struct ctype<double>
 };
 
 template <>
-struct ctype<int8_t>
+struct ctype<char>
 {
     operator hid_t() const
     {
-        return H5T_NATIVE_INT8;
+        return H5T_NATIVE_CHAR;
     }
 };
 
 template <>
-struct ctype<uint8_t>
+struct ctype<signed char>
 {
     operator hid_t() const
     {
-        return H5T_NATIVE_UINT8;
+        return H5T_NATIVE_SCHAR;
     }
 };
 
 template <>
-struct ctype<int16_t>
+struct ctype<unsigned char>
 {
     operator hid_t() const
     {
-        return H5T_NATIVE_INT16;
+        return H5T_NATIVE_UCHAR;
     }
 };
 
 template <>
-struct ctype<uint16_t>
+struct ctype<short>
 {
     operator hid_t() const
     {
-        return H5T_NATIVE_UINT16;
+        return H5T_NATIVE_SHORT;
     }
 };
 
 template <>
-struct ctype<int32_t>
+struct ctype<unsigned short>
 {
     operator hid_t() const
     {
-        return H5T_NATIVE_INT32;
+        return H5T_NATIVE_USHORT;
     }
 };
 
 template <>
-struct ctype<uint32_t>
+struct ctype<int>
 {
     operator hid_t() const
     {
-        return H5T_NATIVE_UINT32;
+        return H5T_NATIVE_INT;
     }
 };
 
 template <>
-struct ctype<int64_t>
+struct ctype<unsigned int>
 {
     operator hid_t() const
     {
-        return H5T_NATIVE_INT64;
+        return H5T_NATIVE_UINT;
     }
 };
 
 template <>
-struct ctype<uint64_t>
+struct ctype<long>
 {
     operator hid_t() const
     {
-        return H5T_NATIVE_UINT64;
+        return H5T_NATIVE_LONG;
     }
 };
 
+template <>
+struct ctype<unsigned long>
+{
+    operator hid_t() const
+    {
+        return H5T_NATIVE_ULONG;
+    }
+};
+
+template <>
+struct ctype<long long>
+{
+    operator hid_t() const
+    {
+        return H5T_NATIVE_LLONG;
+    }
+};
+
+template <>
+struct ctype<unsigned long long>
+{
+    operator hid_t() const
+    {
+        return H5T_NATIVE_ULLONG;
+    }
+};
 
 } // namespace h5xx
 
