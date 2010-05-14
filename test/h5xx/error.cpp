@@ -40,6 +40,7 @@ BOOST_AUTO_TEST_CASE(test_throw_exception)
     H5XX_CALL(ret = H5Sclose(id));
     try {
         H5XX_CALL(ret = H5Sclose(id));
+        BOOST_FAIL("no h5xx::error exception thrown");
     }
     catch (h5xx::error const&) {
         BOOST_REQUIRE(ret < 0);
@@ -82,6 +83,7 @@ BOOST_AUTO_TEST_CASE(test_library_error_description)
     H5XX_CALL(ret = H5Sclose(id));
     try {
         H5XX_CALL(ret = H5Sclose(id));
+        BOOST_FAIL("no h5xx::error exception thrown");
     }
     catch (h5xx::error const& e) {
         BOOST_REQUIRE(0 == strcmp(e.what(), "H5Sclose: not a dataspace"));
@@ -92,6 +94,7 @@ BOOST_AUTO_TEST_CASE(test_custom_error_description)
 {
     try {
         throw h5xx::error("test custom error description");
+        BOOST_FAIL("no h5xx::error exception thrown");
     }
     catch (h5xx::error const& e) {
         BOOST_REQUIRE(0 == strcmp(e.what(), "test custom error description"));
