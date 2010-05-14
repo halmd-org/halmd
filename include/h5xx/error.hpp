@@ -112,7 +112,7 @@ inline herr_t _walk_stack(unsigned int n, H5E_error_t const* err, void* err_ptr)
 inline void throw_exception()
 {
     H5E_error_t const* _err;
-    H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(_walk_stack), &_err);
+    H5XX_COMPAT_H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(_walk_stack), &_err);
     throw h5xx::error(_err);
 }
 
@@ -131,13 +131,13 @@ struct _error_handler
 
     _error_handler()
     {
-        H5Eget_auto(&saved_efunc, &saved_edata);
-        H5Eset_auto(NULL, NULL);
+        H5XX_COMPAT_H5Eget_auto(&saved_efunc, &saved_edata);
+        H5XX_COMPAT_H5Eset_auto(NULL, NULL);
     }
 
     ~_error_handler()
     {
-        H5Eset_auto(saved_efunc, saved_edata);
+        H5XX_COMPAT_H5Eset_auto(saved_efunc, saved_edata);
     }
 # else /* HDF5 >= 1.8 && !H5_NO_DEPRECATED_SYMBOLS */
     unsigned saved_is_v2;

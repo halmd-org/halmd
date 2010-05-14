@@ -51,12 +51,13 @@
  * define a common API for HDF5 1.6.x and HDF5 1.8.x
  */
 #if !(H5_VERS_MAJOR == 1 && H5_VERS_MINOR < 8)
-# undef H5Eget_auto
-# define H5Eget_auto(...) H5Eget_auto2(H5E_DEFAULT, __VA_ARGS__)
-# undef H5Eset_auto
-# define H5Eset_auto(...) H5Eset_auto2(H5E_DEFAULT, __VA_ARGS__)
-# undef H5Ewalk
-# define H5Ewalk(...) H5Ewalk2(H5E_DEFAULT, __VA_ARGS__)
-#endif /* HDF5 >= 1.8 */
+# define H5XX_COMPAT_H5Eget_auto(...)  H5Eget_auto2(H5E_DEFAULT, __VA_ARGS__)
+# define H5XX_COMPAT_H5Eset_auto(...)  H5Eset_auto2(H5E_DEFAULT, __VA_ARGS__)
+# define H5XX_COMPAT_H5Ewalk(...)      H5Ewalk2(H5E_DEFAULT, __VA_ARGS__)
+#else /* HDF5 < 1.8 */
+# define H5XX_COMPAT_H5Eget_auto       H5Eget_auto
+# define H5XX_COMPAT_H5Eset_auto       H5Eset_auto
+# define H5XX_COMPAT_H5Ewalk           H5Ewalk
+#endif /* HDF5 < 1.8 */
 
 #endif /* ! H5XX_COMPAT_HPP */

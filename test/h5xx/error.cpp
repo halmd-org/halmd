@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(test_disable_handler)
 {
     H5E_auto_t efunc = reinterpret_cast<H5E_auto_t>(H5Eprint);
     void* edata = stderr;
-    H5XX_CALL(H5Eget_auto(&efunc, &edata));
+    H5XX_CALL(H5XX_COMPAT_H5Eget_auto(&efunc, &edata));
     BOOST_REQUIRE(NULL == efunc);
     BOOST_REQUIRE(NULL == edata);
 }
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(test_reset_default_error_handler)
 #else
     void* edata = stderr;
 #endif
-    H5Eget_auto(&efunc, &edata);
+    H5XX_COMPAT_H5Eget_auto(&efunc, &edata);
 #ifdef H5_USE_16_API_DEFAULT
     BOOST_REQUIRE(reinterpret_cast<H5E_auto_t>(H5Eprint1) == efunc);
 #else
