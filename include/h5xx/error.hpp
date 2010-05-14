@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -23,10 +23,7 @@
 #include <exception>
 #include <string>
 
-#include <hdf5.h>
-#if H5_VERS_MAJOR <= 1 && H5_VERS_MINOR < 8
-# error "h5xx wrapper requires HDF5 >= 1.8"
-#endif
+#include <h5xx/compat.hpp>
 
 namespace h5xx
 {
@@ -63,7 +60,7 @@ public:
     /**
      * set HDF5 library error description
      */
-    error(H5E_error2_t const* err)
+    error(H5E_error_t const* err)
       : desc_(err->func_name + std::string(": ") + err->desc) {}
 
     /**
@@ -93,16 +90,14 @@ private:
     do { \
         h5xx::_error_handler _no_print; \
         if ((expr) < 0) { \
-            H5E_error2_t const* _err; \
-            H5Ewalk2(H5E_DEFAULT, H5E_WALK_DOWNWARD, h5xx::_walk_stack, &_err); \
-            throw h5xx::error(_err); \
+            h5xx::throw_exception(); \
         } \
     } while(0)
 
 /**
  * retrieve error description on top of error stack
  */
-inline herr_t _walk_stack(unsigned int n, H5E_error2_t const* err, void* err_ptr)
+inline herr_t _walk_stack(unsigned int n, H5E_error_t const* err, void* err_ptr)
 {
     if (n == 0) {
         *reinterpret_cast<void const**>(err_ptr) = err;
@@ -112,38 +107,69 @@ inline herr_t _walk_stack(unsigned int n, H5E_error2_t const* err, void* err_ptr
 }
 
 /**
+ * throw HDF5 library exception
+ */
+inline void throw_exception()
+{
+    H5E_error_t const* _err;
+    H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(_walk_stack), &_err);
+    throw h5xx::error(_err);
+}
+
+/**
  * silence HDF5 error stack printing
+ *
+ * This is an exception-safe adaptation of the HDF5 library macros
+ * H5E_BEGIN_TRY and H5E_END_TRY for all supported HDF5 versions.
  */
 struct _error_handler
 {
 #ifndef HDF5_DEBUG
-# ifndef H5_USE_16_API_DEFAULT
+# if (H5_VERS_MAJOR == 1 && H5_VERS_MINOR < 8) || defined(H5_NO_DEPRECATED_SYMBOLS)
+    H5E_auto_t saved_efunc;
+    void* saved_edata;
+
     _error_handler()
     {
-        H5Eget_auto2(H5E_DEFAULT, &auto_, NULL);
-        H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+        H5Eget_auto(&saved_efunc, &saved_edata);
+        H5Eset_auto(NULL, NULL);
     }
 
     ~_error_handler()
     {
-        H5Eset_auto2(H5E_DEFAULT, auto_, NULL);
+        H5Eset_auto(saved_efunc, saved_edata);
     }
+# else /* HDF5 >= 1.8 && !H5_NO_DEPRECATED_SYMBOLS */
+    unsigned saved_is_v2;
+    union {
+        H5E_auto1_t efunc1;
+        H5E_auto2_t efunc2;
+    } saved;
+    void *saved_edata;
 
-    H5E_auto2_t auto_;
-# else /* ! H5_USE_16_API_DEFAULT */
     _error_handler()
     {
-        H5Eget_auto1(&auto_, NULL);
-        H5Eset_auto1(NULL, NULL);
+        H5Eauto_is_v2(H5E_DEFAULT, &saved_is_v2);
+        if (saved_is_v2) {
+            H5Eget_auto2(H5E_DEFAULT, &saved.efunc2, &saved_edata);
+            H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+        }
+        else {
+            H5Eget_auto1(&saved.efunc1, &saved_edata);
+            H5Eset_auto1(NULL, NULL);
+        }
     }
 
     ~_error_handler()
     {
-        H5Eset_auto1(auto_, NULL);
+        if(saved_is_v2) {
+            H5Eset_auto2(H5E_DEFAULT, saved.efunc2, saved_edata);
+        }
+        else {
+            H5Eset_auto1(saved.efunc1, saved_edata);
+        }
     }
-
-    H5E_auto1_t auto_;
-# endif /* ! H5_USE_16_API_DEFAULT */
+# endif /* HDF5 >= 1.8 && !H5_NO_DEPRECATED_SYMBOLS */
 #endif /* ! HDF5_DEBUG */
 };
 

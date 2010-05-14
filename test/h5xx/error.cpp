@@ -49,31 +49,32 @@ BOOST_AUTO_TEST_CASE(test_throw_exception)
 
 BOOST_AUTO_TEST_CASE(test_disable_handler)
 {
-    void* data_ = stderr;
-#ifndef H5_USE_16_API_DEFAULT
-    H5E_auto2_t auto_ = reinterpret_cast<H5E_auto2_t>(H5Eprint2);
-    H5XX_CALL(H5Eget_auto2(H5E_DEFAULT, &auto_, &data_));
-#else
-    H5E_auto1_t auto_ = reinterpret_cast<H5E_auto1_t>(H5Eprint1);
-    H5XX_CALL(H5Eget_auto1(&auto_, &data_));
-#endif
-    BOOST_REQUIRE(NULL == auto_);
-    BOOST_REQUIRE(NULL == data_);
+    H5E_auto_t efunc = reinterpret_cast<H5E_auto_t>(H5Eprint);
+    void* edata = stderr;
+    H5XX_CALL(H5Eget_auto(&efunc, &edata));
+    BOOST_REQUIRE(NULL == efunc);
+    BOOST_REQUIRE(NULL == edata);
 }
 
 BOOST_AUTO_TEST_CASE(test_reset_default_error_handler)
 {
-    void* data_ = stderr;
-#ifndef H5_USE_16_API_DEFAULT
-    H5E_auto2_t auto_ = NULL;
-    H5Eget_auto2(H5E_DEFAULT, &auto_, &data_);
-    BOOST_REQUIRE(reinterpret_cast<H5E_auto2_t>(H5Eprint2) == auto_);
+    H5E_auto_t efunc = NULL;
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR < 8
+    void* edata = NULL;
 #else
-    H5E_auto1_t auto_ = NULL;
-    H5Eget_auto1(&auto_, &data_);
-    BOOST_REQUIRE(reinterpret_cast<H5E_auto1_t>(H5Eprint1) == auto_);
+    void* edata = stderr;
 #endif
-    BOOST_REQUIRE(NULL == data_);
+    H5Eget_auto(&efunc, &edata);
+#ifdef H5_USE_16_API_DEFAULT
+    BOOST_REQUIRE(reinterpret_cast<H5E_auto_t>(H5Eprint1) == efunc);
+#else
+    BOOST_REQUIRE(reinterpret_cast<H5E_auto_t>(H5Eprint) == efunc);
+#endif
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR < 8
+    BOOST_REQUIRE(stderr == edata);
+#else
+    BOOST_REQUIRE(NULL == edata);
+#endif
 }
 
 BOOST_AUTO_TEST_CASE(test_library_error_description)
@@ -86,7 +87,11 @@ BOOST_AUTO_TEST_CASE(test_library_error_description)
         BOOST_FAIL("no h5xx::error exception thrown");
     }
     catch (h5xx::error const& e) {
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR < 8
+        BOOST_REQUIRE(0 == strcmp(e.what(), "H5Sclose: not a data space"));
+#else
         BOOST_REQUIRE(0 == strcmp(e.what(), "H5Sclose: not a dataspace"));
+#endif
     }
 }
 
