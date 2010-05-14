@@ -39,8 +39,13 @@ static void add_native_types(type_pairs_vector& types)
     types.push_back(make_pair(h5xx::ctype<unsigned short>(), H5T_NATIVE_USHORT));
     types.push_back(make_pair(h5xx::ctype<int>(), H5T_NATIVE_INT));
     types.push_back(make_pair(h5xx::ctype<unsigned int>(), H5T_NATIVE_UINT));
+#if __WORDSIZE == 64
     types.push_back(make_pair(h5xx::ctype<long>(), H5T_NATIVE_LONG));
     types.push_back(make_pair(h5xx::ctype<unsigned long>(), H5T_NATIVE_ULONG));
+#else /* __WORDSIZE == 32 */
+    types.push_back(make_pair(h5xx::ctype<long long>(), H5T_NATIVE_LLONG));
+    types.push_back(make_pair(h5xx::ctype<unsigned long long>(), H5T_NATIVE_ULLONG));
+#endif
 }
 
 static void add_integer_types(type_pairs_vector& types)
