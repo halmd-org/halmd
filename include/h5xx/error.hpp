@@ -112,7 +112,11 @@ inline herr_t _walk_stack(unsigned int n, H5E_error_t const* err, void* err_ptr)
 inline void throw_exception()
 {
     H5E_error_t const* _err;
-    H5XX_COMPAT_H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(_walk_stack), &_err);
+#ifndef H5XX_USE_16_API
+    H5Ewalk(H5E_DEFAULT, H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(_walk_stack), &_err);
+#else
+    H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(_walk_stack), &_err);
+#endif
     throw h5xx::error(_err);
 }
 
@@ -125,21 +129,8 @@ inline void throw_exception()
 struct _error_handler
 {
 #ifndef HDF5_DEBUG
-# if (H5_VERS_MAJOR == 1 && H5_VERS_MINOR < 8) || defined(H5_NO_DEPRECATED_SYMBOLS)
-    H5E_auto_t saved_efunc;
-    void* saved_edata;
-
-    _error_handler()
-    {
-        H5XX_COMPAT_H5Eget_auto(&saved_efunc, &saved_edata);
-        H5XX_COMPAT_H5Eset_auto(NULL, NULL);
-    }
-
-    ~_error_handler()
-    {
-        H5XX_COMPAT_H5Eset_auto(saved_efunc, saved_edata);
-    }
-# else /* HDF5 >= 1.8 && !H5_NO_DEPRECATED_SYMBOLS */
+# ifndef H5XX_USE_16_API
+#  ifndef H5_NO_DEPRECATED_SYMBOLS
     unsigned saved_is_v2;
     union {
         H5E_auto1_t efunc1;
@@ -169,7 +160,36 @@ struct _error_handler
             H5Eset_auto1(saved.efunc1, saved_edata);
         }
     }
-# endif /* HDF5 >= 1.8 && !H5_NO_DEPRECATED_SYMBOLS */
+#  else /* H5_NO_DEPRECATED_SYMBOLS */
+    H5E_auto_t saved_efunc;
+    void* saved_edata;
+
+    _error_handler()
+    {
+        H5Eget_auto(H5E_DEFAULT, &saved_efunc, &saved_edata);
+        H5Eset_auto(H5E_DEFAULT, NULL, NULL);
+    }
+
+    ~_error_handler()
+    {
+        H5Eset_auto(H5E_DEFAULT, saved_efunc, saved_edata);
+    }
+#  endif /* H5_NO_DEPRECATED_SYMBOLS */
+# else /* H5XX_USE_16_API */
+    H5E_auto_t saved_efunc;
+    void* saved_edata;
+
+    _error_handler()
+    {
+        H5Eget_auto(&saved_efunc, &saved_edata);
+        H5Eset_auto(NULL, NULL);
+    }
+
+    ~_error_handler()
+    {
+        H5Eset_auto(saved_efunc, saved_edata);
+    }
+# endif /* H5XX_USE_16_API */
 #endif /* ! HDF5_DEBUG */
 };
 

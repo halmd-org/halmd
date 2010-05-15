@@ -41,23 +41,19 @@
 /**
  * if using HDF5 1.8.x, force HDF 1.8 API as needed
  */
-#define H5E_auto_t_vers 2
-#define H5Eprint_vers 2
-#define H5Ewalk_vers 2
+#define H5E_auto_t_vers  2
+#define H5Eget_auto_vers 2
+#define H5Eprint_vers    2
+#define H5Eset_auto_vers 2
+#define H5Ewalk_vers     2
 
 #include <hdf5.h>
 
 /**
- * define a common API for HDF5 1.6.x and HDF5 1.8.x
+ * backwards compatibility with HDF 1.6.x
  */
-#if !(H5_VERS_MAJOR == 1 && H5_VERS_MINOR < 8)
-# define H5XX_COMPAT_H5Eget_auto(...)  H5Eget_auto2(H5E_DEFAULT, __VA_ARGS__)
-# define H5XX_COMPAT_H5Eset_auto(...)  H5Eset_auto2(H5E_DEFAULT, __VA_ARGS__)
-# define H5XX_COMPAT_H5Ewalk(...)      H5Ewalk2(H5E_DEFAULT, __VA_ARGS__)
-#else /* HDF5 < 1.8 */
-# define H5XX_COMPAT_H5Eget_auto       H5Eget_auto
-# define H5XX_COMPAT_H5Eset_auto       H5Eset_auto
-# define H5XX_COMPAT_H5Ewalk           H5Ewalk
-#endif /* HDF5 < 1.8 */
+#if (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 6)
+# define H5XX_USE_16_API
+#endif
 
 #endif /* ! H5XX_COMPAT_HPP */
