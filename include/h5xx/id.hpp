@@ -21,6 +21,7 @@
 #define H5XX_ID_HPP
 
 #include <boost/operators.hpp>
+#include <iostream>
 
 #include <h5xx/error.hpp>
 
@@ -31,7 +32,7 @@ namespace h5xx
  * HDF5 identifier
  */
 class id
-  : public boost::equality_comparable<id>
+  : boost::equality_comparable<id>
 {
 public:
     /**
@@ -39,7 +40,7 @@ public:
      */
     ~id()
     {
-        H5XX_CALL(H5Idec_ref(id_));
+        H5XX_CHECK(H5Idec_ref(id_));
     }
 
     /**
@@ -47,7 +48,7 @@ public:
      */
     id(id const& other)
     {
-        H5XX_CALL(H5Iinc_ref(id_ = other.id_));
+        H5XX_CHECK(H5Iinc_ref(id_ = other.id_));
     }
 
     /**
@@ -56,8 +57,8 @@ public:
     id& operator=(id const& other)
     {
         if (id_ != other.id_) {
-            H5XX_CALL(H5Idec_ref(id_));
-            H5XX_CALL(H5Iinc_ref(id_ = other.id_));
+            H5XX_CHECK(H5Idec_ref(id_));
+            H5XX_CHECK(H5Iinc_ref(id_ = other.id_));
         }
         return *this;
     }
@@ -70,10 +71,33 @@ public:
         return id_ == other.id_;
     }
 
+    /**
+     * returns absolute path of object within file
+     */
+    std::string path() const
+    {
+        ssize_t size; // excludes NULL terminator
+        H5XX_CHECK(size = H5Iget_name(id_, NULL, 0));
+        std::vector<char> name_(size + 1); // includes NULL terminator
+        H5XX_CHECK(H5Iget_name(id_, name_.data(), name_.size()));
+        return name_.data();
+    }
+
 protected:
-    explicit id(hid_t id_) : id_(id_) {}
+    explicit id(hid_t id_)
+      : id_(id_)
+    {}
+
     hid_t id_;
 };
+
+/**
+ * output absolute path of object within file
+ */
+std::ostream& operator<<(std::ostream& os, id const& id_)
+{
+    return (os << id_.path());
+}
 
 } // namespace h5xx
 

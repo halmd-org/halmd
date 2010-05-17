@@ -20,6 +20,8 @@
 #ifndef H5XX_ERROR_HPP
 #define H5XX_ERROR_HPP
 
+#include <boost/operators.hpp>
+#include <deque>
 #include <exception>
 #include <string>
 
@@ -50,6 +52,63 @@ namespace h5xx
 // http://mail.hdfgroup.org/pipermail/hdf-forum_hdfgroup.org/2010-April/003048.html
 //
 
+#ifndef H5XX_DEBUG
+# define H5XX_NO_PRINT(name) h5xx::_error_handler name
+#else
+# define H5XX_NO_PRINT(name)
+#endif
+
+/**
+ * wrap HDF5 C API calls with this macro for error interception
+ */
+#define H5XX_CHECK(expr) \
+    do { \
+        H5XX_NO_PRINT(_no_print); \
+        if ((expr) < 0) { \
+            throw h5xx::error(); \
+        } \
+    } while(0)
+
+/**
+ * HDF5 major and minor error number
+ */
+#ifdef H5XX_USE_16_API
+typedef std::pair<H5E_major_t, H5E_minor_t> error_type;
+#else
+typedef std::pair<hid_t, hid_t> error_type;
+#endif
+
+/**
+ * HDF5 error description
+ */
+struct error_description
+  : boost::equality_comparable<
+        error_description
+      , error_type
+    >
+{
+    /** major and minor error number */
+    error_type const type;
+    /** error summary */
+    std::string const desc;
+
+    /**
+     * set HDF5 library error description
+     */
+    explicit error_description(H5E_error_t const& e)
+      : type(e.maj_num, e.min_num)
+      , desc(e.func_name + (e.desc ? std::string("(): ") + e.desc : std::string("()")))
+    {}
+
+    /**
+     * check error type for equality
+     */
+    bool operator==(error_type const& type) const
+    {
+        return this->type == type;
+    }
+};
+
 /**
  * HDF5 exception
  */
@@ -57,17 +116,31 @@ class error
   : virtual public std::exception
 {
 public:
+    typedef std::deque<error_description> stack_type;
+
+    /** error stack */
+    stack_type const stack;
+
     /**
      * set HDF5 library error description
      */
-    error(H5E_error_t const* err)
-      : desc_(err->func_name + std::string(": ") + err->desc) {}
-
-    /**
-     * set custom error description
-     */
-    error(std::string const& desc)
-      : desc_(desc) {}
+    error()
+    {
+#ifdef H5XX_USE_16_API
+        H5Ewalk(
+            H5E_WALK_DOWNWARD
+          , reinterpret_cast<H5E_walk_t>(walk_cb)
+          , const_cast<stack_type*>(&stack)
+        );
+#else
+        H5Ewalk(
+            H5E_DEFAULT
+          , H5E_WALK_DOWNWARD
+          , reinterpret_cast<H5E_walk_t>(walk_cb)
+          , const_cast<stack_type*>(&stack)
+        );
+#endif
+    }
 
     virtual ~error() throw() {}
 
@@ -76,49 +149,30 @@ public:
      */
     char const* what() const throw()
     {
-        return desc_.c_str();
+        if (stack.empty()) {
+            return "HDF5 error stack is empty";
+        }
+        return stack.front().desc.c_str();
+    }
+
+    /**
+     * returns number of equal error types in stack
+     */
+    unsigned int count(error_type const& type) const
+    {
+        return std::count(stack.begin(), stack.end(), type);
     }
 
 private:
-    std::string desc_;
-};
-
-/**
- * wrap HDF5 C API calls with this macro for error interception
- */
-#define H5XX_CALL(expr) \
-    do { \
-        h5xx::_error_handler _no_print; \
-        if ((expr) < 0) { \
-            h5xx::throw_exception(); \
-        } \
-    } while(0)
-
-/**
- * retrieve error description on top of error stack
- */
-inline herr_t _walk_stack(unsigned int n, H5E_error_t const* err, void* err_ptr)
-{
-    if (n == 0) {
-        *reinterpret_cast<void const**>(err_ptr) = err;
+    /**
+     * retrieve error description in error stack
+     */
+    static herr_t walk_cb(unsigned int n, H5E_error_t const* err, stack_type* stack)
+    {
+        stack->push_back(error_description(*err));
+        return 0; // indicate SUCCESS
     }
-    // value of HDF5-internal macro SUCCESS
-    return 0;
-}
-
-/**
- * throw HDF5 library exception
- */
-inline void throw_exception()
-{
-    H5E_error_t const* _err;
-#ifndef H5XX_USE_16_API
-    H5Ewalk(H5E_DEFAULT, H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(_walk_stack), &_err);
-#else
-    H5Ewalk(H5E_WALK_DOWNWARD, reinterpret_cast<H5E_walk_t>(_walk_stack), &_err);
-#endif
-    throw h5xx::error(_err);
-}
+};
 
 /**
  * silence HDF5 error stack printing
@@ -128,9 +182,36 @@ inline void throw_exception()
  */
 struct _error_handler
 {
-#ifndef HDF5_DEBUG
-# ifndef H5XX_USE_16_API
-#  ifndef H5_NO_DEPRECATED_SYMBOLS
+#ifdef H5XX_USE_16_API
+    H5E_auto_t saved_efunc;
+    void* saved_edata;
+
+    _error_handler()
+    {
+        H5Eget_auto(&saved_efunc, &saved_edata);
+        H5Eset_auto(NULL, NULL);
+    }
+
+    ~_error_handler()
+    {
+        H5Eset_auto(saved_efunc, saved_edata);
+    }
+#else /* ! H5XX_USE_16_API */
+# ifdef H5_NO_DEPRECATED_SYMBOLS
+    H5E_auto_t saved_efunc;
+    void* saved_edata;
+
+    _error_handler()
+    {
+        H5Eget_auto(H5E_DEFAULT, &saved_efunc, &saved_edata);
+        H5Eset_auto(H5E_DEFAULT, NULL, NULL);
+    }
+
+    ~_error_handler()
+    {
+        H5Eset_auto(H5E_DEFAULT, saved_efunc, saved_edata);
+    }
+# else /* ! H5_NO_DEPRECATED_SYMBOLS */
     unsigned saved_is_v2;
     union {
         H5E_auto1_t efunc1;
@@ -160,37 +241,8 @@ struct _error_handler
             H5Eset_auto1(saved.efunc1, saved_edata);
         }
     }
-#  else /* H5_NO_DEPRECATED_SYMBOLS */
-    H5E_auto_t saved_efunc;
-    void* saved_edata;
-
-    _error_handler()
-    {
-        H5Eget_auto(H5E_DEFAULT, &saved_efunc, &saved_edata);
-        H5Eset_auto(H5E_DEFAULT, NULL, NULL);
-    }
-
-    ~_error_handler()
-    {
-        H5Eset_auto(H5E_DEFAULT, saved_efunc, saved_edata);
-    }
-#  endif /* H5_NO_DEPRECATED_SYMBOLS */
-# else /* H5XX_USE_16_API */
-    H5E_auto_t saved_efunc;
-    void* saved_edata;
-
-    _error_handler()
-    {
-        H5Eget_auto(&saved_efunc, &saved_edata);
-        H5Eset_auto(NULL, NULL);
-    }
-
-    ~_error_handler()
-    {
-        H5Eset_auto(saved_efunc, saved_edata);
-    }
-# endif /* H5XX_USE_16_API */
-#endif /* ! HDF5_DEBUG */
+# endif /* ! H5_NO_DEPRECATED_SYMBOLS */
+#endif /* ! H5XX_USE_16_API */
 };
 
 } // namespace h5xx

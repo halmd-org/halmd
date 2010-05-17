@@ -20,11 +20,13 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE test_h5xx_id
 #include <boost/test/unit_test.hpp>
-#include <cstring>
 
+// #define H5XX_DEBUG
 #include <h5xx/id.hpp>
 
 #define H5XX_TEST_FILENAME "test_h5xx_id.h5"
+
+using namespace std;
 
 /**
  * expose h5xx::id constructor
@@ -42,7 +44,7 @@ struct _expose_id : public h5xx::id
 inline int count(hid_t id)
 {
     int count;
-    H5XX_CALL(count = H5Iget_ref(id));
+    H5XX_CHECK(count = H5Iget_ref(id));
     return count;
 }
 
@@ -50,7 +52,7 @@ BOOST_AUTO_TEST_CASE(test_id)
 {
     // construct two h5xx::id from file identifier
     hid_t file;
-    H5XX_CALL(file = H5Fcreate(H5XX_TEST_FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT));
+    H5XX_CHECK(file = H5Fcreate(H5XX_TEST_FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT));
     BOOST_CHECK(count(file) == 1);
     h5xx::id id1 = _expose_id(file);
     BOOST_CHECK(count(file) == 1);
@@ -61,7 +63,7 @@ BOOST_AUTO_TEST_CASE(test_id)
 
     // construct two h5xx::id from dataspace identifier
     hid_t dataspace;
-    H5XX_CALL(dataspace = H5Screate(H5S_SCALAR));
+    H5XX_CHECK(dataspace = H5Screate(H5S_SCALAR));
     h5xx::id id3 = _expose_id(dataspace);
     BOOST_CHECK(count(dataspace) == 1);
     BOOST_CHECK(id1 != id3);
@@ -91,6 +93,6 @@ BOOST_AUTO_TEST_CASE(test_id)
         BOOST_FAIL("failed to not get file identifier reference count");
     }
     catch (h5xx::error const& e) {
-        BOOST_CHECK(0 == strcmp(e.what(), "H5Iget_ref: can't get ID ref count"));
+        BOOST_CHECK(e.count(make_pair(H5E_ATOM, H5E_BADATOM)));
     }
 }

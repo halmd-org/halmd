@@ -21,24 +21,27 @@
 #define BOOST_TEST_MODULE test_h5xx_error
 #include <boost/test/unit_test.hpp>
 
+// #define H5XX_DEBUG
 #include <h5xx/error.hpp>
+
+using namespace std;
 
 BOOST_AUTO_TEST_CASE(test_success)
 {
     hid_t ret, id;
-    H5XX_CALL(ret = id = H5Screate(H5S_SCALAR));
+    H5XX_CHECK(ret = id = H5Screate(H5S_SCALAR));
     BOOST_REQUIRE(ret >= 0);
-    H5XX_CALL(ret = H5Sclose(id));
+    H5XX_CHECK(ret = H5Sclose(id));
     BOOST_REQUIRE(ret >= 0);
 }
 
 BOOST_AUTO_TEST_CASE(test_throw_exception)
 {
     hid_t ret, id;
-    H5XX_CALL(ret = id = H5Screate(H5S_SCALAR));
-    H5XX_CALL(ret = H5Sclose(id));
+    H5XX_CHECK(ret = id = H5Screate(H5S_SCALAR));
+    H5XX_CHECK(ret = H5Sclose(id));
     try {
-        H5XX_CALL(ret = H5Sclose(id));
+        H5XX_CHECK(ret = H5Sclose(id));
         BOOST_FAIL("no h5xx::error exception thrown");
     }
     catch (h5xx::error const&) {
@@ -46,65 +49,77 @@ BOOST_AUTO_TEST_CASE(test_throw_exception)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_disable_handler)
+BOOST_AUTO_TEST_CASE(test_no_print)
 {
     H5E_auto_t efunc = reinterpret_cast<H5E_auto_t>(H5Eprint);
     void* edata = stderr;
-#ifndef H5XX_USE_16_API
-    H5XX_CALL(H5Eget_auto(H5E_DEFAULT, &efunc, &edata));
+#ifdef H5XX_USE_16_API
+    H5XX_CHECK(H5Eget_auto(&efunc, &edata));
 #else
-    H5XX_CALL(H5Eget_auto(&efunc, &edata));
+    H5XX_CHECK(H5Eget_auto(H5E_DEFAULT, &efunc, &edata));
 #endif
     BOOST_REQUIRE(NULL == efunc);
     BOOST_REQUIRE(NULL == edata);
 }
 
-BOOST_AUTO_TEST_CASE(test_reset_default_error_handler)
+BOOST_AUTO_TEST_CASE(test_reset_print)
 {
     H5E_auto_t efunc = NULL;
-#ifndef H5XX_USE_16_API
-    void* edata = stderr;
-    H5Eget_auto(H5E_DEFAULT, &efunc, &edata);
-#else
+#ifdef H5XX_USE_16_API
     void* edata = NULL;
     H5Eget_auto(&efunc, &edata);
+#else
+    void* edata = stderr;
+    H5Eget_auto(H5E_DEFAULT, &efunc, &edata);
 #endif
 #ifdef H5_USE_16_API_DEFAULT
     BOOST_REQUIRE(reinterpret_cast<H5E_auto_t>(H5Eprint1) == efunc);
 #else
     BOOST_REQUIRE(reinterpret_cast<H5E_auto_t>(H5Eprint) == efunc);
 #endif
-#ifndef H5XX_USE_16_API
-    BOOST_REQUIRE(NULL == edata);
-#else
+#ifdef H5XX_USE_16_API
     BOOST_REQUIRE(stderr == edata);
+#else
+    BOOST_REQUIRE(NULL == edata);
 #endif
 }
 
-BOOST_AUTO_TEST_CASE(test_library_error_description)
+BOOST_AUTO_TEST_CASE(test_error_type)
 {
     hid_t ret, id;
-    H5XX_CALL(ret = id = H5Screate(H5S_SCALAR));
-    H5XX_CALL(ret = H5Sclose(id));
+    H5XX_CHECK(ret = id = H5Screate(H5S_SCALAR));
+    H5XX_CHECK(ret = H5Sclose(id));
     try {
-        H5XX_CALL(ret = H5Sclose(id));
+        H5XX_CHECK(ret = H5Sclose(id));
         BOOST_FAIL("no h5xx::error exception thrown");
     }
     catch (h5xx::error const& e) {
-#ifndef H5XX_USE_16_API
-        BOOST_REQUIRE_EQUAL(e.what(), "H5Sclose: not a dataspace");
+#ifdef H5XX_USE_16_API
+        BOOST_REQUIRE(e.stack.size() == 2);
+        BOOST_CHECK(e.count(make_pair(H5E_ATOM, H5E_BADATOM)) == 1);
+        BOOST_CHECK(e.stack[1] == make_pair(H5E_ATOM, H5E_BADATOM));
 #else
-        BOOST_REQUIRE_EQUAL(e.what(), "H5Sclose: not a data space");
+        BOOST_REQUIRE(e.stack.size() == 1);
 #endif
+        BOOST_CHECK(e.count(make_pair(H5E_ARGS, H5E_BADTYPE)) == 1);
+        BOOST_CHECK(e.stack[0] == make_pair(H5E_ARGS, H5E_BADTYPE));
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_custom_error_description)
+BOOST_AUTO_TEST_CASE(test_error_desc)
 {
+    hid_t ret, id;
+    H5XX_CHECK(ret = id = H5Screate(H5S_SCALAR));
+    H5XX_CHECK(ret = H5Sclose(id));
     try {
-        throw h5xx::error("test custom error description");
+        H5XX_CHECK(ret = H5Sclose(id));
+        BOOST_FAIL("no h5xx::error exception thrown");
     }
     catch (h5xx::error const& e) {
-        BOOST_REQUIRE_EQUAL(e.what(), "test custom error description");
+#ifdef H5XX_USE_16_API
+        BOOST_REQUIRE_EQUAL(e.what(), "H5Sclose(): not a data space");
+#else
+        BOOST_REQUIRE_EQUAL(e.what(), "H5Sclose(): not a dataspace");
+#endif
     }
 }
