@@ -33,8 +33,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/util/hostname.hpp>
 #include <halmd/util/timer.hpp>
+#include <halmd/utility/hostname.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/version.h>
@@ -100,13 +100,7 @@ int main(int argc, char **argv)
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
     LOG("MD simulation backend: " << vm["backend"].as<string>());
-    std::string const hostname(halmd::get_hostname());
-    try {
-        LOG("host name: " << halmd::get_fqdn_hostname(hostname));
-    }
-    catch (std::runtime_error const&) {
-        LOG("host name: " << hostname);
-    }
+    LOG("host name: " << host_name());
     LOG("timer resolution: " << 1.E9 * halmd::high_resolution_timer::resolution() << " ns");
 
     int status_ = halmd::HALMD_EXIT_SUCCESS;

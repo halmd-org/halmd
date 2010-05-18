@@ -1,4 +1,5 @@
 add_library(halmd_utility
+  hostname.cpp
   options.cpp
   )
 target_link_libraries(halmd_utility
