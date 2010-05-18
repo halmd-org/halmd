@@ -1,5 +1,6 @@
 add_library(util
   H5xx.cpp
+  hostname.cpp
   log.cpp
   signal.cpp
   )

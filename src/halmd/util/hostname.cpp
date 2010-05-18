@@ -17,14 +17,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTIL_HOSTNAME_HPP
-#define HALMD_UTIL_HOSTNAME_HPP
+#include <boost/asio.hpp>
+
+#include <halmd/util/hostname.hpp>
 
 namespace halmd
 {
 
-extern std::string get_fqdn_host_name();
+/**
+ * get fully qualified host name
+ */
+std::string get_fqdn_host_name()
+{
+    boost::asio::io_service ios;
+    namespace bai = boost::asio::ip;
+    bai::tcp::resolver resolver(ios);
+    bai::tcp::resolver::query query(bai::host_name(), "");
+    bai::tcp::resolver::iterator addr_iter = resolver.resolve(query);
+    bai::tcp::resolver::iterator end;
+    bai::tcp::endpoint ep;
+    while (addr_iter != end) {
+        bai::tcp::resolver::iterator name_iter = resolver.resolve(addr_iter->endpoint());
+        if (name_iter != end) {
+            return (*name_iter).host_name();
+        }
+        ++addr_iter;
+    }
+    return query.host_name(); // failed to resolve FQDN
+}
 
 } // namespace halmd
-
-#endif /* ! HALMD_UTIL_HOSTNAME_HPP */
