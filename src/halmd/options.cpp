@@ -466,10 +466,10 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
          "number of simulation steps")
         ("time,t", po::value<double>(),
          "total simulation time")
-        ("trajectory,J", po::value<std::string>(),
-         "trajectory input file")
         ("trajectory-sample,S", po::value<int64_t>(),
          "trajectory sample for initial state")
+        ("trajectory,J", po::value<std::string>(),
+         "trajectory input file")
         ;
     add(mdsim);
 
