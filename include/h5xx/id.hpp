@@ -57,9 +57,9 @@ public:
      */
     id& operator=(id const& other)
     {
-        if (id_ != other.id_) {
-            H5XX_CHECK(H5Idec_ref(id_));
-            H5XX_CHECK(H5Iinc_ref(id_ = other.id_));
+        if (*this != other) {
+            id id_(other);
+            swap(id_);
         }
         return *this;
     }
