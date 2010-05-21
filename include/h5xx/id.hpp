@@ -20,6 +20,7 @@
 #ifndef H5XX_ID_HPP
 #define H5XX_ID_HPP
 
+#include <algorithm>
 #include <boost/operators.hpp>
 #include <iostream>
 
@@ -61,6 +62,14 @@ public:
             H5XX_CHECK(H5Iinc_ref(id_ = other.id_));
         }
         return *this;
+    }
+
+    /**
+     * swap identifier
+     */
+    void swap(id& other)
+    {
+        std::swap(id_, other.id_);
     }
 
     /**

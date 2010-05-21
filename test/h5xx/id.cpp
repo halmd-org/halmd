@@ -33,9 +33,9 @@ using namespace std;
  *
  * Call this only *once* per identifier created with H5 C function.
  */
-struct _expose_id : public h5xx::id
+struct _construct_id : public h5xx::id
 {
-    _expose_id(hid_t id) : h5xx::id(id) {}
+    _construct_id(hid_t id) : h5xx::id(id) {}
 };
 
 /**
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(test_id)
     hid_t file;
     H5XX_CHECK(file = H5Fcreate(H5XX_TEST_FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT));
     BOOST_CHECK(count(file) == 1);
-    h5xx::id id1 = _expose_id(file);
+    h5xx::id id1 = _construct_id(file);
     BOOST_CHECK(count(file) == 1);
     h5xx::id id2 = id1;
     BOOST_CHECK(count(file) == 2);
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(test_id)
     // construct two h5xx::id from dataspace identifier
     hid_t dataspace;
     H5XX_CHECK(dataspace = H5Screate(H5S_SCALAR));
-    h5xx::id id3 = _expose_id(dataspace);
+    h5xx::id id3 = _construct_id(dataspace);
     BOOST_CHECK(count(dataspace) == 1);
     BOOST_CHECK(id1 != id3);
     BOOST_CHECK(!(id1 == id3));
@@ -73,6 +73,12 @@ BOOST_AUTO_TEST_CASE(test_id)
     BOOST_CHECK(id3 == id4);
 
     // mingle file and dataspace identifiers
+    id1.swap(id3);
+    BOOST_CHECK(id1 != id2);
+    BOOST_CHECK(id1 == id4);
+    BOOST_CHECK(id3 != id4);
+    BOOST_CHECK(id3 == id2);
+    id3.swap(id1);
     id1 = id3;
     BOOST_CHECK(count(file) == 1);
     BOOST_CHECK(count(dataspace) == 3);
