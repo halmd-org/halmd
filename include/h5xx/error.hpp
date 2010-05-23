@@ -52,24 +52,33 @@ namespace h5xx
 // http://mail.hdfgroup.org/pipermail/hdf-forum_hdfgroup.org/2010-April/003048.html
 //
 
-#define H5XX_ERROR_SCOPE_BEGIN {
-#define H5XX_ERROR_SCOPE_END   } // satisfy Vim syntax highlighting
+#ifndef H5XX_DEBUG
+# define H5XX_ERROR_SCOPE_BEGIN {
+# define H5XX_ERROR_SCOPE_END   } // satisfy Vim syntax highlighting
+# undef H5XX_ERROR_SCOPE_END
+# define H5XX_ERROR_BEGIN_TRY   H5E_BEGIN_TRY
+# define H5XX_ERROR_END_TRY     H5E_END_TRY
+#else
+# define H5XX_ERROR_SCOPE_BEGIN
+# define H5XX_ERROR_BEGIN_TRY
+# define H5XX_ERROR_END_TRY
+#endif
 
 /**
  * wrap HDF5 C API calls with this macro for error interception
  */
 #define H5XX_CHECK(expr) \
-    H5E_BEGIN_TRY { \
+    H5XX_ERROR_BEGIN_TRY { \
         try { \
             if ((expr) < 0) { \
                 throw h5xx::error(); \
             } \
         } \
         catch (...) { \
-            H5XX_ERROR_SCOPE_BEGIN H5E_END_TRY; \
+            H5XX_ERROR_SCOPE_BEGIN H5XX_ERROR_END_TRY; \
             throw; \
         } \
-    } H5E_END_TRY
+    } H5XX_ERROR_END_TRY
 
 /**
  * HDF5 major and minor error number
