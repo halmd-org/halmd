@@ -75,7 +75,7 @@ namespace h5xx
             } \
         } \
         catch (...) { \
-            H5XX_ERROR_SCOPE_BEGIN H5XX_ERROR_END_TRY; \
+            H5XX_ERROR_SCOPE_BEGIN H5XX_ERROR_END_TRY \
             throw; \
         } \
     } H5XX_ERROR_END_TRY
