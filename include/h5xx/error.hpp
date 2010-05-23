@@ -52,22 +52,24 @@ namespace h5xx
 // http://mail.hdfgroup.org/pipermail/hdf-forum_hdfgroup.org/2010-April/003048.html
 //
 
-#ifndef H5XX_DEBUG
-# define H5XX_NO_PRINT(name) h5xx::_error_handler name
-#else
-# define H5XX_NO_PRINT(name)
-#endif
+#define H5XX_ERROR_SCOPE_BEGIN {
+#define H5XX_ERROR_SCOPE_END   } // satisfy Vim syntax highlighting
 
 /**
  * wrap HDF5 C API calls with this macro for error interception
  */
 #define H5XX_CHECK(expr) \
-    do { \
-        H5XX_NO_PRINT(_no_print); \
-        if ((expr) < 0) { \
-            throw h5xx::error(); \
+    H5E_BEGIN_TRY { \
+        try { \
+            if ((expr) < 0) { \
+                throw h5xx::error(); \
+            } \
         } \
-    } while(0)
+        catch (...) { \
+            H5XX_ERROR_SCOPE_BEGIN H5E_END_TRY; \
+            throw; \
+        } \
+    } H5E_END_TRY
 
 /**
  * HDF5 major and minor error number
@@ -172,77 +174,6 @@ private:
         stack->push_back(error_description(*err));
         return 0; // indicate SUCCESS
     }
-};
-
-/**
- * silence HDF5 error stack printing
- *
- * This is an exception-safe adaptation of the HDF5 library macros
- * H5E_BEGIN_TRY and H5E_END_TRY for all supported HDF5 versions.
- */
-struct _error_handler
-{
-#ifdef H5XX_USE_16_API
-    H5E_auto_t saved_efunc;
-    void* saved_edata;
-
-    _error_handler()
-    {
-        H5Eget_auto(&saved_efunc, &saved_edata);
-        H5Eset_auto(NULL, NULL);
-    }
-
-    ~_error_handler()
-    {
-        H5Eset_auto(saved_efunc, saved_edata);
-    }
-#else /* ! H5XX_USE_16_API */
-# ifdef H5_NO_DEPRECATED_SYMBOLS
-    H5E_auto_t saved_efunc;
-    void* saved_edata;
-
-    _error_handler()
-    {
-        H5Eget_auto(H5E_DEFAULT, &saved_efunc, &saved_edata);
-        H5Eset_auto(H5E_DEFAULT, NULL, NULL);
-    }
-
-    ~_error_handler()
-    {
-        H5Eset_auto(H5E_DEFAULT, saved_efunc, saved_edata);
-    }
-# else /* ! H5_NO_DEPRECATED_SYMBOLS */
-    unsigned saved_is_v2;
-    union {
-        H5E_auto1_t efunc1;
-        H5E_auto2_t efunc2;
-    } saved;
-    void *saved_edata;
-
-    _error_handler()
-    {
-        H5Eauto_is_v2(H5E_DEFAULT, &saved_is_v2);
-        if (saved_is_v2) {
-            H5Eget_auto2(H5E_DEFAULT, &saved.efunc2, &saved_edata);
-            H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-        }
-        else {
-            H5Eget_auto1(&saved.efunc1, &saved_edata);
-            H5Eset_auto1(NULL, NULL);
-        }
-    }
-
-    ~_error_handler()
-    {
-        if(saved_is_v2) {
-            H5Eset_auto2(H5E_DEFAULT, saved.efunc2, saved_edata);
-        }
-        else {
-            H5Eset_auto1(saved.efunc1, saved_edata);
-        }
-    }
-# endif /* ! H5_NO_DEPRECATED_SYMBOLS */
-#endif /* ! H5XX_USE_16_API */
 };
 
 } // namespace h5xx
