@@ -24,6 +24,7 @@
 #include <boost/weak_ptr.hpp>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/utility/module/builder.hpp>
 #include <halmd/utility/module/demangle.hpp>
 #include <halmd/utility/module/exception.hpp>
@@ -62,8 +63,10 @@ public:
 
         shared_ptr<T> singleton(singleton_.lock());
         if (!singleton) {
+            LOG_DEBUG("instantiate module " << name());
             singleton.reset(new T(vm));
             singleton_ = singleton;
+            LOG_DEBUG("constructed module " << name());
         }
         return singleton;
     }
