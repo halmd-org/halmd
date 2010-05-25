@@ -23,6 +23,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/program_options.hpp>
+#include <map>
 #include <stdint.h>
 #include <string>
 
@@ -72,6 +73,16 @@ public:
     boost::program_options::variable_value const& operator[](std::string const& vv) const
     {
         return vm[vv];
+    }
+
+    /**
+     * modify option value
+     */
+    void set(std::string const& vv, boost::program_options::variable_value const& value)
+    {
+        // override const operator[] in variables_map
+        std::map<std::string, boost::program_options::variable_value>& vm_(vm);
+        vm_[vv] = value;
     }
 
     size_t count(std::string const& name) const
