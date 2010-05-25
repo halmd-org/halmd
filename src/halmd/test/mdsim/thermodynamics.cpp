@@ -28,7 +28,6 @@
 #include <string>
 #include <utility>
 
-// #include <halmd/mdlib.hpp>
 #include <halmd/core.hpp>
 // #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -38,58 +37,36 @@
 #include <halmd/io/logger.hpp>
 
 using namespace halmd;
+using namespace boost::assign;
 
 BOOST_AUTO_TEST_CASE( thermodynamics )
 {
     typedef boost::program_options::variable_value variable_value;
 
-    // parse and define program options
+    // manually define program option values
     options vm;
-/*    try {
-        vm.parse(argc, const_cast<char**>(argv));
-    }
-    catch (halmd::options::exit_exception const& e) {
-        BOOST_FAIL("Parsing command line options failed with exit code " << e.status());
-    }
-    BOOST_TEST_MESSAGE("Still alive");*/
+    vm["backend"]       = variable_value(std::string(MDSIM_BACKEND), false);
+    vm["particles"]     = variable_value(1000u, false);
+    vm["steps"]         = variable_value(uint64_t(1000), false);
+    vm["timestep"]      = variable_value(0.001, false);
+    vm["density"]       = variable_value(0.2f, false);
+    vm["temperature"]   = variable_value(2.0f, false);
+    vm["dimension"]     = variable_value(3, false);
+    vm["verbose"]       = variable_value(2, false);
+    vm["epsilon"]       = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), false);
+    vm["sigma"]         = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), false);
+    vm["cutoff"]        = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), false);
+    vm["skin"]          = variable_value(0.5f, false);
+    vm["random-seed"]   = variable_value(42u, false);
 
-    vm.set("time", variable_value(1e0f, false));
-    vm.set("density", variable_value(0.2f, false));
-    vm.set("temperature", variable_value(2.0f, false));
-    vm.set("dimension", variable_value(3, true));
-    vm.set("verbose", variable_value(2, true));
-
-#ifndef NDEBUG
-    // enable logging as early as possible if debugging
+    BOOST_TEST_MESSAGE("enable logging to console");
     io::logger::init(vm);
-#endif
 
-    // resolve module dependencies
-    try {
-        module<halmd::mdsim::host::box<3> >::required(vm);
-//         module<halmd::mdsim::host::particle<3, double> >::required(vm);
-//         module<core>::required(vm);
-    }
-    catch (std::exception const& e) {
-        BOOST_FAIL(e.what());
-    }
+    BOOST_TEST_MESSAGE("resolve module dependencies");
+    module<core>::required(vm);
 
-    // parse module options
-    try {
-        vm.parse(module<>::options());
-    }
-    catch (halmd::options::exit_exception const& e) {
-        BOOST_FAIL("exception in options parser: " << e.status());
-    }
-
-#ifdef NDEBUG
-    // enable logging after successful option parsing if not debugging
-    io::logger::init(vm);
-#endif
-
-    BOOST_TEST_MESSAGE("Still alive");
-
-    // run MD simulation
+    BOOST_TEST_MESSAGE("initialise MD simulation");
     shared_ptr<halmd::core> core(module<halmd::core>::fetch(vm));
+    BOOST_TEST_MESSAGE("run MD simulation");
     core->run();
 }

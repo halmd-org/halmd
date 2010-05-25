@@ -31,8 +31,6 @@ foreach(impl ${HALMD_impl})
 
   add_executable(test_thermodynamics_${backend}
     thermodynamics.cpp
-    ../../options.cpp
-    ../../mdlib.cpp
   )
   set(HALMD_COMPILE_DEFINITIONS
     MDSIM_CLASS=${class}

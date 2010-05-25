@@ -70,19 +70,19 @@ public:
     /**
      * return option value
      */
-    boost::program_options::variable_value const& operator[](std::string const& vv) const
+    boost::program_options::variable_value const& operator[](std::string const& name) const
     {
-        return vm[vv];
+        return vm[name];
     }
 
     /**
      * modify option value
      */
-    void set(std::string const& vv, boost::program_options::variable_value const& value)
+    boost::program_options::variable_value& operator[](std::string const& name)
     {
         // override const operator[] in variables_map
         std::map<std::string, boost::program_options::variable_value>& vm_(vm);
-        vm_[vv] = value;
+        return vm_[name];
     }
 
     size_t count(std::string const& name) const
