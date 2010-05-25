@@ -43,6 +43,7 @@ foreach(impl ${HALMD_impl})
 
   target_link_libraries(test_thermodynamics_${backend}
     ${HALMD_COMMON_LIBRARIES}
+    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
   )
   if(${backend} STREQUAL "host")
     target_link_libraries(test_thermodynamics_${backend}
