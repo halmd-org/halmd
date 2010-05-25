@@ -87,17 +87,28 @@ void test_rand48_gpu( unsigned long count )
         cuda::host::vector<float> h_array(count);
         cuda::copy(g_array, h_array);
 
-        halmd::accumulator<float> a;
+        halmd::accumulator<double> a;
         for (unsigned long i=0; i < count; i++) {
             a += h_array[i];
-        }
+         }
 
-        // mean = 1/2, std = 1/12
-        // use tolerance = six sigma, so the test passes with 97% probability
-        double tol = 6 * sqrt(1. / (count - 1) / (1./12));
+        // check count, mean, and variance
         BOOST_CHECK_EQUAL(a.count(), count);
-        BOOST_CHECK_CLOSE_FRACTION(a.mean(), 0.5, tol / .5);
-        BOOST_CHECK_CLOSE_FRACTION(a.var(), 1./12, tol / (1./12));
+
+        // mean = 1/2, variance = 1/12, n-th moment is 1/(n+1)
+        // use tolerance = 3 sigma, so the test passes with 99% probability
+        double val = 0.5;
+        double tol = 3 * a.std() / sqrt(count - 1);
+        BOOST_CHECK_CLOSE_FRACTION(a.mean(), val, tol / val);
+
+        // Var(ΣX^2/N) = E(X^4)/N
+        val = 1./12;
+        tol = 1 * sqrt(1. / (count - 1) * (1./5));
+        BOOST_CHECK_CLOSE_FRACTION(a.var(), val, tol / val);
+
+        // TODO: Kolmogorov-Smirnov test
+        // see Knuth, vol. 2, ch. 3.3.B
+        // lookup algorithm without sorting by Gonzalez et al.
     }
     catch (cuda::error const& e) {
         BOOST_FAIL("(CUDA error) " << e.what());
@@ -117,31 +128,56 @@ void test_gsl_rng( unsigned long count )
 
     // test uniform distribution
     halmd::accumulator<double> a;
-    for (unsigned i=0; i < count; i++)
+    for (unsigned i=0; i < count; i++) {
         a += rng.uniform();
-
-    // mean = 1/2, std = 1/12
-    // use tolerance = six sigma, so the test passes with 97% probability
-    double tol = 6 * sqrt(1. / (count - 1) / (1./12));
-    BOOST_CHECK_EQUAL(a.count(), count);
-    BOOST_CHECK_CLOSE_FRACTION(a.mean(), .5, tol / .5);
-    BOOST_CHECK_CLOSE_FRACTION(a.var(), 1./12, tol / (1./12));
-
-    // test Gaussian distribution
-    BOOST_REQUIRE_MESSAGE(count % 2 == 0, "require even number of samples");
-    a.clear();
-    for (unsigned i=0; i < count; i+=2) {
-        double x1, x2;
-        rng.gaussian(x1, x2, 1.);
-        a += 1 + x1;
-        a += 1 + x2;
     }
 
-    // mean = 1, std = 1
-    tol = 6 * sqrt(1. / (count - 1));  // tolerance = six sigma
+    // check count, mean, and variance
     BOOST_CHECK_EQUAL(a.count(), count);
-    BOOST_CHECK_CLOSE_FRACTION(a.mean(), 1, tol);
-    BOOST_CHECK_CLOSE_FRACTION(a.var(), 1, tol);
+
+    // mean = 1/2, variance = 1/12, n-th moment is 1/(n+1)
+    // use tolerance = 3 sigma, so the test passes with 99% probability
+    double val = 0.5;
+    double tol = 3 * a.std() / sqrt(count - 1);
+    BOOST_CHECK_CLOSE_FRACTION(a.mean(), val, tol / val);
+
+    // Var(ΣX^2/N) = E(X^4)/N
+    val = 1./12;
+    tol = 1 * sqrt(1. / (count - 1) * (1./5));
+    BOOST_CHECK_CLOSE_FRACTION(a.var(), val, tol / val);
+
+    // test Gaussian distribution
+    BOOST_REQUIRE_MESSAGE(count % 2 == 0, "Box-Muller algorithm requires even number of samples");
+    a.clear();
+    halmd::accumulator<double> a3, a4;
+    for (unsigned i=0; i < count; i+=2) {
+        double x1, x2, tmp;
+        rng.gaussian(x1, x2, 1.);
+        a += x1;
+        tmp = x1 * x1;
+        a3 += x1 * tmp;
+        a4 += tmp * tmp;
+
+        a += x2;
+        tmp = x2 * x2;
+        a3 += x2 * tmp;
+        a4 += tmp * tmp;
+    }
+
+    // mean = 0, std = 1
+    BOOST_CHECK_EQUAL(a.count(), count);
+    tol = 3 * a.std() / sqrt(count - 1);         // tolerance = 3 sigma (passes in 99% of all cases)
+    BOOST_CHECK_SMALL(a.mean(), tol);
+    val = 1;
+    tol = 3 * sqrt( 1. / (count - 1) * 2);       // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
+    BOOST_CHECK_CLOSE_FRACTION(a.var(), val, tol / val);
+
+    // higher moments
+    tol = 3 * a3.std() / sqrt(count - 1);        // <X³> = 0
+    BOOST_CHECK_SMALL(a3.mean(), tol);
+    val = 3;                                     // <X⁴> = 3
+    tol = 3 * a4.std() / sqrt(count - 1);
+    BOOST_CHECK_CLOSE_FRACTION(a4.mean(), val, tol / val);
 }
 
 int init_unit_test_suite()
@@ -159,7 +195,7 @@ int init_unit_test_suite()
 
     master_test_suite().add(BOOST_TEST_CASE(&test_accum));
     master_test_suite().add(
-        BOOST_PARAM_TEST_CASE(&test_gsl_rng, counts.begin(), counts.end()-1));
+        BOOST_PARAM_TEST_CASE(&test_gsl_rng, counts.begin(), counts.end()-2));
     master_test_suite().add(
         BOOST_PARAM_TEST_CASE(&test_rand48_gpu, counts.begin(), counts.end()));
 
