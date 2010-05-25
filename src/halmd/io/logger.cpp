@@ -81,16 +81,18 @@ void init(options const& vm)
         lvl_cons = lvl_file = trace; break;
     }
 
-    init_log_to_file
-    (
-        vm["output"].as<string>() + ".log",
-        keywords::auto_flush = true,
-        keywords::filter = filters::attr<severity_level>("Severity") >= lvl_file,
-        keywords::format = formatters::format("[%1%] %2%%3%")
-            % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
-            % formatters::attr<severity_level>("Severity")
-            % formatters::message()
-    );
+    if (!vm["output"].empty()) {
+        init_log_to_file
+        (
+            vm["output"].as<string>() + ".log",
+            keywords::auto_flush = true,
+            keywords::filter = filters::attr<severity_level>("Severity") >= lvl_file,
+            keywords::format = formatters::format("[%1%] %2%%3%")
+                % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
+                % formatters::attr<severity_level>("Severity")
+                % formatters::message()
+        );
+    }
 
     init_log_to_console
     (
