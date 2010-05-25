@@ -23,6 +23,7 @@
 #include <exception>
 
 #include <halmd/utility/module/exception.hpp>
+#include <halmd/utility/module/demangle.hpp>
 #include <halmd/utility/module/factory.hpp>
 #include <halmd/utility/module/wrapper.hpp>
 
@@ -102,11 +103,11 @@ public:
     }
 
     /**
-     * returns module name
+     * return (demangled) module name
      */
     static std::string name()
     {
-        return typeid(T).name();
+        return demangled_name<T>();
     }
 
     /**

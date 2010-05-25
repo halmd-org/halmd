@@ -22,9 +22,10 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <typeinfo>
+#include <string>
 
 #include <halmd/utility/module/builder.hpp>
+#include <halmd/utility/module/demangle.hpp>
 #include <halmd/utility/module/exception.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -84,11 +85,11 @@ public:
     }
 
     /**
-     * returns module name
+     * return (demangled) module name
      */
     std::string name()
     {
-        return typeid(T).name();
+        return demangled_name<T>();
     }
 
     /** module instance observer */

@@ -23,7 +23,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits/is_object.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <string>
 
+#include <halmd/utility/module/demangle.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -113,7 +115,7 @@ public:
 
     virtual std::string name() const
     {
-        return typeid(T).name();
+        return demangled_name<T>();
     }
 };
 
@@ -183,7 +185,7 @@ public:
 
     virtual std::string name() const
     {
-        return typeid(T).name();
+        return demangled_name<T>();
     }
 };
 
