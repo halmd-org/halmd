@@ -21,21 +21,22 @@
 #define BOOST_TEST_MODULE test_h5xx_id
 #include <boost/test/unit_test.hpp>
 
+#include <boost/filesystem.hpp>
+
 // #define H5XX_DEBUG
 #include <h5xx/id.hpp>
 
 #define H5XX_TEST_FILENAME "test_h5xx_id.h5"
 
+using namespace boost;
+using namespace boost::filesystem;
 using namespace std;
 
-/**
- * expose h5xx::id constructor
- *
- * Call this only *once* per identifier created with H5 C function.
- */
-struct _construct_id : public h5xx::id
+struct remove_file
 {
-    _construct_id(hid_t id) : h5xx::id(id) {}
+    // remove test file before and after test case
+    remove_file()  { remove(H5XX_TEST_FILENAME); }
+    ~remove_file() { remove(H5XX_TEST_FILENAME); }
 };
 
 /**
@@ -48,27 +49,27 @@ inline int count(hid_t id)
     return count;
 }
 
-BOOST_AUTO_TEST_CASE(test_id)
+BOOST_FIXTURE_TEST_CASE(test_id, remove_file)
 {
-    // construct two h5xx::id from file identifier
+    // construct two h5xx::basic_id from file identifier
     hid_t file;
-    H5XX_CHECK(file = H5Fcreate(H5XX_TEST_FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT));
+    H5XX_CHECK(file = H5Fcreate(H5XX_TEST_FILENAME, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT));
     BOOST_CHECK(count(file) == 1);
-    h5xx::id id1 = _construct_id(file);
+    h5xx::basic_id id1 = h5xx::basic_id(file);
     BOOST_CHECK(count(file) == 1);
-    h5xx::id id2 = id1;
+    h5xx::basic_id id2 = id1;
     BOOST_CHECK(count(file) == 2);
     BOOST_CHECK(id1 == id2);
     BOOST_CHECK(!(id1 != id2));
 
-    // construct two h5xx::id from dataspace identifier
+    // construct two h5xx::basic_id from dataspace identifier
     hid_t dataspace;
     H5XX_CHECK(dataspace = H5Screate(H5S_SCALAR));
-    h5xx::id id3 = _construct_id(dataspace);
+    h5xx::basic_id id3 = h5xx::basic_id(dataspace);
     BOOST_CHECK(count(dataspace) == 1);
     BOOST_CHECK(id1 != id3);
     BOOST_CHECK(!(id1 == id3));
-    h5xx::id id4(id3);
+    h5xx::basic_id id4(id3);
     BOOST_CHECK(count(dataspace) == 2);
     BOOST_CHECK(id3 == id4);
 

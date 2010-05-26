@@ -30,82 +30,99 @@ namespace h5xx
 {
 
 /**
- * HDF5 identifier
+ * This class wraps a HDF5 identifier, which identifies a HDF5
+ * library resource, e.g. a file or a group, for safe use within
+ * higher-level wrapper classes.
  */
-class id
-  : boost::equality_comparable<id>
+class basic_id
+  : boost::equality_comparable<basic_id>
 {
 public:
     /**
-     * close identifier
+     * wrap identifier returned by H5 API function
      */
-    ~id()
+    explicit basic_id(hid_t hid)
+      : hid_(hid)
     {
-        H5XX_CHECK(H5Idec_ref(id_));
     }
 
     /**
-     * copy identifier
+     * copy identifier by increasing reference count
      */
-    id(id const& other)
+    basic_id(basic_id const& id)
+      : hid_(id.hid_)
     {
-        H5XX_CHECK(H5Iinc_ref(id_ = other.id_));
+        H5XX_CHECK(H5Iinc_ref(hid_));
+    }
+
+    /**
+     * close identifier by decreasing reference count
+     */
+    ~basic_id()
+    {
+        H5XX_CHECK(H5Idec_ref(hid_));
     }
 
     /**
      * assign identifier
      */
-    id& operator=(id const& other)
+    basic_id& operator=(basic_id const& id)
     {
-        if (*this != other) {
-            id id_(other);
+        if (*this != id) {
+            basic_id id_(id);
             swap(id_);
         }
         return *this;
     }
 
     /**
-     * swap identifier
+     * returns HDF5 resource identifier
      */
-    void swap(id& other)
+    hid_t hid() const
     {
-        std::swap(id_, other.id_);
+        return hid_;
+    }
+
+    /**
+     * swap HDF5 resource identifiers
+     */
+    void swap(basic_id& id)
+    {
+        std::swap(hid_, id.hid_);
     }
 
     /**
      * equality comparison
      */
-    bool operator==(id const& other) const
+    bool operator==(basic_id const& id) const
     {
-        return id_ == other.id_;
+        return hid_ == id.hid_;
     }
 
     /**
      * returns absolute path of object within file
+     *
+     * For attributes the path of the parent object is returned.
      */
     std::string path() const
     {
         ssize_t size; // excludes NULL terminator
-        H5XX_CHECK(size = H5Iget_name(id_, NULL, 0));
+        H5XX_CHECK(size = H5Iget_name(hid_, NULL, 0));
         std::vector<char> name_(size + 1); // includes NULL terminator
-        H5XX_CHECK(H5Iget_name(id_, name_.data(), name_.size()));
+        H5XX_CHECK(H5Iget_name(hid_, name_.data(), name_.size()));
         return name_.data();
     }
 
-protected:
-    explicit id(hid_t id_)
-      : id_(id_)
-    {}
-
-    hid_t id_;
+private:
+    hid_t hid_;
 };
 
 /**
  * output absolute path of object within file
  */
-std::ostream& operator<<(std::ostream& os, id const& id_)
+std::ostream& operator<<(std::ostream& os, basic_id const& id)
 {
-    return (os << id_.path());
+    return (os << id.path());
 }
 
 } // namespace h5xx
