@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -58,6 +58,7 @@ void lj<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::required(vm);
     module<box_type>::required(vm);
+    module<thermodynamics_type>::required(vm);
 }
 
 /**
@@ -69,6 +70,7 @@ lj<dimension, float_type>::lj(po::options const& vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
   , box(module<box_type>::fetch(vm))
+  , thermodynamics(module<thermodynamics_type>::fetch(vm))
   // allocate potential parameters
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
@@ -126,13 +128,15 @@ void lj<dimension, float_type>::compute()
     std::fill(particle->f.begin(), particle->f.end(), 0);
 
     // potential energy
+    float_type& en_pot_ = thermodynamics->en_pot_;
     en_pot_ = 0;
     // virial equation sum
+    std::vector<virial_type>& virial_ = thermodynamics->virial_;
     std::fill(virial_.begin(), virial_.end(), 0);
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbor particles
-        BOOST_FOREACH (size_t j, particle->neighbor[i]) {
+        BOOST_FOREACH(size_t j, particle->neighbor[i]) {
             // particle distance vector
             vector_type r = particle->r[i] - particle->r[j];
             box->reduce_periodic(r);
@@ -162,33 +166,16 @@ void lj<dimension, float_type>::compute()
             en_pot_ += en_pot;
 
             // add contribution to virial
-            float_type virial = 0.5 * rr * fval;
-            virial_[a][0] += virial;
-            virial_[b][0] += virial;
-
-            // compute off-diagonal virial stress tensor elements
-            if (dimension == 3) {
-                virial = 0.5 * r[1] * r[2] * fval;
-                virial_[a][1] += virial;
-                virial_[b][1] += virial;
-
-                virial = 0.5 * r[2] * r[0] * fval;
-                virial_[a][2] += virial;
-                virial_[b][2] += virial;
-
-                virial = 0.5 * r[0] * r[1] * fval;
-                virial_[a][3] += virial;
-                virial_[b][3] += virial;
-            }
-            else {
-                virial = 0.5 * r[0] * r[1] * fval;
-                virial_[a][1] += virial;
-                virial_[b][1] += virial;
-            }
+            virial_type vir = 0.5f * fval * thermodynamics_type::virial_tensor(rr, r);
+            virial_[a] += vir;
+            virial_[b] += vir;
         }
     }
 
     en_pot_ /= particle->nbox;
+    for (size_t i = 0; i < virial_.size(); ++i) {
+        virial_[i] /= particle->ntypes[i];
+    }
 
     // ensure that system is still in valid state
     if (std::isinf(en_pot_)) {

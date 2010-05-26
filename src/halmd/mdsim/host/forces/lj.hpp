@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -25,6 +25,7 @@
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/thermodynamics.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -42,9 +43,12 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef host::box<dimension> box_type;
+    typedef host::thermodynamics<dimension> thermodynamics_type;
+    typedef typename thermodynamics_type::virial_type virial_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
+    shared_ptr<thermodynamics_type> thermodynamics;
 
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);
@@ -68,11 +72,6 @@ protected:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-
-    /** average potential energy per particle */
-    using _Base::en_pot_;
-    /** average virial per particle for each particle types */
-    using _Base::virial_;
 };
 
 }}} // namespace mdsim::host::forces

@@ -8,6 +8,7 @@ add_library(halmd_mdsim
   position.cpp
   random.cpp
   sort.cpp
+  thermodynamics.cpp
   velocity.cpp
   )
 

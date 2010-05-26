@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,9 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
-#include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/host/forces/lj.hpp>
+#include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/utility/module.hpp>
 
 using namespace boost;
 using namespace std;
@@ -33,21 +32,21 @@ namespace mdsim
  * Resolve module dependencies
  */
 template <int dimension>
-void force<dimension>::resolve(po::options const& vm)
+void thermodynamics<dimension>::resolve(po::options const& vm)
 {
-    module<particle_type>::required(vm);
+    module<box_type>::required(vm);
 }
 
 template <int dimension>
-force<dimension>::force(po::options const& vm)
+thermodynamics<dimension>::thermodynamics(po::options const& vm)
   // dependency injection
-  : particle(module<particle_type>::fetch(vm))
+  : box(module<box_type>::fetch(vm))
 {
 }
 
 // explicit instantiation
-template class force<3>;
-template class force<2>;
+template class thermodynamics<3>;
+template class thermodynamics<2>;
 
 } // namespace mdsim
 

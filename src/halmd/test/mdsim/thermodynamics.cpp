@@ -30,43 +30,53 @@
 
 #include <halmd/core.hpp>
 // #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/box.hpp>
+// #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/io/logger.hpp>
 
-using namespace halmd;
-using namespace boost::assign;
-
 BOOST_AUTO_TEST_CASE( thermodynamics )
 {
+    using namespace halmd;
+    using namespace boost::assign;
+
     typedef boost::program_options::variable_value variable_value;
 
     // manually define program option values
     options vm;
     vm["backend"]       = variable_value(std::string(MDSIM_BACKEND), false);
     vm["particles"]     = variable_value(1000u, false);
-    vm["steps"]         = variable_value(uint64_t(1000), false);
+    vm["steps"]         = variable_value(uint64_t(100), false);
     vm["timestep"]      = variable_value(0.001, false);
     vm["density"]       = variable_value(0.2f, false);
     vm["temperature"]   = variable_value(2.0f, false);
     vm["dimension"]     = variable_value(3, false);
-    vm["verbose"]       = variable_value(2, false);
+    vm["verbose"]       = variable_value(1, false);
     vm["epsilon"]       = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), false);
     vm["sigma"]         = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), false);
     vm["cutoff"]        = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), false);
     vm["skin"]          = variable_value(0.5f, false);
     vm["random-seed"]   = variable_value(42u, false);
 
+    BOOST_TEST_MESSAGE("use backend " << vm["backend"].as<std::string>());
+
     BOOST_TEST_MESSAGE("enable logging to console");
     io::logger::init(vm);
 
     BOOST_TEST_MESSAGE("resolve module dependencies");
     module<core>::required(vm);
+    module<mdsim::thermodynamics<3> >::required(vm);
 
     BOOST_TEST_MESSAGE("initialise MD simulation");
     shared_ptr<halmd::core> core(module<halmd::core>::fetch(vm));
     BOOST_TEST_MESSAGE("run MD simulation");
     core->run();
+
+    shared_ptr<mdsim::thermodynamics<3> >
+        thermodynamics(module<mdsim::thermodynamics<3> >::fetch(vm));
+    BOOST_TEST_MESSAGE("Temperature: " << thermodynamics->temp());
+    BOOST_TEST_MESSAGE("Pressure: " << thermodynamics->pressure());
+    BOOST_TEST_MESSAGE("E_tot: " << thermodynamics->en_tot());
+    BOOST_TEST_MESSAGE("v_cm: " << thermodynamics->v_cm());
 }

@@ -50,14 +50,6 @@ public:
     virtual ~force() {}
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;
-    double en_pot() { return en_pot_; }
-    std::vector<virial_type> const& virial() { return virial_; }
-
-protected:
-    /** average potential energy per particle */
-    double en_pot_;
-    /** average virial per particle for each particle type */
-    std::vector<virial_type> virial_;
 };
 
 } // namespace mdsim

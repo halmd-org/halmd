@@ -3,6 +3,7 @@ add_library(halmd_mdsim_host
   neighbor.cpp
   particle.cpp
   random.cpp
+  thermodynamics.cpp
   )
 
 add_subdirectory(forces)
