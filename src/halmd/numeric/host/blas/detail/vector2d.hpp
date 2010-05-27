@@ -363,6 +363,17 @@ operator%(vector<T, 2> v, T_ const& s)
 }
 
 /**
+ * Unary negative operator
+ */
+template <typename T>
+inline vector<T, 2> operator-(vector<T, 2> v)
+{
+    v[0] = -v[0];
+    v[1] = -v[1];
+    return v;
+}
+
+/**
  * Inner product
  */
 template <typename T>
