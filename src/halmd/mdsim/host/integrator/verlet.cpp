@@ -59,10 +59,10 @@ verlet<dimension, float_type>::verlet(po::options const& vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
   , box(module<box_type>::fetch(vm))
+  // set parameters
+  , timestep_(vm["timestep"].as<double>())
+  , timestep_half_(0.5 * timestep_)
 {
-    // parse options
-    timestep_ = vm["timestep"].as<double>();
-
     LOG("integration timestep: " << timestep_);
 }
 
