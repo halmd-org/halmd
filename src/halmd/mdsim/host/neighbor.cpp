@@ -65,12 +65,10 @@ neighbor<dimension, float_type>::neighbor(po::options const& vm)
   , force(module<force_type>::fetch(vm))
   , box(module<box_type>::fetch(vm))
   // allocate parameters
+  , r_skin_(vm["skin"].as<float>())
   , rr_cut_skin_(particle->ntype, particle->ntype)
   , r0_(particle->nbox)
 {
-    // parse options
-    r_skin_ = vm["skin"].as<float>();
-
     matrix_type r_cut = force->cutoff();
     matrix_type r_cut_skin(particle->ntype, particle->ntype);
     typename matrix_type::value_type r_cut_max = 0;
@@ -147,7 +145,7 @@ void neighbor<dimension, float_type>::update_cells()
     // add particles to cells
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type const& r = particle->r[i];
-        cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_)), ncell_);
+        cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_) + static_cast<vector_type>(ncell_)), ncell_);
         cell_(index).push_back(i);
     }
 }
@@ -202,8 +200,9 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
 {
     BOOST_FOREACH(size_t j, c) {
         // skip identical particle and particle pair permutations if same cell
-        if (same_cell && particle->tag[j] <= particle->tag[i])
+        if (same_cell && particle->tag[j] <= particle->tag[i]) {
             continue;
+        }
 
         // particle distance vector
         vector_type r = particle->r[i] - particle->r[j];
@@ -215,8 +214,9 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
         float_type rr = inner_prod(r, r);
 
         // enforce cutoff radius with neighbor list skin
-        if (rr >= rr_cut_skin_(a, b))
+        if (rr >= rr_cut_skin_(a, b)) {
             continue;
+        }
 
         // add particle to neighbor list
         particle->neighbor[i].push_back(j);
