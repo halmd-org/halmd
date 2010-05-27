@@ -130,6 +130,7 @@ bool neighbor<dimension, float_type>::check()
     float_type rr_max = 0;
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type r = particle->r[i] - r0_[i];
+        box->reduce_periodic(r);
         rr_max = max(rr_max, inner_prod(r, r));
     }
     return sqrt(rr_max) > r_skin_half_;
