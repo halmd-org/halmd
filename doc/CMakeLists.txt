@@ -8,7 +8,7 @@ add_custom_target(halmd_doc ALL
   COMMENT "Building documentation using Boost.Jam"
   )
 set_directory_properties(PROPERTIES
-  ADDITIONAL_MAKE_CLEAN_FILES "bin;html"
+  ADDITIONAL_MAKE_CLEAN_FILES "bin html"
   )
 install(DIRECTORY html
   DESTINATION share/doc/halmd
