@@ -67,6 +67,8 @@ public:
     double pressure() const;
     /** system temperature */
     double temp() const { return 2 * en_kin() / dimension; }
+    /** particle density */
+    double density() const { return box->density(); }
     /** total energy per particle */
     double en_tot() const { return en_pot() + en_kin(); }
 };
@@ -80,8 +82,9 @@ inline double thermodynamics<dimension>::pressure() const
     BOOST_FOREACH(virial_type const& v, vir) {
         virial_sum += v[0];
     }
+    virial_sum /= dimension;
     // TODO: check '-' sign
-    return box->density() / dimension * (temp() - virial_sum);
+    return box->density() * (temp() - virial_sum);
 }
 
 } // namespace mdsim
