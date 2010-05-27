@@ -109,4 +109,6 @@ Please refer to the :ref:`Download section <download>`.
 
 [section:reference Reference Documentation]
 
+[xinclude autodoc.xml]
+
 [endsect]
