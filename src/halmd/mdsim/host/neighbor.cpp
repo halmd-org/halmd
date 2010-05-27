@@ -82,7 +82,7 @@ neighbor<dimension, float_type>::neighbor(po::options const& vm)
         }
     }
     vector_type L = box->length();
-    ncell_ = static_cast<cell_index>(L / r_cut_max);
+    ncell_ = static_cast<cell_size_type>(L / r_cut_max);
     if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
         throw logic_error("less than least 3 cells per dimension");
     }
@@ -104,7 +104,7 @@ void neighbor<dimension, float_type>::update()
     // rebuild cell lists
     update_cells();
     // rebuild neighbor lists
-    cell_index i;
+    cell_size_type i;
     for (i[0] = 0; i[0] < ncell_[0]; ++i[0]) {
         for (i[1] = 0; i[1] < ncell_[1]; ++i[1]) {
             if (dimension == 3) {
@@ -146,7 +146,7 @@ void neighbor<dimension, float_type>::update_cells()
     // add particles to cells
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type const& r = particle->r[i];
-        cell_index index = element_mod(static_cast<cell_index>(element_div(r, cell_length_)), ncell_);
+        cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_)), ncell_);
         cell_(index).push_back(i);
     }
 }
@@ -155,13 +155,13 @@ void neighbor<dimension, float_type>::update_cells()
  * Update neighbor lists for a single cell
  */
 template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::update_cell_neighbors(cell_index const& i)
+void neighbor<dimension, float_type>::update_cell_neighbors(cell_size_type const& i)
 {
     BOOST_FOREACH(size_t p, cell_(i)) {
         // empty neighbor list of particle
         particle->neighbor[p].clear();
 
-        cell_index j;
+        cell_diff_type j;
         for (j[0] = -1; j[0] <= 1; ++j[0]) {
             for (j[1] = -1; j[1] <= 1; ++j[1]) {
                 if (dimension == 3) {
@@ -171,7 +171,7 @@ void neighbor<dimension, float_type>::update_cell_neighbors(cell_index const& i)
                             goto self;
                         }
                         // update neighbor list of particle
-                        cell_index k = element_mod(i + ncell_ + j, ncell_);
+                        cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell_) + j), ncell_);
                         compute_cell_neighbors<false>(p, cell_(k));
                     }
                 }
@@ -181,7 +181,7 @@ void neighbor<dimension, float_type>::update_cell_neighbors(cell_index const& i)
                         goto self;
                     }
                     // update neighbor list of particle
-                    cell_index k = element_mod(i + ncell_ + j, ncell_);
+                    cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell_) + j), ncell_);
                     compute_cell_neighbors<false>(p, cell_(k));
                 }
             }

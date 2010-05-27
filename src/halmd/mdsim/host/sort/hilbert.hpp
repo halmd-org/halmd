@@ -43,7 +43,7 @@ public:
     typedef host::neighbor<dimension, float_type> neighbor_type;
 
     typedef typename neighbor_type::cell_list cell_list;
-    typedef typename neighbor_type::cell_index cell_index;
+    typedef typename neighbor_type::cell_size_type cell_size_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;

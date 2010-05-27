@@ -58,7 +58,8 @@ public:
 
     typedef typename particle_type::neighbor_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
-    typedef numeric::host::blas::vector<size_t, dimension> cell_index;
+    typedef numeric::host::blas::vector<size_t, dimension> cell_size_type;
+    typedef numeric::host::blas::vector<ssize_t, dimension> cell_diff_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;
@@ -75,7 +76,7 @@ protected:
     friend class sort::hilbert<dimension, float_type>;
 
     void update_cells();
-    void update_cell_neighbors(cell_index const& i);
+    void update_cell_neighbors(cell_size_type const& i);
     template <bool same_cell>
     void compute_cell_neighbors(size_t i, cell_list& c);
 
@@ -86,7 +87,7 @@ protected:
     /** cell lists */
     cell_lists cell_;
     /** number of cells per dimension */
-    cell_index ncell_;
+    cell_size_type ncell_;
     /** cell edge lengths */
     vector_type cell_length_;
     /** half neighbor list skin */

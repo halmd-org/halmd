@@ -64,7 +64,7 @@ hilbert<dimension, float_type>::hilbert(po::options const& vm)
     // generate 1-dimensional Hilbert curve mapping of cell lists
     typedef std::pair<cell_list*, unsigned int> pair;
     std::vector<pair> pairs;
-    cell_index x;
+    cell_size_type x;
     for (x[0] = 0; x[0] < neighbor->ncell_[0]; ++x[0]) {
         for (x[1] = 0; x[1] < neighbor->ncell_[1]; ++x[1]) {
             if (dimension == 3) {
@@ -163,7 +163,7 @@ unsigned int hilbert<dimension, float_type>::map(vector_type r, unsigned int dep
         // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
         for (unsigned int i = 0; i < depth; ++i) {
             // determine Hilbert vertex closest to particle
-            cell_index x;
+            cell_size_type x;
             x[0] = std::signbit(r[0]) & 1;
             x[1] = std::signbit(r[1]) & 1;
             x[2] = std::signbit(r[2]) & 1;
@@ -218,7 +218,7 @@ unsigned int hilbert<dimension, float_type>::map(vector_type r, unsigned int dep
         // 32-bit integer for 2D Hilbert code allows a maximum of 16 levels
         for (unsigned int i = 0; i < depth; ++i) {
             // determine Hilbert vertex closest to particle
-            cell_index x;
+            cell_size_type x;
             x[0] = std::signbit(r[0]) & 1;
             x[1] = std::signbit(r[1]) & 1;
             // lookup Hilbert code
