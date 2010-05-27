@@ -53,7 +53,12 @@ public:
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);
     core(po::options const& vm);
+    /** Run complete simulation */
     void run();
+    /** Initialise simulation */
+    void init();
+    /** Perform a single MD integration step */
+    void mdstep();
     uint64_t steps() { return steps_; }
     double time() { return time_; }
 

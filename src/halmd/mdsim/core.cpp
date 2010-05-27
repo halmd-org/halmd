@@ -95,26 +95,44 @@ core<dimension>::core(po::options const& vm)
 template <int dimension>
 void core<dimension>::run()
 {
-    position->set();
-    velocity->set();
-    neighbor->update();
-    force->compute();
+    init();
 
     LOG("starting simulation");
 
     for (uint64_t i = 0; i < steps_; ++i) {
-        integrator->integrate();
-        if (neighbor->check()) {
-            if (sort) {
-                sort->order();
-            }
-            neighbor->update();
-        }
-        force->compute();
-        integrator->finalize();
+        mdstep();
     }
 
     LOG("finished simulation");
+}
+
+/**
+ * Initialise simulation
+ */
+template <int dimension>
+inline void core<dimension>::init()
+{
+    position->set();
+    velocity->set();
+    neighbor->update();
+    force->compute();
+}
+
+/**
+ * Perform a single MD integration step
+ */
+template <int dimension>
+inline void core<dimension>::mdstep()
+{
+    integrator->integrate();
+    if (neighbor->check()) {
+        if (sort) {
+            sort->order();
+        }
+        neighbor->update();
+    }
+    force->compute();
+    integrator->finalize();
 }
 
 // explicit instantiation
