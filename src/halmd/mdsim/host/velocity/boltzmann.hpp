@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITY_BOLTZMANN_HPP
 #define HALMD_MDSIM_HOST_VELOCITY_BOLTZMANN_HPP
 
+#include <utility>
+
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/random.hpp>
 #include <halmd/mdsim/velocity.hpp>
@@ -48,6 +50,17 @@ public:
     boltzmann(po::options const& vm);
     virtual ~boltzmann() {};
     void set();
+
+private:
+    /** assign new velocities from Gaussian distribution of width sigma,
+      * return mean velocity and mean-square velocity */
+    std::pair<vector_type, float_type> gaussian(float_type sigma);
+    /** shift all velocities by 'v_shift' */
+    void shift(vector_type const& v_shift);
+    /** rescale magnitude of all velocities by factor 'scale' */
+    void rescale(float_type scale);
+    /** first shift, then rescale all velocities */
+    void shift_rescale(vector_type const& v_shift, float_type scale);
 
 protected:
     /** temperature */

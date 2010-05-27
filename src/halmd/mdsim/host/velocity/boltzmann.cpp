@@ -71,24 +71,94 @@ boltzmann<dimension, float_type>::boltzmann(po::options const& vm)
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::set()
 {
-    float_type r, sigma = sqrt(temp_);
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& v = particle->v[i];
-        if (dimension == 3) {
-            if (i % 2) {
-                v[0] = r;
-                random->normal(v[1], v[2], sigma);
+    pair<vector_type, float_type> p;
+    vector_type& v_cm = p.first;
+    float_type& vv = p.second;
+
+    // assuming equal (unit) mass for all particle types
+    p = gaussian(sqrt(temp_));
+
+    // center velocities around origin, then rescale to exactly
+    // match the desired temperature;
+    // temp = vv / dimension
+    // vv changes to vv - v_cm^2 after shifting
+    float_type scale = sqrt(temp_ * dimension / (vv - inner_prod(v_cm, v_cm)));
+    shift_rescale(-v_cm, scale);
+
+    LOG_DEBUG("velocities rescaled by factor " << scale);
+    LOG("assigned Maxwell-Boltzmann velocity distribution: T = " << temp_);
+}
+
+/**
+ * Assign new velocities from Gaussian distribution
+ */
+template <int dimension, typename float_type>
+pair<typename boltzmann<dimension, float_type>::vector_type, float_type>
+inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
+{
+    vector_type v_cm = 0;
+    float_type vv = 0;
+    float_type r;
+    bool r_valid = false;
+
+    BOOST_FOREACH (vector_type& v, particle->v) {
+        // assign two components at a time
+        for (unsigned i=0; i < dimension-1; i+=2) {
+            random->normal(v[i], v[i+1], sigma);
+        }
+        // handle last component separately for odd dimensions
+        if (dimension % 2 == 1) {
+            if (r_valid) {
+                v[dimension-1] = r;
             }
             else {
-                random->normal(v[0], v[1], sigma);
-                random->normal(v[2], r, sigma);
+                random->normal(v[dimension-1], r, sigma);
             }
+            r_valid = !r_valid;
         }
-        else {
-            random->normal(v[0], v[1], sigma);
-        }
+        v_cm += v;
+        vv += inner_prod(v, v);
     }
-    LOG("assigned Maxwell-Boltzmann velocity distribution: T = " << temp_);
+
+    v_cm /= particle->v.size();
+    vv /= particle->v.size();
+    return make_pair(v_cm, vv);
+}
+
+/**
+ * Shift all velocities by 'v'
+ */
+template <int dimension, typename float_type>
+inline void boltzmann<dimension, float_type>::shift(vector_type const& v_shift)
+{
+    BOOST_FOREACH (vector_type& v, particle->v) {
+        v += v_shift;
+    }
+}
+
+/**
+ * Rescale magnitude of all velocities by factor 'scale'
+ */
+template <int dimension, typename float_type>
+inline void boltzmann<dimension, float_type>::rescale(float_type scale)
+{
+    BOOST_FOREACH (vector_type& v, particle->v) {
+        v *= scale;
+    }
+}
+
+/**
+ * First shift, then rescale all velocities
+ */
+template <int dimension, typename float_type>
+inline void boltzmann<dimension, float_type>::shift_rescale(
+    vector_type const& v_shift,
+    float_type scale)
+{
+    BOOST_FOREACH (vector_type& v, particle->v) {
+        v += v_shift;
+        v *= scale;
+    }
 }
 
 // explicit instantiation
