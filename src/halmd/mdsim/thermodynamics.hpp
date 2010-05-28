@@ -83,8 +83,7 @@ inline double thermodynamics<dimension>::pressure() const
         virial_sum += v[0];
     }
     virial_sum /= dimension;
-    // TODO: check '-' sign
-    return box->density() * (temp() - virial_sum);
+    return box->density() * (temp() + virial_sum);
 }
 
 } // namespace mdsim
