@@ -51,7 +51,7 @@ public:
     virtual ~boltzmann() {};
     void set();
 
-private:
+// private:
     /** assign new velocities from Gaussian distribution of width sigma,
       * return mean velocity and mean-square velocity */
     std::pair<vector_type, float_type> gaussian(float_type sigma);

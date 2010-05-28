@@ -145,6 +145,7 @@ inline void boltzmann<dimension, float_type>::rescale(float_type scale)
     BOOST_FOREACH (vector_type& v, particle->v) {
         v *= scale;
     }
+    LOG("velocities rescaled by factor " << scale);
 }
 
 /**
