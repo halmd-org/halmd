@@ -46,6 +46,8 @@
 #define H5Eprint_vers    2
 #define H5Eset_auto_vers 2
 #define H5Ewalk_vers     2
+#define H5Gcreate_vers   2
+#define H5Gopen_vers     2
 
 #include <hdf5.h>
 

@@ -21,5 +21,6 @@
 #define H5XX_HPP
 
 #include <h5xx/error.hpp>
+#include <h5xx/file.hpp>
 
 #endif /* ! H5XX_HPP */
