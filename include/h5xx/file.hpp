@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 
+#include <h5xx/group.hpp>
 #include <h5xx/id.hpp>
 
 namespace h5xx
@@ -34,6 +35,7 @@ namespace h5xx
  */
 class file
   : public virtual basic_id
+  , public basic_group
 {
 public:
 // The H5 file mode macros cannot be used to define an enum,
@@ -61,6 +63,7 @@ public:
      */
     file(std::string const& name, open_mode flags = file::ro)
       : basic_id(open(name, flags))
+      , basic_group(basic_id::hid())
     {}
 
     /**
@@ -68,6 +71,7 @@ public:
      */
     file(std::string const& name, create_mode flags)
       : basic_id(create(name, flags))
+      , basic_group(basic_id::hid())
     {}
 
 public:

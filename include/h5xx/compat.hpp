@@ -41,6 +41,8 @@
 /**
  * if using HDF5 1.8.x, force HDF 1.8 API as needed
  */
+#define H5Dcreate_vers   2
+#define H5Dopen_vers     2
 #define H5E_auto_t_vers  2
 #define H5Eget_auto_vers 2
 #define H5Eprint_vers    2

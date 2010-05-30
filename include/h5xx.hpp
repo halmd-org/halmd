@@ -22,5 +22,6 @@
 
 #include <h5xx/error.hpp>
 #include <h5xx/file.hpp>
+#include <h5xx/group.hpp>
 
 #endif /* ! H5XX_HPP */

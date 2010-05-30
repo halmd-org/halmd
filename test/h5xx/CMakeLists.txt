@@ -2,6 +2,7 @@ foreach(module
     ctype
     error
     file
+    group
     id
     )
   add_executable(test_h5xx_${module}
