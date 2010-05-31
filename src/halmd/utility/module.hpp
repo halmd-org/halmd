@@ -30,7 +30,7 @@ namespace halmd
 
 // import into top-level namespace
 using utility::module::module;
-using utility::module::module_error;
+using utility::module::unsuitable_module;
 using boost::shared_ptr;
 
 } // namespace halmd

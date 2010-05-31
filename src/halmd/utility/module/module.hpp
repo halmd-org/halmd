@@ -116,7 +116,7 @@ public:
     static void required(po::options const& vm)
     {
         if (!factory::resolve(_Rank_ptr(new _Rank), vm)) {
-            throw module_error("irresolvable dependency " + module<T>::name());
+            throw unresolvable_dependency<T>("no modules available");
         }
     }
 

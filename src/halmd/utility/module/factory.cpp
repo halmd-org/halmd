@@ -18,6 +18,7 @@
  */
 
 #include <boost/bind.hpp>
+#include <stdexcept>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/module/exception.hpp>
@@ -37,7 +38,7 @@ namespace utility { namespace module
 void factory::_register(_Rank_ptr rank_, _Module_ptr module_)
 {
     if (!modules().insert(make_pair(rank_, module_)).second) {
-        throw module_error("duplicate module " + module_->name());
+        throw logic_error("duplicate module " + module_->name());
     }
 }
 

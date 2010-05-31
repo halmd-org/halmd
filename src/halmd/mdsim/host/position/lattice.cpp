@@ -43,7 +43,7 @@ template <int dimension, typename float_type>
 void lattice<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm.count("trajectory-sample")) {
-        throw module_error("inept module " + module<lattice>::name());
+        throw unsuitable_module<lattice>("conflicting option 'trajectory-sample'");
     }
 
     module<particle_type>::required(vm);

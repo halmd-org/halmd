@@ -38,7 +38,7 @@ template <int dimension, typename float_type>
 void file<dimension, float_type>::resolve(po::options const& vm)
 {
     if (!vm.count("trajectory-sample")) {
-        throw module_error("inept module " + module<file>::name());
+        throw unsuitable_module<file>("missing option 'trajectory-sample'");
     }
 
     module<reader_type>::required(vm);

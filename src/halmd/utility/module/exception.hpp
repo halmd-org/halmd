@@ -23,29 +23,66 @@
 #include <exception>
 #include <string>
 
+#include <halmd/utility/module/demangle.hpp>
+
 namespace halmd
 {
 namespace utility { namespace module
 {
 
-/**
- * This exception is thrown if a module is disabled due to a
- * program option, or if a required dependency of a module is
- * a disabled module.
- */
+// This is the base class of all module exceptions.
 class module_error
   : public virtual std::exception // virtual inheritance avoids ambiguity
 {
 public:
-    module_error(std::string const& what_) : what_(what_) {}
+    module_error(std::string const& msg) : msg_(msg) {}
     virtual ~module_error() throw () {}
     virtual const char* what() const throw()
     {
-        return what_.c_str();
+        return msg_.c_str();
     }
 
+    // returns module name
+    virtual std::string name() const = 0;
+
 private:
-    std::string what_;
+    std::string msg_;
+};
+
+// This exception is thrown in the resolve function of a module
+// if it is unsuitable due to missing program option(s).
+template <typename T>
+class unsuitable_module
+  : public module_error
+{
+public:
+    unsuitable_module(std::string const& msg)
+      : module_error("unsuitable module " + name() + " [" + msg + "]")
+    {}
+
+    // returns module name
+    std::string name() const
+    {
+        return demangled_name<T>();
+    }
+};
+
+// This exception is thrown in the resolve function of the
+// factory class, if no module is available for a given type.
+template <typename T>
+class unresolvable_dependency
+  : public module_error
+{
+public:
+    unresolvable_dependency(std::string const& msg)
+      : module_error("unresolvable dependency " + name() + ": " + msg)
+    {}
+
+    // returns module name
+    std::string name() const
+    {
+        return demangled_name<T>();
+    }
 };
 
 }} // namespace utility::module

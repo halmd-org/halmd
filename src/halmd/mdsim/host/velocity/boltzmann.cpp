@@ -47,7 +47,7 @@ template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm.count("trajectory-sample")) {
-        throw module_error("inept module " + module<boltzmann>::name());
+        throw unsuitable_module<boltzmann>("conflicting option 'trajectory-sample'");
     }
 
     module<particle_type>::required(vm);

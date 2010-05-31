@@ -51,7 +51,7 @@ template <int dimension>
 void core<dimension>::resolve(po::options const& vm)
 {
     if (vm["dimension"].as<int>() != dimension) {
-        throw module_error("inept module " + module<core>::name());
+        throw unsuitable_module<core>("mismatching option 'dimension'");
     }
     module<force_type>::required(vm);
     module<neighbor_type>::required(vm);
