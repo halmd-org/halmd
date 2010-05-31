@@ -34,8 +34,8 @@ namespace mdsim { namespace host { namespace position
 {
 
 template <int dimension, typename float_type>
-class lattice :
-  public mdsim::position<dimension>
+class lattice
+  : public mdsim::position<dimension>
 {
 public:
     typedef mdsim::position<dimension> _Base;

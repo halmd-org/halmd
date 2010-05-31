@@ -34,8 +34,8 @@ namespace mdsim { namespace host { namespace velocity
 {
 
 template <int dimension, typename float_type>
-class file :
-  public mdsim::velocity<dimension>
+class file
+  : public mdsim::velocity<dimension>
 {
 public:
     typedef mdsim::velocity<dimension> _Base;
