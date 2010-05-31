@@ -88,6 +88,14 @@ public:
     }
 
     /**
+     * returns module runtime type
+     */
+    std::type_info const& type()
+    {
+        return typeid(T);
+    }
+
+    /**
      * return (demangled) module name
      */
     std::string name()

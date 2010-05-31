@@ -70,6 +70,7 @@ struct builder
 {
     typedef T _Module_base;
     virtual shared_ptr<_Module_base> fetch(po::options const& vm) = 0;
+    virtual std::type_info const& type() = 0;
 
     /**
      * assemble module options
