@@ -89,3 +89,113 @@ A short description of the basic functionality of each class template.
    ljfluid<ljfluid_impl_host, …>
       This class implements the host backend.
 
+Modular design principles
+=========================
+
+HALMD consists of various module groups (avoiding the word 'class' here) which are initialised and interact with each other depending on the configuration at runtime. A module group should satisfy the following criteria:
+
+* It is a natural entity for storing a particular set of data and/or providing algorithms.
+* It functions independently, but may access data and algorithms of other module groups.
+* It may introduce a unique (and independent?) set of programme options.
+* Two module groups should not be easily combinable??? (separability)
+
+A module group is realised by a set of module classes which derive from a base class. These classes reflect implementations for different architectures (host, GPU) or different algorithms (force laws, integrators).
+
+Modules in namespace halmd
+--------------------------
+
+.. glossary::
+
+    :doc:`core <impl/core>`
+        Refined by `mdsim::core`
+
+        Description:
+
+Modules in namespace halmd::mdsim
+---------------------------------
+
+.. glossary::
+
+    :doc:`force <impl/mdsim_force>`
+        Refined by `mdsim::host::forces::lj`
+
+        Description:
+
+    :doc:`position <impl/mdsim_position>`
+        Refined by `mdsim::host::position::file`, `mdsim::host::position::lattice`
+
+        Description:
+
+    :doc:`sort <impl/mdsim_sort>`
+        Refined by `mdsim::host::sort::hilbert`
+
+        Description:
+
+    :doc:`velocity <impl/mdsim_velocity>`
+        Refined by `mdsim::host::velocity::file`, `mdsim::host::velocity::boltzmann`
+
+        Description:
+
+    :doc:`box <impl/mdsim_box>`
+        Refined by `mdsim::host::box`
+
+        Description:
+
+    :doc:`thermodynamics <impl/mdsim_thermodynamics>`
+        Refined by `mdsim::host::thermodynamics`
+
+        Description:
+
+    :doc:`random <impl/mdsim_random>`
+        Refined by `mdsim::host::random`
+
+        Description:
+
+    :doc:`integrator <impl/mdsim_integrator>`
+        Refined by `mdsim::host::integrator::verlet`
+
+        Description:
+
+    :doc:`particle <impl/mdsim_particle>`
+        Refined by `mdsim::host::particle`, `mdsim::gpu::particle`
+
+        Description:
+
+    :doc:`neighbor <impl/mdsim_neighbor>`
+        Refined by `mdsim::host::neighbor`
+
+        Description:
+
+Modules in namespace halmd::mdsim::*
+-------------------------------------
+
+(These modules have no base in halmd::mdsim?)
+
+* `mdsim::samples::host::trajectory`
+* `mdsim::samples::gpu::trajectory`
+Refining which base class??
+
+* `mdsim::gpu::sample::trajectory`
+* `mdsim::host::sample::trajectory`
+Refining which base class??
+
+Modules in namespace halmd::io
+------------------------------
+
+.. glossary::
+
+    :doc:`trajectory::reader <impl/io_trajectory_reader>`
+        Refined by `io::trajectory::readers::hdf5`
+
+        Description:
+
+Modules in namespace halmd::utility
+-----------------------------------
+
+.. glossary::
+
+    :doc:`utility::gpu::device <impl/utility_gpu_device>`
+        Refining which base class??
+
+        Description:
+
