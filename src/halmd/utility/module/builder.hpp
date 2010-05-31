@@ -56,6 +56,7 @@ struct builder<>
     virtual void options(po::options_description& desc) = 0;
     virtual void resolve(po::options const& vm) = 0;
     virtual std::string name() = 0;
+    virtual std::type_info const& type() = 0;
 };
 
 /**
@@ -70,7 +71,6 @@ struct builder
 {
     typedef T _Module_base;
     virtual shared_ptr<_Module_base> fetch(po::options const& vm) = 0;
-    virtual std::type_info const& type() = 0;
 
     /**
      * assemble module options
