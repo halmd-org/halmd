@@ -75,7 +75,7 @@ class unresolvable_dependency
 {
 public:
     unresolvable_dependency(std::string const& msg)
-      : module_error("unresolvable dependency " + name() + ": " + msg)
+      : module_error("unresolvable dependency " + name() + " [" + msg + "]")
     {}
 
     // returns module name
