@@ -101,7 +101,6 @@ endif(WITH_CUDA)
 set(HALMD_COMMON_LIBRARIES
   -Wl,-whole-archive
   ${HALMD_MODULES}
-  util
   sample_common
   -Wl,-no-whole-archive
   ${Boost_FILESYSTEM_LIBRARY}
@@ -232,5 +231,4 @@ add_subdirectory(mdsim)
 add_subdirectory(rng)
 add_subdirectory(sample)
 add_subdirectory(test)
-add_subdirectory(util)
 add_subdirectory(utility)
