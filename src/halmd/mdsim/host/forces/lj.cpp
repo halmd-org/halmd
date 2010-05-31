@@ -59,6 +59,7 @@ void lj<dimension, float_type>::resolve(po::options const& vm)
     module<particle_type>::required(vm);
     module<box_type>::required(vm);
     module<thermodynamics_type>::required(vm);
+    module<smooth_type>::optional(vm);
 }
 
 /**
@@ -71,6 +72,7 @@ lj<dimension, float_type>::lj(po::options const& vm)
   , particle(module<particle_type>::fetch(vm))
   , box(module<box_type>::fetch(vm))
   , thermodynamics(module<thermodynamics_type>::fetch(vm))
+  , smooth(module<smooth_type>::fetch(vm))
   // allocate potential parameters
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
@@ -157,6 +159,11 @@ void lj<dimension, float_type>::compute()
             float_type epsilon = epsilon_(a, b);
             float_type fval = 48 * rri * r6i * (r6i - 0.5) * (epsilon / sigma2);
             float_type en_pot = 4 * epsilon * r6i * (r6i - 1) - en_cut_(a, b);
+
+            // optionally smooth potential yielding continuous 2nd derivative
+            if (smooth) { // FIXME test performance of template versus runtime bool
+                smooth->compute(std::sqrt(rr), r_cut_(a, b), fval, en_pot);
+            }
 
             // add force contribution to both particles
             particle->f[i] += r * fval;

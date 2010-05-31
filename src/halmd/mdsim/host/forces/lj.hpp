@@ -24,6 +24,7 @@
 
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/host/box.hpp>
+#include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/thermodynamics.hpp>
 #include <halmd/utility/options.hpp>
@@ -44,11 +45,13 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef host::box<dimension> box_type;
     typedef host::thermodynamics<dimension> thermodynamics_type;
+    typedef host::forces::smooth<dimension, float_type> smooth_type;
     typedef typename thermodynamics_type::virial_type virial_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
     shared_ptr<thermodynamics_type> thermodynamics;
+    shared_ptr<smooth_type> smooth;
 
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);

@@ -232,6 +232,7 @@ void set_default_options(halmd::options& vm)
     vm["particles"]     = variable_value(1000u, true);
     vm["steps"]         = variable_value((uint64_t)1000, true);
     vm["timestep"]      = variable_value(0.001, true);
+    vm["smooth"]        = variable_value(0.005f, true);
     vm["density"]       = variable_value(0.4f, true);
     vm["temperature"]   = variable_value(2.0f, true);
     vm["dimension"]     = variable_value(3, true);
