@@ -20,13 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_LJ_HPP
 #define HALMD_MDSIM_HOST_FORCES_LJ_HPP
 
-#include <boost/shared_ptr.hpp>
-
-#include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/host/box.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
-#include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/thermodynamics.hpp>
+#include <halmd/mdsim/host/force.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -36,22 +30,17 @@ namespace mdsim { namespace host { namespace forces
 
 template <int dimension, typename float_type>
 class lj
-  : public mdsim::force<dimension>
+  : public mdsim::host::force<dimension, float_type>
 {
 public:
-    typedef mdsim::force<dimension> _Base;
+    typedef mdsim::host::force<dimension, float_type> _Base;
     typedef typename _Base::matrix_type matrix_type;
-    typedef host::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
-    typedef host::box<dimension> box_type;
-    typedef host::thermodynamics<dimension> thermodynamics_type;
-    typedef host::forces::smooth<dimension, float_type> smooth_type;
-    typedef typename thermodynamics_type::virial_type virial_type;
+    typedef typename _Base::vector_type vector_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<box_type> box;
-    shared_ptr<thermodynamics_type> thermodynamics;
-    shared_ptr<smooth_type> smooth;
+    using _Base::box;
+    using _Base::particle;
+    using _Base::smooth;
+    using _Base::thermodynamics;
 
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);

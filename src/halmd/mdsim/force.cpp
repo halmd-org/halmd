@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/host/forces/lj.hpp>
 
 using namespace boost;
 using namespace std;

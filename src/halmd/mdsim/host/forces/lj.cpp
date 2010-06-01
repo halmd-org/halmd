@@ -40,6 +40,8 @@ namespace mdsim { namespace host { namespace forces
 template <int dimension, typename float_type>
 void lj<dimension, float_type>::options(po::options_description& desc)
 {
+    _Base::options(desc);
+
     desc.add_options()
         ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
          "truncate potential at cutoff radius")
@@ -47,8 +49,6 @@ void lj<dimension, float_type>::options(po::options_description& desc)
          "potential well depths AA,AB,BB")
         ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
          "collision diameters AA,AB,BB")
-        ("smooth", po::value<float>()->default_value(0.f),
-         "C²-potential smoothing factor")
         ;
 }
 
@@ -58,10 +58,7 @@ void lj<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void lj<dimension, float_type>::resolve(po::options const& vm)
 {
-    module<particle_type>::required(vm);
-    module<box_type>::required(vm);
-    module<thermodynamics_type>::required(vm);
-    module<smooth_type>::optional(vm);
+    _Base::resolve(vm);
 }
 
 /**
@@ -70,11 +67,6 @@ void lj<dimension, float_type>::resolve(po::options const& vm)
 template <int dimension, typename float_type>
 lj<dimension, float_type>::lj(po::options const& vm)
   : _Base(vm)
-  // dependency injection
-  , particle(module<particle_type>::fetch(vm))
-  , box(module<box_type>::fetch(vm))
-  , thermodynamics(module<thermodynamics_type>::fetch(vm))
-  , smooth(module<smooth_type>::fetch(vm))
   // allocate potential parameters
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
@@ -134,7 +126,10 @@ void lj<dimension, float_type>::compute()
     // potential energy
     float_type& en_pot_ = thermodynamics->en_pot_;
     en_pot_ = 0;
+
     // virial equation sum
+    typedef typename _Base::thermodynamics_type thermodynamics_type;
+    typedef typename thermodynamics_type::virial_type virial_type;
     std::vector<virial_type>& virial_ = thermodynamics->virial_;
     std::fill(virial_.begin(), virial_.end(), 0);
 

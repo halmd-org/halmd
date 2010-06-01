@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -21,9 +21,8 @@
 #define HALMD_MDSIM_FORCE_HPP
 
 #include <boost/numeric/ublas/symmetric.hpp>
-#include <vector>
+#include <boost/shared_ptr.hpp>
 
-#include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/options.hpp>
@@ -33,13 +32,21 @@ namespace halmd
 namespace mdsim
 {
 
+/**
+ * The force module computes all interparticle forces.
+ * The current particle positions are read from and
+ * the result is stored in the particle module. Periodic
+ * boundaries may be taken into account by reference to the
+ * box module.
+ */
+
 template <int dimension>
 class force
 {
 public:
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<double, boost::numeric::ublas::lower> matrix_type;
-    typedef numeric::host::blas::vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
+
     typedef mdsim::particle<dimension> particle_type;
 
     shared_ptr<particle_type> particle;
