@@ -55,6 +55,7 @@ print
 
 baseclass = dict()
 typedefs = dict()
+description = dict()
 
 # extract base class and typedefs from header file
 for m in modules:
@@ -65,15 +66,18 @@ for m in modules:
         continue
 
     fh = open(fn, 'r')
-    lines = fh.read().splitlines()
+    content = fh.read()
+    lines = content.splitlines()
     fh.close()
 
+    # derived from a base class?
     expr = re.compile(r':\s+public\s+([\w:]+)')
     for s in lines:
         match = expr.search(s)
         if match:
             baseclass[m] = match.group(1)
 
+    # store typedefs
     typedefs[m] = dict()
     expr = re.compile(r'typedef\s+(.+)\s+(\w+);')
     for s in lines:
@@ -81,11 +85,18 @@ for m in modules:
         if match:
             typedefs[m][match.group(2)] = match.group(1)
 
-# remove result files from previous runs (dangerous!?)
+    # extract doxygen description
+    match = re.search(r'/\*\*(.*?)\s+\*/.*class', content, re.DOTALL)
+    if match:
+        s = match.group(1)
+        description[m] = re.sub('\n[ \t]*\*[ \t]*', '\n', s).splitlines()
+
+# write header of result files (and overwrite old files)
 for m in modules:
     fn = get_result_filename(m)
-    if os.access(fn, os.W_OK):
-        os.remove(fn)
+    fh = open(fn, 'w')
+    print >>fh, 'Module group %s' % get_base(m)
+    print >>fh, '------------\n'
 
 # determine dependencies from calls to module<...>::required()
 for m in modules:
@@ -112,40 +123,44 @@ for m in modules:
 
     # extract options
     options = []
-    '\n'.join(lines)
-    match = re.search(r'add_options\(\)\s*\(([^;]+)*\)', '\n'.join(lines))
+    match = re.search(r'add_options\(\)\s*\(([^;]+)*\)', content)
     if match:
         for opt in re.split(r'(?<=")\)\s*\((?=")', match.group(1)):
             match = re.search(r'"(?P<name>[\w-]+)(?:,(?P<short>\w))?",' +
-                              r'.*value<(?P<type>.+)>\(\).*,\s*"(?P<desc>.*)"', opt)
+                              r'.*value<(?P<type>.+?)\s*>\(\).*,\s*"(?P<desc>.*)"', opt)
             if match:
                 options.append(match.groupdict())
 
     # collect results in one file per base module
-    if dependencies or options:
+    if (m in description) or dependencies or options:
         fh = open(get_result_filename(m), 'a')
-        print >>fh, '**Module %s**\n' % m
-#        print >>fh, 'Base module: %s' % get_base(m)
+        print >>fh, 'Module %s' % m
+        print >>fh, '^^^^^^^\n'
+
+        if m in description:
+            print >>fh, '  :Description:'
+            print >>fh, '\n    '.join(description[m])[1:]
+            print >>fh
 
         if dependencies:
-            print >>fh, '* Dependencies:\n'
+            print >>fh, '  :Dependencies:'
             for type in dependencies:
                 if type in typedefs[m]:
                     type = typedefs[m][type]
                 type = type.split('<')[0]
-                print >>fh, '  - %s' % type
+                print >>fh, '    %s\n' % type
             print >>fh
 
         if options:
             # create table
-            table = []
+            table = [['Name', 'Type', 'Description']]
             for opts in options:
                 row = 3 * [None]
                 if opts['short'] == None:
                     row[0] = '--%(name)s' % opts
                 else:
                     row[0] = '--%(name)s, -%(short)s' % opts
-                row[1] = opts['type']
+                row[1] = '``%s``' % opts['type']
                 row[2] = opts['desc']
                 table.append(row)
             # determine column widths
@@ -155,15 +170,16 @@ for m in modules:
                 width[i] = max([len(row[i].decode('utf-8')) for row in table])
                 rule += (width[i] + 2) * '-' + '+'
             # print table
-            print >>fh, '* Options:\n'
-            print >>fh, '  .. table::'
-            print >>fh, '\n    ' + rule
-            for row in table:
-                line = '    '
-                for n,s in enumerate(row):
-                    line += '| %s ' % s.ljust(width[n])
+            print >>fh, '  :Options:\n'
+            print >>fh, '    .. table::'
+            print >>fh, '\n      ' + rule
+            for n,row in enumerate(table):
+                line = '      '
+                for i,s in enumerate(row):
+                    line += '| %s ' % s.ljust(width[i])
                 line += '|'
-                print >>fh, line + '\n    ' + rule
+                print >>fh, line
+                print >>fh, '      ' + (rule if n > 0 else rule.replace('-', '='))
             print >>fh
 
         fh.close()
