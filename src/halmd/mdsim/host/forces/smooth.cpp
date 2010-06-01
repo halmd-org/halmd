@@ -51,7 +51,10 @@ template <int dimension, typename float_type>
 void smooth<dimension, float_type>::resolve(po::options const& vm)
 {
     if (!vm.count("smooth")) {
-        throw unsuitable_module<smooth>("missing option 'smooth'");
+        throw unsuitable_module<smooth>("missing option '--smooth'");
+    }
+    if (vm["smooth"].as<float>() == 0.) {
+        throw unsuitable_module<smooth>("potential smoothing disabled");
     }
 }
 
@@ -64,7 +67,7 @@ smooth<dimension, float_type>::smooth(po::options const& vm)
   : r_smooth_(vm["smooth"].as<float>())
   , rri_smooth_(std::pow(r_smooth_, -2))
 {
-    LOG("potential smoothing function scale parameter: " << r_smooth_);
+    LOG("scale parameter for potential smoothing function: " << r_smooth_);
 }
 
 // explicit instantiation

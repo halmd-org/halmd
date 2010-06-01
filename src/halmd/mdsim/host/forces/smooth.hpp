@@ -28,6 +28,11 @@ namespace halmd
 namespace mdsim { namespace host { namespace forces
 {
 
+/**
+ * provide functions to make the potential C²-smooth
+ * at the cutoff
+ */
+
 template <int dimension, typename float_type>
 class smooth
 {
@@ -54,7 +59,7 @@ template <int dimension, typename float_type>
 void smooth<dimension, float_type>::compute(
     float_type r        // absolute particle distnace
   , float_type r_cut    // cutoff radius
-  , float_type& fval    // |F(r)| / |r|
+  , float_type& fval    // F(r) / |r|
   , float_type& en_pot  // U(r)
 )
 {

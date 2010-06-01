@@ -47,6 +47,8 @@ void lj<dimension, float_type>::options(po::options_description& desc)
          "potential well depths AA,AB,BB")
         ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
          "collision diameters AA,AB,BB")
+        ("smooth", po::value<float>()->default_value(0.f),
+         "C²-potential smoothing factor")
         ;
 }
 
