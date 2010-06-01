@@ -45,13 +45,13 @@ module_files = su.ffindgrep(basepath,
 modules = map(lambda s: s[len(basepath)+1:-4].replace('/', '::'), module_files)
 modules.sort()
 
-print """
-List of modules
----------------
-"""
-for s in modules:
-    print '    %s' % s
-print
+#print """
+#List of modules
+#---------------
+#"""
+#for s in modules:
+#    print '    %s' % s
+#print
 
 baseclass = dict()
 typedefs = dict()
@@ -95,8 +95,8 @@ for m in modules:
 for m in modules:
     fn = get_result_filename(m)
     fh = open(fn, 'w')
-    print >>fh, 'Module group %s' % get_base(m)
-    print >>fh, '------------\n'
+    title = 'Module group %s' % get_base(m)
+    print >>fh, '%s\n%s\n' % (title, len(title) * '-')
 
 # determine dependencies from calls to module<...>::required()
 for m in modules:
@@ -134,8 +134,8 @@ for m in modules:
     # collect results in one file per base module
     if (m in description) or dependencies or options:
         fh = open(get_result_filename(m), 'a')
-        print >>fh, 'Module %s' % m
-        print >>fh, '^^^^^^^\n'
+        title = 'Module %s' % m
+        print >>fh, '%s\n%s\n' % (title, len(title) * '"')
 
         if m in description:
             print >>fh, '  :Description:'
