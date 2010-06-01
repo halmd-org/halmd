@@ -102,7 +102,7 @@ powerlaw<dimension, float_type>::powerlaw(po::options const& vm)
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             // energy shift due to truncation at cutoff length
-            en_cut_(i, j) = epsilon_(i, j) * std::pow(r_cut_sigma_(i, j), -index_);
+            en_cut_(i, j) = epsilon_(i, j) * std::pow(1. / r_cut_sigma_(i, j), index_);
         }
     }
 
