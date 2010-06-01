@@ -1,15 +1,13 @@
 Formulae and units
 ******************
 
-Lennard-Jones
-=============
-
 Propagation laws
-----------------
+================
 
 .. glossary::
 
- velocity-Verlet algorithm
+velocity-Verlet algorithm
+-------------------------
   .. math::
     :nowrap:
 
@@ -23,15 +21,18 @@ Propagation laws
 
 
 Interaction laws
-----------------
+================
+
+Lennard-Jones
+-------------
 
 .. glossary::
 
  Lennard-Jones potential
   .. math::
     U(r_{ij}) = 4\epsilon
-    \Bigl(\bigl(\frac{\sigma}{r_{ij}}\bigr)^{12}
-    - \bigl(\frac{\sigma}{r_{ij}}\bigr)^6\Bigr)
+    \Bigl[\bigl(\frac{\sigma}{r_{ij}}\bigr)^{12}
+    - \bigl(\frac{\sigma}{r_{ij}}\bigr)^6\Bigr]
 
  shifted, truncated Lennard-Jones potential
   .. math::
@@ -45,12 +46,27 @@ Interaction laws
  Lennard-Jones force
   .. math::
     \vec{F}(\vec{r}_{ij}) = \frac{48\epsilon}{\sigma}
-    \Bigl(\bigl(\frac{\sigma}{r_{ij}}\bigr)^{13}
-    - \frac{1}{2}\bigl(\frac{\sigma}{r_{ij}}\bigr)^7\Bigr) \hat{r}_{ij}
+    \Bigl[\bigl(\frac{\sigma}{r_{ij}}\bigr)^{13}
+    - \frac{1}{2}\bigl(\frac{\sigma}{r_{ij}}\bigr)^7\Bigr] \hat{r}_{ij}
 
 
-Base MD units
--------------
+Soft power-law potential
+------------------------
+
+.. glossary::
+
+ Soft power-law potential
+  .. math::
+    U(r_{ij}) = \epsilon \left(\frac{r_{ij}}{\sigma}\right)^{-n}
+
+ Soft power-law force
+  .. math::
+    \vec{F}(\vec{r}_{ij}) = \frac{n \epsilon}{\sigma}
+    \left(\frac{r_{ij}}{\sigma}\right)^{-(n+1)} \hat{r}_{ij}
+
+
+Basic MD units
+--------------
 
 .. glossary::
 
@@ -61,5 +77,5 @@ Base MD units
   .. math:: [E] = \epsilon
 
  unit of time
-  .. math:: [t] = \sqrt{\frac{m\sigma^2}{\epsilon}}
+  .. math:: [t] = \sqrt{m\sigma^2/\epsilon}
 

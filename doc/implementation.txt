@@ -173,13 +173,16 @@ Modules in namespace halmd::mdsim::*
 
 * :doc:`mdsim::samples::host::trajectory <impl/mdsim_samples_host_trajectory>`
 * :doc:`mdsim::samples::gpu::trajectory <impl/mdsim_samples_gpu_trajectory>`
+
 Refining which base class??
 
 * `mdsim::gpu::sample::trajectory`
 * `mdsim::host::sample::trajectory`
+
 Refining which base class??
 
 * :doc:`mdsim::host::forces::smooth <impl/mdsim_host_forces_smooth>`
+
 Refining which base class??
 
 Modules in namespace halmd::io
