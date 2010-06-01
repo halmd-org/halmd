@@ -35,8 +35,11 @@ namespace mdsim
 {
 
 /**
- * compute and store thermodynamic state variables such as pressure,
+ * compute thermodynamic state variables such as pressure,
  * temperature, potential energy, total energy
+ *
+ * store potential energy and virial sum for efficient updates
+ * during the force computation
  */
 
 template <int dimension>
