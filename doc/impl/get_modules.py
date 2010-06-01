@@ -114,12 +114,17 @@ for m in modules:
 
     # extract dependencies
     dependencies = []
-    expr = re.compile(r'module<(.*)>::required')
+    opt_deps = []
+    expr = re.compile(r'module<(.*)>::(required|optional)')
     for s in lines:
         match = expr.search(s)
         if match:
-            dependencies.append(match.group(1))
+            if match.group(2) == 'required':
+                dependencies.append(match.group(1))
+            else:
+                opt_deps.append(match.group(1))
     dependencies.sort()
+    opt_deps.sort()
 
     # extract options
     options = []
@@ -149,6 +154,11 @@ for m in modules:
                     type = typedefs[m][type]
                 type = type.split('<')[0]
                 print >>fh, '    %s\n' % type
+            for type in opt_deps:
+                if type in typedefs[m]:
+                    type = typedefs[m][type]
+                type = type.split('<')[0]
+                print >>fh, '    %s *(optional)*\n' % type
             print >>fh
 
         if options:
