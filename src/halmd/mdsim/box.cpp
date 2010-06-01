@@ -87,7 +87,7 @@ void box<dimension>::length(vector_type const& value)
     double volume = accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
     density_ = particle->nbox / volume;
 
-    LOG("simulation box edge lengths: " << length_);
+    LOG("edge lengths of simulation box: " << length_);
     LOG("number density: " << density_);
 }
 

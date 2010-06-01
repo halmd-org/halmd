@@ -78,7 +78,7 @@ particle<dimension>::particle(po::options const& vm)
     vector<string> ntypes_(ntypes.size());
     std::transform(ntypes.begin(), ntypes.end(), ntypes_.begin(), lexical_cast<string, unsigned int>);
 
-    LOG("positional coordinates dimension: " << dimension);
+    LOG("dimension of positional coordinates: " << dimension);
     LOG("number of particles: " << nbox);
     LOG("number of particle types: " << ntype);
     LOG("number of particles per type: " << join(ntypes_, " "));
