@@ -43,11 +43,15 @@ public:
     virtual ~smooth() {}
     virtual void compute(float_type r, float_type dr, float_type& fval, float_type& pot);
 
+    bool is_enabled() { return enabled; }
+
 protected:
     /** potential smoothing function scale parameter */
     float_type r_smooth_;
     /** inverse squared smoothing parameter */
     float_type rri_smooth_;
+    /** switch for disabling smoothing */
+    bool enabled;
 };
 
 /*

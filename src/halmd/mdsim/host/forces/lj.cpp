@@ -158,7 +158,8 @@ void lj<dimension, float_type>::compute()
             float_type en_pot = 4 * epsilon * r6i * (r6i - 1) - en_cut_(a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
-            if (smooth) { // FIXME test performance of template versus runtime bool
+            // FIXME test performance of template versus runtime bool
+            if (smooth && smooth->is_enabled()) {
                 smooth->compute(std::sqrt(rr), r_cut_(a, b), fval, en_pot);
             }
 

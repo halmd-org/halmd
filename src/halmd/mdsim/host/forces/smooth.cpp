@@ -33,12 +33,12 @@ namespace mdsim { namespace host { namespace forces
 template <int dimension, typename float_type>
 void smooth<dimension, float_type>::options(po::options_description& desc)
 {
-#if 0
+#if 1
     // FIXME This is a module-specific option, however we do not (yet)
     // parse module options before calling the resolve function of a
     // module, which is needed to make a decision on its suitability.
     desc.add_options()
-        ("smooth", po::value<float>(),
+        ("smooth", po::value<float>()->default_value(0.f),
          "C²-potential smoothing factor")
         ;
 #endif
@@ -50,24 +50,25 @@ void smooth<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void smooth<dimension, float_type>::resolve(po::options const& vm)
 {
-    if (!vm.count("smooth")) {
-        throw unsuitable_module<smooth>("missing option '--smooth'");
-    }
-    if (vm["smooth"].as<float>() == 0.) {
-        throw unsuitable_module<smooth>("potential smoothing disabled");
-    }
 }
 
 /**
- * Initialize Lennard-Jones potential parameters
+ * Initialise parameters
  */
 template <int dimension, typename float_type>
 smooth<dimension, float_type>::smooth(po::options const& vm)
-  // allocate potential parameters
+  // initialise parameters
   : r_smooth_(vm["smooth"].as<float>())
   , rri_smooth_(std::pow(r_smooth_, -2))
+  , enabled(true)
 {
-    LOG("scale parameter for potential smoothing function: " << r_smooth_);
+    if (vm["smooth"].as<float>() == 0.) {
+        enabled = false;
+        LOG("potential smoothing disabled");
+    }
+    else {
+        LOG("scale parameter for potential smoothing function: " << r_smooth_);
+    }
 }
 
 // explicit instantiation
