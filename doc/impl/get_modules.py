@@ -152,7 +152,7 @@ for m in modules:
             width = 3 * [None]
             rule = '+'
             for i in range(3):
-                width[i] = max([len(row[i]) for row in table])
+                width[i] = max([len(row[i].decode('utf-8')) for row in table])
                 rule += (width[i] + 2) * '-' + '+'
             # print table
             print >>fh, '* Options:\n'
