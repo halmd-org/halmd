@@ -30,6 +30,12 @@ namespace halmd
 namespace mdsim
 {
 
+/**
+ * The particle module describes the current microsopic state of the system.
+ * It holds positions, velocities, forces, particle identities
+ * ... and the neighbour lists.
+ */
+
 template <int dimension>
 class particle
 {
