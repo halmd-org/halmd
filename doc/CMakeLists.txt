@@ -41,8 +41,14 @@ if(SPHINX_FOUND AND DOXYGEN_FOUND)
       ${OUTPUT_TYPE}
       COMMENT "Building ${OUTPUT_TYPE} documentation"
       )
-    add_dependencies(halmd_doc_${OUTPUT_TYPE} halmd_doc_xml)
+    add_dependencies(halmd_doc_${OUTPUT_TYPE} halmd_doc_xml halmd_doc_impl)
   endforeach(OUTPUT_TYPE)
+
+  add_custom_target(halmd_doc_impl
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/impl/get_modules.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/impl
+    COMMENT "Extracting module structure and documentation"
+    )
 
   # serialise targets with a common cache directory
   add_dependencies(halmd_doc_latex halmd_doc_html)
