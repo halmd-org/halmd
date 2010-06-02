@@ -17,13 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <cmath>
+#include <string>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/host/forces/powerlaw.hpp>
+#include <halmd/utility/module.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -34,14 +37,14 @@ namespace halmd
 namespace mdsim { namespace host { namespace forces
 {
 
-/**
+/**boost/algorithm/string/predicate.hpp>
  * Assemble module options
  */
 template <int dimension, typename float_type>
 void powerlaw<dimension, float_type>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("power-law-index", po::value<unsigned int>()->default_value(12),
+        ("index", po::value<unsigned int>()->default_value(12),
          "index of soft power-law potential")
         ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
          "truncate potential at cutoff radius")
@@ -58,6 +61,10 @@ void powerlaw<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void powerlaw<dimension, float_type>::resolve(po::options const& vm)
 {
+    using namespace boost;
+    if (!starts_with(vm["force"].as<std::string>(),  "power-law")) {
+        throw unsuitable_module<powerlaw>("mismatching option '--force'");
+    }
 }
 
 /**
@@ -67,7 +74,7 @@ template <int dimension, typename float_type>
 powerlaw<dimension, float_type>::powerlaw(po::options const& vm)
   : _Base(vm)
   // allocate potential parameters
-  , index_(vm["power-law-index"].as<unsigned int>())
+  , index_(vm["index"].as<unsigned int>())
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , r_cut_sigma_(particle->ntype, particle->ntype)
@@ -156,7 +163,7 @@ void powerlaw<dimension, float_type>::compute()
 
             // optionally smooth potential yielding continuous 2nd derivative
             // FIXME test performance of template versus runtime bool
-            if (smooth && smooth->is_enabled()) {
+            if (smooth) {
                 smooth->compute(std::sqrt(rr), r_cut_(a, b), fval, en_pot);
             }
 

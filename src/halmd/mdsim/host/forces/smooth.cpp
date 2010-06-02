@@ -17,8 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <string>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
+#include <halmd/utility/module.hpp>
 
 using namespace boost;
 
@@ -33,15 +37,10 @@ namespace mdsim { namespace host { namespace forces
 template <int dimension, typename float_type>
 void smooth<dimension, float_type>::options(po::options_description& desc)
 {
-#if 1
-    // FIXME This is a module-specific option, however we do not (yet)
-    // parse module options before calling the resolve function of a
-    // module, which is needed to make a decision on its suitability.
     desc.add_options()
         ("smooth", po::value<float>()->default_value(0.f),
          "C²-potential smoothing factor")
         ;
-#endif
 }
 
 /**
@@ -50,6 +49,10 @@ void smooth<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void smooth<dimension, float_type>::resolve(po::options const& vm)
 {
+    using namespace boost;
+    if (!ends_with(vm["force"].as<std::string>(), "-smooth")) {
+        throw unsuitable_module<smooth>("mismatching option '--force'");
+    }
 }
 
 /**
@@ -60,15 +63,8 @@ smooth<dimension, float_type>::smooth(po::options const& vm)
   // initialise parameters
   : r_smooth_(vm["smooth"].as<float>())
   , rri_smooth_(std::pow(r_smooth_, -2))
-  , enabled(true)
 {
-    if (vm["smooth"].as<float>() == 0.) {
-        enabled = false;
-        LOG("potential smoothing disabled");
-    }
-    else {
-        LOG("scale parameter for potential smoothing function: " << r_smooth_);
-    }
+    LOG("scale parameter for potential smoothing function: " << r_smooth_);
 }
 
 // explicit instantiation

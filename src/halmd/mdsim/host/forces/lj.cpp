@@ -17,13 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <cmath>
+#include <string>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/host/forces/lj.hpp>
+#include <halmd/utility/module.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -56,6 +59,10 @@ void lj<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void lj<dimension, float_type>::resolve(po::options const& vm)
 {
+    using namespace boost;
+    if (!starts_with(vm["force"].as<std::string>(),  "lj")) {
+        throw unsuitable_module<lj>("mismatching option '--force'");
+    }
 }
 
 /**
@@ -156,7 +163,7 @@ void lj<dimension, float_type>::compute()
 
             // optionally smooth potential yielding continuous 2nd derivative
             // FIXME test performance of template versus runtime bool
-            if (smooth && smooth->is_enabled()) {
+            if (smooth) {
                 smooth->compute(std::sqrt(rr), r_cut_(a, b), fval, en_pot);
             }
 

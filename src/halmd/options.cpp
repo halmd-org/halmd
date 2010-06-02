@@ -254,6 +254,10 @@ void options::parse(int argc, char** argv)
          "trajectory input file")
         ("trajectory-sample,S", po::value<ssize_t>(),
          "trajectory sample for initial state")
+        ("force", po::value<string>()->default_value("lj"),
+         "specify force module")
+        ("integrator", po::value<string>()->default_value("verlet"),
+         "specify integrator module")
         ;
 
     try {

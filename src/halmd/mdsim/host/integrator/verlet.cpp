@@ -19,9 +19,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrator/verlet.hpp>
+#include <halmd/utility/module.hpp>
 
 using namespace boost;
 using namespace std;
@@ -49,6 +51,9 @@ void verlet<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::resolve(po::options const& vm)
 {
+    if (vm["integrator"].as<std::string>() != "verlet") {
+        throw unsuitable_module<verlet>("mismatching option '--integrator'");
+    }
     module<particle_type>::required(vm);
     module<box_type>::required(vm);
 }
