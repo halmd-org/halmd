@@ -58,13 +58,16 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
     // resolved.
     //
 
-#define STACK_DEBUG(x) LOG_DEBUG("[" << stack_.size() << "] " << x)
+#define LOG_DEBUG_INDENT(indent, x) LOG_DEBUG(string((indent) * 2, ' ') << x)
+#ifndef NDEBUG
+    static int depth = 0;
+#endif
 
     // We cache the result of a dependency resolution by holding
     // the number of resolved modules in a rank-indexed map.
 
     if (!cache_.count(rank_)) {
-        STACK_DEBUG("resolve dependency " << rank_->name());
+        LOG_DEBUG_INDENT(depth, "resolve dependency " << rank_->name());
 
         set<_Rank_ptr, rank_order_equal_base> resolved;
 
@@ -80,12 +83,12 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
             // come before base modules in the sequence.
 
             if (resolved.count(it->first)) {
-                STACK_DEBUG("skipping base module " << it->second->name());
+                LOG_DEBUG_INDENT((++depth)--, "skipping base module " << it->second->name());
                 modules().erase(it++);
                 continue;
             }
 
-            STACK_DEBUG("resolve module " << it->second->name());
+            LOG_DEBUG_INDENT((++depth)++, "resolve module " << it->second->name());
 
             // Take note of the current top of the dependency
             // resolution stack to rewind in case of failure.
@@ -98,19 +101,20 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
             catch (module_error const& e) {
                 // The module is irresolvable, therefore we
                 // rewind the stack and erase this module.
-                STACK_DEBUG(e.what());
+                LOG_DEBUG_INDENT((--depth)--, "✘ " << e.what());
                 stack_.erase(top, stack_.end());
                 modules().erase(it++);
                 continue;
             }
             // The module is resolvable.
+            LOG_DEBUG_INDENT((--depth)--, "✔ resolved module " << it->second->name());
             resolved.insert(it->first);
             ++it;
         }
         cache_.insert(make_pair(rank_, resolved.size()));
     }
 
-#undef STACK_DEBUG
+#undef LOG_DEBUG_INDENT
 
     return cache_.at(rank_);
 }
