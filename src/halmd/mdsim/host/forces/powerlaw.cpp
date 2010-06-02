@@ -109,7 +109,7 @@ powerlaw<dimension, float_type>::powerlaw(po::options const& vm)
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             // energy shift due to truncation at cutoff length
-            en_cut_(i, j) = epsilon_(i, j) * std::pow(1. / r_cut_sigma_(i, j), index_);
+            en_cut_(i, j) = epsilon_(i, j) * std::pow(1 / r_cut_sigma_(i, j), static_cast<float_type>(index_));
         }
     }
 
@@ -156,7 +156,7 @@ void powerlaw<dimension, float_type>::compute()
                 continue;
 
             // compute power-law force in reduced units
-            float_type rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);
+            float_type rni = std::pow(sigma_(a, b) / std::sqrt(rr), static_cast<float_type>(index_));
             float_type en_pot = epsilon_(a, b) * rni;      // U(r)
             float_type fval = index_ * en_pot / rr;        // F(r) / r
             en_pot -= en_cut_(a, b);                       // shift potential
