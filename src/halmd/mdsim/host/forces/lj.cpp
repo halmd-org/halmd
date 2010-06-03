@@ -42,6 +42,7 @@ namespace mdsim { namespace host { namespace forces
 template <int dimension, typename float_type>
 void lj<dimension, float_type>::options(po::options_description& desc)
 {
+    desc.caption("Lennard-Jones potential");
     desc.add_options()
         ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
          "truncate potential at cutoff radius")

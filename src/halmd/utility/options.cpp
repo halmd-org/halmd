@@ -22,7 +22,7 @@
 #include <fstream>
 #include <iostream>
 
-#include <halmd/utility/module/factory.hpp>
+#include <halmd/utility/module/options.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/version.h>
 
@@ -62,10 +62,8 @@ void parse_options(int argc, char** argv, options& vm)
          "increase verbosity")
         ("version",
          "output version and exit")
-#if 0 // FIXME
         ("help",
          "display this help and exit")
-#endif
         ;
 
     po::unparsed_options unparsed;
@@ -109,7 +107,10 @@ void parse_options(int argc, char** argv, options& vm)
     }
 
     if (vm.count("help")) {
-        cout << "Usage: " PROGRAM_NAME " [OPTION]...\n" << desc << "\n";
+        cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
+             << desc << endl
+             << utility::module::options_description();
+        throw options_parser_error(EXIT_SUCCESS);
     }
 
     if (vm.count("version")) {

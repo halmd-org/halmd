@@ -42,6 +42,7 @@ namespace mdsim { namespace host { namespace forces
 template <int dimension, typename float_type>
 void powerlaw<dimension, float_type>::options(po::options_description& desc)
 {
+    desc.caption("Power law potential");
     desc.add_options()
         ("index", po::value<unsigned int>()->default_value(12),
          "index of soft power-law potential")

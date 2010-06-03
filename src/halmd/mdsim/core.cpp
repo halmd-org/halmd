@@ -36,6 +36,7 @@ namespace mdsim
 template <int dimension>
 void core<dimension>::options(po::options_description& desc)
 {
+    desc.caption("MD simulation");
     desc.add_options()
         ("dimension", po::value<int>()->default_value(3),
          "positional coordinates dimension")

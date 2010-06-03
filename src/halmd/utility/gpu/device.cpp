@@ -43,6 +43,7 @@ namespace utility { namespace gpu
  */
 void device::options(po::options_description& desc)
 {
+    desc.caption("CUDA device configuration");
     desc.add_options()
 #ifndef __DEVICE_EMULATION__
         ("device,D", po::value<boost::multi_array<int, 1> >(),

@@ -46,6 +46,7 @@ namespace mdsim
 template <int dimension>
 void particle<dimension>::options(po::options_description& desc)
 {
+    desc.caption("Particle");
     desc.add_options()
         ("particles,N", po::value<unsigned int>()->default_value(1000),
          "number of particles")

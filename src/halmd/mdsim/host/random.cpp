@@ -33,6 +33,7 @@ namespace mdsim { namespace host
  */
 void random::options(po::options_description& desc)
 {
+    desc.caption("Random number generator");
     desc.add_options()
         ("random-seed", po::value<unsigned int>(),
          "random number generator integer seed")
