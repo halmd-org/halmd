@@ -93,7 +93,24 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
             // Take note of the current top of the dependency
             // resolution stack to rewind in case of failure.
             _Module_stack_iterator top = stack_.end();
-            stack_.push_back(it->second);
+            // Try to parse module options
+            if (!it->second->vm && !stack_.empty()) {
+                stack_.push_back(stack_.back());
+                it->second->vm.reset(new po::options);
+                try {
+                    po::options_description opt;
+                    it->second->options(opt);
+                    po::parse_options(stack_.back(), opt, *it->second->vm);
+                }
+                catch (po::required_option const& e) {
+                    // The module is irresolvable, therefore we
+                    // rewind the stack and erase this module.
+                    LOG_DEBUG_INDENT((--depth)--, "  ✘ " << e.what());
+                    stack_.erase(top, stack_.end());
+                    modules().erase(it++);
+                    continue;
+                }
+            }
             // Try to resolve the dependencies of the module.
             try {
                 it->second->resolve(vm);
@@ -117,22 +134,6 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
 #undef LOG_DEBUG_INDENT
 
     return cache_.at(rank_);
-}
-
-/**
- * assemble module options
- */
-po::options_description factory::options()
-{
-    po::options_description desc;
-
-    // Using the stack of modules created during dependency
-    // resolution we build a unique set of used modules and
-    // collect the options of each module.
-
-    set<_Module_ptr> set(stack_.begin(), stack_.end());
-    for_each(set.begin(), set.end(), bind(&builder<>::options, _1, ref(desc)));
-    return desc;
 }
 
 /**

@@ -53,9 +53,9 @@ int main(int argc, char **argv)
     // parse program options
     po::options vm;
     try {
-        vm.parse(argc, argv);
+        po::parse_options(argc, argv, vm);
     }
-    catch (halmd::options::exit_exception const& e) {
+    catch (po::options_parser_error const& e) {
         return e.status();
     }
 
@@ -71,14 +71,6 @@ int main(int argc, char **argv)
     catch (std::exception const& e) {
         cerr << PROGRAM_NAME ": " << e.what() << endl;
         return EXIT_FAILURE;
-    }
-
-    // parse module options
-    try {
-        vm.parse(module<>::options());
-    }
-    catch (halmd::options::exit_exception const& e) {
-        return e.status();
     }
 
 #ifdef NDEBUG

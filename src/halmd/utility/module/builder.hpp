@@ -57,6 +57,7 @@ struct builder<>
     virtual void resolve(po::options const& vm) = 0;
     virtual std::string name() = 0;
     virtual std::type_info const& type() = 0;
+    shared_ptr<po::options> vm;
 };
 
 /**

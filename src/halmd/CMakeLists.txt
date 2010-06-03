@@ -129,7 +129,6 @@ set(HALMD_COMMON_LIBRARIES
 if(NOT HALMD_BACKEND_EXECUTABLES)
   add_executable(halmd
     main.cpp
-    options.cpp
     )
   target_link_libraries(halmd
     ${HALMD_COMMON_LIBRARIES}
@@ -163,7 +162,6 @@ foreach(impl ${HALMD_impl})
   if(HALMD_BACKEND_EXECUTABLES)
     add_executable(halmd_${backend}
       main.cpp
-      options.cpp
       mdlib.cpp
       )
     target_link_libraries(halmd_${backend}

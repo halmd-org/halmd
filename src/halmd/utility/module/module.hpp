@@ -40,7 +40,7 @@ using std::logic_error;
 /**
  * This template wraps static module functions.
  */
-template <typename T = void>
+template <typename T>
 class module
 {
 public:
@@ -59,7 +59,7 @@ public:
     struct _fetch
     {
         _fetch(po::options const& vm) : vm(vm) {}
-        options const& vm;
+        po::options const& vm;
 
         /**
          * returns required or optional instance
@@ -141,22 +141,6 @@ private:
 };
 
 template <typename T> typename module<T>::_register module<T>::register_;
-
-/**
- * Type-independent module interface
- */
-template <>
-class module<>
-{
-public:
-    /**
-     * returns options of resolved modules
-     */
-    static po::options_description options()
-    {
-        return factory::options();
-    }
-};
 
 }} // namespace utility::module
 

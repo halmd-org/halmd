@@ -54,6 +54,15 @@ public:
      */
     shared_ptr<_Base> fetch(po::options const& vm)
     {
+        // This attaches the module-specific option values to the
+        // global option values by setting an internal pointer.
+        // We choose this order so subsequent module fetches from
+        // the constructor of the module will get a reference to
+        // the global map, and not the module-specific map.
+
+        po::options vm_(vm);
+        vm_.next(this->vm.get());
+
         // We use an observing weak pointer instead of an owning
         // shared pointer to let the caller decide when the
         // singleton instance and its dependencies are destroyed.
@@ -64,7 +73,7 @@ public:
         shared_ptr<T> singleton(singleton_.lock());
         if (!singleton) {
             LOG_DEBUG("instantiate module " << name());
-            singleton.reset(new T(vm));
+            singleton.reset(new T(vm_));
             singleton_ = singleton;
             LOG_DEBUG("constructed module " << name());
         }
@@ -84,7 +93,9 @@ public:
      */
     void resolve(po::options const& vm)
     {
-        builder<T>::resolve(vm);
+        po::options vm_(vm);
+        vm_.next(this->vm.get());
+        builder<T>::resolve(vm_);
     }
 
     /**

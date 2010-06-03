@@ -22,7 +22,6 @@
 
 #include <boost/program_options.hpp>
 
-#include <halmd/options.hpp> // FIXME transition
 #include <halmd/utility/detail/options.hpp>
 
 namespace halmd
@@ -30,10 +29,41 @@ namespace halmd
 namespace po
 {
 
+/** parsed program options type */
+typedef boost::program_options::variables_map options;
+
+using boost::program_options::option;
 using boost::program_options::options_description;
 using boost::program_options::value;
 
-using halmd::options; // FIXME transition
+using boost::program_options::required_option;
+
+struct unparsed_options
+{
+    /** unrecognised program options from command line parser */
+    std::vector<po::option> command_line_options;
+    /** unrecognised program options from config file parser */
+    std::vector<std::vector<po::option> > config_file_options;
+};
+
+extern void parse_options(int argc, char** argv, options& vm);
+extern void parse_options(unparsed_options& unparsed, options_description const& opt, options& vm);
+
+class options_parser_error
+{
+public:
+    options_parser_error(int status)
+      : status_(status)
+    {}
+
+    int status() const throw()
+    {
+        return status_;
+    }
+
+private:
+    int status_;
+};
 
 } // namespace po
 
