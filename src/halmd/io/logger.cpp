@@ -66,7 +66,7 @@ namespace io { namespace logger
 /**
  * initialize logging
  */
-void init(options const& vm)
+void init(po::options const& vm)
 {
     severity_level lvl_cons, lvl_file;
     switch (vm["verbose"].as<int>())

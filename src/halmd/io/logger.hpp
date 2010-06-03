@@ -23,7 +23,7 @@
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 
-#include <halmd/options.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -57,7 +57,7 @@ extern boost::log::sources::severity_logger<severity_level> logger_;
 namespace io { namespace logger
 {
 
-extern void init(options const& vm);
+extern void init(po::options const& vm);
 
 }} // namespace io::logger
 
