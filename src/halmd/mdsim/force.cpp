@@ -28,6 +28,18 @@ namespace mdsim
 {
 
 /**
+ * Assemble module options
+ */
+template <int dimension>
+void force<dimension>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("force", po::value<string>()->default_value("lj"),
+         "specify force module")
+        ;
+}
+
+/**
  * Resolve module dependencies
  */
 template <int dimension>

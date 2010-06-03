@@ -99,7 +99,6 @@ int main(int argc, char **argv)
     std::vector<string> cmd(argv, argv + argc);
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
-    LOG("MD simulation backend: " << vm["backend"].as<string>());
     LOG("host name: " << host_name());
     LOG("timer resolution: " << 1.E9 * halmd::high_resolution_timer::resolution() << " ns");
 

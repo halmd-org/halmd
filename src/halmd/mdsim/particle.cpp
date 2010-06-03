@@ -51,6 +51,13 @@ void particle<dimension>::options(po::options_description& desc)
          "number of particles")
         ("binary,M", po::value<boost::array<unsigned int, 2> >(),
          "binary mixture with A,B particles")
+        ("backend",
+#ifdef WITH_CUDA
+         po::value<string>()->default_value("gpu_neighbour"),
+#else
+         po::value<string>()->default_value("host"),
+#endif
+         "MD simulation backend")
         ;
 }
 
@@ -78,6 +85,7 @@ particle<dimension>::particle(po::options const& vm)
     vector<string> ntypes_(ntypes.size());
     std::transform(ntypes.begin(), ntypes.end(), ntypes_.begin(), lexical_cast<string, unsigned int>);
 
+    LOG("MD simulation backend: " << vm["backend"].as<string>());
     LOG("dimension of positional coordinates: " << dimension);
     LOG("number of particles: " << nbox);
     LOG("number of particle types: " << ntype);

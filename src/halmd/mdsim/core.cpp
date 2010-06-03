@@ -37,6 +37,8 @@ template <int dimension>
 void core<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
+        ("dimension", po::value<int>()->default_value(3),
+         "positional coordinates dimension")
         ("steps,s", po::value<uint64_t>()->default_value(10000),
          "number of simulation steps")
         ("time,t", po::value<double>(),

@@ -21,10 +21,25 @@
 #include <halmd/mdsim/host/integrator/verlet.hpp>
 #include <halmd/mdsim/integrator.hpp>
 
+using namespace boost;
+using namespace std;
+
 namespace halmd
 {
 namespace mdsim
 {
+
+/**
+ * Assemble module options
+ */
+template <int dimension>
+void integrator<dimension>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("integrator", po::value<string>()->default_value("verlet"),
+         "specify integrator module")
+        ;
+}
 
 // explicit instantiation
 template class integrator<3>;
