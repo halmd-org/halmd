@@ -46,7 +46,7 @@ These software packages are required for compilation:
      to CMake and is not to be confused nor compatible with the CUDA module in
      CMake 2.8.
 
-* `Boost C++ Libraries <http://www.boost.org/>`_ >= 1.39.0
+* `Boost C++ Libraries <http://www.boost.org/>`_ >= 1.42.0
 
   In addition, the proposed `Boost.Log <http://boost-log.sourceforge.net/>`_
   library is needed, which is acquired with ::
@@ -61,13 +61,11 @@ These software packages are required for compilation:
 
   Alternatively, you can use (or self-compile) these Debian packages:
 
-  * `Boost.Log packages for Debian squeeze/sid
-    <http://colberg.org/debian/pool/main/b/boost1.40>`_
+  * `Boost packages with Boost.Log for Debian etch
+    <http://colberg.org/debian/pool/main/b/boost1.42>`_
 
-  * `Boost.Log packages for Ubuntu karmic
-    <http://colberg.org/ubuntu/pool/main/b/boost1.40>`_
-
-  The packages are installed alongside the Boost 1.40 packages in Debian/Ubuntu.
+  * `Boost packages with Boost.Log for Ubuntu jaunty
+    <http://colberg.org/ubuntu/pool/main/b/boost1.42>`_
 
 * `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ >= 1.6.6
 
