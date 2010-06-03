@@ -68,17 +68,20 @@ BOOST_AUTO_TEST_CASE( ideal_gas )
     typedef boost::program_options::variable_value variable_value;
 
     // manually define program option values
-    options vm;
+    po::options vm;
     set_default_options(vm);
 
     float density = 1.;
     float temp = 1.;
     float rc = 0.1;
 
-    vm["density"]       = variable_value(density, false);
-    vm["temperature"]   = variable_value(temp, false);
-    vm["dimension"]     = variable_value(dim, false);
-    vm["epsilon"]       = variable_value(boost::array<float, 3>(list_of(0.f)(0.f)(0.f)), false); vm["cutoff"]        = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
+    // override const operator[] in variables_map
+    std::map<std::string, variable_value>& vm_(vm);
+    vm_["density"]      = variable_value(density, false);
+    vm_["temperature"]  = variable_value(temp, false);
+    vm_["dimension"]    = variable_value(dim, false);
+    vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(0.f)(0.f)(0.f)), false);
+    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
 
     // enable logging to console
     io::logger::init(vm);
@@ -124,7 +127,7 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
     typedef boost::program_options::variable_value variable_value;
 
     // manually define program option values
-    options vm;
+    po::options vm;
     set_default_options(vm);
 
     float density = 0.4;
@@ -133,13 +136,15 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
 
     using namespace boost::assign;
 
-    vm["density"]       = variable_value(density, false);
-    vm["temperature"]   = variable_value(temp, false);
-    vm["dimension"]     = variable_value(dim, false);
-    vm["particles"]     = variable_value(864u, false);
-    vm["time"]          = variable_value(50., false);
-    vm["verbose"]       = variable_value(1, true);
-    vm["cutoff"]        = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
+    // override const operator[] in variables_map
+    std::map<std::string, variable_value>& vm_(vm);
+    vm_["density"]      = variable_value(density, false);
+    vm_["temperature"]  = variable_value(temp, false);
+    vm_["dimension"]    = variable_value(dim, false);
+    vm_["particles"]    = variable_value(864u, false);
+    vm_["time"]         = variable_value(50., false);
+    vm_["verbose"]      = variable_value(1, true);
+    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
     // enable logging to console
     io::logger::init(vm);
@@ -228,18 +233,22 @@ void set_default_options(halmd::po::options& vm)
     typedef boost::program_options::variable_value variable_value;
     using namespace boost::assign;
 
-    vm["backend"]       = variable_value(std::string(MDSIM_BACKEND), true);
-    vm["particles"]     = variable_value(1000u, true);
-    vm["steps"]         = variable_value((uint64_t)1000, true);
-    vm["timestep"]      = variable_value(0.001, true);
-    vm["smooth"]        = variable_value(0.005f, true);
-    vm["density"]       = variable_value(0.4f, true);
-    vm["temperature"]   = variable_value(2.0f, true);
-    vm["dimension"]     = variable_value(3, true);
-    vm["verbose"]       = variable_value(0, true);
-    vm["epsilon"]       = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), true);
-    vm["sigma"]         = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), true);
-    vm["cutoff"]        = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), true);
-    vm["skin"]          = variable_value(0.5f, true);
-    vm["random-seed"]   = variable_value(42u, true);
+    // override const operator[] in variables_map
+    std::map<std::string, variable_value>& vm_(vm);
+    vm_["backend"]      = variable_value(std::string(MDSIM_BACKEND), true);
+    vm_["force"]        = variable_value(std::string("lj"), true);
+    vm_["integrator"]   = variable_value(std::string("verlet"), true);
+    vm_["particles"]    = variable_value(1000u, true);
+    vm_["steps"]        = variable_value((uint64_t)1000, true);
+    vm_["timestep"]     = variable_value(0.001, true);
+    vm_["smooth"]       = variable_value(0.005f, true);
+    vm_["density"]      = variable_value(0.4f, true);
+    vm_["temperature"]  = variable_value(2.0f, true);
+    vm_["dimension"]    = variable_value(3, true);
+    vm_["verbose"]      = variable_value(0, true);
+    vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), true);
+    vm_["sigma"]        = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), true);
+    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), true);
+    vm_["skin"]         = variable_value(0.5f, true);
+    vm_["random-seed"]  = variable_value(42u, true);
 }
