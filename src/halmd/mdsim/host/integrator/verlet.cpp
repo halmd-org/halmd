@@ -52,7 +52,7 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["integrator"].as<std::string>() != "verlet") {
-        throw unsuitable_module<verlet>("mismatching option '--integrator'");
+        throw unsuitable_module("mismatching option '--integrator'");
     }
     module<particle_type>::required(vm);
     module<box_type>::required(vm);

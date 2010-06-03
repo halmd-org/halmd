@@ -59,7 +59,7 @@ template <int dimension, typename float_type>
 void lj<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["force"].as<std::string>() != "lj") {
-        throw unsuitable_module<lj>("mismatching option '--force'");
+        throw unsuitable_module("mismatching option '--force'");
     }
 }
 

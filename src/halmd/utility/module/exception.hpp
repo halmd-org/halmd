@@ -35,15 +35,16 @@ class module_error
   : public virtual std::exception // virtual inheritance avoids ambiguity
 {
 public:
-    module_error(std::string const& msg) : msg_(msg) {}
+    module_error(std::string const& msg)
+      : msg_(msg)
+    {}
+
     virtual ~module_error() throw () {}
+
     virtual const char* what() const throw()
     {
         return msg_.c_str();
     }
-
-    // returns module name
-    virtual std::string name() const = 0;
 
 private:
     std::string msg_;
@@ -51,38 +52,24 @@ private:
 
 // This exception is thrown in the resolve function of a module
 // if it is unsuitable due to missing program option(s).
-template <typename T>
 class unsuitable_module
   : public module_error
 {
 public:
     unsuitable_module(std::string const& msg)
-      : module_error("unsuitable module " + name() + " [" + msg + "]")
+      : module_error(msg)
     {}
-
-    // returns module name
-    std::string name() const
-    {
-        return demangled_name<T>();
-    }
 };
 
 // This exception is thrown in the resolve function of the
 // factory class, if no module is available for a given type.
-template <typename T>
 class unresolvable_dependency
   : public module_error
 {
 public:
     unresolvable_dependency(std::string const& msg)
-      : module_error("unresolvable dependency " + name() + " [" + msg + "]")
+      : module_error(msg)
     {}
-
-    // returns module name
-    std::string name() const
-    {
-        return demangled_name<T>();
-    }
 };
 
 }} // namespace utility::module

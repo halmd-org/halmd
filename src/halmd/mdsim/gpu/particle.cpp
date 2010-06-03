@@ -39,7 +39,7 @@ template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["backend"].as<string>() != "gpu_neighbour") {
-        throw unsuitable_module<particle>("mismatching option 'backend'");
+        throw unsuitable_module("mismatching option 'backend'");
     }
     module<device_type>::required(vm);
 }
