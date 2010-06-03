@@ -42,7 +42,7 @@
  *  and in Hansen & McDonald, Table 4.2
  */
 
-void set_default_options(halmd::options& vm);
+void set_default_options(halmd::po::options& vm);
 
 const double eps = std::numeric_limits<double>::epsilon();
 const float eps_float = std::numeric_limits<float>::epsilon();
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
     BOOST_CHECK_CLOSE_FRACTION(Cv, 2.03, 0.05);
 }
 
-void set_default_options(halmd::options& vm)
+void set_default_options(halmd::po::options& vm)
 {
     typedef boost::program_options::variable_value variable_value;
     using namespace boost::assign;
