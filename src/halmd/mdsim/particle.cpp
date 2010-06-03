@@ -54,7 +54,7 @@ void particle<dimension>::options(po::options_description& desc)
          "binary mixture with A,B particles")
         ("backend",
 #ifdef WITH_CUDA
-         po::value<string>()->default_value("gpu_neighbour"),
+         po::value<string>()->default_value("gpu"),
 #else
          po::value<string>()->default_value("host"),
 #endif

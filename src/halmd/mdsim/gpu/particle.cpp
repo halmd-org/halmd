@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <boost/algorithm/string/predicate.hpp>
 #include <exception>
 #include <numeric>
 
@@ -38,7 +39,7 @@ namespace mdsim { namespace gpu
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::resolve(po::options const& vm)
 {
-    if (vm["backend"].as<string>() != "gpu_neighbour") {
+    if (!starts_with(vm["backend"].as<string>(), "gpu")) {
         throw unsuitable_module("mismatching option backend");
     }
     module<device_type>::required(vm);
