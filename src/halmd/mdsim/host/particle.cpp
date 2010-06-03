@@ -40,7 +40,7 @@ template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["backend"].as<string>() != "host") {
-        throw unsuitable_module("mismatching option 'backend'");
+        throw unsuitable_module("mismatching option backend");
     }
 }
 

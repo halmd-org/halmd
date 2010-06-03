@@ -61,7 +61,7 @@ template <int dimension, typename float_type>
 void powerlaw<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["force"].as<std::string>() != "power-law") {
-        throw unsuitable_module("mismatching option '--force'");
+        throw unsuitable_module("mismatching option force");
     }
 }
 

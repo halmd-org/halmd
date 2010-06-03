@@ -53,7 +53,7 @@ template <int dimension>
 void core<dimension>::resolve(po::options const& vm)
 {
     if (vm["dimension"].as<int>() != dimension) {
-        throw unsuitable_module("mismatching option 'dimension'");
+        throw unsuitable_module("mismatching option dimension");
     }
     module<force_type>::required(vm);
     module<neighbor_type>::required(vm);
