@@ -38,21 +38,9 @@ template <int dimension, typename float_type>
 void smooth<dimension, float_type>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("smooth", po::value<float>()->default_value(0.f),
+        ("smooth", po::value<float>()->required(),
          "C²-potential smoothing factor")
         ;
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void smooth<dimension, float_type>::resolve(po::options const& vm)
-{
-    using namespace boost;
-    if (!ends_with(vm["force"].as<std::string>(), "-smooth")) {
-        throw unsuitable_module<smooth>("mismatching option '--force'");
-    }
 }
 
 /**

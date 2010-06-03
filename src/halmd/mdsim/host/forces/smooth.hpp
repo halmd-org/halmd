@@ -37,7 +37,7 @@ class smooth
 {
 public:
     static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
+    static void resolve(po::options const& vm) {}
     smooth(po::options const& vm);
     virtual ~smooth() {}
     virtual void compute(float_type r, float_type dr, float_type& fval, float_type& pot);

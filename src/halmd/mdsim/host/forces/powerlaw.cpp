@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <cmath>
@@ -61,8 +60,7 @@ void powerlaw<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void powerlaw<dimension, float_type>::resolve(po::options const& vm)
 {
-    using namespace boost;
-    if (!starts_with(vm["force"].as<std::string>(),  "power-law")) {
+    if (vm["force"].as<std::string>() != "power-law") {
         throw unsuitable_module<powerlaw>("mismatching option '--force'");
     }
 }
