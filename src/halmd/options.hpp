@@ -21,6 +21,8 @@
 #ifndef HALMD_OPTIONS_HPP
 #define HALMD_OPTIONS_HPP
 
+#error This file is deprecated, use <halmd/utility/options.hpp> instead.
+
 #include <boost/noncopyable.hpp>
 #include <boost/program_options.hpp>
 #include <map>
