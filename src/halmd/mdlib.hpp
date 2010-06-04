@@ -21,7 +21,9 @@
 #ifndef HALMD_MDLIB_HPP
 #define HALMD_MDLIB_HPP
 
+#define USE_DEPRECATED_OPTIONS_HPP
 #include <halmd/options.hpp>
+#undef USE_DEPRECATED_OPTIONS_HPP
 #include <halmd/util/dl.hpp>
 
 extern "C" int mdlib_mdsim(halmd::options const& opt);
