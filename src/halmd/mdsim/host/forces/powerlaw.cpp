@@ -42,8 +42,8 @@ namespace mdsim { namespace host { namespace forces
 template <int dimension, typename float_type>
 void powerlaw<dimension, float_type>::options(po::options_description& desc)
 {
-    desc.caption("Power law potential");
-    desc.add_options()
+    po::options_description group("Power law potential");
+    group.add_options()
         ("index", po::value<unsigned int>()->default_value(12),
          "index of soft power-law potential")
         ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
@@ -53,6 +53,7 @@ void powerlaw<dimension, float_type>::options(po::options_description& desc)
         ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
          "collision diameters AA,AB,BB")
         ;
+    desc.add(group);
 }
 
 /**

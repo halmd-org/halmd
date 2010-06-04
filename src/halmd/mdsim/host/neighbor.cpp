@@ -40,11 +40,12 @@ namespace mdsim { namespace host
 template <int dimension, typename float_type>
 void neighbor<dimension, float_type>::options(po::options_description& desc)
 {
-    desc.caption("Neighbor lists");
-    desc.add_options()
+    po::options_description group("Neighbor lists");
+    group.add_options()
         ("skin", po::value<float>()->default_value(0.5),
          "neighbour list skin")
         ;
+    desc.add(group);
 }
 
 /**

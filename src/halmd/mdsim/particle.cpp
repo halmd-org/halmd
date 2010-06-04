@@ -46,20 +46,24 @@ namespace mdsim
 template <int dimension>
 void particle<dimension>::options(po::options_description& desc)
 {
-    desc.caption("Particle");
     desc.add_options()
-        ("particles,N", po::value<unsigned int>()->default_value(1000),
-         "number of particles")
-        ("binary,M", po::value<boost::array<unsigned int, 2> >(),
-         "binary mixture with A,B particles")
         ("backend",
 #ifdef WITH_CUDA
          po::value<string>()->default_value("gpu"),
 #else
          po::value<string>()->default_value("host"),
 #endif
-         "MD simulation backend")
+         "computing device type")
         ;
+
+    po::options_description group("Particle");
+    group.add_options()
+        ("particles,N", po::value<unsigned int>()->default_value(1000),
+         "number of particles")
+        ("binary,M", po::value<boost::array<unsigned int, 2> >(),
+         "binary mixture with A,B particles")
+        ;
+    desc.add(group);
 }
 
 template <int dimension>

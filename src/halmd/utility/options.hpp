@@ -33,45 +33,10 @@ namespace po
 typedef boost::program_options::variables_map options;
 
 using boost::program_options::option;
+using boost::program_options::options_description;
 using boost::program_options::value;
 
 using boost::program_options::required_option;
-
-class options_description
-  : public boost::program_options::options_description
-{
-public:
-    options_description() {}
-
-    options_description(std::string caption_)
-      : caption_(caption_)
-    {}
-
-    void caption(std::string const& caption_)
-    {
-        this->caption_ = caption_;
-    }
-
-    std::string caption() const
-    {
-        return caption_;
-    }
-
-    void print(std::ostream& os) const
-    {
-        os << caption_ << std::endl;
-        boost::program_options::options_description::print(os);
-    }
-
-private:
-    std::string caption_;
-};
-
-inline std::ostream& operator<<(std::ostream& os, options_description const& desc)
-{
-    desc.print(os);
-    return os;
-}
 
 struct unparsed_options
 {

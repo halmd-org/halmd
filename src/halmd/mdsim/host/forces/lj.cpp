@@ -42,8 +42,8 @@ namespace mdsim { namespace host { namespace forces
 template <int dimension, typename float_type>
 void lj<dimension, float_type>::options(po::options_description& desc)
 {
-    desc.caption("Lennard-Jones potential");
-    desc.add_options()
+    po::options_description group("Lennard-Jones potential");
+    group.add_options()
         ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
          "truncate potential at cutoff radius")
         ("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
@@ -51,6 +51,7 @@ void lj<dimension, float_type>::options(po::options_description& desc)
         ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
          "collision diameters AA,AB,BB")
         ;
+    desc.add(group);
 }
 
 /**

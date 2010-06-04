@@ -36,15 +36,19 @@ namespace mdsim
 template <int dimension>
 void core<dimension>::options(po::options_description& desc)
 {
-    desc.caption("MD simulation");
     desc.add_options()
         ("dimension", po::value<int>()->default_value(3),
-         "positional coordinates dimension")
+         "dimension of positional coordinates")
+        ;
+
+    po::options_description group("MD simulation");
+    group.add_options()
         ("steps,s", po::value<uint64_t>()->default_value(10000),
          "number of simulation steps")
         ("time,t", po::value<double>(),
          "total simulation time")
         ;
+    desc.add(group);
 }
 
 /**
