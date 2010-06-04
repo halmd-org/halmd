@@ -35,7 +35,7 @@ namespace mdsim { namespace host { namespace forces
  */
 
 template <int dimension, typename float_type>
-class powerlaw
+class power_law
   : public mdsim::host::force<dimension, float_type>
 {
 public:
@@ -50,8 +50,8 @@ public:
 
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);
-    powerlaw(po::options const& vm);
-    virtual ~powerlaw() {}
+    power_law(po::options const& vm);
+    virtual ~power_law() {}
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }
 

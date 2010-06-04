@@ -43,7 +43,7 @@ namespace mdsim { namespace host { namespace forces
  * Assemble module options
  */
 template <int dimension, typename float_type>
-void powerlaw<dimension, float_type>::options(po::options_description& desc)
+void power_law<dimension, float_type>::options(po::options_description& desc)
 {
     po::options_description group("Power law potential");
     group.add_options()
@@ -63,7 +63,7 @@ void powerlaw<dimension, float_type>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void powerlaw<dimension, float_type>::resolve(po::options const& vm)
+void power_law<dimension, float_type>::resolve(po::options const& vm)
 {
     if (vm["force"].as<std::string>() != "power-law") {
         throw unsuitable_module("mismatching option force");
@@ -74,7 +74,7 @@ void powerlaw<dimension, float_type>::resolve(po::options const& vm)
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-powerlaw<dimension, float_type>::powerlaw(po::options const& vm)
+power_law<dimension, float_type>::power_law(po::options const& vm)
   : _Base(vm)
   // allocate potential parameters
   , index_(vm["index"].as<unsigned int>())
@@ -130,7 +130,7 @@ powerlaw<dimension, float_type>::powerlaw(po::options const& vm)
  * for efficiency of pow() function
  */
 template <int dimension, typename float_type>
-void powerlaw<dimension, float_type>::compute()
+void power_law<dimension, float_type>::compute()
 {
     switch (index_) {
         case 6:  compute_impl<6u>();  break;
@@ -145,7 +145,7 @@ void powerlaw<dimension, float_type>::compute()
 }
 
 template <int dimension, typename float_type> template <unsigned int index>
-void powerlaw<dimension, float_type>::compute_impl()
+void power_law<dimension, float_type>::compute_impl()
 {
     // initialize particle forces to zero
     std::fill(particle->f.begin(), particle->f.end(), 0);
@@ -223,21 +223,21 @@ void powerlaw<dimension, float_type>::compute_impl()
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class powerlaw<3, double>;
-template class powerlaw<2, double>;
+template class power_law<3, double>;
+template class power_law<2, double>;
 #else
-template class powerlaw<3, float>;
-template class powerlaw<2, float>;
+template class power_law<3, float>;
+template class power_law<2, float>;
 #endif
 
 }}} // namespace mdsim::host::forces
 
 #ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::forces::powerlaw<3, double> >;
-template class module<mdsim::host::forces::powerlaw<2, double> >;
+template class module<mdsim::host::forces::power_law<3, double> >;
+template class module<mdsim::host::forces::power_law<2, double> >;
 #else
-template class module<mdsim::host::forces::powerlaw<3, float> >;
-template class module<mdsim::host::forces::powerlaw<2, float> >;
+template class module<mdsim::host::forces::power_law<3, float> >;
+template class module<mdsim::host::forces::power_law<2, float> >;
 #endif
 
 } // namespace halmd
