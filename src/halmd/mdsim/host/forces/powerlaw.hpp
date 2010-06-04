@@ -72,6 +72,10 @@ protected:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
+
+    /** optimise pow() function by providing the index at compile time */
+    template <unsigned int index>
+    void compute_impl();
 };
 
 }}} // namespace mdsim::host::forces

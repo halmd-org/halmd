@@ -23,6 +23,7 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/math/pow.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/host/forces/powerlaw.hpp>
 #include <halmd/utility/module.hpp>
@@ -30,6 +31,8 @@
 using namespace boost;
 using namespace boost::assign;
 using namespace boost::numeric::ublas;
+
+using namespace halmd::math;
 
 namespace halmd
 {
@@ -109,7 +112,7 @@ powerlaw<dimension, float_type>::powerlaw(po::options const& vm)
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             // energy shift due to truncation at cutoff length
-            en_cut_(i, j) = epsilon_(i, j) * std::pow(1 / r_cut_sigma_(i, j), static_cast<float_type>(index_));
+            en_cut_(i, j) = epsilon_(i, j) * std::pow(1 / r_cut_sigma_(i, j), static_cast<int>(index_));
         }
     }
 
@@ -122,9 +125,27 @@ powerlaw<dimension, float_type>::powerlaw(po::options const& vm)
 
 /**
  * Compute power-law forces
+ *
+ * call index-dependent template implementations
+ * for efficiency of pow() function
  */
 template <int dimension, typename float_type>
 void powerlaw<dimension, float_type>::compute()
+{
+    switch (index_) {
+        case 6:  compute_impl<6u>();  break;
+        case 12: compute_impl<12u>(); break;
+        case 24: compute_impl<24u>(); break;
+        case 48: compute_impl<48u>(); break;
+        default:
+            LOG_WARNING("Using non-optimised force routine for index " << index_);
+            compute_impl<0>();
+            break;
+    }
+}
+
+template <int dimension, typename float_type> template <unsigned int index>
+void powerlaw<dimension, float_type>::compute_impl()
 {
     // initialize particle forces to zero
     std::fill(particle->f.begin(), particle->f.end(), 0);
@@ -155,10 +176,18 @@ void powerlaw<dimension, float_type>::compute()
             if (rr >= rr_cut_(a, b))
                 continue;
 
-            // compute power-law force in reduced units
-            float_type rni = std::pow(sigma_(a, b) / std::sqrt(rr), static_cast<float_type>(index_));
+            // compute power-law force in reduced units,
+            // choose arbitrary index_ if template parameter index = 0
+            float_type rni;
+            if (index > 0) {
+                rni = pow<index>(sigma_(a, b) / std::sqrt(rr));
+            }
+            else {
+                rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);
+            }
             float_type en_pot = epsilon_(a, b) * rni;      // U(r)
-            float_type fval = index_ * en_pot / rr;        // F(r) / r
+            float_type fval = (index > 0 ? index : index_) * en_pot / rr;
+                                                           // F(r) / r
             en_pot -= en_cut_(a, b);                       // shift potential
 
             // optionally smooth potential yielding continuous 2nd derivative
