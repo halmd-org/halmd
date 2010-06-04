@@ -57,7 +57,7 @@ public:
 
 protected:
     /** power law index */
-    unsigned int index_;
+    int index_;
     /** potential well depths in MD units */
     matrix_type epsilon_;
     /** pair separation in MD units */
@@ -74,7 +74,7 @@ protected:
     matrix_type en_cut_;
 
     /** optimise pow() function by providing the index at compile time */
-    template <unsigned int index>
+    template <int index>
     void compute_impl();
 };
 

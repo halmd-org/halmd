@@ -47,7 +47,7 @@ void power_law<dimension, float_type>::options(po::options_description& desc)
 {
     po::options_description group("Power law potential");
     group.add_options()
-        ("index", po::value<unsigned int>()->default_value(12),
+        ("index", po::value<int>()->default_value(12),
          "index of soft power-law potential")
         ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
          "truncate potential at cutoff radius")
@@ -77,7 +77,7 @@ template <int dimension, typename float_type>
 power_law<dimension, float_type>::power_law(po::options const& vm)
   : _Base(vm)
   // allocate potential parameters
-  , index_(vm["index"].as<unsigned int>())
+  , index_(vm["index"].as<int>())
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , r_cut_sigma_(particle->ntype, particle->ntype)
@@ -133,10 +133,10 @@ template <int dimension, typename float_type>
 void power_law<dimension, float_type>::compute()
 {
     switch (index_) {
-        case 6:  compute_impl<6u>();  break;
-        case 12: compute_impl<12u>(); break;
-        case 24: compute_impl<24u>(); break;
-        case 48: compute_impl<48u>(); break;
+        case 6:  compute_impl<6>();  break;
+        case 12: compute_impl<12>(); break;
+        case 24: compute_impl<24>(); break;
+        case 48: compute_impl<48>(); break;
         default:
             LOG_WARNING("Using non-optimised force routine for index " << index_);
             compute_impl<0>();
@@ -144,7 +144,8 @@ void power_law<dimension, float_type>::compute()
     }
 }
 
-template <int dimension, typename float_type> template <unsigned int index>
+template <int dimension, typename float_type>
+template <int index>
 void power_law<dimension, float_type>::compute_impl()
 {
     // initialize particle forces to zero
