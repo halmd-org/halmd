@@ -40,19 +40,40 @@ enum severity_level
 
 extern boost::log::sources::severity_logger<severity_level> logger_;
 
-#define _LOG(lvl)          BOOST_LOG_SEV(logger_, (lvl))
+#define HALMD_LOG(lvl, fmt) \
+    do { \
+        BOOST_LOG_SEV(logger_, (lvl)) << fmt; \
+    } while(0)
+
+#define HALMD_LOG_ONCE(lvl, fmt) \
+    do { \
+        static bool __logged__ = false; \
+        if (!__logged__) { \
+            BOOST_LOG_SEV(logger_, (lvl)) << fmt; \
+            __logged__ = true; \
+        } \
+    } while(0)
+
+#define LOG_FATAL(fmt)          HALMD_LOG(fatal, fmt)
+#define LOG_FATAL_ONCE(fmt)     HALMD_LOG_ONCE(fatal, fmt)
+#define LOG_ERROR(fmt)          HALMD_LOG(error, fmt)
+#define LOG_ERROR_ONCE(fmt)     HALMD_LOG_ONCE(error, fmt)
+#define LOG_WARNING(fmt)        HALMD_LOG(warning, fmt)
+#define LOG_WARNING_ONCE(fmt)   HALMD_LOG_ONCE(warning, fmt)
+#define LOG(fmt)                HALMD_LOG(info, fmt)
+#define LOG_ONCE(fmt)           HALMD_LOG_ONCE(info, fmt)
 
 #ifndef NDEBUG
-# define LOG_TRACE(fmt)    _LOG(trace) << fmt
-# define LOG_DEBUG(fmt)    _LOG(debug) << fmt
+# define LOG_DEBUG(fmt)         HALMD_LOG(debug, fmt)
+# define LOG_DEBUG_ONCE(fmt)    HALMD_LOG_ONCE(debug, fmt)
+# define LOG_TRACE(fmt)         HALMD_LOG(trace, fmt)
+# define LOG_TRACE_ONCE(fmt)    HALMD_LOG_ONCE(trace, fmt)
 #else
-# define LOG_TRACE(fmt)
 # define LOG_DEBUG(fmt)
+# define LOG_DEBUG_ONCE(fmt)
+# define LOG_TRACE(fmt)
+# define LOG_TRACE_ONCE(fmt)
 #endif
-#define LOG(fmt)           _LOG(info) << fmt
-#define LOG_WARNING(fmt)   _LOG(warning) << fmt
-#define LOG_ERROR(fmt)     _LOG(error) << fmt
-#define LOG_FATAL(fmt)     _LOG(fatal) << fmt
 
 namespace io { namespace logger
 {
