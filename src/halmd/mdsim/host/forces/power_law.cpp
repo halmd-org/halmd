@@ -138,7 +138,7 @@ void power_law<dimension, float_type>::compute()
         case 24: compute_impl<24>(); break;
         case 48: compute_impl<48>(); break;
         default:
-            LOG_WARNING("Using non-optimised force routine for index " << index_);
+            LOG_WARNING_ONCE("Using non-optimised force routine for index " << index_);
             compute_impl<0>();
             break;
     }
