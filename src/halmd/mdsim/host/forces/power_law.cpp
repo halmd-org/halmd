@@ -25,7 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/math/pow.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
-#include <halmd/mdsim/host/forces/powerlaw.hpp>
+#include <halmd/mdsim/host/forces/power_law.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_FORCES_POWERLAW_HPP
-#define HALMD_MDSIM_HOST_FORCES_POWERLAW_HPP
+#ifndef HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
+#define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/utility/options.hpp>
@@ -82,4 +82,4 @@ protected:
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_FORCES_POWERLAW_HPP */
+#endif /* ! HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP */
