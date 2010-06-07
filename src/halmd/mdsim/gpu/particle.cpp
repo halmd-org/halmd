@@ -55,7 +55,7 @@ particle<dimension, float_type>::particle(po::options const& vm)
   , g_image(nbox)
   , g_v(nbox)
   , g_f(nbox)
-  , g_neighbor(nbox)
+  , g_neighbour(nbox)
   // allocate page-locked host memory
   , h_r(nbox)
   , h_image(nbox)

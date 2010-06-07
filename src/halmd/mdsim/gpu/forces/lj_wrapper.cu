@@ -28,9 +28,9 @@ cuda::texture<float4>
 cuda::symbol<float3>
   lj_wrapper<3>::box_length = lj_kernel::dim_<3>::box_length;
 cuda::symbol<unsigned int>
-  lj_wrapper<3>::neighbor_size = lj_kernel::neighbor_size_;
+  lj_wrapper<3>::neighbour_size = lj_kernel::neighbour_size_;
 cuda::symbol<unsigned int>
-  lj_wrapper<3>::neighbor_stride = lj_kernel::neighbor_stride_;
+  lj_wrapper<3>::neighbour_stride = lj_kernel::neighbour_stride_;
 cuda::texture<float4>
   lj_wrapper<3>::ljparam = lj_kernel::ljparam_;
 cuda::function<void (float4*, unsigned int*, float*, float4*)>
@@ -41,9 +41,9 @@ cuda::texture<float4>
 cuda::symbol<float2>
   lj_wrapper<2>::box_length = lj_kernel::dim_<2>::box_length;
 cuda::symbol<unsigned int>
-  lj_wrapper<2>::neighbor_size = lj_kernel::neighbor_size_;
+  lj_wrapper<2>::neighbour_size = lj_kernel::neighbour_size_;
 cuda::symbol<unsigned int>
-  lj_wrapper<2>::neighbor_stride = lj_kernel::neighbor_stride_;
+  lj_wrapper<2>::neighbour_stride = lj_kernel::neighbour_stride_;
 cuda::texture<float4>
   lj_wrapper<2>::ljparam = lj_kernel::ljparam_;
 cuda::function<void (float2*, unsigned int*, float*, float2*)>

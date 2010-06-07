@@ -161,8 +161,8 @@ Modules in namespace halmd::mdsim
 
         Description:
 
-    :doc:`neighbor <impl/mdsim_neighbor>`
-        Refined by `mdsim::host::neighbor`
+    :doc:`neighbour <impl/mdsim_neighbour>`
+        Refined by `mdsim::host::neighbour`
 
         Description:
 

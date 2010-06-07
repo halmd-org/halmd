@@ -138,8 +138,8 @@ void lj<dimension, float_type>::compute()
     std::fill(virial_.begin(), virial_.end(), 0);
 
     for (size_t i = 0; i < particle->nbox; ++i) {
-        // calculate pairwise Lennard-Jones force with neighbor particles
-        BOOST_FOREACH(size_t j, particle->neighbor[i]) {
+        // calculate pairwise Lennard-Jones force with neighbour particles
+        BOOST_FOREACH(size_t j, particle->neighbour[i]) {
             // particle distance vector
             vector_type r = particle->r[i] - particle->r[j];
             box->reduce_periodic(r);

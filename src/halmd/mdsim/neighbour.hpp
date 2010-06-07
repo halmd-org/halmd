@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_NEIGHBOR_HPP
-#define HALMD_MDSIM_NEIGHBOR_HPP
+#ifndef HALMD_MDSIM_NEIGHBOUR_HPP
+#define HALMD_MDSIM_NEIGHBOUR_HPP
 
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -29,13 +29,13 @@ namespace mdsim
 {
 
 template <int dimension>
-class neighbor
+class neighbour
 {
 public:
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm) {}
-    neighbor(po::options const& vm) {}
-    virtual ~neighbor() {}
+    neighbour(po::options const& vm) {}
+    virtual ~neighbour() {}
     virtual void update() = 0;
     virtual bool check() = 0;
 };
@@ -44,4 +44,4 @@ public:
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_NEIGHBOR_HPP */
+#endif /* ! HALMD_MDSIM_NEIGHBOUR_HPP */

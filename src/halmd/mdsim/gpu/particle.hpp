@@ -62,8 +62,8 @@ public:
     cuda::vector<float4> g_v;
     /** forces */
     cuda::vector<gpu_vector_type> g_f;
-    /** neighbor lists */
-    cuda::vector<unsigned int> g_neighbor;
+    /** neighbour lists */
+    cuda::vector<unsigned int> g_neighbour;
 
     //
     // particles in page-locked host memory
@@ -82,10 +82,10 @@ public:
     using _Base::ntype;
     /** number of particles per type */
     using _Base::ntypes;
-    /** number of placeholders per neighbor list */
-    unsigned int neighbor_size;
-    /** neighbor list stride */
-    unsigned int neighbor_stride;
+    /** number of placeholders per neighbour list */
+    unsigned int neighbour_size;
+    /** neighbour list stride */
+    unsigned int neighbour_stride;
 };
 
 }} // namespace mdsim::gpu

@@ -18,16 +18,16 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/neighbor.hpp>
-#include <halmd/mdsim/neighbor.hpp>
+#include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/mdsim/neighbour.hpp>
 
 namespace halmd
 {
 namespace mdsim
 {
 
-template class neighbor<3>;
-template class neighbor<2>;
+template class neighbour<3>;
+template class neighbour<2>;
 
 } // namespace mdsim
 

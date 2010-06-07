@@ -3,7 +3,7 @@ add_library(halmd_mdsim
   core.cpp
   force.cpp
   integrator.cpp
-  neighbor.cpp
+  neighbour.cpp
   particle.cpp
   position.cpp
   random.cpp

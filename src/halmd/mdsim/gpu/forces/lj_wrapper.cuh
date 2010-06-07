@@ -38,10 +38,10 @@ struct lj_wrapper
     static cuda::texture<float4> r;
     /** cubic box edgle length */
     static cuda::symbol<vector_type> box_length;
-    /** number of placeholders per neighbor list */
-    static cuda::symbol<unsigned int> neighbor_size;
-    /** neighbor list stride */
-    static cuda::symbol<unsigned int> neighbor_stride;
+    /** number of placeholders per neighbour list */
+    static cuda::symbol<unsigned int> neighbour_size;
+    /** neighbour list stride */
+    static cuda::symbol<unsigned int> neighbour_stride;
     /** Lennard-Jones potential parameters */
     static cuda::texture<float4> ljparam;
     /** compute Lennard-Jones forces */

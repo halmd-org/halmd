@@ -33,15 +33,15 @@ using namespace halmd::numeric::gpu::blas;
 namespace halmd { namespace mdsim { namespace gpu
 {
 
-namespace neighbor_kernel
+namespace neighbour_kernel
 {
 
-/** (cutoff lengths + neighbor list skin)² */
+/** (cutoff lengths + neighbour list skin)² */
 texture<float, 1, cudaReadModeElementType> rr_cut_skin_;
-/** neighbor list length */
-__constant__ unsigned int neighbor_size_;
-/** neighbor list stride */
-__constant__ unsigned int neighbor_stride_;
+/** neighbour list length */
+__constant__ unsigned int neighbour_size_;
+/** neighbour list stride */
+__constant__ unsigned int neighbour_stride_;
 /** number of particles in simulation box */
 __constant__ unsigned int nbox_;
 
@@ -63,9 +63,9 @@ template class dim_<3>;
 template class dim_<2>;
 
 /**
- * compute neighbor cell
+ * compute neighbour cell
  */
-__device__ unsigned int compute_neighbor_cell(vector<int, 3> const &offset)
+__device__ unsigned int compute_neighbour_cell(vector<int, 3> const &offset)
 {
     vector<int, 3> ncell(static_cast<vector<unsigned int, 3> >(dim_<3>::ncell));
     vector<int, 3> cell;
@@ -74,13 +74,13 @@ __device__ unsigned int compute_neighbor_cell(vector<int, 3> const &offset)
     cell[0] = BID % ncell[0];
     cell[1] = (BID / ncell[0]) % ncell[1];
     cell[2] = BID / ncell[0] / ncell[1];
-    // neighbor cell of this cell
+    // neighbour cell of this cell
     cell = element_mod(cell + ncell + offset, ncell);
 
     return (cell[2] * ncell[1] + cell[1]) * ncell[0] + cell[0];
 }
 
-__device__ unsigned int compute_neighbor_cell(vector<int, 2> const& offset)
+__device__ unsigned int compute_neighbour_cell(vector<int, 2> const& offset)
 {
     vector<int, 2> ncell(static_cast<vector<unsigned int, 2> >(dim_<2>::ncell));
     vector<int, 2> cell;
@@ -88,24 +88,24 @@ __device__ unsigned int compute_neighbor_cell(vector<int, 2> const& offset)
     // cell belonging to this execution block
     cell[0] = BID % ncell[0];
     cell[1] = BID / ncell[0];
-    // neighbor cell of this cell
+    // neighbour cell of this cell
     cell = element_mod(cell + ncell + offset, ncell);
 
     return cell[1] * ncell[0] + cell[0];
 }
 
 /**
- * update neighbor list with particles of given cell
+ * update neighbour list with particles of given cell
  */
 template <bool same_cell, typename T, typename I>
-__device__ void update_cell_neighbors(
+__device__ void update_cell_neighbours(
   I const& offset,
   unsigned int const* g_cell,
   T const& r,
   unsigned int type,
   unsigned int const& n,
   unsigned int& count,
-  unsigned int* g_neighbor)
+  unsigned int* g_neighbour)
 {
     extern __shared__ unsigned int s_n[];
     unsigned int* const s_type = &s_n[blockDim.x];
@@ -116,7 +116,7 @@ __device__ void update_cell_neighbors(
     __syncthreads();
 
     // compute cell index
-    unsigned int const cell = compute_neighbor_cell(offset);
+    unsigned int const cell = compute_neighbour_cell(offset);
     // load particles in cell
     unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
@@ -141,23 +141,23 @@ __device__ void update_cell_neighbors(
         // squared particle distance
         float rr = inner_prod(dr, dr);
 
-        // enforce cutoff length with neighbor list skin
+        // enforce cutoff length with neighbour list skin
         float rr_cut_skin = tex1Dfetch(rr_cut_skin_, symmetric_matrix::lower_index(type, s_type[i]));
-        if (rr <= rr_cut_skin && count < neighbor_size_) {
-            // scattered write to neighbor list
-            g_neighbor[count * neighbor_stride_ + n] = m;
-            // increment neighbor list particle count
+        if (rr <= rr_cut_skin && count < neighbour_size_) {
+            // scattered write to neighbour list
+            g_neighbour[count * neighbour_stride_ + n] = m;
+            // increment neighbour list particle count
             count++;
         }
     }
 }
 
 /**
- * update neighbor lists
+ * update neighbour lists
  */
 template <unsigned int dimension>
-__global__ void update_neighbors(
-  unsigned int* g_neighbor,
+__global__ void update_neighbours(
+  unsigned int* g_neighbour,
   unsigned int* g_ret,
   unsigned int const* g_cell)
 {
@@ -165,7 +165,7 @@ __global__ void update_neighbors(
     unsigned int const n = g_cell[GTID];
     unsigned int type;
     vector<float, dimension> const r = untagged<vector<float, dimension> >(tex1Dfetch(dim_<dimension>::r, n), type);
-    // number of particles in neighbor list
+    // number of particles in neighbour list
     unsigned int count = 0;
 
     //
@@ -189,8 +189,8 @@ __global__ void update_neighbors(
     //
     // The reason for this behaviour lies in the disadvantageous summing
     // order: With a purely repulsive potential, the summed forces of a
-    // single neighbor cell will more or less have the same direction.
-    // Thus, when adding the force sums of all neighbor cells, we add
+    // single neighbour cell will more or less have the same direction.
+    // Thus, when adding the force sums of all neighbour cells, we add
     // huge force sums which will mostly cancel each other out in an
     // equilibrated system, giving a small and very inaccurate total
     // force due to being limited to single-precision floating-point
@@ -198,57 +198,57 @@ __global__ void update_neighbors(
     //
     // Besides implementing the summation in double precision arithmetic,
     // choosing the order of summation over cells such that one partial
-    // neighbor cell force sum is always followed by the sum of the
-    // opposite neighbor cell softens the velocity drift.
+    // neighbour cell force sum is always followed by the sum of the
+    // opposite neighbour cell softens the velocity drift.
     //
 
     if (dimension == 3) {
         // visit this cell
-        update_cell_neighbors<true>(make_int3( 0,  0,  0), g_cell, r, type, n, count, g_neighbor);
-        // visit 26 neighbor cells, grouped into 13 pairs of mutually opposite cells
-        update_cell_neighbors<false>(make_int3(-1, -1, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1, +1, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(-1, -1, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1, +1, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(-1, +1, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1, -1, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1, -1, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(-1, +1, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(-1, -1,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1, +1,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(-1, +1,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1, -1,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(-1,  0, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1,  0, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(-1,  0, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1,  0, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3( 0, -1, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3( 0, +1, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3( 0, -1, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3( 0, +1, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(-1,  0,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3(+1,  0,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3( 0, -1,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3( 0, +1,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3( 0,  0, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int3( 0,  0, +1), g_cell, r, type, n, count, g_neighbor);
+        update_cell_neighbours<true>(make_int3( 0,  0,  0), g_cell, r, type, n, count, g_neighbour);
+        // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
+        update_cell_neighbours<false>(make_int3(-1, -1, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1, +1, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(-1, -1, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1, +1, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(-1, +1, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1, -1, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1, -1, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(-1, +1, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(-1, -1,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1, +1,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(-1, +1,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1, -1,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(-1,  0, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1,  0, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(-1,  0, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1,  0, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3( 0, -1, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3( 0, +1, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3( 0, -1, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3( 0, +1, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(-1,  0,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3(+1,  0,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3( 0, -1,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3( 0, +1,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3( 0,  0, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int3( 0,  0, +1), g_cell, r, type, n, count, g_neighbour);
     }
     else {
         // visit this cell
-        update_cell_neighbors<true>(make_int2( 0,  0), g_cell, r, type, n, count, g_neighbor);
-        // visit 8 neighbor cells, grouped into 4 pairs of mutually opposite cells
-        update_cell_neighbors<false>(make_int2(-1, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int2(+1, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int2(-1, +1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int2(+1, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int2(-1,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int2(+1,  0), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int2( 0, -1), g_cell, r, type, n, count, g_neighbor);
-        update_cell_neighbors<false>(make_int2( 0, +1), g_cell, r, type, n, count, g_neighbor);
+        update_cell_neighbours<true>(make_int2( 0,  0), g_cell, r, type, n, count, g_neighbour);
+        // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
+        update_cell_neighbours<false>(make_int2(-1, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int2(+1, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int2(-1, +1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int2(+1, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int2(-1,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int2(+1,  0), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int2( 0, -1), g_cell, r, type, n, count, g_neighbour);
+        update_cell_neighbours<false>(make_int2( 0, +1), g_cell, r, type, n, count, g_neighbour);
     }
 
-    // return failure if any neighbor list is fully occupied
-    if (count == neighbor_size_) {
+    // return failure if any neighbour list is fully occupied
+    if (count == neighbour_size_) {
         *g_ret = EXIT_FAILURE;
     }
 }
@@ -349,6 +349,6 @@ __global__ void gen_index(unsigned int* g_index)
     g_index[GTID] = (GTID < nbox_) ? GTID : 0;
 }
 
-} // namespace neighbor_kernel
+} // namespace neighbour_kernel
 
 }}} //namespace halmd::mdsim::gpu

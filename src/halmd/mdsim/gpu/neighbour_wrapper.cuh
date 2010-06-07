@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_NEIGHBOR_WRAPPER_CUH
-#define HALMD_MDSIM_GPU_NEIGHBOR_WRAPPER_CUH
+#ifndef HALMD_MDSIM_GPU_NEIGHBOUR_WRAPPER_CUH
+#define HALMD_MDSIM_GPU_NEIGHBOUR_WRAPPER_CUH
 
 #include <boost/mpl/if.hpp>
 
@@ -28,19 +28,19 @@ namespace halmd { namespace mdsim { namespace gpu
 {
 
 template <size_t N>
-struct neighbor_wrapper
+struct neighbour_wrapper
 {
     typedef typename boost::mpl::if_c<N == 3, float3, float2>::type vector_type;
     typedef typename boost::mpl::if_c<N == 3, uint3, uint2>::type cell_index;
 
-    /** (cutoff lengths + neighbor list skin)² */
+    /** (cutoff lengths + neighbour list skin)² */
     static cuda::texture<float> rr_cut_skin;
     /** number of cells per dimension */
     static cuda::symbol<cell_index> ncell;
-    /** neighbor list length */
-    static cuda::symbol<unsigned int> neighbor_size;
-    /** neighbor list stride */
-    static cuda::symbol<unsigned int> neighbor_stride;
+    /** neighbour list length */
+    static cuda::symbol<unsigned int> neighbour_size;
+    /** neighbour list stride */
+    static cuda::symbol<unsigned int> neighbour_stride;
     /** number of particles in simulation box */
     static cuda::symbol<unsigned int> nbox;
     /** positions, tags */
@@ -55,12 +55,12 @@ struct neighbor_wrapper
     static cuda::function<void (unsigned int*, unsigned int*)> find_cell_offset;
     /** generate ascending index sequence */
     static cuda::function<void (unsigned int*)> gen_index;
-    /** update neighbor lists */
-    static cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)> update_neighbors;
+    /** update neighbour lists */
+    static cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)> update_neighbours;
     /** compute cell indices for particle positions */
     static cuda::function<void (float4 const*, unsigned int*)> compute_cell;
 };
 
 }}} // namespace halmd::mdsim::gpu
 
-#endif /* ! HALMD_MDSIM_GPU_NEIGHBOR_WRAPPER_CUH */
+#endif /* ! HALMD_MDSIM_GPU_NEIGHBOUR_WRAPPER_CUH */

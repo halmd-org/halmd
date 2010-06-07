@@ -24,7 +24,7 @@
 #include <exception>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/neighbor.hpp>
+#include <halmd/mdsim/host/neighbour.hpp>
 
 using namespace boost;
 using namespace std;
@@ -38,9 +38,9 @@ namespace mdsim { namespace host
  * Assemble module options
  */
 template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::options(po::options_description& desc)
+void neighbour<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description group("Neighbor lists");
+    po::options_description group("Neighbour lists");
     group.add_options()
         ("skin", po::value<float>()->default_value(0.5),
          "neighbour list skin")
@@ -52,7 +52,7 @@ void neighbor<dimension, float_type>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::resolve(po::options const& vm)
+void neighbour<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::required(vm);
     module<box_type>::required(vm);
@@ -60,7 +60,7 @@ void neighbor<dimension, float_type>::resolve(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-neighbor<dimension, float_type>::neighbor(po::options const& vm)
+neighbour<dimension, float_type>::neighbour(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
@@ -90,30 +90,30 @@ neighbor<dimension, float_type>::neighbor(po::options const& vm)
     cell_length_ = element_div(L, static_cast<vector_type>(ncell_));
     r_skin_half_ = r_skin_ / 2;
 
-    LOG("neighbor list skin: " << r_skin_);
+    LOG("neighbour list skin: " << r_skin_);
     LOG("number of cells per dimension: " << ncell_);
     LOG("cell edge lengths: " << cell_length_);
 }
 
 /**
- * Update neighbor lists
+ * Update neighbour lists
  */
 template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::update()
+void neighbour<dimension, float_type>::update()
 {
     // rebuild cell lists
     update_cells();
-    // rebuild neighbor lists
+    // rebuild neighbour lists
     cell_size_type i;
     for (i[0] = 0; i[0] < ncell_[0]; ++i[0]) {
         for (i[1] = 0; i[1] < ncell_[1]; ++i[1]) {
             if (dimension == 3) {
                 for (i[2] = 0; i[2] < ncell_[2]; ++i[2]) {
-                    update_cell_neighbors(i);
+                    update_cell_neighbours(i);
                 }
             }
             else {
-                update_cell_neighbors(i);
+                update_cell_neighbours(i);
             }
         }
     }
@@ -122,10 +122,10 @@ void neighbor<dimension, float_type>::update()
 }
 
 /**
- * Check if neighbor list update is needed
+ * Check if neighbour list update is needed
  */
 template <int dimension, typename float_type>
-bool neighbor<dimension, float_type>::check()
+bool neighbour<dimension, float_type>::check()
 {
     float_type rr_max = 0;
     for (size_t i = 0; i < particle->nbox; ++i) {
@@ -140,7 +140,7 @@ bool neighbor<dimension, float_type>::check()
  * Update cell lists
  */
 template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::update_cells()
+void neighbour<dimension, float_type>::update_cells()
 {
     // empty cell lists without memory reallocation
     for_each(cell_.data(), cell_.data() + cell_.num_elements(), bind(&cell_list::clear, _1));
@@ -153,52 +153,52 @@ void neighbor<dimension, float_type>::update_cells()
 }
 
 /**
- * Update neighbor lists for a single cell
+ * Update neighbour lists for a single cell
  */
 template <int dimension, typename float_type>
-void neighbor<dimension, float_type>::update_cell_neighbors(cell_size_type const& i)
+void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type const& i)
 {
     BOOST_FOREACH(size_t p, cell_(i)) {
-        // empty neighbor list of particle
-        particle->neighbor[p].clear();
+        // empty neighbour list of particle
+        particle->neighbour[p].clear();
 
         cell_diff_type j;
         for (j[0] = -1; j[0] <= 1; ++j[0]) {
             for (j[1] = -1; j[1] <= 1; ++j[1]) {
                 if (dimension == 3) {
                     for (j[2] = -1; j[2] <= 1; ++j[2]) {
-                        // visit half of 26 neighbor cells due to pair potential
+                        // visit half of 26 neighbour cells due to pair potential
                         if (j[0] == 0 && j[1] == 0 && j[2] == 0) {
                             goto self;
                         }
-                        // update neighbor list of particle
+                        // update neighbour list of particle
                         cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell_) + j), ncell_);
-                        compute_cell_neighbors<false>(p, cell_(k));
+                        compute_cell_neighbours<false>(p, cell_(k));
                     }
                 }
                 else {
-                    // visit half of 8 neighbor cells due to pair potential
+                    // visit half of 8 neighbour cells due to pair potential
                     if (j[0] == 0 && j[1] == 0) {
                         goto self;
                     }
-                    // update neighbor list of particle
+                    // update neighbour list of particle
                     cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell_) + j), ncell_);
-                    compute_cell_neighbors<false>(p, cell_(k));
+                    compute_cell_neighbours<false>(p, cell_(k));
                 }
             }
         }
 self:
         // visit this cell
-        compute_cell_neighbors<true>(p, cell_(i));
+        compute_cell_neighbours<true>(p, cell_(i));
     }
 }
 
 /**
- * Update neighbor list of particle
+ * Update neighbour list of particle
  */
 template <int dimension, typename float_type>
 template <bool same_cell>
-void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list& c)
+void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_list& c)
 {
     BOOST_FOREACH(size_t j, c) {
         // skip identical particle and particle pair permutations if same cell
@@ -215,33 +215,33 @@ void neighbor<dimension, float_type>::compute_cell_neighbors(size_t i, cell_list
         // squared particle distance
         float_type rr = inner_prod(r, r);
 
-        // enforce cutoff radius with neighbor list skin
+        // enforce cutoff radius with neighbour list skin
         if (rr >= rr_cut_skin_(a, b)) {
             continue;
         }
 
-        // add particle to neighbor list
-        particle->neighbor[i].push_back(j);
+        // add particle to neighbour list
+        particle->neighbour[i].push_back(j);
     }
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class neighbor<3, double>;
-template class neighbor<2, double>;
+template class neighbour<3, double>;
+template class neighbour<2, double>;
 #else
-template class neighbor<3, float>;
-template class neighbor<2, float>;
+template class neighbour<3, float>;
+template class neighbour<2, float>;
 #endif
 
 }} // namespace mdsim::host
 
 #ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::neighbor<3, double> >;
-template class module<mdsim::host::neighbor<2, double> >;
+template class module<mdsim::host::neighbour<3, double> >;
+template class module<mdsim::host::neighbour<2, double> >;
 #else
-template class module<mdsim::host::neighbor<3, float> >;
-template class module<mdsim::host::neighbor<2, float> >;
+template class module<mdsim::host::neighbour<3, float> >;
+template class module<mdsim::host::neighbour<2, float> >;
 #endif
 
 } // namespace halmd

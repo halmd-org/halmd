@@ -54,14 +54,14 @@ particle<dimension, float_type>::particle(po::options const& vm)
   , f(nbox)
   , tag(nbox)
   , type(nbox)
-  , neighbor(nbox)
+  , neighbour(nbox)
 {
 }
 
 /**
  * Rearrange particles in memory according to an integer index sequence
  *
- * The neighbor lists must be rebuilt after calling this function!
+ * The neighbour lists must be rebuilt after calling this function!
  */
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const& index)
@@ -72,7 +72,7 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     // no permutation of forces
     algorithm::host::permute(tag.begin(), tag.end(), index.begin());
     algorithm::host::permute(type.begin(), type.end(), index.begin());
-    // no permutation of neighbor lists
+    // no permutation of neighbour lists
 }
 
 // explicit instantiation

@@ -61,7 +61,7 @@ void core<dimension>::resolve(po::options const& vm)
         throw unsuitable_module("mismatching option dimension");
     }
     module<force_type>::required(vm);
-    module<neighbor_type>::required(vm);
+    module<neighbour_type>::required(vm);
     module<sort_type>::optional(vm);
     module<integrator_type>::required(vm);
     module<position_type>::required(vm);
@@ -76,7 +76,7 @@ core<dimension>::core(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , force(module<force_type>::fetch(vm))
-  , neighbor(module<neighbor_type>::fetch(vm))
+  , neighbour(module<neighbour_type>::fetch(vm))
   , sort(module<sort_type>::fetch(vm))
   , integrator(module<integrator_type>::fetch(vm))
   , position(module<position_type>::fetch(vm))
@@ -121,7 +121,7 @@ inline void core<dimension>::init()
 {
     position->set();
     velocity->set();
-    neighbor->update();
+    neighbour->update();
     force->compute();
 }
 
@@ -132,11 +132,11 @@ template <int dimension>
 inline void core<dimension>::mdstep()
 {
     integrator->integrate();
-    if (neighbor->check()) {
+    if (neighbour->check()) {
         if (sort) {
             sort->order();
         }
-        neighbor->update();
+        neighbour->update();
     }
     force->compute();
     integrator->finalize();

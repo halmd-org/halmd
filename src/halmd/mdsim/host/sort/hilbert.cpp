@@ -42,7 +42,7 @@ void hilbert<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::required(vm);
     module<box_type>::required(vm);
-    module<neighbor_type>::required(vm);
+    module<neighbour_type>::required(vm);
 }
 
 template <int dimension, typename float_type>
@@ -51,10 +51,10 @@ hilbert<dimension, float_type>::hilbert(po::options const& vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
   , box(module<box_type>::fetch(vm))
-  , neighbor(module<neighbor_type>::fetch(vm))
+  , neighbour(module<neighbour_type>::fetch(vm))
 {
     // set Hilbert space-filling curve recursion depth
-    unsigned int ncell = *max_element(neighbor->ncell_.begin(), neighbor->ncell_.end());
+    unsigned int ncell = *max_element(neighbour->ncell_.begin(), neighbour->ncell_.end());
     unsigned int depth = static_cast<int>(std::ceil(std::log(static_cast<double>(ncell)) / M_LN2));
     // 32-bit integer for 2D Hilbert code allows a maximum of 16/10 levels
     depth = min((dimension == 3) ? 10U : 16U, depth);
@@ -65,25 +65,25 @@ hilbert<dimension, float_type>::hilbert(po::options const& vm)
     typedef std::pair<cell_list*, unsigned int> pair;
     std::vector<pair> pairs;
     cell_size_type x;
-    for (x[0] = 0; x[0] < neighbor->ncell_[0]; ++x[0]) {
-        for (x[1] = 0; x[1] < neighbor->ncell_[1]; ++x[1]) {
+    for (x[0] = 0; x[0] < neighbour->ncell_[0]; ++x[0]) {
+        for (x[1] = 0; x[1] < neighbour->ncell_[1]; ++x[1]) {
             if (dimension == 3) {
-                for (x[2] = 0; x[2] < neighbor->ncell_[2]; ++x[2]) {
+                for (x[2] = 0; x[2] < neighbour->ncell_[2]; ++x[2]) {
                     vector_type r(x);
-                    r = element_prod(r + vector_type(0.5), neighbor->cell_length_);
-                    pairs.push_back(std::make_pair(&neighbor->cell_(x), map(r, depth)));
+                    r = element_prod(r + vector_type(0.5), neighbour->cell_length_);
+                    pairs.push_back(std::make_pair(&neighbour->cell_(x), map(r, depth)));
                 }
             }
             else {
                 vector_type r(x);
-                r = element_prod(r + vector_type(0.5), neighbor->cell_length_);
-                pairs.push_back(std::make_pair(&neighbor->cell_(x), map(r, depth)));
+                r = element_prod(r + vector_type(0.5), neighbour->cell_length_);
+                pairs.push_back(std::make_pair(&neighbour->cell_(x), map(r, depth)));
             }
         }
     }
     stable_sort(pairs.begin(), pairs.end(), bind(&pair::second, _1) < bind(&pair::second, _2));
     cell_.clear();
-    cell_.reserve(neighbor->cell_.size());
+    cell_.reserve(neighbour->cell_.size());
     transform(pairs.begin(), pairs.end(), back_inserter(cell_), bind(&pair::first, _1));
 }
 
@@ -94,7 +94,7 @@ template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
     // particle binning
-    neighbor->update_cells();
+    neighbour->update_cells();
     // generate index sequence according to Hilbert-sorted cells
     std::vector<unsigned int> index;
     index.reserve(particle->nbox);

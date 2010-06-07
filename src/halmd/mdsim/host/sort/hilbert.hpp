@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_HOST_SORT_HILBERT_HPP
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/neighbor.hpp>
+#include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/utility/options.hpp>
@@ -40,14 +40,14 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef host::neighbor<dimension, float_type> neighbor_type;
+    typedef host::neighbour<dimension, float_type> neighbour_type;
 
-    typedef typename neighbor_type::cell_list cell_list;
-    typedef typename neighbor_type::cell_size_type cell_size_type;
+    typedef typename neighbour_type::cell_list cell_list;
+    typedef typename neighbour_type::cell_size_type cell_size_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
-    shared_ptr<neighbor_type> neighbor;
+    shared_ptr<neighbour_type> neighbour;
 
     static void options(po::options_description& desc) {}
     static void resolve(po::options const& vm);

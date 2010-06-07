@@ -48,10 +48,10 @@ struct dim_
 template class dim_<3>;
 template class dim_<2>;
 
-/** number of placeholders per neighbor list */
-__constant__ unsigned int neighbor_size_;
-/** neighbor list stride */
-__constant__ unsigned int neighbor_stride_;
+/** number of placeholders per neighbour list */
+__constant__ unsigned int neighbour_size_;
+/** neighbour list stride */
+__constant__ unsigned int neighbour_stride_;
 /** Lennard-Jones potential parameters */
 texture<float4, 1, cudaReadModeElementType> ljparam_;
 
@@ -61,7 +61,7 @@ texture<float4, 1, cudaReadModeElementType> ljparam_;
 template <typename vector_type, typename gpu_vector_type>
 __global__ void compute(
   gpu_vector_type* g_f,
-  unsigned int* g_neighbor,
+  unsigned int* g_neighbour,
   float* g_en_pot,
   gpu_vector_type* g_virial)
 {
@@ -84,9 +84,9 @@ __global__ void compute(
     vector_type f = 0;
 #endif
 
-    for (unsigned int k = 0; k < neighbor_size_; ++k) {
-        // coalesced read from neighbor list
-        unsigned int j = g_neighbor[k * neighbor_stride_ + i];
+    for (unsigned int k = 0; k < neighbour_size_; ++k) {
+        // coalesced read from neighbour list
+        unsigned int j = g_neighbour[k * neighbour_stride_ + i];
         // skip placeholder particles
         if (j == particle_kernel::PLACEHOLDER) {
             break;

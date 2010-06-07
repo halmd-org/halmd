@@ -25,7 +25,7 @@
 #include <halmd/core.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/mdsim/neighbor.hpp>
+#include <halmd/mdsim/neighbour.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
@@ -44,7 +44,7 @@ class core
 public:
     typedef halmd::core _Base;
     typedef mdsim::force<dimension> force_type;
-    typedef mdsim::neighbor<dimension> neighbor_type;
+    typedef mdsim::neighbour<dimension> neighbour_type;
     typedef mdsim::sort<dimension> sort_type;
     typedef mdsim::integrator<dimension> integrator_type;
     typedef mdsim::position<dimension> position_type;
@@ -63,7 +63,7 @@ public:
     double time() { return time_; }
 
     shared_ptr<force_type> force;
-    shared_ptr<neighbor_type> neighbor;
+    shared_ptr<neighbour_type> neighbour;
     shared_ptr<sort_type> sort;
     shared_ptr<integrator_type> integrator;
     shared_ptr<position_type> position;

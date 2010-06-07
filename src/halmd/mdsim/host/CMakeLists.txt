@@ -1,7 +1,7 @@
 add_library(halmd_mdsim_host
   box.cpp
   force.cpp
-  neighbor.cpp
+  neighbour.cpp
   particle.cpp
   random.cpp
   thermodynamics.cpp

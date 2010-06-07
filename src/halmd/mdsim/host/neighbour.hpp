@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_NEIGHBOR_HPP
-#define HALMD_MDSIM_HOST_NEIGHBOR_HPP
+#ifndef HALMD_MDSIM_HOST_NEIGHBOUR_HPP
+#define HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 
 #include <boost/array.hpp>
 #include <boost/multi_array.hpp>
@@ -29,7 +29,7 @@
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/neighbor.hpp>
+#include <halmd/mdsim/neighbour.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -45,18 +45,18 @@ class hilbert;
 }
 
 template <int dimension, typename float_type>
-class neighbor
-  : public mdsim::neighbor<dimension>
+class neighbour
+  : public mdsim::neighbour<dimension>
 {
 public:
-    typedef mdsim::neighbor<dimension> _Base;
+    typedef mdsim::neighbour<dimension> _Base;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::force<dimension> force_type;
     typedef host::box<dimension> box_type;
     typedef typename force_type::matrix_type matrix_type;
 
-    typedef typename particle_type::neighbor_list cell_list;
+    typedef typename particle_type::neighbour_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
     typedef numeric::host::blas::vector<size_t, dimension> cell_size_type;
     typedef numeric::host::blas::vector<ssize_t, dimension> cell_diff_type;
@@ -67,8 +67,8 @@ public:
 
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);
-    neighbor(po::options const& vm);
-    virtual ~neighbor() {}
+    neighbour(po::options const& vm);
+    virtual ~neighbour() {}
     void update();
     bool check();
 
@@ -76,13 +76,13 @@ protected:
     friend class sort::hilbert<dimension, float_type>;
 
     void update_cells();
-    void update_cell_neighbors(cell_size_type const& i);
+    void update_cell_neighbours(cell_size_type const& i);
     template <bool same_cell>
-    void compute_cell_neighbors(size_t i, cell_list& c);
+    void compute_cell_neighbours(size_t i, cell_list& c);
 
-    /** neighbor list skin in MD units */
+    /** neighbour list skin in MD units */
     float_type r_skin_;
-    /** (cutoff lengths + neighbor list skin)² */
+    /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** cell lists */
     cell_lists cell_;
@@ -90,9 +90,9 @@ protected:
     cell_size_type ncell_;
     /** cell edge lengths */
     vector_type cell_length_;
-    /** half neighbor list skin */
+    /** half neighbour list skin */
     float_type r_skin_half_;
-    /** particle positions at last neighbor list update */
+    /** particle positions at last neighbour list update */
     std::vector<vector_type> r0_;
 };
 
@@ -100,4 +100,4 @@ protected:
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_NEIGHBOR_HPP */
+#endif /* ! HALMD_MDSIM_HOST_NEIGHBOUR_HPP */
