@@ -37,15 +37,21 @@
 #include <halmd/utility/options.hpp>
 #include <halmd/io/logger.hpp>
 
+using namespace halmd;
+using namespace std;
+
 /** reference values for the state variables of a 3-dim. LJ fluid can be found in
  *  L. Verlet, Phys. Rev. 159, 98 (1967)
  *  and in Hansen & McDonald, Table 4.2
+ *
+ *  a more detailed analysis and more accurate values are found in
+ *  Johnson, Zollweg, and Gubbins, Mol. Phys. 78, 591 (1993).
  */
 
 void set_default_options(halmd::po::options& vm);
 
-const double eps = std::numeric_limits<double>::epsilon();
-const float eps_float = std::numeric_limits<float>::epsilon();
+const double eps = numeric_limits<double>::epsilon();
+const float eps_float = numeric_limits<float>::epsilon();
 
 const int dim = 3;
 
@@ -62,7 +68,6 @@ inline double heat_capacity(double en_kin, double variance, unsigned npart)
 
 BOOST_AUTO_TEST_CASE( ideal_gas )
 {
-    using namespace halmd;
     using namespace boost::assign;
 
     typedef boost::program_options::variable_value variable_value;
@@ -76,7 +81,7 @@ BOOST_AUTO_TEST_CASE( ideal_gas )
     float rc = 0.1;
 
     // override const operator[] in variables_map
-    std::map<std::string, variable_value>& vm_(vm);
+    map<string, variable_value>& vm_(vm);
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
     vm_["dimension"]    = variable_value(dim, false);
@@ -86,7 +91,7 @@ BOOST_AUTO_TEST_CASE( ideal_gas )
     // enable logging to console
     io::logger::init(vm);
 
-    BOOST_TEST_MESSAGE("use backend " << vm["backend"].as<std::string>());
+    BOOST_TEST_MESSAGE("use backend " << vm["backend"].as<string>());
 
     // set up modules
     BOOST_TEST_MESSAGE("resolve module dependencies");
@@ -122,7 +127,6 @@ BOOST_AUTO_TEST_CASE( ideal_gas )
 
 BOOST_AUTO_TEST_CASE( thermodynamics )
 {
-    using namespace halmd;
 
     typedef boost::program_options::variable_value variable_value;
 
@@ -131,25 +135,27 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
     set_default_options(vm);
 
     float density = 0.4;
-    float temp = 1.424;
-    float rc = 2.5; //pow(2, 1./6);
+    float temp = 2.0;
+    float rc = 3.5;
 
     using namespace boost::assign;
 
     // override const operator[] in variables_map
-    std::map<std::string, variable_value>& vm_(vm);
+    map<string, variable_value>& vm_(vm);
+//     vm_["force"]        = variable_value(string("power-law"), false);
+//     vm_["index"]        = variable_value(48, false);
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
     vm_["dimension"]    = variable_value(dim, false);
     vm_["particles"]    = variable_value(864u, false);
     vm_["time"]         = variable_value(50., false);
-    vm_["verbose"]      = variable_value(1, true);
+//     vm_["verbose"]      = variable_value(2, true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
     // enable logging to console
     io::logger::init(vm);
 
-    BOOST_TEST_MESSAGE("use backend " << vm["backend"].as<std::string>());
+    BOOST_TEST_MESSAGE("use backend " << vm["backend"].as<string>());
 
     // set up modules
     BOOST_TEST_MESSAGE("resolve module dependencies");
@@ -170,13 +176,12 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
 
     core->init();
 
-    // prepare system at given temperature, run for t*=10 (following Verlet)
+    // prepare system at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("equilibrate initial state");
-    uint64_t steps = static_cast<uint64_t>(round(20 / vm["timestep"].as<double>()));
+    uint64_t steps = static_cast<uint64_t>(round(30 / vm["timestep"].as<double>()));
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
         if((i+1) % 200 == 0) {
-            BOOST_TEST_MESSAGE("temperature at step " << i+1 << ": " << thermodynamics->temp());
             boltzmann->set();
         }
     }
@@ -201,31 +206,36 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
     for (uint64_t i = 0; i < core->steps(); ++i) {
         core->mdstep();
         if(i % 10 == 0) {
-            double temp__ = thermodynamics->temp();
-            BOOST_TEST_MESSAGE("temperature at step " << i << ": " << temp__);
-            temp_  += temp__; //thermodynamics->temp();
+            temp_  += thermodynamics->temp();
             press  += thermodynamics->pressure();
             en_pot += thermodynamics->en_pot();
         }
     }
 
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), core->steps() * eps);
-    BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(), core->steps() * 1e-10 / en_tot);
+    BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(),
+                               core->steps() * 1e-10 / fabs(en_tot));
 
-    BOOST_CHECK_CLOSE_FRACTION(temp, temp_.mean(), 3e-3);
+    BOOST_CHECK_CLOSE_FRACTION(temp, temp_.mean(), 5e-3);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     double Cv = heat_capacity(temp_.mean(), temp_.var(), vm["particles"].as<unsigned>());
+
+    // corrections for trunctated LJ potential, see e.g. Johnsen et al. (1993)
+    double press_corr = 32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3);
+    double en_corr = 8./9 * M_PI * density * (pow(rc, -6) - 3) * pow(rc, -3);
+
     BOOST_TEST_MESSAGE("Density: " << density);
     BOOST_TEST_MESSAGE("Temperature: " << temp_.mean() << " ± " << temp_.err());
     BOOST_TEST_MESSAGE("Pressure: " << press.mean() << " ± " << press.err());
+    BOOST_TEST_MESSAGE("Pressure (corrected): " << press.mean() + press_corr);
     BOOST_TEST_MESSAGE("Potential energy: " << en_pot.mean() << " ± " << en_pot.err());
+    BOOST_TEST_MESSAGE("Potential energy (corrected): " << en_pot.mean() + en_corr);
     BOOST_TEST_MESSAGE("β P / ρ = " << press.mean() / temp_.mean() / density);
     BOOST_TEST_MESSAGE("β U / N = " << en_pot.mean() / temp_.mean());
     BOOST_TEST_MESSAGE("Heat capacity = " << Cv);
-    BOOST_CHECK_CLOSE_FRACTION(press.mean() / temp_.mean() / density, 0.38, 0.05);
-    BOOST_CHECK_CLOSE_FRACTION(en_pot.mean() / temp_.mean(), -2.73, 0.05);
-    BOOST_CHECK_CLOSE_FRACTION(Cv, 2.03, 0.05);
+    BOOST_CHECK_CLOSE_FRACTION(press.mean() + press_corr, 0.70, 0.01);
+    BOOST_CHECK_CLOSE_FRACTION(en_pot.mean() + en_corr, -2.54, 0.01);
 }
 
 void set_default_options(halmd::po::options& vm)
@@ -234,10 +244,10 @@ void set_default_options(halmd::po::options& vm)
     using namespace boost::assign;
 
     // override const operator[] in variables_map
-    std::map<std::string, variable_value>& vm_(vm);
-    vm_["backend"]      = variable_value(std::string(MDSIM_BACKEND), true);
-    vm_["force"]        = variable_value(std::string("lj"), true);
-    vm_["integrator"]   = variable_value(std::string("verlet"), true);
+    map<string, variable_value>& vm_(vm);
+    vm_["backend"]      = variable_value(string(MDSIM_BACKEND), true);
+    vm_["force"]        = variable_value(string("lj"), true);
+    vm_["integrator"]   = variable_value(string("verlet"), true);
     vm_["particles"]    = variable_value(1000u, true);
     vm_["steps"]        = variable_value((uint64_t)1000, true);
     vm_["timestep"]     = variable_value(0.001, true);
