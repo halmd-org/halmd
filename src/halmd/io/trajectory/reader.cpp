@@ -17,31 +17,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_TRAJECTORY_READER_HPP
-#define HALMD_IO_TRAJECTORY_READER_HPP
+#include <halmd/io/trajectory/reader.hpp>
 
-#include <halmd/mdsim/samples/host/trajectory.hpp>
-#include <halmd/util/H5xx.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace io { namespace trajectory
 {
 
+/**
+ * Assemble module options
+ */
 template <int dimension>
-class reader
+void reader<dimension>::options(po::options_description& desc)
 {
-public:
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm) {}
-    reader(po::options const& vm) {}
-    virtual ~reader() {}
-};
+    desc.add_options()
+        ("trajectory,J", po::value<string>()->required(),
+         "trajectory input file")
+        ;
+
+    po::options_description group("Trajectory reader");
+    group.add_options()
+        ("trajectory-sample,S", po::value<ssize_t>()->required(),
+         "trajectory sample for initial state")
+        ;
+    desc.add(group);
+}
 
 }} // namespace io::trajectory
 
-} // namespace halmd
+template class module<io::trajectory::reader<3> >;
+template class module<io::trajectory::reader<2> >;
 
-#endif /* ! HALMD_IO_TRAJECTORY_READER_HPP */
+} // namespace halmd

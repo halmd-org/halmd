@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <H5Cpp.h>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/readers/hdf5.hpp>
 
@@ -34,6 +36,9 @@ namespace io { namespace trajectory { namespace readers
 template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::resolve(po::options const& vm)
 {
+    if (!H5::H5File::isHdf5(vm["trajectory"].as<string>())) {
+        throw unsuitable_module("not a HDF5 file: " + vm["trajectory"].as<string>());
+    }
     module<sample_type>::required(vm);
     module<particle_type>::required(vm);
 }

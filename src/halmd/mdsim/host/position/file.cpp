@@ -37,10 +37,6 @@ using namespace std;
 template <int dimension, typename float_type>
 void file<dimension, float_type>::resolve(po::options const& vm)
 {
-    if (!vm.count("trajectory-sample")) {
-        throw unsuitable_module("missing option trajectory-sample");
-    }
-
     module<reader_type>::required(vm);
     module<sample_type>::required(vm);
     module<particle_type>::required(vm);

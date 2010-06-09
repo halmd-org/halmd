@@ -72,6 +72,7 @@ configure_file(
 
 set(HALMD_MODULES
   halmd_io
+  halmd_io_trajectory
   halmd_io_trajectory_readers
   halmd_mdsim
   halmd_mdsim_host
