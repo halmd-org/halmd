@@ -141,4 +141,3 @@ endif(TBB_FOUND)
 
 add_subdirectory(doc)
 add_subdirectory(src)
-add_subdirectory(test)
