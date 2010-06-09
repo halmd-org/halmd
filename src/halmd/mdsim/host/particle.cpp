@@ -54,7 +54,6 @@ particle<dimension, float_type>::particle(po::options const& vm)
   , f(nbox)
   , tag(nbox)
   , type(nbox)
-  , neighbour(nbox)
 {
 }
 
@@ -72,7 +71,6 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     // no permutation of forces
     algorithm::host::permute(tag.begin(), tag.end(), index.begin());
     algorithm::host::permute(type.begin(), type.end(), index.begin());
-    // no permutation of neighbour lists
 }
 
 // explicit instantiation

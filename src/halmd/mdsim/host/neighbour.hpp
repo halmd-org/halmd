@@ -56,7 +56,8 @@ public:
     typedef host::box<dimension> box_type;
     typedef typename force_type::matrix_type matrix_type;
 
-    typedef typename particle_type::neighbour_list cell_list;
+    typedef std::vector<unsigned int> neighbour_list;
+    typedef std::vector<unsigned int> cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
     typedef numeric::host::blas::vector<size_t, dimension> cell_size_type;
     typedef numeric::host::blas::vector<ssize_t, dimension> cell_diff_type;
@@ -71,6 +72,9 @@ public:
     virtual ~neighbour() {}
     void update();
     bool check();
+
+    /** neighbour lists */
+    std::vector<neighbour_list> list;
 
 protected:
     friend class sort::hilbert<dimension, float_type>;
