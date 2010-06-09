@@ -91,10 +91,6 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
         throw runtime_error("failed to copy trajectory from GPU to host");
     }
 
-    for (size_t i = 0; i < particle->ntype; ++i) {
-        r[i].reset(new sample_vector(particle->ntypes[i]));
-        v[i].reset(new sample_vector(particle->ntypes[i]));
-    }
     for (size_t i = 0; i < particle->nbox; ++i) {
         unsigned int type, tag;
         vector_type r = untagged<vector_type>(particle->h_r[i], type);

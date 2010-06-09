@@ -44,7 +44,12 @@ trajectory<dimension, float_type>::trajectory(po::options const& vm)
   // allocate sample pointers
   , r(particle->ntype)
   , v(particle->ntype)
-{}
+{
+    for (size_t i = 0; i < particle->ntype; ++i) {
+        r[i].reset(new sample_vector(particle->ntypes[i]));
+        v[i].reset(new sample_vector(particle->ntypes[i]));
+    }
+}
 
 #ifndef USE_HOST_SINGLE_PRECISION
 template class trajectory<3, double>;

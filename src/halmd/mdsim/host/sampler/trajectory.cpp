@@ -52,10 +52,6 @@ trajectory<dimension, float_type>::trajectory(po::options const& vm)
 template <int dimension, typename float_type>
 void trajectory<dimension, float_type>::acquire()
 {
-    for (size_t i = 0; i < particle->ntype; ++i) {
-        r[i].reset(new sample_vector(particle->ntypes[i]));
-        v[i].reset(new sample_vector(particle->ntypes[i]));
-    }
     for (size_t i = 0; i < particle->nbox; ++i) {
         // periodically extended particle position
         (*r[particle->type[i]])[particle->tag[i]] = particle->r[i] + element_prod(particle->image[i], box->length());
