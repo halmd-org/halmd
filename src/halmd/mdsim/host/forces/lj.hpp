@@ -38,7 +38,6 @@ public:
     typedef typename _Base::vector_type vector_type;
 
     using _Base::box;
-    using _Base::neighbour;
     using _Base::particle;
     using _Base::smooth;
     using _Base::thermodynamics;

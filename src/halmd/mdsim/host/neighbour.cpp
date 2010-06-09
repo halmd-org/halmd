@@ -67,7 +67,6 @@ neighbour<dimension, float_type>::neighbour(po::options const& vm)
   , force(module<force_type>::fetch(vm))
   , box(module<box_type>::fetch(vm))
   // allocate parameters
-  , list(particle->nbox)
   , r_skin_(vm["skin"].as<float>())
   , rr_cut_skin_(particle->ntype, particle->ntype)
   , r0_(particle->nbox)
@@ -161,7 +160,7 @@ void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type con
 {
     BOOST_FOREACH(size_t p, cell_(i)) {
         // empty neighbour list of particle
-        list[p].clear();
+        particle->neighbour[p].clear();
 
         cell_diff_type j;
         for (j[0] = -1; j[0] <= 1; ++j[0]) {
@@ -222,7 +221,7 @@ void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_li
         }
 
         // add particle to neighbour list
-        list[i].push_back(j);
+        particle->neighbour[i].push_back(j);
     }
 }
 

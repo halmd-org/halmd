@@ -42,7 +42,6 @@ void force<dimension, float_type>::resolve(po::options const& vm)
 {
     module<particle_type>::required(vm);
     module<box_type>::required(vm);
-    module<neighbour_type>::required(vm);
     module<thermodynamics_type>::required(vm);
     module<smooth_type>::optional(vm);
 }
@@ -56,7 +55,6 @@ force<dimension, float_type>::force(po::options const& vm)
   // dependency injection
   , particle(module<particle_type>::fetch(vm))
   , box(module<box_type>::fetch(vm))
-  , neighbour(module<neighbour_type>::fetch(vm))
   , thermodynamics(module<thermodynamics_type>::fetch(vm))
   , smooth(module<smooth_type>::fetch(vm))
 {
