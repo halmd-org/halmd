@@ -21,8 +21,8 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/mdsim/gpu/sample/trajectory.hpp>
-#include <halmd/mdsim/gpu/sample/trajectory_wrapper.cuh>
+#include <halmd/mdsim/gpu/sampler/trajectory.hpp>
+#include <halmd/mdsim/gpu/sampler/trajectory_wrapper.cuh>
 
 using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;
@@ -30,7 +30,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace sample
+namespace mdsim { namespace gpu { namespace sampler
 {
 
 /**
@@ -108,17 +108,11 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
     }
 }
 
-// explicit instantiation
-template class trajectory<mdsim::samples::gpu::trajectory<3, float> >;
-template class trajectory<mdsim::samples::gpu::trajectory<2, float> >;
-template class trajectory<mdsim::samples::host::trajectory<3, float> >;
-template class trajectory<mdsim::samples::host::trajectory<2, float> >;
-
 }}} // namespace mdsim::gpu::sample
 
-template class module<mdsim::gpu::sample::trajectory<mdsim::samples::gpu::trajectory<3, float> > >;
-template class module<mdsim::gpu::sample::trajectory<mdsim::samples::gpu::trajectory<2, float> > >;
-template class module<mdsim::gpu::sample::trajectory<mdsim::samples::host::trajectory<3, float> > >;
-template class module<mdsim::gpu::sample::trajectory<mdsim::samples::host::trajectory<2, float> > >;
+template class module<mdsim::gpu::sampler::trajectory<mdsim::samples::gpu::trajectory<3, float> > >;
+template class module<mdsim::gpu::sampler::trajectory<mdsim::samples::gpu::trajectory<2, float> > >;
+template class module<mdsim::gpu::sampler::trajectory<mdsim::samples::host::trajectory<3, float> > >;
+template class module<mdsim::gpu::sampler::trajectory<mdsim::samples::host::trajectory<2, float> > >;
 
 } // namespace halmd

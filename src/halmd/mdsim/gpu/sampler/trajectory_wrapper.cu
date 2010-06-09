@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/sample/trajectory_kernel.cu>
-#include <halmd/mdsim/gpu/sample/trajectory_wrapper.cuh>
+#include <halmd/mdsim/gpu/sampler/trajectory_kernel.cu>
+#include <halmd/mdsim/gpu/sampler/trajectory_wrapper.cuh>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace sample
+namespace halmd { namespace mdsim { namespace gpu { namespace sampler
 {
 
 cuda::texture<float4>
@@ -45,4 +45,4 @@ cuda::symbol<float2>
 cuda::function<void (unsigned int const*, float2*, float2*)>
   trajectory_wrapper<2>::sample = trajectory_kernel::sample<vector<float, 2> >;
 
-}}}} // namespace halmd::mdsim::gpu::sample
+}}}} // namespace halmd::mdsim::gpu::sampler

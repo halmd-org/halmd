@@ -10,6 +10,6 @@ add_library(halmd_mdsim_host
 add_subdirectory(forces)
 add_subdirectory(integrator)
 add_subdirectory(position)
-add_subdirectory(sample)
+add_subdirectory(sampler)
 add_subdirectory(sort)
 add_subdirectory(velocity)

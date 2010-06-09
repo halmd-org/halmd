@@ -18,7 +18,6 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/sample/trajectory.hpp>
 #include <halmd/mdsim/samples/gpu/trajectory.hpp>
 
 namespace halmd

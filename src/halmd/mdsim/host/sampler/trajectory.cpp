@@ -18,14 +18,14 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/sample/trajectory.hpp>
+#include <halmd/mdsim/host/sampler/trajectory.hpp>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace sample
+namespace mdsim { namespace host { namespace sampler
 {
 
 /**
@@ -64,24 +64,14 @@ void trajectory<dimension, float_type>::acquire()
     }
 }
 
-// explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class trajectory<3, double>;
-template class trajectory<2, double>;
-#else
-template class trajectory<3, float>;
-template class trajectory<2, float>;
-#endif
-
-}}} // namespace mdsim::host::sample
+}}} // namespace mdsim::host::sampler
 
 #ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::sample::trajectory<3, double> >;
-template class module<mdsim::host::sample::trajectory<2, double> >;
+template class module<mdsim::host::sampler::trajectory<3, double> >;
+template class module<mdsim::host::sampler::trajectory<2, double> >;
 #else
-template class module<mdsim::host::sample::trajectory<3, float> >;
-template class module<mdsim::host::sample::trajectory<2, float> >;
+template class module<mdsim::host::sampler::trajectory<3, float> >;
+template class module<mdsim::host::sampler::trajectory<2, float> >;
 #endif
 
 } // namespace halmd
-

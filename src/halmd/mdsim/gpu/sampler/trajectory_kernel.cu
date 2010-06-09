@@ -27,7 +27,7 @@ using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
 
-namespace halmd { namespace mdsim { namespace gpu { namespace sample { namespace trajectory_kernel
+namespace halmd { namespace mdsim { namespace gpu { namespace sampler { namespace trajectory_kernel
 {
 
 template <size_t N>
@@ -69,4 +69,4 @@ __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov)
     g_ov[GTID] = v;
 }
 
-}}}}} // namespace halmd::mdsim::gpu::sample::trajectory_kernel
+}}}}} // namespace halmd::mdsim::gpu::sampler::trajectory_kernel

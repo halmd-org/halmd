@@ -24,7 +24,7 @@
 
 #include <cuda_wrapper.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace sample
+namespace halmd { namespace mdsim { namespace gpu { namespace sampler
 {
 
 template <size_t N>
@@ -45,6 +45,6 @@ struct trajectory_wrapper
     static cuda::function<void (unsigned int const*, coalesced_vector_type*, coalesced_vector_type*)> sample;
 };
 
-}}}} // namespace halmd::mdsim::gpu::sample
+}}}} // namespace halmd::mdsim::gpu::sampler
 
 #endif /* ! HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH */

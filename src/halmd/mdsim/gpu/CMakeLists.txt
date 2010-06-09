@@ -8,5 +8,5 @@ target_link_libraries(halmd_mdsim_gpu
 
 add_subdirectory(forces)
 add_subdirectory(integrator)
-add_subdirectory(sample)
+add_subdirectory(sampler)
 add_subdirectory(sort)

@@ -19,10 +19,8 @@
 
 #include <halmd/io/logger.hpp>
 #ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/sample/trajectory.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 #endif
-#include <halmd/mdsim/host/sample/trajectory.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 
 namespace halmd
