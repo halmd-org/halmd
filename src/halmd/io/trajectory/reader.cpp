@@ -40,7 +40,7 @@ void reader<dimension>::options(po::options_description& desc)
 
     po::options_description group("Trajectory reader");
     group.add_options()
-        ("trajectory-sample,S", po::value<ssize_t>()->required(),
+        ("trajectory-sample,S", po::value<ssize_t>()->default_value(-1),
          "trajectory sample for initial state")
         ;
     desc.add(group);
