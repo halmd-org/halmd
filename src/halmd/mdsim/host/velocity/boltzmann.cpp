@@ -48,8 +48,8 @@ void boltzmann<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::resolve(po::options const& vm)
 {
-    if (vm.count("trajectory-sample")) {
-        throw unsuitable_module("conflicting option trajectory-sample");
+    if (vm["velocity"].as<string>() != "boltzmann") {
+        throw unsuitable_module("mismatching option velocity");
     }
 
     module<particle_type>::required(vm);

@@ -42,8 +42,8 @@ using namespace std;
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::resolve(po::options const& vm)
 {
-    if (vm.count("trajectory-sample")) {
-        throw unsuitable_module("conflicting option trajectory-sample");
+    if (vm["position"].as<string>() != "lattice") {
+        throw unsuitable_module("mismatching option position");
     }
 
     module<particle_type>::required(vm);

@@ -32,7 +32,7 @@ template <int dimension>
 class velocity
 {
 public:
-    static void options(po::options_description& desc) {}
+    static void options(po::options_description& desc);
     static void resolve(po::options const& vm) {}
     velocity(po::options const& vm) {}
     virtual ~velocity() {}

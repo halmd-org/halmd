@@ -37,6 +37,10 @@ using namespace std;
 template <int dimension, typename float_type>
 void file<dimension, float_type>::resolve(po::options const& vm)
 {
+    if (vm["velocity"].as<string>() != "file") {
+        throw unsuitable_module("mismatching option velocity");
+    }
+
     module<reader_type>::required(vm);
     module<sample_type>::required(vm);
     module<particle_type>::required(vm);

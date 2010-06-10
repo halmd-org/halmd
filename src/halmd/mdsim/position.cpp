@@ -21,10 +21,26 @@
 #include <halmd/mdsim/host/position/lattice.hpp>
 #include <halmd/mdsim/position.hpp>
 
+using namespace boost;
+using namespace std;
+
 namespace halmd
 {
 namespace mdsim
 {
+
+/**
+ * Assemble module options
+ */
+template <int dimension>
+void position<dimension>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("position",
+         po::value<string>()->default_value("lattice"),
+         "initial particle positions module")
+        ;
+}
 
 template class position<3>;
 template class position<2>;

@@ -21,10 +21,26 @@
 #include <halmd/mdsim/host/velocity/boltzmann.hpp>
 #include <halmd/mdsim/velocity.hpp>
 
+using namespace boost;
+using namespace std;
+
 namespace halmd
 {
 namespace mdsim
 {
+
+/**
+ * Assemble module options
+ */
+template <int dimension>
+void velocity<dimension>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("velocity",
+         po::value<string>()->default_value("boltzmann"),
+         "initial particle velocities module")
+        ;
+}
 
 template class velocity<3>;
 template class velocity<2>;
