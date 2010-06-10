@@ -19,16 +19,23 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lambda/bind.hpp>
+#include <boost/lambda/casts.hpp>
+#include <boost/lambda/lambda.hpp>
 #include <fstream>
 #include <iostream>
 
+#include <halmd/utility/date_time.hpp>
 #include <halmd/utility/module/options.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
 using namespace boost::assign;
+using namespace boost::lambda;
 using namespace std;
+
+#define OUTPUT_FILENAME (to_lower_copy(string(PROGRAM_NAME)) + "_%Y%m%d_%H%M%S")
 
 namespace halmd
 {
@@ -52,7 +59,7 @@ void parse_options(int argc, char** argv, options& vm)
     po::options_description desc("Program options");
     desc.add_options()
         ("output,o",
-         po::value<string>()->default_value(to_lower_copy(string(PROGRAM_NAME)) + "_%Y%m%d_%H%M%S"),
+         po::value<string>()->default_value(OUTPUT_FILENAME)->notifier(bind(&format_local_time, ll_const_cast<string&>(_1), _1)),
          "output file prefix")
         ("input,I", po::value<vector<string> >(),
          "parameter input file")
@@ -105,6 +112,8 @@ void parse_options(int argc, char** argv, options& vm)
         cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
         throw options_parser_error(EXIT_FAILURE);
     }
+
+    po::notify(vm);
 
     if (vm.count("help")) {
         cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
