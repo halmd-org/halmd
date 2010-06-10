@@ -579,6 +579,24 @@ attribute::as()
     return value;
 }
 
+/**
+ * returns absolute path of a HDF5 object within file
+ *
+ * For attributes the path of the parent object is returned.
+ */
+inline std::string path(H5::IdComponent const& id)
+{
+    ssize_t size; // excludes NULL terminator
+    if (-1 == (size = H5Iget_name(id.getId(), NULL, 0))) {
+        throw H5::IdComponentException("H5Iget_name", "failed to get length of name");
+    }
+    std::vector<char> name_(size + 1); // includes NULL terminator
+    if (-1 == (H5Iget_name(id.getId(), name_.data(), name_.size()))) {
+        throw H5::IdComponentException("H5Iget_name", "failed to get name");
+    }
+    return name_.data();
+}
+
 } // namespace H5xx
 
 #endif /* ! HALMD_UTIL_H5XX_HPP */
