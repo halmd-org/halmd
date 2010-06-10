@@ -81,8 +81,7 @@ inline double thermodynamics<dimension>::pressure() const
 {
     double virial_sum = 0;
     // store reference to avoid redundant calls to virtual function
-    std::vector<virial_type> const& vir = virial();
-    BOOST_FOREACH(virial_type const& v, vir) {
+    BOOST_FOREACH(virial_type const& v, virial()) {
         virial_sum += v[0];
     }
     virial_sum /= dimension;
