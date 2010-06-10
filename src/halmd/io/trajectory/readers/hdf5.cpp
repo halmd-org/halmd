@@ -40,7 +40,6 @@ void hdf5<dimension, float_type>::resolve(po::options const& vm)
         throw unsuitable_module("not a HDF5 file: " + vm["trajectory"].as<string>());
     }
     module<sample_type>::required(vm);
-    module<particle_type>::required(vm);
 }
 
 /**
@@ -51,19 +50,15 @@ hdf5<dimension, float_type>::hdf5(po::options const& vm)
   : _Base(vm)
   // dependency injection
   , sample(module<sample_type>::fetch(vm))
-  , particle(module<particle_type>::fetch(vm))
-  // parse options
-  , path_(vm["trajectory"].as<string>())
-  , offset_(vm["trajectory-sample"].as<ssize_t>())
 {
     LOG("read trajectory file: " << path_);
 
     H5::H5File file(path_, H5F_ACC_RDONLY);
     H5::Group root(file.openGroup("trajectory"));
 
-    for (size_t i = 0; i < particle->ntype; ++i) {
+    for (size_t i = 0; i < sample->r.size(); ++i) {
         H5::Group type;
-        if (particle->ntype > 1) {
+        if (sample->r.size() > 1) {
             type = root.openGroup(string(1, 'A' + i));
         }
         else {
@@ -95,9 +90,6 @@ hdf5<dimension, float_type>::hdf5(po::options const& vm)
             LOG_WARNING("falling back to reduced particle position sample");
         }
         H5::DataSet v = type.openDataSet("v");
-
-        sample->r[i].reset(new sample_vector(particle->ntypes[i]));
-        sample->v[i].reset(new sample_vector(particle->ntypes[i]));
 
         read(r, sample->r[i]);
         read(v, sample->v[i]);

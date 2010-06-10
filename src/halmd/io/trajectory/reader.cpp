@@ -46,9 +46,17 @@ void reader<dimension>::options(po::options_description& desc)
     desc.add(group);
 }
 
-}} // namespace io::trajectory
+template <int dimension>
+reader<dimension>::reader(po::options const& vm)
+  // parse options
+  : path_(vm["trajectory"].as<string>())
+  , offset_(vm["trajectory-sample"].as<ssize_t>())
+{
+}
 
-template class module<io::trajectory::reader<3> >;
-template class module<io::trajectory::reader<2> >;
+template class reader<3>;
+template class reader<2>;
+
+}} // namespace io::trajectory
 
 } // namespace halmd
