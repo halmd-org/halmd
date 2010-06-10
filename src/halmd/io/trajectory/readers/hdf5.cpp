@@ -36,8 +36,8 @@ namespace io { namespace trajectory { namespace readers
 template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::resolve(po::options const& vm)
 {
-    if (!H5::H5File::isHdf5(vm["trajectory"].as<string>())) {
-        throw unsuitable_module("not a HDF5 file: " + vm["trajectory"].as<string>());
+    if (!H5::H5File::isHdf5(vm["trajectory-file"].as<string>())) {
+        throw unsuitable_module("not a HDF5 file: " + vm["trajectory-file"].as<string>());
     }
     module<sample_type>::required(vm);
 }

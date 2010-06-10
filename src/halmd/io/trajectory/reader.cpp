@@ -34,7 +34,7 @@ template <int dimension>
 void reader<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("trajectory,J", po::value<string>()->required(),
+        ("trajectory-file,J", po::value<string>()->required(),
          "trajectory input file")
         ;
 
@@ -49,7 +49,7 @@ void reader<dimension>::options(po::options_description& desc)
 template <int dimension>
 reader<dimension>::reader(po::options const& vm)
   // parse options
-  : path_(vm["trajectory"].as<string>())
+  : path_(vm["trajectory-file"].as<string>())
   , offset_(vm["trajectory-sample"].as<ssize_t>())
 {
 }
