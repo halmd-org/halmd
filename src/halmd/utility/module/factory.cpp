@@ -58,9 +58,9 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
     // resolved.
     //
 
-#define LOG_DEBUG_INDENT(indent, x) LOG_DEBUG(string((indent) * 2, ' ') << x)
+#define LOG_DEBUG_INDENT(indent, x) LOG_DEBUG(string((indent), '.') << " " << x)
 #ifndef NDEBUG
-    static int depth = 0;
+    static int depth = 1;
 #endif
 
     // We cache the result of a dependency resolution by holding
