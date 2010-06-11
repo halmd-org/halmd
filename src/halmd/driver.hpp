@@ -17,51 +17,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_CORE_HPP
-#define HALMD_MDSIM_CORE_HPP
+#ifndef HALMD_DRIVER_HPP
+#define HALMD_DRIVER_HPP
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/integrator.hpp>
-#include <halmd/mdsim/neighbour.hpp>
-#include <halmd/mdsim/position.hpp>
-#include <halmd/mdsim/sort.hpp>
-#include <halmd/mdsim/velocity.hpp>
+#include <halmd/core.hpp>
+#include <halmd/mdsim/core.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
 {
-namespace mdsim
-{
 
+/**
+ * This class drives the MD integration and the evaluation.
+ */
 template <int dimension>
-class core
+class driver
+  : public halmd::core
 {
 public:
-    typedef mdsim::force<dimension> force_type;
-    typedef mdsim::neighbour<dimension> neighbour_type;
-    typedef mdsim::sort<dimension> sort_type;
-    typedef mdsim::integrator<dimension> integrator_type;
-    typedef mdsim::position<dimension> position_type;
-    typedef mdsim::velocity<dimension> velocity_type;
+    typedef halmd::core _Base;
+    typedef mdsim::core<dimension> core_type;
 
     static void options(po::options_description& desc);
     static void resolve(po::options const& vm);
-    core(po::options const& vm);
-    void mdstep();
+    driver(po::options const& vm);
+    void run();
+    uint64_t steps() { return steps_; }
+    double time() { return time_; }
 
-    shared_ptr<force_type> force;
-    shared_ptr<neighbour_type> neighbour;
-    shared_ptr<sort_type> sort;
-    shared_ptr<integrator_type> integrator;
-    shared_ptr<position_type> position;
-    shared_ptr<velocity_type> velocity;
+    shared_ptr<core_type> core;
+
+protected:
+    /** number of integration steps */
+    uint64_t steps_;
+    /** integration time in MD units */
+    double time_;
 };
-
-} // namespace mdsim
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_CORE_HPP */
+#endif /* ! HALMD_DRIVER_HPP */

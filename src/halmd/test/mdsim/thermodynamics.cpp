@@ -106,14 +106,13 @@ BOOST_AUTO_TEST_CASE( ideal_gas )
     shared_ptr<mdsim::thermodynamics<dim> >
             thermodynamics(module<mdsim::thermodynamics<dim> >::fetch(vm));
 
-    core->init();
-
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
     double en_tot = thermodynamics->en_tot();
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run MD simulation");
-    for (uint64_t i = 0; i < core->steps(); ++i) {
+    uint64_t steps = 1000;
+    for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
     }
 
@@ -148,7 +147,6 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
     vm_["temperature"]  = variable_value(temp, false);
     vm_["dimension"]    = variable_value(dim, false);
     vm_["particles"]    = variable_value(864u, false);
-    vm_["time"]         = variable_value(50., false);
 //     vm_["verbose"]      = variable_value(2, true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
@@ -173,8 +171,6 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
     // poor man's thermostat
     shared_ptr<mdsim::host::velocity::boltzmann<dim, double> >
             boltzmann(module<mdsim::host::velocity::boltzmann<dim, double> >::fetch(vm));
-
-    core->init();
 
     // prepare system at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("equilibrate initial state");
@@ -203,7 +199,8 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run MD simulation");
-    for (uint64_t i = 0; i < core->steps(); ++i) {
+    steps = 1000;
+    for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
         if(i % 10 == 0) {
             temp_  += thermodynamics->temp();
@@ -212,9 +209,9 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
         }
     }
 
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), core->steps() * eps);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), steps * eps);
     BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(),
-                               core->steps() * 1e-10 / fabs(en_tot));
+                               steps * 1e-10 / fabs(en_tot));
 
     BOOST_CHECK_CLOSE_FRACTION(temp, temp_.mean(), 5e-3);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
@@ -249,7 +246,6 @@ void set_default_options(halmd::po::options& vm)
     vm_["force"]        = variable_value(string("lj"), true);
     vm_["integrator"]   = variable_value(string("verlet"), true);
     vm_["particles"]    = variable_value(1000u, true);
-    vm_["steps"]        = variable_value((uint64_t)1000, true);
     vm_["timestep"]     = variable_value(0.001, true);
     vm_["smooth"]       = variable_value(0.005f, true);
     vm_["density"]      = variable_value(0.4f, true);

@@ -40,15 +40,6 @@ void core<dimension>::options(po::options_description& desc)
         ("dimension", po::value<int>()->default_value(3),
          "dimension of positional coordinates")
         ;
-
-    po::options_description group("MD simulation");
-    group.add_options()
-        ("steps,s", po::value<uint64_t>()->default_value(10000),
-         "number of simulation steps")
-        ("time,t", po::value<double>(),
-         "total simulation time")
-        ;
-    desc.add(group);
 }
 
 /**
@@ -73,51 +64,13 @@ void core<dimension>::resolve(po::options const& vm)
  */
 template <int dimension>
 core<dimension>::core(po::options const& vm)
-  : _Base(vm)
   // dependency injection
-  , force(module<force_type>::fetch(vm))
+  : force(module<force_type>::fetch(vm))
   , neighbour(module<neighbour_type>::fetch(vm))
   , sort(module<sort_type>::fetch(vm))
   , integrator(module<integrator_type>::fetch(vm))
   , position(module<position_type>::fetch(vm))
   , velocity(module<velocity_type>::fetch(vm))
-{
-    // parse options
-    if (vm["steps"].defaulted() && !vm["time"].empty()) {
-        time_ = vm["time"].as<double>();
-        steps_ = static_cast<uint64_t>(round(time_ / integrator->timestep()));
-    }
-    else {
-        steps_ = vm["steps"].as<uint64_t>();
-        time_ = steps_ * integrator->timestep();
-    }
-
-    LOG("number of integration steps: " << steps_);
-    LOG("integration time: " << time_);
-}
-
-/**
- * Run simulation
- */
-template <int dimension>
-void core<dimension>::run()
-{
-    init();
-
-    LOG("starting simulation");
-
-    for (uint64_t i = 0; i < steps_; ++i) {
-        mdstep();
-    }
-
-    LOG("finished simulation");
-}
-
-/**
- * Initialise simulation
- */
-template <int dimension>
-inline void core<dimension>::init()
 {
     position->set();
     velocity->set();
