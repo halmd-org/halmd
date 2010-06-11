@@ -38,6 +38,9 @@ using namespace std;
 namespace halmd
 {
 
+namespace io { namespace logger
+{
+
 sources::severity_logger<severity_level> logger_;
 
 static inline ostream& operator<<(ostream& os, severity_level lvl)
@@ -59,9 +62,6 @@ static inline ostream& operator<<(ostream& os, severity_level lvl)
     }
     return os;
 }
-
-namespace io { namespace logger
-{
 
 /**
  * initialize logging

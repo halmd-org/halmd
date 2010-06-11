@@ -25,31 +25,22 @@
 
 #include <halmd/utility/options.hpp>
 
-namespace halmd
-{
-
-enum severity_level
-{
-    trace,
-    debug,
-    info,
-    warning,
-    error,
-    fatal,
-};
-
-extern boost::log::sources::severity_logger<severity_level> logger_;
-
 #define HALMD_LOG(lvl, fmt) \
     do { \
-        BOOST_LOG_SEV(logger_, (lvl)) << fmt; \
+        BOOST_LOG_SEV( \
+            ::halmd::io::logger::logger_ \
+          , ::halmd::io::logger::lvl \
+          ) << fmt; \
     } while(0)
 
 #define HALMD_LOG_ONCE(lvl, fmt) \
     do { \
         static bool __logged__ = false; \
         if (!__logged__) { \
-            BOOST_LOG_SEV(logger_, (lvl)) << fmt; \
+            BOOST_LOG_SEV( \
+                ::halmd::io::logger::logger_ \
+              , ::halmd::io::logger::lvl \
+              ) << fmt; \
             __logged__ = true; \
         } \
     } while(0)
@@ -75,10 +66,25 @@ extern boost::log::sources::severity_logger<severity_level> logger_;
 # define LOG_TRACE_ONCE(fmt)
 #endif
 
+namespace halmd
+{
+
 namespace io { namespace logger
 {
 
-extern void init(po::options const& vm);
+enum severity_level
+{
+    trace,
+    debug,
+    info,
+    warning,
+    error,
+    fatal,
+};
+
+extern boost::log::sources::severity_logger<severity_level> logger_;
+
+void init(po::options const& vm);
 
 }} // namespace io::logger
 
