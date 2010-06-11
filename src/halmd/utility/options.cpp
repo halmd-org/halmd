@@ -133,7 +133,7 @@ void parse_options(int argc, char** argv, options& vm)
     }
 
     // FIXME dirty hack
-    utility::module::factory::stack_.push_back(unparsed);
+    utility::module::factory::stack_.assign(1, unparsed);
 }
 
 /**

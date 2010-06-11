@@ -94,7 +94,7 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
             // resolution stack to rewind in case of failure.
             _Module_stack_iterator top = stack_.end();
             // Try to parse module options
-            if (!it->second->vm && !stack_.empty()) {
+            if (!it->second->vm) {
                 stack_.push_back(stack_.back());
                 it->second->vm.reset(new po::options);
                 try {
@@ -187,7 +187,7 @@ factory::_Module_map& factory::modules()
 }
 
 /** stack to keep track of used modules */
-factory::_Module_stack factory::stack_;
+factory::_Module_stack factory::stack_ = _Module_stack(1); // default to empty unparsed options
 /** resolved module cache */
 factory::_Rank_cache factory::cache_;
 
