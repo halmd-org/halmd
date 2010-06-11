@@ -245,6 +245,8 @@ void set_default_options(halmd::po::options& vm)
     vm_["backend"]      = variable_value(string(MDSIM_BACKEND), true);
     vm_["force"]        = variable_value(string("lj"), true);
     vm_["integrator"]   = variable_value(string("verlet"), true);
+    vm_["position"]     = variable_value(string("lattice"), true);
+    vm_["velocity"]     = variable_value(string("boltzmann"), true);
     vm_["particles"]    = variable_value(1000u, true);
     vm_["timestep"]     = variable_value(0.001, true);
     vm_["smooth"]       = variable_value(0.005f, true);
