@@ -22,16 +22,14 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/utility/module/exception.hpp>
 #include <halmd/utility/module/module.hpp>
 
 namespace halmd
 {
 
 // import into top-level namespace
-using utility::module::module;
-using utility::module::unsuitable_module;
 using boost::shared_ptr;
+using utility::module::module;
 
 } // namespace halmd
 

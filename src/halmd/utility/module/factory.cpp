@@ -35,7 +35,7 @@ namespace utility { namespace module
 /**
  * register module builder at program startup
  */
-void factory::_register(_Rank_ptr rank_, _Module_ptr module_)
+void factory::_register(rank rank_, builder module_)
 {
     if (!modules().insert(make_pair(rank_, module_)).second) {
         throw logic_error("duplicate module " + module_->name());
@@ -48,7 +48,7 @@ void factory::_register(_Rank_ptr rank_, _Module_ptr module_)
  * returns the number of resolved modules, which is used to
  * validate a dependency as required, optional or one-to-many.
  */
-size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
+size_t factory::resolve(rank rank_, po::options const& vm)
 {
     // Given a required, optional or one-to-many dependency,
     // which may be a (multiply) derived or base class, this
@@ -69,7 +69,7 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
     if (!cache_.count(rank_)) {
         LOG_DEBUG_INDENT(depth, "resolve dependency " << rank_->name());
 
-        set<_Rank_ptr, rank_order_equal_base> resolved;
+        set<rank, compare_rank_base> resolved;
 
         // Check each of the modules registered in the base class
         // factory during program startup for suitability.
@@ -141,35 +141,33 @@ size_t factory::resolve(_Rank_ptr rank_, po::options const& vm)
  */
 struct derived_rank_equality
 {
-    /** search rank */
-    typedef factory::_Rank_ptr _Rank_ptr;
     /** module rank */
     typedef factory::_Module_map::value_type _Module_pair;
 
-    bool operator()(_Module_pair left, _Rank_ptr right) const
+    bool operator()(_Module_pair left, rank right) const
     {
         // If the search rank is right in the inequality and the
         // module rank is left, treat equal or derived module
         // rank as equal to the search rank.
 
-        return rank_order_equal_base()(left.first, right);
+        return compare_rank_base()(left.first, right);
     }
 
-    bool operator()(_Rank_ptr left, _Module_pair right) const
+    bool operator()(rank left, _Module_pair right) const
     {
         // If the search rank is left in the inequality and the
         // module rank is right, use normal rank ordering. We are
         // looking only for equal or derived module ranks, which
         // are ordered left to base module ranks in the map.
 
-        return rank_order()(left, right.first);
+        return compare_rank()(left, right.first);
     }
 };
 
 /**
  * returns a range of modules with equal or derived rank
  */
-factory::_Module_map_iterator_pair factory::fetch(_Rank_ptr rank_)
+factory::_Module_map_iterator_pair factory::fetch(rank rank_)
 {
     return equal_range(modules().begin(), modules().end(), rank_, derived_rank_equality());
 }

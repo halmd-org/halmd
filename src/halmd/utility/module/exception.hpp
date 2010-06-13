@@ -27,8 +27,6 @@
 
 namespace halmd
 {
-namespace utility { namespace module
-{
 
 // This is the base class of all module exceptions.
 class module_error
@@ -71,8 +69,6 @@ public:
       : module_error(msg)
     {}
 };
-
-}} // namespace utility::module
 
 } // namespace halmd
 

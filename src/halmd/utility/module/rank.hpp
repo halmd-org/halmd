@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_MODULE_RANK_HPP
-#define HALMD_UTILITY_MODULE_RANK_HPP
+#ifndef HALMD_UTILITY_MODULE_RESOLVER_HPP
+#define HALMD_UTILITY_MODULE_RESOLVER_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits/is_object.hpp>
@@ -39,11 +39,8 @@ using boost::dynamic_pointer_cast;
 using boost::enable_if;
 using boost::is_object;
 
-/**
- * Exceptions for base-to-derived rank signaling.
- */
-struct _rank_left_is_base {};
-struct _rank_right_is_base {};
+// forward declaration
+class untyped_rank_base;
 
 /**
  * The rank template models a forest of disjunct class hierarchy
@@ -63,54 +60,65 @@ struct _rank_right_is_base {};
  * ordered according to the collation order of their respective
  * base classes.
  */
-template <typename T = void, typename Enable = void>
-class rank;
+
+typedef shared_ptr<untyped_rank_base> rank;
 
 /**
  * A type-independent base class, which is used in the factory to
  * store pointers of arbitrary rank instances in a container.
  */
-template <>
-class rank<>
+class untyped_rank_base
 {
 public:
-    typedef shared_ptr<rank<> > _Rank_ptr;
+    // C++0x will support scoped and strongly typed enums.
+    // http://www2.research.att.com/~bs/C++0xFAQ.html#enum
+    struct result
+    {
+        enum type
+        {
+            left,      // left is before right rank in collation order
+            right,
+            left_base, // left is base of right rank
+            right_base,
+        };
+    };
 
-    virtual ~rank() {}
-    virtual bool operator<(_Rank_ptr const& other) const = 0;
+    virtual ~untyped_rank_base() {}
+    virtual result::type operator<(rank const& other) const = 0;
+    virtual result::type operator>(rank const& other) const = 0;
     virtual std::string name() const = 0;
-
-private:
-    template <typename T, typename Enable> friend class rank;
-    virtual bool operator>(_Rank_ptr const& other) const = 0;
 };
 
 /**
  * A base template, which corresponds to the base class of a
  * module (e.g. force, particle).
  */
-template <typename T, typename Enable>
-class rank
-  : public rank<>
+template <typename T, typename Enable = void>
+class typed_rank_base
+  : public untyped_rank_base
 {
 public:
-    typedef T _Module_base;
-    typedef shared_ptr<rank<> > _Rank_ptr;
+    typedef untyped_rank_base _Base;
+    typedef typename _Base::result result;
+    typedef T _Base_type;
 
-    virtual bool operator<(_Rank_ptr const& other) const
+    virtual typename result::type operator<(rank const& other) const
     {
-        if (dynamic_pointer_cast<rank<T> >(other)) {
-            throw _rank_left_is_base();
+        if (dynamic_pointer_cast<typed_rank_base<T> >(other)) {
+            return result::left_base;
         }
-        return !(other->operator>(_Rank_ptr(new rank<T>)));
+        return other->operator>(rank(new typed_rank_base<T>));
     }
 
-    virtual bool operator>(_Rank_ptr const& other) const
+    virtual typename result::type operator>(rank const& other) const
     {
-        if (dynamic_pointer_cast<rank<T> >(other)) {
-            throw _rank_right_is_base();
+        if (dynamic_pointer_cast<typed_rank_base<T> >(other)) {
+            return result::right_base;
         }
-        return typeid(*other).before(typeid(rank<T>));
+        if (typeid(*other).before(typeid(typed_rank_base<T>))) {
+            return result::left;
+        }
+        return result::right;
     }
 
     virtual std::string name() const
@@ -123,18 +131,18 @@ public:
  * A deriving template to the base template.
  */
 template <typename T>
-class rank<T, typename enable_if<is_object<typename T::_Base> >::type>
-  : public rank<typename T::_Base>
+class typed_rank_base<T, typename enable_if<is_object<typename T::_Base> >::type>
+  : public typed_rank_base<typename T::_Base>
 {
 public:
-    typedef typename T::_Base _Base;
-    typedef shared_ptr<rank<> > _Rank_ptr;
+    typedef typed_rank_base<typename T::_Base> _Base;
+    typedef typename _Base::result result;
 
     /**
      * The less-than operator is called by a rank ordering class
      * and marks the first phase of strict weak ordering.
      */
-    virtual bool operator<(_Rank_ptr const& other) const
+    virtual typename result::type operator<(rank const& other) const
     {
         // We cast the other rank to every base rank that the
         // rank on the *left* side of the inequality (directly or
@@ -147,23 +155,21 @@ public:
         // rank of the next derived rank is passed to the
         // greater-than operator of the other rank.
 
-        try {
-            return rank<_Base>::operator<(other);
-        }
-        catch (_rank_left_is_base const&)
-        {
-            if (dynamic_pointer_cast<rank<T> >(other)) {
-                throw;
+        typename result::type const result = _Base::operator<(other);
+        if (result == result::left_base) {
+            if (dynamic_pointer_cast<typed_rank_base<T> >(other)) {
+                return result::left_base;
             }
-            return !(other->operator>(_Rank_ptr(new rank<T>)));
+            return other->operator>(rank(new typed_rank_base<T>));
         }
+        return result;
     }
 
     /**
      * The greater-than operator is called by the less-than
      * operator of the other rank and marks the second phase.
      */
-    virtual bool operator>(_Rank_ptr const& other) const
+    virtual typename result::type operator>(rank const& other) const
     {
         // This essentially does the same as the less-than
         // operator, but for the rank on the *right* side of the
@@ -171,16 +177,17 @@ public:
         // we order the two ranks by their collation order, which
         // is compiler-dependent but deterministic.
 
-        try {
-            return rank<_Base>::operator>(other);
-        }
-        catch (_rank_right_is_base const&)
-        {
-            if (dynamic_pointer_cast<rank<T> >(other)) {
-                throw;
+        typename result::type const result = _Base::operator>(other);
+        if (result == result::right_base) {
+            if (dynamic_pointer_cast<typed_rank_base<T> >(other)) {
+                return result::right_base;
             }
-            return typeid(*other).before(typeid(rank<T>));
+            if (typeid(*other).before(typeid(typed_rank_base<T>))) {
+                return result::left;
+            }
+            return result::right;
         }
+        return result;
     }
 
     virtual std::string name() const
@@ -189,25 +196,35 @@ public:
     }
 };
 
+template <typename T>
+class typed_rank
+  : public typed_rank_base<T>
+{
+public:
+    typedef typed_rank_base<T> _Base;
+};
+
 /**
  * A class to implement strict weak ordering of rank instances
  * in STL sequences, following the rules described above.
  */
-struct rank_order
+struct compare_rank
 {
-    typedef shared_ptr<rank<> > _Rank_ptr;
+    typedef untyped_rank_base::result result;
 
-    bool operator()(_Rank_ptr left, _Rank_ptr right) const
+    bool operator()(rank left, rank right) const
     {
         if (typeid(*left) != typeid(*right)) {
-            try {
-                return left->operator<(right);
-            }
-            catch (_rank_left_is_base const&) {
+            switch (left->operator<(right)) {
+              case result::left:
                 return false;
-            }
-            catch (_rank_right_is_base const&) {
+              case result::right:
                 return true;
+              case result::left_base:
+                return false;
+              case result::right_base:
+                return true;
+              // compiler emits warning if enumeration value is unhandled
             }
         }
         return false;
@@ -219,21 +236,23 @@ struct rank_order
  * in STL sequences, following the rules described above, with
  * the exception of defining a base and derived ranks as equal.
  */
-struct rank_order_equal_base
+struct compare_rank_base
 {
-    typedef shared_ptr<rank<> > _Rank_ptr;
+    typedef untyped_rank_base::result result;
 
-    bool operator()(_Rank_ptr left, _Rank_ptr right) const
+    bool operator()(rank left, rank right) const
     {
         if (typeid(*left) != typeid(*right)) {
-            try {
-                return left->operator<(right);
-            }
-            catch (_rank_left_is_base const&) {
+            switch (left->operator<(right)) {
+              case result::left:
                 return false;
-            }
-            catch (_rank_right_is_base const&) {
+              case result::right:
+                return true;
+              case result::left_base:
                 return false;
+              case result::right_base:
+                return false;
+              // compiler emits warning if enumeration value is unhandled
             }
         }
         return false;
@@ -244,4 +263,4 @@ struct rank_order_equal_base
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_MODULE_RANK_HPP */
+#endif /* ! HALMD_UTILITY_MODULE_RESOLVER_HPP */

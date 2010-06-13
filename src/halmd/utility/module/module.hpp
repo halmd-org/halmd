@@ -25,7 +25,7 @@
 #include <halmd/utility/module/exception.hpp>
 #include <halmd/utility/module/demangle.hpp>
 #include <halmd/utility/module/factory.hpp>
-#include <halmd/utility/module/wrapper.hpp>
+#include <halmd/utility/module/builder.hpp>
 
 namespace halmd
 {
@@ -44,12 +44,9 @@ template <typename T>
 class module
 {
 public:
-    typedef rank<T> _Rank;
-    typedef wrapper<T> _Wrapper;
-    typedef factory::_Module_ptr _Module_ptr;
-    typedef factory::_Rank_ptr _Rank_ptr;
-    typedef typename _Rank::_Module_base _Base;
-    typedef builder<_Base> _Base_module;
+    typedef typename typed_rank<T>::_Base_type _Base_type;
+    typedef typed_builder_base<_Base_type> _Builder_base;
+    typedef shared_ptr<_Builder_base> _Builder_base_ptr;
     typedef factory::_Module_map_iterator_pair _Module_map_iterator_pair;
     typedef factory::_Module_map_iterator _Module_map_iterator;
 
@@ -67,7 +64,7 @@ public:
         operator shared_ptr<T>()
         {
             shared_ptr<T> result;
-            _Module_map_iterator_pair range = factory::fetch(_Rank_ptr(new _Rank));
+            _Module_map_iterator_pair range = factory::fetch(rank(new typed_rank<T>));
 
             if (range.first != range.second) {
                 // ensure that range contains only a single module
@@ -75,7 +72,7 @@ public:
                     throw logic_error("ambiguous dependency " + module<T>::name());
                 }
 
-                shared_ptr<_Base_module> module_ = dynamic_pointer_cast<_Base_module>(range.first->second);
+                _Builder_base_ptr module_ = dynamic_pointer_cast<_Builder_base>(range.first->second);
                 result = dynamic_pointer_cast<T>(module_->fetch(vm));
             }
             return result;
@@ -87,10 +84,10 @@ public:
         operator std::vector<shared_ptr<T> >()
         {
             std::vector<shared_ptr<T> > result;
-            _Module_map_iterator_pair range = factory::fetch(_Rank_ptr(new _Rank));
+            _Module_map_iterator_pair range = factory::fetch(rank(new typed_rank<T>));
 
             for (_Module_map_iterator it = range.first; it != range.second; ++it) {
-                shared_ptr<_Base_module> module_ = dynamic_pointer_cast<_Base_module>(it->second);
+                _Builder_base_ptr module_ = dynamic_pointer_cast<_Builder_base>(it->second);
                 result.push_back(dynamic_pointer_cast<T>(module_->fetch(vm)));
             }
             return result;
@@ -115,7 +112,7 @@ public:
      */
     static void required(po::options const& vm)
     {
-        if (!factory::resolve(_Rank_ptr(new _Rank), vm)) {
+        if (!factory::resolve(rank(new typed_rank<T>), vm)) {
             throw unresolvable_dependency("missing required module " + name());
         }
     }
@@ -125,7 +122,7 @@ public:
      */
     static void optional(po::options const& vm)
     {
-        factory::resolve(_Rank_ptr(new _Rank), vm);
+        factory::resolve(rank(new typed_rank<T>), vm);
     }
 
 private:
@@ -133,7 +130,7 @@ private:
     {
         _register()
         {
-            factory::_register(_Rank_ptr(new _Rank), _Module_ptr(new _Wrapper));
+            factory::_register(rank(new typed_rank<T>), builder(new typed_builder<T>));
         }
     };
 

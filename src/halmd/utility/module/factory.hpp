@@ -48,18 +48,16 @@ using boost::shared_ptr;
 class factory
 {
 public:
-    typedef shared_ptr<rank<> > _Rank_ptr;
-    typedef shared_ptr<builder<> > _Module_ptr;
-    typedef std::map<_Rank_ptr, _Module_ptr, rank_order> _Module_map;
+    typedef std::map<rank, builder, compare_rank> _Module_map;
     typedef _Module_map::iterator _Module_map_iterator;
     typedef std::pair<_Module_map_iterator, _Module_map_iterator> _Module_map_iterator_pair;
-    typedef std::map<_Rank_ptr, size_t, rank_order> _Rank_cache;
+    typedef std::map<rank, size_t, compare_rank> _Rank_cache;
     typedef std::deque<po::unparsed_options> _Module_stack;
     typedef _Module_stack::iterator _Module_stack_iterator;
 
-    static void _register(_Rank_ptr rank_, _Module_ptr module_);
-    static _Module_map_iterator_pair fetch(_Rank_ptr rank_);
-    static size_t resolve(_Rank_ptr rank_, po::options const& vm);
+    static void _register(rank rank_, builder module_);
+    static _Module_map_iterator_pair fetch(rank rank_);
+    static size_t resolve(rank rank_, po::options const& vm);
 
 // FIXME private:
     static _Module_map& modules();
