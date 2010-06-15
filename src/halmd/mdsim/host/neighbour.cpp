@@ -52,20 +52,20 @@ void neighbour<dimension, float_type>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::resolve(po::options const& vm)
+void neighbour<dimension, float_type>::depends()
 {
-    module<particle_type>::required(vm);
-    module<box_type>::required(vm);
-    module<force_type>::required(vm);
+    modules::required<_Self, particle_type>();
+    modules::required<_Self, box_type>();
+    modules::required<_Self, force_type>();
 }
 
 template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , particle(module<particle_type>::fetch(vm))
-  , force(module<force_type>::fetch(vm))
-  , box(module<box_type>::fetch(vm))
+  , particle(modules::fetch<particle_type>(vm))
+  , force(modules::fetch<force_type>(vm))
+  , box(modules::fetch<box_type>(vm))
   // allocate parameters
   , r_skin_(vm["skin"].as<float>())
   , rr_cut_skin_(particle->ntype, particle->ntype)

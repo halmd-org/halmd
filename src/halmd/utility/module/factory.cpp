@@ -189,6 +189,8 @@ factory::_Module_stack factory::stack_ = _Module_stack(1); // default to empty u
 /** resolved module cache */
 factory::_Rank_cache factory::cache_;
 
+po::options const* factory::vm;
+
 }} // namespace utility::module
 
 } // namespace halmd

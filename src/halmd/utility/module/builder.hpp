@@ -90,7 +90,8 @@ struct typed_builder_base
      */
     virtual void resolve(po::options const& vm)
     {
-        T::resolve(vm);
+        T::select(vm);
+        T::depends();
     }
 };
 
@@ -122,8 +123,11 @@ struct typed_builder_base<T, typename enable_if<is_object<typename T::_Base> >::
     {
         typed_builder_base<_Base>::resolve(vm);
         // check for inherited base module function
-        if (T::resolve != _Base::resolve) {
-            T::resolve(vm);
+        if (T::select != _Base::select) {
+            T::select(vm);
+        }
+        if (T::depends != _Base::depends) {
+            T::depends();
         }
     }
 };

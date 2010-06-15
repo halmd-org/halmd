@@ -36,11 +36,14 @@ class random
   : public mdsim::random
 {
 public:
+    // module definitions
+    typedef random _Self;
     typedef mdsim::random _Base;
+    static void options(po::options_description& desc);
+    static void depends() {}
+
     typedef boost::mt19937 random_generator;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm) {}
     random(po::options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);

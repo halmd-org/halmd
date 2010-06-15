@@ -43,15 +43,15 @@ void force<dimension>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension>
-void force<dimension>::resolve(po::options const& vm)
+void force<dimension>::depends()
 {
-    module<particle_type>::required(vm);
+    modules::required<_Self, particle_type>();
 }
 
 template <int dimension>
 force<dimension>::force(po::options const& vm)
   // dependency injection
-  : particle(module<particle_type>::fetch(vm))
+  : particle(modules::fetch<particle_type>(vm))
 {
 }
 

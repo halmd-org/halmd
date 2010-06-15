@@ -32,15 +32,15 @@ namespace mdsim { namespace samples { namespace host
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::resolve(po::options const& vm)
+void trajectory<dimension, float_type>::depends()
 {
-    module<particle_type>::required(vm);
+    modules::required<_Self, particle_type>();
 }
 
 template <int dimension, typename float_type>
 trajectory<dimension, float_type>::trajectory(po::options const& vm)
   // dependency injection
-  : particle(module<particle_type>::fetch(vm))
+  : particle(modules::fetch<particle_type>(vm))
   // allocate sample pointers
   , r(particle->ntype)
   , v(particle->ntype)

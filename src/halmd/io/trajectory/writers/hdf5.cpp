@@ -35,9 +35,9 @@ namespace io { namespace trajectory { namespace writers
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::resolve(po::options const& vm)
+void hdf5<dimension, float_type>::depends()
 {
-    module<sample_type>::required(vm);
+    modules::required<_Self, sample_type>();
 }
 
 /**
@@ -47,7 +47,7 @@ template <int dimension, typename float_type>
 hdf5<dimension, float_type>::hdf5(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , sample(module<sample_type>::fetch(vm))
+  , sample(modules::fetch<sample_type>(vm))
   // initialize parameters
   , path_(initial_path() / (vm["output"].as<string>() + extension()))
   , file_(path_.file_string(), H5F_ACC_TRUNC)

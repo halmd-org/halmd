@@ -37,11 +37,15 @@ template <int dimension, typename float_type>
 class trajectory
 {
 public:
+    // module definitions
+    typedef trajectory _Self;
+    static void options(po::options_description& desc) {}
+    static void depends();
+    static void select(po::options const& vm) {}
+
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
 
-    static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm);
     trajectory(po::options const& vm);
     virtual ~trajectory() {}
     virtual void acquire() = 0;

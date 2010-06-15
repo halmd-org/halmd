@@ -38,7 +38,11 @@ class thermodynamics
     : public mdsim::thermodynamics<dimension>
 {
 public:
+    // module definitions
+    typedef thermodynamics _Self;
     typedef mdsim::thermodynamics<dimension> _Base;
+    static void options(po::options_description& desc) {}
+    static void depends();
 
     typedef mdsim::host::particle<dimension, double> particle_type;
     typedef typename particle_type::vector_type vector_type;
@@ -46,8 +50,6 @@ public:
 
     shared_ptr<particle_type> particle;
 
-    static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm);
     thermodynamics(po::options const& vm);
     virtual ~thermodynamics() {}
 

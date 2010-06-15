@@ -44,6 +44,12 @@ template <int dimension>
 class force
 {
 public:
+    // module definitions
+    typedef force _Self;
+    static void options(po::options_description& desc);
+    static void depends();
+    static void select(po::options const& vm) {}
+
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<double, boost::numeric::ublas::lower> matrix_type;
 
@@ -51,8 +57,6 @@ public:
 
     shared_ptr<particle_type> particle;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     force(po::options const& vm);
     virtual ~force() {}
     virtual void compute() = 0;

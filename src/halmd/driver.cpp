@@ -48,16 +48,16 @@ void driver<dimension>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension>
-void driver<dimension>::resolve(po::options const& vm)
+void driver<dimension>::depends()
 {
-    module<core_type>::required(vm);
+    modules::required<_Self, core_type>();
 }
 
 template <int dimension>
 driver<dimension>::driver(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , core(module<core_type>::fetch(vm))
+  , core(modules::fetch<core_type>(vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {

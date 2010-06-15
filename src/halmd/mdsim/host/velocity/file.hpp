@@ -38,7 +38,13 @@ class file
   : public mdsim::velocity<dimension>
 {
 public:
+    // module definitions
+    typedef file _Self;
     typedef mdsim::velocity<dimension> _Base;
+    static void options(po::options_description& desc) {}
+    static void depends();
+    static void select(po::options const& vm);
+
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef io::trajectory::reader<dimension> reader_type;
@@ -48,8 +54,6 @@ public:
     shared_ptr<sample_type> sample;
     shared_ptr<particle_type> particle;
 
-    static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm);
     file(po::options const& vm);
     virtual ~file() {}
     void set();

@@ -37,9 +37,9 @@ namespace mdsim { namespace host
  * Resolve module dependencies
  */
 template <int dimension>
-void box<dimension>::resolve(po::options const& vm)
+void box<dimension>::depends()
 {
-    module<particle_type>::required(vm);
+    modules::required<_Self, particle_type>();
 }
 
 /**
@@ -49,7 +49,7 @@ template <int dimension>
 box<dimension>::box(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , particle(module<particle_type>::fetch(vm))
+  , particle(modules::fetch<particle_type>(vm))
   // initialize parameters
   , length_half_(.5 * length_)
 {}

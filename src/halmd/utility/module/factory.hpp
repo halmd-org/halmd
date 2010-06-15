@@ -63,6 +63,9 @@ public:
     static _Module_map& modules();
     static _Rank_cache cache_;
     static _Module_stack stack_;
+
+    // hack for forward compatibility with upcoming module mechanism rewrite
+    static po::options const* vm;
 };
 
 }} // namespace utility::module

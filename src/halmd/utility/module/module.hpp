@@ -112,6 +112,9 @@ public:
      */
     static void required(po::options const& vm)
     {
+        // hack for forward compatibility with upcoming module mechanism rewrite
+        utility::module::factory::vm = &vm;
+
         if (!factory::resolve(rank(new typed_rank<T>), vm)) {
             throw unresolvable_dependency("missing required module " + name());
         }
@@ -122,6 +125,9 @@ public:
      */
     static void optional(po::options const& vm)
     {
+        // hack for forward compatibility with upcoming module mechanism rewrite
+        utility::module::factory::vm = &vm;
+
         factory::resolve(rank(new typed_rank<T>), vm);
     }
 

@@ -37,12 +37,16 @@ class hdf5
   : public trajectory::reader<dimension>
 {
 public:
+    // module definitions
+    typedef hdf5 _Self;
     typedef trajectory::reader<dimension> _Base;
+    static void depends();
+    static void select(po::options const& vm);
+
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector;
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 
-    static void resolve(po::options const& vm);
     hdf5(po::options const& vm);
 
     shared_ptr<sample_type> sample;

@@ -32,8 +32,12 @@ template <int dimension>
 class sort
 {
 public:
+    // module definitions
+    typedef sort _Self;
     static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
     sort(po::options const& vm) {}
     virtual ~sort() {}
     virtual void order() = 0;

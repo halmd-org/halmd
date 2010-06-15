@@ -33,7 +33,12 @@ class lj_square
   : public mdsim::host::force<dimension, float_type>
 {
 public:
+    // module definitions
+    typedef lj_square _Self;
     typedef mdsim::host::force<dimension, float_type> _Base;
+    static void options(po::options_description& desc);
+    static void select(po::options const& vm);
+
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
 
@@ -42,8 +47,6 @@ public:
     using _Base::smooth;
     using _Base::thermodynamics;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     lj_square(po::options const& vm);
     virtual ~lj_square() {}
     virtual void compute();

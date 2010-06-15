@@ -40,6 +40,12 @@ template <int dimension>
 class core
 {
 public:
+    // module definitions
+    typedef core _Self;
+    static void options(po::options_description& desc);
+    static void depends();
+    static void select(po::options const& vm);
+
     typedef mdsim::force<dimension> force_type;
     typedef mdsim::neighbour<dimension> neighbour_type;
     typedef mdsim::sort<dimension> sort_type;
@@ -47,8 +53,6 @@ public:
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     core(po::options const& vm);
     void mdstep();
 

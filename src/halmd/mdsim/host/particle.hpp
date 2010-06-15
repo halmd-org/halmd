@@ -36,11 +36,14 @@ class particle
   : public mdsim::particle<dimension>
 {
 public:
+    // module definitions
+    typedef particle _Self;
     typedef mdsim::particle<dimension> _Base;
+    static void select(po::options const& vm);
+
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;
     typedef std::vector<unsigned int> neighbour_list;
 
-    static void resolve(po::options const& vm);
     particle(po::options const& vm);
     virtual ~particle() {}
     virtual void rearrange(std::vector<unsigned int> const& index);

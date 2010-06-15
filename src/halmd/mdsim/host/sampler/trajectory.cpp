@@ -32,18 +32,18 @@ namespace mdsim { namespace host { namespace sampler
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::resolve(po::options const& vm)
+void trajectory<dimension, float_type>::depends()
 {
-    module<particle_type>::required(vm);
-    module<box_type>::required(vm);
+    modules::required<_Self, particle_type>();
+    modules::required<_Self, box_type>();
 }
 
 template <int dimension, typename float_type>
 trajectory<dimension, float_type>::trajectory(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , particle(module<particle_type>::fetch(vm))
-  , box(module<box_type>::fetch(vm))
+  , particle(modules::fetch<particle_type>(vm))
+  , box(modules::fetch<box_type>(vm))
 {}
 
 /**

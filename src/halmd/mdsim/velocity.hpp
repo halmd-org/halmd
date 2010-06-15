@@ -32,8 +32,12 @@ template <int dimension>
 class velocity
 {
 public:
+    // module definitions
+    typedef velocity _Self;
     static void options(po::options_description& desc);
-    static void resolve(po::options const& vm) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
     velocity(po::options const& vm) {}
     virtual ~velocity() {}
     virtual void set() = 0;

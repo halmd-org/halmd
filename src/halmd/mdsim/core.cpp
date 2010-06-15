@@ -46,17 +46,22 @@ void core<dimension>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension>
-void core<dimension>::resolve(po::options const& vm)
+void core<dimension>::depends()
+{
+    modules::required<_Self, force_type>();
+    modules::required<_Self, neighbour_type>();
+    modules::optional<_Self, sort_type>();
+    modules::required<_Self, integrator_type>();
+    modules::required<_Self, position_type>();
+    modules::required<_Self, velocity_type>();
+}
+
+template <int dimension>
+void core<dimension>::select(po::options const& vm)
 {
     if (vm["dimension"].as<int>() != dimension) {
         throw unsuitable_module("mismatching option dimension");
     }
-    module<force_type>::required(vm);
-    module<neighbour_type>::required(vm);
-    module<sort_type>::optional(vm);
-    module<integrator_type>::required(vm);
-    module<position_type>::required(vm);
-    module<velocity_type>::required(vm);
 }
 
 /**
@@ -65,12 +70,12 @@ void core<dimension>::resolve(po::options const& vm)
 template <int dimension>
 core<dimension>::core(po::options const& vm)
   // dependency injection
-  : force(module<force_type>::fetch(vm))
-  , neighbour(module<neighbour_type>::fetch(vm))
-  , sort(module<sort_type>::fetch(vm))
-  , integrator(module<integrator_type>::fetch(vm))
-  , position(module<position_type>::fetch(vm))
-  , velocity(module<velocity_type>::fetch(vm))
+  : force(modules::fetch<force_type>(vm))
+  , neighbour(modules::fetch<neighbour_type>(vm))
+  , sort(modules::fetch<sort_type>(vm))
+  , integrator(modules::fetch<integrator_type>(vm))
+  , position(modules::fetch<position_type>(vm))
+  , velocity(modules::fetch<velocity_type>(vm))
 {
     position->set();
     velocity->set();

@@ -58,7 +58,7 @@ void lj_square<dimension, float_type>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void lj_square<dimension, float_type>::resolve(po::options const& vm)
+void lj_square<dimension, float_type>::select(po::options const& vm)
 {
     if (vm["force"].as<std::string>() != "lj_square") {
         throw unsuitable_module("mismatching option force");

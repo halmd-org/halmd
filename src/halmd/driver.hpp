@@ -38,11 +38,14 @@ class driver
   : public halmd::core
 {
 public:
+    // module definitions
+    typedef driver _Self;
     typedef halmd::core _Base;
+    static void options(po::options_description& desc);
+    static void depends();
+
     typedef mdsim::core<dimension> core_type;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     driver(po::options const& vm);
     void run();
     uint64_t steps() { return steps_; }

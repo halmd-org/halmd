@@ -37,7 +37,7 @@ namespace mdsim { namespace host
  * Resolve module dependencies
  */
 template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::resolve(po::options const& vm)
+void particle<dimension, float_type>::select(po::options const& vm)
 {
     if (vm["backend"].as<string>() != "host") {
         throw unsuitable_module("mismatching option backend");

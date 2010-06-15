@@ -36,7 +36,12 @@ class trajectory
   : public mdsim::samples::host::trajectory<dimension, float_type>
 {
 public:
+    // module definitions
+    typedef trajectory _Self;
     typedef mdsim::samples::host::trajectory<dimension, float_type> _Base;
+    static void options(po::options_description& desc) {}
+    static void depends();
+
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
@@ -44,8 +49,6 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
 
-    static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm);
     trajectory(po::options const& vm);
     virtual ~trajectory() {}
     void acquire();

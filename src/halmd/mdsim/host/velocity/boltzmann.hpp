@@ -37,7 +37,13 @@ class boltzmann
   : public mdsim::velocity<dimension>
 {
 public:
+    // module definitions
+    typedef boltzmann _Self;
     typedef mdsim::velocity<dimension> _Base;
+    static void options(po::options_description& desc);
+    static void depends();
+    static void select(po::options const& vm);
+
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef host::random random_type;
@@ -45,8 +51,6 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<random_type> random;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     boltzmann(po::options const& vm);
     virtual ~boltzmann() {};
     void set();

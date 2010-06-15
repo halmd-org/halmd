@@ -31,8 +31,12 @@ namespace mdsim
 class random
 {
 public:
+    // module definitions
+    typedef random _Self;
     static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
     random(po::options const& vm) {}
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;

@@ -38,12 +38,12 @@ void force<dimension, float_type>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void force<dimension, float_type>::resolve(po::options const& vm)
+void force<dimension, float_type>::depends()
 {
-    module<particle_type>::required(vm);
-    module<box_type>::required(vm);
-    module<thermodynamics_type>::required(vm);
-    module<smooth_type>::optional(vm);
+    modules::required<_Self, particle_type>();
+    modules::required<_Self, box_type>();
+    modules::required<_Self, thermodynamics_type>();
+    modules::optional<_Self, smooth_type>();
 }
 
 /**
@@ -53,10 +53,10 @@ template <int dimension, typename float_type>
 force<dimension, float_type>::force(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , particle(module<particle_type>::fetch(vm))
-  , box(module<box_type>::fetch(vm))
-  , thermodynamics(module<thermodynamics_type>::fetch(vm))
-  , smooth(module<smooth_type>::fetch(vm))
+  , particle(modules::fetch<particle_type>(vm))
+  , box(modules::fetch<box_type>(vm))
+  , thermodynamics(modules::fetch<thermodynamics_type>(vm))
+  , smooth(modules::fetch<smooth_type>(vm))
 {
 }
 

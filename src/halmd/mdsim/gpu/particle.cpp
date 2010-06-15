@@ -37,19 +37,24 @@ namespace mdsim { namespace gpu
  * Resolve module dependencies
  */
 template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::resolve(po::options const& vm)
+void particle<dimension, float_type>::depends()
+{
+    modules::required<_Self, device_type>();
+}
+
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::select(po::options const& vm)
 {
     if (!starts_with(vm["backend"].as<string>(), "gpu")) {
         throw unsuitable_module("mismatching option backend");
     }
-    module<device_type>::required(vm);
 }
 
 template <unsigned int dimension, typename float_type>
 particle<dimension, float_type>::particle(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , device(module<device_type>::fetch(vm))
+  , device(modules::fetch<device_type>(vm))
   // allocate global device memory
   , g_r(nbox)
   , g_image(nbox)

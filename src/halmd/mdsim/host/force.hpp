@@ -39,7 +39,12 @@ class force
   : public mdsim::force<dimension>
 {
 public:
+    // module definitions
+    typedef force _Self;
     typedef mdsim::force<dimension> _Base;
+    static void options(po::options_description& desc);
+    static void depends();
+
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::matrix_type matrix_type;
 
@@ -53,8 +58,6 @@ public:
     shared_ptr<thermodynamics_type> thermodynamics;
     shared_ptr<smooth_type> smooth;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     force(po::options const& vm);
     virtual ~force() {};
     virtual void compute() = 0;

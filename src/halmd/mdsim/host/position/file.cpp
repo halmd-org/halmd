@@ -35,26 +35,30 @@ using namespace std;
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void file<dimension, float_type>::resolve(po::options const& vm)
+void file<dimension, float_type>::depends()
+{
+    modules::required<_Self, reader_type>();
+    modules::required<_Self, sample_type>();
+    modules::required<_Self, particle_type>();
+    modules::required<_Self, box_type>();
+}
+
+template <int dimension, typename float_type>
+void file<dimension, float_type>::select(po::options const& vm)
 {
     if (vm["position"].as<string>() != "file") {
         throw unsuitable_module("mismatching option position");
     }
-
-    module<reader_type>::required(vm);
-    module<sample_type>::required(vm);
-    module<particle_type>::required(vm);
-    module<box_type>::required(vm);
 }
 
 template <int dimension, typename float_type>
 file<dimension, float_type>::file(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , reader(module<reader_type>::fetch(vm))
-  , sample(module<sample_type>::fetch(vm))
-  , particle(module<particle_type>::fetch(vm))
-  , box(module<box_type>::fetch(vm))
+  , reader(modules::fetch<reader_type>(vm))
+  , sample(modules::fetch<sample_type>(vm))
+  , particle(modules::fetch<particle_type>(vm))
+  , box(modules::fetch<box_type>(vm))
 {}
 
 /**

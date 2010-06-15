@@ -40,24 +40,28 @@ using namespace std;
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void lattice<dimension, float_type>::resolve(po::options const& vm)
+void lattice<dimension, float_type>::depends()
+{
+    modules::required<_Self, particle_type>();
+    modules::required<_Self, box_type>();
+    modules::required<_Self, random_type>();
+}
+
+template <int dimension, typename float_type>
+void lattice<dimension, float_type>::select(po::options const& vm)
 {
     if (vm["position"].as<string>() != "lattice") {
         throw unsuitable_module("mismatching option position");
     }
-
-    module<particle_type>::required(vm);
-    module<box_type>::required(vm);
-    module<random_type>::required(vm);
 }
 
 template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , particle(module<particle_type>::fetch(vm))
-  , box(module<box_type>::fetch(vm))
-  , random(module<random_type>::fetch(vm))
+  , particle(modules::fetch<particle_type>(vm))
+  , box(modules::fetch<box_type>(vm))
+  , random(modules::fetch<random_type>(vm))
 {}
 
 /**

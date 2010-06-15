@@ -34,12 +34,17 @@ namespace io { namespace trajectory { namespace readers
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::resolve(po::options const& vm)
+void hdf5<dimension, float_type>::depends()
+{
+    modules::required<_Self, sample_type>();
+}
+
+template <int dimension, typename float_type>
+void hdf5<dimension, float_type>::select(po::options const& vm)
 {
     if (!H5::H5File::isHdf5(vm["trajectory-file"].as<string>())) {
         throw unsuitable_module("not a HDF5 file: " + vm["trajectory-file"].as<string>());
     }
-    module<sample_type>::required(vm);
 }
 
 /**
@@ -49,7 +54,7 @@ template <int dimension, typename float_type>
 hdf5<dimension, float_type>::hdf5(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , sample(module<sample_type>::fetch(vm))
+  , sample(modules::fetch<sample_type>(vm))
 {
     LOG("read trajectory file: " << path_);
 

@@ -51,21 +51,26 @@ void verlet<dimension, float_type>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void verlet<dimension, float_type>::resolve(po::options const& vm)
+void verlet<dimension, float_type>::depends()
+{
+    modules::required<_Self, particle_type>();
+    modules::required<_Self, box_type>();
+}
+
+template <int dimension, typename float_type>
+void verlet<dimension, float_type>::select(po::options const& vm)
 {
     if (vm["integrator"].as<std::string>() != "verlet") {
         throw unsuitable_module("mismatching option integrator");
     }
-    module<particle_type>::required(vm);
-    module<box_type>::required(vm);
 }
 
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , particle(module<particle_type>::fetch(vm))
-  , box(module<box_type>::fetch(vm))
+  , particle(modules::fetch<particle_type>(vm))
+  , box(modules::fetch<box_type>(vm))
   // set parameters
   , timestep_(vm["timestep"].as<double>())
   , timestep_half_(0.5 * timestep_)

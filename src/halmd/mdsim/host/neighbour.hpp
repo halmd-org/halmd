@@ -49,7 +49,12 @@ class neighbour
   : public mdsim::neighbour<dimension>
 {
 public:
+    // module definitions
+    typedef neighbour _Self;
     typedef mdsim::neighbour<dimension> _Base;
+    static void options(po::options_description& desc);
+    static void depends();
+
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::force<dimension> force_type;
@@ -65,8 +70,6 @@ public:
     shared_ptr<force_type> force;
     shared_ptr<box_type> box;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     neighbour(po::options const& vm);
     virtual ~neighbour() {}
     void update();

@@ -32,8 +32,12 @@ template <int dimension>
 class neighbour
 {
 public:
+    // module definitions
+    typedef neighbour _Self;
     static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
     neighbour(po::options const& vm) {}
     virtual ~neighbour() {}
     virtual void update() = 0;

@@ -37,7 +37,13 @@ class verlet
   : public mdsim::integrator<dimension>
 {
 public:
+    // module definitions
+    typedef verlet _Self;
     typedef mdsim::integrator<dimension> _Base;
+    static void options(po::options_description& desc);
+    static void depends();
+    static void select(po::options const& vm);
+
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef host::box<dimension> box_type;
@@ -45,8 +51,6 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     verlet(po::options const& vm);
     virtual ~verlet() {}
     void integrate();

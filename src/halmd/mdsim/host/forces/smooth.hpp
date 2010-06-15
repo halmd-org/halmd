@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_SMOOTH_HPP
 #define HALMD_MDSIM_HOST_FORCES_SMOOTH_HPP
 
+#include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -36,8 +37,12 @@ template <int dimension, typename float_type>
 class smooth
 {
 public:
+    // module definitions
+    typedef smooth _Self;
     static void options(po::options_description& desc);
-    static void resolve(po::options const& vm) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
     smooth(po::options const& vm);
     virtual ~smooth() {}
     virtual void compute(float_type r, float_type dr, float_type& fval, float_type& pot);

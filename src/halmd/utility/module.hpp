@@ -31,6 +31,30 @@ namespace halmd
 using boost::shared_ptr;
 using utility::module::module;
 
+// forward compatibility with upcoming module mechanism rewrite
+namespace modules
+{
+
+template <typename T, typename U>
+void required()
+{
+    module<U>::required(*utility::module::factory::vm);
+}
+
+template <typename T, typename U>
+void optional()
+{
+    module<U>::optional(*utility::module::factory::vm);
+}
+
+template <typename T>
+typename module<T>::_fetch fetch(po::options const& vm)
+{
+    return module<T>::fetch(vm);
+}
+
+} // namespace modules
+
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_MODULE_HPP */

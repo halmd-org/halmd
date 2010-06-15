@@ -21,6 +21,7 @@
 #define HALMD_CORE_HPP
 
 #include <halmd/utility/options.hpp>
+#include <halmd/utility/module.hpp>
 
 namespace halmd
 {
@@ -28,8 +29,12 @@ namespace halmd
 class core
 {
 public:
+    // module definitions
+    typedef core _Self;
     static void options(po::options_description& desc) {}
-    static void resolve(po::options const& vm) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
     core(po::options const& vm) {}
     virtual ~core() {}
     virtual void run() = 0;

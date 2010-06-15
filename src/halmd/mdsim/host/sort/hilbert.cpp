@@ -38,20 +38,20 @@ namespace mdsim { namespace host { namespace sort
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::resolve(po::options const& vm)
+void hilbert<dimension, float_type>::depends()
 {
-    module<particle_type>::required(vm);
-    module<box_type>::required(vm);
-    module<neighbour_type>::required(vm);
+    modules::required<_Self, particle_type>();
+    modules::required<_Self, box_type>();
+    modules::required<_Self, neighbour_type>();
 }
 
 template <int dimension, typename float_type>
 hilbert<dimension, float_type>::hilbert(po::options const& vm)
   : _Base(vm)
   // dependency injection
-  , particle(module<particle_type>::fetch(vm))
-  , box(module<box_type>::fetch(vm))
-  , neighbour(module<neighbour_type>::fetch(vm))
+  , particle(modules::fetch<particle_type>(vm))
+  , box(modules::fetch<box_type>(vm))
+  , neighbour(modules::fetch<neighbour_type>(vm))
 {
     // set Hilbert space-filling curve recursion depth
     unsigned int ncell = *max_element(neighbour->ncell_.begin(), neighbour->ncell_.end());

@@ -42,7 +42,11 @@ class hdf5
   : public trajectory::writer<dimension>
 {
 public:
+    // module definitions
+    typedef hdf5 _Self;
     typedef trajectory::writer<dimension> _Base;
+    static void depends();
+
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector;
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
@@ -51,7 +55,6 @@ public:
     /** returns file extension */
     std::string extension() const { return ".trj"; }
 
-    static void resolve(po::options const& vm);
     hdf5(po::options const& vm);
     void append();
     void flush();

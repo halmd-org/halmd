@@ -39,7 +39,12 @@ class power_law
   : public mdsim::host::force<dimension, float_type>
 {
 public:
+    // module definitions
+    typedef power_law _Self;
     typedef mdsim::host::force<dimension, float_type> _Base;
+    static void options(po::options_description& desc);
+    static void select(po::options const& vm);
+
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
 
@@ -48,8 +53,6 @@ public:
     using _Base::smooth;
     using _Base::thermodynamics;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     power_law(po::options const& vm);
     virtual ~power_law() {}
     virtual void compute();

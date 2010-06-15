@@ -40,8 +40,12 @@ template <int dimension>
 class particle
 {
 public:
+    // module definitions
+    typedef particle _Self;
     static void options(po::options_description& desc);
-    static void resolve(po::options const& vm) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
     particle(po::options const& vm);
     virtual ~particle() {}
 

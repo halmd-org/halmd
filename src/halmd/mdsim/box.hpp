@@ -36,13 +36,17 @@ template <int dimension>
 class box
 {
 public:
+    // module definitions
+    typedef box _Self;
+    static void options(po::options_description& desc);
+    static void depends();
+    static void select(po::options const& vm) {}
+
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
     shared_ptr<particle_type> particle;
 
-    static void options(po::options_description& desc);
-    static void resolve(po::options const& vm);
     box(po::options const& vm);
     virtual ~box() {}
     void length(vector_type const& value_type);

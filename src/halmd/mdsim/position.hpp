@@ -32,8 +32,12 @@ template <int dimension>
 class position
 {
 public:
+    // module definitions
+    typedef position _Self;
     static void options(po::options_description& desc);
-    static void resolve(po::options const& vm) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
     position(po::options const& vm) {}
     virtual ~position() {}
     virtual void set() = 0;

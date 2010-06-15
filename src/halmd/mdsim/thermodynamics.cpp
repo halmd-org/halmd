@@ -32,15 +32,15 @@ namespace mdsim
  * Resolve module dependencies
  */
 template <int dimension>
-void thermodynamics<dimension>::resolve(po::options const& vm)
+void thermodynamics<dimension>::depends()
 {
-    module<box_type>::required(vm);
+    modules::required<_Self, box_type>();
 }
 
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(po::options const& vm)
   // dependency injection
-  : box(module<box_type>::fetch(vm))
+  : box(modules::fetch<box_type>(vm))
 {
 }
 
