@@ -18,7 +18,6 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/integrator/verlet.hpp>
 #include <halmd/mdsim/integrator.hpp>
 
 using namespace boost;
@@ -37,8 +36,23 @@ void integrator<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
         ("integrator", po::value<string>()->default_value("verlet"),
-         "specify integrator module")
+         "specify integration module")
         ;
+
+    po::options_description group("Integrator");
+    group.add_options()
+        ("timestep,h", po::value<double>()->default_value(0.001),
+         "integration timestep")
+        ;
+    desc.add(group);
+}
+
+template <int dimension>
+integrator<dimension>::integrator(po::options const& vm)
+  // set parameters
+  : timestep_(vm["timestep"].as<double>())
+{
+    LOG("integration timestep: " << timestep_);
 }
 
 // explicit instantiation

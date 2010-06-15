@@ -38,11 +38,15 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    integrator(po::options const& vm) {}
+    integrator(po::options const& vm);
     virtual ~integrator() {}
     virtual void integrate() = 0;
     virtual void finalize() = 0;
-    virtual double timestep() = 0;
+    double timestep() { return timestep_; };
+
+protected:
+    /** integration time-step */
+    double timestep_;
 };
 
 } // namespace mdsim

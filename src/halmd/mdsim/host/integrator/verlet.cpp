@@ -39,12 +39,6 @@ namespace mdsim { namespace host { namespace integrator
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description group("Velocity-Verlet integrator");
-    group.add_options()
-        ("timestep,h", po::value<double>()->default_value(0.001),
-         "simulation timestep")
-        ;
-    desc.add(group);
 }
 
 /**
@@ -72,10 +66,8 @@ verlet<dimension, float_type>::verlet(po::options const& vm)
   , particle(modules::fetch<particle_type>(vm))
   , box(modules::fetch<box_type>(vm))
   // set parameters
-  , timestep_(vm["timestep"].as<double>())
   , timestep_half_(0.5 * timestep_)
 {
-    LOG("integration timestep: " << timestep_);
 }
 
 /**

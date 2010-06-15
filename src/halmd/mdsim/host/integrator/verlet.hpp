@@ -55,11 +55,10 @@ public:
     virtual ~verlet() {}
     void integrate();
     void finalize();
-    double timestep() { return timestep_; }
 
 protected:
     /** integration time-step */
-    double timestep_;
+    using _Base::timestep_;
     /** half time-step */
     double timestep_half_;
 };
