@@ -23,7 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
-#include <halmd/mdsim/gpu/integrators/verlet_wrapper.cuh>
+#include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
 #include <halmd/utility/module.hpp>
 
 namespace halmd

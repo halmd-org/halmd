@@ -1,5 +1,5 @@
 add_library(halmd_mdsim_gpu_integrator
-  verlet_wrapper.cu
+  verlet_kernel.cu
   verlet.cpp
   )
 target_link_libraries(halmd_mdsim_gpu_integrator
