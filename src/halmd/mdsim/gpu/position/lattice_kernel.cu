@@ -1,5 +1,4 @@
-/* Lennard-Jones fluid kernel
- *
+/*
  * Copyright © 2008-2009  Peter Colberg
  *
  * This file is part of HALMD.
@@ -21,10 +20,15 @@
 #include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/math/gpu/vector2d.cuh>
 #include <halmd/math/gpu/vector3d.cuh>
-#include <halmd/mdsim/backend/gpu/lattice.hpp>
+#include <halmd/mdsim/gpu/position/lattice_kernel.cuh>
 
-namespace halmd { namespace cu { namespace lattice
+namespace halmd { namespace mdsim { namespace gpu { namespace position
 {
+
+namespace lattice_kernel
+{
+
+using namespace halmd::cu;
 
 /**
  * place particles on a face centered cubic lattice (fcc)
@@ -67,24 +71,18 @@ __global__ void lattice(float4* g_r, uint n, float box)
     g_r[GTID] = r * (box / n);
 }
 
-}}} // namespace halmd::cu::lattice
-
-namespace halmd { namespace gpu
-{
-
-typedef lattice<3> __3D;
-typedef lattice<2> __2D;
+} // namespace lattice_kernel
 
 /**
  * device function wrappers
  */
-cuda::function<void (float4*, uint, float)>
-    __3D::fcc(cu::lattice::lattice<3, cu::lattice::fcc>);
-cuda::function<void (float4*, uint, float)>
-    __3D::sc(cu::lattice::lattice<3, cu::lattice::sc>);
-cuda::function<void (float4*, uint, float)>
-    __2D::fcc(cu::lattice::lattice<2, cu::lattice::fcc>);
-cuda::function<void (float4*, uint, float)>
-    __2D::sc(cu::lattice::lattice<2, cu::lattice::sc>);
+cuda::function <void (float4*, uint, float)>
+    lattice_wrapper<3>::fcc = lattice_kernel::lattice<3, lattice_kernel::fcc>;
+cuda::function <void (float4*, uint, float)>
+    lattice_wrapper<3>::sc = lattice_kernel::lattice<3, lattice_kernel::sc>;
+cuda::function <void (float4*, uint, float)>
+    lattice_wrapper<2>::fcc = lattice_kernel::lattice<2, lattice_kernel::fcc>;
+cuda::function <void (float4*, uint, float)>
+    lattice_wrapper<2>::sc = lattice_kernel::lattice<2, lattice_kernel::sc>;
 
-}} // namespace halmd::gpu
+}}}} // namespace halmd::mdsim::gpu::position

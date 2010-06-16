@@ -1,6 +1,5 @@
-/* Lennard-Jones fluid kernel
- *
- * Copyright © 2008-2009  Peter Colberg
+/*
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,31 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_LATTICE_HPP
-#define HALMD_MDSIM_GPU_LATTICE_HPP
+#ifndef HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_CUH
+#define HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_CUH
 
 #include <cuda_wrapper.hpp>
 
-namespace halmd { namespace gpu
+namespace halmd { namespace mdsim { namespace gpu { namespace position
 {
 
 template <int dimension>
-struct lattice;
-
-template <>
-struct lattice<3>
+struct lattice_wrapper
 {
     static cuda::function<void (float4*, uint, float)> fcc;
     static cuda::function<void (float4*, uint, float)> sc;
 };
 
-template <>
-struct lattice<2>
-{
-    static cuda::function<void (float4*, uint, float)> fcc;
-    static cuda::function<void (float4*, uint, float)> sc;
-};
+}}}} // namespace halmd::mdsim::gpu::position
 
-}} // namespace halmd::gpu
-
-#endif /* ! HALMD_MDSIM_GPU_LATTICE_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_CUH */
