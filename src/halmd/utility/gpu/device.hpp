@@ -30,7 +30,18 @@ namespace halmd { namespace utility { namespace gpu
 {
 
 /**
- * CUDA device configuration
+ * The gpu::device module selects a GPU from the pool of available
+ * GPUs (or the available subset of GPUs given as an option) and
+ * prints driver and runtime version information.
+ *
+ * Further it stores a global value for the number of threads per
+ * block, which gpu modules may use as a reasonable default.
+ *
+ * The GPU selection may be augmented with the external preload
+ * library *nvlock* to consider only unused GPUs.
+ * nvlock transparently emulates the CUDA exclusive mode feature
+ * available for NVIDIA Tesla cards only, by locking the NVIDIA
+ * device file upon context creation on a GPU.
  */
 class device
 {

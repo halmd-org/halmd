@@ -39,6 +39,10 @@ namespace mdsim { namespace gpu
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::depends()
 {
+    // The gpu::device module selects the GPU, which has to occur
+    // before the first CUDA kernel call or memory allocation. As
+    // the particle module is instantiated foremost and allocates
+    // GPU memory, we add a dependency on gpu::device.
     modules::required<_Self, device_type>();
 }
 
