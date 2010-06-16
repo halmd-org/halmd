@@ -12,7 +12,6 @@ add_library(halmd_mdsim
   velocity.cpp
   )
 
-add_subdirectory(backend)
 if(WITH_CUDA)
   add_subdirectory(gpu)
 endif(WITH_CUDA)

@@ -92,7 +92,8 @@ if(WITH_CUDA)
     ${HALMD_MODULES}
     halmd_mdsim_gpu
     halmd_mdsim_gpu_forces
-    halmd_mdsim_gpu_integrator
+    halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu_position
     halmd_mdsim_gpu_sample
     halmd_mdsim_gpu_sort
     halmd_mdsim_samples_gpu
@@ -138,92 +139,6 @@ if(NOT HALMD_BACKEND_EXECUTABLES)
     RUNTIME DESTINATION bin
     )
 endif(NOT HALMD_BACKEND_EXECUTABLES)
-
-set(HALMD_impl
-    ljfluid_impl_host
-    )
-if(WITH_CUDA)
-  set(HALMD_impl
-    ${HALMD_impl}
-    ljfluid_impl_gpu_square
-    ljfluid_impl_gpu_neighbour
-    )
-endif(WITH_CUDA)
-
-foreach(impl ${HALMD_impl})
-  string(REGEX REPLACE "_impl[_a-z]*$" "" class ${impl})
-  string(REGEX REPLACE "(^ljfluid_impl_|_impl)" "" backend ${impl})
-
-  set(HALMD_COMPILE_DEFINITIONS
-    MDSIM_CLASS=${class}
-    MDSIM_IMPL=${impl}
-    MDSIM_BACKEND="${backend}"
-    )
-
-  if(HALMD_BACKEND_EXECUTABLES)
-    add_executable(halmd_${backend}
-      driver.cpp
-      main.cpp
-      mdlib.cpp
-      )
-    target_link_libraries(halmd_${backend}
-      ${HALMD_COMMON_LIBRARIES}
-      )
-    install(TARGETS halmd_${backend}
-      RUNTIME DESTINATION bin
-      )
-  else(HALMD_BACKEND_EXECUTABLES)
-    add_library(halmd_${backend} MODULE
-      mdlib.cpp
-      )
-    install(TARGETS halmd_${backend}
-      LIBRARY DESTINATION lib
-      )
-  endif(HALMD_BACKEND_EXECUTABLES)
-
-  set_target_properties(halmd_${backend} PROPERTIES
-    COMPILE_DEFINITIONS "${HALMD_COMPILE_DEFINITIONS}"
-    )
-  if(HALMD_USE_STATIC_LIBS)
-    set_target_properties(halmd_${backend} PROPERTIES
-      LINK_SEARCH_END_STATIC TRUE
-      )
-  endif(HALMD_USE_STATIC_LIBS)
-endforeach(impl)
-
-target_link_libraries(halmd_host
-  ${GSL_LIBRARIES}
-  sample_host
-  )
-set_target_properties(halmd_host PROPERTIES
-  COMPILE_FLAGS "-UWITH_CUDA"
-  )
-
-if(WITH_CUDA)
-  target_link_libraries(halmd_gpu_square
-    ${CUDA_LIBRARIES}
-    gpu_boltzmann
-    gpu_lattice
-    gpu_ljfluid_square
-    gpu_radix_sort
-    gpu_rand48
-    gpu_reduce
-    gpu_virial
-    sample_gpu
-    )
-  target_link_libraries(halmd_gpu_neighbour
-    ${CUDA_LIBRARIES}
-    gpu_boltzmann
-    gpu_hilbert
-    gpu_lattice
-    gpu_ljfluid_nbr
-    gpu_radix_sort
-    gpu_rand48
-    gpu_reduce
-    gpu_virial
-    sample_gpu
-    )
-endif(WITH_CUDA)
 
 add_subdirectory(algorithm)
 add_subdirectory(io)
