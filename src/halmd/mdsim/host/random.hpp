@@ -39,8 +39,9 @@ public:
     // module definitions
     typedef random _Self;
     typedef mdsim::random _Base;
-    static void options(po::options_description& desc);
     static void depends() {}
+    static void options(po::options_description& desc);
+    static void select(po::options const& vm) {}
 
     typedef boost::mt19937 random_generator;
 

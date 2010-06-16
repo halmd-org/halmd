@@ -36,6 +36,7 @@ public:
     // module definitions
     typedef lj _Self;
     typedef mdsim::host::force<dimension, float_type> _Base;
+    static void depends() {}
     static void options(po::options_description& desc);
     static void select(po::options const& vm);
 

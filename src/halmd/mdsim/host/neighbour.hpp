@@ -52,8 +52,9 @@ public:
     // module definitions
     typedef neighbour _Self;
     typedef mdsim::neighbour<dimension> _Base;
-    static void options(po::options_description& desc);
     static void depends();
+    static void select(po::options const& vm) {}
+    static void options(po::options_description& desc);
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;

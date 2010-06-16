@@ -42,6 +42,8 @@ public:
     typedef box _Self;
     typedef mdsim::box<dimension> _Base;
     static void depends();
+    static void select(po::options const& vm) {}
+    static void options(po::options_description& desc) {}
 
     typedef numeric::host::blas::vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;

@@ -42,6 +42,7 @@ public:
     // module definitions
     typedef power_law _Self;
     typedef mdsim::host::force<dimension, float_type> _Base;
+    static void depends() {}
     static void options(po::options_description& desc);
     static void select(po::options const& vm);
 

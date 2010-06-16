@@ -28,6 +28,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/module/demangle.hpp>
 #include <halmd/utility/module/exception.hpp>
+#include <halmd/utility/modules/concept.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -82,6 +83,7 @@ struct typed_builder_base
      */
     virtual void options(po::options_description& desc)
     {
+        boost::function_requires<modules::ModuleConcept<T> >();
         T::options(desc);
     }
 
@@ -90,6 +92,7 @@ struct typed_builder_base
      */
     virtual void resolve(po::options const& vm)
     {
+        boost::function_requires<modules::ModuleConcept<T> >();
         T::select(vm);
         T::depends();
     }
@@ -110,10 +113,8 @@ struct typed_builder_base<T, typename enable_if<is_object<typename T::_Base> >::
     virtual void options(po::options_description& desc)
     {
         typed_builder_base<_Base>::options(desc);
-        // check for inherited base module function
-        if (T::options != _Base::options) {
-            T::options(desc);
-        }
+        boost::function_requires<modules::ModuleConcept<T> >();
+        T::options(desc);
     }
 
     /**
@@ -122,13 +123,9 @@ struct typed_builder_base<T, typename enable_if<is_object<typename T::_Base> >::
     virtual void resolve(po::options const& vm)
     {
         typed_builder_base<_Base>::resolve(vm);
-        // check for inherited base module function
-        if (T::select != _Base::select) {
-            T::select(vm);
-        }
-        if (T::depends != _Base::depends) {
-            T::depends();
-        }
+        boost::function_requires<modules::ModuleConcept<T> >();
+        T::select(vm);
+        T::depends();
     }
 };
 

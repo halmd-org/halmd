@@ -46,6 +46,8 @@ public:
     typedef hdf5 _Self;
     typedef trajectory::writer<dimension> _Base;
     static void depends();
+    static void select(po::options const& vm) {}
+    static void options(po::options_description& desc) {}
 
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector;

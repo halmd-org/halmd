@@ -45,8 +45,8 @@ public:
     // module definitions
     typedef trajectory _Self;
     typedef mdsim::samples::gpu::trajectory<dimension, float_type> _Base;
-    static void options(po::options_description& desc) {}
     static void depends();
+    static void options(po::options_description& desc) {}
     static void select(po::options const& vm) {}
 
     typedef gpu::particle<dimension, float_type> particle_type;

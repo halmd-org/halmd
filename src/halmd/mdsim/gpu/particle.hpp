@@ -44,6 +44,7 @@ public:
     typedef mdsim::particle<dimension> _Base;
     static void depends();
     static void select(po::options const& vm);
+    static void options(po::options_description& desc) {}
 
     typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_vector_type;
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;

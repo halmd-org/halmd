@@ -41,8 +41,9 @@ public:
     // module definitions
     typedef driver _Self;
     typedef halmd::core _Base;
-    static void options(po::options_description& desc);
     static void depends();
+    static void options(po::options_description& desc);
+    static void select(po::options const& vm) {}
 
     typedef mdsim::core<dimension> core_type;
 

@@ -39,7 +39,9 @@ public:
     // module definitions
     typedef particle _Self;
     typedef mdsim::particle<dimension> _Base;
+    static void depends() {}
     static void select(po::options const& vm);
+    static void options(po::options_description& desc) {}
 
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;
     typedef std::vector<unsigned int> neighbour_list;
