@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/integrator/verlet_kernel.cu>
-#include <halmd/mdsim/gpu/integrator/verlet_wrapper.cuh>
+#include <halmd/mdsim/gpu/integrators/verlet_kernel.cu>
+#include <halmd/mdsim/gpu/integrators/verlet_wrapper.cuh>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace integrator
+namespace halmd { namespace mdsim { namespace gpu { namespace integrators
 {
 
 cuda::symbol<float>
@@ -41,4 +41,4 @@ cuda::function <void (float4*, float2*, float4*, float2 const*)>
 cuda::function <void (float4*, float2 const*)>
   verlet_wrapper<2>::finalize = verlet_kernel::_finalize<vector<dsfloat, 2>, vector<float, 2> >;
 
-}}}} // namespace halmd::mdsim::gpu::integrator
+}}}} // namespace halmd::mdsim::gpu::integrators

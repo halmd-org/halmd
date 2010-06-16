@@ -20,7 +20,7 @@
 #include <boost/mpl/if.hpp>
 
 #include <halmd/algorithm/gpu/base.cuh>
-#include <halmd/mdsim/gpu/integrator/verlet_kernel.cuh>
+#include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
@@ -29,7 +29,7 @@ using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
 
-namespace halmd { namespace mdsim { namespace gpu { namespace integrator
+namespace halmd { namespace mdsim { namespace gpu { namespace integrators
 {
 
 namespace verlet_kernel
@@ -120,4 +120,4 @@ __global__ void _finalize(
 
 } // namespace verlet_kernel
 
-}}}} //namespace halmd::mdsim::gpu::integrator
+}}}} //namespace halmd::mdsim::gpu::integrators

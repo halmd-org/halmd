@@ -24,7 +24,7 @@
 
 #include <cuda_wrapper.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace integrator
+namespace halmd { namespace mdsim { namespace gpu { namespace integrators
 {
 
 template <size_t N>
@@ -43,6 +43,6 @@ struct verlet_wrapper
     static cuda::function <void (float4*, coalesced_vector_type const*)> finalize;
 };
 
-}}}} // namespace halmd::mdsim::gpu::integrator
+}}}} // namespace halmd::mdsim::gpu::integrators
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATOR_VERLET_WRAPPER_CUH */

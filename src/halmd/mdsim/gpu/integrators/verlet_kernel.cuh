@@ -23,7 +23,7 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_CUH
 #define HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_CUH
 
-namespace halmd { namespace mdsim { namespace gpu { namespace integrator
+namespace halmd { namespace mdsim { namespace gpu { namespace integrators
 {
 
 namespace verlet_kernel
@@ -60,6 +60,6 @@ __device__ void finalize(
 
 } // namespace verlet_kernel
 
-}}}} //namespace halmd::mdsim::gpu::integrator
+}}}} //namespace halmd::mdsim::gpu::integrators
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_CUH */
