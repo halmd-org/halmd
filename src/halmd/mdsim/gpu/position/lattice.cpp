@@ -35,8 +35,6 @@ namespace halmd
 namespace mdsim { namespace gpu { namespace position
 {
 
-// using namespace boost;
-// using namespace numeric::gpu::blas;
 using namespace halmd;
 using namespace std;
 
@@ -135,7 +133,7 @@ void lattice<dimension, float_type>::set()
     cuda::thread::synchronize();
     try {
 //         timer[0].record();
-//         cuda::configure(particle->dim_.grid, particle->dim_.block);
+        cuda::configure(particle->dim.grid, particle->dim.block);
         lattice_wrapper<dimension>::fcc(particle->g_r, n, box->length()[0]);
         cuda::thread::synchronize();
 //         timer[1].record();
@@ -147,22 +145,8 @@ void lattice<dimension, float_type>::set()
 //     m_times["lattice"] += timer[1] - timer[0];
 
     // randomly permute particle coordinates for binary mixture
-//     algorith::gpu::permute(particle->g_r);
-//     particle->rearrange(particle->g_r);
-//     LOG("randomly permuting particle coordinates");
-//
-//     cuda::vector<unsigned int> g_sort_index(npart);
-//     g_sort_index.reserve(dim_.threads());
-//
-//     try {
-//         rng_.get(g_sort_index);
-//         radix_sort_(g_sort_index, g_r);
-//         cuda::thread::synchronize();
-//     }
-//     catch (cuda::error const& e) {
-//         LOG_ERROR("CUDA: " << e.what());
-//         throw exception("failed to randomly permute particle coordinates on GPU");
-//     }
+    LOG("randomly permuting particle coordinates");
+    random->shuffle(particle->g_r);
 
     // ??? shift particle positions to range (-L/2, L/2)
 //    box->reduce_periodic(r);

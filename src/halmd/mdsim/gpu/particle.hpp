@@ -54,6 +54,7 @@ public:
 
     particle(po::options const& vm);
     virtual ~particle() {}
+    virtual void rearrange(std::vector<unsigned int> const& index) {} // TODO
 
     //
     // particles in global device memory

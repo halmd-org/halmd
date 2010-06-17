@@ -25,8 +25,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/algorithm/radix_sort.hpp>
 #include <halmd/rng/random.hpp>
 #include <halmd/rng/rand48.hpp>
+#include <halmd/util/exception.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -55,33 +57,48 @@ public:
     virtual ~random() {}
     void seed(unsigned int value);
 
-    template <typename input_iterator>
-    void shuffle(input_iterator first, input_iterator last);
+    template <typename sequence_type>
+    void shuffle(sequence_type& g_val);
     template <typename value_type>
     void normal(value_type& r1, value_type& r2, value_type sigma2);
 
 protected:
     /** pseudo-random number generator */
     random_generator rng_;
-    cuda::config dim_;
+    /** GPU radix sort */
+    radix_sort<float4> radix_sort_;
 };
 
 /**
  * Shuffle sequence in-place
- *
- * D.E. Knuth, Art of Computer Programming, Volume 2:
- * Seminumerical Algorithms, 3rd Edition, 1997,
- * Addison-Wesley, pp. 124-125.
  */
-// template <typename input_iterator>
-// void random::shuffle(input_iterator first, input_iterator last)
-// {
-//     typedef typename std::iterator_traits<input_iterator>::difference_type difference_type;
-//     boost::uniform_int<difference_type> variate;
-//     for (difference_type i = last - first; i > 1; --i) {
-//         std::iter_swap(first + variate(rng_, i), first + (i - 1));
-//     }
-// }
+template <typename sequence_type>
+void random::shuffle(sequence_type& g_val)
+{
+    cuda::vector<unsigned int> g_sort_index;
+    // allocate device memory
+    try {
+        g_sort_index.resize(g_val.size());
+        g_sort_index.reserve(device->threads());
+
+        radix_sort_.resize(g_val.size(), device->threads());
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to allocate global device memory in random::shuffle");
+    }
+
+    try {
+        rng_.get(g_sort_index);
+        radix_sort_(g_sort_index, g_val);
+        cuda::thread::synchronize();
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to shuffle sequence on GPU");
+    }
+
+}
 
 /**
  * Generate two random numbers from normal distribution

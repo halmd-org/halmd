@@ -4,6 +4,7 @@ add_library(halmd_rng_gpu
 target_link_libraries(halmd_rng_gpu
   ${CUDA_LIBRARIES}
   gpu_rand48
+  gpu_radix_sort
   )
 
 add_library(gpu_rand48
