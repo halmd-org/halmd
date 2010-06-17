@@ -75,7 +75,7 @@ void test_rand48_gpu( unsigned long count )
 
     try {
         // seed GPU random number generator
-        halmd::rand48 rng(cuda::config(BLOCKS, THREADS));
+        halmd::rng::rand48 rng(cuda::config(BLOCKS, THREADS));
         rng.set(seed);
         cuda::thread::synchronize();
 

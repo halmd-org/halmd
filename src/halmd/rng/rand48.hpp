@@ -25,9 +25,9 @@
 #include <iostream>
 
 #include <halmd/algorithm/prefix_sum.hpp>
-#include <halmd/rng/gpu/rand48.hpp>
+#include <halmd/rng/gpu/rand48.cuh>
 
-namespace halmd
+namespace halmd { namespace rng
 {
 
 /**
@@ -38,18 +38,19 @@ class rand48
 public:
     /** type for saving or restoring generator state in memory */
     typedef ushort3 state_type;
+    typedef gpu::rand48_wrapper __wrapper;
 
 public:
     rand48()
-      : sym_a(gpu::rand48::a), sym_c(gpu::rand48::c),
-        sym_state(gpu::rand48::state) {}
+      : sym_a(__wrapper::a), sym_c(__wrapper::c),
+        sym_state(__wrapper::state) {}
 
     /**
      * initialize random number generator with CUDA execution dimensions
      */
     rand48(cuda::config const& dim)
-      : sym_a(gpu::rand48::a), sym_c(gpu::rand48::c),
-        sym_state(gpu::rand48::state), dim_(dim), g_state(dim.threads())
+      : sym_a(__wrapper::a), sym_c(__wrapper::c),
+        sym_state(__wrapper::state), dim_(dim), g_state(dim.threads())
     {
         // copy state pointer to device symbol
         cuda::copy(g_state.data(), sym_state);
@@ -105,7 +106,7 @@ public:
         // compute leapfrog multipliers for initialization
         cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
         cuda::configure(dim_.grid, dim_.block);
-        gpu::rand48::leapfrog(g_a);
+        __wrapper::leapfrog(g_a);
 
         // compute leapfrog addends for initialization
         cuda::copy(g_a, g_c);
@@ -115,7 +116,7 @@ public:
         // initialize generator with seed
         cuda::vector<uint48> a(1), c(1);
         cuda::configure(dim_.grid, dim_.block);
-        gpu::rand48::set(g_a, g_c, a, c, seed);
+        __wrapper::set(g_a, g_c, a, c, seed);
         cuda::thread::synchronize();
 
         // copy leapfrog multiplier into constant device memory
@@ -130,7 +131,7 @@ public:
     void uniform(cuda::vector<float>& r)
     {
         cuda::configure(dim_.grid, dim_.block);
-        gpu::rand48::uniform(r, r.size());
+        __wrapper::uniform(r, r.size());
     }
 
     /**
@@ -139,7 +140,7 @@ public:
     void get(cuda::vector<uint>& r)
     {
         cuda::configure(dim_.grid, dim_.block);
-        gpu::rand48::get(r, r.size());
+        __wrapper::get(r, r.size());
     }
 
     /**
@@ -151,7 +152,7 @@ public:
         cuda::host::vector<ushort3> buf(1);
 
         cuda::configure(dim_.grid, dim_.block);
-        gpu::rand48::save(buf_gpu);
+        __wrapper::save(buf_gpu);
         cuda::copy(buf_gpu, buf);
         cuda::thread::synchronize();
 
@@ -166,7 +167,7 @@ public:
         // compute leapfrog multipliers for initialization
         cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
         cuda::configure(dim_.grid, dim_.block);
-        gpu::rand48::leapfrog(g_a);
+        __wrapper::leapfrog(g_a);
 
         // compute leapfrog addends for initialization
         cuda::copy(g_a, g_c);
@@ -176,7 +177,7 @@ public:
         // initialize generator from state
         cuda::vector<uint48> a(1), c(1);
         cuda::configure(dim_.grid, dim_.block);
-        gpu::rand48::restore(g_a, g_c, a, c, mem);
+        __wrapper::restore(g_a, g_c, a, c, mem);
         cuda::thread::synchronize();
 
         // copy leapfrog multiplier into constant device memory
@@ -215,6 +216,6 @@ private:
     cuda::vector<ushort3> g_state;
 };
 
-} // namespace halmd
+}} // namespace halmd::rng
 
 #endif /* ! HALMD_RNG_RAND48_HPP */

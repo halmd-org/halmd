@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
         // seed GPU random number generator
         cuda::config dim(blocks, threads);
-        rand48 rng(dim);
+        rng::rand48 rng(dim);
         start[0].record();
         rng.set(seed);
         cuda::thread::synchronize();
