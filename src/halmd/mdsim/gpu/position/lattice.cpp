@@ -151,60 +151,10 @@ void lattice<dimension, float_type>::set()
     // ??? shift particle positions to range (-L/2, L/2)
 //    box->reduce_periodic(r);
 
-
 //    ??? assign_positions();
 
-/*
-
-    // assign particle types in random order
-    for (size_t i = 0, j = 0, k = 0; j < particle->ntype; ++j) {
-        k += particle->ntypes[j];
-        for (; i < k; ++i) {
-            particle->type[i] = j;
-        }
-    }
-    random->shuffle(particle->type.begin(), particle->type.end());
-
-    // assign particle tags
-    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(particle->nbox), particle->tag.begin());
-
-    // assign lattice coordinates
-    vector_type L = box->length();
-    double u = (dimension == 3) ? 4 : 2;
-    double V = accumulate(L.begin(), L.end(), 1. / ceil(particle->nbox / u), multiplies<double>());
-    double a = pow(V, 1. / dimension);
-    vector<unsigned int, dimension> n(L / a);
-    while (particle->nbox > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
-        vector_type t;
-        for (size_t i = 0; i < dimension; ++i) {
-            t[i] = L[i] / (n[i] + 1);
-        }
-        a = *max_element(t.begin(), t.end());
-        for (size_t i = 0; i < dimension; ++i) {
-            if (t[i] == a) {
-                n[i]++;
-            }
-        }
-    }
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& r = particle->r[i] = a;
-        if (dimension == 3) {
-            r[0] *= ((i >> 2) % n[0]) + ((i ^ (i >> 1)) & 1) / 2.;
-            r[1] *= ((i >> 2) / n[0] % n[1]) + (i & 1) / 2.;
-            r[2] *= ((i >> 2) / n[0] / n[1]) + (i & 2) / 4.;
-        }
-        else {
-            r[0] *= ((i >> 1) % n[0]) + (i & 1) / 2.;
-            r[1] *= ((i >> 1) / n[0]) + (i & 1) / 2.;
-        }
-        // shift particle positions to range (-L/2, L/2)
-        box->reduce_periodic(r);
-    }
-
-    // assign particle image vectors
-    fill(particle->image.begin(), particle->image.end(), 0);*/
-
-//     LOG("particles placed on fcc lattice: a = " << a);
+    // reset particle image vectors
+    cuda::memset(particle->g_image, 0, particle->g_image.capacity());
 }
 
 // explicit instantiation
