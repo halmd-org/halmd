@@ -45,13 +45,17 @@ public:
     enum { RADIX = gpu::radix_sort::RADIX };
 
 public:
-    radix_sort() {}
+    radix_sort() : count_(0) {}
 
     /**
      * reallocate parallel radix sort for given element count
      */
     void resize(unsigned int count, unsigned int threads)
     {
+        // don't reallocate the same count
+        if (count_ == count) return;
+        count_ = count;
+
         // compute optimal CUDA thread configuration
         int dev = cuda::device::get();
         unsigned int max_threads, max_blocks;
@@ -106,7 +110,7 @@ public:
     }
 
 private:
-    unsigned int blocks_, threads_;
+    unsigned int count_, blocks_, threads_;
     prefix_sum<unsigned int> g_scan;
     key_vector g_bucket, g_key;
     val_vector g_val;
