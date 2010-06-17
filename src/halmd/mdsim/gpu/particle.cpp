@@ -69,7 +69,12 @@ particle<dimension, float_type>::particle(po::options const& vm)
   , h_r(nbox)
   , h_image(nbox)
   , h_v(nbox)
+  // initialize parameters
+  , dim(cuda::config((nbox + device->threads() - 1) / device->threads(),
+                     device->threads()))
 {
+    LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
+    LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
 }
 
 // explicit instantiation

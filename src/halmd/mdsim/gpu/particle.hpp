@@ -91,6 +91,8 @@ public:
     unsigned int neighbour_size;
     /** neighbour list stride */
     unsigned int neighbour_stride;
+    /** grid and block dimensions for CUDA calls */
+    const cuda::config dim;
 };
 
 }} // namespace mdsim::gpu

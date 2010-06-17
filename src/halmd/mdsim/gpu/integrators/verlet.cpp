@@ -62,11 +62,6 @@ verlet<dimension, float_type>::verlet(po::options const& vm)
   , timestep_half_(0.5 * timestep_)
 {
     LOG("using velocity-Verlet integration");
-
-    unsigned blocks = (particle->nbox + device->threads() - 1) / device->threads();
-    dim_ = cuda::config(blocks, device->threads());
-    LOG_DEBUG("number of CUDA execution blocks: " << dim_.blocks_per_grid());
-    LOG_DEBUG("number of CUDA execution threads per block: " << dim_.threads_per_block());
 }
 
 /**
@@ -76,7 +71,7 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     try {
-        cuda::configure(dim_.grid, dim_.block);
+        cuda::configure(particle->dim.grid, particle->dim.block);
         verlet_wrapper<dimension>::integrate(
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
         cuda::thread::synchronize();
@@ -98,7 +93,7 @@ void verlet<dimension, float_type>::finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        cuda::configure(dim_.grid, dim_.block);
+        cuda::configure(particle->dim.grid, particle->dim.block);
         verlet_wrapper<dimension>::finalize(particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }

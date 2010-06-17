@@ -61,8 +61,6 @@ protected:
     using _Base::timestep_;
     /** half time-step */
     double timestep_half_;
-    /** grid and block dimensions for CUDA calls */
-    cuda::config dim_;
 };
 
 }}} // namespace mdsim::gpu::integrators
