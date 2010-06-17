@@ -17,10 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
-#include <exception>
-#include <numeric>
-
 #include <halmd/algorithm/host/permute.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
