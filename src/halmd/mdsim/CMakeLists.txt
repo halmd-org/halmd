@@ -6,7 +6,6 @@ add_library(halmd_mdsim
   neighbour.cpp
   particle.cpp
   position.cpp
-  random.cpp
   sort.cpp
   thermodynamics.cpp
   velocity.cpp

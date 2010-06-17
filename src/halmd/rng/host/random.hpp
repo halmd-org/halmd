@@ -17,28 +17,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_RANDOM_HPP
-#define HALMD_MDSIM_HOST_RANDOM_HPP
+#ifndef HALMD_RNG_HOST_RANDOM_HPP
+#define HALMD_RNG_HOST_RANDOM_HPP
 
 #include <algorithm>
 #include <boost/random.hpp>
 #include <iterator>
 
-#include <halmd/mdsim/random.hpp>
+#include <halmd/rng/random.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host
+namespace rng { namespace host
 {
 
 class random
-  : public mdsim::random
+  : public rng::random
 {
 public:
     // module definitions
     typedef random _Self;
-    typedef mdsim::random _Base;
+    typedef rng::random _Base;
     static void depends() {}
     static void options(po::options_description& desc);
     static void select(po::options const& vm) {}
@@ -108,8 +108,8 @@ void random::normal(value_type& x, value_type& y, value_type sigma)
     y *= s;
 }
 
-}} // namespace mdsim::host
+}} // namespace rng::host
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_RANDOM_HPP */
+#endif /* ! HALMD_RNG_HOST_RANDOM_HPP */

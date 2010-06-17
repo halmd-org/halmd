@@ -20,15 +20,29 @@
 #include <fstream>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/random.hpp>
-#include <halmd/mdsim/random.hpp>
+#include <halmd/rng/random.hpp>
 
 using namespace std;
 
 namespace halmd
 {
-namespace mdsim
+namespace rng
 {
+
+/**
+ * Assemble module options
+ */
+void random::options(po::options_description& desc)
+{
+    po::options_description group("Random number generator");
+    group.add_options()
+        ("random-seed", po::value<unsigned int>(),
+         "random number generator integer seed")
+        ("random-device", po::value<std::string>()->default_value("/dev/random"),
+         "random number generator device")
+        ;
+    desc.add(group);
+}
 
 /**
  * Obtain integer seed from file
@@ -50,6 +64,6 @@ unsigned int random::readint(std::string const& file)
     return seed;
 }
 
-} // namespace mdsim
+} // namespace rng
 
 } // namespace halmd

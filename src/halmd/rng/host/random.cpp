@@ -18,14 +18,12 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/random.hpp>
-
-using namespace boost;
-using namespace std;
+#include <halmd/rng/host/random.hpp>
+#include <halmd/utility/module.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host
+namespace rng { namespace host
 {
 
 /**
@@ -60,8 +58,8 @@ void random::seed(unsigned int value)
     rng_.seed(value);
 }
 
-}} // namespace mdsim::host
+}} // namespace rng::host
 
-template class module<mdsim::host::random>;
+template class module<rng::host::random>;
 
 } // namespace halmd

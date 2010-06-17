@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,36 +17,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_RANDOM_HPP
-#define HALMD_MDSIM_RANDOM_HPP
-
+#include <halmd/io/logger.hpp>
+#include <halmd/rng/gpu/random.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim
+namespace rng { namespace gpu
 {
 
-class random
+random::random(po::options const& vm)
+  : _Base(vm)
 {
-public:
-    // module definitions
-    typedef random _Self;
-    static void options(po::options_description& desc) {}
-    static void depends() {}
-    static void select(po::options const& vm) {}
+    if (vm["random-seed"].empty()) {
+        seed(readint(vm["random-device"].as<std::string>()));
+    }
+    else {
+        seed(vm["random-seed"].as<unsigned int>());
+    }
+}
 
-    random(po::options const& vm) {}
-    virtual ~random() {}
-    virtual void seed(unsigned int value) = 0;
+void random::seed(unsigned int value)
+{
+    LOG("random number generator seed: " << value);
+//     rng_.seed(value);
+}
 
-protected:
-    unsigned int readint(std::string const& fn);
-};
+}} // namespace rng::gpu
 
-} // namespace mdsim
+template class module<rng::gpu::random>;
 
 } // namespace halmd
-
-#endif /* ! HALMD_MDSIM_RANDOM_HPP */

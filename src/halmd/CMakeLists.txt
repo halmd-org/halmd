@@ -84,6 +84,7 @@ set(HALMD_MODULES
   halmd_mdsim_host_sort
   halmd_mdsim_host_velocity
   halmd_mdsim_samples_host
+  halmd_rng
   halmd_utility
   halmd_utility_module
   )
