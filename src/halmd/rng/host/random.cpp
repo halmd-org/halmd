@@ -29,12 +29,7 @@ namespace rng { namespace host
 random::random(po::options const& vm)
   : _Base(vm)
 {
-    if (vm["random-seed"].empty()) {
-        seed(readint(vm["random-device"].as<std::string>()));
-    }
-    else {
-        seed(vm["random-seed"].as<unsigned int>());
-    }
+    set_seed(vm);
 }
 
 void random::seed(unsigned int value)

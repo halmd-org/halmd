@@ -19,6 +19,9 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/rng/gpu/random.hpp>
+#include <halmd/rng/gpu/rand48.cuh>
+#include <halmd/rng/rand48.hpp>
+#include <halmd/util/exception.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
@@ -26,21 +29,46 @@ namespace halmd
 namespace rng { namespace gpu
 {
 
+enum { BLOCKS = 32 };
+enum { THREADS = 32 << DEVICE_SCALE };
+
+/**
+ * Resolve module dependencies
+ */
+void random::depends()
+{
+    modules::required<_Self, device_type>();
+}
+
 random::random(po::options const& vm)
   : _Base(vm)
+  // dependency injection
+  , device(modules::fetch<device_type>(vm))
 {
-    if (vm["random-seed"].empty()) {
-        seed(readint(vm["random-device"].as<std::string>()));
-    }
-    else {
-        seed(vm["random-seed"].as<unsigned int>());
-    }
+    set_seed(vm);
 }
 
 void random::seed(unsigned int value)
 {
     LOG("random number generator seed: " << value);
-//     rng_.seed(value);
+
+    try {
+        rng_.resize(cuda::config(BLOCKS, THREADS));
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to change random number generator dimensions");
+    }
+
+    try {
+        rng_.set(value);
+        cuda::thread::synchronize();
+        rng_.init_symbols(rand48_wrapper::a, rand48_wrapper::c, rand48_wrapper::state);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to seed random number generator");
+    }
 }
 
 }} // namespace rng::gpu

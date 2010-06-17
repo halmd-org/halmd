@@ -48,7 +48,7 @@ void lattice<dimension, float_type>::depends()
 {
     modules::required<_Self, particle_type>();
     modules::required<_Self, box_type>();
-//     modules::required<_Self, random_type>();
+    modules::required<_Self, random_type>();
 }
 
 template <int dimension, typename float_type>
@@ -65,7 +65,7 @@ lattice<dimension, float_type>::lattice(po::options const& vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(vm))
   , box(modules::fetch<box_type>(vm))
-//   , random(modules::fetch<random_type>(vm))
+  , random(modules::fetch<random_type>(vm))
 {}
 
 /**

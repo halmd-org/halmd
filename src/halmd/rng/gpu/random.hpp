@@ -23,8 +23,11 @@
 #include <algorithm>
 #include <iterator>
 
+#include <boost/shared_ptr.hpp>
+
 #include <halmd/rng/random.hpp>
 #include <halmd/rng/rand48.hpp>
+#include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -40,10 +43,13 @@ public:
     typedef random _Self;
     typedef rng::random _Base;
     static void options(po::options_description& desc) {};
-    static void depends() {}
+    static void depends();
     static void select(po::options const& vm) {}
 
-    typedef halmd::rand48 random_generator;
+    typedef halmd::rng::rand48 random_generator;
+    typedef utility::gpu::device device_type;
+
+    shared_ptr<device_type> device;
 
     random(po::options const& vm);
     virtual ~random() {}
@@ -57,6 +63,7 @@ public:
 protected:
     /** pseudo-random number generator */
     random_generator rng_;
+    cuda::config dim_;
 };
 
 /**

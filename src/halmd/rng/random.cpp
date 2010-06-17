@@ -45,6 +45,22 @@ void random::options(po::options_description& desc)
 }
 
 /**
+ * Set seed from option or device
+ *
+ * accesses the pure virtual function seed()
+ * => can only be called from a derived class
+ */
+void random::set_seed(po::options const& vm)
+{
+    if (vm["random-seed"].empty()) {
+        seed(readint(vm["random-device"].as<std::string>()));
+    }
+    else {
+        seed(vm["random-seed"].as<unsigned int>());
+    }
+}
+
+/**
  * Obtain integer seed from file
  */
 unsigned int random::readint(std::string const& file)

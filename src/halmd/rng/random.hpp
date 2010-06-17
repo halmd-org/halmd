@@ -42,6 +42,7 @@ public:
 
 protected:
     unsigned int readint(std::string const& fn);
+    void set_seed(po::options const& vm);
 };
 
 } // namespace rng
