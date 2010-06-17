@@ -26,21 +26,6 @@ namespace halmd
 namespace rng { namespace host
 {
 
-/**
- * Assemble module options
- */
-void random::options(po::options_description& desc)
-{
-    po::options_description group("Random number generator");
-    group.add_options()
-        ("random-seed", po::value<unsigned int>(),
-         "random number generator integer seed")
-        ("random-device", po::value<std::string>()->default_value("/dev/random"),
-         "random number generator device")
-        ;
-    desc.add(group);
-}
-
 random::random(po::options const& vm)
   : _Base(vm)
 {
