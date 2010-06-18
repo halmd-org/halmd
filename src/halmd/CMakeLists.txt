@@ -97,6 +97,7 @@ if(WITH_CUDA)
     halmd_mdsim_gpu_position
     halmd_mdsim_gpu_sample
     halmd_mdsim_gpu_sort
+    halmd_mdsim_gpu_velocity
     halmd_mdsim_samples_gpu
     halmd_utility_gpu
     )

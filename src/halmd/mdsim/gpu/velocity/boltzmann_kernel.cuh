@@ -1,6 +1,6 @@
 /* Maxwell-Boltzmann distribution at accurate temperature
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,21 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_BOLTZMANN_HPP
-#define HALMD_MDSIM_GPU_BOLTZMANN_HPP
+#ifndef HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_KERNEL_CUH
+#define HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_KERNEL_CUH
 
 #include <cuda_wrapper.hpp>
 #include <halmd/math/gpu/dsfloat.cuh>
 #include <halmd/rng/gpu/uint48.cuh>
 
-namespace halmd { namespace gpu
+namespace halmd { namespace mdsim { namespace gpu { namespace velocity
 {
 
 template <int dimension = 0>
-struct boltzmann;
+struct boltzmann_wrapper;
 
 template <>
-struct boltzmann<>
+struct boltzmann_wrapper<>
 {
     enum { BLOCKS = 32 };
     enum { THREADS = 32 << DEVICE_SCALE };
@@ -46,7 +46,7 @@ struct boltzmann<>
 };
 
 template <>
-struct boltzmann<3> : boltzmann<>
+struct boltzmann_wrapper<3> : boltzmann_wrapper<>
 {
     static cuda::function<void (float4*, uint, uint, float, float4*)> gaussian;
     static cuda::function<void (float4*, uint, uint, float4 const*, dsfloat*)> shift_velocity;
@@ -54,13 +54,13 @@ struct boltzmann<3> : boltzmann<>
 };
 
 template <>
-struct boltzmann<2> : boltzmann<>
+struct boltzmann_wrapper<2> : boltzmann_wrapper<>
 {
-    static cuda::function<void (float2*, uint, uint, float, float2*)> gaussian;
-    static cuda::function<void (float2*, uint, uint, float2 const*, dsfloat*)> shift_velocity;
-    static cuda::function<void (float2*, uint, uint, dsfloat const*, dsfloat)> scale_velocity;
+    static cuda::function<void (float4*, uint, uint, float, float2*)> gaussian;
+    static cuda::function<void (float4*, uint, uint, float2 const*, dsfloat*)> shift_velocity;
+    static cuda::function<void (float4*, uint, uint, dsfloat const*, dsfloat)> scale_velocity;
 };
 
-}} // namespace halmd::gpu
+}}}} // namespace halmd::mdsim::gpu::velocity
 
-#endif /* ! HALMD_MDSIM_GPU_BOLTZMANN_HPP */
+#endif /* ! HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_KERNEL_CUH */
