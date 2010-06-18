@@ -107,8 +107,18 @@ void random::shuffle(sequence_type& g_val)
 template <unsigned dimension, typename sequence_type>
 void random::normal(sequence_type& g_val, float variance)
 {
+    typedef typename sequence_type::value_type value_type;
+
     try {
-        rng_.normal<dimension>(g_val, variance);
+        const uint stride = sizeof(value_type) / sizeof(float);
+
+        // successively assign the dimensional components,
+        // the dimension can not be derived from value_type
+        // being often an aligned type like float2 or float4
+        for (uint i=0; i < dimension; i++) {
+            rng_.normal(reinterpret_cast<float*>((value_type*)g_val) + i,
+                        g_val.size(), variance, stride);
+        }
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());

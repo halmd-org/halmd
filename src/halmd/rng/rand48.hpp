@@ -152,15 +152,10 @@ public:
         __wrapper::normal(r, r.size(), var, 1);
     }
 
-    template <unsigned dimension, typename gpu_vector_type>
-    void normal(cuda::vector<gpu_vector_type>& r, float var)
+    void normal(float* r, uint size, float var, uint stride=1)
     {
-        const uint stride = sizeof(gpu_vector_type) / sizeof(float);
-
         cuda::configure(dim_.grid, dim_.block);
-        for (uint i=0; i < dimension; i++) {
-            __wrapper::normal(reinterpret_cast<float*>((float4*)r) + i, r.size(), var, stride);
-        }
+        __wrapper::normal(r, size, var, stride);
     }
 
     /**
