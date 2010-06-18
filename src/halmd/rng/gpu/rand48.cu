@@ -142,6 +142,44 @@ __device__ float uniform(state_type& state)
 }
 
 /**
+ * fill array with uniform random numbers in [0.0, 1.0)
+ */
+__global__ void uniform(float* v, uint len)
+{
+    ushort3 x = g_state[GTID];
+
+    for (uint k = GTID; k < len; k += GTDIM) {
+        v[k] = uniform(x);
+    }
+
+    g_state[GTID] = x;
+}
+
+/**
+ * returns random integer in [0, 2^32-1]
+ */
+__device__ uint get(ushort3& state)
+{
+    uint r = (state.z << 16UL) + state.y;
+    state = muladd(a, state, c);
+    return r;
+}
+
+/**
+ * fill array with random integers in [0, 2^32-1]
+ */
+__global__ void get(uint* v, uint len)
+{
+    ushort3 x = g_state[GTID];
+
+    for (uint k = GTID; k < len; k += GTDIM) {
+        v[k] = get(x);
+    }
+
+    g_state[GTID] = x;
+}
+
+/**
  * generate 2 random numbers from Gaussian distribution with given variance
  */
 __device__ void normal(float& r1, float& r2, float var, state_type& state)
@@ -186,41 +224,24 @@ __device__ void normal(float2& v, float var, state_type& state)
 }
 
 /**
- * fill array with uniform random numbers in [0.0, 1.0)
+ * fill array with normally distributed random numbers of given variance,
+ * the array is traversed with the given stride
  */
-__global__ void uniform(float* v, uint len)
+__global__ void normal(float* v, uint len, float var, uint stride)
 {
-    ushort3 x = g_state[GTID];
+    ushort3 state = g_state[GTID];
 
-    for (uint k = GTID; k < len; k += GTDIM) {
-        v[k] = uniform(x);
+    // generate random numbers in pairs
+    uint k = GTID;
+    for (; k + stride < len; k += 2 * stride * GTDIM) {
+        normal(v[k], v[k + stride], var, state);
+    }
+    if (k < len) {
+        float r;
+        normal(v[k], r, var, state);
     }
 
-    g_state[GTID] = x;
-}
-
-/**
- * returns random integer in [0, 2^32-1]
- */
-__device__ uint get(ushort3& state)
-{
-    uint r = (state.z << 16UL) + state.y;
-    state = muladd(a, state, c);
-    return r;
-}
-
-/**
- * fill array with random integers in [0, 2^32-1]
- */
-__global__ void get(uint* v, uint len)
-{
-    ushort3 x = g_state[GTID];
-
-    for (uint k = GTID; k < len; k += GTDIM) {
-        v[k] = get(x);
-    }
-
-    g_state[GTID] = x;
+    g_state[GTID] = state;
 }
 
 } // namespace rand48_kernel
@@ -240,6 +261,8 @@ cuda::function<void (float*, uint)>
     rand48_wrapper::uniform = rand48_kernel::uniform;
 cuda::function<void (uint*, uint)>
     rand48_wrapper::get = rand48_kernel::get;
+cuda::function<void (float* v, uint len, float var, uint stride)>
+    rand48_wrapper::normal = rand48_kernel::normal;
 
 /**
  * device constant wrappers

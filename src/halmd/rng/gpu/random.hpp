@@ -59,8 +59,8 @@ public:
 
     template <typename sequence_type>
     void shuffle(sequence_type& g_val);
-    template <typename value_type>
-    void normal(value_type& r1, value_type& r2, value_type sigma2);
+    template <unsigned dimension, typename sequence_type>
+    void normal(sequence_type& g_val, float variance);
 
 protected:
     /** pseudo-random number generator */
@@ -97,40 +97,24 @@ void random::shuffle(sequence_type& g_val)
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to shuffle sequence on GPU");
     }
-
 }
 
 /**
- * Generate two random numbers from normal distribution
- *
- * The Box-Muller transformation for generating random numbers
- * in the normal distribution was originally described in
- *
- *   G.E.P. Box and M.E. Muller, A Note on the Generation of
- *   Random Normal Deviates, The Annals of Mathematical Statistics,
- *   1958, 29, p. 610-611
- *
- * Here, we use instead the faster polar method of the Box-Muller
- * transformation, see
- *
- *   D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
- *   Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
+ * Fill sequence with normally distributed random numbers of given variance,
+ * the value_type of sequence may be a vector
  */
-// template <typename value_type>
-// void random::normal(value_type& x, value_type& y, value_type sigma)
-// {
-//     boost::uniform_01<random_generator&> variate(rng_);
-//     value_type s;
-//     do {
-//         x = 2. * variate() - 1.;
-//         y = 2. * variate() - 1.;
-//         s = x * x + y * y;
-//     } while (s >= 1.);
-//
-//     s = sigma * std::sqrt(-2. * std::log(s) / s);
-//     x *= s;
-//     y *= s;
-// }
+
+template <unsigned dimension, typename sequence_type>
+void random::normal(sequence_type& g_val, float variance)
+{
+    try {
+        rng_.normal<dimension>(g_val, variance);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw exception("failed to generate normal distribution on GPU");
+    }
+}
 
 }} // namespace rng::gpu
 

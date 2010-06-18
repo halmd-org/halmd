@@ -1,6 +1,6 @@
 /* Parallelized rand48 random number generator for CUDA
  *
- * Copyright © 2007-2009  Peter Colberg
+ * Copyright © 2007-2009  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -141,6 +141,26 @@ public:
     {
         cuda::configure(dim_.grid, dim_.block);
         __wrapper::get(r, r.size());
+    }
+
+    /**
+     * fill array with normally distributed random numbers of given variance
+     */
+    void normal(cuda::vector<float>& r, float var)
+    {
+        cuda::configure(dim_.grid, dim_.block);
+        __wrapper::normal(r, r.size(), var, 1);
+    }
+
+    template <unsigned dimension, typename gpu_vector_type>
+    void normal(cuda::vector<gpu_vector_type>& r, float var)
+    {
+        const uint stride = sizeof(gpu_vector_type) / sizeof(float);
+
+        cuda::configure(dim_.grid, dim_.block);
+        for (uint i=0; i < dimension; i++) {
+            __wrapper::normal(reinterpret_cast<float*>((float4*)r) + i, r.size(), var, stride);
+        }
     }
 
     /**

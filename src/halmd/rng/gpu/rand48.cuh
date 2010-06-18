@@ -35,6 +35,7 @@ struct rand48_wrapper
     static cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3)> restore;
     static cuda::function<void (float*, uint)> uniform;
     static cuda::function<void (uint*, uint)> get;
+    static cuda::function<void (float* v, uint len, float var, uint stride)> normal;
 
     static cuda::symbol<uint48> a;
     static cuda::symbol<uint48> c;
