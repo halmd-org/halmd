@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,7 +20,10 @@
 #ifndef HALMD_MDSIM_HOST_BOX_HPP
 #define HALMD_MDSIM_HOST_BOX_HPP
 
+#include <vector>
+
 #include <halmd/mdsim/box.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/options.hpp>
@@ -39,7 +42,7 @@ public:
     typedef box _Self;
     typedef mdsim::box<dimension> _Base;
     static void depends();
-    static void select(po::options const& vm);
+    static void select(po::options const& vm) {}
     static void options(po::options_description& desc) {}
 
     typedef numeric::host::blas::vector<double, dimension> vector_type;

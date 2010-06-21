@@ -20,7 +20,10 @@
 #ifndef HALMD_MDSIM_GPU_BOX_HPP
 #define HALMD_MDSIM_GPU_BOX_HPP
 
+#include <vector>
+
 #include <halmd/mdsim/box.hpp>
+// #include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 // #include <halmd/numeric/gpu/blas/vector.cuh>
 #include <halmd/utility/options.hpp>
@@ -39,7 +42,7 @@ public:
     typedef box _Self;
     typedef mdsim::box<dimension> _Base;
     static void depends();
-    static void select(po::options const& vm);
+    static void select(po::options const& vm) {}
     static void options(po::options_description& desc) {}
 
     typedef typename _Base::vector_type vector_type;

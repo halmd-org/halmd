@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,13 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #include <algorithm>
-// #include <cmath>
+#include <algorithm>
+#include <cmath>
+#include <numeric>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/host/box.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/utility/module.hpp>
 
+using namespace boost;
 using namespace std;
 
 namespace halmd

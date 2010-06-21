@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,13 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string/predicate.hpp>
+#include <algorithm>
+#include <cmath>
+#include <numeric>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/box.hpp>
-#include <halmd/utility/module.hpp>
-
-// workaround
 #include <halmd/mdsim/gpu/particle.hpp>
 
 using namespace boost;
@@ -41,16 +40,6 @@ template <int dimension>
 void box<dimension>::depends()
 {
     modules::required<_Self, particle_type>();
-    // workaround
-    modules::required<_Self, gpu::particle<dimension, float> >();
-}
-
-template <int dimension>
-void box<dimension>::select(po::options const& vm)
-{
-/*    if (!starts_with(vm["backend"].as<string>(), "gpu")) {
-        throw unsuitable_module("mismatching option backend");
-    }*/
 }
 
 /**
