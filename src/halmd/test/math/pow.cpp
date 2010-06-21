@@ -34,13 +34,13 @@ using namespace halmd;
 
 BOOST_AUTO_TEST_CASE( correctness )
 {
-    BOOST_CHECK_EQUAL(std::pow(2, 0), math::pow<0>(2));
-    BOOST_CHECK_EQUAL(std::pow(2, 1), math::pow<1>(2));
-    BOOST_CHECK_EQUAL(std::pow(2, 2), math::pow<2>(2));
-    BOOST_CHECK_EQUAL(std::pow(2, 6), math::pow<6>(2));
-    BOOST_CHECK_EQUAL(std::pow(2, 12), math::pow<12>(2));
-    BOOST_CHECK_EQUAL(std::pow(2, 15), math::pow<15>(2));
-    BOOST_CHECK_EQUAL(std::pow(2, 24), math::pow<24>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 0), math::pow<0>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 1), math::pow<1>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 2), math::pow<2>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 6), math::pow<6>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 12), math::pow<12>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 15), math::pow<15>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 24), math::pow<24>(2));
 
     BOOST_CHECK_CLOSE_FRACTION(math::pow<2>(std::sqrt(5)), 5, eps);
     BOOST_CHECK_CLOSE_FRACTION(math::pow<12>(1.3), std::pow(1.3, 12), eps);
