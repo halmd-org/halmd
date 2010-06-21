@@ -18,7 +18,6 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/position/lattice.hpp>
 #include <halmd/mdsim/position.hpp>
 
 using namespace boost;

@@ -18,7 +18,6 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/sort/hilbert.hpp>
 #include <halmd/mdsim/sort.hpp>
 
 namespace halmd

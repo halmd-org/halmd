@@ -18,7 +18,6 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/velocity/boltzmann.hpp>
 #include <halmd/mdsim/velocity.hpp>
 
 using namespace boost;

@@ -25,10 +25,6 @@
 #include <numeric>
 
 #include <halmd/io/logger.hpp>
-#ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/particle.hpp>
-#endif
-#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/particle.hpp>
 
 using namespace boost;

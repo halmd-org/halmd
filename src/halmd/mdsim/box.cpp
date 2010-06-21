@@ -22,8 +22,6 @@
 #include <numeric>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/box.hpp>
-#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/box.hpp>
 
 using namespace boost;

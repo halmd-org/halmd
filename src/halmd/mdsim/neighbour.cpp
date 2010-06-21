@@ -18,7 +18,6 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/neighbour.hpp>
 
 namespace halmd
