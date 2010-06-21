@@ -39,6 +39,7 @@
 #include <halmd/utility/modules/factory.hpp>
 #include <halmd/utility/modules/policy.hpp>
 #include <halmd/utility/modules/resolver.hpp>
+#include <halmd/utility/modules/writer.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/version.h>
 
@@ -69,6 +70,9 @@ int main(int argc, char **argv)
 #endif
 
     // resolve module dependencies
+#ifndef NDEBUG
+    write_graphviz(vm["output"].as<string>() + "_registry.dot", modules::registry::graph());
+#endif
     modules::resolver resolver(modules::registry::graph());
     try {
         resolver.resolve<core>(vm, unparsed);
@@ -77,7 +81,13 @@ int main(int argc, char **argv)
         cerr << PROGRAM_NAME ": " << e.what() << endl;
         return EXIT_FAILURE;
     }
+#ifndef NDEBUG
+    write_graphviz(vm["output"].as<string>() + "_resolver.dot", resolver.graph());
+#endif
     modules::policy policy(resolver.graph());
+#ifndef NDEBUG
+    write_graphviz(vm["output"].as<string>() + "_policy.dot", policy.graph());
+#endif
     modules::factory factory(policy.graph());
 
 #ifdef NDEBUG
