@@ -112,11 +112,11 @@ void lattice<dimension, float_type>::set()
     // lower boundary for number of particles per lattice dimension
     unsigned int n = static_cast<unsigned int>(pow(particle->nbox / m, 1. / dimension));
     // lower boundary for total number of lattice sites
-    unsigned int N = m * static_cast<unsigned int>(pow(n, dimension));
+    unsigned int N = m * static_cast<unsigned int>(pow(static_cast<double>(n), dimension));
 
     if (N < particle->nbox) {
         n += 1;
-        N = m * static_cast<unsigned int>(pow(n, dimension));
+        N = m * static_cast<unsigned int>(pow(static_cast<double>(n), dimension));
     }
     if (N > particle->nbox) {
         LOG_WARNING("lattice not fully occupied (" << N << " sites)");
