@@ -38,7 +38,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    velocity(po::options const& vm) {}
+    velocity(modules::factory& factory, po::options const& vm) {}
     virtual ~velocity() {}
     virtual void set() = 0;
 };

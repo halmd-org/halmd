@@ -35,7 +35,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    core(po::options const& vm) {}
+    core(modules::factory& factory, po::options const& vm) {}
     virtual ~core() {}
     virtual void run() = 0;
 };

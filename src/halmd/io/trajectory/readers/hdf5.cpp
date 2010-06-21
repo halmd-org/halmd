@@ -36,7 +36,7 @@ namespace io { namespace trajectory { namespace readers
 template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::depends()
 {
-    modules::required<_Self, sample_type>();
+    modules::depends<_Self, sample_type>::required();
 }
 
 template <int dimension, typename float_type>
@@ -51,10 +51,10 @@ void hdf5<dimension, float_type>::select(po::options const& vm)
  * read sample from HDF5 trajectory file
  */
 template <int dimension, typename float_type>
-hdf5<dimension, float_type>::hdf5(po::options const& vm)
-  : _Base(vm)
+hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , sample(modules::fetch<sample_type>(vm))
+  , sample(modules::fetch<sample_type>(factory, vm))
 {
     LOG("read trajectory file: " << path_);
 

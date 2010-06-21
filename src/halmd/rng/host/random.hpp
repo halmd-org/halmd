@@ -25,6 +25,7 @@
 #include <iterator>
 
 #include <halmd/rng/random.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -45,7 +46,7 @@ public:
 
     typedef boost::mt19937 random_generator;
 
-    random(po::options const& vm);
+    random(modules::factory& factory, po::options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);
 

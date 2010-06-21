@@ -48,7 +48,7 @@ public:
     typedef typename sample_type::sample_vector sample_vector;
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 
-    hdf5(po::options const& vm);
+    hdf5(modules::factory& factory, po::options const& vm);
 
     shared_ptr<sample_type> sample;
 

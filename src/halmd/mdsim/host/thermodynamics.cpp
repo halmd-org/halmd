@@ -34,14 +34,14 @@ namespace mdsim { namespace host
 template <int dimension>
 void thermodynamics<dimension>::depends()
 {
-    modules::required<_Self, particle_type>();
+    modules::depends<_Self, particle_type>::required();
 }
 
 template <int dimension>
-thermodynamics<dimension>::thermodynamics(po::options const& vm)
-  : _Base(vm)
+thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , particle(modules::fetch<particle_type>(vm))
+  , particle(modules::fetch<particle_type>(factory, vm))
   // allocate result variables
   , virial_(particle->ntype)
 {

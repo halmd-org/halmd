@@ -34,6 +34,9 @@
 #include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/mdsim/host/velocity/boltzmann.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/modules/factory.hpp>
+#include <halmd/utility/modules/policy.hpp>
+#include <halmd/utility/modules/resolver.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/io/logger.hpp>
 
@@ -95,16 +98,20 @@ BOOST_AUTO_TEST_CASE( ideal_gas )
 
     // set up modules
     BOOST_TEST_MESSAGE("resolve module dependencies");
-    module<mdsim::core<dim> >::required(vm);
-    module<mdsim::thermodynamics<dim> >::required(vm);
+    po::unparsed_options unparsed;
+    modules::resolver resolver(modules::registry::graph());
+    resolver.resolve<mdsim::core<dim> >(vm, unparsed);
+    resolver.resolve<mdsim::thermodynamics<dim> >(vm, unparsed);
+    modules::policy policy(resolver.graph());
+    modules::factory factory(policy.graph());
 
     BOOST_TEST_MESSAGE("initialise MD simulation");
     // init core module
-    shared_ptr<mdsim::core<dim> > core(module<mdsim::core<dim> >::fetch(vm));
+    shared_ptr<mdsim::core<dim> > core(modules::fetch<mdsim::core<dim> >(factory, vm));
 
     // measure thermodynamic properties
     shared_ptr<mdsim::thermodynamics<dim> >
-            thermodynamics(module<mdsim::thermodynamics<dim> >::fetch(vm));
+            thermodynamics(modules::fetch<mdsim::thermodynamics<dim> >(factory, vm));
 
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
     double en_tot = thermodynamics->en_tot();
@@ -157,20 +164,24 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
 
     // set up modules
     BOOST_TEST_MESSAGE("resolve module dependencies");
-    module<mdsim::core<dim> >::required(vm);
-    module<mdsim::thermodynamics<dim> >::required(vm);
+    po::unparsed_options unparsed;
+    modules::resolver resolver(modules::registry::graph());
+    resolver.resolve<mdsim::core<dim> >(vm, unparsed);
+    resolver.resolve<mdsim::thermodynamics<dim> >(vm, unparsed);
+    modules::policy policy(resolver.graph());
+    modules::factory factory(policy.graph());
 
     BOOST_TEST_MESSAGE("initialise MD simulation");
     // init core module
-    shared_ptr<mdsim::core<dim> > core(module<mdsim::core<dim> >::fetch(vm));
+    shared_ptr<mdsim::core<dim> > core(modules::fetch<mdsim::core<dim> >(factory, vm));
 
     // measure thermodynamic properties
     shared_ptr<mdsim::thermodynamics<dim> >
-            thermodynamics(module<mdsim::thermodynamics<dim> >::fetch(vm));
+            thermodynamics(modules::fetch<mdsim::thermodynamics<dim> >(factory, vm));
 
     // poor man's thermostat
     shared_ptr<mdsim::host::velocity::boltzmann<dim, double> >
-            boltzmann(module<mdsim::host::velocity::boltzmann<dim, double> >::fetch(vm));
+            boltzmann(modules::fetch<mdsim::host::velocity::boltzmann<dim, double> >(factory, vm));
 
     // prepare system at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("equilibrate initial state");

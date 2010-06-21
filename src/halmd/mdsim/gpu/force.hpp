@@ -42,7 +42,7 @@ public:
     // module definitions
     typedef force _Self;
     typedef mdsim::force<dimension> _Base;
-    static void options(po::options_description& desc);
+    static void options(po::options_description& desc) {}
     static void depends();
     static void select(po::options const& vm) {}
 
@@ -59,7 +59,7 @@ public:
 //     shared_ptr<thermodynamics_type> thermodynamics;
 //     shared_ptr<smooth_type> smooth;
 
-    force(po::options const& vm);
+    force(modules::factory& factory, po::options const& vm);
     virtual ~force() {};
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;

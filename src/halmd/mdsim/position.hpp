@@ -38,7 +38,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    position(po::options const& vm) {}
+    position(modules::factory& factory, po::options const& vm) {}
     virtual ~position() {}
     virtual void set() = 0;
 };

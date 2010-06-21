@@ -57,7 +57,7 @@ public:
     /** returns file extension */
     std::string extension() const { return ".trj"; }
 
-    hdf5(po::options const& vm);
+    hdf5(modules::factory& factory, po::options const& vm);
     void append();
     void flush();
 

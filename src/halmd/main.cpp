@@ -36,6 +36,9 @@
 #include <halmd/util/timer.hpp>
 #include <halmd/utility/hostname.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/modules/factory.hpp>
+#include <halmd/utility/modules/policy.hpp>
+#include <halmd/utility/modules/resolver.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/version.h>
 
@@ -52,8 +55,9 @@ int main(int argc, char **argv)
 
     // parse program options
     po::options vm;
+    po::unparsed_options unparsed;
     try {
-        po::parse_options(argc, argv, vm);
+        po::parse_options(argc, argv, vm, unparsed);
     }
     catch (po::options_parser_error const& e) {
         return e.status();
@@ -65,13 +69,16 @@ int main(int argc, char **argv)
 #endif
 
     // resolve module dependencies
+    modules::resolver resolver(modules::registry::graph());
     try {
-        module<core>::required(vm);
+        resolver.resolve<core>(vm, unparsed);
     }
-    catch (std::exception const& e) {
+    catch (program_options::error const& e) {
         cerr << PROGRAM_NAME ": " << e.what() << endl;
         return EXIT_FAILURE;
     }
+    modules::policy policy(resolver.graph());
+    modules::factory factory(policy.graph());
 
 #ifdef NDEBUG
     // enable logging after successful option parsing if not debugging
@@ -112,7 +119,7 @@ int main(int argc, char **argv)
         }
 
         // run MD simulation
-        shared_ptr<halmd::core> core(module<halmd::core>::fetch(vm));
+        shared_ptr<halmd::core> core(modules::fetch<halmd::core>(factory, vm));
         core->run();
 #ifdef NDEBUG
     }

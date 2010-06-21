@@ -38,7 +38,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    neighbour(po::options const& vm) {}
+    neighbour(modules::factory& factory, po::options const& vm) {}
     virtual ~neighbour() {}
     virtual void update() = 0;
     virtual bool check() = 0;

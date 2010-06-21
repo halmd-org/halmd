@@ -54,7 +54,7 @@ public:
     shared_ptr<box_type> box;
     shared_ptr<random_type> random;
 
-    lattice(po::options const& vm);
+    lattice(modules::factory& factory, po::options const& vm);
     virtual ~lattice() {}
     void set();
 };

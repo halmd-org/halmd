@@ -56,7 +56,7 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
 
-    trajectory(po::options const& vm);
+    trajectory(modules::factory& factory, po::options const& vm);
     virtual ~trajectory() {}
     void acquire();
 
@@ -90,7 +90,7 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
 
-    trajectory(po::options const& vm);
+    trajectory(modules::factory& factory, po::options const& vm);
     virtual ~trajectory() {}
     void acquire();
 

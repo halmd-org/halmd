@@ -51,7 +51,7 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
 
-    verlet(po::options const& vm);
+    verlet(modules::factory& factory, po::options const& vm);
     virtual ~verlet() {}
     void integrate();
     void finalize();

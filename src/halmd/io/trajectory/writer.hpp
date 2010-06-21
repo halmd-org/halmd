@@ -39,7 +39,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    writer(po::options const& vm) {}
+    writer(modules::factory& factory, po::options const& vm) {}
     virtual ~writer() {}
     virtual std::string extension() const = 0;
     virtual void append() = 0;

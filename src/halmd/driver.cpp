@@ -50,14 +50,14 @@ void driver<dimension>::options(po::options_description& desc)
 template <int dimension>
 void driver<dimension>::depends()
 {
-    modules::required<_Self, core_type>();
+    modules::depends<_Self, core_type>::required();
 }
 
 template <int dimension>
-driver<dimension>::driver(po::options const& vm)
-  : _Base(vm)
+driver<dimension>::driver(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , core(modules::fetch<core_type>(vm))
+  , core(modules::fetch<core_type>(factory, vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {

@@ -47,8 +47,8 @@ void verlet<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::depends()
 {
-    modules::required<_Self, particle_type>();
-    modules::required<_Self, box_type>();
+    modules::depends<_Self, particle_type>::required();
+    modules::depends<_Self, box_type>::required();
 }
 
 template <int dimension, typename float_type>
@@ -60,11 +60,11 @@ void verlet<dimension, float_type>::select(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-verlet<dimension, float_type>::verlet(po::options const& vm)
-  : _Base(vm)
+verlet<dimension, float_type>::verlet(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , particle(modules::fetch<particle_type>(vm))
-  , box(modules::fetch<box_type>(vm))
+  , particle(modules::fetch<particle_type>(factory, vm))
+  , box(modules::fetch<box_type>(factory, vm))
   // set parameters
   , timestep_half_(0.5 * timestep_)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,31 +17,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_MODULE_OPTIONS_HPP
-#define HALMD_UTILITY_MODULE_OPTIONS_HPP
+#ifndef HALMD_UTILITY_MODULES_DEMANGLE_HPP
+#define HALMD_UTILITY_MODULES_DEMANGLE_HPP
 
-#include <boost/shared_ptr.hpp>
-#include <deque>
-#include <map>
-#include <set>
-
-#include <halmd/utility/module/factory.hpp>
-#include <halmd/utility/options.hpp>
+#include <cxxabi.h>
+#include <string>
+#include <typeinfo>
 
 namespace halmd
 {
-namespace utility { namespace module
+namespace modules
 {
 
-class options_description
+/**
+ * return type name in human readable format
+ */
+template <typename T>
+inline std::string demangled_name()
 {
-public:
-};
+    int status;
+    char* buf = abi::__cxa_demangle(typeid(T).name(), 0, 0, &status);
 
-std::ostream& operator<<(std::ostream& os, options_description const& opt);
+    if(!status) {
+        std::string s(buf);
+        free(buf);
+        return s;
+    }
+    else {
+        return typeid(T).name();
+    }
+}
 
-}} // namespace utility::module
+} // namespace modules
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_MODULE_OPTIONS_HPP */
+#endif /* ! HALMD_UTILITY_MODULES_DEMANGLE_HPP */

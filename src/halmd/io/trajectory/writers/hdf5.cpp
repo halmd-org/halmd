@@ -37,17 +37,17 @@ namespace io { namespace trajectory { namespace writers
 template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::depends()
 {
-    modules::required<_Self, sample_type>();
+    modules::depends<_Self, sample_type>::required();
 }
 
 /**
  * read sample from HDF5 trajectory file
  */
 template <int dimension, typename float_type>
-hdf5<dimension, float_type>::hdf5(po::options const& vm)
-  : _Base(vm)
+hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , sample(modules::fetch<sample_type>(vm))
+  , sample(modules::fetch<sample_type>(factory, vm))
   // initialize parameters
   , path_(initial_path() / (vm["output"].as<string>() + extension()))
   , file_(path_.file_string(), H5F_ACC_TRUNC)

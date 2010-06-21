@@ -34,13 +34,13 @@ namespace mdsim
 template <int dimension>
 void thermodynamics<dimension>::depends()
 {
-    modules::required<_Self, box_type>();
+    modules::depends<_Self, box_type>::required();
 }
 
 template <int dimension>
-thermodynamics<dimension>::thermodynamics(po::options const& vm)
+thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options const& vm)
   // dependency injection
-  : box(modules::fetch<box_type>(vm))
+  : box(modules::fetch<box_type>(factory, vm))
 {
 }
 

@@ -48,7 +48,7 @@ void integrator<dimension>::options(po::options_description& desc)
 }
 
 template <int dimension>
-integrator<dimension>::integrator(po::options const& vm)
+integrator<dimension>::integrator(modules::factory& factory, po::options const& vm)
   // set parameters
   : timestep_(vm["timestep"].as<double>())
 {

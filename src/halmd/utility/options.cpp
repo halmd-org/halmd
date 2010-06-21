@@ -26,7 +26,6 @@
 #include <iostream>
 
 #include <halmd/utility/date_time.hpp>
-#include <halmd/utility/module/options.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/version.h>
 
@@ -54,7 +53,7 @@ using boost::program_options::store;
 /**
  * parse global program option values
  */
-void parse_options(int argc, char** argv, options& vm)
+void parse_options(int argc, char** argv, options& vm, unparsed_options& unparsed)
 {
     po::options_description desc("Program options");
     desc.add_options()
@@ -72,8 +71,6 @@ void parse_options(int argc, char** argv, options& vm)
         ("help",
          "display this help and exit")
         ;
-
-    po::unparsed_options unparsed;
 
     try {
         po::command_line_parser parser(argc, argv);
@@ -117,8 +114,8 @@ void parse_options(int argc, char** argv, options& vm)
 
     if (vm.count("help")) {
         cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
-             << desc << endl
-             << utility::module::options_description();
+             << desc << endl;
+             /* FIXME << utility::module::options_description(); */
         throw options_parser_error(EXIT_SUCCESS);
     }
 
@@ -131,9 +128,6 @@ void parse_options(int argc, char** argv, options& vm)
             "There is NO WARRANTY, to the extent permitted by law.\n";
         throw options_parser_error(EXIT_SUCCESS);
     }
-
-    // FIXME dirty hack
-    utility::module::factory::stack_.assign(1, unparsed);
 }
 
 /**

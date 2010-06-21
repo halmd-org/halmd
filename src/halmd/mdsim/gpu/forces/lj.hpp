@@ -48,7 +48,7 @@ public:
 //     using _Base::smooth;
 //     using _Base::thermodynamics;
 
-    lj(po::options const& vm);
+    lj(modules::factory& factory, po::options const& vm);
     virtual ~lj() {}
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }

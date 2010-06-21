@@ -34,31 +34,23 @@ namespace mdsim { namespace gpu
 {
 
 /**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void integrator<dimension, float_type>::options(po::options_description& desc)
-{
-}
-
-/**
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
 void integrator<dimension, float_type>::depends()
 {
-    modules::required<_Self, particle_type>();
-    modules::required<_Self, box_type>();
-    modules::required<_Self, device_type>();
+    modules::depends<_Self, particle_type>::required();
+    modules::depends<_Self, box_type>::required();
+    modules::depends<_Self, device_type>::required();
 }
 
 template <int dimension, typename float_type>
-integrator<dimension, float_type>::integrator(po::options const& vm)
-  : _Base(vm)
+integrator<dimension, float_type>::integrator(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , particle(modules::fetch<particle_type>(vm))
-  , box(modules::fetch<box_type>(vm))
-  , device(modules::fetch<device_type>(vm))
+  , particle(modules::fetch<particle_type>(factory, vm))
+  , box(modules::fetch<box_type>(factory, vm))
+  , device(modules::fetch<device_type>(factory, vm))
 {
 }
 

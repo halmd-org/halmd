@@ -20,6 +20,7 @@
 #ifndef HALMD_RNG_RANDOM_HPP
 #define HALMD_RNG_RANDOM_HPP
 
+#include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -36,7 +37,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    random(po::options const& vm) {}
+    random(modules::factory& factory, po::options const& vm) {}
     virtual ~random() {}
     virtual void seed(unsigned int value) = 0;
 

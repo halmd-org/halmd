@@ -47,7 +47,7 @@ public:
 
     typedef mdsim::core<dimension> core_type;
 
-    driver(po::options const& vm);
+    driver(modules::factory& factory, po::options const& vm);
     void run();
     uint64_t steps() { return steps_; }
     double time() { return time_; }

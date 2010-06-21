@@ -58,7 +58,7 @@ public:
 
     shared_ptr<box_type> box;
 
-    thermodynamics(po::options const& vm);
+    thermodynamics(modules::factory& factory, po::options const& vm);
     virtual ~thermodynamics() {}
 
     /** potential energy per particle */

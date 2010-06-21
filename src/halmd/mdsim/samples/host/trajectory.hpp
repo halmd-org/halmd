@@ -46,7 +46,7 @@ public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
 
-    trajectory(po::options const& vm);
+    trajectory(modules::factory& factory, po::options const& vm);
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 

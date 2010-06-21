@@ -57,7 +57,7 @@ public:
 
     shared_ptr<particle_type> particle;
 
-    force(po::options const& vm);
+    force(modules::factory& factory, po::options const& vm);
     virtual ~force() {}
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;

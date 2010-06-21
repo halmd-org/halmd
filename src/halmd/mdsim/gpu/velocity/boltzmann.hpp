@@ -52,7 +52,7 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<random_type> random;
 
-    boltzmann(po::options const& vm);
+    boltzmann(modules::factory& factory, po::options const& vm);
     virtual ~boltzmann() {};
     void set();
 

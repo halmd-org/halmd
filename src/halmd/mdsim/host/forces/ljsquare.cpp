@@ -69,8 +69,8 @@ void lj_square<dimension, float_type>::select(po::options const& vm)
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-lj_square<dimension, float_type>::lj_square(po::options const& vm)
-  : _Base(vm)
+lj_square<dimension, float_type>::lj_square(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // allocate potential parameters
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))

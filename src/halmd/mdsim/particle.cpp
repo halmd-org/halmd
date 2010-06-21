@@ -63,7 +63,7 @@ void particle<dimension>::options(po::options_description& desc)
 }
 
 template <int dimension>
-particle<dimension>::particle(po::options const& vm)
+particle<dimension>::particle(modules::factory& factory, po::options const& vm)
 {
     // parse options
     if (!vm["binary"].empty() && vm["particles"].defaulted()) {

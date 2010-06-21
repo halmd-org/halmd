@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_MODULE_BUILDER_HPP
-#define HALMD_UTILITY_MODULE_BUILDER_HPP
+#ifndef HALMD_UTILITY_MODULES_BUILDER_HPP
+#define HALMD_UTILITY_MODULES_BUILDER_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits/is_object.hpp>
@@ -26,14 +26,14 @@
 #include <boost/weak_ptr.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/utility/module/demangle.hpp>
-#include <halmd/utility/module/exception.hpp>
 #include <halmd/utility/modules/concept.hpp>
+#include <halmd/utility/modules/demangle.hpp>
+#include <halmd/utility/modules/exception.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace utility { namespace module
+namespace modules
 {
 
 // import into namespace
@@ -56,14 +56,13 @@ using boost::is_object;
 struct untyped_builder_base
 {
     virtual ~untyped_builder_base() {}
+    virtual void depends() = 0;
     virtual void options(po::options_description& desc) = 0;
-    virtual void resolve(po::options const& vm) = 0;
+    virtual void select(po::options const& vm) = 0;
     virtual std::string name() = 0;
     virtual std::type_info const& type() = 0;
-    shared_ptr<po::options> vm;
+    po::options vm;
 };
-
-typedef shared_ptr<untyped_builder_base> builder;
 
 /**
  * A base template, which corresponds to the base class of a
@@ -71,48 +70,66 @@ typedef shared_ptr<untyped_builder_base> builder;
  * casts type-independent builder pointers to this type to
  * create module instances.
  */
-template <typename T, typename Enable = void>
+template <typename T, typename Factory, typename Enable = void>
 struct typed_builder_base
   : public untyped_builder_base
 {
-    typedef T _Module_base;
-    virtual shared_ptr<_Module_base> fetch(po::options const& vm) = 0;
+    typedef T BaseT;
+    virtual shared_ptr<BaseT> fetch(Factory& factory, po::options const& vm) = 0;
+
+    /**
+     * resolve class dependencies
+     */
+    virtual void depends()
+    {
+        T::depends();
+    }
 
     /**
      * assemble module options
      */
     virtual void options(po::options_description& desc)
     {
-        boost::function_requires<modules::ModuleConcept<T> >();
         T::options(desc);
     }
 
     /**
      * resolve class dependencies
      */
-    virtual void resolve(po::options const& vm)
+    virtual void select(po::options const& vm)
     {
-        boost::function_requires<modules::ModuleConcept<T> >();
         T::select(vm);
-        T::depends();
     }
 };
 
 /**
  * A deriving template to the base template.
  */
-template <typename T>
-struct typed_builder_base<T, typename enable_if<is_object<typename T::_Base> >::type>
-  : public typed_builder_base<typename T::_Base>
+template <typename T, typename Factory>
+struct typed_builder_base<T, Factory, typename enable_if<is_object<typename T::_Base> >::type>
+  : public typed_builder_base<typename T::_Base, Factory>
 {
-    typedef typename T::_Base _Base;
+    typedef typed_builder_base<typename T::_Base, Factory> Base;
+    typedef typename Base::BaseT BaseT;
+
+    /**
+     * resolve class dependencies
+     */
+    virtual void depends()
+    {
+        Base::depends();
+        // check for inherited base module function
+        boost::function_requires<modules::ModuleConcept<T> >();
+        T::depends();
+    }
 
     /**
      * assemble module options
      */
     virtual void options(po::options_description& desc)
     {
-        typed_builder_base<_Base>::options(desc);
+        Base::options(desc);
+        // check for inherited base module function
         boost::function_requires<modules::ModuleConcept<T> >();
         T::options(desc);
     }
@@ -120,30 +137,30 @@ struct typed_builder_base<T, typename enable_if<is_object<typename T::_Base> >::
     /**
      * resolve class dependencies
      */
-    virtual void resolve(po::options const& vm)
+    virtual void select(po::options const& vm)
     {
-        typed_builder_base<_Base>::resolve(vm);
+        Base::select(vm);
+        // check for inherited base module function
         boost::function_requires<modules::ModuleConcept<T> >();
         T::select(vm);
-        T::depends();
     }
 };
 
 /**
  * Concrete module
  */
-template <typename T>
+template <typename T, typename Factory>
 class typed_builder
-  : public typed_builder_base<T>
+  : public typed_builder_base<T, Factory>
 {
 public:
-    typedef typed_builder_base<T> _Base;
-    typedef typename _Base::_Module_base _Base_type;
+    typedef typed_builder_base<T, Factory> Base;
+    typedef typename Base::BaseT BaseT;
 
     /**
      * returns singleton instance
      */
-    shared_ptr<_Base_type> fetch(po::options const& vm)
+    shared_ptr<BaseT> fetch(Factory& factory, po::options const& vm)
     {
         // This attaches the module-specific option values to the
         // global option values by setting an internal pointer.
@@ -152,7 +169,7 @@ public:
         // the global map, and not the module-specific map.
 
         po::options vm_(vm);
-        vm_.next(this->vm.get());
+        vm_.next(&this->vm);
 
         // We use an observing weak pointer instead of an owning
         // shared pointer to let the caller decide when the
@@ -164,7 +181,7 @@ public:
         shared_ptr<T> singleton(singleton_.lock());
         if (!singleton) {
             LOG_DEBUG("instantiate module " << name());
-            singleton.reset(new T(vm_));
+            singleton.reset(new T(factory, vm_));
             singleton_ = singleton;
             LOG_DEBUG("constructed module " << name());
         }
@@ -172,21 +189,13 @@ public:
     }
 
     /**
-     * assemble module options
-     */
-    void options(po::options_description& desc)
-    {
-        _Base::options(desc);
-    }
-
-    /**
      * resolve module dependencies
      */
-    void resolve(po::options const& vm)
+    void select(po::options const& vm)
     {
         po::options vm_(vm);
-        vm_.next(this->vm.get());
-        _Base::resolve(vm_);
+        vm_.next(&this->vm);
+        Base::select(vm_);
     }
 
     /**
@@ -206,13 +215,11 @@ public:
     }
 
     /** module instance observer */
-    static weak_ptr<T> singleton_;
+    weak_ptr<T> singleton_;
 };
 
-template <typename T> weak_ptr<T> typed_builder<T>::singleton_;
-
-}} // namespace utility::module
+} // namespace modules
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_MODULE_BUILDER_HPP */
+#endif /* ! HALMD_UTILITY_MODULES_BUILDER_HPP */

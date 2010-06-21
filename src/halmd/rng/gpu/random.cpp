@@ -22,7 +22,6 @@
 #include <halmd/rng/gpu/rand48.cuh>
 #include <halmd/rng/rand48.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/utility/module.hpp>
 
 namespace halmd
 {
@@ -37,13 +36,13 @@ enum { THREADS = 32 << DEVICE_SCALE };
  */
 void random::depends()
 {
-    modules::required<_Self, device_type>();
+    modules::depends<_Self, device_type>::required();
 }
 
-random::random(po::options const& vm)
-  : _Base(vm)
+random::random(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , device(modules::fetch<device_type>(vm))
+  , device(modules::fetch<device_type>(factory, vm))
 {
     set_seed(vm);
 }

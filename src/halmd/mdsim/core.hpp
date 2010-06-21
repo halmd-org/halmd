@@ -53,7 +53,7 @@ public:
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
 
-    core(po::options const& vm);
+    core(modules::factory& factory, po::options const& vm);
     void mdstep();
 
     shared_ptr<force_type> force;

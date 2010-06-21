@@ -46,7 +46,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    particle(po::options const& vm);
+    particle(modules::factory& factory, po::options const& vm);
     virtual ~particle() {}
 
     /** number of particles in simulation box */

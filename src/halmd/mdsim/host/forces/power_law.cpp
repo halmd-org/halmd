@@ -74,8 +74,8 @@ void power_law<dimension, float_type>::select(po::options const& vm)
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-power_law<dimension, float_type>::power_law(po::options const& vm)
-  : _Base(vm)
+power_law<dimension, float_type>::power_law(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // allocate potential parameters
   , index_(vm["index"].as<int>())
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))

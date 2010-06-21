@@ -37,10 +37,10 @@ using namespace std;
 template <int dimension, typename float_type>
 void file<dimension, float_type>::depends()
 {
-    modules::required<_Self, reader_type>();
-    modules::required<_Self, sample_type>();
-    modules::required<_Self, particle_type>();
-    modules::required<_Self, box_type>();
+    modules::depends<_Self, reader_type>::required();
+    modules::depends<_Self, sample_type>::required();
+    modules::depends<_Self, particle_type>::required();
+    modules::depends<_Self, box_type>::required();
 }
 
 template <int dimension, typename float_type>
@@ -52,13 +52,13 @@ void file<dimension, float_type>::select(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-file<dimension, float_type>::file(po::options const& vm)
-  : _Base(vm)
+file<dimension, float_type>::file(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , reader(modules::fetch<reader_type>(vm))
-  , sample(modules::fetch<sample_type>(vm))
-  , particle(modules::fetch<particle_type>(vm))
-  , box(modules::fetch<box_type>(vm))
+  , reader(modules::fetch<reader_type>(factory, vm))
+  , sample(modules::fetch<sample_type>(factory, vm))
+  , particle(modules::fetch<particle_type>(factory, vm))
+  , box(modules::fetch<box_type>(factory, vm))
 {}
 
 /**

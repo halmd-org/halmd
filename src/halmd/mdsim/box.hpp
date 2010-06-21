@@ -47,7 +47,7 @@ public:
 
     shared_ptr<particle_type> particle;
 
-    box(po::options const& vm);
+    box(modules::factory& factory, po::options const& vm);
     virtual ~box() {}
     void length(vector_type const& value_type);
     vector_type const& length() { return length_; }

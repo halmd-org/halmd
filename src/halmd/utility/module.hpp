@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -22,38 +22,53 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/utility/module/module.hpp>
+#include <halmd/utility/modules/factory.hpp>
+#include <halmd/utility/modules/fetch.hpp>
+#include <halmd/utility/modules/graph.hpp>
+#include <halmd/utility/modules/parser.hpp>
+#include <halmd/utility/modules/registry.hpp>
 
 namespace halmd
 {
 
-// import into top-level namespace
+// shared_ptr is used in every module in HALMD, therefore
+// we import it into the global halmd namespace.
 using boost::shared_ptr;
-using utility::module::module;
 
-// forward compatibility with upcoming module mechanism rewrite
 namespace modules
 {
 
-template <typename T, typename U>
-void required()
+template <typename Dependant, typename Dependency>
+struct depends
 {
-    module<U>::required(*utility::module::factory::vm);
-}
+    typedef modules::graph Graph;
+    typedef modules::registry Registry;
 
-template <typename T, typename U>
-void optional()
-{
-    module<U>::optional(*utility::module::factory::vm);
-}
+    static void required()
+    {
+        Registry::template edge<Dependant, Dependency>(modules::property::is_required);
+    }
 
-template <typename T>
-typename module<T>::_fetch fetch(po::options const& vm)
-{
-    return module<T>::fetch(vm);
-}
+    static void optional()
+    {
+        Registry::template edge<Dependant, Dependency>(modules::property::is_optional);
+    }
+};
 
 } // namespace modules
+
+template <typename T>
+class module
+{
+public:
+    typedef modules::typed_parser<T, modules::factory> Parser;
+
+private:
+    static Parser dummy_;
+};
+
+template <typename T>
+typename module<T>::Parser module<T>::dummy_ = typename module<T>::Parser();
 
 } // namespace halmd
 

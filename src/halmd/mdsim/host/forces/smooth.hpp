@@ -43,7 +43,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    smooth(po::options const& vm);
+    smooth(modules::factory& factory, po::options const& vm);
     virtual ~smooth() {}
     virtual void compute(float_type r, float_type dr, float_type& fval, float_type& pot);
 

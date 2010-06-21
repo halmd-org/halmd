@@ -46,7 +46,7 @@ public:
     typedef numeric::host::blas::vector<float_type, dimension> vector_type;
     typedef std::vector<unsigned int> neighbour_list;
 
-    particle(po::options const& vm);
+    particle(modules::factory& factory, po::options const& vm);
     virtual ~particle() {}
     virtual void rearrange(std::vector<unsigned int> const& index);
 

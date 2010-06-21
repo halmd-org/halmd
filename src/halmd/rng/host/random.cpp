@@ -19,15 +19,14 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/rng/host/random.hpp>
-#include <halmd/utility/module.hpp>
 
 namespace halmd
 {
 namespace rng { namespace host
 {
 
-random::random(po::options const& vm)
-  : _Base(vm)
+random::random(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
 {
     set_seed(vm);
 }

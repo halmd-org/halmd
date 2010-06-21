@@ -47,7 +47,7 @@ void reader<dimension>::options(po::options_description& desc)
 }
 
 template <int dimension>
-reader<dimension>::reader(po::options const& vm)
+reader<dimension>::reader(modules::factory& factory, po::options const& vm)
   // parse options
   : path_(vm["trajectory-file"].as<string>())
   , offset_(vm["trajectory-sample"].as<ssize_t>())

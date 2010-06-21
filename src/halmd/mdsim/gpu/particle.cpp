@@ -43,7 +43,7 @@ void particle<dimension, float_type>::depends()
     // before the first CUDA kernel call or memory allocation. As
     // the particle module is instantiated foremost and allocates
     // GPU memory, we add a dependency on gpu::device.
-    modules::required<_Self, device_type>();
+    modules::depends<_Self, device_type>::required();
 }
 
 template <unsigned int dimension, typename float_type>
@@ -55,10 +55,10 @@ void particle<dimension, float_type>::select(po::options const& vm)
 }
 
 template <unsigned int dimension, typename float_type>
-particle<dimension, float_type>::particle(po::options const& vm)
-  : _Base(vm)
+particle<dimension, float_type>::particle(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , device(modules::fetch<device_type>(vm))
+  , device(modules::fetch<device_type>(factory, vm))
   // allocate global device memory
   , g_r(nbox)
   , g_image(nbox)

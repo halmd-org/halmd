@@ -51,7 +51,7 @@ public:
 
     shared_ptr<particle_type> particle;
 
-    thermodynamics(po::options const& vm);
+    thermodynamics(modules::factory& factory, po::options const& vm);
     virtual ~thermodynamics() {}
 
     double en_kin() const;

@@ -38,7 +38,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    sort(po::options const& vm) {}
+    sort(modules::factory& factory, po::options const& vm) {}
     virtual ~sort() {}
     virtual void order() = 0;
 };

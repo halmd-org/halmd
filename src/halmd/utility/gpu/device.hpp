@@ -52,7 +52,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    device(po::options const& vm);
+    device(modules::factory& factory, po::options const& vm);
     virtual ~device() {}
     unsigned int threads() { return threads_; }
 

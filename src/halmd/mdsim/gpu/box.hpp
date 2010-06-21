@@ -51,7 +51,7 @@ public:
 
     shared_ptr<particle_type> particle;
 
-    box(po::options const& vm);
+    box(modules::factory& factory, po::options const& vm);
     virtual ~box() {}
     vector_type reduce_periodic(vector_type& r) const;
     vector_type origin() const { return -length_half_; }

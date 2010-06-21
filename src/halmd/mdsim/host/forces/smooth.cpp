@@ -49,7 +49,7 @@ void smooth<dimension, float_type>::options(po::options_description& desc)
  * Initialise parameters
  */
 template <int dimension, typename float_type>
-smooth<dimension, float_type>::smooth(po::options const& vm)
+smooth<dimension, float_type>::smooth(modules::factory& factory, po::options const& vm)
   // initialise parameters
   : r_smooth_(vm["smooth"].as<float>())
   , rri_smooth_(std::pow(r_smooth_, -2))

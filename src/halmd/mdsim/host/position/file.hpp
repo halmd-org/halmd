@@ -57,7 +57,7 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
 
-    file(po::options const& vm);
+    file(modules::factory& factory, po::options const& vm);
     virtual ~file() {}
     void set();
 };

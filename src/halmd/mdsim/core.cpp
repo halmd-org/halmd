@@ -48,12 +48,12 @@ void core<dimension>::options(po::options_description& desc)
 template <int dimension>
 void core<dimension>::depends()
 {
-    modules::required<_Self, force_type>();
-    modules::required<_Self, neighbour_type>();
-    modules::optional<_Self, sort_type>();
-    modules::required<_Self, integrator_type>();
-    modules::required<_Self, position_type>();
-    modules::required<_Self, velocity_type>();
+    modules::depends<_Self, force_type>::required();
+    modules::depends<_Self, neighbour_type>::required();
+    modules::depends<_Self, sort_type>::optional();
+    modules::depends<_Self, integrator_type>::required();
+    modules::depends<_Self, position_type>::required();
+    modules::depends<_Self, velocity_type>::required();
 }
 
 template <int dimension>
@@ -68,14 +68,14 @@ void core<dimension>::select(po::options const& vm)
  * Initialize simulation
  */
 template <int dimension>
-core<dimension>::core(po::options const& vm)
+core<dimension>::core(modules::factory& factory, po::options const& vm)
   // dependency injection
-  : force(modules::fetch<force_type>(vm))
-  , neighbour(modules::fetch<neighbour_type>(vm))
-  , sort(modules::fetch<sort_type>(vm))
-  , integrator(modules::fetch<integrator_type>(vm))
-  , position(modules::fetch<position_type>(vm))
-  , velocity(modules::fetch<velocity_type>(vm))
+  : force(modules::fetch<force_type>(factory, vm))
+  , neighbour(modules::fetch<neighbour_type>(factory, vm))
+  , sort(modules::fetch<sort_type>(factory, vm))
+  , integrator(modules::fetch<integrator_type>(factory, vm))
+  , position(modules::fetch<position_type>(factory, vm))
+  , velocity(modules::fetch<velocity_type>(factory, vm))
 {
     position->set();
     velocity->set();

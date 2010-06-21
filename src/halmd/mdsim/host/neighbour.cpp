@@ -54,18 +54,18 @@ void neighbour<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::depends()
 {
-    modules::required<_Self, particle_type>();
-    modules::required<_Self, box_type>();
-    modules::required<_Self, force_type>();
+    modules::depends<_Self, particle_type>::required();
+    modules::depends<_Self, box_type>::required();
+    modules::depends<_Self, force_type>::required();
 }
 
 template <int dimension, typename float_type>
-neighbour<dimension, float_type>::neighbour(po::options const& vm)
-  : _Base(vm)
+neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , particle(modules::fetch<particle_type>(vm))
-  , force(modules::fetch<force_type>(vm))
-  , box(modules::fetch<box_type>(vm))
+  , particle(modules::fetch<particle_type>(factory, vm))
+  , force(modules::fetch<force_type>(factory, vm))
+  , box(modules::fetch<box_type>(factory, vm))
   // allocate parameters
   , r_skin_(vm["skin"].as<float>())
   , rr_cut_skin_(particle->ntype, particle->ntype)

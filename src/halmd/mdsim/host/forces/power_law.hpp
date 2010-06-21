@@ -54,7 +54,7 @@ public:
     using _Base::smooth;
     using _Base::thermodynamics;
 
-    power_law(po::options const& vm);
+    power_law(modules::factory& factory, po::options const& vm);
     virtual ~power_law() {}
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }

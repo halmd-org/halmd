@@ -45,13 +45,13 @@ void force<dimension>::options(po::options_description& desc)
 template <int dimension>
 void force<dimension>::depends()
 {
-    modules::required<_Self, particle_type>();
+    modules::depends<_Self, particle_type>::required();
 }
 
 template <int dimension>
-force<dimension>::force(po::options const& vm)
+force<dimension>::force(modules::factory& factory, po::options const& vm)
   // dependency injection
-  : particle(modules::fetch<particle_type>(vm))
+  : particle(modules::fetch<particle_type>(factory, vm))
 {
 }
 

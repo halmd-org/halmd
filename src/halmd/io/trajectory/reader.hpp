@@ -39,7 +39,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    reader(po::options const& vm);
+    reader(modules::factory& factory, po::options const& vm);
     virtual ~reader() {}
 
 protected:

@@ -38,7 +38,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    integrator(po::options const& vm);
+    integrator(modules::factory& factory, po::options const& vm);
     virtual ~integrator() {}
     virtual void integrate() = 0;
     virtual void finalize() = 0;

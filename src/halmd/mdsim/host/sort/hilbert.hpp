@@ -55,7 +55,7 @@ public:
     shared_ptr<box_type> box;
     shared_ptr<neighbour_type> neighbour;
 
-    hilbert(po::options const& vm);
+    hilbert(modules::factory& factory, po::options const& vm);
     virtual ~hilbert() {}
     virtual void order();
 

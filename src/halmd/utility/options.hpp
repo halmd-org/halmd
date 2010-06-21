@@ -46,8 +46,8 @@ struct unparsed_options
     std::vector<std::vector<po::option> > config_file_options;
 };
 
-extern void parse_options(int argc, char** argv, options& vm);
-extern void parse_options(unparsed_options& unparsed, options_description const& opt, options& vm);
+void parse_options(int argc, char** argv, options& vm, unparsed_options& unparsed);
+void parse_options(unparsed_options& unparsed, options_description const& opt, options& vm);
 
 class options_parser_error
 {

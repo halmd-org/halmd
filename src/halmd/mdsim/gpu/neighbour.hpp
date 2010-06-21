@@ -71,7 +71,7 @@ public:
     shared_ptr<force_type> force;
     shared_ptr<box_type> box;
 
-    neighbour(po::options const& vm);
+    neighbour(modules::factory& factory, po::options const& vm);
     virtual ~neighbour() {}
     void update();
     bool check();

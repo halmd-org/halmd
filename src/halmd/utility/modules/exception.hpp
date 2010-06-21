@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_MODULE_EXCEPTION_HPP
-#define HALMD_UTILITY_MODULE_EXCEPTION_HPP
+#ifndef HALMD_UTILITY_MODULES_EXCEPTION_HPP
+#define HALMD_UTILITY_MODULES_EXCEPTION_HPP
 
 #include <exception>
 #include <string>
 
-#include <halmd/utility/module/demangle.hpp>
+#include <halmd/utility/modules/demangle.hpp>
 
 namespace halmd
 {
@@ -72,4 +72,4 @@ public:
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_MODULE_EXCEPTION_HPP */
+#endif /* ! HALMD_UTILITY_MODULES_EXCEPTION_HPP */

@@ -48,8 +48,8 @@ void boltzmann<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::depends()
 {
-    modules::required<_Self, particle_type>();
-    modules::required<_Self, random_type>();
+    modules::depends<_Self, particle_type>::required();
+    modules::depends<_Self, random_type>::required();
 }
 
 template <int dimension, typename float_type>
@@ -61,11 +61,11 @@ void boltzmann<dimension, float_type>::select(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-boltzmann<dimension, float_type>::boltzmann(po::options const& vm)
-  : _Base(vm)
+boltzmann<dimension, float_type>::boltzmann(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , particle(modules::fetch<particle_type>(vm))
-  , random(modules::fetch<random_type>(vm))
+  , particle(modules::fetch<particle_type>(factory, vm))
+  , random(modules::fetch<random_type>(factory, vm))
 {
     // parse options
     temp_ = vm["temperature"].as<float>();

@@ -52,7 +52,7 @@ public:
 
     shared_ptr<device_type> device;
 
-    particle(po::options const& vm);
+    particle(modules::factory& factory, po::options const& vm);
     virtual ~particle() {}
     virtual void rearrange(std::vector<unsigned int> const& index) {} // TODO
 

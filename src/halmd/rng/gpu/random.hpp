@@ -30,6 +30,7 @@
 #include <halmd/rng/rand48.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/utility/gpu/device.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -53,7 +54,7 @@ public:
 
     shared_ptr<device_type> device;
 
-    random(po::options const& vm);
+    random(modules::factory& factory, po::options const& vm);
     virtual ~random() {}
     void seed(unsigned int value);
 

@@ -39,8 +39,8 @@ public:
     // module definitions
     typedef verlet _Self;
     typedef mdsim::gpu::integrator<dimension, float_type> _Base;
-    static void options(po::options_description& desc);
-    static void depends();
+    static void options(po::options_description& desc) {}
+    static void depends() {}
     static void select(po::options const& vm);
 
     typedef typename _Base::particle_type particle_type;
@@ -51,7 +51,7 @@ public:
     using _Base::box;
     using _Base::device;
 
-    verlet(po::options const& vm);
+    verlet(modules::factory& factory, po::options const& vm);
     virtual ~verlet() {}
     void integrate();
     void finalize();

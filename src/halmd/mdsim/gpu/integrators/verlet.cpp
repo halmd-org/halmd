@@ -31,22 +31,6 @@ namespace halmd
 namespace mdsim { namespace gpu { namespace integrators
 {
 
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::options(po::options_description& desc)
-{
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::depends()
-{
-}
-
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::select(po::options const& vm)
 {
@@ -56,8 +40,8 @@ void verlet<dimension, float_type>::select(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-verlet<dimension, float_type>::verlet(po::options const& vm)
-  : _Base(vm)
+verlet<dimension, float_type>::verlet(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // set parameters
   , timestep_half_(0.5 * timestep_)
 {

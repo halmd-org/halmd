@@ -45,8 +45,8 @@ void particle<dimension, float_type>::select(po::options const& vm)
 }
 
 template <unsigned int dimension, typename float_type>
-particle<dimension, float_type>::particle(po::options const& vm)
-  : _Base(vm)
+particle<dimension, float_type>::particle(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // allocate particle storage
   , r(nbox)
   , image(nbox)

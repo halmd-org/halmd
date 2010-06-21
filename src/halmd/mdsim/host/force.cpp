@@ -40,23 +40,23 @@ void force<dimension, float_type>::options(po::options_description& desc)
 template <int dimension, typename float_type>
 void force<dimension, float_type>::depends()
 {
-    modules::required<_Self, particle_type>();
-    modules::required<_Self, box_type>();
-    modules::required<_Self, thermodynamics_type>();
-    modules::optional<_Self, smooth_type>();
+    modules::depends<_Self, particle_type>::required();
+    modules::depends<_Self, box_type>::required();
+    modules::depends<_Self, thermodynamics_type>::required();
+    modules::depends<_Self, smooth_type>::optional();
 }
 
 /**
  * Initialize module dependencies
  */
 template <int dimension, typename float_type>
-force<dimension, float_type>::force(po::options const& vm)
-  : _Base(vm)
+force<dimension, float_type>::force(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  , particle(modules::fetch<particle_type>(vm))
-  , box(modules::fetch<box_type>(vm))
-  , thermodynamics(modules::fetch<thermodynamics_type>(vm))
-  , smooth(modules::fetch<smooth_type>(vm))
+  , particle(modules::fetch<particle_type>(factory, vm))
+  , box(modules::fetch<box_type>(factory, vm))
+  , thermodynamics(modules::fetch<thermodynamics_type>(factory, vm))
+  , smooth(modules::fetch<smooth_type>(factory, vm))
 {
 }
 
