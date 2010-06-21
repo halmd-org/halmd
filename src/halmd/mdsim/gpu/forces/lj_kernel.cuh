@@ -20,7 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_CUH
 #define HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_CUH
 
-namespace halmd { namespace mdsim { namespace gpu { namespace forces { namespace lj_kernel
+#include <cuda_wrapper.hpp>
+
+namespace halmd { namespace mdsim { namespace gpu { namespace forces
+{
+
+namespace lj_kernel
 {
 
 //
@@ -37,6 +42,28 @@ enum {
     EN_CUT,
 };
 
-}}}}} // namespace halmd::mdsim::gpu::forces::lj_kernel
+} // namespace lj_kernel
+
+template <size_t N>
+struct lj_wrapper
+{
+    typedef typename boost::mpl::if_c<N == 3, float4, float2>::type coalesced_vector_type;
+    typedef typename boost::mpl::if_c<N == 3, float3, float2>::type vector_type;
+
+    /** positions, types */
+    static cuda::texture<float4> r;
+    /** cubic box edgle length */
+    static cuda::symbol<vector_type> box_length;
+    /** number of placeholders per neighbour list */
+    static cuda::symbol<unsigned int> neighbour_size;
+    /** neighbour list stride */
+    static cuda::symbol<unsigned int> neighbour_stride;
+    /** Lennard-Jones potential parameters */
+    static cuda::texture<float4> ljparam;
+    /** compute Lennard-Jones forces */
+    static cuda::function<void (coalesced_vector_type*, unsigned int*, float*, coalesced_vector_type*)> compute;
+};
+
+}}}} // namespace halmd::mdsim::gpu::forces::lj_kernel
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_CUH */

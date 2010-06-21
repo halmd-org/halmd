@@ -22,9 +22,11 @@
 #include <cmath>
 #include <string>
 
+#include <cuda_wrapper.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/gpu/forces/lj.hpp>
+#include <halmd/mdsim/gpu/forces/lj_kernel.cuh>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
@@ -116,6 +118,17 @@ lj<dimension, float_type>::lj(po::options const& vm)
     LOG("potential pair separation: σ = " << sigma_);
     LOG("potential cutoff length: r = " << r_cut_sigma_);
     LOG("potential cutoff energy: U = " << en_cut_);
+
+/* FIXME
+    // initialise CUDA symbols
+    typedef lj_wrapper<dimension> _gpu;
+
+    _gpu::r = // cuda::texture<float4>
+    _gpu::box_length =  // cuda::symbol<vector_type>
+    _gpu::neighbour_size = // cuda::symbol<unsigned int> ;
+    _gpu::neighbour_stride = // cuda::symbol<unsigned int> ;
+    _gpu::ljparam = // cuda::texture<float4> ;
+*/
 }
 
 /**
@@ -126,6 +139,19 @@ void lj<dimension, float_type>::compute()
 {
 #ifdef USE_FORCE_DSFUN
 #endif /* HALMD_VARIANT_FORCE_DSFUN */
+
+    typedef lj_wrapper<dimension> _gpu;
+
+    // temporay workaround until thermodynamics module is available
+    cuda::vector<float> g_en_pot(particle->dim.threads());
+    cuda::vector<typename _Base::particle_type::gpu_vector_type>
+            g_virial(particle->dim.threads());
+
+    cuda::configure(particle->dim.grid, particle->dim.block);
+    _gpu::compute(particle->g_f,
+                  particle->g_neighbour, // FIXME should go to neighbour->
+                  g_en_pot, g_virial);
+//                   thermodynamics->en_pot, thermodynamics->virial);
 
 /*    // initialize particle forces to zero
     std::fill(particle->f.begin(), particle->f.end(), 0);
