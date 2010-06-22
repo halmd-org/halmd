@@ -52,7 +52,7 @@ public:
         typedef boost::property_map<Graph, tag::selected>::type SelectedMap;
         typedef predicate::relation<RelationMap> RelationPredicate;
         typedef predicate::selected<SelectedMap> SelectedPredicate;
-        typedef predicate::not_not_selected<SelectedMap> NotNotSelectedPredicate;
+        typedef predicate::not_selected<SelectedMap> NotSelectedPredicate;
         typedef boost::filtered_graph<Graph, RelationPredicate, SelectedPredicate> FilteredGraph;
         typedef boost::graph_traits<FilteredGraph>::edge_iterator EdgeIterator;
         typedef boost::graph_traits<FilteredGraph>::vertex_iterator VertexIterator;
@@ -65,14 +65,14 @@ public:
         ColorMap color(num_vertices(graph_), Color::white());
         RequiredStack stack;
         RelationPredicate bp(get(tag::relation(), graph_), property::is_base_of);
-        SelectedPredicate sp(get(tag::selected(), graph_));
-        NotNotSelectedPredicate nnp(get(tag::selected(), graph_));
+        SelectedPredicate sp(get(tag::selected(), graph_), Color::black());
+        NotSelectedPredicate np(get(tag::selected(), graph_), Color::white());
         FilteredGraph bg(graph_, bp, sp);
         RootGraph og(bg, boost::keep_all(), RootPredicate(bg));
         RootVertexIterator ri, ri_end;
         for (boost::tie(ri, ri_end) = vertices(og); ri != ri_end; ++ri) {
             depth_first_visit(
-                make_filtered_graph(graph_, bp, nnp)
+                make_filtered_graph(graph_, bp, np)
               , *ri // base class at bottom of class hierarchy
               , visitor::policy<Graph, RequiredStack>(graph_, stack)
               , &color.front()

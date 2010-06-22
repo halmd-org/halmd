@@ -40,6 +40,9 @@ public:
     typedef modules::graph Graph;
     typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
     typedef boost::graph_traits<Graph>::edge_descriptor Edge;
+    typedef boost::property_map<Graph, tag::selected>::type PropertyMap;
+    typedef boost::property_traits<PropertyMap>::value_type ColorValue;
+    typedef boost::color_traits<ColorValue> Color;
 
     //
     // Read this for the following use of static local variables:
@@ -88,7 +91,7 @@ private:
         Graph& g = graph();
         Vertex v = add_vertex(g);
         put(tag::name(), g, v, demangled_name<T>());
-        put(tag::selected(), g, v, false);
+        put(tag::selected(), g, v, Color::white());
         return v;
     }
 };

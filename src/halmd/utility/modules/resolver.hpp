@@ -76,8 +76,10 @@ public:
     void resolve(po::options const& vm, po::unparsed_options& unparsed)
     {
         typedef boost::property_map<Graph, tag::selected>::type SelectedMap;
+        typedef typename boost::property_traits<SelectedMap>::value_type ColorValue;
+        typedef boost::color_traits<ColorValue> Color;
+        typedef predicate::selected<SelectedMap> SelectedPredicate;
         typedef predicate::not_selected<SelectedMap> NotSelectedPredicate;
-        typedef predicate::not_not_selected<SelectedMap> NotNotSelectedPredicate;
 
         Vertex v = Registry::template vertex<T>();
         LOG_DEBUG("resolve module " << get(tag::name(), graph_, v));
@@ -86,19 +88,19 @@ public:
           , v
           , visitor::resolver<Graph>(graph_, vm, unparsed)
           , &color_.front()
-          , NotSelectedPredicate(get(tag::selected(), graph_)) // terminate search
+          , SelectedPredicate(get(tag::selected(), graph_), Color::white()) // terminate search
         );
-        if (!get(tag::selected(), graph_, v)) {
+        if (get(tag::selected(), graph_, v) == Color::white()) {
             throw std::logic_error("failed to resolve module " + get(tag::name(), graph_, v));
         }
-        NotNotSelectedPredicate nnp(get(tag::selected(), graph_));
+        NotSelectedPredicate np(get(tag::selected(), graph_), Color::white());
         ColorMap color(num_vertices(graph_), Color::white());
         depth_first_visit(
-            make_filtered_graph(graph_, boost::keep_all(), nnp)
+            make_filtered_graph(graph_, boost::keep_all(), np)
           , v
           , visitor::picker<Graph>(graph_)
           , &color.front()
-          , NotSelectedPredicate(get(tag::selected(), graph_)) // terminate search
+          , SelectedPredicate(get(tag::selected(), graph_), Color::white()) // terminate search
         );
     }
 

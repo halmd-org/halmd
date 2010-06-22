@@ -49,8 +49,8 @@ public:
         typedef boost::property_map<Graph, tag::relation>::const_type RelationMap;
         typedef boost::property_map<Graph, tag::selected>::const_type SelectedMap;
         typedef predicate::relation<RelationMap> RelationPredicate;
-        typedef predicate::not_not_selected<SelectedMap> NotNotSelectedPredicate;
-        typedef boost::filtered_graph<Graph, RelationPredicate, NotNotSelectedPredicate> FilteredGraph;
+        typedef predicate::not_selected<SelectedMap> NotSelectedPredicate;
+        typedef boost::filtered_graph<Graph, RelationPredicate, NotSelectedPredicate> FilteredGraph;
         typedef predicate::root<FilteredGraph> RootPredicate;
         typedef boost::filtered_graph<FilteredGraph, boost::keep_all, RootPredicate> RootGraph;
         typedef boost::graph_traits<RootGraph>::vertex_iterator VertexIterator;
@@ -60,8 +60,8 @@ public:
         BuilderStack stack;
         ColorMap color(num_vertices(g), Color::white()); // manually color due to partial DFS
         RelationPredicate ep(get(tag::relation(), g), property::is_base_of);
-        NotNotSelectedPredicate nnp(get(tag::selected(), g));
-        FilteredGraph fg(g, ep, nnp);
+        NotSelectedPredicate np(get(tag::selected(), g), Color::white());
+        FilteredGraph fg(g, ep, np);
         RootGraph rg(fg, boost::keep_all(), RootPredicate(fg));
         VertexIterator vi, vi_end;
         for (boost::tie(vi, vi_end) = vertices(rg); vi != vi_end; ++vi) {

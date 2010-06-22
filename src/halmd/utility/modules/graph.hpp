@@ -23,7 +23,6 @@
 #include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
-#include <boost/logic/tribool.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/utility/modules/builder.hpp>
@@ -49,15 +48,8 @@ namespace property
 
 typedef std::string name;
 typedef boost::shared_ptr<untyped_builder_base> builder;
-typedef boost::tribool selected;
-
-enum relation
-{
-    is_required,
-    is_optional,
-    is_implicit,
-    is_base_of,
-};
+typedef boost::default_color_type selected;
+enum relation { is_required, is_optional, is_implicit, is_base_of };
 
 } // namespace property
 

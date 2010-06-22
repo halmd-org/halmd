@@ -79,17 +79,31 @@ struct not_relation
 template <typename PropertyMap>
 struct selected
 {
+    typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
+    typedef boost::color_traits<ColorValue> Color;
+
     PropertyMap map;
+    ColorValue value;
 
     selected() {} // requirement of Iterator concept
-    explicit selected(PropertyMap const& map)
+    explicit selected(PropertyMap const& map, ColorValue const& value)
       : map(map)
+      , value(value)
     {}
 
     template <typename Vertex>
     bool operator()(Vertex const& v) const
     {
-        return get(map, v); // boost::tribool == true
+        return get(map, v) == value;
+    }
+
+    /**
+     * DFS terminator
+     */
+    template <typename Vertex, typename Graph>
+    bool operator()(Vertex const& v, Graph const&) const
+    {
+        return get(map, v) == value;
     }
 };
 
@@ -99,17 +113,22 @@ struct selected
 template <typename PropertyMap>
 struct not_selected
 {
+    typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
+    typedef boost::color_traits<ColorValue> Color;
+
     PropertyMap map;
+    ColorValue value;
 
     not_selected() {} // requirement of Iterator concept
-    explicit not_selected(PropertyMap const& map)
+    explicit not_selected(PropertyMap const& map, ColorValue const& value)
       : map(map)
+      , value(value)
     {}
 
     template <typename Vertex>
     bool operator()(Vertex const& v) const
     {
-        return !get(map, v); // boost::tribool == false
+        return get(map, v) != value;
     }
 
     /**
@@ -118,24 +137,7 @@ struct not_selected
     template <typename Vertex, typename Graph>
     bool operator()(Vertex const& v, Graph const&) const
     {
-        return !get(map, v);
-    }
-};
-
-template <typename PropertyMap>
-struct not_not_selected
-{
-    PropertyMap map;
-
-    not_not_selected() {} // requirement of Iterator concept
-    explicit not_not_selected(PropertyMap const& map)
-      : map(map)
-    {}
-
-    template <typename Vertex>
-    bool operator()(Vertex const& v) const
-    {
-        return !bool(!get(map, v)); // Yikes!
+        return get(map, v) != value;
     }
 };
 
@@ -162,6 +164,10 @@ struct root
 template <typename Graph>
 struct selected_descendants
 {
+    typedef typename boost::property_map<Graph, tag::selected>::type PropertyMap;
+    typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
+    typedef boost::color_traits<ColorValue> Color;
+
     Graph const* g; // use pointer to allow default constructor
 
     selected_descendants() {} // requirement of Iterator concept
@@ -172,7 +178,7 @@ struct selected_descendants
     template <typename Edge>
     bool operator()(Edge const& e) const
     {
-        return get(tag::selected(), *g, target(e, *g));
+        return get(tag::selected(), *g, target(e, *g)) == Color::black();
     }
 };
 

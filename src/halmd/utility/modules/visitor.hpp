@@ -64,6 +64,10 @@ template <typename Graph>
 struct resolver
   : public boost::default_dfs_visitor
 {
+    typedef typename boost::property_map<Graph, tag::selected>::type PropertyMap;
+    typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
+    typedef boost::color_traits<ColorValue> Color;
+
     resolver(Graph& g, po::options const& vm, po::unparsed_options& unparsed)
       : g(g)
       , vm(vm)
@@ -98,7 +102,7 @@ struct resolver
                 return;
             }
         }
-        put(tag::selected(), g, v, boost::tribool(boost::indeterminate));
+        put(tag::selected(), g, v, Color::gray());
     }
 
     template <typename Vertex, typename FilteredGraph>
@@ -107,26 +111,26 @@ struct resolver
         typedef typename boost::property_map<Graph, tag::relation>::type RelationMap;
         typedef typename boost::property_map<Graph, tag::selected>::type SelectedMap;
         typedef predicate::relation<RelationMap> RelationPredicate;
+        typedef predicate::selected<SelectedMap> SelectedPredicate;
         typedef predicate::not_selected<SelectedMap> NotSelectedPredicate;
-        typedef predicate::not_not_selected<SelectedMap> NotNotSelectedPredicate;
 
         LOG_DEBUG("finish module " << get(tag::name(), g, v));
-        if (!get(tag::selected(), g, v)) {
+        if (get(tag::selected(), g, v) == Color::white()) {
             return;
         }
         RelationPredicate rp(get(tag::relation(), g), property::is_required);
-        NotSelectedPredicate np(get(tag::selected(), g));
-        if (out_degree(v, make_filtered_graph(g, rp, np))) {
+        SelectedPredicate sp(get(tag::selected(), g), Color::white());
+        if (out_degree(v, make_filtered_graph(g, rp, sp))) {
             LOG_DEBUG("✘ " << "missing required dependency");
-            put(tag::selected(), g, v, false);
+            put(tag::selected(), g, v, Color::white());
             return;
         }
         if (!get(tag::builder(), g, v)) {
             RelationPredicate bp(get(tag::relation(), g), property::is_base_of);
-            NotNotSelectedPredicate nnp(get(tag::selected(), g));
-            if (!out_degree(v, make_filtered_graph(g, bp, nnp))) {
+            NotSelectedPredicate np(get(tag::selected(), g), Color::white());
+            if (!out_degree(v, make_filtered_graph(g, bp, np))) {
                 LOG_DEBUG("✘ " << "missing required module");
-                put(tag::selected(), g, v, false);
+                put(tag::selected(), g, v, Color::white());
                 return;
             }
         }
@@ -137,20 +141,24 @@ template <typename Graph>
 struct picker
   : public boost::default_dfs_visitor
 {
+    typedef typename boost::property_map<Graph, tag::selected>::type PropertyMap;
+    typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
+    typedef boost::color_traits<ColorValue> Color;
+
     Graph& g;
     picker(Graph& g) : g(g) {}
 
     template <typename Vertex, typename FilteredGraph>
     void start_vertex(Vertex const& v, FilteredGraph const&)
     {
-        put(tag::selected(), g, v, true);
+        put(tag::selected(), g, v, Color::black());
     }
 
     template <typename Edge, typename FilteredGraph>
     void examine_edge(Edge const& e, FilteredGraph const&)
     {
         if (get(tag::relation(), g, e) != property::is_base_of) {
-            put(tag::selected(), g, target(e, g), true);
+            put(tag::selected(), g, target(e, g), Color::black());
         }
     }
 };
@@ -161,9 +169,8 @@ struct policy
 {
     typedef typename boost::property_map<Graph, tag::relation>::type RelationMap;
     typedef typename boost::property_map<Graph, tag::selected>::type SelectedMap;
-    typedef predicate::not_relation<RelationMap> NotRelationPredicate;
-    typedef predicate::selected<SelectedMap> SelectedPredicate;
-    typedef boost::filtered_graph<Graph, NotRelationPredicate, SelectedPredicate> FilteredGraph;
+    typedef typename boost::property_traits<SelectedMap>::value_type ColorValue;
+    typedef boost::color_traits<ColorValue> Color;
     typedef predicate::selected_descendants<Graph> SelectedDescendantsPredicate;
 
     Graph& g;
@@ -183,10 +190,10 @@ struct policy
             if (!out_degree(v, make_filtered_graph(bg, SelectedDescendantsPredicate(g)))) {
                 AdjacencyIterator ai, ai_end;
                 for (boost::tie(ai, ai_end) = adjacent_vertices(v, bg); ai != ai_end; ++ai) {
-                    put(tag::selected(), g, *ai, true);
+                    put(tag::selected(), g, *ai, Color::black());
                 }
             }
-            put(tag::selected(), g, v, boost::tribool(boost::indeterminate));
+            put(tag::selected(), g, v, Color::gray());
         }
         stack.push_back(false);
     }
@@ -197,9 +204,9 @@ struct policy
         if (get(tag::builder(), g, v)) {
             if (stack.back()) { // base module overriden by derived module
                 LOG_DEBUG("✘ " << get(tag::name(), g, v));
-                put(tag::selected(), g, v, boost::tribool(boost::indeterminate));
+                put(tag::selected(), g, v, Color::gray());
             }
-            else if (get(tag::selected(), g, v)) {
+            else if (get(tag::selected(), g, v) == Color::black()) {
                 std::fill(stack.begin(), stack.end(), true);
             }
         }
@@ -222,11 +229,14 @@ struct factory
     template <typename Vertex, typename Graph>
     void discover_vertex(Vertex const& v, Graph const& g)
     {
+        typedef typename boost::property_map<Graph, tag::selected>::type SelectedMap;
+        typedef typename boost::property_traits<SelectedMap>::value_type ColorValue;
+        typedef boost::color_traits<ColorValue> Color;
         typedef typename BuilderStack::iterator StackIterator;
         typedef typename BuilderMap::value_type::second_type::value_type Builder;
 
         stack.push_back(&map[v]);
-        if (get(tag::selected(), g, v)) {
+        if (get(tag::selected(), g, v) == Color::black()) {
             Builder builder = get(tag::builder(), g, v);
             if (builder) {
                 LOG_DEBUG("✔ " << get(tag::name(), g, v));
