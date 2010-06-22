@@ -56,6 +56,8 @@ struct typed_parser
     typedef typename Registry::Graph Graph;
     typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
     typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    typedef typename boost::property_map<Graph, tag::builder>::type BuilderPropertyMap;
+    typedef typename boost::property_traits<BuilderPropertyMap>::value_type Builder;
 
     /**
      * wrap constructor of the most outer class and attach an
@@ -65,7 +67,7 @@ struct typed_parser
     {
         Graph& g = Registry::graph();
         Vertex v = Registry::template vertex<T>();
-        property::builder builder(new typed_builder<T, Factory>);
+        Builder builder(new typed_builder<T, Factory>);
         put(tag::builder(), g, v, builder);
     }
 };
@@ -82,6 +84,10 @@ struct typed_parser_base<T, Factory, typename boost::enable_if<boost::is_object<
     typedef typename T::_Base BaseT;
     typedef typed_parser_base<BaseT, Factory> Base;
     typedef typename Factory::Registry Registry;
+    typedef typename Registry::Graph Graph;
+    typedef typename boost::property_map<Graph, tag::relation>::type RelationPropertyMap;
+    typedef typename boost::property_traits<RelationPropertyMap>::value_type RelationValue;
+    typedef boost::color_traits<RelationValue> Relation;
 
     /**
      * register derived-to-base relation and module dependencies
@@ -91,7 +97,7 @@ struct typed_parser_base<T, Factory, typename boost::enable_if<boost::is_object<
     typed_parser_base()
     {
         boost::function_requires<ModuleConcept<T> >();
-        Registry::template edge<BaseT, T>(property::is_base_of);
+        Registry::template edge<BaseT, T>(Relation::base());
         T::depends();
     }
 };

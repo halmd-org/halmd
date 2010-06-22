@@ -41,12 +41,18 @@ public:
     typedef boost::default_color_type ColorValue;
     typedef boost::color_traits<ColorValue> Color;
     typedef std::vector<ColorValue> ColorMap;
-    typedef property::builder Builder;
-    typedef std::map<Vertex, std::vector<Builder> > BuilderMap;
+    typedef boost::property_map<Graph, tag::builder>::type BuilderPropertyMap;
+    typedef boost::property_traits<BuilderPropertyMap>::value_type Builder;
+    typedef std::vector<std::vector<Builder> > BuilderMap;
+
+    BuilderMap builder;
 
     explicit factory(Graph const& g)
+      : builder(num_vertices(g))
     {
         typedef boost::property_map<Graph, tag::relation>::const_type RelationMap;
+        typedef boost::property_traits<RelationMap>::value_type RelationValue;
+        typedef boost::color_traits<RelationValue> Relation;
         typedef boost::property_map<Graph, tag::selected>::const_type SelectedMap;
         typedef predicate::relation<RelationMap> RelationPredicate;
         typedef predicate::not_selected<SelectedMap> NotSelectedPredicate;
@@ -59,7 +65,7 @@ public:
         LOG_DEBUG("construct module factory");
         BuilderStack stack;
         ColorMap color(num_vertices(g), Color::white()); // manually color due to partial DFS
-        RelationPredicate ep(get(tag::relation(), g), property::is_base_of);
+        RelationPredicate ep(get(tag::relation(), g), Relation::base());
         NotSelectedPredicate np(get(tag::selected(), g), Color::white());
         FilteredGraph fg(g, ep, np);
         RootGraph rg(fg, boost::keep_all(), RootPredicate(fg));
@@ -73,8 +79,6 @@ public:
             );
         }
     }
-
-    BuilderMap builder;
 };
 
 }} // namespace halmd::modules

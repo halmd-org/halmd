@@ -20,7 +20,6 @@
 #ifndef HALMD_UTILITY_MODULES_GRAPH_HPP
 #define HALMD_UTILITY_MODULES_GRAPH_HPP
 
-#include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/shared_ptr.hpp>
@@ -43,27 +42,19 @@ struct relation     { typedef boost::edge_property_tag kind; };
 
 } // namespace tag
 
-namespace property
-{
-
-typedef std::string name;
-typedef boost::shared_ptr<untyped_builder_base> builder;
-typedef boost::default_color_type selected;
-enum relation { is_required, is_optional, is_implicit, is_base_of };
-
-} // namespace property
+enum relation_type { required_relation, optional_relation, implicit_relation, base_relation };
 
 typedef boost::adjacency_list<
     boost::setS
   , boost::vecS
   , boost::bidirectionalS
-  , boost::property<tag::name, property::name
-      , boost::property<tag::builder, property::builder
-          , boost::property<tag::selected, property::selected
+  , boost::property<tag::name, std::string
+      , boost::property<tag::builder, boost::shared_ptr<untyped_builder_base>
+          , boost::property<tag::selected, boost::default_color_type
             >
         >
     >
-  , boost::property<tag::relation, property::relation
+  , boost::property<tag::relation, relation_type
     >
 > graph;
 

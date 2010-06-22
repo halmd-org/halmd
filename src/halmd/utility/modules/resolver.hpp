@@ -50,6 +50,8 @@ public:
       , color_(num_vertices(graph_), Color::white())
     {
         typedef boost::property_map<Graph, tag::relation>::type RelationMap;
+        typedef boost::property_traits<RelationMap>::value_type RelationValue;
+        typedef boost::color_traits<RelationValue> Relation;
         typedef predicate::relation<RelationMap> RelationPredicate;
         typedef boost::filtered_graph<Graph, RelationPredicate> FilteredGraph;
         typedef predicate::root<FilteredGraph> RootPredicate;
@@ -57,7 +59,7 @@ public:
         typedef boost::graph_traits<RootGraph>::vertex_iterator VertexIterator;
 
         LOG_DEBUG("construct module resolver");
-        RelationPredicate ep(get(tag::relation(), graph_), property::is_base_of);
+        RelationPredicate ep(get(tag::relation(), graph_), Relation::base());
         FilteredGraph fg(graph_, ep);
         RootGraph rg(fg, boost::keep_all(), RootPredicate(fg));
         VertexIterator vi, vi_end;

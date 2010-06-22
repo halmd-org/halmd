@@ -25,6 +25,7 @@
 #include <boost/graph/depth_first_search.hpp>
 
 #include <halmd/utility/modules/graph.hpp>
+#include <halmd/utility/modules/traits.hpp>
 
 namespace halmd
 {
@@ -38,38 +39,43 @@ namespace modules { namespace predicate
 template <typename PropertyMap>
 struct relation
 {
+    typedef typename boost::property_traits<PropertyMap>::value_type PropertyValue;
+
     PropertyMap map;
-    property::relation pred;
+    PropertyValue value;
 
     relation() {} // requirement of Iterator concept
-    relation(PropertyMap const& map, property::relation const& pred)
+    relation(PropertyMap const& map, PropertyValue const& value)
       : map(map)
-      , pred(pred)
+      , value(value)
     {}
 
     template <typename Edge>
     bool operator()(Edge const& e) const
     {
-        return get(map, e) == pred;
+        return get(map, e) == value;
     }
 };
 
 template <typename PropertyMap>
 struct not_relation
 {
+    typedef typename boost::property_traits<PropertyMap>::value_type PropertyValue;
+    typedef boost::color_traits<PropertyValue> Property;
+
     PropertyMap map;
-    property::relation pred;
+    PropertyValue value;
 
     not_relation() {} // requirement of Iterator concept
-    not_relation(PropertyMap const& map, property::relation const& pred)
+    not_relation(PropertyMap const& map, PropertyValue const& value)
       : map(map)
-      , pred(pred)
+      , value(value)
     {}
 
     template <typename Edge>
     bool operator()(Edge const& e) const
     {
-        return get(map, e) != pred;
+        return get(map, e) != value;
     }
 };
 
@@ -79,14 +85,13 @@ struct not_relation
 template <typename PropertyMap>
 struct selected
 {
-    typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
-    typedef boost::color_traits<ColorValue> Color;
+    typedef typename boost::property_traits<PropertyMap>::value_type PropertyValue;
 
     PropertyMap map;
-    ColorValue value;
+    PropertyValue value;
 
     selected() {} // requirement of Iterator concept
-    explicit selected(PropertyMap const& map, ColorValue const& value)
+    explicit selected(PropertyMap const& map, PropertyValue const& value)
       : map(map)
       , value(value)
     {}
@@ -113,14 +118,13 @@ struct selected
 template <typename PropertyMap>
 struct not_selected
 {
-    typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
-    typedef boost::color_traits<ColorValue> Color;
+    typedef typename boost::property_traits<PropertyMap>::value_type PropertyValue;
 
     PropertyMap map;
-    ColorValue value;
+    PropertyValue value;
 
     not_selected() {} // requirement of Iterator concept
-    explicit not_selected(PropertyMap const& map, ColorValue const& value)
+    explicit not_selected(PropertyMap const& map, PropertyValue const& value)
       : map(map)
       , value(value)
     {}
@@ -165,8 +169,8 @@ template <typename Graph>
 struct selected_descendants
 {
     typedef typename boost::property_map<Graph, tag::selected>::type PropertyMap;
-    typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
-    typedef boost::color_traits<ColorValue> Color;
+    typedef typename boost::property_traits<PropertyMap>::value_type PropertyValue;
+    typedef boost::color_traits<PropertyValue> Color;
 
     Graph const* g; // use pointer to allow default constructor
 

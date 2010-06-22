@@ -21,6 +21,7 @@
 #define HALMD_UTILITY_MODULES_REGISTRY_HPP
 
 #include <halmd/utility/modules/graph.hpp>
+#include <halmd/utility/modules/traits.hpp>
 
 namespace halmd
 {
@@ -43,6 +44,8 @@ public:
     typedef boost::property_map<Graph, tag::selected>::type PropertyMap;
     typedef boost::property_traits<PropertyMap>::value_type ColorValue;
     typedef boost::color_traits<ColorValue> Color;
+    typedef boost::property_map<Graph, tag::relation>::type RelationPropertyMap;
+    typedef boost::property_traits<RelationPropertyMap>::value_type RelationValue;
 
     //
     // Read this for the following use of static local variables:
@@ -73,7 +76,7 @@ public:
     }
 
     template <typename Source, typename Target>
-    static void edge(property::relation const& relation)
+    static void edge(RelationValue const& relation)
     {
         Graph& g = graph();
         Vertex u = vertex<Source>();

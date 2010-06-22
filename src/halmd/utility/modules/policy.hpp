@@ -40,6 +40,8 @@ public:
     typedef Registry::Graph Graph;
     typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
     typedef boost::graph_traits<Graph>::edge_descriptor Edge;
+    typedef boost::property_map<Graph, tag::builder>::type BuilderPropertyMap;
+    typedef boost::property_traits<BuilderPropertyMap>::value_type Builder;
     typedef boost::default_color_type ColorValue;
     typedef boost::color_traits<ColorValue> Color;
     typedef std::vector<ColorValue> ColorMap;
@@ -49,6 +51,8 @@ public:
       : graph_(g)
     {
         typedef boost::property_map<Graph, tag::relation>::type RelationMap;
+        typedef boost::property_traits<RelationMap>::value_type RelationValue;
+        typedef boost::color_traits<RelationValue> Relation;
         typedef boost::property_map<Graph, tag::selected>::type SelectedMap;
         typedef predicate::relation<RelationMap> RelationPredicate;
         typedef predicate::selected<SelectedMap> SelectedPredicate;
@@ -59,12 +63,11 @@ public:
         typedef predicate::root<FilteredGraph> RootPredicate;
         typedef boost::filtered_graph<FilteredGraph, boost::keep_all, RootPredicate> RootGraph;
         typedef boost::graph_traits<RootGraph>::vertex_iterator RootVertexIterator;
-        typedef property::builder Builder;
 
         LOG_DEBUG("apply module policy");
         ColorMap color(num_vertices(graph_), Color::white());
         RequiredStack stack;
-        RelationPredicate bp(get(tag::relation(), graph_), property::is_base_of);
+        RelationPredicate bp(get(tag::relation(), graph_), Relation::base());
         SelectedPredicate sp(get(tag::selected(), graph_), Color::black());
         NotSelectedPredicate np(get(tag::selected(), graph_), Color::white());
         FilteredGraph bg(graph_, bp, sp);

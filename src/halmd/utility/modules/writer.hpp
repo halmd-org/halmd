@@ -24,6 +24,7 @@
 #include <fstream>
 
 #include <halmd/utility/modules/graph.hpp>
+#include <halmd/utility/modules/traits.hpp>
 
 namespace halmd
 {
@@ -94,27 +95,22 @@ struct edge_property_writer
     typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
     typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
     typedef typename boost::property_map<modules::graph, modules::tag::relation>::const_type RelationPropertyMap;
+    typedef typename boost::property_traits<RelationPropertyMap>::value_type RelationValue;
+    typedef boost::color_traits<RelationValue> Relation;
 
-    RelationPropertyMap relation;
+    RelationPropertyMap map;
 
     edge_property_writer(Graph const& g)
-      : relation(get(tag::relation(), g))
+      : map(get(tag::relation(), g))
     {}
 
     void operator()(std::ostream& out, Edge const& e) const
     {
-        switch (get(relation, e))
-        {
-          case property::is_required:
-            out << "[style=\"solid\"]"; break;
-          case property::is_optional:
-            out << "[style=\"dashed\"]"; break;
-          case property::is_base_of:
-            out << "[arrowhead=\"ediamond\"]"; break;
-          case property::is_implicit:
-            out << "[style=\"dotted\"]"; break;
-          // unhandler enumeration value results in compiler warning
-        }
+        RelationValue value = get(map, e);
+        if (value == Relation::required())   out << "[style=\"solid\"]";
+        if (value == Relation::optional())   out << "[style=\"dashed\"]";
+        if (value == Relation::base())       out << "[arrowhead=\"ediamond\"]";
+        if (value == Relation::implicit())   out << "[style=\"dotted\"]";
     }
 };
 

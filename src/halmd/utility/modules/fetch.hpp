@@ -22,28 +22,30 @@
 
 #include <boost/bind.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/utility/modules/builder.hpp>
+#include <halmd/utility/modules/factory.hpp>
+#include <halmd/utility/modules/registry.hpp>
 
 namespace halmd
 {
 namespace modules
 {
 
-template <typename T, typename Factory>
+template <typename T>
 struct fetcher
 {
-    typedef typename Factory::Registry Registry;
+    typedef typename modules::registry Registry;
     typedef typename Registry::Graph Graph;
     typedef typename Registry::Vertex Vertex;
-    typedef typename Factory::Builder Builder;
-    typedef typename typed_builder_base<T, Factory>::BaseT BaseT;
-    typedef typed_builder_base<BaseT, Factory> BaseBuilder;
+    typedef boost::property_map<Graph, tag::builder>::type BuilderPropertyMap;
+    typedef boost::property_traits<BuilderPropertyMap>::value_type Builder;
+    typedef typename typed_builder_base<T, modules::factory>::BaseT BaseT;
+    typedef typed_builder_base<BaseT, modules::factory> BaseBuilder;
 
-    Factory& factory;
+    modules::factory& factory;
     po::options const& vm;
 
-    fetcher(Factory& factory, po::options const& vm)
+    fetcher(modules::factory& factory, po::options const& vm)
       : factory(factory)
       , vm(vm)
     {}
@@ -82,10 +84,10 @@ struct fetcher
     }
 };
 
-template <typename T, typename Factory>
-fetcher<T, Factory> fetch(Factory& factory, po::options const& vm)
+template <typename T>
+fetcher<T> fetch(modules::factory& factory, po::options const& vm)
 {
-    return fetcher<T, Factory>(factory, vm);
+    return fetcher<T>(factory, vm);
 }
 
 }} // namespace halmd::modules

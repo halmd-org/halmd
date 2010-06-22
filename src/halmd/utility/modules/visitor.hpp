@@ -47,15 +47,17 @@ struct forwarder
     void examine_edge(Edge const& e, AcyclicGraph const&)
     {
         typedef typename boost::property_map<Graph, tag::relation>::type RelationMap;
+        typedef typename boost::property_traits<RelationMap>::value_type RelationValue;
+        typedef boost::color_traits<RelationValue> Relation;
         typedef predicate::relation<RelationMap> RelationPredicate;
         typedef boost::filtered_graph<Graph, RelationPredicate> RequiredGraph;
         typedef typename boost::graph_traits<RequiredGraph>::out_edge_iterator EdgeIterator;
 
-        RelationPredicate ep(get(tag::relation(), g), property::is_required);
+        RelationPredicate ep(get(tag::relation(), g), Relation::required());
         RequiredGraph rg(g, ep);
         EdgeIterator ei, ei_end;
         for (boost::tie(ei, ei_end) = out_edges(source(e, g), rg); ei != ei_end; ++ei) {
-            add_edge(target(e, g), target(*ei, g), property::is_implicit, g);
+            add_edge(target(e, g), target(*ei, g), Relation::implicit(), g);
         }
     }
 };
@@ -64,6 +66,8 @@ template <typename Graph>
 struct resolver
   : public boost::default_dfs_visitor
 {
+    typedef typename boost::property_map<Graph, tag::builder>::type BuilderPropertyMap;
+    typedef typename boost::property_traits<BuilderPropertyMap>::value_type Builder;
     typedef typename boost::property_map<Graph, tag::selected>::type PropertyMap;
     typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
     typedef boost::color_traits<ColorValue> Color;
@@ -82,7 +86,7 @@ struct resolver
     void discover_vertex(Vertex const& v, FilteredGraph const&)
     {
         LOG_DEBUG("discover module " << get(tag::name(), g, v));
-        property::builder builder = get(tag::builder(), g, v);
+        Builder builder = get(tag::builder(), g, v);
         if (builder) {
             builder->vm = vm;
             po::options_description desc;
@@ -109,6 +113,8 @@ struct resolver
     void finish_vertex(Vertex const& v, FilteredGraph const&)
     {
         typedef typename boost::property_map<Graph, tag::relation>::type RelationMap;
+        typedef typename boost::property_traits<RelationMap>::value_type RelationValue;
+        typedef boost::color_traits<RelationValue> Relation;
         typedef typename boost::property_map<Graph, tag::selected>::type SelectedMap;
         typedef predicate::relation<RelationMap> RelationPredicate;
         typedef predicate::selected<SelectedMap> SelectedPredicate;
@@ -118,7 +124,7 @@ struct resolver
         if (get(tag::selected(), g, v) == Color::white()) {
             return;
         }
-        RelationPredicate rp(get(tag::relation(), g), property::is_required);
+        RelationPredicate rp(get(tag::relation(), g), Relation::required());
         SelectedPredicate sp(get(tag::selected(), g), Color::white());
         if (out_degree(v, make_filtered_graph(g, rp, sp))) {
             LOG_DEBUG("✘ " << "missing required dependency");
@@ -126,7 +132,7 @@ struct resolver
             return;
         }
         if (!get(tag::builder(), g, v)) {
-            RelationPredicate bp(get(tag::relation(), g), property::is_base_of);
+            RelationPredicate bp(get(tag::relation(), g), Relation::base());
             NotSelectedPredicate np(get(tag::selected(), g), Color::white());
             if (!out_degree(v, make_filtered_graph(g, bp, np))) {
                 LOG_DEBUG("✘ " << "missing required module");
@@ -144,6 +150,9 @@ struct picker
     typedef typename boost::property_map<Graph, tag::selected>::type PropertyMap;
     typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
     typedef boost::color_traits<ColorValue> Color;
+    typedef typename boost::property_map<Graph, tag::relation>::type RelationPropertyMap;
+    typedef typename boost::property_traits<RelationPropertyMap>::value_type RelationValue;
+    typedef boost::color_traits<RelationValue> Relation;
 
     Graph& g;
     picker(Graph& g) : g(g) {}
@@ -157,7 +166,7 @@ struct picker
     template <typename Edge, typename FilteredGraph>
     void examine_edge(Edge const& e, FilteredGraph const&)
     {
-        if (get(tag::relation(), g, e) != property::is_base_of) {
+        if (get(tag::relation(), g, e) != Relation::base()) {
             put(tag::selected(), g, target(e, g), Color::black());
         }
     }
@@ -233,7 +242,7 @@ struct factory
         typedef typename boost::property_traits<SelectedMap>::value_type ColorValue;
         typedef boost::color_traits<ColorValue> Color;
         typedef typename BuilderStack::iterator StackIterator;
-        typedef typename BuilderMap::value_type::second_type::value_type Builder;
+        typedef typename BuilderMap::value_type::value_type Builder;
 
         stack.push_back(&map[v]);
         if (get(tag::selected(), g, v) == Color::black()) {

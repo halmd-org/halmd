@@ -22,9 +22,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/utility/modules/factory.hpp>
 #include <halmd/utility/modules/fetch.hpp>
 #include <halmd/utility/modules/graph.hpp>
+#include <halmd/utility/modules/traits.hpp>
 #include <halmd/utility/modules/parser.hpp>
 #include <halmd/utility/modules/registry.hpp>
 
@@ -43,15 +43,18 @@ struct depends
 {
     typedef modules::graph Graph;
     typedef modules::registry Registry;
+    typedef typename boost::property_map<Graph, tag::relation>::type RelationPropertyMap;
+    typedef typename boost::property_traits<RelationPropertyMap>::value_type RelationValue;
+    typedef boost::color_traits<RelationValue> Relation;
 
     static void required()
     {
-        Registry::template edge<Dependant, Dependency>(modules::property::is_required);
+        Registry::template edge<Dependant, Dependency>(Relation::required());
     }
 
     static void optional()
     {
-        Registry::template edge<Dependant, Dependency>(modules::property::is_optional);
+        Registry::template edge<Dependant, Dependency>(Relation::optional());
     }
 };
 
