@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/utility/modules/builder.hpp>
+#include <halmd/utility/modules/property.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -41,8 +42,6 @@ struct selected     { typedef boost::vertex_property_tag kind; };
 struct relation     { typedef boost::edge_property_tag kind; };
 
 } // namespace tag
-
-enum relation_type { required_relation, optional_relation, implicit_relation, base_relation };
 
 typedef boost::adjacency_list<
     boost::setS

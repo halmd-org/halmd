@@ -24,7 +24,6 @@
 
 #include <halmd/utility/modules/fetch.hpp>
 #include <halmd/utility/modules/graph.hpp>
-#include <halmd/utility/modules/traits.hpp>
 #include <halmd/utility/modules/parser.hpp>
 #include <halmd/utility/modules/registry.hpp>
 

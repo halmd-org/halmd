@@ -21,7 +21,6 @@
 #define HALMD_UTILITY_MODULES_REGISTRY_HPP
 
 #include <halmd/utility/modules/graph.hpp>
-#include <halmd/utility/modules/traits.hpp>
 
 namespace halmd
 {

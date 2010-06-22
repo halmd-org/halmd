@@ -17,10 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_MODULES_TRAITS_HPP
-#define HALMD_UTILITY_MODULES_TRAITS_HPP
+#ifndef HALMD_UTILITY_MODULES_PROPERTY_HPP
+#define HALMD_UTILITY_MODULES_PROPERTY_HPP
 
 #include <halmd/utility/modules/graph.hpp>
+
+namespace halmd
+{
+namespace modules
+{
+
+enum relation_type { required_relation, optional_relation, implicit_relation, base_relation };
+
+} // namespace modules
+
+} // namespace halmd
 
 namespace boost
 {
@@ -37,4 +48,4 @@ struct color_traits<halmd::modules::relation_type>
 
 } // namespace boost
 
-#endif /* ! HALMD_UTILITY_MODULES_TRAITS_HPP */
+#endif /* ! HALMD_UTILITY_MODULES_PROPERTY_HPP */

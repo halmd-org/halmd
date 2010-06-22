@@ -25,7 +25,6 @@
 #include <boost/graph/depth_first_search.hpp>
 
 #include <halmd/utility/modules/graph.hpp>
-#include <halmd/utility/modules/traits.hpp>
 
 namespace halmd
 {

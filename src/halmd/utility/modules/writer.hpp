@@ -24,7 +24,6 @@
 #include <fstream>
 
 #include <halmd/utility/modules/graph.hpp>
-#include <halmd/utility/modules/traits.hpp>
 
 namespace halmd
 {
