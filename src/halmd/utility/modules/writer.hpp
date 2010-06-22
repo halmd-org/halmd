@@ -41,6 +41,8 @@ struct vertex_property_writer
     typedef typename boost::property_map<Graph, tag::name>::const_type NamePropertyMap;
     typedef typename boost::property_map<Graph, tag::builder>::const_type BuilderPropertyMap;
     typedef typename boost::property_map<Graph, tag::selected>::const_type SelectedPropertyMap;
+    typedef typename boost::property_traits<SelectedPropertyMap>::value_type SelectedValue;
+    typedef boost::color_traits<SelectedValue> Color;
 
     NamePropertyMap name;
     BuilderPropertyMap builder;
@@ -57,20 +59,20 @@ struct vertex_property_writer
         out << "[label=\"" << get(name, v) << "\"";
         if (get(builder, v)) {
             out << ",shape=\"box\"";
-            if (get(selected, v)) {
+            if (get(selected, v) == Color::black()) {
                 out << ",style=\"filled\",fillcolor=\"lightblue\"";
             }
-            else if (!get(selected, v)) {
+            else if (get(selected, v) == Color::gray()) {
                 out << ",style=\"filled\",fillcolor=\"lightgrey\"";
             }
             // else boost::indeterminate
         }
         else {
             out << ",shape=\"ellipse\"";
-            if (get(selected, v)) {
+            if (get(selected, v) == Color::black()) {
                 out << ",style=\"filled\",fillcolor=\"mistyrose\"";
             }
-            else if (!get(selected, v)) {
+            else if (get(selected, v) == Color::gray()) {
                 out << ",style=\"filled\",fillcolor=\"lightgrey\"";
             }
             // else boost::indeterminate
