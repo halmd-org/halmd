@@ -146,7 +146,7 @@ void thermodynamics(po::options vm)
     vm_["temperature"]  = variable_value(temp, false);
     vm_["dimension"]    = variable_value(dim, false);
     vm_["particles"]    = variable_value(864u, false);
-    vm_["verbose"]      = variable_value(2, true);
+//    vm_["verbose"]      = variable_value(2, true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
     // enable logging to console
@@ -263,6 +263,7 @@ int init_unit_test_suite()
 {
     typedef boost::program_options::variable_value variable_value;
     using namespace boost::assign;
+    using namespace boost::unit_test;
     using namespace boost::unit_test::framework;
 
     // manually define program option values
@@ -277,13 +278,13 @@ int init_unit_test_suite()
     }
     {
         map<string, variable_value>& vm_(vm[1]);
-        vm_["backend"]      = variable_value(string("gpu"), true);
-        vm_["dimension"]    = variable_value(3, true);
+        vm_["backend"]      = variable_value(string("host"), true);
+        vm_["dimension"]    = variable_value(2, true);
     }
     {
         map<string, variable_value>& vm_(vm[2]);
-        vm_["backend"]      = variable_value(string("host"), true);
-        vm_["dimension"]    = variable_value(2, true);
+        vm_["backend"]      = variable_value(string("gpu"), true);
+        vm_["dimension"]    = variable_value(3, true);
     }
     {
         map<string, variable_value>& vm_(vm[3]);
@@ -291,10 +292,16 @@ int init_unit_test_suite()
         vm_["dimension"]    = variable_value(2, true);
     }
 
-    master_test_suite().add(
-        BOOST_PARAM_TEST_CASE( &ideal_gas, vm.begin(), vm.end() ));
-    master_test_suite().add(
-        BOOST_PARAM_TEST_CASE( &thermodynamics, vm.begin(), vm.end() ));
+    test_suite* ts1 = BOOST_TEST_SUITE( "host" );
+    ts1->add( BOOST_PARAM_TEST_CASE( &ideal_gas, vm.begin(), vm.begin() + 2 ) );
+    ts1->add( BOOST_PARAM_TEST_CASE( &thermodynamics, vm.begin(), vm.begin() + 2 ) );
+
+    test_suite* ts2 = BOOST_TEST_SUITE( "gpu" );
+    ts2->add( BOOST_PARAM_TEST_CASE( &ideal_gas, vm.begin() + 2, vm.end() ) );
+    ts2->add( BOOST_PARAM_TEST_CASE( &thermodynamics, vm.begin() + 2, vm.end() ) );
+
+    master_test_suite().add( ts1 );
+    master_test_suite().add( ts2 );
 
     return 0;
 }
