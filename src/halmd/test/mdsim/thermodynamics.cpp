@@ -21,6 +21,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE thermodynamics
 #include <boost/test/unit_test.hpp>
+#include <boost/test/parameterized_test.hpp>
 
 #include <boost/program_options.hpp>
 #include <cuda_wrapper.hpp>
@@ -69,15 +70,11 @@ inline double heat_capacity(double en_kin, double variance, unsigned npart)
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
-BOOST_AUTO_TEST_CASE( ideal_gas )
+void ideal_gas(po::options vm)
 {
     using namespace boost::assign;
 
     typedef boost::program_options::variable_value variable_value;
-
-    // manually define program option values
-    po::options vm;
-    set_default_options(vm);
 
     float density = 1.;
     float temp = 1.;
@@ -131,14 +128,9 @@ BOOST_AUTO_TEST_CASE( ideal_gas )
     BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., eps_float);
 }
 
-BOOST_AUTO_TEST_CASE( thermodynamics )
+void thermodynamics(po::options vm)
 {
-
     typedef boost::program_options::variable_value variable_value;
-
-    // manually define program option values
-    po::options vm;
-    set_default_options(vm);
 
     float density = 0.4;
     float temp = 2.0;
@@ -154,7 +146,7 @@ BOOST_AUTO_TEST_CASE( thermodynamics )
     vm_["temperature"]  = variable_value(temp, false);
     vm_["dimension"]    = variable_value(dim, false);
     vm_["particles"]    = variable_value(864u, false);
-//     vm_["verbose"]      = variable_value(2, true);
+    vm_["verbose"]      = variable_value(2, true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
     // enable logging to console
@@ -253,7 +245,6 @@ void set_default_options(halmd::po::options& vm)
 
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
-    vm_["backend"]      = variable_value(string(MDSIM_BACKEND), true);
     vm_["force"]        = variable_value(string("lj"), true);
     vm_["integrator"]   = variable_value(string("verlet"), true);
     vm_["particles"]    = variable_value(1000u, true);
@@ -261,10 +252,51 @@ void set_default_options(halmd::po::options& vm)
     vm_["smooth"]       = variable_value(0.005f, true);
     vm_["density"]      = variable_value(0.4f, true);
     vm_["temperature"]  = variable_value(2.0f, true);
-    vm_["dimension"]    = variable_value(3, true);
     vm_["verbose"]      = variable_value(0, true);
     vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), true);
     vm_["sigma"]        = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), true);
     vm_["random-seed"]  = variable_value(42u, true);
 }
+
+int init_unit_test_suite()
+{
+    typedef boost::program_options::variable_value variable_value;
+    using namespace boost::assign;
+    using namespace boost::unit_test::framework;
+
+    // manually define program option values
+    boost::array<po::options, 4> vm;
+    for_each(vm.begin(), vm.end(), boost::bind(&set_default_options, _1));
+
+    // parametrize specific program options
+    {
+        map<string, variable_value>& vm_(vm[0]);
+        vm_["backend"]      = variable_value(string("host"), true);
+        vm_["dimension"]    = variable_value(3, true);
+    }
+    {
+        map<string, variable_value>& vm_(vm[1]);
+        vm_["backend"]      = variable_value(string("gpu"), true);
+        vm_["dimension"]    = variable_value(3, true);
+    }
+    {
+        map<string, variable_value>& vm_(vm[2]);
+        vm_["backend"]      = variable_value(string("host"), true);
+        vm_["dimension"]    = variable_value(2, true);
+    }
+    {
+        map<string, variable_value>& vm_(vm[3]);
+        vm_["backend"]      = variable_value(string("gpu"), true);
+        vm_["dimension"]    = variable_value(2, true);
+    }
+
+    master_test_suite().add(
+        BOOST_PARAM_TEST_CASE( &ideal_gas, vm.begin(), vm.end() ));
+    master_test_suite().add(
+        BOOST_PARAM_TEST_CASE( &thermodynamics, vm.begin(), vm.end() ));
+
+    return 0;
+}
+
+static int _dummy = init_unit_test_suite();
