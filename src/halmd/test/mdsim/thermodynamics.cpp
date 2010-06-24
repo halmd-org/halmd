@@ -57,8 +57,6 @@ void set_default_options(halmd::po::options& vm);
 const double eps = numeric_limits<double>::epsilon();
 const float eps_float = numeric_limits<float>::epsilon();
 
-const int dim = 3;
-
 /**
  * heat capacity from microcanonical fluctuations of kinetic energy
  * see Lebowitz, Percus, and Verlet, Phys. Rev. 153, 250 (1967) for details
@@ -70,6 +68,7 @@ inline double heat_capacity(double en_kin, double variance, unsigned npart)
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
+template <int dimension>
 void ideal_gas(po::options vm)
 {
     using namespace boost::assign;
@@ -82,33 +81,34 @@ void ideal_gas(po::options vm)
 
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
+    vm_["dimension"]    = variable_value(dimension, false);
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
-    vm_["dimension"]    = variable_value(dim, false);
     vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(0.f)(0.f)(0.f)), false);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
 
     // enable logging to console
     io::logger::init(vm);
 
-    BOOST_TEST_MESSAGE("use backend " << vm["backend"].as<string>());
+    BOOST_TEST_MESSAGE("using backend '" << vm["backend"].as<string>() << "' in " <<
+                       dimension << " dimensions");
 
     // set up modules
     BOOST_TEST_MESSAGE("resolve module dependencies");
     po::unparsed_options unparsed;
     modules::resolver resolver(modules::registry::graph());
-    resolver.resolve<mdsim::core<dim> >(vm, unparsed);
-    resolver.resolve<mdsim::thermodynamics<dim> >(vm, unparsed);
+    resolver.resolve<mdsim::core<dimension> >(vm, unparsed);
+    resolver.resolve<mdsim::thermodynamics<dimension> >(vm, unparsed);
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 
     BOOST_TEST_MESSAGE("initialise MD simulation");
     // init core module
-    shared_ptr<mdsim::core<dim> > core(modules::fetch<mdsim::core<dim> >(factory, vm));
+    shared_ptr<mdsim::core<dimension> > core(modules::fetch<mdsim::core<dimension> >(factory, vm));
 
     // measure thermodynamic properties
-    shared_ptr<mdsim::thermodynamics<dim> >
-            thermodynamics(modules::fetch<mdsim::thermodynamics<dim> >(factory, vm));
+    shared_ptr<mdsim::thermodynamics<dimension> >
+            thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
 
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
     double en_tot = thermodynamics->en_tot();
@@ -128,6 +128,7 @@ void ideal_gas(po::options vm)
     BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., eps_float);
 }
 
+template <int dimension>
 void thermodynamics(po::options vm)
 {
     typedef boost::program_options::variable_value variable_value;
@@ -140,11 +141,11 @@ void thermodynamics(po::options vm)
 
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
+    vm_["dimension"]    = variable_value(dimension, false);
 //     vm_["force"]        = variable_value(string("power-law"), false);
 //     vm_["index"]        = variable_value(48, false);
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
-    vm_["dimension"]    = variable_value(dim, false);
     vm_["particles"]    = variable_value(864u, false);
 //    vm_["verbose"]      = variable_value(2, true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
@@ -152,28 +153,29 @@ void thermodynamics(po::options vm)
     // enable logging to console
     io::logger::init(vm);
 
-    BOOST_TEST_MESSAGE("use backend " << vm["backend"].as<string>());
+    BOOST_TEST_MESSAGE("using backend '" << vm["backend"].as<string>() << "' in " <<
+                       dimension << " dimensions");
 
     // set up modules
     BOOST_TEST_MESSAGE("resolve module dependencies");
     po::unparsed_options unparsed;
     modules::resolver resolver(modules::registry::graph());
-    resolver.resolve<mdsim::core<dim> >(vm, unparsed);
-    resolver.resolve<mdsim::thermodynamics<dim> >(vm, unparsed);
+    resolver.resolve<mdsim::core<dimension> >(vm, unparsed);
+    resolver.resolve<mdsim::thermodynamics<dimension> >(vm, unparsed);
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 
     BOOST_TEST_MESSAGE("initialise MD simulation");
     // init core module
-    shared_ptr<mdsim::core<dim> > core(modules::fetch<mdsim::core<dim> >(factory, vm));
+    shared_ptr<mdsim::core<dimension> > core(modules::fetch<mdsim::core<dimension> >(factory, vm));
 
     // measure thermodynamic properties
-    shared_ptr<mdsim::thermodynamics<dim> >
-            thermodynamics(modules::fetch<mdsim::thermodynamics<dim> >(factory, vm));
+    shared_ptr<mdsim::thermodynamics<dimension> >
+            thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
 
     // poor man's thermostat
-    shared_ptr<mdsim::host::velocity::boltzmann<dim, double> >
-            boltzmann(modules::fetch<mdsim::host::velocity::boltzmann<dim, double> >(factory, vm));
+    shared_ptr<mdsim::host::velocity::boltzmann<dimension, double> >
+            boltzmann(modules::fetch<mdsim::host::velocity::boltzmann<dimension, double> >(factory, vm));
 
     // prepare system at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("equilibrate initial state");
@@ -267,41 +269,39 @@ int init_unit_test_suite()
     using namespace boost::unit_test::framework;
 
     // manually define program option values
-    boost::array<po::options, 4> vm;
+    boost::array<po::options, 2> vm;
     for_each(vm.begin(), vm.end(), boost::bind(&set_default_options, _1));
 
     // parametrize specific program options
     {
         map<string, variable_value>& vm_(vm[0]);
         vm_["backend"]      = variable_value(string("host"), true);
-        vm_["dimension"]    = variable_value(3, true);
     }
     {
         map<string, variable_value>& vm_(vm[1]);
-        vm_["backend"]      = variable_value(string("host"), true);
-        vm_["dimension"]    = variable_value(2, true);
-    }
-    {
-        map<string, variable_value>& vm_(vm[2]);
         vm_["backend"]      = variable_value(string("gpu"), true);
-        vm_["dimension"]    = variable_value(3, true);
-    }
-    {
-        map<string, variable_value>& vm_(vm[3]);
-        vm_["backend"]      = variable_value(string("gpu"), true);
-        vm_["dimension"]    = variable_value(2, true);
     }
 
-    test_suite* ts1 = BOOST_TEST_SUITE( "host" );
-    ts1->add( BOOST_PARAM_TEST_CASE( &ideal_gas, vm.begin(), vm.begin() + 2 ) );
-    ts1->add( BOOST_PARAM_TEST_CASE( &thermodynamics, vm.begin(), vm.begin() + 2 ) );
+    test_suite* ts1 = BOOST_TEST_SUITE( "host 2D" );
+    ts1->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin(), vm.begin() + 1 ) );
+    ts1->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin(), vm.begin() + 1 ) );
 
-    test_suite* ts2 = BOOST_TEST_SUITE( "gpu" );
-    ts2->add( BOOST_PARAM_TEST_CASE( &ideal_gas, vm.begin() + 2, vm.end() ) );
-    ts2->add( BOOST_PARAM_TEST_CASE( &thermodynamics, vm.begin() + 2, vm.end() ) );
+    test_suite* ts2 = BOOST_TEST_SUITE( "host 3D" );
+    ts1->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin(), vm.begin() + 1 ) );
+    ts1->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin(), vm.begin() + 1 ) );
+
+    test_suite* ts3 = BOOST_TEST_SUITE( "gpu 2D" );
+    ts2->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin() + 1, vm.end() ) );
+    ts2->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin() + 1, vm.end() ) );
+
+    test_suite* ts4 = BOOST_TEST_SUITE( "gpu 3D" );
+    ts2->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin() + 1, vm.end() ) );
+    ts2->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin() + 1, vm.end() ) );
 
     master_test_suite().add( ts1 );
     master_test_suite().add( ts2 );
+    master_test_suite().add( ts3 );
+    master_test_suite().add( ts4 );
 
     return 0;
 }
