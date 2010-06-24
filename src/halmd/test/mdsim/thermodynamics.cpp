@@ -282,26 +282,34 @@ int init_unit_test_suite()
         vm_["backend"]      = variable_value(string("gpu"), true);
     }
 
-    test_suite* ts1 = BOOST_TEST_SUITE( "host 2D" );
-    ts1->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin(), vm.begin() + 1 ) );
-    ts1->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin(), vm.begin() + 1 ) );
+    test_suite* ts1 = BOOST_TEST_SUITE( "host" );
 
-    test_suite* ts2 = BOOST_TEST_SUITE( "host 3D" );
-    ts1->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin(), vm.begin() + 1 ) );
-    ts1->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin(), vm.begin() + 1 ) );
+    test_suite* ts11 = BOOST_TEST_SUITE( "2d" );
+    ts11->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin(), vm.begin() + 1 ) );
+    ts11->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin(), vm.begin() + 1 ) );
 
-    test_suite* ts3 = BOOST_TEST_SUITE( "gpu 2D" );
-    ts2->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin() + 1, vm.end() ) );
-    ts2->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin() + 1, vm.end() ) );
+    test_suite* ts12 = BOOST_TEST_SUITE( "3d" );
+    ts12->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin(), vm.begin() + 1 ) );
+    ts12->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin(), vm.begin() + 1 ) );
 
-    test_suite* ts4 = BOOST_TEST_SUITE( "gpu 3D" );
-    ts2->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin() + 1, vm.end() ) );
-    ts2->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin() + 1, vm.end() ) );
+    ts1->add( ts11 );
+    ts1->add( ts12 );
+
+    test_suite* ts2 = BOOST_TEST_SUITE( "gpu" );
+
+    test_suite* ts21 = BOOST_TEST_SUITE( "2d" );
+    ts21->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin() + 1, vm.end() ) );
+    ts21->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin() + 1, vm.end() ) );
+
+    test_suite* ts22 = BOOST_TEST_SUITE( "3d" );
+    ts22->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin() + 1, vm.end() ) );
+    ts22->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin() + 1, vm.end() ) );
+
+    ts2->add( ts21 );
+    ts2->add( ts22 );
 
     master_test_suite().add( ts1 );
     master_test_suite().add( ts2 );
-    master_test_suite().add( ts3 );
-    master_test_suite().add( ts4 );
 
     return 0;
 }
