@@ -25,6 +25,7 @@
 #ifndef CUDA_ERROR_HPP
 #define CUDA_ERROR_HPP
 
+#include <boost/exception/exception.hpp>
 #include <cuda_runtime.h>
 #include <exception>
 
@@ -46,9 +47,9 @@ namespace cuda
 /*
  * CUDA error handling
  */
-class error : public std::exception
+struct error
+  : virtual std::exception
 {
-public:
     /* CUDA error */
     const cudaError_t err;
 
