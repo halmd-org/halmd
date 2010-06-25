@@ -127,6 +127,26 @@ foreach(impl ${HALMD_impl})
   string(REGEX REPLACE "_impl[_a-z]*$" "" class ${impl})
   string(REGEX REPLACE "(^ljfluid_impl_|_impl)" "" backend ${impl})
 
+  if(impl STREQUAL "ljfluid_impl_gpu_neighbour")
+    if(NOT HALMD_VARIANT_FORCE_DSFUN AND NOT HALMD_VARIANT_VERLET_DSFUN)
+      set(backend "${backend}_single")
+    elseif(NOT HALMD_VARIANT_FORCE_DSFUN)
+      set(backend "${backend}_single_force")
+    elseif(NOT HALMD_VARIANT_VERLET_DSFUN)
+      set(backend "${backend}_single_verlet")
+    endif(NOT HALMD_VARIANT_FORCE_DSFUN AND NOT HALMD_VARIANT_VERLET_DSFUN)
+  elseif(impl STREQUAL "ljfluid_impl_gpu_square")
+    if(NOT HALMD_VARIANT_FORCE_DSFUN)
+      set(backend "${backend}_single")
+    else(NOT HALMD_VARIANT_FORCE_DSFUN)
+      set(backend "${backend}_single_verlet")
+    endif(NOT HALMD_VARIANT_FORCE_DSFUN)
+  elseif(impl STREQUAL "ljfluid_impl_host")
+    if(HALMD_VARIANT_HOST_SINGLE_PRECISION)
+      set(backend "${backend}_single")
+    endif(HALMD_VARIANT_HOST_SINGLE_PRECISION)
+  endif(impl STREQUAL "ljfluid_impl_gpu_neighbour")
+
   set(HALMD_COMPILE_DEFINITIONS
     MDSIM_CLASS=${class}
     MDSIM_IMPL=${impl}
@@ -162,48 +182,50 @@ foreach(impl ${HALMD_impl})
       LINK_SEARCH_END_STATIC TRUE
       )
   endif(HALMD_USE_STATIC_LIBS)
+
+  if(impl STREQUAL "ljfluid_impl_gpu_neighbour")
+    target_link_libraries(halmd_${backend}
+      ${CUDA_LIBRARIES}
+      gpu_boltzmann
+      gpu_hilbert
+      gpu_lattice
+      gpu_ljfluid_nbr
+      gpu_radix_sort
+      gpu_rand48
+      gpu_reduce
+      gpu_virial
+      sample_gpu
+      )
+  elseif(impl STREQUAL "ljfluid_impl_gpu_square")
+    target_link_libraries(halmd_${backend}
+      ${CUDA_LIBRARIES}
+      gpu_boltzmann
+      gpu_lattice
+      gpu_ljfluid_square
+      gpu_radix_sort
+      gpu_rand48
+      gpu_reduce
+      gpu_virial
+      sample_gpu
+      )
+  elseif(impl STREQUAL "ljfluid_impl_host")
+    target_link_libraries(halmd_${backend}
+      ${GSL_LIBRARIES}
+      sample_host
+      )
+    set_target_properties(halmd_${backend} PROPERTIES
+      COMPILE_FLAGS "-UWITH_CUDA"
+      )
+  elseif(impl STREQUAL "hardsphere_impl")
+    target_link_libraries(halmd_${backend}
+      ${GSL_LIBRARIES}
+      sample_host
+      )
+    set_target_properties(halmd_${backend} PROPERTIES
+      COMPILE_FLAGS "-UWITH_CUDA"
+      )
+  endif(impl STREQUAL "ljfluid_impl_gpu_neighbour")
 endforeach(impl)
-
-target_link_libraries(halmd_host
-  ${GSL_LIBRARIES}
-  sample_host
-  )
-set_target_properties(halmd_host PROPERTIES
-  COMPILE_FLAGS "-UWITH_CUDA"
-  )
-target_link_libraries(halmd_hardsphere
-  ${GSL_LIBRARIES}
-  sample_host
-  )
-set_target_properties(halmd_hardsphere PROPERTIES
-  COMPILE_FLAGS "-UWITH_CUDA"
-  )
-
-if(WITH_CUDA)
-  target_link_libraries(halmd_gpu_square
-    ${CUDA_LIBRARIES}
-    gpu_boltzmann
-    gpu_lattice
-    gpu_ljfluid_square
-    gpu_radix_sort
-    gpu_rand48
-    gpu_reduce
-    gpu_virial
-    sample_gpu
-    )
-  target_link_libraries(halmd_gpu_neighbour
-    ${CUDA_LIBRARIES}
-    gpu_boltzmann
-    gpu_hilbert
-    gpu_lattice
-    gpu_ljfluid_nbr
-    gpu_radix_sort
-    gpu_rand48
-    gpu_reduce
-    gpu_virial
-    sample_gpu
-    )
-endif(WITH_CUDA)
 
 add_subdirectory(algorithm)
 add_subdirectory(mdsim)
