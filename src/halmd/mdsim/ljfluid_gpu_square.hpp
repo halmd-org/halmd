@@ -428,11 +428,11 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::sample(energy_sample_type& sam
         timer[0].record();
         if (mixture_ == BINARY) {
             reduce_virial(g_part.virial, g_part.tag, mpart);
-            reduce_virial(g_part.helfand, g_part.tag, mpart);
+            reduce_helfand(g_part.helfand, g_part.tag, mpart);
         }
         else {
             reduce_virial(g_part.virial);
-            reduce_virial(g_part.helfand);
+            reduce_helfand(g_part.helfand);
         }
         cuda::thread::synchronize();
         timer[1].record();
