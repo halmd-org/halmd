@@ -44,7 +44,7 @@ struct verlet_wrapper
     static cuda::function <void (float4*, coalesced_vector_type const*)> finalize;
 };
 
-// expose the heart of the algorithm here as template functions
+// expose the reusable algorithms here as template functions
 
 namespace verlet_kernel
 {
