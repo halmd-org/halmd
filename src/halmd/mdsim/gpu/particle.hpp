@@ -56,6 +56,9 @@ public:
     virtual ~particle() {}
     virtual void rearrange(std::vector<unsigned int> const& index) {} // TODO
 
+    /** grid and block dimensions for CUDA calls */
+    cuda::config const dim;
+
     //
     // particles in global device memory
     //
@@ -92,8 +95,6 @@ public:
     unsigned int neighbour_size;
     /** neighbour list stride */
     unsigned int neighbour_stride;
-    /** grid and block dimensions for CUDA calls */
-    const cuda::config dim;
 };
 
 }} // namespace mdsim::gpu

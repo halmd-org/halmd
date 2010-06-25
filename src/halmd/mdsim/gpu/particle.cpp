@@ -59,6 +59,8 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
   : _Base(factory, vm)
   // dependency injection
   , device(modules::fetch<device_type>(factory, vm))
+  // default CUDA kernel execution dimensions
+  , dim(cuda::config((nbox + device->threads() - 1) / device->threads(), device->threads()))
   // allocate global device memory
   , g_r(nbox)
   , g_image(nbox)
@@ -69,12 +71,25 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
   , h_r(nbox)
   , h_image(nbox)
   , h_v(nbox)
-  // initialize parameters
-  , dim(cuda::config((nbox + device->threads() - 1) / device->threads(),
-                     device->threads()))
 {
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
+
+    //
+    // As the number of threads may exceed the nmber of particles
+    // to account for an integer number of threads per block,
+    // we need to allocate excess memory for the GPU vectors.
+    //
+    // The additional memory is allocated using reserve(), which
+    // increases the capacity() without changing the size(). The
+    // coordinates of these "virtual" particles will be ignored
+    // in cuda::copy or cuda::memset calls.
+    //
+    g_r.reserve(dim.threads());
+    g_image.reserve(dim.threads());
+    g_v.reserve(dim.threads());
+    g_f.reserve(dim.threads());
+    g_neighbour.reserve(dim.threads());
 }
 
 // explicit instantiation
