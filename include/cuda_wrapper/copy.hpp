@@ -23,6 +23,8 @@
 
 #include <assert.h>
 #include <boost/array.hpp>
+#include <boost/type_traits/is_convertible.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h>
 #include <vector>
 
@@ -159,8 +161,9 @@ void copy(symbol<T[]> const& src, vector<T>& dst)
 /**
  * copy from value to device symbol
  */
-template <typename T>
-void copy(T const& src, symbol<T>& dst)
+template <typename T_, typename T>
+typename boost::enable_if<boost::is_convertible<T_, T>, void>::type
+copy(T_ const& src, symbol<T>& dst)
 {
     assert(1 == dst.size());
     CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), &src, sizeof(T), 0, cudaMemcpyHostToDevice));
