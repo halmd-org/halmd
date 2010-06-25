@@ -46,7 +46,7 @@ public:
     static void select(po::options const& vm) {}
 
     typedef gpu::particle<dimension, float_type> particle_type;
-//     typedef typename particle_type::vector_type vector_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef gpu::box<dimension> box_type;
     typedef utility::gpu::device device_type;
 

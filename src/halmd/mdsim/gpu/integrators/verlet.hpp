@@ -43,8 +43,8 @@ public:
     static void depends() {}
     static void select(po::options const& vm);
 
+    typedef typename _Base::vector_type vector_type;
     typedef typename _Base::particle_type particle_type;
-//     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::box_type box_type;
 
     using _Base::particle;

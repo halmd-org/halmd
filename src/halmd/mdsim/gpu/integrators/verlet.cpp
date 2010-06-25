@@ -69,6 +69,15 @@ verlet<dimension, float_type>::verlet(modules::factory& factory, po::options con
 #else
     LOG_WARNING("using velocity-Verlet integration in single precision");
 #endif
+
+    try {
+        cuda::copy(timestep_, verlet_wrapper<dimension>::timestep);
+        cuda::copy(static_cast<vector_type>(box->length()), verlet_wrapper<dimension>::box_length);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR(e.what());
+        throw exception("failed to initialize Verlet integrator symbols");
+    }
 }
 
 /**
