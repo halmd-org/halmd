@@ -37,7 +37,7 @@ struct verlet_wrapper
     /** integration time-step */
     static cuda::symbol<float> timestep;
     /** cubic box edgle length */
-    static cuda::symbol<vector_type> length;
+    static cuda::symbol<vector_type> box_length;
     /** first leapfrog half-step of velocity-Verlet algorithm */
     static cuda::function <void (float4*, coalesced_vector_type*, float4*, coalesced_vector_type const*)> integrate;
     /** second leapfrog half-step of velocity-Verlet algorithm */

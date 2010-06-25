@@ -39,15 +39,25 @@ namespace verlet_kernel
 __constant__ float timestep_;
 
 template <size_t N>
-struct dim_
+struct dim_;
+
+template <>
+struct dim_<3>
 {
     /** cubic box edgle length */
-    static __constant__ typename if_c<N == 3, float3, float2>::type box_length;
+    static __constant__ float3 box_length;
 };
 
-// explicit instantiation
-template class dim_<3>;
-template class dim_<2>;
+float3 dim_<3>::box_length;
+
+template <>
+struct dim_<2>
+{
+    /** cubic box edgle length */
+    static __constant__ float2 box_length;
+};
+
+float2 dim_<2>::box_length;
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
@@ -126,7 +136,7 @@ __global__ void _finalize(
 cuda::symbol<float>
   verlet_wrapper<3>::timestep = verlet_kernel::timestep_;
 cuda::symbol<float3>
-  verlet_wrapper<3>::length = verlet_kernel::dim_<3>::box_length;
+  verlet_wrapper<3>::box_length = verlet_kernel::dim_<3>::box_length;
 cuda::function <void (float4*, float4*, float4*, float4 const*)>
   verlet_wrapper<3>::integrate = verlet_kernel::_integrate<vector<dsfloat, 3>, vector<float, 3> >;
 cuda::function <void (float4*, float4 const*)>
@@ -135,7 +145,7 @@ cuda::function <void (float4*, float4 const*)>
 cuda::symbol<float>
   verlet_wrapper<2>::timestep = verlet_kernel::timestep_;
 cuda::symbol<float2>
-  verlet_wrapper<2>::length = verlet_kernel::dim_<2>::box_length;
+  verlet_wrapper<2>::box_length = verlet_kernel::dim_<2>::box_length;
 cuda::function <void (float4*, float2*, float4*, float2 const*)>
   verlet_wrapper<2>::integrate = verlet_kernel::_integrate<vector<dsfloat, 2>, vector<float, 2> >;
 cuda::function <void (float4*, float2 const*)>
