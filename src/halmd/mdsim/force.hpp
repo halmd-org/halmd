@@ -20,11 +20,9 @@
 #ifndef HALMD_MDSIM_FORCE_HPP
 #define HALMD_MDSIM_FORCE_HPP
 
-#include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/mdsim/particle.hpp>
-#include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -50,9 +48,6 @@ public:
     static void depends();
     static void select(po::options const& vm) {}
 
-    typedef numeric::host::blas::vector<double, dimension> vector_type;
-    typedef boost::numeric::ublas::symmetric_matrix<double, boost::numeric::ublas::lower> matrix_type;
-
     typedef mdsim::particle<dimension> particle_type;
 
     shared_ptr<particle_type> particle;
@@ -60,7 +55,6 @@ public:
     force(modules::factory& factory, po::options const& vm);
     virtual ~force() {}
     virtual void compute() = 0;
-    virtual matrix_type const& cutoff() = 0;
 };
 
 } // namespace mdsim

@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_FORCE_HPP
 #define HALMD_MDSIM_HOST_FORCE_HPP
 
+#include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/mdsim/force.hpp>
@@ -27,6 +28,7 @@
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/thermodynamics.hpp>
+#include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -46,8 +48,8 @@ public:
     static void options(po::options_description& desc);
     static void select(po::options const& vm) {}
 
-    typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::matrix_type matrix_type;
+    typedef numeric::host::blas::vector<float_type, dimension> vector_type;
+    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef host::box<dimension> box_type;
