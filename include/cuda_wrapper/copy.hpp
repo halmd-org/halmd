@@ -22,11 +22,11 @@
 #define CUDA_WRAPPER_COPY_HPP
 
 #include <assert.h>
-#include <boost/array.hpp>
+#include <boost/concept_check.hpp>
 #include <boost/type_traits/is_convertible.hpp>
+#include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h>
-#include <vector>
 
 #include <cuda_wrapper/host/vector.hpp>
 #include <cuda_wrapper/stream.hpp>
@@ -35,6 +35,10 @@
 
 namespace cuda
 {
+
+// import into current namespace
+using boost::function_requires;
+using boost::RandomAccessContainerConcept;
 
 /**
  * copy from device memory area to device memory area
@@ -57,55 +61,69 @@ void copy(vector<T> const& src, vector<T>& dst, size_t size)
 /**
  * copy from host memory area to device memory area
  */
-template <typename T, typename Alloc>
-void copy(std::vector<T, Alloc> const& src, vector<T>& dst)
+template <typename T, typename U>
+typename boost::enable_if<boost::is_same<T, typename U::value_type>, void>::type
+copy(U const& src, vector<T>& dst)
 {
-    assert(src.size() == dst.size());
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToDevice));
+    function_requires<RandomAccessContainerConcept<U> >();
+    assert((src.end() - src.begin()) == typename U::difference_type(dst.size()));
+    CUDA_CALL(cudaMemcpy(dst.data(), &*src.begin(), (src.end() - src.begin()) * sizeof(T), cudaMemcpyHostToDevice));
 }
 
-template <typename T, typename Alloc>
-void copy(std::vector<T, Alloc> const& src, vector<T>& dst, size_t size)
+template <typename T, typename U>
+typename boost::enable_if<boost::is_same<T, typename U::value_type>, void>::type
+copy(U const& src, vector<T>& dst, size_t size)
 {
-    assert(size <= src.capacity());
+    function_requires<RandomAccessContainerConcept<U> >();
+    // assert(size <= src.capacity());
     assert(size <= dst.capacity());
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), size * sizeof(T), cudaMemcpyHostToDevice));
+    CUDA_CALL(cudaMemcpy(dst.data(), &*src.begin(), size * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 /**
  * copy from device memory area to host memory area
  */
-template <typename T, typename Alloc>
-void copy(vector<T> const& src, std::vector<T, Alloc>& dst)
+template <typename T, typename U>
+typename boost::enable_if<boost::is_same<T, typename U::value_type>, void>::type
+copy(vector<T> const& src, U& dst)
 {
-    assert(src.size() == dst.size());
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToHost));
+    function_requires<RandomAccessContainerConcept<U> >();
+    assert(typename U::difference_type(src.size()) == (dst.end() - dst.begin()));
+    CUDA_CALL(cudaMemcpy(&*dst.begin(), src.data(), src.size() * sizeof(T), cudaMemcpyDeviceToHost));
 }
 
-template <typename T, typename Alloc>
-void copy(vector<T> const& src, std::vector<T, Alloc>& dst, size_t size)
+template <typename T, typename U>
+typename boost::enable_if<boost::is_same<T, typename U::value_type>, void>::type
+copy(vector<T> const& src, U& dst, size_t size)
 {
+    function_requires<RandomAccessContainerConcept<U> >();
     assert(size <= src.capacity());
-    assert(size <= dst.capacity());
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), size * sizeof(T), cudaMemcpyDeviceToHost));
+    // assert(size <= dst.capacity());
+    CUDA_CALL(cudaMemcpy(&*dst.begin(), src.data(), size * sizeof(T), cudaMemcpyDeviceToHost));
 }
 
 /**
  * copy from host memory area to host memory area
  */
-template <typename T, typename Alloc>
-void copy(std::vector<T, Alloc> const& src, std::vector<T, Alloc>& dst)
+template <typename U, typename V>
+typename boost::enable_if<boost::is_same<typename U::value_type, typename V::value_type>, void>::type
+copy(U const& src, V& dst)
 {
-    assert(src.size() == dst.size());
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), src.size() * sizeof(T), cudaMemcpyHostToHost));
+    function_requires<RandomAccessContainerConcept<U> >();
+    function_requires<RandomAccessContainerConcept<V> >();
+    assert((src.end() - src.begin()) == (dst.end() - dst.begin()));
+    CUDA_CALL(cudaMemcpy(&*dst.begin(), &*src.begin(), (src.end() - src.begin()) * sizeof(typename U::value_type), cudaMemcpyHostToHost));
 }
 
-template <typename T, typename Alloc>
-void copy(std::vector<T, Alloc> const& src, std::vector<T, Alloc>& dst, size_t size)
+template <typename U, typename V>
+typename boost::enable_if<boost::is_same<typename U::value_type, typename V::value_type>, void>::type
+copy(U const& src, V& dst, size_t size)
 {
-    assert(size <= src.capacity());
-    assert(size <= dst.capacity());
-    CUDA_CALL(cudaMemcpy(dst.data(), src.data(), size * sizeof(T), cudaMemcpyHostToHost));
+    function_requires<RandomAccessContainerConcept<U> >();
+    function_requires<RandomAccessContainerConcept<V> >();
+    // assert(size <= src.capacity());
+    // assert(size <= dst.capacity());
+    CUDA_CALL(cudaMemcpy(&*dst.begin(), &*src.begin(), size * sizeof(typename U::value_type), cudaMemcpyHostToHost));
 }
 
 /**
@@ -121,21 +139,13 @@ void copy(symbol<T> const& src, T& dst)
 /**
  * copy from device symbol to host memory area
  */
-template <typename T, size_t size>
-void copy(symbol<T[]> const& src, boost::array<T, size>& dst)
+template <typename T, typename U>
+typename boost::enable_if<boost::is_same<T, typename U::value_type>, void>::type
+copy(symbol<T[]> const& src, U& dst)
 {
-    assert(src.size() == dst.size());
-    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
-}
-
-/**
- * copy from device symbol to host memory area
- */
-template <typename T, typename Alloc>
-void copy(symbol<T[]> const& src, std::vector<T, Alloc>& dst)
-{
-    assert(src.size() == dst.size());
-    CUDA_CALL(cudaMemcpyFromSymbol(dst.data(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
+    function_requires<RandomAccessContainerConcept<U> >();
+    assert(typename U::difference_type(src.size()) == (dst.end() - dst.begin()));
+    CUDA_CALL(cudaMemcpyFromSymbol(&*dst.begin(), reinterpret_cast<char const*>(src.data()), src.size() * sizeof(T), 0, cudaMemcpyDeviceToHost));
 }
 
 /*
@@ -172,21 +182,13 @@ copy(T_ const& src, symbol<T>& dst)
 /**
  * copy from host memory area to device symbol
  */
-template <typename T, size_t size>
-void copy(boost::array<T, size> const& src, symbol<T[]>& dst)
+template <typename T, typename U>
+typename boost::enable_if<boost::is_same<T, typename U::value_type>, void>::type
+copy(U const& src, symbol<T[]>& dst)
 {
-    assert(src.size() == dst.size());
-    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
-}
-
-/**
- * copy from host memory area to device symbol
- */
-template <typename T, typename Alloc>
-void copy(std::vector<T, Alloc> const& src, symbol<T[]>& dst)
-{
-    assert(src.size() == dst.size());
-    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), src.data(), src.size() * sizeof(T), 0, cudaMemcpyHostToDevice));
+    function_requires<RandomAccessContainerConcept<U> >();
+    assert((src.end() - src.begin()) == typename U::difference_type(dst.size()));
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), &*src.begin(), (src.end() - src.begin()) * sizeof(T), 0, cudaMemcpyHostToDevice));
 }
 
 /**
