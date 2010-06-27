@@ -21,6 +21,7 @@
 #ifndef CUDA_TEXTURE_HPP
 #define CUDA_TEXTURE_HPP
 
+#include <boost/noncopyable.hpp>
 #include <cuda_runtime.h>
 
 #ifndef __CUDACC__
@@ -37,39 +38,37 @@ namespace cuda
 
 template<class T>
 class texture
+  : boost::noncopyable
 {
 public:
-#ifdef __CUDACC__
-    /**
-     * type-safe constructor for CUDA host code
-     */
-    texture(::texture<T, 1, cudaReadModeElementType> const& tex) : tex(tex) {}
-#else
+#ifndef __CUDACC__
     /**
      * bind CUDA texture to device memory array
      */
-    void bind(cuda::vector<T> const& g_array)
+    texture(texture const& texture_, vector<T> const& vector_)
+      : texref_(texture_.texref_)
     {
-        CUDA_CALL(cudaBindTexture(NULL, &tex, g_array.data(), &tex.channelDesc));
+        CUDA_CALL(cudaBindTexture(NULL, &texref_, vector_.data(), &texref_.channelDesc));
     }
 
     /**
      * unbind CUDA texture
      */
-    void unbind()
+    ~texture()
     {
-        CUDA_CALL(cudaUnbindTexture(&tex));
+        CUDA_CALL(cudaUnbindTexture(&texref_));
     }
-
-private:
+#else
     /**
-     * bogus constructor to avoid GCC 4.4 compiler warning
+     * store CUDA texture reference
      */
-    texture(textureReference const& tex) : tex(tex) {}
+    texture(::texture<T> const& texref)
+      : texref_(texref)
+    {}
 #endif
 
 private:
-    textureReference const& tex;
+    ::textureReference const& texref_;
 };
 
 }
