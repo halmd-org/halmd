@@ -83,7 +83,7 @@ __device__ T muladd(uint48 a, T b, uint48 c)
 /**
  * add-operation for 48-bit integers
  */
-__device__ uint48& operator+=(uint48& a, uint48 const& b)
+inline __device__ uint48& operator+=(uint48& a, uint48 const& b)
 {
     uint d = a.x + b.x;
     a.x = (d & 0xFFFF);
@@ -99,7 +99,7 @@ __device__ uint48& operator+=(uint48& a, uint48 const& b)
 /**
  * add-operation for 48-bit integers
  */
-__device__ uint48 operator+(uint48 const& a, uint48 b)
+inline __device__ uint48 operator+(uint48 const& a, uint48 b)
 {
     b += a;
     return b;
