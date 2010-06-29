@@ -68,8 +68,7 @@ struct dsfloat
         dsdeq(hi, lo, a);
     }
 
-    template <typename T>
-    __device__ __host__ operator T() const
+    __device__ __host__ operator float() const
     {
         return hi;
     }
