@@ -1,7 +1,6 @@
 /* Lennard-Jones fluid kernel
  *
- * Copyright © 2008-2010  Peter Colberg
- *                        Felix Höfling
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -27,6 +26,15 @@
 
 using namespace halmd::gpu;
 
+// define with global scope to work around CUDA 3.0 bug
+// http://forums.nvidia.com/index.php?showtopic=163545
+texture<float4> __dim3d_r;
+texture<float4> __dim3d_R;
+texture<float4> __dim3d_v;
+texture<float4> __dim2d_r;
+texture<float2> __dim2d_R;
+texture<float2> __dim2d_v;
+
 namespace halmd { namespace cu { namespace ljfluid
 {
 
@@ -49,31 +57,23 @@ template <>
 struct tex<3>
 {
     /** periodic particle positions */
-    static texture<float4, 1, cudaReadModeElementType> r;
+    static __device__ __host__ texture<float4>& r() { return __dim3d_r; }
     /** extended particle positions */
-    static texture<float4, 1, cudaReadModeElementType> R;
+    static __device__ __host__ texture<float4>& R() { return __dim3d_R; }
     /** particle velocities */
-    static texture<float4, 1, cudaReadModeElementType> v;
+    static __device__ __host__ texture<float4>& v() { return __dim3d_v; }
 };
 
 template <>
 struct tex<2>
 {
     /** periodic particle positions */
-    static texture<float4, 1, cudaReadModeElementType> r;
+    static __device__ __host__ texture<float4>& r() { return __dim2d_r; }
     /** extended particle positions */
-    static texture<float2, 1, cudaReadModeElementType> R;
+    static __device__ __host__ texture<float2>& R() { return __dim2d_R; }
     /** particle velocities */
-    static texture<float2, 1, cudaReadModeElementType> v;
+    static __device__ __host__ texture<float2>& v() { return __dim2d_v; }
 };
-
-// instantiate texture references
-texture<float4, 1, cudaReadModeElementType> tex<3>::r;
-texture<float4, 1, cudaReadModeElementType> tex<2>::r;
-texture<float4, 1, cudaReadModeElementType> tex<3>::R;
-texture<float2, 1, cudaReadModeElementType> tex<2>::R;
-texture<float4, 1, cudaReadModeElementType> tex<3>::v;
-texture<float2, 1, cudaReadModeElementType> tex<2>::v;
 
 /**
  * n-dimensional MD integration step
@@ -111,7 +111,7 @@ __global__ void mdstep(float4 const* g_r, T* g_v, T* g_f, float* g_en, T* g_viri
         if (n == VIRTUAL_PARTICLE) break;
 
         unsigned int tag_;
-        vector_type r_ = detach_particle_tag(tex1Dfetch(tex<dimension>::r, n), tag_);
+        vector_type r_ = detach_particle_tag(tex1Dfetch(tex<dimension>::r(), n), tag_);
         // particle type in binary mixture
         int const b = (tag_ >= mpart[0]);
 
@@ -189,7 +189,7 @@ __device__ void update_cell_neighbours(I const& offset, unsigned int const* g_ce
     // load particles in cell
     unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
-    s_r[threadIdx.x] = tex1Dfetch(tex<dimension>::r, n_);
+    s_r[threadIdx.x] = tex1Dfetch(tex<dimension>::r(), n_);
     __syncthreads();
 
     if (n == VIRTUAL_PARTICLE) return;
@@ -227,7 +227,7 @@ __global__ void update_neighbours(unsigned int* g_ret, unsigned int const* g_cel
 {
     // load particle from cell placeholder
     unsigned int const n = g_cell[GTID];
-    vector<float, dimension> const r = tex1Dfetch(tex<dimension>::r, n);
+    vector<float, dimension> const r = tex1Dfetch(tex<dimension>::r(), n);
     // number of particles in neighbour list
     uint count = 0;
 
@@ -409,13 +409,13 @@ __global__ void order_particles(unsigned int const* g_index, float4* g_or, T* g_
     uint const j = g_index[GTID];
     // permute particle phase space coordinates
     unsigned int tag;
-    vector<float, dimension> r = detach_particle_tag(tex1Dfetch(tex<dimension>::r, j), tag);
+    vector<float, dimension> r = detach_particle_tag(tex1Dfetch(tex<dimension>::r(), j), tag);
     g_or[GTID] = attach_particle_tag(r, tag);
-    g_oR[GTID] = tex1Dfetch(tex<dimension>::R, j);
-    g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
+    g_oR[GTID] = tex1Dfetch(tex<dimension>::R(), j);
+    g_ov[GTID] = tex1Dfetch(tex<dimension>::v(), j);
 #ifdef USE_VERLET_DSFUN
-    g_or[GTID + GTDIM] = tex1Dfetch(tex<dimension>::r, j + GTDIM);
-    g_ov[GTID + GTDIM] = tex1Dfetch(tex<dimension>::v, j + GTDIM);
+    g_or[GTID + GTDIM] = tex1Dfetch(tex<dimension>::r(), j + GTDIM);
+    g_ov[GTID + GTDIM] = tex1Dfetch(tex<dimension>::v(), j + GTDIM);
 #endif
     g_otag[GTID] = tag;
 }
@@ -426,7 +426,7 @@ __global__ void order_particles(unsigned int const* g_index, float4* g_or, T* g_
 template <int dimension, typename T>
 __global__ void order_velocities(uint const* g_tag, T* g_v)
 {
-    g_v[GTID] = tex1Dfetch(tex<dimension>::v, g_tag[GTID]);
+    g_v[GTID] = tex1Dfetch(tex<dimension>::v(), g_tag[GTID]);
 }
 
 /**
@@ -438,10 +438,10 @@ __global__ void sample(unsigned int const* g_perm, T* g_or, T* g_ov)
     // permutation index
     uint const j = g_perm[GTID];
     // permute particle phase space coordinates
-    vector<float, dimension> const r = tex1Dfetch(tex<dimension>::r, j);
-    vector<float, dimension> const R = tex1Dfetch(tex<dimension>::R, j);
+    vector<float, dimension> const r = tex1Dfetch(tex<dimension>::r(), j);
+    vector<float, dimension> const R = tex1Dfetch(tex<dimension>::R(), j);
     g_or[GTID] = r + box * R;
-    g_ov[GTID] = tex1Dfetch(tex<dimension>::v, j);
+    g_ov[GTID] = tex1Dfetch(tex<dimension>::v(), j);
 }
 
 /**
@@ -504,12 +504,12 @@ cuda::symbol<unsigned int*> _Base::g_nbl(cu::ljfluid::g_nbl);
 /**
  * device texture wrappers
  */
-cuda::texture<float4> _3D::r(cu::ljfluid::tex<3>::r);
-cuda::texture<float4> _2D::r(cu::ljfluid::tex<2>::r);
-cuda::texture<float4> _3D::R(cu::ljfluid::tex<3>::R);
-cuda::texture<float2> _2D::R(cu::ljfluid::tex<2>::R);
-cuda::texture<float4> _3D::v(cu::ljfluid::tex<3>::v);
-cuda::texture<float2> _2D::v(cu::ljfluid::tex<2>::v);
+cuda::texture<float4> _3D::r(cu::ljfluid::tex<3>::r());
+cuda::texture<float4> _2D::r(cu::ljfluid::tex<2>::r());
+cuda::texture<float4> _3D::R(cu::ljfluid::tex<3>::R());
+cuda::texture<float2> _2D::R(cu::ljfluid::tex<2>::R());
+cuda::texture<float4> _3D::v(cu::ljfluid::tex<3>::v());
+cuda::texture<float2> _2D::v(cu::ljfluid::tex<2>::v());
 
 /**
  * device function wrappers
