@@ -230,15 +230,17 @@
         void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS, T, x))
         {
             // properly align CUDA device function arguments
-            struct {
-                #define DECL_ARG(z, n, x) T##n x##n;
-                BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS, DECL_ARG, a)
+            struct offset
+            {
+                #define DECL_ARG(z, n, arg) T##n arg##n;
+                BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS, DECL_ARG, x)
                 #undef DECL_ARG
-            } args = {
-                BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, x)
             };
+            offset* __offset = 0;
             // push aligned arguments onto CUDA execution stack
-            CUDA_CALL(cudaSetupArgument(&args, sizeof(args), 0));
+            #define DECL_ARG(z, n, offset) CUDA_CALL(cudaSetupArgument(&x##n, sizeof(T##n), reinterpret_cast<size_t>(&offset->x##n)));
+            BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS, DECL_ARG, __offset)
+            #undef DECL_ARG
             // launch CUDA device function
             CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(f)));
         }
