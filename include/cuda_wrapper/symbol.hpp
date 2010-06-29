@@ -21,6 +21,7 @@
 #ifndef CUDA_SYMBOL_HPP
 #define CUDA_SYMBOL_HPP
 
+#include <boost/noncopyable.hpp>
 #include <cuda_runtime.h>
 
 #ifndef __CUDACC__
@@ -35,9 +36,9 @@ namespace cuda
  */
 template <typename T>
 class symbol
+  : boost::noncopyable
 {
 public:
-    typedef symbol<T> vector_type;
     typedef T value_type;
     typedef size_t size_type;
 
@@ -45,7 +46,9 @@ public:
     /**
      * initialize device symbol constant
      */
-    symbol(value_type const& symbol) : ptr_(&symbol) { }
+    symbol(value_type const& symbol)
+      : ptr_(&symbol)
+    {}
 
     /**
      * return element count of device symbol
@@ -64,12 +67,6 @@ public:
     }
 
 private:
-    // disable default copy constructor
-    symbol(vector_type const&);
-    // disable default assignment operator
-    vector_type& operator=(vector_type const&);
-
-private:
     /** device symbol pointer */
     value_type const* ptr_;
 };
@@ -80,9 +77,9 @@ private:
  */
 template <typename T>
 class symbol<T[]>
+  : boost::noncopyable
 {
 public:
-    typedef symbol<T> vector_type;
     typedef T value_type;
     typedef size_t size_type;
 
@@ -90,29 +87,19 @@ public:
     /**
      * initialize device symbol vector
      */
-    symbol(value_type const* symbol) : ptr_(symbol) { }
-
-#ifndef __CUDACC__
+    template <typename Array>
+    symbol(Array const& array)
+      : ptr_(array)
+      , size_(sizeof(array) / sizeof(value_type))
+    {}
 
     /**
      * return element count of device symbol
      */
     size_type size() const
     {
-        //
-        // It would be preferable to issue the following CUDA runtime
-        // call directly upon construction. However, the constructor
-        // has to be compilable by the NVIDIA CUDA compiler as well,
-        // which does not support C++ runtime functionality, e.g.
-        // exceptions.
-        //
-
-        size_t size;
-        CUDA_CALL(cudaGetSymbolSize(&size, reinterpret_cast<char const*>(ptr_)));
-        return (size / sizeof(value_type));
+        return size_;
     }
-
-#endif /* ! __CUDACC__ */
 
     /**
      * returns device pointer to device symbol
@@ -123,14 +110,10 @@ public:
     }
 
 private:
-    // disable default copy constructor
-    symbol(vector_type const&);
-    // disable default assignment operator
-    vector_type& operator=(vector_type const&);
-
-private:
     /** device symbol pointer */
     value_type const* ptr_;
+    /** array size */
+    size_type size_;
 };
 
 } // namespace cuda
