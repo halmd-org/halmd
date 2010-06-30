@@ -18,11 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/algorithm/gpu/reduce.cuh>
 #include <halmd/math/gpu/vector2d.cuh>
 #include <halmd/math/gpu/vector3d.cuh>
 #include <halmd/sample/gpu/tcf.hpp>
+#include <halmd/utility/gpu/thread.cuh>
 
 namespace halmd { namespace cu { namespace tcf
 {

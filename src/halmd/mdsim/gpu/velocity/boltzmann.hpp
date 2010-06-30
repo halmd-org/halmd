@@ -24,7 +24,7 @@
 
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/rng/gpu/random.hpp>
+#include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -47,7 +47,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
-    typedef rng::gpu::random random_type;
+    typedef random::gpu::random random_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<random_type> random;

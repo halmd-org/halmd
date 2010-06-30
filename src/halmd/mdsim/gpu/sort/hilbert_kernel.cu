@@ -20,13 +20,15 @@
 #include <boost/mpl/if.hpp>
 #include <float.h>
 
-#include <halmd/algorithm/gpu/base.cuh>
+#include <halmd/algorithm/gpu/bits.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/utility/gpu/thread.cuh>
 
 using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
+using namespace halmd::algorithm::gpu;
 
 namespace halmd { namespace mdsim { namespace gpu
 {
@@ -53,14 +55,14 @@ __constant__ unsigned int depth_;
 /**
  * swap Hilbert spacing-filling curve vertices
  */
-__device__ void swap(uint& v, uint& a, uint& b, uint const& mask)
+__device__ void swap_vertex(uint& v, uint& a, uint& b, uint const& mask)
 {
     // swap bits comprising Hilbert codes in vertex-to-code lookup table
     uint const va = ((v >> a) & mask);
     uint const vb = ((v >> b) & mask);
     v = v ^ (va << a) ^ (vb << b) ^ (va << b) ^ (vb << a);
     // update code-to-vertex lookup table
-    algorithm::gpu::swap(a, b);
+    swap(a, b);
 }
 
 /**
@@ -103,28 +105,28 @@ __device__ unsigned int _map(vector<float, 3> r)
         r = 2 * r - (vector<float, 3>(0.5f) - vector<float, 3>(x));
         // apply permutation rule according to Hilbert code
         if (v == 0) {
-            swap(vc, b, h, MASK);
-            swap(vc, c, e, MASK);
+            swap_vertex(vc, b, h, MASK);
+            swap_vertex(vc, c, e, MASK);
         }
         else if (v == 1 || v == 2) {
-            swap(vc, c, g, MASK);
-            swap(vc, d, h, MASK);
+            swap_vertex(vc, c, g, MASK);
+            swap_vertex(vc, d, h, MASK);
         }
         else if (v == 3 || v == 4) {
-            swap(vc, a, c, MASK);
+            swap_vertex(vc, a, c, MASK);
 #ifdef USE_HILBERT_ALT_3D
-            swap(vc, b, d, MASK);
-            swap(vc, e, g, MASK);
+            swap_vertex(vc, b, d, MASK);
+            swap_vertex(vc, e, g, MASK);
 #endif
-            swap(vc, f, h, MASK);
+            swap_vertex(vc, f, h, MASK);
         }
         else if (v == 5 || v == 6) {
-            swap(vc, a, e, MASK);
-            swap(vc, b, f, MASK);
+            swap_vertex(vc, a, e, MASK);
+            swap_vertex(vc, b, f, MASK);
         }
         else if (v == 7) {
-            swap(vc, a, g, MASK);
-            swap(vc, d, f, MASK);
+            swap_vertex(vc, a, g, MASK);
+            swap_vertex(vc, d, f, MASK);
         }
 
         // add vertex code to partial Hilbert code
@@ -164,10 +166,10 @@ __device__ unsigned int _map(vector<float, 2> r)
         r = 2 * r - (vector<float, 2>(0.5f) - vector<float, 2>(x));
         // apply permutation rule according to Hilbert code
         if (v == 0) {
-            swap(vc, b, d, MASK);
+            swap_vertex(vc, b, d, MASK);
         }
         else if (v == 3) {
-            swap(vc, a, c, MASK);
+            swap_vertex(vc, a, c, MASK);
         }
 
         // add vertex code to partial Hilbert code

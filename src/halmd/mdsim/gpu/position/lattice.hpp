@@ -25,7 +25,7 @@
 #include <halmd/mdsim/gpu/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/position.hpp>
-#include <halmd/rng/gpu/random.hpp>
+#include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -48,7 +48,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef gpu::box<dimension> box_type;
-    typedef rng::gpu::random random_type;
+    typedef random::gpu::random random_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;

@@ -1,0 +1,14 @@
+if(WITH_CUDA)
+  add_subdirectory(gpu)
+
+  add_executable(test_rand_dist rand_dist.cpp)
+  target_link_libraries(test_rand_dist
+    halmd_random_gpu
+    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+    ${CUDA_LIBRARIES}
+    ${GSL_LIBRARIES}
+  )
+  add_test(random_distributions
+    test_rand_dist
+  )
+endif(WITH_CUDA)

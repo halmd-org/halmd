@@ -23,23 +23,22 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/math/pow.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/host/forces/power_law.hpp>
+#include <halmd/numeric/host/pow.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
 using namespace boost::assign;
 using namespace boost::numeric::ublas;
-
-using namespace halmd::math;
+using namespace halmd::numeric::host;
 
 namespace halmd
 {
 namespace mdsim { namespace host { namespace forces
 {
 
-/**boost/algorithm/string/predicate.hpp>
+/**
  * Assemble module options
  */
 template <int dimension, typename float_type>

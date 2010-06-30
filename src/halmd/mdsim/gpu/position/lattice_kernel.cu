@@ -17,18 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/base.cuh>
-#include <halmd/math/gpu/vector2d.cuh>
-#include <halmd/math/gpu/vector3d.cuh>
 #include <halmd/mdsim/gpu/position/lattice_kernel.cuh>
+#include <halmd/mdsim/gpu/particle_kernel.cuh>
+#include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/utility/gpu/thread.cuh>
+
+using namespace halmd::numeric::gpu::blas;
+using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd { namespace mdsim { namespace gpu { namespace position
 {
 
 namespace lattice_kernel
 {
-
-using namespace halmd::cu;
 
 /**
  * place particles on a face centered cubic lattice (fcc)
@@ -68,7 +69,7 @@ __global__ void lattice(float4* g_r, uint n, float box)
 {
     vector<float, dimension> r;
     primitive(r, n);
-    g_r[GTID] = r * (box / n);
+    g_r[GTID] = tagged(r * (box / n), GTID);
 }
 
 } // namespace lattice_kernel

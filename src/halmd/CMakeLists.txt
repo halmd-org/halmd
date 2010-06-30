@@ -84,7 +84,8 @@ set(HALMD_MODULES
   halmd_mdsim_host_sort
   halmd_mdsim_host_velocity
   halmd_mdsim_samples_host
-  halmd_rng
+  halmd_random
+  halmd_random_host
   halmd_utility
   )
 if(WITH_CUDA)
@@ -98,6 +99,7 @@ if(WITH_CUDA)
     halmd_mdsim_gpu_sort
     halmd_mdsim_gpu_velocity
     halmd_mdsim_samples_gpu
+    halmd_random_gpu
     halmd_utility_gpu
     )
 endif(WITH_CUDA)
@@ -105,7 +107,6 @@ endif(WITH_CUDA)
 set(HALMD_COMMON_LIBRARIES
   -Wl,-whole-archive
   ${HALMD_MODULES}
-  sample_common
   -Wl,-no-whole-archive
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
@@ -144,7 +145,6 @@ endif(NOT HALMD_BACKEND_EXECUTABLES)
 add_subdirectory(algorithm)
 add_subdirectory(io)
 add_subdirectory(mdsim)
-add_subdirectory(rng)
-add_subdirectory(sample)
+add_subdirectory(random)
 add_subdirectory(test)
 add_subdirectory(utility)

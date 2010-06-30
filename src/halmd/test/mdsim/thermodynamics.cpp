@@ -1,6 +1,6 @@
 /* test simulation results for thermodynamic variables in the dilute limit
  *
- * Copyright (C) 2010  Felix Höfling
+ * Copyright © 2010  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -30,7 +30,7 @@
 #include <string>
 #include <utility>
 
-#include <halmd/math/accum.hpp>
+#include <halmd/numeric/host/accumulator.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/mdsim/host/velocity/boltzmann.hpp>
@@ -42,6 +42,7 @@
 #include <halmd/io/logger.hpp>
 
 using namespace halmd;
+using namespace halmd::numeric::host;
 using namespace std;
 
 /** reference values for the state variables of a 3-dim. LJ fluid can be found in

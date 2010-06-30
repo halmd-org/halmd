@@ -1,5 +1,4 @@
-/* Maxwell-Boltzmann distribution at accurate temperature
- *
+/*
  * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
@@ -18,17 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/base.cuh>
-#include <halmd/algorithm/gpu/reduce.cuh>
-#include <halmd/math/gpu/dsvector.cuh>
-#include <halmd/math/gpu/vector2d.cuh>
-#include <halmd/math/gpu/vector3d.cuh>
+#include <halmd/algorithm/gpu/reduce_kernel.cuh>
+#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/velocity/boltzmann_kernel.cuh>
+#include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/utility/gpu/thread.cuh>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace velocity
+using namespace halmd::numeric::gpu::blas;
+using namespace halmd::mdsim::gpu::particle_kernel;
+
+//
+// Maxwell-Boltzmann distribution at accurate temperature
+//
+
+namespace halmd
 {
-
+namespace mdsim { namespace gpu { namespace velocity
+{
 namespace boltzmann_kernel
 {
 
@@ -53,9 +59,9 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
 //         rand48::gaussian(v, temp, state);
 //         g_v[i] = v;
 // #ifdef USE_VERLET_DSFUN
-//         g_v[i + nplace] = cu::vector<float, dimension>(0);
+//         g_v[i + nplace] = vector<float, dimension>(0);
 // #endif
-//         vcm += cu::vector<float, dimension>(v);
+//         vcm += vector<float, dimension>(v);
 //     }
 //     // store random number generator state in global device memory
 //     rand48::g_state[GTID] = state;
@@ -69,9 +75,9 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
 
     if (TID < 1) {
         // store block reduced value in global memory
-        g_vcm[blockIdx.x] = static_cast<cu::vector<float, dimension> >(vcm);
+        g_vcm[blockIdx.x] = static_cast<vector<float, dimension> >(vcm);
 #ifdef USE_VERLET_DSFUN
-        g_vcm[blockIdx.x + BDIM] = dsfloat2lo(vcm);
+        g_vcm[blockIdx.x + BDIM] = dsfloat_lo(vcm);
 #endif
     }
 }
@@ -104,16 +110,16 @@ __global__ void shift_velocity(float4* g_v, uint npart, uint nplace, T const* g_
 
     for (uint i = GTID; i < npart; i += GTDIM) {
 #ifdef USE_VERLET_DSFUN
-        vector_type v(g_v[i], g_v[i + nplace]);
+        vector_type v; // FIXME (g_v[i], g_v[i + nplace]);
 #else
         vector_type v = g_v[i];
 #endif
         v -= vcm;
-        g_v[i] = static_cast<cu::vector<float, dimension> >(v);
+        g_v[i] = tagged(static_cast<vector<float, dimension> >(v), /* FIXME */0);
 #ifdef USE_VERLET_DSFUN
-        g_v[i + nplace] = dsfloat2lo(v);
+        g_v[i + nplace] = tagged(dsfloat_lo(v), /* FIXME */0);
 #endif
-        vv += v * v;
+        vv += inner_prod(v, v);
     }
     // reduced value for this thread
     s_vv[TID] = vv;
@@ -152,14 +158,14 @@ __global__ void scale_velocity(float4* g_v, uint npart, uint nplace, dsfloat con
 
     for (uint i = GTID; i < npart; i += GTDIM) {
 #ifdef USE_VERLET_DSFUN
-        vector_type v(g_v[i], g_v[i + nplace]);
+        vector_type v; // FIXME (g_v[i], g_v[i + nplace]);
 #else
         vector_type v = g_v[i];
 #endif
         v *= coeff;
-        g_v[i] = static_cast<cu::vector<float, dimension> >(v);
+        // FIXME g_v[i] = static_cast<vector<float, dimension> >(v);
 #ifdef USE_VERLET_DSFUN
-        g_v[i + nplace] = dsfloat2lo(v);
+        g_v[i + nplace] = tagged(dsfloat_lo(v), /* FIXME */0);
 #endif
     }
 }
@@ -188,22 +194,24 @@ typedef float float_type;
 
 cuda::function<void (float4*, uint, uint, float, float4*)>
     boltzmann_wrapper<3>::gaussian =
-        boltzmann_kernel::gaussian<cu::vector<float_type, 3> >;
+        boltzmann_kernel::gaussian<vector<float_type, 3> >;
 cuda::function<void (float4*, uint, uint, float4 const*, dsfloat*)>
     boltzmann_wrapper<3>::shift_velocity =
-        boltzmann_kernel::shift_velocity<cu::vector<float_type, 3> >;
+        boltzmann_kernel::shift_velocity<vector<float_type, 3> >;
 cuda::function<void (float4*, uint, uint, dsfloat const*, dsfloat)>
     boltzmann_wrapper<3>::scale_velocity =
-        boltzmann_kernel::scale_velocity<cu::vector<float_type, 3> >;
+        boltzmann_kernel::scale_velocity<vector<float_type, 3> >;
 
 cuda::function<void (float4*, uint, uint, float, float2*)>
     boltzmann_wrapper<2>::gaussian =
-        boltzmann_kernel::gaussian<cu::vector<float_type, 2> >;
+        boltzmann_kernel::gaussian<vector<float_type, 2> >;
 cuda::function<void (float4*, uint, uint, float2 const*, dsfloat*)>
     boltzmann_wrapper<2>::shift_velocity =
-        boltzmann_kernel::shift_velocity<cu::vector<float_type, 2> >;
+        boltzmann_kernel::shift_velocity<vector<float_type, 2> >;
 cuda::function<void (float4*, uint, uint, dsfloat const*, dsfloat)>
     boltzmann_wrapper<2>::scale_velocity =
-        boltzmann_kernel::scale_velocity<cu::vector<float_type, 2> >;
+        boltzmann_kernel::scale_velocity<vector<float_type, 2> >;
 
-}}}} // namespace halmd::mdsim::gpu::velocity
+}}} // namespace mdsim::gpu::velocity
+
+} // namespace halmd

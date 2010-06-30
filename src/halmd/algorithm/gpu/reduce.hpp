@@ -1,5 +1,4 @@
-/* Parallel reduction kernel
- *
+/*
  * Copyright © 2008-2009  Peter Colberg
  *
  * This file is part of HALMD.
@@ -21,25 +20,117 @@
 #ifndef HALMD_ALGORITHM_GPU_REDUCE_HPP
 #define HALMD_ALGORITHM_GPU_REDUCE_HPP
 
-#include <cuda_wrapper.hpp>
-#include <halmd/math/gpu/dsfloat.cuh>
+#include <algorithm>
+#include <numeric>
 
-namespace halmd { namespace gpu { namespace reduce
+#include <cuda_wrapper.hpp>
+#include <halmd/algorithm/gpu/reduce_kernel.cuh>
+
+namespace halmd
+{
+namespace algorithm { namespace gpu
 {
 
-enum {
-    BLOCKS = 16,
-    THREADS = 64 << DEVICE_SCALE
+/*
+ * Parallel reduction
+ */
+template <
+    template <typename> class tag
+  , typename gpu_output_type
+  , typename output_type = gpu_output_type
+  , int blocks = 16
+  , int threads = (64 << DEVICE_SCALE)
+>
+struct reduce
+{
+    template <typename gpu_input_type>
+    output_type operator()(cuda::vector<gpu_input_type> const& g_in)
+    {
+        cuda::vector<gpu_output_type> g_block_sum(blocks);
+        cuda::host::vector<gpu_output_type> h_block_sum(blocks);
+        cuda::configure(blocks, threads);
+        tag<output_type>::reduce(g_in, g_block_sum, g_in.size());
+        cuda::copy(g_block_sum, h_block_sum);
+        return tag<output_type>::value(h_block_sum);
+    }
 };
 
-extern cuda::function<void(float const*, dsfloat*, uint),
-               void(float4 const*, float4*, uint),
-               void(float2 const*, float2*, uint)> sum;
-extern cuda::function<void(float4 const*, dsfloat*, uint),
-                      void(float2 const*, dsfloat*, uint)> sum_of_squares;
-extern cuda::function<void(float4 const*, float*, uint),
-                      void(float2 const*, float*, uint)> max;
+namespace tag
+{
 
-}}} // namespace halmd::gpu::reduce
+/**
+ * sum
+ */
+template <typename output_type>
+struct sum
+{
+    template <typename gpu_input_type, typename gpu_output_type>
+    static void reduce(
+        cuda::vector<gpu_input_type> const& g_in
+      , cuda::vector<gpu_output_type>& g_block_sum
+      , unsigned int count
+    )
+    {
+        reduce_wrapper<threads, gpu_input_type, gpu_output_type>::sum(g_in, g_block_sum, count);
+    }
+
+    template <typename gpu_output_type>
+    static output_type value(cuda::host::vector<gpu_output_type> const& sum)
+    {
+        return std::accumulate(sum.begin(), sum.end(), output_type(0));
+    }
+};
+
+/**
+ * sum of squares
+ */
+template <typename output_type>
+struct sum_of_squares
+{
+    template <typename gpu_input_type, typename gpu_output_type>
+    static void reduce(
+        cuda::vector<gpu_input_type> const& g_in
+      , cuda::vector<gpu_output_type>& g_block_sum
+      , unsigned int count
+    )
+    {
+        reduce_wrapper<threads, gpu_input_type, gpu_output_type>::sum_of_squares(g_in, g_block_sum, count);
+    }
+
+    template <typename gpu_output_type>
+    static output_type value(cuda::host::vector<gpu_output_type> const& sum)
+    {
+        return std::accumulate(sum.begin(), sum.end(), output_type(0));
+    }
+};
+
+/**
+ * absolute maximum
+ */
+template <typename output_type>
+struct max
+{
+    template <typename gpu_input_type, typename gpu_output_type>
+    static void reduce(
+        cuda::vector<gpu_input_type> const& g_in
+      , cuda::vector<gpu_output_type>& g_block_max
+      , unsigned int count
+    )
+    {
+        reduce_wrapper<threads, gpu_input_type, gpu_output_type>::max(g_in, g_block_max, count);
+    }
+
+    template <typename gpu_output_type>
+    static output_type value(cuda::host::vector<gpu_output_type> const& max)
+    {
+        return *std::max_element(max.begin(), max.end());
+    }
+};
+
+} // namespace tag
+
+}} // namespace algorithm::gpu
+
+} // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_REDUCE_HPP */

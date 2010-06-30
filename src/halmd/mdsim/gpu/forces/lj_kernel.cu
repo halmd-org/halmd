@@ -19,7 +19,6 @@
 
 #include <boost/mpl/if.hpp>
 
-#include <halmd/algorithm/gpu/base.cuh>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/force_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/lj_kernel.cuh>
@@ -27,6 +26,7 @@
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/symmetric.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/utility/gpu/thread.cuh>
 
 using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;

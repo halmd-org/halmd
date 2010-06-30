@@ -24,7 +24,7 @@
 
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/rng/host/random.hpp>
+#include <halmd/random/host/random.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -46,7 +46,7 @@ public:
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef rng::host::random random_type;
+    typedef random::host::random random_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<random_type> random;

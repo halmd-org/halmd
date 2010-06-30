@@ -21,11 +21,6 @@
 #ifndef HALMD_MDSIM_EXCEPTION_HPP
 #define HALMD_MDSIM_EXCEPTION_HPP
 
-#include <boost/foreach.hpp>
-
-#include <halmd/mdsim/backend/base.hpp>
-#include <halmd/mdsim/backend/traits.hpp>
-
 namespace halmd
 {
 

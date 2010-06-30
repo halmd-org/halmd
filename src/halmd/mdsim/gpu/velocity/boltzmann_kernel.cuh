@@ -22,11 +22,16 @@
 #define HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_KERNEL_CUH
 
 #include <cuda_wrapper.hpp>
-#include <halmd/math/gpu/dsfloat.cuh>
-#include <halmd/rng/gpu/uint48.cuh>
+#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/random/gpu/uint48.cuh>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace velocity
+namespace halmd
 {
+namespace mdsim { namespace gpu { namespace velocity
+{
+
+using random::gpu::uint48;
+using numeric::gpu::blas::dsfloat;
 
 template <int dimension = 0>
 struct boltzmann_wrapper;
@@ -61,6 +66,8 @@ struct boltzmann_wrapper<2> : boltzmann_wrapper<>
     static cuda::function<void (float4*, uint, uint, dsfloat const*, dsfloat)> scale_velocity;
 };
 
-}}}} // namespace halmd::mdsim::gpu::velocity
+}}} // namespace mdsim::gpu::velocity
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_KERNEL_CUH */

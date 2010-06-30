@@ -1,12 +1,5 @@
-add_library(gpu_prefix_sum
-  prefix_sum.cu
-  )
-add_library(gpu_radix_sort
-  radix_sort.cu
-  )
-target_link_libraries(gpu_radix_sort
-  gpu_prefix_sum
-  )
-add_library(gpu_reduce
-  reduce.cu
-  )
+add_library(halmd_algorithm_gpu
+  radix_kernel.cu
+  reduce_kernel.cu
+  scan_kernel.cu
+)
