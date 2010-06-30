@@ -131,7 +131,7 @@ set(HALMD_COMMON_LIBRARIES
 
 if(NOT HALMD_BACKEND_EXECUTABLES)
   add_executable(halmd
-    driver.cpp
+    core.cpp
     main.cpp
     )
   target_link_libraries(halmd

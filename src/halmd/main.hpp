@@ -17,50 +17,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_DRIVER_HPP
-#define HALMD_DRIVER_HPP
+#ifndef HALMD_MAIN_HPP
+#define HALMD_MAIN_HPP
 
-#include <boost/shared_ptr.hpp>
-
-#include <halmd/core.hpp>
-#include <halmd/mdsim/core.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
 {
 
-/**
- * This class drives the MD integration and the evaluation.
- */
-template <int dimension>
-class driver
-  : public halmd::core
+class main
 {
 public:
     // module definitions
-    typedef driver _Self;
-    typedef halmd::core _Base;
-    static void depends();
-    static void options(po::options_description& desc);
+    typedef main _Self;
+    static void options(po::options_description& desc) {}
+    static void depends() {}
     static void select(po::options const& vm) {}
 
-    typedef mdsim::core<dimension> core_type;
-
-    driver(modules::factory& factory, po::options const& vm);
-    void run();
-    uint64_t steps() { return steps_; }
-    double time() { return time_; }
-
-    shared_ptr<core_type> core;
-
-protected:
-    /** number of integration steps */
-    uint64_t steps_;
-    /** integration time in MD units */
-    double time_;
+    main(modules::factory& factory, po::options const& vm) {}
+    virtual ~main() {}
+    virtual void run() = 0;
 };
 
 } // namespace halmd
 
-#endif /* ! HALMD_DRIVER_HPP */
+#endif /* ! HALMD_MAIN_HPP */

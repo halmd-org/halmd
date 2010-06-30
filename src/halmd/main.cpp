@@ -29,8 +29,8 @@
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
 #endif
-#include <halmd/core.hpp>
 #include <halmd/io/logger.hpp>
+#include <halmd/main.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/util/timer.hpp>
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 #endif
     modules::resolver resolver(modules::registry::graph());
     try {
-        resolver.resolve<core>(vm, unparsed);
+        resolver.resolve<halmd::main>(vm, unparsed);
     }
     catch (program_options::error const& e) {
         cerr << PROGRAM_NAME ": " << e.what() << endl;
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
         }
 
         // run MD simulation
-        shared_ptr<halmd::core> core(modules::fetch<halmd::core>(factory, vm));
+        shared_ptr<halmd::main> core(modules::fetch<halmd::main>(factory, vm));
         core->run();
 #ifdef NDEBUG
     }

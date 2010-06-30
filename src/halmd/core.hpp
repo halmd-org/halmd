@@ -20,24 +20,42 @@
 #ifndef HALMD_CORE_HPP
 #define HALMD_CORE_HPP
 
+#include <boost/shared_ptr.hpp>
+
+#include <halmd/main.hpp>
+#include <halmd/mdsim/core.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
 {
 
+template <int dimension>
 class core
+  : public halmd::main
 {
 public:
     // module definitions
     typedef core _Self;
-    static void options(po::options_description& desc) {}
-    static void depends() {}
+    typedef halmd::main _Base;
+    static void depends();
+    static void options(po::options_description& desc);
     static void select(po::options const& vm) {}
 
-    core(modules::factory& factory, po::options const& vm) {}
-    virtual ~core() {}
-    virtual void run() = 0;
+    typedef mdsim::core<dimension> mdsim_type;
+
+    core(modules::factory& factory, po::options const& vm);
+    void run();
+    uint64_t steps() { return steps_; }
+    double time() { return time_; }
+
+    shared_ptr<mdsim_type> mdsim;
+
+protected:
+    /** number of integration steps */
+    uint64_t steps_;
+    /** integration time in MD units */
+    double time_;
 };
 
 } // namespace halmd

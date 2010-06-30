@@ -17,10 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
-
+#include <halmd/core.hpp>
 #include <halmd/io/logger.hpp>
-#include <halmd/driver.hpp>
 
 using namespace boost;
 using namespace std;
@@ -32,7 +30,7 @@ namespace halmd
  * Assemble module options
  */
 template <int dimension>
-void driver<dimension>::options(po::options_description& desc)
+void core<dimension>::options(po::options_description& desc)
 {
     po::options_description group("Simulation");
     group.add_options()
@@ -48,25 +46,25 @@ void driver<dimension>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension>
-void driver<dimension>::depends()
+void core<dimension>::depends()
 {
-    modules::depends<_Self, core_type>::required();
+    modules::depends<_Self, mdsim_type>::required();
 }
 
 template <int dimension>
-driver<dimension>::driver(modules::factory& factory, po::options const& vm)
+core<dimension>::core(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   // dependency injection
-  , core(modules::fetch<core_type>(factory, vm))
+  , mdsim(modules::fetch<mdsim_type>(factory, vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {
         time_ = vm["time"].as<double>();
-        steps_ = static_cast<uint64_t>(round(time_ / core->integrator->timestep()));
+        steps_ = static_cast<uint64_t>(round(time_ / mdsim->integrator->timestep()));
     }
     else {
         steps_ = vm["steps"].as<uint64_t>();
-        time_ = steps_ * core->integrator->timestep();
+        time_ = steps_ * mdsim->integrator->timestep();
     }
 
     LOG("number of integration steps: " << steps_);
@@ -77,22 +75,22 @@ driver<dimension>::driver(modules::factory& factory, po::options const& vm)
  * Run simulation
  */
 template <int dimension>
-void driver<dimension>::run()
+void core<dimension>::run()
 {
     LOG("starting simulation");
 
     for (uint64_t i = 0; i < steps_; ++i) {
-        core->mdstep();
+        mdsim->mdstep();
     }
 
     LOG("finished simulation");
 }
 
 // explicit instantiation
-template class driver<3>;
-template class driver<2>;
+template class core<3>;
+template class core<2>;
 
-template class module<driver<3> >;
-template class module<driver<2> >;
+template class module<core<3> >;
+template class module<core<2> >;
 
 } // namespace halmd
