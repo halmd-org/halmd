@@ -1,6 +1,5 @@
-/* GSL random number generator C++ wrapper
- *
- * Copyright © 2008-2009  Peter Colberg
+/*
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,11 +20,8 @@
 #ifndef HALMD_RANDOM_HOST_GSL_RNG_HPP
 #define HALMD_RANDOM_HOST_GSL_RNG_HPP
 
-#include <cmath>
 #include <gsl/gsl_rng.h>
-#include <vector>
-
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <stdexcept>
 
 namespace halmd
 {
@@ -33,14 +29,25 @@ namespace random { namespace host
 {
 
 /**
- * GSL random number generator
+ * GSL random number generator C++ wrapper
+ *
+ * This class models the NumberGenerator, UniformRandomNumberGenerator
+ * and (partially) PseudoRandomNumberGenerator concepts in the Boost
+ * Random Number library, as well as the RandomNumberGenerator concept
+ * in the STL library.
  */
-template <const gsl_rng_type* const& rng_type>
+template <gsl_rng_type const* const& rng_type>
 class gsl_rng_wrapper
 {
 public:
-    /** random number generator state type */
-    typedef std::vector<char> state_type;
+    // We use double precision floating-point as the result type,
+    // as the gsl_rng_get() function returns 32-bit integer values,
+    // whereas some generators are capable of generating numbers
+    // with higher precision if sampled vith gsl_rng_uniform().
+    typedef double result_type;
+    static bool const has_fixed_range = true;
+    static result_type const min_value = 0.0;
+    static result_type const max_value = 1.0;
 
     /**
      * create new instance of random number generator
@@ -59,14 +66,32 @@ public:
     }
 
     /**
-     * create new instance as an exact copy of given generator
+     * create new instance of random number generator using given seed
      */
-    gsl_rng_wrapper(gsl_rng_wrapper<rng_type> const& src)
+    explicit gsl_rng_wrapper(unsigned long int value)
     {
         // do not abort program after GSL error
         gsl_error_handler_t* handler = gsl_set_error_handler_off();
 
-        if (NULL == (rng_ = gsl_rng_clone(src.rng_))) {
+        if (NULL == (rng_ = gsl_rng_alloc(rng_type))) {
+            throw std::bad_alloc();
+        }
+
+        // restore previous error handler
+        gsl_set_error_handler(handler);
+
+        gsl_rng_set(rng_, value);
+    }
+
+    /**
+     * create new instance as an exact copy of given generator
+     */
+    explicit gsl_rng_wrapper(gsl_rng_wrapper const& rng)
+    {
+        // do not abort program after GSL error
+        gsl_error_handler_t* handler = gsl_set_error_handler_off();
+
+        if (NULL == (rng_ = gsl_rng_clone(rng.rng_))) {
             throw std::bad_alloc();
         }
 
@@ -77,9 +102,9 @@ public:
     /**
      * copy random number generator into pre-existing generator
      */
-    gsl_rng_wrapper<rng_type>& operator=(gsl_rng_wrapper<rng_type> const& src)
+    gsl_rng_wrapper& operator=(gsl_rng_wrapper const& rng)
     {
-        gsl_rng_memcpy(rng_, src.rng_);
+        gsl_rng_memcpy(rng_, rng.rng_);
         return *this;
     }
 
@@ -92,172 +117,48 @@ public:
     }
 
     /**
-     * save generator state
+     * generate uniform pseudo-random integer in [0.0, 1.0)
      */
-    void save(state_type& state) const
-    {
-        state.resize(rng_type->size);
-        memcpy(state.data(), rng_->state, rng_type->size);
-    }
-
-    /**
-     * restore generator state
-     */
-    void restore(state_type const& state)
-    {
-        assert(state.size() == rng_type->size);
-        memcpy(rng_->state, state.data(), rng_type->size);
-    }
-
-    /**
-     * initialize generator with integer seed
-     */
-    void set(unsigned long int seed)
-    {
-        gsl_rng_set(rng_, seed);
-    }
-
-    /**
-     * generate random integer in algorithm-dependent interval
-     */
-    unsigned long int get()
-    {
-        return gsl_rng_get(rng_);
-    }
-
-    /**
-     * determine minimum random integer
-     */
-    unsigned long int min() const
-    {
-        return gsl_rng_min(rng_);
-    }
-
-    /**
-     * determine maximum random integer
-     */
-    unsigned long int max() const
-    {
-        return gsl_rng_max(rng_);
-    }
-
-    /**
-     * generate random uniform number
-     */
-    double uniform()
+    result_type operator()()
     {
         return gsl_rng_uniform(rng_);
     }
 
     /**
-     * generate 2-dimensional random unit vector
+     * tight lower bound for pseudo-random integer values
      */
-    template <typename T>
-    void unit_vector(numeric::host::blas::vector<T, 2>& v)
+    result_type min() const
     {
-        T s = 2. * M_PI * uniform();
-        v.x = std::cos(s);
-        v.y = std::sin(s);
+        return min_value;
     }
 
     /**
-     * generate 3-dimensional random unit vector
+     * tight upper bound for pseudo-random integer values
      */
-    template <typename T>
-    void unit_vector(numeric::host::blas::vector<T, 3>& v)
+    result_type max() const
     {
-        //
-        // The following method requires an average of 8/Pi =~ 2.55
-        // uniform random numbers. It is described in
-        //
-        // G. Marsaglia, Choosing a Point from the Surface of a Sphere,
-        // The Annals of Mathematical Statistics, 1972, 43, p. 645-646
-        //
-        // http://projecteuclid.org/euclid.aoms/1177692644#
-        //
-
-        T s;
-
-        do {
-            v.x = 2. * uniform() - 1.;
-            v.y = 2. * uniform() - 1.;
-            s = v.x * v.x + v.y * v.y;
-        } while (s >= 1.);
-
-        v.z = 1. - 2. * s;
-        s = 2. * std::sqrt(1. - s);
-        v.x *= s;
-        v.y *= s;
+        return max_value;
     }
 
     /**
-     * generate 2 random numbers from Gaussian distribution with given variance
+     * generate uniform integer in [0, n-1]
      */
-    template <typename T>
-    void gaussian(T& r1, T& r2, T const& var)
+    unsigned long int operator()(unsigned long int n)
     {
-        //
-        // The Box-Muller transformation for generating random numbers
-        // in the normal distribution was originally described in
-        //
-        // G.E.P. Box and M.E. Muller, A Note on the Generation of
-        // Random Normal Deviates, The Annals of Mathematical Statistics,
-        // 1958, 29, p. 610-611
-        //
-        // Here, we use instead the faster polar method of the Box-Muller
-        // transformation, see
-        //
-        // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
-        // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
-        //
-
-        T s;
-
-        do {
-            r1 = 2. * uniform() - 1.;
-            r2 = 2. * uniform() - 1.;
-            s = r1 * r1 + r2 * r2;
-        } while (s >= 1.);
-
-        s = std::sqrt(-2. * var * std::log(s) / s);
-        r1 *= s;
-        r2 *= s;
-    }
-
-    template <typename T>
-    void gaussian(numeric::host::blas::vector<T, 3>& v, T const& var)
-    {
-        gaussian(v[0], v[1], var);
-        gaussian(v[2], v[0], var);
-    }
-
-    template <typename T>
-    void gaussian(numeric::host::blas::vector<T, 2>& v, T const& var)
-    {
-        gaussian(v[0], v[1], var);
+        return gsl_rng_uniform_int(rng_, n);
     }
 
     /**
-     * in-place array shuffle
+     * initialize generator with integer seed
      */
-    template <typename T>
-    void shuffle(T& array)
+    void seed(unsigned long int value)
     {
-        //
-        // D.E. Knuth, Art of Computer Programming, Volume 2:
-        // Seminumerical Algorithms, 3rd Edition, 1997,
-        // Addison-Wesley, pp. 124-125.
-        //
-        for (typename T::size_type i = array.size(); i > 1; --i) {
-            typename T::size_type r = static_cast<typename T::size_type>(i * uniform());
-            std::swap(array[r], array[i - 1]);
-        }
+        gsl_rng_set(rng_, value);
     }
 
 private:
     gsl_rng *rng_;
 };
-
 
 typedef gsl_rng_wrapper<gsl_rng_borosh13> borosh13;
 typedef gsl_rng_wrapper<gsl_rng_coveyou> coveyou;
