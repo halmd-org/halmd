@@ -46,7 +46,7 @@ public:
     /**
      * initialize device symbol constant
      */
-    symbol(value_type const& symbol)
+    explicit symbol(value_type const& symbol)
       : ptr_(&symbol)
     {}
 
@@ -88,7 +88,7 @@ public:
      * initialize device symbol vector
      */
     template <typename Array>
-    symbol(Array const& array)
+    explicit symbol(Array const& array)
       : ptr_(array)
       , size_(sizeof(array) / sizeof(value_type))
     {}
