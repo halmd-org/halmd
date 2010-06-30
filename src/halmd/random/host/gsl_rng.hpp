@@ -117,7 +117,7 @@ public:
     }
 
     /**
-     * generate uniform pseudo-random integer in [0.0, 1.0)
+     * generate uniform pseudo-random floating-point value in [0.0, 1.0)
      */
     result_type operator()()
     {
@@ -125,7 +125,7 @@ public:
     }
 
     /**
-     * tight lower bound for pseudo-random integer values
+     * tight lower bound for pseudo-random floating-point values
      */
     result_type min() const
     {
@@ -133,7 +133,7 @@ public:
     }
 
     /**
-     * tight upper bound for pseudo-random integer values
+     * smallest representable number larger than the tight upper bound
      */
     result_type max() const
     {
