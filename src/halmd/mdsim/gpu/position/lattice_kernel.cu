@@ -77,13 +77,13 @@ __global__ void lattice(float4* g_r, uint n, float box)
 /**
  * device function wrappers
  */
-cuda::function <void (float4*, uint, float)>
-    lattice_wrapper<3>::fcc = lattice_kernel::lattice<3, lattice_kernel::fcc>;
-cuda::function <void (float4*, uint, float)>
-    lattice_wrapper<3>::sc = lattice_kernel::lattice<3, lattice_kernel::sc>;
-cuda::function <void (float4*, uint, float)>
-    lattice_wrapper<2>::fcc = lattice_kernel::lattice<2, lattice_kernel::fcc>;
-cuda::function <void (float4*, uint, float)>
-    lattice_wrapper<2>::sc = lattice_kernel::lattice<2, lattice_kernel::sc>;
+template <> cuda::function <void (float4*, uint, float)>
+    lattice_wrapper<3>::fcc(lattice_kernel::lattice<3, lattice_kernel::fcc>);
+template <> cuda::function <void (float4*, uint, float)>
+    lattice_wrapper<3>::sc(lattice_kernel::lattice<3, lattice_kernel::sc>);
+template <> cuda::function <void (float4*, uint, float)>
+    lattice_wrapper<2>::fcc(lattice_kernel::lattice<2, lattice_kernel::fcc>);
+template <> cuda::function <void (float4*, uint, float)>
+    lattice_wrapper<2>::sc(lattice_kernel::lattice<2, lattice_kernel::sc>);
 
 }}}} // namespace halmd::mdsim::gpu::position

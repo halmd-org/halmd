@@ -193,24 +193,18 @@ typedef float float_type;
  */
 
 cuda::function<void (float4*, uint, uint, float, float4*)>
-    boltzmann_wrapper<3>::gaussian =
-        boltzmann_kernel::gaussian<vector<float_type, 3> >;
+    boltzmann_wrapper<3>::gaussian(boltzmann_kernel::gaussian<vector<float_type, 3> >);
 cuda::function<void (float4*, uint, uint, float4 const*, dsfloat*)>
-    boltzmann_wrapper<3>::shift_velocity =
-        boltzmann_kernel::shift_velocity<vector<float_type, 3> >;
+    boltzmann_wrapper<3>::shift_velocity(boltzmann_kernel::shift_velocity<vector<float_type, 3> >);
 cuda::function<void (float4*, uint, uint, dsfloat const*, dsfloat)>
-    boltzmann_wrapper<3>::scale_velocity =
-        boltzmann_kernel::scale_velocity<vector<float_type, 3> >;
+    boltzmann_wrapper<3>::scale_velocity(boltzmann_kernel::scale_velocity<vector<float_type, 3> >);
 
 cuda::function<void (float4*, uint, uint, float, float2*)>
-    boltzmann_wrapper<2>::gaussian =
-        boltzmann_kernel::gaussian<vector<float_type, 2> >;
+    boltzmann_wrapper<2>::gaussian(boltzmann_kernel::gaussian<vector<float_type, 2> >);
 cuda::function<void (float4*, uint, uint, float2 const*, dsfloat*)>
-    boltzmann_wrapper<2>::shift_velocity =
-        boltzmann_kernel::shift_velocity<vector<float_type, 2> >;
+    boltzmann_wrapper<2>::shift_velocity(boltzmann_kernel::shift_velocity<vector<float_type, 2> >);
 cuda::function<void (float4*, uint, uint, dsfloat const*, dsfloat)>
-    boltzmann_wrapper<2>::scale_velocity =
-        boltzmann_kernel::scale_velocity<vector<float_type, 2> >;
+    boltzmann_wrapper<2>::scale_velocity(boltzmann_kernel::scale_velocity<vector<float_type, 2> >);
 
 }}} // namespace mdsim::gpu::velocity
 

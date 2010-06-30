@@ -155,19 +155,19 @@ using namespace random::gpu;
  * device function wrappers
  */
 template <> cuda::function<void (uint const*, uint*, uint*, uint const)>
-    scan_wrapper<uint>::grid_prefix_sum = gpu::grid_prefix_sum;
+    scan_wrapper<uint>::grid_prefix_sum(gpu::grid_prefix_sum);
 template <> cuda::function<void (uint48 const*, uint48*, uint48*, uint const)>
-    scan_wrapper<uint48>::grid_prefix_sum = gpu::grid_prefix_sum;
+    scan_wrapper<uint48>::grid_prefix_sum(gpu::grid_prefix_sum);
 
 template <> cuda::function<void (uint const*, uint*, uint const*, uint const)>
-    scan_wrapper<uint>::add_block_sums = gpu::add_block_sums;
+    scan_wrapper<uint>::add_block_sums(gpu::add_block_sums);
 template <> cuda::function<void (uint48 const*, uint48*, uint48 const*, uint const)>
-    scan_wrapper<uint48>::add_block_sums = gpu::add_block_sums;
+    scan_wrapper<uint48>::add_block_sums(gpu::add_block_sums);
 
 template <> cuda::function<void (uint const*, uint*, uint const)>
-    scan_wrapper<uint>::block_prefix_sum = gpu::block_prefix_sum;
+    scan_wrapper<uint>::block_prefix_sum(gpu::block_prefix_sum);
 template <> cuda::function<void (uint48 const*, uint48*, uint const)>
-    scan_wrapper<uint48>::block_prefix_sum = gpu::block_prefix_sum;
+    scan_wrapper<uint48>::block_prefix_sum(gpu::block_prefix_sum);
 
 }} // namespace algorithm::gpu
 

@@ -133,30 +133,30 @@ __global__ void compute(
 
 } // namespace lj_kernel
 
-cuda::texture<float4>
-  lj_wrapper<3>::r = lj_kernel::dim_<3>::r;
-cuda::symbol<float3>
-  lj_wrapper<3>::box_length = lj_kernel::dim_<3>::box_length;
-cuda::symbol<unsigned int>
-  lj_wrapper<3>::neighbour_size = lj_kernel::neighbour_size_;
-cuda::symbol<unsigned int>
-  lj_wrapper<3>::neighbour_stride = lj_kernel::neighbour_stride_;
-cuda::texture<float4>
-  lj_wrapper<3>::ljparam = lj_kernel::ljparam_;
-cuda::function<void (float4*, unsigned int*, float*, float4*)>
-  lj_wrapper<3>::compute = lj_kernel::compute<vector<float, 3> >;
+template <> cuda::texture<float4>
+  lj_wrapper<3>::r(lj_kernel::dim_<3>::r);
+template <> cuda::symbol<float3>
+  lj_wrapper<3>::box_length(lj_kernel::dim_<3>::box_length);
+template <> cuda::symbol<unsigned int>
+  lj_wrapper<3>::neighbour_size(lj_kernel::neighbour_size_);
+template <> cuda::symbol<unsigned int>
+  lj_wrapper<3>::neighbour_stride(lj_kernel::neighbour_stride_);
+template <> cuda::texture<float4>
+  lj_wrapper<3>::ljparam(lj_kernel::ljparam_);
+template <> cuda::function<void (float4*, unsigned int*, float*, float4*)>
+  lj_wrapper<3>::compute(lj_kernel::compute<vector<float, 3> >);
 
-cuda::texture<float4>
-  lj_wrapper<2>::r = lj_kernel::dim_<2>::r;
-cuda::symbol<float2>
-  lj_wrapper<2>::box_length = lj_kernel::dim_<2>::box_length;
-cuda::symbol<unsigned int>
-  lj_wrapper<2>::neighbour_size = lj_kernel::neighbour_size_;
-cuda::symbol<unsigned int>
-  lj_wrapper<2>::neighbour_stride = lj_kernel::neighbour_stride_;
-cuda::texture<float4>
-  lj_wrapper<2>::ljparam = lj_kernel::ljparam_;
-cuda::function<void (float2*, unsigned int*, float*, float2*)>
-  lj_wrapper<2>::compute = lj_kernel::compute<vector<float, 2> >;
+template <> cuda::texture<float4>
+  lj_wrapper<2>::r(lj_kernel::dim_<2>::r);
+template <> cuda::symbol<float2>
+  lj_wrapper<2>::box_length(lj_kernel::dim_<2>::box_length);
+template <> cuda::symbol<unsigned int>
+  lj_wrapper<2>::neighbour_size(lj_kernel::neighbour_size_);
+template <> cuda::symbol<unsigned int>
+  lj_wrapper<2>::neighbour_stride(lj_kernel::neighbour_stride_);
+template <> cuda::texture<float4>
+  lj_wrapper<2>::ljparam(lj_kernel::ljparam_);
+template <> cuda::function<void (float2*, unsigned int*, float*, float2*)>
+  lj_wrapper<2>::compute(lj_kernel::compute<vector<float, 2> >);
 
 }}}} // namespace halmd::mdsim::gpu::forces

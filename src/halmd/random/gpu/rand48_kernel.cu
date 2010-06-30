@@ -249,19 +249,19 @@ __global__ void normal(float* v, uint len, float var, uint stride)
  * device function wrappers
  */
 cuda::function <void (uint48*)>
-    rand48_wrapper::leapfrog = gpu::leapfrog;
+    rand48_wrapper::leapfrog(gpu::leapfrog);
 cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, uint)>
-    rand48_wrapper::set = gpu::set;
+    rand48_wrapper::set(gpu::set);
 cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3)>
-    rand48_wrapper::restore = gpu::restore;
+    rand48_wrapper::restore(gpu::restore);
 cuda::function<void (ushort3*)>
-    rand48_wrapper::save = gpu::save;
+    rand48_wrapper::save(gpu::save);
 cuda::function<void (float*, uint)>
-    rand48_wrapper::uniform = gpu::uniform;
+    rand48_wrapper::uniform(gpu::uniform);
 cuda::function<void (uint*, uint)>
-    rand48_wrapper::get = gpu::get;
+    rand48_wrapper::get(gpu::get);
 cuda::function<void (float* v, uint len, float var, uint stride)>
-    rand48_wrapper::normal = gpu::normal;
+    rand48_wrapper::normal(gpu::normal);
 
 /**
  * device constant wrappers

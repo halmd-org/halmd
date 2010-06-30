@@ -166,22 +166,22 @@ __global__ void permute(uint const* g_in, uint* g_out, T const* g_data_in, T* g_
  * device function wrappers
  */
 template <> cuda::function<void (uint const*, uint*, uint, uint)>
-    radix_wrapper<int>::histogram_keys = gpu::histogram_keys;
+    radix_wrapper<int>::histogram_keys(gpu::histogram_keys);
 template <> cuda::function<void (uint const*, uint*, uint, uint)>
-    radix_wrapper<uint>::histogram_keys = gpu::histogram_keys;
+    radix_wrapper<uint>::histogram_keys(gpu::histogram_keys);
 template <> cuda::function<void (uint const*, uint*, uint, uint)>
-    radix_wrapper<float4>::histogram_keys = gpu::histogram_keys;
+    radix_wrapper<float4>::histogram_keys(gpu::histogram_keys);
 template <> cuda::function<void (uint const*, uint*, uint, uint)>
-    radix_wrapper<float2>::histogram_keys = gpu::histogram_keys;
+    radix_wrapper<float2>::histogram_keys(gpu::histogram_keys);
 
 template <> cuda::function<void (uint const*, uint*, int const*, int*, uint const*, uint, uint)>
-    radix_wrapper<int>::permute = gpu::permute;
+    radix_wrapper<int>::permute(gpu::permute);
 template <> cuda::function<void (uint const*, uint*, uint const*, uint*, uint const*, uint, uint)>
-    radix_wrapper<uint>::permute = gpu::permute;
+    radix_wrapper<uint>::permute(gpu::permute);
 template <> cuda::function<void (uint const*, uint*, float4 const*, float4*, uint const*, uint, uint)>
-    radix_wrapper<float4>::permute = gpu::permute;
+    radix_wrapper<float4>::permute(gpu::permute);
 template <> cuda::function<void (uint const*, uint*, float2 const*, float2*, uint const*, uint, uint)>
-    radix_wrapper<float2>::permute = gpu::permute;
+    radix_wrapper<float2>::permute(gpu::permute);
 
 }} // namespace algorithm::gpu
 

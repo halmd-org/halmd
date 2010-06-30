@@ -23,26 +23,26 @@
 namespace halmd { namespace mdsim { namespace gpu { namespace sampler
 {
 
-cuda::texture<float4>
-  trajectory_wrapper<3>::r = trajectory_kernel::dim_<3>::r;
-cuda::texture<float4>
-  trajectory_wrapper<3>::image = trajectory_kernel::dim_<3>::image;
-cuda::texture<float4>
-  trajectory_wrapper<3>::v = trajectory_kernel::dim_<3>::v;
-cuda::symbol<float3>
-  trajectory_wrapper<3>::box_length = trajectory_kernel::dim_<3>::box_length;
-cuda::function<void (unsigned int const*, float4*, float4*)>
-  trajectory_wrapper<3>::sample = trajectory_kernel::sample<vector<float, 3> >;
+template <> cuda::texture<float4>
+  trajectory_wrapper<3>::r(trajectory_kernel::dim_<3>::r);
+template <> cuda::texture<float4>
+  trajectory_wrapper<3>::image(trajectory_kernel::dim_<3>::image);
+template <> cuda::texture<float4>
+  trajectory_wrapper<3>::v(trajectory_kernel::dim_<3>::v);
+template <> cuda::symbol<float3>
+  trajectory_wrapper<3>::box_length(trajectory_kernel::dim_<3>::box_length);
+template <> cuda::function<void (unsigned int const*, float4*, float4*)>
+  trajectory_wrapper<3>::sample(trajectory_kernel::sample<vector<float, 3> >);
 
-cuda::texture<float4>
-  trajectory_wrapper<2>::r = trajectory_kernel::dim_<2>::r;
-cuda::texture<float2>
-  trajectory_wrapper<2>::image = trajectory_kernel::dim_<2>::image;
-cuda::texture<float4>
-  trajectory_wrapper<2>::v = trajectory_kernel::dim_<2>::v;
-cuda::symbol<float2>
-  trajectory_wrapper<2>::box_length = trajectory_kernel::dim_<2>::box_length;
-cuda::function<void (unsigned int const*, float2*, float2*)>
-  trajectory_wrapper<2>::sample = trajectory_kernel::sample<vector<float, 2> >;
+template <> cuda::texture<float4>
+  trajectory_wrapper<2>::r(trajectory_kernel::dim_<2>::r);
+template <> cuda::texture<float2>
+  trajectory_wrapper<2>::image(trajectory_kernel::dim_<2>::image);
+template <> cuda::texture<float4>
+  trajectory_wrapper<2>::v(trajectory_kernel::dim_<2>::v);
+template <> cuda::symbol<float2>
+  trajectory_wrapper<2>::box_length(trajectory_kernel::dim_<2>::box_length);
+template <> cuda::function<void (unsigned int const*, float2*, float2*)>
+  trajectory_wrapper<2>::sample(trajectory_kernel::sample<vector<float, 2> >);
 
 }}}} // namespace halmd::mdsim::gpu::sampler

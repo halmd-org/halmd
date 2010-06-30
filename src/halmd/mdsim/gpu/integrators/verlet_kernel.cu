@@ -133,22 +133,22 @@ __global__ void _finalize(
 /**
  * device function wrappers
  */
-cuda::symbol<float>
-  verlet_wrapper<3>::timestep = verlet_kernel::timestep_;
-cuda::symbol<float3>
-  verlet_wrapper<3>::box_length = verlet_kernel::dim_<3>::box_length;
-cuda::function <void (float4*, float4*, float4*, float4 const*)>
-  verlet_wrapper<3>::integrate = verlet_kernel::_integrate<vector<dsfloat, 3>, vector<float, 3> >;
-cuda::function <void (float4*, float4 const*)>
-  verlet_wrapper<3>::finalize = verlet_kernel::_finalize<vector<dsfloat, 3>, vector<float, 3> >;
+template <> cuda::symbol<float>
+  verlet_wrapper<3>::timestep(verlet_kernel::timestep_);
+template <> cuda::symbol<float3>
+  verlet_wrapper<3>::box_length(verlet_kernel::dim_<3>::box_length);
+template <> cuda::function <void (float4*, float4*, float4*, float4 const*)>
+  verlet_wrapper<3>::integrate(verlet_kernel::_integrate<vector<dsfloat, 3>, vector<float, 3> >);
+template <> cuda::function <void (float4*, float4 const*)>
+  verlet_wrapper<3>::finalize(verlet_kernel::_finalize<vector<dsfloat, 3>, vector<float, 3> >);
 
-cuda::symbol<float>
-  verlet_wrapper<2>::timestep = verlet_kernel::timestep_;
-cuda::symbol<float2>
-  verlet_wrapper<2>::box_length = verlet_kernel::dim_<2>::box_length;
-cuda::function <void (float4*, float2*, float4*, float2 const*)>
-  verlet_wrapper<2>::integrate = verlet_kernel::_integrate<vector<dsfloat, 2>, vector<float, 2> >;
-cuda::function <void (float4*, float2 const*)>
-  verlet_wrapper<2>::finalize = verlet_kernel::_finalize<vector<dsfloat, 2>, vector<float, 2> >;
+template <> cuda::symbol<float>
+  verlet_wrapper<2>::timestep(verlet_kernel::timestep_);
+template <> cuda::symbol<float2>
+  verlet_wrapper<2>::box_length(verlet_kernel::dim_<2>::box_length);
+template <> cuda::function <void (float4*, float2*, float4*, float2 const*)>
+  verlet_wrapper<2>::integrate(verlet_kernel::_integrate<vector<dsfloat, 2>, vector<float, 2> >);
+template <> cuda::function <void (float4*, float2 const*)>
+  verlet_wrapper<2>::finalize(verlet_kernel::_finalize<vector<dsfloat, 2>, vector<float, 2> >);
 
 }}}} //namespace halmd::mdsim::gpu::integrators

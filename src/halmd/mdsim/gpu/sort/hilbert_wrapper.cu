@@ -24,14 +24,14 @@ namespace halmd { namespace mdsim { namespace gpu
 {
 
 template <int dimension> cuda::symbol<float>
-    hilbert_wrapper<dimension>::depth = hilbert_kernel::depth_;
+    hilbert_wrapper<dimension>::depth(hilbert_kernel::depth_);
 template <int dimension> cuda::symbol<typename hilbert_wrapper<dimension>::vector_type>
-    hilbert_wrapper<dimension>::box_length = hilbert_kernel::dim_<dimension>::box_length;
+    hilbert_wrapper<dimension>::box_length(hilbert_kernel::dim_<dimension>::box_length);
 
 template <> cuda::function<void (float4 const*, unsigned int*)>
-    hilbert_wrapper<3>::map = hilbert_kernel::map<vector<float, 3> >;
+    hilbert_wrapper<3>::map(hilbert_kernel::map<vector<float, 3> >);
 template <> cuda::function<void (float4 const*, unsigned int*)>
-    hilbert_wrapper<2>::map = hilbert_kernel::map<vector<float, 2> >;
+    hilbert_wrapper<2>::map(hilbert_kernel::map<vector<float, 2> >);
 
 // explicit instantiation
 template class hilbert_wrapper<3>;

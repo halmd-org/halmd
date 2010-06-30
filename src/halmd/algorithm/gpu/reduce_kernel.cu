@@ -114,55 +114,55 @@ __global__ void max(coalesced_input_type const* g_in, coalesced_output_type* g_b
  * device function wrappers
  */
 template <> cuda::function<void(float4 const*, float4*, uint)>
-    reduce_wrapper<512, float4, float4>::sum = gpu::sum<512, vector<float, 3>, vector<float, 3> >;
+    reduce_wrapper<512, float4, float4>::sum(gpu::sum<512, vector<float, 3>, vector<float, 3> >);
 template <> cuda::function<void(float2 const*, float2*, uint)>
-    reduce_wrapper<512, float2, float2>::sum = gpu::sum<512, vector<float, 2>, vector<float, 2> >;
+    reduce_wrapper<512, float2, float2>::sum(gpu::sum<512, vector<float, 2>, vector<float, 2> >);
 template <> cuda::function<void(float4 const*, float4*, uint)>
-    reduce_wrapper<256, float4, float4>::sum = gpu::sum<256, vector<float, 3>, vector<float, 3> >;
+    reduce_wrapper<256, float4, float4>::sum(gpu::sum<256, vector<float, 3>, vector<float, 3> >);
 template <> cuda::function<void(float2 const*, float2*, uint)>
-    reduce_wrapper<256, float2, float2>::sum = gpu::sum<256, vector<float, 2>, vector<float, 2> >;
+    reduce_wrapper<256, float2, float2>::sum(gpu::sum<256, vector<float, 2>, vector<float, 2> >);
 template <> cuda::function<void(float4 const*, float4*, uint)>
-    reduce_wrapper<128, float4, float4>::sum = gpu::sum<128, vector<float, 3>, vector<float, 3> >;
+    reduce_wrapper<128, float4, float4>::sum(gpu::sum<128, vector<float, 3>, vector<float, 3> >);
 template <> cuda::function<void(float2 const*, float2*, uint)>
-    reduce_wrapper<128, float2, float2>::sum = gpu::sum<128, vector<float, 2>, vector<float, 2> >;
+    reduce_wrapper<128, float2, float2>::sum(gpu::sum<128, vector<float, 2>, vector<float, 2> >);
 template <> cuda::function<void(float4 const*, float4*, uint)>
-    reduce_wrapper<64, float4, float4>::sum = gpu::sum<64, vector<float, 3>, vector<float, 3> >;
+    reduce_wrapper<64, float4, float4>::sum(gpu::sum<64, vector<float, 3>, vector<float, 3> >);
 template <> cuda::function<void(float2 const*, float2*, uint)>
-    reduce_wrapper<64, float2, float2>::sum = gpu::sum<64, vector<float, 2>, vector<float, 2> >;
+    reduce_wrapper<64, float2, float2>::sum(gpu::sum<64, vector<float, 2>, vector<float, 2> >);
 
 template <> cuda::function<void(float4 const*, dsfloat*, uint)>
-    reduce_wrapper<512, float4, dsfloat>::sum_of_squares = gpu::sum_of_squares<512, vector<float, 3>, dsfloat>;
+    reduce_wrapper<512, float4, dsfloat>::sum_of_squares(gpu::sum_of_squares<512, vector<float, 3>, dsfloat>);
 template <> cuda::function<void(float2 const*, dsfloat*, uint)>
-    reduce_wrapper<512, float2, dsfloat>::sum_of_squares = gpu::sum_of_squares<512, vector<float, 2>, dsfloat>;
+    reduce_wrapper<512, float2, dsfloat>::sum_of_squares(gpu::sum_of_squares<512, vector<float, 2>, dsfloat>);
 template <> cuda::function<void(float4 const*, dsfloat*, uint)>
-    reduce_wrapper<256, float4, dsfloat>::sum_of_squares = gpu::sum_of_squares<256, vector<float, 3>, dsfloat>;
+    reduce_wrapper<256, float4, dsfloat>::sum_of_squares(gpu::sum_of_squares<256, vector<float, 3>, dsfloat>);
 template <> cuda::function<void(float2 const*, dsfloat*, uint)>
-    reduce_wrapper<256, float2, dsfloat>::sum_of_squares = gpu::sum_of_squares<256, vector<float, 2>, dsfloat>;
+    reduce_wrapper<256, float2, dsfloat>::sum_of_squares(gpu::sum_of_squares<256, vector<float, 2>, dsfloat>);
 template <> cuda::function<void(float4 const*, dsfloat*, uint)>
-    reduce_wrapper<128, float4, dsfloat>::sum_of_squares = gpu::sum_of_squares<128, vector<float, 3>, dsfloat>;
+    reduce_wrapper<128, float4, dsfloat>::sum_of_squares(gpu::sum_of_squares<128, vector<float, 3>, dsfloat>);
 template <> cuda::function<void(float2 const*, dsfloat*, uint)>
-    reduce_wrapper<128, float2, dsfloat>::sum_of_squares = gpu::sum_of_squares<128, vector<float, 2>, dsfloat>;
+    reduce_wrapper<128, float2, dsfloat>::sum_of_squares(gpu::sum_of_squares<128, vector<float, 2>, dsfloat>);
 template <> cuda::function<void(float4 const*, dsfloat*, uint)>
-    reduce_wrapper<64, float4, dsfloat>::sum_of_squares = gpu::sum_of_squares<64, vector<float, 3>, dsfloat>;
+    reduce_wrapper<64, float4, dsfloat>::sum_of_squares(gpu::sum_of_squares<64, vector<float, 3>, dsfloat>);
 template <> cuda::function<void(float2 const*, dsfloat*, uint)>
-    reduce_wrapper<64, float2, dsfloat>::sum_of_squares = gpu::sum_of_squares<64, vector<float, 2>, dsfloat>;
+    reduce_wrapper<64, float2, dsfloat>::sum_of_squares(gpu::sum_of_squares<64, vector<float, 2>, dsfloat>);
 
 template <> cuda::function<void(float4 const*, float*, uint)>
-    reduce_wrapper<512, float4, float>::max = gpu::max<512, vector<float, 3>, float>;
+    reduce_wrapper<512, float4, float>::max(gpu::max<512, vector<float, 3>, float>);
 template <> cuda::function<void(float2 const*, float*, uint)>
-    reduce_wrapper<512, float2, float>::max = gpu::max<512, vector<float, 2>, float>;
+    reduce_wrapper<512, float2, float>::max(gpu::max<512, vector<float, 2>, float>);
 template <> cuda::function<void(float4 const*, float*, uint)>
-    reduce_wrapper<256, float4, float>::max = gpu::max<256, vector<float, 3>, float>;
+    reduce_wrapper<256, float4, float>::max(gpu::max<256, vector<float, 3>, float>);
 template <> cuda::function<void(float2 const*, float*, uint)>
-    reduce_wrapper<256, float2, float>::max = gpu::max<256, vector<float, 2>, float>;
+    reduce_wrapper<256, float2, float>::max(gpu::max<256, vector<float, 2>, float>);
 template <> cuda::function<void(float4 const*, float*, uint)>
-    reduce_wrapper<128, float4, float>::max = gpu::max<128, vector<float, 3>, float>;
+    reduce_wrapper<128, float4, float>::max(gpu::max<128, vector<float, 3>, float>);
 template <> cuda::function<void(float2 const*, float*, uint)>
-    reduce_wrapper<128, float2, float>::max = gpu::max<128, vector<float, 2>, float>;
+    reduce_wrapper<128, float2, float>::max(gpu::max<128, vector<float, 2>, float>);
 template <> cuda::function<void(float4 const*, float*, uint)>
-    reduce_wrapper<64, float4, float>::max = gpu::max<64, vector<float, 3>, float>;
+    reduce_wrapper<64, float4, float>::max(gpu::max<64, vector<float, 3>, float>);
 template <> cuda::function<void(float2 const*, float*, uint)>
-    reduce_wrapper<64, float2, float>::max = gpu::max<64, vector<float, 2>, float>;
+    reduce_wrapper<64, float2, float>::max(gpu::max<64, vector<float, 2>, float>);
 
 }} // namespace algorithm::gpu
 
