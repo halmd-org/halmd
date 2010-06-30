@@ -22,10 +22,12 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
-#include <cuda_wrapper.hpp>
+#include <boost/random/uniform_01.hpp>
+#include <boost/random/normal_distribution.hpp>
 #include <time.h>
 #include <stdexcept>
 
+#include <cuda_wrapper.hpp>
 #include <halmd/numeric/host/accumulator.hpp>
 #include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/gpu/rand48.hpp>
@@ -123,16 +125,19 @@ void test_rand48_gpu( unsigned long count )
 
 void test_gsl_rng( unsigned long count )
 {
+    typedef halmd::random::host::gfsr4 RandomNumberGenerator;
+
     unsigned seed = time(NULL);
 
     // seed host random number generator
-    halmd::random::host::gfsr4 rng;
-    rng.set(seed);
+    RandomNumberGenerator rng(seed);
+    // uniform distribution in [0.0, 1.0)
+    boost::uniform_01<RandomNumberGenerator&, double> uniform_01(rng);
 
     // test uniform distribution
     halmd::accumulator<double> a;
     for (unsigned i=0; i < count; i++) {
-        a += rng.uniform();
+        a += uniform_01();
     }
 
     // check count, mean, and variance
@@ -150,21 +155,17 @@ void test_gsl_rng( unsigned long count )
     BOOST_CHECK_CLOSE_FRACTION(a.var(), val, tol / val);
 
     // test Gaussian distribution
-    BOOST_REQUIRE_MESSAGE(count % 2 == 0, "Box-Muller algorithm requires even number of samples");
+    boost::normal_distribution<double> normal;
+    BOOST_CHECK_EQUAL(normal.mean(), 0.0);
+    BOOST_CHECK_EQUAL(normal.sigma(), 1.0);
     a.clear();
     halmd::accumulator<double> a3, a4;
-    for (unsigned i=0; i < count; i+=2) {
-        double x1, x2, tmp;
-        rng.gaussian(x1, x2, 1.);
-        a += x1;
-        tmp = x1 * x1;
-        a3 += x1 * tmp;
-        a4 += tmp * tmp;
-
-        a += x2;
-        tmp = x2 * x2;
-        a3 += x2 * tmp;
-        a4 += tmp * tmp;
+    for (unsigned i=0; i < count; i++) {
+        double x = normal(uniform_01);
+        a += x;
+        double x2 = x * x;
+        a3 += x * x2;
+        a4 += x2 * x2;
     }
 
     // mean = 0, std = 1
