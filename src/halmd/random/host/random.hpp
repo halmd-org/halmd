@@ -21,9 +21,10 @@
 #define HALMD_RANDOM_HOST_RANDOM_HPP
 
 #include <algorithm>
-#include <boost/random.hpp>
+#include <boost/random/uniform_01.hpp>
 #include <iterator>
 
+#include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/random.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -44,7 +45,7 @@ public:
     static void options(po::options_description& desc) {}
     static void select(po::options const& vm) {}
 
-    typedef boost::mt19937 random_generator;
+    typedef host::gfsr4 random_generator; // FIXME template parameter
 
     random(modules::factory& factory, po::options const& vm);
     virtual ~random() {}
@@ -71,9 +72,8 @@ template <typename input_iterator>
 void random::shuffle(input_iterator first, input_iterator last)
 {
     typedef typename std::iterator_traits<input_iterator>::difference_type difference_type;
-    boost::uniform_int<difference_type> variate;
     for (difference_type i = last - first; i > 1; --i) {
-        std::iter_swap(first + variate(rng_, i), first + (i - 1));
+        std::iter_swap(first + rng_(i), first + (i - 1));
     }
 }
 
