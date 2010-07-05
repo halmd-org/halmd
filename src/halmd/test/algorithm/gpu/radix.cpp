@@ -94,9 +94,9 @@ int main(int argc, char **argv)
         cuda::vector<uint> g_array(count);
         cuda::host::vector<uint> h_array(count);
         cuda::config dim((count + threads - 1) / threads, threads);
-        halmd::random::gpu::rand48 rng(dim);
-        rng.set(seed);
-        rng.get(g_array);
+        halmd::random::gpu::rand48 rng(dim.grid, dim.block);
+        rng.seed(seed);
+        // FIXME rng.get(g_array);
         cuda::copy(g_array, h_array);
 
         // parallel radix sort

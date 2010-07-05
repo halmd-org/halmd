@@ -41,24 +41,24 @@ using namespace std;
 /**
  * Resolve module dependencies
  */
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::depends()
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::depends()
 {
     modules::depends<_Self, particle_type>::required();
     modules::depends<_Self, box_type>::required();
     modules::depends<_Self, random_type>::required();
 }
 
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::select(po::options const& vm)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::select(po::options const& vm)
 {
     if (vm["position"].as<string>() != "lattice") {
         throw unsuitable_module("mismatching option position");
     }
 }
 
-template <int dimension, typename float_type>
-lattice<dimension, float_type>::lattice(modules::factory& factory, po::options const& vm)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+lattice<dimension, float_type, RandomNumberGenerator>::lattice(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
@@ -97,8 +97,8 @@ lattice<dimension, float_type>::lattice(modules::factory& factory, po::options c
  *
  * is satisfied.
  */
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::set()
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
     // TODO: handle non-cubic boxes
     for (unsigned i=1; i < dimension; i++) {
@@ -157,13 +157,13 @@ void lattice<dimension, float_type>::set()
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());
 }
 
-// explicit instantiation
-template class lattice<3, float>;
-template class lattice<2, float>;
-
 }}} // namespace mdsim::gpu::position
 
-template class module<mdsim::gpu::position::lattice<3, float> >;
-template class module<mdsim::gpu::position::lattice<2, float> >;
+// explicit instantiation
+template class mdsim::gpu::position::lattice<3, float, random::gpu::rand48>;
+template class mdsim::gpu::position::lattice<2, float, random::gpu::rand48>;
+
+template class module<mdsim::gpu::position::lattice<3, float, random::gpu::rand48> >;
+template class module<mdsim::gpu::position::lattice<2, float, random::gpu::rand48> >;
 
 } // namespace halmd

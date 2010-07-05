@@ -33,8 +33,8 @@ using namespace std;
 /**
  * Assemble module options
  */
-template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::options(po::options_description& desc)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void boltzmann<dimension, float_type, RandomNumberGenerator>::options(po::options_description& desc)
 {
     po::options_description group("Boltzmann velocity distribution");
     group.add_options()
@@ -47,23 +47,23 @@ void boltzmann<dimension, float_type>::options(po::options_description& desc)
 /**
  * Resolve module dependencies
  */
-template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::depends()
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void boltzmann<dimension, float_type, RandomNumberGenerator>::depends()
 {
     modules::depends<_Self, particle_type>::required();
     modules::depends<_Self, random_type>::required();
 }
 
-template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::select(po::options const& vm)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void boltzmann<dimension, float_type, RandomNumberGenerator>::select(po::options const& vm)
 {
     if (vm["velocity"].as<string>() != "boltzmann") {
         throw unsuitable_module("mismatching option velocity");
     }
 }
 
-template <int dimension, typename float_type>
-boltzmann<dimension, float_type>::boltzmann(modules::factory& factory, po::options const& vm)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
@@ -86,8 +86,8 @@ boltzmann<dimension, float_type>::boltzmann(modules::factory& factory, po::optio
  * in consequence affects the second moment, i.e. the temperature.
  *
  */
-template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::set()
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 {
     LOG("assigning Maxwell-Boltzmann velocity distribution: T = " << temp_);
 
@@ -146,9 +146,9 @@ void boltzmann<dimension, float_type>::set()
 /**
  * Assign new velocities from Gaussian distribution
  */
-template <int dimension, typename float_type>
-pair<typename boltzmann<dimension, float_type>::vector_type, float_type>
-inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+pair<typename boltzmann<dimension, float_type, RandomNumberGenerator>::vector_type, float_type>
+inline boltzmann<dimension, float_type, RandomNumberGenerator>::gaussian(float_type sigma)
 {
     vector_type v_cm = 0;
     float_type vv = 0;
@@ -182,8 +182,8 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
 /**
  * Shift all velocities by 'v'
  */
-template <int dimension, typename float_type>
-inline void boltzmann<dimension, float_type>::shift(vector_type const& v_shift)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+inline void boltzmann<dimension, float_type, RandomNumberGenerator>::shift(vector_type const& v_shift)
 {
 /*    BOOST_FOREACH (vector_type& v, particle->v) {
         v += v_shift;
@@ -193,8 +193,8 @@ inline void boltzmann<dimension, float_type>::shift(vector_type const& v_shift)
 /**
  * Rescale magnitude of all velocities by factor 'scale'
  */
-template <int dimension, typename float_type>
-inline void boltzmann<dimension, float_type>::rescale(float_type scale)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+inline void boltzmann<dimension, float_type, RandomNumberGenerator>::rescale(float_type scale)
 {
 //     BOOST_FOREACH (vector_type& v, particle->v) {
 //         v *= scale;
@@ -205,8 +205,8 @@ inline void boltzmann<dimension, float_type>::rescale(float_type scale)
 /**
  * First shift, then rescale all velocities
  */
-template <int dimension, typename float_type>
-inline void boltzmann<dimension, float_type>::shift_rescale(
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+inline void boltzmann<dimension, float_type, RandomNumberGenerator>::shift_rescale(
     vector_type const& v_shift,
     float_type scale)
 {
@@ -216,13 +216,13 @@ inline void boltzmann<dimension, float_type>::shift_rescale(
 //     }
 }
 
-// explicit instantiation
-template class boltzmann<3, float>;
-template class boltzmann<2, float>;
-
 }}} // namespace mdsim::gpu::velocity
 
-template class module<mdsim::gpu::velocity::boltzmann<3, float> >;
-template class module<mdsim::gpu::velocity::boltzmann<2, float> >;
+// explicit instantiation
+template class mdsim::gpu::velocity::boltzmann<3, float, random::gpu::rand48>;
+template class mdsim::gpu::velocity::boltzmann<2, float, random::gpu::rand48>;
+
+template class module<mdsim::gpu::velocity::boltzmann<3, float, random::gpu::rand48> >;
+template class module<mdsim::gpu::velocity::boltzmann<2, float, random::gpu::rand48> >;
 
 } // namespace halmd

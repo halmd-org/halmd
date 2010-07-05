@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,28 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
-#include <halmd/random/host/random.hpp>
+#ifndef HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH
+#define HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH
 
-namespace halmd
-{
-namespace random { namespace host
-{
+#include <halmd/random/gpu/rand48_kernel.cuh>
 
-random::random(modules::factory& factory, po::options const& vm)
-  : _Base(factory, vm)
-{
-    _Base::seed(vm);
-}
-
-void random::seed(unsigned int value)
-{
-    LOG("random number generator seed: " << value);
-    rng_.seed(value);
-}
-
-}} // namespace random::host
-
-template class module<random::host::random>;
-
-} // namespace halmd
+#endif /* ! HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH */

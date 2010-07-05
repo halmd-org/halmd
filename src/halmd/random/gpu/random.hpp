@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -38,6 +38,7 @@ namespace halmd
 namespace random { namespace gpu
 {
 
+template <typename RandomNumberGenerator>
 class random
   : public halmd::random::random
 {
@@ -45,11 +46,11 @@ public:
     // module definitions
     typedef random _Self;
     typedef halmd::random::random _Base;
-    static void options(po::options_description& desc) {};
+    static void options(po::options_description& desc);
     static void depends();
     static void select(po::options const& vm) {}
 
-    typedef rand48 random_generator;
+    typedef typename RandomNumberGenerator::rng_type rng_type;
     typedef utility::gpu::device device_type;
 
     shared_ptr<device_type> device;
@@ -58,23 +59,30 @@ public:
     virtual ~random() {}
     void seed(unsigned int value);
 
-    template <typename sequence_type>
-    void shuffle(sequence_type& g_val);
-    template <typename value_type>
-    void normal(value_type& r1, value_type& r2, value_type sigma2);
+    //
+    // The following functions are provided for convenience.
+    // Use the CUDA device functions for more flexibility.
+    //
+    void uniform(cuda::vector<float>& g_v);
+    void get(cuda::vector<unsigned int>& g_v);
+    void normal(cuda::vector<float>& g_v, float mean, float sigma);
+
+    template <typename Sequence>
+    void shuffle(Sequence& g_val);
 
 protected:
     /** pseudo-random number generator */
-    random_generator rng_;
+    RandomNumberGenerator rng_;
 };
 
 /**
  * Shuffle sequence in-place
  */
-template <typename sequence_type>
-void random::shuffle(sequence_type& g_val)
+template <typename RandomNumberGenerator>
+template <typename Sequence>
+void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
 {
-    typedef typename sequence_type::value_type value_type;
+    typedef typename Sequence::value_type value_type;
     typedef algorithm::gpu::radix_sort<value_type> sort_type;
 
     cuda::vector<unsigned int> g_sort_index;
@@ -90,7 +98,7 @@ void random::shuffle(sequence_type& g_val)
 
     sort_type sort(g_val.size(), device->threads());
     try {
-        rng_.get(g_sort_index);
+        get(g_sort_index);
         sort(g_sort_index, g_val);
         cuda::thread::synchronize();
     }
@@ -98,7 +106,6 @@ void random::shuffle(sequence_type& g_val)
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to shuffle sequence on GPU");
     }
-
 }
 
 }} // namespace random::gpu

@@ -1,6 +1,5 @@
-/* Parallelized rand48 random number generator for CUDA
- *
- * Copyright © 2007-2009  Peter Colberg
+/*
+ * Copyright © 2007-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -33,188 +32,60 @@ namespace random { namespace gpu
 {
 
 /**
- * parallelized rand48 random number generator for CUDA
+ * Parallelized rand48 random number generator for CUDA
  */
 class rand48
 {
 public:
-    /** type for saving or restoring generator state in memory */
-    typedef ushort3 state_type;
-
-public:
-    rand48()
-      : sym_a(rand48_kernel::a), sym_c(rand48_kernel::c),
-        sym_state(rand48_kernel::state) {}
+    typedef rand48_rng rng_type;
 
     /**
      * initialize random number generator with CUDA execution dimensions
      */
-    rand48(cuda::config const& dim)
-      : sym_a(rand48_kernel::a), sym_c(rand48_kernel::c),
-        sym_state(rand48_kernel::state), dim_(dim), g_state(dim.threads())
-    {
-        // copy state pointer to device symbol
-        cuda::copy(g_state.data(), sym_state);
-    }
+    rand48(dim3 blocks, dim3 threads)
+      : dim(blocks, threads)
+      , g_state_(dim.threads())
+    {}
 
     /**
-     * initialise device symbols of arbitrary module for rand48 usage
+     * seed generator with 32-bit integer
      */
-    void init_symbols(cuda::symbol<uint48>& a, cuda::symbol<uint48>& c,
-                      cuda::symbol<ushort3*>& state)
-    {
-        uint48 a_, c_;
-        cuda::copy(sym_a, a_);
-        cuda::copy(sym_c, c_);
-        cuda::copy(a_, a);
-        cuda::copy(c_, c);
-        cuda::copy(g_state.data(), state);
-    }
-
-    /**
-     * change random number generator CUDA execution dimensions
-     */
-    void resize(cuda::config const& dim)
-    {
-        if (g_state.size() > 0) {
-            ushort3 x;
-            // save generator state using old dimensions
-            save(x);
-            // set new CUDA execution dimensions
-            dim_ = dim;
-            // reallocate global device memory for generator state
-            g_state.resize(dim_.threads());
-            // copy state pointer to device symbol
-            cuda::copy(g_state.data(), sym_state);
-            // restore generator state using new dimensions
-            restore(x);
-        }
-        else {
-            // set new CUDA execution dimensions
-            dim_ = dim;
-            // reallocate global device memory for generator state
-            g_state.resize(dim_.threads());
-            // copy state pointer to device symbol
-            cuda::copy(g_state.data(), sym_state);
-        }
-    }
-
-    /**
-     * initialize generator with 32-bit integer seed
-     */
-    void set(uint seed)
+    void seed(unsigned int value)
     {
         // compute leapfrog multipliers for initialization
-        cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_kernel::leapfrog(g_a);
+        cuda::vector<uint48> g_A(dim.threads()), g_C(dim.threads());
+        cuda::configure(dim.grid, dim.block);
+        rand48_wrapper::leapfrog(g_A);
 
         // compute leapfrog addends for initialization
-        cuda::copy(g_a, g_c);
-        algorithm::gpu::scan<uint48> scan(g_c.size(), dim_.threads_per_block());
-        scan(g_c);
+        cuda::copy(g_A, g_C);
+        algorithm::gpu::scan<uint48> scan(g_C.size(), dim.threads_per_block());
+        scan(g_C);
 
         // initialize generator with seed
-        cuda::vector<uint48> a(1), c(1);
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_kernel::set(g_a, g_c, a, c, seed);
-        cuda::thread::synchronize();
+        cuda::vector<uint48> g_a(1), g_c(1);
+        cuda::host::vector<uint48> h_a(1), h_c(1);
+        cuda::configure(dim.grid, dim.block);
+        rand48_wrapper::seed(g_A, g_C, g_a, g_c, g_state_, value);
+        cuda::copy(g_a, h_a);
+        cuda::copy(g_c, h_c);
 
-        // copy leapfrog multiplier into constant device memory
-        cuda::copy(a, sym_a);
-        // copy leapfrog addend into constant device memory
-        cuda::copy(c, sym_c);
+        // set leapfrog constants for constant device memory
+        rng_.a = h_a.front();
+        rng_.c = h_c.front();
+        rng_.g_state = g_state_.data();
     }
 
-    /*
-     * fill array with uniform random numbers in [0.0, 1.0)
-     */
-    void uniform(cuda::vector<float>& r)
+    cuda::config const dim;
+
+    rand48_rng const& rng() const
     {
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_kernel::uniform(r, r.size());
-    }
-
-    /**
-     * fill array with random integers in [0, 2^32-1]
-     */
-    void get(cuda::vector<uint>& r)
-    {
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_kernel::get(r, r.size());
-    }
-
-    /**
-     * save generator state to memory
-     */
-    void save(state_type& mem)
-    {
-        cuda::vector<ushort3> buf_gpu(1);
-        cuda::host::vector<ushort3> buf(1);
-
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_kernel::save(buf_gpu);
-        cuda::copy(buf_gpu, buf);
-        cuda::thread::synchronize();
-
-        mem = buf[0u];
-    }
-
-    /**
-     * restore generator state from memory
-     */
-    void restore(state_type const& mem)
-    {
-        // compute leapfrog multipliers for initialization
-        cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_kernel::leapfrog(g_a);
-
-        // compute leapfrog addends for initialization
-        cuda::copy(g_a, g_c);
-        algorithm::gpu::scan<uint48> scan(g_c.size(), dim_.threads_per_block());
-        scan(g_c);
-
-        // initialize generator from state
-        cuda::vector<uint48> a(1), c(1);
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_kernel::restore(g_a, g_c, a, c, mem);
-        cuda::thread::synchronize();
-
-        // copy leapfrog multiplier into constant device memory
-        cuda::copy(a, sym_a);
-        // copy leapfrog addend into constant device memory
-        cuda::copy(c, sym_c);
-    }
-
-    /**
-     * save generator state to text-mode output stream
-     */
-    friend std::ostream& operator<<(std::ostream& os, rand48& rng)
-    {
-        state_type state;
-        rng.save(state);
-        os << state.x << " " << state.y << " " << state.z << " ";
-        return os;
-    }
-
-    /**
-     * restore generator state from text-mode input stream
-     */
-    friend std::istream& operator>>(std::istream& is, rand48& rng)
-    {
-        state_type state;
-        is >> state.x >> state.y >> state.z;
-        rng.restore(state);
-        return is;
+        return rng_;
     }
 
 private:
-    cuda::symbol<uint48>& sym_a;
-    cuda::symbol<uint48>& sym_c;
-    cuda::symbol<ushort3*>& sym_state;
-    cuda::config dim_;
-    cuda::vector<ushort3> g_state;
+    cuda::vector<ushort3> g_state_;
+    rand48_rng rng_;
 };
 
 }} // namespace random::gpu

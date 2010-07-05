@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -39,11 +39,13 @@ public:
 
     random(modules::factory& factory, po::options const& vm) {}
     virtual ~random() {}
-    virtual void seed(unsigned int value) = 0;
 
 protected:
-    unsigned int readint(std::string const& fn);
-    void set_seed(po::options const& vm);
+    void seed(po::options const& vm);
+    virtual void seed(unsigned int value) = 0;
+
+private:
+    static unsigned int readint(std::string const& fn);
 };
 
 } // namespace random

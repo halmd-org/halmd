@@ -1,6 +1,5 @@
-/* Parallelized rand48 random number generator for CUDA
- *
- * Copyright © 2007-2009  Peter Colberg
+/*
+ * Copyright © 2007-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -22,27 +21,17 @@
 #define HALMD_RANDOM_GPU_RAND48_KERNEL_HPP
 
 #include <cuda_wrapper.hpp>
-#include <halmd/numeric/gpu/uint48.cuh>
+#include <halmd/random/gpu/rand48_kernel.cuh>
 
 namespace halmd
 {
 namespace random { namespace gpu
 {
 
-using numeric::gpu::uint48;
-
-struct rand48_kernel
+struct rand48_wrapper
 {
     static cuda::function<void (uint48*)> leapfrog;
-    static cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, uint)> set;
-    static cuda::function<void (ushort3*)> save;
-    static cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3)> restore;
-    static cuda::function<void (float*, uint)> uniform;
-    static cuda::function<void (uint*, uint)> get;
-
-    static cuda::symbol<uint48> a;
-    static cuda::symbol<uint48> c;
-    static cuda::symbol<ushort3*> state;
+    static cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3* g_state, uint)> seed;
 };
 
 }} // namespace random::gpu

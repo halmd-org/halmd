@@ -1,6 +1,5 @@
-/* Parallelized rand48 random number generator for CUDA
- *
- * Copyright © 2007-2009  Peter Colberg
+/*
+ * Copyright © 2007-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -29,7 +28,6 @@
 #define HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 
 #include <halmd/numeric/gpu/uint48.cuh>
-#include <halmd/numeric/gpu/blas/vector.cuh>
 
 namespace halmd
 {
@@ -38,67 +36,44 @@ namespace random { namespace gpu
 
 using numeric::gpu::uint48;
 
-typedef ushort3 state_type;
+struct rand48_rng
+{
+    /** per-thread generator state type */
+    typedef ushort3 state_type;
 
-/** leapfrogging multiplier */
-__constant__ uint48 a;
-/** leapfrogging addend */
-__constant__ uint48 c;
-/** generator state in global device memory */
-__constant__ state_type* g_state;
+    state_type& operator[](unsigned int thread) const
+    {
+        return g_state[thread];
+    }
+
+    /** leapfrogging multiplier */
+    uint48 a;
+    /** leapfrogging addend */
+    uint48 c;
+    /** generator states in global device memory */
+    state_type* g_state;
+};
 
 /**
  * returns uniform random number in [0.0, 1.0)
  */
-__device__ float uniform(state_type& state)
+inline __device__ float uniform(rand48_rng const& rng, rand48_rng::state_type& state)
 {
-    float r = state.z / 65536.f + state.y / 4294967296.f;
+    uint48 const a = rng.a, c = rng.c;
+    float variate = state.z / 65536.f + state.y / 4294967296.f;
     state = muladd(a, state, c);
-    return r;
+    return variate;
 }
 
 /**
- * generate 2 random numbers from Gaussian distribution with given variance
+ * returns random integer in [0, 2^32-1]
  */
-__device__ void gaussian(float& r1, float& r2, float var, state_type& state)
+inline __device__ unsigned int get(rand48_rng const& rng, rand48_rng::state_type& state)
 {
-    //
-    // The Box-Muller transformation for generating random numbers
-    // in the normal distribution was originally described in
-    //
-    // G.E.P. Box and M.E. Muller, A Note on the Generation of
-    // Random Normal Deviates, The Annals of Mathematical Statistics,
-    // 1958, 29, p. 610-611
-    //
-    // Here, we use instead the faster polar method of the Box-Muller
-    // transformation, see
-    //
-    // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
-    // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
-    //
-
-    float s;
-
-    do {
-        r1 = 2 * uniform(state) - 1;
-        r2 = 2 * uniform(state) - 1;
-        s = r1 * r1 + r2 * r2;
-    } while (s >= 1);
-
-    s = sqrtf(-2 * var * logf(s) / s);
-    r1 *= s;
-    r2 *= s;
-}
-
-__device__ void gaussian(float4& v, float var, state_type& state)
-{
-    gaussian(v.x, v.y, var, state);
-    gaussian(v.z, v.w, var, state);
-}
-
-__device__ void gaussian(float2& v, float var, state_type& state)
-{
-    gaussian(v.x, v.y, var, state);
+    uint48 const a = rng.a, c = rng.c;
+    unsigned int variate = (state.z << 16UL) + state.y;
+    state = muladd(a, state, c);
+    return variate;
 }
 
 }} // namespace random::gpu

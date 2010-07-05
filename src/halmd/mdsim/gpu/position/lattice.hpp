@@ -33,7 +33,7 @@ namespace halmd
 namespace mdsim { namespace gpu { namespace position
 {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type, typename RandomNumberGenerator>
 class lattice
   : public mdsim::position<dimension>
 {
@@ -48,7 +48,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef gpu::box<dimension> box_type;
-    typedef random::gpu::random random_type;
+    typedef random::gpu::random<RandomNumberGenerator> random_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;

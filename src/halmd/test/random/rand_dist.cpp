@@ -80,13 +80,12 @@ void test_rand48_gpu( unsigned long count )
 
     try {
         // seed GPU random number generator
-        halmd::random::gpu::rand48 rng(cuda::config(BLOCKS, THREADS));
-        rng.set(seed);
-        cuda::thread::synchronize();
+        halmd::random::gpu::rand48 rng(BLOCKS, THREADS);
+        rng.seed(seed);
 
         // parallel GPU rand48
         cuda::vector<float> g_array(count);
-        rng.uniform(g_array);
+        // FIXME rng.uniform(g_array);
         cuda::thread::synchronize();
 
         cuda::host::vector<float> h_array(count);

@@ -104,18 +104,15 @@ int main(int argc, char **argv)
         std::cout << std::endl;
 
         // seed GPU random number generator
-        cuda::config dim(blocks, threads);
-        halmd::random::gpu::rand48 rng(dim);
+        halmd::random::gpu::rand48 rng(blocks, threads);
         start[0].record();
-        rng.set(seed);
-        cuda::thread::synchronize();
+        rng.seed(seed);
         stop[0].record();
 
         // parallel GPU rand48
         cuda::vector<uint> g_array(count);
         start[1].record();
-        rng.get(g_array);
-        cuda::thread::synchronize();
+        // FIXME rng.get(g_array);
         stop[1].record();
 
         cuda::host::vector<uint> h_array(count);

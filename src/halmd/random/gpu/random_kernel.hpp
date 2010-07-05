@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,28 +17,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
-#include <halmd/random/host/random.hpp>
+#ifndef HALMD_RANDOM_GPU_RANDOM_KERNEL_HPP
+#define HALMD_RANDOM_GPU_RANDOM_KERNEL_HPP
+
+#include <cuda_wrapper.hpp>
 
 namespace halmd
 {
-namespace random { namespace host
+namespace random { namespace gpu
 {
 
-random::random(modules::factory& factory, po::options const& vm)
-  : _Base(factory, vm)
+template <typename RandomNumberGenerator>
+struct random_wrapper
 {
-    _Base::seed(vm);
-}
+    static cuda::symbol<RandomNumberGenerator> rng;
+    static cuda::function<void (float*, uint)> uniform;
+    static cuda::function<void (uint*, uint)> get;
+    static cuda::function<void (float*, uint, float, float)> normal;
+};
 
-void random::seed(unsigned int value)
-{
-    LOG("random number generator seed: " << value);
-    rng_.seed(value);
-}
-
-}} // namespace random::host
-
-template class module<random::host::random>;
+}} // namespace random::gpu
 
 } // namespace halmd
+
+#endif /* ! HALMD_RANDOM_GPU_RANDOM_KERNEL_HPP */

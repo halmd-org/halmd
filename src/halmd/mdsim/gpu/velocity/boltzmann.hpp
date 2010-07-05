@@ -32,7 +32,7 @@ namespace halmd
 namespace mdsim { namespace gpu { namespace velocity
 {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type, typename RandomNumberGenerator>
 class boltzmann
   : public mdsim::velocity<dimension>
 {
@@ -47,7 +47,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
-    typedef random::gpu::random random_type;
+    typedef random::gpu::random<RandomNumberGenerator> random_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<random_type> random;

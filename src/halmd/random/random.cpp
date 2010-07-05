@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -45,19 +45,18 @@ void random::options(po::options_description& desc)
 }
 
 /**
- * Set seed from option or device
- *
- * accesses the pure virtual function seed()
- * => can only be called from a derived class
+ * Seed random number generator from option or device
  */
-void random::set_seed(po::options const& vm)
+void random::seed(po::options const& vm)
 {
+    unsigned int value;
     if (vm["random-seed"].empty()) {
-        seed(readint(vm["random-device"].as<std::string>()));
+        value = readint(vm["random-device"].as<std::string>());
     }
     else {
-        seed(vm["random-seed"].as<unsigned int>());
+        value = vm["random-seed"].as<unsigned int>();
     }
+    seed(value);
 }
 
 /**

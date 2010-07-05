@@ -41,28 +41,20 @@ namespace numeric { namespace gpu
  * and that we define a custom uint48 type instead of using
  * the predefined uint3, as we overload the add operators.
  */
-struct uint48
+struct uint48 : uint3 {};
+
+inline __device__ __host__ uint48 make_uint48(uint x, uint y, uint z)
 {
-    unsigned int x, y, z;
-
-    uint48(uint48 const& i) : x(i.x), y(i.y), z(i.z) {}
-    uint48() {}
-    uint48(unsigned int i) : x(i), y(i), z(i) {}
-    uint48(unsigned int x, unsigned int y, unsigned int z) : x(x), y(y), z(z) {}
-
-    uint48(uint3 const& i) : x(i.x), y(i.y), z(i.z) {}
-    operator uint3() { return make_uint3(x, y, z); }
-
-    uint48(ushort3 const& i) : x(i.x), y(i.y), z(i.z) {}
-    operator ushort3() { return make_ushort3(x, y, z); }
-};
+    uint48 u; u.x = x; u.y = y; u.z = z; return u;
+}
 
 /**
  * combined multiply-add operation for 48 bit integers
  */
-inline __device__ __host__ uint48 muladd(uint48 const& a, uint48 const& b, uint48 const& c)
+template <typename T>
+__device__ __host__ T muladd(uint48 const& a, T const& b, uint48 const& c)
 {
-    uint48 r;
+    T r;
 
     //
     // With a C compiler following the ISO/IEC 9899:1999 standard

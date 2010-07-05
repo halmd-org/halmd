@@ -1,6 +1,5 @@
-/* Parallelized rand48 random number generator for CUDA
- *
- * Copyright © 2007-2009  Peter Colberg
+/*
+ * Copyright © 2007-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,13 +25,16 @@
 //
 
 #include <halmd/algorithm/gpu/scan_kernel.cuh>
-#include <halmd/random/gpu/rand48_kernel.cuh>
 #include <halmd/random/gpu/rand48_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+
+using namespace halmd::numeric::gpu;
 
 namespace halmd
 {
 namespace random { namespace gpu
+{
+namespace rand48_kernel
 {
 
 /*
@@ -43,9 +45,10 @@ namespace random { namespace gpu
 /**
  * compute leapfrog multipliers for initialization
  */
-__global__ void leapfrog(uint48* g_la)
+__global__ void leapfrog(uint48* g_A)
 {
-    const uint48 a(0xE66D, 0xDEEC, 0x0005);
+    uint48 const a = make_uint48(0xE66D, 0xDEEC, 0x0005);
+    uint48 const zero = uint48(); // value-initialized
 
     //
     // leapfrog multiplier:
@@ -58,28 +61,28 @@ __global__ void leapfrog(uint48* g_la)
     // fast exponentiation by squares
     for (uint k = GTID; k > 0; k >>= 1) {
         if (k % 2 == 1) {
-            A = muladd(x, A, 0);
+            A = muladd(x, A, zero);
         }
-        x = muladd(x, x, 0);
+        x = muladd(x, x, zero);
     }
 
-    g_la[GTID] = A;
+    g_A[GTID] = A;
 }
 
 /**
  * initialize generator with 32-bit integer seed
  */
-__global__ void set(uint48 const* g_la, uint48 const* g_lc, uint48 *g_a, uint48 *g_c, uint seed)
+__global__ void seed(uint48 const* g_A, uint48 const* g_C, uint48 *g_a, uint48 *g_c, ushort3* g_state, uint seed)
 {
-    const uint48 c(0x000B, 0, 0);
+    uint48 const c = make_uint48(0x000B, 0, 0);
 
     //
     // leapfrog addend:
     //   C = (c * sum(n = 0..(N-1), a^n)) mod m
     //
 
-    const uint48 A = g_la[GTID];
-    const uint48 C = muladd(c, g_lc[GTID], c);
+    uint48 const A = g_A[GTID];
+    uint48 const C = muladd(c, g_C[GTID], c);
 
     if (GTID == GTDIM - 1) {
         // store leapfrog constants
@@ -99,102 +102,15 @@ __global__ void set(uint48 const* g_la, uint48 const* g_lc, uint48 *g_a, uint48 
     g_state[GTID] = muladd(A, x, C);
 }
 
-/**
- * restore generate state
- */
-__global__ void restore(uint48 const* g_la, uint48 const* g_lc, uint48 *g_a, uint48 *g_c, ushort3 state)
-{
-    const uint48 c(0x000B, 0, 0);
-
-    const uint48 A = g_la[GTID];
-    const uint48 C = muladd(c, g_lc[GTID], c);
-
-    if (GTID == GTDIM - 1) {
-        // store leapfrog constants
-        *g_a = A;
-        *g_c = C;
-
-        g_state[0] = state;
-    }
-    else {
-        // generate initial states
-        g_state[GTID + 1] = muladd(A, state, C);
-    }
-}
+} // namespace rand48_kernel
 
 /**
- * save generator state
+ * CUDA C++ wrappers
  */
-__global__ void save(ushort3 *state)
-{
-    if (GTID == 0) {
-        *state = g_state[0];
-    }
-}
-
-/**
- * fill array with uniform random numbers in [0.0, 1.0)
- */
-__global__ void uniform(float* v, uint len)
-{
-    ushort3 x = g_state[GTID];
-
-    for (uint k = GTID; k < len; k += GTDIM) {
-        v[k] = uniform(x);
-    }
-
-    g_state[GTID] = x;
-}
-
-/**
- * returns random integer in [0, 2^32-1]
- */
-__device__ uint get(ushort3& state)
-{
-    uint r = (state.z << 16UL) + state.y;
-    state = muladd(a, state, c);
-    return r;
-}
-
-/**
- * fill array with random integers in [0, 2^32-1]
- */
-__global__ void get(uint* v, uint len)
-{
-    ushort3 x = g_state[GTID];
-
-    for (uint k = GTID; k < len; k += GTDIM) {
-        v[k] = get(x);
-    }
-
-    g_state[GTID] = x;
-}
-
-/**
- * device function wrappers
- */
-cuda::function<void (uint48*)>
-    rand48_kernel::leapfrog(gpu::leapfrog);
-cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, uint)>
-    rand48_kernel::set(gpu::set);
-cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3)>
-    rand48_kernel::restore(gpu::restore);
-cuda::function<void (ushort3*)>
-    rand48_kernel::save(gpu::save);
-cuda::function<void (float*, uint)>
-    rand48_kernel::uniform(gpu::uniform);
-cuda::function<void (uint*, uint)>
-    rand48_kernel::get(gpu::get);
-
-/**
- * device constant wrappers
- */
-cuda::symbol<uint48>
-    rand48_kernel::a(gpu::a);
-cuda::symbol<uint48>
-    rand48_kernel::c(gpu::c);
-cuda::symbol<ushort3*>
-    rand48_kernel::state(gpu::g_state);
+typeof(rand48_wrapper::leapfrog)
+    rand48_wrapper::leapfrog(rand48_kernel::leapfrog);
+typeof(rand48_wrapper::seed)
+    rand48_wrapper::seed(rand48_kernel::seed);
 
 }} // namespace random::gpu
 

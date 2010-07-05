@@ -6,3 +6,6 @@ target_link_libraries(test_rand48
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${CUDA_LIBRARIES}
 )
+add_test(random_gpu_rand48
+  test_rand48
+)
