@@ -60,8 +60,8 @@ public:
 
     template <typename sequence_type>
     void shuffle(sequence_type& g_val);
-    template <unsigned dimension, typename sequence_type>
-    void normal(sequence_type& g_val, float variance);
+    template <typename value_type>
+    void normal(value_type& r1, value_type& r2, value_type sigma2);
 
 protected:
     /** pseudo-random number generator */
@@ -98,33 +98,7 @@ void random::shuffle(sequence_type& g_val)
         LOG_ERROR("CUDA: " << e.what());
         throw exception("failed to shuffle sequence on GPU");
     }
-}
 
-/**
- * Fill sequence with normally distributed random numbers of given variance,
- * the value_type of sequence may be a vector
- */
-
-template <unsigned dimension, typename sequence_type>
-void random::normal(sequence_type& g_val, float variance)
-{
-    typedef typename sequence_type::value_type value_type;
-
-    try {
-        const uint stride = sizeof(value_type) / sizeof(float);
-
-        // successively assign the dimensional components,
-        // the dimension can not be derived from value_type
-        // being often an aligned type like float2 or float4
-        for (uint i=0; i < dimension; i++) {
-            rng_.normal(reinterpret_cast<float*>((value_type*)g_val) + i,
-                        g_val.size(), variance, stride);
-        }
-    }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to generate normal distribution on GPU");
-    }
 }
 
 }} // namespace random::gpu
