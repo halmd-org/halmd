@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/algorithm/gpu/scan_kernel.cuh>
 #include <halmd/random/gpu/rand48_kernel.cuh>
 #include <halmd/random/gpu/rand48_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -189,5 +190,7 @@ cuda::symbol<ushort3*>
     rand48_kernel::state(gpu::g_state);
 
 }} // namespace random::gpu
+
+template class algorithm::gpu::scan_kernel<random::gpu::uint48>;
 
 } // namespace halmd

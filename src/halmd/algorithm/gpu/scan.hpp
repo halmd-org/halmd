@@ -23,7 +23,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include <halmd/algorithm/gpu/scan_kernel.cuh>
+#include <halmd/algorithm/gpu/scan_kernel.hpp>
 
 namespace halmd
 {
@@ -73,23 +73,23 @@ public:
 
         // compute blockwise partial prefix sums
         cuda::configure(blocks[0], threads, boff(2 * threads * sizeof(T)));
-        scan_wrapper<T>::grid_prefix_sum(g_array, g_array, g_sum[0], count);
+        scan_kernel<T>::grid_prefix_sum(g_array, g_array, g_sum[0], count);
 
         for (uint i = 1; i < blocks.size(); ++i) {
             cuda::configure(blocks[i], threads, boff(2 * threads * sizeof(T)));
-            scan_wrapper<T>::grid_prefix_sum(g_sum[i - 1], g_sum[i - 1], g_sum[i], blocks[i - 1]);
+            scan_kernel<T>::grid_prefix_sum(g_sum[i - 1], g_sum[i - 1], g_sum[i], blocks[i - 1]);
         }
 
         // add block prefix sums to partial prefix sums
         if (blocks.size() > 1) {
             for (uint i = blocks.size() - 2; i > 0; --i) {
                 cuda::configure(g_sum[i].size(), threads);
-                scan_wrapper<T>::add_block_sums(g_sum[i - 1], g_sum[i - 1], g_sum[i], blocks[i - 1]);
+                scan_kernel<T>::add_block_sums(g_sum[i - 1], g_sum[i - 1], g_sum[i], blocks[i - 1]);
             }
         }
         if (blocks[0] > 1) {
             cuda::configure(blocks[0], threads);
-            scan_wrapper<T>::add_block_sums(g_array, g_array, g_sum[0], count);
+            scan_kernel<T>::add_block_sums(g_array, g_array, g_sum[0], count);
         }
     }
 

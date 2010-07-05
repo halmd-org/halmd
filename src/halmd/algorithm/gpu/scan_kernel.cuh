@@ -20,33 +20,146 @@
 #ifndef HALMD_ALGORITHM_GPU_SCAN_KERNEL_CUH
 #define HALMD_ALGORITHM_GPU_SCAN_KERNEL_CUH
 
-#include <cuda_wrapper.hpp>
+#include <halmd/algorithm/gpu/bits.cuh>
+#include <halmd/algorithm/gpu/scan_kernel.hpp>
 
 namespace halmd
 {
 namespace algorithm { namespace gpu
 {
 
-enum {
-    // number of shared memory banks
-    SHMEM_BANKS = 16,
-};
-
 /**
- * returns array index with offset for bank conflict free shared memory access
+ * blockwise parallel exclusive prefix sum
  */
-__device__ __host__ inline uint boff(uint const& i)
+template <typename T>
+__device__ T grid_prefix_sum(T const* g_in, T* g_out, uint const count)
 {
-    return i + i / SHMEM_BANKS;
+    //
+    // Prefix Sums and Their Applications,
+    // Guy E. Blelloch.
+    // CMU-CS-90-190, November 1990.
+    //
+    // http://www.cs.cmu.edu/~scandal/papers/CMU-CS-90-190.html
+    //
+
+    //
+    // Parallel Prefix Sum (Scan) with CUDA,
+    // Mark Harris, April 2007, NVIDIA Corporation
+    //
+
+    extern __shared__ char __s_array[];
+    T* const s_array = reinterpret_cast<T*>(__s_array); // work around for CUDA 3.0/3.1
+    T block_sum = 0;
+
+    uint const tid = threadIdx.x;
+    uint const threads = blockDim.x;
+    uint const bid = blockIdx.x;
+
+    // read elements from global memory, or pad with zero
+    uint const i1 = 2 * bid * threads + tid;
+    uint const i2 = (2 * bid + 1) * threads + tid;
+    s_array[boff(tid)] = (i1 < count) ? g_in[i1] : 0;
+    s_array[boff(threads + tid)] = (i2 < count) ? g_in[i2] : 0;
+    __syncthreads();
+
+    // up-sweep phase from leaves to root of binary tree
+    for (uint d = threads, n = 1; d > 0; d >>= 1, n <<= 1) {
+        if (tid < d) {
+            s_array[boff(n * (2 * tid + 2) - 1)] += s_array[boff(n * (2 * tid + 1) - 1)];
+        }
+        __syncthreads();
+    }
+
+    if (tid == 0) {
+        // set last element to zero for down-sweep phase
+        swap(s_array[boff(2 * threads - 1)], block_sum);
+    }
+    __syncthreads();
+
+    // down-sweep phase from root to leaves of binary tree
+    for (uint d = 1, n = threads; n > 0; d <<= 1, n >>= 1) {
+        if (tid < d) {
+            uint const i1 = boff(n * (2 * tid + 1) - 1);
+            uint const i2 = boff(n * (2 * tid + 2) - 1);
+            T const t1 = s_array[i1];
+            T const t2 = s_array[i2];
+            s_array[i1] = t2;
+            s_array[i2] = t1 + t2;
+        }
+        __syncthreads();
+    }
+
+    // write partial prefix sums to global memory
+    if (i1 < count)
+        g_out[i1] = s_array[boff(tid)];
+    if (i2 < count)
+        g_out[i2] = s_array[boff(threads + tid)];
+
+    // block sum for last thread in block, otherwise zero
+    return block_sum;
 }
 
+/**
+ * blockwise parallel exclusive prefix sum
+ */
 template <typename T>
-struct scan_wrapper
+__global__ void grid_prefix_sum(T const* g_in, T* g_out, T* g_block_sum, uint const count)
 {
-    static cuda::function<void (T const*, T*, T*, const uint)> grid_prefix_sum;
-    static cuda::function<void (T const*, T*, T const*, const uint)> add_block_sums;
-    static cuda::function<void (T const*, T*, const uint)> block_prefix_sum;
-};
+    uint const tid = threadIdx.x;
+    uint const bid = blockIdx.x;
+
+    T const block_sum =  grid_prefix_sum(g_in, g_out, count);
+
+    if (tid == 0) {
+        g_block_sum[bid] = block_sum;
+    }
+}
+
+/**
+ * single-block parallel exclusive prefix sum
+ */
+template <typename T>
+__global__ void block_prefix_sum(T const* g_in, T* g_out, uint const count)
+{
+    grid_prefix_sum(g_in, g_out, count);
+}
+
+/**
+ * add block prefix sum to partial prefix sums for each block
+ */
+template <typename T>
+__global__ void add_block_sums(T const* g_in, T* g_out, T const* g_block_sum, uint const count)
+{
+    __shared__ T s_block_sum[1];
+
+    uint const tid = threadIdx.x;
+    uint const threads = blockDim.x;
+    uint const bid = blockIdx.x;
+
+    if (tid == 0) {
+        // read block sum for subsequent shared memory broadcast
+        s_block_sum[0] = g_block_sum[bid];
+    }
+    __syncthreads();
+
+    uint const i1 = 2 * bid * threads + tid;
+    if (i1 < count)
+        g_out[i1] = g_in[i1] + s_block_sum[0];
+
+    uint const i2 = (2 * bid + 1) * threads + tid;
+    if (i2 < count)
+        g_out[i2] = g_in[i2] + s_block_sum[0];
+}
+
+/**
+ * device function wrappers
+ */
+template <typename T> typeof(scan_kernel<T>::grid_prefix_sum)
+    scan_kernel<T>::grid_prefix_sum(gpu::grid_prefix_sum);
+template <typename T> typeof(scan_kernel<T>::add_block_sums)
+    scan_kernel<T>::add_block_sums(gpu::add_block_sums);
+template <typename T> typeof(scan_kernel<T>::block_prefix_sum)
+    scan_kernel<T>::block_prefix_sum(gpu::block_prefix_sum);
 
 }} // namespace algorithm::gpu
 

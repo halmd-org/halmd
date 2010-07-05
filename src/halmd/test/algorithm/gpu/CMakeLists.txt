@@ -1,8 +1,8 @@
 add_executable(test_scan
+  scan_kernel.cu
   scan.cpp
 )
 target_link_libraries(test_scan
-  halmd_algorithm_gpu
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${CUDA_LIBRARIES}
 )

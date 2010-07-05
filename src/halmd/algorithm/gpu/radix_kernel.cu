@@ -18,6 +18,7 @@
  */
 
 #include <halmd/algorithm/gpu/radix_kernel.cuh>
+#include <halmd/algorithm/gpu/scan_kernel.cuh>
 
 namespace halmd
 {
@@ -184,5 +185,7 @@ template <> cuda::function<void (uint const*, uint*, float2 const*, float2*, uin
     radix_wrapper<float2>::permute(gpu::permute);
 
 }} // namespace algorithm::gpu
+
+template class algorithm::gpu::scan_kernel<unsigned int>;
 
 } // namespace halmd
