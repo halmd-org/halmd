@@ -1,5 +1,6 @@
-/*
- * Copyright © 2007-2010  Peter Colberg and Felix Höfling
+/* Parallelized rand48 random number generator for CUDA
+ *
+ * Copyright © 2007-2009  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,6 +19,7 @@
  */
 
 #include <halmd/random/gpu/rand48_kernel.cuh>
+#include <halmd/random/gpu/rand48_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
 namespace halmd
@@ -25,20 +27,10 @@ namespace halmd
 namespace random { namespace gpu
 {
 
-//
-// This is a parallel version of the Unix rand48 generator for CUDA.
-// It is based on the GNU Scientific Library rand48 implementation.
-//
-
-typedef ushort3 state_type;
-
-/** leapfrogging multiplier */
-__constant__ uint48 a;
-/** leapfrogging addend */
-__constant__ uint48 c;
-/** generator state in global device memory */
-__constant__ state_type* g_state;
-
+/*
+ * This is a parallel version of the Unix rand48 generator for CUDA.
+ * It is based on the GNU Scientific Library rand48 implementation.
+ */
 
 /**
  * compute leapfrog multipliers for initialization
@@ -133,60 +125,6 @@ __global__ void save(ushort3 *state)
 }
 
 /**
- * returns uniform random number in [0.0, 1.0)
- */
-__device__ float uniform(state_type& state)
-{
-    float r = state.z / 65536.f + state.y / 4294967296.f;
-    state = muladd(a, state, c);
-    return r;
-}
-
-/**
- * generate 2 random numbers from Gaussian distribution with given variance
- */
-__device__ void normal(float& r1, float& r2, float var, state_type& state)
-{
-    //
-    // The Box-Muller transformation for generating random numbers
-    // in the normal distribution was originally described in
-    //
-    // G.E.P. Box and M.E. Muller, A Note on the Generation of
-    // Random Normal Deviates, The Annals of Mathematical Statistics,
-    // 1958, 29, p. 610-611
-    //
-    // Here, we use instead the faster polar method of the Box-Muller
-    // transformation, see
-    //
-    // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
-    // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
-    //
-
-    float s;
-
-    do {
-        r1 = 2 * uniform(state) - 1;
-        r2 = 2 * uniform(state) - 1;
-        s = r1 * r1 + r2 * r2;
-    } while (s >= 1);
-
-    s = sqrtf(-2 * var * logf(s) / s);
-    r1 *= s;
-    r2 *= s;
-}
-
-__device__ void normal(float4& v, float var, state_type& state)
-{
-    normal(v.x, v.y, var, state);
-    normal(v.z, v.w, var, state);
-}
-
-__device__ void normal(float2& v, float var, state_type& state)
-{
-    normal(v.x, v.y, var, state);
-}
-
-/**
  * fill array with uniform random numbers in [0.0, 1.0)
  */
 __global__ void uniform(float* v, uint len)
@@ -227,28 +165,28 @@ __global__ void get(uint* v, uint len)
 /**
  * device function wrappers
  */
-cuda::function <void (uint48*)>
-    rand48_wrapper::leapfrog(gpu::leapfrog);
+cuda::function<void (uint48*)>
+    rand48_kernel::leapfrog(gpu::leapfrog);
 cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, uint)>
-    rand48_wrapper::set(gpu::set);
+    rand48_kernel::set(gpu::set);
 cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3)>
-    rand48_wrapper::restore(gpu::restore);
+    rand48_kernel::restore(gpu::restore);
 cuda::function<void (ushort3*)>
-    rand48_wrapper::save(gpu::save);
+    rand48_kernel::save(gpu::save);
 cuda::function<void (float*, uint)>
-    rand48_wrapper::uniform(gpu::uniform);
+    rand48_kernel::uniform(gpu::uniform);
 cuda::function<void (uint*, uint)>
-    rand48_wrapper::get(gpu::get);
+    rand48_kernel::get(gpu::get);
 
 /**
  * device constant wrappers
  */
 cuda::symbol<uint48>
-    rand48_wrapper::a(gpu::a);
+    rand48_kernel::a(gpu::a);
 cuda::symbol<uint48>
-    rand48_wrapper::c(gpu::c);
+    rand48_kernel::c(gpu::c);
 cuda::symbol<ushort3*>
-    rand48_wrapper::state(gpu::g_state);
+    rand48_kernel::state(gpu::g_state);
 
 }} // namespace random::gpu
 

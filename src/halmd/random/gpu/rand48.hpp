@@ -1,5 +1,6 @@
-/*
- * Copyright © 2007-2009  Peter Colberg and Felix Höfling
+/* Parallelized rand48 random number generator for CUDA
+ *
+ * Copyright © 2007-2009  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -24,7 +25,7 @@
 #include <iostream>
 
 #include <halmd/algorithm/gpu/scan.hpp>
-#include <halmd/random/gpu/rand48_kernel.cuh>
+#include <halmd/random/gpu/rand48_kernel.hpp>
 
 namespace halmd
 {
@@ -42,20 +43,15 @@ public:
 
 public:
     rand48()
-      : sym_a(rand48_wrapper::a)
-      , sym_c(rand48_wrapper::c)
-      , sym_state(rand48_wrapper::state)
-    {}
+      : sym_a(rand48_kernel::a), sym_c(rand48_kernel::c),
+        sym_state(rand48_kernel::state) {}
 
     /**
      * initialize random number generator with CUDA execution dimensions
      */
     rand48(cuda::config const& dim)
-      : sym_a(rand48_wrapper::a)
-      , sym_c(rand48_wrapper::c)
-      , sym_state(rand48_wrapper::state)
-      , dim_(dim)
-      , g_state(dim.threads())
+      : sym_a(rand48_kernel::a), sym_c(rand48_kernel::c),
+        sym_state(rand48_kernel::state), dim_(dim), g_state(dim.threads())
     {
         // copy state pointer to device symbol
         cuda::copy(g_state.data(), sym_state);
@@ -64,11 +60,8 @@ public:
     /**
      * initialise device symbols of arbitrary module for rand48 usage
      */
-    void init_symbols(
-        cuda::symbol<uint48>& a
-      , cuda::symbol<uint48>& c
-      , cuda::symbol<ushort3*>& state
-    )
+    void init_symbols(cuda::symbol<uint48>& a, cuda::symbol<uint48>& c,
+                      cuda::symbol<ushort3*>& state)
     {
         uint48 a_, c_;
         cuda::copy(sym_a, a_);
@@ -114,7 +107,7 @@ public:
         // compute leapfrog multipliers for initialization
         cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
         cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::leapfrog(g_a);
+        rand48_kernel::leapfrog(g_a);
 
         // compute leapfrog addends for initialization
         cuda::copy(g_a, g_c);
@@ -124,7 +117,7 @@ public:
         // initialize generator with seed
         cuda::vector<uint48> a(1), c(1);
         cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::set(g_a, g_c, a, c, seed);
+        rand48_kernel::set(g_a, g_c, a, c, seed);
         cuda::thread::synchronize();
 
         // copy leapfrog multiplier into constant device memory
@@ -139,7 +132,7 @@ public:
     void uniform(cuda::vector<float>& r)
     {
         cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::uniform(r, r.size());
+        rand48_kernel::uniform(r, r.size());
     }
 
     /**
@@ -148,22 +141,7 @@ public:
     void get(cuda::vector<uint>& r)
     {
         cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::get(r, r.size());
-    }
-
-    /**
-     * fill array with normally distributed random numbers of given variance
-     */
-    void normal(cuda::vector<float>& r, float var)
-    {
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::normal(r, r.size(), var, 1);
-    }
-
-    void normal(float* r, uint size, float var, uint stride=1)
-    {
-        cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::normal(r, size, var, stride);
+        rand48_kernel::get(r, r.size());
     }
 
     /**
@@ -175,7 +153,7 @@ public:
         cuda::host::vector<ushort3> buf(1);
 
         cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::save(buf_gpu);
+        rand48_kernel::save(buf_gpu);
         cuda::copy(buf_gpu, buf);
         cuda::thread::synchronize();
 
@@ -190,7 +168,7 @@ public:
         // compute leapfrog multipliers for initialization
         cuda::vector<uint48> g_a(dim_.threads()), g_c(dim_.threads());
         cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::leapfrog(g_a);
+        rand48_kernel::leapfrog(g_a);
 
         // compute leapfrog addends for initialization
         cuda::copy(g_a, g_c);
@@ -200,7 +178,7 @@ public:
         // initialize generator from state
         cuda::vector<uint48> a(1), c(1);
         cuda::configure(dim_.grid, dim_.block);
-        rand48_wrapper::restore(g_a, g_c, a, c, mem);
+        rand48_kernel::restore(g_a, g_c, a, c, mem);
         cuda::thread::synchronize();
 
         // copy leapfrog multiplier into constant device memory

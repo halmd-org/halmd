@@ -110,7 +110,7 @@ void boltzmann<dimension, float_type>::set()
 
     // generate Maxwell-Boltzmann distributed velocities,
     // assuming equal (unit) mass for all particle types
-    random->normal<dimension>(particle->g_v, temp_);
+    // random->normal<dimension>(particle->g_v, temp_);
 
     // determine g_vcm and g_vv
 

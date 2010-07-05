@@ -20,7 +20,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/rand48.hpp>
-#include <halmd/random/gpu/rand48_kernel.cuh>
 
 namespace halmd
 {
@@ -61,7 +60,7 @@ void random::seed(unsigned int value)
     try {
         rng_.set(value);
         cuda::thread::synchronize();
-        rng_.init_symbols(rand48_wrapper::a, rand48_wrapper::c, rand48_wrapper::state);
+        rng_.init_symbols(rand48_kernel::a, rand48_kernel::c, rand48_kernel::state);
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());

@@ -1,5 +1,6 @@
-/*
- * Copyright © 2007-2010  Peter Colberg and Felix Höfling
+/* Parallelized rand48 random number generator for CUDA
+ *
+ * Copyright © 2007-2009  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,27 +21,76 @@
 #ifndef HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 #define HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 
-#include <cuda_wrapper.hpp>
 #include <halmd/random/gpu/uint48.cuh>
+#include <halmd/numeric/gpu/blas/vector.cuh>
 
 namespace halmd
 {
 namespace random { namespace gpu
 {
 
-struct rand48_wrapper
-{
-    static cuda::function<void (uint48*)> leapfrog;
-    static cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, uint)> set;
-    static cuda::function<void (ushort3*)> save;
-    static cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3)> restore;
-    static cuda::function<void (float*, uint)> uniform;
-    static cuda::function<void (uint*, uint)> get;
+typedef ushort3 state_type;
 
-    static cuda::symbol<uint48> a;
-    static cuda::symbol<uint48> c;
-    static cuda::symbol<ushort3*> state;
-};
+/** leapfrogging multiplier */
+__constant__ uint48 a;
+/** leapfrogging addend */
+__constant__ uint48 c;
+/** generator state in global device memory */
+__constant__ state_type* g_state;
+
+/**
+ * returns uniform random number in [0.0, 1.0)
+ */
+__device__ float uniform(state_type& state)
+{
+    float r = state.z / 65536.f + state.y / 4294967296.f;
+    state = muladd(a, state, c);
+    return r;
+}
+
+/**
+ * generate 2 random numbers from Gaussian distribution with given variance
+ */
+__device__ void gaussian(float& r1, float& r2, float var, state_type& state)
+{
+    //
+    // The Box-Muller transformation for generating random numbers
+    // in the normal distribution was originally described in
+    //
+    // G.E.P. Box and M.E. Muller, A Note on the Generation of
+    // Random Normal Deviates, The Annals of Mathematical Statistics,
+    // 1958, 29, p. 610-611
+    //
+    // Here, we use instead the faster polar method of the Box-Muller
+    // transformation, see
+    //
+    // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+    // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
+    //
+
+    float s;
+
+    do {
+        r1 = 2 * uniform(state) - 1;
+        r2 = 2 * uniform(state) - 1;
+        s = r1 * r1 + r2 * r2;
+    } while (s >= 1);
+
+    s = sqrtf(-2 * var * logf(s) / s);
+    r1 *= s;
+    r2 *= s;
+}
+
+__device__ void gaussian(float4& v, float var, state_type& state)
+{
+    gaussian(v.x, v.y, var, state);
+    gaussian(v.z, v.w, var, state);
+}
+
+__device__ void gaussian(float2& v, float var, state_type& state)
+{
+    gaussian(v.x, v.y, var, state);
+}
 
 }} // namespace random::gpu
 
