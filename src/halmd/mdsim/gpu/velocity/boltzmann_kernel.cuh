@@ -23,14 +23,14 @@
 
 #include <cuda_wrapper.hpp>
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
-#include <halmd/random/gpu/uint48.cuh>
+#include <halmd/numeric/gpu/uint48.cuh>
 
 namespace halmd
 {
 namespace mdsim { namespace gpu { namespace velocity
 {
 
-using random::gpu::uint48;
+using numeric::gpu::uint48;
 using numeric::gpu::blas::dsfloat;
 
 template <int dimension = 0>

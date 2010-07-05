@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007-2009  Peter Colberg
+ * Copyright © 2007-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,37 +17,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_RANDOM_GPU_UINT48_CUH
-#define HALMD_RANDOM_GPU_UINT48_CUH
+#ifndef HALMD_NUMERIC_GPU_UINT48_CUH
+#define HALMD_NUMERIC_GPU_UINT48_CUH
 
 namespace halmd
 {
-namespace random { namespace gpu
+namespace numeric { namespace gpu
 {
 
 /**
- * 48-bit integer operations
+ * We define an 48 bit interger type, along with multiply-add and
+ * add operators. It is used in the rand48 random number generator
+ * for CUDA, which lacks native 64 bit integers.
+ *
+ * Note that we use three 32 bit integers instead of 16 bit
+ * integers, which is reasoned in the multiply-add function,
+ * and that we define a custom uint48 type instead of using
+ * the predefined uint3, as we overload the add operators.
  */
 struct uint48
 {
-    uint x, y, z;
+    unsigned int x, y, z;
 
-    uint48() {}
     uint48(uint48 const& i) : x(i.x), y(i.y), z(i.z) {}
-    uint48(uint const& i) : x(i), y(i), z(i) {}
-    uint48(uint const& x, uint const& y, uint const& z) : x(x), y(y), z(z) {}
+    uint48() {}
+    uint48(unsigned int i) : x(i), y(i), z(i) {}
+    uint48(unsigned int x, unsigned int y, unsigned int z) : x(x), y(y), z(z) {}
+
+    uint48(uint3 const& i) : x(i.x), y(i.y), z(i.z) {}
+    operator uint3() { return make_uint3(x, y, z); }
+
+    uint48(ushort3 const& i) : x(i.x), y(i.y), z(i.z) {}
+    operator ushort3() { return make_ushort3(x, y, z); }
 };
 
-#ifdef __CUDACC__
-
 /**
- * combined multiply-add-operation for 48-bit integers
+ * combined multiply-add operation for 48 bit integers
  */
-template <typename T>
-__device__ T muladd(uint48 a, T b, uint48 c)
+inline __device__ __host__ uint48 muladd(uint48 const& a, uint48 const& b, uint48 const& c)
 {
-    uint d;
-    T r;
+    uint48 r;
 
     //
     // With a C compiler following the ISO/IEC 9899:1999 standard
@@ -65,7 +74,7 @@ __device__ T muladd(uint48 a, T b, uint48 c)
     // take a look at the resulting PTX assembly code.
     //
 
-    d = a.x * b.x + c.x;
+    unsigned int d = a.x * b.x + c.x;
     r.x = (d & 0xFFFF);
 
     d >>= 16;
@@ -85,11 +94,11 @@ __device__ T muladd(uint48 a, T b, uint48 c)
 }
 
 /**
- * add-operation for 48-bit integers
+ * add-operation for 48 bit integers
  */
-inline __device__ uint48& operator+=(uint48& a, uint48 const& b)
+inline __device__ __host__ uint48& operator+=(uint48& a, uint48 const& b)
 {
-    uint d = a.x + b.x;
+    unsigned int d = a.x + b.x;
     a.x = (d & 0xFFFF);
     d >>= 16;
     d += a.y + b.y;
@@ -101,18 +110,16 @@ inline __device__ uint48& operator+=(uint48& a, uint48 const& b)
 }
 
 /**
- * add-operation for 48-bit integers
+ * add-operation for 48 bit integers
  */
-inline __device__ uint48 operator+(uint48 const& a, uint48 b)
+inline __device__ __host__ uint48 operator+(uint48 const& a, uint48 b)
 {
     b += a;
     return b;
 }
 
-#endif /* __CUDACC__ */
-
-}} // namespace random::gpu
+}} // namespace numeric::gpu
 
 } // namespace halmd
 
-#endif /* ! HALMD_RANDOM_GPU_UINT48_CUH */
+#endif /* ! HALMD_NUMERIC_GPU_UINT48_CUH */

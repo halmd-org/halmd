@@ -22,12 +22,14 @@
 #define HALMD_RANDOM_GPU_RAND48_KERNEL_HPP
 
 #include <cuda_wrapper.hpp>
-#include <halmd/random/gpu/uint48.cuh>
+#include <halmd/numeric/gpu/uint48.cuh>
 
 namespace halmd
 {
 namespace random { namespace gpu
 {
+
+using numeric::gpu::uint48;
 
 struct rand48_kernel
 {

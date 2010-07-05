@@ -21,13 +21,15 @@
 #ifndef HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 #define HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 
-#include <halmd/random/gpu/uint48.cuh>
+#include <halmd/numeric/gpu/uint48.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 
 namespace halmd
 {
 namespace random { namespace gpu
 {
+
+using numeric::gpu::uint48;
 
 typedef ushort3 state_type;
 
