@@ -17,6 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//
+// The multiply-add operation is based on the rand48 generator of the
+// GNU Scientific Library. The file rng/rand48.c was written by James
+// Theiler and Brian Gough and is licensed under the GPL v3 or later.
+//
+
 #ifndef HALMD_NUMERIC_GPU_UINT48_CUH
 #define HALMD_NUMERIC_GPU_UINT48_CUH
 

@@ -18,6 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//
+// This is a parallel version of the Unix rand48 generator for CUDA.
+// It is based on the rand48 generator of the GNU Scientific Library.
+// The file rng/rand48.c was written by James Theiler and Brian Gough
+// and is licensed under the GPL v3 or later.
+//
+
 #include <halmd/algorithm/gpu/scan_kernel.cuh>
 #include <halmd/random/gpu/rand48_kernel.cuh>
 #include <halmd/random/gpu/rand48_kernel.hpp>
@@ -191,6 +198,6 @@ cuda::symbol<ushort3*>
 
 }} // namespace random::gpu
 
-template class algorithm::gpu::scan_kernel<random::gpu::uint48>;
+template class algorithm::gpu::scan_kernel<numeric::gpu::uint48>;
 
 } // namespace halmd
