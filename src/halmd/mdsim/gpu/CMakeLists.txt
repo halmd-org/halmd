@@ -3,7 +3,7 @@ add_library(halmd_mdsim_gpu
   force.cpp
   integrator.cpp
   neighbour.cpp
-  neighbour_wrapper.cu
+  neighbour_kernel.cu
   particle.cpp
   )
 target_link_libraries(halmd_mdsim_gpu

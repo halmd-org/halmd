@@ -17,21 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_NEIGHBOUR_WRAPPER_CUH
-#define HALMD_MDSIM_GPU_NEIGHBOUR_WRAPPER_CUH
+#ifndef HALMD_MDSIM_GPU_NEIGHBOUR_KERNEL_HPP
+#define HALMD_MDSIM_GPU_NEIGHBOUR_KERNEL_HPP
 
 #include <boost/mpl/if.hpp>
 
 #include <cuda_wrapper.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu
+namespace halmd
+{
+namespace mdsim { namespace gpu
 {
 
-template <size_t N>
-struct neighbour_wrapper
+template <int D>
+struct neighbour_kernel
 {
-    typedef typename boost::mpl::if_c<N == 3, float3, float2>::type vector_type;
-    typedef typename boost::mpl::if_c<N == 3, uint3, uint2>::type cell_index;
+    typedef typename boost::mpl::if_c<D == 3, float3, float2>::type vector_type;
+    typedef typename boost::mpl::if_c<D == 3, uint3, uint2>::type cell_index;
 
     /** (cutoff lengths + neighbour list skin)² */
     static cuda::texture<float> rr_cut_skin;
@@ -61,6 +63,8 @@ struct neighbour_wrapper
     static cuda::function<void (float4 const*, unsigned int*)> compute_cell;
 };
 
-}}} // namespace halmd::mdsim::gpu
+}} // namespace mdsim::gpu
 
-#endif /* ! HALMD_MDSIM_GPU_NEIGHBOUR_WRAPPER_CUH */
+} // namespace halmd
+
+#endif /* ! HALMD_MDSIM_GPU_NEIGHBOUR_KERNEL_HPP */
