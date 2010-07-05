@@ -26,7 +26,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/gpu/forces/lj.hpp>
-#include <halmd/mdsim/gpu/forces/lj_kernel.cuh>
+#include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
@@ -140,7 +140,7 @@ void lj<dimension, float_type>::compute()
 #ifdef USE_FORCE_DSFUN
 #endif /* HALMD_VARIANT_FORCE_DSFUN */
 
-    typedef lj_wrapper<dimension> _gpu;
+    typedef lj_kernel<dimension> _gpu;
 
     // temporay workaround until thermodynamics module is available
     cuda::vector<float> g_en_pot(particle->dim.threads());

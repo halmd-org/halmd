@@ -17,38 +17,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_CUH
-#define HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_CUH
+#ifndef HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP
+#define HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP
 
 #include <cuda_wrapper.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace forces
+namespace halmd
+{
+namespace mdsim { namespace gpu { namespace forces
 {
 
-namespace lj_kernel
+template <int D>
+struct lj_kernel
 {
+    //
+    // Lennard Jones potential parameter indices
+    //
+    enum {
+        /** potential well depths in MD units */
+        EPSILON,
+        /** square of cutoff length */
+        RR_CUT,
+        /** square of pair separation */
+        SIGMA2,
+        /** potential energy at cutoff length in MD units */
+        EN_CUT,
+    };
 
-//
-// Lennard Jones potential parameter indices
-//
-enum {
-    /** potential well depths in MD units */
-    EPSILON,
-    /** square of cutoff length */
-    RR_CUT,
-    /** square of pair separation */
-    SIGMA2,
-    /** potential energy at cutoff length in MD units */
-    EN_CUT,
-};
-
-} // namespace lj_kernel
-
-template <size_t N>
-struct lj_wrapper
-{
-    typedef typename boost::mpl::if_c<N == 3, float4, float2>::type coalesced_vector_type;
-    typedef typename boost::mpl::if_c<N == 3, float3, float2>::type vector_type;
+    typedef typename boost::mpl::if_c<D == 3, float4, float2>::type coalesced_vector_type;
+    typedef typename boost::mpl::if_c<D == 3, float3, float2>::type vector_type;
 
     /** positions, types */
     static cuda::texture<float4> r;
@@ -64,6 +61,8 @@ struct lj_wrapper
     static cuda::function<void (coalesced_vector_type*, unsigned int*, float*, coalesced_vector_type*)> compute;
 };
 
-}}}} // namespace halmd::mdsim::gpu::forces::lj_kernel
+}}} // namespace mdsim::gpu::forces
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_CUH */
+} // namespace halmd
+
+#endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP */
