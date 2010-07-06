@@ -22,4 +22,25 @@
 
 #include <halmd/random/gpu/rand48_kernel.cuh>
 
+namespace halmd
+{
+namespace random { namespace gpu
+{
+
+template <typename RandomNumberGenerator>
+struct rng;
+
+template <>
+struct rng<rand48_rng>
+{
+    // FIXME report bug against CUDA 3.0/3.1
+    static __constant__ rand48_rng g_rng;
+};
+
+rand48_rng rng<rand48_rng>::g_rng;
+
+}} // namespace random::gpu
+
+} // namespace halmd
+
 #endif /* ! HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH */

@@ -30,17 +30,8 @@ namespace random { namespace gpu
 namespace random_kernel
 {
 
-template <typename RandomNumberGenerator>
-struct rng;
-
-template <>
-struct rng<rand48_rng>
-{
-    // FIXME report bug against CUDA 3.0/3.1
-    static __constant__ rand48_rng g_rng;
-};
-
-rand48_rng rng<rand48_rng>::g_rng;
+// import into current namespace
+using random::gpu::rng;
 
 /**
  * fill array with uniform random numbers in [0.0, 1.0)
