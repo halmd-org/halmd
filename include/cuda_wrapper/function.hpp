@@ -146,7 +146,7 @@
         /**
          * execute kernel
          */
-        void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS, T, x))
+        void operator()(BOOST_PP_ENUM_BINARY_PARAMS(CUDA_FUNCTION_ARGS, T, x)) const
         {
             // properly align CUDA device function arguments
             struct offset
