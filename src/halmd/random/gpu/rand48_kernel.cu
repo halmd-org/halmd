@@ -114,6 +114,6 @@ rand48_wrapper const rand48_wrapper::kernel = {
 
 }} // namespace random::gpu
 
-template class algorithm::gpu::scan_kernel<numeric::gpu::uint48>;
+template class algorithm::gpu::scan_wrapper<numeric::gpu::uint48>;
 
 } // namespace halmd

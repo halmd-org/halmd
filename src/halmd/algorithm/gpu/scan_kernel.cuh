@@ -27,6 +27,8 @@ namespace halmd
 {
 namespace algorithm { namespace gpu
 {
+namespace scan_kernel
+{
 
 /**
  * blockwise parallel exclusive prefix sum
@@ -151,15 +153,17 @@ __global__ void add_block_sums(T const* g_in, T* g_out, T const* g_block_sum, ui
         g_out[i2] = g_in[i2] + s_block_sum[0];
 }
 
+} // namespace scan_kernel
+
 /**
- * device function wrappers
+ * CUDA C++ wrapper
  */
-template <typename T> typeof(scan_kernel<T>::grid_prefix_sum)
-    scan_kernel<T>::grid_prefix_sum(gpu::grid_prefix_sum);
-template <typename T> typeof(scan_kernel<T>::add_block_sums)
-    scan_kernel<T>::add_block_sums(gpu::add_block_sums);
-template <typename T> typeof(scan_kernel<T>::block_prefix_sum)
-    scan_kernel<T>::block_prefix_sum(gpu::block_prefix_sum);
+template <typename T>
+scan_wrapper<T> const scan_wrapper<T>::kernel = {
+    scan_kernel::grid_prefix_sum
+  , scan_kernel::add_block_sums
+  , scan_kernel::block_prefix_sum
+};
 
 }} // namespace algorithm::gpu
 

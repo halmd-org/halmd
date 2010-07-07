@@ -21,4 +21,4 @@
 
 using namespace halmd;
 
-template class algorithm::gpu::scan_kernel<unsigned int>;
+template class algorithm::gpu::scan_wrapper<unsigned int>;

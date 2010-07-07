@@ -186,6 +186,6 @@ template <> cuda::function<void (uint const*, uint*, float2 const*, float2*, uin
 
 }} // namespace algorithm::gpu
 
-template class algorithm::gpu::scan_kernel<unsigned int>;
+template class algorithm::gpu::scan_wrapper<unsigned int>;
 
 } // namespace halmd

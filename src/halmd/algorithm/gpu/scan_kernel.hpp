@@ -41,12 +41,19 @@ __device__ __host__ inline uint boff(uint const& i)
 }
 
 template <typename T>
-struct scan_kernel
+struct scan_wrapper
 {
-    static cuda::function<void (T const*, T*, T*, const uint)> grid_prefix_sum;
-    static cuda::function<void (T const*, T*, T const*, const uint)> add_block_sums;
-    static cuda::function<void (T const*, T*, const uint)> block_prefix_sum;
+    cuda::function<void (T const*, T*, T*, const uint)> grid_prefix_sum;
+    cuda::function<void (T const*, T*, T const*, const uint)> add_block_sums;
+    cuda::function<void (T const*, T*, const uint)> block_prefix_sum;
+    static scan_wrapper const kernel;
 };
+
+template <typename T>
+scan_wrapper<T> const& get_scan_kernel()
+{
+    return scan_wrapper<T>::kernel;
+}
 
 }} // namespace algorithm::gpu
 
