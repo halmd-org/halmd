@@ -107,7 +107,7 @@ __global__ void seed(uint48 const* g_A, uint48 const* g_C, uint48 *g_a, uint48 *
 /**
  * CUDA C++ wrappers
  */
-rand48_wrapper const rand48_wrapper::kernels = {
+rand48_wrapper const rand48_wrapper::kernel = {
     rand48_kernel::leapfrog
   , rand48_kernel::seed
 };

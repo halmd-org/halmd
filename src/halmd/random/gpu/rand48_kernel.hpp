@@ -28,14 +28,21 @@ namespace halmd
 namespace random { namespace gpu
 {
 
+/**
+ * CUDA C++ wrapper
+ */
 struct rand48_wrapper
 {
     cuda::function<void (uint48*)> leapfrog;
     cuda::function<void (uint48 const*, uint48 const*, uint48*, uint48*, ushort3* g_state, uint)> seed;
-    static rand48_wrapper const kernels;
+    static rand48_wrapper const kernel;
 };
 
-static rand48_wrapper const& rand48_kernels = rand48_wrapper::kernels;
+// syntactic sugar
+inline rand48_wrapper const& get_rand48_kernel()
+{
+    return rand48_wrapper::kernel;
+}
 
 }} // namespace random::gpu
 

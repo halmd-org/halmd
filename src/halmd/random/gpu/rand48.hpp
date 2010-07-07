@@ -55,7 +55,7 @@ public:
         // compute leapfrog multipliers for initialization
         cuda::vector<uint48> g_A(dim.threads()), g_C(dim.threads());
         cuda::configure(dim.grid, dim.block);
-        rand48_kernels.leapfrog(g_A);
+        get_rand48_kernel().leapfrog(g_A);
 
         // compute leapfrog addends for initialization
         cuda::copy(g_A, g_C);
@@ -66,7 +66,7 @@ public:
         cuda::vector<uint48> g_a(1), g_c(1);
         cuda::host::vector<uint48> h_a(1), h_c(1);
         cuda::configure(dim.grid, dim.block);
-        rand48_kernels.seed(g_A, g_C, g_a, g_c, g_state_, value);
+        get_rand48_kernel().seed(g_A, g_C, g_a, g_c, g_state_, value);
         cuda::copy(g_a, h_a);
         cuda::copy(g_c, h_c);
 
