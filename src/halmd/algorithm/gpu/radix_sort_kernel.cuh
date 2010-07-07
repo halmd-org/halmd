@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_ALGORITHM_GPU_RADIX_KERNEL_CUH
-#define HALMD_ALGORITHM_GPU_RADIX_KERNEL_CUH
+#ifndef HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_CUH
+#define HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_CUH
 
 #include <cuda_wrapper.hpp>
 
@@ -38,15 +38,26 @@ enum {
     BUCKETS_PER_THREAD = BUCKET_SIZE / HALF_WARP_SIZE,
 };
 
+/**
+ * CUDA C++ wrapper
+ */
 template <typename T>
-struct radix_wrapper
+struct radix_sort_wrapper
 {
-    static cuda::function<void (uint const*, uint*, uint, uint)> histogram_keys;
-    static cuda::function<void (uint const*, uint*, T const*, T*, uint const*, uint, uint)> permute;
+    cuda::function<void (uint const*, uint*, uint, uint)> histogram_keys;
+    cuda::function<void (uint const*, uint*, T const*, T*, uint const*, uint, uint)> permute;
+    static radix_sort_wrapper const kernel;
 };
+
+// syntactic sugar
+template <typename T>
+radix_sort_wrapper<T> const& get_radix_sort_kernel()
+{
+    return radix_sort_wrapper<T>::kernel;
+}
 
 }} // namespace algorithm::gpu
 
 } // namespace halmd
 
-#endif /* ! HALMD_ALGORITHM_GPU_RADIX_KERNEL_CUH */
+#endif /* ! HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_CUH */

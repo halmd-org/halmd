@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <vector>
 
-#include <halmd/algorithm/gpu/radix.hpp>
+#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/util/timer.hpp>
 
@@ -100,11 +100,11 @@ int main(int argc, char **argv)
         cuda::copy(g_array, h_array);
 
         // parallel radix sort
-        algorithm::gpu::radix_sort<uint> radix(count, threads);
+        algorithm::gpu::radix_sort<uint> sort(count, threads);
         cuda::vector<uint> g_dummy(count);
         cuda::host::vector<uint> h_array2(count);
         start.record();
-        radix(g_array, g_dummy);
+        sort(g_array, g_dummy);
         cuda::thread::synchronize();
         stop.record();
         cuda::copy(g_array, h_array2);

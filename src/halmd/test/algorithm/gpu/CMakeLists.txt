@@ -12,10 +12,10 @@ foreach(count 10000000 1000000 100000 10000 1024 1000 512 100 10 2)
   )
 endforeach(count)
 
-add_executable(test_radix
-  radix.cpp
+add_executable(test_radix_sort
+  radix_sort.cpp
 )
-target_link_libraries(test_radix
+target_link_libraries(test_radix_sort
   halmd_algorithm_gpu
   halmd_random_gpu
   ${Boost_PROGRAM_OPTIONS_LIBRARY}

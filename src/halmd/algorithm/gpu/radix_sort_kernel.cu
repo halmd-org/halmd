@@ -17,12 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/radix_kernel.cuh>
+#include <halmd/algorithm/gpu/radix_sort_kernel.cuh>
 #include <halmd/algorithm/gpu/scan_kernel.cuh>
 
 namespace halmd
 {
 namespace algorithm { namespace gpu
+{
+namespace radix_sort_kernel
 {
 
 /**
@@ -163,26 +165,21 @@ __global__ void permute(uint const* g_in, uint* g_out, T const* g_data_in, T* g_
     }
 }
 
+} // namespace radix_sort_kernel
+
 /**
  * device function wrappers
  */
-template <> cuda::function<void (uint const*, uint*, uint, uint)>
-    radix_wrapper<int>::histogram_keys(gpu::histogram_keys);
-template <> cuda::function<void (uint const*, uint*, uint, uint)>
-    radix_wrapper<uint>::histogram_keys(gpu::histogram_keys);
-template <> cuda::function<void (uint const*, uint*, uint, uint)>
-    radix_wrapper<float4>::histogram_keys(gpu::histogram_keys);
-template <> cuda::function<void (uint const*, uint*, uint, uint)>
-    radix_wrapper<float2>::histogram_keys(gpu::histogram_keys);
+template <typename T>
+radix_sort_wrapper<T> const radix_sort_wrapper<T>::kernel = {
+    radix_sort_kernel::histogram_keys
+  , radix_sort_kernel::permute
+};
 
-template <> cuda::function<void (uint const*, uint*, int const*, int*, uint const*, uint, uint)>
-    radix_wrapper<int>::permute(gpu::permute);
-template <> cuda::function<void (uint const*, uint*, uint const*, uint*, uint const*, uint, uint)>
-    radix_wrapper<uint>::permute(gpu::permute);
-template <> cuda::function<void (uint const*, uint*, float4 const*, float4*, uint const*, uint, uint)>
-    radix_wrapper<float4>::permute(gpu::permute);
-template <> cuda::function<void (uint const*, uint*, float2 const*, float2*, uint const*, uint, uint)>
-    radix_wrapper<float2>::permute(gpu::permute);
+template class radix_sort_wrapper<int>;
+template class radix_sort_wrapper<unsigned int>;
+template class radix_sort_wrapper<float4>;
+template class radix_sort_wrapper<float2>;
 
 }} // namespace algorithm::gpu
 

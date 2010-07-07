@@ -25,7 +25,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/algorithm/gpu/radix.hpp>
+#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/random.hpp>
 #include <halmd/util/exception.hpp>

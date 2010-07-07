@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_ALGORITHM_GPU_RADIX_HPP
-#define HALMD_ALGORITHM_GPU_RADIX_HPP
+#ifndef HALMD_ALGORITHM_GPU_RADIX_SORT_HPP
+#define HALMD_ALGORITHM_GPU_RADIX_SORT_HPP
 
 #include <algorithm>
 #include <boost/ref.hpp>
 
-#include <halmd/algorithm/gpu/radix_kernel.cuh>
+#include <halmd/algorithm/gpu/radix_sort_kernel.cuh>
 #include <halmd/algorithm/gpu/scan.hpp>
 
 namespace halmd
@@ -79,12 +79,12 @@ public:
 
             // compute partial radix counts
             cuda::configure(blocks_, threads_, shmem);
-            radix_wrapper<T>::histogram_keys(ikey, g_bucket, g_key.size(), r);
+            get_radix_sort_kernel<T>().histogram_keys(ikey, g_bucket, g_key.size(), r);
             // parallel prefix sum over radix counts
             scan_(g_bucket);
             // permute array
             cuda::configure(blocks_, threads_, shmem);
-            radix_wrapper<T>::permute(ikey, okey, ival, oval, g_bucket, g_key.size(), r);
+            get_radix_sort_kernel<T>().permute(ikey, okey, ival, oval, g_bucket, g_key.size(), r);
 
             // swap GPU dual buffers
             std::swap(key[0], key[1]);
@@ -118,4 +118,4 @@ private:
 
 } // namespace halmd
 
-#endif /* ! HALMD_ALGORITHM_GPU_RADIX_HPP */
+#endif /* ! HALMD_ALGORITHM_GPU_RADIX_SORT_HPP */
