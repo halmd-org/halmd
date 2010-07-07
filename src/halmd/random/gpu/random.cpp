@@ -70,7 +70,7 @@ void random<RandomNumberGenerator>::seed(unsigned int value)
 
     try {
         rng_.seed(value);
-        cuda::copy(rng_.rng(), random_wrapper<rng_type>::rng);
+        cuda::copy(rng_.rng(), get_random_kernel<rng_type>().rng);
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -86,7 +86,7 @@ void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
 {
     try {
         cuda::configure(rng_.dim.grid, rng_.dim.block);
-        random_wrapper<rng_type>::uniform(g_v, g_v.size());
+        get_random_kernel<rng_type>().uniform(g_v, g_v.size());
         cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
@@ -103,7 +103,7 @@ void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
 {
     try {
         cuda::configure(rng_.dim.grid, rng_.dim.block);
-        random_wrapper<rng_type>::get(g_v, g_v.size());
+        get_random_kernel<rng_type>().get(g_v, g_v.size());
         cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {
@@ -120,7 +120,7 @@ void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean,
 {
     try {
         cuda::configure(rng_.dim.grid, rng_.dim.block);
-        random_wrapper<rng_type>::normal(g_v, g_v.size(), mean, sigma);
+        get_random_kernel<rng_type>().normal(g_v, g_v.size(), mean, sigma);
         cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {

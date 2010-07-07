@@ -30,11 +30,18 @@ namespace random { namespace gpu
 template <typename RandomNumberGenerator>
 struct random_wrapper
 {
-    static cuda::symbol<RandomNumberGenerator> rng;
-    static cuda::function<void (float*, uint)> uniform;
-    static cuda::function<void (uint*, uint)> get;
-    static cuda::function<void (float*, uint, float, float)> normal;
+    cuda::symbol<RandomNumberGenerator> rng;
+    cuda::function<void (float*, uint)> uniform;
+    cuda::function<void (uint*, uint)> get;
+    cuda::function<void (float*, uint, float, float)> normal;
+    static random_wrapper const kernel;
 };
+
+template <typename RandomNumberGenerator>
+random_wrapper<RandomNumberGenerator> const& get_random_kernel()
+{
+    return random_wrapper<RandomNumberGenerator>::kernel;
+}
 
 }} // namespace random::gpu
 

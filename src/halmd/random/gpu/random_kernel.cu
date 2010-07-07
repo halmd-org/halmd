@@ -84,17 +84,16 @@ __global__ void normal(float* v, unsigned int len, float mean, float sigma)
 /**
  * CUDA C++ wrappers
  */
-template <typename T> typeof(random_wrapper<T>::rng)
-    random_wrapper<T>::rng(random_kernel::rng<T>::g_rng);
-template <typename T> typeof(random_wrapper<T>::uniform)
-    random_wrapper<T>::uniform(random_kernel::uniform<T>);
-template <typename T> typeof(random_wrapper<T>::get)
-    random_wrapper<T>::get(random_kernel::get<T>);
-template <typename T> typeof(random_wrapper<T>::normal)
-    random_wrapper<T>::normal(random_kernel::normal<T>);
+template <typename T>
+random_wrapper<T> const random_wrapper<T>::kernel = {
+    random_kernel::rng<T>::g_rng
+  , random_kernel::uniform<T>
+  , random_kernel::get<T>
+  , random_kernel::normal<T>
+};
+
+template class random_wrapper<random::gpu::rand48_rng>;
 
 }} // namespace random::gpu
-
-template class random::gpu::random_wrapper<random::gpu::rand48_rng>;
 
 } // namespace halmd
