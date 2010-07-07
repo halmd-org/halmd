@@ -23,6 +23,7 @@
 #include <cuda_wrapper.hpp>
 
 #include <halmd/mdsim/gpu/integrator.hpp>
+#include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/util/exception.hpp>
 
@@ -50,6 +51,9 @@ public:
     using _Base::particle;
     using _Base::box;
     using _Base::device;
+
+    /** CUDA C++ wrapper */
+    verlet_wrapper<dimension> const* wrapper;
 
     verlet(modules::factory& factory, po::options const& vm);
     virtual ~verlet() {}

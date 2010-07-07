@@ -20,6 +20,7 @@
 #include <boost/mpl/if.hpp>
 
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
+#include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
@@ -29,9 +30,10 @@ using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
 
-namespace halmd { namespace mdsim { namespace gpu { namespace integrators
+namespace halmd
 {
-
+namespace mdsim { namespace gpu { namespace integrators
+{
 namespace verlet_kernel
 {
 
@@ -130,25 +132,17 @@ __global__ void _finalize(
 
 } // namespace verlet_kernel
 
-/**
- * device function wrappers
- */
-template <> cuda::symbol<float>
-  verlet_wrapper<3>::timestep(verlet_kernel::timestep_);
-template <> cuda::symbol<float3>
-  verlet_wrapper<3>::box_length(verlet_kernel::dim_<3>::box_length);
-template <> cuda::function <void (float4*, float4*, float4*, float4 const*)>
-  verlet_wrapper<3>::integrate(verlet_kernel::_integrate<vector<dsfloat, 3>, vector<float, 3> >);
-template <> cuda::function <void (float4*, float4 const*)>
-  verlet_wrapper<3>::finalize(verlet_kernel::_finalize<vector<dsfloat, 3>, vector<float, 3> >);
+template <int dimension>
+verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
+    verlet_kernel::timestep_
+  , verlet_kernel::dim_<dimension>::box_length
+  , verlet_kernel::_integrate<vector<dsfloat, dimension>, vector<float, dimension> >
+  , verlet_kernel::_finalize<vector<dsfloat, dimension>, vector<float, dimension> >
+};
 
-template <> cuda::symbol<float>
-  verlet_wrapper<2>::timestep(verlet_kernel::timestep_);
-template <> cuda::symbol<float2>
-  verlet_wrapper<2>::box_length(verlet_kernel::dim_<2>::box_length);
-template <> cuda::function <void (float4*, float2*, float4*, float2 const*)>
-  verlet_wrapper<2>::integrate(verlet_kernel::_integrate<vector<dsfloat, 2>, vector<float, 2> >);
-template <> cuda::function <void (float4*, float2 const*)>
-  verlet_wrapper<2>::finalize(verlet_kernel::_finalize<vector<dsfloat, 2>, vector<float, 2> >);
+template class verlet_wrapper<3>;
+template class verlet_wrapper<2>;
 
-}}}} //namespace halmd::mdsim::gpu::integrators
+}}} // namespace mdsim::gpu::integrators
+
+} // namespace halmd

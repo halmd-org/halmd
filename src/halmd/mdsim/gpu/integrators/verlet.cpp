@@ -23,7 +23,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
-#include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
@@ -42,6 +41,8 @@ void verlet<dimension, float_type>::select(po::options const& vm)
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
+  // reference CUDA C++ verlet_wrapper
+  , wrapper(&verlet_wrapper<dimension>::wrapper)
   // set parameters
   , timestep_half_(0.5 * timestep_)
 {
@@ -71,8 +72,8 @@ verlet<dimension, float_type>::verlet(modules::factory& factory, po::options con
 #endif
 
     try {
-        cuda::copy(timestep_, verlet_wrapper<dimension>::timestep);
-        cuda::copy(static_cast<vector_type>(box->length()), verlet_wrapper<dimension>::box_length);
+        cuda::copy(timestep_, wrapper->timestep);
+        cuda::copy(static_cast<vector_type>(box->length()), wrapper->box_length);
     }
     catch (cuda::error const& e) {
         LOG_ERROR(e.what());
@@ -88,7 +89,7 @@ void verlet<dimension, float_type>::integrate()
 {
     try {
         cuda::configure(particle->dim.grid, particle->dim.block);
-        verlet_wrapper<dimension>::integrate(
+        wrapper->integrate(
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }
@@ -110,7 +111,7 @@ void verlet<dimension, float_type>::finalize()
     // and scheduling
     try {
         cuda::configure(particle->dim.grid, particle->dim.block);
-        verlet_wrapper<dimension>::finalize(particle->g_v, particle->g_f);
+        wrapper->finalize(particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {

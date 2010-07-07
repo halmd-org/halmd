@@ -20,32 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_CUH
 #define HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_CUH
 
-#include <boost/mpl/if.hpp>
-#include <cuda_wrapper.hpp>
-
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace integrators
+namespace halmd
 {
-
-template <size_t N>
-struct verlet_wrapper
+namespace mdsim { namespace gpu { namespace integrators
 {
-    typedef typename boost::mpl::if_c<N == 3, float4, float2>::type coalesced_vector_type;
-    typedef typename boost::mpl::if_c<N == 3, float3, float2>::type vector_type;
-
-    /** integration time-step */
-    static cuda::symbol<float> timestep;
-    /** cubic box edgle length */
-    static cuda::symbol<vector_type> box_length;
-    /** first leapfrog half-step of velocity-Verlet algorithm */
-    static cuda::function <void (float4*, coalesced_vector_type*, float4*, coalesced_vector_type const*)> integrate;
-    /** second leapfrog half-step of velocity-Verlet algorithm */
-    static cuda::function <void (float4*, coalesced_vector_type const*)> finalize;
-};
-
-// expose the reusable algorithms here as template functions
-
 namespace verlet_kernel
 {
 
@@ -80,6 +60,8 @@ __device__ void finalize(
 
 } // namespace verlet_kernel
 
-}}}} // namespace halmd::mdsim::gpu::integrators
+}}} // namespace mdsim::gpu::integrators
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_CUH */
