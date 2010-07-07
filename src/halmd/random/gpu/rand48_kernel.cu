@@ -107,10 +107,10 @@ __global__ void seed(uint48 const* g_A, uint48 const* g_C, uint48 *g_a, uint48 *
 /**
  * CUDA C++ wrappers
  */
-typeof(rand48_wrapper::leapfrog)
-    rand48_wrapper::leapfrog(rand48_kernel::leapfrog);
-typeof(rand48_wrapper::seed)
-    rand48_wrapper::seed(rand48_kernel::seed);
+rand48_wrapper const rand48_wrapper::kernels = {
+    rand48_kernel::leapfrog
+  , rand48_kernel::seed
+};
 
 }} // namespace random::gpu
 
