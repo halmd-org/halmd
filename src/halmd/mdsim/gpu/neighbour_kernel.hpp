@@ -29,38 +29,40 @@ namespace halmd
 namespace mdsim { namespace gpu
 {
 
-template <int D>
-struct neighbour_kernel
+template <int dimension>
+struct neighbour_wrapper
 {
-    typedef typename boost::mpl::if_c<D == 3, float3, float2>::type vector_type;
-    typedef typename boost::mpl::if_c<D == 3, uint3, uint2>::type cell_index;
+    typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
+    typedef typename boost::mpl::if_c<dimension == 3, uint3, uint2>::type cell_index;
 
     /** (cutoff lengths + neighbour list skin)² */
-    static cuda::texture<float> rr_cut_skin;
+    cuda::texture<float> rr_cut_skin;
     /** number of cells per dimension */
-    static cuda::symbol<cell_index> ncell;
+    cuda::symbol<cell_index> ncell;
     /** neighbour list length */
-    static cuda::symbol<unsigned int> neighbour_size;
+    cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */
-    static cuda::symbol<unsigned int> neighbour_stride;
+    cuda::symbol<unsigned int> neighbour_stride;
     /** number of particles in simulation box */
-    static cuda::symbol<unsigned int> nbox;
+    cuda::symbol<unsigned int> nbox;
     /** positions, tags */
-    static cuda::texture<float4> r;
+    cuda::texture<float4> r;
     /** cubic box edgle length */
-    static cuda::symbol<vector_type> box_length;
+    cuda::symbol<vector_type> box_length;
     /** cell edge lengths */
-    static cuda::symbol<vector_type> cell_length;
+    cuda::symbol<vector_type> cell_length;
     /** assign particles to cells */
-    static cuda::function<void (unsigned int*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int*)> assign_cells;
+    cuda::function<void (unsigned int*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int*)> assign_cells;
     /** compute global cell offsets in particle list */
-    static cuda::function<void (unsigned int*, unsigned int*)> find_cell_offset;
+    cuda::function<void (unsigned int*, unsigned int*)> find_cell_offset;
     /** generate ascending index sequence */
-    static cuda::function<void (unsigned int*)> gen_index;
+    cuda::function<void (unsigned int*)> gen_index;
     /** update neighbour lists */
-    static cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)> update_neighbours;
+    cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)> update_neighbours;
     /** compute cell indices for particle positions */
-    static cuda::function<void (float4 const*, unsigned int*)> compute_cell;
+    cuda::function<void (float4 const*, unsigned int*)> compute_cell;
+
+    static neighbour_wrapper kernel;
 };
 
 }} // namespace mdsim::gpu

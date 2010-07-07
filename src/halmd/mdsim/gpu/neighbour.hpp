@@ -28,6 +28,7 @@
 
 #include <halmd/mdsim/gpu/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
+#include <halmd/mdsim/gpu/neighbour_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
 // #include <halmd/numeric/gpu/blas/vector.hpp>
@@ -60,6 +61,8 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef gpu::force<dimension, float_type> force_type;
     typedef gpu::box<dimension> box_type;
+    typedef gpu::neighbour_wrapper<dimension> wrapper_type;
+
     typedef typename force_type::matrix_type matrix_type;
 
 //     typedef typename particle_type::neighbour_list cell_list;
@@ -70,6 +73,9 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;
     shared_ptr<box_type> box;
+
+    // CUDA C++ wrapper
+    wrapper_type const* kernel;
 
     neighbour(modules::factory& factory, po::options const& vm);
     virtual ~neighbour() {}

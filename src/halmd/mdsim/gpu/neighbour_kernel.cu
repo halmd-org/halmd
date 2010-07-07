@@ -35,6 +35,8 @@ namespace halmd
 {
 namespace mdsim { namespace gpu
 {
+namespace neighbour_kernel
+{
 
 /** (cutoff lengths + neighbour list skin)² */
 texture<float, 1, cudaReadModeElementType> rr_cut_skin_;
@@ -349,36 +351,28 @@ __global__ void gen_index(unsigned int* g_index)
     g_index[GTID] = (GTID < nbox_) ? GTID : 0;
 }
 
-template <int D> typeof(neighbour_kernel<D>::rr_cut_skin)
-  neighbour_kernel<D>::rr_cut_skin(gpu::rr_cut_skin_);
-template <int D> typeof(neighbour_kernel<D>::ncell)
-  neighbour_kernel<D>::ncell(gpu::dim_<D>::ncell);
-template <int D> typeof(neighbour_kernel<D>::neighbour_size)
-  neighbour_kernel<D>::neighbour_size(gpu::neighbour_size_);
-template <int D> typeof(neighbour_kernel<D>::neighbour_stride)
-  neighbour_kernel<D>::neighbour_stride(gpu::neighbour_stride_);
-template <int D> typeof(neighbour_kernel<D>::nbox)
-  neighbour_kernel<D>::nbox(gpu::nbox_);
-template <int D> typeof(neighbour_kernel<D>::r)
-  neighbour_kernel<D>::r(gpu::dim_<D>::r);
-template <int D> typeof(neighbour_kernel<D>::box_length)
-  neighbour_kernel<D>::box_length(gpu::dim_<D>::box_length);
-template <int D> typeof(neighbour_kernel<D>::cell_length)
-  neighbour_kernel<D>::cell_length(gpu::dim_<D>::cell_length);
-template <int D> typeof(neighbour_kernel<D>::assign_cells)
-  neighbour_kernel<D>::assign_cells(gpu::assign_cells);
-template <int D> typeof(neighbour_kernel<D>::find_cell_offset)
-  neighbour_kernel<D>::find_cell_offset(gpu::find_cell_offset);
-template <int D> typeof(neighbour_kernel<D>::gen_index)
-  neighbour_kernel<D>::gen_index(gpu::gen_index);
-template <int D> typeof(neighbour_kernel<D>::update_neighbours)
-  neighbour_kernel<D>::update_neighbours(gpu::update_neighbours<D>);
-template <int D> typeof(neighbour_kernel<D>::compute_cell)
-  neighbour_kernel<D>::compute_cell(gpu::compute_cell<D>);
+} // namespace neighbour_kernel
+
+template <int dimension>
+neighbour_wrapper<dimension> neighbour_wrapper<dimension>::kernel = {
+    neighbour_kernel::rr_cut_skin_
+  , neighbour_kernel::dim_<dimension>::ncell
+  , neighbour_kernel::neighbour_size_
+  , neighbour_kernel::neighbour_stride_
+  , neighbour_kernel::nbox_
+  , neighbour_kernel::dim_<dimension>::r
+  , neighbour_kernel::dim_<dimension>::box_length
+  , neighbour_kernel::dim_<dimension>::cell_length
+  , neighbour_kernel::assign_cells
+  , neighbour_kernel::find_cell_offset
+  , neighbour_kernel::gen_index
+  , neighbour_kernel::update_neighbours<dimension>
+  , neighbour_kernel::compute_cell<dimension>
+};
+
+template class neighbour_wrapper<3>;
+template class neighbour_wrapper<2>;
 
 }} //namespace mdsim::gpu
-
-template class mdsim::gpu::neighbour_kernel<3>;
-template class mdsim::gpu::neighbour_kernel<2>;
 
 } //namespace halmd

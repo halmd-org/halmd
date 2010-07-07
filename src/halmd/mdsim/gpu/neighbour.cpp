@@ -66,6 +66,8 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
   , particle(modules::fetch<particle_type>(factory, vm))
   , force(modules::fetch<force_type>(factory, vm))
   , box(modules::fetch<box_type>(factory, vm))
+  // reference CUDA C++ wrapper
+  , kernel(&wrapper_type::kernel)
   // allocate parameters
   , r_skin_(vm["skin"].as<float>())
   , rr_cut_skin_(particle->ntype, particle->ntype)
