@@ -139,7 +139,7 @@
         typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T));
 
     public:
-        explicit function(T *f) : f(f) {}
+        function(T *f) : f(f) {}
 
     #ifndef __CUDACC__
 
