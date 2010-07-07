@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/radix_sort_kernel.cuh>
+#include <halmd/algorithm/gpu/radix_sort_kernel.hpp>
 #include <halmd/algorithm/gpu/scan_kernel.cuh>
 
 namespace halmd

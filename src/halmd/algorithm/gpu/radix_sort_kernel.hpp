@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_CUH
-#define HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_CUH
+#ifndef HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_HPP
+#define HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_HPP
 
 #include <cuda_wrapper.hpp>
 
@@ -60,4 +60,4 @@ radix_sort_wrapper<T> const& get_radix_sort_kernel()
 
 } // namespace halmd
 
-#endif /* ! HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_CUH */
+#endif /* ! HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_HPP */

@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <boost/ref.hpp>
 
-#include <halmd/algorithm/gpu/radix_sort_kernel.cuh>
+#include <halmd/algorithm/gpu/radix_sort_kernel.hpp>
 #include <halmd/algorithm/gpu/scan.hpp>
 
 namespace halmd
