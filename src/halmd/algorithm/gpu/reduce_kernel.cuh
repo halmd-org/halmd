@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,237 +17,74 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH
-#define HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH
+#include <boost/preprocessor/repetition/enum_params.hpp>
 
-#include <boost/mpl/int.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
-
-#include <cuda_wrapper.hpp>
+#include <halmd/algorithm/gpu/reduce_kernel.hpp>
+#include <halmd/algorithm/gpu/reduction.cuh>
+#include <halmd/utility/gpu/thread.cuh>
 
 namespace halmd
 {
 namespace algorithm { namespace gpu
 {
-
-template <int threads, typename T, typename U>
-struct reduce_wrapper
+namespace reduce_kernel
 {
-    static cuda::function<void (T const*, U*, uint)> sum;
-    static cuda::function<void (T const*, U*, uint)> sum_of_squares;
-    static cuda::function<void (T const*, U*, uint)> max;
+
+/**
+ * parallel reduction
+ */
+template <
+    typename reduce_transform
+  , typename input_type
+  , typename coalesced_input_type
+  , typename output_type
+  , typename coalesced_output_type
+  , typename input_transform
+  , typename output_transform
+  , int threads
+>
+__global__ void reduce(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
+{
+    __shared__ output_type s_vv[threads];
+
+    // load values from global device memory
+    output_type vv = 0;
+    for (uint i = GTID; i < n; i += GTDIM) {
+        output_type v = transform<input_transform, input_type, output_type>(g_in[i]);
+        vv = transform<reduce_transform>(vv, v);
+    }
+    // reduced value for this thread
+    s_vv[TID] = vv;
+    __syncthreads();
+
+    // compute reduced value for all threads in block
+    gpu::reduce<threads / 2, reduce_transform>(vv, s_vv);
+
+    if (TID < 1) {
+        // store block reduced value in global memory
+        g_block_sum[blockIdx.x] = transform<output_transform, output_type, output_type>(vv);
+    }
+}
+
+} // namespace reduce_kernel
+
+//
+// To avoid repeating template arguments and at the same time not
+// define an ugly macro, we use BOOST_PP_ENUM_PARAMS to generate
+// the template arguments. The meaningless names (T0, T1, …) will
+// never show up in compile error messages, as the compiler uses
+// the template argument names of the *declaration*.
+//
+
+template <BOOST_PP_ENUM_PARAMS(7, typename T)>
+reduce_wrapper<BOOST_PP_ENUM_PARAMS(7, T)> const reduce_wrapper<BOOST_PP_ENUM_PARAMS(7, T)>::kernel = {
+    reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T), 512>
+  , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T), 256>
+  , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T), 128>
+  , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T),  64>
+  , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T),  32>
 };
-
-#ifdef __CUDACC__
-
-using boost::disable_if;
-using boost::enable_if;
-using boost::is_same;
-using boost::mpl::int_;
-
-enum { WARP_SIZE = 32 };
-
-/**
- * transformation types
- */
-struct identity_;
-struct square_;
-struct sqrt_;
-struct sum_;
-struct complex_sum_;
-struct quaternion_sum_;
-struct max_;
-
-/**
- * unary transformations
- */
-template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, identity_>, output_type>::type
-transform(input_type v)
-{
-    return v;
-}
-
-template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, square_>, output_type>::type
-transform(input_type v)
-{
-    return inner_prod(v, v);
-}
-
-template <typename transform_, typename input_type, typename output_type>
-__device__ typename enable_if<is_same<transform_, sqrt_>, output_type>::type
-transform(input_type v)
-{
-    return sqrtf(v);
-}
-
-/**
- * binary transformations
- */
-template <typename transform_, typename T>
-__device__ typename enable_if<is_same<transform_, sum_>, T>::type
-transform(T v1, T v2)
-{
-    return v1 + v2;
-}
-
-template <typename transform_, typename T>
-__device__ typename enable_if<is_same<transform_, complex_sum_>, void>::type
-transform(T& r1, T& i1, T r2, T i2)
-{
-    r1 += r2;
-    i1 += i2;
-}
-
-template <typename transform_, typename T>
-__device__ typename enable_if<is_same<transform_, quaternion_sum_>, void>::type
-transform(T& r1, T& i1, T& j1, T& k1, T r2, T i2, T j2, T k2)
-{
-    r1 += r2;
-    i1 += i2;
-    j1 += j2;
-    k1 += k2;
-}
-
-template <typename transform_, typename T>
-__device__ typename enable_if<is_same<transform_, max_>, T>::type
-transform(T v1, T v2)
-{
-    return fmaxf(v1, v2);
-}
-
-/**
- * parallel unary reduction
- */
-template <int threads, typename transform_, typename T, typename V>
-__device__ typename enable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T& sum, V s_sum[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
-    }
-}
-
-template <int threads, typename transform_, typename T, typename V>
-__device__ typename disable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T& sum, V s_sum[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        sum = transform<transform_>(sum, static_cast<T>(s_sum[tid + threads]));
-        s_sum[tid] = sum;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (threads >= WARP_SIZE) {
-        __syncthreads();
-    }
-
-    reduce<threads / 2, transform_>(sum, s_sum);
-}
-
-/**
- * parallel binary reduction
- */
-template <int threads, typename transform_, typename T0, typename T1, typename V0, typename V1>
-__device__ typename enable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
-    }
-}
-
-template <int threads, typename transform_, typename T0, typename T1, typename V0, typename V1>
-__device__ typename disable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, V0 s_sum0[], V1 s_sum1[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]));
-        s_sum0[tid] = sum0;
-        s_sum1[tid] = sum1;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (threads >= WARP_SIZE) {
-        __syncthreads();
-    }
-
-    reduce<threads / 2, transform_>(sum0, sum1, s_sum0, s_sum1);
-}
-
-/**
- * parallel ternary reduction
- */
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename V0, typename V1, typename V2>
-__device__ typename enable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
-    }
-}
-
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename V0, typename V1, typename V2>
-__device__ typename disable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, sum2, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]));
-        s_sum0[tid] = sum0;
-        s_sum1[tid] = sum1;
-        s_sum2[tid] = sum2;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (threads >= WARP_SIZE) {
-        __syncthreads();
-    }
-
-    reduce<threads / 2, transform_>(sum0, sum1, sum2, s_sum0, s_sum1, s_sum2);
-}
-
-/**
- * parallel quartenary reduction
- */
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3, typename V0, typename V1, typename V2, typename V3>
-__device__ typename enable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[], V3 s_sum3[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
-    }
-}
-
-template <int threads, typename transform_, typename T0, typename T1, typename T2, typename T3, typename V0, typename V1, typename V2, typename V3>
-__device__ typename disable_if<is_same<int_<threads>, int_<1> >, void>::type
-reduce(T0& sum0, T1& sum1, T2& sum2, T3& sum3, V0 s_sum0[], V1 s_sum1[], V2 s_sum2[], V3 s_sum3[])
-{
-    int const tid = threadIdx.x;
-    if (tid < threads) {
-        transform<transform_>(sum0, sum1, sum2, sum3, static_cast<T0>(s_sum0[tid + threads]), static_cast<T1>(s_sum1[tid + threads]), static_cast<T2>(s_sum2[tid + threads]), static_cast<T3>(s_sum3[tid + threads]));
-        s_sum0[tid] = sum0;
-        s_sum1[tid] = sum1;
-        s_sum2[tid] = sum2;
-        s_sum3[tid] = sum3;
-    }
-    // no further syncs needed within execution warp of 32 threads
-    if (threads >= WARP_SIZE) {
-        __syncthreads();
-    }
-
-    reduce<threads / 2, transform_>(sum0, sum1, sum2, sum3, s_sum0, s_sum1, s_sum2, s_sum3);
-}
-
-#endif /* __CUDACC__ */
 
 }} // namespace algorithm::gpu
 
 } // namespace halmd
-
-#endif /* ! HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH */

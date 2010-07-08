@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/reduce_kernel.cuh>
+#include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/velocity/boltzmann_kernel.cuh>
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>

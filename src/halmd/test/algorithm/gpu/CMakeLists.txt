@@ -1,3 +1,15 @@
+add_executable(test_gpu_reduce
+  reduce.cpp
+  reduce_kernel.cu
+)
+target_link_libraries(test_gpu_reduce
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${CUDA_LIBRARIES}
+)
+add_test(gpu_reduce
+  test_gpu_reduce
+)
+
 add_executable(test_scan
   scan_kernel.cu
   scan.cpp

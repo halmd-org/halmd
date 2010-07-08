@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -22,112 +22,131 @@
 
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
 
+#include <boost/lambda/bind.hpp>
+#include <boost/lambda/construct.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 #include <cuda_wrapper.hpp>
-#include <halmd/algorithm/gpu/reduce_kernel.cuh>
+#include <halmd/algorithm/gpu/reduce_kernel.hpp>
 
 namespace halmd
 {
 namespace algorithm { namespace gpu
 {
 
-/*
- * Parallel reduction
- */
 template <
-    template <typename> class tag
-  , typename gpu_output_type
-  , typename output_type = gpu_output_type
-  , int blocks = 16
-  , int threads = (64 << DEVICE_SCALE)
+    typename reduce_transform
+  , typename host_output_type
+>
+struct reduce_blocks;
+
+template <
+    typename reduce_transform
+  , typename input_type
+  , typename coalesced_input_type       = input_type
+  , typename output_type                = input_type
+  , typename coalesced_output_type      = output_type
+  , typename host_output_type           = coalesced_output_type
+  , typename input_transform            = identity_
+  , typename output_transform           = identity_
 >
 struct reduce
 {
-    template <typename gpu_input_type>
-    output_type operator()(cuda::vector<gpu_input_type> const& g_in)
+    typedef reduce_wrapper<
+        reduce_transform
+      , input_type
+      , coalesced_input_type
+      , output_type
+      , coalesced_output_type
+      , input_transform
+      , output_transform
+    > wrapper_type;
+
+    typedef cuda::function<
+        void (coalesced_input_type const*, coalesced_output_type*, unsigned int)
+    > reduce_impl_type;
+
+    reduce(int blocks = 16, int threads = (64 << DEVICE_SCALE))
+      : dim(blocks, threads)
+      , g_block(blocks)
+      , h_block(blocks)
+      , reduce_impl(get_reduce_impl(threads))
+    {}
+
+    host_output_type operator()(cuda::vector<coalesced_input_type> const& g_v)
     {
-        cuda::vector<gpu_output_type> g_block_sum(blocks);
-        cuda::host::vector<gpu_output_type> h_block_sum(blocks);
-        cuda::configure(blocks, threads);
-        tag<output_type>::reduce(g_in, g_block_sum, g_in.size());
-        cuda::copy(g_block_sum, h_block_sum);
-        return tag<output_type>::value(h_block_sum);
+        cuda::configure(dim.grid, dim.block);
+        reduce_impl(g_v, g_block, g_v.size());
+        cuda::copy(g_block, h_block);
+        return reduce_blocks<reduce_transform, host_output_type>()(h_block);
+    }
+
+    static reduce_impl_type get_reduce_impl(int threads)
+    {
+        switch (threads) {
+          case 512:
+            return wrapper_type::kernel.reduce_impl_512;
+          case 256:
+            return wrapper_type::kernel.reduce_impl_256;
+          case 128:
+            return wrapper_type::kernel.reduce_impl_128;
+          case 64:
+            return wrapper_type::kernel.reduce_impl_64;
+          case 32:
+            return wrapper_type::kernel.reduce_impl_32;
+          default:
+            throw std::logic_error("invalid reduction thread count");
+        }
+    }
+
+    cuda::config dim;
+    cuda::vector<coalesced_output_type> g_block;
+    cuda::host::vector<coalesced_output_type> h_block;
+    reduce_impl_type reduce_impl;
+};
+
+template <typename host_output_type>
+struct reduce_blocks<sum_, host_output_type>
+{
+    template <typename coalesced_output_type>
+    host_output_type operator()(cuda::host::vector<coalesced_output_type> const& h_block)
+    {
+        using namespace boost::lambda;
+        return std::accumulate(
+            boost::make_transform_iterator(
+                h_block.begin()
+              , ret<host_output_type>(bind(constructor<host_output_type>(), _1)) // type conversion
+            )
+          , boost::make_transform_iterator(
+                h_block.end()
+              , ret<host_output_type>(bind(constructor<host_output_type>(), _1)) // type conversion
+            )
+          , host_output_type() // value-initialized
+        );
     }
 };
 
-namespace tag
+template <typename host_output_type>
+struct reduce_blocks<max_, host_output_type>
 {
-
-/**
- * sum
- */
-template <typename output_type>
-struct sum
-{
-    template <typename gpu_input_type, typename gpu_output_type>
-    static void reduce(
-        cuda::vector<gpu_input_type> const& g_in
-      , cuda::vector<gpu_output_type>& g_block_sum
-      , unsigned int count
-    )
+    template <typename coalesced_output_type>
+    host_output_type operator()(cuda::host::vector<coalesced_output_type> const& h_block)
     {
-        reduce_wrapper<threads, gpu_input_type, gpu_output_type>::sum(g_in, g_block_sum, count);
-    }
-
-    template <typename gpu_output_type>
-    static output_type value(cuda::host::vector<gpu_output_type> const& sum)
-    {
-        return std::accumulate(sum.begin(), sum.end(), output_type(0));
+        using namespace boost::lambda;
+        return *std::max_element(
+            boost::make_transform_iterator(
+                h_block.begin()
+              , ret<host_output_type>(bind(constructor<host_output_type>(), _1)) // type conversion
+            )
+          , boost::make_transform_iterator(
+                h_block.end()
+              , ret<host_output_type>(bind(constructor<host_output_type>(), _1)) // type conversion
+            )
+        );
     }
 };
-
-/**
- * sum of squares
- */
-template <typename output_type>
-struct sum_of_squares
-{
-    template <typename gpu_input_type, typename gpu_output_type>
-    static void reduce(
-        cuda::vector<gpu_input_type> const& g_in
-      , cuda::vector<gpu_output_type>& g_block_sum
-      , unsigned int count
-    )
-    {
-        reduce_wrapper<threads, gpu_input_type, gpu_output_type>::sum_of_squares(g_in, g_block_sum, count);
-    }
-
-    template <typename gpu_output_type>
-    static output_type value(cuda::host::vector<gpu_output_type> const& sum)
-    {
-        return std::accumulate(sum.begin(), sum.end(), output_type(0));
-    }
-};
-
-/**
- * absolute maximum
- */
-template <typename output_type>
-struct max
-{
-    template <typename gpu_input_type, typename gpu_output_type>
-    static void reduce(
-        cuda::vector<gpu_input_type> const& g_in
-      , cuda::vector<gpu_output_type>& g_block_max
-      , unsigned int count
-    )
-    {
-        reduce_wrapper<threads, gpu_input_type, gpu_output_type>::max(g_in, g_block_max, count);
-    }
-
-    template <typename gpu_output_type>
-    static output_type value(cuda::host::vector<gpu_output_type> const& max)
-    {
-        return *std::max_element(max.begin(), max.end());
-    }
-};
-
-} // namespace tag
 
 }} // namespace algorithm::gpu
 
