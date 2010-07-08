@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE( double_single_reduce )
       , dsfloat         // coalesced_output_type
       , double          // host_output_type
     > sum;
-    cuda::host::vector<float> h_v(make_counting_iterator(1), make_counting_iterator(3456789));
+    cuda::host::vector<float> h_v(make_counting_iterator(1), make_counting_iterator(12345679));
     cuda::vector<float> g_v(h_v.size());
     cuda::copy(h_v, g_v);
-    BOOST_CHECK_EQUAL(sum(g_v), 3456789LL * 3456790 / 2);
+    BOOST_CHECK_EQUAL(int64_t(sum(g_v)), 12345678LL * 12345679 / 2);
 }
