@@ -21,7 +21,6 @@
 #ifndef CUDA_SYMBOL_HPP
 #define CUDA_SYMBOL_HPP
 
-#include <boost/noncopyable.hpp>
 #include <cuda_runtime.h>
 
 #ifndef __CUDACC__
@@ -36,7 +35,6 @@ namespace cuda
  */
 template <typename T>
 class symbol
-  : boost::noncopyable
 {
 public:
     typedef T value_type;
@@ -77,7 +75,6 @@ private:
  */
 template <typename T>
 class symbol<T[]>
-  : boost::noncopyable
 {
 public:
     typedef T value_type;
