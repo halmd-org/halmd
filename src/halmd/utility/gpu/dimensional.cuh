@@ -120,9 +120,9 @@ __device__ __host__ typename boost::enable_if<
         typename boost::mpl::at<Sequence, Key>::type
       , dim
       , mode
-    > const&
+    >
 >::type
-get(texture<dimensional<Sequence>, dim, mode> const& value)
+get(texture<dimensional<Sequence>, dim, mode> value)
 {
     return reinterpret_cast<
         texture<
@@ -140,9 +140,9 @@ __device__ __host__ typename boost::enable_if<
         typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type
       , dim
       , mode
-    > const&
+    >
 >::type
-get(texture<dimensional<Sequence>, dim, mode> const& value)
+get(texture<dimensional<Sequence>, dim, mode> value)
 {
     return reinterpret_cast<
         texture<
