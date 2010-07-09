@@ -46,7 +46,7 @@ public:
     texture(texture const& texture_, vector<T> const& vector_)
       : texref_(texture_.texref_)
     {
-        CUDA_CALL(cudaBindTexture(NULL, &texref_, vector_.data(), &texref_.channelDesc));
+        CUDA_CALL(cudaBindTexture(NULL, &texref_, vector_.data(), cudaCreateChannelDesc<T>()));
     }
 
     /**
