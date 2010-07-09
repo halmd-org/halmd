@@ -27,6 +27,8 @@ namespace halmd
 namespace random { namespace gpu
 {
 
+static __constant__ rand48_rng __g_rand48_rng;
+
 template <typename RandomNumberGenerator>
 struct rng;
 
@@ -34,10 +36,10 @@ template <>
 struct rng<rand48_rng>
 {
     // FIXME report bug against CUDA 3.0/3.1
-    static __constant__ rand48_rng g_rng;
+    static __device__ __host__ rand48_rng const& get() {
+        return __g_rand48_rng;
+    }
 };
-
-rand48_rng rng<rand48_rng>::g_rng;
 
 }} // namespace random::gpu
 

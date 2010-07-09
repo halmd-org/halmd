@@ -39,13 +39,13 @@ using random::gpu::rng;
 template <typename RandomNumberGenerator>
 __global__ void uniform(float* v, unsigned int len)
 {
-    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::g_rng[GTID];
+    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::get()[GTID];
 
     for (unsigned int k = GTID; k < len; k += GTDIM) {
-        v[k] = uniform(rng<rand48_rng>::g_rng, state);
+        v[k] = uniform(rng<rand48_rng>::get(), state);
     }
 
-    rng<rand48_rng>::g_rng[GTID] = state;
+    rng<rand48_rng>::get()[GTID] = state;
 }
 
 /**
@@ -54,13 +54,13 @@ __global__ void uniform(float* v, unsigned int len)
 template <typename RandomNumberGenerator>
 __global__ void get(unsigned int* v, unsigned int len)
 {
-    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::g_rng[GTID];
+    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::get()[GTID];
 
     for (unsigned int k = GTID; k < len; k += GTDIM) {
-        v[k] = get(rng<rand48_rng>::g_rng, state);
+        v[k] = get(rng<rand48_rng>::get(), state);
     }
 
-    rng<rand48_rng>::g_rng[GTID] = state;
+    rng<rand48_rng>::get()[GTID] = state;
 }
 
 /**
@@ -69,13 +69,13 @@ __global__ void get(unsigned int* v, unsigned int len)
 template <typename RandomNumberGenerator>
 __global__ void normal(float* v, unsigned int len, float mean, float sigma)
 {
-    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::g_rng[GTID];
+    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::get()[GTID];
 
     for (unsigned int k = GTID; k < len; k += 2 * GTDIM) {
-        normal(rng<rand48_rng>::g_rng, state, v[k], v[k + GTID], mean, sigma);
+        normal(rng<rand48_rng>::get(), state, v[k], v[k + GTID], mean, sigma);
     }
 
-    rng<rand48_rng>::g_rng[GTID] = state;
+    rng<rand48_rng>::get()[GTID] = state;
 }
 
 
@@ -86,7 +86,7 @@ __global__ void normal(float* v, unsigned int len, float mean, float sigma)
  */
 template <typename T>
 random_wrapper<T> const random_wrapper<T>::kernel = {
-    random_kernel::rng<T>::g_rng
+    random_kernel::rng<T>::get()
   , random_kernel::uniform<T>
   , random_kernel::get<T>
   , random_kernel::normal<T>
