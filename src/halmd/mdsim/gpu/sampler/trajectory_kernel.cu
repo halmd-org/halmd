@@ -20,7 +20,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/sampler/trajectory_kernel.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
-#include <halmd/utility/gpu/dimensional.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::mdsim::gpu::particle_kernel;
@@ -37,11 +37,11 @@ namespace trajectory_kernel
 /** positions, types */
 texture<float4, 1, cudaReadModeElementType> r_;
 /** minimum image vectors */
-texture<dimensional<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > image_;
+texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > image_;
 /** velocities, tags */
 texture<float4, 1, cudaReadModeElementType> v_;
 /** cubic box edgle length */
-__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * sample trajectory for all particle of a single species

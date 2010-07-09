@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_GPU_DIMENSIONAL_CUH
-#define HALMD_UTILITY_GPU_DIMENSIONAL_CUH
+#ifndef HALMD_UTILITY_GPU_VARIANT_CUH
+#define HALMD_UTILITY_GPU_VARIANT_CUH
 
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/begin.hpp>
@@ -51,14 +51,14 @@ template <
   , typename End
   , typename Enable = void
 >
-union dimensional_iterate_range {};
+union variant_iterate_range {};
 
 template <
     typename Sequence
   , typename Begin
   , typename End
 >
-union dimensional_iterate_range<
+union variant_iterate_range<
     Sequence
   , Begin
   , End
@@ -69,7 +69,7 @@ union dimensional_iterate_range<
         Sequence
       , typename boost::mpl::deref<Begin>::type
     >::type head;
-    dimensional_iterate_range<
+    variant_iterate_range<
         Sequence
       , typename boost::mpl::next<Begin>::type
       , End
@@ -79,10 +79,10 @@ union dimensional_iterate_range<
 } // namespace detail
 
 template <typename Sequence>
-union dimensional
+union variant
 {
     typedef Sequence types;
-    detail::dimensional_iterate_range<
+    detail::variant_iterate_range<
         Sequence
       , typename boost::mpl::begin<Sequence>::type
       , typename boost::mpl::end<Sequence>::type
@@ -94,7 +94,7 @@ __device__ __host__ typename boost::enable_if<
     boost::mpl::has_key<Sequence, Key>
   , typename boost::mpl::at<Sequence, Key>::type const&
 >::type
-get(dimensional<Sequence> const& value)
+get(variant<Sequence> const& value)
 {
     return reinterpret_cast<
         typename boost::mpl::at<Sequence, Key>::type const&
@@ -106,7 +106,7 @@ __device__ __host__ typename boost::enable_if<
     boost::mpl::has_key<Sequence, boost::mpl::int_<Key> >
   , typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type const&
 >::type
-get(dimensional<Sequence> const& value)
+get(variant<Sequence> const& value)
 {
     return reinterpret_cast<
         typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type const&
@@ -122,7 +122,7 @@ __device__ __host__ typename boost::enable_if<
       , mode
     >
 >::type
-get(texture<dimensional<Sequence>, dim, mode> value)
+get(texture<variant<Sequence>, dim, mode> value)
 {
     return reinterpret_cast<
         texture<
@@ -142,7 +142,7 @@ __device__ __host__ typename boost::enable_if<
       , mode
     >
 >::type
-get(texture<dimensional<Sequence>, dim, mode> value)
+get(texture<variant<Sequence>, dim, mode> value)
 {
     return reinterpret_cast<
         texture<
@@ -157,4 +157,4 @@ get(texture<dimensional<Sequence>, dim, mode> value)
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_GPU_DIMENSIONAL_CUH */
+#endif /* ! HALMD_UTILITY_GPU_VARIANT_CUH */

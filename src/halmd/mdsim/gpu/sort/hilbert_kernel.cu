@@ -24,7 +24,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/sort/hilbert_kernel.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
-#include <halmd/utility/gpu/dimensional.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::algorithm::gpu;
@@ -42,7 +42,7 @@ namespace hilbert_kernel
 /** Hilbert space-filling curve recursion depth */
 __constant__ unsigned int depth_;
 /** cubic box edgle length */
-__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * swap Hilbert spacing-filling curve vertices

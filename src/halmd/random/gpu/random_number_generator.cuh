@@ -21,18 +21,18 @@
 #define HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH
 
 #include <halmd/random/gpu/rand48_kernel.cuh>
-#include <halmd/utility/gpu/dimensional.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 
 namespace halmd
 {
 namespace random { namespace gpu
 {
 
-using utility::gpu::dimensional;
+using utility::gpu::variant;
 using utility::gpu::set;
 using utility::gpu::get;
 
-typedef dimensional<
+typedef variant<
     set<
         rand48_rng
     >

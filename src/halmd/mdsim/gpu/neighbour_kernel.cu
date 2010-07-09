@@ -24,8 +24,8 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/gpu/blas/symmetric.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
-#include <halmd/utility/gpu/dimensional.cuh>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
@@ -47,11 +47,11 @@ __constant__ unsigned int neighbour_stride_;
 /** number of particles in simulation box */
 __constant__ unsigned int nbox_;
 /** cuboid box edgle length */
-__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 /** number of cells per dimension */
-__constant__ dimensional<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
+__constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
 /** cell edge lengths */
-__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > cell_length_;
+__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > cell_length_;
 /** positions, tags */
 texture<float4, 1, cudaReadModeElementType> r_;
 

@@ -26,8 +26,8 @@
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/symmetric.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
-#include <halmd/utility/gpu/dimensional.cuh>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
@@ -49,7 +49,7 @@ texture<float4> ljparam_;
 /** positions, types */
 texture<float4> r_;
 /** cuboid box edgle length */
-__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * Compute Lennard-Jones forces
