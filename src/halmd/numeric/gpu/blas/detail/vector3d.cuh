@@ -29,9 +29,10 @@
 #include <halmd/numeric/gpu/blas/detail/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/detail/storage.cuh>
 
-namespace halmd { namespace numeric { namespace gpu { namespace blas
+namespace halmd
 {
-
+namespace numeric { namespace gpu { namespace blas
+{
 namespace detail
 {
 
@@ -355,33 +356,43 @@ struct vector<dsfloat, 3> : bounded_array<dsfloat, 3>
         (*this)[1] = dsfloat(v[1], w[1]);
         (*this)[2] = dsfloat(v[2], w[2]);
     }
-};
 
 #ifdef __CUDACC__
 
-/**
- * Returns "high" single precision floating-point vector
- */
-__device__ inline vector<float, 3> dsfloat_hi(vector<dsfloat, 3> const& v)
-{
-    vector<float, 3> w;
-    w[0] = dsfloat_hi(v[0]);
-    w[1] = dsfloat_hi(v[1]);
-    w[2] = dsfloat_hi(v[2]);
-    return w;
-}
+    /**
+     * Returns "high" and "low" single precision vector tuple
+     */
+    __device__ operator tuple<vector<float, 3>, vector<float, 3> >()
+    {
+        vector<float, 3> hi, lo;
+        tie(hi[0], lo[0]) = (*this)[0];
+        tie(hi[1], lo[1]) = (*this)[1];
+        tie(hi[2], lo[2]) = (*this)[2];
+        return make_tuple(hi, lo);
+    }
 
-/**
- * Returns "low" single precision floating-point vector
- */
-__device__ inline vector<float, 3> dsfloat_lo(vector<dsfloat, 3> const& v)
-{
-    vector<float, 3> w;
-    w[0] = dsfloat_lo(v[0]);
-    w[1] = dsfloat_lo(v[1]);
-    w[2] = dsfloat_lo(v[2]);
-    return w;
-}
+    __device__ operator tuple<float3, float3>()
+    {
+        float3 hi, lo;
+        tie(hi.x, lo.x) = (*this)[0];
+        tie(hi.y, lo.y) = (*this)[1];
+        tie(hi.z, lo.z) = (*this)[2];
+        return make_tuple(hi, lo);
+    }
+
+    __device__ operator tuple<float4, float4>()
+    {
+        float4 hi, lo;
+        tie(hi.x, lo.x) = (*this)[0];
+        tie(hi.y, lo.y) = (*this)[1];
+        tie(hi.z, lo.z) = (*this)[2];
+        return make_tuple(hi, lo);
+    }
+
+#endif /* __CUDACC__ */
+};
+
+#ifdef __CUDACC__
 
 /**
  * Assignment by elementwise vector addition
@@ -813,6 +824,8 @@ __device__ inline vector<float, 3> __fdivide(vector<float, 3> v, vector<float, 3
 
 } // namespace detail
 
-}}}} // namespace halmd::numeric::gpu::blas
+}}} // namespace numeric::gpu::blas
+
+} // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_GPU_BLAS_DETAIL_VECTOR3D_CUH */

@@ -24,11 +24,16 @@
 #include <halmd/numeric/gpu/blas/detail/vector3d.cuh>
 #include <halmd/numeric/gpu/blas/detail/vector4d.cuh>
 
-namespace halmd { namespace numeric { namespace gpu { namespace blas
+namespace halmd
+{
+namespace numeric { namespace gpu { namespace blas
 {
 
+// import into current namespace
 using detail::vector;
 
-}}}} // namespace halmd::numeric::gpu::blas
+}}} // namespace numeric::gpu::blas
+
+} // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_GPU_BLAS_VECTOR_CUH */

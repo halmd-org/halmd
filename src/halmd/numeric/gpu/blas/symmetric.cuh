@@ -22,9 +22,10 @@
 
 #include <cuda_runtime.h>
 
-namespace halmd { namespace numeric { namespace gpu { namespace blas
+namespace halmd
 {
-
+namespace numeric { namespace gpu { namespace blas
+{
 namespace symmetric_matrix
 {
 
@@ -40,6 +41,8 @@ __device__ inline unsigned int lower_index(unsigned int row, unsigned int col)
 
 } // namespace symmetric_matrix
 
-}}}} // namespace halmd::numeric::gpu::blas
+}}} // namespace numeric::gpu::blas
+
+} // namespace halmd::numeric::gpu::blas
 
 #endif /* ! HALMD_NUMERIC_GPU_BLAS_SYMMETRIC_CUH */

@@ -29,9 +29,10 @@
 #include <halmd/numeric/gpu/blas/detail/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/detail/storage.cuh>
 
-namespace halmd { namespace numeric { namespace gpu { namespace blas
+namespace halmd
 {
-
+namespace numeric { namespace gpu { namespace blas
+{
 namespace detail
 {
 
@@ -272,31 +273,32 @@ struct vector<dsfloat, 2> : bounded_array<dsfloat, 2>
         (*this)[0] = dsfloat(v[0], w[0]);
         (*this)[1] = dsfloat(v[1], w[1]);
     }
-};
 
 #ifdef __CUDACC__
 
-/**
- * Returns "high" single precision floating-point vector
- */
-__device__ inline vector<float, 2> dsfloat_hi(vector<dsfloat, 2> const& v)
-{
-    vector<float, 2> w;
-    w[0] = dsfloat_hi(v[0]);
-    w[1] = dsfloat_hi(v[1]);
-    return w;
-}
+    /**
+     * Returns "high" and "low" single precision vector tuple
+     */
+    __device__ operator tuple<vector<float, 2>, vector<float, 2> >()
+    {
+        vector<float, 2> hi, lo;
+        tie(hi[0], lo[0]) = (*this)[0];
+        tie(hi[1], lo[1]) = (*this)[1];
+        return make_tuple(hi, lo);
+    }
 
-/**
- * Returns "low" single precision floating-point vector
- */
-__device__ inline vector<float, 2> dsfloat_lo(vector<dsfloat, 2> const& v)
-{
-    vector<float, 2> w;
-    w[0] = dsfloat_lo(v[0]);
-    w[1] = dsfloat_lo(v[1]);
-    return w;
-}
+    __device__ operator tuple<float2, float2>()
+    {
+        float2 hi, lo;
+        tie(hi.x, lo.x) = (*this)[0];
+        tie(hi.y, lo.y) = (*this)[1];
+        return make_tuple(hi, lo);
+    }
+
+#endif /* __CUDACC__ */
+};
+
+#ifdef __CUDACC__
 
 /**
  * Assignment by elementwise vector addition
@@ -694,6 +696,8 @@ __device__ inline vector<float, 2> __fdivide(vector<float, 2> v, vector<float, 2
 
 } // namespace detail
 
-}}}} // namespace halmd::numeric::gpu::blas
+}}} // namespace numeric::gpu::blas
+
+} // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_GPU_BLAS_DETAIL_VECTOR2D_CUH */

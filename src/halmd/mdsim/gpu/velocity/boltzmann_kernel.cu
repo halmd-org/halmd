@@ -75,9 +75,10 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
 
     if (TID < 1) {
         // store block reduced value in global memory
-        g_vcm[blockIdx.x] = static_cast<vector<float, dimension> >(vcm);
 #ifdef USE_VERLET_DSFUN
-        g_vcm[blockIdx.x + BDIM] = dsfloat_lo(vcm);
+        tie(g_vcm[blockIdx.x], g_vcm[blockIdx.x + BDIM]) = vcm;
+#else
+        g_vcm[blockIdx.x] = vcm;
 #endif
     }
 }
@@ -109,17 +110,20 @@ __global__ void shift_velocity(float4* g_v, uint npart, uint nplace, T const* g_
     vcm /= npart;
 
     for (uint i = GTID; i < npart; i += GTDIM) {
+        vector_type v;
+        unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-        vector_type v; // FIXME (g_v[i], g_v[i + nplace]);
+        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + nplace]);
 #else
-        vector_type v = g_v[i];
+        tie(v, tag) = untagged<vector_type>(g_v[i]);
 #endif
         v -= vcm;
-        g_v[i] = tagged(static_cast<vector<float, dimension> >(v), /* FIXME */0);
-#ifdef USE_VERLET_DSFUN
-        g_v[i + nplace] = tagged(dsfloat_lo(v), /* FIXME */0);
-#endif
         vv += inner_prod(v, v);
+#ifdef USE_VERLET_DSFUN
+        tie(g_v[i], g_v[i + nplace]) = tagged(v, tag);
+#else
+        g_v[i] = tagged(v, tag);
+#endif
     }
     // reduced value for this thread
     s_vv[TID] = vv;

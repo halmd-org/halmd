@@ -22,11 +22,16 @@
 
 #include <halmd/numeric/gpu/blas/detail/dsfloat.cuh>
 
-namespace halmd { namespace numeric { namespace gpu { namespace blas
+namespace halmd
+{
+namespace numeric { namespace gpu { namespace blas
 {
 
+// import into current namespace
 using detail::dsfloat;
 
-}}}} // namespace halmd::numeric::gpu::blas
+}}} // namespace numeric::gpu::blas
+
+} // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_GPU_BLAS_DSFLOAT_CUH */

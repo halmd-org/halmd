@@ -26,12 +26,24 @@
 #include <boost/utility/enable_if.hpp>
 
 #include <halmd/numeric/gpu/blas/detail/dsfun.cuh>
+#ifdef __CUDACC__
+# include <halmd/algorithm/gpu/tuple.cuh>
+#endif
 
-namespace halmd { namespace numeric { namespace gpu { namespace blas
+namespace halmd
 {
-
+namespace numeric { namespace gpu { namespace blas
+{
 namespace detail
 {
+
+#ifdef __CUDACC__
+
+using algorithm::gpu::tuple;
+using algorithm::gpu::make_tuple;
+using algorithm::gpu::tie;
+
+#endif /* __CUDACC__ */
 
 /**
  * Double-single floating point value
@@ -68,34 +80,36 @@ struct dsfloat
         dsdeq(hi, lo, a);
     }
 
+    /**
+     * Returns "high" single precision floating-point value
+     */
     __device__ __host__ operator float() const
     {
         return hi;
     }
 
+    /**
+     * Returns double precision value if supported natively
+     */
     __device__ __host__ operator double() const
     {
         return static_cast<double>(hi) + lo;
     }
-};
 
 #ifdef __CUDACC__
 
-/**
- * Returns "high" single precision floating-point value
- */
-__device__ inline float dsfloat_hi(dsfloat const& v)
-{
-    return v.hi;
-}
+    /**
+     * Returns "high" and "low" single precision floating-point tuple
+     */
+    __device__ operator tuple<float, float>() const
+    {
+        return make_tuple(hi, lo);
+    }
 
-/**
- * Returns "low" single precision floating-point value
- */
-__device__ inline float dsfloat_lo(dsfloat const& v)
-{
-    return v.lo;
-}
+#endif /* __CUDACC__ */
+};
+
+#ifdef __CUDACC__
 
 /**
  * Addition by assignment
@@ -239,6 +253,8 @@ __device__ inline dsfloat sqrt(dsfloat v)
 
 } // namespace detail
 
-}}}} // namespace halmd::numeric::gpu::blas
+}}} // namespace numeric::gpu::blas
+
+} // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_GPU_BLAS_DETAIL_DSFLOAT_CUH */

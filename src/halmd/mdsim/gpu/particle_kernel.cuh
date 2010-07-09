@@ -47,6 +47,7 @@ enum { PLACEHOLDER = -1U };
 using algorithm::gpu::tuple;
 using algorithm::gpu::make_tuple;
 using algorithm::gpu::tie;
+using numeric::gpu::blas::dsfloat;
 
 #else /* ! __CUDACC__ */
 
@@ -70,8 +71,6 @@ inline int __float_as_int(float value)
 }
 
 #endif /* ! __CUDACC__ */
-
-using numeric::gpu::blas::dsfloat;
 
 /**
  * Convert particle position and tag to coalesced vector type
@@ -97,28 +96,6 @@ tagged(vector_type v, unsigned int tag)
 template <typename vector_type>
 __device__ typename boost::enable_if<
     boost::mpl::and_<
-        boost::is_same<boost::mpl::int_<vector_type::static_size>, boost::mpl::int_<3> >
-      , boost::is_same<typename vector_type::value_type, dsfloat>
-    >
-  , tuple<float4, float4>
->::type
-tagged(vector_type v, unsigned int tag)
-{
-    float4 hi, lo;
-    hi.x = dsfloat_hi(v[0]);
-    lo.x = dsfloat_lo(v[0]);
-    hi.y = dsfloat_hi(v[1]);
-    lo.y = dsfloat_lo(v[1]);
-    hi.z = dsfloat_hi(v[2]);
-    lo.z = dsfloat_lo(v[2]);
-    hi.w = __int_as_float(tag);
-    lo.w = 0;
-    return make_tuple(hi, lo);
-}
-
-template <typename vector_type>
-__device__ typename boost::enable_if<
-    boost::mpl::and_<
         boost::is_same<boost::mpl::int_<vector_type::static_size>, boost::mpl::int_<2> >
       , boost::is_same<typename vector_type::value_type, float>
     >
@@ -134,6 +111,26 @@ tagged(vector_type v, unsigned int tag)
     return w;
 }
 
+#ifdef __CUDACC__
+
+template <typename vector_type>
+__device__ typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<boost::mpl::int_<vector_type::static_size>, boost::mpl::int_<3> >
+      , boost::is_same<typename vector_type::value_type, dsfloat>
+    >
+  , tuple<float4, float4>
+>::type
+tagged(vector_type v, unsigned int tag)
+{
+    float4 hi, lo;
+    tie(hi.x, lo.x) = v[0];
+    tie(hi.y, lo.y) = v[1];
+    tie(hi.z, lo.z) = v[2];
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(tag), 0);
+    return make_tuple(hi, lo);
+}
+
 template <typename vector_type>
 __device__ typename boost::enable_if<
     boost::mpl::and_<
@@ -145,16 +142,14 @@ __device__ typename boost::enable_if<
 tagged(vector_type v, unsigned int tag)
 {
     float4 hi, lo;
-    hi.x = dsfloat_hi(v[0]);
-    lo.x = dsfloat_lo(v[0]);
-    hi.y = dsfloat_hi(v[1]);
-    lo.y = dsfloat_lo(v[1]);
-    hi.z = 0;
-    lo.z = 0;
-    hi.w = __int_as_float(tag);
-    lo.w = 0;
+    tie(hi.x, lo.x) = v[0];
+    tie(hi.y, lo.y) = v[1];
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(tag), 0);
     return make_tuple(hi, lo);
 }
+
+#endif /* __CUDACC__ */
 
 /**
  * Convert coalesced vector type to particle position and tag
@@ -180,6 +175,25 @@ untagged(float4 v)
 template <typename vector_type>
 __device__ typename boost::enable_if<
     boost::mpl::and_<
+        boost::is_same<boost::mpl::int_<vector_type::static_size>, boost::mpl::int_<2> >
+      , boost::is_same<typename vector_type::value_type, float>
+    >
+  , tuple<vector_type, unsigned int>
+>::type
+untagged(float4 const& v)
+{
+    vector_type w;
+    w[0] = v.x;
+    w[1] = v.y;
+    unsigned int tag = __float_as_int(v.w);
+    return make_tuple(w, tag);
+}
+
+#ifdef __CUDACC__
+
+template <typename vector_type>
+__device__ typename boost::enable_if<
+    boost::mpl::and_<
         boost::is_same<boost::mpl::int_<vector_type::static_size>, boost::mpl::int_<3> >
       , boost::is_same<typename vector_type::value_type, dsfloat>
     >
@@ -200,23 +214,6 @@ template <typename vector_type>
 __device__ typename boost::enable_if<
     boost::mpl::and_<
         boost::is_same<boost::mpl::int_<vector_type::static_size>, boost::mpl::int_<2> >
-      , boost::is_same<typename vector_type::value_type, float>
-    >
-  , tuple<vector_type, unsigned int>
->::type
-untagged(float4 const& v)
-{
-    vector_type w;
-    w[0] = v.x;
-    w[1] = v.y;
-    unsigned int tag = __float_as_int(v.w);
-    return make_tuple(w, tag);
-}
-
-template <typename vector_type>
-__device__ typename boost::enable_if<
-    boost::mpl::and_<
-        boost::is_same<boost::mpl::int_<vector_type::static_size>, boost::mpl::int_<2> >
       , boost::is_same<typename vector_type::value_type, dsfloat>
     >
   , tuple<vector_type, unsigned int>
@@ -230,6 +227,8 @@ untagged(float4 const& hi, float4 const& lo)
     unsigned int tag = __float_as_int(hi.w);
     return make_tuple(w, tag);
 }
+
+#endif /* __CUDACC__ */
 
 }}} // namespace mdsim::gpu::particle_kernel
 
