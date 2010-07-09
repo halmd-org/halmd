@@ -25,7 +25,6 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h> // if compiled with C++ compiler
-#include <string.h>
 
 #ifdef __CUDACC__
 # include <halmd/algorithm/gpu/tuple.cuh>
@@ -40,19 +39,39 @@ namespace halmd
 namespace mdsim { namespace gpu { namespace particle_kernel
 {
 
+/** placeholder particle */
+enum { PLACEHOLDER = -1U };
+
 #ifdef __CUDACC__
+
 using algorithm::gpu::tuple;
 using algorithm::gpu::make_tuple;
 using algorithm::gpu::tie;
-#else
+
+#else /* ! __CUDACC__ */
+
 using boost::tuple;
 using boost::make_tuple;
 using boost::tie;
-#endif
-using numeric::gpu::blas::dsfloat;
 
-/** placeholder particle */
-enum { PLACEHOLDER = -1U };
+//
+// Use union casts instead of pointer casts to avoid dereferencing
+// a type-punned pointer, which would break strict-aliasing rules.
+// Same endianness is assumed on GPU and host.
+//
+inline float __int_as_float(int value)
+{
+    union { int i; float f; } u; u.i = value; return u.f;
+}
+
+inline int __float_as_int(float value)
+{
+    union { float f; int i; } u; u.f = value; return u.i;
+}
+
+#endif /* ! __CUDACC__ */
+
+using numeric::gpu::blas::dsfloat;
 
 /**
  * Convert particle position and tag to coalesced vector type
@@ -71,14 +90,7 @@ tagged(vector_type v, unsigned int tag)
     w.x = v[0];
     w.y = v[1];
     w.z = v[2];
-#ifdef __CUDACC__
     w.w = __int_as_float(tag);
-#else
-    // We use memcpy instead of pointer casting to avoid dereferencing a
-    // type-punned pointer, which would break strict-aliasing rules.
-    // Same endianness is assumed on GPU and host.
-    memcpy(&w.w, &tag, sizeof(tag));
-#endif
     return w;
 }
 
@@ -99,14 +111,7 @@ tagged(vector_type v, unsigned int tag)
     lo.y = dsfloat_lo(v[1]);
     hi.z = dsfloat_hi(v[2]);
     lo.z = dsfloat_lo(v[2]);
-#ifdef __CUDACC__
     hi.w = __int_as_float(tag);
-#else
-    // We use memcpy instead of pointer casting to avoid dereferencing a
-    // type-punned pointer, which would break strict-aliasing rules.
-    // Same endianness is assumed on GPU and host.
-    memcpy(&hi.w, &tag, sizeof(tag));
-#endif
     lo.w = 0;
     return make_tuple(hi, lo);
 }
@@ -125,14 +130,7 @@ tagged(vector_type v, unsigned int tag)
     w.x = v[0];
     w.y = v[1];
     w.z = 0;
-#ifdef __CUDACC__
     w.w = __int_as_float(tag);
-#else
-    // We use memcpy instead of pointer casting to avoid dereferencing a
-    // type-punned pointer, which would break strict-aliasing rules.
-    // Same endianness is assumed on GPU and host.
-    memcpy(&w.w, &tag, sizeof(tag));
-#endif
     return w;
 }
 
@@ -153,14 +151,7 @@ tagged(vector_type v, unsigned int tag)
     lo.y = dsfloat_lo(v[1]);
     hi.z = 0;
     lo.z = 0;
-#ifdef __CUDACC__
     hi.w = __int_as_float(tag);
-#else
-    // We use memcpy instead of pointer casting to avoid dereferencing a
-    // type-punned pointer, which would break strict-aliasing rules.
-    // Same endianness is assumed on GPU and host.
-    memcpy(&hi.w, &tag, sizeof(tag));
-#endif
     lo.w = 0;
     return make_tuple(hi, lo);
 }
@@ -182,15 +173,7 @@ untagged(float4 v)
     w[0] = v.x;
     w[1] = v.y;
     w[2] = v.z;
-    unsigned int tag;
-#ifdef __CUDACC__
-    tag = __float_as_int(v.w);
-#else
-    // We use memcpy instead of pointer casting to avoid dereferencing a
-    // type-punned pointer, which would break strict-aliasing rules.
-    // Same endianness is assumed on GPU and host.
-    memcpy(&tag, &v.w, sizeof(tag));
-#endif
+    unsigned int tag = __float_as_int(v.w);
     return make_tuple(w, tag);
 }
 
@@ -209,15 +192,7 @@ untagged(float4 hi, float4 lo)
     w[0] = value_type(hi.x, lo.x);
     w[1] = value_type(hi.y, lo.y);
     w[2] = value_type(hi.z, lo.z);
-    unsigned int tag;
-#ifdef __CUDACC__
-    tag = __float_as_int(hi.w);
-#else
-    // We use memcpy instead of pointer casting to avoid dereferencing a
-    // type-punned pointer, which would break strict-aliasing rules.
-    // Same endianness is assumed on GPU and host.
-    memcpy(&tag, &hi.w, sizeof(tag));
-#endif
+    unsigned int tag = __float_as_int(hi.w);
     return make_tuple(w, tag);
 }
 
@@ -234,15 +209,7 @@ untagged(float4 const& v)
     vector_type w;
     w[0] = v.x;
     w[1] = v.y;
-    unsigned int tag;
-#ifdef __CUDACC__
-    tag = __float_as_int(v.w);
-#else
-    // We use memcpy instead of pointer casting to avoid dereferencing a
-    // type-punned pointer, which would break strict-aliasing rules.
-    // Same endianness is assumed on GPU and host.
-    memcpy(&tag, &v.w, sizeof(tag));
-#endif
+    unsigned int tag = __float_as_int(v.w);
     return make_tuple(w, tag);
 }
 
@@ -260,15 +227,7 @@ untagged(float4 const& hi, float4 const& lo)
     vector_type w;
     w[0] = value_type(hi.x, lo.x);
     w[1] = value_type(hi.y, lo.y);
-    unsigned int tag;
-#ifdef __CUDACC__
-    tag = __float_as_int(hi.w);
-#else
-    // We use memcpy instead of pointer casting to avoid dereferencing a
-    // type-punned pointer, which would break strict-aliasing rules.
-    // Same endianness is assumed on GPU and host.
-    memcpy(&tag, &hi.w, sizeof(tag));
-#endif
+    unsigned int tag = __float_as_int(hi.w);
     return make_tuple(w, tag);
 }
 
