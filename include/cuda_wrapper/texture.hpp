@@ -21,7 +21,6 @@
 #ifndef CUDA_TEXTURE_HPP
 #define CUDA_TEXTURE_HPP
 
-#include <boost/noncopyable.hpp>
 #include <cuda_runtime.h>
 
 #ifndef __CUDACC__
@@ -38,7 +37,6 @@ namespace cuda
 
 template<class T>
 class texture
-  : boost::noncopyable
 {
 public:
 #ifndef __CUDACC__
