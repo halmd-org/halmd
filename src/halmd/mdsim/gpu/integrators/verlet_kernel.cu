@@ -38,28 +38,32 @@ namespace verlet_kernel
 {
 
 /** integration time-step */
-__constant__ float timestep_;
+static __constant__ float timestep_;
+/** cuboid box edge length */
+static __constant__ float3 __box_length_impl_3;
+/** rectangular box edge length */
+static __constant__ float2 __box_length_impl_2;
 
 template <size_t N>
-struct dim_;
+struct box_length;
 
 template <>
-struct dim_<3>
+struct box_length<3>
 {
-    /** cubic box edgle length */
-    static __constant__ float3 box_length;
+    // FIXME report bug against CUDA 3.0/3.1
+    static __device__ __host__ float3 const& get() {
+        return __box_length_impl_3;
+    }
 };
-
-float3 dim_<3>::box_length;
 
 template <>
-struct dim_<2>
+struct box_length<2>
 {
-    /** cubic box edgle length */
-    static __constant__ float2 box_length;
+    // FIXME report bug against CUDA 3.0/3.1
+    static __device__ __host__ float2 const& get() {
+        return __box_length_impl_2;
+    }
 };
-
-float2 dim_<2>::box_length;
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
@@ -88,7 +92,7 @@ __global__ void _integrate(
 #endif
     vector_type_ image = g_image[i];
     vector_type_ f = g_f[i];
-    vector_type_ L = dim_<vector_type::static_size>::box_length;
+    vector_type_ L = box_length<vector_type::static_size>::get();
 
     integrate(r, image, v, f, timestep_, L);
 
@@ -139,7 +143,7 @@ __global__ void _finalize(
 template <int dimension>
 verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
     verlet_kernel::timestep_
-  , verlet_kernel::dim_<dimension>::box_length
+  , verlet_kernel::box_length<dimension>::get()
 #ifdef USE_VERLET_DSFUN
   , verlet_kernel::_integrate<vector<dsfloat, dimension>, vector<float, dimension> >
   , verlet_kernel::_finalize<vector<dsfloat, dimension>, vector<float, dimension> >
