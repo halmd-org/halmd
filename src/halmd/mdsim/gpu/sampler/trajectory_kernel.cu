@@ -17,38 +17,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/mpl/if.hpp>
-
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
+#include <halmd/mdsim/gpu/sampler/trajectory_kernel.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/utility/gpu/dimensional.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
+using namespace halmd::utility::gpu;
 
-namespace halmd { namespace mdsim { namespace gpu { namespace sampler { namespace trajectory_kernel
+namespace halmd
+{
+namespace mdsim { namespace gpu { namespace sampler
+{
+namespace trajectory_kernel
 {
 
-template <size_t N>
-struct dim_
-{
-    typedef typename if_c<N == 3, float4, float2>::type coalesced_vector_type;
-    typedef typename if_c<N == 3, float3, float2>::type vector_type;
-
-    /** positions, types */
-    static texture<float4, 1, cudaReadModeElementType> r;
-    /** minimum image vectors */
-    static texture<coalesced_vector_type, 1, cudaReadModeElementType> image;
-    /** velocities, tags */
-    static texture<float4, 1, cudaReadModeElementType> v;
-    /** cubic box edgle length */
-    static __constant__ vector_type box_length;
-};
-
-// explicit instantiation
-template class dim_<3>;
-template class dim_<2>;
+/** positions, types */
+texture<float4, 1, cudaReadModeElementType> r_;
+/** minimum image vectors */
+texture<dimensional<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > image_;
+/** velocities, tags */
+texture<float4, 1, cudaReadModeElementType> v_;
+/** cubic box edgle length */
+__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * sample trajectory for all particle of a single species
@@ -62,13 +55,29 @@ __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov)
     // fetch particle from texture caches
     unsigned int tag, type;
     vector_type r, v;
-    tie(r, type) = untagged<vector_type>(tex1Dfetch(dim_<dimension>::r, j));
-    tie(v, tag) = untagged<vector_type>(tex1Dfetch(dim_<dimension>::v, j));
-    vector_type image = tex1Dfetch(dim_<dimension>::image, j);
-    vector_type L = dim_<dimension>::box_length;
+    tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, j));
+    tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, j));
+    vector_type image = tex1Dfetch(get<dimension>(image_), j);
+    vector_type L = get<dimension>(box_length_);
     // store particle in global memory
     g_or[GTID] = r + element_prod(L, image);
     g_ov[GTID] = v;
 }
 
-}}}}} // namespace halmd::mdsim::gpu::sampler::trajectory_kernel
+} // namespace trajectory_kernel
+
+template <int dimension>
+trajectory_wrapper<dimension> const trajectory_wrapper<dimension>::kernel = {
+    trajectory_kernel::r_
+  , get<dimension>(trajectory_kernel::image_)
+  , trajectory_kernel::v_
+  , get<dimension>(trajectory_kernel::box_length_)
+  , trajectory_kernel::sample<vector<float, dimension> >
+};
+
+template class trajectory_wrapper<3>;
+template class trajectory_wrapper<2>;
+
+}}} // namespace mdsim::gpu::sampler
+
+} // namespace halmd

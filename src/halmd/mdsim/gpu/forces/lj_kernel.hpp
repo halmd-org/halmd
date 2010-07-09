@@ -26,40 +26,52 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
-
-template <int D>
-struct lj_kernel
+namespace lj_kernel
 {
-    //
-    // Lennard Jones potential parameter indices
-    //
-    enum {
-        /** potential well depths in MD units */
-        EPSILON,
-        /** square of cutoff length */
-        RR_CUT,
-        /** square of pair separation */
-        SIGMA2,
-        /** potential energy at cutoff length in MD units */
-        EN_CUT,
-    };
 
-    typedef typename boost::mpl::if_c<D == 3, float4, float2>::type coalesced_vector_type;
-    typedef typename boost::mpl::if_c<D == 3, float3, float2>::type vector_type;
+//
+// Lennard Jones potential parameter indices
+//
+enum {
+    /** potential well depths in MD units */
+    EPSILON,
+    /** square of cutoff length */
+    RR_CUT,
+    /** square of pair separation */
+    SIGMA2,
+    /** potential energy at cutoff length in MD units */
+    EN_CUT,
+};
+
+} // namespace lj_kernel
+
+template <int dimension>
+struct lj_wrapper
+{
+    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
+    typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
 
     /** positions, types */
-    static cuda::texture<float4> r;
+    cuda::texture<float4> r;
     /** cubic box edgle length */
-    static cuda::symbol<vector_type> box_length;
+    cuda::symbol<vector_type> box_length;
     /** number of placeholders per neighbour list */
-    static cuda::symbol<unsigned int> neighbour_size;
+    cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */
-    static cuda::symbol<unsigned int> neighbour_stride;
+    cuda::symbol<unsigned int> neighbour_stride;
     /** Lennard-Jones potential parameters */
-    static cuda::texture<float4> ljparam;
+    cuda::texture<float4> ljparam;
     /** compute Lennard-Jones forces */
-    static cuda::function<void (coalesced_vector_type*, unsigned int*, float*, coalesced_vector_type*)> compute;
+    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, coalesced_vector_type*)> compute;
+
+    static lj_wrapper const kernel;
 };
+
+template <int dimension>
+lj_wrapper<dimension> const& get_lj_kernel()
+{
+    return lj_wrapper<dimension>::kernel;
+}
 
 }}} // namespace mdsim::gpu::forces
 

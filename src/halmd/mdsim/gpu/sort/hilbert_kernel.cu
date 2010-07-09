@@ -22,35 +22,27 @@
 
 #include <halmd/algorithm/gpu/bits.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
+#include <halmd/mdsim/gpu/sort/hilbert_kernel.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/utility/gpu/dimensional.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace boost::mpl;
+using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
-using namespace halmd::algorithm::gpu;
+using namespace halmd::utility::gpu;
 
-namespace halmd { namespace mdsim { namespace gpu
+namespace halmd
 {
-
+namespace mdsim { namespace gpu
+{
 namespace hilbert_kernel
 {
 
-template <size_t N>
-struct dim_
-{
-    /** positions, tags */
-    static texture<float4, 1, cudaReadModeElementType> r;
-    /** cubic box edgle length */
-    static __constant__ typename if_c<N == 3, float3, float2>::type box_length;
-};
-
-// explicit instantiation
-template class dim_<3>;
-template class dim_<2>;
-
 /** Hilbert space-filling curve recursion depth */
 __constant__ unsigned int depth_;
+/** cubic box edgle length */
+__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * swap Hilbert spacing-filling curve vertices
@@ -201,7 +193,7 @@ __global__ void map(float4 const* g_r, unsigned int* g_sfc)
     unsigned int type;
     vector_type r;
     tie(r, type) = untagged<vector_type>(g_r[GTID]);
-    vector_type L = dim_<dimension>::box_length;
+    vector_type L = get<dimension>(box_length_);
     // Hilbert cells per dimension at deepest recursion level
     uint const n = 1UL << depth_;
     // fractional index of particle's Hilbert cell in [0, n)
@@ -218,4 +210,17 @@ __global__ void map(float4 const* g_r, unsigned int* g_sfc)
 
 } // namespace hilbert_kernel
 
-}}} //namespace halmd::mdsim::gpu
+template <int dimension>
+hilbert_wrapper<dimension> const hilbert_wrapper<dimension>::kernel = {
+    hilbert_kernel::depth_
+  , get<dimension>(hilbert_kernel::box_length_)
+  , hilbert_kernel::map<vector<float, dimension> >
+};
+
+// explicit instantiation
+template class hilbert_wrapper<3>;
+template class hilbert_wrapper<2>;
+
+}} // namespace mdsim::gpu
+
+} // namespace halmd

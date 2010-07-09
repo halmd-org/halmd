@@ -17,14 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_HILBERT_WRAPPER_CUH
-#define HALMD_MDSIM_GPU_HILBERT_WRAPPER_CUH
+#ifndef HALMD_MDSIM_GPU_HILBERT_KERNEL_HPP
+#define HALMD_MDSIM_GPU_HILBERT_KERNEL_HPP
 
 #include <boost/mpl/if.hpp>
 
 #include <cuda_wrapper.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu
+namespace halmd
+{
+namespace mdsim { namespace gpu
 {
 
 template <int dimension>
@@ -33,13 +35,23 @@ struct hilbert_wrapper
     typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
 
     /** Hilbert space-filling curve recursion depth */
-    static cuda::symbol<float> depth;
+    cuda::symbol<float> depth;
     /** cubic box edgle length */
-    static cuda::symbol<vector_type> box_length;
+    cuda::symbol<vector_type> box_length;
     /** generate Hilbert space-filling curve */
-    static cuda::function<void (float4 const*, unsigned int*)> map;
+    cuda::function<void (float4 const*, unsigned int*)> map;
+
+    static hilbert_wrapper const kernel;
 };
 
-}}} // namespace halmd::mdsim::gpu
+template <int dimension>
+hilbert_wrapper<dimension> const& get_hilbert_kernel()
+{
+    return hilbert_wrapper<dimension>::kernel;
+}
 
-#endif /* ! HALMD_MDSIM_GPU_HILBERT_WRAPPER_CUH */
+}} // namespace mdsim::gpu
+
+} // namespace halmd
+
+#endif /* ! HALMD_MDSIM_GPU_HILBERT_KERNEL_HPP */

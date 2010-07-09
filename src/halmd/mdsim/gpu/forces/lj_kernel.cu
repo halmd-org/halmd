@@ -26,36 +26,30 @@
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/symmetric.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/utility/gpu/dimensional.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
+using namespace halmd::utility::gpu;
 
 namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
-
-template <size_t N>
-struct dim_
+namespace lj_kernel
 {
-    /** positions, types */
-    static texture<float4, 1, cudaReadModeElementType> r;
-    /** cubic box edgle length */
-    static __constant__ typename if_c<N == 3, float3, float2>::type box_length;
-};
-
-// explicit instantiation
-template class dim_<3>;
-template class dim_<2>;
 
 /** number of placeholders per neighbour list */
 __constant__ unsigned int neighbour_size_;
 /** neighbour list stride */
 __constant__ unsigned int neighbour_stride_;
 /** Lennard-Jones potential parameters */
-texture<float4, 1, cudaReadModeElementType> ljparam_;
+texture<float4> ljparam_;
+/** positions, types */
+texture<float4> r_;
+/** cuboid box edgle length */
+__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * Compute Lennard-Jones forces
@@ -67,22 +61,22 @@ __global__ void compute(
   float* g_en_pot,
   gpu_vector_type* g_virial)
 {
-    enum { D = vector_type::static_size };
+    enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;
     unsigned int i = GTID;
 
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(dim_<D>::r, i));
+    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(r_, i));
 
     // potential energy contribution
     float en_pot_ = 0;
     // virial contribution
-    vector<float, (D - 1) * D / 2 + 1> virial_ = 0;
+    vector<float, (dimension - 1) * dimension / 2 + 1> virial_ = 0;
 #ifdef USE_FORCE_DSFUN
     // force sum
-    vector<dsfloat, D> f = 0;
+    vector<dsfloat, dimension> f = 0;
 #else
     vector_type f = 0;
 #endif
@@ -98,26 +92,26 @@ __global__ void compute(
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) = untagged<vector_type>(tex1Dfetch(dim_<D>::r, j));
+        tie(r2, type2) = untagged<vector_type>(tex1Dfetch(r_, j));
         // Lennard-Jones potential parameters
         vector<float, 4> lj = tex1Dfetch(ljparam_, symmetric_matrix::lower_index(type1, type2));
 
         // particle distance vector
         vector_type r = r1 - r2;
         // enforce periodic boundary conditions
-        box_kernel::reduce_periodic(r, static_cast<vector_type>(dim_<D>::box_length));
+        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(box_length_)));
         // squared particle distance
         value_type rr = inner_prod(r, r);
         // enforce cutoff length
-        if (rr >= lj[lj_kernel<D>::RR_CUT]) {
+        if (rr >= lj[RR_CUT]) {
             return;
         }
 
         // compute Lennard-Jones force in reduced units
-        value_type rri = lj[lj_kernel<D>::SIGMA2] / rr;
+        value_type rri = lj[SIGMA2] / rr;
         value_type ri6 = rri * rri * rri;
-        value_type fval = 48 * lj[lj_kernel<D>::EPSILON] * rri * ri6 * (ri6 - 0.5f) / lj[lj_kernel<D>::SIGMA2];
-        value_type en_pot = 4 * lj[lj_kernel<D>::EPSILON] * ri6 * (ri6 - 1) - lj[lj_kernel<D>::EN_CUT];
+        value_type fval = 48 * lj[EPSILON] * rri * ri6 * (ri6 - 0.5f) / lj[SIGMA2];
+        value_type en_pot = 4 * lj[EPSILON] * ri6 * (ri6 - 1) - lj[EN_CUT];
 
         // virial equation sum
         virial_ += 0.5f * fval * force_kernel::virial_tensor(rr, r);
@@ -132,22 +126,21 @@ __global__ void compute(
     g_virial[i] = virial_;
 }
 
-template <int D> typeof(lj_kernel<D>::r)
-  lj_kernel<D>::r(forces::dim_<D>::r);
-template <int D> typeof(lj_kernel<D>::box_length)
-  lj_kernel<D>::box_length(forces::dim_<D>::box_length);
-template <int D> typeof(lj_kernel<D>::neighbour_size)
-  lj_kernel<D>::neighbour_size(forces::neighbour_size_);
-template <int D> typeof(lj_kernel<D>::neighbour_stride)
-  lj_kernel<D>::neighbour_stride(forces::neighbour_stride_);
-template <int D> typeof(lj_kernel<D>::ljparam)
-  lj_kernel<D>::ljparam(forces::ljparam_);
-template <int D> typeof(lj_kernel<D>::compute)
-  lj_kernel<D>::compute(forces::compute<vector<float, D> >);
+} // namespace lj_kernel
+
+template <int dimension>
+lj_wrapper<dimension> const lj_wrapper<dimension>::kernel = {
+    lj_kernel::r_
+  , get<dimension>(lj_kernel::box_length_)
+  , lj_kernel::neighbour_size_
+  , lj_kernel::neighbour_stride_
+  , lj_kernel::ljparam_
+  , lj_kernel::compute<vector<float, dimension> >
+};
+
+template class lj_wrapper<3>;
+template class lj_wrapper<2>;
 
 }}} // namespace mdsim::gpu::forces
-
-template class mdsim::gpu::forces::lj_kernel<3>;
-template class mdsim::gpu::forces::lj_kernel<2>;
 
 } // namespace halmd

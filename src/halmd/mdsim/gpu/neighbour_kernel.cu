@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/mpl/if.hpp>
 #include <float.h>
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
@@ -25,11 +24,12 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/gpu/blas/symmetric.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/utility/gpu/dimensional.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
+using namespace halmd::utility::gpu;
 
 namespace halmd
 {
@@ -46,30 +46,21 @@ __constant__ unsigned int neighbour_size_;
 __constant__ unsigned int neighbour_stride_;
 /** number of particles in simulation box */
 __constant__ unsigned int nbox_;
-
-template <size_t N>
-struct dim_
-{
-    /** positions, tags */
-    static texture<float4, 1, cudaReadModeElementType> r;
-    /** number of cells per dimension */
-    static __constant__ typename if_c<N == 3, uint3, uint2>::type ncell;
-    /** cubic box edgle length */
-    static __constant__ typename if_c<N == 3, float3, float2>::type box_length;
-    /** cell edge lengths */
-    static __constant__ typename if_c<N == 3, float3, float2>::type cell_length;
-};
-
-// explicit instantiation
-template class dim_<3>;
-template class dim_<2>;
+/** cuboid box edgle length */
+__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+/** number of cells per dimension */
+__constant__ dimensional<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
+/** cell edge lengths */
+__constant__ dimensional<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > cell_length_;
+/** positions, tags */
+texture<float4, 1, cudaReadModeElementType> r_;
 
 /**
  * compute neighbour cell
  */
 __device__ unsigned int compute_neighbour_cell(vector<int, 3> const &offset)
 {
-    vector<int, 3> ncell(static_cast<vector<unsigned int, 3> >(dim_<3>::ncell));
+    vector<int, 3> ncell(static_cast<vector<unsigned int, 3> >(get<3>(ncell_)));
     vector<int, 3> cell;
 
     // cell belonging to this execution block
@@ -84,7 +75,7 @@ __device__ unsigned int compute_neighbour_cell(vector<int, 3> const &offset)
 
 __device__ unsigned int compute_neighbour_cell(vector<int, 2> const& offset)
 {
-    vector<int, 2> ncell(static_cast<vector<unsigned int, 2> >(dim_<2>::ncell));
+    vector<int, 2> ncell(static_cast<vector<unsigned int, 2> >(get<2>(ncell_)));
     vector<int, 2> cell;
 
     // cell belonging to this execution block
@@ -122,7 +113,7 @@ __device__ void update_cell_neighbours(
     // load particles in cell
     unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
-    tie(s_r[threadIdx.x], s_type[threadIdx.x]) = untagged<vector<float, dimension> >(tex1Dfetch(dim_<dimension>::r, n_));
+    tie(s_r[threadIdx.x], s_type[threadIdx.x]) = untagged<vector<float, dimension> >(tex1Dfetch(r_, n_));
     __syncthreads();
 
     if (n == PLACEHOLDER) return;
@@ -138,7 +129,7 @@ __device__ void update_cell_neighbours(
         // particle distance vector
         T dr = r - s_r[i];
         // enforce periodic boundary conditions
-        T L = dim_<dimension>::box_length;
+        T L = get<dimension>(box_length_);
         box_kernel::reduce_periodic(dr, L);
         // squared particle distance
         float rr = inner_prod(dr, dr);
@@ -167,7 +158,7 @@ __global__ void update_neighbours(
     unsigned int const n = g_cell[GTID];
     unsigned int type;
     vector<float, dimension> r;
-    tie(r, type) = untagged<vector<float, dimension> >(tex1Dfetch(dim_<dimension>::r, n));
+    tie(r, type) = untagged<vector<float, dimension> >(tex1Dfetch(r_, n));
     // number of particles in neighbour list
     unsigned int count = 0;
 
@@ -263,8 +254,8 @@ template <typename vector_type>
 __device__ inline unsigned int compute_cell_index(vector_type r)
 {
     enum { dimension = vector_type::static_size };
-    vector_type L = dim_<dimension>::box_length;
-    vector<unsigned int, dimension> ncell = dim_<dimension>::ncell;
+    vector_type L = get<dimension>(box_length_);
+    vector<unsigned int, dimension> ncell = get<dimension>(ncell_);
 
     //
     // Mapping the positional coordinates of a particle to its corresponding
@@ -359,13 +350,13 @@ __global__ void gen_index(unsigned int* g_index)
 template <int dimension>
 neighbour_wrapper<dimension> neighbour_wrapper<dimension>::kernel = {
     neighbour_kernel::rr_cut_skin_
-  , neighbour_kernel::dim_<dimension>::ncell
+  , get<dimension>(neighbour_kernel::ncell_)
   , neighbour_kernel::neighbour_size_
   , neighbour_kernel::neighbour_stride_
   , neighbour_kernel::nbox_
-  , neighbour_kernel::dim_<dimension>::r
-  , neighbour_kernel::dim_<dimension>::box_length
-  , neighbour_kernel::dim_<dimension>::cell_length
+  , neighbour_kernel::r_
+  , get<dimension>(neighbour_kernel::box_length_)
+  , get<dimension>(neighbour_kernel::cell_length_)
   , neighbour_kernel::assign_cells
   , neighbour_kernel::find_cell_offset
   , neighbour_kernel::gen_index

@@ -24,27 +24,39 @@
 
 #include <cuda_wrapper.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace sampler
+namespace halmd
+{
+namespace mdsim { namespace gpu { namespace sampler
 {
 
-template <size_t N>
+template <int dimension>
 struct trajectory_wrapper
 {
-    typedef typename boost::mpl::if_c<N == 3, float4, float2>::type coalesced_vector_type;
-    typedef typename boost::mpl::if_c<N == 3, float3, float2>::type vector_type;
+    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
+    typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
 
     /** positions, types */
-    static cuda::texture<float4> r;
+    cuda::texture<float4> r;
     /** minimum image vectors */
-    static cuda::texture<coalesced_vector_type> image;
+    cuda::texture<coalesced_vector_type> image;
     /** velocities, tags */
-    static cuda::texture<float4> v;
+    cuda::texture<float4> v;
     /** cubic box edgle length */
-    static cuda::symbol<vector_type> box_length;
+    cuda::symbol<vector_type> box_length;
     /** sample trajectory for all particle of a single species */
-    static cuda::function<void (unsigned int const*, coalesced_vector_type*, coalesced_vector_type*)> sample;
+    cuda::function<void (unsigned int const*, coalesced_vector_type*, coalesced_vector_type*)> sample;
+
+    static trajectory_wrapper const kernel;
 };
 
-}}}} // namespace halmd::mdsim::gpu::sampler
+template <int dimension>
+trajectory_wrapper<dimension> const& get_trajectory_kernel()
+{
+    return trajectory_wrapper<dimension>::kernel;
+}
+
+}}} // namespace mdsim::gpu::sampler
+
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH */

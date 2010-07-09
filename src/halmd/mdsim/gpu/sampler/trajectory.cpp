@@ -22,7 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/sampler/trajectory.hpp>
-#include <halmd/mdsim/gpu/sampler/trajectory_wrapper.cuh>
+#include <halmd/mdsim/gpu/sampler/trajectory_kernel.hpp>
 
 using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;
