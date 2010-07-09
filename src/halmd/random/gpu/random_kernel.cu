@@ -30,52 +30,55 @@ namespace random { namespace gpu
 namespace random_kernel
 {
 
-// import into current namespace
-using random::gpu::rng;
+// random number generator parameters
+static __constant__ random_number_generator rng;
+
+// import into current namespace (because we define get function below)
+using random::gpu::get;
 
 /**
  * fill array with uniform random numbers in [0.0, 1.0)
  */
-template <typename RandomNumberGenerator>
+template <typename Rng>
 __global__ void uniform(float* v, unsigned int len)
 {
-    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::get()[GTID];
+    typename Rng::state_type state = get<Rng>(rng)[GTID];
 
     for (unsigned int k = GTID; k < len; k += GTDIM) {
-        v[k] = uniform(rng<rand48_rng>::get(), state);
+        v[k] = uniform(get<Rng>(rng), state);
     }
 
-    rng<rand48_rng>::get()[GTID] = state;
+    get<Rng>(rng)[GTID] = state;
 }
 
 /**
  * fill array with random integers in [0, 2^32-1]
  */
-template <typename RandomNumberGenerator>
+template <typename Rng>
 __global__ void get(unsigned int* v, unsigned int len)
 {
-    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::get()[GTID];
+    typename Rng::state_type state = get<Rng>(rng)[GTID];
 
     for (unsigned int k = GTID; k < len; k += GTDIM) {
-        v[k] = get(rng<rand48_rng>::get(), state);
+        v[k] = get(get<Rng>(rng), state);
     }
 
-    rng<rand48_rng>::get()[GTID] = state;
+    get<Rng>(rng)[GTID] = state;
 }
 
 /**
  * fill array with normal distributed random numbers in [0.0, 1.0)
  */
-template <typename RandomNumberGenerator>
+template <typename Rng>
 __global__ void normal(float* v, unsigned int len, float mean, float sigma)
 {
-    typename RandomNumberGenerator::state_type state = rng<rand48_rng>::get()[GTID];
+    typename Rng::state_type state = get<Rng>(rng)[GTID];
 
     for (unsigned int k = GTID; k < len; k += 2 * GTDIM) {
-        normal(rng<rand48_rng>::get(), state, v[k], v[k + GTID], mean, sigma);
+        normal(get<Rng>(rng), state, v[k], v[k + GTID], mean, sigma);
     }
 
-    rng<rand48_rng>::get()[GTID] = state;
+    get<Rng>(rng)[GTID] = state;
 }
 
 
@@ -84,12 +87,12 @@ __global__ void normal(float* v, unsigned int len, float mean, float sigma)
 /**
  * CUDA C++ wrappers
  */
-template <typename T>
-random_wrapper<T> const random_wrapper<T>::kernel = {
-    random_kernel::rng<T>::get()
-  , random_kernel::uniform<T>
-  , random_kernel::get<T>
-  , random_kernel::normal<T>
+template <typename Rng>
+random_wrapper<Rng> const random_wrapper<Rng>::kernel = {
+    random_kernel::get<Rng>(random_kernel::rng)
+  , random_kernel::uniform<Rng>
+  , random_kernel::get<Rng>
+  , random_kernel::normal<Rng>
 };
 
 template class random_wrapper<random::gpu::rand48_rng>;

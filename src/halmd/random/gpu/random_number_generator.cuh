@@ -27,19 +27,37 @@ namespace halmd
 namespace random { namespace gpu
 {
 
-static __constant__ rand48_rng __g_rand48_rng;
-
-template <typename RandomNumberGenerator>
-struct rng;
-
-template <>
-struct rng<rand48_rng>
+union random_number_generator
 {
-    // FIXME report bug against CUDA 3.0/3.1
-    static __device__ __host__ rand48_rng const& get() {
-        return __g_rand48_rng;
-    }
+private:
+    /**
+     * Available random number generators.
+     */
+    rand48_rng rand48_;
+    // gfsr4_rng gfsr4_;
+
+public:
+    /**
+     * These constructors are used on the host to cuda::copy the
+     * parameters of a specific random number generator to the GPU.
+     */
+    __host__ random_number_generator(rand48_rng const& rng) : rand48_(rng) {}
+    // __host__ random_number_generator(gfsr4_rng const& rng) : gfsr4_(rng) {}
+
+    /**
+     * Default constructor for __constant__ definition.
+     */
+    __device__ random_number_generator() {}
 };
+
+/**
+ * Select random number generator in __device__ function.
+ */
+template <typename RandomNumberGenerator>
+__device__ __host__ RandomNumberGenerator const& get(random_number_generator const& rng)
+{
+    return reinterpret_cast<RandomNumberGenerator const&>(rng);
+}
 
 }} // namespace random::gpu
 
