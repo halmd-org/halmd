@@ -595,7 +595,7 @@ __device__ inline vector<float, 3> rint(vector<float, 3> v)
 /**
  * Elementwise round to nearest integer, away from zero
  */
-__device__ vector<float, 3> round(vector<float, 3> v)
+__device__ inline vector<float, 3> round(vector<float, 3> v)
 {
     v[0] = ::roundf(v[0]);
     v[1] = ::roundf(v[1]);
