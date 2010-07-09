@@ -21,43 +21,22 @@
 #define HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH
 
 #include <halmd/random/gpu/rand48_kernel.cuh>
+#include <halmd/utility/gpu/dimensional.cuh>
 
 namespace halmd
 {
 namespace random { namespace gpu
 {
 
-union random_number_generator
-{
-private:
-    /**
-     * Available random number generators.
-     */
-    rand48_rng rand48_;
-    // gfsr4_rng gfsr4_;
+using utility::gpu::dimensional;
+using utility::gpu::set;
+using utility::gpu::get;
 
-public:
-    /**
-     * These constructors are used on the host to cuda::copy the
-     * parameters of a specific random number generator to the GPU.
-     */
-    __host__ random_number_generator(rand48_rng const& rng) : rand48_(rng) {}
-    // __host__ random_number_generator(gfsr4_rng const& rng) : gfsr4_(rng) {}
-
-    /**
-     * Default constructor for __constant__ definition.
-     */
-    __device__ random_number_generator() {}
-};
-
-/**
- * Select random number generator in __device__ function.
- */
-template <typename RandomNumberGenerator>
-__device__ __host__ RandomNumberGenerator const& get(random_number_generator const& rng)
-{
-    return reinterpret_cast<RandomNumberGenerator const&>(rng);
-}
+typedef dimensional<
+    set<
+        rand48_rng
+    >
+> random_number_generator;
 
 }} // namespace random::gpu
 
