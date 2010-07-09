@@ -81,7 +81,6 @@ union variant_iterate_range<
 template <typename Sequence>
 union variant
 {
-    typedef Sequence types;
     detail::variant_iterate_range<
         Sequence
       , typename boost::mpl::begin<Sequence>::type
