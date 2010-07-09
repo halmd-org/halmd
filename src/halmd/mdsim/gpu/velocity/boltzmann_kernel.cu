@@ -141,6 +141,7 @@ template <typename vector_type>
 __global__ void scale_velocity(float4* g_v, uint npart, uint nplace, dsfloat const* g_vv, dsfloat temp)
 {
     enum { dimension = vector_type::static_size };
+    typedef typename vector_type::value_type float_type;
     __shared__ dsfloat s_vv[THREADS];
     dsfloat vv = 0;
 
@@ -153,19 +154,21 @@ __global__ void scale_velocity(float4* g_v, uint npart, uint nplace, dsfloat con
         vv += s_vv[i];
     }
 
-    int dim = vector_type::static_size;
-    dsfloat coeff = sqrt(temp * static_cast<dsfloat>(dim) * (static_cast<dsfloat>(npart) / vv));
+    float_type coeff = sqrt(temp * static_cast<int>(dimension) * (static_cast<float_type>(npart) / vv));
 
     for (uint i = GTID; i < npart; i += GTDIM) {
+        vector_type v;
+        unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-        vector_type v; // FIXME (g_v[i], g_v[i + nplace]);
+        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + nplace]);
 #else
-        vector_type v = g_v[i];
+        tie(v, tag) = untagged<vector_type>(g_v[i]);
 #endif
         v *= coeff;
-        // FIXME g_v[i] = static_cast<vector<float, dimension> >(v);
 #ifdef USE_VERLET_DSFUN
-        g_v[i + nplace] = tagged(dsfloat_lo(v), /* FIXME */0);
+        tie(g_v[i], g_v[i + nplace]) = tagged(v, tag);
+#else
+        g_v[i] = tagged(v, tag);
 #endif
     }
 }

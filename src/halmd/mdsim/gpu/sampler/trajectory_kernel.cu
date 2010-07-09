@@ -60,10 +60,12 @@ __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov)
     // permutation index
     uint const j = g_index[GTID];
     // fetch particle from texture caches
-    vector_type r = untagged<vector_type >(tex1Dfetch(dim_<dimension>::r, j));
+    unsigned int tag, type;
+    vector_type r, v;
+    tie(r, type) = untagged<vector_type>(tex1Dfetch(dim_<dimension>::r, j));
+    tie(v, tag) = untagged<vector_type>(tex1Dfetch(dim_<dimension>::v, j));
     vector_type image = tex1Dfetch(dim_<dimension>::image, j);
     vector_type L = dim_<dimension>::box_length;
-    vector_type v = untagged<vector_type >(tex1Dfetch(dim_<dimension>::v, j));
     // store particle in global memory
     g_or[GTID] = r + element_prod(L, image);
     g_ov[GTID] = v;

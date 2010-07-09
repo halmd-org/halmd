@@ -198,7 +198,9 @@ __global__ void map(float4 const* g_r, unsigned int* g_sfc)
     // and round the particle position to the nearest center of a cell.
     //
 
-    vector_type r = untagged<vector_type>(g_r[GTID]);
+    unsigned int type;
+    vector_type r;
+    tie(r, type) = untagged<vector_type>(g_r[GTID]);
     vector_type L = dim_<dimension>::box_length;
     // Hilbert cells per dimension at deepest recursion level
     uint const n = 1UL << depth_;

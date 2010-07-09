@@ -73,7 +73,8 @@ __global__ void compute(
 
     // load particle associated with this thread
     unsigned int type1;
-    vector_type r1 = untagged<vector_type>(tex1Dfetch(dim_<D>::r, i), type1);
+    vector_type r1;
+    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(dim_<D>::r, i));
 
     // potential energy contribution
     float en_pot_ = 0;
@@ -96,7 +97,8 @@ __global__ void compute(
 
         // load particle
         unsigned int type2;
-        vector_type r2 = untagged<vector_type>(tex1Dfetch(dim_<D>::r, j), type2);
+        vector_type r2;
+        tie(r2, type2) = untagged<vector_type>(tex1Dfetch(dim_<D>::r, j));
         // Lennard-Jones potential parameters
         vector<float, 4> lj = tex1Dfetch(ljparam_, symmetric_matrix::lower_index(type1, type2));
 

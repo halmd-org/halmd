@@ -93,8 +93,9 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         unsigned int type, tag;
-        vector_type r = untagged<vector_type>(particle->h_r[i], type);
-        vector_type v = untagged<vector_type>(particle->h_v[i], tag);
+        vector_type r, v;
+        tie(r, type) = untagged<vector_type>(particle->h_r[i]);
+        tie(v, tag) = untagged<vector_type>(particle->h_v[i]);
         vector_type image = particle->h_image[i];
         vector_type L = static_cast<vector_type>(box->length());
         // periodically extended particle position

@@ -122,7 +122,7 @@ __device__ void update_cell_neighbours(
     // load particles in cell
     unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
-    s_r[threadIdx.x] = untagged<vector<float, dimension> >(tex1Dfetch(dim_<dimension>::r, n_), s_type[threadIdx.x]);
+    tie(s_r[threadIdx.x], s_type[threadIdx.x]) = untagged<vector<float, dimension> >(tex1Dfetch(dim_<dimension>::r, n_));
     __syncthreads();
 
     if (n == PLACEHOLDER) return;
@@ -166,7 +166,8 @@ __global__ void update_neighbours(
     // load particle from cell placeholder
     unsigned int const n = g_cell[GTID];
     unsigned int type;
-    vector<float, dimension> const r = untagged<vector<float, dimension> >(tex1Dfetch(dim_<dimension>::r, n), type);
+    vector<float, dimension> r;
+    tie(r, type) = untagged<vector<float, dimension> >(tex1Dfetch(dim_<dimension>::r, n));
     // number of particles in neighbour list
     unsigned int count = 0;
 
@@ -291,7 +292,9 @@ __device__ inline unsigned int compute_cell_index(vector_type r)
 template <unsigned int dimension>
 __global__ void compute_cell(float4 const* g_r, unsigned int* g_cell)
 {
-    vector<float, dimension> const r = untagged<vector<float, dimension> >(g_r[GTID]);
+    vector<float, dimension> r;
+    unsigned int type;
+    tie(r, type) = untagged<vector<float, dimension> >(g_r[GTID]);
     g_cell[GTID] = compute_cell_index(r);
 }
 

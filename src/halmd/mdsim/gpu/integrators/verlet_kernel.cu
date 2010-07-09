@@ -64,7 +64,11 @@ float2 dim_<2>::box_length;
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
-template <typename vector_type, typename vector_type_, typename gpu_vector_type>
+template <
+    typename vector_type
+  , typename vector_type_
+  , typename gpu_vector_type
+>
 __global__ void _integrate(
   float4* g_r,
   gpu_vector_type* g_image,
@@ -74,37 +78,38 @@ __global__ void _integrate(
     unsigned int const i = GTID;
     unsigned int const threads = GTDIM;
     unsigned int type, tag;
+    vector_type r, v;
 #ifdef USE_VERLET_DSFUN
-    vector_type r      ( untagged<vector_type_>(g_r[i], type),
-                         untagged<vector_type_>(g_r[i + threads]));
-    vector_type v      ( untagged<vector_type_>(g_v[i], tag),
-                         untagged<vector_type_>(g_v[i + threads]));
+    tie(r, type) = untagged<vector_type>(g_r[i], g_r[i + threads]);
+    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
 #else
-    vector_type_ r     = untagged<vector_type_>(g_r[i], type);
-    vector_type_ v     = untagged<vector_type_>(g_v[i], tag);
+    tie(r, type) = untagged<vector_type>(g_r[i]);
+    tie(v, tag) = untagged<vector_type>(g_v[i]);
 #endif
     vector_type_ image = g_image[i];
-    vector_type_ f     = g_f[i];
-    vector_type_ L     = dim_<vector_type::static_size>::box_length;
+    vector_type_ f = g_f[i];
+    vector_type_ L = dim_<vector_type::static_size>::box_length;
 
     integrate(r, image, v, f, timestep_, L);
 
 #ifdef USE_VERLET_DSFUN
-    g_r[i]             = tagged(dsfloat_hi(r), type);
-    g_r[i + threads]   = tagged(dsfloat_lo(r), 0);
-    g_v[i]             = tagged(dsfloat_hi(v), tag);
-    g_v[i + threads]   = tagged(dsfloat_lo(v), 0);
+    tie(g_r[i], g_r[i + threads]) = tagged(r, type);
+    tie(g_v[i], g_v[i + threads]) = tagged(v, tag);
 #else
-    g_r[i]             = tagged(r, type);
-    g_v[i]             = tagged(v, tag);
+    g_r[i] = tagged(r, type);
+    g_v[i] = tagged(v, tag);
 #endif
-    g_image[i]         = image;
+    g_image[i] = image;
 }
 
 /**
  * Second leapfrog half-step of velocity-Verlet algorithm
  */
-template <typename vector_type, typename vector_type_, typename gpu_vector_type>
+template <
+    typename vector_type
+  , typename vector_type_
+  , typename gpu_vector_type
+>
 __global__ void _finalize(
   float4* g_v,
   gpu_vector_type const* g_f)
@@ -112,21 +117,20 @@ __global__ void _finalize(
     unsigned int const i = GTID;
     unsigned int const threads = GTDIM;
     unsigned int tag;
+    vector_type v;
 #ifdef USE_VERLET_DSFUN
-    vector_type v      ( untagged<vector_type_>(g_v[i], tag),
-                         untagged<vector_type_>(g_v[i + threads]));
+    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
 #else
-    vector_type_ v     = untagged<vector_type_>(g_v[i], tag);
+    tie(v, tag) = untagged<vector_type>(g_v[i]);
 #endif
-    vector_type_ f     = g_f[i];
+    vector_type_ f = g_f[i];
 
     finalize(v, f, timestep_);
 
 #ifdef USE_VERLET_DSFUN
-    g_v[i]             = tagged(dsfloat_hi(v), tag);
-    g_v[i + threads]   = tagged(dsfloat_lo(v), 0);
+    tie(g_v[i], g_v[i + threads]) = tagged(v, tag);
 #else
-    g_v[i]             = tagged(v, tag);
+    g_v[i] = tagged(v, tag);
 #endif
 }
 
@@ -136,8 +140,13 @@ template <int dimension>
 verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
     verlet_kernel::timestep_
   , verlet_kernel::dim_<dimension>::box_length
+#ifdef USE_VERLET_DSFUN
   , verlet_kernel::_integrate<vector<dsfloat, dimension>, vector<float, dimension> >
   , verlet_kernel::_finalize<vector<dsfloat, dimension>, vector<float, dimension> >
+#else
+  , verlet_kernel::_integrate<vector<float, dimension>, vector<float, dimension> >
+  , verlet_kernel::_finalize<vector<float, dimension>, vector<float, dimension> >
+#endif
 };
 
 template class verlet_wrapper<3>;
