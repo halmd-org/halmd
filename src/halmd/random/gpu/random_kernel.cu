@@ -75,7 +75,7 @@ __global__ void normal(float* v, unsigned int len, float mean, float sigma)
     typename Rng::state_type state = get<Rng>(rng)[GTID];
 
     for (unsigned int k = GTID; k < len; k += 2 * GTDIM) {
-        normal(get<Rng>(rng), state, v[k], v[k + GTID], mean, sigma);
+        tie(v[k], v[k + GTID]) = normal(get<Rng>(rng), state, mean, sigma);
     }
 
     get<Rng>(rng)[GTID] = state;

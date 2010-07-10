@@ -27,10 +27,16 @@
 #ifndef HALMD_RANDOM_GPU_NORMAL_DISTRIBUTION_CUH
 #define HALMD_RANDOM_GPU_NORMAL_DISTRIBUTION_CUH
 
+#include <halmd/algorithm/gpu/tuple.cuh>
+
 namespace halmd
 {
 namespace random { namespace gpu
 {
+
+using algorithm::gpu::tuple;
+using algorithm::gpu::make_tuple;
+using algorithm::gpu::tie;
 
 //
 // The Box-Muller transformation for generating random numbers
@@ -51,16 +57,14 @@ namespace random { namespace gpu
  * generate pair of random numbers from Gaussian distribution
  */
 template <typename RandomNumberGenerator>
-inline __device__ void normal(
-    RandomNumberGenerator const& rng,
-    typename RandomNumberGenerator::state_type& state,
-    float& variate1
-  , float& variate2
+inline __device__ tuple<float, float> normal(
+    RandomNumberGenerator const& rng
+  , typename RandomNumberGenerator::state_type& state
   , float mean = 0.0    // mean of distribution
   , float sigma = 1.0   // standard deviation
 )
 {
-    float s;
+    float s, variate1, variate2;
 
     do {
         variate1 = 2 * uniform(rng, state) - 1;
@@ -71,6 +75,7 @@ inline __device__ void normal(
     s = sigma * sqrtf(-2 * logf(s) / s);
     variate1 *= s;
     variate2 *= s;
+    return make_tuple(variate1, variate2);
 }
 
 }} // namespace random::gpu
