@@ -76,7 +76,7 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
     if (TID < 1) {
         // store block reduced value in global memory
 #ifdef USE_VERLET_DSFUN
-        tie(g_vcm[blockIdx.x], g_vcm[blockIdx.x + BDIM]) = vcm;
+        tie(g_vcm[blockIdx.x], g_vcm[blockIdx.x + BDIM]) = split(vcm);
 #else
         g_vcm[blockIdx.x] = vcm;
 #endif

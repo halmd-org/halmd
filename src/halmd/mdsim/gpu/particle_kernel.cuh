@@ -124,9 +124,9 @@ __device__ typename boost::enable_if<
 tagged(vector_type v, unsigned int tag)
 {
     float4 hi, lo;
-    tie(hi.x, lo.x) = v[0];
-    tie(hi.y, lo.y) = v[1];
-    tie(hi.z, lo.z) = v[2];
+    tie(hi.x, lo.x) = split(v[0]);
+    tie(hi.y, lo.y) = split(v[1]);
+    tie(hi.z, lo.z) = split(v[2]);
     tie(hi.w, lo.w) = make_tuple(__int_as_float(tag), 0);
     return make_tuple(hi, lo);
 }
@@ -142,8 +142,8 @@ __device__ typename boost::enable_if<
 tagged(vector_type v, unsigned int tag)
 {
     float4 hi, lo;
-    tie(hi.x, lo.x) = v[0];
-    tie(hi.y, lo.y) = v[1];
+    tie(hi.x, lo.x) = split(v[0]);
+    tie(hi.y, lo.y) = split(v[1]);
     tie(hi.z, lo.z) = make_tuple(0, 0);
     tie(hi.w, lo.w) = make_tuple(__int_as_float(tag), 0);
     return make_tuple(hi, lo);
