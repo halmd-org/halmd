@@ -307,33 +307,6 @@ struct vector<dsfloat, 4> : bounded_array<dsfloat, 4>
         (*this)[2] = dsfloat(v[2], w[2]);
         (*this)[3] = dsfloat(v[3], w[3]);
     }
-
-#ifdef __CUDACC__
-
-    /**
-     * Returns "high" and "low" single precision vector tuple
-     */
-    __device__ operator tuple<vector<float, 4>, vector<float, 4> >()
-    {
-        vector<float, 4> hi, lo;
-        tie(hi[0], lo[0]) = (*this)[0];
-        tie(hi[1], lo[1]) = (*this)[1];
-        tie(hi[2], lo[2]) = (*this)[2];
-        tie(hi[3], lo[3]) = (*this)[3];
-        return make_tuple(hi, lo);
-    }
-
-    __device__ operator tuple<float4, float4>()
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = (*this)[0];
-        tie(hi.y, lo.y) = (*this)[1];
-        tie(hi.z, lo.z) = (*this)[2];
-        tie(hi.w, lo.w) = (*this)[3];
-        return make_tuple(hi, lo);
-    }
-
-#endif /* __CUDACC__ */
 };
 
 #ifdef __CUDACC__

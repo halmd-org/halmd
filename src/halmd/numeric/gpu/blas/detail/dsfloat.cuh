@@ -95,18 +95,6 @@ struct dsfloat
     {
         return static_cast<double>(hi) + lo;
     }
-
-#ifdef __CUDACC__
-
-    /**
-     * Returns "high" and "low" single precision floating-point tuple
-     */
-    __device__ operator tuple<float, float>() const
-    {
-        return make_tuple(hi, lo);
-    }
-
-#endif /* __CUDACC__ */
 };
 
 #ifdef __CUDACC__

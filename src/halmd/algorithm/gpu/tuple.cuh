@@ -80,12 +80,6 @@ public:
     __device__ tuple& operator=(tuple<TT0> const& t) {
         t0 = get<0>(t); return *this;
     }
-    // hint compiler to convert argument to tuple value type
-    __device__ tuple& operator=(tuple<
-        typename boost::remove_reference<T0>::type
-     > const& t) {
-        t0 = get<0>(t); return *this;
-    }
 };
 
 template <typename T0, typename T1>
@@ -103,13 +97,6 @@ public:
       : t0(t.t0), t1(t.t1) {}
     template <typename TT0, typename TT1>
     __device__ tuple& operator=(tuple<TT0, TT1> const& t) {
-        t0 = get<0>(t); t1 = get<1>(t); return *this;
-    }
-    // hint compiler to convert argument to tuple value type
-    __device__ tuple& operator=(tuple<
-        typename boost::remove_reference<T0>::type
-      , typename boost::remove_reference<T1>::type
-     > const& t) {
         t0 = get<0>(t); t1 = get<1>(t); return *this;
     }
 };
