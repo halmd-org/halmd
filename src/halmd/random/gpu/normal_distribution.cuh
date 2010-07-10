@@ -64,8 +64,7 @@ inline __device__ tuple<float, float> normal(
   , float sigma = 1.0   // standard deviation
 )
 {
-    float s, variate1, variate2;
-
+    float variate1, variate2, s;
     do {
         variate1 = 2 * uniform(rng, state) - 1;
         variate2 = 2 * uniform(rng, state) - 1;
@@ -73,8 +72,8 @@ inline __device__ tuple<float, float> normal(
     } while (s >= 1);
 
     s = sigma * sqrtf(-2 * logf(s) / s);
-    variate1 *= s;
-    variate2 *= s;
+    variate1 = s * variate1 + mean;
+    variate2 = s * variate2 + mean;
     return make_tuple(variate1, variate2);
 }
 
