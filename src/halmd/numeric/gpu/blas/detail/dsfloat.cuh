@@ -112,6 +112,14 @@ struct dsfloat
 #ifdef __CUDACC__
 
 /**
+ * Returns "high" and "low" single precision floating-point tuple
+ */
+__device__ inline tuple<float, float> split(dsfloat const& v)
+{
+    return make_tuple(v.hi, v.lo);
+}
+
+/**
  * Addition by assignment
  */
 __device__ inline dsfloat& operator+=(dsfloat& v, dsfloat const& w)

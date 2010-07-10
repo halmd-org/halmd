@@ -395,6 +395,18 @@ struct vector<dsfloat, 3> : bounded_array<dsfloat, 3>
 #ifdef __CUDACC__
 
 /**
+ * Returns "high" and "low" single precision vector tuple
+ */
+__device__ inline tuple<vector<float, 3>, vector<float, 3> > split(vector<dsfloat, 3> const& v)
+{
+    vector<float, 3> hi, lo;
+    tie(hi[0], lo[0]) = split(v[0]);
+    tie(hi[1], lo[1]) = split(v[1]);
+    tie(hi[2], lo[2]) = split(v[2]);
+    return make_tuple(hi, lo);
+}
+
+/**
  * Assignment by elementwise vector addition
  */
 template <typename T, typename T_>
