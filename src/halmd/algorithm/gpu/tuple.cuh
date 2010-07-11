@@ -66,7 +66,7 @@ __device__ get(tuple<T0, T1> const& t)
 }
 
 template <typename T0>
-struct tuple<T0>
+class tuple<T0>
 {
     T0 t0;
     friend T0 get<0>(tuple<T0> const&);
@@ -75,7 +75,7 @@ public:
     __device__ tuple() {}
     template <typename TT0>
     __device__ tuple(tuple<TT0> const& t)
-      : t0(t.t0) {}
+      : t0(get<0>(t)) {}
     template <typename TT0>
     __device__ tuple& operator=(tuple<TT0> const& t) {
         t0 = get<0>(t); return *this;
@@ -83,7 +83,7 @@ public:
 };
 
 template <typename T0, typename T1>
-struct tuple
+class tuple
 {
     T0 t0; T1 t1;
     friend T0 get<0>(tuple<T0, T1> const&);
@@ -94,7 +94,7 @@ public:
     __device__ tuple() {}
     template <typename TT0, typename TT1>
     __device__ tuple(tuple<TT0, TT1> const& t)
-      : t0(t.t0), t1(t.t1) {}
+      : t0(get<0>(t)), t1(get<1>(t)) {}
     template <typename TT0, typename TT1>
     __device__ tuple& operator=(tuple<TT0, TT1> const& t) {
         t0 = get<0>(t); t1 = get<1>(t); return *this;
