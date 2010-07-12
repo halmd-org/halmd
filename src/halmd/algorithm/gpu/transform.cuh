@@ -77,17 +77,17 @@ transform(T v1, T v2)
     return v1 + v2;
 }
 
-template <typename transform_, typename T>
+template <typename transform_, typename T0, typename T1>
 __device__ typename enable_if<is_same<transform_, complex_sum_>, void>::type
-transform(T& r1, T& i1, T r2, T i2)
+transform(T0& r1, T1& i1, T0 r2, T1 i2)
 {
     r1 += r2;
     i1 += i2;
 }
 
-template <typename transform_, typename T>
+template <typename transform_, typename T0, typename T1, typename T2, typename T3>
 __device__ typename enable_if<is_same<transform_, quaternion_sum_>, void>::type
-transform(T& r1, T& i1, T& j1, T& k1, T r2, T i2, T j2, T k2)
+transform(T0& r1, T1& i1, T2& j1, T3& k1, T0 r2, T1 i2, T2 j2, T3 k2)
 {
     r1 += r2;
     i1 += i2;
