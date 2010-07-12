@@ -25,7 +25,7 @@
 #include <numeric>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/position/lattice_kernel.cuh>
+#include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/position/lattice.hpp>
 #include <halmd/util/exception.hpp>
 #include <halmd/utility/module.hpp>
@@ -134,7 +134,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     try {
 //         timer[0].record();
         cuda::configure(particle->dim.grid, particle->dim.block);
-        lattice_wrapper<dimension>::fcc(particle->g_r, n, box->length()[0]);
+        get_lattice_kernel<dimension>().fcc(particle->g_r, n, box->length()[0]);
         cuda::thread::synchronize();
 //         timer[1].record();
     }

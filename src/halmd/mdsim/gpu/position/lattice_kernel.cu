@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/position/lattice_kernel.cuh>
+#include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 #include <halmd/utility/gpu/thread.cuh>
@@ -25,9 +25,10 @@
 using namespace halmd::numeric::gpu::blas;
 using namespace halmd::mdsim::gpu::particle_kernel;
 
-namespace halmd { namespace mdsim { namespace gpu { namespace position
+namespace halmd
 {
-
+namespace mdsim { namespace gpu { namespace position
+{
 namespace lattice_kernel
 {
 
@@ -74,16 +75,15 @@ __global__ void lattice(float4* g_r, uint n, float box)
 
 } // namespace lattice_kernel
 
-/**
- * device function wrappers
- */
-template <> cuda::function <void (float4*, uint, float)>
-    lattice_wrapper<3>::fcc(lattice_kernel::lattice<3, lattice_kernel::fcc>);
-template <> cuda::function <void (float4*, uint, float)>
-    lattice_wrapper<3>::sc(lattice_kernel::lattice<3, lattice_kernel::sc>);
-template <> cuda::function <void (float4*, uint, float)>
-    lattice_wrapper<2>::fcc(lattice_kernel::lattice<2, lattice_kernel::fcc>);
-template <> cuda::function <void (float4*, uint, float)>
-    lattice_wrapper<2>::sc(lattice_kernel::lattice<2, lattice_kernel::sc>);
+template <int dimension>
+lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
+    lattice_kernel::lattice<dimension, lattice_kernel::fcc>
+  , lattice_kernel::lattice<dimension, lattice_kernel::sc>
+};
 
-}}}} // namespace halmd::mdsim::gpu::position
+template class lattice_wrapper<3>;
+template class lattice_wrapper<2>;
+
+}}} // namespace mdsim::gpu::position
+
+} // namespace halmd
