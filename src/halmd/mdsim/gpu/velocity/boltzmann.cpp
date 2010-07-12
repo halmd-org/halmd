@@ -19,7 +19,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/velocity/boltzmann.hpp>
-#include <halmd/mdsim/gpu/velocity/boltzmann_kernel.cuh>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
@@ -68,9 +67,36 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(modules::fact
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
   , random(modules::fetch<random_type>(factory, vm))
+  // select thread-dependent implementation
+  , gaussian_impl(get_gaussian_impl(random->rng.dim.threads_per_block()))
+  // parse options
+  , temp_(vm["temperature"].as<float>())
+  // allocate GPU memory
+  , g_vcm_(2 * random->rng.dim.blocks_per_grid())
+  , g_vv_(random->rng.dim.blocks_per_grid())
 {
-    // parse options
-    temp_ = vm["temperature"].as<float>();
+    // copy random number generator parameters to GPU
+    cuda::copy(random->rng.rng(), wrapper_type::kernel.rng);
+}
+
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+typename boltzmann<dimension, float_type, RandomNumberGenerator>::gaussian_impl_type
+boltzmann<dimension, float_type, RandomNumberGenerator>::get_gaussian_impl(int threads)
+{
+    switch (threads) {
+      case 512:
+        return wrapper_type::kernel.gaussian_impl_512;
+      case 256:
+        return wrapper_type::kernel.gaussian_impl_256;
+      case 128:
+        return wrapper_type::kernel.gaussian_impl_128;
+      case 64:
+        return wrapper_type::kernel.gaussian_impl_64;
+      case 32:
+        return wrapper_type::kernel.gaussian_impl_32;
+      default:
+        throw std::logic_error("invalid gaussian thread count");
+    }
 }
 
 /**
@@ -91,47 +117,39 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 {
     LOG("assigning Maxwell-Boltzmann velocity distribution: T = " << temp_);
 
-#ifdef USE_VERLET_DSFUN
-    cuda::memset(particle->g_v, 0, particle->g_v.capacity());
-#endif
-
-    typedef boltzmann_wrapper<dimension> _gpu;
-
-    /** block sum of velocity */
-    cuda::vector<gpu_vector_type> g_vcm;
-    /** block sum of squared velocity */
-    cuda::vector<dsfloat> g_vv;
-#ifdef USE_VERLET_DSFUN
-    g_vcm.resize(2 * _gpu::BLOCKS);
-#else
-    g_vcm.resize(_gpu::BLOCKS);
-#endif
-    g_vv.resize(_gpu::BLOCKS);
-
     // generate Maxwell-Boltzmann distributed velocities,
     // assuming equal (unit) mass for all particle types
-    // random->normal<dimension>(particle->g_v, temp_);
+    cuda::configure(
+        random->rng.dim.grid
+      , random->rng.dim.block
+      , random->rng.dim.threads_per_block() * (1 + dimension) * sizeof(dsfloat)
+    );
+    gaussian_impl(
+        particle->g_v
+      , particle->nbox
+      , particle->dim.threads()
+      , temp_
+      , g_vcm_
+      , g_vv_
+    );
+    cuda::thread::synchronize();
 
-    // determine g_vcm and g_vv
-
-    // set center of mass velocity to zero and reduce squared velocity
-//     cuda::configure(_gpu::BLOCKS, _gpu::THREADS);
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    _gpu::shift_velocity(particle->g_v, particle->nbox, particle->dim.threads(), g_vcm, g_vv);
-
+    // set center of mass velocity to zero and
     // rescale velocities to accurate temperature
-//     cuda::configure(_gpu::BLOCKS, _gpu::THREADS);
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    _gpu::scale_velocity(particle->g_v, particle->nbox, particle->dim.threads(), g_vv, temp_);
-
-/*
-    // center velocities around origin, then rescale to exactly
-    // match the desired temperature;
-    // temp = vv / dimension
-    // vv changes to vv - v_cm^2 after shifting
-    float_type scale = sqrt(temp_ * dimension / (vv - inner_prod(v_cm, v_cm)));
-    shift_rescale(-v_cm, scale);*/
-
+    cuda::configure(
+        particle->dim.grid
+      , particle->dim.block
+      , g_vv_.size() * (1 + dimension) * sizeof(dsfloat)
+    );
+    wrapper_type::kernel.shift_rescale(
+        particle->g_v
+      , particle->nbox
+      , particle->dim.threads()
+      , temp_
+      , g_vcm_
+      , g_vv_
+      , g_vv_.size()
+    );
 
 #ifdef USE_HILBERT_ORDER
     // make thermostat independent of neighbour list update frequency or skin

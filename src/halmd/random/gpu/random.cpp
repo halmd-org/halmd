@@ -58,7 +58,7 @@ random<RandomNumberGenerator>::random(modules::factory& factory, po::options con
   // dependency injection
   , device(modules::fetch<device_type>(factory, vm))
   // allocate random number generator state
-  , rng_(vm["random-blocks"].as<unsigned int>(), vm["random-threads"].as<unsigned int>())
+  , rng(vm["random-blocks"].as<unsigned int>(), vm["random-threads"].as<unsigned int>())
 {
     _Base::seed(vm);
 }
@@ -69,8 +69,8 @@ void random<RandomNumberGenerator>::seed(unsigned int value)
     LOG("random number generator seed: " << value);
 
     try {
-        rng_.seed(value);
-        cuda::copy(rng_.rng(), get_random_kernel<rng_type>().rng);
+        rng.seed(value);
+        cuda::copy(rng.rng(), get_random_kernel<rng_type>().rng);
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -85,7 +85,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
 {
     try {
-        cuda::configure(rng_.dim.grid, rng_.dim.block);
+        cuda::configure(rng.dim.grid, rng.dim.block);
         get_random_kernel<rng_type>().uniform(g_v, g_v.size());
         cuda::thread::synchronize();
     }
@@ -102,7 +102,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
 {
     try {
-        cuda::configure(rng_.dim.grid, rng_.dim.block);
+        cuda::configure(rng.dim.grid, rng.dim.block);
         get_random_kernel<rng_type>().get(g_v, g_v.size());
         cuda::thread::synchronize();
     }
@@ -119,7 +119,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean, float sigma)
 {
     try {
-        cuda::configure(rng_.dim.grid, rng_.dim.block);
+        cuda::configure(rng.dim.grid, rng.dim.block);
         get_random_kernel<rng_type>().normal(g_v, g_v.size(), mean, sigma);
         cuda::thread::synchronize();
     }

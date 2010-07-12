@@ -53,6 +53,7 @@ public:
     typedef typename RandomNumberGenerator::rng_type rng_type;
     typedef utility::gpu::device device_type;
 
+    RandomNumberGenerator rng;
     shared_ptr<device_type> device;
 
     random(modules::factory& factory, po::options const& vm);
@@ -69,10 +70,6 @@ public:
 
     template <typename Sequence>
     void shuffle(Sequence& g_val);
-
-protected:
-    /** pseudo-random number generator */
-    RandomNumberGenerator rng_;
 };
 
 /**

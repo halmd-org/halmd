@@ -23,7 +23,9 @@
 #include <utility>
 
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/gpu/velocity/boltzmann_kernel.hpp>
 #include <halmd/mdsim/velocity.hpp>
+#include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -31,6 +33,8 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace velocity
 {
+
+using numeric::gpu::blas::dsfloat;
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class boltzmann
@@ -48,6 +52,13 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
+    typedef typename random_type::rng_type rng_type;
+#ifdef USE_VERLET_DSFUN
+    typedef boltzmann_wrapper<dimension, dsfloat, rng_type> wrapper_type;
+#else
+    typedef boltzmann_wrapper<dimension, float, rng_type> wrapper_type;
+#endif
+    typedef typename wrapper_type::gaussian_impl_type gaussian_impl_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<random_type> random;
@@ -55,6 +66,9 @@ public:
     boltzmann(modules::factory& factory, po::options const& vm);
     virtual ~boltzmann() {};
     void set();
+
+    gaussian_impl_type const gaussian_impl;
+    static gaussian_impl_type get_gaussian_impl(int threads);
 
 // private:
     /** assign new velocities from Gaussian distribution of width sigma,
@@ -70,6 +84,10 @@ public:
 protected:
     /** temperature */
     float_type temp_;
+    /** block sum of velocity */
+    cuda::vector<gpu_vector_type> g_vcm_;
+    /** block sum of squared velocity */
+    cuda::vector<dsfloat> g_vv_;
 };
 
 }}} // namespace mdsim::gpu::velocity
