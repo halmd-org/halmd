@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/tuple/tuple.hpp>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocity/boltzmann.hpp>
 
@@ -77,12 +79,10 @@ boltzmann<dimension, float_type>::boltzmann(modules::factory& factory, po::optio
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::set()
 {
-    pair<vector_type, float_type> p;
-    vector_type& v_cm = p.first;
-    float_type& vv = p.second;
-
     // assuming equal (unit) mass for all particle types
-    p = gaussian(sqrt(temp_));
+    vector_type v_cm;
+    float_type vv;
+    tie(v_cm, vv) = gaussian(sqrt(temp_));
 
     // center velocities around origin, then rescale to exactly
     // match the desired temperature;
