@@ -35,38 +35,45 @@
 namespace cuda
 {
 
-template<class T>
+template <
+    typename T
+  , int dim = 1
+  , enum cudaTextureReadMode mode = cudaReadModeElementType
+>
 class texture
 {
 public:
-#ifndef __CUDACC__
+#ifdef __CUDACC__
+    typedef ::texture<T, dim, mode> texture_type;
+    /**
+     * type-safe constructor for CUDA host code
+     */
+    texture(texture_type const& tex)
+      : tex(tex)
+    {
+        // For variant textures we need to set the channel desciptor.
+        const_cast<texture_type&>(tex).channelDesc = cudaCreateChannelDesc<T>();
+    }
+#else /* ! __CUDACC__ */
     /**
      * bind CUDA texture to device memory array
      */
-    texture(texture const& texture_, vector<T> const& vector_)
-      : texref_(texture_.texref_)
+    void bind(cuda::vector<T> const& v) const
     {
-        CUDA_CALL(cudaBindTexture(NULL, &texref_, vector_.data(), cudaCreateChannelDesc<T>()));
+        CUDA_CALL(cudaBindTexture(NULL, &tex, v.data(), &tex.channelDesc));
     }
 
     /**
      * unbind CUDA texture
      */
-    ~texture()
+    void unbind() const
     {
-        CUDA_CALL(cudaUnbindTexture(&texref_));
+        CUDA_CALL(cudaUnbindTexture(&tex));
     }
-#else
-    /**
-     * store CUDA texture reference
-     */
-    texture(::texture<T> const& texref)
-      : texref_(texref)
-    {}
-#endif
+#endif /* ! __CUDACC__ */
 
 private:
-    ::textureReference const& texref_;
+    textureReference const& tex;
 };
 
 }
