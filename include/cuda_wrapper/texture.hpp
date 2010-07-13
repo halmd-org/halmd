@@ -44,23 +44,21 @@ class texture
 {
 public:
 #ifdef __CUDACC__
-    typedef ::texture<T, dim, mode> texture_type;
     /**
      * type-safe constructor for CUDA host code
      */
-    texture(texture_type const& tex)
+    texture(::texture<T, dim, mode> const& tex)
       : tex(tex)
-    {
-        // For variant textures we need to set the channel desciptor.
-        const_cast<texture_type&>(tex).channelDesc = cudaCreateChannelDesc<T>();
-    }
+        // For variant textures we need to override the channel desciptor.
+      , cd(cudaCreateChannelDesc<T>())
+    {}
 #else /* ! __CUDACC__ */
     /**
      * bind CUDA texture to device memory array
      */
     void bind(cuda::vector<T> const& v) const
     {
-        CUDA_CALL(cudaBindTexture(NULL, &tex, v.data(), &tex.channelDesc));
+        CUDA_CALL(cudaBindTexture(NULL, &tex, v.data(), &cd));
     }
 
     /**
@@ -74,6 +72,7 @@ public:
 
 private:
     textureReference const& tex;
+    cudaChannelFormatDesc const cd;
 };
 
 }
