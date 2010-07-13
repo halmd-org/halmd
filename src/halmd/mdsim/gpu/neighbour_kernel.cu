@@ -198,49 +198,36 @@ __global__ void update_neighbours(
     // opposite neighbour cell softens the velocity drift.
     //
 
+    for (int i = -1; i <= 1; ++i) {
+        for (int j = -1; j <= 1; ++j) {
+            if (dimension == 3) {
+                for (int k = -1; k <= 1; ++k) {
+                    if (i == 0 && j == 0 && k == 0) {
+                        goto self;
+                    }
+                    // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
+                    update_cell_neighbours<false>(make_int3(i, j, k), g_cell, r, type, n, count, g_neighbour);
+                    update_cell_neighbours<false>(make_int3(-i, -j, -k), g_cell, r, type, n, count, g_neighbour);
+                }
+            }
+            else {
+                if (i == 0 && j == 0) {
+                    goto self;
+                }
+                // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
+                update_cell_neighbours<false>(make_int2(i, j), g_cell, r, type, n, count, g_neighbour);
+                update_cell_neighbours<false>(make_int2(-i, -j), g_cell, r, type, n, count, g_neighbour);
+            }
+        }
+    }
+
+self:
+    // visit this cell
     if (dimension == 3) {
-        // visit this cell
         update_cell_neighbours<true>(make_int3( 0,  0,  0), g_cell, r, type, n, count, g_neighbour);
-        // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-        update_cell_neighbours<false>(make_int3(-1, -1, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1, +1, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(-1, -1, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1, +1, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(-1, +1, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1, -1, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1, -1, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(-1, +1, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(-1, -1,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1, +1,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(-1, +1,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1, -1,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(-1,  0, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1,  0, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(-1,  0, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1,  0, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3( 0, -1, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3( 0, +1, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3( 0, -1, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3( 0, +1, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(-1,  0,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3(+1,  0,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3( 0, -1,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3( 0, +1,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3( 0,  0, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int3( 0,  0, +1), g_cell, r, type, n, count, g_neighbour);
     }
     else {
-        // visit this cell
         update_cell_neighbours<true>(make_int2( 0,  0), g_cell, r, type, n, count, g_neighbour);
-        // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-        update_cell_neighbours<false>(make_int2(-1, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int2(+1, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int2(-1, +1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int2(+1, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int2(-1,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int2(+1,  0), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int2( 0, -1), g_cell, r, type, n, count, g_neighbour);
-        update_cell_neighbours<false>(make_int2( 0, +1), g_cell, r, type, n, count, g_neighbour);
     }
 
     // return failure if any neighbour list is fully occupied
