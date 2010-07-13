@@ -34,6 +34,7 @@ struct neighbour_wrapper
 {
     typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
     typedef typename boost::mpl::if_c<dimension == 3, uint3, uint2>::type cell_index;
+    typedef cuda::function<void (float4* g_r, float4* g_r0, float* g_rr)> displacement_impl_type;
 
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
@@ -52,18 +53,26 @@ struct neighbour_wrapper
     /** cell edge lengths */
     cuda::symbol<vector_type> cell_length;
     /** assign particles to cells */
-    cuda::function<void (unsigned int*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int*)> assign_cells;
+    cuda::function<void (int*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int*)> assign_cells;
     /** compute global cell offsets in particle list */
     cuda::function<void (unsigned int*, unsigned int*)> find_cell_offset;
     /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
     /** update neighbour lists */
-    cuda::function<void (unsigned int*, unsigned int*, unsigned int const*)> update_neighbours;
+    cuda::function<void (int*, unsigned int*, unsigned int const*)> update_neighbours;
     /** compute cell indices for particle positions */
     cuda::function<void (float4 const*, unsigned int*)> compute_cell;
+    /** maximum squared particle distance */
+    displacement_impl_type displacement_impl[5];
 
     static neighbour_wrapper kernel;
 };
+
+template <int dimension>
+neighbour_wrapper<dimension> const& get_neighbour_kernel()
+{
+    return neighbour_wrapper<dimension>::kernel;
+}
 
 }} // namespace mdsim::gpu
 

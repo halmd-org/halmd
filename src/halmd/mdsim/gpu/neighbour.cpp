@@ -44,6 +44,8 @@ void neighbour<dimension, float_type>::options(po::options_description& desc)
     group.add_options()
         ("skin", po::value<float>()->default_value(0.5),
          "neighbour list skin")
+        ("cell-occupancy", po::value<float>()->default_value(0.4),
+         "desired average cell occupancy")
         ;
     desc.add(group);
 }
@@ -66,35 +68,94 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
   , particle(modules::fetch<particle_type>(factory, vm))
   , force(modules::fetch<force_type>(factory, vm))
   , box(modules::fetch<box_type>(factory, vm))
-  // reference CUDA C++ wrapper
-  , kernel(&wrapper_type::kernel)
+  // select thread-dependent reduction kernel
+  , dim_reduce(64, (64 << DEVICE_SCALE))
+  , displacement_impl(get_displacement_impl(dim_reduce.threads_per_block()))
   // allocate parameters
   , r_skin_(vm["skin"].as<float>())
+  , rr_skin_half_(pow(r_skin_ / 2, 2))
   , rr_cut_skin_(particle->ntype, particle->ntype)
-  , r0_(particle->nbox)
+  , g_rr_cut_skin_(rr_cut_skin_.data().size())
+  , nu_cell_(vm["cell-occupancy"].as<float>())
+  , g_r0_(particle->nbox)
+  , g_rr_(dim_reduce.blocks_per_grid())
+  , h_rr_(g_rr_.size())
+  , sort_(particle->nbox, particle->dim.threads_per_block())
 {
-/*    matrix_type r_cut = force->cutoff();
-    matrix_type r_cut_skin(particle->ntype, particle->ntype);
+    matrix_type r_cut = force->cutoff();
     typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle->ntype; ++i) {
         for (size_t j = i; j < particle->ntype; ++j) {
-            r_cut_skin(i, j) = r_cut(i, j) + r_skin_;
-            rr_cut_skin_(i, j) = std::pow(r_cut_skin(i, j), 2);
-            r_cut_max = max(r_cut_skin(i, j), r_cut_max);
+            rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
+            r_cut_max = max(r_cut(i, j), r_cut_max);
         }
     }
-    vector_type L = box->length();
-    ncell_ = static_cast<cell_size_type>(L / r_cut_max);
+    ncell_ = static_cast<cell_size_type>(box->length() / (r_cut_max + r_skin_));
+    size_t warp_size = cuda::device::properties(cuda::device::get()).warp_size();
+    double frac = particle->nbox / accumulate(ncell_.begin(), ncell_.end(), nu_cell_ * warp_size, multiplies<double>());
+    // FIXME optimize ncell
+    cell_size_ = warp_size * static_cast<size_t>(ceil(frac));
+    vector_type cell_length_ = element_div(static_cast<vector_type>(box->length()), static_cast<vector_type>(ncell_));
+    dim_cell_ = cuda::config(
+        dim3(
+             accumulate(ncell_.begin() + 1, ncell_.end() - 1, ncell_.front(), multiplies<size_t>())
+           , ncell_.back()
+        )
+      , cell_size_
+    );
+
     if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
-        throw logic_error("less than least 3 cells per dimension");
+        throw std::logic_error("number of cells per dimension must be at least 3");
     }
-    cell_.resize(ncell_);
-    cell_length_ = element_div(L, static_cast<vector_type>(ncell_));
-    r_skin_half_ = r_skin_ / 2;
+
+    LOG("number of placeholders per cell: " << cell_size_);
+    LOG("number of cells per dimension: " << ncell_);
+    LOG("cell edge lengths: " << cell_length_);
+    LOG("desired average cell occupancy: " << nu_cell_);
+    LOG("effective average cell occupancy: " << (static_cast<double>(particle->nbox) / dim_cell_.threads()));
+
+    try {
+        using numeric::gpu::blas::vector;
+        cuda::copy(static_cast<vector<uint, dimension> >(ncell_), get_neighbour_kernel<dimension>().ncell);
+        cuda::copy(cell_length_, get_neighbour_kernel<dimension>().cell_length);
+        cuda::copy(static_cast<vector_type>(box->length()), get_neighbour_kernel<dimension>().box_length);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw std::logic_error("failed to copy cell parameters to device symbols");
+    }
+
+    // volume of n-dimensional sphere with neighbour list radius
+    float_type neighbour_sphere = ((dimension + 1) * M_PI / 3) * pow(r_cut_max + r_skin_, dimension);
+    // number of placeholders per neighbour list
+    neighbour_size_ = static_cast<size_t>(ceil(neighbour_sphere * (box->density() / nu_cell_)));
 
     LOG("neighbour list skin: " << r_skin_);
-    LOG("number of cells per dimension: " << ncell_);
-    LOG("cell edge lengths: " << cell_length_);*/
+    LOG("number of placeholders per neighbour list: " << neighbour_size_);
+
+    try {
+        cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
+        cuda::copy(neighbour_size_, get_neighbour_kernel<dimension>().neighbour_size);
+        cuda::copy(static_cast<unsigned int>(particle->dim.threads()), get_neighbour_kernel<dimension>().neighbour_stride);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw std::logic_error("failed to copy neighbour list parameters to device symbols");
+    }
+
+    try {
+        g_cell_.resize(dim_cell_.threads());
+        g_neighbour_.resize(particle->dim.threads() * neighbour_size_);
+        g_cell_offset_.resize(dim_cell_.blocks_per_grid());
+        g_cell_index_.reserve(particle->dim.threads());
+        g_cell_index_.resize(particle->nbox);
+        g_cell_permutation_.reserve(particle->dim.threads());
+        g_cell_permutation_.resize(particle->nbox);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw std::logic_error("failed to allocate global device memory cell placeholders");
+    }
 }
 
 /**
@@ -103,24 +164,32 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update()
 {
-/*    // rebuild cell lists
+    // rebuild cell lists
     update_cells();
     // rebuild neighbour lists
-    cell_size_type i;
-    for (i[0] = 0; i[0] < ncell_[0]; ++i[0]) {
-        for (i[1] = 0; i[1] < ncell_[1]; ++i[1]) {
-            if (dimension == 3) {
-                for (i[2] = 0; i[2] < ncell_[2]; ++i[2]) {
-                    update_cell_neighbours(i);
-                }
-            }
-            else {
-                update_cell_neighbours(i);
-            }
-        }
-    }
+    update_neighbours();
     // make snapshot of absolute particle displacements
-    copy(particle->r.begin(), particle->r.end(), r0_.begin());*/
+    cuda::copy(particle->g_r, g_r0_);
+}
+
+template <int dimension, typename float_type>
+typename neighbour_wrapper<dimension>::displacement_impl_type
+neighbour<dimension, float_type>::get_displacement_impl(int threads)
+{
+    switch (threads) {
+      case 512:
+        return neighbour_wrapper<dimension>::kernel.displacement_impl[0];
+      case 256:
+        return neighbour_wrapper<dimension>::kernel.displacement_impl[1];
+      case 128:
+        return neighbour_wrapper<dimension>::kernel.displacement_impl[2];
+      case 64:
+        return neighbour_wrapper<dimension>::kernel.displacement_impl[3];
+      case 32:
+        return neighbour_wrapper<dimension>::kernel.displacement_impl[4];
+      default:
+        throw std::logic_error("invalid reduction thread count");
+    }
 }
 
 /**
@@ -129,13 +198,16 @@ void neighbour<dimension, float_type>::update()
 template <int dimension, typename float_type>
 bool neighbour<dimension, float_type>::check()
 {
-/*    float_type rr_max = 0;
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type r = particle->r[i] - r0_[i];
-        box->reduce_periodic(r);
-        rr_max = max(rr_max, inner_prod(r, r));
+    try {
+        cuda::configure(dim_reduce.grid, dim_reduce.block, dim_reduce.threads_per_block() * sizeof(float));
+        displacement_impl(particle->g_r, g_r0_, g_rr_);
+        cuda::copy(g_rr_, h_rr_);
     }
-    return sqrt(rr_max) > r_skin_half_;*/
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw std::logic_error("failed to reduce squared particle displacements on GPU");
+    }
+    return *max_element(h_rr_.begin(), h_rr_.end()) > rr_skin_half_;
 }
 
 /**
@@ -144,88 +216,53 @@ bool neighbour<dimension, float_type>::check()
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update_cells()
 {
-/*    // empty cell lists without memory reallocation
-    for_each(cell_.data(), cell_.data() + cell_.num_elements(), bind(&cell_list::clear, _1));
-    // add particles to cells
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type const& r = particle->r[i];
-        cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_) + static_cast<vector_type>(ncell_)), ncell_);
-        cell_(index).push_back(i);
-    }*/
+    // compute cell indices for particle positions
+    cuda::configure(particle->dim.grid, particle->dim.block);
+    get_neighbour_kernel<dimension>().compute_cell(particle->g_r, g_cell_index_);
+
+    // generate permutation
+    cuda::configure(particle->dim.grid, particle->dim.block);
+    get_neighbour_kernel<dimension>().gen_index(g_cell_permutation_);
+    sort_(g_cell_index_, g_cell_permutation_);
+
+    // compute global cell offsets in sorted particle list
+    cuda::memset(g_cell_offset_, 0xFF);
+    cuda::configure(particle->dim.grid, particle->dim.block);
+    get_neighbour_kernel<dimension>().find_cell_offset(g_cell_index_, g_cell_offset_);
+
+    // assign particles to cells
+    cuda::vector<int> g_ret(1);
+    cuda::host::vector<int> h_ret(1);
+    cuda::memset(g_ret, EXIT_SUCCESS);
+    cuda::configure(dim_cell_.grid, dim_cell_.block);
+    get_neighbour_kernel<dimension>().assign_cells(g_ret, g_cell_index_, g_cell_offset_, g_cell_permutation_, g_cell_);
+    cuda::copy(g_ret, h_ret);
+    if (h_ret.front() != EXIT_SUCCESS) {
+        throw std::runtime_error("overcrowded placeholders in cell lists update");
+    }
 }
 
 /**
- * Update neighbour lists for a single cell
+ * Update neighbour lists
  */
-// template <int dimension, typename float_type>
-// void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type const& i)
-// {
-//     BOOST_FOREACH(size_t p, cell_(i)) {
-//         // empty neighbour list of particle
-//         particle->neighbour[p].clear();
-//
-//         cell_diff_type j;
-//         for (j[0] = -1; j[0] <= 1; ++j[0]) {
-//             for (j[1] = -1; j[1] <= 1; ++j[1]) {
-//                 if (dimension == 3) {
-//                     for (j[2] = -1; j[2] <= 1; ++j[2]) {
-//                         // visit half of 26 neighbour cells due to pair potential
-//                         if (j[0] == 0 && j[1] == 0 && j[2] == 0) {
-//                             goto self;
-//                         }
-//                         // update neighbour list of particle
-//                         cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell_) + j), ncell_);
-//                         compute_cell_neighbours<false>(p, cell_(k));
-//                     }
-//                 }
-//                 else {
-//                     // visit half of 8 neighbour cells due to pair potential
-//                     if (j[0] == 0 && j[1] == 0) {
-//                         goto self;
-//                     }
-//                     // update neighbour list of particle
-//                     cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell_) + j), ncell_);
-//                     compute_cell_neighbours<false>(p, cell_(k));
-//                 }
-//             }
-//         }
-// self:
-//         // visit this cell
-//         compute_cell_neighbours<true>(p, cell_(i));
-//     }
-// }
-
-/**
- * Update neighbour list of particle
- */
-// template <int dimension, typename float_type>
-// template <bool same_cell>
-// void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_list& c)
-// {
-//     BOOST_FOREACH(size_t j, c) {
-//         // skip identical particle and particle pair permutations if same cell
-//         if (same_cell && particle->tag[j] <= particle->tag[i]) {
-//             continue;
-//         }
-//
-//         // particle distance vector
-//         vector_type r = particle->r[i] - particle->r[j];
-//         box->reduce_periodic(r);
-//         // particle types
-//         size_t a = particle->type[i];
-//         size_t b = particle->type[j];
-//         // squared particle distance
-//         float_type rr = inner_prod(r, r);
-//
-//         // enforce cutoff radius with neighbour list skin
-//         if (rr >= rr_cut_skin_(a, b)) {
-//             continue;
-//         }
-//
-//         // add particle to neighbour list
-//         particle->neighbour[i].push_back(j);
-//     }
-// }
+template <int dimension, typename float_type>
+void neighbour<dimension, float_type>::update_neighbours()
+{
+    // mark neighbour list placeholders as virtual particles
+    cuda::memset(g_neighbour_, 0xFF);
+    // build neighbour lists
+    cuda::vector<int> g_ret(1);
+    cuda::host::vector<int> h_ret(1);
+    cuda::memset(g_ret, EXIT_SUCCESS);
+    cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (2 + dimension) * sizeof(int));
+    get_neighbour_kernel<dimension>().r.bind(particle->g_r);
+    get_neighbour_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, g_cell_);
+    cuda::thread::synchronize();
+    cuda::copy(g_ret, h_ret);
+    if (h_ret.front() != EXIT_SUCCESS) {
+        throw std::runtime_error("overcrowded placeholders in neighbour lists update");
+    }
+}
 
 // explicit instantiation
 template class neighbour<3, float>;

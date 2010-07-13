@@ -26,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
+#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/neighbour_kernel.hpp>
@@ -60,22 +61,22 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef gpu::force<dimension, float_type> force_type;
-    typedef gpu::box<dimension> box_type;
-    typedef gpu::neighbour_wrapper<dimension> wrapper_type;
-
     typedef typename force_type::matrix_type matrix_type;
+    typedef gpu::box<dimension> box_type;
+
+    typedef typename neighbour_wrapper<dimension>::displacement_impl_type displacement_impl_type;
 
 //     typedef typename particle_type::neighbour_list cell_list;
 //     typedef boost::multi_array<cell_list, dimension> cell_lists;
-//     typedef numeric::gpu::blas::vector<size_t, dimension> cell_size_type;
-//     typedef numeric::gpu::blas::vector<ssize_t, dimension> cell_diff_type;
+    typedef numeric::host::blas::vector<unsigned int, dimension> cell_size_type;
+    typedef numeric::host::blas::vector<int, dimension> cell_diff_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;
     shared_ptr<box_type> box;
 
-    // CUDA C++ wrapper
-    wrapper_type const* kernel;
+    cuda::config dim_reduce;
+    displacement_impl_type const displacement_impl;
 
     neighbour(modules::factory& factory, po::options const& vm);
     virtual ~neighbour() {}
@@ -85,25 +86,52 @@ public:
 protected:
     friend class sort::hilbert<dimension, float_type>;
 
+    static displacement_impl_type get_displacement_impl(int threads);
     void update_cells();
+    void update_neighbours();
 //     void update_cell_neighbours(cell_size_type const& i);
 //     template <bool same_cell>
 //     void compute_cell_neighbours(size_t i, cell_list& c);
 
     /** neighbour list skin in MD units */
     float_type r_skin_;
+    /** half neighbour list skin */
+    float_type rr_skin_half_;
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
-    /** cell lists */
-//     cell_lists cell_;
+    /** (cutoff lengths + neighbour list skin)² */
+    cuda::vector<float_type> g_rr_cut_skin_;
+    /** average desired cell occupancy */
+    float_type nu_cell_;
     /** number of cells per dimension */
-//     cell_size_type ncell_;
+    cell_size_type ncell_;
+    /** number of placeholders per cell */
+    size_t cell_size_;
     /** cell edge lengths */
     vector_type cell_length_;
-    /** half neighbour list skin */
-    float_type r_skin_half_;
+    /** CUDA cell kernel execution configuration */
+    cuda::config dim_cell_;
+    /** number of placeholders per neighbour list */
+    size_t neighbour_size_;
     /** particle positions at last neighbour list update */
-    std::vector<vector_type> r0_;
+    cuda::vector<float4> g_r0_;
+    /** block-reduced squared particle distances */
+    cuda::vector<float> g_rr_;
+    /** block-reduced squared particle distances */
+    cuda::host::vector<float> h_rr_;
+    /** cell lists in global device memory */
+    cuda::vector<unsigned int> g_cell_;
+    /** neighbour lists in global device memory */
+    cuda::vector<unsigned int> g_neighbour_;
+
+    /** GPU radix sort */
+    algorithm::gpu::radix_sort<unsigned int> sort_;
+    /** cell indices for particles */
+    cuda::vector<unsigned int> g_cell_index_;
+    /** particle permutation */
+    cuda::vector<unsigned int> g_cell_permutation_;
+    /** cell offsets in sorted particle list */
+    cuda::vector<unsigned int> g_cell_offset_;
 };
 
 }} // namespace mdsim::gpu

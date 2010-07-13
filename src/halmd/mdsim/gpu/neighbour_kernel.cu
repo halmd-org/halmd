@@ -19,6 +19,7 @@
 
 #include <float.h>
 
+#include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/neighbour_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
@@ -27,6 +28,7 @@
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
+using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
 using namespace halmd::utility::gpu;
@@ -150,8 +152,8 @@ __device__ void update_cell_neighbours(
  */
 template <unsigned int dimension>
 __global__ void update_neighbours(
+  int* g_ret,
   unsigned int* g_neighbour,
-  unsigned int* g_ret,
   unsigned int const* g_cell)
 {
     // load particle from cell placeholder
@@ -307,7 +309,7 @@ __global__ void find_cell_offset(unsigned int* g_cell, unsigned int* g_cell_offs
  * assign particles to cells
  */
 __global__ void assign_cells(
-  unsigned int* g_ret,
+  int* g_ret,
   unsigned int const* g_cell,
   unsigned int const* g_cell_offset,
   unsigned int const* g_itag,
@@ -345,6 +347,46 @@ __global__ void gen_index(unsigned int* g_index)
     g_index[GTID] = (GTID < nbox_) ? GTID : 0;
 }
 
+/**
+ * maximum squared particle distance
+ */
+template <
+    typename vector_type
+  , int threads
+>
+__global__ void displacement(float4* g_r, float4* g_r0, typename vector_type::value_type* g_rr)
+{
+    typedef typename vector_type::value_type float_type;
+    enum { dimension = vector_type::static_size };
+
+    extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
+    float_type* const s_rr = reinterpret_cast<float_type*>(__s_array);
+    float_type rr = 0;
+
+    for (uint i = GTID; i < nbox_; i += GTDIM) {
+        vector_type r;
+        unsigned int type;
+        tie(r, type) = untagged<vector_type>(g_r[i]);
+        vector_type r0;
+        tie(r0, type) = untagged<vector_type>(g_r0[i]);
+        r -= r0;
+        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(box_length_)));
+        rr = max(rr, inner_prod(r, r));
+    }
+
+    // reduced values for this thread
+    s_rr[TID] = rr;
+    __syncthreads();
+
+    // compute reduced value for all threads in block
+    reduce<threads / 2, sum_>(rr, s_rr);
+
+    if (TID < 1) {
+        // store block reduced value in global memory
+        g_rr[blockIdx.x] = rr;
+    }
+}
+
 } // namespace neighbour_kernel
 
 template <int dimension>
@@ -362,6 +404,11 @@ neighbour_wrapper<dimension> neighbour_wrapper<dimension>::kernel = {
   , neighbour_kernel::gen_index
   , neighbour_kernel::update_neighbours<dimension>
   , neighbour_kernel::compute_cell<dimension>
+  , neighbour_kernel::displacement<vector<float, dimension>, 512>
+  , neighbour_kernel::displacement<vector<float, dimension>, 256>
+  , neighbour_kernel::displacement<vector<float, dimension>, 128>
+  , neighbour_kernel::displacement<vector<float, dimension>, 64>
+  , neighbour_kernel::displacement<vector<float, dimension>, 32>
 };
 
 template class neighbour_wrapper<3>;
