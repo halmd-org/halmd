@@ -93,7 +93,7 @@ __device__ __host__ typename boost::enable_if<
     boost::mpl::has_key<Sequence, Key>
   , typename boost::mpl::at<Sequence, Key>::type const&
 >::type
-get(variant<Sequence> const& value)
+inline get(variant<Sequence> const& value)
 {
     return reinterpret_cast<
         typename boost::mpl::at<Sequence, Key>::type const&
@@ -105,7 +105,7 @@ __device__ __host__ typename boost::enable_if<
     boost::mpl::has_key<Sequence, boost::mpl::int_<Key> >
   , typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type const&
 >::type
-get(variant<Sequence> const& value)
+inline get(variant<Sequence> const& value)
 {
     return reinterpret_cast<
         typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type const&
@@ -121,7 +121,7 @@ __device__ __host__ typename boost::enable_if<
       , mode
     > const&
 >::type
-get(texture<variant<Sequence>, dim, mode> const& value)
+inline get(texture<variant<Sequence>, dim, mode> const& value)
 {
     return reinterpret_cast<
         texture<
@@ -141,7 +141,7 @@ __device__ __host__ typename boost::enable_if<
       , mode
     > const&
 >::type
-get(texture<variant<Sequence>, dim, mode> const& value)
+inline get(texture<variant<Sequence>, dim, mode> const& value)
 {
     return reinterpret_cast<
         texture<
