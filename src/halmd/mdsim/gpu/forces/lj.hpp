@@ -53,6 +53,10 @@ public:
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }
 
+    using _Base::g_neighbour;
+    using _Base::neighbour_size;
+    using _Base::neighbour_stride;
+
 protected:
     /** potential well depths in MD units */
     matrix_type epsilon_;
@@ -68,6 +72,8 @@ protected:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
+    /** Lennard-Jones potential parameters */
+    cuda::vector<float4> g_ljparam_;
 };
 
 }}} // namespace mdsim::gpu::forces

@@ -81,6 +81,7 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
   , rr_cut_(particle->ntype, particle->ntype)
   , sigma2_(particle->ntype, particle->ntype)
   , en_cut_(particle->ntype, particle->ntype)
+  , g_ljparam_(epsilon_.data().size())
 {
     // parse deprecated options
     boost::array<float, 3> epsilon = vm["epsilon"].as<boost::array<float, 3> >();
@@ -119,6 +120,19 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
     LOG("potential cutoff length: r = " << r_cut_sigma_);
     LOG("potential cutoff energy: U = " << en_cut_);
 
+    cuda::host::vector<float4> ljparam(g_ljparam_.size());
+    for (size_t i = 0; i < ljparam.size(); ++i) {
+        numeric::host::blas::vector<float, 4> p;
+        p[lj_kernel::EPSILON] = epsilon_.data()[i];
+        p[lj_kernel::RR_CUT] = rr_cut_.data()[i];
+        p[lj_kernel::SIGMA2] = sigma2_.data()[i];
+        p[lj_kernel::EN_CUT] = en_cut_.data()[i];
+        ljparam[i] = p;
+    }
+    cuda::copy(ljparam, g_ljparam_);
+    cuda::copy(static_cast<vector_type>(box->length()), get_lj_kernel<dimension>().box_length);
+    cuda::copy(neighbour_size, get_lj_kernel<dimension>().neighbour_size);
+    cuda::copy(neighbour_stride, get_lj_kernel<dimension>().neighbour_stride);
 /* FIXME
     // initialise CUDA symbols
     typedef lj_wrapper<dimension> _gpu;
@@ -146,9 +160,10 @@ void lj<dimension, float_type>::compute()
             g_virial(particle->dim.threads());
 
     cuda::configure(particle->dim.grid, particle->dim.block);
-    get_lj_kernel<dimension>().compute(particle->g_f,
-                  particle->g_neighbour, // FIXME should go to neighbour->
-                  g_en_pot, g_virial);
+    get_lj_kernel<dimension>().r.bind(particle->g_r);
+    get_lj_kernel<dimension>().ljparam.bind(g_ljparam_);
+    get_lj_kernel<dimension>().compute(particle->g_f, g_neighbour, g_en_pot, g_virial);
+    cuda::thread::synchronize();
 //                   thermodynamics->en_pot, thermodynamics->virial);
 
 /*    // initialize particle forces to zero

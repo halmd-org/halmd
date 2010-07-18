@@ -25,6 +25,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
+#include <halmd/mdsim/gpu/force.hpp>
 
 using namespace boost;
 using namespace std;
@@ -128,15 +129,19 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
     // volume of n-dimensional sphere with neighbour list radius
     float_type neighbour_sphere = ((dimension + 1) * M_PI / 3) * pow(r_cut_max + r_skin_, dimension);
     // number of placeholders per neighbour list
-    neighbour_size_ = static_cast<size_t>(ceil(neighbour_sphere * (box->density() / nu_cell_)));
+    force->neighbour_size = static_cast<size_t>(ceil(neighbour_sphere * (box->density() / nu_cell_)));
+    // number of neighbour lists
+    force->neighbour_stride = particle->dim.threads();
+    // allocate neighbour lists
+    force->g_neighbour.resize(force->neighbour_stride * force->neighbour_size);
 
     LOG("neighbour list skin: " << r_skin_);
-    LOG("number of placeholders per neighbour list: " << neighbour_size_);
+    LOG("number of placeholders per neighbour list: " << force->neighbour_size);
 
     try {
         cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
-        cuda::copy(neighbour_size_, get_neighbour_kernel<dimension>().neighbour_size);
-        cuda::copy(static_cast<unsigned int>(particle->dim.threads()), get_neighbour_kernel<dimension>().neighbour_stride);
+        cuda::copy(force->neighbour_size, get_neighbour_kernel<dimension>().neighbour_size);
+        cuda::copy(force->neighbour_stride, get_neighbour_kernel<dimension>().neighbour_stride);
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
@@ -145,7 +150,6 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
 
     try {
         g_cell_.resize(dim_cell_.threads());
-        g_neighbour_.resize(particle->dim.threads() * neighbour_size_);
         g_cell_offset_.resize(dim_cell_.blocks_per_grid());
         g_cell_index_.reserve(particle->dim.threads());
         g_cell_index_.resize(particle->nbox);
@@ -249,14 +253,14 @@ template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update_neighbours()
 {
     // mark neighbour list placeholders as virtual particles
-    cuda::memset(g_neighbour_, 0xFF);
+    cuda::memset(force->g_neighbour, 0xFF);
     // build neighbour lists
     cuda::vector<int> g_ret(1);
     cuda::host::vector<int> h_ret(1);
     cuda::memset(g_ret, EXIT_SUCCESS);
     cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (2 + dimension) * sizeof(int));
     get_neighbour_kernel<dimension>().r.bind(particle->g_r);
-    get_neighbour_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, g_cell_);
+    get_neighbour_kernel<dimension>().update_neighbours(g_ret, force->g_neighbour, g_cell_);
     cuda::thread::synchronize();
     cuda::copy(g_ret, h_ret);
     if (h_ret.front() != EXIT_SUCCESS) {

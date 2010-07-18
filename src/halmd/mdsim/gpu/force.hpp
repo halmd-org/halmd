@@ -27,6 +27,7 @@
 #include <halmd/mdsim/gpu/box.hpp>
 // #include <halmd/mdsim/gpu/forces/smooth.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/gpu/neighbour.hpp>
 // #include <halmd/mdsim/gpu/thermodynamics.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/options.hpp>
@@ -65,6 +66,13 @@ public:
     virtual ~force() {};
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;
+
+    /** neighbour lists */
+    cuda::vector<unsigned int> g_neighbour;
+    /** number of placeholders per neighbour list */
+    unsigned int neighbour_size;
+    /** neighbour list stride */
+    unsigned int neighbour_stride;
 };
 
 }} // namespace mdsim::host

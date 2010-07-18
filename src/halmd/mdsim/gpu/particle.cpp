@@ -66,7 +66,6 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
   , g_image(nbox)
   , g_v(nbox)
   , g_f(nbox)
-  , g_neighbour(nbox)
   // allocate page-locked host memory
   , h_r(nbox)
   , h_image(nbox)
@@ -89,7 +88,6 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
     g_image.reserve(dim.threads());
     g_v.reserve(dim.threads());
     g_f.reserve(dim.threads());
-    g_neighbour.reserve(dim.threads());
 }
 
 // explicit instantiation

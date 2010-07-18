@@ -28,7 +28,6 @@
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/box.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/neighbour_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
@@ -39,6 +38,10 @@ namespace halmd
 {
 namespace mdsim { namespace gpu
 {
+
+// forward declaration
+template <int dimension, typename float_type>
+class force;
 
 namespace sort
 {
@@ -111,8 +114,6 @@ protected:
     vector_type cell_length_;
     /** CUDA cell kernel execution configuration */
     cuda::config dim_cell_;
-    /** number of placeholders per neighbour list */
-    size_t neighbour_size_;
     /** particle positions at last neighbour list update */
     cuda::vector<float4> g_r0_;
     /** block-reduced squared particle distances */
@@ -121,8 +122,6 @@ protected:
     cuda::host::vector<float> h_rr_;
     /** cell lists in global device memory */
     cuda::vector<unsigned int> g_cell_;
-    /** neighbour lists in global device memory */
-    cuda::vector<unsigned int> g_neighbour_;
 
     /** GPU radix sort */
     algorithm::gpu::radix_sort<unsigned int> sort_;
