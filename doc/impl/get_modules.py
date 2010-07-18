@@ -189,7 +189,7 @@ for m in modules:
                     line += '| %s ' % s.ljust(width[i])
                 line += '|'
                 print >>fh, line
-                print >>fh, '      ' + (rule if n > 0 else rule.replace('-', '='))
+                print >>fh, '      ' + (lambda:rule.replace('-', '='), lambda:rule)[n > 0]()
             print >>fh
 
         fh.close()
