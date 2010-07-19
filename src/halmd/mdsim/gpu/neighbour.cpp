@@ -117,6 +117,7 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
 
     try {
         using numeric::gpu::blas::vector;
+        cuda::copy(particle->nbox, get_neighbour_kernel<dimension>().nbox);
         cuda::copy(static_cast<vector<uint, dimension> >(ncell_), get_neighbour_kernel<dimension>().ncell);
         cuda::copy(cell_length_, get_neighbour_kernel<dimension>().cell_length);
         cuda::copy(static_cast<vector_type>(box->length()), get_neighbour_kernel<dimension>().box_length);
@@ -260,6 +261,7 @@ void neighbour<dimension, float_type>::update_neighbours()
     cuda::memset(g_ret, EXIT_SUCCESS);
     cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (2 + dimension) * sizeof(int));
     get_neighbour_kernel<dimension>().r.bind(particle->g_r);
+    get_neighbour_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
     get_neighbour_kernel<dimension>().update_neighbours(g_ret, force->g_neighbour, g_cell_);
     cuda::thread::synchronize();
     cuda::copy(g_ret, h_ret);
