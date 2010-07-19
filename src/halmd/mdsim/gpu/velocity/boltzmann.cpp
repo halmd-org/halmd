@@ -150,6 +150,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
       , g_vv_
       , g_vv_.size()
     );
+    cuda::thread::synchronize();
 
 #ifdef USE_HILBERT_ORDER
     // make thermostat independent of neighbour list update frequency or skin

@@ -138,7 +138,7 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
 
     // compute mean center of mass velocity from block reduced values
     for (uint i = TID; i < size; i += TDIM) {
-        s_vcm[i] = vector_type(g_vcm[i], g_vcm[i + BDIM]);
+        s_vcm[i] = vector_type(g_vcm[i], g_vcm[i + size]);
         s_vv[i] = g_vv[i];
     }
     __syncthreads();
@@ -194,7 +194,7 @@ __global__ void shift_velocity(float4* g_v, uint npart, uint nplace, T const* g_
     // compute mean center of mass velocity from block reduced values
     for (uint i = TID; i < size; i += TDIM) {
 #ifdef USE_VERLET_DSFUN
-        s_vcm[i] = vector_type(g_vcm[i], g_vcm[i + BDIM]);
+        s_vcm[i] = vector_type(g_vcm[i], g_vcm[i + size]);
 #else
         s_vcm[i] = g_vcm[i];
 #endif
