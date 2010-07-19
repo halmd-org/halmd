@@ -104,7 +104,7 @@ __global__ void compute(
         value_type rr = inner_prod(r, r);
         // enforce cutoff length
         if (rr >= lj[RR_CUT]) {
-            return;
+            continue;
         }
 
         // compute Lennard-Jones force in reduced units
