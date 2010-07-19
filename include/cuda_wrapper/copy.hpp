@@ -176,7 +176,7 @@ typename boost::enable_if<boost::is_convertible<T_, T>, void>::type
 copy(T_ const& src, symbol<T> const& dst)
 {
     assert(1 == dst.size());
-    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), &src, sizeof(T), 0, cudaMemcpyHostToDevice));
+    CUDA_CALL(cudaMemcpyToSymbol(reinterpret_cast<char const*>(dst.data()), &static_cast<T const&>(src), sizeof(T), 0, cudaMemcpyHostToDevice));
 }
 
 /**
