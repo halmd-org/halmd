@@ -25,10 +25,12 @@
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 
 using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::numeric::gpu::blas;
+using namespace halmd::utility::gpu;
 
 namespace halmd
 {
@@ -40,30 +42,7 @@ namespace verlet_kernel
 /** integration time-step */
 static __constant__ float timestep_;
 /** cuboid box edge length */
-static __constant__ float3 __box_length_impl_3;
-/** rectangular box edge length */
-static __constant__ float2 __box_length_impl_2;
-
-template <size_t N>
-struct box_length;
-
-template <>
-struct box_length<3>
-{
-    // FIXME report bug against CUDA 3.0/3.1
-    static __device__ __host__ float3 const& get() {
-        return __box_length_impl_3;
-    }
-};
-
-template <>
-struct box_length<2>
-{
-    // FIXME report bug against CUDA 3.0/3.1
-    static __device__ __host__ float2 const& get() {
-        return __box_length_impl_2;
-    }
-};
+static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
@@ -92,7 +71,7 @@ __global__ void _integrate(
 #endif
     vector_type_ image = g_image[i];
     vector_type_ f = g_f[i];
-    vector_type_ L = box_length<vector_type::static_size>::get();
+    vector_type_ L = get<vector_type::static_size>(box_length_);
 
     integrate(r, image, v, f, timestep_, L);
 
@@ -143,7 +122,7 @@ __global__ void _finalize(
 template <int dimension>
 verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
     verlet_kernel::timestep_
-  , verlet_kernel::box_length<dimension>::get()
+  , get<dimension>(verlet_kernel::box_length_)
 #ifdef USE_VERLET_DSFUN
   , verlet_kernel::_integrate<vector<dsfloat, dimension>, vector<float, dimension> >
   , verlet_kernel::_finalize<vector<dsfloat, dimension>, vector<float, dimension> >
