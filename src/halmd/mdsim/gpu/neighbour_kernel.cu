@@ -41,7 +41,7 @@ namespace neighbour_kernel
 {
 
 /** (cutoff lengths + neighbour list skin)² */
-texture<float, 1, cudaReadModeElementType> rr_cut_skin_;
+texture<float> rr_cut_skin_;
 /** neighbour list length */
 __constant__ unsigned int neighbour_size_;
 /** neighbour list stride */
@@ -55,7 +55,7 @@ __constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
 /** cell edge lengths */
 __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > cell_length_;
 /** positions, tags */
-texture<float4, 1, cudaReadModeElementType> r_;
+texture<float4> r_;
 
 /**
  * compute neighbour cell

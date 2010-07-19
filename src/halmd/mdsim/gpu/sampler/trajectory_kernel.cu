@@ -35,11 +35,11 @@ namespace trajectory_kernel
 {
 
 /** positions, types */
-texture<float4, 1, cudaReadModeElementType> r_;
+texture<float4> r_;
 /** minimum image vectors */
 texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > image_;
 /** velocities, tags */
-texture<float4, 1, cudaReadModeElementType> v_;
+texture<float4> v_;
 /** cubic box edgle length */
 __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
