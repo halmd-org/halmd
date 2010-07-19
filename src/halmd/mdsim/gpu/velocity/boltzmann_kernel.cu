@@ -155,7 +155,7 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
     // vv changes to vv - v_cm^2 after shifting
 
     vv -= inner_prod(vcm, vcm);
-    float_type coeff = sqrt(temp * static_cast<int>(dimension) * (static_cast<float_type>(npart) / vv));
+    float_type coeff = sqrt(temp * static_cast<int>(dimension) / vv);
 
     for (uint i = GTID; i < npart; i += GTDIM) {
         vector_type v;
