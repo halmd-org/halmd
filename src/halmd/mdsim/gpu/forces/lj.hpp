@@ -53,10 +53,6 @@ public:
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }
 
-    using _Base::g_neighbour;
-    using _Base::neighbour_size;
-    using _Base::neighbour_stride;
-
 protected:
     /** potential well depths in MD units */
     matrix_type epsilon_;

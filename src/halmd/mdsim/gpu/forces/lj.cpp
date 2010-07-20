@@ -131,8 +131,6 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
     }
     cuda::copy(ljparam, g_ljparam_);
     cuda::copy(static_cast<vector_type>(box->length()), get_lj_kernel<dimension>().box_length);
-    cuda::copy(neighbour_size, get_lj_kernel<dimension>().neighbour_size);
-    cuda::copy(neighbour_stride, get_lj_kernel<dimension>().neighbour_stride);
 /* FIXME
     // initialise CUDA symbols
     typedef lj_wrapper<dimension> _gpu;
@@ -159,10 +157,12 @@ void lj<dimension, float_type>::compute()
     cuda::vector<typename _Base::particle_type::gpu_vector_type>
             g_virial(particle->dim.threads());
 
-    cuda::configure(particle->dim.grid, particle->dim.block);
+    cuda::copy(particle->neighbour_size, get_lj_kernel<dimension>().neighbour_size);
+    cuda::copy(particle->neighbour_stride, get_lj_kernel<dimension>().neighbour_stride);
     get_lj_kernel<dimension>().r.bind(particle->g_r);
     get_lj_kernel<dimension>().ljparam.bind(g_ljparam_);
-    get_lj_kernel<dimension>().compute(particle->g_f, g_neighbour, g_en_pot, g_virial);
+    cuda::configure(particle->dim.grid, particle->dim.block);
+    get_lj_kernel<dimension>().compute(particle->g_f, particle->g_neighbour, g_en_pot, g_virial);
     cuda::thread::synchronize();
 //                   thermodynamics->en_pot, thermodynamics->virial);
 
