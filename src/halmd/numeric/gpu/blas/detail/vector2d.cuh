@@ -117,6 +117,15 @@ struct vector<float, 2> : bounded_array<float, 2>
     }
 
     /**
+     * Convert from CUDA vector type
+     */
+    __device__ vector(float4 const& v)
+    {
+        (*this)[0] = v.x;
+        (*this)[1] = v.y;
+    }
+
+    /**
      * Convert to CUDA vector type
      */
     __device__ operator float2() const
