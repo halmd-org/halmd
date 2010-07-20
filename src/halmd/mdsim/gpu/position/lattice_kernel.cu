@@ -87,14 +87,14 @@ template <
 __global__ void lattice(float4* g_r, uint n, float box)
 {
     vector_type r;
-    unsigned int tag;
-    tie(r, tag) = untagged<vector_type>(g_r[GTID]);
+    unsigned int type;
+    tie(r, type) = untagged<vector_type>(g_r[GTID]);
 
     // compute primitive lattice vector
     primitive(r, n);
     r *= box / n;
 
-    g_r[GTID] = tagged(r, tag);
+    g_r[GTID] = tagged(r, type);
 }
 
 } // namespace lattice_kernel
