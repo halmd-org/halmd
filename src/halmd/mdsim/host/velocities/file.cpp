@@ -21,11 +21,11 @@
 #include <boost/iterator/counting_iterator.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/velocity/file.hpp>
+#include <halmd/mdsim/host/velocities/file.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace velocity
+namespace mdsim { namespace host { namespace velocities
 {
 
 using namespace boost;
@@ -81,14 +81,14 @@ template class file<3, float>;
 template class file<2, float>;
 #endif
 
-}}} // namespace mdsim::host::velocity
+}}} // namespace mdsim::host::velocities
 
 #ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::velocity::file<3, double> >;
-template class module<mdsim::host::velocity::file<2, double> >;
+template class module<mdsim::host::velocities::file<3, double> >;
+template class module<mdsim::host::velocities::file<2, double> >;
 #else
-template class module<mdsim::host::velocity::file<3, float> >;
-template class module<mdsim::host::velocity::file<2, float> >;
+template class module<mdsim::host::velocities::file<3, float> >;
+template class module<mdsim::host::velocities::file<2, float> >;
 #endif
 
 } // namespace halmd

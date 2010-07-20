@@ -17,33 +17,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_HPP
-#define HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_HPP
+#ifndef HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP
+#define HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP
 
 #include <utility>
 
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/gpu/velocity/boltzmann_kernel.hpp>
-#include <halmd/mdsim/velocity.hpp>
+#include <halmd/mdsim/gpu/velocity.hpp>
+#include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace velocity
+namespace mdsim { namespace gpu { namespace velocities
 {
 
 using numeric::gpu::blas::dsfloat;
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class boltzmann
-  : public mdsim::velocity<dimension>
+  : public gpu::velocity<dimension, float_type>
 {
 public:
     // module definitions
     typedef boltzmann _Self;
-    typedef mdsim::velocity<dimension> _Base;
+    typedef gpu::velocity<dimension, float_type> _Base;
     static void options(po::options_description& desc);
     static void depends();
     static void select(po::options const& vm);
@@ -70,17 +70,6 @@ public:
     gaussian_impl_type const gaussian_impl;
     static gaussian_impl_type get_gaussian_impl(int threads);
 
-// private:
-    /** assign new velocities from Gaussian distribution of width sigma,
-      * return mean velocity and mean-square velocity */
-    std::pair<vector_type, float_type> gaussian(float_type sigma);
-    /** shift all velocities by 'v_shift' */
-    void shift(vector_type const& v_shift);
-    /** rescale magnitude of all velocities by factor 'scale' */
-    void rescale(float_type scale);
-    /** first shift, then rescale all velocities */
-    void shift_rescale(vector_type const& v_shift, float_type scale);
-
 protected:
     /** temperature */
     float_type temp_;
@@ -90,8 +79,8 @@ protected:
     cuda::vector<dsfloat> g_vv_;
 };
 
-}}} // namespace mdsim::gpu::velocity
+}}} // namespace mdsim::gpu::velocities
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_HPP */
+#endif /* ! HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP */

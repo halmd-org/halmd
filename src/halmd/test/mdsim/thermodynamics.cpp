@@ -33,7 +33,7 @@
 #include <halmd/numeric/host/accumulator.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/thermodynamics.hpp>
-#include <halmd/mdsim/host/velocity/boltzmann.hpp>
+#include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/modules/factory.hpp>
 #include <halmd/utility/modules/policy.hpp>
@@ -175,8 +175,8 @@ void thermodynamics(po::options vm)
             thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
 
     // poor man's thermostat
-    shared_ptr<mdsim::host::velocity::boltzmann<dimension, double> >
-            boltzmann(modules::fetch<mdsim::host::velocity::boltzmann<dimension, double> >(factory, vm));
+    shared_ptr<mdsim::velocity<dimension> >
+            boltzmann(modules::fetch<mdsim::velocity<dimension> >(factory, vm));
 
     // prepare system at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("equilibrate initial state");

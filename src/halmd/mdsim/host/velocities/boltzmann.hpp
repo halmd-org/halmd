@@ -17,29 +17,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_VELOCITY_BOLTZMANN_HPP
-#define HALMD_MDSIM_HOST_VELOCITY_BOLTZMANN_HPP
+#ifndef HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
+#define HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 
 #include <utility>
 
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/velocity.hpp>
+#include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace velocity
+namespace mdsim { namespace host { namespace velocities
 {
 
 template <int dimension, typename float_type>
 class boltzmann
-  : public mdsim::velocity<dimension>
+  : public host::velocity<dimension, float_type>
 {
 public:
     // module definitions
     typedef boltzmann _Self;
-    typedef mdsim::velocity<dimension> _Base;
+    typedef host::velocity<dimension, float_type> _Base;
     static void options(po::options_description& desc);
     static void depends();
     static void select(po::options const& vm);
@@ -59,20 +59,14 @@ public:
     /** assign new velocities from Gaussian distribution of width sigma,
       * return mean velocity and mean-square velocity */
     std::pair<vector_type, float_type> gaussian(float_type sigma);
-    /** shift all velocities by 'v_shift' */
-    void shift(vector_type const& v_shift);
-    /** rescale magnitude of all velocities by factor 'scale' */
-    void rescale(float_type scale);
-    /** first shift, then rescale all velocities */
-    void shift_rescale(vector_type const& v_shift, float_type scale);
 
 protected:
     /** temperature */
     float_type temp_;
 };
 
-}}} // namespace mdsim::host::velocity
+}}} // namespace mdsim::host::velocities
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_VELOCITY_BOLTZMANN_HPP */
+#endif /* ! HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP */

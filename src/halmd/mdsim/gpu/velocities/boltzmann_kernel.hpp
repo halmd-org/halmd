@@ -1,5 +1,4 @@
-/* Maxwell-Boltzmann distribution at accurate temperature
- *
+/*
  * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
@@ -18,17 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_KERNEL_HPP
-#define HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_KERNEL_HPP
+#define HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_KERNEL_HPP
 
 #include <boost/mpl/if.hpp>
 
 #include <cuda_wrapper.hpp>
 #include <halmd/numeric/gpu/blas/dsfloat.cuh>
 
+//
+// Maxwell-Boltzmann distribution at accurate temperature
+//
+
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace velocity
+namespace mdsim { namespace gpu { namespace velocities
 {
 
 using numeric::gpu::blas::dsfloat;
@@ -42,25 +45,18 @@ struct boltzmann_wrapper
 {
     typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
     typedef cuda::function<void (float4*, uint, uint, float, coalesced_vector_type*, dsfloat*)> gaussian_impl_type;
-    typedef cuda::function<void (float4*, uint, uint, coalesced_vector_type const*, uint, dsfloat*)> shift_velocity_impl_type;
     gaussian_impl_type gaussian_impl_32;
     gaussian_impl_type gaussian_impl_64;
     gaussian_impl_type gaussian_impl_128;
     gaussian_impl_type gaussian_impl_256;
     gaussian_impl_type gaussian_impl_512;
     cuda::function<void (float4*, uint, uint, dsfloat, coalesced_vector_type const*, dsfloat const*, uint)> shift_rescale;
-    shift_velocity_impl_type shift_velocity_impl_32;
-    shift_velocity_impl_type shift_velocity_impl_64;
-    shift_velocity_impl_type shift_velocity_impl_128;
-    shift_velocity_impl_type shift_velocity_impl_256;
-    shift_velocity_impl_type shift_velocity_impl_512;
-    cuda::function<void (float4*, uint, uint, dsfloat const*, uint, dsfloat)> scale_velocity;
     cuda::symbol<rng_type> rng;
     static boltzmann_wrapper const kernel;
 };
 
-}}} // namespace mdsim::gpu::velocity
+}}} // namespace mdsim::gpu::velocities
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_VELOCITY_BOLTZMANN_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_KERNEL_HPP */

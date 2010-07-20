@@ -6,6 +6,8 @@ add_library(halmd_mdsim_gpu
   neighbour_kernel.cu
   particle.cpp
   particle_kernel.cu
+  velocity.cpp
+  velocity_kernel.cu
   )
 target_link_libraries(halmd_mdsim_gpu
   ${CUDA_LIBRARIES}
@@ -16,4 +18,4 @@ add_subdirectory(integrators)
 add_subdirectory(position)
 add_subdirectory(sampler)
 add_subdirectory(sort)
-add_subdirectory(velocity)
+add_subdirectory(velocities)

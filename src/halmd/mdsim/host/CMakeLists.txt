@@ -4,6 +4,7 @@ add_library(halmd_mdsim_host
   neighbour.cpp
   particle.cpp
   thermodynamics.cpp
+  velocity.cpp
   )
 
 add_subdirectory(forces)
@@ -11,4 +12,4 @@ add_subdirectory(integrator)
 add_subdirectory(position)
 add_subdirectory(sampler)
 add_subdirectory(sort)
-add_subdirectory(velocity)
+add_subdirectory(velocities)

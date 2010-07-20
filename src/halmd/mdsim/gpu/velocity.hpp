@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,40 +17,49 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_VELOCITY_HPP
-#define HALMD_MDSIM_VELOCITY_HPP
+#ifndef HALMD_MDSIM_GPU_VELOCITY_HPP
+#define HALMD_MDSIM_GPU_VELOCITY_HPP
 
+#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/velocity.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim
+namespace mdsim { namespace gpu
 {
 
-template <int dimension>
+template <int dimension, typename float_type>
 class velocity
+  : public mdsim::velocity<dimension>
 {
 public:
     // module definitions
     typedef velocity _Self;
+    typedef mdsim::velocity<dimension> _Base;
     static void options(po::options_description& desc);
-    static void depends() {}
+    static void depends();
     static void select(po::options const& vm) {}
 
+    typedef gpu::particle<dimension, float_type> particle_type;
     typedef numeric::host::blas::vector<double, dimension> vector_type;
 
-    velocity(modules::factory& factory, po::options const& vm) {}
+    shared_ptr<particle_type> particle;
+
+    velocity(modules::factory& factory, po::options const& vm);
     virtual ~velocity() {}
-    virtual void set() = 0;
-    virtual void rescale(double factor) = 0;
-    virtual void shift(vector_type const& delta) = 0;
-    virtual void shift_rescale(vector_type const& delta, double factor) = 0;
+    void rescale(double factor);
+    void shift(vector_type const& delta);
+    void shift_rescale(vector_type const& delta, double factor);
+
+private:
+    cuda::config dim_;
 };
 
-} // namespace mdsim
+}} // namespace mdsim::gpu
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_VELOCITY_HPP */
+#endif /* ! HALMD_MDSIM_GPU_VELOCITY_HPP */

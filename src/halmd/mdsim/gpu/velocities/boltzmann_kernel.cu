@@ -19,7 +19,7 @@
 
 #include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/mdsim/gpu/velocity/boltzmann_kernel.hpp>
+#include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/random/gpu/normal_distribution.cuh>
 #include <halmd/random/gpu/random_number_generator.cuh>
 #include <halmd/utility/gpu/thread.cuh>
@@ -35,7 +35,7 @@ using namespace halmd::random::gpu;
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace velocity
+namespace mdsim { namespace gpu { namespace velocities
 {
 namespace boltzmann_kernel
 {
@@ -175,104 +175,6 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
     }
 }
 
-/**
- * set center of mass velocity to zero and reduce squared velocity
- */
-template <
-    typename vector_type
-  , int threads
-  , typename T
->
-__global__ void shift_velocity(float4* g_v, uint npart, uint nplace, T const* g_vcm, uint size, dsfloat* g_vv)
-{
-    extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    vector_type* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
-    dsfloat* const s_vv = reinterpret_cast<dsfloat*>(&s_vcm[size]);
-    vector_type vcm = 0;
-    dsfloat vv = 0;
-
-    // compute mean center of mass velocity from block reduced values
-    for (uint i = TID; i < size; i += TDIM) {
-#ifdef USE_VERLET_DSFUN
-        s_vcm[i] = vector_type(g_vcm[i], g_vcm[i + size]);
-#else
-        s_vcm[i] = g_vcm[i];
-#endif
-    }
-    __syncthreads();
-    for (uint i = 0; i < size; ++i) {
-        vcm += s_vcm[i];
-    }
-    vcm /= npart;
-
-    for (uint i = GTID; i < npart; i += GTDIM) {
-        vector_type v;
-        unsigned int tag;
-#ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + nplace]);
-#else
-        tie(v, tag) = untagged<vector_type>(g_v[i]);
-#endif
-        v -= vcm;
-        vv += inner_prod(v, v);
-#ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) = tagged(v, tag);
-#else
-        g_v[i] = tagged(v, tag);
-#endif
-    }
-    // reduced value for this thread
-    s_vv[TID] = vv;
-    __syncthreads();
-
-    // compute reduced value for all threads in block
-    reduce<threads / 2, sum_>(vv, s_vv);
-
-    if (TID < 1) {
-        // store block reduced value in global memory
-        g_vv[blockIdx.x] = vv;
-    }
-}
-
-/**
- * rescale velocities to accurate temperature
- */
-template <typename vector_type>
-__global__ void scale_velocity(float4* g_v, uint npart, uint nplace, dsfloat const* g_vv, uint size, dsfloat temp)
-{
-    typedef typename vector_type::value_type float_type;
-    extern __shared__ dsfloat s_vv[];
-    dsfloat vv = 0;
-
-    // compute squared velocity sum from block reduced values
-    for (uint i = TID; i < size; i += TDIM) {
-        s_vv[i] = g_vv[i];
-    }
-    __syncthreads();
-    for (uint i = 0; i < size; ++i) {
-        vv += s_vv[i];
-    }
-
-    int const dimension = vector_type::static_size;
-    float_type coeff = sqrt(temp * dimension * (static_cast<float_type>(npart) / vv));
-
-    for (uint i = GTID; i < npart; i += GTDIM) {
-        vector_type v;
-        unsigned int tag;
-#ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + nplace]);
-#else
-        tie(v, tag) = untagged<vector_type>(g_v[i]);
-#endif
-        v *= coeff;
-#ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) = tagged(v, tag);
-#else
-        g_v[i] = tagged(v, tag);
-#endif
-    }
-}
-
 } // namespace boltzmann_kernel
 
 template <int dimension, typename float_type, typename rng_type>
@@ -283,12 +185,6 @@ boltzmann_wrapper<dimension, float_type, rng_type> const boltzmann_wrapper<dimen
   , boltzmann_kernel::gaussian<vector<float_type, dimension>, rng_type, 256>
   , boltzmann_kernel::gaussian<vector<float_type, dimension>, rng_type, 512>
   , boltzmann_kernel::shift_rescale<vector<float_type, dimension> >
-  , boltzmann_kernel::shift_velocity<vector<float_type, dimension>, 32>
-  , boltzmann_kernel::shift_velocity<vector<float_type, dimension>, 64>
-  , boltzmann_kernel::shift_velocity<vector<float_type, dimension>, 128>
-  , boltzmann_kernel::shift_velocity<vector<float_type, dimension>, 256>
-  , boltzmann_kernel::shift_velocity<vector<float_type, dimension>, 512>
-  , boltzmann_kernel::scale_velocity<vector<float_type, dimension> >
   , get<rng_type>(boltzmann_kernel::rng)
 };
 
@@ -300,6 +196,6 @@ template class boltzmann_wrapper<3, float, random::gpu::rand48_rng>;
 template class boltzmann_wrapper<2, float, random::gpu::rand48_rng>;
 #endif
 
-}}} // namespace mdsim::gpu::velocity
+}}} // namespace mdsim::gpu::velocities
 
 } // namespace halmd

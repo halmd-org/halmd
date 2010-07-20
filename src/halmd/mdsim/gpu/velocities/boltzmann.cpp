@@ -18,12 +18,12 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/velocity/boltzmann.hpp>
+#include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace velocity
+namespace mdsim { namespace gpu { namespace velocities
 {
 
 using namespace boost;
@@ -162,86 +162,13 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 //    LOG_DEBUG("velocities rescaled by factor " << scale);
 }
 
-/**
- * Assign new velocities from Gaussian distribution
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-pair<typename boltzmann<dimension, float_type, RandomNumberGenerator>::vector_type, float_type>
-inline boltzmann<dimension, float_type, RandomNumberGenerator>::gaussian(float_type sigma)
-{
-    vector_type v_cm = 0;
-    float_type vv = 0;
- /*   float_type r;
-    bool r_valid = false;
-
-    BOOST_FOREACH (vector_type& v, particle->v) {
-        // assign two components at a time
-        for (unsigned i=0; i < dimension-1; i+=2) {
-            random->normal(v[i], v[i+1], sigma);
-        }
-        // handle last component separately for odd dimensions
-        if (dimension % 2 == 1) {
-            if (r_valid) {
-                v[dimension-1] = r;
-            }
-            else {
-                random->normal(v[dimension-1], r, sigma);
-            }
-            r_valid = !r_valid;
-        }
-        v_cm += v;
-        vv += inner_prod(v, v);
-    }
-
-    v_cm /= particle->v.size();
-    vv /= particle->v.size();*/
-    return make_pair(v_cm, vv);
-}
-
-/**
- * Shift all velocities by 'v'
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-inline void boltzmann<dimension, float_type, RandomNumberGenerator>::shift(vector_type const& v_shift)
-{
-/*    BOOST_FOREACH (vector_type& v, particle->v) {
-        v += v_shift;
-    }*/
-}
-
-/**
- * Rescale magnitude of all velocities by factor 'scale'
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-inline void boltzmann<dimension, float_type, RandomNumberGenerator>::rescale(float_type scale)
-{
-//     BOOST_FOREACH (vector_type& v, particle->v) {
-//         v *= scale;
-//     }
-//     LOG("velocities rescaled by factor " << scale);
-}
-
-/**
- * First shift, then rescale all velocities
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-inline void boltzmann<dimension, float_type, RandomNumberGenerator>::shift_rescale(
-    vector_type const& v_shift,
-    float_type scale)
-{
-//     BOOST_FOREACH (vector_type& v, particle->v) {
-//         v += v_shift;
-//         v *= scale;
-//     }
-}
-
-}}} // namespace mdsim::gpu::velocity
+}}} // namespace mdsim::gpu::velocities
 
 // explicit instantiation
-template class mdsim::gpu::velocity::boltzmann<3, float, random::gpu::rand48>;
-template class mdsim::gpu::velocity::boltzmann<2, float, random::gpu::rand48>;
+template class mdsim::gpu::velocities::boltzmann<3, float, random::gpu::rand48>;
+template class mdsim::gpu::velocities::boltzmann<2, float, random::gpu::rand48>;
 
-template class module<mdsim::gpu::velocity::boltzmann<3, float, random::gpu::rand48> >;
-template class module<mdsim::gpu::velocity::boltzmann<2, float, random::gpu::rand48> >;
+template class module<mdsim::gpu::velocities::boltzmann<3, float, random::gpu::rand48> >;
+template class module<mdsim::gpu::velocities::boltzmann<2, float, random::gpu::rand48> >;
 
 } // namespace halmd

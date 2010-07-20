@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,50 +17,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_VELOCITY_FILE_HPP
-#define HALMD_MDSIM_HOST_VELOCITY_FILE_HPP
+#ifndef HALMD_MDSIM_HOST_VELOCITY_HPP
+#define HALMD_MDSIM_HOST_VELOCITY_HPP
 
-#include <vector>
-
-#include <halmd/io/trajectory/reader.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/mdsim/samples/host/trajectory.hpp>
+#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace velocity
+namespace mdsim { namespace host
 {
 
 template <int dimension, typename float_type>
-class file
+class velocity
   : public mdsim::velocity<dimension>
 {
 public:
     // module definitions
-    typedef file _Self;
+    typedef velocity _Self;
     typedef mdsim::velocity<dimension> _Base;
-    static void options(po::options_description& desc) {}
+    static void options(po::options_description& desc);
     static void depends();
-    static void select(po::options const& vm);
+    static void select(po::options const& vm) {}
 
     typedef host::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
-    typedef io::trajectory::reader<dimension> reader_type;
-    typedef samples::host::trajectory<dimension, float_type> sample_type;
+    typedef numeric::host::blas::vector<double, dimension> vector_type;
 
-    shared_ptr<reader_type> reader;
-    shared_ptr<sample_type> sample;
     shared_ptr<particle_type> particle;
 
-    file(modules::factory& factory, po::options const& vm);
-    virtual ~file() {}
-    void set();
+    velocity(modules::factory& factory, po::options const& vm);
+    virtual ~velocity() {}
+    void rescale(double factor);
+    void shift(vector_type const& delta);
+    void shift_rescale(vector_type const& delta, double factor);
 };
 
-}}} // namespace mdsim::host::velocity
+}} // namespace mdsim::host
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_VELOCITY_FILE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_VELOCITY_HPP */

@@ -82,7 +82,7 @@ set(HALMD_MODULES
   halmd_mdsim_host_position
   halmd_mdsim_host_sample
   halmd_mdsim_host_sort
-  halmd_mdsim_host_velocity
+  halmd_mdsim_host_velocities
   halmd_mdsim_samples_host
   halmd_random
   halmd_random_host
@@ -97,7 +97,7 @@ if(WITH_CUDA)
     halmd_mdsim_gpu_position
     halmd_mdsim_gpu_sample
     halmd_mdsim_gpu_sort
-    halmd_mdsim_gpu_velocity
+    halmd_mdsim_gpu_velocities
     halmd_mdsim_samples_gpu
     halmd_random_gpu
     halmd_utility_gpu

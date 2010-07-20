@@ -20,11 +20,11 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/velocity/boltzmann.hpp>
+#include <halmd/mdsim/host/velocities/boltzmann.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace velocity
+namespace mdsim { namespace host { namespace velocities
 {
 
 using namespace boost;
@@ -131,43 +131,6 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
     return make_pair(v_cm, vv);
 }
 
-/**
- * Shift all velocities by 'v'
- */
-template <int dimension, typename float_type>
-inline void boltzmann<dimension, float_type>::shift(vector_type const& v_shift)
-{
-    BOOST_FOREACH (vector_type& v, particle->v) {
-        v += v_shift;
-    }
-}
-
-/**
- * Rescale magnitude of all velocities by factor 'scale'
- */
-template <int dimension, typename float_type>
-inline void boltzmann<dimension, float_type>::rescale(float_type scale)
-{
-    BOOST_FOREACH (vector_type& v, particle->v) {
-        v *= scale;
-    }
-    LOG("velocities rescaled by factor " << scale);
-}
-
-/**
- * First shift, then rescale all velocities
- */
-template <int dimension, typename float_type>
-inline void boltzmann<dimension, float_type>::shift_rescale(
-    vector_type const& v_shift,
-    float_type scale)
-{
-    BOOST_FOREACH (vector_type& v, particle->v) {
-        v += v_shift;
-        v *= scale;
-    }
-}
-
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class boltzmann<3, double>;
@@ -177,14 +140,14 @@ template class boltzmann<3, float>;
 template class boltzmann<2, float>;
 #endif
 
-}}} // namespace mdsim::host::velocity
+}}} // namespace mdsim::host::velocities
 
 #ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::velocity::boltzmann<3, double> >;
-template class module<mdsim::host::velocity::boltzmann<2, double> >;
+template class module<mdsim::host::velocities::boltzmann<3, double> >;
+template class module<mdsim::host::velocities::boltzmann<2, double> >;
 #else
-template class module<mdsim::host::velocity::boltzmann<3, float> >;
-template class module<mdsim::host::velocity::boltzmann<2, float> >;
+template class module<mdsim::host::velocities::boltzmann<3, float> >;
+template class module<mdsim::host::velocities::boltzmann<2, float> >;
 #endif
 
 } // namespace halmd
