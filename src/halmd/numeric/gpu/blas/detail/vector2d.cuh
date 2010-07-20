@@ -267,10 +267,10 @@ struct vector<dsfloat, 2> : bounded_array<dsfloat, 2>
     }
 
     /**
-     * Explicit conversion from vector of convertible element type
+     * Implicit conversion from vector of convertible element type
      */
     template <typename T_>
-    __device__ explicit vector(vector<T_, 2> const& v,
+    __device__ vector(vector<T_, 2> const& v,
       typename boost::enable_if<boost::is_convertible<T_, dsfloat> >::type* dummy = 0)
     {
         (*this)[0] = static_cast<dsfloat>(v[0]);
