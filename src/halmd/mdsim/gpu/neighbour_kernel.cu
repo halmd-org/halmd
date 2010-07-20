@@ -243,27 +243,23 @@ template <typename vector_type>
 __device__ inline unsigned int compute_cell_index(vector_type r)
 {
     enum { dimension = vector_type::static_size };
-    vector_type L = get<dimension>(box_length_);
-    vector<unsigned int, dimension> ncell = get<dimension>(ncell_);
+    typedef vector<unsigned int, dimension> cell_size_type;
+    typedef vector<int, dimension> cell_diff_type;
 
-    //
-    // Mapping the positional coordinates of a particle to its corresponding
-    // cell index is the most delicate part of the cell lists update.
-    // The safest way is to combine round-towards-zero with a successive
-    // integer modulo operation, which comes with a performance penalty.
-    //
-    // As an efficient alternative, we transform the coordinates to the
-    // half-open unit interval [0.0, 1.0) and multiply with the number
-    // of cells per dimension afterwards.
-    //
-    vector_type frac = __saturate(element_div(r, L)) * (1.f - FLT_EPSILON);
-    vector<unsigned int, dimension> index(element_prod(static_cast<vector_type>(ncell), frac));
-    if (dimension == 3) {
-        return index[0] + ncell[0] * (index[1] + ncell[1] * index[2]);
+    cell_size_type ncell = get<dimension>(ncell_);
+    vector_type cell_length = get<dimension>(cell_length_);
+
+    cell_size_type index = element_mod(
+        static_cast<cell_size_type>(element_div(r, cell_length) + static_cast<vector_type>(ncell))
+      , ncell
+    );
+    // FIXME check PTX to ensure CUDA unrolls this loop
+    unsigned int offset = index[dimension - 1];
+    for (int i = dimension - 2; i >= 0; i--) {
+        offset *= ncell[i];
+        offset += index[i];
     }
-    else {
-        return index[0] + ncell[0] * index[1];
-    }
+    return offset;
 }
 
 /**
