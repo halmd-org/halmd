@@ -100,6 +100,9 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(modules::factory&
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
+    LOG("randomly permuting particle types");
+    random->shuffle(particle->g_r);
+
     // TODO: handle non-cubic boxes
     for (unsigned i=1; i < dimension; i++) {
         assert(box->length()[0] == box->length()[i]);
@@ -143,10 +146,6 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
         throw exception("failed to compute particle lattice positions on GPU");
     }
 //     m_times["lattice"] += timer[1] - timer[0];
-
-    // randomly permute particle coordinates for binary mixture
-    LOG("randomly permuting particle coordinates");
-    random->shuffle(particle->g_r);
 
     // ??? shift particle positions to range (-L/2, L/2)
 //    box->reduce_periodic(r);

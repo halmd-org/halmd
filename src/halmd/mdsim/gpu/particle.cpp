@@ -24,6 +24,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/gpu/particle_kernel.hpp>
 
 using namespace boost;
 using namespace std;
@@ -88,6 +89,24 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
     g_image.reserve(dim.threads());
     g_v.reserve(dim.threads());
     g_f.reserve(dim.threads());
+
+    cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
+    cuda::copy(ntype, get_particle_kernel<dimension>().ntype);
+    tag();
+}
+
+/**
+ * set particle tags and types
+ */
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::tag()
+{
+    cuda::configure(dim.grid, dim.block);
+    cuda::vector<unsigned int> g_ntypes(ntypes.size());
+    cuda::copy(ntypes, g_ntypes);
+    get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
+    get_particle_kernel<dimension>().tag(g_r, g_v);
+    cuda::thread::synchronize();
 }
 
 // explicit instantiation
