@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -28,25 +28,12 @@
 
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
+#include <halmd/test/tools/cuda.hpp>
 #include <halmd/util/timer.hpp>
 
 //
 // Parallel GPU rand48 random number generator test
 //
-
-// "global fixture:" select CUDA device
-struct set_cuda_device {
-    set_cuda_device() {
-        try {
-            cuda::device::set(0);
-        }
-        catch (cuda::error const& e) {
-            std::cerr << "CUDA error: " << e.what() << std::endl;
-            exit(EXIT_FAILURE);
-        }
-    }
-    ~set_cuda_device() {}  // release device here?
-};
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 

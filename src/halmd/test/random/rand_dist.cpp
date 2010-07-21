@@ -32,6 +32,7 @@
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/gpu/rand48.hpp>
+#include <halmd/test/tools/cuda.hpp>
 
 //
 // test random number generators in combination with accumulator class
@@ -39,20 +40,6 @@
 
 const unsigned BLOCKS = 64;
 const unsigned THREADS = 128;
-
-// "global fixture:" select CUDA device
-struct set_cuda_device {
-    set_cuda_device() {
-        try {
-            cuda::device::set(0);
-        }
-        catch (cuda::error const& e) {
-            std::cerr << "CUDA error: " << e.what() << std::endl;
-            exit(EXIT_FAILURE);
-        }
-    }
-    ~set_cuda_device() {}  // release device here?
-};
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
