@@ -21,7 +21,7 @@
 #define HALMD_CONFIG_HPP
 
 #ifdef __CUDACC__
-# define HALMD_GPU_ENABLED __device__ __host__
+# define HALMD_GPU_ENABLED __device__
 #else
 # define HALMD_GPU_ENABLED
 #endif
