@@ -17,12 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_HOST_POW_HPP
-#define HALMD_NUMERIC_HOST_POW_HPP
+#ifndef HALMD_NUMERIC_POW_HPP
+#define HALMD_NUMERIC_POW_HPP
+
+#include <halmd/config.hpp>
 
 namespace halmd
-{
-namespace numeric { namespace host
 {
 
 /**
@@ -33,9 +33,8 @@ namespace numeric { namespace host
  * D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
  * Algorithms, 2nd Edition, 1981, Addison-Wesley, p. 442
  */
-
-template<unsigned n, typename float_type>
-inline float_type pow(float_type x)
+template <unsigned int n, typename float_type>
+inline HALMD_GPU_ENABLED float_type fixed_pow(float_type x)
 {
     float_type y = (n % 2) ? x : 1;
 
@@ -50,8 +49,6 @@ inline float_type pow(float_type x)
     return y;
 }
 
-}} // namespace numeric::host
-
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_HOST_POW_HPP */
+#endif /* ! HALMD_NUMERIC_POW_HPP */

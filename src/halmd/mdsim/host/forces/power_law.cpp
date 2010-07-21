@@ -25,13 +25,12 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/host/forces/power_law.hpp>
-#include <halmd/numeric/host/pow.hpp>
+#include <halmd/numeric/pow.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
 using namespace boost::assign;
 using namespace boost::numeric::ublas;
-using namespace halmd::numeric::host;
 
 namespace halmd
 {
@@ -126,7 +125,7 @@ power_law<dimension, float_type>::power_law(modules::factory& factory, po::optio
  * Compute power-law forces
  *
  * call index-dependent template implementations
- * for efficiency of pow() function
+ * for efficiency of fixed_pow() function
  */
 template <int dimension, typename float_type>
 void power_law<dimension, float_type>::compute()
@@ -180,7 +179,7 @@ void power_law<dimension, float_type>::compute_impl()
             // choose arbitrary index_ if template parameter index = 0
             float_type rni;
             if (index > 0) {
-                rni = pow<index>(sigma_(a, b) / std::sqrt(rr));
+                rni = fixed_pow<index>(sigma_(a, b) / std::sqrt(rr));
             }
             else {
                 rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);

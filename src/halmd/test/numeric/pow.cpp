@@ -24,7 +24,7 @@
 #include <cmath>
 #include <limits>
 
-#include <halmd/numeric/host/pow.hpp>
+#include <halmd/numeric/pow.hpp>
 #include <halmd/util/timer.hpp>
 
 const double eps = std::numeric_limits<double>::epsilon();
@@ -32,21 +32,21 @@ const double eps = std::numeric_limits<double>::epsilon();
 using namespace halmd;
 
 //
-// test and benchmark numeric::host::pow() function
+// test and benchmark fixed_pow() function
 //
 
 BOOST_AUTO_TEST_CASE( correctness )
 {
-    BOOST_CHECK_EQUAL(std::pow(2., 0), numeric::host::pow<0>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 1), numeric::host::pow<1>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 2), numeric::host::pow<2>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 6), numeric::host::pow<6>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 12), numeric::host::pow<12>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 15), numeric::host::pow<15>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 24), numeric::host::pow<24>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 0), fixed_pow<0>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 1), fixed_pow<1>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 2), fixed_pow<2>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 6), fixed_pow<6>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 12), fixed_pow<12>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 15), fixed_pow<15>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 24), fixed_pow<24>(2));
 
-    BOOST_CHECK_CLOSE_FRACTION(numeric::host::pow<2>(std::sqrt(5)), 5, eps);
-    BOOST_CHECK_CLOSE_FRACTION(numeric::host::pow<12>(1.3), std::pow(1.3, 12), eps);
+    BOOST_CHECK_CLOSE_FRACTION(fixed_pow<2>(std::sqrt(5)), 5, eps);
+    BOOST_CHECK_CLOSE_FRACTION(fixed_pow<12>(1.3), std::pow(1.3, 12), eps);
 }
 
 BOOST_AUTO_TEST_CASE( performance )
@@ -59,10 +59,10 @@ BOOST_AUTO_TEST_CASE( performance )
     timer[0].record();
     double a = 0;
     for (n=0; n < 10000000; n++) {
-        a += numeric::host::pow<index>((double)n);
+        a += fixed_pow<index>((double)n);
     }
     timer[1].record();
-    BOOST_TEST_MESSAGE("  numeric::host::pow: " << 1e9 * (timer[1] - timer[0]) / n);
+    BOOST_TEST_MESSAGE("  fixed_pow: " << 1e9 * (timer[1] - timer[0]) / n);
 
     timer[2].record();
     double b = 0;
@@ -82,6 +82,5 @@ BOOST_AUTO_TEST_CASE( performance )
 
     BOOST_CHECK_CLOSE_FRACTION(a, b, 2 * eps);
     BOOST_CHECK_MESSAGE(timer[1] - timer[0] < .9 * (timer[3] - timer[2]),
-                        "improvement of numeric::host::pow is less than 20% in speed");
+                        "improvement of fixed_pow is less than 20% in speed");
 }
-
