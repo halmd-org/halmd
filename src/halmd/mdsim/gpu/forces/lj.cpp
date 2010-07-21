@@ -152,17 +152,17 @@ void lj<dimension, float_type>::compute()
 #ifdef USE_FORCE_DSFUN
 #endif /* HALMD_VARIANT_FORCE_DSFUN */
 
-    // temporay workaround until thermodynamics module is available
-    cuda::vector<float> g_en_pot(particle->dim.threads());
-    cuda::vector<typename _Base::particle_type::gpu_vector_type>
-            g_virial(particle->dim.threads());
-
     cuda::copy(particle->neighbour_size, get_lj_kernel<dimension>().neighbour_size);
     cuda::copy(particle->neighbour_stride, get_lj_kernel<dimension>().neighbour_stride);
     get_lj_kernel<dimension>().r.bind(particle->g_r);
     get_lj_kernel<dimension>().ljparam.bind(g_ljparam_);
     cuda::configure(particle->dim.grid, particle->dim.block);
-    get_lj_kernel<dimension>().compute(particle->g_f, particle->g_neighbour, g_en_pot, g_virial);
+    get_lj_kernel<dimension>().compute(
+        particle->g_f
+      , particle->g_neighbour
+      , thermodynamics->g_en_pot_
+      , thermodynamics->g_virial_
+    );
     cuda::thread::synchronize();
 //                   thermodynamics->en_pot, thermodynamics->virial);
 

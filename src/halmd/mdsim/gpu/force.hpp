@@ -28,7 +28,7 @@
 // #include <halmd/mdsim/gpu/forces/smooth.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
-// #include <halmd/mdsim/gpu/thermodynamics.hpp>
+#include <halmd/mdsim/gpu/thermodynamics.hpp>
 #include <halmd/numeric/host/blas/vector.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -54,12 +54,12 @@ public:
 
     typedef gpu::particle<dimension, float> particle_type;
     typedef gpu::box<dimension> box_type;
-//     typedef host::thermodynamics<dimension> thermodynamics_type;
+    typedef gpu::thermodynamics<dimension, float_type> thermodynamics_type;
 //     typedef host::forces::smooth<dimension, float_type> smooth_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
-//     shared_ptr<thermodynamics_type> thermodynamics;
+    shared_ptr<thermodynamics_type> thermodynamics;
 //     shared_ptr<smooth_type> smooth;
 
     force(modules::factory& factory, po::options const& vm);

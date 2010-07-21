@@ -46,7 +46,7 @@ public:
     using _Base::box;
     using _Base::particle;
 //     using _Base::smooth;
-//     using _Base::thermodynamics;
+    using _Base::thermodynamics;
 
     lj(modules::factory& factory, po::options const& vm);
     virtual ~lj() {}

@@ -34,7 +34,7 @@ void force<dimension, float_type>::depends()
 {
     modules::depends<_Self, particle_type>::required();
     modules::depends<_Self, box_type>::required();
-//     modules::depends<_Self, thermodynamics_type>::required();
+    modules::depends<_Self, thermodynamics_type>::required();
 //     modules::depends<_Self, smooth_type>::optional();
 }
 
@@ -47,7 +47,7 @@ force<dimension, float_type>::force(modules::factory& factory, po::options const
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
   , box(modules::fetch<box_type>(factory, vm))
-//   , thermodynamics(modules::fetch<thermodynamics_type>(factory, vm))
+  , thermodynamics(modules::fetch<thermodynamics_type>(factory, vm))
 //   , smooth(modules::fetch<smooth_type>(factory, vm))
 {
 }
