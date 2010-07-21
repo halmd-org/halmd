@@ -30,6 +30,9 @@ add_executable(test_radix_sort
 target_link_libraries(test_radix_sort
   halmd_algorithm_gpu
   halmd_random_gpu
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
   ${CUDA_LIBRARIES}
+)
+add_test(algorithm_gpu_radix_sort
+  test_radix_sort
 )
