@@ -6,7 +6,7 @@ target_link_libraries(test_gpu_reduce
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
   ${CUDA_LIBRARIES}
 )
-add_test(gpu_reduce
+add_test(algorithm_gpu_reduce
   test_gpu_reduce
 )
 
@@ -15,14 +15,12 @@ add_executable(test_scan
   scan.cpp
 )
 target_link_libraries(test_scan
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
   ${CUDA_LIBRARIES}
 )
-foreach(count 10000000 1000000 100000 10000 1024 1000 512 100 10 2)
-  add_test(test_scan_${count}
-    test_scan -N${count}
-  )
-endforeach(count)
+add_test(algorithm_gpu_scan
+  test_scan
+)
 
 add_executable(test_radix_sort
   radix_sort.cpp
