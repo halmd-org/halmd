@@ -4,7 +4,7 @@ add_executable(test_accumulator
 target_link_libraries(test_accumulator
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
-add_test(accumulator
+add_test(numeric_accumulator
   test_accumulator
 )
 
@@ -14,7 +14,7 @@ add_executable(test_pow
 target_link_libraries(test_pow
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
   )
-add_test(test_pow
+add_test(numeric_pow
   test_pow
 )
 

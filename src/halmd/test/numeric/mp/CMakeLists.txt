@@ -7,7 +7,7 @@ if(WITH_CUDA)
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
     ${CUDA_LIBRARIES}
   )
-  add_test(dsfun
+  add_test(numeric_mp_dsfun
     test_dsfun
   )
 endif(WITH_CUDA)
