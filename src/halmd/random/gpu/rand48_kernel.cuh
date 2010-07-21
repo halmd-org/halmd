@@ -27,14 +27,12 @@
 #ifndef HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 #define HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 
-#include <halmd/numeric/gpu/uint48.cuh>
+#include <halmd/numeric/mp/uint48.hpp>
 
 namespace halmd
 {
 namespace random { namespace gpu
 {
-
-using numeric::gpu::uint48;
 
 struct rand48_rng
 {

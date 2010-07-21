@@ -28,8 +28,6 @@
 #include <halmd/random/gpu/rand48_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace halmd::numeric::gpu;
-
 namespace halmd
 {
 namespace random { namespace gpu
@@ -114,6 +112,6 @@ rand48_wrapper const rand48_wrapper::kernel = {
 
 }} // namespace random::gpu
 
-template class algorithm::gpu::scan_wrapper<numeric::gpu::uint48>;
+template class algorithm::gpu::scan_wrapper<uint48>;
 
 } // namespace halmd

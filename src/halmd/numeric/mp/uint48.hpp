@@ -17,18 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef HALMD_NUMERIC_MP_UINT48_HPP
+#define HALMD_NUMERIC_MP_UINT48_HPP
+
+#include <halmd/config.hpp>
+
 //
 // The multiply-add operation is based on the rand48 generator of the
 // GNU Scientific Library. The file rng/rand48.c was written by James
 // Theiler and Brian Gough and is licensed under the GPL v3 or later.
 //
 
-#ifndef HALMD_NUMERIC_GPU_UINT48_CUH
-#define HALMD_NUMERIC_GPU_UINT48_CUH
-
 namespace halmd
-{
-namespace numeric { namespace gpu
 {
 
 /**
@@ -43,7 +43,7 @@ namespace numeric { namespace gpu
  */
 struct uint48 : uint3 {};
 
-inline __device__ __host__ uint48 make_uint48(uint x, uint y, uint z)
+inline HALMD_GPU_ENABLED uint48 make_uint48(uint x, uint y, uint z)
 {
     uint48 u; u.x = x; u.y = y; u.z = z; return u;
 }
@@ -52,7 +52,7 @@ inline __device__ __host__ uint48 make_uint48(uint x, uint y, uint z)
  * combined multiply-add operation for 48 bit integers
  */
 template <typename T>
-__device__ __host__ T muladd(uint48 const& a, T const& b, uint48 const& c)
+HALMD_GPU_ENABLED T muladd(uint48 const& a, T const& b, uint48 const& c)
 {
     T r;
 
@@ -94,7 +94,7 @@ __device__ __host__ T muladd(uint48 const& a, T const& b, uint48 const& c)
 /**
  * add-operation for 48 bit integers
  */
-inline __device__ __host__ uint48& operator+=(uint48& a, uint48 const& b)
+inline HALMD_GPU_ENABLED uint48& operator+=(uint48& a, uint48 const& b)
 {
     unsigned int d = a.x + b.x;
     a.x = (d & 0xFFFF);
@@ -110,14 +110,12 @@ inline __device__ __host__ uint48& operator+=(uint48& a, uint48 const& b)
 /**
  * add-operation for 48 bit integers
  */
-inline __device__ __host__ uint48 operator+(uint48 const& a, uint48 b)
+inline HALMD_GPU_ENABLED uint48 operator+(uint48 const& a, uint48 b)
 {
     b += a;
     return b;
 }
 
-}} // namespace numeric::gpu
-
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_GPU_UINT48_CUH */
+#endif /* ! HALMD_NUMERIC_MP_UINT48_HPP */
