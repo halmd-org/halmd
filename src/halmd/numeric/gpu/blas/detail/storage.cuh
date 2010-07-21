@@ -24,7 +24,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h>
 
-#include <halmd/numeric/gpu/blas/detail/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd { namespace numeric { namespace gpu { namespace blas
 {

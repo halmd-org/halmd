@@ -1,0 +1,13 @@
+if(WITH_CUDA)
+  add_executable(test_dsfun
+    dsfun.cpp
+    dsfun_kernel.cu
+  )
+  target_link_libraries(test_dsfun
+    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+    ${CUDA_LIBRARIES}
+  )
+  add_test(dsfun
+    test_dsfun
+  )
+endif(WITH_CUDA)

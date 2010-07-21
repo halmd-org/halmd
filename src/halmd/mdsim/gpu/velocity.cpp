@@ -20,7 +20,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
 using namespace boost;
 using namespace std;
@@ -76,9 +76,6 @@ void velocity<dimension, float_type>::rescale(double factor)
       , factor
     );
 }
-
-// for conversion to double-single precision vector
-using numeric::gpu::blas::dsfloat;
 
 /**
  * Shift all velocities by 'delta'

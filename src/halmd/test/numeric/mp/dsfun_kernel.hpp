@@ -1,5 +1,4 @@
-/* DSFUN division test
- *
+/*
  * Copyright © 2009  Peter Colberg
  *
  * This file is part of HALMD.
@@ -18,14 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TEST_DSFUN_DIV_HPP
-#define TEST_DSFUN_DIV_HPP
+#ifndef HALMD_TEST_NUMERIC_MP_DSFUN_HPP
+#define HALMD_TEST_NUMERIC_MP_DSFUN_HPP
 
 #include <cuda_wrapper.hpp>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
-using halmd::numeric::gpu::blas::dsfloat;
+namespace halmd
+{
+namespace test
+{
 
+extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_add;
+extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_sub;
+extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_mul;
+extern cuda::function<void (float const*, float const*, dsfloat*)> kernel_mulss;
 extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_div;
+extern cuda::function<void (dsfloat const*, dsfloat*)> kernel_sqrt;
 
-#endif /* ! TEST_DSFUN_DIV_HPP */
+} // namespace test
+
+} // namespace halmd
+
+#endif /* ! HALMD_TEST_NUMERIC_MP_DSFUN_HPP */

@@ -25,12 +25,12 @@
 #include <boost/iterator/counting_iterator.hpp>
 
 #include <halmd/algorithm/gpu/reduce.hpp>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 
 using namespace boost;
+using namespace halmd;
 using namespace halmd::algorithm::gpu;
-using namespace halmd::numeric::gpu::blas;
 
 /**
  * Test »32 bit integer arithmetic using double-single floating point (~44 bit).

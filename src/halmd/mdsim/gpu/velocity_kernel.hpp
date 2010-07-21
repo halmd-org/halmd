@@ -23,14 +23,13 @@
 #include <boost/mpl/if.hpp>
 
 #include <cuda_wrapper.hpp>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd
 {
 namespace mdsim { namespace gpu
 {
 
-using numeric::gpu::blas::dsfloat;
 using numeric::gpu::blas::vector;
 
 template <int dimension>

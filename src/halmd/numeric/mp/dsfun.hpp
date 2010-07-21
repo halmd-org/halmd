@@ -17,15 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_GPU_BLAS_DETAIL_DSFUN_CUH
-#define HALMD_NUMERIC_GPU_BLAS_DETAIL_DSFUN_CUH
+#ifndef HALMD_NUMERIC_MP_DSFUN_CUH
+#define HALMD_NUMERIC_MP_DSFUN_CUH
 
 #ifdef __CUDACC__
 # include <cuda_runtime.h>
+#else
+# include <cmath>
 #endif
 
-namespace halmd { namespace numeric { namespace gpu { namespace blas { namespace detail
-{
+#include <halmd/config.hpp>
 
 //
 // These routines are based on DSFUN, a double-single floating point
@@ -41,6 +42,11 @@ namespace halmd { namespace numeric { namespace gpu { namespace blas { namespace
 // Besides the use of __fmul_rn to avoid fused multiply-add,
 // porting further DSFUN routines to CUDA was straight-forward.
 //
+
+namespace halmd
+{
+namespace detail { namespace numeric { namespace mp
+{
 
 //
 // The DSFUN Fortran 90 package is accompanied by the following license.
@@ -114,7 +120,7 @@ namespace halmd { namespace numeric { namespace gpu { namespace blas { namespace
 /**
  * This function sets the DS number A equal to the double precision floating point number B.
  */
-__device__ __host__ inline void dsdeq(float& a0, float& a1, double b)
+inline HALMD_GPU_ENABLED void dsdeq(float& a0, float& a1, double b)
 {
     a0 = (float)b;
     a1 = (float)(b - a0);
@@ -123,18 +129,16 @@ __device__ __host__ inline void dsdeq(float& a0, float& a1, double b)
 /**
  * This function sets the DS number A equal to the single precision floating point number B.
  */
-__device__ __host__ inline void dsfeq(float& a0, float& a1, float b)
+inline HALMD_GPU_ENABLED void dsfeq(float& a0, float& a1, float b)
 {
     a0 = b;
     a1 = 0.0f;
 }
 
-#ifdef __CUDACC__
-
 /**
  * This function computes c = a + b.
  */
-__device__ inline void dsadd(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
+inline HALMD_GPU_ENABLED void dsadd(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
 {
     // Compute dsa + dsb using Knuth's trick.
     float t1 = a0 + b0;
@@ -149,7 +153,7 @@ __device__ inline void dsadd(float& c0, float& c1, float const a0, float const a
 /**
  * This function computes c = a - b.
  */
-__device__ inline void dssub(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
+inline HALMD_GPU_ENABLED void dssub(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
 {
     // Compute dsa - dsb using Knuth's trick.
     float t1 = a0 - b0;
@@ -170,7 +174,7 @@ __device__ inline void dssub(float& c0, float& c1, float const a0, float const a
  * Based on: Guillaume Da Graça, David Defour. Implementation of Float-Float
  * Operators on Graphics Hardware. RNC'7 pp. 23-32, 2006.
  */
-__device__ inline void dsmul(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
+inline HALMD_GPU_ENABLED void dsmul(float& c0, float& c1, float const a0, float const a1, float const b0, float const b1)
 {
     // This splits dsa(1) and dsb(1) into high-order and low-order words.
     float cona = a0 * 8193.0f;
@@ -181,7 +185,11 @@ __device__ inline void dsmul(float& c0, float& c1, float const a0, float const a
     float sb2 = b0 - sb1;
 
     // Multiply a0 * b0 using Dekker's method.
+#ifdef __CUDACC__
     float c11 = __fmul_rn(a0, b0);
+#else
+    float c11 = a0 * b0;
+#endif
     float c21 = (((sa1 * sb1 - c11) + sa1 * sb2) + sa2 * sb1) + sa2 * sb2;
 
     // Compute a0 * b1 + a1 * b0 (only high-order word is needed).
@@ -200,7 +208,7 @@ __device__ inline void dsmul(float& c0, float& c1, float const a0, float const a
 /**
  * This divides the DS number DSA by the DS number DSB to yield the DS quotient DSC.
  */
-__device__ inline void dsdiv(float& dsc0, float& dsc1, float const dsa0, float const dsa1, float const dsb0, float const dsb1)
+inline HALMD_GPU_ENABLED void dsdiv(float& dsc0, float& dsc1, float const dsa0, float const dsa1, float const dsb0, float const dsb1)
 {
     // Compute a DP approximation to the quotient.
 
@@ -255,7 +263,7 @@ __device__ inline void dsdiv(float& dsc0, float& dsc1, float const dsa0, float c
 /**
  * This subroutine computes dsc = da x db.
  */
-__device__ inline void dsmulss(float& dsc0, float& dsc1, float const da, float const db)
+inline HALMD_GPU_ENABLED void dsmulss(float& dsc0, float& dsc1, float const da, float const db)
 {
     float const split = 8193;
 
@@ -270,14 +278,18 @@ __device__ inline void dsmulss(float& dsc0, float& dsc1, float const da, float c
 
     // Multiply da * db using Dekker's method.
 
+#ifdef __CUDACC__
     dsc0 = __fmul_rn(da, db);
+#else
+    dsc0 = da * db;
+#endif
     dsc1 = (((a1 * b1 - dsc0) + a1 * b2) + a2 * b1) + a2 * b2;
 }
 
 /**
  * This computes the square root of the DS number A and returns the DS result in B.
  */
-__device__ inline void dssqrt(float& dsb0, float& dsb1, float const dsa0, float const dsa1)
+inline HALMD_GPU_ENABLED void dssqrt(float& dsb0, float& dsb1, float const dsa0, float const dsa1)
 {
     // This subroutine employs the following formula (due to Alan Karp):
     //
@@ -306,8 +318,8 @@ __device__ inline void dssqrt(float& dsb0, float& dsb1, float const dsa0, float 
     dsadd(dsb0, dsb1, s00, s01, s10, s11);
 }
 
-#endif /* __CUDACC__ */
+}}} // namespace detail::numeric::mp
 
-}}}}} // namespace halmd::numeric::gpu::blas::detail
+} // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_GPU_BLAS_DETAIL_DSFUN_CUH */
+#endif /* ! HALMD_NUMERIC_MP_DSFUN_CUH */

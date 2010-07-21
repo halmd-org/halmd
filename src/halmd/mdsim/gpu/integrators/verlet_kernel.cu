@@ -22,7 +22,7 @@
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>

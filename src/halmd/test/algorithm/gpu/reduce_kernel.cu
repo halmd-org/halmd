@@ -18,11 +18,11 @@
  */
 
 #include <halmd/algorithm/gpu/reduce_kernel.cuh>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 
+using namespace halmd;
 using namespace halmd::algorithm::gpu;
-using namespace halmd::numeric::gpu::blas;
 
 template class reduce_wrapper<
     sum_        // reduce_transform

@@ -19,7 +19,7 @@
 
 #include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/mdsim/gpu/thermodynamics.hpp>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 #include <halmd/utility/module.hpp>
 

@@ -17,33 +17,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_GPU_BLAS_DETAIL_DSFLOAT_CUH
-#define HALMD_NUMERIC_GPU_BLAS_DETAIL_DSFLOAT_CUH
+#ifndef HALMD_NUMERIC_MP_DSFLOAT_CUH
+#define HALMD_NUMERIC_MP_DSFLOAT_CUH
 
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
-#include <halmd/numeric/gpu/blas/detail/dsfun.cuh>
+#include <halmd/numeric/mp/dsfun.hpp>
 #ifdef __CUDACC__
 # include <halmd/algorithm/gpu/tuple.cuh>
+#else
+# include <boost/tuple/tuple.hpp>
 #endif
 
 namespace halmd
 {
-namespace numeric { namespace gpu { namespace blas
-{
-namespace detail
+namespace detail { namespace numeric { namespace mp
 {
 
 #ifdef __CUDACC__
-
 using algorithm::gpu::tuple;
 using algorithm::gpu::make_tuple;
 using algorithm::gpu::tie;
-
-#endif /* __CUDACC__ */
+#else
+using boost::tuple;
+using boost::make_tuple;
+using boost::tie;
+#endif
 
 /**
  * Double-single floating point value
@@ -52,29 +54,29 @@ struct dsfloat
 {
     float hi, lo;
 
-    __device__ __host__ dsfloat()
+    HALMD_GPU_ENABLED dsfloat()
     {}
 
-    __device__ __host__ dsfloat(float a0, float a1)
+    HALMD_GPU_ENABLED dsfloat(float a0, float a1)
       : hi(a0), lo(a1)
     {}
 
     template <typename T>
-    __device__ __host__ dsfloat(T a0,
+    HALMD_GPU_ENABLED dsfloat(T a0,
       typename boost::enable_if<boost::is_same<T, float> >::type* dummy = 0)
     {
         dsfeq(hi, lo, a0);
     }
 
     template <typename T>
-    __device__ __host__ dsfloat(T a0,
+    HALMD_GPU_ENABLED dsfloat(T a0,
       typename boost::enable_if<boost::is_integral<T> >::type* dummy = 0)
     {
         dsfeq(hi, lo, a0);
     }
 
     template <typename T>
-    __device__ __host__ dsfloat(T a,
+    HALMD_GPU_ENABLED dsfloat(T a,
       typename boost::enable_if<boost::is_same<T, double> >::type* dummy = 0)
     {
         dsdeq(hi, lo, a);
@@ -83,7 +85,7 @@ struct dsfloat
     /**
      * Returns "high" single precision floating-point value
      */
-    __device__ __host__ operator float() const
+    HALMD_GPU_ENABLED operator float() const
     {
         return hi;
     }
@@ -91,18 +93,16 @@ struct dsfloat
     /**
      * Returns double precision value if supported natively
      */
-    __device__ __host__ operator double() const
+    HALMD_GPU_ENABLED operator double() const
     {
         return static_cast<double>(hi) + lo;
     }
 };
 
-#ifdef __CUDACC__
-
 /**
  * Returns "high" and "low" single precision floating-point tuple
  */
-__device__ inline tuple<float, float> split(dsfloat const& v)
+inline HALMD_GPU_ENABLED tuple<float, float> split(dsfloat const& v)
 {
     return make_tuple(v.hi, v.lo);
 }
@@ -110,7 +110,7 @@ __device__ inline tuple<float, float> split(dsfloat const& v)
 /**
  * Addition by assignment
  */
-__device__ inline dsfloat& operator+=(dsfloat& v, dsfloat const& w)
+inline HALMD_GPU_ENABLED dsfloat& operator+=(dsfloat& v, dsfloat const& w)
 {
     dsadd(v.hi, v.lo, v.hi, v.lo, w.hi, w.lo);
     return v;
@@ -119,7 +119,7 @@ __device__ inline dsfloat& operator+=(dsfloat& v, dsfloat const& w)
 /**
  * Subtraction by assignment
  */
-__device__ inline dsfloat& operator-=(dsfloat& v, dsfloat const& w)
+inline HALMD_GPU_ENABLED dsfloat& operator-=(dsfloat& v, dsfloat const& w)
 {
     dssub(v.hi, v.lo, v.hi, v.lo, w.hi, w.lo);
     return v;
@@ -128,7 +128,7 @@ __device__ inline dsfloat& operator-=(dsfloat& v, dsfloat const& w)
 /**
  * Multiplication by assignment
  */
-__device__ inline dsfloat& operator*=(dsfloat& v, dsfloat const& w)
+inline HALMD_GPU_ENABLED dsfloat& operator*=(dsfloat& v, dsfloat const& w)
 {
     dsmul(v.hi, v.lo, v.hi, v.lo, w.hi, w.lo);
     return v;
@@ -137,7 +137,7 @@ __device__ inline dsfloat& operator*=(dsfloat& v, dsfloat const& w)
 /**
  * Division by assignment
  */
-__device__ inline dsfloat& operator/=(dsfloat& v, dsfloat const& w)
+inline HALMD_GPU_ENABLED dsfloat& operator/=(dsfloat& v, dsfloat const& w)
 {
     dsdiv(v.hi, v.lo, v.hi, v.lo, w.hi, w.lo);
     return v;
@@ -146,21 +146,21 @@ __device__ inline dsfloat& operator/=(dsfloat& v, dsfloat const& w)
 /**
  * Addition
  */
-__device__ inline dsfloat operator+(dsfloat v, dsfloat const& w)
+inline HALMD_GPU_ENABLED dsfloat operator+(dsfloat v, dsfloat const& w)
 {
     v += w;
     return v;
 }
 
 template <typename T>
-__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
 operator+(T const& v, dsfloat const& w)
 {
     return static_cast<dsfloat>(v) + w;
 }
 
 template <typename T>
-__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
 operator+(dsfloat const& v, T const& w)
 {
     return v + static_cast<dsfloat>(w);
@@ -169,21 +169,21 @@ operator+(dsfloat const& v, T const& w)
 /**
  * Subtraction
  */
-__device__ inline dsfloat operator-(dsfloat v, dsfloat const& w)
+inline HALMD_GPU_ENABLED dsfloat operator-(dsfloat v, dsfloat const& w)
 {
     v -= w;
     return v;
 }
 
 template <typename T>
-__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
 operator-(T const& v, dsfloat const& w)
 {
     return static_cast<dsfloat>(v) - w;
 }
 
 template <typename T>
-__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
 operator-(dsfloat const& v, T const& w)
 {
     return v - static_cast<dsfloat>(w);
@@ -192,27 +192,27 @@ operator-(dsfloat const& v, T const& w)
 /**
  * Multiplication
  */
-__device__ inline dsfloat operator*(dsfloat v, dsfloat const& w)
+inline HALMD_GPU_ENABLED dsfloat operator*(dsfloat v, dsfloat const& w)
 {
     v *= w;
     return v;
 }
 
 template <typename T>
-__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
 operator*(T const& v, dsfloat const& w)
 {
     return static_cast<dsfloat>(v) * w;
 }
 
 template <typename T>
-__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
 operator*(dsfloat const& v, T const& w)
 {
     return v * static_cast<dsfloat>(w);
 }
 
-__device__ inline dsfloat operator/(dsfloat v, dsfloat const& w)
+inline HALMD_GPU_ENABLED dsfloat operator/(dsfloat v, dsfloat const& w)
 {
     v /= w;
     return v;
@@ -222,14 +222,14 @@ __device__ inline dsfloat operator/(dsfloat v, dsfloat const& w)
  * Division
  */
 template <typename T>
-__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
 operator/(T const& v, dsfloat const& w)
 {
     return static_cast<dsfloat>(v) / w;
 }
 
 template <typename T>
-__device__ inline typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
+inline HALMD_GPU_ENABLED typename boost::enable_if<boost::is_arithmetic<T>, dsfloat>::type
 operator/(dsfloat const& v, T const& w)
 {
     return v / static_cast<dsfloat>(w);
@@ -238,19 +238,18 @@ operator/(dsfloat const& v, T const& w)
 /**
  * Square root function
  */
-__device__ inline dsfloat sqrt(dsfloat v)
+inline HALMD_GPU_ENABLED dsfloat sqrt(dsfloat v)
 {
     dsfloat w;
     dssqrt(w.hi, w.lo, v.hi, v.lo);
     return w;
 }
 
-#endif /* __CUDACC__ */
+}}} // namespace detail::numeric::mp
 
-} // namespace detail
-
-}}} // namespace numeric::gpu::blas
+// import into top-level namespace
+using detail::numeric::mp::dsfloat;
 
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_GPU_BLAS_DETAIL_DSFLOAT_CUH */
+#endif /* ! HALMD_NUMERIC_MP_DSFLOAT_CUH */

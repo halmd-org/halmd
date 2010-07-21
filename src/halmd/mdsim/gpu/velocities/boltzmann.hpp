@@ -25,7 +25,7 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -33,8 +33,6 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace velocities
 {
-
-using numeric::gpu::blas::dsfloat;
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class boltzmann

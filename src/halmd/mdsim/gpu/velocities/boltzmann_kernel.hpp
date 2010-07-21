@@ -23,7 +23,7 @@
 #include <boost/mpl/if.hpp>
 
 #include <cuda_wrapper.hpp>
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
 //
 // Maxwell-Boltzmann distribution at accurate temperature
@@ -33,8 +33,6 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace velocities
 {
-
-using numeric::gpu::blas::dsfloat;
 
 template <
     int dimension

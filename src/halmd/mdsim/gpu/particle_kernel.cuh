@@ -31,7 +31,7 @@
 #else
 # include <boost/tuple/tuple.hpp>
 #endif
-#include <halmd/numeric/gpu/blas/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/numeric/gpu/blas/vector.cuh>
 
 namespace halmd
@@ -47,7 +47,6 @@ enum { PLACEHOLDER = -1U };
 using algorithm::gpu::tuple;
 using algorithm::gpu::make_tuple;
 using algorithm::gpu::tie;
-using numeric::gpu::blas::dsfloat;
 
 #else /* ! __CUDACC__ */
 

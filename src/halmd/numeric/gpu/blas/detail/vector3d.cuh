@@ -26,7 +26,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h>
 
-#include <halmd/numeric/gpu/blas/detail/dsfloat.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/numeric/gpu/blas/detail/storage.cuh>
 
 namespace halmd
@@ -38,6 +38,16 @@ namespace detail
 
 template <typename T, size_t N>
 struct vector;
+
+#ifdef __CUDACC__
+using algorithm::gpu::tuple;
+using algorithm::gpu::make_tuple;
+using algorithm::gpu::tie;
+#else
+using boost::tuple;
+using boost::make_tuple;
+using boost::tie;
+#endif
 
 /**
  * Three-dimensional vector of arbitrary value type
