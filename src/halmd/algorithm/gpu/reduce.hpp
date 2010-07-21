@@ -24,9 +24,8 @@
 #include <numeric>
 #include <stdexcept>
 
-#include <boost/lambda/bind.hpp>
-#include <boost/lambda/construct.hpp>
-#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/lambda.hpp> // before other Boost.Lambda headers
+#include <boost/lambda/casts.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <cuda_wrapper.hpp>
 #include <halmd/algorithm/gpu/reduce_kernel.hpp>
@@ -117,11 +116,11 @@ struct reduce_blocks<sum_, host_output_type>
         return std::accumulate(
             boost::make_transform_iterator(
                 h_block.begin()
-              , ret<host_output_type>(bind(constructor<host_output_type>(), _1)) // type conversion
+              , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
             )
           , boost::make_transform_iterator(
                 h_block.end()
-              , ret<host_output_type>(bind(constructor<host_output_type>(), _1)) // type conversion
+              , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
             )
           , host_output_type() // value-initialized
         );
@@ -138,11 +137,11 @@ struct reduce_blocks<max_, host_output_type>
         return *std::max_element(
             boost::make_transform_iterator(
                 h_block.begin()
-              , ret<host_output_type>(bind(constructor<host_output_type>(), _1)) // type conversion
+              , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
             )
           , boost::make_transform_iterator(
                 h_block.end()
-              , ret<host_output_type>(bind(constructor<host_output_type>(), _1)) // type conversion
+              , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
             )
         );
     }
