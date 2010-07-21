@@ -30,7 +30,7 @@
 #include <string>
 #include <utility>
 
-#include <halmd/numeric/host/accumulator.hpp>
+#include <halmd/numeric/accumulator.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/mdsim/velocity.hpp>
@@ -200,7 +200,7 @@ void thermodynamics(po::options vm)
     }
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), steps * eps);
 
-    boltzmann->rescale(sqrt(temp/temp_.mean()));
+    boltzmann->rescale(sqrt(temp / mean(temp_)));
     double en_tot = thermodynamics->en_tot();
 
     // microcanonical simulation run
@@ -219,26 +219,26 @@ void thermodynamics(po::options vm)
     BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(),
                                steps * 1e-10 / fabs(en_tot));
 
-    BOOST_CHECK_CLOSE_FRACTION(temp, temp_.mean(), 5e-3);
+    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 5e-3);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
-    double Cv = heat_capacity(temp_.mean(), temp_.var(), vm["particles"].as<unsigned>());
+    double Cv = heat_capacity(mean(temp_), variance(temp_), vm["particles"].as<unsigned>());
 
     // corrections for trunctated LJ potential, see e.g. Johnsen et al. (1993)
     double press_corr = 32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3);
     double en_corr = 8./9 * M_PI * density * (pow(rc, -6) - 3) * pow(rc, -3);
 
     BOOST_TEST_MESSAGE("Density: " << density);
-    BOOST_TEST_MESSAGE("Temperature: " << temp_.mean() << " ± " << temp_.err());
-    BOOST_TEST_MESSAGE("Pressure: " << press.mean() << " ± " << press.err());
-    BOOST_TEST_MESSAGE("Pressure (corrected): " << press.mean() + press_corr);
-    BOOST_TEST_MESSAGE("Potential energy: " << en_pot.mean() << " ± " << en_pot.err());
-    BOOST_TEST_MESSAGE("Potential energy (corrected): " << en_pot.mean() + en_corr);
-    BOOST_TEST_MESSAGE("β P / ρ = " << press.mean() / temp_.mean() / density);
-    BOOST_TEST_MESSAGE("β U / N = " << en_pot.mean() / temp_.mean());
+    BOOST_TEST_MESSAGE("Temperature: " << mean(temp_) << " ± " << error_of_mean(temp_));
+    BOOST_TEST_MESSAGE("Pressure: " << mean(press) << " ± " << error_of_mean(press));
+    BOOST_TEST_MESSAGE("Pressure (corrected): " << mean(press) + press_corr);
+    BOOST_TEST_MESSAGE("Potential energy: " << mean(en_pot) << " ± " << error_of_mean(en_pot));
+    BOOST_TEST_MESSAGE("Potential energy (corrected): " << mean(en_pot) + en_corr);
+    BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
+    BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
     BOOST_TEST_MESSAGE("Heat capacity = " << Cv);
-    BOOST_CHECK_CLOSE_FRACTION(press.mean() + press_corr, 0.70, 0.01);
-    BOOST_CHECK_CLOSE_FRACTION(en_pot.mean() + en_corr, -2.54, 0.01);
+    BOOST_CHECK_CLOSE_FRACTION(mean(press) + press_corr, 0.70, 0.01);
+    BOOST_CHECK_CLOSE_FRACTION(mean(en_pot) + en_corr, -2.54, 0.01);
 }
 
 void set_default_options(halmd::po::options& vm)

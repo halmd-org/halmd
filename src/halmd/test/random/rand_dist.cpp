@@ -28,7 +28,7 @@
 #include <stdexcept>
 
 #include <cuda_wrapper.hpp>
-#include <halmd/numeric/host/accumulator.hpp>
+#include <halmd/numeric/accumulator.hpp>
 #include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 
@@ -55,26 +55,7 @@ struct set_cuda_device {
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
-void test_accum()
-{
-    halmd::accumulator<double> a;
-
-    for (unsigned i=0; i <= 1; i++) {
-        for (unsigned j=0; j < 10; j++) {
-            a += j;
-        }
-
-        BOOST_CHECK_EQUAL(a.count(), 10u);
-        BOOST_CHECK_CLOSE_FRACTION(a.mean(), 4.5, 1e-14);
-        BOOST_CHECK_CLOSE_FRACTION(a.var(), 8.25, 1e-14);
-        BOOST_CHECK_CLOSE_FRACTION(a.std(), 2.8722813232690143, 1e-14);
-        BOOST_CHECK_CLOSE_FRACTION(a.err(), 0.9574271077563381, 1e-14);
-
-        a.clear();  // check clear() function
-    }
-}
-
-void test_rand48_gpu( unsigned long count )
+void test_rand48_gpu( unsigned long n )
 {
     unsigned seed = time(NULL);
 
@@ -84,31 +65,31 @@ void test_rand48_gpu( unsigned long count )
         rng.seed(seed);
 
         // parallel GPU rand48
-        cuda::vector<float> g_array(count);
+        cuda::vector<float> g_array(n);
         // FIXME rng.uniform(g_array);
         cuda::thread::synchronize();
 
-        cuda::host::vector<float> h_array(count);
+        cuda::host::vector<float> h_array(n);
         cuda::copy(g_array, h_array);
 
         halmd::accumulator<double> a;
-        for (unsigned long i=0; i < count; i++) {
+        for (unsigned long i=0; i < n; i++) {
             a += h_array[i];
          }
 
         // check count, mean, and variance
-        BOOST_CHECK_EQUAL(a.count(), count);
+        BOOST_CHECK_EQUAL(count(a), n);
 
         // mean = 1/2, variance = 1/12, n-th moment is 1/(n+1)
         // use tolerance = 3 sigma, so the test passes with 99% probability
         double val = 0.5;
-        double tol = 3 * a.std() / sqrt(count - 1);
-        BOOST_CHECK_CLOSE_FRACTION(a.mean(), val, tol / val);
+        double tol = 3 * sigma(a) / sqrt(n - 1);
+        BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
         // Var(ΣX^2/N) = E(X^4)/N
         val = 1./12;
-        tol = 1 * sqrt(1. / (count - 1) * (1./5));
-        BOOST_CHECK_CLOSE_FRACTION(a.var(), val, tol / val);
+        tol = 1 * sqrt(1. / (n - 1) * (1./5));
+        BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
         // TODO: Kolmogorov-Smirnov test
         // see Knuth, vol. 2, ch. 3.3.B
@@ -122,7 +103,7 @@ void test_rand48_gpu( unsigned long count )
     }
 }
 
-void test_gsl_rng( unsigned long count )
+void test_gsl_rng( unsigned long n )
 {
     typedef halmd::random::host::gfsr4 RandomNumberGenerator;
 
@@ -135,31 +116,31 @@ void test_gsl_rng( unsigned long count )
 
     // test uniform distribution
     halmd::accumulator<double> a;
-    for (unsigned i=0; i < count; i++) {
+    for (unsigned i=0; i < n; i++) {
         a += uniform_01();
     }
 
     // check count, mean, and variance
-    BOOST_CHECK_EQUAL(a.count(), count);
+    BOOST_CHECK_EQUAL(count(a), n);
 
     // mean = 1/2, variance = 1/12, n-th moment is 1/(n+1)
     // use tolerance = 3 sigma, so the test passes with 99% probability
     double val = 0.5;
-    double tol = 3 * a.std() / sqrt(count - 1);
-    BOOST_CHECK_CLOSE_FRACTION(a.mean(), val, tol / val);
+    double tol = 3 * sigma(a) / sqrt(n - 1);
+    BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
     // Var(ΣX^2/N) = E(X^4)/N
     val = 1./12;
-    tol = 1 * sqrt(1. / (count - 1) * (1./5));
-    BOOST_CHECK_CLOSE_FRACTION(a.var(), val, tol / val);
+    tol = 1 * sqrt(1. / (n - 1) * (1./5));
+    BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
     // test Gaussian distribution
     boost::normal_distribution<double> normal;
     BOOST_CHECK_EQUAL(normal.mean(), 0.0);
     BOOST_CHECK_EQUAL(normal.sigma(), 1.0);
-    a.clear();
+    a = halmd::accumulator<double>();
     halmd::accumulator<double> a3, a4;
-    for (unsigned i=0; i < count; i++) {
+    for (unsigned i=0; i < n; i++) {
         double x = normal(uniform_01);
         a += x;
         double x2 = x * x;
@@ -168,19 +149,19 @@ void test_gsl_rng( unsigned long count )
     }
 
     // mean = 0, std = 1
-    BOOST_CHECK_EQUAL(a.count(), count);
-    tol = 3 * a.std() / sqrt(count - 1);         // tolerance = 3 sigma (passes in 99% of all cases)
-    BOOST_CHECK_SMALL(a.mean(), tol);
+    BOOST_CHECK_EQUAL(count(a), n);
+    tol = 3 * sigma(a) / sqrt(n - 1);         // tolerance = 3 sigma (passes in 99% of all cases)
+    BOOST_CHECK_SMALL(mean(a), tol);
     val = 1;
-    tol = 3 * sqrt( 1. / (count - 1) * 2);       // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
-    BOOST_CHECK_CLOSE_FRACTION(a.var(), val, tol / val);
+    tol = 3 * sqrt( 1. / (n - 1) * 2);       // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
+    BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
     // higher moments
-    tol = 3 * a3.std() / sqrt(count - 1);        // <X³> = 0
-    BOOST_CHECK_SMALL(a3.mean(), tol);
+    tol = 3 * sigma(a3) / sqrt(n - 1);        // <X³> = 0
+    BOOST_CHECK_SMALL(mean(a3), tol);
     val = 3;                                     // <X⁴> = 3
-    tol = 3 * a4.std() / sqrt(count - 1);
-    BOOST_CHECK_CLOSE_FRACTION(a4.mean(), val, tol / val);
+    tol = 3 * sigma(a4) / sqrt(n - 1);
+    BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 }
 
 int init_unit_test_suite()
@@ -196,7 +177,6 @@ int init_unit_test_suite()
     counts.push_back(10000000);
     counts.push_back(100000000);
 
-    master_test_suite().add(BOOST_TEST_CASE(&test_accum));
     master_test_suite().add(
         BOOST_PARAM_TEST_CASE(&test_gsl_rng, counts.begin(), counts.end()-2));
     master_test_suite().add(
