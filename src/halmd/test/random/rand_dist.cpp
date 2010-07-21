@@ -29,6 +29,7 @@
 
 #include <cuda_wrapper.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 
@@ -58,15 +59,18 @@ BOOST_GLOBAL_FIXTURE( set_cuda_device );
 void test_rand48_gpu( unsigned long n )
 {
     unsigned seed = time(NULL);
+    using halmd::random::gpu::rand48;
 
     try {
         // seed GPU random number generator
-        halmd::random::gpu::rand48 rng(BLOCKS, THREADS);
+        rand48 rng(BLOCKS, THREADS);
         rng.seed(seed);
+        cuda::copy(rng.rng(), halmd::random::gpu::get_random_kernel<rand48::rng_type>().rng);
 
         // parallel GPU rand48
         cuda::vector<float> g_array(n);
-        // FIXME rng.uniform(g_array);
+        cuda::configure(rng.dim.grid, rng.dim.block);
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(g_array, g_array.size());
         cuda::thread::synchronize();
 
         cuda::host::vector<float> h_array(n);
