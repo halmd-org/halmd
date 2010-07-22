@@ -22,8 +22,10 @@
 
 #ifdef __CUDACC__
 # define HALMD_GPU_ENABLED __device__
+# define HALMD_GPU_USING(__gpu__, __host__) using __gpu__
 #else
 # define HALMD_GPU_ENABLED
+# define HALMD_GPU_USING(__gpu__, __host__) using __host__
 #endif
 
 #endif /* ! HALMD_CONFIG_HPP */
