@@ -24,7 +24,6 @@
 #include <boost/test/parameterized_test.hpp>
 
 #include <boost/program_options.hpp>
-#include <cuda_wrapper.hpp>
 #include <limits>
 #include <map>
 #include <string>
