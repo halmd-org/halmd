@@ -232,16 +232,16 @@ self:
 /**
  * compute cell indices for given particle positions
  */
-template <typename vector_type>
+template <
+    typename cell_size_type // work around "lower_constant: bad kind" bug in CUDA 2.3
+  , typename vector_type
+>
 __device__ inline unsigned int compute_cell_index(vector_type r)
 {
     enum { dimension = vector_type::static_size };
-    typedef fixed_vector<unsigned int, dimension> cell_size_type;
-    typedef fixed_vector<int, dimension> cell_diff_type;
 
-    cell_size_type ncell = get<dimension>(ncell_);
     vector_type cell_length = get<dimension>(cell_length_);
-
+    cell_size_type ncell = get<dimension>(ncell_);
     cell_size_type index = element_mod(
         static_cast<cell_size_type>(element_div(r, cell_length) + static_cast<vector_type>(ncell))
       , ncell
@@ -264,7 +264,7 @@ __global__ void compute_cell(float4 const* g_r, unsigned int* g_cell)
     fixed_vector<float, dimension> r;
     unsigned int type;
     tie(r, type) = untagged<fixed_vector<float, dimension> >(g_r[GTID]);
-    g_cell[GTID] = compute_cell_index(r);
+    g_cell[GTID] = compute_cell_index<fixed_vector<unsigned int, dimension> >(r);
 }
 
 /**
