@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_VELOCITY_HPP
 #define HALMD_MDSIM_VELOCITY_HPP
 
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -39,7 +39,7 @@ public:
     static void depends() {}
     static void select(po::options const& vm) {}
 
-    typedef numeric::host::blas::vector<double, dimension> vector_type;
+    typedef fixed_vector<double, dimension> vector_type;
 
     velocity(modules::factory& factory, po::options const& vm) {}
     virtual ~velocity() {}

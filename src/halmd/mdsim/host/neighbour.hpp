@@ -30,7 +30,7 @@
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -64,8 +64,8 @@ public:
 
     typedef typename particle_type::neighbour_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
-    typedef numeric::host::blas::vector<size_t, dimension> cell_size_type;
-    typedef numeric::host::blas::vector<ssize_t, dimension> cell_diff_type;
+    typedef fixed_vector<size_t, dimension> cell_size_type;
+    typedef fixed_vector<ssize_t, dimension> cell_diff_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;

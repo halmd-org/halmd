@@ -22,14 +22,13 @@
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/numeric/gpu/blas/vector.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
 using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::numeric::gpu::blas;
 using namespace halmd::utility::gpu;
 
 namespace halmd
@@ -124,11 +123,11 @@ verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
     verlet_kernel::timestep_
   , get<dimension>(verlet_kernel::box_length_)
 #ifdef USE_VERLET_DSFUN
-  , verlet_kernel::_integrate<vector<dsfloat, dimension>, vector<float, dimension> >
-  , verlet_kernel::_finalize<vector<dsfloat, dimension>, vector<float, dimension> >
+  , verlet_kernel::_integrate<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> >
+  , verlet_kernel::_finalize<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> >
 #else
-  , verlet_kernel::_integrate<vector<float, dimension>, vector<float, dimension> >
-  , verlet_kernel::_finalize<vector<float, dimension>, vector<float, dimension> >
+  , verlet_kernel::_integrate<fixed_vector<float, dimension>, fixed_vector<float, dimension> >
+  , verlet_kernel::_finalize<fixed_vector<float, dimension>, fixed_vector<float, dimension> >
 #endif
 };
 

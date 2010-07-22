@@ -25,7 +25,6 @@
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::algorithm::gpu;
-using namespace halmd::numeric::gpu::blas;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::random::gpu;
 
@@ -57,10 +56,10 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
     enum { dimension = vector_type::static_size };
 
     extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    vector<dsfloat, dimension>* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
+    fixed_vector<dsfloat, dimension>* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
     dsfloat* const s_vv = reinterpret_cast<dsfloat*>(&s_vcm[TDIM]);
 
-    vector<dsfloat, dimension> vcm = 0;
+    fixed_vector<dsfloat, dimension> vcm = 0;
     dsfloat vv = 0;
 
     // read random number generator state from global device memory
@@ -130,10 +129,10 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
     typedef typename vector_type::value_type float_type;
 
     extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    vector<dsfloat, dimension>* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
+    fixed_vector<dsfloat, dimension>* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
     dsfloat* const s_vv = reinterpret_cast<dsfloat*>(&s_vcm[size]);
 
-    vector<dsfloat, dimension> vcm = 0;
+    fixed_vector<dsfloat, dimension> vcm = 0;
     dsfloat vv = 0;
 
     // compute mean center of mass velocity from block reduced values
@@ -179,12 +178,12 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
 
 template <int dimension, typename float_type, typename rng_type>
 boltzmann_wrapper<dimension, float_type, rng_type> const boltzmann_wrapper<dimension, float_type, rng_type>::kernel = {
-    boltzmann_kernel::gaussian<vector<float_type, dimension>, rng_type, 32>
-  , boltzmann_kernel::gaussian<vector<float_type, dimension>, rng_type, 64>
-  , boltzmann_kernel::gaussian<vector<float_type, dimension>, rng_type, 128>
-  , boltzmann_kernel::gaussian<vector<float_type, dimension>, rng_type, 256>
-  , boltzmann_kernel::gaussian<vector<float_type, dimension>, rng_type, 512>
-  , boltzmann_kernel::shift_rescale<vector<float_type, dimension> >
+    boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 32>
+  , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 64>
+  , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 128>
+  , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 256>
+  , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 512>
+  , boltzmann_kernel::shift_rescale<fixed_vector<float_type, dimension> >
   , get<rng_type>(boltzmann_kernel::rng)
 };
 

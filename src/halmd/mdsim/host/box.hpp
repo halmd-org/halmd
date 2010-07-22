@@ -25,7 +25,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -45,7 +45,7 @@ public:
     static void select(po::options const& vm) {}
     static void options(po::options_description& desc) {}
 
-    typedef numeric::host::blas::vector<double, dimension> vector_type;
+    typedef fixed_vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
     shared_ptr<particle_type> particle;

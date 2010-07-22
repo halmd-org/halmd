@@ -28,7 +28,7 @@
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/thermodynamics.hpp>
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -48,7 +48,7 @@ public:
     static void options(po::options_description& desc);
     static void select(po::options const& vm) {}
 
-    typedef numeric::host::blas::vector<float_type, dimension> vector_type;
+    typedef fixed_vector<float_type, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
     typedef host::particle<dimension, float_type> particle_type;

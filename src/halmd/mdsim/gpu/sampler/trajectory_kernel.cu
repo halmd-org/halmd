@@ -19,12 +19,11 @@
 
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/sampler/trajectory_kernel.hpp>
-#include <halmd/numeric/gpu/blas/vector.cuh>
-#include <halmd/utility/gpu/variant.cuh>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::numeric::gpu::blas;
 using namespace halmd::utility::gpu;
 
 namespace halmd
@@ -72,7 +71,7 @@ trajectory_wrapper<dimension> const trajectory_wrapper<dimension>::kernel = {
   , get<dimension>(trajectory_kernel::image_)
   , trajectory_kernel::v_
   , get<dimension>(trajectory_kernel::box_length_)
-  , trajectory_kernel::sample<vector<float, dimension> >
+  , trajectory_kernel::sample<fixed_vector<float, dimension> >
 };
 
 template class trajectory_wrapper<3>;

@@ -24,7 +24,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/sort/hilbert.hpp>
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 
 using namespace boost;
 using namespace std;

@@ -25,7 +25,7 @@
 #include <halmd/mdsim/box.hpp>
 // #include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
-// #include <halmd/numeric/gpu/blas/vector.cuh>
+// #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -46,7 +46,7 @@ public:
     static void options(po::options_description& desc) {}
 
     typedef typename _Base::vector_type vector_type;
-//     typedef numeric::gpu::blas::vector<double, dimension> vector_type;
+//     typedef fixed_vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
     shared_ptr<particle_type> particle;

@@ -87,7 +87,7 @@ void velocity<dimension, float_type>::shift(vector_type const& delta)
     get_velocity_kernel<dimension>().shift(
         particle->g_v
       , particle->dim.threads()
-      , static_cast<numeric::host::blas::vector<dsfloat, dimension> >(delta)
+      , delta
     );
 }
 
@@ -101,7 +101,7 @@ void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, do
     get_velocity_kernel<dimension>().shift_rescale(
         particle->g_v
       , particle->dim.threads()
-      , static_cast<numeric::host::blas::vector<dsfloat, dimension> >(delta)
+      , delta
       , factor
     );
 }

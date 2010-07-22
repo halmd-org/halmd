@@ -21,13 +21,12 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
-#include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace boost;
-using namespace halmd::numeric::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd
@@ -101,8 +100,8 @@ __global__ void lattice(float4* g_r, uint n, float box)
 
 template <int dimension>
 lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
-    lattice_kernel::lattice<blas::vector<float, dimension>, lattice_kernel::fcc>
-  , lattice_kernel::lattice<blas::vector<float, dimension>, lattice_kernel::sc>
+    lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
+  , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::sc>
 };
 
 template class lattice_wrapper<3>;

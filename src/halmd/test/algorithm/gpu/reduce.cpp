@@ -25,8 +25,8 @@
 #include <boost/iterator/counting_iterator.hpp>
 
 #include <halmd/algorithm/gpu/reduce.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/numeric/gpu/blas/vector.cuh>
 
 using namespace boost;
 using namespace halmd;

@@ -25,7 +25,7 @@
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 // #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -53,8 +53,8 @@ public:
     static void select(po::options const& vm) {}
 
     typedef mdsim::box<dimension> box_type;
-    typedef numeric::host::blas::vector<double, dimension> vector_type;
-    typedef numeric::host::blas::vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
+    typedef fixed_vector<double, dimension> vector_type;
+    typedef fixed_vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
 
     shared_ptr<box_type> box;
 

@@ -30,15 +30,13 @@ namespace halmd
 namespace mdsim { namespace gpu
 {
 
-using numeric::gpu::blas::vector;
-
 template <int dimension>
 struct velocity_wrapper
 {
     typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
     cuda::function<void (float4*, unsigned int, dsfloat)> rescale;
-    cuda::function<void (float4*, unsigned int, vector<dsfloat, dimension>)> shift;
-    cuda::function<void (float4*, unsigned int, vector<dsfloat, dimension>, dsfloat)> shift_rescale;
+    cuda::function<void (float4*, unsigned int, fixed_vector<dsfloat, dimension>)> shift;
+    cuda::function<void (float4*, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale;
     cuda::symbol<unsigned int> nbox;
     static velocity_wrapper const kernel;
 };

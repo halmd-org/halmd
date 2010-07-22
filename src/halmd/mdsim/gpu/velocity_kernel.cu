@@ -21,7 +21,6 @@
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace halmd::numeric::gpu::blas;
 using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd
@@ -68,7 +67,7 @@ template <typename vector_type>
 __global__ void shift(
     float4* g_v
   , unsigned int size
-  , vector<dsfloat, vector_type::static_size> delta
+  , fixed_vector<dsfloat, vector_type::static_size> delta
 )
 {
     for (unsigned int i = GTID; i < nbox_; i += GTDIM) {
@@ -95,7 +94,7 @@ template <typename vector_type>
 __global__ void shift_rescale(
     float4* g_v
   , unsigned int size
-  , vector<dsfloat, vector_type::static_size> delta
+  , fixed_vector<dsfloat, vector_type::static_size> delta
   , dsfloat factor
 )
 {
@@ -122,13 +121,13 @@ __global__ void shift_rescale(
 template <int dimension>
 velocity_wrapper<dimension> const velocity_wrapper<dimension>::kernel = {
 #ifdef USE_VERLET_DSFUN
-    velocity_kernel::rescale<vector<dsfloat, dimension> >
-  , velocity_kernel::shift<vector<dsfloat, dimension> >
-  , velocity_kernel::shift_rescale<vector<dsfloat, dimension> >
+    velocity_kernel::rescale<fixed_vector<dsfloat, dimension> >
+  , velocity_kernel::shift<fixed_vector<dsfloat, dimension> >
+  , velocity_kernel::shift_rescale<fixed_vector<dsfloat, dimension> >
 #else
-    velocity_kernel::rescale<vector<float, dimension> >
-  , velocity_kernel::shift<vector<float, dimension> >
-  , velocity_kernel::shift_rescale<vector<float, dimension> >
+    velocity_kernel::rescale<fixed_vector<float, dimension> >
+  , velocity_kernel::shift<fixed_vector<float, dimension> >
+  , velocity_kernel::shift_rescale<fixed_vector<float, dimension> >
 #endif
   , velocity_kernel::nbox_
 };

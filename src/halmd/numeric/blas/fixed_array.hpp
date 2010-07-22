@@ -17,26 +17,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_GPU_BLAS_DETAIL_STORAGE_CUH
-#define HALMD_NUMERIC_GPU_BLAS_DETAIL_STORAGE_CUH
+#ifndef HALMD_NUMERIC_BLAS_FIXED_ARRAY_HPP
+#define HALMD_NUMERIC_BLAS_FIXED_ARRAY_HPP
 
+#ifndef __CUDACC__
+# include <boost/array.hpp>
+#endif
 #include <boost/type_traits/is_pod.hpp>
 #include <boost/utility/enable_if.hpp>
-#include <cuda_runtime.h>
 
+#include <halmd/config.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 
-namespace halmd { namespace numeric { namespace gpu { namespace blas
+namespace halmd
+{
+namespace detail { namespace numeric { namespace blas
 {
 
-namespace detail
-{
+// import into current namespace
+using namespace boost;
+
+#ifndef __CUDACC__
 
 template <typename T, size_t N>
-struct _bounded_array;
+struct fixed_array
+  : boost::array<T, N> {};
+
+#else /* __CUDACC__ */
+
+template <typename T, size_t N>
+struct _fixed_array_impl;
 
 template <typename T, typename Enable = void>
-struct _bounded_array_pod_type;
+struct _fixed_array_pod_type;
 
 //
 // The purpose of a bounded array is to serve as the underlying
@@ -44,18 +57,18 @@ struct _bounded_array_pod_type;
 // operator[] to allow convenient access of its components.
 //
 template <typename T, size_t N>
-struct bounded_array
-  : _bounded_array<typename _bounded_array_pod_type<T>::type, N>
+struct fixed_array
+  : _fixed_array_impl<typename _fixed_array_pod_type<T>::type, N>
 {
     typedef T value_type;
     enum { static_size = N };
 
-    __device__ value_type& operator[](size_t i)
+    HALMD_GPU_ENABLED value_type& operator[](size_t i)
     {
         return reinterpret_cast<value_type*>(this)[i];
     }
 
-    __device__ value_type const& operator[](size_t i) const
+    HALMD_GPU_ENABLED value_type const& operator[](size_t i) const
     {
         return reinterpret_cast<value_type const*>(this)[i];
     }
@@ -69,14 +82,14 @@ struct bounded_array
 //
 
 template <typename T>
-struct _bounded_array_pod_type<T,
-  typename boost::enable_if<boost::is_pod<T> >::type>
+struct _fixed_array_pod_type<T,
+  typename enable_if<is_pod<T> >::type>
 {
     typedef T type;
 };
 
 template <>
-struct _bounded_array_pod_type<dsfloat>
+struct _fixed_array_pod_type<dsfloat>
 {
     typedef float2 type;
 };
@@ -85,31 +98,33 @@ struct _bounded_array_pod_type<dsfloat>
 // These specializations define the data members of bounded array.
 //
 template <typename T>
-struct _bounded_array<T, 1>
+struct _fixed_array_impl<T, 1>
 {
     T x;
 };
 
 template <typename T>
-struct _bounded_array<T, 2>
+struct _fixed_array_impl<T, 2>
 {
     T x, y;
 };
 
 template <typename T>
-struct _bounded_array<T, 3>
+struct _fixed_array_impl<T, 3>
 {
     T x, y, z;
 };
 
 template <typename T>
-struct _bounded_array<T, 4>
+struct _fixed_array_impl<T, 4>
 {
     T x, y, z, w;
 };
 
-} // namespace detail
+#endif /* __CUDACC__ */
 
-}}}} // namespace halmd::numeric::gpu::blas
+}}} // namespace detail::numeric::blas
 
-#endif /* ! HALMD_NUMERIC_GPU_BLAS_DETAIL_STORAGE_CUH */
+} // namespace halmd
+
+#endif /* ! HALMD_NUMERIC_BLAS_FIXED_ARRAY_HPP */

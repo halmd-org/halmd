@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,19 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_HOST_BLAS_VECTOR_HPP
-#define HALMD_NUMERIC_HOST_BLAS_VECTOR_HPP
+#ifndef HALMD_NUMERIC_BLAS_BLAS_HPP
+#define HALMD_NUMERIC_BLAS_BLAS_HPP
 
-#include <halmd/numeric/host/blas/detail/vector2d.hpp>
-#include <halmd/numeric/host/blas/detail/vector3d.hpp>
-#include <halmd/numeric/host/blas/detail/vector4d.hpp>
-#include <halmd/numeric/host/blas/detail/blas1.hpp>
+#include <halmd/numeric/blas/blas1.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/numeric/blas/symmetric_matrix.hpp>
 
-namespace halmd { namespace numeric { namespace host { namespace blas
-{
-
-using detail::vector;
-
-}}}} // namespace halmd::numeric::host::blas
-
-#endif /* ! HALMD_NUMERIC_HOST_BLAS_VECTOR_HPP */
+#endif /* ! HALMD_NUMERIC_BLAS_BLAS_HPP */

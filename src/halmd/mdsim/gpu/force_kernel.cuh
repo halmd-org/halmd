@@ -20,20 +20,18 @@
 #ifndef HALMD_MDSIM_GPU_FORCE_KERNEL_CUH
 #define HALMD_MDSIM_GPU_FORCE_KERNEL_CUH
 
-#include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/numeric/blas/blas.hpp>
 
 namespace halmd { namespace mdsim { namespace gpu { namespace force_kernel
 {
-
-using numeric::gpu::blas::vector;
 
 /**
  * Trace and off-diagonal elements of distance tensor
  */
 template <typename T>
-__device__ inline vector<T, 4> virial_tensor(T rr, vector<T, 3> const& r)
+__device__ inline fixed_vector<T, 4> virial_tensor(T rr, fixed_vector<T, 3> const& r)
 {
-    vector<T, 4> v;
+    fixed_vector<T, 4> v;
     v[0] = rr;
     v[1] = r[1] * r[2];
     v[2] = r[2] * r[0];
@@ -42,9 +40,9 @@ __device__ inline vector<T, 4> virial_tensor(T rr, vector<T, 3> const& r)
 }
 
 template <typename T>
-__device__ inline vector<T, 2> virial_tensor(T rr, vector<T, 2> const& r)
+__device__ inline fixed_vector<T, 2> virial_tensor(T rr, fixed_vector<T, 2> const& r)
 {
-    vector<T, 2> v;
+    fixed_vector<T, 2> v;
     v[0] = rr;
     v[1] = r[0] * r[1];
     return v;

@@ -122,7 +122,7 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
 
     cuda::host::vector<float4> ljparam(g_ljparam_.size());
     for (size_t i = 0; i < ljparam.size(); ++i) {
-        numeric::host::blas::vector<float, 4> p;
+        fixed_vector<float, 4> p;
         p[lj_kernel::EPSILON] = epsilon_.data()[i];
         p[lj_kernel::RR_CUT] = rr_cut_.data()[i];
         p[lj_kernel::SIGMA2] = sigma2_.data()[i];

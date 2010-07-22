@@ -23,14 +23,12 @@
 #include <halmd/mdsim/gpu/force_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/numeric/gpu/blas/symmetric.cuh>
-#include <halmd/numeric/gpu/blas/vector.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::numeric::gpu::blas;
 using namespace halmd::utility::gpu;
 
 namespace halmd
@@ -73,10 +71,10 @@ __global__ void compute(
     // potential energy contribution
     float en_pot_ = 0;
     // virial contribution
-    vector<float, (dimension - 1) * dimension / 2 + 1> virial_ = 0;
+    fixed_vector<float, (dimension - 1) * dimension / 2 + 1> virial_ = 0;
 #ifdef USE_FORCE_DSFUN
     // force sum
-    vector<dsfloat, dimension> f = 0;
+    fixed_vector<dsfloat, dimension> f = 0;
 #else
     vector_type f = 0;
 #endif
@@ -94,7 +92,7 @@ __global__ void compute(
         vector_type r2;
         tie(r2, type2) = untagged<vector_type>(tex1Dfetch(r_, j));
         // Lennard-Jones potential parameters
-        vector<float, 4> lj = tex1Dfetch(ljparam_, symmetric_matrix::lower_index(type1, type2));
+        fixed_vector<float, 4> lj = tex1Dfetch(ljparam_, symmetric_matrix::lower_index(type1, type2));
 
         // particle distance vector
         vector_type r = r1 - r2;
@@ -135,7 +133,7 @@ lj_wrapper<dimension> const lj_wrapper<dimension>::kernel = {
   , lj_kernel::neighbour_size_
   , lj_kernel::neighbour_stride_
   , lj_kernel::ljparam_
-  , lj_kernel::compute<vector<float, dimension> >
+  , lj_kernel::compute<fixed_vector<float, dimension> >
 };
 
 template class lj_wrapper<3>;

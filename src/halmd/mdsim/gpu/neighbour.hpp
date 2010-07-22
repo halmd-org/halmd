@@ -71,8 +71,8 @@ public:
 
 //     typedef typename particle_type::neighbour_list cell_list;
 //     typedef boost::multi_array<cell_list, dimension> cell_lists;
-    typedef numeric::host::blas::vector<unsigned int, dimension> cell_size_type;
-    typedef numeric::host::blas::vector<int, dimension> cell_diff_type;
+    typedef fixed_vector<unsigned int, dimension> cell_size_type;
+    typedef fixed_vector<int, dimension> cell_diff_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;

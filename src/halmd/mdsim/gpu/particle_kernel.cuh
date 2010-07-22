@@ -31,8 +31,8 @@
 #else
 # include <boost/tuple/tuple.hpp>
 #endif
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/numeric/gpu/blas/vector.cuh>
 
 namespace halmd
 {

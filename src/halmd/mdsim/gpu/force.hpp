@@ -29,7 +29,7 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/thermodynamics.hpp>
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -49,7 +49,7 @@ public:
     static void depends();
     static void select(po::options const& vm) {}
 
-    typedef numeric::host::blas::vector<float_type, dimension> vector_type;
+    typedef fixed_vector<float_type, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
     typedef gpu::particle<dimension, float> particle_type;

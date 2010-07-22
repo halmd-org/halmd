@@ -36,7 +36,7 @@ __device__ inline vector_type_ reduce_periodic(
   vector_type& r,
   vector_type_ const& L)
 {
-    vector_type_ image = rint(__fdivide(static_cast<vector_type_>(r), L));
+    vector_type_ image = rint(fdivide(static_cast<vector_type_>(r), L));
     r -= element_prod(image, L);
     return image;
 }

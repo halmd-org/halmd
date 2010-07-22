@@ -23,14 +23,12 @@
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/neighbour_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/numeric/gpu/blas/symmetric.cuh>
-#include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::numeric::gpu::blas;
 using namespace halmd::utility::gpu;
 
 namespace halmd
@@ -60,10 +58,10 @@ texture<float4> r_;
 /**
  * compute neighbour cell
  */
-__device__ unsigned int compute_neighbour_cell(vector<int, 3> const &offset)
+__device__ unsigned int compute_neighbour_cell(fixed_vector<int, 3> const &offset)
 {
-    vector<int, 3> ncell(static_cast<vector<unsigned int, 3> >(get<3>(ncell_)));
-    vector<int, 3> cell;
+    fixed_vector<int, 3> ncell(static_cast<fixed_vector<unsigned int, 3> >(get<3>(ncell_)));
+    fixed_vector<int, 3> cell;
 
     // cell belonging to this execution block
     cell[0] = BID % ncell[0];
@@ -75,10 +73,10 @@ __device__ unsigned int compute_neighbour_cell(vector<int, 3> const &offset)
     return (cell[2] * ncell[1] + cell[1]) * ncell[0] + cell[0];
 }
 
-__device__ unsigned int compute_neighbour_cell(vector<int, 2> const& offset)
+__device__ unsigned int compute_neighbour_cell(fixed_vector<int, 2> const& offset)
 {
-    vector<int, 2> ncell(static_cast<vector<unsigned int, 2> >(get<2>(ncell_)));
-    vector<int, 2> cell;
+    fixed_vector<int, 2> ncell(static_cast<fixed_vector<unsigned int, 2> >(get<2>(ncell_)));
+    fixed_vector<int, 2> cell;
 
     // cell belonging to this execution block
     cell[0] = BID % ncell[0];
@@ -115,7 +113,7 @@ __device__ void update_cell_neighbours(
     // load particles in cell
     unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
-    tie(s_r[threadIdx.x], s_type[threadIdx.x]) = untagged<vector<float, dimension> >(tex1Dfetch(r_, n_));
+    tie(s_r[threadIdx.x], s_type[threadIdx.x]) = untagged<fixed_vector<float, dimension> >(tex1Dfetch(r_, n_));
     __syncthreads();
 
     if (n == PLACEHOLDER) return;
@@ -159,8 +157,8 @@ __global__ void update_neighbours(
     // load particle from cell placeholder
     unsigned int const n = g_cell[GTID];
     unsigned int type;
-    vector<float, dimension> r;
-    tie(r, type) = untagged<vector<float, dimension> >(tex1Dfetch(r_, n));
+    fixed_vector<float, dimension> r;
+    tie(r, type) = untagged<fixed_vector<float, dimension> >(tex1Dfetch(r_, n));
     // number of particles in neighbour list
     unsigned int count = 0;
 
@@ -198,37 +196,32 @@ __global__ void update_neighbours(
     // opposite neighbour cell softens the velocity drift.
     //
 
-    for (int i = -1; i <= 1; ++i) {
-        for (int j = -1; j <= 1; ++j) {
+    fixed_vector<int, dimension> j;
+    for (j[0] = -1; j[0] <= 1; ++j[0]) {
+        for (j[1] = -1; j[1] <= 1; ++j[1]) {
             if (dimension == 3) {
-                for (int k = -1; k <= 1; ++k) {
-                    if (i == 0 && j == 0 && k == 0) {
+                for (j[2] = -1; j[2] <= 1; ++j[2]) {
+                    if (j[0] == 0 && j[1] == 0 && j[2] == 0) {
                         goto self;
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-                    update_cell_neighbours<false>(make_int3(i, j, k), g_cell, r, type, n, count, g_neighbour);
-                    update_cell_neighbours<false>(make_int3(-i, -j, -k), g_cell, r, type, n, count, g_neighbour);
+                    update_cell_neighbours<false>(j, g_cell, r, type, n, count, g_neighbour);
+                    update_cell_neighbours<false>(-j, g_cell, r, type, n, count, g_neighbour);
                 }
             }
             else {
-                if (i == 0 && j == 0) {
+                if (j[0] == 0 && j[1] == 0) {
                     goto self;
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-                update_cell_neighbours<false>(make_int2(i, j), g_cell, r, type, n, count, g_neighbour);
-                update_cell_neighbours<false>(make_int2(-i, -j), g_cell, r, type, n, count, g_neighbour);
+                update_cell_neighbours<false>(j, g_cell, r, type, n, count, g_neighbour);
+                update_cell_neighbours<false>(-j, g_cell, r, type, n, count, g_neighbour);
             }
         }
     }
 
 self:
-    // visit this cell
-    if (dimension == 3) {
-        update_cell_neighbours<true>(make_int3( 0,  0,  0), g_cell, r, type, n, count, g_neighbour);
-    }
-    else {
-        update_cell_neighbours<true>(make_int2( 0,  0), g_cell, r, type, n, count, g_neighbour);
-    }
+    update_cell_neighbours<true>(j, g_cell, r, type, n, count, g_neighbour);
 
     // return failure if any neighbour list is fully occupied
     if (count == neighbour_size_) {
@@ -243,8 +236,8 @@ template <typename vector_type>
 __device__ inline unsigned int compute_cell_index(vector_type r)
 {
     enum { dimension = vector_type::static_size };
-    typedef vector<unsigned int, dimension> cell_size_type;
-    typedef vector<int, dimension> cell_diff_type;
+    typedef fixed_vector<unsigned int, dimension> cell_size_type;
+    typedef fixed_vector<int, dimension> cell_diff_type;
 
     cell_size_type ncell = get<dimension>(ncell_);
     vector_type cell_length = get<dimension>(cell_length_);
@@ -268,9 +261,9 @@ __device__ inline unsigned int compute_cell_index(vector_type r)
 template <unsigned int dimension>
 __global__ void compute_cell(float4 const* g_r, unsigned int* g_cell)
 {
-    vector<float, dimension> r;
+    fixed_vector<float, dimension> r;
     unsigned int type;
-    tie(r, type) = untagged<vector<float, dimension> >(g_r[GTID]);
+    tie(r, type) = untagged<fixed_vector<float, dimension> >(g_r[GTID]);
     g_cell[GTID] = compute_cell_index(r);
 }
 
@@ -387,11 +380,11 @@ neighbour_wrapper<dimension> neighbour_wrapper<dimension>::kernel = {
   , neighbour_kernel::gen_index
   , neighbour_kernel::update_neighbours<dimension>
   , neighbour_kernel::compute_cell<dimension>
-  , neighbour_kernel::displacement<vector<float, dimension>, 512>
-  , neighbour_kernel::displacement<vector<float, dimension>, 256>
-  , neighbour_kernel::displacement<vector<float, dimension>, 128>
-  , neighbour_kernel::displacement<vector<float, dimension>, 64>
-  , neighbour_kernel::displacement<vector<float, dimension>, 32>
+  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 512>
+  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 256>
+  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 128>
+  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 64>
+  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 32>
 };
 
 template class neighbour_wrapper<3>;

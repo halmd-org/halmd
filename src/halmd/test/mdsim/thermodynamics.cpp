@@ -42,7 +42,6 @@
 #include <halmd/io/logger.hpp>
 
 using namespace halmd;
-using namespace halmd::numeric::host;
 using namespace std;
 
 /** reference values for the state variables of a 3-dim. LJ fluid can be found in

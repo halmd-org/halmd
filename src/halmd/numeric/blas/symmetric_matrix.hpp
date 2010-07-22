@@ -17,23 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_GPU_BLAS_VECTOR_CUH
-#define HALMD_NUMERIC_GPU_BLAS_VECTOR_CUH
-
-#include <halmd/numeric/gpu/blas/detail/vector2d.cuh>
-#include <halmd/numeric/gpu/blas/detail/vector3d.cuh>
-#include <halmd/numeric/gpu/blas/detail/vector4d.cuh>
+#ifndef HALMD_NUMERIC_BLAS_SYMMETRIC_MATRIX_HPP
+#define HALMD_NUMERIC_BLAS_SYMMETRIC_MATRIX_HPP
 
 namespace halmd
 {
-namespace numeric { namespace gpu { namespace blas
+namespace symmetric_matrix
 {
 
-// import into current namespace
-using detail::vector;
+/**
+ * Compute storage index for lower symmetric matrix
+ */
+inline HALMD_GPU_ENABLED unsigned int lower_index(unsigned int row, unsigned int col)
+{
+    unsigned int row_lower = col > row ? col : row;
+    unsigned int col_lower = col < row ? col : row;
+    return col_lower + ((row_lower * (row_lower + 1)) / 2);
+}
 
-}}} // namespace numeric::gpu::blas
+} // namespace symmetric_matrix
 
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_GPU_BLAS_VECTOR_CUH */
+#endif /* ! HALMD_NUMERIC_BLAS_SYMMETRIC_MATRIX_HPP */

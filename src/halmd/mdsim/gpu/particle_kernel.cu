@@ -20,11 +20,10 @@
 #include <halmd/algorithm/gpu/tuple.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
-#include <halmd/numeric/gpu/blas/vector.cuh>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::algorithm::gpu;
-using namespace halmd::numeric::gpu;
 
 namespace halmd
 {
@@ -77,7 +76,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
     particle_kernel::nbox_
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
-  , particle_kernel::tag<blas::vector<float, dimension> >
+  , particle_kernel::tag<fixed_vector<float, dimension> >
 };
 
 template class particle_wrapper<3>;

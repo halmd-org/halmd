@@ -116,9 +116,8 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
     LOG("effective average cell occupancy: " << (static_cast<double>(particle->nbox) / dim_cell_.threads()));
 
     try {
-        using numeric::gpu::blas::vector;
         cuda::copy(particle->nbox, get_neighbour_kernel<dimension>().nbox);
-        cuda::copy(static_cast<vector<uint, dimension> >(ncell_), get_neighbour_kernel<dimension>().ncell);
+        cuda::copy(static_cast<fixed_vector<uint, dimension> >(ncell_), get_neighbour_kernel<dimension>().ncell);
         cuda::copy(cell_length_, get_neighbour_kernel<dimension>().cell_length);
         cuda::copy(static_cast<vector_type>(box->length()), get_neighbour_kernel<dimension>().box_length);
     }

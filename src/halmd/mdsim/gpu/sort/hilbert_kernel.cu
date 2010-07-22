@@ -23,13 +23,12 @@
 #include <halmd/algorithm/gpu/bits.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/sort/hilbert_kernel.hpp>
-#include <halmd/numeric/gpu/blas/vector.cuh>
-#include <halmd/utility/gpu/variant.cuh>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::numeric::gpu::blas;
 using namespace halmd::utility::gpu;
 
 namespace halmd
@@ -60,7 +59,7 @@ __device__ void swap_vertex(uint& v, uint& a, uint& b, uint const& mask)
 /**
  * map 3-dimensional point to 1-dimensional point on Hilbert space curve
  */
-__device__ unsigned int _map(vector<float, 3> r)
+__device__ unsigned int _map(fixed_vector<float, 3> r)
 {
     //
     // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
@@ -86,7 +85,7 @@ __device__ unsigned int _map(vector<float, 3> r)
     // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
     for (unsigned int i = 0; i < depth_; ++i) {
         // determine Hilbert vertex closest to particle
-        vector<unsigned int, 3> x;
+        fixed_vector<unsigned int, 3> x;
         x[0] = __signbitf(r[0]) & 1;
         x[1] = __signbitf(r[1]) & 1;
         x[2] = __signbitf(r[2]) & 1;
@@ -94,7 +93,7 @@ __device__ unsigned int _map(vector<float, 3> r)
         const uint v = (vc >> (3 * (x[0] + (x[1] << 1) + (x[2] << 2))) & MASK);
 
         // scale particle coordinates to subcell
-        r = 2 * r - (vector<float, 3>(0.5f) - vector<float, 3>(x));
+        r = 2 * r - (fixed_vector<float, 3>(0.5f) - fixed_vector<float, 3>(x));
         // apply permutation rule according to Hilbert code
         if (v == 0) {
             swap_vertex(vc, b, h, MASK);
@@ -131,7 +130,7 @@ __device__ unsigned int _map(vector<float, 3> r)
 /**
  * map 2-dimensional point to 1-dimensional point on Hilbert space curve
  */
-__device__ unsigned int _map(vector<float, 2> r)
+__device__ unsigned int _map(fixed_vector<float, 2> r)
 {
     // Hilbert code for particle
     unsigned int hcode = 0;
@@ -148,14 +147,14 @@ __device__ unsigned int _map(vector<float, 2> r)
     // 32-bit integer for 2D Hilbert code allows a maximum of 16 levels
     for (unsigned int i = 0; i < depth_; ++i) {
         // determine Hilbert vertex closest to particle
-        vector<unsigned int, 2> x;
+        fixed_vector<unsigned int, 2> x;
         x[0] = __signbitf(r[0]) & 1;
         x[1] = __signbitf(r[1]) & 1;
         // lookup Hilbert code
         const uint v = (vc >> (2 * (x[0] + (x[1] << 1))) & MASK);
 
         // scale particle coordinates to subcell
-        r = 2 * r - (vector<float, 2>(0.5f) - vector<float, 2>(x));
+        r = 2 * r - (fixed_vector<float, 2>(0.5f) - fixed_vector<float, 2>(x));
         // apply permutation rule according to Hilbert code
         if (v == 0) {
             swap_vertex(vc, b, d, MASK);
@@ -197,7 +196,7 @@ __global__ void map(float4 const* g_r, unsigned int* g_sfc)
     // Hilbert cells per dimension at deepest recursion level
     uint const n = 1UL << depth_;
     // fractional index of particle's Hilbert cell in [0, n)
-    r = n * (__saturate(element_div(r, L)) * (1.f - FLT_EPSILON));
+    r = n * (saturate(element_div(r, L)) * (1.f - FLT_EPSILON));
 
     // round particle position to center of cell in unit coordinates
     r = (floor(r) + vector_type(0.5f)) / n;
@@ -214,7 +213,7 @@ template <int dimension>
 hilbert_wrapper<dimension> const hilbert_wrapper<dimension>::kernel = {
     hilbert_kernel::depth_
   , get<dimension>(hilbert_kernel::box_length_)
-  , hilbert_kernel::map<vector<float, dimension> >
+  , hilbert_kernel::map<fixed_vector<float, dimension> >
 };
 
 // explicit instantiation

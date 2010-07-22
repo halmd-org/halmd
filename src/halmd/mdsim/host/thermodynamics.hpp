@@ -25,7 +25,7 @@
 
 #include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/numeric/host/blas/vector.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
