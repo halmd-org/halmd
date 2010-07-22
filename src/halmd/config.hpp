@@ -21,11 +21,21 @@
 #define HALMD_CONFIG_HPP
 
 #ifdef __CUDACC__
-# define HALMD_GPU_ENABLED __device__
-# define HALMD_GPU_USING(__gpu__, __host__) using __gpu__
-#else
-# define HALMD_GPU_ENABLED
-# define HALMD_GPU_USING(__gpu__, __host__) using __host__
+
+#define HALMD_GPU_ENABLED __device__
+
+#define HALMD_GPU_USING(__gpu__, __host__) using __gpu__
+
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 130
+# define HALMD_GPU_DOUBLE_PRECISION
 #endif
+
+#else /* __CUDACC__ */
+
+#define HALMD_GPU_ENABLED
+
+#define HALMD_GPU_USING(__gpu__, __host__) using __host__
+
+#endif /* ! __CUDACC__ */
 
 #endif /* ! HALMD_CONFIG_HPP */
