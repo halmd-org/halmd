@@ -245,6 +245,22 @@ inline HALMD_GPU_ENABLED dsfloat sqrt(dsfloat v)
     return w;
 }
 
+/**
+ * Maximum value
+ */
+inline HALMD_GPU_ENABLED dsfloat max(dsfloat const& v, dsfloat const& w)
+{
+    return v.hi == w.hi ? (v.lo >= w.lo ? v : w) : (v.hi > w.hi ? v : w);
+}
+
+/**
+ * Minimum value
+ */
+inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
+{
+    return v.hi == w.hi ? (v.lo <= w.lo ? v : w) : (v.hi < w.hi ? v : w);
+}
+
 }}} // namespace detail::numeric::mp
 
 // import into top-level namespace

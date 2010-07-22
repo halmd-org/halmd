@@ -99,7 +99,7 @@ template <typename transform_, typename T>
 __device__ typename enable_if<is_same<transform_, max_>, T>::type
 transform(T v1, T v2)
 {
-    return fmaxf(v1, v2);
+    return max(v1, v2);
 }
 
 }} // namespace algorithm::gpu
