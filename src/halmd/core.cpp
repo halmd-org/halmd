@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -19,6 +19,7 @@
 
 #include <halmd/core.hpp>
 #include <halmd/io/logger.hpp>
+#include <halmd/util/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -78,12 +79,27 @@ template <int dimension>
 void core<dimension>::run()
 {
     LOG("starting simulation");
+    real_timer timer;
+    timer.start();
 
     for (uint64_t i = 0; i < steps_; ++i) {
         mdsim->mdstep();
     }
 
+    timer.stop();
     LOG("finished simulation");
+
+    // print performance statistics
+    std::stringstream is;
+    std::string str;
+    is << mdsim->runtimes;
+    while (std::getline(is, str)) {
+        LOG(str);
+    }
+
+    // TODO save performance statistics to file
+
+    LOG("total simulation runtime: " << timer);
 }
 
 // explicit instantiation

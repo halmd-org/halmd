@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -21,6 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
+#include <halmd/util/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -89,15 +90,42 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
 template <int dimension>
 inline void core<dimension>::mdstep()
 {
+    boost::array<high_resolution_timer, 8> timer;
+    timer[0].record();
+
     integrator->integrate();
-    if (neighbour->check()) {
+    timer[1].record();
+
+    bool nbr_check = neighbour->check();
+    timer[2].record();
+    if (nbr_check) {
         if (sort) {
             sort->order();
         }
+        timer[3].record();
         neighbour->update();
     }
+    timer[4].record();
+
     force->compute();
+    timer[5].record();
+
     integrator->finalize();
+    timer[6].record();
+
+    runtimes["mdstep"] += timer[6] - timer[0];
+    runtimes["integration"] += (timer[1] - timer[0]) + (timer[6] - timer[5]);
+    runtimes["update_forces"] += timer[5] - timer[4];
+    runtimes["check_neighbour_update"] += timer[2] - timer[1];
+    if (nbr_check) {
+        if (sort) {
+            runtimes["particle_sort"] += timer[3] - timer[2];
+        }
+        runtimes["update_neighbours"] += timer[4] - timer[3];
+    }
+    timer[7].record();
+
+    runtimes["update_timers"] += timer[7] - timer[6];
 }
 
 // explicit instantiation

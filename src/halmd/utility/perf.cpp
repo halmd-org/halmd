@@ -1,6 +1,6 @@
 /* Performance data
  *
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -27,7 +27,7 @@
 #include <limits>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/sample/perf.hpp>
+#include <halmd/utility/perf.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
 
@@ -41,15 +41,18 @@ namespace halmd
  */
 perf::desc_map perf::m_desc = boost::assign::map_list_of
     ("boltzmann",                "Boltzmann distribution")
+    ("check_neighbour_update",   "check for automatic neighbour update")
     ("event_queue",                "event queue processing")
     ("hilbert_sort",                "Hilbert curve sort")
     ("init_cells",                "cell lists initialisation")
+    ("integration",                "integration step(s)")
     ("lattice",                        "lattice generation")
     ("maximum_displacement",        "maximum particle displacement reduction")
     ("maximum_velocity",        "maximum velocity reduction")
     ("mdstep",                        "MD integration step")
     ("memcpy_cells",                "cell lists memcpy")
     ("permutation",                "phase space sample sort")
+    ("particle_sort",        "sort particles in memory")
     ("potential_energy",        "potential energy sum reduction")
     ("reduce_squared_velocity",        "mean squared velocity reduction")
     ("reduce_velocity",                "velocity center of mass reduction")
@@ -58,6 +61,7 @@ perf::desc_map perf::m_desc = boost::assign::map_list_of
     ("update_cells",                "cell lists update")
     ("update_forces",                "Lennard-Jones force update")
     ("update_neighbours",        "neighbour lists update")
+    ("update_timers",        "update of timer list")
     ("velocity_verlet",                "velocity-Verlet integration")
     ("virial_sum",                "virial equation sum reduction")
     ;
@@ -96,10 +100,10 @@ void perf::sample(counters const& times)
 template <typename T>
 std::ostream& operator<<(std::ostream& os, accumulator<T> const& acc)
 {
-    os << std::fixed << std::setprecision(4) << (acc.mean() * 1000) << " ms";
-    if (acc.count() > 1) {
+    os << std::fixed << std::setprecision(4) << (mean(acc) * 1000) << " ms";
+    if (count(acc) > 1) {
         os << " (" << std::fixed << std::setprecision(4)
-           << (acc.std() * 1000) << " ms, " << acc.count() << " calls)";
+           << (error_of_mean(acc) * 1000) << " ms, " << count(acc) << " calls)";
     }
     return os;
 }
@@ -128,10 +132,10 @@ void perf::flush()
     H5::Group node;
     try {
         H5XX_NO_AUTO_PRINT(H5::FileIException);
-        node = m_file.openGroup("times");
+        node = m_file.openGroup("runtimes");
     }
     catch (H5::FileIException const&) {
-        node = m_file.createGroup("times");
+        node = m_file.createGroup("runtimes");
     }
 
     // dataspace for performance data
@@ -156,9 +160,9 @@ void perf::flush()
     try {
         foreach (counter const& i, m_times) {
             // write to HDF5 dataset
-            data[0] = i.second.mean();
-            data[1] = i.second.std();
-            data[2] = i.second.count();
+            data[0] = mean(i.second);
+            data[1] = error_of_mean(i.second);
+            data[2] = count(i.second);
             m_dataset[i.first].write(data.c_array(), m_tid, ds_mem, ds_file);
         }
     }
