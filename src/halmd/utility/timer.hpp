@@ -89,7 +89,7 @@ private:
     static void getres(struct timespec& ts)
     {
         boost::system::error_code ec(
-            clock_gettime(CLOCK_MONOTONIC, &ts)
+            clock_getres(CLOCK_MONOTONIC, &ts)
           , boost::system::get_posix_category()
         );
         if (ec != boost::system::errc::success) {
