@@ -64,6 +64,44 @@ public:
       , typename boost::enable_if<boost::is_convertible<U, T> >::type* dummy = 0
     ) : n_(acc.n_), m_(acc.m_), v_(acc.v_) {}
 
+    /**
+     * Add value to accumulator.
+     */
+    template <typename V>
+    HALMD_GPU_ENABLED typename boost::enable_if<boost::is_convertible<V, T>, accumulator<T>&>::type
+    operator()(V const& value)
+    {
+        //
+        // The following method for calculating means and standard
+        // deviations with floating point arithmetic is described in
+        //
+        // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
+        // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
+        //
+        T const t = static_cast<T>(value) - m_;
+        n_++;
+        m_ += t / n_;
+        v_ += t * (static_cast<T>(value) - m_);
+        return *this;
+    }
+
+    /**
+     * Add accumulator to accumulator.
+     */
+    HALMD_GPU_ENABLED accumulator<T>&
+    operator()(accumulator<T> const& acc)
+    {
+        if (n_ > 0) {
+            typename accumulator<T>::size_type const count = n_ + acc.n_;
+            v_ += acc.v_;
+            T const diff = m_ - acc.m_;
+            v_ += diff * diff * n_ * acc.n_ / count;
+            m_ = (n_ * m_ + acc.n_ * acc.m_) / count;
+            n_ = count;
+        }
+        return *this;
+    }
+
     /** count */
     size_type n_;
     /** mean */
@@ -71,53 +109,6 @@ public:
     /** variance × count */
     value_type v_;
 };
-
-
-/**
- * Add value to accumulator.
- */
-template <typename T, typename V>
-HALMD_GPU_ENABLED typename boost::enable_if<boost::is_convertible<V, T>, accumulator<T>&>::type
-operator+=(accumulator<T>& acc, V const& value)
-{
-    //
-    // The following method for calculating means and standard
-    // deviations with floating point arithmetic is described in
-    //
-    // D.E. Knuth, Art of Computer Programming, Volume 2: Seminumerical
-    // Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 232
-    //
-    T const t = static_cast<T>(value) - acc.m_;
-    acc.n_++;
-    acc.m_ += t / acc.n_;
-    acc.v_ += t * (static_cast<T>(value) - acc.m_);
-    return acc;
-}
-
-/**
- * Add accumulator to accumulator.
- */
-template <typename T>
-HALMD_GPU_ENABLED accumulator<T>&
-operator+=(accumulator<T>& acc, accumulator<T> const& acc2)
-{
-    if (acc.n_ > 0) {
-        typename accumulator<T>::size_type const count = acc.n_ + acc2.n_;
-        acc.v_ += acc2.v_;
-        T const diff = acc.m_ - acc2.m_;
-        acc.v_ += diff * diff * acc.n_ * acc2.n_ / count;
-        acc.m_ = (acc.n_ * acc.m_ + acc2.n_ * acc2.m_) / count;
-        acc.n_ = count;
-    }
-    return acc;
-}
-
-template <typename T>
-HALMD_GPU_ENABLED accumulator<T>
-operator+(accumulator<T> acc, accumulator<T> const& acc2)
-{
-    return acc += acc2;
-}
 
 /**
  * Returns number of accumulated values.

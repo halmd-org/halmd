@@ -193,7 +193,7 @@ void thermodynamics(po::options vm)
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
         if(i > steps/2 && i % 10 == 0) {
-            temp_ += thermodynamics->temp();
+            temp_(thermodynamics->temp());
         }
     }
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), steps * eps);
@@ -207,9 +207,9 @@ void thermodynamics(po::options vm)
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
         if(i % 10 == 0) {
-            temp_  += thermodynamics->temp();
-            press  += thermodynamics->pressure();
-            en_pot += thermodynamics->en_pot();
+            temp_(thermodynamics->temp());
+            press(thermodynamics->pressure());
+            en_pot(thermodynamics->en_pot());
         }
     }
 

@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE( test_accumulator )
 
     for (unsigned i=0; i <= 1; i++) {
         for (unsigned j=0; j < 10; j++) {
-            a += j;
+            a(j);
         }
 
         BOOST_CHECK_EQUAL(count(a), 10u);

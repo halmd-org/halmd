@@ -65,7 +65,7 @@ void test_rand48_gpu( unsigned long n )
 
         halmd::accumulator<double> a;
         for (unsigned long i=0; i < n; i++) {
-            a += h_array[i];
+            a(h_array[i]);
          }
 
         // check count, mean, and variance
@@ -108,7 +108,7 @@ void test_gsl_rng( unsigned long n )
     // test uniform distribution
     halmd::accumulator<double> a;
     for (unsigned i=0; i < n; i++) {
-        a += uniform_01();
+        a(uniform_01());
     }
 
     // check count, mean, and variance
@@ -133,10 +133,10 @@ void test_gsl_rng( unsigned long n )
     halmd::accumulator<double> a3, a4;
     for (unsigned i=0; i < n; i++) {
         double x = normal(uniform_01);
-        a += x;
+        a(x);
         double x2 = x * x;
-        a3 += x * x2;
-        a4 += x2 * x2;
+        a3(x * x2);
+        a4(x2 * x2);
     }
 
     // mean = 0, std = 1
