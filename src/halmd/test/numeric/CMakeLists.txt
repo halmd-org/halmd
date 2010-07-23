@@ -13,6 +13,7 @@ add_executable(test_pow
 )
 target_link_libraries(test_pow
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   )
 add_test(numeric_pow
   test_pow

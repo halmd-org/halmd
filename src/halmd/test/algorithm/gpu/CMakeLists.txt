@@ -16,6 +16,7 @@ add_executable(test_scan
 )
 target_link_libraries(test_scan
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   ${CUDA_LIBRARIES}
 )
 add_test(algorithm_gpu_scan
@@ -29,6 +30,7 @@ target_link_libraries(test_radix_sort
   halmd_algorithm_gpu
   halmd_random_gpu
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   ${CUDA_LIBRARIES}
 )
 add_test(algorithm_gpu_radix_sort

@@ -33,7 +33,7 @@
 #include <halmd/main.hpp>
 #include <halmd/util/H5xx.hpp>
 #include <halmd/util/exception.hpp>
-#include <halmd/util/timer.hpp>
+#include <halmd/utility/timer.hpp>
 #include <halmd/utility/hostname.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/modules/factory.hpp>
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
     LOG("host name: " << host_name());
-    LOG("timer resolution: " << 1.E9 * halmd::high_resolution_timer::resolution() << " ns");
+    LOG("timer resolution: " << 1.E9 * utility::timer::resolution() << " ns");
 
     int status_ = halmd::HALMD_EXIT_SUCCESS;
 #ifdef NDEBUG

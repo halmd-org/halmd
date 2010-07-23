@@ -29,7 +29,7 @@
 
 #include <halmd/algorithm/gpu/scan.hpp>
 #include <halmd/test/tools/cuda.hpp>
-#include <halmd/util/timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
@@ -38,8 +38,6 @@ void compare_scan( size_t count )
     const unsigned threads = 256;
 
     BOOST_TEST_MESSAGE( "Scanning " << count << " elements");
-
-    halmd::high_resolution_timer start, stop;
 
     // generate array of ascending integers
     cuda::host::vector<uint> h_array(count);
@@ -52,26 +50,26 @@ void compare_scan( size_t count )
     // parallel exclusive prefix sum
     halmd::algorithm::gpu::scan<uint> scan(count, threads);
     cuda::host::vector<uint> h_array2(count);
-    start.record();
+    halmd::utility::timer timer;
     scan(g_array);
     cuda::thread::synchronize();
-    stop.record();
+    double elapsed = timer.elapsed();
     cuda::copy(g_array, h_array2);
 
     BOOST_TEST_MESSAGE("GPU time: " << std::fixed << std::setprecision(3)
-                       << (stop - start) * 1e3 << " ms");
+                       << elapsed * 1e3 << " ms");
 
     // serial prefix sum
     std::vector<uint> h_array3(count);
-    start.record();
+    timer.restart();
     h_array3[0] = 0;
     for (uint i = 1; i < count; ++i) {
         h_array3[i] = h_array[i - 1] + h_array3[i - 1];
     }
-    stop.record();
+    elapsed = timer.elapsed();
 
     BOOST_TEST_MESSAGE("CPU time: " << std::fixed << std::setprecision(3)
-                       << (stop - start) * 1e3 << " ms");
+                       << elapsed * 1e3 << " ms");
 
     // compare results
     BOOST_CHECK_MESSAGE(std::equal(h_array2.begin(), h_array2.end(), h_array3.begin()),

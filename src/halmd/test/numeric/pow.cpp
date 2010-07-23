@@ -21,11 +21,12 @@
 #define BOOST_TEST_MODULE test_math_pow
 #include <boost/test/unit_test.hpp>
 
+#include <boost/array.hpp>
 #include <cmath>
 #include <limits>
 
 #include <halmd/numeric/pow.hpp>
-#include <halmd/util/timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 const double eps = std::numeric_limits<double>::epsilon();
 
@@ -51,36 +52,36 @@ BOOST_AUTO_TEST_CASE( correctness )
 
 BOOST_AUTO_TEST_CASE( performance )
 {
-    high_resolution_timer timer[6];
+    boost::array<double, 3> elapsed;
     unsigned n;
     #define index 12
 
     BOOST_TEST_MESSAGE("evaluation time of x^" << index << " in nanoseconds:");
-    timer[0].record();
+    halmd::utility::timer timer;
     double a = 0;
     for (n=0; n < 10000000; n++) {
         a += fixed_pow<index>((double)n);
     }
-    timer[1].record();
-    BOOST_TEST_MESSAGE("  fixed_pow: " << 1e9 * (timer[1] - timer[0]) / n);
+    elapsed[0] = timer.elapsed();
+    BOOST_TEST_MESSAGE("  fixed_pow: " << 1e9 * elapsed[0] / n);
 
-    timer[2].record();
+    timer.restart();
     double b = 0;
     for (n=0; n < 10000000; n++) {
         b += std::pow((double)n, index);
     }
-    timer[3].record();
-    BOOST_TEST_MESSAGE("  std::pow: " << 1e9 * (timer[3] - timer[2]) / n);
+    elapsed[1] = timer.elapsed();
+    BOOST_TEST_MESSAGE("  std::pow: " << 1e9 * elapsed[1] / n);
 
-    timer[4].record();
+    timer.restart();
     double c = 0;
     for (n=0; n < 100000; n++) {
         c += std::pow((double)n, double(index));
     }
-    timer[5].record();
-    BOOST_TEST_MESSAGE("  std::pow (double): " << 1e9 * (timer[5] - timer[4]) / n);
+    elapsed[2] = timer.elapsed();
+    BOOST_TEST_MESSAGE("  std::pow (double): " << 1e9 * elapsed[2] / n);
 
     BOOST_CHECK_CLOSE_FRACTION(a, b, 2 * eps);
-    BOOST_CHECK_MESSAGE(timer[1] - timer[0] < .9 * (timer[3] - timer[2]),
+    BOOST_CHECK_MESSAGE(elapsed[0] < .9 * elapsed[1],
                         "improvement of fixed_pow is less than 20% in speed");
 }

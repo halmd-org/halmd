@@ -34,7 +34,7 @@
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/test/tools/cuda.hpp>
-#include <halmd/util/timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
@@ -43,7 +43,6 @@ void compare_radix_sort( size_t count )
     const unsigned threads = 128;
     const unsigned seed = 42;
 
-    halmd::high_resolution_timer start, stop;
     using halmd::random::gpu::rand48;
 
     // generate array of random integers in [0, 2^32-1] on GPU
@@ -61,14 +60,14 @@ void compare_radix_sort( size_t count )
     halmd::algorithm::gpu::radix_sort<uint> sort(count, threads);
     cuda::vector<uint> g_dummy(count);
     cuda::host::vector<uint> h_array2(count);
-    start.record();
+    halmd::utility::timer timer;
     sort(g_array, g_dummy);
     cuda::thread::synchronize();
-    stop.record();
+    double elapsed = timer.elapsed();
     cuda::copy(g_array, h_array2);
 
     BOOST_TEST_MESSAGE("GPU time: " << std::fixed << std::setprecision(3)
-                       << (stop - start) * 1e3 << " ms");
+                       << elapsed * 1e3 << " ms");
 
     using halmd::algorithm::gpu::BUCKET_SIZE;
     using halmd::algorithm::gpu::RADIX;
@@ -77,7 +76,7 @@ void compare_radix_sort( size_t count )
     std::vector<uint> h_array3(count);
     boost::array<std::deque<uint>, BUCKET_SIZE> h_buckets;
     std::copy(h_array.begin(), h_array.end(), h_array3.begin());
-    start.record();
+    timer.restart();
     for (uint r = 0; r < 32; r += RADIX) {
         for (uint i = 0; i < count; ++i) {
             h_buckets[(h_array3[i] >> r) & 0xff].push_back(h_array3[i]);
@@ -90,10 +89,10 @@ void compare_radix_sort( size_t count )
             }
         }
     }
-    stop.record();
+    elapsed = timer.elapsed();
 
     BOOST_TEST_MESSAGE("CPU time: " << std::fixed << std::setprecision(3)
-                       << (stop - start) * 1e3 << " ms");
+                       << elapsed * 1e3 << " ms");
 
     // compare sorted result vectors
     BOOST_CHECK_MESSAGE(std::equal(h_array2.begin(), h_array2.end(), h_array3.begin()),

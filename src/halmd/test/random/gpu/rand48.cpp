@@ -29,7 +29,7 @@
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/test/tools/cuda.hpp>
-#include <halmd/util/timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 //
 // Parallel GPU rand48 random number generator test
@@ -50,28 +50,28 @@ BOOST_AUTO_TEST_CASE( compare_variates )
     BOOST_TEST_MESSAGE("seed: " << seed);
 
     using halmd::random::gpu::rand48;
-    halmd::high_resolution_timer start, stop;
 
     // seed GPU random number generator
     rand48 rng(blocks, threads);
-    start.record();
+    halmd::utility::timer timer;
+    timer.restart();
     rng.seed(seed);
     cuda::copy(rng.rng(), halmd::random::gpu::get_random_kernel<rand48::rng_type>().rng);
-    stop.record();
+    double elapsed = timer.elapsed();
 
     BOOST_TEST_MESSAGE("seed GPU time: " << std::fixed << std::setprecision(3)
-                       << (stop - start) * 1e3 << " ms");
+                       << elapsed * 1e3 << " ms");
 
     // parallel GPU rand48
     cuda::vector<uint> g_array(count);
-    start.record();
+    timer.restart();
     cuda::configure(rng.dim.grid, rng.dim.block);
     halmd::random::gpu::get_random_kernel<rand48::rng_type>().get(g_array, g_array.size());
     cuda::thread::synchronize();
-    stop.record();
+    elapsed = timer.elapsed();
 
     BOOST_TEST_MESSAGE("rand48 GPU time: " << std::fixed << std::setprecision(3)
-                       << (stop - start) * 1e3 << " ms");
+                       << elapsed * 1e3 << " ms");
 
     cuda::host::vector<uint> h_array(count);
     cuda::copy(g_array, h_array);
@@ -79,12 +79,12 @@ BOOST_AUTO_TEST_CASE( compare_variates )
     // serial GNU C library rand48
     std::vector<uint> h_array2(count);
     srand48(seed);
-    start.record();
+    timer.restart();
     std::generate(h_array2.begin(), h_array2.end(), mrand48);
-    stop.record();
+    elapsed = timer.elapsed();
 
     BOOST_TEST_MESSAGE("rand48 CPU time: " << std::fixed << std::setprecision(3)
-                       << (stop - start) * 1e3 << " ms");
+                       << elapsed * 1e3 << " ms");
 
     // compare GPU and CPU variates
     BOOST_CHECK_MESSAGE(std::equal(h_array.begin(), h_array.end(), h_array2.begin()),
