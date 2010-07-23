@@ -1,6 +1,6 @@
 /* Performance data
  *
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2009  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,15 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_PERF_HPP
-#define HALMD_UTILITY_PERF_HPP
+#ifndef HALMD_SAMPLE_PERF_HPP
+#define HALMD_SAMPLE_PERF_HPP
 
 #include <boost/assign.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/unordered_map.hpp>
 #include <string>
 
-#include <halmd/numeric/accumulator.hpp>
+#include <halmd/math/accum.hpp>
 #include <halmd/sample/H5param.hpp>
 #include <halmd/util/H5xx.hpp>
 
@@ -86,4 +86,4 @@ std::ostream& operator<<(std::ostream& os, perf::counters const& times);
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_PERF_HPP */
+#endif /* ! HALMD_SAMPLE_PERF_HPP */

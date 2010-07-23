@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -29,7 +29,6 @@
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/options.hpp>
-#include <halmd/utility/perf.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
@@ -63,9 +62,6 @@ public:
     shared_ptr<integrator_type> integrator;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
-
-    /** performance data, runtime accumulators */
-    perf::counters mutable runtimes;
 };
 
 } // namespace mdsim
