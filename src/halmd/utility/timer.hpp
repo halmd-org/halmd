@@ -23,6 +23,7 @@
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
 #include <ctime>
+#include <limits>
 
 namespace halmd
 {
@@ -41,64 +42,83 @@ public:
     /**
      * start timer
      */
-    timer()
-    {
-        timer::gettime(ts_);
-    }
+    timer();
 
     /**
      * restart timer
      */
-    void restart()
-    {
-        timer::gettime(ts_);
-    }
+    void restart();
 
     /**
      * returns elapsted time
      */
-    double elapsed() const
-    {
-        struct timespec ts;
-        timer::gettime(ts);
-        return (ts.tv_sec - ts_.tv_sec) + 1.e-9 * (ts.tv_nsec - ts_.tv_nsec);
-    }
+    double elapsed() const;
+
+    static double elapsed_max();
 
     /**
      * returns resolution of timer
      */
-    static double resolution()
-    {
-        struct timespec ts;
-        timer::getres(ts);
-        return ts.tv_sec + 1.e-9 * ts.tv_nsec;
-    }
+    static double elapsed_min();
 
 private:
-    static void gettime(struct timespec& ts)
-    {
-        boost::system::error_code ec(
-            clock_gettime(CLOCK_MONOTONIC, &ts)
-          , boost::system::get_posix_category()
-        );
-        if (ec != boost::system::errc::success) {
-            throw boost::system::system_error(ec);
-        }
-    }
+    static void gettime(struct timespec& ts);
 
-    static void getres(struct timespec& ts)
-    {
-        boost::system::error_code ec(
-            clock_getres(CLOCK_MONOTONIC, &ts)
-          , boost::system::get_posix_category()
-        );
-        if (ec != boost::system::errc::success) {
-            throw boost::system::system_error(ec);
-        }
-    }
+    static void getres(struct timespec& ts);
 
     struct timespec ts_;
 };
+
+inline timer::timer()
+{
+    timer::gettime(ts_);
+}
+
+inline void timer::restart()
+{
+    timer::gettime(ts_);
+}
+
+inline double timer::elapsed() const
+{
+    struct timespec ts;
+    timer::gettime(ts);
+    return (ts.tv_sec - ts_.tv_sec) + 1.e-9 * (ts.tv_nsec - ts_.tv_nsec);
+}
+
+inline double timer::elapsed_max()
+{
+    return std::numeric_limits<double>::max();
+}
+
+inline double timer::elapsed_min()
+{
+    struct timespec ts;
+    timer::getres(ts);
+    return ts.tv_sec + 1.e-9 * ts.tv_nsec;
+}
+
+inline void timer::gettime(struct timespec& ts)
+{
+    boost::system::error_code ec(
+        clock_gettime(CLOCK_MONOTONIC, &ts)
+      , boost::system::get_posix_category()
+    );
+    if (ec != boost::system::errc::success) {
+        throw boost::system::system_error(ec);
+    }
+}
+
+inline void timer::getres(struct timespec& ts)
+{
+    boost::system::error_code ec(
+        clock_getres(CLOCK_MONOTONIC, &ts)
+      , boost::system::get_posix_category()
+    );
+    if (ec != boost::system::errc::success) {
+        throw boost::system::system_error(ec);
+    }
+}
 
 } // namespace utility
 

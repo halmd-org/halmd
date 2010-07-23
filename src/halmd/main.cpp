@@ -109,7 +109,7 @@ int main(int argc, char **argv)
     LOG("command line: " << boost::algorithm::join(cmd, " "));
 
     LOG("host name: " << host_name());
-    LOG("timer resolution: " << 1.E9 * utility::timer::resolution() << " ns");
+    LOG("timer resolution: " << 1.E9 * utility::timer::elapsed_min() << " ns");
 
     int status_ = halmd::HALMD_EXIT_SUCCESS;
 #ifdef NDEBUG
