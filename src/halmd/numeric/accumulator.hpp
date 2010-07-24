@@ -68,7 +68,7 @@ public:
      * Add value to accumulator.
      */
     template <typename V>
-    HALMD_GPU_ENABLED typename boost::enable_if<boost::is_convertible<V, T>, accumulator<T>&>::type
+    HALMD_GPU_ENABLED typename boost::enable_if<boost::is_convertible<V, T>, void>::type
     operator()(V const& value)
     {
         //
@@ -82,13 +82,12 @@ public:
         n_++;
         m_ += t / n_;
         v_ += t * (static_cast<T>(value) - m_);
-        return *this;
     }
 
     /**
      * Add accumulator to accumulator.
      */
-    HALMD_GPU_ENABLED accumulator<T>&
+    HALMD_GPU_ENABLED void
     operator()(accumulator<T> const& acc)
     {
         if (n_ > 0) {
@@ -99,7 +98,6 @@ public:
             m_ = (n_ * m_ + acc.n_ * acc.m_) / count;
             n_ = count;
         }
-        return *this;
     }
 
     /** count */
