@@ -60,7 +60,7 @@ void compare_radix_sort( size_t count )
     halmd::algorithm::gpu::radix_sort<uint> sort(count, threads);
     cuda::vector<uint> g_dummy(count);
     cuda::host::vector<uint> h_array2(count);
-    halmd::utility::timer timer;
+    halmd::timer timer;
     sort(g_array, g_dummy);
     cuda::thread::synchronize();
     double elapsed = timer.elapsed();

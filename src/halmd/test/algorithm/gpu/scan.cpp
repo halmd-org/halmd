@@ -50,7 +50,7 @@ void compare_scan( size_t count )
     // parallel exclusive prefix sum
     halmd::algorithm::gpu::scan<uint> scan(count, threads);
     cuda::host::vector<uint> h_array2(count);
-    halmd::utility::timer timer;
+    halmd::timer timer;
     scan(g_array);
     cuda::thread::synchronize();
     double elapsed = timer.elapsed();

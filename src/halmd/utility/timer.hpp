@@ -27,8 +27,6 @@
 
 namespace halmd
 {
-namespace utility
-{
 
 /**
  * High-resolution timer
@@ -119,8 +117,6 @@ inline void timer::getres(struct timespec& ts)
         throw boost::system::system_error(ec);
     }
 }
-
-} // namespace utility
 
 } // namespace halmd
 

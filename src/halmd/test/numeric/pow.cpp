@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE( performance )
     #define index 12
 
     BOOST_TEST_MESSAGE("evaluation time of x^" << index << " in nanoseconds:");
-    halmd::utility::timer timer;
+    halmd::timer timer;
     double a = 0;
     for (n=0; n < 10000000; n++) {
         a += fixed_pow<index>((double)n);

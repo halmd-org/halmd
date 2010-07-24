@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE( compare_variates )
 
     // seed GPU random number generator
     rand48 rng(blocks, threads);
-    halmd::utility::timer timer;
+    halmd::timer timer;
     timer.restart();
     rng.seed(seed);
     cuda::copy(rng.rng(), halmd::random::gpu::get_random_kernel<rand48::rng_type>().rng);
