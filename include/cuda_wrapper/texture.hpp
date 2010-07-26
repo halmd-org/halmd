@@ -71,6 +71,12 @@ public:
 #endif /* ! __CUDACC__ */
 
 private:
+#ifndef __CUDACC__
+    // provide host constructor to avoid GCC 4.4 warning
+    texture(textureReference const& dummy)
+      : tex(dummy) {}
+#endif
+
     textureReference const& tex;
     cudaChannelFormatDesc const cd;
 };
