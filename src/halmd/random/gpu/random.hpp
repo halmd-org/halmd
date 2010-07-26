@@ -53,8 +53,9 @@ public:
     typedef typename RandomNumberGenerator::rng_type rng_type;
     typedef utility::gpu::device device_type;
 
-    RandomNumberGenerator rng;
     shared_ptr<device_type> device;
+
+    RandomNumberGenerator rng;
 
     random(modules::factory& factory, po::options const& vm);
     virtual ~random() {}
