@@ -17,16 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_MODULES_DEMANGLE_HPP
-#define HALMD_UTILITY_MODULES_DEMANGLE_HPP
+#ifndef HALMD_UTILITY_DEMANGLE_HPP
+#define HALMD_UTILITY_DEMANGLE_HPP
 
 #include <cxxabi.h>
 #include <string>
 #include <typeinfo>
 
 namespace halmd
-{
-namespace modules
 {
 
 /**
@@ -48,8 +46,6 @@ inline std::string demangled_name()
     }
 }
 
-} // namespace modules
-
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_MODULES_DEMANGLE_HPP */
+#endif /* ! HALMD_UTILITY_DEMANGLE_HPP */

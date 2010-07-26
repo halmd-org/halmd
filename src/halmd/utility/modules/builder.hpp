@@ -27,7 +27,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/modules/concept.hpp>
-#include <halmd/utility/modules/demangle.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/modules/exception.hpp>
 #include <halmd/utility/options.hpp>
 

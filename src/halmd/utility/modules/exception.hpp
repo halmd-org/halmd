@@ -23,7 +23,7 @@
 #include <exception>
 #include <string>
 
-#include <halmd/utility/modules/demangle.hpp>
+#include <halmd/utility/demangle.hpp>
 
 namespace halmd
 {
