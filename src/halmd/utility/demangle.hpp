@@ -30,11 +30,10 @@ namespace halmd
 /**
  * return type name in human readable format
  */
-template <typename T>
-inline std::string demangled_name()
+inline std::string demangled_name(std::type_info const& type)
 {
     int status;
-    char* buf = abi::__cxa_demangle(typeid(T).name(), 0, 0, &status);
+    char* buf = abi::__cxa_demangle(type.name(), 0, 0, &status);
 
     if(!status) {
         std::string s(buf);
@@ -42,8 +41,14 @@ inline std::string demangled_name()
         return s;
     }
     else {
-        return typeid(T).name();
+        return type.name();
     }
+}
+
+template <typename T>
+inline std::string demangled_name()
+{
+    return demangled_name(typeid(T));
 }
 
 } // namespace halmd
