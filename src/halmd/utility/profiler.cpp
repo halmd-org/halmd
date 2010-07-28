@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/profile/writer.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/profiler.hpp>
 
 using namespace boost;
@@ -26,6 +28,37 @@ namespace halmd
 {
 namespace utility
 {
+
+/**
+ * Resolve module dependencies
+ */
+void profiler::depends()
+{
+    modules::depends<_Self, profile_writer_type>::required();
+}
+
+profiler::profiler(modules::factory& factory, po::options const& vm)
+  // dependency injection
+  : profile_writer(modules::fetch<profile_writer_type>(factory, vm)) {}
+
+void profiler::register_accumulator(
+    std::type_info const& tag
+  , accumulator_type const& acc
+  , std::string const& desc
+) const
+{
+    for_each(
+        profile_writer.begin()
+      , profile_writer.end()
+      , bind(
+            &profile_writer_type::register_accumulator
+          , _1
+          , tokenized_name(tag) // namespace and class template tokens
+          , cref(acc)
+          , cref(desc)
+        )
+    );
+}
 
 } // namespace utility
 

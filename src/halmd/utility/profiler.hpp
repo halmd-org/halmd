@@ -21,6 +21,7 @@
 #define HALMD_UTILITY_PROFILER_HPP
 
 #include <boost/fusion/include/at_key.hpp>
+#include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/map.hpp>
 
 #include <halmd/numeric/accumulator.hpp>
@@ -29,9 +30,25 @@
 
 namespace halmd
 {
+namespace io { namespace profile
+{
+
+// forward declaration
+class writer;
+
+}} // namespace io::profile
 
 namespace utility
 {
+
+namespace detail { namespace profiler
+{
+
+// forward declaration
+struct visitor;
+
+}} // namespace detail::profiler
+
 
 /**
  * This module delegates registrations of runtime accumulator
@@ -43,27 +60,63 @@ public:
     // module definitions
     typedef profiler _Self;
     static void options(po::options_description& desc) {}
-    static void depends() {}
+    static void depends();
     static void select(po::options const& vm) {}
 
-    profiler(modules::factory& factory, po::options const& vm) {}
+    typedef io::profile::writer profile_writer_type;
+    typedef accumulator<double> accumulator_type;
+
+    std::vector<shared_ptr<profile_writer_type> > profile_writer;
+
+    profiler(modules::factory& factory, po::options const& vm);
 
     template <typename AccumulatorMap>
     void register_map(AccumulatorMap const& map)
     {
-        // FIXME
+        boost::fusion::for_each(map, detail::profiler::visitor(*this));
     }
+
+private:
+    friend class detail::profiler::visitor;
+    void register_accumulator(
+        std::type_info const& tag
+      , accumulator_type const& acc
+      , std::string const& desc
+    ) const;
 };
 
 /**
  * Define tag for runtime accumulator within module.
  */
-#define HALMD_PROFILE_TAG(__tag__, __desc__) \
-    struct __tag__ { \
-        static char const* desc() { \
-            return __desc__; \
-        } \
+#define HALMD_PROFILE_TAG(__tag__, __desc__)    \
+    struct __tag__ {                            \
+        static char const* desc() {             \
+            return __desc__;                    \
+        }                                       \
     }
+
+namespace detail { namespace profiler
+{
+
+/**
+ * Extract tag type and accumulator reference from boost::fusion::pair.
+ */
+struct visitor
+{
+    template <typename TaggedAccumulator>
+    void operator()(TaggedAccumulator const& acc) const
+    {
+        p.register_accumulator(
+            typeid(typename TaggedAccumulator::first_type)
+          , acc.second
+          , TaggedAccumulator::first_type::desc()
+        );
+    }
+    visitor(utility::profiler const& p) : p(p) {}
+    utility::profiler const& p;
+};
+
+}} // namespace detail::profiler
 
 } // namespace utility
 

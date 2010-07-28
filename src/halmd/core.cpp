@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <boost/bind.hpp>
+
 #include <halmd/core.hpp>
 #include <halmd/io/logger.hpp>
 
@@ -49,6 +52,7 @@ template <int dimension>
 void core<dimension>::depends()
 {
     modules::depends<_Self, mdsim_type>::required();
+    modules::depends<_Self, profile_writer_type>::required();
 }
 
 template <int dimension>
@@ -56,6 +60,7 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   // dependency injection
   , mdsim(modules::fetch<mdsim_type>(factory, vm))
+  , profile_writers(modules::fetch<profile_writer_type>(factory, vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {
@@ -84,6 +89,12 @@ void core<dimension>::run()
     }
 
     LOG("finished simulation");
+
+    for_each(
+        profile_writers.begin()
+      , profile_writers.end()
+      , bind(&profile_writer_type::write, _1)
+    );
 }
 
 // explicit instantiation

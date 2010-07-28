@@ -22,6 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/io/profile/writer.hpp>
 #include <halmd/main.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/utility/options.hpp>
@@ -43,6 +44,7 @@ public:
     static void select(po::options const& vm) {}
 
     typedef mdsim::core<dimension> mdsim_type;
+    typedef io::profile::writer profile_writer_type;
 
     core(modules::factory& factory, po::options const& vm);
     void run();
@@ -50,6 +52,7 @@ public:
     double time() { return time_; }
 
     shared_ptr<mdsim_type> mdsim;
+    std::vector<shared_ptr<profile_writer_type> > profile_writers;
 
 protected:
     /** number of integration steps */
