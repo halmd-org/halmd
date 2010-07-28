@@ -89,21 +89,9 @@ public:
     bool check();
 
     // module runtime accumulator descriptions
-    struct check_ {
-        static char const* desc() {
-            return "neighbour update criterion";
-        }
-    };
-    struct update_cells_ {
-        static char const* desc() {
-            return "cell lists update";
-        }
-    };
-    struct update_neighbours_ {
-        static char const* desc() {
-            return "neighbour lists update";
-        }
-    };
+    HALMD_PROFILE_TAG( check_, "neighbour update criterion" );
+    HALMD_PROFILE_TAG( update_cells_, "cell lists update" );
+    HALMD_PROFILE_TAG( update_neighbours_, "neighbour lists update" );
 
 protected:
     friend class sort::hilbert<dimension, float_type>;

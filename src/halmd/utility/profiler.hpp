@@ -55,6 +55,16 @@ public:
     }
 };
 
+/**
+ * Define tag for runtime accumulator within module.
+ */
+#define HALMD_PROFILE_TAG(__tag__, __desc__) \
+    struct __tag__ { \
+        static char const* desc() { \
+            return __desc__; \
+        } \
+    }
+
 } // namespace utility
 
 } // namespace halmd

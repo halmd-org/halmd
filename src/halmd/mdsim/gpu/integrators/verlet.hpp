@@ -63,16 +63,8 @@ public:
     void finalize();
 
     // module runtime accumulator descriptions
-    struct integrate_ {
-        static char const* desc() {
-            return "first half-step of velocity-Verlet";
-        }
-    };
-    struct finalize_ {
-        static char const* desc() {
-            return "second half-step of velocity-Verlet";
-        }
-    };
+    HALMD_PROFILE_TAG( integrate_, "first half-step of velocity-Verlet" );
+    HALMD_PROFILE_TAG( finalize_, "second half-step of velocity-Verlet" );
 
 protected:
     /** integration time-step */

@@ -67,11 +67,7 @@ public:
     shared_ptr<profiler_type> profiler;
 
     // module runtime accumulator descriptions
-    struct mdstep_ {
-        static char const* desc() {
-            return "MD integration step";
-        }
-    };
+    HALMD_PROFILE_TAG( mdstep_, "MD integration step" );
 
 private:
     boost::fusion::map<

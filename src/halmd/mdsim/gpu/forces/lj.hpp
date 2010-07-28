@@ -56,11 +56,7 @@ public:
     matrix_type const& cutoff() { return r_cut_; }
 
     // module runtime accumulator descriptions
-    struct compute_ {
-        static char const* desc() {
-            return "Lennard-Jones forces";
-        }
-    };
+    HALMD_PROFILE_TAG( compute_, "Lennard-Jones forces" );
 
 protected:
     /** potential well depths in MD units */
