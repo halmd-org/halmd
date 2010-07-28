@@ -53,6 +53,13 @@ public:
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }
 
+    // module runtime accumulator descriptions
+    struct compute_ {
+        static char const* desc() {
+            return "Lennard-Jones forces";
+        }
+    };
+
 protected:
     /** potential well depths in MD units */
     matrix_type epsilon_;
@@ -70,6 +77,11 @@ protected:
     matrix_type en_cut_;
     /** Lennard-Jones potential parameters */
     cuda::vector<float4> g_ljparam_;
+
+private:
+    boost::fusion::map<
+        boost::fusion::pair<compute_, accumulator<double> >
+    > runtime_;
 };
 
 }}} // namespace mdsim::gpu::forces

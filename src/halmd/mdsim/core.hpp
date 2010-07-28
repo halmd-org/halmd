@@ -28,8 +28,9 @@
 #include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/utility/options.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/options.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -62,6 +63,18 @@ public:
     shared_ptr<integrator_type> integrator;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
+
+    // module runtime accumulator descriptions
+    struct mdstep_ {
+        static char const* desc() {
+            return "MD integration step";
+        }
+    };
+
+private:
+    boost::fusion::map<
+        boost::fusion::pair<mdstep_, accumulator<double> >
+    > runtime_;
 };
 
 } // namespace mdsim

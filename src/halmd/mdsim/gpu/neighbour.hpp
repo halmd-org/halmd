@@ -86,6 +86,23 @@ public:
     void update();
     bool check();
 
+    // module runtime accumulator descriptions
+    struct check_ {
+        static char const* desc() {
+            return "neighbour update criterion";
+        }
+    };
+    struct update_cells_ {
+        static char const* desc() {
+            return "cell lists update";
+        }
+    };
+    struct update_neighbours_ {
+        static char const* desc() {
+            return "neighbour lists update";
+        }
+    };
+
 protected:
     friend class sort::hilbert<dimension, float_type>;
 
@@ -131,6 +148,13 @@ protected:
     cuda::vector<unsigned int> g_cell_permutation_;
     /** cell offsets in sorted particle list */
     cuda::vector<unsigned int> g_cell_offset_;
+
+private:
+    boost::fusion::map<
+        boost::fusion::pair<check_, accumulator<double> >
+      , boost::fusion::pair<update_cells_, accumulator<double> >
+      , boost::fusion::pair<update_neighbours_, accumulator<double> >
+    > runtime_;
 };
 
 }} // namespace mdsim::gpu

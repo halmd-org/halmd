@@ -24,6 +24,10 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
+
+using namespace boost::fusion;
 
 namespace halmd
 {
@@ -88,6 +92,7 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     try {
+        scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper->integrate(
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
@@ -110,6 +115,7 @@ void verlet<dimension, float_type>::finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
+        scoped_timer<timer> timer_(at_key<finalize_>(runtime_));
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper->finalize(particle->g_v, particle->g_f);
         cuda::thread::synchronize();

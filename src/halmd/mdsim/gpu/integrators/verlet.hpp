@@ -60,11 +60,29 @@ public:
     void integrate();
     void finalize();
 
+    // module runtime accumulator descriptions
+    struct integrate_ {
+        static char const* desc() {
+            return "first half-step of velocity-Verlet";
+        }
+    };
+    struct finalize_ {
+        static char const* desc() {
+            return "second half-step of velocity-Verlet";
+        }
+    };
+
 protected:
     /** integration time-step */
     using _Base::timestep_;
     /** half time-step */
     double timestep_half_;
+
+private:
+    boost::fusion::map<
+        boost::fusion::pair<integrate_, accumulator<double> >
+      , boost::fusion::pair<finalize_, accumulator<double> >
+    > runtime_;
 };
 
 }}} // namespace mdsim::gpu::integrators

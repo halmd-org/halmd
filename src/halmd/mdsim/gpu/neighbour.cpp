@@ -26,8 +26,11 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 using namespace boost;
+using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -202,6 +205,7 @@ neighbour<dimension, float_type>::get_displacement_impl(int threads)
 template <int dimension, typename float_type>
 bool neighbour<dimension, float_type>::check()
 {
+    scoped_timer<timer> timer_(at_key<check_>(runtime_));
     try {
         cuda::configure(dim_reduce.grid, dim_reduce.block, dim_reduce.threads_per_block() * sizeof(float));
         displacement_impl(particle->g_r, g_r0_, g_rr_);
@@ -220,6 +224,8 @@ bool neighbour<dimension, float_type>::check()
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update_cells()
 {
+    scoped_timer<timer> timer_(at_key<update_cells_>(runtime_));
+
     // compute cell indices for particle positions
     cuda::configure(particle->dim.grid, particle->dim.block);
     get_neighbour_kernel<dimension>().compute_cell(particle->g_r, g_cell_index_);
@@ -252,6 +258,8 @@ void neighbour<dimension, float_type>::update_cells()
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update_neighbours()
 {
+    scoped_timer<timer> timer_(at_key<update_neighbours_>(runtime_));
+
     // mark neighbour list placeholders as virtual particles
     cuda::memset(particle->g_neighbour, 0xFF);
     // build neighbour lists

@@ -21,8 +21,12 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
+
 
 using namespace boost;
+using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -89,6 +93,7 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
 template <int dimension>
 inline void core<dimension>::mdstep()
 {
+    scoped_timer<timer> timer_(at_key<mdstep_>(runtime_));
     integrator->integrate();
     if (neighbour->check()) {
         if (sort) {

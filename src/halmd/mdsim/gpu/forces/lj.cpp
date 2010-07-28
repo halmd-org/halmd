@@ -28,9 +28,12 @@
 #include <halmd/mdsim/gpu/forces/lj.hpp>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace boost::assign;
+using namespace boost::fusion;
 using namespace boost::numeric::ublas;
 
 namespace halmd
@@ -152,6 +155,7 @@ void lj<dimension, float_type>::compute()
 #ifdef USE_FORCE_DSFUN
 #endif /* HALMD_VARIANT_FORCE_DSFUN */
 
+    scoped_timer<timer> timer_(at_key<compute_>(runtime_));
     cuda::copy(particle->neighbour_size, get_lj_kernel<dimension>().neighbour_size);
     cuda::copy(particle->neighbour_stride, get_lj_kernel<dimension>().neighbour_stride);
     get_lj_kernel<dimension>().r.bind(particle->g_r);

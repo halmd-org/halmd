@@ -23,6 +23,7 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
