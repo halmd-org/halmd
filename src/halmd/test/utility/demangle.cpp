@@ -21,6 +21,8 @@
 #define BOOST_TEST_MODULE demangle
 #include <boost/test/unit_test.hpp>
 
+#include <boost/assign/list_of.hpp>
+#include <boost/lambda/lambda.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/vector.hpp>
 
@@ -73,6 +75,18 @@ struct test_type
     >::type type;
 };
 
+namespace std {
+
+// needed for Boost Test failure message
+static inline ostream& operator<<(ostream& os, vector<string> const& v)
+{
+    for_each(v.begin(), v.end(), os << boost::lambda::_1);
+    return os;
+}
+
+} // namespace std
+
+using namespace boost::assign;
 using namespace halmd;
 using namespace std;
 
@@ -101,4 +115,33 @@ BOOST_AUTO_TEST_CASE( test_demangled_name )
                        "mdsim::gpu::force<3, mdsim::core<3, core<3> > >::LennardJones<mdsim::core<3, core<3> > >");
     BOOST_CHECK_EQUAL( demangled_name<test_type<8>::type >(),
                        "mdsim::core<3, core<3> >");
+}
+
+/**
+ * test type tokenization without template parameters
+ */
+BOOST_AUTO_TEST_CASE( test_tokenized_name )
+{
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<0>::type >(),
+                       list_of("main_") );
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<1>::type >(),
+                       list_of("core") );
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<2>::type >(),
+                       list_of("core") );
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<3>::type >(),
+                       list_of("mdsim")("core") );
+    BOOST_CHECK_NE( tokenized_name<test_type<3>::type >(), // validate vector comparison
+                       list_of("mdsimcore") );
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<4>::type >(),
+                       list_of("mdsim")("gpu")("force") );
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<5>::type >(),
+                       list_of("mdsim")("gpu")("force") );
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<6>::type >(),
+                       list_of("mdsim")("gpu")("force")("LennardJones") );
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<7>::type >(),
+                       list_of("mdsim")("gpu")("force")("LennardJones") );
+    BOOST_CHECK_EQUAL( tokenized_name(typeid(test_type<7>::type)), // alternative syntax
+                       list_of("mdsim")("gpu")("force")("LennardJones") );
+    BOOST_CHECK_EQUAL( tokenized_name<test_type<8>::type >(),
+                       list_of("mdsim")("core") );
 }

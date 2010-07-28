@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -22,6 +22,7 @@
 
 #include <string>
 #include <typeinfo>
+#include <vector>
 
 // This check is from <boost/units/detail/utility.hpp>.
 #if defined(__GLIBCXX__) || defined(__GLIBCPP__)
@@ -58,6 +59,50 @@ template <typename T>
 inline std::string demangled_name()
 {
     return demangled_name(typeid(T));
+}
+
+/**
+ * split type into namespace and class template tokens
+ */
+inline std::vector<std::string> tokenized_name(std::type_info const& type)
+{
+    std::vector<std::string> tokens;
+    std::string name(demangled_name(type));
+    std::string::const_iterator end = name.end();
+    std::string::const_iterator it = name.begin();
+    std::string token;
+    token.reserve(name.size());
+    while (it != end) {
+        if (*it == '<') { // opening bracket of template parameter(s)
+            std::string::size_type bracket = 1;
+            while (bracket) { // skip until matching closing bracket
+                ++it;
+                if (*it == '<') {
+                    ++bracket;
+                }
+                else if (*it == '>') {
+                    --bracket;
+                }
+            }
+        }
+        else if (*it == ':') { // start of namespace delimiter "::"
+            tokens.push_back(token);
+            token.clear();
+            ++it; // skip second ":"
+        }
+        else {
+            token += *it; // append character to token
+        }
+        ++it;
+    }
+    tokens.push_back(token);
+    return tokens;
+}
+
+template <typename T>
+inline std::vector<std::string> tokenized_name()
+{
+    return tokenized_name(typeid(T));
 }
 
 } // namespace halmd
