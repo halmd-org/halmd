@@ -53,6 +53,7 @@ public:
     typedef mdsim::integrator<dimension> integrator_type;
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
+    typedef utility::profiler profiler_type;
 
     core(modules::factory& factory, po::options const& vm);
     void mdstep();
@@ -63,6 +64,7 @@ public:
     shared_ptr<integrator_type> integrator;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
+    shared_ptr<profiler_type> profiler;
 
     // module runtime accumulator descriptions
     struct mdstep_ {

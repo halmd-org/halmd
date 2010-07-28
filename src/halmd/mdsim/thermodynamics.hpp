@@ -54,10 +54,12 @@ public:
     static void select(po::options const& vm) {}
 
     typedef mdsim::box<dimension> box_type;
+    typedef utility::profiler profiler_type;
     typedef fixed_vector<double, dimension> vector_type;
     typedef fixed_vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
 
     shared_ptr<box_type> box;
+    shared_ptr<profiler_type> profiler;
 
     thermodynamics(modules::factory& factory, po::options const& vm);
     virtual ~thermodynamics() {}

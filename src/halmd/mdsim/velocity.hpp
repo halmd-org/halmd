@@ -37,12 +37,15 @@ public:
     // module definitions
     typedef velocity _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
+    static void depends();
     static void select(po::options const& vm) {}
 
+    typedef utility::profiler profiler_type;
     typedef fixed_vector<double, dimension> vector_type;
 
-    velocity(modules::factory& factory, po::options const& vm) {}
+    shared_ptr<profiler_type> profiler;
+
+    velocity(modules::factory& factory, po::options const& vm);
     virtual ~velocity() {}
     virtual void set() = 0;
     virtual void rescale(double factor) = 0;

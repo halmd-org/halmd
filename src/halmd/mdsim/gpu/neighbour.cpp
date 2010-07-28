@@ -86,6 +86,9 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
   , h_rr_(g_rr_.size())
   , sort_(particle->nbox, particle->dim.threads_per_block())
 {
+    // register module runtime accumulators
+    profiler->register_map(runtime_);
+
     matrix_type r_cut = force->cutoff();
     typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle->ntype; ++i) {

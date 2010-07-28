@@ -29,6 +29,15 @@ namespace mdsim
 {
 
 /**
+ * Resolve module dependencies
+ */
+template <int dimension>
+void position<dimension>::depends()
+{
+    modules::depends<_Self, profiler_type>::required();
+}
+
+/**
  * Assemble module options
  */
 template <int dimension>
@@ -40,6 +49,12 @@ void position<dimension>::options(po::options_description& desc)
          "initial particle positions module")
         ;
 }
+
+template <int dimension>
+position<dimension>::position(modules::factory& factory, po::options const& vm)
+  // dependency injection
+  : profiler(modules::fetch<profiler_type>(factory, vm))
+{}
 
 template class position<3>;
 template class position<2>;

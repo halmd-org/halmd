@@ -22,6 +22,41 @@
 
 #include <boost/fusion/include/at_key.hpp>
 #include <boost/fusion/include/map.hpp>
+
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/utility/module.hpp>
+#include <halmd/utility/options.hpp>
+
+namespace halmd
+{
+
+namespace utility
+{
+
+/**
+ * This module delegates registrations of runtime accumulator
+ * maps of other modules to available profile writer modules.
+ */
+class profiler
+{
+public:
+    // module definitions
+    typedef profiler _Self;
+    static void options(po::options_description& desc) {}
+    static void depends() {}
+    static void select(po::options const& vm) {}
+
+    profiler(modules::factory& factory, po::options const& vm) {}
+
+    template <typename AccumulatorMap>
+    void register_map(AccumulatorMap const& map)
+    {
+        // FIXME
+    }
+};
+
+} // namespace utility
+
+} // namespace halmd
 
 #endif /* ! HALMD_UTILITY_PROFILER_HPP */

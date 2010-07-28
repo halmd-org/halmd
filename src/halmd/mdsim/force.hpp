@@ -50,8 +50,10 @@ public:
     static void select(po::options const& vm) {}
 
     typedef mdsim::particle<dimension> particle_type;
+    typedef utility::profiler profiler_type;
 
     shared_ptr<particle_type> particle;
+    shared_ptr<profiler_type> profiler;
 
     force(modules::factory& factory, po::options const& vm);
     virtual ~force() {}

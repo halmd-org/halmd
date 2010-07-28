@@ -47,10 +47,12 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::particle_type particle_type;
     typedef typename _Base::box_type box_type;
+    typedef typename _Base::profiler_type profiler_type;
 
     using _Base::particle;
     using _Base::box;
     using _Base::device;
+    using _Base::profiler;
 
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper;

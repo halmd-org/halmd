@@ -50,6 +50,8 @@ verlet<dimension, float_type>::verlet(modules::factory& factory, po::options con
   // set parameters
   , timestep_half_(0.5 * timestep_)
 {
+    // register module runtime accumulators
+    profiler->register_map(runtime_);
 #ifdef USE_VERLET_DSFUN
     //
     // Double-single precision requires two single precision

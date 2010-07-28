@@ -86,6 +86,9 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
   , en_cut_(particle->ntype, particle->ntype)
   , g_ljparam_(epsilon_.data().size())
 {
+    // register module runtime accumulators
+    profiler->register_map(runtime_);
+
     // parse deprecated options
     boost::array<float, 3> epsilon = vm["epsilon"].as<boost::array<float, 3> >();
     boost::array<float, 3> sigma = vm["sigma"].as<boost::array<float, 3> >();

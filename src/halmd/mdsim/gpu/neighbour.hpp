@@ -66,6 +66,7 @@ public:
     typedef gpu::force<dimension, float_type> force_type;
     typedef typename force_type::matrix_type matrix_type;
     typedef gpu::box<dimension> box_type;
+    typedef typename _Base::profiler_type profiler_type;
 
     typedef typename neighbour_wrapper<dimension>::displacement_impl_type displacement_impl_type;
 
@@ -77,6 +78,7 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;
     shared_ptr<box_type> box;
+    using _Base::profiler;
 
     cuda::config dim_reduce;
     displacement_impl_type const displacement_impl;

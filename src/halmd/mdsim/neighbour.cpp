@@ -25,6 +25,21 @@ namespace halmd
 namespace mdsim
 {
 
+/**
+ * Resolve module dependencies
+ */
+template <int dimension>
+void neighbour<dimension>::depends()
+{
+    modules::depends<_Self, profiler_type>::required();
+}
+
+template <int dimension>
+neighbour<dimension>::neighbour(modules::factory& factory, po::options const& vm)
+  // dependency injection
+  : profiler(modules::fetch<profiler_type>(factory, vm))
+{}
+
 template class neighbour<3>;
 template class neighbour<2>;
 

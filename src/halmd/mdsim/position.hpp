@@ -36,10 +36,14 @@ public:
     // module definitions
     typedef position _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
+    static void depends();
     static void select(po::options const& vm) {}
 
-    position(modules::factory& factory, po::options const& vm) {}
+    typedef utility::profiler profiler_type;
+
+    shared_ptr<profiler_type> profiler;
+
+    position(modules::factory& factory, po::options const& vm);
     virtual ~position() {}
     virtual void set() = 0;
 };

@@ -42,11 +42,13 @@ public:
 
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::profiler_type profiler_type;
 
     using _Base::box;
     using _Base::particle;
 //     using _Base::smooth;
     using _Base::thermodynamics;
+    using _Base::profiler;
 
     lj(modules::factory& factory, po::options const& vm);
     virtual ~lj() {}

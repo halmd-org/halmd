@@ -58,6 +58,7 @@ void core<dimension>::depends()
     modules::depends<_Self, integrator_type>::required();
     modules::depends<_Self, position_type>::required();
     modules::depends<_Self, velocity_type>::required();
+    modules::depends<_Self, profiler_type>::required();
 }
 
 template <int dimension>
@@ -80,7 +81,11 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
   , integrator(modules::fetch<integrator_type>(factory, vm))
   , position(modules::fetch<position_type>(factory, vm))
   , velocity(modules::fetch<velocity_type>(factory, vm))
+  , profiler(modules::fetch<profiler_type>(factory, vm))
 {
+    // register module runtime accumulators
+    profiler->register_map(runtime_);
+
     position->set();
     velocity->set();
     neighbour->update();

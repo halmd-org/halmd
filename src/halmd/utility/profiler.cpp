@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,39 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/thermodynamics.hpp>
-#include <halmd/utility/module.hpp>
+#include <halmd/utility/profiler.hpp>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd
 {
-namespace mdsim
+namespace utility
 {
 
-/**
- * Resolve module dependencies
- */
-template <int dimension>
-void thermodynamics<dimension>::depends()
-{
-    modules::depends<_Self, box_type>::required();
-    modules::depends<_Self, profiler_type>::required();
-}
+} // namespace utility
 
-template <int dimension>
-thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options const& vm)
-  // dependency injection
-  : box(modules::fetch<box_type>(factory, vm))
-  , profiler(modules::fetch<profiler_type>(factory, vm))
-{
-}
-
-// explicit instantiation
-template class thermodynamics<3>;
-template class thermodynamics<2>;
-
-} // namespace mdsim
+template class module<utility::profiler>;
 
 } // namespace halmd
