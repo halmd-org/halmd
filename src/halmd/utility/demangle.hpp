@@ -20,9 +20,14 @@
 #ifndef HALMD_UTILITY_DEMANGLE_HPP
 #define HALMD_UTILITY_DEMANGLE_HPP
 
-#include <cxxabi.h>
 #include <string>
 #include <typeinfo>
+
+// This check is from <boost/units/detail/utility.hpp>.
+#if defined(__GLIBCXX__) || defined(__GLIBCPP__)
+# define HALMD_USE_DEMANGLING
+# include <cxxabi.h>
+#endif // __GNUC__
 
 namespace halmd
 {
@@ -32,6 +37,7 @@ namespace halmd
  */
 inline std::string demangled_name(std::type_info const& type)
 {
+#ifdef HALMD_USE_DEMANGLING
     int status;
     char* buf = abi::__cxa_demangle(type.name(), 0, 0, &status);
 
@@ -41,8 +47,11 @@ inline std::string demangled_name(std::type_info const& type)
         return s;
     }
     else {
+#endif
         return type.name();
+#ifdef HALMD_USE_DEMANGLING
     }
+#endif
 }
 
 template <typename T>
