@@ -23,8 +23,8 @@
 #include <string>
 
 #include <cuda_wrapper.hpp>
+#include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/gpu/forces/lj.hpp>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
 #include <halmd/utility/module.hpp>

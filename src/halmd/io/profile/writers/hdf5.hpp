@@ -20,10 +20,10 @@
 #ifndef HALMD_IO_PROFILE_HDF5_HPP
 #define HALMD_IO_PROFILE_HDF5_HPP
 
+#include <halmd/deprecated/util/H5xx.hpp>
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
-#include <halmd/util/H5xx.hpp>
 
 namespace halmd
 {

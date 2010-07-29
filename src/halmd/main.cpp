@@ -29,10 +29,10 @@
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
 #endif
+#include <halmd/deprecated/util/H5xx.hpp>
+#include <halmd/deprecated/util/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/main.hpp>
-#include <halmd/util/H5xx.hpp>
-#include <halmd/util/exception.hpp>
 #include <halmd/utility/timer.hpp>
 #include <halmd/utility/hostname.hpp>
 #include <halmd/utility/module.hpp>

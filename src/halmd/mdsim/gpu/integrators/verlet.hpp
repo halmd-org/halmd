@@ -22,10 +22,10 @@
 
 #include <cuda_wrapper.hpp>
 
+#include <halmd/deprecated/util/exception.hpp>
 #include <halmd/mdsim/gpu/integrator.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/utility/options.hpp>
-#include <halmd/util/exception.hpp>
 
 namespace halmd
 {

@@ -25,10 +25,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/unordered_map.hpp>
 
+#include <halmd/deprecated/util/H5xx.hpp>
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>
-#include <halmd/util/H5xx.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 

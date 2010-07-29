@@ -24,10 +24,10 @@
 #include <limits>
 #include <numeric>
 
+#include <halmd/deprecated/util/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/position/lattice.hpp>
-#include <halmd/util/exception.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd

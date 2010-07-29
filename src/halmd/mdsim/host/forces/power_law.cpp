@@ -22,8 +22,8 @@
 #include <cmath>
 #include <string>
 
+#include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/backend/exception.hpp>
 #include <halmd/mdsim/host/forces/power_law.hpp>
 #include <halmd/numeric/pow.hpp>
 #include <halmd/utility/module.hpp>
