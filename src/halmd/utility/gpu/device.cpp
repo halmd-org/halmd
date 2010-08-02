@@ -87,11 +87,10 @@ device::device(modules::factory& factory, po::options const& vm)
     }
 
     // choose first available CUDA device
-    shared_ptr<cuda::driver::context> ctx;
     BOOST_FOREACH (int i, devices) {
         try {
             // create CUDA context and associate it with this thread
-            ctx.reset(new cuda::driver::context(i));
+            context_.reset(new cuda::driver::context(i));
             break;
         }
         catch (cuda::driver::error const&) {

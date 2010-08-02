@@ -67,6 +67,8 @@ protected:
 
     /** number of CUDA threads per block */
     unsigned int threads_;
+    /** selected CUDA device context */
+    shared_ptr<cuda::driver::context> context_;
 };
 
 }}} // namespace halmd::utility::gpu
