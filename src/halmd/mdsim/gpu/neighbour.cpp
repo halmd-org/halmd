@@ -97,15 +97,39 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
             r_cut_max = max(r_cut(i, j), r_cut_max);
         }
     }
-    ncell_ = static_cast<cell_size_type>(box->length() / (r_cut_max + r_skin_));
+    // find an optimal(?) cell size
+    // ideally, we would like to have warp_size placeholders per cell
+    //
+    // definitions:
+    // a) n_cell = L_box / cell_length   (for each dimension)
+    // b) #cells = prod(n_cell)
+    // c) #particles = #cells × cell_size × ν_eff
+    //
+    // constraints:
+    // 1) cell_length > r_c + r_skin  (potential cutoff + neighbour list skin)
+    // 2) cell_size is a (small) multiple of warp_size
+    // 3) ν_eff ≤ ν  (actual vs. desired occupancy)
+    //
+    // upper bound on ncell_ provided by 1)
+    cell_size_type ncell_max =
+        static_cast<cell_size_type>(box->length() / (r_cut_max + r_skin_));
+    // determine optimal value from 2) together with b,c)
     size_t warp_size = cuda::device::properties(cuda::device::get()).warp_size();
-    double frac = particle->nbox / accumulate(ncell_.begin(), ncell_.end(), nu_cell_ * warp_size, multiplies<double>());
-    // FIXME optimize ncell
-    cell_size_ = warp_size * static_cast<size_t>(ceil(frac));
-    vector_type cell_length_ = element_div(static_cast<vector_type>(box->length()), static_cast<vector_type>(ncell_));
+    double nwarps = particle->nbox / (nu_cell_ * warp_size);
+    ncell_ = static_cast<cell_size_type>(ceil(pow(nwarps, 1./dimension)));
+    LOG_DEBUG("desired values for number of cells: " << ncell_);
+    LOG_DEBUG("upper bound on number of cells: " << ncell_max);
+    // respect upper bound
+    ncell_ = min(ncell_, ncell_max);
+
+    // compute derived values
+    size_t ncells = accumulate(ncell_.begin(), ncell_.end(), 1, multiplies<size_t>());
+    cell_size_ = warp_size * static_cast<size_t>(ceil(nwarps / ncells));
+    vector_type cell_length_ =
+        element_div(static_cast<vector_type>(box->length()), static_cast<vector_type>(ncell_));
     dim_cell_ = cuda::config(
         dim3(
-             accumulate(ncell_.begin() + 1, ncell_.end() - 1, ncell_.front(), multiplies<size_t>())
+             accumulate(ncell_.begin(), ncell_.end() - 1, 1, multiplies<size_t>())
            , ncell_.back()
         )
       , cell_size_
@@ -164,7 +188,7 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw std::logic_error("failed to allocate global device memory cell placeholders");
+        throw std::logic_error("failed to allocate cell placeholders in global device memory");
     }
 }
 
