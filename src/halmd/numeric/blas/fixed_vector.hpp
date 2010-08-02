@@ -1815,7 +1815,7 @@ inline std::ostream& operator<<(std::ostream& os, fixed_vector<T, N> const& v)
 {
     os << v[0];
     for (size_t i = 1; i < N; ++i) {
-        os << v[i] << " ";
+        os << " " << v[i];
     }
     return os;
 }
