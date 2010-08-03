@@ -134,9 +134,9 @@ void thermodynamics(po::options vm)
 {
     typedef boost::program_options::variable_value variable_value;
 
-    float density = 0.4;
-    float temp = 2.0;
-    float rc = 3.5;
+    float density = 0.3;
+    float temp = 3.0;
+    float rc = 4.0;
 
     using namespace boost::assign;
 
@@ -147,7 +147,7 @@ void thermodynamics(po::options vm)
 //     vm_["index"]        = variable_value(48, false);
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
-    vm_["particles"]    = variable_value(864u, false);
+    vm_["particles"]    = variable_value(4000u, false);
 //    vm_["verbose"]      = variable_value(2, true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
@@ -178,9 +178,9 @@ void thermodynamics(po::options vm)
     shared_ptr<mdsim::velocity<dimension> >
             boltzmann(modules::fetch<mdsim::velocity<dimension> >(factory, vm));
 
-    // prepare system at given temperature, run for t*=30
+    // prepare system at given temperature, run for t*=100
     BOOST_TEST_MESSAGE("equilibrate initial state");
-    uint64_t steps = static_cast<uint64_t>(round(30 / vm["timestep"].as<double>()));
+    uint64_t steps = static_cast<uint64_t>(round(100 / vm["timestep"].as<double>()));
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
         if((i+1) % 200 == 0) {
@@ -198,7 +198,8 @@ void thermodynamics(po::options vm)
             temp_(thermodynamics->temp());
         }
     }
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), steps * eps);
+    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? eps_float : eps;
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     boltzmann->rescale(sqrt(temp / mean(temp_)));
     double en_tot = thermodynamics->en_tot();
@@ -215,7 +216,7 @@ void thermodynamics(po::options vm)
         }
     }
 
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), steps * eps);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
     BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(),
                                steps * 1e-10 / fabs(en_tot));
 
@@ -237,8 +238,10 @@ void thermodynamics(po::options vm)
     BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
     BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
     BOOST_TEST_MESSAGE("Heat capacity = " << Cv);
-    BOOST_CHECK_CLOSE_FRACTION(mean(press) + press_corr, 0.70, 0.01);
-    BOOST_CHECK_CLOSE_FRACTION(mean(en_pot) + en_corr, -2.54, 0.01);
+    BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 0.01);
+    BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 0.01);
+//     BOOST_CHECK_CLOSE_FRACTION(mean(press) + press_corr, 0.70, 0.01);
+//     BOOST_CHECK_CLOSE_FRACTION(mean(en_pot) + en_corr, -2.54, 0.01);
 }
 
 void set_default_options(halmd::po::options& vm)
@@ -252,7 +255,7 @@ void set_default_options(halmd::po::options& vm)
     vm_["integrator"]   = variable_value(string("verlet"), true);
     vm_["particles"]    = variable_value(1000u, true);
     vm_["timestep"]     = variable_value(0.001, true);
-    vm_["smooth"]       = variable_value(0.005f, true);
+//     vm_["smooth"]       = variable_value(0.005f, true);
     vm_["density"]      = variable_value(0.4f, true);
     vm_["temperature"]  = variable_value(2.0f, true);
     vm_["verbose"]      = variable_value(0, true);
