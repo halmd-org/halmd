@@ -76,7 +76,7 @@ void ideal_gas(po::options vm)
 
     float density = 1.;
     float temp = 1.;
-    float rc = 0.1;
+    float rc = .1;
 
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
@@ -109,7 +109,9 @@ void ideal_gas(po::options vm)
     shared_ptr<mdsim::thermodynamics<dimension> >
             thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
 
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
+    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? eps_float : eps;
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
+
     double en_tot = thermodynamics->en_tot();
 
     // microcanonical simulation run
@@ -119,7 +121,7 @@ void ideal_gas(po::options vm)
         core->mdstep();
     }
 
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
     BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(), 10 * eps);
 
     BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), eps_float);
@@ -258,6 +260,7 @@ void set_default_options(halmd::po::options& vm)
     vm_["sigma"]        = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), true);
     vm_["random-seed"]  = variable_value(42u, true);
+    vm_["output"]       = variable_value(string("halmd_test"), true);
 }
 
 int init_unit_test_suite()
