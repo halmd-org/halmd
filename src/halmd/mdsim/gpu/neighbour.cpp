@@ -143,7 +143,8 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
     LOG("number of cells per dimension: " << ncell_);
     LOG("cell edge lengths: " << cell_length_);
     LOG("desired average cell occupancy: " << nu_cell_);
-    LOG("effective average cell occupancy: " << (static_cast<double>(particle->nbox) / dim_cell_.threads()));
+    double nu_cell_eff = static_cast<double>(particle->nbox) / dim_cell_.threads();
+    LOG("effective average cell occupancy: " << nu_cell_eff);
 
     try {
         cuda::copy(particle->nbox, get_neighbour_kernel<dimension>().nbox);
@@ -157,9 +158,16 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
     }
 
     // volume of n-dimensional sphere with neighbour list radius
-    float_type neighbour_sphere = ((dimension + 1) * M_PI / 3) * pow(r_cut_max + r_skin_, dimension);
+    // volume of unit sphere: V_d = π^(d/2) / Γ(1+d/2), Γ(1) = 1, Γ(1/2) = √π
+    float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
+    assert(dimension <= 4);
+    float_type neighbour_sphere = unit_sphere[dimension] * pow(r_cut_max + r_skin_, dimension);
     // number of placeholders per neighbour list
-    particle->neighbour_size = static_cast<size_t>(ceil(neighbour_sphere * (box->density() / nu_cell_)));
+    particle->neighbour_size =
+        static_cast<size_t>(ceil(neighbour_sphere * (box->density() / nu_cell_eff)));
+    // at least cell_size (or warp_size?) placeholders
+    // FIXME what is a sensible lower bound?
+    particle->neighbour_size = max(particle->neighbour_size, (unsigned)cell_size_);
     // number of neighbour lists
     particle->neighbour_stride = particle->dim.threads();
     // allocate neighbour lists
