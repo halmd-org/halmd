@@ -20,7 +20,9 @@
 #ifndef HALMD_UTILITY_MODULES_GRAPH_HPP
 #define HALMD_UTILITY_MODULES_GRAPH_HPP
 
+#define BOOST_NO_HASH  // circumvent deprecated header warning by disabling use of hash_set
 #include <boost/graph/adjacency_list.hpp>
+#undef BOOST_NO_HASH
 #include <boost/graph/graph_traits.hpp>
 #include <boost/shared_ptr.hpp>
 
