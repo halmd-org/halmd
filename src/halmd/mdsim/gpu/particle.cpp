@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -85,13 +85,26 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
     // coordinates of these "virtual" particles will be ignored
     // in cuda::copy or cuda::memset calls.
     //
-    g_r.reserve(dim.threads());
-    g_image.reserve(dim.threads());
-    g_v.reserve(dim.threads());
-    g_f.reserve(dim.threads());
+    try {
+        g_r.reserve(dim.threads());
+        g_image.reserve(dim.threads());
+        g_v.reserve(dim.threads());
+        g_f.reserve(dim.threads());
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw std::logic_error("failed to allocate particles in global device memory");
+    }
 
-    cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
-    cuda::copy(ntype, get_particle_kernel<dimension>().ntype);
+    try {
+        cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
+        cuda::copy(ntype, get_particle_kernel<dimension>().ntype);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw std::logic_error("failed to copy particle parameters to device symbols");
+    }
+
     tag();
 }
 
@@ -101,12 +114,18 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::tag()
 {
-    cuda::configure(dim.grid, dim.block);
-    cuda::vector<unsigned int> g_ntypes(ntypes.size());
-    cuda::copy(ntypes, g_ntypes);
-    get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
-    get_particle_kernel<dimension>().tag(g_r, g_v);
-    cuda::thread::synchronize();
+    try {
+        cuda::configure(dim.grid, dim.block);
+        cuda::vector<unsigned int> g_ntypes(ntypes.size());
+        cuda::copy(ntypes, g_ntypes);
+        get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
+        get_particle_kernel<dimension>().tag(g_r, g_v);
+        cuda::thread::synchronize();
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw std::logic_error("failed to set particle tags and types");
+    }
 }
 
 // explicit instantiation
