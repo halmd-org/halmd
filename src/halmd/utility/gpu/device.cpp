@@ -134,6 +134,16 @@ device::device(modules::factory& factory, po::options const& vm)
 }
 
 /**
+ * Detach CUDA runtime from CUDA device context
+ *
+ * This explicit clean-up is needed with CUDA < 3.0.
+ */
+device::~device()
+{
+    cuda::thread::exit();
+}
+
+/**
  * Query NVIDIA driver version
  */
 string device::nvidia_driver_version()
