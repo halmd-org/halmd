@@ -148,7 +148,7 @@ void thermodynamics(po::options vm)
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
     vm_["particles"]    = variable_value(4000u, false);
-    vm_["verbose"]      = variable_value(2, true);
+//    vm_["verbose"]      = variable_value(2, true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
     // enable logging to console
