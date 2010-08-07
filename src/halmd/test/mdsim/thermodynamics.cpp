@@ -53,6 +53,9 @@ using namespace std;
 
 void set_default_options(halmd::po::options& vm);
 
+const double eps = numeric_limits<double>::epsilon();
+const float eps_float = numeric_limits<float>::epsilon();
+
 /**
  * heat capacity from microcanonical fluctuations of kinetic energy
  * see Lebowitz, Percus, and Verlet, Phys. Rev. 153, 250 (1967) for details
@@ -64,14 +67,9 @@ inline double heat_capacity(double en_kin, double variance, unsigned npart)
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
-template <int dimension, typename float_type>
+template <int dimension>
 void ideal_gas(po::options vm)
 {
-    // The simulation backend uses single or double floating-point
-    // precision, which sets the limit of numerical precision, however
-    // thermodynamic properties are always returned as double.
-    double const eps = numeric_limits<float_type>::epsilon();
-
     using namespace boost::assign;
 
     typedef boost::program_options::variable_value variable_value;
@@ -111,7 +109,8 @@ void ideal_gas(po::options vm)
     shared_ptr<mdsim::thermodynamics<dimension> >
             thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
 
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
+    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? eps_float : eps;
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     double en_tot = thermodynamics->en_tot();
 
@@ -122,22 +121,17 @@ void ideal_gas(po::options vm)
         core->mdstep();
     }
 
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
     BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(), 10 * eps);
 
-    BOOST_CHECK_CLOSE_FRACTION(temp, thermodynamics->temp(), eps);
-    BOOST_CHECK_CLOSE_FRACTION(density, thermodynamics->density(), eps);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., eps);
+    BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), eps_float);
+    BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., eps_float);
 }
 
-template <int dimension, typename float_type>
+template <int dimension>
 void thermodynamics(po::options vm)
 {
-    // The simulation backend uses single or double floating-point
-    // precision, which sets the limit of numerical precision, however
-    // thermodynamic properties are always returned as double.
-    double const eps = numeric_limits<float_type>::epsilon();
-
     typedef boost::program_options::variable_value variable_value;
 
     float density = 0.3;
@@ -204,7 +198,8 @@ void thermodynamics(po::options vm)
             temp_(thermodynamics->temp());
         }
     }
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
+    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? eps_float : eps;
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     boltzmann->rescale(sqrt(temp / mean(temp_)));
     double en_tot = thermodynamics->en_tot();
@@ -221,12 +216,12 @@ void thermodynamics(po::options vm)
         }
     }
 
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), eps);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
     BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(),
                                steps * 1e-10 / fabs(en_tot));
 
     BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 5e-3);
-    BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps);
+    BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     double Cv = heat_capacity(mean(temp_), variance(temp_), vm["particles"].as<unsigned>());
 
@@ -295,37 +290,25 @@ int init_unit_test_suite()
     test_suite* ts1 = BOOST_TEST_SUITE( "host" );
 
     test_suite* ts11 = BOOST_TEST_SUITE( "2d" );
-#ifndef USE_HOST_SINGLE_PRECISION
-    ts11->add( BOOST_PARAM_TEST_CASE( (ideal_gas<2, double>), vm.begin(), vm.begin() + 1 ) );
-    ts11->add( BOOST_PARAM_TEST_CASE( (thermodynamics<2, double>), vm.begin(), vm.begin() + 1 ) );
-#else
-    ts11->add( BOOST_PARAM_TEST_CASE( (ideal_gas<2, float>), vm.begin(), vm.begin() + 1 ) );
-    ts11->add( BOOST_PARAM_TEST_CASE( (thermodynamics<2, float>), vm.begin(), vm.begin() + 1 ) );
-#endif
+    ts11->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin(), vm.begin() + 1 ) );
+    ts11->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin(), vm.begin() + 1 ) );
 
     test_suite* ts12 = BOOST_TEST_SUITE( "3d" );
-#ifndef USE_HOST_SINGLE_PRECISION
-    ts12->add( BOOST_PARAM_TEST_CASE( (ideal_gas<3, double>), vm.begin(), vm.begin() + 1 ) );
-    ts12->add( BOOST_PARAM_TEST_CASE( (thermodynamics<3, double>), vm.begin(), vm.begin() + 1 ) );
-#else
-    ts12->add( BOOST_PARAM_TEST_CASE( (ideal_gas<3, float>), vm.begin(), vm.begin() + 1 ) );
-    ts12->add( BOOST_PARAM_TEST_CASE( (thermodynamics<3, float>), vm.begin(), vm.begin() + 1 ) );
-#endif
+    ts12->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin(), vm.begin() + 1 ) );
+    ts12->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin(), vm.begin() + 1 ) );
 
     ts1->add( ts11 );
     ts1->add( ts12 );
 
     test_suite* ts2 = BOOST_TEST_SUITE( "gpu" );
 
-    // FIXME The GPU backend will support double precision in the future.
-
     test_suite* ts21 = BOOST_TEST_SUITE( "2d" );
-    ts21->add( BOOST_PARAM_TEST_CASE( (ideal_gas<2, float>), vm.begin() + 1, vm.end() ) );
-    ts21->add( BOOST_PARAM_TEST_CASE( (thermodynamics<2, float>), vm.begin() + 1, vm.end() ) );
+    ts21->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin() + 1, vm.end() ) );
+    ts21->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin() + 1, vm.end() ) );
 
     test_suite* ts22 = BOOST_TEST_SUITE( "3d" );
-    ts22->add( BOOST_PARAM_TEST_CASE( (ideal_gas<3, float>), vm.begin() + 1, vm.end() ) );
-    ts22->add( BOOST_PARAM_TEST_CASE( (thermodynamics<3, float>), vm.begin() + 1, vm.end() ) );
+    ts22->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin() + 1, vm.end() ) );
+    ts22->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin() + 1, vm.end() ) );
 
     ts2->add( ts21 );
     ts2->add( ts22 );
