@@ -56,6 +56,7 @@ public:
     typedef utility::profiler profiler_type;
 
     core(modules::factory& factory, po::options const& vm);
+    void prepare();
     void mdstep();
 
     shared_ptr<force_type> force;
@@ -67,11 +68,13 @@ public:
     shared_ptr<profiler_type> profiler;
 
     // module runtime accumulator descriptions
+    HALMD_PROFILE_TAG( prepare_, "microscopic state preparation" );
     HALMD_PROFILE_TAG( mdstep_, "MD integration step" );
 
 private:
     boost::fusion::map<
-        boost::fusion::pair<mdstep_, accumulator<double> >
+        boost::fusion::pair<prepare_, accumulator<double> >
+      , boost::fusion::pair<mdstep_, accumulator<double> >
     > runtime_;
 };
 

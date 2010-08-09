@@ -116,6 +116,7 @@ void ideal_gas(po::options vm)
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run MD simulation");
+    core->prepare();
     uint64_t steps = 1000;
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
@@ -180,6 +181,7 @@ void thermodynamics(po::options vm)
 
     // prepare system at given temperature, run for t*=100
     BOOST_TEST_MESSAGE("equilibrate initial state");
+    core->prepare();
     uint64_t steps = static_cast<uint64_t>(round(100 / vm["timestep"].as<double>()));
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();

@@ -82,6 +82,8 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
 template <int dimension>
 void core<dimension>::run()
 {
+    mdsim->prepare();
+
     LOG("starting simulation");
 
     for (uint64_t i = 0; i < steps_; ++i) {

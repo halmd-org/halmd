@@ -85,7 +85,15 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
 {
     // register module runtime accumulators
     profiler->register_map(runtime_);
+}
 
+/**
+ * Prepare microscopic system state
+ */
+template <int dimension>
+inline void core<dimension>::prepare()
+{
+    scoped_timer<timer> timer_(at_key<prepare_>(runtime_));
     position->set();
     velocity->set();
     neighbour->update();
