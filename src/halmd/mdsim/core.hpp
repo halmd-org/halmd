@@ -57,7 +57,7 @@ public:
 
     core(modules::factory& factory, po::options const& vm);
     void prepare();
-    void mdstep();
+    void integrate();
 
     shared_ptr<force_type> force;
     shared_ptr<neighbour_type> neighbour;
@@ -69,12 +69,12 @@ public:
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( prepare_, "microscopic state preparation" );
-    HALMD_PROFILE_TAG( mdstep_, "MD integration step" );
+    HALMD_PROFILE_TAG( integrate_, "MD integration step" );
 
 private:
     boost::fusion::map<
         boost::fusion::pair<prepare_, accumulator<double> >
-      , boost::fusion::pair<mdstep_, accumulator<double> >
+      , boost::fusion::pair<integrate_, accumulator<double> >
     > runtime_;
 };
 

@@ -104,9 +104,9 @@ inline void core<dimension>::prepare()
  * Perform a single MD integration step
  */
 template <int dimension>
-inline void core<dimension>::mdstep()
+inline void core<dimension>::integrate()
 {
-    scoped_timer<timer> timer_(at_key<mdstep_>(runtime_));
+    scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
     integrator->integrate();
     if (neighbour->check()) {
         if (sort) {
