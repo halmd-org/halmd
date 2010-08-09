@@ -91,7 +91,7 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
  * Prepare microscopic system state
  */
 template <int dimension>
-inline void core<dimension>::prepare()
+void core<dimension>::prepare()
 {
     scoped_timer<timer> timer_(at_key<prepare_>(runtime_));
     position->set();
@@ -104,7 +104,7 @@ inline void core<dimension>::prepare()
  * Perform a single MD integration step
  */
 template <int dimension>
-inline void core<dimension>::integrate()
+void core<dimension>::integrate()
 {
     scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
     integrator->integrate();
