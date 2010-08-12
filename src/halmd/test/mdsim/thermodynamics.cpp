@@ -119,7 +119,7 @@ void ideal_gas(po::options vm)
     core->prepare();
     uint64_t steps = 1000;
     for (uint64_t i = 0; i < steps; ++i) {
-        core->integrate();
+        core->mdstep();
     }
 
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
@@ -184,7 +184,7 @@ void thermodynamics(po::options vm)
     core->prepare();
     uint64_t steps = static_cast<uint64_t>(round(100 / vm["timestep"].as<double>()));
     for (uint64_t i = 0; i < steps; ++i) {
-        core->integrate();
+        core->mdstep();
         if((i+1) % 200 == 0) {
             boltzmann->set();
         }
@@ -195,7 +195,7 @@ void thermodynamics(po::options vm)
 
     // equilibration run, measure temperature in second half
     for (uint64_t i = 0; i < steps; ++i) {
-        core->integrate();
+        core->mdstep();
         if(i > steps/2 && i % 10 == 0) {
             temp_(thermodynamics->temp());
         }
@@ -210,7 +210,7 @@ void thermodynamics(po::options vm)
     BOOST_TEST_MESSAGE("run MD simulation");
     steps = 1000;
     for (uint64_t i = 0; i < steps; ++i) {
-        core->integrate();
+        core->mdstep();
         if(i % 10 == 0) {
             temp_(thermodynamics->temp());
             press(thermodynamics->pressure());

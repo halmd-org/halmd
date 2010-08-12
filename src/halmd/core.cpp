@@ -87,7 +87,7 @@ void core<dimension>::run()
     LOG("starting simulation");
 
     for (uint64_t i = 0; i < steps_; ++i) {
-        mdsim->integrate();
+        mdsim->mdstep();
     }
 
     LOG("finished simulation");
