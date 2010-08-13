@@ -30,6 +30,7 @@ namespace mdsim { namespace gpu
 namespace thermodynamics_kernel
 {
 
+#if 0
 /**
  * parallel reduction, separately for each particle type
  * as provided by g_r
@@ -85,6 +86,7 @@ __global__ void reduce_types(coalesced_input_type const* g_in,
         }
     }
 }
+#endif
 
 } // namespace thermodynamics_kernel
 
