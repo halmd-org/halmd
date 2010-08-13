@@ -105,6 +105,9 @@ void ideal_gas(po::options vm)
     // init core module
     shared_ptr<mdsim::core<dimension> > core(modules::fetch<mdsim::core<dimension> >(factory, vm));
 
+    // prepare system with Maxwell-Boltzmann distributed velocities
+    core->prepare();
+
     // measure thermodynamic properties
     shared_ptr<mdsim::thermodynamics<dimension> >
             thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
@@ -116,7 +119,6 @@ void ideal_gas(po::options vm)
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run MD simulation");
-    core->prepare();
     uint64_t steps = 1000;
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
@@ -149,7 +151,7 @@ void thermodynamics(po::options vm)
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
     vm_["particles"]    = variable_value(4000u, false);
-//    vm_["verbose"]      = variable_value(2, true);
+    vm_["verbose"]      = variable_value(2, true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
     // enable logging to console
@@ -185,7 +187,7 @@ void thermodynamics(po::options vm)
     uint64_t steps = static_cast<uint64_t>(round(100 / vm["timestep"].as<double>()));
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
-        if((i+1) % 200 == 0) {
+        if((i+1) % 500 == 0) {
             boltzmann->set();
         }
     }
