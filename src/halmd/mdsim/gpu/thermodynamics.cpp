@@ -115,8 +115,17 @@ template <int dimension, typename float_type>
 std::vector<typename thermodynamics<dimension, float_type>::virial_type> const&
 thermodynamics<dimension, float_type>::virial() const
 {
-    // FIXME
+    std::vector<virial_type> virial_;
 
+/*    virial_ = reduce<
+        sum_                               // reduce_transform
+      , float                              // input_type
+      , float                              // coalesced_input_type
+      , cuda::vector<gpu_vector_type>      // output_type
+      , cuda::vector<gpu_vector_type>      // coalesced_output_type
+      , gpu::vector<virial_type>           // host_output_type
+    >()(g_virial_);
+*/
     return virial_;
 }
 

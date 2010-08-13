@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -29,6 +29,62 @@ namespace mdsim { namespace gpu
 {
 namespace thermodynamics_kernel
 {
+
+/**
+ * parallel reduction, separately for each particle type
+ * as provided by g_r
+ */
+template <
+    typename reduce_transform
+  , typename input_type
+  , typename coalesced_input_type
+  , typename output_type
+  , typename coalesced_output_type
+  , typename coalesced_vector_type
+  , typename input_transform
+  , typename output_transform
+  , int threads
+  , int ntypes
+>
+__global__ void reduce_types(coalesced_input_type const* g_in,
+                             coalesced_output_type* g_block_sum,
+                             coalesced_vector_type* g_r, uint npart)
+{
+    typedef fixed_vector<output_type, ntypes> output_vector_type;
+    __shared__ output_vector_type s_vv[threads];
+
+    // load values from global device memory
+    output_vector_type vv;
+    for (uint k = 0; k < ntypes; k++) {
+        vv[k] = 0;
+    }
+    for (uint i = GTID; i < n; i += GTDIM) {
+        // load and transform input value
+        output_type v = transform<input_transform, input_type, output_type>(g_in[i]);
+        // determine particle type
+        vector_type r;
+        unsigned int type;
+        tie(r, type) = untagged<vector_type>(g_r[GTID]);
+        // assert(type < ntypes);
+        // merge (add, multiply, ...) with accumulator
+        vv[type] = transform<reduce_transform>(vv[type], v);
+    }
+    // reduced value for this thread
+    s_vv[TID] = vv;
+    __syncthreads();
+
+    // compute reduced value for all threads in block
+    gpu::reduce<threads / 2, reduce_transform>(vv, s_vv);
+
+    if (TID < 1) {
+        // store block reduced value in global memory
+        // in groups of particle types
+        for (uint k = 0; k < ntypes; k++) {
+            g_block_sum[BID + k * BDIM] =
+                transform<output_transform, output_type, output_type>(vv[k]);
+        }
+    }
+}
 
 } // namespace thermodynamics_kernel
 
