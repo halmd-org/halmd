@@ -20,8 +20,8 @@
 #include <algorithm>
 #include <boost/bind.hpp>
 
-#include <halmd/core.hpp>
 #include <halmd/io/logger.hpp>
+#include <halmd/script.hpp>
 
 using namespace boost;
 using namespace std;
@@ -33,7 +33,7 @@ namespace halmd
  * Assemble module options
  */
 template <int dimension>
-void core<dimension>::options(po::options_description& desc)
+void script<dimension>::options(po::options_description& desc)
 {
     po::options_description group("Simulation");
     group.add_options()
@@ -49,27 +49,27 @@ void core<dimension>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension>
-void core<dimension>::depends()
+void script<dimension>::depends()
 {
-    modules::depends<_Self, mdsim_type>::required();
+    modules::depends<_Self, core_type>::required();
     modules::depends<_Self, profile_writer_type>::required();
 }
 
 template <int dimension>
-core<dimension>::core(modules::factory& factory, po::options const& vm)
+script<dimension>::script(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   // dependency injection
-  , mdsim(modules::fetch<mdsim_type>(factory, vm))
+  , core(modules::fetch<core_type>(factory, vm))
   , profile_writers(modules::fetch<profile_writer_type>(factory, vm))
 {
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {
         time_ = vm["time"].as<double>();
-        steps_ = static_cast<uint64_t>(round(time_ / mdsim->integrator->timestep()));
+        steps_ = static_cast<uint64_t>(round(time_ / core->integrator->timestep()));
     }
     else {
         steps_ = vm["steps"].as<uint64_t>();
-        time_ = steps_ * mdsim->integrator->timestep();
+        time_ = steps_ * core->integrator->timestep();
     }
 
     LOG("number of integration steps: " << steps_);
@@ -80,14 +80,14 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
  * Run simulation
  */
 template <int dimension>
-void core<dimension>::run()
+void script<dimension>::run()
 {
-    mdsim->prepare();
+    core->prepare();
 
     LOG("starting simulation");
 
     for (uint64_t i = 0; i < steps_; ++i) {
-        mdsim->mdstep();
+        core->mdstep();
     }
 
     LOG("finished simulation");
@@ -100,10 +100,10 @@ void core<dimension>::run()
 }
 
 // explicit instantiation
-template class core<3>;
-template class core<2>;
+template class script<3>;
+template class script<2>;
 
-template class module<core<3> >;
-template class module<core<2> >;
+template class module<script<3> >;
+template class module<script<2> >;
 
 } // namespace halmd

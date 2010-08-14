@@ -129,8 +129,8 @@ int main(int argc, char **argv)
         }
 
         // run MD simulation
-        shared_ptr<halmd::main> core(modules::fetch<halmd::main>(factory, vm));
-        core->run();
+        shared_ptr<halmd::main> script(modules::fetch<halmd::main>(factory, vm));
+        script->run();
 #ifdef NDEBUG
     }
 #ifdef WITH_CUDA

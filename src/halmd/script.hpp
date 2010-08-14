@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_CORE_HPP
-#define HALMD_CORE_HPP
+#ifndef HALMD_SCRIPT_HPP
+#define HALMD_SCRIPT_HPP
 
 #include <boost/shared_ptr.hpp>
 
@@ -32,26 +32,26 @@ namespace halmd
 {
 
 template <int dimension>
-class core
+class script
   : public halmd::main
 {
 public:
     // module definitions
-    typedef core _Self;
+    typedef script _Self;
     typedef halmd::main _Base;
     static void depends();
     static void options(po::options_description& desc);
     static void select(po::options const& vm) {}
 
-    typedef mdsim::core<dimension> mdsim_type;
+    typedef mdsim::core<dimension> core_type;
     typedef io::profile::writer profile_writer_type;
 
-    core(modules::factory& factory, po::options const& vm);
+    script(modules::factory& factory, po::options const& vm);
     void run();
     uint64_t steps() { return steps_; }
     double time() { return time_; }
 
-    shared_ptr<mdsim_type> mdsim;
+    shared_ptr<core_type> core;
     std::vector<shared_ptr<profile_writer_type> > profile_writers;
 
 protected:
@@ -63,4 +63,4 @@ protected:
 
 } // namespace halmd
 
-#endif /* ! HALMD_CORE_HPP */
+#endif /* ! HALMD_SCRIPT_HPP */
