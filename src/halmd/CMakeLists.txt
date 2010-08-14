@@ -137,6 +137,9 @@ if(NOT HALMD_BACKEND_EXECUTABLES)
     )
   target_link_libraries(halmd
     ${HALMD_COMMON_LIBRARIES}
+    -Wl,-whole-archive
+    halmd_scripts
+    -Wl,-no-whole-archive
     )
   install(TARGETS halmd
     RUNTIME DESTINATION bin
@@ -147,5 +150,6 @@ add_subdirectory(algorithm)
 add_subdirectory(io)
 add_subdirectory(mdsim)
 add_subdirectory(random)
+add_subdirectory(scripts)
 add_subdirectory(test)
 add_subdirectory(utility)

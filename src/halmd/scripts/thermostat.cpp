@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,26 +21,26 @@
 #include <boost/bind.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/script.hpp>
+#include <halmd/scripts/thermostat.hpp>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd
 {
+namespace scripts
+{
 
 /**
  * Assemble module options
  */
 template <int dimension>
-void script<dimension>::options(po::options_description& desc)
+void thermostat<dimension>::options(po::options_description& desc)
 {
     po::options_description group("Simulation");
     group.add_options()
-        ("steps,s", po::value<uint64_t>()->default_value(10000),
-         "number of simulation steps")
-        ("time,t", po::value<double>(),
-         "total simulation time")
+        ("thermostat", po::value<float>()->required(),
+         "heat bath collision rate")
         ;
     desc.add(group);
 }
@@ -49,48 +49,41 @@ void script<dimension>::options(po::options_description& desc)
  * Resolve module dependencies
  */
 template <int dimension>
-void script<dimension>::depends()
+void thermostat<dimension>::depends()
 {
-    modules::depends<_Self, core_type>::required();
-    modules::depends<_Self, profile_writer_type>::required();
+    // FIXME ugly hack to override base module
+    modules::depends<_Self, _Self>::required();
 }
 
 template <int dimension>
-script<dimension>::script(modules::factory& factory, po::options const& vm)
+thermostat<dimension>::thermostat(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
-  // dependency injection
-  , core(modules::fetch<core_type>(factory, vm))
-  , profile_writers(modules::fetch<profile_writer_type>(factory, vm))
+  // set parameters
+  , rate_(vm["thermostat"].as<float>())
+  , interval_(max(static_cast<int>(round(1 / (rate_ * core->integrator->timestep()))), 1))
 {
-    // parse options
-    if (vm["steps"].defaulted() && !vm["time"].empty()) {
-        time_ = vm["time"].as<double>();
-        steps_ = static_cast<uint64_t>(round(time_ / core->integrator->timestep()));
-    }
-    else {
-        steps_ = vm["steps"].as<uint64_t>();
-        time_ = steps_ * core->integrator->timestep();
-    }
-
-    LOG("number of integration steps: " << steps_);
-    LOG("integration time: " << time_);
+    LOG("heat bath collision rate: " << rate_);
+    LOG("heat bath coupling interval: " << interval_);
 }
 
 /**
  * Run simulation
  */
 template <int dimension>
-void script<dimension>::run()
+void thermostat<dimension>::run()
 {
     core->prepare();
 
-    LOG("starting NVE ensemble run");
+    LOG("starting thermostat run");
 
-    for (uint64_t i = 0; i < steps_; ++i) {
+    for (uint64_t i = 0; i < _Base::steps_; ++i) {
         core->mdstep();
+        if (i % interval_ == interval_ - 1) {
+            core->velocity->set();
+        }
     }
 
-    LOG("finished NVE ensemble run");
+    LOG("finished thermostat run");
 
     for_each(
         profile_writers.begin()
@@ -100,10 +93,12 @@ void script<dimension>::run()
 }
 
 // explicit instantiation
-template class script<3>;
-template class script<2>;
+template class thermostat<3>;
+template class thermostat<2>;
 
-template class module<script<3> >;
-template class module<script<2> >;
+} // namespace scripts
+
+template class module<scripts::thermostat<3> >;
+template class module<scripts::thermostat<2> >;
 
 } // namespace halmd

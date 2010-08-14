@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,52 +17,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_SCRIPT_HPP
-#define HALMD_SCRIPT_HPP
+#ifndef HALMD_THERMOSTAT_HPP
+#define HALMD_THERMOSTAT_HPP
 
-#include <halmd/io/profile/writer.hpp>
-#include <halmd/main.hpp>
-#include <halmd/mdsim/core.hpp>
+#include <halmd/script.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
 {
+namespace scripts
+{
 
 /**
- * NVE ensemble run
+ * Pseudo-thermostat run
+ *
+ * This script uses the boltzmann module to periodically assign
+ * Boltzmann-distributed velocities to all particles, which is
+ * sufficient to realise pre-equilibration cooling.
  */
 template <int dimension>
-class script
-  : public halmd::main
+class thermostat
+  : public script<dimension>
 {
 public:
     // module definitions
-    typedef script _Self;
-    typedef halmd::main _Base;
+    typedef thermostat _Self;
+    typedef halmd::script<dimension> _Base;
     static void depends();
     static void options(po::options_description& desc);
     static void select(po::options const& vm) {}
 
-    typedef mdsim::core<dimension> core_type;
-    typedef io::profile::writer profile_writer_type;
+    typedef typename _Base::profile_writer_type profile_writer_type;
 
-    script(modules::factory& factory, po::options const& vm);
-    virtual ~script() {}
-    virtual void run();
-    uint64_t steps() { return steps_; }
-    double time() { return time_; }
+    thermostat(modules::factory& factory, po::options const& vm);
+    void run();
 
-    shared_ptr<core_type> core;
-    std::vector<shared_ptr<profile_writer_type> > profile_writers;
+    using _Base::core;
+    using _Base::profile_writers;
 
 protected:
-    /** number of integration steps */
-    uint64_t steps_;
-    /** integration time in MD units */
-    double time_;
+    /** heat bath collision rate */
+    float rate_;
+    /** heat bath coupling interval */
+    unsigned int interval_;
 };
+
+} // namespace scripts
 
 } // namespace halmd
 
-#endif /* ! HALMD_SCRIPT_HPP */
+#endif /* ! HALMD_THERMOSTAT_HPP */
