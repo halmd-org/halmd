@@ -77,6 +77,8 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(modules::fact
 {
     // copy random number generator parameters to GPU
     cuda::copy(random->rng.rng(), wrapper_type::kernel.rng);
+
+    LOG("Boltzmann velocity distribution temperature: T = " << temp_);
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -115,8 +117,6 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::get_gaussian_impl(int t
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 {
-    LOG("assigning Maxwell-Boltzmann velocity distribution: T = " << temp_);
-
     // generate Maxwell-Boltzmann distributed velocities,
     // assuming equal (unit) mass for all particle types
     cuda::configure(
@@ -157,8 +157,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 //     order_velocities(); boltzmann is not a thermostat!
 #endif
 
-
-
+    LOG_DEBUG("assigned Boltzmann-distributed velocities");
 //    LOG_DEBUG("velocities rescaled by factor " << scale);
 }
 

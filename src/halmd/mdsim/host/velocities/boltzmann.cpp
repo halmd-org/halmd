@@ -68,9 +68,10 @@ boltzmann<dimension, float_type>::boltzmann(modules::factory& factory, po::optio
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
   , random(modules::fetch<random_type>(factory, vm))
+  // parse options
+  , temp_(vm["temperature"].as<float>())
 {
-    // parse options
-    temp_ = vm["temperature"].as<float>();
+    LOG("Boltzmann velocity distribution temperature: T = " << temp_);
 }
 
 /**
@@ -92,7 +93,7 @@ void boltzmann<dimension, float_type>::set()
     shift_rescale(-v_cm, scale);
 
     LOG_DEBUG("velocities rescaled by factor " << scale);
-    LOG("assigned Maxwell-Boltzmann velocity distribution: T = " << temp_);
+    LOG_DEBUG("assigned Boltzmann-distributed velocities");
 }
 
 /**
