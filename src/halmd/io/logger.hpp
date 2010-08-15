@@ -20,74 +20,92 @@
 #ifndef HALMD_IO_LOGGER_HPP
 #define HALMD_IO_LOGGER_HPP
 
+#include <boost/log/sinks/sync_frontend.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 
 #include <halmd/utility/options.hpp>
 
-#define HALMD_LOG(lvl, fmt) \
-    do { \
-        BOOST_LOG_SEV( \
-            ::halmd::io::logger::logger_ \
-          , ::halmd::io::logger::lvl \
-          ) << fmt; \
-    } while(0)
-
-#define HALMD_LOG_ONCE(lvl, fmt) \
-    do { \
-        static bool __logged__ = false; \
-        if (!__logged__) { \
-            BOOST_LOG_SEV( \
-                ::halmd::io::logger::logger_ \
-              , ::halmd::io::logger::lvl \
-              ) << fmt; \
-            __logged__ = true; \
-        } \
-    } while(0)
-
-#define LOG_FATAL(fmt)          HALMD_LOG(fatal, fmt)
-#define LOG_FATAL_ONCE(fmt)     HALMD_LOG_ONCE(fatal, fmt)
-#define LOG_ERROR(fmt)          HALMD_LOG(error, fmt)
-#define LOG_ERROR_ONCE(fmt)     HALMD_LOG_ONCE(error, fmt)
-#define LOG_WARNING(fmt)        HALMD_LOG(warning, fmt)
-#define LOG_WARNING_ONCE(fmt)   HALMD_LOG_ONCE(warning, fmt)
-#define LOG(fmt)                HALMD_LOG(info, fmt)
-#define LOG_ONCE(fmt)           HALMD_LOG_ONCE(info, fmt)
-
-#ifndef NDEBUG
-# define LOG_DEBUG(fmt)         HALMD_LOG(debug, fmt)
-# define LOG_DEBUG_ONCE(fmt)    HALMD_LOG_ONCE(debug, fmt)
-# define LOG_TRACE(fmt)         HALMD_LOG(trace, fmt)
-# define LOG_TRACE_ONCE(fmt)    HALMD_LOG_ONCE(trace, fmt)
-#else
-# define LOG_DEBUG(fmt)
-# define LOG_DEBUG_ONCE(fmt)
-# define LOG_TRACE(fmt)
-# define LOG_TRACE_ONCE(fmt)
-#endif
-
 namespace halmd
 {
-
-namespace io { namespace logger
+namespace io
 {
 
-enum severity_level
+class logging
 {
-    trace,
-    debug,
-    info,
-    warning,
-    error,
-    fatal,
+public:
+    static void options(po::options_description& desc);
+
+    typedef boost::log::sinks::text_ostream_backend console_backend;
+    typedef boost::log::sinks::synchronous_sink<console_backend> console_sink;
+    typedef boost::log::sinks::text_file_backend file_backend;
+    typedef boost::log::sinks::synchronous_sink<file_backend> file_sink;
+
+    enum severity_level
+    {
+        fatal,
+        error,
+        warning,
+        info,
+        debug,
+        trace,
+    };
+
+    static boost::log::sources::severity_logger<severity_level> logger;
+
+    logging(po::options const& vm);
+    ~logging();
+
+private:
+    boost::shared_ptr<console_sink> console_;
+    boost::shared_ptr<file_sink> file_;
 };
 
-extern boost::log::sources::severity_logger<severity_level> logger_;
-
-void init(po::options const& vm);
-
-}} // namespace io::logger
+} // namespace io
 
 } // namespace halmd
+
+#define __HALMD_LOG__(__level__, __format__)            \
+    do {                                                \
+        BOOST_LOG_SEV(                                  \
+            ::halmd::io::logging::logger                \
+          , ::halmd::io::logging::__level__             \
+          ) << __format__;                              \
+    } while(0)
+
+#define __HALMD_LOG_ONCE__(__level__, __format__)       \
+    do {                                                \
+        static bool __logged__ = false;                 \
+        if (!__logged__) {                              \
+            BOOST_LOG_SEV(                              \
+                ::halmd::io::logging::logger            \
+              , ::halmd::io::logging::__level__         \
+              ) << __format__;                          \
+            __logged__ = true;                          \
+        }                                               \
+    } while(0)
+
+#define LOG_FATAL(__format__)           __HALMD_LOG__(fatal, __format__)
+#define LOG_FATAL_ONCE(__format__)      __HALMD_LOG_ONCE__(fatal, __format__)
+#define LOG_ERROR(__format__)           __HALMD_LOG__(error, __format__)
+#define LOG_ERROR_ONCE(__format__)      __HALMD_LOG_ONCE__(error, __format__)
+#define LOG_WARNING(__format__)         __HALMD_LOG__(warning, __format__)
+#define LOG_WARNING_ONCE(__format__)    __HALMD_LOG_ONCE__(warning, __format__)
+#define LOG(__format__)                 __HALMD_LOG__(info, __format__)
+#define LOG_ONCE(__format__)            __HALMD_LOG_ONCE__(info, __format__)
+
+#ifndef NDEBUG
+# define LOG_DEBUG(__format__)          __HALMD_LOG__(debug, __format__)
+# define LOG_DEBUG_ONCE(__format__)     __HALMD_LOG_ONCE__(debug, __format__)
+# define LOG_TRACE(__format__)          __HALMD_LOG__(trace, __format__)
+# define LOG_TRACE_ONCE(__format__)     __HALMD_LOG_ONCE__(trace, __format__)
+#else
+# define LOG_DEBUG(__format__)
+# define LOG_DEBUG_ONCE(__format__)
+# define LOG_TRACE(__format__)
+# define LOG_TRACE_ONCE(__format__)
+#endif
 
 #endif /* ! HALMD_IO_LOGGER_HPP */

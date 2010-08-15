@@ -17,45 +17,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/log/attributes/timer.hpp>
+#include <boost/log/attributes/clock.hpp>
 #include <boost/log/filters/attr.hpp>
 #include <boost/log/formatters/attr.hpp>
 #include <boost/log/formatters/date_time.hpp>
 #include <boost/log/formatters/format.hpp>
 #include <boost/log/formatters/message.hpp>
-#include <boost/log/utility/init/common_attributes.hpp>
-#include <boost/log/utility/init/to_console.hpp>
-#include <boost/log/utility/init/to_file.hpp>
+#include <boost/log/utility/empty_deleter.hpp>
 
 #include <halmd/io/logger.hpp>
 
-using namespace boost::log;
 using namespace boost;
+using namespace boost::log;
 using namespace std;
 
 #define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
 
 namespace halmd
 {
-
-namespace io { namespace logger
+namespace io
 {
 
-sources::severity_logger<severity_level> logger_;
-
-static inline ostream& operator<<(ostream& os, severity_level lvl)
+/**
+ * Assemble module options
+ */
+void logging::options(po::options_description& desc)
 {
-    switch (lvl)
+    desc.add_options()
+        ("verbose,v", po::accum_value<int>()->default_value(warning),
+         "increase verbosity")
+        ;
+}
+
+sources::severity_logger<logging::severity_level> logging::logger;
+
+static inline ostream& operator<<(ostream& os, logging::severity_level level)
+{
+    switch (level)
     {
-      case trace:
+      case logging::trace:
         os << "[TRACE] "; break;
-      case debug:
+      case logging::debug:
         os << "[DEBUG] "; break;
-      case warning:
+      case logging::warning:
         os << "[WARNING] "; break;
-      case error:
+      case logging::error:
         os << "[ERROR] "; break;
-      case fatal:
+      case logging::fatal:
         os << "[FATAL] "; break;
       default:
         break;
@@ -63,52 +71,64 @@ static inline ostream& operator<<(ostream& os, severity_level lvl)
     return os;
 }
 
-/**
- * initialize logging
- */
-void init(po::options const& vm)
+logging::logging(po::options const& vm)
 {
-    severity_level lvl_cons, lvl_file;
-    switch (vm["verbose"].as<int>())
     {
-      case 0:
-        lvl_cons = warning; lvl_file = info; break;
-      case 1:
-        lvl_cons = lvl_file = info; break;
-      case 2:
-        lvl_cons = lvl_file = debug; break;
-      default:
-        lvl_cons = lvl_file = trace; break;
-    }
-
-    if (!vm["output"].empty()) {
-        init_log_to_file
-        (
-            vm["output"].as<string>() + ".log",
-            keywords::auto_flush = true,
-            keywords::filter = filters::attr<severity_level>("Severity") >= lvl_file,
-            keywords::format = formatters::format("[%1%] %2%%3%")
+        shared_ptr<console_backend> backend(make_shared<console_backend>());
+        backend->add_stream(
+            shared_ptr<ostream>(&clog, empty_deleter())
+        );
+        backend->set_formatter(
+            formatters::format("[%1%] %2%%3%")
                 % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
                 % formatters::attr<severity_level>("Severity")
                 % formatters::message()
         );
+        backend->auto_flush(true);
+
+        console_ = make_shared<console_sink>(backend);
+        console_->set_filter(
+            filters::attr<severity_level>("Severity") <= vm["verbose"].as<int>()
+        );
+        core::get()->add_sink(console_);
     }
 
-    init_log_to_console
-    (
-        std::clog,
-        keywords::auto_flush = true,
-        keywords::filter = filters::attr<severity_level>("Severity") >= lvl_cons,
-        keywords::format = formatters::format("[%1%] %2%%3%")
-            % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
-            % formatters::attr<severity_level>("Severity")
-            % formatters::message()
-    );
+    {
+        shared_ptr<file_backend> backend(
+            make_shared<file_backend>(
+                keywords::file_name = vm["output"].as<string>() + ".log"
+            )
+        );
+        backend->set_formatter(
+            formatters::format("[%1%] %2%%3%")
+                % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
+                % formatters::attr<severity_level>("Severity")
+                % formatters::message()
+        );
+        backend->auto_flush(true);
 
-    // add timestamp and record counter
-    add_common_attributes();
+        file_ = make_shared<file_sink>(backend);
+        file_->set_filter(
+            filters::attr<severity_level>("Severity") <= max(
+                vm["verbose"].as<int>()
+              , static_cast<int>(info)
+            )
+        );
+        core::get()->add_sink(file_);
+    }
+
+    core::get()->add_global_attribute(
+        "TimeStamp"
+      , make_shared<attributes::local_clock>()
+    );
 }
 
-}} // namespace io::logger
+logging::~logging()
+{
+    core::get()->remove_sink(console_);
+    core::get()->remove_sink(file_);
+}
+
+} // namespace io
 
 } // namespace halmd

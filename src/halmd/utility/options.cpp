@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iostream>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/utility/date_time.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/version.h>
@@ -64,13 +65,13 @@ void parse_options(int argc, char** argv, options& vm, unparsed_options& unparse
          "parameter input file")
         ("trajectory,J", po::value<string>(),
          "trajectory input file")
-        ("verbose,v", po::accum_value<int>()->default_value(0),
-         "increase verbosity")
         ("version",
          "output version and exit")
         ("help",
          "display this help and exit")
         ;
+
+    io::logging::options(desc);
 
     try {
         po::command_line_parser parser(argc, argv);
