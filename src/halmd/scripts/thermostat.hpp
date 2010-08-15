@@ -59,8 +59,8 @@ public:
 protected:
     /** heat bath collision rate */
     float rate_;
-    /** heat bath coupling interval */
-    unsigned int interval_;
+    /** heat bath coupling period */
+    unsigned int period_;
 };
 
 } // namespace scripts

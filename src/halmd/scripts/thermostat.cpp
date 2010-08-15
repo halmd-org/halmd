@@ -60,10 +60,10 @@ thermostat<dimension>::thermostat(modules::factory& factory, po::options const& 
   : _Base(factory, vm)
   // set parameters
   , rate_(vm["thermostat"].as<float>())
-  , interval_(max(static_cast<int>(round(1 / (rate_ * core->integrator->timestep()))), 1))
+  , period_(max(static_cast<int>(round(1 / (rate_ * core->integrator->timestep()))), 1))
 {
     LOG("heat bath collision rate: " << rate_);
-    LOG("heat bath coupling interval: " << interval_);
+    LOG("heat bath coupling period: " << period_);
 }
 
 /**
@@ -78,7 +78,7 @@ void thermostat<dimension>::run()
 
     for (uint64_t i = 0; i < _Base::steps_; ++i) {
         core->mdstep();
-        if (i % interval_ == interval_ - 1) {
+        if (i % period_ == period_ - 1) {
             core->velocity->set();
         }
     }
