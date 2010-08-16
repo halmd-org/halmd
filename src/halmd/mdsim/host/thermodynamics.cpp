@@ -31,24 +31,24 @@ namespace mdsim { namespace host
 /**
  * Resolve module dependencies
  */
-template <int dimension>
-void thermodynamics<dimension>::depends()
+template <int dimension, typename float_type>
+void thermodynamics<dimension, float_type>::depends()
 {
     modules::depends<_Self, particle_type>::required();
+    modules::depends<_Self, force_type>::required();
 }
 
-template <int dimension>
-thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options const& vm)
+template <int dimension, typename float_type>
+thermodynamics<dimension, float_type>::thermodynamics(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
-  // allocate result variables
-  , virial_(particle->ntype)
+  , force(modules::fetch<force_type>(factory, vm))
 {
 }
 
-template <int dimension>
-double thermodynamics<dimension>::en_kin() const
+template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::en_kin() const
 {
     // compute mean-square velocity
     double vv = 0;
@@ -59,8 +59,8 @@ double thermodynamics<dimension>::en_kin() const
     return .5 * vv / particle->nbox;
 }
 
-template <int dimension>
-typename thermodynamics<dimension>::vector_type thermodynamics<dimension>::v_cm() const
+template <int dimension, typename float_type>
+typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimension, float_type>::v_cm() const
 {
     // compute mean velocity
     vector_type v_cm_(0.);
@@ -71,12 +71,22 @@ typename thermodynamics<dimension>::vector_type thermodynamics<dimension>::v_cm(
 }
 
 // explicit instantiation
-template class thermodynamics<3>;
-template class thermodynamics<2>;
+#ifndef USE_HOST_SINGLE_PRECISION
+template class thermodynamics<3, double>;
+template class thermodynamics<2, double>;
+#else
+template class thermodynamics<3, float>;
+template class thermodynamics<2, float>;
+#endif
 
 }} // namespace mdsim::host
 
-template class module<mdsim::host::thermodynamics<3> >;
-template class module<mdsim::host::thermodynamics<2> >;
+#ifndef USE_HOST_SINGLE_PRECISION
+template class module<mdsim::host::thermodynamics<3, double> >;
+template class module<mdsim::host::thermodynamics<2, double> >;
+#else
+template class module<mdsim::host::thermodynamics<3, float> >;
+template class module<mdsim::host::thermodynamics<2, float> >;
+#endif
 
 } // namespace halmd

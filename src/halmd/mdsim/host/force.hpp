@@ -27,7 +27,7 @@
 #include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/thermodynamics.hpp>
+#include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -35,6 +35,10 @@ namespace halmd
 {
 namespace mdsim { namespace host
 {
+
+// forward declaration
+template <int dimension, typename float_type>
+class thermodynamics;
 
 template <int dimension, typename float_type>
 class force
@@ -50,21 +54,28 @@ public:
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef typename mdsim::thermodynamics<dimension>::virial_type virial_type;
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef host::box<dimension> box_type;
-    typedef host::thermodynamics<dimension> thermodynamics_type;
     typedef host::forces::smooth<dimension, float_type> smooth_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
-    shared_ptr<thermodynamics_type> thermodynamics;
     shared_ptr<smooth_type> smooth;
 
     force(modules::factory& factory, po::options const& vm);
     virtual ~force() {};
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;
+
+protected:
+    /** average potential energy per particle */
+    double en_pot_;
+    /** virial tensor for each particle type */
+    std::vector<virial_type> virial_;
+
+    friend class thermodynamics<dimension, float_type>;
 };
 
 }} // namespace mdsim::host

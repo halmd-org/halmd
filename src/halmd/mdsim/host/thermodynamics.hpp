@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
@@ -33,7 +34,7 @@ namespace halmd
 namespace mdsim { namespace host
 {
 
-template <int dimension>
+template <int dimension, typename float_type>
 class thermodynamics
     : public mdsim::thermodynamics<dimension>
 {
@@ -45,38 +46,32 @@ public:
     static void options(po::options_description& desc) {}
     static void select(po::options const& vm) {}
 
-    typedef mdsim::host::particle<dimension, double> particle_type;
+    typedef host::particle<dimension, float_type> particle_type;
+    typedef host::force<dimension, float_type> force_type;
+
     typedef typename particle_type::vector_type vector_type;
     typedef typename _Base::virial_type virial_type;
 
     shared_ptr<particle_type> particle;
+    shared_ptr<force_type> force;
 
     thermodynamics(modules::factory& factory, po::options const& vm);
     virtual ~thermodynamics() {}
 
     double en_kin() const;
     vector_type v_cm() const;
-    double en_pot() const { return en_pot_; }
-    std::vector<virial_type> const& virial() { return virial_; }
-
-    template <typename T>
-    static virial_type virial_tensor(T rr, vector_type const& r);
-
-    /** average potential energy per particle */
-    double en_pot_;
-    /** virial tensor for each particle type */
-    std::vector<virial_type> virial_;
+    double en_pot() const { return force->en_pot_; }
+    std::vector<virial_type> const& virial() { return force->virial_; }
 };
 
 /**
  * Trace and off-diagonal elements of distance tensor
  */
-
-template <> template <typename T>
-inline typename thermodynamics<3>::virial_type
-thermodynamics<3>::virial_tensor(T rr, typename thermodynamics<3>::vector_type const& r)
+template <typename float_type>
+typename thermodynamics<3, float_type>::virial_type
+virial_tensor(float_type rr, fixed_vector<float_type, 3> const& r)
 {
-    thermodynamics<3>::virial_type v;
+    typename thermodynamics<3, float_type>::virial_type v;
     v[0] = rr;
     v[1] = r[1] * r[2];
     v[2] = r[2] * r[0];
@@ -84,11 +79,11 @@ thermodynamics<3>::virial_tensor(T rr, typename thermodynamics<3>::vector_type c
     return v;
 }
 
-template <> template <typename T>
-inline typename thermodynamics<2>::virial_type
-thermodynamics<2>::virial_tensor(T rr, typename thermodynamics<2>::vector_type const& r)
+template <typename float_type>
+typename thermodynamics<2, float_type>::virial_type
+virial_tensor(float_type rr, fixed_vector<float_type, 2> const& r)
 {
-    thermodynamics<2>::virial_type v;
+    typename thermodynamics<2, float_type>::virial_type v;
     v[0] = rr;
     v[1] = r[0] * r[1];
     return v;

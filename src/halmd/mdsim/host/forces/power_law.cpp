@@ -25,6 +25,7 @@
 #include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/power_law.hpp>
+#include <halmd/mdsim/host/thermodynamics.hpp>
 #include <halmd/numeric/pow.hpp>
 #include <halmd/utility/module.hpp>
 
@@ -150,13 +151,9 @@ void power_law<dimension, float_type>::compute_impl()
     std::fill(particle->f.begin(), particle->f.end(), 0);
 
     // potential energy
-    float_type& en_pot_ = thermodynamics->en_pot_;
     en_pot_ = 0;
 
     // virial equation sum
-    typedef typename _Base::thermodynamics_type thermodynamics_type;
-    typedef typename thermodynamics_type::virial_type virial_type;
-    std::vector<virial_type>& virial_ = thermodynamics->virial_;
     std::fill(virial_.begin(), virial_.end(), 0);
 
     for (size_t i = 0; i < particle->nbox; ++i) {
@@ -203,7 +200,7 @@ void power_law<dimension, float_type>::compute_impl()
             en_pot_ += en_pot;
 
             // add contribution to virial
-            virial_type vir = 0.5f * fval * thermodynamics_type::virial_tensor(rr, r);
+            virial_type vir = 0.5f * fval * virial_tensor(rr, r);
             virial_[a] += vir;
             virial_[b] += vir;
         }

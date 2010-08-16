@@ -42,11 +42,11 @@ public:
 
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::virial_type virial_type;
 
     using _Base::box;
     using _Base::particle;
     using _Base::smooth;
-    using _Base::thermodynamics;
 
     lj(modules::factory& factory, po::options const& vm);
     virtual ~lj() {}
@@ -68,6 +68,9 @@ protected:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
+
+    using _Base::en_pot_;
+    using _Base::virial_;
 };
 
 }}} // namespace mdsim::host::forces
