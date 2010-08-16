@@ -152,7 +152,7 @@ void thermodynamics(po::options vm)
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
     vm_["particles"]    = variable_value(4000u, false);
-    vm_["verbose"]      = variable_value(2, true);
+    vm_["verbose"]      = variable_value(static_cast<int>(logging::debug), true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
     // enable logging to console
@@ -263,7 +263,7 @@ void set_default_options(halmd::po::options& vm)
     vm_["smooth"]       = variable_value(0.005f, true);
     vm_["density"]      = variable_value(0.4f, true);
     vm_["temperature"]  = variable_value(2.0f, true);
-    vm_["verbose"]      = variable_value(1, true);
+    vm_["verbose"]      = variable_value(static_cast<int>(logging::info), true);
     vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), true);
     vm_["sigma"]        = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), true);
