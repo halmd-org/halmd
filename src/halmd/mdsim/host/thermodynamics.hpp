@@ -57,7 +57,7 @@ public:
     double en_kin() const;
     vector_type v_cm() const;
     double en_pot() const { return en_pot_; }
-    std::vector<virial_type> const& virial() const { return virial_; }
+    std::vector<virial_type> const& virial() { return virial_; }
 
     template <typename T>
     static virial_type virial_tensor(T rr, vector_type const& r);

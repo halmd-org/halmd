@@ -101,11 +101,12 @@ void ideal_gas(po::options vm)
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 
-    BOOST_TEST_MESSAGE("initialise MD simulation");
     // init core module
+    BOOST_TEST_MESSAGE("initialise MD simulation");
     shared_ptr<mdsim::core<dimension> > core(modules::fetch<mdsim::core<dimension> >(factory, vm));
 
     // prepare system with Maxwell-Boltzmann distributed velocities
+    BOOST_TEST_MESSAGE("assign positions and velocities");
     core->prepare();
 
     // measure thermodynamic properties
@@ -227,25 +228,25 @@ void thermodynamics(po::options vm)
     BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 5e-3);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
-    double Cv = heat_capacity(mean(temp_), variance(temp_), vm["particles"].as<unsigned>());
+    if (dimension == 3) {
+        double Cv = heat_capacity(mean(temp_), variance(temp_), vm["particles"].as<unsigned>());
 
-    // corrections for trunctated LJ potential, see e.g. Johnsen et al. (1993)
-    double press_corr = 32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3);
-    double en_corr = 8./9 * M_PI * density * (pow(rc, -6) - 3) * pow(rc, -3);
+        // corrections for trunctated LJ potential, see e.g. Johnsen et al. (1993)
+        double press_corr = 32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3);
+        double en_corr = 8./9 * M_PI * density * (pow(rc, -6) - 3) * pow(rc, -3);
 
-    BOOST_TEST_MESSAGE("Density: " << density);
-    BOOST_TEST_MESSAGE("Temperature: " << mean(temp_) << " ± " << error_of_mean(temp_));
-    BOOST_TEST_MESSAGE("Pressure: " << mean(press) << " ± " << error_of_mean(press));
-    BOOST_TEST_MESSAGE("Pressure (corrected): " << mean(press) + press_corr);
-    BOOST_TEST_MESSAGE("Potential energy: " << mean(en_pot) << " ± " << error_of_mean(en_pot));
-    BOOST_TEST_MESSAGE("Potential energy (corrected): " << mean(en_pot) + en_corr);
-    BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
-    BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
-    BOOST_TEST_MESSAGE("Heat capacity = " << Cv);
-    BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 0.01);
-    BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 0.01);
-//     BOOST_CHECK_CLOSE_FRACTION(mean(press) + press_corr, 0.70, 0.01);
-//     BOOST_CHECK_CLOSE_FRACTION(mean(en_pot) + en_corr, -2.54, 0.01);
+        BOOST_TEST_MESSAGE("Density: " << density);
+        BOOST_TEST_MESSAGE("Temperature: " << mean(temp_) << " ± " << error_of_mean(temp_));
+        BOOST_TEST_MESSAGE("Pressure: " << mean(press) << " ± " << error_of_mean(press));
+        BOOST_TEST_MESSAGE("Pressure (corrected): " << mean(press) + press_corr);
+        BOOST_TEST_MESSAGE("Potential energy: " << mean(en_pot) << " ± " << error_of_mean(en_pot));
+        BOOST_TEST_MESSAGE("Potential energy (corrected): " << mean(en_pot) + en_corr);
+        BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
+        BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
+        BOOST_TEST_MESSAGE("Heat capacity = " << Cv);
+        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 0.001);
+        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 0.001);
+    }
 }
 
 void set_default_options(halmd::po::options& vm)
@@ -259,7 +260,7 @@ void set_default_options(halmd::po::options& vm)
     vm_["integrator"]   = variable_value(string("verlet"), true);
     vm_["particles"]    = variable_value(1000u, true);
     vm_["timestep"]     = variable_value(0.001, true);
-//     vm_["smooth"]       = variable_value(0.005f, true);
+    vm_["smooth"]       = variable_value(0.005f, true);
     vm_["density"]      = variable_value(0.4f, true);
     vm_["temperature"]  = variable_value(2.0f, true);
     vm_["verbose"]      = variable_value(1, true);

@@ -56,6 +56,8 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef typename _Base::virial_type virial_type;
+    typedef typename boost::mpl::if_c<virial_type::static_size >= 3,
+                         float4, float2>::type gpu_virial_type;
 
     shared_ptr<particle_type> particle;
 
@@ -65,15 +67,16 @@ public:
     double en_kin() const;
     vector_type v_cm() const;
     double en_pot() const;
-    std::vector<virial_type> const& virial() const;
+    std::vector<virial_type> const& virial();
 
 private:
     /** virial for each particle type */
+    /** the GPU implementation returns the total virial sum only at index 0 */
     std::vector<virial_type> virial_;
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
     /** virial for each particle */
-    cuda::vector<gpu_vector_type> g_virial_;
+    cuda::vector<gpu_virial_type> g_virial_;
 
     // FIXME can we inherit the friendship from force to its derived classes?
     friend class gpu::force<dimension, float_type>;

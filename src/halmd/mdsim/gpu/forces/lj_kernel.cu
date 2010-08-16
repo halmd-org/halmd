@@ -52,12 +52,12 @@ __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_le
 /**
  * Compute Lennard-Jones forces
  */
-template <typename vector_type, typename gpu_vector_type>
+template <typename vector_type, typename gpu_vector_type, typename gpu_virial_type>
 __global__ void compute(
   gpu_vector_type* g_f,
   unsigned int* g_neighbour,
   float* g_en_pot,
-  gpu_vector_type* g_virial)
+  gpu_virial_type* g_virial)
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;

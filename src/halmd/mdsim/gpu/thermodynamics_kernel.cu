@@ -112,6 +112,22 @@ template class reduce_wrapper<
 
 template class reduce_wrapper<
     sum_                        // reduce_transform
+  , fixed_vector<float, 4>      // input_type
+  , float4                      // coalesced_input_type
+  , fixed_vector<float, 4>      // output_type
+  , fixed_vector<float, 4>      // coalesced_output_type
+>;
+
+template class reduce_wrapper<
+    sum_                        // reduce_transform
+  , fixed_vector<float, 2>      // input_type
+  , float2                      // coalesced_input_type
+  , fixed_vector<float, 2>      // output_type
+  , fixed_vector<float, 2>      // coalesced_output_type
+>;
+
+template class reduce_wrapper<
+    sum_                        // reduce_transform
   , fixed_vector<float, 3>      // input_type
   , float4                      // coalesced_input_type
   , fixed_vector<dsfloat, 3>    // output_type

@@ -71,10 +71,10 @@ public:
     /** mean velocity per particle */
     virtual vector_type v_cm() const = 0;
     /** virial tensor per particle for each particle type */
-    virtual std::vector<virial_type> const& virial() const = 0;
+    virtual std::vector<virial_type> const& virial() = 0;
 
     /** total pressure */
-    double pressure() const;
+    double pressure();
     /** system temperature */
     double temp() const { return 2 * en_kin() / dimension; }
     /** particle density */
@@ -84,10 +84,10 @@ public:
 };
 
 template <int dimension>
-inline double thermodynamics<dimension>::pressure() const
+inline double thermodynamics<dimension>::pressure()
 {
     double virial_sum = 0;
-    // store reference to avoid redundant calls to virtual function
+    // sequence argument is evaluated exactly once
     BOOST_FOREACH(virial_type const& v, virial()) {
         virial_sum += v[0];
     }

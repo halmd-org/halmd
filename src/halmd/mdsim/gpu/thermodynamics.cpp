@@ -109,23 +109,27 @@ double thermodynamics<dimension, float_type>::en_pot() const
 }
 
 /**
- * compute virial for each particle type
+ * compute virial sum regardless of particle type
  */
 template <int dimension, typename float_type>
 std::vector<typename thermodynamics<dimension, float_type>::virial_type> const&
-thermodynamics<dimension, float_type>::virial() const
+thermodynamics<dimension, float_type>::virial()
 {
-    std::vector<virial_type> virial_;
+    typedef fixed_vector<float, virial_type::static_size> float_virial_type;
 
-/*    virial_ = reduce<
+    // using fixed_vector<dsfloat, N> as output_type results in
+    // exit code 255 of 'nvcc -c thermodynamics_kernel.cu'
+    virial_[0] = reduce<
         sum_                               // reduce_transform
-      , float                              // input_type
-      , float                              // coalesced_input_type
-      , cuda::vector<gpu_vector_type>      // output_type
-      , cuda::vector<gpu_vector_type>      // coalesced_output_type
-      , gpu::vector<virial_type>           // host_output_type
+      , float_virial_type                  // input_type
+      , gpu_virial_type                    // coalesced_input_type
+      , float_virial_type                  // output_type
+      , float_virial_type                  // coalesced_output_type
+      , virial_type                        // host_output_type
     >()(g_virial_);
-*/
+
+    virial_[0] /= particle->nbox;
+
     return virial_;
 }
 
