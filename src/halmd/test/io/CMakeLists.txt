@@ -1,0 +1,11 @@
+add_executable(test_logging
+  logging.cpp
+)
+target_link_libraries(test_logging
+  ${HALMD_COMMON_LIBRARIES}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+)
+add_test(io_logging
+  test_logging
+)
