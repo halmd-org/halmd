@@ -71,7 +71,7 @@ void parse_options(int argc, char** argv, options& vm, unparsed_options& unparse
          "display this help and exit")
         ;
 
-    io::logging::options(desc);
+    logging::options(desc);
 
     try {
         po::command_line_parser parser(argc, argv);

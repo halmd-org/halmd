@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 
 #ifndef NDEBUG
     // enable logging as early as possible if debugging
-    shared_ptr<io::logging> logger(new io::logging(vm));
+    shared_ptr<logging> logger(new logging(vm));
 #endif
 
     // resolve module dependencies
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 
 #ifdef NDEBUG
     // enable logging after successful option parsing if not debugging
-    shared_ptr<io::logging> logger(new io::logging(vm));
+    shared_ptr<logging> logger(new logging(vm));
 #endif
 
     LOG(PROGRAM_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);

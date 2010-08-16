@@ -65,6 +65,9 @@ private:
 
 } // namespace io
 
+// import logging into halmd namespace
+using io::logging;
+
 } // namespace halmd
 
 #define __HALMD_LOG__(__level__, __format__)            \
