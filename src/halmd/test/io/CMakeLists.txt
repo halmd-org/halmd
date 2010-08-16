@@ -4,8 +4,18 @@ add_executable(test_logging
 target_link_libraries(test_logging
   ${HALMD_COMMON_LIBRARIES}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
 )
 add_test(io_logging
   test_logging
+)
+
+add_executable(test_profile_writers
+  profile_writers.cpp
+)
+target_link_libraries(test_profile_writers
+  ${HALMD_COMMON_LIBRARIES}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+add_test(io_profile_writers
+  test_profile_writers
 )

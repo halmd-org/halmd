@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE( test_logging )
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
     vm_["verbose"] = variable_value(0, true);
-    vm_["output"] = variable_value(string("test_logging"), true);
+    vm_["output"] = variable_value(string("halmd_test"), true);
 
     string logfile = vm["output"].as<string>() + ".log";
 
