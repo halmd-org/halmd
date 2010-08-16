@@ -25,7 +25,6 @@
 #include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/lj.hpp>
-#include <halmd/mdsim/host/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;

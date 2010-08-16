@@ -64,31 +64,6 @@ public:
     std::vector<virial_type> const& virial() { return force->virial_; }
 };
 
-/**
- * Trace and off-diagonal elements of distance tensor
- */
-template <typename float_type>
-typename thermodynamics<3, float_type>::virial_type
-virial_tensor(float_type rr, fixed_vector<float_type, 3> const& r)
-{
-    typename thermodynamics<3, float_type>::virial_type v;
-    v[0] = rr;
-    v[1] = r[1] * r[2];
-    v[2] = r[2] * r[0];
-    v[3] = r[0] * r[1];
-    return v;
-}
-
-template <typename float_type>
-typename thermodynamics<2, float_type>::virial_type
-virial_tensor(float_type rr, fixed_vector<float_type, 2> const& r)
-{
-    typename thermodynamics<2, float_type>::virial_type v;
-    v[0] = rr;
-    v[1] = r[0] * r[1];
-    return v;
-}
-
 }} // namespace mdsim::host
 
 } // namespace halmd
