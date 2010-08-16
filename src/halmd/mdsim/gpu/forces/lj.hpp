@@ -47,7 +47,6 @@ public:
     using _Base::box;
     using _Base::particle;
 //     using _Base::smooth;
-    using _Base::thermodynamics;
     using _Base::profiler;
 
     lj(modules::factory& factory, po::options const& vm);
@@ -75,6 +74,9 @@ protected:
     matrix_type en_cut_;
     /** Lennard-Jones potential parameters */
     cuda::vector<float4> g_ljparam_;
+
+    using _Base::g_en_pot_;
+    using _Base::g_virial_;
 
 private:
     boost::fusion::map<

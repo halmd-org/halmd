@@ -28,7 +28,7 @@
 // #include <halmd/mdsim/gpu/forces/smooth.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
-#include <halmd/mdsim/gpu/thermodynamics.hpp>
+#include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -36,6 +36,10 @@ namespace halmd
 {
 namespace mdsim { namespace gpu
 {
+
+// forward declaration
+template <int dimension, typename float_type>
+class thermodynamics;
 
 template <int dimension, typename float_type>
 class force
@@ -51,21 +55,33 @@ public:
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef typename mdsim::thermodynamics<dimension>::virial_type virial_type;
+    typedef typename boost::mpl::if_c<
+        virial_type::static_size >= 3
+      , float4
+      , float2
+    >::type gpu_virial_type;
 
     typedef gpu::particle<dimension, float> particle_type;
     typedef gpu::box<dimension> box_type;
-    typedef gpu::thermodynamics<dimension, float_type> thermodynamics_type;
 //     typedef host::forces::smooth<dimension, float_type> smooth_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
-    shared_ptr<thermodynamics_type> thermodynamics;
 //     shared_ptr<smooth_type> smooth;
 
     force(modules::factory& factory, po::options const& vm);
     virtual ~force() {};
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;
+
+protected:
+    /** potential energy for each particle */
+    cuda::vector<float> g_en_pot_;
+    /** virial for each particle */
+    cuda::vector<gpu_virial_type> g_virial_;
+
+    friend class thermodynamics<dimension, float_type>;
 };
 
 }} // namespace mdsim::host

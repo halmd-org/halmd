@@ -23,6 +23,7 @@
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <vector>
 
+#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/utility/options.hpp>
@@ -31,14 +32,6 @@ namespace halmd
 {
 namespace mdsim { namespace gpu
 {
-
-template <int dimension, typename float_type>
-class force;
-
-namespace forces {
-template <int dimension, typename float_type>
-class lj;
-}
 
 template <int dimension, typename float_type>
 class thermodynamics
@@ -53,13 +46,15 @@ public:
     static void select(po::options const& vm) {}
 
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef gpu::force<dimension, float_type> force_type;
+
     typedef typename _Base::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef typename _Base::virial_type virial_type;
-    typedef typename boost::mpl::if_c<virial_type::static_size >= 3,
-                         float4, float2>::type gpu_virial_type;
+    typedef typename force_type::gpu_virial_type gpu_virial_type;
 
     shared_ptr<particle_type> particle;
+    shared_ptr<force_type> force;
 
     thermodynamics(modules::factory& factory, po::options const& vm);
     virtual ~thermodynamics() {}
@@ -73,16 +68,7 @@ private:
     /** virial for each particle type */
     /** the GPU implementation returns the total virial sum only at index 0 */
     std::vector<virial_type> virial_;
-    /** potential energy for each particle */
-    cuda::vector<float> g_en_pot_;
-    /** virial for each particle */
-    cuda::vector<gpu_virial_type> g_virial_;
-
-    // FIXME can we inherit the friendship from force to its derived classes?
-    friend class gpu::force<dimension, float_type>;
-    friend class gpu::forces::lj<dimension, float_type>;
 };
-
 
 }} // namespace mdsim::gpu
 

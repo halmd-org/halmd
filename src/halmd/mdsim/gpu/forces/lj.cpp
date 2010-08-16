@@ -167,8 +167,8 @@ void lj<dimension, float_type>::compute()
     get_lj_kernel<dimension>().compute(
         particle->g_f
       , particle->g_neighbour
-      , thermodynamics->g_en_pot_
-      , thermodynamics->g_virial_
+      , g_en_pot_
+      , g_virial_
     );
     cuda::thread::synchronize();
 //                   thermodynamics->en_pot, thermodynamics->virial);

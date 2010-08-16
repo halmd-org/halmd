@@ -39,6 +39,7 @@ template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::depends()
 {
     modules::depends<_Self, particle_type>::required();
+    modules::depends<_Self, force_type>::required();
 }
 
 template <int dimension, typename float_type>
@@ -46,10 +47,9 @@ thermodynamics<dimension, float_type>::thermodynamics(modules::factory& factory,
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
+  , force(modules::fetch<force_type>(factory, vm))
   // allocate result variables
   , virial_(particle->ntype)
-  , g_en_pot_(particle->dim.threads())
-  , g_virial_(particle->dim.threads())
 {}
 
 /**
@@ -103,7 +103,7 @@ double thermodynamics<dimension, float_type>::en_pot() const
       , dsfloat                                 // output_type
       , dsfloat                                 // coalesced_output_type
       , double                                  // host_output_type
-    >()(g_en_pot_);
+    >()(force->g_en_pot_);
 
     return en_pot / particle->nbox;
 }
@@ -126,7 +126,7 @@ thermodynamics<dimension, float_type>::virial()
       , float_virial_type                  // output_type
       , float_virial_type                  // coalesced_output_type
       , virial_type                        // host_output_type
-    >()(g_virial_);
+    >()(force->g_virial_);
 
     virial_[0] /= particle->nbox;
 
