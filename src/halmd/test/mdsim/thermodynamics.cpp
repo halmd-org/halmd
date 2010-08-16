@@ -87,7 +87,7 @@ void ideal_gas(po::options vm)
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
 
     // enable logging to console
-    shared_ptr<io::logging>(new io::logging(vm));
+    shared_ptr<io::logging> logger(new io::logging(vm));
 
     BOOST_TEST_MESSAGE("using backend '" << vm["backend"].as<string>() << "' in " <<
                        dimension << " dimensions");
@@ -155,7 +155,7 @@ void thermodynamics(po::options vm)
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
 
     // enable logging to console
-    shared_ptr<io::logging>(new io::logging(vm));
+    shared_ptr<io::logging> logger(new io::logging(vm));
 
     BOOST_TEST_MESSAGE("using backend '" << vm["backend"].as<string>() << "' in " <<
                        dimension << " dimensions");
