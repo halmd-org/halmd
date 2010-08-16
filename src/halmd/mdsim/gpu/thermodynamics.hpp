@@ -33,6 +33,14 @@ namespace mdsim { namespace gpu
 {
 
 template <int dimension, typename float_type>
+class force;
+
+namespace forces {
+template <int dimension, typename float_type>
+class lj;
+}
+
+template <int dimension, typename float_type>
 class thermodynamics
     : public mdsim::thermodynamics<dimension>
 {
@@ -59,14 +67,19 @@ public:
     double en_pot() const;
     std::vector<virial_type> const& virial() const;
 
-// FIXME private:
+private:
     /** virial for each particle type */
     std::vector<virial_type> virial_;
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
     /** virial for each particle */
     cuda::vector<gpu_vector_type> g_virial_;
+
+    // FIXME can we inherit the friendship from force to its derived classes?
+    friend class gpu::force<dimension, float_type>;
+    friend class gpu::forces::lj<dimension, float_type>;
 };
+
 
 }} // namespace mdsim::gpu
 
