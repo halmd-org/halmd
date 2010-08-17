@@ -114,16 +114,18 @@ template class reduce_wrapper<
     sum_                        // reduce_transform
   , fixed_vector<float, 4>      // input_type
   , float4                      // coalesced_input_type
-  , fixed_vector<float, 4>      // output_type
-  , fixed_vector<float, 4>      // coalesced_output_type
+  , dsfloat                     // output_type
+  , dsfloat                     // coalesced_output_type
+  , at_0                        // input_transform
 >;
 
 template class reduce_wrapper<
     sum_                        // reduce_transform
   , fixed_vector<float, 2>      // input_type
   , float2                      // coalesced_input_type
-  , fixed_vector<float, 2>      // output_type
-  , fixed_vector<float, 2>      // coalesced_output_type
+  , dsfloat                     // output_type
+  , dsfloat                     // coalesced_output_type
+  , at_0                        // input_transform
 >;
 
 template class reduce_wrapper<
