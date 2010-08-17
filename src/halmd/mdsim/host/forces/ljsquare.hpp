@@ -42,7 +42,7 @@ public:
 
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::virial_type virial_type;
+    typedef typename _Base::stress_tensor_type stress_tensor_type;
 
     using _Base::box;
     using _Base::particle;
@@ -70,7 +70,7 @@ protected:
     matrix_type en_cut_;
 
     using _Base::en_pot_;
-    using _Base::virial_;
+    using _Base::stress_pot_;
 };
 
 }}} // namespace mdsim::host::forces

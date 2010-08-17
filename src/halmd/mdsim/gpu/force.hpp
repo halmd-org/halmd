@@ -55,12 +55,12 @@ public:
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
-    typedef typename mdsim::thermodynamics<dimension>::virial_type virial_type;
+    typedef fixed_vector<float_type, 1 + (dimension - 1) * dimension / 2> stress_tensor_type;
     typedef typename boost::mpl::if_c<
-        virial_type::static_size >= 3
+        stress_tensor_type::static_size >= 3
       , float4
       , float2
-    >::type gpu_virial_type;
+    >::type gpu_stress_tensor_type;
 
     typedef gpu::particle<dimension, float> particle_type;
     typedef gpu::box<dimension> box_type;
@@ -78,8 +78,8 @@ public:
 protected:
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
-    /** virial for each particle */
-    cuda::vector<gpu_virial_type> g_virial_;
+    /** potential part of stress tensor for each particle */
+    cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
 
     friend class thermodynamics<dimension, float_type>;
 };

@@ -29,7 +29,7 @@ namespace halmd { namespace mdsim { namespace gpu { namespace force_kernel
  * Trace and off-diagonal elements of distance tensor
  */
 template <typename T>
-__device__ inline fixed_vector<T, 4> virial_tensor(T rr, fixed_vector<T, 3> const& r)
+__device__ inline fixed_vector<T, 4> make_stress_tensor(T rr, fixed_vector<T, 3> const& r)
 {
     fixed_vector<T, 4> v;
     v[0] = rr;
@@ -40,7 +40,7 @@ __device__ inline fixed_vector<T, 4> virial_tensor(T rr, fixed_vector<T, 3> cons
 }
 
 template <typename T>
-__device__ inline fixed_vector<T, 2> virial_tensor(T rr, fixed_vector<T, 2> const& r)
+__device__ inline fixed_vector<T, 2> make_stress_tensor(T rr, fixed_vector<T, 2> const& r)
 {
     fixed_vector<T, 2> v;
     v[0] = rr;

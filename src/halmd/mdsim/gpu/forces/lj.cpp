@@ -166,77 +166,9 @@ void lj<dimension, float_type>::compute()
         particle->g_f
       , particle->g_neighbour
       , g_en_pot_
-      , g_virial_
+      , g_stress_pot_
     );
     cuda::thread::synchronize();
-//                   thermodynamics->en_pot, thermodynamics->virial);
-
-/*    // initialize particle forces to zero
-    std::fill(particle->f.begin(), particle->f.end(), 0);
-
-    // potential energy
-    float_type& en_pot_ = thermodynamics->en_pot_;
-    en_pot_ = 0;
-
-    // virial equation sum
-    typedef typename _Base::thermodynamics_type thermodynamics_type;
-    typedef typename thermodynamics_type::virial_type virial_type;
-    std::vector<virial_type>& virial_ = thermodynamics->virial_;
-    std::fill(virial_.begin(), virial_.end(), 0);
-
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        // calculate pairwise Lennard-Jones force with neighbour particles
-        BOOST_FOREACH(size_t j, particle->neighbour[i]) {
-            // particle distance vector
-            vector_type r = particle->r[i] - particle->r[j];
-            box->reduce_periodic(r);
-            // particle types
-            size_t a = particle->type[i];
-            size_t b = particle->type[j];
-            // squared particle distance
-            float_type rr = inner_prod(r, r);
-
-            // truncate potential at cutoff length
-            if (rr >= rr_cut_(a, b))
-                continue;
-
-            // compute Lennard-Jones force in reduced units
-            float_type sigma2 = sigma2_(a, b);
-            float_type rri = sigma2 / rr;
-            float_type r6i = rri * rri * rri;
-            float_type epsilon = epsilon_(a, b);
-            float_type fval = 48 * rri * r6i * (r6i - 0.5) * (epsilon / sigma2);
-            float_type en_pot = 4 * epsilon * r6i * (r6i - 1) - en_cut_(a, b);
-
-            // optionally smooth potential yielding continuous 2nd derivative
-            // FIXME test performance of template versus runtime bool
-            if (smooth) {
-                smooth->compute(std::sqrt(rr), r_cut_(a, b), fval, en_pot);
-            }
-
-            // add force contribution to both particles
-            particle->f[i] += r * fval;
-            particle->f[j] -= r * fval;
-
-            // add contribution to potential energy
-            en_pot_ += en_pot;
-
-            // add contribution to virial
-            virial_type vir = 0.5f * fval * thermodynamics_type::virial_tensor(rr, r);
-            virial_[a] += vir;
-            virial_[b] += vir;
-        }
-    }
-
-    en_pot_ /= particle->nbox;
-    for (size_t i = 0; i < virial_.size(); ++i) {
-        virial_[i] /= particle->ntypes[i];
-    }
-
-    // ensure that system is still in valid state
-    if (std::isinf(en_pot_)) {
-        throw potential_energy_divergence();
-    }*/
 }
 
 // explicit instantiation

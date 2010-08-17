@@ -50,7 +50,7 @@ struct lj_wrapper
 {
     typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
     typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
-    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_virial_type;
+    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_stress_tensor_type;
 
     /** positions, types */
     cuda::texture<float4> r;
@@ -63,7 +63,7 @@ struct lj_wrapper
     /** Lennard-Jones potential parameters */
     cuda::texture<float4> ljparam;
     /** compute Lennard-Jones forces */
-    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, gpu_virial_type*)> compute;
+    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, gpu_stress_tensor_type*)> compute;
 
     static lj_wrapper const kernel;
 };

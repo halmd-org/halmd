@@ -76,7 +76,7 @@ protected:
     cuda::vector<float4> g_ljparam_;
 
     using _Base::g_en_pot_;
-    using _Base::g_virial_;
+    using _Base::g_stress_pot_;
 
 private:
     boost::fusion::map<

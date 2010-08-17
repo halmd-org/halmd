@@ -50,7 +50,6 @@ public:
     typedef host::force<dimension, float_type> force_type;
 
     typedef typename particle_type::vector_type vector_type;
-    typedef typename _Base::virial_type virial_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;
@@ -61,7 +60,7 @@ public:
     double en_kin() const;
     vector_type v_cm() const;
     double en_pot() const { return force->en_pot_; }
-    std::vector<virial_type> const& virial() { return force->virial_; }
+    double virial() const { return force->stress_pot_[0]; }
 };
 
 }} // namespace mdsim::host

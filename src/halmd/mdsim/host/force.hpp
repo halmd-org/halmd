@@ -54,7 +54,7 @@ public:
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
-    typedef typename mdsim::thermodynamics<dimension>::virial_type virial_type;
+    typedef fixed_vector<float_type, 1 + (dimension - 1) * dimension / 2> stress_tensor_type;
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef host::box<dimension> box_type;
@@ -72,8 +72,8 @@ public:
 protected:
     /** average potential energy per particle */
     double en_pot_;
-    /** virial tensor for each particle type */
-    std::vector<virial_type> virial_;
+    /** potential part of stress tensor */
+    stress_tensor_type stress_pot_;
 
     friend class thermodynamics<dimension, float_type>;
 };
@@ -82,10 +82,10 @@ protected:
  * Trace and off-diagonal elements of distance tensor
  */
 template <typename float_type>
-typename force<3, float_type>::virial_type
-virial_tensor(float_type rr, fixed_vector<float_type, 3> const& r)
+typename force<3, float_type>::stress_tensor_type
+make_stress_tensor(float_type rr, fixed_vector<float_type, 3> const& r)
 {
-    typename force<3, float_type>::virial_type v;
+    typename force<3, float_type>::stress_tensor_type v;
     v[0] = rr;
     v[1] = r[1] * r[2];
     v[2] = r[2] * r[0];
@@ -94,10 +94,10 @@ virial_tensor(float_type rr, fixed_vector<float_type, 3> const& r)
 }
 
 template <typename float_type>
-typename force<2, float_type>::virial_type
-virial_tensor(float_type rr, fixed_vector<float_type, 2> const& r)
+typename force<2, float_type>::stress_tensor_type
+make_stress_tensor(float_type rr, fixed_vector<float_type, 2> const& r)
 {
-    typename force<2, float_type>::virial_type v;
+    typename force<2, float_type>::stress_tensor_type v;
     v[0] = rr;
     v[1] = r[0] * r[1];
     return v;

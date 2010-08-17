@@ -56,7 +56,7 @@ force<dimension, float_type>::force(modules::factory& factory, po::options const
   , box(modules::fetch<box_type>(factory, vm))
   , smooth(modules::fetch<smooth_type>(factory, vm))
   // allocate result variables
-  , virial_(particle->ntype)
+  , stress_pot_(particle->ntype)
 {
 }
 

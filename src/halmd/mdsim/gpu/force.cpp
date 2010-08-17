@@ -49,7 +49,7 @@ force<dimension, float_type>::force(modules::factory& factory, po::options const
 //   , smooth(modules::fetch<smooth_type>(factory, vm))
   // allocate result variables
   , g_en_pot_(particle->dim.threads())
-  , g_virial_(particle->dim.threads())
+  , g_stress_pot_(particle->dim.threads())
 {
 }
 

@@ -122,14 +122,12 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
 template <int dimension, typename float_type>
 void lj<dimension, float_type>::compute()
 {
-    // initialize particle forces to zero
+    // initialise particle forces to zero
     std::fill(particle->f.begin(), particle->f.end(), 0);
 
-    // potential energy
+    // initialise potential energy and stress tensor
     en_pot_ = 0;
-
-    // virial equation sum
-    std::fill(virial_.begin(), virial_.end(), 0);
+    stress_pot_ = 0;
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
@@ -168,17 +166,13 @@ void lj<dimension, float_type>::compute()
             // add contribution to potential energy
             en_pot_ += en_pot;
 
-            // add contribution to virial
-            virial_type vir = 0.5f * fval * virial_tensor(rr, r);
-            virial_[a] += vir;
-            virial_[b] += vir;
+            // ... and potential part of stress tensor
+            stress_pot_ += fval * make_stress_tensor(rr, r);
         }
     }
 
     en_pot_ /= particle->nbox;
-    for (size_t i = 0; i < virial_.size(); ++i) {
-        virial_[i] /= particle->ntypes[i];
-    }
+    stress_pot_ /= particle->nbox;
 
     // ensure that system is still in valid state
     if (std::isinf(en_pot_)) {

@@ -48,8 +48,6 @@ thermodynamics<dimension, float_type>::thermodynamics(modules::factory& factory,
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
   , force(modules::fetch<force_type>(factory, vm))
-  // allocate result variables
-  , virial_(particle->ntype)
 {}
 
 /**
@@ -109,28 +107,25 @@ double thermodynamics<dimension, float_type>::en_pot() const
 }
 
 /**
- * compute virial sum regardless of particle type
+ * compute virial sum from potential part of stress tensor
  */
 template <int dimension, typename float_type>
-std::vector<typename thermodynamics<dimension, float_type>::virial_type> const&
-thermodynamics<dimension, float_type>::virial()
+double thermodynamics<dimension, float_type>::virial() const
 {
-    typedef fixed_vector<float, virial_type::static_size> float_virial_type;
+    typedef fixed_vector<float, stress_tensor_type::static_size> float_stress_tensor_type;
 
     // using fixed_vector<dsfloat, N> as output_type results in
     // exit code 255 of 'nvcc -c thermodynamics_kernel.cu'
-    virial_[0] = reduce<
+    stress_tensor_type stress_pot = reduce<
         sum_                               // reduce_transform
-      , float_virial_type                  // input_type
-      , gpu_virial_type                    // coalesced_input_type
-      , float_virial_type                  // output_type
-      , float_virial_type                  // coalesced_output_type
-      , virial_type                        // host_output_type
-    >()(force->g_virial_);
+      , float_stress_tensor_type                  // input_type
+      , gpu_stress_tensor_type                    // coalesced_input_type
+      , float_stress_tensor_type                  // output_type
+      , float_stress_tensor_type                  // coalesced_output_type
+      , stress_tensor_type                        // host_output_type
+    >()(force->g_stress_pot_);
 
-    virial_[0] /= particle->nbox;
-
-    return virial_;
+    return stress_pot[0] / particle->nbox;
 }
 
 // explicit instantiation

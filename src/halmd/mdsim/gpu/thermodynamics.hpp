@@ -50,8 +50,8 @@ public:
 
     typedef typename _Base::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
-    typedef typename _Base::virial_type virial_type;
-    typedef typename force_type::gpu_virial_type gpu_virial_type;
+    typedef typename force_type::stress_tensor_type stress_tensor_type;
+    typedef typename force_type::gpu_stress_tensor_type gpu_stress_tensor_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;
@@ -62,12 +62,7 @@ public:
     double en_kin() const;
     vector_type v_cm() const;
     double en_pot() const;
-    std::vector<virial_type> const& virial();
-
-private:
-    /** virial for each particle type */
-    /** the GPU implementation returns the total virial sum only at index 0 */
-    std::vector<virial_type> virial_;
+    double virial() const;
 };
 
 }} // namespace mdsim::gpu

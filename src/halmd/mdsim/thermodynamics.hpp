@@ -39,8 +39,8 @@ namespace mdsim
  * compute thermodynamic state variables such as pressure,
  * temperature, potential energy, total energy
  *
- * store potential energy and virial sum for efficient updates
- * during the force computation
+ * potential energy and the potential part of the stress tensor
+ * are computed and stored by the force modules
  */
 
 template <int dimension>
@@ -56,7 +56,6 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef utility::profiler profiler_type;
     typedef fixed_vector<double, dimension> vector_type;
-    typedef fixed_vector<double, 1 + (dimension - 1) * dimension / 2> virial_type;
 
     shared_ptr<box_type> box;
     shared_ptr<profiler_type> profiler;
@@ -71,10 +70,13 @@ public:
     /** mean velocity per particle */
     virtual vector_type v_cm() const = 0;
     /** virial tensor per particle for each particle type */
-    virtual std::vector<virial_type> const& virial() = 0;
+    virtual double virial() const = 0;
 
     /** total pressure */
-    double pressure();
+    double pressure() const
+    {
+        return box->density() * (temp() + virial() / dimension);
+    }
     /** system temperature */
     double temp() const { return 2 * en_kin() / dimension; }
     /** particle density */
@@ -82,18 +84,6 @@ public:
     /** total energy per particle */
     double en_tot() const { return en_pot() + en_kin(); }
 };
-
-template <int dimension>
-inline double thermodynamics<dimension>::pressure()
-{
-    double virial_sum = 0;
-    // sequence argument is evaluated exactly once
-    BOOST_FOREACH(virial_type const& v, virial()) {
-        virial_sum += v[0];
-    }
-    virial_sum /= dimension;
-    return box->density() * (temp() + virial_sum);
-}
 
 } // namespace mdsim
 
