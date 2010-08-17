@@ -70,8 +70,6 @@ inline double heat_capacity(double en_kin, double variance, unsigned npart)
 template <int dimension>
 void ideal_gas(po::options vm)
 {
-    using namespace boost::assign;
-
     typedef boost::program_options::variable_value variable_value;
 
     float density = 1.;
@@ -83,8 +81,8 @@ void ideal_gas(po::options vm)
     vm_["dimension"]    = variable_value(dimension, false);
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
-    vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(0.f)(0.f)(0.f)), false);
-    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
+    vm_["epsilon"]      = variable_value(std::vector<float>(1, 0.f), false);
+    vm_["cutoff"]       = variable_value(std::vector<float>(1, rc), false);
 
     // enable logging to console
     shared_ptr<logging> logger(new logging(vm));
@@ -144,8 +142,6 @@ void thermodynamics(po::options vm)
     double timestep = 0.01;    // start with small time step for thermalisation
     unsigned npart = (vm["backend"].as<string>() == "gpu") ? 4000 : 1000;
 
-    using namespace boost::assign;
-
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
     vm_["dimension"]    = variable_value(dimension, false);
@@ -154,7 +150,7 @@ void thermodynamics(po::options vm)
     vm_["timestep"]     = variable_value(timestep, false);
     vm_["particles"]    = variable_value(npart, false);
 //     vm_["verbose"]      = variable_value(int(logging::info), true);
-    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
+    vm_["cutoff"]       = variable_value(std::vector<float>(1, rc), false);
 
     // enable logging to console
     shared_ptr<logging> logger(new logging(vm));
@@ -276,7 +272,6 @@ void thermodynamics(po::options vm)
 void set_default_options(halmd::po::options& vm)
 {
     typedef boost::program_options::variable_value variable_value;
-    using namespace boost::assign;
 
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
@@ -289,9 +284,9 @@ void set_default_options(halmd::po::options& vm)
     vm_["density"]      = variable_value(0.4f, true);
     vm_["temperature"]  = variable_value(2.0f, true);
     vm_["verbose"]      = variable_value(int(logging::warning), true);
-    vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), true);
-    vm_["sigma"]        = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), true);
-    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), true);
+    vm_["epsilon"]      = variable_value(std::vector<float>(1, 1.0f), true);
+    vm_["sigma"]        = variable_value(std::vector<float>(1, 1.0f), true);
+    vm_["cutoff"]       = variable_value(std::vector<float>(1, 2.5f), true);
     vm_["random-seed"]  = variable_value(42u, true);
     vm_["output"]       = variable_value(string("halmd_test"), true);
 }
@@ -299,7 +294,6 @@ void set_default_options(halmd::po::options& vm)
 int init_unit_test_suite()
 {
     typedef boost::program_options::variable_value variable_value;
-    using namespace boost::assign;
     using namespace boost::unit_test;
     using namespace boost::unit_test::framework;
 
