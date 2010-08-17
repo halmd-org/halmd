@@ -32,7 +32,7 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/thermodynamics.hpp>
-#include <halmd/mdsim/velocity.hpp>
+#include <halmd/mdsim/particle.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/modules/factory.hpp>
 #include <halmd/utility/modules/policy.hpp>
@@ -102,7 +102,7 @@ void ideal_gas(po::options vm)
     modules::factory factory(policy.graph());
 
     // init core module
-    BOOST_TEST_MESSAGE("initialise MD simulation");
+    BOOST_TEST_MESSAGE("initialise simulation modules");
     shared_ptr<mdsim::core<dimension> > core(modules::fetch<mdsim::core<dimension> >(factory, vm));
 
     // prepare system with Maxwell-Boltzmann distributed velocities
@@ -113,13 +113,13 @@ void ideal_gas(po::options vm)
     shared_ptr<mdsim::thermodynamics<dimension> >
             thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
 
-    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? eps_float : eps;
+    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? 0.1 * eps_float : eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     double en_tot = thermodynamics->en_tot();
 
     // microcanonical simulation run
-    BOOST_TEST_MESSAGE("run MD simulation");
+    BOOST_TEST_MESSAGE("run NVE simulation");
     uint64_t steps = 1000;
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
@@ -141,19 +141,20 @@ void thermodynamics(po::options vm)
     float density = 0.3;
     float temp = 3.0;
     float rc = 4.0;
+    double timestep = 0.01;    // start with small time step for thermalisation
+    unsigned npart = (vm["backend"].as<string>() == "gpu") ? 4000 : 1000;
 
     using namespace boost::assign;
 
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
     vm_["dimension"]    = variable_value(dimension, false);
-//     vm_["force"]        = variable_value(string("power-law"), false);
-//     vm_["index"]        = variable_value(48, false);
     vm_["density"]      = variable_value(density, false);
     vm_["temperature"]  = variable_value(temp, false);
-    vm_["particles"]    = variable_value(4000u, false);
-    vm_["verbose"]      = variable_value(static_cast<int>(logging::debug), true);
-    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), true);
+    vm_["timestep"]     = variable_value(timestep, false);
+    vm_["particles"]    = variable_value(npart, false);
+//     vm_["verbose"]      = variable_value(int(logging::info), true);
+    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
 
     // enable logging to console
     shared_ptr<logging> logger(new logging(vm));
@@ -170,62 +171,83 @@ void thermodynamics(po::options vm)
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 
-    BOOST_TEST_MESSAGE("initialise MD simulation");
-    // init core module
-    shared_ptr<mdsim::core<dimension> > core(modules::fetch<mdsim::core<dimension> >(factory, vm));
+    BOOST_TEST_MESSAGE("initialise simulation modules");
+    // init core module and all dependencies
+    shared_ptr<mdsim::core<dimension> >
+        core(modules::fetch<mdsim::core<dimension> >(factory, vm));
+
+    // keep a handle on particle configuration
+    // thus, we can destroy and reload core with different options
+    shared_ptr<mdsim::particle<dimension> >
+        particle(modules::fetch<mdsim::particle<dimension> >(factory, vm));
+
+    // prepare system at given temperature, run for t*=50, couple every Δt*=0.2
+    BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
+    core->prepare();
+    uint64_t steps = static_cast<uint64_t>(ceil(50 / timestep));
+    uint64_t period = static_cast<uint64_t>(round(.2 / timestep));
+    for (uint64_t i = 0; i < steps; ++i) {
+        core->mdstep();
+        if((i+1) % period == 0) {
+            core->velocity->set();
+        }
+    }
+
+    // reload core with different timestep, keep particle configuration
+    core.reset();
+    timestep = 0.001;
+    vm_["timestep"] = variable_value(timestep, false);
+    core = modules::fetch<mdsim::core<dimension> >(factory, vm);
+    BOOST_CHECK_EQUAL(core->integrator->timestep(), timestep);
 
     // measure thermodynamic properties
     shared_ptr<mdsim::thermodynamics<dimension> >
             thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
 
-    // poor man's thermostat
-    shared_ptr<mdsim::velocity<dimension> >
-            boltzmann(modules::fetch<mdsim::velocity<dimension> >(factory, vm));
-
-    // prepare system at given temperature, run for t*=100
-    BOOST_TEST_MESSAGE("equilibrate initial state");
-    core->prepare();
-    uint64_t steps = static_cast<uint64_t>(round(100 / vm["timestep"].as<double>()));
-    for (uint64_t i = 0; i < steps; ++i) {
-        core->mdstep();
-        if((i+1) % 500 == 0) {
-            boltzmann->set();
-        }
-    }
-
     // take averages of fluctuating quantities,
     accumulator<double> temp_, press, en_pot;
 
     // equilibration run, measure temperature in second half
+    BOOST_TEST_MESSAGE("equilibrate initial state");
+    steps = static_cast<uint64_t>(ceil(30 / timestep));
+    period = static_cast<uint64_t>(round(.01 / timestep));
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
-        if(i > steps/2 && i % 10 == 0) {
+        if(i > steps/2 && i % period == 0) {
             temp_(thermodynamics->temp());
         }
     }
-    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? eps_float : eps;
+    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? 0.1 * eps_float : 20 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
-    boltzmann->rescale(sqrt(temp / mean(temp_)));
+    double scale = sqrt(temp / mean(temp_));
+    BOOST_TEST_MESSAGE("rescale velocities by factor " << scale);
+    core->velocity->rescale(scale);
+
     double en_tot = thermodynamics->en_tot();
+    double max_en_diff = 0; // maximal absolut deviation from initial total energy
+    temp_.reset();
 
     // microcanonical simulation run
-    BOOST_TEST_MESSAGE("run MD simulation");
-    steps = 1000;
+    BOOST_TEST_MESSAGE("run NVE simulation");
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
-        if(i % 10 == 0) {
+        if(i % period == 0) {
             temp_(thermodynamics->temp());
             press(thermodynamics->pressure());
             en_pot(thermodynamics->en_pot());
+            max_en_diff = max(abs(thermodynamics->en_tot() - en_tot), max_en_diff);
         }
     }
-
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
-    BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(),
-                               steps * 1e-10 / fabs(en_tot));
 
-    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 5e-3);
+    // with the first released version of halmd (commit f5283a2),
+    // an energy drift of less than 5e-6 ε was obtained over 2e8 MD steps
+    // using a smoothed potential (dt*=0.001, h=0.005)
+    double en_limit = max(2e-5, steps * 1e-12);
+    BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
+
+    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 2e-3);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     if (dimension == 3) {
@@ -244,8 +266,10 @@ void thermodynamics(po::options vm)
         BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
         BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
         BOOST_TEST_MESSAGE("Heat capacity = " << Cv);
-        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 0.001);
-        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 0.001);
+        // values from Johnson et al.: P = 1.023, Epot = -1.673  (Npart = 864)
+        // values from RFA theory: P = 1.0245, Epot = -1.6717
+        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 3e-3);
+        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 2e-3);
     }
 }
 
@@ -260,10 +284,11 @@ void set_default_options(halmd::po::options& vm)
     vm_["integrator"]   = variable_value(string("verlet"), true);
     vm_["particles"]    = variable_value(1000u, true);
     vm_["timestep"]     = variable_value(0.001, true);
-    vm_["smooth"]       = variable_value(0.005f, true);
+    // smoothing modifies the equation of state
+//     vm_["smooth"]       = variable_value(0.005f, true);
     vm_["density"]      = variable_value(0.4f, true);
     vm_["temperature"]  = variable_value(2.0f, true);
-    vm_["verbose"]      = variable_value(static_cast<int>(logging::info), true);
+    vm_["verbose"]      = variable_value(int(logging::warning), true);
     vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), true);
     vm_["sigma"]        = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), true);
     vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), true);
