@@ -100,6 +100,14 @@ public:
         }
     }
 
+    /**
+     * Reset accumulator.
+     */
+    HALMD_GPU_ENABLED void reset()
+    {
+        *this = accumulator();
+    }
+
     /** count */
     size_type n_;
     /** mean */
