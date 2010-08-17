@@ -38,6 +38,8 @@ using boost::is_same;
 struct identity_;
 struct square_;
 struct sqrt_;
+// FIXME template <int index> struct at_;
+struct at_0;
 struct sum_;
 struct complex_sum_;
 struct quaternion_sum_;
@@ -65,6 +67,13 @@ __device__ typename enable_if<is_same<transform_, sqrt_>, output_type>::type
 transform(input_type v)
 {
     return sqrtf(v);
+}
+
+template <typename transform_, typename input_type, typename output_type>
+__device__ typename enable_if<is_same<transform_, at_0>, output_type>::type
+transform(input_type v)
+{
+    return v[0];
 }
 
 /**
