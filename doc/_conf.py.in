@@ -194,3 +194,34 @@ latex_logo = '@CMAKE_CURRENT_SOURCE_DIR@/_static/halmd_logo.pdf'
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+
+# -- Options for LaTeX math formula rendering ----------------------------------
+
+# The command name with which to invoke LaTeX.
+pngmath_latex = '@LATEX_COMPILER@'
+
+# The command name with which to invoke dvipng.
+#pngmath_dvipng = 'dvipng'
+
+# Additional arguments to give to latex, as a list.
+#pngmath_latex_args = []
+
+# Additional LaTeX code to put into the preamble.
+#pngmath_latex_preamble = ''
+
+# Additional arguments to give to dvipng, as a list.
+#pngmath_dvipng_args = ['-gamma 1.5', '-D 110']
+
+
+# -- Options for Graphviz graphs -----------------------------------------------
+
+# The command name with which to invoke dot. The default is 'dot'.
+graphviz_dot = '@DOXYGEN_DOT_EXECUTABLE@'
+
+# Additional command-line arguments to give to dot, as a list.
+#graphviz_dot_args = []
+
+# The output format for Graphviz when building HTML files.
+# This must be either 'png' or 'svg'.
+#graphviz_output_format = 'png'
