@@ -23,12 +23,9 @@ find_package(Boost 1.42.0 QUIET REQUIRED COMPONENTS
   unit_test_framework
   )
 find_package(CUDA QUIET)
-find_package(Sphinx QUIET)
-find_package(LATEX QUIET)
 find_package(Git QUIET REQUIRED)
 find_package(GSL QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)
-find_package(Doxygen QUIET)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")

@@ -1,4 +1,53 @@
-if(SPHINX_FOUND AND DOXYGEN_FOUND)
+set(_HALMD_GENERATE_DOC TRUE)
+
+# We use the Sphinx documentation generator to render HTML and manual
+# pages from the user and reference documentation in ReST format.
+find_package(Sphinx QUIET)
+if(NOT SPHINX_FOUND)
+  message(STATUS "Unable to find Sphinx documentation generator")
+  set(_HALMD_GENERATE_DOC FALSE)
+endif(NOT SPHINX_FOUND)
+
+# We use Doxygen to extract inline reference documentation from the
+# source code in XML format. This command also finds the dot program
+# of the Graphviz package to render class inheritance diagrams.
+find_package(Doxygen QUIET)
+if(NOT DOXYGEN_FOUND)
+  message(STATUS "Unable to find Doxygen documentation generator")
+  set(_HALMD_GENERATE_DOC FALSE)
+endif(NOT DOXYGEN_FOUND)
+
+# The XML output is transformed to ReST using XSLT.
+find_program(XSLTPROC_EXECUTABLE xsltproc)
+if(NOT XSLTPROC_EXECUTABLE)
+  message(STATUS "Unable to find xsltproc command")
+  set(_HALMD_GENERATE_DOC FALSE)
+endif(NOT XSLTPROC_EXECUTABLE)
+mark_as_advanced(XSLTPROC_EXECUTABLE)
+
+# Sphinx uses latex and dvipng to render LaTeX formulas.
+find_package(LATEX QUIET)
+if(NOT LATEX_COMPILER)
+  message(STATUS "Unable to find LaTeX compiler")
+  set(_HALMD_GENERATE_DOC FALSE)
+endif(NOT LATEX_COMPILER)
+find_program(DVIPNG_CONVERTER dvipng)
+if(NOT DVIPNG_CONVERTER)
+  message(STATUS "Unable to find dvipng converter")
+  set(_HALMD_GENERATE_DOC FALSE)
+endif(NOT DVIPNG_CONVERTER)
+mark_as_advanced(DVIPNG_CONVERTER)
+
+if(NOT _HALMD_GENERATE_DOC)
+  message(STATUS "Unable to generate ${PROJECT_NAME} documentation")
+endif(NOT _HALMD_GENERATE_DOC)
+
+# set global variable to indicate whether all tools were found
+set(HALMD_GENERATE_DOC ${_HALMD_GENERATE_DOC}
+  CACHE INTERNAL "Generate HALMD documentation" FORCE
+)
+
+if(HALMD_GENERATE_DOC)
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
     ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
@@ -71,4 +120,4 @@ if(SPHINX_FOUND AND DOXYGEN_FOUND)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/latex/HALMD.pdf
     DESTINATION share/doc/halmd
     )
-endif(SPHINX_FOUND AND DOXYGEN_FOUND)
+endif(HALMD_GENERATE_DOC)

@@ -202,7 +202,7 @@ latex_logo = '@CMAKE_CURRENT_SOURCE_DIR@/_static/halmd_logo.pdf'
 pngmath_latex = '@LATEX_COMPILER@'
 
 # The command name with which to invoke dvipng.
-#pngmath_dvipng = 'dvipng'
+pngmath_dvipng = '@DVIPNG_CONVERTER@'
 
 # Additional arguments to give to latex, as a list.
 #pngmath_latex_args = []
