@@ -29,7 +29,7 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * provide functions to make the potential C²-smooth
+ * provide functions to make the potential @f$C^2@f$-smooth
  * at the cutoff
  */
 

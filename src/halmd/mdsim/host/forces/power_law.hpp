@@ -29,7 +29,7 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * A power-law potential r^{-n} is often used for
+ * A power-law potential @f$r^{-n}@f$ is often used for
  * repulsive smooth spheres. A big advantage is
  * its scale invariance (in the absence of a cutoff).
  */
