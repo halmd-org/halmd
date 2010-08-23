@@ -213,6 +213,8 @@ pngmath_dvipng = '@DVIPNG_CONVERTER@'
 # Additional arguments to give to dvipng, as a list.
 #pngmath_dvipng_args = ['-gamma 1.5', '-D 110']
 
+# Correctly align baselines, requires preview-latex package.
+pngmath_use_preview = True
 
 # -- Options for Graphviz graphs -----------------------------------------------
 
