@@ -4,7 +4,6 @@ HALMD documentation
 .. toctree::
    :maxdepth: 2
 
-   license
    readme
    usage
    faq

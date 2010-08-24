@@ -1,11 +1,13 @@
-set(_HALMD_GENERATE_DOC TRUE)
+# Generate documentation in HTML and PDF format using Sphinx.
+
+set(GENERATE_DOC TRUE)
 
 # We use the Sphinx documentation generator to render HTML and manual
 # pages from the user and reference documentation in ReST format.
 find_package(Sphinx QUIET)
 if(NOT SPHINX_FOUND)
-  message(STATUS "Unable to find Sphinx documentation generator")
-  set(_HALMD_GENERATE_DOC FALSE)
+  message(WARNING "Unable to find Sphinx documentation generator")
+  set(GENERATE_DOC FALSE)
 endif(NOT SPHINX_FOUND)
 
 # We use Doxygen to extract inline reference documentation from the
@@ -13,111 +15,148 @@ endif(NOT SPHINX_FOUND)
 # of the Graphviz package to render class inheritance diagrams.
 find_package(Doxygen QUIET)
 if(NOT DOXYGEN_FOUND)
-  message(STATUS "Unable to find Doxygen documentation generator")
-  set(_HALMD_GENERATE_DOC FALSE)
+  message(WARNING "Unable to find Doxygen documentation generator")
+  set(GENERATE_DOC FALSE)
 endif(NOT DOXYGEN_FOUND)
 
 # The XML output is transformed to ReST using XSLT.
 find_program(XSLTPROC_EXECUTABLE xsltproc)
 if(NOT XSLTPROC_EXECUTABLE)
-  message(STATUS "Unable to find xsltproc command")
-  set(_HALMD_GENERATE_DOC FALSE)
+  message(WARNING "Unable to find xsltproc command")
+  set(GENERATE_DOC FALSE)
 endif(NOT XSLTPROC_EXECUTABLE)
 mark_as_advanced(XSLTPROC_EXECUTABLE)
 
 # Sphinx uses latex and dvipng to render LaTeX formulas.
 find_package(LATEX QUIET)
 if(NOT LATEX_COMPILER)
-  message(STATUS "Unable to find LaTeX compiler")
-  set(_HALMD_GENERATE_DOC FALSE)
+  message(WARNING "Unable to find LaTeX compiler")
+  set(GENERATE_DOC FALSE)
 endif(NOT LATEX_COMPILER)
 find_program(DVIPNG_CONVERTER dvipng)
 if(NOT DVIPNG_CONVERTER)
-  message(STATUS "Unable to find dvipng converter")
-  set(_HALMD_GENERATE_DOC FALSE)
+  message(WARNING "Unable to find dvipng converter")
+  set(GENERATE_DOC FALSE)
 endif(NOT DVIPNG_CONVERTER)
 mark_as_advanced(DVIPNG_CONVERTER)
 
-if(NOT _HALMD_GENERATE_DOC)
-  message(STATUS "Unable to generate ${PROJECT_NAME} documentation")
-endif(NOT _HALMD_GENERATE_DOC)
+if(GENERATE_DOC)
+  # documentation tools
+  set(SOURCE_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/_build")
+  # configured documentation tools and intermediate build results
+  set(BINARY_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
+  # static ReST documentation sources
+  set(SOURCES_DIR "${CMAKE_CURRENT_BINARY_DIR}/_sources")
 
-# set global variable to indicate whether all tools were found
-set(HALMD_GENERATE_DOC ${_HALMD_GENERATE_DOC}
-  CACHE INTERNAL "Generate HALMD documentation" FORCE
-)
+  # substitute variables in configuration and scripts
+  foreach(file
+      conf.py
+      reference.dox
+      sources.cmake
+  )
+    configure_file(
+      "${SOURCE_BUILD_DIR}/${file}.in"
+      "${BINARY_BUILD_DIR}/${file}"
+      @ONLY
+    )
+  endforeach(file)
 
-if(HALMD_GENERATE_DOC)
-  configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
-    ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-    ESCAPE_QUOTES @ONLY
-    )
-  add_custom_target(halmd_doc_xml ALL
-    ${DOXYGEN_EXECUTABLE} Doxyfile
-    COMMENT "Building doxygen xml output"
-    )
-  set(DOC_OUTPUT_FILES
-    "xml"
-    )
+  add_custom_command(
+    OUTPUT "${BINARY_BUILD_DIR}/reference.xml"
+    COMMAND "${DOXYGEN}" reference.dox
+    COMMAND "${XSLTPROC_EXECUTABLE}" -o reference.xml xml/combine.xslt xml/index.xml
+    WORKING_DIRECTORY "${BINARY_BUILD_DIR}"
+    DEPENDS "${BINARY_BUILD_DIR}/reference.dox"
+    COMMENT "Extracting inline documentation"
+  )
+  set(CLEAN_FILES
+    "${BINARY_BUILD_DIR}/xml"
+  )
+  add_custom_target(halmd_doc_reference ALL
+    DEPENDS "${BINARY_BUILD_DIR}/reference.xml"
+  )
 
-  set(DOC_OUTPUT_TYPES
-    html
-    latex
-    )
-  set(DOC_CACHE_DIRECTORY ".doctrees")
+  # Sphinx requires all sources in the same directory tree. As we wish
+  # to include generated reference documention from the build tree, we
+  # copy static ReST documents to the build tree before calling Sphinx.
+  add_custom_target(halmd_doc_sources ALL
+    "${CMAKE_COMMAND}" -P "${BINARY_BUILD_DIR}/sources.cmake"
+  )
+  list(APPEND CLEAN_FILES
+    "${SOURCES_DIR}"
+  )
+  add_dependencies(halmd_doc_sources
+    halmd_doc_reference
+  )
+  # note the trailing slash to exclude directory name
+  install(DIRECTORY "${SOURCES_DIR}/"
+    DESTINATION "share/doc/halmd"
+  )
 
-  configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/_conf.py.in
-    ${CMAKE_CURRENT_BINARY_DIR}/conf.py
-    ESCAPE_QUOTES @ONLY
-    )
-  set(DOC_OUTPUT_FILES
-    ${DOC_OUTPUT_FILES}
-    ${DOC_OUTPUT_TYPES}
-    ${DOC_CACHE_DIRECTORY}
-    )
-  set_directory_properties(PROPERTIES
-    ADDITIONAL_MAKE_CLEAN_FILES "${DOC_OUTPUT_FILES}"
-    )
-  foreach(OUTPUT_TYPE ${DOC_OUTPUT_TYPES})
-    add_custom_target(halmd_doc_${OUTPUT_TYPE} ALL
-      ${SPHINX_EXECUTABLE}
-      -c .
-      -b ${OUTPUT_TYPE}
-      -d ${DOC_CACHE_DIRECTORY}
-      ${CMAKE_CURRENT_SOURCE_DIR}
-      ${OUTPUT_TYPE}
-      COMMENT "Building ${OUTPUT_TYPE} documentation"
-      )
-    add_dependencies(halmd_doc_${OUTPUT_TYPE} halmd_doc_xml halmd_doc_impl)
-  endforeach(OUTPUT_TYPE)
+  # Sphinx cache with pickled ReST documents
+  set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_doctrees")
+  # HTML output directory
+  set(SPHINX_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/html")
 
-  add_custom_target(halmd_doc_impl
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/impl/get_modules.py
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/impl
-    COMMENT "Extracting module structure and documentation"
-    )
+  # This target builds HTML documentation using Sphinx.
+  add_custom_target(halmd_doc_html ALL
+    ${SPHINX_EXECUTABLE}
+      -q -b html
+      -c "${BINARY_BUILD_DIR}"
+      -d "${SPHINX_CACHE_DIR}"
+      "${SOURCES_DIR}"
+      "${SPHINX_HTML_DIR}"
+    COMMENT "Building HTML documentation with Sphinx"
+  )
+  list(APPEND CLEAN_FILES
+    "${SPHINX_CACHE_DIR}"
+    "${SPHINX_HTML_DIR}"
+  )
+  add_dependencies(halmd_doc_html
+    halmd_doc_sources
+  )
+  install(DIRECTORY "${SPHINX_HTML_DIR}"
+    DESTINATION "share/doc/halmd"
+  )
 
-  # serialise targets with a common cache directory
-  add_dependencies(halmd_doc_latex halmd_doc_html)
-
+  # This target builds PDF documentation using Sphinx and LaTeX.
   if(PDFLATEX_COMPILER)
+    # PDF output directory
+    set(SPHINX_PDF_DIR "${CMAKE_CURRENT_BINARY_DIR}/pdf")
+
     add_custom_target(halmd_doc_pdf ALL
-      ${CMAKE_MAKE_PROGRAM}
-      -C ${CMAKE_CURRENT_BINARY_DIR}/latex
-      LATEXOPTS=-interaction=batchmode
-      COMMENT "Building pdf documentation"
-      )
-    add_dependencies(halmd_doc_pdf halmd_doc_latex)
+      ${SPHINX_EXECUTABLE}
+	-q -b latex
+	-c "${BINARY_BUILD_DIR}"
+	-d "${SPHINX_CACHE_DIR}"
+	"${SOURCES_DIR}"
+	"${SPHINX_PDF_DIR}"
+      COMMENT "Building PDF documentation with Sphinx"
+    )
+    add_custom_command(TARGET halmd_doc_pdf POST_BUILD
+      COMMAND ${CMAKE_MAKE_PROGRAM} LATEXOPTS=-interaction=batchmode
+      WORKING_DIRECTORY "${SPHINX_PDF_DIR}"
+    )
+    list(APPEND CLEAN_FILES
+      "${SPHINX_PDF_DIR}"
+    )
+    add_dependencies(halmd_doc_pdf
+      halmd_doc_sources
+    )
+    # serialize Sphinx targets to avoid cache conflicts in parallel builds
+    add_dependencies(halmd_doc_pdf
+      halmd_doc_html
+    )
+    install(FILES "${SPHINX_PDF_DIR}/halmd.pdf"
+      DESTINATION "share/doc/halmd"
+    )
   endif(PDFLATEX_COMPILER)
 
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
-    DESTINATION share/doc/halmd
-    PATTERN "cmake" EXCLUDE
-    )
+  # Add output directories to clean target.
+  set_directory_properties(PROPERTIES
+    ADDITIONAL_MAKE_CLEAN_FILES "${CLEAN_FILES}"
+  )
 
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/latex/HALMD.pdf
-    DESTINATION share/doc/halmd
-    )
-endif(HALMD_GENERATE_DOC)
+else(GENERATE_DOC)
+  message(WARNING "Missing required documentation tools")
+endif(GENERATE_DOC)
