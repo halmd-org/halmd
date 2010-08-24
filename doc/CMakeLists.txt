@@ -47,11 +47,14 @@ if(GENERATE_DOC)
   set(BINARY_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
   # static ReST documentation sources
   set(SOURCES_DIR "${CMAKE_CURRENT_BINARY_DIR}/_sources")
+  # generated ReST documentation sources
+  set(REF_SOURCES_DIR "${SOURCES_DIR}/reference")
 
   # substitute variables in configuration and scripts
   foreach(file
       conf.py
       reference.dox
+      reference.xsl
       sources.cmake
   )
     configure_file(
@@ -72,8 +75,15 @@ if(GENERATE_DOC)
   set(CLEAN_FILES
     "${BINARY_BUILD_DIR}/xml"
   )
+  add_custom_command(
+    OUTPUT "${REF_SOURCES_DIR}/index.rst"
+    COMMAND "${XSLTPROC_EXECUTABLE}" -o "${REF_SOURCES_DIR}/" reference.xsl reference.xml
+    WORKING_DIRECTORY "${BINARY_BUILD_DIR}"
+    DEPENDS "${BINARY_BUILD_DIR}/reference.xsl" "${BINARY_BUILD_DIR}/reference.xml"
+    COMMENT "Building reference documentation"
+  )
   add_custom_target(halmd_doc_reference ALL
-    DEPENDS "${BINARY_BUILD_DIR}/reference.xml"
+    DEPENDS "${REF_SOURCES_DIR}/index.rst"
   )
 
   # Sphinx requires all sources in the same directory tree. As we wish
