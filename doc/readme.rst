@@ -21,7 +21,7 @@ These software packages are required for compilation:
   the CUDA driver accompanying a CUDA toolkit is not updated and may contain
   serious bugs, e.g. that cause hanging GPU kernels.
 
-* `CMake <http://www.cmake.org/>`_ >= 2.6.0 with custom CUDA compiler support patch
+* `CMake <http://www.cmake.org/>`_ >= 2.8.0 with custom CUDA compiler support patch
 
   The patched CMake version, which adds native CUDA language support, is
   available at ::
