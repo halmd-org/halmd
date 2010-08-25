@@ -1,7 +1,7 @@
-# This script recursively copies all ReST documents from the source directory
-# to the binary directory. HALMD_DOC_SOURCE_DIR and HALMD_DOC_SOURCES_DIR are
-# substituted upon the cmake stage. The script is executed upon the make stage
-# to ensure that the binary sources directory is always up to date.
+# This script recursively copies all ReST documents from the source directory to
+# the binary directory. CMAKE_CURRENT_SOURCE_DIR and SOURCES_DIR are substituted
+# upon the cmake stage. The script is executed upon the make stage to ensure
+# that the binary sources directory is always up to date.
 
 file(GLOB_RECURSE SOURCES
   RELATIVE "@CMAKE_CURRENT_SOURCE_DIR@"
