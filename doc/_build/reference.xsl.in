@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<xsl:stylesheet version="1.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:halmd="http://research.colberg.org/projects/halmd"
+                xmlns:doxygen="http://www.stack.nl/~dimitri/doxygen"
+                xmlns:rst="http://docutils.sourceforge.net/rst.html"
+                xmlns:func="http://exslt.org/functions"
+                xmlns:str="http://exslt.org/strings"
+                extension-element-prefixes="halmd rst doxygen func str">
+
 <!--
   Copyright © 2010  Peter Colberg
 
@@ -43,21 +52,222 @@
   [3] http://www.exslt.org/
 -->
 
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:template match="/doxygen">
-    <xsl:document href="index.rst" method="text">
-      <xsl:text>.. _reference:
+<xsl:variable name="newline">
+<xsl:text>
+</xsl:text>
+</xsl:variable>
 
-Reference
-=========
-
+<!--
+  Generate TOC tree of modules grouped by namespace in the master document, and
+  for each namespace a separate document with a description of the modules.
+-->
+<xsl:template match="/doxygen">
+  <xsl:document href="@REF_MASTER_DOC@.rst" method="text">
+    <xsl:text>
 Modules
--------
+=======
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
 </xsl:text>
-    </xsl:document>
-  </xsl:template>
+    <xsl:for-each select="compounddef[@kind='namespace']">
+      <xsl:variable name="desc" select="halmd:gen-modules-desc(.)" />
+      <xsl:if test="$desc">
+        <xsl:value-of select="concat('   ', @id, $newline)" />
+        <xsl:document href="{@id}.rst" method="text">
+          <xsl:value-of select="$desc" />
+        </xsl:document>
+      </xsl:if>
+    </xsl:for-each>
+  </xsl:document>
+</xsl:template>
+
+
+<!--========== HALMD documentation ==========-->
+
+<!--
+  Generates modules description for given namespace.
+
+  If the namespace does not contain any modules, returns empty result.
+-->
+<func:function name="halmd:gen-modules-desc">
+  <xsl:param name="compound" />
+  <xsl:variable name="innerclass" select="doxygen:compound-by-id($compound/innerclass/@refid)" />
+  <xsl:variable name="modules" select="$innerclass[halmd:is-module(.)]" />
+  <xsl:choose>
+    <xsl:when test="$modules">
+      <xsl:variable name="namespace" select="$compound/compoundname" />
+      <xsl:variable name="namespace-id" select="$compound/@id" />
+      <func:result>
+        <xsl:value-of select="rst:label($namespace-id)" />
+        <xsl:value-of select="rst:section(concat('Namespace ', rst:literal($namespace)))" />
+        <xsl:value-of select="$newline" />
+        <xsl:for-each select="$modules">
+          <xsl:variable name="module-name" select="halmd:strip-ns(compoundname, $namespace)" />
+          <xsl:value-of select="rst:label(@id)" />
+          <xsl:value-of select="rst:subsection(concat('Module ', rst:literal($module-name)))" />
+          <xsl:value-of select="$newline" />
+        </xsl:for-each>
+      </func:result>
+    </xsl:when>
+    <xsl:otherwise>
+      <func:result />
+    </xsl:otherwise>
+  </xsl:choose>
+</func:function>
+
+<!--
+  Strip given namespace from given compound name.
+-->
+<func:function name="halmd:strip-ns">
+  <xsl:param name="compoundname" />
+  <xsl:param name="namespace" />
+  <func:result select="substring-after($compoundname, concat($namespace, '::'))" />
+</func:function>
+
+<!--
+  Strip 'halmd' namespace from given compound name.
+-->
+<func:function name="halmd:strip-halmd-ns">
+  <xsl:param name="compoundname" />
+  <func:result select="halmd:strip-ns($compoundname, 'halmd')" />
+</func:function>
+
+<!--========== HALMD code ==========-->
+
+<!--
+  This predicate tests whether a compounddef node is a module.
+-->
+<func:function name="halmd:is-module">
+  <xsl:param name="compound" />
+  <xsl:choose>
+    <xsl:when test="not($compound/@kind='class' or $compound/@kind='struct')">
+      <func:result select="false()" />
+    </xsl:when>
+    <xsl:when test="not($compound/sectiondef/memberdef/name='_Self')">
+      <func:result select="false()" />
+    </xsl:when>
+    <xsl:when test="not($compound/sectiondef/memberdef/name='depends')">
+      <func:result select="false()" />
+    </xsl:when>
+    <xsl:otherwise>
+      <func:result select="true()" />
+    </xsl:otherwise>
+  </xsl:choose>
+</func:function>
+
+
+<!--========== Doxygen XML ==========-->
+
+<!--
+  This function selects the compounddef node with the given id.
+  As Doxygen does not provide a DTD the builtin id() cannot be used.
+-->
+<func:function name="doxygen:compound-by-id">
+  <xsl:param name="id" />
+  <func:result select="/doxygen/compounddef[@id=$id]" />
+</func:function>
+
+
+<!--========== reStructuredText markup ==========-->
+
+<!--
+   Section heading with the given title and punctuation character for the
+   underline, and optionally an overline.
+-->
+<func:function name="rst:heading">
+  <xsl:param name="title" />
+  <xsl:param name="punctuation" />
+  <xsl:param name="overline" select="false()" />
+  <func:result>
+    <xsl:if test="$overline">
+      <xsl:value-of select="str:padding(string-length($title), $punctuation)" />
+      <xsl:value-of select="$newline"/>
+    </xsl:if>
+    <xsl:value-of select="$title" />
+    <xsl:value-of select="$newline"/>
+    <xsl:value-of select="str:padding(string-length($title), $punctuation)" />
+    <xsl:value-of select="$newline"/>
+  </func:result>
+</func:function>
+
+<!--
+  The following section headings follow the Python documentation convention.
+-->
+
+<!--
+  Section heading for part
+-->
+<func:function name="rst:part">
+  <xsl:param name="title" />
+  <func:result select="rst:heading($title, '#', true())" />
+</func:function>
+
+<!--
+  Section heading for chapter
+-->
+<func:function name="rst:chapter">
+  <xsl:param name="title" />
+  <func:result select="rst:heading($title, '*', true())" />
+</func:function>
+
+<!--
+  Section heading for section
+-->
+<func:function name="rst:section">
+  <xsl:param name="title" />
+  <func:result select="rst:heading($title, '=')" />
+</func:function>
+
+<!--
+  Section heading for subsection
+-->
+<func:function name="rst:subsection">
+  <xsl:param name="title" />
+  <func:result select="rst:heading($title, '-')" />
+</func:function>
+
+<!--
+  Section heading for subsubsection
+-->
+<func:function name="rst:subsubsection">
+  <xsl:param name="title" />
+  <func:result select="rst:heading($title, '^')" />
+</func:function>
+
+<!--
+  Section heading for paragraph
+-->
+<func:function name="rst:paragraph">
+  <xsl:param name="title" />
+  <func:result select="rst:heading($title, '&quot;')" />
+</func:function>
+
+
+<!--
+  Reference label
+-->
+<func:function name="rst:label">
+  <xsl:param name="label" />
+  <func:result select="concat('.. _', $label, ':', $newline, $newline)" />
+</func:function>
+
+<!--
+  Reference
+-->
+<func:function name="rst:ref">
+  <xsl:param name="ref" />
+  <func:result select="concat(':ref:`', $ref, '`')" />
+</func:function>
+
+
+<!--
+  Inline literal text
+-->
+<func:function name="rst:literal">
+  <xsl:param name="string" />
+  <func:result select="concat('``', $string, '``')" />
+</func:function>
+
 </xsl:stylesheet>

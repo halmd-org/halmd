@@ -9,7 +9,6 @@ HALMD documentation
    faq
    data
    units
-   implementation
    reference/index
 
 Indices and tables
