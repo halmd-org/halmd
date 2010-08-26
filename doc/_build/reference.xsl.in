@@ -52,6 +52,7 @@
   [3] http://www.exslt.org/
 -->
 
+<xsl:strip-space elements="*"/>
 <xsl:variable name="newline">
 <xsl:text>
 </xsl:text>
@@ -108,6 +109,7 @@ Modules
           <xsl:value-of select="rst:label(@id)" />
           <xsl:value-of select="rst:subsection(concat('Module ', rst:literal($module-name)))" />
           <xsl:value-of select="$newline" />
+          <xsl:apply-templates select="." mode="markup-module"/>
         </xsl:for-each>
       </func:result>
     </xsl:when>
@@ -116,6 +118,42 @@ Modules
     </xsl:otherwise>
   </xsl:choose>
 </func:function>
+
+<!--
+  Generate module description
+-->
+<xsl:template match="compounddef" mode="markup-module">
+  <xsl:variable name="briefdescription">
+    <xsl:apply-templates select="briefdescription" mode="markup" />
+  </xsl:variable>
+  <xsl:choose>
+    <xsl:when test="string-length($briefdescription)">
+      <xsl:value-of select="concat($briefdescription, $newline, $newline)" />
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>.. warning::
+
+   Missing brief module description.
+
+</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:variable name="detaileddescription">
+    <xsl:apply-templates select="detaileddescription" mode="markup" />
+  </xsl:variable>
+  <xsl:choose>
+    <xsl:when test="string-length($detaileddescription)">
+      <xsl:value-of select="concat($detaileddescription, $newline, $newline)" />
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>.. warning::
+
+   Missing detailed module description.
+
+</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
 
 <!--
   Strip given namespace from given compound name.
@@ -269,5 +307,14 @@ Modules
   <xsl:param name="string" />
   <func:result select="concat('``', $string, '``')" />
 </func:function>
+
+
+<!--
+  Inline LaTeX formula
+-->
+<xsl:template match="formula[starts-with(., '$')]" mode="markup">
+  <xsl:value-of select="concat(':math:`', ., '`')" />
+</xsl:template>
+
 
 </xsl:stylesheet>
