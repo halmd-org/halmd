@@ -29,16 +29,9 @@
 
 <!--
   This XSLT stylesheet transforms the XML output of Doxygen to reStructuredText,
-  for use with the Sphinx documentation generator. Some parts of the code are
-  based on the reference.xsl stylesheet of the Boost.Asio library, which was
-  written by Christopher M. Kohlhoff to generate documentation in Quickbook.
-
-  The file reference.xsl of the Boost.Asio library contains this notice:
-
-    Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-
-    Distributed under the Boost Software License, Version 1.0. (See accompanying
-    file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+  for use with the Sphinx documentation generator. This idea is based on the
+  reference.xsl stylesheet of the Boost.Asio library, which was written by
+  Christopher M. Kohlhoff to generate documentation in Quickbook.
 -->
 
 <!--
