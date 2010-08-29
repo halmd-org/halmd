@@ -21,7 +21,6 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <cmath>
 #include <string>
-#include <vector>
 
 #include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
@@ -29,6 +28,7 @@
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
+using namespace boost::assign;
 using namespace boost::numeric::ublas;
 
 namespace halmd
@@ -44,12 +44,12 @@ void lj<dimension, float_type>::options(po::options_description& desc)
 {
     po::options_description group("Lennard-Jones potential");
     group.add_options()
-        ("cutoff", po::value<float>()->multitoken()->default_value(2.5f),
-         "cutoff radius (radii) of the truncated potential(s)")
-        ("epsilon", po::value<float>()->multitoken()->default_value(1.0f),
-         "depth(s) of potential well(s)")
-        ("sigma", po::value<float>()->multitoken()->default_value(1.0f),
-         "width(s) of potential core(s)")
+        ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
+         "truncate potential at cutoff radius")
+        ("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
+         "potential well depths AA,AB,BB")
+        ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
+         "collision diameters AA,AB,BB")
         ;
     desc.add(group);
 }
@@ -80,15 +80,17 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
   , sigma2_(particle->ntype, particle->ntype)
   , en_cut_(particle->ntype, particle->ntype)
 {
-    // parse options
-    std::vector<float> epsilon = vm["epsilon"].as<std::vector<float> >();
-    std::vector<float> sigma   = vm["sigma"].as<std::vector<float> >();
-    std::vector<float> r_cut_sigma = vm["cutoff"].as<std::vector<float> >();
-    LOG_DEBUG("size of epsilon: " << epsilon.size());
-    LOG_DEBUG("size of sigma: " << sigma.size());
-    LOG_DEBUG("size of cutoff: " << r_cut_sigma.size());
-
-    // FIXME the loop appears to work only for 1 and 2 particle types
+    // parse deprecated options
+    boost::array<float, 3> epsilon = vm["epsilon"].as<boost::array<float, 3> >();
+    boost::array<float, 3> sigma = vm["sigma"].as<boost::array<float, 3> >();
+    boost::array<float, 3> r_cut_sigma;
+    try {
+        r_cut_sigma = vm["cutoff"].as<boost::array<float, 3> >();
+    }
+    catch (boost::bad_any_cast const&) {
+        // backwards compatibility
+        std::fill(r_cut_sigma.begin(), r_cut_sigma.end(), vm["cutoff"].as<float>());
+    }
     for (size_t i = 0; i < std::min(particle->ntype, 2U); ++i) {
         for (size_t j = i; j < std::min(particle->ntype, 2U); ++j) {
             epsilon_(i, j) = epsilon[i + j];
