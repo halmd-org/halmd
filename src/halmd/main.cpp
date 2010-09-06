@@ -71,7 +71,9 @@ int main(int argc, char **argv)
 
     // resolve module dependencies
 #ifndef NDEBUG
-    write_graphviz(vm["output"].as<string>() + "_registry.dot", modules::registry::graph());
+    if (vm["verbose"].as<int>() >= logging::debug) {
+        write_graphviz(vm["output"].as<string>() + "_registry.dot", modules::registry::graph());
+    }
 #endif
     modules::resolver resolver(modules::registry::graph());
     try {
@@ -82,11 +84,15 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 #ifndef NDEBUG
-    write_graphviz(vm["output"].as<string>() + "_resolver.dot", resolver.graph());
+    if (vm["verbose"].as<int>() >= logging::debug) {
+        write_graphviz(vm["output"].as<string>() + "_resolver.dot", resolver.graph());
+    }
 #endif
     modules::policy policy(resolver.graph());
 #ifndef NDEBUG
-    write_graphviz(vm["output"].as<string>() + "_policy.dot", policy.graph());
+    if (vm["verbose"].as<int>() >= logging::debug) {
+        write_graphviz(vm["output"].as<string>() + "_policy.dot", policy.graph());
+    }
 #endif
     modules::factory factory(policy.graph());
 
