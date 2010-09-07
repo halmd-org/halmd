@@ -354,8 +354,8 @@ __global__ void displacement(float4* g_r, float4* g_r0, typename vector_type::va
     s_rr[TID] = rr;
     __syncthreads();
 
-    // compute reduced value for all threads in block
-    reduce<threads / 2, sum_>(rr, s_rr);
+    // reduce values for all threads in block with the maximum function
+    reduce<threads / 2, max_>(rr, s_rr);
 
     if (TID < 1) {
         // store block reduced value in global memory
