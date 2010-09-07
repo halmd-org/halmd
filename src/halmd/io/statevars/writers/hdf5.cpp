@@ -43,6 +43,22 @@ hdf5::hdf5(modules::factory& factory, po::options const& vm)
       , H5F_ACC_TRUNC // truncate existing file
     )
 {
+    // create parameter group
+    H5::Group group = file_.openGroup("/");
+    group = group.createGroup("param");
+
+    // store file version
+    array<hsize_t, 1> dim = {{ 2 }};
+    array<unsigned char, 2> version = {{ 1, 0 }};
+    H5::Attribute attr(
+        group.createAttribute(
+            "file_version"
+          , H5::PredType::NATIVE_UCHAR
+          , H5::DataSpace(dim.size(), dim.data())
+        )
+    );
+    attr.write(attr.getDataType(), version.data());
+
     LOG("write macroscopic state variables to file: " << file_.getFileName());
 }
 
