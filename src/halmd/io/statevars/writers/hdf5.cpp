@@ -45,20 +45,26 @@ hdf5<dimension>::hdf5(modules::factory& factory, po::options const& vm)
     )
 {
     // create parameter group
-    H5::Group group = file_.openGroup("/");
-    group = group.createGroup("param");
+    H5::Group param = file_.openGroup("/").createGroup("param");
 
     // store file version
     array<hsize_t, 1> dim = {{ 2 }};
     array<unsigned char, 2> version = {{ 1, 0 }};
     H5::Attribute attr(
-        group.createAttribute(
+        param.createAttribute(
             "file_version"
           , H5::PredType::NATIVE_UCHAR
           , H5::DataSpace(dim.size(), dim.data())
         )
     );
     attr.write(attr.getDataType(), version.data());
+
+    // store dimension
+    // FIXME configuration and simulation parameters should be stored by a distinct function
+    array<unsigned, 1> dimension_ = {{ dimension }};
+    H5::Group mdsim = param.createGroup("mdsim");
+    attr = mdsim.createAttribute("dimension", H5::PredType::NATIVE_UINT, H5S_SCALAR);
+    attr.write(attr.getDataType(), dimension_.data());
 
     LOG("write macroscopic state variables to file: " << file_.getFileName());
 }
