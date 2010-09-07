@@ -26,8 +26,8 @@
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/mdsim/neighbour.hpp>
 #include <halmd/mdsim/position.hpp>
+#include <halmd/mdsim/sampler.hpp>
 #include <halmd/mdsim/sort.hpp>
-#include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -54,7 +54,7 @@ public:
     typedef mdsim::integrator<dimension> integrator_type;
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
-    typedef mdsim::thermodynamics<dimension> thermodynamics_type;
+    typedef mdsim::sampler<dimension> sampler_type;
     typedef utility::profiler profiler_type;
 
     core(modules::factory& factory, po::options const& vm);
@@ -68,7 +68,7 @@ public:
     shared_ptr<integrator_type> integrator;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
-    shared_ptr<thermodynamics_type> thermodynamics;
+    shared_ptr<sampler_type> sampler;
     shared_ptr<profiler_type> profiler;
 
     // module runtime accumulator descriptions
@@ -87,8 +87,6 @@ private:
 
     // MD step counter
     uint64_t step_counter_;
-    // value from option --sampling-interval
-    unsigned sampling_interval_;
 };
 
 } // namespace mdsim
