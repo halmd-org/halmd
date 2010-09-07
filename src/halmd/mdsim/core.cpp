@@ -43,7 +43,7 @@ void core<dimension>::options(po::options_description& desc)
     desc.add_options()
         ("dimension", po::value<int>()->default_value(3),
          "dimension of positional coordinates")
-        ("sampling-interval", po::value<unsigned>()->default_value(100),
+        ("sampling-interval", po::value<unsigned>()->default_value(25),
          "sample system state every given number of integration steps")
         ;
 }

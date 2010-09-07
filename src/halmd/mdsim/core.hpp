@@ -79,6 +79,7 @@ public:
     double time() const { return step_counter_ * integrator->timestep(); }
 
 private:
+    // list of profiling timers
     boost::fusion::map<
         boost::fusion::pair<prepare_, accumulator<double> >
       , boost::fusion::pair<mdstep_, accumulator<double> >
