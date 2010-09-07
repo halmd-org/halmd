@@ -90,6 +90,10 @@ public:
     /** total energy per particle */
     double en_tot() const { return en_pot() + en_kin(); }
 
+    // module runtime accumulator descriptions
+    HALMD_PROFILE_TAG( compute_, "computation of macroscopic state variables" );
+    HALMD_PROFILE_TAG( write_, "output of macroscopic state variables" );
+
 private:
     // sample() passes values to HDF5 writer via a fixed location in memory
     double en_pot_;
@@ -100,6 +104,12 @@ private:
     double temp_;
     double density_;
     double time_;
+
+    // list of profiling timers
+    boost::fusion::map<
+        boost::fusion::pair<compute_, accumulator<double> >
+      , boost::fusion::pair<write_, accumulator<double> >
+    > runtime_;
 };
 
 } // namespace mdsim

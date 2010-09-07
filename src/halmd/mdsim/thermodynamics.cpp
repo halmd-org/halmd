@@ -19,8 +19,11 @@
 
 #include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 using namespace boost;
+using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -73,6 +76,9 @@ thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options
     writer->register_vector_observable("VCM", &v_cm_, "centre-of-mass velocity");
     writer->register_scalar_observable("PRESS", &pressure_, "virial pressure");
     writer->register_scalar_observable("TEMP", &temp_, "temperature");
+
+    // register module runtime accumulators
+    profiler->register_map(runtime_);
 }
 
 /**
@@ -83,17 +89,23 @@ void thermodynamics<dimension>::sample(double time)
 {
     // compute state variables and take care that
     // expensive functions are called only once
-    en_pot_ = en_pot();
-    en_kin_ = en_kin();
-    v_cm_ = v_cm();
-    en_tot_ = en_pot_ + en_kin_;
-    temp_ = 2 * en_kin_ / dimension;
-    density_ = box->density();
-    pressure_ = density_ * (temp_ + virial() / dimension);
-    time_ = time;
+    if (1) {
+        scoped_timer<timer> timer_(at_key<compute_>(runtime_));
+        en_pot_ = en_pot();
+        en_kin_ = en_kin();
+        v_cm_ = v_cm();
+        en_tot_ = en_pot_ + en_kin_;
+        temp_ = 2 * en_kin_ / dimension;
+        density_ = box->density();
+        pressure_ = density_ * (temp_ + virial() / dimension);
+        time_ = time;
+    }
 
     // call previously registered writer functions
-    writer->write();
+    if (1) {
+        scoped_timer<timer> timer_(at_key<write_>(runtime_));
+        writer->write();
+    }
 }
 
 
