@@ -41,7 +41,7 @@ public:
 
     writer(modules::factory& factory, po::options const& vm) {}
     virtual ~writer() {}
-    virtual std::string extension() const = 0;
+    virtual std::string file_extension() const = 0;
     virtual void append() = 0;
     virtual void flush() = 0;
 };

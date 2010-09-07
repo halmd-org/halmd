@@ -55,7 +55,7 @@ public:
     typedef boost::unordered_map<std::string, boost::function<void ()> > writer_map;
 
     /** returns file extension */
-    std::string extension() const { return ".trj"; }
+    std::string file_extension() const { return ".trj"; }
 
     hdf5(modules::factory& factory, po::options const& vm);
     void append();

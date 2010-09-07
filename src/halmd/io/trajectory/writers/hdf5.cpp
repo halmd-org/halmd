@@ -49,7 +49,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
   // dependency injection
   , sample(modules::fetch<sample_type>(factory, vm))
   // initialize parameters
-  , path_(initial_path() / (vm["output"].as<string>() + extension()))
+  , path_(initial_path() / (vm["output"].as<string>() + file_extension()))
   , file_(path_.file_string(), H5F_ACC_TRUNC)
 {
     LOG("write trajectory to file: " << path_.file_string());
