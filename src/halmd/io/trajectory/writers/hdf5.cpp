@@ -61,12 +61,12 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
     array<hsize_t, 1> dim = {{ 2 }};
     array<unsigned char, 2> version = {{ 1, 0 }};
     H5::Attribute attr(
-                       param.createAttribute(
-                                             "file_version"
-            , H5::PredType::NATIVE_UCHAR
-            , H5::DataSpace(dim.size(), dim.data())
-                                            )
-                      );
+        param.createAttribute(
+            "file_version"
+          , H5::PredType::NATIVE_UCHAR
+          , H5::DataSpace(dim.size(), dim.data())
+        )
+    );
     attr.write(attr.getDataType(), version.data());
 
     // create trajectory group
