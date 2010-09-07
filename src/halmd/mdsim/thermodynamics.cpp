@@ -29,22 +29,73 @@ namespace mdsim
 {
 
 /**
+ * Assemble module options
+ */
+template <int dimension>
+void thermodynamics<dimension>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("disable-state-vars", po::bool_switch(),
+         "disable evaluation and output of macroscopic state variables")
+        ;
+}
+
+/**
  * Resolve module dependencies
  */
 template <int dimension>
 void thermodynamics<dimension>::depends()
 {
     modules::depends<_Self, box_type>::required();
+    modules::depends<_Self, writer_type>::required();
     modules::depends<_Self, profiler_type>::required();
+}
+
+template <int dimension>
+void thermodynamics<dimension>::select(po::options const& vm)
+{
+    if (vm["disable-state-vars"].as<bool>()) {
+        throw unsuitable_module("mismatching option: disable-state-vars");
+    }
 }
 
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options const& vm)
   // dependency injection
   : box(modules::fetch<box_type>(factory, vm))
+  , writer(modules::fetch<writer_type>(factory, vm))
   , profiler(modules::fetch<profiler_type>(factory, vm))
 {
+    writer->register_observable("TIME", &time_, "simulation time");
+    writer->register_observable("EPOT", &en_pot_, "potential energy");
+    writer->register_observable("EKIN", &en_kin_, "kinetic energy");
+    writer->register_observable("ETOT", &en_tot_, "total energy");
+//     writer->register_observable("VCM", &v_cm_, "centre-of-mass velocity");
+    writer->register_observable("PRESS", &pressure_, "pressure");
+    writer->register_observable("TEMP", &temp_, "temperature");
 }
+
+/**
+ * Sample macroscopic state variables
+ */
+template <int dimension>
+void thermodynamics<dimension>::sample(double time)
+{
+    // compute state variables and take care that
+    // expensive functions are called only once
+    en_pot_ = en_pot();
+    en_kin_ = en_kin();
+//     v_cm_ = v_cm();
+    en_tot_ = en_pot_ + en_kin_;
+    temp_ = 2 * en_kin_ / dimension;
+    density_ = box->density();
+    pressure_ = density_ * (temp_ + virial() / dimension);
+    time_ = time;
+
+    // call previously registered writer functions
+    writer->write();
+}
+
 
 // explicit instantiation
 template class thermodynamics<3>;

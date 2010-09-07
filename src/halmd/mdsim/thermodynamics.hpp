@@ -24,6 +24,7 @@
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <vector>
 
+#include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
@@ -49,19 +50,24 @@ class thermodynamics
 public:
     // module definitions
     typedef thermodynamics _Self;
-    static void options(po::options_description& desc) {}
+    static void options(po::options_description& desc);
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::options const& vm);
 
     typedef mdsim::box<dimension> box_type;
+    typedef io::statevars::writer writer_type;
     typedef utility::profiler profiler_type;
     typedef fixed_vector<double, dimension> vector_type;
 
     shared_ptr<box_type> box;
+    shared_ptr<writer_type> writer;
     shared_ptr<profiler_type> profiler;
 
     thermodynamics(modules::factory& factory, po::options const& vm);
     virtual ~thermodynamics() {}
+
+    // sample macroscopic state variables and store with given time
+    void sample(double time);
 
     /** potential energy per particle */
     virtual double en_pot() const = 0;
@@ -69,7 +75,7 @@ public:
     virtual double en_kin() const = 0;
     /** mean velocity per particle */
     virtual vector_type v_cm() const = 0;
-    /** virial tensor per particle for each particle type */
+    /** virial sum */
     virtual double virial() const = 0;
 
     /** total pressure */
@@ -83,6 +89,17 @@ public:
     double density() const { return box->density(); }
     /** total energy per particle */
     double en_tot() const { return en_pot() + en_kin(); }
+
+private:
+    // sample() passes values to HDF5 writer via a fixed location in memory
+    double en_pot_;
+    double en_kin_;
+    double en_tot_;
+    vector_type v_cm_;
+    double pressure_;
+    double temp_;
+    double density_;
+    double time_;
 };
 
 } // namespace mdsim

@@ -84,6 +84,11 @@ void hdf5::register_accumulator(
         )
     );
     attr.write(attr.getDataType(), desc.c_str());
+
+    // We bind the functions to write the datasets using a
+    // *reference* to the accumulator and a *copy* of the HDF5
+    // dataset instance which goes out of scope
+
     writer_.push_back(
         bind(
             &hdf5::write_accumulator

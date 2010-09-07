@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -27,6 +27,7 @@
 #include <halmd/mdsim/neighbour.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/sort.hpp>
+#include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -53,11 +54,13 @@ public:
     typedef mdsim::integrator<dimension> integrator_type;
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
+    typedef mdsim::thermodynamics<dimension> thermodynamics_type;
     typedef utility::profiler profiler_type;
 
     core(modules::factory& factory, po::options const& vm);
     void prepare();
     void mdstep();
+    void sample();
 
     shared_ptr<force_type> force;
     shared_ptr<neighbour_type> neighbour;
@@ -65,17 +68,26 @@ public:
     shared_ptr<integrator_type> integrator;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
+    shared_ptr<thermodynamics_type> thermodynamics;
     shared_ptr<profiler_type> profiler;
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( prepare_, "microscopic state preparation" );
     HALMD_PROFILE_TAG( mdstep_, "MD integration step" );
 
+    uint64_t step_counter() const { return step_counter_; }
+    double time() const { return step_counter_ * integrator->timestep(); }
+
 private:
     boost::fusion::map<
         boost::fusion::pair<prepare_, accumulator<double> >
       , boost::fusion::pair<mdstep_, accumulator<double> >
     > runtime_;
+
+    // MD step counter
+    uint64_t step_counter_;
+    // value from option --sampling-interval
+    unsigned sampling_interval_;
 };
 
 } // namespace mdsim

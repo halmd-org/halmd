@@ -73,6 +73,7 @@ configure_file(
 set(HALMD_MODULES
   halmd_io
   halmd_io_profile_writers
+  halmd_io_statevars_writers
   halmd_io_trajectory
   halmd_io_trajectory_readers
   halmd_io_trajectory_writers

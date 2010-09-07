@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -73,14 +73,21 @@ template <int dimension>
 void thermostat<dimension>::run()
 {
     core->prepare();
+    core->sample();
 
     LOG("starting thermostat run");
 
-    for (uint64_t i = 0; i < _Base::steps_; ++i) {
+    while (core->step_counter() < _Base::steps_) {
+        // perform complete MD integration step
         core->mdstep();
-        if (i % period_ == period_ - 1) {
+
+        // assign new random velocities (Andersen thermostat)
+        if (!(core->step_counter() % period_)) {
             core->velocity->set();
         }
+
+        // sample system state and properties
+        core->sample();
     }
 
     LOG("finished thermostat run");

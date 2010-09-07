@@ -35,6 +35,7 @@ typedef boost::program_options::variables_map options;
 using boost::program_options::option;
 using boost::program_options::options_description;
 using boost::program_options::value;
+using boost::program_options::bool_switch;
 
 using boost::program_options::required_option;
 

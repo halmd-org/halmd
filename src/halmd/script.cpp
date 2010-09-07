@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -83,11 +83,16 @@ template <int dimension>
 void script<dimension>::run()
 {
     core->prepare();
+    core->sample();
 
     LOG("starting NVE ensemble run");
 
-    for (uint64_t i = 0; i < steps_; ++i) {
+    while (core->step_counter() < steps_) {
+        // perform complete MD integration step
         core->mdstep();
+
+        // sample system state and properties
+        core->sample();
     }
 
     LOG("finished NVE ensemble run");

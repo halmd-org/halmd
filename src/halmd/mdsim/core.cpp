@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -43,6 +43,8 @@ void core<dimension>::options(po::options_description& desc)
     desc.add_options()
         ("dimension", po::value<int>()->default_value(3),
          "dimension of positional coordinates")
+        ("sampling-interval", po::value<unsigned>()->default_value(100),
+         "sample system state every given number of integration steps")
         ;
 }
 
@@ -58,6 +60,7 @@ void core<dimension>::depends()
     modules::depends<_Self, integrator_type>::required();
     modules::depends<_Self, position_type>::required();
     modules::depends<_Self, velocity_type>::required();
+    modules::depends<_Self, thermodynamics_type>::optional();
     modules::depends<_Self, profiler_type>::required();
 }
 
@@ -81,8 +84,12 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
   , integrator(modules::fetch<integrator_type>(factory, vm))
   , position(modules::fetch<position_type>(factory, vm))
   , velocity(modules::fetch<velocity_type>(factory, vm))
+  , thermodynamics(modules::fetch<thermodynamics_type>(factory, vm))
   , profiler(modules::fetch<profiler_type>(factory, vm))
 {
+    step_counter_ = 0;
+    sampling_interval_ = vm["sampling-interval"].as<unsigned>();
+
     // register module runtime accumulators
     profiler->register_map(runtime_);
 }
@@ -116,6 +123,19 @@ void core<dimension>::mdstep()
     }
     force->compute();
     integrator->finalize();
+
+    // increment step counter
+    step_counter_++;
+}
+
+/**
+ * Sample system state and system properties
+ */
+template <int dimension>
+void core<dimension>::sample()
+{
+    if (thermodynamics && !(step_counter_ % sampling_interval_))
+        thermodynamics->sample(time());
 }
 
 // explicit instantiation
