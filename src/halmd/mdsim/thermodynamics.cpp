@@ -67,11 +67,11 @@ thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options
   , profiler(modules::fetch<profiler_type>(factory, vm))
 {
     writer->register_observable("TIME", &time_, "simulation time");
-    writer->register_observable("EPOT", &en_pot_, "potential energy");
-    writer->register_observable("EKIN", &en_kin_, "kinetic energy");
-    writer->register_observable("ETOT", &en_tot_, "total energy");
+    writer->register_observable("EPOT", &en_pot_, "mean potential energy per particle");
+    writer->register_observable("EKIN", &en_kin_, "mean kinetic energy per particle");
+    writer->register_observable("ETOT", &en_tot_, "mean total energy per particle");
 //     writer->register_observable("VCM", &v_cm_, "centre-of-mass velocity");
-    writer->register_observable("PRESS", &pressure_, "pressure");
+    writer->register_observable("PRESS", &pressure_, "virial pressure");
     writer->register_observable("TEMP", &temp_, "temperature");
 }
 
