@@ -55,7 +55,7 @@ public:
     static void select(po::options const& vm);
 
     typedef mdsim::box<dimension> box_type;
-    typedef io::statevars::writer writer_type;
+    typedef io::statevars::writer<dimension> writer_type;
     typedef utility::profiler profiler_type;
     typedef fixed_vector<double, dimension> vector_type;
 

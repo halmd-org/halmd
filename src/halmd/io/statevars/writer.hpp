@@ -21,6 +21,7 @@
 #define HALMD_IO_STATEVARS_WRITER_HPP
 
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -41,11 +42,14 @@ namespace io { namespace statevars
 /**
  * Abstract base class of a writer of macroscopic state variables.
  */
+template <int dimension>
 class writer
 {
 public:
     // module definitions
     typedef writer _Self;
+    typedef fixed_vector<double, dimension> vector_type;
+
     static void options(po::options_description& desc) {}
     static void depends() {}
     static void select(po::options const& vm) {}
@@ -55,12 +59,17 @@ public:
     virtual void write() = 0;
 
 protected:
-    template <int dimension>
-    friend class mdsim::thermodynamics;
+    friend class mdsim::thermodynamics<dimension>;
 
-    virtual void register_observable(
+    virtual void register_scalar_observable(
         std::string const& tag
       , double const* value_ptr
+      , std::string const& desc
+    ) = 0;
+
+    virtual void register_vector_observable(
+        std::string const& tag
+      , vector_type const* value_ptr
       , std::string const& desc
     ) = 0;
 };

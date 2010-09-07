@@ -33,13 +33,16 @@ namespace io { namespace statevars { namespace writers
 /**
  * Write results for macroscopic state variables to a HDF5 file.
  */
+template <int dimension>
 class hdf5
-  : public statevars::writer
+  : public statevars::writer<dimension>
 {
 public:
     // module definitions
     typedef hdf5 _Self;
-    typedef statevars::writer _Base;
+    typedef statevars::writer<dimension> _Base;
+    typedef typename _Base::vector_type vector_type;
+
     static void options(po::options_description& desc) {}
     static void depends() {}
     static void select(po::options const& vm) {}
@@ -50,14 +53,26 @@ public:
     void write();
 
 private:
-    void register_observable(
+    void register_scalar_observable(
         std::string const& tag
       , double const* value_ptr
       , std::string const& desc
     );
-    static void write_observable(
+
+    static void write_scalar_observable(
         H5::DataSet const& dset
       , double const* value_ptr
+    );
+
+    void register_vector_observable(
+        std::string const& tag
+      , vector_type const* value_ptr
+      , std::string const& desc
+    );
+
+    static void write_vector_observable(
+        H5::DataSet const& dset
+      , vector_type const* value_ptr
     );
 
     H5::H5File file_;

@@ -66,13 +66,13 @@ thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options
   , writer(modules::fetch<writer_type>(factory, vm))
   , profiler(modules::fetch<profiler_type>(factory, vm))
 {
-    writer->register_observable("TIME", &time_, "simulation time");
-    writer->register_observable("EPOT", &en_pot_, "mean potential energy per particle");
-    writer->register_observable("EKIN", &en_kin_, "mean kinetic energy per particle");
-    writer->register_observable("ETOT", &en_tot_, "mean total energy per particle");
-//     writer->register_observable("VCM", &v_cm_, "centre-of-mass velocity");
-    writer->register_observable("PRESS", &pressure_, "virial pressure");
-    writer->register_observable("TEMP", &temp_, "temperature");
+    writer->register_scalar_observable("TIME", &time_, "simulation time");
+    writer->register_scalar_observable("EPOT", &en_pot_, "mean potential energy per particle");
+    writer->register_scalar_observable("EKIN", &en_kin_, "mean kinetic energy per particle");
+    writer->register_scalar_observable("ETOT", &en_tot_, "mean total energy per particle");
+    writer->register_vector_observable("VCM", &v_cm_, "centre-of-mass velocity");
+    writer->register_scalar_observable("PRESS", &pressure_, "virial pressure");
+    writer->register_scalar_observable("TEMP", &temp_, "temperature");
 }
 
 /**
@@ -85,7 +85,7 @@ void thermodynamics<dimension>::sample(double time)
     // expensive functions are called only once
     en_pot_ = en_pot();
     en_kin_ = en_kin();
-//     v_cm_ = v_cm();
+    v_cm_ = v_cm();
     en_tot_ = en_pot_ + en_kin_;
     temp_ = 2 * en_kin_ / dimension;
     density_ = box->density();
