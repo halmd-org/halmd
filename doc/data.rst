@@ -136,9 +136,11 @@ evaluation scripts. *Do not (ab)use the log file for evaluation purposes.*
    |    \-- timestep		simulation time-step
    |
    \-- program
-        \-- name		program name (HALMD)
-        \-- variant		compile-time feature flags
-        \-- version		git repository version
+   |    \-- name		program name (HALMD)
+   |    \-- variant		compile-time feature flags
+   |    \-- version		git repository version
+   |
+   \-- file_version		version of file format (major, minor)
 
 
 Trajectories (TRJ)
@@ -176,23 +178,25 @@ A particle trajectory file contains three datasets::
      The first dimension is the trajectory sample number.
 
 
-Thermodynamic variables (TEP)
------------------------------
+Macroscopic state variables (MSV)
+---------------------------------
 
-A thermodynamic variables file contains one dataset per measured variable::
+An MSV file contains one dataset per macroscopic state variable and one additional dataset
+for the corresponding time::
 
   \-- EKIN			mean kinetic energy per particle
   \-- EPOT			mean potential energy per particle
   \-- ETOT			mean total energy per particle
   \-- PRESS			virial pressure
   \-- TEMP			temperature
-  \-- VCM			velocity center of mass
+  \-- VCM			centre-of-mass velocity
+  \-- TIME			simulation time
 
-All datasets are two-dimensional.
-The first dimension describes the sample number.
-The second dimension contains the sample time and the variable value.
+Datasets are of rank 1 for scalars and of rank 2 for vectorial observables like VCM.
+The first dimension always refers to the sample number.
 All values are double-precision floating point numbers, but may be measured
-in single-precision internally depending on the backend.
+in single-precision internally depending on the configuration.
+Each dataset has an attribute "description".
 
 .. glossary::
 
@@ -218,16 +222,16 @@ in single-precision internally depending on the backend.
    virial pressure
      .. math::
 
-        P^* = \frac{N}{d V^*} \sum_{i=1}^N
-        \bigl( (\vec{v}^*_i)^2 +
-        \sum_{j>i}^N \vec{F}(\vec{r}^*_{ij})\cdot\vec{r}^*_{ij}\bigr)
+        P^* = \frac{N}{d\, V^*} \sum_{i=1}^N
+        \left[ (\vec{v}^*_i)^2 +
+        \sum_{j>i}^N \vec{F}(\vec{r}^*_{ij})\cdot\vec{r}^*_{ij}\right]
 
      With the GPU backend, the inner sum is truncated to single-precision.
 
    temperature
      .. math::
 
-        T^* = \frac{1}{d N} \sum_{i=1}^N (\vec{v}^*_i)^2
+        T^* = \frac{1}{d\,N} \sum_{i=1}^N (\vec{v}^*_i)^2
 
    velocity center of mass
      .. math::
