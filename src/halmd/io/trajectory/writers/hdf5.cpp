@@ -52,8 +52,24 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
   , path_(initial_path() / (vm["output"].as<string>() + extension()))
   , file_(path_.file_string(), H5F_ACC_TRUNC)
 {
-    LOG("write trajectories to file: " << path_.file_string());
+    LOG("write trajectory to file: " << path_.file_string());
 
+    // create parameter group
+    H5::Group param = file_.openGroup("/").createGroup("param");
+
+    // store file version
+    array<hsize_t, 1> dim = {{ 2 }};
+    array<unsigned char, 2> version = {{ 1, 0 }};
+    H5::Attribute attr(
+                       param.createAttribute(
+                                             "file_version"
+            , H5::PredType::NATIVE_UCHAR
+            , H5::DataSpace(dim.size(), dim.data())
+                                            )
+                      );
+    attr.write(attr.getDataType(), version.data());
+
+    // create trajectory group
     H5::Group root = file_.createGroup("trajectory");
 
     for (size_t i = 0; i < sample->r.size(); ++i) {
