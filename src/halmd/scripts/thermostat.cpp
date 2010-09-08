@@ -73,7 +73,7 @@ template <int dimension>
 void thermostat<dimension>::run()
 {
     core->prepare();
-    core->sample();
+    sampler->sample();
 
     LOG("starting thermostat run");
 
@@ -87,7 +87,7 @@ void thermostat<dimension>::run()
         }
 
         // sample system state and properties
-        core->sample();
+        sampler->sample();
     }
 
     LOG("finished thermostat run");

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -102,11 +102,10 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
     }
 
     // simulation time in reduced units
-    double* _FIXME_time = new double(42);
-    H5::DataSet t = create_scalar_dataset(root, "time", *_FIXME_time);
+    H5::DataSet t = create_scalar_dataset(root, "time", sample->time);
     writer_.insert(make_pair(
         H5xx::path(t)
-      , bind(&hdf5<dimension, float_type>::write_scalar_dataset, this, t, ref(*_FIXME_time))
+      , bind(&hdf5<dimension, float_type>::write_scalar_dataset, this, t, ref(sample->time))
     ));
 }
 
@@ -116,6 +115,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
 template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::append()
 {
+    sample->acquire();
     BOOST_FOREACH( typename writer_map::value_type const& writer, writer_ ) {
         LOG_DEBUG("writing dataset " << writer.first);
         writer.second();

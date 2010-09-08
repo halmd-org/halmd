@@ -58,7 +58,6 @@ void core<dimension>::depends()
     modules::depends<_Self, integrator_type>::required();
     modules::depends<_Self, position_type>::required();
     modules::depends<_Self, velocity_type>::required();
-    modules::depends<_Self, sampler_type>::required();
     modules::depends<_Self, profiler_type>::required();
 }
 
@@ -82,7 +81,6 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
   , integrator(modules::fetch<integrator_type>(factory, vm))
   , position(modules::fetch<position_type>(factory, vm))
   , velocity(modules::fetch<velocity_type>(factory, vm))
-  , sampler(modules::fetch<sampler_type>(factory, vm))
   , profiler(modules::fetch<profiler_type>(factory, vm))
   // initialise attributes
   , step_counter_(0)
@@ -123,15 +121,6 @@ void core<dimension>::mdstep()
 
     // increment step counter
     step_counter_++;
-}
-
-/**
- * Sample system state and system properties
- */
-template <int dimension>
-void core<dimension>::sample()
-{
-    sampler->sample(step_counter_, time());
 }
 
 // explicit instantiation

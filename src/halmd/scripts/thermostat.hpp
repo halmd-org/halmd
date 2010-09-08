@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -54,6 +54,7 @@ public:
     void run();
 
     using _Base::core;
+    using _Base::sampler;
     using _Base::profile_writers;
 
 protected:

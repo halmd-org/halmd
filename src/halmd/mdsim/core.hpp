@@ -26,7 +26,6 @@
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/mdsim/neighbour.hpp>
 #include <halmd/mdsim/position.hpp>
-#include <halmd/mdsim/sampler.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/module.hpp>
@@ -54,13 +53,11 @@ public:
     typedef mdsim::integrator<dimension> integrator_type;
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
-    typedef mdsim::sampler<dimension> sampler_type;
     typedef utility::profiler profiler_type;
 
     core(modules::factory& factory, po::options const& vm);
     void prepare();
     void mdstep();
-    void sample();
 
     shared_ptr<force_type> force;
     shared_ptr<neighbour_type> neighbour;
@@ -68,7 +65,6 @@ public:
     shared_ptr<integrator_type> integrator;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
-    shared_ptr<sampler_type> sampler;
     shared_ptr<profiler_type> profiler;
 
     // module runtime accumulator descriptions

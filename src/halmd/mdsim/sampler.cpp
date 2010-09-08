@@ -18,13 +18,8 @@
  */
 
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/sampler.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
-
-using namespace boost;
-using namespace boost::fusion;
-using namespace std;
 
 namespace halmd
 {
@@ -38,8 +33,12 @@ template <int dimension>
 void sampler<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("sampling-interval", po::value<unsigned>()->default_value(25),
-         "sample system state every given number of integration steps")
+        ("sampling-stat-vars", po::value<unsigned>()->default_value(25),
+         "sample macroscopic state variables every given number of integration steps")
+        ;
+    desc.add_options()
+        ("sampling-trajectory", po::value<unsigned>()->default_value(0),
+         "sample trajectory every given number of integration steps")
         ;
 }
 
@@ -49,8 +48,9 @@ void sampler<dimension>::options(po::options_description& desc)
 template <int dimension>
 void sampler<dimension>::depends()
 {
+    modules::depends<_Self, core_type>::required();
     modules::depends<_Self, thermodynamics_type>::optional();
-    modules::depends<_Self, profiler_type>::required();
+    modules::depends<_Self, trajectory_writer_type>::required();
 }
 
 /**
@@ -59,23 +59,37 @@ void sampler<dimension>::depends()
 template <int dimension>
 sampler<dimension>::sampler(modules::factory& factory, po::options const& vm)
   // dependency injection
-  : thermodynamics(modules::fetch<thermodynamics_type>(factory, vm))
-  , profiler(modules::fetch<profiler_type>(factory, vm))
+  : core(modules::fetch<core_type>(factory, vm))
+  , thermodynamics(modules::fetch<thermodynamics_type>(factory, vm))
+  , trajectory_writer(modules::fetch<trajectory_writer_type>(factory, vm))
   // store options
-  , sampling_interval_(vm["sampling-interval"].as<unsigned>())
+  , stat_vars_interval_(vm["sampling-stat-vars"].as<unsigned>())
+  , trajectory_interval_(vm["sampling-trajectory"].as<unsigned>())
 {
-    // register module runtime accumulators
-    profiler->register_map(runtime_);
 }
 
 /**
  * Sample system state and system properties
  */
 template <int dimension>
-void sampler<dimension>::sample(uint64_t step, double time)
+void sampler<dimension>::sample()
 {
-    if (thermodynamics && !(step % sampling_interval_))
-        thermodynamics->sample(time);
+    uint64_t step = core->step_counter();
+    bool is_sampling_step = false;
+
+    if (!(step % stat_vars_interval_) && thermodynamics) {
+        thermodynamics->sample(core->time());
+        is_sampling_step = true;
+    }
+
+    // allow value 0 for trajectory_interval_
+    if (trajectory_interval_ && !(step % trajectory_interval_) && trajectory_writer) {
+        trajectory_writer->append();
+        is_sampling_step = true;
+    }
+
+    if (is_sampling_step)
+        LOG_DEBUG("system state sampled at step " << step);
 }
 
 // explicit instantiation

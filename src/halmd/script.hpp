@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,6 +23,7 @@
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/main.hpp>
 #include <halmd/mdsim/core.hpp>
+#include <halmd/mdsim/sampler.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/module.hpp>
 
@@ -45,6 +46,7 @@ public:
     static void select(po::options const& vm) {}
 
     typedef mdsim::core<dimension> core_type;
+    typedef mdsim::sampler<dimension> sampler_type;
     typedef io::profile::writer profile_writer_type;
 
     script(modules::factory& factory, po::options const& vm);
@@ -54,6 +56,7 @@ public:
     double time() { return time_; }
 
     shared_ptr<core_type> core;
+    shared_ptr<sampler_type> sampler;
     std::vector<shared_ptr<profile_writer_type> > profile_writers;
 
 protected:

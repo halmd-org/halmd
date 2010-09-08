@@ -52,6 +52,7 @@ template <int dimension>
 void script<dimension>::depends()
 {
     modules::depends<_Self, core_type>::required();
+    modules::depends<_Self, sampler_type>::required();
     modules::depends<_Self, profile_writer_type>::required();
 }
 
@@ -60,6 +61,7 @@ script<dimension>::script(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   // dependency injection
   , core(modules::fetch<core_type>(factory, vm))
+  , sampler(modules::fetch<sampler_type>(factory, vm))
   , profile_writers(modules::fetch<profile_writer_type>(factory, vm))
 {
     // parse options
@@ -83,7 +85,7 @@ template <int dimension>
 void script<dimension>::run()
 {
     core->prepare();
-    core->sample();
+    sampler->sample();
 
     LOG("starting NVE ensemble run");
 
@@ -92,7 +94,7 @@ void script<dimension>::run()
         core->mdstep();
 
         // sample system state and properties
-        core->sample();
+        sampler->sample();
     }
 
     LOG("finished NVE ensemble run");

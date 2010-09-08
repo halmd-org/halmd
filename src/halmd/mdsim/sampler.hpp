@@ -22,10 +22,11 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/io/trajectory/writer.hpp>
+#include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
-#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -42,26 +43,22 @@ public:
     static void depends();
     static void select(po::options const& vm) {};
 
+    typedef mdsim::core<dimension> core_type;
     typedef mdsim::thermodynamics<dimension> thermodynamics_type;
-    typedef utility::profiler profiler_type;
+    typedef io::trajectory::writer<dimension> trajectory_writer_type;
 
     sampler(modules::factory& factory, po::options const& vm);
-    void sample(uint64_t step, double time);
+    void sample();
 
+    shared_ptr<core_type> core;
     shared_ptr<thermodynamics_type> thermodynamics;
-    shared_ptr<profiler_type> profiler;
-
-    // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( mdstep_, "MD integration step" );
+    shared_ptr<trajectory_writer_type> trajectory_writer;
 
 private:
-    // list of profiling timers
-    boost::fusion::map<
-        boost::fusion::pair<mdstep_, accumulator<double> >
-    > runtime_;
-
-    // value from option --sampling-interval
-    unsigned sampling_interval_;
+    // value from option --sampling-stat-vars
+    unsigned stat_vars_interval_;
+    // value from option --sampling-trajectory
+    unsigned trajectory_interval_;
 };
 
 } // namespace mdsim
