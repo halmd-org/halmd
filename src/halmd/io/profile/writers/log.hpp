@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,7 +20,9 @@
 #ifndef HALMD_IO_PROFILE_LOG_HPP
 #define HALMD_IO_PROFILE_LOG_HPP
 
-#include <boost/function.hpp>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/utility/module.hpp>
@@ -46,23 +48,26 @@ public:
     static void select(po::options const& vm) {}
 
     typedef _Base::accumulator_type accumulator_type;
-    typedef boost::function<void ()> writer_functor;
+    typedef std::pair<accumulator_type const*, std::string> acc_desc_pair_type;
 
     log(modules::factory& factory, po::options const& vm);
     void write();
 
 private:
+    /**
+    * register runtime accumulator
+    */
     void register_accumulator(
         std::vector<std::string> const& tag
       , accumulator_type const& acc
       , std::string const& desc
-    );
-    static void write_accumulator(
-        accumulator_type const& acc
-      , std::string const& desc
-    );
+    )
+    {
+        accumulators_.push_back(make_pair(&acc, desc));
+    }
 
-    std::vector<writer_functor> writer_;
+    /** list of registered accumulators and their descriptions */
+    std::vector<acc_desc_pair_type> accumulators_;
 };
 
 }}} // namespace io::profile::writers

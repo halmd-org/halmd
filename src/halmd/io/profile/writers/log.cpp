@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,7 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <iomanip>
 
 #include <halmd/io/logger.hpp>
@@ -55,44 +57,29 @@ log::log(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm) {}
 
 /**
- * register runtime accumulator
+ * compare total accumulated runtimes of acc_desc_pairs
  */
-void log::register_accumulator(
-    std::vector<std::string> const& tag
-  , accumulator_type const& acc
-  , std::string const& desc
-)
+template <typename T>
+bool greater_total_runtime(T x, T y)
 {
-    writer_.push_back(
-        bind(
-            &log::write_accumulator
-          , cref(acc)
-          , desc
-        )
-    );
+    return mean(*x.first) * count(*x.first) > mean(*y.first) * count(*y.first);
 }
 
 /**
- * write log entry for runtime accumulator
- */
-void log::write_accumulator(
-    accumulator_type const& acc
-  , std::string const& desc
-)
-{
-    LOG(desc << ": " << acc);
-}
-
-/**
- * write all log entries
+ * write log entries for all runtime accumulators,
+ * sorted by their total accumulated runtime
  */
 void log::write()
 {
-    for_each(
-        writer_.begin()
-      , writer_.end()
-      , bind(&writer_functor::operator(), _1)
+    stable_sort(
+        accumulators_.begin()
+      , accumulators_.end()
+      , bind(&greater_total_runtime<acc_desc_pair_type>, _1, _2)
     );
+
+    BOOST_FOREACH(acc_desc_pair_type const& x, accumulators_) {
+        LOG(x.second << ": " << *x.first);
+    }
 }
 
 }}} // namespace io::profile::writers
