@@ -149,9 +149,9 @@ Trajectories (TRJ)
 A particle trajectory file contains three datasets::
 
   trajectory
-   \-- r			periodically extended particle coordinates
-   \-- v			particle velocities
-   \-- t			trajectory times
+   \-- position		periodically extended particle coordinates
+   \-- velocity		particle velocities
+   \-- time			time of trajectory snapshots
 
 .. glossary::
 
@@ -173,7 +173,7 @@ A particle trajectory file contains three datasets::
      The second dimension is the particle number.
      The third dimension is the coordinates dimension.
 
-   trajectory times
+   time of trajectory snapshots
      A one-dimensional double-precision floating-point dataset.
      The first dimension is the trajectory sample number.
 
