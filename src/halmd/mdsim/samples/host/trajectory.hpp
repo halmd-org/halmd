@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
+#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
@@ -43,8 +44,10 @@ public:
     static void depends();
     static void select(po::options const& vm) {}
 
-    typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
+    // this module is used by mdsim::gpu::sampler::trajectory
+    // and must not depend on host::particle
+    typedef mdsim::particle<dimension> particle_type;
+    typedef typename mdsim::host::particle<dimension, float_type>::vector_type vector_type;
 
     trajectory(modules::factory& factory, po::options const& vm);
     virtual ~trajectory() {}
@@ -63,6 +66,8 @@ public:
     sample_vector_ptr_vector r;
     /** particle velocities */
     sample_vector_ptr_vector v;
+    /** simulation time when sample was taken */
+    double time;
 };
 
 }}} // namespace mdsim::samples::host

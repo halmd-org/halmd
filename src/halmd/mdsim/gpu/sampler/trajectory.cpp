@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -56,6 +56,7 @@ trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::trajectory(
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
   , box(modules::fetch<box_type>(factory, vm))
+  , core(modules::fetch<core_type>(factory, vm))
 {}
 
 template <int dimension, typename float_type>
@@ -64,6 +65,7 @@ trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::trajectory
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
   , box(modules::fetch<box_type>(factory, vm))
+  , core(modules::fetch<core_type>(factory, vm))
 {}
 
 /**
@@ -73,6 +75,8 @@ template <int dimension, typename float_type>
 void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::acquire()
 {
     // FIXME
+
+    time = core->time();
 }
 
 /**
@@ -103,6 +107,7 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
         // particle velocity
         (*this->v[type])[tag] = v;
     }
+    time = core->time();
 }
 
 }}} // namespace mdsim::gpu::sample

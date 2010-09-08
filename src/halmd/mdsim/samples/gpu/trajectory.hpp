@@ -64,6 +64,8 @@ public:
     sample_vector_ptr_vector r;
     /** particle velocities */
     sample_vector_ptr_vector v;
+    /** simulation time when sample was taken */
+    double time;
 };
 
 }}} // namespace mdsim::samples::gpu

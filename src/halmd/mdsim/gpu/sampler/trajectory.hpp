@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -21,6 +21,7 @@
 #define HALMD_MDSIM_GPU_SAMPLER_TRAJECTORY_HPP
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/samples/gpu/trajectory.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
@@ -52,9 +53,11 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
+    typedef mdsim::core<dimension> core_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
+    shared_ptr<core_type> core;
 
     trajectory(modules::factory& factory, po::options const& vm);
     virtual ~trajectory() {}
@@ -66,6 +69,8 @@ public:
     using _Base::r;
     /** particle velocities */
     using _Base::v;
+    /** simulation time when sample was taken */
+    using _Base::time;
 };
 
 /**
@@ -86,9 +91,11 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
+    typedef mdsim::core<dimension> core_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;
+    shared_ptr<core_type> core;
 
     trajectory(modules::factory& factory, po::options const& vm);
     virtual ~trajectory() {}
@@ -100,6 +107,8 @@ public:
     using _Base::r;
     /** particle velocities */
     using _Base::v;
+    /** simulation time when sample was taken */
+    using _Base::time;
 };
 
 }}} // namespace mdsim::gpu::sampler

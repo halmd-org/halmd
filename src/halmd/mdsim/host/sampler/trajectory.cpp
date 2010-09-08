@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -44,6 +44,7 @@ trajectory<dimension, float_type>::trajectory(modules::factory& factory, po::opt
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
   , box(modules::fetch<box_type>(factory, vm))
+  , core(modules::fetch<core_type>(factory, vm))
 {}
 
 /**
@@ -58,6 +59,7 @@ void trajectory<dimension, float_type>::acquire()
         // particle velocity
         (*v[particle->type[i]])[particle->tag[i]] = particle->v[i];
     }
+    time = core->time();
 }
 
 }}} // namespace mdsim::host::sampler
