@@ -48,7 +48,7 @@ public:
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
 
     sampler(modules::factory& factory, po::options const& vm);
-    void sample();
+    void sample(bool force=false);
 
     shared_ptr<core_type> core;
     shared_ptr<thermodynamics_type> thermodynamics;

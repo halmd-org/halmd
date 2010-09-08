@@ -85,7 +85,7 @@ template <int dimension>
 void script<dimension>::run()
 {
     core->prepare();
-    sampler->sample();
+    sampler->sample(true);
 
     LOG("starting NVE ensemble run");
 
@@ -93,8 +93,9 @@ void script<dimension>::run()
         // perform complete MD integration step
         core->mdstep();
 
-        // sample system state and properties
-        sampler->sample();
+        // sample system state and properties,
+        // force sampling after last integration step
+        sampler->sample(core->step_counter() == steps_);
     }
 
     LOG("finished NVE ensemble run");

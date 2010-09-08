@@ -73,7 +73,7 @@ template <int dimension>
 void thermostat<dimension>::run()
 {
     core->prepare();
-    sampler->sample();
+    sampler->sample(true);
 
     LOG("starting thermostat run");
 
@@ -86,8 +86,9 @@ void thermostat<dimension>::run()
             core->velocity->set();
         }
 
-        // sample system state and properties
-        sampler->sample();
+        // sample system state and properties,
+        // force sampling after last integration step
+        sampler->sample(core->step_counter() == _Base::steps_);
     }
 
     LOG("finished thermostat run");

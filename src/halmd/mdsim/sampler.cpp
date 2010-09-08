@@ -72,18 +72,19 @@ sampler<dimension>::sampler(modules::factory& factory, po::options const& vm)
  * Sample system state and system properties
  */
 template <int dimension>
-void sampler<dimension>::sample()
+void sampler<dimension>::sample(bool force)
 {
     uint64_t step = core->step_counter();
     bool is_sampling_step = false;
 
-    if (!(step % stat_vars_interval_) && thermodynamics) {
+    if ((!(step % stat_vars_interval_) || force) && thermodynamics) {
         thermodynamics->sample(core->time());
         is_sampling_step = true;
     }
 
     // allow value 0 for trajectory_interval_
-    if (trajectory_interval_ && !(step % trajectory_interval_) && trajectory_writer) {
+    if ((trajectory_interval_ && !(step % trajectory_interval_) || force)
+          && trajectory_writer) {
         trajectory_writer->append();
         is_sampling_step = true;
     }
