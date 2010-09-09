@@ -89,7 +89,7 @@ void thermodynamics<dimension>::sample(double time)
 {
     // compute state variables and take care that
     // expensive functions are called only once
-    if (1) {
+    {
         scoped_timer<timer> timer_(at_key<compute_>(runtime_));
         en_pot_ = en_pot();
         en_kin_ = en_kin();
@@ -102,7 +102,7 @@ void thermodynamics<dimension>::sample(double time)
     }
 
     // call previously registered writer functions
-    if (1) {
+    {
         scoped_timer<timer> timer_(at_key<write_>(runtime_));
         writer->write();
     }
