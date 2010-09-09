@@ -18,7 +18,6 @@
  */
 
 #include <algorithm>
-#include <boost/iterator/counting_iterator.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/position/file.hpp>
@@ -67,19 +66,15 @@ file<dimension, float_type>::file(modules::factory& factory, po::options const& 
 template <int dimension, typename float_type>
 void file<dimension, float_type>::set()
 {
-    // assign particle coordinates and types
+    // assign particle coordinates
     for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
         copy(sample->r[j]->begin(), sample->r[j]->end(), &particle->r[i]);
-        fill_n(&particle->type[i], particle->ntypes[j], j);
     }
 
     // shift particle positions to range (-L/2, L/2)
     for (size_t i = 0; i < particle->nbox; ++i) {
         box->reduce_periodic(particle->r[i]);
     }
-
-    // assign particle tags
-    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(particle->nbox), particle->tag.begin());
 
     // assign particle image vectors
     fill(particle->image.begin(), particle->image.end(), 0);

@@ -19,7 +19,6 @@
 
 #include <algorithm>
 #include <boost/array.hpp>
-#include <boost/iterator/counting_iterator.hpp>
 #include <cmath>
 #include <limits>
 #include <numeric>
@@ -97,17 +96,8 @@ lattice<dimension, float_type>::lattice(modules::factory& factory, po::options c
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    // assign particle types in random order
-    for (size_t i = 0, j = 0, k = 0; j < particle->ntype; ++j) {
-        k += particle->ntypes[j];
-        for (; i < k; ++i) {
-            particle->type[i] = j;
-        }
-    }
+    // randomize particle types
     random->shuffle(particle->type.begin(), particle->type.end());
-
-    // assign particle tags
-    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(particle->nbox), particle->tag.begin());
 
     // assign lattice coordinates
     vector_type L = box->length();

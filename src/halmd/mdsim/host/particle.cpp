@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <boost/iterator/counting_iterator.hpp>
 #include <exception>
 #include <numeric>
 
@@ -64,7 +65,17 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::set()
 {
-    // FIXME
+    // assign particle tags
+    copy(
+        counting_iterator<size_t>(0)
+      , counting_iterator<size_t>(nbox)
+      , tag.begin()
+    );
+
+    // assign particle types
+    for (size_t j = 0, i = 0; j < ntype; i += ntypes[j], ++j) {
+        fill_n(&type[i], ntypes[j], j);
+    }
 }
 
 /**
