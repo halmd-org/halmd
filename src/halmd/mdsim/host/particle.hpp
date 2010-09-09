@@ -48,6 +48,7 @@ public:
 
     particle(modules::factory& factory, po::options const& vm);
     virtual ~particle() {}
+    virtual void set();
     virtual void rearrange(std::vector<unsigned int> const& index);
 
     /** positions, reduced to extended domain box */

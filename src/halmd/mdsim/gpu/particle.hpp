@@ -54,8 +54,8 @@ public:
 
     particle(modules::factory& factory, po::options const& vm);
     virtual ~particle() {}
+    virtual void set();
     virtual void rearrange(std::vector<unsigned int> const& index) {} // TODO
-    void tag();
 
     /** grid and block dimensions for CUDA calls */
     cuda::config const dim;

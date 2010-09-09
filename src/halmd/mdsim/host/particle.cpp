@@ -59,6 +59,15 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
 }
 
 /**
+ * set particle tags and types
+ */
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::set()
+{
+    // FIXME
+}
+
+/**
  * Rearrange particles in memory according to an integer index sequence
  *
  * The neighbour lists must be rebuilt after calling this function!

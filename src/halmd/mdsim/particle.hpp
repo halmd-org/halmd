@@ -48,6 +48,7 @@ public:
 
     particle(modules::factory& factory, po::options const& vm);
     virtual ~particle() {}
+    virtual void set() = 0;
 
     /** number of particles in simulation box */
     unsigned int nbox;

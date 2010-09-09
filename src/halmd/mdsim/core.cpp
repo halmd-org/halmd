@@ -56,6 +56,7 @@ void core<dimension>::depends()
     modules::depends<_Self, neighbour_type>::required();
     modules::depends<_Self, sort_type>::optional();
     modules::depends<_Self, integrator_type>::required();
+    modules::depends<_Self, particle_type>::required();
     modules::depends<_Self, position_type>::required();
     modules::depends<_Self, velocity_type>::required();
     modules::depends<_Self, profiler_type>::required();
@@ -79,6 +80,7 @@ core<dimension>::core(modules::factory& factory, po::options const& vm)
   , neighbour(modules::fetch<neighbour_type>(factory, vm))
   , sort(modules::fetch<sort_type>(factory, vm))
   , integrator(modules::fetch<integrator_type>(factory, vm))
+  , particle(modules::fetch<particle_type>(factory, vm))
   , position(modules::fetch<position_type>(factory, vm))
   , velocity(modules::fetch<velocity_type>(factory, vm))
   , profiler(modules::fetch<profiler_type>(factory, vm))
@@ -96,6 +98,7 @@ template <int dimension>
 void core<dimension>::prepare()
 {
     scoped_timer<timer> timer_(at_key<prepare_>(runtime_));
+    particle->set();
     position->set();
     velocity->set();
     neighbour->update();

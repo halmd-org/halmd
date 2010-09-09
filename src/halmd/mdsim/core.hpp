@@ -25,6 +25,7 @@
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/mdsim/neighbour.hpp>
+#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
@@ -51,6 +52,7 @@ public:
     typedef mdsim::neighbour<dimension> neighbour_type;
     typedef mdsim::sort<dimension> sort_type;
     typedef mdsim::integrator<dimension> integrator_type;
+    typedef mdsim::particle<dimension> particle_type;
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
     typedef utility::profiler profiler_type;
@@ -63,6 +65,7 @@ public:
     shared_ptr<neighbour_type> neighbour;
     shared_ptr<sort_type> sort;
     shared_ptr<integrator_type> integrator;
+    shared_ptr<particle_type> particle;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
     shared_ptr<profiler_type> profiler;

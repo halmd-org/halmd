@@ -104,15 +104,13 @@ particle<dimension, float_type>::particle(modules::factory& factory, po::options
         LOG_ERROR("CUDA: " << e.what());
         throw std::logic_error("failed to copy particle parameters to device symbols");
     }
-
-    tag();
 }
 
 /**
  * set particle tags and types
  */
 template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::tag()
+void particle<dimension, float_type>::set()
 {
     try {
         cuda::configure(dim.grid, dim.block);
