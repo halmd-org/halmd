@@ -20,15 +20,18 @@
 #ifndef HALMD_MDSIM_TYPE_TRAITS_HPP
 #define HALMD_MDSIM_TYPE_TRAITS_HPP
 
-// #include <boost/mpl/if.hpp>
-#include <halmd/numeric/blas/blas.hpp>
+#ifdef WITH_CUDA
 #include <cuda_wrapper.hpp>
+#endif
+
+#include <halmd/numeric/blas/blas.hpp>
 
 namespace halmd
 {
 namespace mdsim
 {
 
+#ifdef WITH_CUDA
 namespace detail { namespace gpu
 {
 
@@ -80,6 +83,7 @@ struct type_traits<2, value_type>
 };
 
 }} // namespace detail::gpu
+#endif // WITH_CUDA
 
 /**
  * definitions of non-scalar types used by the simulation
@@ -93,7 +97,9 @@ struct type_traits
     typedef fixed_vector<value_type, dimension> vector_type;
     typedef fixed_vector<value_type, 1 + (dimension - 1) * dimension / 2> stress_tensor_type;
 
-        typedef detail::gpu::type_traits<dimension, value_type> gpu;
+#ifdef WITH_CUDA
+    typedef detail::gpu::type_traits<dimension, value_type> gpu;
+#endif
 };
 
 } // namespace mdsim
