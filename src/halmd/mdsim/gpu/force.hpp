@@ -28,18 +28,23 @@
 // #include <halmd/mdsim/gpu/forces/smooth.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
-#include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace gpu
+namespace observables { namespace gpu
 {
 
 // forward declaration
 template <int dimension, typename float_type>
 class thermodynamics;
+
+}} // namespace observables::gpu
+
+namespace mdsim { namespace gpu
+{
 
 template <int dimension, typename float_type>
 class force
@@ -81,10 +86,10 @@ protected:
     /** potential part of stress tensor for each particle */
     cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
 
-    friend class thermodynamics<dimension, float_type>;
+    friend class observables::gpu::thermodynamics<dimension, float_type>;
 };
 
-}} // namespace mdsim::host
+}} // namespace mdsim::gpu
 
 } // namespace halmd
 

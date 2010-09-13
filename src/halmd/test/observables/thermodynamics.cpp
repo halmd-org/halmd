@@ -31,7 +31,7 @@
 
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/modules/factory.hpp>
@@ -97,7 +97,7 @@ void ideal_gas(po::options vm)
     po::unparsed_options unparsed;
     modules::resolver resolver(modules::registry::graph());
     resolver.resolve<mdsim::core<dimension> >(vm, unparsed);
-    resolver.resolve<mdsim::thermodynamics<dimension> >(vm, unparsed);
+    resolver.resolve<observables::thermodynamics<dimension> >(vm, unparsed);
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 
@@ -110,8 +110,8 @@ void ideal_gas(po::options vm)
     core->prepare();
 
     // measure thermodynamic properties
-    shared_ptr<mdsim::thermodynamics<dimension> >
-            thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
+    shared_ptr<observables::thermodynamics<dimension> >
+            thermodynamics(modules::fetch<observables::thermodynamics<dimension> >(factory, vm));
 
     double vcm_limit = (vm["backend"].as<string>() == "gpu") ? 0.1 * eps_float : eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
@@ -167,7 +167,7 @@ void thermodynamics(po::options vm)
     po::unparsed_options unparsed;
     modules::resolver resolver(modules::registry::graph());
     resolver.resolve<mdsim::core<dimension> >(vm, unparsed);
-    resolver.resolve<mdsim::thermodynamics<dimension> >(vm, unparsed);
+    resolver.resolve<observables::thermodynamics<dimension> >(vm, unparsed);
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 
@@ -201,8 +201,8 @@ void thermodynamics(po::options vm)
     BOOST_CHECK_EQUAL(core->integrator->timestep(), timestep);
 
     // measure thermodynamic properties
-    shared_ptr<mdsim::thermodynamics<dimension> >
-            thermodynamics(modules::fetch<mdsim::thermodynamics<dimension> >(factory, vm));
+    shared_ptr<observables::thermodynamics<dimension> >
+            thermodynamics(modules::fetch<observables::thermodynamics<dimension> >(factory, vm));
 
     // take averages of fluctuating quantities,
     accumulator<double> temp_, press, en_pot;

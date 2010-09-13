@@ -3,7 +3,6 @@ add_library(halmd_mdsim_host
   force.cpp
   neighbour.cpp
   particle.cpp
-  thermodynamics.cpp
   velocity.cpp
   )
 

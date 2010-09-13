@@ -8,7 +8,6 @@ add_library(halmd_mdsim
   position.cpp
   sampler.cpp
   sort.cpp
-  thermodynamics.cpp
   velocity.cpp
   )
 

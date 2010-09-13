@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -28,7 +28,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace mdsim
+namespace observables
 {
 
 /**
@@ -113,6 +113,6 @@ void thermodynamics<dimension>::sample(double time)
 template class thermodynamics<3>;
 template class thermodynamics<2>;
 
-} // namespace mdsim
+} // namespace observables
 
 } // namespace halmd

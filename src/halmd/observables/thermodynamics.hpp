@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_THERMODYNAMICS_HPP
-#define HALMD_MDSIM_THERMODYNAMICS_HPP
+#ifndef HALMD_OBSERVABLES_THERMODYNAMICS_HPP
+#define HALMD_OBSERVABLES_THERMODYNAMICS_HPP
 
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
@@ -33,7 +33,7 @@
 
 namespace halmd
 {
-namespace mdsim
+namespace observables
 {
 
 /**
@@ -112,8 +112,8 @@ private:
     > runtime_;
 };
 
-} // namespace mdsim
+} // namespace observables
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_THERMODYNAMICS_HPP */
+#endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

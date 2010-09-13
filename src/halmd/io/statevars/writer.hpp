@@ -27,7 +27,7 @@
 
 namespace halmd
 {
-namespace mdsim
+namespace observables
 {
 
 // forward declaration
@@ -59,7 +59,7 @@ public:
     virtual void write() = 0;
 
 protected:
-    friend class mdsim::thermodynamics<dimension>;
+    friend class observables::thermodynamics<dimension>;
 
     virtual void register_scalar_observable(
         std::string const& tag

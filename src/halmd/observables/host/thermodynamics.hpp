@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_THERMODYNAMICS_HPP
-#define HALMD_MDSIM_HOST_THERMODYNAMICS_HPP
+#ifndef HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
+#define HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <vector>
 
-#include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -31,23 +31,23 @@
 
 namespace halmd
 {
-namespace mdsim { namespace host
+namespace observables { namespace host
 {
 
 template <int dimension, typename float_type>
 class thermodynamics
-    : public mdsim::thermodynamics<dimension>
+    : public observables::thermodynamics<dimension>
 {
 public:
     // module definitions
     typedef thermodynamics _Self;
-    typedef mdsim::thermodynamics<dimension> _Base;
+    typedef observables::thermodynamics<dimension> _Base;
     static void depends();
     static void options(po::options_description& desc) {}
     static void select(po::options const& vm) {}
 
-    typedef host::particle<dimension, float_type> particle_type;
-    typedef host::force<dimension, float_type> force_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::host::force<dimension, float_type> force_type;
 
     typedef typename particle_type::vector_type vector_type;
 
@@ -63,8 +63,8 @@ public:
     double virial() const { return force->stress_pot_[0]; }
 };
 
-}} // namespace mdsim::host
+}} // namespace observables::host
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_THERMODYNAMICS_HPP */
+#endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

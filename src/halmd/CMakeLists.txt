@@ -86,6 +86,8 @@ set(HALMD_MODULES
   halmd_mdsim_host_sort
   halmd_mdsim_host_velocities
   halmd_mdsim_samples_host
+  halmd_observables
+  halmd_observables_host
   halmd_random
   halmd_random_host
   halmd_utility
@@ -101,6 +103,7 @@ if(WITH_CUDA)
     halmd_mdsim_gpu_sort
     halmd_mdsim_gpu_velocities
     halmd_mdsim_samples_gpu
+    halmd_observables_gpu
     halmd_random_gpu
     halmd_utility_gpu
     )
@@ -150,6 +153,7 @@ endif(NOT HALMD_BACKEND_EXECUTABLES)
 add_subdirectory(algorithm)
 add_subdirectory(io)
 add_subdirectory(mdsim)
+add_subdirectory(observables)
 add_subdirectory(random)
 add_subdirectory(scripts)
 add_subdirectory(test)

@@ -6,8 +6,6 @@ add_library(halmd_mdsim_gpu
   neighbour_kernel.cu
   particle.cpp
   particle_kernel.cu
-  thermodynamics.cpp
-  thermodynamics_kernel.cu
   velocity.cpp
   velocity_kernel.cu
   )

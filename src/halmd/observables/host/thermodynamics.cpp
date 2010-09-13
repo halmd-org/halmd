@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/host/thermodynamics.hpp>
+#include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
@@ -25,7 +25,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace host
+namespace observables { namespace host
 {
 
 /**
@@ -79,14 +79,14 @@ template class thermodynamics<3, float>;
 template class thermodynamics<2, float>;
 #endif
 
-}} // namespace mdsim::host
+}} // namespace observables::host
 
 #ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::thermodynamics<3, double> >;
-template class module<mdsim::host::thermodynamics<2, double> >;
+template class module<observables::host::thermodynamics<3, double> >;
+template class module<observables::host::thermodynamics<2, double> >;
 #else
-template class module<mdsim::host::thermodynamics<3, float> >;
-template class module<mdsim::host::thermodynamics<2, float> >;
+template class module<observables::host::thermodynamics<3, float> >;
+template class module<observables::host::thermodynamics<2, float> >;
 #endif
 
 } // namespace halmd

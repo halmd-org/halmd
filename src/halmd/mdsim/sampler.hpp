@@ -24,7 +24,7 @@
 
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -44,7 +44,7 @@ public:
     static void select(po::options const& vm) {};
 
     typedef mdsim::core<dimension> core_type;
-    typedef mdsim::thermodynamics<dimension> thermodynamics_type;
+    typedef observables::thermodynamics<dimension> thermodynamics_type;
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
 
     sampler(modules::factory& factory, po::options const& vm);

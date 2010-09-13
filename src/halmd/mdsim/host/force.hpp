@@ -27,18 +27,23 @@
 #include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host
+namespace observables { namespace host
 {
 
 // forward declaration
 template <int dimension, typename float_type>
 class thermodynamics;
+
+}} // namespace observables::host
+
+namespace mdsim { namespace host
+{
 
 template <int dimension, typename float_type>
 class force
@@ -75,7 +80,7 @@ protected:
     /** potential part of stress tensor */
     stress_tensor_type stress_pot_;
 
-    friend class thermodynamics<dimension, float_type>;
+    friend class observables::host::thermodynamics<dimension, float_type>;
 };
 
 /**

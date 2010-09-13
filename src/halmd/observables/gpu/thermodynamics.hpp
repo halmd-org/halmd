@@ -17,36 +17,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_THERMODYNAMICS_HPP
-#define HALMD_MDSIM_GPU_THERMODYNAMICS_HPP
+#ifndef HALMD_OBSERVABLES_GPU_THERMODYNAMICS_HPP
+#define HALMD_OBSERVABLES_GPU_THERMODYNAMICS_HPP
 
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <vector>
 
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/thermodynamics.hpp>
+#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace gpu
+namespace observables { namespace gpu
 {
 
 template <int dimension, typename float_type>
 class thermodynamics
-    : public mdsim::thermodynamics<dimension>
+    : public observables::thermodynamics<dimension>
 {
 public:
     // module definitions
     typedef thermodynamics _Self;
-    typedef mdsim::thermodynamics<dimension> _Base;
+    typedef observables::thermodynamics<dimension> _Base;
     static void depends();
     static void options(po::options_description& desc) {}
     static void select(po::options const& vm) {}
 
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef gpu::force<dimension, float_type> force_type;
+    typedef mdsim::gpu::force<dimension, float_type> force_type;
 
     typedef typename _Base::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
@@ -65,8 +65,8 @@ public:
     double virial() const;
 };
 
-}} // namespace mdsim::gpu
+}} // namespace observables::gpu
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_THERMODYNAMICS_HPP */
+#endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

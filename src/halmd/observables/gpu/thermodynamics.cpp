@@ -18,7 +18,7 @@
  */
 
 #include <halmd/algorithm/gpu/reduce.hpp>
-#include <halmd/mdsim/gpu/thermodynamics.hpp>
+#include <halmd/observables/gpu/thermodynamics.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/module.hpp>
@@ -29,7 +29,7 @@ using namespace halmd::algorithm::gpu;
 
 namespace halmd
 {
-namespace mdsim { namespace gpu
+namespace observables { namespace gpu
 {
 
 /**
@@ -133,9 +133,9 @@ double thermodynamics<dimension, float_type>::virial() const
 template class thermodynamics<3, float>;
 template class thermodynamics<2, float>;
 
-}} // namespace mdsim::gpu
+}} // namespace observables::gpu
 
-template class module<mdsim::gpu::thermodynamics<3, float> >;
-template class module<mdsim::gpu::thermodynamics<2, float> >;
+template class module<observables::gpu::thermodynamics<3, float> >;
+template class module<observables::gpu::thermodynamics<2, float> >;
 
 } // namespace halmd

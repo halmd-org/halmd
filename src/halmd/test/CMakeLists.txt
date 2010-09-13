@@ -1,6 +1,6 @@
 add_subdirectory(algorithm)
 add_subdirectory(io)
-add_subdirectory(mdsim)
+add_subdirectory(observables)
 add_subdirectory(numeric)
 add_subdirectory(random)
 add_subdirectory(utility)
