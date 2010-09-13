@@ -22,6 +22,7 @@
 
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/numeric/blas/blas.hpp>
+#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -48,7 +49,7 @@ class writer
 public:
     // module definitions
     typedef writer _Self;
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef typename observables::thermodynamics<dimension>::vector_type vector_type;
 
     static void options(po::options_description& desc) {}
     static void depends() {}

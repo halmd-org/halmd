@@ -27,6 +27,7 @@
 #include <halmd/mdsim/host/box.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
@@ -57,9 +58,10 @@ public:
     static void options(po::options_description& desc);
     static void select(po::options const& vm) {}
 
-    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef type_traits<dimension, float_type> _type_traits;
+    typedef typename _type_traits::vector_type vector_type;
+    typedef typename _type_traits::stress_tensor_type stress_tensor_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
-    typedef fixed_vector<float_type, 1 + (dimension - 1) * dimension / 2> stress_tensor_type;
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef host::box<dimension> box_type;

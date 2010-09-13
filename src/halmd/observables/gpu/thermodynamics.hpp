@@ -49,9 +49,6 @@ public:
     typedef mdsim::gpu::force<dimension, float_type> force_type;
 
     typedef typename _Base::vector_type vector_type;
-    typedef typename particle_type::gpu_vector_type gpu_vector_type;
-    typedef typename force_type::stress_tensor_type stress_tensor_type;
-    typedef typename force_type::gpu_stress_tensor_type gpu_stress_tensor_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;

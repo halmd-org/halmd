@@ -20,9 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_NEIGHBOUR_KERNEL_HPP
 #define HALMD_MDSIM_GPU_NEIGHBOUR_KERNEL_HPP
 
-#include <boost/mpl/if.hpp>
-
 #include <cuda_wrapper.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
@@ -32,14 +31,14 @@ namespace mdsim { namespace gpu
 template <int dimension>
 struct neighbour_wrapper
 {
-    typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
-    typedef typename boost::mpl::if_c<dimension == 3, uint3, uint2>::type cell_index;
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef typename type_traits<dimension, unsigned int>::gpu::vector_type cell_index_type;
     typedef cuda::function<void (float4* g_r, float4* g_r0, float* g_rr)> displacement_impl_type;
 
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
     /** number of cells per dimension */
-    cuda::symbol<cell_index> ncell;
+    cuda::symbol<cell_index_type> ncell;
     /** neighbour list length */
     cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */

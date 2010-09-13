@@ -20,8 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_HPP
 #define HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_HPP
 
-#include <boost/mpl/if.hpp>
 #include <cuda_wrapper.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
@@ -31,8 +31,8 @@ namespace mdsim { namespace gpu { namespace integrators
 template <int dimension>
 struct verlet_wrapper
 {
-    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
-    typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
 
     /** integration time-step */
     cuda::symbol<float> timestep;

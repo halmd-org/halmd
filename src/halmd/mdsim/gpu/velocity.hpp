@@ -44,7 +44,7 @@ public:
     static void select(po::options const& vm) {}
 
     typedef gpu::particle<dimension, float_type> particle_type;
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef typename _Base::vector_type vector_type;
 
     shared_ptr<particle_type> particle;
 

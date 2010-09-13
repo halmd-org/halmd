@@ -21,6 +21,7 @@
 #define HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP
 
 #include <cuda_wrapper.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
@@ -48,9 +49,9 @@ enum {
 template <int dimension>
 struct lj_wrapper
 {
-    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
-    typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
-    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_stress_tensor_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
 
     /** positions, types */
     cuda::texture<float4> r;
@@ -63,7 +64,7 @@ struct lj_wrapper
     /** Lennard-Jones potential parameters */
     cuda::texture<float4> ljparam;
     /** compute Lennard-Jones forces */
-    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, gpu_stress_tensor_type*)> compute;
+    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, stress_tensor_type*)> compute;
 
     static lj_wrapper const kernel;
 };

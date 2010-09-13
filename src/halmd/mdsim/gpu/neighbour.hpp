@@ -22,7 +22,6 @@
 
 #include <boost/array.hpp>
 #include <boost/multi_array.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
@@ -31,7 +30,6 @@
 #include <halmd/mdsim/gpu/neighbour_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
-// #include <halmd/numeric/gpu/blas/vector.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd

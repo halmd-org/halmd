@@ -20,11 +20,11 @@
 #ifndef HALMD_MDSIM_GPU_PARTICLE_HPP
 #define HALMD_MDSIM_GPU_PARTICLE_HPP
 
-#include <boost/mpl/if.hpp>
 #include <vector>
 
 #include <cuda_wrapper.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/gpu/device.hpp>
@@ -46,8 +46,8 @@ public:
     static void select(po::options const& vm);
     static void options(po::options_description& desc) {}
 
-    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type gpu_vector_type;
-    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename type_traits<dimension, float_type>::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
     typedef utility::gpu::device device_type;
 
     shared_ptr<device_type> device;

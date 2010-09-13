@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/mpl/if.hpp>
-
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/force_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
@@ -52,12 +50,12 @@ __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_le
 /**
  * Compute Lennard-Jones forces
  */
-template <typename vector_type, typename gpu_vector_type, typename gpu_stress_tensor_type>
+template <typename vector_type, typename gpu_vector_type, typename stress_tensor_type>
 __global__ void compute(
   gpu_vector_type* g_f,
   unsigned int* g_neighbour,
   float* g_en_pot,
-  gpu_stress_tensor_type* g_stress_pot)
+  stress_tensor_type* g_stress_pot)
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;

@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_VELOCITY_HPP
 #define HALMD_MDSIM_VELOCITY_HPP
 
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -41,7 +42,7 @@ public:
     static void select(po::options const& vm) {}
 
     typedef utility::profiler profiler_type;
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef typename type_traits<dimension, double>::vector_type vector_type;
 
     shared_ptr<profiler_type> profiler;
 

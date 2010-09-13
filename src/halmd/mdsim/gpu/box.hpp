@@ -46,7 +46,6 @@ public:
     static void options(po::options_description& desc) {}
 
     typedef typename _Base::vector_type vector_type;
-//     typedef fixed_vector<double, dimension> vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
     shared_ptr<particle_type> particle;

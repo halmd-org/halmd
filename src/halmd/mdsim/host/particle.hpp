@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -43,7 +44,7 @@ public:
     static void select(po::options const& vm);
     static void options(po::options_description& desc) {}
 
-    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename type_traits<dimension, float_type>::vector_type vector_type;
     typedef std::vector<unsigned int> neighbour_list;
 
     particle(modules::factory& factory, po::options const& vm);

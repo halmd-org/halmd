@@ -20,9 +20,9 @@
 #ifndef HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH
 #define HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH
 
-#include <boost/mpl/if.hpp>
-
 #include <cuda_wrapper.hpp>
+
+#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
@@ -32,8 +32,8 @@ namespace mdsim { namespace gpu { namespace sampler
 template <int dimension>
 struct trajectory_wrapper
 {
-    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
-    typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
     /** positions, types */
     cuda::texture<float4> r;

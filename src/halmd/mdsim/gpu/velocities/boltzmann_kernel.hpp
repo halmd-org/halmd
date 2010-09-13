@@ -23,6 +23,7 @@
 #include <boost/mpl/if.hpp>
 
 #include <cuda_wrapper.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 
 //
@@ -41,7 +42,7 @@ template <
 >
 struct boltzmann_wrapper
 {
-    typedef typename boost::mpl::if_c<dimension == 3, float4, float2>::type coalesced_vector_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef cuda::function<void (float4*, uint, uint, float, coalesced_vector_type*, dsfloat*)> gaussian_impl_type;
     gaussian_impl_type gaussian_impl_32;
     gaussian_impl_type gaussian_impl_64;

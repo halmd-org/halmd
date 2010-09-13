@@ -20,9 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_HILBERT_KERNEL_HPP
 #define HALMD_MDSIM_GPU_HILBERT_KERNEL_HPP
 
-#include <boost/mpl/if.hpp>
-
 #include <cuda_wrapper.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
@@ -32,7 +31,7 @@ namespace mdsim { namespace gpu
 template <int dimension>
 struct hilbert_wrapper
 {
-    typedef typename boost::mpl::if_c<dimension == 3, float3, float2>::type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
 
     /** Hilbert space-filling curve recursion depth */
     cuda::symbol<float> depth;

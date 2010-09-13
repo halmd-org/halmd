@@ -28,8 +28,8 @@
 // #include <halmd/mdsim/gpu/forces/smooth.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/thermodynamics.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
@@ -58,14 +58,12 @@ public:
     static void depends();
     static void select(po::options const& vm) {}
 
-    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef type_traits<dimension, float_type> _type_traits;
+    typedef typename _type_traits::vector_type vector_type;
+    typedef typename _type_traits::stress_tensor_type stress_tensor_type;
+    typedef typename _type_traits::gpu::stress_tensor_type gpu_stress_tensor_type;
+
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
-    typedef fixed_vector<float_type, 1 + (dimension - 1) * dimension / 2> stress_tensor_type;
-    typedef typename boost::mpl::if_c<
-        stress_tensor_type::static_size >= 3
-      , float4
-      , float2
-    >::type gpu_stress_tensor_type;
 
     typedef gpu::particle<dimension, float> particle_type;
     typedef gpu::box<dimension> box_type;

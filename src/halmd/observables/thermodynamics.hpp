@@ -26,6 +26,7 @@
 
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -33,6 +34,15 @@
 
 namespace halmd
 {
+namespace io { namespace statevars
+{
+
+// forward declaration, required by halmd/io/statevars/writer.hpp
+template <int dimension>
+class writer;
+
+}} // namespace io::statevars
+
 namespace observables
 {
 
@@ -57,7 +67,7 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef io::statevars::writer<dimension> writer_type;
     typedef utility::profiler profiler_type;
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
 
     shared_ptr<box_type> box;
     shared_ptr<writer_type> writer;

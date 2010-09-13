@@ -112,13 +112,14 @@ double thermodynamics<dimension, float_type>::en_pot() const
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial() const
 {
-    typedef fixed_vector<float, stress_tensor_type::static_size> float_stress_tensor_type;
+    typedef typename force_type::stress_tensor_type stress_tensor_type;
+    typedef typename force_type::gpu_stress_tensor_type gpu_stress_tensor_type;
 
     // using fixed_vector<dsfloat, N> as output_type results in
     // exit code 255 of 'nvcc -c thermodynamics_kernel.cu'
     double virial = reduce<
         sum_                                      // reduce_transform
-      , float_stress_tensor_type                  // input_type
+      , stress_tensor_type                        // input_type
       , gpu_stress_tensor_type                    // coalesced_input_type
       , dsfloat                                   // output_type
       , dsfloat                                   // coalesced_output_type
