@@ -22,7 +22,6 @@
 
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 

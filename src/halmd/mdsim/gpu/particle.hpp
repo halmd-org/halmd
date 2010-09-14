@@ -25,7 +25,6 @@
 #include <cuda_wrapper.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/gpu/device.hpp>
 

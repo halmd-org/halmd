@@ -24,7 +24,6 @@
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd

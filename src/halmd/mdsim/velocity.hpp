@@ -21,7 +21,6 @@
 #define HALMD_MDSIM_VELOCITY_HPP
 
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/profiler.hpp>

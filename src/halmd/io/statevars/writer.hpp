@@ -21,7 +21,6 @@
 #define HALMD_IO_STATEVARS_WRITER_HPP
 
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>

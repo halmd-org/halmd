@@ -25,7 +25,6 @@
 
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
