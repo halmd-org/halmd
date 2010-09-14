@@ -20,12 +20,12 @@
 #ifndef HALMD_IO_TRAJECTORY_HDF5_WRITER_HPP
 #define HALMD_IO_TRAJECTORY_HDF5_WRITER_HPP
 
-#include <H5Cpp.h>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/unordered_map.hpp>
+#include <H5Cpp.h>
+#include <H5xx.hpp>
 
-#include <halmd/deprecated/util/H5xx.hpp>
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>

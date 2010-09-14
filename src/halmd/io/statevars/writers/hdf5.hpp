@@ -20,7 +20,8 @@
 #ifndef HALMD_IO_STATEVARS_HDF5_HPP
 #define HALMD_IO_STATEVARS_HDF5_HPP
 
-#include <halmd/deprecated/util/H5xx.hpp>
+#include <H5xx.hpp>
+
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>

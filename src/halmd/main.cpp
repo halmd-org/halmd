@@ -29,7 +29,8 @@
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
 #endif
-#include <halmd/deprecated/util/H5xx.hpp>
+#include <H5xx.hpp>
+
 #include <halmd/deprecated/util/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/main.hpp>
