@@ -47,16 +47,8 @@ hdf5::hdf5(modules::factory& factory, po::options const& vm)
     H5::Group param = file_.openGroup("/").createGroup("param");
 
     // store file version
-    array<hsize_t, 1> dim = {{ 2 }};
     array<unsigned char, 2> version = {{ 1, 0 }};
-    H5::Attribute attr(
-        param.createAttribute(
-            "file_version"
-          , H5::PredType::NATIVE_UCHAR
-          , H5::DataSpace(dim.size(), dim.data())
-        )
-    );
-    attr.write(attr.getDataType(), version.data());
+    H5xx::attribute(param, "file_version") = version;
 
     LOG("write profile data to file: " << file_.getFileName());
 }
@@ -91,14 +83,8 @@ void hdf5::register_accumulator(
           , H5::DataSpace(dim.size(), dim.data())
         )
     );
-    H5::Attribute attr( // store description as attribute
-        dataset.createAttribute(
-            "timer"
-          , H5::StrType(H5::PredType::C_S1, desc.size()) // no NULL terminator
-          , H5S_SCALAR
-        )
-    );
-    attr.write(attr.getDataType(), desc.c_str());
+    // store description as attribute
+    H5xx::attribute(dataset, "timer") = desc;
 
     // We bind the functions to write the datasets using a
     // *reference* to the accumulator and a *copy* of the HDF5

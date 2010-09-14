@@ -48,23 +48,13 @@ hdf5<dimension>::hdf5(modules::factory& factory, po::options const& vm)
     H5::Group param = file_.openGroup("/").createGroup("param");
 
     // store file version
-    array<hsize_t, 1> dim = {{ 2 }};
     array<unsigned char, 2> version = {{ 1, 0 }};
-    H5::Attribute attr(
-        param.createAttribute(
-            "file_version"
-          , H5::PredType::NATIVE_UCHAR
-          , H5::DataSpace(dim.size(), dim.data())
-        )
-    );
-    attr.write(attr.getDataType(), version.data());
+    H5xx::attribute(param, "file_version") = version;
 
     // store dimension
     // FIXME configuration and simulation parameters should be stored by a distinct function
-    array<unsigned, 1> dimension_ = {{ dimension }};
     H5::Group mdsim = param.createGroup("mdsim");
-    attr = mdsim.createAttribute("dimension", H5::PredType::NATIVE_UINT, H5S_SCALAR);
-    attr.write(attr.getDataType(), dimension_.data());
+    H5xx::attribute(mdsim, "dimension") = dimension;
 
     LOG("write macroscopic state variables to file: " << file_.getFileName());
 }
@@ -100,14 +90,7 @@ void hdf5<dimension>::register_scalar_observable(
     );
 
     // store description as attribute
-    H5::Attribute attr(
-        dataset.createAttribute(
-            "description"
-          , H5::StrType(H5::PredType::C_S1, desc.size()) // no NULL terminator
-          , H5S_SCALAR
-        )
-    );
-    attr.write(attr.getDataType(), desc.c_str());
+    H5xx::attribute(dataset, "description") = desc;
 
     // We bind the functions to write the datasets, using a
     // *pointer* to the value and a *copy* of the HDF5
@@ -172,14 +155,7 @@ void hdf5<dimension>::register_vector_observable(
     );
 
     // store description as attribute
-    H5::Attribute attr(
-        dataset.createAttribute(
-            "description"
-          , H5::StrType(H5::PredType::C_S1, desc.size()) // no NULL terminator
-          , H5S_SCALAR
-        )
-    );
-    attr.write(attr.getDataType(), desc.c_str());
+    H5xx::attribute(dataset, "description") = desc;
 
     // We bind the functions to write the datasets, using a
     // *pointer* to the value and a *copy* of the HDF5
