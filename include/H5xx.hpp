@@ -26,6 +26,7 @@
 #include <H5xx/dataset.hpp>
 #include <H5xx/exception.hpp>
 #include <H5xx/group.hpp>
+#include <H5xx/file.hpp>
 #include <H5xx/util.hpp>
 
 #endif /* ! HALMD_UTIL_H5XX_HPP */

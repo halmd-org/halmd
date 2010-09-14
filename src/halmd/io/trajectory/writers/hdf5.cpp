@@ -50,7 +50,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
   , sample(modules::fetch<sample_type>(factory, vm))
   // initialize parameters
   , path_(initial_path() / (vm["output"].as<string>() + file_extension()))
-  , file_(path_.file_string(), H5F_ACC_TRUNC)
+  , file_(path_.file_string(), H5xx::file::trunc)
 {
     LOG("write trajectory to file: " << path_.file_string());
 

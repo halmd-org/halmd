@@ -18,6 +18,7 @@
  */
 
 #include <H5Cpp.h>
+#include <H5xx.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/readers/hdf5.hpp>
@@ -58,7 +59,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
 {
     LOG("read trajectory file: " << path_);
 
-    H5::H5File file(path_, H5F_ACC_RDONLY);
+    H5xx::file file(path_, H5xx::file::rdonly);
     H5::Group root(file.openGroup("trajectory"));
 
     for (size_t i = 0; i < sample->r.size(); ++i) {

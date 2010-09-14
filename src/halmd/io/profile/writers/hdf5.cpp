@@ -40,7 +40,7 @@ hdf5::hdf5(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   , file_(
         (initial_path() / (vm["output"].as<string>() + ".prf")).string()
-      , H5F_ACC_TRUNC // truncate existing file
+      , H5xx::file::trunc // truncate existing file
     )
 {
     // create parameter group

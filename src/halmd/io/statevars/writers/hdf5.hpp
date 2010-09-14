@@ -76,7 +76,7 @@ private:
       , vector_type const* value_ptr
     );
 
-    H5::H5File file_;
+    H5xx::file file_;
     std::vector<writer_functor> writer_;
 };
 
