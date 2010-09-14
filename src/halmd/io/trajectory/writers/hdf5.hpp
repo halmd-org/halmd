@@ -72,7 +72,7 @@ private:
     /** absolute path to HDF5 trajectory file */
     boost::filesystem::path const path_;
     /** HDF5 file */
-    H5xx::file file_;
+    H5::H5File file_;
     /** dataset write functors */
     writer_map writer_;
 };

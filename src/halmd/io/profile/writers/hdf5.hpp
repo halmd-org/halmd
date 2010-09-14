@@ -62,7 +62,7 @@ private:
       , accumulator_type const& acc
     );
 
-    H5xx::file file_;
+    H5::H5File file_;
     std::vector<writer_functor> writer_;
 };
 
