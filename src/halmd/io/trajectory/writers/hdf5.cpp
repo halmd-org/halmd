@@ -97,8 +97,14 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
     H5::DataSet t = create_scalar_dataset(root, "time", sample->time);
     writer_.insert(make_pair(
         H5xx::path(t)
-      , bind(&hdf5<dimension, float_type>::write_scalar_dataset, this, t, ref(sample->time))
+//       , H5xx::dataset(root).create("time", sample->time).writer()
+      , H5xx::make_dataset_writer(root, "time", &sample->time)
     ));
+/*    H5::DataSet t = create_scalar_dataset(root, "time", sample->time);
+    writer_.insert(make_pair(
+        H5xx::path(t)
+      , bind(&hdf5<dimension, float_type>::write_scalar_dataset, this, t, ref(sample->time))
+    ));*/
 }
 
 /**
