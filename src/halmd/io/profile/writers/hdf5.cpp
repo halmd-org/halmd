@@ -62,6 +62,8 @@ void hdf5::register_accumulator(
   , string const& desc
 )
 {
+    // FIXME this block should go to H5xx/util.hpp
+    // H5::group group = H5xx::open_group(file_, tag);
     H5::Group group = file_.openGroup("/");
     vector<string>::const_iterator it = tag.begin();
     vector<string>::const_iterator const end = tag.end() - 1;
@@ -75,13 +77,11 @@ void hdf5::register_accumulator(
         }
         ++it;
     }
-    array<hsize_t, 1> dim = {{ 3 }};
-    H5::DataSet dataset(
-        group.createDataSet(
-            trim_right_copy_if(tag.back(), is_any_of("_")) // omit trailing "_"
-          , H5::PredType::NATIVE_DOUBLE
-          , H5::DataSpace(dim.size(), dim.data())
-        )
+
+    H5::DataSet dataset = H5xx::create_dataset<array<double, 3> >(
+        group
+      , trim_right_copy_if(tag.back(), is_any_of("_"))      // omit trailing "_"
+      , 1                                                   // only 1 entry
     );
     // store description as attribute
     H5xx::attribute(dataset, "timer") = desc;
@@ -107,18 +107,12 @@ void hdf5::write_accumulator(
   , accumulator_type const& acc
 )
 {
-    array<hsize_t, 1> dim = {{ 3 }};
     array<double, 3> data = {{
         mean(acc)
       , error_of_mean(acc)
       , count(acc)
     }};
-    dataset.write(
-        data.data()
-      , H5::PredType::NATIVE_DOUBLE
-      , H5::DataSpace(dim.size(), dim.data())
-      , dataset.getSpace()
-    );
+    H5xx::write(dataset, data, 0);
 }
 
 /**

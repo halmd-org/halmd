@@ -72,56 +72,14 @@ void hdf5<dimension>::register_scalar_observable(
 {
     H5::Group root = file_.openGroup("/");
 
-    // write an unlimited number of scalar chunks
-    array<hsize_t, 1> dim = {{ 0 }};
-    array<hsize_t, 1> max_dim = {{ H5S_UNLIMITED }};
-    array<hsize_t, 1> chunk_dim = {{ 1 }};
-
-    H5::DSetCreatPropList cparms;
-    cparms.setChunk(chunk_dim.size(), chunk_dim.data());
-
-    H5::DataSet dataset(
-        root.createDataSet(
-            tag
-          , H5::PredType::NATIVE_DOUBLE
-          , H5::DataSpace(dim.size(), dim.data(), max_dim.data())
-          , cparms
-        )
-    );
+    // create dataset for an unlimited number of scalar chunks
+    H5::DataSet dataset = H5xx::create_dataset<double>(root, tag);
 
     // store description as attribute
     H5xx::attribute(dataset, "description") = desc;
 
-    // We bind the functions to write the datasets, using a
-    // *pointer* to the value and a *copy* of the HDF5
-    // dataset instance which goes out of scope
-    writer_.push_back(bind(&hdf5<dimension>::write_scalar_observable, dataset, value_ptr));
-}
-
-/**
- * write dataset for scalar macroscopic state variable
- */
-template <int dimension>
-void hdf5<dimension>::write_scalar_observable(
-    H5::DataSet const& dataset
-  , double const* value_ptr
-)
-{
-    array<hsize_t, 1> dim;
-
-    // extend data space by 1
-    H5::DataSpace dataspace(dataset.getSpace());
-    dataspace.getSimpleExtentDims(dim.data());
-    hsize_t count[1]  = { 1 };
-    hsize_t start[1]  = { dim[0] };
-    hsize_t stride[1] = { 1 };
-    hsize_t block[1]  = { 1 };
-    dim[0]++;
-    dataspace.setExtentSimple(dim.size(), dim.data());
-    dataspace.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-
-    dataset.extend(dim.data());
-    dataset.write(value_ptr, H5::PredType::NATIVE_DOUBLE, H5S_SCALAR, dataspace);
+    // add dataset writer to internal list
+    writer_.push_back(H5xx::make_dataset_writer(dataset, value_ptr));
 }
 
 /**
@@ -135,65 +93,18 @@ void hdf5<dimension>::register_vector_observable(
   , string const& desc
 )
 {
+    // FIXME overloading with fixed_vector is missing in H5xx
+    typedef boost::array<typename vector_type::value_type, vector_type::static_size> array_type;
     H5::Group root = file_.openGroup("/");
 
-    // write an unlimited number of vectorial chunks
-    array<hsize_t, 2> dim = {{ 0, vector_type::static_size }};
-    array<hsize_t, 2> max_dim = {{ H5S_UNLIMITED, vector_type::static_size }};
-    array<hsize_t, 2> chunk_dim = {{ 1, vector_type::static_size }};
-
-    H5::DSetCreatPropList cparms;
-    cparms.setChunk(chunk_dim.size(), chunk_dim.data());
-
-    H5::DataSet dataset(
-        root.createDataSet(
-            tag
-          , H5xx::ctype<typename vector_type::value_type>()
-          , H5::DataSpace(dim.size(), dim.data(), max_dim.data())
-          , cparms
-        )
-    );
+    // create dataset for an unlimited number of vectorial chunks
+    H5::DataSet dataset = H5xx::create_dataset<array_type>(root, tag);
 
     // store description as attribute
     H5xx::attribute(dataset, "description") = desc;
 
-    // We bind the functions to write the datasets, using a
-    // *pointer* to the value and a *copy* of the HDF5
-    // dataset instance which goes out of scope
-    writer_.push_back(bind(&hdf5<dimension>::write_vector_observable, dataset, value_ptr));
-}
-
-/**
- * write dataset for scalar macroscopic state variable
- */
-template <int dimension>
-void hdf5<dimension>::write_vector_observable(
-    H5::DataSet const& dataset
-  , vector_type const* value_ptr
-)
-{
-    array<hsize_t, 2> dim;
-
-    // extend data space by 1
-    H5::DataSpace dataspace(dataset.getSpace());
-    dataspace.getSimpleExtentDims(dim.data());
-    hsize_t count[2]  = { 1, 1 };
-    hsize_t start[2]  = { dim[0], 0 };
-    hsize_t stride[2] = { 1, 1 };
-    hsize_t block[2]  = { 1, vector_type::static_size };
-    dim[0]++;
-    dataspace.setExtentSimple(dim.size(), dim.data());
-    dataspace.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-
-    array<hsize_t, 1> dim_sample = {{ vector_type::static_size }};
-
-    dataset.extend(dim.data());
-    dataset.write(
-        value_ptr->data()
-      , H5xx::ctype<typename vector_type::value_type>()
-      , H5::DataSpace(dim_sample.size(), dim_sample.data())
-      , dataspace
-    );
+    // add dataset writer to internal list
+    writer_.push_back(H5xx::make_dataset_writer(dataset, static_cast<array_type const*>(value_ptr)));
 }
 
 /**
