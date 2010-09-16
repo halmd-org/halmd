@@ -3,8 +3,7 @@ add_executable(test_H5xx
 )
 target_link_libraries(test_H5xx
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-  ${HDF5_CPP_LIBRARY}
-  ${HDF5_LIBRARY}
+  ${HALMD_COMMON_LIBRARIES}
 )
 add_test(H5xx
   test_H5xx
