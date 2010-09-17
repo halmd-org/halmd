@@ -74,12 +74,15 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         else {
             type = root;
         }
-        // FIXME create_dataset doesn't accept std::vector<fixed_vector<> >
-        // thus we need the following hack
-        typedef boost::multi_array<typename vector_type::value_type, 2> output_type;
-        size_t shape[2] = { sample->r[i]->size(), vector_type::static_size };
-        H5::DataSet r = create_dataset<output_type>(type, "position", shape);
-        H5::DataSet v = create_dataset<output_type>(type, "velocity", shape);
+        // FIXME fixed_vector<> is not converted to boost::array
+        typedef boost::array<
+            typename sample_vector_type::value_type::value_type
+          , sample_vector_type::value_type::static_size
+        > array_type;
+        typedef std::vector<array_type> output_type;
+        size_t size = sample->r[i]->size();
+        H5::DataSet r = create_dataset<output_type>(type, "position", size);
+        H5::DataSet v = create_dataset<output_type>(type, "velocity", size);
 
         // We bind the functions to write the datasets, using a
         // *reference* to the sample vector pointer so it remains
@@ -93,7 +96,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         );
         // particle velocities
         writers_.push_back(
-            make_dataset_writer(r, reinterpret_cast<output_type*>(&*sample->v[i]))
+            make_dataset_writer(v, reinterpret_cast<output_type*>(&*sample->v[i]))
         );
     }
 
