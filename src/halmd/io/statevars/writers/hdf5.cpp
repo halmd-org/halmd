@@ -94,6 +94,7 @@ void hdf5<dimension>::register_vector_observable(
 )
 {
     // FIXME overloading with fixed_vector is missing in H5xx
+    // shouldn't fixed_vector be interpreted as boost::array?
     typedef boost::array<typename vector_type::value_type, vector_type::static_size> array_type;
     H5::Group root = file_.openGroup("/");
 
