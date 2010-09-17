@@ -20,6 +20,8 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include <H5xx.hpp>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profile/writers/hdf5.hpp>
 
@@ -44,7 +46,7 @@ hdf5::hdf5(modules::factory& factory, po::options const& vm)
     )
 {
     // create parameter group
-    H5::Group param = file_.openGroup("/").createGroup("param");
+    H5::Group param = H5xx::open_group(file_, "param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
@@ -62,21 +64,9 @@ void hdf5::register_accumulator(
   , string const& desc
 )
 {
-    // FIXME this block should go to H5xx/util.hpp
-    // H5::group group = H5xx::open_group(file_, tag);
-    H5::Group group = file_.openGroup("/");
-    vector<string>::const_iterator it = tag.begin();
-    vector<string>::const_iterator const end = tag.end() - 1;
-    while (it != end) { // create group for each tag token
-        try {
-            H5XX_NO_AUTO_PRINT(H5::GroupIException);
-            group = group.openGroup(*it);
-        }
-        catch (H5::GroupIException const&) {
-            group = group.createGroup(*it);
-        }
-        ++it;
-    }
+    // open group defined by tag,
+    // last entry of tag will be the name of the attribute
+    H5::Group group = H5xx::open_group(file_, tag.begin(), tag.end() - 1);
 
     H5::DataSet dataset = H5xx::create_dataset<array<double, 3> >(
         group

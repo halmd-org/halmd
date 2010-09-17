@@ -55,7 +55,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
     LOG("write trajectory to file: " << path_.file_string());
 
     // create parameter group
-    H5::Group param = file_.openGroup("/").createGroup("param");
+    H5::Group param = H5xx::open_group(file_, "/param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};

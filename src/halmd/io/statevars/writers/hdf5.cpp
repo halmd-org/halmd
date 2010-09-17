@@ -45,7 +45,7 @@ hdf5<dimension>::hdf5(modules::factory& factory, po::options const& vm)
     )
 {
     // create parameter group
-    H5::Group param = file_.openGroup("/").createGroup("param");
+    H5::Group param = H5xx::open_group(file_, "/param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
@@ -70,7 +70,7 @@ void hdf5<dimension>::register_scalar_observable(
   , string const& desc
 )
 {
-    H5::Group root = file_.openGroup("/");
+    H5::Group root = H5xx::open_group(file_, "/");
 
     // create dataset for an unlimited number of scalar chunks
     H5::DataSet dataset = H5xx::create_dataset<double>(root, tag);
@@ -96,7 +96,7 @@ void hdf5<dimension>::register_vector_observable(
     // FIXME overloading with fixed_vector is missing in H5xx
     // shouldn't fixed_vector be interpreted as boost::array?
     typedef boost::array<typename vector_type::value_type, vector_type::static_size> array_type;
-    H5::Group root = file_.openGroup("/");
+    H5::Group root = H5xx::open_group(file_, "/");
 
     // create dataset for an unlimited number of vectorial chunks
     H5::DataSet dataset = H5xx::create_dataset<array_type>(root, tag);
