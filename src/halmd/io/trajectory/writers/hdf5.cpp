@@ -18,6 +18,7 @@
  */
 
 #include <boost/foreach.hpp>
+#include <H5xx.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/writers/hdf5.hpp>
@@ -25,6 +26,7 @@
 using namespace boost;
 using namespace boost::filesystem;
 using namespace std;
+using namespace H5xx;
 
 namespace halmd
 {
@@ -55,11 +57,11 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
     LOG("write trajectory to file: " << path_.file_string());
 
     // create parameter group
-    H5::Group param = H5xx::open_group(file_, "/param");
+    H5::Group param = open_group(file_, "/param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
-    H5xx::attribute(param, "file_version") = version;
+    attribute(param, "file_version") = version;
 
     // create trajectory group
     H5::Group root = file_.createGroup("trajectory");
@@ -72,8 +74,12 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         else {
             type = root;
         }
-        H5::DataSet r = create_vector_dataset(type, "position", sample->r[i]);
-        H5::DataSet v = create_vector_dataset(type, "velocity", sample->v[i]);
+        // FIXME create_dataset doesn't accept std::vector<fixed_vector<> >
+        // thus we need the following hack
+        typedef boost::multi_array<typename vector_type::value_type, 2> output_type;
+        size_t shape[2] = { sample->r[i]->size(), vector_type::static_size };
+        H5::DataSet r = create_dataset<output_type>(type, "position", shape);
+        H5::DataSet v = create_dataset<output_type>(type, "velocity", shape);
 
         // We bind the functions to write the datasets, using a
         // *reference* to the sample vector pointer so it remains
@@ -82,23 +88,18 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         // this loop.
 
         // particle positions
-        writer_.insert(make_pair(
-            H5xx::path(r)
-          , bind(&hdf5<dimension, float_type>::write_vector_dataset, this, r, ref(sample->r[i]))
-        ));
+        writers_.push_back(
+            make_dataset_writer(r, reinterpret_cast<output_type*>(&*sample->r[i]))
+        );
         // particle velocities
-        writer_.insert(make_pair(
-            H5xx::path(v)
-          , bind(&hdf5<dimension, float_type>::write_vector_dataset, this, v, ref(sample->v[i]))
-        ));
+        writers_.push_back(
+            make_dataset_writer(r, reinterpret_cast<output_type*>(&*sample->v[i]))
+        );
     }
 
     // simulation time in reduced units
-    H5::DataSet t = H5xx::create_dataset<double>(root, "time");
-    writer_.insert(make_pair(
-        H5xx::path(t)
-      , H5xx::make_dataset_writer(t, &sample->time)
-    ));
+    H5::DataSet t = create_dataset<double>(root, "time");
+    writers_.push_back(make_dataset_writer(t, &sample->time));
 }
 
 /**
@@ -108,9 +109,8 @@ template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::append()
 {
     sample->acquire();
-    BOOST_FOREACH( typename writer_map::value_type const& writer, writer_ ) {
-        LOG_DEBUG("writing dataset " << writer.first);
-        writer.second();
+    BOOST_FOREACH (boost::function<void ()> const& writer, writers_) {
+        writer();
     }
 }
 
@@ -121,116 +121,6 @@ template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::flush()
 {
     file_.flush(H5F_SCOPE_GLOBAL);
-}
-
-/**
- * create vector sample dataset
- */
-template <int dimension, typename float_type>
-H5::DataSet hdf5<dimension, float_type>::create_vector_dataset(
-    H5::Group where
-  , std::string const& name
-  , sample_vector_ptr sample
-  )
-{
-    H5::DataType const tid = H5xx::ctype<float_type>();
-    size_t const size = sample->size();
-
-    // vector sample file dataspace
-    hsize_t dim[3] = { 0, size, dimension };
-    hsize_t max_dim[3] = { H5S_UNLIMITED, size, dimension };
-    H5::DataSpace ds(3, dim, max_dim);
-
-    H5::DSetCreatPropList cparms;
-    hsize_t chunk_dim[3] = { 1, size, dimension };
-    cparms.setChunk(3, chunk_dim);
-    // enable GZIP compression
-    cparms.setDeflate(6);
-
-    return where.createDataSet(name, tid, ds, cparms);
-}
-
-/**
- * create scalar sample dataset
- */
-template <int dimension, typename float_type>
-H5::DataSet hdf5<dimension, float_type>::create_scalar_dataset(
-    H5::Group where
-  , std::string const& name
-  , float_type sample
-  )
-{
-    H5::DataType const tid = H5xx::ctype<double>();
-
-    // scalar sample file dataspace
-    hsize_t dim[1] = { 0 };
-    hsize_t max_dim[1] = { H5S_UNLIMITED };
-    H5::DataSpace ds(1, dim, max_dim);
-
-    H5::DSetCreatPropList cparms;
-    hsize_t chunk_dim[1] = { 1 };
-    cparms.setChunk(1, chunk_dim);
-
-    return where.createDataSet(name, tid, ds, cparms);
-}
-
-/**
- * write vector sample dataset
- */
-template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::write_vector_dataset(
-    H5::DataSet dset
-  , sample_vector_ptr sample
-  )
-{
-    H5::DataType const tid = H5xx::ctype<float_type>();
-    size_t const size = sample->size();
-
-    // extend vector sample file dataspace
-    H5::DataSpace ds(dset.getSpace());
-    hsize_t dim[3];
-    ds.getSimpleExtentDims(dim);
-    hsize_t count[3]  = { 1, 1, 1 };
-    hsize_t start[3]  = { dim[0], 0, 0 };
-    hsize_t stride[3] = { 1, 1, 1 };
-    hsize_t block[3]  = { 1, size, dimension };
-    dim[0]++;
-    ds.setExtentSimple(3, dim);
-    ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-
-    // vector sample memory dataspace
-    hsize_t dim_sample[2] = { size, dimension };
-    H5::DataSpace ds_sample(2, dim_sample);
-
-    dset.extend(dim);
-    dset.write(sample->data(), tid, ds_sample, ds);
-}
-
-/**
- * write scalar sample dataset
- */
-template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::write_scalar_dataset(
-    H5::DataSet dset
-  , double sample
-  )
-{
-    H5::DataType const tid = H5xx::ctype<double>();
-
-    // extend scalar sample file dataspace
-    H5::DataSpace ds(dset.getSpace());
-    hsize_t dim[1];
-    ds.getSimpleExtentDims(dim);
-    hsize_t count[1]  = { 1 };
-    hsize_t start[1]  = { dim[0] };
-    hsize_t stride[1] = { 1 };
-    hsize_t block[1]  = { 1 };
-    dim[0]++;
-    ds.setExtentSimple(1, dim);
-    ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-
-    dset.extend(dim);
-    dset.write(&sample, tid, H5S_SCALAR, ds);
 }
 
 // explicit instantiation

@@ -24,7 +24,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/unordered_map.hpp>
 #include <H5Cpp.h>
-#include <H5xx.hpp>
 
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
@@ -50,9 +49,8 @@ public:
     static void options(po::options_description& desc) {}
 
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
-    typedef typename sample_type::sample_vector sample_vector;
-    typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
-    typedef boost::unordered_map<std::string, boost::function<void ()> > writer_map;
+    typedef typename sample_type::sample_vector sample_vector_type;
+    typedef typename sample_vector_type::value_type vector_type;
 
     /** returns file extension */
     std::string file_extension() const { return ".trj"; }
@@ -64,17 +62,12 @@ public:
     shared_ptr<sample_type> sample;
 
 private:
-    H5::DataSet create_vector_dataset(H5::Group where, std::string const& name, sample_vector_ptr sample);
-    H5::DataSet create_scalar_dataset(H5::Group where, std::string const& name, float_type sample);
-    void write_vector_dataset(H5::DataSet dset, sample_vector_ptr sample);
-    void write_scalar_dataset(H5::DataSet dset, double sample);
-
     /** absolute path to HDF5 trajectory file */
     boost::filesystem::path const path_;
     /** HDF5 file */
     H5::H5File file_;
     /** dataset write functors */
-    writer_map writer_;
+    std::vector<boost::function<void ()> > writers_;
 };
 
 }}} // namespace io::trajectory::writers
