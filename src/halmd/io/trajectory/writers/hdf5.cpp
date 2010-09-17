@@ -84,12 +84,6 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         H5::DataSet r = create_dataset<output_type>(type, "position", size);
         H5::DataSet v = create_dataset<output_type>(type, "velocity", size);
 
-        // We bind the functions to write the datasets, using a
-        // *reference* to the sample vector pointer so it remains
-        // valid after reallocation, and a *copy* of the HDF5
-        // dataset instance which goes out of scope at the end of
-        // this loop.
-
         // particle positions
         writers_.push_back(
             make_dataset_writer(r, reinterpret_cast<output_type*>(&*sample->r[i]))
