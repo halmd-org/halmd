@@ -35,6 +35,29 @@ Boost
 Lua
 ---
 
+Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.1.4`_.
+
+.. _Lua download: http://www.lua.org/download.html
+.. _Lua 5.1.4: http://www.lua.org/ftp/lua-5.1.4.tar.gz
+
+The recommended way of embedding the Lua intepreter in an executable is to link
+the Lua library statically, which is the default mode of compilation.
+
+On **32-bit platforms**, compile the Lua library with ::
+
+   make linux
+
+On **64-bit platforms**, include the ``-fPIC`` flag using ::
+
+   make linux CFLAGS='-fPIC -O2 -Wall $(MYCFLAGS)'
+
+(Note the single quotes to prevent the shell from swallowing $.)
+
+Install the Lua library into your packages directory::
+
+   make install INSTALL_TOP=~/usr/lua-5.1.4
+
+
 Luabind
 -------
 
