@@ -131,6 +131,26 @@ Install the Luabind library into your packages directory::
 HDF5
 ----
 
+Get the latest `HDF5 source package`_, currently `HDF5 1.8.5 patch 1`_.
+
+.. _HDF5 source package: http://www.hdfgroup.org/HDF5/release/obtain5.html#obtain
+.. _HDF5 1.8.5 patch 1: http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.5-patch1.tar.gz
+
+Prepare a statically linked build of the HDF5 C and C++ library with ::
+
+   ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/hdf5-1.8.5-patch1
+
+.. note:: Compiling HDF5 with C++ support disables multi-threading.
+
+Compile HDF5 using ::
+
+   make
+
+Install the HDF5 libraries into your packages directory::
+
+   make install
+
+
 GNU Scientific Library
 ----------------------
 
