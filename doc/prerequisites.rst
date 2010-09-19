@@ -15,6 +15,16 @@ of these packages before attempting to compile them yourself.
    This simple scheme allows you to have multiple versions of a package, or
    remove a package without impacting others.
 
+When initially creating the CMake build tree, include all third-party package
+directories in the CMake variable ``CMAKE_PREFIX_PATH``.
+For example, if Boost, Lua and Luabind are installed in your home directory,
+CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
+the initial cmake command might look like this ::
+
+   cmake -DCMAKE_PREFIX_PATH='~/usr/boost_1_44_0;/opt/cuda-3.1;~/usr/lua-5.1.4;~/usr/luabind-0.9' ~/projects/halmd
+
+(Note the single quotes to prevent the shell from swallowing semicolons.)
+
 
 CMake
 -----
