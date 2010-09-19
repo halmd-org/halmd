@@ -4,6 +4,7 @@ HALMD documentation
 .. toctree::
    :maxdepth: 2
 
+   prerequisites
    readme
    usage
    faq
