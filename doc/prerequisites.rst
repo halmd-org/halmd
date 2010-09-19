@@ -61,6 +61,30 @@ Install the Lua library into your packages directory::
 Luabind
 -------
 
+Get the latest `Luabind source package`_, currently `Luabind 0.9`_.
+
+.. _Luabind source package: http://sourceforge.net/projects/luabind/files/luabind
+.. _Luabind 0.9: http://sourceforge.net/projects/luabind/files/luabind/0.9/luabind-0.9.tar.gz
+
+.. note::
+
+   Luabind is based on the Boost C++ libraries and uses boost-jam as its
+   build tool. After compiling Boost following the instructions above, the
+   bjam executable is found in the top-level source directory, for example
+   ``/tmp/boost_1_44_0/bjam``. This directory also has to be passed to bjam
+   during Luabind build using the environment variable ``BOOST_ROOT``.
+
+Compile a statically linked release build of the Luabind library with ::
+
+   BOOST_ROOT=/tmp/boost_1_44_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_44_0/bjam link=static variant=release
+
+Install the Luabind library into your packages directory::
+
+   BOOST_ROOT=/tmp/boost_1_44_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_44_0/bjam link=static variant=release install --prefix=$HOME/usr/luabind-0.9
+
+(Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
+
+
 HDF5
 ----
 
