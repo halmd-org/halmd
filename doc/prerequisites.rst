@@ -29,6 +29,31 @@ the initial cmake command might look like this ::
 CMake
 -----
 
+Get the latest `CMake with native CUDA support`_ ::
+
+   git clone git://git.colberg.org/gpgpu/cmake-cuda.git
+
+.. note::
+
+   If you are trapped behind a restrictive firewall, use ::
+
+      git clone http://git.colberg.org/gpgpu/cmake-cuda.git
+
+.. _CMake with native CUDA support: https://software.colberg.org/projects/cmake-cuda
+
+Prepare the CMake build with ::
+
+   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.2
+
+Compile CMake with ::
+
+   make
+
+Install CMake into your packages directory::
+
+   make install
+
+
 Boost
 -----
 
