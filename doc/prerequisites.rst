@@ -32,6 +32,49 @@ CMake
 Boost
 -----
 
+Get the latest `Boost source package`_, currently `Boost 1.44.0`_.
+
+.. _Boost source package: http://www.boost.org/users/download
+.. _Boost 1.44.0: http://sourceforge.net/projects/boost/files/boost/1.44.0/boost_1_44_0.tar.bz2
+
+Get the latest `Boost.Log source package`_, currently `Boost.Log 1.0`_.
+
+.. note::
+
+   The `Boost.Log`_ library is a proposed extension to the Boost C++ libraries.
+   As a result of the `formal review of Boost.Log`_ in March 2010, the library has
+   been accepted subject to several conditions. It is not shipped yet with
+   upstream Boost.
+
+.. _Boost.Log source package: http://sourceforge.net/projects/boost-log/files
+.. _Boost.Log 1.0: http://sourceforge.net/projects/boost-log/files/boost-log-1.0.zip
+.. _Boost.Log: http://boost-log.sourceforge.net/
+.. _formal review of Boost.Log: http://lists.boost.org/boost-announce/2010/03/0256.php
+
+We will build Boost and Boost.Log in a single step, therefore extract both
+source packages and copy the Boost.Log headers and library sources to the
+Boost source directory using ::
+
+   cp -r /tmp/boost-log-1.0/boost/log /tmp/boost_1_44_0/boost/
+   cp -r /tmp/boost-log-1.0/libs/log /tmp/boost_1_44_0/libs/
+
+In the Boost source directory, bootstrap the build with ::
+
+   ./bootstrap.sh
+
+Compile a statically linked release build of Boost with Boost.Log using ::
+
+   ./bjam link=static variant=release
+
+.. warning:: Boost may require more than ten minutes to compile.
+
+   You are strongly advised to take a coffee break.
+
+Install the Boost libraries into your packages directory::
+
+   ./bjam link=static variant=release install --prefix=$HOME/usr/boost_1_44_0
+
+
 Lua
 ---
 
