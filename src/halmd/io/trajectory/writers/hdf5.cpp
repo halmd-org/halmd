@@ -71,24 +71,14 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         else {
             type = root;
         }
-        // FIXME fixed_vector<> is not converted to boost::array
-        typedef boost::array<
-            typename sample_vector_type::value_type::value_type
-          , sample_vector_type::value_type::static_size
-        > array_type;
-        typedef std::vector<array_type> output_type;
         size_t size = sample->r[i]->size();
-        DataSet r = create_dataset<output_type>(type, "position", size);
-        DataSet v = create_dataset<output_type>(type, "velocity", size);
+        DataSet r = create_dataset<sample_vector_type>(type, "position", size);
+        DataSet v = create_dataset<sample_vector_type>(type, "velocity", size);
 
         // particle positions
-        writers_.push_back(
-            make_dataset_writer(r, reinterpret_cast<output_type*>(&*sample->r[i]))
-        );
+        writers_.push_back(make_dataset_writer(r, &*sample->r[i]));
         // particle velocities
-        writers_.push_back(
-            make_dataset_writer(v, reinterpret_cast<output_type*>(&*sample->v[i]))
-        );
+        writers_.push_back(make_dataset_writer(v, &*sample->v[i]));
     }
 
     // simulation time in reduced units

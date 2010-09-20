@@ -94,19 +94,16 @@ void hdf5<dimension>::register_vector_observable(
   , string const& desc
 )
 {
-    // FIXME overloading with fixed_vector is missing in H5
-    // shouldn't fixed_vector be interpreted as boost::array?
-    typedef boost::array<typename vector_type::value_type, vector_type::static_size> array_type;
     Group root = open_group(file_, "/");
 
     // create dataset for an unlimited number of vectorial chunks
-    DataSet dataset = create_dataset<array_type>(root, tag);
+    DataSet dataset = create_dataset<vector_type>(root, tag);
 
     // store description as attribute
     attribute(dataset, "description") = desc;
 
     // add dataset writer to internal list
-    writer_.push_back(make_dataset_writer(dataset, static_cast<array_type const*>(value_ptr)));
+    writer_.push_back(make_dataset_writer(dataset, value_ptr));
 }
 
 /**

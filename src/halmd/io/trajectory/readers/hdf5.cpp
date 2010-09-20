@@ -98,19 +98,13 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         }
         DataSet v = type.openDataSet("v");
 
-        // FIXME fixed_vector<> is not converted to boost::array
-        typedef boost::array<
-                typename sample_vector_type::value_type::value_type
-                , sample_vector_type::value_type::static_size
-                > array_type;
-        typedef std::vector<array_type> output_type;
-        read(r, reinterpret_cast<output_type*>(&*sample->r[i]), offset_);
-        read(v, reinterpret_cast<output_type*>(&*sample->v[i]), offset_);
+        H5::read(r, &*sample->r[i], offset_);
+        H5::read(v, &*sample->v[i], offset_);
     }
 
     DataSet t = root.openDataSet("t");
     float_type time;
-    size_t offset = read(t, &time, offset_);
+    size_t offset = H5::read(t, &time, offset_);
     LOG("read trajectory sample at offset " << offset << " with t = " << time);
 }
 
