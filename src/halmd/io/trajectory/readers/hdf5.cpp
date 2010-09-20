@@ -60,12 +60,12 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
     LOG("read trajectory file: " << path_);
 
     H5::H5File file(path_, H5F_ACC_RDONLY);
-    H5::Group root = H5xx::open_group(file, "trajectory");
+    H5::Group root = H5::open_group(file, "trajectory");
 
     for (size_t i = 0; i < sample->r.size(); ++i) {
         H5::Group type;
         if (sample->r.size() > 1) {
-            type = H5xx::open_group(root, string(1, 'A' + i));
+            type = H5::open_group(root, string(1, 'A' + i));
         }
         else {
             type = root;
@@ -90,7 +90,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
             r = type.openDataSet("r");
         }
         // backwards compatibility with r:R:v:t format
-        if (r.getDataType() == H5xx::ctype<float>()) {
+        if (r.getDataType() == H5::ctype<float>()) {
             // use reduced positions if extended positions are single-precision
             r = type.openDataSet("r");
             LOG_WARNING("falling back to reduced particle position sample");
@@ -150,7 +150,7 @@ size_t hdf5<dimension, float_type>::read(H5::DataSet dset, sample_vector_ptr sam
 
     try {
         H5XX_NO_AUTO_PRINT(H5::Exception);
-        dset.read(sample->data(), H5xx::ctype<float_type>(), ds_sample, ds);
+        dset.read(sample->data(), H5::ctype<float_type>(), ds_sample, ds);
     }
     catch (H5::Exception const&) {
         throw runtime_error("failed to read vector sample from HDF5 trajectory input file");
@@ -191,7 +191,7 @@ size_t hdf5<dimension, float_type>::read(H5::DataSet dset, float_type& sample)
 
     try {
         H5XX_NO_AUTO_PRINT(H5::Exception);
-        dset.read(&sample, H5xx::ctype<float_type>(), H5S_SCALAR, ds);
+        dset.read(&sample, H5::ctype<float_type>(), H5S_SCALAR, ds);
     }
     catch (H5::Exception const&) {
         throw runtime_error("failed to read scalar sample from HDF5 trajectory input file");

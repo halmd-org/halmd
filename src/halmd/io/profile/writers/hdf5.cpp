@@ -46,11 +46,11 @@ hdf5::hdf5(modules::factory& factory, po::options const& vm)
     )
 {
     // create parameter group
-    H5::Group param = H5xx::open_group(file_, "param");
+    H5::Group param = H5::open_group(file_, "param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
-    H5xx::attribute(param, "file_version") = version;
+    H5::attribute(param, "file_version") = version;
 
     LOG("write profile data to file: " << file_.getFileName());
 }
@@ -66,15 +66,15 @@ void hdf5::register_accumulator(
 {
     // open group defined by tag,
     // last entry of tag will be the name of the attribute
-    H5::Group group = H5xx::open_group(file_, tag.begin(), tag.end() - 1);
+    H5::Group group = H5::open_group(file_, tag.begin(), tag.end() - 1);
 
-    H5::DataSet dataset = H5xx::create_dataset<array<double, 3> >(
+    H5::DataSet dataset = H5::create_dataset<array<double, 3> >(
         group
       , trim_right_copy_if(tag.back(), is_any_of("_"))      // omit trailing "_"
       , 1                                                   // only 1 entry
     );
     // store description as attribute
-    H5xx::attribute(dataset, "timer") = desc;
+    H5::attribute(dataset, "timer") = desc;
 
     // We bind the functions to write the datasets using a
     // *reference* to the accumulator and a *copy* of the HDF5
@@ -102,7 +102,7 @@ void hdf5::write_accumulator(
       , error_of_mean(acc)
       , count(acc)
     }};
-    H5xx::write(dataset, data, 0);
+    H5::write(dataset, data, 0);
 }
 
 /**

@@ -26,7 +26,7 @@
 using namespace boost;
 using namespace boost::filesystem;
 using namespace std;
-using namespace H5xx;
+using namespace H5;
 
 namespace halmd
 {
