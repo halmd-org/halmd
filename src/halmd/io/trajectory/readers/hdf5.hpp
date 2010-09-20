@@ -45,7 +45,7 @@ public:
     static void options(po::options_description& desc) {}
 
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
-    typedef typename sample_type::sample_vector sample_vector;
+    typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 
     hdf5(modules::factory& factory, po::options const& vm);
@@ -53,9 +53,6 @@ public:
     shared_ptr<sample_type> sample;
 
 private:
-    size_t read(H5::DataSet dset, sample_vector_ptr sample);
-    size_t read(H5::DataSet dset, float_type& sample);
-
     using _Base::path_;
     using _Base::offset_;
 };

@@ -98,107 +98,20 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         }
         DataSet v = type.openDataSet("v");
 
-        read(r, sample->r[i]);
-        read(v, sample->v[i]);
+        // FIXME fixed_vector<> is not converted to boost::array
+        typedef boost::array<
+                typename sample_vector_type::value_type::value_type
+                , sample_vector_type::value_type::static_size
+                > array_type;
+        typedef std::vector<array_type> output_type;
+        read(r, reinterpret_cast<output_type*>(&*sample->r[i]), offset_);
+        read(v, reinterpret_cast<output_type*>(&*sample->v[i]), offset_);
     }
 
     DataSet t = root.openDataSet("t");
     float_type time;
-    size_t offset = read(t, time);
+    size_t offset = read(t, &time, offset_);
     LOG("read trajectory sample at offset " << offset << " with t = " << time);
-}
-
-/**
- * read vector sample dataset
- */
-template <int dimension, typename float_type>
-size_t hdf5<dimension, float_type>::read(DataSet dset, sample_vector_ptr sample)
-{
-    DataSpace ds(dset.getSpace());
-
-    if (!ds.isSimple()) {
-        throw runtime_error("HDF5 vector dataspace is not a simple dataspace");
-    }
-    if (ds.getSimpleExtentNdims() != 3) {
-        throw runtime_error("HDF5 vector dataspace has invalid dimensionality");
-    }
-
-    hsize_t dim[3];
-    ds.getSimpleExtentDims(dim);
-
-    ssize_t const len = dim[0];
-    if ((offset_ >= len) || ((-offset_) > len)) {
-        throw runtime_error("trajectory input sample number out of bounds");
-    }
-    size_t offset = (offset_ < 0) ? (offset_ + len) : offset_;
-
-    size_t const size = dim[1];
-    if (size != sample->size()) {
-        throw runtime_error("trajectory input file has invalid number of particles");
-    }
-    if (dim[2] != dimension) {
-        throw runtime_error("trajectory input file has invalid coordinate dimension");
-    }
-
-    hsize_t dim_sample[2] = { size, dimension };
-    DataSpace ds_sample(2, dim_sample);
-
-    hsize_t count[3]  = { 1, size, 1 };
-    hsize_t start[3]  = { offset, 0, 0 };
-    hsize_t stride[3] = { 1, 1, 1 };
-    hsize_t block[3]  = { 1, 1, dimension };
-    ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-
-    try {
-        H5XX_NO_AUTO_PRINT(Exception);
-        dset.read(sample->data(), H5::ctype<float_type>(), ds_sample, ds);
-    }
-    catch (Exception const&) {
-        throw runtime_error("failed to read vector sample from HDF5 trajectory input file");
-    }
-
-    return offset;
-}
-
-/**
- * read scalar sample dataset
- */
-template <int dimension, typename float_type>
-size_t hdf5<dimension, float_type>::read(DataSet dset, float_type& sample)
-{
-    DataSpace ds(dset.getSpace());
-
-    if (!ds.isSimple()) {
-        throw runtime_error("HDF5 scalar dataspace is not a simple dataspace");
-    }
-    if (ds.getSimpleExtentNdims() != 1) {
-        throw runtime_error("HDF5 scalar dataspace has invalid dimensionality");
-    }
-
-    hsize_t dim[1];
-    ds.getSimpleExtentDims(dim);
-
-    ssize_t const len = dim[0];
-    if ((offset_ >= len) || ((-offset_) > len)) {
-        throw runtime_error("trajectory input sample number out of bounds");
-    }
-    size_t offset = (offset_ < 0) ? (offset_ + len) : offset_;
-
-    hsize_t count[1]  = { 1 };
-    hsize_t start[1]  = { offset };
-    hsize_t stride[1] = { 1 };
-    hsize_t block[1]  = { 1 };
-    ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
-
-    try {
-        H5XX_NO_AUTO_PRINT(Exception);
-        dset.read(&sample, H5::ctype<float_type>(), H5S_SCALAR, ds);
-    }
-    catch (Exception const&) {
-        throw runtime_error("failed to read scalar sample from HDF5 trajectory input file");
-    }
-
-    return offset;
 }
 
 // explicit instantiation
