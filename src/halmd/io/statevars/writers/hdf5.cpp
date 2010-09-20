@@ -64,17 +64,17 @@ hdf5<dimension>::hdf5(modules::factory& factory, po::options const& vm)
  * create dataset for scalar macroscopic state variable
  * and register writer functor
  */
-template <int dimension>
-void hdf5<dimension>::register_scalar_observable(
+template <int dimension> template<typename T>
+void hdf5<dimension>::register_observable(
     string const& tag
-  , double const* value_ptr
+  , T const* value_ptr
   , string const& desc
 )
 {
     Group root = open_group(file_, "/");
 
     // create dataset for an unlimited number of scalar chunks
-    DataSet dataset = create_dataset<double>(root, tag);
+    DataSet dataset = create_dataset<T>(root, tag);
 
     // store description as attribute
     attribute(dataset, "description") = desc;
@@ -83,27 +83,18 @@ void hdf5<dimension>::register_scalar_observable(
     writer_.push_back(make_dataset_writer(dataset, value_ptr));
 }
 
-/**
- * create dataset for vectorial macroscopic state variable
- * and register writer functor
- */
 template <int dimension>
-void hdf5<dimension>::register_vector_observable(
-    string const& tag
-  , vector_type const* value_ptr
-  , string const& desc
-)
+void hdf5<dimension>::register_observable(
+    string const& tag, double const* value_ptr, string const& desc)
 {
-    Group root = open_group(file_, "/");
+    register_observable<>(tag, value_ptr, desc);
+}
 
-    // create dataset for an unlimited number of vectorial chunks
-    DataSet dataset = create_dataset<vector_type>(root, tag);
-
-    // store description as attribute
-    attribute(dataset, "description") = desc;
-
-    // add dataset writer to internal list
-    writer_.push_back(make_dataset_writer(dataset, value_ptr));
+template <int dimension>
+void hdf5<dimension>::register_observable(
+    string const& tag, vector_type const* value_ptr, string const& desc)
+{
+    register_observable<>(tag, value_ptr, desc);
 }
 
 /**

@@ -61,13 +61,18 @@ public:
 protected:
     friend class observables::thermodynamics<dimension>;
 
-    virtual void register_scalar_observable(
+    /**
+     * register an observable for output in HDF5 file
+     * as dataset named by 'tag' with description 'desc',
+     * data are read from *value_ptr at each invocation of write()
+     */
+    virtual void register_observable(
         std::string const& tag
       , double const* value_ptr
       , std::string const& desc
     ) = 0;
 
-    virtual void register_vector_observable(
+    virtual void register_observable(
         std::string const& tag
       , vector_type const* value_ptr
       , std::string const& desc

@@ -54,27 +54,17 @@ public:
     void write();
 
 private:
-    void register_scalar_observable(
+    // templates for register functions
+    template <typename T>
+    void register_observable(
         std::string const& tag
-      , double const* value_ptr
+      , T const* value_ptr
       , std::string const& desc
     );
 
-    static void write_scalar_observable(
-        H5::DataSet const& dset
-      , double const* value_ptr
-    );
-
-    void register_vector_observable(
-        std::string const& tag
-      , vector_type const* value_ptr
-      , std::string const& desc
-    );
-
-    static void write_vector_observable(
-        H5::DataSet const& dset
-      , vector_type const* value_ptr
-    );
+    // declarations for all required types
+    void register_observable(std::string const&, double const*, std::string const&);
+    void register_observable(std::string const&, vector_type const*, std::string const&);
 
     H5::H5File file_;
     std::vector<writer_functor> writer_;
