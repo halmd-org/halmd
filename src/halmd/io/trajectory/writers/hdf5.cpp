@@ -56,18 +56,15 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
 {
     LOG("write trajectory to file: " << path_.file_string());
 
-    // create parameter group
-    H5::Group param = open_group(file_, "/param");
-
-    // store file version
+    // store file version in parameter group
     array<unsigned char, 2> version = {{ 1, 0 }};
-    attribute(param, "file_version") = version;
+    attribute(open_group(file_, "param"), "file_version") = version;
 
-    // create trajectory group
-    H5::Group root = file_.createGroup("trajectory");
+    // open or create trajectory group
+    Group root = open_group(file_, "trajectory");
 
     for (size_t i = 0; i < sample->r.size(); ++i) {
-        H5::Group type;
+        Group type;
         if (sample->r.size() > 1) {
             type = root.createGroup(string(1, 'A' + i));
         }
@@ -81,8 +78,8 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
         > array_type;
         typedef std::vector<array_type> output_type;
         size_t size = sample->r[i]->size();
-        H5::DataSet r = create_dataset<output_type>(type, "position", size);
-        H5::DataSet v = create_dataset<output_type>(type, "velocity", size);
+        DataSet r = create_dataset<output_type>(type, "position", size);
+        DataSet v = create_dataset<output_type>(type, "velocity", size);
 
         // particle positions
         writers_.push_back(
@@ -95,7 +92,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
     }
 
     // simulation time in reduced units
-    H5::DataSet t = create_dataset<double>(root, "time");
+    DataSet t = create_dataset<double>(root, "time");
     writers_.push_back(make_dataset_writer(t, &sample->time));
 }
 

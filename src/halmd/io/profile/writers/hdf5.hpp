@@ -32,7 +32,7 @@ namespace io { namespace profile { namespace writers
 {
 
 /**
- * This module writes runtime accumulator results to a HDF5 file.
+ * This module writes runtime accumulator results to an HDF5 file.
  */
 class hdf5
   : public profile::writer

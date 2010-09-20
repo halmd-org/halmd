@@ -25,6 +25,7 @@
 
 using namespace boost;
 using namespace std;
+using namespace H5;
 
 namespace halmd
 {
@@ -43,8 +44,8 @@ void hdf5<dimension, float_type>::depends()
 template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::select(po::options const& vm)
 {
-    if (!H5::H5File::isHdf5(vm["trajectory-file"].as<string>())) {
-        throw unsuitable_module("not a HDF5 file: " + vm["trajectory-file"].as<string>());
+    if (!H5File::isHdf5(vm["trajectory-file"].as<string>())) {
+        throw unsuitable_module("not an HDF5 file: " + vm["trajectory-file"].as<string>());
     }
 }
 
@@ -59,19 +60,19 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
 {
     LOG("read trajectory file: " << path_);
 
-    H5::H5File file(path_, H5F_ACC_RDONLY);
-    H5::Group root = H5::open_group(file, "trajectory");
+    H5File file(path_, H5F_ACC_RDONLY);
+    Group root = open_group(file, "trajectory");
 
     for (size_t i = 0; i < sample->r.size(); ++i) {
-        H5::Group type;
+        Group type;
         if (sample->r.size() > 1) {
-            type = H5::open_group(root, string(1, 'A' + i));
+            type = open_group(root, string(1, 'A' + i));
         }
         else {
             type = root;
         }
 
-        H5::DataSet r;
+        DataSet r;
         try {
             // backwards compatibility with r:R:v:t format
             //   r = reduced single- or double-precision positions,
@@ -81,7 +82,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
             r = type.openDataSet("R");
             LOG_WARNING("detected obsolete trajectory file format");
         }
-        catch (H5::GroupIException const& e)
+        catch (GroupIException const& e)
         {
             // new-style r:v:t format
             //   r = extended double-precision positions,
@@ -95,13 +96,13 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
             r = type.openDataSet("r");
             LOG_WARNING("falling back to reduced particle position sample");
         }
-        H5::DataSet v = type.openDataSet("v");
+        DataSet v = type.openDataSet("v");
 
         read(r, sample->r[i]);
         read(v, sample->v[i]);
     }
 
-    H5::DataSet t = root.openDataSet("t");
+    DataSet t = root.openDataSet("t");
     float_type time;
     size_t offset = read(t, time);
     LOG("read trajectory sample at offset " << offset << " with t = " << time);
@@ -111,9 +112,9 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& 
  * read vector sample dataset
  */
 template <int dimension, typename float_type>
-size_t hdf5<dimension, float_type>::read(H5::DataSet dset, sample_vector_ptr sample)
+size_t hdf5<dimension, float_type>::read(DataSet dset, sample_vector_ptr sample)
 {
-    H5::DataSpace ds(dset.getSpace());
+    DataSpace ds(dset.getSpace());
 
     if (!ds.isSimple()) {
         throw runtime_error("HDF5 vector dataspace is not a simple dataspace");
@@ -140,7 +141,7 @@ size_t hdf5<dimension, float_type>::read(H5::DataSet dset, sample_vector_ptr sam
     }
 
     hsize_t dim_sample[2] = { size, dimension };
-    H5::DataSpace ds_sample(2, dim_sample);
+    DataSpace ds_sample(2, dim_sample);
 
     hsize_t count[3]  = { 1, size, 1 };
     hsize_t start[3]  = { offset, 0, 0 };
@@ -149,10 +150,10 @@ size_t hdf5<dimension, float_type>::read(H5::DataSet dset, sample_vector_ptr sam
     ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     try {
-        H5XX_NO_AUTO_PRINT(H5::Exception);
+        H5XX_NO_AUTO_PRINT(Exception);
         dset.read(sample->data(), H5::ctype<float_type>(), ds_sample, ds);
     }
-    catch (H5::Exception const&) {
+    catch (Exception const&) {
         throw runtime_error("failed to read vector sample from HDF5 trajectory input file");
     }
 
@@ -163,9 +164,9 @@ size_t hdf5<dimension, float_type>::read(H5::DataSet dset, sample_vector_ptr sam
  * read scalar sample dataset
  */
 template <int dimension, typename float_type>
-size_t hdf5<dimension, float_type>::read(H5::DataSet dset, float_type& sample)
+size_t hdf5<dimension, float_type>::read(DataSet dset, float_type& sample)
 {
-    H5::DataSpace ds(dset.getSpace());
+    DataSpace ds(dset.getSpace());
 
     if (!ds.isSimple()) {
         throw runtime_error("HDF5 scalar dataspace is not a simple dataspace");
@@ -190,10 +191,10 @@ size_t hdf5<dimension, float_type>::read(H5::DataSet dset, float_type& sample)
     ds.selectHyperslab(H5S_SELECT_SET, count, start, stride, block);
 
     try {
-        H5XX_NO_AUTO_PRINT(H5::Exception);
+        H5XX_NO_AUTO_PRINT(Exception);
         dset.read(&sample, H5::ctype<float_type>(), H5S_SCALAR, ds);
     }
-    catch (H5::Exception const&) {
+    catch (Exception const&) {
         throw runtime_error("failed to read scalar sample from HDF5 trajectory input file");
     }
 

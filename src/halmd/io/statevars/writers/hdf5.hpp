@@ -32,7 +32,7 @@ namespace io { namespace statevars { namespace writers
 {
 
 /**
- * Write results for macroscopic state variables to a HDF5 file.
+ * Write results for macroscopic state variables to an HDF5 file.
  */
 template <int dimension>
 class hdf5

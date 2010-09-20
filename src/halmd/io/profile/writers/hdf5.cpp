@@ -29,6 +29,7 @@ using namespace boost;
 using namespace boost::algorithm;
 using namespace boost::filesystem;
 using namespace std;
+using namespace H5;
 
 namespace halmd
 {
@@ -46,11 +47,11 @@ hdf5::hdf5(modules::factory& factory, po::options const& vm)
     )
 {
     // create parameter group
-    H5::Group param = H5::open_group(file_, "param");
+    Group param = open_group(file_, "/param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
-    H5::attribute(param, "file_version") = version;
+    attribute(param, "file_version") = version;
 
     LOG("write profile data to file: " << file_.getFileName());
 }
@@ -66,15 +67,15 @@ void hdf5::register_accumulator(
 {
     // open group defined by tag,
     // last entry of tag will be the name of the attribute
-    H5::Group group = H5::open_group(file_, tag.begin(), tag.end() - 1);
+    Group group = open_group(file_, tag.begin(), tag.end() - 1);
 
-    H5::DataSet dataset = H5::create_dataset<array<double, 3> >(
+    DataSet dataset = create_dataset<array<double, 3> >(
         group
       , trim_right_copy_if(tag.back(), is_any_of("_"))      // omit trailing "_"
       , 1                                                   // only 1 entry
     );
     // store description as attribute
-    H5::attribute(dataset, "timer") = desc;
+    attribute(dataset, "timer") = desc;
 
     // We bind the functions to write the datasets using a
     // *reference* to the accumulator and a *copy* of the HDF5
@@ -93,7 +94,7 @@ void hdf5::register_accumulator(
  * write dataset for runtime accumulator
  */
 void hdf5::write_accumulator(
-    H5::DataSet const& dataset
+    DataSet const& dataset
   , accumulator_type const& acc
 )
 {

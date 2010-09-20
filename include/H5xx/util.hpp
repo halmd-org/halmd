@@ -31,7 +31,7 @@ namespace H5
 {
 
 /**
- * returns absolute path of a HDF5 object within file
+ * returns absolute path of an HDF5 object within file
  *
  * For attributes the path of the parent object is returned.
  */

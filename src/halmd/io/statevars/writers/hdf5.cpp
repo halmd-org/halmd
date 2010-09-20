@@ -27,6 +27,7 @@ using namespace boost;
 using namespace boost::algorithm;
 using namespace boost::filesystem;
 using namespace std;
+using namespace H5;
 
 namespace halmd
 {
@@ -45,16 +46,16 @@ hdf5<dimension>::hdf5(modules::factory& factory, po::options const& vm)
     )
 {
     // create parameter group
-    H5::Group param = H5::open_group(file_, "/param");
+    Group param = open_group(file_, "/param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
-    H5::attribute(param, "file_version") = version;
+    attribute(param, "file_version") = version;
 
     // store dimension
     // FIXME configuration and simulation parameters should be stored by a distinct function
-    H5::Group mdsim = param.createGroup("mdsim");
-    H5::attribute(mdsim, "dimension") = dimension;
+    Group mdsim = param.createGroup("mdsim");
+    attribute(mdsim, "dimension") = dimension;
 
     LOG("write macroscopic state variables to file: " << file_.getFileName());
 }
@@ -70,16 +71,16 @@ void hdf5<dimension>::register_scalar_observable(
   , string const& desc
 )
 {
-    H5::Group root = H5::open_group(file_, "/");
+    Group root = open_group(file_, "/");
 
     // create dataset for an unlimited number of scalar chunks
-    H5::DataSet dataset = H5::create_dataset<double>(root, tag);
+    DataSet dataset = create_dataset<double>(root, tag);
 
     // store description as attribute
-    H5::attribute(dataset, "description") = desc;
+    attribute(dataset, "description") = desc;
 
     // add dataset writer to internal list
-    writer_.push_back(H5::make_dataset_writer(dataset, value_ptr));
+    writer_.push_back(make_dataset_writer(dataset, value_ptr));
 }
 
 /**
@@ -96,16 +97,16 @@ void hdf5<dimension>::register_vector_observable(
     // FIXME overloading with fixed_vector is missing in H5
     // shouldn't fixed_vector be interpreted as boost::array?
     typedef boost::array<typename vector_type::value_type, vector_type::static_size> array_type;
-    H5::Group root = H5::open_group(file_, "/");
+    Group root = open_group(file_, "/");
 
     // create dataset for an unlimited number of vectorial chunks
-    H5::DataSet dataset = H5::create_dataset<array_type>(root, tag);
+    DataSet dataset = create_dataset<array_type>(root, tag);
 
     // store description as attribute
-    H5::attribute(dataset, "description") = desc;
+    attribute(dataset, "description") = desc;
 
     // add dataset writer to internal list
-    writer_.push_back(H5::make_dataset_writer(dataset, static_cast<array_type const*>(value_ptr)));
+    writer_.push_back(make_dataset_writer(dataset, static_cast<array_type const*>(value_ptr)));
 }
 
 /**
