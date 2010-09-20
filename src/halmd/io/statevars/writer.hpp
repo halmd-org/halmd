@@ -77,6 +77,18 @@ protected:
       , vector_type const* value_ptr
       , std::string const& desc
     ) = 0;
+
+    virtual void register_observable(
+        std::string const& tag
+      , std::vector<double> const* value_ptr
+      , std::string const& desc
+    ) = 0;
+
+    virtual void register_observable(
+        std::string const& tag
+      , std::vector<vector_type> const* value_ptr
+      , std::string const& desc
+    ) = 0;
 };
 
 }} // namespace io::statevars

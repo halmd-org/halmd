@@ -62,9 +62,18 @@ private:
       , std::string const& desc
     );
 
+    template <typename T>
+    void register_observable(
+        std::string const& tag
+      , std::vector<T> const* value_ptr
+      , std::string const& desc
+    );
+
     // declarations for all required types
     void register_observable(std::string const&, double const*, std::string const&);
     void register_observable(std::string const&, vector_type const*, std::string const&);
+    void register_observable(std::string const&, std::vector<double> const*, std::string const&);
+    void register_observable(std::string const&, std::vector<vector_type> const*, std::string const&);
 
     H5::H5File file_;
     std::vector<writer_functor> writer_;

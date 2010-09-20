@@ -83,6 +83,25 @@ void hdf5<dimension>::register_observable(
     writer_.push_back(make_dataset_writer(dataset, value_ptr));
 }
 
+template <int dimension> template<typename T>
+void hdf5<dimension>::register_observable(
+    string const& tag
+  , vector<T> const* value_ptr
+  , string const& desc
+)
+{
+    Group root = open_group(file_, "/");
+
+    // create dataset for an unlimited number of vector chunks with given size
+    DataSet dataset = create_dataset<vector<T> >(root, tag, value_ptr->size());
+
+    // store description as attribute
+    attribute(dataset, "description") = desc;
+
+    // add dataset writer to internal list
+    writer_.push_back(make_dataset_writer(dataset, value_ptr));
+}
+
 template <int dimension>
 void hdf5<dimension>::register_observable(
     string const& tag, double const* value_ptr, string const& desc)
@@ -93,6 +112,20 @@ void hdf5<dimension>::register_observable(
 template <int dimension>
 void hdf5<dimension>::register_observable(
     string const& tag, vector_type const* value_ptr, string const& desc)
+{
+    register_observable<>(tag, value_ptr, desc);
+}
+
+template <int dimension>
+void hdf5<dimension>::register_observable(
+    string const& tag, std::vector<double> const* value_ptr, string const& desc)
+{
+    register_observable<>(tag, value_ptr, desc);
+}
+
+template <int dimension>
+void hdf5<dimension>::register_observable(
+    string const& tag, std::vector<vector_type> const* value_ptr, string const& desc)
 {
     register_observable<>(tag, value_ptr, desc);
 }
