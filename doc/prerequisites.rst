@@ -87,17 +87,27 @@ In the Boost source directory, bootstrap the build with ::
 
    ./bootstrap.sh
 
-Compile a statically linked release build of Boost with Boost.Log using ::
+Compile Boost using ::
 
-   ./bjam link=static variant=release
+   ./bjam
 
-.. warning:: Boost may require more than ten minutes to compile.
+This compiles both dynamic and static libraries.
+
+.. note:: By default, CMake uses the dynamically linked Boost libraries.
+
+   This is the recommended way of linking to Boost, as static linking of
+   the unit test executables significantly increases the size of the build
+   tree. If you wish to link statically nevertheless, for example to run a
+   program on another machine without your Boost libraries, invoke cmake
+   with ``-DBoost_USE_STATIC_LIBS=True`` on the *first* run.
+
+.. warning:: Boost may require more than fifteen minutes to compile.
 
    You are strongly advised to take a coffee break.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam link=static variant=release install --prefix=$HOME/usr/boost_1_44_0
+   ./bjam install --prefix=$HOME/usr/boost_1_44_0
 
 
 Lua
