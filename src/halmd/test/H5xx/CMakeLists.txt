@@ -5,6 +5,13 @@ target_link_libraries(test_H5xx
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
   ${HALMD_COMMON_LIBRARIES}
 )
-add_test(H5xx
-  test_H5xx
+
+add_test(H5xx_attribute
+  test_H5xx --run_test=H5xx_attribute
+)
+add_test(H5xx_dataset
+  test_H5xx --run_test=H5xx_dataset
+)
+add_test(H5xx_group
+  test_H5xx --run_test=H5xx_group
 )
