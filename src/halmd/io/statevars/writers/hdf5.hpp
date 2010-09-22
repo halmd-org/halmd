@@ -77,7 +77,32 @@ private:
       , std::string const& desc
     );
 
+    // virtual write_dataset function, only called by base class
+    virtual void write_dataset(
+        std::string const& tag
+      , void const* value
+      , std::type_info const& value_type
+      , std::string const& desc
+    );
+
+    // templates for write_dataset function
+    template <typename T>
+    void write_dataset(
+        std::string const& tag
+      , T const& value
+      , std::string const& desc
+    );
+
+    template <typename T>
+    void write_dataset(
+        std::string const& tag
+      , std::vector<T> const& value
+      , std::string const& desc
+    );
+
+    /** HDF5 file object */
     H5::H5File file_;
+    /** list of registered writer functors */
     std::vector<writer_functor> writer_;
 };
 

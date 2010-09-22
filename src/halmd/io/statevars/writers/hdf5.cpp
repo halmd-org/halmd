@@ -61,7 +61,7 @@ hdf5<dimension>::hdf5(modules::factory& factory, po::options const& vm)
 }
 
 /**
- * create dataset for scalar macroscopic state variable
+ * create dataset for macroscopic state variable
  * and register writer functor
  */
 template <int dimension> template<typename T>
@@ -75,7 +75,7 @@ void hdf5<dimension>::register_observable(
     list<string> path(split_path(tag));
     Group root = open_group(file_, path.begin(), --path.end());
 
-    // create dataset for an unlimited number of scalar chunks
+    // create dataset for an unlimited number of chunks
     DataSet dataset = create_dataset<T>(root, path.back());
 
     // store description as attribute
@@ -85,6 +85,7 @@ void hdf5<dimension>::register_observable(
     writer_.push_back(make_dataset_writer(dataset, value_ptr));
 }
 
+// overload for vector of data
 template <int dimension> template<typename T>
 void hdf5<dimension>::register_observable(
     string const& tag
@@ -134,6 +135,84 @@ void hdf5<dimension>::register_observable(
     SELECT_REGISTER_OBSERVABLE(vector<double>);
     SELECT_REGISTER_OBSERVABLE(vector<vector_type>);
 #undef SELECT_REGISTER_OBSERVABLE
+
+    throw runtime_error(string("HDF5 writer: unknown type of dataset ") + tag);
+}
+
+/**
+ * create single-valued dataset and write data
+ */
+template <int dimension> template<typename T>
+void hdf5<dimension>::write_dataset(
+    string const& tag
+  , T const& value
+  , string const& desc
+)
+{
+    // first part of tag is path, last part is dataset name
+    list<string> path(split_path(tag));
+    Group root = open_group(file_, path.begin(), --path.end());
+
+    // create dataset for a single chunk
+    DataSet dataset = create_dataset<T>(root, path.back(), 1);
+
+    // store description as attribute
+    attribute(dataset, "description") = desc;
+
+    // write dataset at index 0
+    H5::write(dataset, value, 0);
+}
+
+// overload for vector of data
+template <int dimension> template<typename T>
+void hdf5<dimension>::write_dataset(
+    string const& tag
+  , vector<T> const& value
+  , string const& desc
+)
+{
+    // first part of tag is path, last part is dataset name
+    list<string> path(split_path(tag));
+    Group root = open_group(file_, path.begin(), --path.end());
+
+    // create dataset for a single vector chunk with given size
+    DataSet dataset = create_dataset<vector<T> >(root, path.back(), value.size(), 1);
+
+    // store description as attribute
+    attribute(dataset, "description") = desc;
+
+    // write dataset at index 0
+    H5::write(dataset, value, 0);
+}
+
+/**
+ * write_dataset function from base class interface,
+ * calls appropriate template of write_dataset
+ */
+template <int dimension>
+void hdf5<dimension>::write_dataset(
+    string const& tag
+  , void const* value_ptr
+  , type_info const& value_type
+  , string const& desc
+)
+{
+    // the reinterpret_cast is safe since we know the type of value_ptr
+#define SELECT_WRITE_DATASET(TYPE)                     \
+    if (value_type == typeid(TYPE)) {                  \
+        write_dataset<>(                               \
+            tag                                        \
+          , *reinterpret_cast<TYPE const*>(value_ptr)  \
+          , desc                                       \
+        );                                             \
+        return;                                        \
+    }
+
+    SELECT_WRITE_DATASET(double);
+    SELECT_WRITE_DATASET(vector_type);
+    SELECT_WRITE_DATASET(vector<double>);
+    SELECT_WRITE_DATASET(vector<vector_type>);
+#undef SELECT_WRITE_DATASET
 
     throw runtime_error(string("HDF5 writer: unknown type of dataset ") + tag);
 }

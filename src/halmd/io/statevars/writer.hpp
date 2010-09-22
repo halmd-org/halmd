@@ -50,7 +50,7 @@ public:
     virtual void write() = 0;
 
     /**
-     * register an observable for output as dataset named by 'tag'
+     * Register an observable for output as dataset named by 'tag'
      * with description 'desc'. Data are read from *value_ptr at
      * each invocation of write().
      *
@@ -61,14 +61,36 @@ public:
         register_observable(tag, value_ptr, typeid(T), desc);
     }
 
+    /**
+     * Write single dataset 'value' named by 'tag' with description 'desc'
+     *
+     * convenience template for the protected virtual function write_dataset() */
+    template <typename T>
+    void write_dataset(std::string const& tag, T const& value, std::string const& desc)
+    {
+        write_dataset(tag, &value, typeid(T), desc);
+    }
+
 protected:
     /**
-     * register an observable for output as dataset named by 'tag'
+     * Register an observable for output as dataset named by 'tag'
      * with description 'desc'. Data are read from *value_ptr at
      * each invocation of write(). The value type is passed
      * separately to this pure virtual function
      */
     virtual void register_observable(
+        std::string const& tag
+      , void const* value_ptr
+      , std::type_info const& value_type
+      , std::string const& desc
+    ) = 0;
+
+    /**
+     * Write single dataset named by 'tag' with description 'desc'.
+     * Data are read from *value_ptr, the value type is passed
+     * separately to this pure virtual function
+     */
+    virtual void write_dataset(
         std::string const& tag
       , void const* value_ptr
       , std::type_info const& value_type
