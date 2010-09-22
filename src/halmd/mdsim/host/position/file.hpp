@@ -23,7 +23,7 @@
 #include <vector>
 
 #include <halmd/io/trajectory/reader.hpp>
-#include <halmd/mdsim/host/box.hpp>
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
@@ -48,7 +48,7 @@ public:
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef host::box<dimension> box_type;
+    typedef mdsim::box<dimension> box_type;
     typedef io::trajectory::reader<dimension> reader_type;
     typedef samples::host::trajectory<dimension, float_type> sample_type;
 

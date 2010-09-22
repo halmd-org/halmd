@@ -1,5 +1,4 @@
 add_library(halmd_mdsim_gpu
-  box.cpp
   force.cpp
   integrator.cpp
   neighbour.cpp

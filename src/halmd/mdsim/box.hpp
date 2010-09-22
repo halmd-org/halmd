@@ -79,6 +79,8 @@ protected:
  * which is appropriate too for relative vectors
  *
  * return reduction vector in units of box edge lengths
+ *
+ * A GPU version is found in halmd/mdsim/gpu/box_kernel.cuh
  */
 template <int dimension> template <typename T>
 inline T box<dimension>::reduce_periodic(T& r) const

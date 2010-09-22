@@ -24,7 +24,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/gpu/box.hpp>
+#include <halmd/mdsim/box.hpp>
 // #include <halmd/mdsim/gpu/forces/smooth.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
@@ -66,7 +66,7 @@ public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
     typedef gpu::particle<dimension, float> particle_type;
-    typedef gpu::box<dimension> box_type;
+    typedef mdsim::box<dimension> box_type;
 //     typedef host::forces::smooth<dimension, float_type> smooth_type;
 
     shared_ptr<particle_type> particle;

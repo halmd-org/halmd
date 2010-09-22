@@ -26,7 +26,7 @@
 #include <vector>
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
-#include <halmd/mdsim/gpu/box.hpp>
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/neighbour_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
@@ -63,7 +63,7 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef gpu::force<dimension, float_type> force_type;
     typedef typename force_type::matrix_type matrix_type;
-    typedef gpu::box<dimension> box_type;
+    typedef mdsim::box<dimension> box_type;
     typedef typename _Base::profiler_type profiler_type;
 
     typedef typename neighbour_wrapper<dimension>::displacement_impl_type displacement_impl_type;

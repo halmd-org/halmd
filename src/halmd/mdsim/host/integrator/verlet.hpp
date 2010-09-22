@@ -22,7 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/mdsim/host/box.hpp>
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/utility/options.hpp>
@@ -46,7 +46,7 @@ public:
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef host::box<dimension> box_type;
+    typedef mdsim::box<dimension> box_type;
 
     shared_ptr<particle_type> particle;
     shared_ptr<box_type> box;

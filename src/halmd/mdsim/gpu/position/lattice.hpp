@@ -22,7 +22,7 @@
 
 #include <vector>
 
-#include <halmd/mdsim/gpu/box.hpp>
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/random/gpu/random.hpp>
@@ -47,7 +47,7 @@ public:
 
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef gpu::box<dimension> box_type;
+    typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
 
     shared_ptr<particle_type> particle;
