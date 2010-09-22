@@ -71,10 +71,12 @@ void hdf5<dimension>::register_observable(
   , string const& desc
 )
 {
-    Group root = open_group(file_, "/");
+    // first part of tag is path, last part is dataset name
+    list<string> path(split_path(tag));
+    Group root = open_group(file_, path.begin(), --path.end());
 
     // create dataset for an unlimited number of scalar chunks
-    DataSet dataset = create_dataset<T>(root, tag);
+    DataSet dataset = create_dataset<T>(root, path.back());
 
     // store description as attribute
     attribute(dataset, "description") = desc;
@@ -90,10 +92,12 @@ void hdf5<dimension>::register_observable(
   , string const& desc
 )
 {
-    Group root = open_group(file_, "/");
+    // first part of tag is path, last part is dataset name
+    list<string> path(split_path(tag));
+    Group root = open_group(file_, path.begin(), --path.end());
 
     // create dataset for an unlimited number of vector chunks with given size
-    DataSet dataset = create_dataset<vector<T> >(root, tag, value_ptr->size());
+    DataSet dataset = create_dataset<vector<T> >(root, path.back(), value_ptr->size());
 
     // store description as attribute
     attribute(dataset, "description") = desc;
