@@ -58,7 +58,6 @@ void sampler<dimension>::depends()
     modules::depends<_Self, observable_type>::optional();
     modules::depends<_Self, statevars_writer_type>::optional();
     modules::depends<_Self, trajectory_writer_type>::required();
-    modules::depends<_Self, profiler_type>::required();
 }
 
 /**
@@ -71,13 +70,27 @@ sampler<dimension>::sampler(modules::factory& factory, po::options const& vm)
   , observables(modules::fetch<observable_type>(factory, vm))
   , statevars_writer(modules::fetch<statevars_writer_type>(factory, vm))
   , trajectory_writer(modules::fetch<trajectory_writer_type>(factory, vm))
-  , profiler(modules::fetch<profiler_type>(factory, vm))
   // store options
   , statevars_interval_(vm["sampling-state-vars"].as<unsigned>())
   , trajectory_interval_(vm["sampling-trajectory"].as<unsigned>())
 {
-    // register module runtime accumulators
-    profiler->register_map(runtime_);
+    /*@{ FIXME remove pre-Lua hack */
+    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
+    register_runtimes(*profiler);
+    /*@}*/
+
+    BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
+        observable->register_statevars(*statevars_writer);
+    }
+}
+
+/**
+ * register module runtime accumulators
+ */
+template <int dimension>
+void sampler<dimension>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
 }
 
 /**
@@ -90,8 +103,8 @@ void sampler<dimension>::sample(bool force)
     bool is_sampling_step = false;
 
     if (!(step % statevars_interval_) || force) {
-        BOOST_FOREACH (shared_ptr<observable_type> const& ptr, observables) {
-            ptr->sample(core->time());
+        BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
+            observable->sample(core->time());
             is_sampling_step = true;
         }
         if (statevars_writer) {

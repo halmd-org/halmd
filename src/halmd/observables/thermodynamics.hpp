@@ -24,7 +24,6 @@
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <vector>
 
-#include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -63,11 +62,11 @@ public:
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
 
     shared_ptr<box_type> box;
-    shared_ptr<writer_type> writer;
-    shared_ptr<profiler_type> profiler;
 
     thermodynamics(modules::factory& factory, po::options const& vm);
     virtual ~thermodynamics() {}
+    void register_runtimes(profiler_type& profiler);
+    virtual void register_statevars(writer_type& writer);
 
     // sample macroscopic state variables and store with given time
     void sample(double time);

@@ -31,6 +31,7 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
 #include <halmd/utility/options.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -64,7 +65,7 @@ public:
     typedef gpu::force<dimension, float_type> force_type;
     typedef typename force_type::matrix_type matrix_type;
     typedef mdsim::box<dimension> box_type;
-    typedef typename _Base::profiler_type profiler_type;
+    typedef utility::profiler profiler_type;
 
     typedef typename neighbour_wrapper<dimension>::displacement_impl_type displacement_impl_type;
 
@@ -76,13 +77,13 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;
     shared_ptr<box_type> box;
-    using _Base::profiler;
 
     cuda::config dim_reduce;
     displacement_impl_type const displacement_impl;
 
     neighbour(modules::factory& factory, po::options const& vm);
     virtual ~neighbour() {}
+    void register_runtimes(profiler_type& profiler);
     void update();
     bool check();
 

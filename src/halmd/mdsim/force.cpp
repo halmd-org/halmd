@@ -46,14 +46,12 @@ template <int dimension>
 void force<dimension>::depends()
 {
     modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, profiler_type>::required();
 }
 
 template <int dimension>
 force<dimension>::force(modules::factory& factory, po::options const& vm)
   // dependency injection
   : particle(modules::fetch<particle_type>(factory, vm))
-  , profiler(modules::fetch<profiler_type>(factory, vm))
 {
 }
 

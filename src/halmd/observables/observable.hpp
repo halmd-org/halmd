@@ -21,6 +21,7 @@
 #define HALMD_OBSERVABLES_OBSERVABLE_HPP
 
 #include <halmd/utility/options.hpp>
+#include <halmd/io/statevars/writer.hpp>
 
 namespace halmd
 {
@@ -43,8 +44,11 @@ public:
     static void depends() {};
     static void select(po::options const& vm) {};
 
+    typedef io::statevars::writer<dimension> writer_type;
+
     observable(modules::factory& factory, po::options const& vm) {};
     virtual ~observable() {}
+    virtual void register_statevars(writer_type& writer) = 0;
 
     // sample observable and store with given time
     virtual void sample(double time) = 0;

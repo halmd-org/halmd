@@ -50,8 +50,11 @@ verlet<dimension, float_type>::verlet(modules::factory& factory, po::options con
   // set parameters
   , timestep_half_(0.5 * timestep_)
 {
-    // register module runtime accumulators
-    profiler->register_map(runtime_);
+    /*@{ FIXME remove pre-Lua hack */
+    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
+    register_runtimes(*profiler);
+    /*@}*/
+
 #ifdef USE_VERLET_DSFUN
     //
     // Double-single precision requires two single precision
@@ -85,6 +88,15 @@ verlet<dimension, float_type>::verlet(modules::factory& factory, po::options con
         LOG_ERROR(e.what());
         throw exception("failed to initialize Verlet integrator symbols");
     }
+}
+
+/**
+ * register module runtime accumulators
+ */
+template <int dimension, typename float_type>
+void verlet<dimension, float_type>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
 }
 
 /**

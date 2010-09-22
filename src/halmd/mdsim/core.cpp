@@ -76,19 +76,29 @@ void core<dimension>::select(po::options const& vm)
 template <int dimension>
 core<dimension>::core(modules::factory& factory, po::options const& vm)
   // dependency injection
-  : force(modules::fetch<force_type>(factory, vm))
+  : profiler(modules::fetch<profiler_type>(factory, vm))
+  , force(modules::fetch<force_type>(factory, vm))
   , neighbour(modules::fetch<neighbour_type>(factory, vm))
   , sort(modules::fetch<sort_type>(factory, vm))
   , integrator(modules::fetch<integrator_type>(factory, vm))
   , particle(modules::fetch<particle_type>(factory, vm))
   , position(modules::fetch<position_type>(factory, vm))
   , velocity(modules::fetch<velocity_type>(factory, vm))
-  , profiler(modules::fetch<profiler_type>(factory, vm))
   // initialise attributes
   , step_counter_(0)
 {
-    // register module runtime accumulators
-    profiler->register_map(runtime_);
+    /*@{ FIXME remove pre-Lua hack */
+    register_runtimes(*profiler);
+    /*@}*/
+}
+
+/**
+ * register module runtime accumulators
+ */
+template <int dimension>
+void core<dimension>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
 }
 
 /**

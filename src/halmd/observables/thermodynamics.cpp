@@ -50,8 +50,6 @@ template <int dimension>
 void thermodynamics<dimension>::depends()
 {
     modules::depends<_Self, box_type>::required();
-    modules::depends<_Self, writer_type>::required();
-    modules::depends<_Self, profiler_type>::required();
 }
 
 template <int dimension>
@@ -67,40 +65,56 @@ thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options
   : _Base(factory, vm)
   // dependency injection
   , box(modules::fetch<box_type>(factory, vm))
-  , writer(modules::fetch<writer_type>(factory, vm))
-  , profiler(modules::fetch<profiler_type>(factory, vm))
 {
-    writer->register_observable("TIME", &time_, "simulation time");
-    writer->register_observable("EPOT", &en_pot_, "mean potential energy per particle");
-    writer->register_observable("EKIN", &en_kin_, "mean kinetic energy per particle");
-    writer->register_observable("ETOT", &en_tot_, "mean total energy per particle");
-    writer->register_observable("VCM", &v_cm_, "centre-of-mass velocity");
-    writer->register_observable("PRESS", &pressure_, "virial pressure");
-    writer->register_observable("TEMP", &temp_, "temperature");
+    /*@{ FIXME remove pre-Lua hack */
+    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
+    register_runtimes(*profiler);
+    /*@}*/
+}
 
-    // register module runtime accumulators
-    profiler->register_map(runtime_);
+/**
+ * register module runtime accumulators
+ */
+template <int dimension>
+void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
+}
+
+/**
+ * register observables
+ */
+template <int dimension>
+void thermodynamics<dimension>::register_statevars(writer_type& writer)
+{
+    writer.register_observable("TIME", &time_, "simulation time"); //< FIXME move time to mdsim::core
+    writer.register_observable("EPOT", &en_pot_, "mean potential energy per particle");
+    writer.register_observable("EKIN", &en_kin_, "mean kinetic energy per particle");
+    writer.register_observable("ETOT", &en_tot_, "mean total energy per particle");
+    writer.register_observable("VCM", &v_cm_, "centre-of-mass velocity");
+    writer.register_observable("PRESS", &pressure_, "virial pressure");
+    writer.register_observable("TEMP", &temp_, "temperature");
 }
 
 /**
  * Sample macroscopic state variables
+ *
+ * Compute state variables and take care that expensive functions are
+ * called only once.
  */
 template <int dimension>
 void thermodynamics<dimension>::sample(double time)
 {
-    // compute state variables and take care that
-    // expensive functions are called only once
     scoped_timer<timer> timer_(at_key<sample_>(runtime_));
     en_pot_ = en_pot();
     en_kin_ = en_kin();
     v_cm_ = v_cm();
     en_tot_ = en_pot_ + en_kin_;
     temp_ = 2 * en_kin_ / dimension;
-    density_ = box->density();
+    density_ = box->density(); //< FIXME why is this duplicated in thermodynamics?
     pressure_ = density_ * (temp_ + virial() / dimension);
     time_ = time;
 }
-
 
 // explicit instantiation
 template class thermodynamics<3>;

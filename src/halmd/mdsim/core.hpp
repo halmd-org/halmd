@@ -58,9 +58,11 @@ public:
     typedef utility::profiler profiler_type;
 
     core(modules::factory& factory, po::options const& vm);
+    void register_runtimes(profiler_type& profiler);
     void prepare();
     void mdstep();
 
+    shared_ptr<profiler_type> profiler;
     shared_ptr<force_type> force;
     shared_ptr<neighbour_type> neighbour;
     shared_ptr<sort_type> sort;
@@ -68,7 +70,6 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
-    shared_ptr<profiler_type> profiler;
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( prepare_, "microscopic state preparation" );

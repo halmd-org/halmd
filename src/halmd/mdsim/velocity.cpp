@@ -29,15 +29,6 @@ namespace mdsim
 {
 
 /**
- * Resolve module dependencies
- */
-template <int dimension>
-void velocity<dimension>::depends()
-{
-    modules::depends<_Self, profiler_type>::required();
-}
-
-/**
  * Assemble module options
  */
 template <int dimension>
@@ -49,12 +40,6 @@ void velocity<dimension>::options(po::options_description& desc)
          "initial particle velocities module")
         ;
 }
-
-template <int dimension>
-velocity<dimension>::velocity(modules::factory& factory, po::options const& vm)
-  // dependency injection
-  : profiler(modules::fetch<profiler_type>(factory, vm))
-{}
 
 template class velocity<3>;
 template class velocity<2>;

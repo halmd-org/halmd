@@ -86,8 +86,10 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
   , h_rr_(g_rr_.size())
   , sort_(particle->nbox, particle->dim.threads_per_block())
 {
-    // register module runtime accumulators
-    profiler->register_map(runtime_);
+    /*@{ FIXME remove pre-Lua hack */
+    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
+    register_runtimes(*profiler);
+    /*@}*/
 
     matrix_type r_cut = force->cutoff();
     typename matrix_type::value_type r_cut_max = 0;
@@ -198,6 +200,15 @@ neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::optio
         LOG_ERROR("CUDA: " << e.what());
         throw std::logic_error("failed to allocate cell placeholders in global device memory");
     }
+}
+
+/**
+ * register module runtime accumulators
+ */
+template <int dimension, typename float_type>
+void neighbour<dimension, float_type>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
 }
 
 /**

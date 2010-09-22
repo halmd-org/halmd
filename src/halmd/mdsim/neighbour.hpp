@@ -22,7 +22,6 @@
 
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
-#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -36,14 +35,10 @@ public:
     // module definitions
     typedef neighbour _Self;
     static void options(po::options_description& desc) {}
-    static void depends();
+    static void depends() {}
     static void select(po::options const& vm) {}
 
-    typedef utility::profiler profiler_type;
-
-    shared_ptr<profiler_type> profiler;
-
-    neighbour(modules::factory& factory, po::options const& vm);
+    neighbour(modules::factory& factory, po::options const& vm) {}
     virtual ~neighbour() {}
     virtual void update() = 0;
     virtual bool check() = 0;

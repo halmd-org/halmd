@@ -42,15 +42,15 @@ public:
 
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::profiler_type profiler_type;
+    typedef utility::profiler profiler_type;
 
     using _Base::box;
     using _Base::particle;
 //     using _Base::smooth;
-    using _Base::profiler;
 
     lj(modules::factory& factory, po::options const& vm);
     virtual ~lj() {}
+    void register_runtimes(profiler_type& profiler);
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }
 

@@ -86,8 +86,10 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
   , en_cut_(particle->ntype, particle->ntype)
   , g_ljparam_(epsilon_.data().size())
 {
-    // register module runtime accumulators
-    profiler->register_map(runtime_);
+    /*@{ FIXME remove pre-Lua hack */
+    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
+    register_runtimes(*profiler);
+    /*@}*/
 
     // parse deprecated options
     boost::array<float, 3> epsilon = vm["epsilon"].as<boost::array<float, 3> >();
@@ -147,6 +149,15 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::options const& vm)
     get_lj_kernel<dimension>().neighbour_stride = // cuda::symbol<unsigned int> ;
     get_lj_kernel<dimension>().ljparam = // cuda::texture<float4> ;
 */
+}
+
+/**
+ * register module runtime accumulators
+ */
+template <int dimension, typename float_type>
+void lj<dimension, float_type>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
 }
 
 /**

@@ -53,12 +53,12 @@ public:
 
     sampler(modules::factory& factory, po::options const& vm);
     void sample(bool force=false);
+    void register_runtimes(profiler_type& profiler);
 
     shared_ptr<core_type> core;
     std::vector<shared_ptr<observable_type> > observables;
     shared_ptr<statevars_writer_type> statevars_writer;
     shared_ptr<trajectory_writer_type> trajectory_writer;
-    shared_ptr<profiler_type> profiler;
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( msv_output_, "output of macroscopic state variables" );

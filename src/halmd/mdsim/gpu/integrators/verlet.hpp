@@ -26,6 +26,7 @@
 #include <halmd/mdsim/gpu/integrator.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/utility/options.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -47,18 +48,18 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::particle_type particle_type;
     typedef typename _Base::box_type box_type;
-    typedef typename _Base::profiler_type profiler_type;
+    typedef utility::profiler profiler_type;
 
     using _Base::particle;
     using _Base::box;
     using _Base::device;
-    using _Base::profiler;
 
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper;
 
     verlet(modules::factory& factory, po::options const& vm);
     virtual ~verlet() {}
+    void register_runtimes(profiler_type& profiler);
     void integrate();
     void finalize();
 

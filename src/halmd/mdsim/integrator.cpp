@@ -29,15 +29,6 @@ namespace mdsim
 {
 
 /**
- * Resolve module dependencies
- */
-template <int dimension>
-void integrator<dimension>::depends()
-{
-    modules::depends<_Self, profiler_type>::required();
-}
-
-/**
  * Assemble module options
  */
 template <int dimension>
@@ -58,10 +49,8 @@ void integrator<dimension>::options(po::options_description& desc)
 
 template <int dimension>
 integrator<dimension>::integrator(modules::factory& factory, po::options const& vm)
-  // dependency injection
-  : profiler(modules::fetch<profiler_type>(factory, vm))
   // set parameters
-  , timestep_(vm["timestep"].as<double>())
+  : timestep_(vm["timestep"].as<double>())
 {
     LOG("integration timestep: " << timestep_);
 }
