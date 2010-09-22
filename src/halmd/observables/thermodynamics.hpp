@@ -28,6 +28,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
+#include <halmd/observables/observable.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -55,11 +56,12 @@ namespace observables
  */
 
 template <int dimension>
-class thermodynamics
+class thermodynamics : public observable<dimension>
 {
 public:
     // module definitions
     typedef thermodynamics _Self;
+    typedef observable<dimension> _Base;
     static void options(po::options_description& desc);
     static void depends();
     static void select(po::options const& vm);

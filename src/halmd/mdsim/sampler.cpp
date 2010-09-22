@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/foreach.hpp>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/sampler.hpp>
@@ -49,7 +51,7 @@ template <int dimension>
 void sampler<dimension>::depends()
 {
     modules::depends<_Self, core_type>::required();
-    modules::depends<_Self, thermodynamics_type>::optional();
+    modules::depends<_Self, observable_type>::optional();
     modules::depends<_Self, trajectory_writer_type>::required();
 }
 
@@ -60,7 +62,7 @@ template <int dimension>
 sampler<dimension>::sampler(modules::factory& factory, po::options const& vm)
   // dependency injection
   : core(modules::fetch<core_type>(factory, vm))
-  , thermodynamics(modules::fetch<thermodynamics_type>(factory, vm))
+  , observables(modules::fetch<observable_type>(factory, vm))
   , trajectory_writer(modules::fetch<trajectory_writer_type>(factory, vm))
   // store options
   , stat_vars_interval_(vm["sampling-stat-vars"].as<unsigned>())
@@ -77,9 +79,11 @@ void sampler<dimension>::sample(bool force)
     uint64_t step = core->step_counter();
     bool is_sampling_step = false;
 
-    if ((!(step % stat_vars_interval_) || force) && thermodynamics) {
-        thermodynamics->sample(core->time());
-        is_sampling_step = true;
+    if (!(step % stat_vars_interval_) || force) {
+        BOOST_FOREACH (shared_ptr<observable_type> const& ptr, observables) {
+            ptr->sample(core->time());
+            is_sampling_step = true;
+        }
     }
 
     // allow value 0 for trajectory_interval_

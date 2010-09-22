@@ -24,7 +24,7 @@
 
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/observables/thermodynamics.hpp>
+#include <halmd/observables/observable.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
@@ -44,14 +44,14 @@ public:
     static void select(po::options const& vm) {};
 
     typedef mdsim::core<dimension> core_type;
-    typedef observables::thermodynamics<dimension> thermodynamics_type;
+    typedef observables::observable<dimension> observable_type;
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
 
     sampler(modules::factory& factory, po::options const& vm);
     void sample(bool force=false);
 
     shared_ptr<core_type> core;
-    shared_ptr<thermodynamics_type> thermodynamics;
+    std::vector<shared_ptr<observable_type> > observables;
     shared_ptr<trajectory_writer_type> trajectory_writer;
 
 private:

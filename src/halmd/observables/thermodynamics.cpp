@@ -64,8 +64,9 @@ void thermodynamics<dimension>::select(po::options const& vm)
 
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  : box(modules::fetch<box_type>(factory, vm))
+  , box(modules::fetch<box_type>(factory, vm))
   , writer(modules::fetch<writer_type>(factory, vm))
   , profiler(modules::fetch<profiler_type>(factory, vm))
 {
