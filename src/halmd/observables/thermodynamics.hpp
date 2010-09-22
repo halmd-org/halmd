@@ -35,15 +35,6 @@
 
 namespace halmd
 {
-namespace io { namespace statevars
-{
-
-// forward declaration, required by halmd/io/statevars/writer.hpp
-template <int dimension>
-class writer;
-
-}} // namespace io::statevars
-
 namespace observables
 {
 

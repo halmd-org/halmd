@@ -106,32 +106,36 @@ void hdf5<dimension>::register_observable(
     writer_.push_back(make_dataset_writer(dataset, value_ptr));
 }
 
+/**
+ * register function from base class interface,
+ * calls appropriate template of register_observable
+ */
 template <int dimension>
 void hdf5<dimension>::register_observable(
-    string const& tag, double const* value_ptr, string const& desc)
+    string const& tag
+  , void const* value_ptr
+  , type_info const& value_type
+  , string const& desc
+)
 {
-    register_observable<>(tag, value_ptr, desc);
-}
+    // the reinterpret_cast is safe since we know the type of value_ptr
+#define SELECT_REGISTER_OBSERVABLE(TYPE)               \
+    if (value_type == typeid(TYPE)) {                  \
+        register_observable<>(                         \
+            tag                                        \
+          , reinterpret_cast<TYPE const*>(value_ptr)   \
+          , desc                                       \
+        );                                             \
+        return;                                        \
+    }
 
-template <int dimension>
-void hdf5<dimension>::register_observable(
-    string const& tag, vector_type const* value_ptr, string const& desc)
-{
-    register_observable<>(tag, value_ptr, desc);
-}
+    SELECT_REGISTER_OBSERVABLE(double);
+    SELECT_REGISTER_OBSERVABLE(vector_type);
+    SELECT_REGISTER_OBSERVABLE(vector<double>);
+    SELECT_REGISTER_OBSERVABLE(vector<vector_type>);
+#undef SELECT_REGISTER_OBSERVABLE
 
-template <int dimension>
-void hdf5<dimension>::register_observable(
-    string const& tag, std::vector<double> const* value_ptr, string const& desc)
-{
-    register_observable<>(tag, value_ptr, desc);
-}
-
-template <int dimension>
-void hdf5<dimension>::register_observable(
-    string const& tag, std::vector<vector_type> const* value_ptr, string const& desc)
-{
-    register_observable<>(tag, value_ptr, desc);
+    throw runtime_error(string("HDF5 writer: unknown type of dataset ") + tag);
 }
 
 /**

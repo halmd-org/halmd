@@ -20,22 +20,13 @@
 #ifndef HALMD_IO_STATEVARS_WRITER_HPP
 #define HALMD_IO_STATEVARS_WRITER_HPP
 
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
-namespace observables
-{
-
-// forward declaration
-template <int dimension>
-class thermodynamics;
-
-} // namespace mdsim
-
 namespace io { namespace statevars
 {
 
@@ -48,7 +39,7 @@ class writer
 public:
     // module definitions
     typedef writer _Self;
-    typedef typename observables::thermodynamics<dimension>::vector_type vector_type;
+    typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
 
     static void options(po::options_description& desc) {}
     static void depends() {}
@@ -58,35 +49,29 @@ public:
     virtual ~writer() {}
     virtual void write() = 0;
 
-protected:
-    friend class observables::thermodynamics<dimension>;
-
     /**
-     * register an observable for output in HDF5 file
-     * as dataset named by 'tag' with description 'desc',
-     * data are read from *value_ptr at each invocation of write()
+     * register an observable for output as dataset named by 'tag'
+     * with description 'desc'. Data are read from *value_ptr at
+     * each invocation of write().
+     *
+     * convenience template for the protected virtual function register_observable() */
+    template <typename T>
+    void register_observable(std::string const& tag, T const* value_ptr, std::string const& desc)
+    {
+        register_observable(tag, value_ptr, typeid(T), desc);
+    }
+
+protected:
+    /**
+     * register an observable for output as dataset named by 'tag'
+     * with description 'desc'. Data are read from *value_ptr at
+     * each invocation of write(). The value type is passed
+     * separately to this pure virtual function
      */
     virtual void register_observable(
         std::string const& tag
-      , double const* value_ptr
-      , std::string const& desc
-    ) = 0;
-
-    virtual void register_observable(
-        std::string const& tag
-      , vector_type const* value_ptr
-      , std::string const& desc
-    ) = 0;
-
-    virtual void register_observable(
-        std::string const& tag
-      , std::vector<double> const* value_ptr
-      , std::string const& desc
-    ) = 0;
-
-    virtual void register_observable(
-        std::string const& tag
-      , std::vector<vector_type> const* value_ptr
+      , void const* value_ptr
+      , std::type_info const& value_type
       , std::string const& desc
     ) = 0;
 };
