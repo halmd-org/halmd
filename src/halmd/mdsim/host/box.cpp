@@ -50,8 +50,6 @@ box<dimension>::box(modules::factory& factory, po::options const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
-  // initialize parameters
-  , length_half_(.5 * length_)
 {}
 
 // explicit instantiation
