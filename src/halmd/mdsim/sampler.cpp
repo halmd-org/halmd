@@ -22,6 +22,10 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/sampler.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
+
+using namespace boost::fusion;
 
 namespace halmd
 {
@@ -35,7 +39,7 @@ template <int dimension>
 void sampler<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("sampling-stat-vars", po::value<unsigned>()->default_value(25),
+        ("sampling-state-vars", po::value<unsigned>()->default_value(25),
          "sample macroscopic state variables every given number of integration steps")
         ;
     desc.add_options()
@@ -52,7 +56,9 @@ void sampler<dimension>::depends()
 {
     modules::depends<_Self, core_type>::required();
     modules::depends<_Self, observable_type>::optional();
+    modules::depends<_Self, statevars_writer_type>::optional();
     modules::depends<_Self, trajectory_writer_type>::required();
+    modules::depends<_Self, profiler_type>::required();
 }
 
 /**
@@ -63,11 +69,15 @@ sampler<dimension>::sampler(modules::factory& factory, po::options const& vm)
   // dependency injection
   : core(modules::fetch<core_type>(factory, vm))
   , observables(modules::fetch<observable_type>(factory, vm))
+  , statevars_writer(modules::fetch<statevars_writer_type>(factory, vm))
   , trajectory_writer(modules::fetch<trajectory_writer_type>(factory, vm))
+  , profiler(modules::fetch<profiler_type>(factory, vm))
   // store options
-  , stat_vars_interval_(vm["sampling-stat-vars"].as<unsigned>())
+  , statevars_interval_(vm["sampling-state-vars"].as<unsigned>())
   , trajectory_interval_(vm["sampling-trajectory"].as<unsigned>())
 {
+    // register module runtime accumulators
+    profiler->register_map(runtime_);
 }
 
 /**
@@ -79,10 +89,14 @@ void sampler<dimension>::sample(bool force)
     uint64_t step = core->step_counter();
     bool is_sampling_step = false;
 
-    if (!(step % stat_vars_interval_) || force) {
+    if (!(step % statevars_interval_) || force) {
         BOOST_FOREACH (shared_ptr<observable_type> const& ptr, observables) {
             ptr->sample(core->time());
             is_sampling_step = true;
+        }
+        if (statevars_writer) {
+            scoped_timer<timer> timer_(at_key<msv_output_>(runtime_));
+            statevars_writer->write();
         }
     }
 

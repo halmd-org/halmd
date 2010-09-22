@@ -94,8 +94,7 @@ public:
     double en_tot() const { return en_pot() + en_kin(); }
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( compute_, "computation of macroscopic state variables" );
-    HALMD_PROFILE_TAG( write_, "output of macroscopic state variables" );
+    HALMD_PROFILE_TAG( sample_, "computation of macroscopic state variables" );
 
 private:
     // sample() passes values to HDF5 writer via a fixed location in memory
@@ -110,8 +109,7 @@ private:
 
     // list of profiling timers
     boost::fusion::map<
-        boost::fusion::pair<compute_, accumulator<double> >
-      , boost::fusion::pair<write_, accumulator<double> >
+        boost::fusion::pair<sample_, accumulator<double> >
     > runtime_;
 };
 

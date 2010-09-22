@@ -22,11 +22,13 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/io/statevars/writer.hpp>
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/observables/observable.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -45,20 +47,32 @@ public:
 
     typedef mdsim::core<dimension> core_type;
     typedef observables::observable<dimension> observable_type;
+    typedef io::statevars::writer<dimension> statevars_writer_type;
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
+    typedef utility::profiler profiler_type;
 
     sampler(modules::factory& factory, po::options const& vm);
     void sample(bool force=false);
 
     shared_ptr<core_type> core;
     std::vector<shared_ptr<observable_type> > observables;
+    shared_ptr<statevars_writer_type> statevars_writer;
     shared_ptr<trajectory_writer_type> trajectory_writer;
+    shared_ptr<profiler_type> profiler;
+
+    // module runtime accumulator descriptions
+    HALMD_PROFILE_TAG( msv_output_, "output of macroscopic state variables" );
 
 private:
-    // value from option --sampling-stat-vars
-    unsigned stat_vars_interval_;
+    // value from option --sampling-state-vars
+    unsigned statevars_interval_;
     // value from option --sampling-trajectory
     unsigned trajectory_interval_;
+
+    // list of profiling timers
+    boost::fusion::map<
+        boost::fusion::pair<msv_output_, accumulator<double> >
+    > runtime_;
 };
 
 } // namespace mdsim
