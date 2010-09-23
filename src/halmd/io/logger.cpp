@@ -26,6 +26,7 @@
 #include <boost/log/utility/empty_deleter.hpp>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace boost::log;
@@ -128,6 +129,34 @@ logging::~logging()
     core::get()->remove_sink(console_);
     core::get()->remove_sink(file_);
 }
+
+template <enum logging::severity_level Level>
+static void log_wrapper(char const* message)
+{
+    BOOST_LOG_SEV(logging::logger, Level) << message;
+}
+
+static void register_lua(lua_State* L)
+{
+    using namespace luabind;
+    module(L)
+    [
+        namespace_("log")
+        [
+            def("fatal", &log_wrapper<logging::fatal>)
+          , def("error", &log_wrapper<logging::error>)
+          , def("warning", &log_wrapper<logging::warning>)
+          , def("info", &log_wrapper<logging::info>)
+          , def("debug", &log_wrapper<logging::debug>)
+          , def("trace", &log_wrapper<logging::trace>)
+        ]
+    ];
+}
+
+static lua_registry<>::iterator dummy = (
+    lua_registry<>::get()->push_back( &register_lua )
+  , lua_registry<>::get()->end()
+);
 
 } // namespace io
 
