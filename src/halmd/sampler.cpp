@@ -158,7 +158,7 @@ void sampler<dimension>::sample(bool force)
     }
 
     // allow value 0 for trajectory_interval_
-    if ((trajectory_interval_ && !(step % trajectory_interval_) || force)
+    if (((trajectory_interval_ && !(step % trajectory_interval_)) || force)
           && trajectory_writer) {
         trajectory_writer->append();
         is_sampling_step = true;
