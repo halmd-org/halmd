@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -40,6 +40,8 @@ struct square_;
 struct sqrt_;
 // FIXME template <int index> struct at_;
 struct at_0;
+template <int dimension>
+struct trace;
 struct sum_;
 struct complex_sum_;
 struct quaternion_sum_;
@@ -74,6 +76,21 @@ __device__ typename enable_if<is_same<transform_, at_0>, output_type>::type
 transform(input_type v)
 {
     return v[0];
+}
+
+/** return trace of tensor, i.e. the sum of the first few elements */
+template <typename transform_, typename input_type, typename output_type>
+__device__ typename enable_if<is_same<transform_, trace<2> >, output_type>::type
+transform(input_type v)
+{
+    return v[0] + v[1];
+}
+
+template <typename transform_, typename input_type, typename output_type>
+__device__ typename enable_if<is_same<transform_, trace<3> >, output_type>::type
+transform(input_type v)
+{
+    return v[0] + v[1] + v[2];
 }
 
 /**
