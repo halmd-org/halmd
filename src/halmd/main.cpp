@@ -137,6 +137,8 @@ int main(int argc, char **argv)
 
         // run MD simulation
         shared_ptr<halmd::main> script(modules::fetch<halmd::main>(factory, vm));
+        script->load_wrapper();
+        script->load_library();
         script->run();
 #ifdef NDEBUG
     }

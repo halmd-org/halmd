@@ -24,8 +24,9 @@
 #include <halmd/main.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/sampler.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/utility/lua/lua_include.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -51,6 +52,8 @@ public:
 
     script(modules::factory& factory, po::options const& vm);
     virtual ~script() {}
+    virtual void load_wrapper();
+    virtual void load_library();
     virtual void run();
     uint64_t steps() { return steps_; }
     double time() { return time_; }
@@ -64,6 +67,8 @@ protected:
     uint64_t steps_;
     /** integration time in MD units */
     double time_;
+    /** Lua state */
+    boost::shared_ptr<lua_State> L_;
 };
 
 } // namespace halmd

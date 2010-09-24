@@ -19,9 +19,12 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
+#include <boost/bind/apply.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
+#include <halmd/utility/lua.hpp>
+#include <halmd/version.h>
 
 using namespace boost;
 using namespace std;
@@ -63,7 +66,12 @@ script<dimension>::script(modules::factory& factory, po::options const& vm)
   , core(modules::fetch<core_type>(factory, vm))
   , sampler(modules::fetch<sampler_type>(factory, vm))
   , profile_writers(modules::fetch<profile_writer_type>(factory, vm))
+  , L_(luaL_newstate(), lua_close) //< create Lua state
 {
+    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
+
+    luaL_openlibs(L); //< load Lua standard libraries
+
     // parse options
     if (vm["steps"].defaulted() && !vm["time"].empty()) {
         time_ = vm["time"].as<double>();
@@ -79,11 +87,72 @@ script<dimension>::script(modules::factory& factory, po::options const& vm)
 }
 
 /**
+ * Load HALMD Lua wrapper
+ *
+ * Register C++ classes with Lua.
+ */
+template <int dimension>
+void script<dimension>::load_wrapper()
+{
+    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
+
+    using namespace luabind;
+
+    open(L); //< setup global structures and Lua class support
+
+    for_each(
+        lua_registry<>::get()->begin()
+      , lua_registry<>::get()->end()
+      , bind(apply<void>(), _1, L)
+    );
+}
+
+/**
+ * Load HALMD Lua library
+ */
+template <int dimension>
+void script<dimension>::load_library()
+{
+    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
+
+    using namespace luabind;
+
+    string path(object_cast<string>(globals(L)["package"]["path"]));
+    path.append(HALMD_BINARY_DIR "/lib/?/init.lua" ";");
+    path.append(HALMD_SOURCE_DIR "/lib/?/init.lua" ";");
+    path.append(HALMD_INSTALL_PREFIX "/share/?/init.lua" ";");
+    path.append(HALMD_INSTALL_PREFIX "/lib/?/init.lua" ";");
+    globals(L)["package"]["path"] = path;
+
+    int status = luaL_dostring(L, "require('halmd')");
+
+    if (status != 0) {
+        LOG_ERROR("[Lua] " << lua_tostring(L, -1));
+        lua_pop(L, 1); //< remove error message
+        throw std::runtime_error("Lua error");
+    }
+}
+
+/**
  * Run simulation
  */
 template <int dimension>
 void script<dimension>::run()
 {
+    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
+
+    LOG("starting simulation");
+
+    int status = luaL_dostring(L, "halmd.lib.run()");
+
+    if (status != 0) {
+        LOG_ERROR("[Lua] " << lua_tostring(L, -1));
+        lua_pop(L, 1); //< remove error message
+        throw std::runtime_error("Lua error");
+    }
+
+    LOG("finished simulation");
+
     core->prepare();
     sampler->sample(true);
 
