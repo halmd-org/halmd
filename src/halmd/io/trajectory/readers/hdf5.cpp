@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <H5Cpp.h>
 #include <H5xx.hpp>
 
 #include <halmd/io/logger.hpp>

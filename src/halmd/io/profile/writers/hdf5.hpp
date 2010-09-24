@@ -20,8 +20,7 @@
 #ifndef HALMD_IO_PROFILE_HDF5_HPP
 #define HALMD_IO_PROFILE_HDF5_HPP
 
-#include <H5Cpp.h>
-
+#include <H5xx.hpp>
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
