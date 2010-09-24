@@ -110,12 +110,9 @@ void lattice<dimension, float_type>::set()
         for (size_t i = 0; i < dimension; ++i) {
             t[i] = L[i] / (n[i] + 1);
         }
-        a = *max_element(t.begin(), t.end());
-        for (size_t i = 0; i < dimension; ++i) {
-            if (t[i] == a) {
-                n[i]++;
-            }
-        }
+        typename vector_type::iterator it = max_element(t.begin(), t.end());
+        a = *it;
+        ++n[it - t.begin()];
     }
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type& r = particle->r[i] = a;
