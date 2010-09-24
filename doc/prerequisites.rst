@@ -147,7 +147,7 @@ Get the latest `Luabind source package`_, currently `Luabind 0.9`_.
 .. note::
 
    Luabind is based on the Boost C++ libraries and uses boost-jam as its
-   build tool. After compiling Boost following the instructions above, the
+   build tool. After bootstrapping Boost following the instructions above, the
    bjam executable is found in the top-level source directory, for example
    ``/tmp/boost_1_44_0/bjam``. This directory also has to be passed to bjam
    during Luabind build using the environment variable ``BOOST_ROOT``.
