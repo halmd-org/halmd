@@ -35,7 +35,7 @@ using namespace boost::assign;
 using namespace boost::lambda;
 using namespace std;
 
-#define OUTPUT_FILENAME (to_lower_copy(string(PROGRAM_NAME)) + "_%Y%m%d_%H%M%S")
+#define OUTPUT_FILENAME (PROGRAM_NAME "_%Y%m%d_%H%M%S")
 
 namespace halmd
 {
@@ -121,7 +121,7 @@ void parse_options(int argc, char** argv, options& vm, unparsed_options& unparse
     }
 
     if (vm.count("version")) {
-        cout << PROGRAM_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION "\n"
+        cout << PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION "\n"
             "\n" PROGRAM_COPYRIGHT "\n" "This is free software. "
             "You may redistribute copies of it under the terms of\n"
             "the GNU General Public License "

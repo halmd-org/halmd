@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     shared_ptr<logging> logger(new logging(vm));
 #endif
 
-    LOG(PROGRAM_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
+    LOG(PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
     LOG("variant: " << PROGRAM_VARIANT);
 #ifndef NDEBUG
     LOG_WARNING("built with enabled debugging");
@@ -145,24 +145,24 @@ int main(int argc, char **argv)
 #ifdef WITH_CUDA
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        LOG_WARNING(PROGRAM_NAME " aborted");
+        LOG_WARNING(PROJECT_NAME " aborted");
         return halmd::HALMD_EXIT_CUDA_ERROR;
     }
 #ifndef __DEVICE_EMULATION__
     catch (cuda::driver::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        LOG_WARNING(PROGRAM_NAME " aborted");
+        LOG_WARNING(PROJECT_NAME " aborted");
         return halmd::HALMD_EXIT_CUDA_ERROR;
     }
 #endif /* ! __DEVICE_EMULATION__ */
 #endif /* WITH_CUDA */
     catch (std::exception const& e) {
         LOG_ERROR(e.what());
-        LOG_WARNING(PROGRAM_NAME " aborted");
+        LOG_WARNING(PROJECT_NAME " aborted");
         return halmd::HALMD_EXIT_EXCEPTION;
     }
 #endif /* NDEBUG */
 
-    LOG(PROGRAM_NAME " exit");
+    LOG(PROJECT_NAME " exit");
     return status_;
 }
