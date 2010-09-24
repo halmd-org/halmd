@@ -28,6 +28,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -180,10 +181,6 @@ string device::cuda_driver_version()
     return lexical_cast<string>(major) + "." + lexical_cast<string>(minor);
 }
 
-#endif /* CUDA_VERSION >= 2020 */
-
-#if CUDART_VERSION >= 2020
-
 /**
  * Query CUDA runtime version
  */
@@ -195,6 +192,35 @@ string device::cuda_runtime_version()
 }
 
 #endif /* CUDART_VERSION >= 2020 */
+
+static void register_lua(lua_State* L)
+{
+    using namespace luabind;
+    using luabind::module; //< FIXME namespace conflicts
+    module(L, "halmd")
+    [
+        namespace_("utility")
+        [
+            namespace_("gpu")
+            [
+                class_<device, shared_ptr<device> >("device")
+                    .property("threads", &device::threads)
+                    .scope
+                    [
+                        def("options", &device::options)
+                      , def("nvidia_driver_version", &device::nvidia_driver_version)
+                      , def("cuda_driver_version", &device::cuda_driver_version)
+                      , def("cuda_runtime_version", &device::cuda_runtime_version)
+                    ]
+            ]
+        ]
+    ];
+}
+
+static lua_registry<>::iterator dummy = (
+    lua_registry<gpu_>::get()->push_back( &register_lua )
+  , lua_registry<>::get()->end()
+);
 
 }} // namespace utility::gpu
 

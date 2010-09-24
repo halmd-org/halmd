@@ -56,15 +56,13 @@ public:
     virtual ~device();
     unsigned int threads() { return threads_; }
 
-protected:
     static std::string nvidia_driver_version();
 #if CUDA_VERSION >= 2020
     static std::string cuda_driver_version();
-#endif
-#if CUDART_VERSION >= 2020
     static std::string cuda_runtime_version();
 #endif
 
+private:
     /** number of CUDA threads per block */
     unsigned int threads_;
     /** selected CUDA device context */
