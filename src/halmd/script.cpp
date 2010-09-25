@@ -118,9 +118,13 @@ void script<dimension>::load_library()
     using namespace luabind;
 
     string path;
+    path.append( HALMD_BINARY_DIR "/lib/?.lua" ";" );
     path.append( HALMD_BINARY_DIR "/lib/?/init.lua" ";" );
+    path.append( HALMD_SOURCE_DIR "/lib/?.lua" ";" );
     path.append( HALMD_SOURCE_DIR "/lib/?/init.lua" ";" );
+    path.append( HALMD_INSTALL_PREFIX "/share/?.lua" ";" );
     path.append( HALMD_INSTALL_PREFIX "/share/?/init.lua" ";" );
+    path.append( HALMD_INSTALL_PREFIX "/lib/?.lua" ";" );
     path.append( HALMD_INSTALL_PREFIX "/lib/?/init.lua" ";" );
     path.append( object_cast<string>(globals(L)["package"]["path"]) );
     globals(L)["package"]["path"] = path;
