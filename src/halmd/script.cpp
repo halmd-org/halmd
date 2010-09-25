@@ -117,11 +117,12 @@ void script<dimension>::load_library()
 
     using namespace luabind;
 
-    string path(object_cast<string>(globals(L)["package"]["path"]));
-    path.append(HALMD_BINARY_DIR "/lib/?/init.lua" ";");
-    path.append(HALMD_SOURCE_DIR "/lib/?/init.lua" ";");
-    path.append(HALMD_INSTALL_PREFIX "/share/?/init.lua" ";");
-    path.append(HALMD_INSTALL_PREFIX "/lib/?/init.lua" ";");
+    string path;
+    path.append( HALMD_BINARY_DIR "/lib/?/init.lua" ";" );
+    path.append( HALMD_SOURCE_DIR "/lib/?/init.lua" ";" );
+    path.append( HALMD_INSTALL_PREFIX "/share/?/init.lua" ";" );
+    path.append( HALMD_INSTALL_PREFIX "/lib/?/init.lua" ";" );
+    path.append( object_cast<string>(globals(L)["package"]["path"]) );
     globals(L)["package"]["path"] = path;
 
     int status = luaL_dostring(L, "require('halmd')");
