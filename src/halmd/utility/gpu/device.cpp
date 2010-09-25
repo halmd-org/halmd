@@ -197,7 +197,7 @@ static luabind::scope register_lua()
 {
     using namespace luabind;
     return
-        namespace_("halmd")
+        namespace_("halmd_wrapper")
         [
             namespace_("utility")
             [

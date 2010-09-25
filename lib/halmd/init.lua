@@ -21,10 +21,11 @@
 -- HALMD Lua library
 --
 
-halmd = halmd or {}
+-- grab environment
+local log = log
 
-halmd.lib = {}
+module("halmd")
 
-function halmd.lib.run()
+function run()
     log.info("********* Hello, World! *********")
 end

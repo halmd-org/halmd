@@ -148,7 +148,7 @@ void script<dimension>::run()
 
     LOG("starting simulation");
 
-    int status = luaL_dostring(L, "halmd.lib.run()");
+    int status = luaL_dostring(L, "halmd.run()");
 
     if (status != 0) {
         LOG_ERROR("[Lua] " << lua_tostring(L, -1));
