@@ -193,33 +193,33 @@ string device::cuda_runtime_version()
 
 #endif /* CUDART_VERSION >= 2020 */
 
-static void register_lua(lua_State* L)
+static luabind::scope register_lua()
 {
     using namespace luabind;
-    using luabind::module; //< FIXME namespace conflicts
-    module(L, "halmd")
-    [
-        namespace_("utility")
+    return
+        namespace_("halmd")
         [
-            namespace_("gpu")
+            namespace_("utility")
             [
-                class_<device, shared_ptr<device> >("device")
-                    .property("threads", &device::threads)
-                    .scope
-                    [
-                        def("options", &device::options)
-                      , def("nvidia_driver_version", &device::nvidia_driver_version)
-                      , def("cuda_driver_version", &device::cuda_driver_version)
-                      , def("cuda_runtime_version", &device::cuda_runtime_version)
-                    ]
+                namespace_("gpu")
+                [
+                    class_<device, shared_ptr<device> >("device")
+                        .property("threads", &device::threads)
+                        .scope
+                        [
+                            def("options", &device::options)
+                          , def("nvidia_driver_version", &device::nvidia_driver_version)
+                          , def("cuda_driver_version", &device::cuda_driver_version)
+                          , def("cuda_runtime_version", &device::cuda_runtime_version)
+                        ]
+                ]
             ]
-        ]
-    ];
+        ];
 }
 
-static lua_registry<>::iterator dummy = (
-    lua_registry<gpu_>::get()->push_back( &register_lua )
-  , lua_registry<>::get()->end()
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua() )
+  , lua_registry::get()->end()
 );
 
 }} // namespace utility::gpu

@@ -19,7 +19,6 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <boost/bind/apply.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
@@ -97,13 +96,14 @@ void script<dimension>::load_wrapper()
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
     using namespace luabind;
+    using luabind::module; //< FIXME namespace conflicts
 
     open(L); //< setup global structures and Lua class support
 
     for_each(
-        lua_registry<>::get()->begin()
-      , lua_registry<>::get()->end()
-      , bind(apply<void>(), _1, L)
+        lua_registry::get()->begin()
+      , lua_registry::get()->end()
+      , bind(&module_::operator[], module(L), _1)
     );
 }
 

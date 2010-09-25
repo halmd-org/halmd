@@ -136,11 +136,10 @@ static void log_wrapper(char const* message)
     BOOST_LOG_SEV(logging::logger, Level) << message;
 }
 
-static void register_lua(lua_State* L)
+static luabind::scope register_lua()
 {
     using namespace luabind;
-    module(L)
-    [
+    return
         namespace_("log")
         [
             def("fatal", &log_wrapper<logging::fatal>)
@@ -149,13 +148,12 @@ static void register_lua(lua_State* L)
           , def("info", &log_wrapper<logging::info>)
           , def("debug", &log_wrapper<logging::debug>)
           , def("trace", &log_wrapper<logging::trace>)
-        ]
-    ];
+        ];
 }
 
-static lua_registry<>::iterator dummy = (
-    lua_registry<>::get()->push_back( &register_lua )
-  , lua_registry<>::get()->end()
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua() )
+  , lua_registry::get()->end()
 );
 
 } // namespace io

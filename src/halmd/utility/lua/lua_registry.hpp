@@ -20,10 +20,6 @@
 #ifndef HALMD_UTILITY_LUA_LUA_REGISTRY_HPP
 #define HALMD_UTILITY_LUA_LUA_REGISTRY_HPP
 
-#include <boost/mpl/int.hpp>
-#include <boost/parameter.hpp>
-#include <boost/type_traits/is_base_and_derived.hpp>
-#include <boost/type_traits/is_same.hpp>
 #include <list>
 
 #include <halmd/utility/lua/lua_include.hpp>
@@ -31,68 +27,24 @@
 namespace halmd
 {
 
-namespace detail
-{
-
-namespace tag { struct dimension; } // keyword tag type
-namespace tag { struct backend; } // keyword tag type
-
-struct backend_base {};
-
-template <typename T>
-struct is_backend
-  : boost::is_base_and_derived<backend_base, T> {};
-
-template <typename T>
-struct is_dimension
-  : boost::is_same<boost::mpl::int_<T::value>, T> {};
-
-} // namespace detail
-
-template <int Dimension>
-struct dimension_
-  : boost::parameter::template_keyword<
-        detail::tag::dimension, boost::mpl::int_<Dimension> > {};
-
-template <typename Backend>
-struct backend_
-  : boost::parameter::template_keyword<
-        detail::tag::backend, Backend> {};
-
-struct gpu_ : detail::backend_base {};
-struct host_ : detail::backend_base {};
-
-namespace detail
-{
-
-typedef boost::parameter::parameters<
-    boost::parameter::optional<
-        boost::parameter::deduced<detail::tag::backend>
-      , detail::is_backend<boost::mpl::_>
-    >
-  , boost::parameter::optional<
-        detail::tag::dimension
-      , detail::is_dimension<boost::mpl::_>
-    >
-> registry_signature;
-
-struct lua_registry_impl_base
+/**
+ * This class stores a static list of C++ wrapper registration functions.
+ *
+ * To export C++ classes or functions to Lua, we have to register them
+ * using the Luabind C++ wrapper API. The wrappers are implemented as free
+ * functions, which are pushed into this registry at program startup using
+ * static initialization. The registry is then iterated over to initialize
+ * the Lua state.
+ */
+struct lua_registry
 {
     /** wrapper function type */
-    typedef void (*value_type)(lua_State*);
+    typedef luabind::scope value_type;
     /** registry iterator */
     typedef std::list<value_type>::iterator iterator;
     /** registry const iterator */
     typedef std::list<value_type>::const_iterator const_iterator;
-};
 
-template <
-    typename Dimension
-  , typename Backend
->
-struct lua_registry_impl
-  : lua_registry_impl_base
-{
     /**
      * Returns a pointer to the singleton registry.
      *
@@ -105,46 +57,6 @@ struct lua_registry_impl
     {
         static std::list<value_type> list;
         return &list;
-    }
-};
-
-} // namespace detail
-
-/**
- * This class stores a static list of C++ wrapper registration functions.
- *
- * To export C++ classes or functions to Lua, we have to register them
- * using the Luabind C++ wrapper API. The wrappers are implemented as free
- * functions, which are pushed into this registry at program startup using
- * static initialization. The registry is then iterated over to initialize
- * the Lua state.
- */
-template <
-    typename A0 = boost::parameter::void_
-  , typename A1 = boost::parameter::void_
->
-class lua_registry
-  : public detail::lua_registry_impl_base
-{
-private:
-    // Create ArgumentPack
-    typedef typename
-        detail::registry_signature::bind<A0, A1>::type args;
-
-    // Extract first logical parameter.
-    typedef typename boost::parameter::binding<
-      args, detail::tag::dimension, void>::type dimension;
-
-    typedef typename boost::parameter::binding<
-      args, detail::tag::backend, void>::type backend;
-
-public:
-    /**
-     * Returns a pointer to the singleton registry.
-     */
-    static std::list<value_type>* get()
-    {
-        return detail::lua_registry_impl<dimension, backend>::get();
     }
 };
 
