@@ -20,6 +20,8 @@
 #ifndef HALMD_THERMOSTAT_HPP
 #define HALMD_THERMOSTAT_HPP
 
+#error scripts::thermostat is deprecated
+
 #include <halmd/script.hpp>
 #include <halmd/utility/options.hpp>
 #include <halmd/utility/module.hpp>
