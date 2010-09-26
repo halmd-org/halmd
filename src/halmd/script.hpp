@@ -23,7 +23,7 @@
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/main.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/sampler.hpp>
+#include <halmd/sampler.hpp>
 #include <halmd/utility/lua/lua_include.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -47,7 +47,7 @@ public:
     static void select(po::options const& vm) {}
 
     typedef mdsim::core<dimension> core_type;
-    typedef mdsim::sampler<dimension> sampler_type;
+    typedef halmd::sampler<dimension> sampler_type;
     typedef io::profile::writer profile_writer_type;
 
     script(modules::factory& factory, po::options const& vm);

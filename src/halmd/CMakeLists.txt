@@ -139,6 +139,7 @@ set(HALMD_COMMON_LIBRARIES
 if(NOT HALMD_BACKEND_EXECUTABLES)
   add_executable(halmd
     main.cpp
+    sampler.cpp
     script.cpp
     )
   target_link_libraries(halmd

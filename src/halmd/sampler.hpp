@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_SAMPLER_HPP
-#define HALMD_MDSIM_SAMPLER_HPP
+#ifndef HALMD_SAMPLER_HPP
+#define HALMD_SAMPLER_HPP
 
 #include <boost/shared_ptr.hpp>
 
@@ -31,8 +31,6 @@
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
-{
-namespace mdsim
 {
 
 template <int dimension>
@@ -75,8 +73,6 @@ private:
     > runtime_;
 };
 
-} // namespace mdsim
-
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_SAMPLER_HPP */
+#endif /* ! HALMD_SAMPLER_HPP */

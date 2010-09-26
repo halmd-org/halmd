@@ -6,7 +6,6 @@ add_library(halmd_mdsim
   neighbour.cpp
   particle.cpp
   position.cpp
-  sampler.cpp
   sort.cpp
   velocity.cpp
   )

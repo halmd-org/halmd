@@ -21,15 +21,13 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/sampler.hpp>
+#include <halmd/sampler.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
 using namespace boost::fusion;
 
 namespace halmd
-{
-namespace mdsim
 {
 
 /**
@@ -128,9 +126,7 @@ void sampler<dimension>::sample(bool force)
 template class sampler<3>;
 template class sampler<2>;
 
-} // namespace mdsim
-
-template class module<mdsim::sampler<3> >;
-template class module<mdsim::sampler<2> >;
+template class module<sampler<3> >;
+template class module<sampler<2> >;
 
 } // namespace halmd
