@@ -31,58 +31,13 @@ using namespace std;
 namespace halmd
 {
 
-/**
- * Assemble module options
- */
-template <int dimension>
-void script<dimension>::options(po::options_description& desc)
-{
-    po::options_description group("Simulation");
-    group.add_options()
-        ("steps,s", po::value<uint64_t>()->default_value(10000),
-         "number of simulation steps")
-        ("time,t", po::value<double>(),
-         "total simulation time")
-        ;
-    desc.add(group);
-}
-
-/**
- * Resolve module dependencies
- */
-template <int dimension>
-void script<dimension>::depends()
-{
-    modules::depends<_Self, core_type>::required();
-    modules::depends<_Self, sampler_type>::required();
-    modules::depends<_Self, profile_writer_type>::required();
-}
-
 template <int dimension>
 script<dimension>::script(modules::factory& factory, po::options const& vm)
-  : _Base(factory, vm)
-  // dependency injection
-  , core(modules::fetch<core_type>(factory, vm))
-  , sampler(modules::fetch<sampler_type>(factory, vm))
-  , profile_writers(modules::fetch<profile_writer_type>(factory, vm))
-  , L_(luaL_newstate(), lua_close) //< create Lua state
+  : L_(luaL_newstate(), lua_close) //< create Lua state
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
     luaL_openlibs(L); //< load Lua standard libraries
-
-    // parse options
-    if (vm["steps"].defaulted() && !vm["time"].empty()) {
-        time_ = vm["time"].as<double>();
-        steps_ = static_cast<uint64_t>(round(time_ / core->integrator->timestep()));
-    }
-    else {
-        steps_ = vm["steps"].as<uint64_t>();
-        time_ = steps_ * core->integrator->timestep();
-    }
-
-    LOG("number of integration steps: " << steps_);
-    LOG("integration time: " << time_);
 }
 
 /**
@@ -157,35 +112,10 @@ void script<dimension>::run()
     }
 
     LOG("finished simulation");
-
-    core->prepare();
-    sampler->sample(true);
-
-    LOG("starting NVE ensemble run");
-
-    while (core->step_counter() < steps_) {
-        // perform complete MD integration step
-        core->mdstep();
-
-        // sample system state and properties,
-        // force sampling after last integration step
-        sampler->sample(core->step_counter() == steps_);
-    }
-
-    LOG("finished NVE ensemble run");
-
-    for_each(
-        profile_writers.begin()
-      , profile_writers.end()
-      , bind(&profile_writer_type::write, _1)
-    );
 }
 
 // explicit instantiation
 template class script<3>;
 template class script<2>;
-
-template class module<script<3> >;
-template class module<script<2> >;
 
 } // namespace halmd

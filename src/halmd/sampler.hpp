@@ -22,8 +22,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/io/profile/writer.hpp>
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/io/trajectory/writer.hpp>
+#include <halmd/main.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/observables/observable.hpp>
 #include <halmd/utility/module.hpp>
@@ -35,10 +37,12 @@ namespace halmd
 
 template <int dimension>
 class sampler
+  : public halmd::main
 {
 public:
     // module definitions
     typedef sampler _Self;
+    typedef halmd::main _Base;
     static void options(po::options_description& desc);
     static void depends();
     static void select(po::options const& vm) {};
@@ -47,21 +51,30 @@ public:
     typedef observables::observable<dimension> observable_type;
     typedef io::statevars::writer<dimension> statevars_writer_type;
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
+    typedef io::profile::writer profile_writer_type;
     typedef utility::profiler profiler_type;
 
     sampler(modules::factory& factory, po::options const& vm);
+    virtual void run();
     void sample(bool force=false);
     void register_runtimes(profiler_type& profiler);
+    uint64_t steps() { return steps_; }
+    double time() { return time_; }
 
     shared_ptr<core_type> core;
     std::vector<shared_ptr<observable_type> > observables;
     shared_ptr<statevars_writer_type> statevars_writer;
     shared_ptr<trajectory_writer_type> trajectory_writer;
+    std::vector<shared_ptr<profile_writer_type> > profile_writers;
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( msv_output_, "output of macroscopic state variables" );
 
 private:
+    /** number of integration steps */
+    uint64_t steps_;
+    /** integration time in MD units */
+    double time_;
     // value from option --sampling-state-vars
     unsigned statevars_interval_;
     // value from option --sampling-trajectory

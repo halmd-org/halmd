@@ -36,14 +36,18 @@ namespace halmd
 template <int dimension>
 void sampler<dimension>::options(po::options_description& desc)
 {
-    desc.add_options()
+    po::options_description group("Simulation");
+    group.add_options()
+        ("steps,s", po::value<uint64_t>()->default_value(10000),
+         "number of simulation steps")
+        ("time,t", po::value<double>(),
+         "total simulation time")
         ("sampling-state-vars", po::value<unsigned>()->default_value(25),
          "sample macroscopic state variables every given number of integration steps")
-        ;
-    desc.add_options()
         ("sampling-trajectory", po::value<unsigned>()->default_value(0),
          "sample trajectory every given number of integration steps")
         ;
+    desc.add(group);
 }
 
 /**
@@ -63,11 +67,13 @@ void sampler<dimension>::depends()
  */
 template <int dimension>
 sampler<dimension>::sampler(modules::factory& factory, po::options const& vm)
+  : _Base(factory, vm)
   // dependency injection
-  : core(modules::fetch<core_type>(factory, vm))
+  , core(modules::fetch<core_type>(factory, vm))
   , observables(modules::fetch<observable_type>(factory, vm))
   , statevars_writer(modules::fetch<statevars_writer_type>(factory, vm))
   , trajectory_writer(modules::fetch<trajectory_writer_type>(factory, vm))
+  , profile_writers(modules::fetch<profile_writer_type>(factory, vm))
   // store options
   , statevars_interval_(vm["sampling-state-vars"].as<unsigned>())
   , trajectory_interval_(vm["sampling-trajectory"].as<unsigned>())
@@ -80,6 +86,19 @@ sampler<dimension>::sampler(modules::factory& factory, po::options const& vm)
     BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
         observable->register_statevars(*statevars_writer);
     }
+
+    // parse options
+    if (vm["steps"].defaulted() && !vm["time"].empty()) {
+        time_ = vm["time"].as<double>();
+        steps_ = static_cast<uint64_t>(round(time_ / core->integrator->timestep()));
+    }
+    else {
+        steps_ = vm["steps"].as<uint64_t>();
+        time_ = steps_ * core->integrator->timestep();
+    }
+
+    LOG("number of integration steps: " << steps_);
+    LOG("integration time: " << time_);
 }
 
 /**
@@ -91,6 +110,34 @@ void sampler<dimension>::register_runtimes(profiler_type& profiler)
     profiler.register_map(runtime_);
 }
 
+/**
+ * Run simulation
+ */
+template <int dimension>
+void sampler<dimension>::run()
+{
+    core->prepare();
+    sample(true);
+
+    LOG("starting simulation run");
+
+    while (core->step_counter() < steps_) {
+        // perform complete MD integration step
+        core->mdstep();
+
+        // sample system state and properties,
+        // force sampling after last integration step
+        sample(core->step_counter() == steps_);
+    }
+
+    LOG("finished simulation run");
+
+    for_each(
+        profile_writers.begin()
+      , profile_writers.end()
+      , bind(&profile_writer_type::write, _1)
+    );
+}
 /**
  * Sample system state and system properties
  */

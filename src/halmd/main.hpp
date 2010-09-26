@@ -37,8 +37,6 @@ public:
 
     main(modules::factory& factory, po::options const& vm) {}
     virtual ~main() {}
-    virtual void load_wrapper() = 0;
-    virtual void load_library() = 0;
     virtual void run() = 0;
 };
 

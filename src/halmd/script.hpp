@@ -20,10 +20,6 @@
 #ifndef HALMD_SCRIPT_HPP
 #define HALMD_SCRIPT_HPP
 
-#include <halmd/io/profile/writer.hpp>
-#include <halmd/main.hpp>
-#include <halmd/mdsim/core.hpp>
-#include <halmd/sampler.hpp>
 #include <halmd/utility/lua/lua_include.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/options.hpp>
@@ -36,37 +32,15 @@ namespace halmd
  */
 template <int dimension>
 class script
-  : public halmd::main
 {
 public:
-    // module definitions
-    typedef script _Self;
-    typedef halmd::main _Base;
-    static void depends();
-    static void options(po::options_description& desc);
-    static void select(po::options const& vm) {}
-
-    typedef mdsim::core<dimension> core_type;
-    typedef halmd::sampler<dimension> sampler_type;
-    typedef io::profile::writer profile_writer_type;
-
     script(modules::factory& factory, po::options const& vm);
     virtual ~script() {}
     virtual void load_wrapper();
     virtual void load_library();
     virtual void run();
-    uint64_t steps() { return steps_; }
-    double time() { return time_; }
-
-    shared_ptr<core_type> core;
-    shared_ptr<sampler_type> sampler;
-    std::vector<shared_ptr<profile_writer_type> > profile_writers;
 
 protected:
-    /** number of integration steps */
-    uint64_t steps_;
-    /** integration time in MD units */
-    double time_;
     /** Lua state */
     boost::shared_ptr<lua_State> L_;
 };
