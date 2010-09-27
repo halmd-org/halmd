@@ -61,6 +61,9 @@ public:
 private:
     boost::shared_ptr<console_sink> console_;
     boost::shared_ptr<file_sink> file_;
+
+    void log_to_console(severity_level level);
+    void log_to_file(severity_level level, std::string file_name);
 };
 
 } // namespace io

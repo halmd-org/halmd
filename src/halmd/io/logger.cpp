@@ -74,56 +74,81 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
 
 logging::logging(po::options const& vm)
 {
-    {
-        shared_ptr<console_backend> backend(make_shared<console_backend>());
-        backend->add_stream(
-            shared_ptr<ostream>(&clog, empty_deleter())
-        );
-        backend->set_formatter(
-            formatters::format("[%1%] %2%%3%")
-                % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
-                % formatters::attr<severity_level>("Severity")
-                % formatters::message()
-        );
-        backend->auto_flush(true);
-
-        console_ = make_shared<console_sink>(backend);
-        console_->set_filter(
-            filters::attr<severity_level>("Severity") <= vm["verbose"].as<int>()
-        );
-        core::get()->add_sink(console_);
-    }
-
-    {
-        shared_ptr<file_backend> backend(
-            make_shared<file_backend>(
-                keywords::file_name = vm["output"].as<string>() + ".log"
-            )
-        );
-        backend->set_formatter(
-            formatters::format("[%1%] %2%%3%")
-                % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
-                % formatters::attr<severity_level>("Severity")
-                % formatters::message()
-        );
-        backend->auto_flush(true);
-
-        file_ = make_shared<file_sink>(backend);
-        file_->set_filter(
-            filters::attr<severity_level>("Severity") <= max(
-                vm["verbose"].as<int>()
-              , static_cast<int>(info)
-            )
-        );
-        core::get()->add_sink(file_);
-    }
-
     core::get()->add_global_attribute(
         "TimeStamp"
       , make_shared<attributes::local_clock>()
     );
+    log_to_console(
+        static_cast<severity_level>(vm["verbose"].as<int>())
+    );
+    log_to_file(
+        static_cast<severity_level>(
+            max(vm["verbose"].as<int>(), static_cast<int>(info))
+        )
+      , vm["output"].as<string>() + ".log"
+    );
 }
 
+/**
+ * enable logging to console
+ *
+ * @param level logging severity level
+ *
+ * FIXME repeated calls of this function if public
+ */
+void logging::log_to_console(severity_level level)
+{
+    shared_ptr<console_backend> backend(make_shared<console_backend>());
+    backend->add_stream(
+        shared_ptr<ostream>(&clog, empty_deleter())
+    );
+    backend->set_formatter(
+        formatters::format("[%1%] %2%%3%")
+            % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
+            % formatters::attr<severity_level>("Severity")
+            % formatters::message()
+    );
+    backend->auto_flush(true);
+
+    console_ = make_shared<console_sink>(backend);
+    console_->set_filter(
+        filters::attr<severity_level>("Severity") <= level
+    );
+    core::get()->add_sink(console_);
+}
+
+/**
+ * enable logging to file
+ *
+ * @param level logging severity level
+ *
+ * FIXME repeated calls of this function if public
+ */
+void logging::log_to_file(severity_level level, string file_name)
+{
+    shared_ptr<file_backend> backend(
+        make_shared<file_backend>(
+            keywords::file_name = file_name
+        )
+    );
+    backend->set_formatter(
+        formatters::format("[%1%] %2%%3%")
+            % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
+            % formatters::attr<severity_level>("Severity")
+            % formatters::message()
+    );
+    backend->auto_flush(true);
+
+    file_ = make_shared<file_sink>(backend);
+    file_->set_filter(
+        filters::attr<severity_level>("Severity") <= level
+    );
+    core::get()->add_sink(file_);
+}
+
+/**
+ * remove sinks from logging core singleton
+ */
 logging::~logging()
 {
     core::get()->remove_sink(console_);
