@@ -37,8 +37,7 @@ namespace halmd
 template <int dimension>
 void sampler<dimension>::options(po::options_description& desc)
 {
-    po::options_description group("Simulation");
-    group.add_options()
+    desc.add_options()
         ("steps,s", po::value<uint64_t>()->default_value(10000),
          "number of simulation steps")
         ("time,t", po::value<double>(),
@@ -48,7 +47,6 @@ void sampler<dimension>::options(po::options_description& desc)
         ("sampling-trajectory", po::value<unsigned>()->default_value(0),
          "sample trajectory every given number of integration steps")
         ;
-    desc.add(group);
 }
 
 /**

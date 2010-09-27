@@ -38,14 +38,9 @@ void integrator<dimension>::options(po::options_description& desc)
     desc.add_options()
         ("integrator", po::value<string>()->default_value("verlet"),
          "specify integration module")
-        ;
-
-    po::options_description group("Integrator");
-    group.add_options()
         ("timestep,h", po::value<double>()->default_value(0.001),
          "integration timestep")
         ;
-    desc.add(group);
 }
 
 template <int dimension>

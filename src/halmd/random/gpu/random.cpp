@@ -34,14 +34,12 @@ namespace random { namespace gpu
 template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::options(po::options_description& desc)
 {
-    po::options_description group("Random number generator (GPU)");
-    group.add_options()
+    desc.add_options()
         ("random-threads", po::value<unsigned int>()->default_value(32 << DEVICE_SCALE),
          "number of CUDA threads per block")
         ("random-blocks", po::value<unsigned int>()->default_value(32),
          "number of CUDA blocks")
         ;
-    desc.add(group);
 }
 
 /**

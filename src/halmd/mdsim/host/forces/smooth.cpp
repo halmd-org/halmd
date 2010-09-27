@@ -38,12 +38,10 @@ namespace mdsim { namespace host { namespace forces
 template <int dimension, typename float_type>
 void smooth<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description group("C²-potential smoothing function");
-    group.add_options()
+    desc.add_options()
         ("smooth", po::value<float>(),
          "C²-potential smoothing factor")
         ;
-    desc.add(group);
 }
 
 template <int dimension, typename float_type>

@@ -39,14 +39,12 @@ namespace mdsim
 template <int dimension>
 void box<dimension>::options(po::options_description& desc)
 {
-    po::options_description group("Simulation box");
-    group.add_options()
+    desc.add_options()
         ("density,d", po::value<float>()->default_value(0.75),
          "particle density")
         ("box-length,L", po::value<float>(),
          "simulation box length")
         ;
-    desc.add(group);
 }
 
 /**

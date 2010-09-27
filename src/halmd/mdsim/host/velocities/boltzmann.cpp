@@ -37,12 +37,10 @@ using namespace std;
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::options(po::options_description& desc)
 {
-    po::options_description group("Boltzmann velocity distribution");
-    group.add_options()
+    desc.add_options()
         ("temperature,K", po::value<float>()->default_value(1.12),
          "Boltzmann distribution temperature")
         ;
-    desc.add(group);
 }
 
 /**

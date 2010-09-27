@@ -37,14 +37,9 @@ void reader<dimension>::options(po::options_description& desc)
     desc.add_options()
         ("trajectory-file,J", po::value<string>(),
          "trajectory input file")
-        ;
-
-    po::options_description group("Trajectory reader");
-    group.add_options()
         ("trajectory-sample,S", po::value<ssize_t>()->default_value(-1),
          "trajectory sample for initial state")
         ;
-    desc.add(group);
 }
 
 template <int dimension>

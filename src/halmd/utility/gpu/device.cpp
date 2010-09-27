@@ -44,8 +44,7 @@ namespace utility { namespace gpu
  */
 void device::options(po::options_description& desc)
 {
-    po::options_description group("CUDA device configuration");
-    group.add_options()
+    desc.add_options()
 #ifndef __DEVICE_EMULATION__
         ("device,D", po::value<boost::multi_array<int, 1> >(),
          "CUDA device(s)")
@@ -53,7 +52,6 @@ void device::options(po::options_description& desc)
         ("threads,T", po::value<unsigned int>()->default_value(128),
          "number of CUDA threads per block")
         ;
-    desc.add(group);
 }
 
 /**

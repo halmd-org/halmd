@@ -37,12 +37,10 @@ namespace scripts
 template <int dimension>
 void thermostat<dimension>::options(po::options_description& desc)
 {
-    po::options_description group("Simulation");
-    group.add_options()
+    desc.add_options()
         ("thermostat", po::value<float>()->required(),
          "heat bath collision rate")
         ;
-    desc.add(group);
 }
 
 /**
