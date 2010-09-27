@@ -17,9 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -39,7 +41,10 @@ void profiler::depends()
 
 profiler::profiler(modules::factory& factory, po::variables_map const& vm)
   // dependency injection
-  : profile_writer(modules::fetch<profile_writer_type>(factory, vm)) {}
+  : profile_writer(modules::fetch<profile_writer_type>(factory, vm))
+{
+    LOG("timer resolution: " << 1.E9 * timer::elapsed_min() << " ns");
+}
 
 void profiler::register_accumulator(
     std::type_info const& tag
