@@ -212,8 +212,8 @@ static lua_registry::iterator dummy = (
     lua_registry::get()->push_back( register_lua<lj<3, double> >("lj_3_") )
   , lua_registry::get()->push_back( register_lua<lj<2, double> >("lj_2_") )
 #else
-    lua_registry::get()->push_back( register_lua<lj<3, double> >("lj_3_") )
-  , lua_registry::get()->push_back( register_lua<lj<2, double> >("lj_2_") )
+    lua_registry::get()->push_back( register_lua<lj<3, float> >("lj_3_") )
+  , lua_registry::get()->push_back( register_lua<lj<2, float> >("lj_2_") )
 #endif
   , lua_registry::get()->end()
 );
