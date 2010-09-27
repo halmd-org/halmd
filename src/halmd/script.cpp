@@ -31,13 +31,16 @@ using namespace std;
 namespace halmd
 {
 
-template <int dimension>
-script<dimension>::script(modules::factory& factory, po::options const& vm)
+script::script()
   : L_(luaL_newstate(), lua_close) //< create Lua state
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
     luaL_openlibs(L); //< load Lua standard libraries
+
+    load_wrapper(); //< load HALMD Lua C++ wrapper
+
+    load_library(); //< load HALMD Lua library
 }
 
 /**
@@ -45,13 +48,11 @@ script<dimension>::script(modules::factory& factory, po::options const& vm)
  *
  * Register C++ classes with Lua.
  */
-template <int dimension>
-void script<dimension>::load_wrapper()
+void script::load_wrapper()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
     using namespace luabind;
-    using luabind::module; //< FIXME namespace conflicts
 
     open(L); //< setup global structures and Lua class support
 
@@ -65,8 +66,7 @@ void script<dimension>::load_wrapper()
 /**
  * Load HALMD Lua library
  */
-template <int dimension>
-void script<dimension>::load_library()
+void script::load_library()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
@@ -84,38 +84,57 @@ void script<dimension>::load_library()
     path.append( object_cast<string>(globals(L)["package"]["path"]) );
     globals(L)["package"]["path"] = path;
 
-    int status = luaL_dostring(L, "require('halmd')");
-
-    if (status != 0) {
+    try {
+        call_function<void>(L, "require", "halmd");
+    }
+    catch (luabind::error const& e) {
         LOG_ERROR("[Lua] " << lua_tostring(L, -1));
         lua_pop(L, 1); //< remove error message
-        throw std::runtime_error("Lua error");
+        throw;
+    }
+}
+
+/**
+ * Assemble program options
+ */
+void script::options(po::options_description& desc)
+{
+    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
+
+    using namespace luabind;
+
+    // retrieve the Lua function before the try-catch block
+    // to avoid bogus error message on the Lua stack in case
+    // call_function throws an exception
+    object options(globals(L)["halmd"]["modules"]["options"]);
+    try {
+        call_function<void>(options, ref(desc));
+    }
+    catch (luabind::error const& e) {
+        LOG_ERROR("[Lua] " << lua_tostring(e.state(), -1));
+        lua_pop(e.state(), 1); //< remove error message
+        throw;
     }
 }
 
 /**
  * Run simulation
  */
-template <int dimension>
-void script<dimension>::run()
+void script::run()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
-    LOG("starting simulation");
+    using namespace luabind;
 
-    int status = luaL_dostring(L, "halmd.run()");
-
-    if (status != 0) {
-        LOG_ERROR("[Lua] " << lua_tostring(L, -1));
-        lua_pop(L, 1); //< remove error message
-        throw std::runtime_error("Lua error");
+    object run(globals(L)["halmd"]["run"]);
+    try {
+        call_function<void>(run);
     }
-
-    LOG("finished simulation");
+    catch (luabind::error const& e) {
+        LOG_ERROR("[Lua] " << lua_tostring(e.state(), -1));
+        lua_pop(e.state(), 1); //< remove error message
+        throw;
+    }
 }
-
-// explicit instantiation
-template class script<3>;
-template class script<2>;
 
 } // namespace halmd

@@ -20,29 +20,28 @@
 #ifndef HALMD_SCRIPT_HPP
 #define HALMD_SCRIPT_HPP
 
-#include <halmd/utility/lua/lua_include.hpp>
-#include <halmd/utility/module.hpp>
+#include <luabind/lua_include.hpp>
+
 #include <halmd/utility/options.hpp>
 
 namespace halmd
 {
 
 /**
- * NVE ensemble run
+ * HALMD scripting engine
  */
-template <int dimension>
 class script
 {
 public:
-    script(modules::factory& factory, po::options const& vm);
-    virtual ~script() {}
-    virtual void load_wrapper();
-    virtual void load_library();
-    virtual void run();
+    script();
+    void options(po::options_description& desc);
+    void run();
 
-protected:
-    /** Lua state */
-    boost::shared_ptr<lua_State> L_;
+private:
+    boost::shared_ptr<lua_State> L_; //< Lua state
+
+    void load_wrapper();
+    void load_library();
 };
 
 } // namespace halmd
