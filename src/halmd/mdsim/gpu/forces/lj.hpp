@@ -36,7 +36,7 @@ public:
     // module definitions
     typedef lj _Self;
     typedef mdsim::gpu::force<dimension, float_type> _Base;
-    static void options(po::options_description& desc);
+    static void options(po::options_description& desc) {} // see mdsim::host::forces::lj
     static void depends() {}
     static void select(po::options const& vm);
 

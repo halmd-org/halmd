@@ -21,6 +21,7 @@
 #include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -29,19 +30,6 @@ namespace halmd
 {
 namespace mdsim { namespace gpu
 {
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void velocity<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("velocity",
-         po::value<string>()->default_value("boltzmann"),
-         "initial particle velocities module")
-        ;
-}
 
 /**
  * Resolve module dependencies

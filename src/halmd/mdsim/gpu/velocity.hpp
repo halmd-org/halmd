@@ -38,7 +38,7 @@ public:
     // module definitions
     typedef velocity _Self;
     typedef mdsim::velocity<dimension> _Base;
-    static void options(po::options_description& desc);
+    static void options(po::options_description& desc) {}
     static void depends();
     static void select(po::options const& vm) {}
 

@@ -18,6 +18,7 @@
  */
 
 #include <halmd/observables/thermodynamics.hpp>
+#include <halmd/utility/lua.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -115,6 +116,30 @@ void thermodynamics<dimension>::sample(double time)
     pressure_ = density_ * (temp_ + virial() / dimension);
     time_ = time;
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("observables")
+            [
+                class_<T, shared_ptr<T> >(class_name)
+                    .scope
+                    [
+                        def("options", &T::options)
+                    ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<thermodynamics<3> >("thermodynamics_3_") )
+  , lua_registry::get()->push_back( register_lua<thermodynamics<2> >("thermodynamics_2_") )
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 template class thermodynamics<3>;

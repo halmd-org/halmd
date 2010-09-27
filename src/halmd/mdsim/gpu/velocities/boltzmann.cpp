@@ -30,20 +30,6 @@ using namespace boost;
 using namespace std;
 
 /**
- * Assemble module options
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void boltzmann<dimension, float_type, RandomNumberGenerator>::options(po::options_description& desc)
-{
-    po::options_description group("Boltzmann velocity distribution");
-    group.add_options()
-        ("temperature,K", po::value<float>()->default_value(1.12),
-         "Boltzmann distribution temperature")
-        ;
-    desc.add(group);
-}
-
-/**
  * Resolve module dependencies
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>

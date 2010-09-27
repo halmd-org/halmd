@@ -54,7 +54,7 @@ public:
     typedef force _Self;
     typedef mdsim::force<dimension> _Base;
     static void depends();
-    static void options(po::options_description& desc);
+    static void options(po::options_description& desc) {}
     static void select(po::options const& vm) {}
 
     typedef type_traits<dimension, float_type> _type_traits;

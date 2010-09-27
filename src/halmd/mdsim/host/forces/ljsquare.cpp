@@ -37,24 +37,6 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void lj_square<dimension, float_type>::options(po::options_description& desc)
-{
-    po::options_description group("Lennard-Jones potential with O(N²) algorithm");
-    group.add_options()
-        ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
-         "truncate potential at cutoff radius")
-        ("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
-         "potential well depths AA,AB,BB")
-        ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
-         "collision diameters AA,AB,BB")
-        ;
-    desc.add(group);
-}
-
-/**
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>

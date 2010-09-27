@@ -18,6 +18,7 @@
  */
 
 #include <halmd/mdsim/host/force.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 
@@ -25,14 +26,6 @@ namespace halmd
 {
 namespace mdsim { namespace host
 {
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void force<dimension, float_type>::options(po::options_description& desc)
-{
-}
 
 /**
  * Resolve module dependencies

@@ -21,6 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
+#include <halmd/utility/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -41,6 +42,13 @@ template <int dimension>
 void core<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
+        ("backend",
+#ifdef WITH_CUDA
+         po::value<string>()->default_value("gpu"),
+#else
+         po::value<string>()->default_value("host"),
+#endif
+         "computing device type")
         ("dimension", po::value<int>()->default_value(3),
          "dimension of positional coordinates")
         ;
@@ -135,6 +143,30 @@ void core<dimension>::mdstep()
     // increment step counter
     step_counter_++;
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                class_<T, shared_ptr<T> >(class_name)
+                    .scope
+                    [
+                        def("options", &T::options)
+                    ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<core<3> >("core_3_") )
+  , lua_registry::get()->push_back( register_lua<core<2> >("core_2_") )
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 template class core<3>;

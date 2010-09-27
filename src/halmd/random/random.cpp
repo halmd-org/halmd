@@ -21,6 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/random/random.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace std;
 
@@ -78,6 +79,28 @@ unsigned int random::readint(std::string const& file)
     }
     return seed;
 }
+
+static luabind::scope register_lua()
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("random")
+            [
+                class_<random, shared_ptr<random> >("random")
+                    .scope
+                    [
+                        def("options", &random::options)
+                    ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua() )
+  , lua_registry::get()->end()
+);
 
 } // namespace random
 

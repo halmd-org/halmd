@@ -18,6 +18,7 @@
  */
 
 #include <halmd/io/trajectory/reader.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -53,6 +54,33 @@ reader<dimension>::reader(modules::factory& factory, po::options const& vm)
   , offset_(vm["trajectory-sample"].as<ssize_t>())
 {
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("io")
+            [
+                namespace_("trajectory")
+                [
+                    class_<T, shared_ptr<T> >(class_name)
+                        .scope
+                        [
+                            def("options", &T::options)
+                        ]
+                ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<reader<3> >("reader_3_") )
+  , lua_registry::get()->push_back( register_lua<reader<2> >("reader_2_") )
+  , lua_registry::get()->end()
+);
 
 template class reader<3>;
 template class reader<2>;

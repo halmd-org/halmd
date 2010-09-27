@@ -19,6 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/integrator.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -54,6 +55,30 @@ integrator<dimension>::integrator(modules::factory& factory, po::options const& 
 {
     LOG("integration timestep: " << timestep_);
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                class_<T, shared_ptr<T> >(class_name)
+                    .scope
+                    [
+                        def("options", &T::options)
+                    ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<integrator<3> >("integrator_3_") )
+  , lua_registry::get()->push_back( register_lua<integrator<2> >("integrator_2_") )
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 template class integrator<3>;

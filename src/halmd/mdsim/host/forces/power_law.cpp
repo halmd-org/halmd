@@ -27,6 +27,7 @@
 #include <halmd/mdsim/host/forces/power_law.hpp>
 #include <halmd/numeric/pow.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -209,6 +210,41 @@ void power_law<dimension, float_type>::compute_impl()
         throw potential_energy_divergence();
     }
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    namespace_("forces")
+                    [
+                        class_<T, shared_ptr<T> >(class_name)
+                            .scope
+                            [
+                                def("options", &T::options)
+                            ]
+                    ]
+                ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+#ifndef USE_HOST_SINGLE_PRECISION
+    lua_registry::get()->push_back( register_lua<power_law<3, double> >("power_law_3_") )
+  , lua_registry::get()->push_back( register_lua<power_law<2, double> >("power_law_2_") )
+#else
+    lua_registry::get()->push_back( register_lua<power_law<3, float> >("power_law_3_") )
+  , lua_registry::get()->push_back( register_lua<power_law<2, float> >("power_law_2_") )
+#endif
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

@@ -23,6 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -106,6 +107,30 @@ void box<dimension>::density(double value)
     LOG("simulation box edge lengths: " << length_);
     LOG("number density: " << density_);
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                class_<T, shared_ptr<T> >(class_name)
+                    .scope
+                    [
+                        def("options", &T::options)
+                    ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<box<3> >("box_3_") )
+  , lua_registry::get()->push_back( register_lua<box<2> >("box_2_") )
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 template class box<3>;

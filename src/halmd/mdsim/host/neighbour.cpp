@@ -25,6 +25,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -224,6 +225,38 @@ void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_li
         particle->neighbour[i].push_back(j);
     }
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    class_<T, shared_ptr<T> >(class_name)
+                        .scope
+                        [
+                            def("options", &T::options)
+                        ]
+                ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+#ifndef USE_HOST_SINGLE_PRECISION
+    lua_registry::get()->push_back( register_lua<neighbour<3, double> >("neighbour_3_") )
+  , lua_registry::get()->push_back( register_lua<neighbour<2, double> >("neighbour_2_") )
+#else
+    lua_registry::get()->push_back( register_lua<neighbour<3, float> >("neighbour_3_") )
+  , lua_registry::get()->push_back( register_lua<neighbour<2, float> >("neighbour_2_") )
+#endif
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

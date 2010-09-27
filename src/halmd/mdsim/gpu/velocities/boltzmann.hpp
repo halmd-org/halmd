@@ -42,7 +42,7 @@ public:
     // module definitions
     typedef boltzmann _Self;
     typedef gpu::velocity<dimension, float_type> _Base;
-    static void options(po::options_description& desc);
+    static void options(po::options_description& desc) {} // see mdsim::host::velocities::boltzmann
     static void depends();
     static void select(po::options const& vm);
 

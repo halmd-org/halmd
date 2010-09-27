@@ -19,6 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/velocity.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -40,6 +41,30 @@ void velocity<dimension>::options(po::options_description& desc)
          "initial particle velocities module")
         ;
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                class_<T, shared_ptr<T> >(class_name)
+                    .scope
+                    [
+                        def("options", &T::options)
+                    ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<velocity<3> >("velocity_3_") )
+  , lua_registry::get()->push_back( register_lua<velocity<2> >("velocity_2_") )
+  , lua_registry::get()->end()
+);
 
 template class velocity<3>;
 template class velocity<2>;

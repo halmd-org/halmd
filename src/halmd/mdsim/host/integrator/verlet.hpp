@@ -40,7 +40,7 @@ public:
     // module definitions
     typedef verlet _Self;
     typedef mdsim::integrator<dimension> _Base;
-    static void options(po::options_description& desc);
+    static void options(po::options_description& desc) {}
     static void depends();
     static void select(po::options const& vm);
 

@@ -37,7 +37,7 @@ public:
     typedef lj_square _Self;
     typedef mdsim::host::force<dimension, float_type> _Base;
     static void depends() {}
-    static void options(po::options_description& desc);
+    static void options(po::options_description& desc) {} //< see mdsim::host::forces::lj
     static void select(po::options const& vm);
 
     typedef typename _Base::matrix_type matrix_type;

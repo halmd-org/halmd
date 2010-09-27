@@ -23,6 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrator/verlet.hpp>
+#include <halmd/utility/lua.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
@@ -32,14 +33,6 @@ namespace halmd
 {
 namespace mdsim { namespace host { namespace integrator
 {
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::options(po::options_description& desc)
-{
-}
 
 /**
  * Resolve module dependencies

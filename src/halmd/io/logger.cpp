@@ -140,7 +140,18 @@ static luabind::scope register_lua()
 {
     using namespace luabind;
     return
-        namespace_("log")
+        namespace_("halmd_wrapper")
+        [
+            namespace_("io")
+            [
+                class_<logging, shared_ptr<logging> >("logging")
+                    .scope
+                    [
+                        def("options", &logging::options)
+                    ]
+            ]
+        ]
+      , namespace_("log")
         [
             def("fatal", &log_wrapper<logging::fatal>)
           , def("error", &log_wrapper<logging::error>)

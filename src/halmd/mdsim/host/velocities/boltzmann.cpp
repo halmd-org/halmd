@@ -21,6 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/utility/lua.hpp>
 
 namespace halmd
 {
@@ -131,6 +132,41 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
     vv /= particle->v.size();
     return make_pair(v_cm, vv);
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    namespace_("velocities")
+                    [
+                        class_<T, shared_ptr<T> >(class_name)
+                            .scope
+                            [
+                                def("options", &T::options)
+                            ]
+                    ]
+                ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+#ifndef USE_HOST_SINGLE_PRECISION
+    lua_registry::get()->push_back( register_lua<boltzmann<3, double> >("boltzmann_3_") )
+  , lua_registry::get()->push_back( register_lua<boltzmann<2, double> >("boltzmann_2_") )
+#else
+    lua_registry::get()->push_back( register_lua<boltzmann<3, float> >("boltzmann_3_") )
+  , lua_registry::get()->push_back( register_lua<boltzmann<2, float> >("boltzmann_2_") )
+#endif
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

@@ -21,6 +21,7 @@
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
+#include <halmd/utility/lua.hpp>
 
 namespace halmd
 {
@@ -128,6 +129,30 @@ void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean,
         throw exception("failed to fill vector with normal random numbers");
     }
 }
+
+template <typename Module>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("gpu")
+            [
+                namespace_("random")
+                [
+                    class_<Module, shared_ptr<Module> >(class_name)
+
+                  , def("options", &Module::options)
+                ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<random<rand48> >("rand48") )
+  , lua_registry::get()->end()
+);
 
 }} // namespace random::gpu
 

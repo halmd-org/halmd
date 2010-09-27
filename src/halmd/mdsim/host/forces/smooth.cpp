@@ -23,6 +23,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/utility/module.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 
@@ -56,6 +57,41 @@ smooth<dimension, float_type>::smooth(modules::factory& factory, po::options con
 {
     LOG("scale parameter for potential smoothing function: " << r_smooth_);
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    namespace_("forces")
+                    [
+                        class_<T, shared_ptr<T> >(class_name)
+                            .scope
+                            [
+                                def("options", &T::options)
+                            ]
+                    ]
+                ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+#ifndef USE_HOST_SINGLE_PRECISION
+    lua_registry::get()->push_back( register_lua<smooth<3, double> >("smooth_3_") )
+  , lua_registry::get()->push_back( register_lua<smooth<2, double> >("smooth_2_") )
+#else
+    lua_registry::get()->push_back( register_lua<smooth<3, float> >("smooth_3_") )
+  , lua_registry::get()->push_back( register_lua<smooth<2, float> >("smooth_2_") )
+#endif
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

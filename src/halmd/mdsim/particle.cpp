@@ -26,6 +26,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -42,16 +43,6 @@ namespace mdsim
 template <int dimension>
 void particle<dimension>::options(po::options_description& desc)
 {
-    desc.add_options()
-        ("backend",
-#ifdef WITH_CUDA
-         po::value<string>()->default_value("gpu"),
-#else
-         po::value<string>()->default_value("host"),
-#endif
-         "computing device type")
-        ;
-
     po::options_description group("Particle");
     group.add_options()
         ("particles,N", po::value<unsigned int>()->default_value(1000),
@@ -92,6 +83,30 @@ particle<dimension>::particle(modules::factory& factory, po::options const& vm)
     LOG("number of particle types: " << ntype);
     LOG("number of particles per type: " << join(ntypes_, " "));
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                class_<T, shared_ptr<T> >(class_name)
+                    .scope
+                    [
+                        def("options", &T::options)
+                    ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<particle<3> >("particle_3_") )
+  , lua_registry::get()->push_back( register_lua<particle<2> >("particle_2_") )
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 template class particle<3>;

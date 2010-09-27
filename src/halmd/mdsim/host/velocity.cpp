@@ -19,6 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
+#include <halmd/utility/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -27,19 +28,6 @@ namespace halmd
 {
 namespace mdsim { namespace host
 {
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void velocity<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("velocity",
-         po::value<string>()->default_value("boltzmann"),
-         "initial particle velocities module")
-        ;
-}
 
 /**
  * Resolve module dependencies

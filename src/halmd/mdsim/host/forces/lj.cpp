@@ -25,6 +25,7 @@
 #include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/lj.hpp>
+#include <halmd/utility/lua.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
@@ -181,6 +182,41 @@ void lj<dimension, float_type>::compute()
         throw potential_energy_divergence();
     }
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    namespace_("forces")
+                    [
+                        class_<T, shared_ptr<T> >(class_name)
+                            .scope
+                            [
+                                def("options", &T::options)
+                            ]
+                    ]
+                ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+#ifndef USE_HOST_SINGLE_PRECISION
+    lua_registry::get()->push_back( register_lua<lj<3, double> >("lj_3_") )
+  , lua_registry::get()->push_back( register_lua<lj<2, double> >("lj_2_") )
+#else
+    lua_registry::get()->push_back( register_lua<lj<3, double> >("lj_3_") )
+  , lua_registry::get()->push_back( register_lua<lj<2, double> >("lj_2_") )
+#endif
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

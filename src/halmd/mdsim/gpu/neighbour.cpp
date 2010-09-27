@@ -26,6 +26,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
+#include <halmd/utility/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -46,8 +47,6 @@ void neighbour<dimension, float_type>::options(po::options_description& desc)
 {
     po::options_description group("Neighbour lists");
     group.add_options()
-        ("skin", po::value<float>()->default_value(0.5),
-         "neighbour list skin")
         ("cell-occupancy", po::value<float>()->default_value(0.4),
          "desired average cell occupancy")
         ;
@@ -322,6 +321,33 @@ void neighbour<dimension, float_type>::update_neighbours()
         throw std::runtime_error("overcrowded placeholders in neighbour lists update");
     }
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
+                [
+                    class_<T, shared_ptr<T> >(class_name)
+                        .scope
+                        [
+                            def("options", &T::options)
+                        ]
+                ]
+            ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<neighbour<3, float> >("neighbour_3_") )
+  , lua_registry::get()->push_back( register_lua<neighbour<2, float> >("neighbour_2_") )
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 template class neighbour<3, float>;

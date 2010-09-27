@@ -22,6 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/sampler.hpp>
+#include <halmd/utility/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -168,6 +169,27 @@ void sampler<dimension>::sample(bool force)
     if (is_sampling_step)
         LOG_DEBUG("system state sampled at step " << step);
 }
+
+template <typename T>
+static luabind::scope register_lua(char const* class_name)
+{
+    using namespace luabind;
+    return
+        namespace_("halmd_wrapper")
+        [
+            class_<T, shared_ptr<T> >(class_name)
+                .scope
+                [
+                    def("options", &T::options)
+                ]
+        ];
+}
+
+static lua_registry::iterator dummy = (
+    lua_registry::get()->push_back( register_lua<sampler<3> >("sampler_3_") )
+  , lua_registry::get()->push_back( register_lua<sampler<2> >("sampler_2_") )
+  , lua_registry::get()->end()
+);
 
 // explicit instantiation
 template class sampler<3>;
