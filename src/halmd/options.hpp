@@ -29,8 +29,6 @@
 #include <string>
 #include <vector>
 
-#include <halmd/version.h> //< needed for PROGRAM_NAME
-
 namespace halmd
 {
 
@@ -61,11 +59,6 @@ public:
 private:
     po::options_description desc_; //< options description
     po::variables_map vm_; //< options map
-
-    static char const* output_file_basename()
-    {
-       return PROGRAM_NAME "_%Y%m%d_%H%M%S";
-    }
 };
 
 /**

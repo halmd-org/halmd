@@ -28,12 +28,16 @@
 #include <halmd/options.hpp>
 #include <halmd/utility/date_time.hpp>
 #include <halmd/utility/lua.hpp>
+#include <halmd/version.h>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd
 {
+
+// define here to avoid program-wide dependency on <halmd/version.h>
+static char const* default_output_file_name = PROGRAM_NAME "_%Y%m%d_%H%M%S";
 
 /**
  * setup program options description
@@ -43,7 +47,7 @@ options_parser::options_parser(po::options_description const& desc)
 {
     desc_.add_options()
         ("output,o",
-         po::value<string>()->default_value(output_file_basename())->notifier(
+         po::value<string>()->default_value(default_output_file_name)->notifier(
              boost::lambda::bind(
                  &format_local_time
                , boost::lambda::ll_const_cast<string&>(boost::lambda::_1)
