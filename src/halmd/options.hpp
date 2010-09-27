@@ -26,6 +26,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/program_options.hpp>
+#include <luabind/luabind.hpp>
 #include <string>
 #include <vector>
 
@@ -204,5 +205,33 @@ std::ostream& operator<<(std::ostream& os, boost::multi_array<T, 1> const& value
 }
 
 } // namespace std
+
+namespace luabind
+{
+
+/**
+ * Luabind converter for Boost.Program_options variables_map
+ */
+template <>
+struct default_converter<boost::program_options::variables_map>
+  : native_converter_base<boost::program_options::variables_map>
+{
+    //! convert from C++ to Lua
+    void to(lua_State* L, boost::program_options::variables_map const& vm)
+    {
+        luabind::object table = luabind::newtable(L);
+        boost::program_options::variables_map::const_iterator it, end = vm.end();
+        for (it = vm.begin(); it != end; ++it) {
+            table[it->first] = it->second;
+        }
+        table.push(L);
+    }
+};
+
+template <>
+struct default_converter<boost::program_options::variables_map const&>
+  : default_converter<boost::program_options::variables_map> {};
+
+} // namespace luabind
 
 #endif /* ! HALMD_OPTIONS_HPP */
