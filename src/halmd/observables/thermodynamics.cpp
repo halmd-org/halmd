@@ -54,7 +54,7 @@ void thermodynamics<dimension>::depends()
 }
 
 template <int dimension>
-void thermodynamics<dimension>::select(po::options const& vm)
+void thermodynamics<dimension>::select(po::variables_map const& vm)
 {
     if (vm["disable-state-vars"].as<bool>()) {
         throw unsuitable_module("mismatching option: disable-state-vars");
@@ -62,7 +62,7 @@ void thermodynamics<dimension>::select(po::options const& vm)
 }
 
 template <int dimension>
-thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::options const& vm)
+thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , box(modules::fetch<box_type>(factory, vm))

@@ -45,7 +45,7 @@ void verlet<dimension, float_type>::depends()
 }
 
 template <int dimension, typename float_type>
-void verlet<dimension, float_type>::select(po::options const& vm)
+void verlet<dimension, float_type>::select(po::variables_map const& vm)
 {
     if (vm["integrator"].as<std::string>() != "verlet") {
         throw unsuitable_module("mismatching option integrator");
@@ -53,7 +53,7 @@ void verlet<dimension, float_type>::select(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-verlet<dimension, float_type>::verlet(modules::factory& factory, po::options const& vm)
+verlet<dimension, float_type>::verlet(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))

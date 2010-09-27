@@ -24,7 +24,7 @@
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/sort.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -41,7 +41,7 @@ public:
     typedef mdsim::sort<dimension> _Base;
     static void depends();
     static void options(po::options_description& desc) {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
@@ -55,7 +55,7 @@ public:
     shared_ptr<box_type> box;
     shared_ptr<neighbour_type> neighbour;
 
-    hilbert(modules::factory& factory, po::options const& vm);
+    hilbert(modules::factory& factory, po::variables_map const& vm);
     virtual ~hilbert() {}
     virtual void order();
 

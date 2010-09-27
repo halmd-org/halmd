@@ -28,7 +28,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profile/writers/log.hpp>
 #include <halmd/io/profile/writers/hdf5.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 #include <halmd/utility/module.hpp>
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( test_profile_writers )
 {
     typedef boost::program_options::variable_value variable_value;
 
-    halmd::po::options vm;
+    halmd::po::variables_map vm;
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
     vm_["verbose"] = variable_value(0, true);
@@ -70,11 +70,10 @@ BOOST_AUTO_TEST_CASE( test_profile_writers )
 
     // resolve module dependencies
     using namespace halmd::io::profile;
-    po::unparsed_options unparsed;
     modules::resolver resolver(modules::registry::graph());
-    resolver.resolve<writers::log>(vm, unparsed);
-    resolver.resolve<writers::hdf5>(vm, unparsed);
-    resolver.resolve<utility::profiler>(vm, unparsed);
+    resolver.resolve<writers::log>(vm);
+    resolver.resolve<writers::hdf5>(vm);
+    resolver.resolve<utility::profiler>(vm);
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 

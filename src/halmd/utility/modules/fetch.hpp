@@ -43,9 +43,9 @@ struct fetcher
     typedef typed_builder_base<BaseT, modules::factory> BaseBuilder;
 
     modules::factory& factory;
-    po::options const& vm;
+    po::variables_map const& vm;
 
-    fetcher(modules::factory& factory, po::options const& vm)
+    fetcher(modules::factory& factory, po::variables_map const& vm)
       : factory(factory)
       , vm(vm)
     {}
@@ -85,7 +85,7 @@ struct fetcher
 };
 
 template <typename T>
-fetcher<T> fetch(modules::factory& factory, po::options const& vm)
+fetcher<T> fetch(modules::factory& factory, po::variables_map const& vm)
 {
     return fetcher<T>(factory, vm);
 }

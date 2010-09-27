@@ -26,7 +26,7 @@
 
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -61,14 +61,14 @@ public:
     typedef profiler _Self;
     static void options(po::options_description& desc) {}
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef io::profile::writer profile_writer_type;
     typedef accumulator<double> accumulator_type;
 
     std::vector<shared_ptr<profile_writer_type> > profile_writer;
 
-    profiler(modules::factory& factory, po::options const& vm);
+    profiler(modules::factory& factory, po::variables_map const& vm);
 
     template <typename AccumulatorMap>
     void register_map(AccumulatorMap const& map)

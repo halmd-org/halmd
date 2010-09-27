@@ -25,7 +25,7 @@
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -53,8 +53,7 @@ struct ModuleConcept
     {
         BOOST_MPL_ASSERT(( boost::is_same<T, _Self> )); // _Self points to the class itself
         Function<void (), &T::depends>();
-        Function<void (po::options_description&), &T::options>();
-        Function<void (po::options const&), &T::select>();
+        Function<void (po::variables_map const&), &T::select>();
     }
 };
 
@@ -78,8 +77,7 @@ struct ModuleConcept<T, typename boost::enable_if<boost::is_object<typename T::_
         BOOST_MPL_ASSERT(( boost::is_same<_Self, T> ));
         BOOST_MPL_ASSERT(( boost::is_base_of<_Base, T> )); // _Base is (any) base of class
         FunctionNotFromBase<void (), &T::depends, &_Base::depends>();
-        FunctionNotFromBase<void (po::options_description&), &T::options, &_Base::options>();
-        FunctionNotFromBase<void (po::options const&), &T::select, &_Base::select>();
+        FunctionNotFromBase<void (po::variables_map const&), &T::select, &_Base::select>();
     }
 };
 

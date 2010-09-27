@@ -36,7 +36,7 @@
 #include <halmd/utility/modules/factory.hpp>
 #include <halmd/utility/modules/policy.hpp>
 #include <halmd/utility/modules/resolver.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 #include <halmd/io/logger.hpp>
 
 using namespace halmd;
@@ -50,7 +50,7 @@ using namespace std;
  *  Johnson, Zollweg, and Gubbins, Mol. Phys. 78, 591 (1993).
  */
 
-void set_default_options(halmd::po::options& vm);
+void set_default_options(halmd::po::variables_map& vm);
 
 const double eps = numeric_limits<double>::epsilon();
 const float eps_float = numeric_limits<float>::epsilon();
@@ -67,7 +67,7 @@ inline double heat_capacity(double en_kin, double variance, unsigned npart)
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
 template <int dimension>
-void ideal_gas(po::options vm)
+void ideal_gas(po::variables_map vm)
 {
     using namespace boost::assign;
 
@@ -93,10 +93,9 @@ void ideal_gas(po::options vm)
 
     // set up modules
     BOOST_TEST_MESSAGE("resolve module dependencies");
-    po::unparsed_options unparsed;
     modules::resolver resolver(modules::registry::graph());
-    resolver.resolve<mdsim::core<dimension> >(vm, unparsed);
-    resolver.resolve<observables::thermodynamics<dimension> >(vm, unparsed);
+    resolver.resolve<mdsim::core<dimension> >(vm);
+    resolver.resolve<observables::thermodynamics<dimension> >(vm);
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 
@@ -133,7 +132,7 @@ void ideal_gas(po::options vm)
 }
 
 template <int dimension>
-void thermodynamics(po::options vm)
+void thermodynamics(po::variables_map vm)
 {
     typedef boost::program_options::variable_value variable_value;
 
@@ -163,10 +162,9 @@ void thermodynamics(po::options vm)
 
     // set up modules
     BOOST_TEST_MESSAGE("resolve module dependencies");
-    po::unparsed_options unparsed;
     modules::resolver resolver(modules::registry::graph());
-    resolver.resolve<mdsim::core<dimension> >(vm, unparsed);
-    resolver.resolve<observables::thermodynamics<dimension> >(vm, unparsed);
+    resolver.resolve<mdsim::core<dimension> >(vm);
+    resolver.resolve<observables::thermodynamics<dimension> >(vm);
     modules::policy policy(resolver.graph());
     modules::factory factory(policy.graph());
 
@@ -272,7 +270,7 @@ void thermodynamics(po::options vm)
     }
 }
 
-void set_default_options(halmd::po::options& vm)
+void set_default_options(halmd::po::variables_map& vm)
 {
     typedef boost::program_options::variable_value variable_value;
     using namespace boost::assign;
@@ -307,7 +305,7 @@ int init_unit_test_suite()
     using namespace boost::unit_test::framework;
 
     // manually define program option values
-    boost::array<po::options, 2> vm;
+    boost::array<po::variables_map, 2> vm;
     for_each(vm.begin(), vm.end(), boost::bind(&set_default_options, _1));
 
     // parametrize specific program options

@@ -181,6 +181,12 @@ static luabind::scope register_lua()
             namespace_("program_options")
             [
                 class_<po::options_description>("options_description") //< only register class
+              , class_<po::variable_value>("variable_value")
+                    .def(constructor<>())
+                    .def("empty", &po::variable_value::empty)
+                    .def("defaulted", &po::variable_value::defaulted)
+                    .def("value", (any const& (po::variable_value::*)() const) &po::variable_value::value)
+                    .def("value", (any& (po::variable_value::*)()) &po::variable_value::value)
             ]
         ];
 }

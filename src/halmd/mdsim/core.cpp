@@ -71,7 +71,7 @@ void core<dimension>::depends()
 }
 
 template <int dimension>
-void core<dimension>::select(po::options const& vm)
+void core<dimension>::select(po::variables_map const& vm)
 {
     if (vm["dimension"].as<int>() != dimension) {
         throw unsuitable_module("mismatching option dimension");
@@ -82,7 +82,7 @@ void core<dimension>::select(po::options const& vm)
  * Initialize simulation
  */
 template <int dimension>
-core<dimension>::core(modules::factory& factory, po::options const& vm)
+core<dimension>::core(modules::factory& factory, po::variables_map const& vm)
   // dependency injection
   : profiler(modules::fetch<profiler_type>(factory, vm))
   , force(modules::fetch<force_type>(factory, vm))

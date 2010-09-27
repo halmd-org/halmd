@@ -48,7 +48,7 @@ void particle<dimension, float_type>::depends()
 }
 
 template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::select(po::options const& vm)
+void particle<dimension, float_type>::select(po::variables_map const& vm)
 {
     if (!starts_with(vm["backend"].as<string>(), "gpu")) {
         throw unsuitable_module("mismatching option backend");
@@ -56,7 +56,7 @@ void particle<dimension, float_type>::select(po::options const& vm)
 }
 
 template <unsigned int dimension, typename float_type>
-particle<dimension, float_type>::particle(modules::factory& factory, po::options const& vm)
+particle<dimension, float_type>::particle(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , device(modules::fetch<device_type>(factory, vm))

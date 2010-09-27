@@ -29,7 +29,7 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/observable.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -54,7 +54,7 @@ public:
     typedef observable<dimension> _Base;
     static void options(po::options_description& desc);
     static void depends();
-    static void select(po::options const& vm);
+    static void select(po::variables_map const& vm);
 
     typedef mdsim::box<dimension> box_type;
     typedef io::statevars::writer<dimension> writer_type;
@@ -63,7 +63,7 @@ public:
 
     shared_ptr<box_type> box;
 
-    thermodynamics(modules::factory& factory, po::options const& vm);
+    thermodynamics(modules::factory& factory, po::variables_map const& vm);
     virtual ~thermodynamics() {}
     void register_runtimes(profiler_type& profiler);
     virtual void register_statevars(writer_type& writer);

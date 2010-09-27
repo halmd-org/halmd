@@ -31,7 +31,7 @@
 #include <halmd/random/random.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -48,7 +48,7 @@ public:
     typedef halmd::random::random _Base;
     static void options(po::options_description& desc);
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef typename RandomNumberGenerator::rng_type rng_type;
     typedef utility::gpu::device device_type;
@@ -57,7 +57,7 @@ public:
 
     RandomNumberGenerator rng;
 
-    random(modules::factory& factory, po::options const& vm);
+    random(modules::factory& factory, po::variables_map const& vm);
     virtual ~random() {}
     void seed(unsigned int value);
 

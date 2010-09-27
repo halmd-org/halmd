@@ -39,7 +39,7 @@ void trajectory<dimension, float_type>::depends()
 }
 
 template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(modules::factory& factory, po::options const& vm)
+trajectory<dimension, float_type>::trajectory(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))

@@ -25,7 +25,7 @@
 #include <halmd/utility/module.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -40,14 +40,14 @@ public:
     typedef box _Self;
     static void options(po::options_description& desc);
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;
     typedef mdsim::particle<dimension> particle_type;
 
     shared_ptr<particle_type> particle;
 
-    box(modules::factory& factory, po::options const& vm);
+    box(modules::factory& factory, po::variables_map const& vm);
     virtual ~box() {}
     void length(vector_type const& value_type);
     vector_type const& length() { return length_; }

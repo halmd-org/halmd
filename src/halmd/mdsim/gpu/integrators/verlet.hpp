@@ -25,7 +25,7 @@
 #include <halmd/deprecated/util/exception.hpp>
 #include <halmd/mdsim/gpu/integrator.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -43,7 +43,7 @@ public:
     typedef mdsim::gpu::integrator<dimension, float_type> _Base;
     static void options(po::options_description& desc) {}
     static void depends() {}
-    static void select(po::options const& vm);
+    static void select(po::variables_map const& vm);
 
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::particle_type particle_type;
@@ -57,7 +57,7 @@ public:
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper;
 
-    verlet(modules::factory& factory, po::options const& vm);
+    verlet(modules::factory& factory, po::variables_map const& vm);
     virtual ~verlet() {}
     void register_runtimes(profiler_type& profiler);
     void integrate();

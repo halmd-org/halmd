@@ -23,7 +23,7 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -43,9 +43,9 @@ public:
 
     static void options(po::options_description& desc) {}
     static void depends() {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
-    writer(modules::factory& factory, po::options const& vm) {}
+    writer(modules::factory& factory, po::variables_map const& vm) {}
     virtual ~writer() {}
     virtual void write() = 0;
 

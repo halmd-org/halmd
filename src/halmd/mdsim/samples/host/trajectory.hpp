@@ -26,7 +26,7 @@
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -41,14 +41,14 @@ public:
     typedef trajectory _Self;
     static void options(po::options_description& desc) {}
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     // this module is used by mdsim::gpu::sampler::trajectory
     // and must not depend on host::particle
     typedef mdsim::particle<dimension> particle_type;
     typedef typename mdsim::host::particle<dimension, float_type>::vector_type vector_type;
 
-    trajectory(modules::factory& factory, po::options const& vm);
+    trajectory(modules::factory& factory, po::variables_map const& vm);
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 

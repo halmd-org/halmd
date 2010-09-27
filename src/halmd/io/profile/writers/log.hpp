@@ -26,7 +26,7 @@
 
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -45,12 +45,12 @@ public:
     typedef profile::writer _Base;
     static void options(po::options_description& desc) {}
     static void depends() {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef _Base::accumulator_type accumulator_type;
     typedef std::pair<accumulator_type const*, std::string> acc_desc_pair_type;
 
-    log(modules::factory& factory, po::options const& vm);
+    log(modules::factory& factory, po::variables_map const& vm);
     void write();
 
 private:

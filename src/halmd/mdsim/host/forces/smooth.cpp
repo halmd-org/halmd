@@ -40,17 +40,25 @@ void smooth<dimension, float_type>::options(po::options_description& desc)
 {
     po::options_description group("C²-potential smoothing function");
     group.add_options()
-        ("smooth", po::value<float>()->required(),
+        ("smooth", po::value<float>(),
          "C²-potential smoothing factor")
         ;
     desc.add(group);
+}
+
+template <int dimension, typename float_type>
+void smooth<dimension, float_type>::select(po::variables_map const& vm)
+{
+    if (vm["smooth"].empty()) {
+        throw unsuitable_module("mismatching option smooth");
+    }
 }
 
 /**
  * Initialise parameters
  */
 template <int dimension, typename float_type>
-smooth<dimension, float_type>::smooth(modules::factory& factory, po::options const& vm)
+smooth<dimension, float_type>::smooth(modules::factory& factory, po::variables_map const& vm)
   // initialise parameters
   : r_smooth_(vm["smooth"].as<float>())
   , rri_smooth_(std::pow(r_smooth_, -2))

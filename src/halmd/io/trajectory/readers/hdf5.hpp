@@ -25,7 +25,7 @@
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -41,14 +41,14 @@ public:
     typedef hdf5 _Self;
     typedef trajectory::reader<dimension> _Base;
     static void depends();
-    static void select(po::options const& vm);
+    static void select(po::variables_map const& vm);
     static void options(po::options_description& desc) {}
 
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 
-    hdf5(modules::factory& factory, po::options const& vm);
+    hdf5(modules::factory& factory, po::variables_map const& vm);
 
     shared_ptr<sample_type> sample;
 

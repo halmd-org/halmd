@@ -45,7 +45,7 @@ namespace io
 void logging::options(po::options_description& desc)
 {
     desc.add_options()
-        ("verbose,v", po::accum_value<int>()->default_value(warning),
+        ("verbose,v", accum_value<int>()->default_value(warning),
          "increase verbosity")
         ;
 }
@@ -72,7 +72,7 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
     return os;
 }
 
-logging::logging(po::options const& vm)
+logging::logging(po::variables_map const& vm)
 {
     core::get()->add_global_attribute(
         "TimeStamp"

@@ -40,7 +40,7 @@ namespace mdsim { namespace host { namespace forces
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>
-void lj_square<dimension, float_type>::select(po::options const& vm)
+void lj_square<dimension, float_type>::select(po::variables_map const& vm)
 {
     if (vm["force"].as<std::string>() != "lj_square") {
         throw unsuitable_module("mismatching option force");
@@ -51,7 +51,7 @@ void lj_square<dimension, float_type>::select(po::options const& vm)
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-lj_square<dimension, float_type>::lj_square(modules::factory& factory, po::options const& vm)
+lj_square<dimension, float_type>::lj_square(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // allocate potential parameters
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))

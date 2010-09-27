@@ -54,7 +54,7 @@ void random<RandomNumberGenerator>::depends()
 }
 
 template <typename RandomNumberGenerator>
-random<RandomNumberGenerator>::random(modules::factory& factory, po::options const& vm)
+random<RandomNumberGenerator>::random(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , device(modules::fetch<device_type>(factory, vm))

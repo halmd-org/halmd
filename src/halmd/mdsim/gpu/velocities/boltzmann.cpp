@@ -40,7 +40,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::depends()
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void boltzmann<dimension, float_type, RandomNumberGenerator>::select(po::options const& vm)
+void boltzmann<dimension, float_type, RandomNumberGenerator>::select(po::variables_map const& vm)
 {
     if (vm["velocity"].as<string>() != "boltzmann") {
         throw unsuitable_module("mismatching option velocity");
@@ -48,7 +48,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::select(po::options
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(modules::factory& factory, po::options const& vm)
+boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))

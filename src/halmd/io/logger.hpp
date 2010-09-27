@@ -26,7 +26,7 @@
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -55,7 +55,7 @@ public:
 
     static boost::log::sources::severity_logger<severity_level> logger;
 
-    logging(po::options const& vm);
+    logging(po::variables_map const& vm);
     ~logging();
 
 private:

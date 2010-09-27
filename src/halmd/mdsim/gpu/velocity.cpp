@@ -41,7 +41,7 @@ void velocity<dimension, float_type>::depends()
 }
 
 template <int dimension, typename float_type>
-velocity<dimension, float_type>::velocity(modules::factory& factory, po::options const& vm)
+velocity<dimension, float_type>::velocity(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))

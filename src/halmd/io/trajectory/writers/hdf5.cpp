@@ -46,7 +46,7 @@ void hdf5<dimension, float_type>::depends()
  * read sample from HDF5 trajectory file
  */
 template <int dimension, typename float_type>
-hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& vm)
+hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , sample(modules::fetch<sample_type>(factory, vm))

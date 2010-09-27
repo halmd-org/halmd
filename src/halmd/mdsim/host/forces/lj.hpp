@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_HOST_FORCES_LJ_HPP
 
 #include <halmd/mdsim/host/force.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -38,7 +38,7 @@ public:
     typedef mdsim::host::force<dimension, float_type> _Base;
     static void depends() {}
     static void options(po::options_description& desc);
-    static void select(po::options const& vm);
+    static void select(po::variables_map const& vm);
 
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
@@ -48,7 +48,7 @@ public:
     using _Base::particle;
     using _Base::smooth;
 
-    lj(modules::factory& factory, po::options const& vm);
+    lj(modules::factory& factory, po::variables_map const& vm);
     virtual ~lj() {}
     virtual void compute();
     matrix_type const& cutoff() { return r_cut_; }

@@ -62,7 +62,7 @@ void box<dimension>::depends()
  * Set box edge lengths
  */
 template <int dimension>
-box<dimension>::box(modules::factory& factory, po::options const& vm)
+box<dimension>::box(modules::factory& factory, po::variables_map const& vm)
   // dependency injection
   : particle(modules::fetch<particle_type>(factory, vm))
   // default to cube

@@ -43,7 +43,7 @@ void file<dimension, float_type>::depends()
 }
 
 template <int dimension, typename float_type>
-void file<dimension, float_type>::select(po::options const& vm)
+void file<dimension, float_type>::select(po::variables_map const& vm)
 {
     if (vm["position"].as<string>() != "file") {
         throw unsuitable_module("mismatching option position");
@@ -51,7 +51,7 @@ void file<dimension, float_type>::select(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-file<dimension, float_type>::file(modules::factory& factory, po::options const& vm)
+file<dimension, float_type>::file(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , reader(modules::fetch<reader_type>(factory, vm))

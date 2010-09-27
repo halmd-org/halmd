@@ -41,7 +41,7 @@ void hdf5<dimension, float_type>::depends()
 }
 
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::select(po::options const& vm)
+void hdf5<dimension, float_type>::select(po::variables_map const& vm)
 {
     if (!H5File::isHdf5(vm["trajectory-file"].as<string>())) {
         throw unsuitable_module("not an HDF5 file: " + vm["trajectory-file"].as<string>());
@@ -52,7 +52,7 @@ void hdf5<dimension, float_type>::select(po::options const& vm)
  * read sample from HDF5 trajectory file
  */
 template <int dimension, typename float_type>
-hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::options const& vm)
+hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , sample(modules::fetch<sample_type>(factory, vm))

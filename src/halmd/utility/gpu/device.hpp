@@ -24,7 +24,7 @@
 
 #include <cuda_wrapper.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd { namespace utility { namespace gpu
 {
@@ -50,9 +50,9 @@ public:
     typedef device _Self;
     static void options(po::options_description& desc);
     static void depends() {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
-    device(modules::factory& factory, po::options const& vm);
+    device(modules::factory& factory, po::variables_map const& vm);
     virtual ~device();
     unsigned int threads() { return threads_; }
 

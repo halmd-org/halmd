@@ -27,7 +27,7 @@
 #include <cuda_wrapper.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -42,12 +42,12 @@ public:
     typedef trajectory _Self;
     static void options(po::options_description& desc) {}
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
 
-    trajectory(modules::factory& factory, po::options const& vm);
+    trajectory(modules::factory& factory, po::variables_map const& vm);
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 

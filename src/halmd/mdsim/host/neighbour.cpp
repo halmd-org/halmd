@@ -61,7 +61,7 @@ void neighbour<dimension, float_type>::depends()
 }
 
 template <int dimension, typename float_type>
-neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::options const& vm)
+neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))

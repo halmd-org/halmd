@@ -29,7 +29,7 @@
 #include <halmd/mdsim/core.hpp>
 #include <halmd/observables/observable.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -45,7 +45,7 @@ public:
     typedef halmd::main _Base;
     static void options(po::options_description& desc);
     static void depends();
-    static void select(po::options const& vm) {};
+    static void select(po::variables_map const& vm) {};
 
     typedef mdsim::core<dimension> core_type;
     typedef observables::observable<dimension> observable_type;
@@ -54,7 +54,7 @@ public:
     typedef io::profile::writer profile_writer_type;
     typedef utility::profiler profiler_type;
 
-    sampler(modules::factory& factory, po::options const& vm);
+    sampler(modules::factory& factory, po::variables_map const& vm);
     virtual void run();
     void sample(bool force=false);
     void register_runtimes(profiler_type& profiler);

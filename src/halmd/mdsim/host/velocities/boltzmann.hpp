@@ -25,7 +25,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/random/host/random.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -42,7 +42,7 @@ public:
     typedef host::velocity<dimension, float_type> _Base;
     static void options(po::options_description& desc);
     static void depends();
-    static void select(po::options const& vm);
+    static void select(po::variables_map const& vm);
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
@@ -51,7 +51,7 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<random_type> random;
 
-    boltzmann(modules::factory& factory, po::options const& vm);
+    boltzmann(modules::factory& factory, po::variables_map const& vm);
     virtual ~boltzmann() {};
     void set();
 

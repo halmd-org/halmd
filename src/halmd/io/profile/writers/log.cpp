@@ -53,7 +53,7 @@ namespace halmd
 namespace io { namespace profile { namespace writers
 {
 
-log::log(modules::factory& factory, po::options const& vm)
+log::log(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm) {}
 
 /**

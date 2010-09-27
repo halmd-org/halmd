@@ -30,7 +30,7 @@
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -52,7 +52,7 @@ public:
     typedef neighbour _Self;
     typedef mdsim::neighbour<dimension> _Base;
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
     static void options(po::options_description& desc);
 
     typedef host::particle<dimension, float_type> particle_type;
@@ -70,7 +70,7 @@ public:
     shared_ptr<force_type> force;
     shared_ptr<box_type> box;
 
-    neighbour(modules::factory& factory, po::options const& vm);
+    neighbour(modules::factory& factory, po::variables_map const& vm);
     virtual ~neighbour() {}
     void update();
     bool check();

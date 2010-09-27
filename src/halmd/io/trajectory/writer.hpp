@@ -22,7 +22,7 @@
 
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -37,9 +37,9 @@ public:
     typedef writer _Self;
     static void options(po::options_description& desc) {}
     static void depends() {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
-    writer(modules::factory& factory, po::options const& vm) {}
+    writer(modules::factory& factory, po::variables_map const& vm) {}
     virtual ~writer() {}
     virtual std::string file_extension() const = 0;
     virtual void append() = 0;

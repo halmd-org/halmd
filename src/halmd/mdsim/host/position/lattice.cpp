@@ -46,7 +46,7 @@ void lattice<dimension, float_type>::depends()
 }
 
 template <int dimension, typename float_type>
-void lattice<dimension, float_type>::select(po::options const& vm)
+void lattice<dimension, float_type>::select(po::variables_map const& vm)
 {
     if (vm["position"].as<string>() != "lattice") {
         throw unsuitable_module("mismatching option position");
@@ -54,7 +54,7 @@ void lattice<dimension, float_type>::select(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-lattice<dimension, float_type>::lattice(modules::factory& factory, po::options const& vm)
+lattice<dimension, float_type>::lattice(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))

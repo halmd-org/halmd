@@ -38,7 +38,7 @@ namespace io { namespace statevars { namespace writers
  * open HDF5 file for writing
  */
 template <int dimension>
-hdf5<dimension>::hdf5(modules::factory& factory, po::options const& vm)
+hdf5<dimension>::hdf5(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   , file_(
         (initial_path() / (vm["output"].as<string>() + ".msv")).string()

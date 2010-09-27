@@ -26,7 +26,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/modules/predicate.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {

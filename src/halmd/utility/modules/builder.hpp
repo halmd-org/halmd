@@ -26,10 +26,10 @@
 #include <boost/weak_ptr.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/utility/modules/concept.hpp>
+#include <halmd/options.hpp>
 #include <halmd/utility/demangle.hpp>
+#include <halmd/utility/modules/concept.hpp>
 #include <halmd/utility/modules/exception.hpp>
-#include <halmd/utility/options.hpp>
 
 namespace halmd
 {
@@ -57,11 +57,10 @@ struct untyped_builder_base
 {
     virtual ~untyped_builder_base() {}
     virtual void depends() = 0;
-    virtual void options(po::options_description& desc) = 0;
-    virtual void select(po::options const& vm) = 0;
+    virtual void select(po::variables_map const& vm) = 0;
     virtual std::string name() = 0;
     virtual std::type_info const& type() = 0;
-    po::options vm;
+    po::variables_map vm;
 };
 
 /**
@@ -75,7 +74,7 @@ struct typed_builder_base
   : public untyped_builder_base
 {
     typedef T BaseT;
-    virtual shared_ptr<BaseT> fetch(Factory& factory, po::options const& vm) = 0;
+    virtual shared_ptr<BaseT> fetch(Factory& factory, po::variables_map const& vm) = 0;
 
     /**
      * resolve class dependencies
@@ -86,17 +85,9 @@ struct typed_builder_base
     }
 
     /**
-     * assemble module options
-     */
-    virtual void options(po::options_description& desc)
-    {
-        T::options(desc);
-    }
-
-    /**
      * resolve class dependencies
      */
-    virtual void select(po::options const& vm)
+    virtual void select(po::variables_map const& vm)
     {
         T::select(vm);
     }
@@ -124,20 +115,9 @@ struct typed_builder_base<T, Factory, typename enable_if<is_object<typename T::_
     }
 
     /**
-     * assemble module options
-     */
-    virtual void options(po::options_description& desc)
-    {
-        Base::options(desc);
-        // check for inherited base module function
-        boost::function_requires<modules::ModuleConcept<T> >();
-        T::options(desc);
-    }
-
-    /**
      * resolve class dependencies
      */
-    virtual void select(po::options const& vm)
+    virtual void select(po::variables_map const& vm)
     {
         Base::select(vm);
         // check for inherited base module function
@@ -160,7 +140,7 @@ public:
     /**
      * returns singleton instance
      */
-    shared_ptr<BaseT> fetch(Factory& factory, po::options const& vm)
+    shared_ptr<BaseT> fetch(Factory& factory, po::variables_map const& vm)
     {
         // This attaches the module-specific option values to the
         // global option values by setting an internal pointer.
@@ -168,7 +148,7 @@ public:
         // the constructor of the module will get a reference to
         // the global map, and not the module-specific map.
 
-        po::options vm_(vm);
+        po::variables_map vm_(vm);
         vm_.next(&this->vm);
 
         // We use an observing weak pointer instead of an owning
@@ -191,9 +171,9 @@ public:
     /**
      * resolve module dependencies
      */
-    void select(po::options const& vm)
+    void select(po::variables_map const& vm)
     {
-        po::options vm_(vm);
+        po::variables_map vm_(vm);
         vm_.next(&this->vm);
         Base::select(vm_);
     }

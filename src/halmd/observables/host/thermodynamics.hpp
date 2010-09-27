@@ -26,7 +26,7 @@
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -43,7 +43,7 @@ public:
     typedef observables::thermodynamics<dimension> _Base;
     static void depends();
     static void options(po::options_description& desc) {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::force<dimension, float_type> force_type;
@@ -53,7 +53,7 @@ public:
     shared_ptr<particle_type> particle;
     shared_ptr<force_type> force;
 
-    thermodynamics(modules::factory& factory, po::options const& vm);
+    thermodynamics(modules::factory& factory, po::variables_map const& vm);
     virtual ~thermodynamics() {}
 
     double en_kin() const;

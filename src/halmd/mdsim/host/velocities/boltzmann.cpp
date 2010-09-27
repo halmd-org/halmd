@@ -56,7 +56,7 @@ void boltzmann<dimension, float_type>::depends()
 }
 
 template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::select(po::options const& vm)
+void boltzmann<dimension, float_type>::select(po::variables_map const& vm)
 {
     if (vm["velocity"].as<string>() != "boltzmann") {
         throw unsuitable_module("mismatching option velocity");
@@ -64,7 +64,7 @@ void boltzmann<dimension, float_type>::select(po::options const& vm)
 }
 
 template <int dimension, typename float_type>
-boltzmann<dimension, float_type>::boltzmann(modules::factory& factory, po::options const& vm)
+boltzmann<dimension, float_type>::boltzmann(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))

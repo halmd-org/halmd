@@ -67,7 +67,7 @@ void sampler<dimension>::depends()
  * Initialize simulation
  */
 template <int dimension>
-sampler<dimension>::sampler(modules::factory& factory, po::options const& vm)
+sampler<dimension>::sampler(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , core(modules::fetch<core_type>(factory, vm))

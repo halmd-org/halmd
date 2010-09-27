@@ -22,7 +22,7 @@
 
 #include <luabind/lua_include.hpp>
 
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -34,7 +34,7 @@ class script
 {
 public:
     script();
-    void options(po::options_description& desc);
+    po::options_description options();
     void run();
 
 private:

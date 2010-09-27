@@ -35,7 +35,7 @@ template <int dimension>
 void reader<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("trajectory-file,J", po::value<string>()->required(),
+        ("trajectory-file,J", po::value<string>(),
          "trajectory input file")
         ;
 
@@ -48,7 +48,15 @@ void reader<dimension>::options(po::options_description& desc)
 }
 
 template <int dimension>
-reader<dimension>::reader(modules::factory& factory, po::options const& vm)
+void reader<dimension>::select(po::variables_map const& vm)
+{
+    if (vm["trajectory-file"].empty()) {
+        throw unsuitable_module("mismatching option trajectory-file");
+    }
+}
+
+template <int dimension>
+reader<dimension>::reader(modules::factory& factory, po::variables_map const& vm)
   // parse options
   : path_(vm["trajectory-file"].as<string>())
   , offset_(vm["trajectory-sample"].as<ssize_t>())

@@ -28,7 +28,7 @@
 #undef NDEBUG
 #include <halmd/io/logger.hpp>
 #define NDEBUG
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 
 using namespace boost;
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( test_logging )
 {
     typedef boost::program_options::variable_value variable_value;
 
-    halmd::po::options vm;
+    halmd::po::variables_map vm;
     // override const operator[] in variables_map
     map<string, variable_value>& vm_(vm);
     vm_["verbose"] = variable_value(0, true);

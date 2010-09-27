@@ -34,6 +34,8 @@
 #include <halmd/deprecated/util/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/main.hpp>
+#include <halmd/options.hpp>
+#include <halmd/script.hpp>
 #include <halmd/utility/timer.hpp>
 #include <halmd/utility/hostname.hpp>
 #include <halmd/utility/module.hpp>
@@ -41,7 +43,6 @@
 #include <halmd/utility/modules/policy.hpp>
 #include <halmd/utility/modules/resolver.hpp>
 #include <halmd/utility/modules/writer.hpp>
-#include <halmd/utility/options.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -50,20 +51,24 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
+    static halmd::script script; //< load Lua scripting engine
+
+    options_parser options(script.options());
+    try {
+        options.parse(argc, argv);
+    }
+    catch (exit_exception const& e) {
+        return e.code();
+    }
+    po::variables_map vm(options.parsed());
+
+    // FIXME split log_to_console, log_to_file
+
 #ifdef NDEBUG
     // turns off the automatic error printing from the HDF5 library
     H5::Exception::dontPrint();
 #endif
 
-    // parse program options
-    po::options vm;
-    po::unparsed_options unparsed;
-    try {
-        po::parse_options(argc, argv, vm, unparsed);
-    }
-    catch (po::options_parser_error const& e) {
-        return e.status();
-    }
 
 #ifndef NDEBUG
     // enable logging as early as possible if debugging
@@ -78,7 +83,7 @@ int main(int argc, char **argv)
 #endif
     modules::resolver resolver(modules::registry::graph());
     try {
-        resolver.resolve<halmd::main>(vm, unparsed);
+        resolver.resolve<halmd::main>(vm);
     }
     catch (program_options::error const& e) {
         cerr << PROGRAM_NAME ": " << e.what() << endl;

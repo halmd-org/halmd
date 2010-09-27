@@ -30,7 +30,7 @@
 #include <halmd/mdsim/gpu/neighbour_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -58,7 +58,7 @@ public:
     typedef mdsim::neighbour<dimension> _Base;
     static void options(po::options_description& desc); // also see mdsim::host::neighbour
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
@@ -81,7 +81,7 @@ public:
     cuda::config dim_reduce;
     displacement_impl_type const displacement_impl;
 
-    neighbour(modules::factory& factory, po::options const& vm);
+    neighbour(modules::factory& factory, po::variables_map const& vm);
     virtual ~neighbour() {}
     void register_runtimes(profiler_type& profiler);
     void update();

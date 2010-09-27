@@ -48,7 +48,7 @@ void random::options(po::options_description& desc)
 /**
  * Seed random number generator from option or device
  */
-void random::seed(po::options const& vm)
+void random::seed(po::variables_map const& vm)
 {
     unsigned int value;
     if (vm["random-seed"].empty()) {

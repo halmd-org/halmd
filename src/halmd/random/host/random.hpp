@@ -27,7 +27,7 @@
 #include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/random.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -43,11 +43,11 @@ public:
     typedef halmd::random::random _Base;
     static void depends() {}
     static void options(po::options_description& desc) {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef host::gfsr4 random_generator; // FIXME template parameter
 
-    random(modules::factory& factory, po::options const& vm);
+    random(modules::factory& factory, po::variables_map const& vm);
     virtual ~random() {}
     void seed(unsigned int value);
 

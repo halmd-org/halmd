@@ -30,7 +30,7 @@
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -46,7 +46,7 @@ public:
     typedef core _Self;
     static void options(po::options_description& desc);
     static void depends();
-    static void select(po::options const& vm);
+    static void select(po::variables_map const& vm);
 
     typedef mdsim::force<dimension> force_type;
     typedef mdsim::neighbour<dimension> neighbour_type;
@@ -57,7 +57,7 @@ public:
     typedef mdsim::velocity<dimension> velocity_type;
     typedef utility::profiler profiler_type;
 
-    core(modules::factory& factory, po::options const& vm);
+    core(modules::factory& factory, po::variables_map const& vm);
     void register_runtimes(profiler_type& profiler);
     void prepare();
     void mdstep();

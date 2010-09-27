@@ -27,7 +27,7 @@
 #include <halmd/utility/modules/predicate.hpp>
 #include <halmd/utility/modules/registry.hpp>
 #include <halmd/utility/modules/visitor.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -75,7 +75,7 @@ public:
     }
 
     template <typename T>
-    void resolve(po::options const& vm, po::unparsed_options& unparsed)
+    void resolve(po::variables_map const& vm)
     {
         typedef boost::property_map<Graph, tag::selected>::type SelectedMap;
         typedef typename boost::property_traits<SelectedMap>::value_type ColorValue;
@@ -88,7 +88,7 @@ public:
         depth_first_visit(
             graph_
           , v
-          , visitor::resolver<Graph>(graph_, vm, unparsed)
+          , visitor::resolver<Graph>(graph_, vm)
           , &color_.front()
           , SelectedPredicate(get(tag::selected(), graph_), Color::white()) // terminate search
         );

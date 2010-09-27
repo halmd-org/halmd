@@ -39,7 +39,7 @@ namespace io { namespace profile { namespace writers
 /**
  * open HDF5 file for writing
  */
-hdf5::hdf5(modules::factory& factory, po::options const& vm)
+hdf5::hdf5(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   , file_(
         (initial_path() / (vm["output"].as<string>() + ".prf")).string()

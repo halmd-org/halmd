@@ -25,7 +25,7 @@ namespace halmd
 namespace random { namespace host
 {
 
-random::random(modules::factory& factory, po::options const& vm)
+random::random(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
 {
     _Base::seed(vm);

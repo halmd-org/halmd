@@ -20,7 +20,7 @@
 #ifndef HALMD_MAIN_HPP
 #define HALMD_MAIN_HPP
 
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 #include <halmd/utility/module.hpp>
 
 namespace halmd
@@ -33,9 +33,9 @@ public:
     typedef main _Self;
     static void options(po::options_description& desc) {}
     static void depends() {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
-    main(modules::factory& factory, po::options const& vm) {}
+    main(modules::factory& factory, po::variables_map const& vm) {}
     virtual ~main() {}
     virtual void run() = 0;
 };

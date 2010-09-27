@@ -28,7 +28,7 @@
 
 #include <halmd/utility/modules/builder.hpp>
 #include <halmd/utility/modules/property.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {

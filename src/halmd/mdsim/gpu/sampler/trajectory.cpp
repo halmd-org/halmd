@@ -51,7 +51,7 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::depen
 }
 
 template <int dimension, typename float_type>
-trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::trajectory(modules::factory& factory, po::options const& vm)
+trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::trajectory(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))
@@ -60,7 +60,7 @@ trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::trajectory(
 {}
 
 template <int dimension, typename float_type>
-trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::trajectory(modules::factory& factory, po::options const& vm)
+trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::trajectory(modules::factory& factory, po::variables_map const& vm)
   : _Base(factory, vm)
   // dependency injection
   , particle(modules::fetch<particle_type>(factory, vm))

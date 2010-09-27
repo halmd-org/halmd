@@ -50,7 +50,7 @@ void force<dimension>::depends()
 }
 
 template <int dimension>
-force<dimension>::force(modules::factory& factory, po::options const& vm)
+force<dimension>::force(modules::factory& factory, po::variables_map const& vm)
   // dependency injection
   : particle(modules::fetch<particle_type>(factory, vm))
 {

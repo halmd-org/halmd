@@ -37,7 +37,7 @@ void profiler::depends()
     modules::depends<_Self, profile_writer_type>::required();
 }
 
-profiler::profiler(modules::factory& factory, po::options const& vm)
+profiler::profiler(modules::factory& factory, po::variables_map const& vm)
   // dependency injection
   : profile_writer(modules::fetch<profile_writer_type>(factory, vm)) {}
 

@@ -30,7 +30,7 @@
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/thermodynamics.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -56,7 +56,7 @@ public:
     typedef mdsim::force<dimension> _Base;
     static void options(po::options_description& desc) {}
     static void depends();
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
     typedef type_traits<dimension, float_type> _type_traits;
     typedef typename _type_traits::vector_type vector_type;
@@ -73,7 +73,7 @@ public:
     shared_ptr<box_type> box;
 //     shared_ptr<smooth_type> smooth;
 
-    force(modules::factory& factory, po::options const& vm);
+    force(modules::factory& factory, po::variables_map const& vm);
     virtual ~force() {};
     virtual void compute() = 0;
     virtual matrix_type const& cutoff() = 0;

@@ -59,7 +59,7 @@ void device::options(po::options_description& desc)
 /**
  * Initialize CUDA device
  */
-device::device(modules::factory& factory, po::options const& vm)
+device::device(modules::factory& factory, po::variables_map const& vm)
 {
 #ifndef __DEVICE_EMULATION__
     try {

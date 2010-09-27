@@ -26,7 +26,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/modules/predicate.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -72,15 +72,13 @@ struct resolver
     typedef typename boost::property_traits<PropertyMap>::value_type ColorValue;
     typedef boost::color_traits<ColorValue> Color;
 
-    resolver(Graph& g, po::options const& vm, po::unparsed_options& unparsed)
+    resolver(Graph& g, po::variables_map const& vm)
       : g(g)
       , vm(vm)
-      , unparsed(unparsed)
     {}
 
     Graph& g;
-    po::options const& vm;
-    po::unparsed_options& unparsed;
+    po::variables_map const& vm;
 
     template <typename Vertex, typename FilteredGraph>
     void discover_vertex(Vertex const& v, FilteredGraph const&)
@@ -89,15 +87,6 @@ struct resolver
         Builder builder = get(tag::builder(), g, v);
         if (builder) {
             builder->vm = vm;
-            po::options_description desc;
-            builder->options(desc);
-            try {
-                po::parse_options(unparsed, desc, builder->vm);
-            }
-            catch (po::required_option const& e) {
-                LOG_DEBUG("✘ " << e.what());
-                return;
-            }
             try {
                 builder->select(builder->vm);
             }

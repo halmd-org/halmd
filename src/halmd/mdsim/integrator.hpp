@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_INTEGRATOR_HPP
 
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/options.hpp>
+#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -36,9 +36,9 @@ public:
     typedef integrator _Self;
     static void options(po::options_description& desc);
     static void depends() {}
-    static void select(po::options const& vm) {}
+    static void select(po::variables_map const& vm) {}
 
-    integrator(modules::factory& factory, po::options const& vm);
+    integrator(modules::factory& factory, po::variables_map const& vm);
     virtual ~integrator() {}
     virtual void integrate() = 0;
     virtual void finalize() = 0;
