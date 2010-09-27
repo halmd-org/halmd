@@ -21,6 +21,27 @@
 -- HALMD Lua library
 --
 
+require("halmd.gpu.device")
+require("halmd.gpu.random")
+require("halmd.io.logging")
+require("halmd.io.trajectory.reader")
+require("halmd.mdsim.box")
+require("halmd.mdsim.core")
+require("halmd.mdsim.force")
+require("halmd.mdsim.gpu.neighbour")
+require("halmd.mdsim.host.forces.lj")
+require("halmd.mdsim.host.forces.power_law")
+require("halmd.mdsim.host.forces.smooth")
+require("halmd.mdsim.host.velocities.boltzmann")
+require("halmd.mdsim.host.neighbour")
+require("halmd.mdsim.integrator")
+require("halmd.mdsim.particle")
+require("halmd.mdsim.position")
+require("halmd.mdsim.velocity")
+require("halmd.observables.thermodynamics")
+require("halmd.random")
+require("halmd.sampler")
+
 -- grab environment
 local log = log
 
