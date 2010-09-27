@@ -23,8 +23,6 @@
 #include <boost/foreach.hpp>
 #include <exception>
 #include <iostream>
-#include <libgen.h>
-#include <sched.h>
 
 #ifdef WITH_CUDA
 # include <cuda_wrapper.hpp>
@@ -126,19 +124,6 @@ int main(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
-        // bind process to CPU core(s)
-        if (!vm["processor"].empty()) {
-            cpu_set_t mask;
-            CPU_ZERO(&mask);
-            BOOST_FOREACH(int cpu, vm["processor"].as<std::vector<int> >()) {
-                LOG("adding CPU core " << cpu << " to process CPU affinity mask");
-                CPU_SET(cpu, &mask);
-            }
-            if (0 != sched_setaffinity(getpid(), sizeof(cpu_set_t), &mask)) {
-                throw std::logic_error("failed to set process CPU affinity mask");
-            }
-        }
-
         // run MD simulation
         shared_ptr<halmd::main> sampler(modules::fetch<halmd::main>(factory, vm));
         sampler->run();
