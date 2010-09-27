@@ -281,8 +281,12 @@ void set_default_options(halmd::po::options& vm)
     map<string, variable_value>& vm_(vm);
     vm_["force"]        = variable_value(string("lj"), true);
     vm_["integrator"]   = variable_value(string("verlet"), true);
+    vm_["velocity"]     = variable_value(string("boltzmann"), true);
+    vm_["position"]     = variable_value(string("lattice"), true);
+    vm_["disable-state-vars"] = variable_value(false, true);
     vm_["particles"]    = variable_value(1000u, true);
     vm_["timestep"]     = variable_value(0.001, true);
+    vm_["skin"]         = variable_value(0.5f, true);
     // smoothing modifies the equation of state
 //     vm_["smooth"]       = variable_value(0.005f, true);
     vm_["density"]      = variable_value(0.4f, true);
@@ -314,6 +318,10 @@ int init_unit_test_suite()
     {
         map<string, variable_value>& vm_(vm[1]);
         vm_["backend"]      = variable_value(string("gpu"), true);
+        vm_["threads"]      = variable_value(128u, true);
+        vm_["cell-occupancy"] = variable_value(0.4f, true);
+        vm_["random-threads"] = variable_value(32u << DEVICE_SCALE, true);
+        vm_["random-blocks"] = variable_value(32u, true);
     }
 
     test_suite* ts1 = BOOST_TEST_SUITE( "host" );
