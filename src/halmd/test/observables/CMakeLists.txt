@@ -11,9 +11,11 @@ add_test(thermodynamics_host_2d
 add_test(thermodynamics_host_3d
   test_thermodynamics --run_test=host/3d/* --log_level=test_suite
 )
-add_test(thermodynamics_gpu_2d
-  test_thermodynamics --run_test=gpu/2d/* --log_level=test_suite
-)
-add_test(thermodynamics_gpu_3d
-  test_thermodynamics --run_test=gpu/3d/* --log_level=test_suite
-)
+if(WITH_CUDA)
+  add_test(thermodynamics_gpu_2d
+    test_thermodynamics --run_test=gpu/2d/* --log_level=test_suite
+  )
+  add_test(thermodynamics_gpu_3d
+    test_thermodynamics --run_test=gpu/3d/* --log_level=test_suite
+  )
+endif(WITH_CUDA)

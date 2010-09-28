@@ -313,6 +313,7 @@ int init_unit_test_suite()
         map<string, variable_value>& vm_(vm[0]);
         vm_["backend"]      = variable_value(string("host"), true);
     }
+#ifdef WITH_CUDA
     {
         map<string, variable_value>& vm_(vm[1]);
         vm_["backend"]      = variable_value(string("gpu"), true);
@@ -321,6 +322,7 @@ int init_unit_test_suite()
         vm_["random-threads"] = variable_value(32u << DEVICE_SCALE, true);
         vm_["random-blocks"] = variable_value(32u, true);
     }
+#endif /* WITH_CUDA */
 
     test_suite* ts1 = BOOST_TEST_SUITE( "host" );
 
@@ -335,6 +337,7 @@ int init_unit_test_suite()
     ts1->add( ts11 );
     ts1->add( ts12 );
 
+#ifdef WITH_CUDA
     test_suite* ts2 = BOOST_TEST_SUITE( "gpu" );
 
     test_suite* ts21 = BOOST_TEST_SUITE( "2d" );
@@ -347,9 +350,12 @@ int init_unit_test_suite()
 
     ts2->add( ts21 );
     ts2->add( ts22 );
+#endif /* WITH_CUDA */
 
     master_test_suite().add( ts1 );
+#ifdef WITH_CUDA
     master_test_suite().add( ts2 );
+#endif /* WITH_CUDA */
 
     return 0;
 }
