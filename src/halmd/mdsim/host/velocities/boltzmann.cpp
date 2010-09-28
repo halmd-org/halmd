@@ -132,10 +132,11 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -152,19 +153,20 @@ static luabind::scope register_lua(char const* class_name)
                     ]
                 ]
             ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
+static __attribute__((constructor)) void register_lua()
+{
 #ifndef USE_HOST_SINGLE_PRECISION
-    lua_registry::get()->push_back( register_lua<boltzmann<3, double> >("boltzmann_3_") )
-  , lua_registry::get()->push_back( register_lua<boltzmann<2, double> >("boltzmann_2_") )
+    register_lua<boltzmann<3, double> >("boltzmann_3_");
+    register_lua<boltzmann<2, double> >("boltzmann_2_");
 #else
-    lua_registry::get()->push_back( register_lua<boltzmann<3, float> >("boltzmann_3_") )
-  , lua_registry::get()->push_back( register_lua<boltzmann<2, float> >("boltzmann_2_") )
+    register_lua<boltzmann<3, float> >("boltzmann_3_");
+    register_lua<boltzmann<2, float> >("boltzmann_2_");
 #endif
-  , lua_registry::get()->end()
-);
+}
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

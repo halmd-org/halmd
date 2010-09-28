@@ -169,10 +169,11 @@ void sampler<dimension>::sample(bool force)
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             class_<T, shared_ptr<T> >(class_name)
@@ -180,14 +181,15 @@ static luabind::scope register_lua(char const* class_name)
                 [
                     def("options", &T::options)
                 ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
-    lua_registry::get()->push_back( register_lua<sampler<3> >("sampler_3_") )
-  , lua_registry::get()->push_back( register_lua<sampler<2> >("sampler_2_") )
-  , lua_registry::get()->end()
-);
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<sampler<3> >("sampler_3_");
+    register_lua<sampler<2> >("sampler_2_");
+}
 
 // explicit instantiation
 template class sampler<3>;

@@ -57,10 +57,11 @@ force<dimension>::force(modules::factory& factory, po::variables_map const& vm)
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -71,14 +72,15 @@ static luabind::scope register_lua(char const* class_name)
                         def("options", &T::options)
                     ]
             ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
-    lua_registry::get()->push_back( register_lua<force<3> >("force_3_") )
-  , lua_registry::get()->push_back( register_lua<force<2> >("force_2_") )
-  , lua_registry::get()->end()
-);
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<force<3> >("force_3_");
+    register_lua<force<2> >("force_2_");
+}
 
 // explicit instantiation
 template class force<3>;

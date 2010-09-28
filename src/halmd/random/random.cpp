@@ -78,10 +78,11 @@ unsigned int random::readint(std::string const& file)
     return seed;
 }
 
-static luabind::scope register_lua()
+static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("random")
@@ -92,13 +93,9 @@ static luabind::scope register_lua()
                         def("options", &random::options)
                     ]
             ]
-        ];
+        ]
+    ));
 }
-
-static lua_registry::iterator dummy = (
-    lua_registry::get()->push_back( register_lua() )
-  , lua_registry::get()->end()
-);
 
 } // namespace random
 

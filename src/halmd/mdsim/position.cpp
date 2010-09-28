@@ -43,10 +43,11 @@ void position<dimension>::options(po::options_description& desc)
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -57,14 +58,15 @@ static luabind::scope register_lua(char const* class_name)
                         def("options", &T::options)
                     ]
             ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
-    lua_registry::get()->push_back( register_lua<position<3> >("position_3_") )
-  , lua_registry::get()->push_back( register_lua<position<2> >("position_2_") )
-  , lua_registry::get()->end()
-);
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<position<3> >("position_3_");
+    register_lua<position<2> >("position_2_");
+}
 
 template class position<3>;
 template class position<2>;

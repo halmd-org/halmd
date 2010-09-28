@@ -171,10 +171,11 @@ void options_parser::parse(int argc, char** argv)
 /**
  * register Lua C++ wrapper
  */
-static luabind::scope register_lua()
+static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             class_<options_parser>("options_parser")
@@ -192,12 +193,8 @@ static luabind::scope register_lua()
                     .def("value", (any const& (po::variable_value::*)() const) &po::variable_value::value)
                     .def("value", (any& (po::variable_value::*)()) &po::variable_value::value)
             ]
-        ];
+        ]
+    ));
 }
-
-static lua_registry::iterator dummy = (
-    lua_registry::get()->push_back( register_lua() )
-  , lua_registry::get()->end()
-);
 
 } // namespace halmd

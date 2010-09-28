@@ -191,10 +191,11 @@ string device::cuda_runtime_version()
 
 #endif /* CUDART_VERSION >= 2020 */
 
-static luabind::scope register_lua()
+static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("utility")
@@ -212,13 +213,9 @@ static luabind::scope register_lua()
                         ]
                 ]
             ]
-        ];
+        ]
+    ));
 }
-
-static lua_registry::iterator dummy = (
-    lua_registry::get()->push_back( register_lua() )
-  , lua_registry::get()->end()
-);
 
 }} // namespace utility::gpu
 

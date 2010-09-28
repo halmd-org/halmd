@@ -225,10 +225,11 @@ void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_li
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -242,19 +243,20 @@ static luabind::scope register_lua(char const* class_name)
                         ]
                 ]
             ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
+static __attribute__((constructor)) void register_lua()
+{
 #ifndef USE_HOST_SINGLE_PRECISION
-    lua_registry::get()->push_back( register_lua<neighbour<3, double> >("neighbour_3_") )
-  , lua_registry::get()->push_back( register_lua<neighbour<2, double> >("neighbour_2_") )
+    register_lua<neighbour<3, double> >("neighbour_3_");
+    register_lua<neighbour<2, double> >("neighbour_2_");
 #else
-    lua_registry::get()->push_back( register_lua<neighbour<3, float> >("neighbour_3_") )
-  , lua_registry::get()->push_back( register_lua<neighbour<2, float> >("neighbour_2_") )
+    register_lua<neighbour<3, float> >("neighbour_3_");
+    register_lua<neighbour<2, float> >("neighbour_2_");
 #endif
-  , lua_registry::get()->end()
-);
+}
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

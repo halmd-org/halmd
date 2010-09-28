@@ -65,10 +65,11 @@ smooth<dimension, float_type>::smooth(modules::factory& factory, po::variables_m
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -85,19 +86,20 @@ static luabind::scope register_lua(char const* class_name)
                     ]
                 ]
             ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
+static __attribute__((constructor)) void register_lua()
+{
 #ifndef USE_HOST_SINGLE_PRECISION
-    lua_registry::get()->push_back( register_lua<smooth<3, double> >("smooth_3_") )
-  , lua_registry::get()->push_back( register_lua<smooth<2, double> >("smooth_2_") )
+    register_lua<smooth<3, double> >("smooth_3_");
+    register_lua<smooth<2, double> >("smooth_2_");
 #else
-    lua_registry::get()->push_back( register_lua<smooth<3, float> >("smooth_3_") )
-  , lua_registry::get()->push_back( register_lua<smooth<2, float> >("smooth_2_") )
+    register_lua<smooth<3, float> >("smooth_3_");
+    register_lua<smooth<2, float> >("smooth_2_");
 #endif
-  , lua_registry::get()->end()
-);
+}
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

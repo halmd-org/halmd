@@ -210,10 +210,11 @@ void power_law<dimension, float_type>::compute_impl()
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -230,19 +231,20 @@ static luabind::scope register_lua(char const* class_name)
                     ]
                 ]
             ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
+static __attribute__((constructor)) void register_lua()
+{
 #ifndef USE_HOST_SINGLE_PRECISION
-    lua_registry::get()->push_back( register_lua<power_law<3, double> >("power_law_3_") )
-  , lua_registry::get()->push_back( register_lua<power_law<2, double> >("power_law_2_") )
+    register_lua<power_law<3, double> >("power_law_3_");
+    register_lua<power_law<2, double> >("power_law_2_");
 #else
-    lua_registry::get()->push_back( register_lua<power_law<3, float> >("power_law_3_") )
-  , lua_registry::get()->push_back( register_lua<power_law<2, float> >("power_law_2_") )
+    register_lua<power_law<3, float> >("power_law_3_");
+    register_lua<power_law<2, float> >("power_law_2_");
 #endif
-  , lua_registry::get()->end()
-);
+}
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

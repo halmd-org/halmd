@@ -182,10 +182,11 @@ void lj<dimension, float_type>::compute()
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -202,19 +203,20 @@ static luabind::scope register_lua(char const* class_name)
                     ]
                 ]
             ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
+static __attribute__((constructor)) void register_lua()
+{
 #ifndef USE_HOST_SINGLE_PRECISION
-    lua_registry::get()->push_back( register_lua<lj<3, double> >("lj_3_") )
-  , lua_registry::get()->push_back( register_lua<lj<2, double> >("lj_2_") )
+    register_lua<lj<3, double> >("lj_3_");
+    register_lua<lj<2, double> >("lj_2_");
 #else
-    lua_registry::get()->push_back( register_lua<lj<3, float> >("lj_3_") )
-  , lua_registry::get()->push_back( register_lua<lj<2, float> >("lj_2_") )
+    register_lua<lj<3, float> >("lj_3_");
+    register_lua<lj<2, float> >("lj_2_");
 #endif
-  , lua_registry::get()->end()
-);
+}
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

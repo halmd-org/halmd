@@ -321,10 +321,11 @@ void neighbour<dimension, float_type>::update_neighbours()
 }
 
 template <typename T>
-static luabind::scope register_lua(char const* class_name)
+static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    return
+    lua_registry::get()->push_back
+    ((
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -338,14 +339,15 @@ static luabind::scope register_lua(char const* class_name)
                         ]
                 ]
             ]
-        ];
+        ]
+    ));
 }
 
-static lua_registry::iterator dummy = (
-    lua_registry::get()->push_back( register_lua<neighbour<3, float> >("neighbour_3_") )
-  , lua_registry::get()->push_back( register_lua<neighbour<2, float> >("neighbour_2_") )
-  , lua_registry::get()->end()
-);
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<neighbour<3, float> >("neighbour_3_");
+    register_lua<neighbour<2, float> >("neighbour_2_");
+}
 
 // explicit instantiation
 template class neighbour<3, float>;
