@@ -48,7 +48,7 @@ public:
 
     observable(modules::factory& factory, po::variables_map const& vm) {};
     virtual ~observable() {}
-    virtual void register_statevars(writer_type& writer) = 0;
+    virtual void register_observables(writer_type& writer) = 0;
 
     // sample observable and store with given time
     virtual void sample(double time) = 0;

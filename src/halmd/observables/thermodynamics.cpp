@@ -96,7 +96,7 @@ void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
  * register observables
  */
 template <int dimension>
-void thermodynamics<dimension>::register_statevars(writer_type& writer)
+void thermodynamics<dimension>::register_observables(writer_type& writer)
 {
     writer.register_observable("TIME", &time_, "simulation time"); //< FIXME move time to mdsim::core
     writer.register_observable("EPOT", &en_pot_, "mean potential energy per particle");

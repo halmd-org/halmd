@@ -57,7 +57,7 @@ public:
     static void select(po::variables_map const& vm);
 
     typedef mdsim::box<dimension> box_type;
-    typedef io::statevars::writer<dimension> writer_type;
+    typedef typename _Base::writer_type writer_type;
     typedef utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
 
@@ -66,7 +66,7 @@ public:
     thermodynamics(modules::factory& factory, po::variables_map const& vm);
     virtual ~thermodynamics() {}
     void register_runtimes(profiler_type& profiler);
-    virtual void register_statevars(writer_type& writer);
+    virtual void register_observables(writer_type& writer);
 
     // sample macroscopic state variables and store with given time
     void sample(double time);

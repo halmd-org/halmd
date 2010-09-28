@@ -94,7 +94,7 @@ sampler<dimension>::sampler(modules::factory& factory, po::variables_map const& 
     /*@}*/
 
     BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
-        observable->register_statevars(*statevars_writer);
+        observable->register_observables(*statevars_writer);
     }
 
     // parse options
