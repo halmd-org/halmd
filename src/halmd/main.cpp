@@ -21,6 +21,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <boost/proto/args.hpp> //< proto/matches.hpp:95: error: 'N' is not a member of 'boost::proto'
 #include <exception>
 #include <iostream>
 
