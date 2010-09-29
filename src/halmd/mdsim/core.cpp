@@ -108,6 +108,9 @@ core<dimension>::core(modules::factory& factory, po::variables_map const& vm)
     /*@{ FIXME remove pre-Lua hack */
     register_runtimes(*profiler);
     /*@}*/
+
+    LOG("dimension of positional coordinates: " << dimension);
+    LOG("MD simulation backend: " << vm["backend"].as<string>());
 }
 
 /**
