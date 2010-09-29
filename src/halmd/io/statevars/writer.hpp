@@ -22,8 +22,6 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -37,15 +35,8 @@ template <int dimension>
 class writer
 {
 public:
-    // module definitions
-    typedef writer _Self;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
-
-    static void options(po::options_description& desc) {}
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
-
-    writer(modules::factory& factory, po::variables_map const& vm) {}
+    writer() {}
     virtual ~writer() {}
     virtual void write() = 0;
 

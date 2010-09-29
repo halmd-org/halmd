@@ -42,7 +42,7 @@ void box<dimension>::options(po::options_description& desc)
     desc.add_options()
         ("density,d", po::value<float>()->default_value(0.75),
          "particle density")
-        ("box-length,L", po::value<float>(),
+        ("box-length,L", po::value<multi_array<float, 1> >(),
          "simulation box length")
         ;
 }
@@ -54,49 +54,25 @@ static __attribute__((constructor)) void register_option_converters()
 {
     using namespace lua_wrapper;
     register_any_converter<float>();
-}
-
-
-/**
- * Resolve module dependencies
- */
-template <int dimension>
-void box<dimension>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
+    register_any_converter<multi_array<float, 1> >();
 }
 
 /**
  * Set box edge lengths
  */
 template <int dimension>
-box<dimension>::box(modules::factory& factory, po::variables_map const& vm)
-  // dependency injection
-  : particle(modules::fetch<particle_type>(factory, vm))
-  // default to cube
-  , scale_(1)
+box<dimension>::box(
+    shared_ptr<particle_type> particle
+  , vector_type const& length
+)
+  : length_(length)
+  , density_(
+        particle->nbox / accumulate(
+            length_.begin(), length_.end(), 1., multiplies<double>()
+        )
+    )
+  , length_half_(0.5 * length_)
 {
-    // parse options
-    if (vm["density"].defaulted() && !vm["box-length"].empty()) {
-        length(vm["box-length"].as<float>());
-    }
-    else {
-        density(vm["density"].as<float>());
-    }
-}
-
-/**
- * Set edge lengths of cuboid
- */
-template <int dimension>
-void box<dimension>::length(vector_type const& value)
-{
-    length_ = value;
-    length_half_ = .5 * length_;
-    scale_ = length_ / *max_element(length_.begin(), length_.end());
-    double volume = accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
-    density_ = particle->nbox / volume;
-
     LOG("edge lengths of simulation box: " << length_);
     LOG("number density: " << density_);
 }
@@ -105,20 +81,32 @@ void box<dimension>::length(vector_type const& value)
  * Set number density
  */
 template <int dimension>
-void box<dimension>::density(double value)
+box<dimension>::box(
+    shared_ptr<particle_type> particle
+  , double density
+  , vector_type const& ratios
+)
+  : length_(
+        ratios * pow(
+            particle->nbox / accumulate(
+                ratios.begin(), ratios.end(), density, multiplies<double>()
+            )
+          , 1. / dimension
+        )
+    )
+  , density_(density)
+  , length_half_(0.5 * length_)
 {
-    density_ = value;
-    double volume = particle->nbox / accumulate(scale_.begin(), scale_.end(), density_, multiplies<double>());
-    length_ = scale_ * pow(volume, 1. / dimension);
-    length_half_ = .5 * length_;
-
-    LOG("simulation box edge lengths: " << length_);
     LOG("number density: " << density_);
+    LOG("edge lengths of simulation box: " << length_);
 }
 
 template <typename T>
 static void register_lua(char const* class_name)
 {
+    typedef typename T::particle_type particle_type;
+    typedef typename T::vector_type vector_type;
+
     using namespace luabind;
     lua_wrapper::register_(0) //< distance of derived to base class
     [
@@ -127,6 +115,8 @@ static void register_lua(char const* class_name)
             namespace_("mdsim")
             [
                 class_<T, shared_ptr<T> >(class_name)
+                    .def(constructor<shared_ptr<particle_type>, vector_type const&>())
+                    .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
                     .scope
                     [
                         def("options", &T::options)
@@ -147,8 +137,5 @@ template class box<3>;
 template class box<2>;
 
 } // namespace mdsim
-
-template class module<mdsim::box<3> >;
-template class module<mdsim::box<2> >;
 
 } // namespace halmd

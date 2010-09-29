@@ -38,21 +38,15 @@ class particle
   : public mdsim::particle<dimension>
 {
 public:
-    // module definitions
-    typedef particle _Self;
     typedef mdsim::particle<dimension> _Base;
-    static void depends();
-    static void select(po::variables_map const& vm);
-    static void options(po::options_description& desc) {}
-
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
     typedef utility::gpu::device device_type;
 
-    shared_ptr<device_type> device;
-
-    particle(modules::factory& factory, po::variables_map const& vm);
-    virtual ~particle() {}
+    particle(
+        boost::shared_ptr<device_type> device
+      , std::vector<unsigned int> const& particles
+    );
     virtual void set();
     virtual void rearrange(std::vector<unsigned int> const& index) {} // TODO
 

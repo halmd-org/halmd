@@ -23,6 +23,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/sampler/trajectory.hpp>
 #include <halmd/mdsim/gpu/sampler/trajectory_kernel.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;
@@ -33,40 +34,31 @@ namespace halmd
 namespace mdsim { namespace gpu { namespace sampler
 {
 
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::depends()
+trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::trajectory(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , shared_ptr<core_type> core
+)
+  : _Base(particle)
+  , particle(particle)  //< mdsim::host:particle
+  , box(box)
+  , core(core)
 {
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
 }
 
 template <int dimension, typename float_type>
-void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::depends()
+trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::trajectory(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , shared_ptr<core_type> core
+)
+  : _Base(particle)
+  , particle(particle)
+  , box(box)
+  , core(core)
 {
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
 }
-
-template <int dimension, typename float_type>
-trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::trajectory(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
-  , core(modules::fetch<core_type>(factory, vm))
-{}
-
-template <int dimension, typename float_type>
-trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::trajectory(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
-  , core(modules::fetch<core_type>(factory, vm))
-{}
 
 /**
  * Sample trajectory
@@ -110,11 +102,46 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
     time = core->time();
 }
 
-}}} // namespace mdsim::gpu::sample
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+    typedef typename T::core_type core_type;
 
-template class module<mdsim::gpu::sampler::trajectory<mdsim::samples::gpu::trajectory<3, float> > >;
-template class module<mdsim::gpu::sampler::trajectory<mdsim::samples::gpu::trajectory<2, float> > >;
-template class module<mdsim::gpu::sampler::trajectory<mdsim::samples::host::trajectory<3, float> > >;
-template class module<mdsim::gpu::sampler::trajectory<mdsim::samples::host::trajectory<2, float> > >;
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
+                [
+                    namespace_("sampler")
+                    [
+                        class_<T, shared_ptr<_Base>, _Base>(class_name)
+                            .def(constructor<
+                                 shared_ptr<particle_type>
+                               , shared_ptr<box_type>
+                               , shared_ptr<core_type>
+                            >())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<trajectory<mdsim::samples::gpu::trajectory<3, float> > >("trajectory_gpu_3_");
+    register_lua<trajectory<mdsim::samples::gpu::trajectory<2, float> > >("trajectory_gpu_2_");
+    register_lua<trajectory<mdsim::samples::host::trajectory<3, float> > >("trajectory_host_3_");
+    register_lua<trajectory<mdsim::samples::host::trajectory<2, float> > >("trajectory_host_2_");
+}
+
+}}} // namespace mdsim::gpu::sample
 
 } // namespace halmd

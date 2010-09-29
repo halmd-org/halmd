@@ -23,13 +23,13 @@
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
+using namespace boost;
+using namespace std;
+
 namespace halmd
 {
 namespace mdsim { namespace host { namespace velocities
 {
-
-using namespace boost;
-using namespace std;
 
 /**
  * Assemble module options
@@ -52,33 +52,18 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<float>();
 }
 
-
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, random_type>::required();
-}
-
-template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["velocity"].as<string>() != "boltzmann") {
-        throw unsuitable_module("mismatching option velocity");
-    }
-}
-
-template <int dimension, typename float_type>
-boltzmann<dimension, float_type>::boltzmann(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+boltzmann<dimension, float_type>::boltzmann(
+    shared_ptr<particle_type> particle
+  , shared_ptr<random_type> random
+  , double temperature
+)
+  : _Base(particle)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , random(modules::fetch<random_type>(factory, vm))
+  , particle(particle)
+  , random(random)
   // parse options
-  , temp_(vm["temperature"].as<float>())
+  , temp_(temperature)
 {
     LOG("Boltzmann velocity distribution temperature: T = " << temp_);
 }
@@ -144,6 +129,11 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
 template <typename T>
 static void register_lua(char const* class_name)
 {
+    typedef typename T::_Base _Base;
+    typedef typename _Base::_Base _Base_Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::random_type random_type;
+
     using namespace luabind;
     lua_wrapper::register_(2) //< distance of derived to base class
     [
@@ -155,7 +145,8 @@ static void register_lua(char const* class_name)
                 [
                     namespace_("velocities")
                     [
-                        class_<T, shared_ptr<T> >(class_name)
+                        class_<T, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name)
+                            .def(constructor<shared_ptr<particle_type>, shared_ptr<random_type>, double>())
                             .scope
                             [
                                 def("options", &T::options)
@@ -188,13 +179,5 @@ template class boltzmann<2, float>;
 #endif
 
 }}} // namespace mdsim::host::velocities
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::velocities::boltzmann<3, double> >;
-template class module<mdsim::host::velocities::boltzmann<2, double> >;
-#else
-template class module<mdsim::host::velocities::boltzmann<3, float> >;
-template class module<mdsim::host::velocities::boltzmann<2, float> >;
-#endif
 
 } // namespace halmd

@@ -18,26 +18,25 @@
 --
 
 -- grab environment
-local modules = require("halmd.modules")
 local setmetatable = setmetatable
 local pairs = pairs
 local string = string
 
-module("halmd.options", modules.register)
+module("halmd.options")
 
-setmetatable(_M, {
-    --
-    -- Set parsed command line options
-    --
-    -- @param self Module halmd.options
-    -- @param parsed Boost.Program_options variables_map
-    --
-    -- This function is called by halmd::script.
-    --
-    __call = function(self, parsed)
-        for k, v in pairs(parsed) do
-            option = string.gsub(k, "-", "_") -- e.g. options.power_law_index
-            self[option] = v:value()
-        end
+--
+-- Set parsed command line options
+--
+-- @param self Module halmd.options
+-- @param parsed Boost.Program_options variables_map
+--
+-- This function is called by halmd::script.
+--
+local function set(self, parsed)
+    for k, v in pairs(parsed) do
+        option = string.gsub(k, "-", "_") -- e.g. options.power_law_index
+        self[option] = v:value()
     end
-})
+end
+
+setmetatable(_M, { __call = set })

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,29 +17,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MAIN_HPP
-#define HALMD_MAIN_HPP
+#ifndef HALMD_UTILITY_MULTI_ARRAY_HPP
+#define HALMD_UTILITY_MULTI_ARRAY_HPP
 
-#include <halmd/options.hpp>
-#include <halmd/utility/module.hpp>
+#include <algorithm>
+#include <boost/multi_array.hpp>
+#include <vector>
 
 namespace halmd
 {
 
-class main
+/**
+ * Make 1-dimensional boost::multi_array from std::vector
+ */
+template <typename T>
+boost::multi_array<T, 1> make_multi_array(std::vector<T> const& vector)
 {
-public:
-    // module definitions
-    typedef main _Self;
-    static void options(po::options_description& desc) {}
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
-
-    main(modules::factory& factory, po::variables_map const& vm) {}
-    virtual ~main() {}
-    virtual void run() = 0;
-};
+    boost::multi_array<T, 1> array(boost::extents[vector.size()]);
+    std::copy(vector.begin(), vector.end(), array.begin());
+    return array;
+}
 
 } // namespace halmd
 
-#endif /* ! HALMD_MAIN_HPP */
+#endif /* ! HALMD_UTILITY_MULTI_ARRAY_HPP */

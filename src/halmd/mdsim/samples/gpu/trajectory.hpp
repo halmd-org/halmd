@@ -20,14 +20,7 @@
 #ifndef HALMD_MDSIM_SAMPLES_GPU_TRAJECTORY_HPP
 #define HALMD_MDSIM_SAMPLES_GPU_TRAJECTORY_HPP
 
-#include <boost/mpl/if.hpp>
-#include <boost/shared_ptr.hpp>
-#include <vector>
-
-#include <cuda_wrapper.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -38,25 +31,21 @@ template <int dimension, typename float_type>
 class trajectory
 {
 public:
-    // module definitions
-    typedef trajectory _Self;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm) {}
-
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
 
-    trajectory(modules::factory& factory, po::variables_map const& vm);
+    trajectory(
+        boost::shared_ptr<particle_type> particle
+    );
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 
-    shared_ptr<particle_type> particle;
+    boost::shared_ptr<particle_type> particle;
 
     /** sample vector type for all particles of a species */
     typedef cuda::vector<gpu_vector_type> sample_vector;
     /** sample pointer type for all particle of a species */
-    typedef shared_ptr<sample_vector> sample_vector_ptr;
+    typedef boost::shared_ptr<sample_vector> sample_vector_ptr;
     /** sample pointer type for all species */
     typedef std::vector<sample_vector_ptr> sample_vector_ptr_vector;
 

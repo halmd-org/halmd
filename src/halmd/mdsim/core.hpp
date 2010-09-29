@@ -22,6 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/mdsim/neighbour.hpp>
@@ -29,7 +30,6 @@
 #include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -44,34 +44,31 @@ template <int dimension>
 class core
 {
 public:
-    // module definitions
-    typedef core _Self;
-    static void options(po::options_description& desc);
-    static void depends();
-    static void select(po::variables_map const& vm);
-
+    typedef mdsim::particle<dimension> particle_type;
     typedef mdsim::force<dimension> force_type;
+    typedef mdsim::box<dimension> box_type;
     typedef mdsim::neighbour<dimension> neighbour_type;
     typedef mdsim::sort<dimension> sort_type;
     typedef mdsim::integrator<dimension> integrator_type;
-    typedef mdsim::particle<dimension> particle_type;
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
     typedef utility::profiler profiler_type;
 
-    core(modules::factory& factory, po::variables_map const& vm);
+    static void options(po::options_description& desc);
+
+    core();
     void register_runtimes(profiler_type& profiler);
     void prepare();
     void mdstep();
 
-    shared_ptr<profiler_type> profiler;
-    shared_ptr<force_type> force;
-    shared_ptr<neighbour_type> neighbour;
-    shared_ptr<sort_type> sort;
-    shared_ptr<integrator_type> integrator;
-    shared_ptr<particle_type> particle;
-    shared_ptr<position_type> position;
-    shared_ptr<velocity_type> velocity;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<neighbour_type> neighbour;
+    boost::shared_ptr<sort_type> sort;
+    boost::shared_ptr<integrator_type> integrator;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<velocity_type> velocity;
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( prepare_, "microscopic state preparation" );

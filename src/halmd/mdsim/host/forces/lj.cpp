@@ -22,15 +22,14 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/lj.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include <halmd/utility/module.hpp>
 
 using namespace boost;
 using namespace boost::assign;
 using namespace boost::numeric::ublas;
+using namespace std;
 
 namespace halmd
 {
@@ -44,11 +43,11 @@ template <int dimension, typename float_type>
 void lj<dimension, float_type>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
+        ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
          "truncate potential at cutoff radius")
-        ("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
+        ("epsilon", po::value<boost::array<float, 3> >()->default_value(default_epsilon()),
          "potential well depths AA,AB,BB")
-        ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
+        ("sigma", po::value<boost::array<float, 3> >()->default_value(default_sigma()),
          "collision diameters AA,AB,BB")
         ;
 }
@@ -63,22 +62,19 @@ static __attribute__((constructor)) void register_option_converters()
 }
 
 /**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void lj<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["force"].as<std::string>() != "lj") {
-        throw unsuitable_module("mismatching option force");
-    }
-}
-
-/**
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-lj<dimension, float_type>::lj(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+lj<dimension, float_type>::lj(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , array<float, 3> const& cutoff
+  , array<float, 3> const& epsilon
+  , array<float, 3> const& sigma
+)
+  // dependency injection
+  : particle(particle)
+  , box(box)
   // allocate potential parameters
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
@@ -88,22 +84,12 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::variables_map const
   , sigma2_(particle->ntype, particle->ntype)
   , en_cut_(particle->ntype, particle->ntype)
 {
-    // parse deprecated options
-    boost::array<float, 3> epsilon = vm["epsilon"].as<boost::array<float, 3> >();
-    boost::array<float, 3> sigma = vm["sigma"].as<boost::array<float, 3> >();
-    boost::array<float, 3> r_cut_sigma;
-    try {
-        r_cut_sigma = vm["cutoff"].as<boost::array<float, 3> >();
-    }
-    catch (boost::bad_any_cast const&) {
-        // backwards compatibility
-        std::fill(r_cut_sigma.begin(), r_cut_sigma.end(), vm["cutoff"].as<float>());
-    }
+    // FIXME support any number of types
     for (size_t i = 0; i < std::min(particle->ntype, 2U); ++i) {
         for (size_t j = i; j < std::min(particle->ntype, 2U); ++j) {
             epsilon_(i, j) = epsilon[i + j];
             sigma_(i, j) = sigma[i + j];
-            r_cut_sigma_(i, j) = r_cut_sigma[i + j];
+            r_cut_sigma_(i, j) = sigma[i + j];
         }
     }
 
@@ -185,14 +171,19 @@ void lj<dimension, float_type>::compute()
     stress_pot_ /= particle->nbox;
 
     // ensure that system is still in valid state
-    if (std::isinf(en_pot_)) {
-        throw potential_energy_divergence();
+    if (isinf(en_pot_)) {
+        throw runtime_error("Potential energy diverged");
     }
 }
 
 template <typename T>
 static void register_lua(char const* class_name)
 {
+    typedef typename T::_Base _Base;
+    typedef typename _Base::_Base _Base_Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+
     using namespace luabind;
     lua_wrapper::register_(2) //< distance of derived to base class
     [
@@ -204,7 +195,15 @@ static void register_lua(char const* class_name)
                 [
                     namespace_("forces")
                     [
-                        class_<T, shared_ptr<T> >(class_name)
+                        class_<T, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name)
+                            .def(constructor<
+                                shared_ptr<particle_type>
+                              , shared_ptr<box_type>
+                              , array<float, 3> const&
+                              , array<float, 3> const&
+                              , array<float, 3> const&
+                            >())
+                            .def_readwrite("smooth", &T::smooth)
                             .scope
                             [
                                 def("options", &T::options)
@@ -237,13 +236,5 @@ template class lj<2, float>;
 #endif
 
 }}} // namespace mdsim::host::forces
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::forces::lj<3, double> >;
-template class module<mdsim::host::forces::lj<2, double> >;
-#else
-template class module<mdsim::host::forces::lj<3, float> >;
-template class module<mdsim::host::forces::lj<2, float> >;
-#endif
 
 } // namespace halmd

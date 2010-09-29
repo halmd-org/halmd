@@ -30,35 +30,18 @@ namespace mdsim { namespace host { namespace position
 using namespace boost;
 using namespace std;
 
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void file<dimension, float_type>::depends()
-{
-    modules::depends<_Self, reader_type>::required();
-    modules::depends<_Self, sample_type>::required();
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
-}
-
-template <int dimension, typename float_type>
-void file<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["position"].as<string>() != "file") {
-        throw unsuitable_module("mismatching option position");
-    }
-}
-
-template <int dimension, typename float_type>
-file<dimension, float_type>::file(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+file<dimension, float_type>::file(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , shared_ptr<sample_type> sample
+)
   // dependency injection
-  , reader(modules::fetch<reader_type>(factory, vm))
-  , sample(modules::fetch<sample_type>(factory, vm))
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
-{}
+  : particle(particle)
+  , box(box)
+  , sample(sample)
+{
+}
 
 /**
  * set particle positions
@@ -92,13 +75,5 @@ template class file<2, float>;
 #endif
 
 }}} // namespace mdsim::host::position
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::position::file<3, double> >;
-template class module<mdsim::host::position::file<2, double> >;
-#else
-template class module<mdsim::host::position::file<3, float> >;
-template class module<mdsim::host::position::file<2, float> >;
-#endif
 
 } // namespace halmd

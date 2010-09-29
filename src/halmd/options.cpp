@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iostream>
 
+#include <halmd/io/logger.hpp> //< logger::warning
 #include <halmd/options.hpp>
 #include <halmd/utility/date_time.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
@@ -59,6 +60,8 @@ options_parser::options_parser(po::options_description const& desc)
          "parameter input file")
         ("trajectory,J", po::value<string>(),
          "trajectory input file")
+        ("verbose,v", accum_value<int>()->default_value(logger::warning),
+         "increase verbosity")
         ("version",
          "output version and exit")
         ("help",
@@ -73,6 +76,7 @@ static __attribute__((constructor)) void register_option_converters()
 {
     using namespace lua_wrapper;
     register_any_converter<string>();
+    register_any_converter<int>();
 }
 
 

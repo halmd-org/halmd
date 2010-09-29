@@ -37,9 +37,33 @@ script::script()
 
     luaL_openlibs(L); //< load Lua standard libraries
 
+    package_path(); //< set Lua package path
+
     load_wrapper(); //< load HALMD Lua C++ wrapper
 
     load_library(); //< load HALMD Lua library
+}
+
+/**
+ * Set Lua package path
+ */
+void script::package_path()
+{
+    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
+
+    using namespace luabind;
+
+    string path;
+    path.append( HALMD_BINARY_DIR "/lib/?.lua" ";" );
+    path.append( HALMD_BINARY_DIR "/lib/?/init.lua" ";" );
+    path.append( HALMD_SOURCE_DIR "/lib/?.lua" ";" );
+    path.append( HALMD_SOURCE_DIR "/lib/?/init.lua" ";" );
+    path.append( HALMD_INSTALL_PREFIX "/share/?.lua" ";" );
+    path.append( HALMD_INSTALL_PREFIX "/share/?/init.lua" ";" );
+    path.append( HALMD_INSTALL_PREFIX "/lib/?.lua" ";" );
+    path.append( HALMD_INSTALL_PREFIX "/lib/?/init.lua" ";" );
+    path.append( object_cast<string>(globals(L)["package"]["path"]) );
+    globals(L)["package"]["path"] = path;
 }
 
 /**
@@ -66,18 +90,6 @@ void script::load_library()
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
     using namespace luabind;
-
-    string path;
-    path.append( HALMD_BINARY_DIR "/lib/?.lua" ";" );
-    path.append( HALMD_BINARY_DIR "/lib/?/init.lua" ";" );
-    path.append( HALMD_SOURCE_DIR "/lib/?.lua" ";" );
-    path.append( HALMD_SOURCE_DIR "/lib/?/init.lua" ";" );
-    path.append( HALMD_INSTALL_PREFIX "/share/?.lua" ";" );
-    path.append( HALMD_INSTALL_PREFIX "/share/?/init.lua" ";" );
-    path.append( HALMD_INSTALL_PREFIX "/lib/?.lua" ";" );
-    path.append( HALMD_INSTALL_PREFIX "/lib/?/init.lua" ";" );
-    path.append( object_cast<string>(globals(L)["package"]["path"]) );
-    globals(L)["package"]["path"] = path;
 
     try {
         call_function<void>(L, "require", "halmd");
@@ -145,9 +157,8 @@ void script::run()
 
     using namespace luabind;
 
-    object run(globals(L)["halmd"]["run"]);
     try {
-        call_function<void>(run);
+        call_function<void>(L, "run");
     }
     catch (luabind::error const& e) {
         LOG_ERROR("[Lua] " << lua_tostring(e.state(), -1));

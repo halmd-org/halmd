@@ -29,6 +29,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/multi_array.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -46,10 +47,10 @@ void device::options(po::options_description& desc)
 {
     desc.add_options()
 #ifndef __DEVICE_EMULATION__
-        ("device,D", po::value<boost::multi_array<int, 1> >(),
+        ("device,D", po::value<boost::multi_array<int, 1> >()->default_value(make_multi_array(default_devices())),
          "CUDA device(s)")
 #endif
-        ("threads,T", po::value<unsigned int>()->default_value(128),
+        ("threads,T", po::value<unsigned int>()->default_value(default_threads()),
          "number of CUDA threads per block")
         ;
 }
@@ -67,7 +68,8 @@ static __attribute__((constructor)) void register_option_converters()
 /**
  * Initialize CUDA device
  */
-device::device(modules::factory& factory, po::variables_map const& vm)
+device::device(vector<int> devices, unsigned int threads)
+  : threads_(threads)
 {
 #ifndef __DEVICE_EMULATION__
     try {
@@ -83,16 +85,13 @@ device::device(modules::factory& factory, po::variables_map const& vm)
     LOG("CUDA runtime version: " << device::cuda_runtime_version());
 # endif
 
-    // build list of chosen or available CUDA devices
-    vector<int> devices;
-    if (!vm["device"].empty()) {
-        multi_array<int, 1> v(vm["device"].as<multi_array<int, 1> >());
-        copy(v.begin(), v.end(), back_inserter(devices));
-    }
-    else {
-        copy(counting_iterator<int>(0),
-             counting_iterator<int>(cuda::device::count()),
-             back_inserter(devices));
+    // default to list of available CUDA devices
+    if (devices.empty()) {
+        copy(
+            counting_iterator<int>(0)
+          , counting_iterator<int>(cuda::device::count())
+          , std::back_inserter(devices)
+        );
     }
 
     // choose first available CUDA device
@@ -125,7 +124,6 @@ device::device(modules::factory& factory, po::variables_map const& vm)
     LOG("CUDA device minor revision: " << prop.minor());
     LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
 
-    threads_ = vm["threads"].as<unsigned int>();
     if (threads_ < 1) {
         throw runtime_error("invalid number of CUDA threads");
     }
@@ -213,6 +211,7 @@ static __attribute__((constructor)) void register_lua()
                 namespace_("gpu")
                 [
                     class_<device, shared_ptr<device> >("device")
+                        .def(constructor<vector<int>, unsigned int>())
                         .property("threads", &device::threads)
                         .scope
                         [
@@ -228,7 +227,5 @@ static __attribute__((constructor)) void register_lua()
 }
 
 }} // namespace utility::gpu
-
-template class module<utility::gpu::device>;
 
 } // namespace halmd

@@ -23,16 +23,14 @@
 #include <string>
 
 #include <cuda_wrapper.hpp>
-#include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/lj.hpp>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
-#include <halmd/utility/module.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::assign;
 using namespace boost::fusion;
 using namespace boost::numeric::ublas;
 
@@ -42,22 +40,19 @@ namespace mdsim { namespace gpu { namespace forces
 {
 
 /**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void lj<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["force"].as<std::string>() != "lj") {
-        throw unsuitable_module("mismatching option force");
-    }
-}
-
-/**
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-lj<dimension, float_type>::lj(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+lj<dimension, float_type>::lj(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , array<float, 3> const& cutoff
+  , array<float, 3> const& epsilon
+  , array<float, 3> const& sigma
+)
+  // dependency injection
+  : particle(particle)
+  , box(box)
   // allocate potential parameters
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
@@ -67,28 +62,16 @@ lj<dimension, float_type>::lj(modules::factory& factory, po::variables_map const
   , sigma2_(particle->ntype, particle->ntype)
   , en_cut_(particle->ntype, particle->ntype)
   , g_ljparam_(epsilon_.data().size())
+  // allocate result variables
+  , g_en_pot_(particle->dim.threads())
+  , g_stress_pot_(particle->dim.threads())
 {
-    /*@{ FIXME remove pre-Lua hack */
-    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
-    register_runtimes(*profiler);
-    /*@}*/
-
-    // parse deprecated options
-    boost::array<float, 3> epsilon = vm["epsilon"].as<boost::array<float, 3> >();
-    boost::array<float, 3> sigma = vm["sigma"].as<boost::array<float, 3> >();
-    boost::array<float, 3> r_cut_sigma;
-    try {
-        r_cut_sigma = vm["cutoff"].as<boost::array<float, 3> >();
-    }
-    catch (boost::bad_any_cast const&) {
-        // backwards compatibility
-        std::fill(r_cut_sigma.begin(), r_cut_sigma.end(), vm["cutoff"].as<float>());
-    }
+    // FIXME support any number of types
     for (size_t i = 0; i < std::min(particle->ntype, 2U); ++i) {
         for (size_t j = i; j < std::min(particle->ntype, 2U); ++j) {
             epsilon_(i, j) = epsilon[i + j];
             sigma_(i, j) = sigma[i + j];
-            r_cut_sigma_(i, j) = r_cut_sigma[i + j];
+            r_cut_sigma_(i, j) = cutoff[i + j];
         }
     }
 
@@ -166,13 +149,51 @@ void lj<dimension, float_type>::compute()
     cuda::thread::synchronize();
 }
 
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename _Base::_Base _Base_Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(2) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
+                [
+                    namespace_("forces")
+                    [
+                        class_<T, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name)
+                            .def(constructor<
+                                shared_ptr<particle_type>
+                              , shared_ptr<box_type>
+                              , array<float, 3> const&
+                              , array<float, 3> const&
+                              , array<float, 3> const&
+                            >())
+                            .def("register_runtimes", &T::register_runtimes)
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<lj<3, float> >("lj_3_");
+    register_lua<lj<2, float> >("lj_2_");
+}
+
 // explicit instantiation
 template class lj<3, float>;
 template class lj<2, float>;
 
 }}} // namespace mdsim::gpu::forces
-
-template class module<mdsim::gpu::forces::lj<3, float> >;
-template class module<mdsim::gpu::forces::lj<2, float> >;
 
 } // namespace halmd

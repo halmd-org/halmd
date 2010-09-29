@@ -17,14 +17,27 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local integrator = {
+local integrator_wrapper = {
     [2] = halmd_wrapper.mdsim.integrator_2_
   , [3] = halmd_wrapper.mdsim.integrator_3_
 }
-local setmetatable = setmetatable
+local integrators = {
+    verlet = require("halmd.mdsim.integrators.verlet")
+}
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.integrator", modules.register)
+module("halmd.mdsim.integrator", halmd.modules.register)
 
-options = integrator[2].options
+options = integrator_wrapper[2].options
+
+--
+-- construct integrator module
+--
+function new()
+    local integrator = assert(args.integrator)
+    return integrators[integrator]()
+end

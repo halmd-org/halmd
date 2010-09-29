@@ -17,14 +17,26 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local boltzmann = {
-    [2] = halmd_wrapper.mdsim.host.velocities.boltzmann_2_
-  , [3] = halmd_wrapper.mdsim.host.velocities.boltzmann_3_
+local profile_writers = {
+    hdf5 = require("halmd.io.profile.writers.hdf5")
+  , log = require("halmd.io.profile.writers.log")
 }
-local setmetatable = setmetatable
+local pairs = pairs
+local table = table
+local print = print
 
-module("halmd.mdsim.host.velocities.boltzmann", modules.register)
+module("halmd.io.profile.writers", halmd.modules.register)
 
-options = boltzmann[2].options
+--
+-- construct profiler module
+--
+function new()
+    local writers = {}
+    for k, v in pairs(profile_writers) do
+        table.insert(writers, v())
+    end
+    return writers
+end

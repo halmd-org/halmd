@@ -22,7 +22,6 @@
 
 #include <cuda_wrapper.hpp>
 
-#include <halmd/deprecated/util/exception.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -41,43 +40,46 @@ class verlet
   : public mdsim::integrator<dimension>
 {
 public:
-    // module definitions
-    typedef verlet _Self;
     typedef mdsim::integrator<dimension> _Base;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm);
-
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef utility::gpu::device device_type;
     typedef utility::profiler profiler_type;
     typedef typename particle_type::vector_type vector_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<box_type> box;
-    shared_ptr<device_type> device;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<device_type> device;
 
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper;
 
-    verlet(modules::factory& factory, po::variables_map const& vm);
-    virtual ~verlet() {}
+    verlet(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , double timestep
+    );
     void register_runtimes(profiler_type& profiler);
-    void integrate();
-    void finalize();
+    virtual void integrate();
+    virtual void finalize();
+    virtual void timestep(double timestep);
+
+    //! returns integration time-step
+    virtual double timestep() const
+    {
+        return timestep_;
+    }
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( integrate_, "first half-step of velocity-Verlet" );
     HALMD_PROFILE_TAG( finalize_, "second half-step of velocity-Verlet" );
 
-protected:
-    /** integration time-step */
-    using _Base::timestep_;
-    /** half time-step */
-    double timestep_half_;
-
 private:
+    /** integration time-step */
+    float_type timestep_;
+    /** half time-step */
+    float_type timestep_half_;
+
     boost::fusion::map<
         boost::fusion::pair<integrate_, accumulator<double> >
       , boost::fusion::pair<finalize_, accumulator<double> >

@@ -36,44 +36,20 @@ using namespace std;
 
 namespace halmd
 {
-namespace io
-{
 
-/**
- * Assemble module options
- */
-void logging::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("verbose,v", accum_value<int>()->default_value(warning),
-         "increase verbosity")
-        ;
-}
-
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    using namespace lua_wrapper;
-    register_any_converter<int>();
-}
-
-sources::severity_logger<logging::severity_level> logging::logger;
-
-static inline ostream& operator<<(ostream& os, logging::severity_level level)
+static inline ostream& operator<<(ostream& os, logger::severity_level level)
 {
     switch (level)
     {
-      case logging::trace:
+      case logger::trace:
         os << "[TRACE] "; break;
-      case logging::debug:
+      case logger::debug:
         os << "[DEBUG] "; break;
-      case logging::warning:
+      case logger::warning:
         os << "[WARNING] "; break;
-      case logging::error:
+      case logger::error:
         os << "[ERROR] "; break;
-      case logging::fatal:
+      case logger::fatal:
         os << "[FATAL] "; break;
       default:
         break;
@@ -81,39 +57,22 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
     return os;
 }
 
-logging::logging()
+logger::logger()
 {
     core::get()->add_global_attribute(
         "TimeStamp"
       , make_shared<attributes::local_clock>()
-    );
-}
-
-logging::logging(po::variables_map const& vm)
-{
-    core::get()->add_global_attribute(
-        "TimeStamp"
-      , make_shared<attributes::local_clock>()
-    );
-    log_to_console(
-        static_cast<severity_level>(vm["verbose"].as<int>())
-    );
-    log_to_file(
-        static_cast<severity_level>(
-            max(vm["verbose"].as<int>(), static_cast<int>(info))
-        )
-      , vm["output"].as<string>() + ".log"
     );
 }
 
 /**
- * enable logging to console
+ * enable logger to console
  *
- * @param level logging severity level
+ * @param level logger severity level
  *
  * FIXME repeated calls of this function if public
  */
-void logging::log_to_console(severity_level level)
+void logger::log_to_console(severity_level level)
 {
     shared_ptr<console_backend> backend(make_shared<console_backend>());
     backend->add_stream(
@@ -136,13 +95,13 @@ void logging::log_to_console(severity_level level)
 }
 
 /**
- * enable logging to file
+ * enable logger to file
  *
- * @param level logging severity level
+ * @param level logger severity level
  *
  * FIXME repeated calls of this function if public
  */
-void logging::log_to_file(severity_level level, string file_name)
+void logger::log_to_file(severity_level level, string file_name)
 {
     shared_ptr<file_backend> backend(
         make_shared<file_backend>(
@@ -166,18 +125,18 @@ void logging::log_to_file(severity_level level, string file_name)
 }
 
 /**
- * remove sinks from logging core singleton
+ * remove sinks from logger core singleton
  */
-logging::~logging()
+logger::~logger()
 {
     core::get()->remove_sink(console_);
     core::get()->remove_sink(file_);
 }
 
-template <enum logging::severity_level Level>
+template <enum logger::severity_level level>
 static void log_wrapper(char const* message)
 {
-    BOOST_LOG_SEV(logging::logger, Level) << message;
+    BOOST_LOG_SEV(logger::get(), level) << message;
 }
 
 static __attribute__((constructor)) void register_lua()
@@ -189,25 +148,20 @@ static __attribute__((constructor)) void register_lua()
         [
             namespace_("io")
             [
-                class_<logging, shared_ptr<logging> >("logging")
-                    .scope
-                    [
-                        def("options", &logging::options)
-                    ]
+                namespace_("logger")
+                [
+                    def("fatal", &log_wrapper<logger::fatal>)
+                  , def("error", &log_wrapper<logger::error>)
+                  , def("warning", &log_wrapper<logger::warning>)
+                  , def("info", &log_wrapper<logger::info>)
+#ifndef NDEBUG
+                  , def("debug", &log_wrapper<logger::debug>)
+                  , def("trace", &log_wrapper<logger::trace>)
+#endif
+                ]
             ]
-        ]
-      , namespace_("log")
-        [
-            def("fatal", &log_wrapper<logging::fatal>)
-          , def("error", &log_wrapper<logging::error>)
-          , def("warning", &log_wrapper<logging::warning>)
-          , def("info", &log_wrapper<logging::info>)
-          , def("debug", &log_wrapper<logging::debug>)
-          , def("trace", &log_wrapper<logging::trace>)
         ]
     ];
 }
-
-} // namespace io
 
 } // namespace halmd

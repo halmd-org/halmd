@@ -53,13 +53,7 @@ class neighbour
   : public mdsim::neighbour<dimension>
 {
 public:
-    // module definitions
-    typedef neighbour _Self;
     typedef mdsim::neighbour<dimension> _Base;
-    static void options(po::options_description& desc); // also see mdsim::host::neighbour
-    static void depends();
-    static void select(po::variables_map const& vm) {}
-
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef gpu::force<dimension, float_type> force_type;
@@ -74,18 +68,27 @@ public:
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
     typedef fixed_vector<int, dimension> cell_diff_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<force_type> force;
-    shared_ptr<box_type> box;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<box_type> box;
 
     cuda::config dim_reduce;
     displacement_impl_type const displacement_impl;
 
-    neighbour(modules::factory& factory, po::variables_map const& vm);
-    virtual ~neighbour() {}
+    static void options(po::options_description& desc);
+
+    static float_type const default_cell_occupancy;
+
+    neighbour(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<force_type> force
+      , double skin
+      , double cell_occupancy
+    );
     void register_runtimes(profiler_type& profiler);
-    void update();
-    bool check();
+    virtual void update();
+    virtual bool check();
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( check_, "neighbour update criterion" );
@@ -93,7 +96,7 @@ public:
     HALMD_PROFILE_TAG( update_neighbours_, "neighbour lists update" );
 
 protected:
-    friend class sort::hilbert<dimension, float_type>;
+    friend class sort::hilbert<dimension, float_type>; //< FIXME public interface
 
     static displacement_impl_type get_displacement_impl(int threads);
     void update_cells();

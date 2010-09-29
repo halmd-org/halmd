@@ -37,23 +37,22 @@ class boltzmann
   : public host::velocity<dimension, float_type>
 {
 public:
-    // module definitions
-    typedef boltzmann _Self;
     typedef host::velocity<dimension, float_type> _Base;
-    static void options(po::options_description& desc);
-    static void depends();
-    static void select(po::variables_map const& vm);
-
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef random::host::random random_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<random_type> random;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<random_type> random;
 
-    boltzmann(modules::factory& factory, po::variables_map const& vm);
-    virtual ~boltzmann() {};
-    void set();
+    static void options(po::options_description& desc);
+
+    boltzmann(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<random_type> random
+      , double temperature
+    );
+    virtual void set();
 
 // private:
     /** assign new velocities from Gaussian distribution of width sigma,

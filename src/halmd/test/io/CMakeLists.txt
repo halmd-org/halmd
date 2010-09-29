@@ -1,12 +1,12 @@
-add_executable(test_logging
-  logging.cpp
+add_executable(test_logger
+  logger.cpp
 )
-target_link_libraries(test_logging
+target_link_libraries(test_logger
   ${HALMD_COMMON_LIBRARIES}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
-add_test(io_logging
-  test_logging
+add_test(io_logger
+  test_logger
 )
 
 add_executable(test_profile_writers

@@ -17,14 +17,19 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local neighbour = {
-    [2] = halmd_wrapper.mdsim.host.neighbour_2_
-  , [3] = halmd_wrapper.mdsim.host.neighbour_3_
+local sorts = {
+    hilbert = require("halmd.mdsim.sort.hilbert")
 }
-local setmetatable = setmetatable
+local assert = assert
 
-module("halmd.mdsim.host.neighbour", modules.register)
+module("halmd.mdsim.sort", halmd.modules.register)
 
-options = neighbour[2].options
+--
+-- construct sort module
+--
+function new()
+    return sorts.hilbert() -- FIXME add option --disable-sort
+end

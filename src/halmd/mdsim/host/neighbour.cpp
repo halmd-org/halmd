@@ -35,6 +35,9 @@ namespace halmd
 namespace mdsim { namespace host
 {
 
+template <int dimension, typename float_type>
+float_type const neighbour<dimension, float_type>::default_skin = 0.5;
+
 /**
  * Assemble module options
  */
@@ -42,7 +45,7 @@ template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("skin", po::value<float>()->default_value(0.5),
+        ("skin", po::value<float>()->default_value(default_skin),
          "neighbour list skin")
         ;
 }
@@ -56,27 +59,19 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<float>();
 }
 
-
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
-    modules::depends<_Self, force_type>::required();
-}
-
-template <int dimension, typename float_type>
-neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+neighbour<dimension, float_type>::neighbour(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , shared_ptr<force_type> force
+  , double skin
+)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , force(modules::fetch<force_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
+  : particle(particle)
+  , force(force)
+  , box(box)
   // allocate parameters
-  , r_skin_(vm["skin"].as<float>())
+  , r_skin_(skin)
   , rr_cut_skin_(particle->ntype, particle->ntype)
   , r0_(particle->nbox)
 {
@@ -238,6 +233,9 @@ template <typename T>
 static void register_lua(char const* class_name)
 {
     typedef typename T::_Base _Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+    typedef typename T::force_type force_type;
 
     using namespace luabind;
     lua_wrapper::register_(1) //< distance of derived to base class
@@ -249,6 +247,7 @@ static void register_lua(char const* class_name)
                 namespace_("host")
                 [
                     class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                        .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, shared_ptr<force_type>, double>())
                         .scope
                         [
                             def("options", &T::options)
@@ -280,13 +279,5 @@ template class neighbour<2, float>;
 #endif
 
 }} // namespace mdsim::host
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::neighbour<3, double> >;
-template class module<mdsim::host::neighbour<2, double> >;
-#else
-template class module<mdsim::host::neighbour<3, float> >;
-template class module<mdsim::host::neighbour<2, float> >;
-#endif
 
 } // namespace halmd

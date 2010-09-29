@@ -20,7 +20,6 @@
 #ifndef HALMD_MDSIM_INTEGRATOR_HPP
 #define HALMD_MDSIM_INTEGRATOR_HPP
 
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -32,21 +31,16 @@ template <int dimension>
 class integrator
 {
 public:
-    // module definitions
-    typedef integrator _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
 
-    integrator(modules::factory& factory, po::variables_map const& vm);
+    static double const default_timestep;
+
+    integrator() {}
     virtual ~integrator() {}
     virtual void integrate() = 0;
     virtual void finalize() = 0;
-    double timestep() { return timestep_; };
-
-protected:
-    /** integration time-step */
-    double timestep_;
+    virtual double timestep() const = 0;
+    virtual void timestep(double timestep) = 0;
 };
 
 } // namespace mdsim

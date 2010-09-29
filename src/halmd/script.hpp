@@ -41,6 +41,7 @@ public:
 private:
     boost::shared_ptr<lua_State> L_; //< Lua state
 
+    void package_path();
     void load_wrapper();
     void load_library();
 };

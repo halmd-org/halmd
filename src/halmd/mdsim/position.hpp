@@ -20,7 +20,6 @@
 #ifndef HALMD_MDSIM_POSITION_HPP
 #define HALMD_MDSIM_POSITION_HPP
 
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -32,13 +31,9 @@ template <int dimension>
 class position
 {
 public:
-    // module definitions
-    typedef position _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
 
-    position(modules::factory& factory, po::variables_map const& vm) {}
+    position() {}
     virtual ~position() {}
     virtual void set() = 0;
 };

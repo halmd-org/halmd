@@ -31,11 +31,6 @@
 #include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
-#include <halmd/utility/module.hpp>
-#include <halmd/utility/modules/factory.hpp>
-#include <halmd/utility/modules/policy.hpp>
-#include <halmd/utility/modules/resolver.hpp>
-
 using namespace boost;
 using namespace halmd;
 using namespace std;
@@ -59,26 +54,14 @@ BOOST_AUTO_TEST_CASE( test_profile_writers )
 {
     typedef boost::program_options::variable_value variable_value;
 
-    halmd::po::variables_map vm;
-    // override const operator[] in variables_map
-    map<string, variable_value>& vm_(vm);
-    vm_["verbose"] = variable_value(0, true);
-    vm_["output"] = variable_value(string("halmd_test"), true);
+    string const file_name("test_io_logger.prf");
 
     // enable logging to console
-    shared_ptr<logging> logger(new logging(vm));
+    static logger log;
+    log.log_to_console(logger::debug);
 
     // resolve module dependencies
     using namespace halmd::io::profile;
-    modules::resolver resolver(modules::registry::graph());
-    resolver.resolve<writers::log>(vm);
-    resolver.resolve<writers::hdf5>(vm);
-    resolver.resolve<utility::profiler>(vm);
-    modules::policy policy(resolver.graph());
-    modules::factory factory(policy.graph());
-
-    shared_ptr<writers::log> log;
-    shared_ptr<writers::hdf5> hdf5;
     shared_ptr<utility::profiler> profiler;
 
     // repeat three times
@@ -86,9 +69,10 @@ BOOST_AUTO_TEST_CASE( test_profile_writers )
         BOOST_TEST_MESSAGE("Pass #" << n+1);
 
         // construct modules
-        log = modules::fetch<writers::log>(factory, vm);
-        hdf5 = modules::fetch<writers::hdf5>(factory, vm);
-        profiler = modules::fetch<utility::profiler>(factory, vm);
+        vector<shared_ptr<writer> > writers;
+        writers.push_back(make_shared<writers::log>());
+        writers.push_back(make_shared<writers::hdf5>(file_name));
+        profiler = make_shared<utility::profiler>(writers);
 
         // register profile timers
         timer_map timers;
@@ -101,13 +85,12 @@ BOOST_AUTO_TEST_CASE( test_profile_writers )
         }
 
         // write results
-        hdf5->write();
-        log->write();
+        for_each(writers.begin(), writers.end(), bind(&writer::write, _1));
 
         // destroy some modules
-        log.reset();
+        writers.pop_back();
         if (n < 1)
-            hdf5.reset();
+            writers.pop_back();
         // if the profiler is not destroyed as well, the test fails:
         // HDF5-DIAG: Error detected in HDF5 (1.8.1) thread 0:
         // #000: H5D.c line 171 in H5Dcreate2(): unable to create dataset
@@ -118,7 +101,5 @@ BOOST_AUTO_TEST_CASE( test_profile_writers )
     // FIXME add some tests here (e.g. line counting of log file)
 
     // remove files
-    remove((vm["output"].as<string>() + ".prf").c_str());
-    remove((vm["output"].as<string>() + ".log").c_str());
+    remove(file_name.c_str());
 }
-

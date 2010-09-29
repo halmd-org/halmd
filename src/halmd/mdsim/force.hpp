@@ -20,9 +20,6 @@
 #ifndef HALMD_MDSIM_FORCE_HPP
 #define HALMD_MDSIM_FORCE_HPP
 
-#include <boost/shared_ptr.hpp>
-
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -42,17 +39,9 @@ template <int dimension>
 class force
 {
 public:
-    // module definitions
-    typedef force _Self;
     static void options(po::options_description& desc);
-    static void depends();
-    static void select(po::variables_map const& vm) {}
 
-    typedef mdsim::particle<dimension> particle_type;
-
-    shared_ptr<particle_type> particle;
-
-    force(modules::factory& factory, po::variables_map const& vm);
+    force() {}
     virtual ~force() {}
     virtual void compute() = 0;
 };

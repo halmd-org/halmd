@@ -17,14 +17,47 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local sampler = {
+local sampler_wrapper = {
     [2] = halmd_wrapper.sampler_2_
   , [3] = halmd_wrapper.sampler_3_
 }
-local setmetatable = setmetatable
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
+local args = require("halmd.options")
+local assert = assert
+local math = math
 
-module("halmd.sampler", modules.register)
+module("halmd.sampler", halmd.modules.register)
 
-options = sampler[2].options
+options = sampler_wrapper[2].options
+
+local sampler -- singleton instance
+
+--
+-- construct sampler module
+--
+function new()
+    -- dependency injection
+    local core = mdsim.core()
+    local integrator = assert(core.integrator)
+
+    -- command line options
+    local dimension = assert(args.dimension)
+    local sampling_state_vars = assert(args.sampling_state_vars)
+    local sampling_trajectory = assert(args.sampling_trajectory)
+    local steps = assert(args.steps)
+    local time = args.time -- optional
+
+    if not sampler then
+        local wrapper = sampler_wrapper[dimension]
+        if time then
+            steps = math.floor((time / integrator.timestep) + 0.5)
+        end
+        sampler = wrapper(core, steps, sampling_state_vars, sampling_trajectory)
+    end
+    return sampler
+end

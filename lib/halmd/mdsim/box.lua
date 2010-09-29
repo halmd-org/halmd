@@ -17,13 +17,45 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local box = {
+local mdsim = {
+  core = require("halmd.mdsim.core")
+}
+local box_wrapper = {
     [2] = halmd_wrapper.mdsim.box_2_
   , [3] = halmd_wrapper.mdsim.box_3_
 }
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.box", modules.register)
+module("halmd.mdsim.box", halmd.modules.register)
 
-options = box[2].options
+options = box_wrapper[2].options
+
+--
+-- construct box module
+--
+function new()
+    local dimension = assert(args.dimension)
+    local density = assert(args.density)
+    local box_length = args.box_length -- optional
+
+    local core = mdsim.core()
+    local particle = assert(core.particle)
+
+    local box = box_wrapper[dimension]
+    if box_length then
+        for i = #box_length + 1, dimension do
+            box_length[i] = box_length[#box_length]
+        end
+        return box(particle, box_length)
+    else
+        local unit_cube = {}
+        for i = 1, dimension do
+            unit_cube[i] = 1 -- cubic aspect ratio
+        end
+        return box(particle, density, unit_cube)
+    end
+end

@@ -21,7 +21,6 @@
 #define HALMD_MDSIM_VELOCITY_HPP
 
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -33,15 +32,11 @@ template <int dimension>
 class velocity
 {
 public:
-    // module definitions
-    typedef velocity _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;
 
-    velocity(modules::factory& factory, po::variables_map const& vm) {}
+    velocity() {}
     virtual ~velocity() {}
     virtual void set() = 0;
     virtual void rescale(double factor) = 0;

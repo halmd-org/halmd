@@ -18,7 +18,7 @@
  */
 
 #include <halmd/observables/host/thermodynamics.hpp>
-#include <halmd/utility/module.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
@@ -28,22 +28,16 @@ namespace halmd
 namespace observables { namespace host
 {
 
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void thermodynamics<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, force_type>::required();
-}
-
-template <int dimension, typename float_type>
-thermodynamics<dimension, float_type>::thermodynamics(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+thermodynamics<dimension, float_type>::thermodynamics(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , shared_ptr<force_type> force
+)
+  : _Base(box)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , force(modules::fetch<force_type>(factory, vm))
+  , particle(particle)
+  , force(force)
 {
 }
 
@@ -70,6 +64,47 @@ typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimen
     return v_cm_ / particle->nbox;
 }
 
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename _Base::_Base _Base_Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+    typedef typename T::force_type force_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(2) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("observables")
+            [
+                namespace_("host")
+                [
+                    class_<T, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name)
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                          , shared_ptr<force_type>
+                        >())
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+#ifndef USE_HOST_SINGLE_PRECISION
+    register_lua<thermodynamics<3, double> >("thermodynamics_3_");
+    register_lua<thermodynamics<2, double> >("thermodynamics_2_");
+#else
+    register_lua<thermodynamics<3, float> >("thermodynamics_3_");
+    register_lua<thermodynamics<2, float> >("thermodynamics_2_");
+#endif
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class thermodynamics<3, double>;
@@ -80,13 +115,5 @@ template class thermodynamics<2, float>;
 #endif
 
 }} // namespace observables::host
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<observables::host::thermodynamics<3, double> >;
-template class module<observables::host::thermodynamics<2, double> >;
-#else
-template class module<observables::host::thermodynamics<3, float> >;
-template class module<observables::host::thermodynamics<2, float> >;
-#endif
 
 } // namespace halmd

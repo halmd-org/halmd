@@ -36,31 +36,16 @@ namespace mdsim { namespace gpu
 {
 
 /**
- * Resolve module dependencies
+ * Allocate microscopic system state.
+ *
+ * @param particles number of particles per type or species
  */
 template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::depends()
-{
-    // The gpu::device module selects the GPU, which has to occur
-    // before the first CUDA kernel call or memory allocation. As
-    // the particle module is instantiated foremost and allocates
-    // GPU memory, we add a dependency on gpu::device.
-    modules::depends<_Self, device_type>::required();
-}
-
-template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (!starts_with(vm["backend"].as<string>(), "gpu")) {
-        throw unsuitable_module("mismatching option backend");
-    }
-}
-
-template <unsigned int dimension, typename float_type>
-particle<dimension, float_type>::particle(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  // dependency injection
-  , device(modules::fetch<device_type>(factory, vm))
+particle<dimension, float_type>::particle(
+    shared_ptr<device_type> device
+  , vector<unsigned int> const& particles
+)
+  : _Base(particles)
   // default CUDA kernel execution dimensions
   , dim(cuda::config((nbox + device->threads() - 1) / device->threads(), device->threads()))
   // allocate global device memory
@@ -142,6 +127,10 @@ static void register_lua(char const* class_name)
                 namespace_("gpu")
                 [
                     class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                        .def(constructor<
+                            shared_ptr<typename T::device_type>
+                          , vector<unsigned int> const&
+                        >())
                 ]
             ]
         ]
@@ -159,8 +148,5 @@ template class particle<3, float>;
 template class particle<2, float>;
 
 }} // namespace mdsim::gpu
-
-template class module<mdsim::gpu::particle<3, float> >;
-template class module<mdsim::gpu::particle<2, float> >;
 
 } // namespace halmd

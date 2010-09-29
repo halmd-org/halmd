@@ -22,12 +22,12 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/statevars/writers/hdf5.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
 using namespace boost::filesystem;
 using namespace std;
-using namespace H5;
 
 namespace halmd
 {
@@ -38,24 +38,23 @@ namespace io { namespace statevars { namespace writers
  * open HDF5 file for writing
  */
 template <int dimension>
-hdf5<dimension>::hdf5(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  , file_(
-        (initial_path() / (vm["output"].as<string>() + ".msv")).string()
+hdf5<dimension>::hdf5(string const& file_name)
+  : file_(
+        (initial_path() / file_name).string()
       , H5F_ACC_TRUNC // truncate existing file
     )
 {
     // create parameter group
-    Group param = open_group(file_, "/param");
+    H5::Group param = open_group(file_, "/param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
-    attribute(param, "file_version") = version;
+    H5::attribute(param, "file_version") = version;
 
     // store dimension
     // FIXME configuration and simulation parameters should be stored by a distinct function
-    Group mdsim = param.createGroup("mdsim");
-    attribute(mdsim, "dimension") = dimension;
+    H5::Group mdsim = param.createGroup("mdsim");
+    H5::attribute(mdsim, "dimension") = dimension;
 
     LOG("write macroscopic state variables to file: " << file_.getFileName());
 }
@@ -72,14 +71,14 @@ void hdf5<dimension>::register_observable(
 )
 {
     // first part of tag is path, last part is dataset name
-    list<string> path(split_path(tag));
-    Group root = open_group(file_, path.begin(), --path.end());
+    list<string> path(H5::split_path(tag));
+    H5::Group root = open_group(file_, path.begin(), --path.end());
 
     // create dataset for an unlimited number of chunks
-    DataSet dataset = create_dataset<T>(root, path.back());
+    H5::DataSet dataset = H5::create_dataset<T>(root, path.back());
 
     // store description as attribute
-    attribute(dataset, "description") = desc;
+    H5::attribute(dataset, "description") = desc;
 
     // add dataset writer to internal list
     writer_.push_back(make_dataset_writer(dataset, value_ptr));
@@ -94,14 +93,14 @@ void hdf5<dimension>::register_observable(
 )
 {
     // first part of tag is path, last part is dataset name
-    list<string> path(split_path(tag));
-    Group root = open_group(file_, path.begin(), --path.end());
+    list<string> path(H5::split_path(tag));
+    H5::Group root = open_group(file_, path.begin(), --path.end());
 
     // create dataset for an unlimited number of vector chunks with given size
-    DataSet dataset = create_dataset<vector<T> >(root, path.back(), value_ptr->size());
+    H5::DataSet dataset = H5::create_dataset<vector<T> >(root, path.back(), value_ptr->size());
 
     // store description as attribute
-    attribute(dataset, "description") = desc;
+    H5::attribute(dataset, "description") = desc;
 
     // add dataset writer to internal list
     writer_.push_back(make_dataset_writer(dataset, value_ptr));
@@ -150,14 +149,14 @@ void hdf5<dimension>::write_dataset(
 )
 {
     // first part of tag is path, last part is dataset name
-    list<string> path(split_path(tag));
-    Group root = open_group(file_, path.begin(), --path.end());
+    list<string> path(H5::split_path(tag));
+    H5::Group root = open_group(file_, path.begin(), --path.end());
 
     // create dataset for a single chunk
-    DataSet dataset = create_dataset<T>(root, path.back(), 1);
+    H5::DataSet dataset = H5::create_dataset<T>(root, path.back(), 1);
 
     // store description as attribute
-    attribute(dataset, "description") = desc;
+    H5::attribute(dataset, "description") = desc;
 
     // write dataset at index 0
     H5::write(dataset, value, 0);
@@ -172,14 +171,14 @@ void hdf5<dimension>::write_dataset(
 )
 {
     // first part of tag is path, last part is dataset name
-    list<string> path(split_path(tag));
-    Group root = open_group(file_, path.begin(), --path.end());
+    list<string> path(H5::split_path(tag));
+    H5::Group root = open_group(file_, path.begin(), --path.end());
 
     // create dataset for a single vector chunk with given size
-    DataSet dataset = create_dataset<vector<T> >(root, path.back(), value.size(), 1);
+    H5::DataSet dataset = H5::create_dataset<vector<T> >(root, path.back(), value.size(), 1);
 
     // store description as attribute
-    attribute(dataset, "description") = desc;
+    H5::attribute(dataset, "description") = desc;
 
     // write dataset at index 0
     H5::write(dataset, value, 0);
@@ -231,9 +230,37 @@ void hdf5<dimension>::write()
     file_.flush(H5F_SCOPE_GLOBAL);
 }
 
-}}} // namespace io::profile::writers
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
 
-template class module<io::statevars::writers::hdf5<2> >;
-template class module<io::statevars::writers::hdf5<3> >;
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("io")
+            [
+                namespace_("statevars")
+                [
+                    namespace_("writers")
+                    [
+                        class_<T, shared_ptr<_Base>, _Base>(class_name)
+                            .def(constructor<string const&>())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<hdf5<3> >("hdf5_3_");
+    register_lua<hdf5<2> >("hdf5_2_");
+}
+
+}}} // namespace io::profile::writers
 
 } // namespace halmd

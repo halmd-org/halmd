@@ -17,13 +17,29 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local core = {
+local core_wrapper = {
     [2] = halmd_wrapper.mdsim.core_2_
   , [3] = halmd_wrapper.mdsim.core_3_
 }
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.core", modules.register)
+module("halmd.mdsim.core", halmd.modules.register)
 
-options = core[2].options
+local core -- singleton instance
+
+--
+-- construct core module
+--
+function new()
+    local dimension = assert(args.dimension)
+    if not core then
+        core = core_wrapper[dimension]()
+    end
+    return core
+end
+
+options = core_wrapper[2].options

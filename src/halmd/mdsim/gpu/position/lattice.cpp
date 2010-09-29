@@ -24,47 +24,31 @@
 #include <limits>
 #include <numeric>
 
-#include <halmd/deprecated/util/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/position/lattice.hpp>
-#include <halmd/utility/module.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+
+using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim { namespace gpu { namespace position
 {
 
-using namespace halmd;
-using namespace std;
-
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void lattice<dimension, float_type, RandomNumberGenerator>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
-    modules::depends<_Self, random_type>::required();
-}
-
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void lattice<dimension, float_type, RandomNumberGenerator>::select(po::variables_map const& vm)
-{
-    if (vm["position"].as<string>() != "lattice") {
-        throw unsuitable_module("mismatching option position");
-    }
-}
-
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-lattice<dimension, float_type, RandomNumberGenerator>::lattice(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+lattice<dimension, float_type, RandomNumberGenerator>::lattice(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , shared_ptr<random_type> random
+)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
-  , random(modules::fetch<random_type>(factory, vm))
-{}
+  : particle(particle)
+  , box(box)
+  , random(random)
+{
+}
 
 /**
  * Place particles on a face-centered cubic (fcc) lattice
@@ -143,7 +127,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to compute particle lattice positions on GPU");
+        throw runtime_error("failed to compute particle lattice positions on GPU");
     }
 //     m_times["lattice"] += timer[1] - timer[0];
 
@@ -156,13 +140,44 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());
 }
 
-}}} // namespace mdsim::gpu::position
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+    typedef typename T::random_type random_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
+                [
+                    namespace_("position")
+                    [
+                        class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                            .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, shared_ptr<random_type> >())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<lattice<3, float, random::gpu::rand48> >("lattice_3_");
+    register_lua<lattice<2, float, random::gpu::rand48> >("lattice_2_");
+}
 
 // explicit instantiation
-template class mdsim::gpu::position::lattice<3, float, random::gpu::rand48>;
-template class mdsim::gpu::position::lattice<2, float, random::gpu::rand48>;
+template class lattice<3, float, random::gpu::rand48>;
+template class lattice<2, float, random::gpu::rand48>;
 
-template class module<mdsim::gpu::position::lattice<3, float, random::gpu::rand48> >;
-template class module<mdsim::gpu::position::lattice<2, float, random::gpu::rand48> >;
+}}} // namespace mdsim::gpu::position
 
 } // namespace halmd

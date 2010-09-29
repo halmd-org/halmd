@@ -17,14 +17,21 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local neighbour = {
-    [2] = halmd_wrapper.mdsim.gpu.neighbour_2_
-  , [3] = halmd_wrapper.mdsim.gpu.neighbour_3_
-}
-local setmetatable = setmetatable
+local hdf5_writer_wrapper = halmd_wrapper.io.profile.writers.hdf5
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.gpu.neighbour", modules.register)
+module("halmd.io.profile.writers.hdf5", halmd.modules.register)
 
-options = neighbour[2].options
+--
+-- construct HDF5 profile writer module
+--
+function new()
+    -- command line options
+    local output = assert(args.output)
+
+    return hdf5_writer_wrapper(output .. ".prf")
+end

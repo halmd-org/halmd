@@ -29,21 +29,14 @@ namespace halmd
 namespace mdsim { namespace host
 {
 
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void velocity<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-}
-
-template <int dimension, typename float_type>
-velocity<dimension, float_type>::velocity(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+velocity<dimension, float_type>::velocity(
+    shared_ptr<particle_type> particle
+)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-{}
+  : particle(particle)
+{
+}
 
 /**
  * Rescale magnitude of all velocities by 'factor'
@@ -80,8 +73,45 @@ void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, do
     }
 }
 
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+#ifndef USE_HOST_SINGLE_PRECISION
+    register_lua<velocity<3, double> >("velocity_3_");
+    register_lua<velocity<2, double> >("velocity_2_");
+#else
+    register_lua<velocity<3, float> >("velocity_3_");
+    register_lua<velocity<2, float> >("velocity_2_");
+#endif
+}
+
+#ifndef USE_HOST_SINGLE_PRECISION
 template class velocity<3, double>;
 template class velocity<2, double>;
+#else
+template class velocity<3, float>;
+template class velocity<2, float>;
+#endif
 
 }} // namespace mdsim::host
 

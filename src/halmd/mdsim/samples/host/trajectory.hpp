@@ -20,13 +20,8 @@
 #ifndef HALMD_MDSIM_SAMPLES_HOST_TRAJECTORY_HPP
 #define HALMD_MDSIM_SAMPLES_HOST_TRAJECTORY_HPP
 
-#include <boost/shared_ptr.hpp>
-#include <vector>
-
+#include <halmd/mdsim/host/particle.hpp> //< vector_type
 #include <halmd/mdsim/particle.hpp>
-#include <halmd/mdsim/host/particle.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -37,27 +32,23 @@ template <int dimension, typename float_type>
 class trajectory
 {
 public:
-    // module definitions
-    typedef trajectory _Self;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm) {}
-
     // this module is used by mdsim::gpu::sampler::trajectory
     // and must not depend on host::particle
     typedef mdsim::particle<dimension> particle_type;
     typedef typename mdsim::host::particle<dimension, float_type>::vector_type vector_type;
 
-    trajectory(modules::factory& factory, po::variables_map const& vm);
+    trajectory(
+        boost::shared_ptr<particle_type> particle
+    );
     virtual ~trajectory() {}
     virtual void acquire() = 0;
 
-    shared_ptr<particle_type> particle;
+    boost::shared_ptr<particle_type> particle;
 
     /** sample vector type for all particles of a species */
     typedef std::vector<vector_type> sample_vector;
     /** sample pointer type for all particle of a species */
-    typedef shared_ptr<sample_vector> sample_vector_ptr;
+    typedef boost::shared_ptr<sample_vector> sample_vector_ptr;
     /** sample pointer type for all species */
     typedef std::vector<sample_vector_ptr> sample_vector_ptr_vector;
 

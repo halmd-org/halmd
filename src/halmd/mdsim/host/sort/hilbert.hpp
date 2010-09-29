@@ -36,13 +36,7 @@ class hilbert
   : public mdsim::sort<dimension>
 {
 public:
-    // module definitions
-    typedef hilbert _Self;
     typedef mdsim::sort<dimension> _Base;
-    static void depends();
-    static void options(po::options_description& desc) {}
-    static void select(po::variables_map const& vm) {}
-
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
@@ -51,12 +45,15 @@ public:
     typedef typename neighbour_type::cell_list cell_list;
     typedef typename neighbour_type::cell_size_type cell_size_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<box_type> box;
-    shared_ptr<neighbour_type> neighbour;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<neighbour_type> neighbour;
 
-    hilbert(modules::factory& factory, po::variables_map const& vm);
-    virtual ~hilbert() {}
+    hilbert(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<neighbour_type> neighbour
+    );
     virtual void order();
 
 protected:

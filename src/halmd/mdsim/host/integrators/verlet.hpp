@@ -37,30 +37,34 @@ class verlet
   : public mdsim::integrator<dimension>
 {
 public:
-    // module definitions
-    typedef verlet _Self;
     typedef mdsim::integrator<dimension> _Base;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm);
-
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<box_type> box;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
 
-    verlet(modules::factory& factory, po::variables_map const& vm);
-    virtual ~verlet() {}
-    void integrate();
-    void finalize();
+    verlet(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , double timestep
+    );
+    virtual void integrate();
+    virtual void finalize();
+    virtual void timestep(double timestep);
+
+    //! returns integration time-step
+    virtual double timestep() const
+    {
+        return timestep_;
+    }
 
 protected:
     /** integration time-step */
-    using _Base::timestep_;
+    float_type timestep_;
     /** half time-step */
-    double timestep_half_;
+    float_type timestep_half_;
 };
 
 }}} // namespace mdsim::host::integrators

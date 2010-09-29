@@ -20,6 +20,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/utility/demangle.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -31,17 +32,9 @@ namespace halmd
 namespace utility
 {
 
-/**
- * Resolve module dependencies
- */
-void profiler::depends()
-{
-    modules::depends<_Self, profile_writer_type>::required();
-}
-
-profiler::profiler(modules::factory& factory, po::variables_map const& vm)
+profiler::profiler(vector<shared_ptr<profile_writer_type> > profile_writers)
   // dependency injection
-  : profile_writer(modules::fetch<profile_writer_type>(factory, vm))
+  : profile_writers(profile_writers)
 {
     LOG("timer resolution: " << 1.E9 * timer::elapsed_min() << " ns");
 }
@@ -53,8 +46,8 @@ void profiler::register_accumulator(
 ) const
 {
     for_each(
-        profile_writer.begin()
-      , profile_writer.end()
+        profile_writers.begin()
+      , profile_writers.end()
       , bind(
             &profile_writer_type::register_accumulator
           , _1
@@ -65,8 +58,26 @@ void profiler::register_accumulator(
     );
 }
 
-} // namespace utility
+static __attribute__((constructor)) void register_lua()
+{
+    typedef profiler::profile_writer_type profile_writer_type;
 
-template class module<utility::profiler>;
+    using namespace luabind;
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("utility")
+            [
+                class_<profiler, shared_ptr<profiler> >("profiler")
+                    .def(constructor<vector<shared_ptr<profile_writer_type> > >())
+                    .def_readonly("profile_writers", &profiler::profile_writers)
+            ]
+        ]
+    ];
+}
+
+
+} // namespace utility
 
 } // namespace halmd

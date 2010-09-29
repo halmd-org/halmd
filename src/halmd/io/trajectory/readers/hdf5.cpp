@@ -21,49 +21,42 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/readers/hdf5.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
-using namespace H5;
 
 namespace halmd
 {
 namespace io { namespace trajectory { namespace readers
 {
 
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::depends()
+bool hdf5<dimension, float_type>::check(std::string const& file_name)
 {
-    modules::depends<_Self, sample_type>::required();
-}
-
-template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (!H5File::isHdf5(vm["trajectory-file"].as<string>())) {
-        throw unsuitable_module("not an HDF5 file: " + vm["trajectory-file"].as<string>());
-    }
+    return H5::H5File::isHdf5(file_name);
 }
 
 /**
  * read sample from HDF5 trajectory file
  */
 template <int dimension, typename float_type>
-hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  // dependency injection
-  , sample(modules::fetch<sample_type>(factory, vm))
+hdf5<dimension, float_type>::hdf5(
+    shared_ptr<sample_type> sample
+  , string const& file_name
+  , ssize_t offset
+)
+  : sample(sample)
+  , path_(file_name)
+  , offset_(offset)
 {
     LOG("read trajectory file: " << path_);
 
-    H5File file(path_, H5F_ACC_RDONLY);
-    Group root = open_group(file, "trajectory");
+    H5::H5File file(path_, H5F_ACC_RDONLY);
+    H5::Group root = open_group(file, "trajectory");
 
     for (size_t i = 0; i < sample->r.size(); ++i) {
-        Group type;
+        H5::Group type;
         if (sample->r.size() > 1) {
             type = open_group(root, string(1, 'A' + i));
         }
@@ -71,7 +64,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map c
             type = root;
         }
 
-        DataSet r;
+        H5::DataSet r;
         try {
             // backwards compatibility with r:R:v:t format
             //   r = reduced single- or double-precision positions,
@@ -81,7 +74,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map c
             r = type.openDataSet("R");
             LOG_WARNING("detected obsolete trajectory file format");
         }
-        catch (GroupIException const& e)
+        catch (H5::GroupIException const& e)
         {
             // new-style r:v:t format
             //   r = extended double-precision positions,
@@ -95,29 +88,60 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map c
             r = type.openDataSet("r");
             LOG_WARNING("falling back to reduced particle position sample");
         }
-        DataSet v = type.openDataSet("v");
+        H5::DataSet v = type.openDataSet("v");
 
         H5::read(r, &*sample->r[i], offset_);
         H5::read(v, &*sample->v[i], offset_);
     }
 
-    DataSet t = root.openDataSet("t");
+    H5::DataSet t = root.openDataSet("t");
     float_type time;
-    size_t offset = H5::read(t, &time, offset_);
+    offset = H5::read(t, &time, offset_);
     LOG("read trajectory sample at offset " << offset << " with t = " << time);
 }
 
-// explicit instantiation
-template class hdf5<3, double>;
-template class hdf5<3, float>;
-template class hdf5<2, double>;
-template class hdf5<2, float>;
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename T::sample_type sample_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("io")
+            [
+                namespace_("trajectory")
+                [
+                    namespace_("readers")
+                    [
+                        class_<T, shared_ptr<_Base>, _Base>(class_name)
+                            .def(constructor<
+                                shared_ptr<sample_type>
+                                , string const&
+                                , ssize_t
+                            >())
+                            .scope
+                            [
+                                def("check", &T::check)
+                            ]
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<hdf5<3, double> >("hdf5_3_double_");
+    register_lua<hdf5<2, double> >("hdf5_2_double_");
+    register_lua<hdf5<3, float> >("hdf5_3_float_");
+    register_lua<hdf5<2, float> >("hdf5_2_float_");
+}
 
 }}} // namespace io::trajectory::readers
-
-template class module<io::trajectory::readers::hdf5<3, double> >;
-template class module<io::trajectory::readers::hdf5<3, float> >;
-template class module<io::trajectory::readers::hdf5<2, double> >;
-template class module<io::trajectory::readers::hdf5<2, float> >;
 
 } // namespace halmd

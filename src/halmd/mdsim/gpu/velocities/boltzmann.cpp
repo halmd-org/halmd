@@ -19,44 +19,30 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
-#include <halmd/utility/module.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+
+using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim { namespace gpu { namespace velocities
 {
 
-using namespace boost;
-using namespace std;
-
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void boltzmann<dimension, float_type, RandomNumberGenerator>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, random_type>::required();
-}
-
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void boltzmann<dimension, float_type, RandomNumberGenerator>::select(po::variables_map const& vm)
-{
-    if (vm["velocity"].as<string>() != "boltzmann") {
-        throw unsuitable_module("mismatching option velocity");
-    }
-}
-
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
+    shared_ptr<particle_type> particle
+  , shared_ptr<random_type> random
+  , double temperature
+)
+  : _Base(particle)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , random(modules::fetch<random_type>(factory, vm))
+  , particle(particle)
+  , random(random)
   // select thread-dependent implementation
   , gaussian_impl(get_gaussian_impl(random->rng.dim.threads_per_block()))
   // parse options
-  , temp_(vm["temperature"].as<float>())
+  , temp_(temperature)
   // allocate GPU memory
   , g_vcm_(2 * random->rng.dim.blocks_per_grid())
   , g_vv_(random->rng.dim.blocks_per_grid())
@@ -147,13 +133,48 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 //    LOG_DEBUG("velocities rescaled by factor " << scale);
 }
 
-}}} // namespace mdsim::gpu::velocities
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename _Base::_Base _Base_Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::random_type random_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(2) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
+                [
+                    namespace_("velocities")
+                    [
+                        class_<T, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name)
+                            .def(constructor<shared_ptr<particle_type>, shared_ptr<random_type>, double>())
+                            .scope
+                            [
+                                def("options", &T::options)
+                            ]
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<boltzmann<3, float, random::gpu::rand48> >("boltzmann_3_");
+    register_lua<boltzmann<2, float, random::gpu::rand48> >("boltzmann_2_");
+}
 
 // explicit instantiation
-template class mdsim::gpu::velocities::boltzmann<3, float, random::gpu::rand48>;
-template class mdsim::gpu::velocities::boltzmann<2, float, random::gpu::rand48>;
+template class boltzmann<3, float, random::gpu::rand48>;
+template class boltzmann<2, float, random::gpu::rand48>;
 
-template class module<mdsim::gpu::velocities::boltzmann<3, float, random::gpu::rand48> >;
-template class module<mdsim::gpu::velocities::boltzmann<2, float, random::gpu::rand48> >;
+}}} // namespace mdsim::gpu::velocities
 
 } // namespace halmd

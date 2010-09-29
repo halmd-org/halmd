@@ -114,7 +114,4 @@ template class thermostat<2>;
 
 } // namespace scripts
 
-template class module<scripts::thermostat<3> >;
-template class module<scripts::thermostat<2> >;
-
 } // namespace halmd

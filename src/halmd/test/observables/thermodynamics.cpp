@@ -1,6 +1,5 @@
-/* test simulation results for thermodynamic variables in the dilute limit
- *
- * Copyright © 2010  Felix Höfling
+/*
+ * Copyright © 2010  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -28,29 +27,298 @@
 #include <string>
 #include <utility>
 
-#include <halmd/numeric/accumulator.hpp>
-#include <halmd/mdsim/core.hpp>
-#include <halmd/observables/thermodynamics.hpp>
-#include <halmd/mdsim/particle.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/utility/modules/factory.hpp>
-#include <halmd/utility/modules/policy.hpp>
-#include <halmd/utility/modules/resolver.hpp>
-#include <halmd/options.hpp>
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/core.hpp>
+#include <halmd/mdsim/host/forces/lj.hpp>
+#include <halmd/mdsim/host/integrators/verlet.hpp>
+#include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/position/lattice.hpp>
+#include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/mdsim/particle.hpp>
+#include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/host/thermodynamics.hpp>
+#include <halmd/observables/thermodynamics.hpp>
+#include <halmd/options.hpp>
+#include <halmd/random/host/random.hpp>
+#ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/forces/lj.hpp>
+# include <halmd/mdsim/gpu/integrators/verlet.hpp>
+# include <halmd/mdsim/gpu/neighbour.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/position/lattice.hpp>
+# include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/observables/gpu/thermodynamics.hpp>
+# include <halmd/random/gpu/random.hpp>
+# include <halmd/utility/gpu/device.hpp>
+#endif
 
+using namespace boost;
 using namespace halmd;
 using namespace std;
 
-/** reference values for the state variables of a 3-dim. LJ fluid can be found in
- *  L. Verlet, Phys. Rev. 159, 98 (1967)
- *  and in Hansen & McDonald, Table 4.2
+/**
+ * test simulation results for thermodynamic variables in the dilute limit
  *
- *  a more detailed analysis and more accurate values are found in
- *  Johnson, Zollweg, and Gubbins, Mol. Phys. 78, 591 (1993).
+ * reference values for the state variables of a 3-dim. LJ fluid can be found in
+ * L. Verlet, Phys. Rev. 159, 98 (1967)
+ * and in Hansen & McDonald, Table 4.2
+ *
+ * a more detailed analysis and more accurate values are found in
+ * Johnson, Zollweg, and Gubbins, Mol. Phys. 78, 591 (1993).
  */
 
-void set_default_options(halmd::po::variables_map& vm);
+#ifdef WITH_CUDA
+shared_ptr<utility::gpu::device> make_device(
+    string const& backend
+  , vector<int> devices
+  , unsigned int threads
+)
+{
+    if (backend == "gpu") {
+        static weak_ptr<utility::gpu::device> device;
+        shared_ptr<utility::gpu::device> device_(device.lock());
+        if (!device_) {
+            device_ = make_shared<utility::gpu::device>(
+                devices
+              , threads
+            );
+            device = device_;
+        }
+        return device_;
+    }
+    if (backend == "host") {
+        return shared_ptr<utility::gpu::device>(); // null pointer
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
+#endif /* WITH_CUDA */
+
+template <int dimension>
+shared_ptr<mdsim::particle<dimension> > make_particle(
+    string const& backend
+  , unsigned int npart
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return make_shared<mdsim::gpu::particle<dimension, float> >(
+            make_device(
+                backend
+              , utility::gpu::device::default_devices()
+              , utility::gpu::device::default_threads()
+            )
+          , vector<unsigned int>(1, npart)
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return make_shared<mdsim::host::particle<dimension, double> >(
+            vector<unsigned int>(1, npart)
+        );
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+shared_ptr<mdsim::integrator<dimension> > make_verlet_integrator(
+    string const& backend
+  , shared_ptr<mdsim::particle<dimension> > particle
+  , shared_ptr<mdsim::box<dimension> > box
+  , double timestep
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return make_shared<mdsim::gpu::integrators::verlet<dimension, float> >(
+            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+          , box
+          , timestep
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return make_shared<mdsim::host::integrators::verlet<dimension, double> >(
+            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+          , box
+          , timestep
+        );
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+shared_ptr<mdsim::force<dimension> > make_lj_force(
+    string const& backend
+  , shared_ptr<mdsim::particle<dimension> > particle
+  , shared_ptr<mdsim::box<dimension> > box
+  , array<float, 3> cutoff
+  , array<float, 3> epsilon
+  , array<float, 3> sigma
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return make_shared<mdsim::gpu::forces::lj<dimension, float> >(
+            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+          , box
+          , cutoff
+          , epsilon
+          , sigma
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return make_shared<mdsim::host::forces::lj<dimension, double> >(
+            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+          , box
+          , cutoff
+          , epsilon
+          , sigma
+        );
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+shared_ptr<mdsim::neighbour<dimension> > make_neighbour(
+    string const& backend
+  , shared_ptr<mdsim::particle<dimension> > particle
+  , shared_ptr<mdsim::box<dimension> > box
+  , shared_ptr<mdsim::force<dimension> > force
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return make_shared<mdsim::gpu::neighbour<dimension, float> >(
+            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+          , box
+          , dynamic_pointer_cast<mdsim::gpu::force<dimension, float> >(force)
+          , mdsim::host::neighbour<dimension, double>::default_skin
+          , mdsim::gpu::neighbour<dimension, float>::default_cell_occupancy
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return make_shared<mdsim::host::neighbour<dimension, double> >(
+            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+          , box
+          , dynamic_pointer_cast<mdsim::host::force<dimension, double> >(force)
+          , mdsim::host::neighbour<dimension, double>::default_skin
+        );
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
+
+shared_ptr<halmd::random::random> make_random(
+    string const& backend
+  , unsigned int seed
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
+        return make_shared<random_type>(
+            make_device(
+                backend
+              , utility::gpu::device::default_devices()
+              , utility::gpu::device::default_threads()
+            )
+          , seed
+          , random_type::default_blocks()
+          , random_type::default_threads()
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return make_shared<halmd::random::host::random>(
+            seed
+        );
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+shared_ptr<mdsim::position<dimension> > make_lattice(
+    string const& backend
+  , shared_ptr<mdsim::particle<dimension> > particle
+  , shared_ptr<mdsim::box<dimension> > box
+  , shared_ptr<halmd::random::random> random
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return make_shared<mdsim::gpu::position::lattice<dimension, float, halmd::random::gpu::rand48> >(
+            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+          , box
+          , dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return make_shared<mdsim::host::position::lattice<dimension, double> >(
+            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+          , box
+          , dynamic_pointer_cast<halmd::random::host::random>(random)
+        );
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+shared_ptr<mdsim::velocity<dimension> > make_boltzmann(
+    string const& backend
+  , shared_ptr<mdsim::particle<dimension> > particle
+  , shared_ptr<halmd::random::random> random
+  , double temperature
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return make_shared<mdsim::gpu::velocities::boltzmann<dimension, float, halmd::random::gpu::rand48> >(
+            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+          , dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
+          , temperature
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return make_shared<mdsim::host::velocities::boltzmann<dimension, double> >(
+            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+          , dynamic_pointer_cast<halmd::random::host::random>(random)
+          , temperature
+        );
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+shared_ptr<observables::thermodynamics<dimension> > make_thermodynamics(
+    string const& backend
+  , shared_ptr<mdsim::particle<dimension> > particle
+  , shared_ptr<mdsim::box<dimension> > box
+  , shared_ptr<mdsim::force<dimension> > force
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return make_shared<observables::gpu::thermodynamics<dimension, float> >(
+            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+          , box
+          , dynamic_pointer_cast<mdsim::gpu::force<dimension, float> >(force)
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return make_shared<observables::host::thermodynamics<dimension, double> >(
+            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+          , box
+          , dynamic_pointer_cast<mdsim::host::force<dimension, double> >(force)
+        );
+    }
+    throw runtime_error("unknown backend: " + backend);
+}
 
 const double eps = numeric_limits<double>::epsilon();
 const float eps_float = numeric_limits<float>::epsilon();
@@ -67,51 +335,100 @@ inline double heat_capacity(double en_kin, double variance, unsigned npart)
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
 
 template <int dimension>
-void ideal_gas(po::variables_map vm)
+void ideal_gas(string const& backend)
 {
     using namespace boost::assign;
-
-    typedef boost::program_options::variable_value variable_value;
 
     float density = 1.;
     float temp = 1.;
     float rc = .1;
-
-    // override const operator[] in variables_map
-    map<string, variable_value>& vm_(vm);
-    vm_["dimension"]    = variable_value(dimension, false);
-    vm_["density"]      = variable_value(density, false);
-    vm_["temperature"]  = variable_value(temp, false);
-    vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(0.f)(0.f)(0.f)), false);
-    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
+    double timestep = 0.001;
+    unsigned int npart = 1000;
+    unsigned int random_seed = 42;
 
     // enable logging to console
-    shared_ptr<logging> logger(new logging(vm));
+    shared_ptr<logger> log(new logger);
+    log->log_to_console(
+#ifdef NDEBUG
+        logger::warning
+#else
+        logger::debug
+#endif
+    );
 
-    BOOST_TEST_MESSAGE("using backend '" << vm["backend"].as<string>() << "' in " <<
+    BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
                        dimension << " dimensions");
 
-    // set up modules
-    BOOST_TEST_MESSAGE("resolve module dependencies");
-    modules::resolver resolver(modules::registry::graph());
-    resolver.resolve<mdsim::core<dimension> >(vm);
-    resolver.resolve<observables::thermodynamics<dimension> >(vm);
-    modules::policy policy(resolver.graph());
-    modules::factory factory(policy.graph());
+#ifdef WITH_CUDA
+    shared_ptr<utility::gpu::device> device = make_device(
+        backend
+      , utility::gpu::device::default_devices()
+      , utility::gpu::device::default_threads()
+    );
+#endif /* WITH_CUDA */
+    shared_ptr<halmd::random::random> random = make_random(
+        backend
+      , random_seed
+    );
 
     // init core module
     BOOST_TEST_MESSAGE("initialise simulation modules");
-    shared_ptr<mdsim::core<dimension> > core(modules::fetch<mdsim::core<dimension> >(factory, vm));
+    shared_ptr<mdsim::core<dimension> > core(new mdsim::core<dimension>);
+    core->particle = make_particle<dimension>(
+        backend
+      , npart
+    );
+    core->box = make_shared<mdsim::box<dimension> >(
+        core->particle
+      , density
+      , 1 //< cube aspect ratios
+    );
+    core->integrator = make_verlet_integrator<dimension>(
+        backend
+      , core->particle
+      , core->box
+      , timestep
+    );
+    core->force = make_lj_force<dimension>(
+        backend
+      , core->particle
+      , core->box
+      , list_of(rc)(rc)(rc) /* cutoff */
+      , list_of(0.f)(0.f)(0.f) /* epsilon */
+      , mdsim::host::forces::lj<dimension, double>::default_sigma()
+    );
+    core->neighbour = make_neighbour(
+        backend
+      , core->particle
+      , core->box
+      , core->force
+    );
+    core->position = make_lattice(
+        backend
+      , core->particle
+      , core->box
+      , random
+    );
+    core->velocity = make_boltzmann(
+        backend
+      , core->particle
+      , random
+      , temp
+    );
 
     // prepare system with Maxwell-Boltzmann distributed velocities
     BOOST_TEST_MESSAGE("assign positions and velocities");
     core->prepare();
 
     // measure thermodynamic properties
-    shared_ptr<observables::thermodynamics<dimension> >
-            thermodynamics(modules::fetch<observables::thermodynamics<dimension> >(factory, vm));
+    shared_ptr<observables::thermodynamics<dimension> > thermodynamics = make_thermodynamics(
+        backend
+      , core->particle
+      , core->box
+      , core->force
+    );
 
-    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? 0.1 * eps_float : eps;
+    double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     double en_tot = thermodynamics->en_tot();
@@ -132,51 +449,86 @@ void ideal_gas(po::variables_map vm)
 }
 
 template <int dimension>
-void thermodynamics(po::variables_map vm)
+void thermodynamics(string const& backend)
 {
-    typedef boost::program_options::variable_value variable_value;
-
     float density = 0.3;
     float temp = 3.0;
     float rc = 4.0;
     double timestep = 0.01;    // start with small time step for thermalisation
-    unsigned npart = (vm["backend"].as<string>() == "gpu") ? 4000 : 1000;
+    unsigned npart = (backend == "gpu") ? 4000 : 1000;
+    unsigned int random_seed = 42;
 
     using namespace boost::assign;
 
-    // override const operator[] in variables_map
-    map<string, variable_value>& vm_(vm);
-    vm_["dimension"]    = variable_value(dimension, false);
-    vm_["density"]      = variable_value(density, false);
-    vm_["temperature"]  = variable_value(temp, false);
-    vm_["timestep"]     = variable_value(timestep, false);
-    vm_["particles"]    = variable_value(npart, false);
-//     vm_["verbose"]      = variable_value(int(logging::info), true);
-    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(rc)(rc)(rc)), false);
-
     // enable logging to console
-    shared_ptr<logging> logger(new logging(vm));
+    shared_ptr<logger> log(new logger);
+    log->log_to_console(
+#ifdef NDEBUG
+        logger::warning
+#else
+        logger::debug
+#endif
+    );
 
-    BOOST_TEST_MESSAGE("using backend '" << vm["backend"].as<string>() << "' in " <<
+    BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
                        dimension << " dimensions");
 
-    // set up modules
-    BOOST_TEST_MESSAGE("resolve module dependencies");
-    modules::resolver resolver(modules::registry::graph());
-    resolver.resolve<mdsim::core<dimension> >(vm);
-    resolver.resolve<observables::thermodynamics<dimension> >(vm);
-    modules::policy policy(resolver.graph());
-    modules::factory factory(policy.graph());
+#ifdef WITH_CUDA
+    shared_ptr<utility::gpu::device> device = make_device(
+        backend
+      , utility::gpu::device::default_devices()
+      , utility::gpu::device::default_threads()
+    );
+#endif /* WITH_CUDA */
+    shared_ptr<halmd::random::random> random = make_random(
+        backend
+      , random_seed
+    );
 
     BOOST_TEST_MESSAGE("initialise simulation modules");
     // init core module and all dependencies
-    shared_ptr<mdsim::core<dimension> >
-        core(modules::fetch<mdsim::core<dimension> >(factory, vm));
-
-    // keep a handle on particle configuration
-    // thus, we can destroy and reload core with different options
-    shared_ptr<mdsim::particle<dimension> >
-        particle(modules::fetch<mdsim::particle<dimension> >(factory, vm));
+    shared_ptr<mdsim::core<dimension> > core(new mdsim::core<dimension>);
+    core->particle = make_particle<dimension>(
+        backend
+      , npart
+    );
+    core->box = make_shared<mdsim::box<dimension> >(
+        core->particle
+      , density
+      , 1 //< cube aspect ratios
+    );
+    core->integrator = make_verlet_integrator<dimension>(
+        backend
+      , core->particle
+      , core->box
+      , timestep
+    );
+    core->force = make_lj_force<dimension>(
+        backend
+      , core->particle
+      , core->box
+      , list_of(rc)(rc)(rc) /* cutoff */
+      , mdsim::host::forces::lj<dimension, double>::default_epsilon()
+      , mdsim::host::forces::lj<dimension, double>::default_sigma()
+    );
+    core->neighbour = make_neighbour(
+        backend
+      , core->particle
+      , core->box
+      , core->force
+    );
+    core->position = make_lattice(
+        backend
+      , core->particle
+      , core->box
+      , random
+    );
+    core->velocity = make_boltzmann(
+        backend
+      , core->particle
+      , random
+      , temp
+    );
 
     // prepare system at given temperature, run for t*=50, couple every Δt*=0.2
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
@@ -190,16 +542,18 @@ void thermodynamics(po::variables_map vm)
         }
     }
 
-    // reload core with different timestep, keep particle configuration
-    core.reset();
+    // set different timestep
     timestep = 0.001;
-    vm_["timestep"] = variable_value(timestep, false);
-    core = modules::fetch<mdsim::core<dimension> >(factory, vm);
-    BOOST_CHECK_EQUAL(core->integrator->timestep(), timestep);
+    core->integrator->timestep(timestep);
+    BOOST_CHECK_CLOSE_FRACTION(core->integrator->timestep(), timestep, eps_float);
 
     // measure thermodynamic properties
-    shared_ptr<observables::thermodynamics<dimension> >
-            thermodynamics(modules::fetch<observables::thermodynamics<dimension> >(factory, vm));
+    shared_ptr<observables::thermodynamics<dimension> > thermodynamics = make_thermodynamics(
+        backend
+      , core->particle
+      , core->box
+      , core->force
+    );
 
     // take averages of fluctuating quantities,
     accumulator<double> temp_, press, en_pot;
@@ -214,7 +568,7 @@ void thermodynamics(po::variables_map vm)
             temp_(thermodynamics->temp());
         }
     }
-    double vcm_limit = (vm["backend"].as<string>() == "gpu") ? 0.1 * eps_float : 20 * eps;
+    double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 20 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     double scale = sqrt(temp / mean(temp_));
@@ -248,7 +602,7 @@ void thermodynamics(po::variables_map vm)
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     if (dimension == 3) {
-        double Cv = heat_capacity(mean(temp_), variance(temp_), vm["particles"].as<unsigned>());
+        double Cv = heat_capacity(mean(temp_), variance(temp_), npart);
 
         // corrections for trunctated LJ potential, see e.g. Johnsen et al. (1993)
         double press_corr = 32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3);
@@ -270,33 +624,6 @@ void thermodynamics(po::variables_map vm)
     }
 }
 
-void set_default_options(halmd::po::variables_map& vm)
-{
-    typedef boost::program_options::variable_value variable_value;
-    using namespace boost::assign;
-
-    // override const operator[] in variables_map
-    map<string, variable_value>& vm_(vm);
-    vm_["force"]        = variable_value(string("lj"), true);
-    vm_["integrator"]   = variable_value(string("verlet"), true);
-    vm_["velocity"]     = variable_value(string("boltzmann"), true);
-    vm_["position"]     = variable_value(string("lattice"), true);
-    vm_["disable-state-vars"] = variable_value(false, true);
-    vm_["particles"]    = variable_value(1000u, true);
-    vm_["timestep"]     = variable_value(0.001, true);
-    vm_["skin"]         = variable_value(0.5f, true);
-    // smoothing modifies the equation of state
-//     vm_["smooth"]       = variable_value(0.005f, true);
-    vm_["density"]      = variable_value(0.4f, true);
-    vm_["temperature"]  = variable_value(2.0f, true);
-    vm_["verbose"]      = variable_value(int(logging::warning), true);
-    vm_["epsilon"]      = variable_value(boost::array<float, 3>(list_of(1.0f)(1.5f)(0.5f)), true);
-    vm_["sigma"]        = variable_value(boost::array<float, 3>(list_of(1.0f)(0.8f)(0.88f)), true);
-    vm_["cutoff"]       = variable_value(boost::array<float, 3>(list_of(2.5f)(2.5f)(2.5f)), true);
-    vm_["random-seed"]  = variable_value(42u, true);
-    vm_["output"]       = variable_value(string("halmd_test"), true);
-}
-
 static void __attribute__((constructor)) init_unit_test_suite()
 {
     typedef boost::program_options::variable_value variable_value;
@@ -304,35 +631,23 @@ static void __attribute__((constructor)) init_unit_test_suite()
     using namespace boost::unit_test;
     using namespace boost::unit_test::framework;
 
-    // manually define program option values
-    boost::array<po::variables_map, 2> vm;
-    for_each(vm.begin(), vm.end(), boost::bind(&set_default_options, _1));
-
     // parametrize specific program options
-    {
-        map<string, variable_value>& vm_(vm[0]);
-        vm_["backend"]      = variable_value(string("host"), true);
-    }
+    vector<string> backend = list_of
+        ("host")
 #ifdef WITH_CUDA
-    {
-        map<string, variable_value>& vm_(vm[1]);
-        vm_["backend"]      = variable_value(string("gpu"), true);
-        vm_["threads"]      = variable_value(128u, true);
-        vm_["cell-occupancy"] = variable_value(0.4f, true);
-        vm_["random-threads"] = variable_value(32u << DEVICE_SCALE, true);
-        vm_["random-blocks"] = variable_value(32u, true);
-    }
+        ("gpu")
 #endif /* WITH_CUDA */
+        ;
 
     test_suite* ts1 = BOOST_TEST_SUITE( "host" );
 
     test_suite* ts11 = BOOST_TEST_SUITE( "2d" );
-    ts11->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin(), vm.begin() + 1 ) );
-    ts11->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin(), vm.begin() + 1 ) );
+    ts11->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, backend.begin(), backend.begin() + 1 ) );
+    ts11->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, backend.begin(), backend.begin() + 1 ) );
 
     test_suite* ts12 = BOOST_TEST_SUITE( "3d" );
-    ts12->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin(), vm.begin() + 1 ) );
-    ts12->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin(), vm.begin() + 1 ) );
+    ts12->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, backend.begin(), backend.begin() + 1 ) );
+    ts12->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, backend.begin(), backend.begin() + 1 ) );
 
     ts1->add( ts11 );
     ts1->add( ts12 );
@@ -341,12 +656,12 @@ static void __attribute__((constructor)) init_unit_test_suite()
     test_suite* ts2 = BOOST_TEST_SUITE( "gpu" );
 
     test_suite* ts21 = BOOST_TEST_SUITE( "2d" );
-    ts21->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, vm.begin() + 1, vm.end() ) );
-    ts21->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, vm.begin() + 1, vm.end() ) );
+    ts21->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, backend.begin() + 1, backend.end() ) );
+    ts21->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, backend.begin() + 1, backend.end() ) );
 
     test_suite* ts22 = BOOST_TEST_SUITE( "3d" );
-    ts22->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, vm.begin() + 1, vm.end() ) );
-    ts22->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, vm.begin() + 1, vm.end() ) );
+    ts22->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, backend.begin() + 1, backend.end() ) );
+    ts22->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, backend.begin() + 1, backend.end() ) );
 
     ts2->add( ts21 );
     ts2->add( ts22 );

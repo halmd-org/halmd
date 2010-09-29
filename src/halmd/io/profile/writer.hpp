@@ -21,8 +21,7 @@
 #define HALMD_IO_PROFILE_WRITER_HPP
 
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
+#include <vector>
 
 namespace halmd
 {
@@ -43,15 +42,9 @@ namespace io { namespace profile
 class writer
 {
 public:
-    // module definitions
-    typedef writer _Self;
-    static void options(po::options_description& desc) {}
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
-
     typedef accumulator<double> accumulator_type;
 
-    writer(modules::factory& factory, po::variables_map const& vm) {}
+    writer() {}
     virtual ~writer() {}
     virtual void write() = 0;
 

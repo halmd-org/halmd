@@ -36,19 +36,13 @@ namespace mdsim { namespace host
 {
 
 /**
- * Resolve module dependencies
+ * Allocate microscopic system state.
+ *
+ * @param particles number of particles per type or species
  */
 template <unsigned int dimension, typename float_type>
-void particle<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["backend"].as<string>() != "host") {
-        throw unsuitable_module("mismatching option backend");
-    }
-}
-
-template <unsigned int dimension, typename float_type>
-particle<dimension, float_type>::particle(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+particle<dimension, float_type>::particle(vector<unsigned int> const& particles)
+  : _Base(particles)
   // allocate particle storage
   , r(nbox)
   , image(nbox)
@@ -111,6 +105,7 @@ static void register_lua(char const* class_name)
                 namespace_("host")
                 [
                     class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                        .def(constructor<vector<unsigned int> const&>())
                 ]
             ]
         ]
@@ -138,13 +133,5 @@ template class particle<2, float>;
 #endif
 
 }} // namespace mdsim::host
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::particle<3, double> >;
-template class module<mdsim::host::particle<2, double> >;
-#else
-template class module<mdsim::host::particle<3, float> >;
-template class module<mdsim::host::particle<2, float> >;
-#endif
 
 } // namespace halmd

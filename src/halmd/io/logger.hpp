@@ -26,23 +26,13 @@
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 
-#include <halmd/options.hpp> // FIXME deprecated
 
 namespace halmd
 {
-namespace io
-{
 
-class logging
+class logger
 {
 public:
-    static void options(po::options_description& desc);
-
-    typedef boost::log::sinks::text_ostream_backend console_backend;
-    typedef boost::log::sinks::synchronous_sink<console_backend> console_sink;
-    typedef boost::log::sinks::text_file_backend file_backend;
-    typedef boost::log::sinks::synchronous_sink<file_backend> file_sink;
-
     enum severity_level
     {
         fatal,
@@ -53,31 +43,32 @@ public:
         trace,
     };
 
-    static boost::log::sources::severity_logger<severity_level> logger;
+    typedef boost::log::sinks::text_ostream_backend console_backend;
+    typedef boost::log::sinks::synchronous_sink<console_backend> console_sink;
+    typedef boost::log::sinks::text_file_backend file_backend;
+    typedef boost::log::sinks::synchronous_sink<file_backend> file_sink;
 
-    logging();
-    logging(po::variables_map const& vm); // FIXME deprecated
-    ~logging();
+    logger();
+    ~logger();
     void log_to_console(severity_level level);
     void log_to_file(severity_level level, std::string file_name);
+
+    static boost::log::sources::severity_logger<severity_level>& get()
+    {
+       static boost::log::sources::severity_logger<severity_level> logger_;
+       return logger_;
+    }
 
 private:
     boost::shared_ptr<console_sink> console_;
     boost::shared_ptr<file_sink> file_;
 };
 
-} // namespace io
-
-// import logging into halmd namespace
-using io::logging;
-
-} // namespace halmd
-
 #define __HALMD_LOG__(__level__, __format__)            \
     do {                                                \
         BOOST_LOG_SEV(                                  \
-            ::halmd::io::logging::logger                \
-          , ::halmd::io::logging::__level__             \
+            ::halmd::logger::get()                      \
+          , ::halmd::logger::__level__                  \
           ) << __format__;                              \
     } while(0)
 
@@ -86,8 +77,8 @@ using io::logging;
         static bool __logged__ = false;                 \
         if (!__logged__) {                              \
             BOOST_LOG_SEV(                              \
-                ::halmd::io::logging::logger            \
-              , ::halmd::io::logging::__level__         \
+                ::halmd::logger::get()                  \
+              , ::halmd::logger::__level__              \
               ) << __format__;                          \
             __logged__ = true;                          \
         }                                               \
@@ -113,5 +104,7 @@ using io::logging;
 # define LOG_TRACE(__format__)
 # define LOG_TRACE_ONCE(__format__)
 #endif
+
+} // namespace halmd
 
 #endif /* ! HALMD_IO_LOGGER_HPP */

@@ -39,6 +39,9 @@ namespace halmd
 namespace mdsim { namespace gpu
 {
 
+template <int dimension, typename float_type>
+float_type const neighbour<dimension, float_type>::default_cell_occupancy = 0.4;
+
 /**
  * Assemble module options
  */
@@ -46,7 +49,7 @@ template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("cell-occupancy", po::value<float>()->default_value(0.4),
+        ("cell-occupancy", po::value<float>()->default_value(default_cell_occupancy),
          "desired average cell occupancy")
         ;
 }
@@ -60,44 +63,32 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<float>();
 }
 
-
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
-    modules::depends<_Self, force_type>::required();
-}
-
-template <int dimension, typename float_type>
-neighbour<dimension, float_type>::neighbour(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+neighbour<dimension, float_type>::neighbour(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , shared_ptr<force_type> force
+  , double skin
+  , double cell_occupancy
+)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , force(modules::fetch<force_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
+  : particle(particle)
+  , force(force)
+  , box(box)
   // select thread-dependent reduction kernel
   , dim_reduce(64, (64 << DEVICE_SCALE))
   , displacement_impl(get_displacement_impl(dim_reduce.threads_per_block()))
   // allocate parameters
-  , r_skin_(vm["skin"].as<float>())
+  , r_skin_(skin)
   , rr_skin_half_(pow(r_skin_ / 2, 2))
   , rr_cut_skin_(particle->ntype, particle->ntype)
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
-  , nu_cell_(vm["cell-occupancy"].as<float>())
+  , nu_cell_(cell_occupancy)
   , g_r0_(particle->nbox)
   , g_rr_(dim_reduce.blocks_per_grid())
   , h_rr_(g_rr_.size())
   , sort_(particle->nbox, particle->dim.threads_per_block())
 {
-    /*@{ FIXME remove pre-Lua hack */
-    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
-    register_runtimes(*profiler);
-    /*@}*/
-
     matrix_type r_cut = force->cutoff();
     typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle->ntype; ++i) {
@@ -334,6 +325,9 @@ template <typename T>
 static void register_lua(char const* class_name)
 {
     typedef typename T::_Base _Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+    typedef typename T::force_type force_type;
 
     using namespace luabind;
     lua_wrapper::register_(1) //< distance of derived to base class
@@ -345,6 +339,8 @@ static void register_lua(char const* class_name)
                 namespace_("gpu")
                 [
                     class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                        .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, shared_ptr<force_type>, double, double>())
+                        .def("register_runtimes", &T::register_runtimes)
                         .scope
                         [
                             def("options", &T::options)
@@ -366,8 +362,5 @@ template class neighbour<3, float>;
 template class neighbour<2, float>;
 
 }} // namespace mdsim::gpu
-
-template class module<mdsim::gpu::neighbour<3, float> >;
-template class module<mdsim::gpu::neighbour<2, float> >;
 
 } // namespace halmd

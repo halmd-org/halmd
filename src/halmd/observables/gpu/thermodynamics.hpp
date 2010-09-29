@@ -38,28 +38,25 @@ class thermodynamics
     : public observables::thermodynamics<dimension>
 {
 public:
-    // module definitions
-    typedef thermodynamics _Self;
     typedef observables::thermodynamics<dimension> _Base;
-    static void depends();
-    static void options(po::options_description& desc) {}
-    static void select(po::variables_map const& vm) {}
-
+    typedef typename _Base::vector_type vector_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef typename _Base::box_type box_type;
     typedef mdsim::gpu::force<dimension, float_type> force_type;
 
-    typedef typename _Base::vector_type vector_type;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<force_type> force;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<force_type> force;
+    thermodynamics(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<force_type> force
+    );
 
-    thermodynamics(modules::factory& factory, po::variables_map const& vm);
-    virtual ~thermodynamics() {}
-
-    double en_kin() const;
-    vector_type v_cm() const;
-    double en_pot() const;
-    double virial() const;
+    virtual double en_kin() const;
+    virtual vector_type v_cm() const;
+    virtual double en_pot() const;
+    virtual double virial() const;
 };
 
 }} // namespace observables::gpu

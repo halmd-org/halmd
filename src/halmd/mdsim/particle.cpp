@@ -43,11 +43,12 @@ namespace mdsim
 template <int dimension>
 void particle<dimension>::options(po::options_description& desc)
 {
+    multi_array<unsigned int, 1> default_particles(extents[1]);
+    default_particles[0] = 1000;
+
     desc.add_options()
-        ("particles,N", po::value<unsigned int>()->default_value(1000),
+        ("particles,N", po::value<multi_array<unsigned int, 1> >()->default_value(default_particles),
          "number of particles")
-        ("binary,M", po::value<boost::array<unsigned int, 2> >(),
-         "binary mixture with A,B particles")
         ;
 }
 
@@ -57,34 +58,31 @@ void particle<dimension>::options(po::options_description& desc)
 static __attribute__((constructor)) void register_option_converters()
 {
     using namespace lua_wrapper;
-    register_any_converter<unsigned int>();
-    register_any_converter<boost::array<unsigned int, 2> >();
+    register_any_converter<boost::multi_array<unsigned int, 1> >();
 }
 
-
+/**
+ * Construct microscopic system state.
+ *
+ * @param particles number of particles per type or species
+ */
 template <int dimension>
-particle<dimension>::particle(modules::factory& factory, po::variables_map const& vm)
+particle<dimension>::particle(vector<unsigned int> const& particles)
+  : nbox(accumulate(particles.begin(), particles.end(), 0))
+  , ntype(particles.size())
+  , ntypes(particles)
 {
-    // parse options
-    if (!vm["binary"].empty() && vm["particles"].defaulted()) {
-        array<unsigned int, 2> value = vm["binary"].as<array<unsigned int, 2> >();
-        if (*min_element(value.begin(), value.end()) < 1) {
-            throw logic_error("invalid number of A or B particles");
-        }
-        ntypes.assign(value.begin(), value.end());
+    if (*min_element(this->ntypes.begin(), this->ntypes.end()) < 1) {
+        throw logic_error("invalid number of particles");
     }
-    else {
-        unsigned int value = vm["particles"].as<unsigned int>();
-        if (value < 1) {
-            throw logic_error("invalid number of particles");
-        }
-        ntypes.push_back(value);
-    }
-    nbox = accumulate(ntypes.begin(), ntypes.end(), 0);
-    ntype = ntypes.size();
 
     vector<string> ntypes_(ntypes.size());
-    std::transform(ntypes.begin(), ntypes.end(), ntypes_.begin(), lexical_cast<string, unsigned int>);
+    transform(
+        ntypes.begin()
+      , ntypes.end()
+      , ntypes_.begin()
+      , lexical_cast<string, unsigned int>
+    );
 
     LOG("number of particles: " << nbox);
     LOG("number of particle types: " << ntype);
@@ -102,6 +100,9 @@ static void register_lua(char const* class_name)
             namespace_("mdsim")
             [
                 class_<T, shared_ptr<T> >(class_name)
+                    .def_readonly("nbox", &T::nbox)
+                    .def_readonly("ntype", &T::ntype)
+                    .def_readonly("ntypes", &T::ntypes)
                     .scope
                     [
                         def("options", &T::options)

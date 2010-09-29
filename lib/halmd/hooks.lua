@@ -18,10 +18,25 @@
 --
 
 -- grab environment
-local modules = require("halmd.modules")
-local random = halmd_wrapper.random.random
+local table = table
+local ipairs = ipairs
 local setmetatable = setmetatable
 
-module("halmd.random", modules.register)
+module("halmd.hooks")
 
-setmetatable(_M, { __index = random })
+local hooks = {}
+
+function register(func)
+    table.insert(hooks, func)
+end
+
+local hooked = setmetatable({}, { __mode = "k" }) -- table with weak keys
+
+function run(object)
+    if not hooked[object] then
+        for i, func in ipairs(hooks) do
+            func(object)
+        end
+        hooked[object] = true
+    end
+end

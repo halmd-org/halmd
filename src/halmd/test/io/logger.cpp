@@ -52,26 +52,21 @@ unsigned count_lines(char const* filename)
 }
 
 //
-// test logging module
+// test logger module
 //
 
-BOOST_AUTO_TEST_CASE( test_logging )
+BOOST_AUTO_TEST_CASE( test_logger )
 {
     typedef boost::program_options::variable_value variable_value;
 
-    halmd::po::variables_map vm;
-    // override const operator[] in variables_map
-    map<string, variable_value>& vm_(vm);
-    vm_["verbose"] = variable_value(0, true);
-    vm_["output"] = variable_value(string("halmd_test"), true);
-
-    string logfile = vm["output"].as<string>() + ".log";
+    string const logfile("halmd_test.log");
 
     // sweep all verbosities
     for (int log_level = -1; log_level <= 5; log_level++) {
 
-        vm_["verbose"] = variable_value(log_level, false);
-        shared_ptr<logging> logger(new logging(vm));
+        shared_ptr<logger> log(new logger);
+        log->log_to_console((logger::severity_level)log_level);
+        log->log_to_file((logger::severity_level)log_level, logfile);
 
         LOG("info");
         LOG_FATAL("fatal");
@@ -79,10 +74,10 @@ BOOST_AUTO_TEST_CASE( test_logging )
         LOG_WARNING("warning");
         LOG_DEBUG("debugging");
         LOG_TRACE("trace");
-        BOOST_CHECK_EQUAL((int)count_lines(logfile.c_str()), max(4, log_level + 1));
+        BOOST_CHECK_EQUAL((int)count_lines(logfile.c_str()), log_level + 1);
 
         // drop logger and close file
-        logger.reset();
+        log.reset();
     }
 
     remove(logfile.c_str());

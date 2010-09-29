@@ -22,7 +22,6 @@
 
 #include <vector>
 
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -40,22 +39,18 @@ template <int dimension>
 class particle
 {
 public:
-    // module definitions
-    typedef particle _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
 
-    particle(modules::factory& factory, po::variables_map const& vm);
+    particle(std::vector<unsigned int> const& particles);
     virtual ~particle() {}
     virtual void set() = 0;
 
     /** number of particles in simulation box */
-    unsigned int nbox;
+    unsigned int const nbox;
     /** number of particle types */
-    unsigned int ntype;
+    unsigned int const ntype;
     /** number of particles per type */
-    std::vector<unsigned int> ntypes;
+    std::vector<unsigned int> const ntypes;
 };
 
 } // namespace mdsim

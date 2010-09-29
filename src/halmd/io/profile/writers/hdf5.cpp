@@ -20,10 +20,9 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#include <H5xx.hpp>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profile/writers/hdf5.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -39,10 +38,9 @@ namespace io { namespace profile { namespace writers
 /**
  * open HDF5 file for writing
  */
-hdf5::hdf5(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  , file_(
-        (initial_path() / (vm["output"].as<string>() + ".prf")).string()
+hdf5::hdf5(string const& file_name)
+  : file_(
+        (initial_path() / file_name).string()
       , H5F_ACC_TRUNC // truncate existing file
     )
 {
@@ -119,8 +117,30 @@ void hdf5::write()
     file_.flush(H5F_SCOPE_GLOBAL);
 }
 
-}}} // namespace io::profile::writers
+static __attribute__((constructor)) void register_lua()
+{
+    typedef hdf5::_Base _Base;
 
-template class module<io::profile::writers::hdf5>;
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("io")
+            [
+                namespace_("profile")
+                [
+                    namespace_("writers")
+                    [
+                        class_<hdf5, shared_ptr<hdf5>, _Base>("hdf5")
+                            .def(constructor<string const&>())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+}}} // namespace io::profile::writers
 
 } // namespace halmd

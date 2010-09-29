@@ -18,11 +18,9 @@
  */
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <string>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -53,22 +51,13 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<float>();
 }
 
-
-template <int dimension, typename float_type>
-void smooth<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["smooth"].empty()) {
-        throw unsuitable_module("mismatching option smooth");
-    }
-}
-
 /**
  * Initialise parameters
  */
 template <int dimension, typename float_type>
-smooth<dimension, float_type>::smooth(modules::factory& factory, po::variables_map const& vm)
+smooth<dimension, float_type>::smooth(double r_smooth)
   // initialise parameters
-  : r_smooth_(vm["smooth"].as<float>())
+  : r_smooth_(r_smooth)
   , rri_smooth_(std::pow(r_smooth_, -2))
 {
     LOG("scale parameter for potential smoothing function: " << r_smooth_);
@@ -89,6 +78,7 @@ static void register_lua(char const* class_name)
                     namespace_("forces")
                     [
                         class_<T, shared_ptr<T> >(class_name)
+                            .def(constructor<double>())
                             .scope
                             [
                                 def("options", &T::options)
@@ -121,13 +111,5 @@ template class smooth<2, float>;
 #endif
 
 }}} // namespace mdsim::host::forces
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::forces::smooth<3, double> >;
-template class module<mdsim::host::forces::smooth<2, double> >;
-#else
-template class module<mdsim::host::forces::smooth<3, float> >;
-template class module<mdsim::host::forces::smooth<2, float> >;
-#endif
 
 } // namespace halmd

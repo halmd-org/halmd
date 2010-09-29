@@ -24,7 +24,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include <halmd/utility/module.hpp>
 
 using namespace boost;
 using namespace std;
@@ -34,33 +33,26 @@ namespace halmd
 namespace mdsim { namespace host { namespace integrators
 {
 
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void verlet<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
-}
-
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["integrator"].as<std::string>() != "verlet") {
-        throw unsuitable_module("mismatching option integrator");
-    }
-}
-
-template <int dimension, typename float_type>
-verlet<dimension, float_type>::verlet(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+verlet<dimension, float_type>::verlet(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , double timestep
+)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
-  // set parameters
-  , timestep_half_(0.5 * timestep_)
+  : particle(particle)
+  , box(box)
 {
+    this->timestep(timestep);
+}
+
+template <int dimension, typename float_type>
+void verlet<dimension, float_type>::timestep(double timestep)
+{
+  timestep_ = timestep;
+  timestep_half_ = 0.5 * timestep;
+
+  LOG("integration timestep: " << timestep_);
 }
 
 /**
@@ -70,8 +62,8 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& v = particle->v[i] += particle->f[i] * static_cast<float_type>(timestep_half_);
-        vector_type& r = particle->r[i] += v * static_cast<float_type>(timestep_);
+        vector_type& v = particle->v[i] += particle->f[i] * timestep_half_;
+        vector_type& r = particle->r[i] += v * timestep_;
         // enforce periodic boundary conditions
         // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
         // check that this is OK
@@ -86,8 +78,46 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
     for (size_t i = 0; i < particle->nbox; ++i) {
-        particle->v[i] += particle->f[i] * static_cast<float_type>(timestep_half_);
+        particle->v[i] += particle->f[i] * timestep_half_;
     }
+}
+
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    namespace_("integrators")
+                    [
+                        class_<T, shared_ptr<T>, bases<_Base> >(class_name)
+                            .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, double>())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+#ifndef USE_HOST_SINGLE_PRECISION
+    register_lua<verlet<3, double> >("verlet_3_");
+    register_lua<verlet<2, double> >("verlet_2_");
+#else
+    register_lua<verlet<3, float> >("verlet_3_");
+    register_lua<verlet<2, float> >("verlet_2_");
+#endif
 }
 
 // explicit instantiation
@@ -100,13 +130,5 @@ template class verlet<2, float>;
 #endif
 
 }}} // namespace mdsim::host::integrators
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::integrators::verlet<3, double> >;
-template class module<mdsim::host::integrators::verlet<2, double> >;
-#else
-template class module<mdsim::host::integrators::verlet<3, float> >;
-template class module<mdsim::host::integrators::verlet<2, float> >;
-#endif
 
 } // namespace halmd

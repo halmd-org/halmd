@@ -18,6 +18,7 @@
  */
 
 #include <halmd/io/trajectory/writer.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
@@ -27,8 +28,32 @@ namespace halmd
 namespace io { namespace trajectory
 {
 
-template class writer<3>;
-template class writer<2>;
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    using namespace luabind;
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("io")
+            [
+                namespace_("trajectory")
+                [
+                    class_<T, shared_ptr<T> >(class_name)
+                        .def("flush", &T::flush)
+                        .def("append", &T::append)
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<writer<3> >("writer_3_");
+    register_lua<writer<2> >("writer_2_");
+}
 
 }} // namespace io::trajectory
 

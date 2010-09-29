@@ -18,36 +18,44 @@
 --
 
 --
--- HALMD Lua library
+-- Load HAL’s MD package
 --
-
-require("halmd.gpu.device")
-require("halmd.gpu.random")
-require("halmd.io.logging")
-require("halmd.io.trajectory.reader")
+require("halmd.io.statevars.writers")
+require("halmd.io.trajectory.writers")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
 require("halmd.mdsim.force")
-require("halmd.mdsim.gpu.neighbour")
-require("halmd.mdsim.host.forces.lj")
-require("halmd.mdsim.host.forces.power_law")
-require("halmd.mdsim.host.forces.smooth")
-require("halmd.mdsim.host.velocities.boltzmann")
-require("halmd.mdsim.host.neighbour")
 require("halmd.mdsim.integrator")
+require("halmd.mdsim.neighbour")
 require("halmd.mdsim.particle")
 require("halmd.mdsim.position")
+require("halmd.mdsim.sort")
 require("halmd.mdsim.velocity")
 require("halmd.observables.thermodynamics")
-require("halmd.options")
-require("halmd.random")
+require("halmd.profiler")
 require("halmd.sampler")
 
--- grab environment
-local log = log
-
-module("halmd")
-
+--
+-- Run simulation
+--
 function run()
-    log.info("********* Hello, World! *********")
+    local profiler = halmd.profiler()
+
+    local core = halmd.mdsim.core() -- singleton
+    core.particle = halmd.mdsim.particle()
+    core.box = halmd.mdsim.box()
+    core.integrator = halmd.mdsim.integrator()
+    core.force = halmd.mdsim.force()
+    core.neighbour = halmd.mdsim.neighbour()
+    core.sort = halmd.mdsim.sort()
+    core.position = halmd.mdsim.position()
+    core.velocity = halmd.mdsim.velocity()
+
+    local sampler = halmd.sampler() -- singleton
+    sampler.profile_writers = profiler.profile_writers
+    sampler.trajectory_writer = halmd.io.trajectory.writers()
+    sampler.statevars_writer = halmd.io.statevars.writers()
+    sampler.observables = { halmd.observables.thermodynamics() }
+
+    sampler:run()
 end

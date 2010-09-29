@@ -20,8 +20,6 @@
 #ifndef HALMD_IO_TRAJECTORY_READER_HPP
 #define HALMD_IO_TRAJECTORY_READER_HPP
 
-#include <halmd/mdsim/samples/host/trajectory.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -33,20 +31,10 @@ template <int dimension>
 class reader
 {
 public:
-    // module definitions
-    typedef reader _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
-    static void select(po::variables_map const& vm);
 
-    reader(modules::factory& factory, po::variables_map const& vm);
+    reader() {}
     virtual ~reader() {}
-
-protected:
-    /** absolute path to HDF5 trajectory file */
-    std::string const path_;
-    /** offset relative to start (non-negative) or end (negative) of dataset */
-    ssize_t const offset_;
 };
 
 }} // namespace io::trajectory

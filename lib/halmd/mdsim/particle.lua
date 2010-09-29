@@ -17,13 +17,43 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local particle = {
-    [2] = halmd_wrapper.mdsim.particle_2_
+local particle_wrapper = {
+    host = {
+        [2] = halmd_wrapper.mdsim.host.particle_2_
+      , [3] = halmd_wrapper.mdsim.host.particle_3_
+    }
+  , [2] = halmd_wrapper.mdsim.particle_2_
   , [3] = halmd_wrapper.mdsim.particle_3_
 }
+if halmd_wrapper.mdsim.gpu then
+    particle_wrapper.gpu = {
+        [2] = halmd_wrapper.mdsim.gpu.particle_2_
+      , [3] = halmd_wrapper.mdsim.gpu.particle_3_
+    }
+end
+local device = require("halmd.device")
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.particle", modules.register)
+module("halmd.mdsim.particle", halmd.modules.register)
 
-options = particle[2].options
+options = particle_wrapper[2].options
+
+--
+-- construct particle module
+--
+function new()
+    local dimension = assert(args.dimension)
+    local backend = assert(args.backend)
+    local npart = assert(args.particles)
+
+    local particle = particle_wrapper[backend][dimension]
+    if backend == "gpu" then
+        return particle(device(), npart)
+    elseif backend == "host" then
+        return particle(npart)
+    end
+end

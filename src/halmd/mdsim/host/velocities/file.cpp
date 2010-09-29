@@ -23,41 +23,25 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocities/file.hpp>
 
+using namespace boost;
+using namespace std;
+
 namespace halmd
 {
 namespace mdsim { namespace host { namespace velocities
 {
 
-using namespace boost;
-using namespace std;
-
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void file<dimension, float_type>::depends()
-{
-    modules::depends<_Self, reader_type>::required();
-    modules::depends<_Self, sample_type>::required();
-    modules::depends<_Self, particle_type>::required();
-}
-
-template <int dimension, typename float_type>
-void file<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["velocity"].as<string>() != "file") {
-        throw unsuitable_module("mismatching option velocity");
-    }
-}
-
-template <int dimension, typename float_type>
-file<dimension, float_type>::file(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+file<dimension, float_type>::file(
+    shared_ptr<particle_type> particle
+  , shared_ptr<sample_type> sample
+)
+  : _Base(particle)
   // dependency injection
-  , reader(modules::fetch<reader_type>(factory, vm))
-  , sample(modules::fetch<sample_type>(factory, vm))
-  , particle(modules::fetch<particle_type>(factory, vm))
-{}
+  , particle(particle)
+  , sample(sample)
+{
+}
 
 /**
  * set particle velocities
@@ -82,13 +66,5 @@ template class file<2, float>;
 #endif
 
 }}} // namespace mdsim::host::velocities
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::velocities::file<3, double> >;
-template class module<mdsim::host::velocities::file<2, double> >;
-#else
-template class module<mdsim::host::velocities::file<3, float> >;
-template class module<mdsim::host::velocities::file<2, float> >;
-#endif
 
 } // namespace halmd

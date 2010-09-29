@@ -20,7 +20,6 @@
 #ifndef HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 #define HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 
-#include <boost/array.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
@@ -48,13 +47,7 @@ class neighbour
   : public mdsim::neighbour<dimension>
 {
 public:
-    // module definitions
-    typedef neighbour _Self;
     typedef mdsim::neighbour<dimension> _Base;
-    static void depends();
-    static void select(po::variables_map const& vm) {}
-    static void options(po::options_description& desc);
-
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef host::force<dimension, float_type> force_type;
@@ -66,17 +59,25 @@ public:
     typedef fixed_vector<size_t, dimension> cell_size_type;
     typedef fixed_vector<ssize_t, dimension> cell_diff_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<force_type> force;
-    shared_ptr<box_type> box;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<box_type> box;
 
-    neighbour(modules::factory& factory, po::variables_map const& vm);
-    virtual ~neighbour() {}
-    void update();
-    bool check();
+    static void options(po::options_description& desc);
+
+    static float_type const default_skin;
+
+    neighbour(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<force_type> force
+      , double skin
+    );
+    virtual void update();
+    virtual bool check();
 
 protected:
-    friend class sort::hilbert<dimension, float_type>;
+    friend class sort::hilbert<dimension, float_type>; //< public interface
 
     void update_cells();
     void update_cell_neighbours(cell_size_type const& i);

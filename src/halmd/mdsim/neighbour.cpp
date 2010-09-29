@@ -21,6 +21,9 @@
 #include <halmd/mdsim/neighbour.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
+using namespace boost;
+using namespace std;
+
 namespace halmd
 {
 namespace mdsim
@@ -37,6 +40,8 @@ static void register_lua(char const* class_name)
             namespace_("mdsim")
             [
                 class_<T, shared_ptr<T> >(class_name)
+                    .def("check", &T::check)
+                    .def("update", &T::update)
             ]
         ]
     ];

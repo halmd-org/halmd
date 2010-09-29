@@ -24,6 +24,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profile/writers/log.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
@@ -53,9 +54,6 @@ namespace halmd
 namespace io { namespace profile { namespace writers
 {
 
-log::log(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm) {}
-
 /**
  * compare total accumulated runtimes of acc_desc_pairs
  */
@@ -82,8 +80,30 @@ void log::write()
     }
 }
 
-}}} // namespace io::profile::writers
+static __attribute__((constructor)) void register_lua()
+{
+    typedef log::_Base _Base;
 
-template class module<io::profile::writers::log>;
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("io")
+            [
+                namespace_("profile")
+                [
+                    namespace_("writers")
+                    [
+                        class_<log, shared_ptr<log>, _Base>("log")
+                            .def(constructor<>())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+}}} // namespace io::profile::writers
 
 } // namespace halmd

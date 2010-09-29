@@ -19,7 +19,6 @@
 
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -53,34 +52,13 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<bool>();
 }
 
-
-/**
- * Resolve module dependencies
- */
 template <int dimension>
-void thermodynamics<dimension>::depends()
-{
-    modules::depends<_Self, box_type>::required();
-}
-
-template <int dimension>
-void thermodynamics<dimension>::select(po::variables_map const& vm)
-{
-    if (vm["disable-state-vars"].as<bool>()) {
-        throw unsuitable_module("mismatching option: disable-state-vars");
-    }
-}
-
-template <int dimension>
-thermodynamics<dimension>::thermodynamics(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+thermodynamics<dimension>::thermodynamics(
+    shared_ptr<box_type> box
+)
   // dependency injection
-  , box(modules::fetch<box_type>(factory, vm))
+  : box(box)
 {
-    /*@{ FIXME remove pre-Lua hack */
-    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
-    register_runtimes(*profiler);
-    /*@}*/
 }
 
 /**
@@ -130,14 +108,25 @@ void thermodynamics<dimension>::sample(double time)
 template <typename T>
 static void register_lua(char const* class_name)
 {
+    typedef typename T::_Base _Base;
+
     using namespace luabind;
-    lua_wrapper::register_(0) //< distance of derived to base class
+    lua_wrapper::register_(1) //< distance of derived to base class
     [
         namespace_("halmd_wrapper")
         [
             namespace_("observables")
             [
-                class_<T, shared_ptr<T> >(class_name)
+                class_<T, shared_ptr<_Base>, _Base>(class_name)
+                    .def("sample", &T::sample)
+                    .def("register_runtimes", &T::register_runtimes)
+                    .property("en_kin", &T::en_kin)
+                    .property("en_pot", &T::en_pot)
+                    .property("en_tot", &T::en_tot)
+                    .property("pressure", &T::pressure)
+                    .property("temp", &T::temp)
+                    .property("v_cm", &T::v_cm)
+                    .property("virial", &T::virial)
                     .scope
                     [
                         def("options", &T::options)

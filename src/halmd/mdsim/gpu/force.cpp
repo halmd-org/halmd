@@ -18,44 +18,42 @@
  */
 
 #include <halmd/mdsim/gpu/force.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim { namespace gpu
 {
 
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void force<dimension, float_type>::depends()
+template <typename T>
+static void register_lua(char const* class_name)
 {
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
-//     modules::depends<_Self, smooth_type>::optional();
+    typedef typename T::_Base _Base;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
+                [
+                    class_<T, shared_ptr<_Base>, _Base>(class_name)
+                ]
+            ]
+        ]
+    ];
 }
 
-/**
- * Initialize module dependencies
- */
-template <int dimension, typename float_type>
-force<dimension, float_type>::force(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
-//   , smooth(modules::fetch<smooth_type>(factory, vm))
-  // allocate result variables
-  , g_en_pot_(particle->dim.threads())
-  , g_stress_pot_(particle->dim.threads())
+static __attribute__((constructor)) void register_lua()
 {
+    register_lua<force<3, float> >("force_3_");
+    register_lua<force<2, float> >("force_2_");
 }
-
-// explicit instantiation
-template class force<3, float>;
-template class force<2, float>;
 
 }} // namespace mdsim::gpu
 

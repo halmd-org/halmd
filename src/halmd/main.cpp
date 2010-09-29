@@ -35,9 +35,9 @@ using namespace std;
  */
 int main(int argc, char **argv)
 {
-    static logging logger;
+    static logger log;
 
-    logger.log_to_console(logging::trace); //< facilitate debugging
+    log.log_to_console(logger::trace); //< facilitate debugging
 
     try {
         static script script; //< load Lua script engine
@@ -53,12 +53,12 @@ int main(int argc, char **argv)
 
         script.init(vm); //< pass command line options to Lua
 
-        logger.log_to_console(
-            static_cast<logging::severity_level>(vm["verbose"].as<int>())
+        log.log_to_console(
+            static_cast<logger::severity_level>(vm["verbose"].as<int>())
         );
-        logger.log_to_file(
-            static_cast<logging::severity_level>(
-                max(vm["verbose"].as<int>(), static_cast<int>(logging::info))
+        log.log_to_file(
+            static_cast<logger::severity_level>(
+                max(vm["verbose"].as<int>(), static_cast<int>(logger::info))
             )
           , vm["output"].as<string>() + ".log"
         );

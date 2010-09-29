@@ -20,7 +20,6 @@
 #ifndef HALMD_RANDOM_RANDOM_HPP
 #define HALMD_RANDOM_RANDOM_HPP
 
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -31,21 +30,10 @@ namespace random
 class random
 {
 public:
-    // module definitions
-    typedef random _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
 
-    random(modules::factory& factory, po::variables_map const& vm) {}
+    random() {}
     virtual ~random() {}
-
-protected:
-    void seed(po::variables_map const& vm);
-    virtual void seed(unsigned int value) = 0;
-
-private:
-    static unsigned int readint(std::string const& fn);
 };
 
 } // namespace random

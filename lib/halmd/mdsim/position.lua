@@ -17,14 +17,28 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local position = {
+local position_wrapper = {
     [2] = halmd_wrapper.mdsim.position_2_
   , [3] = halmd_wrapper.mdsim.position_3_
 }
-local setmetatable = setmetatable
+local positions = {
+    lattice = require("halmd.mdsim.position.lattice")
+}
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.position", modules.register)
+module("halmd.mdsim.position", halmd.modules.register)
 
-options = position[2].options
+--
+-- construct position module
+--
+function new()
+    local position = assert(args.position)
+    return positions[position]()
+end
+
+options = position_wrapper[2].options
+

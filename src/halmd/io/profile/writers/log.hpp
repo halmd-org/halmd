@@ -20,13 +20,10 @@
 #ifndef HALMD_IO_PROFILE_LOG_HPP
 #define HALMD_IO_PROFILE_LOG_HPP
 
-#include <string>
 #include <utility>
 #include <vector>
 
 #include <halmd/io/profile/writer.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -40,24 +37,18 @@ class log
   : public profile::writer
 {
 public:
-    // module definitions
-    typedef log _Self;
     typedef profile::writer _Base;
-    static void options(po::options_description& desc) {}
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
-
     typedef _Base::accumulator_type accumulator_type;
     typedef std::pair<accumulator_type const*, std::string> acc_desc_pair_type;
 
-    log(modules::factory& factory, po::variables_map const& vm);
-    void write();
+    log() {}
+    virtual void write();
 
 private:
     /**
     * register runtime accumulator
     */
-    void register_accumulator(
+    virtual void register_accumulator(
         std::vector<std::string> const& tag
       , accumulator_type const& acc
       , std::string const& desc

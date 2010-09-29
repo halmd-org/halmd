@@ -23,8 +23,6 @@
 #include <H5xx.hpp>
 
 #include <halmd/io/statevars/writer.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -39,19 +37,12 @@ class hdf5
   : public statevars::writer<dimension>
 {
 public:
-    // module definitions
-    typedef hdf5 _Self;
     typedef statevars::writer<dimension> _Base;
     typedef typename _Base::vector_type vector_type;
-
-    static void options(po::options_description& desc) {}
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
-
     typedef boost::function<void ()> writer_functor;
 
-    hdf5(modules::factory& factory, po::variables_map const& vm);
-    void write();
+    hdf5(std::string const& file_name);
+    virtual void write();
 
 private:
     // virtual register function, only called by base class

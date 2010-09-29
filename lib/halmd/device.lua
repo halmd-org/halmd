@@ -17,14 +17,34 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local power_law = {
-    [2] = halmd_wrapper.mdsim.host.forces.power_law_2_
-  , [3] = halmd_wrapper.mdsim.host.forces.power_law_3_
-}
-local setmetatable = setmetatable
+local device_wrapper
+if halmd_wrapper.utility.gpu then
+    device_wrapper = halmd_wrapper.utility.gpu.device
+end
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.host.forces.power_law", modules.register)
+module("halmd.device", halmd.modules.register)
 
-options = power_law[2].options
+local device -- singleton instance
+
+--
+-- construct device module
+--
+function new()
+    local devices = assert(args.device)
+    local threads = assert(args.threads)
+
+    if not device then
+        device = device_wrapper(devices, threads)
+    end
+    return device
+end
+
+-- command line options description
+if device_wrapper then
+    options = device_wrapper.options
+end

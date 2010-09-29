@@ -17,13 +17,46 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local thermodynamics = {
-    [2] = halmd_wrapper.observables.thermodynamics_2_
+local thermodynamics_wrapper = {
+    host = {
+        [2] = halmd_wrapper.observables.host.thermodynamics_2_
+      , [3] = halmd_wrapper.observables.host.thermodynamics_3_
+    }
+  , [2] = halmd_wrapper.observables.thermodynamics_2_
   , [3] = halmd_wrapper.observables.thermodynamics_3_
 }
+if halmd_wrapper.observables.gpu then
+    thermodynamics_wrapper.gpu = {
+        [2] = halmd_wrapper.observables.gpu.thermodynamics_2_
+      , [3] = halmd_wrapper.observables.gpu.thermodynamics_3_
+    }
+end
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.observables.thermodynamics", modules.register)
+module("halmd.observables.thermodynamics", halmd.modules.register)
 
-options = thermodynamics[2].options
+options = thermodynamics_wrapper[2].options
+
+--
+-- construct thermodynamics module
+--
+function new()
+    -- dependency injection
+    local core = mdsim.core()
+    local particle = assert(core.particle)
+    local box = assert(core.box)
+    local force = assert(core.force)
+
+    -- command line options
+    local dimension = assert(args.dimension)
+    local backend = assert(args.backend)
+
+    return thermodynamics_wrapper[backend][dimension](particle, box, force)
+end

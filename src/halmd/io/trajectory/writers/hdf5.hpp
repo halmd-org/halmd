@@ -24,11 +24,11 @@
 #include <boost/filesystem.hpp>
 #include <boost/unordered_map.hpp>
 
+#include <H5xx.hpp>
+
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -40,25 +40,19 @@ class hdf5
   : public trajectory::writer<dimension>
 {
 public:
-    // module definitions
-    typedef hdf5 _Self;
     typedef trajectory::writer<dimension> _Base;
-    static void depends();
-    static void select(po::variables_map const& vm) {}
-    static void options(po::options_description& desc) {}
-
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_vector_type::value_type vector_type;
 
-    /** returns file extension */
-    std::string file_extension() const { return ".trj"; }
+    hdf5(
+        boost::shared_ptr<sample_type> sample
+      , std::string const& file_name
+    );
+    virtual void append();
+    virtual void flush();
 
-    hdf5(modules::factory& factory, po::variables_map const& vm);
-    void append();
-    void flush();
-
-    shared_ptr<sample_type> sample;
+    boost::shared_ptr<sample_type> sample;
 
 private:
     /** absolute path to HDF5 trajectory file */

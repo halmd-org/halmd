@@ -23,6 +23,9 @@
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
+using namespace boost;
+using namespace std;
+
 namespace halmd
 {
 namespace random { namespace gpu
@@ -35,10 +38,10 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("random-threads", po::value<unsigned int>()->default_value(32 << DEVICE_SCALE),
-         "number of CUDA threads per block")
-        ("random-blocks", po::value<unsigned int>()->default_value(32),
+        ("random-blocks", po::value<unsigned int>()->default_value(default_blocks()),
          "number of CUDA blocks")
+        ("random-threads", po::value<unsigned int>()->default_value(default_threads()),
+         "number of CUDA threads per block")
         ;
 }
 
@@ -51,39 +54,26 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<unsigned int>();
 }
 
-
-/**
- * Resolve module dependencies
- */
 template <typename RandomNumberGenerator>
-void random<RandomNumberGenerator>::depends()
-{
-    modules::depends<_Self, device_type>::required();
-}
-
-template <typename RandomNumberGenerator>
-random<RandomNumberGenerator>::random(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+random<RandomNumberGenerator>::random(
+    shared_ptr<device_type> device
+  , unsigned int seed
+  , unsigned int blocks
+  , unsigned int threads
+)
   // dependency injection
-  , device(modules::fetch<device_type>(factory, vm))
+  : device(device)
   // allocate random number generator state
-  , rng(vm["random-blocks"].as<unsigned int>(), vm["random-threads"].as<unsigned int>())
+  , rng(blocks, threads)
 {
-    _Base::seed(vm);
-}
-
-template <typename RandomNumberGenerator>
-void random<RandomNumberGenerator>::seed(unsigned int value)
-{
-    LOG("random number generator seed: " << value);
-
+    LOG("random number generator seed: " << seed);
     try {
-        rng.seed(value);
+        rng.seed(seed);
         cuda::copy(rng.rng(), get_random_kernel<rng_type>().rng);
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to seed random number generator");
+        throw runtime_error("failed to seed random number generator");
     }
 }
 
@@ -100,7 +90,7 @@ void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to fill vector with uniform random numbers");
+        throw runtime_error("failed to fill vector with uniform random numbers");
     }
 }
 
@@ -117,7 +107,7 @@ void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to fill vector with uniform integer random numbers");
+        throw runtime_error("failed to fill vector with uniform integer random numbers");
     }
 }
 
@@ -134,13 +124,16 @@ void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean,
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to fill vector with normal random numbers");
+        throw runtime_error("failed to fill vector with normal random numbers");
     }
 }
 
 template <typename Module>
 static void register_lua(char const* class_name)
 {
+    typedef typename Module::_Base _Base;
+    typedef typename Module::device_type device_type;
+
     using namespace luabind;
     lua_wrapper::register_(1) //< distance of derived to base class
     [
@@ -150,7 +143,8 @@ static void register_lua(char const* class_name)
             [
                 namespace_("random")
                 [
-                    class_<Module, shared_ptr<Module> >(class_name)
+                    class_<Module, shared_ptr<_Base>, bases<_Base> >(class_name)
+                        .def(constructor<shared_ptr<device_type>, unsigned int, unsigned int, unsigned int>())
 
                   , def("options", &Module::options)
                 ]
@@ -167,7 +161,5 @@ static __attribute__((constructor)) void register_lua()
 }} // namespace random::gpu
 
 template class random::gpu::random<random::gpu::rand48>;
-
-template class module<random::gpu::random<random::gpu::rand48> >;
 
 } // namespace halmd

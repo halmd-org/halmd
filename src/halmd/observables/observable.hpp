@@ -20,12 +20,10 @@
 #ifndef HALMD_OBSERVABLES_OBSERVABLE_HPP
 #define HALMD_OBSERVABLES_OBSERVABLE_HPP
 
-#include <halmd/options.hpp>
 #include <halmd/io/statevars/writer.hpp>
 
 namespace halmd
 {
-
 namespace observables
 {
 
@@ -38,15 +36,9 @@ template <int dimension>
 class observable
 {
 public:
-    // module definitions
-    typedef observable _Self;
-    static void options(po::options_description& desc) {};
-    static void depends() {};
-    static void select(po::variables_map const& vm) {};
+    typedef io::statevars::writer<dimension> writer_type; //< FIXME dimension-independent
 
-    typedef io::statevars::writer<dimension> writer_type;
-
-    observable(modules::factory& factory, po::variables_map const& vm) {};
+    observable() {};
     virtual ~observable() {}
     virtual void register_observables(writer_type& writer) = 0;
 

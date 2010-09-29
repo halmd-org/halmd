@@ -20,7 +20,10 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LJ_HPP
 #define HALMD_MDSIM_GPU_FORCES_LJ_HPP
 
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
+#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/utility/profiler.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -33,31 +36,49 @@ class lj
   : public mdsim::gpu::force<dimension, float_type>
 {
 public:
-    // module definitions
-    typedef lj _Self;
     typedef mdsim::gpu::force<dimension, float_type> _Base;
-    static void options(po::options_description& desc) {} // see mdsim::host::forces::lj
-    static void depends() {}
-    static void select(po::variables_map const& vm);
-
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
+    typedef gpu::particle<dimension, float> particle_type;
+    typedef mdsim::box<dimension> box_type;
     typedef utility::profiler profiler_type;
 
-    using _Base::box;
-    using _Base::particle;
-//     using _Base::smooth;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
 
-    lj(modules::factory& factory, po::variables_map const& vm);
-    virtual ~lj() {}
+    lj(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::array<float, 3> const& cutoff
+      , boost::array<float, 3> const& epsilon
+      , boost::array<float, 3> const& sigma
+    );
     void register_runtimes(profiler_type& profiler);
     virtual void compute();
-    matrix_type const& cutoff() { return r_cut_; }
+
+    //! returns potential cutoff distance
+    virtual matrix_type const& cutoff()
+    {
+        return r_cut_;
+    }
+
+    //! returns potential energies of particles
+    virtual cuda::vector<float> const& potential_energy()
+    {
+        return g_en_pot_;
+    }
+
+    /** potential part of stress tensors of particles */
+    virtual cuda::vector<gpu_stress_tensor_type> const& potential_stress()
+    {
+        return g_stress_pot_;
+    }
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( compute_, "Lennard-Jones forces" );
 
-protected:
+private:
     /** potential well depths in MD units */
     matrix_type epsilon_;
     /** pair separation in MD units */
@@ -74,11 +95,11 @@ protected:
     matrix_type en_cut_;
     /** Lennard-Jones potential parameters */
     cuda::vector<float4> g_ljparam_;
+    /** potential energy for each particle */
+    cuda::vector<float> g_en_pot_;
+    /** potential part of stress tensor for each particle */
+    cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
 
-    using _Base::g_en_pot_;
-    using _Base::g_stress_pot_;
-
-private:
     boost::fusion::map<
         boost::fusion::pair<compute_, accumulator<double> >
     > runtime_;

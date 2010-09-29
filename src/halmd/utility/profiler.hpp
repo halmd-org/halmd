@@ -25,8 +25,6 @@
 #include <boost/fusion/include/map.hpp>
 
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -57,18 +55,12 @@ struct visitor;
 class profiler
 {
 public:
-    // module definitions
-    typedef profiler _Self;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm) {}
-
     typedef io::profile::writer profile_writer_type;
     typedef accumulator<double> accumulator_type;
 
-    std::vector<shared_ptr<profile_writer_type> > profile_writer;
+    std::vector<boost::shared_ptr<profile_writer_type> > profile_writers;
 
-    profiler(modules::factory& factory, po::variables_map const& vm);
+    profiler(std::vector<boost::shared_ptr<profile_writer_type> > profile_writers);
 
     template <typename AccumulatorMap>
     void register_map(AccumulatorMap const& map)

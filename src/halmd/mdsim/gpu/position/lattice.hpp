@@ -38,25 +38,22 @@ class lattice
   : public mdsim::position<dimension>
 {
 public:
-    // module definitions
-    typedef lattice _Self;
     typedef mdsim::position<dimension> _Base;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm);
-
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<box_type> box;
-    shared_ptr<random_type> random;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<random_type> random;
 
-    lattice(modules::factory& factory, po::variables_map const& vm);
-    virtual ~lattice() {}
-    void set();
+    lattice(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<random_type> random
+    );
+    virtual void set();
 };
 
 }}} // namespace mdsim::gpu::position

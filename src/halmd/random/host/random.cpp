@@ -19,26 +19,50 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/random/host/random.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/read_integer.hpp>
+
+using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace random { namespace host
 {
 
-random::random(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+random::random(unsigned int seed)
 {
-    _Base::seed(vm);
+    LOG("random number generator seed: " << seed);
+    rng_.seed(seed);
 }
 
-void random::seed(unsigned int value)
+template <typename Module>
+static void register_lua(char const* class_name)
 {
-    LOG("random number generator seed: " << value);
-    rng_.seed(value);
+    typedef typename Module::_Base _Base;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("host")
+            [
+                namespace_("random")
+                [
+                    class_<Module, shared_ptr<_Base>, bases<_Base> >(class_name)
+                        .def(constructor<unsigned int>())
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<random>("gfsr4");
 }
 
 }} // namespace random::host
-
-template class module<random::host::random>;
 
 } // namespace halmd

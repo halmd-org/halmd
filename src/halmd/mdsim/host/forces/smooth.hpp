@@ -20,7 +20,6 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_SMOOTH_HPP
 #define HALMD_MDSIM_HOST_FORCES_SMOOTH_HPP
 
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -32,20 +31,14 @@ namespace mdsim { namespace host { namespace forces
  * provide functions to make the potential @f$C^2@f$-smooth
  * at the cutoff
  */
-
 template <int dimension, typename float_type>
 class smooth
 {
 public:
-    // module definitions
-    typedef smooth _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
-    static void select(po::variables_map const& vm);
 
-    smooth(modules::factory& factory, po::variables_map const& vm);
-    virtual ~smooth() {}
-    virtual void compute(float_type r, float_type dr, float_type& fval, float_type& pot);
+    smooth(double r_smooth);
+    void compute(float_type r, float_type dr, float_type& fval, float_type& pot);
 
 protected:
     /** potential smoothing function scale parameter */

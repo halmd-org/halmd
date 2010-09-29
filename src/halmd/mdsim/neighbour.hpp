@@ -20,9 +20,6 @@
 #ifndef HALMD_MDSIM_NEIGHBOUR_HPP
 #define HALMD_MDSIM_NEIGHBOUR_HPP
 
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
-
 namespace halmd
 {
 namespace mdsim
@@ -32,13 +29,7 @@ template <int dimension>
 class neighbour
 {
 public:
-    // module definitions
-    typedef neighbour _Self;
-    static void options(po::options_description& desc) {}
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
-
-    neighbour(modules::factory& factory, po::variables_map const& vm) {}
+    neighbour() {}
     virtual ~neighbour() {}
     virtual void update() = 0;
     virtual bool check() = 0;

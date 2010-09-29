@@ -17,11 +17,30 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local logging = halmd_wrapper.io.logging
-local setmetatable = setmetatable
+local profiler_wrapper = halmd_wrapper.utility.profiler
+local profile_writers = require("halmd.io.profile.writers")
+local hooks = require("halmd.hooks")
+local pairs = pairs
+local table = table
+local print = print
 
-module("halmd.io.logging", modules.register)
+module("halmd.profiler", halmd.modules.register)
 
-setmetatable(_M, { __index = logging })
+--
+-- construct profiler module
+--
+function new()
+    local writers = profile_writers()
+    local profiler = profiler_wrapper(writers)
+
+    hooks.register(function(profilable)
+        if profilable.register_runtimes then
+            profilable:register_runtimes(profiler)
+        end
+    end)
+
+    return profiler
+end

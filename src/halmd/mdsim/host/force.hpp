@@ -21,27 +21,13 @@
 #define HALMD_MDSIM_HOST_FORCE_HPP
 
 #include <boost/numeric/ublas/symmetric.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
-#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/observables/thermodynamics.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
 {
-namespace observables { namespace host
-{
-
-// forward declaration
-template <int dimension, typename float_type>
-class thermodynamics;
-
-}} // namespace observables::host
-
 namespace mdsim { namespace host
 {
 
@@ -50,38 +36,16 @@ class force
   : public mdsim::force<dimension>
 {
 public:
-    // module definitions
-    typedef force _Self;
     typedef mdsim::force<dimension> _Base;
-    static void depends();
-    static void options(po::options_description& desc) {}
-    static void select(po::variables_map const& vm) {}
-
     typedef type_traits<dimension, float_type> _type_traits;
     typedef typename _type_traits::vector_type vector_type;
     typedef typename _type_traits::stress_tensor_type stress_tensor_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
-    typedef host::particle<dimension, float_type> particle_type;
-    typedef mdsim::box<dimension> box_type;
-    typedef host::forces::smooth<dimension, float_type> smooth_type;
-
-    shared_ptr<particle_type> particle;
-    shared_ptr<box_type> box;
-    shared_ptr<smooth_type> smooth;
-
-    force(modules::factory& factory, po::variables_map const& vm);
-    virtual ~force() {};
-    virtual void compute() = 0;
+    force() {}
     virtual matrix_type const& cutoff() = 0;
-
-protected:
-    /** average potential energy per particle */
-    double en_pot_;
-    /** potential part of stress tensor */
-    stress_tensor_type stress_pot_;
-
-    friend class observables::host::thermodynamics<dimension, float_type>;
+    virtual double potential_energy() = 0;
+    virtual stress_tensor_type potential_stress() = 0;
 };
 
 /**

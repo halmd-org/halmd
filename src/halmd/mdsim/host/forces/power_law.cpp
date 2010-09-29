@@ -22,21 +22,22 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/power_law.hpp>
 #include <halmd/numeric/pow.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
-using namespace boost::assign;
 using namespace boost::numeric::ublas;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim { namespace host { namespace forces
 {
+
+template <int dimension, typename float_type>
+int const power_law<dimension, float_type>::default_index = 12;
 
 /**
  * Assemble module options
@@ -45,14 +46,8 @@ template <int dimension, typename float_type>
 void power_law<dimension, float_type>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("index", po::value<int>()->default_value(12),
+        ("power-law-index", po::value<int>()->default_value(default_index),
          "index of soft power-law potential")
-        ("cutoff", po::value<boost::array<float, 3> >()->default_value(list_of(2.5f)(2.5f)(2.5f)),
-         "truncate potential at cutoff radius")
-        ("epsilon", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(1.5f)(0.5f)),
-         "potential well depths AA,AB,BB")
-        ("sigma", po::value<boost::array<float, 3> >()->default_value(list_of(1.0f)(0.8f)(0.88f)),
-         "collision diameters AA,AB,BB")
         ;
 }
 
@@ -63,29 +58,27 @@ static __attribute__((constructor)) void register_option_converters()
 {
     using namespace lua_wrapper;
     register_any_converter<int>();
-    register_any_converter<boost::array<float, 3> >();
-}
-
-
-/**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void power_law<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["force"].as<std::string>() != "power-law") {
-        throw unsuitable_module("mismatching option force");
-    }
 }
 
 /**
  * Initialize Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-power_law<dimension, float_type>::power_law(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+power_law<dimension, float_type>::power_law(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+// FIXME  , shared_ptr<smooth_type> smooth
+  , int index
+  , array<float, 3> const& cutoff
+  , array<float, 3> const& epsilon
+  , array<float, 3> const& sigma
+)
+  // dependency injection
+  : particle(particle)
+  , box(box)
+// FIXME  , smooth(smooth)
   // allocate potential parameters
-  , index_(vm["index"].as<int>())
+  , index_(index)
   , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
   , r_cut_sigma_(particle->ntype, particle->ntype)
@@ -94,22 +87,12 @@ power_law<dimension, float_type>::power_law(modules::factory& factory, po::varia
   , sigma2_(particle->ntype, particle->ntype)
   , en_cut_(particle->ntype, particle->ntype)
 {
-    // parse deprecated options
-    boost::array<float, 3> epsilon = vm["epsilon"].as<boost::array<float, 3> >();
-    boost::array<float, 3> sigma = vm["sigma"].as<boost::array<float, 3> >();
-    boost::array<float, 3> r_cut_sigma;
-    try {
-        r_cut_sigma = vm["cutoff"].as<boost::array<float, 3> >();
-    }
-    catch (boost::bad_any_cast const&) {
-        // backwards compatibility
-        std::fill(r_cut_sigma.begin(), r_cut_sigma.end(), vm["cutoff"].as<float>());
-    }
+    // FIXME support any number of types
     for (size_t i = 0; i < std::min(particle->ntype, 2U); ++i) {
         for (size_t j = i; j < std::min(particle->ntype, 2U); ++j) {
             epsilon_(i, j) = epsilon[i + j];
             sigma_(i, j) = sigma[i + j];
-            r_cut_sigma_(i, j) = r_cut_sigma[i + j];
+            r_cut_sigma_(i, j) = cutoff[i + j];
         }
     }
 
@@ -195,9 +178,9 @@ void power_law<dimension, float_type>::compute_impl()
 
             // optionally smooth potential yielding continuous 2nd derivative
             // FIXME test performance of template versus runtime bool
-            if (smooth) {
-                smooth->compute(std::sqrt(rr), r_cut_(a, b), fval, en_pot);
-            }
+            // if (smooth) {
+            //    smooth->compute(std::sqrt(rr), r_cut_(a, b), fval, en_pot);
+            // }
 
             // add force contribution to both particles
             particle->f[i] += r * fval;
@@ -216,13 +199,18 @@ void power_law<dimension, float_type>::compute_impl()
 
     // ensure that system is still in valid state
     if (std::isinf(en_pot_)) {
-        throw potential_energy_divergence();
+        throw runtime_error("Potential energy diverged");
     }
 }
 
 template <typename T>
 static void register_lua(char const* class_name)
 {
+    typedef typename T::_Base _Base;
+    typedef typename _Base::_Base _Base_Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+
     using namespace luabind;
     lua_wrapper::register_(2) //< distance of derived to base class
     [
@@ -234,7 +222,15 @@ static void register_lua(char const* class_name)
                 [
                     namespace_("forces")
                     [
-                        class_<T, shared_ptr<T> >(class_name)
+                        class_<T, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name)
+                            .def(constructor<
+                                shared_ptr<particle_type>
+                              , shared_ptr<box_type>
+                              , int
+                              , array<float, 3> const&
+                              , array<float, 3> const&
+                              , array<float, 3> const&
+                            >())
                             .scope
                             [
                                 def("options", &T::options)
@@ -267,13 +263,5 @@ template class power_law<2, float>;
 #endif
 
 }}} // namespace mdsim::host::forces
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::forces::power_law<3, double> >;
-template class module<mdsim::host::forces::power_law<2, double> >;
-#else
-template class module<mdsim::host::forces::power_law<3, float> >;
-template class module<mdsim::host::forces::power_law<2, float> >;
-#endif
 
 } // namespace halmd

@@ -1,4 +1,5 @@
 add_library(halmd_observables
+  observable.cpp
   thermodynamics.cpp
   )
 

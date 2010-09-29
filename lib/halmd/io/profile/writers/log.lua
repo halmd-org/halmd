@@ -17,11 +17,17 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local device = halmd_wrapper.utility.gpu.device
-local setmetatable = setmetatable
+local log_writer_wrapper = halmd_wrapper.io.profile.writers.log
+local assert = assert
 
-module("halmd.gpu.device", modules.register)
+module("halmd.io.profile.writers.log", halmd.modules.register)
 
-setmetatable(_M, { __index = device })
+--
+-- construct HDF5 profile writer module
+--
+function new()
+    return log_writer_wrapper()
+end

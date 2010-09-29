@@ -23,52 +23,32 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
-#include <halmd/utility/module.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
+using namespace boost;
 using namespace boost::fusion;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim { namespace gpu { namespace integrators
 {
 
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void verlet<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
-    modules::depends<_Self, device_type>::required();
-}
-
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["integrator"].as<std::string>() != "verlet") {
-        throw unsuitable_module("mismatching option integrator");
-    }
-}
-
-template <int dimension, typename float_type>
-verlet<dimension, float_type>::verlet(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+verlet<dimension, float_type>::verlet(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , double timestep
+)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
-  , device(modules::fetch<device_type>(factory, vm))
+  : particle(particle)
+  , box(box)
   // reference CUDA C++ verlet_wrapper
   , wrapper(&verlet_wrapper<dimension>::wrapper)
-  // set parameters
-  , timestep_half_(0.5 * timestep_)
 {
-    /*@{ FIXME remove pre-Lua hack */
-    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
-    register_runtimes(*profiler);
-    /*@}*/
+    this->timestep(timestep);
 
 #ifdef USE_VERLET_DSFUN
     //
@@ -96,13 +76,32 @@ verlet<dimension, float_type>::verlet(modules::factory& factory, po::variables_m
 #endif
 
     try {
-        cuda::copy(timestep_, wrapper->timestep);
         cuda::copy(static_cast<vector_type>(box->length()), wrapper->box_length);
     }
     catch (cuda::error const& e) {
         LOG_ERROR(e.what());
-        throw exception("failed to initialize Verlet integrator symbols");
+        throw runtime_error("failed to initialize Verlet integrator symbols");
     }
+}
+
+/**
+ * set integration time-step
+ */
+template <int dimension, typename float_type>
+void verlet<dimension, float_type>::timestep(double timestep)
+{
+    timestep_ = timestep;
+    timestep_half_ = 0.5 * timestep_;
+
+    try {
+        cuda::copy(timestep_, wrapper->timestep);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR(e.what());
+        throw runtime_error("failed to initialize Verlet integrator symbols");
+    }
+
+    LOG("integration timestep: " << timestep_);
 }
 
 /**
@@ -129,7 +128,7 @@ void verlet<dimension, float_type>::integrate()
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to stream first leapfrog step on GPU");
+        throw std::runtime_error("failed to stream first leapfrog step on GPU");
     }
 }
 
@@ -151,17 +150,48 @@ void verlet<dimension, float_type>::finalize()
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to stream second leapfrog step on GPU");
+        throw std::runtime_error("failed to stream second leapfrog step on GPU");
     }
+}
+
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
+                [
+                    namespace_("integrators")
+                    [
+                        class_<T, shared_ptr<T>, bases<_Base> >(class_name)
+                            .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, double>())
+                            .def("register_runtimes", &T::register_runtimes)
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<verlet<3, float> >("verlet_3_");
+    register_lua<verlet<2, float> >("verlet_2_");
 }
 
 // explicit instantiation
 template class verlet<3, float>;
 template class verlet<2, float>;
 
-}}} // namespace mdsim::gpu::integrator
-
-template class module<mdsim::gpu::integrators::verlet<3, float> >;
-template class module<mdsim::gpu::integrators::verlet<2, float> >;
+}}} // namespace mdsim::gpu::integrators
 
 } // namespace halmd

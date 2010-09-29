@@ -25,42 +25,28 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/position/lattice.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+
+using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim { namespace host { namespace position
 {
 
-using namespace boost;
-using namespace std;
-
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void lattice<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, box_type>::required();
-    modules::depends<_Self, random_type>::required();
-}
-
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::select(po::variables_map const& vm)
-{
-    if (vm["position"].as<string>() != "lattice") {
-        throw unsuitable_module("mismatching option position");
-    }
-}
-
-template <int dimension, typename float_type>
-lattice<dimension, float_type>::lattice(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
+lattice<dimension, float_type>::lattice(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , shared_ptr<random_type> random
+)
   // dependency injection
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , box(modules::fetch<box_type>(factory, vm))
-  , random(modules::fetch<random_type>(factory, vm))
-{}
+  : particle(particle)
+  , box(box)
+  , random(random)
+{
+}
 
 /**
  * Place particles on a face-centered cubic (fcc) lattice
@@ -135,6 +121,45 @@ void lattice<dimension, float_type>::set()
     LOG("placed particles on fcc lattice: a = " << a);
 }
 
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename T::particle_type particle_type;
+    typedef typename T::box_type box_type;
+    typedef typename T::random_type random_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    namespace_("position")
+                    [
+                        class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                            .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, shared_ptr<random_type> >())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+#ifndef USE_HOST_SINGLE_PRECISION
+    register_lua<lattice<3, double> >("lattice_3_");
+    register_lua<lattice<2, double> >("lattice_2_");
+#else
+    register_lua<lattice<3, float> >("lattice_3_");
+    register_lua<lattice<2, float> >("lattice_2_");
+#endif
+}
+
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class lattice<3, double>;
@@ -145,13 +170,5 @@ template class lattice<2, float>;
 #endif
 
 }}} // namespace mdsim::host::position
-
-#ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::position::lattice<3, double> >;
-template class module<mdsim::host::position::lattice<2, double> >;
-#else
-template class module<mdsim::host::position::lattice<3, float> >;
-template class module<mdsim::host::position::lattice<2, float> >;
-#endif
 
 } // namespace halmd

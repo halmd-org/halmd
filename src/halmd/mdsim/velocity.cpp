@@ -51,7 +51,6 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<string>();
 }
 
-
 template <typename T>
 static void register_lua(char const* class_name)
 {
@@ -63,6 +62,7 @@ static void register_lua(char const* class_name)
             namespace_("mdsim")
             [
                 class_<T, shared_ptr<T> >(class_name)
+                    .def("set", &T::set)
                     .scope
                     [
                         def("options", &T::options)

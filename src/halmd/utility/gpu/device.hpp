@@ -23,7 +23,6 @@
 #include <string>
 
 #include <cuda_wrapper.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd { namespace utility { namespace gpu
@@ -46,14 +45,15 @@ namespace halmd { namespace utility { namespace gpu
 class device
 {
 public:
-    // module definitions
-    typedef device _Self;
     static void options(po::options_description& desc);
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
 
-    device(modules::factory& factory, po::variables_map const& vm);
-    virtual ~device();
+    //! default number of threads per block
+    static unsigned int default_threads() { return 128; }
+    //! default selected CUDA devices
+    static std::vector<int> default_devices() { return std::vector<int>(); }
+
+    device(std::vector<int> devices, unsigned int threads);
+    ~device();
     unsigned int threads() { return threads_; }
 
     static std::string nvidia_driver_version();
@@ -66,7 +66,7 @@ private:
     /** number of CUDA threads per block */
     unsigned int threads_;
     /** selected CUDA device context */
-    shared_ptr<cuda::driver::context> context_;
+    boost::shared_ptr<cuda::driver::context> context_;
 };
 
 }}} // namespace halmd::utility::gpu

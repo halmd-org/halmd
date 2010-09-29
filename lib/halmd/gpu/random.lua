@@ -17,11 +17,41 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local random = halmd_wrapper.gpu.random
-local setmetatable = setmetatable
+local random_wrapper = {
+    read_integer = halmd_wrapper.random.random.read_integer
+}
+if halmd_wrapper.gpu then
+    random_wrapper.gpu = halmd_wrapper.gpu.random
+end
+local device = require("halmd.device")
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.gpu.random", modules.register)
+module("halmd.gpu.random", halmd.modules.register)
 
-setmetatable(_M, { __index = random })
+local random -- singleton instance
+
+--
+-- construct random module
+--
+function new()
+    local file = assert(args.random_file)
+    local seed = args.random_seed -- optional
+    local blocks = assert(args.random_blocks)
+    local threads = assert(args.random_threads)
+
+    if not random then
+        if not seed then
+            seed = random_wrapper.read_integer(file)
+        end
+        random = random_wrapper.gpu.rand48(device(), seed, blocks, threads)
+    end
+    return random
+end
+
+if random_wrapper.gpu then
+    options = random_wrapper.gpu.options
+end

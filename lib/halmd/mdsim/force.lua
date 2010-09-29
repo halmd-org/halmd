@@ -17,14 +17,28 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local force = {
+local force_wrapper = {
     [2] = halmd_wrapper.mdsim.force_2_
   , [3] = halmd_wrapper.mdsim.force_3_
 }
-local setmetatable = setmetatable
+local forces = {
+    lj = require("halmd.mdsim.forces.lj")
+  , power_law = require("halmd.mdsim.forces.power_law")
+}
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.force", modules.register)
+module("halmd.mdsim.force", halmd.modules.register)
 
-options = force[2].options
+options = force_wrapper[2].options
+
+--
+-- construct force module
+--
+function new()
+    local force = assert(args.force)
+    return forces[force]()
+end

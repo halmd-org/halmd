@@ -63,54 +63,16 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<int>();
 }
 
-
-/**
- * Resolve module dependencies
- */
-template <int dimension>
-void core<dimension>::depends()
-{
-    modules::depends<_Self, force_type>::required();
-    modules::depends<_Self, neighbour_type>::required();
-    modules::depends<_Self, sort_type>::optional();
-    modules::depends<_Self, integrator_type>::required();
-    modules::depends<_Self, particle_type>::required();
-    modules::depends<_Self, position_type>::required();
-    modules::depends<_Self, velocity_type>::required();
-    modules::depends<_Self, profiler_type>::required();
-}
-
-template <int dimension>
-void core<dimension>::select(po::variables_map const& vm)
-{
-    if (vm["dimension"].as<int>() != dimension) {
-        throw unsuitable_module("mismatching option dimension");
-    }
-}
-
 /**
  * Initialize simulation
  */
 template <int dimension>
-core<dimension>::core(modules::factory& factory, po::variables_map const& vm)
-  // dependency injection
-  : profiler(modules::fetch<profiler_type>(factory, vm))
-  , force(modules::fetch<force_type>(factory, vm))
-  , neighbour(modules::fetch<neighbour_type>(factory, vm))
-  , sort(modules::fetch<sort_type>(factory, vm))
-  , integrator(modules::fetch<integrator_type>(factory, vm))
-  , particle(modules::fetch<particle_type>(factory, vm))
-  , position(modules::fetch<position_type>(factory, vm))
-  , velocity(modules::fetch<velocity_type>(factory, vm))
+core<dimension>::core()
   // initialise attributes
-  , step_counter_(0)
+  : step_counter_(0)
 {
-    /*@{ FIXME remove pre-Lua hack */
-    register_runtimes(*profiler);
-    /*@}*/
-
     LOG("dimension of positional coordinates: " << dimension);
-    LOG("MD simulation backend: " << vm["backend"].as<string>());
+    // FIXME LOG("MD simulation backend: " << vm["backend"].as<string>());
 }
 
 /**
@@ -168,6 +130,20 @@ static void register_lua(char const* class_name)
             namespace_("mdsim")
             [
                 class_<T, shared_ptr<T> >(class_name)
+                    .def(constructor<>())
+                    .def("register_runtimes", &T::register_runtimes)
+                    .def_readwrite("particle", &T::particle)
+                    .def_readwrite("box", &T::box)
+                    .def_readwrite("force", &T::force)
+                    .def_readwrite("neighbour", &T::neighbour)
+                    .def_readwrite("sort", &T::sort)
+                    .def_readwrite("integrator", &T::integrator)
+                    .def_readwrite("position", &T::position)
+                    .def_readwrite("velocity", &T::velocity)
+                    .property("step_counter", &T::step_counter)
+                    .property("time", &T::time)
+                    .def("prepare", &T::prepare)
+                    .def("mdstep", &T::mdstep)
                     .scope
                     [
                         def("options", &T::options)
@@ -188,8 +164,5 @@ template class core<3>;
 template class core<2>;
 
 } // namespace mdsim
-
-template class module<mdsim::core<3> >;
-template class module<mdsim::core<2> >;
 
 } // namespace halmd

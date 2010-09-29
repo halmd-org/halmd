@@ -17,14 +17,35 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local lj = {
-    [2] = halmd_wrapper.mdsim.host.forces.lj_2_
-  , [3] = halmd_wrapper.mdsim.host.forces.lj_3_
+local random_wrapper = {
+    host = halmd_wrapper.host.random
+  , read_integer = halmd_wrapper.random.random.read_integer
+  , options = halmd_wrapper.random.random.options
 }
-local setmetatable = setmetatable
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.host.forces.lj", modules.register)
+module("halmd.host.random", halmd.modules.register)
 
-options = lj[2].options
+local random -- singleton instance
+
+--
+-- construct random module
+--
+function new()
+    local file = assert(args.random_file)
+    local seed = args.random_seed -- optional
+
+    if not random then
+        if not seed then
+            seed = random_wrapper.read_integer(file)
+        end
+        random = random_wrapper.host.gfsr4(seed)
+    end
+    return random
+end
+
+options = random_wrapper.options

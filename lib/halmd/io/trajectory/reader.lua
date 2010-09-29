@@ -17,13 +17,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local reader = {
+local reader_wrapper = {
     [2] = halmd_wrapper.io.trajectory.reader_2_
   , [3] = halmd_wrapper.io.trajectory.reader_3_
 }
 
-module("halmd.io.trajectory.reader", modules.register)
+module("halmd.io.trajectory.reader", halmd.modules.register)
 
-options = reader[2].options
+options = reader_wrapper[2].options

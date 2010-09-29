@@ -20,22 +20,36 @@
 -- grab environment
 local table = table
 local ipairs = ipairs
+local setmetatable = setmetatable
+local hooks = require("halmd.hooks")
 
 --
 -- This module keeps a registry of all HALMD Lua modules.
 --
--- Modules register themselves by supplying the modules.register
--- function as an additional parameter to the module() command.
+-- Modules register themselves by supplying the function register
+-- as an additional parameter to the module() command.
 --
 module("halmd.modules")
 
-local registry = {} -- ordered list of registered HALMD modules
+local modules = {} -- ordered list of registered HALMD modules
 
 --
 -- register a module
 --
+-- @param module Lua module
+--
 function register(module)
-    table.insert(registry, module)
+    table.insert(modules, module)
+
+    local function new(module, ...)
+        local object = module.new(...)
+        if object then
+            hooks.run(object)
+        end
+        return object
+    end
+
+    setmetatable(module, { __call = new })
 end
 
 --
@@ -44,7 +58,7 @@ end
 -- @param desc Boost.Program_options options description
 --
 function options(desc)
-    for i, module in ipairs(registry) do
+    for i, module in ipairs(modules) do
         if module.options then
             module.options(desc)
         end

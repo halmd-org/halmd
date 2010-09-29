@@ -26,11 +26,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
-#include <halmd/deprecated/util/exception.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/random.hpp>
 #include <halmd/utility/gpu/device.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -43,23 +41,28 @@ class random
   : public halmd::random::random
 {
 public:
-    // module definitions
-    typedef random _Self;
     typedef halmd::random::random _Base;
-    static void options(po::options_description& desc);
-    static void depends();
-    static void select(po::variables_map const& vm) {}
 
     typedef typename RandomNumberGenerator::rng_type rng_type;
     typedef utility::gpu::device device_type;
 
-    shared_ptr<device_type> device;
+    boost::shared_ptr<device_type> device;
 
-    RandomNumberGenerator rng;
+    RandomNumberGenerator rng; //< FIXME private?
 
-    random(modules::factory& factory, po::variables_map const& vm);
-    virtual ~random() {}
-    void seed(unsigned int value);
+    static void options(po::options_description& desc);
+
+    //! default number of blocks per grid
+    static unsigned int default_blocks() { return 32; }
+    //! default number of threads per block
+    static unsigned int default_threads() { return 32 << DEVICE_SCALE; }
+
+    random(
+        boost::shared_ptr<device_type> device
+      , unsigned int seed
+      , unsigned int blocks
+      , unsigned int threads
+    );
 
     //
     // The following functions are provided for convenience.
@@ -91,7 +94,7 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to allocate global device memory in random::shuffle");
+        throw std::runtime_error("failed to allocate global device memory in random::shuffle");
     }
 
     sort_type sort(g_val.size(), device->threads());
@@ -102,7 +105,7 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw exception("failed to shuffle sequence on GPU");
+        throw std::runtime_error("failed to shuffle sequence on GPU");
     }
 }
 

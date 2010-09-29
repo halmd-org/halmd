@@ -24,8 +24,6 @@
 #include <halmd/io/trajectory/reader.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -37,24 +35,25 @@ class hdf5
   : public trajectory::reader<dimension>
 {
 public:
-    // module definitions
-    typedef hdf5 _Self;
     typedef trajectory::reader<dimension> _Base;
-    static void depends();
-    static void select(po::variables_map const& vm);
-    static void options(po::options_description& desc) {}
-
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 
-    hdf5(modules::factory& factory, po::variables_map const& vm);
+    hdf5(
+        boost::shared_ptr<sample_type> sample
+      , std::string const& file_name
+      , ssize_t offset
+    );
+    static bool check(std::string const& file_name);
 
-    shared_ptr<sample_type> sample;
+    boost::shared_ptr<sample_type> sample;
 
 private:
-    using _Base::path_;
-    using _Base::offset_;
+    /** absolute path to HDF5 trajectory file */
+    std::string const path_;
+    /** offset relative to start (non-negative) or end (negative) of dataset */
+    ssize_t const offset_;
 };
 
 }}} // namespace io::trajectory::readers

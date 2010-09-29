@@ -52,22 +52,6 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<ssize_t>();
 }
 
-template <int dimension>
-void reader<dimension>::select(po::variables_map const& vm)
-{
-    if (vm["trajectory-file"].empty()) {
-        throw unsuitable_module("mismatching option trajectory-file");
-    }
-}
-
-template <int dimension>
-reader<dimension>::reader(modules::factory& factory, po::variables_map const& vm)
-  // parse options
-  : path_(vm["trajectory-file"].as<string>())
-  , offset_(vm["trajectory-sample"].as<ssize_t>())
-{
-}
-
 template <typename T>
 static void register_lua(char const* class_name)
 {
@@ -96,9 +80,6 @@ static __attribute__((constructor)) void register_lua()
     register_lua<reader<3> >("reader_3_");
     register_lua<reader<2> >("reader_2_");
 }
-
-template class reader<3>;
-template class reader<2>;
 
 }} // namespace io::trajectory
 

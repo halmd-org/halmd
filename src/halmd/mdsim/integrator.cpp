@@ -29,6 +29,9 @@ namespace halmd
 namespace mdsim
 {
 
+template <int dimension>
+double const integrator<dimension>::default_timestep = 0.001;
+
 /**
  * Assemble module options
  */
@@ -38,7 +41,7 @@ void integrator<dimension>::options(po::options_description& desc)
     desc.add_options()
         ("integrator", po::value<string>()->default_value("verlet"),
          "specify integration module")
-        ("timestep,h", po::value<double>()->default_value(0.001),
+        ("timestep,h", po::value<double>()->default_value(default_timestep),
          "integration timestep")
         ;
 }
@@ -53,15 +56,6 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<double>();
 }
 
-
-template <int dimension>
-integrator<dimension>::integrator(modules::factory& factory, po::variables_map const& vm)
-  // set parameters
-  : timestep_(vm["timestep"].as<double>())
-{
-    LOG("integration timestep: " << timestep_);
-}
-
 template <typename T>
 static void register_lua(char const* class_name)
 {
@@ -73,6 +67,7 @@ static void register_lua(char const* class_name)
             namespace_("mdsim")
             [
                 class_<T, shared_ptr<T> >(class_name)
+                    .property("timestep", (double (T::*)() const) &T::timestep)
                     .scope
                     [
                         def("options", &T::options)

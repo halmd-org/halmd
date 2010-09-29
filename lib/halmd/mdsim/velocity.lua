@@ -17,14 +17,27 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local velocity = {
+local velocities = {
+    boltzmann = require("halmd.mdsim.velocities.boltzmann")
+}
+local velocity_wrapper = {
     [2] = halmd_wrapper.mdsim.velocity_2_
   , [3] = halmd_wrapper.mdsim.velocity_3_
 }
-local setmetatable = setmetatable
+local args = require("halmd.options")
+local assert = assert
 
-module("halmd.mdsim.velocity", modules.register)
+module("halmd.mdsim.velocity", halmd.modules.register)
 
-options = velocity[2].options
+options = velocity_wrapper[2].options
+
+--
+-- construct velocity module
+--
+function new()
+    local velocity = assert(args.velocity)
+    return velocities[velocity]()
+end

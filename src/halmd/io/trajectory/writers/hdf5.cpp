@@ -18,15 +18,14 @@
  */
 
 #include <boost/foreach.hpp>
-#include <H5xx.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/writers/hdf5.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace boost::filesystem;
 using namespace std;
-using namespace H5;
 
 namespace halmd
 {
@@ -34,37 +33,28 @@ namespace io { namespace trajectory { namespace writers
 {
 
 /**
- * Resolve module dependencies
- */
-template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::depends()
-{
-    modules::depends<_Self, sample_type>::required();
-}
-
-/**
  * read sample from HDF5 trajectory file
  */
 template <int dimension, typename float_type>
-hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  // dependency injection
-  , sample(modules::fetch<sample_type>(factory, vm))
-  // initialize parameters
-  , path_(initial_path() / (vm["output"].as<string>() + file_extension()))
+hdf5<dimension, float_type>::hdf5(
+    shared_ptr<sample_type> sample
+  , string const& file_name
+)
+  : sample(sample)
+  , path_(initial_path() / file_name)
   , file_(path_.file_string(), H5F_ACC_TRUNC)
 {
     LOG("write trajectory to file: " << path_.file_string());
 
     // store file version in parameter group
     array<unsigned char, 2> version = {{ 1, 0 }};
-    attribute(open_group(file_, "param"), "file_version") = version;
+    H5::attribute(open_group(file_, "param"), "file_version") = version;
 
     // open or create trajectory group
-    Group root = open_group(file_, "trajectory");
+    H5::Group root = open_group(file_, "trajectory");
 
     for (size_t i = 0; i < sample->r.size(); ++i) {
-        Group type;
+        H5::Group type;
         if (sample->r.size() > 1) {
             type = root.createGroup(string(1, 'A' + i));
         }
@@ -72,8 +62,8 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map c
             type = root;
         }
         size_t size = sample->r[i]->size();
-        DataSet r = create_dataset<sample_vector_type>(type, "position", size);
-        DataSet v = create_dataset<sample_vector_type>(type, "velocity", size);
+        H5::DataSet r = H5::create_dataset<sample_vector_type>(type, "position", size);
+        H5::DataSet v = H5::create_dataset<sample_vector_type>(type, "velocity", size);
 
         // particle positions
         writers_.push_back(make_dataset_writer(r, &*sample->r[i]));
@@ -82,7 +72,7 @@ hdf5<dimension, float_type>::hdf5(modules::factory& factory, po::variables_map c
     }
 
     // simulation time in reduced units
-    DataSet t = create_dataset<double>(root, "time");
+    H5::DataSet t = H5::create_dataset<double>(root, "time");
     writers_.push_back(make_dataset_writer(t, &sample->time));
 }
 
@@ -107,17 +97,43 @@ void hdf5<dimension, float_type>::flush()
     file_.flush(H5F_SCOPE_GLOBAL);
 }
 
-// explicit instantiation
-template class hdf5<3, double>;
-template class hdf5<3, float>;
-template class hdf5<2, double>;
-template class hdf5<2, float>;
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+    typedef typename T::sample_type sample_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("io")
+            [
+                namespace_("trajectory")
+                [
+                    namespace_("writers")
+                    [
+                        class_<T, shared_ptr<_Base>, _Base>(class_name)
+                            .def(constructor<
+                                shared_ptr<sample_type>
+                              , string const&
+                            >())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<hdf5<3, double> >("hdf5_3_double_");
+    register_lua<hdf5<2, double> >("hdf5_2_double_");
+    register_lua<hdf5<3, float> >("hdf5_3_float_");
+    register_lua<hdf5<2, float> >("hdf5_2_float_");
+}
 
 }}} // namespace io::trajectory::writers
-
-template class module<io::trajectory::writers::hdf5<3, double> >;
-template class module<io::trajectory::writers::hdf5<3, float> >;
-template class module<io::trajectory::writers::hdf5<2, double> >;
-template class module<io::trajectory::writers::hdf5<2, float> >;
 
 } // namespace halmd

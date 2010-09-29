@@ -20,7 +20,11 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_LJ_HPP
 #define HALMD_MDSIM_HOST_FORCES_LJ_HPP
 
+#include <boost/assign.hpp>
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
+#include <halmd/mdsim/host/forces/smooth.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -33,27 +37,65 @@ class lj
   : public mdsim::host::force<dimension, float_type>
 {
 public:
-    // module definitions
-    typedef lj _Self;
-    typedef mdsim::host::force<dimension, float_type> _Base;
-    static void depends() {}
     static void options(po::options_description& desc);
-    static void select(po::variables_map const& vm);
 
+    typedef mdsim::host::force<dimension, float_type> _Base;
     typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::stress_tensor_type stress_tensor_type;
 
-    using _Base::box;
-    using _Base::particle;
-    using _Base::smooth;
+    typedef host::particle<dimension, float_type> particle_type;
+    typedef mdsim::box<dimension> box_type;
+    typedef host::forces::smooth<dimension, float_type> smooth_type;
 
-    lj(modules::factory& factory, po::variables_map const& vm);
-    virtual ~lj() {}
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<smooth_type> smooth;
+
+    static boost::array<float, 3> default_cutoff()
+    {
+        return boost::assign::list_of(2.5f)(2.5f)(2.5f);
+    }
+
+    static boost::array<float, 3> default_epsilon()
+    {
+        return boost::assign::list_of(1.0f)(1.5f)(0.5f);
+    }
+
+    static boost::array<float, 3> default_sigma()
+    {
+        return boost::assign::list_of(1.0f)(0.8f)(0.88f);
+    }
+
+    lj(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      // FIXME , boost::shared_ptr<smooth_type> smooth
+      , boost::array<float, 3> const& cutoff
+      , boost::array<float, 3> const& epsilon
+      , boost::array<float, 3> const& sigma
+    );
     virtual void compute();
-    matrix_type const& cutoff() { return r_cut_; }
 
-protected:
+    //! returns potential cutoff distance
+    virtual matrix_type const& cutoff()
+    {
+        return r_cut_;
+    }
+
+    //! returns average potential energy per particle
+    virtual double potential_energy()
+    {
+        return en_pot_;
+    }
+
+    //! potential part of stress tensor
+    virtual stress_tensor_type potential_stress()
+    {
+        return stress_pot_;
+    }
+
+private:
     /** potential well depths in MD units */
     matrix_type epsilon_;
     /** pair separation in MD units */
@@ -68,9 +110,10 @@ protected:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-
-    using _Base::en_pot_;
-    using _Base::stress_pot_;
+    /** average potential energy per particle */
+    double en_pot_;
+    /** potential part of stress tensor */
+    stress_tensor_type stress_pot_;
 };
 
 }}} // namespace mdsim::host::forces

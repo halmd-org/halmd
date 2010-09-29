@@ -20,9 +20,6 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITIES_FILE_HPP
 #define HALMD_MDSIM_HOST_VELOCITIES_FILE_HPP
 
-#include <vector>
-
-#include <halmd/io/trajectory/reader.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
@@ -38,25 +35,19 @@ class file
   : public host::velocity<dimension, float_type>
 {
 public:
-    // module definitions
-    typedef file _Self;
     typedef host::velocity<dimension, float_type> _Base;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm);
-
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef io::trajectory::reader<dimension> reader_type;
     typedef samples::host::trajectory<dimension, float_type> sample_type;
 
-    shared_ptr<reader_type> reader;
-    shared_ptr<sample_type> sample;
-    shared_ptr<particle_type> particle;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<sample_type> sample;
 
-    file(modules::factory& factory, po::variables_map const& vm);
-    virtual ~file() {}
-    void set();
+    file(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<sample_type> sample
+    );
+    virtual void set();
 };
 
 }}} // namespace mdsim::host::velocities

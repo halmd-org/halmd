@@ -20,10 +20,6 @@
 #ifndef HALMD_IO_TRAJECTORY_WRITER_HPP
 #define HALMD_IO_TRAJECTORY_WRITER_HPP
 
-#include <halmd/mdsim/samples/host/trajectory.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/options.hpp>
-
 namespace halmd
 {
 namespace io { namespace trajectory
@@ -33,15 +29,8 @@ template <int dimension>
 class writer
 {
 public:
-    // module definitions
-    typedef writer _Self;
-    static void options(po::options_description& desc) {}
-    static void depends() {}
-    static void select(po::variables_map const& vm) {}
-
-    writer(modules::factory& factory, po::variables_map const& vm) {}
+    writer() {}
     virtual ~writer() {}
-    virtual std::string file_extension() const = 0;
     virtual void append() = 0;
     virtual void flush() = 0;
 };

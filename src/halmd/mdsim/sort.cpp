@@ -19,14 +19,47 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/sort.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+
+using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim
 {
 
-template class sort<3>;
-template class sort<2>;
+/**
+ * Register option value types with Lua
+ */
+static __attribute__((constructor)) void register_option_converters()
+{
+    using namespace lua_wrapper;
+    register_any_converter<string>();
+}
+
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    using namespace luabind;
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                class_<T, shared_ptr<T> >(class_name)
+                    .def("order", &T::order)
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<sort<3> >("sort_3_");
+    register_lua<sort<2> >("sort_2_");
+}
 
 } // namespace mdsim
 

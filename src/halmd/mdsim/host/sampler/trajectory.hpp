@@ -24,7 +24,6 @@
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
-#include <halmd/options.hpp>
 
 namespace halmd
 {
@@ -36,25 +35,22 @@ class trajectory
   : public mdsim::samples::host::trajectory<dimension, float_type>
 {
 public:
-    // module definitions
-    typedef trajectory _Self;
     typedef mdsim::samples::host::trajectory<dimension, float_type> _Base;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm) {}
-
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::core<dimension> core_type;
 
-    shared_ptr<particle_type> particle;
-    shared_ptr<box_type> box;
-    shared_ptr<core_type> core;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<core_type> core;
 
-    trajectory(modules::factory& factory, po::variables_map const& vm);
-    virtual ~trajectory() {}
-    void acquire();
+    trajectory(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<core_type> core
+    );
+    virtual void acquire();
 
     typedef typename _Base::sample_vector sample_vector;
 

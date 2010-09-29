@@ -28,7 +28,6 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/observable.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -46,30 +45,28 @@ namespace observables
  */
 
 template <int dimension>
-class thermodynamics : public observable<dimension>
+class thermodynamics
+  : public observable<dimension>
 {
 public:
-    // module definitions
-    typedef thermodynamics _Self;
     typedef observable<dimension> _Base;
-    static void options(po::options_description& desc);
-    static void depends();
-    static void select(po::variables_map const& vm);
-
     typedef mdsim::box<dimension> box_type;
     typedef typename _Base::writer_type writer_type;
     typedef utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
 
-    shared_ptr<box_type> box;
+    boost::shared_ptr<box_type> box;
 
-    thermodynamics(modules::factory& factory, po::variables_map const& vm);
-    virtual ~thermodynamics() {}
+    static void options(po::options_description& desc);
+
+    thermodynamics(
+        boost::shared_ptr<box_type> box
+    );
     void register_runtimes(profiler_type& profiler);
     virtual void register_observables(writer_type& writer);
 
     // sample macroscopic state variables and store with given time
-    void sample(double time);
+    virtual void sample(double time);
 
     /** potential energy per particle */
     virtual double en_pot() const = 0;
@@ -85,6 +82,7 @@ public:
     {
         return box->density() * (temp() + virial() / dimension);
     }
+
     /** system temperature */
     double temp() const { return 2 * en_kin() / dimension; }
     /** particle density */

@@ -26,7 +26,9 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
+using namespace boost;
 using namespace boost::fusion;
+using namespace std;
 
 namespace halmd
 {
@@ -61,52 +63,21 @@ static __attribute__((constructor)) void register_option_converters()
 }
 
 /**
- * Resolve module dependencies
- */
-template <int dimension>
-void sampler<dimension>::depends()
-{
-    modules::depends<_Self, core_type>::required();
-    modules::depends<_Self, observable_type>::optional();
-    modules::depends<_Self, statevars_writer_type>::optional();
-    modules::depends<_Self, trajectory_writer_type>::required();
-}
-
-/**
  * Initialize simulation
  */
 template <int dimension>
-sampler<dimension>::sampler(modules::factory& factory, po::variables_map const& vm)
-  : _Base(factory, vm)
-  // dependency injection
-  , core(modules::fetch<core_type>(factory, vm))
-  , observables(modules::fetch<observable_type>(factory, vm))
-  , statevars_writer(modules::fetch<statevars_writer_type>(factory, vm))
-  , trajectory_writer(modules::fetch<trajectory_writer_type>(factory, vm))
-  , profile_writers(modules::fetch<profile_writer_type>(factory, vm))
-  // store options
-  , statevars_interval_(vm["sampling-state-vars"].as<unsigned>())
-  , trajectory_interval_(vm["sampling-trajectory"].as<unsigned>())
+sampler<dimension>::sampler(
+    shared_ptr<core_type> core
+  , uint64_t steps
+  , unsigned int statevars_interval
+  , unsigned int trajectory_interval
+)
+  : core(core)
+  , steps_(steps)
+  , time_(steps_ * core->integrator->timestep())
+  , statevars_interval_(statevars_interval)
+  , trajectory_interval_(trajectory_interval)
 {
-    /*@{ FIXME remove pre-Lua hack */
-    shared_ptr<profiler_type> profiler(modules::fetch<profiler_type>(factory, vm));
-    register_runtimes(*profiler);
-    /*@}*/
-
-    BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
-        observable->register_observables(*statevars_writer);
-    }
-
-    // parse options
-    if (vm["steps"].defaulted() && !vm["time"].empty()) {
-        time_ = vm["time"].as<double>();
-        steps_ = static_cast<uint64_t>(round(time_ / core->integrator->timestep()));
-    }
-    else {
-        steps_ = vm["steps"].as<uint64_t>();
-        time_ = steps_ * core->integrator->timestep();
-    }
-
     LOG("number of integration steps: " << steps_);
     LOG("integration time: " << time_);
 }
@@ -148,6 +119,7 @@ void sampler<dimension>::run()
       , bind(&profile_writer_type::write, _1)
     );
 }
+
 /**
  * Sample system state and system properties
  */
@@ -182,12 +154,29 @@ void sampler<dimension>::sample(bool force)
 template <typename T>
 static void register_lua(char const* class_name)
 {
+    typedef typename T::core_type core_type;
+    typedef typename T::observable_type observable_type;
+
     using namespace luabind;
     lua_wrapper::register_(0) //< distance of derived to base class
     [
         namespace_("halmd_wrapper")
         [
             class_<T, shared_ptr<T> >(class_name)
+                .def(constructor<
+                    shared_ptr<core_type>
+                  , uint64_t
+                  , unsigned int
+                  , unsigned int
+                >())
+                .def("run", &T::run)
+                .def("register_runtimes", &T::register_runtimes)
+                .def_readwrite("observables", &T::observables)
+                .def_readwrite("statevars_writer", &T::statevars_writer)
+                .def_readwrite("trajectory_writer", &T::trajectory_writer)
+                .def_readwrite("profile_writers", &T::profile_writers)
+                .property("steps", &T::steps)
+                .property("time", &T::time)
                 .scope
                 [
                     def("options", &T::options)
@@ -205,8 +194,5 @@ static __attribute__((constructor)) void register_lua()
 // explicit instantiation
 template class sampler<3>;
 template class sampler<2>;
-
-template class module<sampler<3> >;
-template class module<sampler<2> >;
 
 } // namespace halmd

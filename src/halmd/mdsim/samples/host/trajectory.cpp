@@ -17,30 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
-#ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/particle.hpp>
-#endif
 #include <halmd/mdsim/samples/host/trajectory.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+
+using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim { namespace samples { namespace host
 {
 
-/**
- * Resolve module dependencies
- */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::depends()
-{
-    modules::depends<_Self, particle_type>::required();
-}
-
-template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(modules::factory& factory, po::variables_map const& vm)
+trajectory<dimension, float_type>::trajectory(
+    shared_ptr<particle_type> particle
+)
   // dependency injection
-  : particle(modules::fetch<particle_type>(factory, vm))
+  : particle(particle)
   // allocate sample pointers
   , r(particle->ntype)
   , v(particle->ntype)
@@ -49,6 +42,41 @@ trajectory<dimension, float_type>::trajectory(modules::factory& factory, po::var
         r[i].reset(new sample_vector(particle->ntypes[i]));
         v[i].reset(new sample_vector(particle->ntypes[i]));
     }
+}
+
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::particle_type particle_type;
+
+    using namespace luabind;
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("samples")
+                [
+                    namespace_("host")
+                    [
+                        class_<T, shared_ptr<T> >(class_name)
+                            .def("acquire", &T::acquire)
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+#ifndef USE_HOST_SINGLE_PRECISION
+    register_lua<trajectory<3, double> >("trajectory_3_double_");
+    register_lua<trajectory<2, double> >("trajectory_2_double_");
+#endif
+    register_lua<trajectory<3, float> >("trajectory_3_float_");
+    register_lua<trajectory<2, float> >("trajectory_2_float_");
 }
 
 #ifndef USE_HOST_SINGLE_PRECISION

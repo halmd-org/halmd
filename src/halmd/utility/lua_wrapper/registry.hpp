@@ -89,14 +89,14 @@ static __attribute__((constructor)) void register_lua()
     [
         namespace_("halmd_wrapper")
         [
-            class_<A, shared_ptr<A> >("A")
+            class_<A, boost::shared_ptr<A> >("A")
         ]
     ];
     lua_wrapper::register_(1) //< distance of derived to base class
     [
         namespace_("halmd_wrapper")
         [
-            class_<B, shared_ptr<A>, bases<A> >("B")
+            class_<B, boost::shared_ptr<A>, bases<A> >("B")
         ]
     ];
 }

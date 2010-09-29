@@ -22,7 +22,6 @@
 
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/utility/module.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -35,23 +34,18 @@ class velocity
   : public mdsim::velocity<dimension>
 {
 public:
-    // module definitions
-    typedef velocity _Self;
     typedef mdsim::velocity<dimension> _Base;
-    static void options(po::options_description& desc) {}
-    static void depends();
-    static void select(po::variables_map const& vm) {}
-
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename _Base::vector_type vector_type;
 
-    shared_ptr<particle_type> particle;
+    boost::shared_ptr<particle_type> particle;
 
-    velocity(modules::factory& factory, po::variables_map const& vm);
-    virtual ~velocity() {}
-    void rescale(double factor);
-    void shift(vector_type const& delta);
-    void shift_rescale(vector_type const& delta, double factor);
+    velocity(
+        boost::shared_ptr<particle_type> particle
+    );
+    virtual void rescale(double factor);
+    virtual void shift(vector_type const& delta);
+    virtual void shift_rescale(vector_type const& delta, double factor);
 };
 
 }} // namespace mdsim::host

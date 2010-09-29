@@ -17,14 +17,30 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 -- grab environment
-local modules = require("halmd.modules")
-local smooth = {
-    [2] = halmd_wrapper.mdsim.host.forces.smooth_2_
-  , [3] = halmd_wrapper.mdsim.host.forces.smooth_3_
+local statevars_writers = {
+    hdf5 = require("halmd.io.statevars.writers.hdf5")
 }
-local setmetatable = setmetatable
+local hooks = require("halmd.hooks")
+local pairs = pairs
+local table = table
+local print = print
 
-module("halmd.mdsim.host.forces.smooth", modules.register)
+module("halmd.io.statevars.writers", halmd.modules.register)
 
-options = smooth[2].options
+--
+-- construct statevars module
+--
+function new()
+    local writer = statevars_writers.hdf5()
+
+    hooks.register(function(observable)
+        if observable.register_observables then
+            observable:register_observables(writer)
+        end
+    end)
+
+    return writer
+end
