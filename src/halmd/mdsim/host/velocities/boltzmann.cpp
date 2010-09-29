@@ -21,7 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 namespace halmd
 {

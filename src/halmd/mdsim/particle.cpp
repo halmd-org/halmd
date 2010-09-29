@@ -26,7 +26,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/particle.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;

@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace boost;
 using namespace std;

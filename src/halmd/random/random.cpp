@@ -21,7 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/random/random.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace std;
 

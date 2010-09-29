@@ -27,7 +27,7 @@
 
 #include <halmd/options.hpp>
 #include <halmd/utility/date_time.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 #include <halmd/version.h>
 
 using namespace boost;

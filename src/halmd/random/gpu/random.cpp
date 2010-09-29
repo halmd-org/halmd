@@ -21,7 +21,7 @@
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 namespace halmd
 {

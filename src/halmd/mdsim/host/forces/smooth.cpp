@@ -23,7 +23,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace boost;
 

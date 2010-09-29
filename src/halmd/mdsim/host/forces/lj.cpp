@@ -25,7 +25,7 @@
 #include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/lj.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;

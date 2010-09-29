@@ -28,7 +28,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;

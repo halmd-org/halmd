@@ -18,7 +18,7 @@
  */
 
 #include <halmd/observables/thermodynamics.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 #include <halmd/utility/module.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>

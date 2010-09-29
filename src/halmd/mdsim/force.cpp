@@ -18,7 +18,7 @@
  */
 
 #include <halmd/mdsim/force.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace boost;
 using namespace std;

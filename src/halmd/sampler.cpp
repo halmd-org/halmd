@@ -22,7 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/sampler.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 

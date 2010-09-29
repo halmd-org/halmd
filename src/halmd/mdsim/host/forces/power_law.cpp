@@ -27,7 +27,7 @@
 #include <halmd/mdsim/host/forces/power_law.hpp>
 #include <halmd/numeric/pow.hpp>
 #include <halmd/utility/module.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace boost;
 using namespace boost::assign;

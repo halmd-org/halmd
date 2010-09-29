@@ -26,7 +26,7 @@
 #include <boost/log/utility/empty_deleter.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace boost;
 using namespace boost::log;

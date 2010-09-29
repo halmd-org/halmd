@@ -22,7 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 #include <halmd/version.h>
 
 using namespace boost;

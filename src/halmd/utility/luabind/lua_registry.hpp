@@ -17,12 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_LUA_REGISTRY_HPP
-#define HALMD_UTILITY_LUA_LUA_REGISTRY_HPP
+#ifndef HALMD_UTILITY_LUABIND_LUA_REGISTRY_HPP
+#define HALMD_UTILITY_LUABIND_LUA_REGISTRY_HPP
 
 #include <list>
 
-#include <halmd/utility/lua/lua_include.hpp>
+#include <luabind/luabind.hpp>
 
 namespace halmd
 {
@@ -62,4 +62,4 @@ struct lua_registry
 
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_LUA_LUA_REGISTRY_HPP */
+#endif /* ! HALMD_UTILITY_LUABIND_LUA_REGISTRY_HPP */

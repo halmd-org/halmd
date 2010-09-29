@@ -18,7 +18,7 @@
  */
 
 #include <halmd/io/trajectory/reader.hpp>
-#include <halmd/utility/lua.hpp>
+#include <halmd/utility/luabind.hpp>
 
 using namespace boost;
 using namespace std;
