@@ -22,6 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/utility/luabind/any_converter.hpp>
 #include <halmd/utility/luabind/lua_include.hpp>
 #include <halmd/utility/luabind/lua_registry.hpp>
 
