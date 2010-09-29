@@ -43,6 +43,17 @@ void integrator<dimension>::options(po::options_description& desc)
         ;
 }
 
+/**
+ * Register option value types with Lua
+ */
+static __attribute__((constructor)) void register_option_converters()
+{
+    using namespace luabind;
+    register_any_converter<string>();
+    register_any_converter<double>();
+}
+
+
 template <int dimension>
 integrator<dimension>::integrator(modules::factory& factory, po::variables_map const& vm)
   // set parameters

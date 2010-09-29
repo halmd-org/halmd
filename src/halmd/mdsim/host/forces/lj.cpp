@@ -54,6 +54,15 @@ void lj<dimension, float_type>::options(po::options_description& desc)
 }
 
 /**
+ * Register option value types with Lua
+ */
+static __attribute__((constructor)) void register_option_converters()
+{
+    using namespace luabind;
+    register_any_converter<boost::array<float, 3> >();
+}
+
+/**
  * Resolve module dependencies
  */
 template <int dimension, typename float_type>

@@ -50,6 +50,15 @@ void logging::options(po::options_description& desc)
         ;
 }
 
+/**
+ * Register option value types with Lua
+ */
+static __attribute__((constructor)) void register_option_converters()
+{
+    using namespace luabind;
+    register_any_converter<int>();
+}
+
 sources::severity_logger<logging::severity_level> logging::logger;
 
 static inline ostream& operator<<(ostream& os, logging::severity_level level)

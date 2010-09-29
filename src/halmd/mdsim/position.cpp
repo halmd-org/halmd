@@ -42,6 +42,16 @@ void position<dimension>::options(po::options_description& desc)
         ;
 }
 
+/**
+ * Register option value types with Lua
+ */
+static __attribute__((constructor)) void register_option_converters()
+{
+    using namespace luabind;
+    register_any_converter<string>();
+}
+
+
 template <typename T>
 static void register_lua(char const* class_name)
 {

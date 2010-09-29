@@ -44,6 +44,16 @@ void smooth<dimension, float_type>::options(po::options_description& desc)
         ;
 }
 
+/**
+ * Register option value types with Lua
+ */
+static __attribute__((constructor)) void register_option_converters()
+{
+    using namespace luabind;
+    register_any_converter<float>();
+}
+
+
 template <int dimension, typename float_type>
 void smooth<dimension, float_type>::select(po::variables_map const& vm)
 {

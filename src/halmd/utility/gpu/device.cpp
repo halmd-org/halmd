@@ -55,6 +55,16 @@ void device::options(po::options_description& desc)
 }
 
 /**
+ * Register option value types with Lua
+ */
+static __attribute__((constructor)) void register_option_converters()
+{
+    using namespace luabind;
+    register_any_converter<boost::multi_array<int, 1> >();
+    register_any_converter<unsigned int>();
+}
+
+/**
  * Initialize CUDA device
  */
 device::device(modules::factory& factory, po::variables_map const& vm)
