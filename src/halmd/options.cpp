@@ -191,7 +191,7 @@ static __attribute__((constructor)) void register_lua()
                     .def("empty", &po::variable_value::empty)
                     .def("defaulted", &po::variable_value::defaulted)
                     .def("value", (any const& (po::variable_value::*)() const) &po::variable_value::value)
-                    .def("value", (any& (po::variable_value::*)()) &po::variable_value::value)
+                    //< only return-by-value is supported by Luabind boost::any converter
             ]
         ]
     ));
