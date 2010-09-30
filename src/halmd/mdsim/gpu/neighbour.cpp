@@ -333,6 +333,8 @@ void neighbour<dimension, float_type>::update_neighbours()
 template <typename T>
 static void register_lua(char const* class_name)
 {
+    typedef typename T::_Base _Base;
+
     using namespace luabind;
     lua_wrapper::register_(1) //< distance of derived to base class
     [
@@ -342,7 +344,7 @@ static void register_lua(char const* class_name)
             [
                 namespace_("gpu")
                 [
-                    class_<T, shared_ptr<T> >(class_name)
+                    class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
                         .scope
                         [
                             def("options", &T::options)
