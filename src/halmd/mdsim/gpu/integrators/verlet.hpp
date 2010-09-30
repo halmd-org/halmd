@@ -23,9 +23,12 @@
 #include <cuda_wrapper.hpp>
 
 #include <halmd/deprecated/util/exception.hpp>
-#include <halmd/mdsim/gpu/integrator.hpp>
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
+#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/integrator.hpp>
 #include <halmd/options.hpp>
+#include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -35,24 +38,25 @@ namespace mdsim { namespace gpu { namespace integrators
 
 template <int dimension, typename float_type>
 class verlet
-  : public mdsim::gpu::integrator<dimension, float_type>
+  : public mdsim::integrator<dimension>
 {
 public:
     // module definitions
     typedef verlet _Self;
-    typedef mdsim::gpu::integrator<dimension, float_type> _Base;
+    typedef mdsim::integrator<dimension> _Base;
     static void options(po::options_description& desc) {}
-    static void depends() {}
+    static void depends();
     static void select(po::variables_map const& vm);
 
-    typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::particle_type particle_type;
-    typedef typename _Base::box_type box_type;
+    typedef gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::box<dimension> box_type;
+    typedef utility::gpu::device device_type;
     typedef utility::profiler profiler_type;
+    typedef typename particle_type::vector_type vector_type;
 
-    using _Base::particle;
-    using _Base::box;
-    using _Base::device;
+    shared_ptr<particle_type> particle;
+    shared_ptr<box_type> box;
+    shared_ptr<device_type> device;
 
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper;

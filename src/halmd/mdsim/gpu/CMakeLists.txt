@@ -1,6 +1,5 @@
 add_library(halmd_mdsim_gpu
   force.cpp
-  integrator.cpp
   neighbour.cpp
   neighbour_kernel.cu
   particle.cpp
