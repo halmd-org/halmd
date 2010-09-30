@@ -76,6 +76,7 @@ if(GENERATE_DOC)
   )
   set(CLEAN_FILES
     "${BINARY_BUILD_DIR}/xml"
+    "${BINARY_BUILD_DIR}/html"
   )
   add_custom_command(
     OUTPUT "${REF_SOURCES_DIR}/${REF_MASTER_DOC}.rst"
