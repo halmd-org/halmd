@@ -25,6 +25,7 @@
 #include <halmd/algorithm/host/permute.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
@@ -93,6 +94,38 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     algorithm::host::permute(tag.begin(), tag.end(), index.begin());
     algorithm::host::permute(type.begin(), type.end(), index.begin());
     // no permutation of neighbour lists
+}
+
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+#ifndef USE_HOST_SINGLE_PRECISION
+    register_lua<particle<3, double> >("particle_3_");
+    register_lua<particle<2, double> >("particle_2_");
+#else
+    register_lua<particle<3, float> >("particle_3_");
+    register_lua<particle<2, float> >("particle_2_");
+#endif
 }
 
 // explicit instantiation

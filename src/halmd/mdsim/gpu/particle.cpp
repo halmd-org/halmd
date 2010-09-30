@@ -25,6 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
@@ -124,6 +125,33 @@ void particle<dimension, float_type>::set()
         LOG_ERROR("CUDA: " << e.what());
         throw std::logic_error("failed to set particle tags and types");
     }
+}
+
+template <typename T>
+static void register_lua(char const* class_name)
+{
+    typedef typename T::_Base _Base;
+
+    using namespace luabind;
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("gpu")
+                [
+                    class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                ]
+            ]
+        ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    register_lua<particle<3, float> >("particle_3_");
+    register_lua<particle<2, float> >("particle_2_");
 }
 
 // explicit instantiation
