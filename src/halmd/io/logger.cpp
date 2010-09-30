@@ -26,7 +26,7 @@
 #include <boost/log/utility/empty_deleter.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/utility/luabind.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace boost::log;
@@ -55,7 +55,7 @@ void logging::options(po::options_description& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace luabind;
+    using namespace lua_wrapper;
     register_any_converter<int>();
 }
 
@@ -173,7 +173,7 @@ static void log_wrapper(char const* message)
 static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    lua_registry::get()->push_back
+    lua_wrapper::registry::get()->push_back
     ((
         namespace_("halmd_wrapper")
         [

@@ -17,14 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUABIND_LUA_REGISTRY_HPP
-#define HALMD_UTILITY_LUABIND_LUA_REGISTRY_HPP
+#ifndef HALMD_UTILITY_LUA_WRAPPER_REGISTRY_HPP
+#define HALMD_UTILITY_LUA_WRAPPER_REGISTRY_HPP
 
 #include <list>
 
 #include <luabind/luabind.hpp>
 
 namespace halmd
+{
+namespace lua_wrapper
 {
 
 /**
@@ -36,7 +38,7 @@ namespace halmd
  * static initialization. The registry is then iterated over to initialize
  * the Lua state.
  */
-struct lua_registry
+struct registry
 {
     /** wrapper function type */
     typedef luabind::scope value_type;
@@ -60,6 +62,8 @@ struct lua_registry
     }
 };
 
+} // namespace lua_wrapper
+
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_LUABIND_LUA_REGISTRY_HPP */
+#endif /* ! HALMD_UTILITY_LUA_WRAPPER_REGISTRY_HPP */

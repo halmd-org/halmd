@@ -28,7 +28,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
-#include <halmd/utility/luabind.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -59,7 +59,7 @@ void device::options(po::options_description& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace luabind;
+    using namespace lua_wrapper;
     register_any_converter<boost::multi_array<int, 1> >();
     register_any_converter<unsigned int>();
 }
@@ -204,7 +204,7 @@ string device::cuda_runtime_version()
 static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    lua_registry::get()->push_back
+    lua_wrapper::registry::get()->push_back
     ((
         namespace_("halmd_wrapper")
         [

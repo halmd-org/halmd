@@ -27,7 +27,7 @@
 
 #include <halmd/options.hpp>
 #include <halmd/utility/date_time.hpp>
-#include <halmd/utility/luabind.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -71,7 +71,7 @@ options_parser::options_parser(po::options_description const& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace luabind;
+    using namespace lua_wrapper;
     register_any_converter<string>();
 }
 
@@ -184,7 +184,7 @@ void options_parser::parse(int argc, char** argv)
 static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    lua_registry::get()->push_back
+    lua_wrapper::registry::get()->push_back
     ((
         namespace_("halmd_wrapper")
         [

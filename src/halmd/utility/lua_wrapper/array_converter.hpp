@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUABIND_ARRAY_CONVERTER_HPP
-#define HALMD_UTILITY_LUABIND_ARRAY_CONVERTER_HPP
+#ifndef HALMD_UTILITY_LUA_WRAPPER_ARRAY_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_WRAPPER_ARRAY_CONVERTER_HPP
 
 #include <boost/array.hpp>
 #include <boost/multi_array.hpp>
@@ -73,4 +73,4 @@ struct default_converter<boost::multi_array<T, 1> const&>
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUABIND_ARRAY_CONVERTER_HPP */
+#endif /* ! HALMD_UTILITY_LUA_WRAPPER_ARRAY_CONVERTER_HPP */

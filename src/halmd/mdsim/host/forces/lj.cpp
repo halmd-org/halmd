@@ -25,7 +25,7 @@
 #include <halmd/deprecated/mdsim/backend/exception.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/lj.hpp>
-#include <halmd/utility/luabind.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/module.hpp>
 
 using namespace boost;
@@ -58,7 +58,7 @@ void lj<dimension, float_type>::options(po::options_description& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace luabind;
+    using namespace lua_wrapper;
     register_any_converter<boost::array<float, 3> >();
 }
 
@@ -194,7 +194,7 @@ template <typename T>
 static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    lua_registry::get()->push_back
+    lua_wrapper::registry::get()->push_back
     ((
         namespace_("halmd_wrapper")
         [

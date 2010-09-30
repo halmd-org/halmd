@@ -22,7 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
-#include <halmd/utility/luabind.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -57,8 +57,8 @@ void script::load_wrapper()
     open(L); //< setup global structures and Lua class support
 
     for_each(
-        lua_registry::get()->begin()
-      , lua_registry::get()->end()
+        lua_wrapper::registry::get()->begin()
+      , lua_wrapper::registry::get()->end()
       , bind(&module_::operator[], module(L), _1)
     );
 }

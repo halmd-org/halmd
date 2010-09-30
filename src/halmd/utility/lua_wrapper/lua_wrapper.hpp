@@ -17,16 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUABIND_LUA_INCLUDE_HPP
-#define HALMD_UTILITY_LUABIND_LUA_INCLUDE_HPP
+#ifndef HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
+#define HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
 
-extern "C"
-{
-    #include "lua.h"
-    #include "lauxlib.h"
-    #include "lualib.h"
-}
+#include <boost/shared_ptr.hpp>
 
-#include <luabind/luabind.hpp>
+#include <halmd/utility/lua_wrapper/any_converter.hpp>
+#include <halmd/utility/lua_wrapper/array_converter.hpp>
+#include <halmd/utility/lua_wrapper/lua_include.hpp>
+#include <halmd/utility/lua_wrapper/registry.hpp>
 
-#endif /* ! HALMD_UTILITY_LUABIND_LUA_INCLUDE_HPP */
+#endif /* ! HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP */

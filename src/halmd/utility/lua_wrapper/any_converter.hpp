@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUABIND_ANY_CONVERTER_HPP
-#define HALMD_UTILITY_LUABIND_ANY_CONVERTER_HPP
+#ifndef HALMD_UTILITY_LUA_WRAPPER_ANY_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_WRAPPER_ANY_CONVERTER_HPP
 
 #include <boost/any.hpp>
 #include <luabind/detail/convert_to_lua.hpp>
@@ -31,9 +31,10 @@
 // This code is based on the any_converter example of Luabind,
 // which demonstrates the conversion of boost::any to Lua.
 
-namespace luabind
+namespace halmd
 {
-
+namespace lua_wrapper
+{
 namespace detail
 {
 
@@ -75,6 +76,13 @@ void register_any_converter()
     converters[&typeid(T)] = detail::convert_any<T>::to;
 }
 
+} // namespace lua_wrapper
+
+} // namespace halmd
+
+namespace luabind
+{
+
 /**
  * Luabind converter for boost::any
  */
@@ -85,8 +93,9 @@ struct default_converter<boost::any>
     //! convert from C++ to Lua
     static void to(lua_State* L, boost::any const& any)
     {
-        detail::any_converter_map& converters = detail::any_converters::get();
-        detail::any_converter_map::const_iterator it = converters.find(&any.type());
+        using namespace halmd::lua_wrapper::detail;
+        any_converter_map& converters = any_converters::get();
+        any_converter_map::const_iterator it = converters.find(&any.type());
         if (it == converters.end()) {
             throw std::runtime_error(
                 "unregistered any_converter: " + halmd::demangled_name(any.type())
@@ -102,4 +111,4 @@ struct default_converter<boost::any const&>
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUABIND_ANY_CONVERTER_HPP */
+#endif /* ! HALMD_UTILITY_LUA_WRAPPER_ANY_CONVERTER_HPP */

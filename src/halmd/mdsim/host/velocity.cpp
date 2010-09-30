@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
-#include <halmd/utility/luabind.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;

@@ -21,7 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/random/random.hpp>
-#include <halmd/utility/luabind.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace std;
 
@@ -48,7 +48,7 @@ void random::options(po::options_description& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace luabind;
+    using namespace lua_wrapper;
     register_any_converter<unsigned int>();
     register_any_converter<std::string>();
 }
@@ -92,7 +92,7 @@ unsigned int random::readint(std::string const& file)
 static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    lua_registry::get()->push_back
+    lua_wrapper::registry::get()->push_back
     ((
         namespace_("halmd_wrapper")
         [

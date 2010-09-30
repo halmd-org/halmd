@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/utility/luabind.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
@@ -48,7 +48,7 @@ void integrator<dimension>::options(po::options_description& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace luabind;
+    using namespace lua_wrapper;
     register_any_converter<string>();
     register_any_converter<double>();
 }
@@ -66,7 +66,7 @@ template <typename T>
 static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    lua_registry::get()->push_back
+    lua_wrapper::registry::get()->push_back
     ((
         namespace_("halmd_wrapper")
         [
