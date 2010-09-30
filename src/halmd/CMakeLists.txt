@@ -80,7 +80,7 @@ set(HALMD_MODULES
   halmd_mdsim
   halmd_mdsim_host
   halmd_mdsim_host_forces
-  halmd_mdsim_host_integrator
+  halmd_mdsim_host_integrators
   halmd_mdsim_host_position
   halmd_mdsim_host_sample
   halmd_mdsim_host_sort

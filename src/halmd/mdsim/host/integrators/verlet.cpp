@@ -22,7 +22,7 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/integrator/verlet.hpp>
+#include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/module.hpp>
 
@@ -31,7 +31,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace integrator
+namespace mdsim { namespace host { namespace integrators
 {
 
 /**
@@ -99,14 +99,14 @@ template class verlet<3, float>;
 template class verlet<2, float>;
 #endif
 
-}}} // namespace mdsim::host::integrator
+}}} // namespace mdsim::host::integrators
 
 #ifndef USE_HOST_SINGLE_PRECISION
-template class module<mdsim::host::integrator::verlet<3, double> >;
-template class module<mdsim::host::integrator::verlet<2, double> >;
+template class module<mdsim::host::integrators::verlet<3, double> >;
+template class module<mdsim::host::integrators::verlet<2, double> >;
 #else
-template class module<mdsim::host::integrator::verlet<3, float> >;
-template class module<mdsim::host::integrator::verlet<2, float> >;
+template class module<mdsim::host::integrators::verlet<3, float> >;
+template class module<mdsim::host::integrators::verlet<2, float> >;
 #endif
 
 } // namespace halmd

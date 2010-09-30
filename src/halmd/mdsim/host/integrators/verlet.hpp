@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_VERLET_HPP
-#define HALMD_MDSIM_HOST_VERLET_HPP
+#ifndef HALMD_MDSIM_HOST_INTEGRATORS_VERLET_HPP
+#define HALMD_MDSIM_HOST_INTEGRATORS_VERLET_HPP
 
 #include <boost/shared_ptr.hpp>
 
@@ -29,7 +29,7 @@
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace integrator
+namespace mdsim { namespace host { namespace integrators
 {
 
 template <int dimension, typename float_type>
@@ -63,8 +63,8 @@ protected:
     double timestep_half_;
 };
 
-}}} // namespace mdsim::host::integrator
+}}} // namespace mdsim::host::integrators
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_VERLET_HPP */
+#endif /* ! HALMD_MDSIM_HOST_INTEGRATORS_VERLET_HPP */

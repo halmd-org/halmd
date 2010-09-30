@@ -6,7 +6,7 @@ add_library(halmd_mdsim_host
   )
 
 add_subdirectory(forces)
-add_subdirectory(integrator)
+add_subdirectory(integrators)
 add_subdirectory(position)
 add_subdirectory(sampler)
 add_subdirectory(sort)
