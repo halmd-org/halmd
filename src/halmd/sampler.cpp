@@ -183,8 +183,8 @@ template <typename T>
 static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    lua_wrapper::registry::get()->push_back
-    ((
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
         namespace_("halmd_wrapper")
         [
             class_<T, shared_ptr<T> >(class_name)
@@ -193,7 +193,7 @@ static void register_lua(char const* class_name)
                     def("options", &T::options)
                 ]
         ]
-    ));
+    ];
 }
 
 static __attribute__((constructor)) void register_lua()

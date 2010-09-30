@@ -173,8 +173,8 @@ static void log_wrapper(char const* message)
 static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    lua_wrapper::registry::get()->push_back
-    ((
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
         namespace_("halmd_wrapper")
         [
             namespace_("io")
@@ -195,7 +195,7 @@ static __attribute__((constructor)) void register_lua()
           , def("debug", &log_wrapper<logging::debug>)
           , def("trace", &log_wrapper<logging::trace>)
         ]
-    ));
+    ];
 }
 
 } // namespace io

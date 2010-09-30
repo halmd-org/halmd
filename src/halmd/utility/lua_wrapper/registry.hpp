@@ -20,7 +20,8 @@
 #ifndef HALMD_UTILITY_LUA_WRAPPER_REGISTRY_HPP
 #define HALMD_UTILITY_LUA_WRAPPER_REGISTRY_HPP
 
-#include <list>
+#include <map>
+#include <utility>
 
 #include <luabind/luabind.hpp>
 
@@ -28,24 +29,12 @@ namespace halmd
 {
 namespace lua_wrapper
 {
+namespace detail
+{
 
-/**
- * This class stores a static list of C++ wrapper registration functions.
- *
- * To export C++ classes or functions to Lua, we have to register them
- * using the Luabind C++ wrapper API. The wrappers are implemented as free
- * functions, which are pushed into this registry at program startup using
- * static initialization. The registry is then iterated over to initialize
- * the Lua state.
- */
 struct registry
 {
-    /** wrapper function type */
-    typedef luabind::scope value_type;
-    /** registry iterator */
-    typedef std::list<value_type>::iterator iterator;
-    /** registry const iterator */
-    typedef std::list<value_type>::const_iterator const_iterator;
+    typedef std::multimap<int, luabind::scope>::const_iterator const_iterator;
 
     /**
      * Returns a pointer to the singleton registry.
@@ -55,12 +44,95 @@ struct registry
      * What's the "static initialization order fiasco"?
      * http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.12
      */
-    static std::list<value_type>* get()
+    static std::multimap<int, luabind::scope>& get()
     {
-        static std::list<value_type> list;
-        return &list;
+        static std::multimap<int, luabind::scope> registry; //< ordered map
+        return registry;
     }
 };
+
+} // namespace detail
+
+/**
+   Register Luabind C++ wrapper.
+
+   HALMD stores a singleton registry with Lua wrappers of C++ classes and
+   functions, where every C++ module registers itself before program
+   startup. This avoids explicit dependencies between module source
+   files and thus eases maintainance.
+
+   register_ receives an integer priority and a luabind::scope, which may
+   be one or multiple (concatenated with comma) namespaces, classes or free
+   functions. Scopes are ordered in the registry according to their integer
+   priority. This is used to register base classes before their derived
+   classes. The priority equals the distance of a derived class to its
+   base class.
+
+   For example, to register two classes A and B
+
+   @code
+namespace halmd
+{
+
+class A {};
+class B : A {};
+
+   @endcode
+
+   invoke register_ with priority 0 for class A, and priority 1 for class B
+
+   @code
+static __attribute__((constructor)) void register_lua()
+{
+    using namespace luabind;
+    lua_wrapper::register_(0)
+    [
+        namespace_("halmd_wrapper")
+        [
+            class_<A, shared_ptr<A> >("A")
+        ]
+    ];
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        namespace_("halmd_wrapper")
+        [
+            class_<B, shared_ptr<A>, bases<A> >("B")
+        ]
+    ];
+}
+
+} // namespace halmd
+   @endcode
+ */
+struct register_
+{
+    register_(int priority_) : priority_(priority_) {}
+
+    void operator[](luabind::scope const& scope) const
+    {
+        detail::registry::get().insert(std::make_pair(priority_, scope));
+    }
+
+private:
+    int priority_;
+};
+
+/**
+ * Load registered C++ wrappers into Lua state.
+ *
+ * This function is called by halmd::script to process all registered
+ * Luabind scopes, ordered by the integer priority passed to register_.
+ * This binds the C++ classes and functions to Lua objects.
+ *
+ * @param L Lua state
+ */
+inline void open(lua_State* L)
+{
+    detail::registry::const_iterator it, end = detail::registry::get().end();
+    for (it = detail::registry::get().begin(); it != end; ++it) {
+        luabind::module(L)[it->second];
+    }
+}
 
 } // namespace lua_wrapper
 

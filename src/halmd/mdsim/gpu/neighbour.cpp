@@ -334,8 +334,8 @@ template <typename T>
 static void register_lua(char const* class_name)
 {
     using namespace luabind;
-    lua_wrapper::registry::get()->push_back
-    ((
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
@@ -350,7 +350,7 @@ static void register_lua(char const* class_name)
                 ]
             ]
         ]
-    ));
+    ];
 }
 
 static __attribute__((constructor)) void register_lua()

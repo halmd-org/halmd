@@ -204,8 +204,8 @@ string device::cuda_runtime_version()
 static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    lua_wrapper::registry::get()->push_back
-    ((
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
         namespace_("halmd_wrapper")
         [
             namespace_("utility")
@@ -224,7 +224,7 @@ static __attribute__((constructor)) void register_lua()
                 ]
             ]
         ]
-    ));
+    ];
 }
 
 }} // namespace utility::gpu

@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
 #include <boost/bind.hpp>
 
 #include <halmd/io/logger.hpp>
@@ -56,11 +55,7 @@ void script::load_wrapper()
 
     open(L); //< setup global structures and Lua class support
 
-    for_each(
-        lua_wrapper::registry::get()->begin()
-      , lua_wrapper::registry::get()->end()
-      , bind(&module_::operator[], module(L), _1)
-    );
+    lua_wrapper::open(L); //< register HALMD Lua wrappers
 }
 
 /**

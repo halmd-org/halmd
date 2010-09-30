@@ -184,8 +184,8 @@ void options_parser::parse(int argc, char** argv)
 static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
-    lua_wrapper::registry::get()->push_back
-    ((
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
         namespace_("halmd_wrapper")
         [
             class_<options_parser>("options_parser")
@@ -204,7 +204,7 @@ static __attribute__((constructor)) void register_lua()
                     //< only return-by-value is supported by Luabind boost::any converter
             ]
         ]
-    ));
+    ];
 }
 
 } // namespace halmd
