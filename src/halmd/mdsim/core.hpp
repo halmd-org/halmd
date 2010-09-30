@@ -33,8 +33,10 @@
 #include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
+/** HAL’s MD package */
 namespace halmd
 {
+/** Molecular Dynamics simulation modules */
 namespace mdsim
 {
 

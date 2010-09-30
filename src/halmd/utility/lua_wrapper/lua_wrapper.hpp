@@ -27,4 +27,10 @@
 #include <halmd/utility/lua_wrapper/lua_include.hpp>
 #include <halmd/utility/lua_wrapper/registry.hpp>
 
+/**
+ * @namespace halmd::lua_wrapper
+ *
+ * Lua C++ wrapper extensions
+ */
+
 #endif /* ! HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP */
