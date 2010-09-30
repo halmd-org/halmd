@@ -75,7 +75,7 @@ void compare_scan( size_t count )
                         "GPU and CPU prefix sum mismatch");
 }
 
-int init_unit_test_suite()
+static void __attribute__((constructor)) init_unit_test_suite()
 {
     using namespace boost::unit_test::framework;
     using namespace boost::assign;
@@ -95,8 +95,4 @@ int init_unit_test_suite()
 
     master_test_suite().add(
         BOOST_PARAM_TEST_CASE(&compare_scan, count.begin(), count.end()));
-
-    return 0;
 }
-
-static int _dummy = init_unit_test_suite();

@@ -297,7 +297,7 @@ void set_default_options(halmd::po::variables_map& vm)
     vm_["output"]       = variable_value(string("halmd_test"), true);
 }
 
-int init_unit_test_suite()
+static void __attribute__((constructor)) init_unit_test_suite()
 {
     typedef boost::program_options::variable_value variable_value;
     using namespace boost::assign;
@@ -356,8 +356,4 @@ int init_unit_test_suite()
 #ifdef WITH_CUDA
     master_test_suite().add( ts2 );
 #endif /* WITH_CUDA */
-
-    return 0;
 }
-
-static int _dummy = init_unit_test_suite();

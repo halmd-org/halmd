@@ -154,7 +154,7 @@ void test_gsl_rng( unsigned long n )
     BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 }
 
-int init_unit_test_suite()
+static void __attribute__((constructor)) init_unit_test_suite()
 {
     using namespace boost::unit_test::framework;
 
@@ -171,8 +171,4 @@ int init_unit_test_suite()
         BOOST_PARAM_TEST_CASE(&test_gsl_rng, counts.begin(), counts.end()-2));
     master_test_suite().add(
         BOOST_PARAM_TEST_CASE(&test_rand48_gpu, counts.begin(), counts.end()));
-
-    return 0;
 }
-
-static int _dummy = init_unit_test_suite();
