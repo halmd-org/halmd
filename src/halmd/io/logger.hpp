@@ -26,7 +26,7 @@
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 
-#include <halmd/options.hpp>
+#include <halmd/options.hpp> // FIXME deprecated
 
 namespace halmd
 {
@@ -55,15 +55,15 @@ public:
 
     static boost::log::sources::severity_logger<severity_level> logger;
 
-    logging(po::variables_map const& vm);
+    logging();
+    logging(po::variables_map const& vm); // FIXME deprecated
     ~logging();
+    void log_to_console(severity_level level);
+    void log_to_file(severity_level level, std::string file_name);
 
 private:
     boost::shared_ptr<console_sink> console_;
     boost::shared_ptr<file_sink> file_;
-
-    void log_to_console(severity_level level);
-    void log_to_file(severity_level level, std::string file_name);
 };
 
 } // namespace io

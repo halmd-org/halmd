@@ -81,6 +81,14 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
     return os;
 }
 
+logging::logging()
+{
+    core::get()->add_global_attribute(
+        "TimeStamp"
+      , make_shared<attributes::local_clock>()
+    );
+}
+
 logging::logging(po::variables_map const& vm)
 {
     core::get()->add_global_attribute(
@@ -119,6 +127,7 @@ void logging::log_to_console(severity_level level)
     );
     backend->auto_flush(true);
 
+    core::get()->remove_sink(console_);
     console_ = make_shared<console_sink>(backend);
     console_->set_filter(
         filters::attr<severity_level>("Severity") <= level
@@ -148,6 +157,7 @@ void logging::log_to_file(severity_level level, string file_name)
     );
     backend->auto_flush(true);
 
+    core::get()->remove_sink(file_);
     file_ = make_shared<file_sink>(backend);
     file_->set_filter(
         filters::attr<severity_level>("Severity") <= level
