@@ -186,16 +186,13 @@ static __attribute__((constructor)) void register_lua()
     using namespace luabind;
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        namespace_("halmd_wrapper")
-        [
-            class_<options_parser>("options_parser")
-                .def("parsed", &options_parser::parsed)
-        ]
-      , namespace_("boost")
+        namespace_("boost")
         [
             namespace_("program_options")
             [
-                class_<po::options_description>("options_description") //< only register class
+                class_<po::options_description>("options_description")
+                    //< only register class
+
               , class_<po::variable_value>("variable_value")
                     .def(constructor<>())
                     .def("empty", &po::variable_value::empty)
