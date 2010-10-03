@@ -108,7 +108,7 @@ void options_parser::parse_config_file(std::string const& file_name)
  *
  * @param error exception deriving from std::exception
  */
-void options_parser::print_error(std::exception const& error)
+void options_parser::print_error(std::exception const& error) const
 {
     cerr << PROGRAM_NAME ": " << error.what() << endl;
     cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
@@ -117,7 +117,7 @@ void options_parser::print_error(std::exception const& error)
 /**
  * print options help message to stdout
  */
-void options_parser::print_help()
+void options_parser::print_help() const
 {
     cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
          << desc_ << endl;
@@ -126,7 +126,7 @@ void options_parser::print_help()
 /**
  * print version information to stdout
  */
-void options_parser::print_version()
+void options_parser::print_version() const
 {
     cout << PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION << endl << endl
          << PROGRAM_COPYRIGHT << endl

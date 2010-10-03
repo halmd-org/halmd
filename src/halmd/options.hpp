@@ -45,12 +45,12 @@ public:
     options_parser(po::options_description const& desc);
     void parse_command_line(int argc, char** argv);
     void parse_config_file(std::string const& file_name);
-    void print_error(std::exception const& error);
-    void print_help();
-    void print_version();
+    void print_error(std::exception const& error) const;
+    void print_help() const;
+    void print_version() const;
 
     //! returns parsed program options
-    po::variables_map const& parsed()
+    po::variables_map const& parsed() const
     {
         return vm_;
     }
