@@ -117,6 +117,26 @@ po::options_description script::options()
 }
 
 /**
+ * Set parsed command line options
+ */
+void script::options(po::variables_map const& vm)
+{
+    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
+
+    using namespace luabind;
+
+    object options(globals(L)["halmd"]["options"]);
+    try {
+        call_function<void>(options, cref(vm));
+    }
+    catch (luabind::error const& e) {
+        LOG_ERROR("[Lua] " << lua_tostring(e.state(), -1));
+        lua_pop(e.state(), 1); //< remove error message
+        throw;
+    }
+}
+
+/**
  * Run simulation
  */
 void script::run()

@@ -59,6 +59,8 @@ int main(int argc, char **argv)
     catch (exit_exception const& e) {
         return e.code();
     }
+    script.options(options.parsed());
+
     po::variables_map vm(options.parsed());
 
     // FIXME split log_to_console, log_to_file

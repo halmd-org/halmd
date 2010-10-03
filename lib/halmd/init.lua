@@ -39,6 +39,7 @@ require("halmd.mdsim.particle")
 require("halmd.mdsim.position")
 require("halmd.mdsim.velocity")
 require("halmd.observables.thermodynamics")
+require("halmd.options")
 require("halmd.random")
 require("halmd.sampler")
 
