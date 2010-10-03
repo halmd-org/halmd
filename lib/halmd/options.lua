@@ -21,6 +21,7 @@
 local modules = require("halmd.modules")
 local setmetatable = setmetatable
 local pairs = pairs
+local string = string
 
 module("halmd.options", modules.register)
 
@@ -35,7 +36,8 @@ setmetatable(_M, {
     --
     __call = function(self, parsed)
         for k, v in pairs(parsed) do
-            self[k] = v:value()
+            option = string.gsub(k, "-", "_") -- e.g. options.power_law_index
+            self[option] = v:value()
         end
     end
 })
