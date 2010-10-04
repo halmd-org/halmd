@@ -20,7 +20,7 @@
 #ifndef HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
 #define HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <luabind/shared_ptr_converter.hpp> //< boost::shared_ptr up- and down-casts
 
 #include <halmd/utility/lua_wrapper/any_converter.hpp>
 #include <halmd/utility/lua_wrapper/array_converter.hpp>
