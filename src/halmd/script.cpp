@@ -119,7 +119,7 @@ po::options_description script::options()
 /**
  * Set parsed command line options
  */
-void script::options(po::variables_map const& vm)
+void script::init(po::variables_map const& vm)
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 

@@ -1,6 +1,5 @@
-/* Molecular Dynamics simulation of a Lennard-Jones fluid
- *
- * Copyright © 2008-2009  Peter Colberg
+/*
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,141 +17,72 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
-#include <boost/proto/args.hpp> //< proto/matches.hpp:95: error: 'N' is not a member of 'boost::proto'
-#include <exception>
-#include <iostream>
+#include <boost/algorithm/string/join.hpp>
 
-#ifdef WITH_CUDA
-# include <cuda_wrapper.hpp>
-#endif
-#include <H5xx.hpp>
-
-#include <halmd/deprecated/util/exception.hpp>
 #include <halmd/io/logger.hpp>
-#include <halmd/main.hpp>
 #include <halmd/options.hpp>
 #include <halmd/script.hpp>
-#include <halmd/utility/timer.hpp>
 #include <halmd/utility/hostname.hpp>
-#include <halmd/utility/module.hpp>
-#include <halmd/utility/modules/factory.hpp>
-#include <halmd/utility/modules/policy.hpp>
-#include <halmd/utility/modules/resolver.hpp>
-#include <halmd/utility/modules/writer.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
+using namespace boost::algorithm;
 using namespace halmd;
 using namespace std;
 
+/**
+ * Run HAL’s MD package
+ */
 int main(int argc, char **argv)
 {
-    static halmd::script script; //< load Lua scripting engine
+    static logging logger;
 
-    options_parser options(script.options());
+    logger.log_to_console(logging::trace); //< facilitate debugging
+
     try {
-        options.parse(argc, argv);
-    }
-    catch (exit_exception const& e) {
-        return e.code();
-    }
-    script.options(options.parsed());
+        static script script; //< load Lua script engine
 
-    po::variables_map vm(options.parsed());
+        options_parser options(script.options());
+        try {
+            options.parse(argc, argv);
+        }
+        catch (exit_exception const& e) {
+            return e.code();
+        }
+        po::variables_map vm(options.parsed());
 
-    // FIXME split log_to_console, log_to_file
+        script.init(vm); //< pass command line options to Lua
 
-#ifdef NDEBUG
-    // turns off the automatic error printing from the HDF5 library
-    H5::Exception::dontPrint();
-#endif
+        logger.log_to_console(
+            static_cast<logging::severity_level>(vm["verbose"].as<int>())
+        );
+        logger.log_to_file(
+            static_cast<logging::severity_level>(
+                max(vm["verbose"].as<int>(), static_cast<int>(logging::info))
+            )
+          , vm["output"].as<string>() + ".log"
+        );
 
-
+        LOG(PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
+        LOG("variant: " << PROGRAM_VARIANT);
 #ifndef NDEBUG
-    // enable logging as early as possible if debugging
-    shared_ptr<logging> logger(new logging(vm));
-#endif
-
-    // resolve module dependencies
-#ifndef NDEBUG
-    if (vm["verbose"].as<int>() >= logging::debug) {
-        write_graphviz(vm["output"].as<string>() + "_registry.dot", modules::registry::graph());
-    }
-#endif
-    modules::resolver resolver(modules::registry::graph());
-    try {
-        resolver.resolve<halmd::main>(vm);
-    }
-    catch (program_options::error const& e) {
-        cerr << PROGRAM_NAME ": " << e.what() << endl;
-        return EXIT_FAILURE;
-    }
-#ifndef NDEBUG
-    if (vm["verbose"].as<int>() >= logging::debug) {
-        write_graphviz(vm["output"].as<string>() + "_resolver.dot", resolver.graph());
-    }
-#endif
-    modules::policy policy(resolver.graph());
-#ifndef NDEBUG
-    if (vm["verbose"].as<int>() >= logging::debug) {
-        write_graphviz(vm["output"].as<string>() + "_policy.dot", policy.graph());
-    }
-#endif
-    modules::factory factory(policy.graph());
-
-#ifdef NDEBUG
-    // enable logging after successful option parsing if not debugging
-    shared_ptr<logging> logger(new logging(vm));
-#endif
-
-    LOG(PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
-    LOG("variant: " << PROGRAM_VARIANT);
-#ifndef NDEBUG
-    LOG_WARNING("built with enabled debugging");
+        LOG_WARNING("built with enabled debugging");
 #endif
 #ifdef __DEVICE_EMULATION__
-    LOG_WARNING("built with device emulation");
+        LOG_WARNING("built with device emulation");
 #endif
+        LOG("command line: " << join(vector<string>(argv, argv + argc), " "));
+        LOG("host name: " << host_name());
 
-    // print command line
-    std::vector<string> cmd(argv, argv + argc);
-    LOG("command line: " << boost::algorithm::join(cmd, " "));
-
-    LOG("host name: " << host_name());
-
-    int status_ = halmd::HALMD_EXIT_SUCCESS;
-#ifdef NDEBUG
-    try {
-#endif
-        // run MD simulation
-        shared_ptr<halmd::main> sampler(modules::fetch<halmd::main>(factory, vm));
-        sampler->run();
-#ifdef NDEBUG
+        script.run();
     }
-#ifdef WITH_CUDA
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        LOG_WARNING(PROJECT_NAME " aborted");
-        return halmd::HALMD_EXIT_CUDA_ERROR;
-    }
-#ifndef __DEVICE_EMULATION__
-    catch (cuda::driver::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        LOG_WARNING(PROJECT_NAME " aborted");
-        return halmd::HALMD_EXIT_CUDA_ERROR;
-    }
-#endif /* ! __DEVICE_EMULATION__ */
-#endif /* WITH_CUDA */
     catch (std::exception const& e) {
         LOG_ERROR(e.what());
         LOG_WARNING(PROJECT_NAME " aborted");
-        return halmd::HALMD_EXIT_EXCEPTION;
+        return EXIT_FAILURE;
     }
-#endif /* NDEBUG */
 
     LOG(PROJECT_NAME " exit");
-    return status_;
+
+    return EXIT_SUCCESS;
 }
