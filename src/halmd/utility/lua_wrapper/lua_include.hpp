@@ -27,6 +27,4 @@ extern "C"
     #include "lualib.h"
 }
 
-#include <luabind/luabind.hpp>
-
 #endif /* ! HALMD_UTILITY_LUA_WRAPPER_LUA_INCLUDE_HPP */
