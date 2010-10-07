@@ -33,6 +33,13 @@ struct tcf_base
         BLOCKS = 32,
         THREADS = 256,
     };
+
+    struct velocity_autocorrelation_fastest {
+        static cuda::symbol<float> min_sq_v;
+    };
+    struct velocity_autocorrelation_slowest {
+        static cuda::symbol<float> max_sq_v;
+    };
 };
 
 template <int dimension>
@@ -47,6 +54,10 @@ struct tcf<3> : public tcf_base
                mean_quartic_displacement;
     static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
                velocity_autocorrelation;
+    static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+               velocity_autocorrelation_fastest;
+    static cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+               velocity_autocorrelation_slowest;
     static cuda::function<void (float4 const*, float4 const*, float3 const, dsfloat*, uint)>
         incoherent_scattering_function;
     static cuda::function<void (float4 const*, float3 const, dsfloat*, dsfloat*, uint)>
@@ -62,6 +73,10 @@ struct tcf<2> : public tcf_base
                mean_quartic_displacement;
     static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
                velocity_autocorrelation;
+    static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
+               velocity_autocorrelation_fastest;
+    static cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
+               velocity_autocorrelation_slowest;
     static cuda::function<void (float2 const*, float2 const*, float2 const, dsfloat*, uint)>
         incoherent_scattering_function;
     static cuda::function<void (float2 const*, float2 const, dsfloat*, dsfloat*, uint)>

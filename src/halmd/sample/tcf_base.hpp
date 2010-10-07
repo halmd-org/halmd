@@ -95,6 +95,18 @@ template <template <int> class sample_type>
 struct velocity_autocorrelation;
 
 /**
+ * velocity autocorrelation for fastest particles given lower boundary
+ */
+template <template <int> class sample_type>
+struct velocity_autocorrelation_fastest;
+
+/**
+ * velocity autocorrelation for slowest particles given upper boundary
+ */
+template <template <int> class sample_type>
+struct velocity_autocorrelation_slowest;
+
+/**
  * intermediate scattering function
  */
 template <template <int> class sample_type>

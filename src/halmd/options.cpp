@@ -489,6 +489,10 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
          "minimum number of trajectory samples")
         ("q-values", po::value<boost::multi_array<float, 1> >(),
          "wave vector values for correlation functions")
+        ("minimum-velocity-filter", po::value<boost::multi_array<float, 1> >()->required(),
+         "lower boundary for fastest particles velocity")
+        ("maximum-velocity-filter", po::value<boost::multi_array<float, 1> >()->required(),
+         "upper boundary for slowest particles velocity")
         ("q-error", po::value<float>()->default_value(0.001),
          "relative deviation of averaging wave vectors")
         ;

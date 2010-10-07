@@ -37,6 +37,7 @@
 #endif
 #include <halmd/sample/tcf_host.hpp>
 #include <halmd/util/H5xx.hpp>
+#include <halmd/util/log.hpp>
 
 namespace halmd {
 
@@ -272,6 +273,50 @@ private:
     size_t type;
 };
 
+class tcf_add_minimum_velocity_filter : public boost::static_visitor<>
+{
+public:
+    tcf_add_minimum_velocity_filter(float v) : v(v) {}
+
+    template <template <int> class sample_type>
+    void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
+    {
+        LOG_DEBUG("add minimum velocity filter: " << v);
+        tcf.v_sq_min.push_back(std::pow(v, 2));
+    }
+
+    template <typename T>
+    void operator()(T& tcf) const
+    {
+        // noop
+    }
+
+private:
+    float v;
+};
+
+class tcf_add_maximum_velocity_filter : public boost::static_visitor<>
+{
+public:
+    tcf_add_maximum_velocity_filter(float v) : v(v) {}
+
+    template <template <int> class sample_type>
+    void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
+    {
+        LOG_DEBUG("add maximum velocity filter: " << v);
+        tcf.v_sq_max.push_back(std::pow(v, 2));
+    }
+
+    template <typename T>
+    void operator()(T& tcf) const
+    {
+        // noop
+    }
+
+private:
+    float v;
+};
+
 /**
  * apply correlation function to block of phase space samples
  */
@@ -389,17 +434,29 @@ public:
     template <typename T>
     void operator()(T& tcf) const
     {
-        resize(tcf.result);
+        resize(tcf.result, q_values);
     }
 
-    void resize(tcf_unary_result_type& result) const
+    template <template <int> class sample_type>
+    void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
+    {
+        resize(tcf.result, tcf.v_sq_min.size());
+    }
+
+    template <template <int> class sample_type>
+    void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
+    {
+        resize(tcf.result, tcf.v_sq_max.size());
+    }
+
+    void resize(tcf_unary_result_type& result, unsigned int) const
     {
         result.resize(boost::extents[block_count][block_size]);
     }
 
-    void resize(tcf_binary_result_type& result) const
+    void resize(tcf_binary_result_type& result, unsigned int count) const
     {
-        result.resize(boost::extents[block_count][block_size][q_values]);
+        result.resize(boost::extents[block_count][block_size][count]);
     }
 
 private:
@@ -424,10 +481,23 @@ public:
     template <typename T>
     void operator()(T& tcf) const
     {
-        write(tcf.dataset, tcf.result);
+        write(tcf.dataset, tcf.result, q_value);
     }
 
-    void write(H5::DataSet& dataset, tcf_unary_result_type const& result) const
+    template <template <int> class sample_type>
+    void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
+    {
+        write(tcf.dataset, tcf.result, tcf.v_sq_min);
+    }
+
+    template <template <int> class sample_type>
+    void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
+    {
+        write(tcf.dataset, tcf.result, tcf.v_sq_max);
+    }
+
+    template <typename vector_type>
+    void write(H5::DataSet& dataset, tcf_unary_result_type const& result, vector_type const&) const
     {
         // dataset dimensions
         boost::array<hsize_t, 3> dim = {{ max_blocks, result.shape()[1], 5 }};
@@ -453,7 +523,8 @@ public:
         dataset.write(data.data(), H5::PredType::NATIVE_DOUBLE);
     }
 
-    void write(H5::DataSet& dataset, tcf_binary_result_type const& result) const
+    template <typename vector_type>
+    void write(H5::DataSet& dataset, tcf_binary_result_type const& result, vector_type const& vector) const
     {
         // dataset dimensions
         boost::array<hsize_t, 4> dim = {{ result.shape()[2], max_blocks, result.shape()[1], 6 }};
@@ -464,7 +535,7 @@ public:
             for (unsigned int k = 0; k < dim[1]; ++k) {
                 for (unsigned int l = 0; l < dim[2]; ++l) {
                     // q-value
-                    data[j][k][l][0] = q_value[j];
+                    data[j][k][l][0] = vector[j];
                     // time interval
                     data[j][k][l][1] = block_time[k][l];
                     // mean average

@@ -242,6 +242,28 @@ void correlation<dimension>::add_host_correlation_functions(size_t types)
 }
 
 /**
+ * add lower boundary for absolute velocity of fastest particles
+ */
+template <int dimension>
+void correlation<dimension>::add_minimum_velocity_filter(float velocity)
+{
+    foreach (tcf_variant& tcf, m_tcf) {
+        boost::apply_visitor(tcf_add_minimum_velocity_filter(velocity), tcf);
+    }
+}
+
+/**
+ * add upper boundary for absolute velocity of slowest particles
+ */
+template <int dimension>
+void correlation<dimension>::add_maximum_velocity_filter(float velocity)
+{
+    foreach (tcf_variant& tcf, m_tcf) {
+        boost::apply_visitor(tcf_add_maximum_velocity_filter(velocity), tcf);
+    }
+}
+
+/**
  * create HDF5 correlations output file
  */
 template <int dimension>

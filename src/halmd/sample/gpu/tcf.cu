@@ -43,9 +43,12 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
     dsfloat variance = 0;
 
     // load values from global device memory
+    correlation_function correlator;
     for (uint i = GTID; i < n; i += GTDIM) {
         vector_type a = g_in[i], b = g_in0[i];
-        transform<accumulate_>(count, mean, variance, correlation_function()(a, b));
+        if (correlator.check(a, b)) {
+            transform<accumulate_>(count, mean, variance, correlator(a, b));
+        }
     }
     // reduced value for this thread
     s_n[TID] = count;
@@ -67,7 +70,13 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 struct mean_square_displacement
 {
     template <typename vector_type>
-    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0)
+    __device__ bool check(vector_type const& r, vector_type const& r0) const
+    {
+        return true;
+    }
+
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0) const
     {
         vector_type const dr = r - r0;
         return dr * dr;
@@ -77,7 +86,13 @@ struct mean_square_displacement
 struct mean_quartic_displacement
 {
     template <typename vector_type>
-    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0)
+    __device__ bool check(vector_type const& r, vector_type const& r0) const
+    {
+        return true;
+    }
+
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0) const
     {
         vector_type const dr = r - r0;
         dsfloat const rr = dr * dr;
@@ -88,11 +103,63 @@ struct mean_quartic_displacement
 struct velocity_autocorrelation
 {
     template <typename vector_type>
-    __device__ dsfloat operator()(vector_type const& v, vector_type const& v0)
+    __device__ bool check(vector_type const& v, vector_type const& v0) const
+    {
+        return true;
+    }
+
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& v, vector_type const& v0) const
     {
         return v * v0;
     }
 };
+
+/**
+ * compute VACF for fastest particles given lower boundary
+ */
+struct velocity_autocorrelation_fastest
+{
+    /** lower boundary for squared velocity */
+    static __constant__ float min_sq_v;
+
+    template <typename vector_type>
+    __device__ bool check(vector_type const& v, vector_type const& v0) const
+    {
+        return ((v * v) > min_sq_v && (v0 * v0) > min_sq_v);
+    }
+
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& v, vector_type const& v0) const
+    {
+        return v * v0;
+    }
+};
+
+float velocity_autocorrelation_fastest::min_sq_v;
+
+/**
+ * compute VACF for slowest particles given upper boundary
+ */
+struct velocity_autocorrelation_slowest
+{
+    /** upper boundary for absolute velocity */
+    static __constant__ float max_sq_v;
+
+    template <typename vector_type>
+    __device__ bool check(vector_type const& v, vector_type const& v0) const
+    {
+        return ((v * v) < max_sq_v && (v0 * v0) < max_sq_v);
+    }
+
+    template <typename vector_type>
+    __device__ dsfloat operator()(vector_type const& v, vector_type const& v0) const
+    {
+        return v * v0;
+    }
+};
+
+float velocity_autocorrelation_slowest::max_sq_v;
 
 template <typename vector_type,
           typename correlation_function,
@@ -105,9 +172,10 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
     dsfloat sum = 0;
 
     // load values from global device memory
+    correlation_function correlator;
     for (uint i = GTID; i < n; i += GTDIM) {
         vector_type a = g_in[i], b = g_in0[i], q = q_vector;
-        sum += correlation_function()(a, b, q);
+        sum += correlator(a, b, q);
     }
     // reduced value for this thread
     s_sum[TID] = sum;
@@ -125,7 +193,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, coalesced_vector_t
 struct incoherent_scattering_function
 {
     template <typename vector_type>
-    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0, vector_type const& q)
+    __device__ dsfloat operator()(vector_type const& r, vector_type const& r0, vector_type const& q) const
     {
         // accurate trigonometric function requires local memory
         return cosf((r - r0) * q);
@@ -145,9 +213,10 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
     dsfloat imag = 0;
 
     // load values from global device memory
+    correlation_function correlator;
     for (uint i = GTID; i < n; i += GTDIM) {
         vector_type a = g_in[i], q = q_vector;
-        correlation_function()(real, imag, a, q);
+        correlator(real, imag, a, q);
     }
     // reduced value for this thread
     s_real[TID] = real;
@@ -167,7 +236,7 @@ __global__ void accumulate(coalesced_vector_type const* g_in, uncoalesced_vector
 struct coherent_scattering_function
 {
     template <typename vector_type>
-    __device__ void operator()(dsfloat& real, dsfloat& imag, vector_type const& r, vector_type const& q)
+    __device__ void operator()(dsfloat& real, dsfloat& imag, vector_type const& r, vector_type const& q) const
     {
         float c, s;
         // accurate trigonometric function requires local memory
@@ -191,6 +260,10 @@ cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, ui
     tcf<3>::mean_quartic_displacement(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::mean_quartic_displacement>);
 cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf<3>::velocity_autocorrelation(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::velocity_autocorrelation>);
+cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf<3>::velocity_autocorrelation_fastest(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::velocity_autocorrelation_fastest>);
+cuda::function<void (float4 const*, float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf<3>::velocity_autocorrelation_slowest(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::velocity_autocorrelation_slowest>);
 cuda::function<void (float4 const*, float4 const*, float3 const, dsfloat*, uint)>
     tcf<3>::incoherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 3>, cu::tcf::incoherent_scattering_function>);
 cuda::function<void (float4 const*, float3 const, dsfloat*, dsfloat*, uint)>
@@ -202,9 +275,18 @@ cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, ui
     tcf<2>::mean_quartic_displacement(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::mean_quartic_displacement>);
 cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf<2>::velocity_autocorrelation(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::velocity_autocorrelation>);
+cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf<2>::velocity_autocorrelation_fastest(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::velocity_autocorrelation_fastest>);
+cuda::function<void (float2 const*, float2 const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf<2>::velocity_autocorrelation_slowest(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::velocity_autocorrelation_slowest>);
 cuda::function<void (float2 const*, float2 const*, float2 const, dsfloat*, uint)>
     tcf<2>::incoherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::incoherent_scattering_function>);
 cuda::function<void (float2 const*, float2 const, dsfloat*, dsfloat*, uint)>
     tcf<2>::coherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::coherent_scattering_function>);
+
+cuda::symbol<float>
+    tcf_base::velocity_autocorrelation_fastest::min_sq_v(cu::tcf::velocity_autocorrelation_fastest::min_sq_v);
+cuda::symbol<float>
+    tcf_base::velocity_autocorrelation_slowest::max_sq_v(cu::tcf::velocity_autocorrelation_slowest::max_sq_v);
 
 }} // namespace halmd::gpu
