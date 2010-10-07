@@ -95,6 +95,12 @@ template <template <int> class sample_type>
 struct velocity_autocorrelation;
 
 /**
+ * velocity autocorrelation sorted after squared displacements
+ */
+template <template <int> class sample_type>
+struct sorted_velocity_autocorrelation;
+
+/**
  * velocity autocorrelation for fastest particles given lower boundary
  */
 template <template <int> class sample_type>

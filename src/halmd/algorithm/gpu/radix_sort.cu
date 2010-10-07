@@ -175,9 +175,11 @@ cuda::function<void (uint const*, uint*, uint, uint)>
                radix_sort::histogram_keys(cu::radix_sort::histogram_keys);
 cuda::function<void (uint const*, uint*, int const*, int*, uint const*, uint, uint),
                void (uint const*, uint*, uint const*, uint*, uint const*, uint, uint),
+               void (uint const*, uint*, float const*, float*, uint const*, uint, uint),
                void (uint const*, uint*, float2 const*, float2*, uint const*, uint, uint),
                void (uint const*, uint*, float4 const*, float4*, uint const*, uint, uint)>
                radix_sort::permute(cu::radix_sort::permute, cu::radix_sort::permute,
-                                   cu::radix_sort::permute, cu::radix_sort::permute);
+                                   cu::radix_sort::permute, cu::radix_sort::permute,
+                                   cu::radix_sort::permute);
 
 }} // namespace halmd::gpu

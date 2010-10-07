@@ -37,7 +37,6 @@
 #endif
 #include <halmd/sample/tcf_host.hpp>
 #include <halmd/util/H5xx.hpp>
-#include <halmd/util/log.hpp>
 
 namespace halmd {
 
@@ -273,16 +272,15 @@ private:
     size_t type;
 };
 
-class tcf_add_minimum_velocity_filter : public boost::static_visitor<>
+class tcf_add_fastest_particle_vacf_filter : public boost::static_visitor<>
 {
 public:
-    tcf_add_minimum_velocity_filter(float v) : v(v) {}
+    tcf_add_fastest_particle_vacf_filter(float fraction) : fraction(fraction) {}
 
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
     {
-        LOG_DEBUG("add minimum velocity filter: " << v);
-        tcf.v_sq_min.push_back(std::pow(v, 2));
+        tcf.min_fraction.push_back(fraction);
     }
 
     template <typename T>
@@ -292,19 +290,18 @@ public:
     }
 
 private:
-    float v;
+    float fraction;
 };
 
-class tcf_add_maximum_velocity_filter : public boost::static_visitor<>
+class tcf_add_slowest_particle_vacf_filter : public boost::static_visitor<>
 {
 public:
-    tcf_add_maximum_velocity_filter(float v) : v(v) {}
+    tcf_add_slowest_particle_vacf_filter(float fraction) : fraction(fraction) {}
 
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
     {
-        LOG_DEBUG("add maximum velocity filter: " << v);
-        tcf.v_sq_max.push_back(std::pow(v, 2));
+        tcf.max_fraction.push_back(fraction);
     }
 
     template <typename T>
@@ -314,17 +311,48 @@ public:
     }
 
 private:
-    float v;
+    float fraction;
 };
+
+#ifdef WITH_CUDA
+class tcf_get_sorted_vacf
+  : public boost::static_visitor<
+        boost::multi_array<cuda::vector<float>, 2> const*
+    >
+{
+public:
+    tcf_get_sorted_vacf(size_t type) : type(type) {}
+
+    template <template <int> class sample_type>
+    boost::multi_array<cuda::vector<float>, 2> const*
+        operator()(sorted_velocity_autocorrelation<sample_type> const& tcf) const
+    {
+        if (tcf.type == type) {
+            return &tcf.result;
+        }
+        return (boost::multi_array<cuda::vector<float>, 2> const*) 0; // noop
+    }
+
+    template <typename T>
+    boost::multi_array<cuda::vector<float>, 2> const*
+        operator()(T const& tcf) const
+    {
+        return (boost::multi_array<cuda::vector<float>, 2> const*) 0; // noop
+    }
+
+private:
+    size_t const type;
+};
+#endif /* WITH_CUDA */
 
 /**
  * apply correlation function to block of phase space samples
  */
-template <typename V>
+template <typename V, typename tcf_vector_type>
 class _tcf_correlate_block : public boost::static_visitor<>
 {
 public:
-    _tcf_correlate_block(unsigned int block, V const& q_vector) : block(block), q_vector(q_vector) {}
+    _tcf_correlate_block(unsigned int block, V const& q_vector, tcf_vector_type const& tcf_vector) : block(block), q_vector(q_vector), tcf_vector(tcf_vector) {}
 
     template <typename T, typename U>
     void operator()(T&, U&) const
@@ -337,19 +365,80 @@ public:
     operator()(T& tcf, boost::circular_buffer<std::vector<sample_type<dimension> > >& sample) const
     {
         if (tcf.result.num_elements()) {
-            tcf(std::make_pair(sample.begin(), q_vector.begin()), std::make_pair(sample.end(), q_vector.end()), tcf.result[block].begin());
+            tcf(
+                std::make_pair(sample.begin(), q_vector.begin())
+              , std::make_pair(sample.end(), q_vector.end())
+              , tcf.result[block].begin()
+            );
         }
     }
+
+#ifdef WITH_CUDA
+    template <template <int> class sample_type, int dimension>
+    typename boost::enable_if<
+        boost::is_base_of<
+            correlation_function<sample_type>
+          , velocity_autocorrelation_fastest<sample_type>
+        >, void>::type
+    operator()(
+        velocity_autocorrelation_fastest<sample_type>& tcf
+      , boost::circular_buffer<std::vector<sample_type<dimension> > >& sample
+    ) const
+    {
+        if (tcf.result.num_elements()) {
+            typename tcf_vector_type::const_iterator it, end = tcf_vector.end();
+            for (it = tcf_vector.begin(); it != end; ++it) {
+                if (boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it)) {
+                    tcf(
+                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it))[block].begin()
+                      , (*boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it))[block].end()
+                      , /* ignore zero MSD */ ++(tcf.result[block].begin())
+                    );
+                    return;
+                }
+            }
+            throw std::logic_error("no pointer to sorted velocity autocorrelations");
+        }
+    }
+
+    template <template <int> class sample_type, int dimension>
+    typename boost::enable_if<
+        boost::is_base_of<
+            correlation_function<sample_type>
+          , velocity_autocorrelation_slowest<sample_type>
+        >, void>::type
+    operator()(
+        velocity_autocorrelation_slowest<sample_type>& tcf
+      , boost::circular_buffer<std::vector<sample_type<dimension> > >& sample
+    ) const
+    {
+        if (tcf.result.num_elements()) {
+            typename tcf_vector_type::const_iterator it, end = tcf_vector.end();
+            for (it = tcf_vector.begin(); it != end; ++it) {
+                if (boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it)) {
+                    tcf(
+                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it))[block].begin()
+                      , (*boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it))[block].end()
+                      , /* ignore zero MSD */ ++(tcf.result[block].begin())
+                    );
+                    return;
+                }
+            }
+            throw std::logic_error("no pointer to sorted velocity autocorrelations");
+        }
+    }
+#endif /* WITH_CUDA */
 
 private:
     unsigned int block;
     V const& q_vector;
+    tcf_vector_type const& tcf_vector;
 };
 
-template <typename T>
-_tcf_correlate_block<T> tcf_correlate_block(unsigned int block, T const& q_vector)
+template <typename T, typename U>
+_tcf_correlate_block<T, U> tcf_correlate_block(unsigned int block, T const& q_vector, U const& tcf_vector)
 {
-    return _tcf_correlate_block<T>(block, q_vector);
+    return _tcf_correlate_block<T, U>(block, q_vector, tcf_vector);
 }
 
 /**
@@ -393,6 +482,12 @@ public:
             }
             tcf.dataset = create_dataset(root, tcf.name(), tcf.result);
         }
+    }
+
+    template <template <int> class sample_type>
+    void operator()(sorted_velocity_autocorrelation<sample_type>& tcf) const
+    {
+        // noop
     }
 
     static H5::DataSet create_dataset(H5::Group const& node, char const* name, tcf_unary_result_type const& result)
@@ -442,15 +537,21 @@ public:
     }
 
     template <template <int> class sample_type>
+    void operator()(sorted_velocity_autocorrelation<sample_type>& tcf) const
+    {
+        tcf.result.resize(boost::extents[block_count][block_size]);
+    }
+
+    template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
     {
-        resize(tcf.result, tcf.v_sq_min.size());
+        resize(tcf.result, tcf.min_fraction.size());
     }
 
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
     {
-        resize(tcf.result, tcf.v_sq_max.size());
+        resize(tcf.result, tcf.max_fraction.size());
     }
 
     void resize(tcf_unary_result_type& result, unsigned int) const
@@ -491,10 +592,16 @@ public:
     }
 
     template <template <int> class sample_type>
+    void operator()(sorted_velocity_autocorrelation<sample_type>& tcf) const
+    {
+        // noop
+    }
+
+    template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
     {
         if (tcf.result.num_elements()) {
-            write(tcf.dataset, tcf.result, tcf.v_sq_min);
+            write(tcf.dataset, tcf.result, tcf.min_fraction);
         }
     }
 
@@ -502,7 +609,7 @@ public:
     void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
     {
         if (tcf.result.num_elements()) {
-            write(tcf.dataset, tcf.result, tcf.v_sq_max);
+            write(tcf.dataset, tcf.result, tcf.max_fraction);
         }
     }
 

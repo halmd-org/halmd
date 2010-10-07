@@ -364,25 +364,25 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
             throw std::logic_error("unknown correlation function backend: " + backend);
         }
 
-        if (!m_opt["minimum-velocity-filter"].empty())
-        {
-            boost::multi_array<float, 1> minimum_velocity_filter(
-                m_opt["minimum-velocity-filter"].as<boost::multi_array<float, 1> >()
+        if (!m_opt["fastest-particle-fraction"].empty()) {
+            boost::multi_array<float, 1> fastest_particle_fraction(
+                m_opt["fastest-particle-fraction"].as<boost::multi_array<float, 1> >()
             );
             std::for_each(
-                minimum_velocity_filter.begin()
-              , minimum_velocity_filter.end()
-              , boost::bind(&correlation<dimension>::add_minimum_velocity_filter, &m_corr, _1)
+                fastest_particle_fraction.begin()
+              , fastest_particle_fraction.end()
+              , boost::bind(&correlation<dimension>::add_fastest_particle_vacf_filter, &m_corr, _1)
             );
         }
-        if (!m_opt["maximum-velocity-filter"].empty()) {
-            boost::multi_array<float, 1> maximum_velocity_filter(
-                m_opt["maximum-velocity-filter"].as<boost::multi_array<float, 1> >()
+        if (!m_opt["slowest-particle-fraction"].empty())
+        {
+            boost::multi_array<float, 1> slowest_particle_fraction(
+                m_opt["slowest-particle-fraction"].as<boost::multi_array<float, 1> >()
             );
             std::for_each(
-                maximum_velocity_filter.begin()
-              , maximum_velocity_filter.end()
-              , boost::bind(&correlation<dimension>::add_maximum_velocity_filter, &m_corr, _1)
+                slowest_particle_fraction.begin()
+              , slowest_particle_fraction.end()
+              , boost::bind(&correlation<dimension>::add_slowest_particle_vacf_filter, &m_corr, _1)
             );
         }
     }

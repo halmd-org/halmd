@@ -95,10 +95,10 @@ public:
 #endif
     /** add correlation functions for host */
     void add_host_correlation_functions(size_t types);
-    /** add lower boundary for absolute velocity of fastest particles */
-    void add_minimum_velocity_filter(float velocity);
-    /** add upper boundary for absolute velocity of slowest particles */
-    void add_maximum_velocity_filter(float velocity);
+    /** add fraction of fastest particles */
+    void add_fastest_particle_vacf_filter(float fraction);
+    /** add fraction of slowest particles */
+    void add_slowest_particle_vacf_filter(float fraction);
 
     /** returns total number of simulation steps */
     uint64_t steps() const { return m_steps; }

@@ -28,10 +28,12 @@
 #include <vector>
 
 #include <cuda_wrapper.hpp>
+#include <halmd/algorithm/radix_sort.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/sample.hpp>
 #include <halmd/mdsim/traits.hpp>
+#include <halmd/sample/gpu/vacf_filter.hpp>
 #include <halmd/sample/gpu/tcf.hpp>
 #include <halmd/sample/tcf_base.hpp>
 
@@ -308,7 +310,71 @@ struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 };
 
 /**
- * velocity autocorrelation of fastest particles given lower boundary
+ * velocity autocorrelation per particle, sorted by squared displacements
+ */
+template <>
+struct sorted_velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    boost::multi_array<cuda::vector<float>, 2> result;
+
+    enum { BLOCKS = gpu::vacf_filter<>::BLOCKS };
+    enum { THREADS = gpu::vacf_filter<>::THREADS };
+
+    /** maximum squared displacement per block */
+    cuda::vector<float> g_msd;
+    /** sort indices */
+    cuda::vector<unsigned int> g_index;
+    /** GPU radix sort */
+    radix_sort<float> radix;
+
+    sorted_velocity_autocorrelation() : g_msd(BLOCKS) {}
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+        typedef typename input_iterator::first_type sample_iterator;
+        typedef typename sample_iterator::value_type::value_type sample_type;
+        typedef typename output_iterator::value_type accumulator_type;
+        enum { dimension = sample_type::vector_type::static_size };
+
+        sample_iterator sample;
+
+        for (sample = first.first, /* ignore zero MSD */ ++sample, ++result; sample != last.first; ++sample, ++result) {
+            (*result).resize((*sample)[type].v->size());
+            cuda::configure(BLOCKS, THREADS);
+            gpu::vacf_filter<dimension>::accumulate(
+                *(*sample)[type].r
+              , *(*first.first)[type].r
+              , *(*sample)[type].v
+              , *(*first.first)[type].v
+              , (*sample)[type].v->size()
+              , *result
+              , g_msd
+            );
+
+            g_index.resize((*sample)[type].v->size());
+            cuda::configure(BLOCKS, THREADS);
+            gpu::vacf_filter<dimension>::assign_index_from_msd(
+                *(*sample)[type].r
+              , *(*first.first)[type].r
+              , (*sample)[type].v->size()
+              , g_msd
+              , g_index
+            );
+
+            radix.resize((*sample)[type].v->size(), THREADS);
+            radix(g_index, *result);
+        }
+        cuda::thread::synchronize();
+    }
+};
+
+/**
+ * velocity autocorrelation of given fraction(s) of fastest particles
  */
 template <>
 struct velocity_autocorrelation_fastest<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
@@ -316,7 +382,7 @@ struct velocity_autocorrelation_fastest<tcf_gpu_sample> : correlation_function<t
     /** block sample results */
     tcf_binary_result_type result;
 
-    std::vector<float> v_sq_min; //< set by tcf_add_minimum_velocity_filter
+    std::vector<float> min_fraction; //< set by tcf_add_fastest_particle_vacf_filter
 
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
@@ -334,44 +400,41 @@ struct velocity_autocorrelation_fastest<tcf_gpu_sample> : correlation_function<t
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator const& result)
     {
-        typedef typename input_iterator::first_type sample_iterator;
-        typedef typename sample_iterator::value_type::value_type sample_type;
-        typedef typename sample_type::_gpu _gpu;
         typedef typename output_iterator::value_type result_vector;
         typedef typename output_iterator::value_type::value_type accumulator_type;
-        enum { BLOCKS = _gpu::BLOCKS };
-        enum { THREADS = _gpu::THREADS };
+        enum { BLOCKS = gpu::tcf_base::BLOCKS };
+        enum { THREADS = gpu::tcf_base::THREADS };
 
-        sample_iterator sample;
+        input_iterator sample;
         output_iterator result0;
         std::vector<float>::const_iterator vv;
         unsigned int *count, *count0;
         dsfloat *mean, *var;
 
         // allocate device and host memory for accumulators, if necessary
-        g_count.resize((last.first - first.first) * BLOCKS);
+        g_count.resize((last - first) * BLOCKS);
         h_count.resize(g_count.size());
-        g_mean.resize((last.first - first.first) * BLOCKS);
+        g_mean.resize((last - first) * BLOCKS);
         h_mean.resize(g_mean.size());
-        g_var.resize((last.first - first.first) * BLOCKS);
+        g_var.resize((last - first) * BLOCKS);
         h_var.resize(g_var.size());
 
-        for (vv = v_sq_min.begin(); vv != v_sq_min.end(); ++vv) {
+        for (vv = min_fraction.begin(); vv != min_fraction.end(); ++vv) {
             // copy constants to GPU
-            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_fastest::min_sq_v);
+            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_fastest::min_fraction);
             // compute velocity autocorrelations on GPU
-            for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+            for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
                 cuda::configure(BLOCKS, THREADS);
-                _gpu::velocity_autocorrelation_fastest(*(*sample)[type].v, *(*first.first)[type].v, count, mean, var, (*sample)[type].v->size());
+                gpu::tcf_base::velocity_autocorrelation_fastest::accumulate(*sample, count, mean, var, (*sample).size());
             }
             // copy accumulator block results from GPU to host
             cuda::copy(g_count, h_count);
             cuda::copy(g_mean, h_mean);
             cuda::copy(g_var, h_var);
             // accumulate velocity autocorrelations on host
-            for (sample = first.first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last.first; ++sample, ++result0, count0 += BLOCKS) {
+            for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
                 for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
-                    *(result0->begin() + (vv - v_sq_min.begin())) += accumulator_type(*count, *mean, *var);
+                    *(result0->begin() + (vv - min_fraction.begin())) += accumulator_type(*count, *mean, *var);
                 }
             }
         }
@@ -379,7 +442,7 @@ struct velocity_autocorrelation_fastest<tcf_gpu_sample> : correlation_function<t
 };
 
 /**
- * velocity autocorrelation of slowest particles given upper boundary
+ * velocity autocorrelation of given fraction(s) of slowest particles
  */
 template <>
 struct velocity_autocorrelation_slowest<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
@@ -387,7 +450,7 @@ struct velocity_autocorrelation_slowest<tcf_gpu_sample> : correlation_function<t
     /** block sample results */
     tcf_binary_result_type result;
 
-    std::vector<float> v_sq_max; //< set by tcf_add_maximum_velocity_filter
+    std::vector<float> max_fraction; //< set by tcf_add_slowest_particle_vacf_filter
 
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
@@ -405,44 +468,41 @@ struct velocity_autocorrelation_slowest<tcf_gpu_sample> : correlation_function<t
     template <typename input_iterator, typename output_iterator>
     void operator()(input_iterator const& first, input_iterator const& last, output_iterator const& result)
     {
-        typedef typename input_iterator::first_type sample_iterator;
-        typedef typename sample_iterator::value_type::value_type sample_type;
-        typedef typename sample_type::_gpu _gpu;
         typedef typename output_iterator::value_type result_vector;
         typedef typename output_iterator::value_type::value_type accumulator_type;
-        enum { BLOCKS = _gpu::BLOCKS };
-        enum { THREADS = _gpu::THREADS };
+        enum { BLOCKS = gpu::tcf_base::BLOCKS };
+        enum { THREADS = gpu::tcf_base::THREADS };
 
-        sample_iterator sample;
+        input_iterator sample;
         output_iterator result0;
         std::vector<float>::const_iterator vv;
         unsigned int *count, *count0;
         dsfloat *mean, *var;
 
         // allocate device and host memory for accumulators, if necessary
-        g_count.resize((last.first - first.first) * BLOCKS);
+        g_count.resize((last - first) * BLOCKS);
         h_count.resize(g_count.size());
-        g_mean.resize((last.first - first.first) * BLOCKS);
+        g_mean.resize((last - first) * BLOCKS);
         h_mean.resize(g_mean.size());
-        g_var.resize((last.first - first.first) * BLOCKS);
+        g_var.resize((last - first) * BLOCKS);
         h_var.resize(g_var.size());
 
-        for (vv = v_sq_max.begin(); vv != v_sq_max.end(); ++vv) {
+        for (vv = max_fraction.begin(); vv != max_fraction.end(); ++vv) {
             // copy constants to GPU
-            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_slowest::max_sq_v);
+            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_slowest::max_fraction);
             // compute velocity autocorrelations on GPU
-            for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+            for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
                 cuda::configure(BLOCKS, THREADS);
-                _gpu::velocity_autocorrelation_slowest(*(*sample)[type].v, *(*first.first)[type].v, count, mean, var, (*sample)[type].v->size());
+                gpu::tcf_base::velocity_autocorrelation_slowest::accumulate(*sample, count, mean, var, (*sample).size());
             }
             // copy accumulator block results from GPU to host
             cuda::copy(g_count, h_count);
             cuda::copy(g_mean, h_mean);
             cuda::copy(g_var, h_var);
             // accumulate velocity autocorrelations on host
-            for (sample = first.first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last.first; ++sample, ++result0, count0 += BLOCKS) {
+            for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
                 for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
-                    *(result0->begin() + (vv - v_sq_max.begin())) += accumulator_type(*count, *mean, *var);
+                    *(result0->begin() + (vv - max_fraction.begin())) += accumulator_type(*count, *mean, *var);
                 }
             }
         }
@@ -527,8 +587,9 @@ typedef boost::mpl::push_back<_tcf_gpu_types_3, self_intermediate_scattering_fun
 typedef boost::mpl::push_back<_tcf_gpu_types_4, squared_self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_5;
 typedef boost::mpl::push_back<_tcf_gpu_types_5, virial_stress<tcf_gpu_sample> >::type _tcf_gpu_types_6;
 typedef boost::mpl::push_back<_tcf_gpu_types_6, helfand_moment<tcf_gpu_sample> >::type _tcf_gpu_types_7;
-typedef boost::mpl::push_back<_tcf_gpu_types_7, velocity_autocorrelation_fastest<tcf_gpu_sample> >::type _tcf_gpu_types_8;
-typedef boost::mpl::push_back<_tcf_gpu_types_8, velocity_autocorrelation_slowest<tcf_gpu_sample> >::type tcf_gpu_types;
+typedef boost::mpl::push_back<_tcf_gpu_types_7, sorted_velocity_autocorrelation<tcf_gpu_sample> >::type _tcf_gpu_types_8;
+typedef boost::mpl::push_back<_tcf_gpu_types_8, velocity_autocorrelation_fastest<tcf_gpu_sample> >::type _tcf_gpu_types_9;
+typedef boost::mpl::push_back<_tcf_gpu_types_9, velocity_autocorrelation_slowest<tcf_gpu_sample> >::type tcf_gpu_types;
 
 } // namespace halmd
 

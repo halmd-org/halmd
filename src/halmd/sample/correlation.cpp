@@ -242,24 +242,24 @@ void correlation<dimension>::add_host_correlation_functions(size_t types)
 }
 
 /**
- * add lower boundary for absolute velocity of fastest particles
+ * add fraction of fastest particles
  */
 template <int dimension>
-void correlation<dimension>::add_minimum_velocity_filter(float velocity)
+void correlation<dimension>::add_fastest_particle_vacf_filter(float fraction)
 {
     foreach (tcf_variant& tcf, m_tcf) {
-        boost::apply_visitor(tcf_add_minimum_velocity_filter(velocity), tcf);
+        boost::apply_visitor(tcf_add_fastest_particle_vacf_filter(fraction), tcf);
     }
 }
 
 /**
- * add upper boundary for absolute velocity of slowest particles
+ * add fraction of slowest particles
  */
 template <int dimension>
-void correlation<dimension>::add_maximum_velocity_filter(float velocity)
+void correlation<dimension>::add_slowest_particle_vacf_filter(float fraction)
 {
     foreach (tcf_variant& tcf, m_tcf) {
-        boost::apply_visitor(tcf_add_maximum_velocity_filter(velocity), tcf);
+        boost::apply_visitor(tcf_add_slowest_particle_vacf_filter(fraction), tcf);
     }
 }
 
@@ -406,7 +406,7 @@ template <int dimension>
 void correlation<dimension>::autocorrelate_block(unsigned int n)
 {
     foreach (tcf_variant& tcf, m_tcf) {
-        boost::apply_visitor(tcf_correlate_block(n, m_q_vector), tcf, m_block[n]);
+        boost::apply_visitor(tcf_correlate_block(n, m_q_vector, m_tcf), tcf, m_block[n]);
     }
 }
 

@@ -40,6 +40,7 @@ enum {
 extern cuda::function<void (uint const*, uint*, uint, uint)> histogram_keys;
 extern cuda::function<void (uint const*, uint*, int const*, int*, uint const*, uint, uint),
                       void (uint const*, uint*, uint const*, uint*, uint const*, uint, uint),
+                      void (uint const*, uint*, float const*, float*, uint const*, uint, uint),
                       void (uint const*, uint*, float2 const*, float2*, uint const*, uint, uint),
                       void (uint const*, uint*, float4 const*, float4*, uint const*, uint, uint)> permute;
 

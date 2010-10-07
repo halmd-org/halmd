@@ -12,7 +12,7 @@ endif(HALMD_USE_STATIC_LIBS)
 
 set(CMAKE_MODULE_PATH ${HALMD_SOURCE_DIR}/CMakeModules)
 
-find_package(Boost 1.42.0 QUIET REQUIRED COMPONENTS
+find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
   log
