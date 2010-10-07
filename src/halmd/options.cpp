@@ -318,14 +318,14 @@ void options::parse(po::options_description const& opt)
             std::copy(unparsed.begin(), unparsed.end(), std::back_inserter(parsed.options));
             po::store(parsed, vm);
         }
+
+        po::notify(vm);
     }
     catch (exception const& e) {
         cerr << PROGRAM_NAME ": " << e.what() << "\n";
         cerr << "Try `" PROGRAM_NAME " --help' for more information.\n";
         throw options::exit_exception(EXIT_FAILURE);
     }
-
-    po::notify(vm);
 
     if (vm.count("help")) {
         cout << opt << "\n";
