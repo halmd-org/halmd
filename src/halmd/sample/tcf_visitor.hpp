@@ -336,7 +336,9 @@ public:
     typename boost::enable_if<boost::is_base_of<correlation_function<sample_type>, T>, void>::type
     operator()(T& tcf, boost::circular_buffer<std::vector<sample_type<dimension> > >& sample) const
     {
-        tcf(std::make_pair(sample.begin(), q_vector.begin()), std::make_pair(sample.end(), q_vector.end()), tcf.result[block].begin());
+        if (tcf.result.num_elements()) {
+            tcf(std::make_pair(sample.begin(), q_vector.begin()), std::make_pair(sample.end(), q_vector.end()), tcf.result[block].begin());
+        }
     }
 
 private:
@@ -374,21 +376,23 @@ public:
     template <typename T>
     void operator()(T& tcf) const
     {
-        H5::Group root(file.openGroup("/"));
-        if (types > 1) {
-            std::string name;
-            // AA, BB, ... correlation function
-            name.push_back('A' + tcf.type);
-            name.push_back('A' + tcf.type);
-            try {
-                H5XX_NO_AUTO_PRINT(H5::GroupIException);
-                root = root.createGroup(name);
+        if (tcf.result.num_elements()) {
+            H5::Group root(file.openGroup("/"));
+            if (types > 1) {
+                std::string name;
+                // AA, BB, ... correlation function
+                name.push_back('A' + tcf.type);
+                name.push_back('A' + tcf.type);
+                try {
+                    H5XX_NO_AUTO_PRINT(H5::GroupIException);
+                    root = root.createGroup(name);
+                }
+                catch (H5::GroupIException const&) {
+                    root = root.openGroup(name);
+                }
             }
-            catch (H5::GroupIException const&) {
-                root = root.openGroup(name);
-            }
+            tcf.dataset = create_dataset(root, tcf.name(), tcf.result);
         }
-        tcf.dataset = create_dataset(root, tcf.name(), tcf.result);
     }
 
     static H5::DataSet create_dataset(H5::Group const& node, char const* name, tcf_unary_result_type const& result)
@@ -481,19 +485,25 @@ public:
     template <typename T>
     void operator()(T& tcf) const
     {
-        write(tcf.dataset, tcf.result, q_value);
+        if (tcf.result.num_elements()) {
+            write(tcf.dataset, tcf.result, q_value);
+        }
     }
 
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
     {
-        write(tcf.dataset, tcf.result, tcf.v_sq_min);
+        if (tcf.result.num_elements()) {
+            write(tcf.dataset, tcf.result, tcf.v_sq_min);
+        }
     }
 
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
     {
-        write(tcf.dataset, tcf.result, tcf.v_sq_max);
+        if (tcf.result.num_elements()) {
+            write(tcf.dataset, tcf.result, tcf.v_sq_max);
+        }
     }
 
     template <typename vector_type>
