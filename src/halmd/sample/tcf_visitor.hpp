@@ -280,7 +280,7 @@ public:
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_mobile<sample_type>& tcf) const
     {
-        tcf.min_fraction.push_back(fraction);
+        tcf.mobile_fraction.push_back(fraction);
     }
 
     template <typename T>
@@ -301,7 +301,7 @@ public:
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_immobile<sample_type>& tcf) const
     {
-        tcf.max_fraction.push_back(fraction);
+        tcf.immobile_fraction.push_back(fraction);
     }
 
     template <typename T>
@@ -545,13 +545,13 @@ public:
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_mobile<sample_type>& tcf) const
     {
-        resize(tcf.result, tcf.min_fraction.size());
+        resize(tcf.result, tcf.mobile_fraction.size());
     }
 
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_immobile<sample_type>& tcf) const
     {
-        resize(tcf.result, tcf.max_fraction.size());
+        resize(tcf.result, tcf.immobile_fraction.size());
     }
 
     void resize(tcf_unary_result_type& result, unsigned int) const
@@ -601,7 +601,7 @@ public:
     void operator()(velocity_autocorrelation_mobile<sample_type>& tcf) const
     {
         if (tcf.result.num_elements()) {
-            write(tcf.dataset, tcf.result, tcf.min_fraction);
+            write(tcf.dataset, tcf.result, tcf.mobile_fraction);
         }
     }
 
@@ -609,7 +609,7 @@ public:
     void operator()(velocity_autocorrelation_immobile<sample_type>& tcf) const
     {
         if (tcf.result.num_elements()) {
-            write(tcf.dataset, tcf.result, tcf.max_fraction);
+            write(tcf.dataset, tcf.result, tcf.immobile_fraction);
         }
     }
 

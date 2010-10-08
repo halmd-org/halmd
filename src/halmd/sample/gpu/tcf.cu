@@ -131,7 +131,7 @@ __global__ void accumulate(float const* g_in, uint* g_n, dsfloat* g_m, dsfloat* 
     }
 }
 
-static __constant__ float min_fraction;
+static __constant__ float mobile_fraction;
 
 /**
  * check if particle belongs to given faction of most mobile particles
@@ -141,11 +141,11 @@ struct velocity_autocorrelation_mobile
     __device__ bool check(unsigned int i, unsigned int npart) const
     {
         // FIXME unit test to check accumulator counts against percentage
-        return i >= float2uint((__saturatef(min_fraction) * npart), cudaRoundNearest);
+        return i >= float2uint((__saturatef(1. - mobile_fraction) * npart), cudaRoundNearest);
     }
 };
 
-static __constant__ float max_fraction;
+static __constant__ float immobile_fraction;
 
 /**
  * check if particle belongs to given faction of most immobile particles
@@ -155,7 +155,7 @@ struct velocity_autocorrelation_immobile
     __device__ bool check(unsigned int i, unsigned int npart) const
     {
         // FIXME unit test to check accumulator counts against percentage
-        return i < float2uint((__saturatef(max_fraction) * npart), cudaRoundNearest);
+        return i < float2uint((__saturatef(immobile_fraction) * npart), cudaRoundNearest);
     }
 };
 
@@ -275,9 +275,9 @@ cuda::function<void (float2 const*, float2 const, dsfloat*, dsfloat*, uint)>
     tcf<2>::coherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::coherent_scattering_function>);
 
 cuda::symbol<float>
-    tcf_base::velocity_autocorrelation_mobile::min_fraction(cu::tcf::min_fraction);
+    tcf_base::velocity_autocorrelation_mobile::mobile_fraction(cu::tcf::mobile_fraction);
 cuda::symbol<float>
-    tcf_base::velocity_autocorrelation_immobile::max_fraction(cu::tcf::max_fraction);
+    tcf_base::velocity_autocorrelation_immobile::immobile_fraction(cu::tcf::immobile_fraction);
 cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf_base::velocity_autocorrelation_mobile::accumulate(cu::tcf::accumulate<cu::tcf::velocity_autocorrelation_mobile>);
 cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>

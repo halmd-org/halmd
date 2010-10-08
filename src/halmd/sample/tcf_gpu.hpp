@@ -383,7 +383,7 @@ struct velocity_autocorrelation_mobile<tcf_gpu_sample> : correlation_function<tc
     /** block sample results */
     tcf_binary_result_type result;
 
-    std::vector<float> min_fraction; //< set by tcf_add_mobile_particle_vacf_filter
+    std::vector<float> mobile_fraction; //< set by tcf_add_mobile_particle_vacf_filter
 
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
@@ -420,9 +420,9 @@ struct velocity_autocorrelation_mobile<tcf_gpu_sample> : correlation_function<tc
         g_var.resize((last - first) * BLOCKS);
         h_var.resize(g_var.size());
 
-        for (vv = min_fraction.begin(); vv != min_fraction.end(); ++vv) {
+        for (vv = mobile_fraction.begin(); vv != mobile_fraction.end(); ++vv) {
             // copy constants to GPU
-            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_mobile::min_fraction);
+            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_mobile::mobile_fraction);
             // compute velocity autocorrelations on GPU
             for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
                 cuda::configure(BLOCKS, THREADS);
@@ -435,7 +435,7 @@ struct velocity_autocorrelation_mobile<tcf_gpu_sample> : correlation_function<tc
             // accumulate velocity autocorrelations on host
             for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
                 for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
-                    *(result0->begin() + (vv - min_fraction.begin())) += accumulator_type(*count, *mean, *var);
+                    *(result0->begin() + (vv - mobile_fraction.begin())) += accumulator_type(*count, *mean, *var);
                 }
             }
         }
@@ -451,7 +451,7 @@ struct velocity_autocorrelation_immobile<tcf_gpu_sample> : correlation_function<
     /** block sample results */
     tcf_binary_result_type result;
 
-    std::vector<float> max_fraction; //< set by tcf_add_immobile_particle_vacf_filter
+    std::vector<float> immobile_fraction; //< set by tcf_add_immobile_particle_vacf_filter
 
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
@@ -488,9 +488,9 @@ struct velocity_autocorrelation_immobile<tcf_gpu_sample> : correlation_function<
         g_var.resize((last - first) * BLOCKS);
         h_var.resize(g_var.size());
 
-        for (vv = max_fraction.begin(); vv != max_fraction.end(); ++vv) {
+        for (vv = immobile_fraction.begin(); vv != immobile_fraction.end(); ++vv) {
             // copy constants to GPU
-            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_immobile::max_fraction);
+            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_immobile::immobile_fraction);
             // compute velocity autocorrelations on GPU
             for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
                 cuda::configure(BLOCKS, THREADS);
@@ -503,7 +503,7 @@ struct velocity_autocorrelation_immobile<tcf_gpu_sample> : correlation_function<
             // accumulate velocity autocorrelations on host
             for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
                 for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
-                    *(result0->begin() + (vv - max_fraction.begin())) += accumulator_type(*count, *mean, *var);
+                    *(result0->begin() + (vv - immobile_fraction.begin())) += accumulator_type(*count, *mean, *var);
                 }
             }
         }

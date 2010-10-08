@@ -36,13 +36,13 @@ struct tcf_base
 
     struct velocity_autocorrelation_mobile {
         static cuda::symbol<float>
-            min_fraction;
+            mobile_fraction;
         static cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
             accumulate;
     };
     struct velocity_autocorrelation_immobile {
         static cuda::symbol<float>
-            max_fraction;
+            immobile_fraction;
         static cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
             accumulate;
     };
