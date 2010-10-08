@@ -489,10 +489,10 @@ options::description<mdsim_impl>::description() : po::options_description("MD si
          "minimum number of trajectory samples")
         ("q-values", po::value<boost::multi_array<float, 1> >(),
          "wave vector values for correlation functions")
-        ("fastest-particle-fraction", po::value<boost::multi_array<float, 1> >(),
-         "fraction(s) of fastest particles")
-        ("slowest-particle-fraction", po::value<boost::multi_array<float, 1> >(),
-         "fraction(s) of slowest particles")
+        ("mobile-particle-fraction", po::value<boost::multi_array<float, 1> >(),
+         "fraction(s) of most mobile particles")
+        ("immobile-particle-fraction", po::value<boost::multi_array<float, 1> >(),
+         "fraction(s) of most immobile particles")
         ("q-error", po::value<float>()->default_value(0.001),
          "relative deviation of averaging wave vectors")
         ;

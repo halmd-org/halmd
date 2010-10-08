@@ -134,9 +134,9 @@ __global__ void accumulate(float const* g_in, uint* g_n, dsfloat* g_m, dsfloat* 
 static __constant__ float min_fraction;
 
 /**
- * check if particle belongs to given faction of fastest particles
+ * check if particle belongs to given faction of most mobile particles
  */
-struct velocity_autocorrelation_fastest
+struct velocity_autocorrelation_mobile
 {
     __device__ bool check(unsigned int i, unsigned int npart) const
     {
@@ -148,9 +148,9 @@ struct velocity_autocorrelation_fastest
 static __constant__ float max_fraction;
 
 /**
- * check if particle belongs to given faction of slowest particles
+ * check if particle belongs to given faction of most immobile particles
  */
-struct velocity_autocorrelation_slowest
+struct velocity_autocorrelation_immobile
 {
     __device__ bool check(unsigned int i, unsigned int npart) const
     {
@@ -275,12 +275,12 @@ cuda::function<void (float2 const*, float2 const, dsfloat*, dsfloat*, uint)>
     tcf<2>::coherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::coherent_scattering_function>);
 
 cuda::symbol<float>
-    tcf_base::velocity_autocorrelation_fastest::min_fraction(cu::tcf::min_fraction);
+    tcf_base::velocity_autocorrelation_mobile::min_fraction(cu::tcf::min_fraction);
 cuda::symbol<float>
-    tcf_base::velocity_autocorrelation_slowest::max_fraction(cu::tcf::max_fraction);
+    tcf_base::velocity_autocorrelation_immobile::max_fraction(cu::tcf::max_fraction);
 cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
-    tcf_base::velocity_autocorrelation_fastest::accumulate(cu::tcf::accumulate<cu::tcf::velocity_autocorrelation_fastest>);
+    tcf_base::velocity_autocorrelation_mobile::accumulate(cu::tcf::accumulate<cu::tcf::velocity_autocorrelation_mobile>);
 cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
-    tcf_base::velocity_autocorrelation_slowest::accumulate(cu::tcf::accumulate<cu::tcf::velocity_autocorrelation_slowest>);
+    tcf_base::velocity_autocorrelation_immobile::accumulate(cu::tcf::accumulate<cu::tcf::velocity_autocorrelation_immobile>);
 
 }} // namespace halmd::gpu

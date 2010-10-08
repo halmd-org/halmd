@@ -272,13 +272,13 @@ private:
     size_t type;
 };
 
-class tcf_add_fastest_particle_vacf_filter : public boost::static_visitor<>
+class tcf_add_mobile_particle_vacf_filter : public boost::static_visitor<>
 {
 public:
-    tcf_add_fastest_particle_vacf_filter(float fraction) : fraction(fraction) {}
+    tcf_add_mobile_particle_vacf_filter(float fraction) : fraction(fraction) {}
 
     template <template <int> class sample_type>
-    void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
+    void operator()(velocity_autocorrelation_mobile<sample_type>& tcf) const
     {
         tcf.min_fraction.push_back(fraction);
     }
@@ -293,13 +293,13 @@ private:
     float fraction;
 };
 
-class tcf_add_slowest_particle_vacf_filter : public boost::static_visitor<>
+class tcf_add_immobile_particle_vacf_filter : public boost::static_visitor<>
 {
 public:
-    tcf_add_slowest_particle_vacf_filter(float fraction) : fraction(fraction) {}
+    tcf_add_immobile_particle_vacf_filter(float fraction) : fraction(fraction) {}
 
     template <template <int> class sample_type>
-    void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
+    void operator()(velocity_autocorrelation_immobile<sample_type>& tcf) const
     {
         tcf.max_fraction.push_back(fraction);
     }
@@ -378,10 +378,10 @@ public:
     typename boost::enable_if<
         boost::is_base_of<
             correlation_function<sample_type>
-          , velocity_autocorrelation_fastest<sample_type>
+          , velocity_autocorrelation_mobile<sample_type>
         >, void>::type
     operator()(
-        velocity_autocorrelation_fastest<sample_type>& tcf
+        velocity_autocorrelation_mobile<sample_type>& tcf
       , boost::circular_buffer<std::vector<sample_type<dimension> > >& sample
     ) const
     {
@@ -405,10 +405,10 @@ public:
     typename boost::enable_if<
         boost::is_base_of<
             correlation_function<sample_type>
-          , velocity_autocorrelation_slowest<sample_type>
+          , velocity_autocorrelation_immobile<sample_type>
         >, void>::type
     operator()(
-        velocity_autocorrelation_slowest<sample_type>& tcf
+        velocity_autocorrelation_immobile<sample_type>& tcf
       , boost::circular_buffer<std::vector<sample_type<dimension> > >& sample
     ) const
     {
@@ -543,13 +543,13 @@ public:
     }
 
     template <template <int> class sample_type>
-    void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
+    void operator()(velocity_autocorrelation_mobile<sample_type>& tcf) const
     {
         resize(tcf.result, tcf.min_fraction.size());
     }
 
     template <template <int> class sample_type>
-    void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
+    void operator()(velocity_autocorrelation_immobile<sample_type>& tcf) const
     {
         resize(tcf.result, tcf.max_fraction.size());
     }
@@ -598,7 +598,7 @@ public:
     }
 
     template <template <int> class sample_type>
-    void operator()(velocity_autocorrelation_fastest<sample_type>& tcf) const
+    void operator()(velocity_autocorrelation_mobile<sample_type>& tcf) const
     {
         if (tcf.result.num_elements()) {
             write(tcf.dataset, tcf.result, tcf.min_fraction);
@@ -606,7 +606,7 @@ public:
     }
 
     template <template <int> class sample_type>
-    void operator()(velocity_autocorrelation_slowest<sample_type>& tcf) const
+    void operator()(velocity_autocorrelation_immobile<sample_type>& tcf) const
     {
         if (tcf.result.num_elements()) {
             write(tcf.dataset, tcf.result, tcf.max_fraction);

@@ -242,24 +242,24 @@ void correlation<dimension>::add_host_correlation_functions(size_t types)
 }
 
 /**
- * add fraction of fastest particles
+ * add fraction of most mobile particles
  */
 template <int dimension>
-void correlation<dimension>::add_fastest_particle_vacf_filter(float fraction)
+void correlation<dimension>::add_mobile_particle_vacf_filter(float fraction)
 {
     foreach (tcf_variant& tcf, m_tcf) {
-        boost::apply_visitor(tcf_add_fastest_particle_vacf_filter(fraction), tcf);
+        boost::apply_visitor(tcf_add_mobile_particle_vacf_filter(fraction), tcf);
     }
 }
 
 /**
- * add fraction of slowest particles
+ * add fraction of most immobile particles
  */
 template <int dimension>
-void correlation<dimension>::add_slowest_particle_vacf_filter(float fraction)
+void correlation<dimension>::add_immobile_particle_vacf_filter(float fraction)
 {
     foreach (tcf_variant& tcf, m_tcf) {
-        boost::apply_visitor(tcf_add_slowest_particle_vacf_filter(fraction), tcf);
+        boost::apply_visitor(tcf_add_immobile_particle_vacf_filter(fraction), tcf);
     }
 }
 

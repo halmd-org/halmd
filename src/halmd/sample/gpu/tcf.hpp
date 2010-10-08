@@ -34,13 +34,13 @@ struct tcf_base
         THREADS = 256,
     };
 
-    struct velocity_autocorrelation_fastest {
+    struct velocity_autocorrelation_mobile {
         static cuda::symbol<float>
             min_fraction;
         static cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
             accumulate;
     };
-    struct velocity_autocorrelation_slowest {
+    struct velocity_autocorrelation_immobile {
         static cuda::symbol<float>
             max_fraction;
         static cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>

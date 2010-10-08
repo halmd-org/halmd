@@ -101,16 +101,16 @@ template <template <int> class sample_type>
 struct sorted_velocity_autocorrelation;
 
 /**
- * velocity autocorrelation for fastest particles given lower boundary
+ * velocity autocorrelation for most mobile particles given lower boundary
  */
 template <template <int> class sample_type>
-struct velocity_autocorrelation_fastest;
+struct velocity_autocorrelation_mobile;
 
 /**
- * velocity autocorrelation for slowest particles given upper boundary
+ * velocity autocorrelation for most immobile particles given upper boundary
  */
 template <template <int> class sample_type>
-struct velocity_autocorrelation_slowest;
+struct velocity_autocorrelation_immobile;
 
 /**
  * intermediate scattering function

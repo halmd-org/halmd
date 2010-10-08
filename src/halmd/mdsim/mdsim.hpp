@@ -364,25 +364,25 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
             throw std::logic_error("unknown correlation function backend: " + backend);
         }
 
-        if (!m_opt["fastest-particle-fraction"].empty()) {
-            boost::multi_array<float, 1> fastest_particle_fraction(
-                m_opt["fastest-particle-fraction"].as<boost::multi_array<float, 1> >()
+        if (!m_opt["mobile-particle-fraction"].empty()) {
+            boost::multi_array<float, 1> mobile_particle_fraction(
+                m_opt["mobile-particle-fraction"].as<boost::multi_array<float, 1> >()
             );
             std::for_each(
-                fastest_particle_fraction.begin()
-              , fastest_particle_fraction.end()
-              , boost::bind(&correlation<dimension>::add_fastest_particle_vacf_filter, &m_corr, _1)
+                mobile_particle_fraction.begin()
+              , mobile_particle_fraction.end()
+              , boost::bind(&correlation<dimension>::add_mobile_particle_vacf_filter, &m_corr, _1)
             );
         }
-        if (!m_opt["slowest-particle-fraction"].empty())
+        if (!m_opt["immobile-particle-fraction"].empty())
         {
-            boost::multi_array<float, 1> slowest_particle_fraction(
-                m_opt["slowest-particle-fraction"].as<boost::multi_array<float, 1> >()
+            boost::multi_array<float, 1> immobile_particle_fraction(
+                m_opt["immobile-particle-fraction"].as<boost::multi_array<float, 1> >()
             );
             std::for_each(
-                slowest_particle_fraction.begin()
-              , slowest_particle_fraction.end()
-              , boost::bind(&correlation<dimension>::add_slowest_particle_vacf_filter, &m_corr, _1)
+                immobile_particle_fraction.begin()
+              , immobile_particle_fraction.end()
+              , boost::bind(&correlation<dimension>::add_immobile_particle_vacf_filter, &m_corr, _1)
             );
         }
     }

@@ -375,15 +375,15 @@ struct sorted_velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tc
 };
 
 /**
- * velocity autocorrelation of given fraction(s) of fastest particles
+ * velocity autocorrelation of given fraction(s) of most mobile particles
  */
 template <>
-struct velocity_autocorrelation_fastest<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+struct velocity_autocorrelation_mobile<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
     /** block sample results */
     tcf_binary_result_type result;
 
-    std::vector<float> min_fraction; //< set by tcf_add_fastest_particle_vacf_filter
+    std::vector<float> min_fraction; //< set by tcf_add_mobile_particle_vacf_filter
 
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
@@ -393,7 +393,7 @@ struct velocity_autocorrelation_fastest<tcf_gpu_sample> : correlation_function<t
     cuda::vector<dsfloat> g_var;
     cuda::host::vector<dsfloat> h_var;
 
-    char const* name() const { return "VAC_FASTEST"; }
+    char const* name() const { return "VAC_MOBILE"; }
 
     /**
      * autocorrelate samples in block
@@ -422,11 +422,11 @@ struct velocity_autocorrelation_fastest<tcf_gpu_sample> : correlation_function<t
 
         for (vv = min_fraction.begin(); vv != min_fraction.end(); ++vv) {
             // copy constants to GPU
-            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_fastest::min_fraction);
+            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_mobile::min_fraction);
             // compute velocity autocorrelations on GPU
             for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
                 cuda::configure(BLOCKS, THREADS);
-                gpu::tcf_base::velocity_autocorrelation_fastest::accumulate(*sample, count, mean, var, (*sample).size());
+                gpu::tcf_base::velocity_autocorrelation_mobile::accumulate(*sample, count, mean, var, (*sample).size());
             }
             // copy accumulator block results from GPU to host
             cuda::copy(g_count, h_count);
@@ -443,15 +443,15 @@ struct velocity_autocorrelation_fastest<tcf_gpu_sample> : correlation_function<t
 };
 
 /**
- * velocity autocorrelation of given fraction(s) of slowest particles
+ * velocity autocorrelation of given fraction(s) of most immobile particles
  */
 template <>
-struct velocity_autocorrelation_slowest<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+struct velocity_autocorrelation_immobile<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
 {
     /** block sample results */
     tcf_binary_result_type result;
 
-    std::vector<float> max_fraction; //< set by tcf_add_slowest_particle_vacf_filter
+    std::vector<float> max_fraction; //< set by tcf_add_immobile_particle_vacf_filter
 
     /** device and host memory for accumulators */
     cuda::vector<unsigned int> g_count;
@@ -461,7 +461,7 @@ struct velocity_autocorrelation_slowest<tcf_gpu_sample> : correlation_function<t
     cuda::vector<dsfloat> g_var;
     cuda::host::vector<dsfloat> h_var;
 
-    char const* name() const { return "VAC_SLOWEST"; }
+    char const* name() const { return "VAC_IMMOBILE"; }
 
     /**
      * autocorrelate samples in block
@@ -490,11 +490,11 @@ struct velocity_autocorrelation_slowest<tcf_gpu_sample> : correlation_function<t
 
         for (vv = max_fraction.begin(); vv != max_fraction.end(); ++vv) {
             // copy constants to GPU
-            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_slowest::max_fraction);
+            cuda::copy(*vv, gpu::tcf_base::velocity_autocorrelation_immobile::max_fraction);
             // compute velocity autocorrelations on GPU
             for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
                 cuda::configure(BLOCKS, THREADS);
-                gpu::tcf_base::velocity_autocorrelation_slowest::accumulate(*sample, count, mean, var, (*sample).size());
+                gpu::tcf_base::velocity_autocorrelation_immobile::accumulate(*sample, count, mean, var, (*sample).size());
             }
             // copy accumulator block results from GPU to host
             cuda::copy(g_count, h_count);
@@ -589,8 +589,8 @@ typedef boost::mpl::push_back<_tcf_gpu_types_4, squared_self_intermediate_scatte
 typedef boost::mpl::push_back<_tcf_gpu_types_5, virial_stress<tcf_gpu_sample> >::type _tcf_gpu_types_6;
 typedef boost::mpl::push_back<_tcf_gpu_types_6, helfand_moment<tcf_gpu_sample> >::type _tcf_gpu_types_7;
 typedef boost::mpl::push_back<_tcf_gpu_types_7, sorted_velocity_autocorrelation<tcf_gpu_sample> >::type _tcf_gpu_types_8;
-typedef boost::mpl::push_back<_tcf_gpu_types_8, velocity_autocorrelation_fastest<tcf_gpu_sample> >::type _tcf_gpu_types_9;
-typedef boost::mpl::push_back<_tcf_gpu_types_9, velocity_autocorrelation_slowest<tcf_gpu_sample> >::type tcf_gpu_types;
+typedef boost::mpl::push_back<_tcf_gpu_types_8, velocity_autocorrelation_mobile<tcf_gpu_sample> >::type _tcf_gpu_types_9;
+typedef boost::mpl::push_back<_tcf_gpu_types_9, velocity_autocorrelation_immobile<tcf_gpu_sample> >::type tcf_gpu_types;
 
 } // namespace halmd
 
