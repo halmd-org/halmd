@@ -320,6 +320,7 @@ struct sorted_velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tc
 
     enum { BLOCKS = gpu::vacf_filter<>::BLOCKS };
     enum { THREADS = gpu::vacf_filter<>::THREADS };
+    enum { RADIX_SORT_THREADS = 16 << DEVICE_SCALE };
 
     /** maximum squared displacement per block */
     cuda::vector<float> g_msd;
@@ -366,7 +367,7 @@ struct sorted_velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tc
               , g_index
             );
 
-            radix.resize((*sample)[type].v->size(), THREADS);
+            radix.resize((*sample)[type].v->size(), RADIX_SORT_THREADS);
             radix(g_index, *result);
         }
         cuda::thread::synchronize();
