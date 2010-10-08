@@ -141,7 +141,7 @@ struct velocity_autocorrelation_mobile
     __device__ bool check(unsigned int i, unsigned int npart) const
     {
         // FIXME unit test to check accumulator counts against percentage
-        return i >= float2uint((__saturatef(1. - mobile_fraction) * npart), cudaRoundNearest);
+        return i >= float2uint((__saturatef(1 - mobile_fraction) * npart), cudaRoundNearest);
     }
 };
 
