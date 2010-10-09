@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
         script.run();
     }
-    catch (std::exception const& e) {
+    catch (std::exception const&) {
         LOG_WARNING(PROJECT_NAME " aborted");
         return EXIT_FAILURE;
     }
