@@ -7,3 +7,6 @@ target_link_libraries(test_demangle
 add_test(demangle
   test_demangle --log_level=test_suite
 )
+add_subdirectory(
+  lua_wrapper
+)
