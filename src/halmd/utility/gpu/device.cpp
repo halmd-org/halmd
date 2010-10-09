@@ -199,6 +199,16 @@ string device::cuda_runtime_version()
 
 #endif /* CUDART_VERSION >= 2020 */
 
+/**
+ * Translate CUDA exception to Lua error message
+ */
+static void translate_cuda_error(lua_State* L, cuda::error const& e)
+{
+    string error("[CUDA] ");
+    error.append(e.what());
+    lua_pushstring(L, error.c_str());
+}
+
 static __attribute__((constructor)) void register_lua()
 {
     using namespace luabind;
@@ -224,6 +234,7 @@ static __attribute__((constructor)) void register_lua()
             ]
         ]
     ];
+    register_exception_handler<cuda::error>(&translate_cuda_error);
 }
 
 }} // namespace utility::gpu
