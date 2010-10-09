@@ -25,7 +25,6 @@
 #ifndef CUDA_DRIVER_ERROR_HPP
 #define CUDA_DRIVER_ERROR_HPP
 
-#include <boost/exception/exception.hpp>
 #include <cuda_runtime.h>
 #include <cuda.h>
 #include <exception>
@@ -45,9 +44,9 @@
 namespace cuda { namespace driver
 {
 
-struct error
-  : virtual boost::exception
+class error : public std::exception
 {
+public:
     const CUresult err;
 
     error(CUresult err): err(err)
