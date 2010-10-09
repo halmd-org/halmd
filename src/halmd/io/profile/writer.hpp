@@ -21,6 +21,7 @@
 #define HALMD_IO_PROFILE_WRITER_HPP
 
 #include <halmd/numeric/accumulator.hpp>
+#include <string>
 #include <vector>
 
 namespace halmd

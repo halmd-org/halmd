@@ -20,6 +20,8 @@
 #ifndef HALMD_IO_STATEVARS_WRITER_HPP
 #define HALMD_IO_STATEVARS_WRITER_HPP
 
+#include <typeinfo>
+
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/accumulator.hpp>
 
