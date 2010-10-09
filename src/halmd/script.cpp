@@ -95,7 +95,7 @@ void script::load_library()
         call_function<void>(L, "require", "halmd");
     }
     catch (luabind::error const& e) {
-        LOG_ERROR("[Lua] " << lua_tostring(L, -1));
+        LOG_ERROR(lua_tostring(L, -1));
         lua_pop(L, 1); //< remove error message
         throw;
     }
@@ -120,7 +120,7 @@ po::options_description script::options()
         call_function<void>(options, ref(desc));
     }
     catch (luabind::error const& e) {
-        LOG_ERROR("[Lua] " << lua_tostring(e.state(), -1));
+        LOG_ERROR(lua_tostring(e.state(), -1));
         lua_pop(e.state(), 1); //< remove error message
         throw;
     }
@@ -142,7 +142,7 @@ void script::init(po::variables_map const& vm)
         call_function<void>(options, cref(vm));
     }
     catch (luabind::error const& e) {
-        LOG_ERROR("[Lua] " << lua_tostring(e.state(), -1));
+        LOG_ERROR(lua_tostring(e.state(), -1));
         lua_pop(e.state(), 1); //< remove error message
         throw;
     }
@@ -161,7 +161,7 @@ void script::run()
         call_function<void>(L, "run");
     }
     catch (luabind::error const& e) {
-        LOG_ERROR("[Lua] " << lua_tostring(e.state(), -1));
+        LOG_ERROR(lua_tostring(e.state(), -1));
         lua_pop(e.state(), 1); //< remove error message
         throw;
     }
