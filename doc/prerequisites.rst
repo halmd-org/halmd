@@ -21,7 +21,7 @@ For example, if Boost, Lua and Luabind are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   cmake -DCMAKE_PREFIX_PATH='~/usr/boost_1_44_0;/opt/cuda-3.1;~/usr/lua-5.1.4;~/usr/luabind-0.9' ~/projects/halmd
+   cmake -DCMAKE_PREFIX_PATH='~/usr/boost_1_44_0;/opt/cuda-3.1;~/usr/lua-5.1.4;~/usr/luabind-0.9.1' ~/projects/halmd
 
 (Note the single quotes to prevent the shell from swallowing semicolons.)
 
@@ -139,10 +139,10 @@ Install the Lua library into your packages directory::
 Luabind
 -------
 
-Get the latest `Luabind source package`_, currently `Luabind 0.9`_.
+Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
 
 .. _Luabind source package: http://sourceforge.net/projects/luabind/files/luabind
-.. _Luabind 0.9: http://sourceforge.net/projects/luabind/files/luabind/0.9/luabind-0.9.tar.gz
+.. _Luabind 0.9.1: http://sourceforge.net/projects/luabind/files/luabind/0.9.1/luabind-0.9.1.tar.gz
 
 .. note::
 
@@ -158,7 +158,7 @@ Compile a statically linked release build of the Luabind library with ::
 
 Install the Luabind library into your packages directory::
 
-   BOOST_ROOT=/tmp/boost_1_44_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_44_0/bjam link=static variant=release install --prefix=$HOME/usr/luabind-0.9
+   BOOST_ROOT=/tmp/boost_1_44_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_44_0/bjam link=static variant=release install --prefix=$HOME/usr/luabind-0.9.1
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
