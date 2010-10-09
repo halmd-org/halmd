@@ -48,7 +48,7 @@ namespace cuda
  * CUDA error handling
  */
 struct error
-  : virtual boost::exception
+  : virtual std::exception
 {
     /* CUDA error */
     const cudaError_t err;
