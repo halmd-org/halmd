@@ -95,7 +95,7 @@ static __attribute__((constructor)) void register_lua()
                 [
                     namespace_("writers")
                     [
-                        class_<log, shared_ptr<log>, _Base>("log")
+                        class_<log, shared_ptr<_Base>, _Base>("log")
                             .def(constructor<>())
                     ]
                 ]

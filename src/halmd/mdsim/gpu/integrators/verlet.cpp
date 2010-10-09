@@ -172,7 +172,7 @@ static void register_lua(char const* class_name)
                 [
                     namespace_("integrators")
                     [
-                        class_<T, shared_ptr<T>, bases<_Base> >(class_name)
+                        class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
                             .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, double>())
                             .def("register_runtimes", &T::register_runtimes)
                     ]

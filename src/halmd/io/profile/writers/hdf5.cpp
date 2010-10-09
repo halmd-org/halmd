@@ -132,7 +132,7 @@ static __attribute__((constructor)) void register_lua()
                 [
                     namespace_("writers")
                     [
-                        class_<hdf5, shared_ptr<hdf5>, _Base>("hdf5")
+                        class_<hdf5, shared_ptr<_Base>, _Base>("hdf5")
                             .def(constructor<string const&>())
                     ]
                 ]
