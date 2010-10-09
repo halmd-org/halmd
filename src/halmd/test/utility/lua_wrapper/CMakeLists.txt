@@ -5,3 +5,14 @@ target_link_libraries(test_lua_setup
   ${LUABIND_LIBRARIES}
   ${LUA_LIBRARIES}
 )
+add_executable(test_dependency_injection
+  dependency_injection.cpp
+)
+target_link_libraries(test_dependency_injection
+  test_lua_setup
+  ${HALMD_COMMON_LIBRARIES}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+add_test(dependency_injection
+  test_dependency_injection --log_level=test_suite
+)
