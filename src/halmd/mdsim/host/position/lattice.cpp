@@ -122,7 +122,7 @@ void lattice<dimension, float_type>::set()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename T::particle_type particle_type;
@@ -130,7 +130,7 @@ static void register_lua(char const* class_name)
     typedef typename T::random_type random_type;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -151,12 +151,21 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
+    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    register_lua<lattice<3, double> >("lattice_3_");
-    register_lua<lattice<2, double> >("lattice_2_");
+    [
+        bind(&register_lua<lattice<3, double> >, _1, "lattice_3_")
+    ]
+    [
+        bind(&register_lua<lattice<2, double> >, _1, "lattice_2_")
+    ];
 #else
-    register_lua<lattice<3, float> >("lattice_3_");
-    register_lua<lattice<2, float> >("lattice_2_");
+    [
+        bind(&register_lua<lattice<3, float> >, _1, "lattice_3_")
+    ]
+    [
+        bind(&register_lua<lattice<2, float> >, _1, "lattice_2_")
+    ];
 #endif
 }
 

@@ -126,7 +126,7 @@ double thermodynamics<dimension, float_type>::virial() const
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename _Base::_Base _Base_Base;
@@ -135,7 +135,7 @@ static void register_lua(char const* class_name)
     typedef typename T::force_type force_type;
 
     using namespace luabind;
-    lua_wrapper::register_(2) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -157,8 +157,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<thermodynamics<3, float> >("thermodynamics_3_");
-    register_lua<thermodynamics<2, float> >("thermodynamics_2_");
+    lua_wrapper::register_(2) //< distance of derived to base class
+    [
+        bind(&register_lua<thermodynamics<3, float> >, _1, "thermodynamics_3_")
+    ]
+    [
+        bind(&register_lua<thermodynamics<2, float> >, _1, "thermodynamics_2_")
+    ];
 }
 
 // explicit instantiation

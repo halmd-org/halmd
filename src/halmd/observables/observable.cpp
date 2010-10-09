@@ -29,10 +29,10 @@ namespace observables
 {
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     using namespace luabind;
-    lua_wrapper::register_(0) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -45,8 +45,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<observable<3> >("observable_3_");
-    register_lua<observable<2> >("observable_2_");
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        bind(&register_lua<observable<3> >, _1, "observable_3_")
+    ]
+    [
+        bind(&register_lua<observable<2> >, _1, "observable_2_")
+    ];
 }
 
 } // namespace observables

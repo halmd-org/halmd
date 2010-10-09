@@ -30,10 +30,10 @@ namespace mdsim
 {
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     using namespace luabind;
-    lua_wrapper::register_(0) //< distance to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -49,8 +49,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<neighbour<3> >("neighbour_3_");
-    register_lua<neighbour<2> >("neighbour_2_");
+    lua_wrapper::register_(0) //< distance to base class
+    [
+        bind(&register_lua<neighbour<3> >, _1, "neighbour_3_")
+    ]
+    [
+        bind(&register_lua<neighbour<2> >, _1, "neighbour_2_")
+    ];
 }
 
 template class neighbour<3>;

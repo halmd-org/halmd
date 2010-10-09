@@ -106,12 +106,12 @@ void thermodynamics<dimension>::sample(double time)
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -138,8 +138,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<thermodynamics<3> >("thermodynamics_3_");
-    register_lua<thermodynamics<2> >("thermodynamics_2_");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<thermodynamics<3> >, _1, "thermodynamics_3_")
+    ]
+    [
+        bind(&register_lua<thermodynamics<2> >, _1, "thermodynamics_2_")
+    ];
 }
 
 // explicit instantiation

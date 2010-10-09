@@ -98,13 +98,13 @@ void hdf5<dimension, float_type>::flush()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename T::sample_type sample_type;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -128,10 +128,19 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<hdf5<3, double> >("hdf5_3_double_");
-    register_lua<hdf5<2, double> >("hdf5_2_double_");
-    register_lua<hdf5<3, float> >("hdf5_3_float_");
-    register_lua<hdf5<2, float> >("hdf5_2_float_");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<hdf5<3, double> >, _1, "hdf5_3_double_")
+    ]
+    [
+        bind(&register_lua<hdf5<2, double> >, _1, "hdf5_2_double_")
+    ]
+    [
+        bind(&register_lua<hdf5<3, float> >, _1, "hdf5_3_float_")
+    ]
+    [
+        bind(&register_lua<hdf5<2, float> >, _1, "hdf5_2_float_")
+    ];
 }
 
 }}} // namespace io::trajectory::writers

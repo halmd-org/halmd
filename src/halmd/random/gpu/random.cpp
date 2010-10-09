@@ -129,13 +129,13 @@ void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean,
 }
 
 template <typename Module>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename Module::_Base _Base;
     typedef typename Module::device_type device_type;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -155,7 +155,10 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<random<rand48> >("rand48");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<random<rand48> >, _1, "rand48")
+    ];
 }
 
 }} // namespace random::gpu

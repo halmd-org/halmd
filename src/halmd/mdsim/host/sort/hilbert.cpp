@@ -250,7 +250,7 @@ void hilbert<dimension, float_type>::swap(unsigned int& v, unsigned int& a, unsi
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename T::particle_type particle_type;
@@ -258,7 +258,7 @@ static void register_lua(char const* class_name)
     typedef typename T::neighbour_type neighbour_type;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -283,12 +283,21 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
+    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    register_lua<hilbert<3, double> >("hilbert_3_");
-    register_lua<hilbert<2, double> >("hilbert_2_");
+    [
+        bind(&register_lua<hilbert<3, double> >, _1, "hilbert_3_")
+    ]
+    [
+        bind(&register_lua<hilbert<2, double> >, _1, "hilbert_2_")
+    ];
 #else
-    register_lua<hilbert<3, float> >("hilbert_3_");
-    register_lua<hilbert<2, float> >("hilbert_2_");
+    [
+        bind(&register_lua<hilbert<3, float> >, _1, "hilbert_3_")
+    ]
+    [
+        bind(&register_lua<hilbert<2, float> >, _1, "hilbert_2_")
+    ];
 #endif
 }
 

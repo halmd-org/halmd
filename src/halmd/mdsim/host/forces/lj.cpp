@@ -177,7 +177,7 @@ void lj<dimension, float_type>::compute()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename _Base::_Base _Base_Base;
@@ -185,7 +185,7 @@ static void register_lua(char const* class_name)
     typedef typename T::box_type box_type;
 
     using namespace luabind;
-    lua_wrapper::register_(2) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -217,12 +217,21 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
+    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    register_lua<lj<3, double> >("lj_3_");
-    register_lua<lj<2, double> >("lj_2_");
+    [
+        bind(&register_lua<lj<3, double> >, _1, "lj_3_")
+    ]
+    [
+        bind(&register_lua<lj<2, double> >, _1, "lj_2_")
+    ];
 #else
-    register_lua<lj<3, float> >("lj_3_");
-    register_lua<lj<2, float> >("lj_2_");
+    [
+        bind(&register_lua<lj<3, float> >, _1, "lj_3_")
+    ]
+    [
+        bind(&register_lua<lj<2, float> >, _1, "lj_2_")
+    ];
 #endif
 }
 

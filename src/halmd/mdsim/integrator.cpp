@@ -57,10 +57,10 @@ static __attribute__((constructor)) void register_option_converters()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     using namespace luabind;
-    lua_wrapper::register_(0) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -79,10 +79,14 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<integrator<3> >("integrator_3_");
-    register_lua<integrator<2> >("integrator_2_");
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        bind(&register_lua<integrator<3> >, _1, "integrator_3_")
+    ]
+    [
+        bind(&register_lua<integrator<2> >, _1, "integrator_2_")
+    ];
 }
-
 // explicit instantiation
 template class integrator<3>;
 template class integrator<2>;

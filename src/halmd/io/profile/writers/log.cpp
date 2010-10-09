@@ -80,12 +80,12 @@ void log::write()
     }
 }
 
-static __attribute__((constructor)) void register_lua()
+static void register_lua(lua_State* L)
 {
     typedef log::_Base _Base;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -101,6 +101,14 @@ static __attribute__((constructor)) void register_lua()
                 ]
             ]
         ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua, _1)
     ];
 }
 

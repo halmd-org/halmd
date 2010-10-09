@@ -127,7 +127,7 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename _Base::_Base _Base_Base;
@@ -135,7 +135,7 @@ static void register_lua(char const* class_name)
     typedef typename T::random_type random_type;
 
     using namespace luabind;
-    lua_wrapper::register_(2) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -160,12 +160,21 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
+    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    register_lua<boltzmann<3, double> >("boltzmann_3_");
-    register_lua<boltzmann<2, double> >("boltzmann_2_");
+    [
+        bind(&register_lua<boltzmann<3, double> >, _1, "boltzmann_3_")
+    ]
+    [
+        bind(&register_lua<boltzmann<2, double> >, _1, "boltzmann_2_")
+    ];
 #else
-    register_lua<boltzmann<3, float> >("boltzmann_3_");
-    register_lua<boltzmann<2, float> >("boltzmann_2_");
+    [
+        bind(&register_lua<boltzmann<3, float> >, _1, "boltzmann_3_")
+    ]
+    [
+        bind(&register_lua<boltzmann<2, float> >, _1, "boltzmann_2_")
+    ];
 #endif
 }
 

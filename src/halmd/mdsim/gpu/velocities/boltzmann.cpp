@@ -134,7 +134,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename _Base::_Base _Base_Base;
@@ -142,7 +142,7 @@ static void register_lua(char const* class_name)
     typedef typename T::random_type random_type;
 
     using namespace luabind;
-    lua_wrapper::register_(2) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -167,8 +167,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<boltzmann<3, float, random::gpu::rand48> >("boltzmann_3_");
-    register_lua<boltzmann<2, float, random::gpu::rand48> >("boltzmann_2_");
+    lua_wrapper::register_(2) //< distance of derived to base class
+    [
+        bind(&register_lua<boltzmann<3, float, random::gpu::rand48> >, _1, "boltzmann_3_")
+    ]
+    [
+        bind(&register_lua<boltzmann<2, float, random::gpu::rand48> >, _1, "boltzmann_2_")
+    ];
 }
 
 // explicit instantiation

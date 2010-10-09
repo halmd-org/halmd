@@ -113,12 +113,12 @@ void particle<dimension, float_type>::set()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -139,8 +139,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<particle<3, float> >("particle_3_");
-    register_lua<particle<2, float> >("particle_2_");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<particle<3, float> >, _1, "particle_3_")
+    ]
+    [
+        bind(&register_lua<particle<2, float> >, _1, "particle_2_")
+    ];
 }
 
 // explicit instantiation

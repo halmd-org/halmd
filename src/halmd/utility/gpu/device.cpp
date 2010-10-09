@@ -209,10 +209,10 @@ static void translate_cuda_error(lua_State* L, cuda::error const& e)
     lua_pushstring(L, error.c_str());
 }
 
-static __attribute__((constructor)) void register_lua()
+static void register_lua(lua_State* L)
 {
     using namespace luabind;
-    lua_wrapper::register_(0) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -235,6 +235,14 @@ static __attribute__((constructor)) void register_lua()
         ]
     ];
     register_exception_handler<cuda::error>(&translate_cuda_error);
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        bind(&register_lua, _1)
+    ];
 }
 
 }} // namespace utility::gpu

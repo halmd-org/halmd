@@ -26,9 +26,10 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/program_options.hpp>
-#include <luabind/luabind.hpp>
 #include <string>
 #include <vector>
+
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 namespace halmd
 {

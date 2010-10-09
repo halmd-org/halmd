@@ -231,12 +231,12 @@ void hdf5<dimension>::write()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -257,8 +257,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<hdf5<3> >("hdf5_3_");
-    register_lua<hdf5<2> >("hdf5_2_");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<hdf5<3> >, _1, "hdf5_3_")
+    ]
+    [
+        bind(&register_lua<hdf5<2> >, _1, "hdf5_2_")
+    ];
 }
 
 }}} // namespace io::profile::writers

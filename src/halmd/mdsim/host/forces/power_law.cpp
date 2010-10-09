@@ -204,7 +204,7 @@ void power_law<dimension, float_type>::compute_impl()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename _Base::_Base _Base_Base;
@@ -212,7 +212,7 @@ static void register_lua(char const* class_name)
     typedef typename T::box_type box_type;
 
     using namespace luabind;
-    lua_wrapper::register_(2) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -244,12 +244,21 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
+    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    register_lua<power_law<3, double> >("power_law_3_");
-    register_lua<power_law<2, double> >("power_law_2_");
+    [
+        bind(&register_lua<power_law<3, double> >, _1, "power_law_3_")
+    ]
+    [
+        bind(&register_lua<power_law<2, double> >, _1, "power_law_2_")
+    ];
 #else
-    register_lua<power_law<3, float> >("power_law_3_");
-    register_lua<power_law<2, float> >("power_law_2_");
+    [
+        bind(&register_lua<power_law<3, float> >, _1, "power_law_3_")
+    ]
+    [
+        bind(&register_lua<power_law<2, float> >, _1, "power_law_2_")
+    ];
 #endif
 }
 

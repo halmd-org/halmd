@@ -103,7 +103,7 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename T::particle_type particle_type;
@@ -111,7 +111,7 @@ static void register_lua(char const* class_name)
     typedef typename T::core_type core_type;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -136,10 +136,19 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<trajectory<mdsim::samples::gpu::trajectory<3, float> > >("trajectory_gpu_3_");
-    register_lua<trajectory<mdsim::samples::gpu::trajectory<2, float> > >("trajectory_gpu_2_");
-    register_lua<trajectory<mdsim::samples::host::trajectory<3, float> > >("trajectory_host_3_");
-    register_lua<trajectory<mdsim::samples::host::trajectory<2, float> > >("trajectory_host_2_");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<trajectory<mdsim::samples::gpu::trajectory<3, float> > >, _1, "trajectory_gpu_3_")
+    ]
+    [
+        bind(&register_lua<trajectory<mdsim::samples::gpu::trajectory<2, float> > >, _1, "trajectory_gpu_2_")
+    ]
+    [
+        bind(&register_lua<trajectory<mdsim::samples::host::trajectory<3, float> > >, _1, "trajectory_host_3_")
+    ]
+    [
+        bind(&register_lua<trajectory<mdsim::samples::host::trajectory<2, float> > >, _1, "trajectory_host_2_")
+    ];
 }
 
 }}} // namespace mdsim::gpu::sample

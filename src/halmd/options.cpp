@@ -185,10 +185,10 @@ void options_parser::parse(int argc, char** argv)
 /**
  * register Lua C++ wrapper
  */
-static __attribute__((constructor)) void register_lua()
+static void register_lua(lua_State* L)
 {
     using namespace luabind;
-    lua_wrapper::register_(0) //< distance of derived to base class
+    module(L)
     [
         namespace_("boost")
         [
@@ -205,6 +205,14 @@ static __attribute__((constructor)) void register_lua()
                     //< only return-by-value is supported by Luabind boost::any converter
             ]
         ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        bind(&register_lua, _1)
     ];
 }
 

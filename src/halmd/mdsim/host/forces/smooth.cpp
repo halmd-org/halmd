@@ -64,10 +64,10 @@ smooth<dimension, float_type>::smooth(double r_smooth)
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     using namespace luabind;
-    lua_wrapper::register_(2) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -92,12 +92,21 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
+    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    register_lua<smooth<3, double> >("smooth_3_");
-    register_lua<smooth<2, double> >("smooth_2_");
+    [
+        bind(&register_lua<smooth<3, double> >, _1, "smooth_3_")
+    ]
+    [
+        bind(&register_lua<smooth<2, double> >, _1, "smooth_2_")
+    ];
 #else
-    register_lua<smooth<3, float> >("smooth_3_");
-    register_lua<smooth<2, float> >("smooth_2_");
+    [
+        bind(&register_lua<smooth<3, float> >, _1, "smooth_3_")
+    ]
+    [
+        bind(&register_lua<smooth<2, float> >, _1, "smooth_2_")
+    ];
 #endif
 }
 

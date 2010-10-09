@@ -87,12 +87,12 @@ void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, do
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -109,8 +109,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<velocity<3, float> >("velocity_3_");
-    register_lua<velocity<2, float> >("velocity_2_");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<velocity<3, float> >, _1, "velocity_3_")
+    ]
+    [
+        bind(&register_lua<velocity<2, float> >, _1, "velocity_2_")
+    ];
 }
 
 template class velocity<3, float>;

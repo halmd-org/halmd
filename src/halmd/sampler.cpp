@@ -152,13 +152,13 @@ void sampler<dimension>::sample(bool force)
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::core_type core_type;
     typedef typename T::observable_type observable_type;
 
     using namespace luabind;
-    lua_wrapper::register_(0) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -187,8 +187,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<sampler<3> >("sampler_3_");
-    register_lua<sampler<2> >("sampler_2_");
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        bind(&register_lua<sampler<3> >, _1, "sampler_3_")
+    ]
+    [
+        bind(&register_lua<sampler<2> >, _1, "sampler_2_")
+    ];
 }
 
 // explicit instantiation

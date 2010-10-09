@@ -52,10 +52,10 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<std::string>();
 }
 
-static __attribute__((constructor)) void register_lua()
+static void register_lua(lua_State* L)
 {
     using namespace luabind;
-    lua_wrapper::register_(0) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -69,6 +69,14 @@ static __attribute__((constructor)) void register_lua()
                     ]
             ]
         ]
+    ];
+}
+
+static __attribute__((constructor)) void register_lua()
+{
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        bind(&register_lua, _1)
     ];
 }
 

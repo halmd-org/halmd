@@ -230,7 +230,7 @@ void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_li
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename T::particle_type particle_type;
@@ -238,7 +238,7 @@ static void register_lua(char const* class_name)
     typedef typename T::force_type force_type;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -260,12 +260,21 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
+    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    register_lua<neighbour<3, double> >("neighbour_3_");
-    register_lua<neighbour<2, double> >("neighbour_2_");
+    [
+        bind(&register_lua<neighbour<3, double> >, _1, "neighbour_3_")
+    ]
+    [
+        bind(&register_lua<neighbour<2, double> >, _1, "neighbour_2_")
+    ];
 #else
-    register_lua<neighbour<3, float> >("neighbour_3_");
-    register_lua<neighbour<2, float> >("neighbour_2_");
+    [
+        bind(&register_lua<neighbour<3, float> >, _1, "neighbour_3_")
+    ]
+    [
+        bind(&register_lua<neighbour<2, float> >, _1, "neighbour_2_")
+    ];
 #endif
 }
 

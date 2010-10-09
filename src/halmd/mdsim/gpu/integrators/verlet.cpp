@@ -155,14 +155,14 @@ void verlet<dimension, float_type>::finalize()
 }
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
     typedef typename T::particle_type particle_type;
     typedef typename T::box_type box_type;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -184,8 +184,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<verlet<3, float> >("verlet_3_");
-    register_lua<verlet<2, float> >("verlet_2_");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<verlet<3, float> >, _1, "verlet_3_")
+    ]
+    [
+        bind(&register_lua<verlet<2, float> >, _1, "verlet_2_")
+    ];
 }
 
 // explicit instantiation

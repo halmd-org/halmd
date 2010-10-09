@@ -29,12 +29,12 @@ namespace mdsim { namespace gpu
 {
 
 template <typename T>
-static void register_lua(char const* class_name)
+static void register_lua(lua_State* L, char const* class_name)
 {
     typedef typename T::_Base _Base;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -51,8 +51,13 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<force<3, float> >("force_3_");
-    register_lua<force<2, float> >("force_2_");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<force<3, float> >, _1, "force_3_")
+    ]
+    [
+        bind(&register_lua<force<2, float> >, _1, "force_2_")
+    ];
 }
 
 }} // namespace mdsim::gpu

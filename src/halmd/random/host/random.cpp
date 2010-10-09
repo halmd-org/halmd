@@ -36,13 +36,13 @@ random::random(unsigned int seed)
     rng_.seed(seed);
 }
 
-template <typename Module>
-static void register_lua(char const* class_name)
+template <typename T>
+static void register_lua(lua_State* L, char const* class_name)
 {
-    typedef typename Module::_Base _Base;
+    typedef typename T::_Base _Base;
 
     using namespace luabind;
-    lua_wrapper::register_(1) //< distance of derived to base class
+    module(L)
     [
         namespace_("halmd_wrapper")
         [
@@ -50,7 +50,7 @@ static void register_lua(char const* class_name)
             [
                 namespace_("random")
                 [
-                    class_<Module, shared_ptr<_Base>, bases<_Base> >(class_name)
+                    class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
                         .def(constructor<unsigned int>())
                 ]
             ]
@@ -60,7 +60,10 @@ static void register_lua(char const* class_name)
 
 static __attribute__((constructor)) void register_lua()
 {
-    register_lua<random>("gfsr4");
+    lua_wrapper::register_(1) //< distance of derived to base class
+    [
+        bind(&register_lua<random>, _1, "gfsr4")
+    ];
 }
 
 }} // namespace random::host
