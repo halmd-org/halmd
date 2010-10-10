@@ -55,11 +55,12 @@ public:
 
     static boost::log::sources::severity_logger<severity_level>& get()
     {
-       static boost::log::sources::severity_logger<severity_level> logger_;
        return logger_;
     }
 
 private:
+    static boost::log::sources::severity_logger<severity_level> logger_;
+
     boost::shared_ptr<console_sink> console_;
     boost::shared_ptr<file_sink> file_;
 };

@@ -133,6 +133,8 @@ logger::~logger()
     core::get()->remove_sink(file_);
 }
 
+sources::severity_logger<logger::severity_level> logger::logger_;
+
 template <enum logger::severity_level level>
 static void log_wrapper(char const* message)
 {
