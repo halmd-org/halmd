@@ -54,10 +54,10 @@ void script::package_path()
     using namespace luabind;
 
     string path;
-    path.append( HALMD_BINARY_DIR "/lib/?.lua" ";" );
-    path.append( HALMD_BINARY_DIR "/lib/?/init.lua" ";" );
-    path.append( HALMD_SOURCE_DIR "/lib/?.lua" ";" );
-    path.append( HALMD_SOURCE_DIR "/lib/?/init.lua" ";" );
+    path.append( HALMD_BINARY_DIR "/lua/?.lua" ";" );
+    path.append( HALMD_BINARY_DIR "/lua/?/init.lua" ";" );
+    path.append( HALMD_SOURCE_DIR "/lua/?.lua" ";" );
+    path.append( HALMD_SOURCE_DIR "/lua/?/init.lua" ";" );
     path.append( HALMD_INSTALL_PREFIX "/share/?.lua" ";" );
     path.append( HALMD_INSTALL_PREFIX "/share/?/init.lua" ";" );
     path.append( HALMD_INSTALL_PREFIX "/lib/?.lua" ";" );
