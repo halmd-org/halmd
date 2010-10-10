@@ -26,7 +26,6 @@ local statevars_writers = {
 local hooks = require("halmd.hooks")
 local pairs = pairs
 local table = table
-local print = print
 
 module("halmd.io.statevars.writers", halmd.modules.register)
 

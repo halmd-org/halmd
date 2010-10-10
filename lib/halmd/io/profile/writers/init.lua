@@ -26,7 +26,6 @@ local profile_writers = {
 }
 local pairs = pairs
 local table = table
-local print = print
 
 module("halmd.io.profile.writers", halmd.modules.register)
 

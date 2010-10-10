@@ -25,7 +25,6 @@ local writers = {
 }
 local pairs = pairs
 local table = table
-local print = print
 
 module("halmd.io.trajectory.writers", halmd.modules.register)
 
