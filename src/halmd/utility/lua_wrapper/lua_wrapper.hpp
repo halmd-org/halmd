@@ -27,6 +27,7 @@
 #include <halmd/utility/lua_wrapper/any_converter.hpp>
 #include <halmd/utility/lua_wrapper/array_converter.hpp>
 #include <halmd/utility/lua_wrapper/fixed_vector_converter.hpp>
+#include <halmd/utility/lua_wrapper/long_long_converter.hpp>
 #include <halmd/utility/lua_wrapper/lua_include.hpp>
 #include <halmd/utility/lua_wrapper/registry.hpp>
 #include <halmd/utility/lua_wrapper/vector_converter.hpp>
