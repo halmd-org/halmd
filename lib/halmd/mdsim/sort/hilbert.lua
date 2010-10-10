@@ -29,6 +29,7 @@ local hilbert_wrapper = {
 local mdsim = {
   core = require("halmd.mdsim.core")
 }
+local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
@@ -39,7 +40,6 @@ module("halmd.mdsim.sort.hilbert", halmd.modules.register)
 --
 function new()
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
 
     -- dependency injection
     local core = mdsim.core()
@@ -47,9 +47,7 @@ function new()
     local box = assert(core.box)
     local neighbour = assert(core.neighbour)
 
-    if backend == "gpu" then
-        return nil -- FIXME not implemented
+    if not device() then
+        return hilbert_wrapper.host[dimension](particle, box, neighbour)
     end
-    local hilbert = hilbert_wrapper[backend][dimension]
-    return hilbert(particle, box, neighbour)
 end

@@ -47,13 +47,10 @@ options = particle_wrapper[2].options
 --
 function new()
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
     local npart = assert(args.particles)
 
-    local particle = particle_wrapper[backend][dimension]
-    if backend == "gpu" then
-        return particle(device(), npart)
-    elseif backend == "host" then
-        return particle(npart)
+    if not device() then
+        return particle_wrapper.host[dimension](npart)
     end
+    return particle_wrapper.gpu[dimension](device(), npart)
 end

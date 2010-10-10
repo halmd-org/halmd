@@ -35,6 +35,7 @@ if halmd_wrapper.mdsim.gpu then
       , [3] = halmd_wrapper.mdsim.gpu.integrators.verlet_3_
     }
 end
+local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
@@ -45,7 +46,6 @@ module("halmd.mdsim.integrators.verlet", halmd.modules.register)
 --
 function new()
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
     local timestep = assert(args.timestep)
 
     -- dependency injection
@@ -53,6 +53,8 @@ function new()
     local particle = assert(core.particle)
     local box = assert(core.box)
 
-    local verlet = verlet_wrapper[backend][dimension]
-    return verlet(particle, box, timestep)
+    if not device() then
+        return verlet_wrapper.host[dimension](particle, box, timestep)
+    end
+    return verlet_wrapper.gpu[dimension](particle, box, timestep)
 end

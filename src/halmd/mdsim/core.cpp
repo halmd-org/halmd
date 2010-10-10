@@ -42,13 +42,6 @@ template <int dimension>
 void core<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("backend",
-#ifdef WITH_CUDA
-         po::value<string>()->default_value("gpu"),
-#else
-         po::value<string>()->default_value("host"),
-#endif
-         "computing device type")
         ("dimension", po::value<int>()->default_value(3),
          "dimension of positional coordinates")
         ;
@@ -72,7 +65,6 @@ core<dimension>::core()
   : step_counter_(0)
 {
     LOG("dimension of positional coordinates: " << dimension);
-    // FIXME LOG("MD simulation backend: " << vm["backend"].as<string>());
 }
 
 /**

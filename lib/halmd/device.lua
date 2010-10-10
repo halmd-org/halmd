@@ -35,13 +35,15 @@ local device -- singleton instance
 -- construct device module
 --
 function new()
-    local devices = assert(args.device)
-    local threads = assert(args.threads)
+    if device_wrapper and not args.disable_gpu then
+        local devices = assert(args.device)
+        local threads = assert(args.threads)
 
-    if not device then
-        device = device_wrapper(devices, threads)
+        if not device then
+            device = device_wrapper(devices, threads)
+        end
+        return device
     end
-    return device
 end
 
 -- command line options description

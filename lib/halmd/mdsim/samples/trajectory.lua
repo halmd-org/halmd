@@ -35,6 +35,7 @@ end
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
+local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
@@ -51,7 +52,9 @@ function new()
 
     -- command line options
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
 
-    return sampler_wrapper[backend][dimension](particle, box, core)
+    if not device() then
+        return sampler_wrapper.host[dimension](particle, box, core)
+    end
+    return sampler_wrapper.gpu[dimension](particle, box, core)
 end

@@ -37,6 +37,7 @@ end
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
+local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
@@ -56,7 +57,9 @@ function new()
 
     -- command line options
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
 
-    return thermodynamics_wrapper[backend][dimension](particle, box, force)
+    if not device() then
+        return thermodynamics_wrapper.host[dimension](particle, box, force)
+    end
+    return thermodynamics_wrapper.gpu[dimension](particle, box, force)
 end

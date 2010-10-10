@@ -35,6 +35,7 @@ end
 local mdsim = {
   core = require("halmd.mdsim.core")
 }
+local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
@@ -47,7 +48,6 @@ options = lj_wrapper.host[2].options
 --
 function new()
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
     local cutoff = assert(args.cutoff)
     local epsilon = assert(args.epsilon)
     local sigma = assert(args.sigma)
@@ -57,6 +57,8 @@ function new()
     local particle = assert(core.particle)
     local box = assert(core.box)
 
-    local lj = lj_wrapper[backend][dimension]
-    return lj(particle, box, cutoff, epsilon, sigma)
+    if not device() then
+        return lj_wrapper.host[dimension](particle, box, cutoff, epsilon, sigma)
+    end
+    return lj_wrapper.gpu[dimension](particle, box, cutoff, epsilon, sigma)
 end

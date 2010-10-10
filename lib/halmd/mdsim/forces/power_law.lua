@@ -35,6 +35,7 @@ end
 local mdsim = {
   core = require("halmd.mdsim.core")
 }
+local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
@@ -53,12 +54,13 @@ function new()
 
     -- command line options
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
     local cutoff = assert(args.cutoff)
     local epsilon = assert(args.epsilon)
     local sigma = assert(args.sigma)
     local index = assert(args.power_law_index)
 
-    local power_law = power_law_wrapper[backend][dimension]
-    return power_law(particle, box, index, cutoff, epsilon, sigma)
+    if not device() then
+        return power_law_wrapper.host[dimension](particle, box, index, cutoff, epsilon, sigma)
+    end
+    return power_law_wrapper.gpu[dimension](particle, box, index, cutoff, epsilon, sigma)
 end

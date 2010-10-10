@@ -30,11 +30,12 @@ local hdf5_writer = {
         [2] = halmd_wrapper.io.trajectory.writers.hdf5_2_double_
       , [3] = halmd_wrapper.io.trajectory.writers.hdf5_3_double_
     }
-    , gpu = {
+  , gpu = {
         [2] = halmd_wrapper.io.trajectory.writers.hdf5_2_float_
       , [3] = halmd_wrapper.io.trajectory.writers.hdf5_3_float_
     }
 }
+local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
@@ -50,10 +51,12 @@ function new()
     -- command line options
     local output = assert(args.output)
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
 
     -- parameters
     local file_name = output .. ".trj"
 
-    return hdf5_writer[backend][dimension](sample, file_name)
+    if not device() then
+        return hdf5_writer.host[dimension](sample, file_name)
+    end
+    return hdf5_writer.gpu[dimension](sample, file_name)
 end

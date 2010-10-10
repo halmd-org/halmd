@@ -35,6 +35,7 @@ if halmd_wrapper.mdsim.gpu then
       , [3] = halmd_wrapper.mdsim.gpu.neighbour_3_
     }
 end
+local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
@@ -52,16 +53,13 @@ function new()
 
     -- command line options
     local dimension = assert(args.dimension)
-    local backend = assert(args.backend)
     local skin = assert(args.skin)
 
-    local neighbour = neighbour_wrapper[backend][dimension]
-    if backend == "gpu" then
-	local cell_occupancy = assert(args.cell_occupancy)
-        return neighbour(particle, box, force, skin, cell_occupancy)
-    elseif backend == "host" then
-        return neighbour(particle, box, force, skin)
+    if not device() then
+        return neighbour_wrapper.host[dimension](particle, box, force, skin)
     end
+    local cell_occupancy = assert(args.cell_occupancy)
+    return neighbour_wrapper.gpu[dimension](particle, box, force, skin, cell_occupancy)
 end
 
 options = function(desc)

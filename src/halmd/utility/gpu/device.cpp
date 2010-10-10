@@ -52,6 +52,8 @@ void device::options(po::options_description& desc)
 #endif
         ("threads,T", po::value<unsigned int>()->default_value(default_threads()),
          "number of CUDA threads per block")
+        ("disable-gpu", po::bool_switch(),
+         "disable GPU acceleration")
         ;
 }
 
@@ -61,6 +63,7 @@ void device::options(po::options_description& desc)
 static __attribute__((constructor)) void register_option_converters()
 {
     using namespace lua_wrapper;
+    register_any_converter<bool>();
     register_any_converter<boost::multi_array<int, 1> >();
     register_any_converter<unsigned int>();
 }
