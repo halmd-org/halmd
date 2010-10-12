@@ -931,7 +931,7 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
     }
     // calculate velocities
     t[3].record();
-    if (thermostat_steps && ++thermostat_count > thermostat_steps) {
+    if (thermostat_steps && ++thermostat_count >= thermostat_steps) {
         boltzmann(thermostat_temp);
     }
     else {
@@ -944,7 +944,7 @@ void ljfluid<ljfluid_impl_host, dimension>::mdstep()
         helfand[i] += virial[i] * static_cast<typename virial_tensor::value_type>(timestep_);
     }
 
-    if (thermostat_steps && thermostat_count > thermostat_steps) {
+    if (thermostat_steps && thermostat_count >= thermostat_steps) {
         // reset MD steps since last heatbath coupling
         thermostat_count = 0;
         m_times["boltzmann"] += t[4] - t[3];

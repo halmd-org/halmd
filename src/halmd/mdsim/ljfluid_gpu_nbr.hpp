@@ -636,7 +636,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
     timer[8].record();
 
     // heat bath coupling
-    if (thermostat_steps && ++thermostat_count > thermostat_steps) {
+    if (thermostat_steps && ++thermostat_count >= thermostat_steps) {
         try {
             boltzmann(thermostat_temp);
             cuda::thread::synchronize();
@@ -684,7 +684,7 @@ void ljfluid<ljfluid_impl_gpu_neighbour, dimension>::mdstep()
     // GPU time for Lennard-Jones force update
     m_times["update_forces"] += timer[8] - timer[7];
 
-    if (thermostat_steps && thermostat_count > thermostat_steps) {
+    if (thermostat_steps && thermostat_count >= thermostat_steps) {
         // reset MD steps since last heatbath coupling
         thermostat_count = 0;
         // GPU time for Maxwell-Boltzmann distribution

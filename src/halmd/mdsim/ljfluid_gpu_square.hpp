@@ -299,7 +299,7 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::mdstep()
     timer[3].record();
 
     // heat bath coupling
-    if (thermostat_steps && ++thermostat_count > thermostat_steps) {
+    if (thermostat_steps && ++thermostat_count >= thermostat_steps) {
         try {
             boltzmann(thermostat_temp);
             cuda::thread::synchronize();
@@ -331,7 +331,7 @@ void ljfluid<ljfluid_impl_gpu_square, dimension>::mdstep()
     // GPU time for potential energy sum calculation
     m_times["potential_energy"] += timer[0] - timer[4];
 
-    if (thermostat_steps && thermostat_count > thermostat_steps) {
+    if (thermostat_steps && thermostat_count >= thermostat_steps) {
         // reset MD steps since last heatbath coupling
         thermostat_count = 0;
         // GPU time for Maxwell-Boltzmann distribution
