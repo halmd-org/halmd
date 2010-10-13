@@ -39,8 +39,6 @@ require("halmd.sampler")
 -- Run simulation
 --
 function run()
-    local profiler = halmd.profiler()
-
     local core = halmd.mdsim.core() -- singleton
     core.particle = halmd.mdsim.particle()
     core.box = halmd.mdsim.box()
@@ -52,10 +50,11 @@ function run()
     core.velocity = halmd.mdsim.velocity()
 
     local sampler = halmd.sampler() -- singleton
+    local profiler = halmd.profiler()
     sampler.profile_writers = profiler.profile_writers
     sampler.trajectory_writer = halmd.io.trajectory.writers()
-    sampler.statevars_writer = halmd.io.statevars.writers()
     sampler.observables = { halmd.observables.thermodynamics() }
+    sampler.statevars_writer = halmd.io.statevars.writers()
 
     sampler:run()
 end

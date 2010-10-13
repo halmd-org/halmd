@@ -19,6 +19,7 @@
 
 -- grab environment
 local table = table
+local pairs = pairs
 local ipairs = ipairs
 local setmetatable = setmetatable
 
@@ -26,17 +27,20 @@ module("halmd.hooks")
 
 local hooks = {}
 
+local objects = setmetatable({}, { __mode = "k" }) -- table with weak keys
+
 function register(func)
+    for object, v in pairs(objects) do
+        func(object)
+    end
     table.insert(hooks, func)
 end
 
-local hooked = setmetatable({}, { __mode = "k" }) -- table with weak keys
-
 function run(object)
-    if not hooked[object] then
+    if not objects[object] then
         for i, func in ipairs(hooks) do
             func(object)
         end
-        hooked[object] = true
+        objects[object] = true
     end
 end
