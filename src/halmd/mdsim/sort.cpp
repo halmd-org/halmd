@@ -34,7 +34,6 @@ namespace mdsim
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace lua_wrapper;
     register_any_converter<string>();
 }
 

@@ -74,7 +74,6 @@ options_parser::options_parser(po::options_description const& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace lua_wrapper;
     register_any_converter<string>();
     register_any_converter<int>();
 }

@@ -33,9 +33,7 @@
 
 namespace halmd
 {
-namespace lua_wrapper
-{
-namespace detail
+namespace lua_wrapper { namespace detail
 {
 
 typedef void (*any_converter)(lua_State* L, boost::any const&);
@@ -64,7 +62,7 @@ struct convert_any
     }
 };
 
-} // namespace detail
+}} // namespace lua_wrapper::detail
 
 /**
  * register a boost::any converter for given type
@@ -72,11 +70,10 @@ struct convert_any
 template <typename T>
 void register_any_converter()
 {
-    detail::any_converter_map& converters = detail::any_converters::get();
-    converters[&typeid(T)] = detail::convert_any<T>::to;
+    using namespace lua_wrapper::detail;
+    any_converter_map& converters = any_converters::get();
+    converters[&typeid(T)] = convert_any<T>::to;
 }
-
-} // namespace lua_wrapper
 
 } // namespace halmd
 

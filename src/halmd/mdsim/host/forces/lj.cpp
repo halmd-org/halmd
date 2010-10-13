@@ -57,7 +57,6 @@ void lj<dimension, float_type>::options(po::options_description& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    using namespace lua_wrapper;
     register_any_converter<boost::array<float, 3> >();
 }
 
