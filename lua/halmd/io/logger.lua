@@ -20,6 +20,8 @@
 -- grab environment
 local logger_wrapper = halmd_wrapper.io.logger
 local setmetatable = setmetatable
+local rawset = rawset
+local rawget = rawget
 
 module("halmd.io.logger")
 
@@ -30,10 +32,11 @@ module("halmd.io.logger")
 local function log(self, level)
     local log = logger_wrapper[level]
     if log then
-        return function(...) log(...) end
+        rawset(self, level, log)
     else
-        return function() end
+        rawset(self, level, function() end)
     end
+    return rawget(self, level)
 end
 
 setmetatable(_M, { __index = log })
