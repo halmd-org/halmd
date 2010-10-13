@@ -78,7 +78,7 @@ BOOST_FIXTURE_TEST_CASE( dummy_modules, lua_setup )
     using namespace test_dummy;
     using namespace luabind;
 
-    LUA_CHECK( "assert2 = function(...) assert(...) return assert(...) end" );
+    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
 
     module(L)
     [
@@ -106,7 +106,7 @@ BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_setup )
     using namespace halmd;
     using namespace luabind;
 
-    LUA_CHECK( "assert2 = function(...) assert(...) return assert(...) end" );
+    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
 
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef double float_type;
@@ -163,7 +163,7 @@ BOOST_FIXTURE_TEST_CASE( manually_registered_gpu_modules, lua_setup )
     using namespace halmd;
     using namespace luabind;
 
-    LUA_CHECK( "assert2 = function(...) assert(...) return assert(...) end" );
+    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
 
     module(L)
     [
@@ -225,7 +225,7 @@ BOOST_FIXTURE_TEST_CASE( statically_registered_host_modules, lua_setup )
 {
     using namespace halmd;
 
-    LUA_CHECK( "assert2 = function(...) assert(...) return assert(...) end" );
+    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
 
@@ -246,7 +246,7 @@ BOOST_FIXTURE_TEST_CASE( statically_registered_gpu_modules, lua_setup )
 {
     using namespace halmd;
 
-    LUA_CHECK( "assert2 = function(...) assert(...) return assert(...) end" );
+    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
 
