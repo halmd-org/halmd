@@ -4,6 +4,7 @@ add_library(test_lua_setup
 target_link_libraries(test_lua_setup
   ${LUABIND_LIBRARIES}
   ${LUA_LIBRARIES}
+  dl
 )
 add_executable(test_dependency_injection
   dependency_injection.cpp
