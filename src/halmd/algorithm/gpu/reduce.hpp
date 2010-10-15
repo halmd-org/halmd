@@ -27,7 +27,7 @@
 #include <boost/lambda/lambda.hpp> // before other Boost.Lambda headers
 #include <boost/lambda/casts.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/algorithm/gpu/reduce_kernel.hpp>
 
 namespace halmd

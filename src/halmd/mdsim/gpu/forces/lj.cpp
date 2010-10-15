@@ -22,7 +22,7 @@
 #include <cmath>
 #include <string>
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/lj.hpp>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>

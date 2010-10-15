@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_HPP
 #define HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_HPP
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd
 {

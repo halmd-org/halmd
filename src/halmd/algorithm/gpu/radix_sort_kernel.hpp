@@ -20,7 +20,7 @@
 #ifndef HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_HPP
 #define HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_HPP
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd
 {

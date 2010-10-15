@@ -20,7 +20,7 @@
 #ifndef HALMD_TEST_NUMERIC_MP_DSFUN_HPP
 #define HALMD_TEST_NUMERIC_MP_DSFUN_HPP
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd

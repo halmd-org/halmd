@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH
 #define HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include <halmd/mdsim/type_traits.hpp>
 

@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATORS_VERLET_HPP
 #define HALMD_MDSIM_GPU_INTEGRATORS_VERLET_HPP
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>

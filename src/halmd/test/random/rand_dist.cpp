@@ -26,7 +26,7 @@
 #include <time.h>
 #include <stdexcept>
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/random/host/gsl_rng.hpp>

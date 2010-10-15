@@ -23,7 +23,7 @@
 #include <boost/test/unit_test_monitor.hpp>
 #include <iostream>
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 // "global fixture:" select CUDA device
 struct set_cuda_device {

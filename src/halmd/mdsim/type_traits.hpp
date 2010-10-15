@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_TYPE_TRAITS_HPP
 
 #ifdef WITH_CUDA
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #endif
 
 #include <halmd/numeric/blas/blas.hpp>

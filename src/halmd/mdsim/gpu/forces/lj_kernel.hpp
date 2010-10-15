@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP
 #define HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP
 
-#include <cuda_wrapper.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
