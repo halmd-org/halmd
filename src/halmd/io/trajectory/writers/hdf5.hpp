@@ -24,7 +24,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <H5xx.hpp>
+#include <h5xx/h5xx.hpp>
 
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>

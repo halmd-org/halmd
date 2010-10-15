@@ -20,7 +20,7 @@
 #ifndef HALMD_IO_STATEVARS_HDF5_HPP
 #define HALMD_IO_STATEVARS_HDF5_HPP
 
-#include <H5xx.hpp>
+#include <h5xx/h5xx.hpp>
 
 #include <halmd/io/statevars/writer.hpp>
 

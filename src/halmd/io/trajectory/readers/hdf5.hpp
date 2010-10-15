@@ -20,7 +20,6 @@
 #ifndef HALMD_IO_TRAJECTORY_HDF5_READER_HPP
 #define HALMD_IO_TRAJECTORY_HDF5_READER_HPP
 
-#include <halmd/deprecated/util/H5xx.hpp>
 #include <halmd/io/trajectory/reader.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>
