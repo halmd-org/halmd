@@ -60,7 +60,8 @@ struct default_converter<halmd::fixed_vector<T, N> >
     {
         object table = newtable(L);
         for (std::size_t i = 0; i < v.size(); ++i) {
-            table[i + 1] = v[i];
+            // default_converter<T> only invoked with reference wrapper
+            table[i + 1] = boost::cref(v[i]);
         }
         table.push(L);
     }

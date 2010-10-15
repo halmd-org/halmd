@@ -56,7 +56,8 @@ struct default_converter<boost::array<T, N> >
     {
         luabind::object table = luabind::newtable(L);
         for (std::size_t i = 0; i < array.size(); ++i) {
-            table[i + 1] = array[i];
+            // default_converter<T> only invoked with reference wrapper
+            table[i + 1] = boost::cref(array[i]);
         }
         table.push(L);
     }
@@ -78,7 +79,8 @@ struct default_converter<boost::multi_array<T, 1> >
     {
         luabind::object table = luabind::newtable(L);
         for (std::size_t i = 0; i < array.size(); ++i) {
-            table[i + 1] = array[i];
+            // default_converter<T> only invoked with reference wrapper
+            table[i + 1] = boost::cref(array[i]);
         }
         table.push(L);
     }
