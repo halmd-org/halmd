@@ -83,7 +83,7 @@ hdf5<dimension, float_type>::hdf5(
             r = type.openDataSet("r");
         }
         // backwards compatibility with r:R:v:t format
-        if (r.getDataType() == H5::ctype<float>()) {
+        if (r.getDataType().getId() == H5::ctype<float>::hid()) {
             // use reduced positions if extended positions are single-precision
             r = type.openDataSet("r");
             LOG_WARNING("falling back to reduced particle position sample");
