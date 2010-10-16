@@ -95,10 +95,34 @@ template <template <int> class sample_type>
 struct velocity_autocorrelation;
 
 /**
- * velocity autocorrelation sorted after squared displacements
+ * correlation functions sorted by squared displacements
  */
 template <template <int> class sample_type>
-struct sorted_velocity_autocorrelation;
+struct sorted_by_msd;
+
+/**
+ * mean squared displacement for most mobile particles given lower boundary
+ */
+template <template <int> class sample_type>
+struct mean_square_displacement_mobile;
+
+/**
+ * mean squared displacement for most immobile particles given upper boundary
+ */
+template <template <int> class sample_type>
+struct mean_square_displacement_immobile;
+
+/**
+ * mean quartic displacement for most mobile particles given lower boundary
+ */
+template <template <int> class sample_type>
+struct mean_quartic_displacement_mobile;
+
+/**
+ * mean quartic displacement for most immobile particles given upper boundary
+ */
+template <template <int> class sample_type>
+struct mean_quartic_displacement_immobile;
 
 /**
  * velocity autocorrelation for most mobile particles given lower boundary

@@ -96,7 +96,7 @@ struct velocity_autocorrelation
 };
 
 template <typename correlation_function>
-__global__ void accumulate(float const* g_in, uint* g_n, dsfloat* g_m, dsfloat* g_v, uint n)
+__global__ void accumulate(float4 const* g_in, uint* g_n, dsfloat* g_m, dsfloat* g_v, uint n)
 {
     __shared__ unsigned int s_n[THREADS];
     __shared__ dsfloat s_m[THREADS];
@@ -110,7 +110,7 @@ __global__ void accumulate(float const* g_in, uint* g_n, dsfloat* g_m, dsfloat* 
     correlation_function correlator;
     for (uint i = GTID; i < n; i += GTDIM) {
         if (correlator.check(i, n)) {
-            dsfloat vv = g_in[i];
+            dsfloat vv = correlator(g_in[i]);
             transform<accumulate_>(count, mean, variance, vv);
         }
     }
@@ -136,7 +136,7 @@ static __constant__ float mobile_fraction;
 /**
  * check if particle belongs to given faction of most mobile particles
  */
-struct velocity_autocorrelation_mobile
+struct mobile_filter
 {
     __device__ bool check(unsigned int i, unsigned int npart) const
     {
@@ -150,7 +150,7 @@ static __constant__ float immobile_fraction;
 /**
  * check if particle belongs to given faction of most immobile particles
  */
-struct velocity_autocorrelation_immobile
+struct immobile_filter
 {
     __device__ bool check(unsigned int i, unsigned int npart) const
     {
@@ -158,6 +158,54 @@ struct velocity_autocorrelation_immobile
         return i < float2uint((__saturatef(immobile_fraction) * npart), cudaRoundNearest);
     }
 };
+
+struct sorted_square_displacement
+{
+    __device__ float operator()(float4 const& vv) const
+    {
+        return vv.x; //< refer to vacf_filter.cu
+    }
+};
+
+struct sorted_quartic_displacement
+{
+    __device__ float operator()(float4 const& vv) const
+    {
+        return vv.y; //< refer to vacf_filter.cu
+    }
+};
+
+struct sorted_velocity_autocorrelation
+{
+    __device__ float operator()(float4 const& vv) const
+    {
+        return vv.z; //< refer to vacf_filter.cu
+    }
+};
+
+struct mean_square_displacement_mobile
+  : mobile_filter
+  , sorted_square_displacement {};
+
+struct mean_square_displacement_immobile
+  : immobile_filter
+  , sorted_square_displacement {};
+
+struct mean_quartic_displacement_mobile
+  : mobile_filter
+  , sorted_quartic_displacement {};
+
+struct mean_quartic_displacement_immobile
+  : immobile_filter
+  , sorted_quartic_displacement {};
+
+struct velocity_autocorrelation_mobile
+  : mobile_filter
+  , sorted_velocity_autocorrelation {};
+
+struct velocity_autocorrelation_immobile
+  : immobile_filter
+  , sorted_velocity_autocorrelation {};
 
 template <typename vector_type,
           typename correlation_function,
@@ -275,12 +323,20 @@ cuda::function<void (float2 const*, float2 const, dsfloat*, dsfloat*, uint)>
     tcf<2>::coherent_scattering_function(cu::tcf::accumulate<cu::vector<float, 2>, cu::tcf::coherent_scattering_function>);
 
 cuda::symbol<float>
-    tcf_base::velocity_autocorrelation_mobile::mobile_fraction(cu::tcf::mobile_fraction);
+    tcf_base::mobile_fraction(cu::tcf::mobile_fraction);
 cuda::symbol<float>
-    tcf_base::velocity_autocorrelation_immobile::immobile_fraction(cu::tcf::immobile_fraction);
-cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf_base::immobile_fraction(cu::tcf::immobile_fraction);
+cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf_base::mean_square_displacement_mobile::accumulate(cu::tcf::accumulate<cu::tcf::mean_square_displacement_mobile>);
+cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf_base::mean_square_displacement_immobile::accumulate(cu::tcf::accumulate<cu::tcf::mean_square_displacement_immobile>);
+cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf_base::mean_quartic_displacement_mobile::accumulate(cu::tcf::accumulate<cu::tcf::mean_quartic_displacement_mobile>);
+cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+    tcf_base::mean_quartic_displacement_immobile::accumulate(cu::tcf::accumulate<cu::tcf::mean_quartic_displacement_immobile>);
+cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf_base::velocity_autocorrelation_mobile::accumulate(cu::tcf::accumulate<cu::tcf::velocity_autocorrelation_mobile>);
-cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
+cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
     tcf_base::velocity_autocorrelation_immobile::accumulate(cu::tcf::accumulate<cu::tcf::velocity_autocorrelation_immobile>);
 
 }} // namespace halmd::gpu

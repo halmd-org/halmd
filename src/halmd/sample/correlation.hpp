@@ -96,9 +96,9 @@ public:
     /** add correlation functions for host */
     void add_host_correlation_functions(size_t types);
     /** add fraction of most mobile particles */
-    void add_mobile_particle_vacf_filter(float fraction);
+    void add_mobile_particle_filter(float fraction);
     /** add fraction of most immobile particles */
-    void add_immobile_particle_vacf_filter(float fraction);
+    void add_immobile_particle_filter(float fraction);
 
     /** returns total number of simulation steps */
     uint64_t steps() const { return m_steps; }

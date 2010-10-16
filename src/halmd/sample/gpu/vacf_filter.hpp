@@ -40,14 +40,14 @@ struct vacf_filter<>
 template <>
 struct vacf_filter<3> : vacf_filter<>
 {
-    static cuda::function<void (float4 const*, float4 const*, float4 const*, float4 const*, uint, float*, float*)> accumulate;
+    static cuda::function<void (float4 const*, float4 const*, float4 const*, float4 const*, uint, float4*, float*)> accumulate;
     static cuda::function<void (float4 const*, float4 const*, uint, float const*, unsigned int*)> assign_index_from_msd;
 };
 
 template <>
 struct vacf_filter<2> : vacf_filter<>
 {
-    static cuda::function<void (float2 const*, float2 const*, float2 const*, float2 const*, uint, float*, float*)> accumulate;
+    static cuda::function<void (float2 const*, float2 const*, float2 const*, float2 const*, uint, float4*, float*)> accumulate;
     static cuda::function<void (float2 const*, float2 const*, uint, float const*, unsigned int*)> assign_index_from_msd;
 };
 

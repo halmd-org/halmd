@@ -34,16 +34,33 @@ struct tcf_base
         THREADS = 256,
     };
 
+    static cuda::symbol<float>
+        immobile_fraction;
+    static cuda::symbol<float>
+        mobile_fraction;
+
+    struct mean_square_displacement_mobile {
+        static cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+            accumulate;
+    };
+    struct mean_square_displacement_immobile {
+        static cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+            accumulate;
+    };
+    struct mean_quartic_displacement_mobile {
+        static cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+            accumulate;
+    };
+    struct mean_quartic_displacement_immobile {
+        static cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
+            accumulate;
+    };
     struct velocity_autocorrelation_mobile {
-        static cuda::symbol<float>
-            mobile_fraction;
-        static cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
+        static cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
             accumulate;
     };
     struct velocity_autocorrelation_immobile {
-        static cuda::symbol<float>
-            immobile_fraction;
-        static cuda::function<void (float const*, uint*, dsfloat*, dsfloat*, uint)>
+        static cuda::function<void (float4 const*, uint*, dsfloat*, dsfloat*, uint)>
             accumulate;
     };
 };

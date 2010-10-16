@@ -245,11 +245,11 @@ void correlation<dimension>::add_host_correlation_functions(size_t types)
  * add fraction of most mobile particles
  */
 template <int dimension>
-void correlation<dimension>::add_mobile_particle_vacf_filter(float fraction)
+void correlation<dimension>::add_mobile_particle_filter(float fraction)
 {
-    LOG("filter VACF using the " << fraction * 100 << "% most mobile particles");
+    LOG("filter correlations using the " << fraction * 100 << "% most mobile particles");
     foreach (tcf_variant& tcf, m_tcf) {
-        boost::apply_visitor(tcf_add_mobile_particle_vacf_filter(fraction), tcf);
+        boost::apply_visitor(tcf_add_mobile_particle_filter(fraction), tcf);
     }
 }
 
@@ -257,11 +257,11 @@ void correlation<dimension>::add_mobile_particle_vacf_filter(float fraction)
  * add fraction of most immobile particles
  */
 template <int dimension>
-void correlation<dimension>::add_immobile_particle_vacf_filter(float fraction)
+void correlation<dimension>::add_immobile_particle_filter(float fraction)
 {
-    LOG("filter VACF using the " << fraction * 100 << "% most immobile particles");
+    LOG("filter correlations using the " << fraction * 100 << "% most immobile particles");
     foreach (tcf_variant& tcf, m_tcf) {
-        boost::apply_visitor(tcf_add_immobile_particle_vacf_filter(fraction), tcf);
+        boost::apply_visitor(tcf_add_immobile_particle_filter(fraction), tcf);
     }
 }
 

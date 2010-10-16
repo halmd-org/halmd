@@ -371,7 +371,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
             std::for_each(
                 mobile_particle_fraction.begin()
               , mobile_particle_fraction.end()
-              , boost::bind(&correlation<dimension>::add_mobile_particle_vacf_filter, &m_corr, _1)
+              , boost::bind(&correlation<dimension>::add_mobile_particle_filter, &m_corr, _1)
             );
         }
         if (!m_opt["immobile-particle-fraction"].empty())
@@ -382,7 +382,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
             std::for_each(
                 immobile_particle_fraction.begin()
               , immobile_particle_fraction.end()
-              , boost::bind(&correlation<dimension>::add_immobile_particle_vacf_filter, &m_corr, _1)
+              , boost::bind(&correlation<dimension>::add_immobile_particle_filter, &m_corr, _1)
             );
         }
     }

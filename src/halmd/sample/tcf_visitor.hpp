@@ -272,10 +272,22 @@ private:
     size_t type;
 };
 
-class tcf_add_mobile_particle_vacf_filter : public boost::static_visitor<>
+class tcf_add_mobile_particle_filter : public boost::static_visitor<>
 {
 public:
-    tcf_add_mobile_particle_vacf_filter(float fraction) : fraction(fraction) {}
+    tcf_add_mobile_particle_filter(float fraction) : fraction(fraction) {}
+
+    template <template <int> class sample_type>
+    void operator()(mean_square_displacement_mobile<sample_type>& tcf) const
+    {
+        tcf.mobile_fraction.push_back(fraction);
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_quartic_displacement_mobile<sample_type>& tcf) const
+    {
+        tcf.mobile_fraction.push_back(fraction);
+    }
 
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_mobile<sample_type>& tcf) const
@@ -293,10 +305,22 @@ private:
     float fraction;
 };
 
-class tcf_add_immobile_particle_vacf_filter : public boost::static_visitor<>
+class tcf_add_immobile_particle_filter : public boost::static_visitor<>
 {
 public:
-    tcf_add_immobile_particle_vacf_filter(float fraction) : fraction(fraction) {}
+    tcf_add_immobile_particle_filter(float fraction) : fraction(fraction) {}
+
+    template <template <int> class sample_type>
+    void operator()(mean_square_displacement_immobile<sample_type>& tcf) const
+    {
+        tcf.immobile_fraction.push_back(fraction);
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_quartic_displacement_immobile<sample_type>& tcf) const
+    {
+        tcf.immobile_fraction.push_back(fraction);
+    }
 
     template <template <int> class sample_type>
     void operator()(velocity_autocorrelation_immobile<sample_type>& tcf) const
@@ -315,29 +339,29 @@ private:
 };
 
 #ifdef WITH_CUDA
-class tcf_get_sorted_vacf
+class tcf_get_sorted_by_msd
   : public boost::static_visitor<
-        boost::multi_array<cuda::vector<float>, 2> const*
+        boost::multi_array<cuda::vector<float4>, 2> const*
     >
 {
 public:
-    tcf_get_sorted_vacf(size_t type) : type(type) {}
+    tcf_get_sorted_by_msd(size_t type) : type(type) {}
 
     template <template <int> class sample_type>
-    boost::multi_array<cuda::vector<float>, 2> const*
-        operator()(sorted_velocity_autocorrelation<sample_type> const& tcf) const
+    boost::multi_array<cuda::vector<float4>, 2> const*
+        operator()(sorted_by_msd<sample_type> const& tcf) const
     {
         if (tcf.type == type) {
             return &tcf.result;
         }
-        return (boost::multi_array<cuda::vector<float>, 2> const*) 0; // noop
+        return (boost::multi_array<cuda::vector<float4>, 2> const*) 0; // noop
     }
 
     template <typename T>
-    boost::multi_array<cuda::vector<float>, 2> const*
+    boost::multi_array<cuda::vector<float4>, 2> const*
         operator()(T const& tcf) const
     {
-        return (boost::multi_array<cuda::vector<float>, 2> const*) 0; // noop
+        return (boost::multi_array<cuda::vector<float4>, 2> const*) 0; // noop
     }
 
 private:
@@ -378,6 +402,114 @@ public:
     typename boost::enable_if<
         boost::is_base_of<
             correlation_function<sample_type>
+          , mean_square_displacement_mobile<sample_type>
+        >, void>::type
+    operator()(
+        mean_square_displacement_mobile<sample_type>& tcf
+      , boost::circular_buffer<std::vector<sample_type<dimension> > >& sample
+    ) const
+    {
+        if (tcf.result.num_elements()) {
+            typename tcf_vector_type::const_iterator it, end = tcf_vector.end();
+            for (it = tcf_vector.begin(); it != end; ++it) {
+                if (boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it)) {
+                    tcf(
+                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].begin()
+                      , (*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].end()
+                      , /* ignore zero MSD */ ++(tcf.result[block].begin())
+                    );
+                    return;
+                }
+            }
+            throw std::logic_error("no pointer to sorted mean square displacements");
+        }
+    }
+
+    template <template <int> class sample_type, int dimension>
+    typename boost::enable_if<
+        boost::is_base_of<
+            correlation_function<sample_type>
+          , mean_square_displacement_immobile<sample_type>
+        >, void>::type
+    operator()(
+        mean_square_displacement_immobile<sample_type>& tcf
+      , boost::circular_buffer<std::vector<sample_type<dimension> > >& sample
+    ) const
+    {
+        if (tcf.result.num_elements()) {
+            typename tcf_vector_type::const_iterator it, end = tcf_vector.end();
+            for (it = tcf_vector.begin(); it != end; ++it) {
+                if (boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it)) {
+                    tcf(
+                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].begin()
+                      , (*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].end()
+                      , /* ignore zero MSD */ ++(tcf.result[block].begin())
+                    );
+                    return;
+                }
+            }
+            throw std::logic_error("no pointer to sorted mean square displacements");
+        }
+    }
+
+    template <template <int> class sample_type, int dimension>
+    typename boost::enable_if<
+        boost::is_base_of<
+            correlation_function<sample_type>
+          , mean_quartic_displacement_mobile<sample_type>
+        >, void>::type
+    operator()(
+        mean_quartic_displacement_mobile<sample_type>& tcf
+      , boost::circular_buffer<std::vector<sample_type<dimension> > >& sample
+    ) const
+    {
+        if (tcf.result.num_elements()) {
+            typename tcf_vector_type::const_iterator it, end = tcf_vector.end();
+            for (it = tcf_vector.begin(); it != end; ++it) {
+                if (boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it)) {
+                    tcf(
+                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].begin()
+                      , (*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].end()
+                      , /* ignore zero MSD */ ++(tcf.result[block].begin())
+                    );
+                    return;
+                }
+            }
+            throw std::logic_error("no pointer to sorted mean quartic displacements");
+        }
+    }
+
+    template <template <int> class sample_type, int dimension>
+    typename boost::enable_if<
+        boost::is_base_of<
+            correlation_function<sample_type>
+          , mean_quartic_displacement_immobile<sample_type>
+        >, void>::type
+    operator()(
+        mean_quartic_displacement_immobile<sample_type>& tcf
+      , boost::circular_buffer<std::vector<sample_type<dimension> > >& sample
+    ) const
+    {
+        if (tcf.result.num_elements()) {
+            typename tcf_vector_type::const_iterator it, end = tcf_vector.end();
+            for (it = tcf_vector.begin(); it != end; ++it) {
+                if (boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it)) {
+                    tcf(
+                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].begin()
+                      , (*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].end()
+                      , /* ignore zero MSD */ ++(tcf.result[block].begin())
+                    );
+                    return;
+                }
+            }
+            throw std::logic_error("no pointer to sorted mean quartic displacements");
+        }
+    }
+
+    template <template <int> class sample_type, int dimension>
+    typename boost::enable_if<
+        boost::is_base_of<
+            correlation_function<sample_type>
           , velocity_autocorrelation_mobile<sample_type>
         >, void>::type
     operator()(
@@ -388,10 +520,10 @@ public:
         if (tcf.result.num_elements()) {
             typename tcf_vector_type::const_iterator it, end = tcf_vector.end();
             for (it = tcf_vector.begin(); it != end; ++it) {
-                if (boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it)) {
+                if (boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it)) {
                     tcf(
-                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it))[block].begin()
-                      , (*boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it))[block].end()
+                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].begin()
+                      , (*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].end()
                       , /* ignore zero MSD */ ++(tcf.result[block].begin())
                     );
                     return;
@@ -415,10 +547,10 @@ public:
         if (tcf.result.num_elements()) {
             typename tcf_vector_type::const_iterator it, end = tcf_vector.end();
             for (it = tcf_vector.begin(); it != end; ++it) {
-                if (boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it)) {
+                if (boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it)) {
                     tcf(
-                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it))[block].begin()
-                      , (*boost::apply_visitor(tcf_get_sorted_vacf(tcf.type), *it))[block].end()
+                        /* ignore zero MSD */ ++(*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].begin()
+                      , (*boost::apply_visitor(tcf_get_sorted_by_msd(tcf.type), *it))[block].end()
                       , /* ignore zero MSD */ ++(tcf.result[block].begin())
                     );
                     return;
@@ -485,7 +617,7 @@ public:
     }
 
     template <template <int> class sample_type>
-    void operator()(sorted_velocity_autocorrelation<sample_type>& tcf) const
+    void operator()(sorted_by_msd<sample_type>& tcf) const
     {
         // noop
     }
@@ -537,9 +669,33 @@ public:
     }
 
     template <template <int> class sample_type>
-    void operator()(sorted_velocity_autocorrelation<sample_type>& tcf) const
+    void operator()(sorted_by_msd<sample_type>& tcf) const
     {
         tcf.result.resize(boost::extents[block_count][block_size]);
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_square_displacement_mobile<sample_type>& tcf) const
+    {
+        resize(tcf.result, tcf.mobile_fraction.size());
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_square_displacement_immobile<sample_type>& tcf) const
+    {
+        resize(tcf.result, tcf.immobile_fraction.size());
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_quartic_displacement_mobile<sample_type>& tcf) const
+    {
+        resize(tcf.result, tcf.mobile_fraction.size());
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_quartic_displacement_immobile<sample_type>& tcf) const
+    {
+        resize(tcf.result, tcf.immobile_fraction.size());
     }
 
     template <template <int> class sample_type>
@@ -592,9 +748,41 @@ public:
     }
 
     template <template <int> class sample_type>
-    void operator()(sorted_velocity_autocorrelation<sample_type>& tcf) const
+    void operator()(sorted_by_msd<sample_type>& tcf) const
     {
         // noop
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_square_displacement_mobile<sample_type>& tcf) const
+    {
+        if (tcf.result.num_elements()) {
+            write(tcf.dataset, tcf.result, tcf.mobile_fraction);
+        }
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_square_displacement_immobile<sample_type>& tcf) const
+    {
+        if (tcf.result.num_elements()) {
+            write(tcf.dataset, tcf.result, tcf.immobile_fraction);
+        }
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_quartic_displacement_mobile<sample_type>& tcf) const
+    {
+        if (tcf.result.num_elements()) {
+            write(tcf.dataset, tcf.result, tcf.mobile_fraction);
+        }
+    }
+
+    template <template <int> class sample_type>
+    void operator()(mean_quartic_displacement_immobile<sample_type>& tcf) const
+    {
+        if (tcf.result.num_elements()) {
+            write(tcf.dataset, tcf.result, tcf.immobile_fraction);
+        }
     }
 
     template <template <int> class sample_type>

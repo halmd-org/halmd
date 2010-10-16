@@ -30,7 +30,7 @@ enum { BLOCKS = halmd::gpu::vacf_filter<>::BLOCKS };
 enum { THREADS = halmd::gpu::vacf_filter<>::THREADS };
 
 /**
- * calculate block maximum squared displacement, and velocity autocorrelations
+ * calculate single-particle correlations and block maximum square displacement
  */
 template <typename vector_type, typename coalesced_vector_type>
 __global__ void accumulate(
@@ -39,8 +39,8 @@ __global__ void accumulate(
   , coalesced_vector_type const* g_v
   , coalesced_vector_type const* g_v0
   , uint npart
-  , float* g_vac //< velocity autocorrelation per particle
-  , float* g_msd //< maximum squared displacement per block
+  , float4* g_tcf //< correlation functions per particle
+  , float* g_msd //< maximum square displacement per block
 )
 {
     enum { dimension = vector_type::static_size };
@@ -50,8 +50,14 @@ __global__ void accumulate(
     for (uint i = GTID; i < npart; i += GTDIM) {
         vector_type r = g_r[i], r0 = g_r0[i];
         vector_type v = g_v[i], v0 = g_v0[i];
-        g_vac[i] = v * v0;
-        vector_type dr = r - r0;
+        vector_type dr = r - r0; //< displacement
+        float rr = dr * dr;
+        g_tcf[i] = make_float4(
+            rr          //< square displacement
+          , rr * rr     //< quartic displacement
+          , v * v0      //< velocity autocorrelation
+          , 0
+        );
         msd = transform<max_>(msd, dr * dr);
     }
 
@@ -110,12 +116,12 @@ namespace halmd { namespace gpu
  * device function wrappers
  */
 
-cuda::function<void (float4 const*, float4 const*, float4 const*, float4 const*, uint, float*, float*)>
+cuda::function<void (float4 const*, float4 const*, float4 const*, float4 const*, uint, float4*, float*)>
     vacf_filter<3>::accumulate(cu::vacf_filter::accumulate<cu::vector<float, 3> >);
 cuda::function<void (float4 const*, float4 const*, uint, float const*, unsigned int*)>
     vacf_filter<3>::assign_index_from_msd(cu::vacf_filter::assign_index_from_msd<cu::vector<float, 3> >);
 
-cuda::function<void (float2 const*, float2 const*, float2 const*, float2 const*, uint, float*, float*)>
+cuda::function<void (float2 const*, float2 const*, float2 const*, float2 const*, uint, float4*, float*)>
     vacf_filter<2>::accumulate(cu::vacf_filter::accumulate<cu::vector<float, 2> >);
 cuda::function<void (float2 const*, float2 const*, uint, float const*, unsigned int*)>
     vacf_filter<2>::assign_index_from_msd(cu::vacf_filter::assign_index_from_msd<cu::vector<float, 2> >);
