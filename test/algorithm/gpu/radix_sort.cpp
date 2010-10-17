@@ -32,8 +32,8 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
-#include <halmd/test/tools/cuda.hpp>
 #include <halmd/utility/timer.hpp>
+#include "test/tools/cuda.hpp"
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 

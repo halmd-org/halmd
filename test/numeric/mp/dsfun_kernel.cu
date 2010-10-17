@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/test/numeric/mp/dsfun_kernel.hpp>
+#include "dsfun_kernel.hpp"
 
 using halmd::detail::numeric::mp::dsmulss;
 

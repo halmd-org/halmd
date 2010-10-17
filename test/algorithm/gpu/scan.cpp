@@ -27,8 +27,8 @@
 #include <vector>
 
 #include <halmd/algorithm/gpu/scan.hpp>
-#include <halmd/test/tools/cuda.hpp>
 #include <halmd/utility/timer.hpp>
+#include "test/tools/cuda.hpp"
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 

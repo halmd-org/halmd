@@ -28,7 +28,7 @@
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
-# include <halmd/test/utility/lua_wrapper/lua_setup.hpp>
+#include "test/utility/lua_wrapper/lua_setup.hpp"
 
 /**
  * This test checks the dependency injection of C++ modules from Lua.

@@ -31,7 +31,7 @@
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/gpu/rand48.hpp>
-#include <halmd/test/tools/cuda.hpp>
+#include "test/tools/cuda.hpp"
 
 //
 // test random number generators in combination with accumulator class

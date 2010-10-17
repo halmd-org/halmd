@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/test/utility/lua_wrapper/lua_setup.hpp>
+#include "test/utility/lua_wrapper/lua_setup.hpp"
 
 /**
  * Initialize Lua state.

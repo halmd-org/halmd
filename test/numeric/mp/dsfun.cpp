@@ -20,7 +20,7 @@
 #define BOOST_TEST_MODULE test_dsfun
 #include <boost/test/unit_test.hpp>
 
-#include <halmd/test/numeric/mp/dsfun_kernel.hpp>
+#include "dsfun_kernel.hpp"
 
 #define BLOCKS 4096
 #define THREADS 128

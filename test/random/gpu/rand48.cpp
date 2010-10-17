@@ -27,8 +27,8 @@
 
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
-#include <halmd/test/tools/cuda.hpp>
 #include <halmd/utility/timer.hpp>
+#include "test/tools/cuda.hpp"
 
 //
 // Parallel GPU rand48 random number generator test
