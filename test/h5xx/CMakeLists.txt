@@ -5,6 +5,7 @@ target_link_libraries(test_h5xx
   halmd_io
   ${HDF5_CPP_LIBRARY}
   ${HDF5_LIBRARY}
+  z
   ${LUABIND_LIBRARIES}
   ${LUA_LIBRARIES}
   dl
