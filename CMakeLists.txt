@@ -135,5 +135,5 @@ if(WITH_CUDA)
   include_directories(${CUDA_INCLUDE_DIR})
 endif(WITH_CUDA)
 
-add_subdirectory(doc)
+add_subdirectory(doc EXCLUDE_FROM_ALL)
 add_subdirectory(halmd)
