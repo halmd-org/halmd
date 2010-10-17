@@ -20,7 +20,7 @@
 #ifndef HALMD_SCRIPT_HPP
 #define HALMD_SCRIPT_HPP
 
-#include <luabind/lua_include.hpp>
+#include <lua.hpp>
 
 #include <halmd/options.hpp>
 

@@ -24,7 +24,7 @@
 #include <map>
 #include <utility>
 
-#include <luabind/lua_include.hpp>
+#include <lua.hpp>
 
 namespace halmd
 {
