@@ -1,16 +1,8 @@
-add_library(test_lua_setup
-  lua_setup.cpp
-)
-target_link_libraries(test_lua_setup
-  ${LUABIND_LIBRARIES}
-  ${LUA_LIBRARIES}
-  dl
-)
 add_executable(test_dependency_injection
   dependency_injection.cpp
 )
 target_link_libraries(test_dependency_injection
-  test_lua_setup
+  test_tools_lua
   ${HALMD_COMMON_LIBRARIES}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
@@ -21,7 +13,7 @@ add_executable(test_map_converter
   map_converter.cpp
 )
 target_link_libraries(test_map_converter
-  test_lua_setup
+  test_tools_lua
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )

@@ -17,10 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_TEST_UTILITY_LUA_WRAPPER_LUA_SETUP_HPP
-#define HALMD_TEST_UTILITY_LUA_WRAPPER_LUA_SETUP_HPP
+#ifndef HALMD_TEST_TOOLS_LUA_HPP
+#define HALMD_TEST_TOOLS_LUA_HPP
 
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <boost/shared_ptr.hpp>
+#include <lua.hpp>
+#include <luabind/luabind.hpp>
 
 #define LUA_WARN( str )         BOOST_WARN_MESSAGE( dostring( str ), error(L) )
 #define LUA_CHECK( str )        BOOST_CHECK_MESSAGE( dostring( str ), error(L) )
@@ -31,7 +33,7 @@
  *
  * Setup Lua state with standard libraries and Luabind.
  */
-class lua_setup
+class lua_test_fixture
 {
 private:
     boost::shared_ptr<lua_State> L_;
@@ -39,7 +41,7 @@ private:
 public:
     lua_State* const L;
 
-    lua_setup();
+    lua_test_fixture();
     bool dostring(std::string const& str);
 
     struct error
@@ -51,6 +53,6 @@ public:
     };
 };
 
-extern std::ostream& operator<<(std::ostream& os, lua_setup::error const&);
+extern std::ostream& operator<<(std::ostream& os, lua_test_fixture::error const&);
 
-#endif /* ! HALMD_TEST_UTILITY_LUA_WRAPPER_LUA_SETUP_HPP */
+#endif /* ! HALMD_TEST_TOOLS_LUA_HPP */

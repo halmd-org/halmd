@@ -17,14 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "test/utility/lua_wrapper/lua_setup.hpp"
+#include "test/tools/lua.hpp"
 
 /**
  * Initialize Lua state.
  *
  * Load Lua standard libraries and Luabind global structures.
  */
-lua_setup::lua_setup()
+lua_test_fixture::lua_test_fixture()
   : L_(luaL_newstate(), lua_close) // call lua_close upon destruction
   , L(get_pointer(L_))
 {
@@ -44,7 +44,7 @@ static int pcall_handler(lua_State* L)
  * an exception, it returns true in case of success and false in case
  * of failure. This value is passed as a predicate to BOOST_*_CHECK.
  */
-bool lua_setup::dostring(std::string const& str)
+bool lua_test_fixture::dostring(std::string const& str)
 {
     lua_pushcclosure(L, &pcall_handler, 0);
 
@@ -66,7 +66,7 @@ bool lua_setup::dostring(std::string const& str)
  * This function retrieves an error message from the Lua stack.
  * It is called in case of failure with BOOST_*_CHECK_MESSAGE.
  */
-std::ostream& operator<<(std::ostream& os, lua_setup::error const& e)
+std::ostream& operator<<(std::ostream& os, lua_test_fixture::error const& e)
 {
     os << lua_tostring(e.L, -1);
 

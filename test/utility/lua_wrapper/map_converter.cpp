@@ -20,7 +20,8 @@
 #define BOOST_TEST_MODULE map_converter
 #include <boost/test/unit_test.hpp>
 
-#include "test/utility/lua_wrapper/lua_setup.hpp"
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include "test/tools/lua.hpp"
 
 using namespace boost;
 using namespace std;
@@ -47,7 +48,7 @@ void lua_to_static_map(std::map<std::string, int> const& m)
 /**
  * Test std::map converter for value type with build-in Lua converter
  */
-BOOST_FIXTURE_TEST_CASE( static_map, lua_setup )
+BOOST_FIXTURE_TEST_CASE( static_map, lua_test_fixture )
 {
     using namespace luabind;
 
@@ -78,7 +79,7 @@ std::map<std::string, boost::any> any_map_to_lua()
 /**
  * Test std::map converter for value type with custom Lua converter
  */
-BOOST_FIXTURE_TEST_CASE( any_map, lua_setup )
+BOOST_FIXTURE_TEST_CASE( any_map, lua_test_fixture )
 {
     using namespace luabind;
 

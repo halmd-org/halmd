@@ -28,7 +28,8 @@
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
-#include "test/utility/lua_wrapper/lua_setup.hpp"
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include "test/tools/lua.hpp"
 
 /**
  * This test checks the dependency injection of C++ modules from Lua.
@@ -73,7 +74,7 @@ namespace test_dummy
 /**
  * Test dependency injection using test dummy modules.
  */
-BOOST_FIXTURE_TEST_CASE( dummy_modules, lua_setup )
+BOOST_FIXTURE_TEST_CASE( dummy_modules, lua_test_fixture )
 {
     using namespace test_dummy;
     using namespace luabind;
@@ -101,7 +102,7 @@ BOOST_FIXTURE_TEST_CASE( dummy_modules, lua_setup )
  *
  * This version uses the host modules.
  */
-BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_setup )
+BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_test_fixture )
 {
     using namespace halmd;
     using namespace luabind;
@@ -158,7 +159,7 @@ BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_setup )
  *
  * This version uses the GPU modules.
  */
-BOOST_FIXTURE_TEST_CASE( manually_registered_gpu_modules, lua_setup )
+BOOST_FIXTURE_TEST_CASE( manually_registered_gpu_modules, lua_test_fixture )
 {
     using namespace halmd;
     using namespace luabind;
@@ -221,7 +222,7 @@ BOOST_FIXTURE_TEST_CASE( manually_registered_gpu_modules, lua_setup )
  *
  * This version uses the host modules.
  */
-BOOST_FIXTURE_TEST_CASE( statically_registered_host_modules, lua_setup )
+BOOST_FIXTURE_TEST_CASE( statically_registered_host_modules, lua_test_fixture )
 {
     using namespace halmd;
 
@@ -242,7 +243,7 @@ BOOST_FIXTURE_TEST_CASE( statically_registered_host_modules, lua_setup )
  *
  * This version uses the GPU modules.
  */
-BOOST_FIXTURE_TEST_CASE( statically_registered_gpu_modules, lua_setup )
+BOOST_FIXTURE_TEST_CASE( statically_registered_gpu_modules, lua_test_fixture )
 {
     using namespace halmd;
 
