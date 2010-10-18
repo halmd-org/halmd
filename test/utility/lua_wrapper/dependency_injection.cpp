@@ -105,48 +105,20 @@ BOOST_FIXTURE_TEST_CASE( dummy_modules, lua_test_fixture )
 BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_test_fixture )
 {
     using namespace halmd;
-    using namespace luabind;
 
     LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
 
-#ifndef USE_HOST_SINGLE_PRECISION
-    typedef double float_type;
-#else
-    typedef float float_type;
-#endif
+    mdsim::particle<3>::luaopen(L);
+    mdsim::box<3>::luaopen(L);
+    mdsim::integrator<3>::luaopen(L);
 
-    module(L)
-    [
-        namespace_("halmd_wrapper")
-        [
-            namespace_("mdsim")
-            [
-                class_<mdsim::particle<3>, shared_ptr<mdsim::particle<3> > >("particle_3_")
-              , class_<mdsim::box<3>, shared_ptr<mdsim::box<3> > >("box_3_")
-                    .def(constructor<
-                         shared_ptr<mdsim::box<3>::particle_type>
-                       , mdsim::box<3>::vector_type const&
-                     >())
-              , class_<mdsim::integrator<3>, shared_ptr<mdsim::integrator<3> > >("integrator_3_")
-              , namespace_("host")
-                [
-                    class_<mdsim::host::particle<3, float_type>, shared_ptr<mdsim::particle<3> >, mdsim::particle<3> >("particle_3_")
-                        .def(constructor<
-                            vector<unsigned int> const&
-                        >())
-                  , namespace_("integrators")
-                    [
-                        class_<mdsim::host::integrators::verlet<3, float_type>, shared_ptr<mdsim::integrator<3> >, mdsim::integrator<3> >("verlet_3_")
-                            .def(constructor<
-                                 shared_ptr<mdsim::host::integrators::verlet<3, float_type>::particle_type>
-                               , shared_ptr<mdsim::host::integrators::verlet<3, float_type>::box_type>
-                               , double>()
-                             )
-                    ]
-                ]
-            ]
-        ]
-    ];
+#ifndef USE_HOST_SINGLE_PRECISION
+    mdsim::host::particle<3, double>::luaopen(L);
+    mdsim::host::integrators::verlet<3, double>::luaopen(L);
+#else
+    mdsim::host::particle<3, float>::luaopen(L);
+    mdsim::host::integrators::verlet<3, float>::luaopen(L);
+#endif
 
     LUA_CHECK( "particle = assert2(halmd_wrapper.mdsim.host.particle_3_({ 1000 }))" );
     LUA_CHECK( "box = assert2(halmd_wrapper.mdsim.box_3_(particle, { 10, 10, 10 }))" );
@@ -162,51 +134,17 @@ BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_test_fixture )
 BOOST_FIXTURE_TEST_CASE( manually_registered_gpu_modules, lua_test_fixture )
 {
     using namespace halmd;
-    using namespace luabind;
 
     LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
 
-    module(L)
-    [
-        namespace_("halmd_wrapper")
-        [
-            namespace_("utility")
-            [
-                namespace_("gpu")
-                [
-                    class_<utility::gpu::device, shared_ptr<utility::gpu::device> >("device")
-                        .def(constructor<vector<int>, unsigned int>())
-                ]
-            ]
-          , namespace_("mdsim")
-            [
-                class_<mdsim::particle<3>, shared_ptr<mdsim::particle<3> > >("particle_3_")
-              , class_<mdsim::box<3>, shared_ptr<mdsim::box<3> > >("box_3_")
-                    .def(constructor<
-                         shared_ptr<mdsim::box<3>::particle_type>
-                       , mdsim::box<3>::vector_type const&
-                     >())
-              , class_<mdsim::integrator<3>, shared_ptr<mdsim::integrator<3> > >("integrator_3_")
-              , namespace_("gpu")
-                [
-                    class_<mdsim::gpu::particle<3, float>, shared_ptr<mdsim::particle<3> >, mdsim::particle<3> >("particle_3_")
-                        .def(constructor<
-                            shared_ptr<mdsim::gpu::particle<3, float>::device_type>
-                          , vector<unsigned int> const&
-                        >())
-                  , namespace_("integrators")
-                    [
-                        class_<mdsim::gpu::integrators::verlet<3, float>, shared_ptr<mdsim::integrator<3> >, mdsim::integrator<3> >("verlet_3_")
-                            .def(constructor<
-                                 shared_ptr<mdsim::gpu::integrators::verlet<3, float>::particle_type>
-                               , shared_ptr<mdsim::gpu::integrators::verlet<3, float>::box_type>
-                               , double>()
-                             )
-                    ]
-                ]
-            ]
-        ]
-    ];
+    utility::gpu::device::luaopen(L);
+
+    mdsim::particle<3>::luaopen(L);
+    mdsim::box<3>::luaopen(L);
+    mdsim::integrator<3>::luaopen(L);
+
+    mdsim::gpu::particle<3, float>::luaopen(L);
+    mdsim::gpu::integrators::verlet<3, float>::luaopen(L);
 
     LUA_CHECK( "device = assert2(halmd_wrapper.utility.gpu.device({}, 128))" );
     LUA_CHECK( "particle = assert2(halmd_wrapper.mdsim.gpu.particle_3_(device, { 1000 }))" );
