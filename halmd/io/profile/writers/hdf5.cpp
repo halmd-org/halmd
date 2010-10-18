@@ -117,10 +117,8 @@ void hdf5::write()
     file_.flush(H5F_SCOPE_GLOBAL);
 }
 
-static void register_lua(lua_State* L)
+void hdf5::luaopen(lua_State* L)
 {
-    typedef hdf5::_Base _Base;
-
     using namespace luabind;
     module(L)
     [
@@ -145,7 +143,7 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua, _1)
+        &hdf5::luaopen
     ];
 }
 

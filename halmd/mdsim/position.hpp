@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_POSITION_HPP
 #define HALMD_MDSIM_POSITION_HPP
 
+#include <lua.hpp>
+
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -32,6 +34,7 @@ class position
 {
 public:
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     position() {}
     virtual ~position() {}

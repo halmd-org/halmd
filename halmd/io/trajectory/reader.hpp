@@ -20,6 +20,8 @@
 #ifndef HALMD_IO_TRAJECTORY_READER_HPP
 #define HALMD_IO_TRAJECTORY_READER_HPP
 
+#include <lua.hpp>
+
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -32,6 +34,8 @@ class reader
 {
 public:
     static void options(po::options_description& desc);
+
+    static void luaopen(lua_State* L);
 
     reader() {}
     virtual ~reader() {}

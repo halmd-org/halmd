@@ -230,12 +230,11 @@ void hdf5<dimension>::write()
     file_.flush(H5F_SCOPE_GLOBAL);
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void hdf5<dimension>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
-
     using namespace luabind;
+    string class_name("hdf5_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -246,7 +245,7 @@ static void register_lua(lua_State* L, char const* class_name)
                 [
                     namespace_("writers")
                     [
-                        class_<T, shared_ptr<_Base>, _Base>(class_name)
+                        class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<string const&>())
                     ]
                 ]
@@ -259,10 +258,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua<hdf5<3> >, _1, "hdf5_3_")
+        &hdf5<3>::luaopen
     ]
     [
-        bind(&register_lua<hdf5<2> >, _1, "hdf5_2_")
+        &hdf5<2>::luaopen
     ];
 }
 

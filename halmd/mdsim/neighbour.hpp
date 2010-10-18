@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_NEIGHBOUR_HPP
 #define HALMD_MDSIM_NEIGHBOUR_HPP
 
+#include <lua.hpp>
+
 namespace halmd
 {
 namespace mdsim
@@ -29,6 +31,8 @@ template <int dimension>
 class neighbour
 {
 public:
+    static void luaopen(lua_State* L);
+
     neighbour() {}
     virtual ~neighbour() {}
     virtual void update() = 0;

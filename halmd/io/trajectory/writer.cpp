@@ -28,10 +28,11 @@ namespace halmd
 namespace io { namespace trajectory
 {
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void writer<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("writer_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -40,9 +41,9 @@ static void register_lua(lua_State* L, char const* class_name)
             [
                 namespace_("trajectory")
                 [
-                    class_<T, shared_ptr<T> >(class_name)
-                        .def("flush", &T::flush)
-                        .def("append", &T::append)
+                    class_<writer, shared_ptr<writer> >(class_name.c_str())
+                        .def("flush", &writer::flush)
+                        .def("append", &writer::append)
                 ]
             ]
         ]
@@ -53,10 +54,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<writer<3> >, _1, "writer_3_")
+        &writer<3>::luaopen
     ]
     [
-        bind(&register_lua<writer<2> >, _1, "writer_2_")
+        &writer<2>::luaopen
     ];
 }
 

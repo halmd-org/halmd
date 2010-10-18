@@ -133,15 +133,12 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 //    LOG_DEBUG("velocities rescaled by factor " << scale);
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
     typedef typename _Base::_Base _Base_Base;
-    typedef typename T::particle_type particle_type;
-    typedef typename T::random_type random_type;
-
     using namespace luabind;
+    string class_name("boltzmann_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -152,11 +149,15 @@ static void register_lua(lua_State* L, char const* class_name)
                 [
                     namespace_("velocities")
                     [
-                        class_<T, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name)
-                            .def(constructor<shared_ptr<particle_type>, shared_ptr<random_type>, double>())
+                        class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                            .def(constructor<
+                                 shared_ptr<particle_type>
+                               , shared_ptr<random_type>
+                               , double
+                             >())
                             .scope
                             [
-                                def("options", &T::options)
+                                def("options", &boltzmann::options)
                             ]
                     ]
                 ]
@@ -169,10 +170,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        bind(&register_lua<boltzmann<3, float, random::gpu::rand48> >, _1, "boltzmann_3_")
+        &boltzmann<3, float, random::gpu::rand48>::luaopen
     ]
     [
-        bind(&register_lua<boltzmann<2, float, random::gpu::rand48> >, _1, "boltzmann_2_")
+        &boltzmann<2, float, random::gpu::rand48>::luaopen
     ];
 }
 

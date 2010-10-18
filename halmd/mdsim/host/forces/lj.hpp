@@ -21,6 +21,8 @@
 #define HALMD_MDSIM_HOST_FORCES_LJ_HPP
 
 #include <boost/assign.hpp>
+#include <lua.hpp>
+
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
@@ -66,6 +68,8 @@ public:
     {
         return boost::assign::list_of(1.0f)(0.8f)(0.88f);
     }
+
+    static void luaopen(lua_State* L);
 
     lj(
         boost::shared_ptr<particle_type> particle

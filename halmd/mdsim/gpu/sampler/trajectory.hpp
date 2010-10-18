@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_SAMPLER_TRAJECTORY_HPP
 #define HALMD_MDSIM_GPU_SAMPLER_TRAJECTORY_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -51,6 +53,8 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<core_type> core;
+
+    static void luaopen(lua_State* L);
 
     trajectory(
         boost::shared_ptr<particle_type> particle
@@ -86,6 +90,8 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<core_type> core;
+
+    static void luaopen(lua_State* L);
 
     trajectory(
         boost::shared_ptr<particle_type> particle

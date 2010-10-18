@@ -141,7 +141,7 @@ static void log_wrapper(char const* message)
     BOOST_LOG_SEV(logger::get(), level) << message;
 }
 
-static void register_lua(lua_State* L)
+void logger::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L)
@@ -170,7 +170,7 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua, _1)
+        &logger::luaopen
     ];
 }
 

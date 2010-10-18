@@ -23,6 +23,7 @@
 #include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
@@ -64,6 +65,7 @@ public:
     boost::shared_ptr<box_type> box;
 
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     static float_type const default_skin;
 

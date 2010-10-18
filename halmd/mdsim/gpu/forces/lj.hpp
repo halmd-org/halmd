@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LJ_HPP
 #define HALMD_MDSIM_GPU_FORCES_LJ_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -46,6 +48,8 @@ public:
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
+
+    static void luaopen(lua_State* L);
 
     lj(
         boost::shared_ptr<particle_type> particle

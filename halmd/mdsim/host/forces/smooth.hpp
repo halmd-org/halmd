@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_SMOOTH_HPP
 #define HALMD_MDSIM_HOST_FORCES_SMOOTH_HPP
 
+#include <lua.hpp>
+
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -36,6 +38,8 @@ class smooth
 {
 public:
     static void options(po::options_description& desc);
+
+    static void luaopen(lua_State* L);
 
     smooth(double r_smooth);
     void compute(float_type r, float_type dr, float_type& fval, float_type& pot);

@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_VELOCITY_HPP
 #define HALMD_MDSIM_GPU_VELOCITY_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/options.hpp>
@@ -39,6 +41,8 @@ public:
     typedef typename _Base::vector_type vector_type;
 
     boost::shared_ptr<particle_type> particle;
+
+    static void luaopen(lua_State* L);
 
     velocity(
         boost::shared_ptr<particle_type> particle

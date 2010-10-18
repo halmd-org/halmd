@@ -26,6 +26,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/program_options.hpp>
+#include <lua.hpp>
 #include <string>
 #include <vector>
 
@@ -43,6 +44,8 @@ namespace po = boost::program_options;
 class options_parser
 {
 public:
+    static void luaopen(lua_State* L);
+
     options_parser(po::options_description const& desc);
     void parse_command_line(int argc, char** argv);
     void parse_config_file(std::string const& file_name);

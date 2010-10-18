@@ -39,6 +39,10 @@ class rand48
 public:
     typedef rand48_rng rng_type;
 
+    static char const* name() {
+        return "rand48";
+    }
+
     /**
      * initialize random number generator with CUDA execution dimensions
      */

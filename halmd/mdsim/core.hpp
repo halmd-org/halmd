@@ -55,6 +55,7 @@ public:
     typedef utility::profiler profiler_type;
 
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     core();
     void register_runtimes(profiler_type& profiler);

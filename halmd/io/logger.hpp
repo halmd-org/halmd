@@ -25,7 +25,7 @@
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
-
+#include <lua.hpp>
 
 namespace halmd
 {
@@ -47,6 +47,8 @@ public:
     typedef boost::log::sinks::synchronous_sink<console_backend> console_sink;
     typedef boost::log::sinks::text_file_backend file_backend;
     typedef boost::log::sinks::synchronous_sink<file_backend> file_sink;
+
+    static void luaopen(lua_State* L);
 
     logger();
     ~logger();

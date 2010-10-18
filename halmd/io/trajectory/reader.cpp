@@ -51,10 +51,11 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<ssize_t>();
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void reader<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("reader_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -63,10 +64,10 @@ static void register_lua(lua_State* L, char const* class_name)
             [
                 namespace_("trajectory")
                 [
-                    class_<T, shared_ptr<T> >(class_name)
+                    class_<reader, shared_ptr<reader> >(class_name.c_str())
                         .scope
                         [
-                            def("options", &T::options)
+                            def("options", &reader::options)
                         ]
                 ]
             ]
@@ -78,10 +79,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<reader<3> >, _1, "reader_3_")
+        &reader<3>::luaopen
     ]
     [
-        bind(&register_lua<reader<2> >, _1, "reader_2_")
+        &reader<2>::luaopen
     ];
 }
 

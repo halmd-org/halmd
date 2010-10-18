@@ -127,13 +127,11 @@ void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean,
     }
 }
 
-template <typename Module>
-static void register_lua(lua_State* L, char const* class_name)
+template <typename RandomNumberGenerator>
+void random<RandomNumberGenerator>::luaopen(lua_State* L)
 {
-    typedef typename Module::_Base _Base;
-    typedef typename Module::device_type device_type;
-
     using namespace luabind;
+    string class_name(RandomNumberGenerator::name());
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -142,10 +140,15 @@ static void register_lua(lua_State* L, char const* class_name)
             [
                 namespace_("random")
                 [
-                    class_<Module, shared_ptr<_Base>, bases<_Base> >(class_name)
-                        .def(constructor<shared_ptr<device_type>, unsigned int, unsigned int, unsigned int>())
+                    class_<random, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<device_type>
+                           , unsigned int
+                           , unsigned int
+                           , unsigned int
+                         >())
 
-                  , def("options", &Module::options)
+                  , def("options", &random::options)
                 ]
             ]
         ]
@@ -156,7 +159,7 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua<random<rand48> >, _1, "rand48")
+        &random<rand48>::luaopen
     ];
 }
 

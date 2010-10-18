@@ -21,6 +21,7 @@
 #define HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 
 #include <boost/numeric/ublas/symmetric.hpp>
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/observables/thermodynamics.hpp>
@@ -46,6 +47,8 @@ public:
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<force_type> force;
+
+    static void luaopen(lua_State* L);
 
     thermodynamics(
         boost::shared_ptr<particle_type> particle

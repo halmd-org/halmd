@@ -202,15 +202,12 @@ void power_law<dimension, float_type>::compute_impl()
     }
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension, typename float_type>
+void power_law<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
     typedef typename _Base::_Base _Base_Base;
-    typedef typename T::particle_type particle_type;
-    typedef typename T::box_type box_type;
-
     using namespace luabind;
+    string class_name("power_law_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -221,7 +218,7 @@ static void register_lua(lua_State* L, char const* class_name)
                 [
                     namespace_("forces")
                     [
-                        class_<T, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name)
+                        class_<power_law, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name.c_str())
                             .def(constructor<
                                 shared_ptr<particle_type>
                               , shared_ptr<box_type>
@@ -232,7 +229,7 @@ static void register_lua(lua_State* L, char const* class_name)
                             >())
                             .scope
                             [
-                                def("options", &T::options)
+                                def("options", &power_law::options)
                             ]
                     ]
                 ]
@@ -246,17 +243,17 @@ static __attribute__((constructor)) void register_lua()
     lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
     [
-        bind(&register_lua<power_law<3, double> >, _1, "power_law_3_")
+        &power_law<3, double>::luaopen
     ]
     [
-        bind(&register_lua<power_law<2, double> >, _1, "power_law_2_")
+        &power_law<2, double>::luaopen
     ];
 #else
     [
-        bind(&register_lua<power_law<3, float> >, _1, "power_law_3_")
+        &power_law<3, float>::luaopen
     ]
     [
-        bind(&register_lua<power_law<2, float> >, _1, "power_law_2_")
+        &power_law<2, float>::luaopen
     ];
 #endif
 }

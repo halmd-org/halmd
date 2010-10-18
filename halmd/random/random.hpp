@@ -20,6 +20,8 @@
 #ifndef HALMD_RANDOM_RANDOM_HPP
 #define HALMD_RANDOM_RANDOM_HPP
 
+#include <lua.hpp>
+
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -31,6 +33,7 @@ class random
 {
 public:
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     random() {}
     virtual ~random() {}

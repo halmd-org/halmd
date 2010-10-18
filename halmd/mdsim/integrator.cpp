@@ -55,21 +55,22 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<double>();
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void integrator<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("integrator_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
             [
-                class_<T, shared_ptr<T> >(class_name)
-                    .property("timestep", (double (T::*)() const) &T::timestep)
+                class_<integrator, shared_ptr<integrator> >(class_name.c_str())
+                    .property("timestep", (double (integrator::*)() const) &integrator::timestep)
                     .scope
                     [
-                        def("options", &T::options)
+                        def("options", &integrator::options)
                     ]
             ]
         ]
@@ -80,10 +81,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<integrator<3> >, _1, "integrator_3_")
+        &integrator<3>::luaopen
     ]
     [
-        bind(&register_lua<integrator<2> >, _1, "integrator_2_")
+        &integrator<2>::luaopen
     ];
 }
 // explicit instantiation

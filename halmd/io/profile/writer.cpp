@@ -28,7 +28,7 @@ namespace halmd
 namespace io { namespace profile
 {
 
-static void register_lua(lua_State* L)
+void writer::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L)
@@ -51,7 +51,7 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua, _1)
+        &writer::luaopen
     ];
 }
 

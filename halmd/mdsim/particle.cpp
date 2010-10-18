@@ -88,23 +88,24 @@ particle<dimension>::particle(vector<unsigned int> const& particles)
     LOG("number of particles per type: " << join(ntypes_, " "));
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void particle<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("particle_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
             [
-                class_<T, shared_ptr<T> >(class_name)
-                    .def_readonly("nbox", &T::nbox)
-                    .def_readonly("ntype", &T::ntype)
-                    .def_readonly("ntypes", &T::ntypes)
+                class_<particle, shared_ptr<particle> >(class_name.c_str())
+                    .def_readonly("nbox", &particle::nbox)
+                    .def_readonly("ntype", &particle::ntype)
+                    .def_readonly("ntypes", &particle::ntypes)
                     .scope
                     [
-                        def("options", &T::options)
+                        def("options", &particle::options)
                     ]
             ]
         ]
@@ -115,10 +116,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<particle<3> >, _1, "particle_3_")
+        &particle<3>::luaopen
     ]
     [
-        bind(&register_lua<particle<2> >, _1, "particle_2_")
+        &particle<2>::luaopen
     ];
 }
 

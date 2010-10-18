@@ -80,10 +80,8 @@ void log::write()
     }
 }
 
-static void register_lua(lua_State* L)
+void log::luaopen(lua_State* L)
 {
-    typedef log::_Base _Base;
-
     using namespace luabind;
     module(L)
     [
@@ -108,7 +106,7 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua, _1)
+        &log::luaopen
     ];
 }
 

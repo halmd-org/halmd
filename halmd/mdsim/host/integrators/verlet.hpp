@@ -21,6 +21,7 @@
 #define HALMD_MDSIM_HOST_INTEGRATORS_VERLET_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -44,6 +45,8 @@ public:
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
+
+    static void luaopen(lua_State* L);
 
     verlet(
         boost::shared_ptr<particle_type> particle

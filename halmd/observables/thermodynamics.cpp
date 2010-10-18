@@ -104,31 +104,30 @@ void thermodynamics<dimension>::sample(double time)
     time_ = time;
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void thermodynamics<dimension>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
-
     using namespace luabind;
+    string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("observables")
             [
-                class_<T, shared_ptr<_Base>, _Base>(class_name)
-                    .def("sample", &T::sample)
-                    .def("register_runtimes", &T::register_runtimes)
-                    .property("en_kin", &T::en_kin)
-                    .property("en_pot", &T::en_pot)
-                    .property("en_tot", &T::en_tot)
-                    .property("pressure", &T::pressure)
-                    .property("temp", &T::temp)
-                    .property("v_cm", &T::v_cm)
-                    .property("virial", &T::virial)
+                class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def("sample", &thermodynamics::sample)
+                    .def("register_runtimes", &thermodynamics::register_runtimes)
+                    .property("en_kin", &thermodynamics::en_kin)
+                    .property("en_pot", &thermodynamics::en_pot)
+                    .property("en_tot", &thermodynamics::en_tot)
+                    .property("pressure", &thermodynamics::pressure)
+                    .property("temp", &thermodynamics::temp)
+                    .property("v_cm", &thermodynamics::v_cm)
+                    .property("virial", &thermodynamics::virial)
                     .scope
                     [
-                        def("options", &T::options)
+                        def("options", &thermodynamics::options)
                     ]
             ]
         ]
@@ -139,10 +138,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua<thermodynamics<3> >, _1, "thermodynamics_3_")
+        &thermodynamics<3>::luaopen
     ]
     [
-        bind(&register_lua<thermodynamics<2> >, _1, "thermodynamics_2_")
+        &thermodynamics<2>::luaopen
     ];
 }
 

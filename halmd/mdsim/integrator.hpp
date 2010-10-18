@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_INTEGRATOR_HPP
 #define HALMD_MDSIM_INTEGRATOR_HPP
 
+#include <lua.hpp>
+
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -32,6 +34,7 @@ class integrator
 {
 public:
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     static double const default_timestep;
 

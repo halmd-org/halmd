@@ -40,6 +40,7 @@ class force
 {
 public:
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     force() {}
     virtual ~force() {}

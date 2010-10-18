@@ -28,8 +28,8 @@ local sampler_wrapper = {
 }
 if halmd_wrapper.mdsim.gpu then
     sampler_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.sampler.trajectory_host_2_
-      , [3] = halmd_wrapper.mdsim.gpu.sampler.trajectory_host_3_
+        [2] = halmd_wrapper.mdsim.gpu.sampler.host.trajectory_2_
+      , [3] = halmd_wrapper.mdsim.gpu.sampler.host.trajectory_3_
     }
 end
 local mdsim = {

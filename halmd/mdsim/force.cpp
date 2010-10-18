@@ -48,21 +48,22 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<string>();
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void force<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("force_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
             [
-                class_<T, shared_ptr<T> >(class_name)
-                    .def("compute", &T::compute)
+                class_<force, shared_ptr<force> >(class_name.c_str())
+                    .def("compute", &force::compute)
                     .scope
                     [
-                        def("options", &T::options)
+                        def("options", &force::options)
                     ]
             ]
         ]
@@ -73,10 +74,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<force<3> >, _1, "force_3_")
+        &force<3>::luaopen
     ]
     [
-        bind(&register_lua<force<2> >, _1, "force_2_")
+        &force<2>::luaopen
     ];
 }
 

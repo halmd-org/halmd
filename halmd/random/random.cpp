@@ -51,7 +51,7 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<std::string>();
 }
 
-static void register_lua(lua_State* L)
+void random::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L)
@@ -75,7 +75,7 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua, _1)
+        &random::luaopen
     ];
 }
 

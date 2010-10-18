@@ -22,6 +22,7 @@
 
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
+#include <lua.hpp>
 
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -43,6 +44,8 @@ public:
     typedef typename _type_traits::stress_tensor_type stress_tensor_type;
     typedef typename _type_traits::gpu::stress_tensor_type gpu_stress_tensor_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+
+    static void luaopen(lua_State* L);
 
     force() {}
     virtual matrix_type const& cutoff() = 0;

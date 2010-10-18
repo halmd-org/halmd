@@ -23,6 +23,7 @@
 #include <boost/array.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/shared_ptr.hpp>
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
@@ -76,6 +77,7 @@ public:
     displacement_impl_type const displacement_impl;
 
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     static float_type const default_cell_occupancy;
 

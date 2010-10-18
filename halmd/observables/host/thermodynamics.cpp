@@ -64,16 +64,12 @@ typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimen
     return v_cm_ / particle->nbox;
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension, typename float_type>
+void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
     typedef typename _Base::_Base _Base_Base;
-    typedef typename T::particle_type particle_type;
-    typedef typename T::box_type box_type;
-    typedef typename T::force_type force_type;
-
     using namespace luabind;
+    string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -82,7 +78,7 @@ static void register_lua(lua_State* L, char const* class_name)
             [
                 namespace_("host")
                 [
-                    class_<T, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name)
+                    class_<thermodynamics, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type>
                           , shared_ptr<box_type>
@@ -99,17 +95,17 @@ static __attribute__((constructor)) void register_lua()
     lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
     [
-        bind(&register_lua<thermodynamics<3, double> >, _1, "thermodynamics_3_")
+        &thermodynamics<3, double>::luaopen
     ]
     [
-        bind(&register_lua<thermodynamics<2, double> >, _1, "thermodynamics_2_")
+        &thermodynamics<2, double>::luaopen
     ];
 #else
     [
-        bind(&register_lua<thermodynamics<3, float> >, _1, "thermodynamics_3_")
+        &thermodynamics<3, float>::luaopen
     ]
     [
-        bind(&register_lua<thermodynamics<2, float> >, _1, "thermodynamics_2_")
+        &thermodynamics<2, float>::luaopen
     ];
 #endif
 }

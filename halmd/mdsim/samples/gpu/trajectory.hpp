@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_SAMPLES_GPU_TRAJECTORY_HPP
 #define HALMD_MDSIM_SAMPLES_GPU_TRAJECTORY_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/gpu/particle.hpp>
 
 namespace halmd
@@ -33,6 +35,8 @@ class trajectory
 public:
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
+
+    static void luaopen(lua_State* L);
 
     trajectory(
         boost::shared_ptr<particle_type> particle

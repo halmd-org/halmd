@@ -112,12 +112,11 @@ void particle<dimension, float_type>::set()
     }
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
-
     using namespace luabind;
+    string class_name("particle_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -126,9 +125,9 @@ static void register_lua(lua_State* L, char const* class_name)
             [
                 namespace_("gpu")
                 [
-                    class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
+                    class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            shared_ptr<typename T::device_type>
+                            shared_ptr<device_type>
                           , vector<unsigned int> const&
                         >())
                 ]
@@ -141,10 +140,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua<particle<3, float> >, _1, "particle_3_")
+        &particle<3, float>::luaopen
     ]
     [
-        bind(&register_lua<particle<2, float> >, _1, "particle_2_")
+        &particle<2, float>::luaopen
     ];
 }
 

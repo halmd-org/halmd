@@ -320,15 +320,11 @@ void neighbour<dimension, float_type>::update_neighbours()
     }
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension, typename float_type>
+void neighbour<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
-    typedef typename T::particle_type particle_type;
-    typedef typename T::box_type box_type;
-    typedef typename T::force_type force_type;
-
     using namespace luabind;
+    string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -337,12 +333,18 @@ static void register_lua(lua_State* L, char const* class_name)
             [
                 namespace_("gpu")
                 [
-                    class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
-                        .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, shared_ptr<force_type>, double, double>())
-                        .def("register_runtimes", &T::register_runtimes)
+                    class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                          , shared_ptr<force_type>
+                          , double
+                          , double
+                        >())
+                        .def("register_runtimes", &neighbour::register_runtimes)
                         .scope
                         [
-                            def("options", &T::options)
+                            def("options", &neighbour::options)
                         ]
                 ]
             ]
@@ -354,10 +356,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua<neighbour<3, float> >, _1, "neighbour_3_")
+        &neighbour<3, float>::luaopen
     ]
     [
-        bind(&register_lua<neighbour<2, float> >, _1, "neighbour_2_")
+        &neighbour<2, float>::luaopen
     ];
 }
 

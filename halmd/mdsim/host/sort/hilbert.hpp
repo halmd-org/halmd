@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_HOST_SORT_HILBERT_HPP
 #define HALMD_MDSIM_HOST_SORT_HILBERT_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -48,6 +50,8 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<neighbour_type> neighbour;
+
+    static void luaopen(lua_State* L);
 
     hilbert(
         boost::shared_ptr<particle_type> particle

@@ -20,6 +20,8 @@
 #ifndef HALMD_IO_TRAJECTORY_WRITER_HPP
 #define HALMD_IO_TRAJECTORY_WRITER_HPP
 
+#include <lua.hpp>
+
 namespace halmd
 {
 namespace io { namespace trajectory
@@ -29,6 +31,8 @@ template <int dimension>
 class writer
 {
 public:
+    static void luaopen(lua_State* L);
+
     writer() {}
     virtual ~writer() {}
     virtual void append() = 0;

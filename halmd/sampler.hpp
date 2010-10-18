@@ -20,6 +20,8 @@
 #ifndef HALMD_SAMPLER_HPP
 #define HALMD_SAMPLER_HPP
 
+#include <lua.hpp>
+
 #include <halmd/io/profile/writer.hpp>
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/io/trajectory/writer.hpp>
@@ -43,6 +45,8 @@ public:
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
     typedef io::profile::writer profile_writer_type;
     typedef utility::profiler profiler_type;
+
+    static void luaopen(lua_State* L);
 
     sampler(
         boost::shared_ptr<core_type> core

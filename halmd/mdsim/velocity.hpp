@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_VELOCITY_HPP
 #define HALMD_MDSIM_VELOCITY_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/options.hpp>
 
@@ -33,6 +35,7 @@ class velocity
 {
 public:
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;
 

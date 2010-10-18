@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 #define HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 
+#include <lua.hpp>
 #include <utility>
 
 #include <halmd/mdsim/host/particle.hpp>
@@ -46,6 +47,7 @@ public:
     boost::shared_ptr<random_type> random;
 
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     boltzmann(
         boost::shared_ptr<particle_type> particle

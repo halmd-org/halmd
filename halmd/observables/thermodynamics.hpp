@@ -22,6 +22,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
@@ -58,6 +59,7 @@ public:
     boost::shared_ptr<box_type> box;
 
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     thermodynamics(
         boost::shared_ptr<box_type> box

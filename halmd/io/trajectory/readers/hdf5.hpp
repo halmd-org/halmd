@@ -20,6 +20,8 @@
 #ifndef HALMD_IO_TRAJECTORY_HDF5_READER_HPP
 #define HALMD_IO_TRAJECTORY_HDF5_READER_HPP
 
+#include <lua.hpp>
+
 #include <halmd/io/trajectory/reader.hpp>
 #include <halmd/mdsim/samples/host/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>
@@ -39,12 +41,14 @@ public:
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 
+    static void luaopen(lua_State* L);
+    static bool check(std::string const& file_name);
+
     hdf5(
         boost::shared_ptr<sample_type> sample
       , std::string const& file_name
       , ssize_t offset
     );
-    static bool check(std::string const& file_name);
 
     boost::shared_ptr<sample_type> sample;
 

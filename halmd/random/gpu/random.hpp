@@ -21,9 +21,9 @@
 #define HALMD_RANDOM_GPU_RANDOM_HPP
 
 #include <algorithm>
-#include <iterator>
-
 #include <boost/shared_ptr.hpp>
+#include <lua.hpp>
+#include <iterator>
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/random/gpu/rand48.hpp>
@@ -51,6 +51,7 @@ public:
     RandomNumberGenerator rng; //< FIXME private?
 
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     //! default number of blocks per grid
     static unsigned int default_blocks() { return 32; }

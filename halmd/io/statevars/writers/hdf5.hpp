@@ -20,6 +20,8 @@
 #ifndef HALMD_IO_STATEVARS_HDF5_HPP
 #define HALMD_IO_STATEVARS_HDF5_HPP
 
+#include <lua.hpp>
+
 #include <h5xx/h5xx.hpp>
 
 #include <halmd/io/statevars/writer.hpp>
@@ -40,6 +42,8 @@ public:
     typedef statevars::writer<dimension> _Base;
     typedef typename _Base::vector_type vector_type;
     typedef boost::function<void ()> writer_functor;
+
+    static void luaopen(lua_State* L);
 
     hdf5(std::string const& file_name);
     virtual void write();

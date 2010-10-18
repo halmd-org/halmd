@@ -20,6 +20,7 @@
 #ifndef HALMD_IO_PROFILE_LOG_HPP
 #define HALMD_IO_PROFILE_LOG_HPP
 
+#include <lua.hpp>
 #include <utility>
 #include <vector>
 
@@ -40,6 +41,8 @@ public:
     typedef profile::writer _Base;
     typedef _Base::accumulator_type accumulator_type;
     typedef std::pair<accumulator_type const*, std::string> acc_desc_pair_type;
+
+    static void luaopen(lua_State* L);
 
     log() {}
     virtual void write();

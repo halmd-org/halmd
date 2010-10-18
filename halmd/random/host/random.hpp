@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <boost/random/uniform_01.hpp>
+#include <lua.hpp>
 #include <iterator>
 
 #include <halmd/random/host/gsl_rng.hpp>
@@ -38,6 +39,8 @@ class random
 public:
     typedef halmd::random::random _Base;
     typedef host::gfsr4 random_generator; // FIXME template parameter
+
+    static void luaopen(lua_State* L);
 
     random(unsigned int seed);
 

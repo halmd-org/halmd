@@ -28,17 +28,18 @@ namespace halmd
 namespace observables
 {
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void observable<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("observable_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
-            class_<T, shared_ptr<T> >(class_name)
-                .def("register_observables", &T::register_observables)
-                .def("sample", &T::sample)
+            class_<observable, shared_ptr<observable> >(class_name.c_str())
+                .def("register_observables", &observable::register_observables)
+                .def("sample", &observable::sample)
         ]
     ];
 }
@@ -47,10 +48,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<observable<3> >, _1, "observable_3_")
+        &observable<3>::luaopen
     ]
     [
-        bind(&register_lua<observable<2> >, _1, "observable_2_")
+        &observable<2>::luaopen
     ];
 }
 

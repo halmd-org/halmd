@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_PARTICLE_HPP
 #define HALMD_MDSIM_GPU_PARTICLE_HPP
 
+#include <lua.hpp>
 #include <vector>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
@@ -42,6 +43,8 @@ public:
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
     typedef utility::gpu::device device_type;
+
+    static void luaopen(lua_State* L);
 
     particle(
         boost::shared_ptr<device_type> device

@@ -21,6 +21,7 @@
 #define HALMD_UTILITY_LUA_WRAPPER_REGISTRY_HPP
 
 #include <boost/function.hpp>
+#include <boost/lexical_cast.hpp> //< Lua class names from template parameters
 #include <map>
 #include <utility>
 

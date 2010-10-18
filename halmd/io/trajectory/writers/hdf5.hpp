@@ -23,6 +23,7 @@
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/unordered_map.hpp>
+#include <lua.hpp>
 
 #include <h5xx/h5xx.hpp>
 
@@ -44,6 +45,8 @@ public:
     typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_vector_type::value_type vector_type;
+
+    static void luaopen(lua_State* L);
 
     hdf5(
         boost::shared_ptr<sample_type> sample

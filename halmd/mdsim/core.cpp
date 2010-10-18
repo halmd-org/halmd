@@ -110,34 +110,35 @@ void core<dimension>::mdstep()
     step_counter_++;
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void core<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("core_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
             [
-                class_<T, shared_ptr<T> >(class_name)
+                class_<core, shared_ptr<core> >(class_name.c_str())
                     .def(constructor<>())
-                    .def("register_runtimes", &T::register_runtimes)
-                    .def_readwrite("particle", &T::particle)
-                    .def_readwrite("box", &T::box)
-                    .def_readwrite("force", &T::force)
-                    .def_readwrite("neighbour", &T::neighbour)
-                    .def_readwrite("sort", &T::sort)
-                    .def_readwrite("integrator", &T::integrator)
-                    .def_readwrite("position", &T::position)
-                    .def_readwrite("velocity", &T::velocity)
-                    .property("step_counter", &T::step_counter)
-                    .property("time", &T::time)
-                    .def("prepare", &T::prepare)
-                    .def("mdstep", &T::mdstep)
+                    .def("register_runtimes", &core::register_runtimes)
+                    .def_readwrite("particle", &core::particle)
+                    .def_readwrite("box", &core::box)
+                    .def_readwrite("force", &core::force)
+                    .def_readwrite("neighbour", &core::neighbour)
+                    .def_readwrite("sort", &core::sort)
+                    .def_readwrite("integrator", &core::integrator)
+                    .def_readwrite("position", &core::position)
+                    .def_readwrite("velocity", &core::velocity)
+                    .property("step_counter", &core::step_counter)
+                    .property("time", &core::time)
+                    .def("prepare", &core::prepare)
+                    .def("mdstep", &core::mdstep)
                     .scope
                     [
-                        def("options", &T::options)
+                        def("options", &core::options)
                     ]
             ]
         ]
@@ -148,10 +149,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<core<3> >, _1, "core_3_")
+        &core<3>::luaopen
     ]
     [
-        bind(&register_lua<core<2> >, _1, "core_2_")
+        &core<2>::luaopen
     ];
 }
 

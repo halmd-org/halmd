@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 #define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
 // FIXME #include <halmd/mdsim/host/forces/smooth.hpp>
@@ -59,6 +61,7 @@ public:
     static int const default_index;
 
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     power_law(
         boost::shared_ptr<particle_type> particle

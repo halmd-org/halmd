@@ -20,6 +20,7 @@
 #ifndef HALMD_UTILITY_GPU_DEVICE_HPP
 #define HALMD_UTILITY_GPU_DEVICE_HPP
 
+#include <lua.hpp>
 #include <string>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
@@ -46,6 +47,7 @@ class device
 {
 public:
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     //! default number of threads per block
     static unsigned int default_threads() { return 128; }

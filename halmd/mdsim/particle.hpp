@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_PARTICLE_HPP
 #define HALMD_MDSIM_PARTICLE_HPP
 
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/options.hpp>
@@ -40,6 +41,8 @@ class particle
 {
 public:
     static void options(po::options_description& desc);
+
+    static void luaopen(lua_State* L);
 
     particle(std::vector<unsigned int> const& particles);
     virtual ~particle() {}

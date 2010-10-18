@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_SORT_HPP
 #define HALMD_MDSIM_SORT_HPP
 
+#include <lua.hpp>
+
 namespace halmd
 {
 namespace mdsim
@@ -29,6 +31,8 @@ template <int dimension>
 class sort
 {
 public:
+    static void luaopen(lua_State* L);
+
     sort() {}
     virtual ~sort() {}
     virtual void order() = 0;

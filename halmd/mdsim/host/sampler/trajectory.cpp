@@ -57,15 +57,11 @@ void trajectory<dimension, float_type>::acquire()
     time = core->time();
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension, typename float_type>
+void trajectory<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
-    typedef typename T::particle_type particle_type;
-    typedef typename T::box_type box_type;
-    typedef typename T::core_type core_type;
-
     using namespace luabind;
+    string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -76,7 +72,7 @@ static void register_lua(lua_State* L, char const* class_name)
                 [
                     namespace_("sampler")
                     [
-                        class_<T, shared_ptr<_Base>, _Base>(class_name)
+                        class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
                                  shared_ptr<particle_type>
                                , shared_ptr<box_type>
@@ -94,17 +90,17 @@ static __attribute__((constructor)) void register_lua()
     lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
     [
-        bind(&register_lua<trajectory<3, double> >, _1, "trajectory_3_")
+        &trajectory<3, double>::luaopen
     ]
     [
-        bind(&register_lua<trajectory<2, double> >, _1, "trajectory_2_")
+        &trajectory<2, double>::luaopen
     ];
 #else
     [
-        bind(&register_lua<trajectory<3, float> >, _1, "trajectory_3_")
+        &trajectory<3, float>::luaopen
     ]
     [
-        bind(&register_lua<trajectory<2, float> >, _1, "trajectory_2_")
+        &trajectory<2, float>::luaopen
     ];
 #endif
 }

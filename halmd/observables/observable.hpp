@@ -20,6 +20,8 @@
 #ifndef HALMD_OBSERVABLES_OBSERVABLE_HPP
 #define HALMD_OBSERVABLES_OBSERVABLE_HPP
 
+#include <lua.hpp>
+
 #include <halmd/io/statevars/writer.hpp>
 
 namespace halmd
@@ -37,6 +39,8 @@ class observable
 {
 public:
     typedef io::statevars::writer<dimension> writer_type; //< FIXME dimension-independent
+
+    static void luaopen(lua_State* L);
 
     observable() {};
     virtual ~observable() {}

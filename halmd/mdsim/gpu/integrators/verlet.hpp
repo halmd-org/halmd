@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATORS_VERLET_HPP
 #define HALMD_MDSIM_GPU_INTEGRATORS_VERLET_HPP
 
+#include <lua.hpp>
+
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include <halmd/mdsim/box.hpp>
@@ -53,6 +55,8 @@ public:
 
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper;
+
+    static void luaopen(lua_State* L);
 
     verlet(
         boost::shared_ptr<particle_type> particle

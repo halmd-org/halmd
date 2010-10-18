@@ -100,13 +100,11 @@ hdf5<dimension, float_type>::hdf5(
     LOG("read trajectory sample at offset " << offset << " with t = " << time);
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension, typename float_type>
+void hdf5<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
-    typedef typename T::sample_type sample_type;
-
     using namespace luabind;
+    string class_name("hdf5_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -117,7 +115,7 @@ static void register_lua(lua_State* L, char const* class_name)
                 [
                     namespace_("readers")
                     [
-                        class_<T, shared_ptr<_Base>, _Base>(class_name)
+                        class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
                                 shared_ptr<sample_type>
                                 , string const&
@@ -125,7 +123,7 @@ static void register_lua(lua_State* L, char const* class_name)
                             >())
                             .scope
                             [
-                                def("check", &T::check)
+                                def("check", &hdf5::check)
                             ]
                     ]
                 ]
@@ -138,16 +136,16 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua<hdf5<3, double> >, _1, "hdf5_3_double_")
+        &hdf5<3, double>::luaopen
     ]
     [
-        bind(&register_lua<hdf5<2, double> >, _1, "hdf5_2_double_")
+        &hdf5<2, double>::luaopen
     ]
     [
-        bind(&register_lua<hdf5<3, float> >, _1, "hdf5_3_float_")
+        &hdf5<3, float>::luaopen
     ]
     [
-        bind(&register_lua<hdf5<2, float> >, _1, "hdf5_2_float_")
+        &hdf5<2, float>::luaopen
     ];
 }
 

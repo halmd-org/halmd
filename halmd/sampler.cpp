@@ -150,35 +150,33 @@ void sampler<dimension>::sample(bool force)
         LOG_DEBUG("system state sampled at step " << step);
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void sampler<dimension>::luaopen(lua_State* L)
 {
-    typedef typename T::core_type core_type;
-    typedef typename T::observable_type observable_type;
-
     using namespace luabind;
+    string class_name("sampler_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
-            class_<T, shared_ptr<T> >(class_name)
+            class_<sampler, shared_ptr<sampler> >(class_name.c_str())
                 .def(constructor<
                     shared_ptr<core_type>
                   , uint64_t
                   , unsigned int
                   , unsigned int
                 >())
-                .def("run", &T::run)
-                .def("register_runtimes", &T::register_runtimes)
-                .def_readwrite("observables", &T::observables)
-                .def_readwrite("statevars_writer", &T::statevars_writer)
-                .def_readwrite("trajectory_writer", &T::trajectory_writer)
-                .def_readwrite("profile_writers", &T::profile_writers)
-                .property("steps", &T::steps)
-                .property("time", &T::time)
+                .def("run", &sampler::run)
+                .def("register_runtimes", &sampler::register_runtimes)
+                .def_readwrite("observables", &sampler::observables)
+                .def_readwrite("statevars_writer", &sampler::statevars_writer)
+                .def_readwrite("trajectory_writer", &sampler::trajectory_writer)
+                .def_readwrite("profile_writers", &sampler::profile_writers)
+                .property("steps", &sampler::steps)
+                .property("time", &sampler::time)
                 .scope
                 [
-                    def("options", &T::options)
+                    def("options", &sampler::options)
                 ]
         ]
     ];
@@ -188,10 +186,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<sampler<3> >, _1, "sampler_3_")
+        &sampler<3>::luaopen
     ]
     [
-        bind(&register_lua<sampler<2> >, _1, "sampler_2_")
+        &sampler<2>::luaopen
     ];
 }
 

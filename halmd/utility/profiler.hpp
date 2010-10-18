@@ -23,6 +23,7 @@
 #include <boost/fusion/include/at_key.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/map.hpp>
+#include <lua.hpp>
 
 #include <halmd/numeric/accumulator.hpp>
 
@@ -59,6 +60,8 @@ public:
     typedef accumulator<double> accumulator_type;
 
     std::vector<boost::shared_ptr<profile_writer_type> > profile_writers;
+
+    static void luaopen(lua_State* L);
 
     profiler(std::vector<boost::shared_ptr<profile_writer_type> > profile_writers);
 

@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_PARTICLE_HPP
 #define HALMD_MDSIM_HOST_PARTICLE_HPP
 
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/mdsim/particle.hpp>
@@ -39,6 +40,8 @@ public:
     typedef mdsim::particle<dimension> _Base;
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
     typedef std::vector<unsigned int> neighbour_list;
+
+    static void luaopen(lua_State* L);
 
     particle(std::vector<unsigned int> const& particles);
     virtual void set();

@@ -20,9 +20,11 @@
 #ifndef HALMD_IO_PROFILE_WRITER_HPP
 #define HALMD_IO_PROFILE_WRITER_HPP
 
-#include <halmd/numeric/accumulator.hpp>
+#include <lua.hpp>
 #include <string>
 #include <vector>
+
+#include <halmd/numeric/accumulator.hpp>
 
 namespace halmd
 {
@@ -44,6 +46,8 @@ class writer
 {
 public:
     typedef accumulator<double> accumulator_type;
+
+    static void luaopen(lua_State* L);
 
     writer() {}
     virtual ~writer() {}

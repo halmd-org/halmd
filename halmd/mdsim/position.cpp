@@ -50,21 +50,22 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<string>();
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void position<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("position_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
             [
-                class_<T, shared_ptr<T> >(class_name)
-                    .def("set", &T::set)
+                class_<position, shared_ptr<position> >(class_name.c_str())
+                    .def("set", &position::set)
                     .scope
                     [
-                        def("options", &T::options)
+                        def("options", &position::options)
                     ]
             ]
         ]
@@ -75,10 +76,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<position<3> >, _1, "position_3_")
+        &position<3>::luaopen
     ]
     [
-        bind(&register_lua<position<2> >, _1, "position_2_")
+        &position<2>::luaopen
     ];
 }
 

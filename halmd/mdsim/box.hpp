@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_BOX_HPP
 #define HALMD_MDSIM_BOX_HPP
 
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/mdsim/particle.hpp>
@@ -36,6 +37,7 @@ class box
 {
 public:
     static void options(po::options_description& desc);
+    static void luaopen(lua_State* L);
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;
     typedef mdsim::particle<dimension> particle_type;

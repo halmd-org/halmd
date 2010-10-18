@@ -211,7 +211,7 @@ static void translate_cuda_error(lua_State* L, cuda::error const& e)
     lua_pushstring(L, error.c_str());
 }
 
-static void register_lua(lua_State* L)
+void device::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L)
@@ -243,7 +243,7 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua, _1)
+        &device::luaopen
     ];
 }
 

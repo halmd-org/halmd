@@ -20,6 +20,7 @@
 #ifndef HALMD_IO_STATEVARS_WRITER_HPP
 #define HALMD_IO_STATEVARS_WRITER_HPP
 
+#include <lua.hpp>
 #include <typeinfo>
 
 #include <halmd/mdsim/type_traits.hpp>
@@ -38,6 +39,9 @@ class writer
 {
 public:
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
+
+    static void luaopen(lua_State* L);
+
     writer() {}
     virtual ~writer() {}
     virtual void write() = 0;

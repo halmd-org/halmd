@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_SAMPLES_HOST_TRAJECTORY_HPP
 #define HALMD_MDSIM_SAMPLES_HOST_TRAJECTORY_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/host/particle.hpp> //< vector_type
 #include <halmd/mdsim/particle.hpp>
 
@@ -36,6 +38,8 @@ public:
     // and must not depend on host::particle
     typedef mdsim::particle<dimension> particle_type;
     typedef typename mdsim::host::particle<dimension, float_type>::vector_type vector_type;
+
+    static void luaopen(lua_State* L);
 
     trajectory(
         boost::shared_ptr<particle_type> particle

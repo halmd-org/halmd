@@ -20,6 +20,8 @@
 #ifndef HALMD_IO_PROFILE_HDF5_HPP
 #define HALMD_IO_PROFILE_HDF5_HPP
 
+#include <lua.hpp>
+
 #include <h5xx/h5xx.hpp>
 #include <halmd/io/profile/writer.hpp>
 
@@ -38,6 +40,8 @@ public:
     typedef profile::writer _Base;
     typedef _Base::accumulator_type accumulator_type;
     typedef boost::function<void ()> writer_functor;
+
+    static void luaopen(lua_State* L);
 
     hdf5(std::string const& file_name);
     virtual void write();

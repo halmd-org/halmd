@@ -37,18 +37,19 @@ static __attribute__((constructor)) void register_option_converters()
     register_any_converter<string>();
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension>
+void sort<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    string class_name("sort_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
             [
-                class_<T, shared_ptr<T> >(class_name)
-                    .def("order", &T::order)
+                class_<sort, shared_ptr<sort> >(class_name.c_str())
+                    .def("order", &sort::order)
             ]
         ]
     ];
@@ -58,10 +59,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua<sort<3> >, _1, "sort_3_")
+        &sort<3>::luaopen
     ]
     [
-        bind(&register_lua<sort<2> >, _1, "sort_2_")
+        &sort<2>::luaopen
     ];
 }
 

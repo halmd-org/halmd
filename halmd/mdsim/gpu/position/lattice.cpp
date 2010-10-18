@@ -140,15 +140,11 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());
 }
 
-template <typename T>
-static void register_lua(lua_State* L, char const* class_name)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
-    typedef typename T::_Base _Base;
-    typedef typename T::particle_type particle_type;
-    typedef typename T::box_type box_type;
-    typedef typename T::random_type random_type;
-
     using namespace luabind;
+    string class_name("lattice_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -159,8 +155,12 @@ static void register_lua(lua_State* L, char const* class_name)
                 [
                     namespace_("position")
                     [
-                        class_<T, shared_ptr<_Base>, bases<_Base> >(class_name)
-                            .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, shared_ptr<random_type> >())
+                        class_<lattice, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                            .def(constructor<
+                                 shared_ptr<particle_type>
+                               , shared_ptr<box_type>
+                               , shared_ptr<random_type>
+                             >())
                     ]
                 ]
             ]
@@ -172,10 +172,10 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        bind(&register_lua<lattice<3, float, random::gpu::rand48> >, _1, "lattice_3_")
+        &lattice<3, float, random::gpu::rand48>::luaopen
     ]
     [
-        bind(&register_lua<lattice<2, float, random::gpu::rand48> >, _1, "lattice_2_")
+        &lattice<2, float, random::gpu::rand48>::luaopen
     ];
 }
 

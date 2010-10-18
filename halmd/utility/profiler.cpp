@@ -58,10 +58,8 @@ void profiler::register_accumulator(
     );
 }
 
-static void register_lua(lua_State* L)
+void profiler::luaopen(lua_State* L)
 {
-    typedef profiler::profile_writer_type profile_writer_type;
-
     using namespace luabind;
     module(L)
     [
@@ -81,7 +79,7 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        bind(&register_lua, _1)
+        &profiler::luaopen
     ];
 }
 
