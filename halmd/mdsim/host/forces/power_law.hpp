@@ -20,12 +20,17 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 #define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 
+#include <boost/assign.hpp>
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <utility>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
-// FIXME #include <halmd/mdsim/host/forces/smooth.hpp>
+#include <halmd/mdsim/host/forces/pair_short_ranged.hpp>
+#include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/numeric/pow.hpp>
 #include <halmd/options.hpp>
 
 namespace halmd
@@ -40,83 +45,129 @@ namespace mdsim { namespace host { namespace forces
  */
 
 template <int dimension, typename float_type>
-class power_law
-  : public mdsim::host::force<dimension, float_type>
+class power_law_potential
 {
 public:
-    typedef mdsim::host::force<dimension, float_type> _Base;
-    typedef typename _Base::matrix_type matrix_type;
-    typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::stress_tensor_type stress_tensor_type;
+    typedef typename mdsim::host::force<dimension, float_type>::matrix_type matrix_type;
 
-    typedef host::particle<dimension, float_type> particle_type;
-    typedef mdsim::box<dimension> box_type;
-    // FIXME typedef host::forces::smooth<dimension, float_type> smooth_type;
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    // FIXME boost::shared_ptr<smooth_type> smooth;
-
-    //! default power-law index
-    static int const default_index;
-
-    static void options(po::options_description& desc);
-    static void luaopen(lua_State* L);
-
-    power_law(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-      // FIXME , boost::shared_ptr<smooth_type> smooth
+    power_law_potential(
+        unsigned ntype
       , int index
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
     );
-    virtual void compute();
 
-    //! returns potential cutoff distance
-    virtual matrix_type const& cutoff()
+    /** 
+     * Compute potential and its derivative at squared distance 'rr'
+     * for particles of type 'a' and 'b'
+     *
+     * Call index-dependent template implementations
+     * for efficiency of fixed_pow() function.
+     */
+    std::pair<float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
-        return r_cut_;
+        switch (index_) {
+            case 6:  return impl_<6>(rr, a, b);
+            case 12: return impl_<12>(rr, a, b);
+            case 24: return impl_<24>(rr, a, b);
+            case 48: return impl_<48>(rr, a, b);
+            default:
+                LOG_WARNING_ONCE("Using non-optimised force routine for index " << index_);
+                return impl_<0>(rr, a, b);
+        }
     }
 
-    //! returns average potential energy per particle
-    virtual double potential_energy()
+    matrix_type const& r_cut() const { return r_cut_; }
+
+    float_type r_cut(unsigned a, unsigned b) const
     {
-        return en_pot_;
+        return r_cut_(a, b);
     }
 
-    //! potential part of stress tensor
-    virtual stress_tensor_type potential_stress()
+    float_type rr_cut(unsigned a, unsigned b) const
     {
-        return stress_pot_;
+        return rr_cut_(a, b);
     }
 
 private:
+    /** optimise pow() function by providing the index at compile time */
+    template <int index>
+    std::pair<float_type, float_type> impl_(float_type rr, unsigned a, unsigned b)
+    {
+        // choose arbitrary index_ if template parameter index = 0
+        float_type rni;
+        if (index > 0) {
+            rni = fixed_pow<index>(sigma_(a, b) / std::sqrt(rr));
+        }
+        else {
+            rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);
+        }
+        float_type en_pot = epsilon_(a, b) * rni;      // U(r)
+        float_type fval = (index > 0 ? index : index_) * en_pot / rr;
+                                                       // F(r) / r
+        en_pot -= en_cut_(a, b);                       // shift potential
+
+        return std::make_pair(fval, en_pot);
+    }
+
     /** power law index */
     int index_;
-    /** potential well depths in MD units */
+    /** interaction strength in MD units */
     matrix_type epsilon_;
-    /** pair separation in MD units */
+    /** interaction range in MD units */
     matrix_type sigma_;
-    /** cutoff length in units of sigma */
-    matrix_type r_cut_sigma_;
     /** cutoff length in MD units */
     matrix_type r_cut_;
     /** square of cutoff length */
     matrix_type rr_cut_;
-    /** square of pair separation */
-    matrix_type sigma2_;
-    /** potential energy at cutoff length in MD units */
+    /** potential energy at cutoff in MD units */
     matrix_type en_cut_;
-    /** average potential energy per particle */
-    double en_pot_;
-    /** potential part of stress tensor */
-    stress_tensor_type stress_pot_;
+};
 
-    /** optimise pow() function by providing the index at compile time */
-    template <int index>
-    void compute_impl();
+template <int dimension, typename float_type>
+class power_law
+  : public pair_short_ranged<dimension, float_type, power_law_potential<dimension, float_type> >
+{
+public:
+    static void options(po::options_description& desc);
+
+    typedef power_law_potential<dimension, float_type> potential_type;
+    typedef mdsim::host::forces::pair_short_ranged<dimension, float_type, potential_type> _Base;
+    typedef typename _Base::particle_type particle_type;
+    typedef typename _Base::box_type box_type;
+
+    static void luaopen(lua_State* L);
+
+    power_law(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , int index
+      , boost::array<float, 3> const& cutoff
+      , boost::array<float, 3> const& epsilon
+      , boost::array<float, 3> const& sigma
+    );
+
+    static int default_index()
+    {
+        return 12;
+    }
+
+    // FIXME define sensible default values
+    static boost::array<float, 3> default_cutoff()
+    {
+        return boost::assign::list_of(2.5f)(2.5f)(2.5f);
+    }
+
+    static boost::array<float, 3> default_epsilon()
+    {
+        return boost::assign::list_of(1.0f)(1.5f)(0.5f);
+    }
+
+    static boost::array<float, 3> default_sigma()
+    {
+        return boost::assign::list_of(1.0f)(0.8f)(0.88f);
+    }
 };
 
 }}} // namespace mdsim::host::forces
