@@ -21,10 +21,13 @@
 #define HALMD_MDSIM_HOST_FORCES_LJ_HPP
 
 #include <boost/assign.hpp>
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <utility>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
+#include <halmd/mdsim/host/forces/pair_short_ranged.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/options.hpp>
@@ -34,69 +37,45 @@ namespace halmd
 namespace mdsim { namespace host { namespace forces
 {
 
+/**
+ * define Lennard-Jones potential and parameters
+ */
 template <int dimension, typename float_type>
-class lj
-  : public mdsim::host::force<dimension, float_type>
+class lj_potential
 {
 public:
-    static void options(po::options_description& desc);
+    typedef typename mdsim::host::force<dimension, float_type>::matrix_type matrix_type;
 
-    typedef mdsim::host::force<dimension, float_type> _Base;
-    typedef typename _Base::matrix_type matrix_type;
-    typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::stress_tensor_type stress_tensor_type;
-
-    typedef host::particle<dimension, float_type> particle_type;
-    typedef mdsim::box<dimension> box_type;
-    typedef host::forces::smooth<dimension, float_type> smooth_type;
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<smooth_type> smooth;
-
-    static boost::array<float, 3> default_cutoff()
-    {
-        return boost::assign::list_of(2.5f)(2.5f)(2.5f);
-    }
-
-    static boost::array<float, 3> default_epsilon()
-    {
-        return boost::assign::list_of(1.0f)(1.5f)(0.5f);
-    }
-
-    static boost::array<float, 3> default_sigma()
-    {
-        return boost::assign::list_of(1.0f)(0.8f)(0.88f);
-    }
-
-    static void luaopen(lua_State* L);
-
-    lj(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-      // FIXME , boost::shared_ptr<smooth_type> smooth
+    lj_potential(
+        unsigned ntype
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
     );
-    virtual void compute();
 
-    //! returns potential cutoff distance
-    virtual matrix_type const& cutoff()
+    /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
+    std::pair<float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
-        return r_cut_;
+        float_type sigma2 = sigma2_(a, b);
+        float_type rri = sigma2 / rr;
+        float_type r6i = rri * rri * rri;
+        float_type epsilon = epsilon_(a, b);
+        float_type fval = 48 * rri * r6i * (r6i - 0.5) * (epsilon / sigma2);
+        float_type en_pot = 4 * epsilon * r6i * (r6i - 1) - en_cut_(a, b);
+
+        return std::make_pair(fval, en_pot);
     }
 
-    //! returns average potential energy per particle
-    virtual double potential_energy()
+    matrix_type const& r_cut() const { return r_cut_; }
+
+    float_type r_cut(unsigned a, unsigned b) const
     {
-        return en_pot_;
+        return r_cut_(a, b);
     }
 
-    //! potential part of stress tensor
-    virtual stress_tensor_type potential_stress()
+    float_type rr_cut(unsigned a, unsigned b) const
     {
-        return stress_pot_;
+        return rr_cut_(a, b);
     }
 
 private:
@@ -114,10 +93,44 @@ private:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-    /** average potential energy per particle */
-    double en_pot_;
-    /** potential part of stress tensor */
-    stress_tensor_type stress_pot_;
+};
+
+template <int dimension, typename float_type>
+class lj
+  : public pair_short_ranged<dimension, float_type, lj_potential<dimension, float_type> >
+{
+public:
+    static void options(po::options_description& desc);
+
+    typedef lj_potential<dimension, float_type> potential_type;
+    typedef mdsim::host::forces::pair_short_ranged<dimension, float_type, potential_type> _Base;
+    typedef typename _Base::particle_type particle_type;
+    typedef typename _Base::box_type box_type;
+
+    static void luaopen(lua_State* L);
+
+    lj(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::array<float, 3> const& cutoff
+      , boost::array<float, 3> const& epsilon
+      , boost::array<float, 3> const& sigma
+    );
+
+    static boost::array<float, 3> default_cutoff()
+    {
+        return boost::assign::list_of(2.5f)(2.5f)(2.5f);
+    }
+
+    static boost::array<float, 3> default_epsilon()
+    {
+        return boost::assign::list_of(1.0f)(1.5f)(0.5f);
+    }
+
+    static boost::array<float, 3> default_sigma()
+    {
+        return boost::assign::list_of(1.0f)(0.8f)(0.88f);
+    }
 };
 
 }}} // namespace mdsim::host::forces
