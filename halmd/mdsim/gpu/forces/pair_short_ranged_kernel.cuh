@@ -39,15 +39,12 @@ namespace mdsim { namespace gpu { namespace forces
 namespace pair_short_ranged_kernel
 {
 
-struct _globals
-{
-    /** number of placeholders per neighbour list */
-    unsigned int neighbour_size;
-    /** neighbour list stride */
-    unsigned int neighbour_stride;
-    /** cuboid box edge length */
-    variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length;
-};
+/** number of placeholders per neighbour list */
+static __constant__ unsigned int neighbour_size;
+/** neighbour list stride */
+static __constant__ unsigned int neighbour_stride;
+/** cuboid box edge length */
+static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length;
 
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
@@ -55,7 +52,6 @@ struct _globals
 template <typename vector_type, typename potential_type, typename gpu_vector_type, typename stress_tensor_type>
 __device__ void compute(
     potential_type const& potential
-  , _globals const& globals
   , texture<float4> const t_r
   , gpu_vector_type* g_f
   , unsigned int* g_neighbour
@@ -83,9 +79,9 @@ __device__ void compute(
     vector_type f = 0;
 #endif
 
-    for (unsigned int k = 0; k < globals.neighbour_size; ++k) {
+    for (unsigned int k = 0; k < neighbour_size; ++k) {
         // coalesced read from neighbour list
-        unsigned int j = g_neighbour[k * globals.neighbour_stride + i];
+        unsigned int j = g_neighbour[k * neighbour_stride + i];
         // skip placeholder particles
         if (j == particle_kernel::PLACEHOLDER) {
             break;
@@ -101,7 +97,7 @@ __device__ void compute(
         // particle distance vector
         vector_type r = r1 - r2;
         // enforce periodic boundary conditions
-        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(globals.box_length)));
+        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(box_length)));
         // squared particle distance
         value_type rr = inner_prod(r, r);
         // enforce cutoff length

@@ -29,8 +29,6 @@ namespace mdsim { namespace gpu { namespace forces
 namespace lj_kernel
 {
 
-/** global constants common to all truncated pair potentials */
-__constant__ pair_short_ranged_kernel::_globals globals;
 /** positions, types */
 static texture<float4> r_;
 /** array of Lennard-Jones potential parameters for all combinations of particle types */
@@ -66,7 +64,7 @@ __global__ void compute(
 {
     // call template function for truncated pair interactions
     pair_short_ranged_kernel::compute<vector_type>(
-       lj_potential(), globals, r_
+       lj_potential(), r_
      , g_f, g_neighbour, g_en_pot, g_stress_pot
     );
 }
@@ -76,9 +74,9 @@ __global__ void compute(
 template <int dimension>
 lj_wrapper<dimension> const lj_wrapper<dimension>::kernel = {
     lj_kernel::compute<fixed_vector<float, dimension> >
-  , get<dimension>(lj_kernel::globals.box_length)
-  , lj_kernel::globals.neighbour_size
-  , lj_kernel::globals.neighbour_stride
+  , get<dimension>(pair_short_ranged_kernel::box_length)
+  , pair_short_ranged_kernel::neighbour_size
+  , pair_short_ranged_kernel::neighbour_stride
   , lj_kernel::r_
   , lj_kernel::param_
 };
