@@ -29,17 +29,14 @@ namespace mdsim { namespace gpu { namespace forces
 namespace lj_kernel
 {
 
-//
-// indices of potential parameters, must start with 1
-// (0 is reserved for cutoff)
-//
+/**
+ * indices of potential parameters
+ */
 enum {
-    /** potential well depths in MD units */
-    EPSILON = 1,
-    /** square of pair separation */
-    SIGMA2,
-    /** potential energy at cutoff length in MD units */
-    EN_CUT,
+    RR_CUT      /**< square of cutoff length */
+  , EPSILON     /**< potential well depths in MD units */
+  , SIGMA2      /**< square of pair separation */
+  , EN_CUT      /**< potential energy at cutoff length in MD units */
 };
 
 // forward declaration for host code

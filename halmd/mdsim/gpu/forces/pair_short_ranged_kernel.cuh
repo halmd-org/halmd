@@ -62,7 +62,6 @@ __global__ void compute(
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;
     unsigned int i = GTID;
-    potential_type const potential;
 
     // load particle associated with this thread
     unsigned int type1;
@@ -92,8 +91,8 @@ __global__ void compute(
         unsigned int type2;
         vector_type r2;
         tie(r2, type2) = untagged<vector_type>(tex1Dfetch(r_, j));
-        // potential parameters
-        fixed_vector<float, 4> param = tex1Dfetch(potential.param(), symmetric_matrix::lower_index(type1, type2));
+        // pair potential
+        potential_type const potential(type1, type2);
 
         // particle distance vector
         vector_type r = r1 - r2;
@@ -102,12 +101,12 @@ __global__ void compute(
         // squared particle distance
         value_type rr = inner_prod(r, r);
         // enforce cutoff length
-        if (rr >= param[RR_CUT]) {
+        if (!potential.within_range(rr)) {
             continue;
         }
 
         value_type fval, en_pot;
-        tie(fval, en_pot) = potential(rr, param);
+        tie(fval, en_pot) = potential(rr);
 
         // contribution to stress tensor from this particle
         stress_pot += 0.5f * fval * force_kernel::make_stress_tensor(rr, r);
@@ -125,7 +124,8 @@ __global__ void compute(
 } // namespace pair_short_ranged_kernel
 
 template <int dimension, typename potential_type>
-pair_short_ranged_wrapper<dimension, potential_type> const pair_short_ranged_wrapper<dimension, potential_type>::kernel = {
+pair_short_ranged_wrapper<dimension, potential_type> const
+pair_short_ranged_wrapper<dimension, potential_type>::kernel = {
     pair_short_ranged_kernel::compute<fixed_vector<float, dimension>, potential_type>
   , get<dimension>(pair_short_ranged_kernel::box_length_)
   , pair_short_ranged_kernel::neighbour_size_

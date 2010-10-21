@@ -27,18 +27,6 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
-namespace pair_short_ranged_kernel
-{
-
-//
-// index of cutoff in potential parameters, is assumed to be zero
-//
-enum {
-    /** square of cutoff length */
-    RR_CUT = 0
-};
-
-} // namespace pair_short_ranged_kernel
 
 template <int dimension, typename potential_type>
 struct pair_short_ranged_wrapper

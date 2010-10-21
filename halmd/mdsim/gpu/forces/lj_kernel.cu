@@ -32,24 +32,56 @@ namespace lj_kernel
 /** array of Lennard-Jones potential parameters for all combinations of particle types */
 static texture<float4> param_;
 
-/** define Lennard-Jones potential */
-struct lj_potential
+/**
+ * Lennard-Jones interaction of a pair of particles.
+ */
+class lj_potential
 {
-    template <typename float_type, typename param_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type> operator() (float_type rr, param_type const& param) const
+public:
+    /**
+     * Construct Lennard-Jones pair interaction potential.
+     *
+     * Fetch potential parameters from texture cache for particle pair.
+     *
+     * @param type1 type of first interacting particle
+     * @param type2 type of second interacting particle
+     */
+    HALMD_GPU_ENABLED lj_potential(unsigned int type1, unsigned int type2)
+      : pair_(
+            tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
+        ) {}
+
+    /**
+     * Check whether particles are in interaction range.
+     *
+     * @param rr squared distance between particles
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED bool within_range(float_type rr) const
     {
-        float_type rri = param[SIGMA2] / rr;
+        return (rr < pair_[RR_CUT]);
+    }
+
+    /**
+     * Compute force and potential for interaction.
+     *
+     * @param rr squared distance between particles
+     * @returns tuple of absolute unit force and potential
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
+    {
+        float_type rri = pair_[SIGMA2] / rr;
         float_type ri6 = rri * rri * rri;
-        float_type fval = 48 * param[EPSILON] * rri * ri6 * (ri6 - 0.5f) / param[SIGMA2];
-        float_type en_pot = 4 * param[EPSILON] * ri6 * (ri6 - 1) - param[EN_CUT];
+        float_type fval = 48 * pair_[EPSILON] * rri * ri6 * (ri6 - 0.5f) / pair_[SIGMA2];
+        float_type en_pot = 4 * pair_[EPSILON] * ri6 * (ri6 - 1) - pair_[EN_CUT];
 
         return make_tuple(fval, en_pot);
     }
 
-    HALMD_GPU_ENABLED texture<float4> const& param() const
-    {
-        return param_;
-    }
+private:
+    /** potential parameters for particle pair */
+    fixed_vector<float, 4> pair_;
 };
 
 } // namespace lj_kernel

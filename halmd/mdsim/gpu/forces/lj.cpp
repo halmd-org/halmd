@@ -88,7 +88,7 @@ lj_potential<dimension, float_type>::lj_potential(
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
         p[lj_kernel::EPSILON] = epsilon_.data()[i];
-        p[pair_short_ranged_kernel::RR_CUT] = rr_cut_.data()[i];
+        p[lj_kernel::RR_CUT] = rr_cut_.data()[i];
         p[lj_kernel::SIGMA2] = sigma2_.data()[i];
         p[lj_kernel::EN_CUT] = en_cut_.data()[i];
         param[i] = p;
