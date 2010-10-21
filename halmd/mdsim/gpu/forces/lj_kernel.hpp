@@ -31,13 +31,12 @@ namespace lj_kernel
 {
 
 //
-// Lennard Jones potential parameter indices
+// indices of potential parameters, must start with 1
+// (0 is reserved for cutoff)
 //
 enum {
     /** potential well depths in MD units */
-    EPSILON,
-    /** square of cutoff length */
-    RR_CUT,
+    EPSILON = 1,
     /** square of pair separation */
     SIGMA2,
     /** potential energy at cutoff length in MD units */
@@ -53,27 +52,21 @@ struct lj_wrapper
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
 
-    /** positions, types */
-    cuda::texture<float4> r;
+    /** compute forces, internal energy, and potential part of stress tensor */
+    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, stress_tensor_type*)> compute;
     /** cubic box edgle length */
     cuda::symbol<vector_type> box_length;
     /** number of placeholders per neighbour list */
     cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */
     cuda::symbol<unsigned int> neighbour_stride;
+    /** positions, types */
+    cuda::texture<float4> r;
     /** Lennard-Jones potential parameters */
-    cuda::texture<float4> ljparam;
-    /** compute Lennard-Jones forces */
-    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, stress_tensor_type*)> compute;
+    cuda::texture<float4> param;
 
     static lj_wrapper const kernel;
 };
-
-template <int dimension>
-lj_wrapper<dimension> const& get_lj_kernel()
-{
-    return lj_wrapper<dimension>::kernel;
-}
 
 }}} // namespace mdsim::gpu::forces
 

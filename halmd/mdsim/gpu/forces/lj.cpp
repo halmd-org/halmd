@@ -17,21 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/foreach.hpp>
 #include <boost/numeric/ublas/io.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <cmath>
 #include <string>
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/lj.hpp>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/pair_short_ranged_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::fusion;
 using namespace boost::numeric::ublas;
 using namespace std;
 
@@ -41,35 +38,28 @@ namespace mdsim { namespace gpu { namespace forces
 {
 
 /**
- * Initialize Lennard-Jones potential parameters
+ * Initialise Lennard-Jones potential parameters
  */
 template <int dimension, typename float_type>
-lj<dimension, float_type>::lj(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+lj_potential<dimension, float_type>::lj_potential(
+    unsigned ntype
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
   , array<float, 3> const& sigma
 )
-  // dependency injection
-  : particle(particle)
-  , box(box)
   // allocate potential parameters
-  , epsilon_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
-  , sigma_(scalar_matrix<float_type>(particle->ntype, particle->ntype, 1))
-  , r_cut_sigma_(particle->ntype, particle->ntype)
-  , r_cut_(particle->ntype, particle->ntype)
-  , rr_cut_(particle->ntype, particle->ntype)
-  , sigma2_(particle->ntype, particle->ntype)
-  , en_cut_(particle->ntype, particle->ntype)
-  , g_ljparam_(epsilon_.data().size())
-  // allocate result variables
-  , g_en_pot_(particle->dim.threads())
-  , g_stress_pot_(particle->dim.threads())
+  : epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
+  , sigma_(scalar_matrix<float_type>(ntype, ntype, 1))
+  , r_cut_sigma_(ntype, ntype)
+  , r_cut_(ntype, ntype)
+  , rr_cut_(ntype, ntype)
+  , sigma2_(ntype, ntype)
+  , en_cut_(ntype, ntype)
+  , g_param_(epsilon_.data().size())
 {
     // FIXME support any number of types
-    for (size_t i = 0; i < std::min(particle->ntype, 2U); ++i) {
-        for (size_t j = i; j < std::min(particle->ntype, 2U); ++j) {
+    for (unsigned i = 0; i < std::min(ntype, 2U); ++i) {
+        for (unsigned j = i; j < std::min(ntype, 2U); ++j) {
             epsilon_(i, j) = epsilon[i + j];
             sigma_(i, j) = sigma[i + j];
             r_cut_sigma_(i, j) = cutoff[i + j];
@@ -77,8 +67,8 @@ lj<dimension, float_type>::lj(
     }
 
     // precalculate derived parameters
-    for (size_t i = 0; i < particle->ntype; ++i) {
-        for (size_t j = i; j < particle->ntype; ++j) {
+    for (unsigned i = 0; i < ntype; ++i) {
+        for (unsigned j = i; j < ntype; ++j) {
             r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
@@ -94,66 +84,41 @@ lj<dimension, float_type>::lj(
     LOG("potential cutoff length: r_c = " << r_cut_sigma_);
     LOG("potential cutoff energy: U = " << en_cut_);
 
-    cuda::host::vector<float4> ljparam(g_ljparam_.size());
-    for (size_t i = 0; i < ljparam.size(); ++i) {
+    cuda::host::vector<float4> param(g_param_.size());
+    for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
         p[lj_kernel::EPSILON] = epsilon_.data()[i];
-        p[lj_kernel::RR_CUT] = rr_cut_.data()[i];
+        p[pair_short_ranged_kernel::RR_CUT] = rr_cut_.data()[i];
         p[lj_kernel::SIGMA2] = sigma2_.data()[i];
         p[lj_kernel::EN_CUT] = en_cut_.data()[i];
-        ljparam[i] = p;
+        param[i] = p;
     }
-    cuda::copy(ljparam, g_ljparam_);
-    cuda::copy(static_cast<vector_type>(box->length()), get_lj_kernel<dimension>().box_length);
-/* FIXME
-    // initialise CUDA symbols
-    typedef lj_wrapper<dimension> _gpu;
 
-    get_lj_kernel<dimension>().r = // cuda::texture<float4>
-    get_lj_kernel<dimension>().box_length =  // cuda::symbol<vector_type>
-    get_lj_kernel<dimension>().neighbour_size = // cuda::symbol<unsigned int> ;
-    get_lj_kernel<dimension>().neighbour_stride = // cuda::symbol<unsigned int> ;
-    get_lj_kernel<dimension>().ljparam = // cuda::texture<float4> ;
-*/
+    cuda::copy(param, g_param_);
 }
 
-/**
- * register module runtime accumulators
- */
 template <int dimension, typename float_type>
-void lj<dimension, float_type>::register_runtimes(profiler_type& profiler)
+lj<dimension, float_type>::lj(
+    shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+  , array<float, 3> const& cutoff
+  , array<float, 3> const& epsilon
+  , array<float, 3> const& sigma
+)
+  // dependency injection
+  : _Base(
+        make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
+      , particle
+      , box
+    )
 {
-    profiler.register_map(runtime_);
-}
-
-/**
- * Compute Lennard-Jones forces
- */
-template <int dimension, typename float_type>
-void lj<dimension, float_type>::compute()
-{
-#ifdef USE_FORCE_DSFUN
-#endif /* HALMD_VARIANT_FORCE_DSFUN */
-
-    scoped_timer<timer> timer_(at_key<compute_>(runtime_));
-    cuda::copy(particle->neighbour_size, get_lj_kernel<dimension>().neighbour_size);
-    cuda::copy(particle->neighbour_stride, get_lj_kernel<dimension>().neighbour_stride);
-    get_lj_kernel<dimension>().r.bind(particle->g_r);
-    get_lj_kernel<dimension>().ljparam.bind(g_ljparam_);
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    get_lj_kernel<dimension>().compute(
-        particle->g_f
-      , particle->g_neighbour
-      , g_en_pot_
-      , g_stress_pot_
-    );
-    cuda::thread::synchronize();
 }
 
 template <int dimension, typename float_type>
 void lj<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename _Base::_Base _Base_Base;
+    typedef typename _Base::_Base _Base2;
+    typedef typename _Base2::_Base _Base3;
     using namespace luabind;
     string class_name("lj_" + lexical_cast<string>(dimension) + "_");
     module(L)
@@ -166,7 +131,8 @@ void lj<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("forces")
                     [
-                        class_<lj, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name.c_str())
+                        // skip auxiliary class _Base [_Base=forces::pair_short_ranged]
+                        class_<lj, shared_ptr<_Base3>, bases<_Base2, _Base3> >(class_name.c_str())
                             .def(constructor<
                                 shared_ptr<particle_type>
                               , shared_ptr<box_type>

@@ -20,67 +20,54 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LJ_HPP
 #define HALMD_MDSIM_GPU_FORCES_LJ_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
-#include <halmd/mdsim/box.hpp>
+// #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
-#include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/utility/profiler.hpp>
-#include <halmd/options.hpp>
+#include <halmd/mdsim/gpu/forces/pair_short_ranged.hpp>
+#include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
+// #include <halmd/mdsim/gpu/particle.hpp>
 
 namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
 
+/**
+ * define Lennard-Jones potential and parameters
+ */
 template <int dimension, typename float_type>
-class lj
-  : public mdsim::gpu::force<dimension, float_type>
+class lj_potential
 {
 public:
-    typedef mdsim::gpu::force<dimension, float_type> _Base;
-    typedef typename _Base::matrix_type matrix_type;
-    typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
-    typedef gpu::particle<dimension, float> particle_type;
-    typedef mdsim::box<dimension> box_type;
-    typedef utility::profiler profiler_type;
+    typedef typename mdsim::gpu::force<dimension, float_type>::matrix_type matrix_type;
 
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-
-    static void luaopen(lua_State* L);
-
-    lj(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+    lj_potential(
+        unsigned ntype
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
     );
-    void register_runtimes(profiler_type& profiler);
-    virtual void compute();
 
-    //! returns potential cutoff distance
-    virtual matrix_type const& cutoff()
+    lj_wrapper<dimension> const& get_kernel() const
     {
-        return r_cut_;
+        return lj_wrapper<dimension>::kernel;
     }
 
-    //! returns potential energies of particles
-    virtual cuda::vector<float> const& potential_energy()
+    cuda::vector<float4> const& g_param() const { return g_param_; }
+
+    matrix_type const& r_cut() const { return r_cut_; }
+
+    float_type r_cut(unsigned a, unsigned b) const
     {
-        return g_en_pot_;
+        return r_cut_(a, b);
     }
 
-    /** potential part of stress tensors of particles */
-    virtual cuda::vector<gpu_stress_tensor_type> const& potential_stress()
+    float_type rr_cut(unsigned a, unsigned b) const
     {
-        return g_stress_pot_;
+        return rr_cut_(a, b);
     }
-
-    // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( compute_, "Lennard-Jones forces" );
 
 private:
     /** potential well depths in MD units */
@@ -97,16 +84,30 @@ private:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-    /** Lennard-Jones potential parameters */
-    cuda::vector<float4> g_ljparam_;
-    /** potential energy for each particle */
-    cuda::vector<float> g_en_pot_;
-    /** potential part of stress tensor for each particle */
-    cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
+    /** potential parameters at CUDA device */
+    cuda::vector<float4> g_param_;
+};
 
-    boost::fusion::map<
-        boost::fusion::pair<compute_, accumulator<double> >
-    > runtime_;
+template <int dimension, typename float_type>
+class lj
+  : public pair_short_ranged<dimension, float_type, lj_potential<dimension, float_type> >
+{
+public:
+    typedef lj_potential<dimension, float_type> potential_type;
+    typedef mdsim::gpu::forces::pair_short_ranged<dimension, float_type, potential_type> _Base;
+    typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::particle_type particle_type;
+    typedef typename _Base::box_type box_type;
+
+    static void luaopen(lua_State* L);
+
+    lj(
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<box_type> box
+      , boost::array<float, 3> const& cutoff
+      , boost::array<float, 3> const& epsilon
+      , boost::array<float, 3> const& sigma
+    );
 };
 
 }}} // namespace mdsim::gpu::forces
@@ -114,3 +115,4 @@ private:
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_HPP */
+
