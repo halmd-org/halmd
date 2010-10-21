@@ -33,6 +33,8 @@ namespace lj_kernel
 __constant__ pair_short_ranged_kernel::_globals globals;
 /** positions, types */
 static texture<float4> r_;
+/** array of Lennard-Jones potential parameters for all combinations of particle types */
+static texture<float4> param_;
 
 /** define Lennard-Jones potential */
 struct lj_potential
@@ -48,8 +50,10 @@ struct lj_potential
         return make_tuple(fval, en_pot);
     }
 
-    /** array of Lennard-Jones potential parameters for all combinations of particle types */
-    static texture<float4> param;
+    HALMD_GPU_ENABLED texture<float4> const& param() const
+    {
+        return param_;
+    }
 };
 
 template <typename vector_type, typename gpu_vector_type, typename stress_tensor_type>
@@ -76,7 +80,7 @@ lj_wrapper<dimension> const lj_wrapper<dimension>::kernel = {
   , lj_kernel::globals.neighbour_size
   , lj_kernel::globals.neighbour_stride
   , lj_kernel::r_
-  , lj_kernel::lj_potential::param
+  , lj_kernel::param_
 };
 
 template class lj_wrapper<3>;

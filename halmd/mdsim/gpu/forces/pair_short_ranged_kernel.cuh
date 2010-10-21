@@ -96,7 +96,7 @@ __device__ void compute(
         vector_type r2;
         tie(r2, type2) = untagged<vector_type>(tex1Dfetch(t_r, j));
         // potential parameters
-        fixed_vector<float, 4> param = tex1Dfetch(potential.param, symmetric_matrix::lower_index(type1, type2));
+        fixed_vector<float, 4> param = tex1Dfetch(potential.param(), symmetric_matrix::lower_index(type1, type2));
 
         // particle distance vector
         vector_type r = r1 - r2;
