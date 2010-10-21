@@ -22,10 +22,11 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
+#include <halmd/mdsim/gpu/forces/pair_short_ranged_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/utility/timer.hpp>
 #include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 namespace halmd
 {
@@ -47,6 +48,9 @@ public:
     typedef gpu::particle<dimension, float> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef utility::profiler profiler_type;
+
+    typedef typename potential_type::gpu_potential_type gpu_potential_type;
+    typedef pair_short_ranged_wrapper<dimension, gpu_potential_type> gpu_wrapper;
 
     boost::shared_ptr<potential_type> potential;
     boost::shared_ptr<particle_type> particle;
@@ -107,17 +111,7 @@ pair_short_ranged<dimension, float_type, potential_type>::pair_short_ranged(
   , g_en_pot_(particle->dim.threads())
   , g_stress_pot_(particle->dim.threads())
 {
-    cuda::copy(static_cast<vector_type>(box->length()), potential->get_kernel().box_length);
-/* FIXME
-    // initialise CUDA symbols
-    typedef lj_wrapper<dimension> _gpu;
-
-    potential->get_kernel().box_length =  // cuda::symbol<vector_type>
-    potential->get_kernel().neighbour_size = // cuda::symbol<unsigned int> ;
-    potential->get_kernel().neighbour_stride = // cuda::symbol<unsigned int> ;
-    potential->get_kernel().r = // cuda::texture<float4>
-    potential->get_kernel().param = // cuda::texture<float4> ;
-*/
+    cuda::copy(static_cast<vector_type>(box->length()), gpu_wrapper::kernel.box_length);
 }
 
 /**
@@ -131,13 +125,13 @@ void pair_short_ranged<dimension, float_type, potential_type>::compute()
 
     scoped_timer<timer> timer_(boost::fusion::at_key<compute_>(runtime_));
 
-    cuda::copy(particle->neighbour_size, potential->get_kernel().neighbour_size);
-    cuda::copy(particle->neighbour_stride, potential->get_kernel().neighbour_stride);
-    potential->get_kernel().r.bind(particle->g_r);
+    cuda::copy(particle->neighbour_size, gpu_wrapper::kernel.neighbour_size);
+    cuda::copy(particle->neighbour_stride, gpu_wrapper::kernel.neighbour_stride);
+    gpu_wrapper::kernel.r.bind(particle->g_r);
     potential->get_kernel().param.bind(potential->g_param());
 
     cuda::configure(particle->dim.grid, particle->dim.block);
-    potential->get_kernel().compute(particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_);
+    gpu_wrapper::kernel.compute(particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_);
     cuda::thread::synchronize();
 }
 

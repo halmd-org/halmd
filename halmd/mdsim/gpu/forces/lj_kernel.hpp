@@ -21,7 +21,6 @@
 #define HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
@@ -43,25 +42,14 @@ enum {
     EN_CUT,
 };
 
+// forward declaration for host code
+class lj_potential;
+
 } // namespace lj_kernel
 
 template <int dimension>
 struct lj_wrapper
 {
-    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
-    typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
-
-    /** compute forces, internal energy, and potential part of stress tensor */
-    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, stress_tensor_type*)> compute;
-    /** cubic box edgle length */
-    cuda::symbol<vector_type> box_length;
-    /** number of placeholders per neighbour list */
-    cuda::symbol<unsigned int> neighbour_size;
-    /** neighbour list stride */
-    cuda::symbol<unsigned int> neighbour_stride;
-    /** positions, types */
-    cuda::texture<float4> r;
     /** Lennard-Jones potential parameters */
     cuda::texture<float4> param;
 

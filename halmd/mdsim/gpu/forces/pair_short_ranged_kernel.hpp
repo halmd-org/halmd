@@ -20,6 +20,9 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_HPP
 #define HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/mdsim/type_traits.hpp>
+
 namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
@@ -36,6 +39,27 @@ enum {
 };
 
 } // namespace pair_short_ranged_kernel
+
+template <int dimension, typename potential_type>
+struct pair_short_ranged_wrapper
+{
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
+
+    /** compute forces, internal energy, and potential part of stress tensor */
+    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, stress_tensor_type*)> compute;
+    /** cubic box edgle length */
+    cuda::symbol<vector_type> box_length;
+    /** number of placeholders per neighbour list */
+    cuda::symbol<unsigned int> neighbour_size;
+    /** neighbour list stride */
+    cuda::symbol<unsigned int> neighbour_stride;
+    /** positions, types */
+    cuda::texture<float4> r;
+
+    static pair_short_ranged_wrapper const kernel;
+};
 
 }}} // namespace mdsim::gpu::forces
 

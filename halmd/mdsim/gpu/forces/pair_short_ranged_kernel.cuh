@@ -40,20 +40,20 @@ namespace pair_short_ranged_kernel
 {
 
 /** number of placeholders per neighbour list */
-static __constant__ unsigned int neighbour_size;
+static __constant__ unsigned int neighbour_size_;
 /** neighbour list stride */
-static __constant__ unsigned int neighbour_stride;
+static __constant__ unsigned int neighbour_stride_;
 /** cuboid box edge length */
-static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length;
+static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+/** positions, types */
+static texture<float4> r_;
 
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
  */
 template <typename vector_type, typename potential_type, typename gpu_vector_type, typename stress_tensor_type>
-__device__ void compute(
-    potential_type const& potential
-  , texture<float4> const t_r
-  , gpu_vector_type* g_f
+__global__ void compute(
+    gpu_vector_type* g_f
   , unsigned int* g_neighbour
   , float* g_en_pot
   , stress_tensor_type* g_stress_pot
@@ -62,11 +62,12 @@ __device__ void compute(
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;
     unsigned int i = GTID;
+    potential_type const potential;
 
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(t_r, i));
+    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(r_, i));
 
     // contribution to potential energy
     float en_pot_ = 0;
@@ -79,9 +80,9 @@ __device__ void compute(
     vector_type f = 0;
 #endif
 
-    for (unsigned int k = 0; k < neighbour_size; ++k) {
+    for (unsigned int k = 0; k < neighbour_size_; ++k) {
         // coalesced read from neighbour list
-        unsigned int j = g_neighbour[k * neighbour_stride + i];
+        unsigned int j = g_neighbour[k * neighbour_stride_ + i];
         // skip placeholder particles
         if (j == particle_kernel::PLACEHOLDER) {
             break;
@@ -90,14 +91,14 @@ __device__ void compute(
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) = untagged<vector_type>(tex1Dfetch(t_r, j));
+        tie(r2, type2) = untagged<vector_type>(tex1Dfetch(r_, j));
         // potential parameters
         fixed_vector<float, 4> param = tex1Dfetch(potential.param(), symmetric_matrix::lower_index(type1, type2));
 
         // particle distance vector
         vector_type r = r1 - r2;
         // enforce periodic boundary conditions
-        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(box_length)));
+        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(box_length_)));
         // squared particle distance
         value_type rr = inner_prod(r, r);
         // enforce cutoff length
@@ -122,6 +123,15 @@ __device__ void compute(
 }
 
 } // namespace pair_short_ranged_kernel
+
+template <int dimension, typename potential_type>
+pair_short_ranged_wrapper<dimension, potential_type> const pair_short_ranged_wrapper<dimension, potential_type>::kernel = {
+    pair_short_ranged_kernel::compute<fixed_vector<float, dimension>, potential_type>
+  , get<dimension>(pair_short_ranged_kernel::box_length_)
+  , pair_short_ranged_kernel::neighbour_size_
+  , pair_short_ranged_kernel::neighbour_stride_
+  , pair_short_ranged_kernel::r_
+};
 
 }}} // namespace mdsim::gpu::forces
 

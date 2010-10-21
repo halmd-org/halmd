@@ -29,8 +29,6 @@ namespace mdsim { namespace gpu { namespace forces
 namespace lj_kernel
 {
 
-/** positions, types */
-static texture<float4> r_;
 /** array of Lennard-Jones potential parameters for all combinations of particle types */
 static texture<float4> param_;
 
@@ -54,35 +52,18 @@ struct lj_potential
     }
 };
 
-template <typename vector_type, typename gpu_vector_type, typename stress_tensor_type>
-__global__ void compute(
-    gpu_vector_type* g_f
-  , unsigned int* g_neighbour
-  , float* g_en_pot
-  , stress_tensor_type* g_stress_pot
-)
-{
-    // call template function for truncated pair interactions
-    pair_short_ranged_kernel::compute<vector_type>(
-       lj_potential(), r_
-     , g_f, g_neighbour, g_en_pot, g_stress_pot
-    );
-}
-
 } // namespace lj_kernel
 
 template <int dimension>
 lj_wrapper<dimension> const lj_wrapper<dimension>::kernel = {
-    lj_kernel::compute<fixed_vector<float, dimension> >
-  , get<dimension>(pair_short_ranged_kernel::box_length)
-  , pair_short_ranged_kernel::neighbour_size
-  , pair_short_ranged_kernel::neighbour_stride
-  , lj_kernel::r_
-  , lj_kernel::param_
+    lj_kernel::param_
 };
 
 template class lj_wrapper<3>;
 template class lj_wrapper<2>;
+
+template class pair_short_ranged_wrapper<3, lj_kernel::lj_potential>;
+template class pair_short_ranged_wrapper<2, lj_kernel::lj_potential>;
 
 }}} // namespace mdsim::gpu::forces
 

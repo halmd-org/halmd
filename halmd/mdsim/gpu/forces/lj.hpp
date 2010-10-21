@@ -42,6 +42,7 @@ class lj_potential
 {
 public:
     typedef typename mdsim::gpu::force<dimension, float_type>::matrix_type matrix_type;
+    typedef lj_kernel::lj_potential gpu_potential_type;
 
     lj_potential(
         unsigned ntype
