@@ -72,9 +72,8 @@ public:
 
 private:
 #ifndef __CUDACC__
-    // provide host constructor to avoid GCC 4.4 warning
-    texture(textureReference const& dummy)
-      : tex(dummy) {}
+    // provide dummy host constructor to avoid GCC 4.4 warning
+    texture() : tex(textureReference()) {}
 #endif
 
     textureReference const& tex;
