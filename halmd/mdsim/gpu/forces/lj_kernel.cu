@@ -87,4 +87,3 @@ template class lj_wrapper<2>;
 }}} // namespace mdsim::gpu::forces
 
 } // namespace halmd
-

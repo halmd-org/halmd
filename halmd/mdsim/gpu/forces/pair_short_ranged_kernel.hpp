@@ -42,4 +42,3 @@ enum {
 } // namespace halmd
 
 #endif  /* ! HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_HPP */
-

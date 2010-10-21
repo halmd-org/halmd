@@ -115,4 +115,3 @@ public:
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_HPP */
-
