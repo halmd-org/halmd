@@ -38,7 +38,7 @@ static texture<float4> r_;
 struct lj_potential
 {
     template <typename float_type, typename param_type>
-    tuple<float_type, float_type> operator() (float_type rr, param_type const& param) const
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator() (float_type rr, param_type const& param) const
     {
         float_type rri = param[SIGMA2] / rr;
         float_type ri6 = rri * rri * rri;
