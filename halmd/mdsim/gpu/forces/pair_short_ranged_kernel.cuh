@@ -137,4 +137,6 @@ pair_short_ranged_wrapper<dimension, potential_type>::kernel = {
 
 } // namespace halmd
 
+#else
+#error This header must be included at most once per compilation unit.
 #endif /* ! HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_CUH */
