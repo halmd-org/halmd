@@ -44,7 +44,8 @@ class lj_potential
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
-    static char const* name() { return "lennard_jones"; }
+    static char const* name() { return "Lennard-Jones"; }
+    static char const* module_name() { return "lennard_jones"; }
 
     static void options(po::options_description& desc);
     static void luaopen(lua_State* L);

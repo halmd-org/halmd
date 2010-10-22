@@ -91,7 +91,9 @@ public:
     }
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( compute_, "force computation" );
+    HALMD_PROFILE_TAG(
+        compute_, std::string("computation of ") + potential_type::name() + " forces"
+    );
 
 private:
     /** potential energy for each particle */
@@ -159,7 +161,7 @@ void pair_short_ranged<dimension, float_type, potential_type>::luaopen(lua_State
     using namespace luabind;
     using std::string;
     string class_name(
-        potential_type::name() + string("_") + boost::lexical_cast<string>(dimension) + string("_")
+        string(potential_type::module_name()) + "_" + boost::lexical_cast<string>(dimension) + "_"
     );
     module(L)
     [

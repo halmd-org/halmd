@@ -42,6 +42,9 @@ public:
     typedef lj_kernel::lj_potential gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
+    static char const* name() { return "Lennard-Jones"; }
+    static char const* module_name() { return "lennard_jones"; }
+
     static void luaopen(lua_State* L);
 
     lj_potential(
@@ -50,8 +53,6 @@ public:
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
     );
-
-    static char const* name() { return "lennard_jones"; }
 
     cuda::texture<float4> const& get_kernel_param() const
     {

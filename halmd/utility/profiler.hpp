@@ -85,7 +85,7 @@ private:
  */
 #define HALMD_PROFILE_TAG(__tag__, __desc__)    \
     struct __tag__ {                            \
-        static char const* desc() {             \
+        static std::string desc() {             \
             return __desc__;                    \
         }                                       \
     }

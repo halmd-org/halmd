@@ -20,10 +20,19 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_PAIR_SHORT_RANGED_HPP
 #define HALMD_MDSIM_HOST_FORCES_PAIR_SHORT_RANGED_HPP
 
+#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
+#include <lua.hpp>
+#include <string>
+
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/profiler.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 namespace halmd
 {
@@ -46,6 +55,7 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef host::forces::smooth<dimension, float_type> smooth_type;
+    typedef utility::profiler profiler_type;
 
     boost::shared_ptr<potential_type> potential;
     boost::shared_ptr<particle_type> particle;
@@ -61,6 +71,7 @@ public:
       // FIXME , boost::shared_ptr<smooth_type> smooth
     );
     inline virtual void compute();
+    inline void register_runtimes(profiler_type& profiler);
 
     //! return potential cutoffs
     virtual matrix_type const& cutoff()
@@ -80,11 +91,20 @@ public:
         return stress_pot_;
     }
 
+    // module runtime accumulator descriptions
+    HALMD_PROFILE_TAG(
+        compute_, std::string("computation of ") + potential_type::name() + " forces"
+    );
+
 protected:
     /** average potential energy per particle */
     double en_pot_;
     /** potential part of stress tensor */
     stress_tensor_type stress_pot_;
+
+    boost::fusion::map<
+        boost::fusion::pair<compute_, accumulator<double> >
+    > runtime_;
 };
 
 template <int dimension, typename float_type, typename potential_type>
@@ -101,11 +121,22 @@ pair_short_ranged<dimension, float_type, potential_type>::pair_short_ranged(
 {}
 
 /**
+ * register module runtime accumulators
+ */
+template <int dimension, typename float_type, typename potential_type>
+void pair_short_ranged<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
+}
+
+/**
  * Compute pair forces, potential energy, and potential part of stress tensor
  */
 template <int dimension, typename float_type, typename potential_type>
 void pair_short_ranged<dimension, float_type, potential_type>::compute()
 {
+    scoped_timer<timer> timer_(boost::fusion::at_key<compute_>(runtime_));
+
     // initialise particle forces to zero
     std::fill(particle->f.begin(), particle->f.end(), 0);
 
@@ -166,7 +197,7 @@ void pair_short_ranged<dimension, float_type, potential_type>::luaopen(lua_State
     using namespace luabind;
     using std::string;
     string class_name(
-        potential_type::name() + string("_") + boost::lexical_cast<string>(dimension) + string("_")
+        potential_type::module_name() + string("_") + boost::lexical_cast<string>(dimension) + string("_")
     );
     module(L)
     [
@@ -184,7 +215,7 @@ void pair_short_ranged<dimension, float_type, potential_type>::luaopen(lua_State
                               , boost::shared_ptr<particle_type>
                               , boost::shared_ptr<box_type>
                             >())
-//                             .def("register_runtimes", &pair_short_ranged::register_runtimes)
+                            .def("register_runtimes", &pair_short_ranged::register_runtimes)
                     ]
                 ]
             ]
