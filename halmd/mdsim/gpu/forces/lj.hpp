@@ -20,14 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LJ_HPP
 #define HALMD_MDSIM_GPU_FORCES_LJ_HPP
 
+#include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
-// #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/forces/pair_short_ranged.hpp>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
-// #include <halmd/mdsim/gpu/particle.hpp>
 
 namespace halmd
 {
@@ -37,12 +35,14 @@ namespace mdsim { namespace gpu { namespace forces
 /**
  * define Lennard-Jones potential and parameters
  */
-template <int dimension, typename float_type>
+template <typename float_type>
 class lj_potential
 {
 public:
-    typedef typename mdsim::gpu::force<dimension, float_type>::matrix_type matrix_type;
     typedef lj_kernel::lj_potential gpu_potential_type;
+    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+
+    static void luaopen(lua_State* L);
 
     lj_potential(
         unsigned ntype
@@ -50,6 +50,8 @@ public:
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
     );
+
+    static char const* name() { return "lennard_jones"; }
 
     cuda::texture<float4> const& get_kernel_param() const
     {
@@ -87,28 +89,6 @@ private:
     matrix_type en_cut_;
     /** potential parameters at CUDA device */
     cuda::vector<float4> g_param_;
-};
-
-template <int dimension, typename float_type>
-class lj
-  : public pair_short_ranged<dimension, float_type, lj_potential<dimension, float_type> >
-{
-public:
-    typedef lj_potential<dimension, float_type> potential_type;
-    typedef mdsim::gpu::forces::pair_short_ranged<dimension, float_type, potential_type> _Base;
-    typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::particle_type particle_type;
-    typedef typename _Base::box_type box_type;
-
-    static void luaopen(lua_State* L);
-
-    lj(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-      , boost::array<float, 3> const& cutoff
-      , boost::array<float, 3> const& epsilon
-      , boost::array<float, 3> const& sigma
-    );
 };
 
 }}} // namespace mdsim::gpu::forces

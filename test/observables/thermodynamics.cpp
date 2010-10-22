@@ -160,12 +160,12 @@ shared_ptr<mdsim::force<dimension> > make_lj_force(
 {
 #ifdef WITH_CUDA
     if (backend == "gpu") {
-        return make_shared<mdsim::gpu::forces::lj<dimension, float> >(
-            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+        typedef mdsim::gpu::forces::lj_potential<float> potential_type;
+        typedef mdsim::gpu::forces::pair_short_ranged<dimension, float, potential_type> force_type;
+        return make_shared<force_type>(
+            make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
+          , dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
           , box
-          , cutoff
-          , epsilon
-          , sigma
         );
     }
 #endif /* WITH_CUDA */

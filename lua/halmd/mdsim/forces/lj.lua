@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -21,19 +21,21 @@ require("halmd.modules")
 
 -- grab environment
 local lj_wrapper = {
-    host = {
+    potential = halmd_wrapper.mdsim.gpu.forces.lj_potential
+  , host = {
         [2] = halmd_wrapper.mdsim.host.forces.lj_2_
       , [3] = halmd_wrapper.mdsim.host.forces.lj_3_
     }
 }
 if halmd_wrapper.mdsim.gpu then
     lj_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.forces.lj_2_
-      , [3] = halmd_wrapper.mdsim.gpu.forces.lj_3_
+        [2] = halmd_wrapper.mdsim.gpu.forces.lennard_jones_2_
+      , [3] = halmd_wrapper.mdsim.gpu.forces.lennard_jones_3_
     }
 end
+
 local mdsim = {
-  core = require("halmd.mdsim.core")
+    core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
 local args = require("halmd.options")
@@ -57,8 +59,9 @@ function new()
     local particle = assert(core.particle)
     local box = assert(core.box)
 
+    local potential = lj_wrapper.potential(particle.ntype, cutoff, epsilon, sigma)
     if not device() then
         return lj_wrapper.host[dimension](particle, box, cutoff, epsilon, sigma)
     end
-    return lj_wrapper.gpu[dimension](particle, box, cutoff, epsilon, sigma)
+    return lj_wrapper.gpu[dimension](potential, particle, box)
 end

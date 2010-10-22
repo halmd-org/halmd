@@ -40,8 +40,8 @@ namespace mdsim { namespace gpu { namespace forces
 /**
  * Initialise Lennard-Jones potential parameters
  */
-template <int dimension, typename float_type>
-lj_potential<dimension, float_type>::lj_potential(
+template <typename float_type>
+lj_potential<float_type>::lj_potential(
     unsigned ntype
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
@@ -97,30 +97,11 @@ lj_potential<dimension, float_type>::lj_potential(
     cuda::copy(param, g_param_);
 }
 
-template <int dimension, typename float_type>
-lj<dimension, float_type>::lj(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-  , array<float, 3> const& cutoff
-  , array<float, 3> const& epsilon
-  , array<float, 3> const& sigma
-)
-  // dependency injection
-  : _Base(
-        make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
-      , particle
-      , box
-    )
+template <typename float_type>
+void lj_potential<float_type>::luaopen(lua_State* L)
 {
-}
-
-template <int dimension, typename float_type>
-void lj<dimension, float_type>::luaopen(lua_State* L)
-{
-    typedef typename _Base::_Base _Base2;
-    typedef typename _Base2::_Base _Base3;
     using namespace luabind;
-    string class_name("lj_" + lexical_cast<string>(dimension) + "_");
+    string class_name("lj_potential");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -131,16 +112,13 @@ void lj<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("forces")
                     [
-                        // skip auxiliary class _Base [_Base=forces::pair_short_ranged]
-                        class_<lj, shared_ptr<_Base3>, bases<_Base2, _Base3> >(class_name.c_str())
+                        class_<lj_potential, shared_ptr<lj_potential> >(class_name.c_str())
                             .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
+                                unsigned
                               , array<float, 3> const&
                               , array<float, 3> const&
                               , array<float, 3> const&
                             >())
-                            .def("register_runtimes", &lj::register_runtimes)
                     ]
                 ]
             ]
@@ -150,18 +128,24 @@ void lj<dimension, float_type>::luaopen(lua_State* L)
 
 static __attribute__((constructor)) void register_lua()
 {
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        &lj_potential<float>::luaopen
+    ];
+
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        &lj<3, float>::luaopen
+        &pair_short_ranged<3, float, lj_potential<float> >::luaopen
     ]
     [
-        &lj<2, float>::luaopen
+        &pair_short_ranged<2, float, lj_potential<float> >::luaopen
     ];
 }
 
 // explicit instantiation
-template class lj<3, float>;
-template class lj<2, float>;
+template class lj_potential<float>;
+template class pair_short_ranged<3, float, lj_potential<float> >;
+template class pair_short_ranged<2, float, lj_potential<float> >;
 
 }}} // namespace mdsim::gpu::forces
 
