@@ -86,13 +86,7 @@ private:
 
 } // namespace lj_kernel
 
-template <int dimension>
-lj_wrapper<dimension> const lj_wrapper<dimension>::kernel = {
-    lj_kernel::param_
-};
-
-template class lj_wrapper<3>;
-template class lj_wrapper<2>;
+cuda::texture<float4> lj_wrapper::param = lj_kernel::param_;
 
 template class pair_short_ranged_wrapper<3, lj_kernel::lj_potential>;
 template class pair_short_ranged_wrapper<2, lj_kernel::lj_potential>;

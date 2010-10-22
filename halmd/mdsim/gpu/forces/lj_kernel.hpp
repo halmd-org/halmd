@@ -44,13 +44,10 @@ class lj_potential;
 
 } // namespace lj_kernel
 
-template <int dimension>
 struct lj_wrapper
 {
     /** Lennard-Jones potential parameters */
-    cuda::texture<float4> param;
-
-    static lj_wrapper const kernel;
+    static cuda::texture<float4> param;
 };
 
 }}} // namespace mdsim::gpu::forces
