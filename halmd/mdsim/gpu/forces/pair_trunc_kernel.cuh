@@ -137,6 +137,4 @@ pair_trunc_wrapper<dimension, potential_type>::kernel = {
 
 } // namespace halmd
 
-#else
-#error This header must be included at most once per compilation unit.
 #endif /* ! HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH */
