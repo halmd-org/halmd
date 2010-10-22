@@ -170,12 +170,12 @@ shared_ptr<mdsim::force<dimension> > make_lj_force(
     }
 #endif /* WITH_CUDA */
     if (backend == "host") {
-        return make_shared<mdsim::host::forces::lj<dimension, double> >(
-            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+        typedef mdsim::host::forces::lj_potential<double> potential_type;
+        typedef mdsim::host::forces::pair_short_ranged<dimension, double, potential_type> force_type;
+        return make_shared<force_type>(
+            make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
+          , dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
-          , cutoff
-          , epsilon
-          , sigma
         );
     }
     throw runtime_error("unknown backend: " + backend);
@@ -395,7 +395,7 @@ void ideal_gas(string const& backend)
       , core->box
       , list_of(rc)(rc)(rc) /* cutoff */
       , list_of(0.f)(0.f)(0.f) /* epsilon */
-      , mdsim::host::forces::lj<dimension, double>::default_sigma()
+      , mdsim::host::forces::lj_potential<double>::default_sigma()
     );
     core->neighbour = make_neighbour(
         backend
@@ -508,8 +508,8 @@ void thermodynamics(string const& backend)
       , core->particle
       , core->box
       , list_of(rc)(rc)(rc) /* cutoff */
-      , mdsim::host::forces::lj<dimension, double>::default_epsilon()
-      , mdsim::host::forces::lj<dimension, double>::default_sigma()
+      , mdsim::host::forces::lj_potential<double>::default_epsilon()
+      , mdsim::host::forces::lj_potential<double>::default_sigma()
     );
     core->neighbour = make_neighbour(
         backend

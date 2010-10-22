@@ -20,10 +20,6 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_PAIR_SHORT_RANGED_HPP
 #define HALMD_MDSIM_HOST_FORCES_PAIR_SHORT_RANGED_HPP
 
-#include <boost/foreach.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <stdexcept>
-
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
@@ -55,6 +51,8 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<smooth_type> smooth;
+
+    inline static void luaopen(lua_State* L);
 
     inline pair_short_ranged(
         boost::shared_ptr<potential_type> potential
@@ -159,6 +157,39 @@ void pair_short_ranged<dimension, float_type, potential_type>::compute()
     if (isinf(en_pot_)) {
         throw std::runtime_error("Potential energy diverged");
     }
+}
+
+template <int dimension, typename float_type, typename potential_type>
+void pair_short_ranged<dimension, float_type, potential_type>::luaopen(lua_State* L)
+{
+    typedef typename _Base::_Base _Base_Base;
+    using namespace luabind;
+    using std::string;
+    string class_name(
+        potential_type::name() + string("_") + boost::lexical_cast<string>(dimension) + string("_")
+    );
+    module(L)
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    namespace_("forces")
+                    [
+                        class_<pair_short_ranged, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                            .def(constructor<
+                                boost::shared_ptr<potential_type>
+                              , boost::shared_ptr<particle_type>
+                              , boost::shared_ptr<box_type>
+                            >())
+//                             .def("register_runtimes", &pair_short_ranged::register_runtimes)
+                    ]
+                ]
+            ]
+        ]
+    ];
 }
 
 }}} // namespace mdsim::host::forces

@@ -21,16 +21,17 @@ require("halmd.modules")
 
 -- grab environment
 local lj_wrapper = {
-    potential = halmd_wrapper.mdsim.gpu.forces.lj_potential
-  , host = {
+    host = {
         [2] = halmd_wrapper.mdsim.host.forces.lj_2_
       , [3] = halmd_wrapper.mdsim.host.forces.lj_3_
+      , potential = halmd_wrapper.mdsim.host.forces.lj_potential
     }
 }
 if halmd_wrapper.mdsim.gpu then
     lj_wrapper.gpu = {
         [2] = halmd_wrapper.mdsim.gpu.forces.lennard_jones_2_
       , [3] = halmd_wrapper.mdsim.gpu.forces.lennard_jones_3_
+      , potential = halmd_wrapper.mdsim.gpu.forces.lj_potential
     }
 end
 
@@ -43,7 +44,7 @@ local assert = assert
 
 module("halmd.mdsim.forces.lj", halmd.modules.register)
 
-options = lj_wrapper.host[2].options
+options = lj_wrapper.host.potential.options
 
 --
 -- construct lj module
@@ -59,9 +60,10 @@ function new()
     local particle = assert(core.particle)
     local box = assert(core.box)
 
-    local potential = lj_wrapper.potential(particle.ntype, cutoff, epsilon, sigma)
     if not device() then
-        return lj_wrapper.host[dimension](particle, box, cutoff, epsilon, sigma)
+        local potential = lj_wrapper.host.potential(particle.ntype, cutoff, epsilon, sigma)
+        return lj_wrapper.host[dimension](potential, particle, box)
     end
+    local potential = lj_wrapper.gpu.potential(particle.ntype, cutoff, epsilon, sigma)
     return lj_wrapper.gpu[dimension](potential, particle, box)
 end

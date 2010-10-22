@@ -36,10 +36,34 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
+ * Assemble module options
+ */
+template <typename float_type>
+void lj_potential<float_type>::options(po::options_description& desc)
+{
+    desc.add_options()
+        ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
+         "truncate potential at cutoff radius")
+        ("epsilon", po::value<boost::array<float, 3> >()->default_value(default_epsilon()),
+         "potential well depths AA,AB,BB")
+        ("sigma", po::value<boost::array<float, 3> >()->default_value(default_sigma()),
+         "collision diameters AA,AB,BB")
+        ;
+}
+
+/**
+ * Register option value types with Lua
+ */
+static __attribute__((constructor)) void register_option_converters()
+{
+    register_any_converter<boost::array<float, 3> >();
+}
+
+/**
  * Initialise Lennard-Jones potential parameters
  */
-template <int dimension, typename float_type>
-lj_potential<dimension, float_type>::lj_potential(
+template <typename float_type>
+lj_potential<float_type>::lj_potential(
     unsigned ntype
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
@@ -80,53 +104,11 @@ lj_potential<dimension, float_type>::lj_potential(
     LOG("potential cutoff energy: U = " << en_cut_);
 }
 
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void lj<dimension, float_type>::options(po::options_description& desc)
+template <typename float_type>
+void lj_potential<float_type>::luaopen(lua_State* L)
 {
-    desc.add_options()
-        ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
-         "truncate potential at cutoff radius")
-        ("epsilon", po::value<boost::array<float, 3> >()->default_value(default_epsilon()),
-         "potential well depths AA,AB,BB")
-        ("sigma", po::value<boost::array<float, 3> >()->default_value(default_sigma()),
-         "collision diameters AA,AB,BB")
-        ;
-}
-
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<boost::array<float, 3> >();
-}
-
-template <int dimension, typename float_type>
-lj<dimension, float_type>::lj(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-  , array<float, 3> const& cutoff
-  , array<float, 3> const& epsilon
-  , array<float, 3> const& sigma
-)
-  : _Base(
-        make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
-      , particle
-      , box
-    )
-{
-}
-
-template <int dimension, typename float_type>
-void lj<dimension, float_type>::luaopen(lua_State* L)
-{
-    typedef typename _Base::_Base _Base2;
-    typedef typename _Base2::_Base _Base3;
     using namespace luabind;
-    string class_name("lj_" + lexical_cast<string>(dimension) + "_");
+    string class_name("lj_potential");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -137,19 +119,16 @@ void lj<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("forces")
                     [
-                        // skip auxiliary class _Base [_Base=forces::pair_short_ranged]
-                        class_<lj, shared_ptr<_Base3>, bases<_Base2, _Base3> >(class_name.c_str())
+                        class_<lj_potential, shared_ptr<lj_potential> >(class_name.c_str())
                             .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
+                                unsigned
                               , array<float, 3> const&
                               , array<float, 3> const&
                               , array<float, 3> const&
                             >())
-                            .def_readwrite("smooth", &lj::smooth)
                             .scope
                             [
-                                def("options", &lj::options)
+                                def("options", &lj_potential::options)
                             ]
                     ]
                 ]
@@ -160,31 +139,35 @@ void lj<dimension, float_type>::luaopen(lua_State* L)
 
 static __attribute__((constructor)) void register_lua()
 {
-    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &lj<3, double>::luaopen
-    ]
-    [
-        &lj<2, double>::luaopen
-    ];
+    typedef double float_type;
 #else
+    typedef float float_type;
+#endif
+
+    lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &lj<3, float>::luaopen
+        &lj_potential<float_type>::luaopen
+    ];
+
+    lua_wrapper::register_(2) //< distance of derived to base class
+    [
+        &pair_short_ranged<3, float_type, lj_potential<float_type> >::luaopen
     ]
     [
-        &lj<2, float>::luaopen
+        &pair_short_ranged<2, float_type, lj_potential<float_type> >::luaopen
     ];
-#endif
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class lj<3, double>;
-template class lj<2, double>;
+template class lj_potential<double>;
+template class pair_short_ranged<3, double, lj_potential<double> >;
+template class pair_short_ranged<2, double, lj_potential<double> >;
 #else
-template class lj<3, float>;
-template class lj<2, float>;
+template class lj_potential<float>;
+template class pair_short_ranged<3, float, lj_potential<float> >;
+template class pair_short_ranged<2, float, lj_potential<float> >;
 #endif
 
 }}} // namespace mdsim::host::forces
