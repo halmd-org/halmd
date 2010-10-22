@@ -22,8 +22,8 @@ require("halmd.modules")
 -- grab environment
 local lj_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.forces.lj_2_
-      , [3] = halmd_wrapper.mdsim.host.forces.lj_3_
+        [2] = halmd_wrapper.mdsim.host.forces.lennard_jones_2_
+      , [3] = halmd_wrapper.mdsim.host.forces.lennard_jones_3_
       , potential = halmd_wrapper.mdsim.host.forces.lj_potential
     }
 }
@@ -42,12 +42,12 @@ local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
 
-module("halmd.mdsim.forces.lj", halmd.modules.register)
+module("halmd.mdsim.forces.lennard_jones", halmd.modules.register)
 
 options = lj_wrapper.host.potential.options
 
 --
--- construct lj module
+-- construct Lennard-Jones module
 --
 function new()
     local dimension = assert(args.dimension)

@@ -25,7 +25,7 @@ local force_wrapper = {
   , [3] = halmd_wrapper.mdsim.force_3_
 }
 local forces = {
-    lj = require("halmd.mdsim.forces.lj")
+    lennard_jones = require("halmd.mdsim.forces.lennard_jones")
   , power_law = require("halmd.mdsim.forces.power_law")
 }
 local args = require("halmd.options")

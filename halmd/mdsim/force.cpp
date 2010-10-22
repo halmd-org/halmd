@@ -35,7 +35,7 @@ template <int dimension>
 void force<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("force", po::value<string>()->default_value("lj"),
+        ("force", po::value<string>()->default_value("lennard_jones"),
          "specify force module")
         ;
 }
