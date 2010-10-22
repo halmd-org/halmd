@@ -28,7 +28,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profile/writers/log.hpp>
 #include <halmd/io/profile/writers/hdf5.hpp>
-#include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 using namespace boost;
@@ -52,8 +51,6 @@ struct timer_map {
 
 BOOST_AUTO_TEST_CASE( test_profile_writers )
 {
-    typedef boost::program_options::variable_value variable_value;
-
     string const file_name("test_io_logger.prf");
 
     // enable logging to console

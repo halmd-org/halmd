@@ -28,7 +28,6 @@
 #undef NDEBUG
 #include <halmd/io/logger.hpp>
 #define NDEBUG
-#include <halmd/options.hpp>
 
 
 using namespace boost;
@@ -57,8 +56,6 @@ unsigned count_lines(char const* filename)
 
 BOOST_AUTO_TEST_CASE( test_logger )
 {
-    typedef boost::program_options::variable_value variable_value;
-
     string const logfile("halmd_test.log");
 
     // sweep all verbosities
