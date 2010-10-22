@@ -18,7 +18,7 @@
  */
 
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
-#include <halmd/mdsim/gpu/forces/pair_short_ranged_kernel.cuh>
+#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
 
@@ -88,8 +88,8 @@ private:
 
 cuda::texture<float4> lj_wrapper::param = lj_kernel::param_;
 
-template class pair_short_ranged_wrapper<3, lj_kernel::lj_potential>;
-template class pair_short_ranged_wrapper<2, lj_kernel::lj_potential>;
+template class pair_trunc_wrapper<3, lj_kernel::lj_potential>;
+template class pair_trunc_wrapper<2, lj_kernel::lj_potential>;
 
 }}} // namespace mdsim::gpu::forces
 

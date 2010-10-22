@@ -17,12 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_CUH
-#define HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_CUH
+#ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
+#define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/force_kernel.cuh>
-#include <halmd/mdsim/gpu/forces/pair_short_ranged_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
@@ -36,7 +36,7 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
-namespace pair_short_ranged_kernel
+namespace pair_trunc_kernel
 {
 
 /** number of placeholders per neighbour list */
@@ -121,16 +121,16 @@ __global__ void compute(
     g_stress_pot[i] = stress_pot;
 }
 
-} // namespace pair_short_ranged_kernel
+} // namespace pair_trunc_kernel
 
 template <int dimension, typename potential_type>
-pair_short_ranged_wrapper<dimension, potential_type> const
-pair_short_ranged_wrapper<dimension, potential_type>::kernel = {
-    pair_short_ranged_kernel::compute<fixed_vector<float, dimension>, potential_type>
-  , get<dimension>(pair_short_ranged_kernel::box_length_)
-  , pair_short_ranged_kernel::neighbour_size_
-  , pair_short_ranged_kernel::neighbour_stride_
-  , pair_short_ranged_kernel::r_
+pair_trunc_wrapper<dimension, potential_type> const
+pair_trunc_wrapper<dimension, potential_type>::kernel = {
+    pair_trunc_kernel::compute<fixed_vector<float, dimension>, potential_type>
+  , get<dimension>(pair_trunc_kernel::box_length_)
+  , pair_trunc_kernel::neighbour_size_
+  , pair_trunc_kernel::neighbour_stride_
+  , pair_trunc_kernel::r_
 };
 
 }}} // namespace mdsim::gpu::forces
@@ -139,4 +139,4 @@ pair_short_ranged_wrapper<dimension, potential_type>::kernel = {
 
 #else
 #error This header must be included at most once per compilation unit.
-#endif /* ! HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_CUH */
+#endif /* ! HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH */

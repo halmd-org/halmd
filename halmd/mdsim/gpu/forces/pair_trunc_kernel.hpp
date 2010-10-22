@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_HPP
-#define HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_HPP
+#define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -29,7 +29,7 @@ namespace mdsim { namespace gpu { namespace forces
 {
 
 template <int dimension, typename potential_type>
-struct pair_short_ranged_wrapper
+struct pair_trunc_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
@@ -46,11 +46,11 @@ struct pair_short_ranged_wrapper
     /** positions, types */
     cuda::texture<float4> r;
 
-    static pair_short_ranged_wrapper const kernel;
+    static pair_trunc_wrapper const kernel;
 };
 
 }}} // namespace mdsim::gpu::forces
 
 } // namespace halmd
 
-#endif  /* ! HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_KERNEL_HPP */
+#endif  /* ! HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_HPP */

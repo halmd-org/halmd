@@ -152,22 +152,22 @@ static __attribute__((constructor)) void register_lua()
 
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        &pair_short_ranged<3, float_type, lj_potential<float_type> >::luaopen
+        &pair_trunc<3, float_type, lj_potential<float_type> >::luaopen
     ]
     [
-        &pair_short_ranged<2, float_type, lj_potential<float_type> >::luaopen
+        &pair_trunc<2, float_type, lj_potential<float_type> >::luaopen
     ];
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class lj_potential<double>;
-template class pair_short_ranged<3, double, lj_potential<double> >;
-template class pair_short_ranged<2, double, lj_potential<double> >;
+template class pair_trunc<3, double, lj_potential<double> >;
+template class pair_trunc<2, double, lj_potential<double> >;
 #else
 template class lj_potential<float>;
-template class pair_short_ranged<3, float, lj_potential<float> >;
-template class pair_short_ranged<2, float, lj_potential<float> >;
+template class pair_trunc<3, float, lj_potential<float> >;
+template class pair_trunc<2, float, lj_potential<float> >;
 #endif
 
 }}} // namespace mdsim::host::forces

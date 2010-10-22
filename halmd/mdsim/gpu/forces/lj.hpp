@@ -24,7 +24,7 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
-#include <halmd/mdsim/gpu/forces/pair_short_ranged.hpp>
+#include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
 
 namespace halmd

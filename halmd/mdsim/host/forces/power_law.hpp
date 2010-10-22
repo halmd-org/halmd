@@ -27,7 +27,7 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
-#include <halmd/mdsim/host/forces/pair_short_ranged.hpp>
+#include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/numeric/pow.hpp>
@@ -127,13 +127,13 @@ private:
 
 template <int dimension, typename float_type>
 class power_law
-  : public pair_short_ranged<dimension, float_type, power_law_potential<dimension, float_type> >
+  : public pair_trunc<dimension, float_type, power_law_potential<dimension, float_type> >
 {
 public:
     static void options(po::options_description& desc);
 
     typedef power_law_potential<dimension, float_type> potential_type;
-    typedef mdsim::host::forces::pair_short_ranged<dimension, float_type, potential_type> _Base;
+    typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> _Base;
     typedef typename _Base::particle_type particle_type;
     typedef typename _Base::box_type box_type;
 

@@ -26,7 +26,7 @@
 #include <lua.hpp>
 #include <utility>
 
-#include <halmd/mdsim/host/forces/pair_short_ranged.hpp>
+#include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/options.hpp>
 

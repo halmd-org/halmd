@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_HPP
-#define HALMD_MDSIM_GPU_FORCES_PAIR_SHORT_RANGED_HPP
+#ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_HPP
+#define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
@@ -27,7 +27,7 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
-#include <halmd/mdsim/gpu/forces/pair_short_ranged_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -43,7 +43,7 @@ namespace mdsim { namespace gpu { namespace forces
  * class template for modules implementing short ranged potential forces
  */
 template <int dimension, typename float_type, typename potential_type>
-class pair_short_ranged
+class pair_trunc
   : public mdsim::gpu::force<dimension, float_type>
 {
 public:
@@ -56,7 +56,7 @@ public:
     typedef utility::profiler profiler_type;
 
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
-    typedef pair_short_ranged_wrapper<dimension, gpu_potential_type> gpu_wrapper;
+    typedef pair_trunc_wrapper<dimension, gpu_potential_type> gpu_wrapper;
 
     boost::shared_ptr<potential_type> potential;
     boost::shared_ptr<particle_type> particle;
@@ -64,7 +64,7 @@ public:
 
     inline static void luaopen(lua_State* L);
 
-    inline pair_short_ranged(
+    inline pair_trunc(
         boost::shared_ptr<potential_type> potential
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
@@ -107,7 +107,7 @@ private:
 };
 
 template <int dimension, typename float_type, typename potential_type>
-pair_short_ranged<dimension, float_type, potential_type>::pair_short_ranged(
+pair_trunc<dimension, float_type, potential_type>::pair_trunc(
     boost::shared_ptr<potential_type> potential
   , boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type> box
@@ -128,7 +128,7 @@ pair_short_ranged<dimension, float_type, potential_type>::pair_short_ranged(
  * Compute pair forces, potential energy, and potential part of stress tensor
  */
 template <int dimension, typename float_type, typename potential_type>
-void pair_short_ranged<dimension, float_type, potential_type>::compute()
+void pair_trunc<dimension, float_type, potential_type>::compute()
 {
 #ifdef USE_FORCE_DSFUN
 #endif /* HALMD_VARIANT_FORCE_DSFUN */
@@ -149,13 +149,13 @@ void pair_short_ranged<dimension, float_type, potential_type>::compute()
  * register module runtime accumulators
  */
 template <int dimension, typename float_type, typename potential_type>
-void pair_short_ranged<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
+void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
 {
     profiler.register_map(runtime_);
 }
 
 template <int dimension, typename float_type, typename potential_type>
-void pair_short_ranged<dimension, float_type, potential_type>::luaopen(lua_State* L)
+void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
@@ -173,13 +173,13 @@ void pair_short_ranged<dimension, float_type, potential_type>::luaopen(lua_State
                 [
                     namespace_("forces")
                     [
-                        class_<pair_short_ranged, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                        class_<pair_trunc, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
                             .def(constructor<
                                 boost::shared_ptr<potential_type>
                               , boost::shared_ptr<particle_type>
                               , boost::shared_ptr<box_type>
                             >())
-                            .def("register_runtimes", &pair_short_ranged::register_runtimes)
+                            .def("register_runtimes", &pair_trunc::register_runtimes)
                     ]
                 ]
             ]

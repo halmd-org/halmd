@@ -142,7 +142,7 @@ void power_law<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("forces")
                     [
-                        // skip auxiliary class _Base [_Base=forces::pair_short_ranged]
+                        // skip auxiliary class _Base [_Base=forces::pair_trunc]
                         class_<power_law, shared_ptr<_Base3>, bases<_Base2, _Base3> >(class_name.c_str())
                             .def(constructor<
                                 shared_ptr<particle_type>

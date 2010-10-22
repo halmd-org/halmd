@@ -25,7 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/lj.hpp>
 #include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
-#include <halmd/mdsim/gpu/forces/pair_short_ranged_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -135,17 +135,17 @@ static __attribute__((constructor)) void register_lua()
 
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        &pair_short_ranged<3, float, lj_potential<float> >::luaopen
+        &pair_trunc<3, float, lj_potential<float> >::luaopen
     ]
     [
-        &pair_short_ranged<2, float, lj_potential<float> >::luaopen
+        &pair_trunc<2, float, lj_potential<float> >::luaopen
     ];
 }
 
 // explicit instantiation
 template class lj_potential<float>;
-template class pair_short_ranged<3, float, lj_potential<float> >;
-template class pair_short_ranged<2, float, lj_potential<float> >;
+template class pair_trunc<3, float, lj_potential<float> >;
+template class pair_trunc<2, float, lj_potential<float> >;
 
 }}} // namespace mdsim::gpu::forces
 
