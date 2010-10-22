@@ -13,6 +13,9 @@ if(NOT HALMD_BACKEND_EXECUTABLES)
     script.cpp
     )
   target_link_libraries(halmd
+    -Wl,-whole-archive
+    ${HALMD_MODULES}
+    -Wl,-no-whole-archive
     ${HALMD_COMMON_LIBRARIES}
     )
   install(TARGETS halmd

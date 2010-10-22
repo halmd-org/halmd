@@ -2,6 +2,7 @@ add_executable(test_logger
   logger.cpp
 )
 target_link_libraries(test_logger
+  halmd_io
   ${HALMD_COMMON_LIBRARIES}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
@@ -13,6 +14,10 @@ add_executable(test_profile_writers
   profile_writers.cpp
 )
 target_link_libraries(test_profile_writers
+  halmd_io_profile_writers
+  halmd_io_profile
+  halmd_utility
+  halmd_io
   ${HALMD_COMMON_LIBRARIES}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
