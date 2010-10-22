@@ -6,10 +6,7 @@ add_library(halmd_mdsim_gpu
   particle_kernel.cu
   velocity.cpp
   velocity_kernel.cu
-  )
-target_link_libraries(halmd_mdsim_gpu
-  ${CUDA_LIBRARIES}
-  )
+)
 
 add_subdirectory(forces)
 add_subdirectory(integrators)
