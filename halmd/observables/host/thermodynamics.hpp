@@ -66,7 +66,7 @@ public:
 
     virtual double virial() const
     {
-        return force->potential_stress()[0];
+        return force->stress_tensor_pot()[0];
     }
 };
 

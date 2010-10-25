@@ -85,7 +85,7 @@ public:
     }
 
     /** potential part of stress tensors of particles */
-    virtual cuda::vector<gpu_stress_tensor_type> const& potential_stress()
+    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot()
     {
         return g_stress_pot_;
     }

@@ -120,7 +120,7 @@ double thermodynamics<dimension, float_type>::virial() const
       , dsfloat                                   // coalesced_output_type
       , double                                    // host_output_type
       , at_0                                      // input_transform
-    >()(force->potential_stress());
+    >()(force->stress_tensor_pot());
 
     return virial / particle->nbox;
 }

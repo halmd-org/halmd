@@ -86,7 +86,7 @@ public:
     }
 
     //! potential part of stress tensor
-    virtual stress_tensor_type potential_stress()
+    virtual stress_tensor_type stress_tensor_pot()
     {
         return stress_pot_;
     }
