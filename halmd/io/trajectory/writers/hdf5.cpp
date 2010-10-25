@@ -49,10 +49,10 @@ hdf5<dimension, float_type>::hdf5(
 
     // store file version in parameter group
     array<unsigned char, 2> version = {{ 1, 0 }};
-    H5::attribute(open_group(file_, "param"), "file_version") = version;
+    h5xx::attribute(h5xx::open_group(file_, "param"), "file_version") = version;
 
     // open or create trajectory group
-    H5::Group root = open_group(file_, "trajectory");
+    H5::Group root = h5xx::open_group(file_, "trajectory");
 
     for (size_t i = 0; i < sample->r.size(); ++i) {
         H5::Group type;
@@ -63,18 +63,18 @@ hdf5<dimension, float_type>::hdf5(
             type = root;
         }
         size_t size = sample->r[i]->size();
-        H5::DataSet r = H5::create_dataset<sample_vector_type>(type, "position", size);
-        H5::DataSet v = H5::create_dataset<sample_vector_type>(type, "velocity", size);
+        H5::DataSet r = h5xx::create_dataset<sample_vector_type>(type, "position", size);
+        H5::DataSet v = h5xx::create_dataset<sample_vector_type>(type, "velocity", size);
 
         // particle positions
-        writers_.push_back(make_dataset_writer(r, &*sample->r[i]));
+        writers_.push_back(h5xx::make_dataset_writer(r, &*sample->r[i]));
         // particle velocities
-        writers_.push_back(make_dataset_writer(v, &*sample->v[i]));
+        writers_.push_back(h5xx::make_dataset_writer(v, &*sample->v[i]));
     }
 
     // simulation time in reduced units
-    H5::DataSet t = H5::create_dataset<double>(root, "time");
-    writers_.push_back(make_dataset_writer(t, &sample->time));
+    H5::DataSet t = h5xx::create_dataset<double>(root, "time");
+    writers_.push_back(h5xx::make_dataset_writer(t, &sample->time));
 }
 
 /**

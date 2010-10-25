@@ -53,12 +53,12 @@ hdf5<dimension, float_type>::hdf5(
     LOG("read trajectory file: " << path_);
 
     H5::H5File file(path_, H5F_ACC_RDONLY);
-    H5::Group root = open_group(file, "trajectory");
+    H5::Group root = h5xx::open_group(file, "trajectory");
 
     for (size_t i = 0; i < sample->r.size(); ++i) {
         H5::Group type;
         if (sample->r.size() > 1) {
-            type = open_group(root, string(1, 'A' + i));
+            type = h5xx::open_group(root, string(1, 'A' + i));
         }
         else {
             type = root;
@@ -83,20 +83,20 @@ hdf5<dimension, float_type>::hdf5(
             r = type.openDataSet("r");
         }
         // backwards compatibility with r:R:v:t format
-        if (r.getDataType().getId() == H5::ctype<float>::hid()) {
+        if (r.getDataType().getId() == h5xx::ctype<float>::hid()) {
             // use reduced positions if extended positions are single-precision
             r = type.openDataSet("r");
             LOG_WARNING("falling back to reduced particle position sample");
         }
         H5::DataSet v = type.openDataSet("v");
 
-        H5::read(r, &*sample->r[i], offset_);
-        H5::read(v, &*sample->v[i], offset_);
+        h5xx::read(r, &*sample->r[i], offset_);
+        h5xx::read(v, &*sample->v[i], offset_);
     }
 
     H5::DataSet t = root.openDataSet("t");
     float_type time;
-    offset = H5::read(t, &time, offset_);
+    offset = h5xx::read(t, &time, offset_);
     LOG("read trajectory sample at offset " << offset << " with t = " << time);
 }
 

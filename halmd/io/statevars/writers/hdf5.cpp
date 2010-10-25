@@ -45,16 +45,16 @@ hdf5<dimension>::hdf5(string const& file_name)
     )
 {
     // create parameter group
-    H5::Group param = open_group(file_, "/param");
+    H5::Group param = h5xx::open_group(file_, "/param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
-    H5::attribute(param, "file_version") = version;
+    h5xx::attribute(param, "file_version") = version;
 
     // store dimension
     // FIXME configuration and simulation parameters should be stored by a distinct function
     H5::Group mdsim = param.createGroup("mdsim");
-    H5::attribute(mdsim, "dimension") = dimension;
+    h5xx::attribute(mdsim, "dimension") = dimension;
 
     LOG("write macroscopic state variables to file: " << file_.getFileName());
 }
@@ -71,17 +71,17 @@ void hdf5<dimension>::register_observable(
 )
 {
     // first part of tag is path, last part is dataset name
-    list<string> path(H5::split_path(tag));
-    H5::Group root = open_group(file_, path.begin(), --path.end());
+    list<string> path(h5xx::split_path(tag));
+    H5::Group root = h5xx::open_group(file_, path.begin(), --path.end());
 
     // create dataset for an unlimited number of chunks
-    H5::DataSet dataset = H5::create_dataset<T>(root, path.back());
+    H5::DataSet dataset = h5xx::create_dataset<T>(root, path.back());
 
     // store description as attribute
-    H5::attribute(dataset, "description") = desc;
+    h5xx::attribute(dataset, "description") = desc;
 
     // add dataset writer to internal list
-    writer_.push_back(make_dataset_writer(dataset, value_ptr));
+    writer_.push_back(h5xx::make_dataset_writer(dataset, value_ptr));
 }
 
 // overload for vector of data
@@ -93,17 +93,17 @@ void hdf5<dimension>::register_observable(
 )
 {
     // first part of tag is path, last part is dataset name
-    list<string> path(H5::split_path(tag));
-    H5::Group root = open_group(file_, path.begin(), --path.end());
+    list<string> path(h5xx::split_path(tag));
+    H5::Group root = h5xx::open_group(file_, path.begin(), --path.end());
 
     // create dataset for an unlimited number of vector chunks with given size
-    H5::DataSet dataset = H5::create_dataset<vector<T> >(root, path.back(), value_ptr->size());
+    H5::DataSet dataset = h5xx::create_dataset<vector<T> >(root, path.back(), value_ptr->size());
 
     // store description as attribute
-    H5::attribute(dataset, "description") = desc;
+    h5xx::attribute(dataset, "description") = desc;
 
     // add dataset writer to internal list
-    writer_.push_back(make_dataset_writer(dataset, value_ptr));
+    writer_.push_back(h5xx::make_dataset_writer(dataset, value_ptr));
 }
 
 /**
@@ -149,17 +149,17 @@ void hdf5<dimension>::write_dataset(
 )
 {
     // first part of tag is path, last part is dataset name
-    list<string> path(H5::split_path(tag));
-    H5::Group root = open_group(file_, path.begin(), --path.end());
+    list<string> path(h5xx::split_path(tag));
+    H5::Group root = h5xx::open_group(file_, path.begin(), --path.end());
 
     // create dataset for a single chunk
-    H5::DataSet dataset = H5::create_dataset<T>(root, path.back(), 1);
+    H5::DataSet dataset = h5xx::create_dataset<T>(root, path.back(), 1);
 
     // store description as attribute
-    H5::attribute(dataset, "description") = desc;
+    h5xx::attribute(dataset, "description") = desc;
 
     // write dataset at index 0
-    H5::write(dataset, value, 0);
+    h5xx::write(dataset, value, 0);
 }
 
 // overload for vector of data
@@ -171,17 +171,17 @@ void hdf5<dimension>::write_dataset(
 )
 {
     // first part of tag is path, last part is dataset name
-    list<string> path(H5::split_path(tag));
-    H5::Group root = open_group(file_, path.begin(), --path.end());
+    list<string> path(h5xx::split_path(tag));
+    H5::Group root = h5xx::open_group(file_, path.begin(), --path.end());
 
     // create dataset for a single vector chunk with given size
-    H5::DataSet dataset = H5::create_dataset<vector<T> >(root, path.back(), value.size(), 1);
+    H5::DataSet dataset = h5xx::create_dataset<vector<T> >(root, path.back(), value.size(), 1);
 
     // store description as attribute
-    H5::attribute(dataset, "description") = desc;
+    h5xx::attribute(dataset, "description") = desc;
 
     // write dataset at index 0
-    H5::write(dataset, value, 0);
+    h5xx::write(dataset, value, 0);
 }
 
 /**
