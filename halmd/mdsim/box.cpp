@@ -33,6 +33,14 @@ namespace halmd
 namespace mdsim
 {
 
+template <int dimension>
+boost::multi_array<float, 1> box<dimension>::default_ratios()
+{
+    boost::multi_array<float, 1> a(boost::extents[1]);
+    a[0] = 1.f;
+    return a;
+}
+
 /**
  * Assemble module options
  */
@@ -43,7 +51,9 @@ void box<dimension>::options(options_definition& options)
         ("density,d", po::value<float>()->default_value(0.75),
          "particle density")
         ("box-length,L", po::value<multi_array<float, 1> >(),
-         "simulation box length")
+         "edge lengths of simulation box")
+        ("box-ratios", po::value<multi_array<float, 1> >()->default_value(default_ratios()),
+         "aspect ratios of simulation box (specify relative edge lengths)")
         ;
 }
 

@@ -20,8 +20,8 @@
 #ifndef HALMD_MDSIM_BOX_HPP
 #define HALMD_MDSIM_BOX_HPP
 
+#include <boost/multi_array.hpp>
 #include <lua.hpp>
-#include <vector>
 
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -51,6 +51,9 @@ public:
       , double density
       , vector_type const& ratios
     );
+
+    static boost::multi_array<float, 1> default_ratios();
+
     vector_type const& length() { return length_; }
     double density() { return density_; }
 
