@@ -65,15 +65,13 @@ box<dimension>::box(
   , vector_type const& length
 )
   : length_(length)
-  , density_(
-        particle->nbox / accumulate(
-            length_.begin(), length_.end(), 1., multiplies<double>()
-        )
-    )
   , length_half_(0.5 * length_)
 {
-    LOG("edge lengths of simulation box: " << length_);
+    double volume = accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
+    density_ = particle->nbox / volume;
+
     LOG("number density: " << density_);
+    LOG("edge lengths of simulation box: " << length_);
 }
 
 /**
@@ -85,17 +83,13 @@ box<dimension>::box(
   , double density
   , vector_type const& ratios
 )
-  : length_(
-        ratios * pow(
-            particle->nbox / accumulate(
-                ratios.begin(), ratios.end(), density, multiplies<double>()
-            )
-          , 1. / dimension
-        )
-    )
-  , density_(density)
-  , length_half_(0.5 * length_)
+  : density_(density)
 {
+    double volume = particle->nbox / density;
+    double det = accumulate(ratios.begin(), ratios.end(), 1., multiplies<double>());
+    length_ = ratios * pow(volume / det, 1. / dimension);
+    length_half_ = .5 * length_;
+
     LOG("number density: " << density_);
     LOG("edge lengths of simulation box: " << length_);
 }
