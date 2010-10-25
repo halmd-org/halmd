@@ -54,12 +54,11 @@ public:
       , boost::array<float, 3> const& sigma
     );
 
-    cuda::texture<float4> const& get_kernel_param() const
+    /** bind textures before kernel invocation */
+    void bind_textures() const
     {
-        return lj_wrapper::param;
+        lj_wrapper::param.bind(g_param_);
     }
-
-    cuda::vector<float4> const& g_param() const { return g_param_; }
 
     matrix_type const& r_cut() const { return r_cut_; }
 
