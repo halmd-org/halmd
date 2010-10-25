@@ -28,7 +28,6 @@ using namespace boost;
 using namespace boost::algorithm;
 using namespace boost::filesystem;
 using namespace std;
-using namespace H5;
 
 namespace halmd
 {
@@ -45,7 +44,7 @@ hdf5::hdf5(string const& file_name)
     )
 {
     // create parameter group
-    Group param = h5xx::open_group(file_, "/param");
+    H5::Group param = h5xx::open_group(file_, "/param");
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
@@ -65,9 +64,9 @@ void hdf5::register_accumulator(
 {
     // open group defined by tag,
     // last entry of tag will be the name of the attribute
-    Group group = h5xx::open_group(file_, tag.begin(), tag.end() - 1);
+    H5::Group group = h5xx::open_group(file_, tag.begin(), tag.end() - 1);
 
-    DataSet dataset = h5xx::create_dataset<array<double, 3> >(
+    H5::DataSet dataset = h5xx::create_dataset<array<double, 3> >(
         group
       , trim_right_copy_if(tag.back(), is_any_of("_"))      // omit trailing "_"
       , 1                                                   // only 1 entry
@@ -92,7 +91,7 @@ void hdf5::register_accumulator(
  * write dataset for runtime accumulator
  */
 void hdf5::write_accumulator(
-    DataSet const& dataset
+    H5::DataSet const& dataset
   , accumulator_type const& acc
 )
 {
