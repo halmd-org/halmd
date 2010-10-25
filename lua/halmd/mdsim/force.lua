@@ -26,6 +26,7 @@ local force_wrapper = {
 }
 local forces = {
     lennard_jones = require("halmd.mdsim.forces.lennard_jones")
+  , morse = require("halmd.mdsim.forces.morse")
   , power_law = require("halmd.mdsim.forces.power_law")
 }
 local args = require("halmd.options")
