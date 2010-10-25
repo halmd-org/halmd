@@ -49,7 +49,7 @@ hdf5::hdf5(string const& file_name)
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
-    h5xx::attribute(param, "file_version") = version;
+    h5xx::write_attribute(param, "file_version", version);
 
     LOG("write profile data to file: " << file_.getFileName());
 }
@@ -73,7 +73,7 @@ void hdf5::register_accumulator(
       , 1                                                   // only 1 entry
     );
     // store description as attribute
-    h5xx::attribute(dataset, "timer") = desc;
+    h5xx::write_attribute(dataset, "timer", desc);
 
     // We bind the functions to write the datasets using a
     // *reference* to the accumulator and a *copy* of the HDF5

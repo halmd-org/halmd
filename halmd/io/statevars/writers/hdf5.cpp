@@ -49,12 +49,12 @@ hdf5<dimension>::hdf5(string const& file_name)
 
     // store file version
     array<unsigned char, 2> version = {{ 1, 0 }};
-    h5xx::attribute(param, "file_version") = version;
+    h5xx::write_attribute(param, "file_version", version);
 
     // store dimension
     // FIXME configuration and simulation parameters should be stored by a distinct function
     H5::Group mdsim = param.createGroup("mdsim");
-    h5xx::attribute(mdsim, "dimension") = dimension;
+    h5xx::write_attribute(mdsim, "dimension", dimension);
 
     LOG("write macroscopic state variables to file: " << file_.getFileName());
 }
@@ -78,7 +78,7 @@ void hdf5<dimension>::register_observable(
     H5::DataSet dataset = h5xx::create_dataset<T>(root, path.back());
 
     // store description as attribute
-    h5xx::attribute(dataset, "description") = desc;
+    h5xx::write_attribute(dataset, "description", desc);
 
     // add dataset writer to internal list
     writer_.push_back(h5xx::make_dataset_writer(dataset, value_ptr));
@@ -100,7 +100,7 @@ void hdf5<dimension>::register_observable(
     H5::DataSet dataset = h5xx::create_dataset<vector<T> >(root, path.back(), value_ptr->size());
 
     // store description as attribute
-    h5xx::attribute(dataset, "description") = desc;
+    h5xx::write_attribute(dataset, "description", desc);
 
     // add dataset writer to internal list
     writer_.push_back(h5xx::make_dataset_writer(dataset, value_ptr));
@@ -156,7 +156,7 @@ void hdf5<dimension>::write_dataset(
     H5::DataSet dataset = h5xx::create_dataset<T>(root, path.back(), 1);
 
     // store description as attribute
-    h5xx::attribute(dataset, "description") = desc;
+    h5xx::write_attribute(dataset, "description", desc);
 
     // write dataset at index 0
     h5xx::write(dataset, value, 0);
@@ -178,7 +178,7 @@ void hdf5<dimension>::write_dataset(
     H5::DataSet dataset = h5xx::create_dataset<vector<T> >(root, path.back(), value.size(), 1);
 
     // store description as attribute
-    h5xx::attribute(dataset, "description") = desc;
+    h5xx::write_attribute(dataset, "description", desc);
 
     // write dataset at index 0
     h5xx::write(dataset, value, 0);

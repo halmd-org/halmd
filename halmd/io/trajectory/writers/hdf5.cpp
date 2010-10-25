@@ -49,7 +49,7 @@ hdf5<dimension, float_type>::hdf5(
 
     // store file version in parameter group
     array<unsigned char, 2> version = {{ 1, 0 }};
-    h5xx::attribute(h5xx::open_group(file_, "param"), "file_version") = version;
+    h5xx::write_attribute(h5xx::open_group(file_, "param"), "file_version", version);
 
     // open or create trajectory group
     H5::Group root = h5xx::open_group(file_, "trajectory");
