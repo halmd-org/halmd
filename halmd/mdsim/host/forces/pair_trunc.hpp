@@ -26,6 +26,7 @@
 #include <string>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>

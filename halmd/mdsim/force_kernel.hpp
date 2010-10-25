@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,21 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCE_KERNEL_CUH
-#define HALMD_MDSIM_GPU_FORCE_KERNEL_CUH
+#ifndef HALMD_MDSIM_FORCE_KERNEL_HPP
+#define HALMD_MDSIM_FORCE_KERNEL_HPP
 
-#include <halmd/numeric/blas/blas.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd { namespace mdsim { namespace gpu { namespace force_kernel
+namespace halmd
+{
+namespace mdsim
 {
 
 /**
  * Trace and off-diagonal elements of distance tensor
  */
-template <typename T>
-__device__ inline fixed_vector<T, 4> make_stress_tensor(T rr, fixed_vector<T, 3> const& r)
+template <typename float_type>
+HALMD_GPU_ENABLED typename type_traits<3, float_type>::stress_tensor_type
+make_stress_tensor(float_type rr, fixed_vector<float_type, 3> const& r)
 {
-    fixed_vector<T, 4> v;
+    typename type_traits<3, float_type>::stress_tensor_type v;
     v[0] = rr;
     v[1] = r[1] * r[2];
     v[2] = r[2] * r[0];
@@ -39,15 +42,18 @@ __device__ inline fixed_vector<T, 4> make_stress_tensor(T rr, fixed_vector<T, 3>
     return v;
 }
 
-template <typename T>
-__device__ inline fixed_vector<T, 2> make_stress_tensor(T rr, fixed_vector<T, 2> const& r)
+template <typename float_type>
+HALMD_GPU_ENABLED typename type_traits<2, float_type>::stress_tensor_type
+make_stress_tensor(float_type rr, fixed_vector<float_type, 2> const& r)
 {
-    fixed_vector<T, 2> v;
+    typename type_traits<2, float_type>::stress_tensor_type v;
     v[0] = rr;
     v[1] = r[0] * r[1];
     return v;
 }
 
-}}}} // namespace halmd::mdsim::gpu::force_kernel
+} // namespace mdsim
 
-#endif /* ! HALMD_MDSIM_GPU_FORCE_KERNEL_CUH */
+} // namespace halmd
+
+#endif /* ! HALMD_MDSIM_FORCE_KERNEL_HPP */

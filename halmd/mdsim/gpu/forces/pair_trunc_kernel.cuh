@@ -20,8 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 #define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 
+#include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/force_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
@@ -109,7 +109,7 @@ __global__ void compute(
         tie(fval, en_pot) = potential(rr);
 
         // contribution to stress tensor from this particle
-        stress_pot += 0.5f * fval * force_kernel::make_stress_tensor(rr, r);
+        stress_pot += 0.5f * fval * make_stress_tensor(rr, r);
         // potential energy contribution of this particle
         en_pot_ += 0.5f * en_pot;
         // force from other particle acting on this particle
