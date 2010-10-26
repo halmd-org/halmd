@@ -40,19 +40,21 @@ options = box_wrapper[2].options
 function new()
     local dimension = assert(args.dimension)
     local density = assert(args.density)
-    local box_ratios = assert(args.box_ratios)
+    local box_ratios = args.box_ratios or {}
     local box_length = args.box_length -- optional
 
     local core = mdsim.core()
     local particle = assert(core.particle)
 
     local box = box_wrapper[dimension]
-    if box_length and box_ratios.defaulted() then
+    if box_length then
+        -- complete missing values by repeating the last entry
         for i = #box_length + 1, dimension do
             box_length[i] = box_length[#box_length]
         end
         return box(particle, box_length)
     else
+        -- fill up missing values with 1
         for i = #box_ratios + 1, dimension do
             box_ratios[i] = 1 -- `neutral' aspect ratio
         end

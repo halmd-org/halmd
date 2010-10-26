@@ -52,8 +52,6 @@ public:
       , vector_type const& ratios
     );
 
-    static boost::multi_array<float, 1> default_ratios();
-
     vector_type const& length() { return length_; }
     double density() { return density_; }
 
