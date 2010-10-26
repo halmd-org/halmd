@@ -85,9 +85,9 @@ power_law_potential<dimension, float_type>::power_law_potential(
  * Assemble module options
  */
 template <int dimension, typename float_type>
-void power_law<dimension, float_type>::options(po::options_description& desc)
+void power_law<dimension, float_type>::options(options_definition& options)
 {
-    desc.add_options()
+    options.add_options()
         ("power-law-index", po::value<int>()->default_value(default_index()),
          "index of soft power-law potential")
 // options are not module specific, they are defined by 'lj' already

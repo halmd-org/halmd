@@ -34,7 +34,7 @@ class script
 {
 public:
     script();
-    po::options_description options();
+    options_definition options();
     void init(po::variables_map const& vm);
     void run();
 

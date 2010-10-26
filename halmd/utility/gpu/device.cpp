@@ -43,9 +43,9 @@ namespace utility { namespace gpu
 /**
  * Assemble module options
  */
-void device::options(po::options_description& desc)
+void device::options(options_definition& options)
 {
-    desc.add_options()
+    options.add_options()
 #ifndef __DEVICE_EMULATION__
         ("device,D", po::value<boost::multi_array<int, 1> >()->default_value(make_multi_array(default_devices())),
          "CUDA device(s)")

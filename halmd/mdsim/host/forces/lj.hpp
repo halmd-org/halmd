@@ -47,7 +47,7 @@ public:
     static char const* name() { return "Lennard-Jones"; }
     static char const* module_name() { return "lennard_jones"; }
 
-    static void options(po::options_description& desc);
+    static void options(options_definition& options);
     static void luaopen(lua_State* L);
 
     lj_potential(

@@ -41,12 +41,12 @@ namespace mdsim
  * Assemble module options
  */
 template <int dimension>
-void particle<dimension>::options(po::options_description& desc)
+void particle<dimension>::options(options_definition& options)
 {
     multi_array<unsigned int, 1> default_particles(extents[1]);
     default_particles[0] = 1000;
 
-    desc.add_options()
+    options.add_options()
         ("particles,N", po::value<multi_array<unsigned int, 1> >()->default_value(default_particles),
          "number of particles")
         ;

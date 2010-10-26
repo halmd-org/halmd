@@ -47,7 +47,7 @@ public:
     typedef thermostat _Self;
     typedef halmd::script<dimension> _Base;
     static void depends();
-    static void options(po::options_description& desc);
+    static void options(options_definition& options);
     static void select(po::options const& vm) {}
 
     typedef typename _Base::profile_writer_type profile_writer_type;

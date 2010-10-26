@@ -33,9 +33,9 @@ namespace mdsim
  * Assemble module options
  */
 template <int dimension>
-void position<dimension>::options(po::options_description& desc)
+void position<dimension>::options(options_definition& options)
 {
-    desc.add_options()
+    options.add_options()
         ("position",
          po::value<string>()->default_value("lattice"),
          "initial particle positions module")

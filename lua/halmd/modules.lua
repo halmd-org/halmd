@@ -57,10 +57,10 @@ end
 --
 -- @param desc Boost.Program_options options description
 --
-function options(desc)
+function options(options)
     for i, module in ipairs(modules) do
         if module.options then
-            module.options(desc)
+            module.options(options)
         end
     end
 end

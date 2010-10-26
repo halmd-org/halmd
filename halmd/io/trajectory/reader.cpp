@@ -32,9 +32,9 @@ namespace io { namespace trajectory
  * Assemble module options
  */
 template <int dimension>
-void reader<dimension>::options(po::options_description& desc)
+void reader<dimension>::options(options_definition& options)
 {
-    desc.add_options()
+    options.add_options()
         ("trajectory-file,J", po::value<string>(),
          "trajectory input file")
         ("trajectory-sample,S", po::value<ssize_t>()->default_value(-1),

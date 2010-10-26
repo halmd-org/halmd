@@ -36,7 +36,7 @@ template <int dimension>
 class box
 {
 public:
-    static void options(po::options_description& desc);
+    static void options(options_definition& options);
     static void luaopen(lua_State* L);
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;

@@ -37,9 +37,9 @@ namespace mdsim
  * Assemble module options
  */
 template <int dimension>
-void box<dimension>::options(po::options_description& desc)
+void box<dimension>::options(options_definition& options)
 {
-    desc.add_options()
+    options.add_options()
         ("density,d", po::value<float>()->default_value(0.75),
          "particle density")
         ("box-length,L", po::value<multi_array<float, 1> >(),

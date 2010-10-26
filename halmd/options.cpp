@@ -43,10 +43,10 @@ static char const* default_output_file_name = PROGRAM_NAME "_%Y%m%d_%H%M%S";
 /**
  * setup program options description
  */
-options_parser::options_parser(po::options_description const& desc)
-  : desc_(desc)
+options_parser::options_parser(options_definition const& options)
+  : options_(options)
 {
-    desc_.add_options()
+    options_.add_options()
         ("output,o",
          po::value<string>()->default_value(default_output_file_name)->notifier(
              boost::lambda::bind(
@@ -85,7 +85,7 @@ static __attribute__((constructor)) void register_option_converters()
 void options_parser::parse_command_line(int argc, char** argv)
 {
     po::command_line_parser parser(argc, argv);
-    po::parsed_options parsed(parser.options(desc_).run());
+    po::parsed_options parsed(parser.options(options_).run());
     po::store(parsed, vm_);
     po::notify(vm_);
 }
@@ -101,7 +101,7 @@ void options_parser::parse_config_file(std::string const& file_name)
     if (ifs.fail()) {
         throw runtime_error("could not open parameter file '" + file_name + "'");
     }
-    po::parsed_options parsed(po::parse_config_file(ifs, desc_));
+    po::parsed_options parsed(po::parse_config_file(ifs, options_));
     po::store(parsed, vm_);
     po::notify(vm_);
 }
@@ -123,7 +123,7 @@ void options_parser::print_error(std::exception const& error) const
 void options_parser::print_help() const
 {
     cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
-         << desc_ << endl;
+         << options_ << endl;
 }
 
 /**
@@ -193,7 +193,7 @@ void options_parser::luaopen(lua_State* L)
         [
             namespace_("program_options")
             [
-                class_<po::options_description>("options_description")
+                class_<options_definition>("options_definition")
                     //< only register class
 
               , class_<po::variable_value>("variable_value")

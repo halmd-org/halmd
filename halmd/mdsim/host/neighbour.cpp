@@ -42,9 +42,9 @@ float_type const neighbour<dimension, float_type>::default_skin = 0.5;
  * Assemble module options
  */
 template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::options(po::options_description& desc)
+void neighbour<dimension, float_type>::options(options_definition& options)
 {
-    desc.add_options()
+    options.add_options()
         ("skin", po::value<float>()->default_value(default_skin),
          "neighbour list skin")
         ;

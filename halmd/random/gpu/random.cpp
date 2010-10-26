@@ -35,9 +35,9 @@ namespace random { namespace gpu
  * Assemble module options
  */
 template <typename RandomNumberGenerator>
-void random<RandomNumberGenerator>::options(po::options_description& desc)
+void random<RandomNumberGenerator>::options(options_definition& options)
 {
-    desc.add_options()
+    options.add_options()
         ("random-blocks", po::value<unsigned int>()->default_value(default_blocks()),
          "number of CUDA blocks")
         ("random-threads", po::value<unsigned int>()->default_value(default_threads()),

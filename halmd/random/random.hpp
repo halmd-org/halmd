@@ -32,7 +32,7 @@ namespace random
 class random
 {
 public:
-    static void options(po::options_description& desc);
+    static void options(options_definition& options);
     static void luaopen(lua_State* L);
 
     random() {}

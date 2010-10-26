@@ -39,9 +39,9 @@ namespace mdsim { namespace host { namespace forces
  * Assemble module options
  */
 template <typename float_type>
-void morse_potential<float_type>::options(po::options_description& desc)
+void morse_potential<float_type>::options(options_definition& options)
 {
-    desc.add_options()
+    options.add_options()
 //         ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
 //          "truncate potential at cutoff radius")
 //         ("epsilon", po::value<boost::array<float, 3> >()->default_value(default_epsilon()),

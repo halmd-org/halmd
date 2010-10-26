@@ -58,7 +58,7 @@ public:
 
     boost::shared_ptr<box_type> box;
 
-    static void options(po::options_description& desc);
+    static void options(options_definition& options);
     static void luaopen(lua_State* L);
 
     thermodynamics(

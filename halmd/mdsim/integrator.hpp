@@ -33,7 +33,7 @@ template <int dimension>
 class integrator
 {
 public:
-    static void options(po::options_description& desc);
+    static void options(options_definition& options);
     static void luaopen(lua_State* L);
 
     static double const default_timestep;

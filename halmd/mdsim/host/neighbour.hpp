@@ -64,7 +64,7 @@ public:
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
 
-    static void options(po::options_description& desc);
+    static void options(options_definition& options);
     static void luaopen(lua_State* L);
 
     static float_type const default_skin;
