@@ -105,6 +105,7 @@ static __attribute__((constructor)) void register_lua()
 #endif
 }
 
+// explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class trajectory<3, double>;
 template class trajectory<2, double>;

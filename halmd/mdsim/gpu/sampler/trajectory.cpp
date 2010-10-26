@@ -181,6 +181,7 @@ static __attribute__((constructor)) void register_lua()
     ];
 }
 
+// explicit instantiation
 template class trajectory<mdsim::samples::gpu::trajectory<3, float> >;
 template class trajectory<mdsim::samples::gpu::trajectory<2, float> >;
 template class trajectory<mdsim::samples::host::trajectory<3, float> >;

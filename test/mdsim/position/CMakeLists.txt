@@ -1,0 +1,34 @@
+add_executable(test_position
+  lattice.cpp
+)
+target_link_libraries(test_position
+  halmd_mdsim_host
+  halmd_mdsim_host_position
+  halmd_mdsim_host_sample
+  halmd_mdsim_samples_host
+  halmd_random_host
+)
+if(WITH_CUDA)
+  target_link_libraries(test_position
+    halmd_mdsim_gpu
+    halmd_mdsim_gpu_position
+    halmd_mdsim_gpu_sample
+    halmd_mdsim_samples_gpu
+    halmd_random_gpu
+    halmd_utility_gpu
+  )
+endif(WITH_CUDA)
+target_link_libraries(test_position
+  halmd_io
+  halmd_mdsim
+  halmd_random
+  halmd_utility
+  ${HALMD_COMMON_LIBRARIES}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+add_test(module_mdsim_position_lattice_2d
+  test_position --run_test=lattice/2d --log_level=test_suite
+)
+add_test(module_mdsim_position_lattice_3d
+  test_position --run_test=lattice/3d --log_level=test_suite
+)
