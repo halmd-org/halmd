@@ -181,6 +181,11 @@ static __attribute__((constructor)) void register_lua()
     ];
 }
 
+template class trajectory<mdsim::samples::gpu::trajectory<3, float> >;
+template class trajectory<mdsim::samples::gpu::trajectory<2, float> >;
+template class trajectory<mdsim::samples::host::trajectory<3, float> >;
+template class trajectory<mdsim::samples::host::trajectory<2, float> >;
+
 }}} // namespace mdsim::gpu::sample
 
 } // namespace halmd

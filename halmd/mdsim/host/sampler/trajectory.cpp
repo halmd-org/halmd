@@ -105,6 +105,14 @@ static __attribute__((constructor)) void register_lua()
 #endif
 }
 
+#ifndef USE_HOST_SINGLE_PRECISION
+template class trajectory<3, double>;
+template class trajectory<2, double>;
+#else
+template class trajectory<3, float>;
+template class trajectory<2, float>;
+#endif
+
 }}} // namespace mdsim::host::sampler
 
 } // namespace halmd
