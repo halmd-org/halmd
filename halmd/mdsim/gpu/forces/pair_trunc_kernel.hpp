@@ -37,7 +37,7 @@ struct pair_trunc_wrapper
 
     /** compute forces, internal energy, and potential part of stress tensor */
     cuda::function<void (coalesced_vector_type*, unsigned int*, float*, stress_tensor_type*)> compute;
-    /** cubic box edgle length */
+    /** cubic box edge length */
     cuda::symbol<vector_type> box_length;
     /** number of placeholders per neighbour list */
     cuda::symbol<unsigned int> neighbour_size;
