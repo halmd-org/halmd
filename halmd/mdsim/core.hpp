@@ -59,8 +59,8 @@ public:
 
     core();
     void register_runtimes(profiler_type& profiler);
-    void prepare();
-    void mdstep();
+    virtual void prepare();
+    virtual void mdstep();
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -75,8 +75,8 @@ public:
     HALMD_PROFILE_TAG( prepare_, "microscopic state preparation" );
     HALMD_PROFILE_TAG( mdstep_, "MD integration step" );
 
-    uint64_t step_counter() const { return step_counter_; }
-    double time() const { return step_counter_ * integrator->timestep(); }
+    virtual uint64_t step_counter() const { return step_counter_; }
+    virtual double time() const { return step_counter_ * integrator->timestep(); }
 
 private:
     // list of profiling timers
