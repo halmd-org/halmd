@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2009  Peter Colberg
+ * Copyright © 2008-2009  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -25,9 +25,11 @@
 #include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 
 using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;
+using namespace halmd::utility::gpu;
 
 namespace halmd
 {
@@ -38,60 +40,79 @@ namespace lattice_kernel
 
 using boost::mpl::int_;
 
+/** cuboid box edge length */
+static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+
 /**
  * place particles on a face centered cubic lattice (fcc)
  */
-template <typename vector_type>
+template <typename vector_type, typename index_type>
 __device__ typename enable_if<is_same<int_<3>, int_<vector_type::static_size> > >::type
-fcc(vector_type& r, uint n)
+fcc(unsigned int i, index_type const& n, vector_type& r)
 {
     // compose primitive vectors from 1-dimensional index
-    r.x = ((GTID >> 2) % n) + ((GTID ^ (GTID >> 1)) & 1) / 2.f;
-    r.y = ((GTID >> 2) / n % n) + (GTID & 1) / 2.f;
-    r.z = ((GTID >> 2) / n / n) + (GTID & 2) / 4.f;
+    r.x = ((i >> 2) % n.x) + ((i ^ (i >> 1)) & 1) / 2.f;
+    r.y = ((i >> 2) / n.x % n.y) + (i & 1) / 2.f;
+    r.z = ((i >> 2) / n.x / n.y) + (i & 2) / 4.f;
 }
 
-template <typename vector_type>
+template <typename vector_type, typename index_type>
 __device__ typename enable_if<is_same<int_<2>, int_<vector_type::static_size> > >::type
-fcc(vector_type& r, uint n)
+fcc(unsigned int i, index_type const& n, vector_type& r)
 {
-    r.x = ((GTID >> 1) % n) + (GTID & 1) / 2.f;
-    r.y = ((GTID >> 1) / n) + (GTID & 1) / 2.f;
+    r.x = ((i >> 1) % n.x) + (i & 1) / 2.f;
+    r.y = ((i >> 1) / n.x) + (i & 1) / 2.f;
 }
 
 /**
  * place particles on a simple cubic lattice (sc)
  */
-template <typename vector_type>
+template <typename vector_type, typename index_type>
 __device__ typename enable_if<is_same<int_<3>, int_<vector_type::static_size> > >::type
-sc(vector_type& r, uint n)
+sc(unsigned int i, index_type const& n, vector_type& r)
 {
-    r.x = (GTID % n) + 0.5f;
-    r.y = (GTID / n % n) + 0.5f;
-    r.z = (GTID / n / n) + 0.5f;
+    r.x = (i % n.x) + 0.5f;
+    r.y = (i / n.x % n.y) + 0.5f;
+    r.z = (i / n.x / n.y) + 0.5f;
 }
 
-template <typename vector_type>
+template <typename vector_type, typename index_type>
 __device__ typename enable_if<is_same<int_<2>, int_<vector_type::static_size> > >::type
-sc(vector_type& r, uint n)
+sc(unsigned int i, index_type const& n, vector_type& r)
 {
-    r.x = (GTID % n) + 0.5f;
-    r.y = (GTID / n) + 0.5f;
+    r.x = (i % n.x) + 0.5f;
+    r.y = (i / n.x) + 0.5f;
 }
 
 template <
     typename vector_type
-  , void (*primitive)(vector_type&, uint)
+  , void (*primitive)(
+        unsigned int
+      , fixed_vector<unsigned int, vector_type::static_size> const&
+      , vector_type&
+    )
 >
-__global__ void lattice(float4* g_r, uint n, float box)
+__global__ void lattice(float4* g_r, float a)
 {
+    enum { dimension = vector_type::static_size };
+
+    // load particle type
     vector_type r;
     unsigned int type;
     tie(r, type) = untagged<vector_type>(g_r[GTID]);
 
+    // determine number of cells per directions
+    vector_type L = get<dimension>(box_length_);
+    fixed_vector<unsigned int, dimension> ncell(L / a);
+
     // compute primitive lattice vector
-    primitive(r, n);
-    r *= box / n;
+    primitive(GTID, ncell, r);
+
+    // scale with lattice constant
+    r *= a;
+
+    // shift to box origin at (-L/2, -L/2)
+    r -= L / 2;
 
     g_r[GTID] = tagged(r, type);
 }
@@ -100,7 +121,8 @@ __global__ void lattice(float4* g_r, uint n, float box)
 
 template <int dimension>
 lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
-    lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
+    get<dimension>(lattice_kernel::box_length_)
+  , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::sc>
 };
 

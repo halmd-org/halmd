@@ -21,6 +21,7 @@
 #define HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
@@ -30,8 +31,13 @@ namespace mdsim { namespace gpu { namespace position
 template <int dimension>
 struct lattice_wrapper
 {
-    cuda::function<void (float4*, uint, float)> fcc;
-    cuda::function<void (float4*, uint, float)> sc;
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+
+    /** cubic box edge length */
+    cuda::symbol<vector_type> box_length;
+
+    cuda::function<void (float4*, float)> fcc;
+    cuda::function<void (float4*, float)> sc;
     static lattice_wrapper const kernel;
 };
 

@@ -100,6 +100,8 @@ void lattice<dimension, float_type>::set()
         a = *it;
         ++n[it - t.begin()];
     }
+    LOG("placing particles on fcc lattice: a = " << a);
+
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type& r = particle->r[i] = a;
         if (dimension == 3) {
@@ -117,8 +119,6 @@ void lattice<dimension, float_type>::set()
 
     // assign particle image vectors
     fill(particle->image.begin(), particle->image.end(), 0);
-
-    LOG("placed particles on fcc lattice: a = " << a);
 }
 
 template <int dimension, typename float_type>

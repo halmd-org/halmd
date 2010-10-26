@@ -48,6 +48,11 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
   , box(box)
   , random(random)
 {
+    // initialise kernel globals in constant memory
+    cuda::copy(
+        static_cast<fixed_vector<float_type, dimension> >(box->length())
+      , get_lattice_kernel<dimension>().box_length
+    );
 }
 
 /**
@@ -87,32 +92,30 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     LOG("randomly permuting particle types");
     random->shuffle(particle->g_r);
 
-    // TODO: handle non-cubic boxes
-    for (unsigned i=1; i < dimension; i++) {
-        assert(box->length()[0] == box->length()[i]);
+    // determine maximal lattice constant
+    vector_type L = static_cast<vector_type>(box->length());
+    double u = (dimension == 3) ? 4 : 2;
+    double V = accumulate(L.begin(), L.end(), 1. / ceil(particle->nbox / u), multiplies<double>());
+    double a = pow(V, 1. / dimension);
+    fixed_vector<unsigned int, dimension> n(L / a);
+    while (particle->nbox > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
+        vector_type t;
+        for (size_t i = 0; i < dimension; ++i) {
+            t[i] = L[i] / (n[i] + 1);
+        }
+        typename vector_type::iterator it = max_element(t.begin(), t.end());
+        a = *it;
+        ++n[it - t.begin()];
     }
+    LOG("placing particles on fcc lattice: a = " << a);
 
-    LOG("placing particles on face-centered cubic (fcc) lattice");
-
-    // particles per 2- or 3-dimensional unit cell
-    unsigned int const m = 2 * (dimension - 1);
-    // lower boundary for number of particles per lattice dimension
-    unsigned int n = static_cast<unsigned int>(pow(particle->nbox / m, 1. / dimension));
-    // lower boundary for total number of lattice sites
-    unsigned int N = m * static_cast<unsigned int>(pow(static_cast<double>(n), dimension));
-
-    if (N < particle->nbox) {
-        n += 1;
-        N = m * static_cast<unsigned int>(pow(static_cast<double>(n), dimension));
-    }
+    unsigned int N = u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>());
     if (N > particle->nbox) {
         LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
-    // minimum distance in 2- or 3-dimensional fcc lattice
-    LOG("minimum lattice distance: " << (box->length()[0] / n) / sqrt(2));
-
 #ifdef USE_VERLET_DSFUN
+    // set hi parts of dsfloat values to zero
     cuda::memset(particle->g_r, 0, particle->g_r.capacity());
 #endif
 
@@ -121,20 +124,15 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     try {
 //         timer[0].record();
         cuda::configure(particle->dim.grid, particle->dim.block);
-        get_lattice_kernel<dimension>().fcc(particle->g_r, n, box->length()[0]);
+        get_lattice_kernel<dimension>().fcc(particle->g_r, a);
         cuda::thread::synchronize();
 //         timer[1].record();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to compute particle lattice positions on GPU");
+        throw runtime_error("failed to generate particle lattice on GPU");
     }
 //     m_times["lattice"] += timer[1] - timer[0];
-
-    // ??? shift particle positions to range (-L/2, L/2)
-//    box->reduce_periodic(r);
-
-//    ??? assign_positions();
 
     // reset particle image vectors
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());
