@@ -27,7 +27,7 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/random/gpu/random.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -44,6 +44,7 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
+    typedef utility::profiler profiler_type;
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -57,6 +58,15 @@ public:
       , boost::shared_ptr<random_type> random
     );
     virtual void set();
+    void register_runtimes(profiler_type& profiler);
+
+    // module runtime accumulator descriptions
+    HALMD_PROFILE_TAG(set_, "setting particle positions on lattice");
+
+private:
+    boost::fusion::map<
+        boost::fusion::pair<set_, accumulator<double> >
+    > runtime_;
 };
 
 }}} // namespace mdsim::gpu::position

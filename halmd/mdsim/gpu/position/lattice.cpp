@@ -28,8 +28,11 @@
 #include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/position/lattice.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 using namespace boost;
+using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -53,6 +56,15 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
         static_cast<fixed_vector<float_type, dimension> >(box->length())
       , get_lattice_kernel<dimension>().box_length
     );
+}
+
+/**
+ * register module runtime accumulators
+ */
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
 }
 
 /**
@@ -119,20 +131,17 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     cuda::memset(particle->g_r, 0, particle->g_r.capacity());
 #endif
 
-//     boost::array<high_resolution_timer, 2> timer;
     cuda::thread::synchronize();
     try {
-//         timer[0].record();
+        scoped_timer<timer> timer_(at_key<set_>(runtime_));
         cuda::configure(particle->dim.grid, particle->dim.block);
         get_lattice_kernel<dimension>().fcc(particle->g_r, a);
         cuda::thread::synchronize();
-//         timer[1].record();
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
         throw runtime_error("failed to generate particle lattice on GPU");
     }
-//     m_times["lattice"] += timer[1] - timer[0];
 
     // reset particle image vectors
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());
@@ -159,6 +168,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                                , shared_ptr<box_type>
                                , shared_ptr<random_type>
                              >())
+                            .def("register_runtimes", &lattice::register_runtimes)
                     ]
                 ]
             ]
