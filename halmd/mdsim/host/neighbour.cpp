@@ -87,6 +87,7 @@ neighbour<dimension, float_type>::neighbour(
     vector_type L = box->length();
     ncell_ = static_cast<cell_size_type>(L / r_cut_max);
     if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
+        LOG_DEBUG("number of cells per dimension (untruncated): " << L / r_cut_max);
         throw logic_error("less than least 3 cells per dimension");
     }
     cell_.resize(ncell_);
