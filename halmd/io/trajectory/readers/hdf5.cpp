@@ -90,13 +90,13 @@ hdf5<dimension, float_type>::hdf5(
         }
         H5::DataSet v = type.openDataSet("v");
 
-        h5xx::read(r, &*sample->r[i], offset_);
-        h5xx::read(v, &*sample->v[i], offset_);
+        h5xx::read_dataset(r, &*sample->r[i], offset_);
+        h5xx::read_dataset(v, &*sample->v[i], offset_);
     }
 
     H5::DataSet t = root.openDataSet("t");
     float_type time;
-    offset = h5xx::read(t, &time, offset_);
+    offset = h5xx::read_dataset(t, &time, offset_);
     LOG("read trajectory sample at offset " << offset << " with t = " << time);
 }
 

@@ -100,7 +100,7 @@ void hdf5::write_accumulator(
       , error_of_mean(acc)
       , count(acc)
     }};
-    h5xx::write(dataset, data, 0);
+    h5xx::write_dataset(dataset, data, 0);
 }
 
 /**

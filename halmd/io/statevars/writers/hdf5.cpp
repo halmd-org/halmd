@@ -159,7 +159,7 @@ void hdf5<dimension>::write_dataset(
     h5xx::write_attribute(dataset, "description", desc);
 
     // write dataset at index 0
-    h5xx::write(dataset, value, 0);
+    h5xx::write_dataset(dataset, value, 0);
 }
 
 // overload for vector of data
@@ -181,7 +181,7 @@ void hdf5<dimension>::write_dataset(
     h5xx::write_attribute(dataset, "description", desc);
 
     // write dataset at index 0
-    h5xx::write(dataset, value, 0);
+    h5xx::write_dataset(dataset, value, 0);
 }
 
 /**
