@@ -274,6 +274,10 @@ void lattice_both()
         make_sample_gpu(particle_gpu, box, core);
 
     // generate lattices
+    BOOST_TEST_MESSAGE("set particle tags at host");
+    particle_host->set();
+    BOOST_TEST_MESSAGE("set particle tags at GPU");
+    particle_gpu->set();
     BOOST_TEST_MESSAGE("generate fcc lattice at host");
     position_host->set();
     BOOST_TEST_MESSAGE("generate fcc lattice at GPU");
