@@ -345,6 +345,12 @@ void ideal_gas(string const& backend)
     double timestep = 0.001;
     unsigned int npart = 1000;
     unsigned int random_seed = 42;
+    fixed_vector<double, dimension> box_ratios;
+    box_ratios[0] = 1;
+    box_ratios[1] = 2;
+    if (dimension == 3) {
+        box_ratios[2] = 1.01;
+    }
 
     // enable logging to console
     shared_ptr<logger> log(new logger);
@@ -381,7 +387,7 @@ void ideal_gas(string const& backend)
     core->box = make_shared<mdsim::box<dimension> >(
         core->particle
       , density
-      , 1 //< cube aspect ratios
+      , box_ratios
     );
     core->integrator = make_verlet_integrator<dimension>(
         backend
@@ -455,8 +461,14 @@ void thermodynamics(string const& backend)
     float temp = 3.0;
     float rc = 4.0;
     double timestep = 0.01;    // start with small time step for thermalisation
-    unsigned npart = (backend == "gpu") ? 4000 : 1000;
+    unsigned npart = (backend == "gpu") ? 4000 : 1500;
     unsigned int random_seed = 42;
+    fixed_vector<double, dimension> box_ratios;
+    box_ratios[0] = 1;
+    box_ratios[1] = 2;
+    if (dimension == 3) {
+        box_ratios[2] = 1.01;
+    }
 
     using namespace boost::assign;
 
@@ -495,7 +507,7 @@ void thermodynamics(string const& backend)
     core->box = make_shared<mdsim::box<dimension> >(
         core->particle
       , density
-      , 1 //< cube aspect ratios
+      , box_ratios
     );
     core->integrator = make_verlet_integrator<dimension>(
         backend
