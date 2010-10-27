@@ -22,6 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/statevars/writers/hdf5.hpp>
+#include <halmd/io/utility/hdf5.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
