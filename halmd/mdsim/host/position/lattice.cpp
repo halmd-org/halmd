@@ -82,8 +82,11 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    // randomize particle types
-    random->shuffle(particle->type.begin(), particle->type.end());
+    // randomise particle types if there are more than 1
+    if (particle->ntypes.size() > 1) {
+        LOG("randomly permuting particle types");
+        random->shuffle(particle->type.begin(), particle->type.end());
+    }
 
     // assign lattice coordinates
     vector_type L = box->length();

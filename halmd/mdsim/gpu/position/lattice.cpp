@@ -101,8 +101,11 @@ void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(pr
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
-    LOG("randomly permuting particle types");
-    random->shuffle(particle->g_r);
+    // randomise particle types if there are more than 1
+    if (particle->ntypes.size() > 1) {
+        LOG("randomly permuting particle types");
+        random->shuffle(particle->g_r);
+    }
 
     // determine maximal lattice constant
     vector_type L = static_cast<vector_type>(box->length());
