@@ -51,17 +51,17 @@ __device__ typename enable_if<is_same<int_<3>, int_<vector_type::static_size> > 
 fcc(unsigned int i, index_type const& n, vector_type& r)
 {
     // compose primitive vectors from 1-dimensional index
-    r.x = ((i >> 2) % n.x) + ((i ^ (i >> 1)) & 1) / 2.f;
-    r.y = ((i >> 2) / n.x % n.y) + (i & 1) / 2.f;
-    r.z = ((i >> 2) / n.x / n.y) + (i & 2) / 4.f;
+    r[0] = ((i >> 2) % n[0]) + ((i ^ (i >> 1)) & 1) / 2.f;
+    r[1] = ((i >> 2) / n[0] % n[1]) + (i & 1) / 2.f;
+    r[2] = ((i >> 2) / n[0] / n[1]) + (i & 2) / 4.f;
 }
 
 template <typename vector_type, typename index_type>
 __device__ typename enable_if<is_same<int_<2>, int_<vector_type::static_size> > >::type
 fcc(unsigned int i, index_type const& n, vector_type& r)
 {
-    r.x = ((i >> 1) % n.x) + (i & 1) / 2.f;
-    r.y = ((i >> 1) / n.x) + (i & 1) / 2.f;
+    r[0] = ((i >> 1) % n[0]) + (i & 1) / 2.f;
+    r[1] = ((i >> 1) / n[0]) + (i & 1) / 2.f;
 }
 
 /**
@@ -71,17 +71,17 @@ template <typename vector_type, typename index_type>
 __device__ typename enable_if<is_same<int_<3>, int_<vector_type::static_size> > >::type
 sc(unsigned int i, index_type const& n, vector_type& r)
 {
-    r.x = (i % n.x) + 0.5f;
-    r.y = (i / n.x % n.y) + 0.5f;
-    r.z = (i / n.x / n.y) + 0.5f;
+    r[0] = (i % n[0]) + 0.5f;
+    r[1] = (i / n[0] % n[1]) + 0.5f;
+    r[2] = (i / n[0] / n[1]) + 0.5f;
 }
 
 template <typename vector_type, typename index_type>
 __device__ typename enable_if<is_same<int_<2>, int_<vector_type::static_size> > >::type
 sc(unsigned int i, index_type const& n, vector_type& r)
 {
-    r.x = (i % n.x) + 0.5f;
-    r.y = (i / n.x) + 0.5f;
+    r[0] = (i % n[0]) + 0.5f;
+    r[1] = (i / n[0]) + 0.5f;
 }
 
 template <
