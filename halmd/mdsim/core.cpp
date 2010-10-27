@@ -133,7 +133,6 @@ void core<dimension>::luaopen(lua_State* L)
                     .def_readwrite("position", &core::position)
                     .def_readwrite("velocity", &core::velocity)
                     .property("step_counter", &core::step_counter)
-                    .property("time", &core::time)
                     .def("prepare", &core::prepare)
                     .def("mdstep", &core::mdstep)
                     .scope

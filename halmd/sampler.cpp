@@ -73,12 +73,12 @@ sampler<dimension>::sampler(
 )
   : core(core)
   , steps_(steps)
-  , time_(steps_ * core->integrator->timestep())
+  , total_time_(steps_ * core->integrator->timestep())
   , statevars_interval_(statevars_interval)
   , trajectory_interval_(trajectory_interval)
 {
     LOG("number of integration steps: " << steps_);
-    LOG("integration time: " << time_);
+    LOG("integration time: " << total_time_);
 }
 
 /**
@@ -126,11 +126,12 @@ template <int dimension>
 void sampler<dimension>::sample(bool force)
 {
     uint64_t step = core->step_counter();
+    double time = step * core->integrator->timestep();
     bool is_sampling_step = false;
 
     if (!(step % statevars_interval_) || force) {
         BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
-            observable->sample(core->time());
+            observable->sample(time);
             is_sampling_step = true;
         }
         if (statevars_writer) {
@@ -142,7 +143,7 @@ void sampler<dimension>::sample(bool force)
     // allow value 0 for trajectory_interval_
     if (((trajectory_interval_ && !(step % trajectory_interval_)) || force)
           && trajectory_writer) {
-        trajectory_writer->append();
+        trajectory_writer->append(time);
         is_sampling_step = true;
     }
 
@@ -173,7 +174,7 @@ void sampler<dimension>::luaopen(lua_State* L)
                 .def_readwrite("trajectory_writer", &sampler::trajectory_writer)
                 .def_readwrite("profile_writers", &sampler::profile_writers)
                 .property("steps", &sampler::steps)
-                .property("time", &sampler::time)
+                .property("total_time", &sampler::total_time)
                 .scope
                 [
                     def("options", &sampler::options)

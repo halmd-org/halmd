@@ -81,9 +81,9 @@ hdf5<dimension, float_type>::hdf5(
  * append samples to datasets
  */
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::append()
+void hdf5<dimension, float_type>::append(double time)
 {
-    sample->acquire();
+    sample->acquire(time);
     BOOST_FOREACH (boost::function<void ()> const& writer, writers_) {
         writer();
     }

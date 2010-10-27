@@ -52,7 +52,7 @@ public:
         boost::shared_ptr<sample_type> sample
       , std::string const& file_name
     );
-    virtual void append();
+    virtual void append(double time);
     virtual void flush();
 
     boost::shared_ptr<sample_type> sample;

@@ -29,7 +29,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/position/lattice.hpp>
 #include <halmd/mdsim/host/sampler/trajectory.hpp>
@@ -173,14 +172,12 @@ template <int dimension>
 shared_ptr<mdsim::samples::host::trajectory<dimension, double> > make_sample_host(
     shared_ptr<mdsim::particle<dimension> > particle
   , shared_ptr<mdsim::box<dimension> > box
-  , shared_ptr<mdsim::core<dimension> > core
 )
 {
     typedef mdsim::host::sampler::trajectory<dimension, double> sampler_type;
     return make_shared<sampler_type>(
         dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
       , box
-      , core
     );
 }
 
@@ -188,7 +185,6 @@ template <int dimension>
 shared_ptr<mdsim::samples::host::trajectory<dimension, float> > make_sample_gpu(
     shared_ptr<mdsim::particle<dimension> > particle
   , shared_ptr<mdsim::box<dimension> > box
-  , shared_ptr<mdsim::core<dimension> > core
 )
 {
 #ifdef WITH_CUDA
@@ -197,19 +193,10 @@ shared_ptr<mdsim::samples::host::trajectory<dimension, float> > make_sample_gpu(
     return make_shared<sampler_type>(
         dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
       , box
-      , core
     );
 #endif /* WITH_CUDA */
     throw runtime_error("unknown backend: gpu");
 }
-
-template <int dimension>
-class core_dummy : public mdsim::core<dimension>
-{
-public:
-    core_dummy() : mdsim::core<dimension>() {};
-    virtual double time() const { return 0; }
-};
 
 /** test GPU and host implementation separately */
 template <int dimension>
@@ -265,13 +252,10 @@ void lattice_both()
     shared_ptr<mdsim::position<dimension> > position_gpu =
         make_lattice("gpu", particle_gpu, box, random_gpu);
 
-    // dummy core object
-    shared_ptr<mdsim::core<dimension> > core = make_shared<core_dummy<dimension> >();
-
     shared_ptr<mdsim::samples::host::trajectory<dimension, double> > sample_host =
-        make_sample_host(particle_host, box, core);
+        make_sample_host(particle_host, box);
     shared_ptr<mdsim::samples::host::trajectory<dimension, float> > sample_gpu =
-        make_sample_gpu(particle_gpu, box, core);
+        make_sample_gpu(particle_gpu, box);
 
     // generate lattices
     BOOST_TEST_MESSAGE("set particle tags at host");
@@ -284,9 +268,10 @@ void lattice_both()
     position_gpu->set();
 
     // acquire trajectory samples
-    BOOST_TEST_MESSAGE("acquire samples from host and GPU");
-    sample_host->acquire();
-    sample_gpu->acquire();
+    BOOST_TEST_MESSAGE("acquire sample from host");
+    sample_host->acquire(0);
+    BOOST_TEST_MESSAGE("acquire sample from GPU");
+    sample_gpu->acquire(0);
 
     // compute deviations between particle positions from both implementations
     BOOST_TEST_MESSAGE("compare particle positions");

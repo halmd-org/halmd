@@ -58,7 +58,7 @@ public:
     void sample(bool force=false);
     void register_runtimes(profiler_type& profiler);
     uint64_t steps() { return steps_; }
-    double time() { return time_; }
+    double total_time() { return total_time_; }
 
     boost::shared_ptr<core_type> core;
     std::vector<boost::shared_ptr<observable_type> > observables;
@@ -70,10 +70,10 @@ public:
     HALMD_PROFILE_TAG( msv_output_, "output of macroscopic state variables" );
 
 private:
-    /** number of integration steps */
+    /** total number of integration steps */
     uint64_t steps_;
-    /** integration time in MD units */
-    double time_;
+    /** total integration time in MD units */
+    double total_time_;
     // value from option --sampling-state-vars
     unsigned statevars_interval_;
     // value from option --sampling-trajectory

@@ -75,8 +75,7 @@ public:
     HALMD_PROFILE_TAG( prepare_, "microscopic state preparation" );
     HALMD_PROFILE_TAG( mdstep_, "MD integration step" );
 
-    virtual uint64_t step_counter() const { return step_counter_; }
-    virtual double time() const { return step_counter_ * integrator->timestep(); }
+    uint64_t step_counter() const { return step_counter_; }
 
 private:
     // list of profiling timers

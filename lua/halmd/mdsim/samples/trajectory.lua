@@ -54,7 +54,7 @@ function new()
     local dimension = assert(args.dimension)
 
     if not device() then
-        return sampler_wrapper.host[dimension](particle, box, core)
+        return sampler_wrapper.host[dimension](particle, box)
     end
-    return sampler_wrapper.gpu[dimension](particle, box, core)
+    return sampler_wrapper.gpu[dimension](particle, box)
 end

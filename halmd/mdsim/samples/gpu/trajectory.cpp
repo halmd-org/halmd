@@ -37,6 +37,7 @@ trajectory<dimension, float_type>::trajectory(
   // allocate sample pointers
   , r(particle->ntype)
   , v(particle->ntype)
+  , time(-1)
 {
     for (size_t i = 0; i < particle->ntype; ++i) {
         r[i].reset(new sample_vector(particle->ntypes[i]));

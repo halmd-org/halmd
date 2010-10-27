@@ -45,7 +45,7 @@ public:
         boost::shared_ptr<particle_type> particle
     );
     virtual ~trajectory() {}
-    virtual void acquire() = 0;
+    virtual void acquire(double time) = 0;
 
     boost::shared_ptr<particle_type> particle;
 

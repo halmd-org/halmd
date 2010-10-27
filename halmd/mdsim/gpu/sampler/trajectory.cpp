@@ -38,12 +38,10 @@ template <int dimension, typename float_type>
 trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::trajectory(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
-  , shared_ptr<core_type> core
 )
   : _Base(particle)
   , particle(particle)  //< mdsim::host:particle
   , box(box)
-  , core(core)
 {
 }
 
@@ -51,12 +49,10 @@ template <int dimension, typename float_type>
 trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::trajectory(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
-  , shared_ptr<core_type> core
 )
   : _Base(particle)
   , particle(particle)
   , box(box)
-  , core(core)
 {
 }
 
@@ -64,18 +60,18 @@ trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::trajectory
  * Sample trajectory
  */
 template <int dimension, typename float_type>
-void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::acquire()
+void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::acquire(double time)
 {
     // FIXME
 
-    time = core->time();
+    _Base::time = time;
 }
 
 /**
  * Sample trajectory
  */
 template <int dimension, typename float_type>
-void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acquire()
+void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acquire(double time)
 {
     try {
         cuda::copy(particle->g_r, particle->h_r);
@@ -99,7 +95,7 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
         // particle velocity
         (*this->v[type])[tag] = v;
     }
-    time = core->time();
+    _Base::time = time;
 }
 
 template <int dimension, typename float_type>
@@ -123,7 +119,6 @@ void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::luaope
                                 .def(constructor<
                                      shared_ptr<particle_type>
                                    , shared_ptr<box_type>
-                                   , shared_ptr<core_type>
                                 >())
                         ]
                     ]
@@ -154,7 +149,6 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::luaop
                                 .def(constructor<
                                      shared_ptr<particle_type>
                                    , shared_ptr<box_type>
-                                   , shared_ptr<core_type>
                                 >())
                         ]
                     ]

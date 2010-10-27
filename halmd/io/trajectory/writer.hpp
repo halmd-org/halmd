@@ -35,7 +35,7 @@ public:
 
     writer() {}
     virtual ~writer() {}
-    virtual void append() = 0;
+    virtual void append(double time) = 0;
     virtual void flush() = 0;
 };
 

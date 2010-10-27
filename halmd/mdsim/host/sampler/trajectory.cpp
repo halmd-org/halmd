@@ -33,12 +33,10 @@ template <int dimension, typename float_type>
 trajectory<dimension, float_type>::trajectory(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
-  , shared_ptr<core_type> core
 )
   : _Base(particle)     //< mdsim::particle
   , particle(particle)  //< mdsim::host:particle
   , box(box)
-  , core(core)
 {
 }
 
@@ -46,7 +44,7 @@ trajectory<dimension, float_type>::trajectory(
  * Sample trajectory
  */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::acquire()
+void trajectory<dimension, float_type>::acquire(double time)
 {
     for (size_t i = 0; i < particle->nbox; ++i) {
         // periodically extended particle position
@@ -54,7 +52,7 @@ void trajectory<dimension, float_type>::acquire()
         // particle velocity
         (*v[particle->type[i]])[particle->tag[i]] = particle->v[i];
     }
-    time = core->time();
+    _Base::time = time;
 }
 
 template <int dimension, typename float_type>
@@ -76,7 +74,6 @@ void trajectory<dimension, float_type>::luaopen(lua_State* L)
                             .def(constructor<
                                  shared_ptr<particle_type>
                                , shared_ptr<box_type>
-                               , shared_ptr<core_type>
                             >())
                     ]
                 ]
