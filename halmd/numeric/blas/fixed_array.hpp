@@ -34,9 +34,6 @@ namespace halmd
 namespace detail { namespace numeric { namespace blas
 {
 
-// import into current namespace
-using namespace boost;
-
 #ifndef __CUDACC__
 
 template <typename T, size_t N>
@@ -45,80 +42,56 @@ struct fixed_array
 
 #else /* __CUDACC__ */
 
-template <typename T, size_t N>
-struct _fixed_array_impl;
-
 template <typename T, typename Enable = void>
-struct _fixed_array_pod_type;
+struct fixed_array_pod_type;
 
 //
-// The purpose of a bounded array is to serve as the underlying
+// The purpose of a fixed_array is to serve as the underlying
 // array type to a fixed-length algebraic vector. It defines
 // operator[] to allow convenient access of its components.
 //
 template <typename T, size_t N>
 struct fixed_array
-  : _fixed_array_impl<typename _fixed_array_pod_type<T>::type, N>
 {
+public:
     typedef T value_type;
+    typedef value_type& reference;
+    typedef value_type const& const_reference;
+    typedef size_t size_type;
     enum { static_size = N };
 
-    HALMD_GPU_ENABLED value_type& operator[](size_t i)
+    HALMD_GPU_ENABLED reference operator[](size_type i)
     {
-        return reinterpret_cast<value_type*>(this)[i];
+        return (reinterpret_cast<value_type*>(this))[i];
     }
 
-    HALMD_GPU_ENABLED value_type const& operator[](size_t i) const
+    HALMD_GPU_ENABLED const_reference operator[](size_type i) const
     {
-        return reinterpret_cast<value_type const*>(this)[i];
+        return (reinterpret_cast<value_type const*>(this))[i];
     }
+
+private:
+    typename fixed_array_pod_type<T>::type array[N];
 };
 
 //
 // CUDA shared memory arrays only allow POD-type data members, so we
 // cannot use structs with non-default constructors as a data members.
 // Instead, we define an equivalent POD type here and cast to the
-// non-POD type upon accessing an element of the bounded array.
+// non-POD type upon accessing an element of the fixed_array.
 //
 
 template <typename T>
-struct _fixed_array_pod_type<T,
-  typename enable_if<is_pod<T> >::type>
+struct fixed_array_pod_type<T,
+  typename boost::enable_if<boost::is_pod<T> >::type>
 {
     typedef T type;
 };
 
 template <>
-struct _fixed_array_pod_type<dsfloat>
+struct fixed_array_pod_type<dsfloat>
 {
     typedef float2 type;
-};
-
-//
-// These specializations define the data members of bounded array.
-//
-template <typename T>
-struct _fixed_array_impl<T, 1>
-{
-    T x;
-};
-
-template <typename T>
-struct _fixed_array_impl<T, 2>
-{
-    T x, y;
-};
-
-template <typename T>
-struct _fixed_array_impl<T, 3>
-{
-    T x, y, z;
-};
-
-template <typename T>
-struct _fixed_array_impl<T, 4>
-{
-    T x, y, z, w;
 };
 
 #endif /* __CUDACC__ */
