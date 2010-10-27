@@ -59,8 +59,8 @@ public:
 
     core();
     void register_runtimes(profiler_type& profiler);
-    virtual void prepare();
-    virtual void mdstep();
+    void prepare();
+    void mdstep();
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
