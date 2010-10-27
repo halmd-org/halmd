@@ -80,24 +80,6 @@ struct fixed_vector
             (*this)[i] = static_cast<value_type>(v[i]);
         }
     }
-
-#ifndef __CUDACC__
-    /**
-     * implicit conversion from base classes
-     */
-    HALMD_GPU_ENABLED fixed_vector(fixed_array<T, N> const& v)
-    {
-        for (size_t i = 0; i < static_size; ++i) {
-            (*this)[i] = v[i];
-        }
-    }
-    HALMD_GPU_ENABLED fixed_vector(boost::array<T, N> const& v)
-    {
-        for (size_t i = 0; i < static_size; ++i) {
-            (*this)[i] = v[i];
-        }
-    }
-#endif
 };
 
 /**

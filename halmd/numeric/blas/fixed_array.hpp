@@ -41,18 +41,7 @@ using namespace boost;
 
 template <typename T, size_t N>
 struct fixed_array
-  : boost::array<T, N>
-{
-    fixed_array() : boost::array<T, N>() {}
-    /**
-     * implicit conversion from base class
-     */
-    fixed_array(boost::array<T, N> const& a) {
-        for (size_t i = 0; i < N; ++i) {
-            (*this)[i] = a[i];
-        }
-    }
-};
+  : boost::array<T, N> {};
 
 #else /* __CUDACC__ */
 
