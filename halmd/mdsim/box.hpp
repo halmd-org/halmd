@@ -21,6 +21,8 @@
 #define HALMD_MDSIM_BOX_HPP
 
 #include <boost/multi_array.hpp>
+#include <numeric>
+#include <functional>
 #include <lua.hpp>
 
 #include <halmd/mdsim/particle.hpp>
@@ -54,6 +56,10 @@ public:
 
     vector_type const& length() { return length_; }
     double density() { return density_; }
+    double volume()
+    {
+        return std::accumulate(length_.begin(), length_.end(), 1., std::multiplies<double>());
+    }
 
     template <typename T>
     T reduce_periodic(T& r) const;

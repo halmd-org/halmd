@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
 #include <cmath>
-#include <numeric>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
@@ -69,8 +67,7 @@ box<dimension>::box(
   : length_(length)
   , length_half_(0.5 * length_)
 {
-    double volume = accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
-    density_ = particle->nbox / volume;
+    density_ = particle->nbox / volume();
 
     LOG("number density: " << density_);
     LOG("edge lengths of simulation box: " << length_);
