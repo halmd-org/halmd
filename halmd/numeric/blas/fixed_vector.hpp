@@ -41,9 +41,6 @@ namespace halmd
 namespace detail { namespace numeric { namespace blas
 {
 
-// import into current namespace
-using namespace boost;
-
 /**
  * N-dimensional vector of arbitrary value type
  */
@@ -62,7 +59,7 @@ struct fixed_vector
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(U const& s,
-      typename enable_if<is_convertible<U, T> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, T> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = s;
@@ -74,7 +71,7 @@ struct fixed_vector
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, N> const& v,
-      typename enable_if<is_convertible<U, T> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, T> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -110,7 +107,7 @@ struct fixed_vector<float, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 4> const& v,
-      typename enable_if<is_convertible<U, float> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, float> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -174,7 +171,7 @@ struct fixed_vector<float, 3>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 3> const& v,
-      typename enable_if<is_convertible<U, float> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, float> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -252,7 +249,7 @@ struct fixed_vector<float, 2>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 2> const& v,
-      typename enable_if<is_convertible<U, float> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, float> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -340,7 +337,7 @@ struct fixed_vector<unsigned int, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 4> const& v,
-      typename enable_if<is_convertible<U, unsigned int> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, unsigned int> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -404,7 +401,7 @@ struct fixed_vector<unsigned int, 3>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 3> const& v,
-      typename enable_if<is_convertible<U, unsigned int> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, unsigned int> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -482,7 +479,7 @@ struct fixed_vector<unsigned int, 2>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 2> const& v,
-      typename enable_if<is_convertible<U, unsigned int> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, unsigned int> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -570,7 +567,7 @@ struct fixed_vector<int, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 4> const& v,
-      typename enable_if<is_convertible<U, int> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, int> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -634,7 +631,7 @@ struct fixed_vector<int, 3>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 3> const& v,
-      typename enable_if<is_convertible<U, int> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, int> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -712,7 +709,7 @@ struct fixed_vector<int, 2>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 2> const& v,
-      typename enable_if<is_convertible<U, int> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, int> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -789,7 +786,7 @@ struct fixed_vector<dsfloat, 4> : fixed_array<dsfloat, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(U const& s,
-      typename enable_if<is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = s;
@@ -801,7 +798,7 @@ struct fixed_vector<dsfloat, 4> : fixed_array<dsfloat, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(fixed_vector<U, 4> const& v,
-      typename enable_if<is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -833,7 +830,7 @@ struct fixed_vector<dsfloat, 3> : fixed_array<dsfloat, 3>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(U const& s,
-      typename enable_if<is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = s;
@@ -845,7 +842,7 @@ struct fixed_vector<dsfloat, 3> : fixed_array<dsfloat, 3>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(fixed_vector<U, 3> const& v,
-      typename enable_if<is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -877,7 +874,7 @@ struct fixed_vector<dsfloat, 2> : fixed_array<dsfloat, 2>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(U const& s,
-      typename enable_if<is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = s;
@@ -889,7 +886,7 @@ struct fixed_vector<dsfloat, 2> : fixed_array<dsfloat, 2>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(fixed_vector<U, 2> const& v,
-      typename enable_if<is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -932,7 +929,7 @@ struct fixed_vector<double, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 4> const& v,
-      typename enable_if<is_convertible<U, double> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, double> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -996,7 +993,7 @@ struct fixed_vector<double, 3>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 3> const& v,
-      typename enable_if<is_convertible<U, double> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, double> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -1074,7 +1071,7 @@ struct fixed_vector<double, 2>
      */
     template <typename U>
     HALMD_GPU_ENABLED explicit fixed_vector(fixed_vector<U, 2> const& v,
-      typename enable_if<is_convertible<U, double> >::type* dummy = 0)
+      typename boost::enable_if<boost::is_convertible<U, double> >::type* dummy = 0)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = static_cast<value_type>(v[i]);
@@ -1158,7 +1155,7 @@ split(fixed_vector<dsfloat, N> const& v)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_convertible<U, T>, fixed_vector<T, N>&>::type
+typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N>&>::type
 operator+=(fixed_vector<T, N>& v, fixed_vector<U, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1172,7 +1169,7 @@ operator+=(fixed_vector<T, N>& v, fixed_vector<U, N> const& w)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_convertible<U, T>, fixed_vector<T, N>&>::type
+typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N>&>::type
 operator-=(fixed_vector<T, N>& v, fixed_vector<U, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1186,7 +1183,7 @@ operator-=(fixed_vector<T, N>& v, fixed_vector<U, N> const& w)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_convertible<U, T>, fixed_vector<T, N>&>::type
+typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N>&>::type
 operator*=(fixed_vector<T, N>& v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1200,7 +1197,7 @@ operator*=(fixed_vector<T, N>& v, U s)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_convertible<U, T>, fixed_vector<T, N>&>::type
+typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N>&>::type
 operator/=(fixed_vector<T, N>& v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1214,7 +1211,7 @@ operator/=(fixed_vector<T, N>& v, U s)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<mpl::and_<is_integral<T>, is_integral<U> >, fixed_vector<T, N>&>::type
+typename boost::enable_if<boost::mpl::and_<boost::is_integral<T>, boost::is_integral<U> >, fixed_vector<T, N>&>::type
 operator%=(fixed_vector<T, N>& v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1263,7 +1260,7 @@ fixed_vector<T, N> operator-(fixed_vector<T, N> v)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_convertible<U, T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N> >::type
 operator*(fixed_vector<T, N> v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1277,7 +1274,7 @@ operator*(fixed_vector<T, N> v, U s)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_convertible<U, T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N> >::type
 operator*(U s, fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1291,7 +1288,7 @@ operator*(U s, fixed_vector<T, N> v)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_convertible<U, T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N> >::type
 operator/(fixed_vector<T, N> v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1305,7 +1302,7 @@ operator/(fixed_vector<T, N> v, U s)
  */
 template <typename T, typename U, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<mpl::and_<is_integral<T>, is_integral<U> >, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::mpl::and_<boost::is_integral<T>, boost::is_integral<U> >, fixed_vector<T, N> >::type
 operator%(fixed_vector<T, N> v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1359,7 +1356,7 @@ fixed_vector<T, N> element_div(fixed_vector<T, N> v, fixed_vector<T, N> const& w
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_integral<T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_integral<T>, fixed_vector<T, N> >::type
 element_mod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1373,7 +1370,7 @@ element_mod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_floating_point<T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
 floor(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::floor, std::floor);
@@ -1388,7 +1385,7 @@ floor(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_floating_point<T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
 ceil(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::ceil, std::ceil);
@@ -1403,7 +1400,7 @@ ceil(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_floating_point<T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
 sqrt(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::sqrt, std::sqrt);
@@ -1418,7 +1415,7 @@ sqrt(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_floating_point<T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
 cos(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::cos, std::cos);
@@ -1433,7 +1430,7 @@ cos(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_floating_point<T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
 sin(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::sin, std::sin);
@@ -1448,7 +1445,7 @@ sin(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_floating_point<T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
 fabs(fixed_vector<T, N> v)
 {
     HALMD_GPU_USING(::fabs, std::fabs);
@@ -1488,7 +1485,7 @@ remainder(fixed_vector<float, N> v, fixed_vector<float, N> const& w)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_floating_point<T>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_floating_point<T>, fixed_vector<T, N> >::type
 fmod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 {
     HALMD_GPU_USING(::fmod, std::fmod);
@@ -1503,7 +1500,7 @@ fmod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_same<T, double>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_same<T, double>, fixed_vector<T, N> >::type
 rint(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1514,7 +1511,7 @@ rint(fixed_vector<T, N> v)
 
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_same<T, float>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
 rint(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1528,7 +1525,7 @@ rint(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_same<T, double>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_same<T, double>, fixed_vector<T, N> >::type
 round(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1539,7 +1536,7 @@ round(fixed_vector<T, N> v)
 
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_same<T, float>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
 round(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1555,7 +1552,7 @@ round(fixed_vector<T, N> v)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_same<T, double>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_same<T, double>, fixed_vector<T, N> >::type
 fdivide(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1566,7 +1563,7 @@ fdivide(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_same<T, float>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
 fdivide(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
@@ -1580,7 +1577,7 @@ fdivide(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
  */
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED
-typename enable_if<is_same<T, float>, fixed_vector<T, N> >::type
+typename boost::enable_if<boost::is_same<T, float>, fixed_vector<T, N> >::type
 saturate(fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
