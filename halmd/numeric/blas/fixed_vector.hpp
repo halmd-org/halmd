@@ -24,6 +24,7 @@
 #include <halmd/numeric/blas/fixed_vector/size_2.hpp>
 #include <halmd/numeric/blas/fixed_vector/size_3.hpp>
 #include <halmd/numeric/blas/fixed_vector/size_4.hpp>
+#include <halmd/numeric/blas/fixed_vector/size_6.hpp>
 #include <halmd/numeric/blas/fixed_vector/operators.hpp>
 #include <halmd/numeric/blas/fixed_vector/rounding.hpp>
 
