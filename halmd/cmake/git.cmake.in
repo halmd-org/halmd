@@ -1,0 +1,63 @@
+#
+# Copyright © 2010  Peter Colberg
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+##
+# execute git command
+#
+# @param output output variable
+#
+macro(git output)
+  execute_process(
+    COMMAND "@GIT_EXECUTABLE@" ${ARGN}
+    WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@"
+    OUTPUT_VARIABLE ${output}
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endmacro(git)
+
+##
+# returns branch name of commit in output variable
+#
+# @param output output variable
+# @param commit commit
+#
+macro(git_branch output commit)
+  git(${output} symbolic-ref -q ${commit})
+  string(REGEX REPLACE "^refs/heads/" "" ${output} "${${output}}")
+endmacro(git_branch)
+
+##
+# returns most recent tag reachable from commit in output variable
+#
+# @param output output variable
+# @param commit commit
+#
+macro(git_describe output commit)
+  git(${output} describe --always ${commit})
+endmacro(git_describe)
+
+##
+# returns committer date of commit in output variable
+#
+# @param output output variable
+# @param commit commit
+#
+macro(git_committer_date output commit)
+  git(${output} log -1 --pretty=%cD ${commit})
+endmacro(git_committer_date)

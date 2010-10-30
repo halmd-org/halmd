@@ -1,0 +1,55 @@
+#
+# Copyright © 2010  Peter Colberg
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+include("@CMAKE_CURRENT_BINARY_DIR@/git.cmake")
+
+set(HALMD_SOURCE_DIR "@CMAKE_SOURCE_DIR@")
+set(HALMD_BINARY_DIR "@CMAKE_BINARY_DIR@")
+set(HALMD_INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@")
+
+set(PROJECT_NAME "@PROJECT_NAME@")
+string(TOLOWER "@PROJECT_NAME@" PROGRAM_NAME)
+set(PROGRAM_DESC "HAL’s MD package")
+
+git_branch(HALMD_GIT_BRANCH HEAD)
+git_describe(HALMD_GIT_VERSION HEAD)
+git_committer_date(HALMD_GIT_COMMITTER_DATE HEAD)
+
+if(HALMD_GIT_VERSION)
+  string(REGEX MATCH "v[0-9].*" PROGRAM_VERSION "${HALMD_GIT_VERSION}")
+  if(NOT PROGRAM_VERSION)
+    set(PROGRAM_VERSION "commit ${HALMD_GIT_VERSION}")
+    if(HALMD_GIT_BRANCH)
+      set(PROGRAM_VERSION "${PROGRAM_VERSION} (${HALMD_GIT_BRANCH})")
+    endif(HALMD_GIT_BRANCH)
+  endif(NOT PROGRAM_VERSION)
+else(HALMD_GIT_VERSION)
+  set(PROGRAM_VERSION "(unknown version)")
+endif(HALMD_GIT_VERSION)
+if(HALMD_GIT_COMMITTER_DATE)
+  set(PROGRAM_DATE "${HALMD_GIT_COMMITTER_DATE}")
+else(HALMD_GIT_COMMITTER_DATE)
+  set(PROGRAM_DATE "unknown date")
+endif(HALMD_GIT_COMMITTER_DATE)
+
+configure_file(
+  "${INPUT_FILE}"
+  "${OUTPUT_FILE}"
+  ESCAPE_QUOTES @ONLY
+)

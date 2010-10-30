@@ -1,0 +1,10 @@
+configure_file(
+  version.cmake.in
+  version.cmake
+  @ONLY
+)
+configure_file(
+  git.cmake.in
+  git.cmake
+  @ONLY
+)
