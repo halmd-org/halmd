@@ -35,9 +35,9 @@ namespace mdsim { namespace host { namespace forces
  * Assemble module options
  */
 template <int dimension, typename float_type>
-void smooth<dimension, float_type>::options(options_definition& options)
+void smooth<dimension, float_type>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("smooth", po::value<float>(),
          "C²-potential smoothing factor")
         ;

@@ -32,9 +32,9 @@ namespace mdsim
  * Assemble module options
  */
 template <int dimension>
-void force<dimension>::options(options_definition& options)
+void force<dimension>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("force", po::value<string>()->default_value("lennard_jones"),
          "specify force module")
         ;

@@ -35,9 +35,9 @@ namespace observables
  * Assemble module options
  */
 template <int dimension>
-void thermodynamics<dimension>::options(options_definition& options)
+void thermodynamics<dimension>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("disable-state-vars", po::bool_switch(),
          "disable evaluation and output of macroscopic state variables")
         ;

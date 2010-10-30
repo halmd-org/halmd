@@ -37,7 +37,7 @@ template <int dimension>
 class sampler
 {
 public:
-    static void options(options_definition& options);
+    static void options(po::options_description& desc);
 
     typedef mdsim::core<dimension> core_type;
     typedef observables::observable<dimension> observable_type;

@@ -104,13 +104,13 @@ void script::load_library()
 /**
  * Assemble program options
  */
-options_definition script::options()
+po::options_description script::options()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
     using namespace luabind;
 
-    options_definition desc("Program Options");
+    po::options_description desc("Program Options");
 
     // retrieve the Lua function before the try-catch block
     // to avoid bogus error message on the Lua stack in case

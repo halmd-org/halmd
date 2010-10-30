@@ -35,9 +35,9 @@ namespace mdsim { namespace host { namespace velocities
  * Assemble module options
  */
 template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::options(options_definition& options)
+void boltzmann<dimension, float_type>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("temperature,K", po::value<float>()->default_value(1.12),
          "Boltzmann distribution temperature")
         ;

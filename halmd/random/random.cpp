@@ -32,9 +32,9 @@ namespace random
 /**
  * Assemble module options
  */
-void random::options(options_definition& options)
+void random::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("random-seed", po::value<unsigned int>(),
          "random number generator integer seed")
         ("random-file", po::value<std::string>()->default_value("/dev/random"),

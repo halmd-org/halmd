@@ -34,7 +34,7 @@ template <int dimension>
 class velocity
 {
 public:
-    static void options(options_definition& options);
+    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;

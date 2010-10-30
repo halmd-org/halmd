@@ -37,9 +37,9 @@ namespace halmd
  * Assemble module options
  */
 template <int dimension>
-void sampler<dimension>::options(options_definition& options)
+void sampler<dimension>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("steps,s", po::value<uint64_t>()->default_value(10000),
          "number of simulation steps")
         ("time,t", po::value<double>(),

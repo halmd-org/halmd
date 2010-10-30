@@ -38,9 +38,6 @@ namespace halmd
 // abbreviated namespace with top-level scope
 namespace po = boost::program_options;
 
-// FIXME implement conflicting/dependent options
-typedef po::options_description options_definition;
-
 /**
  * Command-line options parser
  */
@@ -49,7 +46,7 @@ class options_parser
 public:
     static void luaopen(lua_State* L);
 
-    options_parser(options_definition const& options);
+    options_parser(po::options_description const& desc);
     void parse_command_line(int argc, char** argv);
     void parse_config_file(std::string const& file_name);
     void print_error(std::exception const& error) const;
@@ -65,7 +62,7 @@ public:
     void parse(int argc, char** arg);
 
 private:
-    options_definition options_; //< options description
+    po::options_description desc_; //< options description
     po::variables_map vm_; //< options map
 };
 

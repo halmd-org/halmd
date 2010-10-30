@@ -46,9 +46,9 @@ float_type const neighbour<dimension, float_type>::default_cell_occupancy = 0.4;
  * Assemble module options
  */
 template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::options(options_definition& options)
+void neighbour<dimension, float_type>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("cell-occupancy", po::value<float>()->default_value(default_cell_occupancy),
          "desired average cell occupancy")
         ;

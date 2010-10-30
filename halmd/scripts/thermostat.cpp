@@ -35,9 +35,9 @@ namespace scripts
  * Assemble module options
  */
 template <int dimension>
-void thermostat<dimension>::options(options_definition& options)
+void thermostat<dimension>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("thermostat", po::value<float>()->required(),
          "heat bath collision rate")
         ;

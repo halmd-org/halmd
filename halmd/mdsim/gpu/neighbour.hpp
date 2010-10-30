@@ -76,7 +76,7 @@ public:
     cuda::config dim_reduce;
     displacement_impl_type const displacement_impl;
 
-    static void options(options_definition& options);
+    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     static float_type const default_cell_occupancy;

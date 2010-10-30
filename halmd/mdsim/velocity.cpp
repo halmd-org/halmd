@@ -33,9 +33,9 @@ namespace mdsim
  * Assemble module options
  */
 template <int dimension>
-void velocity<dimension>::options(options_definition& options)
+void velocity<dimension>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("velocity",
          po::value<string>()->default_value("boltzmann"),
          "initial particle velocities module")

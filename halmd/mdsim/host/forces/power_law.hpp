@@ -130,7 +130,7 @@ class power_law
   : public pair_trunc<dimension, float_type, power_law_potential<dimension, float_type> >
 {
 public:
-    static void options(options_definition& options);
+    static void options(po::options_description& desc);
 
     typedef power_law_potential<dimension, float_type> potential_type;
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> _Base;

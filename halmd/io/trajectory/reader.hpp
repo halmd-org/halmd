@@ -33,7 +33,7 @@ template <int dimension>
 class reader
 {
 public:
-    static void options(options_definition& options);
+    static void options(po::options_description& desc);
 
     static void luaopen(lua_State* L);
 

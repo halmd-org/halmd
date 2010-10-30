@@ -39,9 +39,9 @@ namespace mdsim
  * Assemble module options
  */
 template <int dimension>
-void core<dimension>::options(options_definition& options)
+void core<dimension>::options(po::options_description& desc)
 {
-    options.add_options()
+    desc.add_options()
         ("dimension", po::value<int>()->default_value(3),
          "dimension of positional coordinates")
         ;

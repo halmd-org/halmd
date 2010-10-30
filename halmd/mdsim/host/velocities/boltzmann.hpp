@@ -46,7 +46,7 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<random_type> random;
 
-    static void options(options_definition& options);
+    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     boltzmann(
