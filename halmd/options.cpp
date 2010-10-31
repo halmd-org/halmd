@@ -60,7 +60,7 @@ options_parser::options_parser(po::options_description const& desc)
          "parameter input file")
         ("trajectory,J", po::value<string>(),
          "trajectory input file")
-        ("verbose,v", accum_value<int>()->default_value(logger::warning),
+        ("verbose,v", po::accum_value<int>()->default_value(logger::warning),
          "increase verbosity")
         ("version",
          "output version and exit")

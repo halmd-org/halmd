@@ -85,6 +85,7 @@ if(NOT HALMD_BACKEND_EXECUTABLES)
     -Wl,-whole-archive
     ${HALMD_MODULES}
     -Wl,-no-whole-archive
+    halmd_utility_program_options
     ${HALMD_COMMON_LIBRARIES}
     )
   install(TARGETS halmd
