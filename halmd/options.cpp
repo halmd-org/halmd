@@ -84,7 +84,9 @@ static __attribute__((constructor)) void register_option_converters()
  */
 void options_parser::parse_command_line(int argc, char** argv)
 {
+    using namespace po::command_line_style;
     po::command_line_parser parser(argc, argv);
+    parser.style(default_style & ~allow_guessing);
     po::parsed_options parsed(parser.options(desc_).run());
     po::store(parsed, vm_);
     po::notify(vm_);
