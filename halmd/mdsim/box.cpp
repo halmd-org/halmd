@@ -40,9 +40,9 @@ void box<dimension>::options(po::options_description& desc)
     desc.add_options()
         ("density,d", po::value<float>()->default_value(0.75),
          "particle density")
-        ("box-length,L", po::value<multi_array<float, 1> >(),
+        ("box-length,L", po::value<multi_array<float, 1> >()->conflicts("density"),
          "edge lengths of simulation box")
-        ("box-ratios", po::value<multi_array<float, 1> >(),
+        ("box-ratios", po::value<multi_array<float, 1> >()->conflicts("box-length"),
          "aspect ratios of simulation box (specify relative edge lengths)")
         ;
 }

@@ -37,7 +37,7 @@ void reader<dimension>::options(po::options_description& desc)
     desc.add_options()
         ("trajectory-file,J", po::value<string>(),
          "trajectory input file")
-        ("trajectory-sample,S", po::value<ssize_t>()->default_value(-1),
+        ("trajectory-sample,S", po::value<ssize_t>()->default_value(-1)->depends("trajectory-file"),
          "trajectory sample for initial state")
         ;
 }
