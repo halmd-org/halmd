@@ -124,7 +124,9 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     }
     LOG("placing particles on fcc lattice: a = " << a);
 
-    unsigned int N = u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>());
+    unsigned int N = static_cast<unsigned int>(
+        u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())
+    );
     if (N > particle->nbox) {
         LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
