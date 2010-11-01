@@ -39,9 +39,9 @@ BOOST_AUTO_TEST_CASE( accumulating_value_empty )
     desc.add_options()
         ("verbose,v", po::accum_value<int>(), "")
         ;
-    array<char*, 1> args = {{ "" //< argv[0]
+    array<char const*, 1> args = {{ "" //< argv[0]
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -58,10 +58,10 @@ BOOST_AUTO_TEST_CASE( accumulating_value_1 )
     desc.add_options()
         ("verbose,v", po::accum_value<int>(), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "positional", "--verbose"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -78,10 +78,10 @@ BOOST_AUTO_TEST_CASE( accumulating_value_3 )
     desc.add_options()
         ("verbose,v", po::accum_value<int>(), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "-v", "positional", "--verbose", "-v"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -98,9 +98,9 @@ BOOST_AUTO_TEST_CASE( accumulating_value_defaulted )
     desc.add_options()
         ("verbose,v", po::accum_value<int>()->default_value(2), "")
         ;
-    array<char*, 1> args = {{ "" //< argv[0]
+    array<char const*, 1> args = {{ "" //< argv[0]
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE( accumulating_value_defaulted_many )
     desc.add_options()
         ("verbose,v", po::accum_value<int>()->default_value(3), "")
         ;
-    vector<char*> args;
+    vector<char const*> args;
     args.push_back(""); //< argv[0]
     for (size_t i = 1; i <= 42; ++i) {
         args.push_back("-v");
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE( accumulating_value_defaulted_many )
         args.push_back("--verbose");
         args.push_back("-v");
     }
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE( conflicting_accumulating_value_defaulted_many )
         ("verbose,v", po::accum_value<int>()->default_value(3), "")
         ("verbosity", po::accum_value<int>()->conflicts("verbose")->default_value(4), "")
         ;
-    vector<char*> args;
+    vector<char const*> args;
     args.push_back(""); //< argv[0]
     for (size_t i = 1; i <= 42; ++i) {
         args.push_back("-v");
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE( conflicting_accumulating_value_defaulted_many )
         args.push_back("-v");
     }
     args.push_back("--verbosity");
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::conflicting_option>(parsed, vm, "verbosity") );
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE( dependent_accumulating_value_defaulted_many )
         ("verbose,v", po::accum_value<int>()->depends("verbosity")->default_value(3), "")
         ("verbosity", po::accum_value<int>()->default_value(4)->conflicts("verbose"), "")
         ;
-    vector<char*> args;
+    vector<char const*> args;
     args.push_back(""); //< argv[0]
     for (size_t i = 1; i <= 42; ++i) {
         args.push_back("-v");
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE( dependent_accumulating_value_defaulted_many )
         args.push_back("--verbose");
         args.push_back("-v");
     }
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::dependent_option>(parsed, vm, "verbose") );

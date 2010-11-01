@@ -40,11 +40,11 @@ BOOST_AUTO_TEST_CASE( conflicting_option )
         ("steps", po::value<uint64_t>(), "")
         ("time", po::value<double>()->conflicts("steps"), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--steps", "4294967296" //< MAX_UINT + 1LLU
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::conflicting_option>(parsed, vm, "time") );
@@ -63,11 +63,11 @@ BOOST_AUTO_TEST_CASE( reversed_conflicting_option )
         ("time", po::value<double>()->conflicts("steps"), "")
         ("steps", po::value<uint64_t>(), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--steps", "4294967296"
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::conflicting_option>(parsed, vm, "time") );
@@ -86,11 +86,11 @@ BOOST_AUTO_TEST_CASE( conflicting_option_reversed_args )
         ("steps", po::value<uint64_t>(), "")
         ("time", po::value<double>()->conflicts("steps"), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--time", "123.4567"
       , "--steps", "4294967296"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::conflicting_option>(parsed, vm, "time") );
@@ -109,11 +109,11 @@ BOOST_AUTO_TEST_CASE( reversed_conflicting_option_reversed_args )
         ("time", po::value<double>()->conflicts("steps"), "")
         ("steps", po::value<uint64_t>(), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--time", "123.4567"
       , "--steps", "4294967296"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::conflicting_option>(parsed, vm, "time") );
@@ -133,11 +133,11 @@ BOOST_AUTO_TEST_CASE( many_conflicting_option )
         ("seconds", po::value<double>(), "")
         ("time", po::value<double>()->conflicts("steps")->conflicts("seconds"), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--seconds", "123.4567e-15"
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::conflicting_option>(parsed, vm, "time") );
@@ -158,10 +158,10 @@ BOOST_AUTO_TEST_CASE( non_conflicting_option )
         ("seconds", po::value<double>(), "")
         ("time", po::value<double>()->conflicts("steps")->conflicts("seconds"), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -181,9 +181,9 @@ BOOST_AUTO_TEST_CASE( conflicting_option_defaulted )
         ("steps", po::value<uint64_t>()->default_value(4294967296LLU), "")
         ("time", po::value<double>()->conflicts("steps")->default_value(123.4567), "")
         ;
-    array<char*, 1> args = {{ "" //< argv[0]
+    array<char const*, 1> args = {{ "" //< argv[0]
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -204,10 +204,10 @@ BOOST_AUTO_TEST_CASE( conflicting_option_defaulted_first )
         ("steps", po::value<uint64_t>()->default_value(4294967296LLU), "")
         ("time", po::value<double>()->conflicts("steps"), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -228,10 +228,10 @@ BOOST_AUTO_TEST_CASE( conflicting_option_defaulted_second )
         ("steps", po::value<uint64_t>(), "")
         ("time", po::value<double>()->conflicts("steps")->default_value(123.4567), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--steps", "4294967296"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -252,11 +252,11 @@ BOOST_AUTO_TEST_CASE( non_existent_conflicting_option )
         ("steps", po::value<uint64_t>(), "")
         ("time", po::value<double>()->conflicts("step"), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--steps", "4294967296" //< MAX_UINT + 1LLU
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::unknown_option>(parsed, vm, "step") );
@@ -276,11 +276,11 @@ BOOST_AUTO_TEST_CASE( non_existent_unused_conflicting_option )
         ("seconds", po::value<double>()->conflicts("step"), "")
         ("time", po::value<double>(), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--steps", "4294967296" //< MAX_UINT + 1LLU
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::unknown_option>(parsed, vm, "step") );
@@ -300,10 +300,10 @@ BOOST_AUTO_TEST_CASE( missing_dependent_option )
         ("steps", po::value<uint64_t>(), "")
         ("time", po::value<double>()->depends("steps"), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::dependent_option>(parsed, vm, "time") );
@@ -322,10 +322,10 @@ BOOST_AUTO_TEST_CASE( reversed_missing_dependent_option )
         ("time", po::value<double>()->depends("steps"), "")
         ("steps", po::value<uint64_t>(), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::dependent_option>(parsed, vm, "time") );
@@ -345,11 +345,11 @@ BOOST_AUTO_TEST_CASE( many_dependent_options )
         ("seconds", po::value<double>(), "")
         ("time", po::value<double>()->depends("steps")->depends("seconds"), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--steps", "4294967296"
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::dependent_option>(parsed, vm, "time") );
@@ -370,12 +370,12 @@ BOOST_AUTO_TEST_CASE( dependent_options )
         ("seconds", po::value<double>(), "")
         ("time", po::value<double>()->depends("steps")->depends("seconds"), "")
         ;
-    array<char*, 7> args = {{ "" //< argv[0]
+    array<char const*, 7> args = {{ "" //< argv[0]
       , "--steps", "4294967296"
       , "--seconds", "123.4567e-15"
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -395,9 +395,9 @@ BOOST_AUTO_TEST_CASE( dependent_options_defaulted )
         ("steps", po::value<uint64_t>()->default_value(4294967296LLU), "")
         ("time", po::value<double>()->depends("steps")->default_value(123.4567), "")
         ;
-    array<char*, 1> args = {{ "" //< argv[0]
+    array<char const*, 1> args = {{ "" //< argv[0]
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -418,10 +418,10 @@ BOOST_AUTO_TEST_CASE( dependent_options_defaulted_first )
         ("steps", po::value<uint64_t>()->default_value(4294967296LLU), "")
         ("time", po::value<double>()->depends("steps"), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::dependent_option>(parsed, vm, "time") );
@@ -442,10 +442,10 @@ BOOST_AUTO_TEST_CASE( dependent_options_defaulted_second )
         ("steps", po::value<uint64_t>(), "")
         ("time", po::value<double>()->depends("steps")->default_value(123.4567), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--steps", "4294967296"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -466,11 +466,11 @@ BOOST_AUTO_TEST_CASE( non_existent_dependent_option )
         ("steps", po::value<uint64_t>(), "")
         ("time", po::value<double>()->depends("step"), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--steps", "4294967296" //< MAX_UINT + 1LLU
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::unknown_option>(parsed, vm, "step") );
@@ -490,11 +490,11 @@ BOOST_AUTO_TEST_CASE( non_existent_unused_dependent_option )
         ("seconds", po::value<double>()->depends("step"), "")
         ("time", po::value<double>(), "")
         ;
-    array<char*, 5> args = {{ "" //< argv[0]
+    array<char const*, 5> args = {{ "" //< argv[0]
       , "--steps", "4294967296" //< MAX_UINT + 1LLU
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     BOOST_CHECK( store_throws_option<po::unknown_option>(parsed, vm, "step") );
@@ -514,10 +514,10 @@ BOOST_AUTO_TEST_CASE( value_store_pointer )
     desc.add_options()
         ("time", po::value<double>(&time), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -535,9 +535,9 @@ BOOST_AUTO_TEST_CASE( default_value )
     desc.add_options()
         ("time", po::value<double>()->default_value(123.4567), "")
         ;
-    array<char*, 1> args = {{ "" //< argv[0]
+    array<char const*, 1> args = {{ "" //< argv[0]
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -555,10 +555,10 @@ BOOST_AUTO_TEST_CASE( overriden_default_value )
     desc.add_options()
         ("time", po::value<double>()->default_value(123.4567), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.45678"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -577,10 +577,10 @@ BOOST_AUTO_TEST_CASE( implicit_value )
     desc.add_options()
         ("time", po::value<double>()->implicit_value(123.4567), "")
         ;
-    array<char*, 2> args = {{ "" //< argv[0]
+    array<char const*, 2> args = {{ "" //< argv[0]
       , "--time"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -598,9 +598,9 @@ BOOST_AUTO_TEST_CASE( empty_implicit_value )
     desc.add_options()
         ("time", po::value<double>()->implicit_value(123.4567), "")
         ;
-    array<char*, 1> args = {{ "" //< argv[0]
+    array<char const*, 1> args = {{ "" //< argv[0]
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -617,10 +617,10 @@ BOOST_AUTO_TEST_CASE( overriden_implicit_value )
     desc.add_options()
         ("time", po::value<double>()->implicit_value(123.4567), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.45678"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -672,10 +672,10 @@ BOOST_AUTO_TEST_CASE( notifier )
     desc.add_options()
         ("dimension", po::value<int>()->notifier(&throw_notify), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--dimension", "42"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -692,10 +692,10 @@ BOOST_AUTO_TEST_CASE( required_value )
     desc.add_options()
         ("time", po::value<double>()->required(), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.45678"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -712,9 +712,9 @@ BOOST_AUTO_TEST_CASE( missing_required_value )
     desc.add_options()
         ("time", po::value<double>()->required(), "")
         ;
-    array<char*, 1> args = {{ "" //< argv[0]
+    array<char const*, 1> args = {{ "" //< argv[0]
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -733,12 +733,12 @@ BOOST_AUTO_TEST_CASE( multitoken_value )
         ("steps", po::value<vector<uint64_t> >()->multitoken(), "")
         ("time", po::value<double>(), "")
         ;
-    array<char*, 11> args = {{ "" //< argv[0]
+    array<char const*, 11> args = {{ "" //< argv[0]
       , "--times", "123.45678", "123.4567", "123.4567", "123.45679"
       , "--steps", "4294967296", "4294967296"
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -765,7 +765,7 @@ BOOST_AUTO_TEST_CASE( composing_value )
         ("steps", po::value<vector<uint64_t> >()->composing(), "")
         ("time", po::value<double>(), "")
         ;
-    array<char*, 13> args = {{ "" //< argv[0]
+    array<char const*, 13> args = {{ "" //< argv[0]
       , "--times", "123.45678"
       , "--times", "123.4567"
       , "--times", "123.45679"
@@ -773,7 +773,7 @@ BOOST_AUTO_TEST_CASE( composing_value )
       , "--steps", "4294967296"
       , "--steps", "4294967296"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -807,11 +807,11 @@ BOOST_AUTO_TEST_CASE( bool_switch_true )
         ("debug", po::bool_switch(), "")
         ("time", po::value<double>(), "")
         ;
-    array<char*, 4> args = {{ "" //< argv[0]
+    array<char const*, 4> args = {{ "" //< argv[0]
       , "--debug"
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -830,10 +830,10 @@ BOOST_AUTO_TEST_CASE( bool_switch_false )
         ("debug", po::bool_switch(), "")
         ("time", po::value<double>(), "")
         ;
-    array<char*, 3> args = {{ "" //< argv[0]
+    array<char const*, 3> args = {{ "" //< argv[0]
       , "--time", "123.4567"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
@@ -851,10 +851,10 @@ BOOST_AUTO_TEST_CASE( untyped_value )
     desc.add_options()
         ("verbose", "")
         ;
-    array<char*, 2> args = {{ "" //< argv[0]
+    array<char const*, 2> args = {{ "" //< argv[0]
       , "--verbose"
     }};
-    po::command_line_parser parser(args.size(), &args.front());
+    po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
     po::variables_map vm;
     po::store(parsed, vm);
