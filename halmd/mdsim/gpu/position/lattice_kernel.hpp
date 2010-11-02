@@ -32,9 +32,12 @@ template <int dimension>
 struct lattice_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef typename type_traits<dimension, unsigned int>::gpu::vector_type index_type;
 
     /** cubic box edge length */
     cuda::symbol<vector_type> box_length;
+    /** number of cells per dimension */
+    cuda::symbol<index_type> ncell;
 
     cuda::function<void (float4*, float)> fcc;
     cuda::function<void (float4*, float)> sc;

@@ -51,11 +51,6 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
   , box(box)
   , random(random)
 {
-    // initialise kernel globals in constant memory
-    cuda::copy(
-        static_cast<fixed_vector<float_type, dimension> >(box->length())
-      , get_lattice_kernel<dimension>().box_length
-    );
 }
 
 /**
@@ -108,21 +103,27 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     }
 
     // determine maximal lattice constant
-    vector_type L = static_cast<vector_type>(box->length());
-    double u = (dimension == 3) ? 4 : 2;
-    double V = accumulate(L.begin(), L.end(), 1. / ceil(particle->nbox / u), multiplies<double>());
-    double a = pow(V, 1. / dimension);
-    fixed_vector<unsigned int, dimension> n(L / a);
+    // use the same floating point precision as the CUDA device
+    gpu_vector_type L = static_cast<gpu_vector_type>(box->length());
+    float_type u = (dimension == 3) ? 4 : 2;
+    float_type V = accumulate(
+        L.begin(), L.end()
+      , float_type(1) / ceil(particle->nbox / u)
+      , multiplies<float_type>()
+    );
+    float_type a = pow(V, float_type(1) / dimension);
+    index_type n(L / a);
     while (particle->nbox > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
-        vector_type t;
+        gpu_vector_type t;
         for (size_t i = 0; i < dimension; ++i) {
             t[i] = L[i] / (n[i] + 1);
         }
-        typename vector_type::iterator it = max_element(t.begin(), t.end());
+        typename gpu_vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
         ++n[it - t.begin()];
     }
     LOG("placing particles on fcc lattice: a = " << a);
+    LOG_DEBUG("number of fcc unit cells: " << n);
 
     unsigned int N = static_cast<unsigned int>(
         u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())
@@ -136,11 +137,16 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     cuda::memset(particle->g_r, 0, particle->g_r.capacity());
 #endif
 
+    // set kernel globals in constant memory
+    lattice_wrapper<dimension> const& kernel = get_lattice_kernel<dimension>();
+    cuda::copy(L, kernel.box_length);
+    cuda::copy(n, kernel.ncell);
+
     cuda::thread::synchronize();
     try {
         scoped_timer<timer> timer_(at_key<set_>(runtime_));
         cuda::configure(particle->dim.grid, particle->dim.block);
-        get_lattice_kernel<dimension>().fcc(particle->g_r, a);
+        kernel.fcc(particle->g_r, a);
         cuda::thread::synchronize();
     }
     catch (cuda::error const& e) {

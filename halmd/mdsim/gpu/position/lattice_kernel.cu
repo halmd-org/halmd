@@ -42,6 +42,8 @@ using boost::mpl::int_;
 
 /** cuboid box edge length */
 static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+/** number of cells per dimension */
+static __constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
 
 /**
  * place particles on a face centered cubic lattice (fcc)
@@ -101,18 +103,14 @@ __global__ void lattice(float4* g_r, float a)
     unsigned int type;
     tie(r, type) = untagged<vector_type>(g_r[GTID]);
 
-    // determine number of cells per directions
-    vector_type L = get<dimension>(box_length_);
-    fixed_vector<unsigned int, dimension> ncell(L / a);
-
     // compute primitive lattice vector
-    primitive(GTID, ncell, r);
+    primitive(GTID, get<dimension>(ncell_), r);
 
     // scale with lattice constant
     r *= a;
 
     // shift to box origin at (-L/2, -L/2)
-    r -= L / 2;
+    r -= vector_type(get<dimension>(box_length_)) / 2;
 
     g_r[GTID] = tagged(r, type);
 }
@@ -122,6 +120,7 @@ __global__ void lattice(float4* g_r, float a)
 template <int dimension>
 lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
     get<dimension>(lattice_kernel::box_length_)
+  , get<dimension>(lattice_kernel::ncell_)
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::sc>
 };

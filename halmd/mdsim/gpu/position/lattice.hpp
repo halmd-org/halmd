@@ -26,6 +26,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/position.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -41,10 +42,12 @@ class lattice
 public:
     typedef mdsim::position<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
     typedef utility::profiler profiler_type;
+    typedef typename particle_type::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::vector_type gpu_vector_type;
+    typedef typename type_traits<dimension, unsigned int>::vector_type index_type;
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
