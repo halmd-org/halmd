@@ -37,8 +37,16 @@ class vector : public std::vector<T, allocator<T> >
 public:
     typedef allocator<T> _Alloc;
     typedef std::vector<T, allocator<T> > _Base;
-    typedef typename _Base::size_type size_type;
     typedef typename _Base::value_type value_type;
+    typedef typename _Base::iterator iterator;
+    typedef typename _Base::const_iterator const_iterator;
+    typedef typename _Base::reverse_iterator reverse_iterator;
+    typedef typename _Base::const_reverse_iterator const_reverse_iterator;
+    typedef typename _Base::reference reference;
+    typedef typename _Base::const_reference const_reference;
+    typedef typename _Base::pointer pointer;
+    typedef typename _Base::difference_type difference_type;
+    typedef typename _Base::size_type size_type;
 
 public:
     /** creates an empty vector */
