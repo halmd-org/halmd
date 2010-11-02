@@ -86,8 +86,15 @@ void options_parser::parse_command_line(int argc, char** argv)
 {
     using namespace po::command_line_style;
     po::command_line_parser parser(argc, argv);
+    parser.options(desc_);
+    // pass an empty positional options description to the command line
+    // parser to warn the user of unintentional positional options
+    po::positional_options_description pd;
+    parser.positional(pd);
+    // disallow abbreviated options, which breaks forward compatibility of
+    // user's scripts as new options are added and create ambiguities
     parser.style(default_style & ~allow_guessing);
-    po::parsed_options parsed(parser.options(desc_).run());
+    po::parsed_options parsed(parser.run());
     po::store(parsed, vm_);
     po::notify(vm_);
 }
