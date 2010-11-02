@@ -96,6 +96,7 @@ template <int dimension>
 void core<dimension>::mdstep()
 {
     scoped_timer<timer> timer_(at_key<mdstep_>(runtime_));
+    LOG_TRACE("performing MD step #" << step_counter_);
     integrator->integrate();
     if (neighbour->check()) {
         if (sort) {
