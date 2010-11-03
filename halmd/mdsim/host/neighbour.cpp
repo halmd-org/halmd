@@ -50,14 +50,6 @@ void neighbour<dimension, float_type>::options(po::options_description& desc)
         ;
 }
 
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<float>();
-}
-
 template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
     shared_ptr<particle_type> particle

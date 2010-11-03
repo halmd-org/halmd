@@ -52,7 +52,6 @@ void box<dimension>::options(po::options_description& desc)
  */
 static __attribute__((constructor)) void register_option_converters()
 {
-    register_any_converter<float>();
     register_any_converter<multi_array<float, 1> >();
 }
 

@@ -70,16 +70,6 @@ options_parser::options_parser(po::options_description const& desc)
 }
 
 /**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<string>();
-    register_any_converter<int>();
-}
-
-
-/**
  * parse command line options
  */
 void options_parser::parse_command_line(int argc, char** argv)

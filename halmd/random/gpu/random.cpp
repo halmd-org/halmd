@@ -45,14 +45,6 @@ void random<RandomNumberGenerator>::options(po::options_description& desc)
         ;
 }
 
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<unsigned int>();
-}
-
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
     shared_ptr<device_type> device

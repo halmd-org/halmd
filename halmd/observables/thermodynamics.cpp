@@ -43,14 +43,6 @@ void thermodynamics<dimension>::options(po::options_description& desc)
         ;
 }
 
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<bool>();
-}
-
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(
     shared_ptr<box_type> box

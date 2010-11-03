@@ -40,14 +40,6 @@ void force<dimension>::options(po::options_description& desc)
         ;
 }
 
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<string>();
-}
-
 template <int dimension>
 void force<dimension>::luaopen(lua_State* L)
 {

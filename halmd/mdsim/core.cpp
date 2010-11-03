@@ -48,14 +48,6 @@ void core<dimension>::options(po::options_description& desc)
 }
 
 /**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<int>();
-}
-
-/**
  * Initialize simulation
  */
 template <int dimension>

@@ -100,14 +100,6 @@ void power_law<dimension, float_type>::options(po::options_description& desc)
         ;
 }
 
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<int>();
-}
-
 template <int dimension, typename float_type>
 power_law<dimension, float_type>::power_law(
     shared_ptr<particle_type> particle

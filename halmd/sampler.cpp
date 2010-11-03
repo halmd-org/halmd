@@ -52,16 +52,6 @@ void sampler<dimension>::options(po::options_description& desc)
 }
 
 /**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<uint64_t>();
-    register_any_converter<double>();
-    register_any_converter<unsigned>();
-}
-
-/**
  * Initialize simulation
  */
 template <int dimension>

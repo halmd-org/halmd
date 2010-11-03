@@ -42,15 +42,6 @@ void random::options(po::options_description& desc)
         ;
 }
 
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<unsigned int>();
-    register_any_converter<std::string>();
-}
-
 void random::luaopen(lua_State* L)
 {
     using namespace luabind;
