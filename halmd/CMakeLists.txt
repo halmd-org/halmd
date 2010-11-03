@@ -21,6 +21,7 @@ set(HALMD_MODULES
   halmd_random
   halmd_random_host
   halmd_utility
+  halmd_utility_lua_wrapper
   )
 if(WITH_CUDA)
   set(HALMD_MODULES
