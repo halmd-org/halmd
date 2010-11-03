@@ -24,6 +24,7 @@
 #include <boost/random/uniform_01.hpp>
 #include <lua.hpp>
 #include <iterator>
+#include <utility>
 
 #include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/random.hpp>
@@ -47,7 +48,9 @@ public:
     template <typename input_iterator>
     void shuffle(input_iterator first, input_iterator last);
     template <typename value_type>
-    void normal(value_type& r1, value_type& r2, value_type sigma2);
+    value_type uniform();
+    template <typename value_type>
+    std::pair<value_type, value_type> normal(value_type sigma2);
 
 protected:
     /** pseudo-random number generator */
@@ -70,6 +73,13 @@ void random::shuffle(input_iterator first, input_iterator last)
     }
 }
 
+template <typename value_type>
+value_type random::uniform()
+{
+    boost::uniform_01<random_generator&, value_type> variate(rng_);
+    return variate();
+}
+
 /**
  * Generate two random numbers from normal distribution
  *
@@ -87,10 +97,10 @@ void random::shuffle(input_iterator first, input_iterator last)
  *   Algorithms, 3rd Edition, 1997, Addison-Wesley, p. 122
  */
 template <typename value_type>
-void random::normal(value_type& x, value_type& y, value_type sigma)
+std::pair<value_type, value_type> random::normal(value_type sigma)
 {
-    boost::uniform_01<random_generator&> variate(rng_);
-    value_type s;
+    boost::uniform_01<random_generator&, value_type> variate(rng_);
+    value_type x, y, s;
     do {
         x = 2. * variate() - 1.;
         y = 2. * variate() - 1.;
@@ -100,6 +110,7 @@ void random::normal(value_type& x, value_type& y, value_type sigma)
     s = sigma * std::sqrt(-2. * std::log(s) / s);
     x *= s;
     y *= s;
+    return make_pair(x, y);
 }
 
 }} // namespace random::host

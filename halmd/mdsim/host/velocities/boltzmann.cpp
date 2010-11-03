@@ -96,7 +96,7 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
     BOOST_FOREACH (vector_type& v, particle->v) {
         // assign two components at a time
         for (unsigned i=0; i < dimension-1; i+=2) {
-            random->normal(v[i], v[i+1], sigma);
+            tie(v[i], v[i+1]) = random->normal(sigma);
         }
         // handle last component separately for odd dimensions
         if (dimension % 2 == 1) {
@@ -104,7 +104,7 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
                 v[dimension-1] = r;
             }
             else {
-                random->normal(v[dimension-1], r, sigma);
+                tie(v[dimension-1], r) = random->normal(sigma);
             }
             r_valid = !r_valid;
         }
