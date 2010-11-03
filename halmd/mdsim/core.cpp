@@ -111,6 +111,15 @@ void core<dimension>::mdstep()
     step_counter_++;
 }
 
+/**
+ * wrap dimension template parameter for Lua
+ */
+template <int dimension>
+static int get_dimension(core<dimension> const&)
+{
+    return dimension;
+}
+
 template <int dimension>
 void core<dimension>::luaopen(lua_State* L)
 {
@@ -133,6 +142,7 @@ void core<dimension>::luaopen(lua_State* L)
                     .def_readwrite("integrator", &core::integrator)
                     .def_readwrite("position", &core::position)
                     .def_readwrite("velocity", &core::velocity)
+                    .property("dimension", &get_dimension<dimension>)
                     .property("step_counter", &core::step_counter)
                     .def("prepare", &core::prepare)
                     .def("mdstep", &core::mdstep)

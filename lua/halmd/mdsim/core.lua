@@ -38,6 +38,7 @@ function new()
     local dimension = assert(args.dimension)
     if not core then
         core = core_wrapper[dimension]()
+        assert(core.dimension == args.dimension)
     end
     return core
 end
