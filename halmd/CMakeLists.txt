@@ -15,6 +15,7 @@ set(HALMD_MODULES
   halmd_mdsim_host_sample
   halmd_mdsim_host_sort
   halmd_mdsim_host_velocities
+  halmd_mdsim_integrators
   halmd_mdsim_samples_host
   halmd_observables
   halmd_observables_host

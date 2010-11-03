@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -23,6 +23,10 @@ require("halmd.modules")
 local integrator_wrapper = {
     [2] = halmd_wrapper.mdsim.integrator_2_
   , [3] = halmd_wrapper.mdsim.integrator_3_
+  , nvt = {
+      [2] = halmd_wrapper.mdsim.integrators.nvt_2_
+    , [3] = halmd_wrapper.mdsim.integrators.nvt_3_
+  }
 }
 local integrators = {
     verlet = require("halmd.mdsim.integrators.verlet")
@@ -32,7 +36,10 @@ local assert = assert
 
 module("halmd.mdsim.integrator", halmd.modules.register)
 
-options = integrator_wrapper[2].options
+options = function(desc)
+    integrator_wrapper[2].options(desc)
+    integrator_wrapper.nvt[2].options(desc)
+end
 
 --
 -- construct integrator module
