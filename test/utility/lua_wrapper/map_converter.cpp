@@ -73,6 +73,7 @@ std::map<std::string, boost::any> any_map_to_lua()
     std::map<std::string, boost::any> m;
     m["foo"] = 5u;
     m["bar"] = 42;
+    m["baz"] = boost::any();
     return m;
 }
 
@@ -94,7 +95,7 @@ BOOST_FIXTURE_TEST_CASE( any_map, lua_test_fixture )
     LUA_REQUIRE( "m = assert(any_map_to_lua())" );
     LUA_CHECK( "assert(m.foo == 5)" );
     LUA_CHECK( "assert(m.bar == 42)" );
-    LUA_CHECK( "assert(m.foobar == nil)" );
+    LUA_CHECK( "assert(m.baz == nil)" );
     LUA_CHECK( "m.foobar = 43" );
     LUA_CHECK( "lua_to_static_map(m)" );
 }
@@ -104,4 +105,5 @@ static __attribute__((constructor)) void register_any_converters()
     using namespace halmd;
     register_any_converter<unsigned int>();
     register_any_converter<int>();
+    register_any_converter<void>(); //< boost::any()
 }

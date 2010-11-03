@@ -62,6 +62,16 @@ struct convert_any
     }
 };
 
+template <>
+struct convert_any<void>
+{
+    //! convert from C++ to Lua
+    static void to(lua_State* L, boost::any const&)
+    {
+        lua_pushnil(L);
+    }
+};
+
 }} // namespace lua_wrapper::detail
 
 /**
