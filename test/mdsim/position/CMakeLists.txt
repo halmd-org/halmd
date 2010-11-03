@@ -32,9 +32,11 @@ add_test(module_mdsim_position_lattice_host_2d
 add_test(module_mdsim_position_lattice_host_3d
   test_position --run_test=lattice/host/3d --log_level=test_suite
 )
-add_test(module_mdsim_position_lattice_gpu_2d
-  test_position --run_test=lattice/gpu/2d --log_level=test_suite
-)
-add_test(module_mdsim_position_lattice_gpu_3d
-  test_position --run_test=lattice/gpu/3d --log_level=test_suite
-)
+if(WITH_CUDA)
+  add_test(module_mdsim_position_lattice_gpu_2d
+    test_position --run_test=lattice/gpu/2d --log_level=test_suite
+  )
+  add_test(module_mdsim_position_lattice_gpu_3d
+    test_position --run_test=lattice/gpu/3d --log_level=test_suite
+  )
+endif(WITH_CUDA)
