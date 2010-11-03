@@ -1,4 +1,6 @@
 add_library(halmd_mdsim_gpu_integrators
   verlet_kernel.cu
   verlet.cpp
+  verlet_nvt_andersen_kernel.cu
+  verlet_nvt_andersen.cpp
 )

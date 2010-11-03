@@ -30,6 +30,7 @@ local integrator_wrapper = {
 }
 local integrators = {
     verlet = require("halmd.mdsim.integrators.verlet")
+  , verlet_nvt_andersen = require("halmd.mdsim.integrators.verlet_nvt_andersen")
 }
 local args = require("halmd.options")
 local assert = assert
