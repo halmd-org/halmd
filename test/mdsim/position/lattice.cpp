@@ -21,7 +21,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
+#include <boost/assign.hpp>
 #include <boost/program_options.hpp>
+#include <cmath>
 #include <limits>
 #include <map>
 #include <string>
@@ -46,6 +48,7 @@
 #endif
 
 using namespace boost;
+using namespace boost::assign;
 using namespace halmd;
 using namespace std;
 
@@ -198,21 +201,46 @@ shared_ptr<mdsim::samples::host::trajectory<dimension, float> > make_sample_gpu(
     throw runtime_error("unknown backend: gpu");
 }
 
-/** test GPU and host implementation separately */
+/** compute static structure factor of trajectory sample for some wavevectors */
+template <typename sample_type, typename vector_type>
+vector<double> compute_ssf(
+    shared_ptr<sample_type> sample
+  , vector<vector_type> const& wavevector
+)
+{
+    unsigned nq = wavevector.size();
+    vector<double> ssf(nq);
+    vector<double> cos_(nq, 0);
+    vector<double> sin_(nq, 0);
+    size_t npart = 0;
+    for (size_t i = 0; i < sample->r.size(); ++i) {
+        BOOST_FOREACH(typename sample_type::vector_type const& r, *sample->r[i]) {
+            for (unsigned j = 0; j < nq; ++j) {
+                double qr = inner_prod(wavevector[j], static_cast<vector_type>(r));
+                cos_[j] += cos(qr);
+                sin_[j] += sin(qr);
+            }
+        }
+        npart += sample->r[i]->size();
+    }
+    for (size_t j = 0; j < nq; ++j) {
+        ssf[j] = (cos_[j] * cos_[j] + sin_[j] * sin_[j]) / npart;
+    }
+    return ssf;
+}
+
 template <int dimension>
 void lattice(string const& backend)
 {
-    // FIXME
-    BOOST_CHECK( true );
-}
+    typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
+    typedef typename mdsim::type_traits<dimension, float>::vector_type gpu_vector_type;
 
-/** test whether GPU and host implementation yield the same results */
-template <int dimension>
-void lattice_both()
-{
-#ifdef WITH_CUDA
+    fixed_vector<unsigned, dimension> ncell =
+        (dimension == 3) ? list_of(3)(3)(6) : list_of(4)(1024);
+    unsigned nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
+    unsigned npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1, multiplies<unsigned>());
     float density = 0.3;
-    unsigned npart = 997;       //< the prime nearest to 1000
+    float lattice_constant = pow(nunit_cell / density, 1./dimension);
     char const* random_file = "/dev/urandom";
 
     // enable logging to console
@@ -225,68 +253,89 @@ void lattice_both()
 #endif
     );
 
-    BOOST_TEST_MESSAGE("compare host and GPU backend in " <<
-                       dimension << " dimensions");
+    BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
+                       ", lattice constant: " << lattice_constant);
 
     // init modules
     BOOST_TEST_MESSAGE("initialise modules");
+#ifdef WITH_CUDA
     shared_ptr<utility::gpu::device> device = make_device(
-        "gpu"
+        backend
       , utility::gpu::device::default_devices()
       , utility::gpu::device::default_threads()
     );
+#endif /* WITH_CUDA */
 
-    shared_ptr<halmd::random::random> random_host = make_random("host", random_file);
-    shared_ptr<halmd::random::random> random_gpu = make_random("gpu", random_file);
+    shared_ptr<halmd::random::random> random = make_random(backend, random_file);
 
-    shared_ptr<mdsim::particle<dimension> > particle_host =
-        make_particle<dimension>("host", npart);
-    shared_ptr<mdsim::particle<dimension> > particle_gpu =
-        make_particle<dimension>("gpu", npart);
+    shared_ptr<mdsim::particle<dimension> > particle =
+        make_particle<dimension>(backend, npart);
 
     shared_ptr<mdsim::box<dimension> > box =
-        make_shared<mdsim::box<dimension> >(particle_host, density, 1 /*< cube aspect ratios */);
+        make_shared<mdsim::box<dimension> >(particle, density, static_cast<vector_type>(ncell));
 
-    shared_ptr<mdsim::position<dimension> > position_host =
-        make_lattice("host", particle_host, box, random_host);
-    shared_ptr<mdsim::position<dimension> > position_gpu =
-        make_lattice("gpu", particle_gpu, box, random_gpu);
-
-    shared_ptr<mdsim::samples::host::trajectory<dimension, double> > sample_host =
-        make_sample_host(particle_host, box);
-    shared_ptr<mdsim::samples::host::trajectory<dimension, float> > sample_gpu =
-        make_sample_gpu(particle_gpu, box);
+    shared_ptr<mdsim::position<dimension> > position =
+        make_lattice(backend, particle, box, random);
 
     // generate lattices
-    BOOST_TEST_MESSAGE("set particle tags at host");
-    particle_host->set();
-    BOOST_TEST_MESSAGE("set particle tags at GPU");
-    particle_gpu->set();
-    BOOST_TEST_MESSAGE("generate fcc lattice at host");
-    position_host->set();
-    BOOST_TEST_MESSAGE("generate fcc lattice at GPU");
-    position_gpu->set();
+    LOG_DEBUG("set particle tags");
+    particle->set();
+    BOOST_TEST_MESSAGE("generate fcc lattice");
+    position->set();
 
     // acquire trajectory samples
-    BOOST_TEST_MESSAGE("acquire sample from host");
-    sample_host->acquire(0);
-    BOOST_TEST_MESSAGE("acquire sample from GPU");
-    sample_gpu->acquire(0);
+    LOG_DEBUG("acquire trajectory sample");
+    shared_ptr<mdsim::samples::host::trajectory<dimension, double> > sample_host;
+#ifdef WITH_CUDA
+    shared_ptr<mdsim::samples::host::trajectory<dimension, float> > sample_gpu;
+#endif
+    if (backend == "host") {
+        sample_host = make_sample_host(particle, box);
+        sample_host->acquire(0);
+    }
+#ifdef WITH_CUDA
+    else if (backend == "gpu") {
+        sample_gpu = make_sample_gpu(particle, box);
+        sample_gpu->acquire(0);
+    }
+#endif
 
-    // compute deviations between particle positions from both implementations
-    BOOST_TEST_MESSAGE("compare particle positions");
-    double diff = 0;
-    for (size_t i = 0; i < particle_host->ntype; i++) {
-        typedef fixed_vector<double, dimension> vector_type;
-        for (size_t j = 0; j < particle_host->ntypes[j]; j++) {
-            vector_type dr((*sample_host->r[i])[j] - static_cast<vector_type>((*sample_gpu->r[i])[j]));
-            diff += inner_prod(dr, dr);
+    // compute static structure factors for a set of wavenumbers
+    // which are points of the reciprocal lattice
+    BOOST_TEST_MESSAGE("compute static structure factors from particle positions");
+    vector<vector_type> q;
+    double qlat = 2 * M_PI / lattice_constant;
+    if (dimension == 3) {
+        for (unsigned i = 7; i > 0; --i) {
+            vector_type q_ = list_of((i >> 2) & 1)((i >> 1) & 1)(i & 1);
+            q.push_back(qlat * q_);
         }
     }
-    diff /= particle_host->nbox;
+    else if (dimension == 2) {
+        for (unsigned i = 3; i > 0; --i) {
+            vector_type q_ = list_of((i >> 1) & 1)(i & 1);
+            q.push_back(qlat * q_);
+        }
+    }
+    q.push_back(.5 * q[0]);
+    q.push_back(2 * q[0]);
 
-    BOOST_CHECK_SMALL(diff, (double)numeric_limits<float>::epsilon());
-#endif /* WITH_CUDA */
+    vector<double> ssf;
+    if (backend == "host") {
+        ssf = compute_ssf(sample_host, q);
+    }
+#ifdef WITH_CUDA
+    else if (backend == "gpu") {
+        ssf = compute_ssf(sample_gpu, q);
+    }
+#endif
+
+    double eps = (double)numeric_limits<float>::epsilon();
+    BOOST_CHECK_CLOSE_FRACTION(ssf.front(), npart, eps);
+    BOOST_CHECK_CLOSE_FRACTION(ssf.back(), npart, eps);
+    for (unsigned i = 1; i < ssf.size() - 1; ++i) {
+        BOOST_CHECK_SMALL(ssf[i] / npart, eps);
+    }
 }
 
 static void __attribute__((constructor)) init_unit_test_suite()
@@ -306,22 +355,31 @@ static void __attribute__((constructor)) init_unit_test_suite()
 
     test_suite* ts1 = BOOST_TEST_SUITE( "lattice" );
 
-    test_suite* ts11 = BOOST_TEST_SUITE( "2d" );
-    ts11->add( BOOST_PARAM_TEST_CASE( &lattice<2>, backend.begin(), backend.begin() + 1 ) );
-#ifdef WITH_CUDA
-    ts11->add( BOOST_PARAM_TEST_CASE( &lattice<2>, backend.begin() + 1, backend.end() ) );
-    ts11->add( BOOST_TEST_CASE( &lattice_both<2> ) );
-#endif
+    test_suite* ts11 = BOOST_TEST_SUITE( "host" );
 
-    test_suite* ts12 = BOOST_TEST_SUITE( "3d" );
-    ts12->add( BOOST_PARAM_TEST_CASE( &lattice<3>, backend.begin(), backend.begin() + 1 ) );
-#ifdef WITH_CUDA
-    ts12->add( BOOST_PARAM_TEST_CASE( &lattice<3>, backend.begin() + 1, backend.end() ) );
-    ts12->add( BOOST_TEST_CASE( &lattice_both<3> ) );
-#endif
+    test_suite* ts111 = BOOST_TEST_SUITE( "2d" );
+    ts111->add( BOOST_PARAM_TEST_CASE( &lattice<2>, backend.begin(), backend.begin() + 1 ) );
 
+    test_suite* ts112 = BOOST_TEST_SUITE( "3d" );
+    ts112->add( BOOST_PARAM_TEST_CASE( &lattice<3>, backend.begin(), backend.begin() + 1 ) );
+
+    ts11->add( ts111 );
+    ts11->add( ts112 );
     ts1->add( ts11 );
+
+#ifdef WITH_CUDA
+    test_suite* ts12 = BOOST_TEST_SUITE( "gpu" );
+
+    test_suite* ts121 = BOOST_TEST_SUITE( "2d" );
+    ts121->add( BOOST_PARAM_TEST_CASE( &lattice<2>, backend.begin() + 1, backend.end() ) );
+
+    test_suite* ts122 = BOOST_TEST_SUITE( "3d" );
+    ts122->add( BOOST_PARAM_TEST_CASE( &lattice<3>, backend.begin() + 1, backend.end() ) );
+
+    ts12->add( ts121 );
+    ts12->add( ts122 );
     ts1->add( ts12 );
+#endif
 
     master_test_suite().add( ts1 );
 }

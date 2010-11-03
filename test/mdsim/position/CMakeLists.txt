@@ -26,9 +26,15 @@ target_link_libraries(test_position
   ${HALMD_COMMON_LIBRARIES}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
-add_test(module_mdsim_position_lattice_2d
-  test_position --run_test=lattice/2d --log_level=test_suite
+add_test(module_mdsim_position_lattice_host_2d
+  test_position --run_test=lattice/host/2d --log_level=test_suite
 )
-add_test(module_mdsim_position_lattice_3d
-  test_position --run_test=lattice/3d --log_level=test_suite
+add_test(module_mdsim_position_lattice_host_3d
+  test_position --run_test=lattice/host/3d --log_level=test_suite
+)
+add_test(module_mdsim_position_lattice_gpu_2d
+  test_position --run_test=lattice/gpu/2d --log_level=test_suite
+)
+add_test(module_mdsim_position_lattice_gpu_3d
+  test_position --run_test=lattice/gpu/3d --log_level=test_suite
 )
