@@ -240,7 +240,7 @@ void lattice(string const& backend)
     unsigned nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
     unsigned npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1, multiplies<unsigned>());
     float density = 0.3;
-    float lattice_constant = pow(nunit_cell / density, 1./dimension);
+    float lattice_constant = pow(nunit_cell / density, 1.f / dimension);
     char const* random_file = "/dev/urandom";
 
     // enable logging to console
