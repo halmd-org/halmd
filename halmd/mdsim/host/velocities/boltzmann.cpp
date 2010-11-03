@@ -90,7 +90,7 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
 {
     vector_type v_cm = 0;
     float_type vv = 0;
-    float_type r;
+    float_type r = 0;
     bool r_valid = false;
 
     BOOST_FOREACH (vector_type& v, particle->v) {
