@@ -33,6 +33,9 @@
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
+#if __CUDA_ARCH__ < 120
+# define USE_ORIGINAL_ANDERSEN_THERMOSTAT
+#endif
 
 using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
