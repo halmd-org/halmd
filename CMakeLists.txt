@@ -92,7 +92,7 @@ if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   enable_language(CUDA)
 
   if(NOT CMAKE_CUDA_FLAGS)
-    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v --host-compilation=c")
+    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v --host-compilation=c -arch sm_12")
   endif(NOT CMAKE_CUDA_FLAGS)
 
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" CACHE STRING
