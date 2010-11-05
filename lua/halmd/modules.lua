@@ -44,9 +44,6 @@ function register(module)
     local function new(module, ...)
         local object = module.new(...)
         if object then
-            if not object._M then
-                object._M = module -- attach Lua module to C++ module instance
-            end
             hooks.run(object)
         end
         return object
