@@ -35,14 +35,36 @@ namespace std // needed for Boost.Log << 1.0
 using namespace halmd;
 
 /**
- * output accumulator results to stream
+ * output accumulator results to stream,
+ * use a suitable unit of time
  */
 template <typename T>
 static ostream& operator<<(ostream& os, accumulator<T> const& acc)
 {
-    os << fixed << setprecision(4) << mean(acc) * 1E3 << " ms";
+    T value = mean(acc);
+    T error = error_of_mean(acc);
+    char const* unit;       // unit of time
+
+    if (value > 1) {
+        unit = "s";
+    }
+    else if (value > 1e-3) {
+        value *= 1e3;
+        error *= 1e3;
+        unit = "ms";
+    }
+    else {
+        value *= 1e6;
+        error *= 1e6;
+        unit = "µs";
+    }
+
+    // let number of digits depend on relative error
+    unsigned prec = max(3u, static_cast<unsigned>(ceil(-log10(error / value)) + 2));
+    os << setprecision(prec) << value << " " << unit;
     if (count(acc) > 1) {
-        os << " (" << error_of_mean(acc) * 1E3 << " ms, " << count(acc) << " calls)";
+        os << setprecision(2) << " (" << error << " " << unit << ", "
+           << count(acc) << " calls)";
     }
     return os;
 }
