@@ -63,12 +63,10 @@ void hdf5::register_accumulator(
 )
 {
     // open group defined by tag,
-    // last entry of tag will be the name of the attribute
-    H5::Group group = h5xx::open_group(file_, tag.begin(), tag.end() - 1);
-
+    // last entry of tag will be the name of the dataset
     H5::DataSet dataset = h5xx::create_dataset<array<double, 3> >(
-        group
-      , trim_right_copy_if(tag.back(), is_any_of("_"))      // omit trailing "_"
+        file_
+      , trim_right_copy_if(join(tag, "/"), is_any_of("_"))  // omit trailing "_"
       , 1                                                   // only 1 entry
     );
     // store description as attribute

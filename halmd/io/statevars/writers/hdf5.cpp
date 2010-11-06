@@ -71,12 +71,9 @@ void hdf5<dimension>::register_observable(
   , string const& desc
 )
 {
-    // first part of tag is path, last part is dataset name
-    list<string> path(h5xx::split_path(tag));
-    H5::Group root = h5xx::open_group(file_, path.begin(), --path.end());
-
     // create dataset for an unlimited number of chunks
-    H5::DataSet dataset = h5xx::create_dataset<T>(root, path.back());
+    // first part of tag is path, last part is dataset name
+    H5::DataSet dataset = h5xx::create_dataset<T>(file_, tag);
 
     // store description as attribute
     h5xx::write_attribute(dataset, "description", desc);
@@ -93,12 +90,9 @@ void hdf5<dimension>::register_observable(
   , string const& desc
 )
 {
-    // first part of tag is path, last part is dataset name
-    list<string> path(h5xx::split_path(tag));
-    H5::Group root = h5xx::open_group(file_, path.begin(), --path.end());
-
     // create dataset for an unlimited number of vector chunks with given size
-    H5::DataSet dataset = h5xx::create_dataset<vector<T> >(root, path.back(), value_ptr->size());
+    // first part of tag is path, last part is dataset name
+    H5::DataSet dataset = h5xx::create_dataset<vector<T> >(file_, tag, value_ptr->size());
 
     // store description as attribute
     h5xx::write_attribute(dataset, "description", desc);
@@ -149,12 +143,9 @@ void hdf5<dimension>::write_dataset(
   , string const& desc
 )
 {
-    // first part of tag is path, last part is dataset name
-    list<string> path(h5xx::split_path(tag));
-    H5::Group root = h5xx::open_group(file_, path.begin(), --path.end());
-
     // create dataset for a single chunk
-    H5::DataSet dataset = h5xx::create_dataset<T>(root, path.back(), 1);
+    // first part of tag is path, last part is dataset name
+    H5::DataSet dataset = h5xx::create_dataset<T>(file_, tag, 1);
 
     // store description as attribute
     h5xx::write_attribute(dataset, "description", desc);
@@ -171,12 +162,9 @@ void hdf5<dimension>::write_dataset(
   , string const& desc
 )
 {
-    // first part of tag is path, last part is dataset name
-    list<string> path(h5xx::split_path(tag));
-    H5::Group root = h5xx::open_group(file_, path.begin(), --path.end());
-
     // create dataset for a single vector chunk with given size
-    H5::DataSet dataset = h5xx::create_dataset<vector<T> >(root, path.back(), value.size(), 1);
+    // first part of tag is path, last part is dataset name
+    H5::DataSet dataset = h5xx::create_dataset<vector<T> >(file_, tag, value.size(), 1);
 
     // store description as attribute
     h5xx::write_attribute(dataset, "description", desc);
