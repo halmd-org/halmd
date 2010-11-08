@@ -47,6 +47,9 @@ void core<dimension>::options(po::options_description& desc)
         ;
 }
 
+/**
+ * Write parameters to HDF5 files
+ */
 template <int dimension>
 void core<dimension>::write_parameters(H5::Group const& param) const
 {
