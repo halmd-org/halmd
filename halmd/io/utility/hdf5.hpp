@@ -22,20 +22,20 @@
 
 #include <h5xx/h5xx.hpp>
 
-namespace halmd
+namespace halmd { namespace detail { namespace numeric { namespace blas
 {
 
 // forward declaration
 template <typename T, size_t N>
 struct fixed_vector;
 
-} // namespace halmd
+}}}} // namespace halmd::detail::numeric::blas
 
 namespace h5xx
 {
 
 template <typename T, size_t N>
-struct is_array<halmd::fixed_vector<T, N> >
+struct is_array<halmd::detail::numeric::blas::fixed_vector<T, N> >
   : boost::true_type {};
 
 } // namespace h5xx
