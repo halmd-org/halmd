@@ -35,7 +35,7 @@ module("halmd.io.statevars.writers", halmd.modules.register)
 function new()
     local writer = statevars_writers.hdf5()
 
-    hooks.register(function(observable)
+    hooks.register_hook(function(observable)
         if observable.register_observables then
             observable:register_observables(writer)
         end

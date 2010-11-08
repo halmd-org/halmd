@@ -29,14 +29,14 @@ local hooks = {}
 
 local objects = setmetatable({}, { __mode = "k" }) -- table with weak keys
 
-function register(func)
+function register_hook(func)
     for object, module in pairs(objects) do
         func(object, module)
     end
     table.insert(hooks, func)
 end
 
-function run(object, module)
+function register_object(object, module)
     if not objects[object] then
         for i, func in ipairs(hooks) do
             func(object, module)

@@ -30,7 +30,7 @@ module("halmd.parameter", halmd.modules.register)
 -- @param writer HDF5 writer object
 --
 function register_writer(writer)
-    hooks.register(function(object, module)
+    hooks.register_hook(function(object, module)
         if object.write_parameters then
             -- HDF5 file with write access
             local file = writer:file()

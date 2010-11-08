@@ -35,7 +35,7 @@ function new()
     local writers = profile_writers()
     local profiler = profiler_wrapper(writers)
 
-    hooks.register(function(profilable)
+    hooks.register_hook(function(profilable)
         if profilable.register_runtimes then
             profilable:register_runtimes(profiler)
         end

@@ -44,7 +44,7 @@ function register(module)
     local function new(module, ...)
         local object = module.new(...)
         if object then
-            hooks.run(object, module)
+            hooks.register_object(object, module)
         end
         return object
     end
