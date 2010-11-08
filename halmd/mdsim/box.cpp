@@ -20,6 +20,7 @@
 #include <cmath>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
@@ -53,6 +54,16 @@ void box<dimension>::options(po::options_description& desc)
 static __attribute__((constructor)) void register_option_converters()
 {
     register_any_converter<multi_array<float, 1> >();
+}
+
+/**
+ *
+ */
+template <int dimension>
+void box<dimension>::write_parameters(H5::Group const& param) const
+{
+    h5xx::write_attribute(param, "length", length_);
+    h5xx::write_attribute(param, "density", density_);
 }
 
 /**
@@ -106,6 +117,7 @@ void box<dimension>::luaopen(lua_State* L)
                 class_<box, shared_ptr<box> >(class_name.c_str())
                     .def(constructor<shared_ptr<particle_type>, vector_type const&>())
                     .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
+                    .def("write_parameters", &box::write_parameters)
                     .scope
                     [
                         def("options", &box::options)

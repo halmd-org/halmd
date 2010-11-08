@@ -21,8 +21,8 @@
 #define HALMD_MDSIM_CORE_HPP
 
 #include <boost/shared_ptr.hpp>
-
 #include <h5xx/h5xx.hpp>
+
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/integrator.hpp>
