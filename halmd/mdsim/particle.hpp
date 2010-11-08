@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_PARTICLE_HPP
 #define HALMD_MDSIM_PARTICLE_HPP
 
+#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 #include <vector>
 
@@ -45,6 +46,7 @@ public:
     static void luaopen(lua_State* L);
 
     particle(std::vector<unsigned int> const& particles);
+    void write_parameters(H5::Group const& param) const;
     virtual ~particle() {}
     virtual void set() = 0;
 
