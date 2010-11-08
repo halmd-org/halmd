@@ -20,36 +20,26 @@
 require("halmd.modules")
 
 -- grab environment
-local io = {
-    statevars = {
-        writers = {
-            hdf5 = {
-                [2] = halmd_wrapper.io.statevars.writers.hdf5_2_
-              , [3] = halmd_wrapper.io.statevars.writers.hdf5_3_
-            }
-        }
-    }
-}
-local args = require("halmd.options")
-local parameter = require("halmd.parameter")
-local assert = assert
+local hooks = require("halmd.hooks")
 
-module("halmd.io.statevars.writers.hdf5", halmd.modules.register)
+module("halmd.parameter", halmd.modules.register)
 
 --
--- construct HDF5 statevars writer module
+-- register HDF5 writer as parameter writer
 --
-function new()
-    -- command line options
-    local output = assert(args.output)
-    local dimension = assert(args.dimension)
+-- @param writer HDF5 writer object
+--
+function register_writer(writer)
+    hooks.register(function(object, module)
+        if object.write_parameters then
+            -- HDF5 file with write access
+            local file = writer:file()
+            -- convert module name to HDF5 group path
+            local path = module._NAME
+            path = path:gsub("%.", "/")
+            path = path:gsub("^halmd", "param")
 
-    -- parameters
-    local file_name = output .. ".msv"
-
-    local writer = io.statevars.writers.hdf5[dimension](file_name)
-
-    parameter.register_writer(writer)
-
-    return writer
+            object:write_parameters(file:open_group(path))
+        end
+    end)
 end

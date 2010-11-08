@@ -36,6 +36,7 @@ local hdf5_writer = {
     }
 }
 local device = require("halmd.device")
+local parameter = require("halmd.parameter")
 local args = require("halmd.options")
 local assert = assert
 
@@ -55,8 +56,14 @@ function new()
     -- parameters
     local file_name = output .. ".trj"
 
+    local writer
     if not device() then
-        return hdf5_writer.host[dimension](sample, file_name)
+        writer = hdf5_writer.host[dimension](sample, file_name)
+    else
+        writer = hdf5_writer.gpu[dimension](sample, file_name)
     end
-    return hdf5_writer.gpu[dimension](sample, file_name)
+
+    parameter.register_writer(writer)
+
+    return writer
 end
