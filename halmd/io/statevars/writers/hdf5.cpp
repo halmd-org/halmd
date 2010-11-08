@@ -52,11 +52,6 @@ hdf5<dimension>::hdf5(string const& file_name)
     array<unsigned char, 2> version = {{ 1, 0 }};
     h5xx::write_attribute(param, "file_version", version);
 
-    // store dimension
-    // FIXME configuration and simulation parameters should be stored by a distinct function
-    H5::Group mdsim = param.createGroup("mdsim");
-    h5xx::write_attribute(mdsim, "dimension", dimension);
-
     LOG("write macroscopic state variables to file: " << file_.getFileName());
 }
 
