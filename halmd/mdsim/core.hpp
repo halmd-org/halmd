@@ -22,6 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <h5xx/h5xx.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/integrator.hpp>
@@ -56,6 +57,8 @@ public:
 
     static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
+
+    void write_parameters(H5::Group const& param) const;
 
     core();
     void register_runtimes(profiler_type& profiler);
