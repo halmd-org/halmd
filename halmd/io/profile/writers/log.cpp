@@ -80,9 +80,9 @@ namespace io { namespace profile { namespace writers
  * compare total accumulated runtimes of acc_desc_pairs
  */
 template <typename T>
-bool greater_total_runtime(T x, T y)
+bool less_total_runtime(T x, T y)
 {
-    return mean(*x.first) * count(*x.first) > mean(*y.first) * count(*y.first);
+    return mean(*x.first) * count(*x.first) < mean(*y.first) * count(*y.first);
 }
 
 /**
@@ -94,7 +94,7 @@ void log::write()
     stable_sort(
         accumulators_.begin()
       , accumulators_.end()
-      , bind(&greater_total_runtime<acc_desc_pair_type>, _1, _2)
+      , bind(&less_total_runtime<acc_desc_pair_type>, _1, _2)
     );
 
     BOOST_FOREACH(acc_desc_pair_type const& x, accumulators_) {
