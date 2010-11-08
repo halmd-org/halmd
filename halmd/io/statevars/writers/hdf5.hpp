@@ -48,6 +48,11 @@ public:
     hdf5(std::string const& file_name);
     virtual void write();
 
+    H5::H5File const& file() const
+    {
+        return file_;
+    }
+
 private:
     // virtual register function, only called by base class
     virtual void register_observable(

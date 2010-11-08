@@ -236,6 +236,7 @@ void hdf5<dimension>::luaopen(lua_State* L)
                     [
                         class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<string const&>())
+                            .def("file", &hdf5::file)
                     ]
                 ]
             ]

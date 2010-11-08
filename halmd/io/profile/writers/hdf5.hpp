@@ -46,6 +46,11 @@ public:
     hdf5(std::string const& file_name);
     virtual void write();
 
+    H5::H5File const& file() const
+    {
+        return file_;
+    }
+
 private:
     virtual void register_accumulator(
         std::vector<std::string> const& tag

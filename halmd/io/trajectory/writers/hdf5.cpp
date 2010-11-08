@@ -119,6 +119,7 @@ void hdf5<dimension, float_type>::luaopen(lua_State* L)
                                 shared_ptr<sample_type>
                               , string const&
                             >())
+                            .def("file", &hdf5::file)
                     ]
                 ]
             ]

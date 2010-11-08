@@ -57,6 +57,11 @@ public:
 
     boost::shared_ptr<sample_type> sample;
 
+    H5::H5File const& file() const
+    {
+        return file_;
+    }
+
 private:
     /** absolute path to HDF5 trajectory file */
     boost::filesystem::path const path_;
