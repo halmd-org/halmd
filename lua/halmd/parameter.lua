@@ -21,6 +21,7 @@ require("halmd.modules")
 
 -- grab environment
 local hooks = require("halmd.hooks")
+local assert = assert
 
 module("halmd.parameter", halmd.modules.register)
 
@@ -34,12 +35,12 @@ function register_writer(writer)
         if object.write_parameters then
             -- HDF5 file with write access
             local file = writer:file()
-            -- convert module name to HDF5 group path
-            local path = module._NAME
-            path = path:gsub("%.", "/")
-            path = path:gsub("^halmd", "param")
+            -- open parameter/namespace group
+            local namespace = module.namespace
+            assert(namespace, "undefined namespace in " .. module._NAME)
+            local group = file:open_group("param/" .. namespace)
 
-            object:write_parameters(file:open_group(path))
+            object:write_parameters(group)
         end
     end)
 end
