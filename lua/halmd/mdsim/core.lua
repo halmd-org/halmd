@@ -29,6 +29,9 @@ local assert = assert
 
 module("halmd.mdsim.core", halmd.modules.register)
 
+-- option/parameter namespace
+namespace = "box"
+
 local core -- singleton instance
 
 --
