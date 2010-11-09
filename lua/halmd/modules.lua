@@ -41,7 +41,7 @@ local modules = {} -- ordered list of registered HALMD modules
 function register(module)
     table.insert(modules, module)
 
-    local function new(module, ...)
+    local new = function(module, ...)
         local object = module.new(...)
         if object then
             hooks.register_object(object, module)
@@ -49,7 +49,12 @@ function register(module)
         return object
     end
 
-    setmetatable(module, { __call = new })
+    local defaults = {
+        -- option/parameter namespace
+        namespace = module._NAME:match("[^.]+$")
+    }
+
+    setmetatable(module, { __call = new, __index = defaults })
 end
 
 --

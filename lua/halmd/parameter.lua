@@ -36,8 +36,7 @@ function register_writer(writer)
             -- HDF5 file with write access
             local file = writer:file()
             -- open parameter/namespace group
-            local namespace = module.namespace
-            assert(namespace, "undefined namespace in " .. module._NAME)
+            local namespace = assert(module.namespace)
             local group = file:open_group("param/" .. namespace)
 
             object:write_parameters(group)

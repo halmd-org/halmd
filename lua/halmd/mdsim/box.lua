@@ -32,9 +32,6 @@ local assert = assert
 
 module("halmd.mdsim.box", halmd.modules.register)
 
--- option/parameter namespace
-namespace = "box"
-
 options = box_wrapper[2].options
 
 --
