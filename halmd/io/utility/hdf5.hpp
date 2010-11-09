@@ -31,11 +31,24 @@ struct fixed_vector;
 
 }}}} // namespace halmd::detail::numeric::blas
 
+namespace boost { namespace numeric { namespace ublas
+{
+
+// forward declaration
+template <typename T, typename Alloc>
+class unbounded_array;
+
+}}} // namespace boost::numeric::ublas
+
 namespace h5xx
 {
 
 template <typename T, size_t N>
 struct is_array<halmd::detail::numeric::blas::fixed_vector<T, N> >
+  : boost::true_type {};
+
+template <typename T, typename Alloc>
+struct is_vector<boost::numeric::ublas::unbounded_array<T, Alloc> >
   : boost::true_type {};
 
 } // namespace h5xx
