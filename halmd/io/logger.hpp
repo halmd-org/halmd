@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -87,26 +87,10 @@ private:
         }                                               \
     } while(0)
 
-#define __HALMD_LOG_LINE__(__level__, __format__)                        \
-    __HALMD_LOG__(__level__, __format__);                                \
-    __HALMD_LOG__(__level__, "in " << __FILE__ << ":" <<__LINE__)
-
-#define __HALMD_LOG_ONCE_LINE__(__level__, __format__)                   \
-    __HALMD_ONCE_LOG__(__level__, __format__);                           \
-    __HALMD_ONCE_LOG__(__level__, "in " << __FILE__ << ":" <<__LINE__)
-
-#ifdef NDEBUG
-# define LOG_FATAL(__format__)           __HALMD_LOG__(fatal, __format__)
-# define LOG_FATAL_ONCE(__format__)      __HALMD_LOG_ONCE__(fatal, __format__)
-# define LOG_ERROR(__format__)           __HALMD_LOG__(error, __format__)
-# define LOG_ERROR_ONCE(__format__)      __HALMD_LOG_ONCE__(error, __format__)
-#else
-# define LOG_FATAL(__format__)           __HALMD_LOG_LINE__(fatal, __format__)
-# define LOG_FATAL_ONCE(__format__)      __HALMD_LOG_ONCE_LINE__(fatal, __format__)
-# define LOG_ERROR(__format__)           __HALMD_LOG_LINE__(error, __format__)
-# define LOG_ERROR_ONCE(__format__)      __HALMD_LOG_ONCE_LINE__(error, __format__)
-#endif
-
+#define LOG_FATAL(__format__)           __HALMD_LOG__(fatal, __format__)
+#define LOG_FATAL_ONCE(__format__)      __HALMD_LOG_ONCE__(fatal, __format__)
+#define LOG_ERROR(__format__)           __HALMD_LOG__(error, __format__)
+#define LOG_ERROR_ONCE(__format__)      __HALMD_LOG_ONCE__(error, __format__)
 #define LOG_WARNING(__format__)         __HALMD_LOG__(warning, __format__)
 #define LOG_WARNING_ONCE(__format__)    __HALMD_LOG_ONCE__(warning, __format__)
 #define LOG(__format__)                 __HALMD_LOG__(info, __format__)
