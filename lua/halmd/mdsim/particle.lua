@@ -40,7 +40,7 @@ local assert = assert
 
 module("halmd.mdsim.particle", halmd.modules.register)
 
--- option/parameter namespace
+-- override default parameter namespace
 namespace = "box"
 
 options = particle_wrapper[2].options
