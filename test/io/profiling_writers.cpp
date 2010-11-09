@@ -26,8 +26,8 @@
 #include <stdio.h>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/profile/writers/log.hpp>
-#include <halmd/io/profile/writers/hdf5.hpp>
+#include <halmd/io/profiling/writers/log.hpp>
+#include <halmd/io/profiling/writers/hdf5.hpp>
 #include <halmd/utility/profiler.hpp>
 
 using namespace boost;
@@ -35,9 +35,9 @@ using namespace halmd;
 using namespace std;
 
 struct timer_map {
-    // define and register profile timers
-    HALMD_PROFILE_TAG( timer1, "first timer" );
-    HALMD_PROFILE_TAG( timer2, "second timer" );
+    // define and register profiling timers
+    HALMD_PROFILING_TAG( timer1, "first timer" );
+    HALMD_PROFILING_TAG( timer2, "second timer" );
 
     boost::fusion::map<
         fusion::pair<timer1, accumulator<double> >
@@ -46,10 +46,10 @@ struct timer_map {
 };
 
 //
-// test profile writer modules
+// test profiling writer modules
 //
 
-BOOST_AUTO_TEST_CASE( test_profile_writers )
+BOOST_AUTO_TEST_CASE( test_profiling_writers )
 {
     string const file_name("test_io_logger.prf");
 
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE( test_profile_writers )
     log.log_to_console(logger::debug);
 
     // resolve module dependencies
-    using namespace halmd::io::profile;
+    using namespace halmd::io::profiling;
     shared_ptr<utility::profiler> profiler;
 
     // repeat three times
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE( test_profile_writers )
         writers.push_back(make_shared<writers::hdf5>(file_name));
         profiler = make_shared<utility::profiler>(writers);
 
-        // register profile timers
+        // register profiling timers
         timer_map timers;
         profiler->register_map(timers.map);
 

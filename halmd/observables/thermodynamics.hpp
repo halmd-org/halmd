@@ -93,7 +93,7 @@ public:
     double en_tot() const { return en_pot() + en_kin(); }
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( sample_, "computation of macroscopic state variables" );
+    HALMD_PROFILING_TAG( sample_, "computation of macroscopic state variables" );
 
 private:
     // sample() passes values to HDF5 writer via a fixed location in memory

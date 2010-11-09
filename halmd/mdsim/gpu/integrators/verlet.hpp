@@ -75,8 +75,8 @@ public:
     }
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( integrate_, "first half-step of velocity-Verlet" );
-    HALMD_PROFILE_TAG( finalize_, "second half-step of velocity-Verlet" );
+    HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet" );
+    HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet" );
 
 private:
     /** integration time-step */

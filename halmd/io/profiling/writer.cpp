@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/profile/writer.hpp>
+#include <halmd/io/profiling/writer.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -25,7 +25,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace io { namespace profile
+namespace io { namespace profiling
 {
 
 void writer::luaopen(lua_State* L)
@@ -37,7 +37,7 @@ void writer::luaopen(lua_State* L)
         [
             namespace_("io")
             [
-                namespace_("profile")
+                namespace_("profiling")
                 [
                     class_<writer, shared_ptr<writer> >("writer")
                         .def("write", &writer::write)
@@ -55,7 +55,7 @@ static __attribute__((constructor)) void register_lua()
     ];
 }
 
-}} // namespace io::profile
+}} // namespace io::profiling
 
 } // namespace halmd
 

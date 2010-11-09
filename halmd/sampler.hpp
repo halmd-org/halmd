@@ -22,7 +22,7 @@
 
 #include <lua.hpp>
 
-#include <halmd/io/profile/writer.hpp>
+#include <halmd/io/profiling/writer.hpp>
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
@@ -43,7 +43,7 @@ public:
     typedef observables::observable<dimension> observable_type;
     typedef io::statevars::writer<dimension> statevars_writer_type;
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
-    typedef io::profile::writer profile_writer_type;
+    typedef io::profiling::writer profiling_writer_type;
     typedef utility::profiler profiler_type;
 
     static void luaopen(lua_State* L);
@@ -64,11 +64,11 @@ public:
     std::vector<boost::shared_ptr<observable_type> > observables;
     boost::shared_ptr<statevars_writer_type> statevars_writer;
     boost::shared_ptr<trajectory_writer_type> trajectory_writer;
-    std::vector<boost::shared_ptr<profile_writer_type> > profile_writers;
+    std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers;
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( msv_output_, "output of macroscopic state variables" );
-    HALMD_PROFILE_TAG( total_, "total simulation runtime" );
+    HALMD_PROFILING_TAG( msv_output_, "output of macroscopic state variables" );
+    HALMD_PROFILING_TAG( total_, "total simulation runtime" );
 
 private:
     /** total number of integration steps */

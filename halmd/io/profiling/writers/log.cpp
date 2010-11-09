@@ -23,7 +23,7 @@
 #include <iomanip>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/profile/writers/log.hpp>
+#include <halmd/io/profiling/writers/log.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -75,7 +75,7 @@ static ostream& operator<<(ostream& os, accumulator<T> const& acc)
 
 namespace halmd
 {
-namespace io { namespace profile { namespace writers
+namespace io { namespace profiling { namespace writers
 {
 
 /**
@@ -113,7 +113,7 @@ void log::luaopen(lua_State* L)
         [
             namespace_("io")
             [
-                namespace_("profile")
+                namespace_("profiling")
                 [
                     namespace_("writers")
                     [
@@ -134,6 +134,6 @@ static __attribute__((constructor)) void register_lua()
     ];
 }
 
-}}} // namespace io::profile::writers
+}}} // namespace io::profiling::writers
 
 } // namespace halmd

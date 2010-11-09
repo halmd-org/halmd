@@ -93,9 +93,9 @@ public:
     virtual bool check();
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( check_, "neighbour update criterion" );
-    HALMD_PROFILE_TAG( update_cells_, "cell lists update" );
-    HALMD_PROFILE_TAG( update_neighbours_, "neighbour lists update" );
+    HALMD_PROFILING_TAG( check_, "neighbour update criterion" );
+    HALMD_PROFILING_TAG( update_cells_, "cell lists update" );
+    HALMD_PROFILING_TAG( update_neighbours_, "neighbour lists update" );
 
 protected:
     friend class sort::hilbert<dimension, float_type>; //< FIXME public interface

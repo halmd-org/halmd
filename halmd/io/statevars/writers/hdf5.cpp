@@ -250,6 +250,6 @@ static __attribute__((constructor)) void register_lua()
     ];
 }
 
-}}} // namespace io::profile::writers
+}}} // namespace io::profiling::writers
 
 } // namespace halmd

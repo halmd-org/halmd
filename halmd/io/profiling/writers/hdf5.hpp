@@ -17,53 +17,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_PROFILE_WRITER_HPP
-#define HALMD_IO_PROFILE_WRITER_HPP
+#ifndef HALMD_IO_PROFILING_HDF5_HPP
+#define HALMD_IO_PROFILING_HDF5_HPP
 
 #include <lua.hpp>
-#include <string>
-#include <vector>
 
-#include <halmd/numeric/accumulator.hpp>
+#include <h5xx/h5xx.hpp>
+#include <halmd/io/profiling/writer.hpp>
 
 namespace halmd
 {
-namespace utility
-{
-
-// forward declaration
-class profiler;
-
-} // namespace utility
-
-namespace io { namespace profile
+namespace io { namespace profiling { namespace writers
 {
 
 /**
- * Abstract base class of a profiler writer.
+ * This module writes runtime accumulator results to an HDF5 file.
  */
-class writer
+class hdf5
+  : public profiling::writer
 {
 public:
-    typedef accumulator<double> accumulator_type;
+    typedef profiling::writer _Base;
+    typedef _Base::accumulator_type accumulator_type;
+    typedef boost::function<void ()> writer_functor;
 
     static void luaopen(lua_State* L);
 
-    writer() {}
-    virtual ~writer() {}
-    virtual void write() = 0;
+    hdf5(std::string const& file_name);
+    virtual void write();
 
-protected:
-    friend class utility::profiler;
+    H5::H5File const& file() const
+    {
+        return file_;
+    }
+
+private:
     virtual void register_accumulator(
         std::vector<std::string> const& tag
-      , accumulator<double> const& acc
+      , accumulator_type const& acc
       , std::string const& desc
-    ) = 0;
+    );
+    static void write_accumulator(
+        H5::DataSet const& dset
+      , accumulator_type const& acc
+    );
+
+    H5::H5File file_;
+    std::vector<writer_functor> writer_;
 };
 
-}} // namespace io::profile
+}}} // namespace io::profiling::writers
 
 } // namespace halmd
 
-#endif /* ! HALMD_IO_PROFILE_WRITER_HPP */
+#endif /* ! HALMD_IO_PROFILING_HDF5_HPP */

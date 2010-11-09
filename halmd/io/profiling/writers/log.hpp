@@ -17,28 +17,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_PROFILE_LOG_HPP
-#define HALMD_IO_PROFILE_LOG_HPP
+#ifndef HALMD_IO_PROFILING_LOG_HPP
+#define HALMD_IO_PROFILING_LOG_HPP
 
 #include <lua.hpp>
 #include <utility>
 #include <vector>
 
-#include <halmd/io/profile/writer.hpp>
+#include <halmd/io/profiling/writer.hpp>
 
 namespace halmd
 {
-namespace io { namespace profile { namespace writers
+namespace io { namespace profiling { namespace writers
 {
 
 /**
  * This module writes runtime accumulator results to the log.
  */
 class log
-  : public profile::writer
+  : public profiling::writer
 {
 public:
-    typedef profile::writer _Base;
+    typedef profiling::writer _Base;
     typedef _Base::accumulator_type accumulator_type;
     typedef std::pair<accumulator_type const*, std::string> acc_desc_pair_type;
 
@@ -64,8 +64,8 @@ private:
     std::vector<acc_desc_pair_type> accumulators_;
 };
 
-}}} // namespace io::profile::writers
+}}} // namespace io::profiling::writers
 
 } // namespace halmd
 
-#endif /* ! HALMD_IO_PROFILE_LOG_HPP */
+#endif /* ! HALMD_IO_PROFILING_LOG_HPP */

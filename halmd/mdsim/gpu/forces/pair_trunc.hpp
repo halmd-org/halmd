@@ -91,7 +91,7 @@ public:
     }
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG(
+    HALMD_PROFILING_TAG(
         compute_, std::string("computation of ") + potential_type::name() + " forces"
     );
 

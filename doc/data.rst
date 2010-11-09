@@ -331,7 +331,7 @@ average, the standard error of mean, the variance and the count.
 Profiling (PRF)
 ---------------
 
-A profile file contains a dataset for each CPU or GPU performance counter.
+A profiling file contains a dataset for each CPU or GPU performance counter.
 
 ::
 

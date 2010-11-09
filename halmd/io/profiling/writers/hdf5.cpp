@@ -21,7 +21,7 @@
 #include <boost/filesystem/operations.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/profile/writers/hdf5.hpp>
+#include <halmd/io/profiling/writers/hdf5.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -31,7 +31,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace io { namespace profile { namespace writers
+namespace io { namespace profiling { namespace writers
 {
 
 /**
@@ -50,7 +50,7 @@ hdf5::hdf5(string const& file_name)
     array<unsigned char, 2> version = {{ 1, 0 }};
     h5xx::write_attribute(param, "file_version", version);
 
-    LOG("write profile data to file: " << file_.getFileName());
+    LOG("write profiling data to file: " << file_.getFileName());
 }
 
 /**
@@ -123,7 +123,7 @@ void hdf5::luaopen(lua_State* L)
         [
             namespace_("io")
             [
-                namespace_("profile")
+                namespace_("profiling")
                 [
                     namespace_("writers")
                     [
@@ -145,6 +145,6 @@ static __attribute__((constructor)) void register_lua()
     ];
 }
 
-}}} // namespace io::profile::writers
+}}} // namespace io::profiling::writers
 
 } // namespace halmd

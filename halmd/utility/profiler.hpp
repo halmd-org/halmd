@@ -29,13 +29,13 @@
 
 namespace halmd
 {
-namespace io { namespace profile
+namespace io { namespace profiling
 {
 
 // forward declaration
 class writer;
 
-}} // namespace io::profile
+}} // namespace io::profiling
 
 namespace utility
 {
@@ -51,19 +51,19 @@ struct visitor;
 
 /**
  * This module delegates registrations of runtime accumulator
- * maps of other modules to available profile writer modules.
+ * maps of other modules to available profiling writer modules.
  */
 class profiler
 {
 public:
-    typedef io::profile::writer profile_writer_type;
+    typedef io::profiling::writer profiling_writer_type;
     typedef accumulator<double> accumulator_type;
 
-    std::vector<boost::shared_ptr<profile_writer_type> > profile_writers;
+    std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers;
 
     static void luaopen(lua_State* L);
 
-    profiler(std::vector<boost::shared_ptr<profile_writer_type> > profile_writers);
+    profiler(std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers);
 
     template <typename AccumulatorMap>
     void register_map(AccumulatorMap const& map)
@@ -83,7 +83,7 @@ private:
 /**
  * Define tag for runtime accumulator within module.
  */
-#define HALMD_PROFILE_TAG(__tag__, __desc__)    \
+#define HALMD_PROFILING_TAG(__tag__, __desc__)    \
     struct __tag__ {                            \
         static std::string desc() {             \
             return __desc__;                    \

@@ -64,7 +64,7 @@ public:
     void register_runtimes(profiler_type& profiler);
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG(set_, "setting particle positions on lattice");
+    HALMD_PROFILING_TAG(set_, "setting particle positions on lattice");
 
 private:
     boost::fusion::map<

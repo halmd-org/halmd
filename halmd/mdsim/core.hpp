@@ -75,8 +75,8 @@ public:
     boost::shared_ptr<velocity_type> velocity;
 
     // module runtime accumulator descriptions
-    HALMD_PROFILE_TAG( prepare_, "microscopic state preparation" );
-    HALMD_PROFILE_TAG( mdstep_, "MD integration step" );
+    HALMD_PROFILING_TAG( prepare_, "microscopic state preparation" );
+    HALMD_PROFILING_TAG( mdstep_, "MD integration step" );
 
     uint64_t step_counter() const { return step_counter_; }
 

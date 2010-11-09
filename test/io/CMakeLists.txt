@@ -10,17 +10,17 @@ add_test(io_logger
   test_logger
 )
 
-add_executable(test_profile_writers
-  profile_writers.cpp
+add_executable(test_profiling_writers
+  profiling_writers.cpp
 )
-target_link_libraries(test_profile_writers
-  halmd_io_profile_writers
-  halmd_io_profile
+target_link_libraries(test_profiling_writers
+  halmd_io_profiling_writers
+  halmd_io_profiling
   halmd_utility
   halmd_io
   ${HALMD_COMMON_LIBRARIES}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
-add_test(io_profile_writers
-  test_profile_writers
+add_test(io_profiling_writers
+  test_profiling_writers
 )

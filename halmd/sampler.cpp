@@ -107,9 +107,9 @@ void sampler<dimension>::run()
     }
 
     for_each(
-        profile_writers.begin()
-      , profile_writers.end()
-      , bind(&profile_writer_type::write, _1)
+        profiling_writers.begin()
+      , profiling_writers.end()
+      , bind(&profiling_writer_type::write, _1)
     );
 }
 
@@ -166,7 +166,7 @@ void sampler<dimension>::luaopen(lua_State* L)
                 .def_readwrite("observables", &sampler::observables)
                 .def_readwrite("statevars_writer", &sampler::statevars_writer)
                 .def_readwrite("trajectory_writer", &sampler::trajectory_writer)
-                .def_readwrite("profile_writers", &sampler::profile_writers)
+                .def_readwrite("profiling_writers", &sampler::profiling_writers)
                 .property("steps", &sampler::steps)
                 .property("total_time", &sampler::total_time)
                 .scope

@@ -92,9 +92,9 @@ void thermostat<dimension>::run()
     LOG("finished thermostat run");
 
     for_each(
-        profile_writers.begin()
-      , profile_writers.end()
-      , bind(&profile_writer_type::write, _1)
+        profiling_writers.begin()
+      , profiling_writers.end()
+      , bind(&profiling_writer_type::write, _1)
     );
 }
 

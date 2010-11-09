@@ -18,7 +18,7 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/profile/writer.hpp>
+#include <halmd/io/profiling/writer.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -32,9 +32,9 @@ namespace halmd
 namespace utility
 {
 
-profiler::profiler(vector<shared_ptr<profile_writer_type> > profile_writers)
+profiler::profiler(vector<shared_ptr<profiling_writer_type> > profiling_writers)
   // dependency injection
-  : profile_writers(profile_writers)
+  : profiling_writers(profiling_writers)
 {
     LOG("timer resolution: " << 1.E9 * timer::elapsed_min() << " ns");
 }
@@ -46,10 +46,10 @@ void profiler::register_accumulator(
 ) const
 {
     for_each(
-        profile_writers.begin()
-      , profile_writers.end()
+        profiling_writers.begin()
+      , profiling_writers.end()
       , bind(
-            &profile_writer_type::register_accumulator
+            &profiling_writer_type::register_accumulator
           , _1
           , tokenized_name(tag) // namespace and class template tokens
           , cref(acc)
@@ -68,8 +68,8 @@ void profiler::luaopen(lua_State* L)
             namespace_("utility")
             [
                 class_<profiler, shared_ptr<profiler> >("profiler")
-                    .def(constructor<vector<shared_ptr<profile_writer_type> > >())
-                    .def_readonly("profile_writers", &profiler::profile_writers)
+                    .def(constructor<vector<shared_ptr<profiling_writer_type> > >())
+                    .def_readonly("profiling_writers", &profiler::profiling_writers)
             ]
         ]
     ];

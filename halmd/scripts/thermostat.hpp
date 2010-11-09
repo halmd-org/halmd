@@ -50,14 +50,14 @@ public:
     static void options(po::options_description& desc);
     static void select(po::options const& vm) {}
 
-    typedef typename _Base::profile_writer_type profile_writer_type;
+    typedef typename _Base::profiling_writer_type profiling_writer_type;
 
     thermostat(modules::factory& factory, po::options const& vm);
     void run();
 
     using _Base::core;
     using _Base::sampler;
-    using _Base::profile_writers;
+    using _Base::profiling_writers;
 
 protected:
     /** heat bath collision rate */
