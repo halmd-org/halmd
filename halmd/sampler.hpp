@@ -68,6 +68,7 @@ public:
 
     // module runtime accumulator descriptions
     HALMD_PROFILE_TAG( msv_output_, "output of macroscopic state variables" );
+    HALMD_PROFILE_TAG( total_, "total simulation runtime" );
 
 private:
     /** total number of integration steps */
@@ -82,6 +83,7 @@ private:
     // list of profiling timers
     boost::fusion::map<
         boost::fusion::pair<msv_output_, accumulator<double> >
+      , boost::fusion::pair<total_, accumulator<double> >
     > runtime_;
 };
 

@@ -86,21 +86,25 @@ void sampler<dimension>::register_runtimes(profiler_type& profiler)
 template <int dimension>
 void sampler<dimension>::run()
 {
+    LOG("setting up simulation box");
     core->prepare();
     sample(true);
 
-    LOG("starting simulation run");
+    {
+        scoped_timer<timer> timer_(at_key<total_>(runtime_));
+        LOG("starting simulation run");
 
-    while (core->step_counter() < steps_) {
-        // perform complete MD integration step
-        core->mdstep();
+        while (core->step_counter() < steps_) {
+            // perform complete MD integration step
+            core->mdstep();
 
-        // sample system state and properties,
-        // force sampling after last integration step
-        sample(core->step_counter() == steps_);
+            // sample system state and properties,
+            // force sampling after last integration step
+            sample(core->step_counter() == steps_);
+        }
+
+        LOG("finished simulation run");
     }
-
-    LOG("finished simulation run");
 
     for_each(
         profile_writers.begin()
