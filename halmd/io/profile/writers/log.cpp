@@ -42,30 +42,32 @@ template <typename T>
 static ostream& operator<<(ostream& os, accumulator<T> const& acc)
 {
     T value = mean(acc);
-    T error = error_of_mean(acc);
-    char const* unit;       // unit of time
+    T error = count(acc) > 1 ? error_of_mean(acc) : 0;
 
-    if (value > 1) {
-        unit = "s";
+    T const conversion[] = { 24 * 3600, 3600, 60, 1, 1e-3, 1e-6, 1e-9 };
+    char const* const unit[] = { "d", "h", "min", "s", "ms", "µs", "ns" };
+    unsigned const N = 7;
+
+    unsigned i;
+    for (i = 0; i < N - 1; ++i) {
+        if (value > conversion[i]) {
+            break;
+        }
     }
-    else if (value > 1e-3) {
-        value *= 1e3;
-        error *= 1e3;
-        unit = "ms";
-    }
-    else {
-        value *= 1e6;
-        error *= 1e6;
-        unit = "µs";
-    }
+    value /= conversion[i];
+    error /= conversion[i];
 
     // let number of digits depend on relative error
-    unsigned prec = max(3u, static_cast<unsigned>(ceil(-log10(error / value)) + 2));
-    os << setprecision(prec) << value << " " << unit;
     if (count(acc) > 1) {
-        os << setprecision(2) << " (" << error << " " << unit << ", "
-           << count(acc) << " calls)";
+        unsigned prec = static_cast<unsigned>(ceil(-log10(error)) + 1);
+        os << fixed << setprecision(prec)
+           << value << " " << unit[i] << resetiosflags(ios_base::floatfield);
+        os << setprecision(2) << " (" << error << " " << unit[i] << ", " << count(acc) << " calls)";
     }
+    else {
+        os << setprecision(3) << value << " " << unit[i];
+    }
+
     return os;
 }
 
