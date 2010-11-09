@@ -21,7 +21,7 @@ require("halmd.modules")
 
 -- grab environment
 local profiler_wrapper = halmd_wrapper.utility.profiler
-local profile_writers = require("halmd.io.profile.writers")
+local profiling_writers = require("halmd.io.profiling.writers")
 local hooks = require("halmd.hooks")
 local pairs = pairs
 local table = table
@@ -32,7 +32,7 @@ module("halmd.profiler", halmd.modules.register)
 -- construct profiler module
 --
 function new()
-    local writers = profile_writers()
+    local writers = profiling_writers()
     local profiler = profiler_wrapper(writers)
 
     hooks.register_hook(function(profilable)

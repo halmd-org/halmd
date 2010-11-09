@@ -20,14 +20,22 @@
 require("halmd.modules")
 
 -- grab environment
-local log_writer_wrapper = halmd_wrapper.io.profile.writers.log
-local assert = assert
+local profiling_writers = {
+    hdf5 = require("halmd.io.profiling.writers.hdf5")
+  , log = require("halmd.io.profiling.writers.log")
+}
+local pairs = pairs
+local table = table
 
-module("halmd.io.profile.writers.log", halmd.modules.register)
+module("halmd.io.profiling.writers", halmd.modules.register)
 
 --
--- construct HDF5 profile writer module
+-- construct profiler module
 --
 function new()
-    return log_writer_wrapper()
+    local writers = {}
+    for k, v in pairs(profiling_writers) do
+        table.insert(writers, v())
+    end
+    return writers
 end

@@ -20,23 +20,14 @@
 require("halmd.modules")
 
 -- grab environment
-local hdf5_writer_wrapper = halmd_wrapper.io.profile.writers.hdf5
-local args = require("halmd.options")
-local parameter = require("halmd.parameter")
+local log_writer_wrapper = halmd_wrapper.io.profiling.writers.log
 local assert = assert
 
-module("halmd.io.profile.writers.hdf5", halmd.modules.register)
+module("halmd.io.profiling.writers.log", halmd.modules.register)
 
 --
--- construct HDF5 profile writer module
+-- construct HDF5 profiling writer module
 --
 function new()
-    -- command line options
-    local output = assert(args.output)
-
-    local writer = hdf5_writer_wrapper(output .. ".prf")
-
-    parameter.register_writer(writer)
-
-    return writer
+    return log_writer_wrapper()
 end

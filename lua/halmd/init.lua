@@ -51,7 +51,7 @@ function run()
 
     local sampler = halmd.sampler() -- singleton
     local profiler = halmd.profiler()
-    sampler.profile_writers = profiler.profile_writers
+    sampler.profiling_writers = profiler.profiling_writers
     sampler.trajectory_writer = halmd.io.trajectory.writers()
     sampler.observables = { halmd.observables.thermodynamics() }
     sampler.statevars_writer = halmd.io.statevars.writers()
