@@ -25,9 +25,7 @@ local force_wrapper = {
   , [3] = halmd_wrapper.mdsim.force_3_
 }
 local forces = {
-    lennard_jones = require("halmd.mdsim.forces.lennard_jones")
-  , morse = require("halmd.mdsim.forces.morse")
-  , power_law = require("halmd.mdsim.forces.power_law")
+    pair_trunc = require("halmd.mdsim.forces.pair_trunc")
 }
 local args = require("halmd.options")
 local assert = assert
@@ -41,5 +39,5 @@ options = force_wrapper[2].options
 --
 function new()
     local force = assert(args.force)
-    return forces[force]()
+    return forces.pair_trunc{ force = force }
 end

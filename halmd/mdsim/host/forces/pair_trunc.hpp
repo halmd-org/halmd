@@ -196,21 +196,18 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
-    using std::string;
-    string class_name(
-        potential_type::module_name() + string("_") + boost::lexical_cast<string>(dimension) + string("_")
-    );
-    module(L)
+    std::string class_name("pair_trunc_" + boost::lexical_cast<std::string>(dimension) + "_");
+    module(L, "halmd_wrapper")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("forces")
                 [
-                    namespace_("forces")
+                    namespace_(class_name.c_str())
                     [
-                        class_<pair_trunc, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                        class_<pair_trunc, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(potential_type::module_name())
                             .def(constructor<
                                 boost::shared_ptr<potential_type>
                               , boost::shared_ptr<particle_type>

@@ -108,29 +108,25 @@ template <typename float_type>
 void lj_potential<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("lj_potential");
-    module(L)
+    module(L, "halmd_wrapper")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("forces")
                 [
-                    namespace_("forces")
-                    [
-                        class_<lj_potential, shared_ptr<lj_potential> >(class_name.c_str())
-                            .def(constructor<
-                                unsigned
-                              , array<float, 3> const&
-                              , array<float, 3> const&
-                              , array<float, 3> const&
-                            >())
-                            .scope
-                            [
-                                def("options", &lj_potential::options)
-                            ]
-                    ]
+                    class_<lj_potential, shared_ptr<lj_potential> >(module_name())
+                        .def(constructor<
+                            unsigned
+                          , array<float, 3> const&
+                          , array<float, 3> const&
+                          , array<float, 3> const&
+                        >())
+                        .scope
+                        [
+                            def("options", &lj_potential::options)
+                        ]
                 ]
             ]
         ]

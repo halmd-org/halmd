@@ -21,18 +21,10 @@ require("halmd.modules")
 
 -- grab environment
 local morse_wrapper = {
-    host = {
-        [2] = halmd_wrapper.mdsim.host.forces.morse_2_
-      , [3] = halmd_wrapper.mdsim.host.forces.morse_3_
-      , potential = halmd_wrapper.mdsim.host.forces.morse_potential
-    }
+    host = halmd_wrapper.mdsim.host.forces.morse
 }
 if halmd_wrapper.mdsim.gpu then
-    morse_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.forces.morse_2_
-      , [3] = halmd_wrapper.mdsim.gpu.forces.morse_3_
-      , potential = halmd_wrapper.mdsim.gpu.forces.morse_potential
-    }
+    morse_wrapper.gpu = halmd_wrapper.mdsim.gpu.forces.morse
 end
 
 local mdsim = {
@@ -41,30 +33,29 @@ local mdsim = {
 local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
+local hooks = require("halmd.hooks")
 
 module("halmd.mdsim.forces.morse", halmd.modules.register)
 
-options = morse_wrapper.host.potential.options
+options = morse_wrapper.host.options
 
 --
--- construct module for Morse potential
+-- construct Morse module
 --
 function new()
-    local dimension = assert(args.dimension)
     local cutoff = assert(args.cutoff)
     local epsilon = assert(args.epsilon)
     local sigma = assert(args.sigma)
-    local rmin = assert(args.morse_minimum)
+    local minimum = assert(args.morse_minimum)
 
-    -- dependency injection
     local core = mdsim.core()
     local particle = assert(core.particle)
-    local box = assert(core.box)
 
-    if not device() then
-        local potential = morse_wrapper.host.potential(particle.ntype, cutoff, epsilon, sigma, rmin)
-        return morse_wrapper.host[dimension](potential, particle, box)
+    local morse
+    if device() then
+        morse = assert(morse_wrapper.gpu)
+    else
+        morse = assert(morse_wrapper.host)
     end
-    local potential = morse_wrapper.gpu.potential(particle.ntype, cutoff, epsilon, sigma, rmin)
-    return morse_wrapper.gpu[dimension](potential, particle, box)
+    return morse(particle.ntype, cutoff, epsilon, sigma, minimum)
 end

@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -21,46 +21,41 @@ require("halmd.modules")
 
 -- grab environment
 local power_law_wrapper = {
-    host = {
-        [2] = halmd_wrapper.mdsim.host.forces.power_law_2_
-      , [3] = halmd_wrapper.mdsim.host.forces.power_law_3_
-    }
+    host = halmd_wrapper.mdsim.host.forces.power_law
 }
 if halmd_wrapper.mdsim.gpu then
-    power_law_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.forces.power_law_2_
-      , [3] = halmd_wrapper.mdsim.gpu.forces.power_law_3_
-    }
+    power_law_wrapper.gpu = halmd_wrapper.mdsim.gpu.forces.power_law
 end
+
 local mdsim = {
-  core = require("halmd.mdsim.core")
+    core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
+local hooks = require("halmd.hooks")
 
 module("halmd.mdsim.forces.power_law", halmd.modules.register)
 
-options = power_law_wrapper.host[2].options
+options = power_law_wrapper.host.options
 
 --
--- construct power_law module
+-- construct power law module
 --
 function new()
-    -- dependency injection
-    local core = mdsim.core()
-    local particle = assert(core.particle)
-    local box = assert(core.box)
-
-    -- command line options
-    local dimension = assert(args.dimension)
+    local index = assert(args.power_law_index)
     local cutoff = assert(args.cutoff)
     local epsilon = assert(args.epsilon)
     local sigma = assert(args.sigma)
-    local index = assert(args.power_law_index)
 
-    if not device() then
-        return power_law_wrapper.host[dimension](particle, box, index, cutoff, epsilon, sigma)
+    local core = mdsim.core()
+    local particle = assert(core.particle)
+
+    local power_law
+    if device() then
+        power_law = assert(power_law_wrapper.gpu)
+    else
+        power_law = assert(power_law_wrapper.host)
     end
-    return power_law_wrapper.gpu[dimension](particle, box, index, cutoff, epsilon, sigma)
+    return power_law(particle.ntype, index, cutoff, epsilon, sigma)
 end

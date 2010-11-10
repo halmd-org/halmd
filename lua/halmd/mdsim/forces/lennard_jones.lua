@@ -20,19 +20,11 @@
 require("halmd.modules")
 
 -- grab environment
-local lj_wrapper = {
-    host = {
-        [2] = halmd_wrapper.mdsim.host.forces.lennard_jones_2_
-      , [3] = halmd_wrapper.mdsim.host.forces.lennard_jones_3_
-      , potential = halmd_wrapper.mdsim.host.forces.lj_potential
-    }
+local lennard_jones_wrapper = {
+    host = halmd_wrapper.mdsim.host.forces.lennard_jones
 }
 if halmd_wrapper.mdsim.gpu then
-    lj_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.forces.lennard_jones_2_
-      , [3] = halmd_wrapper.mdsim.gpu.forces.lennard_jones_3_
-      , potential = halmd_wrapper.mdsim.gpu.forces.lj_potential
-    }
+    lennard_jones_wrapper.gpu = halmd_wrapper.mdsim.gpu.forces.lennard_jones
 end
 
 local mdsim = {
@@ -41,29 +33,28 @@ local mdsim = {
 local device = require("halmd.device")
 local args = require("halmd.options")
 local assert = assert
+local hooks = require("halmd.hooks")
 
 module("halmd.mdsim.forces.lennard_jones", halmd.modules.register)
 
-options = lj_wrapper.host.potential.options
+options = lennard_jones_wrapper.host.options
 
 --
 -- construct Lennard-Jones module
 --
 function new()
-    local dimension = assert(args.dimension)
     local cutoff = assert(args.cutoff)
     local epsilon = assert(args.epsilon)
     local sigma = assert(args.sigma)
 
-    -- dependency injection
     local core = mdsim.core()
     local particle = assert(core.particle)
-    local box = assert(core.box)
 
-    if not device() then
-        local potential = lj_wrapper.host.potential(particle.ntype, cutoff, epsilon, sigma)
-        return lj_wrapper.host[dimension](potential, particle, box)
+    local lennard_jones
+    if device() then
+        lennard_jones = assert(lennard_jones_wrapper.gpu)
+    else
+        lennard_jones = assert(lennard_jones_wrapper.host)
     end
-    local potential = lj_wrapper.gpu.potential(particle.ntype, cutoff, epsilon, sigma)
-    return lj_wrapper.gpu[dimension](potential, particle, box)
+    return lennard_jones(particle.ntype, cutoff, epsilon, sigma)
 end

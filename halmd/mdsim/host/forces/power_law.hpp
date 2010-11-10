@@ -20,16 +20,12 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 #define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 
-#include <boost/assign.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <utility>
 
-#include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
-#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/numeric/pow.hpp>
 #include <halmd/options.hpp>
 
@@ -44,19 +40,30 @@ namespace mdsim { namespace host { namespace forces
  * its scale invariance (in the absence of a cutoff).
  */
 
-template <int dimension, typename float_type>
+template <typename float_type>
 class power_law_potential
 {
 public:
-    typedef typename mdsim::host::force<dimension, float_type>::matrix_type matrix_type;
+    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+
+    static void luaopen(lua_State* L);
+    static void options(po::options_description& desc);
+
+    static char const* name() { return "power law"; }
+    static char const* module_name() { return "power_law"; }
 
     power_law_potential(
-        unsigned ntype
+        unsigned int ntype
       , int index
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
     );
+
+    static int default_index()
+    {
+        return 12;
+    }
 
     /** 
      * Compute potential and its derivative at squared distance 'rr'
@@ -123,51 +130,6 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff in MD units */
     matrix_type en_cut_;
-};
-
-template <int dimension, typename float_type>
-class power_law
-  : public pair_trunc<dimension, float_type, power_law_potential<dimension, float_type> >
-{
-public:
-    static void options(po::options_description& desc);
-
-    typedef power_law_potential<dimension, float_type> potential_type;
-    typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> _Base;
-    typedef typename _Base::particle_type particle_type;
-    typedef typename _Base::box_type box_type;
-
-    static void luaopen(lua_State* L);
-
-    power_law(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-      , int index
-      , boost::array<float, 3> const& cutoff
-      , boost::array<float, 3> const& epsilon
-      , boost::array<float, 3> const& sigma
-    );
-
-    static int default_index()
-    {
-        return 12;
-    }
-
-    // FIXME define sensible default values
-    static boost::array<float, 3> default_cutoff()
-    {
-        return boost::assign::list_of(2.5f)(2.5f)(2.5f);
-    }
-
-    static boost::array<float, 3> default_epsilon()
-    {
-        return boost::assign::list_of(1.0f)(1.5f)(0.5f);
-    }
-
-    static boost::array<float, 3> default_sigma()
-    {
-        return boost::assign::list_of(1.0f)(0.8f)(0.88f);
-    }
 };
 
 }}} // namespace mdsim::host::forces

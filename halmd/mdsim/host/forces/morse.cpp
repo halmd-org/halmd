@@ -114,30 +114,26 @@ template <typename float_type>
 void morse_potential<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("morse_potential");
-    module(L)
+    module(L, "halmd_wrapper")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("forces")
                 [
-                    namespace_("forces")
-                    [
-                        class_<morse_potential, shared_ptr<morse_potential> >(class_name.c_str())
-                            .def(constructor<
-                                unsigned
-                              , array<float, 3> const&
-                              , array<float, 3> const&
-                              , array<float, 3> const&
-                              , array<float, 3> const&
-                            >())
-                            .scope
-                            [
-                                def("options", &morse_potential::options)
-                            ]
-                    ]
+                    class_<morse_potential, shared_ptr<morse_potential> >(module_name())
+                        .def(constructor<
+                            unsigned
+                          , array<float, 3> const&
+                          , array<float, 3> const&
+                          , array<float, 3> const&
+                          , array<float, 3> const&
+                        >())
+                        .scope
+                        [
+                            def("options", &morse_potential::options)
+                        ]
                 ]
             ]
         ]

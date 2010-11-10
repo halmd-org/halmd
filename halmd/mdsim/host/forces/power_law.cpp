@@ -37,9 +37,9 @@ namespace mdsim { namespace host { namespace forces
 /**
  * Initialise potential parameters
  */
-template <int dimension, typename float_type>
-power_law_potential<dimension, float_type>::power_law_potential(
-    unsigned ntype
+template <typename float_type>
+power_law_potential<float_type>::power_law_potential(
+    unsigned int ntype
   , int index
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
@@ -84,8 +84,8 @@ power_law_potential<dimension, float_type>::power_law_potential(
 /**
  * Assemble module options
  */
-template <int dimension, typename float_type>
-void power_law<dimension, float_type>::options(po::options_description& desc)
+template <typename float_type>
+void power_law_potential<float_type>::options(po::options_description& desc)
 {
     desc.add_options()
         ("power-law-index", po::value<int>()->default_value(default_index()),
@@ -100,56 +100,30 @@ void power_law<dimension, float_type>::options(po::options_description& desc)
         ;
 }
 
-template <int dimension, typename float_type>
-power_law<dimension, float_type>::power_law(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-  , int index
-  , array<float, 3> const& cutoff
-  , array<float, 3> const& epsilon
-  , array<float, 3> const& sigma
-)
-  : _Base(
-        make_shared<potential_type>(particle->ntype, index, cutoff, epsilon, sigma)
-      , particle
-      , box
-    )
+template <typename float_type>
+void power_law_potential<float_type>::luaopen(lua_State* L)
 {
-}
-
-template <int dimension, typename float_type>
-void power_law<dimension, float_type>::luaopen(lua_State* L)
-{
-    typedef typename _Base::_Base _Base2;
-    typedef typename _Base2::_Base _Base3;
     using namespace luabind;
-    string class_name("power_law_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "halmd_wrapper")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("forces")
                 [
-                    namespace_("forces")
-                    [
-                        // skip auxiliary class _Base [_Base=forces::pair_trunc]
-                        class_<power_law, shared_ptr<_Base3>, bases<_Base2, _Base3> >(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
-                              , int
-                              , array<float, 3> const&
-                              , array<float, 3> const&
-                              , array<float, 3> const&
-                            >())
-                            .def_readwrite("smooth", &power_law::smooth)
-                            .scope
-                            [
-                                def("options", &power_law::options)
-                            ]
-                    ]
+                    class_<power_law_potential, shared_ptr<power_law_potential> >(module_name())
+                        .def(constructor<
+                            unsigned int
+                          , int
+                          , array<float, 3> const&
+                          , array<float, 3> const&
+                          , array<float, 3> const&
+                        >())
+                        .scope
+                        [
+                            def("options", &power_law_potential::options)
+                        ]
                 ]
             ]
         ]
@@ -158,31 +132,35 @@ void power_law<dimension, float_type>::luaopen(lua_State* L)
 
 static __attribute__((constructor)) void register_lua()
 {
-    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &power_law<3, double>::luaopen
-    ]
-    [
-        &power_law<2, double>::luaopen
-    ];
+    typedef double float_type;
 #else
+    typedef float float_type;
+#endif
+
+    lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &power_law<3, float>::luaopen
+        &power_law_potential<float_type>::luaopen
+    ];
+
+    lua_wrapper::register_(2) //< distance of derived to base class
+    [
+        &pair_trunc<3, float_type, power_law_potential<float_type> >::luaopen
     ]
     [
-        &power_law<2, float>::luaopen
+        &pair_trunc<2, float_type, power_law_potential<float_type> >::luaopen
     ];
-#endif
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class power_law<3, double>;
-template class power_law<2, double>;
+template class power_law_potential<double>;
+template class pair_trunc<3, double, power_law_potential<double> >;
+template class pair_trunc<2, double, power_law_potential<double> >;
 #else
-template class power_law<3, float>;
-template class power_law<2, float>;
+template class power_law_potential<float>;
+template class pair_trunc<3, float, power_law_potential<float> >;
+template class pair_trunc<2, float, power_law_potential<float> >;
 #endif
 
 }}} // namespace mdsim::host::forces
