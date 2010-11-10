@@ -21,6 +21,7 @@
 #define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 #include <utility>
 
@@ -48,6 +49,7 @@ public:
 
     static void luaopen(lua_State* L);
     static void options(po::options_description& desc);
+    void write_parameters(H5::Group const& group) const;
 
     static char const* name() { return "power law"; }
     static char const* module_name() { return "power_law"; }

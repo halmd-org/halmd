@@ -22,6 +22,7 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/host/forces/power_law.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
@@ -33,6 +34,18 @@ namespace halmd
 {
 namespace mdsim { namespace host { namespace forces
 {
+
+/**
+ * Write module parameters to HDF5 group
+ */
+template <typename float_type>
+void power_law<float_type>::write_parameters(H5::Group const& group) const
+{
+    h5xx::write_attribute(group, "index", index_);
+    h5xx::write_attribute(group, "epsilon", epsilon_.data());
+    h5xx::write_attribute(group, "sigma", sigma_.data());
+    h5xx::write_attribute(group, "cutoff", r_cut_sigma_.data());
+}
 
 /**
  * Initialise potential parameters
@@ -119,6 +132,7 @@ void power_law<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                         >())
+                        .def("write_parameters", &power_law::write_parameters)
                         .scope
                         [
                             def("options", &power_law::options)

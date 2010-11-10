@@ -22,6 +22,7 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/host/forces/morse.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
@@ -59,6 +60,18 @@ void morse<float_type>::options(po::options_description& desc)
 static __attribute__((constructor)) void register_option_converters()
 {
     register_any_converter<boost::array<float, 3> >();
+}
+
+/**
+ * Write module parameters to HDF5 group
+ */
+template <typename float_type>
+void morse<float_type>::write_parameters(H5::Group const& group) const
+{
+    h5xx::write_attribute(group, "epsilon", epsilon_.data());
+    h5xx::write_attribute(group, "sigma", sigma_.data());
+    h5xx::write_attribute(group, "cutoff", r_cut_sigma_.data());
+    h5xx::write_attribute(group, "min", r_min_sigma_.data());
 }
 
 /**
@@ -130,6 +143,7 @@ void morse<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                         >())
+                        .def("write_parameters", &morse::write_parameters)
                         .scope
                         [
                             def("options", &morse::options)

@@ -23,6 +23,7 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
 #include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
@@ -36,6 +37,17 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
+
+/**
+ * Write module parameters to HDF5 group
+ */
+template <typename float_type>
+void lennard_jones<float_type>::write_parameters(H5::Group const& group) const
+{
+    h5xx::write_attribute(group, "epsilon", epsilon_.data());
+    h5xx::write_attribute(group, "sigma", sigma_.data());
+    h5xx::write_attribute(group, "cutoff", r_cut_sigma_.data());
+}
 
 /**
  * Initialise Lennard-Jones potential parameters
@@ -116,6 +128,7 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                         >())
+                        .def("write_parameters", &lennard_jones::write_parameters)
                 ]
             ]
         ]

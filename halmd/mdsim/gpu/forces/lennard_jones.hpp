@@ -22,6 +22,7 @@
 
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
@@ -46,6 +47,7 @@ public:
     static char const* module_name() { return "lennard_jones"; }
 
     static void luaopen(lua_State* L);
+    void write_parameters(H5::Group const& group) const;
 
     lennard_jones(
         unsigned ntype

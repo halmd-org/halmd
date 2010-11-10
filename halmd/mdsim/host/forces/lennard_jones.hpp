@@ -23,6 +23,7 @@
 #include <boost/assign.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
+#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 #include <utility>
 
@@ -49,6 +50,7 @@ public:
 
     static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
+    void write_parameters(H5::Group const& group) const;
 
     lennard_jones(
         unsigned ntype
