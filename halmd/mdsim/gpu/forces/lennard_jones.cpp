@@ -23,8 +23,8 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/forces/lj.hpp>
-#include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
+#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
@@ -41,7 +41,7 @@ namespace mdsim { namespace gpu { namespace forces
  * Initialise Lennard-Jones potential parameters
  */
 template <typename float_type>
-lj_potential<float_type>::lj_potential(
+lennard_jones<float_type>::lennard_jones(
     unsigned ntype
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
@@ -87,10 +87,10 @@ lj_potential<float_type>::lj_potential(
     cuda::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
-        p[lj_kernel::EPSILON] = epsilon_.data()[i];
-        p[lj_kernel::RR_CUT] = rr_cut_.data()[i];
-        p[lj_kernel::SIGMA2] = sigma2_.data()[i];
-        p[lj_kernel::EN_CUT] = en_cut_.data()[i];
+        p[lennard_jones_kernel::EPSILON] = epsilon_.data()[i];
+        p[lennard_jones_kernel::RR_CUT] = rr_cut_.data()[i];
+        p[lennard_jones_kernel::SIGMA2] = sigma2_.data()[i];
+        p[lennard_jones_kernel::EN_CUT] = en_cut_.data()[i];
         param[i] = p;
     }
 
@@ -98,7 +98,7 @@ lj_potential<float_type>::lj_potential(
 }
 
 template <typename float_type>
-void lj_potential<float_type>::luaopen(lua_State* L)
+void lennard_jones<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "halmd_wrapper")
@@ -109,7 +109,7 @@ void lj_potential<float_type>::luaopen(lua_State* L)
             [
                 namespace_("forces")
                 [
-                    class_<lj_potential, shared_ptr<lj_potential> >(module_name())
+                    class_<lennard_jones, shared_ptr<lennard_jones> >(module_name())
                         .def(constructor<
                             unsigned
                           , array<float, 3> const&
@@ -126,22 +126,22 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &lj_potential<float>::luaopen
+        &lennard_jones<float>::luaopen
     ];
 
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        &pair_trunc<3, float, lj_potential<float> >::luaopen
+        &pair_trunc<3, float, lennard_jones<float> >::luaopen
     ]
     [
-        &pair_trunc<2, float, lj_potential<float> >::luaopen
+        &pair_trunc<2, float, lennard_jones<float> >::luaopen
     ];
 }
 
 // explicit instantiation
-template class lj_potential<float>;
-template class pair_trunc<3, float, lj_potential<float> >;
-template class pair_trunc<2, float, lj_potential<float> >;
+template class lennard_jones<float>;
+template class pair_trunc<3, float, lennard_jones<float> >;
+template class pair_trunc<2, float, lennard_jones<float> >;
 
 }}} // namespace mdsim::gpu::forces
 

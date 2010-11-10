@@ -30,7 +30,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/host/forces/lj.hpp>
+#include <halmd/mdsim/host/forces/lennard_jones.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -43,7 +43,7 @@
 #include <halmd/options.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/forces/lj.hpp>
+# include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/neighbour.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
@@ -149,7 +149,7 @@ shared_ptr<mdsim::integrator<dimension> > make_verlet_integrator(
 }
 
 template <int dimension>
-shared_ptr<mdsim::force<dimension> > make_lj_force(
+shared_ptr<mdsim::force<dimension> > make_lennard_jones_force(
     string const& backend
   , shared_ptr<mdsim::particle<dimension> > particle
   , shared_ptr<mdsim::box<dimension> > box
@@ -160,7 +160,7 @@ shared_ptr<mdsim::force<dimension> > make_lj_force(
 {
 #ifdef WITH_CUDA
     if (backend == "gpu") {
-        typedef mdsim::gpu::forces::lj_potential<float> potential_type;
+        typedef mdsim::gpu::forces::lennard_jones<float> potential_type;
         typedef mdsim::gpu::forces::pair_trunc<dimension, float, potential_type> force_type;
         return make_shared<force_type>(
             make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
@@ -170,7 +170,7 @@ shared_ptr<mdsim::force<dimension> > make_lj_force(
     }
 #endif /* WITH_CUDA */
     if (backend == "host") {
-        typedef mdsim::host::forces::lj_potential<double> potential_type;
+        typedef mdsim::host::forces::lennard_jones<double> potential_type;
         typedef mdsim::host::forces::pair_trunc<dimension, double, potential_type> force_type;
         return make_shared<force_type>(
             make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
@@ -395,13 +395,13 @@ void ideal_gas(string const& backend)
       , core->box
       , timestep
     );
-    core->force = make_lj_force<dimension>(
+    core->force = make_lennard_jones_force<dimension>(
         backend
       , core->particle
       , core->box
       , list_of(rc)(rc)(rc) /* cutoff */
       , list_of(0.f)(0.f)(0.f) /* epsilon */
-      , mdsim::host::forces::lj_potential<double>::default_sigma()
+      , mdsim::host::forces::lennard_jones<double>::default_sigma()
     );
     core->neighbour = make_neighbour(
         backend
@@ -515,13 +515,13 @@ void thermodynamics(string const& backend)
       , core->box
       , timestep
     );
-    core->force = make_lj_force<dimension>(
+    core->force = make_lennard_jones_force<dimension>(
         backend
       , core->particle
       , core->box
       , list_of(rc)(rc)(rc) /* cutoff */
-      , mdsim::host::forces::lj_potential<double>::default_epsilon()
-      , mdsim::host::forces::lj_potential<double>::default_sigma()
+      , mdsim::host::forces::lennard_jones<double>::default_epsilon()
+      , mdsim::host::forces::lennard_jones<double>::default_sigma()
     );
     core->neighbour = make_neighbour(
         backend

@@ -38,7 +38,7 @@ namespace mdsim { namespace host { namespace forces
  * Initialise potential parameters
  */
 template <typename float_type>
-power_law_potential<float_type>::power_law_potential(
+power_law<float_type>::power_law(
     unsigned int ntype
   , int index
   , array<float, 3> const& cutoff
@@ -85,12 +85,12 @@ power_law_potential<float_type>::power_law_potential(
  * Assemble module options
  */
 template <typename float_type>
-void power_law_potential<float_type>::options(po::options_description& desc)
+void power_law<float_type>::options(po::options_description& desc)
 {
     desc.add_options()
         ("power-law-index", po::value<int>()->default_value(default_index()),
          "index of soft power-law potential")
-// options are not module specific, they are defined by 'lj' already
+// options are not module specific, they are defined by 'lennard_jones' already
 //         ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
 //          "truncate potential at cutoff radius")
 //         ("epsilon", po::value<boost::array<float, 3> >()->default_value(default_epsilon()),
@@ -101,7 +101,7 @@ void power_law_potential<float_type>::options(po::options_description& desc)
 }
 
 template <typename float_type>
-void power_law_potential<float_type>::luaopen(lua_State* L)
+void power_law<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "halmd_wrapper")
@@ -112,7 +112,7 @@ void power_law_potential<float_type>::luaopen(lua_State* L)
             [
                 namespace_("forces")
                 [
-                    class_<power_law_potential, shared_ptr<power_law_potential> >(module_name())
+                    class_<power_law, shared_ptr<power_law> >(module_name())
                         .def(constructor<
                             unsigned int
                           , int
@@ -122,7 +122,7 @@ void power_law_potential<float_type>::luaopen(lua_State* L)
                         >())
                         .scope
                         [
-                            def("options", &power_law_potential::options)
+                            def("options", &power_law::options)
                         ]
                 ]
             ]
@@ -140,27 +140,27 @@ static __attribute__((constructor)) void register_lua()
 
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &power_law_potential<float_type>::luaopen
+        &power_law<float_type>::luaopen
     ];
 
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        &pair_trunc<3, float_type, power_law_potential<float_type> >::luaopen
+        &pair_trunc<3, float_type, power_law<float_type> >::luaopen
     ]
     [
-        &pair_trunc<2, float_type, power_law_potential<float_type> >::luaopen
+        &pair_trunc<2, float_type, power_law<float_type> >::luaopen
     ];
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class power_law_potential<double>;
-template class pair_trunc<3, double, power_law_potential<double> >;
-template class pair_trunc<2, double, power_law_potential<double> >;
+template class power_law<double>;
+template class pair_trunc<3, double, power_law<double> >;
+template class pair_trunc<2, double, power_law<double> >;
 #else
-template class power_law_potential<float>;
-template class pair_trunc<3, float, power_law_potential<float> >;
-template class pair_trunc<2, float, power_law_potential<float> >;
+template class power_law<float>;
+template class pair_trunc<3, float, power_law<float> >;
+template class pair_trunc<2, float, power_law<float> >;
 #endif
 
 }}} // namespace mdsim::host::forces

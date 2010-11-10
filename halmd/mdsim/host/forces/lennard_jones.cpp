@@ -22,7 +22,7 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/forces/lj.hpp>
+#include <halmd/mdsim/host/forces/lennard_jones.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -39,7 +39,7 @@ namespace mdsim { namespace host { namespace forces
  * Assemble module options
  */
 template <typename float_type>
-void lj_potential<float_type>::options(po::options_description& desc)
+void lennard_jones<float_type>::options(po::options_description& desc)
 {
     desc.add_options()
         ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
@@ -63,7 +63,7 @@ static __attribute__((constructor)) void register_option_converters()
  * Initialise Lennard-Jones potential parameters
  */
 template <typename float_type>
-lj_potential<float_type>::lj_potential(
+lennard_jones<float_type>::lennard_jones(
     unsigned ntype
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
@@ -105,7 +105,7 @@ lj_potential<float_type>::lj_potential(
 }
 
 template <typename float_type>
-void lj_potential<float_type>::luaopen(lua_State* L)
+void lennard_jones<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "halmd_wrapper")
@@ -116,7 +116,7 @@ void lj_potential<float_type>::luaopen(lua_State* L)
             [
                 namespace_("forces")
                 [
-                    class_<lj_potential, shared_ptr<lj_potential> >(module_name())
+                    class_<lennard_jones, shared_ptr<lennard_jones> >(module_name())
                         .def(constructor<
                             unsigned
                           , array<float, 3> const&
@@ -125,7 +125,7 @@ void lj_potential<float_type>::luaopen(lua_State* L)
                         >())
                         .scope
                         [
-                            def("options", &lj_potential::options)
+                            def("options", &lennard_jones::options)
                         ]
                 ]
             ]
@@ -143,27 +143,27 @@ static __attribute__((constructor)) void register_lua()
 
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &lj_potential<float_type>::luaopen
+        &lennard_jones<float_type>::luaopen
     ];
 
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        &pair_trunc<3, float_type, lj_potential<float_type> >::luaopen
+        &pair_trunc<3, float_type, lennard_jones<float_type> >::luaopen
     ]
     [
-        &pair_trunc<2, float_type, lj_potential<float_type> >::luaopen
+        &pair_trunc<2, float_type, lennard_jones<float_type> >::luaopen
     ];
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class lj_potential<double>;
-template class pair_trunc<3, double, lj_potential<double> >;
-template class pair_trunc<2, double, lj_potential<double> >;
+template class lennard_jones<double>;
+template class pair_trunc<3, double, lennard_jones<double> >;
+template class pair_trunc<2, double, lennard_jones<double> >;
 #else
-template class lj_potential<float>;
-template class pair_trunc<3, float, lj_potential<float> >;
-template class pair_trunc<2, float, lj_potential<float> >;
+template class lennard_jones<float>;
+template class pair_trunc<3, float, lennard_jones<float> >;
+template class pair_trunc<2, float, lennard_jones<float> >;
 #endif
 
 }}} // namespace mdsim::host::forces

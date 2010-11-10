@@ -17,15 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LJ_HPP
-#define HALMD_MDSIM_GPU_FORCES_LJ_HPP
+#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP
+#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP
 
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
-#include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
 
 namespace halmd
 {
@@ -36,10 +36,10 @@ namespace mdsim { namespace gpu { namespace forces
  * define Lennard-Jones potential and parameters
  */
 template <typename float_type>
-class lj_potential
+class lennard_jones
 {
 public:
-    typedef lj_kernel::lj_potential gpu_potential_type;
+    typedef lennard_jones_kernel::lennard_jones gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
     static char const* name() { return "Lennard-Jones"; }
@@ -47,7 +47,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    lj_potential(
+    lennard_jones(
         unsigned ntype
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
@@ -57,7 +57,7 @@ public:
     /** bind textures before kernel invocation */
     void bind_textures() const
     {
-        lj_wrapper::param.bind(g_param_);
+        lennard_jones_wrapper::param.bind(g_param_);
     }
 
     matrix_type const& r_cut() const { return r_cut_; }
@@ -95,4 +95,4 @@ private:
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_HPP */
+#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP */

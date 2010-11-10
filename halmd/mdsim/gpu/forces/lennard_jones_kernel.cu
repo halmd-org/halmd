@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/forces/lj_kernel.hpp>
+#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
@@ -26,7 +26,7 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
-namespace lj_kernel
+namespace lennard_jones_kernel
 {
 
 /** array of Lennard-Jones potential parameters for all combinations of particle types */
@@ -35,7 +35,7 @@ static texture<float4> param_;
 /**
  * Lennard-Jones interaction of a pair of particles.
  */
-class lj_potential
+class lennard_jones
 {
 public:
     /**
@@ -46,7 +46,7 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED lj_potential(unsigned int type1, unsigned int type2)
+    HALMD_GPU_ENABLED lennard_jones(unsigned int type1, unsigned int type2)
       : pair_(
             tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
         ) {}
@@ -84,12 +84,12 @@ private:
     fixed_vector<float, 4> pair_;
 };
 
-} // namespace lj_kernel
+} // namespace lennard_jones_kernel
 
-cuda::texture<float4> lj_wrapper::param = lj_kernel::param_;
+cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
 
-template class pair_trunc_wrapper<3, lj_kernel::lj_potential>;
-template class pair_trunc_wrapper<2, lj_kernel::lj_potential>;
+template class pair_trunc_wrapper<3, lennard_jones_kernel::lennard_jones>;
+template class pair_trunc_wrapper<2, lennard_jones_kernel::lennard_jones>;
 
 }}} // namespace mdsim::gpu::forces
 

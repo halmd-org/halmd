@@ -39,7 +39,7 @@ namespace mdsim { namespace host { namespace forces
  * define Morse potential and parameters
  */
 template <typename float_type>
-class morse_potential
+class morse
 {
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
@@ -50,7 +50,7 @@ public:
     static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
-    morse_potential(
+    morse(
         unsigned ntype
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon

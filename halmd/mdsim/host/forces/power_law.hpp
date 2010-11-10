@@ -41,7 +41,7 @@ namespace mdsim { namespace host { namespace forces
  */
 
 template <typename float_type>
-class power_law_potential
+class power_law
 {
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
@@ -52,7 +52,7 @@ public:
     static char const* name() { return "power law"; }
     static char const* module_name() { return "power_law"; }
 
-    power_law_potential(
+    power_law(
         unsigned int ntype
       , int index
       , boost::array<float, 3> const& cutoff

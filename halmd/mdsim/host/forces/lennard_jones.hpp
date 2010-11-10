@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_FORCES_LJ_HPP
-#define HALMD_MDSIM_HOST_FORCES_LJ_HPP
+#ifndef HALMD_MDSIM_HOST_FORCES_LENNARD_JONES_HPP
+#define HALMD_MDSIM_HOST_FORCES_LENNARD_JONES_HPP
 
 #include <boost/assign.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
@@ -39,7 +39,7 @@ namespace mdsim { namespace host { namespace forces
  * define Lennard-Jones potential and parameters
  */
 template <typename float_type>
-class lj_potential
+class lennard_jones
 {
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
@@ -50,7 +50,7 @@ public:
     static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
-    lj_potential(
+    lennard_jones(
         unsigned ntype
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
@@ -118,4 +118,4 @@ private:
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_FORCES_LJ_HPP */
+#endif /* ! HALMD_MDSIM_HOST_FORCES_LENNARD_JONES_HPP */

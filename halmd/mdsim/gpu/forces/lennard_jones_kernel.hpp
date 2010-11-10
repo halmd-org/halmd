@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP
-#define HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP
+#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -26,7 +26,7 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
-namespace lj_kernel
+namespace lennard_jones_kernel
 {
 
 /**
@@ -40,11 +40,11 @@ enum {
 };
 
 // forward declaration for host code
-class lj_potential;
+class lennard_jones;
 
-} // namespace lj_kernel
+} // namespace lennard_jones_kernel
 
-struct lj_wrapper
+struct lennard_jones_wrapper
 {
     /** Lennard-Jones potential parameters */
     static cuda::texture<float4> param;
@@ -54,4 +54,4 @@ struct lj_wrapper
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP */

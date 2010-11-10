@@ -40,7 +40,7 @@ enum {
 };
 
 // forward declaration for host code
-class morse_potential;
+class morse;
 
 } // namespace morse_kernel
 

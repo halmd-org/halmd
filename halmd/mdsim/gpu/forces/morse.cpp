@@ -42,7 +42,7 @@ namespace mdsim { namespace gpu { namespace forces
  * Initialise parameters of the potential
  */
 template <typename float_type>
-morse_potential<float_type>::morse_potential(
+morse<float_type>::morse(
     unsigned ntype
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
@@ -104,7 +104,7 @@ morse_potential<float_type>::morse_potential(
 }
 
 template <typename float_type>
-void morse_potential<float_type>::luaopen(lua_State* L)
+void morse<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "halmd_wrapper")
@@ -115,7 +115,7 @@ void morse_potential<float_type>::luaopen(lua_State* L)
             [
                 namespace_("forces")
                 [
-                    class_<morse_potential, shared_ptr<morse_potential> >(module_name())
+                    class_<morse, shared_ptr<morse> >(module_name())
                         .def(constructor<
                             unsigned
                           , array<float, 3> const&
@@ -133,22 +133,22 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &morse_potential<float>::luaopen
+        &morse<float>::luaopen
     ];
 
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        &pair_trunc<3, float, morse_potential<float> >::luaopen
+        &pair_trunc<3, float, morse<float> >::luaopen
     ]
     [
-        &pair_trunc<2, float, morse_potential<float> >::luaopen
+        &pair_trunc<2, float, morse<float> >::luaopen
     ];
 }
 
 // explicit instantiation
-template class morse_potential<float>;
-template class pair_trunc<3, float, morse_potential<float> >;
-template class pair_trunc<2, float, morse_potential<float> >;
+template class morse<float>;
+template class pair_trunc<3, float, morse<float> >;
+template class pair_trunc<2, float, morse<float> >;
 
 }}} // namespace mdsim::gpu::forces
 

@@ -37,7 +37,7 @@ static texture<float> rr_cut_;
 /**
  * Morse potential for the interaction of a pair of particles.
  */
-class morse_potential
+class morse
 {
 public:
     /**
@@ -48,7 +48,7 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED morse_potential(unsigned int type1, unsigned int type2)
+    HALMD_GPU_ENABLED morse(unsigned int type1, unsigned int type2)
       : pair_(
             tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
         )
@@ -96,8 +96,8 @@ private:
 cuda::texture<float4> morse_wrapper::param = morse_kernel::param_;
 cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
 
-template class pair_trunc_wrapper<3, morse_kernel::morse_potential>;
-template class pair_trunc_wrapper<2, morse_kernel::morse_potential>;
+template class pair_trunc_wrapper<3, morse_kernel::morse>;
+template class pair_trunc_wrapper<2, morse_kernel::morse>;
 
 }}} // namespace mdsim::gpu::forces
 

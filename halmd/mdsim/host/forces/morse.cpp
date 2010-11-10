@@ -39,7 +39,7 @@ namespace mdsim { namespace host { namespace forces
  * Assemble module options
  */
 template <typename float_type>
-void morse_potential<float_type>::options(po::options_description& desc)
+void morse<float_type>::options(po::options_description& desc)
 {
     desc.add_options()
 //         ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
@@ -65,7 +65,7 @@ static __attribute__((constructor)) void register_option_converters()
  * Initialise Morse potential parameters
  */
 template <typename float_type>
-morse_potential<float_type>::morse_potential(
+morse<float_type>::morse(
     unsigned ntype
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
@@ -111,7 +111,7 @@ morse_potential<float_type>::morse_potential(
 }
 
 template <typename float_type>
-void morse_potential<float_type>::luaopen(lua_State* L)
+void morse<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "halmd_wrapper")
@@ -122,7 +122,7 @@ void morse_potential<float_type>::luaopen(lua_State* L)
             [
                 namespace_("forces")
                 [
-                    class_<morse_potential, shared_ptr<morse_potential> >(module_name())
+                    class_<morse, shared_ptr<morse> >(module_name())
                         .def(constructor<
                             unsigned
                           , array<float, 3> const&
@@ -132,7 +132,7 @@ void morse_potential<float_type>::luaopen(lua_State* L)
                         >())
                         .scope
                         [
-                            def("options", &morse_potential::options)
+                            def("options", &morse::options)
                         ]
                 ]
             ]
@@ -150,27 +150,27 @@ static __attribute__((constructor)) void register_lua()
 
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &morse_potential<float_type>::luaopen
+        &morse<float_type>::luaopen
     ];
 
     lua_wrapper::register_(2) //< distance of derived to base class
     [
-        &pair_trunc<3, float_type, morse_potential<float_type> >::luaopen
+        &pair_trunc<3, float_type, morse<float_type> >::luaopen
     ]
     [
-        &pair_trunc<2, float_type, morse_potential<float_type> >::luaopen
+        &pair_trunc<2, float_type, morse<float_type> >::luaopen
     ];
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class morse_potential<double>;
-template class pair_trunc<3, double, morse_potential<double> >;
-template class pair_trunc<2, double, morse_potential<double> >;
+template class morse<double>;
+template class pair_trunc<3, double, morse<double> >;
+template class pair_trunc<2, double, morse<double> >;
 #else
-template class morse_potential<float>;
-template class pair_trunc<3, float, morse_potential<float> >;
-template class pair_trunc<2, float, morse_potential<float> >;
+template class morse<float>;
+template class pair_trunc<3, float, morse<float> >;
+template class pair_trunc<2, float, morse<float> >;
 #endif
 
 }}} // namespace mdsim::host::forces

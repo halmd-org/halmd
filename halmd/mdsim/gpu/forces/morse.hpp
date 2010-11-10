@@ -36,10 +36,10 @@ namespace mdsim { namespace gpu { namespace forces
  * define Morse potential and parameters
  */
 template <typename float_type>
-class morse_potential
+class morse
 {
 public:
-    typedef morse_kernel::morse_potential gpu_potential_type;
+    typedef morse_kernel::morse gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
     static char const* name() { return "Morse"; }
@@ -47,7 +47,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    morse_potential(
+    morse(
         unsigned ntype
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
