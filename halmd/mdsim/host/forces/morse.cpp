@@ -76,27 +76,27 @@ morse<float_type>::morse(
   : epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
   , sigma_(scalar_matrix<float_type>(ntype, ntype, 1))
   , r_min_(ntype, ntype)
+  , r_min_sigma_(ntype, ntype)
   , en_cut_(scalar_matrix<float_type>(ntype, ntype, 0))
   , r_cut_(ntype, ntype)
+  , r_cut_sigma_(ntype, ntype)
   , rr_cut_(ntype, ntype)
 {
    // FIXME support any number of types
-    matrix_type r_cut_sigma(ntype, ntype);
-    matrix_type r_min_sigma(ntype, ntype);
     for (unsigned i = 0; i < std::min(ntype, 2U); ++i) {
         for (unsigned j = i; j < std::min(ntype, 2U); ++j) {
             epsilon_(i, j) = epsilon[i + j];
             sigma_(i, j) = sigma[i + j];
-            r_cut_sigma(i, j) = cutoff[i + j];
-            r_min_sigma(i, j) = r_min[i + j];
+            r_cut_sigma_(i, j) = cutoff[i + j];
+            r_min_sigma_(i, j) = r_min[i + j];
         }
     }
 
     // precalculate derived parameters
     for (unsigned i = 0; i < ntype; ++i) {
         for (unsigned j = i; j < ntype; ++j) {
-            r_min_(i, j) = r_min_sigma(i, j) * sigma_(i, j);
-            r_cut_(i, j) = r_cut_sigma(i, j) * sigma_(i, j);
+            r_min_(i, j) = r_min_sigma_(i, j) * sigma_(i, j);
+            r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             // energy shift due to truncation at cutoff length
             en_cut_(i, j) = (*this)(rr_cut_(i, j), i, j).second;
@@ -105,8 +105,8 @@ morse<float_type>::morse(
 
     LOG("depth of potential well: ε = " << epsilon_);
     LOG("width of potential well: σ = " << sigma_);
-    LOG("position of potential well: r_min / σ = " << r_min_sigma);
-    LOG("cutoff radius of potential: r_c / σ = " << r_cut_sigma);
+    LOG("position of potential well: r_min / σ = " << r_min_sigma_);
+    LOG("cutoff radius of potential: r_c / σ = " << r_cut_sigma_);
     LOG("potential energy at cutoff: U = " << en_cut_);
 }
 

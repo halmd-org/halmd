@@ -50,24 +50,23 @@ power_law<float_type>::power_law(
   , epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
   , sigma_(scalar_matrix<float_type>(ntype, ntype, 1))
   , r_cut_(ntype, ntype)
+  , r_cut_sigma_(ntype, ntype)
   , rr_cut_(ntype, ntype)
   , en_cut_(scalar_matrix<float_type>(ntype, ntype, 0))
 {
-    matrix_type r_cut_sigma(ntype, ntype);
-
     // FIXME support any number of types
     for (unsigned i = 0; i < std::min(ntype, 2U); ++i) {
         for (unsigned j = i; j < std::min(ntype, 2U); ++j) {
             epsilon_(i, j) = epsilon[i + j];
             sigma_(i, j) = sigma[i + j];
-            r_cut_sigma(i, j) = cutoff[i + j];
+            r_cut_sigma_(i, j) = cutoff[i + j];
         }
     }
 
     // precalculate derived parameters
     for (unsigned i = 0; i < ntype; ++i) {
         for (unsigned j = i; j < ntype; ++j) {
-            r_cut_(i, j) = r_cut_sigma(i, j) * sigma_(i, j);
+            r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             // energy shift due to truncation at cutoff length
             en_cut_(i, j) = (*this)(rr_cut_(i, j), i, j).second;
@@ -77,7 +76,7 @@ power_law<float_type>::power_law(
     LOG("potential: power law index: n = " << index_);
     LOG("potential: interaction strength ε = " << epsilon_);
     LOG("potential: interaction range σ = " << sigma_);
-    LOG("potential: cutoff length r_c = " << r_cut_sigma);
+    LOG("potential: cutoff length r_c = " << r_cut_sigma_);
     LOG("potential: cutoff energy U = " << en_cut_);
 }
 

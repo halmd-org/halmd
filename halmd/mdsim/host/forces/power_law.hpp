@@ -126,6 +126,8 @@ private:
     matrix_type sigma_;
     /** cutoff length in MD units */
     matrix_type r_cut_;
+    /** cutoff length in units of sigma */
+    matrix_type r_cut_sigma_;
     /** square of cutoff length */
     matrix_type rr_cut_;
     /** potential energy at cutoff in MD units */
