@@ -53,7 +53,7 @@ void particle<dimension>::options(po::options_description& desc)
 }
 
 /**
- * Write parameters to HDF5 files
+ * Write module parameters to HDF5 group
  */
 template <int dimension>
 void particle<dimension>::write_parameters(H5::Group const& param) const

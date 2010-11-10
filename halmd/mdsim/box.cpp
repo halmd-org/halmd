@@ -57,7 +57,7 @@ static __attribute__((constructor)) void register_option_converters()
 }
 
 /**
- * Write parameters to HDF5 files
+ * Write module parameters to HDF5 group
  */
 template <int dimension>
 void box<dimension>::write_parameters(H5::Group const& param) const
