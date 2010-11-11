@@ -79,7 +79,6 @@ endif(GIT_EXECUTABLE)
 if(NOT HALMD_BACKEND_EXECUTABLES)
   add_executable(halmd
     main.cpp
-    options.cpp
     sampler.cpp
     script.cpp
     version.h

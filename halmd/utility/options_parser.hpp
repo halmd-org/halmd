@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OPTIONS_HPP
-#define HALMD_OPTIONS_HPP
+#ifndef HALMD_OPTIONS_PARSER_HPP
+#define HALMD_OPTIONS_PARSER_HPP
 
 #include <lua.hpp>
 
@@ -76,4 +76,4 @@ private:
 
 } // namespace halmd
 
-#endif /* ! HALMD_OPTIONS_HPP */
+#endif /* ! HALMD_OPTIONS_PARSER_HPP */

@@ -26,7 +26,7 @@
 #include <iostream>
 
 #include <halmd/io/logger.hpp> //< logger::warning
-#include <halmd/options.hpp>
+#include <halmd/utility/options_parser.hpp>
 #include <halmd/utility/date_time.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/version.h>

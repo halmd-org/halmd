@@ -20,9 +20,9 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/options.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/hostname.hpp>
+#include <halmd/utility/options_parser.hpp>
 #include <halmd/version.h>
 
 using namespace boost;

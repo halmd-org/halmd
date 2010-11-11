@@ -1,5 +1,6 @@
 add_library(halmd_utility
   hostname.cpp
+  options_parser.cpp
   profiler.cpp
 )
 
