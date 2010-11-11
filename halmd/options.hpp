@@ -20,14 +20,7 @@
 #ifndef HALMD_OPTIONS_HPP
 #define HALMD_OPTIONS_HPP
 
-#include <boost/array.hpp>
-#include <boost/assign.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/multi_array.hpp>
 #include <lua.hpp>
-#include <string>
-#include <vector>
 
 #include <halmd/utility/program_options/program_options.hpp>
 
@@ -82,66 +75,5 @@ private:
 };
 
 } // namespace halmd
-
-namespace std
-{
-
-/**
- * extract comma-separated option values into fixed-size array
- */
-template <typename T, size_t size>
-std::istream& operator>>(std::istream& is, boost::array<T, size>& value)
-{
-    BOOST_FOREACH(T& v, value) {
-        std::string str;
-        getline(is, str, ',');
-        v = boost::lexical_cast<T>(str);
-    }
-    return is;
-}
-
-template <typename T, size_t size>
-std::ostream& operator<<(std::ostream& os, boost::array<T, size> const& value)
-{
-    BOOST_FOREACH(T const& v, value) {
-        if (&v != &value.front()) {
-            os << ',';
-        }
-        os << v;
-    }
-    return os;
-}
-
-/**
- * extract comma-separated option values into variable-size array
- */
-template <typename T>
-std::istream& operator>>(std::istream& is, boost::multi_array<T, 1>& value)
-{
-    std::vector<T> v;
-    std::string str;
-    while (!is.eof()) {
-        getline(is, str, ',');
-        v.push_back(boost::lexical_cast<T>(str));
-    }
-    boost::array<size_t, 1> extents = boost::assign::list_of(v.size());
-    value.resize(extents);
-    std::copy(v.begin(), v.end(), value.begin());
-    return is;
-}
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, boost::multi_array<T, 1> const& value)
-{
-    BOOST_FOREACH(T const& v, value) {
-        if (&v != &(*value.begin())) {
-            os << ',';
-        }
-        os << v;
-    }
-    return os;
-}
-
-} // namespace std
 
 #endif /* ! HALMD_OPTIONS_HPP */

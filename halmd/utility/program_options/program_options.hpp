@@ -23,6 +23,7 @@
 #include <boost/program_options.hpp>
 
 #include <halmd/utility/program_options/accumulating_value.hpp>
+#include <halmd/utility/program_options/array.hpp>
 #include <halmd/utility/program_options/errors.hpp>
 #include <halmd/utility/program_options/typed_value.hpp>
 #include <halmd/utility/program_options/variables_map.hpp>
