@@ -22,6 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua_wrapper/variables_map.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
