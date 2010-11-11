@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,30 +17,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_TRAJECTORY_WRITER_HPP
-#define HALMD_IO_TRAJECTORY_WRITER_HPP
+#ifndef HALMD_OBSERVABLES_TRAJECTORY_HPP
+#define HALMD_OBSERVABLES_TRAJECTORY_HPP
 
 #include <lua.hpp>
 
 namespace halmd
 {
-namespace io { namespace trajectory
+namespace observables
 {
 
 template <int dimension>
-class writer
+class trajectory
 {
 public:
     static void luaopen(lua_State* L);
 
-    writer() {}
-    virtual ~writer() {}
-    virtual void append() = 0;
-    virtual void flush() = 0;
+    trajectory() {}
+    virtual ~trajectory() {};
+    virtual void acquire(double time) = 0;
 };
 
-}} // namespace io::trajectory
+} // namespace observables
 
 } // namespace halmd
 
-#endif /* ! HALMD_IO_TRAJECTORY_WRITER_HPP */
+#endif /* ! HALMD_OBSERVABLES_TRAJECTORY_HPP */

@@ -17,37 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_SAMPLES_HOST_TRAJECTORY_HPP
-#define HALMD_MDSIM_SAMPLES_HOST_TRAJECTORY_HPP
+#ifndef HALMD_OBSERVABLES_HOST_SAMPLES_TRAJECTORY_HPP
+#define HALMD_OBSERVABLES_HOST_SAMPLES_TRAJECTORY_HPP
 
 #include <lua.hpp>
+#include <vector>
 
-#include <halmd/mdsim/host/particle.hpp> //< vector_type
-#include <halmd/mdsim/particle.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace samples { namespace host
+namespace observables { namespace host { namespace samples
 {
 
 template <int dimension, typename float_type>
 class trajectory
 {
 public:
-    // this module is used by mdsim::gpu::sampler::trajectory
-    // and must not depend on host::particle
-    typedef mdsim::particle<dimension> particle_type;
-    typedef typename mdsim::host::particle<dimension, float_type>::vector_type vector_type;
-
-    static void luaopen(lua_State* L);
-
-    trajectory(
-        boost::shared_ptr<particle_type> particle
-    );
-    virtual ~trajectory() {}
-    virtual void acquire(double time) = 0;
-
-    boost::shared_ptr<particle_type> particle;
+    typedef fixed_vector<float_type, dimension> vector_type;
 
     /** sample vector type for all particles of a species */
     typedef std::vector<vector_type> sample_vector;
@@ -62,10 +49,14 @@ public:
     sample_vector_ptr_vector v;
     /** simulation time when sample was taken */
     double time;
+
+    static void luaopen(lua_State* L);
+
+    trajectory(std::vector<unsigned int> ntypes);
 };
 
-}}} // namespace mdsim::samples::host
+}}} // namespace observables::host::samples
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_SAMPLES_HOST_TRAJECTORY_HPP */
+#endif /* ! HALMD_OBSERVABLES_HOST_SAMPLES_TRAJECTORY_HPP */

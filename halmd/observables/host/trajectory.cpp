@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/sampler/trajectory.hpp>
+#include <halmd/observables/host/trajectory.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -26,16 +25,17 @@ using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace sampler
+namespace observables { namespace host
 {
 
 template <int dimension, typename float_type>
 trajectory<dimension, float_type>::trajectory(
-    shared_ptr<particle_type> particle
+    shared_ptr<sample_type> sample
+  , shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
 )
-  : _Base(particle)     //< mdsim::particle
-  , particle(particle)  //< mdsim::host:particle
+  : sample(sample)
+  , particle(particle)
   , box(box)
 {
 }
@@ -48,11 +48,11 @@ void trajectory<dimension, float_type>::acquire(double time)
 {
     for (size_t i = 0; i < particle->nbox; ++i) {
         // periodically extended particle position
-        (*r[particle->type[i]])[particle->tag[i]] = particle->r[i] + element_prod(particle->image[i], box->length());
+        (*sample->r[particle->type[i]])[particle->tag[i]] = particle->r[i] + element_prod(particle->image[i], box->length());
         // particle velocity
-        (*v[particle->type[i]])[particle->tag[i]] = particle->v[i];
+        (*sample->v[particle->type[i]])[particle->tag[i]] = particle->v[i];
     }
-    _Base::time = time;
+    sample->time = time;
 }
 
 template <int dimension, typename float_type>
@@ -60,23 +60,18 @@ void trajectory<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "halmd_wrapper")
     [
-        namespace_("halmd_wrapper")
+        namespace_("observables")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    namespace_("sampler")
-                    [
-                        class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                 shared_ptr<particle_type>
-                               , shared_ptr<box_type>
-                            >())
-                    ]
-                ]
+                class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                         shared_ptr<sample_type>
+                       , shared_ptr<particle_type>
+                       , shared_ptr<box_type>
+                    >())
             ]
         ]
     ];
@@ -111,6 +106,6 @@ template class trajectory<3, float>;
 template class trajectory<2, float>;
 #endif
 
-}}} // namespace mdsim::host::sampler
+}} // namespace observables::host
 
 } // namespace halmd

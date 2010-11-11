@@ -17,53 +17,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_SAMPLER_TRAJECTORY_HPP
-#define HALMD_MDSIM_HOST_SAMPLER_TRAJECTORY_HPP
+#ifndef HALMD_OBSERVABLES_HOST_TRAJECTORY_HPP
+#define HALMD_OBSERVABLES_HOST_TRAJECTORY_HPP
 
 #include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/samples/host/trajectory.hpp>
+#include <halmd/observables/host/samples/trajectory.hpp>
+#include <halmd/observables/trajectory.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace sampler
+namespace observables { namespace host
 {
 
 template <int dimension, typename float_type>
 class trajectory
-  : public mdsim::samples::host::trajectory<dimension, float_type>
+  : public observables::trajectory<dimension>
 {
 public:
-    typedef mdsim::samples::host::trajectory<dimension, float_type> _Base;
-    typedef host::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
+    typedef observables::trajectory<dimension> _Base;
+    typedef host::samples::trajectory<dimension, float_type> sample_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
 
+    boost::shared_ptr<sample_type> sample;
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
 
     trajectory(
-        boost::shared_ptr<particle_type> particle
+        boost::shared_ptr<sample_type> sample
+      , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
     );
     virtual void acquire(double time);
-
-    typedef typename _Base::sample_vector sample_vector;
-
-    /** periodically extended particle positions */
-    using _Base::r;
-    /** particle velocities */
-    using _Base::v;
-    /** simulation time when sample was taken */
-    using _Base::time;
 };
 
-}}} // namespace mdsim::host::sampler
+}} // namespace observables::host
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_SAMPLER_TRAJECTORY_HPP */
+#endif /* ! HALMD_OBSERVABLES_HOST_TRAJECTORY_HPP */

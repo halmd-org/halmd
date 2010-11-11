@@ -32,6 +32,7 @@ require("halmd.mdsim.position")
 require("halmd.mdsim.sort")
 require("halmd.mdsim.velocity")
 require("halmd.observables.thermodynamics")
+require("halmd.observables.trajectory")
 require("halmd.profiler")
 require("halmd.sampler")
 
@@ -52,6 +53,7 @@ function run()
     local sampler = halmd.sampler() -- singleton
     local profiler = halmd.profiler()
     sampler.profiling_writers = profiler.profiling_writers
+    sampler.trajectory = halmd.observables.trajectory()
     sampler.trajectory_writer = halmd.io.trajectory.writers()
     sampler.observables = { halmd.observables.thermodynamics() }
     sampler.statevars_writer = halmd.io.statevars.writers()

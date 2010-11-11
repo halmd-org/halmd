@@ -4,16 +4,15 @@ add_executable(test_position
 target_link_libraries(test_position
   halmd_mdsim_host
   halmd_mdsim_host_position
-  halmd_mdsim_host_sample
-  halmd_mdsim_samples_host
+  halmd_observables_host
+  halmd_observables_host_samples
   halmd_random_host
 )
 if(WITH_CUDA)
   target_link_libraries(test_position
     halmd_mdsim_gpu
     halmd_mdsim_gpu_position
-    halmd_mdsim_gpu_sample
-    halmd_mdsim_samples_gpu
+    halmd_observables_gpu
     halmd_random_gpu
     halmd_utility_gpu
   )

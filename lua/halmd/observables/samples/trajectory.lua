@@ -20,41 +20,46 @@
 require("halmd.modules")
 
 -- grab environment
-local sampler_wrapper = {
+local trajectory_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.sampler.trajectory_2_
-      , [3] = halmd_wrapper.mdsim.host.sampler.trajectory_3_
+        [2] = halmd_wrapper.observables.host.samples.trajectory_2_double_
+      , [3] = halmd_wrapper.observables.host.samples.trajectory_3_double_
     }
 }
-if halmd_wrapper.mdsim.gpu then
-    sampler_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.sampler.host.trajectory_2_
-      , [3] = halmd_wrapper.mdsim.gpu.sampler.host.trajectory_3_
+if halmd_wrapper.observables.gpu then
+    trajectory_wrapper.gpu = {
+        [2] = halmd_wrapper.observables.host.samples.trajectory_2_float_
+      , [3] = halmd_wrapper.observables.host.samples.trajectory_3_float_
     }
 end
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
-module("halmd.mdsim.samples.trajectory", halmd.modules.register)
+module("halmd.observables.samples.trajectory", halmd.modules.register)
+
+-- singleton
+local sample
 
 --
 -- construct trajectory module
 --
 function new()
-    -- dependency injection
-    local core = mdsim.core()
-    local particle = assert(core.particle)
-    local box = assert(core.box)
+    if not sample then
+        local core = assert(mdsim.core())
+        local particle = assert(core.particle)
+        local dimension = assert(core.dimension)
 
-    -- command line options
-    local dimension = assert(args.dimension)
-
-    if not device() then
-        return sampler_wrapper.host[dimension](particle, box)
+        local trajectory
+        if device() then
+            trajectory = assert(trajectory_wrapper.gpu[dimension])
+        else
+            trajectory = assert(trajectory_wrapper.host[dimension])
+        end
+        assert(trajectory)
+        sample = trajectory(particle.ntypes)
     end
-    return sampler_wrapper.gpu[dimension](particle, box)
+    return sample
 end

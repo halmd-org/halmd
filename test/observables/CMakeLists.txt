@@ -5,11 +5,9 @@ target_link_libraries(test_thermodynamics
   halmd_mdsim_host_forces
   halmd_mdsim_host_integrators
   halmd_mdsim_host_position
-  halmd_mdsim_host_sample
   halmd_mdsim_host_sort
   halmd_mdsim_host_velocities
   halmd_mdsim_host
-  halmd_mdsim_samples_host
   halmd_observables_host
   halmd_random_host
 )
@@ -18,11 +16,9 @@ if(WITH_CUDA)
     halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_integrators
     halmd_mdsim_gpu_position
-    halmd_mdsim_gpu_sample
     halmd_mdsim_gpu_sort
     halmd_mdsim_gpu_velocities
     halmd_mdsim_gpu
-    halmd_mdsim_samples_gpu
     halmd_observables_gpu
     halmd_random_gpu
     halmd_utility_gpu

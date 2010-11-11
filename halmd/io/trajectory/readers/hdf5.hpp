@@ -23,8 +23,7 @@
 #include <lua.hpp>
 
 #include <halmd/io/trajectory/reader.hpp>
-#include <halmd/mdsim/samples/host/trajectory.hpp>
-#include <halmd/mdsim/particle.hpp>
+#include <halmd/observables/host/samples/trajectory.hpp>
 
 namespace halmd
 {
@@ -37,7 +36,7 @@ class hdf5
 {
 public:
     typedef trajectory::reader<dimension> _Base;
-    typedef mdsim::samples::host::trajectory<dimension, float_type> sample_type;
+    typedef observables::host::samples::trajectory<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 

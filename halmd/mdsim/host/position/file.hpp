@@ -26,7 +26,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/position.hpp>
-#include <halmd/mdsim/samples/host/trajectory.hpp>
+#include <halmd/observables/host/samples/trajectory.hpp>
 #include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
@@ -43,7 +43,7 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef samples::host::trajectory<dimension, float_type> sample_type;
+    typedef observables::host::samples::trajectory<dimension, float_type> sample_type;
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/samples/gpu/trajectory.hpp>
+#include <halmd/observables/gpu/samples/trajectory.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -25,23 +25,19 @@ using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace samples { namespace gpu
+namespace observables { namespace gpu { namespace samples
 {
 
 template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(
-    shared_ptr<particle_type> particle
-)
-  // dependency injection
-  : particle(particle)
+trajectory<dimension, float_type>::trajectory(vector<unsigned int> ntypes)
   // allocate sample pointers
-  , r(particle->ntype)
-  , v(particle->ntype)
-  , time(-1)
+  : r(ntypes.size())
+  , v(ntypes.size())
+  , time(-numeric_limits<double>::epsilon()) //< any value < 0.
 {
-    for (size_t i = 0; i < particle->ntype; ++i) {
-        r[i].reset(new sample_vector(particle->ntypes[i]));
-        v[i].reset(new sample_vector(particle->ntypes[i]));
+    for (size_t i = 0; i < ntypes.size(); ++i) {
+        r[i].reset(new sample_vector(ntypes[i]));
+        v[i].reset(new sample_vector(ntypes[i]));
     }
 }
 
@@ -50,19 +46,16 @@ void trajectory<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "halmd_wrapper")
     [
-        namespace_("halmd_wrapper")
+        namespace_("observables")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
                 namespace_("samples")
                 [
-                    namespace_("gpu")
-                    [
-                        class_<trajectory, shared_ptr<trajectory> >(class_name.c_str())
-                            .def("acquire", &trajectory::acquire)
-                    ]
+                    class_<trajectory, shared_ptr<trajectory> >(class_name.c_str())
+                        .def(constructor<vector<unsigned int> >())
                 ]
             ]
         ]
@@ -83,6 +76,6 @@ static __attribute__((constructor)) void register_lua()
 template class trajectory<3, float>;
 template class trajectory<2, float>;
 
-}}} // namespace mdsim::samples::gpu
+}}} // namespace observables::gpu::samples
 
 } // namespace halmd

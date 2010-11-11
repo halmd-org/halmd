@@ -20,15 +20,20 @@
 require("halmd.modules")
 
 -- grab environment
-local hdf5_writer = {
+local trajectory_wrapper = {
     host = {
-        [2] = halmd_wrapper.io.trajectory.writers.hdf5_2_double_
-      , [3] = halmd_wrapper.io.trajectory.writers.hdf5_3_double_
+        [2] = halmd_wrapper.observables.host.trajectory_2_
+      , [3] = halmd_wrapper.observables.host.trajectory_3_
     }
-  , gpu = {
-        [2] = halmd_wrapper.io.trajectory.writers.hdf5_2_float_
-      , [3] = halmd_wrapper.io.trajectory.writers.hdf5_3_float_
+}
+if halmd_wrapper.observables.gpu then
+    trajectory_wrapper.gpu = {
+        [2] = halmd_wrapper.observables.gpu.host.trajectory_2_
+      , [3] = halmd_wrapper.observables.gpu.host.trajectory_3_
     }
+end
+local mdsim = {
+    core = require("halmd.mdsim.core")
 }
 local observables = {
     samples = {
@@ -36,34 +41,29 @@ local observables = {
     }
 }
 local device = require("halmd.device")
-local parameter = require("halmd.parameter")
 local args = require("halmd.options")
 local assert = assert
 
-module("halmd.io.trajectory.writers.hdf5", halmd.modules.register)
+module("halmd.observables.trajectory", halmd.modules.register)
 
 --
--- construct HDF5 trajectory writer module
+-- construct trajectory module
 --
 function new()
     -- dependency injection
+    local core = mdsim.core()
+    local particle = assert(core.particle)
+    local box = assert(core.box)
     local sample = assert(observables.samples.trajectory())
 
     -- command line options
-    local output = assert(args.output)
     local dimension = assert(args.dimension)
 
-    -- parameters
-    local file_name = output .. ".trj"
-
-    local writer
-    if not device() then
-        writer = hdf5_writer.host[dimension](sample, file_name)
+    local trajectory
+    if device() then
+        trajectory = assert(trajectory_wrapper.gpu[dimension])
     else
-        writer = hdf5_writer.gpu[dimension](sample, file_name)
+        trajectory = assert(trajectory_wrapper.host[dimension])
     end
-
-    parameter.register_writer(writer)
-
-    return writer
+    return trajectory(sample, particle, box)
 end

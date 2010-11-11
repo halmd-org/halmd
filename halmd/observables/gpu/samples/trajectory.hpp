@@ -17,34 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_SAMPLES_GPU_TRAJECTORY_HPP
-#define HALMD_MDSIM_SAMPLES_GPU_TRAJECTORY_HPP
+#ifndef HALMD_OBSERVABLES_GPU_SAMPLES_TRAJECTORY_HPP
+#define HALMD_OBSERVABLES_GPU_SAMPLES_TRAJECTORY_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
+#include <vector>
 
-#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace samples { namespace gpu
+namespace observables { namespace gpu { namespace samples
 {
 
 template <int dimension, typename float_type>
 class trajectory
 {
 public:
-    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::gpu_vector_type gpu_vector_type;
-
-    static void luaopen(lua_State* L);
-
-    trajectory(
-        boost::shared_ptr<particle_type> particle
-    );
-    virtual ~trajectory() {}
-    virtual void acquire(double time) = 0;
-
-    boost::shared_ptr<particle_type> particle;
+    typedef typename mdsim::type_traits<dimension, float_type>::gpu::coalesced_vector_type gpu_vector_type;
 
     /** sample vector type for all particles of a species */
     typedef cuda::vector<gpu_vector_type> sample_vector;
@@ -59,10 +50,14 @@ public:
     sample_vector_ptr_vector v;
     /** simulation time when sample was taken */
     double time;
+
+    static void luaopen(lua_State* L);
+
+    trajectory(std::vector<unsigned int> ntypes);
 };
 
-}}} // namespace mdsim::samples::gpu
+}}} // namespace observables::gpu::samples
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_SAMPLES_GPU_TRAJECTORY_HPP */
+#endif /* ! HALMD_OBSERVABLES_GPU_SAMPLES_TRAJECTORY_HPP */

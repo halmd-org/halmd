@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH
-#define HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH
+#ifndef HALMD_OBSERVABLES_GPU_TRAJECTORY_KERNEL_CUH
+#define HALMD_OBSERVABLES_GPU_TRAJECTORY_KERNEL_CUH
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -26,14 +26,14 @@
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace sampler
+namespace observables { namespace gpu
 {
 
 template <int dimension>
 struct trajectory_wrapper
 {
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
-    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
     /** positions, types */
     cuda::texture<float4> r;
@@ -55,8 +55,8 @@ trajectory_wrapper<dimension> const& get_trajectory_kernel()
     return trajectory_wrapper<dimension>::kernel;
 }
 
-}}} // namespace mdsim::gpu::sampler
+}} // namespace observables::gpu
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_SAMPLE_TRAJECTORY_WRAPPER_CUH */
+#endif /* ! HALMD_OBSERVABLES_GPU_TRAJECTORY_KERNEL_CUH */

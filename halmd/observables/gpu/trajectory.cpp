@@ -21,58 +21,62 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/mdsim/gpu/sampler/trajectory.hpp>
-#include <halmd/mdsim/gpu/sampler/trajectory_kernel.hpp>
+#include <halmd/observables/gpu/trajectory.hpp>
+#include <halmd/observables/gpu/trajectory_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
-using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace sampler
+namespace observables { namespace gpu
 {
 
 template <int dimension, typename float_type>
-trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::trajectory(
-    shared_ptr<particle_type> particle
+trajectory<gpu::samples::trajectory<dimension, float_type> >::trajectory(
+    shared_ptr<sample_type> sample
+  , shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
 )
-  : _Base(particle)
-  , particle(particle)  //< mdsim::host:particle
-  , box(box)
-{
-}
-
-template <int dimension, typename float_type>
-trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::trajectory(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-)
-  : _Base(particle)
+  : sample(sample)
   , particle(particle)
   , box(box)
 {
 }
 
+template <int dimension, typename float_type>
+trajectory<host::samples::trajectory<dimension, float_type> >::trajectory(
+    shared_ptr<sample_type> sample
+  , shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
+)
+  : sample(sample)
+  , particle(particle)
+  , box(box)
+{
+}
+
+
 /**
  * Sample trajectory
  */
 template <int dimension, typename float_type>
-void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::acquire(double time)
+void trajectory<gpu::samples::trajectory<dimension, float_type> >::acquire(double time)
 {
     // FIXME
 
-    _Base::time = time;
+    sample->time = time;
 }
 
 /**
  * Sample trajectory
  */
 template <int dimension, typename float_type>
-void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acquire(double time)
+void trajectory<host::samples::trajectory<dimension, float_type> >::acquire(double time)
 {
+    using mdsim::gpu::particle_kernel::untagged;
+
     try {
         cuda::copy(particle->g_r, particle->h_r);
         cuda::copy(particle->g_image, particle->h_image);
@@ -91,37 +95,32 @@ void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::acqui
         vector_type image = particle->h_image[i];
         vector_type L = static_cast<vector_type>(box->length());
         // periodically extended particle position
-        (*this->r[type])[tag] = r + element_prod(image, L);
+        (*sample->r[type])[tag] = r + element_prod(image, L);
         // particle velocity
-        (*this->v[type])[tag] = v;
+        (*sample->v[type])[tag] = v;
     }
-    _Base::time = time;
+    sample->time = time;
 }
 
 template <int dimension, typename float_type>
-void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::luaopen(lua_State* L)
+void trajectory<gpu::samples::trajectory<dimension, float_type> >::luaopen(lua_State* L)
 {
     using namespace luabind;
     string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "halmd_wrapper")
     [
-        namespace_("halmd_wrapper")
+        namespace_("observables")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
                 namespace_("gpu")
                 [
-                    namespace_("sampler")
-                    [
-                        namespace_("gpu")
-                        [
-                            class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
-                                .def(constructor<
-                                     shared_ptr<particle_type>
-                                   , shared_ptr<box_type>
-                                >())
-                        ]
-                    ]
+                    class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<sample_type>
+                           , shared_ptr<particle_type>
+                           , shared_ptr<box_type>
+                        >())
                 ]
             ]
         ]
@@ -129,29 +128,24 @@ void trajectory<mdsim::samples::gpu::trajectory<dimension, float_type> >::luaope
 }
 
 template <int dimension, typename float_type>
-void trajectory<mdsim::samples::host::trajectory<dimension, float_type> >::luaopen(lua_State* L)
+void trajectory<host::samples::trajectory<dimension, float_type> >::luaopen(lua_State* L)
 {
     using namespace luabind;
     string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "halmd_wrapper")
     [
-        namespace_("halmd_wrapper")
+        namespace_("observables")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("host")
                 [
-                    namespace_("sampler")
-                    [
-                        namespace_("host")
-                        [
-                            class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
-                                .def(constructor<
-                                     shared_ptr<particle_type>
-                                   , shared_ptr<box_type>
-                                >())
-                        ]
-                    ]
+                    class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<sample_type>
+                           , shared_ptr<particle_type>
+                           , shared_ptr<box_type>
+                        >())
                 ]
             ]
         ]
@@ -162,25 +156,25 @@ static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        &trajectory<mdsim::samples::gpu::trajectory<3, float> >::luaopen
+        &trajectory<gpu::samples::trajectory<3, float> >::luaopen
     ]
     [
-        &trajectory<mdsim::samples::gpu::trajectory<2, float> >::luaopen
+        &trajectory<gpu::samples::trajectory<2, float> >::luaopen
     ]
     [
-        &trajectory<mdsim::samples::host::trajectory<3, float> >::luaopen
+        &trajectory<host::samples::trajectory<3, float> >::luaopen
     ]
     [
-        &trajectory<mdsim::samples::host::trajectory<2, float> >::luaopen
+        &trajectory<host::samples::trajectory<2, float> >::luaopen
     ];
 }
 
 // explicit instantiation
-template class trajectory<mdsim::samples::gpu::trajectory<3, float> >;
-template class trajectory<mdsim::samples::gpu::trajectory<2, float> >;
-template class trajectory<mdsim::samples::host::trajectory<3, float> >;
-template class trajectory<mdsim::samples::host::trajectory<2, float> >;
+template class trajectory<gpu::samples::trajectory<3, float> >;
+template class trajectory<gpu::samples::trajectory<2, float> >;
+template class trajectory<host::samples::trajectory<3, float> >;
+template class trajectory<host::samples::trajectory<2, float> >;
 
-}}} // namespace mdsim::gpu::sample
+}} // namespace observables::gpu
 
 } // namespace halmd

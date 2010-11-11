@@ -18,17 +18,16 @@
  */
 
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/mdsim/gpu/sampler/trajectory_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
+#include <halmd/observables/gpu/trajectory_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
-using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
+using namespace halmd::utility::gpu; //< variant, map, pair
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace sampler
+namespace observables { namespace gpu
 {
 namespace trajectory_kernel
 {
@@ -48,6 +47,8 @@ __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_le
 template <typename vector_type, typename T>
 __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov)
 {
+    using mdsim::gpu::particle_kernel::untagged;
+
     enum { dimension = vector_type::static_size };
     // permutation index
     uint const j = g_index[GTID];
@@ -77,6 +78,6 @@ trajectory_wrapper<dimension> const trajectory_wrapper<dimension>::kernel = {
 template class trajectory_wrapper<3>;
 template class trajectory_wrapper<2>;
 
-}}} // namespace mdsim::gpu::sampler
+}} // namespace observables::gpu
 
 } // namespace halmd

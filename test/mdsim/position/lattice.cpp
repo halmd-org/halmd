@@ -33,15 +33,15 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/position/lattice.hpp>
-#include <halmd/mdsim/host/sampler/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/host/trajectory.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/read_integer.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/position/lattice.hpp>
-# include <halmd/mdsim/gpu/sampler/trajectory.hpp>
+# include <halmd/observables/gpu/trajectory.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
@@ -170,34 +170,32 @@ shared_ptr<mdsim::position<dimension> > make_lattice(
     throw runtime_error("unknown backend: " + backend);
 }
 
-template <int dimension>
-shared_ptr<mdsim::samples::host::trajectory<dimension, double> > make_sample_host(
-    shared_ptr<mdsim::particle<dimension> > particle
+template <int dimension, typename float_type>
+shared_ptr<observables::trajectory<dimension> > make_trajectory_host(
+    shared_ptr<observables::host::samples::trajectory<dimension, float_type> > sample
+  , shared_ptr<mdsim::particle<dimension> > particle
   , shared_ptr<mdsim::box<dimension> > box
 )
 {
-    typedef mdsim::host::sampler::trajectory<dimension, double> sampler_type;
-    return make_shared<sampler_type>(
-        dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+    return make_shared<observables::host::trajectory<dimension, float_type> >(
+        sample
+      , dynamic_pointer_cast<mdsim::host::particle<dimension, float_type> >(particle)
       , box
     );
 }
 
-template <int dimension>
-shared_ptr<mdsim::samples::host::trajectory<dimension, float> > make_sample_gpu(
-    shared_ptr<mdsim::particle<dimension> > particle
+template <int dimension, typename float_type>
+shared_ptr<observables::trajectory<dimension> > make_trajectory_gpu(
+    shared_ptr<observables::host::samples::trajectory<dimension, float_type> > sample
+  , shared_ptr<mdsim::particle<dimension> > particle
   , shared_ptr<mdsim::box<dimension> > box
 )
 {
-#ifdef WITH_CUDA
-    typedef mdsim::samples::host::trajectory<dimension, float> sample_type;
-    typedef mdsim::gpu::sampler::trajectory<sample_type> sampler_type;
-    return make_shared<sampler_type>(
-        dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+    return make_shared<observables::gpu::trajectory<observables::host::samples::trajectory<dimension, float_type> > >(
+        sample
+      , dynamic_pointer_cast<mdsim::gpu::particle<dimension, float_type> >(particle)
       , box
     );
-#endif /* WITH_CUDA */
-    throw runtime_error("unknown backend: gpu");
 }
 
 /** compute static structure factor of trajectory sample for some wavevectors */
@@ -284,20 +282,24 @@ void lattice(string const& backend)
 
     // acquire trajectory samples
     LOG_DEBUG("acquire trajectory sample");
-    shared_ptr<mdsim::samples::host::trajectory<dimension, double> > sample_host;
-#ifdef WITH_CUDA
-    shared_ptr<mdsim::samples::host::trajectory<dimension, float> > sample_gpu;
-#endif
+    shared_ptr<observables::host::samples::trajectory<dimension, double> > sample_host;
+    shared_ptr<observables::host::samples::trajectory<dimension, float> > sample_gpu;
+    shared_ptr<observables::trajectory<dimension> > trajectory;
     if (backend == "host") {
-        sample_host = make_sample_host(particle, box);
-        sample_host->acquire(0);
+        sample_host = make_shared<observables::host::samples::trajectory<dimension, double> >(
+            particle->ntypes
+        );
+        trajectory = make_trajectory_host<dimension, double>(sample_host, particle, box);
     }
 #ifdef WITH_CUDA
     else if (backend == "gpu") {
-        sample_gpu = make_sample_gpu(particle, box);
-        sample_gpu->acquire(0);
+        sample_gpu = make_shared<observables::host::samples::trajectory<dimension, float> >(
+            particle->ntypes
+        );
+        trajectory = make_trajectory_gpu<dimension, float>(sample_gpu, particle, box);
     }
 #endif
+    trajectory->acquire(0.);
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice
@@ -323,11 +325,9 @@ void lattice(string const& backend)
     if (backend == "host") {
         ssf = compute_ssf(sample_host, q);
     }
-#ifdef WITH_CUDA
     else if (backend == "gpu") {
         ssf = compute_ssf(sample_gpu, q);
     }
-#endif
 
     double eps = (double)numeric_limits<float>::epsilon();
     BOOST_CHECK_CLOSE_FRACTION(ssf.front(), npart, eps);
