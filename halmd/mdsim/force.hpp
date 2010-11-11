@@ -20,7 +20,9 @@
 #ifndef HALMD_MDSIM_FORCE_HPP
 #define HALMD_MDSIM_FORCE_HPP
 
-#include <halmd/options.hpp>
+#include <lua.hpp>
+
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

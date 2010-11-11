@@ -28,7 +28,7 @@
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/numeric/pow.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

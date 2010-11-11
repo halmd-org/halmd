@@ -31,8 +31,8 @@
 #include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/options.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 /** HAL’s MD package */
 namespace halmd

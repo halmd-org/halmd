@@ -28,7 +28,7 @@
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/random.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

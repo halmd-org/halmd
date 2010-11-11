@@ -27,7 +27,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/random/host/random.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

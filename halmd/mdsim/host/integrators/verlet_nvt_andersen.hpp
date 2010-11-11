@@ -26,9 +26,9 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/integrators/nvt.hpp>
-#include <halmd/options.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

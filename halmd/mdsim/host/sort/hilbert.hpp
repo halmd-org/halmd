@@ -26,7 +26,7 @@
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/sort.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

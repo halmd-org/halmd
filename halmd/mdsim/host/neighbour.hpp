@@ -30,7 +30,7 @@
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

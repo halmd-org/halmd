@@ -29,7 +29,7 @@
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/random.hpp>
 #include <halmd/utility/gpu/device.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

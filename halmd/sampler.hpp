@@ -27,7 +27,7 @@
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/observables/observable.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd

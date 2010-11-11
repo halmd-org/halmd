@@ -23,7 +23,7 @@
 #include <lua.hpp>
 
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

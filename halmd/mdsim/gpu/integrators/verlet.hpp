@@ -28,9 +28,9 @@
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/options.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

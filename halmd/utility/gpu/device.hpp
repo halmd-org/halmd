@@ -24,7 +24,7 @@
 #include <string>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/options.hpp>
+#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd { namespace utility { namespace gpu
 {
