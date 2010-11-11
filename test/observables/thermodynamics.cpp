@@ -40,7 +40,6 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/observables/thermodynamics.hpp>
-#include <halmd/options.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/forces/lennard_jones.hpp>

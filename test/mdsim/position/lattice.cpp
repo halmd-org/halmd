@@ -36,7 +36,6 @@
 #include <halmd/mdsim/host/sampler/trajectory.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/options.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/read_integer.hpp>
 #ifdef WITH_CUDA
