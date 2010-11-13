@@ -34,7 +34,7 @@ namespace po
  */
 template <typename T, typename charT = char>
 class accumulating_value
-  : public typed_value_base<accumulating_value<T, charT>, T, charT>
+  : public extended_typed_value_base<accumulating_value<T, charT>, T, charT>
 {
     //
     // Originally written by Bryan Green <bgreen@nas.nasa.gov>
@@ -43,17 +43,17 @@ class accumulating_value
 
 public:
     accumulating_value(T* store_to)
-      : typed_value_base<accumulating_value<T, charT>, T, charT>(store_to)
+      : extended_typed_value_base<accumulating_value<T, charT>, T, charT>(store_to)
       , origin(0)
     {
-        typed_value_base<accumulating_value<T, charT>, T, charT>::zero_tokens();
+        extended_typed_value_base<accumulating_value<T, charT>, T, charT>::zero_tokens();
     }
 
     accumulating_value* default_value(T const& v)
     {
         // setting a default value sets the origin to that value
         origin = v;
-        typed_value_base<accumulating_value<T, charT>, T, charT>::default_value(v);
+        extended_typed_value_base<accumulating_value<T, charT>, T, charT>::default_value(v);
         return this;
     }
 
@@ -61,7 +61,7 @@ public:
     {
         // setting a default value sets the origin to that value
         origin = v;
-        typed_value_base<accumulating_value<T, charT>, T, charT>::default_value(v, textual);
+        extended_typed_value_base<accumulating_value<T, charT>, T, charT>::default_value(v, textual);
         return this;
     }
 

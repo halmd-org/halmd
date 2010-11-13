@@ -45,8 +45,8 @@ void store(parsed_options const& options, variables_map& vm, bool utf8)
         string const& name = d->long_name();
 
         // cast upstream value semantic to our value semantic
-        shared_ptr<value_semantic const> semantic(
-            dynamic_pointer_cast<value_semantic const>(d->semantic())
+        shared_ptr<extended_value_semantic const> semantic(
+            dynamic_pointer_cast<extended_value_semantic const>(d->semantic())
         );
         // skip values not deriving from our value semantic
         if (!semantic) {

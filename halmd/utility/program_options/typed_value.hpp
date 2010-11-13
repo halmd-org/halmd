@@ -27,89 +27,92 @@ namespace halmd
 namespace po
 {
 
-class value_semantic
+class extended_value_semantic
 {
 public:
-    virtual ~value_semantic() {}
+    virtual ~extended_value_semantic() {}
 
     virtual std::vector<std::string> const& conflicting() const = 0;
 
     virtual std::vector<std::string> const& dependent() const = 0;
 };
 
-template <typename typed_value, typename T, typename charT = char>
-class typed_value_base
+template <typename extended_typed_value, typename T, typename charT = char>
+class extended_typed_value_base
   : public boost::program_options::typed_value<T, charT>
-  , public value_semantic
+  , public extended_value_semantic
 {
+private:
+    typedef boost::program_options::typed_value<T, charT> _Base;
+
 public:
-    typed_value_base(T* store_to)
-      : boost::program_options::typed_value<T, charT>(store_to) {}
+    extended_typed_value_base(T* store_to)
+      : _Base(store_to) {}
 
-    typed_value* default_value(const T& v)
+    extended_typed_value* default_value(const T& v)
     {
-        boost::program_options::typed_value<T, charT>::default_value(v);
-        return static_cast<typed_value*>(this);
+        _Base::default_value(v);
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* default_value(const T& v, const std::string& textual)
+    extended_typed_value* default_value(const T& v, const std::string& textual)
     {
-        boost::program_options::typed_value<T, charT>::default_value(v, textual);
-        return static_cast<typed_value*>(this);
+        _Base::default_value(v, textual);
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* implicit_value(const T &v)
+    extended_typed_value* implicit_value(const T &v)
     {
-        boost::program_options::typed_value<T, charT>::implicit_value(v);
-        return static_cast<typed_value*>(this);
+        _Base::implicit_value(v);
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* implicit_value(const T &v, const std::string& textual)
+    extended_typed_value* implicit_value(const T &v, const std::string& textual)
     {
-        boost::program_options::typed_value<T, charT>::implicit_value(v, textual);
-        return static_cast<typed_value*>(this);
+        _Base::implicit_value(v, textual);
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* notifier(boost::function1<void, const T&> f)
+    extended_typed_value* notifier(boost::function1<void, const T&> f)
     {
-        boost::program_options::typed_value<T, charT>::notifier(f);
-        return static_cast<typed_value*>(this);
+        _Base::notifier(f);
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* composing()
+    extended_typed_value* composing()
     {
-        boost::program_options::typed_value<T, charT>::composing();
-        return static_cast<typed_value*>(this);
+        _Base::composing();
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* multitoken()
+    extended_typed_value* multitoken()
     {
-        boost::program_options::typed_value<T, charT>::multitoken();
-        return static_cast<typed_value*>(this);
+        _Base::multitoken();
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* zero_tokens()
+    extended_typed_value* zero_tokens()
     {
-        boost::program_options::typed_value<T, charT>::zero_tokens();
-        return static_cast<typed_value*>(this);
+        _Base::zero_tokens();
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* required()
+    extended_typed_value* required()
     {
-        boost::program_options::typed_value<T, charT>::required();
-        return static_cast<typed_value*>(this);
+        _Base::required();
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* conflicts(std::string const& name)
+    extended_typed_value* conflicts(std::string const& name)
     {
         conflicting_.push_back(name);
-        return static_cast<typed_value*>(this);
+        return static_cast<extended_typed_value*>(this);
     }
 
-    typed_value* depends(std::string const& name)
+    extended_typed_value* depends(std::string const& name)
     {
         dependent_.push_back(name);
-        return static_cast<typed_value*>(this);
+        return static_cast<extended_typed_value*>(this);
     }
 
 public:
@@ -129,36 +132,36 @@ private:
 };
 
 template <typename T, typename charT = char>
-class typed_value
-  : public typed_value_base<typed_value<T, charT>, T, charT>
+class extended_typed_value
+  : public extended_typed_value_base<extended_typed_value<T, charT>, T, charT>
 {
 public:
-    typed_value(T* store_to)
-      : typed_value_base<typed_value<T, charT>, T, charT>(store_to) {}
+    extended_typed_value(T* store_to)
+      : extended_typed_value_base<extended_typed_value<T, charT>, T, charT>(store_to) {}
 };
 
 template <typename T>
-typed_value<T>* value(T* v)
+extended_typed_value<T>* value(T* v)
 {
-    typed_value<T>* r = new typed_value<T>(v);
+    extended_typed_value<T>* r = new extended_typed_value<T>(v);
     return r;
 }
 
 template <typename T>
-typed_value<T>* value()
+extended_typed_value<T>* value()
 {
     return value<T>(0);
 }
 
-inline typed_value<bool>* bool_switch(bool* v)
+inline extended_typed_value<bool>* bool_switch(bool* v)
 {
-    typed_value<bool>* r = new typed_value<bool>(v);
+    extended_typed_value<bool>* r = new extended_typed_value<bool>(v);
     r->default_value(0);
     r->zero_tokens();
     return r;
 }
 
-inline typed_value<bool>* bool_switch()
+inline extended_typed_value<bool>* bool_switch()
 {
     return bool_switch(0);
 }
