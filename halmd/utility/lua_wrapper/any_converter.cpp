@@ -19,6 +19,7 @@
 
 #include <luabind/luabind.hpp>
 #include <halmd/utility/lua_wrapper/any_converter.hpp>
+#include <halmd/utility/lua_wrapper/array_converter.hpp>
 #include <halmd/utility/lua_wrapper/long_long_converter.hpp>
 #include <halmd/utility/lua_wrapper/vector_converter.hpp>
 
@@ -64,6 +65,24 @@ static __attribute__((constructor)) void register_any_converters()
     register_any_converter<std::vector<long double> >();
     register_any_converter<std::vector<std::string> >();
     register_any_converter<std::vector<char const*> >();
+
+    register_any_converter<boost::multi_array<bool, 1> >();
+    register_any_converter<boost::multi_array<char, 1> >();
+    register_any_converter<boost::multi_array<signed char, 1> >();
+    register_any_converter<boost::multi_array<unsigned char, 1> >();
+    register_any_converter<boost::multi_array<signed short, 1> >();
+    register_any_converter<boost::multi_array<unsigned short, 1> >();
+    register_any_converter<boost::multi_array<signed int, 1> >();
+    register_any_converter<boost::multi_array<unsigned int, 1> >();
+    register_any_converter<boost::multi_array<signed long, 1> >();
+    register_any_converter<boost::multi_array<unsigned long, 1> >();
+    register_any_converter<boost::multi_array<signed long long, 1> >();
+    register_any_converter<boost::multi_array<unsigned long long, 1> >();
+    register_any_converter<boost::multi_array<float, 1> >();
+    register_any_converter<boost::multi_array<double, 1> >();
+    register_any_converter<boost::multi_array<long double, 1> >();
+    register_any_converter<boost::multi_array<std::string, 1> >();
+    register_any_converter<boost::multi_array<char const*, 1> >();
 }
 
 } // namespace halmd
