@@ -24,7 +24,11 @@ local reader_wrapper = {
     [2] = halmd_wrapper.io.trajectory.reader_2_
   , [3] = halmd_wrapper.io.trajectory.reader_3_
 }
+local po = halmd_wrapper.po
 
 module("halmd.io.trajectory.reader", halmd.modules.register)
 
-options = reader_wrapper[2].options
+function options(desc)
+    desc:add("trajectory-file,J", po.string(), "trajectory input file")
+    desc:add("trajectory-sample,S", po.int64_t():depends("trajectory-file"), "trajectory sample for initial state")
+end

@@ -24,9 +24,18 @@ local device_wrapper
 if halmd_wrapper.utility.gpu then
     device_wrapper = halmd_wrapper.utility.gpu.device
 end
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.device", halmd.modules.register)
+
+function options(desc)
+    if device_wrapper then
+        desc:add("device,D", po.array_int(), "CUDA device(s)")
+        desc:add("threads,T", po.uint(), "number of CUDA threads per block")
+        desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
+    end
+end
 
 local device -- singleton instance
 
@@ -35,17 +44,12 @@ local device -- singleton instance
 --
 function new(args)
     if device_wrapper and not args.disable_gpu then
-        local devices = assert(args.device)
-        local threads = assert(args.threads)
+        local devices = args.device or {}
+        local threads = args.threads or 128 -- default value
 
         if not device then
             device = device_wrapper(devices, threads)
         end
         return device
     end
-end
-
--- command line options description
-if device_wrapper then
-    options = device_wrapper.options
 end

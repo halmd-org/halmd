@@ -21,7 +21,6 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
-#include <boost/program_options.hpp>
 #include <limits>
 #include <map>
 #include <string>
@@ -69,19 +68,15 @@ using namespace std;
  */
 
 #ifdef WITH_CUDA
-shared_ptr<utility::gpu::device> make_device(
-    string const& backend
-  , vector<int> devices
-  , unsigned int threads
-)
+shared_ptr<utility::gpu::device> make_device(string const& backend)
 {
     if (backend == "gpu") {
         static weak_ptr<utility::gpu::device> device;
         shared_ptr<utility::gpu::device> device_(device.lock());
         if (!device_) {
             device_ = make_shared<utility::gpu::device>(
-                devices
-              , threads
+                vector<int>()   // devices
+              , 128             // threads
             );
             device = device_;
         }
@@ -103,11 +98,7 @@ shared_ptr<mdsim::particle<dimension> > make_particle(
 #ifdef WITH_CUDA
     if (backend == "gpu") {
         return make_shared<mdsim::gpu::particle<dimension, float> >(
-            make_device(
-                backend
-              , utility::gpu::device::default_devices()
-              , utility::gpu::device::default_threads()
-            )
+            make_device(backend)
           , vector<unsigned int>(1, npart)
         );
     }
@@ -194,8 +185,8 @@ shared_ptr<mdsim::neighbour<dimension> > make_neighbour(
             dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
           , box
           , dynamic_pointer_cast<mdsim::gpu::force<dimension, float> >(force)
-          , mdsim::host::neighbour<dimension, double>::default_skin
-          , mdsim::gpu::neighbour<dimension, float>::default_cell_occupancy
+          , 0.5         // skin
+          , 0.4         // cell occupancy
         );
     }
 #endif /* WITH_CUDA */
@@ -204,7 +195,7 @@ shared_ptr<mdsim::neighbour<dimension> > make_neighbour(
             dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
           , dynamic_pointer_cast<mdsim::host::force<dimension, double> >(force)
-          , mdsim::host::neighbour<dimension, double>::default_skin
+          , 0.5         // skin
         );
     }
     throw runtime_error("unknown backend: " + backend);
@@ -219,14 +210,10 @@ shared_ptr<halmd::random::random> make_random(
     if (backend == "gpu") {
         typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
         return make_shared<random_type>(
-            make_device(
-                backend
-              , utility::gpu::device::default_devices()
-              , utility::gpu::device::default_threads()
-            )
+            make_device(backend)
           , seed
-          , random_type::default_blocks()
-          , random_type::default_threads()
+          , 32                  // blocks
+          , 32 << DEVICE_SCALE  // threads
         );
     }
 #endif /* WITH_CUDA */
@@ -365,11 +352,7 @@ void ideal_gas(string const& backend)
                        dimension << " dimensions");
 
 #ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(
-        backend
-      , utility::gpu::device::default_devices()
-      , utility::gpu::device::default_threads()
-    );
+    shared_ptr<utility::gpu::device> device = make_device(backend);
 #endif /* WITH_CUDA */
     shared_ptr<halmd::random::random> random = make_random(
         backend
@@ -400,7 +383,7 @@ void ideal_gas(string const& backend)
       , core->box
       , list_of(rc)(rc)(rc) /* cutoff */
       , list_of(0.f)(0.f)(0.f) /* epsilon */
-      , mdsim::host::forces::lennard_jones<double>::default_sigma()
+      , list_of(1.f)(0.f)(0.f) /* sigma */
     );
     core->neighbour = make_neighbour(
         backend
@@ -485,11 +468,7 @@ void thermodynamics(string const& backend)
                        dimension << " dimensions");
 
 #ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(
-        backend
-      , utility::gpu::device::default_devices()
-      , utility::gpu::device::default_threads()
-    );
+    shared_ptr<utility::gpu::device> device = make_device(backend);
 #endif /* WITH_CUDA */
     shared_ptr<halmd::random::random> random = make_random(
         backend
@@ -519,8 +498,8 @@ void thermodynamics(string const& backend)
       , core->particle
       , core->box
       , list_of(rc)(rc)(rc) /* cutoff */
-      , mdsim::host::forces::lennard_jones<double>::default_epsilon()
-      , mdsim::host::forces::lennard_jones<double>::default_sigma()
+      , list_of(1.f)(0.f)(0.f) /* epsilon */
+      , list_of(1.f)(0.f)(0.f) /* sigma */
     );
     core->neighbour = make_neighbour(
         backend
@@ -637,7 +616,6 @@ void thermodynamics(string const& backend)
 
 static void __attribute__((constructor)) init_unit_test_suite()
 {
-    typedef boost::program_options::variable_value variable_value;
     using namespace boost::assign;
     using namespace boost::unit_test;
     using namespace boost::unit_test::framework;

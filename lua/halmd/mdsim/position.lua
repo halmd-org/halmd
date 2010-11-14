@@ -27,17 +27,19 @@ local position_wrapper = {
 local positions = {
     lattice = require("halmd.mdsim.position.lattice")
 }
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.position", halmd.modules.register)
+
+function options(desc)
+    desc:add("position", po.string(), "initial particle positions module")
+end
 
 --
 -- construct position module
 --
 function new(args)
-    local position = assert(args.position)
+    local position = args.position or "lattice" -- default value
     return positions[position]()
 end
-
-options = position_wrapper[2].options
-

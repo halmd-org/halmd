@@ -30,23 +30,6 @@ namespace mdsim
 {
 
 template <int dimension>
-double const integrator<dimension>::default_timestep = 0.001;
-
-/**
- * Assemble module options
- */
-template <int dimension>
-void integrator<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("integrator", po::value<string>()->default_value("verlet"),
-         "specify integration module")
-        ("timestep,h", po::value<double>()->default_value(default_timestep),
-         "integration timestep")
-        ;
-}
-
-template <int dimension>
 void integrator<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -59,10 +42,6 @@ void integrator<dimension>::luaopen(lua_State* L)
             [
                 class_<integrator, shared_ptr<integrator> >(class_name.c_str())
                     .property("timestep", (double (integrator::*)() const) &integrator::timestep)
-                    .scope
-                    [
-                        def("options", &integrator::options)
-                    ]
             ]
         ]
     ];

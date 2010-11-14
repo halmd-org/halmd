@@ -93,25 +93,6 @@ power_law<float_type>::power_law(
     LOG("potential: cutoff energy U = " << en_cut_);
 }
 
-/**
- * Assemble module options
- */
-template <typename float_type>
-void power_law<float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("power-law-index", po::value<int>()->default_value(default_index()),
-         "index of soft power-law potential")
-// options are not module specific, they are defined by 'lennard_jones' already
-//         ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
-//          "truncate potential at cutoff radius")
-//         ("epsilon", po::value<boost::array<float, 3> >()->default_value(default_epsilon()),
-//          "potential well depths AA,AB,BB")
-//         ("sigma", po::value<boost::array<float, 3> >()->default_value(default_sigma()),
-//          "collision diameters AA,AB,BB")
-        ;
-}
-
 template <typename float_type>
 void power_law<float_type>::luaopen(lua_State* L)
 {
@@ -133,10 +114,6 @@ void power_law<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                         >())
                         .def("write_parameters", &power_law::write_parameters)
-                        .scope
-                        [
-                            def("options", &power_law::options)
-                        ]
                 ]
             ]
         ]

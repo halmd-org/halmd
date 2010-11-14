@@ -24,6 +24,7 @@ local core_wrapper = {
     [2] = halmd_wrapper.mdsim.core_2_
   , [3] = halmd_wrapper.mdsim.core_3_
 }
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.core", halmd.modules.register)
@@ -32,6 +33,10 @@ module("halmd.mdsim.core", halmd.modules.register)
 namespace = "box"
 
 local core -- singleton instance
+
+function options(desc)
+    desc:add("dimension", po.int(), "dimension of positional coordinates")
+end
 
 --
 -- construct core module
@@ -44,5 +49,3 @@ function new(args)
     end
     return core
 end
-
-options = core_wrapper[2].options

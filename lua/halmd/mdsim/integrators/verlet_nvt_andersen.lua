@@ -40,19 +40,23 @@ local random = {
     gpu = require("halmd.gpu.random")
   , host = require("halmd.host.random")
 }
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.integrators.verlet_nvt_andersen", halmd.modules.register)
 
-options = verlet_nvt_andersen_wrapper.host[2].options
+function options(desc)
+    -- FIXME desc:add("temperature,K", po.float(), "thermostat temperature")
+    desc:add("andersen-collision-rate", po.float(), "collision rate for Andersen thermostat")
+end
 
 --
 -- construct verlet_nvt_andersen module
 --
 function new(args)
     local timestep = assert(args.timestep)
-    local temperature = assert(args.temperature)
-    local collision_rate = args.andersen_collision_rate or 10
+    local temperature = args.temperature or 1.12 -- default value
+    local collision_rate = args.andersen_collision_rate or 10 -- default value
 
     -- dependency injection
     local core = mdsim.core()

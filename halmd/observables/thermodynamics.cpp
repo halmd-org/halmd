@@ -31,18 +31,6 @@ namespace halmd
 namespace observables
 {
 
-/**
- * Assemble module options
- */
-template <int dimension>
-void thermodynamics<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("disable-state-vars", po::bool_switch(),
-         "disable evaluation and output of macroscopic state variables")
-        ;
-}
-
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(
     shared_ptr<box_type> box
@@ -117,10 +105,6 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
                     .property("temp", &thermodynamics::temp)
                     .property("v_cm", &thermodynamics::v_cm)
                     .property("virial", &thermodynamics::virial)
-                    .scope
-                    [
-                        def("options", &thermodynamics::options)
-                    ]
             ]
         ]
     ];

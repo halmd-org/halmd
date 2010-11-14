@@ -36,18 +36,6 @@ namespace halmd
 namespace mdsim { namespace host { namespace integrators
 {
 
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void verlet_nvt_andersen<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("andersen-collision-rate", po::value<float>(),
-         "collision rate for Andersen thermostat")
-        ;
-}
-
 template <int dimension, typename float_type>
 verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
     shared_ptr<particle_type> particle
@@ -179,10 +167,6 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
                               , float_type, float_type, float_type>()
                             )
                             .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
-                            .scope
-                            [
-                                def("options", &verlet_nvt_andersen::options)
-                            ]
                     ]
                 ]
             ]

@@ -36,9 +36,17 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.neighbour", halmd.modules.register)
+
+function options(desc)
+    desc:add("skin", po.float(), "neighbour list skin")
+    if neighbour_wrapper.gpu then
+        desc:add("cell-occupancy", po.float(), "desired average cell occupancy")
+    end
+end
 
 --
 -- construct neighbour module
@@ -52,18 +60,11 @@ function new(args)
     local force = assert(core.force)
 
     -- command line options
-    local skin = assert(args.skin)
+    local skin = args.skin or 0.5 -- default value
 
     if not device() then
         return neighbour_wrapper.host[dimension](particle, box, force, skin)
     end
-    local cell_occupancy = assert(args.cell_occupancy)
+    local cell_occupancy = args.cell_occupancy or 0.4 -- default value
     return neighbour_wrapper.gpu[dimension](particle, box, force, skin, cell_occupancy)
-end
-
-options = function(desc)
-    neighbour_wrapper.host[2].options(desc)
-    if neighbour_wrapper.gpu then
-	neighbour_wrapper.gpu[2].options(desc)
-    end
 end

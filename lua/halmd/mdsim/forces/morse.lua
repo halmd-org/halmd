@@ -31,21 +31,27 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local po = halmd_wrapper.po
 local assert = assert
-local hooks = require("halmd.hooks")
 
 module("halmd.mdsim.forces.morse", halmd.modules.register)
 
-options = morse_wrapper.host.options
+function options(desc)
+    -- FIXME desc:add("cutoff", po.array_float(), "truncate potential at cutoff radius")
+    -- FIXME desc:add("epsilon", po.array_float(), "potential well depths")
+    -- FIXME desc:add("sigma", po.array_float(), "collision diameters")
+    desc:add("morse-minimum", po.array_float(), "positions of potential minimum for interactions")
+    -- FIXME desc:add("smooth", po.array_float(), "C²-potential smoothing factor")
+end
 
 --
 -- construct Morse module
 --
 function new(args)
-    local cutoff = assert(args.cutoff)
-    local epsilon = assert(args.epsilon)
-    local sigma = assert(args.sigma)
-    local minimum = assert(args.morse_minimum)
+    local cutoff = args.cutoff or { 2.5, 2.5, 2.5 } -- default value
+    local epsilon = args.epsilon or { 1.0, 1.5, 0.5 } -- default value
+    local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
+    local minimum = args.morse_minimum or { 2.0, 1.6, 1.78 } -- default value
 
     local core = mdsim.core()
     local particle = assert(core.particle)

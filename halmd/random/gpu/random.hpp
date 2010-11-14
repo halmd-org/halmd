@@ -29,7 +29,6 @@
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/random.hpp>
 #include <halmd/utility/gpu/device.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -50,13 +49,7 @@ public:
 
     RandomNumberGenerator rng; //< FIXME private?
 
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
-
-    //! default number of blocks per grid
-    static unsigned int default_blocks() { return 32; }
-    //! default number of threads per block
-    static unsigned int default_threads() { return 32 << DEVICE_SCALE; }
 
     random(
         boost::shared_ptr<device_type> device

@@ -28,7 +28,6 @@
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/numeric/pow.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -48,7 +47,6 @@ public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
     static void luaopen(lua_State* L);
-    static void options(po::options_description& desc);
     void write_parameters(H5::Group const& group) const;
 
     static char const* name() { return "power law"; }
@@ -61,11 +59,6 @@ public:
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
     );
-
-    static int default_index()
-    {
-        return 12;
-    }
 
     /** 
      * Compute potential and its derivative at squared distance 'rr'

@@ -38,14 +38,18 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local po = halmd_wrapper.po
 local assert = assert
+local print = print
 
 module("halmd.mdsim.particle", halmd.modules.register)
 
 -- override default parameter namespace
 namespace = "box"
 
-options = particle_wrapper[2].options
+function options(desc)
+    desc:add("particles,N", po.array_int(), "number of particles")
+end
 
 --
 -- construct particle module
@@ -53,7 +57,7 @@ options = particle_wrapper[2].options
 function new(args)
     local core = mdsim.core() -- singleton
     local dimension = assert(core.dimension)
-    local npart = assert(args.particles)
+    local npart = args.particles or { 1000 } -- default value
 
     if not device() then
         return particle_wrapper.host[dimension](npart)

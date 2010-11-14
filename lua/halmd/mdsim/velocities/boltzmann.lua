@@ -40,17 +40,20 @@ local random = {
   , host = require("halmd.host.random")
 }
 local device = require("halmd.device")
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.velocities.boltzmann", halmd.modules.register)
 
-options = boltzmann_wrapper.host[2].options
+function options(desc)
+    desc:add("temperature,K", po.float(), "Boltzmann distribution temperature")
+end
 
 --
 -- construct boltzmann module
 --
 function new(args)
-    local temperature = assert(args.temperature)
+    local temperature = args.temperature or 1.12 -- default value
 
     -- dependency injection
     local core = mdsim.core()

@@ -23,7 +23,6 @@
 #include <lua.hpp>
 
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -34,7 +33,6 @@ template <int dimension>
 class velocity
 {
 public:
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;

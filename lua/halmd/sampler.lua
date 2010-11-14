@@ -27,12 +27,18 @@ local sampler_wrapper = {
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
+local po = halmd_wrapper.po
 local assert = assert
 local math = math
 
 module("halmd.sampler", halmd.modules.register)
 
-options = sampler_wrapper[2].options
+function options(desc)
+    desc:add("steps,s", po.uint64(), "number of simulation steps")
+    desc:add("time,t", po.float():conflicts("steps"), "total simulation time")
+    desc:add("sampling-state-vars", po.uint(), "sample macroscopic state variables every given number of integration steps")
+    desc:add("sampling-trajectory", po.uint(), "sample trajectory every given number of integration steps")
+end
 
 local sampler -- singleton instance
 
@@ -46,9 +52,9 @@ function new(args)
     local integrator = assert(core.integrator)
 
     -- command line options
-    local sampling_state_vars = assert(args.sampling_state_vars)
-    local sampling_trajectory = assert(args.sampling_trajectory)
-    local steps = assert(args.steps)
+    local sampling_state_vars = args.sampling_state_vars or 25 -- default value
+    local sampling_trajectory = args.sampling_trajectory or 0 -- default value
+    local steps = args.steps or 10000 -- default value
     local time = args.time -- optional
 
     if not sampler then

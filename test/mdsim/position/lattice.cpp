@@ -22,7 +22,7 @@
 #include <boost/test/parameterized_test.hpp>
 
 #include <boost/assign.hpp>
-#include <boost/program_options.hpp>
+#include <boost/foreach.hpp>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -56,19 +56,15 @@ using namespace std;
  */
 
 #ifdef WITH_CUDA
-shared_ptr<utility::gpu::device> make_device(
-    string const& backend
-  , vector<int> devices
-  , unsigned int threads
-)
+shared_ptr<utility::gpu::device> make_device(string const& backend)
 {
     if (backend == "gpu") {
         static weak_ptr<utility::gpu::device> device;
         shared_ptr<utility::gpu::device> device_(device.lock());
         if (!device_) {
             device_ = make_shared<utility::gpu::device>(
-                devices
-              , threads
+                vector<int>()   // devices
+              , 128             // threads
             );
             device = device_;
         }
@@ -90,11 +86,7 @@ shared_ptr<mdsim::particle<dimension> > make_particle(
 #ifdef WITH_CUDA
     if (backend == "gpu") {
         return make_shared<mdsim::gpu::particle<dimension, float> >(
-            make_device(
-                backend
-              , utility::gpu::device::default_devices()
-              , utility::gpu::device::default_threads()
-            )
+            make_device(backend)
           , vector<unsigned int>(1, npart)
         );
     }
@@ -116,14 +108,10 @@ shared_ptr<halmd::random::random> make_random(
     if (backend == "gpu") {
         typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
         return make_shared<random_type>(
-            make_device(
-                backend
-              , utility::gpu::device::default_devices()
-              , utility::gpu::device::default_threads()
-            )
+            make_device(backend)
           , seed
-          , random_type::default_blocks()
-          , random_type::default_threads()
+          , 32                  // blocks
+          , 32 << DEVICE_SCALE  // threads
         );
     }
 #endif /* WITH_CUDA */
@@ -256,11 +244,7 @@ void lattice(string const& backend)
     // init modules
     BOOST_TEST_MESSAGE("initialise modules");
 #ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(
-        backend
-      , utility::gpu::device::default_devices()
-      , utility::gpu::device::default_threads()
-    );
+    shared_ptr<utility::gpu::device> device = make_device(backend);
 #endif /* WITH_CUDA */
 
     shared_ptr<halmd::random::random> random = make_random(backend, random_file);
@@ -339,7 +323,6 @@ void lattice(string const& backend)
 
 static void __attribute__((constructor)) init_unit_test_suite()
 {
-    typedef boost::program_options::variable_value variable_value;
     using namespace boost::assign;
     using namespace boost::unit_test;
     using namespace boost::unit_test::framework;

@@ -42,7 +42,6 @@ local mdsim = {
 }
 local device = require("halmd.device")
 local assert = assert
-local hooks = require("halmd.hooks")
 
 module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 

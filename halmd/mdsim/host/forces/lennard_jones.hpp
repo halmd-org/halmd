@@ -29,7 +29,6 @@
 
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -48,7 +47,6 @@ public:
     static char const* name() { return "Lennard-Jones"; }
     static char const* module_name() { return "lennard_jones"; }
 
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
     void write_parameters(H5::Group const& group) const;
 
@@ -70,21 +68,6 @@ public:
         float_type en_pot = 4 * epsilon * r6i * (r6i - 1) - en_cut_(a, b);
 
         return std::make_pair(fval, en_pot);
-    }
-
-    static boost::array<float, 3> default_cutoff()
-    {
-        return boost::assign::list_of(2.5f)(2.5f)(2.5f);
-    }
-
-    static boost::array<float, 3> default_epsilon()
-    {
-        return boost::assign::list_of(1.0f)(1.5f)(0.5f);
-    }
-
-    static boost::array<float, 3> default_sigma()
-    {
-        return boost::assign::list_of(1.0f)(0.8f)(0.88f);
     }
 
     matrix_type const& r_cut() const { return r_cut_; }

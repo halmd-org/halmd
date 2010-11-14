@@ -28,20 +28,6 @@ namespace halmd
 namespace io { namespace trajectory
 {
 
-/**
- * Assemble module options
- */
-template <int dimension>
-void reader<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("trajectory-file,J", po::value<string>(),
-         "trajectory input file")
-        ("trajectory-sample,S", po::value<ssize_t>()->default_value(-1)->depends("trajectory-file"),
-         "trajectory sample for initial state")
-        ;
-}
-
 template <int dimension>
 void reader<dimension>::luaopen(lua_State* L)
 {
@@ -56,10 +42,6 @@ void reader<dimension>::luaopen(lua_State* L)
                 namespace_("trajectory")
                 [
                     class_<reader, shared_ptr<reader> >(class_name.c_str())
-                        .scope
-                        [
-                            def("options", &reader::options)
-                        ]
                 ]
             ]
         ]

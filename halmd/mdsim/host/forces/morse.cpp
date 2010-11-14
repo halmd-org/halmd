@@ -37,32 +37,6 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * Assemble module options
- */
-template <typename float_type>
-void morse<float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-//         ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
-//          "truncate potential at cutoff radius")
-//         ("epsilon", po::value<boost::array<float, 3> >()->default_value(default_epsilon()),
-//          "depths of potential well for AA,AB,BB interactions")
-//         ("sigma", po::value<boost::array<float, 3> >()->default_value(default_sigma()),
-//          "widths of potential well for AA,AB,BB interactions")
-        ("morse-minimum", po::value<boost::array<float, 3> >()->default_value(default_r_min()),
-         "positions of potential minimum for AA,AB,BB interactions")
-        ;
-}
-
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<boost::array<float, 3> >();
-}
-
-/**
  * Write module parameters to HDF5 group
  */
 template <typename float_type>
@@ -144,10 +118,6 @@ void morse<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                         >())
                         .def("write_parameters", &morse::write_parameters)
-                        .scope
-                        [
-                            def("options", &morse::options)
-                        ]
                 ]
             ]
         ]

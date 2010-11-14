@@ -24,9 +24,10 @@
 #include <string>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
-namespace halmd { namespace utility { namespace gpu
+namespace halmd
+{
+namespace utility { namespace gpu
 {
 
 /**
@@ -46,13 +47,7 @@ namespace halmd { namespace utility { namespace gpu
 class device
 {
 public:
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
-
-    //! default number of threads per block
-    static unsigned int default_threads() { return 128; }
-    //! default selected CUDA devices
-    static std::vector<int> default_devices() { return std::vector<int>(); }
 
     device(std::vector<int> devices, unsigned int threads);
     ~device();
@@ -71,6 +66,8 @@ private:
     boost::shared_ptr<cuda::driver::context> context_;
 };
 
-}}} // namespace halmd::utility::gpu
+}} // namespace utility::gpu
+
+} // namespace halmd
 
 #endif /* ! HALMD_UTILITY_GPU_DEVICE_HPP */

@@ -29,19 +29,6 @@ namespace halmd
 namespace mdsim
 {
 
-/**
- * Assemble module options
- */
-template <int dimension>
-void position<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("position",
-         po::value<string>()->default_value("lattice"),
-         "initial particle positions module")
-        ;
-}
-
 template <int dimension>
 void position<dimension>::luaopen(lua_State* L)
 {
@@ -55,10 +42,6 @@ void position<dimension>::luaopen(lua_State* L)
             [
                 class_<position, shared_ptr<position> >(class_name.c_str())
                     .def("set", &position::set)
-                    .scope
-                    [
-                        def("options", &position::options)
-                    ]
             ]
         ]
     ];

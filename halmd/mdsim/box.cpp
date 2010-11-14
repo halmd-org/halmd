@@ -33,22 +33,6 @@ namespace mdsim
 {
 
 /**
- * Assemble module options
- */
-template <int dimension>
-void box<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("density,d", po::value<float>()->default_value(0.75),
-         "particle density")
-        ("box-length,L", po::value<multi_array<float, 1> >()->conflicts("density"),
-         "edge lengths of simulation box")
-        ("box-ratios", po::value<multi_array<float, 1> >()->conflicts("box-length"),
-         "aspect ratios of simulation box (specify relative edge lengths)")
-        ;
-}
-
-/**
  * Register option value types with Lua
  */
 static __attribute__((constructor)) void register_option_converters()
@@ -118,10 +102,6 @@ void box<dimension>::luaopen(lua_State* L)
                     .def(constructor<shared_ptr<particle_type>, vector_type const&>())
                     .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
                     .def("write_parameters", &box::write_parameters)
-                    .scope
-                    [
-                        def("options", &box::options)
-                    ]
             ]
         ]
     ];

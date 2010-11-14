@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP
 #define HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP
 
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <lua.hpp>

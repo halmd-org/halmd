@@ -29,19 +29,6 @@ namespace halmd
 namespace random
 {
 
-/**
- * Assemble module options
- */
-void random::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("random-seed", po::value<unsigned int>(),
-         "random number generator integer seed")
-        ("random-file", po::value<std::string>()->default_value("/dev/random"),
-         "read random seed from file")
-        ;
-}
-
 void random::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -54,8 +41,7 @@ void random::luaopen(lua_State* L)
                 class_<random, shared_ptr<random> >("random")
                     .scope
                     [
-                        def("options", &random::options)
-                      , def("read_integer", &read_integer<unsigned int>)
+                        def("read_integer", &read_integer<unsigned int>)
                     ]
             ]
         ]

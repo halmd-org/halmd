@@ -22,8 +22,6 @@
 
 #include <lua.hpp>
 
-#include <halmd/utility/program_options/program_options.hpp>
-
 namespace halmd
 {
 namespace io { namespace trajectory
@@ -33,8 +31,6 @@ template <int dimension>
 class reader
 {
 public:
-    static void options(po::options_description& desc);
-
     static void luaopen(lua_State* L);
 
     reader() {}

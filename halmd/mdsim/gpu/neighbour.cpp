@@ -40,21 +40,6 @@ namespace mdsim { namespace gpu
 {
 
 template <int dimension, typename float_type>
-float_type const neighbour<dimension, float_type>::default_cell_occupancy = 0.4;
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("cell-occupancy", po::value<float>()->default_value(default_cell_occupancy),
-         "desired average cell occupancy")
-        ;
-}
-
-template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
@@ -334,10 +319,6 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                           , double
                         >())
                         .def("register_runtimes", &neighbour::register_runtimes)
-                        .scope
-                        [
-                            def("options", &neighbour::options)
-                        ]
                 ]
             ]
         ]

@@ -29,19 +29,6 @@ namespace halmd
 namespace mdsim
 {
 
-/**
- * Assemble module options
- */
-template <int dimension>
-void velocity<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("velocity",
-         po::value<string>()->default_value("boltzmann"),
-         "initial particle velocities module")
-        ;
-}
-
 template <int dimension>
 void velocity<dimension>::luaopen(lua_State* L)
 {
@@ -55,10 +42,6 @@ void velocity<dimension>::luaopen(lua_State* L)
             [
                 class_<velocity, shared_ptr<velocity> >(class_name.c_str())
                     .def("set", &velocity::set)
-                    .scope
-                    [
-                        def("options", &velocity::options)
-                    ]
             ]
         ]
     ];

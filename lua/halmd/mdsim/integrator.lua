@@ -32,19 +32,21 @@ local integrators = {
     verlet = require("halmd.mdsim.integrators.verlet")
   , verlet_nvt_andersen = require("halmd.mdsim.integrators.verlet_nvt_andersen")
 }
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.integrator", halmd.modules.register)
 
-options = function(desc)
-    integrator_wrapper[2].options(desc)
-    integrator_wrapper.nvt[2].options(desc)
+function options(desc)
+    desc:add("integrator", po.string(), "specify integration module")
+    desc:add("timestep,h", po.float(), "integration timestep")
 end
 
 --
 -- construct integrator module
 --
 function new(args)
-    local integrator = assert(args.integrator)
-    return integrators[integrator]()
+    local integrator = args.integrator or "verlet" --default value
+    local timestep = args.timestep or 0.001 -- default value
+    return integrators[integrator]{ timestep = timestep }
 end

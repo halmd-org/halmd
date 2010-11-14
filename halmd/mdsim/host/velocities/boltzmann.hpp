@@ -26,7 +26,6 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/random/host/random.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -46,7 +45,6 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<random_type> random;
 
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     boltzmann(

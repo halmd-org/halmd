@@ -36,21 +36,6 @@ namespace mdsim { namespace host
 {
 
 template <int dimension, typename float_type>
-float_type const neighbour<dimension, float_type>::default_skin = 0.5;
-
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("skin", po::value<float>()->default_value(default_skin),
-         "neighbour list skin")
-        ;
-}
-
-template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
@@ -241,10 +226,6 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                            , shared_ptr<force_type>
                            , double
                          >())
-                        .scope
-                        [
-                            def("options", &neighbour::options)
-                        ]
                 ]
             ]
         ]

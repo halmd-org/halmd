@@ -28,18 +28,6 @@ namespace halmd
 namespace mdsim
 {
 
-/**
- * Assemble module options
- */
-template <int dimension>
-void force<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("force", po::value<string>()->default_value("lennard_jones"),
-         "specify force module")
-        ;
-}
-
 template <int dimension>
 void force<dimension>::luaopen(lua_State* L)
 {
@@ -53,10 +41,6 @@ void force<dimension>::luaopen(lua_State* L)
             [
                 class_<force, shared_ptr<force> >(class_name.c_str())
                     .def("compute", &force::compute)
-                    .scope
-                    [
-                        def("options", &force::options)
-                    ]
             ]
         ]
     ];

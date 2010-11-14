@@ -37,30 +37,6 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * Assemble module options
- */
-template <typename float_type>
-void lennard_jones<float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("cutoff", po::value<boost::array<float, 3> >()->default_value(default_cutoff()),
-         "truncate potential at cutoff radius")
-        ("epsilon", po::value<boost::array<float, 3> >()->default_value(default_epsilon()),
-         "potential well depths AA,AB,BB")
-        ("sigma", po::value<boost::array<float, 3> >()->default_value(default_sigma()),
-         "collision diameters AA,AB,BB")
-        ;
-}
-
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<boost::array<float, 3> >();
-}
-
-/**
  * Write module parameters to HDF5 group
  */
 template <typename float_type>
@@ -136,10 +112,6 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                         >())
                         .def("write_parameters", &lennard_jones::write_parameters)
-                        .scope
-                        [
-                            def("options", &lennard_jones::options)
-                        ]
                 ]
             ]
         ]

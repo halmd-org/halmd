@@ -28,7 +28,6 @@
 #include <halmd/mdsim/integrators/nvt.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -52,7 +51,6 @@ public:
     boost::shared_ptr<random_type> random;
 
     static void luaopen(lua_State* L);
-    static void options(po::options_description& desc);
 
     verlet_nvt_andersen(
         boost::shared_ptr<particle_type> particle

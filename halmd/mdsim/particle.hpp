@@ -24,8 +24,6 @@
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/utility/program_options/program_options.hpp>
-
 namespace halmd
 {
 namespace mdsim
@@ -41,8 +39,6 @@ template <int dimension>
 class particle
 {
 public:
-    static void options(po::options_description& desc);
-
     static void luaopen(lua_State* L);
 
     particle(std::vector<unsigned int> const& particles);

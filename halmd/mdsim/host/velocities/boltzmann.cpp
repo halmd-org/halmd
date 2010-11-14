@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include <halmd/io/logger.hpp>
@@ -31,18 +32,6 @@ namespace halmd
 namespace mdsim { namespace host { namespace velocities
 {
 
-/**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void boltzmann<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("temperature,K", po::value<float>()->default_value(1.12),
-         "Boltzmann distribution temperature")
-        ;
-}
-
 template <int dimension, typename float_type>
 boltzmann<dimension, float_type>::boltzmann(
     shared_ptr<particle_type> particle
@@ -53,7 +42,7 @@ boltzmann<dimension, float_type>::boltzmann(
   // dependency injection
   , particle(particle)
   , random(random)
-  // parse options
+  // set parameters
   , temp_(temperature)
 {
     LOG("Boltzmann velocity distribution temperature: T = " << temp_);
@@ -135,10 +124,6 @@ void boltzmann<dimension, float_type>::luaopen(lua_State* L)
                     [
                         class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
                             .def(constructor<shared_ptr<particle_type>, shared_ptr<random_type>, double>())
-                            .scope
-                            [
-                                def("options", &boltzmann::options)
-                            ]
                     ]
                 ]
             ]

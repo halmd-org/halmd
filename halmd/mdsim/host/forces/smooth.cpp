@@ -32,18 +32,6 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * Assemble module options
- */
-template <int dimension, typename float_type>
-void smooth<dimension, float_type>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("smooth", po::value<float>(),
-         "C²-potential smoothing factor")
-        ;
-}
-
-/**
  * Initialise parameters
  */
 template <int dimension, typename float_type>
@@ -72,10 +60,6 @@ void smooth<dimension, float_type>::luaopen(lua_State* L)
                     [
                         class_<smooth, shared_ptr<smooth> >(class_name.c_str())
                             .def(constructor<double>())
-                            .scope
-                            [
-                                def("options", &smooth::options)
-                            ]
                     ]
                 ]
             ]

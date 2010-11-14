@@ -22,8 +22,6 @@
 
 #include <lua.hpp>
 
-#include <halmd/utility/program_options/program_options.hpp>
-
 namespace halmd
 {
 namespace mdsim
@@ -33,10 +31,7 @@ template <int dimension>
 class integrator
 {
 public:
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
-
-    static double const default_timestep;
 
     integrator() {}
     virtual ~integrator() {}

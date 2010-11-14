@@ -41,31 +41,6 @@ namespace utility { namespace gpu
 {
 
 /**
- * Assemble module options
- */
-void device::options(po::options_description& desc)
-{
-    desc.add_options()
-#ifndef __DEVICE_EMULATION__
-        ("device,D", po::value<boost::multi_array<int, 1> >()->default_value(make_multi_array(default_devices())),
-         "CUDA device(s)")
-#endif
-        ("threads,T", po::value<unsigned int>()->default_value(default_threads()),
-         "number of CUDA threads per block")
-        ("disable-gpu", po::bool_switch(),
-         "disable GPU acceleration")
-        ;
-}
-
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<boost::multi_array<int, 1> >();
-}
-
-/**
  * Initialize CUDA device
  */
 device::device(vector<int> devices, unsigned int threads)
@@ -225,8 +200,7 @@ void device::luaopen(lua_State* L)
                         .property("threads", &device::threads)
                         .scope
                         [
-                            def("options", &device::options)
-                          , def("nvidia_driver_version", &device::nvidia_driver_version)
+                            def("nvidia_driver_version", &device::nvidia_driver_version)
                           , def("cuda_driver_version", &device::cuda_driver_version)
                           , def("cuda_runtime_version", &device::cuda_runtime_version)
                         ]

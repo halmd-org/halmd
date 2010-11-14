@@ -31,20 +31,25 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local po = halmd_wrapper.po
 local assert = assert
-local hooks = require("halmd.hooks")
 
 module("halmd.mdsim.forces.lennard_jones", halmd.modules.register)
 
-options = lennard_jones_wrapper.host.options
+function options(desc)
+    desc:add("cutoff", po.array_float(), "truncate potential at cutoff radius")
+    desc:add("epsilon", po.array_float(), "potential well depths")
+    desc:add("sigma", po.array_float(), "collision diameters")
+    -- FIXME desc:add("smooth", po.array_float(), "C²-potential smoothing factor")
+end
 
 --
 -- construct Lennard-Jones module
 --
 function new(args)
-    local cutoff = assert(args.cutoff)
-    local epsilon = assert(args.epsilon)
-    local sigma = assert(args.sigma)
+    local cutoff = args.cutoff or { 2.5, 2.5, 2.5 } -- default value
+    local epsilon = args.epsilon or { 1.0, 1.5, 0.5 } -- default value
+    local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
 
     local core = mdsim.core()
     local particle = assert(core.particle)

@@ -25,7 +25,6 @@
 
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {

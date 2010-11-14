@@ -27,16 +27,19 @@ local force_wrapper = {
 local forces = {
     pair_trunc = require("halmd.mdsim.forces.pair_trunc")
 }
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.force", halmd.modules.register)
 
-options = force_wrapper[2].options
+function options(desc)
+    desc:add("force", po.string(), "specify force module")
+end
 
 --
 -- construct force module
 --
 function new(args)
-    local force = assert(args.force)
+    local force = args.force or "lennard_jones" -- default value
     return forces.pair_trunc{ force = force }
 end

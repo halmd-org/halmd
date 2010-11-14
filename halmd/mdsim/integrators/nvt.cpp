@@ -28,18 +28,6 @@ namespace halmd
 namespace mdsim { namespace integrators
 {
 
-/**
- * Assemble module options
- */
-template <int dimension>
-void nvt<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-//         ("temperature,K", po::value<float>(),
-//          "thermostat temperature")
-        ;
-}
-
 template <int dimension>
 void nvt<dimension>::luaopen(lua_State* L)
 {
@@ -58,10 +46,6 @@ void nvt<dimension>::luaopen(lua_State* L)
                             "temperature"
                           , (double (nvt::*)() const) &nvt::temperature
                         )
-                        .scope
-                        [
-                            def("options", &nvt::options)
-                        ]
                 ]
             ]
         ]

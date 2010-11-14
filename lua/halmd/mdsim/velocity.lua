@@ -27,16 +27,19 @@ local velocity_wrapper = {
     [2] = halmd_wrapper.mdsim.velocity_2_
   , [3] = halmd_wrapper.mdsim.velocity_3_
 }
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.velocity", halmd.modules.register)
 
-options = velocity_wrapper[2].options
+function options(desc)
+    desc:add("velocity", po.string(), "initial particle velocities module")
+end
 
 --
 -- construct velocity module
 --
 function new(args)
-    local velocity = assert(args.velocity)
+    local velocity = args.velocity or "boltzmann" -- default value
     return velocities[velocity]()
 end

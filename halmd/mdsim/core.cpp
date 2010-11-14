@@ -25,7 +25,6 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
-
 using namespace boost;
 using namespace boost::fusion;
 using namespace std;
@@ -34,18 +33,6 @@ namespace halmd
 {
 namespace mdsim
 {
-
-/**
- * Assemble module options
- */
-template <int dimension>
-void core<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("dimension", po::value<int>(),
-         "dimension of positional coordinates")
-        ;
-}
 
 /**
  * Write module parameters to HDF5 group
@@ -148,10 +135,6 @@ void core<dimension>::luaopen(lua_State* L)
                     .property("step_counter", &core::step_counter)
                     .def("prepare", &core::prepare)
                     .def("mdstep", &core::mdstep)
-                    .scope
-                    [
-                        def("options", &core::options)
-                    ]
             ]
         ]
     ];

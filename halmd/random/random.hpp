@@ -22,8 +22,6 @@
 
 #include <lua.hpp>
 
-#include <halmd/utility/program_options/program_options.hpp>
-
 namespace halmd
 {
 namespace random
@@ -32,7 +30,6 @@ namespace random
 class random
 {
 public:
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     random() {}

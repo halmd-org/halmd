@@ -30,7 +30,6 @@
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -64,10 +63,7 @@ public:
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
 
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
-
-    static float_type const default_skin;
 
     neighbour(
         boost::shared_ptr<particle_type> particle

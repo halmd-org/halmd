@@ -28,7 +28,6 @@
 #include <halmd/mdsim/core.hpp>
 #include <halmd/observables/observable.hpp>
 #include <halmd/observables/trajectory.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -38,8 +37,6 @@ template <int dimension>
 class sampler
 {
 public:
-    static void options(po::options_description& desc);
-
     typedef mdsim::core<dimension> core_type;
     typedef observables::observable<dimension> observable_type;
     typedef io::statevars::writer<dimension> statevars_writer_type;

@@ -32,7 +32,6 @@
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 /** HAL’s MD package */
 namespace halmd
@@ -55,7 +54,6 @@ public:
     typedef mdsim::velocity<dimension> velocity_type;
     typedef utility::profiler profiler_type;
 
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     void write_parameters(H5::Group const& param) const;

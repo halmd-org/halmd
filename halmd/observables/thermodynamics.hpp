@@ -30,7 +30,6 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/observable.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -58,7 +57,6 @@ public:
 
     boost::shared_ptr<box_type> box;
 
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     thermodynamics(

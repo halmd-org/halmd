@@ -34,24 +34,6 @@ namespace halmd
 {
 
 /**
- * Assemble module options
- */
-template <int dimension>
-void sampler<dimension>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("steps,s", po::value<uint64_t>()->default_value(10000),
-         "number of simulation steps")
-        ("time,t", po::value<double>()->conflicts("steps"),
-         "total simulation time")
-        ("sampling-state-vars", po::value<unsigned>()->default_value(25),
-         "sample macroscopic state variables every given number of integration steps")
-        ("sampling-trajectory", po::value<unsigned>()->default_value(0),
-         "sample trajectory every given number of integration steps")
-        ;
-}
-
-/**
  * Initialize simulation
  */
 template <int dimension>
@@ -171,10 +153,6 @@ void sampler<dimension>::luaopen(lua_State* L)
                 .def_readwrite("profiling_writers", &sampler::profiling_writers)
                 .property("steps", &sampler::steps)
                 .property("total_time", &sampler::total_time)
-                .scope
-                [
-                    def("options", &sampler::options)
-                ]
         ]
     ];
 }

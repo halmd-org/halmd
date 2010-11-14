@@ -23,7 +23,6 @@
 #include <lua.hpp>
 
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
@@ -36,7 +35,6 @@ class nvt : public integrator<dimension>
 public:
     typedef mdsim::integrator<dimension> _Base;
 
-    static void options(po::options_description& desc);
     static void luaopen(lua_State* L);
 
     nvt() {}

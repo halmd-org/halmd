@@ -41,7 +41,7 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
   , random(random)
   // select thread-dependent implementation
   , gaussian_impl(get_gaussian_impl(random->rng.dim.threads_per_block()))
-  // parse options
+  // set parameters
   , temp_(temperature)
   // allocate GPU memory
   , g_vcm_(2 * random->rng.dim.blocks_per_grid())
@@ -155,10 +155,6 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
                                , shared_ptr<random_type>
                                , double
                              >())
-                            .scope
-                            [
-                                def("options", &boltzmann::options)
-                            ]
                     ]
                 ]
             ]

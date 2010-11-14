@@ -27,9 +27,19 @@ if halmd_wrapper.gpu then
     random_wrapper.gpu = halmd_wrapper.gpu.random
 end
 local device = require("halmd.device")
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.gpu.random", halmd.modules.register)
+
+function options(desc)
+    if random_wrapper.gpu then
+        desc:add("random-seed", po.uint(), "random number generator integer seed")
+        desc:add("random-file", po.string(), "read random seed from file")
+        desc:add("random-blocks", po.uint(), "number of CUDA blocks")
+        desc:add("random-threads", po.uint(), "number of CUDA threads per block")
+    end
+end
 
 local random -- singleton instance
 
@@ -37,10 +47,10 @@ local random -- singleton instance
 -- construct random module
 --
 function new(args)
-    local file = assert(args.random_file)
+    local file = args.random_file or "/dev/random" -- default value
     local seed = args.random_seed -- optional
-    local blocks = assert(args.random_blocks)
-    local threads = assert(args.random_threads)
+    local blocks = args.random_blocks or 32 -- default value
+    local threads = args.random_threads or 256 -- default value FIXME DEVICE_SCALE
 
     if not random then
         if not seed then
@@ -49,8 +59,4 @@ function new(args)
         random = random_wrapper.gpu.rand48(device(), seed, blocks, threads)
     end
     return random
-end
-
-if random_wrapper.gpu then
-    options = random_wrapper.gpu.options
 end

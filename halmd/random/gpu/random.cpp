@@ -31,20 +31,6 @@ namespace halmd
 namespace random { namespace gpu
 {
 
-/**
- * Assemble module options
- */
-template <typename RandomNumberGenerator>
-void random<RandomNumberGenerator>::options(po::options_description& desc)
-{
-    desc.add_options()
-        ("random-blocks", po::value<unsigned int>()->default_value(default_blocks()),
-         "number of CUDA blocks")
-        ("random-threads", po::value<unsigned int>()->default_value(default_threads()),
-         "number of CUDA threads per block")
-        ;
-}
-
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
     shared_ptr<device_type> device
@@ -139,8 +125,6 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
                            , unsigned int
                            , unsigned int
                          >())
-
-                  , def("options", &random::options)
                 ]
             ]
         ]

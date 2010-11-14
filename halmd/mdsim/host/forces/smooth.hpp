@@ -22,8 +22,6 @@
 
 #include <lua.hpp>
 
-#include <halmd/utility/program_options/program_options.hpp>
-
 namespace halmd
 {
 namespace mdsim { namespace host { namespace forces
@@ -37,8 +35,6 @@ template <int dimension, typename float_type>
 class smooth
 {
 public:
-    static void options(po::options_description& desc);
-
     static void luaopen(lua_State* L);
 
     smooth(double r_smooth);

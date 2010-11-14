@@ -42,8 +42,6 @@ local assert = assert
 
 module("halmd.observables.thermodynamics", halmd.modules.register)
 
-options = thermodynamics_wrapper[2].options
-
 --
 -- construct thermodynamics module
 --

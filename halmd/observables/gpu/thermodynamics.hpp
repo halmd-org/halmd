@@ -27,7 +27,6 @@
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/observables/thermodynamics.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
 {
