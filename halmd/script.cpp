@@ -36,7 +36,11 @@ script::script()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
+    using namespace luabind;
+
     luaL_openlibs(L); //< load Lua standard libraries
+
+    set_pcall_callback(&traceback); //< set pcall error handler
 
     package_path(); //< set Lua package path
 
@@ -166,6 +170,23 @@ void script::run()
         lua_pop(e.state(), 1); //< remove error message
         throw;
     }
+}
+
+/**
+ * Append traceback to error message on stack
+ *
+ * @param L Lua state with error message on top of stack
+ */
+int script::traceback(lua_State* L)
+{
+    lua_pushliteral(L, "\n");
+    lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+    lua_pushliteral(L, "traceback");
+    lua_rawget(L, -2);
+    lua_remove(L, -2);
+    lua_call(L, 0, 1);
+    lua_concat(L, 3);
+    return 1;
 }
 
 } // namespace halmd

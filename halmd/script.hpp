@@ -38,6 +38,8 @@ public:
     void init(po::variables_map const& vm);
     void run();
 
+    static int traceback(lua_State* L);
+
 private:
     boost::shared_ptr<lua_State> L_; //< Lua state
 
