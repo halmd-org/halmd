@@ -25,7 +25,6 @@ local random_wrapper = {
   , read_integer = halmd_wrapper.random.random.read_integer
   , options = halmd_wrapper.random.random.options
 }
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.host.random", halmd.modules.register)
@@ -35,7 +34,7 @@ local random -- singleton instance
 --
 -- construct random module
 --
-function new()
+function new(args)
     local file = assert(args.random_file)
     local seed = args.random_seed -- optional
 

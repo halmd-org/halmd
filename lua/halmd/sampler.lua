@@ -27,7 +27,6 @@ local sampler_wrapper = {
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
-local args = require("halmd.options")
 local assert = assert
 local math = math
 
@@ -40,7 +39,7 @@ local sampler -- singleton instance
 --
 -- construct sampler module
 --
-function new()
+function new(args)
     -- dependency injection
     local core = mdsim.core()
     local integrator = assert(core.integrator)

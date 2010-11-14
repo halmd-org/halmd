@@ -20,6 +20,10 @@
 -- grab environment
 local table = table
 local ipairs = ipairs
+local pairs = pairs
+local string = string
+local rawget = rawget
+local rawset = rawset
 local setmetatable = setmetatable
 local hooks = require("halmd.hooks")
 
@@ -31,7 +35,11 @@ local hooks = require("halmd.hooks")
 --
 module("halmd.modules")
 
-local modules = {} -- ordered list of registered HALMD modules
+-- ordered list of registered HALMD modules
+local modules = {}
+
+-- parsed module options
+local vm = {}
 
 --
 -- register a module
@@ -41,8 +49,38 @@ local modules = {} -- ordered list of registered HALMD modules
 function register(module)
     table.insert(modules, module)
 
-    local new = function(module, ...)
-        local object = module.new(...)
+    --
+    -- construct C++ module
+    --
+    -- @param module Lua module
+    -- @param args script parameter table
+    -- @returns C++ module object
+    --
+    local new = function(module, args)
+        --
+        -- get module parameter
+        --
+        -- @param self parameter table
+        -- @param key parameter name
+        -- @returns parameter value, or nil if not found
+        --
+        local param = function(self, key)
+            -- command-line option value
+            local value = rawget(vm, key)
+
+            -- script parameter
+            if not value and args then
+                value = rawget(args, key)
+            end
+
+            -- cache parameter
+            rawset(self, key, value)
+
+            return value
+        end
+
+        local args = setmetatable({}, { __index = param })
+        local object = module.new(args)
         if object then
             hooks.register_object(object, module)
         end
@@ -67,5 +105,19 @@ function options(desc)
         if module.options then
             module.options(desc)
         end
+    end
+end
+
+--
+-- Set parsed command line options
+--
+-- @param args Boost.Program_options variables_map
+--
+-- This function is called by halmd::script.
+--
+function parsed(args)
+    for k, v in pairs(args) do
+        option = string.gsub(k, "-", "_") -- e.g. options.power_law_index
+        vm[option] = v:value()
     end
 end

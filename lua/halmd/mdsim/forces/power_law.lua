@@ -31,7 +31,6 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 local hooks = require("halmd.hooks")
 
@@ -42,7 +41,7 @@ options = power_law_wrapper.host.options
 --
 -- construct power law module
 --
-function new()
+function new(args)
     local index = assert(args.power_law_index)
     local cutoff = assert(args.cutoff)
     local epsilon = assert(args.epsilon)

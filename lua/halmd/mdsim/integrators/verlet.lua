@@ -36,7 +36,6 @@ if halmd_wrapper.mdsim.gpu then
     }
 end
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.integrators.verlet", halmd.modules.register)
@@ -44,7 +43,7 @@ module("halmd.mdsim.integrators.verlet", halmd.modules.register)
 --
 -- construct verlet module
 --
-function new()
+function new(args)
     local dimension = assert(args.dimension)
     local timestep = assert(args.timestep)
 

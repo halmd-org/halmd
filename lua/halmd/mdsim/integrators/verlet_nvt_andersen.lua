@@ -40,7 +40,6 @@ local random = {
     gpu = require("halmd.gpu.random")
   , host = require("halmd.host.random")
 }
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.integrators.verlet_nvt_andersen", halmd.modules.register)
@@ -50,7 +49,7 @@ options = verlet_nvt_andersen_wrapper.host[2].options
 --
 -- construct verlet_nvt_andersen module
 --
-function new()
+function new(args)
     local dimension = assert(args.dimension)
     local timestep = assert(args.timestep)
     local temperature = assert(args.temperature)

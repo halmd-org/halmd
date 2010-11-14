@@ -27,7 +27,6 @@ local velocity_wrapper = {
     [2] = halmd_wrapper.mdsim.velocity_2_
   , [3] = halmd_wrapper.mdsim.velocity_3_
 }
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.velocity", halmd.modules.register)
@@ -37,7 +36,7 @@ options = velocity_wrapper[2].options
 --
 -- construct velocity module
 --
-function new()
+function new(args)
     local velocity = assert(args.velocity)
     return velocities[velocity]()
 end

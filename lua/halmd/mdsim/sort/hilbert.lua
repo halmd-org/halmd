@@ -30,7 +30,6 @@ local mdsim = {
   core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.sort.hilbert", halmd.modules.register)
@@ -38,7 +37,7 @@ module("halmd.mdsim.sort.hilbert", halmd.modules.register)
 --
 -- construct hilbert module
 --
-function new()
+function new(args)
     local dimension = assert(args.dimension)
 
     -- dependency injection

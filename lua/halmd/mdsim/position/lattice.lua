@@ -40,7 +40,6 @@ local random = {
   , host = require("halmd.host.random")
 }
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.position.lattice", halmd.modules.register)
@@ -48,7 +47,7 @@ module("halmd.mdsim.position.lattice", halmd.modules.register)
 --
 -- construct lattice module
 --
-function new()
+function new(args)
     local dimension = assert(args.dimension)
 
     -- dependency injection

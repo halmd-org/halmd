@@ -37,7 +37,6 @@ local observables = {
 }
 local device = require("halmd.device")
 local parameter = require("halmd.parameter")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.io.trajectory.writers.hdf5", halmd.modules.register)
@@ -45,7 +44,7 @@ module("halmd.io.trajectory.writers.hdf5", halmd.modules.register)
 --
 -- construct HDF5 trajectory writer module
 --
-function new()
+function new(args)
     -- dependency injection
     local sample = assert(observables.samples.trajectory())
 

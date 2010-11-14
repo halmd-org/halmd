@@ -30,7 +30,6 @@ local io = {
         }
     }
 }
-local args = require("halmd.options")
 local parameter = require("halmd.parameter")
 local assert = assert
 
@@ -39,7 +38,7 @@ module("halmd.io.statevars.writers.hdf5", halmd.modules.register)
 --
 -- construct HDF5 statevars writer module
 --
-function new()
+function new(args)
     -- command line options
     local output = assert(args.output)
     local dimension = assert(args.dimension)

@@ -41,7 +41,6 @@ local mdsim = {
   , core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
-local options = require("halmd.options")
 local assert = assert
 local hooks = require("halmd.hooks")
 
@@ -51,7 +50,7 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 -- construct truncated pair force module
 --
 function new(args)
-    local dimension = assert(options.dimension)
+    local dimension = assert(args.dimension)
     local force = assert(args.force)
 
     -- dependency injection

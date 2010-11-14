@@ -27,7 +27,6 @@ if halmd_wrapper.gpu then
     random_wrapper.gpu = halmd_wrapper.gpu.random
 end
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.gpu.random", halmd.modules.register)
@@ -37,7 +36,7 @@ local random -- singleton instance
 --
 -- construct random module
 --
-function new()
+function new(args)
     local file = assert(args.random_file)
     local seed = args.random_seed -- optional
     local blocks = assert(args.random_blocks)

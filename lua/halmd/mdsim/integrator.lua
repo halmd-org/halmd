@@ -32,7 +32,6 @@ local integrators = {
     verlet = require("halmd.mdsim.integrators.verlet")
   , verlet_nvt_andersen = require("halmd.mdsim.integrators.verlet_nvt_andersen")
 }
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.integrator", halmd.modules.register)
@@ -45,7 +44,7 @@ end
 --
 -- construct integrator module
 --
-function new()
+function new(args)
     local integrator = assert(args.integrator)
     return integrators[integrator]()
 end

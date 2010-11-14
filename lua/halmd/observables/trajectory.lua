@@ -41,7 +41,6 @@ local observables = {
     }
 }
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.observables.trajectory", halmd.modules.register)
@@ -49,7 +48,7 @@ module("halmd.observables.trajectory", halmd.modules.register)
 --
 -- construct trajectory module
 --
-function new()
+function new(args)
     -- dependency injection
     local core = mdsim.core()
     local particle = assert(core.particle)

@@ -24,7 +24,6 @@ local core_wrapper = {
     [2] = halmd_wrapper.mdsim.core_2_
   , [3] = halmd_wrapper.mdsim.core_3_
 }
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.core", halmd.modules.register)
@@ -37,7 +36,7 @@ local core -- singleton instance
 --
 -- construct core module
 --
-function new()
+function new(args)
     local dimension = assert(args.dimension)
     if not core then
         core = core_wrapper[dimension]()

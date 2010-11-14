@@ -31,7 +31,6 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 local hooks = require("halmd.hooks")
 
@@ -42,7 +41,7 @@ options = morse_wrapper.host.options
 --
 -- construct Morse module
 --
-function new()
+function new(args)
     local cutoff = assert(args.cutoff)
     local epsilon = assert(args.epsilon)
     local sigma = assert(args.sigma)

@@ -27,7 +27,6 @@ local box_wrapper = {
     [2] = halmd_wrapper.mdsim.box_2_
   , [3] = halmd_wrapper.mdsim.box_3_
 }
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.box", halmd.modules.register)
@@ -37,7 +36,7 @@ options = box_wrapper[2].options
 --
 -- construct box module
 --
-function new()
+function new(args)
     local dimension = assert(args.dimension)
     local density = assert(args.density)
     local box_ratios = args.box_ratios or {}

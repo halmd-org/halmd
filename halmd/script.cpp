@@ -138,7 +138,7 @@ void script::init(po::variables_map const& vm)
 
     using namespace luabind;
 
-    object options(globals(L)["halmd"]["options"]);
+    object options(globals(L)["halmd"]["modules"]["parsed"]);
     try {
         call_function<void>(options, cref(vm));
     }

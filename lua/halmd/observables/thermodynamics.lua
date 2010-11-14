@@ -38,7 +38,6 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.observables.thermodynamics", halmd.modules.register)
@@ -48,7 +47,7 @@ options = thermodynamics_wrapper[2].options
 --
 -- construct thermodynamics module
 --
-function new()
+function new(args)
     -- dependency injection
     local core = mdsim.core()
     local particle = assert(core.particle)

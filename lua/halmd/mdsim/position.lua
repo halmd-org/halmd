@@ -27,7 +27,6 @@ local position_wrapper = {
 local positions = {
     lattice = require("halmd.mdsim.position.lattice")
 }
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.position", halmd.modules.register)
@@ -35,7 +34,7 @@ module("halmd.mdsim.position", halmd.modules.register)
 --
 -- construct position module
 --
-function new()
+function new(args)
     local position = assert(args.position)
     return positions[position]()
 end

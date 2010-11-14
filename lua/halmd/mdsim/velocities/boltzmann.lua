@@ -40,7 +40,6 @@ local random = {
   , host = require("halmd.host.random")
 }
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.velocities.boltzmann", halmd.modules.register)
@@ -50,7 +49,7 @@ options = boltzmann_wrapper.host[2].options
 --
 -- construct boltzmann module
 --
-function new()
+function new(args)
     local dimension = assert(args.dimension)
     local temperature = assert(args.temperature)
 

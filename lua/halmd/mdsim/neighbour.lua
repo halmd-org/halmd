@@ -36,7 +36,6 @@ if halmd_wrapper.mdsim.gpu then
     }
 end
 local device = require("halmd.device")
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.mdsim.neighbour", halmd.modules.register)
@@ -44,7 +43,7 @@ module("halmd.mdsim.neighbour", halmd.modules.register)
 --
 -- construct neighbour module
 --
-function new()
+function new(args)
     -- dependency injection
     local core = mdsim.core()
     local particle = assert(core.particle)

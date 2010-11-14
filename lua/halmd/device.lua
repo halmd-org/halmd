@@ -24,7 +24,6 @@ local device_wrapper
 if halmd_wrapper.utility.gpu then
     device_wrapper = halmd_wrapper.utility.gpu.device
 end
-local args = require("halmd.options")
 local assert = assert
 
 module("halmd.device", halmd.modules.register)
@@ -34,7 +33,7 @@ local device -- singleton instance
 --
 -- construct device module
 --
-function new()
+function new(args)
     if device_wrapper and not args.disable_gpu then
         local devices = assert(args.device)
         local threads = assert(args.threads)
