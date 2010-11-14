@@ -74,6 +74,24 @@ template <typename T>
 struct default_converter<boost::multi_array<T, 1> >
   : native_converter_base<boost::multi_array<T, 1> >
 {
+    //! compute Lua to C++ conversion score
+    static int compute_score(lua_State* L, int index)
+    {
+        return lua_type(L, index) == LUA_TTABLE ? 0 : -1;
+    }
+
+    //! convert from Lua to C++
+    boost::multi_array<T, 1> from(lua_State* L, int index)
+    {
+        std::size_t size = luaL_getn(L, index);
+        boost::multi_array<T, 1> v(boost::extents[size]);
+        object table(from_stack(L, index));
+        for (std::size_t i = 0; i < v.size(); ++i) {
+            v[i] = object_cast<T>(table[i + 1]);
+        }
+        return v;
+    }
+
     //! convert from C++ to Lua
     void to(lua_State* L, boost::multi_array<T, 1> const& array)
     {
