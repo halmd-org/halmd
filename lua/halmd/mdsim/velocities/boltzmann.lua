@@ -50,11 +50,11 @@ options = boltzmann_wrapper.host[2].options
 -- construct boltzmann module
 --
 function new(args)
-    local dimension = assert(args.dimension)
     local temperature = assert(args.temperature)
 
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
 
     if not device() then

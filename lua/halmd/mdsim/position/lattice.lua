@@ -48,10 +48,9 @@ module("halmd.mdsim.position.lattice", halmd.modules.register)
 -- construct lattice module
 --
 function new(args)
-    local dimension = assert(args.dimension)
-
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
 

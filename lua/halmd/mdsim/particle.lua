@@ -34,6 +34,9 @@ if halmd_wrapper.mdsim.gpu then
       , [3] = halmd_wrapper.mdsim.gpu.particle_3_
     }
 end
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
 local device = require("halmd.device")
 local assert = assert
 
@@ -48,7 +51,8 @@ options = particle_wrapper[2].options
 -- construct particle module
 --
 function new(args)
-    local dimension = assert(args.dimension)
+    local core = mdsim.core() -- singleton
+    local dimension = assert(core.dimension)
     local npart = assert(args.particles)
 
     if not device() then

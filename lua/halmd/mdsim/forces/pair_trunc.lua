@@ -50,11 +50,11 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 -- construct truncated pair force module
 --
 function new(args)
-    local dimension = assert(args.dimension)
     local force = assert(args.force)
 
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
     local potential = mdsim.forces[force]()

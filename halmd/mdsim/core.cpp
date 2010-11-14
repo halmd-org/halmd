@@ -42,7 +42,7 @@ template <int dimension>
 void core<dimension>::options(po::options_description& desc)
 {
     desc.add_options()
-        ("dimension", po::value<int>()->default_value(3),
+        ("dimension", po::value<int>(),
          "dimension of positional coordinates")
         ;
 }

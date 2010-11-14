@@ -42,10 +42,10 @@ local sampler -- singleton instance
 function new(args)
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local integrator = assert(core.integrator)
 
     -- command line options
-    local dimension = assert(args.dimension)
     local sampling_state_vars = assert(args.sampling_state_vars)
     local sampling_trajectory = assert(args.sampling_trajectory)
     local steps = assert(args.steps)

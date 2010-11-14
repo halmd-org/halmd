@@ -51,12 +51,10 @@ module("halmd.observables.trajectory", halmd.modules.register)
 function new(args)
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
     local sample = assert(observables.samples.trajectory())
-
-    -- command line options
-    local dimension = assert(args.dimension)
 
     local trajectory
     if device() then

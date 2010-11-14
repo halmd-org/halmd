@@ -20,12 +20,12 @@
 require("halmd.modules")
 
 -- grab environment
-local mdsim = {
-  core = require("halmd.mdsim.core")
-}
 local box_wrapper = {
     [2] = halmd_wrapper.mdsim.box_2_
   , [3] = halmd_wrapper.mdsim.box_3_
+}
+local mdsim = {
+  core = require("halmd.mdsim.core")
 }
 local assert = assert
 
@@ -37,12 +37,12 @@ options = box_wrapper[2].options
 -- construct box module
 --
 function new(args)
-    local dimension = assert(args.dimension)
     local density = assert(args.density)
     local box_ratios = args.box_ratios or {}
     local box_length = args.box_length -- optional
 
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
 
     local box = box_wrapper[dimension]

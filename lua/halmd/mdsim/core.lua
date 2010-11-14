@@ -37,10 +37,10 @@ local core -- singleton instance
 -- construct core module
 --
 function new(args)
-    local dimension = assert(args.dimension)
+    local dimension = args.dimension or 3 -- default value
     if not core then
         core = core_wrapper[dimension]()
-        assert(core.dimension == args.dimension)
+        assert(core.dimension == dimension)
     end
     return core
 end

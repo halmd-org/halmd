@@ -50,12 +50,10 @@ options = thermodynamics_wrapper[2].options
 function new(args)
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
     local force = assert(core.force)
-
-    -- command line options
-    local dimension = assert(args.dimension)
 
     if not device() then
         return thermodynamics_wrapper.host[dimension](particle, box, force)

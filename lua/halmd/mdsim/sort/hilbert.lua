@@ -38,10 +38,9 @@ module("halmd.mdsim.sort.hilbert", halmd.modules.register)
 -- construct hilbert module
 --
 function new(args)
-    local dimension = assert(args.dimension)
-
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
     local neighbour = assert(core.neighbour)

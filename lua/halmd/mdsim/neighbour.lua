@@ -20,9 +20,6 @@
 require("halmd.modules")
 
 -- grab environment
-local mdsim = {
-    core = require("halmd.mdsim.core")
-}
 local neighbour_wrapper = {
     host = {
         [2] = halmd_wrapper.mdsim.host.neighbour_2_
@@ -35,6 +32,9 @@ if halmd_wrapper.mdsim.gpu then
       , [3] = halmd_wrapper.mdsim.gpu.neighbour_3_
     }
 end
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
 local device = require("halmd.device")
 local assert = assert
 
@@ -46,12 +46,12 @@ module("halmd.mdsim.neighbour", halmd.modules.register)
 function new(args)
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
     local force = assert(core.force)
 
     -- command line options
-    local dimension = assert(args.dimension)
     local skin = assert(args.skin)
 
     if not device() then

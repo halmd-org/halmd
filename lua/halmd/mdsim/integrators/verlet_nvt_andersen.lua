@@ -20,9 +20,6 @@
 require("halmd.modules")
 
 -- grab environment
-local mdsim = {
-  core = require("halmd.mdsim.core")
-}
 local verlet_nvt_andersen_wrapper = {
     host = {
         [2] = halmd_wrapper.mdsim.host.integrators.verlet_nvt_andersen_2_
@@ -35,6 +32,9 @@ if halmd_wrapper.mdsim.gpu then
       , [3] = halmd_wrapper.mdsim.gpu.integrators.verlet_nvt_andersen_3_
     }
 end
+local mdsim = {
+  core = require("halmd.mdsim.core")
+}
 local device = require("halmd.device")
 local random = {
     gpu = require("halmd.gpu.random")
@@ -50,13 +50,13 @@ options = verlet_nvt_andersen_wrapper.host[2].options
 -- construct verlet_nvt_andersen module
 --
 function new(args)
-    local dimension = assert(args.dimension)
     local timestep = assert(args.timestep)
     local temperature = assert(args.temperature)
     local collision_rate = args.andersen_collision_rate or 10
 
     -- dependency injection
     local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
 

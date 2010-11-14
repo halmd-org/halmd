@@ -30,6 +30,9 @@ local io = {
         }
     }
 }
+local mdsim = {
+  core = require("halmd.mdsim.core")
+}
 local parameter = require("halmd.parameter")
 local assert = assert
 
@@ -39,9 +42,11 @@ module("halmd.io.statevars.writers.hdf5", halmd.modules.register)
 -- construct HDF5 statevars writer module
 --
 function new(args)
+    local core = mdsim.core()
+    local dimension = assert(core.dimension)
+
     -- command line options
     local output = assert(args.output)
-    local dimension = assert(args.dimension)
 
     -- parameters
     local file_name = output .. ".msv"

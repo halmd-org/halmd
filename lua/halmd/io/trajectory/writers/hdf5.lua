@@ -35,6 +35,9 @@ local observables = {
         trajectory = require("halmd.observables.samples.trajectory")
     }
 }
+local mdsim = {
+  core = require("halmd.mdsim.core")
+}
 local device = require("halmd.device")
 local parameter = require("halmd.parameter")
 local assert = assert
@@ -46,11 +49,12 @@ module("halmd.io.trajectory.writers.hdf5", halmd.modules.register)
 --
 function new(args)
     -- dependency injection
+    local core = mdsim.core()
+    local dimension = assert(core.dimension)
     local sample = assert(observables.samples.trajectory())
 
     -- command line options
     local output = assert(args.output)
-    local dimension = assert(args.dimension)
 
     -- parameters
     local file_name = output .. ".trj"
