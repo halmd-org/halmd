@@ -25,22 +25,60 @@ local setmetatable = setmetatable
 
 module("halmd.hooks")
 
-local hooks = {}
-
 local objects = setmetatable({}, { __mode = "k" }) -- table with weak keys
 
-function register_hook(func)
-    for object, module in pairs(objects) do
-        func(object, module)
+local object_hooks = {}
+
+--
+-- Register object hook, and apply to registered objects.
+--
+-- An object hook is applied once to each C++ object.
+--
+-- @param hook function, receives C++ object as argument
+--
+function register_object_hook(hook)
+    for object, _ in pairs(objects) do
+        hook(object)
     end
-    table.insert(hooks, func)
+    table.insert(object_hooks, hook)
 end
 
+local module_hooks = {}
+
+--
+-- Register module hook, and apply to registered objects.
+--
+-- A module hook is applied once to each pair of Lua module and C++ object.
+--
+-- @param hook function, receives Lua module and C++ object as arguments
+--
+function register_module_hook(hook)
+    for _, modules in pairs(objects) do
+        for module, object in pairs(modules) do
+            hook(module, object)
+        end
+    end
+    table.insert(module_hooks, hook)
+end
+
+--
+-- Register C++ object, and apply registered object and module hooks.
+--
+-- @param object C++ object
+-- @param module Lua module
+--
 function register_object(object, module)
     if not objects[object] then
-        for i, func in ipairs(hooks) do
-            func(object, module)
+        for _, hook in ipairs(object_hooks) do
+            hook(object)
         end
-        objects[object] = module
+        objects[object] = setmetatable({}, { __mode = "v" }) -- table with weak values
+    end
+    local modules = objects[object]
+    if not modules[module] then
+        for _, hook in ipairs(module_hooks) do
+            hook(module, object)
+        end
+        modules[module] = object
     end
 end
