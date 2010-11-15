@@ -49,7 +49,7 @@ module("halmd.mdsim.integrators.verlet_nvt_andersen", halmd.modules.register)
 -- construct verlet_nvt_andersen module
 --
 function new(args)
-    local timestep = assert(args.timestep)
+    local timestep = args.timestep or 0.01 -- default value
     local temperature = args.temperature or 1.12 -- default value
     local collision_rate = args.andersen_collision_rate or 10 -- default value
 
@@ -75,6 +75,7 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
+    -- FIXME desc:add("timestep,h", po.float(), "integration timestep")
     -- FIXME desc:add("temperature,K", po.float(), "thermostat temperature")
     desc:add("andersen-collision-rate", po.float(), "collision rate for Andersen thermostat")
 end

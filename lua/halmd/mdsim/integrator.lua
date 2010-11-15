@@ -42,8 +42,7 @@ module("halmd.mdsim.integrator", halmd.modules.register)
 --
 function new(args)
     local integrator = args.integrator or "verlet" --default value
-    local timestep = args.timestep or 0.001 -- default value
-    return integrators[integrator]{ timestep = timestep }
+    return integrators[integrator]()
 end
 
 --
@@ -53,5 +52,4 @@ end
 --
 function options(desc)
     desc:add("integrator", po.string(), "specify integration module")
-    desc:add("timestep,h", po.float(), "integration timestep")
 end

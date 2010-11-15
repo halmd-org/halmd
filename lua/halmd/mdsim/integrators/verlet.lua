@@ -35,6 +35,7 @@ end
 local mdsim = {
   core = require("halmd.mdsim.core")
 }
+local po = halmd_wrapper.po
 local device = require("halmd.device")
 local assert = assert
 
@@ -44,7 +45,7 @@ module("halmd.mdsim.integrators.verlet", halmd.modules.register)
 -- construct verlet module
 --
 function new(args)
-    local timestep = assert(args.timestep)
+    local timestep = args.timestep or 0.001 -- default value
 
     -- dependency injection
     local core = mdsim.core()
@@ -56,4 +57,13 @@ function new(args)
         return verlet_wrapper.host[dimension](particle, box, timestep)
     end
     return verlet_wrapper.gpu[dimension](particle, box, timestep)
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("timestep,h", po.float(), "integration timestep")
 end
