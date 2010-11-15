@@ -44,6 +44,9 @@ function new(args)
     return core
 end
 
+-- override default parameter namespace
+namespace = "box"
+
 --
 -- assemble module options
 --
