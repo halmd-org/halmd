@@ -198,14 +198,26 @@ static void po_call_notifier(luabind::object const& f, T const& value)
 }
 
 template <typename T>
-static po::extended_typed_value<T>* po_notifier(po::extended_typed_value<T>* v, luabind::object const& f)
+static po::extended_typed_value<T>* po_notifier(
+    po::extended_typed_value<T>* v, luabind::object const& f
+)
 {
     return v->notifier(bind(&po_call_notifier<T>, f, _1));
 }
 
-static void po_add(po::options_description& desc, char const* name, po::value_semantic const* semantic, char const* description)
+static void po_add_option_description(
+    po::options_description& desc, char const* name
+  , po::value_semantic const* semantic, char const* description
+)
 {
     desc.add_options()(name, semantic, description);
+}
+
+static void po_add_options_description(
+    po::options_description& desc, po::options_description const& other
+)
+{
+    desc.add(other);
 }
 
 /**
@@ -219,7 +231,10 @@ void options_parser::luaopen(lua_State* L)
         namespace_("po")
         [
             class_<po::options_description>("options_description")
-                .def("add", &po_add)
+                .def(constructor<>())
+                .def(constructor<string>())
+                .def("add", &po_add_option_description)
+                .def("add", &po_add_options_description)
 
           , class_<po::variable_value>("variable_value")
                 .def(constructor<>())

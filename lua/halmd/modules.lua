@@ -18,14 +18,15 @@
 --
 
 -- grab environment
-local table = table
+local hooks = require("halmd.hooks")
+local po = halmd_wrapper.po
 local ipairs = ipairs
 local pairs = pairs
-local string = string
 local rawget = rawget
 local rawset = rawset
 local setmetatable = setmetatable
-local hooks = require("halmd.hooks")
+local string = string
+local table = table
 
 --
 -- This module keeps a registry of all HALMD Lua modules.
@@ -101,10 +102,22 @@ end
 -- @param desc Boost.Program_options options description
 --
 function options(desc)
+    local list = {}
+    local map = setmetatable({}, {
+        __index = function(self, key)
+            local desc = po.options_description(key)
+            table.insert(list, desc)
+            rawset(self, key, desc)
+            return desc
+        end
+    })
     for i, module in ipairs(modules) do
         if module.options then
-            module.options(desc)
+            module.options(map[module.namespace])
         end
+    end
+    for i, v in ipairs(list) do
+        desc:add(v)
     end
 end
 

@@ -118,7 +118,7 @@ po::options_description script::options()
 
     using namespace luabind;
 
-    po::options_description desc("Program Options");
+    po::options_description desc;
 
     // retrieve the Lua function before the try-catch block
     // to avoid bogus error message on the Lua stack in case
