@@ -36,18 +36,6 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * Write module parameters to HDF5 group
- */
-template <typename float_type>
-void power_law<float_type>::write_parameters(H5::Group const& group) const
-{
-    h5xx::write_attribute(group, "index", index_);
-    h5xx::write_attribute(group, "epsilon", epsilon_.data());
-    h5xx::write_attribute(group, "sigma", sigma_.data());
-    h5xx::write_attribute(group, "cutoff", r_cut_sigma_.data());
-}
-
-/**
  * Initialise potential parameters
  */
 template <typename float_type>
@@ -113,7 +101,10 @@ void power_law<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                         >())
-                        .def("write_parameters", &power_law::write_parameters)
+                        .def_readonly("index", &power_law::index)
+                        .def_readonly("r_cut_sigma", &power_law::r_cut_sigma)
+                        .def_readonly("epsilon", &power_law::epsilon)
+                        .def_readonly("sigma", &power_law::sigma)
                 ]
             ]
         ]

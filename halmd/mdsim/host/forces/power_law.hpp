@@ -21,7 +21,6 @@
 #define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 
 #include <boost/shared_ptr.hpp>
-#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 #include <utility>
 
@@ -47,7 +46,6 @@ public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
     static void luaopen(lua_State* L);
-    void write_parameters(H5::Group const& group) const;
 
     static char const* name() { return "power law"; }
     static char const* module_name() { return "power_law"; }
@@ -80,7 +78,15 @@ public:
         }
     }
 
-    matrix_type const& r_cut() const { return r_cut_; }
+    int const& index() const
+    {
+        return index_;
+    }
+
+    matrix_type const& r_cut() const
+    {
+        return r_cut_;
+    }
 
     float_type r_cut(unsigned a, unsigned b) const
     {
@@ -92,21 +98,36 @@ public:
         return rr_cut_(a, b);
     }
 
+    matrix_type const& r_cut_sigma() const
+    {
+        return r_cut_sigma_;
+    }
+
+    matrix_type const& epsilon() const
+    {
+        return epsilon_;
+    }
+
+    matrix_type const& sigma() const
+    {
+        return sigma_;
+    }
+
 private:
     /** optimise pow() function by providing the index at compile time */
-    template <int index>
+    template <int const_index>
     std::pair<float_type, float_type> impl_(float_type rr, unsigned a, unsigned b)
     {
         // choose arbitrary index_ if template parameter index = 0
         float_type rni;
-        if (index > 0) {
-            rni = fixed_pow<index>(sigma_(a, b) / std::sqrt(rr));
+        if (const_index > 0) {
+            rni = fixed_pow<const_index>(sigma_(a, b) / std::sqrt(rr));
         }
         else {
             rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);
         }
         float_type en_pot = epsilon_(a, b) * rni;      // U(r)
-        float_type fval = (index > 0 ? index : index_) * en_pot / rr;
+        float_type fval = (const_index > 0 ? const_index : index_) * en_pot / rr;
                                                        // F(r) / r
         en_pot -= en_cut_(a, b);                       // shift potential
 

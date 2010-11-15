@@ -23,7 +23,6 @@
 #include <boost/assign.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
-#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 #include <utility>
 
@@ -48,7 +47,6 @@ public:
     static char const* module_name() { return "lennard_jones"; }
 
     static void luaopen(lua_State* L);
-    void write_parameters(H5::Group const& group) const;
 
     lennard_jones(
         unsigned ntype
@@ -70,7 +68,10 @@ public:
         return std::make_pair(fval, en_pot);
     }
 
-    matrix_type const& r_cut() const { return r_cut_; }
+    matrix_type const& r_cut() const
+    {
+        return r_cut_;
+    }
 
     float_type r_cut(unsigned a, unsigned b) const
     {
@@ -80,6 +81,21 @@ public:
     float_type rr_cut(unsigned a, unsigned b) const
     {
         return rr_cut_(a, b);
+    }
+
+    matrix_type const& r_cut_sigma() const
+    {
+        return r_cut_sigma_;
+    }
+
+    matrix_type const& epsilon() const
+    {
+        return epsilon_;
+    }
+
+    matrix_type const& sigma() const
+    {
+        return sigma_;
     }
 
 private:

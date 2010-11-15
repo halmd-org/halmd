@@ -37,18 +37,6 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * Write module parameters to HDF5 group
- */
-template <typename float_type>
-void morse<float_type>::write_parameters(H5::Group const& group) const
-{
-    h5xx::write_attribute(group, "epsilon", epsilon_.data());
-    h5xx::write_attribute(group, "sigma", sigma_.data());
-    h5xx::write_attribute(group, "cutoff", r_cut_sigma_.data());
-    h5xx::write_attribute(group, "min", r_min_sigma_.data());
-}
-
-/**
  * Initialise Morse potential parameters
  */
 template <typename float_type>
@@ -117,7 +105,10 @@ void morse<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                         >())
-                        .def("write_parameters", &morse::write_parameters)
+                        .def_readonly("r_cut_sigma", &morse::r_cut_sigma)
+                        .def_readonly("epsilon", &morse::epsilon)
+                        .def_readonly("sigma", &morse::sigma)
+                        .def_readonly("r_min_sigma", &morse::r_min_sigma)
                 ]
             ]
         ]

@@ -31,6 +31,7 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
@@ -68,4 +69,17 @@ function options(desc)
     -- FIXME desc:add("sigma", po.float_array(), "collision diameters")
     desc:add("morse-minimum", po.float_array(), "positions of potential minimum for interactions")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param morse module instance
+-- @param group HDF5 group
+--
+function write_parameters(morse, group)
+    group:write_attribute("cutoff", h5.float_array(), morse.r_cut_sigma:data())
+    group:write_attribute("epsilon", h5.float_array(), morse.epsilon:data())
+    group:write_attribute("sigma", h5.float_array(), morse.sigma:data())
+    group:write_attribute("minimum", h5.float_array(), morse.r_min_sigma:data())
 end

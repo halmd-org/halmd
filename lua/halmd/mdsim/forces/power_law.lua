@@ -31,6 +31,7 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
@@ -63,9 +64,22 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("power-law-index", po.int(), "index of soft power-law potential")
+    desc:add("power-law-index", po.uint(), "index of soft power-law potential")
     -- FIXME desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
     -- FIXME desc:add("epsilon", po.float_array(), "potential well depths")
     -- FIXME desc:add("sigma", po.float_array(), "collision diameters")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param power_law module instance
+-- @param group HDF5 group
+--
+function write_parameters(power_law, group)
+    group:write_attribute("index", h5.uint(), power_law.index)
+    group:write_attribute("cutoff", h5.float_array(), power_law.r_cut_sigma:data())
+    group:write_attribute("epsilon", h5.float_array(), power_law.epsilon:data())
+    group:write_attribute("sigma", h5.float_array(), power_law.sigma:data())
 end

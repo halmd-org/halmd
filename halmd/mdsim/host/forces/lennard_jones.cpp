@@ -37,17 +37,6 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * Write module parameters to HDF5 group
- */
-template <typename float_type>
-void lennard_jones<float_type>::write_parameters(H5::Group const& group) const
-{
-    h5xx::write_attribute(group, "epsilon", epsilon_.data());
-    h5xx::write_attribute(group, "sigma", sigma_.data());
-    h5xx::write_attribute(group, "cutoff", r_cut_sigma_.data());
-}
-
-/**
  * Initialise Lennard-Jones potential parameters
  */
 template <typename float_type>
@@ -111,7 +100,9 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                         >())
-                        .def("write_parameters", &lennard_jones::write_parameters)
+                        .def_readonly("r_cut_sigma", &lennard_jones::r_cut_sigma)
+                        .def_readonly("epsilon", &lennard_jones::epsilon)
+                        .def_readonly("sigma", &lennard_jones::sigma)
                 ]
             ]
         ]

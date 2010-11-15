@@ -22,7 +22,6 @@
 
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
@@ -47,7 +46,6 @@ public:
     static char const* module_name() { return "morse"; }
 
     static void luaopen(lua_State* L);
-    void write_parameters(H5::Group const& group) const;
 
     morse(
         unsigned ntype
@@ -64,7 +62,10 @@ public:
         morse_wrapper::rr_cut.bind(g_rr_cut_);
     }
 
-    matrix_type const& r_cut() const { return r_cut_; }
+    matrix_type const& r_cut() const
+    {
+        return r_cut_;
+    }
 
     float_type r_cut(unsigned a, unsigned b) const
     {
@@ -74,6 +75,26 @@ public:
     float_type rr_cut(unsigned a, unsigned b) const
     {
         return rr_cut_(a, b);
+    }
+
+    matrix_type const& r_cut_sigma() const
+    {
+        return r_cut_sigma_;
+    }
+
+    matrix_type const& epsilon() const
+    {
+        return epsilon_;
+    }
+
+    matrix_type const& sigma() const
+    {
+        return sigma_;
+    }
+
+    matrix_type const& r_min_sigma() const
+    {
+        return r_min_sigma_;
     }
 
 private:

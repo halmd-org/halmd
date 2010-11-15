@@ -22,6 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua_wrapper/ublas.hpp>
 #include <halmd/utility/lua_wrapper/variables_map.hpp>
 #include <halmd/version.h>
 
@@ -85,6 +86,8 @@ void script::load_wrapper()
     open(L); //< setup global structures and Lua class support
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
+
+    lua_wrapper::ublas::luaopen(L);
 }
 
 /**
