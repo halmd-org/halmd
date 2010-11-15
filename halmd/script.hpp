@@ -35,7 +35,7 @@ class script
 public:
     script();
     po::options_description options();
-    void init(po::variables_map const& vm);
+    void parsed(po::variables_map const& vm);
     void run();
 
     static int traceback(lua_State* L);

@@ -51,7 +51,7 @@ int main(int argc, char **argv)
         }
         po::variables_map vm(options.parsed());
 
-        script.init(vm); //< pass command line options to Lua
+        script.parsed(vm); //< pass command line options to Lua
 
         log.log_to_console(
             static_cast<logger::severity_level>(vm["verbose"].as<int>())
