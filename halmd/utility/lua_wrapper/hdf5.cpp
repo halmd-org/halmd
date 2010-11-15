@@ -17,15 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/utility/hdf5.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <h5xx/h5xx.hpp>
+#include <luabind/luabind.hpp>
+#include <luabind/exception_handler.hpp>
+
+#include <halmd/utility/lua_wrapper/hdf5.hpp>
+#include <halmd/utility/lua_wrapper/vector_converter.hpp>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd
 {
-namespace io { namespace hdf5
+namespace lua_wrapper { namespace hdf5
 {
 
 /**
@@ -153,14 +157,6 @@ int luaopen(lua_State* L)
     return 0;
 }
 
-static __attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &luaopen
-    ];
-}
-
-}} // namespace io::hdf5
+}} // namespace lua_wrapper::hdf5
 
 } // namespace halmd

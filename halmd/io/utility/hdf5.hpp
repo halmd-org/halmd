@@ -24,13 +24,6 @@
 
 namespace halmd
 {
-namespace io { namespace hdf5
-{
-
-int luaopen(lua_State* L);
-
-}} // namespace io::hdf5
-
 namespace detail { namespace numeric { namespace blas
 {
 

@@ -21,6 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
+#include <halmd/utility/lua_wrapper/hdf5.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/lua_wrapper/program_options.hpp>
 #include <halmd/utility/lua_wrapper/ublas.hpp>
@@ -87,6 +88,7 @@ void script::load_wrapper()
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
 
+    lua_wrapper::hdf5::luaopen(L);
     lua_wrapper::program_options::luaopen(L);
     lua_wrapper::ublas::luaopen(L);
 }

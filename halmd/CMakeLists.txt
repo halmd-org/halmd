@@ -7,7 +7,6 @@ set(HALMD_MODULES
   halmd_io_trajectory
   halmd_io_trajectory_readers
   halmd_io_trajectory_writers
-  halmd_io_utility
   halmd_mdsim
   halmd_mdsim_host
   halmd_mdsim_host_forces
