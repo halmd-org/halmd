@@ -62,8 +62,8 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("cutoff", po.array_float(), "truncate potential at cutoff radius")
-    desc:add("epsilon", po.array_float(), "potential well depths")
-    desc:add("sigma", po.array_float(), "collision diameters")
-    -- FIXME desc:add("smooth", po.array_float(), "C²-potential smoothing factor")
+    desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
+    desc:add("epsilon", po.float_array(), "potential well depths")
+    desc:add("sigma", po.float_array(), "collision diameters")
+    -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end

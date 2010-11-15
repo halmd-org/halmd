@@ -53,7 +53,7 @@ end
 --
 function options(desc)
     if device_wrapper then
-        desc:add("device,D", po.array_int(), "CUDA device(s)")
+        desc:add("device,D", po.int_array(), "CUDA device(s)")
         desc:add("threads,T", po.uint(), "number of CUDA threads per block")
         desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end

@@ -273,36 +273,36 @@ void options_parser::luaopen(lua_State* L)
           , def("float", &po_value<double>)
           , def("string", &po_value<string>)
 
-          , class_<po::extended_typed_value<multi_array<int, 1> >, po::value_semantic>("typed_value_array_int")
+          , class_<po::extended_typed_value<multi_array<int, 1> >, po::value_semantic>("typed_value_int_array")
                 .def("notifier", &po_notifier<int>)
                 .def("conflicts", &po::extended_typed_value<multi_array<int, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<int, 1> >::depends)
 
-          , class_<po::extended_typed_value<multi_array<unsigned int, 1> >, po::value_semantic>("typed_value_array_uint")
+          , class_<po::extended_typed_value<multi_array<unsigned int, 1> >, po::value_semantic>("typed_value_uint_array")
                 .def("notifier", &po_notifier<unsigned int>)
                 .def("conflicts", &po::extended_typed_value<multi_array<unsigned int, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<unsigned int, 1> >::depends)
 
-          , class_<po::extended_typed_value<multi_array<int64_t, 1> >, po::value_semantic>("typed_value_array_int64")
+          , class_<po::extended_typed_value<multi_array<int64_t, 1> >, po::value_semantic>("typed_value_int64_array")
                 .def("notifier", &po_notifier<int64_t>)
                 .def("conflicts", &po::extended_typed_value<multi_array<int64_t, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<int64_t, 1> >::depends)
 
-          , class_<po::extended_typed_value<multi_array<uint64_t, 1> >, po::value_semantic>("typed_value_array_uint64")
+          , class_<po::extended_typed_value<multi_array<uint64_t, 1> >, po::value_semantic>("typed_value_uint64_array")
                 .def("notifier", &po_notifier<uint64_t>)
                 .def("conflicts", &po::extended_typed_value<multi_array<uint64_t, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<uint64_t, 1> >::depends)
 
-          , class_<po::extended_typed_value<multi_array<double, 1> >, po::value_semantic>("typed_value_array_float")
+          , class_<po::extended_typed_value<multi_array<double, 1> >, po::value_semantic>("typed_value_float_array")
                 .def("notifier", &po_notifier<double>)
                 .def("conflicts", &po::extended_typed_value<multi_array<double, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<double, 1> >::depends)
 
-          , def("array_int", &po_value<multi_array<int, 1> >)
-          , def("array_uint", &po_value<multi_array<unsigned int, 1> >)
-          , def("array_int64", &po_value<multi_array<int64_t, 1> >)
-          , def("array_uint64", &po_value<multi_array<uint64_t, 1> >)
-          , def("array_float", &po_value<multi_array<double, 1> >)
+          , def("int_array", &po_value<multi_array<int, 1> >)
+          , def("uint_array", &po_value<multi_array<unsigned int, 1> >)
+          , def("int64_array", &po_value<multi_array<int64_t, 1> >)
+          , def("uint64_array", &po_value<multi_array<uint64_t, 1> >)
+          , def("float_array", &po_value<multi_array<double, 1> >)
         ]
     ];
 }

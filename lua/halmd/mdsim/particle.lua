@@ -68,7 +68,7 @@ namespace = "box"
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("particles,N", po.array_uint(), "number of particles")
+    desc:add("particles,N", po.uint_array(), "number of particles")
 end
 
 --
@@ -78,5 +78,5 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(particle, group)
-    group:write_attribute("particles", h5.array_uint(), particle.ntypes)
+    group:write_attribute("particles", h5.uint_array(), particle.ntypes)
 end

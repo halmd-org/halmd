@@ -71,8 +71,8 @@ end
 --
 function options(desc)
     desc:add("density,d", po.float(), "particle density")
-    desc:add("box-length,L", po.array_float():conflicts("density"), "edge lengths of simulation box")
-    desc:add("box-ratios", po.array_float():conflicts("box-length"), "aspect ratios of simulation box (specify relative edge lengths)")
+    desc:add("box-length,L", po.float_array():conflicts("density"), "edge lengths of simulation box")
+    desc:add("box-ratios", po.float_array():conflicts("box-length"), "aspect ratios of simulation box (specify relative edge lengths)")
 end
 
 --
@@ -82,6 +82,6 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(box, group)
-    group:write_attribute("length", h5.array_float(), box.length)
+    group:write_attribute("length", h5.float_array(), box.length)
     group:write_attribute("density", h5.float(), box.density)
 end

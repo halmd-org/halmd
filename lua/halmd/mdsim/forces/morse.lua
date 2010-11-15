@@ -63,9 +63,9 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    -- FIXME desc:add("cutoff", po.array_float(), "truncate potential at cutoff radius")
-    -- FIXME desc:add("epsilon", po.array_float(), "potential well depths")
-    -- FIXME desc:add("sigma", po.array_float(), "collision diameters")
-    desc:add("morse-minimum", po.array_float(), "positions of potential minimum for interactions")
-    -- FIXME desc:add("smooth", po.array_float(), "C²-potential smoothing factor")
+    -- FIXME desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
+    -- FIXME desc:add("epsilon", po.float_array(), "potential well depths")
+    -- FIXME desc:add("sigma", po.float_array(), "collision diameters")
+    desc:add("morse-minimum", po.float_array(), "positions of potential minimum for interactions")
+    -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
