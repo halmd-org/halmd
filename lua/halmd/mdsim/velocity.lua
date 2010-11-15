@@ -40,6 +40,9 @@ function new(args)
     return velocities[velocity]()
 end
 
+-- override default parameter namespace
+namespace = "core"
+
 --
 -- assemble module options
 --

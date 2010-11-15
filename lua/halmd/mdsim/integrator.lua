@@ -45,6 +45,9 @@ function new(args)
     return integrators[integrator]()
 end
 
+-- override default parameter namespace
+namespace = "core"
+
 --
 -- assemble module options
 --

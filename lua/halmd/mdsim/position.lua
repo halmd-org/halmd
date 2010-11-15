@@ -40,6 +40,9 @@ function new(args)
     return positions[position]()
 end
 
+-- override default parameter namespace
+namespace = "core"
+
 --
 -- assemble module options
 --
