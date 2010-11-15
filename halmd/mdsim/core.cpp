@@ -35,15 +35,6 @@ namespace mdsim
 {
 
 /**
- * Write module parameters to HDF5 group
- */
-template <int dimension>
-void core<dimension>::write_parameters(H5::Group const& param) const
-{
-    h5xx::write_attribute(param, "dimension", dimension);
-}
-
-/**
  * Initialize simulation
  */
 template <int dimension>
@@ -122,7 +113,6 @@ void core<dimension>::luaopen(lua_State* L)
                 class_<core, shared_ptr<core> >(class_name.c_str())
                     .def(constructor<>())
                     .def("register_runtimes", &core::register_runtimes)
-                    .def("write_parameters", &core::write_parameters)
                     .def_readwrite("particle", &core::particle)
                     .def_readwrite("box", &core::box)
                     .def_readwrite("force", &core::force)

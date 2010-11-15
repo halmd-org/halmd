@@ -70,3 +70,13 @@ namespace = "box"
 function options(desc)
     desc:add("particles,N", po.array_uint(), "number of particles")
 end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param core module instance
+-- @param group HDF5 group
+--
+function write_parameters(particle, group)
+    group:write_attribute("particles", h5.array_uint(), particle.ntypes)
+end

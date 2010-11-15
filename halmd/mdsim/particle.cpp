@@ -38,15 +38,6 @@ namespace mdsim
 {
 
 /**
- * Write module parameters to HDF5 group
- */
-template <int dimension>
-void particle<dimension>::write_parameters(H5::Group const& param) const
-{
-    h5xx::write_attribute(param, "particles", ntypes);
-}
-
-/**
  * Register option value types with Lua
  */
 static __attribute__((constructor)) void register_option_converters()
@@ -94,7 +85,6 @@ void particle<dimension>::luaopen(lua_State* L)
             namespace_("mdsim")
             [
                 class_<particle, shared_ptr<particle> >(class_name.c_str())
-                    .def("write_parameters", &particle::write_parameters)
                     .def_readonly("nbox", &particle::nbox)
                     .def_readonly("ntype", &particle::ntype)
                     .def_readonly("ntypes", &particle::ntypes)

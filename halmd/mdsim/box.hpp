@@ -23,7 +23,6 @@
 #include <boost/multi_array.hpp>
 #include <numeric>
 #include <functional>
-#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 
 #include <halmd/mdsim/particle.hpp>
@@ -52,7 +51,6 @@ public:
       , double density
       , vector_type const& ratios
     );
-    void write_parameters(H5::Group const& param) const;
 
     vector_type const& length() { return length_; }
     double density() { return density_; }

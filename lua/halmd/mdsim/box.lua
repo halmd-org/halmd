@@ -74,3 +74,14 @@ function options(desc)
     desc:add("box-length,L", po.array_float():conflicts("density"), "edge lengths of simulation box")
     desc:add("box-ratios", po.array_float():conflicts("box-length"), "aspect ratios of simulation box (specify relative edge lengths)")
 end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param box module instance
+-- @param group HDF5 group
+--
+function write_parameters(box, group)
+    group:write_attribute("length", h5.array_float(), box.length)
+    group:write_attribute("density", h5.float(), box.density)
+end

@@ -33,24 +33,6 @@ namespace mdsim
 {
 
 /**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<multi_array<float, 1> >();
-}
-
-/**
- * Write module parameters to HDF5 group
- */
-template <int dimension>
-void box<dimension>::write_parameters(H5::Group const& param) const
-{
-    h5xx::write_attribute(param, "length", length_);
-    h5xx::write_attribute(param, "density", density_);
-}
-
-/**
  * Set box edge lengths
  */
 template <int dimension>
@@ -101,7 +83,8 @@ void box<dimension>::luaopen(lua_State* L)
                 class_<box, shared_ptr<box> >(class_name.c_str())
                     .def(constructor<shared_ptr<particle_type>, vector_type const&>())
                     .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
-                    .def("write_parameters", &box::write_parameters)
+                    .def_readonly("length", &box::length)
+                    .def_readonly("density", &box::density)
             ]
         ]
     ];

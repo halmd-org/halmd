@@ -52,3 +52,13 @@ end
 function options(desc)
     desc:add("dimension", po.uint(), "dimension of positional coordinates")
 end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param core module instance
+-- @param group HDF5 group
+--
+function write_parameters(core, group)
+    group:write_attribute("dimension", h5.uint(), core.dimension)
+end
