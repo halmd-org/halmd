@@ -21,7 +21,6 @@
 #define HALMD_UTILITY_PROGRAM_OPTIONS_ARRAY_HPP
 
 #include <boost/array.hpp>
-#include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/multi_array.hpp>
@@ -68,7 +67,7 @@ std::istream& operator>>(std::istream& is, boost::multi_array<T, 1>& value)
         getline(is, str, ',');
         v.push_back(boost::lexical_cast<T>(str));
     }
-    boost::array<size_t, 1> extents = boost::assign::list_of(v.size());
+    boost::array<size_t, 1> extents = {{ v.size() }};
     value.resize(extents);
     std::copy(v.begin(), v.end(), value.begin());
     return is;
