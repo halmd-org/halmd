@@ -22,14 +22,25 @@
 
 #include <h5xx/h5xx.hpp>
 
-namespace halmd { namespace detail { namespace numeric { namespace blas
+namespace halmd
+{
+namespace io { namespace hdf5
+{
+
+int luaopen(lua_State* L);
+
+}} // namespace io::hdf5
+
+namespace detail { namespace numeric { namespace blas
 {
 
 // forward declaration
 template <typename T, size_t N>
 struct fixed_vector;
 
-}}}} // namespace halmd::detail::numeric::blas
+}}} // namespace detail::numeric::blas
+
+} // namespace halmd
 
 namespace boost { namespace numeric { namespace ublas
 {
