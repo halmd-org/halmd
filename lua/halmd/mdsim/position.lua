@@ -32,14 +32,19 @@ local assert = assert
 
 module("halmd.mdsim.position", halmd.modules.register)
 
-function options(desc)
-    desc:add("position", po.string(), "initial particle positions module")
-end
-
 --
 -- construct position module
 --
 function new(args)
     local position = args.position or "lattice" -- default value
     return positions[position]()
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("position", po.string(), "initial particle positions module")
 end

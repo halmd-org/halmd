@@ -29,14 +29,6 @@ local assert = assert
 
 module("halmd.device", halmd.modules.register)
 
-function options(desc)
-    if device_wrapper then
-        desc:add("device,D", po.array_int(), "CUDA device(s)")
-        desc:add("threads,T", po.uint(), "number of CUDA threads per block")
-        desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
-    end
-end
-
 local device -- singleton instance
 
 --
@@ -51,5 +43,18 @@ function new(args)
             device = device_wrapper(devices, threads)
         end
         return device
+    end
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    if device_wrapper then
+        desc:add("device,D", po.array_int(), "CUDA device(s)")
+        desc:add("threads,T", po.uint(), "number of CUDA threads per block")
+        desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end

@@ -29,11 +29,6 @@ local assert = assert
 
 module("halmd.host.random", halmd.modules.register)
 
-function options(desc)
-    desc:add("random-seed", po.uint(), "random number generator integer seed")
-    desc:add("random-file", po.string(), "read random seed from file")
-end
-
 local random -- singleton instance
 
 --
@@ -50,4 +45,14 @@ function new(args)
         random = random_wrapper.host.gfsr4(seed)
     end
     return random
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("random-seed", po.uint(), "random number generator integer seed")
+    desc:add("random-file", po.string(), "read random seed from file")
 end

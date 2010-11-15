@@ -28,6 +28,11 @@ local po = halmd_wrapper.po
 
 module("halmd.io.trajectory.reader", halmd.modules.register)
 
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
 function options(desc)
     desc:add("trajectory-file,J", po.string(), "trajectory input file")
     desc:add("trajectory-sample,S", po.int64_t():depends("trajectory-file"), "trajectory sample for initial state")

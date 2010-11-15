@@ -32,14 +32,19 @@ local assert = assert
 
 module("halmd.mdsim.force", halmd.modules.register)
 
-function options(desc)
-    desc:add("force", po.string(), "specify force module")
-end
-
 --
 -- construct force module
 --
 function new(args)
     local force = args.force or "lennard_jones" -- default value
     return forces.pair_trunc{ force = force }
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("force", po.string(), "specify force module")
 end

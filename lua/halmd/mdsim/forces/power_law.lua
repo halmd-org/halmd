@@ -36,14 +36,6 @@ local assert = assert
 
 module("halmd.mdsim.forces.power_law", halmd.modules.register)
 
-function options(desc)
-    desc:add("power-law-index", po.int(), "index of soft power-law potential")
-    -- FIXME desc:add("cutoff", po.array_float(), "truncate potential at cutoff radius")
-    -- FIXME desc:add("epsilon", po.array_float(), "potential well depths")
-    -- FIXME desc:add("sigma", po.array_float(), "collision diameters")
-    -- FIXME desc:add("smooth", po.array_float(), "C²-potential smoothing factor")
-end
-
 --
 -- construct power law module
 --
@@ -63,4 +55,17 @@ function new(args)
         power_law = assert(power_law_wrapper.host)
     end
     return power_law(particle.ntype, index, cutoff, epsilon, sigma)
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("power-law-index", po.int(), "index of soft power-law potential")
+    -- FIXME desc:add("cutoff", po.array_float(), "truncate potential at cutoff radius")
+    -- FIXME desc:add("epsilon", po.array_float(), "potential well depths")
+    -- FIXME desc:add("sigma", po.array_float(), "collision diameters")
+    -- FIXME desc:add("smooth", po.array_float(), "C²-potential smoothing factor")
 end

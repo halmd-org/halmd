@@ -37,11 +37,6 @@ local assert = assert
 
 module("halmd.mdsim.integrator", halmd.modules.register)
 
-function options(desc)
-    desc:add("integrator", po.string(), "specify integration module")
-    desc:add("timestep,h", po.float(), "integration timestep")
-end
-
 --
 -- construct integrator module
 --
@@ -49,4 +44,14 @@ function new(args)
     local integrator = args.integrator or "verlet" --default value
     local timestep = args.timestep or 0.001 -- default value
     return integrators[integrator]{ timestep = timestep }
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("integrator", po.string(), "specify integration module")
+    desc:add("timestep,h", po.float(), "integration timestep")
 end

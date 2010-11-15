@@ -27,19 +27,17 @@ local box_wrapper = {
 local mdsim = {
   core = require("halmd.mdsim.core")
 }
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.box", halmd.modules.register)
 
-function options(desc)
-    desc:add("density,d", po.float(), "particle density")
-    desc:add("box-length,L", po.array_float():conflicts("density"), "edge lengths of simulation box")
-    desc:add("box-ratios", po.array_float():conflicts("box-length"), "aspect ratios of simulation box (specify relative edge lengths)")
-end
-
 --
--- construct box module
+-- construct box module instance
+--
+-- @param args parameter table
+-- @returns box module instance
 --
 function new(args)
     local density = args.density or 0.75 -- default value
@@ -64,4 +62,15 @@ function new(args)
         end
         return box(particle, density, box_ratios)
     end
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("density,d", po.float(), "particle density")
+    desc:add("box-length,L", po.array_float():conflicts("density"), "edge lengths of simulation box")
+    desc:add("box-ratios", po.array_float():conflicts("box-length"), "aspect ratios of simulation box (specify relative edge lengths)")
 end

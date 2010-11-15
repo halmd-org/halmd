@@ -33,13 +33,6 @@ local math = math
 
 module("halmd.sampler", halmd.modules.register)
 
-function options(desc)
-    desc:add("steps,s", po.uint64(), "number of simulation steps")
-    desc:add("time,t", po.float():conflicts("steps"), "total simulation time")
-    desc:add("sampling-state-vars", po.uint(), "sample macroscopic state variables every given number of integration steps")
-    desc:add("sampling-trajectory", po.uint(), "sample trajectory every given number of integration steps")
-end
-
 local sampler -- singleton instance
 
 --
@@ -65,4 +58,16 @@ function new(args)
         sampler = wrapper(core, steps, sampling_state_vars, sampling_trajectory)
     end
     return sampler
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("steps,s", po.uint64(), "number of simulation steps")
+    desc:add("time,t", po.float():conflicts("steps"), "total simulation time")
+    desc:add("sampling-state-vars", po.uint(), "sample macroscopic state variables every given number of integration steps")
+    desc:add("sampling-trajectory", po.uint(), "sample trajectory every given number of integration steps")
 end

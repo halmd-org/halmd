@@ -38,18 +38,12 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 local print = print
 
 module("halmd.mdsim.particle", halmd.modules.register)
-
--- override default parameter namespace
-namespace = "box"
-
-function options(desc)
-    desc:add("particles,N", po.array_int(), "number of particles")
-end
 
 --
 -- construct particle module
@@ -63,4 +57,16 @@ function new(args)
         return particle_wrapper.host[dimension](npart)
     end
     return particle_wrapper.gpu[dimension](device(), npart)
+end
+
+-- override default parameter namespace
+namespace = "box"
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("particles,N", po.array_uint(), "number of particles")
 end

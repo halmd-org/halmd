@@ -41,13 +41,6 @@ local assert = assert
 
 module("halmd.mdsim.neighbour", halmd.modules.register)
 
-function options(desc)
-    desc:add("skin", po.float(), "neighbour list skin")
-    if neighbour_wrapper.gpu then
-        desc:add("cell-occupancy", po.float(), "desired average cell occupancy")
-    end
-end
-
 --
 -- construct neighbour module
 --
@@ -67,4 +60,16 @@ function new(args)
     end
     local cell_occupancy = args.cell_occupancy or 0.4 -- default value
     return neighbour_wrapper.gpu[dimension](particle, box, force, skin, cell_occupancy)
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("skin", po.float(), "neighbour list skin")
+    if neighbour_wrapper.gpu then
+        desc:add("cell-occupancy", po.float(), "desired average cell occupancy")
+    end
 end

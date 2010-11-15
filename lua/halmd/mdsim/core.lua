@@ -24,19 +24,13 @@ local core_wrapper = {
     [2] = halmd_wrapper.mdsim.core_2_
   , [3] = halmd_wrapper.mdsim.core_3_
 }
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.core", halmd.modules.register)
 
--- override default parameter namespace
-namespace = "box"
-
 local core -- singleton instance
-
-function options(desc)
-    desc:add("dimension", po.int(), "dimension of positional coordinates")
-end
 
 --
 -- construct core module
@@ -48,4 +42,13 @@ function new(args)
         assert(core.dimension == dimension)
     end
     return core
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("dimension", po.uint(), "dimension of positional coordinates")
 end

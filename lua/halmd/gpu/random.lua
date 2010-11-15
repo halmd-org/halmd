@@ -32,15 +32,6 @@ local assert = assert
 
 module("halmd.gpu.random", halmd.modules.register)
 
-function options(desc)
-    if random_wrapper.gpu then
-        desc:add("random-seed", po.uint(), "random number generator integer seed")
-        desc:add("random-file", po.string(), "read random seed from file")
-        desc:add("random-blocks", po.uint(), "number of CUDA blocks")
-        desc:add("random-threads", po.uint(), "number of CUDA threads per block")
-    end
-end
-
 local random -- singleton instance
 
 --
@@ -59,4 +50,18 @@ function new(args)
         random = random_wrapper.gpu.rand48(device(), seed, blocks, threads)
     end
     return random
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    if random_wrapper.gpu then
+        desc:add("random-seed", po.uint(), "random number generator integer seed")
+        desc:add("random-file", po.string(), "read random seed from file")
+        desc:add("random-blocks", po.uint(), "number of CUDA blocks")
+        desc:add("random-threads", po.uint(), "number of CUDA threads per block")
+    end
 end

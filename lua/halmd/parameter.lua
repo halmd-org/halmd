@@ -32,14 +32,14 @@ module("halmd.parameter", halmd.modules.register)
 --
 function register_writer(writer)
     hooks.register_hook(function(object, module)
-        if object.write_parameters then
+        if module.write_parameters then
             -- HDF5 file with write access
             local file = writer:file()
             -- open parameter/namespace group
             local namespace = assert(module.namespace)
             local group = file:open_group("param/" .. namespace)
 
-            object:write_parameters(group)
+            module.write_parameters(object, group)
         end
     end)
 end

@@ -45,11 +45,6 @@ local assert = assert
 
 module("halmd.mdsim.integrators.verlet_nvt_andersen", halmd.modules.register)
 
-function options(desc)
-    -- FIXME desc:add("temperature,K", po.float(), "thermostat temperature")
-    desc:add("andersen-collision-rate", po.float(), "collision rate for Andersen thermostat")
-end
-
 --
 -- construct verlet_nvt_andersen module
 --
@@ -72,4 +67,14 @@ function new(args)
     return verlet_nvt_andersen_wrapper.gpu[dimension](
         particle, box, random.gpu(), timestep, temperature, collision_rate
     )
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    -- FIXME desc:add("temperature,K", po.float(), "thermostat temperature")
+    desc:add("andersen-collision-rate", po.float(), "collision rate for Andersen thermostat")
 end

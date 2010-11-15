@@ -45,10 +45,6 @@ local assert = assert
 
 module("halmd.mdsim.velocities.boltzmann", halmd.modules.register)
 
-function options(desc)
-    desc:add("temperature,K", po.float(), "Boltzmann distribution temperature")
-end
-
 --
 -- construct boltzmann module
 --
@@ -64,4 +60,13 @@ function new(args)
         return boltzmann_wrapper.host[dimension](particle, random.host(), temperature)
     end
     return boltzmann_wrapper.gpu[dimension](particle, random.gpu(), temperature)
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("temperature,K", po.float(), "Boltzmann distribution temperature")
 end
