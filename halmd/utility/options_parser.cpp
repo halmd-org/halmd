@@ -28,7 +28,6 @@
 #include <halmd/io/logger.hpp> //< logger::warning
 #include <halmd/utility/options_parser.hpp>
 #include <halmd/utility/date_time.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -170,7 +169,7 @@ void options_parser::parse(int argc, char** argv)
             for_each(
                 config.begin()
               , config.end()
-              , bind(&options_parser::parse_config_file, this, _1)
+              , lambda::bind(&options_parser::parse_config_file, this, lambda::_1)
             );
         }
     }
@@ -178,156 +177,6 @@ void options_parser::parse(int argc, char** argv)
         print_error(e);
         throw exit_exception(EXIT_FAILURE);
     }
-}
-
-template <typename T>
-static po::extended_typed_value<T>* po_value()
-{
-    return po::value<T>();
-}
-
-static po::extended_typed_value<bool>* po_bool_switch()
-{
-    return po::bool_switch();
-}
-
-template <typename T>
-static void po_call_notifier(luabind::object const& f, T const& value)
-{
-    luabind::call_function<void>(f, cref(value));
-}
-
-template <typename T>
-static po::extended_typed_value<T>* po_notifier(
-    po::extended_typed_value<T>* v, luabind::object const& f
-)
-{
-    return v->notifier(bind(&po_call_notifier<T>, f, _1));
-}
-
-static void po_add_option_description(
-    po::options_description& desc, char const* name
-  , po::value_semantic const* semantic, char const* description
-)
-{
-    desc.add_options()(name, semantic, description);
-}
-
-static void po_add_options_description(
-    po::options_description& desc, po::options_description const& other
-)
-{
-    desc.add(other);
-}
-
-/**
- * register Lua C++ wrapper
- */
-void options_parser::luaopen(lua_State* L)
-{
-    using namespace luabind;
-    module(L, "halmd_wrapper")
-    [
-        namespace_("po")
-        [
-            class_<po::options_description>("options_description")
-                .def(constructor<>())
-                .def(constructor<string>())
-                .def("add", &po_add_option_description)
-                .def("add", &po_add_options_description)
-
-          , class_<po::variable_value>("variable_value")
-                .def(constructor<>())
-                .def("empty", &po::variable_value::empty)
-                .def("defaulted", &po::variable_value::defaulted)
-                .def("value", (any const& (po::variable_value::*)() const) &po::variable_value::value)
-                //< only return-by-value is supported by Luabind boost::any converter
-
-          , class_<po::value_semantic>("value_semantic")
-
-          , class_<po::extended_typed_value<bool>, po::value_semantic>("typed_value_bool")
-                .def("notifier", &po_notifier<bool>)
-                .def("conflicts", &po::extended_typed_value<bool>::conflicts)
-                .def("depends", &po::extended_typed_value<bool>::depends)
-
-          , class_<po::extended_typed_value<int>, po::value_semantic>("typed_value_int")
-                .def("notifier", &po_notifier<int>)
-                .def("conflicts", &po::extended_typed_value<int>::conflicts)
-                .def("depends", &po::extended_typed_value<int>::depends)
-
-          , class_<po::extended_typed_value<unsigned int>, po::value_semantic>("typed_value_uint")
-                .def("notifier", &po_notifier<unsigned int>)
-                .def("conflicts", &po::extended_typed_value<unsigned int>::conflicts)
-                .def("depends", &po::extended_typed_value<unsigned int>::depends)
-
-          , class_<po::extended_typed_value<int64_t>, po::value_semantic>("typed_value_int64")
-                .def("notifier", &po_notifier<int64_t>)
-                .def("conflicts", &po::extended_typed_value<int64_t>::conflicts)
-                .def("depends", &po::extended_typed_value<int64_t>::depends)
-
-          , class_<po::extended_typed_value<uint64_t>, po::value_semantic>("typed_value_uint64")
-                .def("notifier", &po_notifier<uint64_t>)
-                .def("conflicts", &po::extended_typed_value<uint64_t>::conflicts)
-                .def("depends", &po::extended_typed_value<uint64_t>::depends)
-
-          , class_<po::extended_typed_value<double>, po::value_semantic>("typed_value_float")
-                .def("notifier", &po_notifier<double>)
-                .def("conflicts", &po::extended_typed_value<double>::conflicts)
-                .def("depends", &po::extended_typed_value<double>::depends)
-
-          , class_<po::extended_typed_value<string>, po::value_semantic>("typed_value_string")
-                .def("notifier", &po_notifier<string>)
-                .def("conflicts", &po::extended_typed_value<string>::conflicts)
-                .def("depends", &po::extended_typed_value<string>::depends)
-
-          , def("bool_switch", &po_bool_switch)
-          , def("int", &po_value<int>)
-          , def("uint", &po_value<unsigned int>)
-          , def("int64", &po_value<int64_t>)
-          , def("uint64", &po_value<uint64_t>)
-          , def("float", &po_value<double>)
-          , def("string", &po_value<string>)
-
-          , class_<po::extended_typed_value<multi_array<int, 1> >, po::value_semantic>("typed_value_int_array")
-                .def("notifier", &po_notifier<int>)
-                .def("conflicts", &po::extended_typed_value<multi_array<int, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<int, 1> >::depends)
-
-          , class_<po::extended_typed_value<multi_array<unsigned int, 1> >, po::value_semantic>("typed_value_uint_array")
-                .def("notifier", &po_notifier<unsigned int>)
-                .def("conflicts", &po::extended_typed_value<multi_array<unsigned int, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<unsigned int, 1> >::depends)
-
-          , class_<po::extended_typed_value<multi_array<int64_t, 1> >, po::value_semantic>("typed_value_int64_array")
-                .def("notifier", &po_notifier<int64_t>)
-                .def("conflicts", &po::extended_typed_value<multi_array<int64_t, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<int64_t, 1> >::depends)
-
-          , class_<po::extended_typed_value<multi_array<uint64_t, 1> >, po::value_semantic>("typed_value_uint64_array")
-                .def("notifier", &po_notifier<uint64_t>)
-                .def("conflicts", &po::extended_typed_value<multi_array<uint64_t, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<uint64_t, 1> >::depends)
-
-          , class_<po::extended_typed_value<multi_array<double, 1> >, po::value_semantic>("typed_value_float_array")
-                .def("notifier", &po_notifier<double>)
-                .def("conflicts", &po::extended_typed_value<multi_array<double, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<double, 1> >::depends)
-
-          , def("int_array", &po_value<multi_array<int, 1> >)
-          , def("uint_array", &po_value<multi_array<unsigned int, 1> >)
-          , def("int64_array", &po_value<multi_array<int64_t, 1> >)
-          , def("uint64_array", &po_value<multi_array<uint64_t, 1> >)
-          , def("float_array", &po_value<multi_array<double, 1> >)
-        ]
-    ];
-}
-
-static __attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &options_parser::luaopen
-    ];
 }
 
 } // namespace halmd

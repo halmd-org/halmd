@@ -22,8 +22,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua_wrapper/program_options.hpp>
 #include <halmd/utility/lua_wrapper/ublas.hpp>
-#include <halmd/utility/lua_wrapper/variables_map.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -87,6 +87,7 @@ void script::load_wrapper()
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
 
+    lua_wrapper::program_options::luaopen(L);
     lua_wrapper::ublas::luaopen(L);
 }
 
@@ -147,7 +148,7 @@ void script::parsed(po::variables_map const& vm)
 
     object options(globals(L)["halmd"]["modules"]["parsed"]);
     try {
-        call_function<void>(options, cref(vm));
+        call_function<void>(options, vm);
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));

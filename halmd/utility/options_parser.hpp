@@ -20,8 +20,6 @@
 #ifndef HALMD_OPTIONS_PARSER_HPP
 #define HALMD_OPTIONS_PARSER_HPP
 
-#include <lua.hpp>
-
 #include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
@@ -33,8 +31,6 @@ namespace halmd
 class options_parser
 {
 public:
-    static void luaopen(lua_State* L);
-
     options_parser(po::options_description const& desc);
     void parse_command_line(int argc, char** argv);
     void parse_config_file(std::string const& file_name);

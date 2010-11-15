@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,11 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_VARIABLES_MAP_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_VARIABLES_MAP_HPP
+#ifndef HALMD_UTILITY_LUA_WRAPPER_PROGRAM_OPTIONS_HPP
+#define HALMD_UTILITY_LUA_WRAPPER_PROGRAM_OPTIONS_HPP
 
 #include <boost/program_options/variables_map.hpp>
 #include <luabind/luabind.hpp>
+
+#include <halmd/utility/lua_wrapper/any_converter.hpp>
+
+namespace halmd
+{
+namespace lua_wrapper { namespace program_options
+{
+
+int luaopen(lua_State* L);
+
+}} // namespace lua_wrapper::program_options
+
+} // namespace halmd
 
 namespace luabind
 {
@@ -39,7 +52,8 @@ struct default_converter<boost::program_options::variables_map>
         luabind::object table = luabind::newtable(L);
         boost::program_options::variables_map::const_iterator it, end = vm.end();
         for (it = vm.begin(); it != end; ++it) {
-            table[it->first] = it->second;
+            // convert boost::any to Lua value
+            table[it->first] = boost::cref(it->second.value());
         }
         table.push(L);
     }
@@ -51,4 +65,4 @@ struct default_converter<boost::program_options::variables_map const&>
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_VARIABLES_MAP_HPP */
+#endif /* ! HALMD_UTILITY_LUA_WRAPPER_PROGRAM_OPTIONS_HPP */
