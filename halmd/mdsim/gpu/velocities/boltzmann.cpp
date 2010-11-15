@@ -138,7 +138,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
-    string class_name("boltzmann_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("boltzmann_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

@@ -109,7 +109,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name(RandomNumberGenerator::name());
+    static string class_name(RandomNumberGenerator::name());
     module(L)
     [
         namespace_("halmd_wrapper")

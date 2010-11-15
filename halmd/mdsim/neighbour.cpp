@@ -33,7 +33,7 @@ template <int dimension>
 void neighbour<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

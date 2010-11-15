@@ -77,7 +77,7 @@ template <int dimension>
 void particle<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("particle_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("particle_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

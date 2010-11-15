@@ -102,7 +102,7 @@ template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("hdf5_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
+    static string class_name("hdf5_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

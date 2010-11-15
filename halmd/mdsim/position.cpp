@@ -33,7 +33,7 @@ template <int dimension>
 void position<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("position_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("position_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

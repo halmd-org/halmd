@@ -32,7 +32,7 @@ template <int dimension>
 void trajectory<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
     module(L, "halmd_wrapper")
     [
         namespace_("observables")

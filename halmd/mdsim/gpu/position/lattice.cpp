@@ -162,7 +162,7 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("lattice_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("lattice_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

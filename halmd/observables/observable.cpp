@@ -32,7 +32,7 @@ template <int dimension>
 void observable<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("observable_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("observable_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

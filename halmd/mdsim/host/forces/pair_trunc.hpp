@@ -197,7 +197,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
-    std::string class_name("pair_trunc_" + boost::lexical_cast<std::string>(dimension) + "_");
+    static std::string class_name("pair_trunc_" + boost::lexical_cast<std::string>(dimension) + "_");
     module(L, "halmd_wrapper")
     [
         namespace_("mdsim")

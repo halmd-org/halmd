@@ -47,7 +47,7 @@ template <int dimension, typename float_type>
 void smooth<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("smooth_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("smooth_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

@@ -33,7 +33,7 @@ template <int dimension>
 void sort<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    string class_name("sort_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("sort_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

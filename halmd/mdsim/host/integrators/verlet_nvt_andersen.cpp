@@ -144,7 +144,7 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
-    string class_name("verlet_nvt_andersen_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("verlet_nvt_andersen_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
