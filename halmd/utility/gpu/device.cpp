@@ -179,9 +179,9 @@ string device::cuda_runtime_version()
  */
 static void translate_cuda_error(lua_State* L, cuda::error const& e)
 {
-    string error("[CUDA] ");
-    error.append(e.what());
-    lua_pushstring(L, error.c_str());
+    lua_pushliteral(L, "[CUDA] ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
 }
 
 void device::luaopen(lua_State* L)
