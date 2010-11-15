@@ -18,6 +18,7 @@
  */
 
 #include <boost/bind.hpp>
+#include <luabind/class_info.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
@@ -38,11 +39,9 @@ script::script()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
-    using namespace luabind;
-
     luaL_openlibs(L); //< load Lua standard libraries
 
-    set_pcall_callback(&traceback); //< set pcall error handler
+    luabind::set_pcall_callback(&traceback); //< set pcall error handler
 
     package_path(); //< set Lua package path
 
@@ -82,9 +81,9 @@ void script::load_wrapper()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
-    using namespace luabind;
+    luabind::open(L); //< setup global structures and Lua class support
 
-    open(L); //< setup global structures and Lua class support
+    luabind::bind_class_info(L); //< class_info(), class_names()
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
 
