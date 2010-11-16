@@ -68,14 +68,14 @@ void sampler<dimension>::register_runtimes(profiler_type& profiler)
 template <int dimension>
 void sampler<dimension>::run()
 {
-    LOG("setting up simulation box");
-    core->prepare();
-    sample(true);
-
     {
         scoped_timer<timer> timer_(at_key<total_>(runtime_));
-        LOG("starting simulation run");
 
+        LOG("setting up simulation box");
+        core->prepare();
+        sample(true);
+
+        LOG("starting simulation run");
         while (core->step_counter() < steps_) {
             // perform complete MD integration step
             core->mdstep();
