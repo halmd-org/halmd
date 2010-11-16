@@ -141,11 +141,13 @@ int main(int argc, char **argv)
     }
     catch (std::exception const& e) {
         LOG_ERROR(e.what());
-        LOG_WARNING(PROJECT_NAME " aborted");
+        return EXIT_FAILURE;
+    }
+    catch (...) {
+        LOG_ERROR("unknown exception");
         return EXIT_FAILURE;
     }
 
     LOG(PROJECT_NAME " exit");
-
     return EXIT_SUCCESS;
 }
