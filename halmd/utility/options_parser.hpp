@@ -34,9 +34,6 @@ public:
     options_parser(po::options_description const& desc);
     void parse_command_line(int argc, char** argv);
     void parse_config_file(std::string const& file_name);
-    void print_error(std::exception const& error) const;
-    void print_help() const;
-    void print_version() const;
 
     //! returns parsed program options
     po::variables_map const& parsed() const
@@ -49,25 +46,6 @@ public:
 private:
     po::options_description desc_; //< options description
     po::variables_map vm_; //< options map
-};
-
-/**
- * Exit exception
- */
-class exit_exception
-{
-public:
-    //! set exit code
-    exit_exception(int code) : code_(code) {}
-
-    //! returns exit code
-    int code() const throw()
-    {
-        return code_;
-    }
-
-private:
-    int code_; //< exit code
 };
 
 } // namespace halmd

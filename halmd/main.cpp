@@ -18,9 +18,14 @@
  */
 
 #include <boost/algorithm/string/join.hpp>
+#include <boost/lambda/bind.hpp>
+#include <boost/lambda/casts.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <cstdlib> // EXIT_SUCCESS, EXIT_FAILURE
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
+#include <halmd/utility/date_time.hpp>
 #include <halmd/utility/hostname.hpp>
 #include <halmd/utility/options_parser.hpp>
 #include <halmd/version.h>
@@ -32,6 +37,10 @@ using namespace std;
 
 /**
  * Run HAL’s MD package
+ *
+ * This function loads the Lua scripting engine, parses program options
+ * from the command line and optionally a config file, sets up logging,
+ * and runs the Lua simulation script.
  */
 int main(int argc, char **argv)
 {
@@ -42,16 +51,68 @@ int main(int argc, char **argv)
     try {
         static script script; //< load Lua script engine
 
-        options_parser options(script.options());
+        //
+        // assemble program options
+        //
+        po::options_description desc(script.options());
+        desc.add_options()
+            ("output,o",
+             po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S")->notifier(
+                 boost::lambda::bind(
+                     &format_local_time
+                   , boost::lambda::ll_const_cast<string&>(boost::lambda::_1)
+                   , boost::lambda::_1
+                 )
+             ),
+             "output file prefix")
+            ("config,C", po::value<vector<string> >(),
+             "parameter input file")
+            ("trajectory,J", po::value<string>(),
+             "trajectory input file")
+            ("verbose,v", po::accum_value<int>()->default_value(logger::warning),
+             "increase verbosity")
+            ("version",
+             "output version and exit")
+            ("help",
+             "display this help and exit")
+            ;
+
+        //
+        // parse program options from command line and config file
+        //
+        options_parser options(desc);
         try {
             options.parse(argc, argv);
         }
-        catch (exit_exception const& e) {
-            return e.code();
+        catch (po::error const& e) {
+            cerr << PROGRAM_NAME ": " << e.what() << endl;
+            cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
+            return EXIT_FAILURE;
         }
         po::variables_map vm(options.parsed());
 
-        script.parsed(vm); //< pass command line options to Lua
+        //
+        // print version information to stdout
+        //
+        if (vm.count("version")) {
+            cout << PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION << endl << endl
+                 << PROGRAM_COPYRIGHT << endl
+                 << "This is free software. "
+                    "You may redistribute copies of it under the terms of" << endl
+                 << "the GNU General Public License "
+                    "<http://www.gnu.org/licenses/gpl.html>." << endl
+                 << "There is NO WARRANTY, to the extent permitted by law." << endl;
+            return EXIT_SUCCESS;
+        }
+
+        //
+        // print options help message to stdout
+        //
+        if (vm.count("help")) {
+            cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
+                 << desc << endl;
+            return EXIT_SUCCESS;
+        }
 
         log.log_to_console(
             static_cast<logger::severity_level>(vm["verbose"].as<int>())
@@ -73,6 +134,8 @@ int main(int argc, char **argv)
 #endif
         LOG("command line: " << join(vector<string>(argv, argv + argc), " "));
         LOG("host name: " << host_name());
+
+        script.parsed(vm); //< pass command line options to Lua
 
         script.run();
     }

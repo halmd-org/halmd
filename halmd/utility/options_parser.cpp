@@ -17,18 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lambda/bind.hpp>
-#include <boost/lambda/casts.hpp>
 #include <boost/lambda/lambda.hpp>
-#include <cstdlib> // EXIT_SUCCESS, EXIT_FAILURE
+#include <boost/lambda/bind.hpp>
 #include <fstream>
 #include <iostream>
 
-#include <halmd/io/logger.hpp> //< logger::warning
 #include <halmd/utility/options_parser.hpp>
-#include <halmd/utility/date_time.hpp>
-#include <halmd/version.h>
 
 using namespace boost;
 using namespace std;
@@ -36,37 +30,11 @@ using namespace std;
 namespace halmd
 {
 
-// define here to avoid program-wide dependency on <halmd/version.h>
-static char const* default_output_file_name = PROGRAM_NAME "_%Y%m%d_%H%M%S";
-
 /**
  * setup program options description
  */
 options_parser::options_parser(po::options_description const& desc)
-  : desc_(desc)
-{
-    desc_.add_options()
-        ("output,o",
-         po::value<string>()->default_value(default_output_file_name)->notifier(
-             boost::lambda::bind(
-                 &format_local_time
-               , boost::lambda::ll_const_cast<string&>(boost::lambda::_1)
-               , boost::lambda::_1
-             )
-         ),
-         "output file prefix")
-        ("config,C", po::value<vector<string> >(),
-         "parameter input file")
-        ("trajectory,J", po::value<string>(),
-         "trajectory input file")
-        ("verbose,v", po::accum_value<int>()->default_value(logger::warning),
-         "increase verbosity")
-        ("version",
-         "output version and exit")
-        ("help",
-         "display this help and exit")
-        ;
-}
+  : desc_(desc) {}
 
 /**
  * parse command line options
@@ -76,13 +44,16 @@ void options_parser::parse_command_line(int argc, char** argv)
     using namespace po::command_line_style;
     po::command_line_parser parser(argc, argv);
     parser.options(desc_);
+
     // pass an empty positional options description to the command line
     // parser to warn the user of unintentional positional options
     po::positional_options_description pd;
     parser.positional(pd);
-    // disallow abbreviated options, which breaks forward compatibility of
+
+    // disallow abbreviated options, which break forward compatibility of
     // user's scripts as new options are added and create ambiguities
     parser.style(default_style & ~allow_guessing);
+
     po::parsed_options parsed(parser.run());
     po::store(parsed, vm_);
     po::notify(vm_);
@@ -105,77 +76,21 @@ void options_parser::parse_config_file(std::string const& file_name)
 }
 
 /**
- * print options parser error message to stderr
- *
- * @param error exception deriving from std::exception
- */
-void options_parser::print_error(std::exception const& error) const
-{
-    cerr << PROGRAM_NAME ": " << error.what() << endl;
-    cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
-}
-
-/**
- * print options help message to stdout
- */
-void options_parser::print_help() const
-{
-    cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
-         << desc_ << endl;
-}
-
-/**
- * print version information to stdout
- */
-void options_parser::print_version() const
-{
-    cout << PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION << endl << endl
-         << PROGRAM_COPYRIGHT << endl
-         << "This is free software. "
-            "You may redistribute copies of it under the terms of" << endl
-         << "the GNU General Public License "
-            "<http://www.gnu.org/licenses/gpl.html>." << endl
-         << "There is NO WARRANTY, to the extent permitted by law." << endl;
-}
-
-
-/**
  * parse command line and config file options
  *
  * This is a helper function for main().
  */
 void options_parser::parse(int argc, char** argv)
 {
-    try {
-        parse_command_line(argc, argv);
-    }
-    catch (std::exception const& e) {
-        print_error(e);
-        throw exit_exception(EXIT_FAILURE);
-    }
+    parse_command_line(argc, argv);
 
-    if (vm_.count("help")) {
-        print_help();
-        throw exit_exception(EXIT_SUCCESS);
-    }
-    if (vm_.count("version")) {
-        print_version();
-        throw exit_exception(EXIT_SUCCESS);
-    }
-
-    try {
-        if (vm_.count("config")) {
-            vector<string> const& config = vm_["config"].as<vector<string> >();
-            for_each(
-                config.begin()
-              , config.end()
-              , lambda::bind(&options_parser::parse_config_file, this, lambda::_1)
-            );
-        }
-    }
-    catch (std::exception const& e) {
-        print_error(e);
-        throw exit_exception(EXIT_FAILURE);
+    if (vm_.count("config")) {
+        vector<string> const& config = vm_["config"].as<vector<string> >();
+        for_each(
+            config.begin()
+          , config.end()
+          , lambda::bind(&options_parser::parse_config_file, this, lambda::_1)
+        );
     }
 }
 

@@ -135,7 +135,7 @@ po::options_description script::options()
         throw;
     }
 
-    return desc; //< avoid variable in main() at the expense of return-by-value
+    return desc;
 }
 
 /**
