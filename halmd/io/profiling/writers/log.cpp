@@ -57,12 +57,14 @@ static ostream& operator<<(ostream& os, accumulator<T> const& acc)
     value /= conversion[i];
     error /= conversion[i];
 
-    // let number of digits depend on relative error
+    // let number of digits depend on the error value
     if (count(acc) > 1) {
-        unsigned prec = static_cast<unsigned>(ceil(-log10(error)) + 1);
-        os << fixed << setprecision(prec)
-           << value << " " << unit[i] << resetiosflags(ios_base::floatfield);
-        os << setprecision(2) << " (" << error << " " << unit[i] << ", " << count(acc) << " calls)";
+        unsigned prec = static_cast<unsigned>(max(0., ceil(-log10(error)) + 1));
+        os << fixed << setprecision(prec) << value << " " << unit[i];
+        // at least 2 digits for the error
+        prec = static_cast<unsigned>(max(2., ceil(log10(error))));
+        os << resetiosflags(ios_base::floatfield) << setprecision(prec)
+           << " (" << error << " " << unit[i] << ", " << count(acc) << " calls)";
     }
     else {
         os << setprecision(3) << value << " " << unit[i];
