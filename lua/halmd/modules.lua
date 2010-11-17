@@ -72,7 +72,7 @@ function register(module)
             local value
             if module.options then
                 local vm = vm[module.namespace]
-                if type(vm) == 'table' then
+                if type(vm) == "table" then
                     value = rawget(vm, key)
                 end
             end
