@@ -115,7 +115,8 @@ int main(int argc, char **argv)
         // print options help message to stdout
         //
         if (vm.count("help")) {
-            cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
+            cout << "Usage: " PROGRAM_NAME " [OPTION]... [[MODULE] [OPTION]...]..."
+                 << endl << endl
                  << parser.options() << endl;
             return EXIT_SUCCESS;
         }
