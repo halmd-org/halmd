@@ -73,9 +73,9 @@ BOOST_AUTO_TEST_CASE( empty_args_defaulted )
 }
 
 /**
- * test single occurence of module namespace
+ * test single occurrence of module namespace
  */
-BOOST_AUTO_TEST_CASE( single_occurence )
+BOOST_AUTO_TEST_CASE( single_occurrence )
 {
     halmd::options_parser parser;
     po::options_description desc;
@@ -97,9 +97,9 @@ BOOST_AUTO_TEST_CASE( single_occurence )
 }
 
 /**
- * test multiple occurences of module namespace
+ * test multiple occurrences of module namespace
  */
-BOOST_AUTO_TEST_CASE( multiple_occurences )
+BOOST_AUTO_TEST_CASE( multiple_occurrences )
 {
     halmd::options_parser parser;
     po::options_description desc;
@@ -174,9 +174,9 @@ BOOST_AUTO_TEST_CASE( module_independent_and_module_options )
 }
 
 /**
- * test multiple occurences of option
+ * test multiple occurrences of option
  */
-BOOST_AUTO_TEST_CASE( multiple_option_occurences )
+BOOST_AUTO_TEST_CASE( multiple_option_occurrences )
 {
     halmd::options_parser parser;
     po::options_description desc;
@@ -192,9 +192,9 @@ BOOST_AUTO_TEST_CASE( multiple_option_occurences )
 }
 
 /**
- * test multiple occurences of namespace and option
+ * test multiple occurrences of namespace and option
  */
-BOOST_AUTO_TEST_CASE( multiple_namespace_and_option_occurences )
+BOOST_AUTO_TEST_CASE( multiple_namespace_and_option_occurrences )
 {
     halmd::options_parser parser;
     {
