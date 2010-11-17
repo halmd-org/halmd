@@ -21,6 +21,7 @@
 #include <halmd/utility/lua_wrapper/any_converter.hpp>
 #include <halmd/utility/lua_wrapper/array_converter.hpp>
 #include <halmd/utility/lua_wrapper/long_long_converter.hpp>
+#include <halmd/utility/lua_wrapper/program_options.hpp>
 #include <halmd/utility/lua_wrapper/vector_converter.hpp>
 
 namespace halmd
@@ -83,6 +84,8 @@ static __attribute__((constructor)) void register_any_converters()
     register_any_converter<boost::multi_array<long double, 1> >();
     register_any_converter<boost::multi_array<std::string, 1> >();
     register_any_converter<boost::multi_array<char const*, 1> >();
+
+    register_any_converter<boost::program_options::variables_map>();
 }
 
 } // namespace halmd
