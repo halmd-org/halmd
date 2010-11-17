@@ -73,6 +73,21 @@ BOOST_AUTO_TEST_CASE( empty_args_defaulted )
 }
 
 /**
+ * test empty options description
+ */
+BOOST_AUTO_TEST_CASE( empty_options_description )
+{
+    halmd::options_parser parser;
+    po::options_description desc;
+    parser.add(desc, "core");
+    array<char const*, 2> args = {{ "halmd" //< argv[0]
+      , "core"
+    }};
+    po::variables_map vm;
+    BOOST_CHECK_THROW( parser.parse_command_line(args.size(), const_cast<char**>(&args.front()), vm), po::too_many_positional_options_error );
+}
+
+/**
  * test single occurrence of module namespace
  */
 BOOST_AUTO_TEST_CASE( single_occurrence )
