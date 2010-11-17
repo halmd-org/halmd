@@ -56,8 +56,8 @@ namespace = "gpu"
 --
 function options(desc, globals)
     if device_wrapper then
-        desc:add("devices,D", po.int_array(), "CUDA device(s)")
-        desc:add("threads,T", po.uint(), "number of CUDA threads per block")
+        desc:add("devices", po.int_array(), "CUDA device(s)")
+        desc:add("threads", po.uint(), "number of CUDA threads per block")
         globals:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end

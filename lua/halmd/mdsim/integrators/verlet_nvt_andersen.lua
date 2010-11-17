@@ -75,7 +75,7 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("timestep,h", po.float(), "integration timestep")
-    desc:add("temperature,K", po.float(), "thermostat temperature")
+    desc:add("timestep", po.float(), "integration timestep")
+    desc:add("temperature", po.float(), "thermostat temperature")
     desc:add("collision-rate", po.float(), "collision rate for Andersen thermostat")
 end

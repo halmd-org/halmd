@@ -68,7 +68,7 @@ namespace = "box"
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("particles,N", po.uint_array(), "number of particles")
+    desc:add("particles", po.uint_array(), "number of particles")
 end
 
 --

@@ -66,8 +66,8 @@ end
 -- @param desc po.options_description
 --
 function options(desc, globals)
-    globals:add("steps,s", po.uint64(), "number of simulation steps")
-    globals:add("time,t", po.float():conflicts("steps"), "total simulation time")
+    globals:add("steps", po.uint64(), "number of simulation steps")
+    globals:add("time", po.float():conflicts("steps"), "total simulation time")
     desc:add("state-vars", po.uint(), "sample interval for macroscopic state variables")
     desc:add("trajectory", po.uint(), "sample interval for trajectory")
 end

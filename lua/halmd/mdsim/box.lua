@@ -70,9 +70,9 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("density,d", po.float(), "particle density")
-    desc:add("length,L", po.float_array():conflicts("density"), "edge lengths of simulation box")
-    desc:add("ratios", po.float_array():conflicts("length"), "aspect ratios of simulation box (specify relative edge lengths)")
+    desc:add("density", po.float(), "particle density")
+    desc:add("length", po.float_array():conflicts("density"), "edge lengths of simulation box")
+    desc:add("ratios", po.float_array():conflicts("length"), "relative aspect ratios of simulation box")
 end
 
 --

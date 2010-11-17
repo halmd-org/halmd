@@ -68,5 +68,5 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("temperature,K", po.float(), "Boltzmann distribution temperature")
+    desc:add("temperature", po.float(), "Boltzmann distribution temperature")
 end

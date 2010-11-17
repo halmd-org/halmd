@@ -68,15 +68,15 @@ int main(int argc, char **argv)
                  )
              ),
              "output file prefix")
-            ("config,C", po::value<string>(),
+            ("config,c", po::value<string>(),
              "parameter input file")
-            ("trajectory,J", po::value<string>(),
+            ("trajectory", po::value<string>(),
              "trajectory input file")
             ("verbose,v", po::accum_value<int>()->default_value(logger::warning),
              "increase verbosity")
             ("version",
              "output version and exit")
-            ("help",
+            ("help,h",
              "display this help and exit")
             ;
 

@@ -65,5 +65,5 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("timestep,h", po.float(), "integration timestep")
+    desc:add("timestep", po.float(), "integration timestep")
 end
