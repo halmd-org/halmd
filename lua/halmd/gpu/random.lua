@@ -38,10 +38,10 @@ local random -- singleton instance
 -- construct random module
 --
 function new(args)
-    local file = args.random_file or "/dev/random" -- default value
-    local seed = args.random_seed -- optional
-    local blocks = args.random_blocks or 32 -- default value
-    local threads = args.random_threads or 256 -- default value FIXME DEVICE_SCALE
+    local file = args.file or "/dev/random" -- default value
+    local seed = args.seed -- optional
+    local blocks = args.blocks or 32 -- default value
+    local threads = args.threads or 256 -- default value FIXME DEVICE_SCALE
 
     if not random then
         if not seed then
@@ -59,9 +59,7 @@ end
 --
 function options(desc)
     if random_wrapper.gpu then
-        -- FIXME desc:add("random-seed", po.uint(), "random number generator integer seed")
-        -- FIXME desc:add("random-file", po.string(), "read random seed from file")
-        desc:add("random-blocks", po.uint(), "number of CUDA blocks")
-        desc:add("random-threads", po.uint(), "number of CUDA threads per block")
+        desc:add("blocks", po.uint(), "number of CUDA blocks")
+        desc:add("threads", po.uint(), "number of CUDA threads per block")
     end
 end

@@ -58,8 +58,8 @@ function new(args)
     if not device() then
         return neighbour_wrapper.host[dimension](particle, box, force, skin)
     end
-    local cell_occupancy = args.cell_occupancy or 0.4 -- default value
-    return neighbour_wrapper.gpu[dimension](particle, box, force, skin, cell_occupancy)
+    local occupancy = args.occupancy or 0.4 -- default value
+    return neighbour_wrapper.gpu[dimension](particle, box, force, skin, occupancy)
 end
 
 --
@@ -70,6 +70,6 @@ end
 function options(desc)
     desc:add("skin", po.float(), "neighbour list skin")
     if neighbour_wrapper.gpu then
-        desc:add("cell-occupancy", po.float(), "desired average cell occupancy")
+        desc:add("occupancy", po.float(), "desired average cell occupancy")
     end
 end

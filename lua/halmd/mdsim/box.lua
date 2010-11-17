@@ -41,26 +41,26 @@ module("halmd.mdsim.box", halmd.modules.register)
 --
 function new(args)
     local density = args.density or 0.75 -- default value
-    local box_ratios = args.box_ratios or {}
-    local box_length = args.box_length -- optional
+    local ratios = args.ratios or {}
+    local length = args.length -- optional
 
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
 
     local box = box_wrapper[dimension]
-    if box_length then
+    if length then
         -- complete missing values by repeating the last entry
-        for i = #box_length + 1, dimension do
-            box_length[i] = box_length[#box_length]
+        for i = #length + 1, dimension do
+            length[i] = length[#length]
         end
-        return box(particle, box_length)
+        return box(particle, length)
     else
         -- fill up missing values with 1
-        for i = #box_ratios + 1, dimension do
-            box_ratios[i] = 1 -- `neutral' aspect ratio
+        for i = #ratios + 1, dimension do
+            ratios[i] = 1 -- `neutral' aspect ratio
         end
-        return box(particle, density, box_ratios)
+        return box(particle, density, ratios)
     end
 end
 
@@ -71,8 +71,8 @@ end
 --
 function options(desc)
     desc:add("density,d", po.float(), "particle density")
-    desc:add("box-length,L", po.float_array():conflicts("density"), "edge lengths of simulation box")
-    desc:add("box-ratios", po.float_array():conflicts("box-length"), "aspect ratios of simulation box (specify relative edge lengths)")
+    desc:add("length,L", po.float_array():conflicts("density"), "edge lengths of simulation box")
+    desc:add("ratios", po.float_array():conflicts("length"), "aspect ratios of simulation box (specify relative edge lengths)")
 end
 
 --

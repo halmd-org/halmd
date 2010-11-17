@@ -35,8 +35,8 @@ local random -- singleton instance
 -- construct random module
 --
 function new(args)
-    local file = args.random_file or "/dev/random" -- default value
-    local seed = args.random_seed -- optional
+    local file = args.file or "/dev/random" -- default value
+    local seed = args.seed -- optional
 
     if not random then
         if not seed then
@@ -53,6 +53,6 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("random-seed", po.uint(), "random number generator integer seed")
-    desc:add("random-file", po.string(), "read random seed from file")
+    desc:add("seed", po.uint(), "random number generator integer seed")
+    desc:add("file", po.string(), "read random seed from file")
 end

@@ -44,7 +44,7 @@ function new(args)
     local cutoff = args.cutoff or { 2.5, 2.5, 2.5 } -- default value
     local epsilon = args.epsilon or { 1.0, 1.5, 0.5 } -- default value
     local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
-    local minimum = args.morse_minimum or { 2.0, 1.6, 1.78 } -- default value
+    local minimum = args.minimum or { 2.0, 1.6, 1.78 } -- default value
 
     local core = mdsim.core()
     local particle = assert(core.particle)
@@ -64,10 +64,10 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    -- FIXME desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
-    -- FIXME desc:add("epsilon", po.float_array(), "potential well depths")
-    -- FIXME desc:add("sigma", po.float_array(), "collision diameters")
-    desc:add("morse-minimum", po.float_array(), "positions of potential minimum for interactions")
+    desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
+    desc:add("epsilon", po.float_array(), "potential well depths")
+    desc:add("sigma", po.float_array(), "collision diameters")
+    desc:add("minimum", po.float_array(), "positions of potential minimum for interactions")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
 

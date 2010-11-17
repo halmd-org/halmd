@@ -41,7 +41,7 @@ module("halmd.mdsim.forces.power_law", halmd.modules.register)
 -- construct power law module
 --
 function new(args)
-    local index = args.power_law_index or 12 -- default value
+    local index = args.index or 12 -- default value
     local cutoff = args.cutoff or { 2.5, 2.5, 2.5 } -- default value
     local epsilon = args.epsilon or { 1.0, 1.5, 0.5 } -- default value
     local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
@@ -64,10 +64,10 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("power-law-index", po.uint(), "index of soft power-law potential")
-    -- FIXME desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
-    -- FIXME desc:add("epsilon", po.float_array(), "potential well depths")
-    -- FIXME desc:add("sigma", po.float_array(), "collision diameters")
+    desc:add("index", po.uint(), "index of soft power-law potential")
+    desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
+    desc:add("epsilon", po.float_array(), "potential well depths")
+    desc:add("sigma", po.float_array(), "collision diameters")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
 
