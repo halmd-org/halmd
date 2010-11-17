@@ -40,14 +40,11 @@ function new(args)
     return velocities[velocity]()
 end
 
--- override default parameter namespace
-namespace = "core"
-
 --
 -- assemble module options
 --
 -- @param desc po.options_description
 --
-function options(desc)
-    desc:add("velocity", po.string(), "initial particle velocities module")
+function options(desc, globals)
+    globals:add("velocity", po.string(), "initial particle velocities module")
 end

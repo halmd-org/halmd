@@ -46,15 +46,18 @@ function new(args)
     end
 end
 
+-- override default parameter namespace
+namespace = "gpu"
+
 --
 -- assemble module options
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function options(desc, globals)
     if device_wrapper then
         desc:add("devices,D", po.int_array(), "CUDA device(s)")
         desc:add("threads,T", po.uint(), "number of CUDA threads per block")
-        desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
+        globals:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end

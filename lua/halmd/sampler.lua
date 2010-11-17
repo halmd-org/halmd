@@ -45,8 +45,8 @@ function new(args)
     local integrator = assert(core.integrator)
 
     -- command line options
-    local sampling_state_vars = args.sampling_state_vars or 25 -- default value
-    local sampling_trajectory = args.sampling_trajectory or 0 -- default value
+    local state_vars = args.state_vars or 25 -- default value
+    local trajectory = args.trajectory or 0 -- default value
     local steps = args.steps or 10000 -- default value
     local time = args.time -- optional
 
@@ -55,7 +55,7 @@ function new(args)
         if time then
             steps = math.floor((time / integrator.timestep) + 0.5)
         end
-        sampler = wrapper(core, steps, sampling_state_vars, sampling_trajectory)
+        sampler = wrapper(core, steps, state_vars, trajectory)
     end
     return sampler
 end
@@ -65,9 +65,9 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
-    desc:add("steps,s", po.uint64(), "number of simulation steps")
-    desc:add("time,t", po.float():conflicts("steps"), "total simulation time")
-    desc:add("sampling-state-vars", po.uint(), "sample macroscopic state variables every given number of integration steps")
-    desc:add("sampling-trajectory", po.uint(), "sample trajectory every given number of integration steps")
+function options(desc, globals)
+    globals:add("steps,s", po.uint64(), "number of simulation steps")
+    globals:add("time,t", po.float():conflicts("steps"), "total simulation time")
+    desc:add("state-vars", po.uint(), "sample interval for macroscopic state variables")
+    desc:add("trajectory", po.uint(), "sample interval for trajectory")
 end

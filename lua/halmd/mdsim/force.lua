@@ -40,14 +40,11 @@ function new(args)
     return forces.pair_trunc{ force = force }
 end
 
--- override default parameter namespace
-namespace = "core"
-
 --
 -- assemble module options
 --
 -- @param desc po.options_description
 --
-function options(desc)
-    desc:add("force", po.string(), "specify force module")
+function options(desc, globals)
+    globals:add("force", po.string(), "specify force module")
 end

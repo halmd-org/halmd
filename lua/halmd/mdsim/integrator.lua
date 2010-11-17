@@ -45,14 +45,11 @@ function new(args)
     return integrators[integrator]()
 end
 
--- override default parameter namespace
-namespace = "core"
-
 --
 -- assemble module options
 --
 -- @param desc po.options_description
 --
-function options(desc)
-    desc:add("integrator", po.string(), "specify integration module")
+function options(desc, globals)
+    globals:add("integrator", po.string(), "specify integration module")
 end

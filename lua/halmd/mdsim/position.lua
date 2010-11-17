@@ -40,14 +40,11 @@ function new(args)
     return positions[position]()
 end
 
--- override default parameter namespace
-namespace = "core"
-
 --
 -- assemble module options
 --
 -- @param desc po.options_description
 --
-function options(desc)
-    desc:add("position", po.string(), "initial particle positions module")
+function options(desc, globals)
+    globals:add("position", po.string(), "initial particle positions module")
 end
