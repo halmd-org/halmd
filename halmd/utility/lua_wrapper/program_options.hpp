@@ -20,6 +20,7 @@
 #ifndef HALMD_UTILITY_LUA_WRAPPER_PROGRAM_OPTIONS_HPP
 #define HALMD_UTILITY_LUA_WRAPPER_PROGRAM_OPTIONS_HPP
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <luabind/luabind.hpp>
 
@@ -52,8 +53,11 @@ struct default_converter<boost::program_options::variables_map>
         luabind::object table = luabind::newtable(L);
         boost::program_options::variables_map::const_iterator it, end = vm.end();
         for (it = vm.begin(); it != end; ++it) {
+            // convert hyphens to underscores, e.g. options.disable_gpu
+            std::string key(it->first);
+            boost::algorithm::replace_all(key, "-", "_");
             // convert boost::any to Lua value
-            table[it->first] = boost::cref(it->second.value());
+            table[key] = boost::cref(it->second.value());
         }
         table.push(L);
     }

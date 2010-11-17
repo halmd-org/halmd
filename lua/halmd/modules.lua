@@ -129,8 +129,7 @@ end
 -- This function is called by halmd::script.
 --
 function parsed(args)
-    for arg, value in pairs(args) do
-        local key = string.gsub(arg, "-", "_") -- e.g. options.power_law_index
-        vm[key] = value
+    for k, v in pairs(args) do
+        vm[k] = v
     end
 end
