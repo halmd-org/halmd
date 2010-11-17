@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 
         parser.add_options()
             ("output,o",
-             po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S")->notifier(
+             po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S", "")->notifier(
                  lambda::bind(
                      &format_local_time
                    , lambda::ll_const_cast<string&>(lambda::_1)
