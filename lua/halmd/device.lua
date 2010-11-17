@@ -36,7 +36,7 @@ local device -- singleton instance
 --
 function new(args)
     if device_wrapper and not args.disable_gpu then
-        local devices = args.device or {}
+        local devices = args.devices or {}
         local threads = args.threads or 128 -- default value
 
         if not device then
@@ -53,7 +53,7 @@ end
 --
 function options(desc)
     if device_wrapper then
-        desc:add("device,D", po.int_array(), "CUDA device(s)")
+        desc:add("devices,D", po.int_array(), "CUDA device(s)")
         desc:add("threads,T", po.uint(), "number of CUDA threads per block")
         desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end

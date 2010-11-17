@@ -18,9 +18,9 @@
  */
 
 #include <boost/algorithm/string/join.hpp>
+#include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/casts.hpp>
-#include <boost/lambda/lambda.hpp>
 #include <cstdlib> // EXIT_SUCCESS, EXIT_FAILURE
 
 #include <halmd/io/logger.hpp>
@@ -54,18 +54,18 @@ int main(int argc, char **argv)
         //
         // assemble program options
         //
-        po::options_description desc(script.options());
-        desc.add_options()
+        options_parser parser;
+        parser.add_options()
             ("output,o",
              po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S")->notifier(
-                 boost::lambda::bind(
+                 lambda::bind(
                      &format_local_time
-                   , boost::lambda::ll_const_cast<string&>(boost::lambda::_1)
-                   , boost::lambda::_1
+                   , lambda::ll_const_cast<string&>(lambda::_1)
+                   , lambda::_1
                  )
              ),
              "output file prefix")
-            ("config,C", po::value<vector<string> >(),
+            ("config,C", po::value<string>(),
              "parameter input file")
             ("trajectory,J", po::value<string>(),
              "trajectory input file")
@@ -77,19 +77,24 @@ int main(int argc, char **argv)
              "display this help and exit")
             ;
 
+        script.options(parser);
+
         //
         // parse program options from command line and config file
         //
-        options_parser options(desc);
+        po::variables_map vm;
         try {
-            options.parse(argc, argv);
+            parser.parse_command_line(argc, argv, vm);
+
+            if (vm.count("config")) {
+                parser.parse_config_file(vm["config"].as<string>(), vm);
+            }
         }
         catch (po::error const& e) {
             cerr << PROGRAM_NAME ": " << e.what() << endl;
             cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
             return EXIT_FAILURE;
         }
-        po::variables_map vm(options.parsed());
 
         //
         // print version information to stdout
@@ -110,7 +115,7 @@ int main(int argc, char **argv)
         //
         if (vm.count("help")) {
             cout << "Usage: " PROGRAM_NAME " [OPTION]..." << endl << endl
-                 << desc << endl;
+                 << parser.options() << endl;
             return EXIT_SUCCESS;
         }
 

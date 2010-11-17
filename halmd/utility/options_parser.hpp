@@ -20,6 +20,8 @@
 #ifndef HALMD_OPTIONS_PARSER_HPP
 #define HALMD_OPTIONS_PARSER_HPP
 
+#include <lua.hpp>
+
 #include <halmd/utility/program_options/program_options.hpp>
 
 namespace halmd
@@ -31,21 +33,27 @@ namespace halmd
 class options_parser
 {
 public:
-    options_parser(po::options_description const& desc);
-    void parse_command_line(int argc, char** argv);
-    void parse_config_file(std::string const& file_name);
+    options_parser() {}
+    po::options_description_easy_init add_options();
+    void add(po::options_description const& desc);
+    void add(po::options_description const& desc, std::string const& section);
+    po::options_description options() const;
 
-    //! returns parsed program options
-    po::variables_map const& parsed() const
-    {
-        return vm_;
-    }
+    void parse_command_line(std::vector<std::string> const& args, po::variables_map& vm);
+    void parse_command_line(int argc, char** argv, po::variables_map& vm);
+    void parse_config_file(std::string const& file_name, po::variables_map& vm);
 
-    void parse(int argc, char** arg);
+    static void luaopen(lua_State* L);
 
 private:
-    po::options_description desc_; //< options description
-    po::variables_map vm_; //< options map
+    static void parse_command_line(po::command_line_parser& parser, po::variables_map& vm);
+
+    /** module-independent options */
+    po::options_description desc_;
+    /** module-specific options */
+    std::map<std::string, po::options_description> desc_module_;
+    /** module namespaces */
+    std::vector<std::string> sections_;
 };
 
 } // namespace halmd

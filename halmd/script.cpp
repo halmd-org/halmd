@@ -114,28 +114,24 @@ void script::load_library()
 /**
  * Assemble program options
  */
-po::options_description script::options()
+void script::options(options_parser& parser)
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
     using namespace luabind;
-
-    po::options_description desc;
 
     // retrieve the Lua function before the try-catch block
     // to avoid bogus error message on the Lua stack in case
     // call_function throws an exception
     object options(globals(L)["halmd"]["modules"]["options"]);
     try {
-        call_function<void>(options, ref(desc));
+        call_function<void>(options, ref(parser));
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
         lua_pop(e.state(), 1); //< remove error message
         throw;
     }
-
-    return desc;
 }
 
 /**

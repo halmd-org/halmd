@@ -20,6 +20,7 @@
 -- grab environment
 local hooks = require("halmd.hooks")
 local po = halmd_wrapper.po
+local assert = assert
 local ipairs = ipairs
 local pairs = pairs
 local rawget = rawget
@@ -67,7 +68,14 @@ function register(module)
         --
         local param = function(self, key)
             -- command-line option value
-            local value = rawget(vm, key)
+            local value
+            if module.options then
+                local vm = vm[module.namespace]
+                value = rawget(vm, key)
+            end
+            if not value then
+                value = rawget(vm, key)
+            end
 
             -- script parameter
             if not value and args then
@@ -99,25 +107,15 @@ end
 --
 -- query options of registered modules
 --
--- @param desc Boost.Program_options options description
+-- @param parser options_parser instance
 --
-function options(desc)
-    local list = {}
-    local map = setmetatable({}, {
-        __index = function(self, key)
-            local desc = po.options_description(key)
-            table.insert(list, desc)
-            rawset(self, key, desc)
-            return desc
-        end
-    })
-    for i, module in ipairs(modules) do
+function options(parser)
+    for _, module in ipairs(modules) do
         if module.options then
-            module.options(map[module.namespace])
+            local desc = po.options_description()
+            module.options(desc)
+            parser:add(desc, module.namespace)
         end
-    end
-    for i, v in ipairs(list) do
-        desc:add(v)
     end
 end
 

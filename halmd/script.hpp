@@ -22,7 +22,7 @@
 
 #include <lua.hpp>
 
-#include <halmd/utility/program_options/program_options.hpp>
+#include <halmd/utility/options_parser.hpp>
 
 namespace halmd
 {
@@ -34,7 +34,7 @@ class script
 {
 public:
     script();
-    po::options_description options();
+    void options(options_parser& parser);
     void parsed(po::variables_map const& vm);
     void run();
 
