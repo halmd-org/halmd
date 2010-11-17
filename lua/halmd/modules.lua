@@ -28,6 +28,7 @@ local rawset = rawset
 local setmetatable = setmetatable
 local string = string
 local table = table
+local type = type
 
 --
 -- This module keeps a registry of all HALMD Lua modules.
@@ -71,7 +72,9 @@ function register(module)
             local value
             if module.options then
                 local vm = vm[module.namespace]
-                value = rawget(vm, key)
+                if type(vm) == 'table' then
+                    value = rawget(vm, key)
+                end
             end
             if not value then
                 value = rawget(vm, key)
@@ -113,8 +116,10 @@ function options(parser)
     for _, module in ipairs(modules) do
         if module.options then
             local desc = po.options_description()
-            module.options(desc)
+            local globals = po.options_description()
+            module.options(desc, globals)
             parser:add(desc, module.namespace)
+            parser:add(globals)
         end
     end
 end

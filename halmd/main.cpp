@@ -55,6 +55,9 @@ int main(int argc, char **argv)
         // assemble program options
         //
         options_parser parser;
+
+        script.options(parser);
+
         parser.add_options()
             ("output,o",
              po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S")->notifier(
@@ -76,8 +79,6 @@ int main(int argc, char **argv)
             ("help",
              "display this help and exit")
             ;
-
-        script.options(parser);
 
         //
         // parse program options from command line and config file
