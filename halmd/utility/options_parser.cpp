@@ -42,7 +42,7 @@ namespace halmd
  */
 po::options_description_easy_init options_parser::add_options()
 {
-    return desc_.add_options();
+    return globals_.add_options();
 }
 
 /**
@@ -52,9 +52,9 @@ po::options_description_easy_init options_parser::add_options()
  */
 void options_parser::add(po::options_description const& desc)
 {
-    vector<shared_ptr<po::option_description> >::const_iterator i, end = desc.options().end();
-    for (i = desc.options().begin(); i != end; ++i) {
-        desc_.add(*i);
+    vector<shared_ptr<po::option_description> >::const_iterator i, ie;
+    for (i = desc.options().begin(), ie = desc.options().end(); i != ie; ++i) {
+        globals_.add(*i);
     }
 }
 
@@ -67,11 +67,11 @@ void options_parser::add(po::options_description const& desc)
 void options_parser::add(po::options_description const& desc, string const& section)
 {
     if (!desc.options().empty()) {
-        map<string, po::options_description>::iterator m = desc_module_.find(section);
-        if (m == desc_module_.end()) {
+        map<string, po::options_description>::iterator m = desc_.find(section);
+        if (m == desc_.end()) {
             bool _;
             po::options_description desc(section);
-            tie(m, _) = desc_module_.insert(make_pair(section, desc));
+            tie(m, _) = desc_.insert(make_pair(section, desc));
             sections_.push_back(section);
         }
         vector<shared_ptr<po::option_description> >::const_iterator i, ie;
@@ -90,10 +90,10 @@ void options_parser::add(po::options_description const& desc, string const& sect
  */
 po::options_description options_parser::options() const
 {
-    po::options_description desc(desc_);
+    po::options_description desc(globals_);
     vector<string>::const_iterator i, end = sections_.end();
     for (i = sections_.begin(); i != end; ++i) {
-        map<string, po::options_description>::const_iterator m = desc_module_.find(*i);
+        map<string, po::options_description>::const_iterator m = desc_.find(*i);
         desc.add(m->second);
     }
     return desc;
@@ -114,7 +114,7 @@ void options_parser::parse_command_line(vector<string> const& args, po::variable
         argp.reserve(args.size());
         vector<string>::const_iterator i, ie;
         for (i = args.begin(), ie = args.end(); i != ie; ++i) {
-            if (desc_module_.find(*i) != desc_module_.end()) {
+            if (desc_.find(*i) != desc_.end()) {
                 argp.push_back(i);
             }
         }
@@ -126,9 +126,11 @@ void options_parser::parse_command_line(vector<string> const& args, po::variable
     {
         vector<vector<string>::const_iterator>::const_iterator i, ie;
         for (i = argp.begin(), ie = argp.end() - 1; i != ie; ++i) {
-            map<string, vector<string> >::iterator m;
-            bool _;
-            tie(m, _) = argm.insert(make_pair(*(*i), vector<string>()));
+            map<string, vector<string> >::iterator m = argm.find(*(*i));
+            if (m == argm.end()) {
+                bool _;
+                tie(m, _) = argm.insert(make_pair(*(*i), vector<string>()));
+            }
             vector<string>& options = m->second;
             options.insert(options.end(), (*i) + 1, *(i + 1));
         }
@@ -137,18 +139,20 @@ void options_parser::parse_command_line(vector<string> const& args, po::variable
     // parse module-independent options
     {
         po::command_line_parser parser(vector<string>(args.begin(), argp.front()));
-        parser.options(desc_);
+        parser.options(globals_);
         parse_command_line(parser, vm);
     }
 
     // parse module-specific options for each module
     {
         map<string, po::options_description>::const_iterator i, ie;
-        for (i = desc_module_.begin(), ie = desc_module_.end(); i != ie; ++i) {
-            po::variable_value vv(po::variables_map(), false);
-            po::variables_map::iterator m;
-            bool _;
-            tie(m, _) = vm.insert(make_pair(i->first, vv));
+        for (i = desc_.begin(), ie = desc_.end(); i != ie; ++i) {
+            po::variables_map::iterator m = vm.find(i->first);
+            if (m == vm.end()) {
+                po::variable_value vv(po::variables_map(), false);
+                bool _;
+                tie(m, _) = vm.insert(make_pair(i->first, vv));
+            }
             po::variables_map& vm_ = m->second.as<po::variables_map>();
 
             po::command_line_parser parser(argm[i->first]);
@@ -206,7 +210,7 @@ void options_parser::parse_config_file(std::string const& file_name, po::variabl
     if (ifs.fail()) {
         throw runtime_error("could not open parameter file '" + file_name + "'");
     }
-    po::store(po::parse_config_file(ifs, desc_), vm); // FIXME parse module options
+    po::store(po::parse_config_file(ifs, globals_), vm); // FIXME parse module options
     po::notify(vm);
 }
 

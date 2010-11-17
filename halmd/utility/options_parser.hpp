@@ -49,9 +49,9 @@ private:
     static void parse_command_line(po::command_line_parser& parser, po::variables_map& vm);
 
     /** module-independent options */
-    po::options_description desc_;
+    po::options_description globals_;
     /** module-specific options */
-    std::map<std::string, po::options_description> desc_module_;
+    std::map<std::string, po::options_description> desc_;
     /** module namespaces */
     std::vector<std::string> sections_;
 };
