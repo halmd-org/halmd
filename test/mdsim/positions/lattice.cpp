@@ -172,6 +172,7 @@ shared_ptr<observables::trajectory<dimension> > make_trajectory_host(
     );
 }
 
+#ifdef WITH_CUDA
 template <int dimension, typename float_type>
 shared_ptr<observables::trajectory<dimension> > make_trajectory_gpu(
     shared_ptr<observables::host::samples::trajectory<dimension, float_type> > sample
@@ -185,6 +186,7 @@ shared_ptr<observables::trajectory<dimension> > make_trajectory_gpu(
       , box
     );
 }
+#endif
 
 /** compute static structure factor of trajectory sample for some wavevectors */
 template <typename sample_type, typename vector_type>
