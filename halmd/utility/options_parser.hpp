@@ -41,6 +41,7 @@ public:
 
     void parse_command_line(std::vector<std::string> const& args, po::variables_map& vm);
     void parse_command_line(int argc, char** argv, po::variables_map& vm);
+    void parse_config_file(std::istream& is, po::variables_map& vm);
     void parse_config_file(std::string const& file_name, po::variables_map& vm);
 
     static void luaopen(lua_State* L);

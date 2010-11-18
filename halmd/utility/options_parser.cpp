@@ -17,14 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/bind.hpp>
-#include <boost/program_options/detail/config_file.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <fstream>
-#include <iostream>
 
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/options_parser.hpp>
@@ -201,6 +195,80 @@ void options_parser::parse_command_line(po::command_line_parser& parser, po::var
 /**
  * Parse config file options.
  *
+ * @param is input stream
+ * @param vm variables map to store option values
+ */
+void options_parser::parse_config_file(std::istream& is, po::variables_map& vm)
+{
+    // parse config file, allowing unregistered options
+    po::parsed_options parsed(po::parse_config_file(is, globals_, true));
+
+    // split parsed options into module-specific options
+    map<string, po::parsed_options> options;
+    {
+        vector<po::option>::iterator i, ie;
+        for (i = parsed.options.begin(), ie = parsed.options.end(); i != ie; ++i) {
+            string section, option_name;
+            {
+                string::iterator s = find(i->string_key.begin(), i->string_key.end(), '.');
+                if (s == i->string_key.end()) {
+                    i->unregistered = false;
+                    continue;
+                }
+                section = string(i->string_key.begin(), s);
+                option_name = string(s + 1, i->string_key.end());
+            }
+
+            map<string, po::parsed_options>::iterator m = options.find(section);
+            if (m == options.end()) {
+                map<string, po::options_description>::const_iterator d = desc_.find(section);
+                if (d == desc_.end()) {
+                    throw po::error("unknown module " + section);
+                }
+                po::parsed_options parsed(&(d->second));
+                bool _;
+                tie(m, _) = options.insert(make_pair(section, parsed));
+            }
+
+            po::option option(*i);
+            option.string_key = option_name;
+            option.unregistered = false;
+            m->second.options.push_back(option);
+        }
+    }
+
+    // store module-independent options
+    po::store(parsed, vm);
+    po::notify(vm);
+
+    // store module-specific options for each module
+    {
+        map<string, po::options_description>::const_iterator i, ie;
+        for (i = desc_.begin(), ie = desc_.end(); i != ie; ++i) {
+            po::variables_map::iterator m = vm.find(i->first);
+            if (m == vm.end()) {
+                po::variable_value vv(po::variables_map(), false);
+                bool _;
+                tie(m, _) = vm.insert(make_pair(i->first, vv));
+            }
+            po::variables_map& vm_ = m->second.as<po::variables_map>();
+
+            map<string, po::parsed_options>::const_iterator p = options.find(i->first);
+            if (p == options.end()) {
+                po::parsed_options parsed(&(i->second));
+                bool _;
+                tie(p, _) = options.insert(make_pair(i->first, parsed));
+            }
+
+            po::store(p->second, vm_);
+            po::notify(vm_);
+        }
+    }
+}
+
+/**
+ * Parse config file options.
+ *
  * @param file_name path to configuration file
  * @param vm variables map to store option values
  */
@@ -208,10 +276,9 @@ void options_parser::parse_config_file(std::string const& file_name, po::variabl
 {
     ifstream ifs(file_name.c_str());
     if (ifs.fail()) {
-        throw runtime_error("could not open parameter file '" + file_name + "'");
+        throw po::error("could not open parameter file '" + file_name + "'");
     }
-    po::store(po::parse_config_file(ifs, globals_), vm); // FIXME parse module options
-    po::notify(vm);
+    parse_config_file(ifs, vm);
 }
 
 /**
