@@ -17,6 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iomanip>
+#include <sstream>
+
+#include <halmd/utility/lua_wrapper/map_converter.hpp>
 #include <halmd/utility/lua_wrapper/program_options.hpp>
 #include <halmd/utility/program_options/program_options.hpp>
 
@@ -40,7 +44,7 @@ static po::extended_typed_value<bool>* po_bool_switch()
 }
 
 template <typename T>
-static void po_call_notifier(luabind::object const& f, T const& value)
+static void po_lua_notifier(luabind::object const& f, T const& value)
 {
     luabind::call_function<void>(f, cref(value));
 }
@@ -50,7 +54,32 @@ static po::extended_typed_value<T>* po_notifier(
     po::extended_typed_value<T>* v, luabind::object const& f
 )
 {
-    return v->notifier(bind(&po_call_notifier<T>, f, _1));
+    return v->notifier(bind(&po_lua_notifier<T>, f, _1));
+}
+
+template <typename T>
+static void po_choices_notifier(map<T, string> const& choices, T const& value)
+{
+    if (choices.find(value) == choices.end()) {
+        stringstream s;
+        s << "invalid option value '" << value << "'" << endl << endl;
+
+        s << "The choices for the option are:" << endl;
+        typename map<T, string>::const_iterator i, ie;
+        for (i = choices.begin(), ie = choices.end(); i != ie; ++i) {
+            s << "   " << left << setw(24) << i->first << i->second << endl;
+        }
+
+        throw po::error(s.str());
+    }
+}
+
+template <typename T>
+static po::extended_typed_value<T>* po_choices(
+    po::extended_typed_value<T>* v, map<T, string> const& choices
+)
+{
+    return v->notifier(bind(&po_choices_notifier<T>, choices, _1));
 }
 
 static void po_add_option_description(
@@ -114,6 +143,7 @@ int luaopen(lua_State* L)
                 .def("notifier", &po_notifier<string>)
                 .def("conflicts", &po::extended_typed_value<string>::conflicts)
                 .def("depends", &po::extended_typed_value<string>::depends)
+                .def("choices", &po_choices<string>)
 
           , class_<po::extended_typed_value<multi_array<int, 1> >, po::value_semantic>("typed_value_int_array")
                 .def("notifier", &po_notifier<int>)
