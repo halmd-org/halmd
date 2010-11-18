@@ -107,11 +107,17 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
 }
 
 template <int dimension, typename float_type>
+static char const* module_name_wrapper(boltzmann<dimension, float_type> const&)
+{
+    return boltzmann<dimension, float_type>::module_name();
+}
+
+template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
-    static string class_name("boltzmann_" + lexical_cast<string>(dimension) + "_");
+    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -124,6 +130,7 @@ void boltzmann<dimension, float_type>::luaopen(lua_State* L)
                     [
                         class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
                             .def(constructor<shared_ptr<particle_type>, shared_ptr<random_type>, double>())
+                            .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]
             ]

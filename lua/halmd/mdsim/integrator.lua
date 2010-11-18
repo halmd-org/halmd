@@ -32,6 +32,7 @@ local integrator_wrapper = {
   }
 }
 local integrators = halmd.mdsim.integrators
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 local pairs = pairs
@@ -62,4 +63,14 @@ function options(desc, globals)
     end
 
     globals:add("integrator", po.string():choices(choices), "specify integration module")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param integrator module instance
+-- @param group HDF5 group
+--
+function write_parameters(integrator, group, globals)
+    globals:write_attribute("integrator", h5.string(), integrator.module_name)
 end

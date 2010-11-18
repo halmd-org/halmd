@@ -125,10 +125,16 @@ void lattice<dimension, float_type>::set()
 }
 
 template <int dimension, typename float_type>
+static char const* module_name_wrapper(lattice<dimension, float_type> const&)
+{
+    return lattice<dimension, float_type>::module_name();
+}
+
+template <int dimension, typename float_type>
 void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("lattice_" + lexical_cast<string>(dimension) + "_");
+    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -145,6 +151,7 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                                , shared_ptr<box_type>
                                , shared_ptr<random_type>
                              >())
+                            .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]
             ]

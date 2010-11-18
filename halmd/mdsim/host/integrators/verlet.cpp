@@ -83,10 +83,16 @@ void verlet<dimension, float_type>::finalize()
 }
 
 template <int dimension, typename float_type>
+static char const* module_name_wrapper(verlet<dimension, float_type> const&)
+{
+    return verlet<dimension, float_type>::module_name();
+}
+
+template <int dimension, typename float_type>
 void verlet<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("verlet_" + lexical_cast<string>(dimension) + "_");
+    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -103,6 +109,7 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
                               , shared_ptr<box_type>
                               , double>()
                             )
+                            .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]
             ]

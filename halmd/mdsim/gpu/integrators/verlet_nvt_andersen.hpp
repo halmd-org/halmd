@@ -50,6 +50,8 @@ public:
     typedef typename random_type::rng_type rng_type;
     typedef verlet_nvt_andersen_wrapper<dimension, rng_type> wrapper_type;
 
+    static char const* module_name() { return "verlet_nvt_andersen"; }
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;

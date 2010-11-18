@@ -159,10 +159,16 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
+static char const* module_name_wrapper(lattice<dimension, float_type, RandomNumberGenerator> const&)
+{
+    return lattice<dimension, float_type, RandomNumberGenerator>::module_name();
+}
+
+template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("lattice_" + lexical_cast<string>(dimension) + "_");
+    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -180,6 +186,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                                , shared_ptr<random_type>
                              >())
                             .def("register_runtimes", &lattice::register_runtimes)
+                            .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                     ]
                 ]
             ]

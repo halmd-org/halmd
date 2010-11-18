@@ -42,6 +42,8 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef random::host::random random_type;
 
+    static char const* module_name() { return "boltzmann"; }
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<random_type> random;
 

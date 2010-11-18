@@ -134,11 +134,17 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
+static char const* module_name_wrapper(boltzmann<dimension, float_type, RandomNumberGenerator> const&)
+{
+    return boltzmann<dimension, float_type, RandomNumberGenerator>::module_name();
+}
+
+template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
-    static string class_name("boltzmann_" + lexical_cast<string>(dimension) + "_");
+    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -155,6 +161,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
                                , shared_ptr<random_type>
                                , double
                              >())
+                            .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                     ]
                 ]
             ]

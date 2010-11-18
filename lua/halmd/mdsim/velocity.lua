@@ -27,6 +27,7 @@ local velocity_wrapper = {
   , [3] = halmd_wrapper.mdsim.velocity_3_
 }
 local velocities = halmd.mdsim.velocities
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 local pairs = pairs
@@ -57,4 +58,14 @@ function options(desc, globals)
     end
 
     globals:add("velocity", po.string():choices(choices), "initial particle velocities module")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param velocity module instance
+-- @param group HDF5 group
+--
+function write_parameters(velocity, group, globals)
+    globals:write_attribute("velocity", h5.string(), velocity.module_name)
 end

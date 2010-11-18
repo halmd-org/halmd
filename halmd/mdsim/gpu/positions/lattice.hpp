@@ -49,6 +49,8 @@ public:
     typedef typename type_traits<dimension, float>::vector_type gpu_vector_type;
     typedef typename type_traits<dimension, unsigned int>::vector_type index_type;
 
+    static char const* module_name() { return "lattice"; }
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;

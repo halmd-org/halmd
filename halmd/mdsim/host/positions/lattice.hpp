@@ -44,6 +44,8 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef random::host::random random_type;
 
+    static char const* module_name() { return "lattice"; }
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;

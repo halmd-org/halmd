@@ -46,6 +46,8 @@ public:
     typedef random::host::random random_type;
     typedef utility::profiler profiler_type;
 
+    static char const* module_name() { return "verlet_nvt_andersen"; }
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<random_type> random;

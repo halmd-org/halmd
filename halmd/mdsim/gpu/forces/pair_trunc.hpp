@@ -155,6 +155,12 @@ void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profil
 }
 
 template <int dimension, typename float_type, typename potential_type>
+static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type> const&)
+{
+    return potential_type::module_name();
+}
+
+template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
@@ -177,6 +183,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                               , boost::shared_ptr<box_type>
                             >())
                             .def("register_runtimes", &pair_trunc::register_runtimes)
+                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
                     ]
                 ]
             ]

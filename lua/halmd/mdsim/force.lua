@@ -27,6 +27,8 @@ local force_wrapper = {
   , [3] = halmd_wrapper.mdsim.force_3_
 }
 local forces = halmd.mdsim.forces
+local modules = halmd.modules
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 local pairs = pairs
@@ -57,4 +59,14 @@ function options(desc, globals)
     end
 
     globals:add("force", po.string():choices(choices), "specify force module")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param force module instance
+-- @param group HDF5 group
+--
+function write_parameters(force, group, globals)
+    globals:write_attribute("force", h5.string(), force.module_name)
 end

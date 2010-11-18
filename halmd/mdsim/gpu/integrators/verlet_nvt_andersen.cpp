@@ -190,12 +190,18 @@ finalize()
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
+static char const* module_name_wrapper(verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator> const&)
+{
+    return verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::module_name();
+}
+
+template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
-    static string class_name("verlet_nvt_andersen_" + lexical_cast<string>(dimension) + "_");
+    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -218,6 +224,7 @@ luaopen(lua_State* L)
                               , float_type, float_type, float_type>()
                             )
                             .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
+                            .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                     ]
                 ]
             ]

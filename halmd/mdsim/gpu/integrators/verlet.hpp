@@ -48,6 +48,8 @@ public:
     typedef utility::profiler profiler_type;
     typedef typename particle_type::vector_type vector_type;
 
+    static char const* module_name() { return "verlet"; }
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<device_type> device;

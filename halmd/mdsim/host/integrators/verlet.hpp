@@ -42,6 +42,8 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
 
+    static char const* module_name() { return "verlet"; }
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 

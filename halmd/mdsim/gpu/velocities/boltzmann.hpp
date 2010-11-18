@@ -52,6 +52,8 @@ public:
 #endif
     typedef typename wrapper_type::gaussian_impl_type gaussian_impl_type;
 
+    static char const* module_name() { return "boltzmann"; }
+
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<random_type> random;
 

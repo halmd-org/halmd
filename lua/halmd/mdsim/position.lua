@@ -27,6 +27,7 @@ local position_wrapper = {
   , [3] = halmd_wrapper.mdsim.positions_3_
 }
 local positions = halmd.mdsim.positions
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 local pairs = pairs
@@ -57,4 +58,14 @@ function options(desc, globals)
     end
 
     globals:add("position", po.string():choices(choices), "initial particle positions module")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param position module instance
+-- @param group HDF5 group
+--
+function write_parameters(position, group, globals)
+    globals:write_attribute("position", h5.string(), position.module_name)
 end
