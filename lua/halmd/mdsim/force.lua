@@ -19,16 +19,17 @@
 
 require("halmd.modules")
 
+require("halmd.mdsim.forces.pair_trunc")
+
 -- grab environment
 local force_wrapper = {
     [2] = halmd_wrapper.mdsim.force_2_
   , [3] = halmd_wrapper.mdsim.force_3_
 }
-local forces = {
-    pair_trunc = require("halmd.mdsim.forces.pair_trunc")
-}
+local forces = halmd.mdsim.forces
 local po = halmd_wrapper.po
 local assert = assert
+local pairs = pairs
 
 module("halmd.mdsim.force", halmd.modules.register)
 
@@ -46,5 +47,14 @@ end
 -- @param desc po.options_description
 --
 function options(desc, globals)
-    globals:add("force", po.string(), "specify force module")
+
+    -- force module choices with descriptions
+    local choices = {}
+    for force, module in pairs(forces) do
+        if module.name then
+            choices[force] = module.name()
+        end
+    end
+
+    globals:add("force", po.string():choices(choices), "specify force module")
 end

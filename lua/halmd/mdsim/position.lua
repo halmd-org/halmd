@@ -19,16 +19,17 @@
 
 require("halmd.modules")
 
+require("halmd.mdsim.positions.lattice")
+
 -- grab environment
 local position_wrapper = {
     [2] = halmd_wrapper.mdsim.positions_2_
   , [3] = halmd_wrapper.mdsim.positions_3_
 }
-local positions = {
-    lattice = require("halmd.mdsim.positions.lattice")
-}
+local positions = halmd.mdsim.positions
 local po = halmd_wrapper.po
 local assert = assert
+local pairs = pairs
 
 module("halmd.mdsim.position", halmd.modules.register)
 
@@ -46,5 +47,14 @@ end
 -- @param desc po.options_description
 --
 function options(desc, globals)
-    globals:add("position", po.string(), "initial particle positions module")
+
+    -- position module choices with descriptions
+    local choices = {}
+    for position, module in pairs(positions) do
+        if module.name then
+            choices[position] = module.name()
+        end
+    end
+
+    globals:add("position", po.string():choices(choices), "initial particle positions module")
 end

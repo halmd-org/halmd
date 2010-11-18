@@ -19,6 +19,9 @@
 
 require("halmd.modules")
 
+require("halmd.mdsim.integrators.verlet")
+require("halmd.mdsim.integrators.verlet_nvt_andersen")
+
 -- grab environment
 local integrator_wrapper = {
     [2] = halmd_wrapper.mdsim.integrator_2_
@@ -28,12 +31,10 @@ local integrator_wrapper = {
     , [3] = halmd_wrapper.mdsim.integrators.nvt_3_
   }
 }
-local integrators = {
-    verlet = require("halmd.mdsim.integrators.verlet")
-  , verlet_nvt_andersen = require("halmd.mdsim.integrators.verlet_nvt_andersen")
-}
+local integrators = halmd.mdsim.integrators
 local po = halmd_wrapper.po
 local assert = assert
+local pairs = pairs
 
 module("halmd.mdsim.integrator", halmd.modules.register)
 
@@ -51,5 +52,14 @@ end
 -- @param desc po.options_description
 --
 function options(desc, globals)
-    globals:add("integrator", po.string(), "specify integration module")
+
+    -- integrator module choices with descriptions
+    local choices = {}
+    for integrator, module in pairs(integrators) do
+        if module.name then
+            choices[integrator] = module.name()
+        end
+    end
+
+    globals:add("integrator", po.string():choices(choices), "specify integration module")
 end

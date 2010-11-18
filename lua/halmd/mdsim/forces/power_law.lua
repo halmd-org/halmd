@@ -59,6 +59,13 @@ function new(args)
 end
 
 --
+-- returns module description
+--
+function name()
+    return "Power law potential"
+end
+
+--
 -- assemble module options
 --
 -- @param desc po.options_description

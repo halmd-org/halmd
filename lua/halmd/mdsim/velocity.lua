@@ -19,16 +19,17 @@
 
 require("halmd.modules")
 
+require("halmd.mdsim.velocities.boltzmann")
+
 -- grab environment
-local velocities = {
-    boltzmann = require("halmd.mdsim.velocities.boltzmann")
-}
 local velocity_wrapper = {
     [2] = halmd_wrapper.mdsim.velocity_2_
   , [3] = halmd_wrapper.mdsim.velocity_3_
 }
+local velocities = halmd.mdsim.velocities
 local po = halmd_wrapper.po
 local assert = assert
+local pairs = pairs
 
 module("halmd.mdsim.velocity", halmd.modules.register)
 
@@ -46,5 +47,14 @@ end
 -- @param desc po.options_description
 --
 function options(desc, globals)
-    globals:add("velocity", po.string(), "initial particle velocities module")
+
+    -- velocity module choices with descriptions
+    local choices = {}
+    for velocity, module in pairs(velocities) do
+        if module.name then
+            choices[velocity] = module.name()
+        end
+    end
+
+    globals:add("velocity", po.string():choices(choices), "initial particle velocities module")
 end

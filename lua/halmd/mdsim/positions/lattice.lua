@@ -59,3 +59,10 @@ function new(args)
     end
     return lattice_wrapper.gpu[dimension](particle, box, random.gpu())
 end
+
+--
+-- returns module description
+--
+function name()
+    return "Face-centered cubic lattice"
+end

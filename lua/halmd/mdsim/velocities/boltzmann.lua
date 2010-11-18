@@ -63,6 +63,13 @@ function new(args)
 end
 
 --
+-- returns module description
+--
+function name()
+    return "Boltzmann distribution"
+end
+
+--
 -- assemble module options
 --
 -- @param desc po.options_description
