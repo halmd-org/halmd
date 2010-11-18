@@ -226,6 +226,7 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                            , shared_ptr<force_type>
                            , double
                          >())
+                        .property("r_skin", &neighbour::r_skin)
                 ]
             ]
         ]

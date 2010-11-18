@@ -36,6 +36,7 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
@@ -71,5 +72,18 @@ function options(desc)
     desc:add("skin", po.float(), "neighbour list skin")
     if neighbour_wrapper.gpu then
         desc:add("occupancy", po.float(), "desired average cell occupancy")
+    end
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param neighbour module instance
+-- @param group HDF5 group
+--
+function write_parameters(neighbour, group)
+    group:write_attribute("skin", h5.float(), neighbour.r_skin)
+    if neighbour.cell_occupancy then
+        group:write_attribute("occupancy", h5.float(), neighbour.cell_occupancy)
     end
 end

@@ -319,6 +319,8 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                           , double
                         >())
                         .def("register_runtimes", &neighbour::register_runtimes)
+                        .property("r_skin", &neighbour::r_skin)
+                        .property("cell_occupancy", &neighbour::cell_occupancy)
                 ]
             ]
         ]

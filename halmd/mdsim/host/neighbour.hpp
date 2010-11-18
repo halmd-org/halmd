@@ -74,6 +74,12 @@ public:
     virtual void update();
     virtual bool check();
 
+    //! returns neighbour list skin in MD units
+    float_type r_skin() const
+    {
+        return r_skin_;
+    }
+
 protected:
     friend class sort::hilbert<dimension, float_type>; //< public interface
 

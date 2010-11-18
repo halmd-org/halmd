@@ -88,6 +88,18 @@ public:
     virtual void update();
     virtual bool check();
 
+    //! returns neighbour list skin in MD units
+    float_type r_skin() const
+    {
+        return r_skin_;
+    }
+
+    //! returns neighbour list skin in MD units
+    float_type cell_occupancy() const
+    {
+        return nu_cell_;
+    }
+
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG( check_, "neighbour update criterion" );
     HALMD_PROFILING_TAG( update_cells_, "cell lists update" );
