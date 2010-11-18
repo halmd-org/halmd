@@ -22,6 +22,7 @@ require("halmd.modules")
 -- grab environment
 local hooks = require("halmd.hooks")
 local assert = assert
+local setmetatable = setmetatable
 
 module("halmd.parameter", halmd.modules.register)
 
@@ -33,14 +34,29 @@ module("halmd.parameter", halmd.modules.register)
 function register_writer(writer)
     hooks.register_module_hook(function(module, object)
         if module.write_parameters then
-            -- HDF5 file with write access
             local file = writer:file()
-            -- open parameter/namespace group
-            local namespace = assert(module.namespace)
-            local param = file:open_group("param")
-            local group = param:open_group(namespace)
+            local globals = file:open_group("param")
 
-            module.write_parameters(object, group, param)
+            -- If write_parameters only stores global parameters, or stores
+            -- no parameters at all, the module's HDF5 parameter group would
+            -- remain empty. Therefore we delay creation by creating or opening
+            -- the group upon access of its methods.
+
+            local group = setmetatable({}, {
+                __index = function(self, name)
+                    local namespace = assert(module.namespace)
+                    local group = globals:open_group(namespace)
+
+                    local method = group[name]
+                    if method then
+                        return function(self, ...)
+                            method(group, ...)
+                        end
+                    end
+                end
+            })
+
+            module.write_parameters(object, group, globals)
         end
     end)
 end
