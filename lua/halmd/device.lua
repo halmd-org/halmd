@@ -24,6 +24,7 @@ local device_wrapper
 if halmd_wrapper.utility.gpu then
     device_wrapper = halmd_wrapper.utility.gpu.device
 end
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
@@ -60,4 +61,14 @@ function options(desc, globals)
         desc:add("threads", po.uint(), "number of CUDA threads per block")
         globals:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param device module instance
+-- @param group HDF5 group
+--
+function write_parameters(device, group, globals)
+    group:write_attribute("threads", h5.uint(), device.threads)
 end
