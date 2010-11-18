@@ -35,10 +35,7 @@ end
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
-local random = {
-    gpu = require("halmd.gpu.random")
-  , host = require("halmd.host.random")
-}
+local random = require("halmd.random")
 local device = require("halmd.device")
 local po = halmd_wrapper.po
 local assert = assert
@@ -55,11 +52,15 @@ function new(args)
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
+    local random = assert(random())
 
-    if not device() then
-        return boltzmann_wrapper.host[dimension](particle, random.host(), temperature)
+    local boltzmann
+    if device() then
+        boltzmann = boltzmann_wrapper.gpu[dimension]
+    else
+        boltzmann = boltzmann_wrapper.host[dimension]
     end
-    return boltzmann_wrapper.gpu[dimension](particle, random.gpu(), temperature)
+    return boltzmann(particle, random, temperature)
 end
 
 --

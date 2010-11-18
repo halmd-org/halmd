@@ -35,10 +35,7 @@ end
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
-local random = {
-    gpu = require("halmd.gpu.random")
-  , host = require("halmd.host.random")
-}
+local random = require("halmd.random")
 local device = require("halmd.device")
 local assert = assert
 
@@ -53,11 +50,15 @@ function new(args)
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
+    local random = assert(random())
 
-    if not device() then
-        return lattice_wrapper.host[dimension](particle, box, random.host())
+    local lattice
+    if device() then
+        lattice = lattice_wrapper.gpu[dimension]
+    else
+        lattice = lattice_wrapper.host[dimension]
     end
-    return lattice_wrapper.gpu[dimension](particle, box, random.gpu())
+    return lattice(particle, box, random)
 end
 
 --

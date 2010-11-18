@@ -36,10 +36,7 @@ local mdsim = {
   core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
-local random = {
-    gpu = require("halmd.gpu.random")
-  , host = require("halmd.host.random")
-}
+local random = require("halmd.random")
 local po = halmd_wrapper.po
 local assert = assert
 
@@ -58,15 +55,15 @@ function new(args)
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
+    local random = assert(random())
 
-    if not device() then
-        return verlet_nvt_andersen_wrapper.host[dimension](
-            particle, box, random.host(), timestep, temperature, collision_rate
-        )
+    local andersen
+    if device() then
+        andersen = verlet_nvt_andersen_wrapper.gpu[dimension]
+    else
+        andersen = verlet_nvt_andersen_wrapper.host[dimension]
     end
-    return verlet_nvt_andersen_wrapper.gpu[dimension](
-        particle, box, random.gpu(), timestep, temperature, collision_rate
-    )
+    return andersen(particle, box, random, timestep, temperature, collision_rate)
 end
 
 --
