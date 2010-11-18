@@ -161,6 +161,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
                                , shared_ptr<random_type>
                                , double
                              >())
+                            .property("temperature", &boltzmann::temperature)
                             .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                     ]
                 ]

@@ -56,6 +56,12 @@ public:
     );
     virtual void set();
 
+    //! returns temperature
+    float_type temperature() const
+    {
+        return temp_;
+    }
+
 // private:
     /** assign new velocities from Gaussian distribution of width sigma,
       * return mean velocity and mean-square velocity */

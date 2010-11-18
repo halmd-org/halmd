@@ -66,6 +66,12 @@ public:
     );
     virtual void set();
 
+    //! returns temperature
+    float_type temperature() const
+    {
+        return temp_;
+    }
+
     gaussian_impl_type const gaussian_impl;
     static gaussian_impl_type get_gaussian_impl(int threads);
 

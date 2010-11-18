@@ -37,6 +37,7 @@ local mdsim = {
 }
 local random = require("halmd.random")
 local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
@@ -77,4 +78,14 @@ end
 --
 function options(desc)
     desc:add("temperature", po.float(), "Boltzmann distribution temperature")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param boltzmann module instance
+-- @param group HDF5 group
+--
+function write_parameters(boltzmann, group)
+    group:write_attribute("temperature", h5.float(), boltzmann.temperature)
 end
