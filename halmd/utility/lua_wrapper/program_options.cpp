@@ -67,7 +67,7 @@ static void po_choices_notifier(map<T, string> const& choices, T const& value)
         s << "The choices for the option are:" << endl;
         typename map<T, string>::const_iterator i, ie;
         for (i = choices.begin(), ie = choices.end(); i != ie; ++i) {
-            s << "   " << left << setw(24) << i->first << i->second << endl;
+            s << "  " << left << setw(22) << i->first << i->second << endl;
         }
 
         throw po::error(s.str());
