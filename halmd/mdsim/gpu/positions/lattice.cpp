@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -19,24 +19,29 @@
 
 #include <algorithm>
 #include <boost/array.hpp>
+#include <boost/iterator/counting_iterator.hpp>
 #include <cmath>
 #include <limits>
 #include <numeric>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/position/lattice.hpp>
+#include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
+#include <halmd/mdsim/gpu/positions/lattice.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 using namespace boost;
+using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace position
+namespace mdsim { namespace gpu { namespace positions
 {
 
-template <int dimension, typename float_type>
-lattice<dimension, float_type>::lattice(
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+lattice<dimension, float_type, RandomNumberGenerator>::lattice(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
   , shared_ptr<random_type> random
@@ -46,6 +51,15 @@ lattice<dimension, float_type>::lattice(
   , box(box)
   , random(random)
 {
+}
+
+/**
+ * register module runtime accumulators
+ */
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_map(runtime_);
 }
 
 /**
@@ -79,53 +93,73 @@ lattice<dimension, float_type>::lattice(
  *
  * is satisfied.
  */
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::set()
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
     // randomise particle types if there are more than 1
     if (particle->ntypes.size() > 1) {
         LOG("randomly permuting particle types");
-        random->shuffle(particle->type.begin(), particle->type.end());
+        random->shuffle(particle->g_r);
     }
 
-    // assign lattice coordinates
-    vector_type L = box->length();
-    double u = (dimension == 3) ? 4 : 2;
-    double V = box->volume() / ceil(particle->nbox / u);
-    double a = pow(V, 1. / dimension);
-    fixed_vector<unsigned int, dimension> n(L / a);
+    // determine maximal lattice constant
+    // use the same floating point precision as the CUDA device
+    gpu_vector_type L = static_cast<gpu_vector_type>(box->length());
+    float_type u = (dimension == 3) ? 4 : 2;
+    float_type V = accumulate(
+        L.begin(), L.end()
+      , float_type(1) / ceil(particle->nbox / u)
+      , multiplies<float_type>()
+    );
+    float_type a = pow(V, float_type(1) / dimension);
+    index_type n(L / a);
     while (particle->nbox > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
-        vector_type t;
+        gpu_vector_type t;
         for (size_t i = 0; i < dimension; ++i) {
             t[i] = L[i] / (n[i] + 1);
         }
-        typename vector_type::iterator it = max_element(t.begin(), t.end());
+        typename gpu_vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
         ++n[it - t.begin()];
     }
     LOG("placing particles on fcc lattice: a = " << a);
+    LOG_DEBUG("number of fcc unit cells: " << n);
 
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& r = particle->r[i] = a;
-        if (dimension == 3) {
-            r[0] *= ((i >> 2) % n[0]) + ((i ^ (i >> 1)) & 1) / 2.;
-            r[1] *= ((i >> 2) / n[0] % n[1]) + (i & 1) / 2.;
-            r[2] *= ((i >> 2) / n[0] / n[1]) + (i & 2) / 4.;
-        }
-        else {
-            r[0] *= ((i >> 1) % n[0]) + (i & 1) / 2.;
-            r[1] *= ((i >> 1) / n[0]) + (i & 1) / 2.;
-        }
-        // shift particle positions to range (-L/2, L/2)
-        box->reduce_periodic(r);
+    unsigned int N = static_cast<unsigned int>(
+        u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())
+    );
+    if (N > particle->nbox) {
+        LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
-    // assign particle image vectors
-    fill(particle->image.begin(), particle->image.end(), 0);
+#ifdef USE_VERLET_DSFUN
+    // set hi parts of dsfloat values to zero
+    cuda::memset(particle->g_r, 0, particle->g_r.capacity());
+#endif
+
+    // set kernel globals in constant memory
+    lattice_wrapper<dimension> const& kernel = get_lattice_kernel<dimension>();
+    cuda::copy(L, kernel.box_length);
+    cuda::copy(n, kernel.ncell);
+
+    cuda::thread::synchronize();
+    try {
+        scoped_timer<timer> timer_(at_key<set_>(runtime_));
+        cuda::configure(particle->dim.grid, particle->dim.block);
+        kernel.fcc(particle->g_r, a);
+        cuda::thread::synchronize();
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR("CUDA: " << e.what());
+        throw runtime_error("failed to generate particle lattice on GPU");
+    }
+
+    // reset particle image vectors
+    cuda::memset(particle->g_image, 0, particle->g_image.capacity());
 }
 
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("lattice_" + lexical_cast<string>(dimension) + "_");
@@ -135,16 +169,17 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("mdsim")
             [
-                namespace_("host")
+                namespace_("gpu")
                 [
-                    namespace_("position")
+                    namespace_("positions")
                     [
-                        class_<lattice, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        class_<lattice, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
                             .def(constructor<
                                  shared_ptr<particle_type>
                                , shared_ptr<box_type>
                                , shared_ptr<random_type>
                              >())
+                            .def("register_runtimes", &lattice::register_runtimes)
                     ]
                 ]
             ]
@@ -155,32 +190,18 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
 static __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
-#ifndef USE_HOST_SINGLE_PRECISION
     [
-        &lattice<3, double>::luaopen
+        &lattice<3, float, random::gpu::rand48>::luaopen
     ]
     [
-        &lattice<2, double>::luaopen
+        &lattice<2, float, random::gpu::rand48>::luaopen
     ];
-#else
-    [
-        &lattice<3, float>::luaopen
-    ]
-    [
-        &lattice<2, float>::luaopen
-    ];
-#endif
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class lattice<3, double>;
-template class lattice<2, double>;
-#else
-template class lattice<3, float>;
-template class lattice<2, float>;
-#endif
+template class lattice<3, float, random::gpu::rand48>;
+template class lattice<2, float, random::gpu::rand48>;
 
-}}} // namespace mdsim::host::position
+}}} // namespace mdsim::gpu::positions
 
 } // namespace halmd

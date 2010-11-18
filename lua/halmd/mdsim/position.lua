@@ -21,11 +21,11 @@ require("halmd.modules")
 
 -- grab environment
 local position_wrapper = {
-    [2] = halmd_wrapper.mdsim.position_2_
-  , [3] = halmd_wrapper.mdsim.position_3_
+    [2] = halmd_wrapper.mdsim.positions_2_
+  , [3] = halmd_wrapper.mdsim.positions_3_
 }
 local positions = {
-    lattice = require("halmd.mdsim.position.lattice")
+    lattice = require("halmd.mdsim.positions.lattice")
 }
 local po = halmd_wrapper.po
 local assert = assert

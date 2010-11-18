@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POSITION_FILE_HPP
-#define HALMD_MDSIM_HOST_POSITION_FILE_HPP
+#ifndef HALMD_MDSIM_HOST_POSITIONS_FILE_HPP
+#define HALMD_MDSIM_HOST_POSITIONS_FILE_HPP
 
 #include <vector>
 
@@ -30,7 +30,7 @@
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace position
+namespace mdsim { namespace host { namespace positions
 {
 
 template <int dimension, typename float_type>
@@ -56,8 +56,8 @@ public:
     virtual void set();
 };
 
-}}} // namespace mdsim::host::position
+}}} // namespace mdsim::host::positions
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POSITION_FILE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POSITIONS_FILE_HPP */

@@ -22,14 +22,14 @@ require("halmd.modules")
 -- grab environment
 local lattice_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.position.lattice_2_
-      , [3] = halmd_wrapper.mdsim.host.position.lattice_3_
+        [2] = halmd_wrapper.mdsim.host.positions.lattice_2_
+      , [3] = halmd_wrapper.mdsim.host.positions.lattice_3_
     }
 }
 if halmd_wrapper.mdsim.gpu then
     lattice_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.position.lattice_2_
-      , [3] = halmd_wrapper.mdsim.gpu.position.lattice_3_
+        [2] = halmd_wrapper.mdsim.gpu.positions.lattice_2_
+      , [3] = halmd_wrapper.mdsim.gpu.positions.lattice_3_
     }
 end
 local mdsim = {
@@ -42,7 +42,7 @@ local random = {
 local device = require("halmd.device")
 local assert = assert
 
-module("halmd.mdsim.position.lattice", halmd.modules.register)
+module("halmd.mdsim.positions.lattice", halmd.modules.register)
 
 --
 -- construct lattice module

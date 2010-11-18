@@ -20,11 +20,11 @@
 #include <algorithm>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/position/file.hpp>
+#include <halmd/mdsim/host/positions/file.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace position
+namespace mdsim { namespace host { namespace positions
 {
 
 using namespace boost;
@@ -74,6 +74,6 @@ template class file<3, float>;
 template class file<2, float>;
 #endif
 
-}}} // namespace mdsim::host::position
+}}} // namespace mdsim::host::positions
 
 } // namespace halmd

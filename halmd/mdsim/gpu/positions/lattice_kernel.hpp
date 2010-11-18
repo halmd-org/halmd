@@ -17,15 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POSITIONS_LATTICE_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POSITIONS_LATTICE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace position
+namespace mdsim { namespace gpu { namespace positions
 {
 
 template <int dimension>
@@ -50,8 +50,8 @@ lattice_wrapper<dimension> const& get_lattice_kernel()
     return lattice_wrapper<dimension>::kernel;
 }
 
-}}} // namespace mdsim::gpu::position
+}}} // namespace mdsim::gpu::positions
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POSITION_LATTICE_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POSITIONS_LATTICE_KERNEL_HPP */

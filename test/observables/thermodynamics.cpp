@@ -33,7 +33,7 @@
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/position/lattice.hpp>
+#include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -45,7 +45,7 @@
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/neighbour.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/mdsim/gpu/position/lattice.hpp>
+# include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/random/gpu/random.hpp>
@@ -235,7 +235,7 @@ shared_ptr<mdsim::position<dimension> > make_lattice(
 {
 #ifdef WITH_CUDA
     if (backend == "gpu") {
-        return make_shared<mdsim::gpu::position::lattice<dimension, float, halmd::random::gpu::rand48> >(
+        return make_shared<mdsim::gpu::positions::lattice<dimension, float, halmd::random::gpu::rand48> >(
             dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
           , box
           , dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
@@ -243,7 +243,7 @@ shared_ptr<mdsim::position<dimension> > make_lattice(
     }
 #endif /* WITH_CUDA */
     if (backend == "host") {
-        return make_shared<mdsim::host::position::lattice<dimension, double> >(
+        return make_shared<mdsim::host::positions::lattice<dimension, double> >(
             dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
           , dynamic_pointer_cast<halmd::random::host::random>(random)

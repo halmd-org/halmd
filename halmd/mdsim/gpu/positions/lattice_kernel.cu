@@ -22,7 +22,7 @@
 #include <boost/utility/enable_if.hpp>
 
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/mdsim/gpu/position/lattice_kernel.hpp>
+#include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
@@ -33,7 +33,7 @@ using namespace halmd::utility::gpu;
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace position
+namespace mdsim { namespace gpu { namespace positions
 {
 namespace lattice_kernel
 {
@@ -128,6 +128,6 @@ lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
 template class lattice_wrapper<3>;
 template class lattice_wrapper<2>;
 
-}}} // namespace mdsim::gpu::position
+}}} // namespace mdsim::gpu::positions
 
 } // namespace halmd
