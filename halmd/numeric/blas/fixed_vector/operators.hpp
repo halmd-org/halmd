@@ -275,6 +275,32 @@ element_mod(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
 }
 
 /**
+ * Elementwise minimum
+ */
+template <typename T, size_t N>
+inline HALMD_GPU_ENABLED
+fixed_vector<T, N> element_min(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
+{
+    for (size_t i = 0; i < N; ++i) {
+        v[i] = std::min(v[i], w[i]);
+    }
+    return v;
+}
+
+/**
+ * Elementwise maximum
+ */
+template <typename T, size_t N>
+inline HALMD_GPU_ENABLED
+fixed_vector<T, N> element_max(fixed_vector<T, N> v, fixed_vector<T, N> const& w)
+{
+    for (size_t i = 0; i < N; ++i) {
+        v[i] = std::max(v[i], w[i]);
+    }
+    return v;
+}
+
+/**
  * Elementwise round to nearest integer not greater than argument
  */
 template <typename T, size_t N>
