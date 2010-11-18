@@ -28,6 +28,7 @@ if halmd_wrapper.gpu then
     random_wrapper.gpu = halmd_wrapper.gpu.random
 end
 local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
@@ -70,5 +71,21 @@ function options(desc)
     if random_wrapper.gpu then
         desc:add("blocks", po.uint(), "number of CUDA blocks")
         desc:add("threads", po.uint(), "number of CUDA threads per block")
+    end
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param random module instance
+-- @param group HDF5 group
+--
+function write_parameters(random, group)
+
+    -- FIXME serialize random number generator state
+
+    if random.blocks then
+        group:write_attribute("blocks", h5.uint(), random.blocks)
+        group:write_attribute("threads", h5.uint(), random.threads)
     end
 end

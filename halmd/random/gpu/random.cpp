@@ -125,6 +125,8 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
                            , unsigned int
                            , unsigned int
                          >())
+                        .property("blocks", &random::blocks)
+                        .property("threads", &random::threads)
                 ]
             ]
         ]

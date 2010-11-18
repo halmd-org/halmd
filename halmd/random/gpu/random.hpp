@@ -68,6 +68,16 @@ public:
 
     template <typename Sequence>
     void shuffle(Sequence& g_val);
+
+    unsigned int blocks()
+    {
+        return rng.dim.blocks_per_grid();
+    }
+
+    unsigned int threads()
+    {
+        return rng.dim.threads_per_block();
+    }
 };
 
 /**
