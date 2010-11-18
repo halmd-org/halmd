@@ -173,6 +173,7 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
                               , float_type, float_type, float_type>()
                             )
                             .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
+                            .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                             .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]

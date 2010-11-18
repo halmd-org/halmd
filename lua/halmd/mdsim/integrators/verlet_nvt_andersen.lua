@@ -37,6 +37,7 @@ local mdsim = {
 }
 local device = require("halmd.device")
 local random = require("halmd.random")
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
@@ -82,4 +83,16 @@ function options(desc)
     desc:add("timestep", po.float(), "integration timestep")
     desc:add("temperature", po.float(), "thermostat temperature")
     desc:add("collision-rate", po.float(), "collision rate for Andersen thermostat")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param verlet_nvt_andersen module instance
+-- @param group HDF5 group
+--
+function write_parameters(andersen, group)
+    group:write_attribute("timestep", h5.float(), andersen.timestep)
+    group:write_attribute("temperature", h5.float(), andersen.temperature)
+    group:write_attribute("collision_rate", h5.float(), andersen.collision_rate)
 end

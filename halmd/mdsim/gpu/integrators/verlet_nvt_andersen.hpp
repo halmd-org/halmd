@@ -84,6 +84,12 @@ public:
         return temperature_;
     }
 
+    //! returns collision rate with the heat bath
+    float_type collision_rate() const
+    {
+        return coll_rate_;
+    }
+
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet" );
     HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet (+ Andersen thermostat)" );

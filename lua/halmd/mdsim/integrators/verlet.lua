@@ -35,6 +35,7 @@ end
 local mdsim = {
   core = require("halmd.mdsim.core")
 }
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local device = require("halmd.device")
 local assert = assert
@@ -73,4 +74,14 @@ end
 --
 function options(desc)
     desc:add("timestep", po.float(), "integration timestep")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param verlet module instance
+-- @param group HDF5 group
+--
+function write_parameters(verlet, group)
+    group:write_attribute("timestep", h5.float(), verlet.timestep)
 end
