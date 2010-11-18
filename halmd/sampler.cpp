@@ -153,6 +153,8 @@ void sampler<dimension>::luaopen(lua_State* L)
                 .def_readwrite("profiling_writers", &sampler::profiling_writers)
                 .property("steps", &sampler::steps)
                 .property("total_time", &sampler::total_time)
+                .property("trajectory_interval", &sampler::trajectory_interval)
+                .property("statevars_interval", &sampler::statevars_interval)
         ]
     ];
 }

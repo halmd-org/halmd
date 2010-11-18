@@ -27,6 +27,7 @@ local sampler_wrapper = {
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 local math = math
@@ -70,4 +71,17 @@ function options(desc, globals)
     globals:add("time", po.float():conflicts("steps"), "total simulation time")
     desc:add("state-vars", po.uint(), "sample interval for macroscopic state variables")
     desc:add("trajectory", po.uint(), "sample interval for trajectory")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param sampler module instance
+-- @param group HDF5 group
+--
+function write_parameters(sampler, group, globals)
+    globals:write_attribute("steps", h5.uint64(), sampler.steps)
+    globals:write_attribute("time", h5.float(), sampler.total_time)
+    group:write_attribute("state_vars", h5.uint(), sampler.statevars_interval)
+    group:write_attribute("trajectory", h5.uint(), sampler.trajectory_interval)
 end

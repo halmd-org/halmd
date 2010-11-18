@@ -56,8 +56,6 @@ public:
     void run();
     void sample(bool force=false);
     void register_runtimes(profiler_type& profiler);
-    uint64_t steps() { return steps_; }
-    double total_time() { return total_time_; }
 
     boost::shared_ptr<core_type> core;
     std::vector<boost::shared_ptr<observable_type> > observables;
@@ -69,6 +67,26 @@ public:
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG( msv_output_, "output of macroscopic state variables" );
     HALMD_PROFILING_TAG( total_, "total simulation runtime" );
+
+    uint64_t steps()
+    {
+        return steps_;
+    }
+
+    double total_time()
+    {
+        return total_time_;
+    }
+
+    unsigned statevars_interval()
+    {
+        return statevars_interval_;
+    }
+
+    unsigned trajectory_interval()
+    {
+        return trajectory_interval_;
+    }
 
 private:
     /** total number of integration steps */
