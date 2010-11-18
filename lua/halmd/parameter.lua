@@ -37,9 +37,10 @@ function register_writer(writer)
             local file = writer:file()
             -- open parameter/namespace group
             local namespace = assert(module.namespace)
-            local group = file:open_group("param/" .. namespace)
+            local param = file:open_group("param")
+            local group = file:open_group(namespace)
 
-            module.write_parameters(object, group)
+            module.write_parameters(object, group, param)
         end
     end)
 end
