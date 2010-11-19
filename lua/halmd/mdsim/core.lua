@@ -27,6 +27,7 @@ local core_wrapper = {
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
+local error = error
 
 module("halmd.mdsim.core", halmd.modules.register)
 
@@ -53,7 +54,13 @@ namespace = "box"
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("dimension", po.uint(), "dimension of positional coordinates")
+    desc:add("dimension", po.uint():notifier(function(value)
+
+        if not core_wrapper[value] then
+            error(("invalid dimension '%d'"):format(value), 0)
+        end
+
+    end), "dimension of positional coordinates")
 end
 
 --
