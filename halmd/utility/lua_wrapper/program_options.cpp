@@ -44,17 +44,29 @@ static po::extended_typed_value<bool>* po_bool_switch()
 }
 
 template <typename T>
-static void po_lua_notifier(luabind::object const& f, T const& value)
+static void po_lua_notifier(luabind::object const& notifier, T const& value)
 {
-    luabind::call_function<void>(f, cref(value));
+    using namespace luabind;
+
+    object result;
+    try {
+        result = call_function<object>(notifier, value);
+    }
+    catch (error const& e) {
+        throw po::error(lua_tostring(e.state(), -1));
+    }
+
+    if (result) {
+        const_cast<T&>(value) = object_cast<T>(result);
+    }
 }
 
 template <typename T>
 static po::extended_typed_value<T>* po_notifier(
-    po::extended_typed_value<T>* v, luabind::object const& f
+    po::extended_typed_value<T>* v, luabind::object const& notifier
 )
 {
-    return v->notifier(bind(&po_lua_notifier<T>, f, _1));
+    return v->notifier(bind(&po_lua_notifier<T>, notifier, _1));
 }
 
 template <typename T>
