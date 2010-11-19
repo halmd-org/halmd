@@ -20,6 +20,7 @@
 #ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_OPERATORS_HPP
 #define HALMD_NUMERIC_BLAS_FIXED_VECTOR_OPERATORS_HPP
 
+#include <algorithm>
 #include <boost/mpl/and.hpp>
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
