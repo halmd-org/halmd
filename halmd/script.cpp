@@ -51,24 +51,33 @@ script::script()
 
 /**
  * Set Lua package path
+ *
+ * Append HALMD installation prefix paths to package.path.
  */
 void script::package_path()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
-    using namespace luabind;
+    // push table "package"
+    lua_getglobal(L, "package");
+    // push key for rawset
+    lua_pushliteral(L, "path");
+    // push key for rawget
+    lua_pushliteral(L, "path");
+    // get default package.path
+    lua_rawget(L, -3);
 
-    string path;
-    path.append( HALMD_BINARY_DIR "/lua/?.lua" ";" );
-    path.append( HALMD_BINARY_DIR "/lua/?/init.lua" ";" );
-    path.append( HALMD_SOURCE_DIR "/lua/?.lua" ";" );
-    path.append( HALMD_SOURCE_DIR "/lua/?/init.lua" ";" );
-    path.append( HALMD_INSTALL_PREFIX "/share/?.lua" ";" );
-    path.append( HALMD_INSTALL_PREFIX "/share/?/init.lua" ";" );
-    path.append( HALMD_INSTALL_PREFIX "/lib/?.lua" ";" );
-    path.append( HALMD_INSTALL_PREFIX "/lib/?/init.lua" ";" );
-    path.append( object_cast<string>(globals(L)["package"]["path"]) );
-    globals(L)["package"]["path"] = path;
+    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?.lua");
+    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?/init.lua");
+    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/lib/?.lua");
+    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/lib/?/init.lua");
+
+    // append above literals to default package.path
+    lua_concat(L, 5);
+    // set new package.path
+    lua_rawset(L, -3);
+    // remove table "package"
+    lua_pop(L, 1);
 }
 
 /**
@@ -192,7 +201,7 @@ void script::run()
 int script::traceback(lua_State* L)
 {
     lua_pushliteral(L, "\n");
-    lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+    lua_getglobal(L, "debug");
     lua_pushliteral(L, "traceback");
     lua_rawget(L, -2);
     lua_remove(L, -2);
