@@ -127,6 +127,9 @@ void script::options(options_parser& parser)
     // call_function throws an exception
     object options(globals(L)["halmd"]["modules"]["options"]);
     try {
+#ifndef NDEBUG
+        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+#endif
         call_function<void>(options, ref(parser));
     }
     catch (luabind::error const& e) {
