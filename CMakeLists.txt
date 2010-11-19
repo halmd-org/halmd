@@ -214,4 +214,5 @@ endif(WITH_CUDA)
 
 add_subdirectory(doc EXCLUDE_FROM_ALL)
 add_subdirectory(halmd)
+add_subdirectory(lua)
 add_subdirectory(test)
