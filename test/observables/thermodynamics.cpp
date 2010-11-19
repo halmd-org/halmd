@@ -239,6 +239,7 @@ shared_ptr<mdsim::position<dimension> > make_lattice(
             dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
           , box
           , dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
+          , fixed_vector<double, dimension>(1)
         );
     }
 #endif /* WITH_CUDA */
@@ -247,6 +248,7 @@ shared_ptr<mdsim::position<dimension> > make_lattice(
             dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
           , dynamic_pointer_cast<halmd::random::host::random>(random)
+          , fixed_vector<double, dimension>(1)
         );
     }
     throw runtime_error("unknown backend: " + backend);

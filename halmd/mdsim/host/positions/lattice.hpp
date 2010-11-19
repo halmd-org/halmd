@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -56,8 +56,15 @@ public:
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<random_type> random
+      , vector_type const& slab
     );
     virtual void set();
+
+    vector_type const& slab() const { return slab_; }
+
+private:
+    /** slab extents for each direction as fraction of the edge length of the box */
+    vector_type slab_;
 };
 
 }}} // namespace mdsim::host::positions

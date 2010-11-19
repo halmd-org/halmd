@@ -45,12 +45,23 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
   , shared_ptr<random_type> random
+  , typename box_type::vector_type const& slab
 )
   // dependency injection
   : particle(particle)
   , box(box)
   , random(random)
+  , slab_(slab)
 {
+    if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
+        *max_element(slab_.begin(), slab_.end()) > 1
+       ) {
+        throw std::logic_error("slab extents must be a fraction between 0 and 1");
+    }
+
+    if (*min_element(slab_.begin(), slab_.end()) < 1) {
+        LOG("restrict initial particle positions to slab: " << slab_);
+    }
 }
 
 /**
@@ -103,8 +114,9 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     }
 
     // determine maximal lattice constant
-    // use the same floating point precision as the CUDA device
-    gpu_vector_type L = static_cast<gpu_vector_type>(box->length());
+    // use the same floating point precision as the CUDA device,
+    // assign lattice coordinates to (sub-)volume of the box
+    gpu_vector_type L = static_cast<gpu_vector_type>(element_prod(box->length(), slab_));
     float_type u = (dimension == 3) ? 4 : 2;
     float_type V = accumulate(
         L.begin(), L.end()
@@ -139,7 +151,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
 
     // set kernel globals in constant memory
     lattice_wrapper<dimension> const& kernel = get_lattice_kernel<dimension>();
-    cuda::copy(L, kernel.box_length);
+    cuda::copy(L, kernel.slab_length);
     cuda::copy(n, kernel.ncell);
 
     cuda::thread::synchronize();
@@ -184,7 +196,9 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                                  shared_ptr<particle_type>
                                , shared_ptr<box_type>
                                , shared_ptr<random_type>
+                               , typename box_type::vector_type const&
                              >())
+                            .def_readonly("slab", &lattice::slab)
                             .def("register_runtimes", &lattice::register_runtimes)
                             .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                     ]

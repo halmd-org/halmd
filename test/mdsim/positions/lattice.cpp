@@ -22,7 +22,9 @@
 #include <boost/test/parameterized_test.hpp>
 
 #include <boost/assign.hpp>
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/function.hpp>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -131,12 +133,13 @@ shared_ptr<halmd::random::random> make_random(
     return make_random(backend, read_integer<unsigned int>(filename));
 }
 
-template <int dimension>
+template <int dimension, typename vector_type>
 shared_ptr<mdsim::position<dimension> > make_lattice(
     string const& backend
   , shared_ptr<mdsim::particle<dimension> > particle
   , shared_ptr<mdsim::box<dimension> > box
   , shared_ptr<halmd::random::random> random
+  , vector_type const& slab
 )
 {
 #ifdef WITH_CUDA
@@ -145,6 +148,7 @@ shared_ptr<mdsim::position<dimension> > make_lattice(
             dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
           , box
           , dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
+          , slab
         );
     }
 #endif /* WITH_CUDA */
@@ -153,6 +157,7 @@ shared_ptr<mdsim::position<dimension> > make_lattice(
             dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
           , dynamic_pointer_cast<halmd::random::host::random>(random)
+          , slab
         );
     }
     throw runtime_error("unknown backend: " + backend);
@@ -216,6 +221,23 @@ vector<double> compute_ssf(
     return ssf;
 }
 
+/** similar as std::accumulate, but iterate over all particles of the sample */
+template <typename sample_type, typename vector_type, typename BinaryFunction>
+vector_type accumulate(
+    shared_ptr<sample_type> sample
+  , vector_type initial_value
+  , BinaryFunction fct
+)
+{
+    typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
+
+    vector_type result(initial_value);
+    BOOST_FOREACH(sample_vector_ptr const r, sample->r) {
+        result = std::accumulate(r->begin(), r->end(), result, fct);
+    }
+    return result;
+}
+
 template <int dimension>
 void lattice(string const& backend)
 {
@@ -223,12 +245,19 @@ void lattice(string const& backend)
     typedef typename mdsim::type_traits<dimension, float>::vector_type gpu_vector_type;
 
     fixed_vector<unsigned, dimension> ncell =
-        (dimension == 3) ? list_of(3)(3)(6) : list_of(4)(1024);
+        (dimension == 3) ? list_of(3)(6)(6) : list_of(4)(1024);
     unsigned nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
     unsigned npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1, multiplies<unsigned>());
     float density = 0.3;
     float lattice_constant = pow(nunit_cell / density, 1.f / dimension);
     char const* random_file = "/dev/urandom";
+
+    vector_type slab = (dimension == 3) ? list_of(1.)(.5)(1.) : list_of(1.)(1.);
+    double slab_vol_frac = accumulate(slab.begin(), slab.end(), 1., multiplies<double>());
+    npart *= slab_vol_frac;
+    // adjust density to make sure that the slab can accomodate an fcc lattice with the
+    // same lattice spacing (a mismatch is a likely reason for failure of the test)
+    density *= slab_vol_frac;
 
     // enable logging to console
     shared_ptr<logger> log(new logger);
@@ -241,7 +270,7 @@ void lattice(string const& backend)
     );
 
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
-                       ", lattice constant: " << lattice_constant);
+                       ", lattice constant: " << lattice_constant << ", slab extents: " << slab);
 
     // init modules
     BOOST_TEST_MESSAGE("initialise modules");
@@ -258,7 +287,7 @@ void lattice(string const& backend)
         make_shared<mdsim::box<dimension> >(particle, density, static_cast<vector_type>(ncell));
 
     shared_ptr<mdsim::position<dimension> > position =
-        make_lattice(backend, particle, box, random);
+        make_lattice(backend, particle, box, random, slab);
 
     // generate lattices
     LOG_DEBUG("set particle tags");
@@ -285,7 +314,7 @@ void lattice(string const& backend)
         trajectory = make_trajectory_gpu<dimension, float>(sample_gpu, particle, box);
     }
 #endif
-    trajectory->acquire(0.);
+    trajectory->acquire(0);
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice
@@ -308,11 +337,35 @@ void lattice(string const& backend)
     q.push_back(2 * q[0]);
 
     vector<double> ssf;
+    vector_type r_cm, r_min, r_max;
     if (backend == "host") {
+        // compute structure factor
         ssf = compute_ssf(sample_host, q);
+        // centre of mass
+        r_cm  = accumulate(sample_host, vector_type(0), plus<vector_type>()) / npart;
+        // minimal and maximal coordinates
+        using namespace halmd::detail::numeric::blas;
+        r_min = accumulate(sample_host, vector_type(0), bind(element_min<double, dimension>, _1, _2));
+        r_max = accumulate(sample_host, vector_type(0), bind(element_max<double, dimension>, _1, _2));
     }
     else if (backend == "gpu") {
+        // compute structure factor
         ssf = compute_ssf(sample_gpu, q);
+        // centre of mass
+        r_cm  = static_cast<vector_type>(  //< from fixed_vector<float, N> to fixed_vector<double, N>
+                    accumulate(sample_gpu, gpu_vector_type(0), plus<gpu_vector_type>())
+                ) / npart;
+        // minimal and maximal coordinates
+        using namespace halmd::detail::numeric::blas;
+        r_min = static_cast<vector_type>(
+                    accumulate(sample_gpu, gpu_vector_type(0), bind(element_min<float, dimension>, _1, _2))
+                );
+        r_max = static_cast<vector_type>(
+                    accumulate(sample_gpu, gpu_vector_type(0), bind(element_max<float, dimension>, _1, _2))
+                );
+    }
+    else {
+        return;
     }
 
     double eps = (double)numeric_limits<float>::epsilon();
@@ -321,6 +374,13 @@ void lattice(string const& backend)
     for (unsigned i = 1; i < ssf.size() - 1; ++i) {
         BOOST_CHECK_SMALL(ssf[i] / npart, eps);
     }
+
+    // check centre and corners
+    vector_type corner = .5 * element_prod(box->length(), slab);  //< upper right corner
+    vector_type offset(lattice_constant);                               //< diagonal of the unit cell
+    BOOST_CHECK_SMALL(norm_1(r_cm + offset / 4) / norm_1(corner), 2 * eps);
+    BOOST_CHECK_SMALL(norm_1(r_min + corner) / norm_1(corner), eps);
+    BOOST_CHECK_SMALL(norm_1(r_max - corner + offset / 2) / norm_1(corner), eps);
 }
 
 static void __attribute__((constructor)) init_unit_test_suite()

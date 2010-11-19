@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -40,12 +40,23 @@ lattice<dimension, float_type>::lattice(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
   , shared_ptr<random_type> random
+  , vector_type const& slab
 )
   // dependency injection
   : particle(particle)
   , box(box)
   , random(random)
+  , slab_(slab)
 {
+    if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
+        *max_element(slab_.begin(), slab_.end()) > 1
+       ) {
+        throw std::logic_error("slab extents must be a fraction between 0 and 1");
+    }
+
+    if (*min_element(slab_.begin(), slab_.end()) < 1) {
+        LOG("restrict initial particle positions to slab: " << slab_);
+    }
 }
 
 /**
@@ -88,8 +99,8 @@ void lattice<dimension, float_type>::set()
         random->shuffle(particle->type.begin(), particle->type.end());
     }
 
-    // assign lattice coordinates
-    vector_type L = box->length();
+    // assign lattice coordinates to (sub-)volume of the box
+    vector_type L = element_prod(box->length(), slab_);
     double u = (dimension == 3) ? 4 : 2;
     double V = box->volume() / ceil(particle->nbox / u);
     double a = pow(V, 1. / dimension);
@@ -104,6 +115,14 @@ void lattice<dimension, float_type>::set()
         ++n[it - t.begin()];
     }
     LOG("placing particles on fcc lattice: a = " << a);
+    LOG_DEBUG("number of fcc unit cells: " << n);
+
+    unsigned int N = static_cast<unsigned int>(
+        u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())
+    );
+    if (N > particle->nbox) {
+        LOG_WARNING("lattice not fully occupied (" << N << " sites)");
+    }
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type& r = particle->r[i] = a;
@@ -116,8 +135,8 @@ void lattice<dimension, float_type>::set()
             r[0] *= ((i >> 1) % n[0]) + (i & 1) / 2.;
             r[1] *= ((i >> 1) / n[0]) + (i & 1) / 2.;
         }
-        // shift particle positions to range (-L/2, L/2)
-        box->reduce_periodic(r);
+        // centre particle positions around box centre (= coordinate origin)
+        r -= L/2;
     }
 
     // assign particle image vectors
@@ -150,7 +169,9 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                                  shared_ptr<particle_type>
                                , shared_ptr<box_type>
                                , shared_ptr<random_type>
-                             >())
+                               , vector_type const&
+                            >())
+                            .def_readonly("slab", &lattice::slab)
                             .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]

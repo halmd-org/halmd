@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -37,6 +37,8 @@ local mdsim = {
 }
 local random = require("halmd.random")
 local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
+local po = halmd_wrapper.po
 local assert = assert
 
 module("halmd.mdsim.positions.lattice", halmd.modules.register)
@@ -45,6 +47,8 @@ module("halmd.mdsim.positions.lattice", halmd.modules.register)
 -- construct lattice module
 --
 function new(args)
+    local slab = args.slab or {} -- optional
+
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
@@ -52,13 +56,18 @@ function new(args)
     local box = assert(core.box)
     local random = assert(random())
 
+    -- fill up missing values with 1
+    for i = #slab + 1, dimension do
+        slab[i] = 1 -- full box size
+    end
+
     local lattice
     if device() then
         lattice = lattice_wrapper.gpu[dimension]
     else
         lattice = lattice_wrapper.host[dimension]
     end
-    return lattice(particle, box, random)
+    return lattice(particle, box, random, slab)
 end
 
 --
@@ -66,4 +75,23 @@ end
 --
 function name()
     return "Face-centered cubic lattice"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("slab", po.float_array(), "slab extents as a fraction of simulation box")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param instance of lattice module
+-- @param group HDF5 group
+--
+function write_parameters(lattice, group)
+    group:write_attribute("slab", h5.float_array(), lattice.slab)
 end

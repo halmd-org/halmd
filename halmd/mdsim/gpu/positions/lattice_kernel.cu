@@ -40,8 +40,8 @@ namespace lattice_kernel
 
 using boost::mpl::int_;
 
-/** cuboid box edge length */
-static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+/** edge lengths of cuboid slab */
+static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > slab_length_;
 /** number of cells per dimension */
 static __constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
 
@@ -109,8 +109,8 @@ __global__ void lattice(float4* g_r, float a)
     // scale with lattice constant
     r *= a;
 
-    // shift to box origin at (-L/2, -L/2)
-    r -= vector_type(get<dimension>(box_length_)) / 2;
+    // centre particle positions around box centre (= coordinate origin)
+    r -= vector_type(get<dimension>(slab_length_)) / 2;
 
     g_r[GTID] = tagged(r, type);
 }
@@ -119,7 +119,7 @@ __global__ void lattice(float4* g_r, float a)
 
 template <int dimension>
 lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
-    get<dimension>(lattice_kernel::box_length_)
+    get<dimension>(lattice_kernel::slab_length_)
   , get<dimension>(lattice_kernel::ncell_)
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::sc>
