@@ -22,6 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
+#include <halmd/utility/lua_wrapper/error.hpp>
 #include <halmd/utility/lua_wrapper/hdf5.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/lua_wrapper/program_options.hpp>
@@ -40,8 +41,6 @@ script::script()
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
     luaL_openlibs(L); //< load Lua standard libraries
-
-    luabind::set_pcall_callback(&traceback); //< set pcall error handler
 
     package_path(); //< set Lua package path
 
@@ -102,6 +101,9 @@ void script::load_library()
     using namespace luabind;
 
     try {
+#ifndef NDEBUG
+        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+#endif
         call_function<void>(L, "require", "halmd");
     }
     catch (luabind::error const& e) {
@@ -145,6 +147,9 @@ void script::parsed(po::variables_map const& vm)
 
     object options(globals(L)["halmd"]["modules"]["parsed"]);
     try {
+#ifndef NDEBUG
+        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+#endif
         call_function<void>(options, vm);
     }
     catch (luabind::error const& e) {
@@ -164,6 +169,9 @@ void script::run()
     using namespace luabind;
 
     try {
+#ifndef NDEBUG
+        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+#endif
         call_function<void>(L, "run");
     }
     catch (luabind::error const& e) {
