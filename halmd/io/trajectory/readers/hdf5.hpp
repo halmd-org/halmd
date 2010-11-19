@@ -41,7 +41,7 @@ public:
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 
     static void luaopen(lua_State* L);
-    static bool check(std::string const& file_name);
+    static bool format(std::string const& file_name);
 
     hdf5(
         boost::shared_ptr<sample_type> sample

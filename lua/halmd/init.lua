@@ -21,6 +21,7 @@
 -- Load HAL’s MD package
 --
 require("halmd.io.statevars.writers")
+require("halmd.io.trajectory.reader")
 require("halmd.io.trajectory.writers")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")

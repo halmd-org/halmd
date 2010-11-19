@@ -32,8 +32,11 @@ namespace halmd
 namespace io { namespace trajectory { namespace readers
 {
 
+/**
+ * check whether file is in HDF5 format
+ */
 template <int dimension, typename float_type>
-bool hdf5<dimension, float_type>::check(std::string const& file_name)
+bool hdf5<dimension, float_type>::format(std::string const& file_name)
 {
     return H5::H5File::isHdf5(file_name);
 }
@@ -124,7 +127,7 @@ void hdf5<dimension, float_type>::luaopen(lua_State* L)
                             >())
                             .scope
                             [
-                                def("check", &hdf5::check)
+                                def("format", &hdf5::format)
                             ]
                     ]
                 ]

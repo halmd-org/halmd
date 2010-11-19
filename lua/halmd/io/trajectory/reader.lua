@@ -19,12 +19,14 @@
 
 require("halmd.modules")
 
+require("halmd.io.trajectory.readers")
+
 -- grab environment
-local reader_wrapper = {
-    [2] = halmd_wrapper.io.trajectory.reader_2_
-  , [3] = halmd_wrapper.io.trajectory.reader_3_
-}
+local readers = halmd.io.trajectory.readers
 local po = halmd_wrapper.po
+local error = error
+local io = io
+local pairs = pairs
 
 module("halmd.io.trajectory.reader", halmd.modules.register)
 
@@ -34,6 +36,29 @@ module("halmd.io.trajectory.reader", halmd.modules.register)
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("trajectory-file,J", po.string(), "trajectory input file")
-    desc:add("trajectory-sample,S", po.int64_t():depends("trajectory-file"), "trajectory sample for initial state")
+    desc:add("trajectory", po.string():notifier(function(value)
+
+        -- check whether file exists and is readable
+        local file, message = io.open(value)
+        if not file then
+            error(message, 0)
+        end
+        file:close()
+
+        -- check for reader that can handle file format
+        local reader
+        for _, module in pairs(readers) do
+            local format = module.format
+            if format and format(value) then
+                reader = module
+                break
+            end
+        end
+        if not reader then
+            error(value .. ": unknown trajectory file format", 0)
+        end
+
+    end), "trajectory input file")
+
+    desc:add("sample", po.int64():depends("trajectory"), "trajectory sample for initial state")
 end
