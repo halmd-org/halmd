@@ -10,7 +10,7 @@ of these packages before attempting to compile them yourself.
    When installing third-party packages, it is advisable to put them into
    separate directories. If you install software only for yourself, use package
    directories of the form ``~/usr/PKGNAME-PKGVERSION``, for example
-   ``~/usr/boost-1.44.0`` or ``~/usr/Sphinx-1.0.4``. If you install software
+   ``~/usr/boost-1.45.0`` or ``~/usr/Sphinx-1.0.4``. If you install software
    system-wide as the root user, use ``/opt/PKGNAME-PKGVERSION``.
    This simple scheme allows you to have multiple versions of a package, or
    remove a package without impacting others.
@@ -21,7 +21,7 @@ For example, if Boost, Lua and Luabind are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   cmake -DCMAKE_PREFIX_PATH='~/usr/boost_1_44_0;/opt/cuda-3.1;~/usr/lua-5.1.4;~/usr/luabind-0.9.1' ~/projects/halmd
+   cmake -DCMAKE_PREFIX_PATH='~/usr/boost_1_45_0;/opt/cuda-3.1;~/usr/lua-5.1.4;~/usr/luabind-0.9.1' ~/projects/halmd
 
 (Note the single quotes to prevent the shell from swallowing semicolons.)
 
@@ -57,10 +57,10 @@ Install CMake into your packages directory::
 Boost
 -----
 
-Get the latest `Boost source package`_, currently `Boost 1.44.0`_.
+Get the latest `Boost source package`_, currently `Boost 1.45.0`_.
 
 .. _Boost source package: http://www.boost.org/users/download
-.. _Boost 1.44.0: http://sourceforge.net/projects/boost/files/boost/1.44.0/boost_1_44_0.tar.bz2
+.. _Boost 1.45.0: http://sourceforge.net/projects/boost/files/boost/1.45.0/boost_1_45_0.tar.bz2
 
 Get the latest `Boost.Log source package`_, currently `Boost.Log 1.0`_.
 
@@ -80,8 +80,8 @@ We will build Boost and Boost.Log in a single step, therefore extract both
 source packages and copy the Boost.Log headers and library sources to the
 Boost source directory using ::
 
-   cp -r /tmp/boost-log-1.0/boost/log /tmp/boost_1_44_0/boost/
-   cp -r /tmp/boost-log-1.0/libs/log /tmp/boost_1_44_0/libs/
+   cp -r /tmp/boost-log-1.0/boost/log /tmp/boost_1_45_0/boost/
+   cp -r /tmp/boost-log-1.0/libs/log /tmp/boost_1_45_0/libs/
 
 In the Boost source directory, bootstrap the build with ::
 
@@ -107,7 +107,7 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam install --prefix=$HOME/usr/boost_1_44_0
+   ./bjam install --prefix=$HOME/usr/boost_1_45_0
 
 
 Lua
@@ -149,16 +149,16 @@ Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
    Luabind is based on the Boost C++ libraries and uses boost-jam as its
    build tool. After bootstrapping Boost following the instructions above, the
    bjam executable is found in the top-level source directory, for example
-   ``/tmp/boost_1_44_0/bjam``. This directory also has to be passed to bjam
+   ``/tmp/boost_1_45_0/bjam``. This directory also has to be passed to bjam
    during Luabind build using the environment variable ``BOOST_ROOT``.
 
 Compile a statically linked release build of the Luabind library with ::
 
-   BOOST_ROOT=/tmp/boost_1_44_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_44_0/bjam link=static variant=release
+   BOOST_ROOT=/tmp/boost_1_45_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_45_0/bjam link=static variant=release
 
 Install the Luabind library into your packages directory::
 
-   BOOST_ROOT=/tmp/boost_1_44_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_44_0/bjam link=static variant=release install --prefix=$HOME/usr/luabind-0.9.1
+   BOOST_ROOT=/tmp/boost_1_45_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_45_0/bjam link=static variant=release install --prefix=$HOME/usr/luabind-0.9.1
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
