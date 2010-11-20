@@ -16,14 +16,19 @@ of these packages before attempting to compile them yourself.
    remove a package without impacting others.
 
 When initially creating the CMake build tree, include all third-party package
-directories in the CMake variable ``CMAKE_PREFIX_PATH``.
+directories in the environment variable ``CMAKE_PREFIX_PATH``.
 For example, if Boost, Lua and Luabind are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   cmake -DCMAKE_PREFIX_PATH='~/usr/boost_1_45_0;/opt/cuda-3.1;~/usr/lua-5.1.4;~/usr/luabind-0.9.1' ~/projects/halmd
+   CMAKE_PREFIX_PATH=~/usr/boost_1_45_0:/opt/cuda-3.1:~/usr/lua-5.1.4:~/usr/luabind-0.9.1 cmake ~/projects/halmd
 
-(Note the single quotes to prevent the shell from swallowing semicolons.)
+Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell's equivalent) ::
+
+   export CMAKE_PREFIX_PATH="${HOME}/usr/boost_1_45_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="/opt/cuda-3.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/usr/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
 CMake
@@ -52,6 +57,11 @@ Compile CMake with ::
 Install CMake into your packages directory::
 
    make install
+
+Include CMake in your shell environment, by adding to ~/.bashrc::
+
+   export PATH="${HOME}/usr/cmake-cuda-2.8.2/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/usr/cmake-cuda-2.8.2/man${MANPATH+:$MANPATH}"
 
 
 Boost
@@ -109,6 +119,11 @@ Install the Boost libraries into your packages directory::
 
    ./bjam install --prefix=$HOME/usr/boost_1_45_0
 
+Include Boost in your shell environment, by adding to ~/.bashrc::
+
+   export CMAKE_PREFIX_PATH="${HOME}/usr/boost_1_45_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export LD_LIBRARY_PATH="${HOME}/usr/boost_1_45_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+
 
 Lua
 ---
@@ -134,6 +149,12 @@ On **64-bit platforms**, include the ``-fPIC`` flag using ::
 Install the Lua library into your packages directory::
 
    make install INSTALL_TOP=~/usr/lua-5.1.4
+
+Include Lua in your shell environment, by adding to ~/.bashrc::
+
+   export CMAKE_PREFIX_PATH="${HOME}/usr/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/usr/lua-5.1.4/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/usr/lua-5.1.4/man${MANPATH+:$MANPATH}"
 
 
 Luabind
@@ -162,6 +183,10 @@ Install the Luabind library into your packages directory::
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
+Include Lua in your shell environment, by adding to ~/.bashrc::
+
+   export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+
 
 HDF5
 ----
@@ -185,6 +210,11 @@ Install the HDF5 libraries into your packages directory::
 
    make install
 
+Include HDF5 in your shell environment, by adding to ~/.bashrc::
+
+   export PATH="${HOME}/usr/hdf5-1.8.5-patch1/bin${PATH+:$PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/usr/hdf5-1.8.5-patch1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+
 
 GNU Scientific Library
 ----------------------
@@ -205,6 +235,13 @@ Compile GSL using ::
 Install the GSL libraries into your packages directory::
 
    make install
+
+Include GSL in your shell environment, by adding to ~/.bashrc::
+
+   export CMAKE_PREFIX_PATH="${HOME}/usr/gsl-1.14${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export LD_LIBRARY_PATH="${HOME}/usr/gsl-1.14/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+   export PATH="${HOME}/usr/gsl-1.14/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/usr/gsl-1.14/share/man${MANPATH+:$MANPATH}"
 
 
 NVIDIA CUDA toolkit
@@ -233,4 +270,9 @@ Add the package directory to the PYTHON_PATH environment variable ::
 Install Sphinx into your packages directory ::
 
    python setup.py install --prefix=$HOME/usr/Sphinx-1.0.5
+
+Include Sphinx in your shell environment, by adding to ~/.bashrc::
+
+   export PATH="${HOME}/usr/Sphinx-1.0.5/bin${PATH+:$PATH}"
+   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.5/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
