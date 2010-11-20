@@ -43,7 +43,12 @@ function new(args)
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
-    local neighbour = assert(core.neighbour)
+
+    -- check if neighbour module is available
+    local neighbour = core.neighbour
+    if not neighbour then
+        return nil
+    end
 
     if not device() then
         return hilbert_wrapper.host[dimension](particle, box, neighbour)

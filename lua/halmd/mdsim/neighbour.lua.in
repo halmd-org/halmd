@@ -52,7 +52,12 @@ function new(args)
     local particle = assert(core.particle)
     local box = assert(core.box)
     local force = assert(core.force)
-    local r_cut = assert(force.r_cut)
+
+    -- neighbour module is only needed if truncated pair force
+    local r_cut = force.r_cut
+    if not r_cut then
+        return nil
+    end
 
     -- command line options
     local skin = args.skin or 0.5 -- default value

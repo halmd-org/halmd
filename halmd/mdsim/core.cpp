@@ -64,7 +64,9 @@ void core<dimension>::prepare()
     particle->set();
     position->set();
     velocity->set();
-    neighbour->update();
+    if (neighbour) {
+        neighbour->update();
+    }
     force->compute();
 }
 
@@ -77,7 +79,7 @@ void core<dimension>::mdstep()
     scoped_timer<timer> timer_(at_key<mdstep_>(runtime_));
     LOG_TRACE("performing MD step #" << step_counter_);
     integrator->integrate();
-    if (neighbour->check()) {
+    if (neighbour && neighbour->check()) {
         if (sort) {
             sort->order();
         }
