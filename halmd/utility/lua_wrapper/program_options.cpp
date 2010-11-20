@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include <halmd/utility/lua_wrapper/long_long_converter.hpp> // *int64_t on x86
 #include <halmd/utility/lua_wrapper/map_converter.hpp>
 #include <halmd/utility/lua_wrapper/program_options.hpp>
 #include <halmd/utility/program_options/program_options.hpp>

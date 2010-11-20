@@ -22,6 +22,7 @@
 #include <luabind/exception_handler.hpp>
 
 #include <halmd/utility/lua_wrapper/hdf5.hpp>
+#include <halmd/utility/lua_wrapper/long_long_converter.hpp> // *int64_t on x86
 #include <halmd/utility/lua_wrapper/vector_converter.hpp>
 
 using namespace boost;
