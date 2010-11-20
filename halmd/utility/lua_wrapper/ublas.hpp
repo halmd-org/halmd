@@ -20,7 +20,6 @@
 #ifndef HALMD_UTILITY_LUA_WRAPPER_UBLAS_HPP
 #define HALMD_UTILITY_LUA_WRAPPER_UBLAS_HPP
 
-#include <boost/numeric/ublas/storage.hpp>
 #include <luabind/luabind.hpp>
 
 namespace halmd
@@ -34,15 +33,24 @@ int luaopen(lua_State* L);
 
 } // namespace luabind
 
+namespace boost { namespace numeric { namespace ublas
+{
+
+// forward declaration
+template <typename T, typename A>
+struct unbounded_array;
+
+}}} // namespace boost::numeric::ublas
+
 namespace luabind
 {
 
 /**
  * Luabind converter for Boost uBLAS unbounded storage array
  */
-template <typename T>
-struct default_converter<boost::numeric::ublas::unbounded_array<T> >
-  : native_converter_base<boost::numeric::ublas::unbounded_array<T> >
+template <typename T, typename A>
+struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
+  : native_converter_base<boost::numeric::ublas::unbounded_array<T, A> >
 {
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
@@ -51,10 +59,10 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T> >
     }
 
     //! convert from Lua to C++
-    boost::numeric::ublas::unbounded_array<T> from(lua_State* L, int index)
+    boost::numeric::ublas::unbounded_array<T, A> from(lua_State* L, int index)
     {
         std::size_t size = luaL_getn(L, index);
-        boost::numeric::ublas::unbounded_array<T> v(size);
+        boost::numeric::ublas::unbounded_array<T, A> v(size);
         object table(from_stack(L, index));
         for (std::size_t i = 0; i < v.size(); ++i) {
             v[i] = object_cast<T>(table[i + 1]);
@@ -63,7 +71,7 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T> >
     }
 
     //! convert from C++ to Lua
-    void to(lua_State* L, boost::numeric::ublas::unbounded_array<T> const& v)
+    void to(lua_State* L, boost::numeric::ublas::unbounded_array<T, A> const& v)
     {
         object table = newtable(L);
         for (std::size_t i = 0; i < v.size(); ++i) {
@@ -74,10 +82,9 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T> >
     }
 };
 
-template <typename T>
-struct default_converter<boost::numeric::ublas::unbounded_array<T> const&>
-  : default_converter<boost::numeric::ublas::unbounded_array<T> > {};
-
+template <typename T, typename A>
+struct default_converter<boost::numeric::ublas::unbounded_array<T, A> const&>
+  : default_converter<boost::numeric::ublas::unbounded_array<T, A> > {};
 
 } // namespace luabind
 
