@@ -33,8 +33,7 @@ if halmd_wrapper.mdsim.gpu then
     }
 end
 local mdsim = {
-    forces = halmd.mdsim.forces
-  , core = require("halmd.mdsim.core")
+    core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
 local assert = assert
@@ -44,15 +43,17 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 --
 -- construct truncated pair force module
 --
+-- @param args.force potential name
+-- @param args.potential potential module instance
+--
 function new(args)
     local force = assert(args.force)
+    local potential = assert(args.potential)
 
-    -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
-    local potential = mdsim.forces[force]()
 
     local pair_trunc
     if device() then

@@ -40,7 +40,13 @@ module("halmd.mdsim.force", halmd.modules.register)
 --
 function new(args)
     local force = args.force or "lennard_jones" -- default value
-    return forces.pair_trunc{ force = force }
+    local potential = assert(forces[force])
+
+    local potential = potential()
+    if potential.r_cut then
+        return forces.pair_trunc{ force = force, potential = potential }
+    end
+    return potential
 end
 
 --

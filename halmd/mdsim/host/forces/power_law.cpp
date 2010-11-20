@@ -102,6 +102,7 @@ void power_law<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                         >())
                         .def_readonly("index", &power_law::index)
+                        .def_readonly("r_cut", (matrix_type const& (power_law::*)() const) &power_law::r_cut)
                         .def_readonly("r_cut_sigma", &power_law::r_cut_sigma)
                         .def_readonly("epsilon", &power_law::epsilon)
                         .def_readonly("sigma", &power_law::sigma)
