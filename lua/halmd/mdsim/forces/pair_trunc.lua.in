@@ -33,11 +33,7 @@ if halmd_wrapper.mdsim.gpu then
     }
 end
 local mdsim = {
-    forces = {
-        lennard_jones = require("halmd.mdsim.forces.lennard_jones")
-      , morse = require("halmd.mdsim.forces.morse")
-      , power_law = require("halmd.mdsim.forces.power_law")
-    }
+    forces = halmd.mdsim.forces
   , core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")

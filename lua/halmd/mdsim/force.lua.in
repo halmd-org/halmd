@@ -19,7 +19,7 @@
 
 require("halmd.modules")
 
-require("halmd.mdsim.forces.pair_trunc")
+require("halmd.mdsim.forces")
 
 -- grab environment
 local force_wrapper = {

@@ -1,0 +1,4 @@
+require("halmd.mdsim.forces.lennard_jones")
+require("halmd.mdsim.forces.morse")
+require("halmd.mdsim.forces.pair_trunc")
+require("halmd.mdsim.forces.power_law")

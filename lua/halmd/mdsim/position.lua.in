@@ -19,7 +19,7 @@
 
 require("halmd.modules")
 
-require("halmd.mdsim.positions.lattice")
+require("halmd.mdsim.positions")
 
 -- grab environment
 local position_wrapper = {

@@ -19,8 +19,7 @@
 
 require("halmd.modules")
 
-require("halmd.mdsim.integrators.verlet")
-require("halmd.mdsim.integrators.verlet_nvt_andersen")
+require("halmd.mdsim.integrators")
 
 -- grab environment
 local integrator_wrapper = {

@@ -19,7 +19,7 @@
 
 require("halmd.modules")
 
-require("halmd.mdsim.velocities.boltzmann")
+require("halmd.mdsim.velocities")
 
 -- grab environment
 local velocity_wrapper = {
