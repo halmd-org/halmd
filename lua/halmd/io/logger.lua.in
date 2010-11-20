@@ -22,21 +22,27 @@ local logger_wrapper = halmd_wrapper.io.logger
 local setmetatable = setmetatable
 local rawset = rawset
 local rawget = rawget
+local tostring = tostring
 
 module("halmd.io.logger")
 
---
---
--- @param level Logging severity level
---
-local function log(self, level)
-    local log = logger_wrapper[level]
-    if log then
+setmetatable(_M, {
+    --
+    -- log message with given severity
+    --
+    -- @param level Logging severity level
+    --
+    __index = function(self, level)
+        local wrapper = logger_wrapper[level]
+        local log
+        if wrapper then
+            log = function(message)
+                wrapper(tostring(message))
+            end
+        else
+            log = function() end
+        end
         rawset(self, level, log)
-    else
-        rawset(self, level, function() end)
+        return log
     end
-    return rawget(self, level)
-end
-
-setmetatable(_M, { __index = log })
+})
