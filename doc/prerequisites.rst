@@ -195,3 +195,24 @@ NVIDIA CUDA toolkit
 Sphinx
 ------
 
+Get the latest `Sphinx source package`_, currently `Sphinx 1.0.5`_.
+
+.. _Sphinx source package: http://pypi.python.org/pypi/Sphinx
+.. _Sphinx 1.0.5: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.0.5.tar.gz
+
+Query your Python version ::
+
+   python -V
+
+Create a package directory for Sphinx using the Python major and minor version ::
+
+   mkdir -p $HOME/usr/Sphinx-1.0.5/lib/python2.5/site-packages
+
+Add the package directory to the PYTHON_PATH environment variable ::
+
+   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.5/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+
+Install Sphinx into your packages directory ::
+
+   python setup.py install --prefix=$HOME/usr/Sphinx-1.0.5
+
