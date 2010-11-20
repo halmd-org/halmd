@@ -25,7 +25,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -39,17 +38,25 @@ namespace halmd
 namespace mdsim { namespace gpu
 {
 
+/**
+ * construct neighbour list module
+ *
+ * @param particle mdsim::gpu::particle instance
+ * @param box mdsim::box instance
+ * @param cutoff force cutoff radius
+ * @param skin neighbour list skin
+ * @param cell_occupancy desired average cell occupancy
+ */
 template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
-  , shared_ptr<force_type> force
+  , matrix_type const& r_cut
   , double skin
   , double cell_occupancy
 )
   // dependency injection
   : particle(particle)
-  , force(force)
   , box(box)
   // select thread-dependent reduction kernel
   , dim_reduce(64, (64 << DEVICE_SCALE))
@@ -65,7 +72,6 @@ neighbour<dimension, float_type>::neighbour(
   , h_rr_(g_rr_.size())
   , sort_(particle->nbox, particle->dim.threads_per_block())
 {
-    matrix_type r_cut = force->cutoff();
     typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle->ntype; ++i) {
         for (size_t j = i; j < particle->ntype; ++j) {
@@ -314,7 +320,7 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                         .def(constructor<
                             shared_ptr<particle_type>
                           , shared_ptr<box_type>
-                          , shared_ptr<force_type>
+                          , matrix_type const&
                           , double
                           , double
                         >())

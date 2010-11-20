@@ -35,23 +35,29 @@ namespace halmd
 namespace mdsim { namespace host
 {
 
+/**
+ * construct neighbour list module
+ *
+ * @param particle mdsim::host::particle instance
+ * @param box mdsim::box instance
+ * @param cutoff force cutoff radius
+ * @param skin neighbour list skin
+ */
 template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
-  , shared_ptr<force_type> force
+  , matrix_type const& r_cut
   , double skin
 )
   // dependency injection
   : particle(particle)
-  , force(force)
   , box(box)
   // allocate parameters
   , r_skin_(skin)
   , rr_cut_skin_(particle->ntype, particle->ntype)
   , r0_(particle->nbox)
 {
-    matrix_type r_cut = force->cutoff();
     matrix_type r_cut_skin(particle->ntype, particle->ntype);
     typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle->ntype; ++i) {
@@ -223,7 +229,7 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                         .def(constructor<
                              shared_ptr<particle_type>
                            , shared_ptr<box_type>
-                           , shared_ptr<force_type>
+                           , matrix_type const&
                            , double
                          >())
                         .property("r_skin", &neighbour::r_skin)

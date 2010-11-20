@@ -52,15 +52,18 @@ function new(args)
     local particle = assert(core.particle)
     local box = assert(core.box)
     local force = assert(core.force)
+    local r_cut = assert(force.r_cut)
 
     -- command line options
     local skin = args.skin or 0.5 -- default value
 
-    if not device() then
-        return neighbour_wrapper.host[dimension](particle, box, force, skin)
+    if device() then
+        local occupancy = args.occupancy or 0.4 -- default value
+
+        return neighbour_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
+    else
+        return neighbour_wrapper.host[dimension](particle, box, r_cut, skin)
     end
-    local occupancy = args.occupancy or 0.4 -- default value
-    return neighbour_wrapper.gpu[dimension](particle, box, force, skin, occupancy)
 end
 
 --

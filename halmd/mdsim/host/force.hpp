@@ -45,7 +45,6 @@ public:
     static void luaopen(lua_State* L);
 
     force() {}
-    virtual matrix_type const& cutoff() = 0;
     virtual double potential_energy() = 0;
     virtual stress_tensor_type stress_tensor_pot() = 0;
 };

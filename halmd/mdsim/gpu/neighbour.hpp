@@ -22,6 +22,7 @@
 
 #include <boost/array.hpp>
 #include <boost/multi_array.hpp>
+#include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <vector>
@@ -56,8 +57,7 @@ public:
     typedef mdsim::neighbour<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef gpu::force<dimension, float_type> force_type;
-    typedef typename force_type::matrix_type matrix_type;
+    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef utility::profiler profiler_type;
 
@@ -69,7 +69,6 @@ public:
     typedef fixed_vector<int, dimension> cell_diff_type;
 
     boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
 
     cuda::config dim_reduce;
@@ -80,7 +79,7 @@ public:
     neighbour(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
-      , boost::shared_ptr<force_type> force
+      , matrix_type const& r_cut
       , double skin
       , double cell_occupancy
     );

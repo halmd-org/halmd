@@ -47,7 +47,6 @@ public:
     static void luaopen(lua_State* L);
 
     force() {}
-    virtual matrix_type const& cutoff() = 0;
     virtual cuda::vector<float> const& potential_energy() = 0;
     virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() = 0;
 };

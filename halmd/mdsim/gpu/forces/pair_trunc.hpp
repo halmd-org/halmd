@@ -73,7 +73,7 @@ public:
     inline void register_runtimes(profiler_type& profiler);
 
     //! returns potential cutoff distance
-    virtual matrix_type const& cutoff()
+    matrix_type const& r_cut()
     {
         return potential->r_cut();
     }
@@ -183,6 +183,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                               , boost::shared_ptr<box_type>
                             >())
                             .def("register_runtimes", &pair_trunc::register_runtimes)
+                            .property("r_cut", &pair_trunc::r_cut)
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
                     ]
                 ]

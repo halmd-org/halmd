@@ -50,9 +50,8 @@ public:
     typedef mdsim::neighbour<dimension> _Base;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef host::force<dimension, float_type> force_type;
+    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
-    typedef typename force_type::matrix_type matrix_type;
 
     typedef typename particle_type::neighbour_list cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
@@ -60,7 +59,6 @@ public:
     typedef fixed_vector<ssize_t, dimension> cell_diff_type;
 
     boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<force_type> force;
     boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
@@ -68,7 +66,7 @@ public:
     neighbour(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
-      , boost::shared_ptr<force_type> force
+      , matrix_type const& r_cut
       , double skin
     );
     virtual void update();

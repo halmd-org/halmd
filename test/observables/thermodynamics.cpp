@@ -181,20 +181,24 @@ shared_ptr<mdsim::neighbour<dimension> > make_neighbour(
 {
 #ifdef WITH_CUDA
     if (backend == "gpu") {
+        typedef mdsim::gpu::forces::lennard_jones<float> potential_type;
+        typedef mdsim::gpu::forces::pair_trunc<dimension, float, potential_type> force_type;
         return make_shared<mdsim::gpu::neighbour<dimension, float> >(
             dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
           , box
-          , dynamic_pointer_cast<mdsim::gpu::force<dimension, float> >(force)
+          , dynamic_pointer_cast<force_type>(force)->r_cut()
           , 0.5         // skin
           , 0.4         // cell occupancy
         );
     }
 #endif /* WITH_CUDA */
     if (backend == "host") {
+        typedef mdsim::host::forces::lennard_jones<double> potential_type;
+        typedef mdsim::host::forces::pair_trunc<dimension, double, potential_type> force_type;
         return make_shared<mdsim::host::neighbour<dimension, double> >(
             dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
-          , dynamic_pointer_cast<mdsim::host::force<dimension, double> >(force)
+          , dynamic_pointer_cast<force_type>(force)->r_cut()
           , 0.5         // skin
         );
     }
