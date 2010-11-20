@@ -28,6 +28,7 @@ if halmd_wrapper.gpu then
     random_wrapper.gpu = halmd_wrapper.gpu.random
 end
 local device = require("halmd.device")
+local log = require("halmd.log")
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
@@ -47,6 +48,7 @@ function new(args)
         local threads = args.threads or 256 -- default value FIXME DEVICE_SCALE
 
         if not seed then
+            log.info("reading integer seed from file: " .. file)
             seed = random_wrapper.read_integer(file)
         end
         local device = device()
