@@ -24,7 +24,7 @@ local rawset = rawset
 local rawget = rawget
 local tostring = tostring
 
-module("halmd.io.logger")
+module("halmd.log")
 
 setmetatable(_M, {
     --
