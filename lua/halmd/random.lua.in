@@ -32,6 +32,8 @@ local log = require("halmd.log")
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
+local error = error
+local io = io
 
 module("halmd.random", halmd.modules.register)
 
@@ -68,7 +70,16 @@ end
 --
 function options(desc)
     desc:add("seed", po.uint(), "random number generator integer seed")
-    desc:add("file", po.string(), "read random seed from file")
+    desc:add("file", po.string():conflicts("seed"):notifier(function(value)
+
+        -- check whether file exists and is readable
+        local file, message = io.open(value)
+        if not file then
+            error(message, 0)
+        end
+        file:close()
+
+    end), "read random seed from file")
 
     if random_wrapper.gpu then
         desc:add("blocks", po.uint(), "number of CUDA blocks")
