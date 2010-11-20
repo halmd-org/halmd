@@ -189,6 +189,24 @@ Install the HDF5 libraries into your packages directory::
 GNU Scientific Library
 ----------------------
 
+Get the latest `GSL source package`_, currently `GSL 1.14`_.
+
+.. _GSL source package: http://www.gnu.org/software/gsl/
+.. _GSL 1.14: http://ftpmirror.gnu.org/gsl/gsl-1.14.tar.gz
+
+Prepare the GSL build with ::
+
+   ./configure --prefix=$HOME/usr/gsl-1.14
+
+Compile GSL using ::
+
+   make
+
+Install the GSL libraries into your packages directory::
+
+   make install
+
+
 NVIDIA CUDA toolkit
 -------------------
 
