@@ -26,6 +26,7 @@
 #include <iterator>
 #include <utility>
 
+#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/random.hpp>
 
@@ -51,6 +52,10 @@ public:
     value_type uniform();
     template <typename value_type>
     std::pair<value_type, value_type> normal(value_type sigma2);
+    template <typename value_type>
+    void unit_vector(fixed_vector<value_type, 2>& v);
+    template <typename value_type>
+    void unit_vector(fixed_vector<value_type, 3>& v);
 
 protected:
     /** pseudo-random number generator */
@@ -111,6 +116,46 @@ std::pair<value_type, value_type> random::normal(value_type sigma)
     x *= s;
     y *= s;
     return std::make_pair(x, y);
+}
+
+/**
+ * Generate 2-dimensional random unit vector
+ */
+template <typename value_type>
+void random::unit_vector(fixed_vector<value_type, 2>& v)
+{
+    value_type s = 2. * M_PI * uniform<value_type>();
+    v[0] = std::cos(s);
+    v[1] = std::sin(s);
+}
+
+/**
+ * Generate 3-dimensional random unit vector
+ *
+ * The following method requires an average of 8/Pi =~ 2.55
+ * uniform random numbers. It is described in
+ *
+ * G. Marsaglia, Choosing a Point from the Surface of a Sphere,
+ * The Annals of Mathematical Statistics, 1972, 43, p. 645-646
+ *
+ * http://projecteuclid.org/euclid.aoms/1177692644#
+ *
+ */
+template <typename value_type>
+void random::unit_vector(fixed_vector<value_type, 3>& v)
+{
+    value_type s;
+
+    do {
+        v[0] = 2 * uniform<value_type>() - 1;
+        v[1] = 2 * uniform<value_type>() - 1;
+        s = v[0] * v[0] + v[1] * v[1];
+    } while (s >= 1);
+
+    v[2] = 1 - 2 * s;
+    s = 2 * std::sqrt(1 - s);
+    v[0] *= s;
+    v[1] *= s;
 }
 
 }} // namespace random::host
