@@ -27,33 +27,13 @@
 #include <utility>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/host/forces/lennard_jones.hpp>
-#include <halmd/mdsim/host/integrators/verlet.hpp>
-#include <halmd/mdsim/host/neighbour.hpp>
-#include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/positions/lattice.hpp>
-#include <halmd/mdsim/host/velocities/boltzmann.hpp>
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/observables/host/thermodynamics.hpp>
-#include <halmd/observables/thermodynamics.hpp>
-#include <halmd/random/host/random.hpp>
-#ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
-# include <halmd/mdsim/gpu/integrators/verlet.hpp>
-# include <halmd/mdsim/gpu/neighbour.hpp>
-# include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/mdsim/gpu/positions/lattice.hpp>
-# include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
-# include <halmd/observables/gpu/thermodynamics.hpp>
-# include <halmd/random/gpu/random.hpp>
-# include <halmd/utility/gpu/device.hpp>
-#endif
+#include <test/modules.hpp>
 
 using namespace boost;
 using namespace halmd;
+using namespace halmd::test;
 using namespace std;
 
 /**
@@ -66,251 +46,6 @@ using namespace std;
  * a more detailed analysis and more accurate values are found in
  * Johnson, Zollweg, and Gubbins, Mol. Phys. 78, 591 (1993).
  */
-
-#ifdef WITH_CUDA
-shared_ptr<utility::gpu::device> make_device(string const& backend)
-{
-    if (backend == "gpu") {
-        static weak_ptr<utility::gpu::device> device;
-        shared_ptr<utility::gpu::device> device_(device.lock());
-        if (!device_) {
-            device_ = make_shared<utility::gpu::device>(
-                vector<int>()   // devices
-              , 128             // threads
-            );
-            device = device_;
-        }
-        return device_;
-    }
-    if (backend == "host") {
-        return shared_ptr<utility::gpu::device>(); // null pointer
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-#endif /* WITH_CUDA */
-
-template <int dimension>
-shared_ptr<mdsim::particle<dimension> > make_particle(
-    string const& backend
-  , unsigned int npart
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        return make_shared<mdsim::gpu::particle<dimension, float> >(
-            make_device(backend)
-          , vector<unsigned int>(1, npart)
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<mdsim::host::particle<dimension, double> >(
-            vector<unsigned int>(1, npart)
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-template <int dimension>
-shared_ptr<mdsim::integrator<dimension> > make_verlet_integrator(
-    string const& backend
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<mdsim::box<dimension> > box
-  , double timestep
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        return make_shared<mdsim::gpu::integrators::verlet<dimension, float> >(
-            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
-          , box
-          , timestep
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<mdsim::host::integrators::verlet<dimension, double> >(
-            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
-          , box
-          , timestep
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-template <int dimension>
-shared_ptr<mdsim::force<dimension> > make_lennard_jones_force(
-    string const& backend
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<mdsim::box<dimension> > box
-  , array<float, 3> cutoff
-  , array<float, 3> epsilon
-  , array<float, 3> sigma
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        typedef mdsim::gpu::forces::lennard_jones<float> potential_type;
-        typedef mdsim::gpu::forces::pair_trunc<dimension, float, potential_type> force_type;
-        return make_shared<force_type>(
-            make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
-          , dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
-          , box
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        typedef mdsim::host::forces::lennard_jones<double> potential_type;
-        typedef mdsim::host::forces::pair_trunc<dimension, double, potential_type> force_type;
-        return make_shared<force_type>(
-            make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
-          , dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
-          , box
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-template <int dimension>
-shared_ptr<mdsim::neighbour<dimension> > make_neighbour(
-    string const& backend
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<mdsim::box<dimension> > box
-  , shared_ptr<mdsim::force<dimension> > force
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        typedef mdsim::gpu::forces::lennard_jones<float> potential_type;
-        typedef mdsim::gpu::forces::pair_trunc<dimension, float, potential_type> force_type;
-        return make_shared<mdsim::gpu::neighbour<dimension, float> >(
-            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
-          , box
-          , dynamic_pointer_cast<force_type>(force)->r_cut()
-          , 0.5         // skin
-          , 0.4         // cell occupancy
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        typedef mdsim::host::forces::lennard_jones<double> potential_type;
-        typedef mdsim::host::forces::pair_trunc<dimension, double, potential_type> force_type;
-        return make_shared<mdsim::host::neighbour<dimension, double> >(
-            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
-          , box
-          , dynamic_pointer_cast<force_type>(force)->r_cut()
-          , 0.5         // skin
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-shared_ptr<halmd::random::random> make_random(
-    string const& backend
-  , unsigned int seed
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
-        return make_shared<random_type>(
-            make_device(backend)
-          , seed
-          , 32                  // blocks
-          , 32 << DEVICE_SCALE  // threads
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<halmd::random::host::random>(
-            seed
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-template <int dimension>
-shared_ptr<mdsim::position<dimension> > make_lattice(
-    string const& backend
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<mdsim::box<dimension> > box
-  , shared_ptr<halmd::random::random> random
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        return make_shared<mdsim::gpu::positions::lattice<dimension, float, halmd::random::gpu::rand48> >(
-            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
-          , box
-          , dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
-          , fixed_vector<double, dimension>(1)
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<mdsim::host::positions::lattice<dimension, double> >(
-            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
-          , box
-          , dynamic_pointer_cast<halmd::random::host::random>(random)
-          , fixed_vector<double, dimension>(1)
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-template <int dimension>
-shared_ptr<mdsim::velocity<dimension> > make_boltzmann(
-    string const& backend
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<halmd::random::random> random
-  , double temperature
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        return make_shared<mdsim::gpu::velocities::boltzmann<dimension, float, halmd::random::gpu::rand48> >(
-            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
-          , dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
-          , temperature
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<mdsim::host::velocities::boltzmann<dimension, double> >(
-            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
-          , dynamic_pointer_cast<halmd::random::host::random>(random)
-          , temperature
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-template <int dimension>
-shared_ptr<observables::thermodynamics<dimension> > make_thermodynamics(
-    string const& backend
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<mdsim::box<dimension> > box
-  , shared_ptr<mdsim::force<dimension> > force
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        return make_shared<observables::gpu::thermodynamics<dimension, float> >(
-            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
-          , box
-          , dynamic_pointer_cast<mdsim::gpu::force<dimension, float> >(force)
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<observables::host::thermodynamics<dimension, double> >(
-            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
-          , box
-          , dynamic_pointer_cast<mdsim::host::force<dimension, double> >(force)
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
 
 const double eps = numeric_limits<double>::epsilon();
 const float eps_float = numeric_limits<float>::epsilon();
@@ -484,47 +219,27 @@ void thermodynamics(string const& backend)
     BOOST_TEST_MESSAGE("initialise simulation modules");
     // init core module and all dependencies
     shared_ptr<mdsim::core<dimension> > core(new mdsim::core<dimension>);
-    core->particle = make_particle<dimension>(
-        backend
-      , npart
-    );
-    core->box = make_shared<mdsim::box<dimension> >(
-        core->particle
-      , density
-      , box_ratios
-    );
+
+    core->particle = make_particle<dimension>(backend, npart);
+
+    core->box = make_box<dimension>(core->particle, density, box_ratios);
+
     core->integrator = make_verlet_integrator<dimension>(
-        backend
-      , core->particle
-      , core->box
-      , timestep
+        backend, core->particle, core->box, timestep
     );
+
     core->force = make_lennard_jones_force<dimension>(
-        backend
-      , core->particle
-      , core->box
+        backend, core->particle, core->box
       , list_of(rc)(rc)(rc) /* cutoff */
       , list_of(1.f)(0.f)(0.f) /* epsilon */
       , list_of(1.f)(0.f)(0.f) /* sigma */
     );
-    core->neighbour = make_neighbour(
-        backend
-      , core->particle
-      , core->box
-      , core->force
-    );
-    core->position = make_lattice(
-        backend
-      , core->particle
-      , core->box
-      , random
-    );
-    core->velocity = make_boltzmann(
-        backend
-      , core->particle
-      , random
-      , temp
-    );
+
+    core->neighbour = make_neighbour(backend, core->particle, core->box, core->force);
+
+    core->position = make_lattice(backend, core->particle, core->box, random);
+
+    core->velocity = make_boltzmann(backend, core->particle, random, temp);
 
     // prepare system at given temperature, run for t*=50, couple every Δt*=0.2
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
@@ -544,12 +259,8 @@ void thermodynamics(string const& backend)
     BOOST_CHECK_CLOSE_FRACTION(core->integrator->timestep(), timestep, eps_float);
 
     // measure thermodynamic properties
-    shared_ptr<observables::thermodynamics<dimension> > thermodynamics = make_thermodynamics(
-        backend
-      , core->particle
-      , core->box
-      , core->force
-    );
+    shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
+        make_thermodynamics(backend, core->particle, core->box, core->force);
 
     // take averages of fluctuating quantities,
     accumulator<double> temp_, press, en_pot;

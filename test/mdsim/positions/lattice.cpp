@@ -32,166 +32,18 @@
 #include <utility>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/positions/lattice.hpp>
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/observables/host/trajectory.hpp>
-#include <halmd/random/host/random.hpp>
-#include <halmd/utility/read_integer.hpp>
-#ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/mdsim/gpu/positions/lattice.hpp>
-# include <halmd/observables/gpu/trajectory.hpp>
-# include <halmd/random/gpu/random.hpp>
-# include <halmd/utility/gpu/device.hpp>
-#endif
+#include <test/modules.hpp>
 
 using namespace boost;
 using namespace boost::assign;
 using namespace halmd;
+using namespace halmd::test;
 using namespace std;
 
 /**
  * test initialisation of particle positions: lattice, ...
  */
-
-#ifdef WITH_CUDA
-shared_ptr<utility::gpu::device> make_device(string const& backend)
-{
-    if (backend == "gpu") {
-        static weak_ptr<utility::gpu::device> device;
-        shared_ptr<utility::gpu::device> device_(device.lock());
-        if (!device_) {
-            device_ = make_shared<utility::gpu::device>(
-                vector<int>()   // devices
-              , 128             // threads
-            );
-            device = device_;
-        }
-        return device_;
-    }
-    if (backend == "host") {
-        return shared_ptr<utility::gpu::device>(); // null pointer
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-#endif /* WITH_CUDA */
-
-template <int dimension>
-shared_ptr<mdsim::particle<dimension> > make_particle(
-    string const& backend
-  , unsigned int npart
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        return make_shared<mdsim::gpu::particle<dimension, float> >(
-            make_device(backend)
-          , vector<unsigned int>(1, npart)
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<mdsim::host::particle<dimension, double> >(
-            vector<unsigned int>(1, npart)
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-shared_ptr<halmd::random::random> make_random(
-    string const& backend
-  , unsigned int seed
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
-        return make_shared<random_type>(
-            make_device(backend)
-          , seed
-          , 32                  // blocks
-          , 32 << DEVICE_SCALE  // threads
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<halmd::random::host::random>(
-            seed
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-shared_ptr<halmd::random::random> make_random(
-    string const& backend
-  , string const& filename
-)
-{
-    return make_random(backend, read_integer<unsigned int>(filename));
-}
-
-template <int dimension, typename vector_type>
-shared_ptr<mdsim::position<dimension> > make_lattice(
-    string const& backend
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<mdsim::box<dimension> > box
-  , shared_ptr<halmd::random::random> random
-  , vector_type const& slab
-)
-{
-#ifdef WITH_CUDA
-    if (backend == "gpu") {
-        return make_shared<mdsim::gpu::positions::lattice<dimension, float, halmd::random::gpu::rand48> >(
-            dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
-          , box
-          , dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
-          , slab
-        );
-    }
-#endif /* WITH_CUDA */
-    if (backend == "host") {
-        return make_shared<mdsim::host::positions::lattice<dimension, double> >(
-            dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
-          , box
-          , dynamic_pointer_cast<halmd::random::host::random>(random)
-          , slab
-        );
-    }
-    throw runtime_error("unknown backend: " + backend);
-}
-
-template <int dimension, typename float_type>
-shared_ptr<observables::trajectory<dimension> > make_trajectory_host(
-    shared_ptr<observables::host::samples::trajectory<dimension, float_type> > sample
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<mdsim::box<dimension> > box
-)
-{
-    return make_shared<observables::host::trajectory<dimension, float_type> >(
-        sample
-      , dynamic_pointer_cast<mdsim::host::particle<dimension, float_type> >(particle)
-      , box
-    );
-}
-
-#ifdef WITH_CUDA
-template <int dimension, typename float_type>
-shared_ptr<observables::trajectory<dimension> > make_trajectory_gpu(
-    shared_ptr<observables::host::samples::trajectory<dimension, float_type> > sample
-  , shared_ptr<mdsim::particle<dimension> > particle
-  , shared_ptr<mdsim::box<dimension> > box
-)
-{
-    return make_shared<observables::gpu::trajectory<observables::host::samples::trajectory<dimension, float_type> > >(
-        sample
-      , dynamic_pointer_cast<mdsim::gpu::particle<dimension, float_type> >(particle)
-      , box
-    );
-}
-#endif
 
 /** compute static structure factor of trajectory sample for some wavevectors */
 template <typename sample_type, typename vector_type>
@@ -284,7 +136,7 @@ void lattice(string const& backend)
         make_particle<dimension>(backend, npart);
 
     shared_ptr<mdsim::box<dimension> > box =
-        make_shared<mdsim::box<dimension> >(particle, density, static_cast<vector_type>(ncell));
+        make_box<dimension>(particle, density, static_cast<vector_type>(ncell));
 
     shared_ptr<mdsim::position<dimension> > position =
         make_lattice(backend, particle, box, random, slab);
