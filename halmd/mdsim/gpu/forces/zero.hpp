@@ -48,12 +48,12 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
-    inline static void luaopen(lua_State* L);
+    static void luaopen(lua_State* L);
 
-    inline zero(boost::shared_ptr<particle_type> particle);
+    zero(boost::shared_ptr<particle_type> particle);
 
     // there's nothing to compute
-    inline virtual void compute() {}
+    virtual void compute() {}
 
     //! returns potential energies of particles
     virtual cuda::vector<float> const& potential_energy()

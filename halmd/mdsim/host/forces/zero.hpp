@@ -48,12 +48,12 @@ public:
 
     boost::shared_ptr<particle_type> particle;
 
-    inline static void luaopen(lua_State* L);
+    static void luaopen(lua_State* L);
 
-    inline zero(boost::shared_ptr<particle_type> particle);
+    zero(boost::shared_ptr<particle_type> particle);
 
     // there's nothing to compute
-    inline virtual void compute() {}
+    virtual void compute() {}
 
     //! return average potential energy per particle
     virtual double potential_energy()
