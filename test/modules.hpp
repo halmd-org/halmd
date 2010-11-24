@@ -29,7 +29,9 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/forces/lennard_jones.hpp>
+#include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
+#include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
@@ -42,7 +44,9 @@
 #include <halmd/utility/read_integer.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
+# include <halmd/mdsim/gpu/forces/zero.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
+# include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 # include <halmd/mdsim/gpu/neighbour.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
@@ -221,7 +225,7 @@ template <int dimension>
 boost::shared_ptr<mdsim::integrator<dimension> > make_verlet_integrator(
     std::string const& backend
   , boost::shared_ptr<mdsim::particle<dimension> > particle
- ,  boost::shared_ptr<mdsim::box<dimension> > box
+  , boost::shared_ptr<mdsim::box<dimension> > box
   , double timestep
 )
 {
@@ -239,6 +243,38 @@ boost::shared_ptr<mdsim::integrator<dimension> > make_verlet_integrator(
             boost::dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
           , timestep
+        );
+    }
+    throw std::runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+boost::shared_ptr<mdsim::integrator<dimension> > make_verlet_nvt_andersen_integrator(
+    std::string const& backend
+  , boost::shared_ptr<mdsim::particle<dimension> > particle
+  , boost::shared_ptr<mdsim::box<dimension> > box
+  , boost::shared_ptr<halmd::random::random> random
+  , double timestep
+  , double temperature
+  , double collision_rate
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return boost::make_shared<mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float, halmd::random::gpu::rand48> >(
+            boost::dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+          , box
+          , boost::dynamic_pointer_cast<halmd::random::gpu::random<halmd::random::gpu::rand48> >(random)
+          , timestep, temperature, collision_rate
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return boost::make_shared<mdsim::host::integrators::verlet_nvt_andersen<dimension, double> >(
+            boost::dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+          , box
+          , boost::dynamic_pointer_cast<halmd::random::host::random>(random)
+          , timestep, temperature, collision_rate
         );
     }
     throw std::runtime_error("unknown backend: " + backend);
@@ -272,6 +308,27 @@ boost::shared_ptr<mdsim::force<dimension> > make_lennard_jones_force(
             boost::make_shared<potential_type>(particle->ntype, cutoff, epsilon, sigma)
           , boost::dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
+        );
+    }
+    throw std::runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+boost::shared_ptr<mdsim::force<dimension> > make_zero_force(
+    std::string const& backend
+  , boost::shared_ptr<mdsim::particle<dimension> > particle
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return boost::make_shared<mdsim::gpu::forces::zero<dimension, float> >(
+            boost::dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return boost::make_shared<mdsim::host::forces::zero<dimension, double> >(
+            boost::dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
         );
     }
     throw std::runtime_error("unknown backend: " + backend);
