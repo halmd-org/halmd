@@ -3,4 +3,5 @@ add_library(halmd_mdsim_host_forces
   morse.cpp
   power_law.cpp
   smooth.cpp
+  zero.cpp
   )
