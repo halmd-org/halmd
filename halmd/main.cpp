@@ -18,6 +18,7 @@
  */
 
 #include <boost/algorithm/string/join.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/casts.hpp>
@@ -26,6 +27,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/date_time.hpp>
+#include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/hostname.hpp>
 #include <halmd/utility/options_parser.hpp>
 #include <halmd/version.h>
@@ -62,8 +64,11 @@ int main(int argc, char **argv)
             ("output,o",
              po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S", "")->notifier(
                  lambda::ll_const_cast<string&>(lambda::_1) = lambda::bind(
-                     &format_local_time
-                   , lambda::_1
+                     &absolute_path
+                   , lambda::bind(
+                         &format_local_time
+                       , lambda::_1
+                     )
                  )
              ),
              "output file prefix")

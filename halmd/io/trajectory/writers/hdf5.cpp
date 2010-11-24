@@ -26,7 +26,6 @@
 #include <halmd/utility/demangle.hpp>
 
 using namespace boost;
-using namespace boost::filesystem;
 using namespace std;
 
 namespace halmd
@@ -43,10 +42,9 @@ hdf5<dimension, float_type>::hdf5(
   , string const& file_name
 )
   : sample(sample)
-  , path_(initial_path() / file_name)
-  , file_(path_.file_string(), H5F_ACC_TRUNC)
+  , file_(file_name, H5F_ACC_TRUNC)
 {
-    LOG("write trajectory to file: " << path_.file_string());
+    LOG("write trajectory to file: " << file_.getFileName());
 
     // store file version in parameter group
     array<unsigned char, 2> version = {{ 1, 0 }};

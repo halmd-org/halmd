@@ -21,7 +21,6 @@
 #define HALMD_IO_TRAJECTORY_HDF5_WRITER_HPP
 
 #include <boost/bind.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/unordered_map.hpp>
 #include <lua.hpp>
 
@@ -62,8 +61,6 @@ public:
     }
 
 private:
-    /** absolute path to HDF5 trajectory file */
-    boost::filesystem::path const path_;
     /** HDF5 file */
     H5::H5File file_;
     /** dataset write functors */

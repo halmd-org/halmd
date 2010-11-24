@@ -18,7 +18,6 @@
  */
 
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/filesystem/operations.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profiling/writers/hdf5.hpp>
@@ -26,7 +25,6 @@
 
 using namespace boost;
 using namespace boost::algorithm;
-using namespace boost::filesystem;
 using namespace std;
 
 namespace halmd
@@ -38,10 +36,7 @@ namespace io { namespace profiling { namespace writers
  * open HDF5 file for writing
  */
 hdf5::hdf5(string const& file_name)
-  : file_(
-        (initial_path() / file_name).string()
-      , H5F_ACC_TRUNC // truncate existing file
-    )
+  : file_(file_name, H5F_ACC_TRUNC) // truncate existing file
 {
     // create parameter group
     H5::Group param = h5xx::open_group(file_, "/param");
