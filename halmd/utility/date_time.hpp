@@ -30,14 +30,14 @@ namespace halmd
 /**
  * returns formatted current local time
  */
-inline void format_local_time(std::string& result, std::string const& format)
+inline std::string format_local_time(std::string const& format)
 {
     std::ostringstream stream;
     boost::posix_time::ptime const lt = boost::posix_time::second_clock::local_time();
     boost::posix_time::time_facet *const f = new boost::posix_time::time_facet(format.c_str());
     stream.imbue(std::locale(stream.getloc(),f));
     stream << lt;
-    result.assign(stream.str());
+    return stream.str();
 }
 
 } // namespace halmd
