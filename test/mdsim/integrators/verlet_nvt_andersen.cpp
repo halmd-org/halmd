@@ -57,7 +57,7 @@ void verlet_nvt_andersen(string const& backend)
 
     float temp = 1.;
     float density = 0.3;
-    unsigned npart = (backend == "gpu") ? 10000 : 1500;
+    unsigned npart = (backend == "gpu") ? 5000 : 1500;
     double timestep = 0.01;
     double coll_rate = 10;
     char const* random_file = "/dev/urandom";
@@ -104,9 +104,11 @@ void verlet_nvt_andersen(string const& backend)
     shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
         make_thermodynamics(backend, core->particle, core->box, core->force);
 
-    // run for Δt*=100
-    uint64_t steps = static_cast<uint64_t>(ceil(100 / timestep));
-    uint64_t period = static_cast<uint64_t>(round(1. / (coll_rate * timestep)));
+    // run for Δt*=500
+    uint64_t steps = static_cast<uint64_t>(ceil(500 / timestep));
+    // ensure that sampling period is sufficiently large such that
+    // the samples can be considered independent
+    uint64_t period = static_cast<uint64_t>(round(3. / (coll_rate * timestep)));
     accumulator<double> temp_;
     array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
@@ -123,22 +125,54 @@ void verlet_nvt_andersen(string const& backend)
         }
     }
 
-    // centre-of-mass velocity
-    // limit is 3σ, σ = √(<v_x²> / (N - 1))
-    double vcm_limit = 3 * sqrt(temp / (count(v_cm[0]) * npart - 1));
+    //
+    // test velocity distribution of final state
+    //
+    // centre-of-mass velocity ⇒ mean of velocity distribution
+    // each particle is an independent "measurement"
+    // limit is 3σ, σ = √(<v_x²> / (N - 1)) where <v_x²> = k T
+    double vcm_limit = 3 * sqrt(temp / (npart - 1));
+    BOOST_TEST_MESSAGE("Absolute limit on instantaneous centre-of-mass velocity: " << vcm_limit);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);  //< norm_inf tests the max. value
+
+    // temperature ⇒ variance of velocity distribution
+    // we have only one measurement of the variance
+    // limit is 3σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
+    double rel_temp_limit = 3 * sqrt(2. / (dimension * npart)) / temp;
+    BOOST_TEST_MESSAGE("Relative limit on instantaneous temperature: " << rel_temp_limit);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_limit);
+
+    //
+    // test velocity distribution averaged over the whole simulation run
+    //
+    // centre-of-mass velocity ⇒ mean of velocity distribution
+    // #measurements = #particles × #samples
+    // limit is 3σ, σ = √(<v_x²> / (N × C - 1)) where <v_x²> = k T
+    vcm_limit = 3 * sqrt(temp / (npart * count(v_cm[0]) - 1));
     BOOST_TEST_MESSAGE("Absolute limit on centre-of-mass velocity: " << vcm_limit);
     for (unsigned int i = 0; i < dimension; ++i) {
-        BOOST_CHECK_SMALL(mean(v_cm[i]), 3 * error_of_mean(v_cm[i]));
-        BOOST_CHECK_SMALL(error_of_mean(v_cm[i]), 3 * vcm_limit);
+        BOOST_CHECK_SMALL(mean(v_cm[i]), 3 * vcm_limit);
+        BOOST_CHECK_SMALL(error_of_mean(v_cm[i]), vcm_limit);
     }
 
-    // mean temperature
-    // limit is 3σ, σ = √(<ΔT²> / (N - 1))
-    double temp_limit = 3 * sqrt(2. / (dimension * npart * (npart - 1)));
-    BOOST_TEST_MESSAGE("Relative limit on temperature: " << temp_limit);
-    BOOST_CHECK_CLOSE_FRACTION(mean(temp_), temp, temp_limit);
-    // temperature fluctuations
-    BOOST_CHECK_CLOSE_FRACTION(sigma(temp_), sqrt(2. / dimension / npart) * temp, 3 / sqrt(npart - 1));
+    // mean temperature ⇒ variance of velocity distribution
+    // each sample should constitute an independent measurement
+    // limit is 3σ, σ = √(<ΔT²> / (C - 1)) where <ΔT²> / T² = 2 / (dimension × N)
+    rel_temp_limit = 3 * sqrt(2. / (dimension * npart * (count(temp_) - 1))) / temp;
+    BOOST_TEST_MESSAGE("Relative limit on temperature: " << rel_temp_limit);
+    BOOST_CHECK_CLOSE_FRACTION(mean(temp_), temp, rel_temp_limit);
+
+    // specific heat per particle ⇒ temperature fluctuations
+    // c_V = k × (dimension × N / 2)² <ΔT²> / T² / N = k × dimension / 2
+    // where we have used <ΔT²> / T² = 2 / (dimension × N)
+    // limit is 3σ, with the approximation
+    // σ² = Var[ΔE² / (k T²)] / C → (dimension / 2) × (dimension + 6 / N) / C
+    // (one measurement only from the average over C samples)
+    double cv = pow(.5 * dimension, 2.) * npart * variance(temp_);
+    double cv_variance=  (.5 * dimension) * (dimension + 6. / npart) / count(temp_);
+    double rel_cv_limit = 3 * sqrt(cv_variance) / (.5 * dimension);
+    BOOST_TEST_MESSAGE("Relative limit on specific heat: " << rel_cv_limit);
+    BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_limit);
 }
 
 static void __attribute__((constructor)) init_unit_test_suite()
