@@ -26,16 +26,19 @@
 #include <string>
 
 #include <cuda_wrapper/driver/error.hpp>
+#include <cuda_wrapper/traits.hpp>
 
-namespace cuda { namespace driver { namespace mem
+namespace cuda
+{
+namespace driver { namespace mem
 {
 
 /**
  * get total memory in bytes of current CUDA context
  */
-inline unsigned int total()
+inline size_type total()
 {
-    unsigned int free = 0, total = 0;
+    size_type free = 0, total = 0;
     CU_CALL(cuMemGetInfo(&free, &total));
     return total;
 }
@@ -43,9 +46,9 @@ inline unsigned int total()
 /**
  * get allocated memory in bytes of current CUDA context
  */
-inline unsigned int used()
+inline size_type used()
 {
-    unsigned int free = 0, total = 0;
+    size_type free = 0, total = 0;
     CU_CALL(cuMemGetInfo(&free, &total));
     return (total - free);
 }
@@ -53,13 +56,15 @@ inline unsigned int used()
 /**
  * get available memory in bytes of current CUDA context
  */
-inline unsigned int free()
+inline size_type free()
 {
-    unsigned int free = 0, total = 0;
+    size_type free = 0, total = 0;
     CU_CALL(cuMemGetInfo(&free, &total));
     return free;
 }
 
-}}} // namespace cuda::driver::mem
+}} // namespace driver::mem
+
+} // namespace cuda
 
 #endif /* ! CUDA_DRIVER_MEM_HPP */
