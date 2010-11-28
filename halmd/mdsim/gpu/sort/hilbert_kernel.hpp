@@ -34,7 +34,7 @@ struct hilbert_wrapper
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
 
     /** Hilbert space-filling curve recursion depth */
-    cuda::symbol<float> depth;
+    cuda::symbol<unsigned int> depth;
     /** cubic box edgle length */
     cuda::symbol<vector_type> box_length;
     /** generate Hilbert space-filling curve */
