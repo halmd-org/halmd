@@ -88,6 +88,23 @@ union variant
     > range;
 };
 
+/**
+ * The explicit inlines are required by CUDA 2.3, which otherwise fails to
+ * compile with "error: attempt to take address of texture variable".
+ */
+
+template <typename Key, typename Sequence>
+__device__ __host__ typename boost::enable_if<
+    boost::mpl::has_key<Sequence, Key>
+  , typename boost::mpl::at<Sequence, Key>::type&
+>::type
+inline get(variant<Sequence>& value)
+{
+    return reinterpret_cast<
+        typename boost::mpl::at<Sequence, Key>::type&
+    >(value);
+}
+
 template <typename Key, typename Sequence>
 __device__ __host__ typename boost::enable_if<
     boost::mpl::has_key<Sequence, Key>
@@ -97,6 +114,18 @@ inline get(variant<Sequence> const& value)
 {
     return reinterpret_cast<
         typename boost::mpl::at<Sequence, Key>::type const&
+    >(value);
+}
+
+template <int Key, typename Sequence>
+__device__ __host__ typename boost::enable_if<
+    boost::mpl::has_key<Sequence, boost::mpl::int_<Key> >
+  , typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type&
+>::type
+inline get(variant<Sequence>& value)
+{
+    return reinterpret_cast<
+        typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type&
     >(value);
 }
 
@@ -119,6 +148,26 @@ __device__ __host__ typename boost::enable_if<
         typename boost::mpl::at<Sequence, Key>::type
       , dim
       , mode
+    >&
+>::type
+inline get(texture<variant<Sequence>, dim, mode>& value)
+{
+    return reinterpret_cast<
+        texture<
+            typename boost::mpl::at<Sequence, Key>::type
+          , dim
+          , mode
+        >&
+    >(value);
+}
+
+template <typename Key, typename Sequence, int dim, enum cudaTextureReadMode mode>
+__device__ __host__ typename boost::enable_if<
+    boost::mpl::has_key<Sequence, Key>
+  , texture<
+        typename boost::mpl::at<Sequence, Key>::type
+      , dim
+      , mode
     > const&
 >::type
 inline get(texture<variant<Sequence>, dim, mode> const& value)
@@ -129,6 +178,26 @@ inline get(texture<variant<Sequence>, dim, mode> const& value)
           , dim
           , mode
         > const&
+    >(value);
+}
+
+template <int Key, typename Sequence, int dim, enum cudaTextureReadMode mode>
+__device__ __host__ typename boost::enable_if<
+    boost::mpl::has_key<Sequence, boost::mpl::int_<Key> >
+  , texture<
+        typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type
+      , dim
+      , mode
+    >&
+>::type
+inline get(texture<variant<Sequence>, dim, mode>& value)
+{
+    return reinterpret_cast<
+        texture<
+            typename boost::mpl::at<Sequence, boost::mpl::int_<Key> >::type
+          , dim
+          , mode
+        >&
     >(value);
 }
 
