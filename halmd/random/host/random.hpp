@@ -126,9 +126,16 @@ std::pair<value_type, value_type> random::normal(value_type sigma)
 template <typename value_type>
 void random::unit_vector(fixed_vector<value_type, 2>& v)
 {
-    value_type s = 2. * M_PI * uniform<value_type>();
-    v[0] = std::cos(s);
-    v[1] = std::sin(s);
+    value_type s;
+    do {
+        v[0] = 2 * uniform<value_type>() - 1;
+        v[1] = 2 * uniform<value_type>() - 1;
+        s = v[0] * v[0] + v[1] * v[1];
+    } while (s >= 1);
+
+    s = 1 / std::sqrt(s);
+    v[0] *= s;
+    v[1] *= s;
 }
 
 /**
