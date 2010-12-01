@@ -56,6 +56,8 @@ public:
     void unit_vector(fixed_vector<value_type, 2>& v);
     template <typename value_type>
     void unit_vector(fixed_vector<value_type, 3>& v);
+    template <typename value_type>
+    void unit_vector(fixed_vector<value_type, 4>& v);
 
 protected:
     /** pseudo-random number generator */
@@ -156,6 +158,37 @@ void random::unit_vector(fixed_vector<value_type, 3>& v)
     s = 2 * std::sqrt(1 - s);
     v[0] *= s;
     v[1] *= s;
+}
+
+/**
+ * Choose point from surface of 4-sphere
+ *
+ * G. Marsaglia, Choosing a Point from the Surface of a Sphere,
+ * The Annals of Mathematical Statistics, 1972, 43, p. 645-646
+ *
+ * http://projecteuclid.org/euclid.aoms/1177692644#
+ *
+ */
+template <typename value_type>
+void random::unit_vector(fixed_vector<value_type, 4>& v)
+{
+    value_type s1;
+    do {
+        v[0] = 2 * uniform<value_type>() - 1;
+        v[1] = 2 * uniform<value_type>() - 1;
+        s1 = v[0] * v[0] + v[1] * v[1];
+    } while (s1 >= 1);
+
+    value_type s2;
+    do {
+        v[2] = 2 * uniform<value_type>() - 1;
+        v[3] = 2 * uniform<value_type>() - 1;
+        s2 = v[2] * v[2] + v[3] * v[3];
+    } while (s2 >= 1);
+
+    value_type s = std::sqrt((1 - s1) / s2);
+    v[2] *= s;
+    v[3] *= s;
 }
 
 }} // namespace random::host
