@@ -40,11 +40,22 @@ class writer;
 namespace utility
 {
 
+// forward declaration
+class profiler;
+
 namespace detail { namespace profiler
 {
 
-// forward declaration
-struct visitor;
+/**
+ * Extract tag type and accumulator reference from boost::fusion::pair.
+ */
+struct visitor
+{
+    template <typename TaggedAccumulator>
+    void operator()(TaggedAccumulator const& acc) const;
+    visitor(utility::profiler const& p) : p(p) {}
+    utility::profiler const& p;
+};
 
 }} // namespace detail::profiler
 
@@ -93,23 +104,15 @@ private:
 namespace detail { namespace profiler
 {
 
-/**
- * Extract tag type and accumulator reference from boost::fusion::pair.
- */
-struct visitor
+template <typename TaggedAccumulator>
+void visitor::operator()(TaggedAccumulator const& acc) const
 {
-    template <typename TaggedAccumulator>
-    void operator()(TaggedAccumulator const& acc) const
-    {
-        p.register_accumulator(
-            typeid(typename TaggedAccumulator::first_type)
-          , acc.second
-          , TaggedAccumulator::first_type::desc()
-        );
-    }
-    visitor(utility::profiler const& p) : p(p) {}
-    utility::profiler const& p;
-};
+    p.register_accumulator(
+        typeid(typename TaggedAccumulator::first_type)
+      , acc.second
+      , TaggedAccumulator::first_type::desc()
+    );
+}
 
 }} // namespace detail::profiler
 
