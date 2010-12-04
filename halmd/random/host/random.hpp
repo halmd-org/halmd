@@ -110,7 +110,7 @@ std::pair<value_type, value_type> random::normal(value_type sigma)
     s = sigma * std::sqrt(-2. * std::log(s) / s);
     x *= s;
     y *= s;
-    return make_pair(x, y);
+    return std::make_pair(x, y);
 }
 
 }} // namespace random::host
