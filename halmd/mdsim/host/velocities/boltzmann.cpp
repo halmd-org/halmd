@@ -64,7 +64,7 @@ void boltzmann<dimension, float_type>::set()
     // temp = vv / dimension
     // vv changes to vv - v_cm^2 after shifting
     float_type scale = sqrt(temp_ * dimension / (vv - inner_prod(v_cm, v_cm)));
-    shift_rescale(-v_cm, scale);
+    boltzmann::shift_rescale(-v_cm, scale);
 
     LOG_DEBUG("velocities rescaled by factor " << scale);
     LOG_DEBUG("assigned Boltzmann-distributed velocities");
