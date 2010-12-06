@@ -38,8 +38,8 @@ setmetatable(_M, {
         local wrapper = logger_wrapper[level]
         local log
         if wrapper then
-            log = function(message)
-                wrapper(tostring(message))
+            log = function(message, ...)
+                wrapper(tostring(message):format(...))
             end
         else
             log = function() end
