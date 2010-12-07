@@ -22,7 +22,7 @@
 
 #include <halmd/algorithm/gpu/bits.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/mdsim/gpu/sort/hilbert_kernel.hpp>
+#include <halmd/mdsim/gpu/sorts/hilbert_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
@@ -33,7 +33,7 @@ using namespace halmd::utility::gpu;
 
 namespace halmd
 {
-namespace mdsim { namespace gpu
+namespace mdsim { namespace gpu { namespace sorts
 {
 namespace hilbert_kernel
 {
@@ -282,6 +282,6 @@ hilbert_wrapper<dimension> const hilbert_wrapper<dimension>::kernel = {
 template class hilbert_wrapper<3>;
 template class hilbert_wrapper<2>;
 
-}} // namespace mdsim::gpu
+}}} // namespace mdsim::gpu::sorts
 
 } // namespace halmd

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_HILBERT_KERNEL_HPP
-#define HALMD_MDSIM_GPU_HILBERT_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_SORTS_HILBERT_KERNEL_HPP
+#define HALMD_MDSIM_GPU_SORTS_HILBERT_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -26,7 +26,7 @@
 
 namespace halmd
 {
-namespace mdsim { namespace gpu
+namespace mdsim { namespace gpu { namespace sorts
 {
 
 template <int dimension>
@@ -61,8 +61,8 @@ hilbert_wrapper<dimension> const& get_hilbert_kernel()
     return hilbert_wrapper<dimension>::kernel;
 }
 
-}} // namespace mdsim::gpu
+}}} // namespace mdsim::gpu::sorts
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_HILBERT_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_SORTS_HILBERT_KERNEL_HPP */

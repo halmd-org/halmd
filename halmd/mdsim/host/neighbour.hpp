@@ -36,10 +36,13 @@ namespace halmd
 namespace mdsim { namespace host
 {
 
-namespace sort
+namespace sorts
 {
+
+// forward declaration
 template <int dimension, typename float_type>
 class hilbert;
+
 }
 
 template <int dimension, typename float_type>
@@ -79,7 +82,7 @@ public:
     }
 
 protected:
-    friend class sort::hilbert<dimension, float_type>; //< public interface
+    friend class sorts::hilbert<dimension, float_type>; //< public interface
 
     void update_cells();
     void update_cell_neighbours(cell_size_type const& i);

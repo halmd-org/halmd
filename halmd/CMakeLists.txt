@@ -12,7 +12,7 @@ set(HALMD_MODULES
   halmd_mdsim_host_forces
   halmd_mdsim_host_integrators
   halmd_mdsim_host_positions
-  halmd_mdsim_host_sort
+  halmd_mdsim_host_sorts
   halmd_mdsim_host_velocities
   halmd_mdsim_integrators
   halmd_observables
@@ -30,7 +30,7 @@ if(WITH_CUDA)
     halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_integrators
     halmd_mdsim_gpu_positions
-    halmd_mdsim_gpu_sort
+    halmd_mdsim_gpu_sorts
     halmd_mdsim_gpu_velocities
     halmd_observables_gpu
     halmd_observables_gpu_samples

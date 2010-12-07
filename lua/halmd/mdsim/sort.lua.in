@@ -19,17 +19,49 @@
 
 require("halmd.modules")
 
+require("halmd.mdsim.sorts")
+
 -- grab environment
-local sorts = {
-    hilbert = require("halmd.mdsim.sort.hilbert")
-}
+local sorts = halmd.mdsim.sorts
+local h5 = halmd_wrapper.h5
+local po = halmd_wrapper.po
 local assert = assert
+local pairs = pairs
 
 module("halmd.mdsim.sort", halmd.modules.register)
 
 --
 -- construct sort module
 --
-function new()
-    return sorts.hilbert() -- FIXME add option --disable-sort
+function new(args)
+    local sort = args.sort or "hilbert" -- default value
+    return sorts[sort]()
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc, globals)
+
+    -- sort module choices with descriptions
+    local choices = {}
+    for sort, module in pairs(sorts) do
+        if module.name then
+            choices[sort] = module.name()
+        end
+    end
+
+    globals:add("sort", po.string():choices(choices), "specify sort module")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param sort module instance
+-- @param group HDF5 group
+--
+function write_parameters(sort, group, globals)
+    globals:write_attribute("sort", h5.string(), sort.module_name)
 end

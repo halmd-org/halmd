@@ -29,7 +29,7 @@
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace sort
+namespace mdsim { namespace host { namespace sorts
 {
 
 template <int dimension, typename float_type>
@@ -45,6 +45,8 @@ public:
 
     typedef typename neighbour_type::cell_list cell_list;
     typedef typename neighbour_type::cell_size_type cell_size_type;
+
+    static char const* module_name() { return "hilbert"; }
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -67,7 +69,7 @@ protected:
     std::vector<cell_list*> cell_;
 };
 
-}}} // namespace mdsim::host::sort
+}}} // namespace mdsim::host::sorts
 
 } // namespace halmd
 

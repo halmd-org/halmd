@@ -24,7 +24,7 @@
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/sort/hilbert.hpp>
+#include <halmd/mdsim/gpu/sorts/hilbert.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -35,7 +35,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace sort
+namespace mdsim { namespace gpu { namespace sorts
 {
 
 template <int dimension, typename float_type>
@@ -143,6 +143,12 @@ void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> g_index)
 }
 
 template <int dimension, typename float_type>
+static char const* module_name_wrapper(hilbert<dimension, float_type> const&)
+{
+    return hilbert<dimension, float_type>::module_name();
+}
+
+template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -155,13 +161,14 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("gpu")
                 [
-                    namespace_("sort")
+                    namespace_("sorts")
                     [
                         class_<hilbert, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
                                 shared_ptr<particle_type>
                               , shared_ptr<box_type>
                             >())
+                            .property("module_name", &module_name_wrapper<dimension, float_type>)
                             .def("register_runtimes", &hilbert::register_runtimes)
                     ]
                 ]
@@ -185,6 +192,6 @@ static __attribute__((constructor)) void register_lua()
 template class hilbert<3, float>;
 template class hilbert<2, float>;
 
-}}} // namespace mdsim::gpu::sort
+}}} // namespace mdsim::gpu::sorts
 
 } // namespace halmd

@@ -23,7 +23,7 @@
 #include <cmath>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/sort/hilbert.hpp>
+#include <halmd/mdsim/host/sorts/hilbert.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -31,7 +31,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace mdsim { namespace host { namespace sort
+namespace mdsim { namespace host { namespace sorts
 {
 
 template <int dimension, typename float_type>
@@ -250,6 +250,12 @@ void hilbert<dimension, float_type>::swap(unsigned int& v, unsigned int& a, unsi
 }
 
 template <int dimension, typename float_type>
+static char const* module_name_wrapper(hilbert<dimension, float_type> const&)
+{
+    return hilbert<dimension, float_type>::module_name();
+}
+
+template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -262,7 +268,7 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("host")
                 [
-                    namespace_("sort")
+                    namespace_("sorts")
                     [
                         class_<hilbert, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
@@ -270,6 +276,7 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                               , shared_ptr<box_type>
                               , shared_ptr<neighbour_type>
                             >())
+                            .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]
             ]
@@ -306,6 +313,6 @@ template class hilbert<3, float>;
 template class hilbert<2, float>;
 #endif
 
-}}} // namespace mdsim::host::sort
+}}} // namespace mdsim::host::sorts
 
 } // namespace halmd

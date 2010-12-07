@@ -17,20 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_SORT_HILBERT_HPP
-#define HALMD_MDSIM_GPU_SORT_HILBERT_HPP
+#ifndef HALMD_MDSIM_GPU_SORTS_HILBERT_HPP
+#define HALMD_MDSIM_GPU_SORTS_HILBERT_HPP
 
 #include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/gpu/sort/hilbert_kernel.hpp>
+#include <halmd/mdsim/gpu/sorts/hilbert_kernel.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace sort
+namespace mdsim { namespace gpu { namespace sorts
 {
 
 template <int dimension, typename float_type>
@@ -45,6 +45,8 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef utility::profiler profiler_type;
     typedef hilbert_wrapper<dimension> wrapper_type;
+
+    static char const* module_name() { return "hilbert"; }
 
     boost::shared_ptr<particle_type> particle;
 
@@ -77,8 +79,8 @@ private:
     > runtime_;
 };
 
-}}} // namespace mdsim::gpu::sort
+}}} // namespace mdsim::gpu::sorts
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_SORT_HILBERT_HPP */
+#endif /* ! HALMD_MDSIM_GPU_SORTS_HILBERT_HPP */
