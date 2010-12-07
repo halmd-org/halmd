@@ -25,6 +25,10 @@ local hilbert_wrapper = {
         [2] = halmd_wrapper.mdsim.host.sort.hilbert_2_
       , [3] = halmd_wrapper.mdsim.host.sort.hilbert_3_
     }
+  , gpu = {
+        [2] = halmd_wrapper.mdsim.gpu.sort.hilbert_2_
+      , [3] = halmd_wrapper.mdsim.gpu.sort.hilbert_3_
+    }
 }
 local mdsim = {
   core = require("halmd.mdsim.core")
@@ -50,7 +54,11 @@ function new(args)
         return nil
     end
 
-    if not device() then
-        return hilbert_wrapper.host[dimension](particle, box, neighbour)
+    if device() then
+        local hilbert = assert(hilbert_wrapper.gpu[dimension])
+        return hilbert(particle, box)
+    else
+        local hilbert = assert(hilbert_wrapper.host[dimension])
+        return hilbert(particle, box, neighbour)
     end
 end
