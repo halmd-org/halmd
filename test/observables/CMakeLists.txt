@@ -5,7 +5,6 @@ target_link_libraries(test_thermodynamics
   halmd_mdsim_host_forces
   halmd_mdsim_host_integrators
   halmd_mdsim_host_positions
-  halmd_mdsim_host_sort
   halmd_mdsim_host_velocities
   halmd_mdsim_host
   halmd_observables_host
@@ -16,7 +15,6 @@ if(WITH_CUDA)
     halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_integrators
     halmd_mdsim_gpu_positions
-    halmd_mdsim_gpu_sort
     halmd_mdsim_gpu_velocities
     halmd_mdsim_gpu
     halmd_observables_gpu
