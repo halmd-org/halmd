@@ -54,13 +54,14 @@ template <
 __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_vcm, dsfloat* g_vv)
 {
     enum { dimension = vector_type::static_size };
+    typedef typename vector_type::value_type float_type;
 
     extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    fixed_vector<dsfloat, dimension>* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
-    dsfloat* const s_vv = reinterpret_cast<dsfloat*>(&s_vcm[TDIM]);
+    vector_type* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
+    float_type* const s_vv = reinterpret_cast<float_type*>(&s_vcm[TDIM]);
 
-    fixed_vector<dsfloat, dimension> vcm = 0;
-    dsfloat vv = 0;
+    vector_type vcm = 0;
+    float_type vv = 0;
 
     // read random number generator state from global device memory
     typename rng_type::state_type state = get<rng_type>(rng)[GTID];
@@ -114,7 +115,11 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
 
     if (TID < 1) {
         // store block reduced value in global memory
+#ifdef USE_VERLET_DSFUN
         tie(g_vcm[blockIdx.x], g_vcm[blockIdx.x + BDIM]) = split(vcm);
+#else
+        g_vcm[blockIdx.x] = vcm;
+#endif
         g_vv[blockIdx.x] = vv;
     }
 }
@@ -129,15 +134,19 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
     typedef typename vector_type::value_type float_type;
 
     extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    fixed_vector<dsfloat, dimension>* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
-    dsfloat* const s_vv = reinterpret_cast<dsfloat*>(&s_vcm[size]);
+    vector_type* const s_vcm = reinterpret_cast<vector_type*>(__s_array);
+    float_type* const s_vv = reinterpret_cast<float_type*>(&s_vcm[size]);
 
-    fixed_vector<dsfloat, dimension> vcm = 0;
-    dsfloat vv = 0;
+    vector_type vcm = 0;
+    float_type vv = 0;
 
     // compute mean center of mass velocity from block reduced values
     for (uint i = TID; i < size; i += TDIM) {
+#ifdef USE_VERLET_DSFUN
         s_vcm[i] = vector_type(g_vcm[i], g_vcm[i + size]);
+#else
+        s_vcm[i] = vector_type(g_vcm[i]);
+#endif
         s_vv[i] = g_vv[i];
     }
     __syncthreads();
