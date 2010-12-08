@@ -17,7 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/forces/morse_kernel.hpp>
+#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH
+#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH
+
+#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
@@ -26,34 +29,29 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace forces
 {
-namespace morse_kernel
+namespace lennard_jones_kernel
 {
 
-/** array of potential parameters for all combinations of particle types */
+/** array of Lennard-Jones potential parameters for all combinations of particle types */
 static texture<float4> param_;
-/** squares of potential cutoff radius for all combinations of particle types */
-static texture<float> rr_cut_;
 
 /**
- * Morse potential for the interaction of a pair of particles.
+ * Lennard-Jones interaction of a pair of particles.
  */
-class morse
+class lennard_jones
 {
 public:
     /**
-     * Construct Morse's pair interaction potential.
+     * Construct Lennard-Jones pair interaction potential.
      *
      * Fetch potential parameters from texture cache for particle pair.
      *
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED morse(unsigned int type1, unsigned int type2)
+    HALMD_GPU_ENABLED lennard_jones(unsigned int type1, unsigned int type2)
       : pair_(
             tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
-        )
-      , pair_rr_cut_(
-            tex1Dfetch(rr_cut_, symmetric_matrix::lower_index(type1, type2))
         ) {}
 
     /**
@@ -64,22 +62,22 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED bool within_range(float_type rr) const
     {
-        return (rr < pair_rr_cut_);
+        return (rr < pair_[RR_CUT]);
     }
 
     /**
      * Compute force and potential for interaction.
      *
      * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     * @returns tuple of absolute unit force and potential
      */
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type delta_r_sigma = (pair_[R_MIN] - sqrt(rr)) / pair_[SIGMA];
-        float_type exp_dr = exp(delta_r_sigma);
-        float_type fval = -2 * pair_[EPSILON] / pair_[SIGMA] * (exp_dr - 1) * exp_dr;
-        float_type en_pot = pair_[EPSILON] * (exp_dr - 2) * exp_dr - pair_[EN_CUT];
+        float_type rri = pair_[SIGMA2] / rr;
+        float_type ri6 = rri * rri * rri;
+        float_type fval = 48 * pair_[EPSILON] * rri * ri6 * (ri6 - 0.5f) / pair_[SIGMA2];
+        float_type en_pot = 4 * pair_[EPSILON] * ri6 * (ri6 - 1) - pair_[EN_CUT];
 
         return make_tuple(fval, en_pot);
     }
@@ -87,18 +85,17 @@ public:
 private:
     /** potential parameters for particle pair */
     fixed_vector<float, 4> pair_;
-    /** squared cutoff radius for particle pair */
-    float pair_rr_cut_;
 };
 
-} // namespace morse_kernel
+} // namespace lennard_jones_kernel
 
-cuda::texture<float4> morse_wrapper::param = morse_kernel::param_;
-cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
+cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
 
-template class pair_trunc_wrapper<3, morse_kernel::morse>;
-template class pair_trunc_wrapper<2, morse_kernel::morse>;
+template class pair_trunc_wrapper<3, lennard_jones_kernel::lennard_jones>;
+template class pair_trunc_wrapper<2, lennard_jones_kernel::lennard_jones>;
 
 }}} // namespace mdsim::gpu::forces
 
 } // namespace halmd
+
+#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH */
