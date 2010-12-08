@@ -69,7 +69,7 @@ typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N>&>::typ
 operator+=(fixed_vector<T, N>& v, fixed_vector<U, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
-        v[i] += w[i];
+        v[i] += static_cast<T>(w[i]);
     }
     return v;
 }
@@ -83,7 +83,7 @@ typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N>&>::typ
 operator-=(fixed_vector<T, N>& v, fixed_vector<U, N> const& w)
 {
     for (size_t i = 0; i < N; ++i) {
-        v[i] -= w[i];
+        v[i] -= static_cast<T>(w[i]);
     }
     return v;
 }
@@ -97,7 +97,7 @@ typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N>&>::typ
 operator*=(fixed_vector<T, N>& v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
-        v[i] *= s;
+        v[i] *= static_cast<T>(s);
     }
     return v;
 }
@@ -111,7 +111,7 @@ typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N>&>::typ
 operator/=(fixed_vector<T, N>& v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
-        v[i] /= s;
+        v[i] /= static_cast<T>(s);
     }
     return v;
 }
@@ -174,7 +174,7 @@ typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N> >::typ
 operator*(fixed_vector<T, N> v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
-        v[i] *= s;
+        v[i] *= static_cast<T>(s);
     }
     return v;
 }
@@ -188,7 +188,7 @@ typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N> >::typ
 operator*(U s, fixed_vector<T, N> v)
 {
     for (size_t i = 0; i < N; ++i) {
-        v[i] *= s;
+        v[i] *= static_cast<T>(s);
     }
     return v;
 }
@@ -202,7 +202,7 @@ typename boost::enable_if<boost::is_convertible<U, T>, fixed_vector<T, N> >::typ
 operator/(fixed_vector<T, N> v, U s)
 {
     for (size_t i = 0; i < N; ++i) {
-        v[i] /= s;
+        v[i] /= static_cast<T>(s);
     }
     return v;
 }
