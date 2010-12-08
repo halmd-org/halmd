@@ -428,7 +428,7 @@ struct fixed_vector<double, 6>
     /**
      * Convert to CUDA vector types
      */
-    HALMD_GPU_ENABLED explicit operator tuple<double4, double2>() const
+    HALMD_GPU_ENABLED operator tuple<double4, double2>() const
     {
         double4 v;
         double2 w;
@@ -441,7 +441,7 @@ struct fixed_vector<double, 6>
         return make_tuple(v, w);
     }
 
-    HALMD_GPU_ENABLED explicit operator tuple<double3, double3>() const
+    HALMD_GPU_ENABLED operator tuple<double3, double3>() const
     {
         double3 v;
         double3 w;

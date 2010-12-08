@@ -457,7 +457,7 @@ struct fixed_vector<double, 3>
         return v;
     }
 
-    HALMD_GPU_ENABLED explicit operator tuple<double2, double1>() const
+    HALMD_GPU_ENABLED operator tuple<double2, double1>() const
     {
         double2 v;
         double1 w;
