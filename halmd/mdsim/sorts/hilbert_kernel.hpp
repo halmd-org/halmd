@@ -101,7 +101,7 @@ typename boost::enable_if<
     // Hilbert vertex-to-code lookup table
     unsigned int vc = 1U << b ^ 2U << c ^ 3U << d ^ 4U << e ^ 5U << f ^ 6U << g ^ 7U << h;
 
-#define MASK ((1 << 3) - 1)
+    unsigned int const mask = (1 << 3) - 1;
 
     // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
     for (unsigned int i = 0; i < depth; ++i) {
@@ -110,7 +110,7 @@ typename boost::enable_if<
         unsigned int const y = signbit(r[1]) & 1;
         unsigned int const z = signbit(r[2]) & 1;
         // lookup Hilbert code
-        unsigned int const v = (vc >> (3 * (x + (y << 1) + (z << 2))) & MASK);
+        unsigned int const v = (vc >> (3 * (x + (y << 1) + (z << 2))) & mask);
 
         // scale particle coordinates to subcell
         r *= 2;
@@ -122,34 +122,34 @@ typename boost::enable_if<
         r[2] -= 0.5f;
         // apply permutation rule according to Hilbert code
         if (v == 0) {
-            swap(vc, b, h, MASK);
-            swap(vc, c, e, MASK);
+            swap(vc, b, h, mask);
+            swap(vc, c, e, mask);
         }
         else if (v == 1 || v == 2) {
-            swap(vc, c, g, MASK);
-            swap(vc, d, h, MASK);
+            swap(vc, c, g, mask);
+            swap(vc, d, h, mask);
         }
         else if (v == 3 || v == 4) {
-            swap(vc, a, c, MASK);
+            swap(vc, a, c, mask);
 #ifdef USE_HILBERT_ALT_3D
-            swap(vc, b, d, MASK);
-            swap(vc, e, g, MASK);
+            swap(vc, b, d, mask);
+            swap(vc, e, g, mask);
 #endif
-            swap(vc, f, h, MASK);
+            swap(vc, f, h, mask);
         }
         else if (v == 5 || v == 6) {
-            swap(vc, a, e, MASK);
-            swap(vc, b, f, MASK);
+            swap(vc, a, e, mask);
+            swap(vc, b, f, mask);
         }
         else if (v == 7) {
-            swap(vc, a, g, MASK);
-            swap(vc, d, f, MASK);
+            swap(vc, a, g, mask);
+            swap(vc, d, f, mask);
         }
 
         // add vertex code to partial Hilbert code
         hcode = (hcode << 3) + v;
     }
-#undef MASK
+
     return hcode;
 }
 
@@ -181,7 +181,7 @@ typename boost::enable_if<
     // Hilbert vertex-to-code lookup table
     unsigned int vc = 1U << b ^ 2U << c ^ 3U << d;
 
-#define MASK ((1 << 2) - 1)
+    unsigned int const mask = (1 << 2) - 1;
 
     // 32-bit integer for 2D Hilbert code allows a maximum of 16 levels
     for (unsigned int i = 0; i < depth; ++i) {
@@ -189,7 +189,7 @@ typename boost::enable_if<
         unsigned int const x = signbit(r[0]) & 1;
         unsigned int const y = signbit(r[1]) & 1;
         // lookup Hilbert code
-        unsigned int const v = (vc >> (2 * (x + (y << 1))) & MASK);
+        unsigned int const v = (vc >> (2 * (x + (y << 1))) & mask);
 
         // scale particle coordinates to subcell
         r *= 2;
@@ -199,16 +199,16 @@ typename boost::enable_if<
         r[1] -= 0.5f;
         // apply permutation rule according to Hilbert code
         if (v == 0) {
-            swap(vc, b, d, MASK);
+            swap(vc, b, d, mask);
         }
         else if (v == 3) {
-            swap(vc, a, c, MASK);
+            swap(vc, a, c, mask);
         }
 
         // add vertex code to partial Hilbert code
         hcode = (hcode << 2) + v;
     }
-#undef MASK
+
     return hcode;
 }
 
