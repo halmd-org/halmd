@@ -63,7 +63,6 @@ public:
 
 protected:
     unsigned int map(vector_type r, unsigned int depth);
-    void swap(unsigned int& v, unsigned int& a, unsigned int& b, unsigned int mask);
 
     /** 1-dimensional Hilbert curve mapping of cell lists */
     std::vector<cell_list*> cell_;

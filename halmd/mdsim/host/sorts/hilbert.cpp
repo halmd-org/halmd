@@ -24,6 +24,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/sorts/hilbert.hpp>
+#include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -105,148 +106,9 @@ void hilbert<dimension, float_type>::order()
 template <int dimension, typename float_type>
 unsigned int hilbert<dimension, float_type>::map(vector_type r, unsigned int depth)
 {
-    //
-    // We need to avoid ambiguities during the assignment of a particle
-    // to a subcell, i.e. the particle position should never lie on an
-    // edge or corner of multiple subcells, or the algorithm will have
-    // trouble converging to a definite Hilbert curve.
-    //
-    // Therefore, we use a simple cubic lattice of predefined dimensions
-    // according to the number of cells at the deepest recursion level,
-    // and round the particle position to the nearest center of a cell.
-    //
+    r = element_div(r, static_cast<vector_type>(box->length()));
 
-    // Hilbert cells per dimension at deepest recursion level
-    float_type const n = 1UL << depth;
-    // fractional index of particle's Hilbert cell in [0, n)
-    for (size_t i = 0; i < dimension; ++i) {
-        r[i] /= box->length()[i];
-    }
-    r = (r - floor(r)) * n;
-
-    // round particle position to center of cell in unit coordinates
-    r = (floor(r) + vector_type(0.5)) / n;
-    // use symmetric coordinates
-    r -= vector_type(0.5);
-
-    //
-    // Jun Wang & Jie Shan, Space-Filling Curve Based Point Clouds Index,
-    // GeoComputation, 2005
-    //
-
-    // Hilbert code for particle
-    unsigned int hcode = 0;
-
-    if (dimension == 3) {
-        // Hilbert code-to-vertex lookup table
-        unsigned int a = 21;
-        unsigned int b = 18;
-        unsigned int c = 12;
-        unsigned int d = 15;
-        unsigned int e = 3;
-        unsigned int f = 0;
-        unsigned int g = 6;
-        unsigned int h = 9;
-        // Hilbert vertex-to-code lookup table
-        unsigned int vc = 1U << b ^ 2U << c ^ 3U << d ^ 4U << e ^ 5U << f ^ 6U << g ^ 7U << h;
-
-#define MASK ((1 << 3) - 1)
-
-        // 32-bit integer for 3D Hilbert code allows a maximum of 10 levels
-        for (unsigned int i = 0; i < depth; ++i) {
-            // determine Hilbert vertex closest to particle
-            cell_size_type x;
-            x[0] = std::signbit(r[0]) & 1;
-            x[1] = std::signbit(r[1]) & 1;
-            x[2] = std::signbit(r[2]) & 1;
-            // lookup Hilbert code
-            unsigned int const v = (vc >> (3 * (x[0] + (x[1] << 1) + (x[2] << 2))) & MASK);
-
-            // scale particle coordinates to subcell
-            r *= 2;
-            r += vector_type(x) - vector_type(0.5);
-            // apply permutation rule according to Hilbert code
-            if (v == 0) {
-                swap(vc, b, h, MASK);
-                swap(vc, c, e, MASK);
-            }
-            else if (v == 1 || v == 2) {
-                swap(vc, c, g, MASK);
-                swap(vc, d, h, MASK);
-            }
-            else if (v == 3 || v == 4) {
-                swap(vc, a, c, MASK);
-#ifdef USE_HILBERT_ALT_3D
-                swap(vc, b, d, MASK);
-                swap(vc, e, g, MASK);
-#endif
-                swap(vc, f, h, MASK);
-            }
-            else if (v == 5 || v == 6) {
-                swap(vc, a, e, MASK);
-                swap(vc, b, f, MASK);
-            }
-            else if (v == 7) {
-                swap(vc, a, g, MASK);
-                swap(vc, d, f, MASK);
-            }
-
-            // add vertex code to partial Hilbert code
-            hcode = (hcode << 3) + v;
-        }
-#undef MASK
-    }
-    else {
-        // Hilbert code-to-vertex lookup table
-        unsigned int a = 6;
-        unsigned int b = 4;
-        unsigned int c = 0;
-        unsigned int d = 2;
-        // Hilbert vertex-to-code lookup table
-        unsigned int vc = 1U << b ^ 2U << c ^ 3U << d;
-
-#define MASK ((1 << 2) - 1)
-
-        // 32-bit integer for 2D Hilbert code allows a maximum of 16 levels
-        for (unsigned int i = 0; i < depth; ++i) {
-            // determine Hilbert vertex closest to particle
-            cell_size_type x;
-            x[0] = std::signbit(r[0]) & 1;
-            x[1] = std::signbit(r[1]) & 1;
-            // lookup Hilbert code
-            unsigned int const v = (vc >> (2 * (x[0] + (x[1] << 1))) & MASK);
-
-            // scale particle coordinates to subcell
-            r *= 2;
-            r += vector_type(x) - vector_type(0.5);
-            // apply permutation rule according to Hilbert code
-            if (v == 0) {
-                swap(vc, b, d, MASK);
-            }
-            else if (v == 3) {
-                swap(vc, a, c, MASK);
-            }
-
-            // add vertex code to partial Hilbert code
-            hcode = (hcode << 2) + v;
-        }
-#undef MASK
-    }
-    return hcode;
-}
-
-/**
- * Swap Hilbert spacing-filling curve vertices
- */
-template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::swap(unsigned int& v, unsigned int& a, unsigned int& b, unsigned int mask)
-{
-    // swap bits comprising Hilbert codes in vertex-to-code lookup table
-    unsigned int const va = ((v >> a) & mask);
-    unsigned int const vb = ((v >> b) & mask);
-    v = v ^ (va << a) ^ (vb << b) ^ (va << b) ^ (vb << a);
-    // update code-to-vertex lookup table
-    std::swap(a, b);
+    return mdsim::sorts::hilbert_kernel::map(r, depth);
 }
 
 template <int dimension, typename float_type>
