@@ -98,6 +98,7 @@ device::device(vector<int> devices, unsigned int threads)
     LOG("CUDA device major revision: " << prop.major());
     LOG("CUDA device minor revision: " << prop.minor());
     LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
+    LOG("CUDA device compute capability: " << prop.major() << "." << prop.minor());
 
     if (threads_ < 1) {
         throw runtime_error("invalid number of CUDA threads");
