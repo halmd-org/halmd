@@ -28,6 +28,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
+#include <halmd/utility/gpu/device_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/multi_array.hpp>
 
@@ -100,6 +101,8 @@ device::device(vector<int> devices, unsigned int threads)
     LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
     LOG("CUDA device compute capability: " << prop.major() << "." << prop.minor());
 
+    LOG("CUDA compute version: " << device::compute_version());
+
     if (threads_ < 1) {
         throw runtime_error("invalid number of CUDA threads");
     }
@@ -149,6 +152,21 @@ string device::nvidia_driver_version()
     }
     trim(s);
     return s;
+}
+
+/**
+ * Query CUDA compute version
+ */
+string device::compute_version()
+{
+    cuda::vector<int> g_arch(1);
+    cuda::host::vector<int> h_arch(1);
+    cuda::configure(1, 1);
+    device_wrapper::arch(g_arch);
+    cuda::copy(g_arch, h_arch);
+    int major = h_arch.front() / 100;
+    int minor = h_arch.front() / 10 % 10;
+    return lexical_cast<string>(major) + "." + lexical_cast<string>(minor);
 }
 
 #if CUDA_VERSION >= 2020
@@ -202,6 +220,7 @@ void device::luaopen(lua_State* L)
                         .scope
                         [
                             def("nvidia_driver_version", &device::nvidia_driver_version)
+                          , def("compute_version", &device::compute_version)
                           , def("cuda_driver_version", &device::cuda_driver_version)
                           , def("cuda_runtime_version", &device::cuda_runtime_version)
                         ]
