@@ -47,6 +47,7 @@ public:
     force() {}
     virtual double potential_energy() = 0;
     virtual stress_tensor_type stress_tensor_pot() = 0;
+    virtual double hypervirial() = 0;
 };
 
 }} // namespace mdsim::host

@@ -87,6 +87,20 @@ public:
         return make_tuple(fval, en_pot);
     }
 
+    /**
+     * Compute hypervirial for interaction.
+     *
+     * @param rr squared distance between particles
+     * @returns hypervirial contribution for this particle pair
+     */
+    template <typename float_type>
+    HALMD_GPU_ENABLED float_type hypervirial(float_type rr) const
+    {
+        float_type r_sigma = sqrt(rr) / pair_[SIGMA];
+        float_type exp_dr = exp(pair_[R_MIN_SIGMA] - r_sigma);
+        return 2 * pair_[EPSILON] * r_sigma * exp_dr * ((exp_dr - 1) - r_sigma * (2 * exp_dr - 1));
+    }
+
 private:
     /** potential parameters for particle pair */
     fixed_vector<float, 4> pair_;

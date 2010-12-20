@@ -93,6 +93,12 @@ public:
         return stress_pot_;
     }
 
+    //! return average potential energy per particle
+    virtual double hypervirial()
+    {
+        return hypervirial_;
+    }
+
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG(
         compute_, std::string("computation of ") + potential_type::name() + " forces"
@@ -103,6 +109,8 @@ protected:
     double en_pot_;
     /** potential part of stress tensor */
     stress_tensor_type stress_pot_;
+    /** hyper virial for each particle */
+    double hypervirial_;
 
     boost::fusion::map<
         boost::fusion::pair<compute_, accumulator<double> >
@@ -145,6 +153,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     // initialise potential energy and stress tensor
     en_pot_ = 0;
     stress_pot_ = 0;
+    hypervirial_ = 0;
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
@@ -180,11 +189,15 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
 
             // ... and potential part of stress tensor
             stress_pot_ += fval * make_stress_tensor(rr, r);
+
+            // compute contribution to hypervirial
+            hypervirial_ += potential->hypervirial(rr, a, b);
         }
     }
 
     en_pot_ /= particle->nbox;
     stress_pot_ /= particle->nbox;
+    hypervirial_ /= particle->nbox;
 
     // ensure that system is still in valid state
     if (isinf(en_pot_)) {

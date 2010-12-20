@@ -107,16 +107,15 @@ __global__ void compute(
             continue;
         }
 
-        value_type fval, en_pot, hypervirial;
-        tie(fval, en_pot) = potential(rr);  // hyper-virial should be computed here as well
-        hypervirial = 0;
+        value_type fval, en_pot;
+        tie(fval, en_pot) = potential(rr);
 
         // contribution to stress tensor from this particle
         stress_pot += 0.5f * fval * make_stress_tensor(rr, r);
         // potential energy contribution of this particle
         en_pot_ += 0.5f * en_pot;
         // contribution to hypervirial
-        hypervirial_ += 0.5f * hypervirial;
+        hypervirial_ += 0.5f * potential.hypervirial(rr);
         // force from other particle acting on this particle
         f += fval * r;
     }

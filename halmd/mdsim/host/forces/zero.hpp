@@ -66,6 +66,12 @@ public:
     {
         return stress_tensor_type(0);
     }
+
+    //! return hypervirial per particle
+    virtual double hypervirial()
+    {
+        return 0;
+    }
 };
 
 }}} // namespace mdsim::host::forces

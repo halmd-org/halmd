@@ -58,7 +58,7 @@ public:
       , boost::array<float, 3> const& sigma
     );
 
-    /** 
+    /**
      * Compute potential and its derivative at squared distance 'rr'
      * for particles of type 'a' and 'b'
      *
@@ -75,6 +75,19 @@ public:
             default:
                 LOG_WARNING_ONCE("Using non-optimised force routine for index " << index_);
                 return impl_<0>(rr, a, b);
+        }
+    }
+
+    /** compute hypervirial at squared distance 'rr' for particle pair of types 'a' and 'b' */
+    float_type hypervirial(float_type rr, unsigned a, unsigned b)
+    {
+        switch (index_) {
+            case 6:  return hypervirial_impl_<6>(rr, a, b);
+            case 12: return hypervirial_impl_<12>(rr, a, b);
+            case 24: return hypervirial_impl_<24>(rr, a, b);
+            case 48: return hypervirial_impl_<48>(rr, a, b);
+            default:
+                return hypervirial_impl_<0>(rr, a, b);
         }
     }
 
@@ -132,6 +145,21 @@ private:
         en_pot -= en_cut_(a, b);                       // shift potential
 
         return std::make_pair(fval, en_pot);
+    }
+
+    /** optimise pow() function by providing the index at compile time */
+    template <int const_index>
+    float_type hypervirial_impl_(float_type rr, unsigned a, unsigned b)
+    {
+        // choose arbitrary index_ if template parameter index = 0
+        if (const_index > 0) {
+            float_type rni = fixed_pow<const_index>(sigma_(a, b) / std::sqrt(rr));
+            return const_index * const_index * epsilon_(a, b) * rni;
+        }
+        else {
+            float_type rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);
+            return index_ * index_ * epsilon_(a, b) * rni;
+        }
     }
 
     /** power law index */

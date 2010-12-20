@@ -73,6 +73,14 @@ public:
         return std::make_pair(fval, en_pot);
     }
 
+    /** compute hypervirial at squared distance 'rr' for particle pair of types 'a' and 'b' */
+    float_type hypervirial(float_type rr, unsigned a, unsigned b)
+    {
+        float_type r_sigma = sqrt(rr) / sigma_(a, b);
+        float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
+        return 2 * epsilon_(a, b) * r_sigma * exp_dr * ((exp_dr - 1) - r_sigma * (2 * exp_dr - 1));
+    }
+
     matrix_type const& r_cut() const
     {
         return r_cut_;
