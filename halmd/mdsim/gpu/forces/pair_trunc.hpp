@@ -90,6 +90,12 @@ public:
         return g_stress_pot_;
     }
 
+    //! returns hyper virial of particles
+    virtual cuda::vector<float> const& hypervirial()
+    {
+        return g_hypervirial_;
+    }
+
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG(
         compute_, std::string("computation of ") + potential_type::name() + " forces"
@@ -100,6 +106,8 @@ private:
     cuda::vector<float> g_en_pot_;
     /** potential part of stress tensor for each particle */
     cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
+    /** hyper virial for each particle */
+    cuda::vector<float> g_hypervirial_;
 
     boost::fusion::map<
         boost::fusion::pair<compute_, accumulator<double> >
@@ -120,6 +128,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   // memory allocation
   , g_en_pot_(particle->dim.threads())
   , g_stress_pot_(particle->dim.threads())
+  , g_hypervirial_(particle->dim.threads())
 {
     cuda::copy(static_cast<vector_type>(box->length()), gpu_wrapper::kernel.box_length);
 }
@@ -141,7 +150,9 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     potential->bind_textures();
 
     cuda::configure(particle->dim.grid, particle->dim.block);
-    gpu_wrapper::kernel.compute(particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_);
+    gpu_wrapper::kernel.compute(
+        particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_, g_hypervirial_
+    );
     cuda::thread::synchronize();
 }
 

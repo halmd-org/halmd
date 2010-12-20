@@ -39,11 +39,13 @@ zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
   // memory allocation
   , g_en_pot_(particle->dim.threads())
   , g_stress_pot_(particle->dim.threads())
+  , g_hypervirial_(particle->dim.threads())
 {
     // initialise particle forces, potential energy, and stress tensor to zero
     cuda::memset(particle->g_f, 0);
     cuda::memset(g_en_pot_, 0);
     cuda::memset(g_stress_pot_, 0);
+    cuda::memset(g_hypervirial_, 0);
 }
 
 template <int dimension, typename float_type>

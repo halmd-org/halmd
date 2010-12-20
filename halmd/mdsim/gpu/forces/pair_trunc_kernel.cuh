@@ -57,6 +57,7 @@ __global__ void compute(
   , unsigned int* g_neighbour
   , float* g_en_pot
   , stress_tensor_type* g_stress_pot
+  , float* g_hypervirial
 )
 {
     enum { dimension = vector_type::static_size };
@@ -68,8 +69,9 @@ __global__ void compute(
     vector_type r1;
     tie(r1, type1) = untagged<vector_type>(tex1Dfetch(r_, i));
 
-    // contribution to potential energy
+    // contribution to potential energy and hypervirial
     float en_pot_ = 0;
+    float hypervirial_ = 0;
     // contribution to stress tensor
     fixed_vector<float, (dimension - 1) * dimension / 2 + 1> stress_pot = 0;
 #ifdef USE_FORCE_DSFUN
@@ -105,13 +107,16 @@ __global__ void compute(
             continue;
         }
 
-        value_type fval, en_pot;
-        tie(fval, en_pot) = potential(rr);
+        value_type fval, en_pot, hypervirial;
+        tie(fval, en_pot) = potential(rr);  // hyper-virial should be computed here as well
+        hypervirial = 0;
 
         // contribution to stress tensor from this particle
         stress_pot += 0.5f * fval * make_stress_tensor(rr, r);
         // potential energy contribution of this particle
         en_pot_ += 0.5f * en_pot;
+        // contribution to hypervirial
+        hypervirial_ += 0.5f * hypervirial;
         // force from other particle acting on this particle
         f += fval * r;
     }
@@ -119,6 +124,7 @@ __global__ void compute(
     g_f[i] = static_cast<vector_type>(f);
     g_en_pot[i] = en_pot_;
     g_stress_pot[i] = stress_pot;
+    g_hypervirial[i] = hypervirial_;
 }
 
 } // namespace pair_trunc_kernel

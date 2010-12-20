@@ -49,6 +49,7 @@ public:
     force() {}
     virtual cuda::vector<float> const& potential_energy() = 0;
     virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() = 0;
+    virtual cuda::vector<float> const& hypervirial() = 0;
 };
 
 }} // namespace mdsim::gpu

@@ -67,11 +67,19 @@ public:
         return g_stress_pot_;
     }
 
+    //! returns hyper virial of particles
+    virtual cuda::vector<float> const& hypervirial()
+    {
+        return g_hypervirial_;
+    }
+
 protected:
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
     /** potential part of stress tensor for each particle */
     cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
+    /** hyper virial for each particle */
+    cuda::vector<float> g_hypervirial_;
 };
 
 }}} // namespace mdsim::gpu::forces
