@@ -35,7 +35,7 @@ namespace morse_kernel
 enum {
     EPSILON     /**< depth of potential well in MD units */
   , SIGMA       /**< width of potential well in MD units */
-  , R_MIN       /**< position of potential well in MD units */
+  , R_MIN_SIGMA /**< position of potential well in units of sigma */
   , EN_CUT      /**< potential energy at cutoff radius in MD units */
 };
 

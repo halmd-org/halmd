@@ -50,7 +50,6 @@ morse<float_type>::morse(
   // allocate potential parameters
   : epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
   , sigma_(scalar_matrix<float_type>(ntype, ntype, 1))
-  , r_min_(ntype, ntype)
   , r_min_sigma_(ntype, ntype)
   , en_cut_(scalar_matrix<float_type>(ntype, ntype, 0))
   , r_cut_(ntype, ntype)
@@ -70,7 +69,6 @@ morse<float_type>::morse(
     // precalculate derived parameters
     for (unsigned i = 0; i < ntype; ++i) {
         for (unsigned j = i; j < ntype; ++j) {
-            r_min_(i, j) = r_min_sigma_(i, j) * sigma_(i, j);
             r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             // energy shift due to truncation at cutoff length

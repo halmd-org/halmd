@@ -79,9 +79,9 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
-        float_type delta_r_sigma = (pair_[R_MIN] - sqrt(rr)) / pair_[SIGMA];
-        float_type exp_dr = exp(delta_r_sigma);
-        float_type fval = -2 * pair_[EPSILON] / pair_[SIGMA] * (exp_dr - 1) * exp_dr;
+        float_type r_sigma = sqrt(rr) / pair_[SIGMA];
+        float_type exp_dr = exp(pair_[R_MIN_SIGMA] - r_sigma);
+        float_type fval = 2 * pair_[EPSILON] * (exp_dr - 1) * exp_dr * r_sigma / rr;
         float_type en_pot = pair_[EPSILON] * (exp_dr - 2) * exp_dr - pair_[EN_CUT];
 
         return make_tuple(fval, en_pot);

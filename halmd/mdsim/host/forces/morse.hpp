@@ -65,9 +65,9 @@ public:
      */
     std::pair<float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
-        float_type delta_r_sigma = (r_min_(a, b) - sqrt(rr)) / sigma_(a, b);
-        float_type exp_dr = exp(delta_r_sigma);
-        float_type fval = -2 * epsilon_(a, b) / sigma_(a, b) * (exp_dr - 1) * exp_dr;
+        float_type r_sigma = sqrt(rr) / sigma_(a, b);
+        float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
+        float_type fval = 2 * epsilon_(a, b) * (exp_dr - 1) * exp_dr * r_sigma / rr;
         float_type en_pot = epsilon_(a, b) * (exp_dr - 2) * exp_dr - en_cut_(a, b);
 
         return std::make_pair(fval, en_pot);
@@ -113,8 +113,6 @@ private:
     matrix_type epsilon_;
     /** width of potential well in MD units */
     matrix_type sigma_;
-    /** position of potential well in MD units */
-    matrix_type r_min_;
     /** position of potential well in units of sigma */
     matrix_type r_min_sigma_;
     /** potential energy at cutoff length in MD units */

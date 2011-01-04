@@ -102,8 +102,6 @@ private:
     matrix_type epsilon_;
     /** width of potential well in MD units */
     matrix_type sigma_;
-    /** position of potential well in MD units */
-    matrix_type r_min_;
     /** position of potential well in units of sigma */
     matrix_type r_min_sigma_;
     /** potential energy at cutoff length in MD units */
