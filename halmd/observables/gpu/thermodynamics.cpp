@@ -125,6 +125,24 @@ double thermodynamics<dimension, float_type>::virial() const
     return virial / particle->nbox;
 }
 
+/**
+ * compute hypervirial sum
+ */
+template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::hypervirial() const
+{
+    double hypervir = reduce<
+        sum_                                    // reduce_transform
+      , float                                   // input_type
+      , float                                   // coalesced_input_type
+      , dsfloat                                 // output_type
+      , dsfloat                                 // coalesced_output_type
+      , double                                  // host_output_type
+    >()(force->hypervirial());
+
+    return hypervir / particle->nbox;
+}
+
 template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {

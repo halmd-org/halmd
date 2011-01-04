@@ -59,6 +59,7 @@ public:
     virtual vector_type v_cm() const;
     virtual double en_pot() const;
     virtual double virial() const;
+    virtual double hypervirial() const;
 };
 
 }} // namespace observables::gpu

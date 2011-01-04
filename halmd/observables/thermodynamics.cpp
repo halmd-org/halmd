@@ -61,6 +61,7 @@ void thermodynamics<dimension>::register_observables(writer_type& writer)
     writer.register_observable("ETOT", &en_tot_, "mean total energy per particle");
     writer.register_observable("VCM", &v_cm_, "centre-of-mass velocity");
     writer.register_observable("PRESS", &pressure_, "virial pressure");
+    writer.register_observable("XVIR", &hypervirial_, "hypervirial sum ");
     writer.register_observable("TEMP", &temp_, "temperature");
 }
 
@@ -81,6 +82,7 @@ void thermodynamics<dimension>::sample(double time)
     temp_ = 2 * en_kin_ / dimension;
     density_ = box->density(); //< FIXME why is this duplicated in thermodynamics?
     pressure_ = density_ * (temp_ + virial() / dimension);
+    hypervirial_ = hypervirial();
     time_ = time;
 }
 
@@ -105,6 +107,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
                     .property("temp", &thermodynamics::temp)
                     .property("v_cm", &thermodynamics::v_cm)
                     .property("virial", &thermodynamics::virial)
+                    .property("hypervirial", &thermodynamics::hypervirial)
             ]
         ]
     ];

@@ -67,6 +67,11 @@ public:
     {
         return force->stress_tensor_pot()[0];
     }
+
+    virtual double hypervirial() const
+    {
+        return force->hypervirial();
+    }
 };
 
 }} // namespace observables::host

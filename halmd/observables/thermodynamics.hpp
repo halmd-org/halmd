@@ -76,6 +76,8 @@ public:
     virtual vector_type v_cm() const = 0;
     /** virial sum */
     virtual double virial() const = 0;
+    /** hypervirial sum */
+    virtual double hypervirial() const = 0;
 
     /** total pressure */
     double pressure() const
@@ -102,6 +104,7 @@ private:
     double pressure_;
     double temp_;
     double density_;
+    double hypervirial_;
     double time_;
 
     // list of profiling timers
