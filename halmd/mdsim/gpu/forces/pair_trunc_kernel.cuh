@@ -115,7 +115,7 @@ __global__ void compute(
         // potential energy contribution of this particle
         en_pot_ += 0.5f * en_pot;
         // contribution to hypervirial
-        hypervirial_ += 0.5f * potential.hypervirial(rr);
+        hypervirial_ += 0.5f * potential.hypervirial(rr) / (dimension * dimension);
         // force from other particle acting on this particle
         f += fval * r;
     }

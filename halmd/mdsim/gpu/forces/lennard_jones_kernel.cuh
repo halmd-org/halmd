@@ -93,7 +93,7 @@ public:
     {
         float_type rri = pair_[SIGMA2] / rr;
         float_type ri6 = rri * rri * rri;
-        return 288 * pair_[EPSILON] * ri6 * (ri6 - 0.25f);
+        return 576 * pair_[EPSILON] * ri6 * (ri6 - 0.25f);
     }
 
 private:

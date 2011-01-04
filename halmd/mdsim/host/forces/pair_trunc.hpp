@@ -191,7 +191,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
             stress_pot_ += fval * make_stress_tensor(rr, r);
 
             // compute contribution to hypervirial
-            hypervirial_ += potential->hypervirial(rr, a, b);
+            hypervirial_ += potential->hypervirial(rr, a, b) / (dimension * dimension);
         }
     }
 

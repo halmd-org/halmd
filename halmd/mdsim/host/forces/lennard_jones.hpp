@@ -75,7 +75,7 @@ public:
         float_type rri = sigma2 / rr;
         float_type r6i = rri * rri * rri;
         float_type epsilon = epsilon_(a, b);
-        return 288 * epsilon * r6i * (r6i - 0.25);
+        return 576 * epsilon * r6i * (r6i - 0.25);
     }
 
     matrix_type const& r_cut() const
