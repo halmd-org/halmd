@@ -54,7 +54,7 @@ const float eps_float = numeric_limits<float>::epsilon();
  * heat capacity from microcanonical fluctuations of kinetic energy
  * see Lebowitz, Percus, and Verlet, Phys. Rev. 153, 250 (1967) for details
  */
-inline double heat_capacity(double en_kin, double variance, unsigned npart)
+inline double heat_capacity_nve(double en_kin, double variance, unsigned npart)
 {
     return 1 / (2./3 - npart * variance / (en_kin * en_kin));
 }
@@ -309,7 +309,7 @@ void thermodynamics(string const& backend)
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     if (dimension == 3) {
-        double Cv = heat_capacity(mean(temp_), variance(temp_), npart);
+        double cV = heat_capacity_nve(mean(temp_), variance(temp_), npart);
 
         // corrections for trunctated LJ potential, see e.g. Johnsen et al. (1993)
         double press_corr = 32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3);
@@ -323,7 +323,7 @@ void thermodynamics(string const& backend)
         BOOST_TEST_MESSAGE("Potential energy (corrected): " << mean(en_pot) + en_corr);
         BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
         BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
-        BOOST_TEST_MESSAGE("Heat capacity = " << Cv);
+        BOOST_TEST_MESSAGE("Heat capacity c_V = " << cV);
         // values from Johnson et al.: P = 1.023, Epot = -1.673  (Npart = 864)
         // values from RFA theory: P = 1.0245, Epot = -1.6717
         BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 3e-3);
