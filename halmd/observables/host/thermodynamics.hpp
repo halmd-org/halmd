@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -54,6 +54,9 @@ public:
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<force_type> force
     );
+
+    virtual void prepare();
+    virtual void sample(double);
 
     virtual double en_kin() const;
     virtual vector_type v_cm() const;

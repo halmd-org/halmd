@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,9 +18,9 @@
  */
 
 #include <halmd/algorithm/gpu/reduce.hpp>
-#include <halmd/observables/gpu/thermodynamics.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#include <halmd/observables/gpu/thermodynamics.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -43,6 +43,41 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , particle(particle)
   , force(force)
 {
+}
+
+/**
+ * preparations before computation of forces
+ *
+ * set flags of force module to compute auxiliary
+ * variables like potential energy, stress tensor,
+ * and hypervirial
+ */
+template <int dimension, typename float_type>
+void thermodynamics<dimension, float_type>::prepare()
+{
+    using namespace halmd::mdsim;
+    force->set_flags(
+        force_flags::potential_energy
+      | force_flags::stress_tensor
+      | force_flags::hypervirial
+    );
+}
+
+/**
+ * call sample() from base class and
+ * unset compute flags of force module at the end
+ */
+template <int dimension, typename float_type>
+void thermodynamics<dimension, float_type>::sample(double time)
+{
+    _Base::sample(time);
+
+    using namespace halmd::mdsim;
+    force->unset_flags(
+        force_flags::potential_energy
+      | force_flags::stress_tensor
+      | force_flags::hypervirial
+    );
 }
 
 /**

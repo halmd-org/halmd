@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -39,6 +39,41 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , particle(particle)
   , force(force)
 {
+}
+
+/**
+ * preparations before computation of forces
+ *
+ * set flags of force module to compute auxiliary
+ * variables like potential energy, stress tensor,
+ * and hypervirial
+ */
+template <int dimension, typename float_type>
+void thermodynamics<dimension, float_type>::prepare()
+{
+    using namespace halmd::mdsim;
+/*    force->set_flags(
+        force_flags::potential_energy
+      | force_flags::stress_tensor
+      | force_flags::hypervirial
+    );*/
+}
+
+/**
+ * call sample() from base class and
+ * unset compute flags of force module at the end
+ */
+template <int dimension, typename float_type>
+void thermodynamics<dimension, float_type>::sample(double time)
+{
+    _Base::sample(time);
+
+    using namespace halmd::mdsim;
+/*    force->unset_flags(
+        force_flags::potential_energy
+      | force_flags::stress_tensor
+      | force_flags::hypervirial
+    );*/
 }
 
 template <int dimension, typename float_type>
