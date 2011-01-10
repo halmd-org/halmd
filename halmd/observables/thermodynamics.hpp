@@ -65,9 +65,6 @@ public:
     void register_runtimes(profiler_type& profiler);
     virtual void register_observables(writer_type& writer);
 
-    // preparations before force computation
-    virtual void prepare() = 0;
-
     // sample macroscopic state variables and store with given time
     virtual void sample(double time);
 

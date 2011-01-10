@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -45,6 +45,9 @@ public:
     observable() {};
     virtual ~observable() {}
     virtual void register_observables(writer_type& writer) = 0;
+
+    // preparations before MD step
+    virtual void prepare() = 0;
 
     // sample observable and store with given time
     virtual void sample(double time) = 0;

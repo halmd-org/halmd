@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -72,11 +72,15 @@ void sampler<dimension>::run()
         scoped_timer<timer> timer_(at_key<total_>(runtime_));
 
         LOG("setting up simulation box");
+        prepare_observables(true);               //< must be called before force->compute()
         core->prepare();
         sample(true);
 
         LOG("starting simulation run");
         while (core->step_counter() < steps_) {
+            // prepare observables in case of a sampling step
+            prepare_observables(core->step_counter() + 1 == steps_);
+
             // perform complete MD integration step
             core->mdstep();
 
@@ -126,6 +130,22 @@ void sampler<dimension>::sample(bool force)
 
     if (is_sampling_step)
         LOG_DEBUG("system state sampled at step " << step);
+}
+
+/**
+ *  call prepare() for each observable if
+ *  the current step is a sampling step
+ */
+template <int dimension>
+void sampler<dimension>::prepare_observables(bool force)
+{
+    uint64_t step = core->step_counter();
+
+    if (!(step % statevars_interval_) || force) {
+        BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
+            observable->prepare();
+        }
+    }
 }
 
 template <int dimension>

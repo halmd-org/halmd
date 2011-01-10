@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -55,6 +55,7 @@ public:
     );
     void run();
     void sample(bool force=false);
+    void prepare_observables(bool force=false);
     void register_runtimes(profiler_type& profiler);
 
     boost::shared_ptr<core_type> core;
