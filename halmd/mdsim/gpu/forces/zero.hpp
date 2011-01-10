@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -54,6 +54,15 @@ public:
 
     // there's nothing to compute
     virtual void compute() {}
+
+    // no flags to set or unset
+    virtual unsigned int set_flags(unsigned int)
+    {   return 0;
+    }
+
+    virtual unsigned int unset_flags(unsigned int)
+    {   return 0;
+    }
 
     //! returns potential energies of particles
     virtual cuda::vector<float> const& potential_energy()

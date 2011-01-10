@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -81,6 +81,20 @@ public:
         return potential->r_cut();
     }
 
+    // set compute flags
+    virtual unsigned int set_flags(unsigned int flags)
+    {   unsigned int orig = flags_;
+        flags_ |= flags;
+        return orig;
+    }
+
+    // unset compute flags
+    virtual unsigned int unset_flags(unsigned int flags)
+    {   unsigned int orig = flags_;
+        flags_ &= ~flags;
+        return orig;
+    }
+
     //! return average potential energy per particle
     virtual double potential_energy()
     {
@@ -105,6 +119,8 @@ public:
     );
 
 protected:
+    /** compute flags for fine control of function compute() */
+    unsigned int flags_;
     /** average potential energy per particle */
     double en_pot_;
     /** potential part of stress tensor */
@@ -124,10 +140,12 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , boost::shared_ptr<box_type> box
   // FIXME , boost::shared_ptr<smooth_type> smooth
 )
-// dependency injection
-    : potential(potential)
-    , particle(particle)
-    , box(box)
+  // dependency injection
+  : potential(potential)
+  , particle(particle)
+  , box(box)
+  // member initialisation
+  , flags_(0)
 {}
 
 /**
@@ -188,10 +206,14 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
             en_pot_ += en_pot;
 
             // ... and potential part of stress tensor
-            stress_pot_ += fval * make_stress_tensor(rr, r);
+            if (flags_ & force_flags::stress_tensor) {
+                stress_pot_ += fval * make_stress_tensor(rr, r);
+            }
 
             // compute contribution to hypervirial
-            hypervirial_ += potential->hypervirial(rr, a, b) / (dimension * dimension);
+            if (flags_ & force_flags::hypervirial) {
+                hypervirial_ += potential->hypervirial(rr, a, b) / (dimension * dimension);
+            }
         }
     }
 

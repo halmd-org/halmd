@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 #define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 
+#include <halmd/mdsim/force_flags.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
@@ -45,6 +46,8 @@ static __constant__ unsigned int neighbour_size_;
 static __constant__ unsigned int neighbour_stride_;
 /** cuboid box edge length */
 static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
+/** compute flags */
+static __constant__ unsigned int flags_;
 /** positions, types */
 static texture<float4> r_;
 
@@ -110,20 +113,31 @@ __global__ void compute(
         value_type fval, en_pot;
         tie(fval, en_pot) = potential(rr);
 
-        // contribution to stress tensor from this particle
-        stress_pot += 0.5f * fval * make_stress_tensor(rr, r);
-        // potential energy contribution of this particle
-        en_pot_ += 0.5f * en_pot;
-        // contribution to hypervirial
-        hypervirial_ += 0.5f * potential.hypervirial(rr) / (dimension * dimension);
         // force from other particle acting on this particle
         f += fval * r;
+        // potential energy contribution of this particle
+        en_pot_ += 0.5f * en_pot;
+        // contribution to stress tensor from this particle
+        if (flags_ & force_flags::stress_tensor) {
+            stress_pot += 0.5f * fval * make_stress_tensor(rr, r);
+        }
+        // contribution to hypervirial
+        if (flags_ & force_flags::hypervirial) {
+            hypervirial_ += 0.5f * potential.hypervirial(rr) / (dimension * dimension);
+        }
     }
 
+    // write results to global memory
     g_f[i] = static_cast<vector_type>(f);
-    g_en_pot[i] = en_pot_;
-    g_stress_pot[i] = stress_pot;
-    g_hypervirial[i] = hypervirial_;
+    if (flags_ & force_flags::potential_energy) {
+        g_en_pot[i] = en_pot_;
+    }
+    if (flags_ & force_flags::stress_tensor) {
+        g_stress_pot[i] = stress_pot;
+    }
+    if (flags_ & force_flags::hypervirial) {
+        g_hypervirial[i] = hypervirial_;
+    }
 }
 
 } // namespace pair_trunc_kernel
@@ -135,6 +149,7 @@ pair_trunc_wrapper<dimension, potential_type>::kernel = {
   , get<dimension>(pair_trunc_kernel::box_length_)
   , pair_trunc_kernel::neighbour_size_
   , pair_trunc_kernel::neighbour_stride_
+  , pair_trunc_kernel::flags_
   , pair_trunc_kernel::r_
 };
 

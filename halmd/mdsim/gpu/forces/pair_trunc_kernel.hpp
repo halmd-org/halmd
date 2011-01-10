@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -43,6 +43,8 @@ struct pair_trunc_wrapper
     cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */
     cuda::symbol<unsigned int> neighbour_stride;
+    /** compute flags */
+    cuda::symbol<unsigned int> flags;
     /** positions, types */
     cuda::texture<float4> r;
 

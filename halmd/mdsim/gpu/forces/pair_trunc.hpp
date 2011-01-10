@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -78,6 +78,20 @@ public:
         return potential->r_cut();
     }
 
+    // set compute flags
+    virtual unsigned int set_flags(unsigned int flags)
+    {   unsigned int orig = flags_;
+        flags_ |= flags;
+        return orig;
+    }
+
+    // unset compute flags
+    virtual unsigned int unset_flags(unsigned int flags)
+    {   unsigned int orig = flags_;
+        flags_ &= ~flags;
+        return orig;
+    }
+
     //! returns potential energies of particles
     virtual cuda::vector<float> const& potential_energy()
     {
@@ -102,6 +116,8 @@ public:
     );
 
 private:
+    /** compute flags for fine control of function compute() */
+    unsigned int flags_;
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
     /** potential part of stress tensor for each particle */
@@ -125,6 +141,8 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   : potential(potential)
   , particle(particle)
   , box(box)
+  // member initalisation
+  , flags_(0)
   // memory allocation
   , g_en_pot_(particle->dim.threads())
   , g_stress_pot_(particle->dim.threads())
@@ -146,6 +164,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
 
     cuda::copy(particle->neighbour_size, gpu_wrapper::kernel.neighbour_size);
     cuda::copy(particle->neighbour_stride, gpu_wrapper::kernel.neighbour_stride);
+    cuda::copy(flags_, gpu_wrapper::kernel.flags);
     gpu_wrapper::kernel.r.bind(particle->g_r);
     potential->bind_textures();
 
