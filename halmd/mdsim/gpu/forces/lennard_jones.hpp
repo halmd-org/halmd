@@ -57,7 +57,7 @@ public:
     /** bind textures before kernel invocation */
     void bind_textures() const
     {
-//        lennard_jones_wrapper::param.bind(g_param_);
+        lennard_jones_wrapper::param.bind(g_param_);
     }
 
     matrix_type const& r_cut() const

@@ -47,7 +47,7 @@ class lennard_jones;
 struct lennard_jones_wrapper
 {
     /** Lennard-Jones potential parameters */
-    static cuda::symbol<float4> param;
+    static cuda::texture<float4> param;
 };
 
 }}} // namespace mdsim::gpu::forces

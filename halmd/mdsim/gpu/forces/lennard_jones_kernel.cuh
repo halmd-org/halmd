@@ -33,7 +33,7 @@ namespace lennard_jones_kernel
 {
 
 /** array of Lennard-Jones potential parameters for all combinations of particle types */
-static __constant__ float4 param_;
+static texture<float4> param_;
 
 /**
  * Lennard-Jones interaction of a pair of particles.
@@ -51,7 +51,7 @@ public:
      */
     HALMD_GPU_ENABLED lennard_jones(unsigned int type1, unsigned int type2)
       : pair_(
-              param_
+            tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
         ) {}
 
     /**
@@ -103,7 +103,7 @@ private:
 
 } // namespace lennard_jones_kernel
 
-cuda::symbol<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
+cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
 
 template class pair_trunc_wrapper<3, lennard_jones_kernel::lennard_jones>;
 template class pair_trunc_wrapper<2, lennard_jones_kernel::lennard_jones>;
