@@ -140,6 +140,8 @@ template <int dimension>
 void sampler<dimension>::prepare_observables(bool force)
 {
     uint64_t step = core->step_counter();
+    // increment step counter, function is invoked before core->mdstep()
+    ++step;
 
     if (!(step % statevars_interval_) || force) {
         BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
