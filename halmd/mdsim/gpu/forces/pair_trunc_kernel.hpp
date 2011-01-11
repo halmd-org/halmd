@@ -35,16 +35,16 @@ struct pair_trunc_wrapper
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
 
-    /** compute forces, internal energy, and potential part of stress tensor */
+    /** compute forces only */
     cuda::function<void (coalesced_vector_type*, unsigned int*, float*, stress_tensor_type*, float*)> compute;
+    /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
+    cuda::function<void (coalesced_vector_type*, unsigned int*, float*, stress_tensor_type*, float*)> compute_aux;
     /** cubic box edge length */
     cuda::symbol<vector_type> box_length;
     /** number of placeholders per neighbour list */
     cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */
     cuda::symbol<unsigned int> neighbour_stride;
-    /** compute flags */
-    cuda::symbol<unsigned int> flags;
     /** positions, types */
     cuda::texture<float4> r;
 

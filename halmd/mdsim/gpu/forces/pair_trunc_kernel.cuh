@@ -20,7 +20,6 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 #define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH
 
-#include <halmd/mdsim/force_flags.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
@@ -46,15 +45,19 @@ static __constant__ unsigned int neighbour_size_;
 static __constant__ unsigned int neighbour_stride_;
 /** cuboid box edge length */
 static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
-/** compute flags */
-static __constant__ unsigned int flags_;
 /** positions, types */
 static texture<float4> r_;
 
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
  */
-template <typename vector_type, typename potential_type, typename gpu_vector_type, typename stress_tensor_type>
+template <
+    bool do_aux               //< compute auxiliary variables in addition to force
+  , typename vector_type
+  , typename potential_type
+  , typename gpu_vector_type
+  , typename stress_tensor_type
+>
 __global__ void compute(
     gpu_vector_type* g_f
   , unsigned int* g_neighbour
@@ -115,27 +118,21 @@ __global__ void compute(
 
         // force from other particle acting on this particle
         f += fval * r;
-        // potential energy contribution of this particle
-        en_pot_ += 0.5f * en_pot;
-        // contribution to stress tensor from this particle
-        if (flags_ & force_flags::stress_tensor) {
+        if (do_aux) {
+            // potential energy contribution of this particle
+            en_pot_ += 0.5f * en_pot;
+            // contribution to stress tensor from this particle
             stress_pot += 0.5f * fval * make_stress_tensor(rr, r);
-        }
-        // contribution to hypervirial
-        if (flags_ & force_flags::hypervirial) {
+            // contribution to hypervirial
             hypervirial_ += 0.5f * potential.hypervirial(rr) / (dimension * dimension);
         }
     }
 
     // write results to global memory
     g_f[i] = static_cast<vector_type>(f);
-    if (flags_ & force_flags::potential_energy) {
+    if (do_aux) {
         g_en_pot[i] = en_pot_;
-    }
-    if (flags_ & force_flags::stress_tensor) {
         g_stress_pot[i] = stress_pot;
-    }
-    if (flags_ & force_flags::hypervirial) {
         g_hypervirial[i] = hypervirial_;
     }
 }
@@ -145,11 +142,11 @@ __global__ void compute(
 template <int dimension, typename potential_type>
 pair_trunc_wrapper<dimension, potential_type> const
 pair_trunc_wrapper<dimension, potential_type>::kernel = {
-    pair_trunc_kernel::compute<fixed_vector<float, dimension>, potential_type>
+    pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
+  , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
   , get<dimension>(pair_trunc_kernel::box_length_)
   , pair_trunc_kernel::neighbour_size_
   , pair_trunc_kernel::neighbour_stride_
-  , pair_trunc_kernel::flags_
   , pair_trunc_kernel::r_
 };
 

@@ -24,7 +24,6 @@
 #include <lua.hpp>
 
 #include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/force_flags.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
@@ -46,8 +45,6 @@ public:
     static void luaopen(lua_State* L);
 
     force() {}
-    virtual unsigned int set_flags(unsigned int) = 0;
-    virtual unsigned int unset_flags(unsigned int) = 0;
     virtual double potential_energy() = 0;
     virtual stress_tensor_type stress_tensor_pot() = 0;
     virtual double hypervirial() = 0;

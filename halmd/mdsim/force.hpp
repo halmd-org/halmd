@@ -44,6 +44,8 @@ public:
     force() {}
     virtual ~force() {}
     virtual void compute() = 0;
+    virtual void aux_enable() = 0;
+    virtual void aux_disable() = 0;
 };
 
 } // namespace mdsim

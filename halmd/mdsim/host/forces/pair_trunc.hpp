@@ -81,18 +81,16 @@ public:
         return potential->r_cut();
     }
 
-    // set compute flags
-    virtual unsigned int set_flags(unsigned int flags)
-    {   unsigned int orig = flags_;
-        flags_ |= flags;
-        return orig;
+    // enable computation of auxiliary variables
+    virtual void aux_enable()
+    {
+        aux_flag_ = true;
     }
 
-    // unset compute flags
-    virtual unsigned int unset_flags(unsigned int flags)
-    {   unsigned int orig = flags_;
-        flags_ &= ~flags;
-        return orig;
+    // disable computation of auxiliary variables
+    virtual void aux_disable()
+    {
+        aux_flag_ = false;
     }
 
     //! return average potential energy per particle
@@ -119,8 +117,8 @@ public:
     );
 
 protected:
-    /** compute flags for fine control of function compute() */
-    unsigned int flags_;
+    /** flag for switching the computation of auxiliary variables in function compute() */
+    bool aux_flag_;
     /** average potential energy per particle */
     double en_pot_;
     /** potential part of stress tensor */
@@ -131,6 +129,9 @@ protected:
     boost::fusion::map<
         boost::fusion::pair<compute_, accumulator<double> >
     > runtime_;
+
+    template <bool do_aux>
+    inline void compute_impl_();
 };
 
 template <int dimension, typename float_type, typename potential_type>
@@ -145,7 +146,8 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , particle(particle)
   , box(box)
   // member initialisation
-  , flags_(0)
+  , aux_flag_(false)
+  , stress_pot_(particle->nbox)
 {}
 
 /**
@@ -158,20 +160,36 @@ void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profil
 }
 
 /**
- * Compute pair forces, potential energy, and potential part of stress tensor
+ * Compute pair forces and auxiliary variables if desired, e.g.,
+ * potential energy, potential part of stress tensor
  */
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
 {
     scoped_timer<timer> timer_(boost::fusion::at_key<compute_>(runtime_));
 
+    // call implementation which fits to current value of aux_flag_
+    if (!aux_flag_) {
+        compute_impl_<false>();
+    }
+    else {
+        compute_impl_<true>();
+    }
+}
+
+template <int dimension, typename float_type, typename potential_type>
+template <bool do_aux>
+void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
+{
     // initialise particle forces to zero
     std::fill(particle->f.begin(), particle->f.end(), 0);
 
-    // initialise potential energy and stress tensor
-    en_pot_ = 0;
-    stress_pot_ = 0;
-    hypervirial_ = 0;
+    // initialise potential energy and potential part of stress tensor
+    if (do_aux) {
+        en_pot_ = 0;
+        stress_pot_ = 0;
+        hypervirial_ = 0;
+    }
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
@@ -202,28 +220,28 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
             particle->f[i] += r * fval;
             particle->f[j] -= r * fval;
 
-            // add contribution to potential energy
-            en_pot_ += en_pot;
+            if (do_aux) {
+                // add contribution to potential energy
+                en_pot_ += en_pot;
 
-            // ... and potential part of stress tensor
-            if (flags_ & force_flags::stress_tensor) {
+                // ... and potential part of stress tensor
                 stress_pot_ += fval * make_stress_tensor(rr, r);
-            }
 
-            // compute contribution to hypervirial
-            if (flags_ & force_flags::hypervirial) {
+                // compute contribution to hypervirial
                 hypervirial_ += potential->hypervirial(rr, a, b) / (dimension * dimension);
             }
         }
     }
 
-    en_pot_ /= particle->nbox;
-    stress_pot_ /= particle->nbox;
-    hypervirial_ /= particle->nbox;
+    if (do_aux) {
+        en_pot_ /= particle->nbox;
+        stress_pot_ /= particle->nbox;
+        hypervirial_ /= particle->nbox;
 
-    // ensure that system is still in valid state
-    if (isinf(en_pot_)) {
-        throw std::runtime_error("Potential energy diverged");
+        // ensure that system is still in valid state
+        if (isinf(en_pot_)) {
+            throw std::runtime_error("Potential energy diverged");
+        }
     }
 }
 

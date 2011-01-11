@@ -78,18 +78,16 @@ public:
         return potential->r_cut();
     }
 
-    // set compute flags
-    virtual unsigned int set_flags(unsigned int flags)
-    {   unsigned int orig = flags_;
-        flags_ |= flags;
-        return orig;
+    // enable computation of auxiliary variables
+    virtual void aux_enable()
+    {
+        aux_flag_ = true;
     }
 
-    // unset compute flags
-    virtual unsigned int unset_flags(unsigned int flags)
-    {   unsigned int orig = flags_;
-        flags_ &= ~flags;
-        return orig;
+    // disable computation of auxiliary variables
+    virtual void aux_disable()
+    {
+        aux_flag_ = false;
     }
 
     //! returns potential energies of particles
@@ -116,8 +114,8 @@ public:
     );
 
 private:
-    /** compute flags for fine control of function compute() */
-    unsigned int flags_;
+    /** flag for switching the computation of auxiliary variables in function compute() */
+    bool aux_flag_;
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
     /** potential part of stress tensor for each particle */
@@ -142,7 +140,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , particle(particle)
   , box(box)
   // member initalisation
-  , flags_(0)
+  , aux_flag_(false)
   // memory allocation
   , g_en_pot_(particle->dim.threads())
   , g_stress_pot_(particle->dim.threads())
@@ -164,14 +162,20 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
 
     cuda::copy(particle->neighbour_size, gpu_wrapper::kernel.neighbour_size);
     cuda::copy(particle->neighbour_stride, gpu_wrapper::kernel.neighbour_stride);
-    cuda::copy(flags_, gpu_wrapper::kernel.flags);
     gpu_wrapper::kernel.r.bind(particle->g_r);
     potential->bind_textures();
 
     cuda::configure(particle->dim.grid, particle->dim.block);
-    gpu_wrapper::kernel.compute(
-        particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_, g_hypervirial_
-    );
+    if (!aux_flag_) {
+        gpu_wrapper::kernel.compute(
+            particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_, g_hypervirial_
+        );
+    }
+    else {
+        gpu_wrapper::kernel.compute_aux(
+            particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_, g_hypervirial_
+        );
+    }
     cuda::thread::synchronize();
 }
 

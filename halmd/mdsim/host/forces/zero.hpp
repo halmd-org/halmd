@@ -55,14 +55,9 @@ public:
     // there's nothing to compute
     virtual void compute() {}
 
-    // no flags to set or unset
-    virtual unsigned int set_flags(unsigned int)
-    {   return 0;
-    }
-
-    virtual unsigned int unset_flags(unsigned int)
-    {   return 0;
-    }
+    // nothing to enable or disable
+    virtual void aux_enable() {}
+    virtual void aux_disable() {}
 
     //! return average potential energy per particle
     virtual double potential_energy()
