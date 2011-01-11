@@ -50,12 +50,9 @@ public:
      * @param type2 type of second interacting particle
      */
     HALMD_GPU_ENABLED lennard_jones(unsigned int type1, unsigned int type2)
-    {
-        pair_[RR_CUT] = 2.5f;
-        pair_[EPSILON] = 1.f;
-        pair_[SIGMA2] = 1.f;
-        pair_[EN_CUT] = -0.0163169f;
-    }
+      : pair_(
+            tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
+        ) {}
 
     /**
      * Check whether particles are in interaction range.
