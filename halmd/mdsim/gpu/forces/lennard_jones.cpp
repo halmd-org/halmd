@@ -95,7 +95,7 @@ lennard_jones<float_type>::lennard_jones(
         param[i] = p;
     }
 
-    cuda::copy(param, g_param_);
+    cuda::copy(param[0], lennard_jones_wrapper::param);
 }
 
 template <typename float_type>
