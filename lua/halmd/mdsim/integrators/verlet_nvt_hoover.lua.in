@@ -1,0 +1,102 @@
+--
+-- Copyright © 2011  Peter Colberg and Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab environment
+local verlet_nvt_hoover_wrapper = {
+    host = {
+        [2] = halmd_wrapper.mdsim.host.integrators.verlet_nvt_hoover_2_
+      , [3] = halmd_wrapper.mdsim.host.integrators.verlet_nvt_hoover_3_
+    }
+}
+if halmd_wrapper.mdsim.gpu then
+    verlet_nvt_hoover_wrapper.gpu = {
+        [2] = halmd_wrapper.mdsim.gpu.integrators.verlet_nvt_hoover_2_
+      , [3] = halmd_wrapper.mdsim.gpu.integrators.verlet_nvt_hoover_3_
+    }
+end
+local mdsim = {
+  core = require("halmd.mdsim.core")
+}
+local device = require("halmd.device")
+local random = require("halmd.random")
+local h5 = halmd_wrapper.h5
+local po = halmd_wrapper.po
+local assert = assert
+
+module("halmd.mdsim.integrators.verlet_nvt_hoover", halmd.modules.register)
+
+--
+-- construct verlet_nvt_hoover module
+--
+function new(args)
+    local timestep = args.timestep or 0.001 -- default value
+    local temperature = args.temperature or 1.12 -- default value
+    local damping = args.damping or { 10 } -- default value
+
+    -- dependency injection
+    local core = mdsim.core()
+    local dimension = assert(core.dimension)
+    local particle = assert(core.particle)
+    local box = assert(core.box)
+
+    -- fill up missing values with copies of the last one
+    for i = #damping + 1, 2 do
+        damping[i] = damping[i - 1]
+    end
+
+    local hoover
+    if device() then
+        hoover = verlet_nvt_hoover_wrapper.gpu[dimension]
+    else
+        hoover = verlet_nvt_hoover_wrapper.host[dimension]
+    end
+    return hoover(particle, box, timestep, temperature, damping)
+end
+
+--
+-- returns module description
+--
+function name()
+    return "Thermostatted velocity-Verlet integrator using a Nosé-Hoover chain"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("timestep", po.float(), "integration timestep")
+    desc:add("temperature", po.float(), "thermostat temperature")
+    desc:add("mass", po.float(), "coupling parameters: `mass' of heat bath variables")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param verlet_nvt_hoover module instance
+-- @param group HDF5 group
+--
+function write_parameters(hoover, group)
+    group:write_attribute("timestep", h5.float(), hoover.timestep)
+    group:write_attribute("temperature", h5.float(), hoover.temperature)
+    group:write_attribute("mass", h5.float_array(), hoover.mass)
+end

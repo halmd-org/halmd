@@ -32,6 +32,7 @@
 #include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
+#include <halmd/mdsim/host/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
@@ -47,6 +48,7 @@
 # include <halmd/mdsim/gpu/forces/zero.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
+# include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 # include <halmd/mdsim/gpu/neighbour.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
@@ -275,6 +277,35 @@ boost::shared_ptr<mdsim::integrator<dimension> > make_verlet_nvt_andersen_integr
           , box
           , boost::dynamic_pointer_cast<halmd::random::host::random>(random)
           , timestep, temperature, collision_rate
+        );
+    }
+    throw std::runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension, typename float_type>
+boost::shared_ptr<mdsim::integrator<dimension> > make_verlet_nvt_hoover_integrator(
+    std::string const& backend
+  , boost::shared_ptr<mdsim::particle<dimension> > particle
+  , boost::shared_ptr<mdsim::box<dimension> > box
+  , double timestep
+  , double temperature
+  , fixed_vector<double, 2> mass
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        return boost::make_shared<mdsim::gpu::integrators::verlet_nvt_hoover<dimension, float_type> >(
+            boost::dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
+          , box
+          , timestep, temperature, mass
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        return boost::make_shared<mdsim::host::integrators::verlet_nvt_hoover<dimension, float_type> >(
+            boost::dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
+          , box
+          , timestep, temperature, mass
         );
     }
     throw std::runtime_error("unknown backend: " + backend);

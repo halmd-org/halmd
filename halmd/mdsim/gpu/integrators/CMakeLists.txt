@@ -3,4 +3,6 @@ add_library(halmd_mdsim_gpu_integrators
   verlet.cpp
   verlet_nvt_andersen_kernel.cu
   verlet_nvt_andersen.cpp
+  verlet_nvt_hoover_kernel.cu
+  verlet_nvt_hoover.cpp
 )

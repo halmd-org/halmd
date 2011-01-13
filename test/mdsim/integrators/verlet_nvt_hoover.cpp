@@ -43,14 +43,14 @@ using namespace halmd::test;
 using namespace std;
 
 /**
- * test NVT Verlet integrator with stochastic Andersen thermostat
+ * test NVT Verlet integrator with Nosé-Hoover chain thermostat
  */
 
 const double eps = numeric_limits<double>::epsilon();
 const float eps_float = numeric_limits<float>::epsilon();
 
 template <int dimension>
-void verlet_nvt_andersen(string const& backend)
+void verlet_nvt_hoover(string const& backend)
 {
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::vector_type gpu_vector_type;
@@ -59,7 +59,7 @@ void verlet_nvt_andersen(string const& backend)
     float density = 0.3;
     unsigned npart = (backend == "gpu") ? 5000 : 1500;
     double timestep = 0.01;
-    double coll_rate = 10;
+    fixed_vector<double, 2> mass = list_of(10.)(10.);
     char const* random_file = "/dev/urandom";
     fixed_vector<double, dimension> box_ratios =
         (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
@@ -90,8 +90,8 @@ void verlet_nvt_andersen(string const& backend)
 
     core->box = make_box<dimension>(core->particle, density, box_ratios);
 
-    core->integrator = make_verlet_nvt_andersen_integrator<dimension>(
-        backend, core->particle, core->box, random, timestep, temp, coll_rate
+    core->integrator = make_verlet_nvt_hoover_integrator<dimension, double>(
+        backend, core->particle, core->box, timestep, temp, mass
     );
 
     core->force = make_zero_force<dimension>(backend, core->particle);
@@ -108,7 +108,7 @@ void verlet_nvt_andersen(string const& backend)
     uint64_t steps = static_cast<uint64_t>(ceil(500 / timestep));
     // ensure that sampling period is sufficiently large such that
     // the samples can be considered independent
-    uint64_t period = static_cast<uint64_t>(round(3. / (coll_rate * timestep)));
+    uint64_t period = static_cast<uint64_t>(round(3 / (mass[0] * temp * timestep)));
     accumulator<double> temp_;
     array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
@@ -189,15 +189,15 @@ static void __attribute__((constructor)) init_unit_test_suite()
 #endif /* WITH_CUDA */
         ;
 
-    test_suite* ts1 = BOOST_TEST_SUITE( "verlet_nvt_andersen" );
+    test_suite* ts1 = BOOST_TEST_SUITE( "verlet_nvt_hoover" );
 
     test_suite* ts11 = BOOST_TEST_SUITE( "host" );
 
     test_suite* ts111 = BOOST_TEST_SUITE( "2d" );
-    ts111->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_andersen<2>, backend.begin(), backend.begin() + 1 ) );
+    ts111->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_hoover<2>, backend.begin(), backend.begin() + 1 ) );
 
     test_suite* ts112 = BOOST_TEST_SUITE( "3d" );
-    ts112->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_andersen<3>, backend.begin(), backend.begin() + 1 ) );
+    ts112->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_hoover<3>, backend.begin(), backend.begin() + 1 ) );
 
     ts11->add( ts111 );
     ts11->add( ts112 );
@@ -207,10 +207,10 @@ static void __attribute__((constructor)) init_unit_test_suite()
     test_suite* ts12 = BOOST_TEST_SUITE( "gpu" );
 
     test_suite* ts121 = BOOST_TEST_SUITE( "2d" );
-    ts121->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_andersen<2>, backend.begin() + 1, backend.end() ) );
+    ts121->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_hoover<2>, backend.begin() + 1, backend.end() ) );
 
     test_suite* ts122 = BOOST_TEST_SUITE( "3d" );
-    ts122->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_andersen<3>, backend.begin() + 1, backend.end() ) );
+    ts122->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_hoover<3>, backend.begin() + 1, backend.end() ) );
 
     ts12->add( ts121 );
     ts12->add( ts122 );

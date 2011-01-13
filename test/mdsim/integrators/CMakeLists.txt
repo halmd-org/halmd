@@ -1,3 +1,4 @@
+# module verlet_nvt_andersen
 add_executable(test_integrator_verlet_nvt_andersen
   verlet_nvt_andersen.cpp
 )
@@ -43,5 +44,54 @@ if(WITH_CUDA)
   )
   add_test(module_mdsim_integrator_verlet_nvt_andersen_gpu_3d
     test_integrator_verlet_nvt_andersen --run_test=verlet_nvt_andersen/gpu/3d --log_level=test_suite
+  )
+endif(WITH_CUDA)
+
+# module verlet_nvt_hoover
+add_executable(test_integrator_verlet_nvt_hoover
+  verlet_nvt_hoover.cpp
+)
+target_link_libraries(test_integrator_verlet_nvt_hoover
+  halmd_mdsim_host_forces
+  halmd_mdsim_host_integrators
+  halmd_mdsim_host_positions
+  halmd_mdsim_host_velocities
+  halmd_mdsim_host
+  halmd_observables_host
+  halmd_random_host
+)
+if(WITH_CUDA)
+  target_link_libraries(test_integrator_verlet_nvt_hoover
+    halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu_positions
+    halmd_mdsim_gpu_velocities
+    halmd_mdsim_gpu
+    halmd_observables_gpu
+    halmd_random_gpu
+    halmd_utility_gpu
+  )
+endif(WITH_CUDA)
+target_link_libraries(test_integrator_verlet_nvt_hoover
+  halmd_io
+  halmd_mdsim
+  halmd_random
+  halmd_observables
+  halmd_utility
+  ${HALMD_COMMON_LIBRARIES}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+add_test(module_mdsim_integrator_verlet_nvt_hoover_host_2d
+  test_integrator_verlet_nvt_hoover --run_test=verlet_nvt_hoover/host/2d --log_level=test_suite
+)
+add_test(module_mdsim_integrator_verlet_nvt_hoover_host_3d
+  test_integrator_verlet_nvt_hoover --run_test=verlet_nvt_hoover/host/3d --log_level=test_suite
+)
+if(WITH_CUDA)
+  add_test(module_mdsim_integrator_verlet_nvt_hoover_gpu_2d
+    test_integrator_verlet_nvt_hoover --run_test=verlet_nvt_hoover/gpu/2d --log_level=test_suite
+  )
+  add_test(module_mdsim_integrator_verlet_nvt_hoover_gpu_3d
+    test_integrator_verlet_nvt_hoover --run_test=verlet_nvt_hoover/gpu/3d --log_level=test_suite
   )
 endif(WITH_CUDA)
