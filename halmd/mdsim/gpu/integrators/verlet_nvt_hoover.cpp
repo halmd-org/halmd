@@ -50,9 +50,9 @@ verlet_nvt_hoover(
   : particle(particle)
   , box(box)
   // member initialisation
+  , xi(0)
+  , v_xi(0)
   , mass_xi_(mass)
-  , xi_(0)
-  , v_xi_(0)
 {
     this->timestep(timestep);
     this->temperature(temperature);
@@ -203,27 +203,27 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
     float_type en_kin_2 = compute_en_kin_2();
 
     // head of the chain
-    v_xi_[1] += (mass_xi_[0] * v_xi_[0] * v_xi_[0] - temperature_) * timestep_4_;
-    float_type t = exp(-v_xi_[1] * timestep_8_);
-    v_xi_[0] *= t;
-    v_xi_[0] += (en_kin_2 - en_kin_target_2_) / mass_xi_[0] * timestep_4_;
-    v_xi_[0] *= t;
+    v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) * timestep_4_;
+    float_type t = exp(-v_xi[1] * timestep_8_);
+    v_xi[0] *= t;
+    v_xi[0] += (en_kin_2 - en_kin_target_2_) / mass_xi_[0] * timestep_4_;
+    v_xi[0] *= t;
 
     // propagate heat bath variables
     for (unsigned int i = 0; i < 2; ++i ) {
-        xi_[i] += v_xi_[i] * timestep_half_;
+        xi[i] += v_xi[i] * timestep_half_;
     }
 
     // rescale velocities and kinetic energy
     // we only compute the factor, the rescaling is done elsewhere
-    float_type s = exp(-v_xi_[0] * timestep_half_);
+    float_type s = exp(-v_xi[0] * timestep_half_);
     en_kin_2 *= s * s;
 
     // tail of the chain, (almost) mirrors the head
-    v_xi_[0] *= t;
-    v_xi_[0] += (en_kin_2 - en_kin_target_2_) / mass_xi_[0] * timestep_4_;
-    v_xi_[0] *= t;
-    v_xi_[1] += (mass_xi_[0] * v_xi_[0] * v_xi_[0] - temperature_) / mass_xi_[1] * timestep_4_;
+    v_xi[0] *= t;
+    v_xi[0] += (en_kin_2 - en_kin_target_2_) / mass_xi_[0] * timestep_4_;
+    v_xi[0] *= t;
+    v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;
 
     // return scaling factor for CUDA kernels
     return s;

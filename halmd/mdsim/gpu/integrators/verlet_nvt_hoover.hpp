@@ -90,6 +90,10 @@ public:
         return mass_xi_;
     }
 
+    /** chain of heat bath variables */
+    fixed_vector<float_type, 2> xi;
+    fixed_vector<float_type, 2> v_xi;
+
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
     HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
@@ -114,10 +118,6 @@ private:
 
     /** coupling parameters: `mass' of the heat bath variables */
     fixed_vector<float_type, 2> mass_xi_;
-
-    /** chain variables */
-    fixed_vector<float_type, 2> xi_;
-    fixed_vector<float_type, 2> v_xi_;
 
     boost::fusion::map<
         boost::fusion::pair<integrate_, accumulator<double> >
