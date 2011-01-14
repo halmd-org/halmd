@@ -147,10 +147,10 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::
 integrate()
 {
+    scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
     float_type scale = propagate_chain();
 
     try {
-        scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper_type::kernel.integrate(
             particle->g_r, particle->g_image, particle->g_v, particle->g_f, scale
@@ -184,6 +184,7 @@ finalize()
         float_type scale = propagate_chain();
 
         // rescale velocities
+        scoped_timer<timer> timer2_(at_key<rescale_>(runtime_));
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper_type::kernel.rescale(particle->g_v, scale);
         cuda::thread::synchronize();
@@ -200,6 +201,7 @@ finalize()
 template <int dimension, typename float_type>
 float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
+    scoped_timer<timer> timer_(at_key<propagate_>(runtime_));
     float_type en_kin_2 = compute_en_kin_2();
 
     // head of the chain

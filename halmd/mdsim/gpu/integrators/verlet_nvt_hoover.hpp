@@ -97,6 +97,8 @@ public:
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
     HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
+    HALMD_PROFILING_TAG( propagate_, "propagate Nosé-Hoover chain" );
+    HALMD_PROFILING_TAG( rescale_, "rescale velocities in Nosé-Hoover thermostat" );
 
 private:
     // propagate chain of Nosé-Hoover variables
@@ -122,6 +124,8 @@ private:
     boost::fusion::map<
         boost::fusion::pair<integrate_, accumulator<double> >
       , boost::fusion::pair<finalize_, accumulator<double> >
+      , boost::fusion::pair<propagate_, accumulator<double> >
+      , boost::fusion::pair<rescale_, accumulator<double> >
     > runtime_;
 };
 
