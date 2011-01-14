@@ -49,7 +49,7 @@ module("halmd.mdsim.integrators.verlet_nvt_hoover", halmd.modules.register)
 function new(args)
     local timestep = args.timestep or 0.001 -- default value
     local temperature = args.temperature or 1.12 -- default value
-    local damping = args.damping or { 10 } -- default value
+    local mass = args.mass or { 1, 0.3 } -- default value
 
     -- dependency injection
     local core = mdsim.core()
@@ -58,17 +58,17 @@ function new(args)
     local box = assert(core.box)
 
     -- fill up missing values with copies of the last one
-    for i = #damping + 1, 2 do
-        damping[i] = damping[i - 1]
+    for i = #mass + 1, 2 do
+        mass[i] = mass[i - 1]
     end
 
-    local hoover
+    local integrator
     if device() then
-        hoover = verlet_nvt_hoover_wrapper.gpu[dimension]
+        integrator = verlet_nvt_hoover_wrapper.gpu[dimension]
     else
-        hoover = verlet_nvt_hoover_wrapper.host[dimension]
+        integrator = verlet_nvt_hoover_wrapper.host[dimension]
     end
-    return hoover(particle, box, timestep, temperature, damping)
+    return integrator(particle, box, timestep, temperature, mass)
 end
 
 --
@@ -86,17 +86,17 @@ end
 function options(desc)
     desc:add("timestep", po.float(), "integration timestep")
     desc:add("temperature", po.float(), "thermostat temperature")
-    desc:add("mass", po.float(), "coupling parameters: `mass' of heat bath variables")
+    desc:add("mass", po.float_array(), "coupling parameters: `mass' of heat bath variables")
 end
 
 --
 -- write module parameters to HDF5 group
 --
--- @param verlet_nvt_hoover module instance
+-- @param integrator module instance
 -- @param group HDF5 group
 --
-function write_parameters(hoover, group)
-    group:write_attribute("timestep", h5.float(), hoover.timestep)
-    group:write_attribute("temperature", h5.float(), hoover.temperature)
-    group:write_attribute("mass", h5.float_array(), hoover.mass)
+function write_parameters(integrator, group)
+    group:write_attribute("timestep", h5.float(), integrator.timestep)
+    group:write_attribute("temperature", h5.float(), integrator.temperature)
+    group:write_attribute("mass", h5.float_array(), integrator.mass)
 end
