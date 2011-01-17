@@ -113,6 +113,7 @@ struct reduce_blocks<sum_, host_output_type>
     host_output_type operator()(cuda::host::vector<coalesced_output_type> const& h_block)
     {
         using namespace boost::lambda;
+        using boost::lambda::_1;
         return std::accumulate(
             boost::make_transform_iterator(
                 h_block.begin()
@@ -134,6 +135,7 @@ struct reduce_blocks<max_, host_output_type>
     host_output_type operator()(cuda::host::vector<coalesced_output_type> const& h_block)
     {
         using namespace boost::lambda;
+        using boost::lambda::_1;
         return *std::max_element(
             boost::make_transform_iterator(
                 h_block.begin()
