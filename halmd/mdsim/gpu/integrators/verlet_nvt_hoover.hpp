@@ -25,6 +25,7 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
+#include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -101,11 +102,8 @@ public:
     HALMD_PROFILING_TAG( rescale_, "rescale velocities in Nosé-Hoover thermostat" );
 
 private:
-    // propagate chain of Nosé-Hoover variables
+    /** propagate chain of Nosé-Hoover variables */
     float_type propagate_chain();
-    // compute actual value of total kinetic energy (multiplied by 2)
-    float_type compute_en_kin_2() const;
-
 
     /** integration time-step */
     float_type timestep_;
@@ -120,6 +118,17 @@ private:
 
     /** coupling parameters: `mass' of the heat bath variables */
     fixed_vector<float_type, 2> mass_xi_;
+
+    /** functor to compute actual value of total kinetic energy (multiplied by 2) */
+    algorithm::gpu::reduce<
+        algorithm::gpu::sum_                    // reduce_transform
+      , fixed_vector<float, dimension>          // input_type
+      , float4                                  // coalesced_input_type
+      , dsfloat                                 // output_type
+      , dsfloat                                 // coalesced_output_type
+      , float_type                              // host_output_type
+      , algorithm::gpu::square_                 // input_transform
+    > compute_en_kin_2_;
 
     boost::fusion::map<
         boost::fusion::pair<integrate_, accumulator<double> >

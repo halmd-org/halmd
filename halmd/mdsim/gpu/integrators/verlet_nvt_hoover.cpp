@@ -21,7 +21,6 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
@@ -29,7 +28,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace halmd::algorithm::gpu;
 using namespace std;
 using boost::fusion::at_key;
 
@@ -53,6 +51,9 @@ verlet_nvt_hoover(
   , xi(0)
   , v_xi(0)
   , mass_xi_(mass)
+  // set up functor and allocate internal memory,
+  // this is done here and only once rather than repeatedly during the integration
+  , compute_en_kin_2_(30)  // FIXME reduce kernel should use #multiprocessors = #blocks as default
 {
     this->timestep(timestep);
     this->temperature(temperature);
@@ -202,7 +203,9 @@ template <int dimension, typename float_type>
 float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
     scoped_timer<timer> timer_(at_key<propagate_>(runtime_));
-    float_type en_kin_2 = compute_en_kin_2();
+
+    // compute total kinetic energy (multiplied by 2),
+    float_type en_kin_2 = compute_en_kin_2_(particle->g_v);
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) * timestep_4_;
@@ -229,24 +232,6 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 
     // return scaling factor for CUDA kernels
     return s;
-}
-
-/**
- * compute actual value of total kinetic energy (multiplied by 2)
- */
-template <int dimension, typename float_type>
-float_type verlet_nvt_hoover<dimension, float_type>::compute_en_kin_2() const
-{
-    // compute total kinetic energy (multiplied by 2)
-    return reduce<
-        sum_                                    // reduce_transform
-      , fixed_vector<float, dimension>          // input_type
-      , float4                                  // coalesced_input_type
-      , dsfloat                                 // output_type
-      , dsfloat                                 // coalesced_output_type
-      , float_type                              // host_output_type
-      , square_                                 // input_transform
-    >()(particle->g_v);
 }
 
 template <int dimension, typename float_type>
