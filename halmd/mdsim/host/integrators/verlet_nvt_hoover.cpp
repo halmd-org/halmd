@@ -135,7 +135,7 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
     }
 
     // head of the chain
-    v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) * timestep_4_;
+    v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;
     float_type t = exp(-v_xi[1] * timestep_8_);
     v_xi[0] *= t;
     v_xi[0] += (en_kin_2 - en_kin_target_2_) / mass_xi_[0] * timestep_4_;
@@ -153,7 +153,7 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
     }
     en_kin_2 *= s * s;
 
-    // tail of the chain, (almost) mirrors the head
+    // tail of the chain, mirrors the head
     v_xi[0] *= t;
     v_xi[0] += (en_kin_2 - en_kin_target_2_) / mass_xi_[0] * timestep_4_;
     v_xi[0] *= t;
