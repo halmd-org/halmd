@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE position_lattice
+#define BOOST_TEST_MODULE integrator_verlet_nvt_andersen
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
