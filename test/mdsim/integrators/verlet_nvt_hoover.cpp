@@ -31,6 +31,8 @@
 #include <string>
 #include <utility>
 
+#include <iomanip>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -56,10 +58,11 @@ void verlet_nvt_hoover(string const& backend)
     typedef typename mdsim::type_traits<dimension, float>::vector_type gpu_vector_type;
 
     float temp = 1.;
+    float start_temp = 3.;
     float density = 0.3;
-    unsigned npart = (backend == "gpu") ? 5000 : 1500;
-    double timestep = 0.01;
-    fixed_vector<double, 2> mass = list_of(10.)(10.);
+    unsigned npart = (backend == "gpu") ? 4500 : 1500;
+    double timestep = 0.001;
+    fixed_vector<double, 2> mass = list_of(40.)(.01);
     char const* random_file = "/dev/urandom";
     fixed_vector<double, dimension> box_ratios =
         (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
@@ -98,7 +101,7 @@ void verlet_nvt_hoover(string const& backend)
 
     core->position = make_lattice(backend, core->particle, core->box, random);
 
-    core->velocity = make_boltzmann(backend, core->particle, random, temp);
+    core->velocity = make_boltzmann(backend, core->particle, random, start_temp);
 
     // use thermodynamics module to measure temperature (velocity distribution)
     shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
@@ -106,33 +109,96 @@ void verlet_nvt_hoover(string const& backend)
 
     // run for Δt*=500
     uint64_t steps = static_cast<uint64_t>(ceil(500 / timestep));
+    // skip Δt*=50 for equilibration
+    uint64_t skip = static_cast<uint64_t>(ceil(50 / timestep));
     // ensure that sampling period is sufficiently large such that
     // the samples can be considered independent
     uint64_t period = static_cast<uint64_t>(round(3 / (mass[0] * temp * timestep)));
     accumulator<double> temp_;
     array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
+    double max_en_diff = 0;                       // integral of motion: Hamiltonian extended by NHC terms
 
+    BOOST_TEST_MESSAGE("prepare system");
+    core->force->aux_enable();                    //< enable computation of potential energy
     core->prepare();
+    double en_nhc0 = thermodynamics->en_tot();
+
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
+    core->force->aux_disable();
     for (uint64_t i = 0; i < steps; ++i) {
-        core->mdstep();
+        // enable auxiliary variables in force module
         if(i % period == 0) {
-            temp_(thermodynamics->temp());
-            fixed_vector<double, dimension> v(thermodynamics->v_cm());
-            for (unsigned int i = 0; i < dimension; ++i) {
-                v_cm[i](v[i]);
+            core->force->aux_enable();
+        }
+
+        // perform MD step
+        core->mdstep();
+
+        // measurement
+        if(i % period == 0) {
+            // measure temperature after thermalisation
+            if (i >= skip) {
+                temp_(thermodynamics->temp());
             }
+            // track centre-of-mass velocity over the whole run
+            fixed_vector<double, dimension> v(thermodynamics->v_cm());
+            for (unsigned int k = 0; k < dimension; ++k) {
+                v_cm[k](v[k]);
+            }
+
+            // compute modified Hamiltonian
+            double en_nhc_;
+            fixed_vector<double, 2> xi, v_xi;
+            en_nhc_ = thermodynamics->en_tot();
+            if (backend == "gpu") {
+                typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
+                shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
+                xi = integrator->xi;
+                v_xi = integrator->v_xi;
+                en_nhc_ += (dimension * xi[0] + xi[1] / npart) * temp;
+                en_nhc_ += .5 * integrator->mass()[0] * pow(v_xi[0], 2) / npart;
+                en_nhc_ += .5 * integrator->mass()[1] * pow(v_xi[1], 2) / npart;
+            }
+            else if (backend == "host") {
+                typedef mdsim::host::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
+                shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
+                xi = integrator->xi;
+                v_xi = integrator->v_xi;
+                en_nhc_ += (dimension * xi[0] + xi[1] / npart) * temp;
+                en_nhc_ += .5 * integrator->mass()[0] * pow(v_xi[0], 2) / npart;
+                en_nhc_ += .5 * integrator->mass()[1] * pow(v_xi[1], 2) / npart;
+            }
+            LOG_TRACE(setprecision(12)
+                << "en_nhc: " << i * timestep
+                << " " << en_nhc_ << " " << thermodynamics->temp()
+                << " " << xi[0] << " " << xi[1] << " " << v_xi[0] << " " << v_xi[1]
+                << setprecision(6)
+            );
+            max_en_diff = max(abs(en_nhc_ - en_nhc0), max_en_diff);
+            core->force->aux_disable();
         }
     }
 
     //
-    // test velocity distribution of final state
+    // test conservation of pseudo-Hamiltonian
     //
-    // centre-of-mass velocity ⇒ mean of velocity distribution
-    // each particle is an independent "measurement"
-    // limit is 3σ, σ = √(<v_x²> / (N - 1)) where <v_x²> = k T
-    double vcm_limit = 3 * sqrt(temp / (npart - 1));
-    BOOST_TEST_MESSAGE("Absolute limit on instantaneous centre-of-mass velocity: " << vcm_limit);
+    const double en_limit = max(2e-5, steps * 1e-12);
+    BOOST_CHECK_SMALL(max_en_diff / fabs(en_nhc0), en_limit);
+
+    //
+    // test conservation of total momentum
+    //
+    double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 20 * eps;
+    BOOST_TEST_MESSAGE("Absolute limit on centre-of-mass velocity: " << vcm_limit);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        BOOST_CHECK_SMALL(mean(v_cm[i]), vcm_limit);
+        BOOST_CHECK_SMALL(error_of_mean(v_cm[i]), vcm_limit);
+    }
+
+    //
+    // test final distribution of velocities
+    //
+    // mean (total momentum) should be zero
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);  //< norm_inf tests the max. value
 
     // temperature ⇒ variance of velocity distribution
@@ -150,10 +216,6 @@ void verlet_nvt_hoover(string const& backend)
     // limit is 3σ, σ = √(<v_x²> / (N × C - 1)) where <v_x²> = k T
     vcm_limit = 3 * sqrt(temp / (npart * count(v_cm[0]) - 1));
     BOOST_TEST_MESSAGE("Absolute limit on centre-of-mass velocity: " << vcm_limit);
-    for (unsigned int i = 0; i < dimension; ++i) {
-        BOOST_CHECK_SMALL(mean(v_cm[i]), 3 * vcm_limit);
-        BOOST_CHECK_SMALL(error_of_mean(v_cm[i]), vcm_limit);
-    }
 
     // mean temperature ⇒ variance of velocity distribution
     // each sample should constitute an independent measurement
