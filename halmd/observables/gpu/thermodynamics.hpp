@@ -24,6 +24,7 @@
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/observables/thermodynamics.hpp>
@@ -58,11 +59,53 @@ public:
     virtual void prepare();
     virtual void sample(double time);
 
-    virtual double en_kin() const;
-    virtual vector_type v_cm() const;
-    virtual double en_pot() const;
-    virtual double virial() const;
-    virtual double hypervirial() const;
+    virtual double en_kin();
+    virtual vector_type v_cm();
+    virtual double en_pot();
+    virtual double virial();
+    virtual double hypervirial();
+
+private:
+    /** functors for reduce kernels */
+    algorithm::gpu::reduce<
+        algorithm::gpu::sum_                    // reduce_transform
+      , fixed_vector<float, dimension>          // input_type
+      , float4                                  // coalesced_input_type
+      , dsfloat                                 // output_type
+      , dsfloat                                 // coalesced_output_type
+      , double                                  // host_output_type
+      , algorithm::gpu::square_                 // input_transform
+    > sum_velocity_square_;
+
+    algorithm::gpu::reduce<
+        algorithm::gpu::sum_                    // reduce_transform
+      , fixed_vector<float, dimension>          // input_type
+      , float4                                  // coalesced_input_type
+      , fixed_vector<dsfloat, dimension>        // output_type
+      , fixed_vector<dsfloat, dimension>        // coalesced_output_type
+      , vector_type                             // host_output_type
+    > sum_velocity_vector_;
+
+    algorithm::gpu::reduce<
+        algorithm::gpu::sum_                    // reduce_transform
+      , float                                   // input_type
+      , float                                   // coalesced_input_type
+      , dsfloat                                 // output_type
+      , dsfloat                                 // coalesced_output_type
+      , double                                  // host_output_type
+    > sum_scalar_;
+
+    typedef typename force_type::stress_tensor_type stress_tensor_type;
+    typedef typename force_type::gpu_stress_tensor_type gpu_stress_tensor_type;
+    algorithm::gpu::reduce<
+        algorithm::gpu::sum_                    // reduce_transform
+      , stress_tensor_type                      // input_type
+      , gpu_stress_tensor_type                  // coalesced_input_type
+      , dsfloat                                 // output_type
+      , dsfloat                                 // coalesced_output_type
+      , double                                  // host_output_type
+      , algorithm::gpu::at_0                    // input_transform
+    > sum_stress_tensor_diagonal_;
 };
 
 }} // namespace observables::gpu

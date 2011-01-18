@@ -58,20 +58,20 @@ public:
     virtual void prepare();
     virtual void sample(double);
 
-    virtual double en_kin() const;
-    virtual vector_type v_cm() const;
+    virtual double en_kin();
+    virtual vector_type v_cm();
 
-    virtual double en_pot() const
+    virtual double en_pot()
     {
         return force->potential_energy();
     }
 
-    virtual double virial() const
+    virtual double virial()
     {
         return force->stress_tensor_pot()[0];
     }
 
-    virtual double hypervirial() const
+    virtual double hypervirial()
     {
         return force->hypervirial();
     }

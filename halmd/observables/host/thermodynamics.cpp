@@ -66,7 +66,7 @@ void thermodynamics<dimension, float_type>::sample(double time)
 }
 
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::en_kin() const
+double thermodynamics<dimension, float_type>::en_kin()
 {
     // compute mean-square velocity
     double vv = 0;
@@ -78,7 +78,7 @@ double thermodynamics<dimension, float_type>::en_kin() const
 }
 
 template <int dimension, typename float_type>
-typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimension, float_type>::v_cm() const
+typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimension, float_type>::v_cm()
 {
     // compute mean velocity
     vector_type v_cm_(0.);
