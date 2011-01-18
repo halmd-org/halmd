@@ -147,7 +147,9 @@ void ideal_gas(string const& backend)
 
     // prepare system with Maxwell-Boltzmann distributed velocities
     BOOST_TEST_MESSAGE("assign positions and velocities");
+    core->force->aux_enable();              // enable auxiliary variables
     core->prepare();
+    core->force->aux_disable();
 
     // measure thermodynamic properties
     shared_ptr<observables::thermodynamics<dimension> > thermodynamics = make_thermodynamics(
@@ -166,6 +168,10 @@ void ideal_gas(string const& backend)
     BOOST_TEST_MESSAGE("run NVE simulation");
     uint64_t steps = 1000;
     for (uint64_t i = 0; i < steps; ++i) {
+        // last step: evaluate auxiliary variables (potential energy, virial, ...)
+        if (i == steps - 1) {
+            core->force->aux_enable();
+        }
         core->mdstep();
     }
 
@@ -270,11 +276,16 @@ void thermodynamics(string const& backend)
     steps = static_cast<uint64_t>(ceil(30 / timestep));
     period = static_cast<uint64_t>(round(.01 / timestep));
     for (uint64_t i = 0; i < steps; ++i) {
+        if (i == steps - 1) {
+            core->force->aux_enable();              // enable auxiliary variables in last step
+        }
         core->mdstep();
         if(i > steps/2 && i % period == 0) {
             temp_(thermodynamics->temp());
         }
     }
+    core->force->aux_disable();
+
     double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 20 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
@@ -289,12 +300,21 @@ void thermodynamics(string const& backend)
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
     for (uint64_t i = 0; i < steps; ++i) {
+        // turn on evaluation of potential energy, virial, etc.
+        if(i > steps/2 && i % period == 0) {
+            core->force->aux_enable();
+        }
+
+        // perform MD step
         core->mdstep();
+
+        // measurement
         if(i % period == 0) {
             temp_(thermodynamics->temp());
             press(thermodynamics->pressure());
             en_pot(thermodynamics->en_pot());
             max_en_diff = max(abs(thermodynamics->en_tot() - en_tot), max_en_diff);
+            core->force->aux_disable();
         }
     }
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
