@@ -147,7 +147,6 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , box(box)
   // member initialisation
   , aux_flag_(false)
-  , stress_pot_(particle->nbox)
 {}
 
 /**
