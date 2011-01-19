@@ -119,6 +119,8 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
     for (size_t i = 0; i < particle->nbox; ++i) {
         particle->v[i] += particle->f[i] * timestep_half_;
     }
+
+    propagate_chain();
 }
 
 /**
