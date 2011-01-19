@@ -98,6 +98,9 @@ thermodynamics<dimension, float_type>::v_cm()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
+    if (!force->aux_flag()) {
+        throw std::logic_error("Potential energy not enabled in force module");
+    }
     return sum_scalar_(force->potential_energy()) / particle->nbox;
 }
 
@@ -107,6 +110,9 @@ double thermodynamics<dimension, float_type>::en_pot()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
+    if (!force->aux_flag()) {
+        throw std::logic_error("Stress tensor not enabled in force module");
+    }
     return sum_stress_tensor_diagonal_(force->stress_tensor_pot()) / particle->nbox;
 }
 
@@ -116,6 +122,9 @@ double thermodynamics<dimension, float_type>::virial()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
+    if (!force->aux_flag()) {
+        throw std::logic_error("Hypervirial not enabled in force module");
+    }
     return sum_scalar_(force->hypervirial()) / particle->nbox;
 }
 

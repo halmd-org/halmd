@@ -147,9 +147,8 @@ void ideal_gas(string const& backend)
 
     // prepare system with Maxwell-Boltzmann distributed velocities
     BOOST_TEST_MESSAGE("assign positions and velocities");
-    core->force->aux_enable();              // enable auxiliary variables
+    core->force->aux_enable();              // enable computation of potential energy
     core->prepare();
-    core->force->aux_disable();
 
     // measure thermodynamic properties
     shared_ptr<observables::thermodynamics<dimension> > thermodynamics = make_thermodynamics(
@@ -167,6 +166,7 @@ void ideal_gas(string const& backend)
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
     uint64_t steps = 1000;
+    core->force->aux_disable();             // disable auxiliary variables
     for (uint64_t i = 0; i < steps; ++i) {
         // last step: evaluate auxiliary variables (potential energy, virial, ...)
         if (i == steps - 1) {
@@ -279,6 +279,7 @@ void thermodynamics(string const& backend)
     BOOST_TEST_MESSAGE("equilibrate initial state");
     steps = static_cast<uint64_t>(ceil(30 / timestep));
     uint64_t period = static_cast<uint64_t>(round(.01 / timestep));
+    core->force->aux_disable();                     // disable auxiliary variables
     for (uint64_t i = 0; i < steps; ++i) {
         if (i == steps - 1) {
             core->force->aux_enable();              // enable auxiliary variables in last step
@@ -288,7 +289,6 @@ void thermodynamics(string const& backend)
             temp_(thermodynamics->temp());
         }
     }
-    core->force->aux_disable();
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // rescale velocities to match the exact temperature
@@ -302,9 +302,10 @@ void thermodynamics(string const& backend)
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
+    core->force->aux_disable();
     for (uint64_t i = 0; i < steps; ++i) {
         // turn on evaluation of potential energy, virial, etc.
-        if(i > steps/2 && i % period == 0) {
+        if(i % period == 0) {
             core->force->aux_enable();
         }
 

@@ -78,16 +78,22 @@ public:
         return potential->r_cut();
     }
 
-    // enable computation of auxiliary variables
+    //! enable computation of auxiliary variables
     virtual void aux_enable()
     {
         aux_flag_ = true;
     }
 
-    // disable computation of auxiliary variables
+    //! disable computation of auxiliary variables
     virtual void aux_disable()
     {
         aux_flag_ = false;
+    }
+
+    //! return true if auxiliary variables are computed
+    virtual bool aux_flag() const
+    {
+        return aux_flag_;
     }
 
     //! returns potential energies of particles
@@ -140,7 +146,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , particle(particle)
   , box(box)
   // member initalisation
-  , aux_flag_(false)
+  , aux_flag_(true)          //< enable everything by default
   // memory allocation
   , g_en_pot_(particle->dim.threads())
   , g_stress_pot_(particle->dim.threads())

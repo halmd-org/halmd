@@ -58,6 +58,10 @@ public:
     // nothing to enable or disable
     virtual void aux_enable() {}
     virtual void aux_disable() {}
+    virtual bool aux_flag() const
+    {
+        return true;
+    }
 
     //! returns potential energies of particles
     virtual cuda::vector<float> const& potential_energy()
