@@ -94,8 +94,9 @@ public:
     fixed_vector<float_type, 2> v_xi;
 
     // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet" );
-    HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet" );
+    HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
+    HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
+    HALMD_PROFILING_TAG( propagate_, "propagate Nosé-Hoover chain" );
 
 protected:
     // propagate chain of Nosé-Hoover variables
@@ -118,6 +119,7 @@ protected:
     boost::fusion::map<
         boost::fusion::pair<integrate_, accumulator<double> >
       , boost::fusion::pair<finalize_, accumulator<double> >
+      , boost::fusion::pair<propagate_, accumulator<double> >
     > runtime_;
 };
 
