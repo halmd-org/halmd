@@ -142,6 +142,7 @@ else(HALMD_GIT_AUTHOR_DATE)
 endif(HALMD_GIT_AUTHOR_DATE)
 
 enable_testing()
+include(CTest)
 
 include_directories(${HALMD_SOURCE_DIR}/include)
 include_directories(${HALMD_SOURCE_DIR}/src)
