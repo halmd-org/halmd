@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -70,9 +70,9 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::timestep(double timestep)
 {
     timestep_ = static_cast<float_type>(timestep);
-    timestep_half_ = timestep / 2;
-    timestep_4_ = timestep / 4;
-    timestep_8_ = timestep / 8;
+    timestep_half_ = timestep_ / 2;
+    timestep_4_ = timestep_ / 4;
+    timestep_8_ = timestep_ / 8;
 
     LOG("integration timestep: " << timestep_);
 }
