@@ -134,11 +134,11 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::
 temperature(double temperature)
 {
-  temperature_ = static_cast<float_type>(temperature);
-  en_kin_target_2_ = dimension * particle->nbox * temperature_;
+    temperature_ = static_cast<float_type>(temperature);
+    en_kin_target_2_ = dimension * particle->nbox * temperature_;
 
-  LOG("temperature of heat bath: " << temperature_);
-  LOG("target kinetic energy: " << en_kin_target_2_ / particle->nbox);
+    LOG("temperature of heat bath: " << temperature_);
+    LOG("target kinetic energy: " << en_kin_target_2_ / particle->nbox);
 }
 
 /**

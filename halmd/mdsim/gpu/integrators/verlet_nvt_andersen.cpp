@@ -117,18 +117,18 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 temperature(double temperature)
 {
-  temperature_ = static_cast<float_type>(temperature);
-  sqrt_temperature_ = sqrt(temperature_);
+    temperature_ = static_cast<float_type>(temperature);
+    sqrt_temperature_ = sqrt(temperature_);
 
-  try {
-      cuda::copy(sqrt_temperature_, wrapper_type::kernel.sqrt_temperature);
-  }
-  catch (cuda::error const& e) {
-      LOG_ERROR(e.what());
-      throw runtime_error("failed to initialize Verlet integrator symbols");
-  }
+    try {
+        cuda::copy(sqrt_temperature_, wrapper_type::kernel.sqrt_temperature);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR(e.what());
+        throw runtime_error("failed to initialize Verlet integrator symbols");
+    }
 
-  LOG("temperature of heat bath: " << temperature_);
+    LOG("temperature of heat bath: " << temperature_);
 }
 
 /**

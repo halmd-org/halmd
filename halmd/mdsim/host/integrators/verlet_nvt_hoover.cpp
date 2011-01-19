@@ -69,22 +69,22 @@ void verlet_nvt_hoover<dimension, float_type>::register_runtimes(profiler_type& 
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::timestep(double timestep)
 {
-  timestep_ = static_cast<float_type>(timestep);
-  timestep_half_ = timestep / 2;
-  timestep_4_ = timestep / 4;
-  timestep_8_ = timestep / 8;
+    timestep_ = static_cast<float_type>(timestep);
+    timestep_half_ = timestep / 2;
+    timestep_4_ = timestep / 4;
+    timestep_8_ = timestep / 8;
 
-  LOG("integration timestep: " << timestep_);
+    LOG("integration timestep: " << timestep_);
 }
 
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::temperature(double temperature)
 {
-  temperature_ = static_cast<float_type>(temperature);
-  en_kin_target_2_ = dimension * particle->nbox * temperature_;
+    temperature_ = static_cast<float_type>(temperature);
+    en_kin_target_2_ = dimension * particle->nbox * temperature_;
 
-  LOG("temperature of heat bath: " << temperature_);
-  LOG("target kinetic energy: " << en_kin_target_2_ / particle->nbox);
+    LOG("temperature of heat bath: " << temperature_);
+    LOG("target kinetic energy: " << en_kin_target_2_ / particle->nbox);
 }
 
 /**
