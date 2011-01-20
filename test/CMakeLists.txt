@@ -25,6 +25,7 @@ endif(suffix STREQUAL "${CMAKE_SHARED_LIBRARY_SUFFIX}")
 #
 
 add_subdirectory(algorithm)
+add_subdirectory(cuda_wrapper)
 add_subdirectory(h5xx)
 add_subdirectory(io)
 add_subdirectory(mdsim)
