@@ -212,8 +212,8 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
             if (rr >= potential->rr_cut(a, b))
                 continue;
 
-            float_type fval, en_pot;
-            boost::tie(fval, en_pot) = (*potential)(rr, a, b);
+            float_type fval, en_pot, hvir;
+            boost::tie(fval, en_pot, hvir) = (*potential)(rr, a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
             // FIXME test performance of template versus runtime bool
@@ -233,7 +233,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
                 stress_pot_ += fval * make_stress_tensor(rr, r);
 
                 // compute contribution to hypervirial
-                hypervirial_ += potential->hypervirial(rr, a, b) / (dimension * dimension);
+                hypervirial_ += hvir / (dimension * dimension);
             }
         }
     }

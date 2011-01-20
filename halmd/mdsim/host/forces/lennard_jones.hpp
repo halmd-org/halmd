@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -22,9 +22,8 @@
 
 #include <boost/assign.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
-#include <utility>
 
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
@@ -56,26 +55,17 @@ public:
     );
 
     /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
-    std::pair<float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
         float_type sigma2 = sigma2_(a, b);
         float_type rri = sigma2 / rr;
         float_type r6i = rri * rri * rri;
-        float_type epsilon = epsilon_(a, b);
-        float_type fval = 48 * rri * r6i * (r6i - 0.5) * (epsilon / sigma2);
-        float_type en_pot = 4 * epsilon * r6i * (r6i - 1) - en_cut_(a, b);
+        float_type eps_r6i = epsilon_(a, b) * r6i;
+        float_type fval = 48 * rri * eps_r6i * (r6i - 0.5) / sigma2;
+        float_type en_pot = 4 * eps_r6i * (r6i - 1) - en_cut_(a, b);
+        float_type hvir = 576 * eps_r6i * (r6i - 0.25);
 
-        return std::make_pair(fval, en_pot);
-    }
-
-    /** compute hypervirial at squared distance 'rr' for particle pair of types 'a' and 'b' */
-    float_type hypervirial(float_type rr, unsigned a, unsigned b)
-    {
-        float_type sigma2 = sigma2_(a, b);
-        float_type rri = sigma2 / rr;
-        float_type r6i = rri * rri * rri;
-        float_type epsilon = epsilon_(a, b);
-        return 576 * epsilon * r6i * (r6i - 0.25);
+        return boost::make_tuple(fval, en_pot, hvir);
     }
 
     matrix_type const& r_cut() const
