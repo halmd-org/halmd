@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -22,9 +22,8 @@
 
 #include <boost/assign.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
-#include <utility>
 
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
@@ -62,23 +61,18 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      */
-    std::pair<float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
         float_type r_sigma = sqrt(rr) / sigma_(a, b);
         float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
-        float_type fval = 2 * epsilon_(a, b) * (exp_dr - 1) * exp_dr * r_sigma / rr;
-        float_type en_pot = epsilon_(a, b) * (exp_dr - 2) * exp_dr - en_cut_(a, b);
+        float_type eps_exp_dr = epsilon_(a, b) * exp_dr;
+        float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
+        float_type en_pot = eps_exp_dr * (exp_dr - 2) - en_cut_(a, b);
+        float_type hvir = 2 * eps_exp_dr * r_sigma * ((exp_dr - 1) - r_sigma * (2 * exp_dr - 1));
 
-        return std::make_pair(fval, en_pot);
-    }
-
-    /** compute hypervirial at squared distance 'rr' for particle pair of types 'a' and 'b' */
-    float_type hypervirial(float_type rr, unsigned a, unsigned b)
-    {
-        float_type r_sigma = sqrt(rr) / sigma_(a, b);
-        float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
-        return 2 * epsilon_(a, b) * r_sigma * exp_dr * ((exp_dr - 1) - r_sigma * (2 * exp_dr - 1));
+        return boost::make_tuple(fval, en_pot, hvir);
     }
 
     matrix_type const& r_cut() const

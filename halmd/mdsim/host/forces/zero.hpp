@@ -58,6 +58,10 @@ public:
     // nothing to enable or disable
     virtual void aux_enable() {}
     virtual void aux_disable() {}
+    virtual bool aux_flag() const
+    {
+        return true;
+    }
 
     //! return average potential energy per particle
     virtual double potential_energy()

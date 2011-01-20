@@ -4,6 +4,7 @@ add_executable(test_gpu_reduce
 )
 target_link_libraries(test_gpu_reduce
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_COMMON_LIBRARIES}
   ${CUDA_LIBRARIES}
 )
 add_test(algorithm_gpu_reduce

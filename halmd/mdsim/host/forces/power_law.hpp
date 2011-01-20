@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,9 +20,9 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 #define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/numeric/ublas/symmetric.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
-#include <utility>
 
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
@@ -34,7 +34,7 @@ namespace mdsim { namespace host { namespace forces
 {
 
 /**
- * A power-law potential @f$r^{-n}@f$ is often used for
+ * A power-law potential @f$ r^{-n} @f$ is often used for
  * repulsive smooth spheres. A big advantage is
  * its scale invariance (in the absence of a cutoff).
  */
@@ -65,7 +65,7 @@ public:
      * Call index-dependent template implementations
      * for efficiency of fixed_pow() function.
      */
-    std::pair<float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
         switch (index_) {
             case 6:  return impl_<6>(rr, a, b);
@@ -75,19 +75,6 @@ public:
             default:
                 LOG_WARNING_ONCE("Using non-optimised force routine for index " << index_);
                 return impl_<0>(rr, a, b);
-        }
-    }
-
-    /** compute hypervirial at squared distance 'rr' for particle pair of types 'a' and 'b' */
-    float_type hypervirial(float_type rr, unsigned a, unsigned b)
-    {
-        switch (index_) {
-            case 6:  return hypervirial_impl_<6>(rr, a, b);
-            case 12: return hypervirial_impl_<12>(rr, a, b);
-            case 24: return hypervirial_impl_<24>(rr, a, b);
-            case 48: return hypervirial_impl_<48>(rr, a, b);
-            default:
-                return hypervirial_impl_<0>(rr, a, b);
         }
     }
 
@@ -127,9 +114,15 @@ public:
     }
 
 private:
-    /** optimise pow() function by providing the index at compile time */
+    /** optimise pow() function by providing the index at compile time
+     * @param rr squared distance between particles
+     * @param a type of first interacting particle
+     * @param b type of second interacting particle
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
+     */
     template <int const_index>
-    std::pair<float_type, float_type> impl_(float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> impl_(float_type rr, unsigned a, unsigned b)
     {
         // choose arbitrary index_ if template parameter index = 0
         float_type rni;
@@ -139,27 +132,12 @@ private:
         else {
             rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);
         }
-        float_type en_pot = epsilon_(a, b) * rni;      // U(r)
-        float_type fval = (const_index > 0 ? const_index : index_) * en_pot / rr;
-                                                       // F(r) / r
-        en_pot -= en_cut_(a, b);                       // shift potential
+        float_type eps_rni = epsilon_(a, b) * rni;
+        float_type fval = (const_index > 0 ? const_index : index_) * eps_rni / rr;
+        float_type en_pot = eps_rni - en_cut_(a, b);
+        float_type hvir = fixed_pow<2>((const_index > 0 ? const_index : index_)) * eps_rni;
 
-        return std::make_pair(fval, en_pot);
-    }
-
-    /** optimise pow() function by providing the index at compile time */
-    template <int const_index>
-    float_type hypervirial_impl_(float_type rr, unsigned a, unsigned b)
-    {
-        // choose arbitrary index_ if template parameter index = 0
-        if (const_index > 0) {
-            float_type rni = fixed_pow<const_index>(sigma_(a, b) / std::sqrt(rr));
-            return const_index * const_index * epsilon_(a, b) * rni;
-        }
-        else {
-            float_type rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);
-            return index_ * index_ * epsilon_(a, b) * rni;
-        }
+        return boost::make_tuple(fval, en_pot, hvir);
     }
 
     /** power law index */

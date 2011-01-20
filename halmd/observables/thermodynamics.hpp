@@ -69,28 +69,28 @@ public:
     virtual void sample(double time);
 
     /** potential energy per particle */
-    virtual double en_pot() const = 0;
+    virtual double en_pot() = 0;
     /** kinetic energy per particle */
-    virtual double en_kin() const = 0;
+    virtual double en_kin() = 0;
     /** mean velocity per particle */
-    virtual vector_type v_cm() const = 0;
+    virtual vector_type v_cm() = 0;
     /** virial sum */
-    virtual double virial() const = 0;
+    virtual double virial() = 0;
     /** hypervirial sum */
-    virtual double hypervirial() const = 0;
+    virtual double hypervirial() = 0;
 
     /** total pressure */
-    double pressure() const
+    double pressure()
     {
         return box->density() * (temp() + virial() / dimension);
     }
 
     /** system temperature */
-    double temp() const { return 2 * en_kin() / dimension; }
+    double temp() { return 2 * en_kin() / dimension; }
     /** particle density */
-    double density() const { return box->density(); }
+    double density() { return box->density(); }
     /** total energy per particle */
-    double en_tot() const { return en_pot() + en_kin(); }
+    double en_tot() { return en_pot() + en_kin(); }
 
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG( sample_, "computation of macroscopic state variables" );

@@ -199,6 +199,7 @@ list(APPEND HALMD_COMMON_LIBRARIES
 )
 
 enable_testing()
+include(CTest)
 
 include_directories(${HALMD_SOURCE_DIR}/include)
 include_directories(${HALMD_SOURCE_DIR})

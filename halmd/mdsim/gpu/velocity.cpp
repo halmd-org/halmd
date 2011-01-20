@@ -49,6 +49,7 @@ velocity<dimension, float_type>::velocity(
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::rescale(double factor)
 {
+    LOG_TRACE("rescale particle velocities by a factor of " << factor);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().rescale(
         particle->g_v
@@ -63,6 +64,7 @@ void velocity<dimension, float_type>::rescale(double factor)
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::shift(vector_type const& delta)
 {
+    LOG_TRACE("shift particle velocities by " << delta);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().shift(
         particle->g_v
@@ -77,6 +79,7 @@ void velocity<dimension, float_type>::shift(vector_type const& delta)
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, double factor)
 {
+    LOG_TRACE("shift particle velocities by " << delta << " and rescale by a factor of " << factor);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().shift_rescale(
         particle->g_v

@@ -81,16 +81,22 @@ public:
         return potential->r_cut();
     }
 
-    // enable computation of auxiliary variables
+    //! enable computation of auxiliary variables
     virtual void aux_enable()
     {
         aux_flag_ = true;
     }
 
-    // disable computation of auxiliary variables
+    //! disable computation of auxiliary variables
     virtual void aux_disable()
     {
         aux_flag_ = false;
+    }
+
+    //! return true if auxiliary variables are computed
+    virtual bool aux_flag() const
+    {
+        return aux_flag_;
     }
 
     //! return average potential energy per particle
@@ -146,8 +152,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , particle(particle)
   , box(box)
   // member initialisation
-  , aux_flag_(false)
-  , stress_pot_(particle->nbox)
+  , aux_flag_(true)          //< enable everything by default
 {}
 
 /**
@@ -207,8 +212,8 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
             if (rr >= potential->rr_cut(a, b))
                 continue;
 
-            float_type fval, en_pot;
-            boost::tie(fval, en_pot) = (*potential)(rr, a, b);
+            float_type fval, en_pot, hvir;
+            boost::tie(fval, en_pot, hvir) = (*potential)(rr, a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
             // FIXME test performance of template versus runtime bool
@@ -228,7 +233,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
                 stress_pot_ += fval * make_stress_tensor(rr, r);
 
                 // compute contribution to hypervirial
-                hypervirial_ += potential->hypervirial(rr, a, b) / (dimension * dimension);
+                hypervirial_ += hvir / (dimension * dimension);
             }
         }
     }

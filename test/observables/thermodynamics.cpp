@@ -122,9 +122,9 @@ void ideal_gas(string const& backend)
         backend
       , core->particle
       , core->box
-      , list_of(rc)(rc)(rc) /* cutoff */
-      , list_of(0.f)(0.f)(0.f) /* epsilon */
-      , list_of(1.f)(0.f)(0.f) /* sigma */
+      , list_of(rc)(rc)(rc)      /* cutoff */
+      , list_of(0.f)(0.f)(0.f)   /* epsilon */
+      , list_of(1.f)(0.f)(0.f)   /* sigma */
     );
     core->neighbour = make_neighbour(
         backend
@@ -147,6 +147,7 @@ void ideal_gas(string const& backend)
 
     // prepare system with Maxwell-Boltzmann distributed velocities
     BOOST_TEST_MESSAGE("assign positions and velocities");
+    core->force->aux_enable();              // enable computation of potential energy
     core->prepare();
 
     // measure thermodynamic properties
@@ -157,7 +158,7 @@ void ideal_gas(string const& backend)
       , core->force
     );
 
-    double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : eps;
+    const double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     double en_tot = thermodynamics->en_tot();
@@ -165,7 +166,12 @@ void ideal_gas(string const& backend)
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
     uint64_t steps = 1000;
+    core->force->aux_disable();             // disable auxiliary variables
     for (uint64_t i = 0; i < steps; ++i) {
+        // last step: evaluate auxiliary variables (potential energy, virial, ...)
+        if (i == steps - 1) {
+            core->force->aux_enable();
+        }
         core->mdstep();
     }
 
@@ -183,7 +189,7 @@ void thermodynamics(string const& backend)
     float density = 0.3;
     float temp = 3.0;
     float rc = 4.0;
-    double timestep = 0.01;    // start with small time step for thermalisation
+    double timestep = 0.001;
     unsigned npart = (backend == "gpu") ? 4000 : 1500;
     unsigned int random_seed = 42;
     fixed_vector<double, dimension> box_ratios;
@@ -224,15 +230,16 @@ void thermodynamics(string const& backend)
 
     core->box = make_box<dimension>(core->particle, density, box_ratios);
 
-    core->integrator = make_verlet_integrator<dimension>(
-        backend, core->particle, core->box, timestep
+    core->integrator = make_verlet_nvt_andersen_integrator<dimension>(
+        backend, core->particle, core->box, random
+      , 0.01 /* time step */, temp, 5. /* collision rate */
     );
 
     core->force = make_lennard_jones_force<dimension>(
         backend, core->particle, core->box
-      , list_of(rc)(rc)(rc) /* cutoff */
-      , list_of(1.f)(0.f)(0.f) /* epsilon */
-      , list_of(1.f)(0.f)(0.f) /* sigma */
+      , list_of(rc)(rc)(rc)     /* cutoff */
+      , list_of(1.f)(0.f)(0.f)  /* epsilon */
+      , list_of(1.f)(0.f)(0.f)  /* sigma */
     );
 
     core->neighbour = make_neighbour(backend, core->particle, core->box, core->force);
@@ -241,26 +248,29 @@ void thermodynamics(string const& backend)
 
     core->velocity = make_boltzmann(backend, core->particle, random, temp);
 
-    // prepare system at given temperature, run for t*=50, couple every Δt*=0.2
+    // relax configuration and thermalise at given temperature, run for t*=50
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
     core->prepare();
-    uint64_t steps = static_cast<uint64_t>(ceil(50 / timestep));
-    uint64_t period = static_cast<uint64_t>(round(.2 / timestep));
+    uint64_t steps = static_cast<uint64_t>(ceil(50 / core->integrator->timestep()));
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
-        if((i+1) % period == 0) {
-            core->velocity->set();
-        }
     }
 
-    // set different timestep
-    timestep = 0.001;
-    core->integrator->timestep(timestep);
+    // set different timestep and choose NVE integrator
+    core->integrator = make_verlet_integrator<dimension>(
+        backend, core->particle, core->box, timestep
+    );
     BOOST_CHECK_CLOSE_FRACTION(core->integrator->timestep(), timestep, eps_float);
 
     // measure thermodynamic properties
     shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
         make_thermodynamics(backend, core->particle, core->box, core->force);
+
+    // stochastic thermostat => centre particle velocities around zero
+    core->velocity->shift(-thermodynamics->v_cm());
+
+    const double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 20 * eps;
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // take averages of fluctuating quantities,
     accumulator<double> temp_, press, en_pot;
@@ -268,19 +278,23 @@ void thermodynamics(string const& backend)
     // equilibration run, measure temperature in second half
     BOOST_TEST_MESSAGE("equilibrate initial state");
     steps = static_cast<uint64_t>(ceil(30 / timestep));
-    period = static_cast<uint64_t>(round(.01 / timestep));
+    uint64_t period = static_cast<uint64_t>(round(.01 / timestep));
+    core->force->aux_disable();                     // disable auxiliary variables
     for (uint64_t i = 0; i < steps; ++i) {
+        if (i == steps - 1) {
+            core->force->aux_enable();              // enable auxiliary variables in last step
+        }
         core->mdstep();
         if(i > steps/2 && i % period == 0) {
             temp_(thermodynamics->temp());
         }
     }
-    double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 20 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
-    double scale = sqrt(temp / mean(temp_));
-    BOOST_TEST_MESSAGE("rescale velocities by factor " << scale);
-    core->velocity->rescale(scale);
+    // rescale velocities to match the exact temperature
+    double v_scale = sqrt(temp / mean(temp_));
+    BOOST_TEST_MESSAGE("rescale velocities by factor " << v_scale);
+    core->velocity->rescale(v_scale);
 
     double en_tot = thermodynamics->en_tot();
     double max_en_diff = 0; // maximal absolut deviation from initial total energy
@@ -288,13 +302,23 @@ void thermodynamics(string const& backend)
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
+    core->force->aux_disable();
     for (uint64_t i = 0; i < steps; ++i) {
+        // turn on evaluation of potential energy, virial, etc.
+        if(i % period == 0) {
+            core->force->aux_enable();
+        }
+
+        // perform MD step
         core->mdstep();
+
+        // measurement
         if(i % period == 0) {
             temp_(thermodynamics->temp());
             press(thermodynamics->pressure());
             en_pot(thermodynamics->en_pot());
             max_en_diff = max(abs(thermodynamics->en_tot() - en_tot), max_en_diff);
+            core->force->aux_disable();
         }
     }
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
@@ -302,7 +326,7 @@ void thermodynamics(string const& backend)
     // with the first released version of halmd (commit f5283a2),
     // an energy drift of less than 5e-6 ε was obtained over 2e8 MD steps
     // using a smoothed potential (dt*=0.001, h=0.005)
-    double en_limit = max(2e-5, steps * 1e-12);
+    const double en_limit = max(2e-5, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
 
     BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 2e-3);

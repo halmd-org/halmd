@@ -58,21 +58,30 @@ public:
     virtual void prepare();
     virtual void sample(double);
 
-    virtual double en_kin() const;
-    virtual vector_type v_cm() const;
+    virtual double en_kin();
+    virtual vector_type v_cm();
 
-    virtual double en_pot() const
+    virtual double en_pot()
     {
+        if (!force->aux_flag()) {
+            throw std::logic_error("Potential energy not enabled in force module");
+        }
         return force->potential_energy();
     }
 
-    virtual double virial() const
+    virtual double virial()
     {
+        if (!force->aux_flag()) {
+            throw std::logic_error("Stress tensor not enabled in force module");
+        }
         return force->stress_tensor_pot()[0];
     }
 
-    virtual double hypervirial() const
+    virtual double hypervirial()
     {
+        if (!force->aux_flag()) {
+            throw std::logic_error("Hypervirial not enabled in force module");
+        }
         return force->hypervirial();
     }
 };

@@ -112,6 +112,7 @@ void verlet_nvt_andersen(string const& backend)
     accumulator<double> temp_;
     array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
+    core->force->aux_disable();                   //< we don't need potential energy, pressure, etc.
     core->prepare();
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
     for (uint64_t i = 0; i < steps; ++i) {

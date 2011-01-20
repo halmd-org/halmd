@@ -72,7 +72,7 @@ void sampler<dimension>::run()
         scoped_timer<timer> timer_(at_key<total_>(runtime_));
 
         LOG("setting up simulation box");
-        prepare_observables(true);               //< must be called before force->compute()
+        prepare_observables(true);
         core->prepare();
         sample(true);
 

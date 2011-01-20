@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/observables/gpu/thermodynamics.hpp>
@@ -42,6 +41,11 @@ thermodynamics<dimension, float_type>::thermodynamics(
   // dependency injection
   , particle(particle)
   , force(force)
+  // memory allocation in functors
+  , sum_velocity_square_()
+  , sum_velocity_vector_()
+  , sum_scalar_()
+  , sum_stress_tensor_diagonal_()
 {
 }
 
@@ -73,19 +77,9 @@ void thermodynamics<dimension, float_type>::sample(double time)
  * compute mean-square velocity
  */
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::en_kin() const
+double thermodynamics<dimension, float_type>::en_kin()
 {
-    double vv = reduce<
-        sum_                                    // reduce_transform
-      , fixed_vector<float, dimension>          // input_type
-      , float4                                  // coalesced_input_type
-      , dsfloat                                 // output_type
-      , dsfloat                                 // coalesced_output_type
-      , double                                  // host_output_type
-      , square_                                 // input_transform
-    >()(particle->g_v);
-
-    return .5 * vv / particle->nbox;
+    return .5 * sum_velocity_square_(particle->g_v) / particle->nbox;
 }
 
 /**
@@ -93,78 +87,45 @@ double thermodynamics<dimension, float_type>::en_kin() const
  */
 template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type
-thermodynamics<dimension, float_type>::v_cm() const
+thermodynamics<dimension, float_type>::v_cm()
 {
-    vector_type v = reduce<
-        sum_                                    // reduce_transform
-      , fixed_vector<float, dimension>          // input_type
-      , float4                                  // coalesced_input_type
-      , fixed_vector<dsfloat, dimension>        // output_type
-      , fixed_vector<dsfloat, dimension>        // coalesced_output_type
-      , vector_type                             // host_output_type
-    >()(particle->g_v);
-
-    return v / particle->nbox;
+    return sum_velocity_vector_(particle->g_v) / particle->nbox;
 }
 
 /**
  * compute potential energy
  */
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::en_pot() const
+double thermodynamics<dimension, float_type>::en_pot()
 {
-    double en_pot = reduce<
-        sum_                                    // reduce_transform
-      , float                                   // input_type
-      , float                                   // coalesced_input_type
-      , dsfloat                                 // output_type
-      , dsfloat                                 // coalesced_output_type
-      , double                                  // host_output_type
-    >()(force->potential_energy());
-
-    return en_pot / particle->nbox;
+    if (!force->aux_flag()) {
+        throw std::logic_error("Potential energy not enabled in force module");
+    }
+    return sum_scalar_(force->potential_energy()) / particle->nbox;
 }
 
 /**
  * compute virial sum from potential part of stress tensor
  */
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::virial() const
+double thermodynamics<dimension, float_type>::virial()
 {
-    typedef typename force_type::stress_tensor_type stress_tensor_type;
-    typedef typename force_type::gpu_stress_tensor_type gpu_stress_tensor_type;
-
-    // using fixed_vector<dsfloat, N> as output_type results in
-    // exit code 255 of 'nvcc -c thermodynamics_kernel.cu'
-    double virial = reduce<
-        sum_                                      // reduce_transform
-      , stress_tensor_type                        // input_type
-      , gpu_stress_tensor_type                    // coalesced_input_type
-      , dsfloat                                   // output_type
-      , dsfloat                                   // coalesced_output_type
-      , double                                    // host_output_type
-      , at_0                                      // input_transform
-    >()(force->stress_tensor_pot());
-
-    return virial / particle->nbox;
+    if (!force->aux_flag()) {
+        throw std::logic_error("Stress tensor not enabled in force module");
+    }
+    return sum_stress_tensor_diagonal_(force->stress_tensor_pot()) / particle->nbox;
 }
 
 /**
  * compute hypervirial sum
  */
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::hypervirial() const
+double thermodynamics<dimension, float_type>::hypervirial()
 {
-    double hypervir = reduce<
-        sum_                                    // reduce_transform
-      , float                                   // input_type
-      , float                                   // coalesced_input_type
-      , dsfloat                                 // output_type
-      , dsfloat                                 // coalesced_output_type
-      , double                                  // host_output_type
-    >()(force->hypervirial());
-
-    return hypervir / particle->nbox;
+    if (!force->aux_flag()) {
+        throw std::logic_error("Hypervirial not enabled in force module");
+    }
+    return sum_scalar_(force->hypervirial()) / particle->nbox;
 }
 
 template <int dimension, typename float_type>

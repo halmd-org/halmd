@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -69,31 +69,20 @@ public:
      * Compute force and potential for interaction.
      *
      * @param rr squared distance between particles
-     * @returns tuple of absolute unit force and potential
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$,
+     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      */
     template <typename float_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
+    HALMD_GPU_ENABLED tuple<float_type, float_type, float_type> operator()(float_type rr) const
     {
         float_type rri = pair_[SIGMA2] / rr;
         float_type ri6 = rri * rri * rri;
-        float_type fval = 48 * pair_[EPSILON] * rri * ri6 * (ri6 - 0.5f) / pair_[SIGMA2];
-        float_type en_pot = 4 * pair_[EPSILON] * ri6 * (ri6 - 1) - pair_[EN_CUT];
+        float_type eps_ri6 = pair_[EPSILON] * ri6;
+        float_type fval = 48 * rri * eps_ri6 * (ri6 - 0.5f) / pair_[SIGMA2];
+        float_type en_pot = 4 * eps_ri6 * (ri6 - 1) - pair_[EN_CUT];
+        float_type hvir = 576 * eps_ri6 * (ri6 - 0.25f);
 
-        return make_tuple(fval, en_pot);
-    }
-
-    /**
-     * Compute hypervirial for interaction.
-     *
-     * @param rr squared distance between particles
-     * @returns hypervirial contribution for this particle pair
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED float_type hypervirial(float_type rr) const
-    {
-        float_type rri = pair_[SIGMA2] / rr;
-        float_type ri6 = rri * rri * rri;
-        return 576 * pair_[EPSILON] * ri6 * (ri6 - 0.25f);
+        return make_tuple(fval, en_pot, hvir);
     }
 
 private:
