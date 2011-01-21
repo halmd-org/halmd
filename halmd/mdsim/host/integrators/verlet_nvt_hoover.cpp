@@ -41,8 +41,9 @@ template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
-  , float_type timestep, float_type temperature
-  , fixed_vector<float_type, 2>  const& mass
+  , float_type timestep
+  , float_type temperature
+  , float_type resonance_frequency
 )
   // dependency injection
   : particle(particle)
@@ -50,11 +51,12 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
   // member initialisation
   , xi(0)
   , v_xi(0)
-  , mass_xi_(mass)
+  , resonance_frequency_(resonance_frequency)
 {
     this->timestep(timestep);
+
+    LOG("resonance frequency of heat bath: " << resonance_frequency_);
     this->temperature(temperature);
-    LOG("`masses' of heat bath variables: " << mass_xi_);
 }
 
 /**
@@ -83,8 +85,25 @@ void verlet_nvt_hoover<dimension, float_type>::temperature(double temperature)
     temperature_ = static_cast<float_type>(temperature);
     en_kin_target_2_ = dimension * particle->nbox * temperature_;
 
+    // follow Martyna et al. [J. Chem. Phys. 97, 2635 (1992)]
+    // for the masses of the heat bath variables
+    float_type omega_sq = pow(2 * M_PI * resonance_frequency_, 2);
+    unsigned int dof = dimension * particle->nbox;
+    fixed_vector<float_type, 2> mass;
+    mass[0] = dof * temperature_ / omega_sq;
+    mass[1] = temperature_ / omega_sq;
+    this->mass(mass);
+
     LOG("temperature of heat bath: " << temperature_);
-    LOG("target kinetic energy: " << en_kin_target_2_ / particle->nbox);
+    LOG_DEBUG("target kinetic energy: " << en_kin_target_2_ / particle->nbox);
+}
+
+template <int dimension, typename float_type>
+void verlet_nvt_hoover<dimension, float_type>::
+mass(fixed_vector<double, 2> const& mass)
+{
+    mass_xi_ = static_cast<fixed_vector<float_type, 2> >(mass);
+    LOG("`mass' of heat bath variables: " << mass_xi_);
 }
 
 /**
@@ -164,6 +183,9 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;
 }
 
+/*
+ * set temperature and adjust masses of heat bath variables
+ */
 template <int dimension, typename float_type>
 static char const* module_name_wrapper(verlet_nvt_hoover<dimension, float_type> const&)
 {
@@ -194,11 +216,11 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                             .def(constructor<
                                 shared_ptr<particle_type>
                               , shared_ptr<box_type>
-                              , float_type, float_type
-                              , fixed_vector<float_type, 2> const&
+                              , float_type, float_type, float_type
                             >())
                             .def("register_runtimes", &verlet_nvt_hoover::register_runtimes)
-                            .property("mass", &verlet_nvt_hoover::mass)
+                            .def_readonly("mass", (fixed_vector<double, 2> const& (verlet_nvt_hoover::*)() const)&verlet_nvt_hoover::mass) // FIXME make read/write
+                            .def_readonly("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
                             .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]

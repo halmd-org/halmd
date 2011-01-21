@@ -62,7 +62,7 @@ void verlet_nvt_hoover(string const& backend)
     float density = 0.3;
     unsigned npart = (backend == "gpu") ? 4500 : 1500;
     double timestep = 0.001;
-    fixed_vector<double, 2> mass = list_of(40.)(.01);
+    double resonance_frequency = 5.;
     char const* random_file = "/dev/urandom";
     fixed_vector<double, dimension> box_ratios =
         (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
@@ -94,7 +94,7 @@ void verlet_nvt_hoover(string const& backend)
     core->box = make_box<dimension>(core->particle, density, box_ratios);
 
     core->integrator = make_verlet_nvt_hoover_integrator<dimension, double>(
-        backend, core->particle, core->box, timestep, temp, mass
+        backend, core->particle, core->box, timestep, temp, resonance_frequency
     );
 
     core->force = make_zero_force<dimension>(backend, core->particle);
@@ -113,7 +113,7 @@ void verlet_nvt_hoover(string const& backend)
     uint64_t skip = static_cast<uint64_t>(ceil(50 / timestep));
     // ensure that sampling period is sufficiently large such that
     // the samples can be considered independent
-    uint64_t period = static_cast<uint64_t>(round(3 / (mass[0] * temp * timestep)));
+    uint64_t period = static_cast<uint64_t>(round(3 / (resonance_frequency * timestep)));
     accumulator<double> temp_;
     array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
     double max_en_diff = 0;                       // integral of motion: Hamiltonian extended by NHC terms

@@ -63,13 +63,14 @@ public:
       , boost::shared_ptr<box_type> box
       , float_type timestep
       , float_type temperature
-      , fixed_vector<float_type, 2>  const& mass
+      , float_type resonance_frequency
     );
     void register_runtimes(profiler_type& profiler);
     virtual void integrate();
     virtual void finalize();
     virtual void timestep(double timestep);
     virtual void temperature(double temperature);
+    virtual void mass(fixed_vector<double, 2> const& mass);
 
     //! returns integration time-step
     virtual double timestep() const
@@ -83,8 +84,14 @@ public:
         return temperature_;
     }
 
+    //! returns resonance frequency of heat bath
+    virtual double resonance_frequency() const
+    {
+        return resonance_frequency_;
+    }
+
     //! returns coupling parameters: `mass' of the heat bath variables
-    fixed_vector<float_type, 2> const& mass() const
+    fixed_vector<double, 2> const& mass() const
     {
         return mass_xi_;
     }
@@ -113,6 +120,8 @@ protected:
     /** target value for twice the total kinetic energy */
     float_type en_kin_target_2_;
 
+    /** resonance frequency of heat bath, determines coupling parameters below */
+    float_type resonance_frequency_;
     /** coupling parameters: `mass' of the heat bath variables */
     fixed_vector<float_type, 2> mass_xi_;
 

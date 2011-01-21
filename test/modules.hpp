@@ -289,7 +289,7 @@ boost::shared_ptr<mdsim::integrator<dimension> > make_verlet_nvt_hoover_integrat
   , boost::shared_ptr<mdsim::box<dimension> > box
   , double timestep
   , double temperature
-  , fixed_vector<double, 2> mass
+  , double resonance_frequency
 )
 {
 #ifdef WITH_CUDA
@@ -297,7 +297,7 @@ boost::shared_ptr<mdsim::integrator<dimension> > make_verlet_nvt_hoover_integrat
         return boost::make_shared<mdsim::gpu::integrators::verlet_nvt_hoover<dimension, float_type> >(
             boost::dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
           , box
-          , timestep, temperature, mass
+          , timestep, temperature, resonance_frequency
         );
     }
 #endif /* WITH_CUDA */
@@ -305,7 +305,7 @@ boost::shared_ptr<mdsim::integrator<dimension> > make_verlet_nvt_hoover_integrat
         return boost::make_shared<mdsim::host::integrators::verlet_nvt_hoover<dimension, float_type> >(
             boost::dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
-          , timestep, temperature, mass
+          , timestep, temperature, resonance_frequency
         );
     }
     throw std::runtime_error("unknown backend: " + backend);
