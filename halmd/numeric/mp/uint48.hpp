@@ -32,7 +32,7 @@ namespace halmd
 {
 
 /**
- * We define an 48 bit interger type, along with multiply-add and
+ * We define an 48 bit integer type, along with multiply-add and
  * add operators. It is used in the rand48 random number generator
  * for CUDA, which lacks native 64 bit integers.
  *
