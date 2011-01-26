@@ -51,6 +51,14 @@ using namespace std;
 const double eps = numeric_limits<double>::epsilon();
 const float eps_float = numeric_limits<float>::epsilon();
 
+/**
+ * heat capacity from canonical fluctuations (variance) of potential and kinetic energy
+ */
+inline double heat_capacity_nvt(double var_en_pot, double var_en_kin, double temperature, unsigned npart)
+{
+    return npart * (var_en_pot + var_en_kin) / (temperature * temperature);
+}
+
 template <int dimension>
 void verlet_nvt_hoover(string const& backend)
 {
@@ -59,8 +67,8 @@ void verlet_nvt_hoover(string const& backend)
 
     float temp = 1.;
     float start_temp = 3.;
-    float density = 0.3;
-    unsigned npart = (backend == "gpu") ? 4500 : 1500;
+    float density = 0.1;
+    unsigned npart = (backend == "gpu") ? 1500 : 1500;
     double timestep = 0.001;
     double resonance_frequency = 5.;
     char const* random_file = "/dev/urandom";
@@ -97,7 +105,14 @@ void verlet_nvt_hoover(string const& backend)
         backend, core->particle, core->box, timestep, temp, resonance_frequency
     );
 
-    core->force = make_zero_force<dimension>(backend, core->particle);
+    core->force = make_lennard_jones_force<dimension>(
+        backend, core->particle, core->box
+      , list_of(pow(2.f, 1.f/6))(0.f)(0.f)     /* cutoff, WCA potential */
+      , list_of(1.f)(0.f)(0.f)                 /* epsilon */
+      , list_of(1.f)(0.f)(0.f)                 /* sigma */
+    );
+
+    core->neighbour = make_neighbour(backend, core->particle, core->box, core->force);
 
     core->position = make_lattice(backend, core->particle, core->box, random);
 
@@ -216,6 +231,10 @@ void verlet_nvt_hoover(string const& backend)
     // limit is 3σ, σ = √(<v_x²> / (N × C - 1)) where <v_x²> = k T
     vcm_limit = 3 * sqrt(temp / (npart * count(v_cm[0]) - 1));
     BOOST_TEST_MESSAGE("Absolute limit on centre-of-mass velocity: " << vcm_limit);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        BOOST_CHECK_SMALL(mean(v_cm[i]), 3 * vcm_limit);
+        BOOST_CHECK_SMALL(error_of_mean(v_cm[i]), vcm_limit);
+    }
 
     // mean temperature ⇒ variance of velocity distribution
     // each sample should constitute an independent measurement
@@ -224,7 +243,7 @@ void verlet_nvt_hoover(string const& backend)
     BOOST_TEST_MESSAGE("Relative limit on temperature: " << rel_temp_limit);
     BOOST_CHECK_CLOSE_FRACTION(mean(temp_), temp, rel_temp_limit);
 
-    // specific heat per particle ⇒ temperature fluctuations
+    // kinetic part of specific heat per particle ⇒ temperature fluctuations
     // c_V = k × (dimension × N / 2)² <ΔT²> / T² / N = k × dimension / 2
     // where we have used <ΔT²> / T² = 2 / (dimension × N)
     // limit is 3σ, with the approximation
@@ -233,7 +252,7 @@ void verlet_nvt_hoover(string const& backend)
     double cv = pow(.5 * dimension, 2.) * npart * variance(temp_);
     double cv_variance=  (.5 * dimension) * (dimension + 6. / npart) / count(temp_);
     double rel_cv_limit = 3 * sqrt(cv_variance) / (.5 * dimension);
-    BOOST_TEST_MESSAGE("Relative limit on specific heat: " << rel_cv_limit);
+    BOOST_TEST_MESSAGE("Relative limit on kinetic part of specific heat: " << rel_cv_limit);
     BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_limit);
 }
 
