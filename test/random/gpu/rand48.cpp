@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE( compare_variates )
 {
     const unsigned blocks = 64;
     const unsigned threads = 128;
-    const unsigned seed = 42;
+    const unsigned seed = time(NULL);
     const unsigned count = 10000000u;
 
     BOOST_TEST_MESSAGE("number of integers: " << count);
@@ -88,4 +88,18 @@ BOOST_AUTO_TEST_CASE( compare_variates )
     // compare GPU and CPU variates
     BOOST_CHECK_MESSAGE(std::equal(h_array.begin(), h_array.end(), h_array2.begin()),
                         "random variates mismatch");
+
+    unsigned mismatches = 0;
+    for (unsigned i=0; i < count; ++i) {
+        if (h_array[i] != h_array2[i]) {
+            ++mismatches;
+            if  (mismatches < 10) {
+                BOOST_TEST_MESSAGE(i << " " << h_array[i] << " " << h_array2[i]);
+            }
+        }
+    }
+    if (mismatches) {
+        BOOST_TEST_MESSAGE(mismatches << " mismatches out of " << count);
+    }
+
 }
