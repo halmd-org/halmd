@@ -12,6 +12,17 @@ endif(HALMD_USE_STATIC_LIBS)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+# The FindBoost CMake module prefers multi-threaded libraries (filenames with
+# postfix "-mt") over non-multi-threaded libraries. On Redhat or SuSE with
+# installed system Boost libraries, this causes the system libraries (with
+# "-mt") to override the custom-compiled libraries (without "-mt"). For now,
+# HALMD requires custom-compiled libraries in any case, as upstream Boost does
+# not contain the Boost.Log library yet.
+#
+if(NOT DEFINED Boost_USE_MULTITHREADED)
+  set(Boost_USE_MULTITHREADED FALSE)
+endif(NOT DEFINED Boost_USE_MULTITHREADED)
+
 find_package(Boost 1.42.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
