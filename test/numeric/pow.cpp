@@ -80,6 +80,9 @@ BOOST_AUTO_TEST_CASE( performance )
     elapsed[2] = timer.elapsed();
     BOOST_TEST_MESSAGE("  std::pow (double): " << 1e9 * elapsed[2] / n);
 
+    // use the results in some way in order to avoid an overoptimization of the loops
+    BOOST_TEST_MESSAGE("  results: " << a << " " << b << " " << c);
+
     BOOST_CHECK_CLOSE_FRACTION(a, b, 2 * eps);
     BOOST_CHECK_MESSAGE(elapsed[0] < .9 * elapsed[1],
                         "improvement of fixed_pow is less than 20% in speed");
