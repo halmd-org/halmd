@@ -62,48 +62,57 @@ void performance(size_t size)
     const int blocks = 30;
     const int threads = 64 << 3;
 
-    cuda::host::vector<float> h_v(make_counting_iterator(size_t(1)), make_counting_iterator(size));
-    cuda::vector<float> g_v(h_v.size());
-    cuda::copy(h_v, g_v);
+    try {
+        cuda::host::vector<float> h_v(make_counting_iterator(size_t(1)), make_counting_iterator(size));
+        cuda::vector<float> g_v(h_v.size());
+        cuda::copy(h_v, g_v);
 
-    fixed_vector<accumulator<double>, 2> elapsed;
-    for (int i = 0; i < count_local; ++i) {
-        halmd::timer timer;
-        // initialise kernel and allocate internal memory
+        fixed_vector<accumulator<double>, 2> elapsed;
+        for (int i = 0; i < count_local; ++i) {
+            halmd::timer timer;
+            // initialise kernel and allocate internal memory
+            reduce<
+                sum_            // reduce_transform
+              , float           // input_type
+              , float           // coalesced_input_type
+              , dsfloat         // output_type
+              , dsfloat         // coalesced_output_type
+              , double          // host_output_type
+            > sum_local(blocks, threads);
+            //
+            double result = sum_local(g_v);
+            elapsed[0](timer.elapsed());
+            BOOST_CHECK_EQUAL(uint64_t(result), uint64_t(size - 1) * size / 2);
+        }
+
+        // pre-initialise kernel
         reduce<
-            sum_            // reduce_transform
-          , float           // input_type
-          , float           // coalesced_input_type
-          , dsfloat         // output_type
-          , dsfloat         // coalesced_output_type
-          , double          // host_output_type
-        > sum_local(blocks, threads);
-        //
-        double result = sum_local(g_v);
-        elapsed[0](timer.elapsed());
-        BOOST_CHECK_EQUAL(int64_t(result), int64_t(size - 1) * size / 2);
-    }
+            sum_              // reduce_transform
+            , float           // input_type
+            , float           // coalesced_input_type
+            , dsfloat         // output_type
+            , dsfloat         // coalesced_output_type
+            , double          // host_output_type
+        > sum_global(blocks, threads);
+        for (int i = 0; i < count_global; ++i) {
+            halmd::timer timer;
+            double result = sum_global(g_v);
+            elapsed[1](timer.elapsed());
+            BOOST_CHECK_EQUAL(uint64_t(result), uint64_t(size - 1) * size / 2);
+        }
 
-    // pre-initialise kernel
-    reduce<
-        sum_              // reduce_transform
-        , float           // input_type
-        , float           // coalesced_input_type
-        , dsfloat         // output_type
-        , dsfloat         // coalesced_output_type
-        , double          // host_output_type
-    > sum_global(blocks, threads);
-    for (int i = 0; i < count_global; ++i) {
-        halmd::timer timer;
-        double result = sum_global(g_v);
-        elapsed[1](timer.elapsed());
-        BOOST_CHECK_EQUAL(int64_t(result), int64_t(size - 1) * size / 2);
+        BOOST_TEST_MESSAGE("  summation of " << size << " floats: "
+            << mean(elapsed[0]) * 1e3 << " ± " << error_of_mean(elapsed[0]) * 1e3 << " ms (local), "
+            << mean(elapsed[1]) * 1e3 << " ± " << error_of_mean(elapsed[1]) * 1e3 << " ms (global)"
+        );
     }
-
-    BOOST_TEST_MESSAGE("  summation of " << size << " floats: "
-        << mean(elapsed[0]) * 1e3 << " ± " << error_of_mean(elapsed[0]) * 1e3 << " ms (local), "
-        << mean(elapsed[1]) * 1e3 << " ± " << error_of_mean(elapsed[1]) * 1e3 << " ms (global)"
-    );
+    catch (cuda::error const& e) {
+        BOOST_CHECK(e.err == cudaErrorMemoryAllocation);
+        BOOST_TEST_MESSAGE("Unsufficient device memory. Skip test for array of " << size << " bytes");
+    }
+    catch (std::bad_alloc const& e) {
+        BOOST_TEST_MESSAGE("Unsufficient host memory. Skip test for array of " << size << " bytes");
+    }
 }
 
 static void __attribute__((constructor)) init_unit_test_suite()
