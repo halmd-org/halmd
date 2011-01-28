@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
+#include <boost/array.hpp>
 #include <boost/iterator/counting_iterator.hpp>
 
 #include <halmd/algorithm/gpu/reduce.hpp>
@@ -67,7 +68,7 @@ void performance(size_t size)
         cuda::vector<float> g_v(h_v.size());
         cuda::copy(h_v, g_v);
 
-        fixed_vector<accumulator<double>, 2> elapsed;
+        array<accumulator<double>, 2> elapsed;
         for (int i = 0; i < count_local; ++i) {
             halmd::timer timer;
             // initialise kernel and allocate internal memory
