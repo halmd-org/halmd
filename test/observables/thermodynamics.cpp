@@ -232,7 +232,7 @@ void thermodynamics(string const& backend)
 
     core->integrator = make_verlet_nvt_andersen_integrator<dimension>(
         backend, core->particle, core->box, random
-      , 0.01 /* time step */, temp, 5. /* collision rate */
+      , 0.005 /* time step */, temp, 10. /* collision rate */
     );
 
     core->force = make_lennard_jones_force<dimension>(
@@ -329,7 +329,7 @@ void thermodynamics(string const& backend)
     const double en_limit = max(2e-5, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
 
-    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 2e-3);
+    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 3e-3);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     if (dimension == 3) {
