@@ -35,24 +35,30 @@ void performance(size_t size)
     double alloc = 0;
     double copy = 0;
 
-    cuda::vector<char> g_array1(size);
+    try {
+        cuda::vector<char> g_array1(size);
 
-    halmd::timer timer;
-    for (int i = 0; i < count; ++i) {
-        // allocate memory
-        timer.restart();
-        cuda::vector<char> g_array2(size);
-        alloc += timer.elapsed();
+        halmd::timer timer;
+        for (int i = 0; i < count; ++i) {
+            // allocate memory
+            timer.restart();
+            cuda::vector<char> g_array2(size);
+            alloc += timer.elapsed();
 
-        // copy previous array
-        timer.restart();
-        g_array2 = g_array1;
-        copy += timer.elapsed();
+            // copy previous array
+            timer.restart();
+            g_array2 = g_array1;
+            copy += timer.elapsed();
+        }
+        alloc /= count;
+        copy /= count;
+        BOOST_TEST_MESSAGE("  allocation of " << size << " bytes: " << alloc * 1e3 << " ms");
+        BOOST_TEST_MESSAGE("  copying of " << size << " bytes: " << copy * 1e3 << " ms");
     }
-    alloc /= count;
-    copy /= count;
-    BOOST_TEST_MESSAGE("  allocation of " << size << " bytes: " << alloc * 1e3 << " ms");
-    BOOST_TEST_MESSAGE("  copying of " << size << " bytes: " << copy * 1e3 << " ms");
+    catch (cuda::error const& e) {
+        BOOST_CHECK(e.err == cudaErrorMemoryAllocation);
+        BOOST_TEST_MESSAGE("  skip test for chunk of " << size << " bytes");
+    }
 }
 
 static void __attribute__((constructor)) init_unit_test_suite()
@@ -60,7 +66,7 @@ static void __attribute__((constructor)) init_unit_test_suite()
     using namespace boost::unit_test::framework;
 
     std::vector<size_t> sizes;
-    for (size_t s = 1; s <= (1L << 30); s <<= 1) {
+    for (size_t s = 1; s <= (1L << 32); s <<= 1) {
         sizes.push_back(s);
     }
 
