@@ -200,10 +200,8 @@ __global__ void update_neighbours(
     for (j[0] = -1; j[0] <= 1; ++j[0]) {
         for (j[1] = -1; j[1] <= 1; ++j[1]) {
             if (dimension == 3) {
-                // use index "dimension - 1" instead of "2" to avoid out of
-                // bounds compile-time warning in two dimensions
-                for (j[dimension - 1] = -1; j[dimension - 1] <= 1; ++j[dimension - 1]) {
-                    if (j[0] == 0 && j[1] == 0 && j[dimension - 1] == 0) {
+                for (j[2] = -1; j[2] <= 1; ++j[2]) {
+                    if (j[0] == 0 && j[1] == 0 && j[2] == 0) {
                         goto self;
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
