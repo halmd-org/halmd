@@ -7,7 +7,7 @@ target_link_libraries(test_logger
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
 add_test(io_logger
-  test_logger
+  test_logger --log_level=test_suite
 )
 
 add_executable(test_profiling_writers
@@ -22,5 +22,5 @@ target_link_libraries(test_profiling_writers
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
 add_test(io_profiling_writers
-  test_profiling_writers
+  test_profiling_writers --log_level=test_suite
 )

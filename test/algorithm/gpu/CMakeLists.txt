@@ -8,7 +8,7 @@ target_link_libraries(test_gpu_reduce
   ${CUDA_LIBRARIES}
 )
 add_test(algorithm_gpu_reduce
-  test_gpu_reduce
+  test_gpu_reduce --log_level=test_suite
 )
 
 add_executable(test_scan
@@ -21,7 +21,7 @@ target_link_libraries(test_scan
   ${CUDA_LIBRARIES}
 )
 add_test(algorithm_gpu_scan
-  test_scan
+  test_scan --log_level=test_suite
 )
 
 add_executable(test_radix_sort
@@ -35,5 +35,5 @@ target_link_libraries(test_radix_sort
   ${CUDA_LIBRARIES}
 )
 add_test(algorithm_gpu_radix_sort
-  test_radix_sort
+  test_radix_sort --log_level=test_suite
 )
