@@ -22,17 +22,12 @@
 
 #ifndef __CUDACC__
 # include <boost/array.hpp>
-#else
-# include <cuda.h> // defines CUDA_VERSION
 #endif
-
-#if CUDA_VERSION <= 2030
-# include <boost/type_traits/is_pod.hpp>
-# include <boost/utility/enable_if.hpp>
-# include <halmd/numeric/mp/dsfloat.hpp>
-#endif
+#include <boost/type_traits/is_pod.hpp>
+#include <boost/utility/enable_if.hpp>
 
 #include <halmd/config.hpp>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd
 {
@@ -45,7 +40,7 @@ template <typename T, size_t N>
 struct fixed_array
   : boost::array<T, N> {};
 
-#elif CUDA_VERSION <= 2030
+#else /* __CUDACC__ */
 
 template <typename T, typename Enable = void>
 struct fixed_array_pod_type;
@@ -99,152 +94,6 @@ struct fixed_array_pod_type<dsfloat>
     // 4-byte alignment matches that of dsfloat
     typedef struct { float x, y; } type;
 };
-
-#else /* __CUDACC__ */
-
-//
-// The purpose of a fixed_array is to serve as the underlying
-// array type to a fixed-length algebraic vector. It defines
-// operator[] to allow convenient access of its components.
-//
-// fixed_array models the Boost Collection concept.
-//
-template <typename T, size_t N>
-class fixed_array
-{
-public:
-    typedef T value_type;
-    typedef value_type* iterator;
-    typedef value_type const* const_iterator;
-    typedef value_type& reference;
-    typedef value_type const& const_reference;
-    typedef value_type* pointer;
-    typedef value_type const* const_pointer;
-    typedef ssize_t difference_type;
-    typedef size_t size_type;
-
-    enum { static_size = N };
-
-    HALMD_GPU_ENABLED reference operator[](size_type i)
-    {
-        return data_[i];
-    }
-
-    HALMD_GPU_ENABLED const_reference operator[](size_type i) const
-    {
-        return data_[i];
-    }
-
-    HALMD_GPU_ENABLED iterator begin()
-    {
-        return &((*this)[0]);
-    }
-
-    HALMD_GPU_ENABLED const_iterator begin() const
-    {
-        return &((*this)[0]);
-    }
-
-    HALMD_GPU_ENABLED iterator end()
-    {
-        return &((*this)[N - 1]);
-    }
-
-    HALMD_GPU_ENABLED const_iterator end() const
-    {
-        return &((*this)[N - 1]);
-    }
-
-    HALMD_GPU_ENABLED reference front()
-    {
-        return (*this)[0];
-    }
-
-    HALMD_GPU_ENABLED const_reference front() const
-    {
-        return (*this)[0];
-    }
-
-    HALMD_GPU_ENABLED reference back()
-    {
-        return (*this)[N - 1];
-    }
-
-    HALMD_GPU_ENABLED const_reference back() const
-    {
-        return (*this)[N - 1];
-    }
-
-    HALMD_GPU_ENABLED size_type size() const
-    {
-        return N;
-    }
-
-    HALMD_GPU_ENABLED bool empty() const
-    {
-        return N == 0;
-    }
-
-    HALMD_GPU_ENABLED void swap(fixed_array<T, N>& other)
-    {
-        fixed_array<T, N> temp = other;
-        other = *this;
-        *this = temp;
-    }
-
-private:
-    value_type data_[N];
-};
-
-//
-// fixed_array comparison operators
-//
-
-template <typename T, size_t N>
-HALMD_GPU_ENABLED bool operator==(fixed_array<T, N> const& x, fixed_array<T, N> const& y)
-{
-    for (size_t i = 0; i < N; ++i) {
-        if (!(x[i] == y[i])) {
-            return false;
-        }
-    }
-    return true;
-}
-
-template <typename T, size_t N>
-HALMD_GPU_ENABLED bool operator!=(fixed_array<T, N> const& x, fixed_array<T, N> const& y)
-{
-    return !(x == y);
-}
-
-template <typename T, size_t N>
-HALMD_GPU_ENABLED bool operator<(fixed_array<T, N> const& x, fixed_array<T, N> const& y)
-{
-    for (size_t i = 0; i < N; ++i) {
-        if (!(x[i] < y[i])) {
-            return false;
-        }
-    }
-    return true;
-}
-
-template <typename T, size_t N>
-HALMD_GPU_ENABLED bool operator>(fixed_array<T, N> const& x, fixed_array<T, N> const& y)
-{
-    return y < x;
-}
-
-template <typename T, size_t N>
-HALMD_GPU_ENABLED bool operator<=(fixed_array<T, N> const& x, fixed_array<T, N> const& y)
-{
-    return !(y < x);
-}
-
-template <typename T, size_t N>
-HALMD_GPU_ENABLED bool operator>=(fixed_array<T, N> const& x, fixed_array<T, N> const& y)
-{
-    return !(x < y);
-}
 
 #endif /* __CUDACC__ */
 
