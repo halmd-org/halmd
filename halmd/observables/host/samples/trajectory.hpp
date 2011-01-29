@@ -20,6 +20,7 @@
 #ifndef HALMD_OBSERVABLES_HOST_SAMPLES_TRAJECTORY_HPP
 #define HALMD_OBSERVABLES_HOST_SAMPLES_TRAJECTORY_HPP
 
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <vector>
 
