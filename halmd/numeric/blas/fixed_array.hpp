@@ -96,7 +96,8 @@ struct fixed_array_pod_type<T,
 template <>
 struct fixed_array_pod_type<dsfloat>
 {
-    typedef float2 type;
+    // 4-byte alignment matches that of dsfloat
+    typedef struct { float x, y; } type;
 };
 
 #else /* __CUDACC__ */
