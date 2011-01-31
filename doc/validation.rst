@@ -1,0 +1,72 @@
+Validation
+**********
+
+The simulation package is regularly run against various tests which reproduce results from physics literature.
+
+Simple fluids
+=============
+
+Thermodynamics
+--------------
+
+Lennard--Jones potential
+''''''''''''''''''''''''
+
+values for the truncated and shifted Lennard--Jones potential in three dimensions:
+
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
+|        | cutoff radius | density        | temperature | pressure    | potential energy | isochoric       | isothermal                 |
+|        |               |                |             |             | per particle     | specific heat   | compressibility            |
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
+|        | :math:`r_c^*` | :math:`\rho^*` | :math:`T^*` | :math:`P^*` | :math:`U^*`      | :math:`c_V/k_B` |  :math:`\chi_T \rho k_B T` |
++========+===============+================+=============+=============+==================+=================+============================+
+| [1]    | 4.0           | 0.3            | 3.0         | 1.023(2)    | -1.673(2)        |                 |                            |
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
+| [2]    | 4.0           | 0.3            | 3.0         | 1.0245      | -1.6717          |                 | 0.654(20)                  |
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
+| [*]    | 4.0           | 0.3            | 3.0         | 1.0234(3)   | -1.6731(4)       | 1.648(1)        | 0.67(2)                    |
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
+| [1]    | 4.0           | 0.6            | 3.0         | 3.69(1)     | -3.212(3)        |                 |                            |
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
+| [2]    | 4.0           | 0.6            | 3.0         | 3.7165      | -3.2065          |                 | 0.183(2)                   |
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
+| [*]    | 4.0           | 0.6            | 3.0         | 3.6976(8)   | -3.2121(2)       | 1.863(4)        | 0.184(5)                   |
++--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
+
+[1] Molecular dynamics simulations, J. K. Johnson, J. A. Zollweg, and K. E. Gubbins,
+    *The Lennard-Jones equation of state revisited*, Mol. Phys. **78**, 591 (1993).
+    `[Link] <http://dx.doi.org/10.1080/00268979300100411>`_
+
+[2] Integral equations theory, A. Ayadim, M. Oettel, and S Amokrane,
+    *Optimum free energy in the reference functional approach for the integral equations theory*,
+    J. Phys.: Condens. Matter **21**, 115103 (2009).
+    `[Link] <http://dx.doi.org/10.1088/0953-8984/21/11/115103>`_
+
+[*] Result obtained with *HAL's MD package* (4000 particles, NVT ensemble with Nosé--Hoover chain)
+
+Transport
+---------
+
+Weeks--Chandler--Andersen potential
+'''''''''''''''''''''''''''''''''''
+
+[1] Molecular dynamics simulations, D. Levesque and W. T. Ashurst,
+    *Long-Time Behavior of the Velocity Autocorrelation Function for a Fluid of Soft Repulsive Particles*,
+    Phys. Rev. Lett. **33**, 277 (1974).
+    `[Link] <http://link.aps.org/doi/10.1103/PhysRevLett.33.277>`_
+
+
+Binary mixtures
+===============
+
+Transport
+---------
+
+Kob--Andersen mixture
+'''''''''''''''''''''
+
+[1] Molecular dynamics simulations, P. Bordat, F. Affouard, M. Descamps, and F. Müller-Plathe,
+    *The breakdown of the Stokes–Einstein relation in supercooled binary liquids*,
+    J. Phys.: Condens. Matter **15**, 5397 (2003).
+    `[Link] <http://dx.doi.org/10.1088/0953-8984/15/32/301>`_
