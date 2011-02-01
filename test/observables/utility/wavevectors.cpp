@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/assign.hpp>
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
@@ -48,24 +49,24 @@ BOOST_AUTO_TEST_CASE( wavevectors )
     typedef fixed_vector<double, 3> vector_type;
     typedef fixed_vector<unsigned int, 3> index_type;
 
-    vector<double> q_values = list_of(0.3)(0.7)(1.0)(1.5)(2.0)(25.0);
+    vector<double> wavenumbers = list_of(0.3)(0.7)(1.0)(1.5)(2.0)(25.0);
     const vector_type box_length = list_of(10.)(10.)(20.);
-    double epsilon = 0.03;
-    unsigned int miller_max = 3;
+    double epsilon = 0.1;
+    unsigned int miller_max = 4;
 
-    vector<vector<vector_type> > wavevectors =
-        construct_wavevector_shells(q_values, box_length, epsilon, miller_max);
+    multimap<double, vector_type> wavevectors =
+        construct_wavevector_shells(wavenumbers, box_length, epsilon, miller_max);
 
     // check conditions on constructed wavevectors
-    BOOST_CHECK(wavevectors.size() == q_values.size());
-    for (unsigned int i = 0; i < q_values.size(); ++i) {
-        vector<vector_type> const& shell = wavevectors[i];
-        for (unsigned int j = 0; j < shell.size(); ++j) {
-            vector_type const& q = shell[j];
+    BOOST_FOREACH (double q, wavenumbers) {
+        typedef multimap<double, vector_type>::const_iterator iterator_type;
+        typedef pair<iterator_type, iterator_type> range_type;
+        for (range_type shell = wavevectors.equal_range(q); shell.first != shell.second; ++shell.first) {
+            vector_type const& q_vector = shell.first->second;
             const vector_type q_basis = element_div(vector_type(2 * M_PI), box_length);
-            index_type hkl = static_cast<index_type>(round(element_div(q, q_basis)));
+            index_type hkl = static_cast<index_type>(round(element_div(q_vector, q_basis)));
             hkl /= greatest_common_divisor(hkl);
-            BOOST_CHECK_CLOSE_FRACTION(q_values[i], norm_2(q), epsilon);
+            BOOST_CHECK_SMALL(norm_2(q_vector) / q - 1, epsilon);
             BOOST_CHECK(*max_element(hkl.begin(), hkl.end()) <= miller_max);
         }
     }
