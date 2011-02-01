@@ -1,0 +1,11 @@
+add_executable(test_wavevectors
+  wavevectors.cpp
+)
+target_link_libraries(test_wavevectors
+  halmd_io
+  ${HALMD_COMMON_LIBRARIES}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+add_test(observables_utility_wavevectors
+  test_wavevectors
+)
