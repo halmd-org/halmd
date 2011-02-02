@@ -29,10 +29,13 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/timer.hpp>
+#include <test/tools/cuda.hpp>
 
 using namespace boost;
 using namespace halmd;
 using namespace halmd::algorithm::gpu;
+
+BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
 /**
  * Test »32 bit integer arithmetic using double-single floating point (~44 bit).
