@@ -51,14 +51,15 @@ BOOST_AUTO_TEST_CASE( wavevectors )
 
     vector<double> wavenumbers = list_of(0.3)(0.7)(1.0)(1.5)(2.0)(25.0);
     const vector_type box_length = list_of(10.)(10.)(20.);
-    double epsilon = 0.1;
-    unsigned int miller_max = 4;
+    double epsilon = 0.05;
+    unsigned int max_count = 10;
 
     multimap<double, vector_type> wavevectors =
-        construct_wavevector_shells(wavenumbers, box_length, epsilon, miller_max);
+        construct_wavevector_shells(wavenumbers, box_length, epsilon, max_count);
 
     // check conditions on constructed wavevectors
     BOOST_FOREACH (double q, wavenumbers) {
+        BOOST_CHECK(wavevectors.count(q) <= max_count);
         typedef multimap<double, vector_type>::const_iterator iterator_type;
         typedef pair<iterator_type, iterator_type> range_type;
         for (range_type shell = wavevectors.equal_range(q); shell.first != shell.second; ++shell.first) {
@@ -67,7 +68,6 @@ BOOST_AUTO_TEST_CASE( wavevectors )
             index_type hkl = static_cast<index_type>(round(element_div(q_vector, q_basis)));
             hkl /= greatest_common_divisor(hkl);
             BOOST_CHECK_SMALL(norm_2(q_vector) / q - 1, epsilon);
-            BOOST_CHECK(*max_element(hkl.begin(), hkl.end()) <= miller_max);
         }
     }
 }
