@@ -23,6 +23,7 @@
 #include <halmd/io/statevars/writers/hdf5.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/demangle.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -115,12 +116,17 @@ void hdf5<dimension>::register_observable(
     }
 
     SELECT_REGISTER_OBSERVABLE(double);
+    SELECT_REGISTER_OBSERVABLE(unsigned int);
     SELECT_REGISTER_OBSERVABLE(vector_type);
     SELECT_REGISTER_OBSERVABLE(vector<double>);
+    SELECT_REGISTER_OBSERVABLE(vector<unsigned int>);
     SELECT_REGISTER_OBSERVABLE(vector<vector_type>);
 #undef SELECT_REGISTER_OBSERVABLE
 
-    throw runtime_error(string("HDF5 writer: unknown type of dataset ") + tag);
+    throw runtime_error(
+        string("HDF5 writer: unknown type of dataset ") + tag
+      + " (" + demangled_name(value_type) + ")"
+    );
 }
 
 /**
@@ -187,12 +193,17 @@ void hdf5<dimension>::write_dataset(
     }
 
     SELECT_WRITE_DATASET(double);
+    SELECT_WRITE_DATASET(unsigned int);
     SELECT_WRITE_DATASET(vector_type);
     SELECT_WRITE_DATASET(vector<double>);
+    SELECT_WRITE_DATASET(vector<unsigned int>);
     SELECT_WRITE_DATASET(vector<vector_type>);
 #undef SELECT_WRITE_DATASET
 
-    throw runtime_error(string("HDF5 writer: unknown type of dataset ") + tag);
+    throw runtime_error(
+        string("HDF5 writer: unknown type of dataset ") + tag
+      + " (" + demangled_name(value_type) + ")"
+    );
 }
 
 /**

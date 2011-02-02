@@ -1,5 +1,6 @@
 add_library(halmd_observables
   observable.cpp
+  ssf.cpp
   thermodynamics.cpp
   trajectory.cpp
 )
