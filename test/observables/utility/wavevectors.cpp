@@ -19,12 +19,9 @@
 
 #define BOOST_TEST_MODULE observables_utility_wavevectors
 #include <boost/test/unit_test.hpp>
-#include <boost/test/test_case_template.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
-#include <boost/mpl/list.hpp>
-#include <boost/mpl/int.hpp>
 #include <boost/shared_ptr.hpp>
 #include <numeric>
 
@@ -38,9 +35,8 @@ using namespace std;
 
 using observables::utility::construct_wavevector_shells;
 
-typedef mpl::list<mpl::int_<2>, mpl::int_<3> > dimension_list;
-
-BOOST_AUTO_TEST_CASE_TEMPLATE( wavevectors, DIM, dimension_list )
+template <int dimension>
+void wavevectors()
 {
     // enable logging to console
     shared_ptr<logger> log(new logger);
@@ -48,11 +44,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( wavevectors, DIM, dimension_list )
 #ifdef NDEBUG
         logger::warning
 #else
-        logger::trace
+        logger::debug
 #endif
     );
-
-    enum { dimension = DIM::value };
 
     typedef fixed_vector<double, dimension> vector_type;
     typedef fixed_vector<unsigned int, dimension> index_type;
@@ -87,4 +81,12 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( wavevectors, DIM, dimension_list )
             sum_ = sum;
         }
     }
+}
+
+static void __attribute__((constructor)) init_unit_test_suite()
+{
+    using namespace boost::unit_test::framework;
+
+    master_test_suite().add(BOOST_TEST_CASE( &wavevectors<2> ));
+    master_test_suite().add(BOOST_TEST_CASE( &wavevectors<3> ));
 }
