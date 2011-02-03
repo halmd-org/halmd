@@ -21,3 +21,8 @@ Coding conventions
 
     * names of containers and collections are singular
 
+#) Use exception-safe containers and pointers
+
+    .. todo::
+
+       RAII, STL containers, boost::shared_ptr
