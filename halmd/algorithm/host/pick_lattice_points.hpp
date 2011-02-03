@@ -21,10 +21,12 @@
 #define HALMD_ALGORITHM_HOST_PICK_LATTICE_POINTS_HPP
 
 #include <algorithm>
-#include <boost/foreach.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/static_assert.hpp>
 #include <cmath>
-#include <map>
+#include <numeric>
 #include <vector>
+#include <utility>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -36,7 +38,9 @@ namespace halmd { namespace algorithm { namespace host
 /**
  *  pick (almost) equally distributed lattice points from a concentric shell
  *
- * @param radii:        list of shell radii
+ * @param radius_begin: iterator at the begin of a range of shell radii
+ * @param radius_end:   iterator at the end of the range
+ * @param result:       output iterator over pairs (radius, lattice point)
  * @param unit_cell:    edge lengths @f$ (a_1, a_2, ...) @f$ of cuboid unit cell
  * @param tolerance:    relative tolerance on radii, defines thickness of shells
  * @param max_count:    maximal number of points in each shell
@@ -51,25 +55,34 @@ namespace halmd { namespace algorithm { namespace host
  * are not completely symmetric in space (some possible combinations @f$ (h,k,l) @f$ may
  * be missing for the largest sum @f$ h+k+l @f$)
  */
-template <typename float_type, typename vector_type>
-std::multimap<float_type, vector_type> pick_lattice_points_from_shell(
-    std::vector<float_type> const& radii
+template <typename float_type, typename vector_type, typename InputIterator, typename OutputIterator>
+void pick_lattice_points_from_shell(
+    InputIterator radius_begin, InputIterator radius_end
+  , OutputIterator result
   , vector_type const& unit_cell
   , float_type tolerance
   , unsigned int max_count
-) // TODO use the InputIterator/OutputIterator idiom
+)
 {
+    BOOST_STATIC_ASSERT((boost::is_same<
+        typename InputIterator::value_type, float_type
+    >::value));
+    BOOST_STATIC_ASSERT((boost::is_same<
+        typename OutputIterator::container_type::value_type
+      , typename std::pair<float_type const, vector_type>
+    >::value));
+
     using namespace std;
 
     enum { dimension = vector_type::static_size };
-
     typedef fixed_vector<unsigned int, dimension> index_type;
-    typedef multimap<float_type, vector_type> map_type;
-    map_type lattice_points;
+
+    // keep track of the number of constructed lattice points
+    vector<unsigned int> count(radius_end - radius_begin, 0u);
 
     // determine maximum Miller index that fits in the range of radii
     // (e_i) × (h,k,l) ≤ r_max ⇒ (h,k,l) ≤ r_max / max(e_i)
-    float_type r_max = *max_element(radii.begin(), radii.end()) * (1 + tolerance);
+    float_type r_max = *max_element(radius_begin, radius_end) * (1 + tolerance);
     unsigned int miller_max = static_cast<unsigned int>(floor(
         r_max / *max_element(unit_cell.begin(), unit_cell.end())
     ));
@@ -93,14 +106,21 @@ std::multimap<float_type, vector_type> pick_lattice_points_from_shell(
             // with magnitude close to the desired values
             vector_type r0 = element_prod(unit_cell, static_cast<vector_type>(hkl));
             float_type r0_norm = norm_2(r0);
-            BOOST_FOREACH (float_type r, radii) {
-                if (lattice_points.count(r) < max_count) {
+            unsigned int i = 0;
+            for (InputIterator r_it = radius_begin; r_it != radius_end; ++r_it, ++i) {
+                if (count[i] < max_count) {
                     // find integer n such that abs(norm_2(n * r0) - r) / r < tolerance
                     // 1) round to nearest integer
-                    unsigned int n = floor(r / r0_norm + float_type(.5));
+                    unsigned int n = floor(*r_it / r0_norm + float_type(.5));
                     // 2) check if this is good enough
-                    if (n > 0 && abs(n * r0_norm - r) < r * tolerance) {
-                        lattice_points.insert(make_pair(r, n * r0));
+                    if (n > 0 && abs(n * r0_norm - *r_it) < *r_it * tolerance) {
+                        vector_type point = n * r0;
+                        *result++ = make_pair(*r_it, point);
+                        ++count[i];
+#ifndef NDEBUG
+                        index_type hkl_reduced = hkl / greatest_common_divisor(hkl);
+                        LOG_TRACE("  r = " << norm_2(point) << ", (hkl) = " << hkl_reduced);
+#endif
                     }
                 }
             }
@@ -116,27 +136,10 @@ std::multimap<float_type, vector_type> pick_lattice_points_from_shell(
             ++idx[j+1];                      // increment next 'digit'
         }
     };
-    LOG_TRACE("lattice points constructed: " << lattice_points.size());
 
-    // output list of lattice points for debug trace
-    BOOST_FOREACH (float_type r, radii) {
-        unsigned int count = lattice_points.count(r);
-        LOG_TRACE(count << " lattice points with r ≈ " << r);
-        if (!count) {
-            LOG_WARNING("No lattice points compatible with r ≈ " << r);
-        }
-#ifndef NDEBUG
-        typedef pair<typename map_type::const_iterator, typename map_type::const_iterator> range_type;
-        for (range_type shell = lattice_points.equal_range(r); shell.first != shell.second; ++shell.first) {
-            vector_type const& point = shell.first->second;
-            index_type hkl = static_cast<index_type>(round(element_div(point, unit_cell)));
-            hkl /= greatest_common_divisor(hkl);
-            LOG_TRACE("  r = " << norm_2(point) << ", (hkl) = " << hkl);
-        }
-#endif
-    }
-
-    return lattice_points;
+    LOG_TRACE("lattice points constructed: "
+      << accumulate(count.begin(), count.end(), 0u, plus<unsigned int>())
+    );
 }
 
 }}} // namespace halmd::algorithm::host

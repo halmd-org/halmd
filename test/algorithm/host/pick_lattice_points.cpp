@@ -23,6 +23,7 @@
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
+#include <iterator>
 #include <numeric>
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
@@ -56,13 +57,23 @@ void pick_lattice_points()
     double epsilon = 0.05;
     unsigned int max_count = 10;
 
-    multimap<double, vector_type> lattice_points =
-        pick_lattice_points_from_shell(radii, unit_cell, epsilon, max_count);
+    // construct lattice points
+    multimap<double, vector_type> lattice_points;
+    pick_lattice_points_from_shell(
+        radii.begin(), radii.end()
+      , inserter(lattice_points, lattice_points.begin())
+      , unit_cell, epsilon, max_count
+    );
 
     // check conditions on constructed lattice points
     BOOST_FOREACH (double r, radii) {
         // check total count per shell
-        BOOST_CHECK(lattice_points.count(r) <= max_count);
+        unsigned count = lattice_points.count(r);
+        BOOST_CHECK(count <= max_count);
+        if (!count) {
+            BOOST_TEST_MESSAGE("No lattice points compatible with r ≈ " << r);
+        }
+
         typedef typename multimap<double, vector_type>::const_iterator iterator_type;
         typedef pair<iterator_type, iterator_type> range_type;
         unsigned int sum = 0;

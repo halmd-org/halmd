@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iterator>
+
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
@@ -45,16 +47,16 @@ ssf<dimension>::ssf(
   , wavenumbers_(wavenumbers)
   , tolerance_(tolerance)
   , max_count_(max_count)
-  , wavevectors_(
-        algorithm::host::pick_lattice_points_from_shell(
-            wavenumbers
-          , element_div(vector_type(2 * M_PI), box->length())
-          , tolerance
-          , max_count
-        )
-    )
   , time_(-1)
 {
+    algorithm::host::pick_lattice_points_from_shell(
+        wavenumbers.begin(), wavenumbers.end()
+      , inserter(wavevectors_, wavevectors_.begin())
+      , element_div(vector_type(2 * M_PI), box->length())
+      , tolerance
+      , max_count
+    );
+
     // remove wavenumbers with no compatible wavevectors
     for (vector<double>::iterator q_it = wavenumbers_.begin(); q_it != wavenumbers_.end(); ++q_it) {
         if (!wavevectors_.count(*q_it)) {
