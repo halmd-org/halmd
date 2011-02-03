@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/static_assert.hpp>
-#include <cmath>
 #include <numeric>
 #include <vector>
 #include <utility>
@@ -32,7 +31,9 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/gcd.hpp>
 
-namespace halmd { namespace algorithm { namespace host
+namespace halmd
+{
+namespace algorithm { namespace host
 {
 
 /**
@@ -142,6 +143,8 @@ void pick_lattice_points_from_shell(
     );
 }
 
-}}} // namespace halmd::algorithm::host
+}} // namespace algorithm::host
+
+} // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_HOST_PICK_LATTICE_POINTS_HPP */
