@@ -45,5 +45,3 @@ if(WITH_CUDA)
     test_thermodynamics --run_test=gpu/3d/* --log_level=test_suite
   )
 endif(WITH_CUDA)
-
-add_subdirectory(utility)

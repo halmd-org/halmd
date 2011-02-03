@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/observables/ssf.hpp>
-#include <halmd/observables/utility/wavevectors.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -46,8 +46,11 @@ ssf<dimension>::ssf(
   , tolerance_(tolerance)
   , max_count_(max_count)
   , wavevectors_(
-        utility::construct_wavevector_shells(
-            wavenumbers, box->length(), tolerance, max_count
+        algorithm::host::pick_lattice_points_from_shell(
+            wavenumbers
+          , element_div(vector_type(2 * M_PI), box->length())
+          , tolerance
+          , max_count
         )
     )
   , time_(-1)

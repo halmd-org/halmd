@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE observables_utility_wavevectors
+#define BOOST_TEST_MODULE algorithm_host_pick_lattice_points
 #include <boost/test/unit_test.hpp>
 
 #include <boost/assign.hpp>
@@ -25,18 +25,17 @@
 #include <boost/shared_ptr.hpp>
 #include <numeric>
 
+#include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/observables/utility/wavevectors.hpp>
 
 using namespace boost;
 using namespace boost::assign;
 using namespace halmd;
+using namespace halmd::algorithm::host;
 using namespace std;
 
-using observables::utility::construct_wavevector_shells;
-
 template <int dimension>
-void wavevectors()
+void pick_lattice_points()
 {
     // enable logging to console
     shared_ptr<logger> log(new logger);
@@ -44,40 +43,39 @@ void wavevectors()
 #ifdef NDEBUG
         logger::warning
 #else
-        logger::debug
+        logger::trace
 #endif
     );
 
     typedef fixed_vector<double, dimension> vector_type;
     typedef fixed_vector<unsigned int, dimension> index_type;
 
-    vector<double> wavenumbers = list_of(0.3)(0.7)(1.0)(1.5)(2.0)(25.0);
-    const vector_type box_length =
-        (dimension == 3) ? list_of(10.)(10.)(20.) : list_of(20.)(20.);
+    vector<double> radii = list_of(0.3)(0.7)(1.0)(1.5)(2.0)(25.0);
+    const vector_type unit_cell =
+        (dimension == 3) ? list_of(.5)(.5)(.2) : list_of(.3)(.3);
     double epsilon = 0.05;
     unsigned int max_count = 10;
 
-    multimap<double, vector_type> wavevectors =
-        construct_wavevector_shells(wavenumbers, box_length, epsilon, max_count);
+    multimap<double, vector_type> lattice_points =
+        pick_lattice_points_from_shell(radii, unit_cell, epsilon, max_count);
 
-    // check conditions on constructed wavevectors
-    BOOST_FOREACH (double q, wavenumbers) {
+    // check conditions on constructed lattice points
+    BOOST_FOREACH (double r, radii) {
         // check total count per shell
-        BOOST_CHECK(wavevectors.count(q) <= max_count);
+        BOOST_CHECK(lattice_points.count(r) <= max_count);
         typedef typename multimap<double, vector_type>::const_iterator iterator_type;
         typedef pair<iterator_type, iterator_type> range_type;
         unsigned int sum = 0;
-        for (range_type shell = wavevectors.equal_range(q); shell.first != shell.second; ++shell.first) {
-            // check that magnitude is within the tolerance
-            vector_type const& q_vector = shell.first->second;
-            BOOST_CHECK_SMALL(norm_2(q_vector) / q - 1, epsilon);
+        for (range_type shell = lattice_points.equal_range(r); shell.first != shell.second; ++shell.first) {
+            // check that distance to origin is within the tolerance
+            vector_type const& point = shell.first->second;
+            BOOST_CHECK_SMALL(norm_2(point) / r - 1, epsilon);
 
             // check ascending sum of Miller indices
-            const vector_type q_basis = element_div(vector_type(2 * M_PI), box_length);
-            index_type hkl = static_cast<index_type>(round(element_div(q_vector, q_basis)));
+            index_type hkl = static_cast<index_type>(round(element_div(point, unit_cell)));
             hkl /= greatest_common_divisor(hkl);
             unsigned int sum_ = accumulate(hkl.begin(), hkl.end(), 0u, plus<unsigned int>());
-            BOOST_CHECK_MESSAGE(sum_ >= sum, "incorrect order of wavevectors");
+            BOOST_CHECK_MESSAGE(sum_ >= sum, "incorrect order of lattice points");
             sum_ = sum;
         }
     }
@@ -87,6 +85,6 @@ static void __attribute__((constructor)) init_unit_test_suite()
 {
     using namespace boost::unit_test::framework;
 
-    master_test_suite().add(BOOST_TEST_CASE( &wavevectors<2> ));
-    master_test_suite().add(BOOST_TEST_CASE( &wavevectors<3> ));
+    master_test_suite().add(BOOST_TEST_CASE( &pick_lattice_points<2> ));
+    master_test_suite().add(BOOST_TEST_CASE( &pick_lattice_points<3> ));
 }
