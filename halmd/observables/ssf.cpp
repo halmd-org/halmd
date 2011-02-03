@@ -19,7 +19,6 @@
 
 #include <iterator>
 
-#include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -36,42 +35,22 @@ namespace observables
 
 template <int dimension>
 ssf<dimension>::ssf(
-    shared_ptr<box_type> box
-  , std::vector<double> const& wavenumbers
-  , double tolerance
-  , unsigned int max_count
+    boost::shared_ptr<density_modes_type> density_modes
+  , boost::shared_ptr<wavevectors_type> wavevectors
 )
   // dependency injection
-  : box(box)
+  : density_modes(density_modes)
   // initialise members
-  , wavenumbers_(wavenumbers)
-  , tolerance_(tolerance)
-  , max_count_(max_count)
   , time_(-1)
 {
-    algorithm::host::pick_lattice_points_from_shell(
-        wavenumbers.begin(), wavenumbers.end()
-      , inserter(wavevectors_, wavevectors_.begin())
-      , element_div(vector_type(2 * M_PI), box->length())
-      , tolerance
-      , max_count
-    );
-
-    // remove wavenumbers with no compatible wavevectors
-    for (vector<double>::iterator q_it = wavenumbers_.begin(); q_it != wavenumbers_.end(); ++q_it) {
-        if (!wavevectors_.count(*q_it)) {
-            LOG_WARNING("No wavevector compatible with |q| ≈ " << *q_it << ". Value discarded");
-            wavenumbers_.erase(q_it--);   // post-decrement iterator, increment at end of loop
-        }
-    }
-
     // allocate memory
-    result_.resize(wavenumbers_.size());
-    result_acc_.resize(wavenumbers_.size());
+    size_t q_num = wavevectors->wavenumbers().size();
+    result_.resize(q_num);
+    result_acc_.resize(q_num);
     // FIXME support HDF5 output of tuples
-    value_.resize(wavenumbers_.size());
-    error_.resize(wavenumbers_.size());
-    count_.resize(wavenumbers_.size());
+    value_.resize(q_num);
+    error_.resize(q_num);
+    count_.resize(q_num);
 }
 
 /**
@@ -90,7 +69,7 @@ template <int dimension>
 void ssf<dimension>::register_observables(writer_type& writer)
 {
     // write wavenumbers only once
-    writer.write_dataset("structure/ssf/wavenumbers", wavenumbers_, "wavenumber grid");
+    writer.write_dataset("structure/ssf/wavenumbers", wavevectors->wavenumbers(), "wavenumber grid");
 
     // register output writers
     // FIXME support HDF5 output of tuples
@@ -141,11 +120,7 @@ void ssf<dimension>::luaopen(lua_State* L)
                 class_<ssf, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def("sample", &ssf::sample)
                     .def("register_runtimes", &ssf::register_runtimes)
-                    .property("wavenumbers", &ssf::wavenumbers)
-                    .property("wavevectors", &ssf::wavevectors)
                     .property("result", &ssf::result)
-                    .property("tolerance", &ssf::tolerance)
-                    .property("maximum_count", &ssf::maximum_count)
             ]
         ]
     ];

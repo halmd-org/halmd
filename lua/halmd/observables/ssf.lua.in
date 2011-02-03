@@ -41,6 +41,9 @@ local observables = {
     samples = {
         trajectory = require("halmd.observables.samples.trajectory")
     }
+  , utility = {
+        wavevectors = require("halmd.observables.utility.wavevectors")
+    }
 }
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
@@ -71,13 +74,17 @@ function new(args)
         return nil
     end
 
+    local wavevectors = assert(observables.utility.wavevectors(
+        wavenumbers, box.length, tolerance, maximum_count
+    ))
+
     local ssf
     if device() then
         ssf = ssf_wrapper.gpu[dimension]
     else
         ssf = ssf_wrapper.host[dimension]
     end
-    return ssf(sample, box, wavenumbers, tolerance, maximum_count)
+    return ssf(sample, wavevectors)
 end
 
 --
@@ -92,6 +99,7 @@ end
 --
 -- @param desc po.options_description
 --
+-- the wavenumber grid is defined here rather than in utility.wavenumbers
 function options(desc)
     desc:add("wavenumbers", po.float_array(), "list of wavenumbers")
     desc:add("tolerance", po.float(), "relative tolerance on magnitude of wavevectors")

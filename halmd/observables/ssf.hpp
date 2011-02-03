@@ -25,9 +25,9 @@
 #include <map>
 #include <vector>
 
-#include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/observable.hpp>
+#include <halmd/observables/samples/density_modes.hpp>
+#include <halmd/observables/utility/wavevectors.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -46,20 +46,20 @@ class ssf
 public:
     typedef observable<dimension> _Base;
 
-    typedef mdsim::box<dimension> box_type;
+    typedef samples::density_modes<dimension> density_modes_type;
+    typedef utility::wavevectors<dimension> wavevectors_type;
     typedef typename _Base::writer_type writer_type;
-    typedef utility::profiler profiler_type;
-    typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
+    typedef halmd::utility::profiler profiler_type;
+    typedef fixed_vector<double, dimension> vector_type;
 
-    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<density_modes_type> density_modes;
+    boost::shared_ptr<wavevectors_type> wavevectors;
 
     static void luaopen(lua_State* L);
 
     ssf(
-        boost::shared_ptr<box_type> box
-      , std::vector<double> const& wavenumbers
-      , double tolerance
-      , unsigned int max_count
+        boost::shared_ptr<density_modes_type> density_modes
+      , boost::shared_ptr<wavevectors_type> wavevectors
     );
 
     void register_runtimes(profiler_type& profiler);
@@ -69,30 +69,6 @@ public:
 
     // compute ssf from trajectory sample and store with given time
     virtual void sample(double time);
-
-    //! returns tolerance on wavevector magnitude
-    double tolerance() const
-    {
-        return tolerance_;
-    }
-
-    //! returns maximum count of wavevectors per wavenumber
-    double maximum_count() const
-    {
-        return max_count_;
-    }
-
-    //! returns list of wavevectors
-    std::multimap<double, vector_type> const& wavevectors() const
-    {
-        return wavevectors_;
-    }
-
-    //! returns wavenumber grid
-    std::vector<double> const& wavenumbers() const
-    {
-        return wavenumbers_;
-    }
 
     //! returns last computed result for static structure factor
     std::vector<boost::tuple<double, double, unsigned> > const& result() const
@@ -106,18 +82,6 @@ public:
 protected:
     /** compute static structure factor and update accumulators 'result_acc_' */
     virtual void compute_() = 0;
-
-    /** wavenumber grid */
-    std::vector<double> wavenumbers_;
-    /** tolerance of wavevector magnitudes (relative error) */
-    double tolerance_;
-    /** maximum number of wavevectors per wavenumber */
-    double max_count_;
-    /**
-     * list of wavevectors grouped by their magnitude,
-     * the keys equal wavenumbers_ (or a subset of)
-     */
-    std::multimap<double, vector_type> wavevectors_;
 
     /**
      *  result for static structure factor
