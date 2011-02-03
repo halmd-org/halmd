@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 2.8)
 
+if(NOT HALMD_DOC_ONLY)
+  set(HALMD_DOC_ONLY FALSE)
+else()
+  set(HALMD_DOC_ONLY TRUE)
+endif()
+set(HALMD_DOC_ONLY ${HALMD_DOC_ONLY} CACHE INTERNAL "Build HALMD documentation only" FORCE)
+
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+if(NOT HALMD_DOC_ONLY)
+
 project(HALMD)
 
 if (HALMD_USE_STATIC_LIBS)
@@ -9,8 +20,6 @@ if (HALMD_USE_STATIC_LIBS)
   set(HDF5_USE_STATIC_LIBS TRUE)
   set(GSL_USE_STATIC_LIBS TRUE)
 endif(HALMD_USE_STATIC_LIBS)
-
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # The FindBoost CMake module prefers multi-threaded libraries (filenames with
 # postfix "-mt") over non-multi-threaded libraries. On Redhat or SuSE with
@@ -228,3 +237,11 @@ add_subdirectory(doc EXCLUDE_FROM_ALL)
 add_subdirectory(halmd)
 add_subdirectory(lua)
 add_subdirectory(test)
+
+else(NOT HALMD_DOC_ONLY)
+
+project(HALMD NONE) # no compiler languages
+
+add_subdirectory(doc)
+
+endif(NOT HALMD_DOC_ONLY)
