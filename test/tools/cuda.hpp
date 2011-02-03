@@ -20,6 +20,7 @@
 #ifndef HALMD_TEST_TOOLS_CUDA_HPP
 #define HALMD_TEST_TOOLS_CUDA_HPP
 
+#include <boost/shared_ptr.hpp>
 #include <boost/test/unit_test_monitor.hpp>
 #include <iostream>
 
@@ -39,7 +40,7 @@ public:
         for (int i = 0; i < device_count; ++i) {
             try {
                 // create CUDA context and associate it with this thread
-                ctx_ = new cuda::driver::context(i);
+                ctx_.reset(new cuda::driver::context(i));
                 break;
             }
             catch (cuda::driver::error const&) {
@@ -54,11 +55,10 @@ public:
         // Detach CUDA runtime from CUDA device context
         // This explicit clean-up is needed with CUDA < 3.0.
         cuda::thread::exit();
-        delete ctx_;
     }
 
 private:
-    cuda::driver::context *ctx_;
+    boost::shared_ptr<cuda::driver::context> ctx_;
 };
 
 void cuda_error_translator( cuda::error const& e)
