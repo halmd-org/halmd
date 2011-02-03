@@ -1,0 +1,54 @@
+--
+-- Copyright © 2011  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab environment
+local wavevectors_wrapper = {
+    [2] = halmd_wrapper.observables.utility.wavevectors_2_
+  , [3] = halmd_wrapper.observables.utility.wavevectors_3_
+}
+local assert = assert
+
+module("halmd.observables.utility.wavevectors", halmd.modules.register)
+
+--
+-- construct wavevectors module
+--
+-- @param wavenumbers:   list of wavenumbers
+-- @param box_length:    edge lengths of simulation box, determines dimension
+-- @param tolerance:     relative tolerance on wavevector magnitudes
+-- @param maximum_count: maximum number of wavevectors per wavenumber
+--
+-- The module is configured by other modules and does not obtain its
+-- parameters from command line options
+function new(wavenumbers, box_length, tolerance, maximum_count)
+    -- determine dimension from size of table box_length
+    local dimension = #box_length
+
+    local wavevectors = assert(wavevectors_wrapper[dimension])
+    return wavevectors(wavenumbers, box_length, tolerance, maximum_count)
+end
+
+--
+-- returns module description
+--
+function name()
+    return "wavevectors"
+end
