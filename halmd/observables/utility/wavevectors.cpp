@@ -72,7 +72,7 @@ void wavevectors<dimension>::luaopen(lua_State* L)
         [
             namespace_("observables")
             [
-                namespace_("observables")
+                namespace_("utility")
                 [
                     class_<wavevectors, shared_ptr<wavevectors> >(class_name.c_str())
                         .def(constructor<
