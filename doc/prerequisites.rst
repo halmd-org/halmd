@@ -48,7 +48,7 @@ Get the latest `CMake with native CUDA support`_ ::
 
 Prepare the CMake build with ::
 
-   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.2
+   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.3
 
 Compile CMake with ::
 
@@ -60,8 +60,8 @@ Install CMake into your packages directory::
 
 Include CMake in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/cmake-cuda-2.8.2/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/usr/cmake-cuda-2.8.2/man${MANPATH+:$MANPATH}"
+   export PATH="${HOME}/usr/cmake-cuda-2.8.3/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/usr/cmake-cuda-2.8.3/man${MANPATH+:$MANPATH}"
 
 
 Boost
@@ -250,10 +250,10 @@ NVIDIA CUDA toolkit
 Sphinx
 ------
 
-Get the latest `Sphinx source package`_, currently `Sphinx 1.0.5`_.
+Get the latest `Sphinx source package`_, currently `Sphinx 1.0.7`_.
 
 .. _Sphinx source package: http://pypi.python.org/pypi/Sphinx
-.. _Sphinx 1.0.5: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.0.5.tar.gz
+.. _Sphinx 1.0.5: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.0.7.tar.gz
 
 Query your Python version ::
 
