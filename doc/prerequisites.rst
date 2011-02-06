@@ -253,7 +253,7 @@ Sphinx
 Get the latest `Sphinx source package`_, currently `Sphinx 1.0.7`_.
 
 .. _Sphinx source package: http://pypi.python.org/pypi/Sphinx
-.. _Sphinx 1.0.5: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.0.7.tar.gz
+.. _Sphinx 1.0.7: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.0.7.tar.gz
 
 Query your Python version ::
 
@@ -261,18 +261,18 @@ Query your Python version ::
 
 Create a package directory for Sphinx using the Python major and minor version ::
 
-   mkdir -p $HOME/usr/Sphinx-1.0.5/lib/python2.5/site-packages
+   mkdir -p $HOME/usr/Sphinx-1.0.7/lib/python2.5/site-packages
 
 Add the package directory to the PYTHON_PATH environment variable ::
 
-   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.5/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
 Install Sphinx into your packages directory ::
 
-   python setup.py install --prefix=$HOME/usr/Sphinx-1.0.5
+   python setup.py install --prefix=$HOME/usr/Sphinx-1.0.7
 
 Include Sphinx in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/Sphinx-1.0.5/bin${PATH+:$PATH}"
-   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.5/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PATH="${HOME}/usr/Sphinx-1.0.7/bin${PATH+:$PATH}"
+export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
