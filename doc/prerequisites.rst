@@ -274,5 +274,5 @@ Install Sphinx into your packages directory ::
 Include Sphinx in your shell environment, by adding to ~/.bashrc::
 
    export PATH="${HOME}/usr/Sphinx-1.0.7/bin${PATH+:$PATH}"
-export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
