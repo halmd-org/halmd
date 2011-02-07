@@ -55,13 +55,18 @@ void random::luaopen(lua_State* L)
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
         &random::luaopen
     ];
 }
+
+} // namespace
 
 }} // namespace random::host
 

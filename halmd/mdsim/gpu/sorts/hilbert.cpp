@@ -177,7 +177,10 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
@@ -187,6 +190,8 @@ static __attribute__((constructor)) void register_lua()
         &hilbert<2, float>::luaopen
     ];
 }
+
+} // namespace
 
 // explicit instantiation
 template class hilbert<3, float>;

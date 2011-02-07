@@ -112,7 +112,10 @@ void power_law<float_type>::luaopen(lua_State* L)
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef double float_type;
@@ -133,6 +136,8 @@ static __attribute__((constructor)) void register_lua()
         &pair_trunc<2, float_type, power_law<float_type> >::luaopen
     ];
 }
+
+} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

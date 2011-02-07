@@ -107,7 +107,10 @@ static void register_class_B(lua_State* L)
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0)
     [
@@ -118,6 +121,8 @@ static __attribute__((constructor)) void register_lua()
         bind(&register_class_B, _1)
     ];
 }
+
+} // namespace
 
 } // namespace halmd
    @endcode
