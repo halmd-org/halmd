@@ -183,7 +183,7 @@ Install the Luabind library into your packages directory::
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
-Include Lua in your shell environment, by adding to ~/.bashrc::
+Include Luabind in your shell environment, by adding to ~/.bashrc::
 
    export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
