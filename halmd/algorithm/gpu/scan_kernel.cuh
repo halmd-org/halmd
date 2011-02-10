@@ -22,6 +22,7 @@
 
 #include <halmd/algorithm/gpu/bits.cuh>
 #include <halmd/algorithm/gpu/scan_kernel.hpp>
+#include <halmd/numeric/zero.hpp>
 
 namespace halmd
 {
@@ -51,7 +52,7 @@ __device__ T grid_prefix_sum(T const* g_in, T* g_out, uint const count)
 
     extern __shared__ char __s_array[];
     T* const s_array = reinterpret_cast<T*>(__s_array); // work around for CUDA 3.0/3.1
-    T block_sum = T(); // value-initialized
+    T block_sum = zero<T>();
 
     uint const tid = threadIdx.x;
     uint const threads = blockDim.x;
@@ -60,8 +61,8 @@ __device__ T grid_prefix_sum(T const* g_in, T* g_out, uint const count)
     // read elements from global memory, or pad with zero
     uint const i1 = 2 * bid * threads + tid;
     uint const i2 = (2 * bid + 1) * threads + tid;
-    s_array[boff(tid)] = (i1 < count) ? g_in[i1] : T();
-    s_array[boff(threads + tid)] = (i2 < count) ? g_in[i2] : T();
+    s_array[boff(tid)] = (i1 < count) ? g_in[i1] : zero<T>();
+    s_array[boff(threads + tid)] = (i2 < count) ? g_in[i2] : zero<T>();
     __syncthreads();
 
     // up-sweep phase from leaves to root of binary tree
