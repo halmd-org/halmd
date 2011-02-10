@@ -46,7 +46,7 @@ namespace rand48_kernel
 __global__ void leapfrog(uint48* g_A)
 {
     uint48 const a = make_uint48(0xE66D, 0xDEEC, 0x0005);
-    uint48 const zero = uint48(); // value-initialized
+    uint48 const zero = make_uint48(0, 0, 0);
 
     //
     // leapfrog multiplier:
