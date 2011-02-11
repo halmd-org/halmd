@@ -34,17 +34,23 @@ Instead of setting CMAKE_PREFIX_PATH manually, you would include the package dir
 CMake
 -----
 
-Get the latest `CMake with native CUDA support`_ ::
+Get the latest `CMake source package`_, currently `CMake 2.8.3`_.
 
-   git clone git://git.colberg.org/gpgpu/cmake-cuda.git
+Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.3`_.
 
-.. note::
+.. _CMake source package: http://cmake.org/cmake/resources/software.html
 
-   If you are trapped behind a restrictive firewall, use ::
+.. _CMake 2.8.3: http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz
 
-      git clone http://git.colberg.org/gpgpu/cmake-cuda.git
+.. _CMake-CUDA: http://software.colberg.org/projects/cmake-cuda
+
+.. _CMake-CUDA 2.8.3: http://software.colberg.org/attachments/download/7/cmake-cuda-2.8.3.patch
 
 .. _CMake with native CUDA support: https://software.colberg.org/projects/cmake-cuda
+
+Extract the CMake source package, and apply the patch in the CMake source directory with ::
+
+   patch -p1 < ../cmake-cuda-2.8.3.patch
 
 Prepare the CMake build with ::
 
