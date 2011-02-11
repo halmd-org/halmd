@@ -136,8 +136,15 @@ Lua
 
 Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.1.4`_.
 
+Get the `Lua 5.1.4-2 patch`_ fixing several bugs.
+
 .. _Lua download: http://www.lua.org/download.html
 .. _Lua 5.1.4: http://www.lua.org/ftp/lua-5.1.4.tar.gz
+.. _Lua 5.1.4-2 patch: http://www.lua.org/ftp/patch-lua-5.1.4-2
+
+Extract the Lua source package, and apply the patch in the Lua source directory with ::
+
+   patch -p1 < ../patch-lua-5.1.4-2
 
 The recommended way of embedding the Lua intepreter in an executable is to link
 the Lua library statically, which is the default mode of compilation.
