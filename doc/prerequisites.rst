@@ -46,8 +46,6 @@ Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.3`_.
 
 .. _CMake-CUDA 2.8.3: http://software.colberg.org/attachments/download/7/cmake-cuda-2.8.3.patch
 
-.. _CMake with native CUDA support: https://software.colberg.org/projects/cmake-cuda
-
 Extract the CMake source package, and apply the patch in the CMake source directory with ::
 
    patch -p1 < ../cmake-cuda-2.8.3.patch
