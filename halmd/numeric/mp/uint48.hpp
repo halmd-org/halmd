@@ -42,9 +42,12 @@ namespace halmd
  * and that we define a custom uint48 type instead of using
  * the predefined uint3, as we overload the add operators.
  */
-struct uint48 : uint3 {};
+struct uint48
+{
+    unsigned int x, y, z;
+};
 
-inline HALMD_GPU_ENABLED uint48 make_uint48(uint x, uint y, uint z)
+inline HALMD_GPU_ENABLED uint48 make_uint48(unsigned int x, unsigned int y, unsigned int z)
 {
     uint48 u; u.x = x; u.y = y; u.z = z; return u;
 }
