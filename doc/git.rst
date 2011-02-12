@@ -5,11 +5,11 @@ Getting the source code
 
 HALMD is maintained in a public `Git <http://git-scm.com/>`_ repository at ::
 
-  git://git.colberg.org/research/halmd
+  git cone git://git.colberg.org/research/halmd
 
 In case you are behind a firewall that blocks the git protocol port, use ::
 
-  http://git.colberg.org/research/halmd
+  git clone http://git.colberg.org/research/halmd
 
 
 Git tutorials
