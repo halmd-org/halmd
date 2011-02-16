@@ -1,0 +1,121 @@
+--
+-- Copyright © 2011  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab environment
+local density_modes_wrapper = {
+    host = {
+        [2] = halmd_wrapper.observables.host.density_modes_2_
+      , [3] = halmd_wrapper.observables.host.density_modes_3_
+    }
+  , [2] = halmd_wrapper.observables.density_modes_2_
+  , [3] = halmd_wrapper.observables.density_modes_3_
+}
+if halmd_wrapper.observables.gpu then
+    density_modes_wrapper.gpu = {
+        [2] = halmd_wrapper.observables.gpu.density_modes_2_
+      , [3] = halmd_wrapper.observables.gpu.density_modes_3_
+    }
+end
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
+local observables = {
+    samples = {
+        trajectory = require("halmd.observables.samples.trajectory")
+      , density_modes = require("halmd.observables.samples.density_modes")
+    }
+  , utility = {
+        wavevectors = require("halmd.observables.utility.wavevectors")
+    }
+}
+local h5 = halmd_wrapper.h5
+local po = halmd_wrapper.po
+local device = require("halmd.device")
+local assert = assert
+
+module("halmd.observables.density_modes", halmd.modules.register)
+
+--
+-- construct instance of density_modes module
+--
+-- @param args parameter table
+-- @returns instance of density_modes module
+--
+function new(args)
+    -- command line options
+    local tolerance = args.tolerance or 0.01 -- default value
+    local maximum_count = args.maximum_count or 10 -- default value
+    local wavenumbers = args.wavenumbers
+
+    if not wavenumbers then
+        return nil
+    end
+
+    -- dependency injection
+    local core = mdsim.core()
+    local dimension = assert(core.dimension)
+    local box = assert(core.box)
+    local trajectory_sample = assert(observables.samples.trajectory())
+    local rho_sample = assert(observables.samples.density_modes())
+
+    -- construct wavevectors locally
+    local wavevectors = assert(observables.utility.wavevectors(
+        wavenumbers, box.length, tolerance, maximum_count
+    ))
+
+    local density_modes
+    if device() then
+        density_modes = density_modes_wrapper.gpu[dimension]
+    else
+        density_modes = density_modes_wrapper.host[dimension]
+    end
+    return density_modes(rho_sample, trajectory_sample, wavevectors)
+end
+
+--
+-- returns module description
+--
+function name()
+    return "Fourier modes of particle density"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+-- the wavenumber grid is defined here rather than in utility.wavenumbers
+function options(desc)
+    desc:add("wavenumbers", po.float_array(), "list of wavenumbers")
+    desc:add("tolerance", po.float(), "relative tolerance on magnitude of wavevectors")
+    desc:add("maximum-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param density_modes:   module instance
+-- @param group: HDF5 group
+--
+function write_parameters(density_modes, group)
+    group:write_attribute("tolerance", h5.float(), density_modes.tolerance)
+    group:write_attribute("maximum_count", h5.uint(), density_modes.maximum_count)
+end
