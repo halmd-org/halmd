@@ -176,6 +176,9 @@ Modules
     <xsl:when test="not($compound/@kind='class' or $compound/@kind='struct')">
       <func:result select="false()" />
     </xsl:when>
+    <xsl:when test="not($compound/sectiondef/memberdef/name='luaopen')">
+      <func:result select="false()" />
+    </xsl:when>
     <xsl:otherwise>
       <func:result select="true()" />
     </xsl:otherwise>
