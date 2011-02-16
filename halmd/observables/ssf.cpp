@@ -18,14 +18,12 @@
  */
 
 #include <iterator>
+#include <string>
 
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using boost::fusion::at_key;
 using namespace std;
 
 namespace halmd
@@ -35,8 +33,7 @@ namespace observables
 
 template <int dimension>
 ssf<dimension>::ssf(
-    boost::shared_ptr<density_modes_type> density_modes
-  , boost::shared_ptr<wavevectors_type> wavevectors
+    shared_ptr<density_modes_type> density_modes
 )
   // dependency injection
   : density_modes(density_modes)
@@ -44,22 +41,16 @@ ssf<dimension>::ssf(
   , time_(-1)
 {
     // allocate memory
-    size_t q_num = wavevectors->wavenumbers().size();
-    result_.resize(q_num);
-    result_acc_.resize(q_num);
-    // FIXME support HDF5 output of tuples
-    value_.resize(q_num);
-    error_.resize(q_num);
-    count_.resize(q_num);
-}
+    unsigned int nq = density_modes->wavenumbers().size();
+    unsigned int ntype = density_modes->ntype();
+    unsigned int nssf = ntype * (ntype + 1) / 2; //< number of partial structure factors
 
-/**
- * register module runtime accumulators
- */
-template <int dimension>
-void ssf<dimension>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_map(runtime_);
+    value_.resize(nssf);
+    result_accumulator_.resize(nssf);
+    for (unsigned int i = 0; i < nssf; ++i) {
+        value_[i].resize(nq);
+        result_accumulator_[i].resize(nq);
+    }
 }
 
 /**
@@ -68,41 +59,48 @@ void ssf<dimension>::register_runtimes(profiler_type& profiler)
 template <int dimension>
 void ssf<dimension>::register_observables(writer_type& writer)
 {
+    string root("structure/ssf/");
     // write wavenumbers only once
-    writer.write_dataset("structure/ssf/wavenumbers", wavevectors->wavenumbers(), "wavenumber grid");
+    writer.write_dataset(root + "wavenumbers", density_modes->wavenumbers(), "wavenumber grid");
 
-    // register output writers
-    // FIXME support HDF5 output of tuples
-    // writer.register_observable_once("structure/ssf", &result_, "static structure factor (value, error, count)");
-    writer.register_observable("structure/ssf/value", &value_, "static structure factor (mean value)");
-    writer.register_observable("structure/ssf/error", &error_, "error of mean");
-    writer.register_observable("structure/ssf/count", &count_, "count of averaged values");
+    // register output writers for all partial structure factors
+    unsigned char ntype = static_cast<unsigned char>(density_modes->ntype());
+    assert('A' + density_modes->ntype() <= 'Z' + 1);
+    unsigned int k = 0;
+    for (unsigned char i = 0; i < ntype; ++i) {
+        for (unsigned char j = i; j < ntype; ++j, ++k) {
+            string label;
+            label += 'A' + i;
+            label += 'A' + j;
+            writer.register_observable(
+                root + label, &value_[k]
+              , "partial static structure factor S_" + label + " (value, error, count)"
+            );
+        }
+    }
 }
 
 /**
- * Sample all ssf
+ * compute SSF from sample of density Fourier modes
  */
 template <int dimension>
 void ssf<dimension>::sample(double time)
 {
-    scoped_timer<timer> timer_(at_key<sample_>(runtime_));
+    // acquire sample of density modes and compute SSF
+    density_modes->acquire(time);
     compute_();
 
-    // transform accumulators to tuples (mean, error_of_mean, count)
-    for (unsigned int i = 0; i < result_acc_.size(); ++i) {
-        accumulator<double> const& a = result_acc_[i];
-        unsigned int c = count(a);
-        result_[i] = make_tuple(mean(a), (c > 1) ? error_of_mean(a) : 0, c);
+    // iterate over combinations of particle types
+    for (unsigned int i = 0; i < value_.size(); ++i) {
+        // transform accumulators to tuples (mean, error_of_mean, count)
+        for (unsigned int j = 0; j < result_accumulator_[i].size(); ++j) {
+            accumulator<double> const& acc = result_accumulator_[i][j];
+            result_type& v = value_[i][j];
+            v[0] = mean(acc);
+            v[1] = (count(acc) > 1) ? error_of_mean(acc) : 0;
+            v[2] = static_cast<double>(count(acc));
+        }
     }
-
-    // FIXME support HDF5 output of tuples
-    // split vector of tuples
-    double const& (*get0)(tuple<double, double, unsigned>::inherited const&) = &boost::get<0>;
-    double const& (*get1)(tuple<double, double, unsigned>::inherited const&) = &boost::get<1>;
-    unsigned const& (*get2)(tuple<double, double, unsigned>::inherited const&) = &boost::get<2>;
-    transform(result_.begin(), result_.end(), value_.begin(), bind(get0, _1));
-    transform(result_.begin(), result_.end(), error_.begin(), bind(get1, _1));
-    transform(result_.begin(), result_.end(), count_.begin(), bind(get2, _1));
     time_ = time;   // store time for writer functions
 }
 
@@ -118,9 +116,7 @@ void ssf<dimension>::luaopen(lua_State* L)
             namespace_("observables")
             [
                 class_<ssf, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def("sample", &ssf::sample)
-                    .def("register_runtimes", &ssf::register_runtimes)
-                    .property("result", &ssf::result)
+                    .property("value", &ssf::value)
             ]
         ]
     ];

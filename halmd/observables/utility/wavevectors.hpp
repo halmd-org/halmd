@@ -40,6 +40,7 @@ class wavevectors
 {
 public:
     typedef fixed_vector<double, dimension> vector_type;
+    typedef std::multimap<double, vector_type> map_type;
 
     wavevectors(
         std::vector<double> const& wavenumbers
@@ -61,7 +62,7 @@ public:
     }
 
     //! returns list of wavevectors
-    std::multimap<double, vector_type> const& values() const
+    map_type const& values() const
     {
         return wavevectors_;
     }
@@ -83,7 +84,7 @@ protected:
      * list of wavevectors grouped by their magnitude,
      * the keys equal wavenumbers_ (or a subset of)
      */
-    std::multimap<double, vector_type> wavevectors_;
+    map_type wavevectors_;
 };
 
 }} // namespace observables::utility

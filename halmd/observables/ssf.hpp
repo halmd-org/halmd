@@ -20,15 +20,12 @@
 #ifndef HALMD_OBSERVABLES_SSF_HPP
 #define HALMD_OBSERVABLES_SSF_HPP
 
-#include <boost/tuple/tuple.hpp>
+#include <boost/array.hpp>
 #include <lua.hpp>
-#include <map>
 #include <vector>
 
 #include <halmd/observables/observable.hpp>
-#include <halmd/observables/samples/density_modes.hpp>
-#include <halmd/observables/utility/wavevectors.hpp>
-#include <halmd/utility/profiler.hpp>
+#include <halmd/observables/density_modes.hpp>
 
 namespace halmd
 {
@@ -36,7 +33,14 @@ namespace observables
 {
 
 /**
- * compute static structure factor
+ * compute partial static structure factors
+ *
+ * @f$ S_q^{(\alpha\beta)} = \langle \frac{1}{N} \rho_{\vec q}^{(\alpha)} \rho_{-\vec q}^{(\beta)} \rangle @f$
+ * with the partial density modes
+ * @f$ rho_{\vec q}^(\alpha) = \sum_{i=1}^{N_\alpha} \exp(i\vec q\cdot \vec r_i^{\alpha}) @f$
+ * and the total number of particles @f$ N = \sum_\alpha N_\alpha @f$
+ *
+ * see e.g., Hansen & McDonald: Theory of simple liquids, chapter 4.1.
  */
 
 template <int dimension>
@@ -45,65 +49,48 @@ class ssf
 {
 public:
     typedef observable<dimension> _Base;
-
-    typedef samples::density_modes<dimension> density_modes_type;
-    typedef utility::wavevectors<dimension> wavevectors_type;
+    typedef observables::density_modes<dimension> density_modes_type;
     typedef typename _Base::writer_type writer_type;
-    typedef halmd::utility::profiler profiler_type;
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef boost::array<double, 3> result_type;
 
     boost::shared_ptr<density_modes_type> density_modes;
-    boost::shared_ptr<wavevectors_type> wavevectors;
 
     static void luaopen(lua_State* L);
 
     ssf(
         boost::shared_ptr<density_modes_type> density_modes
-      , boost::shared_ptr<wavevectors_type> wavevectors
     );
 
-    void register_runtimes(profiler_type& profiler);
     virtual void register_observables(writer_type& writer);
 
-    virtual void prepare() {}
+    virtual void prepare() {};
 
-    // compute ssf from trajectory sample and store with given time
+    // compute ssf from sample of density Fourier modes and store with given time
     virtual void sample(double time);
 
-    //! returns last computed result for static structure factor
-    std::vector<boost::tuple<double, double, unsigned> > const& result() const
+    //! returns last computed values for static structure factor
+    std::vector<std::vector<result_type> > const& value() const
     {
-        return result_;
+        return value_;
     }
-
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( sample_, "computation of static structure factor" );
 
 protected:
     /** compute static structure factor and update accumulators 'result_acc_' */
     virtual void compute_() = 0;
 
     /**
-     *  result for static structure factor
+     *  result for (partial) static structure factors
+     *  in the order AA, AB, AC, …, BB, BC, …,CC
      *
-     *  result_[i][0]:   mean value S(k) for k = wavenumbers_[i]
-     *  result_[i][1]:   estimated error of mean
-     *  result_[i][2]:   value count for the average
+     *  value_[i][j][0]:   mean value S_ab(k) for k = wavenumbers_[j]
+     *  value_[i][j][1]:   estimated error of mean
+     *  value_[i][j][2]:   value count for the average
      */
-    std::vector<boost::tuple<double, double, unsigned> > result_;
-    // FIXME support HDF5 output of tuples
-    std::vector<double> value_;
-    std::vector<double> error_;
-    std::vector<unsigned int> count_;
+    std::vector<std::vector<result_type> > value_;
     /** result accumulators */
-    std::vector<accumulator<double> > result_acc_;
+    std::vector<std::vector<accumulator<double> > > result_accumulator_;
     /** store time to be passed to HDF5 writer */
     double time_;
-
-    // list of profiling timers
-    boost::fusion::map<
-        boost::fusion::pair<sample_, accumulator<double> >
-    > runtime_;
 };
 
 } // namespace observables
