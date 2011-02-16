@@ -142,7 +142,8 @@ Get the `Lua 5.1.4-2 patch`_ fixing several bugs.
 
 Extract the Lua source package, and apply the patch in the Lua source directory with ::
 
-   patch -p1 < ../patch-lua-5.1.4-2
+   cd lua-5.1.4/src
+   patch < ../../patch-lua-5.1.4-2
 
 The recommended way of embedding the Lua intepreter in an executable is to link
 the Lua library statically, which is the default mode of compilation.
