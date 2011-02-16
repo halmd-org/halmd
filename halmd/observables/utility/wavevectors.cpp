@@ -19,10 +19,11 @@
 
 #include <cmath>
 #include <iterator>
+#include <sstream>
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
+#include <halmd/io/logger.hpp>
 #include <halmd/observables/utility/wavevectors.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
@@ -44,6 +45,12 @@ wavevectors<dimension>::wavevectors(
   , tolerance_(tolerance)
   , max_count_(max_count)
 {
+    ostringstream s;
+    copy(wavenumbers_.begin(), wavenumbers_.end(), ostream_iterator<double>(s, " "));
+    LOG("wavenumber grid: " << s.str());
+    LOG("tolerance on wavevector magnitude: " << tolerance_);
+    LOG("maximum number of wavevectors per wavenumber: " << max_count_);
+
     algorithm::host::pick_lattice_points_from_shell(
         wavenumbers.begin(), wavenumbers.end()
       , inserter(wavevectors_, wavevectors_.begin())
@@ -59,52 +66,9 @@ wavevectors<dimension>::wavevectors(
             wavenumbers_.erase(q_it--);   // post-decrement iterator, increment at end of loop
         }
     }
+
+    LOG_DEBUG("total number of wavevectors: " << wavevectors_.size());
 }
-
-template <int dimension>
-void wavevectors<dimension>::luaopen(lua_State* L)
-{
-    using namespace luabind;
-    static string class_name("wavevectors_" + lexical_cast<string>(dimension) + "_");
-    module(L)
-    [
-        namespace_("halmd_wrapper")
-        [
-            namespace_("observables")
-            [
-                namespace_("utility")
-                [
-                    class_<wavevectors, shared_ptr<wavevectors> >(class_name.c_str())
-                        .def(constructor<
-                             vector<double> const&
-                           , vector_type const&
-                           , double, unsigned int
-                        >())
-                        .property("wavenumbers", &wavevectors::wavenumbers)
-                        .property("result", &wavevectors::result)
-                        .property("tolerance", &wavevectors::tolerance)
-                        .property("maximum_count", &wavevectors::maximum_count)
-                ]
-            ]
-        ]
-    ];
-}
-
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &wavevectors<3>::luaopen
-    ]
-    [
-        &wavevectors<2>::luaopen
-    ];
-}
-
-} // namespace
 
 // explicit instantiation
 template class wavevectors<3>;

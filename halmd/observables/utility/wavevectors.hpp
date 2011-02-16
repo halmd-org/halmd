@@ -20,8 +20,6 @@
 #ifndef HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
 #define HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
 
-#include <boost/tuple/tuple.hpp>
-#include <lua.hpp>
 #include <map>
 #include <vector>
 
@@ -43,8 +41,6 @@ class wavevectors
 public:
     typedef fixed_vector<double, dimension> vector_type;
 
-    static void luaopen(lua_State* L);
-
     wavevectors(
         std::vector<double> const& wavenumbers
       , vector_type const& box_length
@@ -65,7 +61,7 @@ public:
     }
 
     //! returns list of wavevectors
-    std::multimap<double, vector_type> const& result() const
+    std::multimap<double, vector_type> const& values() const
     {
         return wavevectors_;
     }
