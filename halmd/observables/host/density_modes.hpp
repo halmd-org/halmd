@@ -92,14 +92,6 @@ public:
         return wavevectors_.wavenumbers();
     }
 
-    /**
-     * return number of particle types
-     */
-    virtual unsigned int ntype() const
-    {
-        return rho_sample->rho.size();
-    }
-
     //! returns tolerance on wavevector magnitude
     double tolerance() const
     {

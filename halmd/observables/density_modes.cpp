@@ -46,7 +46,6 @@ void density_modes<dimension>::luaopen(lua_State* L)
                     .def("acquire", &density_modes::acquire)
                     .property("value", &density_modes::value)
                     .property("wavenumbers", &density_modes::wavenumbers)
-                    .property("ntype", &density_modes::ntype)
             ]
         ]
     ];

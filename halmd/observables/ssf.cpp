@@ -49,7 +49,7 @@ ssf<dimension>::ssf(
 {
     // allocate memory
     unsigned int nq = density_modes->wavenumbers().size();
-    unsigned int ntype = density_modes->ntype();
+    unsigned int ntype = density_modes->value().size();
     unsigned int nssf = ntype * (ntype + 1) / 2; //< number of partial structure factors
 
     value_.resize(nssf);
@@ -80,8 +80,8 @@ void ssf<dimension>::register_observables(writer_type& writer)
     writer.write_dataset(root + "wavenumbers", density_modes->wavenumbers(), "wavenumber grid");
 
     // register output writers for all partial structure factors
-    unsigned char ntype = static_cast<unsigned char>(density_modes->ntype());
-    assert('A' + density_modes->ntype() <= 'Z' + 1);
+    unsigned char ntype = static_cast<unsigned char>(density_modes->value().size());
+    assert('A' + density_modes->value().size() <= 'Z' + 1);
     unsigned int k = 0;
     for (unsigned char i = 0; i < ntype; ++i) {
         for (unsigned char j = i; j < ntype; ++j, ++k) {
@@ -136,7 +136,7 @@ void ssf<dimension>::compute_()
 
     // perform computation of partial SSF for all combinations of particle types
     wavevectors_map_type const& wavevectors = density_modes->wavevectors().values();
-    unsigned int ntype = density_modes->ntype();
+    unsigned int ntype = density_modes->value().size();
     unsigned int k = 0;
     for (unsigned char i = 0; i < ntype; ++i) {
         for (unsigned char j = i; j < ntype; ++j, ++k) {

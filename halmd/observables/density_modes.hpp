@@ -53,7 +53,6 @@ public:
     virtual result_type const& value() const = 0;
     virtual wavevectors_type const& wavevectors() const = 0;
     virtual std::vector<double> const& wavenumbers() const = 0;
-    virtual unsigned int ntype() const = 0;
 };
 
 } // namespace observables
