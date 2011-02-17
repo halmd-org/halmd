@@ -25,7 +25,6 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_modes.hpp>
 #include <halmd/observables/host/samples/trajectory.hpp>
-#include <halmd/observables/samples/density_modes.hpp>
 #include <halmd/observables/utility/wavevectors.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -46,8 +45,8 @@ class density_modes
 {
 public:
     typedef observables::density_modes<dimension> _Base;
+    typedef typename _Base::density_modes_sample_type density_modes_sample_type;
     typedef typename _Base::wavevectors_type wavevectors_type;
-    typedef observables::samples::density_modes<dimension> density_modes_sample_type;
     typedef host::samples::trajectory<dimension, float_type> trajectory_sample_type;
     typedef halmd::utility::profiler profiler_type;
 
@@ -74,6 +73,12 @@ public:
     * compute density modes from trajectory sample and store with given time stamp
     */
     virtual void acquire(double time);
+
+    //! returns nested list of density modes
+    virtual typename _Base::result_type const& value() const
+    {
+        return rho_sample->rho;
+    }
 
     //! returns wavevectors object
     virtual wavevectors_type const& wavevectors() const
