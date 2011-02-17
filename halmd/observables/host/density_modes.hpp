@@ -46,9 +46,9 @@ class density_modes
 {
 public:
     typedef observables::density_modes<dimension> _Base;
+    typedef typename _Base::wavevectors_type wavevectors_type;
     typedef observables::samples::density_modes<dimension> density_modes_sample_type;
     typedef host::samples::trajectory<dimension, float_type> trajectory_sample_type;
-    typedef observables::utility::wavevectors<dimension> wavevectors_type;
     typedef halmd::utility::profiler profiler_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
@@ -56,14 +56,16 @@ public:
 
     boost::shared_ptr<density_modes_sample_type> rho_sample;
     boost::shared_ptr<trajectory_sample_type> trajectory_sample;
-    boost::shared_ptr<wavevectors_type> wavevectors;
 
     static void luaopen(lua_State* L);
 
     density_modes(
         boost::shared_ptr<density_modes_sample_type> rho_sample
       , boost::shared_ptr<trajectory_sample_type> trajectory_sample
-      , boost::shared_ptr<wavevectors_type> wavevectors
+      , std::vector<double> const& wavenumbers
+      , vector_type const& box_length
+      , double tolerance
+      , unsigned int max_count
     );
 
     void register_runtimes(profiler_type& profiler);
@@ -73,12 +75,16 @@ public:
     */
     virtual void acquire(double time);
 
-    /**
-     * return wavenumber grid
-     */
+    //! returns wavevectors object
+    virtual wavevectors_type const& wavevectors() const
+    {
+        return wavevectors_;
+    }
+
+    //! returns wavenumber grid
     virtual std::vector<double> const& wavenumbers() const
     {
-        return wavevectors->wavenumbers();
+        return wavevectors_.wavenumbers();
     }
 
     /**
@@ -89,10 +95,24 @@ public:
         return rho_sample->rho.size();
     }
 
+    //! returns tolerance on wavevector magnitude
+    double tolerance() const
+    {
+        return wavevectors_.tolerance();
+    }
+
+    //! returns maximum count of wavevectors per wavenumber
+    unsigned int maximum_count() const
+    {
+        return wavevectors_.maximum_count();
+    }
+
     // descriptions of module's runtime accumulators
     HALMD_PROFILING_TAG(sample_, "computation of density modes");
 
 protected:
+    wavevectors_type wavevectors_;
+
     // list of profiling timers
     boost::fusion::map<
         boost::fusion::pair<sample_, accumulator<double> >

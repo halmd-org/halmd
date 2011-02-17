@@ -37,19 +37,23 @@ template <int dimension, typename float_type>
 density_modes<dimension, float_type>::density_modes(
     shared_ptr<density_modes_sample_type> rho_sample
   , shared_ptr<trajectory_sample_type> trajectory_sample
-  , shared_ptr<wavevectors_type> wavevectors
+  , vector<double> const& wavenumbers
+  , vector_type const& box_length
+  , double tolerance
+  , unsigned int max_count
 )
     // dependency injection
   : rho_sample(rho_sample)
   , trajectory_sample(trajectory_sample)
-  , wavevectors(wavevectors)
+    // member initialisation
+  , wavevectors_(wavenumbers, box_length, tolerance, max_count)
 {
     // number of particle types must agree
     assert(rho_sample->rho.size() == trajectory_sample->r.size());
 
     // allocate memory
     unsigned int ntype = rho_sample->rho.size();
-    unsigned int nq = wavevectors->values().size();
+    unsigned int nq = wavevectors_.values().size();
     for (unsigned int i = 0; i < ntype; ++i) {
         typedef typename density_modes_sample_type::mode_vector_type mode_vector_type;
         rho_sample->rho[i].reset(new mode_vector_type(nq));
@@ -97,7 +101,7 @@ void density_modes<dimension, float_type>::acquire(double time)
             typename mode_vector_type::iterator rho_q = rho_vector.begin();
             typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
             // 3rd loop: iterate over wavevectors
-            BOOST_FOREACH (map_value_type const& q_pair, wavevectors->values()) {
+            BOOST_FOREACH (map_value_type const& q_pair, wavevectors_.values()) {
                 float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
                 *rho_q++ += mode_type(cos(q_r), -sin(q_r));
             }
@@ -124,9 +128,12 @@ void density_modes<dimension, float_type>::luaopen(lua_State* L)
                         .def(constructor<
                             shared_ptr<density_modes_sample_type>
                           , shared_ptr<trajectory_sample_type>
-                          , shared_ptr<wavevectors_type>
+                          , vector<double> const&
+                          , vector_type const&, double, unsigned int
                         >())
                         .def("register_runtimes", &density_modes::register_runtimes)
+                        .property("tolerance", &density_modes::tolerance)
+                        .property("maximum_count", &density_modes::maximum_count)
                 ]
             ]
         ]

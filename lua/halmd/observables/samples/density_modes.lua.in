@@ -43,14 +43,7 @@ function new()
         local particle = assert(core.particle)
         local dimension = assert(core.dimension)
 
-        local density_modes
-        if device() then
-            density_modes = assert(density_modes_wrapper.gpu[dimension])
-        else
-            density_modes = assert(density_modes_wrapper.host[dimension])
-        end
-        assert(density_modes)
-        sample = density_modes(particle.ntypes)
+        sample = assert(density_modes_wrapper[dimension](#particle.ntypes))
     end
     return sample
 end

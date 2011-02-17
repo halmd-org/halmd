@@ -42,9 +42,6 @@ local observables = {
         trajectory = require("halmd.observables.samples.trajectory")
       , density_modes = require("halmd.observables.samples.density_modes")
     }
-  , utility = {
-        wavevectors = require("halmd.observables.utility.wavevectors")
-    }
 }
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
@@ -76,18 +73,13 @@ function new(args)
     local trajectory_sample = assert(observables.samples.trajectory())
     local rho_sample = assert(observables.samples.density_modes())
 
-    -- construct wavevectors locally
-    local wavevectors = assert(observables.utility.wavevectors(
-        wavenumbers, box.length, tolerance, maximum_count
-    ))
-
     local density_modes
     if device() then
         density_modes = density_modes_wrapper.gpu[dimension]
     else
         density_modes = density_modes_wrapper.host[dimension]
     end
-    return density_modes(rho_sample, trajectory_sample, wavevectors)
+    return density_modes(rho_sample, trajectory_sample, wavenumbers, box.length, tolerance, maximum_count)
 end
 
 --
@@ -112,8 +104,8 @@ end
 --
 -- write module parameters to HDF5 group
 --
--- @param density_modes:   module instance
--- @param group: HDF5 group
+-- @param density_modes   module instance
+-- @param group           HDF5 group
 --
 function write_parameters(density_modes, group)
     group:write_attribute("tolerance", h5.float(), density_modes.tolerance)
