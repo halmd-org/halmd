@@ -24,8 +24,10 @@
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/observable.hpp>
 #include <halmd/observables/density_modes.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -51,7 +53,10 @@ public:
     typedef observable<dimension> _Base;
     typedef observables::density_modes<dimension> density_modes_type;
     typedef typename _Base::writer_type writer_type;
+    typedef halmd::utility::profiler profiler_type;
+
     typedef boost::array<double, 3> result_type;
+    typedef fixed_vector<double, dimension> vector_type;
 
     boost::shared_ptr<density_modes_type> density_modes;
 
@@ -59,7 +64,10 @@ public:
 
     ssf(
         boost::shared_ptr<density_modes_type> density_modes
+      , unsigned int npart
     );
+
+    virtual void register_runtimes(profiler_type& profiler);
 
     virtual void register_observables(writer_type& writer);
 
@@ -74,9 +82,15 @@ public:
         return value_;
     }
 
+    // module runtime accumulator descriptions
+    HALMD_PROFILING_TAG( sample_, "computation of static structure factor" );
+
 protected:
-    /** compute static structure factor and update accumulators 'result_acc_' */
-    virtual void compute_() = 0;
+    /** compute static structure factor and update result accumulators */
+    virtual void compute_();
+
+    /** total number of particles, required for normalisation */
+    unsigned int npart_;
 
     /**
      *  result for (partial) static structure factors
@@ -91,6 +105,11 @@ protected:
     std::vector<std::vector<accumulator<double> > > result_accumulator_;
     /** store time to be passed to HDF5 writer */
     double time_;
+
+    // list of profiling timers
+    boost::fusion::map<
+        boost::fusion::pair<sample_, accumulator<double> >
+    > runtime_;
 };
 
 } // namespace observables

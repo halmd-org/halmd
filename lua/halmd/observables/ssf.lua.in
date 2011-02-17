@@ -21,19 +21,9 @@ require("halmd.modules")
 
 -- grab environment
 local ssf_wrapper = {
-    host = {
-        [2] = halmd_wrapper.observables.host.ssf_2_
-      , [3] = halmd_wrapper.observables.host.ssf_3_
-    }
-  , [2] = halmd_wrapper.observables.ssf_2_
+    [2] = halmd_wrapper.observables.ssf_2_
   , [3] = halmd_wrapper.observables.ssf_3_
 }
-if halmd_wrapper.observables.gpu then
-    ssf_wrapper.gpu = {
-        [2] = halmd_wrapper.observables.gpu.ssf_2_
-      , [3] = halmd_wrapper.observables.gpu.ssf_3_
-    }
-end
 
 local observables = {
     density_modes = require("halmd.observables.density_modes")
@@ -41,7 +31,6 @@ local observables = {
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
-local device = require("halmd.device")
 local assert = assert
 
 module("halmd.observables.ssf", halmd.modules.register)
@@ -63,12 +52,7 @@ function new(args)
         return nil
     end
 
-    local ssf
-    if device() then
-        ssf = ssf_wrapper.gpu[dimension]
-    else
-        ssf = ssf_wrapper.host[dimension]
-    end
+    local ssf = ssf_wrapper[dimension]
     return ssf(density_modes, particle.nbox)
 end
 
