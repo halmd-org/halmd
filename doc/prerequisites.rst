@@ -94,8 +94,8 @@ We will build Boost and Boost.Log in a single step, therefore extract both
 source packages and copy the Boost.Log headers and library sources to the
 Boost source directory using ::
 
-   cp -r /tmp/boost-log-1.0/boost/log /tmp/boost_1_45_0/boost/
-   cp -r /tmp/boost-log-1.0/libs/log /tmp/boost_1_45_0/libs/
+   cp -r boost-log-1.0/boost/log boost_1_45_0/boost/
+   cp -r boost-log-1.0/libs/log boost_1_45_0/libs/
 
 In the Boost source directory, bootstrap the build with ::
 
