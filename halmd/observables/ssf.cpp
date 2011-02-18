@@ -136,6 +136,8 @@ void ssf<dimension>::compute_()
 
     // perform computation of partial SSF for all combinations of particle types
     wavevectors_map_type const& wavevectors = density_modes->wavevectors().values();
+    if (wavevectors.empty()) return; // nothing to do
+
     unsigned int ntype = density_modes->value().size();
     unsigned int k = 0;
     for (unsigned char i = 0; i < ntype; ++i) {
@@ -144,33 +146,22 @@ void ssf<dimension>::compute_()
             rho_iterator rho_q1 = density_modes->value()[j]->begin();
             result_iterator result = result_accumulator_[k].begin();
 
-            // iterate over ranges of wavevectors with equal magnitude
-            wavevector_iterator q_begin = wavevectors.begin();
-            while (q_begin != wavevectors.end()) {
-                // find range with equal map key
-                typedef typename wavevectors_map_type::value_type value_type;
-                wavevector_iterator q_end = adjacent_find(
-                    q_begin, wavevectors.end()
-                  , bind(less<double>(), bind(&value_type::first, _1), bind(&value_type::first, _2))
-                );
-                // adjacent_find(begin, end, pred) returns the first iterator 'it' where 'pred(it, ++it)' holds
-                // and 'end' if there is no match. Thus, the range of wavevectors in case
-                // of a match is (q_begin, ++q_end). This is inconvenient and we fix it:
-                if (q_end != wavevectors.end()) {
-                    ++q_end;
+            // accumulate products of density modes with equal wavenumber,
+            // iterate over sorted list of wavevectors
+            double sum = 0;
+            unsigned int count = 0;
+            wavevector_iterator q = wavevectors.begin();
+            wavevector_iterator q_next = q; ++q_next;
+            while (q != wavevectors.end()) {
+                // rho_q × rho_q^*
+                sum += real(*rho_q0) * real(*rho_q1) + imag(*rho_q0) * imag(*rho_q1);
+                ++count;
+                // find end of range with equal wavenumber
+                if (q_next == wavevectors.end() || q->first != q_next->first) {
+                    (*result++)(sum / count);   // add result to output accumulator
+                    sum = 0; count = 0;
                 }
-
-                // accumulate products of density modes with equal wavenumber
-                double sum = 0;
-                unsigned int count = 0;
-                for (wavevector_iterator q = q_begin; q != q_end; ++q, ++rho_q0, ++rho_q1, ++count) {
-                    // rho_q × rho_q^*
-                    sum += real(*rho_q0) * real(*rho_q1) + imag(*rho_q0) * imag(*rho_q1);
-                }
-                // add result to accumulator
-                (*result++)(sum / count);
-                // start next range at end of current one
-                q_begin = q_end;
+                ++q; ++q_next; ++rho_q0; ++rho_q1;
             }
         }
     }
