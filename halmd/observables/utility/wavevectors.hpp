@@ -20,7 +20,7 @@
 #ifndef HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
 #define HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
 
-#include <map>
+#include <utility>
 #include <vector>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
@@ -33,6 +33,9 @@ namespace observables { namespace utility
 /**
  * construct set of wavevector shells compatible with the reciprocal
  * lattice and a list of wavenumbers
+ *
+ * The result in value() is a sorted container of key/value pairs
+ * (wavenumber, wavevector).
  */
 
 template <int dimension>
@@ -40,7 +43,7 @@ class wavevectors
 {
 public:
     typedef fixed_vector<double, dimension> vector_type;
-    typedef std::multimap<double, vector_type> map_type;
+    typedef std::vector<std::pair<double, vector_type> > map_type;
 
     wavevectors(
         std::vector<double> const& wavenumbers

@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
 #include <cmath>
 #include <iterator>
 #include <sstream>
@@ -51,17 +52,29 @@ wavevectors<dimension>::wavevectors(
     LOG("tolerance on wavevector magnitude: " << tolerance_);
     LOG("maximum number of wavevectors per wavenumber: " << max_count_);
 
+    // construct wavevectors and store as key/value pairs (wavenumber, wavevector)
     algorithm::host::pick_lattice_points_from_shell(
         wavenumbers.begin(), wavenumbers.end()
-      , inserter(wavevectors_, wavevectors_.begin())
+      , back_inserter(wavevectors_)
       , element_div(vector_type(2 * M_PI), box_length)
       , tolerance
       , max_count
     );
 
+    // sort wavevector map according to keys (wavenumber)
+    stable_sort(
+        wavevectors_.begin(), wavevectors_.end()
+      , bind(less<double>(), bind(&map_type::value_type::first, _1), bind(&map_type::value_type::first, _2))
+    );
+
     // remove wavenumbers with no compatible wavevectors
     for (vector<double>::iterator q_it = wavenumbers_.begin(); q_it != wavenumbers_.end(); ++q_it) {
-        if (!wavevectors_.count(*q_it)) {
+        // find wavevector q with |q| = *q_it
+        typename map_type::const_iterator found = find_if(
+            wavevectors_.begin(), wavevectors_.end()
+          , bind(equal_to<double>(), bind(&map_type::value_type::first, _1), *q_it)
+        );
+        if (found == wavevectors_.end()) {
             LOG_WARNING("No wavevector compatible with |q| ≈ " << *q_it << ". Value discarded");
             wavenumbers_.erase(q_it--);   // post-decrement iterator, increment at end of loop
         }
