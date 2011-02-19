@@ -67,9 +67,9 @@ void thermodynamics<dimension, float_type>::prepare()
  * unset flags for auxiliary variables of force module at the end
  */
 template <int dimension, typename float_type>
-void thermodynamics<dimension, float_type>::sample(double time)
+void thermodynamics<dimension, float_type>::sample(double time, uint64_t step)
 {
-    _Base::sample(time);
+    _Base::sample(time, step);
     force->aux_disable();
 }
 

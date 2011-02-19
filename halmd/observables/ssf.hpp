@@ -22,6 +22,7 @@
 
 #include <boost/array.hpp>
 #include <lua.hpp>
+#include <set>
 #include <vector>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
@@ -71,10 +72,13 @@ public:
 
     virtual void register_observables(writer_type& writer);
 
+    // data stream interface
+    virtual void notify(uint64_t step);
+
     virtual void prepare() {};
 
     // compute ssf from sample of density Fourier modes and store with given time
-    virtual void sample(double time);
+    virtual void sample(double time, uint64_t step);
 
     //! returns last computed values for static structure factor
     std::vector<std::vector<result_type> > const& value() const
@@ -105,6 +109,9 @@ protected:
     std::vector<std::vector<accumulator<double> > > result_accumulator_;
     /** store time to be passed to HDF5 writer */
     double time_;
+
+    // list of issued, but open data requests to sources
+    std::set<uint64_t> issued_request_;
 
     // list of profiling timers
     boost::fusion::map<

@@ -19,6 +19,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/observables/host/density_modes.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -37,6 +38,7 @@ template <int dimension, typename float_type>
 density_modes<dimension, float_type>::density_modes(
     shared_ptr<density_modes_sample_type> rho_sample
   , shared_ptr<trajectory_sample_type> trajectory_sample
+  , shared_ptr<trajectory_stream_type> trajectory_stream
   , vector<double> const& wavenumbers
   , vector_type const& box_length
   , double tolerance
@@ -45,6 +47,7 @@ density_modes<dimension, float_type>::density_modes(
     // dependency injection
   : rho_sample(rho_sample)
   , trajectory_sample(trajectory_sample)
+  , trajectory_stream(trajectory_stream)
     // member initialisation
   , wavevectors_(wavenumbers, box_length, tolerance, max_count)
 {
@@ -67,6 +70,52 @@ template <int dimension, typename float_type>
 void density_modes<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
     profiler.register_map(runtime_);
+}
+
+/**
+ * register data request from a sink
+ */
+template <int dimension, typename float_type>
+void density_modes<dimension, float_type>::register_request(uint64_t step, function<void(uint64_t)> callback)
+{
+    LOG_TRACE("[density_modes] request received for step " << step);
+    request_.insert(make_pair(step, callback));
+
+    // in order to satisfy the request, we need to issue requests to our sources,
+    // but only if not already done for this timestamp 'step'
+    if (issued_request_.find(step) == issued_request_.end()) {
+        LOG_TRACE("[density_modes] issue requests for step " << step);
+        trajectory_stream->register_request(step, bind(&density_modes::notify, this, _1));
+        issued_request_.insert(step);
+    }
+}
+
+/**
+ * notification when trajectory data are available
+ *
+ */
+template <int dimension, typename float_type>
+void density_modes<dimension, float_type>::notify(uint64_t step)
+{
+    LOG_TRACE("[density_modes] notification in step " << step);
+
+    // remove from list of open requests
+    assert(issued_request_.find(step) != issued_request_.end());
+    issued_request_.erase(step);
+
+    // transform trajectory data to density modes
+    acquire(step);  // FIXME rename to transform() or compute()
+
+    // find requests with matching timestamp 'step'
+    typedef request_container_type::iterator iterator_type;
+    std::pair<iterator_type, iterator_type> range = request_.equal_range(step);
+
+    // notify all callbacks of range
+    for (iterator_type it = range.first; it != range.second; ++it) {
+        it->second(step);
+    }
+    // remove fulfilled requests from list
+    request_.erase(range.first, range.second);
 }
 
 /**
@@ -128,6 +177,7 @@ void density_modes<dimension, float_type>::luaopen(lua_State* L)
                         .def(constructor<
                             shared_ptr<density_modes_sample_type>
                           , shared_ptr<trajectory_sample_type>
+                          , shared_ptr<trajectory_stream_type>
                           , vector<double> const&
                           , vector_type const&, double, unsigned int
                         >())

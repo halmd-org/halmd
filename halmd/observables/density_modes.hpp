@@ -20,6 +20,7 @@
 #ifndef HALMD_OBSERVABLES_DENSITY_MODES_HPP
 #define HALMD_OBSERVABLES_DENSITY_MODES_HPP
 
+#include <boost/function.hpp>
 #include <lua.hpp>
 #include <vector>
 
@@ -49,6 +50,11 @@ public:
 
     density_modes() {}
     virtual ~density_modes() {}
+
+    // data stream interface
+    virtual void register_request(uint64_t step, boost::function<void(uint64_t)> callback) = 0;
+    virtual void notify(uint64_t step) = 0;
+
     virtual void acquire(double time) = 0;
     virtual result_type const& value() const = 0;
     virtual wavevectors_type const& wavevectors() const = 0;

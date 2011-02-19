@@ -111,9 +111,13 @@ void sampler<dimension>::sample(bool force)
 
     if (!(step % statevars_interval_) || force) {
         BOOST_FOREACH (shared_ptr<observable_type> const& observable, observables) {
-            observable->sample(time);
+            observable->sample(time, step); //< issue requests to data streams
             is_sampling_step = true;
         }
+        // notify trajectory stream about available data and trigger chain of signals/requests
+        // which completes the computation of observables
+        trajectory->notify(step);
+        // output results
         if (statevars_writer) {
             scoped_timer<timer> timer_(at_key<msv_output_>(runtime_));
             statevars_writer->write();

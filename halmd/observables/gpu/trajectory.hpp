@@ -21,6 +21,7 @@
 #define HALMD_OBSERVABLES_GPU_TRAJECTORY_HPP
 
 #include <lua.hpp>
+#include <map>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -61,6 +62,15 @@ public:
       , boost::shared_ptr<box_type> box
     );
     virtual void acquire(double time);
+
+    // data stream interface
+    virtual void register_request(uint64_t step, boost::function<void(uint64_t)> callback);
+    virtual void notify(uint64_t step);
+
+protected:
+    // list of data requests from sinks
+    typedef std::multimap<uint64_t, boost::function<void(uint64_t)> > request_container_type;
+    request_container_type request_;
 };
 
 /**
@@ -89,6 +99,15 @@ public:
       , boost::shared_ptr<box_type> box
     );
     virtual void acquire(double time);
+
+    // data stream interface
+    virtual void register_request(uint64_t step, boost::function<void(uint64_t)> callback);
+    virtual void notify(uint64_t step);
+
+protected:
+    // list of data requests from sinks
+    typedef std::multimap<uint64_t, boost::function<void(uint64_t)> > request_container_type;
+    request_container_type request_;
 };
 
 }} // namespace observables::gpu

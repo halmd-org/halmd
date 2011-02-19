@@ -57,6 +57,83 @@ trajectory<host::samples::trajectory<dimension, float_type> >::trajectory(
 {
 }
 
+/**
+ * register data request from a sink
+ */
+template <int dimension, typename float_type>
+void trajectory<gpu::samples::trajectory<dimension, float_type> >::register_request(
+    uint64_t step
+  , function<void(uint64_t)> callback
+)
+{
+    LOG_TRACE("[trajectory] request received for step " << step);
+    request_.insert(make_pair(step, callback));
+}
+
+template <int dimension, typename float_type>
+void trajectory<host::samples::trajectory<dimension, float_type> >::register_request(
+    uint64_t step
+  , function<void(uint64_t)> callback
+)
+{
+    LOG_TRACE("[trajectory] request received for step " << step);
+    request_.insert(make_pair(step, callback));
+}
+
+/**
+ * notification when trajectory data are available
+ *
+ */
+template <int dimension, typename float_type>
+void trajectory<gpu::samples::trajectory<dimension, float_type> >::notify(uint64_t step)
+{
+    LOG_TRACE("[trajectory] notification in step " << step);
+
+    // find requests with matching timestamp 'step'
+    typedef request_container_type::iterator iterator_type;
+    std::pair<iterator_type, iterator_type> range = request_.equal_range(step);
+
+    if (range.first == range.second) {
+        LOG_TRACE("[trajectory] ignore notification in step " << step);
+        return; // nothing to do
+    }
+
+    // copy trajectory data from particle container
+    acquire(step);
+
+    // notify all callbacks of range
+    for (iterator_type it = range.first; it != range.second; ++it) {
+        it->second(step);
+    }
+    // remove fulfilled requests from list
+    request_.erase(range.first, range.second);
+}
+
+template <int dimension, typename float_type>
+void trajectory<host::samples::trajectory<dimension, float_type> >::notify(uint64_t step)
+{
+    LOG_TRACE("[trajectory] notification in step " << step);
+
+    // find requests with matching timestamp 'step'
+    typedef request_container_type::iterator iterator_type;
+    std::pair<iterator_type, iterator_type> range = request_.equal_range(step);
+
+    if (range.first == range.second) {
+        LOG_TRACE("[trajectory] ignore notification in step " << step);
+        return; // nothing to do
+    }
+
+    // copy trajectory data from particle container
+    acquire(step);
+
+    // notify all callbacks of range
+    for (iterator_type it = range.first; it != range.second; ++it) {
+        it->second(step);
+    }
+    // remove fulfilled requests from list
+    request_.erase(range.first, range.second);
+}
+
 
 /**
  * Sample trajectory

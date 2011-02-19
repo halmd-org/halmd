@@ -45,22 +45,28 @@ local assert = assert
 
 module("halmd.observables.trajectory", halmd.modules.register)
 
+-- singleton FIXME call ssf with sampler.trajectory
+local trajectory
+
 --
 -- construct trajectory module
 --
 function new(args)
-    -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
-    local sample = assert(observables.samples.trajectory())
+    if not trajectory then
+        -- dependency injection
+        local core = mdsim.core()
+        local dimension = assert(core.dimension)
+        local particle = assert(core.particle)
+        local box = assert(core.box)
+        local sample = assert(observables.samples.trajectory())
 
-    local trajectory
-    if device() then
-        trajectory = assert(trajectory_wrapper.gpu[dimension])
-    else
-        trajectory = assert(trajectory_wrapper.host[dimension])
+        local trajectory_
+        if device() then
+            trajectory_ = assert(trajectory_wrapper.gpu[dimension])
+        else
+            trajectory_ = assert(trajectory_wrapper.host[dimension])
+        end
+        trajectory = trajectory_(sample, particle, box)
     end
-    return trajectory(sample, particle, box)
+    return trajectory
 end

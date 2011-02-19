@@ -66,7 +66,7 @@ public:
     virtual void register_observables(writer_type& writer);
 
     // sample macroscopic state variables and store with given time
-    virtual void sample(double time);
+    virtual void sample(double time, uint64_t step);
 
     /** potential energy per particle */
     virtual double en_pot() = 0;

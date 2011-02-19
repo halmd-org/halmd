@@ -20,6 +20,7 @@
 #ifndef HALMD_OBSERVABLES_TRAJECTORY_HPP
 #define HALMD_OBSERVABLES_TRAJECTORY_HPP
 
+#include <boost/function.hpp>
 #include <lua.hpp>
 
 namespace halmd
@@ -36,6 +37,10 @@ public:
     trajectory() {}
     virtual ~trajectory() {};
     virtual void acquire(double time) = 0;
+
+    // data stream interface
+    virtual void register_request(uint64_t step, boost::function<void(uint64_t)> callback) = 0;
+    virtual void notify(uint64_t step) = 0;
 };
 
 } // namespace observables
