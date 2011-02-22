@@ -110,6 +110,15 @@ register_runtimes(profiler_type& profiler)
 }
 
 /**
+ * register observables
+ */
+template <int dimension, typename float_type>
+void verlet_nvt_hoover<dimension, float_type>::register_observables(writer_type& writer)
+{
+    writer.register_observable("ENHC", &en_nhc_, "energy of Nosé-Hoover chain variables per particle");
+}
+
+/**
  * set integration time-step
  */
 template <int dimension, typename float_type>
@@ -216,6 +225,13 @@ finalize()
         LOG_ERROR("CUDA: " << e.what());
         throw std::runtime_error("failed to stream second leapfrog step on GPU");
     }
+
+    // compute energy contribution of chain variables
+    en_nhc_ = temperature_ * (dimension * particle->nbox * xi[0] + xi[1]);
+    for (unsigned int i = 0; i < 2; ++i ) {
+        en_nhc_ += mass_xi_[i] * v_xi[i] * v_xi[i] / 2;
+    }
+    en_nhc_ /= particle->nbox;
 }
 
 /**
@@ -290,6 +306,7 @@ luaopen(lua_State* L)
                               , float_type, float_type, float_type
                             >())
                             .def("register_runtimes", &verlet_nvt_hoover::register_runtimes)
+                            .def("register_observables", &verlet_nvt_hoover::register_observables)
                             .def_readonly("mass", (fixed_vector<double, 2> const& (verlet_nvt_hoover::*)() const)&verlet_nvt_hoover::mass) // FIXME make read/write
                             .def_readonly("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
                             .property("module_name", &module_name_wrapper<dimension, float_type>)

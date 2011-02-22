@@ -26,6 +26,7 @@
 #include <lua.hpp>
 
 #include <halmd/algorithm/gpu/reduce.hpp>
+#include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -46,7 +47,9 @@ public:
     typedef mdsim::integrators::nvt<dimension> _Base;
     typedef gpu::particle<dimension, float> particle_type;
     typedef mdsim::box<dimension> box_type;
+    typedef io::statevars::writer<dimension> writer_type;
     typedef utility::profiler profiler_type;
+
     typedef typename particle_type::vector_type vector_type;
     typedef typename boost::mpl::if_<
         boost::is_same<float_type, double>, dsfloat, float_type
@@ -68,6 +71,8 @@ public:
       , float_type resonance_frequency
     );
     void register_runtimes(profiler_type& profiler);
+    void register_observables(writer_type& writer);
+
     virtual void integrate();
     virtual void finalize();
     virtual void timestep(double timestep);
@@ -122,6 +127,8 @@ private:
     float_type temperature_;
     /** target value for twice the total kinetic energy */
     float_type en_kin_target_2_;
+    /** energy of chain variables per particle */
+    float_type en_nhc_;
 
     /** resonance frequency of heat bath, determines coupling parameters below */
     float_type resonance_frequency_;
