@@ -12,3 +12,7 @@ reference a ticket or ``closes #no`` to close it, for example ::
 
 http://www.redmine.org/wiki/redmine/RedmineSettings#Referencing-issues-in-commit-messages
 
+Coding conventions
+------------------
+
+Please refer to the document on :doc:`coding conventions <style>`.

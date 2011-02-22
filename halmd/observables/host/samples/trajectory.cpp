@@ -65,7 +65,10 @@ void trajectory<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
@@ -83,6 +86,8 @@ static __attribute__((constructor)) void register_lua()
         &trajectory<2, float>::luaopen
     ];
 }
+
+} // namespace
 
 #ifndef USE_HOST_SINGLE_PRECISION
 template class trajectory<3, double>;

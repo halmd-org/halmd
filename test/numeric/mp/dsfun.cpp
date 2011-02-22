@@ -20,6 +20,7 @@
 #define BOOST_TEST_MODULE test_dsfun
 #include <boost/test/unit_test.hpp>
 
+#include <test/tools/cuda.hpp>
 #include "dsfun_kernel.hpp"
 
 #define BLOCKS 4096
@@ -27,6 +28,8 @@
 
 using namespace halmd;
 using namespace halmd::test;
+
+BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
 /**
  * DSFUN addition test

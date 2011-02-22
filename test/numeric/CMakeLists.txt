@@ -5,7 +5,7 @@ target_link_libraries(test_accumulator
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
 add_test(numeric_accumulator
-  test_accumulator
+  test_accumulator --log_level=test_suite
 )
 
 add_executable(test_pow
@@ -17,7 +17,7 @@ target_link_libraries(test_pow
   rt
   )
 add_test(numeric_pow
-  test_pow
+  test_pow --log_level=test_suite
 )
 
 add_subdirectory(mp)

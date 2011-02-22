@@ -8,6 +8,6 @@ if(WITH_CUDA)
     ${CUDA_LIBRARIES}
   )
   add_test(numeric_mp_dsfun
-    test_dsfun
+    test_dsfun --log_level=test_suite
   )
 endif(WITH_CUDA)

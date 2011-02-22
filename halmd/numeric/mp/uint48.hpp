@@ -21,6 +21,7 @@
 #define HALMD_NUMERIC_MP_UINT48_HPP
 
 #include <halmd/config.hpp>
+#include <halmd/numeric/zero.hpp>
 
 //
 // The multiply-add operation is based on the rand48 generator of the
@@ -41,12 +42,27 @@ namespace halmd
  * and that we define a custom uint48 type instead of using
  * the predefined uint3, as we overload the add operators.
  */
-struct uint48 : uint3 {};
+struct uint48
+{
+    unsigned int x, y, z;
+};
 
-inline HALMD_GPU_ENABLED uint48 make_uint48(uint x, uint y, uint z)
+inline HALMD_GPU_ENABLED uint48 make_uint48(unsigned int x, unsigned int y, unsigned int z)
 {
     uint48 u; u.x = x; u.y = y; u.z = z; return u;
 }
+
+/**
+ * Helper to initialize 48-bit integer to zero.
+ */
+template <>
+struct zero<uint48>
+{
+    HALMD_GPU_ENABLED operator uint48() const
+    {
+        return make_uint48(0, 0, 0);
+    }
+};
 
 /**
  * combined multiply-add operation for 48 bit integers

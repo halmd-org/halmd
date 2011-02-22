@@ -123,7 +123,7 @@ struct reduce_blocks<sum_, host_output_type>
                 h_block.end()
               , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
             )
-          , host_output_type() // value-initialized
+          , host_output_type(0)
         );
     }
 };

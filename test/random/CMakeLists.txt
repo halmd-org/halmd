@@ -9,6 +9,6 @@ if(WITH_CUDA)
     ${GSL_LIBRARIES}
   )
   add_test(random_distributions
-    test_rand_dist
+    test_rand_dist --log_level=test_suite
   )
 endif(WITH_CUDA)

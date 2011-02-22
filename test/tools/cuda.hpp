@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,23 +20,45 @@
 #ifndef HALMD_TEST_TOOLS_CUDA_HPP
 #define HALMD_TEST_TOOLS_CUDA_HPP
 
+#include <boost/shared_ptr.hpp>
 #include <boost/test/unit_test_monitor.hpp>
 #include <iostream>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-// "global fixture:" select CUDA device
-struct set_cuda_device {
+/**
+ *  "global fixture" for Boost Unit Test Framework: select CUDA device
+ *
+ *  create a CUDA context on a free device using the driver library, respect device locks
+ */
+class set_cuda_device
+{
+public:
     set_cuda_device() {
-        try {
-            cuda::device::set(0);
+        // choose first available CUDA device
+        int device_count = cuda::device::count();
+        for (int i = 0; i < device_count; ++i) {
+            try {
+                // create CUDA context and associate it with this thread
+                ctx_.reset(new cuda::driver::context(i));
+                break;
+            }
+            catch (cuda::driver::error const&) {
+                // device is compute-exlusive mode and in use
+            }
         }
-        catch (cuda::error const& e) {
-            std::cerr << "CUDA error: " << e.what() << std::endl;
-            throw;
-        }
+        BOOST_TEST_MESSAGE("Using CUDA device #" << cuda::driver::context::device());
     }
-    ~set_cuda_device() {}  // release device here?
+
+    ~set_cuda_device()
+    {
+        // Detach CUDA runtime from CUDA device context
+        // This explicit clean-up is needed with CUDA < 3.0.
+        cuda::thread::exit();
+    }
+
+private:
+    boost::shared_ptr<cuda::driver::context> ctx_;
 };
 
 void cuda_error_translator( cuda::error const& e)

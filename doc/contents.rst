@@ -8,6 +8,7 @@ HALMD documentation
    readme
    usage
    faq
+   validation
    data
    units
    developer

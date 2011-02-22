@@ -65,7 +65,7 @@ namespace test
 {
 
 #ifdef WITH_CUDA
-boost::shared_ptr<utility::gpu::device> make_device(std::string const& backend)
+boost::shared_ptr<utility::gpu::device> make_device(std::string const& backend, unsigned int threads=128)
 {
     if (backend == "gpu") {
         static boost::weak_ptr<utility::gpu::device> device;
@@ -73,7 +73,7 @@ boost::shared_ptr<utility::gpu::device> make_device(std::string const& backend)
         if (!device_) {
             device_ = boost::make_shared<utility::gpu::device>(
                 std::vector<int>()   // devices
-              , 128                  // threads
+              , threads              // threads
             );
             device = device_;
         }

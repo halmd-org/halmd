@@ -233,7 +233,10 @@ luaopen(lua_State* L)
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(2) //< distance of derived to base class
     [
@@ -243,6 +246,8 @@ static __attribute__((constructor)) void register_lua()
         &verlet_nvt_andersen<2, float, random::gpu::rand48>::luaopen
     ];
 }
+
+} // namespace
 
 // explicit instantiation
 template class verlet_nvt_andersen<3, float, random::gpu::rand48>;

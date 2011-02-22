@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:halmd="http://research.colberg.org/projects/halmd"
+                xmlns:halmd="http://halmd.org"
                 xmlns:doxygen="http://www.stack.nl/~dimitri/doxygen"
                 xmlns:rst="http://docutils.sourceforge.net/rst.html"
                 xmlns:func="http://exslt.org/functions"
@@ -9,7 +9,7 @@
                 extension-element-prefixes="halmd rst doxygen func str">
 
 <!--
-  Copyright © 2010  Peter Colberg
+  Copyright © 2010-2011  Peter Colberg
 
   This file is part of HALMD.
 
@@ -176,10 +176,7 @@ Modules
     <xsl:when test="not($compound/@kind='class' or $compound/@kind='struct')">
       <func:result select="false()" />
     </xsl:when>
-    <xsl:when test="not($compound/sectiondef/memberdef/name='_Self')">
-      <func:result select="false()" />
-    </xsl:when>
-    <xsl:when test="not($compound/sectiondef/memberdef/name='depends')">
+    <xsl:when test="not($compound/sectiondef/memberdef/name='luaopen')">
       <func:result select="false()" />
     </xsl:when>
     <xsl:otherwise>

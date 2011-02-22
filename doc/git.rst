@@ -3,13 +3,13 @@
 Getting the source code
 ***********************
 
-HALMD is maintained in a public `Git <http://git-scm.com/>`_ repository at ::
+HALMD is maintained in a public `Git <http://git-scm.com/>`_ repository ::
 
-  git://git.colberg.org/research/halmd
+  git clone git://git.halmd.org/halmd.git
 
 In case you are behind a firewall that blocks the git protocol port, use ::
 
-  http://git.colberg.org/research/halmd
+  git clone http://git.halmd.org/halmd.git
 
 
 Git tutorials

@@ -1,0 +1,118 @@
+--
+-- Copyright © 2011  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab environment
+local ssf_wrapper = {
+    host = {
+        [2] = halmd_wrapper.observables.host.ssf_2_
+      , [3] = halmd_wrapper.observables.host.ssf_3_
+    }
+  , [2] = halmd_wrapper.observables.ssf_2_
+  , [3] = halmd_wrapper.observables.ssf_3_
+}
+if halmd_wrapper.observables.gpu then
+    ssf_wrapper.gpu = {
+        [2] = halmd_wrapper.observables.gpu.ssf_2_
+      , [3] = halmd_wrapper.observables.gpu.ssf_3_
+    }
+end
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
+local observables = {
+    samples = {
+        trajectory = require("halmd.observables.samples.trajectory")
+    }
+  , utility = {
+        wavevectors = require("halmd.observables.utility.wavevectors")
+    }
+}
+local h5 = halmd_wrapper.h5
+local po = halmd_wrapper.po
+local device = require("halmd.device")
+local assert = assert
+
+module("halmd.observables.ssf", halmd.modules.register)
+
+--
+-- construct instance of ssf module
+--
+-- @param args parameter table
+-- @returns instance of ssf module
+--
+function new(args)
+    -- dependency injection
+    local core = mdsim.core()
+    local dimension = assert(core.dimension)
+    local sample = assert(observables.samples.trajectory())
+    local box = assert(core.box)
+
+    -- command line options
+    local tolerance = args.tolerance or 0.01 -- default value
+    local maximum_count = args.maximum_count or 10 -- default value
+    local wavenumbers = args.wavenumbers
+
+    if not wavenumbers then
+        return nil
+    end
+
+    local wavevectors = assert(observables.utility.wavevectors(
+        wavenumbers, box.length, tolerance, maximum_count
+    ))
+
+    local ssf
+    if device() then
+        ssf = ssf_wrapper.gpu[dimension]
+    else
+        ssf = ssf_wrapper.host[dimension]
+    end
+    return ssf(sample, wavevectors)
+end
+
+--
+-- returns module description
+--
+function name()
+    return "static structure factor"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+-- the wavenumber grid is defined here rather than in utility.wavenumbers
+function options(desc)
+    desc:add("wavenumbers", po.float_array(), "list of wavenumbers")
+    desc:add("tolerance", po.float(), "relative tolerance on magnitude of wavevectors")
+    desc:add("maximum-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param ssf:   module instance
+-- @param group: HDF5 group
+--
+function write_parameters(ssf, group)
+    group:write_attribute("tolerance", h5.float(), ssf.tolerance)
+    group:write_attribute("maximum_count", h5.uint(), ssf.maximum_count)
+end

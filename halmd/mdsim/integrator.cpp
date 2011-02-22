@@ -42,12 +42,17 @@ void integrator<dimension>::luaopen(lua_State* L)
             [
                 class_<integrator, shared_ptr<integrator> >(class_name.c_str())
                     .property("timestep", (double (integrator::*)() const) &integrator::timestep)
+                    .def("integrate", &integrator::integrate)
+                    .def("finalize", &integrator::finalize)
             ]
         ]
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
@@ -57,6 +62,8 @@ static __attribute__((constructor)) void register_lua()
         &integrator<2>::luaopen
     ];
 }
+
+} // namespace
 // explicit instantiation
 template class integrator<3>;
 template class integrator<2>;

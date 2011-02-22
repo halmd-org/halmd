@@ -122,7 +122,7 @@ void boltzmann(string const& backend)
     // shift mean velocity to zero
     vector_type v_cm = thermodynamics->v_cm();
     velocity->shift(-v_cm);
-    vcm_limit = (backend == "gpu") ? 0.1 * eps_float : eps;
+    vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 2 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // first shift, then rescale in one step

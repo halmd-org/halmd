@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -45,6 +45,9 @@ using namespace std;
  *
  * a more detailed analysis and more accurate values are found in
  * Johnson, Zollweg, and Gubbins, Mol. Phys. 78, 591 (1993).
+ *
+ * and we refer to results from integral equations theory:
+ * Ayadim, Oettel, Amokrane, J. Phys.: Condens. Matter 21, 115103 (2009).
  */
 
 const double eps = numeric_limits<double>::epsilon();
@@ -57,6 +60,22 @@ const float eps_float = numeric_limits<float>::epsilon();
 inline double heat_capacity_nve(double en_kin, double variance, unsigned npart)
 {
     return 1 / (2./3 - npart * variance / (en_kin * en_kin));
+}
+
+/**
+ * from pressure fluctuations and the hypervirial function, one can
+ * compute the compressibility. In the microcanonical ensemble, the
+ * adiabatic compressibility is obtained most easily.
+ * see Allen, Tildesley: Computer Simulation of Liquids (Oxford, 1989)
+ */
+
+template<int dimension>
+inline double adiabatic_compressibility_nve(
+    double press, double press_variance, double hypervirial, double temp, double density, unsigned npart
+)
+{
+      double x = press_variance * npart / density / temp;
+      return 1 / (2. / dimension * temp * density + press + hypervirial * density - x);
 }
 
 /** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
@@ -191,7 +210,7 @@ void thermodynamics(string const& backend)
     float rc = 4.0;
     double timestep = 0.001;
     unsigned npart = (backend == "gpu") ? 4000 : 1500;
-    unsigned int random_seed = 42;
+    char const* random_file = "/dev/urandom";
     fixed_vector<double, dimension> box_ratios;
     box_ratios[0] = 1;
     box_ratios[1] = 2;
@@ -219,7 +238,7 @@ void thermodynamics(string const& backend)
 #endif /* WITH_CUDA */
     shared_ptr<halmd::random::random> random = make_random(
         backend
-      , random_seed
+      , random_file
     );
 
     BOOST_TEST_MESSAGE("initialise simulation modules");
@@ -232,7 +251,7 @@ void thermodynamics(string const& backend)
 
     core->integrator = make_verlet_nvt_andersen_integrator<dimension>(
         backend, core->particle, core->box, random
-      , 0.01 /* time step */, temp, 5. /* collision rate */
+      , 0.005 /* time step */, temp, 1. /* collision rate */
     );
 
     core->force = make_lennard_jones_force<dimension>(
@@ -248,10 +267,10 @@ void thermodynamics(string const& backend)
 
     core->velocity = make_boltzmann(backend, core->particle, random, temp);
 
-    // relax configuration and thermalise at given temperature, run for t*=50
+    // relax configuration and thermalise at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
     core->prepare();
-    uint64_t steps = static_cast<uint64_t>(ceil(50 / core->integrator->timestep()));
+    uint64_t steps = static_cast<uint64_t>(ceil(30 / core->integrator->timestep()));
     for (uint64_t i = 0; i < steps; ++i) {
         core->mdstep();
     }
@@ -273,7 +292,7 @@ void thermodynamics(string const& backend)
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // take averages of fluctuating quantities,
-    accumulator<double> temp_, press, en_pot;
+    accumulator<double> temp_, press, en_pot, hypervir;
 
     // equilibration run, measure temperature in second half
     BOOST_TEST_MESSAGE("equilibrate initial state");
@@ -302,6 +321,8 @@ void thermodynamics(string const& backend)
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
+    steps = static_cast<uint64_t>(ceil(60 / timestep));
+    period = static_cast<uint64_t>(round(.05 / timestep));
     core->force->aux_disable();
     for (uint64_t i = 0; i < steps; ++i) {
         // turn on evaluation of potential energy, virial, etc.
@@ -317,6 +338,7 @@ void thermodynamics(string const& backend)
             temp_(thermodynamics->temp());
             press(thermodynamics->pressure());
             en_pot(thermodynamics->en_pot());
+            hypervir(thermodynamics->hypervirial());
             max_en_diff = max(abs(thermodynamics->en_tot() - en_tot), max_en_diff);
             core->force->aux_disable();
         }
@@ -329,11 +351,15 @@ void thermodynamics(string const& backend)
     const double en_limit = max(2e-5, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
 
-    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 2e-3);
+    // allow larger tolerance for the host simulation with fewer particles
+    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), (backend == "gpu") ? 3e-3 : 6e-3);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     if (dimension == 3) {
         double cV = heat_capacity_nve(mean(temp_), variance(temp_), npart);
+        double chi_S = adiabatic_compressibility_nve<dimension>(
+            mean(press), variance(press), mean(hypervir), mean(temp_), density, npart
+        );
 
         // corrections for trunctated LJ potential, see e.g. Johnsen et al. (1993)
         double press_corr = 32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3);
@@ -348,10 +374,15 @@ void thermodynamics(string const& backend)
         BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
         BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
         BOOST_TEST_MESSAGE("Heat capacity c_V = " << cV);
+        BOOST_TEST_MESSAGE("Adiabatic compressibility χ_S = " << chi_S);
         // values from Johnson et al.: P = 1.023, Epot = -1.673  (Npart = 864)
-        // values from RFA theory: P = 1.0245, Epot = -1.6717
-        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 3e-3);
-        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 2e-3);
+        // values from RFA theory (Ayadim et al.): P = 1.0245, Epot = -1.6717
+        // (allow larger tolerance for the host simulation with fewer particles)
+        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, (backend == "gpu") ? 3e-3 : 6e-3);
+        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, (backend == "gpu") ? 2e-3 : 4e-3);
+        // our own measurements using HAL's MD package FIXME find reference values
+        BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, (backend == "gpu") ? 1e-2 : 3e-2);
+        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.35, 0.2);
     }
 }
 

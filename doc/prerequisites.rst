@@ -34,21 +34,25 @@ Instead of setting CMAKE_PREFIX_PATH manually, you would include the package dir
 CMake
 -----
 
-Get the latest `CMake with native CUDA support`_ ::
+Get the latest `CMake source package`_, currently `CMake 2.8.3`_.
 
-   git clone git://git.colberg.org/gpgpu/cmake-cuda.git
+Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.3`_.
 
-.. note::
+.. _CMake source package: http://cmake.org/cmake/resources/software.html
 
-   If you are trapped behind a restrictive firewall, use ::
+.. _CMake 2.8.3: http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz
 
-      git clone http://git.colberg.org/gpgpu/cmake-cuda.git
+.. _CMake-CUDA: http://software.colberg.org/projects/cmake-cuda
 
-.. _CMake with native CUDA support: https://software.colberg.org/projects/cmake-cuda
+.. _CMake-CUDA 2.8.3: http://software.colberg.org/attachments/download/7/cmake-cuda-2.8.3.patch
+
+Extract the CMake source package, and apply the patch in the CMake source directory with ::
+
+   patch -p1 < ../cmake-cuda-2.8.3.patch
 
 Prepare the CMake build with ::
 
-   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.2
+   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.3
 
 Compile CMake with ::
 
@@ -60,8 +64,8 @@ Install CMake into your packages directory::
 
 Include CMake in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/cmake-cuda-2.8.2/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/usr/cmake-cuda-2.8.2/man${MANPATH+:$MANPATH}"
+   export PATH="${HOME}/usr/cmake-cuda-2.8.3/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/usr/cmake-cuda-2.8.3/man${MANPATH+:$MANPATH}"
 
 
 Boost
@@ -90,8 +94,8 @@ We will build Boost and Boost.Log in a single step, therefore extract both
 source packages and copy the Boost.Log headers and library sources to the
 Boost source directory using ::
 
-   cp -r /tmp/boost-log-1.0/boost/log /tmp/boost_1_45_0/boost/
-   cp -r /tmp/boost-log-1.0/libs/log /tmp/boost_1_45_0/libs/
+   cp -r boost-log-1.0/boost/log boost_1_45_0/boost/
+   cp -r boost-log-1.0/libs/log boost_1_45_0/libs/
 
 In the Boost source directory, bootstrap the build with ::
 
@@ -130,8 +134,16 @@ Lua
 
 Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.1.4`_.
 
+Get the `Lua 5.1.4-2 patch`_ fixing several bugs.
+
 .. _Lua download: http://www.lua.org/download.html
 .. _Lua 5.1.4: http://www.lua.org/ftp/lua-5.1.4.tar.gz
+.. _Lua 5.1.4-2 patch: http://www.lua.org/ftp/patch-lua-5.1.4-2
+
+Extract the Lua source package, and apply the patch in the Lua source directory with ::
+
+   cd lua-5.1.4/src
+   patch < ../../patch-lua-5.1.4-2
 
 The recommended way of embedding the Lua intepreter in an executable is to link
 the Lua library statically, which is the default mode of compilation.
@@ -183,7 +195,7 @@ Install the Luabind library into your packages directory::
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
-Include Lua in your shell environment, by adding to ~/.bashrc::
+Include Luabind in your shell environment, by adding to ~/.bashrc::
 
    export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
@@ -250,10 +262,10 @@ NVIDIA CUDA toolkit
 Sphinx
 ------
 
-Get the latest `Sphinx source package`_, currently `Sphinx 1.0.5`_.
+Get the latest `Sphinx source package`_, currently `Sphinx 1.0.7`_.
 
 .. _Sphinx source package: http://pypi.python.org/pypi/Sphinx
-.. _Sphinx 1.0.5: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.0.5.tar.gz
+.. _Sphinx 1.0.7: http://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.0.7.tar.gz
 
 Query your Python version ::
 
@@ -261,18 +273,18 @@ Query your Python version ::
 
 Create a package directory for Sphinx using the Python major and minor version ::
 
-   mkdir -p $HOME/usr/Sphinx-1.0.5/lib/python2.5/site-packages
+   mkdir -p $HOME/usr/Sphinx-1.0.7/lib/python2.5/site-packages
 
 Add the package directory to the PYTHON_PATH environment variable ::
 
-   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.5/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
 Install Sphinx into your packages directory ::
 
-   python setup.py install --prefix=$HOME/usr/Sphinx-1.0.5
+   python setup.py install --prefix=$HOME/usr/Sphinx-1.0.7
 
 Include Sphinx in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/Sphinx-1.0.5/bin${PATH+:$PATH}"
-   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.5/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PATH="${HOME}/usr/Sphinx-1.0.7/bin${PATH+:$PATH}"
+   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 

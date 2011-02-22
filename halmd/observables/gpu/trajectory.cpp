@@ -152,7 +152,10 @@ void trajectory<host::samples::trajectory<dimension, float_type> >::luaopen(lua_
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
@@ -168,6 +171,8 @@ static __attribute__((constructor)) void register_lua()
         &trajectory<host::samples::trajectory<2, float> >::luaopen
     ];
 }
+
+} // namespace
 
 // explicit instantiation
 template class trajectory<gpu::samples::trajectory<3, float> >;
