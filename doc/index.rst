@@ -17,7 +17,7 @@ HALMD is written and developed by Peter Colberg and Felix Höfling.
    is found in the article by Peter H. Colberg and Felix Höfling, `Highly
    accelerated simulations of glassy dynamics using GPUs: Caveats on limited
    floating-point precision <http://dx.doi.org/10.1016/j.cpc.2011.01.009>`_,
-   Computer Physics Communications (2011), doi:10.1016/j.cpc.2011.01.009
+   Computer Physics Communications 182 (2011) 1120-1129
    [`arXiv:0912.3824 <http://arxiv.org/abs/0912.3824>`_].
 
 The name *HALMD* was chosen in honour of the machine `HAL
