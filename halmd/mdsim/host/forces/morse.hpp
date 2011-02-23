@@ -58,8 +58,8 @@ public:
      * Compute force and potential for interaction.
      *
      * @param rr squared distance between particles
-     * @param type1 type of first interacting particle
-     * @param type2 type of second interacting particle
+     * @param a type of first interacting particle
+     * @param b type of second interacting particle
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
      * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      */
