@@ -238,6 +238,7 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                             .def("register_observables", &verlet_nvt_hoover::register_observables)
                             .def_readonly("mass", (fixed_vector<double, 2> const& (verlet_nvt_hoover::*)() const)&verlet_nvt_hoover::mass) // FIXME make read/write
                             .def_readonly("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
+                            .def_readonly("en_nhc", &verlet_nvt_hoover::en_nhc)
                             .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]

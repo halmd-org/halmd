@@ -171,9 +171,7 @@ void verlet_nvt_hoover(string const& backend)
                 shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
                 xi = integrator->xi;
                 v_xi = integrator->v_xi;
-                en_nhc_ += (dimension * xi[0] + xi[1] / npart) * temp;
-                en_nhc_ += .5 * integrator->mass()[0] * pow(v_xi[0], 2) / npart;
-                en_nhc_ += .5 * integrator->mass()[1] * pow(v_xi[1], 2) / npart;
+                en_nhc_ += integrator->en_nhc();
 #endif
             }
             else if (backend == "host") {
@@ -181,9 +179,7 @@ void verlet_nvt_hoover(string const& backend)
                 shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
                 xi = integrator->xi;
                 v_xi = integrator->v_xi;
-                en_nhc_ += (dimension * xi[0] + xi[1] / npart) * temp;
-                en_nhc_ += .5 * integrator->mass()[0] * pow(v_xi[0], 2) / npart;
-                en_nhc_ += .5 * integrator->mass()[1] * pow(v_xi[1], 2) / npart;
+                en_nhc_ += integrator->en_nhc();
             }
             LOG_TRACE(setprecision(12)
                 << "en_nhc: " << i * timestep

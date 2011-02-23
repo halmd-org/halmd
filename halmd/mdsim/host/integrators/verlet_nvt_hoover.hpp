@@ -100,6 +100,12 @@ public:
         return mass_xi_;
     }
 
+    //! returns energy per particle of the Nosé-Hoover chain
+    double en_nhc() const
+    {
+        return en_nhc_;
+    }
+
     /** chain of heat bath variables */
     fixed_vector<float_type, 2> xi;
     fixed_vector<float_type, 2> v_xi;
