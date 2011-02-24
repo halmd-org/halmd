@@ -1,12 +1,12 @@
 FAQ
 ***
 
-**With HALMD, I could do simulations of breath-taking quality and obtain new scientific insight. How may I thank you?**
+**With HALMD, I could do simulations of breath-taking quality and have obtained new scientific insight. How may I thank you?**
   Please acknowledge the use of HALMD in your publications by citing our article:
 
-  P. H. Colberg and F. Höfling,
-  *Accelerating glassy dynamics on graphics processing units*,
-  `arXiv:0912.3824 [physics.comp-ph] <http://arxiv.org/abs/0912.3824>`_
+   P. H. Colberg and F. Höfling,
+   *Highly accelerated simulations of glassy dynamics using GPUs: Caveats on limited floating-point precision,*
+   Comp. Phys. Comm. *182*, 1120 (2011) `[Link] <http://dx.doi.org/10.1016/j.cpc.2011.01.009>`_.
 
 **Why does HALMD abort with “[ERROR] overcrowded placeholders in cell/neighbour lists update”?**
   The GPU backends of HALMD employ fixed-size cell and neighbour lists to
