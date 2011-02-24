@@ -69,7 +69,7 @@ void verlet_nvt_hoover(string const& backend)
     float start_temp = 3.;
     float density = 0.1;
     unsigned npart = (backend == "gpu") ? 1500 : 1500;
-    double timestep = 0.001;
+    double timestep = 0.002;
     double resonance_frequency = 5.;
     char const* random_file = "/dev/urandom";
     fixed_vector<double, dimension> box_ratios =
@@ -136,7 +136,28 @@ void verlet_nvt_hoover(string const& backend)
     BOOST_TEST_MESSAGE("prepare system");
     core->force->aux_enable();                    //< enable computation of potential energy
     core->prepare();
+
+    // equilibrate the system,
+    // this avoids a jump in the conserved energy at the very beginning
+    BOOST_TEST_MESSAGE("equilibrate over " << steps / 20 << " steps");
+    for (uint64_t i = 0; i < steps / 20; ++i) {
+        core->mdstep();
+    }
+
+    // compute modified Hamiltonian
     double en_nhc0 = thermodynamics->en_tot();
+    if (backend == "gpu") {
+#ifdef WITH_CUDA
+        typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
+        shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
+        en_nhc0 += integrator->en_nhc();
+#endif
+    }
+    else if (backend == "host") {
+        typedef mdsim::host::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
+        shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
+        en_nhc0 += integrator->en_nhc();
+    }
 
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
     core->force->aux_disable();
@@ -163,7 +184,7 @@ void verlet_nvt_hoover(string const& backend)
 
             // compute modified Hamiltonian
             double en_nhc_;
-            fixed_vector<double, 2> xi, v_xi;
+            fixed_vector<double, 2> xi(0), v_xi(0);
             en_nhc_ = thermodynamics->en_tot();
             if (backend == "gpu") {
 #ifdef WITH_CUDA
