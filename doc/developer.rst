@@ -16,3 +16,10 @@ Coding conventions
 ------------------
 
 Please refer to the document on :doc:`coding conventions <style>`.
+
+
+Luabind
+-------
+
+The *Luabind* library is used to export C++ classes to the Lua scripting
+interface. Please refer to the :doc:`Short guide on Luabind <luabind>`.
