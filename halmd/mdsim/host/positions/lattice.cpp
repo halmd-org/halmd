@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <boost/array.hpp>
 #include <cmath>
+#include <functional>
 #include <limits>
 #include <numeric>
 
@@ -59,6 +60,26 @@ lattice<dimension, float_type>::lattice(
     }
 }
 
+template <int dimension, typename float_type>
+void lattice<dimension, float_type>::set()
+{
+    // randomise particle types if there are more than 1
+    if (particle->ntypes.size() > 1) {
+        LOG("randomly permuting particle types");
+        random->shuffle(particle->type.begin(), particle->type.end());
+    }
+
+    assert(particle->r.size() == particle->nbox);
+
+    // assign fcc lattice points to a fraction of the particles in a slab at the centre
+    vector_type length = element_prod(box->length(), slab_);
+    vector_type offset = -length / 2;
+    fcc(particle->r.begin(), particle->r.end(), length, offset);
+
+    // assign particle image vectors
+    fill(particle->image.begin(), particle->image.end(), 0);
+}
+
 /**
  * Place particles on a face-centered cubic (fcc) lattice
  *
@@ -90,25 +111,22 @@ lattice<dimension, float_type>::lattice(
  *
  * is satisfied.
  */
-template <int dimension, typename float_type>
-void lattice<dimension, float_type>::set()
+template <int dimension, typename float_type> template <typename position_iterator>
+void lattice<dimension, float_type>::fcc(
+    position_iterator first, position_iterator last
+  , vector_type const& length, vector_type const& offset
+)
 {
-    // randomise particle types if there are more than 1
-    if (particle->ntypes.size() > 1) {
-        LOG("randomly permuting particle types");
-        random->shuffle(particle->type.begin(), particle->type.end());
-    }
-
-    // assign lattice coordinates to (sub-)volume of the box
-    vector_type L = element_prod(box->length(), slab_);
+    LOG_TRACE("generating fcc lattice for " << last - first << " particles, box: " << length << ", offset: " << offset);
+    size_t npart = last - first;
     double u = (dimension == 3) ? 4 : 2;
-    double V = box->volume() / ceil(particle->nbox / u);
+    double V = accumulate(length.begin(), length.end(), 1., multiplies<double>()) / ceil(npart / u);
     double a = pow(V, 1. / dimension);
-    fixed_vector<unsigned int, dimension> n(L / a);
-    while (particle->nbox > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
+    fixed_vector<unsigned int, dimension> n(length / a);
+    while (npart > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
         vector_type t;
         for (size_t i = 0; i < dimension; ++i) {
-            t[i] = L[i] / (n[i] + 1);
+            t[i] = length[i] / (n[i] + 1);
         }
         typename vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
@@ -120,12 +138,13 @@ void lattice<dimension, float_type>::set()
     unsigned int N = static_cast<unsigned int>(
         u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())
     );
-    if (N > particle->nbox) {
+    if (N > npart) {
         LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& r = particle->r[i] = a;
+    size_t i = 0;
+    for (position_iterator r_it = first; r_it != last; ++r_it, ++i) {
+        vector_type& r = *r_it = a;
         if (dimension == 3) {
             r[0] *= ((i >> 2) % n[0]) + ((i ^ (i >> 1)) & 1) / 2.;
             r[1] *= ((i >> 2) / n[0] % n[1]) + (i & 1) / 2.;
@@ -135,12 +154,10 @@ void lattice<dimension, float_type>::set()
             r[0] *= ((i >> 1) % n[0]) + (i & 1) / 2.;
             r[1] *= ((i >> 1) / n[0]) + (i & 1) / 2.;
         }
-        // centre particle positions around box centre (= coordinate origin)
-        r -= L/2;
+        // shift origin of lattice to offset
+        r += offset;
     }
-
-    // assign particle image vectors
-    fill(particle->image.begin(), particle->image.end(), 0);
+    LOG_DEBUG("number of particles inserted: " << npart);
 }
 
 template <int dimension, typename float_type>

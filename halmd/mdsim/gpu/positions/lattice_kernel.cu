@@ -41,7 +41,7 @@ namespace lattice_kernel
 using boost::mpl::int_;
 
 /** edge lengths of cuboid slab */
-static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > slab_length_;
+static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > offset_;
 /** number of cells per dimension */
 static __constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
 
@@ -94,32 +94,35 @@ template <
       , vector_type&
     )
 >
-__global__ void lattice(float4* g_r, float a)
+__global__ void lattice(float4* g_r, uint npart, float a)
 {
     enum { dimension = vector_type::static_size };
 
-    // load particle type
-    vector_type r;
-    unsigned int type;
-    tie(r, type) = untagged<vector_type>(g_r[GTID]);
+    for (uint i = GTID; i < npart; i += GTDIM) {
 
-    // compute primitive lattice vector
-    primitive(GTID, get<dimension>(ncell_), r);
+        // load particle type
+        vector_type r;
+        unsigned int type;
+        tie(r, type) = untagged<vector_type>(g_r[i]);
 
-    // scale with lattice constant
-    r *= a;
+        // compute primitive lattice vector
+        primitive(i, get<dimension>(ncell_), r);
 
-    // centre particle positions around box centre (= coordinate origin)
-    r -= vector_type(get<dimension>(slab_length_)) / 2;
+        // scale with lattice constant
+        r *= a;
 
-    g_r[GTID] = tagged(r, type);
+        // shift origin of lattice to offset
+        r += vector_type(get<dimension>(offset_));
+
+        g_r[i] = tagged(r, type);
+    }
 }
 
 } // namespace lattice_kernel
 
 template <int dimension>
 lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
-    get<dimension>(lattice_kernel::slab_length_)
+    get<dimension>(lattice_kernel::offset_)
   , get<dimension>(lattice_kernel::ncell_)
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::sc>

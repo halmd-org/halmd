@@ -65,6 +65,16 @@ public:
 private:
     /** slab extents for each direction as fraction of the edge length of the box */
     vector_type slab_;
+
+    /**
+     *  assign range of particle positions [first, last) to fcc lattice
+     *  of extents 'length' with origin at 'offset'
+     */
+    template <typename position_iterator>
+    void fcc(
+        position_iterator first, position_iterator last
+      , vector_type const& length, vector_type const& offset
+    );
 };
 
 }}} // namespace mdsim::host::positions
