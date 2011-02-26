@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_VELOCITIES_FILE_HPP
-#define HALMD_MDSIM_HOST_VELOCITIES_FILE_HPP
+#ifndef HALMD_MDSIM_HOST_VELOCITIES_TRAJECTORY_HPP
+#define HALMD_MDSIM_HOST_VELOCITIES_TRAJECTORY_HPP
 
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
@@ -30,7 +30,7 @@ namespace mdsim { namespace host { namespace velocities
 {
 
 template <int dimension, typename float_type>
-class file
+class trajectory
   : public host::velocity<dimension, float_type>
 {
 public:
@@ -42,7 +42,7 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<sample_type> sample;
 
-    file(
+    trajectory(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<sample_type> sample
     );
@@ -53,4 +53,4 @@ public:
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_VELOCITIES_FILE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_VELOCITIES_TRAJECTORY_HPP */

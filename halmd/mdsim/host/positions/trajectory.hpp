@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POSITIONS_FILE_HPP
-#define HALMD_MDSIM_HOST_POSITIONS_FILE_HPP
+#ifndef HALMD_MDSIM_HOST_POSITIONS_TRAJECTORY_HPP
+#define HALMD_MDSIM_HOST_POSITIONS_TRAJECTORY_HPP
 
 #include <vector>
 
@@ -34,7 +34,7 @@ namespace mdsim { namespace host { namespace positions
 {
 
 template <int dimension, typename float_type>
-class file
+class trajectory
   : public mdsim::position<dimension>
 {
 public:
@@ -48,7 +48,7 @@ public:
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<sample_type> sample;
 
-    file(
+    trajectory(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<sample_type> sample
@@ -60,4 +60,4 @@ public:
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POSITIONS_FILE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POSITIONS_TRAJECTORY_HPP */

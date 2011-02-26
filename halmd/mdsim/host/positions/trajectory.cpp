@@ -18,53 +18,62 @@
  */
 
 #include <algorithm>
-#include <boost/iterator/counting_iterator.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/velocities/file.hpp>
+#include <halmd/mdsim/host/positions/trajectory.hpp>
+
+namespace halmd
+{
+namespace mdsim { namespace host { namespace positions
+{
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace velocities
-{
-
 template <int dimension, typename float_type>
-file<dimension, float_type>::file(
+trajectory<dimension, float_type>::trajectory(
     shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
   , shared_ptr<sample_type> sample
 )
-  : _Base(particle)
   // dependency injection
-  , particle(particle)
+  : particle(particle)
+  , box(box)
   , sample(sample)
 {
 }
 
 /**
- * set particle velocities
+ * set particle positions
  */
 template <int dimension, typename float_type>
-void file<dimension, float_type>::set()
+void trajectory<dimension, float_type>::set()
 {
+    // assign particle coordinates
     for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        copy(sample->v[j]->begin(), sample->v[j]->end(), &particle->v[i]);
+        copy(sample->r[j]->begin(), sample->r[j]->end(), &particle->r[i]);
     }
 
-    LOG("set particle velocities from trajectory sample");
+    // shift particle positions to range (-L/2, L/2)
+    for (size_t i = 0; i < particle->nbox; ++i) {
+        box->reduce_periodic(particle->r[i]);
+    }
+
+    // assign particle image vectors
+    fill(particle->image.begin(), particle->image.end(), 0);
+
+    LOG("set particle positions from trajectory sample");
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class file<3, double>;
-template class file<2, double>;
+template class trajectory<3, double>;
+template class trajectory<2, double>;
 #else
-template class file<3, float>;
-template class file<2, float>;
+template class trajectory<3, float>;
+template class trajectory<2, float>;
 #endif
 
-}}} // namespace mdsim::host::velocities
+}}} // namespace mdsim::host::positions
 
 } // namespace halmd
