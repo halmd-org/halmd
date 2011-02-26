@@ -72,7 +72,7 @@ void thermodynamics<dimension>::register_observables(writer_type& writer)
  * called only once.
  */
 template <int dimension>
-void thermodynamics<dimension>::sample(double time, uint64_t step)
+void thermodynamics<dimension>::sample(double time)
 {
     scoped_timer<timer> timer_(at_key<sample_>(runtime_));
     en_pot_ = en_pot();

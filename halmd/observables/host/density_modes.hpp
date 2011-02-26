@@ -21,13 +21,10 @@
 #define HALMD_OBSERVABLES_HOST_DENSITY_MODES_HPP
 
 #include <lua.hpp>
-#include <map>
-#include <set>
 
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_modes.hpp>
 #include <halmd/observables/host/samples/trajectory.hpp>
-#include <halmd/observables/host/trajectory.hpp>
 #include <halmd/observables/utility/wavevectors.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -51,7 +48,6 @@ public:
     typedef typename _Base::density_modes_sample_type density_modes_sample_type;
     typedef typename _Base::wavevectors_type wavevectors_type;
     typedef host::samples::trajectory<dimension, float_type> trajectory_sample_type;
-    typedef host::trajectory<dimension, float_type> trajectory_stream_type;
     typedef halmd::utility::profiler profiler_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
@@ -59,14 +55,12 @@ public:
 
     boost::shared_ptr<density_modes_sample_type> rho_sample;
     boost::shared_ptr<trajectory_sample_type> trajectory_sample;
-    boost::shared_ptr<trajectory_stream_type> trajectory_stream;
 
     static void luaopen(lua_State* L);
 
     density_modes(
         boost::shared_ptr<density_modes_sample_type> rho_sample
       , boost::shared_ptr<trajectory_sample_type> trajectory_sample
-      , boost::shared_ptr<trajectory_stream_type> trajectory_stream
       , std::vector<double> const& wavenumbers
       , vector_type const& box_length
       , double tolerance
@@ -74,10 +68,6 @@ public:
     );
 
     void register_runtimes(profiler_type& profiler);
-
-    // data stream interface
-    virtual void register_request(uint64_t step, boost::function<void(uint64_t)> callback);
-    virtual void notify(uint64_t step);
 
     /**
     * compute density modes from trajectory sample and store with given time stamp
@@ -119,12 +109,6 @@ public:
 
 protected:
     wavevectors_type wavevectors_;
-
-    // list of data requests from sinks
-    typedef std::multimap<uint64_t, boost::function<void(uint64_t)> > request_container_type;
-    request_container_type request_;
-    // list of issued, but open data requests to sources
-    std::set<uint64_t> issued_request_;
 
     // list of profiling timers
     boost::fusion::map<

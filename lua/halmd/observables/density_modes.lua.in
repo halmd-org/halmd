@@ -42,7 +42,6 @@ local observables = {
         trajectory = require("halmd.observables.samples.trajectory")
       , density_modes = require("halmd.observables.samples.density_modes")
     }
-  , trajectory = require("halmd.observables.trajectory")
 }
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
@@ -72,7 +71,6 @@ function new(args)
     local dimension = assert(core.dimension)
     local box = assert(core.box)
     local trajectory_sample = assert(observables.samples.trajectory())
-    local trajectory_stream = assert(observables.trajectory())
     local rho_sample = assert(observables.samples.density_modes())
 
     local density_modes
@@ -81,7 +79,7 @@ function new(args)
     else
         density_modes = density_modes_wrapper.host[dimension]
     end
-    return density_modes(rho_sample, trajectory_sample, trajectory_stream, wavenumbers, box.length, tolerance, maximum_count)
+    return density_modes(rho_sample, trajectory_sample, wavenumbers, box.length, tolerance, maximum_count)
 end
 
 --

@@ -49,8 +49,8 @@ public:
     // preparations before MD step
     virtual void prepare() = 0;
 
-    // sample observable and store with given time and simulation step
-    virtual void sample(double time, uint64_t step) = 0;
+    // sample observable and store with given time
+    virtual void sample(double time) = 0;
 };
 
 } // namespace observables

@@ -22,7 +22,6 @@
 #include <iterator>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -59,7 +58,6 @@ ssf<dimension>::ssf(
         value_[i].resize(nq);
         result_accumulator_[i].resize(nq);
     }
-    LOG_TRACE("module ssf constructed");
 }
 
 /**
@@ -99,22 +97,15 @@ void ssf<dimension>::register_observables(writer_type& writer)
 }
 
 /**
- * notification when data for density modes are available
- *
+ * compute SSF from sample of density Fourier modes
  */
 template <int dimension>
-void ssf<dimension>::notify(uint64_t step)
+void ssf<dimension>::sample(double time)
 {
-    LOG_TRACE("[ssf] notification in step " << step);
-
-    // remove from list of open requests
-    assert(issued_request_.find(step) != issued_request_.end());
-    issued_request_.erase(step);
-
-    // transform density modes to SSF
+    // acquire sample of density modes and compute SSF
+    density_modes->acquire(time);
     compute_();
 
-    // copy result to data space registered with writers
     // iterate over combinations of particle types
     for (unsigned int i = 0; i < value_.size(); ++i) {
         // transform accumulators to tuples (mean, error_of_mean, count)
@@ -126,24 +117,6 @@ void ssf<dimension>::notify(uint64_t step)
             v[2] = static_cast<double>(count(acc));
         }
     }
-}
-
-
-/**
- * compute SSF from sample of density Fourier modes
- */
-template <int dimension>
-void ssf<dimension>::sample(double time, uint64_t step)
-{
-    LOG_TRACE("[ssf] sample in step " << step);
-    // issue a request for data of density modes,
-    // but only if not already done for this timestamp 'step'
-    if (issued_request_.find(step) == issued_request_.end()) {
-        LOG_TRACE("[ssf] issue requests for step " << step);
-        density_modes->register_request(step, bind(&ssf::notify, this, _1));
-        issued_request_.insert(step);
-    }
-
     time_ = time;   // store time for writer functions
 }
 
