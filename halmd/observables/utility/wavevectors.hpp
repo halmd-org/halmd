@@ -21,6 +21,7 @@
 #define HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
 
 #include <utility>
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
@@ -44,6 +45,8 @@ class wavevectors
 public:
     typedef fixed_vector<double, dimension> vector_type;
     typedef std::vector<std::pair<double, vector_type> > map_type;
+
+    static void luaopen(lua_State* L);
 
     wavevectors(
         std::vector<double> const& wavenumbers

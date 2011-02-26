@@ -25,6 +25,7 @@
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/utility/wavevectors.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
 using namespace std;
@@ -82,6 +83,51 @@ wavevectors<dimension>::wavevectors(
 
     LOG_DEBUG("total number of wavevectors: " << wavevectors_.size());
 }
+
+template <int dimension>
+void wavevectors<dimension>::luaopen(lua_State* L)
+{
+    using namespace luabind;
+    static string class_name("wavevectors_" + lexical_cast<string>(dimension) + "_");
+    module(L)
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("observables")
+            [
+                namespace_("utility")
+                [
+                    class_<wavevectors, shared_ptr<wavevectors> >(class_name.c_str())
+                        .def(constructor<
+                             vector<double> const&
+                           , vector_type const&
+                           , double, unsigned int
+                        >())
+                        .def("wavenumbers", &wavevectors::wavenumbers)
+                        .def("values", &wavevectors::values)
+                        .def("tolerance", &wavevectors::tolerance)
+                        .def("maximum_count", &wavevectors::maximum_count)
+                ]
+            ]
+        ]
+    ];
+}
+
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
+{
+    lua_wrapper::register_(0) //< distance of derived to base class
+    [
+        &wavevectors<3>::luaopen
+    ]
+    [
+        &wavevectors<2>::luaopen
+    ];
+}
+
+} // namespace
 
 // explicit instantiation
 template class wavevectors<3>;
