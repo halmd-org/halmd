@@ -25,12 +25,35 @@ local ssf_wrapper = {
   , [3] = halmd_wrapper.observables.ssf_3_
 }
 
+local density_modes_wrapper = {
+    host = {
+        [2] = halmd_wrapper.observables.host.density_modes_2_
+      , [3] = halmd_wrapper.observables.host.density_modes_3_
+    }
+}
+if halmd_wrapper.observables.gpu then
+    density_modes_wrapper.gpu = {
+        [2] = halmd_wrapper.observables.gpu.density_modes_2_
+      , [3] = halmd_wrapper.observables.gpu.density_modes_3_
+    }
+end
+
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
 local observables = {
     density_modes = require("halmd.observables.density_modes")
+  , trajectory = require("halmd.observables.trajectory")
+  , utility = {
+        wavevectors = require("halmd.observables.utility.wavevectors")
+    }
 }
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
+local h5 = halmd_wrapper.h5
+local po = halmd_wrapper.po
+local device = require("halmd.device")
 local assert = assert
 
 module("halmd.observables.ssf", halmd.modules.register)
@@ -42,18 +65,37 @@ module("halmd.observables.ssf", halmd.modules.register)
 -- @returns instance of ssf module
 --
 function new(args)
+    -- command line options
+    local tolerance = args.tolerance or 0.01 -- default value
+    local maximum_count = args.maximum_count or 10 -- default value
+    local wavenumbers = args.wavenumbers
+
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
-    local density_modes = observables.density_modes()
+    local box = assert(core.box)
+    local trajectory = assert(observables.trajectory())
+    local density_modes = assert(observables.density_modes()) -- returns a class constructor
+    
+    -- construct local wavevectors module
+    local wavevectors = assert(observables.utility.wavevectors()) -- returns a class constructor
+    if wavenumbers then
+        wavevectors = wavevectors(wavenumbers, box.length, tolerance, maximum_count) -- instantiate class
+    else
+        wavevectors = nil
+    end
 
-    if not density_modes then
+    if not wavevectors then
         return nil
     end
 
+    -- construct ssf module
     local ssf = ssf_wrapper[dimension]
-    return ssf(density_modes, particle.nbox)
+    return ssf(
+        density_modes(trajectory, wavevectors)
+      , particle.nbox
+    )
 end
 
 --
@@ -69,13 +111,18 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
+    desc:add("wavenumbers", po.float_array(), "list of wavenumbers")
+    desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
+    desc:add("maximum-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
 end
 
 --
 -- write module parameters to HDF5 group
 --
--- @param ssf    module instance
--- @param group  HDF5 group
+-- @param ssf     module instance
+-- @param group   HDF5 group
 --
 function write_parameters(ssf, group)
+    group:write_attribute("tolerance", h5.float(), ssf.wavevectors.tolerance)
+    group:write_attribute("maximum_count", h5.uint(), ssf.wavevectors.maximum_count)
 end

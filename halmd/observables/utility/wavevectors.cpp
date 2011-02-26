@@ -103,10 +103,10 @@ void wavevectors<dimension>::luaopen(lua_State* L)
                            , vector_type const&
                            , double, unsigned int
                         >())
-                        .def("wavenumbers", &wavevectors::wavenumbers)
-                        .def("values", &wavevectors::values)
-                        .def("tolerance", &wavevectors::tolerance)
-                        .def("maximum_count", &wavevectors::maximum_count)
+                        .property("wavenumbers", &wavevectors::wavenumbers)
+                        .property("values", &wavevectors::values)
+                        .property("tolerance", &wavevectors::tolerance)
+                        .property("maximum_count", &wavevectors::maximum_count)
                 ]
             ]
         ]

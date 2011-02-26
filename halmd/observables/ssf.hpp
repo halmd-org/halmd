@@ -82,6 +82,12 @@ public:
         return value_;
     }
 
+    //! returns instance of wavevector class used to compute the ssf
+    typename density_modes_type::wavevectors_type const& wavevectors() const
+    {
+        return density_modes->wavevectors();
+    }
+
     // module runtime accumulator descriptions
     HALMD_PROFILING_TAG( sample_, "computation of static structure factor" );
 

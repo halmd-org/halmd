@@ -37,41 +37,18 @@ end
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
-local observables = {
-    samples = {
-        trajectory = require("halmd.observables.samples.trajectory")
-      , density_modes = require("halmd.observables.samples.density_modes")
-    }
-}
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
 local device = require("halmd.device")
 local assert = assert
 
 module("halmd.observables.density_modes", halmd.modules.register)
 
 --
--- construct instance of density_modes module
---
--- @param args parameter table
--- @returns instance of density_modes module
+-- return constructor of density_modes module
 --
 function new(args)
-    -- command line options
-    local tolerance = args.tolerance or 0.01 -- default value
-    local maximum_count = args.maximum_count or 10 -- default value
-    local wavenumbers = args.wavenumbers
-
-    if not wavenumbers then
-        return nil
-    end
-
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
-    local box = assert(core.box)
-    local trajectory_sample = assert(observables.samples.trajectory())
-    local rho_sample = assert(observables.samples.density_modes())
 
     local density_modes
     if device() then
@@ -79,35 +56,5 @@ function new(args)
     else
         density_modes = density_modes_wrapper.host[dimension]
     end
-    return density_modes(rho_sample, trajectory_sample, wavenumbers, box.length, tolerance, maximum_count)
-end
-
---
--- returns module description
---
-function name()
-    return "Fourier modes of particle density"
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
--- the wavenumber grid is defined here rather than in utility.wavenumbers
-function options(desc)
-    desc:add("wavenumbers", po.float_array(), "list of wavenumbers")
-    desc:add("tolerance", po.float(), "relative tolerance on magnitude of wavevectors")
-    desc:add("maximum-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
-end
-
---
--- write module parameters to HDF5 group
---
--- @param density_modes   module instance
--- @param group           HDF5 group
---
-function write_parameters(density_modes, group)
-    group:write_attribute("tolerance", h5.float(), density_modes.tolerance)
-    group:write_attribute("maximum_count", h5.uint(), density_modes.maximum_count)
+    return assert(density_modes)
 end

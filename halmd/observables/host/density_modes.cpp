@@ -36,28 +36,21 @@ namespace observables { namespace host
 
 template <int dimension, typename float_type>
 density_modes<dimension, float_type>::density_modes(
-    shared_ptr<density_modes_sample_type> rho_sample
-  , shared_ptr<trajectory_type> trajectory
-  , vector<double> const& wavenumbers
-  , vector_type const& box_length
-  , double tolerance
-  , unsigned int max_count
+    shared_ptr<trajectory_type> trajectory
+  , shared_ptr<wavevectors_type> wavevectors
 )
     // dependency injection
-  : rho_sample(rho_sample)
-  , trajectory(trajectory)
+  : trajectory_(trajectory)
+  , wavevectors_(wavevectors)
     // member initialisation
-  , wavevectors_(wavenumbers, box_length, tolerance, max_count)
+  , rho_sample_(trajectory_->sample->r.size())
 {
-    // number of particle types must agree
-    assert(rho_sample->rho.size() == trajectory->sample->r.size());
-
     // allocate memory
-    unsigned int ntype = rho_sample->rho.size();
-    unsigned int nq = wavevectors_.values().size();
+    unsigned int ntype = rho_sample_.rho.size();
+    unsigned int nq = wavevectors_->values().size();
     for (unsigned int i = 0; i < ntype; ++i) {
         typedef typename density_modes_sample_type::mode_vector_type mode_vector_type;
-        rho_sample->rho[i].reset(new mode_vector_type(nq));
+        rho_sample_.rho[i].reset(new mode_vector_type(nq));
     }
 }
 
@@ -79,20 +72,20 @@ void density_modes<dimension, float_type>::acquire(double time)
     scoped_timer<timer> timer_(at_key<sample_>(runtime_));
 
     // do nothing if we're up to date
-    if (rho_sample->time == time) return;
+    if (rho_sample_.time == time) return;
     LOG_TRACE("[density_modes] acquire sample");
 
     typedef typename trajectory_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_modes_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of trajectory sample
-    trajectory->acquire(time);
+    trajectory_->acquire(time);
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
     unsigned int type = 0;
-    BOOST_FOREACH (positions_vector_ptr_type const r_sample, trajectory->sample->r) {
-        mode_vector_type& rho_vector = *rho_sample->rho[type]; //< dereference shared_ptr
+    BOOST_FOREACH (positions_vector_ptr_type const r_sample, trajectory_->sample->r) {
+        mode_vector_type& rho_vector = *rho_sample_.rho[type]; //< dereference shared_ptr
         // initialise result array
         fill(rho_vector.begin(), rho_vector.end(), 0);
         // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
@@ -101,14 +94,14 @@ void density_modes<dimension, float_type>::acquire(double time)
             typename mode_vector_type::iterator rho_q = rho_vector.begin();
             typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
             // 3rd loop: iterate over wavevectors
-            BOOST_FOREACH (map_value_type const& q_pair, wavevectors_.values()) {
+            BOOST_FOREACH (map_value_type const& q_pair, wavevectors_->values()) {
                 float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
                 *rho_q++ += mode_type(cos(q_r), -sin(q_r));
             }
         }
         ++type;
     }
-    rho_sample->time = time;
+    rho_sample_.time = time;
 }
 
 template <int dimension, typename float_type>
@@ -126,14 +119,10 @@ void density_modes<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<density_modes, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            shared_ptr<density_modes_sample_type>
-                          , shared_ptr<trajectory_type>
-                          , vector<double> const&
-                          , vector_type const&, double, unsigned int
+                            shared_ptr<trajectory_type>
+                          , shared_ptr<wavevectors_type>
                         >())
                         .def("register_runtimes", &density_modes::register_runtimes)
-                        .property("tolerance", &density_modes::tolerance)
-                        .property("maximum_count", &density_modes::maximum_count)
                 ]
             ]
         ]

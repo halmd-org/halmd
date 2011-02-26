@@ -31,19 +31,13 @@ local assert = assert
 
 module("halmd.observables.samples.density_modes", halmd.modules.register)
 
--- singleton
-local sample
-
 --
 -- construct density_modes module
 --
 function new()
-    if not sample then
-        local core = assert(mdsim.core())
-        local particle = assert(core.particle)
-        local dimension = assert(core.dimension)
+    local core = assert(mdsim.core())
+    local particle = assert(core.particle)
+    local dimension = assert(core.dimension)
 
-        sample = assert(density_modes_wrapper[dimension](#particle.ntypes))
-    end
-    return sample
+    sample = assert(density_modes_wrapper[dimension](#particle.ntypes))
 end

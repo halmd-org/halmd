@@ -189,6 +189,7 @@ void ssf<dimension>::luaopen(lua_State* L)
                     >())
                     .def("register_runtimes", &ssf::register_runtimes)
                     .property("value", &ssf::value)
+                    .property("wavevectors", &ssf::wavevectors)
             ]
         ]
     ];

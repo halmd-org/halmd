@@ -53,18 +53,11 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef typename density_modes_sample_type::mode_type mode_type;
 
-    boost::shared_ptr<density_modes_sample_type> rho_sample;
-    boost::shared_ptr<trajectory_type> trajectory;
-
     static void luaopen(lua_State* L);
 
     density_modes(
-        boost::shared_ptr<density_modes_sample_type> rho_sample
-      , boost::shared_ptr<trajectory_type> trajectory
-      , std::vector<double> const& wavenumbers
-      , vector_type const& box_length
-      , double tolerance
-      , unsigned int max_count
+        boost::shared_ptr<trajectory_type> trajectory
+      , boost::shared_ptr<wavevectors_type> wavevectors
     );
 
     void register_runtimes(profiler_type& profiler);
@@ -77,38 +70,30 @@ public:
     //! returns nested list of density modes
     virtual typename _Base::result_type const& value() const
     {
-        return rho_sample->rho;
+        return rho_sample_.rho;
     }
 
     //! returns wavevectors object
     virtual wavevectors_type const& wavevectors() const
     {
-        return wavevectors_;
+        return *wavevectors_;
     }
 
     //! returns wavenumber grid
     virtual std::vector<double> const& wavenumbers() const
     {
-        return wavevectors_.wavenumbers();
-    }
-
-    //! returns tolerance on wavevector magnitude
-    double tolerance() const
-    {
-        return wavevectors_.tolerance();
-    }
-
-    //! returns maximum count of wavevectors per wavenumber
-    unsigned int maximum_count() const
-    {
-        return wavevectors_.maximum_count();
+        return wavevectors_->wavenumbers();
     }
 
     // descriptions of module's runtime accumulators
     HALMD_PROFILING_TAG(sample_, "computation of density modes");
 
 protected:
-    wavevectors_type wavevectors_;
+    boost::shared_ptr<trajectory_type> trajectory_;
+    boost::shared_ptr<wavevectors_type> wavevectors_;
+
+    /** data structure for density modes */
+    density_modes_sample_type rho_sample_;
 
     // list of profiling timers
     boost::fusion::map<
