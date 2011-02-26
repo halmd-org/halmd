@@ -22,6 +22,7 @@
 #include <iterator>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -102,6 +103,9 @@ void ssf<dimension>::register_observables(writer_type& writer)
 template <int dimension>
 void ssf<dimension>::sample(double time)
 {
+    if (time_ == time) return; // nothing to do, we're up to date
+    LOG_TRACE("[ssf] sampling");
+
     // acquire sample of density modes and compute SSF
     density_modes->acquire(time);
     compute_();

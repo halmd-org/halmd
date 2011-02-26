@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
 #include <halmd/observables/host/trajectory.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
@@ -46,6 +47,9 @@ trajectory<dimension, float_type>::trajectory(
 template <int dimension, typename float_type>
 void trajectory<dimension, float_type>::acquire(double time)
 {
+    if (sample->time == time) return; // we're up to date, nothing to do
+    LOG_TRACE("[trajectory] acquire sample");
+
     for (size_t i = 0; i < particle->nbox; ++i) {
         // periodically extended particle position
         (*sample->r[particle->type[i]])[particle->tag[i]] = particle->r[i] + element_prod(particle->image[i], box->length());

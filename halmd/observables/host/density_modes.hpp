@@ -24,7 +24,7 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_modes.hpp>
-#include <halmd/observables/host/samples/trajectory.hpp>
+#include <halmd/observables/host/trajectory.hpp>
 #include <halmd/observables/utility/wavevectors.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -47,20 +47,20 @@ public:
     typedef observables::density_modes<dimension> _Base;
     typedef typename _Base::density_modes_sample_type density_modes_sample_type;
     typedef typename _Base::wavevectors_type wavevectors_type;
-    typedef host::samples::trajectory<dimension, float_type> trajectory_sample_type;
+    typedef host::trajectory<dimension, float_type> trajectory_type;
     typedef halmd::utility::profiler profiler_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef typename density_modes_sample_type::mode_type mode_type;
 
     boost::shared_ptr<density_modes_sample_type> rho_sample;
-    boost::shared_ptr<trajectory_sample_type> trajectory_sample;
+    boost::shared_ptr<trajectory_type> trajectory;
 
     static void luaopen(lua_State* L);
 
     density_modes(
         boost::shared_ptr<density_modes_sample_type> rho_sample
-      , boost::shared_ptr<trajectory_sample_type> trajectory_sample
+      , boost::shared_ptr<trajectory_type> trajectory
       , std::vector<double> const& wavenumbers
       , vector_type const& box_length
       , double tolerance

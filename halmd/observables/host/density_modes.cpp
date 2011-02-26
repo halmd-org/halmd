@@ -19,6 +19,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/observables/host/density_modes.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -36,7 +37,7 @@ namespace observables { namespace host
 template <int dimension, typename float_type>
 density_modes<dimension, float_type>::density_modes(
     shared_ptr<density_modes_sample_type> rho_sample
-  , shared_ptr<trajectory_sample_type> trajectory_sample
+  , shared_ptr<trajectory_type> trajectory
   , vector<double> const& wavenumbers
   , vector_type const& box_length
   , double tolerance
@@ -44,12 +45,12 @@ density_modes<dimension, float_type>::density_modes(
 )
     // dependency injection
   : rho_sample(rho_sample)
-  , trajectory_sample(trajectory_sample)
+  , trajectory(trajectory)
     // member initialisation
   , wavevectors_(wavenumbers, box_length, tolerance, max_count)
 {
     // number of particle types must agree
-    assert(rho_sample->rho.size() == trajectory_sample->r.size());
+    assert(rho_sample->rho.size() == trajectory->sample->r.size());
 
     // allocate memory
     unsigned int ntype = rho_sample->rho.size();
@@ -79,19 +80,18 @@ void density_modes<dimension, float_type>::acquire(double time)
 
     // do nothing if we're up to date
     if (rho_sample->time == time) return;
+    LOG_TRACE("[density_modes] acquire sample");
 
-    typedef typename trajectory_sample_type::sample_vector_ptr positions_vector_ptr_type;
+    typedef typename trajectory_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_modes_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of trajectory sample
-    if (trajectory_sample->time != time) {
-        // FIXME
-    }
+    trajectory->acquire(time);
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
     unsigned int type = 0;
-    BOOST_FOREACH (positions_vector_ptr_type const r_sample, trajectory_sample->r) {
+    BOOST_FOREACH (positions_vector_ptr_type const r_sample, trajectory->sample->r) {
         mode_vector_type& rho_vector = *rho_sample->rho[type]; //< dereference shared_ptr
         // initialise result array
         fill(rho_vector.begin(), rho_vector.end(), 0);
@@ -127,7 +127,7 @@ void density_modes<dimension, float_type>::luaopen(lua_State* L)
                     class_<density_modes, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<density_modes_sample_type>
-                          , shared_ptr<trajectory_sample_type>
+                          , shared_ptr<trajectory_type>
                           , vector<double> const&
                           , vector_type const&, double, unsigned int
                         >())
