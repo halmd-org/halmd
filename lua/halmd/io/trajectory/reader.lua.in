@@ -63,5 +63,5 @@ function options(desc)
 
     end), "trajectory input file")
 
-    desc:add("sample", po.int64():depends("trajectory"), "trajectory sample for initial state")
+    desc:add("sample", po.int64():depends("file"), "trajectory sample for initial state")
 end
