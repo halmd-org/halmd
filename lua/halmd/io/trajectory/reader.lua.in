@@ -30,13 +30,16 @@ local pairs = pairs
 
 module("halmd.io.trajectory.reader", halmd.modules.register)
 
+-- override default parameter namespace
+namespace = "trajectory"
+
 --
 -- assemble module options
 --
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("trajectory", po.string():notifier(function(value)
+    desc:add("file", po.string():notifier(function(value)
 
         -- check whether file exists and is readable
         local file, message = io.open(value)
