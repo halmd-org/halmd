@@ -64,6 +64,13 @@ function options(desc)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.dimension = group:read_attribute("dimension", h5.uint())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param core module instance
