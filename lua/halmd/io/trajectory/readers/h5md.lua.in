@@ -102,6 +102,10 @@ function read_module_parameters(file)
 
             local group = setmetatable({}, {
                 __index = function(self, name)
+                    if not param:exists_group(namespace) then
+                        return function() end
+                    end
+
                     local group = param:open_group(namespace)
 
                     local method = group[name]
