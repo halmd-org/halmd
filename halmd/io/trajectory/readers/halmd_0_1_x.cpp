@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,7 +20,7 @@
 #include <h5xx/h5xx.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/trajectory/readers/hdf5.hpp>
+#include <halmd/io/trajectory/readers/halmd_0_1_x.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
@@ -34,19 +34,19 @@ namespace io { namespace trajectory { namespace readers
 {
 
 /**
- * check whether file is in HDF5 format
+ * check whether file is in HALMD 0.1.x format
  */
 template <int dimension, typename float_type>
-bool hdf5<dimension, float_type>::format(std::string const& file_name)
+bool halmd_0_1_x<dimension, float_type>::format(std::string const& file_name)
 {
     return H5::H5File::isHdf5(file_name);
 }
 
 /**
- * read sample from HDF5 trajectory file
+ * read sample from HALMD 0.1.x trajectory file
  */
 template <int dimension, typename float_type>
-hdf5<dimension, float_type>::hdf5(
+halmd_0_1_x<dimension, float_type>::halmd_0_1_x(
     shared_ptr<sample_type> sample
   , string const& file_name
   , ssize_t offset
@@ -106,10 +106,10 @@ hdf5<dimension, float_type>::hdf5(
 }
 
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::luaopen(lua_State* L)
+void halmd_0_1_x<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("hdf5_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
+    static string class_name("halmd_0_1_x_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -120,7 +120,7 @@ void hdf5<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("readers")
                     [
-                        class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        class_<halmd_0_1_x, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
                                 shared_ptr<sample_type>
                                 , string const&
@@ -128,7 +128,7 @@ void hdf5<dimension, float_type>::luaopen(lua_State* L)
                             >())
                             .scope
                             [
-                                def("format", &hdf5::format)
+                                def("format", &halmd_0_1_x::format)
                             ]
                     ]
                 ]
@@ -144,16 +144,16 @@ __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        &hdf5<3, double>::luaopen
+        &halmd_0_1_x<3, double>::luaopen
     ]
     [
-        &hdf5<2, double>::luaopen
+        &halmd_0_1_x<2, double>::luaopen
     ]
     [
-        &hdf5<3, float>::luaopen
+        &halmd_0_1_x<3, float>::luaopen
     ]
     [
-        &hdf5<2, float>::luaopen
+        &halmd_0_1_x<2, float>::luaopen
     ];
 }
 

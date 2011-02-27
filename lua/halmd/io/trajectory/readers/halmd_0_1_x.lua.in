@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -22,12 +22,12 @@ require("halmd.modules")
 -- grab environment
 local reader_wrapper = {
     host = {
-        [2] = halmd_wrapper.io.trajectory.readers.hdf5_2_double_
-      , [3] = halmd_wrapper.io.trajectory.readers.hdf5_3_double_
+        [2] = halmd_wrapper.io.trajectory.readers.halmd_0_1_x_2_double_
+      , [3] = halmd_wrapper.io.trajectory.readers.halmd_0_1_x_3_double_
     }
   , gpu = {
-        [2] = halmd_wrapper.io.trajectory.readers.hdf5_2_float_
-      , [3] = halmd_wrapper.io.trajectory.readers.hdf5_3_float_
+        [2] = halmd_wrapper.io.trajectory.readers.halmd_0_1_x_2_float_
+      , [3] = halmd_wrapper.io.trajectory.readers.halmd_0_1_x_3_float_
     }
 }
 local trajectory = require("halmd.observables.samples.trajectory")
@@ -40,13 +40,13 @@ local error = error
 local io = io
 local assert = assert
 
-module("halmd.io.trajectory.readers.hdf5", halmd.modules.register)
+module("halmd.io.trajectory.readers.halmd_0_1_x", halmd.modules.register)
 
 -- function to check file format
 format = reader_wrapper.host[2].format
 
 --
--- construct HDF5 trajectory reader module
+-- construct HALMD 0.1.x trajectory reader module
 --
 function new(args)
     local file = assert(args.file)
@@ -56,11 +56,11 @@ function new(args)
     local core = assert(mdsim.core())
     local dimension = assert(core.dimension)
 
-    local hdf5
+    local halmd_0_1_x
     if device() then
-        hdf5 = assert(reader_wrapper.gpu[dimension])
+        halmd_0_1_x = assert(reader_wrapper.gpu[dimension])
     else
-        hdf5 = assert(reader_wrapper.host[dimension])
+        halmd_0_1_x = assert(reader_wrapper.host[dimension])
     end
-    return hdf5(sample, file, offset)
+    return halmd_0_1_x(sample, file, offset)
 end

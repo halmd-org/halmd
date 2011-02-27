@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_TRAJECTORY_HDF5_READER_HPP
-#define HALMD_IO_TRAJECTORY_HDF5_READER_HPP
+#ifndef HALMD_IO_TRAJECTORY_READERS_HALMD_0_1_X_HPP
+#define HALMD_IO_TRAJECTORY_READERS_HALMD_0_1_X_HPP
 
 #include <lua.hpp>
 
@@ -30,8 +30,11 @@ namespace halmd
 namespace io { namespace trajectory { namespace readers
 {
 
+/**
+ * HALMD 0.1.x trajectory file reader
+ */
 template <int dimension, typename float_type>
-class hdf5
+class halmd_0_1_x
   : public trajectory::reader<dimension>
 {
 public:
@@ -43,7 +46,7 @@ public:
     static void luaopen(lua_State* L);
     static bool format(std::string const& file_name);
 
-    hdf5(
+    halmd_0_1_x(
         boost::shared_ptr<sample_type> sample
       , std::string const& file_name
       , ssize_t offset
@@ -62,4 +65,4 @@ private:
 
 } // namespace halmd
 
-#endif /* ! HALMD_IO_TRAJECTORY_HDF5_READER_HPP */
+#endif /* ! HALMD_IO_TRAJECTORY_READERS_HALMD_0_1_X_HPP */
