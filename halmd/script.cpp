@@ -200,7 +200,15 @@ shared_ptr<runner> script::run()
     object sampler(globals(L)["halmd"]["sampler"]);
 
     // downcast from template class sampler to base class runner
-    return call_function<shared_ptr<runner> >(sampler);
+    shared_ptr<runner> runner(call_function<shared_ptr<runner> >(sampler));
+
+    // Some C++ modules are only needed during the Lua script stage,
+    // e.g. the trajectory reader. To make sure these modules are
+    // destructed before running the simulation, invoke the Lua
+    // garbage collector now.
+    lua_gc(L, LUA_GCCOLLECT, 0);
+
+    return runner;
 }
 
 /**
