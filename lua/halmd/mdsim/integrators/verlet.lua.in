@@ -77,6 +77,13 @@ function options(desc)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.timestep = group:read_attribute("timestep", h5.float())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param verlet module instance

@@ -68,6 +68,13 @@ function options(desc, globals)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group, globals)
+    args.force = globals:read_attribute("force", h5.string())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param force module instance

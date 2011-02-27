@@ -107,12 +107,22 @@ function options(desc)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    -- FIXME args.wavenumbers = group:read_attribute("wavenumbers", h5.float_array())
+    args.tolerance = group:read_attribute("tolerance", h5.float())
+    args.maximum_count = group:read_attribute("maximum_count", h5.uint())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param ssf:   module instance
 -- @param group: HDF5 group
 --
 function write_parameters(ssf, group)
+    -- FIXME group:write_attribute("wavenumbers", h5.float_array(), ssf.wavenumbers)
     group:write_attribute("tolerance", h5.float(), ssf.tolerance)
     group:write_attribute("maximum_count", h5.uint(), ssf.maximum_count)
 end

@@ -79,6 +79,16 @@ function options(desc)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.index = group:read_attribute("index", h5.uint())
+    -- FIXME args.cutoff = group:read_attribute("cutoff", h5.float_array())
+    -- FIXME args.epsilon = group:read_attribute("epsilon", h5.float_array())
+    -- FIXME args.sigma = group:read_attribute("sigma", h5.float_array())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param power_law module instance

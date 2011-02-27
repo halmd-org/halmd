@@ -84,6 +84,16 @@ function options(desc)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.skin = group:read_attribute("skin", h5.float())
+    if neighbour_wrapper.gpu then
+        args.occupancy = group:read_attribute("occupancy", h5.float())
+    end
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param neighbour module instance

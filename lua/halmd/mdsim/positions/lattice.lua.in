@@ -87,6 +87,13 @@ function options(desc)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.slab = group:read_attribute("slab", h5.float_array())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param instance of lattice module
