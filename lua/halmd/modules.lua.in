@@ -77,7 +77,10 @@ function register(module)
                 end
             end
             if not value then
-                value = rawget(vm, key)
+                local vm = rawget(vm, key)
+                if type(vm) ~= "table" then
+                    value = vm
+                end
             end
 
             -- script parameter
