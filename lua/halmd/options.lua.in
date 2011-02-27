@@ -1,0 +1,86 @@
+--
+-- Copyright © 2010-2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab environment
+local po = halmd_wrapper.po
+local ipairs = ipairs
+local pairs = pairs
+local setmetatable = setmetatable
+local type = type
+
+module("halmd.options", halmd.modules.provider)
+
+-- parsed module options
+local vm = {}
+-- parsed global options
+local globals = {}
+
+--
+-- provide parameters for given module
+--
+function parameters(module)
+    if module.options then
+        local vm = vm[module.namespace]
+        if vm then
+            return setmetatable({}, { __index = vm })
+        end
+    else
+        return setmetatable({}, { __index = globals })
+    end
+end
+
+--
+-- query options of registered modules
+--
+-- @param parser options_parser instance
+--
+function get(parser)
+    for _, module in ipairs(modules) do
+        if module.options then
+            local desc = po.options_description()
+            local globals = po.options_description()
+            module.options(desc, globals)
+            parser:add(desc, module.namespace)
+            parser:add(globals)
+        end
+    end
+end
+
+--
+-- Set parsed command line options
+--
+-- @param args Boost.Program_options variables_map
+--
+-- This function is called by halmd::script.
+--
+function set(args)
+    for k, v in pairs(args) do
+        if type(v) == "table" then
+            vm[k] = v
+        else
+            globals[k] = v
+        end
+    end
+
+    for _, v in pairs(vm) do
+        setmetatable(v, { __index = globals })
+    end
+end

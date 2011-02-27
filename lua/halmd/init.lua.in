@@ -20,6 +20,7 @@
 --
 -- Load HAL’s MD package
 --
+require("halmd.options")
 require("halmd.io.statevars.writers")
 require("halmd.io.trajectory.reader")
 require("halmd.io.trajectory.writers")
