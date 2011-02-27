@@ -38,13 +38,13 @@ module("halmd.mdsim.velocity", halmd.modules.register)
 -- construct velocity module
 --
 function new(args)
-    local velocity = args.velocity or "boltzmann" -- default value
-
-    if args.reader and not args.velocity then
-        return velocities.trajectory{ reader = reader }
+    local velocity
+    if args.reader then
+        velocity = args.velocity or "trajectory"
     else
-        return velocities[velocity]()
+        velocity = args.velocity or "boltzmann" -- default value
     end
+    return velocities[velocity]()
 end
 
 --
