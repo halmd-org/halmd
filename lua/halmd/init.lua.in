@@ -49,8 +49,10 @@ function run()
     core.force = halmd.mdsim.force()
     core.neighbour = halmd.mdsim.neighbour()
     core.sort = halmd.mdsim.sort()
-    core.position = halmd.mdsim.position()
-    core.velocity = halmd.mdsim.velocity()
+
+    local reader = halmd.io.trajectory.reader()
+    core.position = halmd.mdsim.position{ reader = reader }
+    core.velocity = halmd.mdsim.velocity{ reader = reader }
 
     local sampler = halmd.sampler() -- singleton
     local profiler = halmd.profiler()
