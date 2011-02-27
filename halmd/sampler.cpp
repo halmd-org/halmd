@@ -159,7 +159,7 @@ void sampler<dimension>::luaopen(lua_State* L)
     [
         namespace_("halmd_wrapper")
         [
-            class_<sampler, shared_ptr<sampler> >(class_name.c_str())
+            class_<sampler, shared_ptr<sampler>, runner>(class_name.c_str())
                 .def(constructor<
                     shared_ptr<core_type>
                   , uint64_t
@@ -186,7 +186,7 @@ namespace // limit symbols to translation unit
 
 __attribute__((constructor)) void register_lua()
 {
-    lua_wrapper::register_(0) //< distance of derived to base class
+    lua_wrapper::register_(1) //< distance of derived to base class
     [
         &sampler<3>::luaopen
     ]

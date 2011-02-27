@@ -28,6 +28,7 @@
 #include <halmd/mdsim/core.hpp>
 #include <halmd/observables/observable.hpp>
 #include <halmd/observables/trajectory.hpp>
+#include <halmd/runner.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -35,6 +36,7 @@ namespace halmd
 
 template <int dimension>
 class sampler
+  : public runner
 {
 public:
     typedef mdsim::core<dimension> core_type;
@@ -53,7 +55,7 @@ public:
       , unsigned int statevars_interval
       , unsigned int trajectory_interval
     );
-    void run();
+    virtual void run();
     void sample(bool force=false);
     void prepare_observables(bool force=false);
     void register_runtimes(profiler_type& profiler);
