@@ -179,7 +179,7 @@ void script::parsed(po::variables_map const& vm)
 /**
  * Run simulation
  */
-void script::run()
+shared_ptr<runner> script::run()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
@@ -196,6 +196,11 @@ void script::run()
         lua_pop(e.state(), 1); //< remove error message
         throw;
     }
+
+    object sampler(globals(L)["halmd"]["sampler"]);
+
+    // downcast from template class sampler to base class runner
+    return call_function<shared_ptr<runner> >(sampler);
 }
 
 /**

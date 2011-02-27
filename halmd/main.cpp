@@ -146,7 +146,9 @@ int main(int argc, char **argv)
 
         script.parsed(vm); //< pass command line options to Lua
 
-        script.run();
+        shared_ptr<runner> sampler(script.run());
+
+        sampler->run();
     }
     catch (std::exception const& e) {
         LOG_ERROR(e.what());

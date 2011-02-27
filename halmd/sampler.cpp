@@ -166,7 +166,6 @@ void sampler<dimension>::luaopen(lua_State* L)
                   , unsigned int
                   , unsigned int
                 >())
-                .def("run", &sampler::run)
                 .def("register_runtimes", &sampler::register_runtimes)
                 .def_readwrite("observables", &sampler::observables)
                 .def_readwrite("statevars_writer", &sampler::statevars_writer)

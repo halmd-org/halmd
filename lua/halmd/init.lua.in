@@ -64,6 +64,4 @@ function run()
       , halmd.observables.thermodynamics()
     }
     sampler.statevars_writer = halmd.io.statevars.writers()
-
-    sampler:run()
 end
