@@ -40,7 +40,7 @@ module("halmd.mdsim.position", halmd.modules.register)
 function new(args)
     local position = args.position or "lattice" -- default value
 
-    if args.reader then
+    if args.reader and not args.position then
         return positions.trajectory{ reader = reader }
     else
         return positions[position]()
