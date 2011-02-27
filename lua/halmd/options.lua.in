@@ -42,9 +42,8 @@ function parameters(module)
         if vm then
             return setmetatable({}, { __index = vm })
         end
-    else
-        return setmetatable({}, { __index = globals })
     end
+    return setmetatable({}, { __index = globals })
 end
 
 --
