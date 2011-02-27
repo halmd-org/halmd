@@ -64,20 +64,3 @@ end
 function name()
     return "Zero potential (no interaction)"
 end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function options(desc)
-end
-
---
--- write module parameters to HDF5 group
---
--- @param instance of zero module
--- @param group HDF5 group
---
-function write_parameters(zero, group)
-end
