@@ -89,6 +89,10 @@ end
 --
 function read_module_parameters(file)
     local param = file:open_group("param")
+    local mdsim = param:open_group("mdsim")
 
-    -- FIXME read HALMD 0.1.x parameters
+    vm.box = vm.box or {}
+    vm.box.dimension = mdsim:read_attribute("dimension", h5.uint())
+    vm.box.particles = mdsim:read_attribute("particles", h5.uint_array())
+    vm.box.density = mdsim:read_attribute("density", h5.float())
 end
