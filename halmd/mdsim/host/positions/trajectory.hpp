@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_POSITIONS_TRAJECTORY_HPP
 #define HALMD_MDSIM_HOST_POSITIONS_TRAJECTORY_HPP
 
+#include <lua.hpp>
 #include <vector>
 
 #include <halmd/io/trajectory/reader.hpp>
@@ -47,6 +48,8 @@ public:
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<sample_type> sample;
+
+    static void luaopen(lua_State* L);
 
     trajectory(
         boost::shared_ptr<particle_type> particle

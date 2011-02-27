@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITIES_TRAJECTORY_HPP
 #define HALMD_MDSIM_HOST_VELOCITIES_TRAJECTORY_HPP
 
+#include <lua.hpp>
+
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/observables/host/samples/trajectory.hpp>
@@ -41,6 +43,8 @@ public:
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<sample_type> sample;
+
+    static void luaopen(lua_State* L);
 
     trajectory(
         boost::shared_ptr<particle_type> particle

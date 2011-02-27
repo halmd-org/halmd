@@ -21,6 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/positions/trajectory.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 namespace halmd
 {
@@ -64,6 +65,60 @@ void trajectory<dimension, float_type>::set()
 
     LOG("set particle positions from trajectory sample");
 }
+
+template <int dimension, typename float_type>
+void trajectory<dimension, float_type>::luaopen(lua_State* L)
+{
+    using namespace luabind;
+    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    module(L)
+    [
+        namespace_("halmd_wrapper")
+        [
+            namespace_("mdsim")
+            [
+                namespace_("host")
+                [
+                    namespace_("positions")
+                    [
+                        class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                            .def(constructor<
+                                 shared_ptr<particle_type>
+                               , shared_ptr<box_type>
+                               , shared_ptr<sample_type>
+                            >())
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
+
+
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
+{
+    lua_wrapper::register_(1) //< distance of derived to base class
+#ifndef USE_HOST_SINGLE_PRECISION
+    [
+        &trajectory<3, double>::luaopen
+    ]
+    [
+        &trajectory<2, double>::luaopen
+    ];
+#else
+    [
+        &trajectory<3, float>::luaopen
+    ]
+    [
+        &trajectory<2, float>::luaopen
+    ];
+#endif
+}
+
+} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

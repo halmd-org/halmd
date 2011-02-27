@@ -66,6 +66,8 @@ end
 -- @param position module instance
 -- @param group HDF5 group
 --
-function write_parameters(position, group, globals)
-    globals:write_attribute("position", h5.string(), position.module_name)
+function write_parameters(self, group, globals)
+    if self.module_name then
+        globals:write_attribute("self", h5.string(), self.module_name)
+    end
 end
