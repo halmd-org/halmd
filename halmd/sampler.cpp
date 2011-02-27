@@ -159,7 +159,7 @@ void sampler<dimension>::luaopen(lua_State* L)
     [
         namespace_("halmd_wrapper")
         [
-            class_<sampler, shared_ptr<sampler>, runner>(class_name.c_str())
+            class_<sampler, shared_ptr<runner>, runner>(class_name.c_str())
                 .def(constructor<
                     shared_ptr<core_type>
                   , uint64_t
