@@ -22,6 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/readers/hdf5.hpp>
 #include <halmd/io/utility/hdf5.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -108,7 +109,7 @@ template <int dimension, typename float_type>
 void hdf5<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("hdf5_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("hdf5_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L)
     [
         namespace_("halmd_wrapper")

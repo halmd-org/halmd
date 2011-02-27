@@ -21,14 +21,46 @@ require("halmd.modules")
 
 -- grab environment
 local reader_wrapper = {
-    [2] = halmd_wrapper.io.trajectory.readers.hdf5_2_
-  , [3] = halmd_wrapper.io.trajectory.readers.hdf5_3_
+    host = {
+        [2] = halmd_wrapper.io.trajectory.readers.hdf5_2_double_
+      , [3] = halmd_wrapper.io.trajectory.readers.hdf5_3_double_
+    }
+  , gpu = {
+        [2] = halmd_wrapper.io.trajectory.readers.hdf5_2_float_
+      , [3] = halmd_wrapper.io.trajectory.readers.hdf5_3_float_
+    }
 }
+local trajectory = require("halmd.observables.samples.trajectory")
+local mdsim = {
+  core = require("halmd.mdsim.core")
+}
+local device = require("halmd.device")
 local po = halmd_wrapper.po
 local error = error
 local io = io
+local assert = assert
 
 module("halmd.io.trajectory.readers.hdf5", halmd.modules.register)
 
 -- function to check file format
-format = reader_wrapper[2].format
+format = reader_wrapper.host[2].format
+
+--
+-- construct HDF5 trajectory reader module
+--
+function new(args)
+    local file = assert(args.file)
+    local offset = assert(args.offset)
+
+    local sample = assert(trajectory())
+    local core = assert(mdsim.core())
+    local dimension = assert(core.dimension)
+
+    local hdf5
+    if device() then
+        hdf5 = assert(reader_wrapper.gpu[dimension])
+    else
+        hdf5 = assert(reader_wrapper.host[dimension])
+    end
+    return hdf5(sample, file, offset)
+end
