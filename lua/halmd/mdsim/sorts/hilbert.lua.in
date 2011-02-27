@@ -25,11 +25,13 @@ local hilbert_wrapper = {
         [2] = halmd_wrapper.mdsim.host.sorts.hilbert_2_
       , [3] = halmd_wrapper.mdsim.host.sorts.hilbert_3_
     }
-  , gpu = {
+}
+if halmd_wrapper.mdsim.gpu then
+    hilbert_wrapper.gpu = {
         [2] = halmd_wrapper.mdsim.gpu.sorts.hilbert_2_
       , [3] = halmd_wrapper.mdsim.gpu.sorts.hilbert_3_
     }
-}
+end
 local mdsim = {
   core = require("halmd.mdsim.core")
 }
