@@ -73,6 +73,6 @@ end
 --
 function write_parameters(self, group, globals)
     if self.module_name then
-        globals:write_attribute("self", h5.string(), self.module_name)
+        globals:write_attribute("velocity", h5.string(), self.module_name)
     end
 end
