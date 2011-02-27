@@ -30,6 +30,33 @@ local pairs = pairs
 
 module("halmd.io.trajectory.reader", halmd.modules.register)
 
+--
+-- construct trajectory reader module
+--
+function new(args)
+    local file = args.file -- trajectory input file is optional
+
+    if file then
+        local offset = args.offset or -1  -- default value
+
+        -- find reader that can handle file format
+        local reader
+        for _, module in pairs(readers) do
+            local format = module.format
+            if format and format(file) then
+                reader = module
+                break
+            end
+        end
+        if not reader then
+            error(file .. ": unknown trajectory file format")
+        end
+
+        return reader{ file = file, offset = offset }
+    end
+end
+
+
 -- override default parameter namespace
 namespace = "trajectory"
 
