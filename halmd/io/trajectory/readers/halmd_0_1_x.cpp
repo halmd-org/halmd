@@ -35,11 +35,22 @@ namespace io { namespace trajectory { namespace readers
 
 /**
  * check whether file is in HALMD 0.1.x format
+ *
+ * FIXME implement file format detection based on required datasets
  */
 template <int dimension, typename float_type>
 bool halmd_0_1_x<dimension, float_type>::format(std::string const& file_name)
 {
-    return H5::H5File::isHdf5(file_name);
+    if (!H5::H5File::isHdf5(file_name)) {
+        return false;
+    }
+    H5::H5File file(file_name, H5F_ACC_RDONLY);
+    H5::Group param(file.openGroup("param"));
+    if (h5xx::exists_attribute(param, "file_version")) {
+        return false;
+    }
+    LOG_DEBUG("detected HALMD 0.1.x trajectory file format");
+    return true;
 }
 
 /**
