@@ -88,7 +88,7 @@ protected:
 template <int dimension> template <typename T>
 inline T box<dimension>::reduce_periodic(T& r) const
 {
-    vector_type image;
+    T image;
     for (size_t j = 0; j < dimension; ++j) {
         if (r[j] > length_half_[j]) {
             r[j] -= length_[j];
