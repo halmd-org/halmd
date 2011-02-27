@@ -79,9 +79,13 @@ function options(desc)
         local reader
         for _, module in pairs(readers) do
             local format = module.format
-            if format and format(value) then
-                reader = module
-                break
+            if format then
+                local file = format(value)
+                if file then
+                    reader = module
+                    reader.read_module_parameters(file)
+                    break
+                end
             end
         end
         if not reader then

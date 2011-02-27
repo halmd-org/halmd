@@ -35,12 +35,14 @@ local mdsim = {
   core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+local assert = assert
 local error = error
 local io = io
-local assert = assert
+local setmetatable = setmetatable
 
-module("halmd.io.trajectory.readers.halmd_0_1_x", halmd.modules.register)
+module("halmd.io.trajectory.readers.halmd_0_1_x", halmd.modules.register, halmd.modules.provider)
 
 -- function to check file format
 format = reader_wrapper.host[2].format
@@ -63,4 +65,30 @@ function new(args)
         halmd_0_1_x = assert(reader_wrapper.host[dimension])
     end
     return halmd_0_1_x(sample, file, offset)
+end
+
+-- module parameters
+local vm = {}
+
+--
+-- provide parameters for given module
+--
+function parameters(module)
+    if module.read_parameters then
+        local vm = vm[module.namespace]
+        if vm then
+            return setmetatable({}, { __index = vm })
+        end
+    end
+end
+
+--
+-- read module parameters from trajectory file
+--
+-- @param file HDF5 trajectory file
+--
+function read_module_parameters(file)
+    local param = file:open_group("param")
+
+    -- FIXME read HALMD 0.1.x parameters
 end
