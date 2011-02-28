@@ -32,7 +32,11 @@ namespace halmd
  */
 std::string absolute_path(std::string const& path)
 {
+#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION >= 3
+    return boost::filesystem::absolute(path).string();
+#else
     return boost::filesystem::complete(path).string();
+#endif
 }
 
 } // namespace halmd
