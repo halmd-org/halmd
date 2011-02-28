@@ -356,7 +356,11 @@ void options::parse(po::options_description const& opt)
     if (vm.count("trajectory")) {
         // store absolute input file path
         boost::filesystem::path path(vm["trajectory"].as<string>());
+#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION >= 3
+        vm_["trajectory"] = po::variable_value(boost::filesystem::absolute(path).string(), false);
+#else
         vm_["trajectory"] = po::variable_value(boost::filesystem::complete(path).string(), false);
+#endif
 
         try {
             H5XX_NO_AUTO_PRINT(H5::Exception);
@@ -425,13 +429,21 @@ void options::parse(po::options_description const& opt)
     if (vm.count("energy")) {
         // store absolute input file path
         boost::filesystem::path path(vm["energy"].as<string>());
+#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION >= 3
+        vm_["energy"] = po::variable_value(boost::filesystem::absolute(path).string(), false);
+#else
         vm_["energy"] = po::variable_value(boost::filesystem::complete(path).string(), false);
+#endif
     }
 
     // format timestamp in output file prefix
     boost::filesystem::path path(date_time::format(vm["output"].as<string>()));
     // store absolute output file path
+#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION >= 3
+    vm_["output"] = po::variable_value(boost::filesystem::absolute(path).string(), false);
+#else
     vm_["output"] = po::variable_value(boost::filesystem::complete(path).string(), false);
+#endif
 }
 
 #define IMPL(x) typename mdsim_impl::impl_##x()
