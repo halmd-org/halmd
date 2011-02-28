@@ -68,16 +68,7 @@ function new(args)
 end
 
 -- module parameters
-local vm = setmetatable({}, {
-    --
-    -- create module parameter table upon access
-    --
-    __index = function(self, key)
-        local table = {}
-        self[key] = table
-        return table
-    end
-})
+local vm = {}
 
 --
 -- provide parameters for given module
@@ -101,12 +92,14 @@ function read_module_parameters(file)
     local mdsim = param:open_group("mdsim")
     local correlation = param:open_group("correlation")
 
+    vm.box = {}
     vm.box.dimension = mdsim:read_attribute("dimension", h5.int())
     -- FIXME scalar vm.box.particles = mdsim:read_attribute("particles", h5.uint())
     vm.box.particles = mdsim:read_attribute("particles", h5.uint_array())
     vm.box.density = mdsim:read_attribute("density", h5.float())
     -- FIXME optional vm.box.length = mdsim:read_attribute("box_length", h5.float())
 
+    vm.verlet = {}
     vm.verlet.timestep = mdsim:read_attribute("timestep", h5.float())
     vm.integrator = "verlet"
 
@@ -117,15 +110,19 @@ function read_module_parameters(file)
     -- FIXME vm.lennard_jones.smooth = mdsim:read_attribute("potential_smoothing", h5.float())
     vm.force = "lennard_jones"
 
+    vm.neighbour = {}
     vm.neighbour.occupancy = mdsim:read_attribute("cell_occupancy", h5.float())
     vm.neighbour.skin = mdsim:read_attribute("neighbour_skin", h5.float())
 
+    vm.gpu = {}
     vm.gpu.threads = mdsim:read_attribute("threads", h5.uint())
 
+    vm.boltzmann = {}
     vm.boltzmann.temperature = mdsim:read_attribute("temperature", h5.float())
 
     -- vm.FIXME = mdsim:read_attribute("pair_separation", h5.float())
 
+    vm.sampler = {}
     vm.sampler.steps = correlation:read_attribute("steps", h5.uint64())
     -- FIXME optional vm.sampler.time = correlation:read_attribute("time", h5.float())
 
