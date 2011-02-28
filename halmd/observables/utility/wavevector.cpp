@@ -24,7 +24,7 @@
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/io/logger.hpp>
-#include <halmd/observables/utility/wavevectors.hpp>
+#include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -36,27 +36,27 @@ namespace observables { namespace utility
 {
 
 template <int dimension>
-wavevectors<dimension>::wavevectors(
-    vector<double> const& wavenumbers
+wavevector<dimension>::wavevector(
+    vector<double> const& wavenumber
   , vector_type const& box_length
   , double tolerance
   , unsigned int max_count
 )
   // initialise members
-  : wavenumbers_(wavenumbers)
+  : wavenumber_(wavenumber)
   , tolerance_(tolerance)
   , max_count_(max_count)
 {
     ostringstream s;
-    copy(wavenumbers_.begin(), wavenumbers_.end(), ostream_iterator<double>(s, " "));
+    copy(wavenumber_.begin(), wavenumber_.end(), ostream_iterator<double>(s, " "));
     LOG("wavenumber grid: " << s.str());
     LOG("tolerance on wavevector magnitude: " << tolerance_);
     LOG("maximum number of wavevectors per wavenumber: " << max_count_);
 
     // construct wavevectors and store as key/value pairs (wavenumber, wavevector)
     algorithm::host::pick_lattice_points_from_shell(
-        wavenumbers.begin(), wavenumbers.end()
-      , back_inserter(wavevectors_)
+        wavenumber.begin(), wavenumber.end()
+      , back_inserter(wavevector_)
       , element_div(vector_type(2 * M_PI), box_length)
       , tolerance
       , max_count
@@ -64,31 +64,31 @@ wavevectors<dimension>::wavevectors(
 
     // sort wavevector map according to keys (wavenumber)
     stable_sort(
-        wavevectors_.begin(), wavevectors_.end()
+        wavevector_.begin(), wavevector_.end()
       , bind(less<double>(), bind(&map_type::value_type::first, _1), bind(&map_type::value_type::first, _2))
     );
 
     // remove wavenumbers with no compatible wavevectors
-    for (vector<double>::iterator q_it = wavenumbers_.begin(); q_it != wavenumbers_.end(); ++q_it) {
+    for (vector<double>::iterator q_it = wavenumber_.begin(); q_it != wavenumber_.end(); ++q_it) {
         // find wavevector q with |q| = *q_it
         typename map_type::const_iterator found = find_if(
-            wavevectors_.begin(), wavevectors_.end()
+            wavevector_.begin(), wavevector_.end()
           , bind(equal_to<double>(), bind(&map_type::value_type::first, _1), *q_it)
         );
-        if (found == wavevectors_.end()) {
+        if (found == wavevector_.end()) {
             LOG_WARNING("No wavevector compatible with |q| ≈ " << *q_it << ". Value discarded");
-            wavenumbers_.erase(q_it--);   // post-decrement iterator, increment at end of loop
+            wavenumber_.erase(q_it--);   // post-decrement iterator, increment at end of loop
         }
     }
 
-    LOG_DEBUG("total number of wavevectors: " << wavevectors_.size());
+    LOG_DEBUG("total number of wavevectors: " << wavevector_.size());
 }
 
 template <int dimension>
-void wavevectors<dimension>::luaopen(lua_State* L)
+void wavevector<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("wavevectors_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("wavevector_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -97,16 +97,16 @@ void wavevectors<dimension>::luaopen(lua_State* L)
             [
                 namespace_("utility")
                 [
-                    class_<wavevectors, shared_ptr<wavevectors> >(class_name.c_str())
+                    class_<wavevector, shared_ptr<wavevector> >(class_name.c_str())
                         .def(constructor<
                              vector<double> const&
                            , vector_type const&
                            , double, unsigned int
                         >())
-                        .property("wavenumbers", &wavevectors::wavenumbers)
-                        .property("values", &wavevectors::values)
-                        .property("tolerance", &wavevectors::tolerance)
-                        .property("maximum_count", &wavevectors::maximum_count)
+                        .property("wavenumber", &wavevector::wavenumber)
+                        .property("value", &wavevector::value)
+                        .property("tolerance", &wavevector::tolerance)
+                        .property("maximum_count", &wavevector::maximum_count)
                 ]
             ]
         ]
@@ -120,18 +120,18 @@ __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &wavevectors<3>::luaopen
+        &wavevector<3>::luaopen
     ]
     [
-        &wavevectors<2>::luaopen
+        &wavevector<2>::luaopen
     ];
 }
 
 } // namespace
 
 // explicit instantiation
-template class wavevectors<3>;
-template class wavevectors<2>;
+template class wavevector<3>;
+template class wavevector<2>;
 
 }} // namespace observables::utility
 

@@ -45,7 +45,7 @@ void density_mode<dimension>::luaopen(lua_State* L)
                 class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
                     .def("acquire", &density_mode::acquire)
                     .property("value", &density_mode::value)
-                    .property("wavenumbers", &density_mode::wavenumbers)
+                    .property("wavenumber", &density_mode::wavenumber)
             ]
         ]
     ];

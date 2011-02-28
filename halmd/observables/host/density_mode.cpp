@@ -37,13 +37,13 @@ namespace observables { namespace host
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     shared_ptr<trajectory_type> trajectory
-  , shared_ptr<wavevectors_type> wavevectors
+  , shared_ptr<wavevector_type> wavevector
 )
     // dependency injection
   : trajectory_(trajectory)
-  , wavevectors_(wavevectors)
+  , wavevector_(wavevector)
     // memory allocation
-  , rho_sample_(trajectory_->sample->r.size(), wavevectors_->values().size())
+  , rho_sample_(trajectory_->sample->r.size(), wavevector_->value().size())
 {
 }
 
@@ -87,7 +87,7 @@ void density_mode<dimension, float_type>::acquire(double time)
             typename mode_vector_type::iterator rho_q = rho_vector.begin();
             typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
             // 3rd loop: iterate over wavevectors
-            BOOST_FOREACH (map_value_type const& q_pair, wavevectors_->values()) {
+            BOOST_FOREACH (map_value_type const& q_pair, wavevector_->value()) {
                 float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
                 *rho_q++ += mode_type(cos(q_r), -sin(q_r));
             }
@@ -113,7 +113,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                     class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<trajectory_type>
-                          , shared_ptr<wavevectors_type>
+                          , shared_ptr<wavevector_type>
                         >())
                         .def("register_runtimes", &density_mode::register_runtimes)
                 ]

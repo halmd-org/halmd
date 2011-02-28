@@ -20,29 +20,29 @@
 require("halmd.modules")
 
 -- grab environment
-local wavevectors_wrapper = {
-    [2] = halmd_wrapper.observables.utility.wavevectors_2_
-  , [3] = halmd_wrapper.observables.utility.wavevectors_3_
+local wavevector_wrapper = {
+    [2] = halmd_wrapper.observables.utility.wavevector_2_
+  , [3] = halmd_wrapper.observables.utility.wavevector_3_
 }
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local assert = assert
 
-module("halmd.observables.utility.wavevectors", halmd.modules.register)
+module("halmd.observables.utility.wavevector", halmd.modules.register)
 
 --
--- construct instance of wavevectors module
+-- construct instance of wavevector module
 --
 -- @param args                parameter table:
---     args.wavenumbers       list of wavenumbers
+--     args.wavenumber        list of wavenumbers
 --     args.tolerance         relative tolerance on wavevector magnitude
 --     args.maximum_count     maximum number of wavevectors per wavenumber shell
--- @returns instance of wavevectors module
+-- @returns instance of wavevector module
 --
 function new(args)
     -- options
-    local wavenumbers = assert(args.wavenumbers)
+    local wavenumber = assert(args.wavenumber)
     local tolerance = assert(args.tolerance)
     local maximum_count = assert(args.maximum_count)
 
@@ -51,6 +51,6 @@ function new(args)
     local dimension = assert(core.dimension)
     local box = assert(core.box)
 
-    local wavevectors = assert(wavevectors_wrapper[dimension])
-    return wavevectors(wavenumbers, box.length, tolerance, maximum_count)
+    local wavevector = assert(wavevector_wrapper[dimension])
+    return wavevector(wavenumber, box.length, tolerance, maximum_count)
 end

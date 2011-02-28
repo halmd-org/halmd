@@ -31,7 +31,7 @@ local mdsim = {
 local observables = {
     density_mode = require("halmd.observables.density_mode")
   , utility = {
-        wavevectors = require("halmd.observables.utility.wavevectors")
+        wavevector = require("halmd.observables.utility.wavevector")
     }
 }
 local h5 = halmd_wrapper.h5
@@ -57,26 +57,26 @@ function new(args)
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
 
-    -- construct local wavevectors module
-    local wavevectors = assert(observables.utility.wavevectors)
+    -- construct local wavevector module
+    local wavevector = assert(observables.utility.wavevector)
     if wavenumbers then
-        wavevectors = wavevectors{
-            wavenumbers = wavenumbers
+        wavevector = wavevector{
+            wavenumber = wavenumbers
           , tolerance = tolerance
           , maximum_count = maximum_count
         }
     else
-        wavevectors = nil
+        wavevector = nil
     end
 
-    if not wavevectors then
+    if not wavevector then
         return nil
     end
 
     -- construct ssf module
     local ssf = assert(ssf_wrapper[dimension])
     return ssf(
-        assert(observables.density_mode{ wavevectors = wavevectors })
+        assert(observables.density_mode{ wavevector = wavevector })
       , particle.nbox
     )
 end
@@ -106,6 +106,6 @@ end
 -- @param group   HDF5 group
 --
 function write_parameters(ssf, group)
-    group:write_attribute("tolerance", h5.float(), ssf.wavevectors.tolerance)
-    group:write_attribute("maximum_count", h5.uint(), ssf.wavevectors.maximum_count)
+    group:write_attribute("tolerance", h5.float(), ssf.wavevector.tolerance)
+    group:write_attribute("maximum_count", h5.uint(), ssf.wavevector.maximum_count)
 end

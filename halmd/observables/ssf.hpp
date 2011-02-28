@@ -83,9 +83,9 @@ public:
     }
 
     //! returns instance of wavevector class used to compute the ssf
-    typename density_mode_type::wavevectors_type const& wavevectors() const
+    typename density_mode_type::wavevector_type const& wavevector() const
     {
-        return density_mode->wavevectors();
+        return density_mode->wavevector();
     }
 
     // module runtime accumulator descriptions
@@ -102,7 +102,7 @@ protected:
      *  result for (partial) static structure factors
      *  in the order AA, AB, AC, …, BB, BC, …,CC
      *
-     *  value_[i][j][0]:   mean value S_ab(k) for k = wavenumbers_[j]
+     *  value_[i][j][0]:   mean value S_ab(k) for k = wavenumber_[j]
      *  value_[i][j][1]:   estimated error of mean
      *  value_[i][j][2]:   value count for the average
      */

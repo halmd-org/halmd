@@ -49,7 +49,7 @@ module("halmd.observables.density_mode", halmd.modules.register)
 -- construct instance of density_mode module
 --
 -- @param args              parameter table:
---     args.wavevectors     instance of wavevectors module
+--     args.wavevector      instance of wavevector module
 -- @returns instance of density_mode module
 --
 function new(args)
@@ -57,7 +57,7 @@ function new(args)
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local trajectory = assert(observables.trajectory())
-    local wavevectors = args.wavevectors
+    local wavevector = args.wavevector
 
     local density_mode
     if device() then
@@ -65,5 +65,5 @@ function new(args)
     else
         density_mode = assert(density_mode_wrapper.host[dimension])
     end
-    return density_mode(trajectory, wavevectors)
+    return density_mode(trajectory, wavevector)
 end

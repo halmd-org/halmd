@@ -49,7 +49,7 @@ ssf<dimension>::ssf(
   , time_(-1)
 {
     // allocate memory
-    unsigned int nq = density_mode->wavenumbers().size();
+    unsigned int nq = density_mode->wavenumber().size();
     unsigned int ntype = density_mode->value().size();
     unsigned int nssf = ntype * (ntype + 1) / 2; //< number of partial structure factors
 
@@ -78,7 +78,7 @@ void ssf<dimension>::register_observables(writer_type& writer)
 {
     string root("structure/ssf/");
     // write wavenumbers only once
-    writer.write_dataset(root + "wavenumbers", density_mode->wavenumbers(), "wavenumber grid");
+    writer.write_dataset(root + "wavenumber", density_mode->wavenumber(), "wavenumber grid");
 
     // register output writers for all partial structure factors
     unsigned char ntype = static_cast<unsigned char>(density_mode->value().size());
@@ -133,14 +133,14 @@ void ssf<dimension>::compute_()
     scoped_timer<timer> timer_(at_key<sample_>(runtime_));
 
     typedef typename density_mode_type::result_type::value_type::element_type rho_vector_type;
-    typedef typename density_mode_type::wavevectors_type::map_type wavevectors_map_type;
+    typedef typename density_mode_type::wavevector_type::map_type wavevector_map_type;
     typedef typename rho_vector_type::const_iterator rho_iterator;
-    typedef typename wavevectors_map_type::const_iterator wavevector_iterator;
+    typedef typename wavevector_map_type::const_iterator wavevector_iterator;
     typedef std::vector<accumulator<double> >::iterator result_iterator;
 
     // perform computation of partial SSF for all combinations of particle types
-    wavevectors_map_type const& wavevectors = density_mode->wavevectors().values();
-    if (wavevectors.empty()) return; // nothing to do
+    wavevector_map_type const& wavevector = density_mode->wavevector().value();
+    if (wavevector.empty()) return; // nothing to do
 
     unsigned int ntype = density_mode->value().size();
     unsigned int k = 0;
@@ -154,14 +154,14 @@ void ssf<dimension>::compute_()
             // iterate over sorted list of wavevectors
             double sum = 0;
             unsigned int count = 0;
-            wavevector_iterator q = wavevectors.begin();
+            wavevector_iterator q = wavevector.begin();
             wavevector_iterator q_next = q; ++q_next;
-            while (q != wavevectors.end()) {
+            while (q != wavevector.end()) {
                 // rho_q × rho_q^*
                 sum += real(*rho_q0) * real(*rho_q1) + imag(*rho_q0) * imag(*rho_q1);
                 ++count;
                 // find end of range with equal wavenumber
-                if (q_next == wavevectors.end() || q->first != q_next->first) {
+                if (q_next == wavevector.end() || q->first != q_next->first) {
                     (*result++)(sum / count);   // add result to output accumulator
                     sum = 0; count = 0;
                 }
@@ -189,7 +189,7 @@ void ssf<dimension>::luaopen(lua_State* L)
                     >())
                     .def("register_runtimes", &ssf::register_runtimes)
                     .property("value", &ssf::value)
-                    .property("wavevectors", &ssf::wavevectors)
+                    .property("wavevector", &ssf::wavevector)
             ]
         ]
     ];

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
-#define HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
+#ifndef HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP
+#define HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP
 
 #include <utility>
 #include <lua.hpp>
@@ -40,7 +40,7 @@ namespace observables { namespace utility
  */
 
 template <int dimension>
-class wavevectors
+class wavevector
 {
 public:
     typedef fixed_vector<double, dimension> vector_type;
@@ -48,8 +48,8 @@ public:
 
     static void luaopen(lua_State* L);
 
-    wavevectors(
-        std::vector<double> const& wavenumbers
+    wavevector(
+        std::vector<double> const& wavenumber
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
@@ -68,33 +68,33 @@ public:
     }
 
     //! returns list of wavevectors
-    map_type const& values() const
+    map_type const& value() const
     {
-        return wavevectors_;
+        return wavevector_;
     }
 
     //! returns wavenumber grid
-    std::vector<double> const& wavenumbers() const
+    std::vector<double> const& wavenumber() const
     {
-        return wavenumbers_;
+        return wavenumber_;
     }
 
 protected:
     /** wavenumber grid */
-    std::vector<double> wavenumbers_;
+    std::vector<double> wavenumber_;
     /** tolerance of wavevector magnitudes (relative error) */
     double tolerance_;
     /** maximum number of wavevectors per wavenumber */
     double max_count_;
     /**
      * list of wavevectors grouped by their magnitude,
-     * the keys equal wavenumbers_ (or a subset of)
+     * the keys equal wavenumber_ (or a subset of)
      */
-    map_type wavevectors_;
+    map_type wavevector_;
 };
 
 }} // namespace observables::utility
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP */
+#endif /* ! HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP */

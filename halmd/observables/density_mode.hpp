@@ -24,7 +24,7 @@
 #include <vector>
 
 #include <halmd/observables/samples/density_mode.hpp>
-#include <halmd/observables/utility/wavevectors.hpp>
+#include <halmd/observables/utility/wavevector.hpp>
 
 namespace halmd
 {
@@ -43,7 +43,7 @@ class density_mode
 public:
     typedef observables::samples::density_mode<dimension> density_mode_sample_type;
     typedef typename density_mode_sample_type::mode_vector_vector_type result_type;
-    typedef observables::utility::wavevectors<dimension> wavevectors_type;
+    typedef observables::utility::wavevector<dimension> wavevector_type;
 
     static void luaopen(lua_State* L);
 
@@ -51,8 +51,8 @@ public:
     virtual ~density_mode() {}
     virtual void acquire(double time) = 0;
     virtual result_type const& value() const = 0;
-    virtual wavevectors_type const& wavevectors() const = 0;
-    virtual std::vector<double> const& wavenumbers() const = 0;
+    virtual wavevector_type const& wavevector() const = 0;
+    virtual std::vector<double> const& wavenumber() const = 0;
 };
 
 } // namespace observables

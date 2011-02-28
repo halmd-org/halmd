@@ -25,7 +25,7 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/observables/host/trajectory.hpp>
-#include <halmd/observables/utility/wavevectors.hpp>
+#include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -46,7 +46,7 @@ class density_mode
 public:
     typedef observables::density_mode<dimension> _Base;
     typedef typename _Base::density_mode_sample_type density_mode_sample_type;
-    typedef typename _Base::wavevectors_type wavevectors_type;
+    typedef typename _Base::wavevector_type wavevector_type;
     typedef host::trajectory<dimension, float_type> trajectory_type;
     typedef halmd::utility::profiler profiler_type;
 
@@ -57,7 +57,7 @@ public:
 
     density_mode(
         boost::shared_ptr<trajectory_type> trajectory
-      , boost::shared_ptr<wavevectors_type> wavevectors
+      , boost::shared_ptr<wavevector_type> wavevector
     );
 
     void register_runtimes(profiler_type& profiler);
@@ -73,16 +73,16 @@ public:
         return rho_sample_.rho;
     }
 
-    //! returns wavevectors object
-    virtual wavevectors_type const& wavevectors() const
+    //! returns wavevector object
+    virtual wavevector_type const& wavevector() const
     {
-        return *wavevectors_;
+        return *wavevector_;
     }
 
     //! returns wavenumber grid
-    virtual std::vector<double> const& wavenumbers() const
+    virtual std::vector<double> const& wavenumber() const
     {
-        return wavevectors_->wavenumbers();
+        return wavevector_->wavenumber();
     }
 
     // descriptions of module's runtime accumulators
@@ -90,7 +90,7 @@ public:
 
 protected:
     boost::shared_ptr<trajectory_type> trajectory_;
-    boost::shared_ptr<wavevectors_type> wavevectors_;
+    boost::shared_ptr<wavevector_type> wavevector_;
 
     /** data structure for density modes */
     density_mode_sample_type rho_sample_;
