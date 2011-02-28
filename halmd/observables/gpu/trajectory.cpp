@@ -64,6 +64,7 @@ trajectory<host::samples::trajectory<dimension, float_type> >::trajectory(
 template <int dimension, typename float_type>
 void trajectory<gpu::samples::trajectory<dimension, float_type> >::acquire(double time)
 {
+    LOG_TRACE("[trajectory] acquire GPU sample");
     // FIXME
 
     sample->time = time;
@@ -75,6 +76,8 @@ void trajectory<gpu::samples::trajectory<dimension, float_type> >::acquire(doubl
 template <int dimension, typename float_type>
 void trajectory<host::samples::trajectory<dimension, float_type> >::acquire(double time)
 {
+    LOG_TRACE("[trajectory] acquire host sample");
+
     using mdsim::gpu::particle_kernel::untagged;
 
     try {
