@@ -60,20 +60,12 @@ static inline ostream& operator<<(ostream& os, logger::severity_level level)
 
 logger::logger()
 {
-    // The attribute interface of Boost.Log changed in SVN r479.
-    // Boost.Log does not provide any version information, but
-    // we may assume that users of Boost >= 1.46.0 require at
-    // least Boost.Log r588 to compile with Boost Filesystem
-    // version 3. For users of Boost < 1.46.0 we assume that
-    // Boost.Log 1.0 was used as recommended in the HALMD
-    // prerequisites guide.
-
     core::get()->add_global_attribute(
         "TimeStamp"
-#if BOOST_VERSION >= 104600
-      , attributes::local_clock()
-#else
+#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < r479 (SVN)
       , make_shared<attributes::local_clock>()
+#else
+      , attributes::local_clock()
 #endif
     );
 }
