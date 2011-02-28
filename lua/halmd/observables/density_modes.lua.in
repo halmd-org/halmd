@@ -38,23 +38,32 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local device = require("halmd.device")
+local observables = {
+    trajectory = require("halmd.observables.trajectory")
+}
 local assert = assert
 
 module("halmd.observables.density_modes", halmd.modules.register)
 
 --
--- return constructor of density_modes module
+-- construct instance of density_modes module
+--
+-- @param args              parameter table:
+--     args.wavevectors     instance of wavevectors module
+-- @returns instance of density_modes module
 --
 function new(args)
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
+    local trajectory = assert(observables.trajectory())
+    local wavevectors = args.wavevectors
 
     local density_modes
     if device() then
-        density_modes = density_modes_wrapper.gpu[dimension]
+        density_modes = assert(density_modes_wrapper.gpu[dimension])
     else
-        density_modes = density_modes_wrapper.host[dimension]
+        density_modes = assert(density_modes_wrapper.host[dimension])
     end
-    return assert(density_modes)
+    return density_modes(trajectory, wavevectors)
 end

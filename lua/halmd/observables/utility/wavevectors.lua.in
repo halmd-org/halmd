@@ -32,12 +32,25 @@ local assert = assert
 module("halmd.observables.utility.wavevectors", halmd.modules.register)
 
 --
--- return constructor of wavevectors module
+-- construct instance of wavevectors module
 --
-function new()
+-- @param args                parameter table:
+--     args.wavenumbers       list of wavenumbers
+--     args.tolerance         relative tolerance on wavevector magnitude
+--     args.maximum_count     maximum number of wavevectors per wavenumber shell
+-- @returns instance of wavevectors module
+--
+function new(args)
+    -- options
+    local wavenumbers = assert(args.wavenumbers)
+    local tolerance = assert(args.tolerance)
+    local maximum_count = assert(args.maximum_count)
+
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
+    local box = assert(core.box)
 
-    return assert(wavevectors_wrapper[dimension])
+    local wavevectors = assert(wavevectors_wrapper[dimension])
+    return wavevectors(wavenumbers, box.length, tolerance, maximum_count)
 end

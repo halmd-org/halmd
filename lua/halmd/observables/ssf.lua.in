@@ -25,35 +25,17 @@ local ssf_wrapper = {
   , [3] = halmd_wrapper.observables.ssf_3_
 }
 
-local density_modes_wrapper = {
-    host = {
-        [2] = halmd_wrapper.observables.host.density_modes_2_
-      , [3] = halmd_wrapper.observables.host.density_modes_3_
-    }
-}
-if halmd_wrapper.observables.gpu then
-    density_modes_wrapper.gpu = {
-        [2] = halmd_wrapper.observables.gpu.density_modes_2_
-      , [3] = halmd_wrapper.observables.gpu.density_modes_3_
-    }
-end
-
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local observables = {
     density_modes = require("halmd.observables.density_modes")
-  , trajectory = require("halmd.observables.trajectory")
   , utility = {
         wavevectors = require("halmd.observables.utility.wavevectors")
     }
 }
-local mdsim = {
-    core = require("halmd.mdsim.core")
-}
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
-local device = require("halmd.device")
 local assert = assert
 
 module("halmd.observables.ssf", halmd.modules.register)
@@ -74,14 +56,15 @@ function new(args)
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
-    local box = assert(core.box)
-    local trajectory = assert(observables.trajectory())
-    local density_modes = assert(observables.density_modes()) -- returns a class constructor
-    
+
     -- construct local wavevectors module
-    local wavevectors = assert(observables.utility.wavevectors()) -- returns a class constructor
+    local wavevectors = assert(observables.utility.wavevectors)
     if wavenumbers then
-        wavevectors = wavevectors(wavenumbers, box.length, tolerance, maximum_count) -- instantiate class
+        wavevectors = wavevectors{
+            wavenumbers = wavenumbers
+          , tolerance = tolerance
+          , maximum_count = maximum_count
+        }
     else
         wavevectors = nil
     end
@@ -91,9 +74,9 @@ function new(args)
     end
 
     -- construct ssf module
-    local ssf = ssf_wrapper[dimension]
+    local ssf = assert(ssf_wrapper[dimension])
     return ssf(
-        density_modes(trajectory, wavevectors)
+        assert(observables.density_modes{ wavevectors = wavevectors })
       , particle.nbox
     )
 end
