@@ -29,7 +29,7 @@ local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local observables = {
-    density_modes = require("halmd.observables.density_modes")
+    density_mode = require("halmd.observables.density_mode")
   , utility = {
         wavevectors = require("halmd.observables.utility.wavevectors")
     }
@@ -76,7 +76,7 @@ function new(args)
     -- construct ssf module
     local ssf = assert(ssf_wrapper[dimension])
     return ssf(
-        assert(observables.density_modes{ wavevectors = wavevectors })
+        assert(observables.density_mode{ wavevectors = wavevectors })
       , particle.nbox
     )
 end

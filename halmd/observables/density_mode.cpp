@@ -20,7 +20,7 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 
-#include <halmd/observables/density_modes.hpp>
+#include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -32,20 +32,20 @@ namespace observables
 {
 
 template <int dimension>
-void density_modes<dimension>::luaopen(lua_State* L)
+void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("density_modes_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("observables")
             [
-                class_<density_modes, shared_ptr<density_modes> >(class_name.c_str())
-                    .def("acquire", &density_modes::acquire)
-                    .property("value", &density_modes::value)
-                    .property("wavenumbers", &density_modes::wavenumbers)
+                class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
+                    .def("acquire", &density_mode::acquire)
+                    .property("value", &density_mode::value)
+                    .property("wavenumbers", &density_mode::wavenumbers)
             ]
         ]
     ];
@@ -58,10 +58,10 @@ __attribute__ ((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &density_modes<3>::luaopen
+        &density_mode<3>::luaopen
     ]
     [
-        &density_modes<2>::luaopen
+        &density_mode<2>::luaopen
     ];
 }
 

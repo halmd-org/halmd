@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_SAMPLES_DENSITY_MODES_HPP
-#define HALMD_OBSERVABLES_SAMPLES_DENSITY_MODES_HPP
+#ifndef HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
+#define HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <complex>
@@ -39,7 +39,7 @@ namespace observables { namespace samples
  *  for each particle type
  */
 template <int dimension>
-class density_modes
+class density_mode
 {
 public:
     typedef fixed_vector<double, dimension> vector_type;
@@ -66,11 +66,11 @@ public:
      * @param ntype number of particle types
      * @param nq    total number of wavevectors
      */
-    density_modes(unsigned int ntype, unsigned int nq);
+    density_mode(unsigned int ntype, unsigned int nq);
 };
 
 }} // namespace observables::samples
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_SAMPLES_DENSITY_MODES_HPP */
+#endif /* ! HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP */

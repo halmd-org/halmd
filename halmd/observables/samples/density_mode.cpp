@@ -20,7 +20,7 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 
-#include <halmd/observables/samples/density_modes.hpp>
+#include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -32,7 +32,7 @@ namespace observables { namespace samples
 {
 
 template <int dimension>
-density_modes<dimension>::density_modes(unsigned int ntype, unsigned int nq)
+density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq)
   // allocate sample pointers
   : rho(ntype)
   , time(-1)                    //< any value < 0.
@@ -44,17 +44,17 @@ density_modes<dimension>::density_modes(unsigned int ntype, unsigned int nq)
 }
 
 template <int dimension>
-void density_modes<dimension>::luaopen(lua_State* L)
+void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("density_modes_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
     module(L, "halmd_wrapper")
     [
         namespace_("observables")
         [
             namespace_("samples")
             [
-                class_<density_modes, shared_ptr<density_modes> >(class_name.c_str())
+                class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
                     .def(constructor<unsigned int, unsigned int>())
             ]
         ]
@@ -68,17 +68,17 @@ __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &density_modes<3>::luaopen
+        &density_mode<3>::luaopen
     ]
     [
-        &density_modes<2>::luaopen
+        &density_mode<2>::luaopen
     ];
 }
 
 } // namespace
 
-template class density_modes<3>;
-template class density_modes<2>;
+template class density_mode<3>;
+template class density_mode<2>;
 
 }} // namespace observables::samples
 

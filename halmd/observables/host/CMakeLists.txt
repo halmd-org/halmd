@@ -1,5 +1,5 @@
 add_library(halmd_observables_host
-  density_modes.cpp
+  density_mode.cpp
   thermodynamics.cpp
   trajectory.cpp
 )

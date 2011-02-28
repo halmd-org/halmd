@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_GPU_DENSITY_MODES_HPP
-#define HALMD_OBSERVABLES_GPU_DENSITY_MODES_HPP
+#ifndef HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP
+#define HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP
 
 #include <lua.hpp>
 
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/observables/density_modes.hpp>
+#include <halmd/observables/density_mode.hpp>
 #include <halmd/observables/gpu/trajectory.hpp>
 #include <halmd/observables/utility/wavevectors.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -40,23 +40,23 @@ namespace observables { namespace gpu
  *  for each particle type
  */
 template <int dimension, typename float_type>
-class density_modes
-  : public observables::density_modes<dimension>
+class density_mode
+  : public observables::density_mode<dimension>
 {
 public:
-    typedef observables::density_modes<dimension> _Base;
-    typedef typename _Base::density_modes_sample_type density_modes_sample_type;
+    typedef observables::density_mode<dimension> _Base;
+    typedef typename _Base::density_mode_sample_type density_mode_sample_type;
     typedef typename _Base::wavevectors_type wavevectors_type;
     // FIXME use trajectory sample on GPU, add kernels for computation of sum(exp(i q r))
     typedef gpu::trajectory<host::samples::trajectory<dimension, float_type> > trajectory_type;
     typedef halmd::utility::profiler profiler_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
-    typedef typename density_modes_sample_type::mode_type mode_type;
+    typedef typename density_mode_sample_type::mode_type mode_type;
 
     static void luaopen(lua_State* L);
 
-    density_modes(
+    density_mode(
         boost::shared_ptr<trajectory_type> trajectory
       , boost::shared_ptr<wavevectors_type> wavevectors
     );
@@ -94,7 +94,7 @@ protected:
     boost::shared_ptr<wavevectors_type> wavevectors_;
 
     /** data structure for density modes */
-    density_modes_sample_type rho_sample_;
+    density_mode_sample_type rho_sample_;
 
     // list of profiling timers
     boost::fusion::map<
@@ -106,4 +106,4 @@ protected:
 
 }  // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_GPU_DENSITY_MODES_HPP */
+#endif /* ! HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP */

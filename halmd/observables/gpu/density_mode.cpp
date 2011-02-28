@@ -20,7 +20,7 @@
 #include <boost/foreach.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/observables/host/density_modes.hpp>
+#include <halmd/observables/gpu/density_mode.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -31,11 +31,11 @@ using namespace std;
 
 namespace halmd
 {
-namespace observables { namespace host
+namespace observables { namespace gpu
 {
 
 template <int dimension, typename float_type>
-density_modes<dimension, float_type>::density_modes(
+density_mode<dimension, float_type>::density_mode(
     shared_ptr<trajectory_type> trajectory
   , shared_ptr<wavevectors_type> wavevectors
 )
@@ -51,7 +51,7 @@ density_modes<dimension, float_type>::density_modes(
  * register module runtime accumulators
  */
 template <int dimension, typename float_type>
-void density_modes<dimension, float_type>::register_runtimes(profiler_type& profiler)
+void density_mode<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
     profiler.register_map(runtime_);
 }
@@ -60,16 +60,16 @@ void density_modes<dimension, float_type>::register_runtimes(profiler_type& prof
  * Acquire sample of all density modes from trajectory sample
  */
 template <int dimension, typename float_type>
-void density_modes<dimension, float_type>::acquire(double time)
+void density_mode<dimension, float_type>::acquire(double time)
 {
     scoped_timer<timer> timer_(at_key<sample_>(runtime_));
 
     // do nothing if we're up to date
     if (rho_sample_.time == time) return;
-    LOG_TRACE("[density_modes] acquire sample");
+    LOG_TRACE("[density_mode] acquire sample");
 
     typedef typename trajectory_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
-    typedef typename density_modes_sample_type::mode_vector_type mode_vector_type;
+    typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of trajectory sample
     trajectory_->acquire(time);
@@ -98,24 +98,24 @@ void density_modes<dimension, float_type>::acquire(double time)
 }
 
 template <int dimension, typename float_type>
-void density_modes<dimension, float_type>::luaopen(lua_State* L)
+void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("density_modes_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("observables")
             [
-                namespace_("host")
+                namespace_("gpu")
                 [
-                    class_<density_modes, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<trajectory_type>
                           , shared_ptr<wavevectors_type>
                         >())
-                        .def("register_runtimes", &density_modes::register_runtimes)
+                        .def("register_runtimes", &density_mode::register_runtimes)
                 ]
             ]
         ]
@@ -128,34 +128,20 @@ namespace  // limit symbols to translation unit
 __attribute__ ((constructor)) void register_lua()
 {
     lua_wrapper::register_(1)	//< distance of derived to base class
-#ifndef USE_HOST_SINGLE_PRECISION
     [
-        &density_modes<3, double>::luaopen
+        &density_mode<3, float>::luaopen
     ]
     [
-        &density_modes<2, double>::luaopen
+        &density_mode<2, float>::luaopen
     ];
-#else
-    [
-        &density_modes<3, float>::luaopen
-    ]
-    [
-        &density_modes<2, float>::luaopen
-    ];
-#endif
 }
 
 }  // namespace
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class density_modes<3, double>;
-template class density_modes<2, double>;
-#else
-template class density_modes<3, float>;
-template class density_modes<2, float>;
-#endif
+template class density_mode<3, float>;
+template class density_mode<2, float>;
 
-}}  // namespace observables::host
+}}  // namespace observables::gpu
 
 }  // namespace halmd

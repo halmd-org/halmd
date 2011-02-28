@@ -1,5 +1,5 @@
 add_library(halmd_observables
-  density_modes.cpp
+  density_mode.cpp
   observable.cpp
   ssf.cpp
   thermodynamics.cpp

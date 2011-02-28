@@ -20,18 +20,18 @@
 require("halmd.modules")
 
 -- grab environment
-local density_modes_wrapper = {
+local density_mode_wrapper = {
     host = {
-        [2] = halmd_wrapper.observables.host.density_modes_2_
-      , [3] = halmd_wrapper.observables.host.density_modes_3_
+        [2] = halmd_wrapper.observables.host.density_mode_2_
+      , [3] = halmd_wrapper.observables.host.density_mode_3_
     }
-  , [2] = halmd_wrapper.observables.density_modes_2_
-  , [3] = halmd_wrapper.observables.density_modes_3_
+  , [2] = halmd_wrapper.observables.density_mode_2_
+  , [3] = halmd_wrapper.observables.density_mode_3_
 }
 if halmd_wrapper.observables.gpu then
-    density_modes_wrapper.gpu = {
-        [2] = halmd_wrapper.observables.gpu.density_modes_2_
-      , [3] = halmd_wrapper.observables.gpu.density_modes_3_
+    density_mode_wrapper.gpu = {
+        [2] = halmd_wrapper.observables.gpu.density_mode_2_
+      , [3] = halmd_wrapper.observables.gpu.density_mode_3_
     }
 end
 local mdsim = {
@@ -43,14 +43,14 @@ local observables = {
 }
 local assert = assert
 
-module("halmd.observables.density_modes", halmd.modules.register)
+module("halmd.observables.density_mode", halmd.modules.register)
 
 --
--- construct instance of density_modes module
+-- construct instance of density_mode module
 --
 -- @param args              parameter table:
 --     args.wavevectors     instance of wavevectors module
--- @returns instance of density_modes module
+-- @returns instance of density_mode module
 --
 function new(args)
     -- dependency injection
@@ -59,11 +59,11 @@ function new(args)
     local trajectory = assert(observables.trajectory())
     local wavevectors = args.wavevectors
 
-    local density_modes
+    local density_mode
     if device() then
-        density_modes = assert(density_modes_wrapper.gpu[dimension])
+        density_mode = assert(density_mode_wrapper.gpu[dimension])
     else
-        density_modes = assert(density_modes_wrapper.host[dimension])
+        density_mode = assert(density_mode_wrapper.host[dimension])
     end
-    return density_modes(trajectory, wavevectors)
+    return density_mode(trajectory, wavevectors)
 end

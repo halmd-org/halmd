@@ -26,7 +26,7 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/observable.hpp>
-#include <halmd/observables/density_modes.hpp>
+#include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -51,19 +51,19 @@ class ssf
 {
 public:
     typedef observable<dimension> _Base;
-    typedef observables::density_modes<dimension> density_modes_type;
+    typedef observables::density_mode<dimension> density_mode_type;
     typedef typename _Base::writer_type writer_type;
     typedef halmd::utility::profiler profiler_type;
 
     typedef boost::array<double, 3> result_type;
     typedef fixed_vector<double, dimension> vector_type;
 
-    boost::shared_ptr<density_modes_type> density_modes;
+    boost::shared_ptr<density_mode_type> density_mode;
 
     static void luaopen(lua_State* L);
 
     ssf(
-        boost::shared_ptr<density_modes_type> density_modes
+        boost::shared_ptr<density_mode_type> density_mode
       , unsigned int npart
     );
 
@@ -83,9 +83,9 @@ public:
     }
 
     //! returns instance of wavevector class used to compute the ssf
-    typename density_modes_type::wavevectors_type const& wavevectors() const
+    typename density_mode_type::wavevectors_type const& wavevectors() const
     {
-        return density_modes->wavevectors();
+        return density_mode->wavevectors();
     }
 
     // module runtime accumulator descriptions
