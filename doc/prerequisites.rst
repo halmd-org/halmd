@@ -91,8 +91,8 @@ Get `Boost.Log`_ from the upstream subversion repository ::
 .. _Boost.Log: http://boost-log.sourceforge.net/
 .. _formal review of Boost.Log: http://lists.boost.org/boost-announce/2010/03/0256.php
 
-We will build Boost and Boost.Log in a single step, therefore extract both
-source packages and copy the Boost.Log headers and library sources to the
+We will build Boost and Boost.Log in a single step, therefore extract the
+Boost source package and copy the Boost.Log headers and library sources to the
 Boost source directory using ::
 
    cp -r boost-log/boost/log boost_1_46_0/boost/
