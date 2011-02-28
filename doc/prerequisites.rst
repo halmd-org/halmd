@@ -76,9 +76,7 @@ Get the latest `Boost source package`_, currently `Boost 1.46.0`_.
 .. _Boost source package: http://www.boost.org/users/download
 .. _Boost 1.46.0: http://sourceforge.net/projects/boost/files/boost/1.46.0/boost_1_46_0.tar.bz2
 
-Get `Boost.Log`_ from the upstream subversion repository ::
-
-   svn co https://boost-log.svn.sourceforge.net/svnroot/boost-log/trunk/boost-log
+Get the latest `Boost.Log source package`_ from the upstream repository.
 
 .. note::
 
@@ -87,7 +85,7 @@ Get `Boost.Log`_ from the upstream subversion repository ::
    been accepted subject to several conditions. It is not shipped yet with
    upstream Boost.
 
-.. _Boost.Log source package: http://sourceforge.net/projects/boost-log/files
+.. _Boost.Log source package: http://boost-log.svn.sourceforge.net/viewvc/boost-log/trunk/boost-log/?view=tar
 .. _Boost.Log: http://boost-log.sourceforge.net/
 .. _formal review of Boost.Log: http://lists.boost.org/boost-announce/2010/03/0256.php
 
