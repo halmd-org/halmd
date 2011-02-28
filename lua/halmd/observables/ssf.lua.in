@@ -49,8 +49,9 @@ module("halmd.observables.ssf", halmd.modules.register)
 function new(args)
     -- command line options
     local tolerance = args.tolerance or 0.01 -- default value
-    local maximum_count = args.maximum_count or 10 -- default value
+    local maximum_count = args.maximum_count or 7 -- default value
     local wavenumbers = args.wavenumbers
+    local maximum_wavenumber = args.maximum_wavenumber
 
     -- dependency injection
     local core = mdsim.core()
@@ -62,6 +63,12 @@ function new(args)
     if wavenumbers then
         wavevector = wavevector{
             wavenumber = wavenumbers
+          , tolerance = tolerance
+          , maximum_count = maximum_count
+        }
+    elseif maximum_wavenumber then
+        wavevector = wavevector{
+            maximum_wavenumber = maximum_wavenumber
           , tolerance = tolerance
           , maximum_count = maximum_count
         }
@@ -94,7 +101,8 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("wavenumbers", po.float_array(), "list of wavenumbers")
+    desc:add("wavenumbers", po.float_array():conflicts("maximum-wavenumber"), "list of wavenumbers")
+    desc:add("maximum-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of linearly spaced grid")
     desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
     desc:add("maximum-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
 end

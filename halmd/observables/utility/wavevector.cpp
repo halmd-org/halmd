@@ -44,22 +44,53 @@ wavevector<dimension>::wavevector(
 )
   // initialise members
   : wavenumber_(wavenumber)
+  , box_length_(box_length)
   , tolerance_(tolerance)
   , max_count_(max_count)
 {
     ostringstream s;
     copy(wavenumber_.begin(), wavenumber_.end(), ostream_iterator<double>(s, " "));
     LOG("wavenumber grid: " << s.str());
+
+    init_();
+}
+
+template <int dimension>
+wavevector<dimension>::wavevector(
+    double max_wavenumber
+  , vector_type const& box_length
+  , double tolerance
+  , unsigned int max_count
+)
+  // initialise members
+  : box_length_(box_length)
+  , tolerance_(tolerance)
+  , max_count_(max_count)
+{
+    LOG("maximum wavenumber: " << max_wavenumber);
+
+    // set up linearly spaced wavenumber grid
+    double q_min = 2 * M_PI / norm_inf(box_length_); // norm_inf returns the maximum coordinate
+    for (double q = q_min; q < max_wavenumber; q += q_min) {
+        wavenumber_.push_back(q);
+    }
+
+    init_();
+}
+
+template <int dimension>
+void wavevector<dimension>::init_()
+{
     LOG("tolerance on wavevector magnitude: " << tolerance_);
     LOG("maximum number of wavevectors per wavenumber: " << max_count_);
 
     // construct wavevectors and store as key/value pairs (wavenumber, wavevector)
     algorithm::host::pick_lattice_points_from_shell(
-        wavenumber.begin(), wavenumber.end()
+        wavenumber_.begin(), wavenumber_.end()
       , back_inserter(wavevector_)
-      , element_div(vector_type(2 * M_PI), box_length)
-      , tolerance
-      , max_count
+      , element_div(vector_type(2 * M_PI), box_length_)
+      , tolerance_
+      , max_count_
     );
 
     // sort wavevector map according to keys (wavenumber)
@@ -100,6 +131,11 @@ void wavevector<dimension>::luaopen(lua_State* L)
                     class_<wavevector, shared_ptr<wavevector> >(class_name.c_str())
                         .def(constructor<
                              vector<double> const&
+                           , vector_type const&
+                           , double, unsigned int
+                        >())
+                        .def(constructor<
+                             double
                            , vector_type const&
                            , double, unsigned int
                         >())

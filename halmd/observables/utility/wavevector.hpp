@@ -48,8 +48,19 @@ public:
 
     static void luaopen(lua_State* L);
 
+    // construct class with list of wavenumbers
     wavevector(
         std::vector<double> const& wavenumber
+      , vector_type const& box_length
+      , double tolerance
+      , unsigned int max_count
+    );
+
+    // construct class with upper limit on wavenumber,
+    // the grid is linearly spaced starting with the smallest value
+    // that is compatible with the extents of the simulation box
+    wavevector(
+        double max_wavenumber
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
@@ -80,8 +91,13 @@ public:
     }
 
 protected:
+    // common part of constructors
+    void init_();
+
     /** wavenumber grid */
     std::vector<double> wavenumber_;
+    /** edge lengths of simulation box */
+    vector_type box_length_;
     /** tolerance of wavevector magnitudes (relative error) */
     double tolerance_;
     /** maximum number of wavevectors per wavenumber */
