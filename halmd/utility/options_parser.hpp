@@ -21,6 +21,7 @@
 #define HALMD_OPTIONS_PARSER_HPP
 
 #include <lua.hpp>
+#include <set>
 
 #include <halmd/utility/program_options/program_options.hpp>
 
@@ -53,8 +54,8 @@ private:
     po::options_description globals_;
     /** module-specific options */
     std::map<std::string, po::options_description> desc_;
-    /** module namespaces */
-    std::vector<std::string> sections_;
+    /** ordered module namespaces */
+    std::set<std::string> sections_;
 };
 
 } // namespace halmd
