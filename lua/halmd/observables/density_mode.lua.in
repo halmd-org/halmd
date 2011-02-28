@@ -57,7 +57,7 @@ function new(args)
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local trajectory = assert(observables.trajectory())
-    local wavevector = args.wavevector
+    local wavevector = assert(args.wavevector)
 
     local density_mode
     if device() then
