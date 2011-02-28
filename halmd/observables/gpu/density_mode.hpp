@@ -20,10 +20,12 @@
 #ifndef HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP
 #define HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_mode.hpp>
+#include <halmd/observables/gpu/density_mode_kernel.hpp>
 #include <halmd/observables/gpu/trajectory.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -47,11 +49,12 @@ public:
     typedef observables::density_mode<dimension> _Base;
     typedef typename _Base::density_mode_sample_type density_mode_sample_type;
     typedef typename _Base::wavevector_type wavevector_type;
-    // FIXME use trajectory sample on GPU, add kernels for computation of sum(exp(i q r))
-    typedef gpu::trajectory<host::samples::trajectory<dimension, float_type> > trajectory_type;
+    typedef gpu::trajectory<gpu::samples::trajectory<dimension, float_type> > trajectory_type;
+    typedef density_mode_wrapper<dimension> wrapper_type;
     typedef halmd::utility::profiler profiler_type;
 
-    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
     typedef typename density_mode_sample_type::mode_type mode_type;
 
     static void luaopen(lua_State* L);
@@ -93,8 +96,26 @@ protected:
     boost::shared_ptr<trajectory_type> trajectory_;
     boost::shared_ptr<wavevector_type> wavevector_;
 
+    /** total number of wavevectors */
+    unsigned int nq_;
+    /** grid and block dimensions for CUDA calls */
+    cuda::config const dim_;
+
     /** data structure for density modes */
     density_mode_sample_type rho_sample_;
+
+    /** wavevectors */
+    cuda::vector<gpu_vector_type> g_q_;
+
+    /** block sums of sin(q r) und cos(q r) for each wavevector on the device */
+    cuda::vector<float> g_sin_block_;
+    cuda::vector<float> g_cos_block_;
+    /** sin(q r) und cos(q r) for each wavevector on the device */
+    cuda::vector<float> g_sin_;
+    cuda::vector<float> g_cos_;
+    /** sin(q r) und cos(q r) for each wavevector as page-locked host memory */
+    cuda::host::vector<float> h_sin_;
+    cuda::host::vector<float> h_cos_;
 
     // list of profiling timers
     boost::fusion::map<

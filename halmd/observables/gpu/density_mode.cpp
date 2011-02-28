@@ -42,9 +42,40 @@ density_mode<dimension, float_type>::density_mode(
     // dependency injection
   : trajectory_(trajectory)
   , wavevector_(wavevector)
+    // member initialisation
+  , nq_(wavevector_->value().size())
+  , dim_(trajectory_->particle->dim)
     // memory allocation
-  , rho_sample_(trajectory_->sample->r.size(), wavevector_->value().size())
+  , rho_sample_(trajectory_->sample->r.size(), nq_)
+  , g_q_(nq_)
+  , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
+  , g_sin_(nq_), g_cos_(nq_)
+  , h_sin_(nq_), h_cos_(nq_)
 {
+    // copy wavevectors to CUDA device
+    try {
+        cuda::host::vector<gpu_vector_type> q(nq_);
+        for (unsigned int i = 0; i < nq_; ++i) {
+            // select wavevector from pair (wavenumber, wavevector),
+            // cast from fixed_vector<double, ...> to fixed_vector<float, ...>
+            // and finally to gpu_vector_type (float4 or float2)
+            q[i] = static_cast<vector_type>(wavevector_->value()[i].second);
+        }
+        cuda::copy(q, g_q_);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR(e.what());
+        throw runtime_error("[density_mode] failed to initialise device constants");
+    }
+
+    // copy parameters to CUDA device
+    try {
+        cuda::copy(nq_, wrapper_type::kernel.nq);
+    }
+    catch (cuda::error const& e) {
+        LOG_ERROR(e.what());
+        throw runtime_error("[density_mode] failed to initialise device constants");
+    }
 }
 
 /**
@@ -72,24 +103,39 @@ void density_mode<dimension, float_type>::acquire(double time)
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of trajectory sample
-    trajectory_->acquire(time);
+    trajectory_->acquire(time); // FIXME does nothing yet, access positions directly via trajectory->particle
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
     unsigned int type = 0;
     BOOST_FOREACH (positions_vector_ptr_type const r_sample, trajectory_->sample->r) {
-        mode_vector_type& rho_vector = *rho_sample_.rho[type]; //< dereference shared_ptr
-        // initialise result array
-        fill(rho_vector.begin(), rho_vector.end(), 0);
-        // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
-        // 2nd loop: iterate over particles of the same type
-        BOOST_FOREACH (vector_type const& r, *r_sample) {
-            typename mode_vector_type::iterator rho_q = rho_vector.begin();
-            typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
-            // 3rd loop: iterate over wavevectors
-            BOOST_FOREACH (map_value_type const& q_pair, wavevector_->value()) {
-                float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
-                *rho_q++ += mode_type(cos(q_r), -sin(q_r));
+        mode_vector_type& rho = *rho_sample_.rho[type]; //< dereference shared_ptr
+        if (type ==  0) {
+            try {
+                cuda::configure(dim_.grid, dim_.block);
+                wrapper_type::kernel.q.bind(g_q_);
+
+                // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
+                // FIXME pass r_sample->r[type] instead of particle->g_r
+                wrapper_type::kernel.compute(
+                    trajectory_->particle->g_r, trajectory_->particle->nbox
+                  , g_sin_block_, g_cos_block_);
+                cuda::thread::synchronize();
+
+                // finalise block sums for each wavevector
+                cuda::configure(dim_.grid, dim_.block); // FIXME optimise configuration
+                wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, dim_.blocks_per_grid());
+            }
+            catch (cuda::error const& e) {
+                LOG_ERROR("CUDA: " << e.what());
+                throw std::runtime_error("failed to compute density modes on GPU");
+            }
+
+            // copy data from device and store in density_mode sample
+            cuda::copy(g_sin_, h_sin_);
+            cuda::copy(g_cos_, h_cos_);
+            for (unsigned int i = 0; i < nq_; ++i) {
+                rho[i] = mode_type(g_cos_[i], -g_sin_[i]);
             }
         }
         ++type;

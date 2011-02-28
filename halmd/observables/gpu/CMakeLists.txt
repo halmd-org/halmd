@@ -1,6 +1,6 @@
 add_library(halmd_observables_gpu
   density_mode.cpp
-#   density_mode_kernel.cu
+  density_mode_kernel.cu
   thermodynamics.cpp
   thermodynamics_kernel.cu
   trajectory.cpp
