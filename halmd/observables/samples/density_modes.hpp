@@ -60,7 +60,13 @@ public:
 
     static void luaopen(lua_State* L);
 
-    density_modes(unsigned int ntype);
+    /**
+     * construct sample of given size
+     *
+     * @param ntype number of particle types
+     * @param nq    total number of wavevectors
+     */
+    density_modes(unsigned int ntype, unsigned int nq);
 };
 
 }} // namespace observables::samples

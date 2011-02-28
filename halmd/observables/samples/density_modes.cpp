@@ -32,11 +32,15 @@ namespace observables { namespace samples
 {
 
 template <int dimension>
-density_modes<dimension>::density_modes(unsigned int ntype)
+density_modes<dimension>::density_modes(unsigned int ntype, unsigned int nq)
   // allocate sample pointers
   : rho(ntype)
   , time(-1)                    //< any value < 0.
 {
+    // allocate memory for each particle type
+    for (unsigned int i = 0; i < ntype; ++i) {
+        rho[i].reset(new mode_vector_type(nq));
+    }
 }
 
 template <int dimension>
@@ -51,7 +55,7 @@ void density_modes<dimension>::luaopen(lua_State* L)
             namespace_("samples")
             [
                 class_<density_modes, shared_ptr<density_modes> >(class_name.c_str())
-                    .def(constructor<unsigned int>())
+                    .def(constructor<unsigned int, unsigned int>())
             ]
         ]
     ];

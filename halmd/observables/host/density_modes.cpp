@@ -42,16 +42,9 @@ density_modes<dimension, float_type>::density_modes(
     // dependency injection
   : trajectory_(trajectory)
   , wavevectors_(wavevectors)
-    // member initialisation
-  , rho_sample_(trajectory_->sample->r.size())
+    // memory allocation
+  , rho_sample_(trajectory_->sample->r.size(), wavevectors_->values().size())
 {
-    // allocate memory
-    unsigned int ntype = rho_sample_.rho.size();
-    unsigned int nq = wavevectors_->values().size();
-    for (unsigned int i = 0; i < ntype; ++i) {
-        typedef typename density_modes_sample_type::mode_vector_type mode_vector_type;
-        rho_sample_.rho[i].reset(new mode_vector_type(nq));
-    }
 }
 
 /**
