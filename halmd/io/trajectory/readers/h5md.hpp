@@ -20,7 +20,7 @@
 #ifndef HALMD_IO_TRAJECTORY_READERS_H5MD_HPP
 #define HALMD_IO_TRAJECTORY_READERS_H5MD_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/optional.hpp>
 #include <lua.hpp>
 
 #include <halmd/io/trajectory/reader.hpp>
@@ -45,7 +45,7 @@ public:
     typedef typename sample_type::sample_vector_ptr sample_vector_ptr;
 
     static void luaopen(lua_State* L);
-    static boost::shared_ptr<H5::H5File> format(std::string const& file_name);
+    static boost::optional<H5::H5File> format(std::string const& file_name);
 
     h5md(
         boost::shared_ptr<sample_type> sample
