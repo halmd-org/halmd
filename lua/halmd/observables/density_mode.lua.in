@@ -56,14 +56,16 @@ function new(args)
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
-    local trajectory = assert(observables.trajectory())
     local wavevector = assert(args.wavevector)
 
+    local trajectory
     local density_mode
     if device() then
         density_mode = assert(density_mode_wrapper.gpu[dimension])
+        trajectory = assert(observables.trajectory{ memory = "gpu" })
     else
         density_mode = assert(density_mode_wrapper.host[dimension])
+        trajectory = assert(observables.trajectory{ memory = "host" })
     end
     return density_mode(trajectory, wavevector)
 end

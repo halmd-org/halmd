@@ -20,16 +20,22 @@
 require("halmd.modules")
 
 -- grab environment
-local trajectory_wrapper = {
+local trajectory_wrapper = { host, gpu }
+trajectory_wrapper.host = {
     host = {
         [2] = halmd_wrapper.observables.host.samples.trajectory_2_double_
       , [3] = halmd_wrapper.observables.host.samples.trajectory_3_double_
     }
 }
 if halmd_wrapper.observables.gpu then
-    trajectory_wrapper.gpu = {
+    trajectory_wrapper.gpu = { host, gpu }
+    trajectory_wrapper.gpu.host = {
         [2] = halmd_wrapper.observables.host.samples.trajectory_2_float_
       , [3] = halmd_wrapper.observables.host.samples.trajectory_3_float_
+    }
+    trajectory_wrapper.gpu.gpu = {
+        [2] = halmd_wrapper.observables.gpu.samples.trajectory_2_
+      , [3] = halmd_wrapper.observables.gpu.samples.trajectory_3_
     }
 end
 local mdsim = {
@@ -41,25 +47,29 @@ local assert = assert
 module("halmd.observables.samples.trajectory", halmd.modules.register)
 
 -- singleton
-local sample
+local sample = { host, gpu }
 
 --
 -- construct trajectory module
 --
-function new()
-    if not sample then
+-- @param args       parameter table
+--   args.memory     specify memory location of sample ("host", "gpu")
+--
+function new(args)
+    local memory = assert(args.memory)
+
+    if not sample[memory] then
         local core = assert(mdsim.core())
         local particle = assert(core.particle)
         local dimension = assert(core.dimension)
 
         local trajectory
         if device() then
-            trajectory = assert(trajectory_wrapper.gpu[dimension])
+            trajectory = assert(trajectory_wrapper.gpu[memory][dimension])
         else
-            trajectory = assert(trajectory_wrapper.host[dimension])
+            trajectory = assert(trajectory_wrapper.host[memory][dimension])
         end
-        assert(trajectory)
-        sample = trajectory(particle.ntypes)
+        sample[memory] = trajectory(particle.ntypes)
     end
-    return sample
+    return sample[memory]
 end

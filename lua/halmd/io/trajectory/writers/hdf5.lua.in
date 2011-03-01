@@ -51,7 +51,7 @@ function new(args)
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
-    local sample = assert(observables.samples.trajectory())
+    local sample = assert(observables.samples.trajectory{ memory = "host" })
 
     -- command line options
     local output = assert(args.output)
