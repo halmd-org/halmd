@@ -152,18 +152,15 @@ void ssf<dimension>::compute_()
 
             // accumulate products of density modes with equal wavenumber,
             // iterate over sorted list of wavevectors
-            double sum = 0;
-            unsigned int count = 0;
             wavevector_iterator q = wavevector.begin();
             wavevector_iterator q_next = q; ++q_next;
             while (q != wavevector.end()) {
-                // rho_q × rho_q^*
-                sum += real(*rho_q0) * real(*rho_q1) + imag(*rho_q0) * imag(*rho_q1);
-                ++count;
+                // compute Re[rho_q rho_q^*], add result to output accumulator
+                double re = (real(*rho_q0) * real(*rho_q1) + imag(*rho_q0) * imag(*rho_q1));
+                (*result)(re / npart_);
                 // find end of range with equal wavenumber
                 if (q_next == wavevector.end() || q->first != q_next->first) {
-                    (*result++)(sum / count);   // add result to output accumulator
-                    sum = 0; count = 0;
+                    result++;   // next wavenumber: increment output iterator
                 }
                 ++q; ++q_next; ++rho_q0; ++rho_q1;
             }
