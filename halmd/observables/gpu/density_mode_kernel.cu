@@ -156,15 +156,13 @@ __global__ void finalise(
     __shared__ float s_sum[MAX_BLOCK_SIZE];
     __shared__ float c_sum[MAX_BLOCK_SIZE];
 
-    float c = 0;
-    float s = 0;
     // outer loop over wavevectors, distributed over block grid
     for (uint i = BID; i < nq_; i += BDIM) {
         s_sum[TID] = 0;
         c_sum[TID] = 0;
         for (uint j = TID; j < bdim; j += TDIM) {
-            s_sum[TID] += g_sin_block[i * bdim + TID];
-            c_sum[TID] += g_cos_block[i * bdim + TID];
+            s_sum[TID] += g_sin_block[i * bdim + j];
+            c_sum[TID] += g_cos_block[i * bdim + j];
         }
         __syncthreads();
 
@@ -177,17 +175,11 @@ __global__ void finalise(
         else if (TDIM == 16) sum_reduce<8>(s_sum, c_sum);
         else if (TDIM == 8) sum_reduce<4>(s_sum, c_sum);
 
-        // accumulate
+        // store result in global memory
         if (TID == 0) {
-            s += s_sum[0];
-            c += c_sum[0];
+            g_sin[i] = s_sum[0];
+            g_cos[i] = c_sum[0];
         }
-        __syncthreads();
-    }
-    // store result in global memory
-    if (TID == 0) {
-        g_sin[BID] = s;
-        g_cos[BID] = c;
     }
 }
 
