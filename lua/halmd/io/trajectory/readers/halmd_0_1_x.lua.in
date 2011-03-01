@@ -54,7 +54,7 @@ function new(args)
     local file = assert(args.file)
     local offset = assert(args.offset)
 
-    local sample = assert(trajectory())
+    local sample = assert(trajectory{ memory = "host" })
     local core = assert(mdsim.core())
     local dimension = assert(core.dimension)
 
