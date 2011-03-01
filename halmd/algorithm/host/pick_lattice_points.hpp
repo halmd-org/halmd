@@ -117,7 +117,10 @@ pick_lattice_points_from_shell(
                         ++count[i];
 #ifndef NDEBUG
                         index_type hkl_reduced = hkl / greatest_common_divisor(hkl);
-                        LOG_TRACE("  r = " << norm_2(point) << ", (hkl) = " << hkl_reduced);
+                        LOG_TRACE(
+                            "  r = " << norm_2(point) << ", (hkl) = " << hkl_reduced
+                         << " ⇒ " << n << " × √" << inner_prod(hkl, hkl)
+                        );
 #endif
                     }
                 }
