@@ -35,6 +35,7 @@ template <int dimension, typename float_type>
 class trajectory
 {
 public:
+    typedef typename mdsim::type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float_type>::gpu::coalesced_vector_type gpu_vector_type;
 
     /** sample vector type for all particles of a species */
