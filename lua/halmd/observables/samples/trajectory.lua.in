@@ -49,7 +49,7 @@ local assert = assert
 module("halmd.observables.samples.trajectory", halmd.modules.register)
 
 -- singleton
-local sample = { host, gpu }
+local sample = {}
 
 --
 -- construct trajectory module
