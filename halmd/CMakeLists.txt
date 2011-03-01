@@ -18,6 +18,7 @@ set(HALMD_MODULES
   halmd_observables
   halmd_observables_host
   halmd_observables_host_samples
+  halmd_observables_samples
   halmd_observables_utility
   halmd_random
   halmd_random_host

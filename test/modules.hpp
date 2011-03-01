@@ -37,9 +37,13 @@
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/mdsim/particle.hpp>
+#include <halmd/observables/density_mode.hpp>
+#include <halmd/observables/host/density_mode.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/observables/host/trajectory.hpp>
+#include <halmd/observables/ssf.hpp>
 #include <halmd/observables/thermodynamics.hpp>
+#include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/read_integer.hpp>
 #ifdef WITH_CUDA
@@ -51,6 +55,7 @@
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/observables/gpu/density_mode.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/observables/gpu/trajectory.hpp>
 # include <halmd/random/gpu/random.hpp>
@@ -206,14 +211,15 @@ boost::shared_ptr<observables::trajectory<dimension> > make_trajectory_host(
 }
 
 #ifdef WITH_CUDA
-template <int dimension, typename float_type>
+template <int dimension, typename sample_type>
 boost::shared_ptr<observables::trajectory<dimension> > make_trajectory_gpu(
-    boost::shared_ptr<observables::host::samples::trajectory<dimension, float_type> > sample
+    boost::shared_ptr<sample_type> sample
   , boost::shared_ptr<mdsim::particle<dimension> > particle
   , boost::shared_ptr<mdsim::box<dimension> > box
 )
 {
-    return boost::make_shared<observables::gpu::trajectory<observables::host::samples::trajectory<dimension, float_type> > >(
+    typedef typename sample_type::vector_type::value_type float_type;
+    return boost::make_shared<observables::gpu::trajectory<sample_type> >(
         sample
       , boost::dynamic_pointer_cast<mdsim::gpu::particle<dimension, float_type> >(particle)
       , box
@@ -417,6 +423,33 @@ boost::shared_ptr<observables::thermodynamics<dimension> > make_thermodynamics(
             boost::dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
           , boost::dynamic_pointer_cast<mdsim::host::force<dimension, double> >(force)
+        );
+    }
+    throw std::runtime_error("unknown backend: " + backend);
+}
+
+template <int dimension>
+boost::shared_ptr<observables::density_mode<dimension> > make_density_mode(
+    std::string const& backend
+  , boost::shared_ptr<observables::trajectory<dimension> > trajectory
+  , boost::shared_ptr<observables::utility::wavevector<dimension> > wavevector
+)
+{
+#ifdef WITH_CUDA
+    if (backend == "gpu") {
+        typedef observables::gpu::samples::trajectory<dimension, float> sample_type;
+        typedef observables::gpu::trajectory<sample_type> trajectory_type;
+        return boost::make_shared<observables::gpu::density_mode<dimension, float> >(
+            boost::dynamic_pointer_cast<trajectory_type>(trajectory)
+          , wavevector
+        );
+    }
+#endif /* WITH_CUDA */
+    if (backend == "host") {
+        typedef observables::host::trajectory<dimension, double> trajectory_type;
+        return boost::make_shared<observables::host::density_mode<dimension, double> >(
+            boost::dynamic_pointer_cast<trajectory_type>(trajectory)
+          , wavevector
         );
     }
     throw std::runtime_error("unknown backend: " + backend);

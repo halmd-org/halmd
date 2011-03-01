@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_SAMPLES_DENSITY_MODES_HPP
-#define HALMD_OBSERVABLES_SAMPLES_DENSITY_MODES_HPP
+#ifndef HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
+#define HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <complex>
@@ -36,23 +36,23 @@ namespace observables { namespace samples
  *  data structure for storing Fourier modes of the particle density
  *
  *  @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
- *  for each particle species
+ *  for each particle type
  */
 template <int dimension>
-class density_modes
+class density_mode
 {
 public:
     typedef fixed_vector<double, dimension> vector_type;
     typedef std::complex<double> mode_type;
 
-    /** density modes of a single particle species, one entry per wavevector */
+    /** density modes of a single particle type, one entry per wavevector */
     typedef std::vector<mode_type> mode_vector_type;
-    /** list of density modes for all particle species */
+    /** list of density modes for all particle types */
     typedef std::vector<boost::shared_ptr<mode_vector_type> > mode_vector_vector_type;
 
     /**
      *  nested list of density modes, @f$ \text{rho[i][j]} = \rho_{\vec q}^{(i)} = @f$
-     *  for wavevector @f$ \vec q = wavevector[j] @f$ and particle species @f$ i @f$
+     *  for wavevector @f$ \vec q = wavevector[j] @f$ and particle types @f$ i @f$
      */
     mode_vector_vector_type rho;
     /** simulation time when sample was taken */
@@ -60,11 +60,17 @@ public:
 
     static void luaopen(lua_State* L);
 
-    density_modes(size_t n_species, size_t n_wavevectors);
+    /**
+     * construct sample of given size
+     *
+     * @param ntype number of particle types
+     * @param nq    total number of wavevectors
+     */
+    density_mode(unsigned int ntype, unsigned int nq);
 };
 
 }} // namespace observables::samples
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_SAMPLES_DENSITY_MODES_HPP */
+#endif /* ! HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP */

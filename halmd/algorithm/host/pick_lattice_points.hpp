@@ -21,8 +21,9 @@
 #define HALMD_ALGORITHM_HOST_PICK_LATTICE_POINTS_HPP
 
 #include <algorithm>
+#include <boost/concept_check.hpp>
+#include <boost/concept/requires.hpp>
 #include <boost/type_traits/is_same.hpp>
-#include <boost/static_assert.hpp>
 #include <numeric>
 #include <vector>
 #include <utility>
@@ -57,7 +58,11 @@ namespace algorithm { namespace host
  * be missing for the largest sum @f$ h+k+l @f$)
  */
 template <typename float_type, typename vector_type, typename InputIterator, typename OutputIterator>
-void pick_lattice_points_from_shell(
+BOOST_CONCEPT_REQUIRES(
+    ((boost::InputIterator<InputIterator>))
+    ((boost::OutputIterator<OutputIterator, std::pair<float_type const, vector_type> >))
+  , (void)) // return type
+pick_lattice_points_from_shell(
     InputIterator radius_begin, InputIterator radius_end
   , OutputIterator result
   , vector_type const& unit_cell
@@ -65,14 +70,6 @@ void pick_lattice_points_from_shell(
   , unsigned int max_count
 )
 {
-    BOOST_STATIC_ASSERT((boost::is_same<
-        typename InputIterator::value_type, float_type
-    >::value));
-    BOOST_STATIC_ASSERT((boost::is_same<
-        typename OutputIterator::container_type::value_type
-      , typename std::pair<float_type const, vector_type>
-    >::value));
-
     using namespace std;
 
     enum { dimension = vector_type::static_size };
@@ -81,19 +78,19 @@ void pick_lattice_points_from_shell(
     // keep track of the number of constructed lattice points
     vector<unsigned int> count(radius_end - radius_begin, 0u);
 
-    // determine maximum Miller index that fits in the range of radii
-    // (e_i) × (h,k,l) ≤ r_max ⇒ (h,k,l) ≤ r_max / max(e_i)
+    // determine maximum sum of Miller indices that fits in the range of radii
+    // (e_i) × (h,k,l) ≤ r_max ⇒ h+k+l ≤ dimension × r_max / max(e_i)
     float_type r_max = *max_element(radius_begin, radius_end) * (1 + tolerance);
-    unsigned int miller_max = static_cast<unsigned int>(floor(
+    unsigned int miller_sum_max = dimension * static_cast<unsigned int>(floor(
         r_max / *max_element(unit_cell.begin(), unit_cell.end())
     ));
-    LOG_DEBUG("generate lattice points with a maximum sum of Miller indices: " << miller_max);
+    LOG_DEBUG("generate lattice points with a maximum sum of Miller indices: " << miller_sum_max);
 
-    // generate all lattice points bounded h+k+l ≤ miller_max,
+    // generate all lattice points bounded h+k+l ≤ miller_sum_max,
     // loop over tuple index (hkl), or (hk) in two dimensions,
     // using idx[2] = h+k+l, idx[1] = h+k, and idx[0] = h as loop variables
     index_type idx(0);
-    while (idx[dimension-1] <= miller_max) {
+    while (idx[dimension-1] <= miller_sum_max) {
         // construct (hkl) from partial index sums
         index_type hkl;
         hkl[0] = idx[0];
@@ -120,14 +117,17 @@ void pick_lattice_points_from_shell(
                         ++count[i];
 #ifndef NDEBUG
                         index_type hkl_reduced = hkl / greatest_common_divisor(hkl);
-                        LOG_TRACE("  r = " << norm_2(point) << ", (hkl) = " << hkl_reduced);
+                        LOG_TRACE(
+                            "  r = " << norm_2(point) << ", (hkl) = " << hkl_reduced
+                         << " ⇒ " << n << " × √" << inner_prod(hkl, hkl)
+                        );
 #endif
                     }
                 }
             }
         }
         // increment index tuple at end of loop,
-        // obey 0 ≤ idx[0] ≤ idx[1] ≤ ... ≤ miller_max
+        // obey 0 ≤ idx[0] ≤ idx[1] ≤ ... ≤ miller_sum_max
         ++idx[0];                            // always increment first 'digit' (element)
         for (unsigned int j = 0; j < dimension - 1; ++j) {
             if (idx[j] <= idx[j+1]) {        // increment 'digit' and test upper bound

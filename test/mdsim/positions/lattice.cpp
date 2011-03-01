@@ -150,20 +150,22 @@ void lattice(string const& backend)
     // acquire trajectory samples
     LOG_DEBUG("acquire trajectory sample");
     shared_ptr<observables::host::samples::trajectory<dimension, double> > sample_host;
+#ifdef WITH_CUDA
     shared_ptr<observables::host::samples::trajectory<dimension, float> > sample_gpu;
+#endif
     shared_ptr<observables::trajectory<dimension> > trajectory;
     if (backend == "host") {
         sample_host = make_shared<observables::host::samples::trajectory<dimension, double> >(
             particle->ntypes
         );
-        trajectory = make_trajectory_host<dimension, double>(sample_host, particle, box);
+        trajectory = make_trajectory_host(sample_host, particle, box);
     }
 #ifdef WITH_CUDA
     else if (backend == "gpu") {
         sample_gpu = make_shared<observables::host::samples::trajectory<dimension, float> >(
             particle->ntypes
         );
-        trajectory = make_trajectory_gpu<dimension, float>(sample_gpu, particle, box);
+        trajectory = make_trajectory_gpu(sample_gpu, particle, box);
     }
 #endif
     trajectory->acquire(0);

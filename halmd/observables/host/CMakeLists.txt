@@ -1,6 +1,7 @@
 add_library(halmd_observables_host
   mean_quartic_displacement.cpp
   mean_square_displacement.cpp
+  density_mode.cpp
   thermodynamics.cpp
   trajectory.cpp
   velocity_autocorrelation.cpp

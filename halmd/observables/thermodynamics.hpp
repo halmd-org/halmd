@@ -52,7 +52,7 @@ public:
     typedef observable<dimension> _Base;
     typedef mdsim::box<dimension> box_type;
     typedef typename _Base::writer_type writer_type;
-    typedef utility::profiler profiler_type;
+    typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
 
     boost::shared_ptr<box_type> box;

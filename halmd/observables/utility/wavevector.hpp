@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
-#define HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP
+#ifndef HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP
+#define HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP
 
-#include <boost/tuple/tuple.hpp>
+#include <utility>
 #include <lua.hpp>
-#include <map>
 #include <vector>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
@@ -35,18 +34,33 @@ namespace observables { namespace utility
 /**
  * construct set of wavevector shells compatible with the reciprocal
  * lattice and a list of wavenumbers
+ *
+ * The result in value() is a sorted container of key/value pairs
+ * (wavenumber, wavevector).
  */
 
 template <int dimension>
-class wavevectors
+class wavevector
 {
 public:
     typedef fixed_vector<double, dimension> vector_type;
+    typedef std::vector<std::pair<double, vector_type> > map_type;
 
     static void luaopen(lua_State* L);
 
-    wavevectors(
-        std::vector<double> const& wavenumbers
+    // construct class with list of wavenumbers
+    wavevector(
+        std::vector<double> const& wavenumber
+      , vector_type const& box_length
+      , double tolerance
+      , unsigned int max_count
+    );
+
+    // construct class with upper limit on wavenumber,
+    // the grid is linearly spaced starting with the smallest value
+    // that is compatible with the extents of the simulation box
+    wavevector(
+        double max_wavenumber
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
@@ -65,33 +79,38 @@ public:
     }
 
     //! returns list of wavevectors
-    std::multimap<double, vector_type> const& result() const
+    map_type const& value() const
     {
-        return wavevectors_;
+        return wavevector_;
     }
 
     //! returns wavenumber grid
-    std::vector<double> const& wavenumbers() const
+    std::vector<double> const& wavenumber() const
     {
-        return wavenumbers_;
+        return wavenumber_;
     }
 
 protected:
+    // common part of constructors
+    void init_();
+
     /** wavenumber grid */
-    std::vector<double> wavenumbers_;
+    std::vector<double> wavenumber_;
+    /** edge lengths of simulation box */
+    vector_type box_length_;
     /** tolerance of wavevector magnitudes (relative error) */
     double tolerance_;
     /** maximum number of wavevectors per wavenumber */
     double max_count_;
     /**
      * list of wavevectors grouped by their magnitude,
-     * the keys equal wavenumbers_ (or a subset of)
+     * the keys equal wavenumber_ (or a subset of)
      */
-    std::multimap<double, vector_type> wavevectors_;
+    map_type wavevector_;
 };
 
 }} // namespace observables::utility
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_UTILITY_WAVEVECTORS_HPP */
+#endif /* ! HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP */

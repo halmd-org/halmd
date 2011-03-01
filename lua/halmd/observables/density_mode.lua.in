@@ -1,0 +1,71 @@
+--
+-- Copyright © 2011  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab environment
+local density_mode_wrapper = {
+    host = {
+        [2] = halmd_wrapper.observables.host.density_mode_2_
+      , [3] = halmd_wrapper.observables.host.density_mode_3_
+    }
+  , [2] = halmd_wrapper.observables.density_mode_2_
+  , [3] = halmd_wrapper.observables.density_mode_3_
+}
+if halmd_wrapper.observables.gpu then
+    density_mode_wrapper.gpu = {
+        [2] = halmd_wrapper.observables.gpu.density_mode_2_
+      , [3] = halmd_wrapper.observables.gpu.density_mode_3_
+    }
+end
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
+local device = require("halmd.device")
+local observables = {
+    trajectory = require("halmd.observables.trajectory")
+}
+local assert = assert
+
+module("halmd.observables.density_mode", halmd.modules.register)
+
+--
+-- construct instance of density_mode module
+--
+-- @param args              parameter table:
+--     args.wavevector      instance of wavevector module
+-- @returns instance of density_mode module
+--
+function new(args)
+    -- dependency injection
+    local core = mdsim.core()
+    local dimension = assert(core.dimension)
+    local wavevector = assert(args.wavevector)
+
+    local trajectory
+    local density_mode
+    if device() then
+        density_mode = assert(density_mode_wrapper.gpu[dimension])
+        trajectory = assert(observables.trajectory{ memory = "gpu" })
+    else
+        density_mode = assert(density_mode_wrapper.host[dimension])
+        trajectory = assert(observables.trajectory{ memory = "host" })
+    end
+    return density_mode(trajectory, wavevector)
+end
