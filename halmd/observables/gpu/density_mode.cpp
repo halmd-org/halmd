@@ -44,7 +44,7 @@ density_mode<dimension, float_type>::density_mode(
   , wavevector_(wavevector)
     // member initialisation
   , nq_(wavevector_->value().size())
-  , dim_(trajectory_->particle->dim)
+  , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
     // memory allocation
   , rho_sample_(trajectory_->sample->r.size(), nq_)
   , g_q_(nq_)
@@ -52,6 +52,10 @@ density_mode<dimension, float_type>::density_mode(
   , g_sin_(nq_), g_cos_(nq_)
   , h_sin_(nq_), h_cos_(nq_)
 {
+    LOG_DEBUG(
+        "[density_mode] CUDA configuration: " << dim_.blocks_per_grid() << " blocks of "
+     << dim_.threads_per_block() << " threads each"
+    );
     // copy wavevectors to CUDA device
     try {
         cuda::host::vector<gpu_vector_type> q(nq_);
@@ -123,7 +127,10 @@ void density_mode<dimension, float_type>::acquire(double time)
                 cuda::thread::synchronize();
 
                 // finalise block sums for each wavevector
-                cuda::configure(dim_.grid, dim_.block); // FIXME optimise configuration
+                cuda::configure(
+                    nq_                        // #blocks: one per wavevector
+                  , dim_.block                 // #threads per block, must be a power of 2
+                );
                 wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, dim_.blocks_per_grid());
             }
             catch (cuda::error const& e) {
