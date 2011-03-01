@@ -142,7 +142,7 @@ void density_mode<dimension, float_type>::acquire(double time)
             cuda::copy(g_sin_, h_sin_);
             cuda::copy(g_cos_, h_cos_);
             for (unsigned int i = 0; i < nq_; ++i) {
-                rho[i] = mode_type(g_cos_[i], -g_sin_[i]);
+                rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
             }
         }
         ++type;
