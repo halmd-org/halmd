@@ -54,7 +54,7 @@ function new(args)
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
-    local sample = assert(samples.trajectory())
+    local sample = assert(samples.trajectory{ memory = "host" })
 
     local trajectory
     if device() then
