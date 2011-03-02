@@ -49,6 +49,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
     catch (cuda::error const&)
     {
         LOG_ERROR("[phase_space] failed to copy box length to GPU");
+        throw;
     }
 }
 
