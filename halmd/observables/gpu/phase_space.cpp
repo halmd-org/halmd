@@ -43,6 +43,13 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
   , particle(particle)
   , box(box)
 {
+    try {
+        cuda::copy(static_cast<vector_type>(box->length()), phase_space_wrapper<dimension>::kernel.box_length);
+    }
+    catch (cuda::error const&)
+    {
+        LOG_ERROR("[phase_space] failed to copy box length to GPU");
+    }
 }
 
 template <int dimension, typename float_type>
@@ -65,7 +72,14 @@ template <int dimension, typename float_type>
 void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(double time)
 {
     LOG_TRACE("[phase_space] acquire GPU sample");
-    // FIXME
+
+    phase_space_wrapper<dimension>::kernel.r.bind(particle->g_r);
+    phase_space_wrapper<dimension>::kernel.image.bind(particle->g_image);
+    phase_space_wrapper<dimension>::kernel.v.bind(particle->g_v);
+
+    for (size_t i = 0; i < particle->ntypes.size(); ++i) {
+        // FIXME permutation index g_index missing in particle
+    }
 
     sample->time = time;
 }

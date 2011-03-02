@@ -47,6 +47,7 @@ public:
     typedef observables::phase_space<dimension> _Base;
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
 
     boost::shared_ptr<sample_type> sample;
