@@ -20,7 +20,7 @@
 #include <boost/foreach.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/trajectory/writers/hdf5.hpp>
+#include <halmd/io/trajectory/writers/h5md.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/demangle.hpp>
@@ -34,10 +34,10 @@ namespace io { namespace trajectory { namespace writers
 {
 
 /**
- * read sample from HDF5 trajectory file
+ * read sample from H5MD trajectory file
  */
 template <int dimension, typename float_type>
-hdf5<dimension, float_type>::hdf5(
+h5md<dimension, float_type>::h5md(
     shared_ptr<sample_type> sample
   , string const& file_name
 )
@@ -80,7 +80,7 @@ hdf5<dimension, float_type>::hdf5(
  * append samples to datasets
  */
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::append()
+void h5md<dimension, float_type>::append()
 {
     BOOST_FOREACH (boost::function<void ()> const& writer, writers_) {
         writer();
@@ -88,19 +88,19 @@ void hdf5<dimension, float_type>::append()
 }
 
 /**
- * flush HDF5 file
+ * flush H5MD file
  */
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::flush()
+void h5md<dimension, float_type>::flush()
 {
     file_.flush(H5F_SCOPE_GLOBAL);
 }
 
 template <int dimension, typename float_type>
-void hdf5<dimension, float_type>::luaopen(lua_State* L)
+void h5md<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("hdf5_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
+    static string class_name("h5md_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -111,12 +111,12 @@ void hdf5<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("writers")
                     [
-                        class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        class_<h5md, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
                                 shared_ptr<sample_type>
                               , string const&
                             >())
-                            .def("file", &hdf5::file)
+                            .def("file", &h5md::file)
                     ]
                 ]
             ]
@@ -131,16 +131,16 @@ __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        &hdf5<3, double>::luaopen
+        &h5md<3, double>::luaopen
     ]
     [
-        &hdf5<2, double>::luaopen
+        &h5md<2, double>::luaopen
     ]
     [
-        &hdf5<3, float>::luaopen
+        &h5md<3, float>::luaopen
     ]
     [
-        &hdf5<2, float>::luaopen
+        &h5md<2, float>::luaopen
     ];
 }
 

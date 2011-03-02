@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -20,14 +20,14 @@
 require("halmd.modules")
 
 -- grab environment
-local hdf5_writer = {
+local h5md_writer = {
     host = {
-        [2] = halmd_wrapper.io.trajectory.writers.hdf5_2_double_
-      , [3] = halmd_wrapper.io.trajectory.writers.hdf5_3_double_
+        [2] = halmd_wrapper.io.trajectory.writers.h5md_2_double_
+      , [3] = halmd_wrapper.io.trajectory.writers.h5md_3_double_
     }
   , gpu = {
-        [2] = halmd_wrapper.io.trajectory.writers.hdf5_2_float_
-      , [3] = halmd_wrapper.io.trajectory.writers.hdf5_3_float_
+        [2] = halmd_wrapper.io.trajectory.writers.h5md_2_float_
+      , [3] = halmd_wrapper.io.trajectory.writers.h5md_3_float_
     }
 }
 local observables = {
@@ -42,10 +42,10 @@ local device = require("halmd.device")
 local parameter = require("halmd.parameter")
 local assert = assert
 
-module("halmd.io.trajectory.writers.hdf5", halmd.modules.register)
+module("halmd.io.trajectory.writers.h5md", halmd.modules.register)
 
 --
--- construct HDF5 trajectory writer module
+-- construct H5MD trajectory writer module
 --
 function new(args)
     -- dependency injection
@@ -61,12 +61,19 @@ function new(args)
 
     local writer
     if not device() then
-        writer = hdf5_writer.host[dimension](sample, file_name)
+        writer = h5md_writer.host[dimension](sample, file_name)
     else
-        writer = hdf5_writer.gpu[dimension](sample, file_name)
+        writer = h5md_writer.gpu[dimension](sample, file_name)
     end
 
     parameter.register_writer(writer)
 
     return writer
+end
+
+--
+-- returns module description
+--
+function name()
+    return "H5MD file format"
 end

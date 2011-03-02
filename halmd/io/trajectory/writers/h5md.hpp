@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_TRAJECTORY_HDF5_WRITER_HPP
-#define HALMD_IO_TRAJECTORY_HDF5_WRITER_HPP
+#ifndef HALMD_IO_TRAJECTORY_H5MD_WRITER_HPP
+#define HALMD_IO_TRAJECTORY_H5MD_WRITER_HPP
 
 #include <boost/bind.hpp>
 #include <boost/unordered_map.hpp>
@@ -35,7 +35,7 @@ namespace io { namespace trajectory { namespace writers
 {
 
 template <int dimension, typename float_type>
-class hdf5
+class h5md
   : public trajectory::writer<dimension>
 {
 public:
@@ -46,7 +46,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    hdf5(
+    h5md(
         boost::shared_ptr<sample_type> sample
       , std::string const& file_name
     );
@@ -61,7 +61,7 @@ public:
     }
 
 private:
-    /** HDF5 file */
+    /** H5MD file */
     H5::H5File file_;
     /** dataset write functors */
     std::vector<boost::function<void ()> > writers_;
@@ -71,4 +71,4 @@ private:
 
 } // namespace halmd
 
-#endif /* ! HALMD_IO_TRAJECTORY_HDF5_WRITER_HPP */
+#endif /* ! HALMD_IO_TRAJECTORY_H5MD_WRITER_HPP */
