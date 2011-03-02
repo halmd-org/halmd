@@ -44,7 +44,7 @@ struct phase_space_wrapper
     /** cubic box edgle length */
     cuda::symbol<vector_type> box_length;
     /** sample phase space for all particle of a single species */
-    cuda::function<void (unsigned int const*, coalesced_vector_type*, coalesced_vector_type*)> sample;
+    cuda::function<void (unsigned int const*, coalesced_vector_type*, coalesced_vector_type*, unsigned int)> sample;
 
     static phase_space_wrapper const kernel;
 };

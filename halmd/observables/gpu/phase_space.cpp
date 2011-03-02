@@ -77,8 +77,14 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(dou
     phase_space_wrapper<dimension>::kernel.image.bind(particle->g_image);
     phase_space_wrapper<dimension>::kernel.v.bind(particle->g_v);
 
+    unsigned int threads = particle->dim.threads_per_block();
+    unsigned int* g_index = particle->g_index.data();
+
     for (size_t i = 0; i < particle->ntypes.size(); ++i) {
-        // FIXME permutation index g_index missing in particle
+        unsigned int ntype = particle->ntypes[i];
+        cuda::configure((ntype + threads - 1) / threads, threads);
+        phase_space_wrapper<dimension>::kernel.sample(g_index, *sample->r[i], *sample->v[i], ntype);
+        g_index += ntype;
     }
 
     sample->time = time;
