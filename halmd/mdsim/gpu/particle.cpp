@@ -53,6 +53,7 @@ particle<dimension, float_type>::particle(
   , g_image(nbox)
   , g_v(nbox)
   , g_f(nbox)
+  , g_index(nbox)
   // allocate page-locked host memory
   , h_r(nbox)
   , h_image(nbox)
@@ -76,6 +77,7 @@ particle<dimension, float_type>::particle(
         g_image.reserve(dim.threads());
         g_v.reserve(dim.threads());
         g_f.reserve(dim.threads());
+        g_index.reserve(dim.threads());
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());

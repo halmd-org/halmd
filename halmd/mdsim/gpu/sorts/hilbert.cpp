@@ -80,15 +80,13 @@ template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
     LOG_TRACE("[hilbert] order particles");
-    cuda::vector<unsigned int> g_index(particle->nbox);
-    g_index.reserve(particle->g_r.capacity());
     {
         cuda::vector<unsigned int> g_map(particle->nbox);
         g_map.reserve(particle->g_r.capacity());
         this->map(g_map);
-        this->permutation(g_map, g_index);
+        this->permutation(g_map, particle->g_index);
     }
-    this->order(g_index);
+    this->order(particle->g_index);
 }
 
 /**
