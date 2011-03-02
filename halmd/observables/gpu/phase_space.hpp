@@ -17,16 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_GPU_TRAJECTORY_HPP
-#define HALMD_OBSERVABLES_GPU_TRAJECTORY_HPP
+#ifndef HALMD_OBSERVABLES_GPU_PHASE_SPACE_HPP
+#define HALMD_OBSERVABLES_GPU_PHASE_SPACE_HPP
 
 #include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/observables/gpu/samples/trajectory.hpp>
-#include <halmd/observables/host/samples/trajectory.hpp>
-#include <halmd/observables/trajectory.hpp>
+#include <halmd/observables/gpu/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/phase_space.hpp>
 
 namespace halmd
 {
@@ -34,18 +34,18 @@ namespace observables { namespace gpu
 {
 
 template <typename sample_type>
-class trajectory;
+class phase_space;
 
 /**
- * Sample trajectory from GPU memory to GPU memory
+ * Sample phase_space from GPU memory to GPU memory
  */
 template <int dimension, typename float_type>
-class trajectory<gpu::samples::trajectory<dimension, float_type> >
-  : public observables::trajectory<dimension>
+class phase_space<gpu::samples::phase_space<dimension, float_type> >
+  : public observables::phase_space<dimension>
 {
 public:
-    typedef observables::trajectory<dimension> _Base;
-    typedef gpu::samples::trajectory<dimension, float_type> sample_type;
+    typedef observables::phase_space<dimension> _Base;
+    typedef gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
 
@@ -55,7 +55,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    trajectory(
+    phase_space(
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
@@ -64,15 +64,15 @@ public:
 };
 
 /**
- * Sample trajectory from GPU memory to host memory
+ * Sample phase_space from GPU memory to host memory
  */
 template <int dimension, typename float_type>
-class trajectory<host::samples::trajectory<dimension, float_type> >
-  : public observables::trajectory<dimension>
+class phase_space<host::samples::phase_space<dimension, float_type> >
+  : public observables::phase_space<dimension>
 {
 public:
-    typedef observables::trajectory<dimension> _Base;
-    typedef host::samples::trajectory<dimension, float_type> sample_type;
+    typedef observables::phase_space<dimension> _Base;
+    typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef fixed_vector<float_type, dimension> vector_type;
@@ -83,7 +83,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    trajectory(
+    phase_space(
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
@@ -95,4 +95,4 @@ public:
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_GPU_TRAJECTORY_HPP */
+#endif /* ! HALMD_OBSERVABLES_GPU_PHASE_SPACE_HPP */

@@ -90,24 +90,24 @@ void ssf(string const& backend)
     shared_ptr<mdsim::position<dimension> > position =
         make_lattice(backend, particle, box, random);
 
-    // construct trajectory sampler
-    shared_ptr<observables::host::samples::trajectory<dimension, double> > sample_host;
+    // construct phase space sampler
+    shared_ptr<observables::host::samples::phase_space<dimension, double> > sample_host;
 #ifdef WITH_CUDA
-    shared_ptr<observables::gpu::samples::trajectory<dimension, float> > sample_gpu;
+    shared_ptr<observables::gpu::samples::phase_space<dimension, float> > sample_gpu;
 #endif
-    shared_ptr<observables::trajectory<dimension> > trajectory;
+    shared_ptr<observables::phase_space<dimension> > phase_space;
     if (backend == "host") {
-        sample_host = make_shared<observables::host::samples::trajectory<dimension, double> >(
+        sample_host = make_shared<observables::host::samples::phase_space<dimension, double> >(
             particle->ntypes
         );
-        trajectory = make_trajectory_host(sample_host, particle, box);
+        phase_space = make_phase_space_host(sample_host, particle, box);
     }
 #ifdef WITH_CUDA
     else if (backend == "gpu") {
-        sample_gpu = make_shared<observables::gpu::samples::trajectory<dimension, float> >(
+        sample_gpu = make_shared<observables::gpu::samples::phase_space<dimension, float> >(
             particle->ntypes
         );
-        trajectory = make_trajectory_gpu(sample_gpu, particle, box);
+        phase_space = make_phase_space_gpu(sample_gpu, particle, box);
     }
 #endif
 
@@ -162,7 +162,7 @@ void ssf(string const& backend)
 
     // construct modules for density modes and static structure factor
     shared_ptr<observables::density_mode<dimension> > density_mode =
-        make_density_mode(backend, trajectory, wavevector);
+        make_density_mode(backend, phase_space, wavevector);
 
     typedef observables::ssf<dimension> ssf_type;
     shared_ptr<ssf_type> ssf = make_shared<ssf_type>(density_mode, particle->nbox);

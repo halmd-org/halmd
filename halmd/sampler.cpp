@@ -123,7 +123,7 @@ void sampler<dimension>::sample(bool force)
     // allow value 0 for trajectory_interval_
     if (((trajectory_interval_ && !(step % trajectory_interval_)) || force)
           && trajectory_writer) {
-        trajectory->acquire(time);
+        phase_space->acquire(time);
         trajectory_writer->append();
         is_sampling_step = true;
     }
@@ -169,7 +169,7 @@ void sampler<dimension>::luaopen(lua_State* L)
                 .def("register_runtimes", &sampler::register_runtimes)
                 .def_readwrite("observables", &sampler::observables)
                 .def_readwrite("statevars_writer", &sampler::statevars_writer)
-                .def_readwrite("trajectory", &sampler::trajectory)
+                .def_readwrite("phase_space", &sampler::phase_space)
                 .def_readwrite("trajectory_writer", &sampler::trajectory_writer)
                 .def_readwrite("profiling_writers", &sampler::profiling_writers)
                 .property("steps", &sampler::steps)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,44 +17,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_VELOCITIES_TRAJECTORY_HPP
-#define HALMD_MDSIM_GPU_VELOCITIES_TRAJECTORY_HPP
+#ifndef HALMD_MDSIM_HOST_VELOCITIES_PHASE_SPACE_HPP
+#define HALMD_MDSIM_HOST_VELOCITIES_PHASE_SPACE_HPP
 
 #include <lua.hpp>
 
-#include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/gpu/velocity.hpp>
-#include <halmd/observables/host/samples/trajectory.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/velocity.hpp>
+#include <halmd/observables/host/samples/phase_space.hpp>
 
 namespace halmd
 {
-namespace mdsim { namespace gpu { namespace velocities
+namespace mdsim { namespace host { namespace velocities
 {
 
 template <int dimension, typename float_type>
-class trajectory
-  : public gpu::velocity<dimension, float_type>
+class phase_space
+  : public host::velocity<dimension, float_type>
 {
 public:
-    typedef gpu::velocity<dimension, float_type> _Base;
-    typedef gpu::particle<dimension, float_type> particle_type;
+    typedef host::velocity<dimension, float_type> _Base;
+    typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef observables::host::samples::trajectory<dimension, float_type> sample_type;
+    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<sample_type> sample;
 
     static void luaopen(lua_State* L);
 
-    trajectory(
+    phase_space(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<sample_type> sample
     );
     virtual void set();
 };
 
-}}} // namespace mdsim::gpu::velocities
+}}} // namespace mdsim::host::velocities
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_VELOCITIES_TRAJECTORY_HPP */
+#endif /* ! HALMD_MDSIM_HOST_VELOCITIES_PHASE_SPACE_HPP */

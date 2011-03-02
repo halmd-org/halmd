@@ -1,2 +1,2 @@
 require("halmd.mdsim.positions.lattice")
-require("halmd.mdsim.positions.trajectory")
+require("halmd.mdsim.positions.phase_space")

@@ -21,7 +21,7 @@
 #include <boost/iterator/counting_iterator.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/velocities/trajectory.hpp>
+#include <halmd/mdsim/host/velocities/phase_space.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -33,7 +33,7 @@ namespace mdsim { namespace host { namespace velocities
 {
 
 template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(
+phase_space<dimension, float_type>::phase_space(
     shared_ptr<particle_type> particle
   , shared_ptr<sample_type> sample
 )
@@ -48,20 +48,20 @@ trajectory<dimension, float_type>::trajectory(
  * set particle velocities
  */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::set()
+void phase_space<dimension, float_type>::set()
 {
     for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
         copy(sample->v[j]->begin(), sample->v[j]->end(), &particle->v[i]);
     }
 
-    LOG("set particle velocities from trajectory sample");
+    LOG("set particle velocities from phase space sample");
 }
 
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::luaopen(lua_State* L)
+void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -72,7 +72,7 @@ void trajectory<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("velocities")
                     [
-                        class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
                                  shared_ptr<particle_type>
                                , shared_ptr<sample_type>
@@ -93,17 +93,17 @@ __attribute__((constructor)) void register_lua()
     lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
     [
-        &trajectory<3, double>::luaopen
+        &phase_space<3, double>::luaopen
     ]
     [
-        &trajectory<2, double>::luaopen
+        &phase_space<2, double>::luaopen
     ];
 #else
     [
-        &trajectory<3, float>::luaopen
+        &phase_space<3, float>::luaopen
     ]
     [
-        &trajectory<2, float>::luaopen
+        &phase_space<2, float>::luaopen
     ];
 #endif
 }
@@ -112,11 +112,11 @@ __attribute__((constructor)) void register_lua()
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class trajectory<3, double>;
-template class trajectory<2, double>;
+template class phase_space<3, double>;
+template class phase_space<2, double>;
 #else
-template class trajectory<3, float>;
-template class trajectory<2, float>;
+template class phase_space<3, float>;
+template class phase_space<2, float>;
 #endif
 
 }}} // namespace mdsim::host::velocities

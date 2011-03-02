@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POSITIONS_TRAJECTORY_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POSITIONS_TRAJECTORY_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POSITIONS_PHASE_SPACE_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POSITIONS_PHASE_SPACE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -29,17 +29,17 @@ namespace mdsim { namespace gpu { namespace positions
 {
 
 template <int dimension>
-struct trajectory_wrapper
+struct phase_space_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
 
     cuda::symbol<vector_type> box_length;
     cuda::function<void (float4*)> reduce_periodic;
-    static trajectory_wrapper const kernel;
+    static phase_space_wrapper const kernel;
 };
 
 }}} // namespace mdsim::gpu::positions
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POSITIONS_TRAJECTORY_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POSITIONS_PHASE_SPACE_KERNEL_HPP */

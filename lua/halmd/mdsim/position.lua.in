@@ -40,7 +40,7 @@ module("halmd.mdsim.position", halmd.modules.register)
 function new(args)
     local position
     if args.reader then
-        position = args.position or "trajectory"
+        position = args.position or "phase_space"
     else
         position = args.position or "lattice" -- default value
     end

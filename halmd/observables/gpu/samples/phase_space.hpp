@@ -17,28 +17,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_HOST_SAMPLES_TRAJECTORY_HPP
-#define HALMD_OBSERVABLES_HOST_SAMPLES_TRAJECTORY_HPP
+#ifndef HALMD_OBSERVABLES_GPU_SAMPLES_PHASE_SPACE_HPP
+#define HALMD_OBSERVABLES_GPU_SAMPLES_PHASE_SPACE_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
 {
-namespace observables { namespace host { namespace samples
+namespace observables { namespace gpu { namespace samples
 {
 
 template <int dimension, typename float_type>
-class trajectory
+class phase_space
 {
 public:
-    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename mdsim::type_traits<dimension, float_type>::vector_type vector_type;
+    typedef typename mdsim::type_traits<dimension, float_type>::gpu::coalesced_vector_type gpu_vector_type;
 
     /** sample vector type for all particles of a species */
-    typedef std::vector<vector_type> sample_vector;
+    typedef cuda::vector<gpu_vector_type> sample_vector;
     /** sample pointer type for all particle of a species */
     typedef boost::shared_ptr<sample_vector> sample_vector_ptr;
     /** sample pointer type for all species */
@@ -53,11 +54,11 @@ public:
 
     static void luaopen(lua_State* L);
 
-    trajectory(std::vector<unsigned int> ntypes);
+    phase_space(std::vector<unsigned int> ntypes);
 };
 
-}}} // namespace observables::host::samples
+}}} // namespace observables::gpu::samples
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_HOST_SAMPLES_TRAJECTORY_HPP */
+#endif /* ! HALMD_OBSERVABLES_GPU_SAMPLES_PHASE_SPACE_HPP */

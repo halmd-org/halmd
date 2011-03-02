@@ -20,23 +20,23 @@
 require("halmd.modules")
 
 -- grab environment
-local trajectory_wrapper = {
+local phase_space_wrapper = {
     host = {
         host = {
-            [2] = halmd_wrapper.observables.host.samples.trajectory_2_double_
-          , [3] = halmd_wrapper.observables.host.samples.trajectory_3_double_
+            [2] = halmd_wrapper.observables.host.samples.phase_space_2_double_
+          , [3] = halmd_wrapper.observables.host.samples.phase_space_3_double_
         }
     }
 }
 if halmd_wrapper.observables.gpu then
-    trajectory_wrapper.gpu = {
+    phase_space_wrapper.gpu = {
         host = {
-            [2] = halmd_wrapper.observables.host.samples.trajectory_2_float_
-          , [3] = halmd_wrapper.observables.host.samples.trajectory_3_float_
+            [2] = halmd_wrapper.observables.host.samples.phase_space_2_float_
+          , [3] = halmd_wrapper.observables.host.samples.phase_space_3_float_
         }
       , gpu = {
-            [2] = halmd_wrapper.observables.gpu.samples.trajectory_2_
-          , [3] = halmd_wrapper.observables.gpu.samples.trajectory_3_
+            [2] = halmd_wrapper.observables.gpu.samples.phase_space_2_
+          , [3] = halmd_wrapper.observables.gpu.samples.phase_space_3_
         }
     }
 end
@@ -46,13 +46,13 @@ local mdsim = {
 local device = require("halmd.device")
 local assert = assert
 
-module("halmd.observables.samples.trajectory", halmd.modules.register)
+module("halmd.observables.samples.phase_space", halmd.modules.register)
 
 -- singleton
 local sample = {}
 
 --
--- construct trajectory module
+-- construct phase_space module
 --
 -- @param args       parameter table
 --   args.memory     specify memory location of sample ("host", "gpu")
@@ -65,13 +65,13 @@ function new(args)
         local particle = assert(core.particle)
         local dimension = assert(core.dimension)
 
-        local trajectory
+        local phase_space
         if device() then
-            trajectory = assert(trajectory_wrapper.gpu[memory][dimension])
+            phase_space = assert(phase_space_wrapper.gpu[memory][dimension])
         else
-            trajectory = assert(trajectory_wrapper.host[memory][dimension])
+            phase_space = assert(phase_space_wrapper.host[memory][dimension])
         end
-        sample[memory] = trajectory(particle.ntypes)
+        sample[memory] = phase_space(particle.ntypes)
     end
     return sample[memory]
 end

@@ -19,7 +19,7 @@
 
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
-#include <halmd/observables/gpu/trajectory_kernel.hpp>
+#include <halmd/observables/gpu/phase_space_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
@@ -29,7 +29,7 @@ namespace halmd
 {
 namespace observables { namespace gpu
 {
-namespace trajectory_kernel
+namespace phase_space_kernel
 {
 
 /** positions, types */
@@ -42,7 +42,7 @@ texture<float4> v_;
 __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
- * sample trajectory for all particle of a single species
+ * sample phase_space for all particle of a single species
  */
 template <typename vector_type, typename T>
 __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov)
@@ -64,19 +64,19 @@ __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov)
     g_ov[GTID] = v;
 }
 
-} // namespace trajectory_kernel
+} // namespace phase_space_kernel
 
 template <int dimension>
-trajectory_wrapper<dimension> const trajectory_wrapper<dimension>::kernel = {
-    trajectory_kernel::r_
-  , get<dimension>(trajectory_kernel::image_)
-  , trajectory_kernel::v_
-  , get<dimension>(trajectory_kernel::box_length_)
-  , trajectory_kernel::sample<fixed_vector<float, dimension> >
+phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
+    phase_space_kernel::r_
+  , get<dimension>(phase_space_kernel::image_)
+  , phase_space_kernel::v_
+  , get<dimension>(phase_space_kernel::box_length_)
+  , phase_space_kernel::sample<fixed_vector<float, dimension> >
 };
 
-template class trajectory_wrapper<3>;
-template class trajectory_wrapper<2>;
+template class phase_space_wrapper<3>;
+template class phase_space_wrapper<2>;
 
 }} // namespace observables::gpu
 

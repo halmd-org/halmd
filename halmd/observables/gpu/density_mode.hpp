@@ -26,7 +26,7 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
-#include <halmd/observables/gpu/trajectory.hpp>
+#include <halmd/observables/gpu/phase_space.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -49,7 +49,7 @@ public:
     typedef observables::density_mode<dimension> _Base;
     typedef typename _Base::density_mode_sample_type density_mode_sample_type;
     typedef typename _Base::wavevector_type wavevector_type;
-    typedef gpu::trajectory<gpu::samples::trajectory<dimension, float_type> > trajectory_type;
+    typedef gpu::phase_space<gpu::samples::phase_space<dimension, float_type> > phase_space_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
     typedef halmd::utility::profiler profiler_type;
 
@@ -60,14 +60,14 @@ public:
     static void luaopen(lua_State* L);
 
     density_mode(
-        boost::shared_ptr<trajectory_type> trajectory
+        boost::shared_ptr<phase_space_type> phase_space
       , boost::shared_ptr<wavevector_type> wavevector
     );
 
     void register_runtimes(profiler_type& profiler);
 
     /**
-    * compute density modes from trajectory sample and store with given time stamp
+    * compute density modes from phase space sample and store with given time stamp
     */
     virtual void acquire(double time);
 
@@ -93,7 +93,7 @@ public:
     HALMD_PROFILING_TAG(sample_, "computation of density modes");
 
 protected:
-    boost::shared_ptr<trajectory_type> trajectory_;
+    boost::shared_ptr<phase_space_type> phase_space_;
     boost::shared_ptr<wavevector_type> wavevector_;
 
     /** total number of wavevectors */

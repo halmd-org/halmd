@@ -36,17 +36,17 @@ namespace observables { namespace gpu
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    shared_ptr<trajectory_type> trajectory
+    shared_ptr<phase_space_type> phase_space
   , shared_ptr<wavevector_type> wavevector
 )
     // dependency injection
-  : trajectory_(trajectory)
+  : phase_space_(phase_space)
   , wavevector_(wavevector)
     // member initialisation
   , nq_(wavevector_->value().size())
   , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
     // memory allocation
-  , rho_sample_(trajectory_->sample->r.size(), nq_)
+  , rho_sample_(phase_space_->sample->r.size(), nq_)
   , g_q_(nq_)
   , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
   , g_sin_(nq_), g_cos_(nq_)
@@ -92,7 +92,7 @@ void density_mode<dimension, float_type>::register_runtimes(profiler_type& profi
 }
 
 /**
- * Acquire sample of all density modes from trajectory sample
+ * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::acquire(double time)
@@ -103,16 +103,16 @@ void density_mode<dimension, float_type>::acquire(double time)
     if (rho_sample_.time == time) return;
     LOG_TRACE("[density_mode] acquire sample");
 
-    typedef typename trajectory_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
+    typedef typename phase_space_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
-    // trigger update of trajectory sample
-    trajectory_->acquire(time); // FIXME does nothing yet, access positions directly via trajectory->particle
+    // trigger update of phase space sample
+    phase_space_->acquire(time); // FIXME does nothing yet, access positions directly via phase_space->particle
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
     unsigned int type = 0;
-    BOOST_FOREACH (positions_vector_ptr_type const r_sample, trajectory_->sample->r) {
+    BOOST_FOREACH (positions_vector_ptr_type const r_sample, phase_space_->sample->r) {
         mode_vector_type& rho = *rho_sample_.rho[type]; //< dereference shared_ptr
         if (type ==  0) {
             try {
@@ -122,7 +122,7 @@ void density_mode<dimension, float_type>::acquire(double time)
                 // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
                 // FIXME pass r_sample->r[type] instead of particle->g_r
                 wrapper_type::kernel.compute(
-                    trajectory_->particle->g_r, trajectory_->particle->nbox
+                    phase_space_->particle->g_r, phase_space_->particle->nbox
                   , g_sin_block_, g_cos_block_);
                 cuda::thread::synchronize();
 
@@ -165,7 +165,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            shared_ptr<trajectory_type>
+                            shared_ptr<phase_space_type>
                           , shared_ptr<wavevector_type>
                         >())
                         .def("register_runtimes", &density_mode::register_runtimes)

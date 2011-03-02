@@ -18,7 +18,7 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/observables/host/trajectory.hpp>
+#include <halmd/observables/host/phase_space.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -30,7 +30,7 @@ namespace observables { namespace host
 {
 
 template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(
+phase_space<dimension, float_type>::phase_space(
     shared_ptr<sample_type> sample
   , shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
@@ -42,13 +42,13 @@ trajectory<dimension, float_type>::trajectory(
 }
 
 /**
- * Sample trajectory
+ * Sample phase_space
  */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::acquire(double time)
+void phase_space<dimension, float_type>::acquire(double time)
 {
     if (sample->time == time) return; // we're up to date, nothing to do
-    LOG_TRACE("[trajectory] acquire sample");
+    LOG_TRACE("[phase_space] acquire sample");
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         // periodically extended particle position
@@ -60,17 +60,17 @@ void trajectory<dimension, float_type>::acquire(double time)
 }
 
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::luaopen(lua_State* L)
+void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L, "halmd_wrapper")
     [
         namespace_("observables")
         [
             namespace_("host")
             [
-                class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
                          shared_ptr<sample_type>
                        , shared_ptr<particle_type>
@@ -89,17 +89,17 @@ __attribute__((constructor)) void register_lua()
     lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
     [
-        &trajectory<3, double>::luaopen
+        &phase_space<3, double>::luaopen
     ]
     [
-        &trajectory<2, double>::luaopen
+        &phase_space<2, double>::luaopen
     ];
 #else
     [
-        &trajectory<3, float>::luaopen
+        &phase_space<3, float>::luaopen
     ]
     [
-        &trajectory<2, float>::luaopen
+        &phase_space<2, float>::luaopen
     ];
 #endif
 }
@@ -108,11 +108,11 @@ __attribute__((constructor)) void register_lua()
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class trajectory<3, double>;
-template class trajectory<2, double>;
+template class phase_space<3, double>;
+template class phase_space<2, double>;
 #else
-template class trajectory<3, float>;
-template class trajectory<2, float>;
+template class phase_space<3, float>;
+template class phase_space<2, float>;
 #endif
 
 }} // namespace observables::host

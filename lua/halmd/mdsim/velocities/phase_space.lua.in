@@ -20,47 +20,46 @@
 require("halmd.modules")
 
 -- grab environment
-local trajectory_wrapper = {
+local phase_space_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.positions.trajectory_2_
-      , [3] = halmd_wrapper.mdsim.host.positions.trajectory_3_
+        [2] = halmd_wrapper.mdsim.host.velocities.phase_space_2_
+      , [3] = halmd_wrapper.mdsim.host.velocities.phase_space_3_
     }
 }
 if halmd_wrapper.mdsim.gpu then
-    trajectory_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.positions.trajectory_2_
-      , [3] = halmd_wrapper.mdsim.gpu.positions.trajectory_3_
+    phase_space_wrapper.gpu = {
+        [2] = halmd_wrapper.mdsim.gpu.velocities.phase_space_2_
+      , [3] = halmd_wrapper.mdsim.gpu.velocities.phase_space_3_
     }
 end
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local samples = {
-    trajectory = require("halmd.observables.samples.trajectory")
+    phase_space = require("halmd.observables.samples.phase_space")
 }
 local device = require("halmd.device")
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 local assert = assert
 
-module("halmd.mdsim.positions.trajectory", halmd.modules.register)
+module("halmd.mdsim.velocities.phase_space", halmd.modules.register)
 
 --
--- construct trajectory module
+-- construct phase_space module
 --
 function new(args)
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
-    local box = assert(core.box)
-    local sample = assert(samples.trajectory{ memory = "host" })
+    local sample = assert(samples.phase_space{ memory = "host" })
 
-    local trajectory
+    local phase_space
     if device() then
-        trajectory = trajectory_wrapper.gpu[dimension]
+        phase_space = phase_space_wrapper.gpu[dimension]
     else
-        trajectory = trajectory_wrapper.host[dimension]
+        phase_space = phase_space_wrapper.host[dimension]
     end
-    return trajectory(particle, box, sample)
+    return phase_space(particle, sample)
 end

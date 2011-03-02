@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_TRAJECTORY_HPP
-#define HALMD_OBSERVABLES_TRAJECTORY_HPP
+#ifndef HALMD_OBSERVABLES_PHASE_SPACE_HPP
+#define HALMD_OBSERVABLES_PHASE_SPACE_HPP
 
 #include <lua.hpp>
 
@@ -28,13 +28,13 @@ namespace observables
 {
 
 template <int dimension>
-class trajectory
+class phase_space
 {
 public:
     static void luaopen(lua_State* L);
 
-    trajectory() {}
-    virtual ~trajectory() {};
+    phase_space() {}
+    virtual ~phase_space() {};
     virtual void acquire(double time) = 0;
 };
 
@@ -42,4 +42,4 @@ public:
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_TRAJECTORY_HPP */
+#endif /* ! HALMD_OBSERVABLES_PHASE_SPACE_HPP */

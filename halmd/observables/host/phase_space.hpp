@@ -17,15 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_HOST_TRAJECTORY_HPP
-#define HALMD_OBSERVABLES_HOST_TRAJECTORY_HPP
+#ifndef HALMD_OBSERVABLES_HOST_PHASE_SPACE_HPP
+#define HALMD_OBSERVABLES_HOST_PHASE_SPACE_HPP
 
 #include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/observables/host/samples/trajectory.hpp>
-#include <halmd/observables/trajectory.hpp>
+#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/phase_space.hpp>
 
 namespace halmd
 {
@@ -33,12 +33,12 @@ namespace observables { namespace host
 {
 
 template <int dimension, typename float_type>
-class trajectory
-  : public observables::trajectory<dimension>
+class phase_space
+  : public observables::phase_space<dimension>
 {
 public:
-    typedef observables::trajectory<dimension> _Base;
-    typedef host::samples::trajectory<dimension, float_type> sample_type;
+    typedef observables::phase_space<dimension> _Base;
+    typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
 
@@ -48,7 +48,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    trajectory(
+    phase_space(
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
@@ -60,4 +60,4 @@ public:
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_HOST_TRAJECTORY_HPP */
+#endif /* ! HALMD_OBSERVABLES_HOST_PHASE_SPACE_HPP */

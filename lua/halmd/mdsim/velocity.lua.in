@@ -40,7 +40,7 @@ module("halmd.mdsim.velocity", halmd.modules.register)
 function new(args)
     local velocity
     if args.reader then
-        velocity = args.velocity or "trajectory"
+        velocity = args.velocity or "phase_space"
     else
         velocity = args.velocity or "boltzmann" -- default value
     end

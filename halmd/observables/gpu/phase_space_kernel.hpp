@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_GPU_TRAJECTORY_KERNEL_CUH
-#define HALMD_OBSERVABLES_GPU_TRAJECTORY_KERNEL_CUH
+#ifndef HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_CUH
+#define HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_CUH
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -30,7 +30,7 @@ namespace observables { namespace gpu
 {
 
 template <int dimension>
-struct trajectory_wrapper
+struct phase_space_wrapper
 {
     typedef typename mdsim::type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
@@ -43,20 +43,20 @@ struct trajectory_wrapper
     cuda::texture<float4> v;
     /** cubic box edgle length */
     cuda::symbol<vector_type> box_length;
-    /** sample trajectory for all particle of a single species */
+    /** sample phase_space for all particle of a single species */
     cuda::function<void (unsigned int const*, coalesced_vector_type*, coalesced_vector_type*)> sample;
 
-    static trajectory_wrapper const kernel;
+    static phase_space_wrapper const kernel;
 };
 
 template <int dimension>
-trajectory_wrapper<dimension> const& get_trajectory_kernel()
+phase_space_wrapper<dimension> const& get_phase_space_kernel()
 {
-    return trajectory_wrapper<dimension>::kernel;
+    return phase_space_wrapper<dimension>::kernel;
 }
 
 }} // namespace observables::gpu
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_GPU_TRAJECTORY_KERNEL_CUH */
+#endif /* ! HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_CUH */

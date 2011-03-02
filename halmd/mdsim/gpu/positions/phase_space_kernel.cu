@@ -19,7 +19,7 @@
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/mdsim/gpu/positions/trajectory_kernel.hpp>
+#include <halmd/mdsim/gpu/positions/phase_space_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
@@ -34,7 +34,7 @@ namespace halmd
 {
 namespace mdsim { namespace gpu { namespace positions
 {
-namespace trajectory_kernel
+namespace phase_space_kernel
 {
 
 /**
@@ -56,16 +56,16 @@ __global__ void reduce_periodic(float4* g_r)
     g_r[GTID] = tagged(r, type);
 }
 
-} // namespace trajectory_kernel
+} // namespace phase_space_kernel
 
 template <int dimension>
-trajectory_wrapper<dimension> const trajectory_wrapper<dimension>::kernel = {
+phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
     get<dimension>(box_length_)
-  , trajectory_kernel::reduce_periodic<fixed_vector<float, dimension> >
+  , phase_space_kernel::reduce_periodic<fixed_vector<float, dimension> >
 };
 
-template class trajectory_wrapper<3>;
-template class trajectory_wrapper<2>;
+template class phase_space_wrapper<3>;
+template class phase_space_wrapper<2>;
 
 }}} // namespace mdsim::gpu::positions
 

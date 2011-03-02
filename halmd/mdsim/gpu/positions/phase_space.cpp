@@ -20,8 +20,8 @@
 #include <algorithm>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/positions/trajectory.hpp>
-#include <halmd/mdsim/gpu/positions/trajectory_kernel.hpp>
+#include <halmd/mdsim/gpu/positions/phase_space.hpp>
+#include <halmd/mdsim/gpu/positions/phase_space_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 namespace halmd
@@ -33,7 +33,7 @@ using namespace boost;
 using namespace std;
 
 template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(
+phase_space<dimension, float_type>::phase_space(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
   , shared_ptr<sample_type> sample
@@ -44,11 +44,11 @@ trajectory<dimension, float_type>::trajectory(
   , sample(sample)
 {
     try {
-        cuda::copy(static_cast<vector_type>(box->length()), trajectory_wrapper<dimension>::kernel.box_length);
+        cuda::copy(static_cast<vector_type>(box->length()), phase_space_wrapper<dimension>::kernel.box_length);
     }
     catch (cuda::error const&)
     {
-        LOG_ERROR("[trajectory] failed to copy box length to GPU");
+        LOG_ERROR("[phase_space] failed to copy box length to GPU");
         throw;
     }
 }
@@ -57,7 +57,7 @@ trajectory<dimension, float_type>::trajectory(
  * set particle positions
  */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::set()
+void phase_space<dimension, float_type>::set()
 {
     // assign particle coordinates
     for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
@@ -74,32 +74,32 @@ void trajectory<dimension, float_type>::set()
     }
     catch (cuda::error const&)
     {
-        LOG_ERROR("[trajectory] failed to copy particle positions to GPU");
+        LOG_ERROR("[phase_space] failed to copy particle positions to GPU");
         throw;
     }
 
     // shift particle positions to range (-L/2, L/2)
     try {
         cuda::configure(particle->dim.grid, particle->dim.block);
-        trajectory_wrapper<dimension>::kernel.reduce_periodic(particle->g_r);
+        phase_space_wrapper<dimension>::kernel.reduce_periodic(particle->g_r);
     }
     catch (cuda::error const&)
     {
-        LOG_ERROR("[trajectory] failed to reduce particle positions on GPU");
+        LOG_ERROR("[phase_space] failed to reduce particle positions on GPU");
         throw;
     }
 
     // assign particle image vectors
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());
 
-    LOG("set particle positions from trajectory sample");
+    LOG("set particle positions from phase space sample");
 }
 
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::luaopen(lua_State* L)
+void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
@@ -110,7 +110,7 @@ void trajectory<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("positions")
                     [
-                        class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
                                  shared_ptr<particle_type>
                                , shared_ptr<box_type>
@@ -131,18 +131,18 @@ __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        &trajectory<3, float>::luaopen
+        &phase_space<3, float>::luaopen
     ]
     [
-        &trajectory<2, float>::luaopen
+        &phase_space<2, float>::luaopen
     ];
 }
 
 } // namespace
 
 // explicit instantiation
-template class trajectory<3, float>;
-template class trajectory<2, float>;
+template class phase_space<3, float>;
+template class phase_space<2, float>;
 
 }}} // namespace mdsim::gpu::positions
 

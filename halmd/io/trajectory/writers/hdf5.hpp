@@ -27,7 +27,7 @@
 #include <h5xx/h5xx.hpp>
 
 #include <halmd/io/trajectory/writer.hpp>
-#include <halmd/observables/host/samples/trajectory.hpp>
+#include <halmd/observables/host/samples/phase_space.hpp>
 
 namespace halmd
 {
@@ -40,7 +40,7 @@ class hdf5
 {
 public:
     typedef trajectory::writer<dimension> _Base;
-    typedef observables::host::samples::trajectory<dimension, float_type> sample_type;
+    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_vector_type::value_type vector_type;
 

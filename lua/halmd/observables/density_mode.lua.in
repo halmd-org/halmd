@@ -39,7 +39,7 @@ local mdsim = {
 }
 local device = require("halmd.device")
 local observables = {
-    trajectory = require("halmd.observables.trajectory")
+    phase_space = require("halmd.observables.phase_space")
 }
 local assert = assert
 
@@ -58,14 +58,14 @@ function new(args)
     local dimension = assert(core.dimension)
     local wavevector = assert(args.wavevector)
 
-    local trajectory
+    local phase_space
     local density_mode
     if device() then
         density_mode = assert(density_mode_wrapper.gpu[dimension])
-        trajectory = assert(observables.trajectory{ memory = "gpu" })
+        phase_space = assert(observables.phase_space{ memory = "gpu" })
     else
         density_mode = assert(density_mode_wrapper.host[dimension])
-        trajectory = assert(observables.trajectory{ memory = "host" })
+        phase_space = assert(observables.phase_space{ memory = "host" })
     end
-    return density_mode(trajectory, wavevector)
+    return density_mode(phase_space, wavevector)
 end

@@ -40,7 +40,7 @@
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/observables/host/density_mode.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
-#include <halmd/observables/host/trajectory.hpp>
+#include <halmd/observables/host/phase_space.hpp>
 #include <halmd/observables/ssf.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
@@ -57,7 +57,7 @@
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/density_mode.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
-# include <halmd/observables/gpu/trajectory.hpp>
+# include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
@@ -197,13 +197,13 @@ boost::shared_ptr<mdsim::position<dimension> > make_lattice(
 }
 
 template <int dimension, typename float_type>
-boost::shared_ptr<observables::trajectory<dimension> > make_trajectory_host(
-    boost::shared_ptr<observables::host::samples::trajectory<dimension, float_type> > sample
+boost::shared_ptr<observables::phase_space<dimension> > make_phase_space_host(
+    boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> > sample
   , boost::shared_ptr<mdsim::particle<dimension> > particle
   , boost::shared_ptr<mdsim::box<dimension> > box
 )
 {
-    return boost::make_shared<observables::host::trajectory<dimension, float_type> >(
+    return boost::make_shared<observables::host::phase_space<dimension, float_type> >(
         sample
       , boost::dynamic_pointer_cast<mdsim::host::particle<dimension, float_type> >(particle)
       , box
@@ -212,14 +212,14 @@ boost::shared_ptr<observables::trajectory<dimension> > make_trajectory_host(
 
 #ifdef WITH_CUDA
 template <int dimension, typename sample_type>
-boost::shared_ptr<observables::trajectory<dimension> > make_trajectory_gpu(
+boost::shared_ptr<observables::phase_space<dimension> > make_phase_space_gpu(
     boost::shared_ptr<sample_type> sample
   , boost::shared_ptr<mdsim::particle<dimension> > particle
   , boost::shared_ptr<mdsim::box<dimension> > box
 )
 {
     typedef typename sample_type::vector_type::value_type float_type;
-    return boost::make_shared<observables::gpu::trajectory<sample_type> >(
+    return boost::make_shared<observables::gpu::phase_space<sample_type> >(
         sample
       , boost::dynamic_pointer_cast<mdsim::gpu::particle<dimension, float_type> >(particle)
       , box
@@ -431,24 +431,24 @@ boost::shared_ptr<observables::thermodynamics<dimension> > make_thermodynamics(
 template <int dimension>
 boost::shared_ptr<observables::density_mode<dimension> > make_density_mode(
     std::string const& backend
-  , boost::shared_ptr<observables::trajectory<dimension> > trajectory
+  , boost::shared_ptr<observables::phase_space<dimension> > phase_space
   , boost::shared_ptr<observables::utility::wavevector<dimension> > wavevector
 )
 {
 #ifdef WITH_CUDA
     if (backend == "gpu") {
-        typedef observables::gpu::samples::trajectory<dimension, float> sample_type;
-        typedef observables::gpu::trajectory<sample_type> trajectory_type;
+        typedef observables::gpu::samples::phase_space<dimension, float> sample_type;
+        typedef observables::gpu::phase_space<sample_type> phase_space_type;
         return boost::make_shared<observables::gpu::density_mode<dimension, float> >(
-            boost::dynamic_pointer_cast<trajectory_type>(trajectory)
+            boost::dynamic_pointer_cast<phase_space_type>(phase_space)
           , wavevector
         );
     }
 #endif /* WITH_CUDA */
     if (backend == "host") {
-        typedef observables::host::trajectory<dimension, double> trajectory_type;
+        typedef observables::host::phase_space<dimension, double> phase_space_type;
         return boost::make_shared<observables::host::density_mode<dimension, double> >(
-            boost::dynamic_pointer_cast<trajectory_type>(trajectory)
+            boost::dynamic_pointer_cast<phase_space_type>(phase_space)
           , wavevector
         );
     }

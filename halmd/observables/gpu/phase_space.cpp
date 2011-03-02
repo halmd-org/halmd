@@ -21,8 +21,8 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/observables/gpu/trajectory.hpp>
-#include <halmd/observables/gpu/trajectory_kernel.hpp>
+#include <halmd/observables/gpu/phase_space.hpp>
+#include <halmd/observables/gpu/phase_space_kernel.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -34,7 +34,7 @@ namespace observables { namespace gpu
 {
 
 template <int dimension, typename float_type>
-trajectory<gpu::samples::trajectory<dimension, float_type> >::trajectory(
+phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
   , shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
@@ -46,7 +46,7 @@ trajectory<gpu::samples::trajectory<dimension, float_type> >::trajectory(
 }
 
 template <int dimension, typename float_type>
-trajectory<host::samples::trajectory<dimension, float_type> >::trajectory(
+phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
   , shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
@@ -59,24 +59,24 @@ trajectory<host::samples::trajectory<dimension, float_type> >::trajectory(
 
 
 /**
- * Sample trajectory
+ * Sample phase_space
  */
 template <int dimension, typename float_type>
-void trajectory<gpu::samples::trajectory<dimension, float_type> >::acquire(double time)
+void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(double time)
 {
-    LOG_TRACE("[trajectory] acquire GPU sample");
+    LOG_TRACE("[phase_space] acquire GPU sample");
     // FIXME
 
     sample->time = time;
 }
 
 /**
- * Sample trajectory
+ * Sample phase_space
  */
 template <int dimension, typename float_type>
-void trajectory<host::samples::trajectory<dimension, float_type> >::acquire(double time)
+void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(double time)
 {
-    LOG_TRACE("[trajectory] acquire host sample");
+    LOG_TRACE("[phase_space] acquire host sample");
 
     using mdsim::gpu::particle_kernel::untagged;
 
@@ -87,7 +87,7 @@ void trajectory<host::samples::trajectory<dimension, float_type> >::acquire(doub
     }
     catch (cuda::error const& e) {
         LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to copy trajectory from GPU to host");
+        throw runtime_error("failed to copy phase space from GPU to host");
     }
 
     for (size_t i = 0; i < particle->nbox; ++i) {
@@ -106,10 +106,10 @@ void trajectory<host::samples::trajectory<dimension, float_type> >::acquire(doub
 }
 
 template <int dimension, typename float_type>
-void trajectory<gpu::samples::trajectory<dimension, float_type> >::luaopen(lua_State* L)
+void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L, "halmd_wrapper")
     [
         namespace_("observables")
@@ -118,7 +118,7 @@ void trajectory<gpu::samples::trajectory<dimension, float_type> >::luaopen(lua_S
             [
                 namespace_("gpu")
                 [
-                    class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                              shared_ptr<sample_type>
                            , shared_ptr<particle_type>
@@ -131,10 +131,10 @@ void trajectory<gpu::samples::trajectory<dimension, float_type> >::luaopen(lua_S
 }
 
 template <int dimension, typename float_type>
-void trajectory<host::samples::trajectory<dimension, float_type> >::luaopen(lua_State* L)
+void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L, "halmd_wrapper")
     [
         namespace_("observables")
@@ -143,7 +143,7 @@ void trajectory<host::samples::trajectory<dimension, float_type> >::luaopen(lua_
             [
                 namespace_("host")
                 [
-                    class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                              shared_ptr<sample_type>
                            , shared_ptr<particle_type>
@@ -162,26 +162,26 @@ __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        &trajectory<gpu::samples::trajectory<3, float> >::luaopen
+        &phase_space<gpu::samples::phase_space<3, float> >::luaopen
     ]
     [
-        &trajectory<gpu::samples::trajectory<2, float> >::luaopen
+        &phase_space<gpu::samples::phase_space<2, float> >::luaopen
     ]
     [
-        &trajectory<host::samples::trajectory<3, float> >::luaopen
+        &phase_space<host::samples::phase_space<3, float> >::luaopen
     ]
     [
-        &trajectory<host::samples::trajectory<2, float> >::luaopen
+        &phase_space<host::samples::phase_space<2, float> >::luaopen
     ];
 }
 
 } // namespace
 
 // explicit instantiation
-template class trajectory<gpu::samples::trajectory<3, float> >;
-template class trajectory<gpu::samples::trajectory<2, float> >;
-template class trajectory<host::samples::trajectory<3, float> >;
-template class trajectory<host::samples::trajectory<2, float> >;
+template class phase_space<gpu::samples::phase_space<3, float> >;
+template class phase_space<gpu::samples::phase_space<2, float> >;
+template class phase_space<host::samples::phase_space<3, float> >;
+template class phase_space<host::samples::phase_space<2, float> >;
 
 }} // namespace observables::gpu
 

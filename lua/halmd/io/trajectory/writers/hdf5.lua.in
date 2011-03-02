@@ -32,7 +32,7 @@ local hdf5_writer = {
 }
 local observables = {
     samples = {
-        trajectory = require("halmd.observables.samples.trajectory")
+        phase_space = require("halmd.observables.samples.phase_space")
     }
 }
 local mdsim = {
@@ -51,7 +51,7 @@ function new(args)
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
-    local sample = assert(observables.samples.trajectory{ memory = "host" })
+    local sample = assert(observables.samples.phase_space{ memory = "host" })
 
     -- command line options
     local output = assert(args.output)

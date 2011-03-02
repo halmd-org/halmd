@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/observables/trajectory.hpp>
+#include <halmd/observables/phase_space.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -29,16 +29,16 @@ namespace observables
 {
 
 template <int dimension>
-void trajectory<dimension>::luaopen(lua_State* L)
+void phase_space<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L, "halmd_wrapper")
     [
         namespace_("observables")
         [
-            class_<trajectory, shared_ptr<trajectory> >(class_name.c_str())
-                .def("acquire", &trajectory::acquire)
+            class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
+                .def("acquire", &phase_space::acquire)
         ]
     ];
 }
@@ -50,10 +50,10 @@ __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
-        &trajectory<3>::luaopen
+        &phase_space<3>::luaopen
     ]
     [
-        &trajectory<2>::luaopen
+        &phase_space<2>::luaopen
     ];
 }
 

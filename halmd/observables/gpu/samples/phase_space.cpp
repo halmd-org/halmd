@@ -17,10 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <limits>
-
-#include <halmd/observables/host/samples/trajectory.hpp>
-#include <halmd/utility/demangle.hpp>
+#include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -28,11 +25,11 @@ using namespace std;
 
 namespace halmd
 {
-namespace observables { namespace host { namespace samples
+namespace observables { namespace gpu { namespace samples
 {
 
 template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(vector<unsigned int> ntypes)
+phase_space<dimension, float_type>::phase_space(vector<unsigned int> ntypes)
   // allocate sample pointers
   : r(ntypes.size())
   , v(ntypes.size())
@@ -45,19 +42,19 @@ trajectory<dimension, float_type>::trajectory(vector<unsigned int> ntypes)
 }
 
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::luaopen(lua_State* L)
+void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
+    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L, "halmd_wrapper")
     [
         namespace_("observables")
         [
-            namespace_("host")
+            namespace_("gpu")
             [
                 namespace_("samples")
                 [
-                    class_<trajectory, shared_ptr<trajectory> >(class_name.c_str())
+                    class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
                         .def(constructor<vector<unsigned int> >())
                 ]
             ]
@@ -71,31 +68,19 @@ namespace // limit symbols to translation unit
 __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
-#ifndef USE_HOST_SINGLE_PRECISION
     [
-        &trajectory<3, double>::luaopen
+        &phase_space<3, float>::luaopen
     ]
     [
-        &trajectory<2, double>::luaopen
-    ]
-#endif
-    [
-        &trajectory<3, float>::luaopen
-    ]
-    [
-        &trajectory<2, float>::luaopen
+        &phase_space<2, float>::luaopen
     ];
 }
 
 } // namespace
 
-#ifndef USE_HOST_SINGLE_PRECISION
-template class trajectory<3, double>;
-template class trajectory<2, double>;
-#endif
-template class trajectory<3, float>;
-template class trajectory<2, float>;
+template class phase_space<3, float>;
+template class phase_space<2, float>;
 
-}}} // namespace observables::host::samples
+}}} // namespace observables::gpu::samples
 
 } // namespace halmd

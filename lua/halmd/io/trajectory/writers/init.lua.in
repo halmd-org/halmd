@@ -29,7 +29,7 @@ local table = table
 module("halmd.io.trajectory.writers", halmd.modules.register)
 
 --
--- construct trajectoryr module
+-- construct trajectory module
 --
 function new()
     return writers.hdf5()

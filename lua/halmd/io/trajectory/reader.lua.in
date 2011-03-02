@@ -94,5 +94,5 @@ function options(desc)
 
     end), "trajectory input file")
 
-    desc:add("offset", po.int64():depends("file"), "trajectory sample for initial state")
+    desc:add("offset", po.int64():depends("file"), "phase space sample for initial state")
 end

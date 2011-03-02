@@ -17,17 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POSITIONS_TRAJECTORY_HPP
-#define HALMD_MDSIM_GPU_POSITIONS_TRAJECTORY_HPP
+#ifndef HALMD_MDSIM_GPU_POSITIONS_PHASE_SPACE_HPP
+#define HALMD_MDSIM_GPU_POSITIONS_PHASE_SPACE_HPP
 
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/io/trajectory/reader.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/position.hpp>
-#include <halmd/observables/host/samples/trajectory.hpp>
+#include <halmd/observables/host/samples/phase_space.hpp>
 
 namespace halmd
 {
@@ -35,7 +34,7 @@ namespace mdsim { namespace gpu { namespace positions
 {
 
 template <int dimension, typename float_type>
-class trajectory
+class phase_space
   : public mdsim::position<dimension>
 {
 public:
@@ -43,7 +42,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef observables::host::samples::trajectory<dimension, float_type> sample_type;
+    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -51,7 +50,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    trajectory(
+    phase_space(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<sample_type> sample
@@ -63,4 +62,4 @@ public:
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POSITIONS_TRAJECTORY_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POSITIONS_PHASE_SPACE_HPP */

@@ -45,7 +45,7 @@ using namespace std;
  * test initialisation of particle positions: lattice, ...
  */
 
-/** compute static structure factor of trajectory sample for some wavevectors */
+/** compute static structure factor of phase space sample for some wavevectors */
 template <typename sample_type, typename vector_type>
 vector<double> compute_ssf(
     shared_ptr<sample_type> sample
@@ -147,28 +147,28 @@ void lattice(string const& backend)
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 
-    // acquire trajectory samples
-    LOG_DEBUG("acquire trajectory sample");
-    shared_ptr<observables::host::samples::trajectory<dimension, double> > sample_host;
+    // acquire phase space samples
+    LOG_DEBUG("acquire phase space sample");
+    shared_ptr<observables::host::samples::phase_space<dimension, double> > sample_host;
 #ifdef WITH_CUDA
-    shared_ptr<observables::host::samples::trajectory<dimension, float> > sample_gpu;
+    shared_ptr<observables::host::samples::phase_space<dimension, float> > sample_gpu;
 #endif
-    shared_ptr<observables::trajectory<dimension> > trajectory;
+    shared_ptr<observables::phase_space<dimension> > phase_space;
     if (backend == "host") {
-        sample_host = make_shared<observables::host::samples::trajectory<dimension, double> >(
+        sample_host = make_shared<observables::host::samples::phase_space<dimension, double> >(
             particle->ntypes
         );
-        trajectory = make_trajectory_host(sample_host, particle, box);
+        phase_space = make_phase_space_host(sample_host, particle, box);
     }
 #ifdef WITH_CUDA
     else if (backend == "gpu") {
-        sample_gpu = make_shared<observables::host::samples::trajectory<dimension, float> >(
+        sample_gpu = make_shared<observables::host::samples::phase_space<dimension, float> >(
             particle->ntypes
         );
-        trajectory = make_trajectory_gpu(sample_gpu, particle, box);
+        phase_space = make_phase_space_gpu(sample_gpu, particle, box);
     }
 #endif
-    trajectory->acquire(0);
+    phase_space->acquire(0);
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice

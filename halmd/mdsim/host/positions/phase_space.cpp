@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,77 +18,73 @@
  */
 
 #include <algorithm>
-#include <boost/iterator/counting_iterator.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/velocities/trajectory.hpp>
+#include <halmd/mdsim/host/positions/phase_space.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+
+namespace halmd
+{
+namespace mdsim { namespace host { namespace positions
+{
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace velocities
-{
-
 template <int dimension, typename float_type>
-trajectory<dimension, float_type>::trajectory(
+phase_space<dimension, float_type>::phase_space(
     shared_ptr<particle_type> particle
+  , shared_ptr<box_type> box
   , shared_ptr<sample_type> sample
 )
-  : _Base(particle)
   // dependency injection
-  , particle(particle)
+  : particle(particle)
+  , box(box)
   , sample(sample)
 {
 }
 
 /**
- * set particle velocities
+ * set particle positions
  */
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::set()
+void phase_space<dimension, float_type>::set()
 {
+    // assign particle coordinates
     for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        copy(sample->v[j]->begin(), sample->v[j]->end(), &particle->h_v[i]);
+        copy(sample->r[j]->begin(), sample->r[j]->end(), &particle->r[i]);
     }
 
-#ifdef USE_VERLET_DSFUN
-    // erase particle velocity vectors (double-single precision)
-    cuda::memset(particle->g_v, 0, particle->g_v.capacity());
-#endif
-
-    try {
-        cuda::copy(particle->h_v, particle->g_v);
-    }
-    catch (cuda::error const&)
-    {
-        LOG_ERROR("[trajectory] failed to copy particle velocities to GPU");
-        throw;
+    // shift particle positions to range (-L/2, L/2)
+    for (size_t i = 0; i < particle->nbox; ++i) {
+        box->reduce_periodic(particle->r[i]);
     }
 
-    LOG("set particle velocities from trajectory sample");
+    // assign particle image vectors
+    fill(particle->image.begin(), particle->image.end(), 0);
+
+    LOG("set particle positions from phase space sample");
 }
 
 template <int dimension, typename float_type>
-void trajectory<dimension, float_type>::luaopen(lua_State* L)
+void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("trajectory_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
         namespace_("halmd_wrapper")
         [
             namespace_("mdsim")
             [
-                namespace_("gpu")
+                namespace_("host")
                 [
-                    namespace_("velocities")
+                    namespace_("positions")
                     [
-                        class_<trajectory, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                             .def(constructor<
                                  shared_ptr<particle_type>
+                               , shared_ptr<box_type>
                                , shared_ptr<sample_type>
                             >())
                     ]
@@ -104,21 +100,35 @@ namespace // limit symbols to translation unit
 
 __attribute__((constructor)) void register_lua()
 {
-    lua_wrapper::register_(2) //< distance of derived to base class
+    lua_wrapper::register_(1) //< distance of derived to base class
+#ifndef USE_HOST_SINGLE_PRECISION
     [
-        &trajectory<3, float>::luaopen
+        &phase_space<3, double>::luaopen
     ]
     [
-        &trajectory<2, float>::luaopen
+        &phase_space<2, double>::luaopen
     ];
+#else
+    [
+        &phase_space<3, float>::luaopen
+    ]
+    [
+        &phase_space<2, float>::luaopen
+    ];
+#endif
 }
 
 } // namespace
 
 // explicit instantiation
-template class trajectory<3, float>;
-template class trajectory<2, float>;
+#ifndef USE_HOST_SINGLE_PRECISION
+template class phase_space<3, double>;
+template class phase_space<2, double>;
+#else
+template class phase_space<3, float>;
+template class phase_space<2, float>;
+#endif
 
-}}} // namespace mdsim::gpu::velocities
+}}} // namespace mdsim::host::positions
 
 } // namespace halmd
