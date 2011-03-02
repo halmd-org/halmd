@@ -202,6 +202,7 @@ void lattice(string const& backend)
         r_min = accumulate(sample_host, vector_type(0), bind(element_min<double, dimension>, _1, _2));
         r_max = accumulate(sample_host, vector_type(0), bind(element_max<double, dimension>, _1, _2));
     }
+#ifdef WITH_CUDA
     else if (backend == "gpu") {
         // compute structure factor
         ssf = compute_ssf(sample_gpu, q);
@@ -218,6 +219,7 @@ void lattice(string const& backend)
                     accumulate(sample_gpu, gpu_vector_type(0), bind(element_max<float, dimension>, _1, _2))
                 );
     }
+#endif
     else {
         return;
     }
