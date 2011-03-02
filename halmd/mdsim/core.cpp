@@ -65,6 +65,9 @@ void core<dimension>::prepare()
     position->set();
     velocity->set();
     if (neighbour) {
+        if (sort) {
+            sort->order();
+        }
         neighbour->update();
     }
     force->compute();
