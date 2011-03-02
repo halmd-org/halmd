@@ -42,7 +42,7 @@ texture<float4> v_;
 __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
- * sample phase_space for all particle of a single species
+ * sample phase space for all particle of a single species
  */
 template <typename vector_type, typename T>
 __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov)
