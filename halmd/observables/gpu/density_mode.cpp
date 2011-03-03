@@ -26,7 +26,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using boost::fusion::at_key;
 using namespace std;
 
 namespace halmd
@@ -88,7 +87,7 @@ density_mode<dimension, float_type>::density_mode(
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.sample, "computation of density modes");
 }
 
 /**
@@ -97,7 +96,7 @@ void density_mode<dimension, float_type>::register_runtimes(profiler_type& profi
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::acquire(double time)
 {
-    scoped_timer<timer> timer_(at_key<sample_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.sample);
 
     // do nothing if we're up to date
     if (rho_sample_.time == time) return;

@@ -50,6 +50,13 @@ public:
     typedef typename random_type::rng_type rng_type;
     typedef verlet_nvt_andersen_wrapper<dimension, rng_type> wrapper_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type integrate;
+        accumulator_type finalize;
+    };
+
     static char const* module_name() { return "verlet_nvt_andersen"; }
 
     boost::shared_ptr<particle_type> particle;
@@ -90,10 +97,6 @@ public:
         return coll_rate_;
     }
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet" );
-    HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet (+ Andersen thermostat)" );
-
 private:
     /** integration time-step */
     float_type timestep_;
@@ -107,11 +110,8 @@ private:
     float_type coll_rate_;
     /** probability of a collision with the heat bath during a timestep */
     float_type coll_prob_;
-
-    boost::fusion::map<
-        boost::fusion::pair<integrate_, accumulator<double> >
-      , boost::fusion::pair<finalize_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }}} // namespace mdsim::gpu::integrators

@@ -58,6 +58,12 @@ public:
     typedef boost::array<double, 3> result_type;
     typedef fixed_vector<double, dimension> vector_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type sample;
+    };
+
     boost::shared_ptr<density_mode_type> density_mode;
 
     static void luaopen(lua_State* L);
@@ -88,9 +94,6 @@ public:
         return density_mode->wavevector();
     }
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( sample_, "computation of static structure factor" );
-
 protected:
     /** compute static structure factor and update result accumulators */
     virtual void compute_();
@@ -111,11 +114,8 @@ protected:
     std::vector<std::vector<accumulator<double> > > result_accumulator_;
     /** store time to be passed to HDF5 writer */
     double time_;
-
-    // list of profiling timers
-    boost::fusion::map<
-        boost::fusion::pair<sample_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace observables

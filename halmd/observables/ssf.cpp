@@ -29,7 +29,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using boost::fusion::at_key;
 using namespace std;
 
 namespace halmd
@@ -67,7 +66,7 @@ ssf<dimension>::ssf(
 template <int dimension>
 void ssf<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.sample, "computation of static structure factor");
 }
 
 /**
@@ -130,7 +129,7 @@ void ssf<dimension>::sample(double time)
 template <int dimension>
 void ssf<dimension>::compute_()
 {
-    scoped_timer<timer> timer_(at_key<sample_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.sample);
 
     typedef typename density_mode_type::result_type::value_type::element_type rho_vector_type;
     typedef typename density_mode_type::wavevector_type::map_type wavevector_map_type;

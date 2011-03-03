@@ -47,6 +47,13 @@ public:
     typedef io::profiling::writer profiling_writer_type;
     typedef utility::profiler profiler_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type msv_output;
+        accumulator_type total;
+    };
+
     static void luaopen(lua_State* L);
 
     sampler(
@@ -66,10 +73,6 @@ public:
     boost::shared_ptr<phase_space_type> phase_space;
     boost::shared_ptr<trajectory_writer_type> trajectory_writer;
     std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers;
-
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( msv_output_, "output of macroscopic state variables" );
-    HALMD_PROFILING_TAG( total_, "total simulation runtime" );
 
     uint64_t steps()
     {
@@ -100,12 +103,8 @@ private:
     unsigned statevars_interval_;
     // value from option --sampling-trajectory
     unsigned trajectory_interval_;
-
-    // list of profiling timers
-    boost::fusion::map<
-        boost::fusion::pair<msv_output_, accumulator<double> >
-      , boost::fusion::pair<total_, accumulator<double> >
-    > runtime_;
+    // profiling runtime accumulators
+    runtime runtime_;
 };
 
 } // namespace halmd

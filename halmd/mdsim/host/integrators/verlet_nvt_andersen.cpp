@@ -28,7 +28,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using boost::fusion::at_key;
 using namespace std;
 
 namespace halmd
@@ -60,7 +59,8 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.integrate, "first half-step of velocity-Verlet");
+    profiler.register_runtime(runtime_.finalize, "second half-step of velocity-Verlet");
 }
 
 template <int dimension, typename float_type>
@@ -88,7 +88,7 @@ void verlet_nvt_andersen<dimension, float_type>::temperature(double temperature)
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
-    scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.integrate);
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         vector_type& v = particle->v[i] += particle->f[i] * timestep_half_;
@@ -106,7 +106,7 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    scoped_timer<timer> timer_(at_key<finalize_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.finalize);
 
     // cache random numbers
     float_type rng_cache = 0;

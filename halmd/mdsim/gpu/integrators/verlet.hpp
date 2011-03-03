@@ -48,6 +48,13 @@ public:
     typedef utility::profiler profiler_type;
     typedef typename particle_type::vector_type vector_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type integrate;
+        accumulator_type finalize;
+    };
+
     static char const* module_name() { return "verlet"; }
 
     boost::shared_ptr<particle_type> particle;
@@ -75,20 +82,13 @@ public:
         return timestep_;
     }
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet" );
-    HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet" );
-
 private:
     /** integration time-step */
     float_type timestep_;
     /** half time-step */
     float_type timestep_half_;
-
-    boost::fusion::map<
-        boost::fusion::pair<integrate_, accumulator<double> >
-      , boost::fusion::pair<finalize_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }}} // namespace mdsim::gpu::integrators

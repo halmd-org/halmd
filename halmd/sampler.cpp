@@ -27,7 +27,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -59,7 +58,8 @@ sampler<dimension>::sampler(
 template <int dimension>
 void sampler<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.msv_output, "output of macroscopic state variables");
+    profiler.register_runtime(runtime_.total, "total simulation runtime");
 }
 
 /**
@@ -69,7 +69,7 @@ template <int dimension>
 void sampler<dimension>::run()
 {
     {
-        scoped_timer<timer> timer_(at_key<total_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.total);
 
         LOG("setting up simulation box");
         prepare_observables(true);
@@ -115,7 +115,7 @@ void sampler<dimension>::sample(bool force)
             is_sampling_step = true;
         }
         if (statevars_writer) {
-            scoped_timer<timer> timer_(at_key<msv_output_>(runtime_));
+            scoped_timer<timer> timer_(runtime_.msv_output);
             statevars_writer->write();
         }
     }

@@ -55,6 +55,12 @@ public:
     typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type sample;
+    };
+
     boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
@@ -92,9 +98,6 @@ public:
     /** total energy per particle */
     double en_tot() { return en_pot() + en_kin(); }
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( sample_, "computation of macroscopic state variables" );
-
 private:
     // sample() passes values to HDF5 writer via a fixed location in memory
     double en_pot_;
@@ -107,10 +110,8 @@ private:
     double hypervirial_;
     double time_;
 
-    // list of profiling timers
-    boost::fusion::map<
-        boost::fusion::pair<sample_, accumulator<double> >
-    > runtime_;
+    // profiling runtime accumulators
+    runtime runtime_;
 };
 
 } // namespace observables

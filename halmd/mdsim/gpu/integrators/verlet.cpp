@@ -28,7 +28,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -110,7 +109,8 @@ void verlet<dimension, float_type>::timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.integrate, "first half-step of velocity-Verlet");
+    profiler.register_runtime(runtime_.finalize, "second half-step of velocity-Verlet");
 }
 
 /**
@@ -120,7 +120,7 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     try {
-        scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.integrate);
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper->integrate(
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
@@ -143,7 +143,7 @@ void verlet<dimension, float_type>::finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        scoped_timer<timer> timer_(at_key<finalize_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.finalize);
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper->finalize(particle->g_v, particle->g_f);
         cuda::thread::synchronize();

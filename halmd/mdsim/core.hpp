@@ -53,6 +53,13 @@ public:
     typedef mdsim::velocity<dimension> velocity_type;
     typedef utility::profiler profiler_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type prepare;
+        accumulator_type mdstep;
+    };
+
     static void luaopen(lua_State* L);
 
     core();
@@ -69,20 +76,12 @@ public:
     boost::shared_ptr<position_type> position;
     boost::shared_ptr<velocity_type> velocity;
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( prepare_, "microscopic state preparation" );
-    HALMD_PROFILING_TAG( mdstep_, "MD integration step" );
-
     uint64_t step_counter() const { return step_counter_; }
 
 private:
-    // list of profiling timers
-    boost::fusion::map<
-        boost::fusion::pair<prepare_, accumulator<double> >
-      , boost::fusion::pair<mdstep_, accumulator<double> >
-    > runtime_;
-
-    // MD step counter
+    /** profiling runtime accumulators */
+    runtime runtime_;
+    /** MD step counter */
     uint64_t step_counter_;
 };
 

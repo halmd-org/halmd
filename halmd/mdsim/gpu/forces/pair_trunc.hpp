@@ -58,6 +58,12 @@ public:
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
     typedef pair_trunc_wrapper<dimension, gpu_potential_type> gpu_wrapper;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type compute;
+    };
+
     boost::shared_ptr<potential_type> potential;
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -114,11 +120,6 @@ public:
         return g_hypervirial_;
     }
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG(
-        compute_, std::string("computation of ") + potential_type::name() + " forces"
-    );
-
 private:
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
@@ -128,10 +129,8 @@ private:
     cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
     /** hyper virial for each particle */
     cuda::vector<float> g_hypervirial_;
-
-    boost::fusion::map<
-        boost::fusion::pair<compute_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 template <int dimension, typename float_type, typename potential_type>
@@ -161,10 +160,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
 {
-#ifdef USE_FORCE_DSFUN
-#endif /* HALMD_VARIANT_FORCE_DSFUN */
-
-    scoped_timer<timer> timer_(boost::fusion::at_key<compute_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.compute);
 
     cuda::copy(particle->neighbour_size, gpu_wrapper::kernel.neighbour_size);
     cuda::copy(particle->neighbour_stride, gpu_wrapper::kernel.neighbour_stride);
@@ -191,7 +187,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.compute, std::string("computation of ") + potential_type::name() + " forces");
 }
 
 template <int dimension, typename float_type, typename potential_type>

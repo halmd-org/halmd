@@ -28,7 +28,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using boost::fusion::at_key;
 using namespace std;
 
 namespace halmd
@@ -138,7 +137,8 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.integrate, "first half-step of velocity-Verlet");
+    profiler.register_runtime(runtime_.finalize, "second half-step of velocity-Verlet (+ Andersen thermostat)");
 }
 
 /**
@@ -149,7 +149,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 integrate()
 {
     try {
-        scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.integrate);
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper_type::kernel.integrate(
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
@@ -173,7 +173,7 @@ finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        scoped_timer<timer> timer_(at_key<finalize_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.finalize);
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
         cuda::configure(random->rng.dim.grid, random->rng.dim.block);

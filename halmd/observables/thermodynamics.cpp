@@ -23,7 +23,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -46,7 +45,7 @@ thermodynamics<dimension>::thermodynamics(
 template <int dimension>
 void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.sample, "computation of macroscopic state variables");
 }
 
 /**
@@ -74,7 +73,7 @@ void thermodynamics<dimension>::register_observables(writer_type& writer)
 template <int dimension>
 void thermodynamics<dimension>::sample(double time)
 {
-    scoped_timer<timer> timer_(at_key<sample_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.sample);
     en_pot_ = en_pot();
     en_kin_ = en_kin();
     v_cm_ = v_cm();

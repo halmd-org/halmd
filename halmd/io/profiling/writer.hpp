@@ -45,6 +45,7 @@ namespace io { namespace profiling
 class writer
 {
 public:
+    typedef std::vector<std::string> tag_type;
     typedef accumulator<double> accumulator_type;
 
     static void luaopen(lua_State* L);
@@ -52,14 +53,7 @@ public:
     writer() {}
     virtual ~writer() {}
     virtual void write() = 0;
-
-protected:
-    friend class utility::profiler;
-    virtual void register_accumulator(
-        std::vector<std::string> const& tag
-      , accumulator<double> const& acc
-      , std::string const& desc
-    ) = 0;
+    virtual void register_accumulator(tag_type const& tag, accumulator_type const& acc, std::string const& desc) = 0;
 };
 
 }} // namespace io::profiling

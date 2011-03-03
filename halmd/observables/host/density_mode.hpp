@@ -53,6 +53,12 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef typename density_mode_sample_type::mode_type mode_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type sample;
+    };
+
     static void luaopen(lua_State* L);
 
     density_mode(
@@ -85,20 +91,14 @@ public:
         return wavevector_->wavenumber();
     }
 
-    // descriptions of module's runtime accumulators
-    HALMD_PROFILING_TAG(sample_, "computation of density modes");
-
 protected:
     boost::shared_ptr<phase_space_type> phase_space_;
     boost::shared_ptr<wavevector_type> wavevector_;
 
     /** data structure for density modes */
     density_mode_sample_type rho_sample_;
-
-    // list of profiling timers
-    boost::fusion::map<
-        boost::fusion::pair<sample_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }} // namespace observables::host
