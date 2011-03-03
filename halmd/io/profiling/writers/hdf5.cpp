@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profiling/writers/hdf5.hpp>
@@ -52,7 +52,7 @@ hdf5::hdf5(string const& file_name)
  * create dataset for runtime accumulator
  */
 void hdf5::register_accumulator(
-    vector<string> const& tag
+    tag_type const& tag
   , accumulator_type const& acc
   , string const& desc
 )
@@ -61,7 +61,7 @@ void hdf5::register_accumulator(
     // last entry of tag will be the name of the dataset
     H5::DataSet dataset = h5xx::create_dataset<array<double, 3> >(
         file_
-      , trim_right_copy_if(join(tag, "/"), is_any_of("_"))  // omit trailing "_"
+      , replace_all_copy(tag, ".", "/")
       , 1                                                   // only 1 entry
     );
     // store description as attribute

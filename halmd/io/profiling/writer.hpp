@@ -45,7 +45,7 @@ namespace io { namespace profiling
 class writer
 {
 public:
-    typedef std::vector<std::string> tag_type;
+    typedef std::string tag_type;
     typedef accumulator<double> accumulator_type;
 
     static void luaopen(lua_State* L);
