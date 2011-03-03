@@ -78,9 +78,9 @@ verlet<dimension, float_type>::verlet(
     try {
         cuda::copy(static_cast<vector_type>(box->length()), wrapper->box_length);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 }
 
@@ -96,9 +96,9 @@ void verlet<dimension, float_type>::timestep(double timestep)
     try {
         cuda::copy(timestep_, wrapper->timestep);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 
     LOG("integration timestep: " << timestep_);
@@ -126,9 +126,9 @@ void verlet<dimension, float_type>::integrate()
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to stream first leapfrog step on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to stream first leapfrog step on GPU");
+        throw;
     }
 }
 
@@ -148,9 +148,9 @@ void verlet<dimension, float_type>::finalize()
         wrapper->finalize(particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to stream second leapfrog step on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to stream second leapfrog step on GPU");
+        throw;
     }
 }
 

@@ -106,9 +106,9 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(do
         cuda::copy(particle->g_image, particle->h_image);
         cuda::copy(particle->g_v, particle->h_v);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to copy phase space from GPU to host");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to copy phase space from GPU to host");
+        throw;
     }
 
     for (size_t i = 0; i < particle->nbox; ++i) {

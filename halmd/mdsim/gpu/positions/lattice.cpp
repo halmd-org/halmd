@@ -161,9 +161,9 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
         kernel.fcc(particle->g_r, a);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to generate particle lattice on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to generate particle lattice on GPU");
+        throw;
     }
 
     // reset particle image vectors

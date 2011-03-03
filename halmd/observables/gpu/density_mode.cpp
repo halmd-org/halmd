@@ -67,18 +67,18 @@ density_mode<dimension, float_type>::density_mode(
         }
         cuda::copy(q, g_q_);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("[density_mode] failed to initialise device constants");
+    catch (cuda::error const&) {
+        LOG_ERROR("[density_mode] failed to initialise device constants");
+        throw;
     }
 
     // copy parameters to CUDA device
     try {
         cuda::copy(nq_, wrapper_type::kernel.nq);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("[density_mode] failed to initialise device constants");
+    catch (cuda::error const&) {
+        LOG_ERROR("[density_mode] failed to initialise device constants");
+        throw;
     }
 }
 
@@ -133,9 +133,9 @@ void density_mode<dimension, float_type>::acquire(double time)
                 );
                 wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, dim_.blocks_per_grid());
             }
-            catch (cuda::error const& e) {
-                LOG_ERROR("CUDA: " << e.what());
-                throw std::runtime_error("failed to compute density modes on GPU");
+            catch (cuda::error const&) {
+                LOG_ERROR("failed to compute density modes on GPU");
+                throw;
             }
 
             // copy data from device and store in density_mode sample

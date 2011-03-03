@@ -134,9 +134,9 @@ neighbour<dimension, float_type>::neighbour(
         cuda::copy(cell_length_, get_neighbour_kernel<dimension>().cell_length);
         cuda::copy(static_cast<vector_type>(box->length()), get_neighbour_kernel<dimension>().box_length);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::logic_error("failed to copy cell parameters to device symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to copy cell parameters to device symbols");
+        throw;
     }
 
     // volume of n-dimensional sphere with neighbour list radius
@@ -163,9 +163,9 @@ neighbour<dimension, float_type>::neighbour(
         cuda::copy(particle->neighbour_size, get_neighbour_kernel<dimension>().neighbour_size);
         cuda::copy(particle->neighbour_stride, get_neighbour_kernel<dimension>().neighbour_stride);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::logic_error("failed to copy neighbour list parameters to device symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to copy neighbour list parameters to device symbols");
+        throw;
     }
 
     try {
@@ -176,9 +176,9 @@ neighbour<dimension, float_type>::neighbour(
         g_cell_permutation_.reserve(particle->dim.threads());
         g_cell_permutation_.resize(particle->nbox);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::logic_error("failed to allocate cell placeholders in global device memory");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to allocate cell placeholders in global device memory");
+        throw;
     }
 }
 
@@ -237,9 +237,9 @@ bool neighbour<dimension, float_type>::check()
         displacement_impl(particle->g_r, g_r0_, g_rr_);
         cuda::copy(g_rr_, h_rr_);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::logic_error("failed to reduce squared particle displacements on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to reduce squared particle displacements on GPU");
+        throw;
     }
     return *max_element(h_rr_.begin(), h_rr_.end()) > rr_skin_half_;
 }

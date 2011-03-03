@@ -84,9 +84,9 @@ verlet_nvt_andersen(
         cuda::copy(static_cast<vector_type>(box->length()), wrapper_type::kernel.box_length);
         cuda::copy(random->rng.rng(), wrapper_type::kernel.rng);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 }
 
@@ -105,9 +105,9 @@ timestep(double timestep)
         cuda::copy(timestep_, wrapper_type::kernel.timestep);
         cuda::copy(coll_prob_, wrapper_type::kernel.coll_prob);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 
     LOG("integration timestep: " << timestep_);
@@ -123,9 +123,9 @@ temperature(double temperature)
   try {
       cuda::copy(sqrt_temperature_, wrapper_type::kernel.sqrt_temperature);
   }
-  catch (cuda::error const& e) {
-      LOG_ERROR(e.what());
-      throw runtime_error("failed to initialize Verlet integrator symbols");
+  catch (cuda::error const&) {
+      LOG_ERROR("failed to initialize Verlet integrator symbols");
+      throw;
   }
 
   LOG("temperature of heat bath: " << temperature_);
@@ -155,9 +155,9 @@ integrate()
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to stream first leapfrog step on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to stream first leapfrog step on GPU");
+        throw;
     }
 }
 
@@ -183,9 +183,9 @@ finalize()
         );
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to stream second leapfrog step on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to stream second leapfrog step on GPU");
+        throw;
     }
 }
 
