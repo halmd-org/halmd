@@ -29,7 +29,6 @@
 
 using namespace boost;
 using namespace std;
-using boost::fusion::at_key;
 
 namespace halmd
 {
@@ -106,7 +105,10 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::
 register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet (+ Nosé-Hoover chain)");
+    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet (+ Nosé-Hoover chain)");
+    profiler.register_runtime(runtime_.propagate, "propagate", "propagate Nosé-Hoover chain");
+    profiler.register_runtime(runtime_.rescale, "rescale", "rescale velocities in Nosé-Hoover thermostat");
 }
 
 /**
@@ -179,7 +181,7 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::
 integrate()
 {
-    scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.integrate);
     float_type scale = propagate_chain();
 
     try {
@@ -202,7 +204,7 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::
 finalize()
 {
-    scoped_timer<timer> timer_(at_key<finalize_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.finalize);
 
     // TODO: possibly a performance critical issue:
     // the old implementation had this loop included in update_forces(),
@@ -216,7 +218,7 @@ finalize()
         float_type scale = propagate_chain();
 
         // rescale velocities
-        scoped_timer<timer> timer2_(at_key<rescale_>(runtime_));
+        scoped_timer<timer> timer2_(runtime_.rescale);
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper_type::kernel.rescale(particle->g_v, scale);
         cuda::thread::synchronize();
@@ -240,7 +242,7 @@ finalize()
 template <int dimension, typename float_type>
 float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
-    scoped_timer<timer> timer_(at_key<propagate_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.propagate);
 
     // compute total kinetic energy (multiplied by 2),
     float_type en_kin_2 = compute_en_kin_2_(particle->g_v);

@@ -53,6 +53,14 @@ public:
     typedef io::statevars::writer<dimension> writer_type;
     typedef utility::profiler profiler_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type integrate;
+        accumulator_type finalize;
+        accumulator_type propagate;
+    };
+
     static char const* module_name() { return "verlet_nvt_hoover"; }
 
     boost::shared_ptr<particle_type> particle;
@@ -110,11 +118,6 @@ public:
     fixed_vector<float_type, 2> xi;
     fixed_vector<float_type, 2> v_xi;
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
-    HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
-    HALMD_PROFILING_TAG( propagate_, "propagate Nosé-Hoover chain" );
-
 protected:
     // propagate chain of Nosé-Hoover variables
     void propagate_chain();
@@ -137,11 +140,8 @@ protected:
     /** coupling parameters: `mass' of the heat bath variables */
     fixed_vector<float_type, 2> mass_xi_;
 
-    boost::fusion::map<
-        boost::fusion::pair<integrate_, accumulator<double> >
-      , boost::fusion::pair<finalize_, accumulator<double> >
-      , boost::fusion::pair<propagate_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }}} // namespace mdsim::host::integrators

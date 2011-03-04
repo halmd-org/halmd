@@ -56,6 +56,15 @@ public:
     >::type gpu_float_type;
     typedef verlet_nvt_hoover_wrapper<dimension, gpu_float_type> wrapper_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type integrate;
+        accumulator_type finalize;
+        accumulator_type propagate;
+        accumulator_type rescale;
+    };
+
     static char const* module_name() { return "verlet_nvt_hoover"; }
 
     boost::shared_ptr<particle_type> particle;
@@ -113,12 +122,6 @@ public:
     fixed_vector<float_type, 2> xi;
     fixed_vector<float_type, 2> v_xi;
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( integrate_, "first half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
-    HALMD_PROFILING_TAG( finalize_, "second half-step of velocity-Verlet (+ Nosé-Hoover chain)" );
-    HALMD_PROFILING_TAG( propagate_, "propagate Nosé-Hoover chain" );
-    HALMD_PROFILING_TAG( rescale_, "rescale velocities in Nosé-Hoover thermostat" );
-
 private:
     /** propagate chain of Nosé-Hoover variables */
     float_type propagate_chain();
@@ -152,12 +155,8 @@ private:
       , algorithm::gpu::square_                 // input_transform
     > compute_en_kin_2_;
 
-    boost::fusion::map<
-        boost::fusion::pair<integrate_, accumulator<double> >
-      , boost::fusion::pair<finalize_, accumulator<double> >
-      , boost::fusion::pair<propagate_, accumulator<double> >
-      , boost::fusion::pair<rescale_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }}} // namespace mdsim::gpu::integrators
