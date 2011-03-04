@@ -28,7 +28,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profiling/writers/log.hpp>
-#include <halmd/io/profiling/writers/hdf5.hpp>
+#include <halmd/io/profiling/writers/h5md.hpp>
 #include <halmd/utility/profiler.hpp>
 
 using namespace boost;
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE( test_profiling_writers )
         // construct modules
         vector<shared_ptr<writer> > writers;
         writers.push_back(make_shared<writers::log>());
-        writers.push_back(make_shared<writers::hdf5>(file_name));
+        writers.push_back(make_shared<writers::h5md>(file_name));
         profiler = make_shared<utility::profiler>(writers, "test/timer_map");
 
         // register profiling timers
