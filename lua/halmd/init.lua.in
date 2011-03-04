@@ -22,7 +22,7 @@
 --
 require("halmd.options")
 require("halmd.io.profiling.writer")
-require("halmd.io.statevars.writers")
+require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
 require("halmd.io.trajectory.writer")
 require("halmd.mdsim.box")
@@ -63,5 +63,5 @@ function run()
         halmd.observables.ssf()
       , halmd.observables.thermodynamics()
     }
-    sampler.statevars_writer = halmd.io.statevars.writers()
+    sampler.statevars_writer = halmd.io.statevars.writer()
 end
