@@ -45,7 +45,7 @@ thermodynamics<dimension>::thermodynamics(
 template <int dimension>
 void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.sample, "computation of macroscopic state variables");
+    profiler.register_runtime(runtime_.sample, "sample", "computation of macroscopic state variables");
 }
 
 /**

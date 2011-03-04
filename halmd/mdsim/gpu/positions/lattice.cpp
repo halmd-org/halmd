@@ -69,7 +69,7 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.set, "setting particle positions on lattice");
+    profiler.register_runtime(runtime_.set, "set", "setting particle positions on lattice");
 }
 
 /**

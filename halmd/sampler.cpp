@@ -58,8 +58,8 @@ sampler<dimension>::sampler(
 template <int dimension>
 void sampler<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.msv_output, "output of macroscopic state variables");
-    profiler.register_runtime(runtime_.total, "total simulation runtime");
+    profiler.register_runtime(runtime_.msv_output, "msv_output", "output of macroscopic state variables");
+    profiler.register_runtime(runtime_.total, "total", "total simulation runtime");
 }
 
 /**

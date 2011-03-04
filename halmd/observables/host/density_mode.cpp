@@ -52,7 +52,7 @@ density_mode<dimension, float_type>::density_mode(
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.sample, "computation of density modes");
+    profiler.register_runtime(runtime_.sample, "sample", "computation of density modes");
 }
 
 /**

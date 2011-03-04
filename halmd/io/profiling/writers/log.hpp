@@ -39,7 +39,6 @@ class log
 {
 public:
     typedef profiling::writer _Base;
-    typedef _Base::tag_type tag_type;
     typedef _Base::accumulator_type accumulator_type;
     typedef std::pair<accumulator_type const*, std::string> acc_desc_pair_type;
 
@@ -52,8 +51,9 @@ public:
     * register runtime accumulator
     */
     virtual void register_accumulator(
-        tag_type const& tag
+        std::string const& group
       , accumulator_type const& acc
+      , std::string const& tag
       , std::string const& desc
     )
     {

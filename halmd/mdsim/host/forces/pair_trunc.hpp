@@ -160,7 +160,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.compute, std::string("computation of ") + potential_type::name() + " forces");
+    profiler.register_runtime(runtime_.compute, "compute", std::string("computation of ") + potential_type::name() + " forces");
 }
 
 /**

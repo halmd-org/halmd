@@ -50,8 +50,8 @@ core<dimension>::core()
 template <int dimension>
 void core<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.prepare, "microscopic state preparation");
-    profiler.register_runtime(runtime_.mdstep, "MD integration step");
+    profiler.register_runtime(runtime_.prepare, "prepare", "microscopic state preparation");
+    profiler.register_runtime(runtime_.mdstep, "mdstep", "MD integration step");
 }
 
 /**

@@ -66,7 +66,7 @@ ssf<dimension>::ssf(
 template <int dimension>
 void ssf<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.sample, "computation of static structure factor");
+    profiler.register_runtime(runtime_.sample, "sample", "computation of static structure factor");
 }
 
 /**

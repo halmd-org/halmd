@@ -187,9 +187,9 @@ neighbour<dimension, float_type>::neighbour(
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.check, "neighbour update criterion");
-    profiler.register_runtime(runtime_.update_cells, "cell lists update");
-    profiler.register_runtime(runtime_.update_neighbours, "neighbour lists update");
+    profiler.register_runtime(runtime_.check, "check", "neighbour update criterion");
+    profiler.register_runtime(runtime_.update_cells, "update_cells", "cell lists update");
+    profiler.register_runtime(runtime_.update_neighbours, "update_neighbours", "neighbour lists update");
 }
 
 /**

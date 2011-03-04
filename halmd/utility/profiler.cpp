@@ -30,18 +30,18 @@ namespace halmd
 namespace utility
 {
 
-profiler::profiler(writers_type writer, tag_type const& tag)
+profiler::profiler(writers_type writer, string const& group)
   : writer_(writer)
-  , tag_(tag)
+  , group_(group)
 {
     LOG_ONCE("timer resolution: " << 1.E9 * timer::elapsed_min() << " ns");
 }
 
-void profiler::register_runtime(accumulator_type const& runtime, std::string const& desc)
+void profiler::register_runtime(accumulator_type const& runtime, string const& tag, std::string const& desc)
 {
     writers_type::const_iterator i, ie = writer_.end();
     for (i = writer_.begin(); i != ie; ++i) {
-        (*i)->register_accumulator(tag_, runtime, desc);
+        (*i)->register_accumulator(group_, runtime, tag, desc);
     }
 }
 
@@ -55,7 +55,7 @@ void profiler::luaopen(lua_State* L)
             namespace_("utility")
             [
                 class_<profiler, shared_ptr<profiler> >("profiler")
-                    .def(constructor<writers_type, tag_type>())
+                    .def(constructor<writers_type, string>())
             ]
         ]
     ];

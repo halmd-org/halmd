@@ -52,8 +52,9 @@ hdf5::hdf5(string const& file_name)
  * create dataset for runtime accumulator
  */
 void hdf5::register_accumulator(
-    tag_type const& tag
+    string const& group
   , accumulator_type const& acc
+  , string const& tag
   , string const& desc
 )
 {
@@ -61,7 +62,7 @@ void hdf5::register_accumulator(
     // last entry of tag will be the name of the dataset
     H5::DataSet dataset = h5xx::create_dataset<array<double, 3> >(
         file_
-      , replace_all_copy(tag, ".", "/")
+      , "profiling/" + replace_all_copy(group, ".", "/") + "/" + tag
       , 1                                                   // only 1 entry
     );
     // store description as attribute

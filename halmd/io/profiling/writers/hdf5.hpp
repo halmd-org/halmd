@@ -38,7 +38,6 @@ class hdf5
 {
 public:
     typedef profiling::writer _Base;
-    typedef _Base::tag_type tag_type;
     typedef _Base::accumulator_type accumulator_type;
     typedef boost::function<void ()> writer_functor;
 
@@ -53,8 +52,9 @@ public:
     }
 
     virtual void register_accumulator(
-        tag_type const& tag
+        std::string const& group
       , accumulator_type const& acc
+      , std::string const& tag
       , std::string const& desc
     );
 

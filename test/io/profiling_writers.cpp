@@ -69,13 +69,12 @@ BOOST_AUTO_TEST_CASE( test_profiling_writers )
         vector<shared_ptr<writer> > writers;
         writers.push_back(make_shared<writers::log>());
         writers.push_back(make_shared<writers::hdf5>(file_name));
-        vector<string> tag = list_of("test")("timer_map");
-        profiler = make_shared<utility::profiler>(writers, tag);
+        profiler = make_shared<utility::profiler>(writers, "test/timer_map");
 
         // register profiling timers
         timer_map timers;
-        profiler->register_runtime(timers.timer1, "first timer");
-        profiler->register_runtime(timers.timer2, "second timer");
+        profiler->register_runtime(timers.timer1, "timer1", "first timer");
+        profiler->register_runtime(timers.timer2, "timer2", "second timer");
 
         // accumulate some values
         for (float x=0; x < 1; x += 0.1) {

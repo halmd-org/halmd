@@ -59,8 +59,8 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.integrate, "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "second half-step of velocity-Verlet");
+    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
+    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet");
 }
 
 template <int dimension, typename float_type>

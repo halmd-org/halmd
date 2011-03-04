@@ -70,9 +70,9 @@ hilbert<dimension, float_type>::hilbert(
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.map, "map particles to Hilbert curve");
-    profiler.register_runtime(runtime_.permutation, "generate permutation");
-    profiler.register_runtime(runtime_.order, "order particles by permutation");
+    profiler.register_runtime(runtime_.map, "map", "map particles to Hilbert curve");
+    profiler.register_runtime(runtime_.permutation, "permutation", "generate permutation");
+    profiler.register_runtime(runtime_.order, "order", "order particles by permutation");
 }
 
 /**

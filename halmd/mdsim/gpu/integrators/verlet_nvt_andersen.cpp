@@ -137,8 +137,8 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.integrate, "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "second half-step of velocity-Verlet (+ Andersen thermostat)");
+    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
+    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet (+ Andersen thermostat)");
 }
 
 /**

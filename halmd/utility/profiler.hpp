@@ -36,17 +36,16 @@ class profiler
 {
 public:
     typedef io::profiling::writer writer_type;
-    typedef writer_type::tag_type tag_type;
     typedef writer_type::accumulator_type accumulator_type;
     typedef std::vector<boost::shared_ptr<writer_type> > writers_type;
 
     static void luaopen(lua_State* L);
-    profiler(writers_type writer, tag_type const& tag);
-    void register_runtime(accumulator_type const& runtime, std::string const& desc);
+    profiler(writers_type writer, std::string const& group);
+    void register_runtime(accumulator_type const& runtime, std::string const& tag, std::string const& desc);
 
 private:
     writers_type writer_;
-    tag_type tag_;
+    std::string group_;
 };
 
 } // namespace utility
