@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -19,27 +19,34 @@
 
 require("halmd.modules")
 
+require("halmd.io.profiling.writers")
+
 -- grab environment
+local writers = halmd.io.profiling.writers
 local profiler_wrapper = halmd_wrapper.utility.profiler
-local profiling_writers = require("halmd.io.profiling.writers")
 local hooks = require("halmd.hooks")
+local assert = assert
 local pairs = pairs
 local table = table
 
-module("halmd.profiler", halmd.modules.register)
+module("halmd.io.profiling.writer", halmd.modules.register)
 
 --
 -- construct profiler module
 --
 function new()
-    local writers = profiling_writers()
-    local profiler = profiler_wrapper(writers)
+    local writer = {}
+    for _, module in pairs(writers) do
+        table.insert(writer, module())
+    end
 
-    hooks.register_object_hook(function(profilable)
-        if profilable.register_runtimes then
-            profilable:register_runtimes(profiler)
+    hooks.register_object_hook(function(object, module)
+        if object.register_runtimes then
+            local group = assert(module._NAME):gsub("^halmd%.", ""):gsub("%.", "/")
+            local profiler = profiler_wrapper(writer, group)
+            object:register_runtimes(profiler)
         end
     end)
 
-    return profiler
+    return writer
 end
