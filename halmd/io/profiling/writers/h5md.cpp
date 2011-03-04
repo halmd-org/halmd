@@ -18,7 +18,7 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/profiling/writers/hdf5.hpp>
+#include <halmd/io/profiling/writers/h5md.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
@@ -30,9 +30,9 @@ namespace io { namespace profiling { namespace writers
 {
 
 /**
- * open HDF5 file for writing
+ * open H5MD file for writing
  */
-hdf5::hdf5(string const& file_name)
+h5md::h5md(string const& file_name)
   : file_(file_name, H5F_ACC_TRUNC) // truncate existing file
 {
     // create parameter group
@@ -48,7 +48,7 @@ hdf5::hdf5(string const& file_name)
 /**
  * create dataset for runtime accumulator
  */
-void hdf5::register_accumulator(
+void h5md::register_accumulator(
     string const& group
   , accumulator_type const& acc
   , string const& tag
@@ -71,7 +71,7 @@ void hdf5::register_accumulator(
 
     writer_.push_back(
         bind(
-            &hdf5::write_accumulator
+            &h5md::write_accumulator
           , dataset
           , cref(acc)
         )
@@ -81,7 +81,7 @@ void hdf5::register_accumulator(
 /**
  * write dataset for runtime accumulator
  */
-void hdf5::write_accumulator(
+void h5md::write_accumulator(
     H5::DataSet const& dataset
   , accumulator_type const& acc
 )
@@ -97,7 +97,7 @@ void hdf5::write_accumulator(
 /**
  * write all datasets and flush file to disk
  */
-void hdf5::write()
+void h5md::write()
 {
     for_each(
         writer_.begin()
@@ -107,7 +107,7 @@ void hdf5::write()
     file_.flush(H5F_SCOPE_GLOBAL);
 }
 
-void hdf5::luaopen(lua_State* L)
+void h5md::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L)
@@ -120,9 +120,9 @@ void hdf5::luaopen(lua_State* L)
                 [
                     namespace_("writers")
                     [
-                        class_<hdf5, shared_ptr<_Base>, _Base>("hdf5")
+                        class_<h5md, shared_ptr<_Base>, _Base>("h5md")
                             .def(constructor<string const&>())
-                            .def("file", &hdf5::file)
+                            .def("file", &h5md::file)
                     ]
                 ]
             ]
@@ -137,7 +137,7 @@ __attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
-        &hdf5::luaopen
+        &h5md::luaopen
     ];
 }
 

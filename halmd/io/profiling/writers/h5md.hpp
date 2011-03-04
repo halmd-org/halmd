@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_PROFILING_HDF5_HPP
-#define HALMD_IO_PROFILING_HDF5_HPP
+#ifndef HALMD_IO_PROFILING_H5MD_HPP
+#define HALMD_IO_PROFILING_H5MD_HPP
 
 #include <lua.hpp>
 
@@ -31,9 +31,9 @@ namespace io { namespace profiling { namespace writers
 {
 
 /**
- * This module writes runtime accumulator results to an HDF5 file.
+ * This module writes runtime accumulator results to an H5MD file.
  */
-class hdf5
+class h5md
   : public profiling::writer
 {
 public:
@@ -43,7 +43,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    hdf5(std::string const& file_name);
+    h5md(std::string const& file_name);
     virtual void write();
 
     H5::H5File const& file() const
@@ -72,4 +72,4 @@ private:
 
 } // namespace halmd
 
-#endif /* ! HALMD_IO_PROFILING_HDF5_HPP */
+#endif /* ! HALMD_IO_PROFILING_H5MD_HPP */
