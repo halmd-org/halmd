@@ -63,7 +63,7 @@ void h5md::register_accumulator(
       , 1                                                   // only 1 entry
     );
     // store description as attribute
-    h5xx::write_attribute(dataset, "timer", desc);
+    h5xx::write_attribute(dataset, "description", desc);
 
     // We bind the functions to write the datasets using a
     // *reference* to the accumulator and a *copy* of the HDF5
