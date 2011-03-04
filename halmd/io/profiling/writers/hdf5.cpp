@@ -17,14 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string/replace.hpp>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profiling/writers/hdf5.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
 using namespace boost;
-using namespace boost::algorithm;
 using namespace std;
 
 namespace halmd
@@ -62,7 +59,7 @@ void hdf5::register_accumulator(
     // last entry of tag will be the name of the dataset
     H5::DataSet dataset = h5xx::create_dataset<array<double, 3> >(
         file_
-      , "profiling/" + replace_all_copy(group, ".", "/") + "/" + tag
+      , "profiling/" + group + "/" + tag
       , 1                                                   // only 1 entry
     );
     // store description as attribute
