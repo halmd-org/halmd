@@ -64,6 +64,13 @@ function options(desc, globals)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.threads = group:read_attribute("threads", h5.uint())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param device module instance

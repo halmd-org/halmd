@@ -70,7 +70,9 @@ hilbert<dimension, float_type>::hilbert(
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.map, "map", "map particles to Hilbert curve");
+    profiler.register_runtime(runtime_.permutation, "permutation", "generate permutation");
+    profiler.register_runtime(runtime_.order, "order", "order particles by permutation");
 }
 
 /**
@@ -80,15 +82,13 @@ template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
     LOG_TRACE("[hilbert] order particles");
-    cuda::vector<unsigned int> g_index(particle->nbox);
-    g_index.reserve(particle->g_r.capacity());
     {
         cuda::vector<unsigned int> g_map(particle->nbox);
         g_map.reserve(particle->g_r.capacity());
         this->map(g_map);
-        this->permutation(g_map, g_index);
+        this->permutation(g_map, particle->g_index);
     }
-    this->order(g_index);
+    this->order(particle->g_index);
 }
 
 /**
@@ -97,7 +97,7 @@ void hilbert<dimension, float_type>::order()
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::map(cuda::vector<unsigned int> g_map)
 {
-    scoped_timer<timer> timer_(fusion::at_key<map_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.map);
     cuda::configure(particle->dim.grid, particle->dim.block);
     wrapper_type::kernel.map(particle->g_r, g_map);
 }
@@ -108,7 +108,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int> g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int> g_map, cuda::vector<unsigned int> g_index)
 {
-    scoped_timer<timer> timer_(fusion::at_key<permutation_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.permutation);
     cuda::configure(particle->dim.grid, particle->dim.block);
     wrapper_type::kernel.gen_index(g_index);
     radix_sort<unsigned int> sort(particle->nbox, particle->dim.threads_per_block());
@@ -121,7 +121,7 @@ void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int> g_ma
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> g_index)
 {
-    scoped_timer<timer> timer_(fusion::at_key<order_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.order);
 
     cuda::vector<float4> g_r(particle->g_r.size());
     cuda::vector<gpu_vector_type> g_image(particle->g_image.size());

@@ -27,7 +27,8 @@
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/observables/observable.hpp>
-#include <halmd/observables/trajectory.hpp>
+#include <halmd/observables/phase_space.hpp>
+#include <halmd/runner.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -35,15 +36,23 @@ namespace halmd
 
 template <int dimension>
 class sampler
+  : public runner
 {
 public:
     typedef mdsim::core<dimension> core_type;
     typedef observables::observable<dimension> observable_type;
     typedef io::statevars::writer<dimension> statevars_writer_type;
-    typedef observables::trajectory<dimension> trajectory_type;
+    typedef observables::phase_space<dimension> phase_space_type;
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
     typedef io::profiling::writer profiling_writer_type;
     typedef utility::profiler profiler_type;
+
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type msv_output;
+        accumulator_type total;
+    };
 
     static void luaopen(lua_State* L);
 
@@ -53,7 +62,7 @@ public:
       , unsigned int statevars_interval
       , unsigned int trajectory_interval
     );
-    void run();
+    virtual void run();
     void sample(bool force=false);
     void prepare_observables(bool force=false);
     void register_runtimes(profiler_type& profiler);
@@ -61,13 +70,9 @@ public:
     boost::shared_ptr<core_type> core;
     std::vector<boost::shared_ptr<observable_type> > observables;
     boost::shared_ptr<statevars_writer_type> statevars_writer;
-    boost::shared_ptr<trajectory_type> trajectory;
+    boost::shared_ptr<phase_space_type> phase_space;
     boost::shared_ptr<trajectory_writer_type> trajectory_writer;
     std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers;
-
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( msv_output_, "output of macroscopic state variables" );
-    HALMD_PROFILING_TAG( total_, "total simulation runtime" );
 
     uint64_t steps()
     {
@@ -98,12 +103,8 @@ private:
     unsigned statevars_interval_;
     // value from option --sampling-trajectory
     unsigned trajectory_interval_;
-
-    // list of profiling timers
-    boost::fusion::map<
-        boost::fusion::pair<msv_output_, accumulator<double> >
-      , boost::fusion::pair<total_, accumulator<double> >
-    > runtime_;
+    // profiling runtime accumulators
+    runtime runtime_;
 };
 
 } // namespace halmd

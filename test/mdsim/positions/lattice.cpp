@@ -45,7 +45,7 @@ using namespace std;
  * test initialisation of particle positions: lattice, ...
  */
 
-/** compute static structure factor of trajectory sample for some wavevectors */
+/** compute static structure factor of phase space sample for some wavevectors */
 template <typename sample_type, typename vector_type>
 vector<double> compute_ssf(
     shared_ptr<sample_type> sample
@@ -147,26 +147,28 @@ void lattice(string const& backend)
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 
-    // acquire trajectory samples
-    LOG_DEBUG("acquire trajectory sample");
-    shared_ptr<observables::host::samples::trajectory<dimension, double> > sample_host;
-    shared_ptr<observables::host::samples::trajectory<dimension, float> > sample_gpu;
-    shared_ptr<observables::trajectory<dimension> > trajectory;
+    // acquire phase space samples
+    LOG_DEBUG("acquire phase space sample");
+    shared_ptr<observables::host::samples::phase_space<dimension, double> > sample_host;
+#ifdef WITH_CUDA
+    shared_ptr<observables::host::samples::phase_space<dimension, float> > sample_gpu;
+#endif
+    shared_ptr<observables::phase_space<dimension> > phase_space;
     if (backend == "host") {
-        sample_host = make_shared<observables::host::samples::trajectory<dimension, double> >(
+        sample_host = make_shared<observables::host::samples::phase_space<dimension, double> >(
             particle->ntypes
         );
-        trajectory = make_trajectory_host<dimension, double>(sample_host, particle, box);
+        phase_space = make_phase_space_host(sample_host, particle, box);
     }
 #ifdef WITH_CUDA
     else if (backend == "gpu") {
-        sample_gpu = make_shared<observables::host::samples::trajectory<dimension, float> >(
+        sample_gpu = make_shared<observables::host::samples::phase_space<dimension, float> >(
             particle->ntypes
         );
-        trajectory = make_trajectory_gpu<dimension, float>(sample_gpu, particle, box);
+        phase_space = make_phase_space_gpu(sample_gpu, particle, box);
     }
 #endif
-    trajectory->acquire(0);
+    phase_space->acquire(0);
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice
@@ -200,6 +202,7 @@ void lattice(string const& backend)
         r_min = accumulate(sample_host, vector_type(0), bind(element_min<double, dimension>, _1, _2));
         r_max = accumulate(sample_host, vector_type(0), bind(element_max<double, dimension>, _1, _2));
     }
+#ifdef WITH_CUDA
     else if (backend == "gpu") {
         // compute structure factor
         ssf = compute_ssf(sample_gpu, q);
@@ -216,6 +219,7 @@ void lattice(string const& backend)
                     accumulate(sample_gpu, gpu_vector_type(0), bind(element_max<float, dimension>, _1, _2))
                 );
     }
+#endif
     else {
         return;
     }

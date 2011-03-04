@@ -63,10 +63,16 @@ public:
 
     typedef typename neighbour_wrapper<dimension>::displacement_impl_type displacement_impl_type;
 
-//     typedef typename particle_type::neighbour_list cell_list;
-//     typedef boost::multi_array<cell_list, dimension> cell_lists;
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
     typedef fixed_vector<int, dimension> cell_diff_type;
+
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type check;
+        accumulator_type update_cells;
+        accumulator_type update_neighbours;
+    };
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -98,11 +104,6 @@ public:
     {
         return nu_cell_;
     }
-
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( check_, "neighbour update criterion" );
-    HALMD_PROFILING_TAG( update_cells_, "cell lists update" );
-    HALMD_PROFILING_TAG( update_neighbours_, "neighbour lists update" );
 
 protected:
     friend class sort::hilbert<dimension, float_type>; //< FIXME public interface
@@ -150,12 +151,8 @@ protected:
     /** cell offsets in sorted particle list */
     cuda::vector<unsigned int> g_cell_offset_;
 
-private:
-    boost::fusion::map<
-        boost::fusion::pair<check_, accumulator<double> >
-      , boost::fusion::pair<update_cells_, accumulator<double> >
-      , boost::fusion::pair<update_neighbours_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }} // namespace mdsim::gpu

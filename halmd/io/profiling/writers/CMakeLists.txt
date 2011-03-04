@@ -1,4 +1,4 @@
 add_library(halmd_io_profiling_writers
-  hdf5.cpp
+  h5md.cpp
   log.cpp
-  )
+)

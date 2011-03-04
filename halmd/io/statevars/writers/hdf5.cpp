@@ -115,12 +115,16 @@ void hdf5<dimension>::register_observable(
         return;                                        \
     }
 
+    typedef boost::array<double, 3> array_double_3_type; // avoid comma in macro parameter
+
     SELECT_REGISTER_OBSERVABLE(double);
     SELECT_REGISTER_OBSERVABLE(unsigned int);
     SELECT_REGISTER_OBSERVABLE(vector_type);
+    SELECT_REGISTER_OBSERVABLE(array_double_3_type);
     SELECT_REGISTER_OBSERVABLE(vector<double>);
     SELECT_REGISTER_OBSERVABLE(vector<unsigned int>);
     SELECT_REGISTER_OBSERVABLE(vector<vector_type>);
+    SELECT_REGISTER_OBSERVABLE(vector<array_double_3_type>);
 #undef SELECT_REGISTER_OBSERVABLE
 
     throw runtime_error(
@@ -192,12 +196,16 @@ void hdf5<dimension>::write_dataset(
         return;                                        \
     }
 
+    typedef boost::array<double, 3> array_double_3_type; // avoid comma in macro parameter
+
     SELECT_WRITE_DATASET(double);
     SELECT_WRITE_DATASET(unsigned int);
     SELECT_WRITE_DATASET(vector_type);
+    SELECT_WRITE_DATASET(array_double_3_type);
     SELECT_WRITE_DATASET(vector<double>);
     SELECT_WRITE_DATASET(vector<unsigned int>);
     SELECT_WRITE_DATASET(vector<vector_type>);
+    SELECT_WRITE_DATASET(vector<array_double_3_type>);
 #undef SELECT_WRITE_DATASET
 
     throw runtime_error(

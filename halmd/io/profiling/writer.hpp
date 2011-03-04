@@ -52,12 +52,10 @@ public:
     writer() {}
     virtual ~writer() {}
     virtual void write() = 0;
-
-protected:
-    friend class utility::profiler;
     virtual void register_accumulator(
-        std::vector<std::string> const& tag
-      , accumulator<double> const& acc
+        std::string const& group
+      , accumulator_type const& acc
+      , std::string const& tag
       , std::string const& desc
     ) = 0;
 };

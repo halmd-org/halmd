@@ -95,6 +95,7 @@ int luaopen(lua_State* L)
 
           , class_<H5::CommonFG>("common_fg")
                 .def("open_group", &h5xx::open_group)
+                .def("exists_group", &h5xx::exists_group)
 
           , class_<H5::H5Object, H5::IdComponent>("object")
                 .def("read_attribute", &read_attribute<bool>)
@@ -127,6 +128,7 @@ int luaopen(lua_State* L)
           , class_<H5::Group, bases<H5::H5Object, H5::CommonFG> >("group")
 
           , class_<H5::DataSet, bases<H5::H5Object, H5::AbstractDs> >("dataset")
+                .def("exists_dataset", &h5xx::exists_dataset)
 
           , class_<type_wrapper<bool> >("bool")
                 .def(constructor<>())

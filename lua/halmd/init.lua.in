@@ -20,9 +20,11 @@
 --
 -- Load HAL’s MD package
 --
-require("halmd.io.statevars.writers")
+require("halmd.options")
+require("halmd.io.profiling.writer")
+require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
-require("halmd.io.trajectory.writers")
+require("halmd.io.trajectory.writer")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
 require("halmd.mdsim.force")
@@ -34,8 +36,7 @@ require("halmd.mdsim.sort")
 require("halmd.mdsim.velocity")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
-require("halmd.observables.trajectory")
-require("halmd.profiler")
+require("halmd.observables.phase_space")
 require("halmd.sampler")
 
 --
@@ -49,19 +50,18 @@ function run()
     core.force = halmd.mdsim.force()
     core.neighbour = halmd.mdsim.neighbour()
     core.sort = halmd.mdsim.sort()
-    core.position = halmd.mdsim.position()
-    core.velocity = halmd.mdsim.velocity()
+
+    local reader = halmd.io.trajectory.reader()
+    core.position = halmd.mdsim.position{ reader = reader }
+    core.velocity = halmd.mdsim.velocity{ reader = reader }
 
     local sampler = halmd.sampler() -- singleton
-    local profiler = halmd.profiler()
-    sampler.profiling_writers = profiler.profiling_writers
-    sampler.trajectory = halmd.observables.trajectory()
-    sampler.trajectory_writer = halmd.io.trajectory.writers()
+    sampler.profiling_writers = halmd.io.profiling.writer()
+    sampler.phase_space = halmd.observables.phase_space{ memory = "host" }
+    sampler.trajectory_writer = halmd.io.trajectory.writer()
     sampler.observables = {
         halmd.observables.ssf()
       , halmd.observables.thermodynamics()
     }
-    sampler.statevars_writer = halmd.io.statevars.writers()
-
-    sampler:run()
+    sampler.statevars_writer = halmd.io.statevars.writer()
 end

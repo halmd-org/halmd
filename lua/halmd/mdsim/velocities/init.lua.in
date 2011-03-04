@@ -1,1 +1,2 @@
 require("halmd.mdsim.velocities.boltzmann")
+require("halmd.mdsim.velocities.phase_space")

@@ -88,6 +88,16 @@ function options(desc)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    if random_wrapper.gpu then
+        args.blocks = group:read_attribute("blocks", h5.uint())
+        args.threads = group:read_attribute("threads", h5.uint())
+    end
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param random module instance

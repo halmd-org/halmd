@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -19,16 +19,10 @@
 
 -- grab environment
 local hooks = require("halmd.hooks")
-local po = halmd_wrapper.po
-local assert = assert
 local ipairs = ipairs
-local pairs = pairs
-local rawget = rawget
 local rawset = rawset
 local setmetatable = setmetatable
-local string = string
 local table = table
-local type = type
 
 --
 -- This module keeps a registry of all HALMD Lua modules.
@@ -41,8 +35,8 @@ module("halmd.modules")
 -- ordered list of registered HALMD modules
 local modules = {}
 
--- parsed module options
-local vm = {}
+-- ordered list of registered parameter provides
+local providers = {}
 
 --
 -- register a module
@@ -68,21 +62,19 @@ function register(module)
         -- @returns parameter value, or nil if not found
         --
         local param = function(self, key)
-            -- command-line option value
             local value
-            if module.options then
-                local vm = vm[module.namespace]
-                if type(vm) == "table" then
-                    value = rawget(vm, key)
-                end
-            end
-            if not value then
-                value = rawget(vm, key)
-            end
 
             -- script parameter
-            if not value and args then
-                value = rawget(args, key)
+            if args then
+                value = args[key]
+            end
+
+            -- parameters providers
+            for _, provider in ipairs(providers) do
+                local parameters = provider.parameters(module)
+                if parameters then
+                    value = value or parameters[key]
+                end
             end
 
             -- cache parameter
@@ -108,31 +100,13 @@ function register(module)
 end
 
 --
--- query options of registered modules
+-- register a parameter provider
 --
--- @param parser options_parser instance
+-- @param module Lua module
 --
-function options(parser)
-    for _, module in ipairs(modules) do
-        if module.options then
-            local desc = po.options_description()
-            local globals = po.options_description()
-            module.options(desc, globals)
-            parser:add(desc, module.namespace)
-            parser:add(globals)
-        end
-    end
-end
+function provider(module)
+    table.insert(providers, module)
 
---
--- Set parsed command line options
---
--- @param args Boost.Program_options variables_map
---
--- This function is called by halmd::script.
---
-function parsed(args)
-    for k, v in pairs(args) do
-        vm[k] = v
-    end
+    -- FIXME read-only iterable proxy table to modules
+    module.modules = modules
 end

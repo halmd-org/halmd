@@ -31,12 +31,42 @@ local pairs = pairs
 module("halmd.io.trajectory.reader", halmd.modules.register)
 
 --
+-- construct trajectory reader module
+--
+function new(args)
+    local file = args.file -- trajectory input file is optional
+
+    if file then
+        local offset = args.offset or -1  -- default value
+
+        -- find reader that can handle file format
+        local reader
+        for _, module in pairs(readers) do
+            local format = module.format
+            if format and format(file) then
+                reader = module
+                break
+            end
+        end
+        if not reader then
+            error(file .. ": unknown trajectory file format")
+        end
+
+        return reader{ file = file, offset = offset }
+    end
+end
+
+
+-- override default parameter namespace
+namespace = "trajectory"
+
+--
 -- assemble module options
 --
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("trajectory", po.string():notifier(function(value)
+    desc:add("file", po.string():notifier(function(value)
 
         -- check whether file exists and is readable
         local file, message = io.open(value)
@@ -49,9 +79,13 @@ function options(desc)
         local reader
         for _, module in pairs(readers) do
             local format = module.format
-            if format and format(value) then
-                reader = module
-                break
+            if format then
+                local file = format(value)
+                if file then
+                    reader = module
+                    reader.read_module_parameters(file)
+                    break
+                end
             end
         end
         if not reader then
@@ -60,5 +94,5 @@ function options(desc)
 
     end), "trajectory input file")
 
-    desc:add("sample", po.int64():depends("trajectory"), "trajectory sample for initial state")
+    desc:add("offset", po.int64():depends("file"), "phase space sample for initial state")
 end

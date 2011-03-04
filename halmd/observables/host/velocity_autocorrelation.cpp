@@ -31,8 +31,8 @@ namespace observables { namespace host
 /**
  * Compute velocity autocorrelation of two velocity sample vectors.
  *
- * @first particles velocities of one species at time t1
- * @second particles velocities of one species at time t2
+ * @param first particles velocities of one species at time t1
+ * @param second particles velocities of one species at time t2
  * @returns accumulated velocity autocorrelation
  */
 template <int dimension, typename float_type>

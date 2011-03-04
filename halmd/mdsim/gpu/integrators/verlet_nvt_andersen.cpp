@@ -28,7 +28,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using boost::fusion::at_key;
 using namespace std;
 
 namespace halmd
@@ -84,9 +83,9 @@ verlet_nvt_andersen(
         cuda::copy(static_cast<vector_type>(box->length()), wrapper_type::kernel.box_length);
         cuda::copy(random->rng.rng(), wrapper_type::kernel.rng);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 }
 
@@ -105,9 +104,9 @@ timestep(double timestep)
         cuda::copy(timestep_, wrapper_type::kernel.timestep);
         cuda::copy(coll_prob_, wrapper_type::kernel.coll_prob);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 
     LOG("integration timestep: " << timestep_);
@@ -123,9 +122,9 @@ temperature(double temperature)
     try {
         cuda::copy(sqrt_temperature_, wrapper_type::kernel.sqrt_temperature);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 
     LOG("temperature of heat bath: " << temperature_);
@@ -138,7 +137,8 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
+    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet (+ Andersen thermostat)");
 }
 
 /**
@@ -149,15 +149,15 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 integrate()
 {
     try {
-        scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.integrate);
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper_type::kernel.integrate(
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to stream first leapfrog step on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to stream first leapfrog step on GPU");
+        throw;
     }
 }
 
@@ -173,7 +173,7 @@ finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        scoped_timer<timer> timer_(at_key<finalize_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.finalize);
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
         cuda::configure(random->rng.dim.grid, random->rng.dim.block);
@@ -183,9 +183,9 @@ finalize()
         );
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to stream second leapfrog step on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to stream second leapfrog step on GPU");
+        throw;
     }
 }
 

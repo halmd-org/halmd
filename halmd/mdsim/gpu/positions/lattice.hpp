@@ -49,6 +49,12 @@ public:
     typedef typename type_traits<dimension, float>::vector_type gpu_vector_type;
     typedef typename type_traits<dimension, unsigned int>::vector_type index_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type set;
+    };
+
     static char const* module_name() { return "lattice"; }
 
     boost::shared_ptr<particle_type> particle;
@@ -68,16 +74,11 @@ public:
 
     typename box_type::vector_type const& slab() const { return slab_; }
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG(set_, "setting particle positions on lattice");
-
 private:
     /** slab extents for each direction as fraction of the edge length of the box */
     typename box_type::vector_type slab_;
-
-    boost::fusion::map<
-        boost::fusion::pair<set_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }}} // namespace mdsim::gpu::positions

@@ -1,8 +1,9 @@
 add_library(halmd_observables
+  density_mode.cpp
   observable.cpp
   ssf.cpp
   thermodynamics.cpp
-  trajectory.cpp
+  phase_space.cpp
 )
 
 if(WITH_CUDA)

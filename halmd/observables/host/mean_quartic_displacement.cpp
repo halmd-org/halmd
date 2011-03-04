@@ -31,8 +31,8 @@ namespace observables { namespace host
 /**
  * Compute mean-quartic displacement of two position sample vectors.
  *
- * @first particles positions of one species at time t1
- * @second particles positions of one species at time t2
+ * @param first particles positions of one species at time t1
+ * @param second particles positions of one species at time t2
  * @returns accumulated mean-quartic displacement
  */
 template <int dimension, typename float_type>

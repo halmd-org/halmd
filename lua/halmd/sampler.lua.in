@@ -74,6 +74,16 @@ function options(desc, globals)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group, globals)
+    args.steps = globals:read_attribute("steps", h5.uint64())
+    -- args.time is optional parameter
+    args.state_vars = group:read_attribute("state_vars", h5.uint())
+    args.trajectory = group:read_attribute("trajectory", h5.uint())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param sampler module instance

@@ -1,0 +1,125 @@
+--
+-- Copyright © 2010-2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab environment
+local reader_wrapper = {
+    host = {
+        [2] = halmd_wrapper.io.trajectory.readers.h5md_2_double_
+      , [3] = halmd_wrapper.io.trajectory.readers.h5md_3_double_
+    }
+  , gpu = {
+        [2] = halmd_wrapper.io.trajectory.readers.h5md_2_float_
+      , [3] = halmd_wrapper.io.trajectory.readers.h5md_3_float_
+    }
+}
+local phase_space = require("halmd.observables.samples.phase_space")
+local mdsim = {
+  core = require("halmd.mdsim.core")
+}
+local device = require("halmd.device")
+local h5 = halmd_wrapper.h5
+local po = halmd_wrapper.po
+local assert = assert
+local error = error
+local io = io
+local ipairs = ipairs
+local setmetatable = setmetatable
+
+module("halmd.io.trajectory.readers.h5md", halmd.modules.register, halmd.modules.provider)
+
+-- function to check file format
+format = reader_wrapper.host[2].format
+
+--
+-- construct H5MD trajectory reader module
+--
+function new(args)
+    local file = assert(args.file)
+    local offset = assert(args.offset)
+
+    local sample = assert(phase_space{ memory = "host" })
+    local core = assert(mdsim.core())
+    local dimension = assert(core.dimension)
+
+    local h5md
+    if device() then
+        h5md = assert(reader_wrapper.gpu[dimension])
+    else
+        h5md = assert(reader_wrapper.host[dimension])
+    end
+    return h5md(sample, file, offset)
+end
+
+-- module parameters
+local vm = {}
+
+--
+-- provide parameters for given module
+--
+function parameters(module)
+    if module.read_parameters then
+        local vm = vm[module.namespace]
+        if vm then
+            return setmetatable({}, { __index = vm })
+        end
+    end
+end
+
+--
+-- read module parameters from trajectory file
+--
+-- @param file HDF5 trajectory file
+--
+function read_module_parameters(file)
+    local param = file:open_group("param")
+
+    for _, module in ipairs(modules) do
+        if module.read_parameters then
+            local namespace = assert(module.namespace)
+
+            -- If read_parameters only reads global parameters, or reads
+            -- no parameters at all, the module's HDF5 parameter group would
+            -- remain empty. Therefore we delay creation by creating or opening
+            -- the group upon access of its methods.
+
+            local group = setmetatable({}, {
+                __index = function(self, name)
+                    if not param:exists_group(namespace) then
+                        return function() end
+                    end
+
+                    local group = param:open_group(namespace)
+
+                    local method = group[name]
+                    if method then
+                        return function(self, ...)
+                            return method(group, ...)
+                        end
+                    end
+                end
+            })
+
+            vm[namespace] = vm[namespace] or {}
+
+            module.read_parameters(vm[namespace], group, param)
+        end
+    end
+end

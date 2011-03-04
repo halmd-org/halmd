@@ -32,7 +32,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -70,7 +69,7 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.set, "set", "setting particle positions on lattice");
 }
 
 /**
@@ -156,14 +155,14 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
 
     cuda::thread::synchronize();
     try {
-        scoped_timer<timer> timer_(at_key<set_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.set);
         cuda::configure(particle->dim.grid, particle->dim.block);
         kernel.fcc(particle->g_r, a);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to generate particle lattice on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to generate particle lattice on GPU");
+        throw;
     }
 
     // reset particle image vectors

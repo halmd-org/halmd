@@ -65,6 +65,13 @@ function options(desc, globals)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group, globals)
+    args.integrator = globals:read_attribute("integrator", h5.string())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param integrator module instance

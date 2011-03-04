@@ -59,6 +59,12 @@ public:
     typedef host::forces::smooth<dimension, float_type> smooth_type;
     typedef utility::profiler profiler_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type compute;
+    };
+
     boost::shared_ptr<potential_type> potential;
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
@@ -117,11 +123,6 @@ public:
         return hypervirial_;
     }
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG(
-        compute_, std::string("computation of ") + potential_type::name() + " forces"
-    );
-
 protected:
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
@@ -131,10 +132,8 @@ protected:
     stress_tensor_type stress_pot_;
     /** hyper virial for each particle */
     double hypervirial_;
-
-    boost::fusion::map<
-        boost::fusion::pair<compute_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 
     template <bool do_aux>
     inline void compute_impl_();
@@ -161,7 +160,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.compute, "compute", std::string("computation of ") + potential_type::name() + " forces");
 }
 
 /**
@@ -171,7 +170,7 @@ void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profil
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
 {
-    scoped_timer<timer> timer_(boost::fusion::at_key<compute_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.compute);
 
     // call implementation which fits to current value of aux_flag_
     if (!aux_flag_) {

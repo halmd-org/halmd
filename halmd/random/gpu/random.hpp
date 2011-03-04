@@ -96,9 +96,9 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
         g_sort_index.resize(g_val.size());
         g_sort_index.reserve(device->threads());
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to allocate global device memory in random::shuffle");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to allocate global device memory in random::shuffle");
+        throw;
     }
 
     sort_type sort(g_val.size(), device->threads());
@@ -107,9 +107,9 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
         sort(g_sort_index, g_val);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to shuffle sequence on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to shuffle sequence on GPU");
+        throw;
     }
 }
 

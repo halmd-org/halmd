@@ -24,6 +24,7 @@
 #include <boost/log/formatters/format.hpp>
 #include <boost/log/formatters/message.hpp>
 #include <boost/log/utility/empty_deleter.hpp>
+#include <boost/version.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
@@ -61,7 +62,11 @@ logger::logger()
 {
     core::get()->add_global_attribute(
         "TimeStamp"
+#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < r479 (SVN)
       , make_shared<attributes::local_clock>()
+#else
+      , attributes::local_clock()
+#endif
     );
 }
 

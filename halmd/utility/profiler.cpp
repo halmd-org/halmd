@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,8 +18,6 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/profiling/writer.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/timer.hpp>
@@ -32,30 +30,19 @@ namespace halmd
 namespace utility
 {
 
-profiler::profiler(vector<shared_ptr<profiling_writer_type> > profiling_writers)
-  // dependency injection
-  : profiling_writers(profiling_writers)
+profiler::profiler(writers_type writer, string const& group)
+  : writer_(writer)
+  , group_(group)
 {
-    LOG("timer resolution: " << 1.E9 * timer::elapsed_min() << " ns");
+    LOG_ONCE("timer resolution: " << 1.E9 * timer::elapsed_min() << " ns");
 }
 
-void profiler::register_accumulator(
-    std::type_info const& tag
-  , accumulator_type const& acc
-  , std::string const& desc
-) const
+void profiler::register_runtime(accumulator_type const& runtime, string const& tag, std::string const& desc)
 {
-    for_each(
-        profiling_writers.begin()
-      , profiling_writers.end()
-      , bind(
-            &profiling_writer_type::register_accumulator
-          , _1
-          , tokenized_name(tag) // namespace and class template tokens
-          , cref(acc)
-          , cref(desc)
-        )
-    );
+    writers_type::const_iterator i, ie = writer_.end();
+    for (i = writer_.begin(); i != ie; ++i) {
+        (*i)->register_accumulator(group_, runtime, tag, desc);
+    }
 }
 
 void profiler::luaopen(lua_State* L)
@@ -68,8 +55,7 @@ void profiler::luaopen(lua_State* L)
             namespace_("utility")
             [
                 class_<profiler, shared_ptr<profiler> >("profiler")
-                    .def(constructor<vector<shared_ptr<profiling_writer_type> > >())
-                    .def_readonly("profiling_writers", &profiler::profiling_writers)
+                    .def(constructor<writers_type, string>())
             ]
         ]
     ];

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,101 +20,33 @@
 #ifndef HALMD_UTILITY_PROFILER_HPP
 #define HALMD_UTILITY_PROFILER_HPP
 
-#include <boost/fusion/include/at_key.hpp>
-#include <boost/fusion/include/for_each.hpp>
-#include <boost/fusion/include/map.hpp>
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <vector>
 
+#include <halmd/io/profiling/writer.hpp>
 #include <halmd/numeric/accumulator.hpp>
 
 namespace halmd
 {
-namespace io { namespace profiling
-{
-
-// forward declaration
-class writer;
-
-}} // namespace io::profiling
-
 namespace utility
 {
 
-// forward declaration
-class profiler;
-
-namespace detail { namespace profiler
-{
-
-/**
- * Extract tag type and accumulator reference from boost::fusion::pair.
- */
-struct visitor
-{
-    template <typename TaggedAccumulator>
-    void operator()(TaggedAccumulator const& acc) const;
-    visitor(utility::profiler const& p) : p(p) {}
-    utility::profiler const& p;
-};
-
-}} // namespace detail::profiler
-
-
-/**
- * This module delegates registrations of runtime accumulator
- * maps of other modules to available profiling writer modules.
- */
 class profiler
 {
 public:
-    typedef io::profiling::writer profiling_writer_type;
-    typedef accumulator<double> accumulator_type;
-
-    std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers;
+    typedef io::profiling::writer writer_type;
+    typedef writer_type::accumulator_type accumulator_type;
+    typedef std::vector<boost::shared_ptr<writer_type> > writers_type;
 
     static void luaopen(lua_State* L);
-
-    profiler(std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers);
-
-    template <typename AccumulatorMap>
-    void register_map(AccumulatorMap const& map)
-    {
-        boost::fusion::for_each(map, detail::profiler::visitor(*this));
-    }
+    profiler(writers_type writer, std::string const& group);
+    void register_runtime(accumulator_type const& runtime, std::string const& tag, std::string const& desc);
 
 private:
-    friend class detail::profiler::visitor;
-    void register_accumulator(
-        std::type_info const& tag
-      , accumulator_type const& acc
-      , std::string const& desc
-    ) const;
+    writers_type writer_;
+    std::string group_;
 };
-
-/**
- * Define tag for runtime accumulator within module.
- */
-#define HALMD_PROFILING_TAG(__tag__, __desc__)    \
-    struct __tag__ {                            \
-        static std::string desc() {             \
-            return __desc__;                    \
-        }                                       \
-    }
-
-namespace detail { namespace profiler
-{
-
-template <typename TaggedAccumulator>
-void visitor::operator()(TaggedAccumulator const& acc) const
-{
-    p.register_accumulator(
-        typeid(typename TaggedAccumulator::first_type)
-      , acc.second
-      , TaggedAccumulator::first_type::desc()
-    );
-}
-
-}} // namespace detail::profiler
 
 } // namespace utility
 

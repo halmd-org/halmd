@@ -13,6 +13,7 @@ if(WITH_CUDA)
     halmd_mdsim_gpu
     halmd_mdsim_gpu_positions
     halmd_observables_gpu
+    halmd_observables_gpu_samples
     halmd_random_gpu
     halmd_utility_gpu
   )

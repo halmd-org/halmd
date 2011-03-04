@@ -23,7 +23,7 @@
 #include <lua.hpp>
 
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/observables/host/samples/trajectory.hpp>
+#include <halmd/observables/host/samples/phase_space.hpp>
 
 namespace halmd
 {
@@ -37,9 +37,9 @@ template <int dimension, typename float_type>
 class mean_square_displacement
 {
 public:
-    typedef host::samples::trajectory<dimension, float_type> trajectory_type;
-    typedef typename trajectory_type::vector_type vector_type;
-    typedef typename trajectory_type::sample_vector sample_vector;
+    typedef host::samples::phase_space<dimension, float_type> phase_space_type;
+    typedef typename phase_space_type::vector_type vector_type;
+    typedef typename phase_space_type::sample_vector sample_vector;
     typedef accumulator<float_type> result_type;
 
     static void luaopen(lua_State* L);

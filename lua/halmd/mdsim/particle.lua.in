@@ -72,6 +72,13 @@ function options(desc)
 end
 
 --
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.particles = group:read_attribute("particles", h5.uint_array())
+end
+
+--
 -- write module parameters to HDF5 group
 --
 -- @param core module instance

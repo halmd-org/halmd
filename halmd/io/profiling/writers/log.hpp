@@ -47,19 +47,20 @@ public:
     log() {}
     virtual void write();
 
-private:
     /**
     * register runtime accumulator
     */
     virtual void register_accumulator(
-        std::vector<std::string> const& tag
+        std::string const& group
       , accumulator_type const& acc
+      , std::string const& tag
       , std::string const& desc
     )
     {
         accumulators_.push_back(make_pair(&acc, desc));
     }
 
+private:
     /** list of registered accumulators and their descriptions */
     std::vector<acc_desc_pair_type> accumulators_;
 };

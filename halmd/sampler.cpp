@@ -27,7 +27,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -59,7 +58,8 @@ sampler<dimension>::sampler(
 template <int dimension>
 void sampler<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.msv_output, "msv_output", "output of macroscopic state variables");
+    profiler.register_runtime(runtime_.total, "total", "total simulation runtime");
 }
 
 /**
@@ -69,7 +69,7 @@ template <int dimension>
 void sampler<dimension>::run()
 {
     {
-        scoped_timer<timer> timer_(at_key<total_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.total);
 
         LOG("setting up simulation box");
         prepare_observables(true);
@@ -115,7 +115,7 @@ void sampler<dimension>::sample(bool force)
             is_sampling_step = true;
         }
         if (statevars_writer) {
-            scoped_timer<timer> timer_(at_key<msv_output_>(runtime_));
+            scoped_timer<timer> timer_(runtime_.msv_output);
             statevars_writer->write();
         }
     }
@@ -123,7 +123,7 @@ void sampler<dimension>::sample(bool force)
     // allow value 0 for trajectory_interval_
     if (((trajectory_interval_ && !(step % trajectory_interval_)) || force)
           && trajectory_writer) {
-        trajectory->acquire(time);
+        phase_space->acquire(time);
         trajectory_writer->append();
         is_sampling_step = true;
     }
@@ -159,18 +159,17 @@ void sampler<dimension>::luaopen(lua_State* L)
     [
         namespace_("halmd_wrapper")
         [
-            class_<sampler, shared_ptr<sampler> >(class_name.c_str())
+            class_<sampler, shared_ptr<runner>, runner>(class_name.c_str())
                 .def(constructor<
                     shared_ptr<core_type>
                   , uint64_t
                   , unsigned int
                   , unsigned int
                 >())
-                .def("run", &sampler::run)
                 .def("register_runtimes", &sampler::register_runtimes)
                 .def_readwrite("observables", &sampler::observables)
                 .def_readwrite("statevars_writer", &sampler::statevars_writer)
-                .def_readwrite("trajectory", &sampler::trajectory)
+                .def_readwrite("phase_space", &sampler::phase_space)
                 .def_readwrite("trajectory_writer", &sampler::trajectory_writer)
                 .def_readwrite("profiling_writers", &sampler::profiling_writers)
                 .property("steps", &sampler::steps)
@@ -186,7 +185,7 @@ namespace // limit symbols to translation unit
 
 __attribute__((constructor)) void register_lua()
 {
-    lua_wrapper::register_(0) //< distance of derived to base class
+    lua_wrapper::register_(1) //< distance of derived to base class
     [
         &sampler<3>::luaopen
     ]

@@ -46,6 +46,14 @@ public:
     typedef utility::profiler profiler_type;
     typedef hilbert_wrapper<dimension> wrapper_type;
 
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type map;
+        accumulator_type permutation;
+        accumulator_type order;
+    };
+
     static char const* module_name() { return "hilbert"; }
 
     boost::shared_ptr<particle_type> particle;
@@ -59,11 +67,6 @@ public:
     void register_runtimes(profiler_type& profiler);
     virtual void order();
 
-    // module runtime accumulator descriptions
-    HALMD_PROFILING_TAG( map_, "map particles to Hilbert curve" );
-    HALMD_PROFILING_TAG( permutation_, "generate permutation" );
-    HALMD_PROFILING_TAG( order_, "order particles by permutation" );
-
 private:
     void map(cuda::vector<unsigned int> g_map);
     void permutation(cuda::vector<unsigned int> g_map, cuda::vector<unsigned int> g_index);
@@ -71,12 +74,8 @@ private:
 
     /** recursion depth */
     unsigned int depth_;
-
-    boost::fusion::map<
-        boost::fusion::pair<map_, accumulator<double> >
-      , boost::fusion::pair<permutation_, accumulator<double> >
-      , boost::fusion::pair<order_, accumulator<double> >
-    > runtime_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }}} // namespace mdsim::gpu::sorts

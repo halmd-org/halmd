@@ -74,8 +74,6 @@ int main(int argc, char **argv)
              "output file prefix")
             ("config,c", po::value<string>(),
              "parameter input file")
-            ("trajectory", po::value<string>(),
-             "trajectory input file")
             ("verbose,v", po::accum_value<int>()->default_value(logger::warning),
              "increase verbosity")
             ("version",
@@ -148,7 +146,9 @@ int main(int argc, char **argv)
 
         script.parsed(vm); //< pass command line options to Lua
 
-        script.run();
+        shared_ptr<runner> sampler(script.run());
+
+        sampler->run();
     }
     catch (std::exception const& e) {
         LOG_ERROR(e.what());

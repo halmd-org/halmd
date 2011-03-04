@@ -139,7 +139,7 @@ void script::options(options_parser& parser)
     // retrieve the Lua function before the try-catch block
     // to avoid bogus error message on the Lua stack in case
     // call_function throws an exception
-    object options(globals(L)["halmd"]["modules"]["options"]);
+    object options(globals(L)["halmd"]["options"]["get"]);
     try {
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
@@ -162,7 +162,7 @@ void script::parsed(po::variables_map const& vm)
 
     using namespace luabind;
 
-    object options(globals(L)["halmd"]["modules"]["parsed"]);
+    object options(globals(L)["halmd"]["options"]["set"]);
     try {
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
@@ -179,7 +179,7 @@ void script::parsed(po::variables_map const& vm)
 /**
  * Run simulation
  */
-void script::run()
+shared_ptr<runner> script::run()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
@@ -196,6 +196,19 @@ void script::run()
         lua_pop(e.state(), 1); //< remove error message
         throw;
     }
+
+    object sampler(globals(L)["halmd"]["sampler"]);
+
+    // downcast from template class sampler to base class runner
+    shared_ptr<runner> runner(call_function<shared_ptr<runner> >(sampler));
+
+    // Some C++ modules are only needed during the Lua script stage,
+    // e.g. the trajectory reader. To make sure these modules are
+    // destructed before running the simulation, invoke the Lua
+    // garbage collector now.
+    lua_gc(L, LUA_GCCOLLECT, 0);
+
+    return runner;
 }
 
 /**

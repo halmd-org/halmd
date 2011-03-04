@@ -70,9 +70,18 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("density", po.float(), "particle density")
     desc:add("length", po.float_array():conflicts("density"), "edge lengths of simulation box")
+    desc:add("density", po.float(), "particle density")
     desc:add("ratios", po.float_array():conflicts("length"), "relative aspect ratios of simulation box")
+end
+
+--
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    -- args.length is optional parameter
+    args.density = group:read_attribute("density", h5.float())
+    -- FIXME args.ratios = group:read_attribute("ratios", h5.float_array())
 end
 
 --
@@ -84,4 +93,5 @@ end
 function write_parameters(box, group)
     group:write_attribute("length", h5.float_array(), box.length)
     group:write_attribute("density", h5.float(), box.density)
+    -- FIXME group:write_attribute("ratios", h5.float_array(), box.ratios)
 end

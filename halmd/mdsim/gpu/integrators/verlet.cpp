@@ -28,7 +28,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -78,9 +77,9 @@ verlet<dimension, float_type>::verlet(
     try {
         cuda::copy(static_cast<vector_type>(box->length()), wrapper->box_length);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 }
 
@@ -96,9 +95,9 @@ void verlet<dimension, float_type>::timestep(double timestep)
     try {
         cuda::copy(timestep_, wrapper->timestep);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR(e.what());
-        throw runtime_error("failed to initialize Verlet integrator symbols");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to initialize Verlet integrator symbols");
+        throw;
     }
 
     LOG("integration timestep: " << timestep_);
@@ -110,7 +109,8 @@ void verlet<dimension, float_type>::timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
+    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet");
 }
 
 /**
@@ -120,15 +120,15 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     try {
-        scoped_timer<timer> timer_(at_key<integrate_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.integrate);
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper->integrate(
             particle->g_r, particle->g_image, particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to stream first leapfrog step on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to stream first leapfrog step on GPU");
+        throw;
     }
 }
 
@@ -143,14 +143,14 @@ void verlet<dimension, float_type>::finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        scoped_timer<timer> timer_(at_key<finalize_>(runtime_));
+        scoped_timer<timer> timer_(runtime_.finalize);
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper->finalize(particle->g_v, particle->g_f);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw std::runtime_error("failed to stream second leapfrog step on GPU");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to stream second leapfrog step on GPU");
+        throw;
     }
 }
 

@@ -48,9 +48,9 @@ random<RandomNumberGenerator>::random(
         rng.seed(seed);
         cuda::copy(rng.rng(), get_random_kernel<rng_type>().rng);
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to seed random number generator");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to seed random number generator");
+        throw;
     }
 }
 
@@ -65,9 +65,9 @@ void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
         get_random_kernel<rng_type>().uniform(g_v, g_v.size());
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to fill vector with uniform random numbers");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to fill vector with uniform random numbers");
+        throw;
     }
 }
 
@@ -82,9 +82,9 @@ void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
         get_random_kernel<rng_type>().get(g_v, g_v.size());
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to fill vector with uniform integer random numbers");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to fill vector with uniform integer random numbers");
+        throw;
     }
 }
 
@@ -99,9 +99,9 @@ void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean,
         get_random_kernel<rng_type>().normal(g_v, g_v.size(), mean, sigma);
         cuda::thread::synchronize();
     }
-    catch (cuda::error const& e) {
-        LOG_ERROR("CUDA: " << e.what());
-        throw runtime_error("failed to fill vector with normal random numbers");
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to fill vector with normal random numbers");
+        throw;
     }
 }
 

@@ -22,6 +22,7 @@
 
 #include <lua.hpp>
 
+#include <halmd/runner.hpp>
 #include <halmd/utility/options_parser.hpp>
 
 namespace halmd
@@ -36,7 +37,7 @@ public:
     script();
     void options(options_parser& parser);
     void parsed(po::variables_map const& vm);
-    void run();
+    boost::shared_ptr<runner> run();
 
     static int traceback(lua_State* L);
 

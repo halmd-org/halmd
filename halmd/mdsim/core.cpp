@@ -26,7 +26,6 @@
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
-using namespace boost::fusion;
 using namespace std;
 
 namespace halmd
@@ -51,7 +50,8 @@ core<dimension>::core()
 template <int dimension>
 void core<dimension>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_map(runtime_);
+    profiler.register_runtime(runtime_.prepare, "prepare", "microscopic state preparation");
+    profiler.register_runtime(runtime_.mdstep, "mdstep", "MD integration step");
 }
 
 /**
@@ -60,11 +60,14 @@ void core<dimension>::register_runtimes(profiler_type& profiler)
 template <int dimension>
 void core<dimension>::prepare()
 {
-    scoped_timer<timer> timer_(at_key<prepare_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.prepare);
     particle->set();
     position->set();
     velocity->set();
     if (neighbour) {
+        if (sort) {
+            sort->order();
+        }
         neighbour->update();
     }
     force->compute();
@@ -76,7 +79,7 @@ void core<dimension>::prepare()
 template <int dimension>
 void core<dimension>::mdstep()
 {
-    scoped_timer<timer> timer_(at_key<mdstep_>(runtime_));
+    scoped_timer<timer> timer_(runtime_.mdstep);
     LOG_TRACE("performing MD step #" << step_counter_);
     integrator->integrate();
     if (neighbour && neighbour->check()) {

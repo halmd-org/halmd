@@ -21,33 +21,21 @@ require("halmd.modules")
 
 -- grab environment
 local ssf_wrapper = {
-    host = {
-        [2] = halmd_wrapper.observables.host.ssf_2_
-      , [3] = halmd_wrapper.observables.host.ssf_3_
-    }
-  , [2] = halmd_wrapper.observables.ssf_2_
+    [2] = halmd_wrapper.observables.ssf_2_
   , [3] = halmd_wrapper.observables.ssf_3_
 }
-if halmd_wrapper.observables.gpu then
-    ssf_wrapper.gpu = {
-        [2] = halmd_wrapper.observables.gpu.ssf_2_
-      , [3] = halmd_wrapper.observables.gpu.ssf_3_
-    }
-end
+
 local mdsim = {
     core = require("halmd.mdsim.core")
 }
 local observables = {
-    samples = {
-        trajectory = require("halmd.observables.samples.trajectory")
-    }
+    density_mode = require("halmd.observables.density_mode")
   , utility = {
-        wavevectors = require("halmd.observables.utility.wavevectors")
+        wavevector = require("halmd.observables.utility.wavevector")
     }
 }
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
-local device = require("halmd.device")
 local assert = assert
 
 module("halmd.observables.ssf", halmd.modules.register)
@@ -59,32 +47,45 @@ module("halmd.observables.ssf", halmd.modules.register)
 -- @returns instance of ssf module
 --
 function new(args)
+    -- command line options
+    local tolerance = args.tolerance or 0.01 -- default value
+    local maximum_count = args.maximum_count or 7 -- default value
+    local wavenumbers = args.wavenumbers
+    local maximum_wavenumber = args.maximum_wavenumber
+
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
-    local sample = assert(observables.samples.trajectory())
-    local box = assert(core.box)
+    local particle = assert(core.particle)
 
-    -- command line options
-    local tolerance = args.tolerance or 0.01 -- default value
-    local maximum_count = args.maximum_count or 10 -- default value
-    local wavenumbers = args.wavenumbers
+    -- construct local wavevector module
+    local wavevector = assert(observables.utility.wavevector)
+    if wavenumbers then
+        wavevector = wavevector{
+            wavenumber = wavenumbers
+          , tolerance = tolerance
+          , maximum_count = maximum_count
+        }
+    elseif maximum_wavenumber then
+        wavevector = wavevector{
+            maximum_wavenumber = maximum_wavenumber
+          , tolerance = tolerance
+          , maximum_count = maximum_count
+        }
+    else
+        wavevector = nil
+    end
 
-    if not wavenumbers then
+    if not wavevector then
         return nil
     end
 
-    local wavevectors = assert(observables.utility.wavevectors(
-        wavenumbers, box.length, tolerance, maximum_count
-    ))
-
-    local ssf
-    if device() then
-        ssf = ssf_wrapper.gpu[dimension]
-    else
-        ssf = ssf_wrapper.host[dimension]
-    end
-    return ssf(sample, wavevectors)
+    -- construct ssf module
+    local ssf = assert(ssf_wrapper[dimension])
+    return ssf(
+        assert(observables.density_mode{ wavevector = wavevector })
+      , particle.nbox
+    )
 end
 
 --
@@ -99,20 +100,29 @@ end
 --
 -- @param desc po.options_description
 --
--- the wavenumber grid is defined here rather than in utility.wavenumbers
 function options(desc)
-    desc:add("wavenumbers", po.float_array(), "list of wavenumbers")
-    desc:add("tolerance", po.float(), "relative tolerance on magnitude of wavevectors")
+    desc:add("wavenumbers", po.float_array():conflicts("maximum-wavenumber"), "list of wavenumbers")
+    desc:add("maximum-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of linearly spaced grid")
+    desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
     desc:add("maximum-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
+end
+
+--
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.tolerance = group:read_attribute("tolerance", h5.float())
+    args.maximum_count = group:read_attribute("maximum_count", h5.uint())
 end
 
 --
 -- write module parameters to HDF5 group
 --
--- @param ssf:   module instance
--- @param group: HDF5 group
+-- @param ssf     module instance
+-- @param group   HDF5 group
 --
 function write_parameters(ssf, group)
-    group:write_attribute("tolerance", h5.float(), ssf.tolerance)
-    group:write_attribute("maximum_count", h5.uint(), ssf.maximum_count)
+    -- wavenumbers are stored along with the ssf data, e.g., in structure/ssf/wavenumber
+    group:write_attribute("tolerance", h5.float(), ssf.wavevector.tolerance)
+    group:write_attribute("maximum_count", h5.uint(), ssf.wavevector.maximum_count)
 end

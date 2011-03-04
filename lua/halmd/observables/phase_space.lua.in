@@ -1,0 +1,78 @@
+--
+-- Copyright © 2010  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab environment
+local phase_space_wrapper = { host }
+phase_space_wrapper.host = {
+    host = {
+        [2] = halmd_wrapper.observables.host.phase_space_2_
+      , [3] = halmd_wrapper.observables.host.phase_space_3_
+    }
+}
+if halmd_wrapper.observables.gpu then
+    phase_space_wrapper.gpu = { host, gpu }
+    phase_space_wrapper.gpu.host = {
+        [2] = halmd_wrapper.observables.gpu.host.phase_space_2_
+      , [3] = halmd_wrapper.observables.gpu.host.phase_space_3_
+    }
+    phase_space_wrapper.gpu.gpu = {
+        [2] = halmd_wrapper.observables.gpu.gpu.phase_space_2_
+      , [3] = halmd_wrapper.observables.gpu.gpu.phase_space_3_
+    }
+end
+local mdsim = {
+    core = require("halmd.mdsim.core")
+}
+local observables = {
+    samples = {
+        phase_space = require("halmd.observables.samples.phase_space")
+    }
+}
+local device = require("halmd.device")
+local assert = assert
+
+module("halmd.observables.phase_space", halmd.modules.register)
+
+--
+-- construct phase_space module
+--
+-- @param args       parameter table
+--   args.memory     specify memory location of phase_space sample ("host", "gpu")
+--
+function new(args)
+    -- parameters
+    local memory = assert(args.memory)
+
+    -- dependency injection
+    local core = mdsim.core()
+    local dimension = assert(core.dimension)
+    local particle = assert(core.particle)
+    local box = assert(core.box)
+    local sample = assert(observables.samples.phase_space{ memory = memory })
+
+    local phase_space
+    if device() then
+        phase_space = assert(phase_space_wrapper.gpu[memory][dimension])
+    else
+        phase_space = assert(phase_space_wrapper.host[memory][dimension])
+    end
+    return phase_space(sample, particle, box)
+end
