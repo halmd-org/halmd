@@ -2,8 +2,8 @@ add_library(halmd_observables_host
   mean_quartic_displacement.cpp
   mean_square_displacement.cpp
   density_mode.cpp
-  thermodynamics.cpp
   phase_space.cpp
+  thermodynamics.cpp
   velocity_autocorrelation.cpp
 )
 add_subdirectory(samples)
