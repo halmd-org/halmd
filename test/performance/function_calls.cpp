@@ -92,6 +92,8 @@ private:
 #define I1E7 10000000
 // CUDA kernel launches are slow…
 #define I1E6 1000000
+// synchroneous CUDA kernel launches are even slower…
+#define I1E5 100000
 
 /**
  * Measure direct C++ function call
@@ -305,12 +307,14 @@ BOOST_AUTO_TEST_CASE( cuda_function_1_128 )
         cuda::configure(1, 128);
         noop_kernel(42.);
     }
+    cuda::thread::synchronize();
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E6; ++i) {
         cuda::configure(1, 128);
         noop_kernel(42.);
     }
+    cuda::thread::synchronize();
 }
 
 /**
@@ -324,11 +328,34 @@ BOOST_AUTO_TEST_CASE( cuda_function_16_512 )
         cuda::configure(16, 512);
         noop_kernel(42.);
     }
+    cuda::thread::synchronize();
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E6; ++i) {
         cuda::configure(16, 512);
         noop_kernel(42.);
+    }
+    cuda::thread::synchronize();
+}
+
+/**
+ * Measure cuda::function call
+ */
+BOOST_AUTO_TEST_CASE( cuda_function_16_512_synchronize )
+{
+    printer p("cuda::function (16×512) + cuda::thread::synchronize", I1E5);
+    // warm up
+    for (size_t i = 0; i < I1E5; ++i) {
+        cuda::configure(16, 512);
+        noop_kernel(42.);
+        cuda::thread::synchronize();
+    }
+    scoped_timer<timer> timer(p);
+    // benchmark
+    for (size_t i = 0; i < I1E5; ++i) {
+        cuda::configure(16, 512);
+        noop_kernel(42.);
+        cuda::thread::synchronize();
     }
 }
 
@@ -342,11 +369,13 @@ BOOST_AUTO_TEST_CASE( cuda_kernel_1_128 )
     for (size_t i = 0; i < I1E6; ++i) {
         launch_noop_kernel(1, 128, 42.);
     }
+    cudaThreadSynchronize();
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E6; ++i) {
         launch_noop_kernel(1, 128, 42.);
     }
+    cudaThreadSynchronize();
 }
 
 /**
@@ -359,10 +388,31 @@ BOOST_AUTO_TEST_CASE( cuda_kernel_16_512 )
     for (size_t i = 0; i < I1E6; ++i) {
         launch_noop_kernel(16, 512, 42.);
     }
+    cudaThreadSynchronize();
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E6; ++i) {
         launch_noop_kernel(16, 512, 42.);
+    }
+    cudaThreadSynchronize();
+}
+
+/**
+ * Measure CUDA kernel call
+ */
+BOOST_AUTO_TEST_CASE( cuda_kernel_16_512_synchronize )
+{
+    printer p("CUDA <<< >>> (16×512) + cudaThreadSynchronize", I1E5);
+    // warm up
+    for (size_t i = 0; i < I1E5; ++i) {
+        launch_noop_kernel(16, 512, 42.);
+        cudaThreadSynchronize();
+    }
+    scoped_timer<timer> timer(p);
+    // benchmark
+    for (size_t i = 0; i < I1E5; ++i) {
+        launch_noop_kernel(16, 512, 42.);
+        cudaThreadSynchronize();
     }
 }
 
