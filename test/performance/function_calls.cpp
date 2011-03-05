@@ -228,7 +228,7 @@ BOOST_FIXTURE_TEST_CASE( global_lua_function, lua_test_fixture )
     LUA_CHECK( "noop = function() end" );
     printer p("Lua function (global)", I1E7);
     // warm up
-    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
+    LUA_CHECK( "for i = 1, " xstr(I1E7) " do noop(42.) end" );
     scoped_timer<timer> timer(p);
     // benchmark
     LUA_CHECK( "for i = 1, " xstr(I1E7) " do noop(42.) end" );
