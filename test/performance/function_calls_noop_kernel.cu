@@ -25,7 +25,7 @@
 static __global__ void noop(double) {}
 
 /**
- * Launch noop CUDA kernel repeatedly
+ * Launch noop CUDA kernel
  */
 void launch_noop_kernel(dim3 grid, dim3 block, double dummy)
 {

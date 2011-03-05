@@ -180,6 +180,76 @@ BOOST_AUTO_TEST_CASE( vector_boost_function_10 )
     }
 }
 
+// see Ch. 26.1 in Programming in Lua by R. Ierusalimschy
+// http://www.lua.org/pil/26.1.html
+static int lua_noop(lua_State* L)
+{
+    double dummy = lua_tonumber(L, 1);  // get argument
+    noop(dummy);
+    return 0;                           // number of results
+}
+
+/**
+ * Measure Lua C function call
+ */
+BOOST_FIXTURE_TEST_CASE( lua_cfunction, lua_test_fixture )
+{
+    lua_pushcfunction(L, lua_noop);
+    lua_setglobal(L, "noop");
+    printer p("Lua C function", I1E7);
+    // warm up
+    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
+    scoped_timer<timer> timer(p);
+    // benchmark
+    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
+}
+
+/**
+ * Measure local Lua function call
+ */
+BOOST_FIXTURE_TEST_CASE( local_lua_function, lua_test_fixture )
+{
+    LUA_CHECK( "noop = function() end" );
+    printer p("Lua function (local)", I1E7);
+    // warm up
+    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
+    scoped_timer<timer> timer(p);
+    // benchmark
+    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
+}
+
+/**
+ * Measure global Lua function call
+ */
+BOOST_FIXTURE_TEST_CASE( global_lua_function, lua_test_fixture )
+{
+    LUA_CHECK( "noop = function() end" );
+    printer p("Lua function (global)", I1E7);
+    // warm up
+    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
+    scoped_timer<timer> timer(p);
+    // benchmark
+    LUA_CHECK( "for i = 1, " xstr(I1E7) " do noop(42.) end" );
+}
+
+/**
+ * Measure Luabind function call
+ */
+BOOST_FIXTURE_TEST_CASE( luabind_function, lua_test_fixture )
+{
+    using namespace luabind;
+    module(L)
+    [
+        def("noop", &noop)
+    ];
+    printer p("Luabind function", I1E7);
+    // warm up
+    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
+    scoped_timer<timer> timer(p);
+    // benchmark
+    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
+}
+
 /**
  * Measure boost::signals2 call
  */
@@ -225,40 +295,6 @@ BOOST_AUTO_TEST_CASE( boost_signals2_10 )
 #ifdef WITH_CUDA
 
 /**
- * Measure CUDA kernel call
- */
-BOOST_AUTO_TEST_CASE( cuda_kernel_1_128 )
-{
-    printer p("CUDA kernel (1×128)", I1E6);
-    // warm up
-    for (size_t i = 0; i < I1E6; ++i) {
-        launch_noop_kernel(1, 128, 42.);
-    }
-    scoped_timer<timer> timer(p);
-    // benchmark
-    for (size_t i = 0; i < I1E6; ++i) {
-        launch_noop_kernel(1, 128, 42.);
-    }
-}
-
-/**
- * Measure CUDA kernel call
- */
-BOOST_AUTO_TEST_CASE( cuda_kernel_16_512 )
-{
-    printer p("CUDA kernel (16×512)", I1E6);
-    // warm up
-    for (size_t i = 0; i < I1E6; ++i) {
-        launch_noop_kernel(16, 512, 42.);
-    }
-    scoped_timer<timer> timer(p);
-    // benchmark
-    for (size_t i = 0; i < I1E6; ++i) {
-        launch_noop_kernel(16, 512, 42.);
-    }
-}
-
-/**
  * Measure cuda::function call
  */
 BOOST_AUTO_TEST_CASE( cuda_function_1_128 )
@@ -296,74 +332,38 @@ BOOST_AUTO_TEST_CASE( cuda_function_16_512 )
     }
 }
 
+/**
+ * Measure CUDA kernel call
+ */
+BOOST_AUTO_TEST_CASE( cuda_kernel_1_128 )
+{
+    printer p("CUDA <<< >>> (1×128)", I1E6);
+    // warm up
+    for (size_t i = 0; i < I1E6; ++i) {
+        launch_noop_kernel(1, 128, 42.);
+    }
+    scoped_timer<timer> timer(p);
+    // benchmark
+    for (size_t i = 0; i < I1E6; ++i) {
+        launch_noop_kernel(1, 128, 42.);
+    }
+}
+
+/**
+ * Measure CUDA kernel call
+ */
+BOOST_AUTO_TEST_CASE( cuda_kernel_16_512 )
+{
+    printer p("CUDA <<< >>> (16×512)", I1E6);
+    // warm up
+    for (size_t i = 0; i < I1E6; ++i) {
+        launch_noop_kernel(16, 512, 42.);
+    }
+    scoped_timer<timer> timer(p);
+    // benchmark
+    for (size_t i = 0; i < I1E6; ++i) {
+        launch_noop_kernel(16, 512, 42.);
+    }
+}
+
 #endif /* WITH_CUDA */
-
-/**
- * Measure global Lua function call
- */
-BOOST_FIXTURE_TEST_CASE( global_lua_function, lua_test_fixture )
-{
-    LUA_CHECK( "noop = function() end" );
-    printer p("Lua function (global)", I1E7);
-    // warm up
-    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
-    scoped_timer<timer> timer(p);
-    // benchmark
-    LUA_CHECK( "for i = 1, " xstr(I1E7) " do noop(42.) end" );
-}
-
-/**
- * Measure local Lua function call
- */
-BOOST_FIXTURE_TEST_CASE( local_lua_function, lua_test_fixture )
-{
-    LUA_CHECK( "noop = function() end" );
-    printer p("Lua function (local)", I1E7);
-    // warm up
-    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
-    scoped_timer<timer> timer(p);
-    // benchmark
-    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
-}
-
-// see Ch. 26.1 in Programming in Lua by R. Ierusalimschy
-// http://www.lua.org/pil/26.1.html
-static int lua_noop(lua_State* L)
-{
-    double dummy = lua_tonumber(L, 1);  // get argument
-    noop(dummy);
-    return 0;                           // number of results
-}
-
-/**
- * Measure Lua C function call
- */
-BOOST_FIXTURE_TEST_CASE( lua_cfunction, lua_test_fixture )
-{
-    lua_pushcfunction(L, lua_noop);
-    lua_setglobal(L, "noop");
-    printer p("Lua C function", I1E7);
-    // warm up
-    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
-    scoped_timer<timer> timer(p);
-    // benchmark
-    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
-}
-
-/**
- * Measure Luabind function call
- */
-BOOST_FIXTURE_TEST_CASE( luabind_function, lua_test_fixture )
-{
-    using namespace luabind;
-    module(L)
-    [
-        def("noop", &noop)
-    ];
-    printer p("Luabind function", I1E7);
-    // warm up
-    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
-    scoped_timer<timer> timer(p);
-    // benchmark
-    LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
-}
