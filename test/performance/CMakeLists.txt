@@ -1,0 +1,21 @@
+if(WITH_CUDA)
+  add_executable(test_function_calls
+    function_calls.cpp
+    function_calls_noop.cpp
+    function_calls_noop_kernel.cu
+  )
+else(WITH_CUDA)
+  add_executable(test_function_calls
+    function_calls.cpp
+    function_calls_noop.cpp
+    function_calls_noop_kernel.cu
+  )
+endif(WITH_CUDA)
+target_link_libraries(test_function_calls
+  test_tools_lua
+  ${HALMD_COMMON_LIBRARIES}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+add_test(function_calls
+  test_function_calls --log_level=message
+)
