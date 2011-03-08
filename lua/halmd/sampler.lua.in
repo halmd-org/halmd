@@ -40,18 +40,18 @@ local sampler -- singleton instance
 -- construct sampler module
 --
 function new(args)
-    -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local integrator = assert(core.integrator)
-
-    -- command line options
-    local state_vars = args.state_vars or 25 -- default value
-    local trajectory = args.trajectory or 0 -- default value
-    local steps = args.steps or 10000 -- default value
-    local time = args.time -- optional
-
     if not sampler then
+        -- dependency injection
+        local core = mdsim.core()
+        local dimension = assert(core.dimension)
+        local integrator = assert(core.integrator)
+
+        -- command line options
+        local state_vars = args.state_vars or 25 -- default value
+        local trajectory = args.trajectory or 0 -- default value
+        local steps = args.steps or 10000 -- default value
+        local time = args.time -- optional
+
         local wrapper = sampler_wrapper[dimension]
         if time then
             steps = math.floor((time / integrator.timestep) + 0.5)
