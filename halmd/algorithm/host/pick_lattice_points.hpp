@@ -24,6 +24,7 @@
 #include <boost/concept_check.hpp>
 #include <boost/concept/requires.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <functional>
 #include <numeric>
 #include <vector>
 #include <utility>
@@ -79,18 +80,18 @@ pick_lattice_points_from_shell(
     vector<unsigned int> count(radius_end - radius_begin, 0u);
 
     // determine maximum sum of Miller indices that fits in the range of radii
-    // (e_i) × (h,k,l) ≤ r_max ⇒ h+k+l ≤ dimension × r_max / max(e_i)
+    // (e_i) × (h,k,l) ≤ r_max ⇒ (h,k,l)_i ≤ r_max / e_i ⇒ h+k+l ≤ r_max × sum(1/e_i)
     float_type r_max = *max_element(radius_begin, radius_end) * (1 + tolerance);
-    unsigned int miller_sum_max = dimension * static_cast<unsigned int>(floor(
-        r_max / *max_element(unit_cell.begin(), unit_cell.end())
-    ));
-    LOG_DEBUG("generate lattice points with a maximum sum of Miller indices: " << miller_sum_max);
+    index_type miller_sum_max = static_cast<index_type>(element_div(vector_type(r_max), unit_cell));
+    // compute partial sum: miller_sum_max = (h_max, h_max + k_max, h_max + k_max + l_max)
+    partial_sum(miller_sum_max.begin(), miller_sum_max.end(), miller_sum_max.begin());
+    LOG_DEBUG("generate lattice points with a maximum sum of Miller indices: " << miller_sum_max[dimension-1]);
 
     // generate all lattice points bounded h+k+l ≤ miller_sum_max,
     // loop over tuple index (hkl), or (hk) in two dimensions,
     // using idx[2] = h+k+l, idx[1] = h+k, and idx[0] = h as loop variables
     index_type idx(0);
-    while (idx[dimension-1] <= miller_sum_max) {
+    while (idx[dimension-1] <= miller_sum_max[dimension-1]) {
         // construct (hkl) from partial index sums
         index_type hkl;
         hkl[0] = idx[0];
@@ -127,14 +128,14 @@ pick_lattice_points_from_shell(
             }
         }
         // increment index tuple at end of loop,
-        // obey 0 ≤ idx[0] ≤ idx[1] ≤ ... ≤ miller_sum_max
+        // obey 0 ≤ idx[j] ≤ miller_sum_max[j]
         ++idx[0];                            // always increment first 'digit' (element)
         for (unsigned int j = 0; j < dimension - 1; ++j) {
-            if (idx[j] <= idx[j+1]) {        // increment 'digit' and test upper bound
-                break;                       // still within range, exit loop
+            if (idx[j] <= miller_sum_max[j]) {  // test upper bound
+                break;                          // still within range, exit loop
             }
-            idx[j] = 0;                      // reset this 'digit'
-            ++idx[j+1];                      // increment next 'digit'
+            idx[j] = 0;                         // reset this 'digit'
+            ++idx[j+1];                         // increment next 'digit'
         }
     };
 
