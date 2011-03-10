@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <test/performance/function_calls_noop_kernel.hpp>
+#include <test/performance/callbacks_extern_kernel.hpp>
 
 /**
  * An empty function

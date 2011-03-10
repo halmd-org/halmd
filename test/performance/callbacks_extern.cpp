@@ -17,12 +17,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_NOOP_KERNEL_HPP
-#define HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_NOOP_KERNEL_HPP
+#include <boost/bind.hpp>
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <test/performance/callbacks_extern.hpp>
 
-void launch_noop_kernel(dim3 grid, dim3 block, double dummy);
-extern cuda::function<void (double)> noop_kernel;
+using namespace boost;
+using namespace std;
 
-#endif /* ! HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_NOOP_KERNEL_HPP */
+/**
+ * Make function to noop using boost::bind
+ */
+function<void (double)> bind_noop()
+{
+    return bind(&noop, _1);
+}
+
+/**
+ * Add noop function to signal
+ */
+void bind_noop(halmd::signal<void (double)>& sig)
+{
+    sig.connect(bind_noop());
+}
+
+/**
+ * An empty function
+ */
+void noop(double) {}
