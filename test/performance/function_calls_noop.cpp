@@ -33,11 +33,11 @@ function<void (double)> bind_noop()
 }
 
 /**
- * Add noop function to vector
+ * Add noop function to signal
  */
-void bind_noop(vector<function<void (double)> >& f)
+void bind_noop(halmd::signal<void (double)>& sig)
 {
-    f.push_back(bind_noop());
+    sig.connect(bind_noop());
 }
 
 /**

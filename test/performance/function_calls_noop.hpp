@@ -21,10 +21,10 @@
 #define HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_NOOP_HPP
 
 #include <boost/function.hpp>
-#include <vector>
+#include <halmd/utility/signal.hpp>
 
 boost::function<void (double)> bind_noop();
-void bind_noop(std::vector<boost::function<void (double)> >& f);
+void bind_noop(halmd::signal<void (double)>& sig);
 void noop(double);
 
 #endif /* ! HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_NOOP_HPP */

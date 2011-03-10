@@ -24,6 +24,7 @@
 #include <iomanip> // setw
 
 #include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/lua.hpp>
 #include <test/performance/function_calls_noop.hpp>
@@ -131,54 +132,42 @@ BOOST_AUTO_TEST_CASE( boost_function )
 }
 
 /**
- * Measure vector<boost::function> call
+ * Measure halmd::signal call
  */
-BOOST_AUTO_TEST_CASE( vector_boost_function )
+BOOST_AUTO_TEST_CASE( halmd_signal )
 {
-    vector<function<void (double)> > f;
-    bind_noop(f);
-    printer p("vector<boost::function>", I1E7);
+    halmd::signal<void (double)> sig;
+    bind_noop(sig);
+    printer p("halmd::signal", I1E7);
     // warm up
     for (size_t i = 0; i < I1E7; ++i) {
-        vector<function<void (double)> >::const_iterator j, je = f.end();
-        for (j = f.begin(); j != je; ++j) {
-            (*j)(42.);
-        }
+        sig(42.);
     }
     scoped_timer<timer> timer(p);
     // benchmark
     for (size_t i = 0; i < I1E7; ++i) {
-        vector<function<void (double)> >::const_iterator j, je = f.end();
-        for (j = f.begin(); j != je; ++j) {
-            (*j)(42.);
-        }
+        sig(42.);
     }
 }
 
 /**
- * Measure vector<boost::function> call with 10 slots
+ * Measure halmd::signal call with 10 slots
  */
-BOOST_AUTO_TEST_CASE( vector_boost_function_10 )
+BOOST_AUTO_TEST_CASE( halmd_signal_10 )
 {
-    vector<function<void (double)> > f;
+    halmd::signal<void (double)> sig;
     for (size_t i = 0; i < 10; ++i) {
-        bind_noop(f);
+        bind_noop(sig);
     }
-    printer p("vector<boost::function> (10 slots)", I1E7);
+    printer p("halmd::signal (10 slots)", I1E6);
     // warm up
-    for (size_t i = 0; i < I1E7; ++i) {
-        vector<function<void (double)> >::const_iterator j, je = f.end();
-        for (j = f.begin(); j != je; ++j) {
-            (*j)(42.);
-        }
+    for (size_t i = 0; i < I1E6; ++i) {
+        sig(42.);
     }
     scoped_timer<timer> timer(p);
     // benchmark
-    for (size_t i = 0; i < I1E7; ++i) {
-        vector<function<void (double)> >::const_iterator j, je = f.end();
-        for (j = f.begin(); j != je; ++j) {
-            (*j)(42.);
-        }
+    for (size_t i = 0; i < I1E6; ++i) {
+        sig(42.);
     }
 }
 
@@ -257,8 +246,7 @@ BOOST_FIXTURE_TEST_CASE( luabind_function, lua_test_fixture )
  */
 BOOST_AUTO_TEST_CASE( boost_signals2 )
 {
-    using namespace boost::signals2;
-    signal<void (double)> sig;
+    boost::signals2::signal<void (double)> sig;
     sig.connect(bind_noop());
     printer p("boost::signals2", I1E7);
     // warm up
@@ -277,8 +265,7 @@ BOOST_AUTO_TEST_CASE( boost_signals2 )
  */
 BOOST_AUTO_TEST_CASE( boost_signals2_10 )
 {
-    using namespace boost::signals2;
-    signal<void (double)> sig;
+    boost::signals2::signal<void (double)> sig;
     for (size_t i = 0; i < 10; ++i) {
         sig.connect(bind_noop());
     }
