@@ -7,6 +7,17 @@ target_link_libraries(test_demangle
 add_test(demangle
   test_demangle --log_level=test_suite
 )
+
+add_executable(test_signal
+  signal.cpp
+)
+target_link_libraries(test_signal
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+add_test(signal
+  test_signal --log_level=test_suite
+)
+
 add_executable(test_options_parser
   options_parser.cpp
 )
@@ -21,6 +32,7 @@ target_link_libraries(test_options_parser
 add_test(options_parser
   test_options_parser --log_level=test_suite
 )
+
 add_subdirectory(lua_wrapper)
 add_subdirectory(program_options)
 
