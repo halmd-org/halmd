@@ -202,14 +202,14 @@ Include Luabind in your shell environment, by adding to ~/.bashrc::
 HDF5
 ----
 
-Get the latest `HDF5 source package`_, currently `HDF5 1.8.5 patch 1`_.
+Get the latest `HDF5 source package`_, currently `HDF5 1.8.6`_.
 
 .. _HDF5 source package: http://www.hdfgroup.org/HDF5/release/obtain5.html#obtain
-.. _HDF5 1.8.5 patch 1: http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.5-patch1.tar.gz
+.. _HDF5 1.8.6: http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.6.tar.gz
 
 Prepare a statically linked build of the HDF5 C and C++ library with ::
 
-   ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/hdf5-1.8.5-patch1
+   ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/hdf5-1.8.6
 
 .. note:: Compiling HDF5 with C++ support disables multi-threading.
 
@@ -223,8 +223,8 @@ Install the HDF5 libraries into your packages directory::
 
 Include HDF5 in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/hdf5-1.8.5-patch1/bin${PATH+:$PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/usr/hdf5-1.8.5-patch1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/usr/hdf5-1.8.6/bin${PATH+:$PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/usr/hdf5-1.8.6${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
 GNU Scientific Library
