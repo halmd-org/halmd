@@ -25,6 +25,7 @@ require("halmd.io.profiling.writers")
 local writers = halmd.io.profiling.writers
 local profiler_wrapper = halmd_wrapper.utility.profiler
 local hooks = require("halmd.hooks")
+local po = halmd_wrapper.po
 local assert = assert
 local pairs = pairs
 local table = table
@@ -34,10 +35,15 @@ module("halmd.io.profiling.writer", halmd.modules.register)
 --
 -- construct profiler module
 --
-function new()
-    local writer = {}
-    for _, module in pairs(writers) do
-        table.insert(writer, module())
+function new(args)
+    local format = args.format -- optional
+
+    -- add log writer by default
+    local writer = { writers.log() }
+
+    -- add optional writer chosen with --format option
+    if args.format then
+        table.insert(writer, writers[format]())
     end
 
     hooks.register_object_hook(function(object, module)
@@ -49,4 +55,25 @@ function new()
     end)
 
     return writer
+end
+
+-- override module namespace
+namespace = "profiling"
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+
+    -- writer module choices with descriptions
+    local choices = {}
+    for writer, module in pairs(writers) do
+        if module.name then
+            choices[writer] = module.name()
+        end
+    end
+
+    desc:add("format", po.string():choices(choices), "profiling output file format")
 end

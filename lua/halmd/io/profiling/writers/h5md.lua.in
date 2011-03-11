@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -38,4 +38,11 @@ function new(args)
     parameter.register_writer(writer)
 
     return writer
+end
+
+--
+-- returns module description
+--
+function name()
+    return "H5MD file format"
 end
