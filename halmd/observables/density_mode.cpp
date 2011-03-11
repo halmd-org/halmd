@@ -22,6 +22,7 @@
 
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -30,6 +31,13 @@ namespace halmd
 {
 namespace observables
 {
+
+template <typename density_mode_type>
+typename signal<void (double)>::slot_function_type
+acquire_wrapper(shared_ptr<density_mode_type> density_mode)
+{
+    return bind(&density_mode_type::acquire, density_mode, _1);
+}
 
 template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
@@ -43,9 +51,9 @@ void density_mode<dimension>::luaopen(lua_State* L)
             namespace_("observables")
             [
                 class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
-                    .def("acquire", &density_mode::acquire)
                     .property("value", &density_mode::value)
                     .property("wavenumber", &density_mode::wavenumber)
+                    .property("acquire", &acquire_wrapper<density_mode>)
             ]
         ]
     ];
