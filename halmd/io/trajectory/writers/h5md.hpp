@@ -43,6 +43,8 @@ public:
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_vector_type::value_type vector_type;
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
@@ -50,7 +52,7 @@ public:
         boost::shared_ptr<sample_type> sample
       , std::string const& file_name
     );
-    virtual void append();
+    virtual void append(double time);
     virtual void flush();
 
     boost::shared_ptr<sample_type> sample;
@@ -60,11 +62,18 @@ public:
         return file_;
     }
 
+    virtual void on_append(slot_function_type const& slot)
+    {
+        on_append_.connect(slot);
+    }
+
 private:
     /** H5MD file */
     H5::H5File file_;
     /** dataset write functors */
     std::vector<boost::function<void ()> > writers_;
+
+    signal_type on_append_;
 };
 
 }}} // namespace io::trajectory::writers

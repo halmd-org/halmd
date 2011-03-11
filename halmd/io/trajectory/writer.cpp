@@ -42,8 +42,11 @@ void writer<dimension>::luaopen(lua_State* L)
                 namespace_("trajectory")
                 [
                     class_<writer, shared_ptr<writer> >(class_name.c_str())
-                        .def("flush", &writer::flush)
-                        .def("append", &writer::append)
+                        .def("on_append", &writer::on_append)
+                        .scope
+                        [
+                            class_<slot_function_type>("slot_function_type")
+                        ]
                 ]
             ]
         ]

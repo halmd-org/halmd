@@ -124,7 +124,7 @@ void sampler<dimension>::sample(bool force)
     if (((trajectory_interval_ && !(step % trajectory_interval_)) || force)
           && trajectory_writer) {
         phase_space->acquire(time);
-        trajectory_writer->append();
+        trajectory_writer->append(time);
         is_sampling_step = true;
     }
 

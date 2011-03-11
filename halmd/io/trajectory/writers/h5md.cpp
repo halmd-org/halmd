@@ -80,8 +80,14 @@ h5md<dimension, float_type>::h5md(
  * append samples to datasets
  */
 template <int dimension, typename float_type>
-void h5md<dimension, float_type>::append()
+void h5md<dimension, float_type>::append(double time)
 {
+    on_append_(time);
+
+    if (sample->time != time) {
+        throw logic_error("phase space sample was not updated");
+    }
+
     BOOST_FOREACH (boost::function<void ()> const& writer, writers_) {
         writer();
     }
