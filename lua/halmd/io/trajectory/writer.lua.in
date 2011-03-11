@@ -47,6 +47,8 @@ function new(args)
     return writer
 end
 
+-- override module namespace
+namespace = "trajectory"
 
 --
 -- assemble module options
@@ -63,5 +65,5 @@ function options(desc)
         end
     end
 
-    desc:add("format", po.string():choices(choices), "trajectory file format")
+    desc:add("format", po.string():choices(choices), "trajectory output file format")
 end
