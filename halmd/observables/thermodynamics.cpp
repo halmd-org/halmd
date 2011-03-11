@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -73,6 +74,13 @@ void thermodynamics<dimension>::register_observables(writer_type& writer)
 template <int dimension>
 void thermodynamics<dimension>::sample(double time)
 {
+    if (time_ == time) {
+        LOG_TRACE("[thermodynamics] sample is up to date");
+        return;
+    }
+
+    LOG_TRACE("[thermodynamics] acquire sample");
+
     scoped_timer<timer> timer_(runtime_.sample);
     en_pot_ = en_pot();
     en_kin_ = en_kin();

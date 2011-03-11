@@ -98,8 +98,10 @@ void density_mode<dimension, float_type>::acquire(double time)
 {
     scoped_timer<timer> timer_(runtime_.sample);
 
-    // do nothing if we're up to date
-    if (rho_sample_.time == time) return;
+    if (rho_sample_.time == time) {
+        LOG_TRACE("[density_mode] sample is up to date");
+        return;
+    }
 
     typedef typename phase_space_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;

@@ -102,7 +102,10 @@ void ssf<dimension>::register_observables(writer_type& writer)
 template <int dimension>
 void ssf<dimension>::sample(double time)
 {
-    if (time_ == time) return; // nothing to do, we're up to date
+    if (time_ == time) {
+        LOG_TRACE("[ssf] sample is up to date");
+        return;
+    }
 
     // acquire sample of density modes
     on_sample_(time);
