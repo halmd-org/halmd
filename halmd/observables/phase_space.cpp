@@ -48,7 +48,7 @@ void phase_space<dimension>::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
-                .def("acquire", &acquire_wrapper<phase_space>)
+                .property("acquire", &acquire_wrapper<phase_space>)
         ]
     ];
 }
