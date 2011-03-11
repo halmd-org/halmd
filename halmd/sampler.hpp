@@ -29,6 +29,7 @@
 #include <halmd/observables/observable.hpp>
 #include <halmd/runner.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd
 {
@@ -44,6 +45,8 @@ public:
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
     typedef io::profiling::writer profiling_writer_type;
     typedef utility::profiler profiler_type;
+    typedef halmd::signal<void ()> signal_type;
+    typedef typename signal_type::slot_function_type slot_function_type;
 
     struct runtime
     {
@@ -61,6 +64,17 @@ public:
       , unsigned int trajectory_interval
     );
     virtual void run();
+
+    void on_start(slot_function_type const& slot)
+    {
+        on_start_.connect(slot);
+    }
+
+    void on_finish(slot_function_type const& slot)
+    {
+        on_finish_.connect(slot);
+    }
+
     void sample(bool force=false);
     void prepare_observables(bool force=false);
     void register_runtimes(profiler_type& profiler);
@@ -102,6 +116,10 @@ private:
     unsigned trajectory_interval_;
     // profiling runtime accumulators
     runtime runtime_;
+
+    signal_type on_start_;
+
+    signal_type on_finish_;
 };
 
 } // namespace halmd

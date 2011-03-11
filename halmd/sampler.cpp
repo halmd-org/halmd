@@ -68,6 +68,9 @@ void sampler<dimension>::register_runtimes(profiler_type& profiler)
 template <int dimension>
 void sampler<dimension>::run()
 {
+    // emit signal before simulation is started
+    on_start_();
+
     {
         scoped_timer<timer> timer_(runtime_.total);
 
@@ -97,6 +100,9 @@ void sampler<dimension>::run()
       , profiling_writers.end()
       , bind(&profiling_writer_type::write, _1)
     );
+
+    // emit signal after simulation is finished
+    on_finish_();
 }
 
 /**
@@ -174,6 +180,8 @@ void sampler<dimension>::luaopen(lua_State* L)
                 .property("total_time", &sampler::total_time)
                 .property("trajectory_interval", &sampler::trajectory_interval)
                 .property("statevars_interval", &sampler::statevars_interval)
+                .def("on_start", &sampler::on_start)
+                .def("on_finish", &sampler::on_finish)
         ]
     ];
 }
