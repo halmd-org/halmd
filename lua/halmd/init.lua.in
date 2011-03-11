@@ -64,4 +64,7 @@ function run()
       , halmd.observables.thermodynamics()
     }
     sampler.statevars_writer = halmd.io.statevars.writer()
+
+    -- sample phase space before appending trajectory
+    sampler.trajectory_writer:on_append(sampler.phase_space:acquire())
 end
