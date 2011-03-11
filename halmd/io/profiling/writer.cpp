@@ -19,6 +19,7 @@
 
 #include <halmd/io/profiling/writer.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -27,6 +28,13 @@ namespace halmd
 {
 namespace io { namespace profiling
 {
+
+template <typename writer_type>
+typename signal<void ()>::slot_function_type
+write_wrapper(shared_ptr<writer_type> writer)
+{
+    return bind(&writer_type::write, writer);
+}
 
 void writer::luaopen(lua_State* L)
 {
@@ -40,7 +48,7 @@ void writer::luaopen(lua_State* L)
                 namespace_("profiling")
                 [
                     class_<writer, shared_ptr<writer> >("writer")
-                        .def("write", &writer::write)
+                        .property("write", &write_wrapper<writer>)
                 ]
             ]
         ]
