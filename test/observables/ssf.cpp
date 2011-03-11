@@ -173,6 +173,10 @@ void ssf(string const& backend)
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 
+    // compute density modes
+    BOOST_TEST_MESSAGE("compute density modes");
+    density_mode->acquire(0);
+
     // compute static structure factor
     BOOST_TEST_MESSAGE("compute static structure factor");
     ssf->sample(0);

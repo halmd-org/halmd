@@ -28,6 +28,7 @@
 #include <halmd/observables/observable.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd
 {
@@ -54,6 +55,8 @@ public:
     typedef observables::density_mode<dimension> density_mode_type;
     typedef typename _Base::writer_type writer_type;
     typedef halmd::utility::profiler profiler_type;
+    typedef halmd::signal<void (double)> signal_type;
+    typedef typename signal_type::slot_function_type slot_function_type;
 
     typedef boost::array<double, 3> result_type;
     typedef fixed_vector<double, dimension> vector_type;
@@ -81,6 +84,11 @@ public:
 
     // compute ssf from sample of density Fourier modes and store with given time
     virtual void sample(double time);
+
+    virtual void on_sample(slot_function_type const& slot)
+    {
+        on_sample_.connect(slot);
+    }
 
     //! returns last computed values for static structure factor
     std::vector<std::vector<result_type> > const& value() const
@@ -116,6 +124,8 @@ protected:
     double time_;
     /** profiling runtime accumulators */
     runtime runtime_;
+
+    signal_type on_sample_;
 };
 
 } // namespace observables

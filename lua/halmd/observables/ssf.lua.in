@@ -80,12 +80,16 @@ function new(args)
         return nil
     end
 
+    -- construct density_mode module
+    local density_mode = assert(observables.density_mode{ wavevector = wavevector })
+
     -- construct ssf module
-    local ssf = assert(ssf_wrapper[dimension])
-    return ssf(
-        assert(observables.density_mode{ wavevector = wavevector })
-      , particle.nbox
-    )
+    local ssf = assert(ssf_wrapper[dimension])(density_mode, particle.nbox)
+
+    -- acquire density modes before sampling static structure factor
+    ssf:on_sample(density_mode.acquire)
+
+    return ssf
 end
 
 --

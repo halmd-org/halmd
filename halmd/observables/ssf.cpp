@@ -103,15 +103,17 @@ template <int dimension>
 void ssf<dimension>::sample(double time)
 {
     if (time_ == time) return; // nothing to do, we're up to date
-    LOG_TRACE("[ssf] sampling");
 
-    // acquire sample of density modes and compute SSF
-    density_mode->acquire(time);
+    // acquire sample of density modes
+    on_sample_(time);
+
+    LOG_TRACE("[ssf] sampling");
 
     if (density_mode->time() != time) {
         throw logic_error("density modes sample was not updated");
     }
 
+    // compute SSF
     compute_();
 
     // iterate over combinations of particle types
@@ -191,6 +193,11 @@ void ssf<dimension>::luaopen(lua_State* L)
                     .def("register_runtimes", &ssf::register_runtimes)
                     .property("value", &ssf::value)
                     .property("wavevector", &ssf::wavevector)
+                    .def("on_sample", &ssf::on_sample)
+                    .scope
+                    [
+                        class_<slot_function_type>("slot_function_type")
+                    ]
             ]
         ]
     ];
