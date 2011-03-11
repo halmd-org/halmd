@@ -36,7 +36,6 @@ require("halmd.mdsim.sort")
 require("halmd.mdsim.velocity")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
-require("halmd.observables.phase_space")
 require("halmd.sampler")
 
 --
@@ -57,14 +56,10 @@ function run()
 
     local sampler = halmd.sampler() -- singleton
     sampler.profiling_writers = halmd.io.profiling.writer()
-    local phase_space = halmd.observables.phase_space{ memory = "host" }
     sampler.trajectory_writer = halmd.io.trajectory.writer()
     sampler.observables = {
         halmd.observables.ssf()
       , halmd.observables.thermodynamics()
     }
     sampler.statevars_writer = halmd.io.statevars.writer()
-
-    -- sample phase space before appending trajectory
-    sampler.trajectory_writer:on_append(phase_space.acquire)
 end

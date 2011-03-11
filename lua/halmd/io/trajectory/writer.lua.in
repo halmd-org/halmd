@@ -23,6 +23,9 @@ require("halmd.io.trajectory.writers")
 
 -- grab environment
 local writers = halmd.io.trajectory.writers
+local observables = {
+    phase_space = require("halmd.observables.phase_space")
+}
 local po = halmd_wrapper.po
 local assert = assert
 local pairs = pairs
@@ -34,8 +37,14 @@ module("halmd.io.trajectory.writer", halmd.modules.register)
 --
 function new(args)
     local format = args.format or "h5md" -- default value
-    local writer = assert(writers[format])
-    return writer()
+    local writer = assert(writers[format])()
+
+    -- FIXME share phase_space instance with observables::host::density_mode
+    local phase_space = assert(observables.phase_space{ memory = "host" })
+    -- sample phase space before appending trajectory
+    writer:on_append(phase_space.acquire)
+
+    return writer
 end
 
 
