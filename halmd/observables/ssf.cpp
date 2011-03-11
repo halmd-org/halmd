@@ -107,6 +107,11 @@ void ssf<dimension>::sample(double time)
 
     // acquire sample of density modes and compute SSF
     density_mode->acquire(time);
+
+    if (density_mode->time() != time) {
+        throw logic_error("density modes sample was not updated");
+    }
+
     compute_();
 
     // iterate over combinations of particle types
