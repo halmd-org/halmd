@@ -55,11 +55,22 @@ function run()
     core.velocity = halmd.mdsim.velocity{ reader = reader }
 
     local sampler = halmd.sampler() -- singleton
-    sampler.profiling_writers = halmd.io.profiling.writer()
     sampler.trajectory_writer = halmd.io.trajectory.writer()
     sampler.observables = {
         halmd.observables.ssf()
       , halmd.observables.thermodynamics()
     }
     sampler.statevars_writer = halmd.io.statevars.writer()
+
+    -- Construct profiling writers.
+    --
+    -- The profiling writers write profiling run times for all registered
+    -- modules to the log file, and FIXME optionally a HDF5 file.
+    local profiling_writers = halmd.io.profiling.writer()
+
+    -- From the table of profiling writers, add each profiling writer
+    -- to the sampler, to invoke write after the simulation is finished.
+    for _, writer in pairs(profiling_writers) do
+        sampler:on_finish(writer.write)
+    end
 end

@@ -22,7 +22,6 @@
 
 #include <lua.hpp>
 
-#include <halmd/io/profiling/writer.hpp>
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
@@ -43,7 +42,6 @@ public:
     typedef observables::observable<dimension> observable_type;
     typedef io::statevars::writer<dimension> statevars_writer_type;
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
-    typedef io::profiling::writer profiling_writer_type;
     typedef utility::profiler profiler_type;
     typedef halmd::signal<void ()> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
@@ -83,7 +81,6 @@ public:
     std::vector<boost::shared_ptr<observable_type> > observables;
     boost::shared_ptr<statevars_writer_type> statevars_writer;
     boost::shared_ptr<trajectory_writer_type> trajectory_writer;
-    std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers;
 
     uint64_t steps()
     {

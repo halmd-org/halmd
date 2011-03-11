@@ -95,12 +95,6 @@ void sampler<dimension>::run()
         LOG("finished simulation run");
     }
 
-    for_each(
-        profiling_writers.begin()
-      , profiling_writers.end()
-      , bind(&profiling_writer_type::write, _1)
-    );
-
     // emit signal after simulation is finished
     on_finish_();
 }
@@ -175,13 +169,16 @@ void sampler<dimension>::luaopen(lua_State* L)
                 .def_readwrite("observables", &sampler::observables)
                 .def_readwrite("statevars_writer", &sampler::statevars_writer)
                 .def_readwrite("trajectory_writer", &sampler::trajectory_writer)
-                .def_readwrite("profiling_writers", &sampler::profiling_writers)
                 .property("steps", &sampler::steps)
                 .property("total_time", &sampler::total_time)
                 .property("trajectory_interval", &sampler::trajectory_interval)
                 .property("statevars_interval", &sampler::statevars_interval)
                 .def("on_start", &sampler::on_start)
                 .def("on_finish", &sampler::on_finish)
+                .scope
+                [
+                    class_<slot_function_type>("slot_function_type")
+                ]
         ]
     ];
 }
