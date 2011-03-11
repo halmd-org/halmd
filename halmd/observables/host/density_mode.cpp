@@ -73,6 +73,10 @@ void density_mode<dimension, float_type>::acquire(double time)
     // trigger update of phase space sample
     phase_space_->acquire(time);
 
+    if (phase_space_->sample->time != time) {
+        throw logic_error("host phase space sample was not updated");
+    }
+
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
     unsigned int type = 0;
