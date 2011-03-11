@@ -17,8 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+
 #include <halmd/observables/phase_space.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -27,6 +30,13 @@ namespace halmd
 {
 namespace observables
 {
+
+template <typename phase_space_type>
+typename signal<void (double)>::slot_function_type
+acquire_wrapper(shared_ptr<phase_space_type> phase_space)
+{
+    return bind(&phase_space_type::acquire, phase_space, _1);
+}
 
 template <int dimension>
 void phase_space<dimension>::luaopen(lua_State* L)
@@ -38,7 +48,7 @@ void phase_space<dimension>::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
-                .def("acquire", &phase_space::acquire)
+                .def("acquire", &acquire_wrapper<phase_space>)
         ]
     ];
 }
