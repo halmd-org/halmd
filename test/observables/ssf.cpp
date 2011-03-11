@@ -173,6 +173,10 @@ void ssf(string const& backend)
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 
+    // acquire phase space sample
+    BOOST_TEST_MESSAGE("acquire phase space sample");
+    phase_space->acquire(0);
+
     // compute density modes
     BOOST_TEST_MESSAGE("compute density modes");
     density_mode->acquire(0);

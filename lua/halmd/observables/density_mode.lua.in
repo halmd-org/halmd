@@ -59,13 +59,18 @@ function new(args)
     local wavevector = assert(args.wavevector)
 
     local phase_space
-    local density_mode
     if device() then
-        density_mode = assert(density_mode_wrapper.gpu[dimension])
+        density_mode_wrapper = assert(density_mode_wrapper.gpu[dimension])
         phase_space = assert(observables.phase_space{ memory = "gpu" })
     else
-        density_mode = assert(density_mode_wrapper.host[dimension])
+        density_mode_wrapper = assert(density_mode_wrapper.host[dimension])
         phase_space = assert(observables.phase_space{ memory = "host" })
     end
-    return density_mode(phase_space, wavevector)
+
+    local density_mode = density_mode_wrapper(phase_space, wavevector)
+
+    -- acquire phase space before acquiring density modes
+    density_mode:on_acquire(phase_space.acquire)
+
+    return density_mode
 end

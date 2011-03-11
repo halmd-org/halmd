@@ -65,13 +65,14 @@ void density_mode<dimension, float_type>::acquire(double time)
 
     // do nothing if we're up to date
     if (rho_sample_.time == time) return;
-    LOG_TRACE("[density_mode] acquire sample");
 
     typedef typename phase_space_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
-    phase_space_->acquire(time);
+    on_acquire_(time);
+
+    LOG_TRACE("[density_mode] acquire sample");
 
     if (phase_space_->sample->time != time) {
         throw logic_error("host phase space sample was not updated");
