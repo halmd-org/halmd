@@ -50,6 +50,7 @@ public:
     density_mode() {}
     virtual ~density_mode() {}
     virtual void acquire(double time) = 0;
+    virtual double time() const = 0;
     virtual result_type const& value() const = 0;
     virtual wavevector_type const& wavevector() const = 0;
     virtual std::vector<double> const& wavenumber() const = 0;

@@ -83,6 +83,12 @@ public:
         return rho_sample_.rho;
     }
 
+    //! returns simulation time when sample was taken
+    virtual double time() const
+    {
+        return rho_sample_.time;
+    }
+
     //! returns wavevector object
     virtual wavevector_type const& wavevector() const
     {
