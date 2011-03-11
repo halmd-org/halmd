@@ -199,8 +199,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
     typedef signal<void ()> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter0 counter1, counter2;
     sig.connect(ref(counter1));
@@ -208,29 +209,29 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig();
+    immutable_sig();
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig();
+    immutable_sig();
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig();
+    immutable_sig();
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -240,8 +241,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
     typedef signal<void (int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter1 counter1, counter2;
     sig.connect(ref(counter1));
@@ -249,29 +251,29 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2);
+    immutable_sig(2);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2);
+    immutable_sig(2);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2);
+    immutable_sig(2);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -281,8 +283,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
     typedef signal<void (int, int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter2 counter1, counter2;
     sig.connect(ref(counter1));
@@ -290,29 +293,29 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2, 3);
+    immutable_sig(2, 3);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2, 3);
+    immutable_sig(2, 3);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2, 3);
+    immutable_sig(2, 3);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -322,8 +325,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
     typedef signal<void (int, int, int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter3 counter1, counter2;
     sig.connect(ref(counter1));
@@ -331,29 +335,29 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2, 3, 4);
+    immutable_sig(2, 3, 4);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2, 3, 4);
+    immutable_sig(2, 3, 4);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2, 3, 4);
+    immutable_sig(2, 3, 4);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -363,8 +367,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
     typedef signal<void (int, int, int, int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter4 counter1, counter2;
     sig.connect(ref(counter1));
@@ -372,31 +377,31 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), 0LU );
     BOOST_CHECK_EQUAL( counter2.count(), 0LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2, 3, 4, 5);
+    immutable_sig(2, 3, 4, 5);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2, 3, 4, 5);
+    immutable_sig(2, 3, 4, 5);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2, 3, 4, 5);
+    immutable_sig(2, 3, 4, 5);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -406,8 +411,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
     typedef signal<void (int, int, int, int, int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter5 counter1, counter2;
     sig.connect(ref(counter1));
@@ -415,29 +421,29 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2, 3, 4, 5, 6);
+    immutable_sig(2, 3, 4, 5, 6);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2, 3, 4, 5, 6);
+    immutable_sig(2, 3, 4, 5, 6);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2, 3, 4, 5, 6);
+    immutable_sig(2, 3, 4, 5, 6);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -447,8 +453,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
     typedef signal<void (int, int, int, int, int, int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter6 counter1, counter2;
     sig.connect(ref(counter1));
@@ -456,29 +463,29 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2, 3, 4, 5, 6, 7);
+    immutable_sig(2, 3, 4, 5, 6, 7);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2, 3, 4, 5, 6, 7);
+    immutable_sig(2, 3, 4, 5, 6, 7);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2, 3, 4, 5, 6, 7);
+    immutable_sig(2, 3, 4, 5, 6, 7);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -488,8 +495,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
     typedef signal<void (int, int, int, int, int, int, int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter7 counter1, counter2;
     sig.connect(ref(counter1));
@@ -497,31 +505,31 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), 0LU );
     BOOST_CHECK_EQUAL( counter2.count(), 0LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2, 3, 4, 5, 6, 7, 8);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2, 3, 4, 5, 6, 7, 8);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2, 3, 4, 5, 6, 7, 8);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -531,8 +539,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
     typedef signal<void (int, int, int, int, int, int, int, int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter8 counter1, counter2;
     sig.connect(ref(counter1));
@@ -540,29 +549,29 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2, 3, 4, 5, 6, 7, 8, 9);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8, 9);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2, 3, 4, 5, 6, 7, 8, 9);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8, 9);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2, 3, 4, 5, 6, 7, 8, 9);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8, 9);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
@@ -572,8 +581,9 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
     typedef signal<void (int, int, int, int, int, int, int, int, int)> signal_type;
 
     signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    signal_type const& immutable_sig(sig);
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter9 counter1, counter2;
     sig.connect(ref(counter1));
@@ -581,29 +591,29 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
     signal_type::connection c = sig.connect(ref(counter2));
     sig.connect(ref(counter1));
 
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
 
-    sig(2, 3, 4, 5, 6, 7, 8, 9, 10);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8, 9, 10);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
+    BOOST_CHECK( !immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
-    sig(2, 3, 4, 5, 6, 7, 8, 9, 10);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8, 9, 10);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     sig.disconnect_all_slots();
 
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
+    BOOST_CHECK( immutable_sig.empty() );
+    BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
-    sig(2, 3, 4, 5, 6, 7, 8, 9, 10);
+    immutable_sig(2, 3, 4, 5, 6, 7, 8, 9, 10);
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
