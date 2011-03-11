@@ -64,8 +64,8 @@ function run()
 
     -- Construct profiling writers.
     --
-    -- The profiling writers write profiling run times for all registered
-    -- modules to the log file, and FIXME optionally a HDF5 file.
+    -- The profiling writers write profiling run times for registered
+    -- modules to the log file, and optionally a H5MD file.
     local profiling_writers = halmd.io.profiling.writer()
 
     -- From the table of profiling writers, add each profiling writer
