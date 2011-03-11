@@ -20,8 +20,6 @@
 #define BOOST_TEST_MODULE signal
 #include <boost/test/unit_test.hpp>
 
-#include <boost/bind.hpp>
-
 #include <halmd/utility/signal.hpp>
 
 using namespace boost;
