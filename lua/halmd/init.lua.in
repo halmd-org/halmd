@@ -57,7 +57,7 @@ function run()
 
     local sampler = halmd.sampler() -- singleton
     sampler.profiling_writers = halmd.io.profiling.writer()
-    sampler.phase_space = halmd.observables.phase_space{ memory = "host" }
+    local phase_space = halmd.observables.phase_space{ memory = "host" }
     sampler.trajectory_writer = halmd.io.trajectory.writer()
     sampler.observables = {
         halmd.observables.ssf()
@@ -66,5 +66,5 @@ function run()
     sampler.statevars_writer = halmd.io.statevars.writer()
 
     -- sample phase space before appending trajectory
-    sampler.trajectory_writer:on_append(sampler.phase_space.acquire)
+    sampler.trajectory_writer:on_append(phase_space.acquire)
 end

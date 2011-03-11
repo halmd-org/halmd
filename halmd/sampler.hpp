@@ -27,7 +27,6 @@
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/observables/observable.hpp>
-#include <halmd/observables/phase_space.hpp>
 #include <halmd/runner.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -42,7 +41,6 @@ public:
     typedef mdsim::core<dimension> core_type;
     typedef observables::observable<dimension> observable_type;
     typedef io::statevars::writer<dimension> statevars_writer_type;
-    typedef observables::phase_space<dimension> phase_space_type;
     typedef io::trajectory::writer<dimension> trajectory_writer_type;
     typedef io::profiling::writer profiling_writer_type;
     typedef utility::profiler profiler_type;
@@ -70,7 +68,6 @@ public:
     boost::shared_ptr<core_type> core;
     std::vector<boost::shared_ptr<observable_type> > observables;
     boost::shared_ptr<statevars_writer_type> statevars_writer;
-    boost::shared_ptr<phase_space_type> phase_space;
     boost::shared_ptr<trajectory_writer_type> trajectory_writer;
     std::vector<boost::shared_ptr<profiling_writer_type> > profiling_writers;
 
