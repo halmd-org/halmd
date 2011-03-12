@@ -41,7 +41,7 @@ require("halmd.sampler")
 --
 -- Run simulation
 --
-function run()
+function halmd:run()
     local core = halmd.mdsim.core() -- singleton
     core.particle = halmd.mdsim.particle()
     core.box = halmd.mdsim.box()

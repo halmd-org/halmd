@@ -191,7 +191,7 @@ shared_ptr<runner> script::run()
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
 #endif
-        sampler = call_function<shared_ptr<runner> >(L, "run");
+        sampler = call_function<shared_ptr<runner> >(globals(L)["halmd"]["run"]);
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
