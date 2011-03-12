@@ -17,6 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.modules")
+
 --
 -- Load HAL’s MD package
 --
@@ -38,35 +40,44 @@ require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
 require("halmd.sampler")
 
---
--- Run simulation
---
-function halmd:run()
-    local core = halmd.mdsim.core() -- singleton
-    core.particle = halmd.mdsim.particle()
-    core.box = halmd.mdsim.box()
-    core.integrator = halmd.mdsim.integrator()
-    core.force = halmd.mdsim.force()
-    core.neighbour = halmd.mdsim.neighbour()
-    core.sort = halmd.mdsim.sort()
+-- grab environment
+local mdsim = halmd.mdsim
+local io = halmd.io
+local observables = halmd.observables
+local sampler = halmd.sampler
+local pairs = pairs
 
-    local reader = halmd.io.trajectory.reader()
-    core.position = halmd.mdsim.position{ reader = reader }
-    core.velocity = halmd.mdsim.velocity{ reader = reader }
+module("halmd", halmd.modules.register)
 
-    local sampler = halmd.sampler() -- singleton
-    sampler.trajectory_writer = halmd.io.trajectory.writer()
+--
+-- Construct simulation
+--
+function new()
+    local core = mdsim.core() -- singleton
+    core.particle = mdsim.particle()
+    core.box = mdsim.box()
+    core.integrator = mdsim.integrator()
+    core.force = mdsim.force()
+    core.neighbour = mdsim.neighbour()
+    core.sort = mdsim.sort()
+
+    local reader = io.trajectory.reader()
+    core.position = mdsim.position{ reader = reader }
+    core.velocity = mdsim.velocity{ reader = reader }
+
+    local sampler = sampler() -- singleton
+    sampler.trajectory_writer = io.trajectory.writer()
     sampler.observables = {
-        halmd.observables.ssf()
-      , halmd.observables.thermodynamics()
+        observables.ssf()
+      , observables.thermodynamics()
     }
-    sampler.statevars_writer = halmd.io.statevars.writer()
+    sampler.statevars_writer = io.statevars.writer()
 
     -- Construct profiling writers.
     --
     -- The profiling writers write profiling run times for registered
     -- modules to the log file, and optionally a H5MD file.
-    local profiling_writers = halmd.io.profiling.writer()
+    local profiling_writers = io.profiling.writer()
 
     -- From the table of profiling writers, add each profiling writer
     -- to the sampler, to invoke write after the simulation is finished.
