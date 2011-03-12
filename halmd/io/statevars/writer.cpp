@@ -17,8 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -27,6 +30,13 @@ namespace halmd
 {
 namespace io { namespace statevars
 {
+
+template <typename writer_type>
+typename signal<void (double)>::slot_function_type
+write_wrapper(shared_ptr<writer_type> writer)
+{
+    return bind(&writer_type::write, writer);
+}
 
 template <int dimension>
 void writer<dimension>::luaopen(lua_State* L)
@@ -42,7 +52,7 @@ void writer<dimension>::luaopen(lua_State* L)
                 namespace_("statevars")
                 [
                     class_<writer, shared_ptr<writer> >(class_name.c_str())
-                        .def("write", &writer::write)
+                        .property("write", &write_wrapper<writer>)
                 ]
             ]
         ]
