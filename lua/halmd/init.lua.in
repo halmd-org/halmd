@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -45,6 +45,8 @@ local mdsim = halmd.mdsim
 local io = halmd.io
 local observables = halmd.observables
 local sampler = halmd.sampler
+local po = halmd_wrapper.po
+local assert = assert
 local pairs = pairs
 
 module("halmd", halmd.modules.register)
@@ -52,7 +54,7 @@ module("halmd", halmd.modules.register)
 --
 -- Construct simulation
 --
-function new()
+function new(args)
     local core = mdsim.core() -- singleton
     core.particle = mdsim.particle()
     core.box = mdsim.box()
@@ -65,13 +67,32 @@ function new()
     core.position = mdsim.position{ reader = reader }
     core.velocity = mdsim.velocity{ reader = reader }
 
-    local sampler = sampler() -- singleton
-    sampler.trajectory_writer = io.trajectory.writer()
-    sampler.observables = {
-        observables.ssf()
-      , observables.thermodynamics()
-    }
-    sampler.statevars_writer = io.statevars.writer()
+    -- Construct sampler.
+    local sampler = sampler()
+
+    -- Optionally write trajectory.
+    if args.trajectory then
+        sampler:on_sample(io.trajectory.writer().append, args.trajectory)
+    end
+
+    -- Optionally sample macroscopic state variables.
+    if args.state_vars then
+        sampler:on_sample(observables.thermodynamics().sample, args.state_vars)
+    end
+
+    -- Optionally sample static structure factor.
+    if args.state_vars then -- FIXME args.ssf
+        -- FIXME do not return nil in observables.ssf()
+        local ssf = observables.ssf()
+        if ssf then
+            sampler:on_sample(ssf.sample, args.state_vars)
+        end
+    end
+
+    -- FIXME connect revised writer to thermodynamics and ssf
+    if args.state_vars then
+        sampler:on_sample(io.statevars.writer().write, args.state_vars)
+    end
 
     -- Construct profiling writers.
     --
@@ -87,4 +108,18 @@ function new()
 
     -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
     return sampler
+end
+
+-- override module namespace
+namespace = "sampler"
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc, globals)
+    -- FIXME desc:add("ssf", po.uint64(), "sample interval for static structure factor")
+    desc:add("state-vars", po.uint64(), "sample interval for macroscopic state variables")
+    desc:add("trajectory", po.uint64(), "sample interval for trajectory")
 end

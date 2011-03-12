@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,11 +21,9 @@
 #define HALMD_SAMPLER_HPP
 
 #include <lua.hpp>
+#include <utility> // pair
 
-#include <halmd/io/statevars/writer.hpp>
-#include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/observables/observable.hpp>
 #include <halmd/runner.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
@@ -33,54 +31,35 @@
 namespace halmd
 {
 
+/**
+ * Sampler to run Molecular Dynamics simulation
+ */
 template <int dimension>
 class sampler
   : public runner
 {
 public:
     typedef mdsim::core<dimension> core_type;
-    typedef observables::observable<dimension> observable_type;
-    typedef io::statevars::writer<dimension> statevars_writer_type;
-    typedef io::trajectory::writer<dimension> trajectory_writer_type;
     typedef utility::profiler profiler_type;
-    typedef halmd::signal<void ()> signal_type;
+    typedef halmd::signal<void (double)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
+    typedef std::pair<slot_function_type, slot_function_type> slot_function_pair_type;
 
     struct runtime
     {
         typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type msv_output;
         accumulator_type total;
     };
 
-    static void luaopen(lua_State* L);
-
-    sampler(
-        boost::shared_ptr<core_type> core
-      , uint64_t steps
-      , unsigned int statevars_interval
-      , unsigned int trajectory_interval
-    );
+    sampler(boost::shared_ptr<core_type> core, uint64_t steps);
     virtual void run();
-
-    void on_start(slot_function_type const& slot)
-    {
-        on_start_.connect(slot);
-    }
-
-    void on_finish(slot_function_type const& slot)
-    {
-        on_finish_.connect(slot);
-    }
-
-    void sample(bool force=false);
-    void prepare_observables(bool force=false);
     void register_runtimes(profiler_type& profiler);
-
-    boost::shared_ptr<core_type> core;
-    std::vector<boost::shared_ptr<observable_type> > observables;
-    boost::shared_ptr<statevars_writer_type> statevars_writer;
-    boost::shared_ptr<trajectory_writer_type> trajectory_writer;
+    void on_start(slot_function_type const& slot);
+    void on_prepare(slot_function_type const& slot, uint64_t interval);
+    void on_sample(slot_function_type const& slot, uint64_t interval);
+    void on_sample(slot_function_pair_type const& slot, uint64_t interval);
+    void on_finish(slot_function_type const& slot);
+    static void luaopen(lua_State* L);
 
     uint64_t steps()
     {
@@ -92,30 +71,25 @@ public:
         return total_time_;
     }
 
-    unsigned statevars_interval()
-    {
-        return statevars_interval_;
-    }
-
-    unsigned trajectory_interval()
-    {
-        return trajectory_interval_;
-    }
-
 private:
+    void prepare(slot_function_type const& slot, uint64_t interval, double time) const;
+    void sample(slot_function_type const& slot, uint64_t interval, double time) const;
+
+    /** Molecular Dynamics simulation core */
+    boost::shared_ptr<core_type> core_;
     /** total number of integration steps */
     uint64_t steps_;
     /** total integration time in MD units */
     double total_time_;
-    // value from option --sampling-state-vars
-    unsigned statevars_interval_;
-    // value from option --sampling-trajectory
-    unsigned trajectory_interval_;
-    // profiling runtime accumulators
+    /** profiling runtime accumulators */
     runtime runtime_;
-
+    /** signal emitted before starting simulation run */
     signal_type on_start_;
-
+    /** signal emitted before MD integration step */
+    signal_type on_prepare_;
+    /** signal emitted after MD integration step */
+    signal_type on_sample_;
+    /** signal emitted after finishing simulation run */
     signal_type on_finish_;
 };
 
