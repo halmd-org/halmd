@@ -80,7 +80,12 @@ template <int dimension>
 void core<dimension>::mdstep()
 {
     scoped_timer<timer> timer_(runtime_.mdstep);
+
+    // count MD steps starting at 1
+    step_counter_++;
+
     LOG_TRACE("performing MD step #" << step_counter_);
+
     integrator->integrate();
     if (neighbour && neighbour->check()) {
         if (sort) {
@@ -91,8 +96,6 @@ void core<dimension>::mdstep()
     force->compute();
     integrator->finalize();
 
-    // increment step counter
-    step_counter_++;
     // update MD time
     time_ = step_counter_ * integrator->timestep();
 }
