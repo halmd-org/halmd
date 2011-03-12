@@ -131,7 +131,6 @@ double thermodynamics<dimension, float_type>::hypervirial()
 template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
     module(L)
@@ -142,7 +141,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("gpu")
                 [
-                    class_<thermodynamics, shared_ptr<_Base_Base>, bases<_Base, _Base_Base> >(class_name.c_str())
+                    class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type>
                           , shared_ptr<box_type>
@@ -159,7 +158,7 @@ namespace // limit symbols to translation unit
 
 __attribute__((constructor)) void register_lua()
 {
-    lua_wrapper::register_(2) //< distance of derived to base class
+    lua_wrapper::register_(1) //< distance of derived to base class
     [
         &thermodynamics<3, float>::luaopen
     ]

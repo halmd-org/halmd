@@ -93,6 +93,16 @@ void thermodynamics<dimension>::sample(double time)
     time_ = time;
 }
 
+template <typename thermodynamics_type>
+typename thermodynamics_type::slot_function_pair_type
+sample_wrapper(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return make_pair(
+        bind(&thermodynamics_type::prepare, thermodynamics)
+      , bind(&thermodynamics_type::sample, thermodynamics, _1)
+    );
+}
+
 template <int dimension>
 void thermodynamics<dimension>::luaopen(lua_State* L)
 {
@@ -104,7 +114,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
         [
             namespace_("observables")
             [
-                class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
                     .def("register_runtimes", &thermodynamics::register_runtimes)
                     .property("en_kin", &thermodynamics::en_kin)
                     .property("en_pot", &thermodynamics::en_pot)
@@ -114,6 +124,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
                     .property("v_cm", &thermodynamics::v_cm)
                     .property("virial", &thermodynamics::virial)
                     .property("hypervirial", &thermodynamics::hypervirial)
+                    .property("sample", &sample_wrapper<thermodynamics>)
             ]
         ]
     ];
@@ -124,7 +135,7 @@ namespace // limit symbols to translation unit
 
 __attribute__((constructor)) void register_lua()
 {
-    lua_wrapper::register_(1) //< distance of derived to base class
+    lua_wrapper::register_(0) //< distance of derived to base class
     [
         &thermodynamics<3>::luaopen
     ]

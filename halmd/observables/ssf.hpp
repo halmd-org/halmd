@@ -24,8 +24,8 @@
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/io/statevars/writer.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/observables/observable.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
@@ -48,12 +48,10 @@ namespace observables
 
 template <int dimension>
 class ssf
-  : public observable<dimension>
 {
 public:
-    typedef observable<dimension> _Base;
+    typedef io::statevars::writer<dimension> writer_type;
     typedef observables::density_mode<dimension> density_mode_type;
-    typedef typename _Base::writer_type writer_type;
     typedef halmd::utility::profiler profiler_type;
     typedef halmd::signal<void (double)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
@@ -79,8 +77,6 @@ public:
     virtual void register_runtimes(profiler_type& profiler);
 
     virtual void register_observables(writer_type& writer);
-
-    virtual void prepare() {};
 
     // compute ssf from sample of density Fourier modes and store with given time
     virtual void sample(double time);
