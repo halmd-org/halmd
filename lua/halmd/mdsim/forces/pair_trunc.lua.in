@@ -19,7 +19,13 @@
 
 require("halmd.modules")
 
--- grab environment
+require("halmd.device")
+require("halmd.mdsim.core")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local pair_trunc_wrapper = {
     host = {
         [2] = halmd_wrapper.mdsim.host.forces.pair_trunc_2_
@@ -32,10 +38,7 @@ if halmd_wrapper.mdsim.gpu then
       , [3] = halmd_wrapper.mdsim.gpu.forces.pair_trunc_3_
     }
 end
-local mdsim = {
-    core = require("halmd.mdsim.core")
-}
-local device = require("halmd.device")
+-- grab standard library
 local assert = assert
 
 module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)

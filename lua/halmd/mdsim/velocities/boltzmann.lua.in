@@ -19,7 +19,15 @@
 
 require("halmd.modules")
 
--- grab environment
+require("halmd.mdsim.core")
+require("halmd.random")
+require("halmd.device")
+
+-- grab modules
+local mdsim = halmd.mdsim
+local random = halmd.random
+local device = halmd.device
+-- grab C++ wrappers
 local boltzmann_wrapper = {
     host = {
         [2] = halmd_wrapper.mdsim.host.velocities.boltzmann_2_
@@ -32,13 +40,9 @@ if halmd_wrapper.mdsim.gpu then
       , [3] = halmd_wrapper.mdsim.gpu.velocities.boltzmann_3_
     }
 end
-local mdsim = {
-    core = require("halmd.mdsim.core")
-}
-local random = require("halmd.random")
-local device = require("halmd.device")
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 
 module("halmd.mdsim.velocities.boltzmann", halmd.modules.register)

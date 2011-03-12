@@ -19,13 +19,14 @@
 
 require("halmd.modules")
 
--- grab environment
+-- grab C++ wrappers
 local device_wrapper
 if halmd_wrapper.utility.gpu then
     device_wrapper = halmd_wrapper.utility.gpu.device
 end
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 
 module("halmd.device", halmd.modules.register)

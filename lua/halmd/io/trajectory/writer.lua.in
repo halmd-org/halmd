@@ -20,13 +20,14 @@
 require("halmd.modules")
 
 require("halmd.io.trajectory.writers")
+require("halmd.observables.phase_space")
 
--- grab environment
-local writers = halmd.io.trajectory.writers
-local observables = {
-    phase_space = require("halmd.observables.phase_space")
-}
+-- grab modules
+local trajectory = halmd.io.trajectory
+local observables = halmd.observables
+-- grab C++ wrappers
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local pairs = pairs
 
@@ -37,7 +38,7 @@ module("halmd.io.trajectory.writer", halmd.modules.register)
 --
 function new(args)
     local format = args.format or "h5md" -- default value
-    local writer = assert(writers[format])()
+    local writer = assert(trajectory.writers[format])()
 
     -- FIXME share phase_space instance with observables::host::density_mode
     local phase_space = assert(observables.phase_space{ memory = "host" })
@@ -59,7 +60,7 @@ function options(desc)
 
     -- writer module choices with descriptions
     local choices = {}
-    for writer, module in pairs(writers) do
+    for writer, module in pairs(trajectory.writers) do
         if module.name then
             choices[writer] = module.name()
         end

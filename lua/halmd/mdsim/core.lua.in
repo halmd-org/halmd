@@ -19,13 +19,14 @@
 
 require("halmd.modules")
 
--- grab environment
+-- grab C++ wrappers
 local core_wrapper = {
     [2] = halmd_wrapper.mdsim.core_2_
   , [3] = halmd_wrapper.mdsim.core_3_
 }
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local error = error
 

@@ -19,8 +19,11 @@
 
 require("halmd.modules")
 
--- grab environment
-local hooks = require("halmd.hooks")
+require("halmd.hooks")
+
+-- grab modules
+local hooks = halmd.hooks
+-- grab standard library
 local assert = assert
 local setmetatable = setmetatable
 

@@ -21,14 +21,16 @@ require("halmd.modules")
 
 require("halmd.mdsim.velocities")
 
--- grab environment
+-- grab modules
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local velocity_wrapper = {
     [2] = halmd_wrapper.mdsim.velocity_2_
   , [3] = halmd_wrapper.mdsim.velocity_3_
 }
-local velocities = halmd.mdsim.velocities
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local pairs = pairs
 
@@ -44,7 +46,7 @@ function new(args)
     else
         velocity = args.velocity or "boltzmann" -- default value
     end
-    return velocities[velocity]()
+    return mdsim.velocities[velocity]()
 end
 
 --
@@ -56,7 +58,7 @@ function options(desc, globals)
 
     -- velocity module choices with descriptions
     local choices = {}
-    for velocity, module in pairs(velocities) do
+    for velocity, module in pairs(mdsim.velocities) do
         if module.name then
             choices[velocity] = module.name()
         end

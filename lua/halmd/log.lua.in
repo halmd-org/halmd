@@ -17,7 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
--- grab environment
+-- grab modules
+-- grab C++ wrappers
+-- grab standard library
 local logger_wrapper = halmd_wrapper.io.logger
 local setmetatable = setmetatable
 local rawset = rawset

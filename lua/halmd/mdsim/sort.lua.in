@@ -21,10 +21,12 @@ require("halmd.modules")
 
 require("halmd.mdsim.sorts")
 
--- grab environment
-local sorts = halmd.mdsim.sorts
+-- grab modules
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local pairs = pairs
 
@@ -35,7 +37,7 @@ module("halmd.mdsim.sort", halmd.modules.register)
 --
 function new(args)
     local sort = args.sort or "hilbert" -- default value
-    return sorts[sort]()
+    return mdsim.sorts[sort]()
 end
 
 --
@@ -47,7 +49,7 @@ function options(desc, globals)
 
     -- sort module choices with descriptions
     local choices = {}
-    for sort, module in pairs(sorts) do
+    for sort, module in pairs(mdsim.sorts) do
         if module.name then
             choices[sort] = module.name()
         end

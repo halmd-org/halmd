@@ -19,10 +19,6 @@
 
 require("halmd.modules")
 
---
--- Load HAL’s MD package
---
-require("halmd.option")
 require("halmd.io.profiling.writer")
 require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
@@ -39,12 +35,17 @@ require("halmd.mdsim.velocity")
 require("halmd.observables.sampler")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
+require("halmd.option")
 
--- grab environment
+-- grab modules
 local mdsim = halmd.mdsim
-local io = halmd.io
 local observables = halmd.observables
+local profiling = halmd.io.profiling
+local statevars = halmd.io.statevars
+local trajectory = halmd.io.trajectory
+-- grab C++ wrappers
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local pairs = pairs
 
@@ -62,7 +63,7 @@ function new(args)
     core.neighbour = mdsim.neighbour()
     core.sort = mdsim.sort()
 
-    local reader = io.trajectory.reader()
+    local reader = trajectory.reader()
     core.position = mdsim.position{ reader = reader }
     core.velocity = mdsim.velocity{ reader = reader }
 
@@ -71,7 +72,7 @@ function new(args)
 
     -- Optionally write trajectory.
     if args.trajectory then
-        sampler:on_sample(io.trajectory.writer().append, args.trajectory)
+        sampler:on_sample(trajectory.writer().append, args.trajectory)
     end
 
     -- Optionally sample macroscopic state variables.
@@ -90,14 +91,14 @@ function new(args)
 
     -- FIXME connect revised writer to thermodynamics and ssf
     if args.state_vars then
-        sampler:on_sample(io.statevars.writer().write, args.state_vars)
+        sampler:on_sample(statevars.writer().write, args.state_vars)
     end
 
     -- Construct profiling writers.
     --
     -- The profiling writers write profiling run times for registered
     -- modules to the log file, and optionally a H5MD file.
-    local profiling_writers = io.profiling.writer()
+    local profiling_writers = profiling.writer()
 
     -- From the table of profiling writers, add each profiling writer
     -- to the sampler, to invoke write after the simulation is finished.

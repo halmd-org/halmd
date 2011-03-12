@@ -18,17 +18,18 @@
 --
 
 require("halmd.modules")
+require("halmd.mdsim.core")
 
--- grab environment
+-- grab modules
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local sampler_wrapper = {
     [2] = halmd_wrapper.sampler_2_
   , [3] = halmd_wrapper.sampler_3_
 }
-local mdsim = {
-    core = require("halmd.mdsim.core")
-}
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local math = math
 

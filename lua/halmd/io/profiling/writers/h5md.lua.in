@@ -19,9 +19,13 @@
 
 require("halmd.modules")
 
--- grab environment
-local h5md_writer_wrapper = halmd_wrapper.io.profiling.writers.h5md
-local parameter = require("halmd.parameter")
+require("halmd.parameter")
+
+-- grab modules
+local parameter = halmd.parameter
+-- grab C++ wrappers
+local h5md_wrapper = halmd_wrapper.io.profiling.writers.h5md
+-- grab standard library
 local assert = assert
 
 module("halmd.io.profiling.writers.h5md", halmd.modules.register)
@@ -33,7 +37,7 @@ function new(args)
     -- command line options
     local output = assert(args.output)
 
-    local writer = h5md_writer_wrapper(output .. ".prf")
+    local writer = h5md_wrapper(output .. ".prf")
 
     parameter.register_writer(writer)
 

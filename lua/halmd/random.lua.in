@@ -19,7 +19,13 @@
 
 require("halmd.modules")
 
--- grab environment
+require("halmd.device")
+require("halmd.log")
+
+-- grab modules
+local device = halmd.device
+local log = halmd.log
+-- grab C++ wrappers
 local random_wrapper = {
     host = halmd_wrapper.host.random
   , read_integer = halmd_wrapper.random.random.read_integer
@@ -27,10 +33,9 @@ local random_wrapper = {
 if halmd_wrapper.gpu then
     random_wrapper.gpu = halmd_wrapper.gpu.random
 end
-local device = require("halmd.device")
-local log = require("halmd.log")
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local error = error
 local io = io

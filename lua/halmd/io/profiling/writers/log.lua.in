@@ -19,8 +19,9 @@
 
 require("halmd.modules")
 
--- grab environment
-local log_writer_wrapper = halmd_wrapper.io.profiling.writers.log
+-- grab C++ wrappers
+local log_wrapper = halmd_wrapper.io.profiling.writers.log
+-- grab standard library
 local assert = assert
 
 module("halmd.io.profiling.writers.log", halmd.modules.register)
@@ -29,5 +30,5 @@ module("halmd.io.profiling.writers.log", halmd.modules.register)
 -- construct HDF5 profiling writer module
 --
 function new()
-    return log_writer_wrapper()
+    return log_wrapper()
 end

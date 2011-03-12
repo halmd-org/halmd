@@ -19,8 +19,18 @@
 
 require("halmd.modules")
 
--- grab environment
-local h5md_writer = {
+require("halmd.device")
+require("halmd.mdsim.core")
+require("halmd.observables.samples.phase_space")
+require("halmd.parameter")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+local observables = halmd.observables
+local parameter = halmd.parameter
+-- grab C++ wrappers
+local h5md_wrapper = {
     host = {
         [2] = halmd_wrapper.io.trajectory.writers.h5md_2_double_
       , [3] = halmd_wrapper.io.trajectory.writers.h5md_3_double_
@@ -30,16 +40,7 @@ local h5md_writer = {
       , [3] = halmd_wrapper.io.trajectory.writers.h5md_3_float_
     }
 }
-local observables = {
-    samples = {
-        phase_space = require("halmd.observables.samples.phase_space")
-    }
-}
-local mdsim = {
-  core = require("halmd.mdsim.core")
-}
-local device = require("halmd.device")
-local parameter = require("halmd.parameter")
+-- grab standard library
 local assert = assert
 
 module("halmd.io.trajectory.writers.h5md", halmd.modules.register)
@@ -61,9 +62,9 @@ function new(args)
 
     local writer
     if not device() then
-        writer = h5md_writer.host[dimension](sample, file_name)
+        writer = h5md_wrapper.host[dimension](sample, file_name)
     else
-        writer = h5md_writer.gpu[dimension](sample, file_name)
+        writer = h5md_wrapper.gpu[dimension](sample, file_name)
     end
 
     parameter.register_writer(writer)

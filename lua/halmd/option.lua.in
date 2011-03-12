@@ -19,8 +19,9 @@
 
 require("halmd.modules")
 
--- grab environment
+-- grab C++ wrappers
 local po = halmd_wrapper.po
+-- grab standard library
 local ipairs = ipairs
 local pairs = pairs
 local setmetatable = setmetatable

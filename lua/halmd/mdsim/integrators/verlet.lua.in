@@ -19,7 +19,13 @@
 
 require("halmd.modules")
 
--- grab environment
+require("halmd.device")
+require("halmd.mdsim.core")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local verlet_wrapper = {
     host = {
         [2] = halmd_wrapper.mdsim.host.integrators.verlet_2_
@@ -32,12 +38,9 @@ if halmd_wrapper.mdsim.gpu then
       , [3] = halmd_wrapper.mdsim.gpu.integrators.verlet_3_
     }
 end
-local mdsim = {
-  core = require("halmd.mdsim.core")
-}
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
-local device = require("halmd.device")
+-- grab standard library
 local assert = assert
 
 module("halmd.mdsim.integrators.verlet", halmd.modules.register)

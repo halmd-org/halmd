@@ -19,14 +19,16 @@
 
 require("halmd.modules")
 
--- grab environment
+require("halmd.mdsim.core")
+
+-- grab modules
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local wavevector_wrapper = {
     [2] = halmd_wrapper.observables.utility.wavevector_2_
   , [3] = halmd_wrapper.observables.utility.wavevector_3_
 }
-local mdsim = {
-    core = require("halmd.mdsim.core")
-}
+-- grab standard library
 local assert = assert
 
 module("halmd.observables.utility.wavevector", halmd.modules.register)

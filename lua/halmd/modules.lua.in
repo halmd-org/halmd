@@ -17,8 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
--- grab environment
-local hooks = require("halmd.hooks")
+require("halmd.hooks")
+
+-- grab modules
+local hooks = halmd.hooks
+-- grab standard library
 local ipairs = ipairs
 local rawset = rawset
 local setmetatable = setmetatable

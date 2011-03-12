@@ -19,13 +19,16 @@
 
 require("halmd.modules")
 
+require("halmd.hooks")
 require("halmd.io.profiling.writers")
 
--- grab environment
-local writers = halmd.io.profiling.writers
+-- grab modules
+local hooks = halmd.hooks
+local profiling = halmd.io.profiling
+-- grab C++ wrappers
 local profiler_wrapper = halmd_wrapper.utility.profiler
-local hooks = require("halmd.hooks")
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local pairs = pairs
 local table = table
@@ -39,11 +42,11 @@ function new(args)
     local format = args.format -- optional
 
     -- add log writer by default
-    local writer = { writers.log() }
+    local writer = { profiling.writers.log() }
 
     -- add optional writer chosen with --format option
     if args.format then
-        table.insert(writer, writers[format]())
+        table.insert(writer, profiling.writers[format]())
     end
 
     hooks.register_object_hook(function(object, module)
@@ -69,7 +72,7 @@ function options(desc)
 
     -- writer module choices with descriptions
     local choices = {}
-    for writer, module in pairs(writers) do
+    for writer, module in pairs(profiling.writers) do
         if module.name then
             choices[writer] = module.name()
         end
