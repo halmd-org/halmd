@@ -31,10 +31,10 @@ namespace observables
 {
 
 template <typename observable_type>
-typename observable_type::observable_function_type
+typename observable_type::slot_function_pair_type
 sample_wrapper(shared_ptr<observable_type> observable)
 {
-    return make_tuple(
+    return make_pair(
         bind(&observable_type::prepare, observable)
       , bind(&observable_type::sample, observable, _1)
     );

@@ -20,8 +20,8 @@
 #ifndef HALMD_OBSERVABLES_OBSERVABLE_HPP
 #define HALMD_OBSERVABLES_OBSERVABLE_HPP
 
-#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
+#include <utility> // pair
 
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/utility/signal.hpp>
@@ -42,7 +42,7 @@ class observable
 public:
     typedef io::statevars::writer<dimension> writer_type; //< FIXME dimension-independent
     typedef typename signal<void (double)>::slot_function_type slot_function_type;
-    typedef boost::tuple<slot_function_type, slot_function_type> observable_function_type;
+    typedef std::pair<slot_function_type, slot_function_type> slot_function_pair_type;
 
     static void luaopen(lua_State* L);
 
