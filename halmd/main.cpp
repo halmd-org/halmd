@@ -50,7 +50,9 @@ int main(int argc, char **argv)
 
     log.log_to_console(logger::trace); //< facilitate debugging
 
+#ifdef NDEBUG
     try {
+#endif
         static script script; //< load Lua script engine
 
         //
@@ -149,6 +151,7 @@ int main(int argc, char **argv)
         shared_ptr<runner> sampler(script.run());
 
         sampler->run();
+#ifdef NDEBUG
     }
     catch (std::exception const& e) {
         LOG_ERROR(e.what());
@@ -160,6 +163,7 @@ int main(int argc, char **argv)
         LOG_WARNING(PROJECT_NAME " aborted");
         return EXIT_FAILURE;
     }
+#endif /* NDEBUG */
 
     LOG(PROJECT_NAME " exit");
     return EXIT_SUCCESS;
