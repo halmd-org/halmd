@@ -73,4 +73,7 @@ function run()
     for _, writer in pairs(profiling_writers) do
         sampler:on_finish(writer.write)
     end
+
+    -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
+    return sampler
 end

@@ -185,11 +185,13 @@ shared_ptr<runner> script::run()
 
     using namespace luabind;
 
+    // runner is non-template base class to template sampler
+    shared_ptr<runner> sampler;
     try {
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
 #endif
-        call_function<void>(L, "run");
+        sampler = call_function<shared_ptr<runner> >(L, "run");
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
@@ -197,18 +199,13 @@ shared_ptr<runner> script::run()
         throw;
     }
 
-    object sampler(globals(L)["halmd"]["sampler"]);
-
-    // downcast from template class sampler to base class runner
-    shared_ptr<runner> runner(call_function<shared_ptr<runner> >(sampler));
-
     // Some C++ modules are only needed during the Lua script stage,
     // e.g. the trajectory reader. To make sure these modules are
     // destructed before running the simulation, invoke the Lua
     // garbage collector now.
     lua_gc(L, LUA_GCCOLLECT, 0);
 
-    return runner;
+    return sampler;
 }
 
 /**
