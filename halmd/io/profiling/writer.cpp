@@ -30,7 +30,7 @@ namespace io { namespace profiling
 {
 
 template <typename writer_type>
-typename signal<void ()>::slot_function_type
+typename signal<void (double)>::slot_function_type
 write_wrapper(shared_ptr<writer_type> writer)
 {
     return bind(&writer_type::write, writer);
