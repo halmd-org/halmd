@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -93,6 +93,8 @@ void core<dimension>::mdstep()
 
     // increment step counter
     step_counter_++;
+    // update MD time
+    time_ = step_counter_ * integrator->timestep();
 }
 
 /**
