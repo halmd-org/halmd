@@ -26,7 +26,7 @@ local pairs = pairs
 local setmetatable = setmetatable
 local type = type
 
-module("halmd.options", halmd.modules.provider)
+module("halmd.option", halmd.modules.provider)
 
 -- parsed module options
 local vm = {}

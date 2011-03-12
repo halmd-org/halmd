@@ -139,7 +139,7 @@ void script::options(options_parser& parser)
     // retrieve the Lua function before the try-catch block
     // to avoid bogus error message on the Lua stack in case
     // call_function throws an exception
-    object options(globals(L)["halmd"]["options"]["get"]);
+    object options(globals(L)["halmd"]["option"]["get"]);
     try {
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
@@ -162,7 +162,7 @@ void script::parsed(po::variables_map const& vm)
 
     using namespace luabind;
 
-    object options(globals(L)["halmd"]["options"]["set"]);
+    object options(globals(L)["halmd"]["option"]["set"]);
     try {
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
