@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_SAMPLER_HPP
-#define HALMD_SAMPLER_HPP
+#ifndef HALMD_OBSERVABLES_SAMPLER_HPP
+#define HALMD_OBSERVABLES_SAMPLER_HPP
 
 #include <lua.hpp>
 #include <utility> // pair
@@ -29,6 +29,8 @@
 #include <halmd/utility/signal.hpp>
 
 namespace halmd
+{
+namespace observables
 {
 
 /**
@@ -93,6 +95,8 @@ private:
     signal_type on_finish_;
 };
 
+} // namespace observables
+
 } // namespace halmd
 
-#endif /* ! HALMD_SAMPLER_HPP */
+#endif /* ! HALMD_OBSERVABLES_SAMPLER_HPP */

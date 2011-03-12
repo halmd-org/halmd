@@ -20,7 +20,7 @@
 #include <boost/bind.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/sampler.hpp>
+#include <halmd/observables/sampler.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -29,6 +29,8 @@ using namespace boost;
 using namespace std;
 
 namespace halmd
+{
+namespace observables
 {
 
 /**
@@ -217,5 +219,7 @@ __attribute__((constructor)) void register_lua()
 // explicit instantiation
 template class sampler<3>;
 template class sampler<2>;
+
+} // namespace observables
 
 } // namespace halmd

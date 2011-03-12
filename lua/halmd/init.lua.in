@@ -36,15 +36,14 @@ require("halmd.mdsim.particle")
 require("halmd.mdsim.position")
 require("halmd.mdsim.sort")
 require("halmd.mdsim.velocity")
+require("halmd.observables.sampler")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
-require("halmd.sampler")
 
 -- grab environment
 local mdsim = halmd.mdsim
 local io = halmd.io
 local observables = halmd.observables
-local sampler = halmd.sampler
 local po = halmd_wrapper.po
 local assert = assert
 local pairs = pairs
@@ -68,7 +67,7 @@ function new(args)
     core.velocity = mdsim.velocity{ reader = reader }
 
     -- Construct sampler.
-    local sampler = sampler()
+    local sampler = observables.sampler()
 
     -- Optionally write trajectory.
     if args.trajectory then

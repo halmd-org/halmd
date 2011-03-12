@@ -2,6 +2,7 @@ add_library(halmd_observables
   density_mode.cpp
   observable.cpp
   phase_space.cpp
+  sampler.cpp
   ssf.cpp
   thermodynamics.cpp
 )

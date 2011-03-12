@@ -32,7 +32,7 @@ local po = halmd_wrapper.po
 local assert = assert
 local math = math
 
-module("halmd.sampler", halmd.modules.register)
+module("halmd.observables.sampler", halmd.modules.register)
 
 --
 -- construct sampler module
