@@ -21,7 +21,6 @@
 
 #include <halmd/observables/observable.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -32,17 +31,13 @@ namespace observables
 {
 
 template <typename observable_type>
-typename signal<void ()>::slot_function_type
-prepare_wrapper(shared_ptr<observable_type> observable)
-{
-    return bind(&observable_type::prepare, observable);
-}
-
-template <typename observable_type>
-typename signal<void (double)>::slot_function_type
+typename observable_type::observable_function_type
 sample_wrapper(shared_ptr<observable_type> observable)
 {
-    return bind(&observable_type::sample, observable, _1);
+    return make_tuple(
+        bind(&observable_type::prepare, observable)
+      , bind(&observable_type::sample, observable, _1)
+    );
 }
 
 template <int dimension>
@@ -56,7 +51,6 @@ void observable<dimension>::luaopen(lua_State* L)
         [
             class_<observable, shared_ptr<observable> >(class_name.c_str())
                 .def("register_observables", &observable::register_observables)
-                .property("prepare", &prepare_wrapper<observable>)
                 .property("sample", &sample_wrapper<observable>)
         ]
     ];
