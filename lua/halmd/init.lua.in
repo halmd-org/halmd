@@ -19,6 +19,10 @@
 
 require("halmd.modules")
 
+-- command-line options override H5MD file parameters
+require("halmd.option")
+require("halmd.parameter")
+
 require("halmd.io.profiling.writer")
 require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
@@ -35,7 +39,6 @@ require("halmd.mdsim.velocity")
 require("halmd.observables.sampler")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
-require("halmd.option")
 
 -- grab modules
 local mdsim = halmd.mdsim
