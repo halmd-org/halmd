@@ -188,7 +188,7 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                                , shared_ptr<random_type>
                                , vector_type const&
                             >())
-                            .def_readonly("slab", &lattice::slab)
+                            .property("slab", &lattice::slab)
                             .property("module_name", &module_name_wrapper<dimension, float_type>)
                     ]
                 ]
