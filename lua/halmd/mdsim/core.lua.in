@@ -18,6 +18,7 @@
 --
 
 require("halmd.modules")
+require("halmd.singleton")
 
 -- grab C++ wrappers
 local core_wrapper = {
@@ -30,19 +31,15 @@ local po = halmd_wrapper.po
 local assert = assert
 local error = error
 
-module("halmd.mdsim.core", halmd.modules.register)
-
-local core -- singleton instance
+module("halmd.mdsim.core", halmd.modules.register, halmd.singleton)
 
 --
 -- construct core module
 --
 function new(args)
     local dimension = args.dimension or 3 -- default value
-    if not core then
-        core = core_wrapper[dimension]()
-        assert(core.dimension == dimension)
-    end
+    local core = core_wrapper[dimension]()
+    assert(core.dimension == dimension)
     return core
 end
 
