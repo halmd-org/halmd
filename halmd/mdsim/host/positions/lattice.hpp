@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_POSITIONS_LATTICE_HPP
 #define HALMD_MDSIM_HOST_POSITIONS_LATTICE_HPP
 
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <vector>
 
