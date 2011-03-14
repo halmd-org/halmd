@@ -18,6 +18,7 @@
 --
 
 require("halmd.modules")
+require("halmd.singleton")
 
 require("halmd.device")
 require("halmd.log")
@@ -40,32 +41,27 @@ local assert = assert
 local error = error
 local io = io
 
-module("halmd.random", halmd.modules.register)
-
-local random -- singleton instance
+module("halmd.random", halmd.modules.register, halmd.singleton)
 
 --
 -- construct random module
 --
 function new(args)
-    if not random then
-        local file = args.file or "/dev/random" -- default value
-        local seed = args.seed -- optional
-        local blocks = args.blocks or 32 -- default value
-        local threads = args.threads or 256 -- default value FIXME DEVICE_SCALE
+    local file = args.file or "/dev/random" -- default value
+    local seed = args.seed -- optional
+    local blocks = args.blocks or 32 -- default value
+    local threads = args.threads or 256 -- default value FIXME DEVICE_SCALE
 
-        if not seed then
-            log.info("reading integer seed from file: " .. file)
-            seed = random_wrapper.read_integer(file)
-        end
-        local device = device()
-        if device then
-            random = random_wrapper.gpu.rand48(device, seed, blocks, threads)
-        else
-            random = random_wrapper.host.gfsr4(seed)
-        end
+    if not seed then
+        log.info("reading integer seed from file: " .. file)
+        seed = random_wrapper.read_integer(file)
     end
-    return random
+    local device = device()
+    if device then
+        return random_wrapper.gpu.rand48(device, seed, blocks, threads)
+    else
+        return random_wrapper.host.gfsr4(seed)
+    end
 end
 
 --
