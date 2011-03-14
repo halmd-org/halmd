@@ -18,6 +18,7 @@
 --
 
 require("halmd.modules")
+require("halmd.singleton")
 
 -- grab C++ wrappers
 local device_wrapper
@@ -29,9 +30,7 @@ local po = halmd_wrapper.po
 -- grab standard library
 local assert = assert
 
-module("halmd.device", halmd.modules.register)
-
-local device -- singleton instance
+module("halmd.device", halmd.modules.register, halmd.singleton)
 
 --
 -- construct device module
@@ -41,10 +40,7 @@ function new(args)
         local devices = args.devices or {}
         local threads = args.threads or 128 -- default value
 
-        if not device then
-            device = device_wrapper(devices, threads)
-        end
-        return device
+        return device_wrapper(devices, threads)
     end
 end
 
