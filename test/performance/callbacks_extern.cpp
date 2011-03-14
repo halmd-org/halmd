@@ -25,9 +25,14 @@ using namespace boost;
 using namespace std;
 
 /**
+ * To protect against link-time optimization across translation units
+ * (GCC 4.5, XL C++ 11), all functions have the noinline attribute.
+ */
+
+/**
  * Make function to noop using boost::bind
  */
-function<void (double)> bind_noop()
+__attribute__((noinline)) function<void (double)> bind_noop()
 {
     return bind(&noop, _1);
 }
@@ -35,7 +40,7 @@ function<void (double)> bind_noop()
 /**
  * Add noop function to signal
  */
-void bind_noop(halmd::signal<void (double)>& sig)
+__attribute__((noinline)) void bind_noop(halmd::signal<void (double)>& sig)
 {
     sig.connect(bind_noop());
 }
@@ -43,4 +48,4 @@ void bind_noop(halmd::signal<void (double)>& sig)
 /**
  * An empty function
  */
-void noop(double) {}
+__attribute__((noinline)) void noop(double) {}
