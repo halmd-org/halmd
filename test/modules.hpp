@@ -21,6 +21,7 @@
 #define HALMD_TEST_MODULES_HPP
 
 #include <boost/array.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <exception>
