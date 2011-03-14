@@ -216,7 +216,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                                , shared_ptr<random_type>
                                , typename box_type::vector_type const&
                              >())
-                            .def_readonly("slab", &lattice::slab)
+                            .property("slab", &lattice::slab)
                             .def("register_runtimes", &lattice::register_runtimes)
                             .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                     ]

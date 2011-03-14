@@ -103,11 +103,11 @@ void morse<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                         >())
-                        .def_readonly("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)
-                        .def_readonly("r_cut_sigma", &morse::r_cut_sigma)
-                        .def_readonly("epsilon", &morse::epsilon)
-                        .def_readonly("sigma", &morse::sigma)
-                        .def_readonly("r_min_sigma", &morse::r_min_sigma)
+                        .property("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)
+                        .property("r_cut_sigma", &morse::r_cut_sigma)
+                        .property("epsilon", &morse::epsilon)
+                        .property("sigma", &morse::sigma)
+                        .property("r_min_sigma", &morse::r_min_sigma)
                 ]
             ]
         ]
