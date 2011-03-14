@@ -46,8 +46,6 @@ public:
     // with higher precision if sampled vith gsl_rng_uniform().
     typedef double result_type;
     static bool const has_fixed_range = true;
-    static result_type const min_value = 0.0;
-    static result_type const max_value = 1.0;
 
     /**
      * create new instance of random number generator
@@ -129,7 +127,7 @@ public:
      */
     result_type min() const
     {
-        return min_value;
+        return 0.0;
     }
 
     /**
@@ -137,7 +135,7 @@ public:
      */
     result_type max() const
     {
-        return max_value;
+        return 1.0;
     }
 
     /**
