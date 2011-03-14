@@ -194,7 +194,7 @@ size_t result(size_t calls, size_t slots)
 
 BOOST_AUTO_TEST_CASE( halmd_signal0 )
 {
-    typedef signal<void ()> signal_type;
+    typedef halmd::signal<void ()> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal1 )
 {
-    typedef signal<void (int)> signal_type;
+    typedef halmd::signal<void (int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal2 )
 {
-    typedef signal<void (int, int)> signal_type;
+    typedef halmd::signal<void (int, int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -320,7 +320,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal3 )
 {
-    typedef signal<void (int, int, int)> signal_type;
+    typedef halmd::signal<void (int, int, int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal4 )
 {
-    typedef signal<void (int, int, int, int)> signal_type;
+    typedef halmd::signal<void (int, int, int, int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal5 )
 {
-    typedef signal<void (int, int, int, int, int)> signal_type;
+    typedef halmd::signal<void (int, int, int, int, int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal6 )
 {
-    typedef signal<void (int, int, int, int, int, int)> signal_type;
+    typedef halmd::signal<void (int, int, int, int, int, int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -490,7 +490,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal7 )
 {
-    typedef signal<void (int, int, int, int, int, int, int)> signal_type;
+    typedef halmd::signal<void (int, int, int, int, int, int, int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -534,7 +534,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal8 )
 {
-    typedef signal<void (int, int, int, int, int, int, int, int)> signal_type;
+    typedef halmd::signal<void (int, int, int, int, int, int, int, int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
@@ -576,7 +576,7 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal9 )
 {
-    typedef signal<void (int, int, int, int, int, int, int, int, int)> signal_type;
+    typedef halmd::signal<void (int, int, int, int, int, int, int, int, int)> signal_type;
 
     signal_type sig;
     signal_type const& immutable_sig(sig);
