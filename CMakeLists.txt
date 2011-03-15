@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 2.6)
 
+if(NOT HALMD_DOC_ONLY)
+  set(HALMD_DOC_ONLY FALSE)
+else()
+  set(HALMD_DOC_ONLY TRUE)
+endif()
+set(HALMD_DOC_ONLY ${HALMD_DOC_ONLY} CACHE INTERNAL "Build HALMD documentation only" FORCE)
+
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules")
+
+if(NOT HALMD_DOC_ONLY)
+
 project(HALMD)
 
 if (HALMD_USE_STATIC_LIBS)
@@ -9,8 +20,6 @@ if (HALMD_USE_STATIC_LIBS)
   set(HDF5_USE_STATIC_LIBS TRUE)
   set(GSL_USE_STATIC_LIBS TRUE)
 endif(HALMD_USE_STATIC_LIBS)
-
-set(CMAKE_MODULE_PATH ${HALMD_SOURCE_DIR}/CMakeModules)
 
 find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
   date_time
@@ -137,3 +146,14 @@ if(SPHINX_FOUND)
   add_subdirectory(doc)
 endif(SPHINX_FOUND)
 add_subdirectory(src)
+
+else(NOT HALMD_DOC_ONLY)
+
+project(HALMD NONE) # no compiler languages
+
+find_package(Sphinx QUIET REQUIRED)
+find_package(LATEX QUIET REQUIRED)
+
+add_subdirectory(doc)
+
+endif(NOT HALMD_DOC_ONLY)
