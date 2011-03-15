@@ -151,8 +151,15 @@ else(NOT HALMD_DOC_ONLY)
 
 project(HALMD NONE) # no compiler languages
 
+find_package(Git QUIET REQUIRED)
 find_package(Sphinx QUIET REQUIRED)
 find_package(LATEX QUIET REQUIRED)
+
+git_repository_info(${HALMD_SOURCE_DIR} HALMD)
+
+set(PROGRAM_NAME "${PROJECT_NAME}")
+set(PROGRAM_DESC "HAL’s MD package")
+set(PROGRAM_VERSION "${HALMD_GIT_VERSION}")
 
 add_subdirectory(doc)
 
