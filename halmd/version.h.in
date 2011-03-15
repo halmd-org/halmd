@@ -69,6 +69,6 @@
 #define PROGRAM_DATE		"@PROGRAM_DATE@"
 #define PROGRAM_BUILT		__DATE__ " " __TIME__
 #define PROGRAM_AUTHORS		"Peter Colberg and Felix Höfling"
-#define PROGRAM_COPYRIGHT	"Copyright © 2007-2010  " PROGRAM_AUTHORS
+#define PROGRAM_COPYRIGHT	"Copyright © 2007-2011  " PROGRAM_AUTHORS
 
 #endif /* !MDSIM_VERSION_H */
