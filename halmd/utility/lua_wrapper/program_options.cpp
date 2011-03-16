@@ -19,6 +19,7 @@
 
 #include <iomanip>
 #include <sstream>
+#include <stdint.h> // <cstdint> is C++0x
 
 #include <halmd/utility/lua_wrapper/array_converter.hpp>
 #include <halmd/utility/lua_wrapper/long_long_converter.hpp> // *int64_t on x86
