@@ -21,6 +21,7 @@
 #define HALMD_UTILITY_PROGRAM_OPTIONS_TYPED_VALUE_HPP
 
 #include <boost/program_options.hpp>
+#include <boost/version.hpp>
 
 namespace halmd
 {
@@ -97,11 +98,13 @@ public:
         return static_cast<extended_typed_value*>(this);
     }
 
+#if BOOST_VERSION >= 104200
     extended_typed_value* required()
     {
         _Base::required();
         return static_cast<extended_typed_value*>(this);
     }
+#endif /* BOOST_VERSION >= 104200 */
 
     extended_typed_value* conflicts(std::string const& name)
     {

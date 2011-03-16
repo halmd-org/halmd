@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/array.hpp>
+#include <boost/version.hpp>
 
 #include <halmd/utility/program_options/program_options.hpp>
 #include "predicates.hpp"
@@ -683,6 +684,8 @@ BOOST_AUTO_TEST_CASE( notifier )
     BOOST_CHECK_EQUAL( vm["dimension"].as<int>(), 42 );
 }
 
+#if BOOST_VERSION >= 104200
+
 /**
  * test required value
  */
@@ -721,6 +724,8 @@ BOOST_AUTO_TEST_CASE( missing_required_value )
     BOOST_CHECK_THROW( po::notify(vm), po::required_option );
     BOOST_CHECK( vm["time"].empty() );
 }
+
+#endif /* BOOST_VERSION >= 104200 */
 
 /**
  * test multi-token value
