@@ -20,6 +20,7 @@
 #define BOOST_TEST_MODULE options_parser
 #include <boost/test/unit_test.hpp>
 
+#include <boost/version.hpp>
 #include <sstream>
 
 #include <halmd/utility/options_parser.hpp>
@@ -785,9 +786,15 @@ BOOST_AUTO_TEST_CASE( multiple_modules )
         parser.add(desc, "morse");
     }
     stringstream is;
+#if BOOST_VERSION >= 104200
     is << "verbose ="                           << endl
        << "verbose ="                           << endl
        << "verbose ="                           << endl
+#else // https://svn.boost.org/trac/boost/ticket/1537
+    is << "verbose = true"                      << endl
+       << "verbose = true"                      << endl
+       << "verbose = true"                      << endl
+#endif
                                                 << endl
        << "[box]"                               << endl
        << "dimension=3"                         << endl
@@ -869,9 +876,15 @@ BOOST_AUTO_TEST_CASE( command_line_and_config_file )
     po::variables_map vm;
     parser.parse_command_line(args.size(), const_cast<char**>(&args.front()), vm);
     stringstream is;
+#if BOOST_VERSION >= 104200
     is << "verbose ="                           << endl
        << "verbose ="                           << endl
        << "verbose ="                           << endl
+#else // https://svn.boost.org/trac/boost/ticket/1537
+    is << "verbose = true"                      << endl
+       << "verbose = true"                      << endl
+       << "verbose = true"                      << endl
+#endif
                                                 << endl
        << "[box]"                               << endl
        << "dimension=3"                         << endl
