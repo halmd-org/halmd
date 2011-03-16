@@ -22,6 +22,7 @@
 
 #include <boost/array.hpp>
 #include <boost/version.hpp>
+#include <stdint.h> // <cstdint> is C++0x
 
 #include <halmd/utility/program_options/program_options.hpp>
 #include "predicates.hpp"
