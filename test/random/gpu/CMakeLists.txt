@@ -3,7 +3,7 @@ add_executable(test_rand48
   )
 target_link_libraries(test_rand48
   halmd_random_gpu
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
   ${Boost_SYSTEM_LIBRARY}
   ${CUDA_LIBRARIES}
 )

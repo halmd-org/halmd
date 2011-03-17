@@ -2,7 +2,7 @@ add_executable(test_demangle
   demangle.cpp
 )
 target_link_libraries(test_demangle
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(demangle
   test_demangle --log_level=test_suite
@@ -12,7 +12,7 @@ add_executable(test_signal
   signal.cpp
 )
 target_link_libraries(test_signal
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(signal
   test_signal --log_level=test_suite
@@ -27,7 +27,7 @@ target_link_libraries(test_options_parser
   halmd_utility_program_options
   halmd_utility_lua_wrapper
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(options_parser
   test_options_parser --log_level=test_suite

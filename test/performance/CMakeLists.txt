@@ -14,7 +14,7 @@ endif(WITH_CUDA)
 target_link_libraries(test_callbacks
   test_tools_lua
   ${HALMD_COMMON_LIBRARIES}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(callbacks
   test_callbacks --log_level=message

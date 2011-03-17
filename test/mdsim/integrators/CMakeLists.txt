@@ -29,7 +29,7 @@ target_link_libraries(test_integrator_verlet_nvt_andersen
   halmd_observables
   halmd_utility
   ${HALMD_COMMON_LIBRARIES}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(module_mdsim_integrator_verlet_nvt_andersen_host_2d
   test_integrator_verlet_nvt_andersen --run_test=verlet_nvt_andersen/host/2d --log_level=test_suite

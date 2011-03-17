@@ -4,7 +4,7 @@ add_executable(test_logger
 target_link_libraries(test_logger
   halmd_io
   ${HALMD_COMMON_LIBRARIES}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(io_logger
   test_logger --log_level=test_suite
@@ -19,7 +19,7 @@ target_link_libraries(test_profiling_writers
   halmd_utility
   halmd_io
   ${HALMD_COMMON_LIBRARIES}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(io_profiling_writers
   test_profiling_writers --log_level=test_suite

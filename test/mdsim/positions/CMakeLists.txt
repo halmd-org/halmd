@@ -24,7 +24,7 @@ target_link_libraries(test_position_lattice
   halmd_random
   halmd_utility
   ${HALMD_COMMON_LIBRARIES}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(module_mdsim_position_lattice_host_2d
   test_position_lattice --run_test=lattice/host/2d --log_level=test_suite

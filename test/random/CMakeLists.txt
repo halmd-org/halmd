@@ -4,7 +4,7 @@ if(WITH_CUDA)
   add_executable(test_rand_dist rand_dist.cpp)
   target_link_libraries(test_rand_dist
     halmd_random_gpu
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+    ${HALMD_TEST_LIBRARIES}
     ${CUDA_LIBRARIES}
     ${GSL_LIBRARIES}
   )
