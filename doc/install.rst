@@ -28,7 +28,7 @@ HALMD is known to compile with these C++ compilers.
   - Clang 2.8 on Linux (x86_64)
 
 
-The following C++ compilers *fail* to compile HALMD.
+The following C++ compilers **fail** to compile HALMD.
 
 * Clang ≤ 2.7
 
