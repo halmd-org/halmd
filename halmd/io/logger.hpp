@@ -20,6 +20,8 @@
 #ifndef HALMD_IO_LOGGER_HPP
 #define HALMD_IO_LOGGER_HPP
 
+// increase compiler compatibility, e.g. with Clang 2.8
+#define BOOST_LOG_NO_UNSPECIFIED_BOOL
 #include <boost/log/sinks/sync_frontend.hpp>
 #include <boost/log/sinks/text_file_backend.hpp>
 #include <boost/log/sinks/text_ostream_backend.hpp>
