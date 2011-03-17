@@ -18,7 +18,6 @@ if (HALMD_USE_STATIC_LIBS)
     "Build statically linked backend executables")
   set(Boost_USE_STATIC_LIBS TRUE)
   set(HDF5_USE_STATIC_LIBS TRUE)
-  set(GSL_USE_STATIC_LIBS TRUE)
 endif(HALMD_USE_STATIC_LIBS)
 
 # The FindBoost CMake module prefers multi-threaded libraries (filenames with
@@ -44,7 +43,6 @@ find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
   )
 find_package(CUDA QUIET)
 find_package(Git QUIET REQUIRED)
-find_package(GSL QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)
 find_package(Lua51 QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
@@ -194,7 +192,6 @@ set(HALMD_COMMON_LIBRARIES
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
-  ${GSL_LIBRARIES}
   ${HDF5_CPP_LIBRARY}
   ${HDF5_LIBRARY}
   ${LUABIND_LIBRARIES}
@@ -225,7 +222,6 @@ include_directories(${HALMD_SOURCE_DIR}/include)
 include_directories(${HALMD_SOURCE_DIR})
 include_directories(${HALMD_BINARY_DIR})
 include_directories(${Boost_INCLUDE_DIR})
-include_directories(${GSL_INCLUDE_DIR})
 include_directories(${HDF5_INCLUDE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
 include_directories(${LUABIND_INCLUDE_DIR})

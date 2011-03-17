@@ -227,37 +227,6 @@ Include HDF5 in your shell environment, by adding to ~/.bashrc::
    export CMAKE_PREFIX_PATH="${HOME}/usr/hdf5-1.8.6${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
-GNU Scientific Library
-----------------------
-
-Get the latest `GSL source package`_, currently `GSL 1.14`_.
-
-.. _GSL source package: http://www.gnu.org/software/gsl/
-.. _GSL 1.14: http://ftpmirror.gnu.org/gsl/gsl-1.14.tar.gz
-
-Prepare the GSL build with ::
-
-   ./configure --prefix=$HOME/usr/gsl-1.14
-
-Compile GSL using ::
-
-   make
-
-Install the GSL libraries into your packages directory::
-
-   make install
-
-Include GSL in your shell environment, by adding to ~/.bashrc::
-
-   export CMAKE_PREFIX_PATH="${HOME}/usr/gsl-1.14${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export LD_LIBRARY_PATH="${HOME}/usr/gsl-1.14/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
-   export PATH="${HOME}/usr/gsl-1.14/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/usr/gsl-1.14/share/man${MANPATH+:$MANPATH}"
-
-
-NVIDIA CUDA toolkit
--------------------
-
 Sphinx
 ------
 

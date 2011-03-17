@@ -69,8 +69,6 @@ These software packages are required for compilation:
 
 * `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ >= 1.6.6
 
-* `GNU Scientific Library <http://www.gnu.org/software/gsl/>`_ (GSL)
-
 * `Git <http://git-scm.com/>`_ >= 1.5.6.2
 
 
@@ -163,7 +161,6 @@ standard C and C++ libraries::
       -DHALMD_BACKEND_EXECUTABLES=TRUE \
       -DBoost_USE_STATIC_LIBS=TRUE \
       -DHDF5_USE_STATIC_LIBS=TRUE \
-      -DGSL_USE_STATIC_LIBS=TRUE \
       ../..
 
 The options given here correspond to the default values.
@@ -183,14 +180,6 @@ Alternatively, you may use CMake's graphical interface::
 The following switch displays the actual commands invoked by make::
 
   CMAKE_VERBOSE_MAKEFILE	ON
-
-On some 64-bit systems, cmake may accidently use a 32-bit library instead of its
-64-bit counterpart, which results in linker errors. With Mandriva Linux, the
-following adjustments are required in ccmake::
-
-  GSL_CBLAS_LIBRARY		/usr/lib64/libgslcblas.so.0
-  GSL_LIBRARY			/usr/lib64/libgsl.so.0
-
 
 An installation prefix may be specified as following::
 
