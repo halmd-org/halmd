@@ -3,6 +3,42 @@
 Installation
 ************
 
+Supported compilers
+===================
+
+HALMD is known to compile with these C++ compilers.
+
+* GCC 4.4
+
+  - GCC 4.4.5 on Debian GNU/Linux 6.0 (x86 and x86_64)
+  - GCC 4.4.4 on RHEL 6.0 (x86_64)
+  - GCC 4.4.3 on Ubuntu 10.04 LTS (x86_64)
+
+* GCC 4.3
+
+  - GCC 4.3.3 on Ubuntu 9.04 (x86_64)
+  - GCC 4.3.2 on Debian GNU/Linux 5.0 (x86_64)
+
+* GCC 4.1
+
+  - GCC 4.1.2 on RHEL 5.5 (x86_64)
+
+* Clang 2.8
+
+  - Clang 2.8 on Linux (x86_64)
+
+
+The following C++ compilers *fail* to compile HALMD.
+
+* Clang ≤ 2.7
+
+  - Clang 2.7 on Linux (x86_64)
+
+* XL C++
+
+  - XL C++ 10.1 and 11.1 on AIX 5.3 (POWER6)
+
+
 Software prerequisites
 ======================
 
