@@ -7,5 +7,5 @@ target_link_libraries(test_pick_lattice_points
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(observables_utility_pick_lattice_points
-  test_pick_lattice_points
+  test_pick_lattice_points --log_level=test_suite
 )
