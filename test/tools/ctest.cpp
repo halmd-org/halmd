@@ -17,11 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
+#include <boost/test/test_tools.hpp>
+#include <boost/test/unit_test_suite.hpp>
 
-using namespace std;
-
-static __attribute__((constructor)) void ctest_full_output()
+/**
+ * Print CTEST_FULL_OUTPUT to avoid ctest truncation of output.
+ *
+ * Requires --log_level=message or --log_level=test_suite.
+ */
+struct ctest_full_output
 {
-    cout << "Avoid ctest truncation of output: CTEST_FULL_OUTPUT" << endl;
-}
+    ctest_full_output()
+    {
+        BOOST_TEST_MESSAGE( "Avoid ctest truncation of output: CTEST_FULL_OUTPUT" );
+    }
+};
+
+/**
+ * To avoid static initialization order fiasco, add the CTEST_FULL_OUTPUT
+ * printer as a global fixture instead of an __attribute__((constructor))
+ * function. The global fixture is instantiated before the test run.
+ */
+BOOST_GLOBAL_FIXTURE( ctest_full_output );
