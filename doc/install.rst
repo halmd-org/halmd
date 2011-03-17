@@ -23,10 +23,15 @@ HALMD is known to compile with these C++ compilers.
 
   - GCC 4.1.2 on RHEL 5.5 (x86_64)
 
-* Clang 2.8
+* Clang 2.8 (requires latest `Luabind source`_)
 
   - Clang 2.8 on Linux (x86_64)
 
+* Intel C++ compiler (requires latest `Luabind source`_)
+
+  - Intel C++ compiler 11.1 and 12.0 on Linux (x86_64)
+
+.. _Luabind source: https://github.com/luabind/luabind
 
 The following C++ compilers **fail** to compile HALMD.
 
