@@ -21,13 +21,15 @@
 #define HALMD_RANDOM_HOST_RANDOM_HPP
 
 #include <algorithm>
+#include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_01.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/variate_generator.hpp>
 #include <lua.hpp>
 #include <iterator>
 #include <utility>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/random/host/gsl_rng.hpp>
 #include <halmd/random/random.hpp>
 
 namespace halmd
@@ -40,7 +42,7 @@ class random
 {
 public:
     typedef halmd::random::random _Base;
-    typedef host::gfsr4 random_generator; // FIXME template parameter
+    typedef boost::mt19937 random_generator; // FIXME template parameter
 
     static void luaopen(lua_State* L);
 
@@ -76,7 +78,9 @@ void random::shuffle(input_iterator first, input_iterator last)
 {
     typedef typename std::iterator_traits<input_iterator>::difference_type difference_type;
     for (difference_type i = last - first; i > 1; --i) {
-        std::iter_swap(first + rng_(i), first + (i - 1));
+        boost::uniform_int<> dist(0, i - 1);
+        boost::variate_generator<random_generator&, boost::uniform_int<> > variate(rng_, dist);
+        std::iter_swap(first + variate(), first + (i - 1));
     }
 }
 
