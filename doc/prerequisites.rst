@@ -34,19 +34,19 @@ Instead of setting CMAKE_PREFIX_PATH manually, you would include the package dir
 CMake
 -----
 
-Get the latest `CMake source package`_, currently `CMake 2.8.3`_.
+Get the latest `CMake source package`_, currently `CMake 2.8.4`_.
 
-Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.3`_.
+Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.4`_.
 
 Get this `CMake patch`_ to fix a `bug with lib64 path suffixes in CXX-only projects`_.
 
 .. _CMake source package: http://cmake.org/cmake/resources/software.html
 
-.. _CMake 2.8.3: http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz
+.. _CMake 2.8.4: http://www.cmake.org/files/v2.8/cmake-2.8.4.tar.gz
 
 .. _CMake-CUDA: http://software.colberg.org/projects/cmake-cuda
 
-.. _CMake-CUDA 2.8.3: http://software.colberg.org/attachments/download/7/cmake-cuda-2.8.3.patch
+.. _CMake-CUDA 2.8.4: http://software.colberg.org/attachments/download/7/cmake-cuda-2.8.4.patch
 
 .. _CMake patch: http://public.kitware.com/Bug/file_download.php?file_id=3759&type=bug
 
@@ -54,12 +54,12 @@ Get this `CMake patch`_ to fix a `bug with lib64 path suffixes in CXX-only proje
 
 Extract the CMake source package, and apply the patches in the CMake source directory with ::
 
-   patch -p1 < ../cmake-cuda-2.8.3.patch
+   patch -p1 < ../cmake-cuda-2.8.4.patch
    patch -p1 < ../cmake_add_lib64_prefix_for_any_language.patch
 
 Prepare the CMake build with ::
 
-   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.3
+   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.4
 
 Compile CMake with ::
 
@@ -71,8 +71,8 @@ Install CMake into your packages directory::
 
 Include CMake in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/cmake-cuda-2.8.3/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/usr/cmake-cuda-2.8.3/man${MANPATH+:$MANPATH}"
+   export PATH="${HOME}/usr/cmake-cuda-2.8.4/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/usr/cmake-cuda-2.8.4/man${MANPATH+:$MANPATH}"
 
 
 Boost
