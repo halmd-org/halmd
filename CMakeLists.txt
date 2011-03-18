@@ -32,15 +32,13 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
 find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
-  date_time
   filesystem
   log
   program_options
-  regex
   system
   thread
   unit_test_framework
-  )
+)
 find_package(CUDA QUIET)
 find_package(Git QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)
