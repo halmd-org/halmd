@@ -38,7 +38,7 @@ Get the latest `CMake source package`_, currently `CMake 2.8.4`_.
 
 Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.4`_.
 
-Get this `CMake patch`_ to fix a `bug with lib64 path suffixes in CXX-only projects`_.
+To fix a bug with `lib64 paths in CXX-only projects`_, get this `CMake patch`_.
 
 .. _CMake source package: http://cmake.org/cmake/resources/software.html
 
@@ -48,9 +48,9 @@ Get this `CMake patch`_ to fix a `bug with lib64 path suffixes in CXX-only proje
 
 .. _CMake-CUDA 2.8.4: http://software.colberg.org/attachments/download/7/cmake-cuda-2.8.4.patch
 
-.. _CMake patch: http://public.kitware.com/Bug/file_download.php?file_id=3759&type=bug
+.. _lib64 paths in CXX-only projects: http://public.kitware.com/Bug/view.php?id=10813#c25824
 
-.. _bug with lib64 path suffixes in CXX-only projects: http://public.kitware.com/Bug/view.php?id=10813#c25824
+.. _CMake patch: http://public.kitware.com/Bug/file_download.php?file_id=3759&type=bug
 
 Extract the CMake source package, and apply the patches in the CMake source directory with ::
 
