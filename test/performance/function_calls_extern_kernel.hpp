@@ -17,12 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_TEST_PERFORMANCE_CALLBACKS_EXTERN_KERNEL_HPP
-#define HALMD_TEST_PERFORMANCE_CALLBACKS_EXTERN_KERNEL_HPP
+#ifndef HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_EXTERN_KERNEL_HPP
+#define HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_EXTERN_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 void launch_noop_kernel(dim3 grid, dim3 block, double dummy);
 extern cuda::function<void (double)> noop_kernel;
 
-#endif /* ! HALMD_TEST_PERFORMANCE_CALLBACKS_EXTERN_KERNEL_HPP */
+#endif /* ! HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_EXTERN_KERNEL_HPP */

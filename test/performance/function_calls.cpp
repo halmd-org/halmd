@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE callbacks
+#define BOOST_TEST_MODULE function_calls
 #include <boost/test/unit_test.hpp>
 
 #include <boost/signals2.hpp>
@@ -27,9 +27,9 @@
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/lua.hpp>
-#include <test/performance/callbacks_extern.hpp>
+#include <test/performance/function_calls_extern.hpp>
 #ifdef WITH_CUDA
-# include <test/performance/callbacks_extern_kernel.hpp>
+# include <test/performance/function_calls_extern_kernel.hpp>
 #endif
 
 /**

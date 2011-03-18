@@ -17,35 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
-
-#include <test/performance/callbacks_extern.hpp>
-
-using namespace boost;
-using namespace std;
-
-/**
- * To protect against link-time optimization across translation units
- * (GCC 4.5, XL C++ 11), all functions have the noinline attribute.
- */
-
-/**
- * Make function to noop using boost::bind
- */
-__attribute__((noinline)) function<void (double)> bind_noop()
-{
-    return bind(&noop, _1);
-}
-
-/**
- * Add noop function to signal
- */
-__attribute__((noinline)) void bind_noop(halmd::signal<void (double)>& sig)
-{
-    sig.connect(bind_noop());
-}
+#include <test/performance/function_calls_extern_kernel.hpp>
 
 /**
  * An empty function
  */
-__attribute__((noinline)) void noop(double) {}
+static __global__ void noop(double) {}
+
+/**
+ * Launch noop CUDA kernel
+ */
+void launch_noop_kernel(dim3 grid, dim3 block, double dummy)
+{
+    noop<<<grid, block>>>(dummy);
+}
+
+cuda::function<void (double)> noop_kernel(&noop);
