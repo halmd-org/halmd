@@ -45,7 +45,7 @@
 # include <cuda_wrapper/version.hpp>
 #endif /* ! __CUDACC__ */
 
-#if !defined(__CUDACC__) && !defined(__DEVICE_EMULATION__)
+#if !defined(__CUDACC__)
 # include <cuda_wrapper/driver/context.hpp>
 # include <cuda_wrapper/driver/error.hpp>
 # include <cuda_wrapper/driver/mem.hpp>
