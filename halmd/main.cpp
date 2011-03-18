@@ -140,9 +140,6 @@ int main(int argc, char **argv)
 #ifndef NDEBUG
         LOG_WARNING("built with enabled debugging");
 #endif
-#ifdef __DEVICE_EMULATION__
-        LOG_WARNING("built with device emulation");
-#endif
         LOG("command line: " << join(vector<string>(argv, argv + argc), " "));
         LOG("host name: " << host_name());
 
