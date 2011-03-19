@@ -46,7 +46,7 @@ To fix a bug with `lib64 paths in CXX-only projects`_, get this `CMake patch`_.
 
 .. _CMake-CUDA: http://software.colberg.org/projects/cmake-cuda
 
-.. _CMake-CUDA 2.8.4: http://software.colberg.org/attachments/download/9/cmake-cuda-2.8.4.patch
+.. _CMake-CUDA 2.8.4: http://software.colberg.org/attachments/download/10/cmake-cuda-2.8.4.patch
 
 .. _lib64 paths in CXX-only projects: http://public.kitware.com/Bug/view.php?id=10813#c25824
 
