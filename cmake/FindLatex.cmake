@@ -24,14 +24,14 @@ find_program(LATEX_COMPILER NAMES latex
   HINTS
   $ENV{LATEX_DIR}
   PATH_SUFFIXES bin
-  DOC "Latex compiler"
+  DOC "LaTeX compiler"
 )
 
 find_program(PDFLATEX_COMPILER NAMES pdflatex
   HINTS
   $ENV{LATEX_DIR}
   PATH_SUFFIXES bin
-  DOC "PdfLatex compiler"
+  DOC "pdfLaTeX compiler"
 )
 
 find_program(DVIPNG_CONVERTER NAMES dvipng
