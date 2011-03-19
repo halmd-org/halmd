@@ -2,7 +2,7 @@ add_library(test_tools_lua
   lua.cpp
 )
 target_link_libraries(test_tools_lua
-  ${LUABIND_LIBRARIES}
+  ${LUABIND_LIBRARY}
   ${LUA_LIBRARIES}
   dl
 )
