@@ -39,7 +39,7 @@ macro(git_repository DIR PREFIX)
   # Rerun CMake if .git/logs/HEAD is touched, which occurs if commit changes.
   configure_file(
     "${_GIT_DIR}/logs/HEAD"
-    "CMakeFiles/git_repository/${PREFIX}/logs/HEAD"
+    "CMakeFiles/GitRepository/${PREFIX}/logs/HEAD"
     COPYONLY
   )
 
