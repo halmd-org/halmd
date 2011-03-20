@@ -9,6 +9,30 @@ set(HALMD_DOC_ONLY ${HALMD_DOC_ONLY} CACHE INTERNAL "Build HALMD documentation o
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+find_package(Git QUIET REQUIRED)
+find_package(GitRepository QUIET REQUIRED)
+
+git_repository("${CMAKE_SOURCE_DIR}" HALMD)
+
+set(PROGRAM_NAME "halmd")
+set(PROGRAM_DESC "HAL’s MD package")
+if(HALMD_GIT_COMMIT_TAG)
+  string(REGEX MATCH "v[0-9].*" PROGRAM_VERSION "${HALMD_GIT_COMMIT_TAG}")
+  if(NOT PROGRAM_VERSION)
+    set(PROGRAM_VERSION "${HALMD_GIT_COMMIT_TAG}")
+    if(HALMD_GIT_BRANCH)
+      set(PROGRAM_VERSION "${PROGRAM_VERSION} (${HALMD_GIT_BRANCH})")
+    endif()
+  endif()
+else()
+  set(PROGRAM_VERSION "(unknown version)")
+endif()
+if(HALMD_GIT_COMMITTER_DATE)
+  set(PROGRAM_DATE "${HALMD_GIT_COMMITTER_DATE}")
+else()
+  set(PROGRAM_DATE "unknown date")
+endif()
+
 if(NOT HALMD_DOC_ONLY)
 
 project(HALMD CXX)
@@ -40,7 +64,6 @@ find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
   unit_test_framework
 )
 find_package(CUDA QUIET)
-find_package(Git QUIET REQUIRED)
 find_package(HDF5 QUIET REQUIRED)
 find_package(Lua51 QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
