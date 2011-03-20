@@ -55,7 +55,7 @@ macro(git_repository DIR PREFIX)
     message(FATAL_ERROR "git_repository Failure executing git symbolic-ref")
   endif()
 
-  if(_GIT_STATUS EQUAL 0)
+  if(_GIT_SYMBOLIC_REF MATCHES "^refs/heads/")
     string(REGEX REPLACE "^refs/heads/" "" ${PREFIX}_GIT_BRANCH "${_GIT_SYMBOLIC_REF}")
   endif()
 
