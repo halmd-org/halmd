@@ -26,7 +26,7 @@ These software packages are required for compilation:
   The patched CMake version, which adds native CUDA language support, is
   available at ::
 
-    git://git.colberg.org/gpgpu/cmake-cuda
+    git://git.colberg.org/cmake-cuda
 
   To obtain the CUDA patch relative to the newestest supported CMake version ::
 
