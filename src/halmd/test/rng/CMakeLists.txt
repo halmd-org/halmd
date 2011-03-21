@@ -5,4 +5,15 @@ if(WITH_CUDA)
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CUDA_LIBRARIES}
     )
+  foreach(count
+    100
+    1000
+    10000
+    100000
+    1000000
+    10000000
+    100000000
+  )
+    add_test(rand48_test_${count} rand48_test -N${count})
+  endforeach(count)
 endif(WITH_CUDA)
