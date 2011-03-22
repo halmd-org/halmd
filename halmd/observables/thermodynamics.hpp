@@ -70,6 +70,7 @@ public:
     thermodynamics(
         boost::shared_ptr<box_type> box
     );
+    virtual ~thermodynamics() {}
     void register_runtimes(profiler_type& profiler);
     virtual void register_observables(writer_type& writer);
 

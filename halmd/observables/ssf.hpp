@@ -73,9 +73,8 @@ public:
         boost::shared_ptr<density_mode_type> density_mode
       , unsigned int npart
     );
-
+    virtual ~ssf() {}
     virtual void register_runtimes(profiler_type& profiler);
-
     virtual void register_observables(writer_type& writer);
 
     // compute ssf from sample of density Fourier modes and store with given time
