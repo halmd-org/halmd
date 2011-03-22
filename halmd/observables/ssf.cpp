@@ -201,6 +201,7 @@ void ssf<dimension>::luaopen(lua_State* L)
                       , unsigned int
                     >())
                     .def("register_runtimes", &ssf::register_runtimes)
+                    .def("register_observables", &ssf::register_observables)
                     .property("value", &ssf::value)
                     .property("wavevector", &ssf::wavevector)
                     .property("sample", &sample_wrapper<ssf>)

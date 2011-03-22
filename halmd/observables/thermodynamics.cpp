@@ -116,6 +116,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
             [
                 class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
                     .def("register_runtimes", &thermodynamics::register_runtimes)
+                    .def("register_observables", &thermodynamics::register_observables)
                     .property("en_kin", &thermodynamics::en_kin)
                     .property("en_pot", &thermodynamics::en_pot)
                     .property("en_tot", &thermodynamics::en_tot)
