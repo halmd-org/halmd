@@ -117,12 +117,14 @@ void lattice<dimension, float_type>::fcc(
   , vector_type const& length, vector_type const& offset
 )
 {
+    typedef fixed_vector<unsigned int, dimension> index_type;
+
     LOG_TRACE("generating fcc lattice for " << last - first << " particles, box: " << length << ", offset: " << offset);
     size_t npart = last - first;
     double u = (dimension == 3) ? 4 : 2;
     double V = accumulate(length.begin(), length.end(), 1., multiplies<double>()) / ceil(npart / u);
     double a = pow(V, 1. / dimension);
-    fixed_vector<unsigned int, dimension> n(length / a);
+    index_type n(length / a);
     while (npart > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
         vector_type t;
         for (size_t i = 0; i < dimension; ++i) {
@@ -130,7 +132,9 @@ void lattice<dimension, float_type>::fcc(
         }
         typename vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
-        ++n[it - t.begin()];
+        unsigned int m = n[it - t.begin()];
+        n = static_cast<index_type>(length / a); //< recompute to preserve aspect ratios of box
+        n[it - t.begin()] = m + 1;               //< ensure increment of at least one component
     }
     LOG("placing particles on fcc lattice: a = " << a);
     LOG_DEBUG("number of fcc unit cells: " << n);

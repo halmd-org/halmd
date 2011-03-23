@@ -157,7 +157,9 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
         }
         typename gpu_vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
-        ++n[it - t.begin()];
+        unsigned int m = n[it - t.begin()];
+        n = static_cast<index_type>(length / a); //< recompute to preserve aspect ratios of box
+        n[it - t.begin()] = m + 1;               //< ensure increment of at least one component
     }
     LOG("placing particles on fcc lattice: a = " << a);
     LOG_DEBUG("number of fcc unit cells: " << n);
