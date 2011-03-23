@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
 
@@ -27,6 +29,13 @@ namespace halmd
 {
 namespace io { namespace trajectory
 {
+
+template <typename writer_type>
+typename signal<void (double)>::slot_function_type
+append_wrapper(shared_ptr<writer_type> writer)
+{
+    return bind(&writer_type::append, writer, _1);
+}
 
 template <int dimension>
 void writer<dimension>::luaopen(lua_State* L)
@@ -42,8 +51,12 @@ void writer<dimension>::luaopen(lua_State* L)
                 namespace_("trajectory")
                 [
                     class_<writer, shared_ptr<writer> >(class_name.c_str())
-                        .def("flush", &writer::flush)
-                        .def("append", &writer::append)
+                        .property("append", &append_wrapper<writer>)
+                        .def("on_append", &writer::on_append)
+                        .scope
+                        [
+                            class_<slot_function_type>("slot_function_type")
+                        ]
                 ]
             ]
         ]

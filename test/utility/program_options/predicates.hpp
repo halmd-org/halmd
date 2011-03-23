@@ -21,6 +21,7 @@
 #define HALMD_TEST_UTILITY_PROGRAM_OPTIONS_PREDICATES_HPP
 
 #include <boost/test/test_tools.hpp>
+#include <boost/version.hpp>
 
 #include <halmd/utility/program_options/program_options.hpp>
 
@@ -38,6 +39,7 @@ store_throws_option(
         halmd::po::store(parsed, vm);
     }
     catch (error_type const& e) {
+#if BOOST_VERSION >= 104200
         if (e.get_option_name() != option_name) {
             boost::test_tools::predicate_result res(false);
             res.message()
@@ -46,6 +48,7 @@ store_throws_option(
                 ;
             return res;
         }
+#endif
         return true;
     }
     boost::test_tools::predicate_result res(false);

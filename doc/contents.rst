@@ -4,8 +4,9 @@ HALMD documentation
 .. toctree::
    :maxdepth: 2
 
-   prerequisites
    readme
+   prerequisites
+   install
    usage
    faq
    validation
@@ -13,10 +14,4 @@ HALMD documentation
    units
    developer
    reference/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
 

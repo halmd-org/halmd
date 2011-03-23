@@ -117,10 +117,10 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                         >())
-                        .def_readonly("r_cut", (matrix_type const& (lennard_jones::*)() const) &lennard_jones::r_cut)
-                        .def_readonly("r_cut_sigma", &lennard_jones::r_cut_sigma)
-                        .def_readonly("epsilon", &lennard_jones::epsilon)
-                        .def_readonly("sigma", &lennard_jones::sigma)
+                        .property("r_cut", (matrix_type const& (lennard_jones::*)() const) &lennard_jones::r_cut)
+                        .property("r_cut_sigma", &lennard_jones::r_cut_sigma)
+                        .property("epsilon", &lennard_jones::epsilon)
+                        .property("sigma", &lennard_jones::sigma)
                 ]
             ]
         ]

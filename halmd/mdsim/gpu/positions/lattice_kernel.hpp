@@ -34,13 +34,13 @@ struct lattice_wrapper
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, unsigned int>::gpu::vector_type index_type;
 
-    /** edge lengths of cuboid slab */
-    cuda::symbol<vector_type> slab_length;
+    /** offset: origin of particle lattice */
+    cuda::symbol<vector_type> offset;
     /** number of cells per dimension */
     cuda::symbol<index_type> ncell;
 
-    cuda::function<void (float4*, float)> fcc;
-    cuda::function<void (float4*, float)> sc;
+    cuda::function<void (float4*, uint, float, uint)> fcc;
+    cuda::function<void (float4*, uint, float, uint)> sc;
     static lattice_wrapper const kernel;
 };
 

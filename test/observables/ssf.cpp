@@ -124,11 +124,11 @@ void ssf(string const& backend)
     if (dimension == 2) {
         ssf_ref.push_back(make_tuple(q_lat / ncell[1], 0, 1));          // hkl = (0, 1/1024)
         ssf_ref.push_back(make_tuple(q_lat / ncell[0], 0, 2));          // hkl = (1/4, 0), (0, 256/1024)
-        ssf_ref.push_back(make_tuple(sqrt(  1) * q_lat, 0, 3));         // hkl = (0,1), (1,0), approx.: (4, 1) × (1/4, 1/1024)
-        ssf_ref.push_back(make_tuple(sqrt(  4) * q_lat, npart / 2., 4));// hkl = (0,2), (2,0), approx.: (4, 1), (8, 1)
-        ssf_ref.push_back(make_tuple(sqrt(  9) * q_lat, 0, 4));         // hkl = (0,3), (3,0), approx.: (3, 1), (4, 1)
-        ssf_ref.push_back(make_tuple(sqrt( 16) * q_lat, npart / 2., 4));// hkl = (0,4), (4,0), approx.: (4, 1), (8, 1)
-        ssf_ref.push_back(make_tuple(sqrt(256) * q_lat, npart / 2., 4));// hkl = (0,16), (16,0), approx.: (4, 1), (8, 1)
+        ssf_ref.push_back(make_tuple(sqrt(  1.) * q_lat, 0, 3));         // hkl = (0,1), (1,0), approx.: (4, 1) × (1/4, 1/1024)
+        ssf_ref.push_back(make_tuple(sqrt(  4.) * q_lat, npart / 2., 4));// hkl = (0,2), (2,0), approx.: (4, 1), (8, 1)
+        ssf_ref.push_back(make_tuple(sqrt(  9.) * q_lat, 0, 4));         // hkl = (0,3), (3,0), approx.: (3, 1), (4, 1)
+        ssf_ref.push_back(make_tuple(sqrt( 16.) * q_lat, npart / 2., 4));// hkl = (0,4), (4,0), approx.: (4, 1), (8, 1)
+        ssf_ref.push_back(make_tuple(sqrt(256.) * q_lat, npart / 2., 4));// hkl = (0,16), (16,0), approx.: (4, 1), (8, 1)
     }
     else if (dimension == 3) {
         if (backend == "host") {
@@ -139,16 +139,16 @@ void ssf(string const& backend)
             ssf_ref.push_back(make_tuple(q_lat / ncell[0], 0, 1));         // hkl = (1/(6*19), 0, 0)
             ssf_ref.push_back(make_tuple(q_lat / ncell[1], 0, 2));         // hkl = (0, 1/12, 0), (0, 0, 1/12)
         }
-        ssf_ref.push_back(make_tuple(sqrt( 1) * q_lat, 0, 6));         // hkl = (0,0,1), (1/3, 2/3, 2/3) and permutations
-        ssf_ref.push_back(make_tuple(sqrt( 2) * q_lat, 0, 6));         // hkl = (0,1,1), (1/3, 1/3, 4/3), ...
-        ssf_ref.push_back(make_tuple(sqrt( 3) * q_lat, npart / 4., 4));// hkl = (1,1,1), (1/3, 1/3, 5/3), ..., only the 1st one contributes
-        ssf_ref.push_back(make_tuple(sqrt( 4) * q_lat, npart / 2., 6));// hkl = (0,0,2), (2/3, 4/3, 4/3), ...
-        ssf_ref.push_back(make_tuple(sqrt( 5) * q_lat, 0, 6));         // hkl = (0,1,2), ...
-        ssf_ref.push_back(make_tuple(sqrt( 6) * q_lat, 0, 6));         // hkl = (1,1,2), (1/3, 2/3, 7/3), ...
-        ssf_ref.push_back(make_tuple(sqrt( 8) * q_lat, npart / 2., 6));// hkl = (0,2,2), (2/3, 2/3, 8/3), ...
-        ssf_ref.push_back(make_tuple(sqrt( 9) * q_lat, 0, 6));         // hkl = (1,2,2), (0,0,3), ...
-        ssf_ref.push_back(make_tuple(sqrt(10) * q_lat, 0, 6));         // hkl = (0,1,3), ...
-        ssf_ref.push_back(make_tuple(sqrt(12) * q_lat, npart / 4., 4));// hkl = (2,2,2), (2, 2, 10), ...
+        ssf_ref.push_back(make_tuple(sqrt( 1.) * q_lat, 0, 6));         // hkl = (0,0,1), (1/3, 2/3, 2/3) and permutations
+        ssf_ref.push_back(make_tuple(sqrt( 2.) * q_lat, 0, 6));         // hkl = (0,1,1), (1/3, 1/3, 4/3), ...
+        ssf_ref.push_back(make_tuple(sqrt( 3.) * q_lat, npart / 4., 4));// hkl = (1,1,1), (1/3, 1/3, 5/3), ..., only the 1st one contributes
+        ssf_ref.push_back(make_tuple(sqrt( 4.) * q_lat, npart / 2., 6));// hkl = (0,0,2), (2/3, 4/3, 4/3), ...
+        ssf_ref.push_back(make_tuple(sqrt( 5.) * q_lat, 0, 6));         // hkl = (0,1,2), ...
+        ssf_ref.push_back(make_tuple(sqrt( 6.) * q_lat, 0, 6));         // hkl = (1,1,2), (1/3, 2/3, 7/3), ...
+        ssf_ref.push_back(make_tuple(sqrt( 8.) * q_lat, npart / 2., 6));// hkl = (0,2,2), (2/3, 2/3, 8/3), ...
+        ssf_ref.push_back(make_tuple(sqrt( 9.) * q_lat, 0, 6));         // hkl = (1,2,2), (0,0,3), ...
+        ssf_ref.push_back(make_tuple(sqrt(10.) * q_lat, 0, 6));         // hkl = (0,1,3), ...
+        ssf_ref.push_back(make_tuple(sqrt(12.) * q_lat, npart / 4., 4));// hkl = (2,2,2), (2, 2, 10), ...
     }
 
     // setup wavevectors
@@ -172,6 +172,14 @@ void ssf(string const& backend)
     particle->set();
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
+
+    // acquire phase space sample
+    BOOST_TEST_MESSAGE("acquire phase space sample");
+    phase_space->acquire(0);
+
+    // compute density modes
+    BOOST_TEST_MESSAGE("compute density modes");
+    density_mode->acquire(0);
 
     // compute static structure factor
     BOOST_TEST_MESSAGE("compute static structure factor");

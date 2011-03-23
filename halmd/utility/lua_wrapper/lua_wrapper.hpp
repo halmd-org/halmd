@@ -20,6 +20,7 @@
 #ifndef HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
 #define HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
 
+#include <boost/shared_ptr.hpp> // pointer holder for luabind::class_
 #include <lua.hpp>
 #include <luabind/luabind.hpp>
 #include <luabind/exception_handler.hpp>

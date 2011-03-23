@@ -4,7 +4,7 @@ if(WITH_CUDA)
     dsfun_kernel.cu
   )
   target_link_libraries(test_dsfun
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+    ${HALMD_TEST_LIBRARIES}
     ${CUDA_LIBRARIES}
   )
   add_test(numeric_mp_dsfun

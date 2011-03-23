@@ -102,11 +102,21 @@ void ssf<dimension>::register_observables(writer_type& writer)
 template <int dimension>
 void ssf<dimension>::sample(double time)
 {
-    if (time_ == time) return; // nothing to do, we're up to date
+    if (time_ == time) {
+        LOG_TRACE("[ssf] sample is up to date");
+        return;
+    }
+
+    // acquire sample of density modes
+    on_sample_(time);
+
     LOG_TRACE("[ssf] sampling");
 
-    // acquire sample of density modes and compute SSF
-    density_mode->acquire(time);
+    if (density_mode->time() != time) {
+        throw logic_error("density modes sample was not updated");
+    }
+
+    // compute SSF
     compute_();
 
     // iterate over combinations of particle types
@@ -167,6 +177,13 @@ void ssf<dimension>::compute_()
     }
 }
 
+template <typename ssf_type>
+typename ssf_type::slot_function_type
+sample_wrapper(shared_ptr<ssf_type> ssf)
+{
+    return bind(&ssf_type::sample, ssf, _1);
+}
+
 template <int dimension>
 void ssf<dimension>::luaopen(lua_State* L)
 {
@@ -178,14 +195,21 @@ void ssf<dimension>::luaopen(lua_State* L)
         [
             namespace_("observables")
             [
-                class_<ssf, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<ssf, shared_ptr<ssf> >(class_name.c_str())
                     .def(constructor<
                         shared_ptr<density_mode_type>
                       , unsigned int
                     >())
                     .def("register_runtimes", &ssf::register_runtimes)
+                    .def("register_observables", &ssf::register_observables)
                     .property("value", &ssf::value)
                     .property("wavevector", &ssf::wavevector)
+                    .property("sample", &sample_wrapper<ssf>)
+                    .def("on_sample", &ssf::on_sample)
+                    .scope
+                    [
+                        class_<slot_function_type>("slot_function_type")
+                    ]
             ]
         ]
     ];
@@ -196,7 +220,7 @@ namespace // limit symbols to translation unit
 
 __attribute__((constructor)) void register_lua()
 {
-    lua_wrapper::register_(1) //< distance of derived to base class
+    lua_wrapper::register_(0) //< distance of derived to base class
     [
         &ssf<3>::luaopen
     ]

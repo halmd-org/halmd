@@ -72,6 +72,33 @@ void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(pr
     profiler.register_runtime(runtime_.set, "set", "setting particle positions on lattice");
 }
 
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void lattice<dimension, float_type, RandomNumberGenerator>::set()
+{
+    // randomise particle types if there are more than 1
+    if (particle->ntypes.size() > 1) {
+        LOG("randomly permuting particle types");
+        random->shuffle(particle->g_r);
+    }
+
+#ifdef USE_VERLET_DSFUN
+    // set hi parts of dsfloat values to zero
+    cuda::memset(particle->g_r, 0, particle->g_r.capacity());
+#endif
+
+    assert(particle->g_r.size() == particle->nbox);
+
+    // assign fcc lattice points to a fraction of the particles in a slab at the centre
+    gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box->length(), slab_));
+    gpu_vector_type offset = -length / 2;
+
+    float4* r_it = particle->g_r.data(); // use pointer as substitute for missing iterator
+    fcc(r_it, r_it + particle->nbox, length, offset);
+
+    // reset particle image vectors
+    cuda::memset(particle->g_image, 0, particle->g_image.capacity());
+}
+
 /**
  * Place particles on a face-centered cubic (fcc) lattice
  *
@@ -104,34 +131,35 @@ void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(pr
  * is satisfied.
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void lattice<dimension, float_type, RandomNumberGenerator>::set()
+template <typename position_iterator>
+void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
+    position_iterator first, position_iterator last
+  , gpu_vector_type const& length, gpu_vector_type const& offset
+)
 {
-    // randomise particle types if there are more than 1
-    if (particle->ntypes.size() > 1) {
-        LOG("randomly permuting particle types");
-        random->shuffle(particle->g_r);
-    }
-
     // determine maximal lattice constant
     // use the same floating point precision as the CUDA device,
     // assign lattice coordinates to (sub-)volume of the box
-    gpu_vector_type L = static_cast<gpu_vector_type>(element_prod(box->length(), slab_));
+    LOG_TRACE("generating fcc lattice for " << last - first << " particles, box: " << length << ", offset: " << offset);
+    size_t npart = last - first;
     float_type u = (dimension == 3) ? 4 : 2;
     float_type V = accumulate(
-        L.begin(), L.end()
-      , float_type(1) / ceil(particle->nbox / u)
+        length.begin(), length.end()
+      , float_type(1) / ceil(npart / u)
       , multiplies<float_type>()
     );
     float_type a = pow(V, float_type(1) / dimension);
-    index_type n(L / a);
-    while (particle->nbox > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
+    index_type n(length / a);
+    while (npart > u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())) {
         gpu_vector_type t;
         for (size_t i = 0; i < dimension; ++i) {
-            t[i] = L[i] / (n[i] + 1);
+            t[i] = length[i] / (n[i] + 1);
         }
         typename gpu_vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
-        ++n[it - t.begin()];
+        unsigned int m = n[it - t.begin()];
+        n = static_cast<index_type>(length / a); //< recompute to preserve aspect ratios of box
+        n[it - t.begin()] = m + 1;               //< ensure increment of at least one component
     }
     LOG("placing particles on fcc lattice: a = " << a);
     LOG_DEBUG("number of fcc unit cells: " << n);
@@ -139,34 +167,33 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     unsigned int N = static_cast<unsigned int>(
         u * accumulate(n.begin(), n.end(), 1, multiplies<unsigned int>())
     );
-    if (N > particle->nbox) {
+    if (N > npart) {
         LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
-#ifdef USE_VERLET_DSFUN
-    // set hi parts of dsfloat values to zero
-    cuda::memset(particle->g_r, 0, particle->g_r.capacity());
-#endif
+    // insert a vacancy every 'skip' sites
+    unsigned int skip = (N - npart) ? static_cast<unsigned int>(ceil(static_cast<double>(N) / (N - npart))) : 0;
+    if (skip) {
+        LOG_TRACE("insert a vacancy after every " << skip << " sites");
+    }
 
     // set kernel globals in constant memory
     lattice_wrapper<dimension> const& kernel = get_lattice_kernel<dimension>();
-    cuda::copy(L, kernel.slab_length);
+    cuda::copy(offset, kernel.offset);
     cuda::copy(n, kernel.ncell);
 
     cuda::thread::synchronize();
     try {
         scoped_timer<timer> timer_(runtime_.set);
         cuda::configure(particle->dim.grid, particle->dim.block);
-        kernel.fcc(particle->g_r, a);
+        kernel.fcc(first, npart, a, skip);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to generate particle lattice on GPU");
         throw;
     }
-
-    // reset particle image vectors
-    cuda::memset(particle->g_image, 0, particle->g_image.capacity());
+    LOG_DEBUG("number of particles inserted: " << npart);
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -197,7 +224,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                                , shared_ptr<random_type>
                                , typename box_type::vector_type const&
                              >())
-                            .def_readonly("slab", &lattice::slab)
+                            .property("slab", &lattice::slab)
                             .def("register_runtimes", &lattice::register_runtimes)
                             .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                     ]

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -76,13 +76,25 @@ public:
     boost::shared_ptr<position_type> position;
     boost::shared_ptr<velocity_type> velocity;
 
-    uint64_t step_counter() const { return step_counter_; }
+    //! returns MD step counter
+    uint64_t step_counter() const
+    {
+        return step_counter_;
+    }
+
+    //! returns MD time
+    double time() const
+    {
+        return time_;
+    }
 
 private:
     /** profiling runtime accumulators */
     runtime runtime_;
     /** MD step counter */
     uint64_t step_counter_;
+    /** MD time */
+    double time_;
 };
 
 } // namespace mdsim

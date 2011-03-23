@@ -72,6 +72,11 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
 template <int dimension, typename float_type>
 void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(double time)
 {
+    if (sample->time == time) {
+        LOG_TRACE("[phase_space] sample is up to date");
+        return;
+    }
+
     LOG_TRACE("[phase_space] acquire GPU sample");
 
     phase_space_wrapper<dimension>::kernel.r.bind(particle->g_r);
@@ -97,6 +102,11 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(dou
 template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(double time)
 {
+    if (sample->time == time) {
+        LOG_TRACE("[phase_space] sample is up to date");
+        return;
+    }
+
     LOG_TRACE("[phase_space] acquire host sample");
 
     using mdsim::gpu::particle_kernel::untagged;

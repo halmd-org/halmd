@@ -19,21 +19,18 @@
 
 require("halmd.modules")
 
--- grab environment
-local io = {
-    statevars = {
-        writers = {
-            hdf5 = {
-                [2] = halmd_wrapper.io.statevars.writers.hdf5_2_
-              , [3] = halmd_wrapper.io.statevars.writers.hdf5_3_
-            }
-        }
-    }
+require("halmd.mdsim.core")
+require("halmd.parameter")
+
+-- grab modules
+local mdsim = halmd.mdsim
+local parameter = halmd.parameter
+-- grab C++ wrappers
+local hdf5_wrapper = {
+    [2] = halmd_wrapper.io.statevars.writers.hdf5_2_
+  , [3] = halmd_wrapper.io.statevars.writers.hdf5_3_
 }
-local mdsim = {
-  core = require("halmd.mdsim.core")
-}
-local parameter = require("halmd.parameter")
+-- grab standard library
 local assert = assert
 
 module("halmd.io.statevars.writers.hdf5", halmd.modules.register)
@@ -51,7 +48,7 @@ function new(args)
     -- parameters
     local file_name = output .. ".msv"
 
-    local writer = io.statevars.writers.hdf5[dimension](file_name)
+    local writer = hdf5_wrapper[dimension](file_name)
 
     parameter.register_writer(writer)
 

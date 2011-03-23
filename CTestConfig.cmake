@@ -1,7 +1,1 @@
-set(CTEST_PROJECT_NAME "HALMD")
-set(CTEST_NIGHTLY_START_TIME "00:00:00 GMT")
-
-set(CTEST_DROP_METHOD "http")
-set(CTEST_DROP_SITE "cdash.colberg.org")
-set(CTEST_DROP_LOCATION "/submit.php?project=HALMD")
-set(CTEST_DROP_SITE_CDASH TRUE)
+# This file is a placeholder to avoid a CTest warning.

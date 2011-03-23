@@ -21,21 +21,23 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
-#include <boost/random/uniform_01.hpp>
-#include <boost/random/normal_distribution.hpp>
-#include <time.h>
+#include <ctime>
 #include <stdexcept>
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/random/gpu/random_kernel.hpp>
-#include <halmd/random/host/gsl_rng.hpp>
-#include <halmd/random/gpu/rand48.hpp>
-#include <test/tools/cuda.hpp>
+#include <halmd/random/host/random.hpp>
+#ifdef WITH_CUDA
+# include <cuda_wrapper/cuda_wrapper.hpp>
+# include <halmd/random/gpu/random_kernel.hpp>
+# include <halmd/random/gpu/rand48.hpp>
+# include <test/tools/cuda.hpp>
+#endif
 
 //
 // test random number generators in combination with accumulator class
 //
+
+#ifdef WITH_CUDA
 
 const unsigned BLOCKS = 64;
 const unsigned THREADS = 128;
@@ -93,21 +95,21 @@ void test_rand48_gpu( unsigned long n )
     }
 }
 
-void test_gsl_rng( unsigned long n )
+#endif /* WITH_CUDA */
+
+void test_host_random( unsigned long n )
 {
-    typedef halmd::random::host::gfsr4 RandomNumberGenerator;
+    typedef halmd::random::host::random RandomNumberGenerator;
 
     unsigned seed = time(NULL);
 
     // seed host random number generator
     RandomNumberGenerator rng(seed);
-    // uniform distribution in [0.0, 1.0)
-    boost::uniform_01<RandomNumberGenerator&, double> uniform_01(rng);
 
     // test uniform distribution
     halmd::accumulator<double> a;
     for (unsigned i=0; i < n; i++) {
-        a(uniform_01());
+        a(rng.uniform<double>());
     }
 
     // check count, mean, and variance
@@ -125,13 +127,12 @@ void test_gsl_rng( unsigned long n )
     BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
     // test Gaussian distribution
-    boost::normal_distribution<double> normal;
-    BOOST_CHECK_EQUAL(normal.mean(), 0.0);
-    BOOST_CHECK_EQUAL(normal.sigma(), 1.0);
     a = halmd::accumulator<double>();
     halmd::accumulator<double> a3, a4;
     for (unsigned i=0; i < n; i++) {
-        double x = normal(uniform_01);
+        // FIXME y is unused due to impractical host::random::normal design
+        double x, y;
+        boost::tie(x, y) = rng.normal(1.0);
         a(x);
         double x2 = x * x;
         a3(x * x2);
@@ -168,7 +169,9 @@ static void __attribute__((constructor)) init_unit_test_suite()
     counts.push_back(100000000);
 
     master_test_suite().add(
-        BOOST_PARAM_TEST_CASE(&test_gsl_rng, counts.begin(), counts.end()-2));
+        BOOST_PARAM_TEST_CASE(&test_host_random, counts.begin(), counts.end()-2));
+#ifdef WITH_CUDA
     master_test_suite().add(
         BOOST_PARAM_TEST_CASE(&test_rand48_gpu, counts.begin(), counts.end()));
+#endif
 }

@@ -21,9 +21,11 @@ require("halmd.modules")
 
 require("halmd.io.trajectory.readers")
 
--- grab environment
-local readers = halmd.io.trajectory.readers
+-- grab modules
+local trajectory = halmd.io.trajectory
+-- grab C++ wrappers
 local po = halmd_wrapper.po
+-- grab standard library
 local error = error
 local io = io
 local pairs = pairs
@@ -41,7 +43,7 @@ function new(args)
 
         -- find reader that can handle file format
         local reader
-        for _, module in pairs(readers) do
+        for _, module in pairs(trajectory.readers) do
             local format = module.format
             if format and format(file) then
                 reader = module
@@ -77,7 +79,7 @@ function options(desc)
 
         -- check for reader that can handle file format
         local reader
-        for _, module in pairs(readers) do
+        for _, module in pairs(trajectory.readers) do
             local format = module.format
             if format then
                 local file = format(value)

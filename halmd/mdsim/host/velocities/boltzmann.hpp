@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 #define HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <utility>
 

@@ -83,8 +83,8 @@ void box<dimension>::luaopen(lua_State* L)
                 class_<box, shared_ptr<box> >(class_name.c_str())
                     .def(constructor<shared_ptr<particle_type>, vector_type const&>())
                     .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
-                    .def_readonly("length", &box::length)
-                    .def_readonly("density", &box::density)
+                    .property("length", &box::length)
+                    .property("density", &box::density)
             ]
         ]
     ];

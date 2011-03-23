@@ -1,33 +1,62 @@
 # - Find the Luabind headers and library
 #
 # This module defines
-#  LUABIND_INCLUDE_DIR
-#  LUABIND_LIBRARIES
 #  LUABIND_FOUND
+#  LUABIND_INCLUDE_DIR
+#  LUABIND_LIBRARY
+#  LUABIND_LIBRARY_DEBUG
 
-find_path(LUABIND_INCLUDE_DIR
-  luabind/luabind.hpp
+#=============================================================================
+# Copyright 2002-2009 Kitware, Inc.
+# Copyright 2010-2011 Peter Colberg
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file COPYING-CMAKE-SCRIPTS for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
+find_path(LUABIND_INCLUDE_DIR luabind/luabind.hpp
+  HINTS
+  $ENV{LUABIND_DIR}
+  PATH_SUFFIXES include
 )
 
-find_library(LUABIND_LIBRARY
-  NAMES luabind
+if(LUABIND_USE_STATIC_LIBS)
+  set( _LUABIND_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  if(WIN32)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .lib .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  else()
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  endif()
+endif()
+
+find_library(LUABIND_LIBRARY NAMES luabind
+  HINTS
+  $ENV{LUABIND_DIR}
+  PATH_SUFFIXES lib64 lib
 )
 
-find_library(LUABIND_LIBRARY_DEBUG
-  NAMES luabindd
+find_library(LUABIND_LIBRARY_DEBUG NAMES luabindd
+  HINTS
+  $ENV{LUABIND_DIR}
+  PATH_SUFFIXES lib64 lib
 )
 
-if(LUABIND_LIBRARY AND LUABIND_INCLUDE_DIR)
-  set(LUABIND_LIBRARIES ${LUABIND_LIBRARY})
-endif(LUABIND_LIBRARY AND LUABIND_INCLUDE_DIR)
+if(LUABIND_USE_STATIC_LIBS)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ${_LUABIND_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
+endif()
 
 include(FindPackageHandleStandardArgs)
 
-# Handle the REQUIRED and QUIET argument to FIND_PACKAGE()
-# and set the LUABIND_FOUND variable.
 find_package_handle_standard_args(Luabind DEFAULT_MSG
-  LUABIND_LIBRARIES
   LUABIND_INCLUDE_DIR
+  LUABIND_LIBRARY
+  # LUABIND_LIBRARY_DEBUG optional
 )
 
 mark_as_advanced(

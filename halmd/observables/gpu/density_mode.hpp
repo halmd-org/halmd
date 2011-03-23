@@ -52,6 +52,8 @@ public:
     typedef gpu::phase_space<gpu::samples::phase_space<dimension, float_type> > phase_space_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
     typedef halmd::utility::profiler profiler_type;
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
 
     typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
@@ -77,10 +79,21 @@ public:
     */
     virtual void acquire(double time);
 
+    virtual void on_acquire(slot_function_type const& slot)
+    {
+        on_acquire_.connect(slot);
+    }
+
     //! returns nested list of density modes
     virtual typename _Base::result_type const& value() const
     {
         return rho_sample_.rho;
+    }
+
+    //! returns simulation time when sample was taken
+    virtual double time() const
+    {
+        return rho_sample_.time;
     }
 
     //! returns wavevector object
@@ -122,6 +135,8 @@ protected:
 
     /** profiling runtime accumulators */
     runtime runtime_;
+
+    signal_type on_acquire_;
 };
 
 }} // namespace observables::gpu

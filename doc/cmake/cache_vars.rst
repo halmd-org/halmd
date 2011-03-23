@@ -32,11 +32,6 @@ Cache variables are passed as options to CMake using ``-D...``
 
      Recommended value is ``-DHDF5_USE_STATIC_LIBS=TRUE``.
 
-   GSL_USE_STATIC_LIBS
-     Link to GNU Scientific Library statically.
-
-     Recommended value is ``-DGSL_USE_STATIC_LIBS=TRUE``.
-
    HALMD_BACKEND_EXECUTABLES
      Compile separate, dynamically linked executable for each backend.
 

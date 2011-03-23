@@ -19,7 +19,9 @@
 
 #include <iomanip>
 #include <sstream>
+#include <stdint.h> // <cstdint> is C++0x
 
+#include <halmd/utility/lua_wrapper/array_converter.hpp>
 #include <halmd/utility/lua_wrapper/long_long_converter.hpp> // *int64_t on x86
 #include <halmd/utility/lua_wrapper/map_converter.hpp>
 #include <halmd/utility/lua_wrapper/program_options.hpp>
@@ -164,27 +166,27 @@ int luaopen(lua_State* L)
                 .def("choices", &po_choices<string>)
 
           , class_<po::extended_typed_value<multi_array<int, 1> >, po::value_semantic>("typed_value_int_array")
-                .def("notifier", &po_notifier<int>)
+                .def("notifier", &po_notifier<multi_array<int, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<int, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<int, 1> >::depends)
 
           , class_<po::extended_typed_value<multi_array<unsigned int, 1> >, po::value_semantic>("typed_value_uint_array")
-                .def("notifier", &po_notifier<unsigned int>)
+                .def("notifier", &po_notifier<multi_array<unsigned int, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<unsigned int, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<unsigned int, 1> >::depends)
 
           , class_<po::extended_typed_value<multi_array<int64_t, 1> >, po::value_semantic>("typed_value_int64_array")
-                .def("notifier", &po_notifier<int64_t>)
+                .def("notifier", &po_notifier<multi_array<int64_t, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<int64_t, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<int64_t, 1> >::depends)
 
           , class_<po::extended_typed_value<multi_array<uint64_t, 1> >, po::value_semantic>("typed_value_uint64_array")
-                .def("notifier", &po_notifier<uint64_t>)
+                .def("notifier", &po_notifier<multi_array<uint64_t, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<uint64_t, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<uint64_t, 1> >::depends)
 
           , class_<po::extended_typed_value<multi_array<double, 1> >, po::value_semantic>("typed_value_float_array")
-                .def("notifier", &po_notifier<double>)
+                .def("notifier", &po_notifier<multi_array<double, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<double, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<double, 1> >::depends)
 

@@ -1,18 +1,9 @@
-{# See Sphinx/doc for an excellent example of Jinja templates. #}
+{# See Sphinx/doc and Python/Doc/tools/sphinxext for examples of Jinja templates. #}
 
 {% extends "!layout.html" %}
 
 {% block rootrellink %}
-  <li><a href="{{ pathto('index') }}">HALMD home</a>&nbsp;|</li>
-  <li><a href="{{ pathto('contents') }}">Documentation</a>&nbsp;|</li>
-  <li><a href="{{ pathto('faq') }}">FAQ</a>&nbsp;|</li>
-  <li><a href="{{ pathto('git') }}">Download</a>&nbsp;|</li>
-  <li><a href="http://software.colberg.org/projects/halmd"><strong>Contribute</strong></a>&nbsp;&raquo;</li>
+  <li><img src="{{ pathto('_static/halmd.png', 1) }}" alt="HALMD" style="vertical-align: middle; margin-top: 4px"/></li>
+  <li><a href="http://halmd.org/">HALMD home</a>{{ reldelim2 }}</li>
+  <li><a href="{{ pathto('contents') }}">{{ shorttitle }}</a>{{ reldelim1 }}</li>
 {% endblock %}
-
-{% block header %}
-<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
-  <img src="{{ pathto("_static/halmd_logo.png", 1) }}" alt="HALMD logo" />
-</div>
-{% endblock %}
-

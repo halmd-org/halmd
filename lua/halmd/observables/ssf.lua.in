@@ -19,23 +19,21 @@
 
 require("halmd.modules")
 
--- grab environment
+require("halmd.mdsim.core")
+require("halmd.observables.density_mode")
+require("halmd.observables.utility.wavevector")
+
+-- grab modules
+local mdsim = halmd.mdsim
+local observables = halmd.observables
+-- grab C++ wrappers
 local ssf_wrapper = {
     [2] = halmd_wrapper.observables.ssf_2_
   , [3] = halmd_wrapper.observables.ssf_3_
 }
-
-local mdsim = {
-    core = require("halmd.mdsim.core")
-}
-local observables = {
-    density_mode = require("halmd.observables.density_mode")
-  , utility = {
-        wavevector = require("halmd.observables.utility.wavevector")
-    }
-}
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 
 module("halmd.observables.ssf", halmd.modules.register)
@@ -80,12 +78,16 @@ function new(args)
         return nil
     end
 
+    -- construct density_mode module
+    local density_mode = assert(observables.density_mode{ wavevector = wavevector })
+
     -- construct ssf module
-    local ssf = assert(ssf_wrapper[dimension])
-    return ssf(
-        assert(observables.density_mode{ wavevector = wavevector })
-      , particle.nbox
-    )
+    local ssf = assert(ssf_wrapper[dimension])(density_mode, particle.nbox)
+
+    -- acquire density modes before sampling static structure factor
+    ssf:on_sample(density_mode.acquire)
+
+    return ssf
 end
 
 --

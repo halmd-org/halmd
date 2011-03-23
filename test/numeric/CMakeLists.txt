@@ -2,7 +2,7 @@ add_executable(test_accumulator
   accumulator.cpp
 )
 target_link_libraries(test_accumulator
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(numeric_accumulator
   test_accumulator --log_level=test_suite
@@ -12,7 +12,7 @@ add_executable(test_pow
   pow.cpp
 )
 target_link_libraries(test_pow
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
   ${Boost_SYSTEM_LIBRARY}
   rt
   )

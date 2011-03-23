@@ -3,7 +3,7 @@ add_executable(test_gpu_reduce
   reduce_kernel.cu
 )
 target_link_libraries(test_gpu_reduce
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
   ${HALMD_COMMON_LIBRARIES}
   ${CUDA_LIBRARIES}
 )
@@ -16,7 +16,7 @@ add_executable(test_scan
   scan.cpp
 )
 target_link_libraries(test_scan
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
   ${Boost_SYSTEM_LIBRARY}
   ${CUDA_LIBRARIES}
 )
@@ -30,7 +30,7 @@ add_executable(test_radix_sort
 target_link_libraries(test_radix_sort
   halmd_algorithm_gpu
   halmd_random_gpu
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
   ${Boost_SYSTEM_LIBRARY}
   ${CUDA_LIBRARIES}
 )

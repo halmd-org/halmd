@@ -47,7 +47,6 @@ namespace utility { namespace gpu
 device::device(vector<int> devices, unsigned int threads)
   : threads_(threads)
 {
-#ifndef __DEVICE_EMULATION__
     try {
         LOG("NVIDIA driver version: " << device::nvidia_driver_version());
     }
@@ -84,10 +83,6 @@ device::device(vector<int> devices, unsigned int threads)
 
     LOG("CUDA device: " << cuda::driver::context::device());
     cuda::device::properties prop(cuda::driver::context::device());
-#else /* ! __DEVICE_EMULATION__ */
-    LOG("CUDA device: " << cuda::device::get());
-    cuda::device::properties prop(cuda::device::get());
-#endif /* ! __DEVICE_EMULATION__ */
 
     LOG("CUDA device name: " << prop.name());
     LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");

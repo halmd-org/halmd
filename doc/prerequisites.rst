@@ -10,7 +10,7 @@ of these packages before attempting to compile them yourself.
    When installing third-party packages, it is advisable to put them into
    separate directories. If you install software only for yourself, use package
    directories of the form ``~/usr/PKGNAME-PKGVERSION``, for example
-   ``~/usr/boost-1.46.0`` or ``~/usr/Sphinx-1.0.4``. If you install software
+   ``~/usr/boost-1.46.1`` or ``~/usr/Sphinx-1.0.4``. If you install software
    system-wide as the root user, use ``/opt/PKGNAME-PKGVERSION``.
    This simple scheme allows you to have multiple versions of a package, or
    remove a package without impacting others.
@@ -21,11 +21,11 @@ For example, if Boost, Lua and Luabind are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   CMAKE_PREFIX_PATH=~/usr/boost_1_46_0:/opt/cuda-3.1:~/usr/lua-5.1.4:~/usr/luabind-0.9.1 cmake ~/projects/halmd
+   CMAKE_PREFIX_PATH=~/usr/boost_1_46_1:/opt/cuda-3.1:~/usr/lua-5.1.4:~/usr/luabind-0.9.1 cmake ~/projects/halmd
 
 Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell's equivalent) ::
 
-   export CMAKE_PREFIX_PATH="${HOME}/usr/boost_1_46_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/usr/boost_1_46_1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="/opt/cuda-3.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="${HOME}/usr/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
@@ -34,25 +34,32 @@ Instead of setting CMAKE_PREFIX_PATH manually, you would include the package dir
 CMake
 -----
 
-Get the latest `CMake source package`_, currently `CMake 2.8.3`_.
+Get the latest `CMake source package`_, currently `CMake 2.8.4`_.
 
-Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.3`_.
+Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.4`_.
+
+To fix a bug with `lib64 paths in CXX-only projects`_, get this `CMake patch`_.
 
 .. _CMake source package: http://cmake.org/cmake/resources/software.html
 
-.. _CMake 2.8.3: http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz
+.. _CMake 2.8.4: http://www.cmake.org/files/v2.8/cmake-2.8.4.tar.gz
 
 .. _CMake-CUDA: http://software.colberg.org/projects/cmake-cuda
 
-.. _CMake-CUDA 2.8.3: http://software.colberg.org/attachments/download/7/cmake-cuda-2.8.3.patch
+.. _CMake-CUDA 2.8.4: http://software.colberg.org/attachments/download/17/CMake-CUDA-2.8.4-0-g7f92dd3.patch
 
-Extract the CMake source package, and apply the patch in the CMake source directory with ::
+.. _lib64 paths in CXX-only projects: http://public.kitware.com/Bug/view.php?id=10813#c25824
 
-   patch -p1 < ../cmake-cuda-2.8.3.patch
+.. _CMake patch: http://public.kitware.com/Bug/file_download.php?file_id=3759&type=bug
+
+Extract the CMake source package, and apply the patches in the CMake source directory with ::
+
+   patch -p1 < ../cmake-cuda-2.8.4.patch
+   patch -p1 < ../cmake_add_lib64_prefix_for_any_language.patch
 
 Prepare the CMake build with ::
 
-   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.3
+   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.4
 
 Compile CMake with ::
 
@@ -64,17 +71,17 @@ Install CMake into your packages directory::
 
 Include CMake in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/cmake-cuda-2.8.3/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/usr/cmake-cuda-2.8.3/man${MANPATH+:$MANPATH}"
+   export PATH="${HOME}/usr/cmake-cuda-2.8.4/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/usr/cmake-cuda-2.8.4/man${MANPATH+:$MANPATH}"
 
 
 Boost
 -----
 
-Get the latest `Boost source package`_, currently `Boost 1.46.0`_.
+Get the latest `Boost source package`_, currently `Boost 1.46.1`_.
 
 .. _Boost source package: http://www.boost.org/users/download
-.. _Boost 1.46.0: http://sourceforge.net/projects/boost/files/boost/1.46.0/boost_1_46_0.tar.bz2
+.. _Boost 1.46.1: http://sourceforge.net/projects/boost/files/boost/1.46.1/boost_1_46_1.tar.bz2
 
 Get the latest `Boost.Log source package`_ from the upstream repository.
 
@@ -93,8 +100,8 @@ We will build Boost and Boost.Log in a single step, therefore extract both
 source packages and copy the Boost.Log headers and library sources to the
 Boost source directory using ::
 
-   cp -r boost-log/boost/log boost_1_46_0/boost/
-   cp -r boost-log/libs/log boost_1_46_0/libs/
+   cp -r boost-log/boost/log boost_1_46_1/boost/
+   cp -r boost-log/libs/log boost_1_46_1/libs/
 
 In the Boost source directory, bootstrap the build with ::
 
@@ -120,12 +127,12 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam install --prefix=$HOME/usr/boost_1_46_0
+   ./bjam install --prefix=$HOME/usr/boost_1_46_1
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/usr/boost_1_46_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export LD_LIBRARY_PATH="${HOME}/usr/boost_1_46_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/usr/boost_1_46_1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export LD_LIBRARY_PATH="${HOME}/usr/boost_1_46_1/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
 
 
 Lua
@@ -181,16 +188,16 @@ Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
    Luabind is based on the Boost C++ libraries and uses boost-jam as its
    build tool. After bootstrapping Boost following the instructions above, the
    bjam executable is found in the top-level source directory, for example
-   ``/tmp/boost_1_46_0/bjam``. This directory also has to be passed to bjam
+   ``/tmp/boost_1_46_1/bjam``. This directory also has to be passed to bjam
    during Luabind build using the environment variable ``BOOST_ROOT``.
 
 Compile a statically linked release build of the Luabind library with ::
 
-   BOOST_ROOT=/tmp/boost_1_46_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_0/bjam link=static variant=release
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam link=static variant=release
 
 Install the Luabind library into your packages directory::
 
-   BOOST_ROOT=/tmp/boost_1_46_0 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_0/bjam link=static variant=release install --prefix=$HOME/usr/luabind-0.9.1
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam link=static variant=release install --prefix=$HOME/usr/luabind-0.9.1
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
@@ -202,14 +209,14 @@ Include Luabind in your shell environment, by adding to ~/.bashrc::
 HDF5
 ----
 
-Get the latest `HDF5 source package`_, currently `HDF5 1.8.5 patch 1`_.
+Get the latest `HDF5 source package`_, currently `HDF5 1.8.6`_.
 
 .. _HDF5 source package: http://www.hdfgroup.org/HDF5/release/obtain5.html#obtain
-.. _HDF5 1.8.5 patch 1: http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.5-patch1.tar.gz
+.. _HDF5 1.8.6: http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.6.tar.gz
 
 Prepare a statically linked build of the HDF5 C and C++ library with ::
 
-   ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/hdf5-1.8.5-patch1
+   ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/hdf5-1.8.6
 
 .. note:: Compiling HDF5 with C++ support disables multi-threading.
 
@@ -223,40 +230,9 @@ Install the HDF5 libraries into your packages directory::
 
 Include HDF5 in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/hdf5-1.8.5-patch1/bin${PATH+:$PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/usr/hdf5-1.8.5-patch1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/usr/hdf5-1.8.6/bin${PATH+:$PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/usr/hdf5-1.8.6${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
-
-GNU Scientific Library
-----------------------
-
-Get the latest `GSL source package`_, currently `GSL 1.14`_.
-
-.. _GSL source package: http://www.gnu.org/software/gsl/
-.. _GSL 1.14: http://ftpmirror.gnu.org/gsl/gsl-1.14.tar.gz
-
-Prepare the GSL build with ::
-
-   ./configure --prefix=$HOME/usr/gsl-1.14
-
-Compile GSL using ::
-
-   make
-
-Install the GSL libraries into your packages directory::
-
-   make install
-
-Include GSL in your shell environment, by adding to ~/.bashrc::
-
-   export CMAKE_PREFIX_PATH="${HOME}/usr/gsl-1.14${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export LD_LIBRARY_PATH="${HOME}/usr/gsl-1.14/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
-   export PATH="${HOME}/usr/gsl-1.14/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/usr/gsl-1.14/share/man${MANPATH+:$MANPATH}"
-
-
-NVIDIA CUDA toolkit
--------------------
 
 Sphinx
 ------

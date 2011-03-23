@@ -144,6 +144,16 @@ inline HALMD_GPU_ENABLED dsfloat& operator/=(dsfloat& v, dsfloat const& w)
 }
 
 /**
+ * Sign
+ */
+inline HALMD_GPU_ENABLED dsfloat operator-(dsfloat v)
+{
+    v.hi = -v.hi;
+    v.lo = -v.lo;
+    return v;
+}
+
+/**
  * Addition
  */
 inline HALMD_GPU_ENABLED dsfloat operator+(dsfloat v, dsfloat const& w)

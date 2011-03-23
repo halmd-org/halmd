@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -17,10 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
---
--- Load HAL’s MD package
---
-require("halmd.options")
+require("halmd.modules")
+
+-- command-line options override H5MD file parameters
+require("halmd.option")
+require("halmd.parameter")
+
 require("halmd.io.profiling.writer")
 require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
@@ -34,34 +36,93 @@ require("halmd.mdsim.particle")
 require("halmd.mdsim.position")
 require("halmd.mdsim.sort")
 require("halmd.mdsim.velocity")
+require("halmd.observables.sampler")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
-require("halmd.observables.phase_space")
-require("halmd.sampler")
+
+-- grab modules
+local mdsim = halmd.mdsim
+local observables = halmd.observables
+local profiling = halmd.io.profiling
+local statevars = halmd.io.statevars
+local trajectory = halmd.io.trajectory
+-- grab C++ wrappers
+local po = halmd_wrapper.po
+-- grab standard library
+local assert = assert
+local pairs = pairs
+
+module("halmd", halmd.modules.register)
 
 --
--- Run simulation
+-- Construct simulation
 --
-function run()
-    local core = halmd.mdsim.core() -- singleton
-    core.particle = halmd.mdsim.particle()
-    core.box = halmd.mdsim.box()
-    core.integrator = halmd.mdsim.integrator()
-    core.force = halmd.mdsim.force()
-    core.neighbour = halmd.mdsim.neighbour()
-    core.sort = halmd.mdsim.sort()
+function new(args)
+    local core = mdsim.core() -- singleton
+    core.particle = mdsim.particle()
+    core.box = mdsim.box()
+    core.integrator = mdsim.integrator()
+    core.force = mdsim.force()
+    core.neighbour = mdsim.neighbour()
+    core.sort = mdsim.sort()
 
-    local reader = halmd.io.trajectory.reader()
-    core.position = halmd.mdsim.position{ reader = reader }
-    core.velocity = halmd.mdsim.velocity{ reader = reader }
+    local reader = trajectory.reader()
+    core.position = mdsim.position{ reader = reader }
+    core.velocity = mdsim.velocity{ reader = reader }
 
-    local sampler = halmd.sampler() -- singleton
-    sampler.profiling_writers = halmd.io.profiling.writer()
-    sampler.phase_space = halmd.observables.phase_space{ memory = "host" }
-    sampler.trajectory_writer = halmd.io.trajectory.writer()
-    sampler.observables = {
-        halmd.observables.ssf()
-      , halmd.observables.thermodynamics()
-    }
-    sampler.statevars_writer = halmd.io.statevars.writer()
+    -- Construct sampler.
+    local sampler = observables.sampler()
+
+    -- Optionally write trajectory.
+    if args.trajectory then
+        sampler:on_sample(trajectory.writer().append, args.trajectory)
+    end
+
+    -- Optionally sample macroscopic state variables.
+    if args.state_vars then
+        sampler:on_sample(observables.thermodynamics().sample, args.state_vars)
+    end
+
+    -- Optionally sample static structure factor.
+    if args.state_vars then -- FIXME args.ssf
+        -- FIXME do not return nil in observables.ssf()
+        local ssf = observables.ssf()
+        if ssf then
+            sampler:on_sample(ssf.sample, args.state_vars)
+        end
+    end
+
+    -- FIXME connect revised writer to thermodynamics and ssf
+    if args.state_vars then
+        sampler:on_sample(statevars.writer().write, args.state_vars)
+    end
+
+    -- Construct profiling writers.
+    --
+    -- The profiling writers write profiling run times for registered
+    -- modules to the log file, and optionally a H5MD file.
+    local profiling_writers = profiling.writer()
+
+    -- From the table of profiling writers, add each profiling writer
+    -- to the sampler, to invoke write after the simulation is finished.
+    for _, writer in pairs(profiling_writers) do
+        sampler:on_finish(writer.write)
+    end
+
+    -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
+    return sampler
+end
+
+-- override module namespace
+namespace = "sampler"
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc, globals)
+    -- FIXME desc:add("ssf", po.uint64(), "sample interval for static structure factor")
+    desc:add("state-vars", po.uint64(), "sample interval for macroscopic state variables")
+    desc:add("trajectory", po.uint64(), "sample interval for trajectory")
 end

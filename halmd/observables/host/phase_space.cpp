@@ -47,7 +47,11 @@ phase_space<dimension, float_type>::phase_space(
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::acquire(double time)
 {
-    if (sample->time == time) return; // we're up to date, nothing to do
+    if (sample->time == time) {
+        LOG_TRACE("[phase_space] sample is up to date");
+        return;
+    }
+
     LOG_TRACE("[phase_space] acquire sample");
 
     for (size_t i = 0; i < particle->nbox; ++i) {

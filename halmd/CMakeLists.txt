@@ -41,48 +41,14 @@ if(WITH_CUDA)
     )
 endif(WITH_CUDA)
 
-# If this is a build from the git repository source, we need to generate
-# version.h from the current git commit. This should be repeated on every
-# invocation of make (that involves dependent source files), so we add a
-# phony build rule and let the generator rule depend on it. Both rules
-# have empty comments, as make executes them multiple times.
-if(GIT_EXECUTABLE)
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.h.in_phony
-    COMMENT ""
-    COMMAND ""
-  )
-  set_source_files_properties(
-    ${CMAKE_CURRENT_BINARY_DIR}/version.h.in_phony PROPERTIES
-    SYMBOLIC TRUE
-  )
-  # The script version.cmake generates version.h with configure_file, which
-  # will only regenerate the destination file if the content has changed,
-  # so a source rebuild will only be triggered if the git commit changes.
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.h
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/version.h.in_phony
-    COMMENT ""
-    COMMAND ${CMAKE_COMMAND}
-      -D "INPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/version.h.in"
-      -D "OUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/version.h"
-      -P cmake/version.cmake
-  )
-  set_source_files_properties(
-    ${CMAKE_CURRENT_BINARY_DIR}/version.h PROPERTIES
-    GENERATED TRUE
-  )
-  add_subdirectory(cmake)
-endif(GIT_EXECUTABLE)
+configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 
 if(NOT HALMD_BACKEND_EXECUTABLES)
   add_executable(halmd
     main.cpp
     runner.cpp
-    sampler.cpp
     script.cpp
-    version.h
-    )
+  )
   target_link_libraries(halmd
     -Wl,-whole-archive
     ${HALMD_MODULES}

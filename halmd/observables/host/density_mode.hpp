@@ -49,6 +49,8 @@ public:
     typedef typename _Base::wavevector_type wavevector_type;
     typedef host::phase_space<dimension, float_type> phase_space_type;
     typedef halmd::utility::profiler profiler_type;
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef typename density_mode_sample_type::mode_type mode_type;
@@ -73,10 +75,21 @@ public:
     */
     virtual void acquire(double time);
 
+    virtual void on_acquire(slot_function_type const& slot)
+    {
+        on_acquire_.connect(slot);
+    }
+
     //! returns nested list of density modes
     virtual typename _Base::result_type const& value() const
     {
         return rho_sample_.rho;
+    }
+
+    //! returns simulation time when sample was taken
+    virtual double time() const
+    {
+        return rho_sample_.time;
     }
 
     //! returns wavevector object
@@ -99,6 +112,8 @@ protected:
     density_mode_sample_type rho_sample_;
     /** profiling runtime accumulators */
     runtime runtime_;
+
+    signal_type on_acquire_;
 };
 
 }} // namespace observables::host

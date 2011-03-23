@@ -19,7 +19,15 @@
 
 require("halmd.modules")
 
--- grab environment
+require("halmd.device")
+require("halmd.mdsim.core")
+require("halmd.observables.samples.phase_space")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+local observables = halmd.observables
+-- grab C++ wrappers
 local reader_wrapper = {
     host = {
         [2] = halmd_wrapper.io.trajectory.readers.h5md_2_double_
@@ -30,13 +38,9 @@ local reader_wrapper = {
       , [3] = halmd_wrapper.io.trajectory.readers.h5md_3_float_
     }
 }
-local phase_space = require("halmd.observables.samples.phase_space")
-local mdsim = {
-  core = require("halmd.mdsim.core")
-}
-local device = require("halmd.device")
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local error = error
 local io = io
@@ -55,7 +59,7 @@ function new(args)
     local file = assert(args.file)
     local offset = assert(args.offset)
 
-    local sample = assert(phase_space{ memory = "host" })
+    local sample = assert(observables.samples.phase_space{ memory = "host" })
     local core = assert(mdsim.core())
     local dimension = assert(core.dimension)
 

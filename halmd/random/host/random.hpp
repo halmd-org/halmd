@@ -21,12 +21,15 @@
 #define HALMD_RANDOM_HOST_RANDOM_HPP
 
 #include <algorithm>
+#include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_01.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/variate_generator.hpp>
 #include <lua.hpp>
 #include <iterator>
 #include <utility>
 
-#include <halmd/random/host/gsl_rng.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/random/random.hpp>
 
 namespace halmd
@@ -39,7 +42,7 @@ class random
 {
 public:
     typedef halmd::random::random _Base;
-    typedef host::gfsr4 random_generator; // FIXME template parameter
+    typedef boost::mt19937 random_generator; // FIXME template parameter
 
     static void luaopen(lua_State* L);
 
@@ -51,6 +54,12 @@ public:
     value_type uniform();
     template <typename value_type>
     std::pair<value_type, value_type> normal(value_type sigma2);
+    template <typename value_type>
+    void unit_vector(fixed_vector<value_type, 2>& v);
+    template <typename value_type>
+    void unit_vector(fixed_vector<value_type, 3>& v);
+    template <typename value_type>
+    void unit_vector(fixed_vector<value_type, 4>& v);
 
 protected:
     /** pseudo-random number generator */
@@ -69,7 +78,9 @@ void random::shuffle(input_iterator first, input_iterator last)
 {
     typedef typename std::iterator_traits<input_iterator>::difference_type difference_type;
     for (difference_type i = last - first; i > 1; --i) {
-        std::iter_swap(first + rng_(i), first + (i - 1));
+        boost::uniform_int<> dist(0, i - 1);
+        boost::variate_generator<random_generator&, boost::uniform_int<> > variate(rng_, dist);
+        std::iter_swap(first + variate(), first + (i - 1));
     }
 }
 
@@ -111,6 +122,84 @@ std::pair<value_type, value_type> random::normal(value_type sigma)
     x *= s;
     y *= s;
     return std::make_pair(x, y);
+}
+
+/**
+ * Generate 2-dimensional random unit vector
+ */
+template <typename value_type>
+void random::unit_vector(fixed_vector<value_type, 2>& v)
+{
+    value_type s;
+    do {
+        v[0] = 2 * uniform<value_type>() - 1;
+        v[1] = 2 * uniform<value_type>() - 1;
+        s = v[0] * v[0] + v[1] * v[1];
+    } while (s >= 1);
+
+    s = 1 / std::sqrt(s);
+    v[0] *= s;
+    v[1] *= s;
+}
+
+/**
+ * Generate 3-dimensional random unit vector
+ *
+ * The following method requires an average of 8/Pi =~ 2.55
+ * uniform random numbers. It is described in
+ *
+ * G. Marsaglia, Choosing a Point from the Surface of a Sphere,
+ * The Annals of Mathematical Statistics, 1972, 43, p. 645-646
+ *
+ * http://projecteuclid.org/euclid.aoms/1177692644#
+ *
+ */
+template <typename value_type>
+void random::unit_vector(fixed_vector<value_type, 3>& v)
+{
+    value_type s;
+
+    do {
+        v[0] = 2 * uniform<value_type>() - 1;
+        v[1] = 2 * uniform<value_type>() - 1;
+        s = v[0] * v[0] + v[1] * v[1];
+    } while (s >= 1);
+
+    v[2] = 1 - 2 * s;
+    s = 2 * std::sqrt(1 - s);
+    v[0] *= s;
+    v[1] *= s;
+}
+
+/**
+ * Choose point from surface of 4-sphere
+ *
+ * G. Marsaglia, Choosing a Point from the Surface of a Sphere,
+ * The Annals of Mathematical Statistics, 1972, 43, p. 645-646
+ *
+ * http://projecteuclid.org/euclid.aoms/1177692644#
+ *
+ */
+template <typename value_type>
+void random::unit_vector(fixed_vector<value_type, 4>& v)
+{
+    value_type s1;
+    do {
+        v[0] = 2 * uniform<value_type>() - 1;
+        v[1] = 2 * uniform<value_type>() - 1;
+        s1 = v[0] * v[0] + v[1] * v[1];
+    } while (s1 >= 1);
+
+    value_type s2;
+    do {
+        v[2] = 2 * uniform<value_type>() - 1;
+        v[3] = 2 * uniform<value_type>() - 1;
+        s2 = v[2] * v[2] + v[3] * v[3];
+    } while (s2 >= 1);
+
+    value_type s = std::sqrt((1 - s1) / s2);
+    v[2] *= s;
+    v[3] *= s;
 }
 
 }} // namespace random::host

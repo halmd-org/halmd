@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// increase compiler compatibility, e.g. with Clang 2.8
+#define BOOST_LOG_NO_UNSPECIFIED_BOOL
 #include <boost/log/attributes/clock.hpp>
 #include <boost/log/filters/attr.hpp>
 #include <boost/log/formatters/attr.hpp>

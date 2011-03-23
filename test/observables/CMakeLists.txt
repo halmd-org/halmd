@@ -30,7 +30,7 @@ target_link_libraries(test_thermodynamics
   halmd_random
   halmd_utility
   ${HALMD_COMMON_LIBRARIES}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(thermodynamics_host_2d
   test_thermodynamics --run_test=host/2d/* --log_level=test_suite
@@ -77,7 +77,7 @@ target_link_libraries(test_observables_ssf
   halmd_random
   halmd_utility
   ${HALMD_COMMON_LIBRARIES}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
 )
 add_test(module_observables_ssf_host_2d
   test_observables_ssf --run_test=ssf/host/2d --log_level=test_suite

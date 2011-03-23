@@ -26,7 +26,7 @@ namespace halmd
 {
 
 /**
- * Dimension-independent base class for sampler.
+ * Dimension-independent base class for observables::sampler.
  *
  * This base class is needed for main() to run the simulation.
  */

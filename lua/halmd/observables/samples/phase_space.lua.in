@@ -19,7 +19,13 @@
 
 require("halmd.modules")
 
--- grab environment
+require("halmd.device")
+require("halmd.mdsim.core")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local phase_space_wrapper = {
     host = {
         host = {
@@ -40,10 +46,7 @@ if halmd_wrapper.observables.gpu then
         }
     }
 end
-local mdsim = {
-    core = require("halmd.mdsim.core")
-}
-local device = require("halmd.device")
+-- grab standard library
 local assert = assert
 
 module("halmd.observables.samples.phase_space", halmd.modules.register)

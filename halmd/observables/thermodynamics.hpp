@@ -23,13 +23,15 @@
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <lua.hpp>
+#include <utility> // pair
 #include <vector>
 
+#include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
-#include <halmd/observables/observable.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd
 {
@@ -46,14 +48,14 @@ namespace observables
 
 template <int dimension>
 class thermodynamics
-  : public observable<dimension>
 {
 public:
-    typedef observable<dimension> _Base;
+    typedef io::statevars::writer<dimension> writer_type;
     typedef mdsim::box<dimension> box_type;
-    typedef typename _Base::writer_type writer_type;
     typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
+    typedef typename signal<void (double)>::slot_function_type slot_function_type;
+    typedef std::pair<slot_function_type, slot_function_type> slot_function_pair_type;
 
     struct runtime
     {
@@ -68,9 +70,12 @@ public:
     thermodynamics(
         boost::shared_ptr<box_type> box
     );
+    virtual ~thermodynamics() {}
     void register_runtimes(profiler_type& profiler);
     virtual void register_observables(writer_type& writer);
 
+    // preparations before MD step
+    virtual void prepare() = 0;
     // sample macroscopic state variables and store with given time
     virtual void sample(double time);
 

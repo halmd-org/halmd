@@ -55,10 +55,18 @@ void store(parsed_options const& options, variables_map& vm, bool utf8)
 
         // validate conflicting/dependent options exist
         BOOST_FOREACH( string const& second, semantic->conflicting() ) {
+#if BOOST_VERSION >= 104200
             desc.find(second, false, false, false); //< throws unknown_option
+#else
+            desc.find(second, false);
+#endif
         }
         BOOST_FOREACH( string const& second, semantic->dependent() ) {
+#if BOOST_VERSION >= 104200
             desc.find(second, false, false, false);
+#else
+            desc.find(second, false);
+#endif
         }
 
         // skip not parsed or defaulted option

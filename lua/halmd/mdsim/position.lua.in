@@ -21,14 +21,16 @@ require("halmd.modules")
 
 require("halmd.mdsim.positions")
 
--- grab environment
+-- grab modules
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local position_wrapper = {
     [2] = halmd_wrapper.mdsim.positions_2_
   , [3] = halmd_wrapper.mdsim.positions_3_
 }
-local positions = halmd.mdsim.positions
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
+-- grab standard library
 local assert = assert
 local pairs = pairs
 
@@ -44,7 +46,7 @@ function new(args)
     else
         position = args.position or "lattice" -- default value
     end
-    return positions[position]()
+    return mdsim.positions[position]()
 end
 
 --
@@ -56,7 +58,7 @@ function options(desc, globals)
 
     -- position module choices with descriptions
     local choices = {}
-    for position, module in pairs(positions) do
+    for position, module in pairs(mdsim.positions) do
         if module.name then
             choices[position] = module.name()
         end

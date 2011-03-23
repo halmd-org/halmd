@@ -20,6 +20,13 @@ if(suffix STREQUAL "${CMAKE_SHARED_LIBRARY_SUFFIX}")
   )
 endif(suffix STREQUAL "${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
+# Link all tests against the test_tools_ctest library, which prints
+# CTEST_FULL_OUTPUT to avoid ctest truncation of the test output.
+set(HALMD_TEST_LIBRARIES
+  test_tools_ctest
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+
 #
 # Include unit tests
 #
@@ -30,6 +37,7 @@ add_subdirectory(io)
 add_subdirectory(mdsim)
 add_subdirectory(numeric)
 add_subdirectory(observables)
+add_subdirectory(performance)
 add_subdirectory(random)
 add_subdirectory(tools)
 add_subdirectory(utility)

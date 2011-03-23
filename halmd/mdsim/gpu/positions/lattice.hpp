@@ -77,6 +77,17 @@ public:
 private:
     /** slab extents for each direction as fraction of the edge length of the box */
     typename box_type::vector_type slab_;
+
+    /**
+     *  assign range of particle positions [first, last) to fcc lattice
+     *  of extents 'length' with origin at 'offset'
+     */
+    template <typename position_iterator>
+    void fcc(
+        position_iterator first, position_iterator last
+      , gpu_vector_type const& length, gpu_vector_type const& offset
+    );
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };

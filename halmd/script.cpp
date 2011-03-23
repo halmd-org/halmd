@@ -139,7 +139,7 @@ void script::options(options_parser& parser)
     // retrieve the Lua function before the try-catch block
     // to avoid bogus error message on the Lua stack in case
     // call_function throws an exception
-    object options(globals(L)["halmd"]["options"]["get"]);
+    object options(globals(L)["halmd"]["option"]["get"]);
     try {
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
@@ -162,7 +162,7 @@ void script::parsed(po::variables_map const& vm)
 
     using namespace luabind;
 
-    object options(globals(L)["halmd"]["options"]["set"]);
+    object options(globals(L)["halmd"]["option"]["set"]);
     try {
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
@@ -185,11 +185,13 @@ shared_ptr<runner> script::run()
 
     using namespace luabind;
 
+    // runner is non-template base class to template sampler
+    shared_ptr<runner> sampler;
     try {
 #ifndef NDEBUG
         lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
 #endif
-        call_function<void>(L, "run");
+        sampler = call_function<shared_ptr<runner> >(L, "halmd");
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
@@ -197,18 +199,13 @@ shared_ptr<runner> script::run()
         throw;
     }
 
-    object sampler(globals(L)["halmd"]["sampler"]);
-
-    // downcast from template class sampler to base class runner
-    shared_ptr<runner> runner(call_function<shared_ptr<runner> >(sampler));
-
     // Some C++ modules are only needed during the Lua script stage,
     // e.g. the trajectory reader. To make sure these modules are
     // destructed before running the simulation, invoke the Lua
     // garbage collector now.
     lua_gc(L, LUA_GCCOLLECT, 0);
 
-    return runner;
+    return sampler;
 }
 
 /**
