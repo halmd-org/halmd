@@ -30,8 +30,8 @@ struct ctest_full_output
 {
     ctest_full_output()
     {
-        BOOST_TEST_MESSAGE( PROJECT_NAME " " PROGRAM_VERSION );
         BOOST_TEST_MESSAGE( "Avoid ctest truncation of output: CTEST_FULL_OUTPUT" );
+        BOOST_TEST_MESSAGE( PROJECT_NAME " " PROGRAM_VERSION );
     }
 };
 
