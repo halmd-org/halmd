@@ -40,6 +40,7 @@ template <int dimension>
 core<dimension>::core()
   // initialise attributes
   : step_counter_(0)
+  , time_(0)
 {
     LOG("dimension of positional coordinates: " << dimension);
 }
@@ -81,10 +82,7 @@ void core<dimension>::mdstep()
 {
     scoped_timer<timer> timer_(runtime_.mdstep);
 
-    // count MD steps starting at 1
-    step_counter_++;
-
-    LOG_TRACE("performing MD step #" << step_counter_);
+    LOG_TRACE("performing MD step #" << step_counter_ + 1); //< output 1-based counter consistent with output files
 
     integrator->integrate();
     if (neighbour && neighbour->check()) {
@@ -96,7 +94,9 @@ void core<dimension>::mdstep()
     force->compute();
     integrator->finalize();
 
-    // update MD time
+    // increment step counter
+    step_counter_++;
+    // update simulation time
     time_ = step_counter_ * integrator->timestep();
 }
 
