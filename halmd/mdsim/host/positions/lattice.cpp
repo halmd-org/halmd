@@ -142,8 +142,19 @@ void lattice<dimension, float_type>::fcc(
         LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
+    // insert a vacancy every 'skip' sites
+    unsigned int skip = (N - npart) ? static_cast<unsigned int>(ceil(static_cast<double>(N) / (N - npart))) : 0;
+    if (skip) {
+        LOG_TRACE("insert a vacancy at every " << skip << "th site");
+    }
+
     size_t i = 0;
     for (position_iterator r_it = first; r_it != last; ++r_it, ++i) {
+        // skip vacant lattice points
+        if (skip && i % skip == skip - 1) {
+            ++i;
+        }
+
         vector_type& r = *r_it = a;
         if (dimension == 3) {
             r[0] *= ((i >> 2) % n[0]) + ((i ^ (i >> 1)) & 1) / 2.;
@@ -157,7 +168,8 @@ void lattice<dimension, float_type>::fcc(
         // shift origin of lattice to offset
         r += offset;
     }
-    LOG_DEBUG("number of particles inserted: " << npart);
+    assert(i <= N);
+    LOG_DEBUG("number of particles inserted: " << last - first);
 }
 
 template <int dimension, typename float_type>

@@ -94,7 +94,7 @@ template <
       , vector_type&
     )
 >
-__global__ void lattice(float4* g_r, uint npart, float a)
+__global__ void lattice(float4* g_r, uint npart, float a, uint skip)
 {
     enum { dimension = vector_type::static_size };
 
@@ -105,8 +105,11 @@ __global__ void lattice(float4* g_r, uint npart, float a)
         unsigned int type;
         tie(r, type) = untagged<vector_type>(g_r[i]);
 
+        // introduce a vacancy after every (skip - 1) particles
+        uint nvacancies = (skip > 1) ? (i / (skip - 1)) : 0;
+
         // compute primitive lattice vector
-        primitive(i, get<dimension>(ncell_), r);
+        primitive(i + nvacancies, get<dimension>(ncell_), r);
 
         // scale with lattice constant
         r *= a;

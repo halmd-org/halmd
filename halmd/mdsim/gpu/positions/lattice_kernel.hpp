@@ -39,8 +39,8 @@ struct lattice_wrapper
     /** number of cells per dimension */
     cuda::symbol<index_type> ncell;
 
-    cuda::function<void (float4*, uint, float)> fcc;
-    cuda::function<void (float4*, uint, float)> sc;
+    cuda::function<void (float4*, uint, float, uint)> fcc;
+    cuda::function<void (float4*, uint, float, uint)> sc;
     static lattice_wrapper const kernel;
 };
 

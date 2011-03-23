@@ -169,6 +169,12 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
         LOG_WARNING("lattice not fully occupied (" << N << " sites)");
     }
 
+    // insert a vacancy every 'skip' sites
+    unsigned int skip = (N - npart) ? static_cast<unsigned int>(ceil(static_cast<double>(N) / (N - npart))) : 0;
+    if (skip) {
+        LOG_TRACE("insert a vacancy after every " << skip << " sites");
+    }
+
     // set kernel globals in constant memory
     lattice_wrapper<dimension> const& kernel = get_lattice_kernel<dimension>();
     cuda::copy(offset, kernel.offset);
@@ -178,7 +184,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
     try {
         scoped_timer<timer> timer_(runtime_.set);
         cuda::configure(particle->dim.grid, particle->dim.block);
-        kernel.fcc(first, npart, a);
+        kernel.fcc(first, npart, a, skip);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
