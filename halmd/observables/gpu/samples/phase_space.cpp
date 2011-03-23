@@ -33,7 +33,8 @@ phase_space<dimension, float_type>::phase_space(vector<unsigned int> ntypes)
   // allocate sample pointers
   : r(ntypes.size())
   , v(ntypes.size())
-  , time(-numeric_limits<double>::epsilon()) //< any value < 0.
+  // initialise attributes
+  , time(-1) //< any value < 0.
 {
     for (size_t i = 0; i < ntypes.size(); ++i) {
         r[i].reset(new sample_vector(ntypes[i]));

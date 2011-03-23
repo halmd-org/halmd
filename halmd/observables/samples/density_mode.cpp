@@ -35,7 +35,8 @@ template <int dimension>
 density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq)
   // allocate sample pointers
   : rho(ntype)
-  , time(-1)                    //< any value < 0.
+  // initialise attributes
+  , time(-1) //< any value < 0.
 {
     // allocate memory for each particle type
     for (unsigned int i = 0; i < ntype; ++i) {

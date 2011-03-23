@@ -37,6 +37,8 @@ thermodynamics<dimension>::thermodynamics(
 )
   // dependency injection
   : box(box)
+  // initialise members
+  , time_(-1) //< any negative value
 {
 }
 
