@@ -128,7 +128,7 @@ void lattice<dimension, float_type>::fcc(
         for (size_t i = 0; i < dimension; ++i) {
             t[i] = length[i] / (n[i] + 1);
         }
-        typename vector_type::iterator it = min_element(t.begin(), t.end());
+        typename vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
         ++n[it - t.begin()];
     }
