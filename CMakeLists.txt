@@ -33,6 +33,9 @@ else()
   set(PROGRAM_DATE "unknown date")
 endif()
 
+# Output source version for Dashboard test reports
+message(STATUS "Building HALMD ${PROGRAM_VERSION}")
+
 if(NOT HALMD_DOC_ONLY)
 
 project(HALMD CXX)
