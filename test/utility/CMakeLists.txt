@@ -33,6 +33,18 @@ add_test(options_parser
   test_options_parser --log_level=test_suite
 )
 
+add_executable(test_posix_signal
+  posix_signal.cpp
+)
+target_link_libraries(test_posix_signal
+  halmd_utility
+  ${Boost_SYSTEM_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(posix_signal
+  test_posix_signal --log_level=message
+)
+
 add_subdirectory(lua_wrapper)
 add_subdirectory(program_options)
 

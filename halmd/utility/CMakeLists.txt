@@ -1,6 +1,7 @@
 add_library(halmd_utility
   hostname.cpp
   options_parser.cpp
+  posix_signal.cpp
   profiler.cpp
 )
 
