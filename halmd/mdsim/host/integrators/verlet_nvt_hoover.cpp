@@ -50,6 +50,7 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
   // member initialisation
   , xi(0)
   , v_xi(0)
+  , en_nhc_(0)
   , resonance_frequency_(resonance_frequency)
 {
     this->timestep(timestep);

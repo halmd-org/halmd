@@ -50,6 +50,7 @@ verlet_nvt_hoover(
   // member initialisation
   , xi(0)
   , v_xi(0)
+  , en_nhc_(0)
   , resonance_frequency_(resonance_frequency)
   // set up functor and allocate internal memory,
   // this is done here and only once rather than repeatedly during the integration
