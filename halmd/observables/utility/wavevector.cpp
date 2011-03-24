@@ -19,6 +19,7 @@
 
 #include <boost/bind.hpp>
 #include <cmath>
+#include <exception>
 #include <iterator>
 #include <sstream>
 
@@ -110,6 +111,11 @@ void wavevector<dimension>::init_()
             LOG_WARNING("No wavevector compatible with |q| ≈ " << *q_it << ". Value discarded");
             wavenumber_.erase(q_it--);   // post-decrement iterator, increment at end of loop
         }
+    }
+
+    if (wavenumber_.empty()) {
+        LOG_WARNING("Wavenumber grid is empty.");
+        throw std::logic_error("Constraints on wavevectors are incompatible with geometry of simulation box.");
     }
 
     LOG_DEBUG("total number of wavevectors: " << wavevector_.size());
