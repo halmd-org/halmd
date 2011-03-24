@@ -85,11 +85,7 @@ function new(args)
 
     -- Optionally sample static structure factor.
     if args.state_vars then -- FIXME args.ssf
-        -- FIXME do not return nil in observables.ssf()
-        local ssf = observables.ssf()
-        if ssf then
-            sampler:on_sample(ssf.sample, args.state_vars)
-        end
+        sampler:on_sample(observables.ssf().sample, args.state_vars)
     end
 
     -- FIXME connect revised writer to thermodynamics and ssf
