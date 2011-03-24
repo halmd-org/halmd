@@ -75,12 +75,6 @@ void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(pr
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
-    // randomise particle types if there are more than 1
-    if (particle->ntypes.size() > 1) {
-        LOG("randomly permuting particle types");
-        random->shuffle(particle->g_r);
-    }
-
 #ifdef USE_VERLET_DSFUN
     // set hi parts of dsfloat values to zero
     cuda::memset(particle->g_r, 0, particle->g_r.capacity());
@@ -94,6 +88,14 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
 
     float4* r_it = particle->g_r.data(); // use pointer as substitute for missing iterator
     fcc(r_it, r_it + particle->nbox, length, offset);
+
+    // randomise particle positions if there is more than 1 particle type
+    // FIXME this requires a subsequent sort
+    // FIXME this will fail greatly once we support polymers
+    if (particle->ntypes.size() > 1) {
+        LOG("randomly permuting particle positions");
+        random->shuffle(particle->g_r);
+    }
 
     // reset particle image vectors
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());

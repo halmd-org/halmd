@@ -63,18 +63,20 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    // randomise particle types if there are more than 1
-    if (particle->ntypes.size() > 1) {
-        LOG("randomly permuting particle types");
-        random->shuffle(particle->type.begin(), particle->type.end());
-    }
-
     assert(particle->r.size() == particle->nbox);
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     vector_type length = element_prod(box->length(), slab_);
     vector_type offset = -length / 2;
     fcc(particle->r.begin(), particle->r.end(), length, offset);
+
+    // randomise particle positions if there is more than 1 particle type
+    // FIXME this requires a subsequent sort
+    // FIXME this will fail greatly once we support polymers
+    if (particle->ntypes.size() > 1) {
+        LOG("randomly permuting particle positions");
+        random->shuffle(particle->r.begin(), particle->r.end());
+    }
 
     // assign particle image vectors
     fill(particle->image.begin(), particle->image.end(), 0);
