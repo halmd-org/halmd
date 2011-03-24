@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <functional>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
@@ -55,10 +58,27 @@ void phase_space<dimension, float_type>::acquire(double time)
     LOG_TRACE("[phase_space] acquire sample");
 
     for (size_t i = 0; i < particle->nbox; ++i) {
+        unsigned int type = particle->type[i];
+        unsigned int tag = particle->tag[i];
+        unsigned int offset = accumulate(
+            particle->ntypes.begin(), particle->ntypes.begin() + type
+          , 0u, plus<unsigned int>()
+        );
+        if (type >= particle->ntype) {
+            LOG_TRACE("Type of particle #" << i << ": " << type);
+        }
+        assert(type < particle->ntype);
+
+        if (tag - offset >= particle->ntypes[type]) {
+            LOG_TRACE("Type of particle #" << i << ": " << type);
+            LOG_TRACE("Tag of particle #" << i << ": " << tag);
+        }
+        assert(tag - offset < particle->ntypes[type]);
+
         // periodically extended particle position
-        (*sample->r[particle->type[i]])[particle->tag[i]] = particle->r[i] + element_prod(particle->image[i], box->length());
+        (*sample->r[type])[tag - offset] = particle->r[i] + element_prod(particle->image[i], box->length());
         // particle velocity
-        (*sample->v[particle->type[i]])[particle->tag[i]] = particle->v[i];
+        (*sample->v[type])[tag - offset] = particle->v[i];
     }
     sample->time = time;
 }
