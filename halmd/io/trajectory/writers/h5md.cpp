@@ -66,9 +66,9 @@ h5md<dimension, float_type>::h5md(
         H5::DataSet v = h5xx::create_dataset<sample_vector_type>(type, "velocity", size);
 
         // particle positions
-        writers_.push_back(h5xx::make_dataset_writer(r, &*sample->r[i]));
+        writers_.push_back(h5xx::make_dataset_writer(r, sample->r[i].get()));
         // particle velocities
-        writers_.push_back(h5xx::make_dataset_writer(v, &*sample->v[i]));
+        writers_.push_back(h5xx::make_dataset_writer(v, sample->v[i].get()));
     }
 
     // simulation time in reduced units

@@ -87,8 +87,8 @@ h5md<dimension, float_type>::h5md(
         H5::DataSet r = type.openDataSet("position");
         H5::DataSet v = type.openDataSet("velocity");
 
-        h5xx::read_dataset(r, &*sample->r[i], offset_);
-        h5xx::read_dataset(v, &*sample->v[i], offset_);
+        h5xx::read_dataset(r, sample->r[i].get(), offset_);
+        h5xx::read_dataset(v, sample->v[i].get(), offset_);
     }
 
     H5::DataSet t = root.openDataSet("time");

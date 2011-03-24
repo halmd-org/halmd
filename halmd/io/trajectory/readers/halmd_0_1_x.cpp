@@ -110,8 +110,8 @@ halmd_0_1_x<dimension, float_type>::halmd_0_1_x(
         }
         H5::DataSet v = type.openDataSet("v");
 
-        h5xx::read_dataset(r, &*sample->r[i], offset_);
-        h5xx::read_dataset(v, &*sample->v[i], offset_);
+        h5xx::read_dataset(r, sample->r[i].get(), offset_);
+        h5xx::read_dataset(v, sample->v[i].get(), offset_);
     }
 
     H5::DataSet t = root.openDataSet("t");
