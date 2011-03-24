@@ -68,9 +68,9 @@ public:
     virtual void order();
 
 private:
-    void map(cuda::vector<unsigned int> g_map);
-    void permutation(cuda::vector<unsigned int> g_map, cuda::vector<unsigned int> g_index);
-    void order(cuda::vector<unsigned int> g_index);
+    void map(cuda::vector<unsigned int>& g_map);
+    void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
+    void order(cuda::vector<unsigned int> const& g_index);
 
     /** recursion depth */
     unsigned int depth_;

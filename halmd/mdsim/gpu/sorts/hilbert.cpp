@@ -95,7 +95,7 @@ void hilbert<dimension, float_type>::order()
  * map particles to Hilbert curve
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::map(cuda::vector<unsigned int> g_map)
+void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 {
     scoped_timer<timer> timer_(runtime_.map);
     cuda::configure(particle->dim.grid, particle->dim.block);
@@ -106,7 +106,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int> g_map)
  * generate permutation
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int> g_map, cuda::vector<unsigned int> g_index)
+void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
     scoped_timer<timer> timer_(runtime_.permutation);
     cuda::configure(particle->dim.grid, particle->dim.block);
@@ -119,7 +119,7 @@ void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int> g_ma
  * order particles by permutation
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> g_index)
+void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> const& g_index)
 {
     scoped_timer<timer> timer_(runtime_.order);
 
