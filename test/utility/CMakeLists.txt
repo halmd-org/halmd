@@ -40,6 +40,7 @@ target_link_libraries(test_posix_signal
   halmd_utility
   ${Boost_SYSTEM_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
+  rt
 )
 add_test(posix_signal
   test_posix_signal --log_level=message
