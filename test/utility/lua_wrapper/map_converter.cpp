@@ -100,10 +100,16 @@ BOOST_FIXTURE_TEST_CASE( any_map, lua_test_fixture )
     LUA_CHECK( "lua_to_static_map(m)" );
 }
 
-static __attribute__((constructor)) void register_any_converters()
+class register_any_converters
 {
-    using namespace halmd;
-    register_any_converter<unsigned int>();
-    register_any_converter<int>();
-    register_any_converter<void>(); //< boost::any()
-}
+public:
+    register_any_converters()
+    {
+        using namespace halmd;
+        register_any_converter<unsigned int>();
+        register_any_converter<int>();
+        register_any_converter<void>(); //< boost::any()
+    }
+};
+
+BOOST_GLOBAL_FIXTURE( register_any_converters );
