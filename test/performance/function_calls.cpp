@@ -29,6 +29,7 @@
 #include <test/tools/lua.hpp>
 #include <test/performance/function_calls_extern.hpp>
 #ifdef WITH_CUDA
+# include <test/tools/cuda.hpp>
 # include <test/performance/function_calls_extern_kernel.hpp>
 #endif
 
@@ -95,6 +96,8 @@ private:
 #define I1E6 1000000
 // synchroneous CUDA kernel launches are even slower…
 #define I1E5 100000
+
+BOOST_AUTO_TEST_SUITE( host )
 
 /**
  * Measure direct C++ function call
@@ -281,7 +284,11 @@ BOOST_AUTO_TEST_CASE( boost_signals2_10 )
     }
 }
 
+BOOST_AUTO_TEST_SUITE_END() // host
+
 #ifdef WITH_CUDA
+
+BOOST_FIXTURE_TEST_SUITE( gpu, set_cuda_device )
 
 /**
  * Measure cuda::function call
@@ -402,5 +409,7 @@ BOOST_AUTO_TEST_CASE( cuda_kernel_16_512_synchronize )
         cudaThreadSynchronize();
     }
 }
+
+BOOST_AUTO_TEST_SUITE_END() // gpu
 
 #endif /* WITH_CUDA */
