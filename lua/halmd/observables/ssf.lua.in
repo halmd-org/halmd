@@ -49,7 +49,7 @@ function new(args)
     local tolerance = args.tolerance or 0.01 -- default value
     local maximum_count = args.maximum_count or 7 -- default value
     local wavenumbers = args.wavenumbers
-    local maximum_wavenumber = args.maximum_wavenumber or { 12.6 } -- default value, approx. 4π
+    local maximum_wavenumber = args.maximum_wavenumber or 12.6 -- default value, approx. 4π
 
     -- dependency injection
     local core = mdsim.core()
