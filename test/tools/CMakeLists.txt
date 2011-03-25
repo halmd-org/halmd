@@ -13,3 +13,6 @@ target_link_libraries(test_tools_lua
 add_library(test_tools_ctest SHARED
   ctest.cpp
 )
+target_link_libraries(test_tools_ctest
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
