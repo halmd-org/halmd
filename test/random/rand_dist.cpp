@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
+#include <cmath>
 #include <ctime>
 #include <stdexcept>
 
@@ -75,12 +76,12 @@ void test_rand48_gpu( unsigned long n )
         // mean = 1/2, variance = 1/12, n-th moment is 1/(n+1)
         // use tolerance = 3 sigma, so the test passes with 99% probability
         double val = 0.5;
-        double tol = 3 * sigma(a) / sqrt(n - 1);
+        double tol = 3 * sigma(a) / std::sqrt(n - 1.);
         BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
         // Var(ΣX^2/N) = E(X^4)/N
         val = 1./12;
-        tol = 1 * sqrt(1. / (n - 1) * (1./5));
+        tol = 1 * std::sqrt(1. / (n - 1) * (1./5));
         BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
         // TODO: Kolmogorov-Smirnov test
@@ -118,12 +119,12 @@ void test_host_random( unsigned long n )
     // mean = 1/2, variance = 1/12, n-th moment is 1/(n+1)
     // use tolerance = 3 sigma, so the test passes with 99% probability
     double val = 0.5;
-    double tol = 3 * sigma(a) / sqrt(n - 1);
+    double tol = 3 * sigma(a) / std::sqrt(n - 1.);
     BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
     // Var(ΣX^2/N) = E(X^4)/N
     val = 1./12;
-    tol = 1 * sqrt(1. / (n - 1) * (1./5));
+    tol = 1 * std::sqrt(1. / (n - 1) * (1./5));
     BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
     // test Gaussian distribution
@@ -141,17 +142,17 @@ void test_host_random( unsigned long n )
 
     // mean = 0, std = 1
     BOOST_CHECK_EQUAL(count(a), n);
-    tol = 3 * sigma(a) / sqrt(n - 1);         // tolerance = 3 sigma (passes in 99% of all cases)
+    tol = 3 * sigma(a) / std::sqrt(n - 1.);     // tolerance = 3 sigma (passes in 99% of all cases)
     BOOST_CHECK_SMALL(mean(a), tol);
     val = 1;
-    tol = 3 * sqrt( 1. / (n - 1) * 2);       // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
+    tol = 3 * std::sqrt( 1. / (n - 1) * 2);     // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
     BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
     // higher moments
-    tol = 3 * sigma(a3) / sqrt(n - 1);        // <X³> = 0
+    tol = 3 * sigma(a3) / std::sqrt(n - 1.);    // <X³> = 0
     BOOST_CHECK_SMALL(mean(a3), tol);
     val = 3;                                     // <X⁴> = 3
-    tol = 3 * sigma(a4) / sqrt(n - 1);
+    tol = 3 * sigma(a4) / std::sqrt(n - 1.);
     BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 }
 
