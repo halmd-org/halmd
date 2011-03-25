@@ -76,6 +76,9 @@ pick_lattice_points_from_shell(
     enum { dimension = vector_type::static_size };
     typedef fixed_vector<unsigned int, dimension> index_type;
 
+    // return on empty range
+    if (radius_begin == radius_end) return;
+
     // keep track of the number of constructed lattice points
     vector<unsigned int> count(radius_end - radius_begin, 0u);
 
@@ -108,11 +111,11 @@ pick_lattice_points_from_shell(
             unsigned int i = 0;
             for (InputIterator r_it = radius_begin; r_it != radius_end; ++r_it, ++i) {
                 if (count[i] < max_count) {
-                    // find integer n such that abs(norm_2(n * r0) - r) / r < tolerance
+                    // find integer n such that abs(norm_2(n * r0) - r) / r ≤ tolerance
                     // 1) round to nearest integer
                     unsigned int n = floor(*r_it / r0_norm + float_type(.5));
                     // 2) check if this is good enough
-                    if (n > 0 && abs(n * r0_norm - *r_it) < *r_it * tolerance) {
+                    if (n > 0 && (abs(n * r0_norm - *r_it) <= *r_it * tolerance)) {
                         vector_type point = n * r0;
                         *result++ = make_pair(*r_it, point);
                         ++count[i];
