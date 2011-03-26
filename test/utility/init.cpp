@@ -78,7 +78,12 @@ HALMD_INIT( append_vector2 )
     vector().push_back(M_LN2);
 }
 
+namespace halmd
+{
+
 HALMD_INIT( append_vector3 )
 {
     vector().push_back(M_1_PI);
 }
+
+} // namespace halmd
