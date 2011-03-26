@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_SORTS_HILBERT_KERNEL_HPP
 #define HALMD_MDSIM_SORTS_HILBERT_KERNEL_HPP
 
+#include <boost/math/special_functions/sign.hpp> // std::signbit is not portable
 #include <boost/mpl/equal_to.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -48,7 +49,7 @@ namespace detail
 #ifdef __CUDACC__
 using algorithm::gpu::swap;
 #else
-using std::signbit;
+using boost::math::signbit;
 using std::swap;
 #endif
 
