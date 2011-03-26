@@ -8,6 +8,16 @@ add_test(demangle
   test_demangle --log_level=test_suite
 )
 
+add_executable(test_init
+  init.cpp
+)
+target_link_libraries(test_init
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(init
+  test_init --log_level=test_suite
+)
+
 add_executable(test_signal
   signal.cpp
 )
