@@ -108,7 +108,7 @@ static void register_class_B(lua_State* L)
     ];
 }
 
-HALMD_INIT( register_lua )
+HALMD_INIT( register_luaopen )
 {
     lua_wrapper::register_(0)
     [

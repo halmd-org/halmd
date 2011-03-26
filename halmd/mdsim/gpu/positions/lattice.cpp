@@ -236,10 +236,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_INIT( register_luaopen )
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
@@ -249,8 +246,6 @@ __attribute__((constructor)) void register_lua()
         &lattice<2, float, random::gpu::rand48>::luaopen
     ];
 }
-
-} // namespace
 
 // explicit instantiation
 template class lattice<3, float, random::gpu::rand48>;

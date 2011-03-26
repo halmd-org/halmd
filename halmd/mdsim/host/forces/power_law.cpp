@@ -112,10 +112,7 @@ void power_law<float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_INIT( register_luaopen )
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef double float_type;
@@ -136,8 +133,6 @@ __attribute__((constructor)) void register_lua()
         &pair_trunc<2, float_type, power_law<float_type> >::luaopen
     ];
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

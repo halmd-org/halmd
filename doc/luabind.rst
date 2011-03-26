@@ -60,10 +60,7 @@ programme execution starts. ::
         ];
     }
 
-    namespace // limit symbols to translation unit
-    {
-
-    __attribute__((constructor)) void register_lua()
+    HALMD_INIT( register_luaopen )
     {
         lua_wrapper::register_(0) //< distance of derived to base class
         [
@@ -74,16 +71,12 @@ programme execution starts. ::
         ];
     }
 
-    } // namespace
-
 **FIXME** explain the template arguments of ``class_``
 
 **FIXME** explain the differences between property, def, def_readonly, add
 comments in code sample
 
 **FIXME** explain ``lua_wrapper::register_``
-
-**FIXME** why is the anonymous namespace necessary?
 
 The actual class for the Verlet module derives from its abstract interface
 class. Again, it has a static method ``luaopen``. Its constructor describes the
@@ -167,10 +160,7 @@ method ``module_name``. ::
         ];
     }
 
-    namespace // limit symbols to translation unit
-    {
-
-    __attribute__((constructor)) void register_lua()
+    HALMD_INIT( register_luaopen )
     {
         lua_wrapper::register_(1) //< distance of derived to base class
         [

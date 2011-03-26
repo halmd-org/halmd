@@ -63,10 +63,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_INIT( register_luaopen )
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
@@ -76,8 +73,6 @@ __attribute__((constructor)) void register_lua()
         &phase_space<2, float>::luaopen
     ];
 }
-
-} // namespace
 
 template class phase_space<3, float>;
 template class phase_space<2, float>;

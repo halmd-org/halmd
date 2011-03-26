@@ -186,10 +186,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_INIT( register_luaopen )
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
@@ -205,8 +202,6 @@ __attribute__((constructor)) void register_lua()
         &phase_space<host::samples::phase_space<2, float> >::luaopen
     ];
 }
-
-} // namespace
 
 // explicit instantiation
 template class phase_space<gpu::samples::phase_space<3, float> >;

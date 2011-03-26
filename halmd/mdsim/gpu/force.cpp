@@ -48,10 +48,7 @@ void force<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_INIT( register_luaopen )
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
@@ -61,8 +58,6 @@ __attribute__((constructor)) void register_lua()
         &force<2, float>::luaopen
     ];
 }
-
-} // namespace
 
 }} // namespace mdsim::gpu
 

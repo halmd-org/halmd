@@ -242,10 +242,7 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_INIT( register_luaopen )
 {
     lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
@@ -264,8 +261,6 @@ __attribute__((constructor)) void register_lua()
     ];
 #endif
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

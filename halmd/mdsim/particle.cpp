@@ -40,7 +40,7 @@ namespace mdsim
 /**
  * Register option value types with Lua
  */
-static __attribute__((constructor)) void register_option_converters()
+HALMD_INIT( register_option_converters )
 {
     register_any_converter<boost::multi_array<unsigned int, 1> >();
 }
@@ -93,10 +93,7 @@ void particle<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_INIT( register_luaopen )
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
@@ -106,8 +103,6 @@ __attribute__((constructor)) void register_lua()
         &particle<2>::luaopen
     ];
 }
-
-} // namespace
 
 // explicit instantiation
 template class particle<3>;
