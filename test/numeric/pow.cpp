@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE( correctness )
     BOOST_CHECK_EQUAL(std::pow(2., 15), fixed_pow<15>(2));
     BOOST_CHECK_EQUAL(std::pow(2., 24), fixed_pow<24>(2));
 
-    BOOST_CHECK_CLOSE_FRACTION(fixed_pow<2>(std::sqrt(5)), 5, eps);
+    BOOST_CHECK_CLOSE_FRACTION(fixed_pow<2>(std::sqrt(5.)), 5, eps);
     BOOST_CHECK_CLOSE_FRACTION(fixed_pow<12>(1.3), std::pow(1.3, 12), eps);
 }
 
