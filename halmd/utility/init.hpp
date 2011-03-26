@@ -39,6 +39,6 @@
 
    http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.14
  */
-#define HALMD_INIT( name ) namespace { struct name { name(); } _ ## name; } name::name()
+#define HALMD_INIT( name ) static struct name { name(); } _ ## name; name::name()
 
 #endif /* ! HALMD_UTILITY_INIT_HPP */
