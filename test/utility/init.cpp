@@ -52,11 +52,14 @@ typename std::vector<T>::const_iterator find(std::vector<T> const& v, T const& t
 BOOST_AUTO_TEST_CASE( init_vector )
 {
     BOOST_CHECK_EQUAL( vector().size(), 6LU );
+    // append_vector
     BOOST_CHECK( find(vector(), M_PI_2) == (find(vector(), M_PI) + 1) );
     BOOST_CHECK( find(vector(), M_PI_4) == (find(vector(), M_PI) + 2) );
     BOOST_CHECK( find(vector(), M_PI)   != vector().end() );
+    // append_vector in different translation unit
     BOOST_CHECK( find(vector(), M_E)    != vector().end() );
     BOOST_CHECK( find(vector(), M_LN2)  != vector().end() );
+    // append_vector in halmd namespace
     BOOST_CHECK( find(vector(), M_1_PI) != vector().end() );
 }
 
@@ -65,23 +68,17 @@ HALMD_INIT( set_scalar )
     scalar() = 42;
 }
 
-HALMD_INIT( append_vector1 )
+HALMD_INIT( append_vector )
 {
     vector().push_back(M_PI);
     vector().push_back(M_PI_2);
     vector().push_back(M_PI_4);
 }
 
-HALMD_INIT( append_vector2 )
-{
-    vector().push_back(M_E);
-    vector().push_back(M_LN2);
-}
-
 namespace halmd
 {
 
-HALMD_INIT( append_vector3 )
+HALMD_INIT( append_vector )
 {
     vector().push_back(M_1_PI);
 }

@@ -10,6 +10,7 @@ add_test(demangle
 
 add_executable(test_init
   init.cpp
+  init_duplicate.cpp
 )
 target_link_libraries(test_init
   ${HALMD_TEST_LIBRARIES}
