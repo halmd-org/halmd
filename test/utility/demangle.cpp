@@ -94,24 +94,49 @@ using namespace std;
  */
 BOOST_AUTO_TEST_CASE( test_demangled_name )
 {
-    BOOST_CHECK_EQUAL( demangled_name<test_type<0>::type >(),
-                       "main_");
+#ifdef HALMD_USE_DEMANGLING
+    BOOST_TEST_MESSAGE( "compiler implements type name demangling" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<0>::type>(),
+                       "main_" );
     BOOST_CHECK_EQUAL( demangled_name(typeid(test_type<0>::type)), // alternative syntax
-                       "main_");
-    BOOST_CHECK_EQUAL( demangled_name<test_type<1>::type >(),
-                       "core<2>");
-    BOOST_CHECK_EQUAL( demangled_name<test_type<2>::type >(),
-                       "core<3>");
-    BOOST_CHECK_EQUAL( demangled_name<test_type<3>::type >(),
-                       "mdsim::core<3, float>");
-    BOOST_CHECK_EQUAL( demangled_name<test_type<4>::type >(),
-                       "mdsim::gpu::force<3, float>");
-    BOOST_CHECK_EQUAL( demangled_name<test_type<5>::type >(),
-                       "mdsim::gpu::force<3, mdsim::core<3, core<3> > >");
-    BOOST_CHECK_EQUAL( demangled_name<test_type<6>::type >(),
-                       "mdsim::gpu::force<3, float>::LennardJones<mdsim::gpu::force<3, float> >");
-    BOOST_CHECK_EQUAL( demangled_name<test_type<7>::type >(),
-                       "mdsim::gpu::force<3, mdsim::core<3, core<3> > >::LennardJones<mdsim::core<3, core<3> > >");
-    BOOST_CHECK_EQUAL( demangled_name<test_type<8>::type >(),
-                       "mdsim::core<3, core<3> >");
+                       "main_" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<1>::type>(),
+                       "core<2>" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<2>::type>(),
+                       "core<3>" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<3>::type>(),
+                       "mdsim::core<3, float>" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<4>::type>(),
+                       "mdsim::gpu::force<3, float>" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<5>::type>(),
+                       "mdsim::gpu::force<3, mdsim::core<3, core<3> > >" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<6>::type>(),
+                       "mdsim::gpu::force<3, float>::LennardJones<mdsim::gpu::force<3, float> >" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<7>::type>(),
+                       "mdsim::gpu::force<3, mdsim::core<3, core<3> > >::LennardJones<mdsim::core<3, core<3> > >" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<8>::type>(),
+                       "mdsim::core<3, core<3> >" );
+#else /* HALMD_USE_DEMANGLING */
+    BOOST_TEST_MESSAGE( "compiler does not implement type name demangling" );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<0>::type>(),
+                       typeid(test_type<0>::type ).name() );
+    BOOST_CHECK_EQUAL( demangled_name(typeid(test_type<0>::type)), // alternative syntax
+                       typeid(test_type<0>::type).name() );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<1>::type>(),
+                       typeid(test_type<1>::type ).name() );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<2>::type>(),
+                       typeid(test_type<2>::type ).name() );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<3>::type>(),
+                       typeid(test_type<3>::type ).name() );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<4>::type>(),
+                       typeid(test_type<4>::type ).name() );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<5>::type>(),
+                       typeid(test_type<5>::type ).name() );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<6>::type>(),
+                       typeid(test_type<6>::type ).name() );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<7>::type>(),
+                       typeid(test_type<7>::type ).name() );
+    BOOST_CHECK_EQUAL( demangled_name<test_type<8>::type>(),
+                       typeid(test_type<8>::type ).name() );
+#endif /* HALMD_USE_DEMANGLING */
 }

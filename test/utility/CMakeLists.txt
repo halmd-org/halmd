@@ -5,7 +5,7 @@ target_link_libraries(test_demangle
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(demangle
-  test_demangle --log_level=test_suite
+  test_demangle --log_level=message
 )
 
 add_executable(test_init
