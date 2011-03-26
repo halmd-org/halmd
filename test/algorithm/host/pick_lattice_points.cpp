@@ -27,6 +27,7 @@
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/init.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -135,7 +136,7 @@ void pick_lattice_points()
     }
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_INIT( init_unit_test_suite )
 {
     using namespace boost::unit_test::framework;
 

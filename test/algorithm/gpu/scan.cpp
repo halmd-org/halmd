@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <halmd/algorithm/gpu/scan.hpp>
+#include <halmd/utility/init.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/cuda.hpp>
 
@@ -75,7 +76,7 @@ void compare_scan( size_t count )
                         "GPU and CPU prefix sum mismatch");
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_INIT( init_unit_test_suite )
 {
     using namespace boost::unit_test::framework;
     using namespace boost::assign;
