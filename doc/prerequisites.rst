@@ -109,7 +109,7 @@ In the Boost source directory, bootstrap the build with ::
 
 Compile Boost using ::
 
-   ./bjam
+   ./bjam cxxflags=-fPIC
 
 This compiles both dynamic and static libraries.
 
@@ -127,7 +127,7 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam install --prefix=$HOME/usr/boost_1_46_1
+   ./bjam cxxflags=-fPIC install --prefix=$HOME/usr/boost_1_46_1
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
