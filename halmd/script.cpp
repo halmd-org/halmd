@@ -74,11 +74,9 @@ void script::package_path()
     // search for Lua scripts in installation prefix
     lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?.lua");
     lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?/init.lua");
-    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/lib/?.lua");
-    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/lib/?/init.lua");
 
     // append above literals to default package.path
-    lua_concat(L, 7);
+    lua_concat(L, 5);
     // set new package.path
     lua_rawset(L, -3);
     // remove table "package"
