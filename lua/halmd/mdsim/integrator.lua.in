@@ -24,14 +24,6 @@ require("halmd.mdsim.integrators")
 -- grab modules
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local integrator_wrapper = {
-    [2] = halmd_wrapper.mdsim.integrator_2_
-  , [3] = halmd_wrapper.mdsim.integrator_3_
-  , nvt = {
-      [2] = halmd_wrapper.mdsim.integrators.nvt_2_
-    , [3] = halmd_wrapper.mdsim.integrators.nvt_3_
-  }
-}
 local h5 = halmd_wrapper.h5
 local po = halmd_wrapper.po
 -- grab standard library
