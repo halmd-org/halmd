@@ -38,14 +38,6 @@ namespace mdsim
 {
 
 /**
- * Register option value types with Lua
- */
-HALMD_INIT( register_option_converters )
-{
-    register_any_converter<boost::multi_array<unsigned int, 1> >();
-}
-
-/**
  * Construct microscopic system state.
  *
  * @param particles number of particles per type or species
