@@ -27,7 +27,6 @@
 
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/random/host/random.hpp>
-#include <halmd/utility/init.hpp>
 #ifdef WITH_CUDA
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/random/gpu/random_kernel.hpp>
@@ -157,7 +156,7 @@ void test_host_random( unsigned long n )
     BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 }
 
-HALMD_INIT( init_unit_test_suite )
+static void __attribute__((constructor)) init_unit_test_suite()
 {
     using namespace boost::unit_test::framework;
 
