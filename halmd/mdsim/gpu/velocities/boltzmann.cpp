@@ -170,7 +170,10 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
     ];
 }
 
-HALMD_INIT( register_luaopen )
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(2) //< distance of derived to base class
     [
@@ -180,6 +183,8 @@ HALMD_INIT( register_luaopen )
         &boltzmann<2, float, random::gpu::rand48>::luaopen
     ];
 }
+
+} // namespace
 
 // explicit instantiation
 template class boltzmann<3, float, random::gpu::rand48>;

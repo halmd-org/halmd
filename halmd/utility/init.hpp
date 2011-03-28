@@ -29,7 +29,7 @@
 
    Example usage:
 
-   HALMD_INIT( register_luaopen )
+   HALMD_INIT( register_lua )
    {
         // ...
    }

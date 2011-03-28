@@ -127,7 +127,10 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_INIT( register_luaopen )
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
@@ -142,6 +145,8 @@ HALMD_INIT( register_luaopen )
         &pair_trunc<2, float, lennard_jones<float> >::luaopen
     ];
 }
+
+} // namespace
 
 // explicit instantiation
 template class lennard_jones<float>;

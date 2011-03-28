@@ -99,7 +99,10 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
 }
 
 
-HALMD_INIT( register_luaopen )
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(2) //< distance of derived to base class
     [
@@ -109,6 +112,8 @@ HALMD_INIT( register_luaopen )
         &phase_space<2, float>::luaopen
     ];
 }
+
+} // namespace
 
 // explicit instantiation
 template class phase_space<3, float>;

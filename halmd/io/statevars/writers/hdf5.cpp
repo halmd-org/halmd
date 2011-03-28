@@ -253,7 +253,10 @@ void hdf5<dimension>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_INIT( register_luaopen )
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(1) //< distance of derived to base class
     [
@@ -263,6 +266,8 @@ HALMD_INIT( register_luaopen )
         &hdf5<2>::luaopen
     ];
 }
+
+} // namespace
 
 }}} // namespace io::profiling::writers
 

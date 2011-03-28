@@ -110,7 +110,10 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_INIT( register_luaopen )
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef double float_type;
@@ -131,6 +134,8 @@ HALMD_INIT( register_luaopen )
         &pair_trunc<2, float_type, lennard_jones<float_type> >::luaopen
     ];
 }
+
+} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

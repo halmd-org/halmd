@@ -60,7 +60,10 @@ void density_mode<dimension>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_INIT( register_luaopen )
+namespace // limit symbols to translation unit
+{
+
+__attribute__ ((constructor)) void register_lua()
 {
     lua_wrapper::register_(0) //< distance of derived to base class
     [
@@ -70,6 +73,8 @@ HALMD_INIT( register_luaopen )
         &density_mode<2>::luaopen
     ];
 }
+
+} // namespace
 
 } // namespace observables
 
