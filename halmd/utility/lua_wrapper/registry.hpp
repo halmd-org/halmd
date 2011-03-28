@@ -22,11 +22,10 @@
 
 #include <boost/function.hpp>
 #include <boost/lexical_cast.hpp> //< Lua class names from template parameters
-#include <lua.hpp>
 #include <map>
 #include <utility>
 
-#include <halmd/utility/init.hpp>
+#include <lua.hpp>
 
 namespace halmd
 {
@@ -108,7 +107,10 @@ static void register_class_B(lua_State* L)
     ];
 }
 
-HALMD_INIT( register_lua )
+namespace // limit symbols to translation unit
+{
+
+__attribute__((constructor)) void register_lua()
 {
     lua_wrapper::register_(0)
     [
@@ -119,6 +121,8 @@ HALMD_INIT( register_lua )
         bind(&register_class_B, _1)
     ];
 }
+
+} // namespace
 
 } // namespace halmd
    @endcode
