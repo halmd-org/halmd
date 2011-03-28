@@ -27,7 +27,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/init.hpp>
 #include <test/modules.hpp>
 
 using namespace boost;
@@ -132,7 +131,7 @@ void boltzmann(string const& backend)
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm() - v_cm), vcm_limit);
 }
 
-HALMD_INIT( init_unit_test_suite )
+static void __attribute__((constructor)) init_unit_test_suite()
 {
     using namespace boost::assign;
     using namespace boost::unit_test;

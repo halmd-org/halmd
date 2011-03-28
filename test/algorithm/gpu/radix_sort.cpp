@@ -32,7 +32,6 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
-#include <halmd/utility/init.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/cuda.hpp>
 
@@ -99,7 +98,7 @@ void compare_radix_sort( size_t count )
                         "GPU and CPU element mismatch");
 }
 
-HALMD_INIT( init_unit_test_suite )
+static void __attribute__((constructor)) init_unit_test_suite()
 {
     using namespace boost::unit_test::framework;
     using namespace boost::assign;

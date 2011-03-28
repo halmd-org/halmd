@@ -26,7 +26,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include <halmd/utility/init.hpp>
 #include <halmd/utility/posix_signal.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -121,7 +120,7 @@ BOOST_AUTO_TEST_CASE( test_alarm )
 
 // FIXME test multiple concurrent posix_signal instances
 
-HALMD_INIT( init_unit_test_suite )
+static __attribute__((constructor)) void init_unit_test_suite()
 {
     using namespace boost::assign;
     using namespace boost::unit_test;

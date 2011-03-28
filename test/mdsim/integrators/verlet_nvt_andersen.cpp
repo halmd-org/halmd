@@ -34,7 +34,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/utility/init.hpp>
 #include <test/modules.hpp>
 
 using namespace boost;
@@ -177,7 +176,7 @@ void verlet_nvt_andersen(string const& backend)
     BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_limit);
 }
 
-HALMD_INIT( init_unit_test_suite )
+static void __attribute__((constructor)) init_unit_test_suite()
 {
     using namespace boost::assign;
     using namespace boost::unit_test;

@@ -23,7 +23,6 @@
 #include <cmath>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/utility/init.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/cuda.hpp>
 
@@ -80,7 +79,7 @@ void performance(size_t size)
     }
 }
 
-HALMD_INIT( init_unit_test_suite )
+static void __attribute__((constructor)) init_unit_test_suite()
 {
     using namespace boost::unit_test::framework;
 
