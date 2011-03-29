@@ -77,13 +77,21 @@ if(NOT CMAKE_BUILD_TYPE)
     "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-if(NOT CMAKE_CXX_FLAGS)
-  if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
+  if(NOT CMAKE_CXX_FLAGS)
     set(CMAKE_CXX_FLAGS "-fPIC -Wall" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
-  else()
-    message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
   endif()
+  if(NOT CMAKE_EXE_LINKER_FLAGS)
+    set(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed" CACHE STRING
+      "Flags used by the linker." FORCE)
+  endif()
+  if(NOT CMAKE_SHARED_LINKER_FLAGS)
+    set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--as-needed" CACHE STRING
+      "Flags used by the linker during the creation of shared libraries." FORCE)
+  endif()
+else()
+  message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
 if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
