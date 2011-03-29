@@ -191,13 +191,13 @@ Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
    ``/tmp/boost_1_46_1/bjam``. This directory also has to be passed to bjam
    during Luabind build using the environment variable ``BOOST_ROOT``.
 
-Compile a statically linked release build of the Luabind library with ::
+Compile statically linked release and debug variants of the Luabind library with ::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug
 
 Install the Luabind library into your packages directory::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release install --prefix=$HOME/usr/luabind-0.9.1
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug install --prefix=$HOME/usr/luabind-0.9.1
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
