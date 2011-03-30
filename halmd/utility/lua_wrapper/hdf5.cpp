@@ -21,7 +21,7 @@
 #include <luabind/luabind.hpp>
 #include <luabind/exception_handler.hpp>
 
-#include <halmd/utility/lua_wrapper/hdf5.hpp>
+#include <halmd/config.hpp>
 #include <halmd/utility/lua_wrapper/long_long_converter.hpp> // *int64_t on x86
 #include <halmd/utility/lua_wrapper/vector_converter.hpp>
 
@@ -81,7 +81,7 @@ static int translate_h5_exception(lua_State* L, H5::Exception const& e)
 /**
  * Register HDF5 classes and functions with Lua
  */
-int luaopen(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_h5(lua_State* L)
 {
     using namespace luabind;
     register_exception_handler<H5::Exception>(&translate_h5_exception);
