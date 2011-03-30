@@ -22,17 +22,6 @@
 
 #include <luabind/luabind.hpp>
 
-namespace halmd
-{
-namespace lua_wrapper { namespace ublas
-{
-
-int luaopen(lua_State* L);
-
-}} // namespace lua_wrapper::ublas
-
-} // namespace luabind
-
 namespace boost { namespace numeric { namespace ublas
 {
 

@@ -24,7 +24,6 @@
 #include <halmd/script.hpp>
 #include <halmd/utility/lua_wrapper/error.hpp>
 #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include <halmd/utility/lua_wrapper/ublas.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -97,8 +96,6 @@ void script::load_wrapper()
     luabind::bind_class_info(L); //< class_info(), class_names()
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
-
-    lua_wrapper::ublas::luaopen(L);
 
     luaopen_libhalmd(L);
 }
