@@ -20,6 +20,7 @@
 #ifndef HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
 #define HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
 
+#include <boost/lexical_cast.hpp> // Lua class names from template parameters
 #include <boost/shared_ptr.hpp> // pointer holder for luabind::class_
 #include <lua.hpp>
 #include <luabind/luabind.hpp>
@@ -34,7 +35,6 @@
 #include <halmd/utility/lua_wrapper/map_converter.hpp>
 #include <halmd/utility/lua_wrapper/optional_converter.hpp>
 #include <halmd/utility/lua_wrapper/program_options.hpp>
-#include <halmd/utility/lua_wrapper/registry.hpp>
 #include <halmd/utility/lua_wrapper/ublas.hpp>
 #include <halmd/utility/lua_wrapper/vector_converter.hpp>
 
