@@ -206,10 +206,6 @@ void ssf<dimension>::luaopen(lua_State* L)
                     .property("wavevector", &ssf::wavevector)
                     .property("sample", &sample_wrapper<ssf>)
                     .def("on_sample", &ssf::on_sample)
-                    .scope
-                    [
-                        class_<slot_function_type>("slot_function_type")
-                    ]
             ]
         ]
     ];

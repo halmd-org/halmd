@@ -53,10 +53,6 @@ void writer<dimension>::luaopen(lua_State* L)
                     class_<writer, shared_ptr<writer> >(class_name.c_str())
                         .property("append", &append_wrapper<writer>)
                         .def("on_append", &writer::on_append)
-                        .scope
-                        [
-                            class_<slot_function_type>("slot_function_type")
-                        ]
                 ]
             ]
         ]
