@@ -49,7 +49,7 @@ void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [

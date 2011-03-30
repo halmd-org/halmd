@@ -56,7 +56,7 @@ void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("velocity_autocorrelation_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [

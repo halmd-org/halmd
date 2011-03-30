@@ -30,18 +30,18 @@ local random = halmd.random
 -- grab C++ wrappers
 local lattice_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.positions.lattice_2_
-      , [3] = halmd_wrapper.mdsim.host.positions.lattice_3_
+        [2] = libhalmd.mdsim.host.positions.lattice_2_
+      , [3] = libhalmd.mdsim.host.positions.lattice_3_
     }
 }
-if halmd_wrapper.mdsim.gpu then
+if libhalmd.mdsim.gpu then
     lattice_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.positions.lattice_2_
-      , [3] = halmd_wrapper.mdsim.gpu.positions.lattice_3_
+        [2] = libhalmd.mdsim.gpu.positions.lattice_2_
+      , [3] = libhalmd.mdsim.gpu.positions.lattice_3_
     }
 end
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 

@@ -104,7 +104,7 @@ void h5md<dimension, float_type>::luaopen(lua_State* L)
     static string class_name("h5md_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("io")
             [

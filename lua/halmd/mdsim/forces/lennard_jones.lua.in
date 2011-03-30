@@ -27,13 +27,13 @@ local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local lennard_jones_wrapper = {
-    host = halmd_wrapper.mdsim.host.forces.lennard_jones
+    host = libhalmd.mdsim.host.forces.lennard_jones
 }
-if halmd_wrapper.mdsim.gpu then
-    lennard_jones_wrapper.gpu = halmd_wrapper.mdsim.gpu.forces.lennard_jones
+if libhalmd.mdsim.gpu then
+    lennard_jones_wrapper.gpu = libhalmd.mdsim.gpu.forces.lennard_jones
 end
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 

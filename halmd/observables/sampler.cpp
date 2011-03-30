@@ -162,7 +162,7 @@ void sampler<dimension>::luaopen(lua_State* L)
     static string class_name("sampler_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             class_<sampler, shared_ptr<runner>, runner>(class_name.c_str())
                 .def(constructor<

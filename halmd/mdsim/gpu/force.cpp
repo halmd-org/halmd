@@ -35,7 +35,7 @@ void force<dimension, float_type>::luaopen(lua_State* L)
     static string class_name("force_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("mdsim")
             [

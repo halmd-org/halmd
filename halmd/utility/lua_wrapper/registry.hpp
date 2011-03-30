@@ -88,7 +88,7 @@ static void register_class_A(lua_State* L)
     using namespace luabind;
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             class_<A, boost::shared_ptr<A> >("A")
         ]
@@ -100,7 +100,7 @@ static void register_class_B(lua_State* L)
     using namespace luabind;
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             class_<B, boost::shared_ptr<A>, bases<A> >("B")
         ]

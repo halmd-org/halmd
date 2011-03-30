@@ -235,7 +235,7 @@ void hdf5<dimension>::luaopen(lua_State* L)
     static string class_name("hdf5_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("io")
             [

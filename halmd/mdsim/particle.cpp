@@ -72,7 +72,7 @@ void particle<dimension>::luaopen(lua_State* L)
     static string class_name("particle_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("mdsim")
             [

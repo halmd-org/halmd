@@ -25,8 +25,8 @@ require("halmd.mdsim.core")
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local wavevector_wrapper = {
-    [2] = halmd_wrapper.observables.utility.wavevector_2_
-  , [3] = halmd_wrapper.observables.utility.wavevector_3_
+    [2] = libhalmd.observables.utility.wavevector_2_
+  , [3] = libhalmd.observables.utility.wavevector_3_
 }
 -- grab standard library
 local assert = assert

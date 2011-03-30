@@ -128,7 +128,7 @@ void wavevector<dimension>::luaopen(lua_State* L)
     static string class_name("wavevector_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("observables")
             [

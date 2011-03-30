@@ -28,16 +28,16 @@ local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local thermodynamics_wrapper = {
     host = {
-        [2] = halmd_wrapper.observables.host.thermodynamics_2_
-      , [3] = halmd_wrapper.observables.host.thermodynamics_3_
+        [2] = libhalmd.observables.host.thermodynamics_2_
+      , [3] = libhalmd.observables.host.thermodynamics_3_
     }
-  , [2] = halmd_wrapper.observables.thermodynamics_2_
-  , [3] = halmd_wrapper.observables.thermodynamics_3_
+  , [2] = libhalmd.observables.thermodynamics_2_
+  , [3] = libhalmd.observables.thermodynamics_3_
 }
-if halmd_wrapper.observables.gpu then
+if libhalmd.observables.gpu then
     thermodynamics_wrapper.gpu = {
-        [2] = halmd_wrapper.observables.gpu.thermodynamics_2_
-      , [3] = halmd_wrapper.observables.gpu.thermodynamics_3_
+        [2] = libhalmd.observables.gpu.thermodynamics_2_
+      , [3] = libhalmd.observables.gpu.thermodynamics_3_
     }
 end
 -- grab standard library

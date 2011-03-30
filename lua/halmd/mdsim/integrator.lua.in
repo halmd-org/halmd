@@ -24,8 +24,8 @@ require("halmd.mdsim.integrators")
 -- grab modules
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local pairs = pairs

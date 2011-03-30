@@ -127,7 +127,7 @@ void halmd_0_1_x<dimension, float_type>::luaopen(lua_State* L)
     static string class_name("halmd_0_1_x_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("io")
             [

@@ -85,7 +85,7 @@ int luaopen(lua_State* L)
 {
     using namespace luabind;
     register_exception_handler<H5::Exception>(&translate_h5_exception);
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("h5")
         [

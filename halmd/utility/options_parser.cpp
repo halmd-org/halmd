@@ -287,7 +287,7 @@ void options_parser::parse_config_file(std::string const& file_name, po::variabl
 void options_parser::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         class_<options_parser>("options_parser")
             .def("add", (void (options_parser::*)(po::options_description const&)) &options_parser::add)

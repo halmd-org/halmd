@@ -28,11 +28,11 @@ local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local ssf_wrapper = {
-    [2] = halmd_wrapper.observables.ssf_2_
-  , [3] = halmd_wrapper.observables.ssf_3_
+    [2] = libhalmd.observables.ssf_2_
+  , [3] = libhalmd.observables.ssf_3_
 }
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 

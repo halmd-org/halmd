@@ -123,7 +123,7 @@ static void po_add_options_description(
 int luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("po")
         [

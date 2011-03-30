@@ -50,7 +50,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [

@@ -87,7 +87,7 @@ template <typename float_type>
 void morse<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("mdsim")
         [

@@ -31,7 +31,7 @@ void runner::luaopen(lua_State* L)
     using namespace luabind;
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             class_<runner, shared_ptr<runner> >("runner")
         ]

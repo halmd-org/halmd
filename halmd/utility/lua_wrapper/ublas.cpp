@@ -36,7 +36,7 @@ namespace lua_wrapper { namespace ublas
 int luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("ublas")
         [

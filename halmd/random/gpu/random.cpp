@@ -112,7 +112,7 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
     static string class_name(RandomNumberGenerator::name());
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("gpu")
             [

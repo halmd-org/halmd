@@ -46,7 +46,7 @@ programme execution starts. ::
         // register a new Lua module
         module(L)
         [
-            namespace_("halmd_wrapper")
+            namespace_("libhalmd")
             [
                 namespace_("mdsim")
                 [
@@ -145,7 +145,7 @@ method ``module_name``. ::
         // register a new Lua module
         module(L)
         [
-            namespace_("halmd_wrapper")
+            namespace_("libhalmd")
             [
                 namespace_("mdsim")
                 [
@@ -192,7 +192,7 @@ deficiency of luabind?
 ::
 
     require("halmd.mdsim.integrator")
-    integrator = assert(halmd_wrapper.mdsim.host.integrators.verlet_2_)
+    integrator = assert(libhalmd.mdsim.host.integrators.verlet_2_)
     print(integrator.module_name())
     instance = integrator(particle, box, 0.001)
     instance:integrate()

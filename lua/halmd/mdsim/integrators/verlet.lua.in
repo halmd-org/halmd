@@ -28,18 +28,18 @@ local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local verlet_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.integrators.verlet_2_
-      , [3] = halmd_wrapper.mdsim.host.integrators.verlet_3_
+        [2] = libhalmd.mdsim.host.integrators.verlet_2_
+      , [3] = libhalmd.mdsim.host.integrators.verlet_3_
     }
 }
-if halmd_wrapper.mdsim.gpu then
+if libhalmd.mdsim.gpu then
     verlet_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.integrators.verlet_2_
-      , [3] = halmd_wrapper.mdsim.gpu.integrators.verlet_3_
+        [2] = libhalmd.mdsim.gpu.integrators.verlet_2_
+      , [3] = libhalmd.mdsim.gpu.integrators.verlet_3_
     }
 end
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 

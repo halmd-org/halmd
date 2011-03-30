@@ -78,7 +78,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("mdsim")
             [

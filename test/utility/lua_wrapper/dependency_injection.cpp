@@ -120,9 +120,9 @@ BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_test_fixture )
     mdsim::host::integrators::verlet<3, float>::luaopen(L);
 #endif
 
-    LUA_CHECK( "particle = assert2(halmd_wrapper.mdsim.host.particle_3_({ 1000 }))" );
-    LUA_CHECK( "box = assert2(halmd_wrapper.mdsim.box_3_(particle, { 10, 10, 10 }))" );
-    LUA_CHECK( "integrator = assert2(halmd_wrapper.mdsim.host.integrators.verlet_3_(particle, box, 0.001))" );
+    LUA_CHECK( "particle = assert2(libhalmd.mdsim.host.particle_3_({ 1000 }))" );
+    LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
+    LUA_CHECK( "integrator = assert2(libhalmd.mdsim.host.integrators.verlet_3_(particle, box, 0.001))" );
 }
 
 #ifdef WITH_CUDA
@@ -146,10 +146,10 @@ BOOST_FIXTURE_TEST_CASE( manually_registered_gpu_modules, lua_test_fixture )
     mdsim::gpu::particle<3, float>::luaopen(L);
     mdsim::gpu::integrators::verlet<3, float>::luaopen(L);
 
-    LUA_CHECK( "device = assert2(halmd_wrapper.utility.gpu.device({}, 128))" );
-    LUA_CHECK( "particle = assert2(halmd_wrapper.mdsim.gpu.particle_3_(device, { 1000 }))" );
-    LUA_CHECK( "box = assert2(halmd_wrapper.mdsim.box_3_(particle, { 10, 10, 10 }))" );
-    LUA_CHECK( "integrator = assert2(halmd_wrapper.mdsim.gpu.integrators.verlet_3_(particle, box, 0.001))" );
+    LUA_CHECK( "device = assert2(libhalmd.utility.gpu.device({}, 128))" );
+    LUA_CHECK( "particle = assert2(libhalmd.mdsim.gpu.particle_3_(device, { 1000 }))" );
+    LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
+    LUA_CHECK( "integrator = assert2(libhalmd.mdsim.gpu.integrators.verlet_3_(particle, box, 0.001))" );
 }
 #endif /* WITH_CUDA */
 
@@ -168,9 +168,9 @@ BOOST_FIXTURE_TEST_CASE( statically_registered_host_modules, lua_test_fixture )
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
 
-    LUA_CHECK( "particle = assert2(halmd_wrapper.mdsim.host.particle_3_({ 1000 }))" );
-    LUA_CHECK( "box = assert2(halmd_wrapper.mdsim.box_3_(particle, { 10, 10, 10 }))" );
-    LUA_CHECK( "integrator = assert2(halmd_wrapper.mdsim.host.integrators.verlet_3_(particle, box, 0.001))" );
+    LUA_CHECK( "particle = assert2(libhalmd.mdsim.host.particle_3_({ 1000 }))" );
+    LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
+    LUA_CHECK( "integrator = assert2(libhalmd.mdsim.host.integrators.verlet_3_(particle, box, 0.001))" );
 }
 
 #ifdef WITH_CUDA
@@ -189,9 +189,9 @@ BOOST_FIXTURE_TEST_CASE( statically_registered_gpu_modules, lua_test_fixture )
 
     lua_wrapper::open(L); //< register HALMD Lua wrappers
 
-    LUA_CHECK( "device = assert2(halmd_wrapper.utility.gpu.device({}, 128))" );
-    LUA_CHECK( "particle = assert2(halmd_wrapper.mdsim.gpu.particle_3_(device, { 1000 }))" );
-    LUA_CHECK( "box = assert2(halmd_wrapper.mdsim.box_3_(particle, { 10, 10, 10 }))" );
-    LUA_CHECK( "integrator = assert2(halmd_wrapper.mdsim.gpu.integrators.verlet_3_(particle, box, 0.001))" );
+    LUA_CHECK( "device = assert2(libhalmd.utility.gpu.device({}, 128))" );
+    LUA_CHECK( "particle = assert2(libhalmd.mdsim.gpu.particle_3_(device, { 1000 }))" );
+    LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
+    LUA_CHECK( "integrator = assert2(libhalmd.mdsim.gpu.integrators.verlet_3_(particle, box, 0.001))" );
 }
 #endif /* WITH_CUDA */

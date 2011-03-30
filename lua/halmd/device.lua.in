@@ -22,11 +22,11 @@ require("halmd.singleton")
 
 -- grab C++ wrappers
 local device_wrapper
-if halmd_wrapper.utility.gpu then
-    device_wrapper = halmd_wrapper.utility.gpu.device
+if libhalmd.utility.gpu then
+    device_wrapper = libhalmd.utility.gpu.device
 end
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 

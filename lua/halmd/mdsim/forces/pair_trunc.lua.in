@@ -28,14 +28,14 @@ local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local pair_trunc_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.forces.pair_trunc_2_
-      , [3] = halmd_wrapper.mdsim.host.forces.pair_trunc_3_
+        [2] = libhalmd.mdsim.host.forces.pair_trunc_2_
+      , [3] = libhalmd.mdsim.host.forces.pair_trunc_3_
     }
 }
-if halmd_wrapper.mdsim.gpu then
+if libhalmd.mdsim.gpu then
     pair_trunc_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.forces.pair_trunc_2_
-      , [3] = halmd_wrapper.mdsim.gpu.forces.pair_trunc_3_
+        [2] = libhalmd.mdsim.gpu.forces.pair_trunc_2_
+      , [3] = libhalmd.mdsim.gpu.forces.pair_trunc_3_
     }
 end
 -- grab standard library

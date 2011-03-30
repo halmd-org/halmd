@@ -24,7 +24,7 @@ require("halmd.io.trajectory.readers")
 -- grab modules
 local trajectory = halmd.io.trajectory
 -- grab C++ wrappers
-local po = halmd_wrapper.po
+local po = libhalmd.po
 -- grab standard library
 local error = error
 local io = io

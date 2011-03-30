@@ -41,7 +41,7 @@ void random::luaopen(lua_State* L)
     using namespace luabind;
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("host")
             [

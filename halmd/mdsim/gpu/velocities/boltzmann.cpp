@@ -147,7 +147,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L)
     [
-        namespace_("halmd_wrapper")
+        namespace_("libhalmd")
         [
             namespace_("mdsim")
             [
