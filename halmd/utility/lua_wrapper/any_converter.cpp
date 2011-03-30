@@ -18,6 +18,8 @@
  */
 
 #include <luabind/luabind.hpp>
+
+#include <halmd/config.hpp>
 #include <halmd/utility/lua_wrapper/any_converter.hpp>
 #include <halmd/utility/lua_wrapper/array_converter.hpp>
 #include <halmd/utility/lua_wrapper/long_long_converter.hpp>
@@ -27,7 +29,7 @@
 namespace halmd
 {
 
-static __attribute__((constructor)) void register_any_converters()
+HALMD_LUA_API int luaopen_libhalmd_any_converter(lua_State*)
 {
     register_any_converter<void>(); //< empty boost::any
 
@@ -86,6 +88,8 @@ static __attribute__((constructor)) void register_any_converters()
     register_any_converter<boost::multi_array<char const*, 1> >();
 
     register_any_converter<boost::program_options::variables_map>();
+
+    return 0;
 }
 
 } // namespace halmd
